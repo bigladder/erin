@@ -1,4 +1,9 @@
-# Atheneum Boilerplate
+# DISCO (District Infrastructure System Component Optimization)
+
+
+
+
+---------
 
 This project serves as a template for consistent, cross-platform, open-source C++ library development.
 

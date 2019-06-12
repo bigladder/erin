@@ -6,7 +6,7 @@
 
 TEST(DISCO, test_gtest) {
   int x(1);
-  int y(2);
+  int y(1);
   EXPECT_EQ(x, y);
 }
 

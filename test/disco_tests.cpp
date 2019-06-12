@@ -2,11 +2,12 @@
 * See the LICENSE file for additional terms and conditions. */
 
 #include "gtest/gtest.h"
-#include "atheneum/atheneum.h"
+#include "disco/disco.h"
 
-TEST(Atheneum, example) {
-  Atheneum::Atheneum atheneum;
-  EXPECT_EQ(atheneum.answer(), 42);
+TEST(DISCO, test_gtest) {
+  int x(1);
+  int y(2);
+  EXPECT_EQ(x, y);
 }
 
 int main(int argc, char **argv) {

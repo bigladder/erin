@@ -2,7 +2,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src"
   "${PROJECT_SOURCE_DIR}/include"
   "${gtest_SOURCE_DIR}/include")
 
-set(test_sources atheneum_tests.cpp)
+set(test_sources disco_tests.cpp)
 
 link_libraries(${CMAKE_PROJECT_NAME} gtest)
 

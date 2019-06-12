@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10) # required for gtest_discover_tests
 
-project(atheneum) # Replace
+project(DISCO)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -13,7 +13,7 @@ endif()
 
 set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-option( ${CMAKE_PROJECT_NAME}_TESTING "Build Atheneum testing targets" OFF)
+option( ${CMAKE_PROJECT_NAME}_TESTING "Build DISCO testing targets" OFF)
 option( ${CMAKE_PROJECT_NAME}_COVERAGE "Generate coverage reports" OFF)
 
 # Set up testing/coverage

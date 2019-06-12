@@ -1,12 +1,14 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
-#include <atheneum/atheneum.h>
+#include "disco/disco.h"
 
-namespace Atheneum {
+namespace DISCO
+{
 
-int Atheneum::answer() {
-    return 42;
-}
+    int DISCO::answer()
+    {
+        return 42;
+    }
 
 }

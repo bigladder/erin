@@ -4,14 +4,23 @@
 #include "gtest/gtest.h"
 #include "disco/disco.h"
 
-TEST(DISCO, test_gtest) {
+TEST(SetupTest, GoogleTestRuns) {
   int x(1);
   int y(1);
   EXPECT_EQ(x, y);
 }
 
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
+TEST(DiscoBasicsTest, CanRunSourceSink) {
+  auto src = ::DISCO::Source();
+  auto sink = ::DISCO::Sink();
+  auto model = ::DISCO::Model();
+  model.addComponent("source", src);
+  model.addComponent("sink", sink);
+  model.connect("source", ::DISCO::Source::OUT, "sink", ::DISCO::Sink::IN);
+}
 
+int
+main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

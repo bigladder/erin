@@ -6,7 +6,6 @@
 #include <string>
 #include <map>
 #include "../../vendor/bdevs/include/adevs.h"
-#include "../../vendor/bdevs/include/adevs_time.h"
 
 namespace DISCO {
   class Component {

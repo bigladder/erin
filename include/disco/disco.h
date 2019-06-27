@@ -21,10 +21,15 @@ namespace DISCO {
       static const int IN = 1;
   };
 
+  class Results {
+    public:
+  };
+
   class Model {
     public:
       void addComponent(std::string const id, Component const comp);
       void connect(std::string const id1, int const port1, std::string const id2, int const port2);
+      Results simulate();
 
     private:
       std::map<std::string, Component> _comps;

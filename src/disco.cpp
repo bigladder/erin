@@ -15,4 +15,9 @@ Model::connect(std::string const id1, int const port1, std::string const id2, in
     // do nothing for now
 }
 
+Results
+Model::simulate() {
+    return Results();
+}
+
 }

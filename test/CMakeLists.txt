@@ -1,8 +1,17 @@
 include_directories("${PROJECT_SOURCE_DIR}/src"
   "${PROJECT_SOURCE_DIR}/include"
-  "${gtest_SOURCE_DIR}/include")
+  "${gtest_SOURCE_DIR}/include"
+  "checkout_line")
 
-set(test_sources disco_tests.cpp)
+set(test_sources
+  disco_tests.cpp
+  checkout_line/clerk.cpp
+  checkout_line/clerk.h
+  checkout_line/customer.h
+  checkout_line/generator.cpp
+  checkout_line/generator.h
+  checkout_line/observer.cpp
+  checkout_line/observer.h)
 
 link_libraries(${CMAKE_PROJECT_NAME} gtest)
 

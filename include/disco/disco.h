@@ -7,26 +7,32 @@
 #include <map>
 #include "../../vendor/bdevs/include/adevs.h"
 
-namespace DISCO {
-  class Component {
+namespace DISCO
+{
+  class Component
+  {
     public:
   };
 
-  class Source : public Component {
+  class Source : public Component
+  {
     public:
       static const int OUT = 1;
   };
 
-  class Sink : public Component {
+  class Sink : public Component
+  {
     public:
       static const int IN = 1;
   };
 
-  class Results {
+  class Results
+  {
     public:
   };
 
-  class Model {
+  class Model
+  {
     public:
       void addComponent(std::string const id, Component const comp);
       void connect(std::string const id1, int const port1, std::string const id2, int const port2);

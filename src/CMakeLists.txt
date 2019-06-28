@@ -12,7 +12,7 @@ set(library_sources
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
-option( ${CMAKE_PROJECT_NAME}_STATIC_LIB "Make penumbra a static library" ON )
+option( ${CMAKE_PROJECT_NAME}_STATIC_LIB "Make a static library" ON )
 
 if (${CMAKE_PROJECT_NAME}_STATIC_LIB)
   add_library(${CMAKE_PROJECT_NAME} STATIC ${library_sources})

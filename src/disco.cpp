@@ -94,8 +94,10 @@ namespace DISCO
     _idx(-1),
     _times(times),
     _loads(loads),
+    _time(0),
     _load(0),
-    _achieved()
+    _achieved_times(),
+    _achieved_loads()
   {
     if (_times.size() != _loads.size())
     {
@@ -103,6 +105,7 @@ namespace DISCO
     }
     if (_times.size() > 0)
     {
+      _time = _times.at(0);
       _load = _loads.at(0);
     }
   }
@@ -117,8 +120,10 @@ namespace DISCO
     }
     if (_idx < _times.size())
     {
-      _achieved.push_back(_load);
+      _achieved_times.push_back(_time);
+      _achieved_loads.push_back(_load);
       _load = _loads.at(_idx);
+      _time = _times.at(_idx);
     }
   }
 
@@ -167,9 +172,9 @@ namespace DISCO
   {
     std::ostringstream oss;
     oss << "\"time (hrs)\",\"power [IN] (kW)\"" << std::endl;
-    for (int idx(0); idx < _achieved.size(); idx++)
+    for (int idx(0); idx < _achieved_times.size(); idx++)
     {
-      oss << _times[idx] << "," << _achieved[idx] << std::endl;
+      oss << _achieved_times[idx] << "," << _achieved_loads[idx] << std::endl;
     }
     return oss.str();
   }

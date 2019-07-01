@@ -57,8 +57,10 @@ namespace DISCO
       int _idx;
       std::vector<int> _times;
       std::vector<int> _loads;
+      int _time;
       int _load;
-      std::vector<int> _achieved;
+      std::vector<int> _achieved_times;
+      std::vector<int> _achieved_loads;
   };
 }
 

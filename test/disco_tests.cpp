@@ -46,6 +46,11 @@ TEST(AdevsUsageTest, CanRunCheckoutLineExample)
     "10 2 44 32\n"
     "11 1 45 33\n";
   adevs::SimpleDigraph<Customer> store;
+  // Note: adevs::SimpleDigraph and adevs::Digraph take ownership of the
+  // objects used in the couple calls.
+  // As such, those objects are deleted with the destructor to the store
+  // object.
+  // Therefore, delete is not called on c, g, or o...
   auto c = new Clerk();
   auto g = new Generator();
   auto o = new Observer();

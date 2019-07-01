@@ -18,13 +18,29 @@ TEST(SetupTest, GoogleTestRuns)
 
 TEST(DiscoBasicsTest, CanRunSourceSink)
 {
-  auto src = ::DISCO::Source();
-  auto sink = ::DISCO::Sink();
-  auto model = ::DISCO::Model();
-  model.addComponent("source", src);
-  model.addComponent("sink", sink);
-  model.connect("source", ::DISCO::Source::PORT_OUT, "sink", ::DISCO::Sink::PORT_IN);
-  auto results = model.simulate();
+  /*
+  std::string expected_src_output =
+    "\"time (hrs)\",\"power [OUT] (kW)\"\n"
+    "0,100\n";
+    */
+  std::string expected_src_output = "";
+  std::string expected_sink_output =
+    "\"time (hrs)\",\"power [IN] (kW)\"\n"
+    "0,100\n";
+  auto src = new ::DISCO::Source();
+  auto sink = new ::DISCO::Sink();
+  adevs::Digraph<::DISCO::Flow> network;
+  network.couple(src, ::DISCO::Source::PORT_OUT_REQUEST, sink, ::DISCO::Sink::PORT_IN_REQUEST);
+  adevs::Simulator<::DISCO::PortValue> sim;
+  network.add(&sim);
+  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  {
+    sim.exec_next_event();
+  }
+  std::string actual_src_output = src->getResults();
+  std::string actual_sink_output = sink->getResults();
+  EXPECT_EQ(expected_src_output, actual_src_output);
+  EXPECT_EQ(expected_sink_output, actual_sink_output);
 }
 
 TEST(AdevsUsageTest, CanRunCheckoutLineExample)

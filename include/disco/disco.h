@@ -40,12 +40,14 @@ namespace DISCO
       static const int PORT_IN_ACHIEVED;
       static const int PORT_IN_REQUEST;
       Sink();
+      Sink(std::vector<int> times, std::vector<int> loads);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& x) override;
       void delta_conf(std::vector<PortValue>& x) override;
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& y) override;
       std::string getResults();
+
     private:
       int _idx;
       std::vector<int> _times;

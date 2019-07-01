@@ -16,6 +16,25 @@ TEST(SetupTest, GoogleTestRuns)
   EXPECT_EQ(x, y);
 }
 
+TEST(DiscoBasicsTest, StandaloneSink)
+{
+  std::string expected_output =
+    "\"time (hrs)\",\"power [IN] (kW)\"\n"
+    "0,100\n"
+    "1,10\n";
+  std::vector<int> times = {0,1,2};
+  std::vector<int> loads = {100,10,0};
+  auto sink = new ::DISCO::Sink(times, loads);
+  adevs::Simulator<::DISCO::PortValue> sim;
+  sim.add(sink);
+  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  {
+    sim.exec_next_event();
+  }
+  std::string actual_output = sink->getResults();
+  EXPECT_EQ(expected_output, actual_output);
+}
+
 TEST(DiscoBasicsTest, CanRunSourceSink)
 {
   /*

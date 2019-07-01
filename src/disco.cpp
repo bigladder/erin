@@ -65,13 +65,22 @@ namespace DISCO
   const int Sink::PORT_IN_REQUEST = 2;
 
   Sink::Sink():
+    Sink::Sink({0, 1}, {100, 0})
+  {
+  }
+
+  Sink::Sink(std::vector<int> times, std::vector<int> loads):
     adevs::Atomic<PortValue>(),
     _idx(0),
-    _times{0, 1},
-    _loads{100, 0},
+    _times(times),
+    _loads(loads),
     _load(0),
     _achieved()
   {
+    if (_times.size() != _loads.size())
+    {
+      // throw exception here
+    }
     if (_idx < _times.size())
     {
       _load = _loads.at(_idx);

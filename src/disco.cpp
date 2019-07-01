@@ -23,14 +23,11 @@ namespace DISCO
   const int Source::PORT_OUT_REQUEST = 1;
 
   Source::Source():
-    adevs::Atomic<PortValue>()
+    adevs::Atomic<PortValue>(),
+    _time(0),
+    _times(),
+    _loads()
   {
-  }
-
-  std::string
-  Source::getResults()
-  {
-    return "";
   }
 
   void
@@ -39,12 +36,23 @@ namespace DISCO
   }
 
   void
-  Source::delta_ext(adevs::Time e, std::vector<PortValue>& x)
+  Source::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
+    for (auto x : xs)
+    {
+      if (x.port == PORT_OUT_REQUEST) 
+      {
+        _time += e.real;
+        Flow f = x.value;
+        int load = f.getFlow();
+        _times.push_back(_time);
+        _loads.push_back(load);
+      }
+    }
   }
 
   void
-  Source::delta_conf(std::vector<PortValue>& x)
+  Source::delta_conf(std::vector<PortValue>& xs)
   {
   }
 
@@ -59,6 +67,18 @@ namespace DISCO
   {
   }
 
+  std::string
+  Source::getResults()
+  {
+    std::ostringstream oss;
+    oss << "\"time (hrs)\",\"power [OUT] (kW)\"" << std::endl;
+    for (int idx(0); idx < _times.size(); idx++)
+    {
+      oss << _times.at(idx) << "," << _loads.at(idx) << std::endl;
+    }
+    return oss.str();
+  }
+
   ///////////////////////////////////////////////////////////////////
   // SINK
   const int Sink::PORT_IN_ACHIEVED = 1;
@@ -71,7 +91,7 @@ namespace DISCO
 
   Sink::Sink(std::vector<int> times, std::vector<int> loads):
     adevs::Atomic<PortValue>(),
-    _idx(0),
+    _idx(-1),
     _times(times),
     _loads(loads),
     _load(0),
@@ -81,36 +101,44 @@ namespace DISCO
     {
       // throw exception here
     }
-    if (_idx < _times.size())
+    if (_times.size() > 0)
     {
-      _load = _loads.at(_idx);
+      _load = _loads.at(0);
     }
   }
 
   void
   Sink::delta_int()
   {
-    _achieved.push_back(_load);
     _idx++;
+    if (_idx == 0)
+    {
+      return;
+    }
     if (_idx < _times.size())
     {
+      _achieved.push_back(_load);
       _load = _loads.at(_idx);
     }
   }
 
   void
-  Sink::delta_ext(adevs::Time e, std::vector<PortValue>& x)
+  Sink::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
   }
 
   void
-  Sink::delta_conf(std::vector<PortValue>& x)
+  Sink::delta_conf(std::vector<PortValue>& xs)
   {
   }
 
   adevs::Time
   Sink::ta()
   {
+    if (_idx < 0)
+    {
+      return adevs::Time(0, 0);
+    }
     int next_idx = _idx + 1;
     if (next_idx < _times.size())
     {
@@ -123,14 +151,14 @@ namespace DISCO
   }
 
   void
-  Sink::output_func(std::vector<PortValue>& y)
+  Sink::output_func(std::vector<PortValue>& ys)
   {
     int next_idx = _idx + 1;
     if (next_idx < _times.size())
     {
       Flow f(_loads.at(next_idx));
       PortValue pv = adevs::port_value<Flow>(PORT_IN_REQUEST, f);
-      y.push_back(pv);
+      ys.push_back(pv);
     }
   }
 

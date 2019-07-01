@@ -27,11 +27,16 @@ namespace DISCO
       static const int PORT_OUT_REQUEST;
       Source();
       void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& x) override;
-      void delta_conf(std::vector<PortValue>& x) override;
+      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
       adevs::Time ta() override;
-      void output_func(std::vector<PortValue>& y) override;
+      void output_func(std::vector<PortValue>& ys) override;
       std::string getResults();
+
+    private:
+      int _time;
+      std::vector<int> _times;
+      std::vector<int> _loads;
   };
 
   class Sink : public adevs::Atomic<PortValue>
@@ -42,10 +47,10 @@ namespace DISCO
       Sink();
       Sink(std::vector<int> times, std::vector<int> loads);
       void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& x) override;
-      void delta_conf(std::vector<PortValue>& x) override;
+      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
       adevs::Time ta() override;
-      void output_func(std::vector<PortValue>& y) override;
+      void output_func(std::vector<PortValue>& ys) override;
       std::string getResults();
 
     private:

@@ -37,19 +37,17 @@ TEST(DiscoBasicsTest, StandaloneSink)
 
 TEST(DiscoBasicsTest, CanRunSourceSink)
 {
-  /*
   std::string expected_src_output =
     "\"time (hrs)\",\"power [OUT] (kW)\"\n"
-    "0,100\n";
-    */
-  std::string expected_src_output = "";
+    "0,100\n"
+    "1,0\n";
   std::string expected_sink_output =
     "\"time (hrs)\",\"power [IN] (kW)\"\n"
     "0,100\n";
   auto src = new ::DISCO::Source();
   auto sink = new ::DISCO::Sink();
   adevs::Digraph<::DISCO::Flow> network;
-  network.couple(src, ::DISCO::Source::PORT_OUT_REQUEST, sink, ::DISCO::Sink::PORT_IN_REQUEST);
+  network.couple(sink, ::DISCO::Sink::PORT_IN_REQUEST, src, ::DISCO::Source::PORT_OUT_REQUEST);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())

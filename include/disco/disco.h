@@ -17,13 +17,13 @@ namespace DISCO
   class Source : public Component
   {
     public:
-      static const int OUT = 1;
+      static const int PORT_OUT = 1;
   };
 
   class Sink : public Component
   {
     public:
-      static const int IN = 1;
+      static const int PORT_IN = 1;
   };
 
   class Results

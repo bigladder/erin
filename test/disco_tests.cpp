@@ -23,7 +23,7 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   auto model = ::DISCO::Model();
   model.addComponent("source", src);
   model.addComponent("sink", sink);
-  model.connect("source", ::DISCO::Source::OUT, "sink", ::DISCO::Sink::IN);
+  model.connect("source", ::DISCO::Source::PORT_OUT, "sink", ::DISCO::Sink::PORT_IN);
   auto results = model.simulate();
 }
 

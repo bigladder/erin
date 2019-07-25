@@ -105,6 +105,103 @@ namespace DISCO
   }
 
   ///////////////////////////////////////////////////////////////////
+  // FLOWLIMITS
+  const int FlowLimits::port_input_request = 1;
+  const int FlowLimits::port_output_request = 2;
+  const int FlowLimits::port_input_achieved = 3;
+  const int FlowLimits::port_output_achieved = 4;
+
+  FlowLimits::FlowLimits(int low_lim, int up_lim) :
+    adevs::Atomic<PortValue>(),
+    lower_limit{low_lim},
+    upper_limit{up_lim},
+    report_input_request{false},
+    report_output_achieved{false},
+    input_request{0},
+    output_achieved{0}
+  {
+    if (lower_limit > upper_limit) {
+      std::ostringstream oss;
+      oss << "FlowLimits error: lower_limit (" << lower_limit
+          << ") > upper_limit (" << upper_limit << ")";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  void
+  FlowLimits::delta_int()
+  {
+    report_input_request = false;
+    report_output_achieved = false;
+    input_request = 0;
+    output_achieved = 0;
+  }
+
+  void
+  FlowLimits::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  {
+    for (auto x : xs) {
+      if (x.port == port_output_request) {
+        // the output requested equals the input request,
+        // provided it is within limits. We accumulate all input requests
+        // accounting for the (unlikely) possibility of multiple values on one
+        // port. input_request is set to 0 at class construction and at each
+        // internal transition.
+        report_input_request = true;
+        input_request += x.value.getFlow();
+      }
+      else if (x.port == port_input_achieved) {
+        // the input achieved equals the output achieved. output_achieved is
+        // initialized to 0 at construction and at each internal transition.
+        report_output_achieved = true;
+        output_achieved += x.value.getFlow();
+      }
+    }
+    // Note: we never provide more power than requested. Therefore, if the
+    // requested power, say 10 kW is less than the minimum power, say 15 kW,
+    // then the request is for 0 kW, not 15 kW. Also, we have to account for
+    // sign convention where we might have a negative output (which means flow
+    // is going the other direction).
+    if (report_input_request) {
+      input_request = clamp_toward_0(input_request, lower_limit, upper_limit);
+      if (!report_output_achieved) {
+        // if an input request is given but no output achieved, assume that
+        // output achieved is input request (limited) unless we hear otherwise.
+        report_output_achieved = true;
+        output_achieved = input_request;
+      }
+    }
+  }
+
+  void
+  FlowLimits::delta_conf(std::vector<PortValue>& xs)
+  {
+    delta_int();
+    delta_ext(adevs::Time(0, 0), xs);
+  }
+
+  adevs::Time
+  FlowLimits::ta()
+  {
+    if (report_input_request || report_output_achieved)
+      return adevs::Time(0, 0);
+    return adevs_inf<adevs::Time>();
+  }
+
+  void
+  FlowLimits::output_func(std::vector<PortValue>& ys)
+  {
+    if (report_input_request) {
+      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow(input_request));
+      ys.push_back(pv);
+    }
+    if (report_output_achieved) {
+      PortValue pv = adevs::port_value<Flow>(port_output_achieved, Flow(output_achieved));
+      ys.push_back(pv);
+    }
+  }
+
+  ///////////////////////////////////////////////////////////////////
   // SINK
   const int Sink::PORT_IN_ACHIEVED = 1;
   const int Sink::PORT_IN_REQUEST = 2;
@@ -155,11 +252,25 @@ namespace DISCO
   void
   Sink::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
+    int input_achieved{0};
+    bool input_given{false};
+    for (auto x : xs) {
+      if (x.port == PORT_IN_ACHIEVED) {
+        input_given = true;
+        input_achieved += x.value.getFlow();
+      }
+    }
+    if (input_given) {
+      // update the load if we're given something on port in achieved
+      _load = input_achieved;
+    }
   }
 
   void
   Sink::delta_conf(std::vector<PortValue>& xs)
   {
+    delta_int();
+    delta_ext(adevs::Time(0, 0), xs);
   }
 
   adevs::Time

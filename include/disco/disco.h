@@ -13,6 +13,8 @@ namespace DISCO
   // Utility Functions
   int clamp_toward_0(int value, int lower, int upper);
 
+  ////////////////////////////////////////////////////////////
+  // Flow
   class Flow
   {
     public:
@@ -25,6 +27,8 @@ namespace DISCO
 
   typedef adevs::port_value<Flow> PortValue;
 
+  ////////////////////////////////////////////////////////////
+  // Source
   class Source : public adevs::Atomic<PortValue>
   {
     public:
@@ -43,6 +47,34 @@ namespace DISCO
       std::vector<int> _loads;
   };
 
+  ////////////////////////////////////////////////////////////
+  // FlowLimits
+  class FlowLimits : public adevs::Atomic<PortValue>
+  {
+    public:
+      static const int port_input_request;
+      static const int port_output_request;
+      static const int port_input_achieved;
+      static const int port_output_achieved;
+      //FlowLimits(int upperLimit);
+      FlowLimits(int lower_limit, int upper_limit);
+      void delta_int() override;
+      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      adevs::Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
+    private:
+      int lower_limit;
+      int upper_limit;
+      bool report_input_request;
+      bool report_output_achieved;
+      int input_request;
+      int output_achieved;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // Sink
   class Sink : public adevs::Atomic<PortValue>
   {
     public:

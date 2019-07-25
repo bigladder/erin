@@ -86,6 +86,44 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   EXPECT_EQ(expected_sink_output, actual_sink_output);
 }
 
+TEST(DiscoBasicTest, CanRunPowerLimitedSink)
+{
+  std::string expected_src_output =
+    "\"time (hrs)\",\"power [OUT] (kW)\"\n"
+    "0,50\n"
+    "1,50\n"
+    "2,40\n"
+    "3,0\n";
+  std::string expected_sink_output =
+    "\"time (hrs)\",\"power [IN] (kW)\"\n"
+    "0,50\n"
+    "1,50\n"
+    "2,40\n";
+  auto src = new ::DISCO::Source();
+  auto lim = new ::DISCO::FlowLimits(0, 50);
+  auto sink = new ::DISCO::Sink({0,1,2,3}, {160,80,40,0});
+  adevs::Digraph<::DISCO::Flow> network;
+  network.couple(
+      sink, ::DISCO::Sink::PORT_IN_REQUEST,
+      lim, ::DISCO::FlowLimits::port_output_request);
+  network.couple(
+      lim, ::DISCO::FlowLimits::port_input_request,
+      src, ::DISCO::Source::PORT_OUT_REQUEST);
+  network.couple(
+      lim, ::DISCO::FlowLimits::port_output_achieved,
+      sink, ::DISCO::Sink::PORT_IN_ACHIEVED);
+  adevs::Simulator<::DISCO::PortValue> sim;
+  network.add(&sim);
+  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  {
+    sim.exec_next_event();
+  }
+  std::string actual_src_output = src->getResults();
+  std::string actual_sink_output = sink->getResults();
+  EXPECT_EQ(expected_src_output, actual_src_output);
+  EXPECT_EQ(expected_sink_output, actual_sink_output);
+}
+
 TEST(AdevsUsageTest, CanRunCheckoutLineExample)
 {
   // Expected results from ADEVS manual

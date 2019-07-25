@@ -73,7 +73,7 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   auto src = new ::DISCO::Source();
   auto sink = new ::DISCO::Sink();
   adevs::Digraph<::DISCO::Flow> network;
-  network.couple(sink, ::DISCO::Sink::PORT_IN_REQUEST, src, ::DISCO::Source::PORT_OUT_REQUEST);
+  network.couple(sink, ::DISCO::Sink::port_input_request, src, ::DISCO::Source::port_output_request);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
@@ -104,14 +104,14 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   auto sink = new ::DISCO::Sink({0,1,2,3}, {160,80,40,0});
   adevs::Digraph<::DISCO::Flow> network;
   network.couple(
-      sink, ::DISCO::Sink::PORT_IN_REQUEST,
+      sink, ::DISCO::Sink::port_input_request,
       lim, ::DISCO::FlowLimits::port_output_request);
   network.couple(
       lim, ::DISCO::FlowLimits::port_input_request,
-      src, ::DISCO::Source::PORT_OUT_REQUEST);
+      src, ::DISCO::Source::port_output_request);
   network.couple(
       lim, ::DISCO::FlowLimits::port_output_achieved,
-      sink, ::DISCO::Sink::PORT_IN_ACHIEVED);
+      sink, ::DISCO::Sink::port_input_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())

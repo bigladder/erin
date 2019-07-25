@@ -33,25 +33,25 @@ namespace DISCO
   ///////////////////////////////////////////////////////////////////
   // FLOW
   Flow::Flow(int flowValue):
-    _flow(flowValue)
+    flow(flowValue)
   {
   }
 
   int
   Flow::getFlow()
   {
-    return _flow;
+    return flow;
   }
 
   ///////////////////////////////////////////////////////////////////
   // SOURCE
-  const int Source::PORT_OUT_REQUEST = 1;
+  const int Source::port_output_request = 1;
 
   Source::Source():
     adevs::Atomic<PortValue>(),
-    _time(0),
-    _times(),
-    _loads()
+    time{0},
+    times{},
+    loads{}
   {
   }
 
@@ -65,13 +65,13 @@ namespace DISCO
   {
     for (auto x : xs)
     {
-      if (x.port == PORT_OUT_REQUEST) 
+      if (x.port == port_output_request) 
       {
-        _time += e.real;
+        time += e.real;
         Flow f = x.value;
         int load = f.getFlow();
-        _times.push_back(_time);
-        _loads.push_back(load);
+        times.push_back(time);
+        loads.push_back(load);
       }
     }
   }
@@ -97,9 +97,9 @@ namespace DISCO
   {
     std::ostringstream oss;
     oss << "\"time (hrs)\",\"power [OUT] (kW)\"" << std::endl;
-    for (int idx(0); idx < _times.size(); idx++)
+    for (int idx(0); idx < times.size(); ++idx)
     {
-      oss << _times.at(idx) << "," << _loads.at(idx) << std::endl;
+      oss << times.at(idx) << "," << loads.at(idx) << std::endl;
     }
     return oss.str();
   }
@@ -203,8 +203,8 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // SINK
-  const int Sink::PORT_IN_ACHIEVED = 1;
-  const int Sink::PORT_IN_REQUEST = 2;
+  const int Sink::port_input_achieved = 1;
+  const int Sink::port_input_request = 2;
 
   Sink::Sink():
     Sink::Sink({0, 1}, {100, 0})
@@ -213,39 +213,39 @@ namespace DISCO
 
   Sink::Sink(std::vector<int> times, std::vector<int> loads):
     adevs::Atomic<PortValue>(),
-    _idx(-1),
-    _times(times),
-    _loads(loads),
-    _time(0),
-    _load(0),
-    _achieved_times(),
-    _achieved_loads()
+    idx{-1},
+    times{times},
+    loads{loads},
+    time{0},
+    load{0},
+    achieved_times{},
+    achieved_loads{}
   {
-    if (_times.size() != _loads.size())
+    if (times.size() != loads.size())
     {
       // throw exception here
     }
-    if (_times.size() > 0)
+    if (times.size() > 0)
     {
-      _time = _times.at(0);
-      _load = _loads.at(0);
+      time = times.at(0);
+      load = loads.at(0);
     }
   }
 
   void
   Sink::delta_int()
   {
-    _idx++;
-    if (_idx == 0)
+    ++idx;
+    if (idx == 0)
     {
       return;
     }
-    if (_idx < _times.size())
+    if (idx < times.size())
     {
-      _achieved_times.push_back(_time);
-      _achieved_loads.push_back(_load);
-      _load = _loads.at(_idx);
-      _time = _times.at(_idx);
+      achieved_times.push_back(time);
+      achieved_loads.push_back(load);
+      load = loads.at(idx);
+      time = times.at(idx);
     }
   }
 
@@ -255,14 +255,14 @@ namespace DISCO
     int input_achieved{0};
     bool input_given{false};
     for (auto x : xs) {
-      if (x.port == PORT_IN_ACHIEVED) {
+      if (x.port == port_input_achieved) {
         input_given = true;
         input_achieved += x.value.getFlow();
       }
     }
     if (input_given) {
       // update the load if we're given something on port in achieved
-      _load = input_achieved;
+      load = input_achieved;
     }
   }
 
@@ -276,15 +276,15 @@ namespace DISCO
   adevs::Time
   Sink::ta()
   {
-    if (_idx < 0)
+    if (idx < 0)
     {
       return adevs::Time(0, 0);
     }
-    int next_idx = _idx + 1;
-    if (next_idx < _times.size())
+    int next_idx = idx + 1;
+    if (next_idx < times.size())
     {
-      int time0(_times.at(_idx));
-      int time1(_times.at(next_idx));
+      int time0(times.at(idx));
+      int time1(times.at(next_idx));
       int dt = time1 - time0;
       return adevs::Time(dt, 0);
     }
@@ -294,11 +294,11 @@ namespace DISCO
   void
   Sink::output_func(std::vector<PortValue>& ys)
   {
-    int next_idx = _idx + 1;
-    if (next_idx < _times.size())
+    int next_idx = idx + 1;
+    if (next_idx < times.size())
     {
-      Flow f(_loads.at(next_idx));
-      PortValue pv = adevs::port_value<Flow>(PORT_IN_REQUEST, f);
+      Flow f(loads.at(next_idx));
+      PortValue pv = adevs::port_value<Flow>(port_input_request, f);
       ys.push_back(pv);
     }
   }
@@ -308,9 +308,9 @@ namespace DISCO
   {
     std::ostringstream oss;
     oss << "\"time (hrs)\",\"power [IN] (kW)\"" << std::endl;
-    for (int idx(0); idx < _achieved_times.size(); idx++)
+    for (int idx(0); idx < achieved_times.size(); ++idx)
     {
-      oss << _achieved_times[idx] << "," << _achieved_loads[idx] << std::endl;
+      oss << achieved_times[idx] << "," << achieved_loads[idx] << std::endl;
     }
     return oss.str();
   }

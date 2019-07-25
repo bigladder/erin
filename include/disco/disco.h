@@ -22,7 +22,7 @@ namespace DISCO
       int getFlow();
 
     private:
-      int _flow;
+      int flow;
   };
 
   typedef adevs::port_value<Flow> PortValue;
@@ -32,7 +32,7 @@ namespace DISCO
   class Source : public adevs::Atomic<PortValue>
   {
     public:
-      static const int PORT_OUT_REQUEST;
+      static const int port_output_request;
       Source();
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
@@ -42,9 +42,9 @@ namespace DISCO
       std::string getResults();
 
     private:
-      int _time;
-      std::vector<int> _times;
-      std::vector<int> _loads;
+      int time;
+      std::vector<int> times;
+      std::vector<int> loads;
   };
 
   ////////////////////////////////////////////////////////////
@@ -78,8 +78,8 @@ namespace DISCO
   class Sink : public adevs::Atomic<PortValue>
   {
     public:
-      static const int PORT_IN_ACHIEVED;
-      static const int PORT_IN_REQUEST;
+      static const int port_input_achieved;
+      static const int port_input_request;
       Sink();
       Sink(std::vector<int> times, std::vector<int> loads);
       void delta_int() override;
@@ -90,13 +90,13 @@ namespace DISCO
       std::string getResults();
 
     private:
-      int _idx;
-      std::vector<int> _times;
-      std::vector<int> _loads;
-      int _time;
-      int _load;
-      std::vector<int> _achieved_times;
-      std::vector<int> _achieved_loads;
+      int idx;
+      std::vector<int> times;
+      std::vector<int> loads;
+      int time;
+      int load;
+      std::vector<int> achieved_times;
+      std::vector<int> achieved_loads;
   };
 }
 

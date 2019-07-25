@@ -92,6 +92,18 @@ Manages the overall build with specific scripts for handling:
 - Optional static or dynamic libraries
 - Handling of MSVC and Windows specific requirements (e.g., MT/MD flags, export headers) (TODO)
 
+### Building the Project
+
+To build the project, follow these steps:
+
+1. check out the source code using git
+2. `mkdir build`
+3. `cd build`
+4. `cmake -DDISCO_TESTING=ON ..`
+5. `make -j4`
+6. `ctest --output-on-failure`
+
+
 ## Dependencies: Git submodules
 
 Where possible, dependencies are added using git submodules. In a few exceptional cases, a dependency may be vendored directly in the root repository.

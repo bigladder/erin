@@ -39,7 +39,7 @@ namespace DISCO
       void delta_conf(std::vector<PortValue>& xs) override;
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
-      std::string getResults();
+      std::string get_results();
 
     private:
       int time;
@@ -87,7 +87,7 @@ namespace DISCO
       void delta_conf(std::vector<PortValue>& xs) override;
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
-      std::string getResults();
+      std::string get_results();
 
     private:
       int idx;

@@ -57,7 +57,7 @@ TEST(DiscoBasicsTest, StandaloneSink)
   {
     sim.exec_next_event();
   }
-  std::string actual_output = sink->getResults();
+  std::string actual_output = sink->get_results();
   EXPECT_EQ(expected_output, actual_output);
 }
 
@@ -80,8 +80,8 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   {
     sim.exec_next_event();
   }
-  std::string actual_src_output = src->getResults();
-  std::string actual_sink_output = sink->getResults();
+  std::string actual_src_output = src->get_results();
+  std::string actual_sink_output = sink->get_results();
   EXPECT_EQ(expected_src_output, actual_src_output);
   EXPECT_EQ(expected_sink_output, actual_sink_output);
 }
@@ -118,8 +118,8 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   {
     sim.exec_next_event();
   }
-  std::string actual_src_output = src->getResults();
-  std::string actual_sink_output = sink->getResults();
+  std::string actual_src_output = src->get_results();
+  std::string actual_sink_output = sink->get_results();
   EXPECT_EQ(expected_src_output, actual_src_output);
   EXPECT_EQ(expected_sink_output, actual_sink_output);
 }
@@ -159,7 +159,7 @@ TEST(AdevsUsageTest, CanRunCheckoutLineExample)
   {
     sim.exec_next_event();
   }
-  std::string actual_output = o->getResults();
+  std::string actual_output = o->get_results();
   EXPECT_EQ(expected_output, actual_output);
 }
 

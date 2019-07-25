@@ -49,7 +49,7 @@ Observer::output_func(std::vector<Customer>& y)
 
 
 std::string
-Observer::getResults()
+Observer::get_results()
 {
     return _oss.str();
 }

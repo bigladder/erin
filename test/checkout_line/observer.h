@@ -13,7 +13,7 @@ class Observer : public adevs::Atomic<Customer>
 {
     public:
         Observer();
-        std::string getResults();
+        std::string get_results();
         void delta_int() override;
         void delta_ext(adevs::Time e, std::vector<Customer>& x) override;
         void delta_conf(std::vector<Customer>& x) override;

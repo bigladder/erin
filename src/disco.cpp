@@ -93,7 +93,7 @@ namespace DISCO
   }
 
   std::string
-  Source::getResults()
+  Source::get_results()
   {
     std::ostringstream oss;
     oss << "\"time (hrs)\",\"power [OUT] (kW)\"" << std::endl;
@@ -304,7 +304,7 @@ namespace DISCO
   }
 
   std::string
-  Sink::getResults()
+  Sink::get_results()
   {
     std::ostringstream oss;
     oss << "\"time (hrs)\",\"power [IN] (kW)\"" << std::endl;

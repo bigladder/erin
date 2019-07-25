@@ -16,6 +16,32 @@ TEST(SetupTest, GoogleTestRuns)
   EXPECT_EQ(x, y);
 }
 
+TEST(DiscoUtilFunctions, TestClamp)
+{
+  // POSITIVE INTEGERS
+  // at lower edge
+  EXPECT_EQ(0, DISCO::clamp_toward_0(0, 0, 10));
+  // at upper edge
+  EXPECT_EQ(10, DISCO::clamp_toward_0(10, 0, 10));
+  // in range
+  EXPECT_EQ(5, DISCO::clamp_toward_0(5, 0, 10));
+  // out of range above
+  EXPECT_EQ(10, DISCO::clamp_toward_0(15, 0, 10));
+  // out of range below
+  EXPECT_EQ(0, DISCO::clamp_toward_0(2, 5, 25));
+  // NEGATIVE INTEGERS
+  // at lower edge
+  EXPECT_EQ(-10, DISCO::clamp_toward_0(-10, -10, -5));
+  // at upper edge
+  EXPECT_EQ(-5, DISCO::clamp_toward_0(-5, -10, -5));
+  // in range
+  EXPECT_EQ(-8, DISCO::clamp_toward_0(-8, -10, -5));
+  // out of range above
+  EXPECT_EQ(0, DISCO::clamp_toward_0(-2, -10, -5));
+  // out of range below
+  EXPECT_EQ(-10, DISCO::clamp_toward_0(-15, -10, -5));
+}
+
 TEST(DiscoBasicsTest, StandaloneSink)
 {
   std::string expected_output =

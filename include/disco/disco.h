@@ -9,6 +9,10 @@
 
 namespace DISCO
 {
+  ////////////////////////////////////////////////////////////
+  // Utility Functions
+  int clamp_toward_0(int value, int lower, int upper);
+
   class Flow
   {
     public:

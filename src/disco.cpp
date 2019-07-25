@@ -2,9 +2,34 @@
 * See the LICENSE file for additional terms and conditions. */
 #include "disco/disco.h"
 #include <sstream>
+#include <stdexcept>
 
 namespace DISCO
 {
+  int
+  clamp_toward_0(int value, int lower, int upper)
+  {
+    if (lower > upper) {
+      std::ostringstream oss;
+      oss << "DISCO::clamp_toward_0 error: lower (" << lower
+          << ") greater than upper (" << upper << ")"; 
+      throw std::invalid_argument(oss.str());
+    }
+    if (value > upper) {
+      if (upper > 0)
+        return upper;
+      else
+        return 0;
+    }
+    else if (value < lower) {
+      if (lower > 0)
+        return 0;
+      else
+        return lower;
+    }
+    return value;
+  }
+
   ///////////////////////////////////////////////////////////////////
   // FLOW
   Flow::Flow(int flowValue):

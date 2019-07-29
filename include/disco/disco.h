@@ -19,7 +19,7 @@ namespace DISCO
   {
     public:
       Flow(int flowValue);
-      int getFlow();
+      int get_flow();
 
     private:
       int flow;

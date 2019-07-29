@@ -38,7 +38,7 @@ namespace DISCO
   }
 
   int
-  Flow::getFlow()
+  Flow::get_flow()
   {
     return flow;
   }
@@ -69,7 +69,7 @@ namespace DISCO
       {
         time += e.real;
         Flow f = x.value;
-        int load = f.getFlow();
+        int load = f.get_flow();
         times.push_back(time);
         loads.push_back(load);
       }
@@ -148,13 +148,13 @@ namespace DISCO
         // port. input_request is set to 0 at class construction and at each
         // internal transition.
         report_input_request = true;
-        input_request += x.value.getFlow();
+        input_request += x.value.get_flow();
       }
       else if (x.port == port_input_achieved) {
         // the input achieved equals the output achieved. output_achieved is
         // initialized to 0 at construction and at each internal transition.
         report_output_achieved = true;
-        output_achieved += x.value.getFlow();
+        output_achieved += x.value.get_flow();
       }
     }
     // Note: we never provide more power than requested. Therefore, if the
@@ -257,7 +257,7 @@ namespace DISCO
     for (auto x : xs) {
       if (x.port == port_input_achieved) {
         input_given = true;
-        input_achieved += x.value.getFlow();
+        input_achieved += x.value.get_flow();
       }
     }
     if (input_given) {

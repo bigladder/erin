@@ -58,7 +58,7 @@ namespace DISCO
   class Source : public adevs::Atomic<PortValue>
   {
     public:
-      static const int port_output_request;
+      static const int inport_output_request;
       Source(StreamType stream_type);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
@@ -79,10 +79,10 @@ namespace DISCO
   class FlowLimits : public adevs::Atomic<PortValue>
   {
     public:
-      static const int port_input_request;
-      static const int port_output_request;
-      static const int port_input_achieved;
-      static const int port_output_achieved;
+      static const int inport_input_achieved;
+      static const int inport_output_request;
+      static const int outport_input_request;
+      static const int outport_output_achieved;
       FlowLimits(StreamType stream_type, FlowValueType lower_limit, FlowValueType upper_limit);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
@@ -105,10 +105,10 @@ namespace DISCO
   class FlowMeter : public adevs::Atomic<PortValue>
   {
     public:
-      static const int port_input_request;
-      static const int port_output_request;
-      static const int port_input_achieved;
-      static const int port_output_achieved;
+      static const int inport_input_achieved;
+      static const int inport_output_request;
+      static const int outport_input_request;
+      static const int outport_output_achieved;
       FlowMeter(StreamType stream_type);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
@@ -135,16 +135,16 @@ namespace DISCO
   class Transformer : public adevs::Atomic<PortValue>
   {
     public:
-      static const int port_input_request;
-      static const int port_output1_request;
-      static const int port_output2_request;
-      static const int port_output3_request;
-      static const int port_output4_request;
-      static const int port_input_achieved;
-      static const int port_output1_achieved;
-      static const int port_output2_achieved;
-      static const int port_output3_achieved;
-      static const int port_output4_achieved;
+      static const int inport_input_achieved;
+      static const int inport_output1_request;
+      static const int inport_output2_request;
+      static const int inport_output3_request;
+      static const int inport_output4_request;
+      static const int outport_input_request;
+      static const int outport_output1_achieved;
+      static const int outport_output2_achieved;
+      static const int outport_output3_achieved;
+      static const int outport_output4_achieved;
       Transformer(
           StreamType input_stream_type,
           std::vector<StreamType> output_stream_types,
@@ -170,8 +170,8 @@ namespace DISCO
   class Sink : public adevs::Atomic<PortValue>
   {
     public:
-      static const int port_input_achieved;
-      static const int port_input_request;
+      static const int inport_input_achieved;
+      static const int outport_input_request;
       Sink(StreamType stream_type);
       Sink(StreamType stream_type, std::vector<RealTimeType> times, std::vector<FlowValueType> loads);
       void delta_int() override;

@@ -52,7 +52,7 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // Source
-  const int Source::port_output_request = 1;
+  const int Source::inport_output_request = 1;
 
   Source::Source(StreamType stream_type):
     adevs::Atomic<PortValue>(),
@@ -73,7 +73,7 @@ namespace DISCO
   {
     for (auto x : xs)
     {
-      if (x.port == port_output_request) 
+      if (x.port == inport_output_request) 
       {
         time += e.real;
         Flow f = x.value;
@@ -117,10 +117,10 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // FlowLimits
-  const int FlowLimits::port_input_request = 1;
-  const int FlowLimits::port_output_request = 2;
-  const int FlowLimits::port_input_achieved = 3;
-  const int FlowLimits::port_output_achieved = 4;
+  const int FlowLimits::inport_input_achieved = 1;
+  const int FlowLimits::inport_output_request = 2;
+  const int FlowLimits::outport_input_request = 3;
+  const int FlowLimits::outport_output_achieved = 4;
 
   FlowLimits::FlowLimits(StreamType stream_type, FlowValueType low_lim, FlowValueType up_lim) :
     adevs::Atomic<PortValue>(),
@@ -153,7 +153,7 @@ namespace DISCO
   FlowLimits::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
     for (auto x : xs) {
-      if (x.port == port_output_request) {
+      if (x.port == inport_output_request) {
         // the output requested equals the input request,
         // provided it is within limits. We accumulate all input requests
         // accounting for the (unlikely) possibility of multiple values on one
@@ -164,7 +164,7 @@ namespace DISCO
         if (x.value.get_stream() != stream)
           throw MixedStreamsError();
       }
-      else if (x.port == port_input_achieved) {
+      else if (x.port == inport_input_achieved) {
         // the input achieved equals the output achieved. output_achieved is
         // initialized to 0 at construction and at each internal transition.
         report_output_achieved = true;
@@ -208,21 +208,23 @@ namespace DISCO
   FlowLimits::output_func(std::vector<PortValue>& ys)
   {
     if (report_input_request) {
-      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow{stream, input_request});
+      PortValue pv = adevs::port_value<Flow>(
+          outport_input_request, Flow{stream, input_request});
       ys.push_back(pv);
     }
     if (report_output_achieved) {
-      PortValue pv = adevs::port_value<Flow>(port_output_achieved, Flow{stream, output_achieved});
+      PortValue pv = adevs::port_value<Flow>(
+          outport_output_achieved, Flow{stream, output_achieved});
       ys.push_back(pv);
     }
   }
 
   ////////////////////////////////////////////////////////////
   // FlowMeter
-  const int FlowMeter::port_input_request = 1;
-  const int FlowMeter::port_output_request = 2;
-  const int FlowMeter::port_input_achieved = 3;
-  const int FlowMeter::port_output_achieved = 4;
+  const int FlowMeter::inport_input_achieved = 3;
+  const int FlowMeter::inport_output_request = 2;
+  const int FlowMeter::outport_input_request = 1;
+  const int FlowMeter::outport_output_achieved = 4;
 
   FlowMeter::FlowMeter(StreamType stream_type) :
     adevs::Atomic<PortValue>(),
@@ -254,11 +256,11 @@ namespace DISCO
     bool requested_flow_updated{false};
     bool achieved_flow_updated{false};
     for (const auto &x : xs) {
-      if (x.port == port_output_request) {
+      if (x.port == inport_output_request) {
         requested_flow_updated = true;
         requested_flow += x.value.get_flow();
       }
-      else if (x.port == port_input_achieved) {
+      else if (x.port == inport_input_achieved) {
         achieved_flow_updated = true;
         achieved_flow += x.value.get_flow();
       }
@@ -295,36 +297,38 @@ namespace DISCO
   FlowMeter::output_func(std::vector<PortValue>& ys)
   {
     if (send_requested)
-      ys.push_back(PortValue{port_input_request, Flow{stream, requested_flow}});
+      ys.push_back(
+          PortValue{outport_input_request, Flow{stream, requested_flow}});
     if (send_achieved)
-      ys.push_back(PortValue{port_output_achieved, Flow{stream, achieved_flow}});
+      ys.push_back(
+          PortValue{outport_output_achieved, Flow{stream, achieved_flow}});
   }
 
-  std::vector<int>
+  std::vector<RealTimeType>
   FlowMeter::get_actual_output_times() const
   {
-    return std::vector<int>(event_times);
+    return std::vector<RealTimeType>(event_times);
   }
 
-  std::vector<double>
+  std::vector<FlowValueType>
   FlowMeter::get_actual_output() const
   {
-    return std::vector<double>(achieved_flows);
+    return std::vector<FlowValueType>(achieved_flows);
   }
 
   ////////////////////////////////////////////////////////////
   // Transformer
   //  public:
-  const int Transformer::port_input_request = 1;
-  const int Transformer::port_output1_request = 2;
-  const int Transformer::port_output2_request = 3;
-  const int Transformer::port_output3_request = 4;
-  const int Transformer::port_output4_request = 5;
-  const int Transformer::port_input_achieved = 6;
-  const int Transformer::port_output1_achieved = 7;
-  const int Transformer::port_output2_achieved = 8;
-  const int Transformer::port_output3_achieved = 9;
-  const int Transformer::port_output4_achieved = 10;
+  const int Transformer::inport_input_achieved = 1;
+  const int Transformer::inport_output1_request = 2;
+  const int Transformer::inport_output2_request = 3;
+  const int Transformer::inport_output3_request = 4;
+  const int Transformer::inport_output4_request = 5;
+  const int Transformer::outport_input_request = 6;
+  const int Transformer::outport_output1_achieved = 7;
+  const int Transformer::outport_output2_achieved = 8;
+  const int Transformer::outport_output3_achieved = 9;
+  const int Transformer::outport_output4_achieved = 10;
 
   Transformer::Transformer(
       StreamType input_stream_type,
@@ -384,8 +388,8 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // Sink
-  const int Sink::port_input_achieved = 1;
-  const int Sink::port_input_request = 2;
+  const int Sink::inport_input_achieved = 1;
+  const int Sink::outport_input_request = 2;
 
   Sink::Sink(StreamType stream_type):
     Sink::Sink(stream_type, {0, 1}, {100, 0})
@@ -437,7 +441,7 @@ namespace DISCO
     int input_achieved{0};
     bool input_given{false};
     for (const auto &x : xs) {
-      if (x.port == port_input_achieved) {
+      if (x.port == inport_input_achieved) {
         input_given = true;
         input_achieved += x.value.get_flow();
         if (x.value.get_stream() != stream)
@@ -481,8 +485,11 @@ namespace DISCO
     int next_idx = idx + 1;
     if (next_idx < times.size())
     {
-      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow{stream, loads.at(next_idx)});
-      ys.push_back(pv);
+      ys.push_back(
+          adevs::port_value<Flow>{
+            outport_input_request,
+            Flow{stream, loads.at(next_idx)
+          }});
     }
   }
 

@@ -113,7 +113,10 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   auto src = new ::DISCO::Source(::DISCO::StreamType::electric_stream_in_kW);
   auto sink = new ::DISCO::Sink(::DISCO::StreamType::electric_stream_in_kW);
   adevs::Digraph<::DISCO::Flow> network;
-  network.couple(sink, ::DISCO::Sink::port_input_request, src, ::DISCO::Source::port_output_request);
+  network.couple(
+      sink, ::DISCO::Sink::outport_input_request,
+      src, ::DISCO::Source::inport_output_request
+      );
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
@@ -146,14 +149,14 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
       ::DISCO::StreamType::electric_stream_in_kW, {0,1,2,3}, {160,80,40,0});
   adevs::Digraph<::DISCO::Flow> network;
   network.couple(
-      sink, ::DISCO::Sink::port_input_request,
-      lim, ::DISCO::FlowLimits::port_output_request);
+      sink, ::DISCO::Sink::outport_input_request,
+      lim, ::DISCO::FlowLimits::inport_output_request);
   network.couple(
-      lim, ::DISCO::FlowLimits::port_input_request,
-      src, ::DISCO::Source::port_output_request);
+      lim, ::DISCO::FlowLimits::outport_input_request,
+      src, ::DISCO::Source::inport_output_request);
   network.couple(
-      lim, ::DISCO::FlowLimits::port_output_achieved,
-      sink, ::DISCO::Sink::port_input_achieved);
+      lim, ::DISCO::FlowLimits::outport_output_achieved,
+      sink, ::DISCO::Sink::inport_input_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
@@ -213,30 +216,30 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
       ::DISCO::StreamType::electric_stream_in_kW, {0,1,2,3}, {160,80,40,0});
   adevs::Digraph<::DISCO::Flow> network;
   network.couple(
-      sink, ::DISCO::Sink::port_input_request,
-      genset_meter, ::DISCO::FlowMeter::port_output_request);
+      sink, ::DISCO::Sink::outport_input_request,
+      genset_meter, ::DISCO::FlowMeter::inport_output_request);
   network.couple(
-      genset_meter, ::DISCO::FlowMeter::port_input_request,
-      genset_lim, ::DISCO::FlowLimits::port_output_request);
+      genset_meter, ::DISCO::FlowMeter::outport_input_request,
+      genset_lim, ::DISCO::FlowLimits::inport_output_request);
   // TODO: examine a way to make the outputs extensible and not hardcoded...
   network.couple(
-      genset_lim, ::DISCO::FlowLimits::port_input_request,
-      genset_tx, ::DISCO::Transformer::port_output1_request);
+      genset_lim, ::DISCO::FlowLimits::outport_input_request,
+      genset_tx, ::DISCO::Transformer::inport_output1_request);
   network.couple(
-      genset_tx, ::DISCO::Transformer::port_input_request,
-      diesel_fuel_meter, ::DISCO::FlowMeter::port_output_request);
+      genset_tx, ::DISCO::Transformer::outport_input_request,
+      diesel_fuel_meter, ::DISCO::FlowMeter::inport_output_request);
   network.couple(
-      diesel_fuel_meter, ::DISCO::FlowMeter::port_input_request,
-      diesel_fuel_src, ::DISCO::Source::port_output_request);
+      diesel_fuel_meter, ::DISCO::FlowMeter::outport_input_request,
+      diesel_fuel_src, ::DISCO::Source::inport_output_request);
   network.couple(
-      diesel_fuel_meter, ::DISCO::FlowMeter::port_output_achieved,
-      genset_tx, ::DISCO::Transformer::port_input_achieved);
+      diesel_fuel_meter, ::DISCO::FlowMeter::outport_output_achieved,
+      genset_tx, ::DISCO::Transformer::inport_input_achieved);
   network.couple(
-      genset_tx, ::DISCO::Transformer::port_output1_achieved,
-      genset_lim, ::DISCO::FlowLimits::port_input_achieved);
+      genset_tx, ::DISCO::Transformer::outport_output1_achieved,
+      genset_lim, ::DISCO::FlowLimits::inport_input_achieved);
   network.couple(
-      genset_lim, ::DISCO::FlowLimits::port_output_achieved,
-      genset_meter, ::DISCO::FlowMeter::port_input_achieved);
+      genset_lim, ::DISCO::FlowLimits::outport_output_achieved,
+      genset_meter, ::DISCO::FlowMeter::inport_input_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())

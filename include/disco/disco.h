@@ -5,6 +5,7 @@
 #define DISCO_DISCO_H
 #include <string>
 #include <vector>
+#include <exception>
 #include "../../vendor/bdevs/include/adevs.h"
 
 namespace DISCO
@@ -14,15 +15,32 @@ namespace DISCO
   int clamp_toward_0(int value, int lower, int upper);
 
   ////////////////////////////////////////////////////////////
+  // MixedStreamsError
+  struct MixedStreamsError : public std::exception {};
+
+  ////////////////////////////////////////////////////////////
+  // StreamType
+  enum class StreamType
+  {
+    electric_stream_in_kW = 0,
+    natural_gas_stream_in_kg_per_second,
+    hot_water_stream_in_kg_per_second,
+    chilled_water_stream_in_kg_per_second,
+    diesel_fuel_stream_in_kg_per_second
+  };
+
+  ////////////////////////////////////////////////////////////
   // Flow
   class Flow
   {
     public:
-      Flow(int flowValue);
+      Flow(int flow_value, StreamType stream_type);
       int get_flow();
+      StreamType get_stream();
 
     private:
       int flow;
+      StreamType stream;
   };
 
   typedef adevs::port_value<Flow> PortValue;
@@ -33,7 +51,7 @@ namespace DISCO
   {
     public:
       static const int port_output_request;
-      Source();
+      Source(StreamType stream_type);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
@@ -42,6 +60,7 @@ namespace DISCO
       std::string get_results();
 
     private:
+      StreamType stream;
       int time;
       std::vector<int> times;
       std::vector<int> loads;
@@ -57,7 +76,7 @@ namespace DISCO
       static const int port_input_achieved;
       static const int port_output_achieved;
       //FlowLimits(int upperLimit);
-      FlowLimits(int lower_limit, int upper_limit);
+      FlowLimits(StreamType stream_type, int lower_limit, int upper_limit);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
@@ -65,6 +84,7 @@ namespace DISCO
       void output_func(std::vector<PortValue>& ys) override;
 
     private:
+      StreamType stream;
       int lower_limit;
       int upper_limit;
       bool report_input_request;
@@ -80,8 +100,8 @@ namespace DISCO
     public:
       static const int port_input_achieved;
       static const int port_input_request;
-      Sink();
-      Sink(std::vector<int> times, std::vector<int> loads);
+      Sink(StreamType stream_type);
+      Sink(StreamType stream_type, std::vector<int> times, std::vector<int> loads);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
@@ -90,6 +110,7 @@ namespace DISCO
       std::string get_results();
 
     private:
+      StreamType stream;
       int idx;
       std::vector<int> times;
       std::vector<int> loads;

@@ -50,7 +50,7 @@ TEST(DiscoBasicsTest, StandaloneSink)
     "1,10\n";
   std::vector<int> times = {0,1,2};
   std::vector<int> loads = {100,10,0};
-  auto sink = new ::DISCO::Sink(times, loads);
+  auto sink = new ::DISCO::Sink(::DISCO::StreamType::electric_stream_in_kW, times, loads);
   adevs::Simulator<::DISCO::PortValue> sim;
   sim.add(sink);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
@@ -70,8 +70,8 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   std::string expected_sink_output =
     "\"time (hrs)\",\"power [IN] (kW)\"\n"
     "0,100\n";
-  auto src = new ::DISCO::Source();
-  auto sink = new ::DISCO::Sink();
+  auto src = new ::DISCO::Source(::DISCO::StreamType::electric_stream_in_kW);
+  auto sink = new ::DISCO::Sink(::DISCO::StreamType::electric_stream_in_kW);
   adevs::Digraph<::DISCO::Flow> network;
   network.couple(sink, ::DISCO::Sink::port_input_request, src, ::DISCO::Source::port_output_request);
   adevs::Simulator<::DISCO::PortValue> sim;
@@ -99,9 +99,11 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
     "0,50\n"
     "1,50\n"
     "2,40\n";
-  auto src = new ::DISCO::Source();
-  auto lim = new ::DISCO::FlowLimits(0, 50);
-  auto sink = new ::DISCO::Sink({0,1,2,3}, {160,80,40,0});
+  auto src = new ::DISCO::Source(::DISCO::StreamType::electric_stream_in_kW);
+  auto lim = new ::DISCO::FlowLimits(
+      ::DISCO::StreamType::electric_stream_in_kW, 0, 50);
+  auto sink = new ::DISCO::Sink(
+      ::DISCO::StreamType::electric_stream_in_kW, {0,1,2,3}, {160,80,40,0});
   adevs::Digraph<::DISCO::Flow> network;
   network.couple(
       sink, ::DISCO::Sink::port_input_request,

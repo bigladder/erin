@@ -32,8 +32,9 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // FLOW
-  Flow::Flow(int flowValue):
-    flow(flowValue)
+  Flow::Flow(int flow_value, StreamType stream_type):
+    flow{flow_value},
+    stream{stream_type}
   {
   }
 
@@ -43,12 +44,19 @@ namespace DISCO
     return flow;
   }
 
+  StreamType
+  Flow::get_stream()
+  {
+    return stream;
+  }
+
   ///////////////////////////////////////////////////////////////////
   // SOURCE
   const int Source::port_output_request = 1;
 
-  Source::Source():
+  Source::Source(StreamType stream_type):
     adevs::Atomic<PortValue>(),
+    stream{stream_type},
     time{0},
     times{},
     loads{}
@@ -69,6 +77,8 @@ namespace DISCO
       {
         time += e.real;
         Flow f = x.value;
+        if (f.get_stream() != stream)
+          throw MixedStreamsError();
         int load = f.get_flow();
         times.push_back(time);
         loads.push_back(load);
@@ -111,8 +121,9 @@ namespace DISCO
   const int FlowLimits::port_input_achieved = 3;
   const int FlowLimits::port_output_achieved = 4;
 
-  FlowLimits::FlowLimits(int low_lim, int up_lim) :
+  FlowLimits::FlowLimits(StreamType stream_type, int low_lim, int up_lim) :
     adevs::Atomic<PortValue>(),
+    stream{stream_type},
     lower_limit{low_lim},
     upper_limit{up_lim},
     report_input_request{false},
@@ -149,12 +160,16 @@ namespace DISCO
         // internal transition.
         report_input_request = true;
         input_request += x.value.get_flow();
+        if (x.value.get_stream() != stream)
+          throw MixedStreamsError();
       }
       else if (x.port == port_input_achieved) {
         // the input achieved equals the output achieved. output_achieved is
         // initialized to 0 at construction and at each internal transition.
         report_output_achieved = true;
         output_achieved += x.value.get_flow();
+        if (x.value.get_stream() != stream)
+          throw MixedStreamsError();
       }
     }
     // Note: we never provide more power than requested. Therefore, if the
@@ -192,11 +207,11 @@ namespace DISCO
   FlowLimits::output_func(std::vector<PortValue>& ys)
   {
     if (report_input_request) {
-      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow(input_request));
+      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow(input_request, stream));
       ys.push_back(pv);
     }
     if (report_output_achieved) {
-      PortValue pv = adevs::port_value<Flow>(port_output_achieved, Flow(output_achieved));
+      PortValue pv = adevs::port_value<Flow>(port_output_achieved, Flow(output_achieved, stream));
       ys.push_back(pv);
     }
   }
@@ -206,13 +221,14 @@ namespace DISCO
   const int Sink::port_input_achieved = 1;
   const int Sink::port_input_request = 2;
 
-  Sink::Sink():
-    Sink::Sink({0, 1}, {100, 0})
+  Sink::Sink(StreamType stream_type):
+    Sink::Sink(stream_type, {0, 1}, {100, 0})
   {
   }
 
-  Sink::Sink(std::vector<int> times, std::vector<int> loads):
+  Sink::Sink(StreamType stream_type, std::vector<int> times, std::vector<int> loads):
     adevs::Atomic<PortValue>(),
+    stream{stream_type},
     idx{-1},
     times{times},
     loads{loads},
@@ -258,6 +274,8 @@ namespace DISCO
       if (x.port == port_input_achieved) {
         input_given = true;
         input_achieved += x.value.get_flow();
+        if (x.value.get_stream() != stream)
+          throw MixedStreamsError();
       }
     }
     if (input_given) {
@@ -297,8 +315,7 @@ namespace DISCO
     int next_idx = idx + 1;
     if (next_idx < times.size())
     {
-      Flow f(loads.at(next_idx));
-      PortValue pv = adevs::port_value<Flow>(port_input_request, f);
+      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow(loads.at(next_idx), stream));
       ys.push_back(pv);
     }
   }

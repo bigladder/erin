@@ -6,8 +6,8 @@
 
 namespace DISCO
 {
-  int
-  clamp_toward_0(int value, int lower, int upper)
+  FlowValueType
+  clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper)
   {
     if (lower > upper) {
       std::ostringstream oss;
@@ -31,27 +31,27 @@ namespace DISCO
   }
 
   ///////////////////////////////////////////////////////////////////
-  // FLOW
-  Flow::Flow(int flow_value, StreamType stream_type):
-    flow{flow_value},
-    stream{stream_type}
+  // Flow
+  Flow::Flow(StreamType stream_type, FlowValueType flow_value):
+    stream{stream_type},
+    flow{flow_value}
   {
-  }
-
-  int
-  Flow::get_flow()
-  {
-    return flow;
   }
 
   StreamType
-  Flow::get_stream()
+  Flow::get_stream() const
   {
     return stream;
   }
 
+  FlowValueType 
+  Flow::get_flow() const
+  {
+    return flow;
+  }
+
   ///////////////////////////////////////////////////////////////////
-  // SOURCE
+  // Source
   const int Source::port_output_request = 1;
 
   Source::Source(StreamType stream_type):
@@ -79,7 +79,7 @@ namespace DISCO
         Flow f = x.value;
         if (f.get_stream() != stream)
           throw MixedStreamsError();
-        int load = f.get_flow();
+        FlowValueType load = f.get_flow();
         times.push_back(time);
         loads.push_back(load);
       }
@@ -89,6 +89,8 @@ namespace DISCO
   void
   Source::delta_conf(std::vector<PortValue>& xs)
   {
+    delta_int();
+    delta_ext(adevs::Time{0, 0}, xs);
   }
 
   adevs::Time
@@ -98,30 +100,29 @@ namespace DISCO
   }
 
   void
-  Source::output_func(std::vector<PortValue>& y)
+  Source::output_func(std::vector<PortValue>& ys)
   {
   }
 
   std::string
-  Source::get_results()
+  Source::get_results() const
   {
     std::ostringstream oss;
     oss << "\"time (hrs)\",\"power [OUT] (kW)\"" << std::endl;
-    for (int idx(0); idx < times.size(); ++idx)
-    {
+    for (int idx{0}; idx < times.size(); ++idx) {
       oss << times.at(idx) << "," << loads.at(idx) << std::endl;
     }
     return oss.str();
   }
 
   ///////////////////////////////////////////////////////////////////
-  // FLOWLIMITS
+  // FlowLimits
   const int FlowLimits::port_input_request = 1;
   const int FlowLimits::port_output_request = 2;
   const int FlowLimits::port_input_achieved = 3;
   const int FlowLimits::port_output_achieved = 4;
 
-  FlowLimits::FlowLimits(StreamType stream_type, int low_lim, int up_lim) :
+  FlowLimits::FlowLimits(StreamType stream_type, FlowValueType low_lim, FlowValueType up_lim) :
     adevs::Atomic<PortValue>(),
     stream{stream_type},
     lower_limit{low_lim},
@@ -192,14 +193,14 @@ namespace DISCO
   FlowLimits::delta_conf(std::vector<PortValue>& xs)
   {
     delta_int();
-    delta_ext(adevs::Time(0, 0), xs);
+    delta_ext(adevs::Time{0, 0}, xs);
   }
 
   adevs::Time
   FlowLimits::ta()
   {
     if (report_input_request || report_output_achieved)
-      return adevs::Time(0, 0);
+      return adevs::Time{0, 0};
     return adevs_inf<adevs::Time>();
   }
 
@@ -207,17 +208,182 @@ namespace DISCO
   FlowLimits::output_func(std::vector<PortValue>& ys)
   {
     if (report_input_request) {
-      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow(input_request, stream));
+      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow{stream, input_request});
       ys.push_back(pv);
     }
     if (report_output_achieved) {
-      PortValue pv = adevs::port_value<Flow>(port_output_achieved, Flow(output_achieved, stream));
+      PortValue pv = adevs::port_value<Flow>(port_output_achieved, Flow{stream, output_achieved});
       ys.push_back(pv);
     }
   }
 
+  ////////////////////////////////////////////////////////////
+  // FlowMeter
+  const int FlowMeter::port_input_request = 1;
+  const int FlowMeter::port_output_request = 2;
+  const int FlowMeter::port_input_achieved = 3;
+  const int FlowMeter::port_output_achieved = 4;
+
+  FlowMeter::FlowMeter(StreamType stream_type) :
+    adevs::Atomic<PortValue>(),
+    stream{stream_type},
+    event_times{},
+    requested_flows{},
+    achieved_flows{},
+    send_requested{false},
+    send_achieved{false},
+    event_time{0},
+    requested_flow{0.0},
+    achieved_flow{0.0}
+  {
+  }
+
+  void
+  FlowMeter::delta_int()
+  {
+    send_achieved = false;
+    send_requested = false;
+    requested_flow = 0.0;
+    achieved_flow = 0.0;
+  }
+
+  void
+  FlowMeter::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  {
+    event_time += e.real;
+    bool requested_flow_updated{false};
+    bool achieved_flow_updated{false};
+    for (const auto &x : xs) {
+      if (x.port == port_output_request) {
+        requested_flow_updated = true;
+        requested_flow += x.value.get_flow();
+      }
+      else if (x.port == port_input_achieved) {
+        achieved_flow_updated = true;
+        achieved_flow += x.value.get_flow();
+      }
+    }
+    int num_events{static_cast<int>(event_times.size())};
+    if (num_events == 0 || (num_events > 0 && event_times.back() != event_time))
+      event_times.push_back(event_time);
+    if (requested_flow_updated) {
+      send_requested = true;
+      requested_flows.push_back(requested_flow);
+    }
+    if (achieved_flow_updated) {
+      send_achieved = true;
+      achieved_flows.push_back(achieved_flow);
+    }
+  }
+
+  void
+  FlowMeter::delta_conf(std::vector<PortValue>& xs)
+  {
+    delta_int();
+    delta_ext(adevs::Time{0, 0}, xs);
+  }
+
+  adevs::Time
+  FlowMeter::ta()
+  {
+    if (send_requested || send_achieved)
+      return adevs::Time{0, 1};
+    return adevs_inf<adevs::Time>();
+  }
+
+  void
+  FlowMeter::output_func(std::vector<PortValue>& ys)
+  {
+    if (send_requested)
+      ys.push_back(PortValue{port_input_request, Flow{stream, requested_flow}});
+    if (send_achieved)
+      ys.push_back(PortValue{port_output_achieved, Flow{stream, achieved_flow}});
+  }
+
+  std::vector<int>
+  FlowMeter::get_actual_output_times() const
+  {
+    return std::vector<int>(event_times);
+  }
+
+  std::vector<double>
+  FlowMeter::get_actual_output() const
+  {
+    return std::vector<double>(achieved_flows);
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Transformer
+  //  public:
+  const int Transformer::port_input_request = 1;
+  const int Transformer::port_output1_request = 2;
+  const int Transformer::port_output2_request = 3;
+  const int Transformer::port_output3_request = 4;
+  const int Transformer::port_output4_request = 5;
+  const int Transformer::port_input_achieved = 6;
+  const int Transformer::port_output1_achieved = 7;
+  const int Transformer::port_output2_achieved = 8;
+  const int Transformer::port_output3_achieved = 9;
+  const int Transformer::port_output4_achieved = 10;
+
+  Transformer::Transformer(
+      StreamType input_stream_type,
+      std::vector<StreamType> output_stream_types,
+      std::vector<std::function<double(double)>> calc_output_n_from_input,
+      std::vector<std::function<double(double)>> calc_input_from_output_n
+      ) :
+    adevs::Atomic<PortValue>(),
+    input_stream{input_stream_type},
+    output_streams(output_stream_types),
+    num_outputs{0},
+    output_n_from_input(calc_output_n_from_input),
+    input_from_output_n(calc_input_from_output_n)
+  {
+    num_outputs = output_streams.size();
+    if (input_from_output_n.size() != num_outputs) {
+      std::ostringstream oss;
+      oss << "Transformer:: The number of output streams (" << num_outputs
+          << ") must match the number of input-from-output functions ("
+          << input_from_output_n.size() << ") but it doesn't\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if (output_n_from_input.size() != num_outputs) {
+      std::ostringstream oss;
+      oss << "Transformer:: The number of output streams (" << num_outputs
+          << ") must match the number of output-from-input functions ("
+          << output_n_from_input.size() << ") but it doesn't\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  void
+  Transformer::delta_int()
+  {
+  }
+
+  void
+  Transformer::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  {
+  }
+
+  void
+  Transformer::delta_conf(std::vector<PortValue>& xs)
+  {
+  }
+
+  adevs::Time
+  Transformer::ta()
+  {
+    return adevs_inf<adevs::Time>();
+  }
+
+  void
+  Transformer::output_func(std::vector<PortValue>& ys)
+  {
+  }
+
   ///////////////////////////////////////////////////////////////////
-  // SINK
+  // Sink
   const int Sink::port_input_achieved = 1;
   const int Sink::port_input_request = 2;
 
@@ -226,7 +392,7 @@ namespace DISCO
   {
   }
 
-  Sink::Sink(StreamType stream_type, std::vector<int> times, std::vector<int> loads):
+  Sink::Sink(StreamType stream_type, std::vector<RealTimeType> times, std::vector<FlowValueType> loads):
     adevs::Atomic<PortValue>(),
     stream{stream_type},
     idx{-1},
@@ -270,7 +436,7 @@ namespace DISCO
   {
     int input_achieved{0};
     bool input_given{false};
-    for (auto x : xs) {
+    for (const auto &x : xs) {
       if (x.port == port_input_achieved) {
         input_given = true;
         input_achieved += x.value.get_flow();
@@ -288,7 +454,7 @@ namespace DISCO
   Sink::delta_conf(std::vector<PortValue>& xs)
   {
     delta_int();
-    delta_ext(adevs::Time(0, 0), xs);
+    delta_ext(adevs::Time{0, 0}, xs);
   }
 
   adevs::Time
@@ -296,7 +462,7 @@ namespace DISCO
   {
     if (idx < 0)
     {
-      return adevs::Time(0, 0);
+      return adevs::Time{0, 0};
     }
     int next_idx = idx + 1;
     if (next_idx < times.size())
@@ -304,7 +470,7 @@ namespace DISCO
       int time0(times.at(idx));
       int time1(times.at(next_idx));
       int dt = time1 - time0;
-      return adevs::Time(dt, 0);
+      return adevs::Time{dt, 0};
     }
     return adevs_inf<adevs::Time>();
   }
@@ -315,13 +481,13 @@ namespace DISCO
     int next_idx = idx + 1;
     if (next_idx < times.size())
     {
-      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow(loads.at(next_idx), stream));
+      PortValue pv = adevs::port_value<Flow>(port_input_request, Flow{stream, loads.at(next_idx)});
       ys.push_back(pv);
     }
   }
 
   std::string
-  Sink::get_results()
+  Sink::get_results() const
   {
     std::ostringstream oss;
     oss << "\"time (hrs)\",\"power [IN] (kW)\"" << std::endl;

@@ -1,6 +1,7 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
+#include <functional>
 #include "gtest/gtest.h"
 #include "disco/disco.h"
 #include "../vendor/bdevs/include/adevs.h"
@@ -87,8 +88,8 @@ TEST(DiscoBasicsTest, StandaloneSink)
     "\"time (hrs)\",\"power [IN] (kW)\"\n"
     "0,100\n"
     "1,10\n";
-  std::vector<int> times = {0,1,2};
-  std::vector<int> loads = {100,10,0};
+  std::vector<::DISCO::RealTimeType> times = {0,1,2};
+  std::vector<::DISCO::FlowValueType> loads = {100,10,0};
   auto sink = new ::DISCO::Sink(::DISCO::StreamType::electric_stream_in_kW, times, loads);
   adevs::Simulator<::DISCO::PortValue> sim;
   sim.add(sink);
@@ -163,6 +164,96 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   std::string actual_sink_output = sink->get_results();
   EXPECT_EQ(expected_src_output, actual_src_output);
   EXPECT_EQ(expected_sink_output, actual_sink_output);
+}
+
+TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
+{
+  const std::vector<::DISCO::FlowValueType> expected_genset_output{50,50,40,0};
+  const std::vector<::DISCO::RealTimeType> expected_genset_output_times{0,1,2,3};
+  // Source https://en.wikipedia.org/wiki/Diesel_fuel
+  const double diesel_fuel_energy_density_MJ_per_liter{35.86};
+  // Source EUDP-Task-028-Task C Equipment 250719.xlsx > "3. Energy systems" > G133
+  const double diesel_generator_efficiency{0.36};
+  const double seconds_per_minute{60};
+  const double kW_per_MW{1000.0};
+  auto calc_output_given_input = [=](double input_liter_per_minute) -> double {
+    return input_liter_per_minute
+      * diesel_fuel_energy_density_MJ_per_liter
+      / seconds_per_minute
+      * kW_per_MW;
+  };
+  auto calc_input_given_output = [=](double output_kW) -> double {
+    return output_kW
+      / kW_per_MW
+      * seconds_per_minute
+      / diesel_fuel_energy_density_MJ_per_liter;
+  };
+  auto diesel_fuel_src = new ::DISCO::Source(
+      ::DISCO::StreamType::diesel_fuel_stream_in_liters_per_minute
+      );
+  auto diesel_fuel_meter = new ::DISCO::FlowMeter(
+      ::DISCO::StreamType::diesel_fuel_stream_in_liters_per_minute
+      );
+  auto genset_tx = new ::DISCO::Transformer(
+      ::DISCO::StreamType::diesel_fuel_stream_in_liters_per_minute,
+      std::vector<::DISCO::StreamType>{::DISCO::StreamType::electric_stream_in_kW},
+      std::vector<
+        std::function<::DISCO::FlowValueType(::DISCO::FlowValueType)>>
+        {calc_output_given_input},
+      std::vector<
+        std::function<::DISCO::FlowValueType(::DISCO::FlowValueType)>>
+        {calc_input_given_output}
+      );
+  auto genset_lim = new ::DISCO::FlowLimits(
+      ::DISCO::StreamType::electric_stream_in_kW, 0, 50);
+  auto genset_meter = new ::DISCO::FlowMeter(
+      ::DISCO::StreamType::electric_stream_in_kW
+      );
+  auto sink = new ::DISCO::Sink(
+      ::DISCO::StreamType::electric_stream_in_kW, {0,1,2,3}, {160,80,40,0});
+  adevs::Digraph<::DISCO::Flow> network;
+  network.couple(
+      sink, ::DISCO::Sink::port_input_request,
+      genset_meter, ::DISCO::FlowMeter::port_output_request);
+  network.couple(
+      genset_meter, ::DISCO::FlowMeter::port_input_request,
+      genset_lim, ::DISCO::FlowLimits::port_output_request);
+  // TODO: examine a way to make the outputs extensible and not hardcoded...
+  network.couple(
+      genset_lim, ::DISCO::FlowLimits::port_input_request,
+      genset_tx, ::DISCO::Transformer::port_output1_request);
+  network.couple(
+      genset_tx, ::DISCO::Transformer::port_input_request,
+      diesel_fuel_meter, ::DISCO::FlowMeter::port_output_request);
+  network.couple(
+      diesel_fuel_meter, ::DISCO::FlowMeter::port_input_request,
+      diesel_fuel_src, ::DISCO::Source::port_output_request);
+  network.couple(
+      diesel_fuel_meter, ::DISCO::FlowMeter::port_output_achieved,
+      genset_tx, ::DISCO::Transformer::port_input_achieved);
+  network.couple(
+      genset_tx, ::DISCO::Transformer::port_output1_achieved,
+      genset_lim, ::DISCO::FlowLimits::port_input_achieved);
+  network.couple(
+      genset_lim, ::DISCO::FlowLimits::port_output_achieved,
+      genset_meter, ::DISCO::FlowMeter::port_input_achieved);
+  adevs::Simulator<::DISCO::PortValue> sim;
+  network.add(&sim);
+  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  {
+    sim.exec_next_event();
+  }
+  std::vector<::DISCO::FlowValueType> actual_genset_output =
+    genset_meter->get_actual_output();
+  std::vector<::DISCO::RealTimeType> actual_genset_output_times =
+    genset_meter->get_actual_output_times();
+  EXPECT_EQ(expected_genset_output.size(), actual_genset_output.size());
+  EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output_times.size());
+  EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output.size());
+  for (int i; i < expected_genset_output.size(); ++i) {
+    EXPECT_EQ(expected_genset_output.at(i), actual_genset_output.at(i));
+    EXPECT_EQ(expected_genset_output_times.at(i), actual_genset_output_times.at(i));
+  }
 }
 
 int

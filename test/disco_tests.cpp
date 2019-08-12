@@ -212,17 +212,13 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
 TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
 {
   // Source https://en.wikipedia.org/wiki/Diesel_fuel
-  //const double diesel_fuel_energy_density_MJ_per_liter{35.86};
-  const double diesel_fuel_energy_density_MJ_per_liter{1.0};
+  const double diesel_fuel_energy_density_MJ_per_liter{35.86};
   // Source EUDP-Task-028-Task C Equipment 250719.xlsx > "3. Energy systems" > G133
-  //const double diesel_generator_efficiency{0.36};
-  const double diesel_generator_efficiency{0.5};
-  //const double seconds_per_minute{60.0};
-  const double seconds_per_minute{1.0};
-  //const double kW_per_MW{1000.0};
-  const double kW_per_MW{1.0};
-  const std::vector<::DISCO::RealTimeType> expected_genset_output_times{0,1,2,3};
-  const std::vector<::DISCO::FlowValueType> expected_genset_output{50,50,40,0};
+  const double diesel_generator_efficiency{0.36};
+  const double seconds_per_minute{60.0};
+  const double kW_per_MW{1000.0};
+  const std::vector<::DISCO::RealTimeType> expected_genset_output_times{0, 1, 2, 3};
+  const std::vector<::DISCO::FlowValueType> expected_genset_output{50, 50, 40, 0};
   auto calc_output_given_input = [=](::DISCO::FlowValueType input_liter_per_minute) -> ::DISCO::FlowValueType {
     return input_liter_per_minute
       * diesel_fuel_energy_density_MJ_per_liter
@@ -241,9 +237,6 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
     calc_input_given_output(40),
     calc_input_given_output(0),
   };
-  auto diesel_fuel_src = new ::DISCO::Source(
-      ::DISCO::StreamType::diesel_fuel_stream_in_liters_per_minute
-      );
   auto diesel_fuel_meter = new ::DISCO::FlowMeter(
       ::DISCO::StreamType::diesel_fuel_stream_in_liters_per_minute
       );
@@ -273,9 +266,6 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
   network.couple(
       genset_tx, ::DISCO::Transformer::outport_input_request,
       diesel_fuel_meter, ::DISCO::FlowMeter::inport_output_request);
-  network.couple(
-      diesel_fuel_meter, ::DISCO::FlowMeter::outport_input_request,
-      diesel_fuel_src, ::DISCO::Source::inport_output_request);
   network.couple(
       diesel_fuel_meter, ::DISCO::FlowMeter::outport_output_achieved,
       genset_tx, ::DISCO::Transformer::inport_input_achieved);

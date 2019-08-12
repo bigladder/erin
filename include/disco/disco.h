@@ -61,27 +61,6 @@ namespace DISCO
   std::string port_value_to_string(const PortValue& pv);
 
   ////////////////////////////////////////////////////////////
-  // Source
-  class Source : public adevs::Atomic<PortValue>
-  {
-    public:
-      static const int inport_output_request;
-      Source(StreamType stream_type);
-      void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
-      void delta_conf(std::vector<PortValue>& xs) override;
-      adevs::Time ta() override;
-      void output_func(std::vector<PortValue>& ys) override;
-      std::string get_results() const;
-
-    private:
-      StreamType stream;
-      int time;
-      std::vector<int> times;
-      std::vector<int> loads;
-  };
-
-  ////////////////////////////////////////////////////////////
   // FlowLimits
   class FlowLimits : public adevs::Atomic<PortValue>
   {

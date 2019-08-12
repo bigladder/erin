@@ -171,25 +171,35 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
 
 TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
 {
-  const std::vector<::DISCO::FlowValueType> expected_genset_output{50,50,40,0};
-  const std::vector<::DISCO::RealTimeType> expected_genset_output_times{0,1,2,3};
   // Source https://en.wikipedia.org/wiki/Diesel_fuel
-  const double diesel_fuel_energy_density_MJ_per_liter{35.86};
+  //const double diesel_fuel_energy_density_MJ_per_liter{35.86};
+  const double diesel_fuel_energy_density_MJ_per_liter{1.0};
   // Source EUDP-Task-028-Task C Equipment 250719.xlsx > "3. Energy systems" > G133
-  const double diesel_generator_efficiency{0.36};
-  const double seconds_per_minute{60};
-  const double kW_per_MW{1000.0};
-  auto calc_output_given_input = [=](double input_liter_per_minute) -> double {
+  //const double diesel_generator_efficiency{0.36};
+  const double diesel_generator_efficiency{0.5};
+  //const double seconds_per_minute{60.0};
+  const double seconds_per_minute{1.0};
+  //const double kW_per_MW{1000.0};
+  const double kW_per_MW{1.0};
+  const std::vector<::DISCO::RealTimeType> expected_genset_output_times{0,1,2,3};
+  const std::vector<::DISCO::FlowValueType> expected_genset_output{50,50,40,0};
+  auto calc_output_given_input = [=](::DISCO::FlowValueType input_liter_per_minute) -> ::DISCO::FlowValueType {
     return input_liter_per_minute
       * diesel_fuel_energy_density_MJ_per_liter
       / seconds_per_minute
       * kW_per_MW;
   };
-  auto calc_input_given_output = [=](double output_kW) -> double {
+  auto calc_input_given_output = [=](::DISCO::FlowValueType output_kW) -> ::DISCO::FlowValueType {
     return output_kW
       / kW_per_MW
       * seconds_per_minute
       / diesel_fuel_energy_density_MJ_per_liter;
+  };
+  const std::vector<::DISCO::FlowValueType> expected_fuel_output{
+    calc_input_given_output(50),
+    calc_input_given_output(50),
+    calc_input_given_output(40),
+    calc_input_given_output(0),
   };
   auto diesel_fuel_src = new ::DISCO::Source(
       ::DISCO::StreamType::diesel_fuel_stream_in_liters_per_minute
@@ -199,13 +209,9 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
       );
   auto genset_tx = new ::DISCO::Transformer(
       ::DISCO::StreamType::diesel_fuel_stream_in_liters_per_minute,
-      std::vector<::DISCO::StreamType>{::DISCO::StreamType::electric_stream_in_kW},
-      std::vector<
-        std::function<::DISCO::FlowValueType(::DISCO::FlowValueType)>>
-        {calc_output_given_input},
-      std::vector<
-        std::function<::DISCO::FlowValueType(::DISCO::FlowValueType)>>
-        {calc_input_given_output}
+      ::DISCO::StreamType::electric_stream_in_kW,
+      calc_output_given_input,
+      calc_input_given_output
       );
   auto genset_lim = new ::DISCO::FlowLimits(
       ::DISCO::StreamType::electric_stream_in_kW, 0, 50);
@@ -221,10 +227,9 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
   network.couple(
       genset_meter, ::DISCO::FlowMeter::outport_input_request,
       genset_lim, ::DISCO::FlowLimits::inport_output_request);
-  // TODO: examine a way to make the outputs extensible and not hardcoded...
   network.couple(
       genset_lim, ::DISCO::FlowLimits::outport_input_request,
-      genset_tx, ::DISCO::Transformer::inport_output1_request);
+      genset_tx, ::DISCO::Transformer::inport_output_request);
   network.couple(
       genset_tx, ::DISCO::Transformer::outport_input_request,
       diesel_fuel_meter, ::DISCO::FlowMeter::inport_output_request);
@@ -235,27 +240,39 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
       diesel_fuel_meter, ::DISCO::FlowMeter::outport_output_achieved,
       genset_tx, ::DISCO::Transformer::inport_input_achieved);
   network.couple(
-      genset_tx, ::DISCO::Transformer::outport_output1_achieved,
+      genset_tx, ::DISCO::Transformer::outport_output_achieved,
       genset_lim, ::DISCO::FlowLimits::inport_input_achieved);
   network.couple(
       genset_lim, ::DISCO::FlowLimits::outport_output_achieved,
       genset_meter, ::DISCO::FlowMeter::inport_input_achieved);
+  network.couple(
+      genset_meter, ::DISCO::FlowMeter::outport_output_achieved,
+      sink, ::DISCO::Sink::inport_input_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
+  adevs::Time t;
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
   {
     sim.exec_next_event();
+    t = sim.now();
+    std::cout << "The current time is: (" << t.real << ", " << t.logical << ")" << std::endl;
   }
   std::vector<::DISCO::FlowValueType> actual_genset_output =
     genset_meter->get_actual_output();
+  std::vector<::DISCO::FlowValueType> actual_fuel_output =
+    diesel_fuel_meter->get_actual_output();
   std::vector<::DISCO::RealTimeType> actual_genset_output_times =
     genset_meter->get_actual_output_times();
   EXPECT_EQ(expected_genset_output.size(), actual_genset_output.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output_times.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output.size());
-  for (int i; i < expected_genset_output.size(); ++i) {
+  EXPECT_EQ(expected_genset_output_times.size(), actual_fuel_output.size());
+  for (int i{0}; i < expected_genset_output.size(); ++i) {
+    if (i >= actual_genset_output.size())
+      break;
     EXPECT_EQ(expected_genset_output.at(i), actual_genset_output.at(i));
     EXPECT_EQ(expected_genset_output_times.at(i), actual_genset_output_times.at(i));
+    EXPECT_EQ(expected_fuel_output.at(i), actual_fuel_output.at(i));
   }
 }
 

@@ -35,6 +35,8 @@ namespace DISCO
     diesel_fuel_stream_in_liters_per_minute
   };
 
+  std::string stream_type_to_string(StreamType st);
+
   ////////////////////////////////////////////////////////////
   // Flow
   class Flow
@@ -52,6 +54,11 @@ namespace DISCO
   ////////////////////////////////////////////////////////////
   // Type Definitions
   typedef adevs::port_value<Flow> PortValue;
+
+
+  ////////////////////////////////////////////////////////////
+  // More Helper Functions
+  std::string port_value_to_string(const PortValue& pv);
 
   ////////////////////////////////////////////////////////////
   // Source
@@ -98,6 +105,7 @@ namespace DISCO
       bool report_output_achieved;
       FlowValueType input_request;
       FlowValueType output_achieved;
+      bool flow_limited;
   };
 
   ////////////////////////////////////////////////////////////
@@ -136,20 +144,14 @@ namespace DISCO
   {
     public:
       static const int inport_input_achieved;
-      static const int inport_output1_request;
-      static const int inport_output2_request;
-      static const int inport_output3_request;
-      static const int inport_output4_request;
+      static const int inport_output_request;
       static const int outport_input_request;
-      static const int outport_output1_achieved;
-      static const int outport_output2_achieved;
-      static const int outport_output3_achieved;
-      static const int outport_output4_achieved;
+      static const int outport_output_achieved;
       Transformer(
           StreamType input_stream_type,
-          std::vector<StreamType> output_stream_types,
-          std::vector<std::function<FlowValueType(FlowValueType)>> calc_output_n_from_input,
-          std::vector<std::function<FlowValueType(FlowValueType)>> calc_input_from_output_n
+          StreamType output_stream_type,
+          std::function<FlowValueType(FlowValueType)> calc_output_from_input,
+          std::function<FlowValueType(FlowValueType)> calc_input_from_output
           );
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
@@ -159,10 +161,13 @@ namespace DISCO
 
     private:
       StreamType input_stream;
-      std::vector<StreamType> output_streams;
-      int num_outputs;
-      std::vector<std::function<FlowValueType(FlowValueType)>> output_n_from_input;
-      std::vector<std::function<FlowValueType(FlowValueType)>> input_from_output_n;
+      StreamType output_stream;
+      std::function<FlowValueType(FlowValueType)> output_from_input;
+      std::function<FlowValueType(FlowValueType)> input_from_output;
+      FlowValueType output;
+      FlowValueType input;
+      bool send_input_request;
+      bool send_output_achieved;
   };
 
   ////////////////////////////////////////////////////////////

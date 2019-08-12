@@ -666,11 +666,6 @@ namespace DISCO
   const int Sink::inport_input_achieved = 1;
   const int Sink::outport_input_request = 2;
 
-  Sink::Sink(StreamType stream_type):
-    Sink::Sink(stream_type, {0, 1}, {100, 0})
-  {
-  }
-
   Sink::Sink(StreamType stream_type, std::vector<RealTimeType> times, std::vector<FlowValueType> loads):
     adevs::Atomic<PortValue>(),
     stream{stream_type},
@@ -682,15 +677,13 @@ namespace DISCO
     achieved_times{},
     achieved_loads{}
   {
-    if (times.size() != loads.size())
-    {
+    if (times.size() != loads.size()) {
       std::ostringstream oss;
       oss << "DISCO::Sink::Sink: times.size() (" << times.size()
           << ") != loads.size() (" << loads.size() << ")" << std::endl;
       throw std::invalid_argument(oss.str());
     }
-    if (times.size() > 0)
-    {
+    if (times.size() > 0) {
       time = times.at(0);
       load = loads.at(0);
     }

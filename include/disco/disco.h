@@ -177,7 +177,6 @@ namespace DISCO
     public:
       static const int inport_input_achieved;
       static const int outport_input_request;
-      Sink(StreamType stream_type);
       Sink(StreamType stream_type, std::vector<RealTimeType> times, std::vector<FlowValueType> loads);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;

@@ -151,42 +151,62 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
 
 TEST(DiscoBasicTest, CanRunPowerLimitedSink)
 {
-  std::string expected_src_output =
-    "\"time (hrs)\",\"power [OUT] (kW)\"\n"
-    "0,50\n"
-    "1,50\n"
-    "2,40\n"
-    "3,0\n";
-  std::string expected_sink_output =
-    "\"time (hrs)\",\"power [IN] (kW)\"\n"
-    "0,50\n"
-    "1,50\n"
-    "2,40\n";
-  auto src = new ::DISCO::Source(::DISCO::StreamType::electric_stream_in_kW);
+  std::vector<::DISCO::RealTimeType> expected_time = {0, 1, 2, 3};
+  std::vector<::DISCO::FlowValueType> expected_flow = {50, 50, 40, 0};
+  auto meter2 = new ::DISCO::FlowMeter(
+      ::DISCO::StreamType::electric_stream_in_kW);
   auto lim = new ::DISCO::FlowLimits(
       ::DISCO::StreamType::electric_stream_in_kW, 0, 50);
+  auto meter1 = new ::DISCO::FlowMeter(
+      ::DISCO::StreamType::electric_stream_in_kW);
   auto sink = new ::DISCO::Sink(
       ::DISCO::StreamType::electric_stream_in_kW, {0,1,2,3}, {160,80,40,0});
   adevs::Digraph<::DISCO::Flow> network;
   network.couple(
       sink, ::DISCO::Sink::outport_input_request,
+      meter1, ::DISCO::FlowMeter::inport_output_request);
+  network.couple(
+      meter1, ::DISCO::FlowMeter::outport_input_request,
       lim, ::DISCO::FlowLimits::inport_output_request);
   network.couple(
       lim, ::DISCO::FlowLimits::outport_input_request,
-      src, ::DISCO::Source::inport_output_request);
+      meter2, ::DISCO::FlowMeter::inport_output_request);
+  network.couple(
+      meter2, ::DISCO::FlowMeter::outport_output_achieved,
+      lim, ::DISCO::FlowLimits::inport_input_achieved);
   network.couple(
       lim, ::DISCO::FlowLimits::outport_output_achieved,
-      sink, ::DISCO::Sink::inport_input_achieved);
+      meter1, ::DISCO::FlowMeter::inport_input_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
-  {
     sim.exec_next_event();
+  std::vector<::DISCO::RealTimeType> actual_time1 =
+    meter1->get_actual_output_times();
+  std::vector<::DISCO::RealTimeType> actual_time2 =
+    meter2->get_actual_output_times();
+  std::vector<::DISCO::FlowValueType> actual_flow1 =
+    meter1->get_actual_output();
+  std::vector<::DISCO::FlowValueType> actual_flow2 =
+    meter2->get_actual_output();
+  EXPECT_EQ(expected_time.size(), actual_time1.size());
+  EXPECT_EQ(expected_time.size(), actual_time2.size());
+  EXPECT_EQ(expected_flow.size(), actual_flow1.size());
+  EXPECT_EQ(expected_flow.size(), actual_flow2.size());
+  for (int i{0}; i < expected_time.size(); ++i) {
+    if (i >= actual_time1.size())
+      break;
+    EXPECT_EQ(expected_time[i], actual_time1[i]);
+    if (i >= actual_time2.size())
+      break;
+    EXPECT_EQ(expected_time[i], actual_time2[i]);
+    if (i >= actual_flow1.size())
+      break;
+    EXPECT_EQ(expected_flow[i], actual_flow1[i]);
+    if (i >= actual_flow2.size())
+      break;
+    EXPECT_EQ(expected_flow[i], actual_flow2[i]);
   }
-  std::string actual_src_output = src->get_results();
-  std::string actual_sink_output = sink->get_results();
-  EXPECT_EQ(expected_src_output, actual_src_output);
-  EXPECT_EQ(expected_sink_output, actual_sink_output);
 }
 
 TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)

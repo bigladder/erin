@@ -84,21 +84,36 @@ TEST(DiscoUtilFunctions, TestClamp)
 
 TEST(DiscoBasicsTest, StandaloneSink)
 {
-  std::string expected_output =
-    "\"time (hrs)\",\"power [IN] (kW)\"\n"
-    "0,100\n"
-    "1,10\n";
+  std::vector<::DISCO::RealTimeType> expected_times = {0, 1, 2};
+  std::vector<::DISCO::RealTimeType> expected_loads = {100, 10, 0};
   std::vector<::DISCO::RealTimeType> times = {0,1,2};
   std::vector<::DISCO::FlowValueType> loads = {100,10,0};
   auto sink = new ::DISCO::Sink(::DISCO::StreamType::electric_stream_in_kW, times, loads);
+  auto meter = new ::DISCO::FlowMeter(::DISCO::StreamType::electric_stream_in_kW);
+  adevs::Digraph<::DISCO::Flow> network;
+  network.couple(
+      sink, ::DISCO::Sink::outport_input_request,
+      meter, ::DISCO::FlowMeter::inport_output_request
+      );
   adevs::Simulator<::DISCO::PortValue> sim;
-  sim.add(sink);
+  network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
   {
     sim.exec_next_event();
   }
-  std::string actual_output = sink->get_results();
-  EXPECT_EQ(expected_output, actual_output);
+  std::vector<::DISCO::RealTimeType> actual_times =
+    meter->get_actual_output_times();
+  std::vector<::DISCO::FlowValueType> actual_loads = meter->get_actual_output();
+  EXPECT_EQ(expected_times.size(), actual_times.size());
+  EXPECT_EQ(expected_loads.size(), actual_loads.size());
+  for (int i{0}; i < expected_times.size(); ++i) {
+    if (i >= actual_times.size())
+      break;
+    EXPECT_EQ(expected_times[i], actual_times[i]);
+    if (i >= actual_loads.size())
+      break;
+    EXPECT_EQ(expected_loads[i], actual_loads[i]);
+  }
 }
 
 TEST(DiscoBasicsTest, CanRunSourceSink)

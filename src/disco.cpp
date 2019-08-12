@@ -8,7 +8,7 @@
 
 namespace DISCO
 {
-  const bool DEBUG{true};
+  const bool DEBUG{false};
 
   FlowValueType
   clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper)

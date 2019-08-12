@@ -123,7 +123,7 @@ namespace DISCO
       void delta_conf(std::vector<PortValue>& xs) override;
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
-      std::vector<RealTimeType> get_actual_output_times() const; 
+      std::vector<RealTimeType> get_actual_output_times() const;
       std::vector<FlowValueType> get_actual_output() const;
 
     private:

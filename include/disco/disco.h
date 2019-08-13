@@ -38,22 +38,22 @@ namespace DISCO
   std::string stream_type_to_string(StreamType st);
 
   ////////////////////////////////////////////////////////////
-  // Flow
-  class Flow
+  // Stream
+  class Stream
   {
     public:
-      Flow(StreamType stream_type, FlowValueType flow_value);
-      StreamType get_stream() const;
+      Stream(StreamType stream_type, FlowValueType flow_value);
+      StreamType get_type() const;
       FlowValueType get_flow() const;
 
     private:
-      StreamType stream;
+      StreamType type;
       FlowValueType flow;
   };
 
   ////////////////////////////////////////////////////////////
   // Type Definitions
-  typedef adevs::port_value<Flow> PortValue;
+  typedef adevs::port_value<Stream> PortValue;
 
 
   ////////////////////////////////////////////////////////////

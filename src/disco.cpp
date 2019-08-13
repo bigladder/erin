@@ -60,23 +60,23 @@ namespace DISCO
   }
 
   ///////////////////////////////////////////////////////////////////
-  // Flow
-  Flow::Flow(StreamType stream_type, FlowValueType flow_value):
-    stream{stream_type},
+  // Stream
+  Stream::Stream(StreamType stream_type, FlowValueType flow_value):
+    type{stream_type},
     flow{flow_value}
   {
   }
 
   inline
   StreamType
-  Flow::get_stream() const
+  Stream::get_type() const
   {
-    return stream;
+    return type;
   }
 
   inline
   FlowValueType 
-  Flow::get_flow() const
+  Stream::get_flow() const
   {
     return flow;
   }
@@ -166,7 +166,7 @@ namespace DISCO
         // internal transition.
         report_input_request = true;
         input_request += x.value.get_flow();
-        if (x.value.get_stream() != stream)
+        if (x.value.get_type() != stream)
           throw MixedStreamsError();
       }
       else if (x.port == inport_input_achieved) {
@@ -174,7 +174,7 @@ namespace DISCO
         // initialized to 0 at construction and at each internal transition.
         report_output_achieved = true;
         output_achieved += x.value.get_flow();
-        if (x.value.get_stream() != stream)
+        if (x.value.get_type() != stream)
           throw MixedStreamsError();
       }
     }
@@ -245,12 +245,12 @@ namespace DISCO
       std::cout << "FlowLimits::output_fn()\n";
     if (report_input_request)
       ys.push_back(
-          adevs::port_value<Flow>{
-            outport_input_request, Flow{stream, input_request}});
+          adevs::port_value<Stream>{
+            outport_input_request, Stream{stream, input_request}});
     if (report_output_achieved || flow_limited)
       ys.push_back(
-          adevs::port_value<Flow>{
-            outport_output_achieved, Flow{stream, output_achieved}});
+          adevs::port_value<Stream>{
+            outport_output_achieved, Stream{stream, output_achieved}});
   }
 
   ////////////////////////////////////////////////////////////
@@ -425,10 +425,10 @@ namespace DISCO
       std::cout << "FlowMeter::output_func()\n";
     if (send_requested)
       ys.push_back(
-          PortValue{outport_input_request, Flow{stream, requested_flow}});
+          PortValue{outport_input_request, Stream{stream, requested_flow}});
     if (send_achieved)
       ys.push_back(
-          PortValue{outport_output_achieved, Flow{stream, achieved_flow}});
+          PortValue{outport_output_achieved, Stream{stream, achieved_flow}});
   }
 
   std::vector<RealTimeType>
@@ -492,14 +492,14 @@ namespace DISCO
       switch (x.port) {
         case inport_input_achieved:
           send_output_achieved = true;
-          if (x.value.get_stream() != input_stream)
+          if (x.value.get_type() != input_stream)
             throw MixedStreamsError();
           input += x.value.get_flow();
           break;
         case inport_output_request:
         {
           send_input_request = true;
-          if (x.value.get_stream() != output_stream)
+          if (x.value.get_type() != output_stream)
             throw MixedStreamsError();
           output += x.value.get_flow();
           break;
@@ -547,12 +547,12 @@ namespace DISCO
       std::cout << "Transformer::output_func()\n";
     if (send_input_request)
       ys.push_back(
-          adevs::port_value<Flow>{
-            outport_input_request, Flow{input_stream, input}});
+          adevs::port_value<Stream>{
+            outport_input_request, Stream{input_stream, input}});
     if (send_output_achieved)
       ys.push_back(
-          adevs::port_value<Flow>{
-            outport_output_achieved, Flow{output_stream, output}});
+          adevs::port_value<Stream>{
+            outport_output_achieved, Stream{output_stream, output}});
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -616,7 +616,7 @@ namespace DISCO
       if (x.port == inport_input_achieved) {
         input_given = true;
         input_achieved += x.value.get_flow();
-        if (x.value.get_stream() != stream)
+        if (x.value.get_type() != stream)
           throw MixedStreamsError();
       }
     }
@@ -662,9 +662,9 @@ namespace DISCO
     if (next_idx < times.size())
     {
       ys.push_back(
-          adevs::port_value<Flow>{
+          adevs::port_value<Stream>{
             outport_input_request,
-            Flow{stream, loads.at(next_idx)
+            Stream{stream, loads.at(next_idx)
           }});
     }
   }

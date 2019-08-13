@@ -90,7 +90,7 @@ TEST(DiscoBasicsTest, StandaloneSink)
   std::vector<::DISCO::FlowValueType> loads = {100, 10, 0};
   auto sink = new ::DISCO::Sink(::DISCO::StreamType::electric_stream_in_kW, times, loads);
   auto meter = new ::DISCO::FlowMeter(::DISCO::StreamType::electric_stream_in_kW);
-  adevs::Digraph<::DISCO::Flow> network;
+  adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_input_request,
       meter, ::DISCO::FlowMeter::inport_output_request
@@ -124,7 +124,7 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
       ::DISCO::StreamType::electric_stream_in_kW, expected_time, expected_flow);
   auto meter = new ::DISCO::FlowMeter(
       ::DISCO::StreamType::electric_stream_in_kW);
-  adevs::Digraph<::DISCO::Flow> network;
+  adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_input_request,
       meter, ::DISCO::FlowMeter::inport_output_request
@@ -161,7 +161,7 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
       ::DISCO::StreamType::electric_stream_in_kW);
   auto sink = new ::DISCO::Sink(
       ::DISCO::StreamType::electric_stream_in_kW, {0,1,2,3}, {160,80,40,0});
-  adevs::Digraph<::DISCO::Flow> network;
+  adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_input_request,
       meter1, ::DISCO::FlowMeter::inport_output_request);
@@ -253,7 +253,7 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
       );
   auto sink = new ::DISCO::Sink(
       ::DISCO::StreamType::electric_stream_in_kW, {0,1,2,3}, {160,80,40,0});
-  adevs::Digraph<::DISCO::Flow> network;
+  adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_input_request,
       genset_meter, ::DISCO::FlowMeter::inport_output_request);

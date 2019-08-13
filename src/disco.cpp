@@ -38,32 +38,61 @@ namespace DISCO
   port_value_to_string(const PortValue& pv)
   {
     std::ostringstream oss;
-    oss << "PortValue(port=" << pv.port << ", flow={" << pv.value.get_flow() << "})\n";
+    oss << "PortValue(port=" << pv.port << ", flow={" << pv.value.get_power() << "})\n";
     return oss.str();
   }
 
-  std::string
-  stream_type_to_string(StreamType st)
+  std::ostream&
+  operator<<(std::ostream& os, const StreamType& st)
   {
-    switch (st) {
-      case (StreamType::electric_stream_in_kW):
-        return "electric_stream_in_kW";
-      case (StreamType::natural_gas_stream_in_kg_per_second):
-        return "natural_gas_stream_in_kg_per_second";
-      case (StreamType::hot_water_stream_in_kg_per_second):
-        return "hot_water_stream_in_kg_per_second";
-      case (StreamType::chilled_water_stream_in_kg_per_second):
-        return "chilled_water_stream_in_kg_per_second";
-      case (StreamType::diesel_fuel_stream_in_liters_per_minute):
-        return "diesel_fuel_stream_in_liters_per_minute";
-    }
+    os << "StreamType(\"" << st.type
+       << "\", \"" << st.effort_units
+       << "\", \"" << st.flow_units
+       << "\", \"" << st.power_units
+       << "\")";
+    return os;
   }
+
+  ////////////////////////////////////////////////////////////
+  // StreamType
+  StreamType::StreamType(
+      std::string t, std::string eu, std::string fu, std::string pu):
+    type{t},
+    effort_units{eu},
+    flow_units{fu},
+    power_units{pu}
+  {
+  }
+
+  bool
+  StreamType::operator==(const StreamType& other) const
+  {
+    return (type != other.type)                 ? false :
+           (effort_units != other.effort_units) ? false :
+           (flow_units != other.flow_units)     ? false :
+           (power_units != other.power_units)   ? false :
+           true;
+  }
+
+  bool
+  StreamType::operator!=(const StreamType& other) const
+  {
+    return !operator==(other);
+  }
+
 
   ///////////////////////////////////////////////////////////////////
   // Stream
-  Stream::Stream(StreamType stream_type, FlowValueType flow_value):
+  Stream::Stream(StreamType stream_type, FlowValueType power_value):
+    Stream(stream_type, 1.0, power_value)
+  {
+  }
+
+  Stream::Stream(StreamType stream_type, FlowValueType effort_value, FlowValueType flow_value):
     type{stream_type},
-    flow{flow_value}
+    effort{effort_value},
+    flow{flow_value},
+    power{effort_value * flow_value}
   {
   }
 
@@ -76,9 +105,23 @@ namespace DISCO
 
   inline
   FlowValueType 
+  Stream::get_effort() const
+  {
+    return effort;
+  }
+
+  inline
+  FlowValueType 
   Stream::get_flow() const
   {
     return flow;
+  }
+
+  inline
+  FlowValueType
+  Stream::get_power() const
+  {
+    return power;
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -112,7 +155,7 @@ namespace DISCO
   {
     if (DEBUG) {
       std::cout << "FlowLimits::delta_int()\n";
-      std::cout << "... stream = " << stream_type_to_string(stream) << "\n";
+      std::cout << "... stream = " << stream << "\n";
       std::cout << "... lower_limit = " << lower_limit << "\n";
       std::cout << "... upper_limit = " << upper_limit << "\n";
       std::cout << "... report_input_request = " << report_input_request << "\n";
@@ -128,7 +171,7 @@ namespace DISCO
     output_achieved = 0;
     flow_limited = false;
     if (DEBUG) {
-      std::cout << "... stream = " << stream_type_to_string(stream) << "\n";
+      std::cout << "... stream = " << stream << "\n";
       std::cout << "... lower_limit = " << lower_limit << "\n";
       std::cout << "... upper_limit = " << upper_limit << "\n";
       std::cout << "... report_input_request = " << report_input_request << "\n";
@@ -147,7 +190,7 @@ namespace DISCO
       std::cout << "FlowLimits::delta_ext(dt(" << e.real << ", " << e.logical << "), xs)\n";
       for (int i{0}; i < xs.size(); ++i)
         std::cout << "... xs[" << i << "] = " << port_value_to_string(xs[i]) << "\n";
-      std::cout << "... stream = " << stream_type_to_string(stream) << "\n";
+      std::cout << "... stream = " << stream << "\n";
       std::cout << "... lower_limit = " << lower_limit << "\n";
       std::cout << "... upper_limit = " << upper_limit << "\n";
       std::cout << "... report_input_request = " << report_input_request << "\n";
@@ -165,7 +208,7 @@ namespace DISCO
         // port. input_request is set to 0 at class construction and at each
         // internal transition.
         report_input_request = true;
-        input_request += x.value.get_flow();
+        input_request += x.value.get_power();
         if (x.value.get_type() != stream)
           throw MixedStreamsError();
       }
@@ -173,7 +216,7 @@ namespace DISCO
         // the input achieved equals the output achieved. output_achieved is
         // initialized to 0 at construction and at each internal transition.
         report_output_achieved = true;
-        output_achieved += x.value.get_flow();
+        output_achieved += x.value.get_power();
         if (x.value.get_type() != stream)
           throw MixedStreamsError();
       }
@@ -197,7 +240,7 @@ namespace DISCO
       }
     }
     if (DEBUG) {
-      std::cout << "... stream = " << stream_type_to_string(stream) << "\n";
+      std::cout << "... stream = " << stream << "\n";
       std::cout << "... lower_limit = " << lower_limit << "\n";
       std::cout << "... upper_limit = " << upper_limit << "\n";
       std::cout << "... report_input_request = " << report_input_request << "\n";
@@ -362,11 +405,11 @@ namespace DISCO
       switch (x.port) {
         case inport_output_request:
           send_requested = true;
-          requested_flow += x.value.get_flow();
+          requested_flow += x.value.get_power();
           break;
         case inport_input_achieved:
           send_achieved = true;
-          achieved_flow += x.value.get_flow();
+          achieved_flow += x.value.get_power();
           break;
         default:
           break;
@@ -494,14 +537,14 @@ namespace DISCO
           send_output_achieved = true;
           if (x.value.get_type() != input_stream)
             throw MixedStreamsError();
-          input += x.value.get_flow();
+          input += x.value.get_power();
           break;
         case inport_output_request:
         {
           send_input_request = true;
           if (x.value.get_type() != output_stream)
             throw MixedStreamsError();
-          output += x.value.get_flow();
+          output += x.value.get_power();
           break;
         }
         default:
@@ -615,7 +658,7 @@ namespace DISCO
     for (const auto &x : xs) {
       if (x.port == inport_input_achieved) {
         input_given = true;
-        input_achieved += x.value.get_flow();
+        input_achieved += x.value.get_power();
         if (x.value.get_type() != stream)
           throw MixedStreamsError();
       }

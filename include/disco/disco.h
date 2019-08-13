@@ -26,29 +26,49 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // StreamType
-  enum class StreamType
+  class StreamType
   {
-    electric_stream_in_kW = 0,
-    natural_gas_stream_in_kg_per_second,
-    hot_water_stream_in_kg_per_second,
-    chilled_water_stream_in_kg_per_second,
-    diesel_fuel_stream_in_liters_per_minute
+    public:
+      StreamType(std::string type, std::string effort_units, std::string flow_units, std::string power_units);
+      bool operator==(const StreamType& other) const;
+      bool operator!=(const StreamType& other) const;
+      friend std::ostream& operator<<(std::ostream& os, const StreamType& st);
+
+    private:
+      std::string type;
+      std::string effort_units;
+      std::string flow_units;
+      std::string power_units;
   };
 
-  std::string stream_type_to_string(StreamType st);
+  //enum class StreamType
+  //{
+  //  electric_stream_in_kW = 0,
+  //  natural_gas_stream_in_kg_per_second,
+  //  hot_water_stream_in_kg_per_second,
+  //  chilled_water_stream_in_kg_per_second,
+  //  diesel_fuel_stream_in_liters_per_minute
+  //};
+
+  //std::string stream_type_to_string(StreamType st);
 
   ////////////////////////////////////////////////////////////
   // Stream
   class Stream
   {
     public:
-      Stream(StreamType stream_type, FlowValueType flow_value);
+      Stream(StreamType stream_type, FlowValueType power_value);
+      Stream(StreamType stream_type, FlowValueType effort_value, FlowValueType flow_value);
       StreamType get_type() const;
+      FlowValueType get_effort() const;
       FlowValueType get_flow() const;
+      FlowValueType get_power() const;
 
     private:
       StreamType type;
+      FlowValueType effort;
       FlowValueType flow;
+      FlowValueType power;
   };
 
   ////////////////////////////////////////////////////////////

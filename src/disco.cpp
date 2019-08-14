@@ -34,23 +34,10 @@ namespace DISCO
     return value;
   }
 
-  std::string
-  port_value_to_string(const PortValue& pv)
-  {
-    std::ostringstream oss;
-    oss << "PortValue(port=" << pv.port << ", flow={" << pv.value.get_power() << "})\n";
-    return oss.str();
-  }
-
   std::ostream&
-  operator<<(std::ostream& os, const StreamType& st)
+  operator<<(std::ostream& os, const PortValue& pv)
   {
-    os << "StreamType(\"" << st.type
-       << "\", \"" << st.effort_units
-       << "\", \"" << st.flow_units
-       << "\", \"" << st.power_units
-       << "\")";
-    return os;
+    return os << "PortValue(port=" << pv.port << ", flow=" << pv.value << ")";
   }
 
   ////////////////////////////////////////////////////////////
@@ -80,6 +67,15 @@ namespace DISCO
     return !operator==(other);
   }
 
+  std::ostream&
+  operator<<(std::ostream& os, const StreamType& st)
+  {
+    return os << "StreamType(type=\"" << st.get_type()
+              << "\", effort_units=\"" << st.get_effort_units()
+              << "\", flow_units=\"" << st.get_flow_units()
+              << "\", power_units=\"" << st.get_power_units()
+              << "\")";
+  }
 
   ///////////////////////////////////////////////////////////////////
   // Stream
@@ -96,32 +92,15 @@ namespace DISCO
   {
   }
 
-  inline
-  StreamType
-  Stream::get_type() const
+  std::ostream&
+  operator<<(std::ostream& os, const Stream& s)
   {
-    return type;
-  }
-
-  inline
-  FlowValueType 
-  Stream::get_effort() const
-  {
-    return effort;
-  }
-
-  inline
-  FlowValueType 
-  Stream::get_flow() const
-  {
-    return flow;
-  }
-
-  inline
-  FlowValueType
-  Stream::get_power() const
-  {
-    return power;
+    auto t = s.get_type();
+    return os << "Stream(stream_type=" << t
+              << ", effort=" << s.get_effort() << " " << t.get_effort_units()
+              << ", flow=" << s.get_flow() << " " << t.get_flow_units()
+              << ", power=" << s.get_power() << " " << t.get_power_units()
+              << ")";
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -189,7 +168,7 @@ namespace DISCO
     if (DEBUG) {
       std::cout << "FlowLimits::delta_ext(dt(" << e.real << ", " << e.logical << "), xs)\n";
       for (int i{0}; i < xs.size(); ++i)
-        std::cout << "... xs[" << i << "] = " << port_value_to_string(xs[i]) << "\n";
+        std::cout << "... xs[" << i << "] = " << xs[i] << "\n";
       std::cout << "... stream = " << stream << "\n";
       std::cout << "... lower_limit = " << lower_limit << "\n";
       std::cout << "... upper_limit = " << upper_limit << "\n";
@@ -385,7 +364,7 @@ namespace DISCO
     if (DEBUG) {
       std::cout << "FlowMeter::delta_ext(dt(" << e.real << ", " << e.logical << "), xs)\n";
       for (int i{0}; i < xs.size(); ++i)
-        std::cout << "... xs[" << i << "] = " << port_value_to_string(xs[i]) << "\n";
+        std::cout << "... xs[" << i << "] = " << xs[i] << "\n";
       std::cout << "... S.event_time = " << event_time << "\n";
       std::cout << "... S.requested_flow = " << requested_flow << "\n";
       std::cout << "... S.achieved_flow = " << requested_flow << "\n";
@@ -528,8 +507,8 @@ namespace DISCO
   {
     if (DEBUG) {
       std::cout << "Transformer::delta_ext(" << e.real << ")\n";
-      for (const auto &x : xs)
-        std::cout << "... x = " << port_value_to_string(x) << "\n";
+      for (int i{0}; i < xs.size(); ++i)
+        std::cout << "... xs[" << i <<  "] = " << xs[i] << "\n";
     }
     for (const auto &x : xs) {
       switch (x.port) {
@@ -650,8 +629,8 @@ namespace DISCO
   {
     if (DEBUG) {
       std::cout << "Sink::delta_ext(" << e.real << ")\n";
-      for (const auto &x : xs)
-        std::cout << "... x = " << port_value_to_string(x) << "\n";
+      for (int i{0}; i < xs.size(); ++i)
+        std::cout << "... xs[" << i << "] = " << xs[i] << "\n";
     }
     int input_achieved{0};
     bool input_given{false};

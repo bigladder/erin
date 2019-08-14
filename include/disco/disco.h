@@ -32,7 +32,10 @@ namespace DISCO
       StreamType(std::string type, std::string effort_units, std::string flow_units, std::string power_units);
       bool operator==(const StreamType& other) const;
       bool operator!=(const StreamType& other) const;
-      friend std::ostream& operator<<(std::ostream& os, const StreamType& st);
+      std::string get_type() const { return type; }
+      std::string get_effort_units() const { return effort_units; }
+      std::string get_flow_units() const { return flow_units; }
+      std::string get_power_units() const { return power_units; }
 
     private:
       std::string type;
@@ -41,16 +44,7 @@ namespace DISCO
       std::string power_units;
   };
 
-  //enum class StreamType
-  //{
-  //  electric_stream_in_kW = 0,
-  //  natural_gas_stream_in_kg_per_second,
-  //  hot_water_stream_in_kg_per_second,
-  //  chilled_water_stream_in_kg_per_second,
-  //  diesel_fuel_stream_in_liters_per_minute
-  //};
-
-  //std::string stream_type_to_string(StreamType st);
+  std::ostream& operator<<(std::ostream& os, const StreamType& st);
 
   ////////////////////////////////////////////////////////////
   // Stream
@@ -59,10 +53,10 @@ namespace DISCO
     public:
       Stream(StreamType stream_type, FlowValueType power_value);
       Stream(StreamType stream_type, FlowValueType effort_value, FlowValueType flow_value);
-      StreamType get_type() const;
-      FlowValueType get_effort() const;
-      FlowValueType get_flow() const;
-      FlowValueType get_power() const;
+      StreamType get_type() const { return type; }
+      FlowValueType get_effort() const { return effort; }
+      FlowValueType get_flow() const { return flow; }
+      FlowValueType get_power() const { return power; }
 
     private:
       StreamType type;
@@ -71,14 +65,13 @@ namespace DISCO
       FlowValueType power;
   };
 
+  std::ostream& operator<<(std::ostream& os, const Stream& s);
+
   ////////////////////////////////////////////////////////////
   // Type Definitions
   typedef adevs::port_value<Stream> PortValue;
 
-
-  ////////////////////////////////////////////////////////////
-  // More Helper Functions
-  std::string port_value_to_string(const PortValue& pv);
+  std::ostream& operator<<(std::ostream& os, const PortValue& pv);
 
   ////////////////////////////////////////////////////////////
   // FlowLimits

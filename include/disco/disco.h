@@ -221,25 +221,20 @@ namespace DISCO
   class Sink : public adevs::Atomic<PortValue>
   {
     public:
-      static const int inport_input_achieved;
-      static const int outport_input_request;
+      static const int outport_inflow_request;
       Sink(StreamType stream_type, std::vector<RealTimeType> times, std::vector<FlowValueType> loads);
       void delta_int() override;
       void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
-      std::string get_results() const;
 
     private:
       StreamType stream;
       int idx;
+      std::vector<RealTimeType>::size_type num_items;
       std::vector<RealTimeType> times;
       std::vector<FlowValueType> loads;
-      RealTimeType time;
-      FlowValueType load;
-      std::vector<RealTimeType> achieved_times;
-      std::vector<FlowValueType> achieved_loads;
   };
 }
 

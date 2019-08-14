@@ -93,7 +93,7 @@ TEST(DiscoBasicsTest, StandaloneSink)
   auto meter = new ::DISCO::FlowMeter(st);
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
-      sink, ::DISCO::Sink::outport_input_request,
+      sink, ::DISCO::Sink::outport_inflow_request,
       meter, ::DISCO::FlowMeter::inport_output_request
       );
   adevs::Simulator<::DISCO::PortValue> sim;
@@ -126,7 +126,7 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   auto meter = new ::DISCO::FlowMeter(st);
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
-      sink, ::DISCO::Sink::outport_input_request,
+      sink, ::DISCO::Sink::outport_inflow_request,
       meter, ::DISCO::FlowMeter::inport_output_request
       );
   adevs::Simulator<::DISCO::PortValue> sim;
@@ -160,7 +160,7 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   auto sink = new ::DISCO::Sink(elec, {0,1,2,3}, {160,80,40,0});
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
-      sink, ::DISCO::Sink::outport_input_request,
+      sink, ::DISCO::Sink::outport_inflow_request,
       meter1, ::DISCO::FlowMeter::inport_output_request);
   network.couple(
       meter1, ::DISCO::FlowMeter::outport_input_request,
@@ -248,7 +248,7 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
   auto sink = new ::DISCO::Sink(elec, {0,1,2,3}, {160,80,40,0});
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
-      sink, ::DISCO::Sink::outport_input_request,
+      sink, ::DISCO::Sink::outport_inflow_request,
       genset_meter, ::DISCO::FlowMeter::inport_output_request);
   network.couple(
       genset_meter, ::DISCO::FlowMeter::outport_input_request,
@@ -268,9 +268,6 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
   network.couple(
       genset_lim, ::DISCO::FlowLimits::outport_output_achieved,
       genset_meter, ::DISCO::FlowMeter::inport_input_achieved);
-  network.couple(
-      genset_meter, ::DISCO::FlowMeter::outport_output_achieved,
-      sink, ::DISCO::Sink::inport_input_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   adevs::Time t;

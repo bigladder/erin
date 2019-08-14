@@ -706,29 +706,22 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // Sink
-  const int Sink::inport_input_achieved = 1;
-  const int Sink::outport_input_request = 2;
+  const int Sink::outport_inflow_request = 1;
 
-  Sink::Sink(StreamType stream_type, std::vector<RealTimeType> times, std::vector<FlowValueType> loads):
+  Sink::Sink(StreamType st, std::vector<RealTimeType> ts, std::vector<FlowValueType> vs):
     adevs::Atomic<PortValue>(),
-    stream{stream_type},
+    stream{st},
     idx{-1},
-    times{times},
-    loads{loads},
-    time{0},
-    load{0},
-    achieved_times{},
-    achieved_loads{}
+    num_items{ts.size()},
+    times{ts},
+    loads{vs}
   {
-    if (times.size() != loads.size()) {
+    auto num_vs{vs.size()};
+    if (num_items != num_vs) {
       std::ostringstream oss;
-      oss << "DISCO::Sink::Sink: times.size() (" << times.size()
-          << ") != loads.size() (" << loads.size() << ")" << std::endl;
+      oss << "DISCO::Sink::Sink: times.size() (" << num_items
+          << ") != loads.size() (" << num_vs << ")";
       throw std::invalid_argument(oss.str());
-    }
-    if (times.size() > 0) {
-      time = times.at(0);
-      load = loads.at(0);
     }
   }
 
@@ -738,17 +731,6 @@ namespace DISCO
     if (DEBUG)
       std::cout << "Sink::delta_int()\n";
     ++idx;
-    if (idx == 0)
-    {
-      return;
-    }
-    if (idx < times.size())
-    {
-      achieved_times.push_back(time);
-      achieved_loads.push_back(load);
-      load = loads.at(idx);
-      time = times.at(idx);
-    }
   }
 
   void
@@ -759,20 +741,7 @@ namespace DISCO
       for (int i{0}; i < xs.size(); ++i)
         std::cout << "... xs[" << i << "] = " << xs[i] << "\n";
     }
-    int input_achieved{0};
-    bool input_given{false};
-    for (const auto &x : xs) {
-      if (x.port == inport_input_achieved) {
-        input_given = true;
-        input_achieved += x.value.get_power();
-        if (x.value.get_type() != stream)
-          throw MixedStreamsError();
-      }
-    }
-    if (input_given) {
-      // update the load if we're given something on port in achieved
-      load = input_achieved;
-    }
+    // Nothing to do. This model is generate only...
   }
 
   void
@@ -790,13 +759,12 @@ namespace DISCO
     if (DEBUG)
       std::cout << "Sink::ta()\n";
     if (idx < 0)
-      return adevs::Time{0, 0};
+      return adevs::Time{0, 1};
     int next_idx = idx + 1;
-    if (next_idx < times.size())
-    {
-      int time0(times.at(idx));
-      int time1(times.at(next_idx));
-      int dt = time1 - time0;
+    if (next_idx < num_items) {
+      RealTimeType time0{times[idx]};
+      RealTimeType time1{times[next_idx]};
+      RealTimeType dt{time1 - time0};
       return adevs::Time{dt, 0};
     }
     return adevs_inf<adevs::Time>();
@@ -808,25 +776,11 @@ namespace DISCO
     if (DEBUG)
       std::cout << "Sink::output_func()\n";
     int next_idx = idx + 1;
-    if (next_idx < times.size())
-    {
+    if (next_idx < num_items)
       ys.push_back(
           adevs::port_value<Stream>{
-            outport_input_request,
-            Stream{stream, loads.at(next_idx)
+            outport_inflow_request,
+            Stream{stream, loads[next_idx]
           }});
-    }
-  }
-
-  std::string
-  Sink::get_results() const
-  {
-    std::ostringstream oss;
-    oss << "\"time (hrs)\",\"power [IN] (kW)\"" << std::endl;
-    for (int idx(0); idx < achieved_times.size(); ++idx)
-    {
-      oss << achieved_times[idx] << "," << achieved_loads[idx] << std::endl;
-    }
-    return oss.str();
   }
 }

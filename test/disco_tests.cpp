@@ -164,15 +164,15 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
       meter1, ::DISCO::FlowMeter::inport_output_request);
   network.couple(
       meter1, ::DISCO::FlowMeter::outport_input_request,
-      lim, ::DISCO::FlowLimits::inport_output_request);
+      lim, ::DISCO::FlowLimits::inport_outflow_request);
   network.couple(
-      lim, ::DISCO::FlowLimits::outport_input_request,
+      lim, ::DISCO::FlowLimits::outport_inflow_request,
       meter2, ::DISCO::FlowMeter::inport_output_request);
   network.couple(
       meter2, ::DISCO::FlowMeter::outport_output_achieved,
-      lim, ::DISCO::FlowLimits::inport_input_achieved);
+      lim, ::DISCO::FlowLimits::inport_inflow_achieved);
   network.couple(
-      lim, ::DISCO::FlowLimits::outport_output_achieved,
+      lim, ::DISCO::FlowLimits::outport_outflow_achieved,
       meter1, ::DISCO::FlowMeter::inport_input_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
@@ -252,9 +252,9 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
       genset_meter, ::DISCO::FlowMeter::inport_output_request);
   network.couple(
       genset_meter, ::DISCO::FlowMeter::outport_input_request,
-      genset_lim, ::DISCO::FlowLimits::inport_output_request);
+      genset_lim, ::DISCO::FlowLimits::inport_outflow_request);
   network.couple(
-      genset_lim, ::DISCO::FlowLimits::outport_input_request,
+      genset_lim, ::DISCO::FlowLimits::outport_inflow_request,
       genset_tx, ::DISCO::Transformer::inport_output_request);
   network.couple(
       genset_tx, ::DISCO::Transformer::outport_input_request,
@@ -264,9 +264,9 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
       genset_tx, ::DISCO::Transformer::inport_input_achieved);
   network.couple(
       genset_tx, ::DISCO::Transformer::outport_output_achieved,
-      genset_lim, ::DISCO::FlowLimits::inport_input_achieved);
+      genset_lim, ::DISCO::FlowLimits::inport_inflow_achieved);
   network.couple(
-      genset_lim, ::DISCO::FlowLimits::outport_output_achieved,
+      genset_lim, ::DISCO::FlowLimits::outport_outflow_achieved,
       genset_meter, ::DISCO::FlowMeter::inport_input_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);

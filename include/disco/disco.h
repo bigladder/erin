@@ -105,12 +105,12 @@ namespace DISCO
       void delta_conf(std::vector<PortValue>& xs) override;
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
-      virtual void update_state_for_outflow_request(FlowValueType outflow) = 0;
-      virtual void update_state_for_inflow_achieved(FlowValueType inflow) = 0;
 
     protected:
       FlowElement(StreamType flow_type);
       FlowElement(StreamType inflow_type, StreamType outflow_type);
+      virtual void update_state_for_outflow_request(FlowValueType outflow) = 0;
+      virtual void update_state_for_inflow_achieved(FlowValueType inflow) = 0;
 
       adevs::Time time;
       StreamType inflow_type;
@@ -129,29 +129,18 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // FlowLimits
-  class FlowLimits : public adevs::Atomic<PortValue>
+  class FlowLimits : public FlowElement
   {
     public:
-      static const int inport_input_achieved;
-      static const int inport_output_request;
-      static const int outport_input_request;
-      static const int outport_output_achieved;
       FlowLimits(StreamType stream_type, FlowValueType lower_limit, FlowValueType upper_limit);
-      void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
-      void delta_conf(std::vector<PortValue>& xs) override;
-      adevs::Time ta() override;
-      void output_func(std::vector<PortValue>& ys) override;
+
+    protected:
+      void update_state_for_outflow_request(FlowValueType outflow) override;
+      void update_state_for_inflow_achieved(FlowValueType inflow) override;
 
     private:
-      StreamType stream;
       FlowValueType lower_limit;
       FlowValueType upper_limit;
-      bool report_input_request;
-      bool report_output_achieved;
-      FlowValueType input_request;
-      FlowValueType output_achieved;
-      bool flow_limited;
   };
 
   ////////////////////////////////////////////////////////////

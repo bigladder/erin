@@ -232,21 +232,10 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // FlowLimits
-  const int FlowLimits::inport_input_achieved = 1;
-  const int FlowLimits::inport_output_request = 2;
-  const int FlowLimits::outport_input_request = 3;
-  const int FlowLimits::outport_output_achieved = 4;
-
   FlowLimits::FlowLimits(StreamType stream_type, FlowValueType low_lim, FlowValueType up_lim) :
-    adevs::Atomic<PortValue>(),
-    stream{stream_type},
+    FlowElement(stream_type),
     lower_limit{low_lim},
-    upper_limit{up_lim},
-    report_input_request{false},
-    report_output_achieved{false},
-    input_request{0},
-    output_achieved{0},
-    flow_limited{false}
+    upper_limit{up_lim}
   {
     if (lower_limit > upper_limit) {
       std::ostringstream oss;
@@ -257,149 +246,31 @@ namespace DISCO
   }
 
   void
-  FlowLimits::delta_int()
+  FlowLimits::update_state_for_outflow_request(FlowValueType out)
   {
-    if (DEBUG) {
-      std::cout << "FlowLimits::delta_int()\n";
-      std::cout << "... stream = " << stream << "\n";
-      std::cout << "... lower_limit = " << lower_limit << "\n";
-      std::cout << "... upper_limit = " << upper_limit << "\n";
-      std::cout << "... report_input_request = " << report_input_request << "\n";
-      std::cout << "... report_output_achieved = " << report_output_achieved << "\n";
-      std::cout << "... input_request = " << input_request << "\n";
-      std::cout << "... output_achieved = " << output_achieved << "\n";
-      std::cout << "... flow_limited = " << flow_limited << "\n";
-      std::cout << "---\n";
+    if (out > upper_limit) {
+      report_outflow_achieved = true;
+      outflow = upper_limit;
     }
-    report_input_request = false;
-    report_output_achieved = false;
-    input_request = 0;
-    output_achieved = 0;
-    flow_limited = false;
-    if (DEBUG) {
-      std::cout << "... stream = " << stream << "\n";
-      std::cout << "... lower_limit = " << lower_limit << "\n";
-      std::cout << "... upper_limit = " << upper_limit << "\n";
-      std::cout << "... report_input_request = " << report_input_request << "\n";
-      std::cout << "... report_output_achieved = " << report_output_achieved << "\n";
-      std::cout << "... input_request = " << input_request << "\n";
-      std::cout << "... output_achieved = " << output_achieved << "\n";
-      std::cout << "... flow_limited = " << flow_limited << "\n";
-      std::cout << "... exit FlowLimits::delta_int(.)\n";
+    else if (out < lower_limit) {
+      report_outflow_achieved = true;
+      outflow = lower_limit;
     }
+    else
+      outflow = out;
+    inflow = outflow;
   }
 
   void
-  FlowLimits::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  FlowLimits::update_state_for_inflow_achieved(FlowValueType in)
   {
-    if (DEBUG) {
-      std::cout << "FlowLimits::delta_ext(dt(" << e.real << ", " << e.logical << "), xs)\n";
-      for (int i{0}; i < xs.size(); ++i)
-        std::cout << "... xs[" << i << "] = " << xs[i] << "\n";
-      std::cout << "... stream = " << stream << "\n";
-      std::cout << "... lower_limit = " << lower_limit << "\n";
-      std::cout << "... upper_limit = " << upper_limit << "\n";
-      std::cout << "... report_input_request = " << report_input_request << "\n";
-      std::cout << "... report_output_achieved = " << report_output_achieved << "\n";
-      std::cout << "... input_request = " << input_request << "\n";
-      std::cout << "... output_achieved = " << output_achieved << "\n";
-      std::cout << "... flow_limited = " << flow_limited << "\n";
-      std::cout << "---\n";
-    }
-    for (const auto &x : xs) {
-      if (x.port == inport_output_request) {
-        // the output requested equals the input request,
-        // provided it is within limits. We accumulate all input requests
-        // accounting for the (unlikely) possibility of multiple values on one
-        // port. input_request is set to 0 at class construction and at each
-        // internal transition.
-        report_input_request = true;
-        input_request += x.value.get_power();
-        if (x.value.get_type() != stream)
-          throw MixedStreamsError();
-      }
-      else if (x.port == inport_input_achieved) {
-        // the input achieved equals the output achieved. output_achieved is
-        // initialized to 0 at construction and at each internal transition.
-        report_output_achieved = true;
-        output_achieved += x.value.get_power();
-        if (x.value.get_type() != stream)
-          throw MixedStreamsError();
-      }
-    }
-    // Note: we never provide more power than requested. Therefore, if the
-    // requested power, say 10 kW is less than the minimum power, say 15 kW,
-    // then the request is for 0 kW, not 15 kW. Also, we have to account for
-    // sign convention where we might have a negative output (which means flow
-    // is going the other direction).
-    if (report_input_request) {
-      auto temp{clamp_toward_0(input_request, lower_limit, upper_limit)};
-      if (temp != input_request) {
-        flow_limited = true;
-        input_request = temp;
-      }
-      if (!report_output_achieved && flow_limited) {
-        // if an input request is given but no output achieved, assume that
-        // output achieved is input request (limited) unless we hear otherwise.
-        report_output_achieved = true;
-        output_achieved = input_request;
-      }
-    }
-    if (DEBUG) {
-      std::cout << "... stream = " << stream << "\n";
-      std::cout << "... lower_limit = " << lower_limit << "\n";
-      std::cout << "... upper_limit = " << upper_limit << "\n";
-      std::cout << "... report_input_request = " << report_input_request << "\n";
-      std::cout << "... report_output_achieved = " << report_output_achieved << "\n";
-      std::cout << "... input_request = " << input_request << "\n";
-      std::cout << "... output_achieved = " << output_achieved << "\n";
-      std::cout << "... flow_limited = " << flow_limited << "\n";
-      std::cout << "... exit FlowLimits::delta_ext(.)\n";
-    }
-  }
-
-  void
-  FlowLimits::delta_conf(std::vector<PortValue>& xs)
-  {
-    if (DEBUG)
-      std::cout << "FlowLimits::delta_conf()\n";
-    delta_int();
-    delta_ext(adevs::Time{0, 0}, xs);
-  }
-
-  adevs::Time
-  FlowLimits::ta()
-  {
-    if (DEBUG)
-      std::cout << "FlowLimits::ta()\n";
-    if (report_input_request) {
-      if (DEBUG)
-        std::cout << "... returning dt(0, 0)\n";
-      return adevs::Time{0, 0};
-    }
-    if (report_output_achieved) {
-      if (DEBUG)
-        std::cout << "... returning dt(0, 1)\n";
-      return adevs::Time{0, 1};
-    }
-    if (DEBUG)
-      std::cout << "... returning infinity\n";
-    return adevs_inf<adevs::Time>();
-  }
-
-  void
-  FlowLimits::output_func(std::vector<PortValue>& ys)
-  {
-    if (DEBUG)
-      std::cout << "FlowLimits::output_fn()\n";
-    if (report_input_request)
-      ys.push_back(
-          adevs::port_value<Stream>{
-            outport_input_request, Stream{stream, input_request}});
-    if (report_output_achieved || flow_limited)
-      ys.push_back(
-          adevs::port_value<Stream>{
-            outport_output_achieved, Stream{stream, output_achieved}});
+    if (in > upper_limit)
+      throw AchievedMoreThanRequestedError();
+    else if (in < lower_limit)
+      throw AchievedMoreThanRequestedError();
+    else
+      inflow = in;
+    outflow = inflow;
   }
 
   ////////////////////////////////////////////////////////////

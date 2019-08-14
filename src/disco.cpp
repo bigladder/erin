@@ -103,6 +103,133 @@ namespace DISCO
               << ")";
   }
 
+  ////////////////////////////////////////////////////////////
+  // FlowElement
+  const int FlowElement::inport_inflow_achieved = 0;
+  const int FlowElement::inport_outflow_request = 1;
+  const int FlowElement::outport_inflow_request = 2;
+  const int FlowElement::outport_outflow_achieved = 3;
+
+  FlowElement::FlowElement(StreamType st) :
+    FlowElement(st, st)
+  {
+  }
+
+  FlowElement::FlowElement(StreamType in, StreamType out) :
+    adevs::Atomic<PortValue>(),
+    time{0,0},
+    inflow_type{in},
+    outflow_type{out},
+    inflow{0},
+    outflow{0},
+    storeflow{0},
+    lossflow{0},
+    report_inflow_request{false},
+    report_outflow_achieved{false}
+  {
+  }
+
+  void
+  FlowElement::delta_int()
+  {
+    report_inflow_request = false;
+    report_outflow_achieved = false;
+  }
+
+  void
+  FlowElement::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  {
+    time = time + e;
+    bool inflow_provided{false};
+    bool outflow_provided{false};
+    FlowValueType inflow_achieved{0};
+    FlowValueType outflow_request{0};
+    for (const auto &x : xs) {
+      switch (x.port) {
+        case inport_inflow_achieved:
+          if (x.value.get_type() != inflow_type)
+            throw MixedStreamsError();
+          inflow_provided = true;
+          inflow_achieved += x.value.get_power();
+          break;
+        case inport_outflow_request:
+          if (x.value.get_type() != outflow_type)
+            throw MixedStreamsError();
+          outflow_provided = true;
+          outflow_request += x.value.get_power();
+          break;
+        default:
+          throw BadPortError();
+      }
+    }
+    if (inflow_provided && !outflow_provided) {
+      if (std::abs(inflow - inflow_achieved) > tol) {
+        report_outflow_achieved = true;
+        if (inflow >= 0.0 && inflow_achieved > inflow)
+          throw AchievedMoreThanRequestedError();
+        if (inflow <= 0.0 && inflow_achieved < inflow)
+          throw AchievedMoreThanRequestedError();
+        update_state_for_inflow_achieved(inflow_achieved);
+      }
+    }
+    else if (outflow_provided && !inflow_provided) {
+      if (std::abs(outflow - outflow_request) > tol) {
+        report_inflow_request = true;
+        update_state_for_outflow_request(outflow_request);
+        if (outflow >= 0.0 && outflow > outflow_request)
+          throw AchievedMoreThanRequestedError();
+        if (outflow <= 0.0 && outflow < outflow_request)
+          throw AchievedMoreThanRequestedError();
+      }
+    }
+    else if (inflow_provided && outflow_provided) {
+      // assumption: we'll never get here...
+      throw SimultaneousIORequestError();
+    }
+    if (report_inflow_request || report_outflow_achieved)
+      check_flow_invariants();
+  }
+
+  void
+  FlowElement::delta_conf(std::vector<PortValue>& xs)
+  {
+    auto e = adevs::Time{0,0};
+    delta_int();
+    delta_ext(e, xs);
+  }
+
+  adevs::Time
+  FlowElement::ta()
+  {
+    if (report_inflow_request)
+      return adevs::Time{0, 1};
+    if (report_outflow_achieved)
+      return adevs::Time{0, 1};
+    return adevs_inf<adevs::Time>();
+  }
+
+  void
+  FlowElement::output_func(std::vector<PortValue>& ys)
+  {
+    if (report_inflow_request)
+      ys.push_back(
+          adevs::port_value<Stream>{
+            outport_inflow_request, Stream{inflow_type, inflow}});
+    if (report_outflow_achieved)
+      ys.push_back(
+          adevs::port_value<Stream>{
+            outport_outflow_achieved, Stream{outflow_type, outflow}});
+  }
+
+  void
+  FlowElement::check_flow_invariants() const
+  {
+    auto diff = inflow - (outflow + storeflow + lossflow);
+    if (diff > tol)
+      throw FlowInvariantError();
+  }
+
+
   ///////////////////////////////////////////////////////////////////
   // FlowLimits
   const int FlowLimits::inport_input_achieved = 1;
@@ -179,7 +306,7 @@ namespace DISCO
       std::cout << "... flow_limited = " << flow_limited << "\n";
       std::cout << "---\n";
     }
-    for (auto x : xs) {
+    for (const auto &x : xs) {
       if (x.port == inport_output_request) {
         // the output requested equals the input request,
         // provided it is within limits. We accumulate all input requests

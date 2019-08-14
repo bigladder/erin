@@ -15,6 +15,7 @@ namespace DISCO
   // Type Definitions
   typedef double FlowValueType;
   typedef int RealTimeType;
+  typedef int LogicalTimeType;
 
   ////////////////////////////////////////////////////////////
   // Utility Functions
@@ -23,6 +24,22 @@ namespace DISCO
   ////////////////////////////////////////////////////////////
   // MixedStreamsError
   struct MixedStreamsError : public std::exception {};
+
+  ////////////////////////////////////////////////////////////
+  // FlowInvariantError
+  struct FlowInvariantError : public std::exception {};
+
+  ////////////////////////////////////////////////////////////
+  // BadPortError
+  struct BadPortError : public std::exception {};
+
+  ////////////////////////////////////////////////////////////
+  // SimultaneousIORequestError
+  struct SimultaneousIORequestError : public std::exception {};
+
+  ////////////////////////////////////////////////////////////
+  // AchievedMoreThanRequestedError
+  struct AchievedMoreThanRequestedError : public std::exception {};
 
   ////////////////////////////////////////////////////////////
   // StreamType
@@ -72,6 +89,43 @@ namespace DISCO
   typedef adevs::port_value<Stream> PortValue;
 
   std::ostream& operator<<(std::ostream& os, const PortValue& pv);
+
+
+  ////////////////////////////////////////////////////////////
+  // FlowElement - Abstract Class
+  class FlowElement : public adevs::Atomic<PortValue>
+  {
+    public:
+      static const int inport_inflow_achieved;
+      static const int inport_outflow_request;
+      static const int outport_inflow_request;
+      static const int outport_outflow_achieved;
+      void delta_int() override;
+      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      adevs::Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+      virtual void update_state_for_outflow_request(FlowValueType outflow) = 0;
+      virtual void update_state_for_inflow_achieved(FlowValueType inflow) = 0;
+
+    protected:
+      FlowElement(StreamType flow_type);
+      FlowElement(StreamType inflow_type, StreamType outflow_type);
+
+      adevs::Time time;
+      StreamType inflow_type;
+      StreamType outflow_type;
+      FlowValueType inflow;
+      FlowValueType outflow;
+      FlowValueType storeflow;
+      FlowValueType lossflow;
+      bool report_inflow_request;
+      bool report_outflow_achieved;
+
+    private:
+      static constexpr FlowValueType tol{1e-6};
+      void check_flow_invariants() const;
+  };
 
   ////////////////////////////////////////////////////////////
   // FlowLimits

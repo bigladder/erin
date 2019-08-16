@@ -108,6 +108,10 @@ namespace DISCO
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
+      // Delete copy constructors and assignment to prevent slicing issues...
+      FlowElement(const FlowElement&) = delete;
+      FlowElement& operator=(const FlowElement&) = delete;
+
     protected:
       FlowElement(std::string id, StreamType flow_type);
       FlowElement(std::string id, StreamType inflow_type, StreamType outflow_type);

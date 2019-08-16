@@ -8,7 +8,7 @@
 
 namespace DISCO
 {
-  const bool DEBUG{false};
+  const bool DEBUG{true};
 
   FlowValueType
   clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper)
@@ -32,6 +32,19 @@ namespace DISCO
         return lower;
     }
     return value;
+  }
+
+  template<class T>
+  void print_vec(const std::string& tag, const std::vector<T>& vs)
+  {
+    char mark = '=';
+    std::cout << tag;
+    for (const auto &v : vs) {
+      std::cout << mark << v;
+      if (mark == '=')
+        mark = ',';
+    }
+    std::cout << std::endl;
   }
 
   std::ostream&
@@ -110,13 +123,14 @@ namespace DISCO
   const int FlowElement::outport_inflow_request = 2;
   const int FlowElement::outport_outflow_achieved = 3;
 
-  FlowElement::FlowElement(StreamType st) :
-    FlowElement(st, st)
+  FlowElement::FlowElement(std::string id, StreamType st) :
+    FlowElement(id, st, st)
   {
   }
 
-  FlowElement::FlowElement(StreamType in, StreamType out) :
+  FlowElement::FlowElement(std::string id_, StreamType in, StreamType out) :
     adevs::Atomic<PortValue>(),
+    id{id_},
     time{0,0},
     inflow_type{in},
     outflow_type{out},
@@ -132,6 +146,9 @@ namespace DISCO
   void
   FlowElement::delta_int()
   {
+    if (DEBUG)
+      std::cout << "FlowElement::delta_int();id=" << id << "\n";
+    update_on_internal_transition();
     report_inflow_request = false;
     report_outflow_achieved = false;
   }
@@ -139,6 +156,8 @@ namespace DISCO
   void
   FlowElement::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
+    if (DEBUG)
+      std::cout << "FlowElement::delta_ext();id=" << id << "\n";
     time = time + e;
     bool inflow_provided{false};
     bool outflow_provided{false};
@@ -147,12 +166,16 @@ namespace DISCO
     for (const auto &x : xs) {
       switch (x.port) {
         case inport_inflow_achieved:
+          if (DEBUG)
+            std::cout << "... <=inport_inflow_achieved\n";
           if (x.value.get_type() != inflow_type)
             throw MixedStreamsError();
           inflow_provided = true;
           inflow_achieved += x.value.get_power();
           break;
         case inport_outflow_request:
+          if (DEBUG)
+            std::cout << "... <=inport_outflow_request\n";
           if (x.value.get_type() != outflow_type)
             throw MixedStreamsError();
           outflow_provided = true;
@@ -163,36 +186,38 @@ namespace DISCO
       }
     }
     if (inflow_provided && !outflow_provided) {
-      if (std::abs(inflow - inflow_achieved) > tol) {
-        report_outflow_achieved = true;
-        if (inflow >= 0.0 && inflow_achieved > inflow)
-          throw AchievedMoreThanRequestedError();
-        if (inflow <= 0.0 && inflow_achieved < inflow)
-          throw AchievedMoreThanRequestedError();
-        update_state_for_inflow_achieved(inflow_achieved);
-      }
+      report_outflow_achieved = true;
+      if (inflow >= 0.0 && inflow_achieved > inflow)
+        throw AchievedMoreThanRequestedError();
+      if (inflow <= 0.0 && inflow_achieved < inflow)
+        throw AchievedMoreThanRequestedError();
+      update_state_for_inflow_achieved(inflow_achieved);
     }
     else if (outflow_provided && !inflow_provided) {
-      if (std::abs(outflow - outflow_request) > tol) {
-        report_inflow_request = true;
-        update_state_for_outflow_request(outflow_request);
-        if (outflow >= 0.0 && outflow > outflow_request)
-          throw AchievedMoreThanRequestedError();
-        if (outflow <= 0.0 && outflow < outflow_request)
-          throw AchievedMoreThanRequestedError();
-      }
+      report_inflow_request = true;
+      update_state_for_outflow_request(outflow_request);
+      if (outflow >= 0.0 && outflow > outflow_request)
+        throw AchievedMoreThanRequestedError();
+      if (outflow <= 0.0 && outflow < outflow_request)
+        throw AchievedMoreThanRequestedError();
     }
     else if (inflow_provided && outflow_provided) {
       // assumption: we'll never get here...
       throw SimultaneousIORequestError();
     }
-    if (report_inflow_request || report_outflow_achieved)
+    else
+      throw BadPortError();
+    if (report_inflow_request || report_outflow_achieved) {
+      update_on_external_transition();
       check_flow_invariants();
+    }
   }
 
   void
   FlowElement::delta_conf(std::vector<PortValue>& xs)
   {
+    if (DEBUG)
+      std::cout << "FlowElement::delta_conf();id=" << id << "\n";
     auto e = adevs::Time{0,0};
     delta_int();
     delta_ext(e, xs);
@@ -201,24 +226,88 @@ namespace DISCO
   adevs::Time
   FlowElement::ta()
   {
-    if (report_inflow_request)
+    if (DEBUG)
+      std::cout << "FlowElement::ta();id=" << id << "\n";
+    if (report_inflow_request || report_outflow_achieved) {
+      if (DEBUG)
+        std::cout << "... dt = (0,1)\n";
       return adevs::Time{0, 1};
-    if (report_outflow_achieved)
-      return adevs::Time{0, 1};
+    }
+    if (DEBUG)
+      std::cout << "... dt = infinity\n";
     return adevs_inf<adevs::Time>();
   }
 
   void
   FlowElement::output_func(std::vector<PortValue>& ys)
   {
-    if (report_inflow_request)
+    if (DEBUG)
+      std::cout << "FlowElement::output_func();id=" << id << "\n";
+    if (report_inflow_request) {
+      if (DEBUG)
+        std::cout << "... send=>outport_inflow_request\n";
       ys.push_back(
           adevs::port_value<Stream>{
             outport_inflow_request, Stream{inflow_type, inflow}});
-    if (report_outflow_achieved)
+    }
+    if (report_outflow_achieved) {
+      if (DEBUG)
+        std::cout << "... send=>outport_outflow_achieved\n";
       ys.push_back(
           adevs::port_value<Stream>{
             outport_outflow_achieved, Stream{outflow_type, outflow}});
+    }
+  }
+
+  void
+  FlowElement::update_state_for_outflow_request(FlowValueType outflow_)
+  {
+    if (DEBUG)
+      std::cout << "FlowElement::update_state_for_outflow_request();id=" << id << "\n";
+    outflow = outflow_;
+    inflow = outflow;
+  }
+
+  void
+  FlowElement::update_state_for_inflow_achieved(FlowValueType inflow_)
+  {
+    if (DEBUG)
+      std::cout << "FlowElement::update_state_for_inflow_achieved();id=" << id << "\n";
+    inflow = inflow_;
+    outflow = inflow;
+  }
+
+  void
+  FlowElement::update_on_internal_transition()
+  {
+    if (DEBUG)
+      std::cout << "FlowElement::update_on_internal_transition();id=" << id << "\n";
+  }
+
+  void
+  FlowElement::update_on_external_transition()
+  {
+    if (DEBUG)
+      std::cout << "FlowElement::update_on_external_transition();id=" << id << "\n";
+  }
+
+  void
+  FlowElement::print_state() const
+  {
+    print_state("");
+  }
+
+  void
+  FlowElement::print_state(const std::string& prefix) const
+  {
+    std::cout << prefix << "id=" << id << "\n"
+              << prefix << "time=(" << time.real << ", " << time.logical << ")\n"
+              << prefix << "inflow=" << inflow << "\n"
+              << prefix << "outflow=" << outflow << "\n"
+              << prefix << "storeflow=" << storeflow << "\n"
+              << prefix << "lossflow=" << lossflow << "\n"
+              << prefix << "report_inflow_request=" << report_inflow_request << "\n"
+              << prefix << "report_outflow_achieved=" << report_outflow_achieved << "\n";
   }
 
   void
@@ -232,8 +321,8 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // FlowLimits
-  FlowLimits::FlowLimits(StreamType stream_type, FlowValueType low_lim, FlowValueType up_lim) :
-    FlowElement(stream_type),
+  FlowLimits::FlowLimits(std::string id, StreamType stream_type, FlowValueType low_lim, FlowValueType up_lim) :
+    FlowElement(id, stream_type),
     lower_limit{low_lim},
     upper_limit{up_lim}
   {
@@ -248,6 +337,10 @@ namespace DISCO
   void
   FlowLimits::update_state_for_outflow_request(FlowValueType out)
   {
+    if (DEBUG) {
+      std::cout << "FlowLimits::update_state_for_outflow_request(" << out << ")\n";
+      print_state("... ");
+    }
     if (out > upper_limit) {
       report_outflow_achieved = true;
       outflow = upper_limit;
@@ -259,6 +352,10 @@ namespace DISCO
     else
       outflow = out;
     inflow = outflow;
+    if (DEBUG) {
+      print_state("... ");
+      std::cout << "end FlowLimits::update_state_for_outflow_request\n";
+    }
   }
 
   void
@@ -275,180 +372,12 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // FlowMeter
-  const int FlowMeter::inport_input_achieved = 1;
-  const int FlowMeter::inport_output_request = 2;
-  const int FlowMeter::outport_input_request = 3;
-  const int FlowMeter::outport_output_achieved = 4;
-
-  FlowMeter::FlowMeter(StreamType stream_type) :
-    adevs::Atomic<PortValue>(),
-    stream{stream_type},
+  FlowMeter::FlowMeter(std::string id, StreamType stream_type) :
+    FlowElement(id, stream_type),
     event_times{},
     requested_flows{},
-    achieved_flows{},
-    send_requested{false},
-    send_achieved{false},
-    event_time{0},
-    requested_flow{0.0},
-    achieved_flow{0.0}
+    achieved_flows{}
   {
-  }
-
-  void
-  FlowMeter::delta_int()
-  {
-    if (DEBUG) {
-      std::cout << "FlowMeter::delta_int()\n";
-      std::cout << "... S.event_time = " << event_time << "\n";
-      std::cout << "... S.requested_flow = " << requested_flow << "\n";
-      std::cout << "... S.achieved_flow = " << requested_flow << "\n";
-      for (int i{0}; i < event_times.size(); ++i) {
-        std::cout << "... S.event_times[" << i << "] = " << event_times[i] << "\n";
-      }
-      for (int i{0}; i < requested_flows.size(); ++i) {
-        std::cout << "... S.requested_flows[" << i << "] = " << requested_flows[i] << "\n";
-      }
-      for (int i{0}; i < achieved_flows.size(); ++i) {
-        std::cout << "... S.achieved_flows[" << i << "] = " << achieved_flows[i] << "\n";
-      }
-      std::cout << "---\n";
-    }
-    int num_events{static_cast<int>(event_times.size())};
-    if (num_events == 0 || (num_events > 0 && event_times.back() != event_time)) {
-      event_times.push_back(event_time);
-      ++num_events;
-    }
-    if (send_requested) {
-      requested_flows.push_back(requested_flow);
-      if (achieved_flows.size() == num_events && achieved_flows.size() > 0) {
-        auto &v = achieved_flows.back();
-        v = requested_flow;
-      }
-      else
-        achieved_flows.push_back(requested_flow);
-    }
-    if (send_achieved) {
-      if (achieved_flows.size() == num_events && achieved_flows.size() > 0) {
-        auto &v = achieved_flows.back();
-        v = achieved_flow;
-      }
-      else
-        achieved_flows.push_back(achieved_flow);
-    }
-    send_achieved = false;
-    send_requested = false;
-    requested_flow = 0.0;
-    achieved_flow = 0.0;
-    if (DEBUG) {
-      std::cout << "... S.event_time = " << event_time << "\n";
-      std::cout << "... S.requested_flow = " << requested_flow << "\n";
-      std::cout << "... S.achieved_flow = " << requested_flow << "\n";
-      for (int i{0}; i < event_times.size(); ++i) {
-        std::cout << "... S.event_times[" << i << "] = " << event_times[i] << "\n";
-      }
-      for (int i{0}; i < requested_flows.size(); ++i) {
-        std::cout << "... S.requested_flows[" << i << "] = " << requested_flows[i] << "\n";
-      }
-      for (int i{0}; i < achieved_flows.size(); ++i) {
-        std::cout << "... S.achieved_flows[" << i << "] = " << achieved_flows[i] << "\n";
-      }
-      std::cout << "... exit FlowMeter::delta_int(.)\n";
-    }
-  }
-
-  void
-  FlowMeter::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
-  {
-    if (DEBUG) {
-      std::cout << "FlowMeter::delta_ext(dt(" << e.real << ", " << e.logical << "), xs)\n";
-      for (int i{0}; i < xs.size(); ++i)
-        std::cout << "... xs[" << i << "] = " << xs[i] << "\n";
-      std::cout << "... S.event_time = " << event_time << "\n";
-      std::cout << "... S.requested_flow = " << requested_flow << "\n";
-      std::cout << "... S.achieved_flow = " << requested_flow << "\n";
-      for (int i{0}; i < event_times.size(); ++i) {
-        std::cout << "... S.event_times[" << i << "] = " << event_times[i] << "\n";
-      }
-      for (int i{0}; i < requested_flows.size(); ++i) {
-        std::cout << "... S.requested_flows[" << i << "] = " << requested_flows[i] << "\n";
-      }
-      for (int i{0}; i < achieved_flows.size(); ++i) {
-        std::cout << "... S.achieved_flows[" << i << "] = " << achieved_flows[i] << "\n";
-      }
-      std::cout << "---\n";
-    }
-    event_time += e.real;
-    for (const auto &x : xs) {
-      switch (x.port) {
-        case inport_output_request:
-          send_requested = true;
-          requested_flow += x.value.get_power();
-          break;
-        case inport_input_achieved:
-          send_achieved = true;
-          achieved_flow += x.value.get_power();
-          break;
-        default:
-          break;
-      }
-    }
-    if (DEBUG) {
-      std::cout << "... S.event_time = " << event_time << "\n";
-      std::cout << "... S.requested_flow = " << requested_flow << "\n";
-      std::cout << "... S.achieved_flow = " << requested_flow << "\n";
-      for (int i{0}; i < event_times.size(); ++i) {
-        std::cout << "... S.event_times[" << i << "] = " << event_times[i] << "\n";
-      }
-      for (int i{0}; i < requested_flows.size(); ++i) {
-        std::cout << "... S.requested_flows[" << i << "] = " << requested_flows[i] << "\n";
-      }
-      for (int i{0}; i < achieved_flows.size(); ++i) {
-        std::cout << "... S.achieved_flows[" << i << "] = " << achieved_flows[i] << "\n";
-      }
-      std::cout << "... exit FlowMeter::delta_ext(.)\n";
-    }
-  }
-
-  void
-  FlowMeter::delta_conf(std::vector<PortValue>& xs)
-  {
-    if (DEBUG)
-      std::cout << "FlowMeter::delta_conf()\n";
-    delta_int();
-    delta_ext(adevs::Time{0, 0}, xs);
-  }
-
-  adevs::Time
-  FlowMeter::ta()
-  {
-    if (DEBUG)
-      std::cout << "FlowMeter::ta()\n";
-    if (send_requested) {
-      if (DEBUG)
-        std::cout << "... send_requested branch; returning dt(0,0)\n";
-      return adevs::Time{0, 0};
-    }
-    if (send_achieved) {
-      if (DEBUG)
-        std::cout << "... send_requested branch; returning dt(0,0)\n";
-      return adevs::Time{0, 0};
-    }
-    if (DEBUG)
-      std::cout << "... returning infinity\n";
-    return adevs_inf<adevs::Time>();
-  }
-
-  void
-  FlowMeter::output_func(std::vector<PortValue>& ys)
-  {
-    if (DEBUG)
-      std::cout << "FlowMeter::output_func()\n";
-    if (send_requested)
-      ys.push_back(
-          PortValue{outport_input_request, Stream{stream, requested_flow}});
-    if (send_achieved)
-      ys.push_back(
-          PortValue{outport_output_achieved, Stream{stream, achieved_flow}});
   }
 
   std::vector<RealTimeType>
@@ -461,6 +390,50 @@ namespace DISCO
   FlowMeter::get_actual_output() const
   {
     return std::vector<FlowValueType>(achieved_flows);
+  }
+
+  void
+  FlowMeter::update_on_external_transition()
+  {
+    if (DEBUG) {
+      std::cout << "FlowMeter::update_on_external_transition()\n";
+      print_state("... ");
+      print_vec<RealTimeType>("... event_times", event_times);
+      print_vec<FlowValueType>("... requested_flows", requested_flows);
+      print_vec<FlowValueType>("... achieved_flows", achieved_flows);
+    }
+    auto num_events{event_times.size()};
+    if (num_events == 0 || (num_events > 0 && event_times.back() != time.real)) {
+      event_times.push_back(time.real);
+      ++num_events;
+    }
+    auto num_achieved{achieved_flows.size()};
+    if (report_inflow_request) {
+      requested_flows.push_back(inflow);
+      if (num_achieved == num_events && num_achieved > 0) {
+        auto &v = achieved_flows.back();
+        v = inflow;
+      }
+      else
+        achieved_flows.push_back(inflow);
+    }
+    else if (report_outflow_achieved) {
+      if (num_achieved == num_events && num_achieved > 0) {
+        auto &v = achieved_flows.back();
+        v = outflow;
+      }
+      else
+        achieved_flows.push_back(outflow);
+    }
+    if (report_inflow_request && report_outflow_achieved)
+      throw SimultaneousIORequestError();
+    if (DEBUG) {
+      print_state("... ");
+      print_vec<RealTimeType>("... event_times", event_times);
+      print_vec<FlowValueType>("... requested_flows", requested_flows);
+      print_vec<FlowValueType>("... achieved_flows", achieved_flows);
+      std::cout << "end FlowMeter::update_on_external_transition()\n";
+    }
   }
 
   ////////////////////////////////////////////////////////////
@@ -607,11 +580,8 @@ namespace DISCO
   void
   Sink::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
-    if (DEBUG) {
-      std::cout << "Sink::delta_ext(" << e.real << ")\n";
-      for (int i{0}; i < xs.size(); ++i)
-        std::cout << "... xs[" << i << "] = " << xs[i] << "\n";
-    }
+    if (DEBUG)
+      std::cout << "Sink::delta_ext()\n";
     // Nothing to do. This model is generate only...
   }
 
@@ -629,15 +599,22 @@ namespace DISCO
   {
     if (DEBUG)
       std::cout << "Sink::ta()\n";
-    if (idx < 0)
-      return adevs::Time{0, 1};
+    if (idx < 0) {
+      if (DEBUG)
+        std::cout << "... dt = infinity\n";
+      return adevs::Time{0, 0};
+    }
     int next_idx = idx + 1;
     if (next_idx < num_items) {
       RealTimeType time0{times[idx]};
       RealTimeType time1{times[next_idx]};
       RealTimeType dt{time1 - time0};
+      if (DEBUG)
+        std::cout << "... dt = (" << dt << ", 0)\n";
       return adevs::Time{dt, 0};
     }
+    if (DEBUG)
+      std::cout << "... dt = infinity\n";
     return adevs_inf<adevs::Time>();
   }
 

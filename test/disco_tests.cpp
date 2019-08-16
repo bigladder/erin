@@ -90,11 +90,11 @@ TEST(DiscoBasicsTest, StandaloneSink)
   std::vector<::DISCO::FlowValueType> loads = {100, 10, 0};
   auto st = ::DISCO::StreamType("electrical", "kV", "A", "kW");
   auto sink = new ::DISCO::Sink(st, times, loads);
-  auto meter = new ::DISCO::FlowMeter(st);
+  auto meter = new ::DISCO::FlowMeter("meter", st);
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_inflow_request,
-      meter, ::DISCO::FlowMeter::inport_output_request
+      meter, ::DISCO::FlowMeter::inport_outflow_request
       );
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
@@ -123,11 +123,11 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   std::vector<::DISCO::FlowValueType> expected_flow = {100, 0};
   auto st = ::DISCO::StreamType("electrical", "kV", "A", "kW");
   auto sink = new ::DISCO::Sink(st, expected_time, expected_flow);
-  auto meter = new ::DISCO::FlowMeter(st);
+  auto meter = new ::DISCO::FlowMeter("meter", st);
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_inflow_request,
-      meter, ::DISCO::FlowMeter::inport_output_request
+      meter, ::DISCO::FlowMeter::inport_outflow_request
       );
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
@@ -154,26 +154,26 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   std::vector<::DISCO::RealTimeType> expected_time = {0, 1, 2, 3};
   std::vector<::DISCO::FlowValueType> expected_flow = {50, 50, 40, 0};
   auto elec = ::DISCO::StreamType("electrical", "kV", "A", "kW");
-  auto meter2 = new ::DISCO::FlowMeter(elec);
-  auto lim = new ::DISCO::FlowLimits(elec, 0, 50);
-  auto meter1 = new ::DISCO::FlowMeter(elec);
-  auto sink = new ::DISCO::Sink(elec, {0,1,2,3}, {160,80,40,0});
+  auto meter2 = new ::DISCO::FlowMeter("meter2", elec);
+  auto lim = new ::DISCO::FlowLimits("lim", elec, 0, 50);
+  auto meter1 = new ::DISCO::FlowMeter("meter1", elec);
+  auto sink = new ::DISCO::Sink(elec, {0, 1, 2, 3}, {160, 80, 40, 0});
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_inflow_request,
-      meter1, ::DISCO::FlowMeter::inport_output_request);
+      meter1, ::DISCO::FlowMeter::inport_outflow_request);
   network.couple(
-      meter1, ::DISCO::FlowMeter::outport_input_request,
+      meter1, ::DISCO::FlowMeter::outport_inflow_request,
       lim, ::DISCO::FlowLimits::inport_outflow_request);
   network.couple(
       lim, ::DISCO::FlowLimits::outport_inflow_request,
-      meter2, ::DISCO::FlowMeter::inport_output_request);
+      meter2, ::DISCO::FlowMeter::inport_outflow_request);
   network.couple(
-      meter2, ::DISCO::FlowMeter::outport_output_achieved,
+      meter2, ::DISCO::FlowMeter::outport_outflow_achieved,
       lim, ::DISCO::FlowLimits::inport_inflow_achieved);
   network.couple(
       lim, ::DISCO::FlowLimits::outport_outflow_achieved,
-      meter1, ::DISCO::FlowMeter::inport_input_achieved);
+      meter1, ::DISCO::FlowMeter::inport_inflow_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
@@ -206,6 +206,7 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   }
 }
 
+/*
 TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
 {
   // Source https://en.wikipedia.org/wiki/Diesel_fuel
@@ -236,38 +237,38 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
   };
   auto diesel = ::DISCO::StreamType("diesel", "kPa", "m3/s", "kW");
   auto elec = ::DISCO::StreamType("electrical", "kV", "A", "kW");
-  auto diesel_fuel_meter = new ::DISCO::FlowMeter(diesel);
+  auto diesel_fuel_meter = new ::DISCO::FlowMeter("diesel_fuel_meter", diesel);
   auto genset_tx = new ::DISCO::Transformer(
       diesel,
       elec,
       calc_output_given_input,
       calc_input_given_output
       );
-  auto genset_lim = new ::DISCO::FlowLimits(elec, 0, 50);
-  auto genset_meter = new ::DISCO::FlowMeter(elec);
+  auto genset_lim = new ::DISCO::FlowLimits("genset_lim", elec, 0, 50);
+  auto genset_meter = new ::DISCO::FlowMeter("genset_meter", elec);
   auto sink = new ::DISCO::Sink(elec, {0,1,2,3}, {160,80,40,0});
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_inflow_request,
-      genset_meter, ::DISCO::FlowMeter::inport_output_request);
+      genset_meter, ::DISCO::FlowMeter::inport_outflow_request);
   network.couple(
-      genset_meter, ::DISCO::FlowMeter::outport_input_request,
+      genset_meter, ::DISCO::FlowMeter::outport_inflow_request,
       genset_lim, ::DISCO::FlowLimits::inport_outflow_request);
   network.couple(
       genset_lim, ::DISCO::FlowLimits::outport_inflow_request,
       genset_tx, ::DISCO::Transformer::inport_output_request);
   network.couple(
       genset_tx, ::DISCO::Transformer::outport_input_request,
-      diesel_fuel_meter, ::DISCO::FlowMeter::inport_output_request);
+      diesel_fuel_meter, ::DISCO::FlowMeter::inport_outflow_request);
   network.couple(
-      diesel_fuel_meter, ::DISCO::FlowMeter::outport_output_achieved,
+      diesel_fuel_meter, ::DISCO::FlowMeter::outport_outflow_achieved,
       genset_tx, ::DISCO::Transformer::inport_input_achieved);
   network.couple(
       genset_tx, ::DISCO::Transformer::outport_output_achieved,
       genset_lim, ::DISCO::FlowLimits::inport_inflow_achieved);
   network.couple(
       genset_lim, ::DISCO::FlowLimits::outport_outflow_achieved,
-      genset_meter, ::DISCO::FlowMeter::inport_input_achieved);
+      genset_meter, ::DISCO::FlowMeter::inport_inflow_achieved);
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   adevs::Time t;
@@ -295,6 +296,7 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
     EXPECT_EQ(expected_fuel_output.at(i), actual_fuel_output.at(i));
   }
 }
+*/
 
 int
 main(int argc, char **argv)

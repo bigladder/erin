@@ -20,6 +20,8 @@ namespace DISCO
   ////////////////////////////////////////////////////////////
   // Utility Functions
   FlowValueType clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper);
+  template<class T>
+  void print_vec(const std::string& tag, const std::vector<T>& vs);
 
   ////////////////////////////////////////////////////////////
   // MixedStreamsError
@@ -107,11 +109,17 @@ namespace DISCO
       void output_func(std::vector<PortValue>& ys) override;
 
     protected:
-      FlowElement(StreamType flow_type);
-      FlowElement(StreamType inflow_type, StreamType outflow_type);
-      virtual void update_state_for_outflow_request(FlowValueType outflow) = 0;
-      virtual void update_state_for_inflow_achieved(FlowValueType inflow) = 0;
+      FlowElement(std::string id, StreamType flow_type);
+      FlowElement(std::string id, StreamType inflow_type, StreamType outflow_type);
+      virtual void update_state_for_outflow_request(FlowValueType outflow_);
+      virtual void update_state_for_inflow_achieved(FlowValueType inflow_);
+      virtual void update_on_internal_transition();
+      virtual void update_on_external_transition();
+      void print_state() const;
+      void print_state(const std::string& prefix) const;
+      std::string get_id() const { return id; }
 
+      std::string id;
       adevs::Time time;
       StreamType inflow_type;
       StreamType outflow_type;
@@ -132,7 +140,7 @@ namespace DISCO
   class FlowLimits : public FlowElement
   {
     public:
-      FlowLimits(StreamType stream_type, FlowValueType lower_limit, FlowValueType upper_limit);
+      FlowLimits(std::string id, StreamType stream_type, FlowValueType lower_limit, FlowValueType upper_limit);
 
     protected:
       void update_state_for_outflow_request(FlowValueType outflow) override;
@@ -145,32 +153,20 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // FlowMeter
-  class FlowMeter : public adevs::Atomic<PortValue>
+  class FlowMeter : public FlowElement
   {
     public:
-      static const int inport_input_achieved;
-      static const int inport_output_request;
-      static const int outport_input_request;
-      static const int outport_output_achieved;
-      FlowMeter(StreamType stream_type);
-      void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
-      void delta_conf(std::vector<PortValue>& xs) override;
-      adevs::Time ta() override;
-      void output_func(std::vector<PortValue>& ys) override;
+      FlowMeter(std::string id, StreamType stream_type);
       std::vector<RealTimeType> get_actual_output_times() const;
       std::vector<FlowValueType> get_actual_output() const;
 
+    protected:
+      void update_on_external_transition() override;
+
     private:
-      StreamType stream;
       std::vector<RealTimeType> event_times;
       std::vector<FlowValueType> requested_flows;
       std::vector<FlowValueType> achieved_flows;
-      bool send_requested;
-      bool send_achieved;
-      RealTimeType event_time;
-      FlowValueType requested_flow;
-      FlowValueType achieved_flow;
   };
 
   ////////////////////////////////////////////////////////////

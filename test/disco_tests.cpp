@@ -206,7 +206,6 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   }
 }
 
-/*
 TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
 {
   // Source https://en.wikipedia.org/wiki/Diesel_fuel
@@ -296,7 +295,6 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
     EXPECT_EQ(expected_fuel_output.at(i), actual_fuel_output.at(i));
   }
 }
-*/
 
 int
 main(int argc, char **argv)

@@ -262,11 +262,6 @@ namespace DISCO
   void
   FlowElement::update_state(const FlowState& fs)
   {
-    // TODO: delete this code below
-    //report_outflow_achieved =
-    //  report_outflow_achieved
-    //  || (isOutflowRequest && (std::fabs(outflow - fs.getOutflow()) > TOL))
-    //  || (!isOutflowRequest && (std::fabs(inflow - fs.getInflow()) > TOL));
     inflow = fs.getInflow();
     outflow = fs.getOutflow();
     storeflow = fs.getStoreflow();

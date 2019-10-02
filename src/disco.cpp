@@ -98,21 +98,17 @@ namespace DISCO
   ////////////////////////////////////////////////////////////
   // StreamType
   StreamType::StreamType(
-      std::string t, std::string eu, std::string fu, std::string pu):
+      std::string t, std::string u):
     type{t},
-    effort_units{eu},
-    flow_units{fu},
-    power_units{pu}
+    units{u}
   {
   }
 
   bool
   StreamType::operator==(const StreamType& other) const
   {
-    return (type != other.type)                 ? false :
-           (effort_units != other.effort_units) ? false :
-           (flow_units != other.flow_units)     ? false :
-           (power_units != other.power_units)   ? false :
+    return (type != other.type)   ? false :
+           (units != other.units) ? false :
            true;
   }
 
@@ -126,36 +122,22 @@ namespace DISCO
   operator<<(std::ostream& os, const StreamType& st)
   {
     return os << "StreamType(type=\"" << st.get_type()
-              << "\", effort_units=\"" << st.get_effort_units()
-              << "\", flow_units=\"" << st.get_flow_units()
-              << "\", power_units=\"" << st.get_power_units()
-              << "\")";
+              << "\", units=\"" << st.get_units() << "\")";
   }
 
   ///////////////////////////////////////////////////////////////////
   // Stream
-  Stream::Stream(StreamType stream_type, FlowValueType power_value):
-    Stream(stream_type, 1.0, power_value)
-  {
-  }
-
-  Stream::Stream(StreamType stream_type, FlowValueType effort_value, FlowValueType flow_value):
-    type{stream_type},
-    effort{effort_value},
-    flow{flow_value},
-    power{effort_value * flow_value}
+  Stream::Stream(StreamType s_type, FlowValueType v):
+    type{s_type},
+    value{v}
   {
   }
 
   std::ostream&
   operator<<(std::ostream& os, const Stream& s)
   {
-    auto t = s.get_type();
-    return os << "Stream(stream_type=" << t
-              << ", effort=" << s.get_effort() << " " << t.get_effort_units()
-              << ", flow=" << s.get_flow() << " " << t.get_flow_units()
-              << ", power=" << s.get_power() << " " << t.get_power_units()
-              << ")";
+    return os << "Stream(stream_type=" << s.get_type()
+              << ", value=" << s.get_value() << ")";
   }
 
   ////////////////////////////////////////////////////////////
@@ -183,6 +165,8 @@ namespace DISCO
     report_inflow_request{false},
     report_outflow_achieved{false}
   {
+    if (inflow_type.get_units() != outflow_type.get_units())
+      throw InconsistentStreamUnitsError();
   }
 
   void
@@ -213,7 +197,7 @@ namespace DISCO
           if (x.value.get_type() != inflow_type)
             throw MixedStreamsError();
           inflow_provided = true;
-          inflow_achieved += x.value.get_power();
+          inflow_achieved += x.value.get_value();
           break;
         case inport_outflow_request:
           if (DEBUG)
@@ -221,7 +205,7 @@ namespace DISCO
           if (x.value.get_type() != outflow_type)
             throw MixedStreamsError();
           outflow_provided = true;
-          outflow_request += x.value.get_power();
+          outflow_request += x.value.get_value();
           break;
         default:
           throw BadPortError();
@@ -377,7 +361,11 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // FlowLimits
-  FlowLimits::FlowLimits(std::string id, StreamType stream_type, FlowValueType low_lim, FlowValueType up_lim) :
+  FlowLimits::FlowLimits(
+      std::string id,
+      StreamType stream_type,
+      FlowValueType low_lim,
+      FlowValueType up_lim) :
     FlowElement(id, stream_type),
     lower_limit{low_lim},
     upper_limit{up_lim}

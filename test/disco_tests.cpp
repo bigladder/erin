@@ -107,7 +107,7 @@ TEST(DiscoBasicsTest, StandaloneSink)
   std::vector<::DISCO::RealTimeType> expected_loads = {100, 10, 0};
   std::vector<::DISCO::RealTimeType> times = {0, 1, 2};
   std::vector<::DISCO::FlowValueType> loads = {100, 10, 0};
-  auto st = ::DISCO::StreamType("electrical", "kV", "A", "kW");
+  auto st = ::DISCO::StreamType("electrical", "kW");
   auto sink = new ::DISCO::Sink(st, times, loads);
   auto meter = new ::DISCO::FlowMeter("meter", st);
   adevs::Digraph<::DISCO::Stream> network;
@@ -138,7 +138,7 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
 {
   std::vector<::DISCO::RealTimeType> expected_time = {0, 1};
   std::vector<::DISCO::FlowValueType> expected_flow = {100, 0};
-  auto st = ::DISCO::StreamType("electrical", "kV", "A", "kW");
+  auto st = ::DISCO::StreamType("electrical", "kW");
   auto sink = new ::DISCO::Sink(st, expected_time, expected_flow);
   auto meter = new ::DISCO::FlowMeter("meter", st);
   adevs::Digraph<::DISCO::Stream> network;
@@ -170,7 +170,7 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
 {
   std::vector<::DISCO::RealTimeType> expected_time = {0, 1, 2, 3};
   std::vector<::DISCO::FlowValueType> expected_flow = {50, 50, 40, 0};
-  auto elec = ::DISCO::StreamType("electrical", "kV", "A", "kW");
+  auto elec = ::DISCO::StreamType("electrical", "kW");
   auto meter2 = new ::DISCO::FlowMeter("meter2", elec);
   auto lim = new ::DISCO::FlowLimits("lim", elec, 0, 50);
   auto meter1 = new ::DISCO::FlowMeter("meter1", elec);
@@ -245,8 +245,8 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
     calc_input_given_output(40),
     calc_input_given_output(0),
   };
-  auto diesel = ::DISCO::StreamType("diesel", "kPa", "m3/s", "kW");
-  auto elec = ::DISCO::StreamType("electrical", "kV", "A", "kW");
+  auto diesel = ::DISCO::StreamType("diesel", "kW");
+  auto elec = ::DISCO::StreamType("electrical", "kW");
   auto diesel_fuel_meter = new ::DISCO::FlowMeter("diesel_fuel_meter", diesel);
   auto genset_tx = new ::DISCO::Transformer(
       "genset_tx",

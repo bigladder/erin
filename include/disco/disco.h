@@ -34,6 +34,16 @@ namespace DISCO
   };
 
   ////////////////////////////////////////////////////////////
+  // InconsistentStreamUnitsError
+  struct InconsistentStreamUnitsError : public std::exception
+  {
+    virtual const char* what() const throw()
+    {
+      return "InconsistentStreamUnitsError";
+    }
+  };
+
+  ////////////////////////////////////////////////////////////
   // FlowInvariantError
   struct FlowInvariantError : public std::exception
   {
@@ -100,19 +110,15 @@ namespace DISCO
   class StreamType
   {
     public:
-      StreamType(std::string type, std::string effort_units, std::string flow_units, std::string power_units);
+      StreamType(std::string type, std::string units);
       bool operator==(const StreamType& other) const;
       bool operator!=(const StreamType& other) const;
       std::string get_type() const { return type; }
-      std::string get_effort_units() const { return effort_units; }
-      std::string get_flow_units() const { return flow_units; }
-      std::string get_power_units() const { return power_units; }
+      std::string get_units() const { return units; }
 
     private:
       std::string type;
-      std::string effort_units;
-      std::string flow_units;
-      std::string power_units;
+      std::string units;
   };
 
   std::ostream& operator<<(std::ostream& os, const StreamType& st);
@@ -122,18 +128,13 @@ namespace DISCO
   class Stream
   {
     public:
-      Stream(StreamType stream_type, FlowValueType power_value);
-      Stream(StreamType stream_type, FlowValueType effort_value, FlowValueType flow_value);
+      Stream(StreamType stream_type, FlowValueType value);
       StreamType get_type() const { return type; }
-      FlowValueType get_effort() const { return effort; }
-      FlowValueType get_flow() const { return flow; }
-      FlowValueType get_power() const { return power; }
+      FlowValueType get_value() const { return value; }
 
     private:
       StreamType type;
-      FlowValueType effort;
-      FlowValueType flow;
-      FlowValueType power;
+      FlowValueType value;
   };
 
   std::ostream& operator<<(std::ostream& os, const Stream& s);

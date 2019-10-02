@@ -473,30 +473,29 @@ namespace DISCO
       print_vec<FlowValueType>("... achieved_flows", achieved_flows);
     }
     auto num_events{event_times.size()};
-    if (num_events == 0 || (num_events > 0 && event_times.back() != time.real)) {
-      event_times.push_back(time.real);
+    auto real_time{get_real_time()};
+    if (num_events == 0 || (num_events > 0 && event_times.back() != real_time)) {
+      event_times.push_back(real_time);
       ++num_events;
     }
     auto num_achieved{achieved_flows.size()};
-    if (report_inflow_request) {
-      requested_flows.push_back(inflow);
+    if (get_report_inflow_request()) {
+      requested_flows.push_back(get_inflow());
       if (num_achieved == num_events && num_achieved > 0) {
         auto &v = achieved_flows.back();
-        v = inflow;
+        v = get_inflow();
       }
       else
-        achieved_flows.push_back(inflow);
+        achieved_flows.push_back(get_inflow());
     }
-    else if (report_outflow_achieved) {
+    else if (get_report_outflow_achieved()) {
       if (num_achieved == num_events && num_achieved > 0) {
         auto &v = achieved_flows.back();
-        v = outflow;
+        v = get_outflow();
       }
       else
-        achieved_flows.push_back(outflow);
+        achieved_flows.push_back(get_outflow());
     }
-    if (report_inflow_request && report_outflow_achieved)
-      throw SimultaneousIORequestError();
     if (DEBUG) {
       print_state("... ");
       print_vec<RealTimeType>("... event_times", event_times);

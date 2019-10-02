@@ -181,9 +181,15 @@ namespace DISCO
       void print_state() const;
       void print_state(const std::string& prefix) const;
       std::string get_id() const { return id; }
+      auto get_real_time() const { return time.real; };
+      bool get_report_inflow_request() const { return report_inflow_request; };
+      bool get_report_outflow_achieved() const { return report_outflow_achieved; };
+      FlowValueType get_inflow() const { return inflow; };
+      FlowValueType get_outflow() const { return outflow; };
+      FlowValueType get_storeflow() const { return storeflow; };
+      FlowValueType get_lossflow() const { return lossflow; };
 
-      // TODO: move as much of this state private as possible
-      // protected read-only accessors is OK if need access but want to protect write-access
+    private:
       std::string id;
       adevs::Time time;
       StreamType inflow_type;
@@ -194,12 +200,11 @@ namespace DISCO
       FlowValueType lossflow;
       bool report_inflow_request;
       bool report_outflow_achieved;
+      bool do_invariant_check;
 
-    private:
       void update_state(const FlowState& fs);
       static constexpr FlowValueType tol{1e-6};
       void check_flow_invariants() const;
-      bool do_invariant_check;
   };
 
   ////////////////////////////////////////////////////////////

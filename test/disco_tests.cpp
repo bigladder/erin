@@ -82,6 +82,25 @@ TEST(DiscoUtilFunctions, TestClamp)
   EXPECT_EQ(-10, DISCO::clamp_toward_0(-15, -10, -5));
 }
 
+TEST(DiscoBasicsTest, FlowState)
+{
+  ::DISCO::FlowState fs{0.0, 0.0};
+  EXPECT_EQ(fs.getInflow(), 0.0);
+  EXPECT_EQ(fs.getOutflow(), 0.0);
+  EXPECT_EQ(fs.getStoreflow(), 0.0);
+  EXPECT_EQ(fs.getLossflow(), 0.0);
+  fs = ::DISCO::FlowState{100.0, 50.0};
+  EXPECT_EQ(fs.getInflow(), 100.0);
+  EXPECT_EQ(fs.getOutflow(), 50.0);
+  EXPECT_EQ(fs.getStoreflow(), 0.0);
+  EXPECT_EQ(fs.getLossflow(), 50.0);
+  fs = ::DISCO::FlowState{100.0, 0.0, 90.0};
+  EXPECT_EQ(fs.getInflow(), 100.0);
+  EXPECT_EQ(fs.getOutflow(), 0.0);
+  EXPECT_EQ(fs.getStoreflow(), 90.0);
+  EXPECT_EQ(fs.getLossflow(), 10.0);
+}
+
 TEST(DiscoBasicsTest, StandaloneSink)
 {
   std::vector<::DISCO::RealTimeType> expected_times = {0, 1, 2};

@@ -44,6 +44,28 @@ namespace DISCO
   struct AchievedMoreThanRequestedError : public std::exception {};
 
   ////////////////////////////////////////////////////////////
+  // FlowState
+  class FlowState
+  {
+    public:
+      FlowState(FlowValueType in, FlowValueType out);
+      FlowState(FlowValueType in, FlowValueType out, FlowValueType store);
+      FlowState(FlowValueType in, FlowValueType out, FlowValueType store, FlowValueType loss);
+
+      FlowValueType getInflow() const { return inflow; };
+      FlowValueType getOutflow() const { return outflow; };
+      FlowValueType getStoreflow() const { return storeflow; };
+      FlowValueType getLossflow() const { return lossflow; };
+
+    private:
+      FlowValueType inflow;
+      FlowValueType outflow;
+      FlowValueType storeflow;
+      FlowValueType lossflow;
+      void checkInvariants() const;
+  };
+
+  ////////////////////////////////////////////////////////////
   // StreamType
   class StreamType
   {

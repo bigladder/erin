@@ -9,6 +9,7 @@
 namespace DISCO
 {
   const bool DEBUG{true};
+  const FlowValueType TOL{1e-6};
 
   FlowValueType
   clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper)
@@ -51,6 +52,47 @@ namespace DISCO
   operator<<(std::ostream& os, const PortValue& pv)
   {
     return os << "PortValue(port=" << pv.port << ", flow=" << pv.value << ")";
+  }
+
+
+  FlowState::FlowState(FlowValueType in, FlowValueType out):
+    FlowState::FlowState(in, out, 0.0, std::fabs(in - out))
+  {
+  }
+
+  FlowState::FlowState(FlowValueType in, FlowValueType out, FlowValueType store):
+    FlowState::FlowState(in, out, store, std::fabs(in - (out + store)))
+  {
+  }
+
+  FlowState::FlowState(
+      FlowValueType in,
+      FlowValueType out,
+      FlowValueType store,
+      FlowValueType loss):
+    inflow{in},
+    outflow{out},
+    storeflow{store},
+    lossflow{loss}
+  {
+    checkInvariants();
+  }
+
+  void
+  FlowState::checkInvariants() const
+  {
+    auto diff{inflow - (outflow + storeflow + lossflow)};
+    if (std::fabs(diff) > TOL) {
+      if (DEBUG) {
+        std::cout << "FlowState.inflow   : " << inflow << "\n";
+        std::cout << "FlowState.outflow  : " << outflow << "\n";
+        std::cout << "FlowState.storeflow: " << storeflow << "\n";
+        std::cout << "FlowState.lossflow : " << lossflow << "\n";
+        std::cout << "FlowState ERROR! " << inflow << " != " << outflow << " + "
+          << storeflow << " + " << lossflow << "\n";
+      }
+      throw FlowInvariantError();
+    }
   }
 
   ////////////////////////////////////////////////////////////

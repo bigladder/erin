@@ -167,14 +167,16 @@ namespace DISCO
     protected:
       FlowElement(std::string id, StreamType flow_type);
       FlowElement(std::string id, StreamType inflow_type, StreamType outflow_type);
-      virtual void update_state_for_outflow_request(FlowValueType outflow_);
-      virtual void update_state_for_inflow_achieved(FlowValueType inflow_);
+      virtual const FlowState update_state_for_outflow_request(FlowValueType outflow_) const;
+      virtual const FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const;
       virtual void update_on_internal_transition();
       virtual void update_on_external_transition();
       void print_state() const;
       void print_state(const std::string& prefix) const;
       std::string get_id() const { return id; }
 
+      // TODO: move as much of this state private as possible
+      // protected read-only accessors is OK if need access but want to protect write-access
       std::string id;
       adevs::Time time;
       StreamType inflow_type;
@@ -187,6 +189,7 @@ namespace DISCO
       bool report_outflow_achieved;
 
     private:
+      void update_state(const FlowState& fs);
       static constexpr FlowValueType tol{1e-6};
       void check_flow_invariants() const;
   };
@@ -199,8 +202,8 @@ namespace DISCO
       FlowLimits(std::string id, StreamType stream_type, FlowValueType lower_limit, FlowValueType upper_limit);
 
     protected:
-      void update_state_for_outflow_request(FlowValueType outflow) override;
-      void update_state_for_inflow_achieved(FlowValueType inflow) override;
+      const FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
+      const FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
       FlowValueType lower_limit;
@@ -227,34 +230,24 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // Transformer
-  class Transformer : public adevs::Atomic<PortValue>
+  class Transformer : public FlowElement
   {
     public:
-      static const int inport_input_achieved;
-      static const int inport_output_request;
-      static const int outport_input_request;
-      static const int outport_output_achieved;
       Transformer(
+          std::string id,
           StreamType input_stream_type,
           StreamType output_stream_type,
           std::function<FlowValueType(FlowValueType)> calc_output_from_input,
           std::function<FlowValueType(FlowValueType)> calc_input_from_output
           );
-      void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
-      void delta_conf(std::vector<PortValue>& xs) override;
-      adevs::Time ta() override;
-      void output_func(std::vector<PortValue>& ys) override;
+
+    protected:
+      const FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
+      const FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
-      StreamType input_stream;
-      StreamType output_stream;
       std::function<FlowValueType(FlowValueType)> output_from_input;
       std::function<FlowValueType(FlowValueType)> input_from_output;
-      FlowValueType output;
-      FlowValueType input;
-      bool send_input_request;
-      bool send_output_achieved;
   };
 
   ////////////////////////////////////////////////////////////

@@ -233,11 +233,15 @@ namespace DISCO
         throw AchievedMoreThanRequestedError();
       if (inflow <= 0.0 && inflow_achieved < inflow)
         throw AchievedMoreThanRequestedError();
-      update_state_for_inflow_achieved(inflow_achieved);
+      const FlowState& fs = update_state_for_inflow_achieved(inflow_achieved);
+      update_state(fs);
     }
     else if (outflow_provided && !inflow_provided) {
       report_inflow_request = true;
-      update_state_for_outflow_request(outflow_request);
+      const FlowState fs = update_state_for_outflow_request(outflow_request);
+      if (std::fabs(fs.getOutflow() - outflow_request) > TOL)
+        report_outflow_achieved = true;
+      update_state(fs);
       if (outflow >= 0.0 && outflow > outflow_request)
         throw AchievedMoreThanRequestedError();
       if (outflow <= 0.0 && outflow < outflow_request)
@@ -253,6 +257,20 @@ namespace DISCO
       update_on_external_transition();
       check_flow_invariants();
     }
+  }
+
+  void
+  FlowElement::update_state(const FlowState& fs)
+  {
+    // TODO: delete this code below
+    //report_outflow_achieved =
+    //  report_outflow_achieved
+    //  || (isOutflowRequest && (std::fabs(outflow - fs.getOutflow()) > TOL))
+    //  || (!isOutflowRequest && (std::fabs(inflow - fs.getInflow()) > TOL));
+    inflow = fs.getInflow();
+    outflow = fs.getOutflow();
+    storeflow = fs.getStoreflow();
+    lossflow = fs.getLossflow();
   }
 
   void
@@ -301,22 +319,20 @@ namespace DISCO
     }
   }
 
-  void
-  FlowElement::update_state_for_outflow_request(FlowValueType outflow_)
+  const FlowState
+  FlowElement::update_state_for_outflow_request(FlowValueType outflow_) const
   {
     if (DEBUG)
       std::cout << "FlowElement::update_state_for_outflow_request();id=" << id << "\n";
-    outflow = outflow_;
-    inflow = outflow;
+    return FlowState{outflow_, outflow_};
   }
 
-  void
-  FlowElement::update_state_for_inflow_achieved(FlowValueType inflow_)
+  const FlowState
+  FlowElement::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
     if (DEBUG)
       std::cout << "FlowElement::update_state_for_inflow_achieved();id=" << id << "\n";
-    inflow = inflow_;
-    outflow = inflow;
+    return FlowState{inflow_, inflow_};
   }
 
   void
@@ -355,9 +371,12 @@ namespace DISCO
   void
   FlowElement::check_flow_invariants() const
   {
-    auto diff = inflow - (outflow + storeflow + lossflow);
-    if (diff > tol)
+    auto diff{inflow - (outflow + storeflow + lossflow)};
+    if (std::fabs(diff) > TOL) {
+      std::cout << "FlowElement ERROR! " << inflow << " != " << outflow << " + "
+                << storeflow << " + " << lossflow << "!\n";
       throw FlowInvariantError();
+    }
   }
 
 
@@ -376,40 +395,48 @@ namespace DISCO
     }
   }
 
-  void
-  FlowLimits::update_state_for_outflow_request(FlowValueType out)
+  const FlowState
+  FlowLimits::update_state_for_outflow_request(FlowValueType out) const
   {
     if (DEBUG) {
       std::cout << "FlowLimits::update_state_for_outflow_request(" << out << ")\n";
       print_state("... ");
     }
+    FlowValueType out_{0.0};
     if (out > upper_limit) {
-      report_outflow_achieved = true;
-      outflow = upper_limit;
+      out_ = upper_limit;
     }
     else if (out < lower_limit) {
-      report_outflow_achieved = true;
-      outflow = lower_limit;
+      out_ = lower_limit;
     }
     else
-      outflow = out;
-    inflow = outflow;
+      out_ = out;
     if (DEBUG) {
       print_state("... ");
       std::cout << "end FlowLimits::update_state_for_outflow_request\n";
     }
+    return FlowState{out_, out_};
   }
 
-  void
-  FlowLimits::update_state_for_inflow_achieved(FlowValueType in)
+  const FlowState
+  FlowLimits::update_state_for_inflow_achieved(FlowValueType in) const
   {
+    if (DEBUG) {
+      std::cout << "FlowLimits::update_state_for_inflow_achieved(" << in << ")\n";
+      print_state("... ");
+    }
+    FlowValueType in_{0.0};
     if (in > upper_limit)
       throw AchievedMoreThanRequestedError();
     else if (in < lower_limit)
       throw AchievedMoreThanRequestedError();
     else
-      inflow = in;
-    outflow = inflow;
+      in_ = in;
+    if (DEBUG) {
+      print_state("... ");
+      std::cout << "end FlowLimits::update_state_for_inflow_achieved\n";
+    }
+    return FlowState{in_, in_};
   }
 
   ////////////////////////////////////////////////////////////
@@ -480,115 +507,31 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // Transformer
-  //  public:
-  const int Transformer::inport_input_achieved = 1;
-  const int Transformer::inport_output_request = 2;
-  const int Transformer::outport_input_request = 3;
-  const int Transformer::outport_output_achieved = 4;
-
   Transformer::Transformer(
+      std::string id,
       StreamType input_stream_type,
       StreamType output_stream_type,
       std::function<FlowValueType(FlowValueType)> calc_output_from_input,
       std::function<FlowValueType(FlowValueType)> calc_input_from_output
       ) :
-    adevs::Atomic<PortValue>(),
-    input_stream{input_stream_type},
-    output_stream{output_stream_type},
+    FlowElement(id, input_stream_type, output_stream_type),
     output_from_input{calc_output_from_input},
-    input_from_output{calc_input_from_output},
-    output{0.0},
-    input{0.0},
-    send_input_request{false},
-    send_output_achieved{false}
+    input_from_output{calc_input_from_output}
   {
   }
 
-  void
-  Transformer::delta_int()
+  const FlowState
+  Transformer::update_state_for_outflow_request(FlowValueType outflow_) const
   {
-    if (DEBUG)
-      std::cout << "Transformer::delta_int()\n";
-    input = 0.0;
-    output = 0.0;
-    send_input_request = false;
-    send_output_achieved = false;
+    return FlowState{input_from_output(outflow_), outflow_};
   }
 
-  void
-  Transformer::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  const FlowState
+  Transformer::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
-    if (DEBUG) {
-      std::cout << "Transformer::delta_ext(" << e.real << ")\n";
-      for (int i{0}; i < xs.size(); ++i)
-        std::cout << "... xs[" << i <<  "] = " << xs[i] << "\n";
-    }
-    for (const auto &x : xs) {
-      switch (x.port) {
-        case inport_input_achieved:
-          send_output_achieved = true;
-          if (x.value.get_type() != input_stream)
-            throw MixedStreamsError();
-          input += x.value.get_power();
-          break;
-        case inport_output_request:
-        {
-          send_input_request = true;
-          if (x.value.get_type() != output_stream)
-            throw MixedStreamsError();
-          output += x.value.get_power();
-          break;
-        }
-        default:
-          break;
-      }
-    }
-    // update inputs / outputs
-    if (send_output_achieved) {
-      output = 0.0;
-      output = output_from_input(input);
-    }
-    if (send_input_request) {
-      input = 0.0;
-      input = input_from_output(output);
-    }
+    return FlowState{inflow_, output_from_input(inflow_)};
   }
 
-  void
-  Transformer::delta_conf(std::vector<PortValue>& xs)
-  {
-    if (DEBUG)
-      std::cout << "Transformer::delta_conf()\n";
-    delta_int();
-    delta_ext(adevs::Time{0, 0}, xs);
-  }
-
-  adevs::Time
-  Transformer::ta()
-  {
-    if (DEBUG)
-      std::cout << "Transformer::ta()\n";
-    if (send_input_request)
-      return adevs::Time{0, 0};
-    if (send_output_achieved)
-      return adevs::Time{0, 0};
-    return adevs_inf<adevs::Time>();
-  }
-
-  void
-  Transformer::output_func(std::vector<PortValue>& ys)
-  {
-    if (DEBUG)
-      std::cout << "Transformer::output_func()\n";
-    if (send_input_request)
-      ys.push_back(
-          adevs::port_value<Stream>{
-            outport_input_request, Stream{input_stream, input}});
-    if (send_output_achieved)
-      ys.push_back(
-          adevs::port_value<Stream>{
-            outport_output_achieved, Stream{output_stream, output}});
-  }
 
   ///////////////////////////////////////////////////////////////////
   // Sink

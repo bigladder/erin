@@ -61,7 +61,9 @@ This project serves as a template for consistent, cross-platform, open-source C+
 One goal is to make it as simple as possible to go from cloning to a tested build with as few steps as possible. The general process should be as simple as:
 
 ```
-cmake .
+mkdir build
+cd build
+cmake ..
 cmake --build . --config Release
 ctest -C Release
 ```

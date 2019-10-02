@@ -25,23 +25,53 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // MixedStreamsError
-  struct MixedStreamsError : public std::exception {};
+  struct MixedStreamsError : public std::exception
+  {
+    virtual const char* what() const throw()
+    {
+      return "MixedStreamsError";
+    }
+  };
 
   ////////////////////////////////////////////////////////////
   // FlowInvariantError
-  struct FlowInvariantError : public std::exception {};
+  struct FlowInvariantError : public std::exception
+  {
+    virtual const char* what() const throw()
+    {
+      return "FlowInvariantError";
+    }
+  };
 
   ////////////////////////////////////////////////////////////
   // BadPortError
-  struct BadPortError : public std::exception {};
+  struct BadPortError : public std::exception
+  {
+    virtual const char* what() const throw()
+    {
+      return "BadPortError";
+    }
+  };
 
   ////////////////////////////////////////////////////////////
   // SimultaneousIORequestError
-  struct SimultaneousIORequestError : public std::exception {};
+  struct SimultaneousIORequestError : public std::exception
+  {
+    virtual const char* what() const throw()
+    {
+      return "SimultaneousIORequestError";
+    }
+  };
 
   ////////////////////////////////////////////////////////////
   // AchievedMoreThanRequestedError
-  struct AchievedMoreThanRequestedError : public std::exception {};
+  struct AchievedMoreThanRequestedError : public std::exception
+  {
+    virtual const char* what() const throw()
+    {
+      return "AchievedMoreThanRequestedError";
+    }
+  };
 
   ////////////////////////////////////////////////////////////
   // FlowState

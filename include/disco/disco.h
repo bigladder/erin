@@ -167,7 +167,13 @@ namespace DISCO
 
     protected:
       FlowElement(std::string id, StreamType flow_type);
-      FlowElement(std::string id, StreamType inflow_type, StreamType outflow_type);
+      FlowElement(
+          std::string id, StreamType flow_type, bool do_check);
+      FlowElement(
+          std::string id, StreamType inflow_type, StreamType outflow_type);
+      FlowElement(
+          std::string id, StreamType inflow_type, StreamType outflow_type,
+          bool do_check);
       virtual const FlowState update_state_for_outflow_request(FlowValueType outflow_) const;
       virtual const FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const;
       virtual void update_on_internal_transition();
@@ -193,6 +199,7 @@ namespace DISCO
       void update_state(const FlowState& fs);
       static constexpr FlowValueType tol{1e-6};
       void check_flow_invariants() const;
+      bool do_invariant_check;
   };
 
   ////////////////////////////////////////////////////////////

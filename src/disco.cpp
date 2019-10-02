@@ -147,12 +147,26 @@ namespace DISCO
   const int FlowElement::outport_inflow_request = 2;
   const int FlowElement::outport_outflow_achieved = 3;
 
-  FlowElement::FlowElement(std::string id, StreamType st) :
-    FlowElement(id, st, st)
+  FlowElement::FlowElement(std::string id_, StreamType st) :
+    FlowElement(id_, st, st, true)
+  {
+  }
+
+  FlowElement::FlowElement(std::string id_, StreamType st, bool do_check) :
+    FlowElement(id_, st, st, do_check)
   {
   }
 
   FlowElement::FlowElement(std::string id_, StreamType in, StreamType out) :
+    FlowElement(id_, in, out, true)
+  {
+  }
+
+  FlowElement::FlowElement(
+      std::string id_,
+      StreamType in,
+      StreamType out,
+      bool do_check) :
     adevs::Atomic<PortValue>(),
     id{id_},
     time{0,0},
@@ -163,9 +177,11 @@ namespace DISCO
     storeflow{0},
     lossflow{0},
     report_inflow_request{false},
-    report_outflow_achieved{false}
+    report_outflow_achieved{false},
+    do_invariant_check{do_check}
   {
-    if (inflow_type.get_units() != outflow_type.get_units())
+    if (do_invariant_check
+        && (inflow_type.get_units() != outflow_type.get_units()))
       throw InconsistentStreamUnitsError();
   }
 
@@ -350,11 +366,13 @@ namespace DISCO
   void
   FlowElement::check_flow_invariants() const
   {
-    auto diff{inflow - (outflow + storeflow + lossflow)};
-    if (std::fabs(diff) > TOL) {
-      std::cout << "FlowElement ERROR! " << inflow << " != " << outflow << " + "
-                << storeflow << " + " << lossflow << "!\n";
-      throw FlowInvariantError();
+    if (do_invariant_check) {
+      auto diff{inflow - (outflow + storeflow + lossflow)};
+      if (std::fabs(diff) > TOL) {
+        std::cout << "FlowElement ERROR! " << inflow << " != " << outflow << " + "
+                  << storeflow << " + " << lossflow << "!\n";
+        throw FlowInvariantError();
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 # DISCO (District Infrastructure System Component Optimization)
-
+        (District Infrastructure Scenario Component Operation)
+        (District Energy Network Scenario Simulation)
 
 # LICENSE
 

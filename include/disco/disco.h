@@ -35,6 +35,16 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // InconsistentStreamUnitsError
+  struct InconsistentStreamTypesError : public std::exception
+  {
+    virtual const char* what() const throw()
+    {
+      return "InconsistentStreamTypesError";
+    }
+  };
+
+  ////////////////////////////////////////////////////////////
+  // InconsistentStreamUnitsError
   struct InconsistentStreamUnitsError : public std::exception
   {
     virtual const char* what() const throw()
@@ -90,7 +100,19 @@ namespace DISCO
     public:
       FlowState(FlowValueType in, FlowValueType out);
       FlowState(FlowValueType in, FlowValueType out, FlowValueType store);
-      FlowState(FlowValueType in, FlowValueType out, FlowValueType store, FlowValueType loss);
+      FlowState(
+          FlowValueType in,
+          FlowValueType out,
+          FlowValueType store,
+          FlowValueType loss
+          );
+      FlowState(
+          FlowValueType in,
+          FlowValueType out,
+          FlowValueType store,
+          FlowValueType loss,
+          bool do_check
+          );
 
       FlowValueType getInflow() const { return inflow; };
       FlowValueType getOutflow() const { return outflow; };
@@ -102,6 +124,7 @@ namespace DISCO
       FlowValueType outflow;
       FlowValueType storeflow;
       FlowValueType lossflow;
+      bool do_invariant_check;
       void checkInvariants() const;
   };
 
@@ -174,8 +197,10 @@ namespace DISCO
       FlowElement(
           std::string id, StreamType inflow_type, StreamType outflow_type,
           bool do_check);
-      virtual const FlowState update_state_for_outflow_request(FlowValueType outflow_) const;
-      virtual const FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const;
+      virtual const FlowState
+        update_state_for_outflow_request(FlowValueType outflow_) const;
+      virtual const FlowState
+        update_state_for_inflow_achieved(FlowValueType inflow_) const;
       virtual void update_on_internal_transition();
       virtual void update_on_external_transition();
       void print_state() const;
@@ -183,7 +208,9 @@ namespace DISCO
       std::string get_id() const { return id; }
       auto get_real_time() const { return time.real; };
       bool get_report_inflow_request() const { return report_inflow_request; };
-      bool get_report_outflow_achieved() const { return report_outflow_achieved; };
+      bool get_report_outflow_achieved() const {
+        return report_outflow_achieved;
+      };
       FlowValueType get_inflow() const { return inflow; };
       FlowValueType get_outflow() const { return outflow; };
       FlowValueType get_storeflow() const { return storeflow; };
@@ -208,11 +235,40 @@ namespace DISCO
   };
 
   ////////////////////////////////////////////////////////////
+  // FlowUnitsConverter
+  class FlowUnitsConverter : public FlowElement
+  {
+    public:
+      FlowUnitsConverter(
+          std::string id,
+          StreamType in,
+          StreamType out,
+          std::function<FlowValueType(FlowValueType)> calc_output_from_input,
+          std::function<FlowValueType(FlowValueType)> calc_input_from_output
+          );
+
+    protected:
+      const FlowState update_state_for_outflow_request(FlowValueType outflow_)
+        const override;
+      const FlowState update_state_for_inflow_achieved(FlowValueType inflow_)
+        const override;
+
+    private:
+      std::function<FlowValueType(FlowValueType)> output_from_input;
+      std::function<FlowValueType(FlowValueType)> input_from_output;
+  };
+
+  ////////////////////////////////////////////////////////////
   // FlowLimits
   class FlowLimits : public FlowElement
   {
     public:
-      FlowLimits(std::string id, StreamType stream_type, FlowValueType lower_limit, FlowValueType upper_limit);
+      FlowLimits(
+          std::string id,
+          StreamType stream_type,
+          FlowValueType lower_limit,
+          FlowValueType upper_limit
+          );
 
     protected:
       const FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;

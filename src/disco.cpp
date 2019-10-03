@@ -55,13 +55,15 @@ namespace DISCO
   }
 
 
+  //////////////////////////////////////////////////////////// 
+  // FlowState
   FlowState::FlowState(FlowValueType in, FlowValueType out):
-    FlowState::FlowState(in, out, 0.0, std::fabs(in - out))
+    FlowState(in, out, 0.0, std::fabs(in - out), true)
   {
   }
 
   FlowState::FlowState(FlowValueType in, FlowValueType out, FlowValueType store):
-    FlowState::FlowState(in, out, store, std::fabs(in - (out + store)))
+    FlowState(in, out, store, std::fabs(in - (out + store)), true)
   {
   }
 
@@ -70,12 +72,24 @@ namespace DISCO
       FlowValueType out,
       FlowValueType store,
       FlowValueType loss):
+    FlowState(in, out, store, loss, true)
+  {
+  }
+
+  FlowState::FlowState(
+      FlowValueType in,
+      FlowValueType out,
+      FlowValueType store,
+      FlowValueType loss,
+      bool do_check):
     inflow{in},
     outflow{out},
     storeflow{store},
-    lossflow{loss}
+    lossflow{loss},
+    do_invariant_check{do_check}
   {
-    checkInvariants();
+    if (do_invariant_check)
+      checkInvariants();
   }
 
   void
@@ -210,7 +224,7 @@ namespace DISCO
         case inport_inflow_achieved:
           if (DEBUG)
             std::cout << "... <=inport_inflow_achieved\n";
-          if (x.value.get_type() != inflow_type)
+          if (do_invariant_check && (x.value.get_type() != inflow_type))
             throw MixedStreamsError();
           inflow_provided = true;
           inflow_achieved += x.value.get_value();
@@ -218,7 +232,7 @@ namespace DISCO
         case inport_outflow_request:
           if (DEBUG)
             std::cout << "... <=inport_outflow_request\n";
-          if (x.value.get_type() != outflow_type)
+          if (do_invariant_check && (x.value.get_type() != outflow_type))
             throw MixedStreamsError();
           outflow_provided = true;
           outflow_request += x.value.get_value();
@@ -374,6 +388,42 @@ namespace DISCO
         throw FlowInvariantError();
       }
     }
+  }
+
+
+  ///////////////////////////////////////////////////////////////////
+  // FlowUnitsConverter
+  // TODO: Should FlowUnitsConverter derive from FlowElement? It has to "turn
+  // off" a lot of the invariant checking machinery which begs the question if
+  // it is really a subclass...
+  // Should units conversion be a part of the flow class?
+  // Stream s{...};
+  // auto v = s.get_value("units-tag");
+  // each component would have to know what units it wants
+  FlowUnitsConverter::FlowUnitsConverter(
+      std::string id,
+      StreamType in,
+      StreamType out,
+      std::function<FlowValueType(FlowValueType)> calc_output_from_input,
+      std::function<FlowValueType(FlowValueType)> calc_input_from_output) :
+    FlowElement(id, in, out, false),
+    output_from_input{calc_output_from_input},
+    input_from_output{calc_input_from_output}
+  {
+    if (in.get_type() != out.get_type())
+      throw InconsistentStreamTypesError();
+  }
+
+  const FlowState
+  FlowUnitsConverter::update_state_for_outflow_request(FlowValueType outflow_) const
+  {
+    return FlowState(input_from_output(outflow_), outflow_, 0.0, 0.0, false);
+  }
+
+  const FlowState
+  FlowUnitsConverter::update_state_for_inflow_achieved(FlowValueType inflow_) const
+  {
+    return FlowState(inflow_, output_from_input(inflow_), 0.0, 0.0, false);
   }
 
 

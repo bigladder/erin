@@ -225,12 +225,7 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
 
 TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
 {
-  // Source https://en.wikipedia.org/wiki/Diesel_fuel
-  const double diesel_fuel_energy_density_MJ_per_liter{35.86};
-  // Source EUDP-Task-028-Task C Equipment 250719.xlsx > "3. Energy systems" > G133
   const double diesel_generator_efficiency{0.36};
-  const double seconds_per_minute{60.0};
-  const double kW_per_MW{1000.0};
   const std::vector<::DISCO::RealTimeType> expected_genset_output_times{0, 1, 2, 3};
   const std::vector<::DISCO::FlowValueType> expected_genset_output{50, 50, 40, 0};
   auto calc_output_given_input = [=](::DISCO::FlowValueType input_kW) -> ::DISCO::FlowValueType {
@@ -305,6 +300,119 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
     EXPECT_EQ(expected_genset_output.at(i), actual_genset_output.at(i));
     EXPECT_EQ(expected_genset_output_times.at(i), actual_genset_output_times.at(i));
     EXPECT_EQ(expected_fuel_output.at(i), actual_fuel_output.at(i));
+  }
+}
+
+TEST(DiscoBasicsTest, UnitConversionForStreams)
+{
+  // Source https://en.wikipedia.org/wiki/Diesel_fuel
+  const double diesel_fuel_energy_density_MJ_per_liter{35.86};
+  // Source EUDP-Task-028-Task C Equipment 250719.xlsx > "3. Energy systems" > G133
+  const double diesel_generator_efficiency{0.36};
+  const double seconds_per_minute{60.0};
+  const double minutes_per_hour{60.0};
+  const double kW_per_MW{1000.0};
+  const double liters_per_gallon{3.7854};
+  auto calc_output_given_input = [=](
+      ::DISCO::FlowValueType input_kW) -> ::DISCO::FlowValueType {
+    return input_kW * diesel_generator_efficiency;
+  };
+  auto calc_input_given_output = [=](
+      ::DISCO::FlowValueType output_kW) -> ::DISCO::FlowValueType {
+    return output_kW / diesel_generator_efficiency;
+  };
+  auto uc_diesel_output_given_input = [=](
+      ::DISCO::FlowValueType input_gallons_per_hour) -> ::DISCO::FlowValueType {
+    return input_gallons_per_hour               // gal/hr 
+      * liters_per_gallon                       // gal/hr * l/gal = l/hr
+      * diesel_fuel_energy_density_MJ_per_liter // l/hr * MJ/l = MJ/hr
+      / minutes_per_hour                        // MJ/hr * hr/min = MJ/min
+      / seconds_per_minute                      // MJ/min * min/s = MJ/s = MW
+      * kW_per_MW                               // MW * kW/MW = kW
+      ;
+  };
+  auto uc_diesel_input_given_output = [=](
+      ::DISCO::FlowValueType output_kW) -> ::DISCO::FlowValueType {
+    return output_kW                            // kW
+      / kW_per_MW                               // kW * MW/kW = MW = MJ/s
+      * seconds_per_minute                      // MJ/s * s/min = MJ/min
+      * minutes_per_hour                        // MJ/min * min/hr = MJ/hr
+      / diesel_fuel_energy_density_MJ_per_liter // MJ/hr * l/MJ = l/hr
+      / liters_per_gallon                       // l/hr * gal/l = gal/hr
+      ;
+  };
+  const std::vector<::DISCO::FlowValueType> expected_fuel_consumption{
+    uc_diesel_input_given_output(calc_input_given_output(50)),
+    uc_diesel_input_given_output(calc_input_given_output(50)),
+    uc_diesel_input_given_output(calc_input_given_output(40)),
+    uc_diesel_input_given_output(calc_input_given_output(0)),
+  };
+  auto diesel_liters_per_hr = ::DISCO::StreamType("diesel", "liters/hour");
+  auto diesel = ::DISCO::StreamType("diesel", "kW");
+  auto elec = ::DISCO::StreamType("electrical", "kW");
+  auto diesel_fuel_meter = new ::DISCO::FlowMeter("diesel_fuel_meter", diesel_liters_per_hr);
+  auto diesel_supply = new ::DISCO::FlowUnitsConverter(
+      "diesel-supply",
+      diesel_liters_per_hr,
+      diesel,
+      uc_diesel_output_given_input,
+      uc_diesel_input_given_output
+      );
+  auto genset_tx = new ::DISCO::Transformer(
+      "genset_tx",
+      diesel,
+      elec,
+      calc_output_given_input,
+      calc_input_given_output
+      );
+  auto genset_lim = new ::DISCO::FlowLimits("genset_lim", elec, 0, 50);
+  auto genset_meter = new ::DISCO::FlowMeter("genset_meter", elec);
+  auto sink = new ::DISCO::Sink(elec, {0,1,2,3}, {160,80,40,0});
+  adevs::Digraph<::DISCO::Stream> network;
+  network.couple(
+      sink, ::DISCO::Sink::outport_inflow_request,
+      genset_meter, ::DISCO::FlowMeter::inport_outflow_request);
+  network.couple(
+      genset_meter, ::DISCO::FlowMeter::outport_inflow_request,
+      genset_lim, ::DISCO::FlowLimits::inport_outflow_request);
+  network.couple(
+      genset_lim, ::DISCO::FlowLimits::outport_inflow_request,
+      genset_tx, ::DISCO::Transformer::inport_outflow_request);
+  network.couple(
+      genset_tx, ::DISCO::Transformer::outport_inflow_request,
+      diesel_supply, ::DISCO::FlowUnitsConverter::inport_outflow_request);
+  network.couple(
+      diesel_supply, ::DISCO::FlowUnitsConverter::outport_inflow_request,
+      diesel_fuel_meter, ::DISCO::FlowMeter::inport_outflow_request);
+  network.couple(
+      diesel_fuel_meter, ::DISCO::FlowMeter::outport_outflow_achieved,
+      diesel_supply, ::DISCO::FlowUnitsConverter::inport_inflow_achieved);
+  network.couple(
+      diesel_supply, ::DISCO::FlowUnitsConverter::outport_outflow_achieved,
+      genset_tx, ::DISCO::Transformer::inport_inflow_achieved);
+  network.couple(
+      genset_tx, ::DISCO::Transformer::outport_outflow_achieved,
+      genset_lim, ::DISCO::FlowLimits::inport_inflow_achieved);
+  network.couple(
+      genset_lim, ::DISCO::FlowLimits::outport_outflow_achieved,
+      genset_meter, ::DISCO::FlowMeter::inport_inflow_achieved);
+  adevs::Simulator<::DISCO::PortValue> sim;
+  network.add(&sim);
+  adevs::Time t;
+  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  {
+    sim.exec_next_event();
+    t = sim.now();
+    std::cout << "The current time is: (" << t.real << ", " << t.logical << ")" << std::endl;
+  }
+  std::vector<::DISCO::FlowValueType> actual_fuel_consumption =
+    diesel_fuel_meter->get_actual_output(); // units gallons/hour
+  auto actual_fuel_consumption_size = actual_fuel_consumption.size();
+  EXPECT_EQ(expected_fuel_consumption.size(), actual_fuel_consumption_size);
+  for (int i{0}; i < expected_fuel_consumption.size(); ++i) {
+    if (i >= actual_fuel_consumption_size)
+      break;
+    EXPECT_EQ(expected_fuel_consumption.at(i), actual_fuel_consumption.at(i));
   }
 }
 

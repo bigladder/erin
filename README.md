@@ -1,6 +1,6 @@
-# DISCO (District Infrastructure System Component Optimization)
-        (District Infrastructure Scenario Component Operation)
-        (District Energy Network Scenario Simulator)
+# AREN (Assessment of Energy Networks)
+
+Main engine for the DISCO (District Infrastructure System Component Optimization) tool.
 
 # LICENSE
 

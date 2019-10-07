@@ -8,14 +8,15 @@
 
 namespace DISCO
 {
+  const bool DEBUG{true};
+  const FlowValueType TOL{1e-6};
+
   Main::Main(std::string in_path, std::string out_path):
     input_file_path{in_path},
     output_file_path{out_path}
   {
   }
 
-  const bool DEBUG{true};
-  const FlowValueType TOL{1e-6};
 
   ////////////////////////////////////////////////////////////
   // Utility Functions

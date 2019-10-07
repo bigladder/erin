@@ -118,7 +118,8 @@ namespace DISCO
   ////////////////////////////////////////////////////////////
   // StreamType
   StreamType::StreamType(
-      std::string t, std::string u):
+      std::string t,
+      std::string u):
     type{t},
     units{u}
   {

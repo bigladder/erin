@@ -16,12 +16,12 @@ namespace DISCO
   class Main
   {
     public:
-      Main(std::string input_toml, std::string output_csv);
+      Main(std::string input_toml, std::string output_toml);
       bool run();
 
     private:
-      std::string input_file_path; // TOML
-      std::string output_file_path; // CSV
+      std::string input_file_path;
+      std::string output_file_path;
   };
 
   ////////////////////////////////////////////////////////////
@@ -103,6 +103,16 @@ namespace DISCO
     virtual const char* what() const throw()
     {
       return "AchievedMoreThanRequestedError";
+    }
+  };
+
+  ////////////////////////////////////////////////////////////
+  // BadInputError
+  struct BadInputError : public std::exception
+  {
+    virtual const char* what() const throw()
+    {
+      return "BadInputError";
     }
   };
 

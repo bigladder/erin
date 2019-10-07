@@ -30,3 +30,5 @@ generate_export_header(${CMAKE_PROJECT_NAME})
 if (${CMAKE_PROJECT_NAME}_COVERAGE)
   add_coverage(${CMAKE_PROJECT_NAME})
 endif()
+
+add_executable(aren cli.cpp ${sources} ${public_headers} ${private_headers})

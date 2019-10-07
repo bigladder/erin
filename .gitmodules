@@ -5,3 +5,6 @@
 	path = vendor/bdevs
 	url = https://michael-okeefe@bitbucket.org/bigladder/bdevs.git
 	branch = add_cmake
+[submodule "vendor/toml11"]
+	path = vendor/toml11
+	url = https://github.com/ToruNiina/toml11.git

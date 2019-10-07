@@ -12,6 +12,19 @@
 namespace DISCO
 {
   ////////////////////////////////////////////////////////////
+  // Main Class
+  class Main
+  {
+    public:
+      Main(std::string input_toml, std::string output_csv);
+      bool run();
+
+    private:
+      std::string input_file_path; // TOML
+      std::string output_file_path; // CSV
+  };
+
+  ////////////////////////////////////////////////////////////
   // Type Definitions
   typedef double FlowValueType;
   typedef int RealTimeType;

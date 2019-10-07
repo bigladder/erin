@@ -17,6 +17,8 @@ namespace DISCO
   const bool DEBUG{true};
   const FlowValueType TOL{1e-6};
 
+  ////////////////////////////////////////////////////////////
+  // Utility Functions
   FlowValueType
   clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper)
   {

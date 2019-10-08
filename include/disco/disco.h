@@ -131,13 +131,6 @@ namespace DISCO
           FlowValueType store,
           FlowValueType loss
           );
-      FlowState(
-          FlowValueType in,
-          FlowValueType out,
-          FlowValueType store,
-          FlowValueType loss,
-          bool do_check
-          );
 
       FlowValueType getInflow() const { return inflow; };
       FlowValueType getOutflow() const { return outflow; };
@@ -149,7 +142,6 @@ namespace DISCO
       FlowValueType outflow;
       FlowValueType storeflow;
       FlowValueType lossflow;
-      bool do_invariant_check;
       void checkInvariants() const;
   };
 
@@ -256,12 +248,7 @@ namespace DISCO
     protected:
       FlowElement(std::string id, StreamType flow_type);
       FlowElement(
-          std::string id, StreamType flow_type, bool do_check);
-      FlowElement(
           std::string id, StreamType inflow_type, StreamType outflow_type);
-      FlowElement(
-          std::string id, StreamType inflow_type, StreamType outflow_type,
-          bool do_check);
       virtual const FlowState
         update_state_for_outflow_request(FlowValueType outflow_) const;
       virtual const FlowState
@@ -292,7 +279,6 @@ namespace DISCO
       FlowValueType lossflow;
       bool report_inflow_request;
       bool report_outflow_achieved;
-      bool do_invariant_check;
 
       void update_state(const FlowState& fs);
       static constexpr FlowValueType tol{1e-6};

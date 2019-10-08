@@ -93,6 +93,13 @@ namespace DISCO
     if (DEBUG)
       for (const auto& x: stream_types_map)
         std::cout << "stream type: " << x.first << ", " << x.second << "\n";
+    // [components]
+    std::map<std::string, std::vector<::DISCO::FlowElement>> components{};
+    const auto toml_comps =
+    // [networks]
+    std::map<std::string, std::vector<::DISCO::FlowElement>> networks{};
+    // [scenarios]
+    std::map<std::string, std::vector<::DISCO::FlowElement>> scenarios{};
     return true;
   }
 

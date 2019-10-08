@@ -127,10 +127,49 @@ namespace DISCO
       // load_priority ... ignore for now
       // load_profiles_by_scenario :: toml::table
       // ... need to refactor FlowSink objects to change load profiles by the active scenario
+      std::map<std::string,std::vector<LoadItem>> loads_by_scenario{};
       it = tt.find("load_profiles_by_scenario");
       if (it != tt.end()) {
+        const auto& loads = toml::get<toml::table>(it->second);
+        const auto num_profile_scenarios{loads.size()};
         if (DEBUG)
-          std::cout << "load_profiles_by_scenario found\n";
+          std::cout << num_profile_scenarios << " load profile(s) by scenario"
+                    << " for component " << c.first << "\n";
+        for (const auto& lp: loads) {
+          std::vector<LoadItem> loads{};
+          for (const auto& li:
+              toml::get<std::vector<toml::table>>(lp.second)) {
+            RealTimeType t{};
+            FlowValueType v{};
+            auto it_for_t = li.find("t");
+            if (it_for_t != li.end())
+              t = toml::get<RealTimeType>(it_for_t->second);
+            else
+              t = -1;
+            auto it_for_v = li.find("v");
+            if (it_for_v != li.end()) {
+              v = toml::get<FlowValueType>(it_for_v->second);
+              loads.push_back(LoadItem(t, v));
+            } else {
+              loads.push_back(LoadItem(t));
+            }
+          }
+          loads_by_scenario.insert(std::make_pair(lp.first, loads));
+        }
+      }
+      if (DEBUG) {
+        std::cout << loads_by_scenario.size() << " scenarios with loads\n";
+        for (const auto& ls: loads_by_scenario) {
+          std::cout << ls.first << ": [";
+          for (const auto& li: ls.second) {
+            std::cout << "(" << li.get_time();
+            if (li.get_is_end())
+              std::cout << ")";
+            else
+              std::cout << ", " << li.get_value() << "), ";
+          }
+          std::cout << "]\n";
+        }
       }
     }
     // [networks]

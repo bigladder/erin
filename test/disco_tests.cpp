@@ -93,12 +93,14 @@ TEST(DiscoBasicsTest, TestUnitConversion)
   const auto s1 = ::DISCO::Stream{st1, 1.0};
   EXPECT_EQ(s1.get_rate(), 1.0);
   EXPECT_NEAR(s1.get_quantity(3600.0), 1.0, 1e-6);
-  auto ru = std::unordered_map<std::string,::DISCO::FlowValueType>();
-  ru.insert(std::make_pair<std::string,::DISCO::FlowValueType>("liters/hour",0.1003904071388734));
-  ru.insert(std::make_pair<std::string,::DISCO::FlowValueType>("gallons/hour",0.026520422449113276));
-  auto qu = std::unordered_map<std::string,::DISCO::FlowValueType>();
-  qu.insert(std::make_pair<std::string,::DISCO::FlowValueType>("liters",2.7886224205242612e-05));
-  qu.insert(std::make_pair<std::string,::DISCO::FlowValueType>("gallons",7.366784013642577e-06));
+  const auto ru = std::unordered_map<std::string,::DISCO::FlowValueType>{
+    {"liters/hour",0.1003904071388734},
+    {"gallons/hour",0.026520422449113276}
+  };
+  const auto qu = std::unordered_map<std::string,::DISCO::FlowValueType>{
+    {"liters",2.7886224205242612e-05},
+    {"gallons",7.366784013642577e-06}
+  };
   const auto st2 = ::DISCO::StreamType{
     "diesel",
     "kW",

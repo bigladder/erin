@@ -95,6 +95,10 @@ namespace DISCO
       for (const auto& x: stream_types_map)
         std::cout << "stream type: " << x.first << ", " << x.second << "\n";
     // [components]
+    const auto toml_comps = toml::find<toml::table>(data, "components");
+    const auto num_comps = toml_comps.size();
+    if (DEBUG)
+      std::cout << num_comps << " components found\n";
     std::map<std::string, std::vector<::DISCO::FlowElement>> components{};
     const auto toml_comps =
     // [networks]

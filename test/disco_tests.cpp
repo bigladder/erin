@@ -82,6 +82,13 @@ TEST(DiscoUtilFunctions, TestClamp)
   EXPECT_EQ(-10, DISCO::clamp_toward_0(-15, -10, -5));
 }
 
+TEST(DiscoBasicsTest, TestUnitConversion)
+{
+  const auto st = ::DISCO::StreamType{"electricity"};
+  const auto s = ::DISCO::Stream(st, 10.0);
+  EXPECT_EQ(s.get_rate(), 10.0);
+}
+
 TEST(DiscoBasicsTest, FlowState)
 {
   ::DISCO::FlowState fs{0.0, 0.0};

@@ -55,8 +55,9 @@ namespace DISCO
     }
     // [streams]
     const auto toml_streams = toml::find<toml::table>(data, "streams");
-    const std::unordered_map<std::string,toml::value>::size_type num_streams =
-      toml_streams.size();
+    const auto num_streams = toml_streams.size();
+    if (DEBUG)
+      std::cout << num_streams << " streams found\n";
     std::map<std::string, ::DISCO::StreamType> stream_types_map;
     for (const auto& s: toml_streams) {
       toml::value t = s.second;

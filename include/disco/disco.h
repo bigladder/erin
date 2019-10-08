@@ -7,6 +7,8 @@
 #include <vector>
 #include <exception>
 #include <functional>
+#include <map>
+#include <unordered_map>
 #include "../../vendor/bdevs/include/adevs.h"
 
 namespace DISCO
@@ -156,15 +158,41 @@ namespace DISCO
   class StreamType
   {
     public:
-      StreamType(std::string type, std::string units);
+      StreamType(const std::string& type);
+      StreamType(
+          const std::string& type,
+          const std::string& rate_units,
+          const std::string& quantity_units,
+          FlowValueType seconds_per_time_unit
+          );
+      StreamType(
+          const std::string& type,
+          const std::string& rate_units,
+          const std::string& quantity_units,
+          FlowValueType seconds_per_time_unit,
+          const std::unordered_map<std::string, FlowValueType>& other_rate_units,
+          const std::unordered_map<std::string, FlowValueType>& other_quantity_units
+          );
       bool operator==(const StreamType& other) const;
       bool operator!=(const StreamType& other) const;
-      std::string get_type() const { return type; }
-      std::string get_units() const { return units; }
+      const std::string& get_type() const { return type; }
+      const std::string& get_rate_units() const { return rate_units; }
+      const std::string& get_quantity_units() const { return quantity_units; }
+      FlowValueType get_seconds_per_time_unit() const { return seconds_per_time_unit; }
+      const std::unordered_map<std::string,FlowValueType>& get_other_rate_units() const {
+        return other_rate_units;
+      }
+      const std::unordered_map<std::string,FlowValueType>& get_other_quntity_units() const {
+        return other_quantity_units;
+      }
 
     private:
       std::string type;
-      std::string units;
+      std::string rate_units;
+      std::string quantity_units;
+      FlowValueType seconds_per_time_unit;
+      std::unordered_map<std::string,FlowValueType> other_rate_units;
+      std::unordered_map<std::string,FlowValueType> other_quantity_units;
   };
 
   std::ostream& operator<<(std::ostream& os, const StreamType& st);
@@ -174,13 +202,27 @@ namespace DISCO
   class Stream
   {
     public:
-      Stream(StreamType stream_type, FlowValueType value);
+      Stream(StreamType stream_type, FlowValueType rate);
       StreamType get_type() const { return type; }
-      FlowValueType get_value() const { return value; }
+      FlowValueType get_rate() const { return rate; }
+      FlowValueType get_quantity(FlowValueType dt_s) const {
+        return rate * (dt_s / type.get_seconds_per_time_unit());
+      }
+      FlowValueType get_rate_in_units(const std::string& units) const {
+        const auto& u = type.get_other_rate_units();
+        FlowValueType m{u.at(units)};
+        return rate * m;
+      }
+      FlowValueType get_quantity_in_units(
+          FlowValueType dt_s, const std::string& units) const {
+        const auto& u = type.get_other_quntity_units();
+        FlowValueType m{u.at(units)};
+        return rate * (dt_s / type.get_seconds_per_time_unit()) * m;
+      }
 
     private:
       StreamType type;
-      FlowValueType value;
+      FlowValueType rate;
   };
 
   std::ostream& operator<<(std::ostream& os, const Stream& s);
@@ -255,30 +297,6 @@ namespace DISCO
       void update_state(const FlowState& fs);
       static constexpr FlowValueType tol{1e-6};
       void check_flow_invariants() const;
-  };
-
-  ////////////////////////////////////////////////////////////
-  // FlowUnitsConverter
-  class FlowUnitsConverter : public FlowElement
-  {
-    public:
-      FlowUnitsConverter(
-          std::string id,
-          StreamType in,
-          StreamType out,
-          std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-          std::function<FlowValueType(FlowValueType)> calc_input_from_output
-          );
-
-    protected:
-      const FlowState update_state_for_outflow_request(FlowValueType outflow_)
-        const override;
-      const FlowState update_state_for_inflow_achieved(FlowValueType inflow_)
-        const override;
-
-    private:
-      std::function<FlowValueType(FlowValueType)> output_from_input;
-      std::function<FlowValueType(FlowValueType)> input_from_output;
   };
 
   ////////////////////////////////////////////////////////////

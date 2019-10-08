@@ -53,7 +53,12 @@ namespace DISCO
       toml::value t = s.second;
       const std::string stream_type{toml::find<std::string>(t, "type")};
       stream_types_map.insert(std::pair<std::string,::DISCO::StreamType>(
-            s.first, ::DISCO::StreamType(stream_type, stream_info_rate_unit)));
+            s.first,
+            ::DISCO::StreamType(
+              stream_type,
+              stream_info_rate_unit,
+              stream_info_quantity_unit,
+              stream_info_seconds_per_time_unit)));
     }
     if (DEBUG)
       for (const auto& x: stream_types_map)
@@ -163,19 +168,51 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // StreamType
+  StreamType::StreamType(const std::string& stream_type):
+    StreamType(stream_type, "kW", "kJ", 1.0)
+  {
+  }
+
   StreamType::StreamType(
-      std::string t,
-      std::string u):
-    type{t},
-    units{u}
+      const std::string& stream_type,
+      const std::string& rate_units,
+      const std::string& quantity_units,
+      FlowValueType seconds_per_time_unit):
+    StreamType(
+        stream_type,
+        rate_units,
+        quantity_units,
+        seconds_per_time_unit,
+        std::unordered_map<std::string,FlowValueType>{},
+        std::unordered_map<std::string,FlowValueType>{})
+  {
+  }
+
+  StreamType::StreamType(
+      const std::string& stream_type,
+      const std::string& r_units,
+      const std::string& q_units,
+      FlowValueType s_per_time_unit,
+      const std::unordered_map<std::string, FlowValueType>& other_r_units,
+      const std::unordered_map<std::string, FlowValueType>& other_q_units
+      ):
+    type{stream_type},
+    rate_units{r_units},
+    quantity_units{q_units},
+    seconds_per_time_unit{s_per_time_unit},
+    other_rate_units{other_r_units},
+    other_quantity_units{other_q_units}
   {
   }
 
   bool
   StreamType::operator==(const StreamType& other) const
   {
+    if (this == &other) return true;
     return (type != other.type)   ? false :
-           (units != other.units) ? false :
+           (rate_units != other.rate_units) ? false :
+           (quantity_units != other.quantity_units) ? false :
+           (seconds_per_time_unit != other.seconds_per_time_unit) ? false :
            true;
   }
 
@@ -189,14 +226,17 @@ namespace DISCO
   operator<<(std::ostream& os, const StreamType& st)
   {
     return os << "StreamType(type=\"" << st.get_type()
-              << "\", units=\"" << st.get_units() << "\")";
+              << "\", rate_units=\"" << st.get_rate_units()
+              << "\", quantity_units=\"" << st.get_quantity_units()
+              << "\", seconds_per_time_unit=" << st.get_seconds_per_time_unit()
+              << ", ...)";
   }
 
   ///////////////////////////////////////////////////////////////////
   // Stream
-  Stream::Stream(StreamType s_type, FlowValueType v):
+  Stream::Stream(StreamType s_type, FlowValueType r):
     type{s_type},
-    value{v}
+    rate{r}
   {
   }
 
@@ -204,7 +244,7 @@ namespace DISCO
   operator<<(std::ostream& os, const Stream& s)
   {
     return os << "Stream(stream_type=" << s.get_type()
-              << ", value=" << s.get_value() << ")";
+              << ", rate=" << s.get_rate() << ")";
   }
 
   ////////////////////////////////////////////////////////////
@@ -248,7 +288,7 @@ namespace DISCO
     do_invariant_check{do_check}
   {
     if (do_invariant_check
-        && (inflow_type.get_units() != outflow_type.get_units()))
+        && (inflow_type.get_rate_units() != outflow_type.get_rate_units()))
       throw InconsistentStreamUnitsError();
   }
 
@@ -280,7 +320,7 @@ namespace DISCO
           if (do_invariant_check && (x.value.get_type() != inflow_type))
             throw MixedStreamsError();
           inflow_provided = true;
-          inflow_achieved += x.value.get_value();
+          inflow_achieved += x.value.get_rate();
           break;
         case inport_outflow_request:
           if (DEBUG)
@@ -288,7 +328,7 @@ namespace DISCO
           if (do_invariant_check && (x.value.get_type() != outflow_type))
             throw MixedStreamsError();
           outflow_provided = true;
-          outflow_request += x.value.get_value();
+          outflow_request += x.value.get_rate();
           break;
         default:
           throw BadPortError();
@@ -442,43 +482,6 @@ namespace DISCO
       }
     }
   }
-
-
-  ///////////////////////////////////////////////////////////////////
-  // FlowUnitsConverter
-  // TODO: Should FlowUnitsConverter derive from FlowElement? It has to "turn
-  // off" a lot of the invariant checking machinery which begs the question if
-  // it is really a subclass...
-  // Should units conversion be a part of the flow class?
-  // Stream s{...};
-  // auto v = s.get_value("units-tag");
-  // each component would have to know what units it wants
-  FlowUnitsConverter::FlowUnitsConverter(
-      std::string id,
-      StreamType in,
-      StreamType out,
-      std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-      std::function<FlowValueType(FlowValueType)> calc_input_from_output) :
-    FlowElement(id, in, out, false),
-    output_from_input{calc_output_from_input},
-    input_from_output{calc_input_from_output}
-  {
-    if (in.get_type() != out.get_type())
-      throw InconsistentStreamTypesError();
-  }
-
-  const FlowState
-  FlowUnitsConverter::update_state_for_outflow_request(FlowValueType outflow_) const
-  {
-    return FlowState(input_from_output(outflow_), outflow_, 0.0, 0.0, false);
-  }
-
-  const FlowState
-  FlowUnitsConverter::update_state_for_inflow_achieved(FlowValueType inflow_) const
-  {
-    return FlowState(inflow_, output_from_input(inflow_), 0.0, 0.0, false);
-  }
-
 
   ///////////////////////////////////////////////////////////////////
   // FlowLimits

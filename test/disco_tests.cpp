@@ -87,6 +87,7 @@ TEST(DiscoBasicsTest, TestUnitConversion)
   const auto st = ::DISCO::StreamType{"electricity"};
   const auto s = ::DISCO::Stream(st, 10.0);
   EXPECT_EQ(s.get_rate(), 10.0);
+  EXPECT_NEAR(s.get_quantity(3600.0), 10.0 * 3600.0, 1e-6);
 }
 
 TEST(DiscoBasicsTest, FlowState)

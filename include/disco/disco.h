@@ -120,6 +120,26 @@ namespace DISCO
     }
   };
 
+  //////////////////////////////////////////////////////////// 
+  // LoadItem
+  class LoadItem
+  {
+    public:
+      LoadItem(RealTimeType t);
+      LoadItem(RealTimeType t, FlowValueType v);
+      RealTimeType get_time() const { return time; }
+      FlowValueType get_value() const { return value; }
+      bool get_is_end() const { return is_end; }
+      RealTimeType get_time_advance(const LoadItem& other) const;
+
+    private:
+      RealTimeType time;
+      FlowValueType value;
+      bool is_end;
+
+      bool is_good() const { return (time >= 0); }
+  };
+
   ////////////////////////////////////////////////////////////
   // FlowState
   class FlowState

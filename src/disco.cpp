@@ -202,6 +202,30 @@ namespace DISCO
     return oss.str();
   }
 
+  ////////////////////////////////////////////////////////////
+  // LoadItem
+  LoadItem::LoadItem(RealTimeType t):
+    time{t},
+    value{-1},
+    is_end{true}
+  {
+    if (!is_good()) throw BadInputError();
+  }
+
+  LoadItem::LoadItem(RealTimeType t, FlowValueType v):
+    time{t},
+    value{v},
+    is_end{false}
+  {
+    if (!is_good()) throw BadInputError();
+  }
+
+  RealTimeType
+  LoadItem::get_time_advance(const LoadItem& other) const
+  {
+    return (other.get_time() - time);
+  }
+
   //////////////////////////////////////////////////////////// 
   // FlowState
   FlowState::FlowState(FlowValueType in, FlowValueType out):

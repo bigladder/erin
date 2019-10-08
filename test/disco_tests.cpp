@@ -118,6 +118,18 @@ TEST(DiscoBasicsTest, TestUnitConversion)
   EXPECT_NEAR(s2.get_quantity_in_units(3600.0, "gallons"), 2.652042244911328, 1e-6);
 }
 
+TEST(DiscoBasicsTest, TestLoadItem)
+{
+  const auto li1 = ::DISCO::LoadItem(0, 1);
+  const auto li2 = ::DISCO::LoadItem(4);
+  EXPECT_NEAR(li1.get_time_advance(li2), 4.0, 1e-6);
+  EXPECT_EQ(li1.get_time(), 0);
+  EXPECT_EQ(li1.get_value(), 1.0);
+  EXPECT_EQ(li2.get_time(), 4);
+  EXPECT_FALSE(li1.get_is_end());
+  EXPECT_TRUE(li2.get_is_end());
+}
+
 TEST(DiscoBasicsTest, FlowState)
 {
   ::DISCO::FlowState fs{0.0, 0.0};

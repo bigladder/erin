@@ -37,6 +37,8 @@ namespace DISCO
   FlowValueType clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper);
   template<class T>
   void print_vec(const std::string& tag, const std::vector<T>& vs);
+  std::string map_to_string(
+      const std::unordered_map<std::string,FlowValueType>& m);
 
   ////////////////////////////////////////////////////////////
   // MixedStreamsError

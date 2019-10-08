@@ -132,6 +132,21 @@ namespace DISCO
     return os << "PortValue(port=" << pv.port << ", flow=" << pv.value << ")";
   }
 
+  std::string
+  map_to_string(const std::unordered_map<std::string,FlowValueType>& m)
+  {
+    auto max_idx{m.size() - 1};
+    std::ostringstream oss;
+    oss << "{";
+    int idx{0};
+    for (const auto& p: m) {
+      oss << "{" << p.first << ", " << p.second << "}";
+      if (idx != max_idx)
+        oss << ", ";
+    }
+    oss << "}";
+    return oss.str();
+  }
 
   //////////////////////////////////////////////////////////// 
   // FlowState

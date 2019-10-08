@@ -174,7 +174,7 @@ namespace DISCO
       const std::unordered_map<std::string,FlowValueType>& get_other_rate_units() const {
         return other_rate_units;
       }
-      const std::unordered_map<std::string,FlowValueType>& get_other_quntity_units() const {
+      const std::unordered_map<std::string,FlowValueType>& get_other_quantity_units() const {
         return other_quantity_units;
       }
 
@@ -207,7 +207,7 @@ namespace DISCO
       }
       FlowValueType get_quantity_in_units(
           FlowValueType dt_s, const std::string& units) const {
-        const auto& u = type.get_other_quntity_units();
+        const auto& u = type.get_other_quantity_units();
         FlowValueType m{u.at(units)};
         return rate * (dt_s / type.get_seconds_per_time_unit()) * m;
       }

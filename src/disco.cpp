@@ -100,7 +100,39 @@ namespace DISCO
     if (DEBUG)
       std::cout << num_comps << " components found\n";
     std::map<std::string, std::vector<::DISCO::FlowElement>> components{};
-    const auto toml_comps =
+    for (const auto& c: toml_comps) {
+      toml::value t = c.second;
+      toml::table tt = toml::get<toml::table>(t);
+      // stream OR input_stream, output_stream
+      std::string input_stream_id{""};
+      std::string output_stream_id{""};
+      auto it = tt.find("stream");
+      if (it != tt.end()) {
+        input_stream_id = toml::get<std::string>(it->second);
+        output_stream_id = input_stream_id;
+      } else {
+        it = tt.find("input_stream");
+        if (it != tt.end())
+          input_stream_id = toml::get<std::string>(it->second);
+        it = tt.find("output_stream");
+        if (it != tt.end())
+          output_stream_id = toml::get<std::string>(it->second);
+      }
+      if (DEBUG) {
+        std::cout << "comp: " << c.first
+                  << ".input_stream_id  = " << input_stream_id << "\n";
+        std::cout << "comp: " << c.first
+                  << ".output_stream_id = " << output_stream_id << "\n";
+      }
+      // load_priority ... ignore for now
+      // load_profiles_by_scenario :: toml::table
+      // ... need to refactor FlowSink objects to change load profiles by the active scenario
+      it = tt.find("load_profiles_by_scenario");
+      if (it != tt.end()) {
+        if (DEBUG)
+          std::cout << "load_profiles_by_scenario found\n";
+      }
+    }
     // [networks]
     std::map<std::string, std::vector<::DISCO::FlowElement>> networks{};
     // [scenarios]

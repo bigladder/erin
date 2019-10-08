@@ -54,10 +54,11 @@ namespace DISCO
                 << stream_info_seconds_per_time_unit << "\n";
     }
     // [streams]
-    const auto streams = toml::find<toml::table>(data, "streams");
-    const std::unordered_map<std::string,toml::value>::size_type num_streams = streams.size();
+    const auto toml_streams = toml::find<toml::table>(data, "streams");
+    const std::unordered_map<std::string,toml::value>::size_type num_streams =
+      toml_streams.size();
     std::map<std::string, ::DISCO::StreamType> stream_types_map;
-    for (const auto& s: streams) {
+    for (const auto& s: toml_streams) {
       toml::value t = s.second;
       toml::table tt = toml::get<toml::table>(t);
       auto other_rate_units = std::unordered_map<std::string,FlowValueType>();

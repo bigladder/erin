@@ -196,6 +196,7 @@ namespace DISCO
       oss << "{" << p.first << ", " << p.second << "}";
       if (idx != max_idx)
         oss << ", ";
+      ++idx;
     }
     oss << "}";
     return oss.str();

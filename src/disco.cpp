@@ -51,14 +51,35 @@ namespace DISCO
     std::map<std::string, ::DISCO::StreamType> stream_types_map;
     for (const auto& s: streams) {
       toml::value t = s.second;
+      toml::table tt = toml::get<toml::table>(t);
+      auto other_rate_units = std::unordered_map<std::string,FlowValueType>();
+      auto other_quantity_units = std::unordered_map<std::string,FlowValueType>();
+      auto it1 = tt.find("other_rate_units");
+      if (it1 != tt.end()) {
+        const auto oru = toml::get<toml::table>(it1->second);
+        for (const auto& p: oru)
+          other_rate_units.insert(std::pair<std::string,FlowValueType>(
+                p.first,
+                toml::get<FlowValueType>(p.second)));
+      }
+      auto it2  = tt.find("other_quantity_units");
+      if (it2 != tt.end()) {
+        const auto oqu = toml::get<toml::table>(it2->second);
+        for (const auto& p: oqu)
+          other_quantity_units.insert(std::pair<std::string,FlowValueType>(
+                p.first,
+                toml::get<FlowValueType>(p.second)));
+      }
       const std::string stream_type{toml::find<std::string>(t, "type")};
-      stream_types_map.insert(std::pair<std::string,::DISCO::StreamType>(
+      stream_types_map.insert(std::make_pair(
             s.first,
             ::DISCO::StreamType(
               stream_type,
               stream_info_rate_unit,
               stream_info_quantity_unit,
-              stream_info_seconds_per_time_unit)));
+              stream_info_seconds_per_time_unit,
+              other_rate_units,
+              other_quantity_units)));
     }
     if (DEBUG)
       for (const auto& x: stream_types_map)

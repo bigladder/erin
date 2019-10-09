@@ -276,8 +276,10 @@ namespace DISCO
         update_state_for_outflow_request(FlowValueType outflow_) const;
       virtual const FlowState
         update_state_for_inflow_achieved(FlowValueType inflow_) const;
+      virtual adevs::Time calculate_time_advance();
       virtual void update_on_internal_transition();
       virtual void update_on_external_transition();
+      virtual void add_additional_outputs(std::vector<PortValue>& ys);
       void print_state() const;
       void print_state(const std::string& prefix) const;
       std::string get_id() const { return id; }
@@ -290,6 +292,8 @@ namespace DISCO
       FlowValueType get_outflow() const { return outflow; };
       FlowValueType get_storeflow() const { return storeflow; };
       FlowValueType get_lossflow() const { return lossflow; };
+      const StreamType& get_inflow_type() const { return inflow_type; };
+      const StreamType& get_outflow_type() const { return outflow_type; };
 
     private:
       std::string id;
@@ -371,23 +375,38 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // Sink
-  class Sink : public adevs::Atomic<PortValue>
+  class Sink : public FlowElement
   {
     public:
-      static const int outport_inflow_request;
-      Sink(StreamType stream_type, std::vector<RealTimeType> times, std::vector<FlowValueType> loads);
-      void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
-      void delta_conf(std::vector<PortValue>& xs) override;
-      adevs::Time ta() override;
-      void output_func(std::vector<PortValue>& ys) override;
+      Sink(
+          std::string id,
+          StreamType stream_type,
+          std::unordered_map<std::string, std::vector<LoadItem>> loads_by_scenario);
+      Sink(
+          std::string id,
+          StreamType stream_type,
+          std::unordered_map<std::string, std::vector<LoadItem>> loads_by_scenario,
+          std::string active_scenario);
+
+    protected:
+      virtual void update_on_internal_transition() override;
+      virtual adevs::Time calculate_time_advance() override;
+      virtual const FlowState update_state_for_inflow_achieved(
+          FlowValueType inflow_) const override;
+      virtual void add_additional_outputs(std::vector<PortValue>& ys) override;
 
     private:
-      StreamType stream;
+      std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;
+      std::string active_scenario;
       int idx;
-      std::vector<RealTimeType>::size_type num_items;
-      std::vector<RealTimeType> times;
-      std::vector<FlowValueType> loads;
+      std::vector<LoadItem>::size_type num_loads;
+      std::vector<LoadItem> loads;
+
+      void check_loads(
+          const std::string& scenario,
+          const std::vector<LoadItem>& loads) const;
+      void check_loads_by_scenario() const;
+      bool switch_scenario(const std::string& active_scenario);
   };
 }
 

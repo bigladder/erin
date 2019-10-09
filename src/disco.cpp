@@ -530,6 +530,12 @@ namespace DISCO
   }
 
   adevs::Time
+  FlowElement::calculate_time_advance()
+  {
+    return adevs_inf<adevs::Time>();
+  }
+
+  adevs::Time
   FlowElement::ta()
   {
     if (DEBUG)
@@ -541,7 +547,7 @@ namespace DISCO
     }
     if (DEBUG)
       std::cout << "... dt = infinity\n";
-    return adevs_inf<adevs::Time>();
+    return calculate_time_advance();
   }
 
   void
@@ -563,6 +569,12 @@ namespace DISCO
           adevs::port_value<Stream>{
             outport_outflow_achieved, Stream{outflow_type, outflow}});
     }
+    add_additional_outputs(ys);
+  }
+
+  void
+  FlowElement::add_additional_outputs(std::vector<PortValue>& ys)
+  {
   }
 
   const FlowState
@@ -783,65 +795,54 @@ namespace DISCO
 
   ///////////////////////////////////////////////////////////////////
   // Sink
-  const int Sink::outport_inflow_request = 1;
-
-  Sink::Sink(StreamType st, std::vector<RealTimeType> ts, std::vector<FlowValueType> vs):
-    adevs::Atomic<PortValue>(),
-    stream{st},
-    idx{-1},
-    num_items{ts.size()},
-    times{ts},
-    loads{vs}
+  Sink::Sink(
+      std::string id,
+      StreamType st,
+      std::unordered_map<std::string, std::vector<LoadItem>> loads):
+    Sink(id, st, loads, "")
   {
-    auto num_vs{vs.size()};
-    if (num_items != num_vs) {
-      std::ostringstream oss;
-      oss << "DISCO::Sink::Sink: times.size() (" << num_items
-          << ") != loads.size() (" << num_vs << ")";
-      throw std::invalid_argument(oss.str());
-    }
+  }
+
+  Sink::Sink(
+      std::string id,
+      StreamType st,
+      std::unordered_map<std::string, std::vector<LoadItem>> loads,
+      std::string scenario):
+    FlowElement(id, st, st),
+    loads_by_scenario{loads},
+    active_scenario{scenario},
+    idx{-1},
+    num_loads{0},
+    loads{}
+  {
+    check_loads_by_scenario();
+    switch_scenario(active_scenario);
   }
 
   void
-  Sink::delta_int()
+  Sink::update_on_internal_transition()
   {
     if (DEBUG)
-      std::cout << "Sink::delta_int()\n";
+      std::cout << "Sink::update_on_internal_transition()\n";
+    // if there is no active scenario, return
+    if (active_scenario == "")
+      return;
     ++idx;
   }
 
-  void
-  Sink::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
-  {
-    if (DEBUG)
-      std::cout << "Sink::delta_ext()\n";
-    // Nothing to do. This model is generate only...
-  }
-
-  void
-  Sink::delta_conf(std::vector<PortValue>& xs)
-  {
-    if (DEBUG)
-      std::cout << "Sink::delta_conf()\n";
-    delta_int();
-    delta_ext(adevs::Time{0, 0}, xs);
-  }
-
   adevs::Time
-  Sink::ta()
+  Sink::calculate_time_advance()
   {
     if (DEBUG)
-      std::cout << "Sink::ta()\n";
+      std::cout << "Sink::calculate_time_advance()\n";
     if (idx < 0) {
       if (DEBUG)
         std::cout << "... dt = infinity\n";
       return adevs::Time{0, 0};
     }
     int next_idx = idx + 1;
-    if (next_idx < num_items) {
-      RealTimeType time0{times[idx]};
-      RealTimeType time1{times[next_idx]};
-      RealTimeType dt{time1 - time0};
+    if (next_idx < num_loads) {
+      RealTimeType dt{loads[idx].get_time_advance(loads[next_idx])};
       if (DEBUG)
         std::cout << "... dt = (" << dt << ", 0)\n";
       return adevs::Time{dt, 0};
@@ -851,17 +852,89 @@ namespace DISCO
     return adevs_inf<adevs::Time>();
   }
 
+  const FlowState
+  Sink::update_state_for_inflow_achieved(FlowValueType inflow_) const
+  {
+    return FlowState{inflow_};
+  }
+
   void
-  Sink::output_func(std::vector<PortValue>& ys)
+  Sink::add_additional_outputs(std::vector<PortValue>& ys)
   {
     if (DEBUG)
       std::cout << "Sink::output_func()\n";
-    int next_idx = idx + 1;
-    if (next_idx < num_items)
-      ys.push_back(
-          adevs::port_value<Stream>{
+    if (active_scenario != "") {
+      auto next_idx{idx + 1};
+      auto max_idx{num_loads - 1};
+      if (next_idx < max_idx)
+        ys.push_back(
+            adevs::port_value<Stream>{
             outport_inflow_request,
-            Stream{stream, loads[next_idx]
-          }});
+            Stream{get_inflow_type(), loads[next_idx].get_value()}});
+    }
+  }
+
+  void
+  Sink::check_loads(
+      const std::string& scenario,
+      const std::vector<LoadItem>& loads) const
+  {
+    auto N{loads.size()};
+    auto last_idx{N - 1};
+    if (N < 2) {
+      std::ostringstream oss;
+      oss << "Sink: must have at least two LoadItems per scenario, "
+          << "but scenario \"" << scenario << "\", only has " << N;
+      throw std::invalid_argument(oss.str());
+    }
+    RealTimeType t{-1};
+    for (int idx{0}; idx < loads.size(); ++idx) {
+      const auto& x{loads.at(idx)};
+      auto t_{x.get_time()};
+      if (idx == last_idx) {
+        if (!x.get_is_end()) {
+          std::ostringstream oss;
+          oss << "Sink: LoadItem[" << idx << "] for scenario \"" << scenario
+              << "\" must not specify a value but it does...";
+          throw std::invalid_argument(oss.str());
+        }
+      } else {
+        if (x.get_is_end()) {
+          std::ostringstream oss;
+          oss << "Sink: non-last LoadItem[" << idx << "] for scenario \""
+              << scenario << "\" doesn't specify a value...";
+          throw std::invalid_argument(oss.str());
+        }
+      }
+      if ((t_ < 0) || (t_ <= t)) {
+        std::ostringstream oss;
+        oss << "Sink: LoadItems for scenario \"" << scenario
+            << "\" must have time points that are everywhere increasing "
+            << " and positive";
+        throw std::invalid_argument(oss.str());
+      }
+    }
+  }
+
+  void
+  Sink::check_loads_by_scenario() const
+  {
+    for (const auto& sl: loads_by_scenario)
+      check_loads(sl.first, sl.second);
+  }
+
+  bool
+  Sink::switch_scenario(const std::string& scenario)
+  {
+    for (const auto& sl: loads_by_scenario) {
+      if (sl.first == scenario) {
+        idx = -1;
+        active_scenario = scenario;
+        num_loads = sl.second.size();
+        loads = sl.second;
+        return true;
+      }
+    }
+    return false;
   }
 }

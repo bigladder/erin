@@ -153,10 +153,9 @@ TEST(DiscoBasicsTest, StandaloneSink)
 {
   std::vector<::DISCO::RealTimeType> expected_times = {0, 1, 2};
   std::vector<::DISCO::RealTimeType> expected_loads = {100, 10, 0};
-  std::vector<::DISCO::RealTimeType> times = {0, 1, 2};
-  std::vector<::DISCO::FlowValueType> loads = {100, 10, 0};
   auto st = ::DISCO::StreamType("electrical");
-  auto sink = new ::DISCO::Sink(st, times, loads);
+  auto sink = new ::DISCO::Sink(
+      "load", st, {{"default", {{0,100},{1,10},{2,0},{3}}}}, "default");
   auto meter = new ::DISCO::FlowMeter("meter", st);
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
@@ -175,10 +174,12 @@ TEST(DiscoBasicsTest, StandaloneSink)
   for (int i{0}; i < expected_times.size(); ++i) {
     if (i >= actual_times.size())
       break;
-    EXPECT_EQ(expected_times[i], actual_times[i]);
+    EXPECT_EQ(expected_times[i], actual_times[i])
+      << "times differ at index " << i;
     if (i >= actual_loads.size())
       break;
-    EXPECT_EQ(expected_loads[i], actual_loads[i]);
+    EXPECT_EQ(expected_loads[i], actual_loads[i])
+      << "loads differ at index " << i;
   }
 }
 
@@ -187,7 +188,8 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   std::vector<::DISCO::RealTimeType> expected_time = {0, 1};
   std::vector<::DISCO::FlowValueType> expected_flow = {100, 0};
   auto st = ::DISCO::StreamType("electrical");
-  auto sink = new ::DISCO::Sink(st, expected_time, expected_flow);
+  auto sink = new ::DISCO::Sink(
+      "sink", st, {{"default",{{0,100},{1,0},{2}}}}, "default");
   auto meter = new ::DISCO::FlowMeter("meter", st);
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
@@ -207,10 +209,13 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   for (int i{0}; i < expected_time.size(); ++i) {
     if (i >= actual_time.size())
       break;
-    EXPECT_EQ(expected_time[i], actual_time[i]);
+    EXPECT_EQ(expected_time[i], actual_time[i])
+      << "times differ at index " << i;
+      ;
     if (i >= actual_flow.size())
       break;
-    EXPECT_EQ(expected_flow[i], actual_flow[i]);
+    EXPECT_EQ(expected_flow[i], actual_flow[i])
+      << "loads differ at index " << i;
   }
 }
 
@@ -222,7 +227,10 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   auto meter2 = new ::DISCO::FlowMeter("meter2", elec);
   auto lim = new ::DISCO::FlowLimits("lim", elec, 0, 50);
   auto meter1 = new ::DISCO::FlowMeter("meter1", elec);
-  auto sink = new ::DISCO::Sink(elec, {0, 1, 2, 3}, {160, 80, 40, 0});
+  auto sink = new ::DISCO::Sink(
+      "electric-load", elec,
+      {{"default", {{0, 160},{1,80},{2,40},{3,0},{4}}}},
+      "default");
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_inflow_request,
@@ -258,16 +266,20 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   for (int i{0}; i < expected_time.size(); ++i) {
     if (i >= actual_time1.size())
       break;
-    EXPECT_EQ(expected_time[i], actual_time1[i]);
+    EXPECT_EQ(expected_time[i], actual_time1[i])
+      << " times from meter1 differ at index " << i;
     if (i >= actual_time2.size())
       break;
-    EXPECT_EQ(expected_time[i], actual_time2[i]);
+    EXPECT_EQ(expected_time[i], actual_time2[i])
+      << " times from meter2 differ at index " << i;
     if (i >= actual_flow1.size())
       break;
-    EXPECT_EQ(expected_flow[i], actual_flow1[i]);
+    EXPECT_EQ(expected_flow[i], actual_flow1[i])
+      << " flows from meter1 differ at index " << i;
     if (i >= actual_flow2.size())
       break;
-    EXPECT_EQ(expected_flow[i], actual_flow2[i]);
+    EXPECT_EQ(expected_flow[i], actual_flow2[i])
+      << " flows from meter2 differ at index " << i;
   }
 }
 
@@ -300,7 +312,9 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
       );
   auto genset_lim = new ::DISCO::FlowLimits("genset_lim", elec, 0, 50);
   auto genset_meter = new ::DISCO::FlowMeter("genset_meter", elec);
-  auto sink = new ::DISCO::Sink(elec, {0,1,2,3}, {160,80,40,0});
+  auto sink = new ::DISCO::Sink(
+      "electric_load", elec,
+      {{"bluesky", {{0,160},{1,80},{2,40},{3,0},{4}}}}, "bluesky");
   adevs::Digraph<::DISCO::Stream> network;
   network.couple(
       sink, ::DISCO::Sink::outport_inflow_request,

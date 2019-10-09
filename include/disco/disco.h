@@ -145,6 +145,7 @@ namespace DISCO
   class FlowState
   {
     public:
+      FlowState(FlowValueType in);
       FlowState(FlowValueType in, FlowValueType out);
       FlowState(FlowValueType in, FlowValueType out, FlowValueType store);
       FlowState(

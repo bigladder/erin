@@ -274,6 +274,11 @@ namespace DISCO
 
   //////////////////////////////////////////////////////////// 
   // FlowState
+  FlowState::FlowState(FlowValueType in):
+    FlowState(in, in, 0.0, 0.0)
+  {
+  }
+
   FlowState::FlowState(FlowValueType in, FlowValueType out):
     FlowState(in, out, 0.0, std::fabs(in - out))
   {

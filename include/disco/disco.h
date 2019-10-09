@@ -268,6 +268,8 @@ namespace DISCO
       FlowElement(const FlowElement&) = delete;
       FlowElement& operator=(const FlowElement&) = delete;
 
+      std::string get_id() const { return id; }
+
     protected:
       FlowElement(std::string id, StreamType flow_type);
       FlowElement(
@@ -282,7 +284,6 @@ namespace DISCO
       virtual void add_additional_outputs(std::vector<PortValue>& ys);
       void print_state() const;
       void print_state(const std::string& prefix) const;
-      std::string get_id() const { return id; }
       auto get_real_time() const { return time.real; };
       bool get_report_inflow_request() const { return report_inflow_request; };
       bool get_report_outflow_achieved() const {

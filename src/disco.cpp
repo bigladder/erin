@@ -156,20 +156,27 @@ namespace DISCO
           }
           loads_by_scenario.insert(std::make_pair(lp.first, loads));
         }
-      }
-      if (DEBUG) {
-        std::cout << loads_by_scenario.size() << " scenarios with loads\n";
-        for (const auto& ls: loads_by_scenario) {
-          std::cout << ls.first << ": [";
-          for (const auto& li: ls.second) {
-            std::cout << "(" << li.get_time();
-            if (li.get_is_end())
-              std::cout << ")";
-            else
-              std::cout << ", " << li.get_value() << "), ";
+        if (DEBUG) {
+          std::cout << loads_by_scenario.size() << " scenarios with loads\n";
+          for (const auto& ls: loads_by_scenario) {
+            std::cout << ls.first << ": [";
+            for (const auto& li: ls.second) {
+              std::cout << "(" << li.get_time();
+              if (li.get_is_end())
+                std::cout << ")";
+              else
+                std::cout << ", " << li.get_value() << "), ";
+            }
+            std::cout << "]\n";
           }
-          std::cout << "]\n";
         }
+        // create the given load component
+        //auto c = Sink{
+        //  stream_types_map[input_stream_id],
+        //};
+      } else {
+        // create the given non-load component
+
       }
     }
     // [networks]

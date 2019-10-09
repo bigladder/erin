@@ -267,9 +267,9 @@ namespace DISCO
   }
 
   RealTimeType
-  LoadItem::get_time_advance(const LoadItem& other) const
+  LoadItem::get_time_advance(const LoadItem& next) const
   {
-    return (other.get_time() - time);
+    return (next.get_time() - time);
   }
 
   //////////////////////////////////////////////////////////// 

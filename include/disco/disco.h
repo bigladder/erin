@@ -130,7 +130,7 @@ namespace DISCO
       RealTimeType get_time() const { return time; }
       FlowValueType get_value() const { return value; }
       bool get_is_end() const { return is_end; }
-      RealTimeType get_time_advance(const LoadItem& other) const;
+      RealTimeType get_time_advance(const LoadItem& next) const;
 
     private:
       RealTimeType time;

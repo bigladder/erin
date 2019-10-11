@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <memory>
 #include "../vendor/toml11/toml.hpp"
 
 namespace DISCO
@@ -58,7 +59,7 @@ namespace DISCO
     const auto num_streams = toml_streams.size();
     if (DEBUG)
       std::cout << num_streams << " streams found\n";
-    std::map<std::string, ::DISCO::StreamType> stream_types_map;
+    std::unordered_map<std::string, ::DISCO::StreamType> stream_types_map;
     for (const auto& s: toml_streams) {
       toml::value t = s.second;
       toml::table tt = toml::get<toml::table>(t);
@@ -99,7 +100,9 @@ namespace DISCO
     const auto num_comps = toml_comps.size();
     if (DEBUG)
       std::cout << num_comps << " components found\n";
-    std::map<std::string, std::vector<::DISCO::FlowElement>> components{};
+    std::unordered_map<
+      std::string,
+      std::vector<std::shared_ptr<::DISCO::FlowElement>>> components{};
     for (const auto& c: toml_comps) {
       toml::value t = c.second;
       toml::table tt = toml::get<toml::table>(t);
@@ -127,7 +130,7 @@ namespace DISCO
       // load_priority ... ignore for now
       // load_profiles_by_scenario :: toml::table
       // ... need to refactor FlowSink objects to change load profiles by the active scenario
-      std::map<std::string,std::vector<LoadItem>> loads_by_scenario{};
+      std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario{};
       it = tt.find("load_profiles_by_scenario");
       if (it != tt.end()) {
         const auto& loads = toml::get<toml::table>(it->second);
@@ -170,15 +173,35 @@ namespace DISCO
             std::cout << "]\n";
           }
         }
-        // create the given load component
-        //auto c = Sink{
-        //  stream_types_map[input_stream_id],
-        //};
+        // create a load element
+        auto load_comp = std::make_shared<Sink>(
+          c.first,
+          stream_types_map.at(input_stream_id),
+          loads_by_scenario);
+        // create a flow meter
+        auto meter = std::make_shared<FlowMeter>(
+            c.first + "-meter", stream_types_map[input_stream_id]);
+        components.insert(
+            std::make_pair(
+              c.first,
+              std::vector<std::shared_ptr<FlowElement>>{load_comp, meter}));
       } else {
         // create the given non-load component
-
+        auto source_comp = std::make_shared<FlowMeter>(
+          c.first, stream_types_map.at(output_stream_id));
+        components.insert(
+            std::make_pair(
+              c.first,
+              std::vector<std::shared_ptr<FlowElement>>{source_comp}));
       }
     }
+    if (DEBUG)
+      for (const auto& c: components) {
+        std::cout << "comp[" << c.first << "]:\n";
+        for (const auto& c_: c.second) {
+          std::cout << "\telement[" << c_->get_id() << "]\n";
+        }
+      }
     // [networks]
     std::map<std::string, std::vector<::DISCO::FlowElement>> networks{};
     // [scenarios]

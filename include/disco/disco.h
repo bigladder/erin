@@ -255,6 +255,11 @@ namespace DISCO
   class Scenario // : public adevs::Atomic<PortValue>
   {
     public:
+      Scenario(const std::string& name, const std::string& network_id, long max_times);
+
+      const std::string& get_name() const { return name; };
+      long get_max_times() const { return max_times; };
+      const std::string& get_network_id() const { return network_id; };
       //static const int outport_scenario_start;
       //static const int outport_scenario_end;
       //void delta_int() override;
@@ -264,6 +269,9 @@ namespace DISCO
       //void output_func(std::vector<PortValue>& ys) override;
 
     private:
+      std::string name;
+      std::string network_id;
+      long max_times;
   };
 
   ////////////////////////////////////////////////////////////

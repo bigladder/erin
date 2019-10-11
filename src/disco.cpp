@@ -238,6 +238,27 @@ namespace DISCO
     const auto num_scenarios{toml_scenarios.size()};
     if (DEBUG)
       std::cout << num_scenarios << " scenarios found\n";
+    for (const auto& s: toml_scenarios) {
+      const auto occurrence_distribution = toml::find<toml::table>(s.second, "occurrence_distribution");
+      const auto duration_distribution = toml::find<toml::table>(s.second, "duration_distribution");
+      const auto max_times = toml::find<int>(s.second, "max_times");
+      const auto network_id = toml::find<std::string>(s.second, "network");
+      scenarios.insert(
+          std::make_pair(
+            s.first,
+            std::make_shared<Scenario>(
+              s.first,
+              network_id,
+              max_times)));
+    }
+    if (DEBUG)
+      for (const auto& s: scenarios) {
+        std::cout << "scenario[" << s.first << "]\n";
+        auto scenario = *s.second;
+        std::cout << "\tname      : " << scenario.get_name() << "\n";
+        std::cout << "\tnetwork_id: " << scenario.get_network_id() << "\n";
+        std::cout << "\tmax_times : " << scenario.get_max_times() << "\n";
+      }
     return true;
   }
 
@@ -460,6 +481,18 @@ namespace DISCO
   {
     return os << "Stream(stream_type=" << s.get_type()
               << ", rate=" << s.get_rate() << ")";
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Scenario
+  Scenario::Scenario(
+      const std::string& name_,
+      const std::string& network_id_,
+      long max_times_):
+    name{name_},
+    network_id{network_id_},
+    max_times{max_times_}
+  {
   }
 
   ////////////////////////////////////////////////////////////

@@ -249,6 +249,22 @@ namespace DISCO
 
   std::ostream& operator<<(std::ostream& os, const PortValue& pv);
 
+  ////////////////////////////////////////////////////////////
+  // Scenario
+  // TODO: finish this class...
+  class Scenario // : public adevs::Atomic<PortValue>
+  {
+    public:
+      //static const int outport_scenario_start;
+      //static const int outport_scenario_end;
+      //void delta_int() override;
+      //void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      //void delta_conf(std::vector<PortValue>& xs) override;
+      //adevs::Time ta() override;
+      //void output_func(std::vector<PortValue>& ys) override;
+
+    private:
+  };
 
   ////////////////////////////////////////////////////////////
   // FlowElement - Abstract Class

@@ -233,7 +233,11 @@ namespace DISCO
         }
       }
     // [scenarios]
-    std::map<std::string, std::vector<::DISCO::FlowElement>> scenarios{};
+    std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios;
+    const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");
+    const auto num_scenarios{toml_scenarios.size()};
+    if (DEBUG)
+      std::cout << num_scenarios << " scenarios found\n";
     return true;
   }
 

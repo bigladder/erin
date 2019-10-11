@@ -268,7 +268,7 @@ namespace DISCO
       FlowElement(const FlowElement&) = delete;
       FlowElement& operator=(const FlowElement&) = delete;
 
-      std::string get_id() const { return id; }
+      const std::string& get_id() const { return id; }
 
     protected:
       FlowElement(std::string id, StreamType flow_type);

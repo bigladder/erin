@@ -321,6 +321,9 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // StreamType
+  StreamType::StreamType():
+    StreamType("electricity") {}
+
   StreamType::StreamType(const std::string& stream_type):
     StreamType(stream_type, "kW", "kJ", 1.0)
   {

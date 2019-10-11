@@ -173,6 +173,7 @@ namespace DISCO
   class StreamType
   {
     public:
+      StreamType();
       StreamType(const std::string& type);
       StreamType(
           const std::string& type,

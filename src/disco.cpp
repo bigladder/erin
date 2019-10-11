@@ -203,7 +203,35 @@ namespace DISCO
         }
       }
     // [networks]
-    std::map<std::string, std::vector<::DISCO::FlowElement>> networks{};
+    std::unordered_map<
+      std::string,
+      std::unordered_map<std::string,std::vector<std::string>>> networks;
+    const auto toml_nets = toml::find<toml::table>(data, "networks");
+    const auto num_nets{toml_nets.size()};
+    if (DEBUG)
+      std::cout << num_nets << " networks found\n";
+    for (const auto& n: toml_nets) {
+      std::unordered_map<std::string, std::vector<std::string>> nw_map;
+      toml::table toml_nw;
+      auto nested_nw_table = toml::get<toml::table>(n.second);
+      auto nested_nw_it = nested_nw_table.find("network");
+      if (nested_nw_it != nested_nw_table.end())
+        toml_nw = toml::get<toml::table>(nested_nw_it->second);
+      for (const auto& nw_p: toml_nw) {
+        auto nodes = toml::get<std::vector<std::string>>(nw_p.second);
+        nw_map.insert(std::make_pair(nw_p.first, nodes));
+      }
+      networks.insert(std::make_pair(n.first, nw_map));
+    }
+    if (DEBUG)
+      for (const auto& nw: networks) {
+        std::cout << "network[" << nw.first << "]:\n";
+        for (const auto& fan: nw.second) {
+          for (const auto& node: fan.second) {
+            std::cout << "\tedge: (" << fan.first << " ==> " << node << ")\n";
+          }
+        }
+      }
     // [scenarios]
     std::map<std::string, std::vector<::DISCO::FlowElement>> scenarios{};
     return true;

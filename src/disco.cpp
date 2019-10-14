@@ -259,6 +259,23 @@ namespace DISCO
         std::cout << "\tnetwork_id: " << scenario.get_network_id() << "\n";
         std::cout << "\tmax_times : " << scenario.get_max_times() << "\n";
       }
+    // 1. Initial assumption: blue-sky scenario. Need to actually make a
+    //    separate devs simulator to accommodate switching between scenarios
+    // 2. Construct and Run Simulation
+    adevs::Digraph<Stream> network;
+    // 3. Instantiate the network and add the components
+    //network.couple(
+    //  sink, ::DISCO::Sink::outport_inflow_request,
+    //  genset_meter, ::DISCO::FlowMeter::inport_outflow_request);
+    adevs::Simulator<PortValue> sim;
+    network.add(&sim);
+    adevs::Time t;
+    while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
+      sim.exec_next_event();
+      t = sim.now();
+      std::cout << "The current time is: (" << t.real << ", "
+                << t.logical << ")\n";
+    }
     return true;
   }
 
@@ -481,6 +498,28 @@ namespace DISCO
   {
     return os << "Stream(stream_type=" << s.get_type()
               << ", rate=" << s.get_rate() << ")";
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Component
+  Component::Component(
+      const std::string& id_,
+      const std::string& type_):
+    id{id_},
+    component_type{type_}
+  {
+  }
+
+  void
+  Component::add_input(std::shared_ptr<Component>& c)
+  {
+    inputs.push_back(c);
+  }
+
+  void
+  Component::add_output(std::shared_ptr<Component>& c)
+  {
+    outputs.push_back(c);
   }
 
   ////////////////////////////////////////////////////////////

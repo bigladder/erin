@@ -250,6 +250,30 @@ namespace DISCO
   std::ostream& operator<<(std::ostream& os, const PortValue& pv);
 
   ////////////////////////////////////////////////////////////
+  // Component
+  // base class for all types of components
+  class Component
+  {
+    public:
+      Component(const Component&) = delete;
+      Component& operator=(const Component&) = delete;
+      Component(const std::string& id, const std::string& type);
+
+      void add_input(std::shared_ptr<Component>& c);
+      void add_output(std::shared_ptr<Component>& c);
+      const std::string& get_id() const { return id; }
+      const std::string& get_component_type() const { return component_type; }
+
+      virtual void add_to_network(adevs::Digraph<Stream>& nw) = 0;
+
+    private:
+      std::string id;
+      std::string component_type;
+      std::vector<std::shared_ptr<Component>> inputs;
+      std::vector<std::shared_ptr<Component>> outputs;
+  };
+
+  ////////////////////////////////////////////////////////////
   // Scenario
   // TODO: finish this class...
   class Scenario // : public adevs::Atomic<PortValue>

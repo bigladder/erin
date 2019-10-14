@@ -102,14 +102,18 @@ namespace DISCO
       std::cout << num_comps << " components found\n";
     std::unordered_map<
       std::string,
-      std::vector<std::shared_ptr<::DISCO::FlowElement>>> components{};
+      std::shared_ptr<Component>> components{};
     for (const auto& c: toml_comps) {
       toml::value t = c.second;
       toml::table tt = toml::get<toml::table>(t);
+      auto it = tt.find("type");
+      std::string component_type;
+      if (it != tt.end())
+        component_type = toml::get<std::string>(it->second);
       // stream OR input_stream, output_stream
       std::string input_stream_id{""};
       std::string output_stream_id{""};
-      auto it = tt.find("stream");
+      it = tt.find("stream");
       if (it != tt.end()) {
         input_stream_id = toml::get<std::string>(it->second);
         output_stream_id = input_stream_id;
@@ -127,80 +131,70 @@ namespace DISCO
         std::cout << "comp: " << c.first
                   << ".output_stream_id = " << output_stream_id << "\n";
       }
-      // load_priority ... ignore for now
-      // load_profiles_by_scenario :: toml::table
-      // ... need to refactor FlowSink objects to change load profiles by the active scenario
-      std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario{};
-      it = tt.find("load_profiles_by_scenario");
-      if (it != tt.end()) {
-        const auto& loads = toml::get<toml::table>(it->second);
-        const auto num_profile_scenarios{loads.size()};
-        if (DEBUG)
-          std::cout << num_profile_scenarios << " load profile(s) by scenario"
-                    << " for component " << c.first << "\n";
-        for (const auto& lp: loads) {
-          std::vector<LoadItem> loads{};
-          for (const auto& li:
-              toml::get<std::vector<toml::table>>(lp.second)) {
-            RealTimeType t{};
-            FlowValueType v{};
-            auto it_for_t = li.find("t");
-            if (it_for_t != li.end())
-              t = toml::get<RealTimeType>(it_for_t->second);
-            else
-              t = -1;
-            auto it_for_v = li.find("v");
-            if (it_for_v != li.end()) {
-              v = toml::get<FlowValueType>(it_for_v->second);
-              loads.push_back(LoadItem(t, v));
-            } else {
-              loads.push_back(LoadItem(t));
-            }
-          }
-          loads_by_scenario.insert(std::make_pair(lp.first, loads));
-        }
-        if (DEBUG) {
-          std::cout << loads_by_scenario.size() << " scenarios with loads\n";
-          for (const auto& ls: loads_by_scenario) {
-            std::cout << ls.first << ": [";
-            for (const auto& li: ls.second) {
-              std::cout << "(" << li.get_time();
-              if (li.get_is_end())
-                std::cout << ")";
+      if (component_type == "source") {
+        std::shared_ptr<Component> source_comp =
+          std::make_shared<SourceComponent>(
+              c.first, stream_types_map.at(output_stream_id));
+        components.insert(std::make_pair(c.first, source_comp));
+      } else if (component_type == "load") {
+        std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario{};
+        it = tt.find("load_profiles_by_scenario");
+        if (it != tt.end()) {
+          const auto& loads = toml::get<toml::table>(it->second);
+          const auto num_profile_scenarios{loads.size()};
+          if (DEBUG)
+            std::cout << num_profile_scenarios << " load profile(s) by scenario"
+              << " for component " << c.first << "\n";
+          for (const auto& lp: loads) {
+            std::vector<LoadItem> loads2{};
+            for (const auto& li:
+                toml::get<std::vector<toml::table>>(lp.second)) {
+              RealTimeType t{};
+              FlowValueType v{};
+              auto it_for_t = li.find("t");
+              if (it_for_t != li.end())
+                t = toml::get<RealTimeType>(it_for_t->second);
               else
-                std::cout << ", " << li.get_value() << "), ";
+                t = -1;
+              auto it_for_v = li.find("v");
+              if (it_for_v != li.end()) {
+                v = toml::get<FlowValueType>(it_for_v->second);
+                loads2.push_back(LoadItem(t, v));
+              } else {
+                loads2.push_back(LoadItem(t));
+              }
             }
-            std::cout << "]\n";
+            loads_by_scenario.insert(std::make_pair(lp.first, loads2));
           }
+          if (DEBUG) {
+            std::cout << loads_by_scenario.size() << " scenarios with loads\n";
+            for (const auto& ls: loads_by_scenario) {
+              std::cout << ls.first << ": [";
+              for (const auto& li: ls.second) {
+                std::cout << "(" << li.get_time();
+                if (li.get_is_end())
+                  std::cout << ")";
+                else
+                  std::cout << ", " << li.get_value() << "), ";
+              }
+              std::cout << "]\n";
+            }
+          }
+          std::shared_ptr<Component> load_comp = std::make_shared<LoadComponent>(
+              c.first,
+              stream_types_map.at(input_stream_id),
+              loads_by_scenario);
+          components.insert(
+              std::make_pair(c.first, load_comp));
+        } else {
+          throw BadInputError();
         }
-        // create a load element
-        auto load_comp = std::make_shared<Sink>(
-          c.first,
-          stream_types_map.at(input_stream_id),
-          loads_by_scenario);
-        // create a flow meter
-        auto meter = std::make_shared<FlowMeter>(
-            c.first + "-meter", stream_types_map[input_stream_id]);
-        components.insert(
-            std::make_pair(
-              c.first,
-              std::vector<std::shared_ptr<FlowElement>>{load_comp, meter}));
-      } else {
-        // create the given non-load component
-        auto source_comp = std::make_shared<FlowMeter>(
-          c.first, stream_types_map.at(output_stream_id));
-        components.insert(
-            std::make_pair(
-              c.first,
-              std::vector<std::shared_ptr<FlowElement>>{source_comp}));
       }
     }
     if (DEBUG)
       for (const auto& c: components) {
         std::cout << "comp[" << c.first << "]:\n";
-        for (const auto& c_: c.second) {
-          std::cout << "\telement[" << c_->get_id() << "]\n";
-        }
+        std::cout << "\t" << c.second->get_id() << "\n";
       }
     // [networks]
     std::unordered_map<
@@ -504,9 +498,13 @@ namespace DISCO
   // Component
   Component::Component(
       const std::string& id_,
-      const std::string& type_):
+      const std::string& type_,
+      const StreamType& input_stream_,
+      const StreamType& output_stream_):
     id{id_},
-    component_type{type_}
+    component_type{type_},
+    input_stream{input_stream_},
+    output_stream{output_stream_}
   {
   }
 
@@ -516,10 +514,37 @@ namespace DISCO
     inputs.push_back(c);
   }
 
-  void
-  Component::add_output(std::shared_ptr<Component>& c)
+  ////////////////////////////////////////////////////////////
+  // LoadComponent
+  LoadComponent::LoadComponent(
+      const std::string& id_,
+      const StreamType& input_stream_,
+      const std::unordered_map<std::string,std::vector<LoadItem>>&
+        loads_by_scenario_):
+    Component(id_, "load", input_stream_, input_stream_),
+    loads_by_scenario{loads_by_scenario_}
   {
-    outputs.push_back(c);
+  }
+
+  void
+  LoadComponent::add_to_network(adevs::Digraph<Stream>& nw)
+  {
+    // 
+  }
+
+  ////////////////////////////////////////////////////////////
+  // SourceComponent
+  SourceComponent::SourceComponent(
+      const std::string& id_,
+      const StreamType& output_stream_):
+    Component(id_, "source", output_stream_, output_stream_)
+  {
+  }
+
+  void
+  SourceComponent::add_to_network(adevs::Digraph<Stream>& nw)
+  {
+    //
   }
 
   ////////////////////////////////////////////////////////////

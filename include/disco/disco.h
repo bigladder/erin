@@ -44,7 +44,7 @@ namespace DISCO
   // MixedStreamsError
   struct MixedStreamsError : public std::exception
   {
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
       return "MixedStreamsError";
     }
@@ -54,7 +54,7 @@ namespace DISCO
   // InconsistentStreamUnitsError
   struct InconsistentStreamTypesError : public std::exception
   {
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
       return "InconsistentStreamTypesError";
     }
@@ -64,7 +64,7 @@ namespace DISCO
   // InconsistentStreamUnitsError
   struct InconsistentStreamUnitsError : public std::exception
   {
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
       return "InconsistentStreamUnitsError";
     }
@@ -74,7 +74,7 @@ namespace DISCO
   // FlowInvariantError
   struct FlowInvariantError : public std::exception
   {
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
       return "FlowInvariantError";
     }
@@ -84,7 +84,7 @@ namespace DISCO
   // BadPortError
   struct BadPortError : public std::exception
   {
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
       return "BadPortError";
     }
@@ -94,7 +94,7 @@ namespace DISCO
   // SimultaneousIORequestError
   struct SimultaneousIORequestError : public std::exception
   {
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
       return "SimultaneousIORequestError";
     }
@@ -104,7 +104,7 @@ namespace DISCO
   // AchievedMoreThanRequestedError
   struct AchievedMoreThanRequestedError : public std::exception
   {
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
       return "AchievedMoreThanRequestedError";
     }
@@ -114,7 +114,7 @@ namespace DISCO
   // BadInputError
   struct BadInputError : public std::exception
   {
-    virtual const char* what() const throw()
+    const char* what() const noexcept override
     {
       return "BadInputError";
     }
@@ -257,10 +257,13 @@ namespace DISCO
     public:
       Component(const Component&) = delete;
       Component& operator=(const Component&) = delete;
-      Component(const std::string& id, const std::string& type);
+      Component(
+          const std::string& id,
+          const std::string& type,
+          const StreamType& input_stream,
+          const StreamType& output_stream);
 
       void add_input(std::shared_ptr<Component>& c);
-      void add_output(std::shared_ptr<Component>& c);
       const std::string& get_id() const { return id; }
       const std::string& get_component_type() const { return component_type; }
 
@@ -269,8 +272,35 @@ namespace DISCO
     private:
       std::string id;
       std::string component_type;
+      StreamType input_stream;
+      StreamType output_stream;
       std::vector<std::shared_ptr<Component>> inputs;
-      std::vector<std::shared_ptr<Component>> outputs;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // LoadComponent
+  class LoadComponent : public Component
+  {
+    public:
+      LoadComponent(
+            const std::string& id,
+            const StreamType& input_stream,
+            const std::unordered_map<std::string,std::vector<LoadItem>>& loads_by_scenario);
+      void add_to_network(adevs::Digraph<Stream>& nw) override;
+
+    private:
+      std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // SourceComponent
+  class SourceComponent : public Component
+  {
+    public:
+      SourceComponent(
+          const std::string& id,
+          const StreamType& output_stream);
+      void add_to_network(adevs::Digraph<Stream>& nw) override;
   };
 
   ////////////////////////////////////////////////////////////
@@ -439,11 +469,11 @@ namespace DISCO
           std::string active_scenario);
 
     protected:
-      virtual void update_on_internal_transition() override;
-      virtual adevs::Time calculate_time_advance() override;
-      virtual const FlowState update_state_for_inflow_achieved(
+      void update_on_internal_transition() override;
+      adevs::Time calculate_time_advance() override;
+      const FlowState update_state_for_inflow_achieved(
           FlowValueType inflow_) const override;
-      virtual void add_additional_outputs(std::vector<PortValue>& ys) override;
+      void add_additional_outputs(std::vector<PortValue>& ys) override;
 
     private:
       std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;

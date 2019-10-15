@@ -14,6 +14,81 @@ namespace DISCO
   const bool DEBUG{true};
   const FlowValueType TOL{1e-6};
 
+  ////////////////////////////////////////////////////////////
+  // StreamInfo
+  StreamInfo::StreamInfo(
+      const std::string& rate_unit_,
+      const std::string& quantity_unit_):
+    rate_unit{rate_unit_},
+    quantity_unit{quantity_unit_},
+    seconds_per_time_unit{1.0}
+  {
+    if ((rate_unit == "kW") && (quantity_unit == "kJ"))
+      seconds_per_time_unit = 1.0;
+    else if ((rate_unit == "kW") && (quantity_unit == "kWh"))
+      seconds_per_time_unit = 3600.0;
+    else
+      throw BadInputError();
+  }
+  StreamInfo::StreamInfo(
+      const std::string& rate_unit_,
+      const std::string& quantity_unit_,
+      double seconds_per_time_unit_):
+    rate_unit{rate_unit_},
+    quantity_unit{quantity_unit_},
+    seconds_per_time_unit{seconds_per_time_unit_}
+  {
+  }
+
+  bool
+  StreamInfo::operator==(const StreamInfo& other) const
+  {
+    if (this == &other) return true;
+    return (rate_unit == other.rate_unit) &&
+           (quantity_unit == other.quantity_unit) &&
+           (seconds_per_time_unit == other.seconds_per_time_unit);
+  }
+
+  ////////////////////////////////////////////////////////////
+  // TomlInputReader
+  //TomlInputReader::TomlInputReader(const std::string& path):
+  //  InputReader(),
+  //  data{}
+  //{
+  //  data = toml::parse(path);
+  //}
+
+  TomlInputReader::TomlInputReader(std::istream& in):
+    InputReader(),
+    data{}
+  {
+    data = toml::parse(in, "input_from_string.toml");
+  }
+
+  StreamInfo
+  TomlInputReader::read_stream_info()
+  {
+    const auto stream_info = toml::find(data, "stream_info");
+    const std::string rate_unit(
+        toml::find_or(stream_info, "rate_unit", "kW"));
+    const std::string quantity_unit(
+        toml::find_or(stream_info, "quantity_unit", "kJ"));
+    double default_seconds_per_time_unit{1.0};
+    if (rate_unit == "kW" && quantity_unit == "kJ")
+      default_seconds_per_time_unit = 1.0;
+    else if (rate_unit == "kW" && quantity_unit == "kWh")
+      default_seconds_per_time_unit = 3600.0;
+    else
+      default_seconds_per_time_unit = -1.0;
+    const double seconds_per_time_unit(
+        toml::find_or(
+          stream_info, "seconds_per_time_unit",
+          default_seconds_per_time_unit));
+    if (seconds_per_time_unit < 0.0)
+      throw BadInputError();
+    return StreamInfo(rate_unit, quantity_unit, seconds_per_time_unit);
+  }
+
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file
@@ -46,7 +121,7 @@ namespace DISCO
           stream_info, "seconds_per_time_unit",
           default_seconds_per_time_unit));
     if (stream_info_seconds_per_time_unit < 0.0)
-      throw new BadInputError();
+      throw BadInputError();
     if (DEBUG) {
       std::cout << "stream_info.rate_unit = " << stream_info_rate_unit << "\n";
       std::cout << "stream_info.quantity_unit = "

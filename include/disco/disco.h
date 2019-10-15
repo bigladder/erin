@@ -10,9 +10,73 @@
 #include <map>
 #include <unordered_map>
 #include "../../vendor/bdevs/include/adevs.h"
+#include "../../vendor/toml11/toml.hpp"
 
 namespace DISCO
 {
+  ////////////////////////////////////////////////////////////
+  // Type Definitions
+  typedef double FlowValueType;
+  typedef int RealTimeType;
+  typedef int LogicalTimeType;
+
+  ////////////////////////////////////////////////////////////
+  // StreamInfo
+  class StreamInfo
+  {
+    public:
+      StreamInfo(
+          const std::string& rate_unit,
+          const std::string& quantity_unit);
+      StreamInfo(
+          const std::string& rate_unit,
+          const std::string& quantity_unit,
+          double default_seconds_per_time_unit);
+      const std::string& get_rate_unit() const {return rate_unit;}
+      const std::string& get_quantity_unit() const {return quantity_unit;}
+      double get_seconds_per_time_unit() const {return seconds_per_time_unit;}
+      bool operator==(const StreamInfo& other) const;
+      bool operator!=(const StreamInfo& other) const {
+        return !(operator==(other));
+      }
+
+    private:
+      std::string rate_unit;
+      std::string quantity_unit;
+      double seconds_per_time_unit;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // InputReader
+  class InputReader
+  {
+    public:
+      virtual StreamInfo read_stream_info() = 0;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // FileInputReader
+  //class InputReaderFactory
+  //{
+  //  public:
+  //    InputReaderFactor(const std::string& path);
+  //    std::unique_ptr<InputReader> get_reader();
+  //};
+
+  ////////////////////////////////////////////////////////////
+  // TomlReader
+  class TomlInputReader : public InputReader
+  {
+    public:
+      //TomlInputReader(const std::string& path);
+      TomlInputReader(std::istream& in);
+
+      StreamInfo read_stream_info() override;
+
+    private:
+      toml::value data;
+  };
+
   ////////////////////////////////////////////////////////////
   // Main Class
   class Main
@@ -25,12 +89,6 @@ namespace DISCO
       std::string input_file_path;
       std::string output_file_path;
   };
-
-  ////////////////////////////////////////////////////////////
-  // Type Definitions
-  typedef double FlowValueType;
-  typedef int RealTimeType;
-  typedef int LogicalTimeType;
 
   ////////////////////////////////////////////////////////////
   // Utility Functions

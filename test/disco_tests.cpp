@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <unordered_map>
+#include <sstream>
 #include "gtest/gtest.h"
 #include "disco/disco.h"
 #include "../vendor/bdevs/include/adevs.h"
@@ -391,6 +392,27 @@ TEST(DiscoBasicTest, CanRunUsingComponents)
   }
   EXPECT_TRUE(iworked > 0);
   EXPECT_TRUE(worked);
+}
+
+TEST(DiscoBasicTest, CanReadStreamInfoFromToml)
+{
+  std::stringstream ss{};
+  ss << "[stream_info]\n"
+     << "# The commonality across all streams.\n"
+     << "# We need to know what the common rate unit and quantity unit is.\n"
+     << "# The rate unit should be the quantity unit per unit of time.\n"
+     << "rate_unit = \"kW\"\n"
+     << "quantity_unit = \"kJ\"\n"
+     << "# seconds_per_time_unit : Number\n"
+     << "# defines how many seconds per unit of time used to specify the quantity unit\n"
+     << "# here since we are using kW and kJ, the answer is 1.0 second.\n"
+     << "# However, if we were doing kW and kWh, we would use 3600 s (i.e., 1 hour) here.\n"
+     << "seconds_per_time_unit = 1.0\n";
+  ::DISCO::TomlInputReader t{ss};
+  ::DISCO::StreamInfo expected{"kW", "kJ", 1.0};
+  auto pt = &t;
+  auto actual = pt->read_stream_info();
+  EXPECT_EQ(expected, actual);
 }
 
 int

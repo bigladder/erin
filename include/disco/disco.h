@@ -68,7 +68,8 @@ namespace DISCO
   class TomlInputReader : public InputReader
   {
     public:
-      //TomlInputReader(const std::string& path);
+      explicit TomlInputReader(const toml::value& v);
+      explicit TomlInputReader(const std::string& path);
       TomlInputReader(std::istream& in);
 
       StreamInfo read_stream_info() override;

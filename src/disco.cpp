@@ -51,12 +51,18 @@ namespace DISCO
 
   ////////////////////////////////////////////////////////////
   // TomlInputReader
-  //TomlInputReader::TomlInputReader(const std::string& path):
-  //  InputReader(),
-  //  data{}
-  //{
-  //  data = toml::parse(path);
-  //}
+  TomlInputReader::TomlInputReader(const toml::value& data_):
+    InputReader(),
+    data{data_}
+  {
+  }
+
+  TomlInputReader::TomlInputReader(const std::string& path):
+    InputReader(),
+    data{}
+  {
+    data = toml::parse(path);
+  }
 
   TomlInputReader::TomlInputReader(std::istream& in):
     InputReader(),

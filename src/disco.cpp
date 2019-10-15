@@ -180,10 +180,12 @@ namespace DISCO
               std::cout << "]\n";
             }
           }
-          std::shared_ptr<Component> load_comp = std::make_shared<LoadComponent>(
-              c.first,
-              stream_types_map.at(input_stream_id),
-              loads_by_scenario);
+          std::shared_ptr<Component> load_comp =
+            std::make_shared<LoadComponent>(
+                c.first,
+                stream_types_map.at(input_stream_id),
+                loads_by_scenario,
+                "");
           components.insert(
               std::make_pair(c.first, load_comp));
         } else {
@@ -504,7 +506,9 @@ namespace DISCO
     id{id_},
     component_type{type_},
     input_stream{input_stream_},
-    output_stream{output_stream_}
+    output_stream{output_stream_},
+    inputs{},
+    connecting_element{nullptr}
   {
   }
 
@@ -514,22 +518,72 @@ namespace DISCO
     inputs.push_back(c);
   }
 
+  FlowElement*
+  Component::get_connecting_element()
+  {
+    if (connecting_element == nullptr)
+      connecting_element = create_connecting_element();
+    return connecting_element;
+  }
+
   ////////////////////////////////////////////////////////////
   // LoadComponent
   LoadComponent::LoadComponent(
       const std::string& id_,
       const StreamType& input_stream_,
-      const std::unordered_map<std::string,std::vector<LoadItem>>&
-        loads_by_scenario_):
+      const std::unordered_map<
+        std::string,std::vector<LoadItem>>& loads_by_scenario_,
+      const std::string& active_scenario_):
     Component(id_, "load", input_stream_, input_stream_),
-    loads_by_scenario{loads_by_scenario_}
+    loads_by_scenario{loads_by_scenario_},
+    active_scenario{active_scenario_}
   {
   }
 
-  void
-  LoadComponent::add_to_network(adevs::Digraph<Stream>& nw)
+  FlowElement*
+  LoadComponent::create_connecting_element()
   {
-    // 
+    if (DEBUG)
+      std::cout << "LoadComponent::create_connecting_element()\n";
+    auto p = new FlowMeter(get_id(), get_input_stream());
+    if (DEBUG)
+      std::cout << "LoadComponent.connecting_element = " << p << "\n";
+    return p;
+  }
+
+  void
+  LoadComponent::add_to_network(adevs::Digraph<Stream>& network)
+  {
+    if (DEBUG)
+      std::cout << "LoadComponent::add_to_network(adevs::Digraph<Stream>& network)\n";
+    auto sink = new Sink(
+        get_id(),
+        get_input_stream(),
+        loads_by_scenario,
+        active_scenario);
+    if (DEBUG)
+      std::cout << "sink = " << sink << "\n";
+    auto meter = get_connecting_element();
+    if (DEBUG)
+      std::cout << "meter = " << meter << "\n";
+    network.couple(
+        sink, Sink::outport_inflow_request,
+        meter, FlowMeter::inport_outflow_request);
+    for (const auto& in: get_inputs()) {
+      auto p = in->get_connecting_element();
+      if (DEBUG)
+        std::cout << "p = " << p << "\n";
+      if (p != nullptr) {
+        network.couple(
+            meter, FlowMeter::outport_inflow_request,
+            p, FlowElement::inport_outflow_request);
+        network.couple(
+            p, FlowElement::outport_outflow_achieved,
+            meter, FlowMeter::inport_inflow_achieved);
+      }
+    }
+    if (DEBUG)
+      std::cout << "LoadComponent::add_to_network(...) exit\n";
   }
 
   ////////////////////////////////////////////////////////////
@@ -542,9 +596,31 @@ namespace DISCO
   }
 
   void
-  SourceComponent::add_to_network(adevs::Digraph<Stream>& nw)
+  SourceComponent::add_to_network(adevs::Digraph<Stream>& network)
   {
-    //
+    if (DEBUG)
+      std::cout << "SourceComponent::add_to_network("
+                << "adevs::Digraph<Stream>& network)\n";
+    // do nothing in this case. There is only the connecting element. If nobody
+    // connects to it, then it doesn't exist. If someone DOES connect, then the
+    // pointer eventually gets passed into the network coupling model
+    // TODO: what we need are wrappers for Element classes that track if
+    // they've been added to the simulation or not. If NOT, then we need to
+    // delete the resource at deletion time... otherwise, the simulator will
+    // delete them.
+    if (DEBUG)
+      std::cout << "SourceComponent::add_to_network(...) exit\n";
+  }
+
+  FlowElement*
+  SourceComponent::create_connecting_element()
+  {
+    if (DEBUG)
+      std::cout << "SourceComponent::create_connecting_element()\n";
+    auto p = new FlowMeter(get_id(), get_output_stream());
+    if (DEBUG)
+      std::cout << "SourceComponent.p = " << p << "\n";
+    return p;
   }
 
   ////////////////////////////////////////////////////////////
@@ -1034,6 +1110,8 @@ namespace DISCO
       const std::string& scenario,
       const std::vector<LoadItem>& loads) const
   {
+    if (DEBUG)
+      std::cout << "Sink::check_loads\n";
     auto N{loads.size()};
     auto last_idx{N - 1};
     if (N < 2) {
@@ -1074,6 +1152,8 @@ namespace DISCO
   void
   Sink::check_loads_by_scenario() const
   {
+    if (DEBUG)
+      std::cout << "Sink::check_loads_by_scenario()\n";
     for (const auto& sl: loads_by_scenario)
       check_loads(sl.first, sl.second);
   }
@@ -1081,8 +1161,14 @@ namespace DISCO
   bool
   Sink::switch_scenario(const std::string& scenario)
   {
+    if (DEBUG) {
+      std::cout << "Sink::switch_scenario(const std::string& scenario)\n";
+      std::cout << "scenario = " << scenario << "\n";
+    }
     for (const auto& sl: loads_by_scenario) {
       if (sl.first == scenario) {
+        if (DEBUG)
+          std::cout << "scenario switched to " << scenario << "\n";
         idx = -1;
         active_scenario = scenario;
         num_loads = sl.second.size();

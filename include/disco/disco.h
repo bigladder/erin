@@ -248,61 +248,6 @@ namespace DISCO
   typedef adevs::port_value<Stream> PortValue;
 
   std::ostream& operator<<(std::ostream& os, const PortValue& pv);
-
-  ////////////////////////////////////////////////////////////
-  // Component
-  // base class for all types of components
-  class Component
-  {
-    public:
-      Component(const Component&) = delete;
-      Component& operator=(const Component&) = delete;
-      Component(
-          const std::string& id,
-          const std::string& type,
-          const StreamType& input_stream,
-          const StreamType& output_stream);
-
-      void add_input(std::shared_ptr<Component>& c);
-      const std::string& get_id() const { return id; }
-      const std::string& get_component_type() const { return component_type; }
-
-      virtual void add_to_network(adevs::Digraph<Stream>& nw) = 0;
-
-    private:
-      std::string id;
-      std::string component_type;
-      StreamType input_stream;
-      StreamType output_stream;
-      std::vector<std::shared_ptr<Component>> inputs;
-  };
-
-  ////////////////////////////////////////////////////////////
-  // LoadComponent
-  class LoadComponent : public Component
-  {
-    public:
-      LoadComponent(
-            const std::string& id,
-            const StreamType& input_stream,
-            const std::unordered_map<std::string,std::vector<LoadItem>>& loads_by_scenario);
-      void add_to_network(adevs::Digraph<Stream>& nw) override;
-
-    private:
-      std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;
-  };
-
-  ////////////////////////////////////////////////////////////
-  // SourceComponent
-  class SourceComponent : public Component
-  {
-    public:
-      SourceComponent(
-          const std::string& id,
-          const StreamType& output_stream);
-      void add_to_network(adevs::Digraph<Stream>& nw) override;
-  };
-
   ////////////////////////////////////////////////////////////
   // Scenario
   // TODO: finish this class...
@@ -487,6 +432,78 @@ namespace DISCO
           const std::vector<LoadItem>& loads) const;
       void check_loads_by_scenario() const;
       bool switch_scenario(const std::string& active_scenario);
+  };
+
+  ////////////////////////////////////////////////////////////
+  // Component
+  // base class for all types of components
+  class Component
+  {
+    public:
+      Component(const Component&) = delete;
+      Component& operator=(const Component&) = delete;
+      Component(
+          const std::string& id,
+          const std::string& type,
+          const StreamType& input_stream,
+          const StreamType& output_stream);
+
+      void add_input(std::shared_ptr<Component>& c);
+      const std::string& get_id() const { return id; }
+      const std::string& get_component_type() const { return component_type; }
+      const StreamType& get_input_stream() const { return input_stream; }
+      const StreamType& get_output_stream() const { return output_stream; }
+
+      virtual void add_to_network(adevs::Digraph<Stream>& nw) = 0;
+      FlowElement* get_connecting_element();
+
+    protected:
+      virtual FlowElement* create_connecting_element() = 0;
+      const std::vector<std::shared_ptr<Component>>& get_inputs() const {
+        return inputs;
+      }
+
+    private:
+      std::string id;
+      std::string component_type;
+      StreamType input_stream;
+      StreamType output_stream;
+      std::vector<std::shared_ptr<Component>> inputs;
+      FlowElement* connecting_element;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // LoadComponent
+  class LoadComponent : public Component
+  {
+    public:
+      LoadComponent(
+            const std::string& id,
+            const StreamType& input_stream,
+            const std::unordered_map<std::string,std::vector<LoadItem>>& loads_by_scenario,
+            const std::string& active_scenario);
+      void add_to_network(adevs::Digraph<Stream>& nw) override;
+
+    protected:
+      FlowElement* create_connecting_element() override;
+
+    private:
+      std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;
+      std::string active_scenario;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // SourceComponent
+  class SourceComponent : public Component
+  {
+    public:
+      SourceComponent(
+          const std::string& id,
+          const StreamType& output_stream);
+      void add_to_network(adevs::Digraph<Stream>& nw) override;
+
+    protected:
+      FlowElement* create_connecting_element() override;
   };
 }
 

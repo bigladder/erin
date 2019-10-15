@@ -49,8 +49,7 @@ TEST(AdevsUsageTest, CanRunCheckoutLineExample)
   store.couple(c, o);
   adevs::Simulator<Customer> sim;
   store.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>())
-  {
+  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
     sim.exec_next_event();
   }
   std::string actual_output = o->get_results();
@@ -340,8 +339,7 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
   adevs::Simulator<::DISCO::PortValue> sim;
   network.add(&sim);
   adevs::Time t;
-  while (sim.next_event_time() < adevs_inf<adevs::Time>())
-  {
+  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
     sim.exec_next_event();
     t = sim.now();
     std::cout << "The current time is: (" << t.real << ", " << t.logical << ")" << std::endl;
@@ -363,6 +361,36 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
     EXPECT_EQ(expected_genset_output_times.at(i), actual_genset_output_times.at(i));
     EXPECT_EQ(expected_fuel_output.at(i), actual_fuel_output.at(i));
   }
+}
+
+TEST(DiscoBasicTest, CanRunUsingComponents)
+{
+  auto elec = ::DISCO::StreamType("electrical");
+  auto loads_by_scenario = std::unordered_map<std::string,std::vector<::DISCO::LoadItem>>(
+      {{"bluesky", {{0,160},{1,80},{2,40},{3,0},{4}}}});
+  std::shared_ptr<::DISCO::Component> source =
+    std::make_shared<::DISCO::SourceComponent>("electrical_pcc", elec);
+  std::shared_ptr<::DISCO::Component> load =
+    std::make_shared<::DISCO::LoadComponent>(
+        "electrical_load",
+        elec,
+        loads_by_scenario,
+        "bluesky");
+  load->add_input(source);
+  adevs::Digraph<::DISCO::Stream> network;
+  load->add_to_network(network);
+  source->add_to_network(network);
+  adevs::Simulator<::DISCO::PortValue> sim;
+  network.add(&sim);
+  bool worked{false};
+  int iworked{0};
+  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
+    sim.exec_next_event();
+    worked = true;
+    ++iworked;
+  }
+  EXPECT_TRUE(iworked > 0);
+  EXPECT_TRUE(worked);
 }
 
 int

@@ -14,9 +14,9 @@ main(int argc, char *argv[]) {
     return 1;
   }
   auto input_toml = std::string{argv[1]};
-  auto output_csv = std::string{argv[2]};
+  auto output_toml = std::string{argv[2]};
 
-  auto m = DISCO::Main(input_toml, output_csv);
+  auto m = DISCO::Main(input_toml, output_toml);
   auto out = m.run();
   std::cout << "result of m.run() = " << out << "\n";
   return 0;

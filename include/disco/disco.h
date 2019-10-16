@@ -52,6 +52,7 @@ namespace DISCO
   {
     public:
       virtual StreamInfo read_stream_info() = 0;
+      virtual ~InputReader() { };
   };
 
   ////////////////////////////////////////////////////////////
@@ -83,12 +84,13 @@ namespace DISCO
   class Main
   {
     public:
-      Main(std::string input_toml, std::string output_toml);
+      Main(const std::string& input_toml, const std::string& output_toml);
       bool run();
 
     private:
       std::string input_file_path;
       std::string output_file_path;
+      std::unique_ptr<InputReader> reader;
   };
 
   ////////////////////////////////////////////////////////////

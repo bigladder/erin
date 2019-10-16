@@ -98,10 +98,14 @@ namespace DISCO
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file
-  Main::Main(std::string in_path, std::string out_path):
+  Main::Main(
+      const std::string& in_path,
+      const std::string& out_path):
     input_file_path{in_path},
-    output_file_path{out_path}
+    output_file_path{out_path},
+    reader{}
   {
+    reader = std::make_unique<TomlInputReader>(input_file_path);
   }
 
   bool
@@ -109,31 +113,13 @@ namespace DISCO
   {
     const auto data = toml::parse(input_file_path);
     // [stream_info]
-    const auto stream_info = toml::find(data, "stream_info");
-    const std::string stream_info_rate_unit(
-        toml::find_or(stream_info, "rate_unit", "kW"));
-    const std::string stream_info_quantity_unit(
-        toml::find_or(stream_info, "quantity_unit", "kJ"));
-    double default_seconds_per_time_unit{1.0};
-    if (stream_info_rate_unit == "kW" && stream_info_quantity_unit == "kJ")
-      default_seconds_per_time_unit = 1.0;
-    else if (stream_info_rate_unit == "kW"
-             && stream_info_quantity_unit == "kWh")
-      default_seconds_per_time_unit = 3600.0;
-    else
-      default_seconds_per_time_unit = -1.0;
-    const double stream_info_seconds_per_time_unit(
-        toml::find_or(
-          stream_info, "seconds_per_time_unit",
-          default_seconds_per_time_unit));
-    if (stream_info_seconds_per_time_unit < 0.0)
-      throw BadInputError();
+    const auto stream_info = reader->read_stream_info();
     if (DEBUG) {
-      std::cout << "stream_info.rate_unit = " << stream_info_rate_unit << "\n";
+      std::cout << "stream_info.rate_unit = " << stream_info.get_rate_unit() << "\n";
       std::cout << "stream_info.quantity_unit = "
-                << stream_info_quantity_unit << "\n";
+                << stream_info.get_quantity_unit() << "\n";
       std::cout << "stream_info.seconds_per_time_unit = "
-                << stream_info_seconds_per_time_unit << "\n";
+                << stream_info.get_seconds_per_time_unit() << "\n";
     }
     // [streams]
     const auto toml_streams = toml::find<toml::table>(data, "streams");
@@ -167,9 +153,9 @@ namespace DISCO
             s.first,
             ::DISCO::StreamType(
               stream_type,
-              stream_info_rate_unit,
-              stream_info_quantity_unit,
-              stream_info_seconds_per_time_unit,
+              stream_info.get_rate_unit(),
+              stream_info.get_quantity_unit(),
+              stream_info.get_seconds_per_time_unit(),
               other_rate_units,
               other_quantity_units)));
     }

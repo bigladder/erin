@@ -1,4 +1,4 @@
-# AREN (Assessment of Energy Networks)
+# E2RIN (Economics, Energy-use, and Resilience of Interacting Networks)
 
 Main engine for the DISCO (District Infrastructure System Component Optimization) tool.
 

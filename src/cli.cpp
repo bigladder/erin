@@ -1,7 +1,7 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 #include <iostream>
-#include "disco/disco.h"
+#include "erin/erin.h"
 
 
 int
@@ -16,7 +16,7 @@ main(int argc, char *argv[]) {
   auto input_toml = std::string{argv[1]};
   auto output_toml = std::string{argv[2]};
 
-  auto m = DISCO::Main(input_toml, output_toml);
+  auto m = ERIN::Main(input_toml, output_toml);
   auto out = m.run();
   std::cout << "result of m.run() = " << out << "\n";
   return 0;

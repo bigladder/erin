@@ -4,7 +4,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src"
   "checkout_line")
 
 set(test_sources
-  disco_tests.cpp
+  e2rin_tests.cpp
   checkout_line/clerk.cpp
   checkout_line/clerk.h
   checkout_line/customer.h

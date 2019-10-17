@@ -1,8 +1,8 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
-#ifndef DISCO_DISCO_H
-#define DISCO_DISCO_H
+#ifndef ERIN_ERIN_H
+#define ERIN_ERIN_H
 #include <string>
 #include <vector>
 #include <exception>
@@ -12,7 +12,7 @@
 #include "../../vendor/bdevs/include/adevs.h"
 #include "../../vendor/toml11/toml.hpp"
 
-namespace DISCO
+namespace ERIN
 {
   ////////////////////////////////////////////////////////////
   // Type Definitions
@@ -568,4 +568,4 @@ namespace DISCO
   };
 }
 
-#endif // DISCO_DISCO_H
+#endif // ERIN_ERIN_H

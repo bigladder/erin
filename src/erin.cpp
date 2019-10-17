@@ -1,6 +1,6 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
-#include "disco/disco.h"
+#include "erin/erin.h"
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
@@ -9,7 +9,7 @@
 #include <memory>
 #include "../vendor/toml11/toml.hpp"
 
-namespace DISCO
+namespace ERIN
 {
   const bool DEBUG{true};
   const FlowValueType TOL{1e-6};
@@ -126,7 +126,7 @@ namespace DISCO
     const auto num_streams = toml_streams.size();
     if (DEBUG)
       std::cout << num_streams << " streams found\n";
-    std::unordered_map<std::string, ::DISCO::StreamType> stream_types_map;
+    std::unordered_map<std::string, StreamType> stream_types_map;
     for (const auto& s: toml_streams) {
       toml::value t = s.second;
       toml::table tt = toml::get<toml::table>(t);
@@ -151,7 +151,7 @@ namespace DISCO
       const std::string stream_type{toml::find<std::string>(t, "type")};
       stream_types_map.insert(std::make_pair(
             s.first,
-            ::DISCO::StreamType(
+            StreamType(
               stream_type,
               stream_info.get_rate_unit(),
               stream_info.get_quantity_unit(),
@@ -328,8 +328,8 @@ namespace DISCO
     adevs::Digraph<Stream> network;
     // 3. Instantiate the network and add the components
     //network.couple(
-    //  sink, ::DISCO::Sink::outport_inflow_request,
-    //  genset_meter, ::DISCO::FlowMeter::inport_outflow_request);
+    //  sink, Sink::outport_inflow_request,
+    //  genset_meter, FlowMeter::inport_outflow_request);
     adevs::Simulator<PortValue> sim;
     network.add(&sim);
     adevs::Time t;
@@ -349,7 +349,7 @@ namespace DISCO
   {
     if (lower > upper) {
       std::ostringstream oss;
-      oss << "DISCO::clamp_toward_0 error: lower (" << lower
+      oss << "ERIN::clamp_toward_0 error: lower (" << lower
           << ") greater than upper (" << upper << ")"; 
       throw std::invalid_argument(oss.str());
     }

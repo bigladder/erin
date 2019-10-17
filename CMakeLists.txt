@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10) # required for gtest_discover_tests
 
-project(DISCO)
+project(ERIN)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
@@ -15,7 +15,7 @@ endif()
 
 set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-option( ${CMAKE_PROJECT_NAME}_TESTING "Build DISCO testing targets" OFF)
+option( ${CMAKE_PROJECT_NAME}_TESTING "Build ERIN testing targets" OFF)
 option( ${CMAKE_PROJECT_NAME}_COVERAGE "Generate coverage reports" OFF)
 
 # Set up testing/coverage

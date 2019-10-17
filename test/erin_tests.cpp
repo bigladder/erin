@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <sstream>
 #include "gtest/gtest.h"
-#include "disco/disco.h"
+#include "erin/erin.h"
 #include "../vendor/bdevs/include/adevs.h"
 #include "checkout_line/clerk.h"
 #include "checkout_line/customer.h"
@@ -57,51 +57,51 @@ TEST(AdevsUsageTest, CanRunCheckoutLineExample)
   EXPECT_EQ(expected_output, actual_output);
 }
 
-TEST(DiscoUtilFunctions, TestClamp)
+TEST(ErinUtilFunctions, TestClamp)
 {
   // POSITIVE INTEGERS
   // at lower edge
-  EXPECT_EQ(0, DISCO::clamp_toward_0(0, 0, 10));
+  EXPECT_EQ(0, ERIN::clamp_toward_0(0, 0, 10));
   // at upper edge
-  EXPECT_EQ(10, DISCO::clamp_toward_0(10, 0, 10));
+  EXPECT_EQ(10, ERIN::clamp_toward_0(10, 0, 10));
   // in range
-  EXPECT_EQ(5, DISCO::clamp_toward_0(5, 0, 10));
+  EXPECT_EQ(5, ERIN::clamp_toward_0(5, 0, 10));
   // out of range above
-  EXPECT_EQ(10, DISCO::clamp_toward_0(15, 0, 10));
+  EXPECT_EQ(10, ERIN::clamp_toward_0(15, 0, 10));
   // out of range below
-  EXPECT_EQ(0, DISCO::clamp_toward_0(2, 5, 25));
+  EXPECT_EQ(0, ERIN::clamp_toward_0(2, 5, 25));
   // NEGATIVE INTEGERS
   // at lower edge
-  EXPECT_EQ(-10, DISCO::clamp_toward_0(-10, -10, -5));
+  EXPECT_EQ(-10, ERIN::clamp_toward_0(-10, -10, -5));
   // at upper edge
-  EXPECT_EQ(-5, DISCO::clamp_toward_0(-5, -10, -5));
+  EXPECT_EQ(-5, ERIN::clamp_toward_0(-5, -10, -5));
   // in range
-  EXPECT_EQ(-8, DISCO::clamp_toward_0(-8, -10, -5));
+  EXPECT_EQ(-8, ERIN::clamp_toward_0(-8, -10, -5));
   // out of range above
-  EXPECT_EQ(0, DISCO::clamp_toward_0(-2, -10, -5));
+  EXPECT_EQ(0, ERIN::clamp_toward_0(-2, -10, -5));
   // out of range below
-  EXPECT_EQ(-10, DISCO::clamp_toward_0(-15, -10, -5));
+  EXPECT_EQ(-10, ERIN::clamp_toward_0(-15, -10, -5));
 }
 
-TEST(DiscoBasicsTest, TestUnitConversion)
+TEST(ErinBasicsTest, TestUnitConversion)
 {
-  const auto st = ::DISCO::StreamType{"electricity"};
-  const auto s = ::DISCO::Stream(st, 10.0);
+  const auto st = ::ERIN::StreamType{"electricity"};
+  const auto s = ::ERIN::Stream(st, 10.0);
   EXPECT_EQ(s.get_rate(), 10.0);
   EXPECT_NEAR(s.get_quantity(3600.0), 10.0 * 3600.0, 1e-6);
-  const auto st1 = ::DISCO::StreamType{"electricity", "kW", "kWh", 3600.0};
-  const auto s1 = ::DISCO::Stream{st1, 1.0};
+  const auto st1 = ::ERIN::StreamType{"electricity", "kW", "kWh", 3600.0};
+  const auto s1 = ::ERIN::Stream{st1, 1.0};
   EXPECT_EQ(s1.get_rate(), 1.0);
   EXPECT_NEAR(s1.get_quantity(3600.0), 1.0, 1e-6);
-  const auto ru = std::unordered_map<std::string,::DISCO::FlowValueType>{
+  const auto ru = std::unordered_map<std::string,::ERIN::FlowValueType>{
     {"liters/hour",0.1003904071388734},
     {"gallons/hour",0.026520422449113276}
   };
-  const auto qu = std::unordered_map<std::string,::DISCO::FlowValueType>{
+  const auto qu = std::unordered_map<std::string,::ERIN::FlowValueType>{
     {"liters",2.7886224205242612e-05},
     {"gallons",7.366784013642577e-06}
   };
-  const auto st2 = ::DISCO::StreamType{
+  const auto st2 = ::ERIN::StreamType{
     "diesel",
     "kW",
     "kJ",
@@ -109,7 +109,7 @@ TEST(DiscoBasicsTest, TestUnitConversion)
     ru,
     qu
   };
-  const auto s2 = ::DISCO::Stream(st2, 100.0);
+  const auto s2 = ::ERIN::Stream(st2, 100.0);
   EXPECT_NEAR(s2.get_rate(), 100.0, 1e-6);
   EXPECT_NEAR(s2.get_quantity(3600.0), 100.0 * 3600.0, 1e-6);
   EXPECT_NEAR(s2.get_rate_in_units("liters/hour"), 10.03904071388734, 1e-6);
@@ -118,10 +118,10 @@ TEST(DiscoBasicsTest, TestUnitConversion)
   EXPECT_NEAR(s2.get_quantity_in_units(3600.0, "gallons"), 2.652042244911328, 1e-6);
 }
 
-TEST(DiscoBasicsTest, TestLoadItem)
+TEST(ErinBasicsTest, TestLoadItem)
 {
-  const auto li1 = ::DISCO::LoadItem(0, 1);
-  const auto li2 = ::DISCO::LoadItem(4);
+  const auto li1 = ::ERIN::LoadItem(0, 1);
+  const auto li2 = ::ERIN::LoadItem(4);
   EXPECT_NEAR(li1.get_time_advance(li2), 4.0, 1e-6);
   EXPECT_EQ(li1.get_time(), 0);
   EXPECT_EQ(li1.get_value(), 1.0);
@@ -130,45 +130,45 @@ TEST(DiscoBasicsTest, TestLoadItem)
   EXPECT_TRUE(li2.get_is_end());
 }
 
-TEST(DiscoBasicsTest, FlowState)
+TEST(ErinBasicsTest, FlowState)
 {
-  ::DISCO::FlowState fs{0.0, 0.0};
+  ::ERIN::FlowState fs{0.0, 0.0};
   EXPECT_EQ(fs.getInflow(), 0.0);
   EXPECT_EQ(fs.getOutflow(), 0.0);
   EXPECT_EQ(fs.getStoreflow(), 0.0);
   EXPECT_EQ(fs.getLossflow(), 0.0);
-  fs = ::DISCO::FlowState{100.0, 50.0};
+  fs = ::ERIN::FlowState{100.0, 50.0};
   EXPECT_EQ(fs.getInflow(), 100.0);
   EXPECT_EQ(fs.getOutflow(), 50.0);
   EXPECT_EQ(fs.getStoreflow(), 0.0);
   EXPECT_EQ(fs.getLossflow(), 50.0);
-  fs = ::DISCO::FlowState{100.0, 0.0, 90.0};
+  fs = ::ERIN::FlowState{100.0, 0.0, 90.0};
   EXPECT_EQ(fs.getInflow(), 100.0);
   EXPECT_EQ(fs.getOutflow(), 0.0);
   EXPECT_EQ(fs.getStoreflow(), 90.0);
   EXPECT_EQ(fs.getLossflow(), 10.0);
 }
 
-TEST(DiscoBasicsTest, StandaloneSink)
+TEST(ErinBasicsTest, StandaloneSink)
 {
-  std::vector<::DISCO::RealTimeType> expected_times = {0, 1, 2};
-  std::vector<::DISCO::RealTimeType> expected_loads = {100, 10, 0};
-  auto st = ::DISCO::StreamType("electrical");
-  auto sink = new ::DISCO::Sink(
+  std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2};
+  std::vector<::ERIN::RealTimeType> expected_loads = {100, 10, 0};
+  auto st = ::ERIN::StreamType("electrical");
+  auto sink = new ::ERIN::Sink(
       "load", st, {{"default", {{0,100},{1,10},{2,0},{3}}}}, "default");
-  auto meter = new ::DISCO::FlowMeter("meter", st);
-  adevs::Digraph<::DISCO::Stream> network;
+  auto meter = new ::ERIN::FlowMeter("meter", st);
+  adevs::Digraph<::ERIN::Stream> network;
   network.couple(
-      sink, ::DISCO::Sink::outport_inflow_request,
-      meter, ::DISCO::FlowMeter::inport_outflow_request
+      sink, ::ERIN::Sink::outport_inflow_request,
+      meter, ::ERIN::FlowMeter::inport_outflow_request
       );
-  adevs::Simulator<::DISCO::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
     sim.exec_next_event();
-  std::vector<::DISCO::RealTimeType> actual_times =
+  std::vector<::ERIN::RealTimeType> actual_times =
     meter->get_actual_output_times();
-  std::vector<::DISCO::FlowValueType> actual_loads = meter->get_actual_output();
+  std::vector<::ERIN::FlowValueType> actual_loads = meter->get_actual_output();
   EXPECT_EQ(expected_times.size(), actual_times.size());
   EXPECT_EQ(expected_loads.size(), actual_loads.size());
   for (int i{0}; i < expected_times.size(); ++i) {
@@ -183,26 +183,26 @@ TEST(DiscoBasicsTest, StandaloneSink)
   }
 }
 
-TEST(DiscoBasicsTest, CanRunSourceSink)
+TEST(ErinBasicsTest, CanRunSourceSink)
 {
-  std::vector<::DISCO::RealTimeType> expected_time = {0, 1};
-  std::vector<::DISCO::FlowValueType> expected_flow = {100, 0};
-  auto st = ::DISCO::StreamType("electrical");
-  auto sink = new ::DISCO::Sink(
+  std::vector<::ERIN::RealTimeType> expected_time = {0, 1};
+  std::vector<::ERIN::FlowValueType> expected_flow = {100, 0};
+  auto st = ::ERIN::StreamType("electrical");
+  auto sink = new ::ERIN::Sink(
       "sink", st, {{"default",{{0,100},{1,0},{2}}}}, "default");
-  auto meter = new ::DISCO::FlowMeter("meter", st);
-  adevs::Digraph<::DISCO::Stream> network;
+  auto meter = new ::ERIN::FlowMeter("meter", st);
+  adevs::Digraph<::ERIN::Stream> network;
   network.couple(
-      sink, ::DISCO::Sink::outport_inflow_request,
-      meter, ::DISCO::FlowMeter::inport_outflow_request
+      sink, ::ERIN::Sink::outport_inflow_request,
+      meter, ::ERIN::FlowMeter::inport_outflow_request
       );
-  adevs::Simulator<::DISCO::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
     sim.exec_next_event();
-  std::vector<::DISCO::RealTimeType> actual_time =
+  std::vector<::ERIN::RealTimeType> actual_time =
     meter->get_actual_output_times();
-  std::vector<::DISCO::FlowValueType> actual_flow =
+  std::vector<::ERIN::FlowValueType> actual_flow =
     meter->get_actual_output();
   EXPECT_EQ(expected_time.size(), actual_time.size());
   EXPECT_EQ(expected_flow.size(), actual_flow.size());
@@ -219,45 +219,45 @@ TEST(DiscoBasicsTest, CanRunSourceSink)
   }
 }
 
-TEST(DiscoBasicTest, CanRunPowerLimitedSink)
+TEST(ErinBasicTest, CanRunPowerLimitedSink)
 {
-  std::vector<::DISCO::RealTimeType> expected_time = {0, 1, 2, 3};
-  std::vector<::DISCO::FlowValueType> expected_flow = {50, 50, 40, 0};
-  auto elec = ::DISCO::StreamType("electrical");
-  auto meter2 = new ::DISCO::FlowMeter("meter2", elec);
-  auto lim = new ::DISCO::FlowLimits("lim", elec, 0, 50);
-  auto meter1 = new ::DISCO::FlowMeter("meter1", elec);
-  auto sink = new ::DISCO::Sink(
+  std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2, 3};
+  std::vector<::ERIN::FlowValueType> expected_flow = {50, 50, 40, 0};
+  auto elec = ::ERIN::StreamType("electrical");
+  auto meter2 = new ::ERIN::FlowMeter("meter2", elec);
+  auto lim = new ::ERIN::FlowLimits("lim", elec, 0, 50);
+  auto meter1 = new ::ERIN::FlowMeter("meter1", elec);
+  auto sink = new ::ERIN::Sink(
       "electric-load", elec,
       {{"default", {{0, 160},{1,80},{2,40},{3,0},{4}}}},
       "default");
-  adevs::Digraph<::DISCO::Stream> network;
+  adevs::Digraph<::ERIN::Stream> network;
   network.couple(
-      sink, ::DISCO::Sink::outport_inflow_request,
-      meter1, ::DISCO::FlowMeter::inport_outflow_request);
+      sink, ::ERIN::Sink::outport_inflow_request,
+      meter1, ::ERIN::FlowMeter::inport_outflow_request);
   network.couple(
-      meter1, ::DISCO::FlowMeter::outport_inflow_request,
-      lim, ::DISCO::FlowLimits::inport_outflow_request);
+      meter1, ::ERIN::FlowMeter::outport_inflow_request,
+      lim, ::ERIN::FlowLimits::inport_outflow_request);
   network.couple(
-      lim, ::DISCO::FlowLimits::outport_inflow_request,
-      meter2, ::DISCO::FlowMeter::inport_outflow_request);
+      lim, ::ERIN::FlowLimits::outport_inflow_request,
+      meter2, ::ERIN::FlowMeter::inport_outflow_request);
   network.couple(
-      meter2, ::DISCO::FlowMeter::outport_outflow_achieved,
-      lim, ::DISCO::FlowLimits::inport_inflow_achieved);
+      meter2, ::ERIN::FlowMeter::outport_outflow_achieved,
+      lim, ::ERIN::FlowLimits::inport_inflow_achieved);
   network.couple(
-      lim, ::DISCO::FlowLimits::outport_outflow_achieved,
-      meter1, ::DISCO::FlowMeter::inport_inflow_achieved);
-  adevs::Simulator<::DISCO::PortValue> sim;
+      lim, ::ERIN::FlowLimits::outport_outflow_achieved,
+      meter1, ::ERIN::FlowMeter::inport_inflow_achieved);
+  adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
     sim.exec_next_event();
-  std::vector<::DISCO::RealTimeType> actual_time1 =
+  std::vector<::ERIN::RealTimeType> actual_time1 =
     meter1->get_actual_output_times();
-  std::vector<::DISCO::RealTimeType> actual_time2 =
+  std::vector<::ERIN::RealTimeType> actual_time2 =
     meter2->get_actual_output_times();
-  std::vector<::DISCO::FlowValueType> actual_flow1 =
+  std::vector<::ERIN::FlowValueType> actual_flow1 =
     meter1->get_actual_output();
-  std::vector<::DISCO::FlowValueType> actual_flow2 =
+  std::vector<::ERIN::FlowValueType> actual_flow2 =
     meter2->get_actual_output();
   EXPECT_EQ(expected_time.size(), actual_time1.size());
   EXPECT_EQ(expected_time.size(), actual_time2.size());
@@ -283,61 +283,61 @@ TEST(DiscoBasicTest, CanRunPowerLimitedSink)
   }
 }
 
-TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
+TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
 {
   const double diesel_generator_efficiency{0.36};
-  const std::vector<::DISCO::RealTimeType> expected_genset_output_times{0, 1, 2, 3};
-  const std::vector<::DISCO::FlowValueType> expected_genset_output{50, 50, 40, 0};
-  auto calc_output_given_input = [=](::DISCO::FlowValueType input_kW) -> ::DISCO::FlowValueType {
+  const std::vector<::ERIN::RealTimeType> expected_genset_output_times{0, 1, 2, 3};
+  const std::vector<::ERIN::FlowValueType> expected_genset_output{50, 50, 40, 0};
+  auto calc_output_given_input = [=](::ERIN::FlowValueType input_kW) -> ::ERIN::FlowValueType {
     return input_kW * diesel_generator_efficiency;
   };
-  auto calc_input_given_output = [=](::DISCO::FlowValueType output_kW) -> ::DISCO::FlowValueType {
+  auto calc_input_given_output = [=](::ERIN::FlowValueType output_kW) -> ::ERIN::FlowValueType {
     return output_kW / diesel_generator_efficiency;
   };
-  const std::vector<::DISCO::FlowValueType> expected_fuel_output{
+  const std::vector<::ERIN::FlowValueType> expected_fuel_output{
     calc_input_given_output(50),
     calc_input_given_output(50),
     calc_input_given_output(40),
     calc_input_given_output(0),
   };
-  auto diesel = ::DISCO::StreamType("diesel");
-  auto elec = ::DISCO::StreamType("electrical");
-  auto diesel_fuel_meter = new ::DISCO::FlowMeter("diesel_fuel_meter", diesel);
-  auto genset_tx = new ::DISCO::Transformer(
+  auto diesel = ::ERIN::StreamType("diesel");
+  auto elec = ::ERIN::StreamType("electrical");
+  auto diesel_fuel_meter = new ::ERIN::FlowMeter("diesel_fuel_meter", diesel);
+  auto genset_tx = new ::ERIN::Transformer(
       "genset_tx",
       diesel,
       elec,
       calc_output_given_input,
       calc_input_given_output
       );
-  auto genset_lim = new ::DISCO::FlowLimits("genset_lim", elec, 0, 50);
-  auto genset_meter = new ::DISCO::FlowMeter("genset_meter", elec);
-  auto sink = new ::DISCO::Sink(
+  auto genset_lim = new ::ERIN::FlowLimits("genset_lim", elec, 0, 50);
+  auto genset_meter = new ::ERIN::FlowMeter("genset_meter", elec);
+  auto sink = new ::ERIN::Sink(
       "electric_load", elec,
       {{"bluesky", {{0,160},{1,80},{2,40},{3,0},{4}}}}, "bluesky");
-  adevs::Digraph<::DISCO::Stream> network;
+  adevs::Digraph<::ERIN::Stream> network;
   network.couple(
-      sink, ::DISCO::Sink::outport_inflow_request,
-      genset_meter, ::DISCO::FlowMeter::inport_outflow_request);
+      sink, ::ERIN::Sink::outport_inflow_request,
+      genset_meter, ::ERIN::FlowMeter::inport_outflow_request);
   network.couple(
-      genset_meter, ::DISCO::FlowMeter::outport_inflow_request,
-      genset_lim, ::DISCO::FlowLimits::inport_outflow_request);
+      genset_meter, ::ERIN::FlowMeter::outport_inflow_request,
+      genset_lim, ::ERIN::FlowLimits::inport_outflow_request);
   network.couple(
-      genset_lim, ::DISCO::FlowLimits::outport_inflow_request,
-      genset_tx, ::DISCO::Transformer::inport_outflow_request);
+      genset_lim, ::ERIN::FlowLimits::outport_inflow_request,
+      genset_tx, ::ERIN::Transformer::inport_outflow_request);
   network.couple(
-      genset_tx, ::DISCO::Transformer::outport_inflow_request,
-      diesel_fuel_meter, ::DISCO::FlowMeter::inport_outflow_request);
+      genset_tx, ::ERIN::Transformer::outport_inflow_request,
+      diesel_fuel_meter, ::ERIN::FlowMeter::inport_outflow_request);
   network.couple(
-      diesel_fuel_meter, ::DISCO::FlowMeter::outport_outflow_achieved,
-      genset_tx, ::DISCO::Transformer::inport_inflow_achieved);
+      diesel_fuel_meter, ::ERIN::FlowMeter::outport_outflow_achieved,
+      genset_tx, ::ERIN::Transformer::inport_inflow_achieved);
   network.couple(
-      genset_tx, ::DISCO::Transformer::outport_outflow_achieved,
-      genset_lim, ::DISCO::FlowLimits::inport_inflow_achieved);
+      genset_tx, ::ERIN::Transformer::outport_outflow_achieved,
+      genset_lim, ::ERIN::FlowLimits::inport_inflow_achieved);
   network.couple(
-      genset_lim, ::DISCO::FlowLimits::outport_outflow_achieved,
-      genset_meter, ::DISCO::FlowMeter::inport_inflow_achieved);
-  adevs::Simulator<::DISCO::PortValue> sim;
+      genset_lim, ::ERIN::FlowLimits::outport_outflow_achieved,
+      genset_meter, ::ERIN::FlowMeter::inport_inflow_achieved);
+  adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
   adevs::Time t;
   while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
@@ -345,11 +345,11 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
     t = sim.now();
     std::cout << "The current time is: (" << t.real << ", " << t.logical << ")" << std::endl;
   }
-  std::vector<::DISCO::FlowValueType> actual_genset_output =
+  std::vector<::ERIN::FlowValueType> actual_genset_output =
     genset_meter->get_actual_output();
-  std::vector<::DISCO::FlowValueType> actual_fuel_output =
+  std::vector<::ERIN::FlowValueType> actual_fuel_output =
     diesel_fuel_meter->get_actual_output();
-  std::vector<::DISCO::RealTimeType> actual_genset_output_times =
+  std::vector<::ERIN::RealTimeType> actual_genset_output_times =
     genset_meter->get_actual_output_times();
   EXPECT_EQ(expected_genset_output.size(), actual_genset_output.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output_times.size());
@@ -364,24 +364,24 @@ TEST(DiscoBasicTest, CanRunBasicDieselGensetExample)
   }
 }
 
-TEST(DiscoBasicTest, CanRunUsingComponents)
+TEST(ErinBasicTest, CanRunUsingComponents)
 {
-  auto elec = ::DISCO::StreamType("electrical");
-  auto loads_by_scenario = std::unordered_map<std::string,std::vector<::DISCO::LoadItem>>(
+  auto elec = ::ERIN::StreamType("electrical");
+  auto loads_by_scenario = std::unordered_map<std::string,std::vector<::ERIN::LoadItem>>(
       {{"bluesky", {{0,160},{1,80},{2,40},{3,0},{4}}}});
-  std::shared_ptr<::DISCO::Component> source =
-    std::make_shared<::DISCO::SourceComponent>("electrical_pcc", elec);
-  std::shared_ptr<::DISCO::Component> load =
-    std::make_shared<::DISCO::LoadComponent>(
+  std::shared_ptr<::ERIN::Component> source =
+    std::make_shared<::ERIN::SourceComponent>("electrical_pcc", elec);
+  std::shared_ptr<::ERIN::Component> load =
+    std::make_shared<::ERIN::LoadComponent>(
         "electrical_load",
         elec,
         loads_by_scenario,
         "bluesky");
   load->add_input(source);
-  adevs::Digraph<::DISCO::Stream> network;
+  adevs::Digraph<::ERIN::Stream> network;
   load->add_to_network(network);
   source->add_to_network(network);
-  adevs::Simulator<::DISCO::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
   bool worked{false};
   int iworked{0};
@@ -394,7 +394,7 @@ TEST(DiscoBasicTest, CanRunUsingComponents)
   EXPECT_TRUE(worked);
 }
 
-TEST(DiscoBasicTest, CanReadStreamInfoFromToml)
+TEST(ErinBasicTest, CanReadStreamInfoFromToml)
 {
   std::stringstream ss{};
   ss << "[stream_info]\n"
@@ -408,8 +408,8 @@ TEST(DiscoBasicTest, CanReadStreamInfoFromToml)
      << "# here since we are using kW and kJ, the answer is 1.0 second.\n"
      << "# However, if we were doing kW and kWh, we would use 3600 s (i.e., 1 hour) here.\n"
      << "seconds_per_time_unit = 1.0\n";
-  ::DISCO::TomlInputReader t{ss};
-  ::DISCO::StreamInfo expected{"kW", "kJ", 1.0};
+  ::ERIN::TomlInputReader t{ss};
+  ::ERIN::StreamInfo expected{"kW", "kJ", 1.0};
   auto pt = &t;
   auto actual = pt->read_stream_info();
   EXPECT_EQ(expected, actual);

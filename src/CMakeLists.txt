@@ -12,12 +12,12 @@
 #file(GLOB_RECURSE public_headers "${PROJECT_SOURCE_DIR}/include/${CMAKE_PROJECT_NAME}/[a-zA-Z]*.h")
 #file(GLOB_RECURSE private_headers "${PROJECT_SOURCE_DIR}/src/[a-zA-Z]*.h")
 set(sources
-  "${PROJECT_SOURCE_DIR}/src/erin.cpp"
+  ${PROJECT_SOURCE_DIR}/src/erin.cpp
 )
 
 set(public_headers
-  "${PROJECT_SOURCE_DIR}/include/erin/erin.h"
-  )
+  ${PROJECT_SOURCE_DIR}/include/erin/erin.h
+)
 
 set(private_headers)
 

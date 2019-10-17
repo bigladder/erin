@@ -1138,7 +1138,7 @@ namespace ERIN
         std::cout << "... dt = infinity\n";
       return adevs::Time{0, 0};
     }
-    int next_idx = idx + 1;
+    std::vector<LoadItem>::size_type next_idx = idx + 1;
     if (next_idx < num_loads) {
       RealTimeType dt{loads[idx].get_time_advance(loads[next_idx])};
       if (DEBUG)
@@ -1162,7 +1162,7 @@ namespace ERIN
     if (DEBUG)
       std::cout << "Sink::output_func()\n";
     if (active_scenario != "") {
-      auto next_idx{idx + 1};
+      std::vector<LoadItem>::size_type next_idx = idx + 1;
       auto max_idx{num_loads - 1};
       if (next_idx < max_idx)
         ys.push_back(
@@ -1188,7 +1188,7 @@ namespace ERIN
       throw std::invalid_argument(oss.str());
     }
     RealTimeType t{-1};
-    for (int idx{0}; idx < loads.size(); ++idx) {
+    for (std::vector<LoadItem>::size_type idx=0; idx < loads.size(); ++idx) {
       const auto& x{loads.at(idx)};
       auto t_{x.get_time()};
       if (idx == last_idx) {

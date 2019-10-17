@@ -49,4 +49,4 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
   add_coverage(${CMAKE_PROJECT_NAME})
 endif()
 
-add_executable(erin cli.cpp ${sources} ${public_headers} ${private_headers})
+add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})

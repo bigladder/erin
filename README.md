@@ -93,7 +93,7 @@ To build the project, follow these steps:
 1. check out the source code using git
 2. `mkdir build`
 3. `cd build`
-4. `cmake -DDISCO_TESTING=ON ..`
+4. `cmake -DERIN_TESTING=ON ..`
 5. `make -j4`
 6. `ctest --output-on-failure`
 

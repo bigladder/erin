@@ -95,43 +95,17 @@ namespace ERIN
     return StreamInfo(rate_unit, quantity_unit, seconds_per_time_unit);
   }
 
-  //////////////////////////////////////////////////////////// 
-  // Main
-  // main class that runs the simulation from file
-  Main::Main(
-      const std::string& in_path,
-      const std::string& out_path):
-    input_file_path{in_path},
-    output_file_path{out_path},
-    reader{}
+  std::unordered_map<std::string, StreamType>
+  TomlInputReader::read_streams(const StreamInfo& si)
   {
-    reader = std::make_unique<TomlInputReader>(input_file_path);
-  }
-
-  bool
-  Main::run()
-  {
-    const auto data = toml::parse(input_file_path);
-    // [stream_info]
-    const auto stream_info = reader->read_stream_info();
-    if (DEBUG) {
-      std::cout << "stream_info.rate_unit = " << stream_info.get_rate_unit() << "\n";
-      std::cout << "stream_info.quantity_unit = "
-                << stream_info.get_quantity_unit() << "\n";
-      std::cout << "stream_info.seconds_per_time_unit = "
-                << stream_info.get_seconds_per_time_unit() << "\n";
-    }
-    // [streams]
     const auto toml_streams = toml::find<toml::table>(data, "streams");
-    const auto num_streams = toml_streams.size();
-    if (DEBUG)
-      std::cout << num_streams << " streams found\n";
     std::unordered_map<std::string, StreamType> stream_types_map;
     for (const auto& s: toml_streams) {
       toml::value t = s.second;
       toml::table tt = toml::get<toml::table>(t);
       auto other_rate_units = std::unordered_map<std::string,FlowValueType>();
-      auto other_quantity_units = std::unordered_map<std::string,FlowValueType>();
+      auto other_quantity_units =
+        std::unordered_map<std::string,FlowValueType>();
       auto it1 = tt.find("other_rate_units");
       if (it1 != tt.end()) {
         const auto oru = toml::get<toml::table>(it1->second);
@@ -153,12 +127,47 @@ namespace ERIN
             s.first,
             StreamType(
               stream_type,
-              stream_info.get_rate_unit(),
-              stream_info.get_quantity_unit(),
-              stream_info.get_seconds_per_time_unit(),
+              si.get_rate_unit(),
+              si.get_quantity_unit(),
+              si.get_seconds_per_time_unit(),
               other_rate_units,
               other_quantity_units)));
     }
+    return stream_types_map;
+  }
+
+  //////////////////////////////////////////////////////////// 
+  // Main
+  // main class that runs the simulation from file
+  Main::Main(
+      const std::string& in_path,
+      const std::string& out_path):
+    input_file_path{in_path},
+    output_file_path{out_path},
+    reader{}
+  {
+    reader = std::make_unique<TomlInputReader>(input_file_path);
+  }
+
+  bool
+  Main::run()
+  {
+    const auto data = toml::parse(input_file_path);
+    // [stream_info]
+    const auto stream_info = reader->read_stream_info();
+    if (DEBUG) {
+      std::cout << "stream_info.rate_unit = "
+                << stream_info.get_rate_unit() << "\n";
+      std::cout << "stream_info.quantity_unit = "
+                << stream_info.get_quantity_unit() << "\n";
+      std::cout << "stream_info.seconds_per_time_unit = "
+                << stream_info.get_seconds_per_time_unit() << "\n";
+    }
+    // [streams]
+    const auto stream_types_map = reader->read_streams(stream_info);
+    const auto num_streams = stream_types_map.size();
+    if (DEBUG)
+      std::cout << num_streams << " streams found\n";
     if (DEBUG)
       for (const auto& x: stream_types_map)
         std::cout << "stream type: " << x.first << ", " << x.second << "\n";

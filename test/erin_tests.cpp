@@ -415,6 +415,62 @@ TEST(ErinBasicTest, CanReadStreamInfoFromToml)
   EXPECT_EQ(expected, actual);
 }
 
+TEST(ErinBasicsTest, CanReadStreamsFromToml)
+{
+  std::stringstream ss{};
+  ss << "[streams.electricity]\n"
+     << "type = \"electricity_medium_voltage\"\n"
+     << "[streams.diesel]\n"
+     << "type = \"diesel_fuel\"\n"
+     << "[streams.diesel.other_rate_units]\n"
+     << "gallons__hour = 0.026520422449113276\n"
+     << "liters__hour = 0.1003904071388734\n"
+     << "[streams.diesel.other_quantity_units]\n"
+     << "gallons = 7.366784013642577e-6\n"
+     << "liters = 2.7886224205242612e-5\n";
+  ::ERIN::TomlInputReader t{ss};
+  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  std::unordered_map<std::string, ::ERIN::StreamType> expected{
+    std::make_pair("electricity", ::ERIN::StreamType(
+          "electricity_medium_voltage", "kW", "kJ", 1.0, {}, {})),
+    std::make_pair("diesel", ::ERIN::StreamType(
+          "diesel_fuel", "kW", "kJ", 1.0,
+          {std::make_pair("gallons__hour", 0.026520422449113276),
+           std::make_pair("liters__hour", 0.1003904071388734)},
+          {std::make_pair("gallons", 7.366784013642577e-6),
+           std::make_pair("liters", 2.7886224205242612e-5)}))
+  };
+  auto pt = &t;
+  auto actual = pt->read_streams(si);
+  EXPECT_EQ(expected.size(), actual.size());
+  for (auto const& e: expected) {
+    const auto a = actual.find(e.first);
+    ASSERT_TRUE(a != actual.end());
+    EXPECT_EQ(e.second.get_type(), a->second.get_type());
+    EXPECT_EQ(e.second.get_rate_units(), a->second.get_rate_units());
+    EXPECT_EQ(e.second.get_quantity_units(), a->second.get_quantity_units());
+    EXPECT_EQ(
+        e.second.get_seconds_per_time_unit(),
+        a->second.get_seconds_per_time_unit());
+    const auto eoru = e.second.get_other_rate_units();
+    const auto aoru = a->second.get_other_rate_units();
+    EXPECT_EQ(eoru.size(), aoru.size());
+    for (auto const& eru: eoru) {
+      const auto aru = aoru.find(eru.first);
+      ASSERT_TRUE(aru != aoru.end());
+      EXPECT_NEAR(eru.second, aru->second, 1e-6);
+    }
+    const auto eoqu = e.second.get_other_quantity_units();
+    const auto aoqu = a->second.get_other_quantity_units();
+    EXPECT_EQ(eoqu.size(), aoqu.size());
+    for (auto const& equ: eoqu) {
+      const auto aqu = aoqu.find(equ.first);
+      ASSERT_TRUE(aqu != aoqu.end());
+      EXPECT_NEAR(equ.second, aqu->second, 1e-6);
+    }
+  }
+}
+
 int
 main(int argc, char **argv)
 {

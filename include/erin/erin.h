@@ -48,10 +48,13 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // InputReader
+  class StreamType; // Forward declaration
   class InputReader
   {
     public:
       virtual StreamInfo read_stream_info() = 0;
+      virtual std::unordered_map<std::string, StreamType>
+        read_streams(const StreamInfo& si) = 0;
       virtual ~InputReader() { };
   };
 
@@ -74,6 +77,8 @@ namespace ERIN
       TomlInputReader(std::istream& in);
 
       StreamInfo read_stream_info() override;
+      std::unordered_map<std::string, StreamType>
+        read_streams(const StreamInfo& si) override;
 
     private:
       toml::value data;

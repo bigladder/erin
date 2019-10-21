@@ -3,7 +3,7 @@
 	url = https://github.com/google/googletest.git
 [submodule "vendor/bdevs"]
 	path = vendor/bdevs
-	url = https://michael-okeefe@bitbucket.org/bigladder/bdevs.git
+	url = https://bitbucket.org/bigladder/bdevs.git
 	branch = add_cmake
 [submodule "vendor/toml11"]
 	path = vendor/toml11

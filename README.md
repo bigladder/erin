@@ -94,8 +94,10 @@ To build the project, follow these steps:
 2. `mkdir build`
 3. `cd build`
 4. `cmake -DERIN_TESTING=ON ..`
-5. `make -j4`
-6. `ctest --output-on-failure`
+5. By operating system:
+    - Windows: open the solution file
+    - OS X or Linux: `make -j4`
+6. `ctest --output-on-failure` (or run `ERIN_TESTS` in VisualStudio)
 
 
 ## Dependencies: Git submodules

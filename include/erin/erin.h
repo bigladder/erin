@@ -49,12 +49,16 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // InputReader
   class StreamType; // Forward declaration
+  class Component; // Forward declaration
   class InputReader
   {
     public:
       virtual StreamInfo read_stream_info() = 0;
       virtual std::unordered_map<std::string, StreamType>
         read_streams(const StreamInfo& si) = 0;
+      virtual std::unordered_map<std::string, std::shared_ptr<Component>>
+        read_components(
+            const std::unordered_map<std::string, StreamType>& stm) = 0;
       virtual ~InputReader() { };
   };
 
@@ -79,6 +83,9 @@ namespace ERIN
       StreamInfo read_stream_info() override;
       std::unordered_map<std::string, StreamType>
         read_streams(const StreamInfo& si) override;
+      std::unordered_map<std::string, std::shared_ptr<Component>>
+        read_components(
+            const std::unordered_map<std::string, StreamType>& stm) override;
 
     private:
       toml::value data;
@@ -513,6 +520,7 @@ namespace ERIN
           const std::string& type,
           const StreamType& input_stream,
           const StreamType& output_stream);
+      virtual ~Component() { };
 
       void add_input(std::shared_ptr<Component>& c);
       const std::string& get_id() const { return id; }
@@ -546,7 +554,8 @@ namespace ERIN
       LoadComponent(
             const std::string& id,
             const StreamType& input_stream,
-            const std::unordered_map<std::string,std::vector<LoadItem>>& loads_by_scenario,
+            const std::unordered_map<std::string, std::vector<LoadItem>>&
+              loads_by_scenario,
             const std::string& active_scenario);
       void add_to_network(adevs::Digraph<Stream>& nw) override;
 

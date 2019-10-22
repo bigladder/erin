@@ -136,42 +136,10 @@ namespace ERIN
     return stream_types_map;
   }
 
-  //////////////////////////////////////////////////////////// 
-  // Main
-  // main class that runs the simulation from file
-  Main::Main(
-      const std::string& in_path,
-      const std::string& out_path):
-    input_file_path{in_path},
-    output_file_path{out_path},
-    reader{}
+  std::unordered_map<std::string, std::shared_ptr<Component>>
+  TomlInputReader::read_components(
+      const std::unordered_map<std::string, StreamType>& stream_types_map)
   {
-    reader = std::make_unique<TomlInputReader>(input_file_path);
-  }
-
-  bool
-  Main::run()
-  {
-    const auto data = toml::parse(input_file_path);
-    // [stream_info]
-    const auto stream_info = reader->read_stream_info();
-    if (DEBUG) {
-      std::cout << "stream_info.rate_unit = "
-                << stream_info.get_rate_unit() << "\n";
-      std::cout << "stream_info.quantity_unit = "
-                << stream_info.get_quantity_unit() << "\n";
-      std::cout << "stream_info.seconds_per_time_unit = "
-                << stream_info.get_seconds_per_time_unit() << "\n";
-    }
-    // [streams]
-    const auto stream_types_map = reader->read_streams(stream_info);
-    const auto num_streams = stream_types_map.size();
-    if (DEBUG)
-      std::cout << num_streams << " streams found\n";
-    if (DEBUG)
-      for (const auto& x: stream_types_map)
-        std::cout << "stream type: " << x.first << ", " << x.second << "\n";
-    // [components]
     const auto toml_comps = toml::find<toml::table>(data, "components");
     const auto num_comps = toml_comps.size();
     if (DEBUG)
@@ -213,14 +181,16 @@ namespace ERIN
               c.first, stream_types_map.at(output_stream_id));
         components.insert(std::make_pair(c.first, source_comp));
       } else if (component_type == "load") {
-        std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario{};
+        std::unordered_map<std::string,std::vector<LoadItem>>
+          loads_by_scenario{};
         it = tt.find("load_profiles_by_scenario");
         if (it != tt.end()) {
           const auto& loads = toml::get<toml::table>(it->second);
           const auto num_profile_scenarios{loads.size()};
           if (DEBUG)
-            std::cout << num_profile_scenarios << " load profile(s) by scenario"
-              << " for component " << c.first << "\n";
+            std::cout << num_profile_scenarios
+                      << " load profile(s) by scenario"
+                      << " for component " << c.first << "\n";
           for (const auto& lp: loads) {
             std::vector<LoadItem> loads2{};
             for (const auto& li:
@@ -243,7 +213,8 @@ namespace ERIN
             loads_by_scenario.insert(std::make_pair(lp.first, loads2));
           }
           if (DEBUG) {
-            std::cout << loads_by_scenario.size() << " scenarios with loads\n";
+            std::cout << loads_by_scenario.size()
+                      << " scenarios with loads\n";
             for (const auto& ls: loads_by_scenario) {
               std::cout << ls.first << ": [";
               for (const auto& li: ls.second) {
@@ -274,6 +245,43 @@ namespace ERIN
         std::cout << "comp[" << c.first << "]:\n";
         std::cout << "\t" << c.second->get_id() << "\n";
       }
+    return components;
+  }
+
+  //////////////////////////////////////////////////////////// 
+  // Main
+  // main class that runs the simulation from file
+  Main::Main(
+      const std::string& in_path,
+      const std::string& out_path):
+    input_file_path{in_path},
+    output_file_path{out_path},
+    reader{}
+  {
+    reader = std::make_unique<TomlInputReader>(input_file_path);
+  }
+
+  bool
+  Main::run()
+  {
+    const auto data = toml::parse(input_file_path);
+    // [stream_info]
+    const auto stream_info = reader->read_stream_info();
+    if (DEBUG) {
+      std::cout << "stream_info.rate_unit = "
+                << stream_info.get_rate_unit() << "\n";
+      std::cout << "stream_info.quantity_unit = "
+                << stream_info.get_quantity_unit() << "\n";
+      std::cout << "stream_info.seconds_per_time_unit = "
+                << stream_info.get_seconds_per_time_unit() << "\n";
+    }
+    // [streams]
+    const auto stream_types_map = reader->read_streams(stream_info);
+    if (DEBUG)
+      for (const auto& x: stream_types_map)
+        std::cout << "stream type: " << x.first << ", " << x.second << "\n";
+    // [components]
+    auto components = reader->read_components(stream_types_map);
     // [networks]
     std::unordered_map<
       std::string,
@@ -397,12 +405,12 @@ namespace ERIN
   }
 
   std::string
-  map_to_string(const std::unordered_map<std::string,FlowValueType>& m)
+  map_to_string(const std::unordered_map<std::string, FlowValueType>& m)
   {
     auto max_idx{m.size() - 1};
     std::ostringstream oss;
     oss << "{";
-    int idx{0};
+    std::unordered_map<std::string, FlowValueType>::size_type idx{0};
     for (const auto& p: m) {
       oss << "{" << p.first << ", " << p.second << "}";
       if (idx != max_idx)
@@ -672,7 +680,7 @@ namespace ERIN
   }
 
   void
-  SourceComponent::add_to_network(adevs::Digraph<Stream>& network)
+  SourceComponent::add_to_network(adevs::Digraph<Stream>&)
   {
     if (DEBUG)
       std::cout << "SourceComponent::add_to_network("
@@ -880,7 +888,7 @@ namespace ERIN
   }
 
   void
-  FlowElement::add_additional_outputs(std::vector<PortValue>& ys)
+  FlowElement::add_additional_outputs(std::vector<PortValue>&)
   {
   }
 

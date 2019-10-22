@@ -471,6 +471,53 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
   }
 }
 
+TEST(ErinBasicsTest, CanReadComponentsFromToml)
+{
+  std::stringstream ss{};
+  ss << "[components.electric_utility]\n"
+     << "type = \"source\"\n"
+     << "# Point of Common Coupling for Electric Utility\n"
+     << "output_stream = \"electricity\"\n"
+     << "[components.cluster_01_electric]\n"
+     << "type = \"load\"\n"
+     << "input_stream = \"electricity\"\n"
+     << "[components.cluster_01_electric.load_profiles_by_scenario]\n"
+     << "blue_sky = [{t=0,v=1.0},{t=4}]\n";
+  ::ERIN::TomlInputReader t{ss};
+  std::unordered_map<std::string, ::ERIN::StreamType> streams{
+    std::make_pair("electricity", ::ERIN::StreamType(
+          "electricity_medium_voltage", "kW", "kJ", 1.0, {}, {}))
+  };
+  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads{
+    {std::string{"blue_sky"}, {{0,1.0},{4}}}
+  };
+  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> expected{
+    std::make_pair(
+        std::string{"electric_utility"},
+        std::make_shared<::ERIN::SourceComponent>(
+          std::string{"electric_utility"},
+          streams["electricity"])),
+    std::make_pair(
+        std::string{"cluster_01_electric"},
+        std::make_shared<::ERIN::LoadComponent>(
+          "cluster_01_electric",
+          streams["electricity"],
+          loads,
+          std::string{"blue_sky"}))
+  };
+  auto pt = &t;
+  auto actual = pt->read_components(streams);
+  EXPECT_EQ(expected.size(), actual.size());
+  for (auto const& e: expected) {
+    const auto a = actual.find(e.first);
+    ASSERT_TRUE(a != actual.end());
+    EXPECT_EQ(e.second->get_id(), a->second->get_id());
+    EXPECT_EQ(e.second->get_component_type(), a->second->get_component_type());
+    EXPECT_EQ(e.second->get_input_stream(), a->second->get_input_stream());
+    EXPECT_EQ(e.second->get_output_stream(), a->second->get_output_stream());
+  }
+}
+
 int
 main(int argc, char **argv)
 {

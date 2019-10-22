@@ -50,3 +50,12 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
 endif()
 
 add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
+
+# Add Warnings
+if(MSVC)
+  target_compile_options(e2rin PRIVATE /W4 /WX)
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX)
+else()
+  target_compile_options(e2rin PRIVATE -Wall -Wextra -pedantic)
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic)
+endif()

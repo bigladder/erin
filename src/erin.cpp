@@ -248,6 +248,42 @@ namespace ERIN
     return components;
   }
 
+  std::unordered_map<std::string,
+    std::unordered_map<std::string, std::vector<std::string>>>
+  TomlInputReader::read_networks()
+  {
+    std::unordered_map<
+      std::string,
+      std::unordered_map<std::string,std::vector<std::string>>> networks;
+    const auto toml_nets = toml::find<toml::table>(data, "networks");
+    const auto num_nets{toml_nets.size()};
+    if (DEBUG)
+      std::cout << num_nets << " networks found\n";
+    for (const auto& n: toml_nets) {
+      std::unordered_map<std::string, std::vector<std::string>> nw_map;
+      toml::table toml_nw;
+      auto nested_nw_table = toml::get<toml::table>(n.second);
+      auto nested_nw_it = nested_nw_table.find("network");
+      if (nested_nw_it != nested_nw_table.end())
+        toml_nw = toml::get<toml::table>(nested_nw_it->second);
+      for (const auto& nw_p: toml_nw) {
+        auto nodes = toml::get<std::vector<std::string>>(nw_p.second);
+        nw_map.insert(std::make_pair(nw_p.first, nodes));
+      }
+      networks.insert(std::make_pair(n.first, nw_map));
+    }
+    if (DEBUG)
+      for (const auto& nw: networks) {
+        std::cout << "network[" << nw.first << "]:\n";
+        for (const auto& fan: nw.second) {
+          for (const auto& node: fan.second) {
+            std::cout << "\tedge: (" << fan.first << " ==> " << node << ")\n";
+          }
+        }
+      }
+    return networks;
+  }
+
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file
@@ -283,35 +319,7 @@ namespace ERIN
     // [components]
     auto components = reader->read_components(stream_types_map);
     // [networks]
-    std::unordered_map<
-      std::string,
-      std::unordered_map<std::string,std::vector<std::string>>> networks;
-    const auto toml_nets = toml::find<toml::table>(data, "networks");
-    const auto num_nets{toml_nets.size()};
-    if (DEBUG)
-      std::cout << num_nets << " networks found\n";
-    for (const auto& n: toml_nets) {
-      std::unordered_map<std::string, std::vector<std::string>> nw_map;
-      toml::table toml_nw;
-      auto nested_nw_table = toml::get<toml::table>(n.second);
-      auto nested_nw_it = nested_nw_table.find("network");
-      if (nested_nw_it != nested_nw_table.end())
-        toml_nw = toml::get<toml::table>(nested_nw_it->second);
-      for (const auto& nw_p: toml_nw) {
-        auto nodes = toml::get<std::vector<std::string>>(nw_p.second);
-        nw_map.insert(std::make_pair(nw_p.first, nodes));
-      }
-      networks.insert(std::make_pair(n.first, nw_map));
-    }
-    if (DEBUG)
-      for (const auto& nw: networks) {
-        std::cout << "network[" << nw.first << "]:\n";
-        for (const auto& fan: nw.second) {
-          for (const auto& node: fan.second) {
-            std::cout << "\tedge: (" << fan.first << " ==> " << node << ")\n";
-          }
-        }
-      }
+    auto networks = reader->read_networks();
     // [scenarios]
     std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios;
     const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");

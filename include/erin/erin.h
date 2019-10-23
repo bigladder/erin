@@ -59,6 +59,9 @@ namespace ERIN
       virtual std::unordered_map<std::string, std::shared_ptr<Component>>
         read_components(
             const std::unordered_map<std::string, StreamType>& stm) = 0;
+      virtual std::unordered_map<std::string,
+        std::unordered_map<std::string, std::vector<std::string>>>
+        read_networks() = 0;
       virtual ~InputReader() { };
   };
 
@@ -72,7 +75,7 @@ namespace ERIN
   //};
 
   ////////////////////////////////////////////////////////////
-  // TomlReader
+  // TomlInputReader
   class TomlInputReader : public InputReader
   {
     public:
@@ -86,6 +89,9 @@ namespace ERIN
       std::unordered_map<std::string, std::shared_ptr<Component>>
         read_components(
             const std::unordered_map<std::string, StreamType>& stm) override;
+      std::unordered_map<std::string,
+        std::unordered_map<std::string, std::vector<std::string>>>
+        read_networks() override;
 
     private:
       toml::value data;

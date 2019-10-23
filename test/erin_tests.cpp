@@ -518,6 +518,34 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
   }
 }
 
+TEST(ErinBasicsTest, CanReadNetworksFromToml)
+{
+  std::stringstream ss{};
+  ss << "############################################################\n"
+     << "[networks.normal_operations.network]\n"
+     << "# specify as: <source (generation) id> = [\"<downstream/load id>\", \"<downstream/load id>\", ...]\n"
+     << "electric_utility = [\"cluster_01_electric\"]\n";
+  ::ERIN::TomlInputReader t{ss};
+  std::unordered_map<
+    std::string,
+    std::unordered_map<
+      std::string,
+      std::vector<std::string>>>
+        expected{{"normal_operations", {{"electric_utility", {"cluster_01_electric"}}}}};
+  auto pt = &t;
+  auto actual = pt->read_networks();
+  EXPECT_EQ(expected.size(), actual.size());
+  for (auto const& e: expected) {
+    const auto a = actual.find(e.first);
+    ASSERT_TRUE(a != actual.end());
+    for (auto const& e_: e.second) {
+      const auto a_ = a->second.find(e_.first);
+      ASSERT_TRUE(a_ != a->second.end());
+      ASSERT_EQ(e_.second, a_->second);
+    }
+  }
+}
+
 int
 main(int argc, char **argv)
 {

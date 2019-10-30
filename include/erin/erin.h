@@ -22,6 +22,14 @@ namespace ERIN
   typedef int LogicalTimeType;
 
   ////////////////////////////////////////////////////////////
+  // Datum
+  struct Datum
+  {
+    RealTimeType time;
+    FlowValueType value;
+  };
+
+  ////////////////////////////////////////////////////////////
   // StreamInfo
   class StreamInfo
   {
@@ -104,6 +112,14 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
+  // ScenarioResults
+  struct ScenarioResults
+  {
+    bool is_good;
+    std::unordered_map<std::string, std::vector<Datum>> results;
+  };
+
+  ////////////////////////////////////////////////////////////
   // Main Class
   class Main
   {
@@ -112,7 +128,7 @@ namespace ERIN
       // testing and programmatic interface
       Main(const std::string& input_toml, const std::string& output_toml);
       // TODO: change run to take the scenario id
-      bool run();
+      ScenarioResults run();
 
     private:
       std::string input_file_path;
@@ -389,6 +405,9 @@ namespace ERIN
       FlowElement& operator=(const FlowElement&) = delete;
 
       const std::string& get_id() const { return id; }
+      virtual std::vector<Datum> get_results() const {
+        return std::vector<Datum>(0);
+      }
 
     protected:
       FlowElement(std::string id, StreamType flow_type);
@@ -462,6 +481,7 @@ namespace ERIN
       FlowMeter(std::string id, StreamType stream_type);
       std::vector<RealTimeType> get_actual_output_times() const;
       std::vector<FlowValueType> get_actual_output() const;
+      std::vector<Datum> get_results() const override;
 
     protected:
       void update_on_external_transition() override;

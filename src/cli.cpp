@@ -18,6 +18,13 @@ main(int argc, char *argv[]) {
 
   auto m = ERIN::Main(input_toml, output_toml);
   auto out = m.run();
-  std::cout << "result of m.run() = " << out << "\n";
+  std::cout << "result of m.run() = " << out.is_good << std::endl;
+  std::cout << "number of results = " << out.results.size() << std::endl;
+  for (const auto& item: out.results) {
+    std::cout << "..." << item.first << " [";
+    for (const auto d: item.second)
+      std::cout << "{" << d.time << ", " << d.value << "} ";
+    std::cout << "]" << std::endl;
+  }
   return 0;
 }

@@ -345,7 +345,7 @@ namespace ERIN
   // TODO: add unit test for the `run(...)` API
   // TODO: add another Reader type that can be programmatically set
   // TODO: return the result of the simulation (all meters report?)
-  bool
+  ScenarioResults
   Main::run()
   {
     // TODO: move the reading and processing of data to another place
@@ -409,15 +409,18 @@ namespace ERIN
       }
       if (DEBUG)
         std::cout << "The current time is: ("
-                  << t.real << ", " << t.logical << ")\n";
+                  << t.real << ", " << t.logical << ")"
+                  << std::endl;
     }
-    // 3. Return outputs. Fundamentally should be a table:
-    //    Map<String,Vector<Double>>
-    //    where the key is the component id and vector<double> are the recorded values
-    //    needs to possibly be vector<pair<double,double>> with time and value...
-    //    although we'd ideally like a vector<double> (times) and map<string,vector<double>>
-    //    that gives the component values for each time.
-    return sim_good;
+    // 3. Return outputs.
+    std::unordered_map<std::string, std::vector<Datum>> results;
+    for (const auto& e: elements) {
+      auto vals = e->get_results();
+      if (vals.size() != 0)
+        results.insert(
+            std::pair<std::string,std::vector<Datum>>(e->get_id(), vals));
+    }
+    return ScenarioResults{sim_good, results};
   }
 
   ////////////////////////////////////////////////////////////
@@ -1113,6 +1116,18 @@ namespace ERIN
   FlowMeter::get_actual_output() const
   {
     return std::vector<FlowValueType>(achieved_flows);
+  }
+
+  std::vector<Datum>
+  FlowMeter::get_results() const
+  {
+    const auto ts = get_actual_output_times();
+    const auto vs = get_actual_output();
+    std::vector<Datum> results(ts.size());
+    for (std::vector<Datum>::size_type i=0; i < ts.size(); ++i) {
+      results[i] = Datum{ts[i], vs[i]};
+    }
+    return results;
   }
 
   void

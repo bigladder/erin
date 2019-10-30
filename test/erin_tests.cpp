@@ -112,10 +112,14 @@ TEST(ErinBasicsTest, TestUnitConversion)
   const auto s2 = ::ERIN::Stream(st2, 100.0);
   EXPECT_NEAR(s2.get_rate(), 100.0, 1e-6);
   EXPECT_NEAR(s2.get_quantity(3600.0), 100.0 * 3600.0, 1e-6);
-  EXPECT_NEAR(s2.get_rate_in_units("liters/hour"), 10.03904071388734, 1e-6);
-  EXPECT_NEAR(s2.get_rate_in_units("gallons/hour"), 2.652042244911328, 1e-6);
-  EXPECT_NEAR(s2.get_quantity_in_units(3600.0, "liters"), 10.03904071388734, 1e-6);
-  EXPECT_NEAR(s2.get_quantity_in_units(3600.0, "gallons"), 2.652042244911328, 1e-6);
+  EXPECT_NEAR(
+      s2.get_rate_in_units("liters/hour"), 10.03904071388734, 1e-6);
+  EXPECT_NEAR(
+      s2.get_rate_in_units("gallons/hour"), 2.652042244911328, 1e-6);
+  EXPECT_NEAR(
+      s2.get_quantity_in_units(3600.0, "liters"), 10.03904071388734, 1e-6);
+  EXPECT_NEAR(
+      s2.get_quantity_in_units(3600.0, "gallons"), 2.652042244911328, 1e-6);
 }
 
 TEST(ErinBasicsTest, TestLoadItem)
@@ -155,7 +159,7 @@ TEST(ErinBasicsTest, StandaloneSink)
   std::vector<::ERIN::RealTimeType> expected_loads = {100, 10, 0};
   auto st = ::ERIN::StreamType("electrical");
   auto sink = new ::ERIN::Sink(
-      "load", st, {{"default", {{0,100},{1,10},{2,0},{3}}}}, "default");
+      "load", st, {{0,100},{1,10},{2,0},{3}});
   auto meter = new ::ERIN::FlowMeter("meter", st);
   adevs::Digraph<::ERIN::Stream> network;
   network.couple(
@@ -189,7 +193,7 @@ TEST(ErinBasicsTest, CanRunSourceSink)
   std::vector<::ERIN::FlowValueType> expected_flow = {100, 0};
   auto st = ::ERIN::StreamType("electrical");
   auto sink = new ::ERIN::Sink(
-      "sink", st, {{"default",{{0,100},{1,0},{2}}}}, "default");
+      "sink", st, {{0,100},{1,0},{2}});
   auto meter = new ::ERIN::FlowMeter("meter", st);
   adevs::Digraph<::ERIN::Stream> network;
   network.couple(
@@ -229,8 +233,7 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   auto meter1 = new ::ERIN::FlowMeter("meter1", elec);
   auto sink = new ::ERIN::Sink(
       "electric-load", elec,
-      {{"default", {{0, 160},{1,80},{2,40},{3,0},{4}}}},
-      "default");
+      {{0, 160},{1,80},{2,40},{3,0},{4}});
   adevs::Digraph<::ERIN::Stream> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
@@ -286,14 +289,18 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
 TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
 {
   const double diesel_generator_efficiency{0.36};
-  const std::vector<::ERIN::RealTimeType> expected_genset_output_times{0, 1, 2, 3};
-  const std::vector<::ERIN::FlowValueType> expected_genset_output{50, 50, 40, 0};
-  auto calc_output_given_input = [=](::ERIN::FlowValueType input_kW) -> ::ERIN::FlowValueType {
-    return input_kW * diesel_generator_efficiency;
-  };
-  auto calc_input_given_output = [=](::ERIN::FlowValueType output_kW) -> ::ERIN::FlowValueType {
-    return output_kW / diesel_generator_efficiency;
-  };
+  const std::vector<::ERIN::RealTimeType> expected_genset_output_times{
+    0, 1, 2, 3};
+  const std::vector<::ERIN::FlowValueType> expected_genset_output{
+    50, 50, 40, 0};
+  auto calc_output_given_input =
+    [=](::ERIN::FlowValueType input_kW) -> ::ERIN::FlowValueType {
+      return input_kW * diesel_generator_efficiency;
+    };
+  auto calc_input_given_output =
+    [=](::ERIN::FlowValueType output_kW) -> ::ERIN::FlowValueType {
+      return output_kW / diesel_generator_efficiency;
+    };
   const std::vector<::ERIN::FlowValueType> expected_fuel_output{
     calc_input_given_output(50),
     calc_input_given_output(50),
@@ -314,7 +321,7 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   auto genset_meter = new ::ERIN::FlowMeter("genset_meter", elec);
   auto sink = new ::ERIN::Sink(
       "electric_load", elec,
-      {{"bluesky", {{0,160},{1,80},{2,40},{3,0},{4}}}}, "bluesky");
+      {{0,160},{1,80},{2,40},{3,0},{4}});
   adevs::Digraph<::ERIN::Stream> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
@@ -343,7 +350,8 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
     sim.exec_next_event();
     t = sim.now();
-    std::cout << "The current time is: (" << t.real << ", " << t.logical << ")" << std::endl;
+    std::cout << "The current time is: (" << t.real << ", " << t.logical
+              << ")" << std::endl;
   }
   std::vector<::ERIN::FlowValueType> actual_genset_output =
     genset_meter->get_actual_output();
@@ -352,14 +360,16 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   std::vector<::ERIN::RealTimeType> actual_genset_output_times =
     genset_meter->get_actual_output_times();
   EXPECT_EQ(expected_genset_output.size(), actual_genset_output.size());
-  EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output_times.size());
+  EXPECT_EQ(
+      expected_genset_output_times.size(), actual_genset_output_times.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_fuel_output.size());
   for (int i{0}; i < expected_genset_output.size(); ++i) {
     if (i >= actual_genset_output.size())
       break;
     EXPECT_EQ(expected_genset_output.at(i), actual_genset_output.at(i));
-    EXPECT_EQ(expected_genset_output_times.at(i), actual_genset_output_times.at(i));
+    EXPECT_EQ(
+        expected_genset_output_times.at(i), actual_genset_output_times.at(i));
     EXPECT_EQ(expected_fuel_output.at(i), actual_fuel_output.at(i));
   }
 }
@@ -367,20 +377,19 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
 TEST(ErinBasicTest, CanRunUsingComponents)
 {
   auto elec = ::ERIN::StreamType("electrical");
-  auto loads_by_scenario = std::unordered_map<std::string,std::vector<::ERIN::LoadItem>>(
-      {{"bluesky", {{0,160},{1,80},{2,40},{3,0},{4}}}});
+  auto loads_by_scenario = std::unordered_map<
+    std::string, std::vector<::ERIN::LoadItem>>(
+        {{"bluesky", {{0,160},{1,80},{2,40},{3,0},{4}}}});
   std::shared_ptr<::ERIN::Component> source =
     std::make_shared<::ERIN::SourceComponent>("electrical_pcc", elec);
   std::shared_ptr<::ERIN::Component> load =
     std::make_shared<::ERIN::LoadComponent>(
-        "electrical_load",
-        elec,
-        loads_by_scenario,
-        "bluesky");
+        "electrical_load", elec, loads_by_scenario);
+  std::string scenario_id{"bluesky"};
   load->add_input(source);
   adevs::Digraph<::ERIN::Stream> network;
-  load->add_to_network(network);
-  source->add_to_network(network);
+  load->add_to_network(network, scenario_id);
+  source->add_to_network(network, scenario_id);
   adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
   bool worked{false};
@@ -398,16 +407,18 @@ TEST(ErinBasicTest, CanReadStreamInfoFromToml)
 {
   std::stringstream ss{};
   ss << "[stream_info]\n"
-     << "# The commonality across all streams.\n"
-     << "# We need to know what the common rate unit and quantity unit is.\n"
-     << "# The rate unit should be the quantity unit per unit of time.\n"
-     << "rate_unit = \"kW\"\n"
-     << "quantity_unit = \"kJ\"\n"
-     << "# seconds_per_time_unit : Number\n"
-     << "# defines how many seconds per unit of time used to specify the quantity unit\n"
-     << "# here since we are using kW and kJ, the answer is 1.0 second.\n"
-     << "# However, if we were doing kW and kWh, we would use 3600 s (i.e., 1 hour) here.\n"
-     << "seconds_per_time_unit = 1.0\n";
+        "# The commonality across all streams.\n"
+        "# We need to know what the common rate unit and quantity unit is.\n"
+        "# The rate unit should be the quantity unit per unit of time.\n"
+        "rate_unit = \"kW\"\n"
+        "quantity_unit = \"kJ\"\n"
+        "# seconds_per_time_unit : Number\n"
+        "# defines how many seconds per unit of time used to specify the "
+          "quantity unit\n"
+        "# here since we are using kW and kJ, the answer is 1.0 second.\n"
+        "# However, if we were doing kW and kWh, we would use 3600 s "
+          "(i.e., 1 hour) here.\n"
+        "seconds_per_time_unit = 1.0\n";
   ::ERIN::TomlInputReader t{ss};
   ::ERIN::StreamInfo expected{"kW", "kJ", 1.0};
   auto pt = &t;
@@ -419,15 +430,15 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
 {
   std::stringstream ss{};
   ss << "[streams.electricity]\n"
-     << "type = \"electricity_medium_voltage\"\n"
-     << "[streams.diesel]\n"
-     << "type = \"diesel_fuel\"\n"
-     << "[streams.diesel.other_rate_units]\n"
-     << "gallons__hour = 0.026520422449113276\n"
-     << "liters__hour = 0.1003904071388734\n"
-     << "[streams.diesel.other_quantity_units]\n"
-     << "gallons = 7.366784013642577e-6\n"
-     << "liters = 2.7886224205242612e-5\n";
+        "type = \"electricity_medium_voltage\"\n"
+        "[streams.diesel]\n"
+        "type = \"diesel_fuel\"\n"
+        "[streams.diesel.other_rate_units]\n"
+        "gallons__hour = 0.026520422449113276\n"
+        "liters__hour = 0.1003904071388734\n"
+        "[streams.diesel.other_quantity_units]\n"
+        "gallons = 7.366784013642577e-6\n"
+        "liters = 2.7886224205242612e-5\n";
   ::ERIN::TomlInputReader t{ss};
   ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
   std::unordered_map<std::string, ::ERIN::StreamType> expected{
@@ -475,21 +486,22 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
 {
   std::stringstream ss{};
   ss << "[components.electric_utility]\n"
-     << "type = \"source\"\n"
-     << "# Point of Common Coupling for Electric Utility\n"
-     << "output_stream = \"electricity\"\n"
-     << "[components.cluster_01_electric]\n"
-     << "type = \"load\"\n"
-     << "input_stream = \"electricity\"\n"
-     << "[components.cluster_01_electric.load_profiles_by_scenario]\n"
-     << "blue_sky = [{t=0,v=1.0},{t=4}]\n";
+        "type = \"source\"\n"
+        "# Point of Common Coupling for Electric Utility\n"
+        "output_stream = \"electricity\"\n"
+        "[components.cluster_01_electric]\n"
+        "type = \"load\"\n"
+        "input_stream = \"electricity\"\n"
+        "[components.cluster_01_electric.load_profiles_by_scenario]\n"
+        "blue_sky = [{t=0,v=1.0},{t=4}]\n";
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair("electricity", ::ERIN::StreamType(
           "electricity_medium_voltage", "kW", "kJ", 1.0, {}, {}))
   };
+  std::string scenario_id{"blue_sky"};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads{
-    {std::string{"blue_sky"}, {{0,1.0},{4}}}
+    {scenario_id, {{0,1.0},{4}}}
   };
   std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> expected{
     std::make_pair(
@@ -500,10 +512,9 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
     std::make_pair(
         std::string{"cluster_01_electric"},
         std::make_shared<::ERIN::LoadComponent>(
-          "cluster_01_electric",
+          std::string{"cluster_01_electric"},
           streams["electricity"],
-          loads,
-          std::string{"blue_sky"}))
+          loads))
   };
   auto pt = &t;
   auto actual = pt->read_components(streams);
@@ -522,9 +533,11 @@ TEST(ErinBasicsTest, CanReadNetworksFromToml)
 {
   std::stringstream ss{};
   ss << "############################################################\n"
-     << "[networks.normal_operations.network]\n"
-     << "# specify as: <source (generation) id> = [\"<downstream/load id>\", \"<downstream/load id>\", ...]\n"
-     << "electric_utility = [\"cluster_01_electric\"]\n";
+        "[networks.normal_operations.network]\n"
+        "# specify as: <source (generation) id> = ["
+                      "\"<downstream/load id>\", "
+                      "\"<downstream/load id>\", ...]\n"
+        "electric_utility = [\"cluster_01_electric\"]\n";
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<
     std::string,
@@ -544,6 +557,89 @@ TEST(ErinBasicsTest, CanReadNetworksFromToml)
       ASSERT_EQ(e_.second, a_->second);
     }
   }
+}
+
+TEST(ErinBasicsTest, CanReadScenariosFromToml)
+{
+  std::stringstream ss{};
+  ss << "[scenarios.blue_sky]\n"
+        "occurrence_distribution = {type = \"fixed_probability\","
+                                  " probability = 1}\n"
+        "duration_distribution = {type = \"specified\", value = 8760,"
+                                " time_unit = \"hours\"}\n"
+        "max_times = 1\n"
+        "network = \"normal_operations\"\n";
+  ::ERIN::TomlInputReader t{ss};
+  std::unordered_map<
+    std::string,
+    std::shared_ptr<::ERIN::Scenario>>
+      expected{
+        {
+          std::string{"blue_sky"},
+          std::make_shared<::ERIN::Scenario>(
+              std::string{"blue_sky"}, std::string{"normal_operations"}, 1)}};
+  auto pt = &t;
+  auto actual = pt->read_scenarios();
+  EXPECT_EQ(expected.size(), actual.size());
+  for (auto const& e: expected) {
+    const auto a = actual.find(e.first);
+    ASSERT_TRUE(a != actual.end());
+    EXPECT_EQ(*(e.second), *(a->second));
+  }
+}
+
+TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
+{
+  std::stringstream ss;
+  std::stringstream out;
+  ss << "[stream_info]\n"
+        "# The commonality across all streams.\n"
+        "# We need to know what the common rate unit and quantity unit is.\n"
+        "# The rate unit should be the quantity unit per unit of time.\n"
+        "rate_unit = \"kW\"\n"
+        "quantity_unit = \"kJ\"\n"
+        "# seconds_per_time_unit : Number\n"
+        "# defines how many seconds per unit of time used to specify the "
+          "quantity unit\n"
+        "# here since we are using kW and kJ, the answer is 1.0 second.\n"
+        "# However, if we were doing kW and kWh, we would use 3600 s "
+          "(i.e., 1 hour) here.\n"
+        "seconds_per_time_unit = 1.0 \n"
+        "[streams.electricity]\n"
+        "type = \"electrity_medium_voltage\"\n"
+        "[streams.diesel]\n"
+        "type = \"diesel_fuel\"\n"
+        "[streams.diesel.other_rate_units]\n"
+        "gallons__hour = 0.026520422449113276\n"
+        "liters__hour = 0.1003904071388734\n"
+        "[streams.diesel.other_quantity_units]\n"
+        "gallons = 7.366784013642577e-6\n"
+        "liters = 2.7886224205242612e-5\n"
+        "############################################################\n"
+        "[components.electric_utility]\n"
+        "type = \"source\"\n"
+        "# Point of Common Coupling for Electric Utility\n"
+        "output_stream = \"electricity\"\n"
+        "[components.cluster_01_electric]\n"
+        "type = \"load\"\n"
+        "input_stream = \"electricity\"\n"
+        "[components.cluster_01_electric.load_profiles_by_scenario]\n"
+        "blue_sky = [{t=0,v=1.0},{t=4}]\n"
+        "############################################################\n"
+        "[networks.normal_operations.network]\n"
+        "# specify as: <source (generation) id> = ["
+           "\"<downstream/load id>\", \"<downstream/load id>\", ...]\n"
+        "electric_utility = [\"cluster_01_electric\"]\n"
+        "############################################################\n"
+        "[scenarios.blue_sky]\n"
+        "occurrence_distribution = {type = \"fixed_probability\", "
+                                   "probability = 1}\n"
+        "duration_distribution = {type = \"specified\", value = 8760, "
+                                 "time_unit = \"hours\"}\n"
+        "max_times = 1\n"
+        "network = \"normal_operations\"\n";
+  ::ERIN::TomlInputReader t{ss};
+
 }
 
 int

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <unordered_set>
 #include <memory>
 #include "../vendor/toml11/toml.hpp"
 
@@ -92,7 +93,16 @@ namespace ERIN
           default_seconds_per_time_unit));
     if (seconds_per_time_unit < 0.0)
       throw BadInputError();
-    return StreamInfo(rate_unit, quantity_unit, seconds_per_time_unit);
+    StreamInfo si{rate_unit, quantity_unit, seconds_per_time_unit};
+    if (DEBUG) {
+      std::cout << "stream_info.rate_unit = "
+                << si.get_rate_unit() << "\n";
+      std::cout << "stream_info.quantity_unit = "
+                << si.get_quantity_unit() << "\n";
+      std::cout << "stream_info.seconds_per_time_unit = "
+                << si.get_seconds_per_time_unit() << "\n";
+    }
+    return si;
   }
 
   std::unordered_map<std::string, StreamType>
@@ -133,6 +143,9 @@ namespace ERIN
               other_rate_units,
               other_quantity_units)));
     }
+    if (DEBUG)
+      for (const auto& x: stream_types_map)
+        std::cout << "stream type: " << x.first << ", " << x.second << "\n";
     return stream_types_map;
   }
 
@@ -231,8 +244,7 @@ namespace ERIN
             std::make_shared<LoadComponent>(
                 c.first,
                 stream_types_map.at(input_stream_id),
-                loads_by_scenario,
-                "");
+                loads_by_scenario);
           components.insert(
               std::make_pair(c.first, load_comp));
         } else {
@@ -284,43 +296,9 @@ namespace ERIN
     return networks;
   }
 
-  //////////////////////////////////////////////////////////// 
-  // Main
-  // main class that runs the simulation from file
-  Main::Main(
-      const std::string& in_path,
-      const std::string& out_path):
-    input_file_path{in_path},
-    output_file_path{out_path},
-    reader{}
+  std::unordered_map<std::string, std::shared_ptr<Scenario>>
+  TomlInputReader::read_scenarios()
   {
-    reader = std::make_unique<TomlInputReader>(input_file_path);
-  }
-
-  bool
-  Main::run()
-  {
-    const auto data = toml::parse(input_file_path);
-    // [stream_info]
-    const auto stream_info = reader->read_stream_info();
-    if (DEBUG) {
-      std::cout << "stream_info.rate_unit = "
-                << stream_info.get_rate_unit() << "\n";
-      std::cout << "stream_info.quantity_unit = "
-                << stream_info.get_quantity_unit() << "\n";
-      std::cout << "stream_info.seconds_per_time_unit = "
-                << stream_info.get_seconds_per_time_unit() << "\n";
-    }
-    // [streams]
-    const auto stream_types_map = reader->read_streams(stream_info);
-    if (DEBUG)
-      for (const auto& x: stream_types_map)
-        std::cout << "stream type: " << x.first << ", " << x.second << "\n";
-    // [components]
-    auto components = reader->read_components(stream_types_map);
-    // [networks]
-    auto networks = reader->read_networks();
-    // [scenarios]
     std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios;
     const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");
     const auto num_scenarios{toml_scenarios.size()};
@@ -347,24 +325,99 @@ namespace ERIN
         std::cout << "\tnetwork_id: " << scenario.get_network_id() << "\n";
         std::cout << "\tmax_times : " << scenario.get_max_times() << "\n";
       }
-    // 1. Initial assumption: blue-sky scenario. Need to actually make a
-    //    separate devs simulator to accommodate switching between scenarios
+    return scenarios;
+  }
+
+  //////////////////////////////////////////////////////////// 
+  // Main
+  // main class that runs the simulation from file
+  Main::Main(
+      const std::string& in_path,
+      const std::string& out_path):
+    input_file_path{in_path},
+    output_file_path{out_path},
+    reader{}
+  {
+    reader = std::make_unique<TomlInputReader>(input_file_path);
+  }
+
+  // TODO: change run to be `run(const std::string& scenario_id)`
+  // TODO: add unit test for the `run(...)` API
+  // TODO: add another Reader type that can be programmatically set
+  // TODO: return the result of the simulation (all meters report?)
+  bool
+  Main::run()
+  {
+    // TODO: move the reading and processing of data to another place
+    //       possibly in the constructor.
+    //       Should happen only once even though runs can happen multiple times
+    // TODO: debug input structure to ensure that keys are available in maps that
+    //       should be there. If not, provide a good error message about what's
+    //       wrong.
+    const auto data = toml::parse(input_file_path);
+    const auto stream_info = reader->read_stream_info();
+    const auto stream_types_map = reader->read_streams(stream_info);
+    auto components = reader->read_components(stream_types_map);
+    auto networks = reader->read_networks();
+    auto scenarios = reader->read_scenarios();
+    // The Run Algorithm
+    // 1. Switch to reading the scenario_id from the input
+    const auto scenario_id = std::string{"blue_sky"};
+    const auto the_scenario = scenarios[scenario_id];
     // 2. Construct and Run Simulation
+    // 2.1. Instantiate a devs network
     adevs::Digraph<Stream> network;
-    // 3. Instantiate the network and add the components
-    //network.couple(
-    //  sink, Sink::outport_inflow_request,
-    //  genset_meter, FlowMeter::inport_outflow_request);
+    // 2.2. Interconnect components based on the network definition
+    const auto network_id = the_scenario->get_network_id();
+    const auto the_nw = networks[network_id];
+    std::unordered_set<std::string> comps_in_use{};
+    for (const auto& nw: the_nw) {
+      comps_in_use.emplace(nw.first);
+      auto src = components[nw.first];
+      for (const auto& sink_id: nw.second) {
+        auto sink = components[sink_id];
+        comps_in_use.emplace(sink_id);
+        sink->add_input(src);
+      }
+    }
+    // 2.2. Add the components on the network
+    std::unordered_set<FlowElement*> elements;
+    for (const auto& comp_id: comps_in_use) {
+      auto c = components[comp_id];
+      auto es = c->add_to_network(network, scenario_id);
+      for (auto e: es) elements.emplace(e);
+    }
     adevs::Simulator<PortValue> sim;
     network.add(&sim);
     adevs::Time t;
+    const auto max_non_advance{comps_in_use.size() * 10};
+    auto non_advance_count{max_non_advance*0};
+    auto t_last_real = sim.now().real;
+    bool sim_good{true};
     while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
       sim.exec_next_event();
       t = sim.now();
-      std::cout << "The current time is: (" << t.real << ", "
-                << t.logical << ")\n";
+      if (t.real == t_last_real)
+        ++non_advance_count;
+      else {
+        non_advance_count = 0;
+        t_last_real = t.real;
+      }
+      if (non_advance_count >= max_non_advance) {
+        sim_good = false;
+        break;
+      }
+      if (DEBUG)
+        std::cout << "The current time is: ("
+                  << t.real << ", " << t.logical << ")\n";
     }
-    return true;
+    // 3. Return outputs. Fundamentally should be a table:
+    //    Map<String,Vector<Double>>
+    //    where the key is the component id and vector<double> are the recorded values
+    //    needs to possibly be vector<pair<double,double>> with time and value...
+    //    although we'd ideally like a vector<double> (times) and map<string,vector<double>>
+    //    that gives the component values for each time.
+    return sim_good;
   }
 
   ////////////////////////////////////////////////////////////
@@ -624,11 +677,9 @@ namespace ERIN
       const std::string& id_,
       const StreamType& input_stream_,
       const std::unordered_map<
-        std::string,std::vector<LoadItem>>& loads_by_scenario_,
-      const std::string& active_scenario_):
+        std::string,std::vector<LoadItem>>& loads_by_scenario_):
     Component(id_, "load", input_stream_, input_stream_),
-    loads_by_scenario{loads_by_scenario_},
-    active_scenario{active_scenario_}
+    loads_by_scenario{loads_by_scenario_}
   {
   }
 
@@ -643,19 +694,23 @@ namespace ERIN
     return p;
   }
 
-  void
-  LoadComponent::add_to_network(adevs::Digraph<Stream>& network)
+  std::unordered_set<FlowElement*>
+  LoadComponent::add_to_network(
+      adevs::Digraph<Stream>& network,
+      const std::string& active_scenario)
   {
+    std::unordered_set<FlowElement*> elements;
     if (DEBUG)
       std::cout << "LoadComponent::add_to_network(adevs::Digraph<Stream>& network)\n";
     auto sink = new Sink(
         get_id(),
         get_input_stream(),
-        loads_by_scenario,
-        active_scenario);
+        loads_by_scenario[active_scenario]);
+    elements.emplace(sink);
     if (DEBUG)
       std::cout << "sink = " << sink << "\n";
     auto meter = get_connecting_element();
+    elements.emplace(meter);
     if (DEBUG)
       std::cout << "meter = " << meter << "\n";
     network.couple(
@@ -663,6 +718,7 @@ namespace ERIN
         meter, FlowMeter::inport_outflow_request);
     for (const auto& in: get_inputs()) {
       auto p = in->get_connecting_element();
+      elements.emplace(p);
       if (DEBUG)
         std::cout << "p = " << p << "\n";
       if (p != nullptr) {
@@ -676,6 +732,7 @@ namespace ERIN
     }
     if (DEBUG)
       std::cout << "LoadComponent::add_to_network(...) exit\n";
+    return elements;
   }
 
   ////////////////////////////////////////////////////////////
@@ -687,9 +744,12 @@ namespace ERIN
   {
   }
 
-  void
-  SourceComponent::add_to_network(adevs::Digraph<Stream>&)
+  std::unordered_set<FlowElement*> 
+  SourceComponent::add_to_network(
+      adevs::Digraph<Stream>&,
+      const std::string&)
   {
+    std::unordered_set<FlowElement*> elements;
     if (DEBUG)
       std::cout << "SourceComponent::add_to_network("
                 << "adevs::Digraph<Stream>& network)\n";
@@ -702,6 +762,7 @@ namespace ERIN
     // delete them.
     if (DEBUG)
       std::cout << "SourceComponent::add_to_network(...) exit\n";
+    return elements;
   }
 
   FlowElement*
@@ -725,6 +786,15 @@ namespace ERIN
     network_id{network_id_},
     max_times{max_times_}
   {
+  }
+
+  bool
+  Scenario::operator==(const Scenario& other) const
+  {
+    if (this == &other) return true;
+    return (name == other.get_name()) &&
+           (network_id == other.get_network_id()) &&
+           (max_times == other.get_max_times());
   }
 
   ////////////////////////////////////////////////////////////
@@ -1121,25 +1191,13 @@ namespace ERIN
   Sink::Sink(
       std::string id,
       StreamType st,
-      std::unordered_map<std::string, std::vector<LoadItem>> loads):
-    Sink(id, st, loads, "")
-  {
-  }
-
-  Sink::Sink(
-      std::string id,
-      StreamType st,
-      std::unordered_map<std::string, std::vector<LoadItem>> loads,
-      std::string scenario):
+      std::vector<LoadItem> loads_):
     FlowElement(id, st, st),
-    loads_by_scenario{loads},
-    active_scenario{scenario},
+    loads{loads_},
     idx{-1},
-    num_loads{0},
-    loads{}
+    num_loads{loads_.size()}
   {
-    check_loads_by_scenario();
-    switch_scenario(active_scenario);
+    check_loads();
   }
 
   void
@@ -1147,9 +1205,6 @@ namespace ERIN
   {
     if (DEBUG)
       std::cout << "Sink::update_on_internal_transition()\n";
-    // if there is no active scenario, return
-    if (active_scenario == "")
-      return;
     ++idx;
   }
 
@@ -1186,21 +1241,17 @@ namespace ERIN
   {
     if (DEBUG)
       std::cout << "Sink::output_func()\n";
-    if (active_scenario != "") {
-      std::vector<LoadItem>::size_type next_idx = idx + 1;
-      auto max_idx{num_loads - 1};
-      if (next_idx < max_idx)
-        ys.push_back(
-            adevs::port_value<Stream>{
-            outport_inflow_request,
-            Stream{get_inflow_type(), loads[next_idx].get_value()}});
-    }
+    std::vector<LoadItem>::size_type next_idx = idx + 1;
+    auto max_idx{num_loads - 1};
+    if (next_idx < max_idx)
+      ys.push_back(
+          adevs::port_value<Stream>{
+          outport_inflow_request,
+          Stream{get_inflow_type(), loads[next_idx].get_value()}});
   }
 
   void
-  Sink::check_loads(
-      const std::string& scenario,
-      const std::vector<LoadItem>& loads) const
+  Sink::check_loads() const
   {
     if (DEBUG)
       std::cout << "Sink::check_loads\n";
@@ -1208,8 +1259,8 @@ namespace ERIN
     auto last_idx{N - 1};
     if (N < 2) {
       std::ostringstream oss;
-      oss << "Sink: must have at least two LoadItems per scenario, "
-          << "but scenario \"" << scenario << "\", only has " << N;
+      oss << "Sink: must have at least two LoadItems but "
+             "only has " << N << std::endl;
       throw std::invalid_argument(oss.str());
     }
     RealTimeType t{-1};
@@ -1219,55 +1270,27 @@ namespace ERIN
       if (idx == last_idx) {
         if (!x.get_is_end()) {
           std::ostringstream oss;
-          oss << "Sink: LoadItem[" << idx << "] for scenario \"" << scenario
-              << "\" must not specify a value but it does...";
+          oss << "Sink: LoadItem[" << idx << "] (last index) "
+                 "must not specify a value but it does..."
+              << std::endl;
           throw std::invalid_argument(oss.str());
         }
       } else {
         if (x.get_is_end()) {
           std::ostringstream oss;
-          oss << "Sink: non-last LoadItem[" << idx << "] for scenario \""
-              << scenario << "\" doesn't specify a value...";
+          oss << "Sink: non-last LoadItem[" << idx << "] "
+                 "doesn't specify a value but it must..."
+              << std::endl;
           throw std::invalid_argument(oss.str());
         }
       }
       if ((t_ < 0) || (t_ <= t)) {
         std::ostringstream oss;
-        oss << "Sink: LoadItems for scenario \"" << scenario
-            << "\" must have time points that are everywhere increasing "
-            << " and positive";
+        oss << "Sink: LoadItems must have time points that are everywhere "
+               "increasing and positive but it doesn't..."
+            << std::endl;
         throw std::invalid_argument(oss.str());
       }
     }
-  }
-
-  void
-  Sink::check_loads_by_scenario() const
-  {
-    if (DEBUG)
-      std::cout << "Sink::check_loads_by_scenario()\n";
-    for (const auto& sl: loads_by_scenario)
-      check_loads(sl.first, sl.second);
-  }
-
-  bool
-  Sink::switch_scenario(const std::string& scenario)
-  {
-    if (DEBUG) {
-      std::cout << "Sink::switch_scenario(const std::string& scenario)\n";
-      std::cout << "scenario = " << scenario << "\n";
-    }
-    for (const auto& sl: loads_by_scenario) {
-      if (sl.first == scenario) {
-        if (DEBUG)
-          std::cout << "scenario switched to " << scenario << "\n";
-        idx = -1;
-        active_scenario = scenario;
-        num_loads = sl.second.size();
-        loads = sl.second;
-        return true;
-      }
-    }
-    return false;
   }
 }

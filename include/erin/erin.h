@@ -9,6 +9,7 @@
 #include <functional>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include "../../vendor/bdevs/include/adevs.h"
 #include "../../vendor/toml11/toml.hpp"
 
@@ -49,7 +50,8 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // InputReader
   class StreamType; // Forward declaration
-  class Component; // Forward declaration
+  class Component;  // Forward declaration
+  class Scenario;   // Forward declearation
   class InputReader
   {
     public:
@@ -62,6 +64,8 @@ namespace ERIN
       virtual std::unordered_map<std::string,
         std::unordered_map<std::string, std::vector<std::string>>>
         read_networks() = 0;
+      virtual std::unordered_map<std::string, std::shared_ptr<Scenario>>
+        read_scenarios() = 0;
       virtual ~InputReader() { };
   };
 
@@ -92,6 +96,8 @@ namespace ERIN
       std::unordered_map<std::string,
         std::unordered_map<std::string, std::vector<std::string>>>
         read_networks() override;
+      std::unordered_map<std::string, std::shared_ptr<Scenario>>
+        read_scenarios() override;
 
     private:
       toml::value data;
@@ -102,7 +108,10 @@ namespace ERIN
   class Main
   {
     public:
+      // TODO: pass in a reader and writer vs explicit files. This enables
+      // testing and programmatic interface
       Main(const std::string& input_toml, const std::string& output_toml);
+      // TODO: change run to take the scenario id
       bool run();
 
     private:
@@ -330,6 +339,10 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // Scenario
   // TODO: finish this class...
+  //       This needs to be a separate DEVS sim over ~1000 years where we
+  //       predict and enter scenarios and kick off detailed runs. Optionally,
+  //       reliability can be taken into account to present the possibility of
+  //       downed equipment at scenario start...
   class Scenario // : public adevs::Atomic<PortValue>
   {
     public:
@@ -338,6 +351,10 @@ namespace ERIN
       const std::string& get_name() const { return name; };
       long get_max_times() const { return max_times; };
       const std::string& get_network_id() const { return network_id; };
+      bool operator==(const Scenario& other) const;
+      bool operator!=(const Scenario& other) const {
+        return !(operator==(other));
+      }
       //static const int outport_scenario_start;
       //static const int outport_scenario_end;
       //void delta_int() override;
@@ -485,12 +502,7 @@ namespace ERIN
       Sink(
           std::string id,
           StreamType stream_type,
-          std::unordered_map<std::string, std::vector<LoadItem>> loads_by_scenario);
-      Sink(
-          std::string id,
-          StreamType stream_type,
-          std::unordered_map<std::string, std::vector<LoadItem>> loads_by_scenario,
-          std::string active_scenario);
+          std::vector<LoadItem> loads);
 
     protected:
       void update_on_internal_transition() override;
@@ -500,17 +512,11 @@ namespace ERIN
       void add_additional_outputs(std::vector<PortValue>& ys) override;
 
     private:
-      std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;
-      std::string active_scenario;
+      std::vector<LoadItem> loads;
       int idx;
       std::vector<LoadItem>::size_type num_loads;
-      std::vector<LoadItem> loads;
 
-      void check_loads(
-          const std::string& scenario,
-          const std::vector<LoadItem>& loads) const;
-      void check_loads_by_scenario() const;
-      bool switch_scenario(const std::string& active_scenario);
+      void check_loads() const;
   };
 
   ////////////////////////////////////////////////////////////
@@ -534,7 +540,10 @@ namespace ERIN
       const StreamType& get_input_stream() const { return input_stream; }
       const StreamType& get_output_stream() const { return output_stream; }
 
-      virtual void add_to_network(adevs::Digraph<Stream>& nw) = 0;
+      virtual std::unordered_set<FlowElement*>
+        add_to_network(
+            adevs::Digraph<Stream>& nw,
+            const std::string& active_scenario) = 0;
       FlowElement* get_connecting_element();
 
     protected:
@@ -561,16 +570,17 @@ namespace ERIN
             const std::string& id,
             const StreamType& input_stream,
             const std::unordered_map<std::string, std::vector<LoadItem>>&
-              loads_by_scenario,
-            const std::string& active_scenario);
-      void add_to_network(adevs::Digraph<Stream>& nw) override;
+              loads_by_scenario);
+      std::unordered_set<FlowElement*>
+        add_to_network(
+            adevs::Digraph<Stream>& nw,
+            const std::string& active_scenario) override;
 
     protected:
       FlowElement* create_connecting_element() override;
 
     private:
       std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;
-      std::string active_scenario;
   };
 
   ////////////////////////////////////////////////////////////
@@ -581,7 +591,10 @@ namespace ERIN
       SourceComponent(
           const std::string& id,
           const StreamType& output_stream);
-      void add_to_network(adevs::Digraph<Stream>& nw) override;
+      std::unordered_set<FlowElement*>
+        add_to_network(
+            adevs::Digraph<Stream>& nw,
+            const std::string& active_scenario) override;
 
     protected:
       FlowElement* create_connecting_element() override;

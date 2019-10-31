@@ -5,9 +5,9 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>
-#include <map>
 #include <unordered_set>
 #include <memory>
+#include <utility>
 #include "../vendor/toml11/toml.hpp"
 
 namespace ERIN
@@ -18,10 +18,10 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // StreamInfo
   StreamInfo::StreamInfo(
-      const std::string& rate_unit_,
-      const std::string& quantity_unit_):
-    rate_unit{rate_unit_},
-    quantity_unit{quantity_unit_},
+      std::string rate_unit_,
+      std::string  quantity_unit_):
+    rate_unit{std::move(rate_unit_)},
+    quantity_unit{std::move(quantity_unit_)},
     seconds_per_time_unit{1.0}
   {
     if ((rate_unit == "kW") && (quantity_unit == "kJ"))
@@ -32,11 +32,11 @@ namespace ERIN
       throw BadInputError();
   }
   StreamInfo::StreamInfo(
-      const std::string& rate_unit_,
-      const std::string& quantity_unit_,
+      std::string rate_unit_,
+      std::string quantity_unit_,
       double seconds_per_time_unit_):
-    rate_unit{rate_unit_},
-    quantity_unit{quantity_unit_},
+    rate_unit{std::move(rate_unit_)},
+    quantity_unit{std::move(quantity_unit_)},
     seconds_per_time_unit{seconds_per_time_unit_}
   {
   }
@@ -52,9 +52,9 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // TomlInputReader
-  TomlInputReader::TomlInputReader(const toml::value& data_):
+  TomlInputReader::TomlInputReader(toml::value data_):
     InputReader(),
-    data{data_}
+    data{std::move(data_)}
   {
   }
 
@@ -168,8 +168,8 @@ namespace ERIN
       if (it != tt.end())
         component_type = toml::get<std::string>(it->second);
       // stream OR input_stream, output_stream
-      std::string input_stream_id{""};
-      std::string output_stream_id{""};
+      std::string input_stream_id;
+      std::string output_stream_id;
       it = tt.find("stream");
       if (it != tt.end()) {
         input_stream_id = toml::get<std::string>(it->second);
@@ -208,19 +208,19 @@ namespace ERIN
             std::vector<LoadItem> loads2{};
             for (const auto& li:
                 toml::get<std::vector<toml::table>>(lp.second)) {
-              RealTimeType t{};
-              FlowValueType v{};
+              RealTimeType the_time{};
+              FlowValueType the_value{};
               auto it_for_t = li.find("t");
               if (it_for_t != li.end())
-                t = toml::get<RealTimeType>(it_for_t->second);
+                  the_time = toml::get<RealTimeType>(it_for_t->second);
               else
-                t = -1;
+                  the_time = -1;
               auto it_for_v = li.find("v");
               if (it_for_v != li.end()) {
-                v = toml::get<FlowValueType>(it_for_v->second);
-                loads2.push_back(LoadItem(t, v));
+                  the_value = toml::get<FlowValueType>(it_for_v->second);
+                loads2.emplace_back(LoadItem(the_time, the_value));
               } else {
-                loads2.push_back(LoadItem(t));
+                loads2.emplace_back(LoadItem(the_time));
               }
             }
             loads_by_scenario.insert(std::make_pair(lp.first, loads2));
@@ -332,10 +332,10 @@ namespace ERIN
   // Main
   // main class that runs the simulation from file
   Main::Main(
-      const std::string& in_path,
-      const std::string& out_path):
-    input_file_path{in_path},
-    output_file_path{out_path},
+      std::string in_path,
+      std::string out_path):
+    input_file_path{std::move(in_path)},
+    output_file_path{std::move(out_path)},
     reader{}
   {
     reader = std::make_unique<TomlInputReader>(input_file_path);
@@ -416,7 +416,7 @@ namespace ERIN
     std::unordered_map<std::string, std::vector<Datum>> results;
     for (const auto& e: elements) {
       auto vals = e->get_results();
-      if (vals.size() != 0)
+      if (!vals.empty())
         results.insert(
             std::pair<std::string,std::vector<Datum>>(e->get_id(), vals));
     }
@@ -582,19 +582,19 @@ namespace ERIN
   }
 
   StreamType::StreamType(
-      const std::string& stream_type,
-      const std::string& r_units,
-      const std::string& q_units,
+      std::string stream_type,
+      std::string  r_units,
+      std::string  q_units,
       FlowValueType s_per_time_unit,
-      const std::unordered_map<std::string, FlowValueType>& other_r_units,
-      const std::unordered_map<std::string, FlowValueType>& other_q_units
+      std::unordered_map<std::string, FlowValueType>  other_r_units,
+      std::unordered_map<std::string, FlowValueType>  other_q_units
       ):
-    type{stream_type},
-    rate_units{r_units},
-    quantity_units{q_units},
+    type{std::move(stream_type)},
+    rate_units{std::move(r_units)},
+    quantity_units{std::move(q_units)},
     seconds_per_time_unit{s_per_time_unit},
-    other_rate_units{other_r_units},
-    other_quantity_units{other_q_units}
+    other_rate_units{std::move(other_r_units)},
+    other_quantity_units{std::move(other_q_units)}
   {
   }
 
@@ -602,11 +602,10 @@ namespace ERIN
   StreamType::operator==(const StreamType& other) const
   {
     if (this == &other) return true;
-    return (type != other.type)   ? false :
-           (rate_units != other.rate_units) ? false :
-           (quantity_units != other.quantity_units) ? false :
-           (seconds_per_time_unit != other.seconds_per_time_unit) ? false :
-           true;
+    return (type == other.type) &&
+           (rate_units == other.rate_units) &&
+           (quantity_units == other.quantity_units) &&
+           (seconds_per_time_unit == other.seconds_per_time_unit);
   }
 
   bool
@@ -632,7 +631,7 @@ namespace ERIN
   ///////////////////////////////////////////////////////////////////
   // Stream
   Stream::Stream(StreamType s_type, FlowValueType r):
-    type{s_type},
+    type{std::move(s_type)},
     rate{r}
   {
   }
@@ -647,14 +646,14 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // Component
   Component::Component(
-      const std::string& id_,
-      const std::string& type_,
-      const StreamType& input_stream_,
-      const StreamType& output_stream_):
-    id{id_},
-    component_type{type_},
-    input_stream{input_stream_},
-    output_stream{output_stream_},
+      std::string id_,
+      std::string type_,
+      StreamType input_stream_,
+      StreamType output_stream_):
+    id{std::move(id_)},
+    component_type{std::move(type_)},
+    input_stream{std::move(input_stream_)},
+    output_stream{std::move(output_stream_)},
     inputs{},
     connecting_element{nullptr}
   {
@@ -679,10 +678,10 @@ namespace ERIN
   LoadComponent::LoadComponent(
       const std::string& id_,
       const StreamType& input_stream_,
-      const std::unordered_map<
-        std::string,std::vector<LoadItem>>& loads_by_scenario_):
+      std::unordered_map<
+        std::string,std::vector<LoadItem>> loads_by_scenario_):
     Component(id_, "load", input_stream_, input_stream_),
-    loads_by_scenario{loads_by_scenario_}
+    loads_by_scenario{std::move(loads_by_scenario_)}
   {
   }
 
@@ -782,11 +781,11 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // Scenario
   Scenario::Scenario(
-      const std::string& name_,
-      const std::string& network_id_,
+      std::string name_,
+      std::string network_id_,
       long max_times_):
-    name{name_},
-    network_id{network_id_},
+    name{std::move(name_)},
+    network_id{std::move(network_id_)},
     max_times{max_times_}
   {
   }
@@ -808,7 +807,7 @@ namespace ERIN
   const int FlowElement::outport_outflow_achieved = 3;
 
   FlowElement::FlowElement(std::string id_, StreamType st) :
-    FlowElement(id_, st, st)
+    FlowElement(std::move(id_), st, st)
   {
   }
 
@@ -817,10 +816,10 @@ namespace ERIN
       StreamType in,
       StreamType out):
     adevs::Atomic<PortValue>(),
-    id{id_},
+    id{std::move(id_)},
     time{0,0},
-    inflow_type{in},
-    outflow_type{out},
+    inflow_type{std::move(in)},
+    outflow_type{std::move(out)},
     inflow{0},
     outflow{0},
     storeflow{0},
@@ -973,7 +972,7 @@ namespace ERIN
   {
   }
 
-  const FlowState
+  FlowState
   FlowElement::update_state_for_outflow_request(FlowValueType outflow_) const
   {
     if (DEBUG)
@@ -981,7 +980,7 @@ namespace ERIN
     return FlowState{outflow_, outflow_};
   }
 
-  const FlowState
+  FlowState
   FlowElement::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
     if (DEBUG)
@@ -1040,7 +1039,7 @@ namespace ERIN
       StreamType stream_type,
       FlowValueType low_lim,
       FlowValueType up_lim) :
-    FlowElement(id, stream_type),
+    FlowElement(std::move(id), stream_type),
     lower_limit{low_lim},
     upper_limit{up_lim}
   {
@@ -1052,7 +1051,7 @@ namespace ERIN
     }
   }
 
-  const FlowState
+  FlowState
   FlowLimits::update_state_for_outflow_request(FlowValueType out) const
   {
     if (DEBUG) {
@@ -1075,7 +1074,7 @@ namespace ERIN
     return FlowState{out_, out_};
   }
 
-  const FlowState
+  FlowState
   FlowLimits::update_state_for_inflow_achieved(FlowValueType in) const
   {
     if (DEBUG) {
@@ -1099,7 +1098,7 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // FlowMeter
   FlowMeter::FlowMeter(std::string id, StreamType stream_type) :
-    FlowElement(id, stream_type),
+    FlowElement(std::move(id), stream_type),
     event_times{},
     requested_flows{},
     achieved_flows{}
@@ -1182,19 +1181,19 @@ namespace ERIN
       std::function<FlowValueType(FlowValueType)> calc_output_from_input,
       std::function<FlowValueType(FlowValueType)> calc_input_from_output
       ) :
-    FlowElement(id, input_stream_type, output_stream_type),
-    output_from_input{calc_output_from_input},
-    input_from_output{calc_input_from_output}
+    FlowElement(std::move(id), input_stream_type, output_stream_type),
+    output_from_input{std::move(calc_output_from_input)},
+    input_from_output{std::move(calc_input_from_output)}
   {
   }
 
-  const FlowState
+  FlowState
   Transformer::update_state_for_outflow_request(FlowValueType outflow_) const
   {
     return FlowState{input_from_output(outflow_), outflow_};
   }
 
-  const FlowState
+  FlowState
   Transformer::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
     return FlowState{inflow_, output_from_input(inflow_)};
@@ -1205,9 +1204,9 @@ namespace ERIN
   // Sink
   Sink::Sink(
       std::string id,
-      StreamType st,
-      std::vector<LoadItem> loads_):
-    FlowElement(id, st, st),
+      const StreamType& st,
+      const std::vector<LoadItem>& loads_):
+    FlowElement(std::move(id), st, st),
     loads{loads_},
     idx{-1},
     num_loads{loads_.size()}
@@ -1245,7 +1244,7 @@ namespace ERIN
     return adevs_inf<adevs::Time>();
   }
 
-  const FlowState
+  FlowState
   Sink::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
     return FlowState{inflow_};
@@ -1279,13 +1278,13 @@ namespace ERIN
       throw std::invalid_argument(oss.str());
     }
     RealTimeType t{-1};
-    for (std::vector<LoadItem>::size_type idx=0; idx < loads.size(); ++idx) {
-      const auto& x{loads.at(idx)};
+    for (std::vector<LoadItem>::size_type idx_=0; idx_ < loads.size(); ++idx_) {
+      const auto& x{loads.at(idx_)};
       auto t_{x.get_time()};
-      if (idx == last_idx) {
+      if (idx_ == last_idx) {
         if (!x.get_is_end()) {
           std::ostringstream oss;
-          oss << "Sink: LoadItem[" << idx << "] (last index) "
+          oss << "Sink: LoadItem[" << idx_ << "] (last index) "
                  "must not specify a value but it does..."
               << std::endl;
           throw std::invalid_argument(oss.str());
@@ -1293,7 +1292,7 @@ namespace ERIN
       } else {
         if (x.get_is_end()) {
           std::ostringstream oss;
-          oss << "Sink: non-last LoadItem[" << idx << "] "
+          oss << "Sink: non-last LoadItem[" << idx_ << "] "
                  "doesn't specify a value but it must..."
               << std::endl;
           throw std::invalid_argument(oss.str());

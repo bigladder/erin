@@ -35,15 +35,15 @@ namespace ERIN
   {
     public:
       StreamInfo(
-          const std::string& rate_unit,
-          const std::string& quantity_unit);
+          std::string  rate_unit,
+          std::string  quantity_unit);
       StreamInfo(
-          const std::string& rate_unit,
-          const std::string& quantity_unit,
+          std::string  rate_unit,
+          std::string  quantity_unit,
           double default_seconds_per_time_unit);
-      const std::string& get_rate_unit() const {return rate_unit;}
-      const std::string& get_quantity_unit() const {return quantity_unit;}
-      double get_seconds_per_time_unit() const {return seconds_per_time_unit;}
+      [[nodiscard]] const std::string& get_rate_unit() const {return rate_unit;}
+      [[nodiscard]] const std::string& get_quantity_unit() const {return quantity_unit;}
+      [[nodiscard]] double get_seconds_per_time_unit() const {return seconds_per_time_unit;}
       bool operator==(const StreamInfo& other) const;
       bool operator!=(const StreamInfo& other) const {
         return !(operator==(other));
@@ -74,7 +74,7 @@ namespace ERIN
         read_networks() = 0;
       virtual std::unordered_map<std::string, std::shared_ptr<Scenario>>
         read_scenarios() = 0;
-      virtual ~InputReader() { };
+      virtual ~InputReader() = default;;
   };
 
   ////////////////////////////////////////////////////////////
@@ -91,9 +91,9 @@ namespace ERIN
   class TomlInputReader : public InputReader
   {
     public:
-      explicit TomlInputReader(const toml::value& v);
+      explicit TomlInputReader(toml::value  v);
       explicit TomlInputReader(const std::string& path);
-      TomlInputReader(std::istream& in);
+      explicit TomlInputReader(std::istream& in);
 
       StreamInfo read_stream_info() override;
       std::unordered_map<std::string, StreamType>
@@ -126,7 +126,7 @@ namespace ERIN
     public:
       // TODO: pass in a reader and writer vs explicit files. This enables
       // testing and programmatic interface
-      Main(const std::string& input_toml, const std::string& output_toml);
+      Main(std::string  input_toml, std::string  output_toml);
       // TODO: change run to take the scenario id
       ScenarioResults run();
 
@@ -148,7 +148,7 @@ namespace ERIN
   // MixedStreamsError
   struct MixedStreamsError : public std::exception
   {
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
       return "MixedStreamsError";
     }
@@ -158,7 +158,7 @@ namespace ERIN
   // InconsistentStreamUnitsError
   struct InconsistentStreamTypesError : public std::exception
   {
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
       return "InconsistentStreamTypesError";
     }
@@ -168,7 +168,7 @@ namespace ERIN
   // InconsistentStreamUnitsError
   struct InconsistentStreamUnitsError : public std::exception
   {
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
       return "InconsistentStreamUnitsError";
     }
@@ -178,7 +178,7 @@ namespace ERIN
   // FlowInvariantError
   struct FlowInvariantError : public std::exception
   {
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
       return "FlowInvariantError";
     }
@@ -188,7 +188,7 @@ namespace ERIN
   // BadPortError
   struct BadPortError : public std::exception
   {
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
       return "BadPortError";
     }
@@ -198,7 +198,7 @@ namespace ERIN
   // SimultaneousIORequestError
   struct SimultaneousIORequestError : public std::exception
   {
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
       return "SimultaneousIORequestError";
     }
@@ -208,7 +208,7 @@ namespace ERIN
   // AchievedMoreThanRequestedError
   struct AchievedMoreThanRequestedError : public std::exception
   {
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
       return "AchievedMoreThanRequestedError";
     }
@@ -218,7 +218,7 @@ namespace ERIN
   // BadInputError
   struct BadInputError : public std::exception
   {
-    const char* what() const noexcept override
+    [[nodiscard]] const char* what() const noexcept override
     {
       return "BadInputError";
     }
@@ -229,19 +229,19 @@ namespace ERIN
   class LoadItem
   {
     public:
-      LoadItem(RealTimeType t);
+      explicit LoadItem(RealTimeType t);
       LoadItem(RealTimeType t, FlowValueType v);
-      RealTimeType get_time() const { return time; }
-      FlowValueType get_value() const { return value; }
-      bool get_is_end() const { return is_end; }
-      RealTimeType get_time_advance(const LoadItem& next) const;
+      [[nodiscard]] RealTimeType get_time() const { return time; }
+      [[nodiscard]] FlowValueType get_value() const { return value; }
+      [[nodiscard]] bool get_is_end() const { return is_end; }
+      [[nodiscard]] RealTimeType get_time_advance(const LoadItem& next) const;
 
     private:
       RealTimeType time;
       FlowValueType value;
       bool is_end;
 
-      bool is_good() const { return (time >= 0); }
+      [[nodiscard]] bool is_good() const { return (time >= 0); }
   };
 
   ////////////////////////////////////////////////////////////
@@ -249,7 +249,7 @@ namespace ERIN
   class FlowState
   {
     public:
-      FlowState(FlowValueType in);
+      explicit FlowState(FlowValueType in);
       FlowState(FlowValueType in, FlowValueType out);
       FlowState(FlowValueType in, FlowValueType out, FlowValueType store);
       FlowState(
@@ -259,10 +259,10 @@ namespace ERIN
           FlowValueType loss
           );
 
-      FlowValueType getInflow() const { return inflow; };
-      FlowValueType getOutflow() const { return outflow; };
-      FlowValueType getStoreflow() const { return storeflow; };
-      FlowValueType getLossflow() const { return lossflow; };
+      [[nodiscard]] FlowValueType getInflow() const { return inflow; };
+      [[nodiscard]] FlowValueType getOutflow() const { return outflow; };
+      [[nodiscard]] FlowValueType getStoreflow() const { return storeflow; };
+      [[nodiscard]] FlowValueType getLossflow() const { return lossflow; };
 
     private:
       FlowValueType inflow;
@@ -278,7 +278,7 @@ namespace ERIN
   {
     public:
       StreamType();
-      StreamType(const std::string& type);
+      explicit StreamType(const std::string& type);
       StreamType(
           const std::string& type,
           const std::string& rate_units,
@@ -286,23 +286,23 @@ namespace ERIN
           FlowValueType seconds_per_time_unit
           );
       StreamType(
-          const std::string& type,
-          const std::string& rate_units,
-          const std::string& quantity_units,
+          std::string  type,
+          std::string  rate_units,
+          std::string  quantity_units,
           FlowValueType seconds_per_time_unit,
-          const std::unordered_map<std::string, FlowValueType>& other_rate_units,
-          const std::unordered_map<std::string, FlowValueType>& other_quantity_units
+          std::unordered_map<std::string, FlowValueType>  other_rate_units,
+          std::unordered_map<std::string, FlowValueType>  other_quantity_units
           );
       bool operator==(const StreamType& other) const;
       bool operator!=(const StreamType& other) const;
-      const std::string& get_type() const { return type; }
-      const std::string& get_rate_units() const { return rate_units; }
-      const std::string& get_quantity_units() const { return quantity_units; }
-      FlowValueType get_seconds_per_time_unit() const { return seconds_per_time_unit; }
-      const std::unordered_map<std::string,FlowValueType>& get_other_rate_units() const {
+      [[nodiscard]] const std::string& get_type() const { return type; }
+      [[nodiscard]] const std::string& get_rate_units() const { return rate_units; }
+      [[nodiscard]] const std::string& get_quantity_units() const { return quantity_units; }
+      [[nodiscard]] FlowValueType get_seconds_per_time_unit() const { return seconds_per_time_unit; }
+      [[nodiscard]] const std::unordered_map<std::string,FlowValueType>& get_other_rate_units() const {
         return other_rate_units;
       }
-      const std::unordered_map<std::string,FlowValueType>& get_other_quantity_units() const {
+      [[nodiscard]] const std::unordered_map<std::string,FlowValueType>& get_other_quantity_units() const {
         return other_quantity_units;
       }
 
@@ -323,17 +323,17 @@ namespace ERIN
   {
     public:
       Stream(StreamType stream_type, FlowValueType rate);
-      StreamType get_type() const { return type; }
-      FlowValueType get_rate() const { return rate; }
-      FlowValueType get_quantity(FlowValueType dt_s) const {
+      [[nodiscard]] StreamType get_type() const { return type; }
+      [[nodiscard]] FlowValueType get_rate() const { return rate; }
+      [[nodiscard]] FlowValueType get_quantity(FlowValueType dt_s) const {
         return rate * (dt_s / type.get_seconds_per_time_unit());
       }
-      FlowValueType get_rate_in_units(const std::string& units) const {
+      [[nodiscard]] FlowValueType get_rate_in_units(const std::string& units) const {
         const auto& u = type.get_other_rate_units();
         FlowValueType m{u.at(units)};
         return rate * m;
       }
-      FlowValueType get_quantity_in_units(
+      [[nodiscard]] FlowValueType get_quantity_in_units(
           FlowValueType dt_s, const std::string& units) const {
         const auto& u = type.get_other_quantity_units();
         FlowValueType m{u.at(units)};
@@ -362,11 +362,11 @@ namespace ERIN
   class Scenario // : public adevs::Atomic<PortValue>
   {
     public:
-      Scenario(const std::string& name, const std::string& network_id, long max_times);
+      Scenario(std::string  name, std::string  network_id, long max_times);
 
-      const std::string& get_name() const { return name; };
-      long get_max_times() const { return max_times; };
-      const std::string& get_network_id() const { return network_id; };
+      [[nodiscard]] const std::string& get_name() const { return name; };
+      [[nodiscard]] long get_max_times() const { return max_times; };
+      [[nodiscard]] const std::string& get_network_id() const { return network_id; };
       bool operator==(const Scenario& other) const;
       bool operator!=(const Scenario& other) const {
         return !(operator==(other));
@@ -404,8 +404,8 @@ namespace ERIN
       FlowElement(const FlowElement&) = delete;
       FlowElement& operator=(const FlowElement&) = delete;
 
-      const std::string& get_id() const { return id; }
-      virtual std::vector<Datum> get_results() const {
+      [[nodiscard]] const std::string& get_id() const { return id; }
+      [[nodiscard]] virtual std::vector<Datum> get_results() const {
         return std::vector<Datum>(0);
       }
 
@@ -413,9 +413,9 @@ namespace ERIN
       FlowElement(std::string id, StreamType flow_type);
       FlowElement(
           std::string id, StreamType inflow_type, StreamType outflow_type);
-      virtual const FlowState
+      [[nodiscard]] virtual FlowState
         update_state_for_outflow_request(FlowValueType outflow_) const;
-      virtual const FlowState
+      [[nodiscard]] virtual FlowState
         update_state_for_inflow_achieved(FlowValueType inflow_) const;
       virtual adevs::Time calculate_time_advance();
       virtual void update_on_internal_transition();
@@ -423,17 +423,17 @@ namespace ERIN
       virtual void add_additional_outputs(std::vector<PortValue>& ys);
       void print_state() const;
       void print_state(const std::string& prefix) const;
-      auto get_real_time() const { return time.real; };
-      bool get_report_inflow_request() const { return report_inflow_request; };
-      bool get_report_outflow_achieved() const {
+      [[nodiscard]] auto get_real_time() const { return time.real; };
+      [[nodiscard]] bool get_report_inflow_request() const { return report_inflow_request; };
+      [[nodiscard]] bool get_report_outflow_achieved() const {
         return report_outflow_achieved;
       };
-      FlowValueType get_inflow() const { return inflow; };
-      FlowValueType get_outflow() const { return outflow; };
-      FlowValueType get_storeflow() const { return storeflow; };
-      FlowValueType get_lossflow() const { return lossflow; };
-      const StreamType& get_inflow_type() const { return inflow_type; };
-      const StreamType& get_outflow_type() const { return outflow_type; };
+      [[nodiscard]] FlowValueType get_inflow() const { return inflow; };
+      [[nodiscard]] FlowValueType get_outflow() const { return outflow; };
+      [[nodiscard]] FlowValueType get_storeflow() const { return storeflow; };
+      [[nodiscard]] FlowValueType get_lossflow() const { return lossflow; };
+      [[nodiscard]] const StreamType& get_inflow_type() const { return inflow_type; };
+      [[nodiscard]] const StreamType& get_outflow_type() const { return outflow_type; };
 
     private:
       std::string id;
@@ -465,8 +465,8 @@ namespace ERIN
           );
 
     protected:
-      const FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
-      const FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
+      [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
+      [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
       FlowValueType lower_limit;
@@ -479,9 +479,9 @@ namespace ERIN
   {
     public:
       FlowMeter(std::string id, StreamType stream_type);
-      std::vector<RealTimeType> get_actual_output_times() const;
-      std::vector<FlowValueType> get_actual_output() const;
-      std::vector<Datum> get_results() const override;
+      [[nodiscard]] std::vector<RealTimeType> get_actual_output_times() const;
+      [[nodiscard]] std::vector<FlowValueType> get_actual_output() const;
+      [[nodiscard]] std::vector<Datum> get_results() const override;
 
     protected:
       void update_on_external_transition() override;
@@ -506,8 +506,8 @@ namespace ERIN
           );
 
     protected:
-      const FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
-      const FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
+      [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
+      [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
       std::function<FlowValueType(FlowValueType)> output_from_input;
@@ -521,13 +521,13 @@ namespace ERIN
     public:
       Sink(
           std::string id,
-          StreamType stream_type,
-          std::vector<LoadItem> loads);
+          const StreamType& stream_type,
+          const std::vector<LoadItem>& loads);
 
     protected:
       void update_on_internal_transition() override;
       adevs::Time calculate_time_advance() override;
-      const FlowState update_state_for_inflow_achieved(
+      [[nodiscard]] FlowState update_state_for_inflow_achieved(
           FlowValueType inflow_) const override;
       void add_additional_outputs(std::vector<PortValue>& ys) override;
 
@@ -548,17 +548,17 @@ namespace ERIN
       Component(const Component&) = delete;
       Component& operator=(const Component&) = delete;
       Component(
-          const std::string& id,
-          const std::string& type,
-          const StreamType& input_stream,
-          const StreamType& output_stream);
-      virtual ~Component() { };
+          std::string  id,
+          std::string  type,
+          StreamType  input_stream,
+          StreamType  output_stream);
+      virtual ~Component() = default;;
 
       void add_input(std::shared_ptr<Component>& c);
-      const std::string& get_id() const { return id; }
-      const std::string& get_component_type() const { return component_type; }
-      const StreamType& get_input_stream() const { return input_stream; }
-      const StreamType& get_output_stream() const { return output_stream; }
+      [[nodiscard]] const std::string& get_id() const { return id; }
+      [[nodiscard]] const std::string& get_component_type() const { return component_type; }
+      [[nodiscard]] const StreamType& get_input_stream() const { return input_stream; }
+      [[nodiscard]] const StreamType& get_output_stream() const { return output_stream; }
 
       virtual std::unordered_set<FlowElement*>
         add_to_network(
@@ -568,7 +568,7 @@ namespace ERIN
 
     protected:
       virtual FlowElement* create_connecting_element() = 0;
-      const std::vector<std::shared_ptr<Component>>& get_inputs() const {
+      [[nodiscard]] const std::vector<std::shared_ptr<Component>>& get_inputs() const {
         return inputs;
       }
 
@@ -589,7 +589,7 @@ namespace ERIN
       LoadComponent(
             const std::string& id,
             const StreamType& input_stream,
-            const std::unordered_map<std::string, std::vector<LoadItem>>&
+            std::unordered_map<std::string, std::vector<LoadItem>>
               loads_by_scenario);
       std::unordered_set<FlowElement*>
         add_to_network(

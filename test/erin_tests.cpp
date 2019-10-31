@@ -159,7 +159,11 @@ TEST(ErinBasicsTest, StandaloneSink)
   std::vector<::ERIN::RealTimeType> expected_loads = {100, 10, 0};
   auto st = ::ERIN::StreamType("electrical");
   auto sink = new ::ERIN::Sink(
-      "load", st, {{0,100},{1,10},{2,0},{3}});
+      "load", st,
+      {::ERIN::LoadItem{0,100},
+       ::ERIN::LoadItem{1,10},
+       ::ERIN::LoadItem{2,0},
+       ::ERIN::LoadItem{3}});
   auto meter = new ::ERIN::FlowMeter("meter", st);
   adevs::Digraph<::ERIN::Stream> network;
   network.couple(
@@ -193,7 +197,10 @@ TEST(ErinBasicsTest, CanRunSourceSink)
   std::vector<::ERIN::FlowValueType> expected_flow = {100, 0};
   auto st = ::ERIN::StreamType("electrical");
   auto sink = new ::ERIN::Sink(
-      "sink", st, {{0,100},{1,0},{2}});
+      "sink", st, {
+          ::ERIN::LoadItem{0,100},
+          ::ERIN::LoadItem{1,0},
+          ::ERIN::LoadItem{2}});
   auto meter = new ::ERIN::FlowMeter("meter", st);
   adevs::Digraph<::ERIN::Stream> network;
   network.couple(
@@ -233,7 +240,12 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   auto meter1 = new ::ERIN::FlowMeter("meter1", elec);
   auto sink = new ::ERIN::Sink(
       "electric-load", elec,
-      {{0, 160},{1,80},{2,40},{3,0},{4}});
+      {
+          ::ERIN::LoadItem{0, 160},
+          ::ERIN::LoadItem{1,80},
+          ::ERIN::LoadItem{2,40},
+          ::ERIN::LoadItem{3,0},
+          ::ERIN::LoadItem{4}});
   adevs::Digraph<::ERIN::Stream> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
@@ -321,7 +333,12 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   auto genset_meter = new ::ERIN::FlowMeter("genset_meter", elec);
   auto sink = new ::ERIN::Sink(
       "electric_load", elec,
-      {{0,160},{1,80},{2,40},{3,0},{4}});
+      {
+          ::ERIN::LoadItem{0,160},
+          ::ERIN::LoadItem{1,80},
+          ::ERIN::LoadItem{2,40},
+          ::ERIN::LoadItem{3,0},
+          ::ERIN::LoadItem{4}});
   adevs::Digraph<::ERIN::Stream> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
@@ -379,7 +396,12 @@ TEST(ErinBasicTest, CanRunUsingComponents)
   auto elec = ::ERIN::StreamType("electrical");
   auto loads_by_scenario = std::unordered_map<
     std::string, std::vector<::ERIN::LoadItem>>(
-        {{"bluesky", {{0,160},{1,80},{2,40},{3,0},{4}}}});
+        {{"bluesky", {
+            ::ERIN::LoadItem{0,160},
+            ::ERIN::LoadItem{1,80},
+            ::ERIN::LoadItem{2,40},
+            ::ERIN::LoadItem{3,0},
+            ::ERIN::LoadItem{4}}}});
   std::shared_ptr<::ERIN::Component> source =
     std::make_shared<::ERIN::SourceComponent>("electrical_pcc", elec);
   std::shared_ptr<::ERIN::Component> load =
@@ -501,7 +523,7 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
   };
   std::string scenario_id{"blue_sky"};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads{
-    {scenario_id, {{0,1.0},{4}}}
+    {scenario_id, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
   };
   std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> expected{
     std::make_pair(

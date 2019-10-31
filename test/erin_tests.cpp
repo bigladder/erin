@@ -613,7 +613,6 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
 {
   std::stringstream ss;
-  std::stringstream out;
   ss << "[stream_info]\n"
         "# The commonality across all streams.\n"
         "# We need to know what the common rate unit and quantity unit is.\n"
@@ -660,8 +659,25 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
                                  "time_unit = \"hours\"}\n"
         "max_times = 1\n"
         "network = \"normal_operations\"\n";
-  ::ERIN::TomlInputReader t{ss};
-
+  ::ERIN::TomlInputReader r{ss};
+  auto si = r.read_stream_info();
+  auto streams = r.read_streams(si);
+  auto components = r.read_components(streams);
+  auto networks = r.read_networks();
+  auto scenarios = r.read_scenarios();
+  ::ERIN::Main m{si, streams, components, networks, scenarios};
+  auto out = m.run();
+  EXPECT_EQ(out.is_good, true);
+  EXPECT_EQ(out.results.size(), 2);
+  std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
+  // out.results : Map String (Vector Datum)
+  for (const auto& item: out.results) {
+    auto it = expected_keys.find(item.first);
+    EXPECT_TRUE(it != expected_keys.end());
+    ASSERT_EQ(item.second.size(), 1);
+    EXPECT_EQ(item.second.at(0).time, 0);
+    EXPECT_EQ(item.second.at(0).value, 1.0);
+  }
 }
 
 int

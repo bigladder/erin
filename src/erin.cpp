@@ -347,6 +347,23 @@ namespace ERIN
     scenarios = reader.read_scenarios();
   }
 
+  Main::Main(
+      StreamInfo stream_info_,
+      std::unordered_map<std::string, StreamType> streams_,
+      std::unordered_map<std::string, std::shared_ptr<Component>> components_,
+      std::unordered_map<
+        std::string,
+        std::unordered_map<
+          std::string, std::vector<std::string>>> networks_,
+      std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios_):
+    stream_info{std::move(stream_info_)},
+    stream_types_map{std::move(streams_)},
+    components{std::move(components_)},
+    networks{std::move(networks_)},
+    scenarios{std::move(scenarios_)}
+  {
+  }
+
   // TODO: change run to be `run(const std::string& scenario_id)`
   // TODO: add unit test for the `run(...)` API
   // TODO: add another Reader type that can be programmatically set

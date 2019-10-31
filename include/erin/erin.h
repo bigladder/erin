@@ -119,12 +119,12 @@ namespace ERIN
       // TODO: pass in a reader and writer vs explicit files. This enables
       // testing and programmatic interface
       explicit Main(const std::string& input_toml);
-      //Main(
-      //    StreamInfo si,
-      //    std::unordered_map<std::string, StreamType> streams,
-      //    std::unordered_map<std::string, std::shared_ptr<Component>> comps,
-      //    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<std::string>>> networks,
-      //    std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios);
+      Main(
+          StreamInfo si,
+          std::unordered_map<std::string, StreamType> streams,
+          std::unordered_map<std::string, std::shared_ptr<Component>> comps,
+          std::unordered_map<std::string, std::unordered_map<std::string, std::vector<std::string>>> networks,
+          std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios);
       // TODO: change run to take the scenario id
       ScenarioResults run();
 

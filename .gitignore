@@ -1,6 +1,7 @@
+.DS_Store
+.idea/
+.vscode/
 build/
 builds/
-.idea/
-.DS_Store
-.vscode/
+cmake-build-debug/
 todo.txt

@@ -680,18 +680,18 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   }
 }
 
-TEST(ErinBasicsTest, CanRun8760ForSourceSink)
+TEST(ErinBasicsTest, CanRun10ForSourceSink)
 {
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
   std::string load_id{"cluster_01_electric"};
   std::string net_id{"normal_operations"};
-  const int hours_per_year = 8760;
+  const int N{10};
   std::vector<::ERIN::LoadItem> loads;
-  for (int i{0}; i < hours_per_year; ++i)
+  for (int i{0}; i < N; ++i)
     loads.emplace_back(::ERIN::LoadItem{i, 1.0});
-  loads.emplace_back(::ERIN::LoadItem{hours_per_year});
+  loads.emplace_back(::ERIN::LoadItem{N});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
   ::ERIN::StreamInfo si{"kW", "kJ", 1.0};

@@ -134,6 +134,8 @@ namespace ERIN
       std::unordered_map<std::string, std::shared_ptr<Component>> components;
       std::unordered_map<std::string, std::unordered_map<std::string, std::vector<std::string>>> networks;
       std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios;
+
+      void check_data() const;
   };
 
   ////////////////////////////////////////////////////////////

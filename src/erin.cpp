@@ -345,6 +345,7 @@ namespace ERIN
     components = reader.read_components(stream_types_map);
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
+    check_data();
   }
 
   Main::Main(
@@ -362,6 +363,7 @@ namespace ERIN
     networks{std::move(networks_)},
     scenarios{std::move(scenarios_)}
   {
+    check_data();
   }
 
   ScenarioResults
@@ -442,6 +444,12 @@ namespace ERIN
             std::pair<std::string,std::vector<Datum>>(e->get_id(), vals));
     }
     return ScenarioResults{sim_good, results};
+  }
+
+  void
+  Main::check_data() const
+  {
+
   }
 
   ////////////////////////////////////////////////////////////

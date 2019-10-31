@@ -364,22 +364,26 @@ namespace ERIN
   {
   }
 
-  // TODO: change run to be `run(const std::string& scenario_id)`
-  // TODO: add unit test for the `run(...)` API
-  // TODO: add another Reader type that can be programmatically set
-  // TODO: return the result of the simulation (all meters report?)
   ScenarioResults
-  Main::run()
+  Main::run(const std::string& scenario_id)
   {
-    // TODO: move the reading and processing of data to another place
-    //       possibly in the constructor.
-    //       Should happen only once even though runs can happen multiple times
-    // TODO: debug input structure to ensure that keys are available in maps that
+    // TODO: check input structure to ensure that keys are available in maps that
     //       should be there. If not, provide a good error message about what's
     //       wrong.
     // The Run Algorithm
+    // 0. Check if we have a valid scenario_id
+    const auto it = scenarios.find(scenario_id);
+    if (it == scenarios.end()) {
+      std::ostringstream oss;
+      oss << "scenario_id -- \"" << scenario_id << "\"" 
+             " is not in available scenarios\n"; 
+      oss << "possible choices: ";
+      for (const auto& item: scenarios)
+        oss << "\"" << item.first << "\", ";
+      oss << "\n";
+      throw std::invalid_argument(oss.str());
+    }
     // 1. Switch to reading the scenario_id from the input
-    const auto scenario_id = std::string{"blue_sky"};
     const auto the_scenario = scenarios[scenario_id];
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network

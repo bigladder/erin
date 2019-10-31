@@ -6,24 +6,44 @@
 
 int
 main(int argc, char *argv[]) {
-  if (argc != 3) {
-    std::cout << "USAGE: aren <input_file_path> <output_file_path>\n";
-    std::cout << "  - input_file_path: path to TOML input file\n";
-    std::cout << "  - output_file_path: path to TOML output file\n";
-    std::cout << "SETS Exit Code 1 if issues encountered, else sets 0\n";
+  if (argc != 4) {
+    std::cout << "USAGE: aren <input_file_path> <output_file_path>\n"
+                 "  - input_file_path: path to TOML input file\n"
+                 "  - output_file_path: path to TOML output file\n"
+                 "  - scenario_id: the id of the scenario to run\n"
+                 "SETS Exit Code 1 if issues encountered, else sets 0\n";
     return 1;
   }
   auto input_toml = std::string{argv[1]};
-  auto output_toml = std::string{argv[2]};
+  auto output_csv = std::string{argv[2]};
+  auto scenario_id = std::string{argv[3]};
+  std::cout << "input_toml  : " << input_toml << std::endl;
+  std::cout << "output_csv  : " << output_csv << std::endl;
+  std::cout << "scenario_id : \"" << scenario_id << "\"" << std::endl;
 
   auto m = ERIN::Main{input_toml};
-  auto out = m.run();
-  std::cout << "result of m.run() = " << out.is_good << std::endl;
+  ERIN::ScenarioResults out;
+  try {
+    out = m.run(scenario_id);
+  }
+  catch (const std::invalid_argument& ia) {
+    std::cerr << "Error!\n"
+                 "Invalid argument: " << ia.what() << "\n";
+    return 1;
+  }
+  std::cout << "result of m.run(\"" << scenario_id << "\") = " << out.is_good << std::endl;
   std::cout << "number of results = " << out.results.size() << std::endl;
+  std::cout << "Results:\n";
+  int max_count{6};
+  int count{0};
   for (const auto& item: out.results) {
-    std::cout << "..." << item.first << " [";
-    for (const auto d: item.second)
+    count = 0;
+    std::cout << "... " << item.first << " [";
+    for (const auto d: item.second) {
+      if (count > max_count) break;
+      ++count;
       std::cout << "{" << d.time << ", " << d.value << "} ";
+    }
     std::cout << "]" << std::endl;
   }
   return 0;

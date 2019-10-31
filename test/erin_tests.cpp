@@ -666,7 +666,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   auto networks = r.read_networks();
   auto scenarios = r.read_scenarios();
   ::ERIN::Main m{si, streams, components, networks, scenarios};
-  auto out = m.run();
+  auto out = m.run("blue_sky");
   EXPECT_EQ(out.is_good, true);
   EXPECT_EQ(out.results.size(), 2);
   std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};

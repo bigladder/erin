@@ -126,7 +126,7 @@ namespace ERIN
           std::unordered_map<std::string, std::unordered_map<std::string, std::vector<std::string>>> networks,
           std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios);
       // TODO: change run to take the scenario id
-      ScenarioResults run();
+      ScenarioResults run(const std::string &scenario_id);
 
     private:
       StreamInfo stream_info;

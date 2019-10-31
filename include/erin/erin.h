@@ -34,12 +34,13 @@ namespace ERIN
   class StreamInfo
   {
     public:
+      StreamInfo();
       StreamInfo(
-          std::string  rate_unit,
-          std::string  quantity_unit);
+          std::string rate_unit,
+          std::string quantity_unit);
       StreamInfo(
-          std::string  rate_unit,
-          std::string  quantity_unit,
+          std::string rate_unit,
+          std::string quantity_unit,
           double default_seconds_per_time_unit);
       [[nodiscard]] const std::string& get_rate_unit() const {return rate_unit;}
       [[nodiscard]] const std::string& get_quantity_unit() const {return quantity_unit;}
@@ -74,17 +75,8 @@ namespace ERIN
         read_networks() = 0;
       virtual std::unordered_map<std::string, std::shared_ptr<Scenario>>
         read_scenarios() = 0;
-      virtual ~InputReader() = default;;
+      virtual ~InputReader() = default;
   };
-
-  ////////////////////////////////////////////////////////////
-  // FileInputReader
-  //class InputReaderFactory
-  //{
-  //  public:
-  //    InputReaderFactor(const std::string& path);
-  //    std::unique_ptr<InputReader> get_reader();
-  //};
 
   ////////////////////////////////////////////////////////////
   // TomlInputReader
@@ -126,14 +118,22 @@ namespace ERIN
     public:
       // TODO: pass in a reader and writer vs explicit files. This enables
       // testing and programmatic interface
-      Main(std::string  input_toml, std::string  output_toml);
+      explicit Main(const std::string& input_toml);
+      //Main(
+      //    StreamInfo si,
+      //    std::unordered_map<std::string, StreamType> streams,
+      //    std::unordered_map<std::string, std::shared_ptr<Component>> comps,
+      //    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<std::string>>> networks,
+      //    std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios);
       // TODO: change run to take the scenario id
       ScenarioResults run();
 
     private:
-      std::string input_file_path;
-      std::string output_file_path;
-      std::unique_ptr<InputReader> reader;
+      StreamInfo stream_info;
+      std::unordered_map<std::string, StreamType> stream_types_map;
+      std::unordered_map<std::string, std::shared_ptr<Component>> components;
+      std::unordered_map<std::string, std::unordered_map<std::string, std::vector<std::string>>> networks;
+      std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios;
   };
 
   ////////////////////////////////////////////////////////////

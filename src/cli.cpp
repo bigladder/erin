@@ -16,7 +16,7 @@ main(int argc, char *argv[]) {
   auto input_toml = std::string{argv[1]};
   auto output_toml = std::string{argv[2]};
 
-  auto m = ERIN::Main(input_toml, output_toml);
+  auto m = ERIN::Main{input_toml};
   auto out = m.run();
   std::cout << "result of m.run() = " << out.is_good << std::endl;
   std::cout << "number of results = " << out.results.size() << std::endl;

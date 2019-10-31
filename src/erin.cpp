@@ -17,6 +17,11 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // StreamInfo
+  StreamInfo::StreamInfo():
+    StreamInfo(std::string{"kW"}, std::string{"kJ"}, 1.0)
+  {
+  }
+
   StreamInfo::StreamInfo(
       std::string rate_unit_,
       std::string  quantity_unit_):
@@ -331,14 +336,15 @@ namespace ERIN
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file
-  Main::Main(
-      std::string in_path,
-      std::string out_path):
-    input_file_path{std::move(in_path)},
-    output_file_path{std::move(out_path)},
-    reader{}
+  Main::Main(const std::string& input_file_path)
   {
-    reader = std::make_unique<TomlInputReader>(input_file_path);
+    auto reader = TomlInputReader{input_file_path};
+    // Read data into private class fields
+    stream_info = reader.read_stream_info();
+    stream_types_map = reader.read_streams(stream_info);
+    components = reader.read_components(stream_types_map);
+    networks = reader.read_networks();
+    scenarios = reader.read_scenarios();
   }
 
   // TODO: change run to be `run(const std::string& scenario_id)`
@@ -354,12 +360,6 @@ namespace ERIN
     // TODO: debug input structure to ensure that keys are available in maps that
     //       should be there. If not, provide a good error message about what's
     //       wrong.
-    const auto data = toml::parse(input_file_path);
-    const auto stream_info = reader->read_stream_info();
-    const auto stream_types_map = reader->read_streams(stream_info);
-    auto components = reader->read_components(stream_types_map);
-    auto networks = reader->read_networks();
-    auto scenarios = reader->read_scenarios();
     // The Run Algorithm
     // 1. Switch to reading the scenario_id from the input
     const auto scenario_id = std::string{"blue_sky"};

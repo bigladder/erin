@@ -1,6 +1,7 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 #include <iostream>
+#include "debug_utils.h"
 #include "erin/erin.h"
 
 
@@ -17,9 +18,9 @@ main(int argc, char *argv[]) {
   auto input_toml = std::string{argv[1]};
   auto output_csv = std::string{argv[2]};
   auto scenario_id = std::string{argv[3]};
-  std::cout << "input_toml  : " << input_toml << std::endl;
-  std::cout << "output_csv  : " << output_csv << std::endl;
-  std::cout << "scenario_id : \"" << scenario_id << "\"" << std::endl;
+  DB_PUTS("input_toml  : " << input_toml);
+  DB_PUTS("output_csv  : " << output_csv);
+  DB_PUTS("scenario_id : \"" << scenario_id << "\"");
 
   auto m = ERIN::Main{input_toml};
   ERIN::ScenarioResults out;
@@ -31,9 +32,10 @@ main(int argc, char *argv[]) {
                  "Invalid argument: " << ia.what() << "\n";
     return 1;
   }
-  std::cout << "result of m.run(\"" << scenario_id << "\") = " << out.is_good << std::endl;
-  std::cout << "number of results = " << out.results.size() << std::endl;
-  std::cout << "Results:\n";
+  std::cout << "result of m.run(\"" << scenario_id << "\") = "
+    << out.is_good << "\n";
+  std::cout << "number of results = " << out.results.size() << "\n";
+  std::cout << "Results:";
   int max_count{6};
   int count{0};
   for (const auto& item: out.results) {

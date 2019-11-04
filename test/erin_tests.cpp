@@ -11,6 +11,7 @@
 #include "checkout_line/customer.h"
 #include "checkout_line/generator.h"
 #include "checkout_line/observer.h"
+#include "debug_utils.h"
 
 TEST(SetupTest, GoogleTestRuns)
 {

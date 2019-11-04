@@ -3,13 +3,13 @@
 
 #ifndef ERIN_ERIN_H
 #define ERIN_ERIN_H
-#include <string>
-#include <vector>
 #include <exception>
 #include <functional>
 #include <map>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include "../../vendor/bdevs/include/adevs.h"
 #include "../../vendor/toml11/toml.hpp"
 

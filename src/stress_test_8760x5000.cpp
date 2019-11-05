@@ -5,7 +5,7 @@
 #include "erin/erin.h"
 
 int
-main(int argc, char *argv[]) {
+main() {
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string net_id{"normal_operations"};

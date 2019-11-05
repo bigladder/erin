@@ -13,6 +13,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
+message(STATUS "CMAKE_BUILD_TYPE is " ${CMAKE_BUILD_TYPE})
 set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 option( ${CMAKE_PROJECT_NAME}_TESTING "Build ERIN testing targets" OFF)

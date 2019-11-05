@@ -57,9 +57,13 @@ add_executable(str8760x5000 stress_test_8760x5000.cpp ${sources} ${public_header
 
 # Add Warnings
 if(MSVC)
-  target_compile_options(e2rin PRIVATE /W4 /WX)
-  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX)
+  target_compile_options(e2rin PRIVATE /W4 /WX "$<$<CONFIG:RELEASE>:/O2>")
+  target_compile_options(str8760 PRIVATE /W4 /WX "$<$<CONFIG:RELEASE>:/O2>")
+  target_compile_options(str8760x5000 PRIVATE /W4 /WX "$<$<CONFIG:RELEASE>:/O2>")
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 /WX "$<$<CONFIG:RELEASE>:/O2>")
 else()
-  target_compile_options(e2rin PRIVATE -Wall -Wextra -pedantic)
-  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic)
+  target_compile_options(e2rin PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:RELEASE>:-O3>")
+  target_compile_options(str8760 PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:RELEASE>:-O3>")
+  target_compile_options(str8760x5000 PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:RELEASE>:-O3>")
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:RELEASE>:-O3>")
 endif()

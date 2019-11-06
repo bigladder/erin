@@ -477,13 +477,16 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
         "[components.cluster_01_electric.load_profiles_by_scenario]\n"
-        "blue_sky = [{t=0,v=1.0},{t=4}]\n";
+        "blue_sky = \"load1\"\n";
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair("electricity", ::ERIN::StreamType(
           "electricity_medium_voltage", "kW", "kJ", 1.0, {}, {}))
   };
   std::string scenario_id{"blue_sky"};
+  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
+    {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
+  };
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads{
     {scenario_id, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
   };
@@ -501,7 +504,7 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
           loads))
   };
   auto pt = &t;
-  auto actual = pt->read_components(streams);
+  auto actual = pt->read_components(streams, loads_by_id);
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);
@@ -510,6 +513,31 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
     EXPECT_EQ(e.second->get_component_type(), a->second->get_component_type());
     EXPECT_EQ(e.second->get_input_stream(), a->second->get_input_stream());
     EXPECT_EQ(e.second->get_output_stream(), a->second->get_output_stream());
+  }
+}
+
+TEST(ErinBasicsTest, CanReadLoadsFromToml)
+{
+  std::stringstream ss{};
+  ss << "[loads.load1]\n"
+        "loads = [{t=0,v=1.0},{t=4}]\n";
+  ::ERIN::TomlInputReader t{ss};
+  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> expected{
+    {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
+  };
+  auto actual = t.read_loads();
+  EXPECT_EQ(expected.size(), actual.size());
+  for (auto const& e: expected) {
+    const auto a = actual.find(e.first);
+    ASSERT_TRUE(a != actual.end());
+    EXPECT_EQ(e.second.size(), a->second.size());
+    for (std::vector<::ERIN::LoadItem>::size_type i{0}; i < e.second.size(); ++i) {
+      EXPECT_EQ(e.second[i].get_time(), a->second[i].get_time());
+      if (e.second[i].get_is_end())
+        EXPECT_EQ(e.second[i].get_is_end(), a->second[i].get_is_end());
+      else
+        EXPECT_EQ(e.second[i].get_value(), a->second[i].get_value());
+    }
   }
 }
 
@@ -599,6 +627,9 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "gallons = 7.366784013642577e-6\n"
         "liters = 2.7886224205242612e-5\n"
         "############################################################\n"
+        "[loads.building_electrical]\n"
+        "loads = [{t=0,v=1.0},{t=4}]\n"
+        "############################################################\n"
         "[components.electric_utility]\n"
         "type = \"source\"\n"
         "# Point of Common Coupling for Electric Utility\n"
@@ -607,7 +638,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
         "[components.cluster_01_electric.load_profiles_by_scenario]\n"
-        "blue_sky = [{t=0,v=1.0},{t=4}]\n"
+        "blue_sky = \"building_electrical\"\n"
         "############################################################\n"
         "[networks.normal_operations.network]\n"
         "# specify as: <source (generation) id> = ["
@@ -624,7 +655,8 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   ::ERIN::TomlInputReader r{ss};
   auto si = r.read_stream_info();
   auto streams = r.read_streams(si);
-  auto components = r.read_components(streams);
+  auto loads = r.read_loads();
+  auto components = r.read_components(streams, loads);
   auto networks = r.read_networks();
   auto scenarios = r.read_scenarios();
   ::ERIN::Main m{si, streams, components, networks, scenarios};
@@ -666,6 +698,9 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
           si.get_quantity_unit(),
           si.get_seconds_per_time_unit(),
           {}, {}))};
+  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
+    {load_id, loads}
+  };
   std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
     std::make_pair(
         source_id,

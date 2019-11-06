@@ -60,16 +60,20 @@ namespace ERIN
   // InputReader
   class StreamType; // Forward declaration
   class Component;  // Forward declaration
-  class Scenario;   // Forward declearation
+  class Scenario;   // Forward declaration
+  class LoadItem;   // Forward declaration
   class InputReader
   {
     public:
       virtual StreamInfo read_stream_info() = 0;
       virtual std::unordered_map<std::string, StreamType>
         read_streams(const StreamInfo& si) = 0;
+      virtual std::unordered_map<std::string, std::vector<LoadItem>>
+        read_loads() = 0;
       virtual std::unordered_map<std::string, std::shared_ptr<Component>>
         read_components(
-            const std::unordered_map<std::string, StreamType>& stm) = 0;
+            const std::unordered_map<std::string, StreamType>& stm,
+            const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id) = 0;
       virtual std::unordered_map<std::string,
         std::unordered_map<std::string, std::vector<std::string>>>
         read_networks() = 0;
@@ -90,9 +94,13 @@ namespace ERIN
       StreamInfo read_stream_info() override;
       std::unordered_map<std::string, StreamType>
         read_streams(const StreamInfo& si) override;
+      std::unordered_map<std::string, std::vector<LoadItem>>
+        read_loads() override;
       std::unordered_map<std::string, std::shared_ptr<Component>>
         read_components(
-            const std::unordered_map<std::string, StreamType>& stm) override;
+            const std::unordered_map<std::string, StreamType>& stm,
+            const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id)
+        override;
       std::unordered_map<std::string,
         std::unordered_map<std::string, std::vector<std::string>>>
         read_networks() override;

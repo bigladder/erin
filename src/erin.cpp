@@ -152,9 +152,45 @@ namespace ERIN
     return stream_types_map;
   }
 
+  std::unordered_map<std::string, std::vector<LoadItem>>
+  TomlInputReader::read_loads()
+  {
+    std::unordered_map<std::string, std::vector<LoadItem>> loads_by_id;
+    const auto toml_loads = toml::find<toml::table>(data, "loads");
+    DB_PUTS2(toml_loads.size(), " load entries found");
+    for (const auto& load_item: toml_loads) {
+      toml::value tv = load_item.second;
+      toml::table tt = toml::get<toml::table>(tv);
+      auto it = tt.find("loads");
+      if (it == tt.end())
+        throw BadInputError();
+      const auto load_array = toml::get<std::vector<toml::table>>(it->second);
+      std::vector<LoadItem> the_loads{};
+      for (const auto& item: load_array) {
+        RealTimeType the_time{};
+        FlowValueType the_value{};
+        auto it_for_t = item.find("t");
+        if (it_for_t != item.end())
+          the_time = toml::get<RealTimeType>(it_for_t->second);
+        else
+          the_time = -1;
+        auto it_for_v = item.find("v");
+        if (it_for_v != item.end()) {
+          the_value = toml::get<FlowValueType>(it_for_v->second);
+          the_loads.emplace_back(LoadItem(the_time, the_value));
+        } else {
+          the_loads.emplace_back(LoadItem(the_time));
+        }
+      }
+      loads_by_id.insert(std::make_pair(load_item.first, the_loads));
+    }
+    return loads_by_id;
+  }
+
   std::unordered_map<std::string, std::shared_ptr<Component>>
   TomlInputReader::read_components(
-      const std::unordered_map<std::string, StreamType>& stream_types_map)
+      const std::unordered_map<std::string, StreamType>& stream_types_map,
+      const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id)
   {
     const auto toml_comps = toml::find<toml::table>(data, "components");
     DB_PUTS2(toml_comps.size(), " components found");
@@ -199,39 +235,27 @@ namespace ERIN
           DB_PUTS4(loads.size(), " load profile(s) by scenario",
               " for component ", c.first);
           for (const auto& lp: loads) {
-            std::vector<LoadItem> loads2{};
-            for (const auto& li:
-                toml::get<std::vector<toml::table>>(lp.second)) {
-              RealTimeType the_time{};
-              FlowValueType the_value{};
-              auto it_for_t = li.find("t");
-              if (it_for_t != li.end())
-                  the_time = toml::get<RealTimeType>(it_for_t->second);
-              else
-                  the_time = -1;
-              auto it_for_v = li.find("v");
-              if (it_for_v != li.end()) {
-                  the_value = toml::get<FlowValueType>(it_for_v->second);
-                loads2.emplace_back(LoadItem(the_time, the_value));
-              } else {
-                loads2.emplace_back(LoadItem(the_time));
-              }
-            }
-            loads_by_scenario.insert(std::make_pair(lp.first, loads2));
+            const std::string load_id{toml::get<toml::string>(lp.second)}; 
+            auto the_loads_it = loads_by_id.find(load_id);
+            if (the_loads_it != loads_by_id.end())
+              loads_by_scenario.insert(
+                  std::make_pair(lp.first, the_loads_it->second));
+            else
+              throw BadInputError();
           }
           DB_PUTS2(loads_by_scenario.size(), " scenarios with loads");
 #ifdef DEBUG_PRINT
-            for (const auto& ls: loads_by_scenario) {
-              std::cout << ls.first << ": [";
-              for (const auto& li: ls.second) {
-                std::cout << "(" << li.get_time();
-                if (li.get_is_end())
-                  std::cout << ")";
-                else
-                  std::cout << ", " << li.get_value() << "), ";
-              }
-              std::cout << "]\n";
+          for (const auto& ls: loads_by_scenario) {
+            std::cout << ls.first << ": [";
+            for (const auto& li: ls.second) {
+              std::cout << "(" << li.get_time();
+              if (li.get_is_end())
+                std::cout << ")";
+              else
+                std::cout << ", " << li.get_value() << "), ";
             }
+            std::cout << "]\n";
+          }
 #endif
           std::shared_ptr<Component> load_comp =
             std::make_shared<LoadComponent>(
@@ -240,9 +264,9 @@ namespace ERIN
                 loads_by_scenario);
           components.insert(
               std::make_pair(c.first, load_comp));
-        } else {
-          throw BadInputError();
         }
+        else
+          throw BadInputError();
       }
     }
 #ifdef DEBUG_PRINT
@@ -399,8 +423,8 @@ namespace ERIN
     // Read data into private class fields
     stream_info = reader.read_stream_info();
     stream_types_map = reader.read_streams(stream_info);
-    components = reader.read_components(stream_types_map);
-    //load_profiles = reader.read_loads();
+    auto loads_by_id = reader.read_loads();
+    components = reader.read_components(stream_types_map, loads_by_id);
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
     check_data();
@@ -507,6 +531,9 @@ namespace ERIN
   Main::max_time_for_scenario(const std::string& scenario_id)
   {
     // TODO: implement after we get loads broken out
+    // - get the network for the scenario_id
+    // - for each component on that network, query it for its max time
+    // - return the largest max time
     return 8760;
   }
 

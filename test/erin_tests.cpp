@@ -629,11 +629,11 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   auto scenarios = r.read_scenarios();
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run("blue_sky");
-  EXPECT_EQ(out.is_good, true);
-  EXPECT_EQ(out.results.size(), 2);
+  EXPECT_EQ(out.get_is_good(), true);
+  EXPECT_EQ(out.get_results().size(), 2);
   std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
-  // out.results : Map String (Vector Datum)
-  for (const auto& item: out.results) {
+  // out.get_results() : Map String (Vector Datum)
+  for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
     EXPECT_TRUE(it != expected_keys.end());
     ASSERT_EQ(item.second.size(), 1);
@@ -685,7 +685,7 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
     {scenario_id, std::make_shared<::ERIN::Scenario>(scenario_id, net_id, 1)}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run(scenario_id);
-  EXPECT_EQ(out.is_good, true);
+  EXPECT_EQ(out.get_is_good(), true);
 }
 
 int

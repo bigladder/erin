@@ -53,7 +53,7 @@ main() {
   std::cout << "running!\n";
   auto out = m.run(scenario_id);
   std::cout << "done!\n";
-  if (out.is_good)
+  if (out.get_is_good())
     std::cout << "success!\n";
   else
     std::cout << "failure!\n";

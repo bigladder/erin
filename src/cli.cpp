@@ -33,14 +33,14 @@ main(int argc, char *argv[]) {
     return 1;
   }
   std::cout << "result of m.run(\"" << scenario_id << "\") = "
-    << out.is_good << "\n";
-  if (!out.is_good)
+    << out.get_is_good() << "\n";
+  if (!out.get_is_good())
     return 1;
-  std::cout << "number of results = " << out.results.size() << "\n";
+  std::cout << "number of results = " << out.get_results().size() << "\n";
   std::cout << "Results:\n";
   int max_count{6};
   int count{0};
-  for (const auto& item: out.results) {
+  for (const auto& item: out.get_results()) {
     count = 0;
     std::cout << "... " << item.first << " [";
     for (const auto d: item.second) {

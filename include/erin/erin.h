@@ -105,10 +105,22 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // ScenarioResults
-  struct ScenarioResults
+  class ScenarioResults
   {
-    bool is_good;
-    std::unordered_map<std::string, std::vector<Datum>> results;
+    public:
+      ScenarioResults();
+      ScenarioResults(
+          bool is_good_,
+          std::unordered_map<std::string,std::vector<Datum>> results_);
+      [[nodiscard]] bool get_is_good() const { return is_good; }
+      [[nodiscard]] const std::unordered_map<std::string, std::vector<Datum>>
+        get_results() const { return results; }
+
+      std::string to_csv() const;
+
+    private:
+      bool is_good;
+      std::unordered_map<std::string, std::vector<Datum>> results;
   };
 
   ////////////////////////////////////////////////////////////

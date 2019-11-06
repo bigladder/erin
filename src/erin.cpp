@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>
@@ -317,6 +318,72 @@ namespace ERIN
       }
 #endif
     return scenarios;
+  }
+
+  ////////////////////////////////////////////////////////////
+  // ScenarioResults
+  ScenarioResults::ScenarioResults():
+    is_good{false},
+    results{}
+  {
+  }
+
+  ScenarioResults::ScenarioResults(
+      bool is_good_,
+      std::unordered_map<std::string, std::vector<Datum>> results_):
+    is_good{is_good_},
+    results{std::move(results_)}
+  {
+  }
+
+  std::string
+  ScenarioResults::to_csv() const
+  {
+    if (!is_good) return std::string{};
+    std::set<RealTimeType> times_set;
+    std::unordered_map<std::string, std::vector<FlowValueType>> values;
+    std::unordered_map<std::string, FlowValueType> last_values;
+    std::vector<std::string> keys;
+    for (const auto p: results) {
+      keys.emplace_back(p.first);
+      values[p.first] = std::vector<FlowValueType>();
+      last_values[p.first] = 0.0;
+      for (const auto d: p.second)
+        times_set.emplace(d.time);
+    }
+    std::vector<RealTimeType> times{times_set.begin(), times_set.end()};
+    std::sort(keys.begin(), keys.end());
+    for (const auto p: results) {
+      for (const auto t: times) {
+        auto k{p.first};
+        bool found{false};
+        FlowValueType last = last_values[k];
+        for (const auto d: p.second) {
+          if (d.time == t) {
+            found = true;
+            values[k].emplace_back(d.value);
+            last_values[k] = d.value;
+            break;
+          }
+          if (d.time > t)
+            break;
+        }
+        if (!found)
+          values[k].emplace_back(last);
+      }
+    }
+    std::ostringstream oss;
+    oss << "time";
+    for (const auto k: keys)
+      oss << "," << k;
+    oss << "\n";
+    for (std::vector<RealTimeType>::size_type i{0}; i < times.size(); ++i) {
+      oss << times[i];
+      for (const auto k: keys)
+        oss << "," << values[k][i];
+      oss << "\n";
+    }
+    return oss.str();
   }
 
   //////////////////////////////////////////////////////////// 

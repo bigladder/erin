@@ -46,7 +46,7 @@ main() {
     {scenario_id, std::make_shared<::ERIN::Scenario>(scenario_id, net_id, 1)}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run(scenario_id);
-  if (out.is_good)
+  if (out.get_is_good())
     std::cout << "success!\n";
   else
     std::cout << "failure!\n";

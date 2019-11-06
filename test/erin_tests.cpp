@@ -688,6 +688,26 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   EXPECT_EQ(out.get_is_good(), true);
 }
 
+TEST(ErinBasicsTest, ScenarioResultsToCSV)
+{
+  ::ERIN::ScenarioResults out{
+    true,
+    {
+      {
+        std::string{"A"},
+        {::ERIN::Datum{0,1.0}, ::ERIN::Datum{1,0.5}, ::ERIN::Datum{2,0.0}}
+      },
+      {
+        std::string{"B"},
+        {::ERIN::Datum{0,10.0}, ::ERIN::Datum{2,5.0}, ::ERIN::Datum{4,0.0}}
+      }
+    }};
+  auto actual = out.to_csv();
+  std::string expected{"time,A,B\n0,1,10\n"
+    "1,0.5,10\n2,0,5\n4,0,0\n"};
+  EXPECT_EQ(expected, actual);
+}
+
 int
 main(int argc, char **argv)
 {

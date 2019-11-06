@@ -317,8 +317,6 @@ namespace ERIN
       std::unordered_map<std::string,FlowValueType> other_quantity_units;
   };
 
-  std::ostream& operator<<(std::ostream& os, const StreamType& st);
-
   ////////////////////////////////////////////////////////////
   // Stream
   class Stream
@@ -351,7 +349,7 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Type Definitions
-  typedef adevs::port_value<Stream> PortValue;
+  typedef adevs::port_value<FlowValueType> PortValue;
 
   std::ostream& operator<<(std::ostream& os, const PortValue& pv);
   ////////////////////////////////////////////////////////////
@@ -410,6 +408,8 @@ namespace ERIN
       [[nodiscard]] virtual std::vector<Datum> get_results() const {
         return std::vector<Datum>(0);
       }
+      [[nodiscard]] const StreamType& get_inflow_type() const { return inflow_type; };
+      [[nodiscard]] const StreamType& get_outflow_type() const { return outflow_type; };
 
     protected:
       FlowElement(std::string id, StreamType flow_type);
@@ -434,8 +434,6 @@ namespace ERIN
       [[nodiscard]] FlowValueType get_outflow() const { return outflow; };
       [[nodiscard]] FlowValueType get_storeflow() const { return storeflow; };
       [[nodiscard]] FlowValueType get_lossflow() const { return lossflow; };
-      [[nodiscard]] const StreamType& get_inflow_type() const { return inflow_type; };
-      [[nodiscard]] const StreamType& get_outflow_type() const { return outflow_type; };
 
     private:
       std::string id;
@@ -564,7 +562,7 @@ namespace ERIN
 
       virtual std::unordered_set<FlowElement*>
         add_to_network(
-            adevs::Digraph<Stream>& nw,
+            adevs::Digraph<FlowValueType>& nw,
             const std::string& active_scenario) = 0;
       FlowElement* get_connecting_element();
 
@@ -573,6 +571,11 @@ namespace ERIN
       [[nodiscard]] const std::vector<std::shared_ptr<Component>>& get_inputs() const {
         return inputs;
       }
+      void connect_source_to_sink(
+          adevs::Digraph<FlowValueType>& nw,
+          FlowElement* source,
+          FlowElement* sink,
+          bool both_way) const;
 
     private:
       std::string id;
@@ -595,7 +598,7 @@ namespace ERIN
               loads_by_scenario);
       std::unordered_set<FlowElement*>
         add_to_network(
-            adevs::Digraph<Stream>& nw,
+            adevs::Digraph<FlowValueType>& nw,
             const std::string& active_scenario) override;
 
     protected:
@@ -615,7 +618,7 @@ namespace ERIN
           const StreamType& output_stream);
       std::unordered_set<FlowElement*>
         add_to_network(
-            adevs::Digraph<Stream>& nw,
+            adevs::Digraph<FlowValueType>& nw,
             const std::string& active_scenario) override;
 
     protected:

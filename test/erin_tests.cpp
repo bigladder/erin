@@ -166,7 +166,7 @@ TEST(ErinBasicsTest, StandaloneSink)
        ::ERIN::LoadItem{2,0},
        ::ERIN::LoadItem{3}});
   auto meter = new ::ERIN::FlowMeter("meter", st);
-  adevs::Digraph<::ERIN::Stream> network;
+  adevs::Digraph<::ERIN::FlowValueType> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter, ::ERIN::FlowMeter::inport_outflow_request
@@ -203,7 +203,7 @@ TEST(ErinBasicsTest, CanRunSourceSink)
           ::ERIN::LoadItem{1,0},
           ::ERIN::LoadItem{2}});
   auto meter = new ::ERIN::FlowMeter("meter", st);
-  adevs::Digraph<::ERIN::Stream> network;
+  adevs::Digraph<::ERIN::FlowValueType> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter, ::ERIN::FlowMeter::inport_outflow_request
@@ -247,7 +247,7 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
           ::ERIN::LoadItem{2,40},
           ::ERIN::LoadItem{3,0},
           ::ERIN::LoadItem{4}});
-  adevs::Digraph<::ERIN::Stream> network;
+  adevs::Digraph<::ERIN::FlowValueType> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter1, ::ERIN::FlowMeter::inport_outflow_request);
@@ -340,7 +340,7 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
           ::ERIN::LoadItem{2,40},
           ::ERIN::LoadItem{3,0},
           ::ERIN::LoadItem{4}});
-  adevs::Digraph<::ERIN::Stream> network;
+  adevs::Digraph<::ERIN::FlowValueType> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       genset_meter, ::ERIN::FlowMeter::inport_outflow_request);
@@ -410,7 +410,7 @@ TEST(ErinBasicTest, CanRunUsingComponents)
         "electrical_load", elec, loads_by_scenario);
   std::string scenario_id{"bluesky"};
   load->add_input(source);
-  adevs::Digraph<::ERIN::Stream> network;
+  adevs::Digraph<::ERIN::FlowValueType> network;
   load->add_to_network(network, scenario_id);
   source->add_to_network(network, scenario_id);
   adevs::Simulator<::ERIN::PortValue> sim;

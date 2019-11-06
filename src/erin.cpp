@@ -375,7 +375,7 @@ namespace ERIN
     const auto the_scenario = scenarios[scenario_id];
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
-    adevs::Digraph<Stream> network;
+    adevs::Digraph<FlowValueType> network;
     // 2.2. Interconnect components based on the network definition
     const auto network_id = the_scenario->get_network_id();
     const auto the_nw = networks[network_id];
@@ -474,12 +474,6 @@ namespace ERIN
         mark = ',';
     }
     std::cout << std::endl;
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const PortValue& pv)
-  {
-    return os << "PortValue(port=" << pv.port << ", flow=" << pv.value << ")";
   }
 
   std::string
@@ -683,6 +677,26 @@ namespace ERIN
     return connecting_element;
   }
 
+  void
+  Component::connect_source_to_sink(
+      adevs::Digraph<FlowValueType>& network,
+      FlowElement* source,
+      FlowElement* sink,
+      bool both_way) const
+  {
+    auto src_out = source->get_outflow_type();
+    auto sink_in = sink->get_inflow_type();
+    if (src_out != sink_in)
+      throw MixedStreamsError();
+    network.couple(
+        sink, FlowMeter::outport_inflow_request,
+        source, FlowMeter::inport_outflow_request);
+    if (both_way)
+      network.couple(
+          source, FlowMeter::outport_outflow_achieved,
+          sink, FlowMeter::inport_inflow_achieved);
+  }
+
   ////////////////////////////////////////////////////////////
   // LoadComponent
   LoadComponent::LoadComponent(
@@ -706,7 +720,7 @@ namespace ERIN
 
   std::unordered_set<FlowElement*>
   LoadComponent::add_to_network(
-      adevs::Digraph<Stream>& network,
+      adevs::Digraph<FlowValueType>& network,
       const std::string& active_scenario)
   {
     std::unordered_set<FlowElement*> elements;
@@ -720,21 +734,13 @@ namespace ERIN
     auto meter = get_connecting_element();
     elements.emplace(meter);
     DB_PUTS2("meter = ", meter);
-    network.couple(
-        sink, Sink::outport_inflow_request,
-        meter, FlowMeter::inport_outflow_request);
+    connect_source_to_sink(network, meter, sink, false);
     for (const auto& in: get_inputs()) {
       auto p = in->get_connecting_element();
       elements.emplace(p);
       DB_PUTS2("p = ", p);
-      if (p != nullptr) {
-        network.couple(
-            meter, FlowMeter::outport_inflow_request,
-            p, FlowElement::inport_outflow_request);
-        network.couple(
-            p, FlowElement::outport_outflow_achieved,
-            meter, FlowMeter::inport_inflow_achieved);
-      }
+      if (p != nullptr)
+        connect_source_to_sink(network, p, meter, true);
     }
     DB_PUTS("LoadComponent::add_to_network(...) exit");
     return elements;
@@ -751,7 +757,7 @@ namespace ERIN
 
   std::unordered_set<FlowElement*> 
   SourceComponent::add_to_network(
-      adevs::Digraph<Stream>&,
+      adevs::Digraph<FlowValueType>&,
       const std::string&)
   {
     std::unordered_set<FlowElement*> elements;
@@ -851,17 +857,13 @@ namespace ERIN
       switch (x.port) {
         case inport_inflow_achieved:
           DB_PUTS("... <=inport_inflow_achieved");
-          if (x.value.get_type() != inflow_type)
-            throw MixedStreamsError();
           inflow_provided = true;
-          inflow_achieved += x.value.get_rate();
+          inflow_achieved += x.value;
           break;
         case inport_outflow_request:
           DB_PUTS("... <=inport_outflow_request");
-          if (x.value.get_type() != outflow_type)
-            throw MixedStreamsError();
           outflow_provided = true;
-          outflow_request += x.value.get_rate();
+          outflow_request += x.value;
           break;
         default:
           throw BadPortError();
@@ -942,14 +944,12 @@ namespace ERIN
     if (report_inflow_request) {
       DB_PUTS("... send=>outport_inflow_request");
       ys.push_back(
-          adevs::port_value<Stream>{
-            outport_inflow_request, Stream{inflow_type, inflow}});
+          adevs::port_value<FlowValueType>{outport_inflow_request, inflow});
     }
     if (report_outflow_achieved) {
       DB_PUTS("... send=>outport_outflow_achieved");
       ys.push_back(
-          adevs::port_value<Stream>{
-            outport_outflow_achieved, Stream{outflow_type, outflow}});
+          adevs::port_value<FlowValueType>{outport_outflow_achieved, outflow});
     }
     add_additional_outputs(ys);
   }
@@ -1236,9 +1236,8 @@ namespace ERIN
     auto max_idx{num_loads - 1};
     if (next_idx < max_idx)
       ys.push_back(
-          adevs::port_value<Stream>{
-          outport_inflow_request,
-          Stream{get_inflow_type(), loads[next_idx].get_value()}});
+          adevs::port_value<FlowValueType>{
+          outport_inflow_request, loads[next_idx].get_value()});
   }
 
   void

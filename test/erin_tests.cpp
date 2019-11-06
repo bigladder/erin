@@ -685,6 +685,7 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
     {scenario_id, std::make_shared<::ERIN::Scenario>(scenario_id, net_id, 1)}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run(scenario_id);
+  EXPECT_EQ(out.is_good, true);
 }
 
 int

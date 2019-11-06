@@ -84,45 +84,6 @@ TEST(ErinUtilFunctions, TestClamp)
   EXPECT_EQ(-10, ERIN::clamp_toward_0(-15, -10, -5));
 }
 
-TEST(ErinBasicsTest, TestUnitConversion)
-{
-  const auto st = ::ERIN::StreamType{"electricity"};
-  const auto s = ::ERIN::Stream(st, 10.0);
-  EXPECT_EQ(s.get_rate(), 10.0);
-  EXPECT_NEAR(s.get_quantity(3600.0), 10.0 * 3600.0, 1e-6);
-  const auto st1 = ::ERIN::StreamType{"electricity", "kW", "kWh", 3600.0};
-  const auto s1 = ::ERIN::Stream{st1, 1.0};
-  EXPECT_EQ(s1.get_rate(), 1.0);
-  EXPECT_NEAR(s1.get_quantity(3600.0), 1.0, 1e-6);
-  const auto ru = std::unordered_map<std::string,::ERIN::FlowValueType>{
-    {"liters/hour",0.1003904071388734},
-    {"gallons/hour",0.026520422449113276}
-  };
-  const auto qu = std::unordered_map<std::string,::ERIN::FlowValueType>{
-    {"liters",2.7886224205242612e-05},
-    {"gallons",7.366784013642577e-06}
-  };
-  const auto st2 = ::ERIN::StreamType{
-    "diesel",
-    "kW",
-    "kJ",
-    1.0,
-    ru,
-    qu
-  };
-  const auto s2 = ::ERIN::Stream(st2, 100.0);
-  EXPECT_NEAR(s2.get_rate(), 100.0, 1e-6);
-  EXPECT_NEAR(s2.get_quantity(3600.0), 100.0 * 3600.0, 1e-6);
-  EXPECT_NEAR(
-      s2.get_rate_in_units("liters/hour"), 10.03904071388734, 1e-6);
-  EXPECT_NEAR(
-      s2.get_rate_in_units("gallons/hour"), 2.652042244911328, 1e-6);
-  EXPECT_NEAR(
-      s2.get_quantity_in_units(3600.0, "liters"), 10.03904071388734, 1e-6);
-  EXPECT_NEAR(
-      s2.get_quantity_in_units(3600.0, "gallons"), 2.652042244911328, 1e-6);
-}
-
 TEST(ErinBasicsTest, TestLoadItem)
 {
   const auto li1 = ::ERIN::LoadItem(0, 1);

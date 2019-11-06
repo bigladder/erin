@@ -318,36 +318,6 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
-  // Stream
-  class Stream
-  {
-    public:
-      Stream(StreamType stream_type, FlowValueType rate);
-      [[nodiscard]] StreamType get_type() const { return type; }
-      [[nodiscard]] FlowValueType get_rate() const { return rate; }
-      [[nodiscard]] FlowValueType get_quantity(FlowValueType dt_s) const {
-        return rate * (dt_s / type.get_seconds_per_time_unit());
-      }
-      [[nodiscard]] FlowValueType get_rate_in_units(const std::string& units) const {
-        const auto& u = type.get_other_rate_units();
-        FlowValueType m{u.at(units)};
-        return rate * m;
-      }
-      [[nodiscard]] FlowValueType get_quantity_in_units(
-          FlowValueType dt_s, const std::string& units) const {
-        const auto& u = type.get_other_quantity_units();
-        FlowValueType m{u.at(units)};
-        return rate * (dt_s / type.get_seconds_per_time_unit()) * m;
-      }
-
-    private:
-      StreamType type;
-      FlowValueType rate;
-  };
-
-  std::ostream& operator<<(std::ostream& os, const Stream& s);
-
-  ////////////////////////////////////////////////////////////
   // Type Definitions
   typedef adevs::port_value<FlowValueType> PortValue;
 

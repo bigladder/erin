@@ -632,21 +632,6 @@ namespace ERIN
               << ")";
   }
 
-  ///////////////////////////////////////////////////////////////////
-  // Stream
-  Stream::Stream(StreamType s_type, FlowValueType r):
-    type{std::move(s_type)},
-    rate{r}
-  {
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const Stream& s)
-  {
-    return os << "Stream(stream_type=" << s.get_type()
-              << ", rate=" << s.get_rate() << ")";
-  }
-
   ////////////////////////////////////////////////////////////
   // Component
   Component::Component(
@@ -724,7 +709,7 @@ namespace ERIN
       const std::string& active_scenario)
   {
     std::unordered_set<FlowElement*> elements;
-    DB_PUTS("LoadComponent::add_to_network(adevs::Digraph<Stream>& network)");
+    DB_PUTS("LoadComponent::add_to_network(adevs::Digraph<FlowValueType>& network)");
     auto sink = new Sink(
         get_id(),
         get_input_stream(),
@@ -761,7 +746,7 @@ namespace ERIN
       const std::string&)
   {
     std::unordered_set<FlowElement*> elements;
-    DB_PUTS("SourceComponent::add_to_network(adevs::Digraph<Stream>& network)");
+    DB_PUTS("SourceComponent::add_to_network(adevs::Digraph<FlowValueType>& network)");
     // do nothing in this case. There is only the connecting element. If nobody
     // connects to it, then it doesn't exist. If someone DOES connect, then the
     // pointer eventually gets passed into the network coupling model

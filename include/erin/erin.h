@@ -463,11 +463,11 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
-  // Transformer
-  class Transformer : public FlowElement
+  // Converter
+  class Converter : public FlowElement
   {
     public:
-      Transformer(
+      Converter(
           std::string id,
           StreamType input_stream_type,
           StreamType output_stream_type,

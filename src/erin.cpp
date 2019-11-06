@@ -1141,8 +1141,8 @@ namespace ERIN
   }
 
   ////////////////////////////////////////////////////////////
-  // Transformer
-  Transformer::Transformer(
+  // Converter
+  Converter::Converter(
       std::string id,
       StreamType input_stream_type,
       StreamType output_stream_type,
@@ -1156,13 +1156,13 @@ namespace ERIN
   }
 
   FlowState
-  Transformer::update_state_for_outflow_request(FlowValueType outflow_) const
+  Converter::update_state_for_outflow_request(FlowValueType outflow_) const
   {
     return FlowState{input_from_output(outflow_), outflow_};
   }
 
   FlowState
-  Transformer::update_state_for_inflow_achieved(FlowValueType inflow_) const
+  Converter::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
     return FlowState{inflow_, output_from_input(inflow_)};
   }

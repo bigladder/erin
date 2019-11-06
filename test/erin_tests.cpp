@@ -284,7 +284,7 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   auto diesel = ::ERIN::StreamType("diesel");
   auto elec = ::ERIN::StreamType("electrical");
   auto diesel_fuel_meter = new ::ERIN::FlowMeter("diesel_fuel_meter", diesel);
-  auto genset_tx = new ::ERIN::Transformer(
+  auto genset_tx = new ::ERIN::Converter(
       "genset_tx",
       diesel,
       elec,
@@ -310,15 +310,15 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
       genset_lim, ::ERIN::FlowLimits::inport_outflow_request);
   network.couple(
       genset_lim, ::ERIN::FlowLimits::outport_inflow_request,
-      genset_tx, ::ERIN::Transformer::inport_outflow_request);
+      genset_tx, ::ERIN::Converter::inport_outflow_request);
   network.couple(
-      genset_tx, ::ERIN::Transformer::outport_inflow_request,
+      genset_tx, ::ERIN::Converter::outport_inflow_request,
       diesel_fuel_meter, ::ERIN::FlowMeter::inport_outflow_request);
   network.couple(
       diesel_fuel_meter, ::ERIN::FlowMeter::outport_outflow_achieved,
-      genset_tx, ::ERIN::Transformer::inport_inflow_achieved);
+      genset_tx, ::ERIN::Converter::inport_inflow_achieved);
   network.couple(
-      genset_tx, ::ERIN::Transformer::outport_outflow_achieved,
+      genset_tx, ::ERIN::Converter::outport_outflow_achieved,
       genset_lim, ::ERIN::FlowLimits::inport_inflow_achieved);
   network.couple(
       genset_lim, ::ERIN::FlowLimits::outport_outflow_achieved,

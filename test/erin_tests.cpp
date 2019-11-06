@@ -702,10 +702,22 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
         {::ERIN::Datum{0,10.0}, ::ERIN::Datum{2,5.0}, ::ERIN::Datum{4,0.0}}
       }
     }};
-  auto actual = out.to_csv();
+  auto actual = out.to_csv(4);
   std::string expected{"time,A,B\n0,1,10\n"
     "1,0.5,10\n2,0,5\n4,0,0\n"};
   EXPECT_EQ(expected, actual);
+  ::ERIN::ScenarioResults out2{
+    true,
+    {
+      {
+        std::string{"A"},
+        {::ERIN::Datum{0,1.0}}
+      }
+    }
+  };
+  auto actual2 = out2.to_csv(4);
+  std::string expected2{"time,A\n0,1\n4,0\n"};
+  EXPECT_EQ(expected2, actual2);
 }
 
 int

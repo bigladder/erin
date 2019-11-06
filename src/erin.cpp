@@ -337,10 +337,10 @@ namespace ERIN
   }
 
   std::string
-  ScenarioResults::to_csv() const
+  ScenarioResults::to_csv(const RealTimeType& max_time) const
   {
     if (!is_good) return std::string{};
-    std::set<RealTimeType> times_set;
+    std::set<RealTimeType> times_set{max_time};
     std::unordered_map<std::string, std::vector<FlowValueType>> values;
     std::unordered_map<std::string, FlowValueType> last_values;
     std::vector<std::string> keys;
@@ -356,20 +356,24 @@ namespace ERIN
     for (const auto p: results) {
       for (const auto t: times) {
         auto k{p.first};
-        bool found{false};
-        FlowValueType last = last_values[k];
-        for (const auto d: p.second) {
-          if (d.time == t) {
-            found = true;
-            values[k].emplace_back(d.value);
-            last_values[k] = d.value;
-            break;
+        if (t == max_time)
+          values[k].emplace_back(0.0);
+        else {
+          bool found{false};
+          FlowValueType last = last_values[k];
+          for (const auto d: p.second) {
+            if (d.time == t) {
+              found = true;
+              values[k].emplace_back(d.value);
+              last_values[k] = d.value;
+              break;
+            }
+            if (d.time > t)
+              break;
           }
-          if (d.time > t)
-            break;
+          if (!found)
+            values[k].emplace_back(last);
         }
-        if (!found)
-          values[k].emplace_back(last);
       }
     }
     std::ostringstream oss;
@@ -396,6 +400,7 @@ namespace ERIN
     stream_info = reader.read_stream_info();
     stream_types_map = reader.read_streams(stream_info);
     components = reader.read_components(stream_types_map);
+    //load_profiles = reader.read_loads();
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
     check_data();
@@ -498,10 +503,17 @@ namespace ERIN
     return ScenarioResults{sim_good, results};
   }
 
+  RealTimeType
+  Main::max_time_for_scenario(const std::string& scenario_id)
+  {
+    // TODO: implement after we get loads broken out
+    return 8760;
+  }
+
   void
   Main::check_data() const
   {
-
+    // TODO: implement this
   }
 
   ////////////////////////////////////////////////////////////

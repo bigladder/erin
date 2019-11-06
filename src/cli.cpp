@@ -8,7 +8,8 @@
 int
 main(int argc, char *argv[]) {
   if (argc != 4) {
-    std::cout << "USAGE: aren <input_file_path> <output_file_path>\n"
+    std::cout << "USAGE: e2rin <input_file_path> <output_file_path> "
+                 "<scenario_id>\n"
                  "  - input_file_path: path to TOML input file\n"
                  "  - output_file_path: path to TOML output file\n"
                  "  - scenario_id: the id of the scenario to run\n"

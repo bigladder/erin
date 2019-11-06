@@ -34,6 +34,8 @@ main(int argc, char *argv[]) {
   }
   std::cout << "result of m.run(\"" << scenario_id << "\") = "
     << out.is_good << "\n";
+  if (!out.is_good)
+    return 1;
   std::cout << "number of results = " << out.results.size() << "\n";
   std::cout << "Results:\n";
   int max_count{6};

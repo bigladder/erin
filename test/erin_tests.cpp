@@ -138,7 +138,7 @@ TEST(ErinBasicsTest, StandaloneSink)
     sim.exec_next_event();
   std::vector<::ERIN::RealTimeType> actual_times =
     meter->get_event_times();
-  std::vector<::ERIN::FlowValueType> actual_loads = meter->get_actual_output();
+  std::vector<::ERIN::FlowValueType> actual_loads = meter->get_achieved_flows();
   EXPECT_EQ(expected_times.size(), actual_times.size());
   EXPECT_EQ(expected_loads.size(), actual_loads.size());
   for (int i{0}; i < expected_times.size(); ++i) {
@@ -176,7 +176,7 @@ TEST(ErinBasicsTest, CanRunSourceSink)
   std::vector<::ERIN::RealTimeType> actual_time =
     meter->get_event_times();
   std::vector<::ERIN::FlowValueType> actual_flow =
-    meter->get_actual_output();
+    meter->get_achieved_flows();
   EXPECT_EQ(expected_time.size(), actual_time.size());
   EXPECT_EQ(expected_flow.size(), actual_flow.size());
   for (int i{0}; i < expected_time.size(); ++i) {
@@ -233,9 +233,9 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   std::vector<::ERIN::RealTimeType> actual_time2 =
     meter2->get_event_times();
   std::vector<::ERIN::FlowValueType> actual_flow1 =
-    meter1->get_actual_output();
+    meter1->get_achieved_flows();
   std::vector<::ERIN::FlowValueType> actual_flow2 =
-    meter2->get_actual_output();
+    meter2->get_achieved_flows();
   EXPECT_EQ(expected_time.size(), actual_time1.size());
   EXPECT_EQ(expected_time.size(), actual_time2.size());
   EXPECT_EQ(expected_flow.size(), actual_flow1.size());
@@ -293,14 +293,13 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
       );
   auto genset_lim = new ::ERIN::FlowLimits("genset_lim", elec, 0, 50);
   auto genset_meter = new ::ERIN::FlowMeter("genset_meter", elec);
-  auto sink = new ::ERIN::Sink(
-      "electric_load", elec,
-      {
-          ::ERIN::LoadItem{0,160},
-          ::ERIN::LoadItem{1,80},
-          ::ERIN::LoadItem{2,40},
-          ::ERIN::LoadItem{3,0},
-          ::ERIN::LoadItem{4}});
+  std::vector<::ERIN::LoadItem> load_profile{
+    ::ERIN::LoadItem{0,160},
+      ::ERIN::LoadItem{1,80},
+      ::ERIN::LoadItem{2,40},
+      ::ERIN::LoadItem{3,0},
+      ::ERIN::LoadItem{4}};
+  auto sink = new ::ERIN::Sink("electric_load", elec, load_profile);
   adevs::Digraph<::ERIN::FlowValueType> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
@@ -333,9 +332,15 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
               << ")" << std::endl;
   }
   std::vector<::ERIN::FlowValueType> actual_genset_output =
-    genset_meter->get_actual_output();
+    genset_meter->get_achieved_flows();
+  std::vector<::ERIN::FlowValueType> requested_genset_output =
+    genset_meter->get_requested_flows();
+  EXPECT_EQ(actual_genset_output.size(), requested_genset_output.size());
+  EXPECT_EQ(load_profile.size() - 1, requested_genset_output.size());
+  for (int i{0}; i < requested_genset_output.size(); ++i)
+    EXPECT_EQ(requested_genset_output[i], load_profile[i].get_value());
   std::vector<::ERIN::FlowValueType> actual_fuel_output =
-    diesel_fuel_meter->get_actual_output();
+    diesel_fuel_meter->get_achieved_flows();
   std::vector<::ERIN::RealTimeType> actual_genset_output_times =
     genset_meter->get_event_times();
   EXPECT_EQ(expected_genset_output.size(), actual_genset_output.size());

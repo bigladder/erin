@@ -471,7 +471,8 @@ namespace ERIN
     public:
       FlowMeter(std::string id, StreamType stream_type);
       [[nodiscard]] std::vector<RealTimeType> get_event_times() const;
-      [[nodiscard]] std::vector<FlowValueType> get_actual_output() const;
+      [[nodiscard]] std::vector<FlowValueType> get_achieved_flows() const;
+      [[nodiscard]] std::vector<FlowValueType> get_requested_flows() const;
       [[nodiscard]] std::vector<Datum> get_results() const override;
 
     protected:

@@ -1188,16 +1188,22 @@ namespace ERIN
   }
 
   std::vector<FlowValueType>
-  FlowMeter::get_actual_output() const
+  FlowMeter::get_achieved_flows() const
   {
     return std::vector<FlowValueType>(achieved_flows);
+  }
+
+  std::vector<FlowValueType>
+  FlowMeter::get_requested_flows() const
+  {
+    return std::vector<FlowValueType>(requested_flows);
   }
 
   std::vector<Datum>
   FlowMeter::get_results() const
   {
     const auto ts = get_event_times();
-    const auto vs = get_actual_output();
+    const auto vs = get_achieved_flows();
     std::vector<Datum> results(ts.size());
     for (std::vector<Datum>::size_type i=0; i < ts.size(); ++i) {
       results[i] = Datum{ts[i], vs[i]};

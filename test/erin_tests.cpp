@@ -4,14 +4,16 @@
 #include <functional>
 #include <unordered_map>
 #include <sstream>
-#include "gtest/gtest.h"
-#include "erin/erin.h"
 #include "../vendor/bdevs/include/adevs.h"
 #include "checkout_line/clerk.h"
 #include "checkout_line/customer.h"
 #include "checkout_line/generator.h"
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
+#include "erin/erin.h"
+#include "erin_test_utils.h"
+#include "gtest/gtest.h"
+
 
 const double tolerance{1e-6};
 

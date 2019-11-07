@@ -137,7 +137,7 @@ TEST(ErinBasicsTest, StandaloneSink)
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
     sim.exec_next_event();
   std::vector<::ERIN::RealTimeType> actual_times =
-    meter->get_actual_output_times();
+    meter->get_event_times();
   std::vector<::ERIN::FlowValueType> actual_loads = meter->get_actual_output();
   EXPECT_EQ(expected_times.size(), actual_times.size());
   EXPECT_EQ(expected_loads.size(), actual_loads.size());
@@ -174,7 +174,7 @@ TEST(ErinBasicsTest, CanRunSourceSink)
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
     sim.exec_next_event();
   std::vector<::ERIN::RealTimeType> actual_time =
-    meter->get_actual_output_times();
+    meter->get_event_times();
   std::vector<::ERIN::FlowValueType> actual_flow =
     meter->get_actual_output();
   EXPECT_EQ(expected_time.size(), actual_time.size());
@@ -229,9 +229,9 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
     sim.exec_next_event();
   std::vector<::ERIN::RealTimeType> actual_time1 =
-    meter1->get_actual_output_times();
+    meter1->get_event_times();
   std::vector<::ERIN::RealTimeType> actual_time2 =
-    meter2->get_actual_output_times();
+    meter2->get_event_times();
   std::vector<::ERIN::FlowValueType> actual_flow1 =
     meter1->get_actual_output();
   std::vector<::ERIN::FlowValueType> actual_flow2 =
@@ -337,7 +337,7 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   std::vector<::ERIN::FlowValueType> actual_fuel_output =
     diesel_fuel_meter->get_actual_output();
   std::vector<::ERIN::RealTimeType> actual_genset_output_times =
-    genset_meter->get_actual_output_times();
+    genset_meter->get_event_times();
   EXPECT_EQ(expected_genset_output.size(), actual_genset_output.size());
   EXPECT_EQ(
       expected_genset_output_times.size(), actual_genset_output_times.size());

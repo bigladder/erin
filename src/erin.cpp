@@ -1182,7 +1182,7 @@ namespace ERIN
   }
 
   std::vector<RealTimeType>
-  FlowMeter::get_actual_output_times() const
+  FlowMeter::get_event_times() const
   {
     return std::vector<RealTimeType>(event_times);
   }
@@ -1196,7 +1196,7 @@ namespace ERIN
   std::vector<Datum>
   FlowMeter::get_results() const
   {
-    const auto ts = get_actual_output_times();
+    const auto ts = get_event_times();
     const auto vs = get_actual_output();
     std::vector<Datum> results(ts.size());
     for (std::vector<Datum>::size_type i=0; i < ts.size(); ++i) {

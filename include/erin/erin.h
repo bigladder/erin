@@ -6,6 +6,7 @@
 #include <exception>
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -28,6 +29,15 @@ namespace ERIN
     RealTimeType time;
     FlowValueType requested_value;
     FlowValueType achieved_value;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // ScenarioStats
+  struct ScenarioStats
+  {
+    RealTimeType uptime;
+    RealTimeType downtime;
+    FlowValueType load_not_served;
   };
 
   ////////////////////////////////////////////////////////////
@@ -122,18 +132,22 @@ namespace ERIN
           bool is_good_,
           std::unordered_map<std::string,std::vector<Datum>> results_);
       [[nodiscard]] bool get_is_good() const { return is_good; }
-      [[nodiscard]] const std::unordered_map<std::string, std::vector<Datum>>
+      [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const { return results; }
 
-      std::string to_csv(const RealTimeType& max_time) const;
-      std::unordered_map<std::string,double> calc_energy_availability() const;
+      [[nodiscard]] std::string to_csv(const RealTimeType& max_time) const;
+      [[nodiscard]] std::unordered_map<std::string,double> calc_energy_availability();
+      [[nodiscard]] std::unordered_map<std::string,RealTimeType> calc_max_downtime();
 
     private:
       bool is_good;
       std::unordered_map<std::string, std::vector<Datum>> results;
+      std::unordered_map<std::string, ScenarioStats> statistics;
   };
 
-  double do_calc_energy_availability(const std::vector<Datum>& ds);
+  ScenarioStats calc_scenario_stats(const std::vector<Datum>& ds);
+  double do_calc_energy_availability(const ScenarioStats& ss);
+  RealTimeType do_calc_max_downtime(const ScenarioStats& ss);
 
   ////////////////////////////////////////////////////////////
   // Main Class

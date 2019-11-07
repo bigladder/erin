@@ -348,7 +348,8 @@ namespace ERIN
   // ScenarioResults
   ScenarioResults::ScenarioResults():
     is_good{false},
-    results{}
+    results{},
+    statistics{}
   {
   }
 
@@ -356,7 +357,8 @@ namespace ERIN
       bool is_good_,
       std::unordered_map<std::string, std::vector<Datum>> results_):
     is_good{is_good_},
-    results{std::move(results_)}
+    results{std::move(results_)},
+    statistics{}
   {
   }
 
@@ -426,23 +428,40 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, double>
-  ScenarioResults::calc_energy_availability() const
+  ScenarioResults::calc_energy_availability()
   {
-    std::unordered_map<std::string, double> calcs{};
+    std::unordered_map<std::string, double> out{};
     for (const auto& r: results) {
-      calcs[r.first] = do_calc_energy_availability(r.second);
+      auto stat_it = statistics.find(r.first);
+      if (stat_it == statistics.end())
+        this->statistics[r.first] = calc_scenario_stats(r.second);
+      out[r.first] = do_calc_energy_availability(statistics[r.first]);
     }
-    return calcs;
+    return out;
   }
 
-  double
-  do_calc_energy_availability(const std::vector<Datum>& ds)
+  std::unordered_map<std::string, RealTimeType>
+  ScenarioResults::calc_max_downtime()
   {
-    double uptime{0.0};
-    double downtime{0.0};
+    std::unordered_map<std::string, RealTimeType> out{};
+    for (const auto& r: results) {
+      auto stat_it = statistics.find(r.first);
+      if (stat_it != statistics.end())
+        statistics[r.first] = calc_scenario_stats(r.second);
+      out[r.first] = do_calc_max_downtime(statistics[r.first]);
+    }
+    return out;
+  }
+
+  ScenarioStats
+  calc_scenario_stats(const std::vector<Datum>& ds)
+  {
+    RealTimeType uptime{0};
+    RealTimeType downtime{0};
     RealTimeType t0{0};
     FlowValueType req{0};
     FlowValueType ach{0};
+    FlowValueType load_not_served{0.0};
     for (const auto d: ds) {
       if (d.time == 0) {
         req = d.requested_value;
@@ -458,14 +477,28 @@ namespace ERIN
         downtime += dt;
       else
         uptime += dt;
+      load_not_served += dt * gap;
       req = d.requested_value;
       ach = d.achieved_value;
     }
-    auto numerator = static_cast<double>(uptime);
-    auto denominator = static_cast<double>(uptime + downtime);
-    if ((uptime + downtime) == 0)
+    return ScenarioStats{
+      uptime, downtime, load_not_served};
+  }
+
+  double
+  do_calc_energy_availability(const ScenarioStats& ss)
+  {
+    auto numerator = static_cast<double>(ss.uptime);
+    auto denominator = static_cast<double>(ss.uptime + ss.downtime);
+    if ((ss.uptime + ss.downtime) == 0)
       return 0.0;
     return numerator / denominator;
+  }
+
+  RealTimeType
+  do_calc_max_downtime(const ScenarioStats& ss)
+  {
+    return ss.downtime;
   }
 
   //////////////////////////////////////////////////////////// 

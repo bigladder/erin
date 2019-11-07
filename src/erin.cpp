@@ -530,11 +530,13 @@ namespace ERIN
   RealTimeType
   Main::max_time_for_scenario(const std::string& scenario_id)
   {
-    // TODO: implement after we get loads broken out
-    // - get the network for the scenario_id
-    // - for each component on that network, query it for its max time
-    // - return the largest max time
-    return 8760;
+    auto it = scenarios.find(scenario_id);
+    if (it == scenarios.end()) {
+      std::ostringstream oss;
+      oss << "scenario_id \"" << scenario_id << "\" not found in scenarios";
+      throw std::invalid_argument(oss.str());
+    }
+    return it->second->get_max_times();
   }
 
   void

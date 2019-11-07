@@ -14,7 +14,7 @@
 
 namespace ERIN
 {
-  const FlowValueType TOL{1e-6};
+  const FlowValueType flow_value_tolerance{1e-6};
 
   ////////////////////////////////////////////////////////////
   // StreamInfo
@@ -454,7 +454,7 @@ namespace ERIN
       if (dt <= 0)
         throw InvariantError();
       auto gap = std::fabs(req - ach);
-      if (gap > TOL)
+      if (gap > flow_value_tolerance)
         downtime += dt;
       else
         uptime += dt;
@@ -713,7 +713,7 @@ namespace ERIN
   FlowState::checkInvariants() const
   {
     auto diff{inflow - (outflow + storeflow + lossflow)};
-    if (std::fabs(diff) > TOL) {
+    if (std::fabs(diff) > flow_value_tolerance) {
       DB_PUTS2("FlowState.inflow   : ", inflow);
       DB_PUTS2("FlowState.outflow  : ", outflow);
       DB_PUTS2("FlowState.storeflow: ", storeflow);
@@ -1028,7 +1028,7 @@ namespace ERIN
     else if (outflow_provided && !inflow_provided) {
       report_inflow_request = true;
       const FlowState fs = update_state_for_outflow_request(outflow_request);
-      if (std::fabs(fs.getOutflow() - outflow_request) > TOL)
+      if (std::fabs(fs.getOutflow() - outflow_request) > flow_value_tolerance)
         report_outflow_achieved = true;
       update_state(fs);
       if (outflow >= 0.0 && outflow > outflow_request)
@@ -1155,7 +1155,7 @@ namespace ERIN
   FlowElement::check_flow_invariants() const
   {
     auto diff{inflow - (outflow + storeflow + lossflow)};
-    if (std::fabs(diff) > TOL) {
+    if (std::fabs(diff) > flow_value_tolerance) {
       std::cout << "FlowElement ERROR! " << inflow << " != " << outflow << " + "
         << storeflow << " + " << lossflow << "!\n";
       throw FlowInvariantError();

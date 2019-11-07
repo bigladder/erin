@@ -825,38 +825,39 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
 
 TEST(ErinBasicsTest, TestScenarioResultsMetrics)
 {
-  // EnergyAvailability
+  // Example 0
   ::ERIN::ScenarioResults sr0{
     true,
     {{ std::string{"A"},
        { ::ERIN::Datum{0,1.0,1.0},
          ::ERIN::Datum{4,0.0,0.0}}}}};
+  // energy availability
   std::unordered_map<std::string,double> expected0{{"A",1.0}};
   auto actual0 = sr0.calc_energy_availability();
-  EXPECT_EQ(expected0.size(), actual0.size());
-  for (const auto& e: expected0) {
-    auto a_it = actual0.find(e.first);
-    ASSERT_FALSE(a_it == actual0.end());
-    auto a_val = a_it->second;
-    auto e_val = e.second;
-    EXPECT_NEAR(e_val, a_val, tolerance) << "key: " << e.first;
-  }
+  ::erin_test_utils::compare_maps<double>(expected0, actual0);
+  // max downtime
+  std::unordered_map<std::string,::ERIN::RealTimeType> expected0_max_downtime{
+    {"A",0}};
+  auto actual0_max_downtime = sr0.calc_max_downtime();
+  ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
+      expected0_max_downtime, actual0_max_downtime);
+  // Example 1
   ::ERIN::ScenarioResults sr1{
     true,
     {{ std::string{"A"},
        { ::ERIN::Datum{0,2.0,1.0},
          ::ERIN::Datum{2,0.5,0.5},
          ::ERIN::Datum{4,0.0,0.0}}}}};
+  // energy availability
   std::unordered_map<std::string,double> expected1{{"A",0.5}};
   auto actual1 = sr1.calc_energy_availability();
-  EXPECT_EQ(expected1.size(), actual1.size());
-  for (const auto& e: expected1) {
-    auto a_it = actual1.find(e.first);
-    ASSERT_FALSE(a_it == actual1.end());
-    auto a_val = a_it->second;
-    auto e_val = e.second;
-    EXPECT_NEAR(e_val, a_val, tolerance) << "key: " << e.first;
-  }
+  ::erin_test_utils::compare_maps<double>(expected1, actual1);
+  // max downtime
+  std::unordered_map<std::string,::ERIN::RealTimeType> expected1_max_downtime{
+    {"A",2}};
+  auto actual1_max_downtime = sr1.calc_max_downtime();
+  ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
+      expected1_max_downtime, actual1_max_downtime);
 }
 
 int

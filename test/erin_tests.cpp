@@ -826,19 +826,31 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   // EnergyAvailability
   ::ERIN::ScenarioResults sr0{
     true,
-    {
-      {
-        std::string{"A"},
-        {::ERIN::Datum{0,1.0,1.0}, ::ERIN::Datum{4,0.0,0.0}}
-      }
-    }
-  };
-  std::unordered_map<std::string,double> expected{{"A",1.0}};
-  auto actual = sr0.calc_energy_availability();
-  EXPECT_EQ(expected.size(), actual.size());
-  for (const auto& e: expected) {
-    auto a_it = actual.find(e.first);
-    ASSERT_FALSE(a_it == actual.end());
+    {{ std::string{"A"},
+       { ::ERIN::Datum{0,1.0,1.0},
+         ::ERIN::Datum{4,0.0,0.0}}}}};
+  std::unordered_map<std::string,double> expected0{{"A",1.0}};
+  auto actual0 = sr0.calc_energy_availability();
+  EXPECT_EQ(expected0.size(), actual0.size());
+  for (const auto& e: expected0) {
+    auto a_it = actual0.find(e.first);
+    ASSERT_FALSE(a_it == actual0.end());
+    auto a_val = a_it->second;
+    auto e_val = e.second;
+    EXPECT_NEAR(e_val, a_val, TOL) << "key: " << e.first;
+  }
+  ::ERIN::ScenarioResults sr1{
+    true,
+    {{ std::string{"A"},
+       { ::ERIN::Datum{0,2.0,1.0},
+         ::ERIN::Datum{2,0.5,0.5},
+         ::ERIN::Datum{4,0.0,0.0}}}}};
+  std::unordered_map<std::string,double> expected1{{"A",0.5}};
+  auto actual1 = sr1.calc_energy_availability();
+  EXPECT_EQ(expected1.size(), actual1.size());
+  for (const auto& e: expected1) {
+    auto a_it = actual1.find(e.first);
+    ASSERT_FALSE(a_it == actual1.end());
     auto a_val = a_it->second;
     auto e_val = e.second;
     EXPECT_NEAR(e_val, a_val, TOL) << "key: " << e.first;

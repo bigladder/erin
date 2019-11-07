@@ -5,6 +5,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src"
 
 set(test_sources
   erin_tests.cpp
+  erin_test_utils.h
   checkout_line/clerk.cpp
   checkout_line/clerk.h
   checkout_line/customer.h

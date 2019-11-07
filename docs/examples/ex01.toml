@@ -1,0 +1,44 @@
+[stream_info]
+# The commonality across all streams.
+# We need to know what the common rate unit and quantity unit is.
+# The rate unit should be the quantity unit per unit of time.
+rate_unit = "kW"
+quantity_unit = "kJ"
+# seconds_per_time_unit : Number
+# defines how many seconds per unit of time used to specify the quantity unit
+# here since we are using kW and kJ, the answer is 1.0 second.
+# However, if we were doing kW and kWh, we would use 3600 s (i.e., 1 hour) here.
+seconds_per_time_unit = 1.0 
+[streams.electricity]
+type = "electrity_medium_voltage"
+[streams.diesel]
+type = "diesel_fuel"
+[streams.diesel.other_rate_units]
+gallons__hour = 0.026520422449113276
+liters__hour = 0.1003904071388734
+[streams.diesel.other_quantity_units]
+gallons = 7.366784013642577e-6
+liters = 2.7886224205242612e-5
+############################################################
+[loads.building_electrical]
+loads = [{t=0,v=1.0},{t=4}]
+############################################################
+[components.electric_utility]
+type = "source"
+# Point of Common Coupling for Electric Utility
+output_stream = "electricity"
+[components.cluster_01_electric]
+type = "load"
+input_stream = "electricity"
+[components.cluster_01_electric.load_profiles_by_scenario]
+blue_sky = "building_electrical"
+############################################################
+[networks.normal_operations.network]
+# specify as: <source (generation) id> = ["<downstream/load id>", "<downstream/load id>", ...]
+electric_utility = ["cluster_01_electric"]
+############################################################
+[scenarios.blue_sky]
+occurrence_distribution = {type = "fixed_probability", probability = 1}
+duration_distribution = {type = "specified", value = 8760, time_unit = "hours"}
+max_times = 1
+network = "normal_operations"

@@ -13,7 +13,7 @@
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
 
-const double TOL{1e-6};
+const double tolerance{1e-6};
 
 TEST(SetupTest, GoogleTestRuns)
 {
@@ -90,7 +90,7 @@ TEST(ErinBasicsTest, TestLoadItem)
 {
   const auto li1 = ::ERIN::LoadItem(0, 1);
   const auto li2 = ::ERIN::LoadItem(4);
-  EXPECT_NEAR(li1.get_time_advance(li2), 4.0, TOL);
+  EXPECT_NEAR(li1.get_time_advance(li2), 4.0, tolerance);
   EXPECT_EQ(li1.get_time(), 0);
   EXPECT_EQ(li1.get_value(), 1.0);
   EXPECT_EQ(li2.get_time(), 4);
@@ -460,7 +460,7 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
     for (auto const& eru: eoru) {
       const auto aru = aoru.find(eru.first);
       ASSERT_TRUE(aru != aoru.end());
-      EXPECT_NEAR(eru.second, aru->second, TOL);
+      EXPECT_NEAR(eru.second, aru->second, tolerance);
     }
     const auto eoqu = e.second.get_other_quantity_units();
     const auto aoqu = a->second.get_other_quantity_units();
@@ -468,7 +468,7 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
     for (auto const& equ: eoqu) {
       const auto aqu = aoqu.find(equ.first);
       ASSERT_TRUE(aqu != aoqu.end());
-      EXPECT_NEAR(equ.second, aqu->second, TOL);
+      EXPECT_NEAR(equ.second, aqu->second, tolerance);
     }
   }
 }
@@ -837,7 +837,7 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
     ASSERT_FALSE(a_it == actual0.end());
     auto a_val = a_it->second;
     auto e_val = e.second;
-    EXPECT_NEAR(e_val, a_val, TOL) << "key: " << e.first;
+    EXPECT_NEAR(e_val, a_val, tolerance) << "key: " << e.first;
   }
   ::ERIN::ScenarioResults sr1{
     true,
@@ -853,7 +853,7 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
     ASSERT_FALSE(a_it == actual1.end());
     auto a_val = a_it->second;
     auto e_val = e.second;
-    EXPECT_NEAR(e_val, a_val, TOL) << "key: " << e.first;
+    EXPECT_NEAR(e_val, a_val, tolerance) << "key: " << e.first;
   }
 }
 

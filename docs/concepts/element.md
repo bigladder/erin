@@ -20,3 +20,8 @@ Elements represent fundamental network actions:
 
 Is the Flow_meter a fundamental concept? Or should metering potentially be part of every Element?
 If we eliminate explicit Flow_meters, it could significantly reduce the number of Elements required to represent any given Component...
+
+Currently, Elements are the devs models and Components are conceptual.
+However, it may actually make more sense for Elements to be minimal C++ classes with input_request, output_request, etc. and let Components be the devs models.
+The main reason for doing that would be to cut down on the number of entities that go into the devs simulator since the overhead of devs grows with the number of entities.
+Note: this suggestion would involve a fairly major conceptual overhall so we just note it in passing for the moment.

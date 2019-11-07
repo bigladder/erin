@@ -675,7 +675,8 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
     EXPECT_TRUE(it != expected_keys.end());
     ASSERT_EQ(item.second.size(), 1);
     EXPECT_EQ(item.second.at(0).time, 0);
-    EXPECT_EQ(item.second.at(0).value, 1.0);
+    EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
+    EXPECT_EQ(item.second.at(0).requested_value, 1.0);
   }
 }
 
@@ -735,28 +736,36 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
     {
       {
         std::string{"A"},
-        {::ERIN::Datum{0,1.0}, ::ERIN::Datum{1,0.5}, ::ERIN::Datum{2,0.0}}
+        {
+          ::ERIN::Datum{0,1.0,1.0},
+          ::ERIN::Datum{1,0.5,0.5},
+          ::ERIN::Datum{2,0.0,0.0}
+        }
       },
       {
         std::string{"B"},
-        {::ERIN::Datum{0,10.0}, ::ERIN::Datum{2,5.0}, ::ERIN::Datum{4,0.0}}
+        {
+          ::ERIN::Datum{0,10.0,10.0},
+          ::ERIN::Datum{2,5.0,5.0},
+          ::ERIN::Datum{4,0.0,0.0}
+        }
       }
     }};
   auto actual = out.to_csv(4);
-  std::string expected{"time,A,B\n0,1,10\n"
-    "1,0.5,10\n2,0,5\n4,0,0\n"};
+  std::string expected{"time,A:achieved,A:requested,B:achieved,B:requested\n"
+    "0,1,1,10,10\n1,0.5,0.5,10,10\n2,0,0,5,5\n4,0,0,0,0\n"};
   EXPECT_EQ(expected, actual);
   ::ERIN::ScenarioResults out2{
     true,
     {
       {
         std::string{"A"},
-        {::ERIN::Datum{0,1.0}}
+        {::ERIN::Datum{0,1.0,1.0}}
       }
     }
   };
   auto actual2 = out2.to_csv(4);
-  std::string expected2{"time,A\n0,1\n4,0\n"};
+  std::string expected2{"time,A:achieved,A:requested\n0,1,1\n4,0,0\n"};
   EXPECT_EQ(expected2, actual2);
 }
 

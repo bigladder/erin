@@ -26,7 +26,8 @@ namespace ERIN
   struct Datum
   {
     RealTimeType time;
-    FlowValueType value;
+    FlowValueType requested_value;
+    FlowValueType achieved_value;
   };
 
   ////////////////////////////////////////////////////////////
@@ -174,6 +175,16 @@ namespace ERIN
     [[nodiscard]] const char* what() const noexcept override
     {
       return "MixedStreamsError";
+    }
+  };
+
+  ////////////////////////////////////////////////////////////
+  // MixedStreamsError
+  struct InvariantError : public std::exception
+  {
+    [[nodiscard]] const char* what() const noexcept override
+    {
+      return "InvariantError";
     }
   };
 

@@ -366,12 +366,16 @@ namespace ERIN
     if (!is_good) return std::string{};
     std::set<RealTimeType> times_set{max_time};
     std::unordered_map<std::string, std::vector<FlowValueType>> values;
+    std::unordered_map<std::string, std::vector<FlowValueType>> requested_values;
     std::unordered_map<std::string, FlowValueType> last_values;
+    std::unordered_map<std::string, FlowValueType> last_requested_values;
     std::vector<std::string> keys;
     for (const auto p: results) {
       keys.emplace_back(p.first);
       values[p.first] = std::vector<FlowValueType>();
+      requested_values[p.first] = std::vector<FlowValueType>();
       last_values[p.first] = 0.0;
+      last_requested_values[p.first] = 0.0;
       for (const auto d: p.second)
         times_set.emplace(d.time);
     }
@@ -380,35 +384,42 @@ namespace ERIN
     for (const auto p: results) {
       for (const auto t: times) {
         auto k{p.first};
-        if (t == max_time)
+        if (t == max_time) {
           values[k].emplace_back(0.0);
+          requested_values[k].emplace_back(0.0);
+        }
         else {
           bool found{false};
-          FlowValueType last = last_values[k];
+          auto last = last_values[k];
+          auto last_request = last_requested_values[k];
           for (const auto d: p.second) {
             if (d.time == t) {
               found = true;
-              values[k].emplace_back(d.value);
-              last_values[k] = d.value;
+              values[k].emplace_back(d.achieved_value);
+              requested_values[k].emplace_back(d.requested_value);
+              last_values[k] = d.achieved_value;
+              last_requested_values[k] = d.requested_value;
               break;
             }
             if (d.time > t)
               break;
           }
-          if (!found)
+          if (!found) {
             values[k].emplace_back(last);
+            requested_values[k].emplace_back(last_request);
+          }
         }
       }
     }
     std::ostringstream oss;
     oss << "time";
     for (const auto k: keys)
-      oss << "," << k;
+      oss << "," << k << ":achieved," << k << ":requested";
     oss << "\n";
     for (std::vector<RealTimeType>::size_type i{0}; i < times.size(); ++i) {
       oss << times[i];
       for (const auto k: keys)
-        oss << "," << values[k][i];
+        oss << "," << values[k][i] << "," << requested_values[k][i];
       oss << "\n";
     }
     return oss.str();
@@ -1202,12 +1213,13 @@ namespace ERIN
   std::vector<Datum>
   FlowMeter::get_results() const
   {
-    const auto ts = get_event_times();
-    const auto vs = get_achieved_flows();
-    std::vector<Datum> results(ts.size());
-    for (std::vector<Datum>::size_type i=0; i < ts.size(); ++i) {
-      results[i] = Datum{ts[i], vs[i]};
-    }
+    const auto num_events{event_times.size()};
+    if ((requested_flows.size() != num_events)
+        || (achieved_flows.size() != num_events))
+      throw InvariantError();
+    std::vector<Datum> results(num_events);
+    for (std::vector<Datum>::size_type i=0; i < num_events; ++i)
+      results[i] = Datum{event_times[i], requested_flows[i], achieved_flows[i]};
     return results;
   }
 

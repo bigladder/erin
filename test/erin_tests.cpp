@@ -121,8 +121,6 @@ TEST(ErinBasicsTest, FlowState)
 
 TEST(ErinBasicsTest, StandaloneSink)
 {
-  std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2};
-  std::vector<::ERIN::RealTimeType> expected_loads = {100, 10, 0};
   auto st = ::ERIN::StreamType("electrical");
   auto sink = new ::ERIN::Sink(
       "load", st,
@@ -140,21 +138,12 @@ TEST(ErinBasicsTest, StandaloneSink)
   network.add(&sim);
   while (sim.next_event_time() < adevs_inf<adevs::Time>())
     sim.exec_next_event();
-  std::vector<::ERIN::RealTimeType> actual_times =
-    meter->get_event_times();
-  std::vector<::ERIN::FlowValueType> actual_loads = meter->get_achieved_flows();
-  EXPECT_EQ(expected_times.size(), actual_times.size());
-  EXPECT_EQ(expected_loads.size(), actual_loads.size());
-  for (int i{0}; i < expected_times.size(); ++i) {
-    if (i >= actual_times.size())
-      break;
-    EXPECT_EQ(expected_times[i], actual_times[i])
-      << "times differ at index " << i;
-    if (i >= actual_loads.size())
-      break;
-    EXPECT_EQ(expected_loads[i], actual_loads[i])
-      << "loads differ at index " << i;
-  }
+  std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2};
+  auto actual_times = meter->get_event_times();
+  ::erin_test_utils::compare_vectors<::ERIN::RealTimeType>(expected_times, actual_times);
+  std::vector<::ERIN::FlowValueType> expected_loads = {100, 10, 0};
+  auto actual_loads = meter->get_achieved_flows();
+  ::erin_test_utils::compare_vectors<::ERIN::FlowValueType>(expected_loads, actual_loads);
 }
 
 TEST(ErinBasicsTest, CanRunSourceSink)

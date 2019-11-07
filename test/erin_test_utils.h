@@ -25,6 +25,17 @@ namespace erin_test_utils
       EXPECT_NEAR(e_val, a_val, tolerance) << "key: " << e.first;
     }
   }
+
+  template <class T>
+  void compare_vectors(
+      const std::vector<T>& expected,
+      const std::vector<T>& actual)
+  {
+    auto expected_size{expected.size()};
+    ASSERT_EQ(expected_size, actual.size());
+    for (decltype(expected_size) i{0}; i < expected_size; ++i)
+      EXPECT_EQ(expected[i], actual[i]) << "vectors differ at index " << i;
+  }
 }
 
 #endif // ERIN_TEST_UTILS_H

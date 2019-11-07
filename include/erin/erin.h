@@ -126,11 +126,14 @@ namespace ERIN
         get_results() const { return results; }
 
       std::string to_csv(const RealTimeType& max_time) const;
+      std::unordered_map<std::string,double> calc_energy_availability() const;
 
     private:
       bool is_good;
       std::unordered_map<std::string, std::vector<Datum>> results;
   };
+
+  double do_calc_energy_availability(const std::vector<Datum>& ds);
 
   ////////////////////////////////////////////////////////////
   // Main Class

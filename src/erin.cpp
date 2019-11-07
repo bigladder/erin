@@ -425,6 +425,49 @@ namespace ERIN
     return oss.str();
   }
 
+  std::unordered_map<std::string, double>
+  ScenarioResults::calc_energy_availability() const
+  {
+    std::unordered_map<std::string, double> calcs{};
+    for (const auto& r: results) {
+      calcs[r.first] = do_calc_energy_availability(r.second);
+    }
+    return calcs;
+  }
+
+  double
+  do_calc_energy_availability(const std::vector<Datum>& ds)
+  {
+    double uptime{0.0};
+    double downtime{0.0};
+    RealTimeType t0{0};
+    FlowValueType req{0};
+    FlowValueType ach{0};
+    for (const auto d: ds) {
+      if (d.time == 0) {
+        req = d.requested_value;
+        ach = d.achieved_value;
+        continue;
+      }
+      auto dt = d.time - t0;
+      t0 = d.time;
+      if (dt <= 0)
+        throw InvariantError();
+      auto gap = std::fabs(req - ach);
+      if (gap > TOL)
+        downtime += dt;
+      else
+        uptime += dt;
+      req = d.requested_value;
+      ach = d.achieved_value;
+    }
+    auto numerator = static_cast<double>(uptime);
+    auto denominator = static_cast<double>(uptime + downtime);
+    if ((uptime + downtime) == 0)
+      return 0.0;
+    return numerator / denominator;
+  }
+
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file

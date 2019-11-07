@@ -13,6 +13,8 @@
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
 
+const double TOL{1e-6};
+
 TEST(SetupTest, GoogleTestRuns)
 {
   int x(1);
@@ -88,7 +90,7 @@ TEST(ErinBasicsTest, TestLoadItem)
 {
   const auto li1 = ::ERIN::LoadItem(0, 1);
   const auto li2 = ::ERIN::LoadItem(4);
-  EXPECT_NEAR(li1.get_time_advance(li2), 4.0, 1e-6);
+  EXPECT_NEAR(li1.get_time_advance(li2), 4.0, TOL);
   EXPECT_EQ(li1.get_time(), 0);
   EXPECT_EQ(li1.get_value(), 1.0);
   EXPECT_EQ(li2.get_time(), 4);
@@ -458,7 +460,7 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
     for (auto const& eru: eoru) {
       const auto aru = aoru.find(eru.first);
       ASSERT_TRUE(aru != aoru.end());
-      EXPECT_NEAR(eru.second, aru->second, 1e-6);
+      EXPECT_NEAR(eru.second, aru->second, TOL);
     }
     const auto eoqu = e.second.get_other_quantity_units();
     const auto aoqu = a->second.get_other_quantity_units();
@@ -466,7 +468,7 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
     for (auto const& equ: eoqu) {
       const auto aqu = aoqu.find(equ.first);
       ASSERT_TRUE(aqu != aoqu.end());
-      EXPECT_NEAR(equ.second, aqu->second, 1e-6);
+      EXPECT_NEAR(equ.second, aqu->second, TOL);
     }
   }
 }
@@ -817,6 +819,30 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   auto actual = m.max_time_for_scenario(scenario_id);
   ::ERIN::RealTimeType expected = N;
   EXPECT_EQ(expected, actual);
+}
+
+TEST(ErinBasicsTest, TestScenarioResultsMetrics)
+{
+  // EnergyAvailability
+  ::ERIN::ScenarioResults sr0{
+    true,
+    {
+      {
+        std::string{"A"},
+        {::ERIN::Datum{0,1.0,1.0}, ::ERIN::Datum{4,0.0,0.0}}
+      }
+    }
+  };
+  std::unordered_map<std::string,double> expected{{"A",1.0}};
+  auto actual = sr0.calc_energy_availability();
+  EXPECT_EQ(expected.size(), actual.size());
+  for (const auto& e: expected) {
+    auto a_it = actual.find(e.first);
+    ASSERT_FALSE(a_it == actual.end());
+    auto a_val = a_it->second;
+    auto e_val = e.second;
+    EXPECT_NEAR(e_val, a_val, TOL) << "key: " << e.first;
+  }
 }
 
 int

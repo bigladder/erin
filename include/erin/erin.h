@@ -353,10 +353,10 @@ namespace ERIN
   class Scenario // : public adevs::Atomic<PortValue>
   {
     public:
-      Scenario(std::string  name, std::string  network_id, long max_times);
+      Scenario(std::string  name, std::string  network_id, RealTimeType max_times);
 
       [[nodiscard]] const std::string& get_name() const { return name; };
-      [[nodiscard]] long get_max_times() const { return max_times; };
+      [[nodiscard]] RealTimeType get_max_time() const { return max_time; };
       [[nodiscard]] const std::string& get_network_id() const { return network_id; };
       bool operator==(const Scenario& other) const;
       bool operator!=(const Scenario& other) const {
@@ -373,7 +373,7 @@ namespace ERIN
     private:
       std::string name;
       std::string network_id;
-      long max_times;
+      RealTimeType max_time;
   };
 
   ////////////////////////////////////////////////////////////

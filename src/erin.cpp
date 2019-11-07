@@ -322,7 +322,7 @@ namespace ERIN
     for (const auto& s: toml_scenarios) {
       const auto occurrence_distribution = toml::find<toml::table>(s.second, "occurrence_distribution");
       const auto duration_distribution = toml::find<toml::table>(s.second, "duration_distribution");
-      const auto max_times = toml::find<int>(s.second, "max_times");
+      const auto max_time = toml::find<int>(s.second, "max_time");
       const auto network_id = toml::find<std::string>(s.second, "network");
       scenarios.insert(
           std::make_pair(
@@ -330,7 +330,7 @@ namespace ERIN
             std::make_shared<Scenario>(
               s.first,
               network_id,
-              max_times)));
+              max_time)));
     }
 #ifdef DEBUG_PRINT
       for (const auto& s: scenarios) {
@@ -338,7 +338,7 @@ namespace ERIN
         auto scenario = *s.second;
         std::cout << "\tname      : " << scenario.get_name() << "\n";
         std::cout << "\tnetwork_id: " << scenario.get_network_id() << "\n";
-        std::cout << "\tmax_times : " << scenario.get_max_times() << "\n";
+        std::cout << "\tmax_time  : " << scenario.get_max_time() << "\n";
       }
 #endif
     return scenarios;
@@ -536,7 +536,7 @@ namespace ERIN
       oss << "scenario_id \"" << scenario_id << "\" not found in scenarios";
       throw std::invalid_argument(oss.str());
     }
-    return it->second->get_max_times();
+    return it->second->get_max_time();
   }
 
   void
@@ -880,10 +880,10 @@ namespace ERIN
   Scenario::Scenario(
       std::string name_,
       std::string network_id_,
-      long max_times_):
+      RealTimeType max_time_):
     name{std::move(name_)},
     network_id{std::move(network_id_)},
-    max_times{max_times_}
+    max_time{max_time_}
   {
   }
 
@@ -893,7 +893,7 @@ namespace ERIN
     if (this == &other) return true;
     return (name == other.get_name()) &&
            (network_id == other.get_network_id()) &&
-           (max_times == other.get_max_times());
+           (max_time == other.get_max_time());
   }
 
   ////////////////////////////////////////////////////////////

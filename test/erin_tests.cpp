@@ -579,7 +579,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
                                   " probability = 1}\n"
         "duration_distribution = {type = \"specified\", value = 8760,"
                                 " time_unit = \"hours\"}\n"
-        "max_times = 1\n"
+        "max_time = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<
@@ -650,7 +650,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
                                    "probability = 1}\n"
         "duration_distribution = {type = \"specified\", value = 8760, "
                                  "time_unit = \"hours\"}\n"
-        "max_times = 1\n"
+        "max_time = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader r{ss};
   auto si = r.read_stream_info();

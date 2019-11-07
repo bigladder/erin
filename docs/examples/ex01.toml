@@ -40,5 +40,5 @@ electric_utility = ["cluster_01_electric"]
 [scenarios.blue_sky]
 occurrence_distribution = {type = "fixed_probability", probability = 1}
 duration_distribution = {type = "specified", value = 8760, time_unit = "hours"}
-max_times = 1
+max_time = 4
 network = "normal_operations"

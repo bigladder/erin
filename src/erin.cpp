@@ -458,6 +458,17 @@ namespace ERIN
     );
   }
 
+  std::unordered_map<std::string, FlowValueType>
+  ScenarioResults::calc_load_not_served()
+  {
+    return erin_generics::derive_statistic<FlowValueType,Datum,ScenarioStats>(
+      results, keys, statistics, calc_scenario_stats,
+      [](const ScenarioStats& ss) -> FlowValueType {
+        return ss.load_not_served;
+      }
+    );
+  }
+
   ScenarioStats
   calc_scenario_stats(const std::vector<Datum>& ds)
   {

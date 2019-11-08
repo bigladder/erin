@@ -831,7 +831,13 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   auto actual0_max_downtime = sr0.calc_max_downtime();
   ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
       expected0_max_downtime, actual0_max_downtime, "max_downtime_with_sr0");
-  // Example 1
+  // load_not_served
+  std::unordered_map<std::string,::ERIN::FlowValueType> expected0_lns{
+    {"A0",0.0}};
+  auto actual0_lns = sr0.calc_load_not_served();
+  ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
+      expected0_lns, actual0_lns, "load_not_served_with_sr0");
+  // ## Example 1
   ::ERIN::ScenarioResults sr1{
     true,
     {{ std::string{"A1"},
@@ -849,6 +855,12 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   auto actual1_max_downtime = sr1.calc_max_downtime();
   ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
       expected1_max_downtime, actual1_max_downtime, "max_downtime_with_sr1");
+  // load_not_served
+  std::unordered_map<std::string,::ERIN::FlowValueType> expected1_lns{
+    {"A1",2.0}};
+  auto actual1_lns = sr1.calc_load_not_served();
+  ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
+      expected1_lns, actual1_lns, "load_not_served_with_sr1");
 }
 
 int

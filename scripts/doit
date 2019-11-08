@@ -1,0 +1,19 @@
+#!/bin/bash
+if ! cmake -DERIN_TESTING=ON -DDO_DEBUG_PRINT=OFF ..; then
+  echo CMAKE CALL FAILED!
+  exit 1
+fi
+if !  cmake --build . -j 4; then
+  echo BUILD FAILED!
+  exit 1
+fi
+if ! ctest --output-on-failure; then
+  echo CTEST FAILED!
+  exit 1
+fi
+if ! ./bin/e2rin ../docs/examples/ex01.toml out.csv "blue_sky"; then
+  echo CALL TO e2rin FAILED!
+  exit 1
+fi
+cat out.csv
+time ./bin/str8760

@@ -12,6 +12,17 @@ cmake --build . --config Release
 ctest -C Release
 ```
 
+## Command-line Setup
+
+If you'd like to develop or kick-off the compiler and tests from the command prompt (Mac OS X or Linux), then after you create your build directory, you can simlink a shell script to facilitate quick testing of commands:
+
+```
+mkdir build
+cd build
+ln -s ../scripts/doit .
+./doit
+```
+
 ## Directory structure
 
 - root

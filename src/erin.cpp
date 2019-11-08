@@ -3,6 +3,7 @@
 #include "../vendor/toml11/toml.hpp"
 #include "debug_utils.h"
 #include "erin/erin.h"
+#include "erin_generics.h"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -432,27 +433,26 @@ namespace ERIN
   std::unordered_map<std::string, double>
   ScenarioResults::calc_energy_availability()
   {
-    std::unordered_map<std::string, double> out{};
-    for (const auto& r: results) {
-      auto stat_it = statistics.find(r.first);
-      if (stat_it == statistics.end())
-        statistics[r.first] = calc_scenario_stats(r.second);
-      out[r.first] = do_calc_energy_availability(statistics[r.first]);
-    }
-    return out;
+    return erin_generics::derive_statistic<double,Datum,ScenarioStats>(
+      results, keys, statistics, calc_scenario_stats,
+      [](const ScenarioStats& ss) -> double {
+        auto numerator = static_cast<double>(ss.uptime);
+        auto denominator = static_cast<double>(ss.uptime + ss.downtime);
+        if ((ss.uptime + ss.downtime) == 0) {
+          return 0.0;
+        }
+        return numerator / denominator;
+      }
+    );
   }
 
   std::unordered_map<std::string, RealTimeType>
   ScenarioResults::calc_max_downtime()
   {
-    std::unordered_map<std::string, RealTimeType> out{};
-    for (const auto& r: results) {
-      auto stat_it = statistics.find(r.first);
-      if (stat_it != statistics.end())
-        statistics[r.first] = calc_scenario_stats(r.second);
-      out[r.first] = do_calc_max_downtime(statistics[r.first]);
-    }
-    return out;
+    return erin_generics::derive_statistic<RealTimeType,Datum,ScenarioStats>(
+      results, keys, statistics, calc_scenario_stats,
+      [](const ScenarioStats& ss) -> RealTimeType { return ss.downtime; }
+    );
   }
 
   ScenarioStats
@@ -484,22 +484,6 @@ namespace ERIN
       ach = d.achieved_value;
     }
     return ScenarioStats{uptime, downtime, load_not_served};
-  }
-
-  double
-  do_calc_energy_availability(const ScenarioStats& ss)
-  {
-    auto numerator = static_cast<double>(ss.uptime);
-    auto denominator = static_cast<double>(ss.uptime + ss.downtime);
-    if ((ss.uptime + ss.downtime) == 0)
-      return 0.0;
-    return numerator / denominator;
-  }
-
-  RealTimeType
-  do_calc_max_downtime(const ScenarioStats& ss)
-  {
-    return ss.downtime;
   }
 
   //////////////////////////////////////////////////////////// 

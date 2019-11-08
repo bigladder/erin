@@ -147,8 +147,6 @@ namespace ERIN
   };
 
   ScenarioStats calc_scenario_stats(const std::vector<Datum>& ds);
-  double do_calc_energy_availability(const ScenarioStats& ss);
-  RealTimeType do_calc_max_downtime(const ScenarioStats& ss);
 
   ////////////////////////////////////////////////////////////
   // Main Class

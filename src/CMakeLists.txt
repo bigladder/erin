@@ -21,6 +21,7 @@ set(public_headers
 
 set(private_headers
   ${PROJECT_SOURCE_DIR}/src/debug_utils.h
+  ${PROJECT_SOURCE_DIR}/src/erin_generics.h
 )
 
 set(library_sources

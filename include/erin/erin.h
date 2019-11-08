@@ -1,5 +1,5 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE file for additional terms and conditions. */
 
 #ifndef ERIN_ERIN_H
 #define ERIN_ERIN_H
@@ -143,6 +143,14 @@ namespace ERIN
       bool is_good;
       std::unordered_map<std::string, std::vector<Datum>> results;
       std::unordered_map<std::string, ScenarioStats> statistics;
+      std::vector<std::string> keys;
+
+      // TODO: how to we abstract calc_energy_availability() and calc_max_downtime()?
+      //template<class T>
+      //std::unordered_map<std::string,T> do_calcs()
+      //{
+
+      //}
   };
 
   ScenarioStats calc_scenario_stats(const std::vector<Datum>& ds);

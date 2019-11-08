@@ -349,7 +349,8 @@ namespace ERIN
   ScenarioResults::ScenarioResults():
     is_good{false},
     results{},
-    statistics{}
+    statistics{},
+    keys{}
   {
   }
 
@@ -358,8 +359,12 @@ namespace ERIN
       std::unordered_map<std::string, std::vector<Datum>> results_):
     is_good{is_good_},
     results{std::move(results_)},
-    statistics{}
+    statistics{},
+    keys{}
   {
+    for (const auto& r: results)
+      keys.emplace_back(r.first);
+    std::sort(keys.begin(), keys.end());
   }
 
   std::string
@@ -371,18 +376,15 @@ namespace ERIN
     std::unordered_map<std::string, std::vector<FlowValueType>> requested_values;
     std::unordered_map<std::string, FlowValueType> last_values;
     std::unordered_map<std::string, FlowValueType> last_requested_values;
-    std::vector<std::string> keys;
-    for (const auto p: results) {
-      keys.emplace_back(p.first);
-      values[p.first] = std::vector<FlowValueType>();
-      requested_values[p.first] = std::vector<FlowValueType>();
-      last_values[p.first] = 0.0;
-      last_requested_values[p.first] = 0.0;
-      for (const auto d: p.second)
+    for (const auto k: keys) {
+      values[k] = std::vector<FlowValueType>();
+      requested_values[k] = std::vector<FlowValueType>();
+      last_values[k] = 0.0;
+      last_requested_values[k] = 0.0;
+      for (const auto d: results.at(k))
         times_set.emplace(d.time);
     }
     std::vector<RealTimeType> times{times_set.begin(), times_set.end()};
-    std::sort(keys.begin(), keys.end());
     for (const auto p: results) {
       for (const auto t: times) {
         auto k{p.first};
@@ -434,7 +436,7 @@ namespace ERIN
     for (const auto& r: results) {
       auto stat_it = statistics.find(r.first);
       if (stat_it == statistics.end())
-        this->statistics[r.first] = calc_scenario_stats(r.second);
+        statistics[r.first] = calc_scenario_stats(r.second);
       out[r.first] = do_calc_energy_availability(statistics[r.first]);
     }
     return out;

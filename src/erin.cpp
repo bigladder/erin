@@ -1,6 +1,9 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
 #include "../vendor/toml11/toml.hpp"
+#pragma clang diagnostic pop
 #include "debug_utils.h"
 #include "erin/erin.h"
 #include "erin_generics.h"

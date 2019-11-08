@@ -1,5 +1,8 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
+#include "../vendor/toml11/toml.hpp"
+#include "debug_utils.h"
+#include "erin/erin.h"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -8,9 +11,6 @@
 #include <stdexcept>
 #include <unordered_set>
 #include <utility>
-#include "../vendor/toml11/toml.hpp"
-#include "debug_utils.h"
-#include "erin/erin.h"
 
 namespace ERIN
 {

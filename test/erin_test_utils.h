@@ -14,7 +14,8 @@ namespace erin_test_utils
   template <class T>
   void compare_maps(
     const std::unordered_map<std::string, T>& expected,
-    const std::unordered_map<std::string, T>& actual)
+    const std::unordered_map<std::string, T>& actual,
+    const std::string& tag)
   {
     EXPECT_EQ(expected.size(), actual.size());
     for (const auto& e: expected) {
@@ -22,7 +23,9 @@ namespace erin_test_utils
       ASSERT_FALSE(a_it == actual.end());
       auto a_val = a_it->second;
       auto e_val = e.second;
-      EXPECT_NEAR(e_val, a_val, tolerance) << "key: " << e.first;
+      EXPECT_NEAR(e_val, a_val, tolerance)
+        << "tag: " << tag << "; "
+        << "key: " << e.first;
     }
   }
 

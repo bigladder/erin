@@ -817,36 +817,38 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   // Example 0
   ::ERIN::ScenarioResults sr0{
     true,
-    {{ std::string{"A"},
+    {{ std::string{"A0"},
        { ::ERIN::Datum{0,1.0,1.0},
          ::ERIN::Datum{4,0.0,0.0}}}}};
   // energy availability
-  std::unordered_map<std::string,double> expected0{{"A",1.0}};
+  std::unordered_map<std::string,double> expected0{{"A0",1.0}};
   auto actual0 = sr0.calc_energy_availability();
-  ::erin_test_utils::compare_maps<double>(expected0, actual0);
+  ::erin_test_utils::compare_maps<double>(
+      expected0, actual0, "energy_availability_with_sr0");
   // max downtime
   std::unordered_map<std::string,::ERIN::RealTimeType> expected0_max_downtime{
-    {"A",0}};
+    {"A0",0}};
   auto actual0_max_downtime = sr0.calc_max_downtime();
   ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
-      expected0_max_downtime, actual0_max_downtime);
+      expected0_max_downtime, actual0_max_downtime, "max_downtime_with_sr0");
   // Example 1
   ::ERIN::ScenarioResults sr1{
     true,
-    {{ std::string{"A"},
+    {{ std::string{"A1"},
        { ::ERIN::Datum{0,2.0,1.0},
          ::ERIN::Datum{2,0.5,0.5},
          ::ERIN::Datum{4,0.0,0.0}}}}};
   // energy availability
-  std::unordered_map<std::string,double> expected1{{"A",0.5}};
+  std::unordered_map<std::string,double> expected1{{"A1",0.5}};
   auto actual1 = sr1.calc_energy_availability();
-  ::erin_test_utils::compare_maps<double>(expected1, actual1);
+  ::erin_test_utils::compare_maps<double>(
+      expected1, actual1, "energy_availability_with_sr1");
   // max downtime
   std::unordered_map<std::string,::ERIN::RealTimeType> expected1_max_downtime{
-    {"A",2}};
+    {"A1",2}};
   auto actual1_max_downtime = sr1.calc_max_downtime();
   ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
-      expected1_max_downtime, actual1_max_downtime);
+      expected1_max_downtime, actual1_max_downtime, "max_downtime_with_sr1");
 }
 
 int

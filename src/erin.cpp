@@ -483,8 +483,7 @@ namespace ERIN
       req = d.requested_value;
       ach = d.achieved_value;
     }
-    return ScenarioStats{
-      uptime, downtime, load_not_served};
+    return ScenarioStats{uptime, downtime, load_not_served};
   }
 
   double

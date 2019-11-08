@@ -144,13 +144,6 @@ namespace ERIN
       std::unordered_map<std::string, std::vector<Datum>> results;
       std::unordered_map<std::string, ScenarioStats> statistics;
       std::vector<std::string> keys;
-
-      // TODO: how to we abstract calc_energy_availability() and calc_max_downtime()?
-      //template<class T>
-      //std::unordered_map<std::string,T> do_calcs()
-      //{
-
-      //}
   };
 
   ScenarioStats calc_scenario_stats(const std::vector<Datum>& ds);

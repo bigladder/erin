@@ -147,9 +147,12 @@ namespace ERIN
         get_results() const { return results; }
 
       [[nodiscard]] std::string to_csv(const RealTimeType& max_time) const;
-      [[nodiscard]] std::unordered_map<std::string,double> calc_energy_availability();
-      [[nodiscard]] std::unordered_map<std::string,RealTimeType> calc_max_downtime();
-      [[nodiscard]] std::unordered_map<std::string,FlowValueType> calc_load_not_served();
+      [[nodiscard]] std::unordered_map<std::string,double>
+        calc_energy_availability();
+      [[nodiscard]] std::unordered_map<std::string,RealTimeType>
+        calc_max_downtime();
+      [[nodiscard]] std::unordered_map<std::string,FlowValueType>
+        calc_load_not_served();
 
     private:
       bool is_good;

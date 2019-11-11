@@ -55,6 +55,7 @@ endif()
 add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
 add_executable(str8760 stress_test_8760.cpp ${sources} ${public_headers} ${private_headers})
 add_executable(str8760x5000 stress_test_8760x5000.cpp ${sources} ${public_headers} ${private_headers})
+add_executable(limits limits.cpp)
 
 # Add Warnings
 if(MSVC)

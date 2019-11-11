@@ -123,12 +123,13 @@ TEST(ErinBasicsTest, StandaloneSink)
 {
   auto st = ::ERIN::StreamType("electrical");
   auto sink = new ::ERIN::Sink(
-      "load", st,
+      "load", ::ERIN::ComponentType::Load, st,
       {::ERIN::LoadItem{0,100},
        ::ERIN::LoadItem{1,10},
        ::ERIN::LoadItem{2,0},
        ::ERIN::LoadItem{3}});
-  auto meter = new ::ERIN::FlowMeter("meter", st);
+  auto meter = new ::ERIN::FlowMeter(
+      "meter", ::ERIN::ComponentType::Load, st);
   adevs::Digraph<::ERIN::FlowValueType> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
@@ -152,11 +153,12 @@ TEST(ErinBasicsTest, CanRunSourceSink)
   std::vector<::ERIN::FlowValueType> expected_flow = {100, 0};
   auto st = ::ERIN::StreamType("electrical");
   auto sink = new ::ERIN::Sink(
-      "sink", st, {
+      "sink", ::ERIN::ComponentType::Load, st, {
           ::ERIN::LoadItem{0,100},
           ::ERIN::LoadItem{1,0},
           ::ERIN::LoadItem{2}});
-  auto meter = new ::ERIN::FlowMeter("meter", st);
+  auto meter = new ::ERIN::FlowMeter(
+      "meter", ::ERIN::ComponentType::Load, st);
   adevs::Digraph<::ERIN::FlowValueType> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
@@ -190,11 +192,11 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2, 3};
   std::vector<::ERIN::FlowValueType> expected_flow = {50, 50, 40, 0};
   auto elec = ::ERIN::StreamType("electrical");
-  auto meter2 = new ::ERIN::FlowMeter("meter2", elec);
-  auto lim = new ::ERIN::FlowLimits("lim", elec, 0, 50);
-  auto meter1 = new ::ERIN::FlowMeter("meter1", elec);
+  auto meter2 = new ::ERIN::FlowMeter("meter2", ::ERIN::ComponentType::Source, elec);
+  auto lim = new ::ERIN::FlowLimits("lim", ::ERIN::ComponentType::Source, elec, 0, 50);
+  auto meter1 = new ::ERIN::FlowMeter("meter1", ::ERIN::ComponentType::Load, elec);
   auto sink = new ::ERIN::Sink(
-      "electric-load", elec,
+      "electric-load", ::ERIN::ComponentType::Load, elec,
       {
           ::ERIN::LoadItem{0, 160},
           ::ERIN::LoadItem{1,80},
@@ -276,23 +278,28 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   };
   auto diesel = ::ERIN::StreamType("diesel");
   auto elec = ::ERIN::StreamType("electrical");
-  auto diesel_fuel_meter = new ::ERIN::FlowMeter("diesel_fuel_meter", diesel);
+  auto diesel_fuel_meter = new ::ERIN::FlowMeter(
+      "diesel_fuel_meter", ::ERIN::ComponentType::Source, diesel);
   auto genset_tx = new ::ERIN::Converter(
       "genset_tx",
+      ::ERIN::ComponentType::Converter,
       diesel,
       elec,
       calc_output_given_input,
       calc_input_given_output
       );
-  auto genset_lim = new ::ERIN::FlowLimits("genset_lim", elec, 0, 50);
-  auto genset_meter = new ::ERIN::FlowMeter("genset_meter", elec);
+  auto genset_lim = new ::ERIN::FlowLimits(
+      "genset_lim", ::ERIN::ComponentType::Converter, elec, 0, 50);
+  auto genset_meter = new ::ERIN::FlowMeter(
+      "genset_meter", ::ERIN::ComponentType::Converter, elec);
   std::vector<::ERIN::LoadItem> load_profile{
     ::ERIN::LoadItem{0,160},
       ::ERIN::LoadItem{1,80},
       ::ERIN::LoadItem{2,40},
       ::ERIN::LoadItem{3,0},
       ::ERIN::LoadItem{4}};
-  auto sink = new ::ERIN::Sink("electric_load", elec, load_profile);
+  auto sink = new ::ERIN::Sink(
+      "electric_load", ::ERIN::ComponentType::Load, elec, load_profile);
   adevs::Digraph<::ERIN::FlowValueType> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,

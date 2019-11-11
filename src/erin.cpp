@@ -20,6 +20,42 @@ namespace ERIN
 {
   const FlowValueType flow_value_tolerance{1e-6};
 
+  ComponentType
+  tag_to_component_type(const std::string& tag)
+  {
+    if (tag == "load") {
+      return ComponentType::Load;
+    }
+    else if (tag == "source") {
+      return ComponentType::Source;
+    }
+    else if (tag == "converter") {
+      return ComponentType::Converter;
+    }
+    else {
+      std::ostringstream oss;
+      oss << "Unhandled tag \"" << tag << "\"";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  std::string
+  component_type_to_tag(ComponentType ct)
+  {
+    switch(ct) {
+      case ComponentType::Load:
+        return std::string{"load"};
+      case ComponentType::Source:
+        return std::string{"source"};
+      case ComponentType::Converter:
+        return std::string{"converter"};
+      default:
+        std::ostringstream oss;
+        oss << "Unhandled ComponentType \"" << static_cast<int>(ct) << "\"";
+        throw std::invalid_argument(oss.str());
+    }
+  }
+
   ////////////////////////////////////////////////////////////
   // StreamInfo
   StreamInfo::StreamInfo():
@@ -830,11 +866,11 @@ namespace ERIN
   // Component
   Component::Component(
       std::string id_,
-      std::string type_,
+      ComponentType type_,
       StreamType input_stream_,
       StreamType output_stream_):
     id{std::move(id_)},
-    component_type{std::move(type_)},
+    component_type{type_},
     input_stream{std::move(input_stream_)},
     output_stream{std::move(output_stream_)},
     inputs{},
@@ -883,7 +919,7 @@ namespace ERIN
       const StreamType& input_stream_,
       std::unordered_map<
         std::string,std::vector<LoadItem>> loads_by_scenario_):
-    Component(id_, "load", input_stream_, input_stream_),
+    Component(id_, ComponentType::Load, input_stream_, input_stream_),
     loads_by_scenario{std::move(loads_by_scenario_)}
   {
   }
@@ -892,7 +928,7 @@ namespace ERIN
   LoadComponent::create_connecting_element()
   {
     DB_PUTS("LoadComponent::create_connecting_element()");
-    auto p = new FlowMeter(get_id(), get_input_stream());
+    auto p = new FlowMeter(get_id(), ComponentType::Load, get_input_stream());
     DB_PUTS2("LoadComponent.connecting_element = ", p);
     return p;
   }
@@ -906,6 +942,7 @@ namespace ERIN
     DB_PUTS("LoadComponent::add_to_network(adevs::Digraph<FlowValueType>& network)");
     auto sink = new Sink(
         get_id(),
+        ComponentType::Load,
         get_input_stream(),
         loads_by_scenario[active_scenario]);
     elements.emplace(sink);
@@ -930,7 +967,7 @@ namespace ERIN
   SourceComponent::SourceComponent(
       const std::string& id_,
       const StreamType& output_stream_):
-    Component(id_, "source", output_stream_, output_stream_)
+    Component(id_, ComponentType::Source, output_stream_, output_stream_)
   {
   }
 
@@ -956,7 +993,7 @@ namespace ERIN
   SourceComponent::create_connecting_element()
   {
     DB_PUTS("SourceComponent::create_connecting_element()");
-    auto p = new FlowMeter(get_id(), get_output_stream());
+    auto p = new FlowMeter(get_id(), ComponentType::Source, get_output_stream());
     DB_PUTS2("SourceComponent.p = ", p);
     return p;
   }
@@ -989,13 +1026,17 @@ namespace ERIN
   const int FlowElement::outport_inflow_request = 2;
   const int FlowElement::outport_outflow_achieved = 3;
 
-  FlowElement::FlowElement(std::string id_, StreamType st) :
-    FlowElement(std::move(id_), st, st)
+  FlowElement::FlowElement(
+      std::string id_,
+      ComponentType component_type_,
+      StreamType st) :
+    FlowElement(std::move(id_), component_type_, st, st)
   {
   }
 
   FlowElement::FlowElement(
       std::string id_,
+      ComponentType component_type_,
       StreamType in,
       StreamType out):
     adevs::Atomic<PortValue>(),
@@ -1008,7 +1049,8 @@ namespace ERIN
     storeflow{0},
     lossflow{0},
     report_inflow_request{false},
-    report_outflow_achieved{false}
+    report_outflow_achieved{false},
+    component_type{component_type_}
   {
     if (inflow_type.get_rate_units() != outflow_type.get_rate_units())
       throw InconsistentStreamUnitsError();
@@ -1198,10 +1240,11 @@ namespace ERIN
   // FlowLimits
   FlowLimits::FlowLimits(
       std::string id,
+      ComponentType component_type,
       StreamType stream_type,
       FlowValueType low_lim,
       FlowValueType up_lim) :
-    FlowElement(std::move(id), stream_type),
+    FlowElement(std::move(id), component_type, stream_type),
     lower_limit{low_lim},
     upper_limit{up_lim}
   {
@@ -1259,8 +1302,11 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // FlowMeter
-  FlowMeter::FlowMeter(std::string id, StreamType stream_type) :
-    FlowElement(std::move(id), stream_type),
+  FlowMeter::FlowMeter(
+      std::string id,
+      ComponentType component_type,
+      StreamType stream_type) :
+    FlowElement(std::move(id), component_type, stream_type),
     event_times{},
     requested_flows{},
     achieved_flows{}
@@ -1345,12 +1391,17 @@ namespace ERIN
   // Converter
   Converter::Converter(
       std::string id,
+      ComponentType component_type,
       StreamType input_stream_type,
       StreamType output_stream_type,
       std::function<FlowValueType(FlowValueType)> calc_output_from_input,
       std::function<FlowValueType(FlowValueType)> calc_input_from_output
       ) :
-    FlowElement(std::move(id), input_stream_type, output_stream_type),
+    FlowElement(
+        std::move(id),
+        component_type,
+        input_stream_type,
+        output_stream_type),
     output_from_input{std::move(calc_output_from_input)},
     input_from_output{std::move(calc_input_from_output)}
   {
@@ -1373,9 +1424,10 @@ namespace ERIN
   // Sink
   Sink::Sink(
       std::string id,
+      ComponentType component_type,
       const StreamType& st,
       const std::vector<LoadItem>& loads_):
-    FlowElement(std::move(id), st, st),
+    FlowElement(std::move(id), component_type, st, st),
     loads{loads_},
     idx{-1},
     num_loads{loads_.size()}

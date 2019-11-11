@@ -23,6 +23,17 @@ namespace ERIN
   typedef int LogicalTimeType;
 
   ////////////////////////////////////////////////////////////
+  // ComponentType
+  enum class ComponentType
+  {
+    Load = 0,
+    Source,
+    Converter
+  };
+
+  ComponentType tag_to_component_type(const std::string& tag);
+
+  ////////////////////////////////////////////////////////////
   // Datum
   struct Datum
   {
@@ -426,11 +437,16 @@ namespace ERIN
       }
       [[nodiscard]] const StreamType& get_inflow_type() const { return inflow_type; };
       [[nodiscard]] const StreamType& get_outflow_type() const { return outflow_type; };
+      [[nodiscard]] ComponentType get_component_type() const {
+        return component_type;
+      };
 
     protected:
-      FlowElement(std::string id, StreamType flow_type);
       FlowElement(
-          std::string id, StreamType inflow_type, StreamType outflow_type);
+          std::string id, ComponentType component_type, StreamType flow_type);
+      FlowElement(
+          std::string id, ComponentType component_type,
+          StreamType inflow_type, StreamType outflow_type);
       [[nodiscard]] virtual FlowState
         update_state_for_outflow_request(FlowValueType outflow_) const;
       [[nodiscard]] virtual FlowState
@@ -462,6 +478,7 @@ namespace ERIN
       FlowValueType lossflow;
       bool report_inflow_request;
       bool report_outflow_achieved;
+      ComponentType component_type;
 
       void update_state(const FlowState& fs);
       static constexpr FlowValueType tol{1e-6};
@@ -475,6 +492,7 @@ namespace ERIN
     public:
       FlowLimits(
           std::string id,
+          ComponentType component_type,
           StreamType stream_type,
           FlowValueType lower_limit,
           FlowValueType upper_limit
@@ -494,7 +512,8 @@ namespace ERIN
   class FlowMeter : public FlowElement
   {
     public:
-      FlowMeter(std::string id, StreamType stream_type);
+      FlowMeter(
+          std::string id, ComponentType component_type, StreamType stream_type);
       [[nodiscard]] std::vector<RealTimeType> get_event_times() const;
       [[nodiscard]] std::vector<FlowValueType> get_achieved_flows() const;
       [[nodiscard]] std::vector<FlowValueType> get_requested_flows() const;
@@ -516,6 +535,7 @@ namespace ERIN
     public:
       Converter(
           std::string id,
+          ComponentType component_type,
           StreamType input_stream_type,
           StreamType output_stream_type,
           std::function<FlowValueType(FlowValueType)> calc_output_from_input,
@@ -538,6 +558,7 @@ namespace ERIN
     public:
       Sink(
           std::string id,
+          ComponentType component_type,
           const StreamType& stream_type,
           const std::vector<LoadItem>& loads);
 
@@ -565,15 +586,15 @@ namespace ERIN
       Component(const Component&) = delete;
       Component& operator=(const Component&) = delete;
       Component(
-          std::string  id,
-          std::string  type,
-          StreamType  input_stream,
-          StreamType  output_stream);
+          std::string id,
+          ComponentType type,
+          StreamType input_stream,
+          StreamType output_stream);
       virtual ~Component() = default;;
 
       void add_input(std::shared_ptr<Component>& c);
       [[nodiscard]] const std::string& get_id() const { return id; }
-      [[nodiscard]] const std::string& get_component_type() const { return component_type; }
+      [[nodiscard]] ComponentType get_component_type() const { return component_type; }
       [[nodiscard]] const StreamType& get_input_stream() const { return input_stream; }
       [[nodiscard]] const StreamType& get_output_stream() const { return output_stream; }
 
@@ -596,7 +617,7 @@ namespace ERIN
 
     private:
       std::string id;
-      std::string component_type;
+      ComponentType component_type;
       StreamType input_stream;
       StreamType output_stream;
       std::vector<std::shared_ptr<Component>> inputs;

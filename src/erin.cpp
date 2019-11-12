@@ -624,8 +624,9 @@ namespace ERIN
     while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
       sim.exec_next_event();
       t = sim.now();
-      if (t.real == t_last_real)
+      if (t.real == t_last_real) {
         ++non_advance_count;
+      }
       else {
         non_advance_count = 0;
         t_last_real = t.real;

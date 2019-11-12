@@ -141,7 +141,9 @@ namespace ERIN
       ScenarioResults();
       ScenarioResults(
           bool is_good_,
-          std::unordered_map<std::string,std::vector<Datum>> results_);
+          const std::unordered_map<std::string,std::vector<Datum>>& results,
+          const std::unordered_map<std::string,StreamType>& stream_types,
+          const std::unordered_map<std::string,ComponentType>& component_types);
       [[nodiscard]] bool get_is_good() const { return is_good; }
       [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const { return results; }
@@ -153,10 +155,14 @@ namespace ERIN
         calc_max_downtime();
       [[nodiscard]] std::unordered_map<std::string,FlowValueType>
         calc_load_not_served();
+      //[[nodiscard]] std::unordered_map<std::string,FlowValueType>
+      //  calc_energy_usage_by_stream(ComponentType ct);
 
     private:
       bool is_good;
       std::unordered_map<std::string, std::vector<Datum>> results;
+      std::unordered_map<std::string, StreamType> stream_types;
+      std::unordered_map<std::string, ComponentType> component_types;
       std::unordered_map<std::string, ScenarioStats> statistics;
       std::vector<std::string> keys;
   };

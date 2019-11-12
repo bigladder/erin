@@ -387,18 +387,19 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // ScenarioResults
   ScenarioResults::ScenarioResults():
-    is_good{false},
-    results{},
-    statistics{},
-    keys{}
+    ScenarioResults(false,{},{},{})
   {
   }
 
   ScenarioResults::ScenarioResults(
       bool is_good_,
-      std::unordered_map<std::string, std::vector<Datum>> results_):
+      const std::unordered_map<std::string, std::vector<Datum>>& results_,
+      const std::unordered_map<std::string, StreamType>& stream_types_,
+      const std::unordered_map<std::string, ComponentType>& component_types_):
     is_good{is_good_},
-    results{std::move(results_)},
+    results{results_},
+    stream_types{stream_types_},
+    component_types{component_types_},
     statistics{},
     keys{}
   {
@@ -504,6 +505,13 @@ namespace ERIN
       }
     );
   }
+
+  //std::unordered_map<std::string, FlowValueType>
+  //ScenarioResults::calc_energy_usage_by_stream(ComponentType ct)
+  //{
+  //  std::unordered_map<std::string, FlowValueType> out{};
+  //  return out;
+  //}
 
   ScenarioStats
   calc_scenario_stats(const std::vector<Datum>& ds)
@@ -641,13 +649,28 @@ namespace ERIN
     }
     // 3. Return outputs.
     std::unordered_map<std::string, std::vector<Datum>> results;
+    std::unordered_map<std::string,ComponentType> comp_types;
+    std::unordered_map<std::string,StreamType> stream_types;
     for (const auto& e: elements) {
       auto vals = e->get_results();
-      if (!vals.empty())
+      if (!vals.empty()) {
+        auto id{e->get_id()};
+        auto in_st{e->get_inflow_type()};
+        auto out_st{e->get_outflow_type()};
+        if (in_st != out_st) {
+          throw MixedStreamsError();
+        }
+        comp_types.insert(
+            std::pair<std::string,ComponentType>(
+              id, e->get_component_type()));
+        stream_types.insert(
+            std::pair<std::string,StreamType>(
+              id, in_st));
         results.insert(
             std::pair<std::string,std::vector<Datum>>(e->get_id(), vals));
+      }
     }
-    return ScenarioResults{sim_good, results};
+    return ScenarioResults{sim_good, results, stream_types, comp_types};
   }
 
   RealTimeType

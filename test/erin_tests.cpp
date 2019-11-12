@@ -733,36 +733,29 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
 {
   ::ERIN::ScenarioResults out{
     true,
-    {
+    {{std::string{"A"},
       {
-        std::string{"A"},
-        {
-          ::ERIN::Datum{0,1.0,1.0},
-          ::ERIN::Datum{1,0.5,0.5},
-          ::ERIN::Datum{2,0.0,0.0}
-        }
-      },
-      {
-        std::string{"B"},
-        {
-          ::ERIN::Datum{0,10.0,10.0},
-          ::ERIN::Datum{2,5.0,5.0},
-          ::ERIN::Datum{4,0.0,0.0}
-        }
-      }
-    }};
+        ::ERIN::Datum{0,1.0,1.0},
+        ::ERIN::Datum{1,0.5,0.5},
+        ::ERIN::Datum{2,0.0,0.0}}},
+     {std::string{"B"},
+       {
+         ::ERIN::Datum{0,10.0,10.0},
+         ::ERIN::Datum{2,5.0,5.0},
+         ::ERIN::Datum{4,0.0,0.0}}}},
+    {{std::string{"A"}, ::ERIN::StreamType("electrical")},
+     {std::string{"B"}, ::ERIN::StreamType("electrical")}},
+    {{std::string{"A"}, ::ERIN::ComponentType::Load},
+     {std::string{"B"}, ::ERIN::ComponentType::Source}}};
   auto actual = out.to_csv(4);
   std::string expected{"time,A:achieved,A:requested,B:achieved,B:requested\n"
     "0,1,1,10,10\n1,0.5,0.5,10,10\n2,0,0,5,5\n4,0,0,0,0\n"};
   EXPECT_EQ(expected, actual);
   ::ERIN::ScenarioResults out2{
     true,
-    {
-      {
-        std::string{"A"},
-        {::ERIN::Datum{0,1.0,1.0}}
-      }
-    }
+    {{std::string{"A"}, {::ERIN::Datum{0,1.0,1.0}}}},
+    {{std::string{"A"}, ::ERIN::StreamType("electrical")}},
+    {{std::string{"A"}, ::ERIN::ComponentType::Load}}
   };
   auto actual2 = out2.to_csv(4);
   std::string expected2{"time,A:achieved,A:requested\n0,1,1\n4,0,0\n"};
@@ -826,7 +819,11 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
     true,
     {{ std::string{"A0"},
        { ::ERIN::Datum{0,1.0,1.0},
-         ::ERIN::Datum{4,0.0,0.0}}}}};
+         ::ERIN::Datum{4,0.0,0.0}}}},
+    {{ std::string{"A0"},
+       ::ERIN::StreamType("electrical")}},
+    {{ std::string{"A0"},
+       ::ERIN::ComponentType::Source}}};
   // energy_availability
   std::unordered_map<std::string,double> expected0{{"A0",1.0}};
   auto actual0 = sr0.calc_energy_availability();
@@ -844,13 +841,24 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   auto actual0_lns = sr0.calc_load_not_served();
   ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
       expected0_lns, actual0_lns, "load_not_served_with_sr0");
+  // energy_usage_by_stream
+  std::unordered_map<std::string,::ERIN::FlowValueType> expected0_eubs{
+    {"electrical", 4.0}};
+  //auto actual0_eubs = sr0.calc_energy_usage_by_stream(
+  //    ::ERIN::ComponentType::Source);
+  //::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
+  //    expected0_eubs, actual0_eubs, "energy_usage_by_stream_with_sr0");
   // ## Example 1
   ::ERIN::ScenarioResults sr1{
     true,
     {{ std::string{"A1"},
        { ::ERIN::Datum{0,2.0,1.0},
          ::ERIN::Datum{2,0.5,0.5},
-         ::ERIN::Datum{4,0.0,0.0}}}}};
+         ::ERIN::Datum{4,0.0,0.0}}}},
+    {{ std::string{"A1"},
+       ::ERIN::StreamType("electrical")}},
+    {{ std::string{"A1"},
+       ::ERIN::ComponentType::Source}}};
   // energy_availability
   std::unordered_map<std::string,double> expected1{{"A1",0.5}};
   auto actual1 = sr1.calc_energy_availability();
@@ -868,6 +876,13 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   auto actual1_lns = sr1.calc_load_not_served();
   ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
       expected1_lns, actual1_lns, "load_not_served_with_sr1");
+  // energy_usage_by_stream
+  std::unordered_map<std::string,::ERIN::FlowValueType> expected1_eubs{
+    {"electrical", 3.0}};
+  //auto actual1_eubs = sr1.calc_energy_usage_by_stream(
+  //    ::ERIN::ComponentType::Source);
+  //::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
+  //    expected1_eubs, actual1_eubs, "energy_usage_by_stream_with_sr1");
 }
 
 int

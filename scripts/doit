@@ -1,5 +1,5 @@
 #!/bin/bash
-if ! cmake -DERIN_TESTING=ON -DDO_DEBUG_PRINT=OFF ..; then
+if ! cmake -DERIN_TESTING=ON -DDO_DEBUG_PRINT=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..; then
   echo CMAKE CALL FAILED!
   exit 1
 fi
@@ -17,3 +17,16 @@ if ! ./bin/e2rin ../docs/examples/ex01.toml out.csv "blue_sky"; then
 fi
 cat out.csv
 time ./bin/str8760
+mkdir -p tidy
+echo Running Clang Tidy...
+clang-tidy -p compile_commands.json -header-filter=.* ../include/erin/erin.h > tidy/erin.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/cli.cpp > tidy/cli.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/debug_utils.h > tidy/debug_utils.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/erin.cpp > tidy/erin.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/erin_generics.h > tidy/erin_generics.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/limits.cpp > tidy/limits.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/stress_test_8760.cpp > tidy/stress_test_8760.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/stress_test_8760x5000.cpp > tidy/stress_test_8760x5000.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/erin_test_utils.h > tidy/erin_test_utils.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/erin_tests.cpp > tidy/erin_tests.cpp.txt
+echo Done!

@@ -49,6 +49,7 @@ namespace ERIN
     RealTimeType uptime;
     RealTimeType downtime;
     FlowValueType load_not_served;
+    FlowValueType total_energy;
   };
 
   ////////////////////////////////////////////////////////////
@@ -155,8 +156,8 @@ namespace ERIN
         calc_max_downtime();
       [[nodiscard]] std::unordered_map<std::string,FlowValueType>
         calc_load_not_served();
-      //[[nodiscard]] std::unordered_map<std::string,FlowValueType>
-      //  calc_energy_usage_by_stream(ComponentType ct);
+      [[nodiscard]] std::unordered_map<std::string,FlowValueType>
+        calc_energy_usage_by_stream(ComponentType ct);
 
     private:
       bool is_good;

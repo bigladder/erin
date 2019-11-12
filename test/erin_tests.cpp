@@ -844,10 +844,10 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   // energy_usage_by_stream
   std::unordered_map<std::string,::ERIN::FlowValueType> expected0_eubs{
     {"electrical", 4.0}};
-  //auto actual0_eubs = sr0.calc_energy_usage_by_stream(
-  //    ::ERIN::ComponentType::Source);
-  //::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
-  //    expected0_eubs, actual0_eubs, "energy_usage_by_stream_with_sr0");
+  auto actual0_eubs = sr0.calc_energy_usage_by_stream(
+      ::ERIN::ComponentType::Source);
+  ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
+      expected0_eubs, actual0_eubs, "energy_usage_by_stream_with_sr0");
   // ## Example 1
   ::ERIN::ScenarioResults sr1{
     true,
@@ -879,10 +879,10 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   // energy_usage_by_stream
   std::unordered_map<std::string,::ERIN::FlowValueType> expected1_eubs{
     {"electrical", 3.0}};
-  //auto actual1_eubs = sr1.calc_energy_usage_by_stream(
-  //    ::ERIN::ComponentType::Source);
-  //::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
-  //    expected1_eubs, actual1_eubs, "energy_usage_by_stream_with_sr1");
+  auto actual1_eubs = sr1.calc_energy_usage_by_stream(
+      ::ERIN::ComponentType::Source);
+  ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
+      expected1_eubs, actual1_eubs, "energy_usage_by_stream_with_sr1");
 }
 
 int

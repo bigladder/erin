@@ -506,12 +506,27 @@ namespace ERIN
     );
   }
 
-  //std::unordered_map<std::string, FlowValueType>
-  //ScenarioResults::calc_energy_usage_by_stream(ComponentType ct)
-  //{
-  //  std::unordered_map<std::string, FlowValueType> out{};
-  //  return out;
-  //}
+  std::unordered_map<std::string, FlowValueType>
+  ScenarioResults::calc_energy_usage_by_stream(ComponentType ct)
+  {
+    std::unordered_map<std::string, FlowValueType> out{};
+    for (const auto k: keys) {
+      auto stat_it = statistics.find(k);
+      if (stat_it == statistics.end()) {
+        statistics[k] = calc_scenario_stats(results.at(k));
+      }
+      auto st_id = stream_types.at(k).get_type();
+      auto the_ct = component_types.at(k);
+      if (the_ct == ct) {
+        auto it = out.find(st_id);
+        if (it == out.end()) {
+          out[st_id] = 0.0;
+        }
+        out[st_id] += statistics[k].total_energy;
+      }
+    }
+    return out;
+  }
 
   ScenarioStats
   calc_scenario_stats(const std::vector<Datum>& ds)
@@ -521,6 +536,7 @@ namespace ERIN
     RealTimeType t0{0};
     FlowValueType req{0};
     FlowValueType ach{0};
+    FlowValueType ach_energy{0};
     FlowValueType load_not_served{0.0};
     for (const auto d: ds) {
       if (d.time == 0) {
@@ -539,9 +555,10 @@ namespace ERIN
         uptime += dt;
       load_not_served += dt * gap;
       req = d.requested_value;
+      ach_energy += ach * dt;
       ach = d.achieved_value;
     }
-    return ScenarioStats{uptime, downtime, load_not_served};
+    return ScenarioStats{uptime, downtime, load_not_served, ach_energy};
   }
 
   //////////////////////////////////////////////////////////// 

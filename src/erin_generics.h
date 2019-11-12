@@ -3,6 +3,10 @@
 
 #ifndef ERIN_GENERICS_H
 #define ERIN_GENERICS_H
+#include <functional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace erin_generics
 {

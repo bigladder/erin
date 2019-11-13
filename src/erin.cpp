@@ -544,7 +544,7 @@ namespace ERIN
     auto lns = calc_load_not_served();
     auto eubs_src = calc_energy_usage_by_stream(ComponentType::Source);
     auto eubs_load = calc_energy_usage_by_stream(ComponentType::Load);
-    if (debug_print) {
+    if (debug_level >= debug_level_high) {
       std::cout << "metrics printout\n";
       std::cout << "results:\n";
       for (const auto& r: results) {

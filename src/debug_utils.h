@@ -6,7 +6,10 @@
 
 namespace ERIN
 {
-  constexpr bool debug_print{true};
+  constexpr int debug_level{1};
+  constexpr int debug_level_high{3};
+  constexpr int debug_level_medium{2};
+  constexpr int debug_level_low{1};
 #ifdef DEBUG_PRINT
 #define DB_PUTS(x) do { \
   std::cerr << x << std::endl; \

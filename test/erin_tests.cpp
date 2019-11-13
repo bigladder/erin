@@ -673,10 +673,13 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
     EXPECT_TRUE(it != expected_keys.end());
-    ASSERT_EQ(item.second.size(), 1);
+    ASSERT_EQ(item.second.size(), 2);
     EXPECT_EQ(item.second.at(0).time, 0);
     EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
     EXPECT_EQ(item.second.at(0).requested_value, 1.0);
+    EXPECT_EQ(item.second.at(1).time, 1);
+    EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
+    EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
   }
 }
 

@@ -645,6 +645,7 @@ namespace ERIN
     adevs::Simulator<PortValue> sim;
     network.add(&sim);
     adevs::Time t;
+    const auto max_time = the_scenario->get_max_time();
     const auto max_non_advance{comps_in_use.size() * 10};
     auto non_advance_count{max_non_advance*0};
     auto t_last_real = sim.now().real;
@@ -672,7 +673,7 @@ namespace ERIN
     std::unordered_map<std::string,ComponentType> comp_types;
     std::unordered_map<std::string,StreamType> stream_types;
     for (const auto& e: elements) {
-      auto vals = e->get_results();
+      auto vals = e->get_results(max_time);
       if (!vals.empty()) {
         auto id{e->get_id()};
         auto in_st{e->get_inflow_type()};
@@ -1376,15 +1377,20 @@ namespace ERIN
   }
 
   std::vector<Datum>
-  FlowMeter::get_results() const
+  FlowMeter::get_results(RealTimeType max_time) const
   {
     const auto num_events{event_times.size()};
     if ((requested_flows.size() != num_events)
-        || (achieved_flows.size() != num_events))
+        || (achieved_flows.size() != num_events)) {
       throw InvariantError();
+    }
     std::vector<Datum> results(num_events);
-    for (std::vector<Datum>::size_type i=0; i < num_events; ++i)
+    for (std::vector<Datum>::size_type i=0; i < num_events; ++i) {
       results[i] = Datum{event_times[i], requested_flows[i], achieved_flows[i]};
+    }
+    if (results[num_events-1].time != max_time) {
+      results.emplace_back(Datum{max_time, 0.0, 0.0});
+    }
     return results;
   }
 

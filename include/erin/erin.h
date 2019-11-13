@@ -456,9 +456,10 @@ namespace ERIN
       FlowElement& operator=(const FlowElement&) = delete;
 
       [[nodiscard]] const std::string& get_id() const { return id; }
-      [[nodiscard]] virtual std::vector<Datum> get_results() const {
-        return std::vector<Datum>(0);
-      }
+      [[nodiscard]] virtual std::vector<Datum>
+        get_results(RealTimeType /* max_time */) const {
+          return std::vector<Datum>(0);
+        }
       [[nodiscard]] const StreamType& get_inflow_type() const { return inflow_type; };
       [[nodiscard]] const StreamType& get_outflow_type() const { return outflow_type; };
       [[nodiscard]] ComponentType get_component_type() const {
@@ -541,7 +542,8 @@ namespace ERIN
       [[nodiscard]] std::vector<RealTimeType> get_event_times() const;
       [[nodiscard]] std::vector<FlowValueType> get_achieved_flows() const;
       [[nodiscard]] std::vector<FlowValueType> get_requested_flows() const;
-      [[nodiscard]] std::vector<Datum> get_results() const override;
+      [[nodiscard]] std::vector<Datum>
+        get_results(RealTimeType max_time) const override;
 
     protected:
       void update_on_external_transition() override;

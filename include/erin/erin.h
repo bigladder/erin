@@ -413,9 +413,11 @@ namespace ERIN
     public:
       Scenario(std::string  name, std::string  network_id, RealTimeType max_times);
 
-      [[nodiscard]] const std::string& get_name() const { return name; };
-      [[nodiscard]] RealTimeType get_max_time() const { return max_time; };
-      [[nodiscard]] const std::string& get_network_id() const { return network_id; };
+      [[nodiscard]] const std::string& get_name() const { return name; }
+      [[nodiscard]] RealTimeType get_max_time() const { return max_time; }
+      [[nodiscard]] const std::string& get_network_id() const {
+        return network_id;
+      }
       bool operator==(const Scenario& other) const;
       bool operator!=(const Scenario& other) const {
         return !(operator==(other));

@@ -5,6 +5,7 @@
 #define ERIN_ERIN_H
 #include <exception>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -41,6 +42,9 @@ namespace ERIN
     FlowValueType requested_value;
     FlowValueType achieved_value;
   };
+
+  void
+  print_datum(std::ostream& os, const Datum& d);
 
   ////////////////////////////////////////////////////////////
   // ScenarioStats

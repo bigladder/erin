@@ -82,6 +82,7 @@ puts("-"*60)
 if num_issues > 0
   puts "#{num_issues} regressions found"
   issues.keys.sort.each do |k|
+    next if issues[k].nil?
     puts "#{k}:"
     puts "  #{issues[k]}"
   end

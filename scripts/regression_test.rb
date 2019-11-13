@@ -45,8 +45,16 @@ examples.each do |ex|
     File.join(THIS_DIR, "..", "test", "reference", "#{root}-out.csv"))
   expected_stats = File.expand_path(
     File.join(THIS_DIR, "..", "test", "reference", "#{root}-stats.csv"))
-  scenario_id = File.read(File.expand_path(
-    File.join(THIS_DIR, "..", "test", "reference", "#{root}-scenario-id.txt"))).strip
+  scenario_id_path = File.expand_path(
+    File.join(THIS_DIR, "..", "test", "reference", "#{root}-scenario-id.txt"))
+  scenario_id = nil
+  if File.exist?(scenario_id_path)
+    scenario_id = File.read(scenario_id_path).strip
+  else
+    issues[root] = "scenario_id file not found at \"#{scenario_id_path}\""
+    num_issues += 1
+    next
+  end
   puts "Running #{root}..."
   Dir.mktmpdir do |dir|
     status = system("#{exe_path} #{ex} out.csv stats.csv \"#{scenario_id}\"")

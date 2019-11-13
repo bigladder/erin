@@ -13,7 +13,10 @@
 #include <unordered_set>
 #include <vector>
 #include "../../vendor/bdevs/include/adevs.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
 #include "../../vendor/toml11/toml.hpp"
+#pragma clang diagnostic pop
 
 namespace ERIN
 {

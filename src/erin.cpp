@@ -546,13 +546,16 @@ namespace ERIN
       }
       auto dt = d.time - t0;
       t0 = d.time;
-      if (dt <= 0)
+      if (dt <= 0) {
         throw InvariantError();
+      }
       auto gap = std::fabs(req - ach);
-      if (gap > flow_value_tolerance)
+      if (gap > flow_value_tolerance) {
         downtime += dt;
-      else
+      }
+      else {
         uptime += dt;
+      }
       load_not_served += dt * gap;
       req = d.requested_value;
       ach_energy += ach * dt;

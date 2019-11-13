@@ -10,26 +10,6 @@ namespace ERIN
   constexpr int debug_level_high{3};
   constexpr int debug_level_medium{2};
   constexpr int debug_level_low{1};
-#ifdef DEBUG_PRINT
-#define DB_PUTS(x) do { \
-  std::cerr << x << std::endl; \
-} while (0)
-#define DB_PUTS2(x,y) do { \
-  std::cerr << x << y << std::endl; \
-} while (0)
-#define DB_PUTS3(x,y,z) do { \
-  std::cerr << x << y << z << std::endl; \
-} while (0)
-#define DB_PUTS4(a,b,c,d) do { \
-  std::cerr << a << b << c << d << std::endl; \
-} while (0)
-#else
-#define DB_PUTS(x)
-#define DB_PUTS2(x,y)
-#define DB_PUTS3(x,y,z)
-#define DB_PUTS4(a,b,c,d)
-#endif
-
 }
 
 #endif // ERIN_DEBUG_UTILS_H

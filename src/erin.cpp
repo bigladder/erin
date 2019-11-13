@@ -148,10 +148,14 @@ namespace ERIN
     if (seconds_per_time_unit < 0.0)
       throw BadInputError();
     StreamInfo si{rate_unit, quantity_unit, seconds_per_time_unit};
-    DB_PUTS2("stream_info.rate_unit = ", si.get_rate_unit());
-    DB_PUTS2("stream_info.quantity_unit = ", si.get_quantity_unit());
-    DB_PUTS2("stream_info.seconds_per_time_unit = ",
-        si.get_seconds_per_time_unit());
+    if (debug_level >= debug_level_high) {
+      std::cout << "stream_info.rate_unit = "
+                << si.get_rate_unit() << "\n";
+      std::cout << "stream_info.quantity_unit = "
+                << si.get_quantity_unit() << "\n";
+      std::cout << "stream_info.seconds_per_time_unit = "
+                << si.get_seconds_per_time_unit() << "\n";
+    }
     return si;
   }
 
@@ -193,10 +197,11 @@ namespace ERIN
               other_rate_units,
               other_quantity_units)));
     }
-#ifdef DEBUG_PRINT
-      for (const auto& x: stream_types_map)
-        std::cerr << "stream type: " << x.first << ", " << x.second << "\n";
-#endif
+    if (debug_level >= debug_level_high) {
+      for (const auto& x: stream_types_map) {
+        std::cerr << "stream type: " << x.first << "\n";
+      }
+    }
     return stream_types_map;
   }
 
@@ -205,7 +210,9 @@ namespace ERIN
   {
     std::unordered_map<std::string, std::vector<LoadItem>> loads_by_id;
     const auto toml_loads = toml::find<toml::table>(data, "loads");
-    DB_PUTS2(toml_loads.size(), " load entries found");
+    if (debug_level >= debug_level_high) {
+      std::cout << toml_loads.size() << " load entries found\n";
+    }
     for (const auto& load_item: toml_loads) {
       toml::value tv = load_item.second;
       toml::table tt = toml::get<toml::table>(tv);
@@ -241,7 +248,9 @@ namespace ERIN
       const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id)
   {
     const auto toml_comps = toml::find<toml::table>(data, "components");
-    DB_PUTS2(toml_comps.size(), " components found");
+    if (debug_level >= debug_level_high) {
+      std::cout << toml_comps.size() << " components found\n";
+    }
     std::unordered_map<
       std::string,
       std::shared_ptr<Component>> components{};
@@ -267,8 +276,12 @@ namespace ERIN
         if (it != tt.end())
           output_stream_id = toml::get<std::string>(it->second);
       }
-      DB_PUTS4("comp: ", c.first, ".input_stream_id  = ", input_stream_id);
-      DB_PUTS4("comp: ", c.first, ".output_stream_id = ", output_stream_id);
+      if (debug_level >= debug_level_high) {
+        std::cout << "comp: " << c.first << ".input_stream_id  = "
+                  << input_stream_id << "\n";
+        std::cout << "comp: " << c.first << ".output_stream_id = "
+                  << output_stream_id << "\n";
+      }
       if (component_type == "source") {
         std::shared_ptr<Component> source_comp =
           std::make_shared<SourceComponent>(
@@ -280,8 +293,10 @@ namespace ERIN
         it = tt.find("load_profiles_by_scenario");
         if (it != tt.end()) {
           const auto& loads = toml::get<toml::table>(it->second);
-          DB_PUTS4(loads.size(), " load profile(s) by scenario",
-              " for component ", c.first);
+          if (debug_level >= debug_level_high) {
+            std::cout << loads.size() << " load profile(s) by scenario"
+                      " for component " << c.first << "\n";
+          }
           for (const auto& lp: loads) {
             const std::string load_id{toml::get<toml::string>(lp.second)}; 
             auto the_loads_it = loads_by_id.find(load_id);
@@ -291,20 +306,22 @@ namespace ERIN
             else
               throw BadInputError();
           }
-          DB_PUTS2(loads_by_scenario.size(), " scenarios with loads");
-#ifdef DEBUG_PRINT
-          for (const auto& ls: loads_by_scenario) {
-            std::cout << ls.first << ": [";
-            for (const auto& li: ls.second) {
-              std::cout << "(" << li.get_time();
-              if (li.get_is_end())
-                std::cout << ")";
-              else
-                std::cout << ", " << li.get_value() << "), ";
-            }
-            std::cout << "]\n";
+          if (debug_level >= debug_level_high) {
+            std::cout << loads_by_scenario.size() << " scenarios with loads\n";
           }
-#endif
+          if (debug_level >= debug_level_high) {
+            for (const auto& ls: loads_by_scenario) {
+              std::cout << ls.first << ": [";
+              for (const auto& li: ls.second) {
+                std::cout << "(" << li.get_time();
+                if (li.get_is_end())
+                  std::cout << ")";
+                else
+                  std::cout << ", " << li.get_value() << "), ";
+              }
+              std::cout << "]\n";
+            }
+          }
           std::shared_ptr<Component> load_comp =
             std::make_shared<LoadComponent>(
                 c.first,
@@ -317,12 +334,12 @@ namespace ERIN
           throw BadInputError();
       }
     }
-#ifdef DEBUG_PRINT
+    if (debug_level >= debug_level_high) {
       for (const auto& c: components) {
         std::cout << "comp[" << c.first << "]:\n";
         std::cout << "\t" << c.second->get_id() << "\n";
       }
-#endif
+    }
     return components;
   }
 
@@ -334,7 +351,9 @@ namespace ERIN
       std::string,
       std::unordered_map<std::string,std::vector<std::string>>> networks;
     const auto toml_nets = toml::find<toml::table>(data, "networks");
-    DB_PUTS2(toml_nets.size(), " networks found");
+    if (debug_level >= debug_level_high) {
+      std::cout << toml_nets.size() << " networks found\n";
+    }
     for (const auto& n: toml_nets) {
       std::unordered_map<std::string, std::vector<std::string>> nw_map;
       toml::table toml_nw;
@@ -348,7 +367,7 @@ namespace ERIN
       }
       networks.insert(std::make_pair(n.first, nw_map));
     }
-#ifdef DEBUG_PRINT    
+    if (debug_level >= debug_level_high) {
       for (const auto& nw: networks) {
         std::cout << "network[" << nw.first << "]:\n";
         for (const auto& fan: nw.second) {
@@ -357,7 +376,7 @@ namespace ERIN
           }
         }
       }
-#endif
+    }
     return networks;
   }
 
@@ -366,7 +385,9 @@ namespace ERIN
   {
     std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios;
     const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");
-    DB_PUTS2(toml_scenarios.size(), " scenarios found");
+    if (debug_level >= debug_level_high) {
+      std::cout << toml_scenarios.size() << " scenarios found\n";
+    }
     for (const auto& s: toml_scenarios) {
       const auto occurrence_distribution = toml::find<toml::table>(s.second, "occurrence_distribution");
       const auto duration_distribution = toml::find<toml::table>(s.second, "duration_distribution");
@@ -380,7 +401,7 @@ namespace ERIN
               network_id,
               max_time)));
     }
-#ifdef DEBUG_PRINT
+    if (debug_level >= debug_level_high) {
       for (const auto& s: scenarios) {
         std::cout << "scenario[" << s.first << "]\n";
         auto scenario = *s.second;
@@ -388,7 +409,7 @@ namespace ERIN
         std::cout << "\tnetwork_id: " << scenario.get_network_id() << "\n";
         std::cout << "\tmax_time  : " << scenario.get_max_time() << "\n";
       }
-#endif
+    }
     return scenarios;
   }
 
@@ -761,9 +782,11 @@ namespace ERIN
         sim_good = false;
         break;
       }
-      DB_PUTS("The current time is:");
-      DB_PUTS2("... real   : ", t.real);
-      DB_PUTS2("... logical: ", t.logical);
+      if (debug_level >= debug_level_high) {
+        std::cout << "The current time is:\n";
+        std::cout << "... real   : " << t.real << "\n";
+        std::cout << "... logical: " << t.logical << "\n";
+      }
     }
     // 3. Return outputs.
     std::unordered_map<std::string, std::vector<Datum>> results;
@@ -924,10 +947,12 @@ namespace ERIN
   {
     auto diff{inflow - (outflow + storeflow + lossflow)};
     if (std::fabs(diff) > flow_value_tolerance) {
-      DB_PUTS2("FlowState.inflow   : ", inflow);
-      DB_PUTS2("FlowState.outflow  : ", outflow);
-      DB_PUTS2("FlowState.storeflow: ", storeflow);
-      DB_PUTS2("FlowState.lossflow : ", lossflow);
+      if (debug_level >= debug_level_high) {
+        std::cerr << "FlowState.inflow   : " << inflow << "\n";
+        std::cerr << "FlowState.outflow  : " << outflow << "\n";
+        std::cerr << "FlowState.storeflow: " << storeflow << "\n";
+        std::cerr << "FlowState.lossflow : " << lossflow << "\n";
+      }
       throw FlowInvariantError();
     }
   }
@@ -1069,9 +1094,13 @@ namespace ERIN
   FlowElement*
   LoadComponent::create_connecting_element()
   {
-    DB_PUTS("LoadComponent::create_connecting_element()");
+    if (debug_level >= debug_level_high) { 
+      std::cout << "LoadComponent::create_connecting_element()\n";
+    }
     auto p = new FlowMeter(get_id(), ComponentType::Load, get_input_stream());
-    DB_PUTS2("LoadComponent.connecting_element = ", p);
+    if (debug_level >= debug_level_high) {
+      std::cout << "LoadComponent.connecting_element = " << p << "\n";
+    }
     return p;
   }
 
@@ -1081,26 +1110,38 @@ namespace ERIN
       const std::string& active_scenario)
   {
     std::unordered_set<FlowElement*> elements;
-    DB_PUTS("LoadComponent::add_to_network(adevs::Digraph<FlowValueType>& network)");
+    if (debug_level >= debug_level_high) {
+      std::cout << "LoadComponent::add_to_network("
+                   "adevs::Digraph<FlowValueType>& network)\n";
+    }
     auto sink = new Sink(
         get_id(),
         ComponentType::Load,
         get_input_stream(),
         loads_by_scenario[active_scenario]);
     elements.emplace(sink);
-    DB_PUTS2("sink = ", sink);
+    if (debug_level >= debug_level_high) {
+      std::cout << "sink = " << sink << "\n";
+    }
     auto meter = get_connecting_element();
     elements.emplace(meter);
-    DB_PUTS2("meter = ", meter);
+    if (debug_level >= debug_level_high) {
+      std::cout << "meter = " << meter << "\n";
+    }
     connect_source_to_sink(network, meter, sink, false);
     for (const auto& in: get_inputs()) {
       auto p = in->get_connecting_element();
       elements.emplace(p);
-      DB_PUTS2("p = ", p);
-      if (p != nullptr)
+      if (debug_level >= debug_level_high) {
+        std::cout << "p = " << p << "\n";
+      }
+      if (p != nullptr) {
         connect_source_to_sink(network, p, meter, true);
+      }
     }
-    DB_PUTS("LoadComponent::add_to_network(...) exit");
+    if (debug_level >= debug_level_high) {
+      std::cout << "LoadComponent::add_to_network(...) exit\n";
+    }
     return elements;
   }
 
@@ -1119,7 +1160,10 @@ namespace ERIN
       const std::string&)
   {
     std::unordered_set<FlowElement*> elements;
-    DB_PUTS("SourceComponent::add_to_network(adevs::Digraph<FlowValueType>& network)");
+    if (debug_level >= debug_level_high) {
+      std::cout << "SourceComponent::add_to_network("
+                   "adevs::Digraph<FlowValueType>& network)\n";
+    }
     // do nothing in this case. There is only the connecting element. If nobody
     // connects to it, then it doesn't exist. If someone DOES connect, then the
     // pointer eventually gets passed into the network coupling model
@@ -1127,16 +1171,22 @@ namespace ERIN
     // they've been added to the simulation or not. If NOT, then we need to
     // delete the resource at deletion time... otherwise, the simulator will
     // delete them.
-    DB_PUTS("SourceComponent::add_to_network(...) exit");
+    if (debug_level >= debug_level_high) {
+      std::cout << "SourceComponent::add_to_network(...) exit\n";
+    }
     return elements;
   }
 
   FlowElement*
   SourceComponent::create_connecting_element()
   {
-    DB_PUTS("SourceComponent::create_connecting_element()");
+    if (debug_level >= debug_level_high) {
+      std::cout << "SourceComponent::create_connecting_element()\n";
+    }
     auto p = new FlowMeter(get_id(), ComponentType::Source, get_output_stream());
-    DB_PUTS2("SourceComponent.p = ", p);
+    if (debug_level >= debug_level_high) {
+      std::cout << "SourceComponent.p = " << p << "\n";
+    }
     return p;
   }
 
@@ -1201,7 +1251,9 @@ namespace ERIN
   void
   FlowElement::delta_int()
   {
-    DB_PUTS2("FlowElement::delta_int();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::delta_int();id=" << id << "\n";
+    }
     update_on_internal_transition();
     report_inflow_request = false;
     report_outflow_achieved = false;
@@ -1210,7 +1262,9 @@ namespace ERIN
   void
   FlowElement::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
-    DB_PUTS2("FlowElement::delta_ext();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::delta_ext();id=" << id << "\n";
+    }
     time = time + e;
     bool inflow_provided{false};
     bool outflow_provided{false};
@@ -1219,12 +1273,16 @@ namespace ERIN
     for (const auto &x : xs) {
       switch (x.port) {
         case inport_inflow_achieved:
-          DB_PUTS("... <=inport_inflow_achieved");
+          if (debug_level >= debug_level_high) {
+            std::cout << "... <=inport_inflow_achieved\n";
+          }
           inflow_provided = true;
           inflow_achieved += x.value;
           break;
         case inport_outflow_request:
-          DB_PUTS("... <=inport_outflow_request");
+          if (debug_level >= debug_level_high) {
+            std::cout << "... <=inport_outflow_request\n";
+          }
           outflow_provided = true;
           outflow_request += x.value;
           break;
@@ -1276,7 +1334,9 @@ namespace ERIN
   void
   FlowElement::delta_conf(std::vector<PortValue>& xs)
   {
-    DB_PUTS2("FlowElement::delta_conf();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::delta_conf();id=" << id << "\n";
+    }
     auto e = adevs::Time{0,0};
     delta_int();
     delta_ext(e, xs);
@@ -1291,26 +1351,38 @@ namespace ERIN
   adevs::Time
   FlowElement::ta()
   {
-    DB_PUTS2("FlowElement::ta();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::ta();id=" << id << "\n";
+    }
     if (report_inflow_request || report_outflow_achieved) {
-      DB_PUTS("... dt = (0,1)");
+      if (debug_level >= debug_level_high) {
+        std::cout << "... dt = (0,1)\n";
+      }
       return adevs::Time{0, 1};
     }
-    DB_PUTS("... dt = infinity");
+    if (debug_level >= debug_level_high) {
+      std::cout << "... dt = infinity\n";
+    }
     return calculate_time_advance();
   }
 
   void
   FlowElement::output_func(std::vector<PortValue>& ys)
   {
-    DB_PUTS2("FlowElement::output_func();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::output_func();id=" << id << "\n";
+    }
     if (report_inflow_request) {
-      DB_PUTS("... send=>outport_inflow_request");
+      if (debug_level >= debug_level_high) {
+        std::cout << "... send=>outport_inflow_request\n";
+      }
       ys.push_back(
           adevs::port_value<FlowValueType>{outport_inflow_request, inflow});
     }
     if (report_outflow_achieved) {
-      DB_PUTS("... send=>outport_outflow_achieved");
+      if (debug_level >= debug_level_high) {
+        std::cout << "... send=>outport_outflow_achieved\n";
+      }
       ys.push_back(
           adevs::port_value<FlowValueType>{outport_outflow_achieved, outflow});
     }
@@ -1325,27 +1397,38 @@ namespace ERIN
   FlowState
   FlowElement::update_state_for_outflow_request(FlowValueType outflow_) const
   {
-    DB_PUTS2("FlowElement::update_state_for_outflow_request();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::update_state_for_outflow_request();id=" << id << "\n";
+    }
     return FlowState{outflow_, outflow_};
   }
 
   FlowState
   FlowElement::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
-    DB_PUTS2("FlowElement::update_state_for_inflow_achieved();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::update_state_for_inflow_achieved();id="
+                << id << "\n";
+    }
     return FlowState{inflow_, inflow_};
   }
 
   void
   FlowElement::update_on_internal_transition()
   {
-    DB_PUTS2("FlowElement::update_on_internal_transition();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::update_on_internal_transition();id="
+                << id << "\n";
+    }
   }
 
   void
   FlowElement::update_on_external_transition()
   {
-    DB_PUTS2("FlowElement::update_on_external_transition();id=", id);
+    if (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::update_on_external_transition();id="
+                << id << "\n";
+    }
   }
 
   void
@@ -1401,10 +1484,10 @@ namespace ERIN
   FlowState
   FlowLimits::update_state_for_outflow_request(FlowValueType out) const
   {
-#ifdef DEBUG_PRINT
+    if (debug_level >= debug_level_high) {
       std::cout << "FlowLimits::update_state_for_outflow_request(" << out << ")\n";
       print_state("... ");
-#endif
+    }
     FlowValueType out_{0.0};
     if (out > upper_limit) {
       out_ = upper_limit;
@@ -1412,33 +1495,37 @@ namespace ERIN
     else if (out < lower_limit) {
       out_ = lower_limit;
     }
-    else
+    else {
       out_ = out;
-#ifdef DEBUG_PRINT
+    }
+    if (debug_level >= debug_level_high) {
       print_state("... ");
       std::cout << "end FlowLimits::update_state_for_outflow_request\n";
-#endif
+    }
     return FlowState{out_, out_};
   }
 
   FlowState
   FlowLimits::update_state_for_inflow_achieved(FlowValueType in) const
   {
-#ifdef DEBUG_PRINT
+    if (debug_level >= debug_level_high) {
       std::cout << "FlowLimits::update_state_for_inflow_achieved(" << in << ")\n";
       print_state("... ");
-#endif
+    }
     FlowValueType in_{0.0};
-    if (in > upper_limit)
+    if (in > upper_limit) {
       throw AchievedMoreThanRequestedError();
-    else if (in < lower_limit)
+    }
+    else if (in < lower_limit) {
       throw AchievedMoreThanRequestedError();
-    else
+    }
+    else {
       in_ = in;
-#ifdef DEBUG_PRINT
+    }
+    if (debug_level >= debug_level_high) {
       print_state("... ");
       std::cout << "end FlowLimits::update_state_for_inflow_achieved\n";
-#endif
+    }
     return FlowState{in_, in_};
   }
 
@@ -1494,13 +1581,13 @@ namespace ERIN
   void
   FlowMeter::update_on_external_transition()
   {
-#ifdef DEBUG_PRINT
+    if (debug_level >= debug_level_high) {
       std::cout << "FlowMeter::update_on_external_transition()\n";
       print_state("... ");
       print_vec<RealTimeType>("... event_times", event_times);
       print_vec<FlowValueType>("... requested_flows", requested_flows);
       print_vec<FlowValueType>("... achieved_flows", achieved_flows);
-#endif
+    }
     auto num_events{event_times.size()};
     auto real_time{get_real_time()};
     if (num_events == 0 || (num_events > 0 && event_times.back() != real_time)) {
@@ -1525,13 +1612,13 @@ namespace ERIN
       else
         achieved_flows.push_back(get_outflow());
     }
-#ifdef DEBUG_PRINT
+    if (debug_level >= debug_level_high) {
       print_state("... ");
       print_vec<RealTimeType>("... event_times", event_times);
       print_vec<FlowValueType>("... requested_flows", requested_flows);
       print_vec<FlowValueType>("... achieved_flows", achieved_flows);
       std::cout << "end FlowMeter::update_on_external_transition()\n";
-#endif
+    }
   }
 
   ////////////////////////////////////////////////////////////
@@ -1585,25 +1672,35 @@ namespace ERIN
   void
   Sink::update_on_internal_transition()
   {
-    DB_PUTS("Sink::update_on_internal_transition()");
+    if (debug_level >= debug_level_high) {
+      std::cout << "Sink::update_on_internal_transition()\n";
+    }
     ++idx;
   }
 
   adevs::Time
   Sink::calculate_time_advance()
   {
-    DB_PUTS("Sink::calculate_time_advance()");
+    if (debug_level >= debug_level_high) {
+      std::cout << "Sink::calculate_time_advance()\n";
+    }
     if (idx < 0) {
-      DB_PUTS("... dt = infinity");
+      if (debug_level >= debug_level_high) {
+        std::cout << "... dt = infinity\n";
+      }
       return adevs::Time{0, 0};
     }
     std::vector<LoadItem>::size_type next_idx = idx + 1;
     if (next_idx < num_loads) {
       RealTimeType dt{loads[idx].get_time_advance(loads[next_idx])};
-      DB_PUTS3("... dt = (", dt, ", 0)");
+      if (debug_level >= debug_level_high) {
+        std::cout << "... dt = (" << dt << ", 0)\n";
+      }
       return adevs::Time{dt, 0};
     }
-    DB_PUTS("... dt = infinity");
+    if (debug_level >= debug_level_high) {
+      std::cout << "... dt = infinity\n";
+    }
     return adevs_inf<adevs::Time>();
   }
 
@@ -1616,7 +1713,9 @@ namespace ERIN
   void
   Sink::add_additional_outputs(std::vector<PortValue>& ys)
   {
-    DB_PUTS("Sink::output_func()");
+    if (debug_level >= debug_level_high) {
+      std::cout << "Sink::output_func()\n";
+    }
     std::vector<LoadItem>::size_type next_idx = idx + 1;
     auto max_idx{num_loads - 1};
     if (next_idx < max_idx)
@@ -1628,7 +1727,9 @@ namespace ERIN
   void
   Sink::check_loads() const
   {
-    DB_PUTS("Sink::check_loads");
+    if (debug_level >= debug_level_high) {
+      std::cout << "Sink::check_loads\n";
+    }
     auto N{loads.size()};
     auto last_idx{N - 1};
     if (N < 2) {

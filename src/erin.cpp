@@ -536,6 +536,92 @@ namespace ERIN
     return out;
   }
 
+  std::string
+  ScenarioResults::to_stats_csv()
+  {
+    auto ea = calc_energy_availability();
+    auto md = calc_max_downtime();
+    auto lns = calc_load_not_served();
+    auto eubs_src = calc_energy_usage_by_stream(ComponentType::Source);
+    auto eubs_load = calc_energy_usage_by_stream(ComponentType::Load);
+    if (debug_print) {
+      std::cout << "metrics printout\n";
+      std::cout << "results:\n";
+      for (const auto& r: results) {
+        std::cout << "  " << r.first << ":\n";
+        for (const auto& d: r.second) {
+          std::cout << "    {";
+          print_datum(std::cout, d);
+          std::cout << "}\n";
+        }
+      }
+      ::erin_generics::print_unordered_map("ea", ea);
+      ::erin_generics::print_unordered_map("md", md);
+      ::erin_generics::print_unordered_map("lns", lns);
+      ::erin_generics::print_unordered_map("eubs_src", eubs_src);
+      ::erin_generics::print_unordered_map("eubs_load", eubs_load);
+      std::cout << "metrics done...\n";
+    }
+    std::ostringstream oss;
+    oss << "parameter,type,stream,energy availability,max downtime,load not served";
+    std::set<std::string> stream_key_set{};
+    for (const auto& s: stream_types) {
+      stream_key_set.emplace(s.second.get_type());
+    }
+    std::vector<std::string> stream_keys{
+      stream_key_set.begin(), stream_key_set.end()};
+    // should not need. set is ordered/sorted.
+    //std::sort(stream_keys.begin(), stream_keys.end());
+    for (const auto sk: stream_keys) {
+      oss << "," << sk << " energy used";
+    }
+    oss << "\n";
+    oss << "units,--,--,fraction,seconds,kJ";
+    for (const auto k: stream_keys) {
+      oss << ",kJ";
+    }
+    oss << "\n";
+    for (const auto k: keys) {
+      oss << k
+          << "," << component_type_to_tag(component_types.at(k))
+          << "," << stream_types.at(k).get_type()
+          << "," << ea.at(k)
+          << "," << md.at(k)
+          << "," << lns.at(k);
+      auto stats = statistics.at(k);
+      auto st = stream_types.at(k);
+      for (const auto sk: stream_keys) {
+        if (st.get_type() != sk) {
+          oss << ",0.0";
+          continue;
+        }
+        oss << "," << stats.total_energy;
+      }
+      oss << "\n";
+    }
+    oss << "total (source),,,,,";
+    for (const auto sk: stream_keys) {
+      auto it = eubs_src.find(sk);
+      if (it == eubs_src.end()) {
+        oss << ",0.0";
+        continue;
+      }
+      oss << "," << (it->second);
+    }
+    oss << "\n";
+    oss << "total (load),,,,,";
+    for (const auto sk: stream_keys) {
+      auto it = eubs_load.find(sk);
+      if (it == eubs_load.end()) {
+        oss << ",0.0";
+        continue;
+      }
+      oss << "," << (it->second);
+    }
+    oss << "\n";
+    return oss.str();
+  }
+
   ScenarioStats
   calc_scenario_stats(const std::vector<Datum>& ds)
   {

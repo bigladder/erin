@@ -162,6 +162,7 @@ namespace ERIN
         calc_load_not_served();
       [[nodiscard]] std::unordered_map<std::string,FlowValueType>
         calc_energy_usage_by_stream(ComponentType ct);
+      [[nodiscard]] std::string to_stats_csv();
 
     private:
       bool is_good;

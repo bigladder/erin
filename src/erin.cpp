@@ -664,6 +664,9 @@ namespace ERIN
       if (t.real == t_last_real) {
         ++non_advance_count;
       }
+      else if (t.real > max_time) {
+        break;
+      }
       else {
         non_advance_count = 0;
         t_last_real = t.real;

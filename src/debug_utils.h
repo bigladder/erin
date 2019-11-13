@@ -6,6 +6,7 @@
 
 namespace ERIN
 {
+  constexpr bool debug_print{true};
 #ifdef DEBUG_PRINT
 #define DB_PUTS(x) do { \
   std::cerr << x << std::endl; \

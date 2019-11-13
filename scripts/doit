@@ -12,11 +12,16 @@ if ! ctest --output-on-failure; then
   echo CTEST FAILED!
   exit 1
 fi
-if ! ./bin/e2rin ../docs/examples/ex01.toml out.csv "blue_sky"; then
+if ! ./bin/e2rin ../docs/examples/ex01.toml out.csv stats.csv "blue_sky"; then
   echo CALL TO e2rin FAILED!
   exit 1
 fi
+echo -- out.csv ----------------
 cat out.csv
+echo -- end out.csv ------------
+echo -- stats.csv --------------
+cat stats.csv
+echo -- end stats.csv ----------
 time ./bin/str8760
 mkdir -p tidy
 echo Running Clang Tidy...

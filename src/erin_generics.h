@@ -4,6 +4,7 @@
 #ifndef ERIN_GENERICS_H
 #define ERIN_GENERICS_H
 #include <functional>
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -27,6 +28,16 @@ namespace erin_generics
       out[k] = derive_stat(statistics[k]);
     }
     return out;
+  }
+
+  template <class T>
+  void
+  print_unordered_map(const std::string& var, const std::unordered_map<std::string,T>& m)
+  {
+    std::cout << var << " = \n";
+    for (const auto& e: m) {
+      std::cout << "  " << e.first << ": " << e.second << "\n";
+    }
   }
 }
 #endif // ERIN_GENERICS_H

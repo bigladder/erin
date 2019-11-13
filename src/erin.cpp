@@ -56,6 +56,14 @@ namespace ERIN
     }
   }
 
+  void
+  print_datum(std::ostream& os, const Datum& d)
+  {
+    os << "time: " << d.time
+       << ", requested_value: " << d.requested_value
+       << ", achieved_value: " << d.achieved_value;
+  }
+
   ////////////////////////////////////////////////////////////
   // StreamInfo
   StreamInfo::StreamInfo():

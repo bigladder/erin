@@ -1,4 +1,5 @@
 #!/bin/bash
+date
 if ! cmake -DERIN_TESTING=ON -DDO_DEBUG_PRINT=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..; then
   echo CMAKE CALL FAILED!
   exit 1

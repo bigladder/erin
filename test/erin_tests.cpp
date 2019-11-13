@@ -885,6 +885,28 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
       expected1_eubs, actual1_eubs, "energy_usage_by_stream_with_sr1");
 }
 
+TEST(ErinBasicsTest, Test_calc_scenario_stats)
+{
+  std::vector<::ERIN::Datum> ds{
+    { ::ERIN::Datum{0,1.0,1.0},
+      ::ERIN::Datum{4,0.0,0.0}}
+  };
+  // RealTimeType uptime;
+  // RealTimeType downtime;
+  // FlowValueType load_not_served;
+  // FlowValueType total_energy;
+  ::ERIN::ScenarioStats expected{
+    4,    // RealTimeType uptime
+    0,    // RealTimeType downtime
+    0.0,  // FlowValueType load_not_served
+    4.0}; // FlowValueType total_energy
+  auto actual = ::ERIN::calc_scenario_stats(ds);
+  EXPECT_NEAR(expected.uptime, actual.uptime, tolerance);
+  EXPECT_NEAR(expected.downtime, actual.downtime, tolerance);
+  EXPECT_NEAR(expected.load_not_served, actual.load_not_served, tolerance);
+  EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
+}
+
 int
 main(int argc, char **argv)
 {

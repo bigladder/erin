@@ -59,7 +59,7 @@ examples.each do |ex|
   Dir.mktmpdir do |dir|
     status = system("#{exe_path} #{ex} out.csv stats.csv \"#{scenario_id}\"")
     if status.nil? or !status
-      issues[root] = "Bad status: #{status}"
+      issues[root] = "issue running #{exe_path}\n\tstatus: #{status}\n\texample: #{ex}\n\tscenario_id: #{scenario_id}"
       num_issues += 1
       next
     end

@@ -7,10 +7,9 @@ A scenario has:
 - duration :: a Distribution
 - occurrence :: a Distribution
 - intensities :: Map String Distribution
-- network :: Network
-- components :: Map String Component
+- network id :: String
 
-A scenario should be able to run itself whenever it gets activated:
+Whenever a scenario becomes active, the corresponding network should be run.
 
 - Scenario(String name, Dist duration, Dist occurrence,
            (Map String Dist) intensities, Newtork nw,

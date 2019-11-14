@@ -10,7 +10,7 @@ quantity_unit = "kJ"
 # However, if we were doing kW and kWh, we would use 3600 s (i.e., 1 hour) here.
 seconds_per_time_unit = 1.0 
 [streams.electricity]
-type = "electrity_medium_voltage"
+type = "electricity_medium_voltage"
 [streams.diesel]
 type = "diesel_fuel"
 [streams.diesel.other_rate_units]

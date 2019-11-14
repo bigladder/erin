@@ -420,7 +420,7 @@ namespace ERIN
   class Scenario // : public adevs::Atomic<PortValue>
   {
     public:
-      Scenario(std::string  name, std::string  network_id, RealTimeType max_times);
+      Scenario(std::string name, std::string network_id, RealTimeType max_times);
 
       [[nodiscard]] const std::string& get_name() const { return name; }
       [[nodiscard]] RealTimeType get_max_time() const { return max_time; }

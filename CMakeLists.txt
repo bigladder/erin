@@ -63,3 +63,18 @@ if (BUILD_DOC)
     message("Doxygen needs to be installed to generate the doxygen documentation")
   endif (DOXYGEN_FOUND)
 endif (BUILD_DOC)
+
+# Copy input files to the build directory
+# for use in regression testing (see scripts/doit).
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex01.toml"
+  "ex01.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex02.toml"
+  "ex02.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex02.csv"
+  "ex02.csv"
+  COPYONLY)

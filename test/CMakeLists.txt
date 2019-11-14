@@ -16,6 +16,12 @@ set(test_sources
 
 link_libraries(${CMAKE_PROJECT_NAME} gtest)
 
+# Copy required ex02.csv to the build/test directory
+# for use in testing.
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex02.csv"
+  "ex02.csv"
+  COPYONLY)
 add_executable(${CMAKE_PROJECT_NAME}_tests ${test_sources})
 
 include(GoogleTest)

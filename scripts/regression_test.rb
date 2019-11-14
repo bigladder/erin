@@ -10,7 +10,7 @@ if !File.exist?(exe_path)
   exit(1)
 end
 examples = Dir[
-  File.expand_path(File.join(THIS_DIR, "..", "docs", "examples", "*.toml"))]
+  File.expand_path(File.join(THIS_DIR, "..", "build", "*.toml"))]
 # puts "Examples: #{examples}"
 num_issues = 0
 issues = {}

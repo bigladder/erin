@@ -6,9 +6,12 @@
 #pragma clang diagnostic pop
 #include "debug_utils.h"
 #include "erin/erin.h"
+#include "erin_csv.h"
 #include "erin_generics.h"
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <set>
 #include <sstream>
@@ -216,30 +219,146 @@ namespace ERIN
     for (const auto& load_item: toml_loads) {
       toml::value tv = load_item.second;
       toml::table tt = toml::get<toml::table>(tv);
-      auto it = tt.find("loads");
-      if (it == tt.end())
-        throw BadInputError();
-      const auto load_array = toml::get<std::vector<toml::table>>(it->second);
       std::vector<LoadItem> the_loads{};
-      for (const auto& item: load_array) {
-        RealTimeType the_time{};
-        FlowValueType the_value{};
-        auto it_for_t = item.find("t");
-        if (it_for_t != item.end())
-          the_time = toml::get<RealTimeType>(it_for_t->second);
-        else
-          the_time = -1;
-        auto it_for_v = item.find("v");
-        if (it_for_v != item.end()) {
-          the_value = toml::get<FlowValueType>(it_for_v->second);
-          the_loads.emplace_back(LoadItem(the_time, the_value));
-        } else {
-          the_loads.emplace_back(LoadItem(the_time));
+      auto it = tt.find("loads");
+      if (it == tt.end()) {
+        auto it2 = tt.find("csv_file");
+        if (it2 == tt.end()) {
+          throw BadInputError();
         }
+        auto csv_file = toml::get<std::string>(it2->second);
+        the_loads = load_loads_from_csv(csv_file);
+      }
+      else {
+        const auto load_array = toml::get<std::vector<toml::table>>(it->second);
+        the_loads = get_loads_from_array(load_array);
       }
       loads_by_id.insert(std::make_pair(load_item.first, the_loads));
     }
     return loads_by_id;
+  }
+
+  std::vector<LoadItem>
+  TomlInputReader::get_loads_from_array(
+      const std::vector<toml::table>& load_array) const
+  {
+    std::vector<LoadItem> the_loads{};
+    for (const auto& item: load_array) {
+      RealTimeType the_time{};
+      FlowValueType the_value{};
+      auto it_for_t = item.find("t");
+      if (it_for_t != item.end()) {
+        the_time = toml::get<RealTimeType>(it_for_t->second);
+      }
+      else {
+        the_time = -1;
+      }
+      auto it_for_v = item.find("v");
+      if (it_for_v != item.end()) {
+        the_value = toml::get<FlowValueType>(it_for_v->second);
+        the_loads.emplace_back(LoadItem(the_time, the_value));
+      } else {
+        the_loads.emplace_back(LoadItem(the_time));
+      }
+    }
+    return the_loads;
+  }
+
+  std::vector<LoadItem>
+  TomlInputReader::load_loads_from_csv(const std::string& csv_path) const
+  {
+    std::vector<LoadItem> the_loads{};
+    RealTimeType t;
+    FlowValueType v;
+    std::ifstream ifs{csv_path};
+    if (!ifs.is_open()) {
+      std::ostringstream oss;
+      oss << "input file stream on \"" << csv_path
+          << "\" failed to open for reading\n";
+      throw std::runtime_error(oss.str());
+    }
+    bool in_header{true};
+    for (int row{0}; ifs.good(); ++row) {
+      auto cells = ::erin_csv::read_row(ifs);
+      if (cells.size() == 0) {
+        break;
+      }
+      if (in_header) {
+        in_header = false;
+        if (cells.size() < 2) {
+          std::ostringstream oss;
+          oss << "badly formatted file \"" << csv_path << "\"\n";
+          oss << "row: " << row << "\n";
+          ::erin_csv::stream_out(oss, cells);
+          throw std::runtime_error(oss.str());
+        }
+        if (cells[0] != "t") {
+          std::ostringstream oss;
+          oss << "in file \"" << csv_path
+            << "\", first column should be \"t\" but is \""
+            << cells[0] << "\"";
+          oss << "row: " << row << "\n";
+          ::erin_csv::stream_out(oss, cells);
+          throw std::runtime_error(oss.str());
+        }
+        if (cells[1] != "v") {
+          std::ostringstream oss;
+          oss << "in file \"" << csv_path
+              << "\", second column should be \"v\" but is \""
+              << cells[1] << "\"";
+          oss << "row: " << "\n";
+          ::erin_csv::stream_out(oss, cells);
+          throw std::runtime_error(oss.str());
+        }
+        continue;
+      }
+      try {
+        t = std::stoi(cells[0]);
+      }
+      catch (const std::invalid_argument& e) {
+        std::ostringstream oss;
+        oss << "failed to convert string to int on row " << row << ".\n";
+        oss << "t = std::stoi(" << cells[0] << ");\n";
+        oss << "row: " << row << "\n";
+        ::erin_csv::stream_out(oss, cells);
+        std::cerr << oss.str();
+        throw;
+      }
+      try {
+        v = std::stod(cells[1]);
+      }
+      catch (const std::invalid_argument& e) {
+        std::ostringstream oss;
+        oss << "failed to convert string to double on row " << row << ".\n";
+        oss << "v = std::stod(" << cells[1] << ");\n";
+        oss << "row: " << row << "\n";
+        ::erin_csv::stream_out(oss, cells);
+        std::cerr << oss.str();
+        throw;
+      }
+      the_loads.emplace_back(LoadItem{t, v});
+    }
+    if (the_loads.empty()) {
+      std::ostringstream oss;
+      oss << "the_loads is empty.\n";
+      throw std::runtime_error(oss.str());
+    }
+    auto& back = the_loads.back();
+    back = LoadItem{back.get_time()};
+    if (debug_level >= debug_level_high) {
+      std::cout << "loads read in:\n";
+      for (const auto ld: the_loads) {
+        std::cout << "  {t: " << ld.get_time();
+        if (ld.get_is_end()) {
+          std::cout << "}\n";
+        }
+        else {
+          std::cout << ", v: " << ld.get_value() << "}\n";
+        }
+      }
+    }
+    ifs.close();
+    return the_loads;
   }
 
   std::unordered_map<std::string, std::shared_ptr<Component>>

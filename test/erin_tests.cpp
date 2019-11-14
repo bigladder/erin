@@ -683,6 +683,65 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   }
 }
 
+TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
+{
+  std::stringstream ss;
+  ss << "[stream_info]\n"
+        "rate_unit = \"kW\"\n"
+        "quantity_unit = \"kJ\"\n"
+        "seconds_per_time_unit = 1.0\n"
+        "[streams.electricity]\n"
+        "type = \"electrity\"\n"
+        "############################################################\n"
+        "[loads.building_electrical]\n"
+        "csv_file = \"ex02.csv\"\n"
+        "############################################################\n"
+        "[components.electric_utility]\n"
+        "type = \"source\"\n"
+        "# Point of Common Coupling for Electric Utility\n"
+        "output_stream = \"electricity\"\n"
+        "[components.cluster_01_electric]\n"
+        "type = \"load\"\n"
+        "input_stream = \"electricity\"\n"
+        "[components.cluster_01_electric.load_profiles_by_scenario]\n"
+        "blue_sky = \"building_electrical\"\n"
+        "############################################################\n"
+        "[networks.normal_operations.network]\n"
+        "electric_utility = [\"cluster_01_electric\"]\n"
+        "############################################################\n"
+        "[scenarios.blue_sky]\n"
+        "occurrence_distribution = {type = \"fixed_probability\","
+                                   "probability = 1}\n"
+        "duration_distribution = {type = \"specified\", value = 8760,"
+                                 "time_unit = \"hours\"}\n"
+        "max_time = 4\n"
+        "network = \"normal_operations\"";
+  ::ERIN::TomlInputReader r{ss};
+  auto si = r.read_stream_info();
+  auto streams = r.read_streams(si);
+  auto loads = r.read_loads();
+  auto components = r.read_components(streams, loads);
+  auto networks = r.read_networks();
+  auto scenarios = r.read_scenarios();
+  ::ERIN::Main m{si, streams, components, networks, scenarios};
+  auto out = m.run("blue_sky");
+  EXPECT_EQ(out.get_is_good(), true);
+  EXPECT_EQ(out.get_results().size(), 2);
+  std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
+  // out.get_results() : Map String (Vector Datum)
+  for (const auto& item: out.get_results()) {
+    auto it = expected_keys.find(item.first);
+    EXPECT_TRUE(it != expected_keys.end());
+    ASSERT_EQ(item.second.size(), 2);
+    EXPECT_EQ(item.second.at(0).time, 0);
+    EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
+    EXPECT_EQ(item.second.at(0).requested_value, 1.0);
+    EXPECT_EQ(item.second.at(1).time, 4);
+    EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
+    EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
+  }
+}
+
 TEST(ErinBasicsTest, CanRun10ForSourceSink)
 {
   std::string scenario_id{"blue_sky"};

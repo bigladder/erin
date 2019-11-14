@@ -139,6 +139,11 @@ namespace ERIN
 
     private:
       toml::value data;
+
+      std::vector<LoadItem>
+        get_loads_from_array(const std::vector<toml::table>& load_array) const;
+      std::vector<LoadItem>
+        load_loads_from_csv(const std::string& file_path) const;
   };
 
   ////////////////////////////////////////////////////////////

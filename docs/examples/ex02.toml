@@ -13,7 +13,7 @@ seconds_per_time_unit = 1.0
 type = "electricity_medium_voltage"
 ############################################################
 [loads.building_electrical]
-file_path = "ex02.csv"
+csv_file = "ex02.csv"
 ############################################################
 [components.electric_utility]
 type = "source"

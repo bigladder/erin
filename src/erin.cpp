@@ -22,6 +22,7 @@
 namespace ERIN
 {
   const FlowValueType flow_value_tolerance{1e-6};
+  const auto inf = adevs_inf<adevs::Time>();
 
   ComponentType
   tag_to_component_type(const std::string& tag)
@@ -499,31 +500,30 @@ namespace ERIN
     return networks;
   }
 
-  std::unordered_map<std::string, std::shared_ptr<Scenario>>
+  std::unordered_map<std::string, Scenario>
   TomlInputReader::read_scenarios()
   {
-    std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios;
+    std::unordered_map<std::string, Scenario> scenarios;
     const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");
     if (debug_level >= debug_level_high) {
       std::cout << toml_scenarios.size() << " scenarios found\n";
     }
     for (const auto& s: toml_scenarios) {
-      const auto occurrence_distribution = toml::find<toml::table>(s.second, "occurrence_distribution");
-      const auto duration_distribution = toml::find<toml::table>(s.second, "duration_distribution");
+      const auto occurrence_distribution = toml::find<toml::table>(
+          s.second, "occurrence_distribution");
+      const auto duration_distribution = toml::find<toml::table>(
+          s.second, "duration_distribution");
       const auto max_time = toml::find<int>(s.second, "max_time");
       const auto network_id = toml::find<std::string>(s.second, "network");
       scenarios.insert(
           std::make_pair(
             s.first,
-            std::make_shared<Scenario>(
-              s.first,
-              network_id,
-              max_time)));
+            Scenario{s.first, network_id, max_time}));
     }
     if (debug_level >= debug_level_high) {
       for (const auto& s: scenarios) {
         std::cout << "scenario[" << s.first << "]\n";
-        auto scenario = *s.second;
+        auto scenario = s.second;
         std::cout << "\tname      : " << scenario.get_name() << "\n";
         std::cout << "\tnetwork_id: " << scenario.get_network_id() << "\n";
         std::cout << "\tmax_time  : " << scenario.get_max_time() << "\n";
@@ -798,6 +798,22 @@ namespace ERIN
     return ScenarioStats{uptime, downtime, load_not_served, ach_energy};
   }
 
+  ////////////////////////////////////////////////////////////
+  // AllResults
+  AllResults::AllResults(bool is_good_):
+    is_good{is_good_},
+    results{}
+  {
+  }
+
+  AllResults::AllResults(
+      bool is_good_,
+      const std::unordered_map<std::string, std::vector<ScenarioResults>>& results_):
+    is_good{is_good_},
+    results{results_}
+  {
+  }
+
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file
@@ -822,7 +838,7 @@ namespace ERIN
         std::string,
         std::unordered_map<
           std::string, std::vector<std::string>>> networks_,
-      std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios_):
+      std::unordered_map<std::string, Scenario> scenarios_):
     stream_info{std::move(stream_info_)},
     stream_types_map{std::move(streams_)},
     components{std::move(components_)},
@@ -852,12 +868,12 @@ namespace ERIN
       throw std::invalid_argument(oss.str());
     }
     // 1. Switch to reading the scenario_id from the input
-    const auto the_scenario = scenarios[scenario_id];
+    const auto the_scenario = it->second;
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
     adevs::Digraph<FlowValueType> network;
     // 2.2. Interconnect components based on the network definition
-    const auto network_id = the_scenario->get_network_id();
+    const auto network_id = the_scenario.get_network_id();
     const auto the_nw = networks[network_id];
     std::unordered_set<std::string> comps_in_use{};
     for (const auto& nw: the_nw) {
@@ -874,39 +890,15 @@ namespace ERIN
     for (const auto& comp_id: comps_in_use) {
       auto c = components[comp_id];
       auto es = c->add_to_network(network, scenario_id);
-      for (auto e: es) elements.emplace(e);
+      for (auto e: es) {
+        elements.emplace(e);
+      }
     }
     adevs::Simulator<PortValue> sim;
     network.add(&sim);
-    adevs::Time t;
-    const auto max_time = the_scenario->get_max_time();
+    const auto max_time = the_scenario.get_max_time();
     const auto max_non_advance{comps_in_use.size() * 10};
-    auto non_advance_count{max_non_advance*0};
-    auto t_last_real = sim.now().real;
-    bool sim_good{true};
-    while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
-      sim.exec_next_event();
-      t = sim.now();
-      if (t.real == t_last_real) {
-        ++non_advance_count;
-      }
-      else if (t.real > max_time) {
-        break;
-      }
-      else {
-        non_advance_count = 0;
-        t_last_real = t.real;
-      }
-      if (non_advance_count >= max_non_advance) {
-        sim_good = false;
-        break;
-      }
-      if (debug_level >= debug_level_high) {
-        std::cout << "The current time is:\n";
-        std::cout << "... real   : " << t.real << "\n";
-        std::cout << "... logical: " << t.logical << "\n";
-      }
-    }
+    auto sim_good = run_devs(sim, max_time, max_non_advance);
     // 3. Return outputs.
     std::unordered_map<std::string, std::vector<Datum>> results;
     std::unordered_map<std::string,ComponentType> comp_types;
@@ -933,6 +925,63 @@ namespace ERIN
     return ScenarioResults{sim_good, results, stream_types, comp_types};
   }
 
+  bool
+  Main::run_devs(
+      adevs::Simulator<PortValue>& sim,
+      const RealTimeType max_time,
+      const std::unordered_set<std::string>::size_type max_non_advance)
+  {
+    bool sim_good{true};
+    std::unordered_set<std::string>::size_type non_advance_count{0};
+    for (
+        auto t = sim.now(), t_next = sim.next_event_time();
+        ((t_next < inf) && (t_next.real <= max_time));
+        sim.exec_next_event(), t = t_next, t_next = sim.next_event_time()) {
+      if (t_next.real == t.real) {
+        ++non_advance_count;
+      }
+      else {
+        non_advance_count = 0;
+      }
+      if (non_advance_count >= max_non_advance) {
+        sim_good = false;
+        break;
+      }
+      if (debug_level >= debug_level_high) {
+        auto t = sim.now();
+        std::cout << "The current time is:\n";
+        std::cout << "... real   : " << t.real << "\n";
+        std::cout << "... logical: " << t.logical << "\n";
+      }
+    }
+    return sim_good;
+  }
+
+  AllResults
+  Main::run_all(RealTimeType sim_max_time)
+  {
+    std::unordered_map<std::string, std::vector<ScenarioResults>> out{};
+    // 1. create the network and simulator
+    adevs::Simulator<PortValue> sim{};
+    // 2. add all scenarios
+    std::vector<Scenario*> copies{};
+    for (const auto s: scenarios) {
+      auto p = new Scenario{s.second};
+      sim.add(p);
+      // NOTE: sim will delete all pointers when it is deleted.
+      // Therefore, we can safely store pointers in `copies` for reference.
+      copies.emplace_back(p);
+    }
+    // 3. run the simulation
+    const auto max_non_advance{10};
+    const auto sim_good = run_devs(sim, sim_max_time, max_non_advance);
+    // 4. pull results into one map
+    for (const auto s: copies) {
+      out[s->get_name()] = s->get_results();
+    }
+    return AllResults{sim_good, out};
+  }
+
   RealTimeType
   Main::max_time_for_scenario(const std::string& scenario_id)
   {
@@ -942,7 +991,7 @@ namespace ERIN
       oss << "scenario_id \"" << scenario_id << "\" not found in scenarios";
       throw std::invalid_argument(oss.str());
     }
-    return it->second->get_max_time();
+    return it->second.get_max_time();
   }
 
   void
@@ -1187,15 +1236,17 @@ namespace ERIN
   {
     auto src_out = source->get_outflow_type();
     auto sink_in = sink->get_inflow_type();
-    if (src_out != sink_in)
+    if (src_out != sink_in) {
       throw MixedStreamsError();
+    }
     network.couple(
         sink, FlowMeter::outport_inflow_request,
         source, FlowMeter::inport_outflow_request);
-    if (both_way)
+    if (both_way) {
       network.couple(
           source, FlowMeter::outport_outflow_achieved,
           sink, FlowMeter::inport_inflow_achieved);
+    }
   }
 
   ////////////////////////////////////////////////////////////
@@ -1315,9 +1366,11 @@ namespace ERIN
       std::string name_,
       std::string network_id_,
       RealTimeType max_time_):
+    adevs::Atomic<PortValue>(),
     name{std::move(name_)},
     network_id{std::move(network_id_)},
-    max_time{max_time_}
+    max_time{max_time_},
+    results{}
   {
   }
 
@@ -1328,6 +1381,68 @@ namespace ERIN
     return (name == other.get_name()) &&
            (network_id == other.get_network_id()) &&
            (max_time == other.get_max_time());
+  }
+
+  void
+  Scenario::delta_int()
+  {
+    if (debug_level >= debug_level_high) {
+      std::cout << "Scenario::delta_int();name=" << name << "\n";
+    }
+    // TODO: kick off a network simulation
+    // TODO: add ScenarioResults to results
+  }
+
+  void
+  Scenario::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  {
+    if (debug_level >= debug_level_high) {
+      std::cout << "Scenario::delta_ext("
+                << "{" << e.real << "," << e.logical << "}, ";
+      auto first{true};
+      for (const auto x: xs) {
+        if (first) {
+          std::cout << "{";
+        }
+        else {
+          std::cout << ", ";
+        }
+        std::cout << x;
+      }
+      std::cout << "});name=" << name << "\n";
+    }
+    // Nothing to do here. Should be no external transitions at this time.
+  }
+
+  void
+  Scenario::delta_conf(std::vector<PortValue>& xs)
+  {
+    if (debug_level >= debug_level_high) {
+      std::cout << "Scenario::delta_conf();name=" << name << "\n";
+    }
+    auto e = adevs::Time{0,0};
+    delta_int();
+    delta_ext(e, xs);
+  }
+
+  adevs::Time
+  Scenario::ta()
+  {
+    // Here, we're going to need to query the occurrence distribution and return.
+    // Just fixing something for now.
+    auto dt = adevs::Time{10,0};
+    t = t + dt;
+    return dt;
+  }
+
+  void
+  Scenario::output_func(std::vector<PortValue>&)
+  {
+    // nothing to do here as well. Scenarios are autonomous and don't interact
+    // with each other. Although we *could* have scenarios send their results
+    // out to an aggregator on each transition, probably best just for each
+    // scenario to track its local state and report back after simulation
+    // finishes.
   }
 
   ////////////////////////////////////////////////////////////

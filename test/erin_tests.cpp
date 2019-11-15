@@ -1,9 +1,6 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include <functional>
-#include <unordered_map>
-#include <sstream>
 #include "../vendor/bdevs/include/adevs.h"
 #include "checkout_line/clerk.h"
 #include "checkout_line/customer.h"
@@ -13,6 +10,9 @@
 #include "erin/erin.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
+#include <functional>
+#include <unordered_map>
+#include <sstream>
 
 
 const double tolerance{1e-6};
@@ -587,21 +587,16 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
         "max_time = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader t{ss};
-  std::unordered_map<
-    std::string,
-    std::shared_ptr<::ERIN::Scenario>>
-      expected{
-        {
-          std::string{"blue_sky"},
-          std::make_shared<::ERIN::Scenario>(
-              std::string{"blue_sky"}, std::string{"normal_operations"}, 1)}};
+  std::unordered_map<std::string, ::ERIN::Scenario> expected{{
+    std::string{"blue_sky"},
+    ::ERIN::Scenario{"blue_sky", "normal_operations", 1}}};
   auto pt = &t;
   auto actual = pt->read_scenarios();
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);
     ASSERT_TRUE(a != actual.end());
-    EXPECT_EQ(*(e.second), *(a->second));
+    EXPECT_EQ(e.second, a->second);
   }
 }
 
@@ -784,8 +779,8 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   std::unordered_map<
     std::string, std::unordered_map<std::string, std::vector<std::string>>>
     networks{{net_id, {{source_id, {load_id}}}}};
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Scenario>> scenarios{
-    {scenario_id, std::make_shared<::ERIN::Scenario>(scenario_id, net_id, 1)}};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, 1}}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run(scenario_id);
   EXPECT_EQ(out.get_is_good(), true);
@@ -831,10 +826,11 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   std::string source_id{"electric_utility"};
   std::string load_id{"cluster_01_electric"};
   std::string net_id{"normal_operations"};
-  const int max_time{10};
+  const ::ERIN::RealTimeType max_time{10};
   std::vector<::ERIN::LoadItem> loads;
-  for (int i{0}; i < max_time; ++i)
+  for (::ERIN::RealTimeType i{0}; i < max_time; ++i) {
     loads.emplace_back(::ERIN::LoadItem{i, 1.0});
+  }
   loads.emplace_back(::ERIN::LoadItem{max_time});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
@@ -866,8 +862,8 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   std::unordered_map<
     std::string, std::unordered_map<std::string, std::vector<std::string>>>
     networks{{net_id, {{source_id, {load_id}}}}};
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Scenario>> scenarios{
-    {scenario_id, std::make_shared<::ERIN::Scenario>(scenario_id, net_id, max_time)}};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, max_time}}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto actual = m.max_time_for_scenario(scenario_id);
   ::ERIN::RealTimeType expected = max_time;
@@ -967,6 +963,67 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
   EXPECT_NEAR(expected.downtime, actual.downtime, tolerance);
   EXPECT_NEAR(expected.load_not_served, actual.load_not_served, tolerance);
   EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
+}
+
+TEST(ErinBasicsTest, BasicScenarioTest)
+{
+  // we want to create one or more scenarios and simulate them in DEVS
+  // each scenario should be autonomous and not interact with any other
+  // the entire simulation has a max time limit.
+  // This is where we may need to switch to long or int64_t if we go with
+  // seconds for the time unit and 1000 years of simulation...
+  std::string scenario_id{"blue_sky"};
+  std::string stream_id{"electricity"};
+  std::string source_id{"electric_utility"};
+  std::string load_id{"cluster_01_electric"};
+  std::string net_id{"normal_operations"};
+  const ::ERIN::RealTimeType max_time{10};
+  std::vector<::ERIN::LoadItem> loads;
+  for (::ERIN::RealTimeType i{0}; i < max_time; ++i) {
+    loads.emplace_back(::ERIN::LoadItem{i, 1.0});
+  }
+  loads.emplace_back(::ERIN::LoadItem{max_time});
+  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
+    loads_by_scenario{{scenario_id, loads}};
+  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  std::unordered_map<std::string, ::ERIN::StreamType> streams{
+    std::make_pair(
+        stream_id,
+        ::ERIN::StreamType(
+          std::string{"electricity_medium_voltage"},
+          si.get_rate_unit(),
+          si.get_quantity_unit(),
+          si.get_seconds_per_time_unit(),
+          {}, {}))};
+  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
+    {load_id, loads}
+  };
+  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
+    std::make_pair(
+        source_id,
+        std::make_shared<::ERIN::SourceComponent>(
+          source_id,
+          streams[stream_id])),
+    std::make_pair(
+        load_id,
+        std::make_shared<::ERIN::LoadComponent>(
+          load_id,
+          streams[stream_id],
+          loads_by_scenario))};
+  std::unordered_map<
+    std::string, std::unordered_map<std::string, std::vector<std::string>>>
+    networks{{net_id, {{source_id, {load_id}}}}};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, max_time}}};
+  ::ERIN::Main m{si, streams, components, networks, scenarios};
+  ::ERIN::RealTimeType sim_max_time{1000};
+  auto actual = m.run_all(sim_max_time);
+  EXPECT_TRUE(actual.get_is_good());
+  EXPECT_TRUE(actual.get_results().size() > 0);
+  // TODO: add the following tests after we get Distributions working
+  // for (const auto& r: actual.get_results()) {
+  //   EXPECT_TRUE(r.second.size() > 0);
+  // }
 }
 
 int

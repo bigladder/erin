@@ -3,6 +3,11 @@
 
 #ifndef ERIN_ERIN_H
 #define ERIN_ERIN_H
+#include "../../vendor/bdevs/include/adevs.h"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#include "../../vendor/toml11/toml.hpp"
+#pragma clang diagnostic pop
 #include <exception>
 #include <functional>
 #include <iostream>
@@ -12,11 +17,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include "../../vendor/bdevs/include/adevs.h"
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-variable"
-#include "../../vendor/toml11/toml.hpp"
-#pragma clang diagnostic pop
 
 namespace ERIN
 {
@@ -25,6 +25,9 @@ namespace ERIN
   typedef double FlowValueType;
   typedef int RealTimeType;
   typedef int LogicalTimeType;
+  typedef adevs::port_value<FlowValueType> PortValue;
+
+  std::ostream& operator<<(std::ostream& os, const PortValue& pv);
 
   ////////////////////////////////////////////////////////////
   // ComponentType
@@ -103,12 +106,12 @@ namespace ERIN
       virtual std::unordered_map<std::string, std::shared_ptr<Component>>
         read_components(
             const std::unordered_map<std::string, StreamType>& stm,
-            const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id) = 0;
+            const std::unordered_map<std::string, std::vector<LoadItem>>&
+              loads_by_id) = 0;
       virtual std::unordered_map<std::string,
         std::unordered_map<std::string, std::vector<std::string>>>
         read_networks() = 0;
-      virtual std::unordered_map<std::string, std::shared_ptr<Scenario>>
-        read_scenarios() = 0;
+      virtual std::unordered_map<std::string, Scenario> read_scenarios() = 0;
       virtual ~InputReader() = default;
   };
 
@@ -134,8 +137,7 @@ namespace ERIN
       std::unordered_map<std::string,
         std::unordered_map<std::string, std::vector<std::string>>>
         read_networks() override;
-      std::unordered_map<std::string, std::shared_ptr<Scenario>>
-        read_scenarios() override;
+      std::unordered_map<std::string, Scenario> read_scenarios() override;
 
     private:
       toml::value data;
@@ -184,6 +186,28 @@ namespace ERIN
   ScenarioStats calc_scenario_stats(const std::vector<Datum>& ds);
 
   ////////////////////////////////////////////////////////////
+  // AllResults
+  class AllResults
+  {
+    public:
+      AllResults();
+      AllResults(bool is_good_);
+      AllResults(
+          bool is_good,
+          const std::unordered_map<std::string, std::vector<ScenarioResults>>&
+            results_);
+      [[nodiscard]] bool get_is_good() const { return is_good; }
+      [[nodiscard]] std::unordered_map<
+        std::string, std::vector<ScenarioResults>> get_results() const {
+          return results;
+        }
+
+    private:
+      bool is_good;
+      std::unordered_map<std::string, std::vector<ScenarioResults>> results;
+  };
+
+  ////////////////////////////////////////////////////////////
   // Main Class
   class Main
   {
@@ -193,19 +217,26 @@ namespace ERIN
           StreamInfo si,
           std::unordered_map<std::string, StreamType> streams,
           std::unordered_map<std::string, std::shared_ptr<Component>> comps,
-          std::unordered_map<std::string, std::unordered_map<std::string, std::vector<std::string>>> networks,
-          std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios);
+          std::unordered_map<std::string,
+            std::unordered_map<std::string, std::vector<std::string>>> networks,
+          std::unordered_map<std::string, Scenario> scenarios);
       ScenarioResults run(const std::string& scenario_id);
+      AllResults run_all(RealTimeType sim_max_time);
       RealTimeType max_time_for_scenario(const std::string& scenario_id);
 
     private:
       StreamInfo stream_info;
       std::unordered_map<std::string, StreamType> stream_types_map;
       std::unordered_map<std::string, std::shared_ptr<Component>> components;
-      std::unordered_map<std::string, std::unordered_map<std::string, std::vector<std::string>>> networks;
-      std::unordered_map<std::string, std::shared_ptr<Scenario>> scenarios;
+      std::unordered_map<std::string,
+        std::unordered_map<std::string, std::vector<std::string>>> networks;
+      std::unordered_map<std::string, Scenario> scenarios;
 
       void check_data() const;
+      bool run_devs(
+          adevs::Simulator<PortValue>& sim,
+          const RealTimeType max_time,
+          const std::unordered_set<std::string>::size_type max_non_advance);
   };
 
   ////////////////////////////////////////////////////////////
@@ -406,18 +437,16 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
-  // Type Definitions
-  typedef adevs::port_value<FlowValueType> PortValue;
-
-  std::ostream& operator<<(std::ostream& os, const PortValue& pv);
-  ////////////////////////////////////////////////////////////
   // Scenario
   // TODO: finish this class...
   //       This needs to be a separate DEVS sim over ~1000 years where we
   //       predict and enter scenarios and kick off detailed runs. Optionally,
   //       reliability can be taken into account to present the possibility of
   //       downed equipment at scenario start...
-  class Scenario // : public adevs::Atomic<PortValue>
+  //       - does need max_num_occurrences : int
+  //       - needs duration :: Distribution
+  //       - needs occurrence :: Distribution
+  class Scenario : public adevs::Atomic<PortValue>
   {
     public:
       Scenario(std::string name, std::string network_id, RealTimeType max_times);
@@ -431,18 +460,23 @@ namespace ERIN
       bool operator!=(const Scenario& other) const {
         return !(operator==(other));
       }
-      //static const int outport_scenario_start;
-      //static const int outport_scenario_end;
-      //void delta_int() override;
-      //void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
-      //void delta_conf(std::vector<PortValue>& xs) override;
-      //adevs::Time ta() override;
-      //void output_func(std::vector<PortValue>& ys) override;
+      void delta_int() override;
+      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      adevs::Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
+      std::vector<ScenarioResults> get_results() const { return results; }
 
     private:
       std::string name;
       std::string network_id;
       RealTimeType max_time;
+      adevs::Time t;
+      // std::unique_ptr<Distribution> occurrence;
+      // std::unique_ptr<Distribution> duration;
+      // std::unordered_map<std::string, std::unique_ptr<Distribution>> intensities;
+      std::vector<ScenarioResults> results;
   };
 
   ////////////////////////////////////////////////////////////

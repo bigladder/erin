@@ -8,6 +8,7 @@
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
 #include "erin/erin.h"
+#include "erin/distributions.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
 #include <functional>
@@ -1024,6 +1025,14 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   // for (const auto& r: actual.get_results()) {
   //   EXPECT_TRUE(r.second.size() > 0);
   // }
+}
+
+TEST(ErinBasicsTest, DistributionTest)
+{
+  int fixed_value{1};
+  std::unique_ptr<::erin::dist::Distribution<int>> d =
+    std::make_unique<::erin::dist::FixedDistribution<int>>(fixed_value);
+  EXPECT_EQ(d->next_value(), fixed_value);
 }
 
 int

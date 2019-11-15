@@ -4,6 +4,7 @@
 #ifndef ERIN_ERIN_H
 #define ERIN_ERIN_H
 #include "../../vendor/bdevs/include/adevs.h"
+#include "erin/distributions.h"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../../vendor/toml11/toml.hpp"

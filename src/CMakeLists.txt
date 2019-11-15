@@ -17,6 +17,7 @@ set(sources
 
 set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
+  ${PROJECT_SOURCE_DIR}/include/erin/distributions.h
 )
 
 set(private_headers

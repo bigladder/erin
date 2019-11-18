@@ -21,6 +21,7 @@ time ./bin/str8760
 mkdir -p tidy
 echo Running Clang Tidy...
 clang-tidy -p compile_commands.json -header-filter=.* ../include/erin/erin.h > tidy/erin.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../include/erin/distributions.h > tidy/distributions.h.txt
 clang-tidy -p compile_commands.json -header-filter=.* ../src/cli.cpp > tidy/cli.cpp.txt
 clang-tidy -p compile_commands.json -header-filter=.* ../src/debug_utils.h > tidy/debug_utils.h.txt
 clang-tidy -p compile_commands.json -header-filter=.* ../src/erin.cpp > tidy/erin.cpp.txt

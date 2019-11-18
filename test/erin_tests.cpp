@@ -167,22 +167,26 @@ TEST(ErinBasicsTest, CanRunSourceSink)
       );
   adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
     sim.exec_next_event();
+  }
   std::vector<::ERIN::RealTimeType> actual_time =
     meter->get_event_times();
   std::vector<::ERIN::FlowValueType> actual_flow =
     meter->get_achieved_flows();
   EXPECT_EQ(expected_time.size(), actual_time.size());
   EXPECT_EQ(expected_flow.size(), actual_flow.size());
-  for (int i{0}; i < expected_time.size(); ++i) {
-    if (i >= actual_time.size())
+  for (
+      std::vector<::ERIN::RealTimeType>::size_type i{0};
+      i < expected_time.size(); ++i) {
+    if (i >= actual_time.size()) {
       break;
+    }
     EXPECT_EQ(expected_time[i], actual_time[i])
       << "times differ at index " << i;
-      ;
-    if (i >= actual_flow.size())
+    if (i >= actual_flow.size()) {
       break;
+    }
     EXPECT_EQ(expected_flow[i], actual_flow[i])
       << "loads differ at index " << i;
   }

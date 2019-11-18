@@ -28,8 +28,6 @@ namespace ERIN
   typedef int LogicalTimeType;
   typedef adevs::port_value<FlowValueType> PortValue;
 
-  std::ostream& operator<<(std::ostream& os, const PortValue& pv);
-
   ////////////////////////////////////////////////////////////
   // ComponentType
   enum class ComponentType

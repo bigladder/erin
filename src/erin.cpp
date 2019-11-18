@@ -152,7 +152,7 @@ namespace ERIN
     if (seconds_per_time_unit < 0.0)
       throw BadInputError();
     StreamInfo si{rate_unit, quantity_unit, seconds_per_time_unit};
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "stream_info.rate_unit = "
                 << si.get_rate_unit() << "\n";
       std::cout << "stream_info.quantity_unit = "
@@ -201,7 +201,7 @@ namespace ERIN
               other_rate_units,
               other_quantity_units)));
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       for (const auto& x: stream_types_map) {
         std::cerr << "stream type: " << x.first << "\n";
       }
@@ -214,7 +214,7 @@ namespace ERIN
   {
     std::unordered_map<std::string, std::vector<LoadItem>> loads_by_id;
     const auto toml_loads = toml::find<toml::table>(data, "loads");
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_loads.size() << " load entries found\n";
     }
     for (const auto& load_item: toml_loads) {
@@ -316,7 +316,7 @@ namespace ERIN
       try {
         t = std::stoi(cells[0]);
       }
-      catch (const std::invalid_argument& e) {
+      catch (const std::invalid_argument&) {
         std::ostringstream oss;
         oss << "failed to convert string to int on row " << row << ".\n";
         oss << "t = std::stoi(" << cells[0] << ");\n";
@@ -328,7 +328,7 @@ namespace ERIN
       try {
         v = std::stod(cells[1]);
       }
-      catch (const std::invalid_argument& e) {
+      catch (const std::invalid_argument&) {
         std::ostringstream oss;
         oss << "failed to convert string to double on row " << row << ".\n";
         oss << "v = std::stod(" << cells[1] << ");\n";
@@ -346,7 +346,7 @@ namespace ERIN
     }
     auto& back = the_loads.back();
     back = LoadItem{back.get_time()};
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "loads read in:\n";
       for (const auto ld: the_loads) {
         std::cout << "  {t: " << ld.get_time();
@@ -368,7 +368,7 @@ namespace ERIN
       const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id)
   {
     const auto toml_comps = toml::find<toml::table>(data, "components");
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_comps.size() << " components found\n";
     }
     std::unordered_map<
@@ -396,7 +396,7 @@ namespace ERIN
         if (it != tt.end())
           output_stream_id = toml::get<std::string>(it->second);
       }
-      if (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "comp: " << c.first << ".input_stream_id  = "
                   << input_stream_id << "\n";
         std::cout << "comp: " << c.first << ".output_stream_id = "
@@ -413,7 +413,7 @@ namespace ERIN
         it = tt.find("load_profiles_by_scenario");
         if (it != tt.end()) {
           const auto& loads = toml::get<toml::table>(it->second);
-          if (debug_level >= debug_level_high) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << loads.size() << " load profile(s) by scenario"
                       " for component " << c.first << "\n";
           }
@@ -426,10 +426,10 @@ namespace ERIN
             else
               throw BadInputError();
           }
-          if (debug_level >= debug_level_high) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << loads_by_scenario.size() << " scenarios with loads\n";
           }
-          if (debug_level >= debug_level_high) {
+          if constexpr (debug_level >= debug_level_high) {
             for (const auto& ls: loads_by_scenario) {
               std::cout << ls.first << ": [";
               for (const auto& li: ls.second) {
@@ -454,7 +454,7 @@ namespace ERIN
           throw BadInputError();
       }
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       for (const auto& c: components) {
         std::cout << "comp[" << c.first << "]:\n";
         std::cout << "\t" << c.second->get_id() << "\n";
@@ -471,7 +471,7 @@ namespace ERIN
       std::string,
       std::unordered_map<std::string,std::vector<std::string>>> networks;
     const auto toml_nets = toml::find<toml::table>(data, "networks");
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_nets.size() << " networks found\n";
     }
     for (const auto& n: toml_nets) {
@@ -487,7 +487,7 @@ namespace ERIN
       }
       networks.insert(std::make_pair(n.first, nw_map));
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       for (const auto& nw: networks) {
         std::cout << "network[" << nw.first << "]:\n";
         for (const auto& fan: nw.second) {
@@ -505,7 +505,7 @@ namespace ERIN
   {
     std::unordered_map<std::string, Scenario> scenarios;
     const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_scenarios.size() << " scenarios found\n";
     }
     for (const auto& s: toml_scenarios) {
@@ -520,7 +520,7 @@ namespace ERIN
             s.first,
             Scenario{s.first, network_id, max_time}));
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       for (const auto& s: scenarios) {
         std::cout << "scenario[" << s.first << "]\n";
         auto scenario = s.second;
@@ -684,7 +684,7 @@ namespace ERIN
     auto lns = calc_load_not_served();
     auto eubs_src = calc_energy_usage_by_stream(ComponentType::Source);
     auto eubs_load = calc_energy_usage_by_stream(ComponentType::Load);
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "metrics printout\n";
       std::cout << "results:\n";
       for (const auto& r: results) {
@@ -947,8 +947,7 @@ namespace ERIN
         sim_good = false;
         break;
       }
-      if (debug_level >= debug_level_high) {
-        auto t = sim.now();
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "The current time is:\n";
         std::cout << "... real   : " << t.real << "\n";
         std::cout << "... logical: " << t.logical << "\n";
@@ -1115,7 +1114,7 @@ namespace ERIN
   {
     auto diff{inflow - (outflow + storeflow + lossflow)};
     if (std::fabs(diff) > flow_value_tolerance) {
-      if (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cerr << "FlowState.inflow   : " << inflow << "\n";
         std::cerr << "FlowState.outflow  : " << outflow << "\n";
         std::cerr << "FlowState.storeflow: " << storeflow << "\n";
@@ -1264,11 +1263,11 @@ namespace ERIN
   FlowElement*
   LoadComponent::create_connecting_element()
   {
-    if (debug_level >= debug_level_high) { 
+    if constexpr (debug_level >= debug_level_high) { 
       std::cout << "LoadComponent::create_connecting_element()\n";
     }
     auto p = new FlowMeter(get_id(), ComponentType::Load, get_input_stream());
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent.connecting_element = " << p << "\n";
     }
     return p;
@@ -1280,7 +1279,7 @@ namespace ERIN
       const std::string& active_scenario)
   {
     std::unordered_set<FlowElement*> elements;
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
     }
@@ -1290,26 +1289,26 @@ namespace ERIN
         get_input_stream(),
         loads_by_scenario[active_scenario]);
     elements.emplace(sink);
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "sink = " << sink << "\n";
     }
     auto meter = get_connecting_element();
     elements.emplace(meter);
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "meter = " << meter << "\n";
     }
     connect_source_to_sink(network, meter, sink, false);
     for (const auto& in: get_inputs()) {
       auto p = in->get_connecting_element();
       elements.emplace(p);
-      if (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "p = " << p << "\n";
       }
       if (p != nullptr) {
         connect_source_to_sink(network, p, meter, true);
       }
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network(...) exit\n";
     }
     return elements;
@@ -1330,7 +1329,7 @@ namespace ERIN
       const std::string&)
   {
     std::unordered_set<FlowElement*> elements;
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
     }
@@ -1341,7 +1340,7 @@ namespace ERIN
     // they've been added to the simulation or not. If NOT, then we need to
     // delete the resource at deletion time... otherwise, the simulator will
     // delete them.
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit\n";
     }
     return elements;
@@ -1350,11 +1349,11 @@ namespace ERIN
   FlowElement*
   SourceComponent::create_connecting_element()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::create_connecting_element()\n";
     }
     auto p = new FlowMeter(get_id(), ComponentType::Source, get_output_stream());
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent.p = " << p << "\n";
     }
     return p;
@@ -1386,7 +1385,7 @@ namespace ERIN
   void
   Scenario::delta_int()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "Scenario::delta_int();name=" << name << "\n";
     }
     // TODO: kick off a network simulation
@@ -1396,7 +1395,7 @@ namespace ERIN
   void
   Scenario::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "Scenario::delta_ext("
                 << "{" << e.real << "," << e.logical << "}, ";
       auto first{true};
@@ -1407,7 +1406,7 @@ namespace ERIN
         else {
           std::cout << ", ";
         }
-        std::cout << x;
+        std::cout << "{port=" << x.port << ", value=" << x.value << "}";
       }
       std::cout << "});name=" << name << "\n";
     }
@@ -1417,7 +1416,7 @@ namespace ERIN
   void
   Scenario::delta_conf(std::vector<PortValue>& xs)
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "Scenario::delta_conf();name=" << name << "\n";
     }
     auto e = adevs::Time{0,0};
@@ -1485,7 +1484,7 @@ namespace ERIN
   void
   FlowElement::delta_int()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::delta_int();id=" << id << "\n";
     }
     update_on_internal_transition();
@@ -1496,7 +1495,7 @@ namespace ERIN
   void
   FlowElement::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::delta_ext();id=" << id << "\n";
     }
     time = time + e;
@@ -1507,14 +1506,14 @@ namespace ERIN
     for (const auto &x : xs) {
       switch (x.port) {
         case inport_inflow_achieved:
-          if (debug_level >= debug_level_high) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << "... <=inport_inflow_achieved\n";
           }
           inflow_provided = true;
           inflow_achieved += x.value;
           break;
         case inport_outflow_request:
-          if (debug_level >= debug_level_high) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << "... <=inport_outflow_request\n";
           }
           outflow_provided = true;
@@ -1526,30 +1525,36 @@ namespace ERIN
     }
     if (inflow_provided && !outflow_provided) {
       report_outflow_achieved = true;
-      if (inflow >= 0.0 && inflow_achieved > inflow)
+      if (inflow >= 0.0 && inflow_achieved > inflow) {
         throw AchievedMoreThanRequestedError();
-      if (inflow <= 0.0 && inflow_achieved < inflow)
+      }
+      if (inflow <= 0.0 && inflow_achieved < inflow) {
         throw AchievedMoreThanRequestedError();
+      }
       const FlowState& fs = update_state_for_inflow_achieved(inflow_achieved);
       update_state(fs);
     }
     else if (outflow_provided && !inflow_provided) {
       report_inflow_request = true;
       const FlowState fs = update_state_for_outflow_request(outflow_request);
-      if (std::fabs(fs.getOutflow() - outflow_request) > flow_value_tolerance)
+      if (std::fabs(fs.getOutflow() - outflow_request) > flow_value_tolerance) {
         report_outflow_achieved = true;
+      }
       update_state(fs);
-      if (outflow >= 0.0 && outflow > outflow_request)
+      if (outflow >= 0.0 && outflow > outflow_request) {
         throw AchievedMoreThanRequestedError();
-      if (outflow <= 0.0 && outflow < outflow_request)
+      }
+      if (outflow <= 0.0 && outflow < outflow_request) {
         throw AchievedMoreThanRequestedError();
+      }
     }
     else if (inflow_provided && outflow_provided) {
       // assumption: we'll never get here...
       throw SimultaneousIORequestError();
     }
-    else
+    else {
       throw BadPortError();
+    }
     if (report_inflow_request || report_outflow_achieved) {
       update_on_external_transition();
       check_flow_invariants();
@@ -1568,7 +1573,7 @@ namespace ERIN
   void
   FlowElement::delta_conf(std::vector<PortValue>& xs)
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::delta_conf();id=" << id << "\n";
     }
     auto e = adevs::Time{0,0};
@@ -1585,16 +1590,16 @@ namespace ERIN
   adevs::Time
   FlowElement::ta()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::ta();id=" << id << "\n";
     }
     if (report_inflow_request || report_outflow_achieved) {
-      if (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... dt = (0,1)\n";
       }
       return adevs::Time{0, 1};
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "... dt = infinity\n";
     }
     return calculate_time_advance();
@@ -1603,18 +1608,18 @@ namespace ERIN
   void
   FlowElement::output_func(std::vector<PortValue>& ys)
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::output_func();id=" << id << "\n";
     }
     if (report_inflow_request) {
-      if (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... send=>outport_inflow_request\n";
       }
       ys.push_back(
           adevs::port_value<FlowValueType>{outport_inflow_request, inflow});
     }
     if (report_outflow_achieved) {
-      if (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... send=>outport_outflow_achieved\n";
       }
       ys.push_back(
@@ -1631,7 +1636,7 @@ namespace ERIN
   FlowState
   FlowElement::update_state_for_outflow_request(FlowValueType outflow_) const
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::update_state_for_outflow_request();id=" << id << "\n";
     }
     return FlowState{outflow_, outflow_};
@@ -1640,7 +1645,7 @@ namespace ERIN
   FlowState
   FlowElement::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::update_state_for_inflow_achieved();id="
                 << id << "\n";
     }
@@ -1650,7 +1655,7 @@ namespace ERIN
   void
   FlowElement::update_on_internal_transition()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::update_on_internal_transition();id="
                 << id << "\n";
     }
@@ -1659,7 +1664,7 @@ namespace ERIN
   void
   FlowElement::update_on_external_transition()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::update_on_external_transition();id="
                 << id << "\n";
     }
@@ -1718,7 +1723,7 @@ namespace ERIN
   FlowState
   FlowLimits::update_state_for_outflow_request(FlowValueType out) const
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowLimits::update_state_for_outflow_request(" << out << ")\n";
       print_state("... ");
     }
@@ -1732,7 +1737,7 @@ namespace ERIN
     else {
       out_ = out;
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       print_state("... ");
       std::cout << "end FlowLimits::update_state_for_outflow_request\n";
     }
@@ -1742,7 +1747,7 @@ namespace ERIN
   FlowState
   FlowLimits::update_state_for_inflow_achieved(FlowValueType in) const
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowLimits::update_state_for_inflow_achieved(" << in << ")\n";
       print_state("... ");
     }
@@ -1756,7 +1761,7 @@ namespace ERIN
     else {
       in_ = in;
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       print_state("... ");
       std::cout << "end FlowLimits::update_state_for_inflow_achieved\n";
     }
@@ -1815,7 +1820,7 @@ namespace ERIN
   void
   FlowMeter::update_on_external_transition()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowMeter::update_on_external_transition()\n";
       print_state("... ");
       print_vec<RealTimeType>("... event_times", event_times);
@@ -1846,7 +1851,7 @@ namespace ERIN
       else
         achieved_flows.push_back(get_outflow());
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       print_state("... ");
       print_vec<RealTimeType>("... event_times", event_times);
       print_vec<FlowValueType>("... requested_flows", requested_flows);
@@ -1906,7 +1911,7 @@ namespace ERIN
   void
   Sink::update_on_internal_transition()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "Sink::update_on_internal_transition()\n";
     }
     ++idx;
@@ -1915,11 +1920,11 @@ namespace ERIN
   adevs::Time
   Sink::calculate_time_advance()
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "Sink::calculate_time_advance()\n";
     }
     if (idx < 0) {
-      if (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... dt = infinity\n";
       }
       return adevs::Time{0, 0};
@@ -1927,12 +1932,12 @@ namespace ERIN
     std::vector<LoadItem>::size_type next_idx = idx + 1;
     if (next_idx < num_loads) {
       RealTimeType dt{loads[idx].get_time_advance(loads[next_idx])};
-      if (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... dt = (" << dt << ", 0)\n";
       }
       return adevs::Time{dt, 0};
     }
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "... dt = infinity\n";
     }
     return adevs_inf<adevs::Time>();
@@ -1947,7 +1952,7 @@ namespace ERIN
   void
   Sink::add_additional_outputs(std::vector<PortValue>& ys)
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "Sink::output_func()\n";
     }
     std::vector<LoadItem>::size_type next_idx = idx + 1;
@@ -1961,7 +1966,7 @@ namespace ERIN
   void
   Sink::check_loads() const
   {
-    if (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "Sink::check_loads\n";
     }
     auto N{loads.size()};

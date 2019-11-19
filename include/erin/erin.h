@@ -257,7 +257,7 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
-  // MixedStreamsError
+  // InvariantError
   struct InvariantError : public std::exception
   {
     [[nodiscard]] const char* what() const noexcept override

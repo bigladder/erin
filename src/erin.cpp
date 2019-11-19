@@ -875,7 +875,7 @@ namespace ERIN
       throw std::invalid_argument(oss.str());
     }
     // 1. Switch to reading the scenario_id from the input
-    const auto the_scenario = it->second;
+    const auto& the_scenario = it->second;
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
     adevs::Digraph<FlowValueType> network;

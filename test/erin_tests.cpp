@@ -12,8 +12,9 @@
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
 #include <functional>
-#include <unordered_map>
+#include <random>
 #include <sstream>
+#include <unordered_map>
 
 
 const double tolerance{1e-6};
@@ -1070,18 +1071,17 @@ TEST(ErinBasicsTest, BasicScenarioTest)
 
 TEST(ErinBasicsTest, DistributionTest)
 {
-  const int fixed_value{1};
-  std::unique_ptr<::erin::dist::Distribution<int>> d_fixed =
-    std::make_unique<::erin::dist::FixedDistribution<int>>(fixed_value);
-  EXPECT_EQ(d_fixed->next_value(), fixed_value);
+  const int k{1};
+  auto d_fixed = ::erin::distribution::make_fixed<int>(k);
+  EXPECT_EQ(d_fixed(), k);
   const int lower_bound{0};
   const int upper_bound{10};
-  std::unique_ptr<::erin::dist::Distribution<int>> d_rand =
-    std::make_unique<::erin::dist::RandomIntegerDistribution<int>>(
-        lower_bound, upper_bound);
+  std::default_random_engine g{};
+  auto d_rand = ::erin::distribution::make_random_integer<int>(
+      g, lower_bound, upper_bound);
   const int max_times{1000};
   for (int i{0}; i < max_times; ++i) {
-    auto v{d_rand->next_value()};
+    auto v{d_rand()};
     EXPECT_TRUE((v >= lower_bound) && (v <= upper_bound))
       << "expected v to be between (" << lower_bound << ", "
       << upper_bound << "] " << "but was " << v;

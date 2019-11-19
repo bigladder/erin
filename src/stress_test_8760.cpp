@@ -43,9 +43,19 @@ main() {
   std::unordered_map<
     std::string, std::unordered_map<std::string, std::vector<std::string>>>
     networks{{net_id, {{source_id, {load_id}}}}};
-  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
-    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, N}}};
-  ::ERIN::Main m{si, streams, components, networks, scenarios};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{};
+  scenarios.emplace(
+      std::make_pair(
+        scenario_id, 
+        ::ERIN::Scenario(
+          scenario_id,
+          net_id,
+          N,
+          -1,
+          nullptr,
+          nullptr,
+          {})));
+  auto m = ::ERIN::Main(si, streams, components, networks, scenarios);
   auto out = m.run(scenario_id);
   if (out.get_is_good()) {
     std::cout << "success!\n";

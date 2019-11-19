@@ -4,11 +4,11 @@
 #ifndef ERIN_ERIN_H
 #define ERIN_ERIN_H
 #include "../../vendor/bdevs/include/adevs.h"
-#include "erin/distributions.h"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../../vendor/toml11/toml.hpp"
 #pragma clang diagnostic pop
+#include "erin/distributions.h"
 #include <exception>
 #include <functional>
 #include <iostream>
@@ -448,7 +448,14 @@ namespace ERIN
   class Scenario : public adevs::Atomic<PortValue>
   {
     public:
-      Scenario(std::string name, std::string network_id, RealTimeType max_times);
+      Scenario(
+          std::string name,
+          std::string network_id,
+          RealTimeType max_time,
+          int max_occurrences,
+          std::function<RealTimeType(void)> calc_next_occurrence,
+          std::function<RealTimeType(void)> calc_duration,
+          std::unordered_map<std::string, double> intensities);
 
       [[nodiscard]] const std::string& get_name() const { return name; }
       [[nodiscard]] RealTimeType get_max_time() const { return max_time; }
@@ -466,16 +473,22 @@ namespace ERIN
       void output_func(std::vector<PortValue>& ys) override;
 
       std::vector<ScenarioResults> get_results() const { return results; }
+      void set_runner(const std::function<ScenarioResults(void)>& f) {
+        runner = f;
+      }
 
     private:
       std::string name;
       std::string network_id;
       RealTimeType max_time;
+      int max_occurrences;
+      std::function<RealTimeType(void)> calc_time_to_next;
+      std::function<RealTimeType(void)> calc_duration;
+      std::unordered_map<std::string, double> intensities;
       adevs::Time t;
-      // std::unique_ptr<Distribution> occurrence;
-      // std::unique_ptr<Distribution> duration;
-      // std::unordered_map<std::string, std::unique_ptr<Distribution>> intensities;
+      int num_occurrences;
       std::vector<ScenarioResults> results;
+      std::function<ScenarioResults(void)> runner;
   };
 
   ////////////////////////////////////////////////////////////

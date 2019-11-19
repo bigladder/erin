@@ -594,7 +594,15 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, ::ERIN::Scenario> expected{{
     std::string{"blue_sky"},
-    ::ERIN::Scenario{"blue_sky", "normal_operations", 1}}};
+    ::ERIN::Scenario{
+      std::string{"blue_sky"},
+      std::string{"normal_operations"},
+      1,
+      -1,
+      []() -> ::ERIN::RealTimeType { return 0; },
+      []() -> ::ERIN::RealTimeType { return 0; },
+      {}
+    }}};
   auto pt = &t;
   auto actual = pt->read_scenarios();
   EXPECT_EQ(expected.size(), actual.size());
@@ -785,7 +793,17 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
     std::string, std::unordered_map<std::string, std::vector<std::string>>>
     networks{{net_id, {{source_id, {load_id}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
-    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, 1}}};
+    {
+      scenario_id,
+      ::ERIN::Scenario{
+        scenario_id,
+        net_id,
+        1,
+        -1,
+        []() -> ::ERIN::RealTimeType { return 0; },
+        []() -> ::ERIN::RealTimeType { return 0; },
+        {}
+      }}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run(scenario_id);
   EXPECT_EQ(out.get_is_good(), true);
@@ -868,7 +886,17 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
     std::string, std::unordered_map<std::string, std::vector<std::string>>>
     networks{{net_id, {{source_id, {load_id}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
-    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, max_time}}};
+    {
+      scenario_id,
+      ::ERIN::Scenario{
+        scenario_id,
+        net_id,
+        max_time,
+        -1,
+        nullptr,
+        nullptr,
+        {}
+      }}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto actual = m.max_time_for_scenario(scenario_id);
   ::ERIN::RealTimeType expected = max_time;
@@ -972,9 +1000,9 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
 
 TEST(ErinBasicsTest, BasicScenarioTest)
 {
-  // we want to create one or more scenarios and simulate them in DEVS
-  // each scenario should be autonomous and not interact with any other
-  // the entire simulation has a max time limit.
+  // We want to create one or more scenarios and simulate them in DEVS
+  // each scenario should be autonomous and not interact with each other.
+  // The entire simulation has a max time limit.
   // This is where we may need to switch to long or int64_t if we go with
   // seconds for the time unit and 1000 years of simulation...
   std::string scenario_id{"blue_sky"};
@@ -1019,16 +1047,25 @@ TEST(ErinBasicsTest, BasicScenarioTest)
     std::string, std::unordered_map<std::string, std::vector<std::string>>>
     networks{{net_id, {{source_id, {load_id}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
-    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, max_time}}};
+    {
+      scenario_id,
+      ::ERIN::Scenario{
+        scenario_id,
+        net_id,
+        max_time,
+        1,
+        [](){ return 100; },
+        [](){ return 10; },
+        {}
+      }}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   ::ERIN::RealTimeType sim_max_time{1000};
   auto actual = m.run_all(sim_max_time);
   EXPECT_TRUE(actual.get_is_good());
   EXPECT_TRUE(actual.get_results().size() > 0);
-  // TODO: add the following tests after we get Distributions working
-  // for (const auto& r: actual.get_results()) {
-  //   EXPECT_TRUE(r.second.size() > 0);
-  // }
+  for (const auto& r: actual.get_results()) {
+    EXPECT_TRUE(r.second.size() > 0);
+  }
 }
 
 TEST(ErinBasicsTest, DistributionTest)

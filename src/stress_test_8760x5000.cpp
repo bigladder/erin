@@ -6,9 +6,9 @@
 
 int
 main() {
-  std::string scenario_id{"blue_sky"};
-  std::string stream_id{"electricity"};
-  std::string net_id{"normal_operations"};
+  const std::string scenario_id{"blue_sky"};
+  const std::string stream_id{"electricity"};
+  const std::string net_id{"normal_operations"};
   const int N{8760};
   std::vector<::ERIN::LoadItem> loads;
   for (int i{0}; i < N; ++i) {
@@ -30,7 +30,16 @@ main() {
     std::shared_ptr<::ERIN::Component>> components;
   std::unordered_map<std::string, std::vector<std::string>> nw;
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
-    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, N}}};
+    {
+      scenario_id,
+      ::ERIN::Scenario{
+        scenario_id,
+        net_id,
+        N,
+        -1,
+        nullptr,
+        nullptr,
+        {}}}};
   const int M{5000};
   std::string src_prefix{"source_"};
   std::string load_prefix{"load_"};

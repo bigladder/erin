@@ -518,15 +518,22 @@ namespace ERIN
       scenarios.insert(
           std::make_pair(
             s.first,
-            Scenario{s.first, network_id, max_time}));
+            Scenario{
+              s.first,
+              network_id,
+              max_time,
+              -1,
+              nullptr,
+              nullptr,
+              {}
+              }));
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& s: scenarios) {
         std::cout << "scenario[" << s.first << "]\n";
-        auto scenario = s.second;
-        std::cout << "\tname      : " << scenario.get_name() << "\n";
-        std::cout << "\tnetwork_id: " << scenario.get_network_id() << "\n";
-        std::cout << "\tmax_time  : " << scenario.get_max_time() << "\n";
+        std::cout << "\tname      : " << s.second.get_name() << "\n";
+        std::cout << "\tnetwork_id: " << s.second.get_network_id() << "\n";
+        std::cout << "\tmax_time  : " << s.second.get_max_time() << "\n";
       }
     }
     return scenarios;
@@ -910,7 +917,12 @@ namespace ERIN
         auto in_st{e->get_inflow_type()};
         auto out_st{e->get_outflow_type()};
         if (in_st != out_st) {
-          throw MixedStreamsError();
+          std::ostringstream oss;
+          oss << "MixedStreamsError:\n";
+          oss << "input stream != output_stream but it should\n";
+          oss << "input stream: " << in_st.get_type() << "\n";
+          oss << "output stream: " << out_st.get_type() << "\n";
+          throw std::runtime_error(oss.str());
         }
         comp_types.insert(
             std::pair<std::string,ComponentType>(
@@ -966,9 +978,14 @@ namespace ERIN
     std::vector<Scenario*> copies{};
     for (const auto s: scenarios) {
       auto p = new Scenario{s.second};
+      auto scenario_id = p->get_name();
+      p->set_runner([this, scenario_id]() -> ScenarioResults {
+          return this->run(scenario_id);
+          });
       sim.add(p);
-      // NOTE: sim will delete all pointers when it is deleted.
-      // Therefore, we can safely store pointers in `copies` for reference.
+      // NOTE: sim will delete all pointers passed to it upon deletion.
+      // Therefore, we don't need to worry about deleting Scenario pointers
+      // (sim does it). Pointers in `copies` are there for reference.
       copies.emplace_back(p);
     }
     // 3. run the simulation
@@ -1236,7 +1253,13 @@ namespace ERIN
     auto src_out = source->get_outflow_type();
     auto sink_in = sink->get_inflow_type();
     if (src_out != sink_in) {
-      throw MixedStreamsError();
+      std::ostringstream oss;
+      oss << "MixedStreamsError:\n";
+      oss << "source output stream != sink input stream for component ";
+      oss << component_type_to_tag(get_component_type()) << "\n";
+      oss << "source output stream: " << src_out.get_type() << "\n";
+      oss << "sink input stream: " << sink_in.get_type() << "\n";
+      throw std::runtime_error(oss.str());
     }
     network.couple(
         sink, FlowMeter::outport_inflow_request,
@@ -1364,22 +1387,35 @@ namespace ERIN
   Scenario::Scenario(
       std::string name_,
       std::string network_id_,
-      RealTimeType max_time_):
+      RealTimeType max_time_,
+      int max_occurrences_,
+      std::function<RealTimeType(void)> calc_time_to_next_,
+      std::function<RealTimeType(void)> calc_duration_,
+      std::unordered_map<std::string, double> intensities_):
     adevs::Atomic<PortValue>(),
     name{std::move(name_)},
     network_id{std::move(network_id_)},
     max_time{max_time_},
-    results{}
+    max_occurrences{max_occurrences_},
+    calc_time_to_next{calc_time_to_next_},
+    calc_duration{calc_duration_},
+    intensities{intensities_},
+    num_occurrences{0},
+    results{},
+    runner{nullptr}
   {
   }
 
+  // TODO: revisit this. Not sure this is the right way to do equality for
+  // scenarios. Do we need equality?
   bool
   Scenario::operator==(const Scenario& other) const
   {
     if (this == &other) return true;
-    return (name == other.get_name()) &&
-           (network_id == other.get_network_id()) &&
-           (max_time == other.get_max_time());
+    return (name == other.name) &&
+           (network_id == other.network_id) &&
+           (max_time == other.max_time) &&
+           (max_occurrences == other.max_occurrences);
   }
 
   void
@@ -1388,8 +1424,12 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Scenario::delta_int();name=" << name << "\n";
     }
-    // TODO: kick off a network simulation
-    // TODO: add ScenarioResults to results
+    ++num_occurrences;
+    if (runner != nullptr) {
+      auto result = runner();
+      // TODO: add the current time and occurrence number to the results?
+      results.emplace_back(result);
+    }
   }
 
   void
@@ -1427,9 +1467,13 @@ namespace ERIN
   adevs::Time
   Scenario::ta()
   {
-    // Here, we're going to need to query the occurrence distribution and return.
-    // Just fixing something for now.
-    auto dt = adevs::Time{10,0};
+    if (calc_time_to_next == nullptr) {
+      return inf;
+    }
+    if (num_occurrences >= max_occurrences) {
+      return inf;
+    }
+    auto dt = adevs::Time{calc_time_to_next(), 0};
     t = t + dt;
     return dt;
   }

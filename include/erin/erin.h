@@ -437,14 +437,6 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Scenario
-  // TODO: finish this class...
-  //       This needs to be a separate DEVS sim over ~1000 years where we
-  //       predict and enter scenarios and kick off detailed runs. Optionally,
-  //       reliability can be taken into account to present the possibility of
-  //       downed equipment at scenario start...
-  //       - does need max_num_occurrences : int
-  //       - needs duration :: Distribution
-  //       - needs occurrence :: Distribution
   class Scenario : public adevs::Atomic<PortValue>
   {
     public:

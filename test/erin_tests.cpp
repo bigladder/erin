@@ -604,8 +604,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
       []() -> ::ERIN::RealTimeType { return 0; },
       {}
     }}};
-  auto pt = &t;
-  auto actual = pt->read_scenarios();
+  auto actual = t.read_scenarios();
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);

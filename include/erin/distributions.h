@@ -20,7 +20,8 @@ namespace erin::distribution
 
   template <class T>
   std::function<T(void)>
-  make_random_integer(const std::default_random_engine& generator, const T& lb, const T& ub)
+  make_random_integer(
+      const std::default_random_engine& generator, const T& lb, const T& ub)
   {
     if (lb >= ub) {
       std::ostringstream oss{};

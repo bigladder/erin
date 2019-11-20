@@ -587,16 +587,17 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
   std::stringstream ss{};
   ss << "[scenarios.blue_sky]\n"
         "time_units = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed_probability\","
-                                  " probability = 1}\n"
+        "occurrence_distribution = {type = \"fixed\","
+                                  " value = 1}\n"
         "duration = 8760\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader t{ss};
+  const std::string scenario_id{"blue_sky"};
   std::unordered_map<std::string, ::ERIN::Scenario> expected{{
-    std::string{"blue_sky"},
+    scenario_id,
     ::ERIN::Scenario{
-      std::string{"blue_sky"},
+      scenario_id,
       std::string{"normal_operations"},
       8760,
       1,
@@ -616,6 +617,9 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
         e.second.get_number_of_occurrences(),
         a->second.get_number_of_occurrences());
   }
+  adevs::Time dt_expected{0, 0};
+  auto dt_actual = actual.at(scenario_id).ta();
+  //EXPECT_EQ(dt_expected, dt_actual);
 }
 
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)

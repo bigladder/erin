@@ -3,6 +3,7 @@
 require 'set'
 require 'pathname'
 
+CHECKS = "-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*"
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 ROOT = File.expand_path(File.join(THIS_DIR, ".."))
 ROOT_PN = Pathname.new(ROOT)
@@ -27,7 +28,7 @@ SRC_FILES.each do |f|
     end
   end
   base_names_set << base_name
-  lines << "clang-tidy -p compile_commands.json -header-filter=.* ../#{relative_path} > tidy/#{base_name}.txt"
+  lines << "clang-tidy -p compile_commands.json -checks='#{CHECKS}' -header-filter='.*' ../#{relative_path} > tidy/#{base_name}.txt"
 end
 prefix = File.read(File.join(THIS_DIR, "doit_prefix.txt"))
 File.open(File.join(THIS_DIR, "doit"), 'w') do |f|

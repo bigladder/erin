@@ -38,7 +38,6 @@ main() {
         N,
         -1,
         nullptr,
-        nullptr,
         {}}}};
   const int M{5000};
   std::string src_prefix{"source_"};

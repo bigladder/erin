@@ -30,7 +30,8 @@ blue_sky = "building_electrical"
 electric_utility = ["cluster_01_electric"]
 ############################################################
 [scenarios.blue_sky]
-occurrence_distribution = {type = "fixed_probability", probability = 1}
-duration_distribution = {type = "specified", value = 8760, time_unit = "hours"}
-max_time = 4
+time_units = "hours"
+occurrence_distribution = {type = "fixed", value = 0}
+duration = 4
+max_occurrences = 1
 network = "normal_operations"

@@ -443,17 +443,23 @@ namespace ERIN
       Scenario(
           std::string name,
           std::string network_id,
-          RealTimeType max_time,
+          RealTimeType duration,
           int max_occurrences,
-          std::function<RealTimeType(void)> calc_next_occurrence,
-          std::function<RealTimeType(void)> calc_duration,
+          std::function<RealTimeType(void)> calc_time_to_next,
           std::unordered_map<std::string, double> intensities);
 
       [[nodiscard]] const std::string& get_name() const { return name; }
-      [[nodiscard]] RealTimeType get_max_time() const { return max_time; }
       [[nodiscard]] const std::string& get_network_id() const {
         return network_id;
       }
+      [[nodiscard]] RealTimeType get_duration() const { return duration; }
+      [[nodiscard]] int get_max_occurrences() const { return max_occurrences; }
+      [[nodiscard]] int get_number_of_occurrences() const {
+        return num_occurrences;
+      }
+      [[nodiscard]] const std::unordered_map<std::string,double>
+        get_intensities() const { return intensities; }
+
       bool operator==(const Scenario& other) const;
       bool operator!=(const Scenario& other) const {
         return !(operator==(other));
@@ -472,12 +478,11 @@ namespace ERIN
     private:
       std::string name;
       std::string network_id;
-      RealTimeType max_time;
+      RealTimeType duration;
       int max_occurrences;
       std::function<RealTimeType(void)> calc_time_to_next;
-      std::function<RealTimeType(void)> calc_duration;
       std::unordered_map<std::string, double> intensities;
-      adevs::Time t;
+      RealTimeType t;
       int num_occurrences;
       std::vector<ScenarioResults> results;
       std::function<ScenarioResults(void)> runner;

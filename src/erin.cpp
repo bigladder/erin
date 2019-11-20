@@ -509,22 +509,23 @@ namespace ERIN
       std::cout << toml_scenarios.size() << " scenarios found\n";
     }
     for (const auto& s: toml_scenarios) {
-      const auto occurrence_distribution = toml::find<toml::table>(
+      const auto dist = toml::find<toml::table>(
           s.second, "occurrence_distribution");
-      const auto duration_distribution = toml::find<toml::table>(
-          s.second, "duration_distribution");
-      const auto max_time = toml::find<int>(s.second, "max_time");
+      const auto next_occurrence_dist =
+        ::erin_generics::read_toml_distribution<RealTimeType>(dist);
+      const auto duration = toml::find<int>(s.second, "duration");
+      const auto max_occurrences = toml::find<int>(s.second, "max_occurrences");
       const auto network_id = toml::find<std::string>(s.second, "network");
+      // TODO: read intensities
       scenarios.insert(
           std::make_pair(
             s.first,
             Scenario{
               s.first,
               network_id,
-              max_time,
-              -1,
-              nullptr,
-              nullptr,
+              duration,
+              max_occurrences,
+              next_occurrence_dist,
               {}
               }));
     }
@@ -533,7 +534,10 @@ namespace ERIN
         std::cout << "scenario[" << s.first << "]\n";
         std::cout << "\tname      : " << s.second.get_name() << "\n";
         std::cout << "\tnetwork_id: " << s.second.get_network_id() << "\n";
-        std::cout << "\tmax_time  : " << s.second.get_max_time() << "\n";
+        std::cout << "\tduration  : " << s.second.get_duration() << "\n";
+        std::cout << "\tmax occur : " << s.second.get_max_occurrences() << "\n";
+        std::cout << "\tnum occur : " << s.second.get_number_of_occurrences()
+                  << "\n";
       }
     }
     return scenarios;
@@ -903,15 +907,15 @@ namespace ERIN
     }
     adevs::Simulator<PortValue> sim;
     network.add(&sim);
-    const auto max_time = the_scenario.get_max_time();
+    const auto duration = the_scenario.get_duration();
     const auto max_non_advance{comps_in_use.size() * 10};
-    auto sim_good = run_devs(sim, max_time, max_non_advance);
+    auto sim_good = run_devs(sim, duration, max_non_advance);
     // 3. Return outputs.
     std::unordered_map<std::string, std::vector<Datum>> results;
     std::unordered_map<std::string,ComponentType> comp_types;
     std::unordered_map<std::string,StreamType> stream_types;
     for (const auto& e: elements) {
-      auto vals = e->get_results(max_time);
+      auto vals = e->get_results(duration);
       if (!vals.empty()) {
         auto id{e->get_id()};
         auto in_st{e->get_inflow_type()};
@@ -1007,7 +1011,7 @@ namespace ERIN
       oss << "scenario_id \"" << scenario_id << "\" not found in scenarios";
       throw std::invalid_argument(oss.str());
     }
-    return it->second.get_max_time();
+    return it->second.get_duration();
   }
 
   void
@@ -1387,19 +1391,18 @@ namespace ERIN
   Scenario::Scenario(
       std::string name_,
       std::string network_id_,
-      RealTimeType max_time_,
+      RealTimeType duration_,
       int max_occurrences_,
       std::function<RealTimeType(void)> calc_time_to_next_,
-      std::function<RealTimeType(void)> calc_duration_,
       std::unordered_map<std::string, double> intensities_):
     adevs::Atomic<PortValue>(),
     name{std::move(name_)},
     network_id{std::move(network_id_)},
-    max_time{max_time_},
+    duration{duration_},
     max_occurrences{max_occurrences_},
     calc_time_to_next{calc_time_to_next_},
-    calc_duration{calc_duration_},
     intensities{intensities_},
+    t{0},
     num_occurrences{0},
     results{},
     runner{nullptr}
@@ -1414,7 +1417,7 @@ namespace ERIN
     if (this == &other) return true;
     return (name == other.name) &&
            (network_id == other.network_id) &&
-           (max_time == other.max_time) &&
+           (duration == other.duration) &&
            (max_occurrences == other.max_occurrences);
   }
 
@@ -1470,12 +1473,12 @@ namespace ERIN
     if (calc_time_to_next == nullptr) {
       return inf;
     }
-    if (num_occurrences >= max_occurrences) {
+    if ((max_occurrences >= 0) && (num_occurrences >= max_occurrences)) {
       return inf;
     }
-    auto dt = adevs::Time{calc_time_to_next(), 0};
-    t = t + dt;
-    return dt;
+    auto dt = calc_time_to_next();
+    t += dt;
+    return adevs::Time{dt, 0};
   }
 
   void

@@ -586,11 +586,11 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
 {
   std::stringstream ss{};
   ss << "[scenarios.blue_sky]\n"
+        "time_units = \"hours\"\n"
         "occurrence_distribution = {type = \"fixed_probability\","
                                   " probability = 1}\n"
-        "duration_distribution = {type = \"specified\", value = 8760,"
-                                " time_unit = \"hours\"}\n"
-        "max_time = 1\n"
+        "duration = 8760\n"
+        "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, ::ERIN::Scenario> expected{{
@@ -598,9 +598,8 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
     ::ERIN::Scenario{
       std::string{"blue_sky"},
       std::string{"normal_operations"},
+      8760,
       1,
-      -1,
-      []() -> ::ERIN::RealTimeType { return 0; },
       []() -> ::ERIN::RealTimeType { return 0; },
       {}
     }}};
@@ -609,7 +608,13 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);
     ASSERT_TRUE(a != actual.end());
-    EXPECT_EQ(e.second, a->second);
+    EXPECT_EQ(e.second.get_name(), a->second.get_name());
+    EXPECT_EQ(e.second.get_network_id(), a->second.get_network_id());
+    EXPECT_EQ(e.second.get_duration(), a->second.get_duration());
+    EXPECT_EQ(e.second.get_max_occurrences(), a->second.get_max_occurrences());
+    EXPECT_EQ(
+        e.second.get_number_of_occurrences(),
+        a->second.get_number_of_occurrences());
   }
 }
 
@@ -661,9 +666,8 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "[scenarios.blue_sky]\n"
         "occurrence_distribution = {type = \"fixed_probability\", "
                                    "probability = 1}\n"
-        "duration_distribution = {type = \"specified\", value = 8760, "
-                                 "time_unit = \"hours\"}\n"
-        "max_time = 1\n"
+        "duration = 1\n"
+        "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader r{ss};
   auto si = r.read_stream_info();
@@ -720,9 +724,8 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "[scenarios.blue_sky]\n"
         "occurrence_distribution = {type = \"fixed_probability\","
                                    "probability = 1}\n"
-        "duration_distribution = {type = \"specified\", value = 8760,"
-                                 "time_unit = \"hours\"}\n"
-        "max_time = 4\n"
+        "duration = 4\n"
+        "max_occurrences = 1\n"
         "network = \"normal_operations\"";
   ::ERIN::TomlInputReader r{ss};
   auto si = r.read_stream_info();
@@ -800,7 +803,6 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
         net_id,
         1,
         -1,
-        []() -> ::ERIN::RealTimeType { return 0; },
         []() -> ::ERIN::RealTimeType { return 0; },
         {}
       }}};
@@ -893,7 +895,6 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
         net_id,
         max_time,
         -1,
-        nullptr,
         nullptr,
         {}
       }}};
@@ -1055,7 +1056,6 @@ TEST(ErinBasicsTest, BasicScenarioTest)
         max_time,
         1,
         [](){ return 100; },
-        [](){ return 10; },
         {}
       }}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};

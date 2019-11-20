@@ -3,8 +3,16 @@
 
 #ifndef ERIN_GENERICS_H
 #define ERIN_GENERICS_H
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#include "../vendor/toml11/toml.hpp"
+#pragma clang diagnostic pop
+#include "erin/distributions.h"
+#include "debug_utils.h"
+#include <exception>
 #include <functional>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -38,6 +46,23 @@ namespace erin_generics
     for (const auto& e: m) {
       std::cout << "  " << e.first << ": " << e.second << "\n";
     }
+  }
+
+  template <class T>
+  std::function<T(void)>
+  read_toml_distribution(const std::unordered_map<std::string, toml::value>& m)
+  {
+    auto it = m.find(std::string{"type"});
+    if (it == m.end()) {
+      std::ostringstream oss;
+      oss << "type of distribution not found in map!";
+      throw std::runtime_error(oss.str());
+    }
+    auto type = toml::get<std::string>(it->second);
+    if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_low) {
+      std::cout << "type of distribution: " << type << "\n";
+    }
+    return ::erin::distribution::make_fixed(10);
   }
 }
 #endif // ERIN_GENERICS_H

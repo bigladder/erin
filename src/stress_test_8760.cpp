@@ -53,7 +53,6 @@ main() {
           N,
           -1,
           nullptr,
-          nullptr,
           {})));
   auto m = ::ERIN::Main(si, streams, components, networks, scenarios);
   auto out = m.run(scenario_id);

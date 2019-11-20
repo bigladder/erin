@@ -582,7 +582,7 @@ TEST(ErinBasicsTest, CanReadNetworksFromToml)
   }
 }
 
-TEST(ErinBasicsTest, CanReadScenariosFromToml)
+TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
 {
   std::stringstream ss{};
   ss << "[scenarios.blue_sky]\n"
@@ -617,9 +617,11 @@ TEST(ErinBasicsTest, CanReadScenariosFromToml)
         e.second.get_number_of_occurrences(),
         a->second.get_number_of_occurrences());
   }
-  adevs::Time dt_expected{0, 0};
-  auto dt_actual = actual.at(scenario_id).ta();
-  //EXPECT_EQ(dt_expected, dt_actual);
+  adevs::Time dt_expected{1, 0};
+  auto scenario = actual.at(scenario_id);
+  auto dt_actual = scenario.ta();
+  EXPECT_EQ(dt_expected.logical, dt_actual.logical);
+  EXPECT_EQ(dt_expected.real, dt_actual.real);
 }
 
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
@@ -668,8 +670,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "electric_utility = [\"cluster_01_electric\"]\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
-        "occurrence_distribution = {type = \"fixed_probability\", "
-                                   "probability = 1}\n"
+        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
         "duration = 1\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
@@ -726,8 +727,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "electric_utility = [\"cluster_01_electric\"]\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
-        "occurrence_distribution = {type = \"fixed_probability\","
-                                   "probability = 1}\n"
+        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
         "duration = 4\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"";

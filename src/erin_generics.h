@@ -52,6 +52,7 @@ namespace erin_generics
   std::function<T(void)>
   read_toml_distribution(const std::unordered_map<std::string, toml::value>& m)
   {
+    const std::string fixed_type{"fixed"}; 
     auto it = m.find(std::string{"type"});
     if (it == m.end()) {
       std::ostringstream oss;
@@ -62,7 +63,20 @@ namespace erin_generics
     if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_low) {
       std::cout << "type of distribution: " << type << "\n";
     }
-    return ::erin::distribution::make_fixed(10);
+    if (type == fixed_type) {
+      auto it_v = m.find(std::string{"value"});
+      if (it_v == m.end()) {
+        std::ostringstream oss;
+        oss << "value missing from fixed distribution specification";
+        throw std::runtime_error(oss.str());
+      }
+      auto v = toml::get<T>(it_v->second);
+      return ::erin::distribution::make_fixed<T>(v);
+    }
+    std::ostringstream oss;
+    oss << "unhandled distribution type\n";
+    oss << "type = \"" << type << "\"\n";
+    throw std::runtime_error(oss.str());
   }
 }
 #endif // ERIN_GENERICS_H

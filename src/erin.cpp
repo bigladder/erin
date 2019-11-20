@@ -525,7 +525,21 @@ namespace ERIN
       const auto duration = toml::find<int>(s.second, "duration");
       const auto max_occurrences = toml::find<int>(s.second, "max_occurrences");
       const auto network_id = toml::find<std::string>(s.second, "network");
-      // TODO: read intensities
+      std::unordered_map<std::string,double> intensity{};
+      auto intensity_tmp =
+        toml::find_or(
+            s.second, "intensity",
+            std::unordered_map<std::string,toml::value>{});
+      for (const auto& pair: intensity_tmp) {
+        double v{0.0};
+        try {
+          v = pair.second.as_floating();
+        }
+        catch (const toml::exception&) {
+          v = static_cast<double>(pair.second.as_integer());
+        }
+        intensity.insert(std::make_pair(pair.first, v));
+      }
       scenarios.insert(
           std::make_pair(
             s.first,
@@ -535,8 +549,7 @@ namespace ERIN
               duration,
               max_occurrences,
               next_occurrence_dist,
-              {}
-              }));
+              intensity}));
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& s: scenarios) {

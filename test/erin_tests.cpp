@@ -650,6 +650,28 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForRandIntDist)
   }
 }
 
+TEST(ErinBasicsTest, CanReadScenariosIntensities)
+{
+  const std::string scenario_id{"class_4_hurricane"};
+  std::stringstream ss{};
+  ss << "[scenarios." << scenario_id << "]\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
+        "duration = 8760\n"
+        "max_occurrences = 1\n"
+        "network = \"emergency_operations\"\n"
+        "intensity.wind_speed_mph = 156\n"
+        "intensity.inundation_depth_ft = 4\n";
+  ::ERIN::TomlInputReader t{ss};
+  auto scenario_map = t.read_scenarios();
+  auto scenario = scenario_map.at(scenario_id);
+  std::unordered_map<std::string,double> expected{
+    {"wind_speed_mph", 156.0},
+    {"inundation_depth_ft", 4.0}};
+  auto actual = scenario.get_intensities();
+  EXPECT_EQ(expected.size(), actual.size());
+}
+
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
 {
   std::stringstream ss;

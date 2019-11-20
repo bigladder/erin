@@ -20,16 +20,23 @@ fi
 time ./bin/str8760
 mkdir -p tidy
 echo Running Clang Tidy...
-clang-tidy -p compile_commands.json -header-filter=.* ../include/erin/erin.h > tidy/erin.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/checkout_line/generator.cpp > tidy/generator.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/checkout_line/observer.h > tidy/observer.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/checkout_line/clerk.cpp > tidy/clerk.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/checkout_line/observer.cpp > tidy/observer.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/checkout_line/clerk.h > tidy/clerk.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/checkout_line/customer.h > tidy/customer.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/checkout_line/generator.h > tidy/generator.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/erin_tests.cpp > tidy/erin_tests.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../test/erin_test_utils.h > tidy/erin_test_utils.h.txt
 clang-tidy -p compile_commands.json -header-filter=.* ../include/erin/distributions.h > tidy/distributions.h.txt
-clang-tidy -p compile_commands.json -header-filter=.* ../src/cli.cpp > tidy/cli.cpp.txt
-clang-tidy -p compile_commands.json -header-filter=.* ../src/debug_utils.h > tidy/debug_utils.h.txt
-clang-tidy -p compile_commands.json -header-filter=.* ../src/erin.cpp > tidy/erin.cpp.txt
-clang-tidy -p compile_commands.json -header-filter=.* ../src/erin_csv.h > tidy/erin_csv.h.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../include/erin/erin.h > tidy/erin.h.txt
 clang-tidy -p compile_commands.json -header-filter=.* ../src/erin_generics.h > tidy/erin_generics.h.txt
 clang-tidy -p compile_commands.json -header-filter=.* ../src/limits.cpp > tidy/limits.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/erin.cpp > tidy/erin.cpp.txt
 clang-tidy -p compile_commands.json -header-filter=.* ../src/stress_test_8760.cpp > tidy/stress_test_8760.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/cli.cpp > tidy/cli.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/debug_utils.h > tidy/debug_utils.h.txt
 clang-tidy -p compile_commands.json -header-filter=.* ../src/stress_test_8760x5000.cpp > tidy/stress_test_8760x5000.cpp.txt
-clang-tidy -p compile_commands.json -header-filter=.* ../test/erin_test_utils.h > tidy/erin_test_utils.h.txt
-clang-tidy -p compile_commands.json -header-filter=.* ../test/erin_tests.cpp > tidy/erin_tests.cpp.txt
+clang-tidy -p compile_commands.json -header-filter=.* ../src/erin_csv.h > tidy/erin_csv.h.txt
 echo Done!

@@ -11,6 +11,13 @@
 
 namespace erin::distribution
 {
+  // TODO: consider going back to classes with simple data that can take a
+  // generator at a later point. Ideally, we'd like the distribution objects to
+  // all reference a single default_random_engine that is held by Main.
+  // Interface:
+  // - virtual void set_random_generator(const std::default_random_engine& g);
+  // - virtual T next_value();
+  // - virtual std::string get_type();
   template <class T>
   std::function<T(void)>
   make_fixed(const T& value) 

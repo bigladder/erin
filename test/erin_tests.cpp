@@ -624,6 +624,32 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
   EXPECT_EQ(dt_expected.real, dt_actual.real);
 }
 
+TEST(ErinBasicsTest, CanReadScenariosFromTomlForRandIntDist)
+{
+  const std::string scenario_id{"blue_sky"};
+  const int lb{1};
+  const int ub{10};
+  std::stringstream ss{};
+  ss << "[scenarios." << scenario_id << "]\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"random_integer\","
+        " lower_bound = " << lb << ", upper_bound = " << ub << "}\n"
+        "duration = 8760\n"
+        "max_occurrences = 1\n"
+        "network = \"normal_operations\"\n";
+  ::ERIN::TomlInputReader t{ss};
+  auto actual = t.read_scenarios();
+  auto scenario = actual.at(scenario_id);
+  const int max_tries{100};
+  for (int i{0}; i < max_tries; ++i) {
+    auto dt_actual = scenario.ta();
+    auto dtr = dt_actual.real;
+    ASSERT_TRUE((dtr >= lb) && (dtr <= ub))
+      << "i = " << i << ", "
+      << "dtr = " << dtr << "\n";
+  }
+}
+
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
 {
   std::stringstream ss;

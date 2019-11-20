@@ -53,6 +53,7 @@ namespace erin_generics
   read_toml_distribution(const std::unordered_map<std::string, toml::value>& m)
   {
     const std::string fixed_type{"fixed"}; 
+    const std::string random_int_type{"random_integer"};
     auto it = m.find(std::string{"type"});
     if (it == m.end()) {
       std::ostringstream oss;
@@ -72,6 +73,20 @@ namespace erin_generics
       }
       auto v = toml::get<T>(it_v->second);
       return ::erin::distribution::make_fixed<T>(v);
+    }
+    else if (type == random_int_type) {
+      std::default_random_engine g;
+      auto it_lb = m.find("lower_bound");
+      auto it_ub = m.find("upper_bound");
+      if ((it_lb == m.end()) || (it_ub == m.end())) {
+        std::ostringstream oss;
+        oss << "lower_bound and upper_bound missing from random_integer "
+            << "distribution specification";
+        throw std::runtime_error(oss.str());
+      }
+      auto lb = toml::get<T>(it_lb->second);
+      auto ub = toml::get<T>(it_ub->second);
+      return ::erin::distribution::make_random_integer(g, lb, ub);
     }
     std::ostringstream oss;
     oss << "unhandled distribution type\n";

@@ -8,6 +8,7 @@
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
 #include "erin/erin.h"
+#include "erin/fragility.h"
 #include "erin/distributions.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
@@ -1137,6 +1138,18 @@ TEST(ErinBasicsTest, DistributionTest)
       << "expected v to be between (" << lower_bound << ", "
       << upper_bound << "] " << "but was " << v;
   }
+}
+
+TEST(ErinBasicsTest, FragilityCurves)
+{
+  const double lb{120.0};
+  const double ub{180.0};
+  ::erin::fragility::Linear f{lb, ub};
+  EXPECT_EQ(0.0, f(lb - 10.0));
+  EXPECT_EQ(1.0, f(ub + 10.0));
+  auto probability_of_failure{f((lb + ub) / 2.0)};
+  EXPECT_TRUE(
+      (probability_of_failure > 0.0) && (probability_of_failure < 1.0));
 }
 
 int

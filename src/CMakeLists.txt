@@ -13,17 +13,20 @@
 #file(GLOB_RECURSE private_headers "${PROJECT_SOURCE_DIR}/src/[a-zA-Z]*.h")
 set(sources
   ${PROJECT_SOURCE_DIR}/src/erin.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
 )
 
 set(public_headers
-  ${PROJECT_SOURCE_DIR}/include/erin/erin.h
   ${PROJECT_SOURCE_DIR}/include/erin/distributions.h
+  ${PROJECT_SOURCE_DIR}/include/erin/erin.h
+  ${PROJECT_SOURCE_DIR}/include/erin/fragility.h
+
 )
 
 set(private_headers
   ${PROJECT_SOURCE_DIR}/src/debug_utils.h
-  ${PROJECT_SOURCE_DIR}/src/erin_generics.h
   ${PROJECT_SOURCE_DIR}/src/erin_csv.h
+  ${PROJECT_SOURCE_DIR}/src/erin_generics.h
 )
 
 set(library_sources

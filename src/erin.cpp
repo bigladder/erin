@@ -7,6 +7,7 @@
 #include "debug_utils.h"
 #include "erin/erin.h"
 #include "erin_csv.h"
+#include "erin/fragility.h"
 #include "erin_generics.h"
 #include <algorithm>
 #include <cmath>

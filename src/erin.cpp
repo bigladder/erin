@@ -503,6 +503,7 @@ namespace ERIN
   std::unordered_map<std::string, Scenario>
   TomlInputReader::read_scenarios()
   {
+    const std::string default_time_units{"hours"};
     std::unordered_map<std::string, Scenario> scenarios;
     const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");
     if constexpr (debug_level >= debug_level_high) {
@@ -513,6 +514,14 @@ namespace ERIN
           s.second, "occurrence_distribution");
       const auto next_occurrence_dist =
         ::erin_generics::read_toml_distribution<RealTimeType>(dist);
+      const auto time_units = toml::find_or(
+          s.second, "time_units", default_time_units);
+      if (time_units != default_time_units) {
+        std::ostringstream oss;
+        oss << "a time_unit other than hours is not supported at this time...\n";
+        oss << "time_unit = \"" << time_units << "\"\n";
+        throw std::runtime_error(oss.str());
+      }
       const auto duration = toml::find<int>(s.second, "duration");
       const auto max_occurrences = toml::find<int>(s.second, "max_occurrences");
       const auto network_id = toml::find<std::string>(s.second, "network");

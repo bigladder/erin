@@ -896,8 +896,9 @@ namespace ERIN
       oss << "scenario_id -- \"" << scenario_id << "\"" 
              " is not in available scenarios\n"; 
       oss << "possible choices: ";
-      for (const auto& item: scenarios)
+      for (const auto& item: scenarios) {
         oss << "\"" << item.first << "\", ";
+      }
       oss << "\n";
       throw std::invalid_argument(oss.str());
     }

@@ -56,11 +56,12 @@ To build the project, follow these steps:
 1. check out the source code using git
 2. `mkdir build`
 3. `cd build`
-4. `cmake -DERIN_TESTING=ON ..`
+4. All systems: `cmake -DERIN_TESTING=ON ..`
+    - *OR* for Xcode on OS X: `cmake -G Xcode -DERIN_TESTING=ON ..`
 5. By operating system:
-    - Windows: open the solution file
+    - Windows or OS X Xcode: open the solution file
     - OS X or Linux: `make -j4`
-6. `ctest --output-on-failure` (or run `ERIN_TESTS` in VisualStudio)
+6. `ctest --output-on-failure` (or run `ERIN_TESTS` in VisualStudio or Xcode)
 
 
 ## Dependencies: Git submodules

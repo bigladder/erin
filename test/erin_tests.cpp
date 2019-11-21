@@ -1169,6 +1169,32 @@ TEST(ErinBasicsTest, TestGetFragilityCurves)
   EXPECT_NEAR(probs.at(0), 0.5, 1e-6);
 }
 
+TEST(ErinBasicsTest, TestFailureChecker)
+{
+  ::erin::fragility::FailureChecker fc{};
+  std::vector<double> probs_1 = {0.0};
+  EXPECT_FALSE(fc.is_failed(probs_1));
+  std::vector<double> probs_2 = {1.0};
+  EXPECT_TRUE(fc.is_failed(probs_2));
+  std::vector<double> probs_3 = {0.5};
+  bool at_least_one_false{false};
+  bool at_least_one_true{false};
+  int max{100};
+  for (int i{0}; i < max; ++i) {
+    auto result = fc.is_failed(probs_3);
+    if (result) {
+      at_least_one_true = true;
+    }
+    if (!result) {
+      at_least_one_false = true;
+    }
+    if (at_least_one_false && at_least_one_true) {
+      break;
+    }
+  }
+  EXPECT_TRUE(at_least_one_false && at_least_one_true);
+}
+
 int
 main(int argc, char **argv)
 {

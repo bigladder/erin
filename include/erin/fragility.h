@@ -4,6 +4,7 @@
 #ifndef ERIN_FRAGILITY_H
 #define ERIN_FRAGILITY_H
 #include <memory>
+#include <random>
 
 namespace erin::fragility
 {
@@ -32,6 +33,27 @@ namespace erin::fragility
       double lower_bound;
       double upper_bound;
       double range;
+  };
+
+  /**
+   * A class to check for failures over multiple probabilities of failure.
+   */
+  class FailureChecker
+  {
+    public:
+      FailureChecker();
+      explicit FailureChecker(const std::default_random_engine& g); 
+
+      /**
+       * assess whether a component is failed based on the vector of probabilities of failure.
+       * @param probs vector of probability of failure. Each failure probability must be 0<=p<=1
+       * @returns true if is failed, else false
+       */
+      bool is_failed(const std::vector<double>& probs);
+
+    private:
+      std::default_random_engine gen;
+      std::uniform_real_distribution<double> dist;
   };
 }
 

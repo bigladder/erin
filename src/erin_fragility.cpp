@@ -45,4 +45,37 @@ namespace erin::fragility
     auto dx{x - lower_bound};
     return dx / range;
   }
+
+  FailureChecker::FailureChecker():
+    FailureChecker(std::default_random_engine{})
+  {
+  }
+
+  FailureChecker::FailureChecker(
+      const std::default_random_engine& g_):
+    gen{g_},
+    dist{0.0, 1.0}
+  {
+  }
+
+  bool
+  FailureChecker::is_failed(const std::vector<double>& probs)
+  {
+    if (probs.empty()) {
+      return false;
+    }
+    for (const auto p: probs) {
+      if (p >= 1.0) {
+        return true;
+      }
+      if (p <= 0.0) {
+        continue;
+      }
+      auto roll = dist(gen);
+      if (roll <= p) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

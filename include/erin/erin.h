@@ -9,6 +9,7 @@
 #include "../../vendor/toml11/toml.hpp"
 #pragma clang diagnostic pop
 #include "erin/distributions.h"
+#include "erin/fragility.h"
 #include <exception>
 #include <functional>
 #include <iostream>
@@ -668,13 +669,27 @@ namespace ERIN
           ComponentType type,
           StreamType input_stream,
           StreamType output_stream);
-      virtual ~Component() = default;;
+      Component(
+          std::string id,
+          ComponentType type,
+          StreamType input_stream,
+          StreamType output_stream,
+          std::unordered_map<
+            std::string,
+            std::unique_ptr<::erin::fragility::Curve>> fragilities);
+      virtual ~Component() = default;
+      virtual std::unique_ptr<Component> clone() const = 0;
 
       void add_input(std::shared_ptr<Component>& c);
       [[nodiscard]] const std::string& get_id() const { return id; }
       [[nodiscard]] ComponentType get_component_type() const { return component_type; }
       [[nodiscard]] const StreamType& get_input_stream() const { return input_stream; }
       [[nodiscard]] const StreamType& get_output_stream() const { return output_stream; }
+      std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+        clone_fragility_curves() const;
+      [[nodiscard]] bool is_fragile() const { return has_fragilities; }
+      std::vector<double> apply_intensities(
+          const std::unordered_map<std::string, double>& intensities);
 
       virtual std::unordered_set<FlowElement*>
         add_to_network(
@@ -698,6 +713,9 @@ namespace ERIN
       ComponentType component_type;
       StreamType input_stream;
       StreamType output_stream;
+      std::unordered_map<
+        std::string, std::unique_ptr<::erin::fragility::Curve>> fragilities;
+      bool has_fragilities;
       std::vector<std::shared_ptr<Component>> inputs;
       FlowElement* connecting_element;
   };
@@ -716,6 +734,7 @@ namespace ERIN
         add_to_network(
             adevs::Digraph<FlowValueType>& nw,
             const std::string& active_scenario) override;
+      std::unique_ptr<Component> clone() const override;
 
     protected:
       FlowElement* create_connecting_element() override;
@@ -732,6 +751,13 @@ namespace ERIN
       SourceComponent(
           const std::string& id,
           const StreamType& output_stream);
+      SourceComponent(
+          const std::string& id,
+          const StreamType& output_stream,
+          std::unordered_map<
+            std::string,
+            std::unique_ptr<::erin::fragility::Curve>> fragilities); 
+      std::unique_ptr<Component> clone() const override;
       std::unordered_set<FlowElement*>
         add_to_network(
             adevs::Digraph<FlowValueType>& nw,

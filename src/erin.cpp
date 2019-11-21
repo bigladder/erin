@@ -1247,19 +1247,66 @@ namespace ERIN
       ComponentType type_,
       StreamType input_stream_,
       StreamType output_stream_):
+    Component(std::move(id_), type_, std::move(input_stream_), std::move(output_stream_), {})
+  {
+  }
+
+  Component::Component(
+      std::string id_,
+      ComponentType type_,
+      StreamType input_stream_,
+      StreamType output_stream_,
+      std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+        fragilities_
+      ):
     id{std::move(id_)},
     component_type{type_},
     input_stream{std::move(input_stream_)},
     output_stream{std::move(output_stream_)},
+    fragilities{std::move(fragilities_)},
+    has_fragilities{!fragilities.empty()},
     inputs{},
     connecting_element{nullptr}
   {
   }
 
+  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+  Component::clone_fragility_curves() const
+  {
+    std::unordered_map<
+      std::string, std::unique_ptr<::erin::fragility::Curve>> frags;
+    for (const auto& pair : fragilities) {
+      frags[pair.first] = pair.second->clone();
+    }
+    return frags;
+  }
+
   void
   Component::add_input(std::shared_ptr<Component>& c)
   {
-    inputs.push_back(c);
+    inputs.emplace_back(c);
+  }
+
+  std::vector<double>
+  Component::apply_intensities(
+      const std::unordered_map<std::string, double>& intensities)
+  {
+    std::vector<double> failure_probabilities{};
+    if (!has_fragilities) {
+      return failure_probabilities;
+    }
+    for (const auto& intensity_pair: intensities) {
+      auto intensity_tag = intensity_pair.first;
+      auto it = fragilities.find(intensity_tag);
+      if (it == fragilities.end()) {
+        continue;
+      }
+      const auto& curve = it->second;
+      auto intensity = intensity_pair.second;
+      auto probability = curve->apply(intensity);
+      failure_probabilities.emplace_back(probability);
+    }
+    return failure_probabilities;
   }
 
   FlowElement*
@@ -1308,6 +1355,17 @@ namespace ERIN
     Component(id_, ComponentType::Load, input_stream_, input_stream_),
     loads_by_scenario{std::move(loads_by_scenario_)}
   {
+  }
+
+  std::unique_ptr<Component>
+  LoadComponent::clone() const
+  {
+    auto the_id = get_id();
+    auto in_strm = get_input_stream();
+    auto lbs = loads_by_scenario;
+    std::unique_ptr<Component> p =
+      std::make_unique<LoadComponent>(the_id, in_strm, lbs);
+    return p;
   }
 
   FlowElement*
@@ -1371,6 +1429,32 @@ namespace ERIN
       const StreamType& output_stream_):
     Component(id_, ComponentType::Source, output_stream_, output_stream_)
   {
+  }
+
+  SourceComponent::SourceComponent(
+      const std::string& id_,
+      const StreamType& output_stream_,
+      std::unordered_map<std::string,std::unique_ptr<::erin::fragility::Curve>>
+        fragilities_):
+    Component(
+        id_,
+        ComponentType::Source,
+        output_stream_,
+        output_stream_,
+        std::move(fragilities_))
+  {
+  }
+
+  std::unique_ptr<Component>
+  SourceComponent::clone() const
+  {
+    auto the_id = get_id();
+    auto out_strm = get_output_stream();
+    auto frags = clone_fragility_curves();
+    std::unique_ptr<Component> p =
+      std::make_unique<SourceComponent>(
+          the_id, out_strm, std::move(frags));
+    return p;
   }
 
   std::unordered_set<FlowElement*> 

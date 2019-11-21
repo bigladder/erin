@@ -13,6 +13,7 @@
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
 #include <functional>
+#include <memory>
 #include <random>
 #include <sstream>
 #include <unordered_map>
@@ -1145,11 +1146,24 @@ TEST(ErinBasicsTest, FragilityCurves)
   const double lb{120.0};
   const double ub{180.0};
   ::erin::fragility::Linear f{lb, ub};
-  EXPECT_EQ(0.0, f(lb - 10.0));
-  EXPECT_EQ(1.0, f(ub + 10.0));
-  auto probability_of_failure{f((lb + ub) / 2.0)};
+  EXPECT_EQ(0.0, f.apply(lb - 10.0));
+  EXPECT_EQ(1.0, f.apply(ub + 10.0));
+  auto probability_of_failure{f.apply((lb + ub) / 2.0)};
   EXPECT_TRUE(
       (probability_of_failure > 0.0) && (probability_of_failure < 1.0));
+}
+
+TEST(ErinBasicsTest, TestGetFragilityCurves)
+{
+  ::ERIN::StreamType st{"electricity"};
+  std::unordered_map<std::string,std::unique_ptr<::erin::fragility::Curve>>
+    fragilities;
+  fragilities.insert(
+      std::make_pair(
+        "wind_speed_mph",
+        std::make_unique<::erin::fragility::Linear>(120.0, 180.0)));
+  ::ERIN::SourceComponent c{"source", st, std::move(fragilities)};
+  // test if this compiles...
 }
 
 int

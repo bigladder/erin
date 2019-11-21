@@ -11,6 +11,7 @@ namespace erin::fragility
   Linear::Linear(
       double lower_bound_,
       double upper_bound_):
+    Curve(),
     lower_bound{lower_bound_},
     upper_bound{upper_bound_},
     range{upper_bound_ - lower_bound_}
@@ -24,8 +25,16 @@ namespace erin::fragility
     }
   }
 
+  std::unique_ptr<Curve>
+  Linear::clone() const
+  {
+    std::unique_ptr<Curve> p =
+      std::make_unique<Linear>(lower_bound, upper_bound);
+    return p;
+  }
+
   double
-  Linear::operator()(double x) const
+  Linear::apply(double x) const
   {
     if (x <= lower_bound) {
       return 0.0;

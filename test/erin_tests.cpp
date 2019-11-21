@@ -1195,6 +1195,83 @@ TEST(ErinBasicsTest, TestFailureChecker)
   EXPECT_TRUE(at_least_one_false && at_least_one_true);
 }
 
+TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
+{
+  ::ERIN::StreamInfo si{};
+  const auto elec_id = std::string{"electrical"};
+  const auto elec_stream = ::ERIN::StreamType(elec_id);
+  std::unordered_map<std::string, ::ERIN::StreamType> streams{
+    {elec_id, elec_stream}};
+  const auto pcc_id = std::string{"electric_utility"};
+  const auto load_id = std::string{"cluster_01_electric"};
+  const auto gen_id = std::string{"emergency_generator"};
+  const auto inundation_depth_ft_lower_bound{6.0};
+  const auto inundation_depth_ft_upper_bound{14.0};
+  const auto wind_speed_mph_lower_bound{80.0};
+  const auto wind_speed_mph_upper_bound{160.0};
+  const auto intensity_wind_speed = std::string{"wind_speed_mph"};
+  const auto intensity_flood = std::string{"inundation_depth_ft"};
+  const auto blue_sky = std::string{"blue_sky"};
+  const auto class_4_hurricane = std::string{"class_4_hurricane"};
+  const auto normal = std::string{"normal_operations"};
+  const auto emergency = std::string{"emergency"};
+  std::unique_ptr<::erin::fragility::Curve> fc_inundation =
+    std::make_unique<::erin::fragility::Linear>(
+        inundation_depth_ft_lower_bound,
+        inundation_depth_ft_upper_bound);
+  std::unique_ptr<::erin::fragility::Curve> fc_wind =
+    std::make_unique<::erin::fragility::Linear>(
+        wind_speed_mph_lower_bound,
+        wind_speed_mph_upper_bound);
+  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+    fs_pcc{};
+  fs_pcc.insert(std::make_pair(intensity_wind_speed, fc_wind->clone()));
+  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+    fs_load{};
+  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+    fs_gen{};
+  fs_gen.insert(std::make_pair(intensity_flood, fc_inundation->clone()));
+  std::vector<::ERIN::LoadItem>
+    loads{::ERIN::LoadItem{0,100.0}, ::ERIN::LoadItem{100}};
+  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
+    loads_by_scenario{{blue_sky, loads}, {class_4_hurricane, loads}};
+  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> comps{
+    { pcc_id,
+      std::make_shared<::ERIN::SourceComponent>(
+          pcc_id, elec_stream, std::move(fs_pcc))},
+    { load_id,
+      std::make_shared<::ERIN::LoadComponent>(
+          load_id, elec_stream, loads_by_scenario, std::move(fs_load))},
+    { gen_id,
+      std::make_shared<::ERIN::SourceComponent>(
+          gen_id, elec_stream, std::move(fs_gen))}};
+  std::unordered_map<
+    std::string, std::unordered_map<std::string, std::vector<std::string>>>
+    networks{
+      {normal,
+        { {pcc_id, {load_id}}}},
+      {emergency,
+        { {pcc_id, {load_id}},
+          {gen_id, {load_id}}}}};
+  std::unordered_map<std::string, double> intensities{
+    { intensity_wind_speed, 156.0},
+    { intensity_flood, 8.0}};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+    { blue_sky,
+      ::ERIN::Scenario{
+        blue_sky, normal, 10, 1, [](){return 0;}, {}}},
+    { class_4_hurricane,
+      ::ERIN::Scenario{
+        class_4_hurricane,
+        emergency, 10, -1, [](){ return 100; }, intensities}}};
+  // make a main object
+  ::ERIN::Main m{si, streams, comps, networks, scenarios};
+  // test 1: simulate with a fragility curve that is robust vs intensity (i.e., never fails)
+  // - confirm the statistics show load always met
+  // test 2: simulate with a fragility curve that is weak vs intensity (i.e., always fails)
+  // - confirm the statistics show 100% load not served
+}
+
 int
 main(int argc, char **argv)
 {

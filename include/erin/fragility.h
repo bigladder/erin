@@ -26,7 +26,7 @@ namespace erin::fragility
       Linear() = delete;
       Linear(double lower_bound, double upper_bound);
 
-      virtual std::unique_ptr<Curve> clone() const override;
+      std::unique_ptr<Curve> clone() const override;
       double apply(double x) const override;
 
     private:

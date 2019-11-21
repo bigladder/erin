@@ -1352,7 +1352,19 @@ namespace ERIN
       const StreamType& input_stream_,
       std::unordered_map<
         std::string,std::vector<LoadItem>> loads_by_scenario_):
-    Component(id_, ComponentType::Load, input_stream_, input_stream_),
+    LoadComponent(id_, input_stream_, loads_by_scenario_, {})
+  {
+  }
+
+  LoadComponent::LoadComponent(
+      const std::string& id_,
+      const StreamType& input_stream_,
+      std::unordered_map<
+        std::string, std::vector<LoadItem>> loads_by_scenario_,
+      std::unordered_map<
+        std::string, std::unique_ptr<::erin::fragility::Curve>> fragilities):
+    Component(
+        id_, ComponentType::Load, input_stream_, input_stream_, std::move(fragilities)),
     loads_by_scenario{std::move(loads_by_scenario_)}
   {
   }
@@ -1384,12 +1396,20 @@ namespace ERIN
   std::unordered_set<FlowElement*>
   LoadComponent::add_to_network(
       adevs::Digraph<FlowValueType>& network,
-      const std::string& active_scenario)
+      const std::string& active_scenario,
+      bool is_failed)
   {
     std::unordered_set<FlowElement*> elements;
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
+    }
+    // TODO: implement is_failed=true semantics
+    if (is_failed) {
+      std::ostringstream oss;
+      oss << "semantics for is_failed=true not yet implemented "
+             "for LoadComponent";
+      throw std::runtime_error(oss.str());
     }
     auto sink = new Sink(
         get_id(),
@@ -1460,12 +1480,18 @@ namespace ERIN
   std::unordered_set<FlowElement*> 
   SourceComponent::add_to_network(
       adevs::Digraph<FlowValueType>&,
-      const std::string&)
+      const std::string&,
+      bool is_failed)
   {
     std::unordered_set<FlowElement*> elements;
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
+    }
+    if (is_failed) {
+      std::ostringstream oss;
+      oss << "is_failed semantics not yet implemented for SourceComponent";
+      throw std::runtime_error(oss.str());
     }
     // do nothing in this case. There is only the connecting element. If nobody
     // connects to it, then it doesn't exist. If someone DOES connect, then the

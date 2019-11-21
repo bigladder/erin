@@ -694,7 +694,8 @@ namespace ERIN
       virtual std::unordered_set<FlowElement*>
         add_to_network(
             adevs::Digraph<FlowValueType>& nw,
-            const std::string& active_scenario) = 0;
+            const std::string& active_scenario,
+            bool is_failed = false) = 0;
       FlowElement* get_connecting_element();
 
     protected:
@@ -726,14 +727,23 @@ namespace ERIN
   {
     public:
       LoadComponent(
-            const std::string& id,
-            const StreamType& input_stream,
-            std::unordered_map<std::string, std::vector<LoadItem>>
-              loads_by_scenario);
+          const std::string& id,
+          const StreamType& input_stream,
+          std::unordered_map<std::string, std::vector<LoadItem>>
+            loads_by_scenario);
+      LoadComponent(
+          const std::string& id,
+          const StreamType& input_stream,
+          std::unordered_map<std::string, std::vector<LoadItem>>
+            loads_by_scenario,
+          std::unordered_map<
+            std::string, std::unique_ptr<::erin::fragility::Curve>>
+            fragilities);
       std::unordered_set<FlowElement*>
         add_to_network(
             adevs::Digraph<FlowValueType>& nw,
-            const std::string& active_scenario) override;
+            const std::string& active_scenario,
+            bool is_failed = false) override;
       std::unique_ptr<Component> clone() const override;
 
     protected:
@@ -761,7 +771,8 @@ namespace ERIN
       std::unordered_set<FlowElement*>
         add_to_network(
             adevs::Digraph<FlowValueType>& nw,
-            const std::string& active_scenario) override;
+            const std::string& active_scenario,
+            bool is_failed = false) override;
 
     protected:
       FlowElement* create_connecting_element() override;

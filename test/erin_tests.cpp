@@ -1253,23 +1253,36 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
       {emergency,
         { {pcc_id, {load_id}},
           {gen_id, {load_id}}}}};
-  std::unordered_map<std::string, double> intensities{
-    { intensity_wind_speed, 156.0},
-    { intensity_flood, 8.0}};
-  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+  // test 1: simulate with a fragility curve that never fails
+  // - confirm the statistics show load always met
+  std::unordered_map<std::string, double> intensities_low{
+    { intensity_wind_speed, 0.0},
+    { intensity_flood, 0.0}};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios_low{
     { blue_sky,
       ::ERIN::Scenario{
         blue_sky, normal, 10, 1, [](){return 0;}, {}}},
     { class_4_hurricane,
       ::ERIN::Scenario{
         class_4_hurricane,
-        emergency, 10, -1, [](){ return 100; }, intensities}}};
-  // make a main object
-  ::ERIN::Main m{si, streams, comps, networks, scenarios};
-  // test 1: simulate with a fragility curve that is robust vs intensity (i.e., never fails)
-  // - confirm the statistics show load always met
-  // test 2: simulate with a fragility curve that is weak vs intensity (i.e., always fails)
+        emergency, 10, -1, [](){ return 100; }, intensities_low}}};
+  ::ERIN::Main m_low{si, streams, comps, networks, scenarios_low};
+  auto results_low = m_low.run(class_4_hurricane);
+
+  // test 2: simulate with a fragility curve that always fails
   // - confirm the statistics show 100% load not served
+  //std::unordered_map<std::string, double> intensities_high{
+  //  { intensity_wind_speed, 300.0},
+  //  { intensity_flood, 20.0}};
+  //std::unordered_map<std::string, ::ERIN::Scenario> scenarios_high{
+  //  { blue_sky,
+  //    ::ERIN::Scenario{
+  //      blue_sky, normal, 10, 1, [](){return 0;}, {}}},
+  //  { class_4_hurricane,
+  //    ::ERIN::Scenario{
+  //      class_4_hurricane,
+  //      emergency, 10, -1, [](){ return 100; }, intensities_high}}};
+  //::ERIN::Main m_high{si, streams, comps, networks, scenarios_high};
 }
 
 int

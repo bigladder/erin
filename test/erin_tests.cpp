@@ -1163,7 +1163,10 @@ TEST(ErinBasicsTest, TestGetFragilityCurves)
         "wind_speed_mph",
         std::make_unique<::erin::fragility::Linear>(120.0, 180.0)));
   ::ERIN::SourceComponent c{"source", st, std::move(fragilities)};
-  // test if this compiles...
+  std::unordered_map<std::string,double> intensities{{"wind_speed_mph", 150.0}};
+  auto probs = c.apply_intensities(intensities);
+  EXPECT_EQ(probs.size(), 1);
+  EXPECT_NEAR(probs.at(0), 0.5, 1e-6);
 }
 
 int

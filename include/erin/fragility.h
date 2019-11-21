@@ -8,6 +8,10 @@
 
 namespace erin::fragility
 {
+  /**
+   * A Fragility Curve that yields the chance of failure as a number
+   * (0 <= n <= 1) given some intensity (a double).
+   */
   class Curve
   {
     public:
@@ -20,6 +24,12 @@ namespace erin::fragility
       virtual double apply(double x) const = 0;
   };
 
+  /**
+   * A class to implement a linear fragility curve that starts at 0% change of
+   * failure from -infinity to the lower_bound, various linearly from 0% to
+   * 100% from lower to upper bound, and 100% for values of intensity at or
+   * above the upper bound.
+   */
   class Linear : public Curve
   {
     public:

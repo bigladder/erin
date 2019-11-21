@@ -902,7 +902,7 @@ namespace ERIN
       oss << "\n";
       throw std::invalid_argument(oss.str());
     }
-    // 1. Switch to reading the scenario_id from the input
+    // 1. Reference the relevant scenario
     const auto& the_scenario = it->second;
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network

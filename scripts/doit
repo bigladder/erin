@@ -20,7 +20,6 @@ fi
 time ./bin/str8760
 mkdir -p tidy
 echo Running Clang Tidy...
-let START_TIME=`date +%s`
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../test/checkout_line/generator.cpp > tidy/generator.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../test/checkout_line/observer.h > tidy/observer.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../test/checkout_line/clerk.cpp > tidy/clerk.cpp.txt
@@ -31,23 +30,25 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../test/erin_tests.cpp > tidy/erin_tests.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../test/erin_test_utils.h > tidy/erin_test_utils.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/type.h > tidy/type.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/stream.h > tidy/stream.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/fragility.h > tidy/fragility.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/element.h > tidy/element.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/network.h > tidy/network.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/distribution.h > tidy/distribution.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/erin.h > tidy/erin.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/component.h > tidy/component.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin_generics.h > tidy/erin_generics.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin_element.cpp > tidy/erin_element.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin_fragility.cpp > tidy/erin_fragility.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/limits.cpp > tidy/limits.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin.cpp > tidy/erin.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/stress_test_8760.cpp > tidy/stress_test_8760.cpp.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin_type.cpp > tidy/erin_type.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin_component.cpp > tidy/erin_component.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/cli.cpp > tidy/cli.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/debug_utils.h > tidy/debug_utils.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin_stream.cpp > tidy/erin_stream.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/stress_test_8760x5000.cpp > tidy/stress_test_8760x5000.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin_network.cpp > tidy/erin_network.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../src/erin_csv.h > tidy/erin_csv.h.txt
-let END_TIME=`date +%s`
-let TIDY_DURATION=$(((END_TIME-START_TIME)/60))
-echo Clang-Tidy: $((TIDY_DURATION)) minutes
 echo Done!

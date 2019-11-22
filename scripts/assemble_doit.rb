@@ -45,9 +45,6 @@ File.open(File.join(THIS_DIR, "doit"), 'w') do |f|
   if USE_BG
     f.write("wait\n")
   end
-  f.write("let END_TIME=`date +%s`\n")
-  f.write("let TIDY_DURATION=$(((END_TIME-START_TIME)/60))\n")
-  f.write("echo Clang-Tidy: $((TIDY_DURATION)) minutes\n")
   f.write("echo Done!\n")
 end
 flag = false

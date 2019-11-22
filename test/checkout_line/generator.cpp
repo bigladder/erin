@@ -16,7 +16,7 @@ adevs::Atomic<Customer>()
         next_arrival_time = next_arrival_times.at(idx);
         c.twait = twaits.at(idx);
         c.tenter = next_arrival_time - last_arrival_time;
-        _arrivals.push_back(c);
+        _arrivals.emplace_back(c);
         last_arrival_time = next_arrival_time;
     }
 }
@@ -56,5 +56,5 @@ Generator::delta_conf(std::vector<Customer>& x)
 void
 Generator::output_func(std::vector<Customer>& y)
 {
-    y.push_back(Customer(_arrivals.front()));
+    y.emplace_back(Customer(_arrivals.front()));
 }

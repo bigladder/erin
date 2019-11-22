@@ -9,7 +9,7 @@
 #include "debug_utils.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"
-#include "erin/distributions.h"
+#include "erin/distribution.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
 #include <functional>

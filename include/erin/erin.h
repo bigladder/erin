@@ -9,7 +9,7 @@
 #include "../../vendor/toml11/toml.hpp"
 #pragma clang diagnostic pop
 #include "erin/component.h"
-#include "erin/distributions.h"
+#include "erin/distribution.h"
 #include "erin/fragility.h"
 #include "erin/type.h"
 #include <exception>

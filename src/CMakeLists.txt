@@ -19,7 +19,7 @@ set(sources
 
 set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/component.h
-  ${PROJECT_SOURCE_DIR}/include/erin/distributions.h
+  ${PROJECT_SOURCE_DIR}/include/erin/distribution.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
   ${PROJECT_SOURCE_DIR}/include/erin/fragility.h
   ${PROJECT_SOURCE_DIR}/include/erin/type.h

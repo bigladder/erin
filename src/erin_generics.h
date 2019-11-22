@@ -7,7 +7,7 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../vendor/toml11/toml.hpp"
 #pragma clang diagnostic pop
-#include "erin/distributions.h"
+#include "erin/distribution.h"
 #include "debug_utils.h"
 #include <exception>
 #include <functional>

@@ -1,8 +1,8 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#ifndef ERIN_DISTRIBUTIONS_H
-#define ERIN_DISTRIBUTIONS_H
+#ifndef ERIN_DISTRIBUTION_H
+#define ERIN_DISTRIBUTION_H
 #include <chrono>
 #include <exception>
 #include <functional>
@@ -41,4 +41,4 @@ namespace erin::distribution
     return [d, g]() mutable -> T { return d(g); };
   }
 }
-#endif // ERIN_DISTRIBUTIONS_H
+#endif // ERIN_DISTRIBUTION_H

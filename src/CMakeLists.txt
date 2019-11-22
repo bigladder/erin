@@ -13,10 +13,12 @@
 #file(GLOB_RECURSE private_headers "${PROJECT_SOURCE_DIR}/src/[a-zA-Z]*.h")
 set(sources
   ${PROJECT_SOURCE_DIR}/src/erin.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
 )
 
 set(public_headers
+  ${PROJECT_SOURCE_DIR}/include/erin/component.h
   ${PROJECT_SOURCE_DIR}/include/erin/distributions.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
   ${PROJECT_SOURCE_DIR}/include/erin/fragility.h

@@ -8,6 +8,7 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../../vendor/toml11/toml.hpp"
 #pragma clang diagnostic pop
+#include "erin/component.h"
 #include "erin/distributions.h"
 #include "erin/fragility.h"
 #include "erin/type.h"
@@ -23,19 +24,6 @@
 
 namespace ERIN
 {
-  ////////////////////////////////////////////////////////////
-  // ComponentType
-  enum class ComponentType
-  {
-    Load = 0,
-    Source,
-    Converter
-  };
-
-  ComponentType tag_to_component_type(const std::string& tag);
-
-  std::string component_type_to_tag(ComponentType ct);
-
   ////////////////////////////////////////////////////////////
   // Datum
   struct Datum

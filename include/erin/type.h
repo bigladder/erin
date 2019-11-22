@@ -11,6 +11,9 @@ namespace ERIN
   using RealTimeType = int;
   using LogicalTimeType = int;
   using PortValue = adevs::port_value<FlowValueType>;
+
+  const FlowValueType flow_value_tolerance{1e-6};
+  const auto inf = adevs_inf<adevs::Time>();
 }
 
 #endif // ERIN_TYPE_H

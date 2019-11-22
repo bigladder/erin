@@ -22,9 +22,6 @@
 
 namespace ERIN
 {
-  const FlowValueType flow_value_tolerance{1e-6};
-  const auto inf = adevs_inf<adevs::Time>();
-
   ComponentType
   tag_to_component_type(const std::string& tag)
   {

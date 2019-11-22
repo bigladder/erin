@@ -23,10 +23,10 @@ namespace erin_csv
     std::stringstream line_stream(line);
     std::string cell;
     while(std::getline(line_stream, cell, ',')) {
-      data.push_back(cell);
+      data.emplace_back(cell);
     }
     if (!line_stream && cell.empty()) {
-      data.push_back("");
+      data.emplace_back("");
     }
     return data;
   }

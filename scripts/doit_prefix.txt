@@ -20,3 +20,4 @@ fi
 time ./bin/str8760
 mkdir -p tidy
 echo Running Clang Tidy...
+let START_TIME=`date +%s`

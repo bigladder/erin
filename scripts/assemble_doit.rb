@@ -28,7 +28,7 @@ SRC_FILES.each do |f|
     end
   end
   base_names_set << base_name
-  lines << "clang-tidy -p compile_commands.json -checks='#{CHECKS}' -header-filter='.*' ../#{relative_path} > tidy/#{base_name}.txt"
+  lines << "clang-tidy -p compile_commands.json --quiet --checks='#{CHECKS}' ../#{relative_path} > tidy/#{base_name}.txt &"
 end
 prefix = File.read(File.join(THIS_DIR, "doit_prefix.txt"))
 File.open(File.join(THIS_DIR, "doit"), 'w') do |f|
@@ -37,6 +37,11 @@ File.open(File.join(THIS_DIR, "doit"), 'w') do |f|
   lines.each do |line|
     f.write(line + "\n")
   end
+  f.write("echo Waiting for clang-tidy background jobs to complete...\n")
+  f.write("wait\n")
+  f.write("let END_TIME=`date +%s`\n")
+  f.write("let TIDY_DURATION=$(((END_TIME-START_TIME)/60))\n")
+  f.write("echo Clang-Tidy: $((TIDY_DURATION)) minutes\n")
   f.write("echo Done!\n")
 end
 flag = false

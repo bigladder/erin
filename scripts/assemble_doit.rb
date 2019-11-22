@@ -36,11 +36,15 @@ prefix = File.read(File.join(THIS_DIR, "doit_prefix.txt"))
 File.open(File.join(THIS_DIR, "doit"), 'w') do |f|
   f.write(prefix.strip)
   f.write("\n")
+  if USE_BG
+    f.write("echo Waiting for clang-tidy background jobs to complete...\n")
+  end
   lines.each do |line|
     f.write(line + "\n")
   end
-  f.write("echo Waiting for clang-tidy background jobs to complete...\n")
-  f.write("wait\n")
+  if USE_BG
+    f.write("wait\n")
+  end
   f.write("let END_TIME=`date +%s`\n")
   f.write("let TIDY_DURATION=$(((END_TIME-START_TIME)/60))\n")
   f.write("echo Clang-Tidy: $((TIDY_DURATION)) minutes\n")

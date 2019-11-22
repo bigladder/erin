@@ -14,14 +14,19 @@
 set(sources
   ${PROJECT_SOURCE_DIR}/src/erin.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_stream.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_type.cpp
 )
 
 set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/component.h
   ${PROJECT_SOURCE_DIR}/include/erin/distribution.h
+  ${PROJECT_SOURCE_DIR}/include/erin/element.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
   ${PROJECT_SOURCE_DIR}/include/erin/fragility.h
+  ${PROJECT_SOURCE_DIR}/include/erin/stream.h
   ${PROJECT_SOURCE_DIR}/include/erin/type.h
 )
 

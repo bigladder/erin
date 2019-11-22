@@ -13,4 +13,4 @@ namespace ERIN
   using PortValue = adevs::port_value<FlowValueType>;
 }
 
-#endif // ERIN_ERIN_H
+#endif // ERIN_TYPE_H

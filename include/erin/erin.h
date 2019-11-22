@@ -10,6 +10,7 @@
 #pragma clang diagnostic pop
 #include "erin/distributions.h"
 #include "erin/fragility.h"
+#include "erin/type.h"
 #include <exception>
 #include <functional>
 #include <iostream>
@@ -22,13 +23,6 @@
 
 namespace ERIN
 {
-  ////////////////////////////////////////////////////////////
-  // Type Definitions
-  typedef double FlowValueType;
-  typedef int RealTimeType;
-  typedef int LogicalTimeType;
-  typedef adevs::port_value<FlowValueType> PortValue;
-
   ////////////////////////////////////////////////////////////
   // ComponentType
   enum class ComponentType

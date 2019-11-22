@@ -20,7 +20,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/distributions.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
   ${PROJECT_SOURCE_DIR}/include/erin/fragility.h
-
+  ${PROJECT_SOURCE_DIR}/include/erin/type.h
 )
 
 set(private_headers

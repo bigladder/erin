@@ -40,6 +40,8 @@ namespace ERIN
 
   ComponentType tag_to_component_type(const std::string& tag);
 
+  std::string component_type_to_tag(ComponentType ct);
+
   ////////////////////////////////////////////////////////////
   // Datum
   struct Datum

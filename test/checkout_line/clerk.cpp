@@ -11,29 +11,25 @@ Clerk::Clerk():
 void
 Clerk::delta_ext(adevs::Time e, std::vector<Customer>& x)
 {
-    if (_verbose)
-    {
+    if (_verbose) {
         // Print a notice
         std::cout << "Clerk: Computed the external transition function at t = " << (_t + e.real) << std::endl;
     }
     // Update the clock
     _t += e.real;
     // Update the time spent on the customer at the front of the line
-    if (!_line.empty())
-    {
+    if (!_line.empty()) {
         _t_spent += e.real;
     }
     // Add new customers to the back of the line.
     std::vector<Customer>::const_iterator it;
-    for (it = x.begin(); it != x.end(); it++)
-    {
+    for (it = x.begin(); it != x.end(); it++) {
         // Copy the incoming customer and place them at the back of the line.
-        _line.push_back(Customer(*it));
+        _line.emplace_back(Customer(*it));
         _line.back().tenter = _t;
     }
     // Summarize the model state
-    if (_verbose)
-    {
+    if (_verbose) {
         std::cout << "Clerk: There are " << _line.size() << " customers waiting." << std::endl;
         std::cout << "Clerk: The next customer will leave at t = " << (_t + ta().real) << "." << std::endl;
     }
@@ -42,8 +38,7 @@ Clerk::delta_ext(adevs::Time e, std::vector<Customer>& x)
 void
 Clerk::delta_int()
 {
-    if (_verbose)
-    {
+    if (_verbose) {
         // Print a noitice of the internal transition
         std::cout << "Clerk: Computed the internal transition function at t = " << (_t + ta().real) << std::endl;
     }
@@ -53,8 +48,7 @@ Clerk::delta_int()
     _t_spent = 0;
     // Remove the departing customer from the front of the line;
     _line.pop_front();
-    if (_verbose)
-    {
+    if (_verbose) {
         // Summarize the model state
         std::cout << "Clerk: There are " << _line.size() << " customers waiting." << std::endl;
         std::cout << "Clerk: The next customer will leave at t = " << (_t + ta().real) << "." << std::endl;
@@ -77,8 +71,7 @@ Clerk::output_func(std::vector<Customer>& y)
     leaving.tleave = _t + ta().real;
     // Eject the customer
     y.push_back(leaving);
-    if (_verbose)
-    {
+    if (_verbose) {
         // Print a notice of the departure
         std::cout << "Clerk: Computed the output function at t = " << (_t + ta().real) << std::endl;
         std::cout << "Clerk: A customer just departed!" << std::endl;
@@ -88,8 +81,7 @@ Clerk::output_func(std::vector<Customer>& y)
 adevs::Time
 Clerk::ta()
 {
-    if (_line.empty())
-    {
+    if (_line.empty()) {
         return adevs_inf<adevs::Time>();
     }
     return adevs::Time(_line.front().twait - _t_spent, 0);

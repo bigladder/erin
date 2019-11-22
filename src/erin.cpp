@@ -258,7 +258,7 @@ namespace ERIN
         if (cells[0] != "t") {
           std::ostringstream oss;
           oss << "in file \"" << csv_path
-            << "\", first column should be \"t\" but is \""
+            << R"(", first column should be "t" but is ")"
             << cells[0] << "\"";
           oss << "row: " << row << "\n";
           ::erin_csv::stream_out(oss, cells);
@@ -267,7 +267,7 @@ namespace ERIN
         if (cells[1] != "v") {
           std::ostringstream oss;
           oss << "in file \"" << csv_path
-              << "\", second column should be \"v\" but is \""
+              << R"("", second column should be "v" but is ")"
               << cells[1] << "\"";
           oss << "row: " << "\n";
           ::erin_csv::stream_out(oss, cells);

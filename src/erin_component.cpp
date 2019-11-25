@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/component.h"
+#include "erin/port.h"
 #include "debug_utils.h"
 #include <sstream>
 #include <stdexcept>
@@ -30,17 +31,15 @@ namespace ERIN
       ComponentType type_,
       StreamType input_stream_,
       StreamType output_stream_,
-      std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
-        fragilities_
-      ):
+      std::unordered_map<
+        std::string,
+        std::unique_ptr<::erin::fragility::Curve>> fragilities_):
     id{std::move(id_)},
     component_type{type_},
     input_stream{std::move(input_stream_)},
     output_stream{std::move(output_stream_)},
     fragilities{std::move(fragilities_)},
-    has_fragilities{!fragilities.empty()},
-    inputs{},
-    connecting_element{nullptr}
+    has_fragilities{!fragilities.empty()}
   {
   }
 
@@ -50,15 +49,10 @@ namespace ERIN
     std::unordered_map<
       std::string, std::unique_ptr<::erin::fragility::Curve>> frags;
     for (const auto& pair : fragilities) {
-      frags[pair.first] = pair.second->clone();
+      frags.insert(
+          std::make_pair(pair.first, pair.second->clone()));
     }
     return frags;
-  }
-
-  void
-  Component::add_input(std::shared_ptr<Component>& c)
-  {
-    inputs.emplace_back(c);
   }
 
   std::vector<double>
@@ -81,14 +75,6 @@ namespace ERIN
       failure_probabilities.emplace_back(probability);
     }
     return failure_probabilities;
-  }
-
-  FlowElement*
-  Component::get_connecting_element()
-  {
-    if (connecting_element == nullptr)
-      connecting_element = create_connecting_element();
-    return connecting_element;
   }
 
   void
@@ -154,26 +140,15 @@ namespace ERIN
     return p;
   }
 
-  FlowElement*
-  LoadComponent::create_connecting_element()
-  {
-    if constexpr (debug_level >= debug_level_high) { 
-      std::cout << "LoadComponent::create_connecting_element()\n";
-    }
-    auto p = new FlowMeter(get_id(), ComponentType::Load, get_input_stream());
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "LoadComponent.connecting_element = " << p << "\n";
-    }
-    return p;
-  }
-
-  std::unordered_set<FlowElement*>
+  PortsAndElements
   LoadComponent::add_to_network(
       adevs::Digraph<FlowValueType>& network,
       const std::string& active_scenario,
-      bool is_failed)
+      bool is_failed) const
   {
+    namespace ep = ::erin::port;
     std::unordered_set<FlowElement*> elements;
+    std::unordered_map<std::string, FlowElement*> ports;
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
@@ -189,31 +164,22 @@ namespace ERIN
         get_id(),
         ComponentType::Load,
         get_input_stream(),
-        loads_by_scenario[active_scenario]);
+        loads_by_scenario.at(active_scenario));
     elements.emplace(sink);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "sink = " << sink << "\n";
     }
-    auto meter = get_connecting_element();
+    auto meter = new FlowMeter(get_id(), ComponentType::Load, get_input_stream());
     elements.emplace(meter);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "meter = " << meter << "\n";
     }
     connect_source_to_sink(network, meter, sink, false);
-    for (const auto& in: get_inputs()) {
-      auto p = in->get_connecting_element();
-      elements.emplace(p);
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "p = " << p << "\n";
-      }
-      if (p != nullptr) {
-        connect_source_to_sink(network, p, meter, true);
-      }
-    }
+    ports[ep::inflow] = meter;
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network(...) exit\n";
     }
-    return elements;
+    return PortsAndElements{ports, elements};
   }
 
   ////////////////////////////////////////////////////////////
@@ -251,12 +217,14 @@ namespace ERIN
     return p;
   }
 
-  std::unordered_set<FlowElement*> 
+  PortsAndElements
   SourceComponent::add_to_network(
       adevs::Digraph<FlowValueType>&,
       const std::string&,
-      bool is_failed)
+      bool is_failed) const
   {
+    namespace ep = ::erin::port;
+    std::unordered_map<std::string, FlowElement*> ports;
     std::unordered_set<FlowElement*> elements;
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network("
@@ -267,29 +235,12 @@ namespace ERIN
       oss << "is_failed semantics not yet implemented for SourceComponent";
       throw std::runtime_error(oss.str());
     }
-    // do nothing in this case. There is only the connecting element. If nobody
-    // connects to it, then it doesn't exist. If someone DOES connect, then the
-    // pointer eventually gets passed into the network coupling model
-    // TODO: what we need are wrappers for Element classes that track if
-    // they've been added to the simulation or not. If NOT, then we need to
-    // delete the resource at deletion time... otherwise, the simulator will
-    // delete them.
+    auto meter = new FlowMeter(get_id(), ComponentType::Source, get_output_stream());
+    elements.emplace(meter);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit\n";
     }
-    return elements;
-  }
-
-  FlowElement*
-  SourceComponent::create_connecting_element()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "SourceComponent::create_connecting_element()\n";
-    }
-    auto p = new FlowMeter(get_id(), ComponentType::Source, get_output_stream());
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "SourceComponent.p = " << p << "\n";
-    }
-    return p;
+    ports[ep::outflow] = meter;
+    return PortsAndElements{ports, elements};
   }
 }

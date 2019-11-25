@@ -4,7 +4,9 @@
 #include "erin/erin.h"
 
 int
-main() {
+main()
+{
+  namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
@@ -28,21 +30,29 @@ main() {
           si.get_quantity_unit(),
           si.get_seconds_per_time_unit(),
           {}, {}))};
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
-    std::make_pair(
-        source_id,
-        std::make_shared<::ERIN::SourceComponent>(
-          source_id,
-          streams[stream_id])),
-    std::make_pair(
-        load_id,
-        std::make_shared<::ERIN::LoadComponent>(
-          load_id,
-          streams[stream_id],
-          loads_by_scenario))};
   std::unordered_map<
-    std::string, std::unordered_map<std::string, std::vector<std::string>>>
-    networks{{net_id, {{source_id, {load_id}}}}};
+    std::string,
+    std::unique_ptr<::ERIN::Component>> components;
+  components.insert(
+      std::make_pair(
+        source_id,
+        std::make_unique<::ERIN::SourceComponent>(
+          source_id,
+          streams.at(stream_id))));
+  components.insert(
+      std::make_pair(
+        load_id,
+        std::make_unique<::ERIN::LoadComponent>(
+          load_id,
+          streams.at(stream_id),
+          loads_by_scenario)));
+  std::unordered_map<
+    std::string, std::vector<::erin::network::Connection>>
+    networks{
+      { net_id,
+        {
+          { { source_id, ep::outflow},
+            { load_id, ep::inflow}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{};
   scenarios.emplace(
       std::make_pair(

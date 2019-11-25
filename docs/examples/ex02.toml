@@ -25,9 +25,8 @@ input_stream = "electricity"
 [components.cluster_01_electric.load_profiles_by_scenario]
 blue_sky = "building_electrical"
 ############################################################
-[networks.normal_operations.network]
-# specify as: <source (generation) id> = ["<downstream/load id>", "<downstream/load id>", ...]
-electric_utility = ["cluster_01_electric"]
+[networks.normal_operations]
+connections = [["electric_utility", "cluster_01_electric"]]
 ############################################################
 [scenarios.blue_sky]
 time_units = "hours"

@@ -8,6 +8,7 @@
 #include "erin/erin.h"
 #include "erin_csv.h"
 #include "erin/fragility.h"
+#include "erin/port.h"
 #include "erin_generics.h"
 #include <algorithm>
 #include <cmath>
@@ -276,7 +277,7 @@ namespace ERIN
     return the_loads;
   }
 
-  std::unordered_map<std::string, std::shared_ptr<Component>>
+  std::unordered_map<std::string, std::unique_ptr<Component>>
   TomlInputReader::read_components(
       const std::unordered_map<std::string, StreamType>& stream_types_map,
       const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id)
@@ -287,14 +288,15 @@ namespace ERIN
     }
     std::unordered_map<
       std::string,
-      std::shared_ptr<Component>> components{};
+      std::unique_ptr<Component>> components{};
     for (const auto& c: toml_comps) {
       toml::value t = c.second;
       toml::table tt = toml::get<toml::table>(t);
       auto it = tt.find("type");
       std::string component_type;
-      if (it != tt.end())
+      if (it != tt.end()) {
         component_type = toml::get<std::string>(it->second);
+      }
       // stream OR input_stream, output_stream
       std::string input_stream_id;
       std::string output_stream_id;
@@ -302,13 +304,16 @@ namespace ERIN
       if (it != tt.end()) {
         input_stream_id = toml::get<std::string>(it->second);
         output_stream_id = input_stream_id;
-      } else {
+      }
+      else {
         it = tt.find("input_stream");
-        if (it != tt.end())
+        if (it != tt.end()) {
           input_stream_id = toml::get<std::string>(it->second);
+        }
         it = tt.find("output_stream");
-        if (it != tt.end())
+        if (it != tt.end()) {
           output_stream_id = toml::get<std::string>(it->second);
+        }
       }
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "comp: " << c.first << ".input_stream_id  = "
@@ -317,11 +322,13 @@ namespace ERIN
                   << output_stream_id << "\n";
       }
       if (component_type == "source") {
-        std::shared_ptr<Component> source_comp =
-          std::make_shared<SourceComponent>(
+        std::unique_ptr<Component> source_comp =
+          std::make_unique<SourceComponent>(
               c.first, stream_types_map.at(output_stream_id));
-        components.insert(std::make_pair(c.first, source_comp));
-      } else if (component_type == "load") {
+        components.insert(
+            std::make_pair(c.first, std::move(source_comp)));
+      }
+      else if (component_type == "load") {
         std::unordered_map<std::string,std::vector<LoadItem>>
           loads_by_scenario{};
         it = tt.find("load_profiles_by_scenario");
@@ -348,24 +355,27 @@ namespace ERIN
               std::cout << ls.first << ": [";
               for (const auto& li: ls.second) {
                 std::cout << "(" << li.get_time();
-                if (li.get_is_end())
+                if (li.get_is_end()) {
                   std::cout << ")";
-                else
+                }
+                else {
                   std::cout << ", " << li.get_value() << "), ";
+                }
               }
               std::cout << "]\n";
             }
           }
-          std::shared_ptr<Component> load_comp =
-            std::make_shared<LoadComponent>(
+          std::unique_ptr<Component> load_comp =
+            std::make_unique<LoadComponent>(
                 c.first,
                 stream_types_map.at(input_stream_id),
                 loads_by_scenario);
           components.insert(
-              std::make_pair(c.first, load_comp));
+              std::make_pair(c.first, std::move(load_comp)));
         }
-        else
+        else {
           throw BadInputError();
+        }
       }
     }
     if constexpr (debug_level >= debug_level_high) {
@@ -377,37 +387,72 @@ namespace ERIN
     return components;
   }
 
-  std::unordered_map<std::string,
-    std::unordered_map<std::string, std::vector<std::string>>>
+  std::unordered_map<
+    std::string,
+    std::vector<::erin::network::Connection>>
   TomlInputReader::read_networks()
   {
+    namespace enw = ::erin::network;
+    namespace ep = ::erin::port;
     std::unordered_map<
       std::string,
-      std::unordered_map<std::string,std::vector<std::string>>> networks;
+      std::vector<enw::Connection>> networks;
     const auto toml_nets = toml::find<toml::table>(data, "networks");
     if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_nets.size() << " networks found\n";
     }
     for (const auto& n: toml_nets) {
-      std::unordered_map<std::string, std::vector<std::string>> nw_map;
-      toml::table toml_nw;
+      std::vector<enw::Connection> nw_list;
+      std::vector<std::vector<std::string>> raw_connects;
       auto nested_nw_table = toml::get<toml::table>(n.second);
-      auto nested_nw_it = nested_nw_table.find("network");
-      if (nested_nw_it != nested_nw_table.end())
-        toml_nw = toml::get<toml::table>(nested_nw_it->second);
-      for (const auto& nw_p: toml_nw) {
-        auto nodes = toml::get<std::vector<std::string>>(nw_p.second);
-        nw_map.insert(std::make_pair(nw_p.first, nodes));
+      auto nested_nw_it = nested_nw_table.find("connections");
+      if (nested_nw_it != nested_nw_table.end()) {
+        raw_connects = toml::get<std::vector<std::vector<std::string>>>(
+            nested_nw_it->second);
       }
-      networks.insert(std::make_pair(n.first, nw_map));
+      int item_num{0};
+      for (const auto& connect: raw_connects) {
+        std::string comp_01_id;
+        std::string comp_01_port;
+        std::string comp_02_id;
+        std::string comp_02_port;
+        auto num_items = connect.size();
+        if (num_items == 2) {
+          comp_01_id = connect.at(0);
+          comp_01_port = ep::outflow;
+          comp_02_id = connect.at(1);
+          comp_02_port = ep::inflow;
+        }
+        else if (num_items == 4) {
+          comp_01_id = connect.at(0);
+          comp_01_port = connect.at(1);
+          comp_02_id = connect.at(2);
+          comp_02_port = connect.at(3);
+        }
+        else {
+          std::ostringstream oss;
+          oss << "network " << nested_nw_it->first << " "
+              << "connection[" << item_num << "] "
+              << "doesn't have 2 or 4 items";
+          throw std::invalid_argument(oss.str());
+        }
+        nw_list.emplace_back(
+            enw::Connection{
+              enw::ComponentAndPort{comp_01_id, comp_01_port},
+              enw::ComponentAndPort{comp_02_id, comp_02_port}});
+        ++item_num;
+      }
+      networks.insert(std::make_pair(n.first, nw_list));
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& nw: networks) {
         std::cout << "network[" << nw.first << "]:\n";
-        for (const auto& fan: nw.second) {
-          for (const auto& node: fan.second) {
-            std::cout << "\tedge: (" << fan.first << " ==> " << node << ")\n";
-          }
+        for (const auto& connection: nw.second) {
+          std::cout << "\tedge: ("
+                    << connection.first.component_id
+                    << "[" << connection.first.port_id << "] <==> "
+                    << connection.second.component_id
+                    << "[" << connection.second.port_id << "])\n";
         }
       }
     }
@@ -778,20 +823,27 @@ namespace ERIN
   }
 
   Main::Main(
-      StreamInfo stream_info_,
-      std::unordered_map<std::string, StreamType> streams_,
-      std::unordered_map<std::string, std::shared_ptr<Component>> components_,
-      std::unordered_map<
+      const StreamInfo& stream_info_,
+      const std::unordered_map<std::string, StreamType>& streams_,
+      const std::unordered_map<
         std::string,
-        std::unordered_map<
-          std::string, std::vector<std::string>>> networks_,
-      std::unordered_map<std::string, Scenario> scenarios_):
-    stream_info{std::move(stream_info_)},
-    stream_types_map{std::move(streams_)},
-    components{std::move(components_)},
-    networks{std::move(networks_)},
-    scenarios{std::move(scenarios_)}
+        std::unique_ptr<Component>>& components_,
+      const std::unordered_map<
+        std::string,
+        std::vector<::erin::network::Connection>>& networks_,
+      const std::unordered_map<std::string, Scenario>& scenarios_):
+    stream_info{stream_info_},
+    stream_types_map{streams_},
+    components{},
+    networks{networks_},
+    scenarios{scenarios_}
   {
+    for (const auto& pair: components_) {
+      components.insert(
+          std::make_pair(
+            pair.first,
+            pair.second->clone()));
+    }
     check_data();
   }
 
@@ -822,30 +874,13 @@ namespace ERIN
     adevs::Digraph<FlowValueType> network;
     // 2.2. Interconnect components based on the network definition
     const auto network_id = the_scenario.get_network_id();
-    const auto the_nw = networks[network_id];
-    std::unordered_set<std::string> comps_in_use{};
-    for (const auto& nw: the_nw) {
-      comps_in_use.emplace(nw.first);
-      auto src = components[nw.first];
-      for (const auto& sink_id: nw.second) {
-        auto sink = components[sink_id];
-        comps_in_use.emplace(sink_id);
-        sink->add_input(src);
-      }
-    }
-    // 2.2. Add the components on the network
-    std::unordered_set<FlowElement*> elements;
-    for (const auto& comp_id: comps_in_use) {
-      auto c = components[comp_id];
-      auto es = c->add_to_network(network, scenario_id);
-      for (auto e: es) {
-        elements.emplace(e);
-      }
-    }
+    const auto& connections = networks[network_id];
+    auto elements = ::erin::network::build(
+        scenario_id, network, connections, components);
     adevs::Simulator<PortValue> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
-    const auto max_non_advance{comps_in_use.size() * 10};
+    const auto max_non_advance{elements.size() * 10};
     auto sim_good = run_devs(sim, duration, max_non_advance);
     // 3. Return outputs.
     std::unordered_map<std::string, std::vector<Datum>> results;

@@ -10,6 +10,7 @@
 #include "erin/erin.h"
 #include "erin/fragility.h"
 #include "erin/distribution.h"
+#include "erin/port.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
 #include <functional>
@@ -94,8 +95,8 @@ TEST(ErinUtilFunctions, TestClamp)
 
 TEST(ErinBasicsTest, TestLoadItem)
 {
-  const auto li1 = ::ERIN::LoadItem(0, 1);
-  const auto li2 = ::ERIN::LoadItem(4);
+  const auto li1 = ERIN::LoadItem(0, 1);
+  const auto li2 = ERIN::LoadItem(4);
   EXPECT_NEAR(li1.get_time_advance(li2), 4.0, tolerance);
   EXPECT_EQ(li1.get_time(), 0);
   EXPECT_EQ(li1.get_value(), 1.0);
@@ -106,17 +107,17 @@ TEST(ErinBasicsTest, TestLoadItem)
 
 TEST(ErinBasicsTest, FlowState)
 {
-  ::ERIN::FlowState fs{0.0, 0.0};
+  auto fs = ERIN::FlowState{0.0, 0.0};
   EXPECT_EQ(fs.getInflow(), 0.0);
   EXPECT_EQ(fs.getOutflow(), 0.0);
   EXPECT_EQ(fs.getStoreflow(), 0.0);
   EXPECT_EQ(fs.getLossflow(), 0.0);
-  fs = ::ERIN::FlowState{100.0, 50.0};
+  fs = ERIN::FlowState{100.0, 50.0};
   EXPECT_EQ(fs.getInflow(), 100.0);
   EXPECT_EQ(fs.getOutflow(), 50.0);
   EXPECT_EQ(fs.getStoreflow(), 0.0);
   EXPECT_EQ(fs.getLossflow(), 50.0);
-  fs = ::ERIN::FlowState{100.0, 0.0, 90.0};
+  fs = ERIN::FlowState{100.0, 0.0, 90.0};
   EXPECT_EQ(fs.getInflow(), 100.0);
   EXPECT_EQ(fs.getOutflow(), 0.0);
   EXPECT_EQ(fs.getStoreflow(), 90.0);
@@ -377,16 +378,20 @@ TEST(ErinBasicTest, CanRunUsingComponents)
             ::ERIN::LoadItem{2,40},
             ::ERIN::LoadItem{3,0},
             ::ERIN::LoadItem{4}}}});
-  std::shared_ptr<::ERIN::Component> source =
-    std::make_shared<::ERIN::SourceComponent>("electrical_pcc", elec);
-  std::shared_ptr<::ERIN::Component> load =
-    std::make_shared<::ERIN::LoadComponent>(
-        "electrical_load", elec, loads_by_scenario);
+  const std::string source_id{"electrical_pcc"};
+  std::unique_ptr<::ERIN::Component> source =
+    std::make_unique<::ERIN::SourceComponent>(source_id, elec);
+  const std::string load_id{"electrical_load"};
+  std::unique_ptr<::ERIN::Component> load =
+    std::make_unique<::ERIN::LoadComponent>(
+        load_id, elec, loads_by_scenario);
+  ::erin::network::Connection conn{
+    ::erin::network::ComponentAndPort{source_id, ::erin::port::outflow},
+    ::erin::network::ComponentAndPort{load_id, ::erin::port::inflow}};
   std::string scenario_id{"bluesky"};
-  load->add_input(source);
   adevs::Digraph<::ERIN::FlowValueType> network;
-  load->add_to_network(network, scenario_id);
-  source->add_to_network(network, scenario_id);
+  auto a = load->add_to_network(network, scenario_id);
+  auto b = source->add_to_network(network, scenario_id);
   adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
   bool worked{false};
@@ -556,31 +561,31 @@ TEST(ErinBasicsTest, CanReadLoadsFromToml)
 
 TEST(ErinBasicsTest, CanReadNetworksFromToml)
 {
+  namespace enw = ::erin::network;
   std::stringstream ss{};
   ss << "############################################################\n"
-        "[networks.normal_operations.network]\n"
-        "# specify as: <source (generation) id> = ["
-                      "\"<downstream/load id>\", "
-                      "\"<downstream/load id>\", ...]\n"
-        "electric_utility = [\"cluster_01_electric\"]\n";
+        "[networks.normal_operations]\n"
+        R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n";
   ::ERIN::TomlInputReader t{ss};
-  std::unordered_map<
-    std::string,
-    std::unordered_map<
-      std::string,
-      std::vector<std::string>>>
-        expected{{"normal_operations", {{"electric_utility", {"cluster_01_electric"}}}}};
+  const std::string outflow{"outflow"};
+  const std::string inflow{"inflow"};
+  std::unordered_map<std::string, std::vector<enw::Connection>> expected{
+    { "normal_operations",
+      { enw::Connection{
+          enw::ComponentAndPort{"electric_utility", outflow},
+          enw::ComponentAndPort{"cluster_01_electric", inflow}}}}};
   auto pt = &t;
   auto actual = pt->read_networks();
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);
     ASSERT_TRUE(a != actual.end());
-    for (auto const& e_: e.second) {
-      const auto a_ = a->second.find(e_.first);
-      ASSERT_TRUE(a_ != a->second.end());
-      ASSERT_EQ(e_.second, a_->second);
-    }
+    auto e_conn = e.second.at(0);
+    auto a_conn = a->second.at(0);
+    ASSERT_EQ(e_conn.first.component_id, a_conn.first.component_id);
+    ASSERT_EQ(e_conn.first.port_id, a_conn.first.port_id);
+    ASSERT_EQ(e_conn.second.component_id, a_conn.second.component_id);
+    ASSERT_EQ(e_conn.second.port_id, a_conn.second.port_id);
   }
 }
 
@@ -714,10 +719,8 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "[components.cluster_01_electric.load_profiles_by_scenario]\n"
         "blue_sky = \"building_electrical\"\n"
         "############################################################\n"
-        "[networks.normal_operations.network]\n"
-        "# specify as: <source (generation) id> = ["
-           "\"<downstream/load id>\", \"<downstream/load id>\", ...]\n"
-        "electric_utility = [\"cluster_01_electric\"]\n"
+        "[networks.normal_operations]\n"
+        R"(connections=[["electric_utility", "cluster_01_electric"]])" "\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
         "occurrence_distribution = {type = \"fixed\", value = 1}\n"
@@ -773,8 +776,8 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "[components.cluster_01_electric.load_profiles_by_scenario]\n"
         "blue_sky = \"building_electrical\"\n"
         "############################################################\n"
-        "[networks.normal_operations.network]\n"
-        "electric_utility = [\"cluster_01_electric\"]\n"
+        "[networks.normal_operations]\n"
+        R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
         "occurrence_distribution = {type = \"fixed\", value = 1}\n"
@@ -809,6 +812,8 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
 
 TEST(ErinBasicsTest, CanRun10ForSourceSink)
 {
+  namespace enw = ::erin::network;
+  namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
@@ -834,21 +839,27 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
-    std::make_pair(
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
+    components;
+  components.insert(
+      std::make_pair(
         source_id,
-        std::make_shared<::ERIN::SourceComponent>(
-          source_id,
-          streams[stream_id])),
-    std::make_pair(
+        std::make_unique<::ERIN::SourceComponent>(source_id, streams[stream_id])));
+  components.insert(
+      std::make_pair(
         load_id,
-        std::make_shared<::ERIN::LoadComponent>(
+        std::make_unique<::ERIN::LoadComponent>(
           load_id,
           streams[stream_id],
-          loads_by_scenario))};
+          loads_by_scenario)));
   std::unordered_map<
-    std::string, std::unordered_map<std::string, std::vector<std::string>>>
-    networks{{net_id, {{source_id, {load_id}}}}};
+    std::string, std::vector<enw::Connection>> networks{
+      { net_id,
+        { enw::Connection{
+            enw::ComponentAndPort{
+              source_id, ep::outflow},
+            enw::ComponentAndPort{
+              load_id, ep::inflow}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -900,6 +911,8 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
 
 TEST(ErinBasicsTest, TestMaxTimeByScenario)
 {
+  namespace enw = ::erin::network;
+  namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
@@ -926,21 +939,28 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
-    std::make_pair(
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
+    components;
+  components.insert(
+      std::make_pair(
         source_id,
-        std::make_shared<::ERIN::SourceComponent>(
+        std::make_unique<::ERIN::SourceComponent>(
           source_id,
-          streams[stream_id])),
-    std::make_pair(
+          streams[stream_id])));
+  components.insert(
+      std::make_pair(
         load_id,
-        std::make_shared<::ERIN::LoadComponent>(
+        std::make_unique<::ERIN::LoadComponent>(
           load_id,
           streams[stream_id],
-          loads_by_scenario))};
+          loads_by_scenario)));
   std::unordered_map<
-    std::string, std::unordered_map<std::string, std::vector<std::string>>>
-    networks{{net_id, {{source_id, {load_id}}}}};
+    std::string, std::vector<enw::Connection>> networks{
+      { net_id,
+        { enw::Connection{
+            enw::ComponentAndPort{source_id, ep::outflow}},
+          enw::Connection{
+            enw::ComponentAndPort{load_id, ep::inflow}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -1060,6 +1080,8 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   // The entire simulation has a max time limit.
   // This is where we may need to switch to long or int64_t if we go with
   // seconds for the time unit and 1000 years of simulation...
+  namespace enw = ::erin::network;
+  namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
@@ -1086,21 +1108,27 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
-    std::make_pair(
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
+    components;
+  components.insert(
+      std::make_pair(
         source_id,
-        std::make_shared<::ERIN::SourceComponent>(
+        std::make_unique<::ERIN::SourceComponent>(
           source_id,
-          streams[stream_id])),
-    std::make_pair(
+          streams[stream_id])));
+  components.insert(
+      std::make_pair(
         load_id,
-        std::make_shared<::ERIN::LoadComponent>(
+        std::make_unique<::ERIN::LoadComponent>(
           load_id,
           streams[stream_id],
-          loads_by_scenario))};
+          loads_by_scenario)));
   std::unordered_map<
-    std::string, std::unordered_map<std::string, std::vector<std::string>>>
-    networks{{net_id, {{source_id, {load_id}}}}};
+    std::string, std::vector<enw::Connection>> networks{
+      { net_id,
+        { enw::Connection{
+            {source_id, ep::outflow},
+            {load_id, ep::inflow}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -1197,6 +1225,8 @@ TEST(ErinBasicsTest, TestFailureChecker)
 
 TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
 {
+  namespace enw = ::erin::network;
+  namespace ep = ::erin::port;
   ::ERIN::StreamInfo si{};
   const auto elec_id = std::string{"electrical"};
   const auto elec_stream = ::ERIN::StreamType(elec_id);
@@ -1235,24 +1265,29 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
     loads{::ERIN::LoadItem{0,100.0}, ::ERIN::LoadItem{100}};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{blue_sky, loads}, {class_4_hurricane, loads}};
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> comps{
-    { pcc_id,
-      std::make_shared<::ERIN::SourceComponent>(
-          pcc_id, elec_stream, std::move(fs_pcc))},
-    { load_id,
-      std::make_shared<::ERIN::LoadComponent>(
-          load_id, elec_stream, loads_by_scenario, std::move(fs_load))},
-    { gen_id,
-      std::make_shared<::ERIN::SourceComponent>(
-          gen_id, elec_stream, std::move(fs_gen))}};
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>> comps;
+  comps.insert(
+      std::make_pair(
+        pcc_id,
+        std::make_unique<::ERIN::SourceComponent>(
+          pcc_id, elec_stream, std::move(fs_pcc))));
+  comps.insert(
+      std::make_pair(
+        load_id,
+        std::make_unique<::ERIN::LoadComponent>(
+          load_id, elec_stream, loads_by_scenario, std::move(fs_load))));
+  comps.insert(
+      std::make_pair(
+        gen_id,
+        std::make_unique<::ERIN::SourceComponent>(
+          gen_id, elec_stream, std::move(fs_gen))));
   std::unordered_map<
-    std::string, std::unordered_map<std::string, std::vector<std::string>>>
-    networks{
+    std::string, std::vector<enw::Connection>> networks{
       {normal,
-        { {pcc_id, {load_id}}}},
+        { enw::Connection{{pcc_id, ep::outflow}, {load_id, ep::inflow}}}},
       {emergency,
-        { {pcc_id, {load_id}},
-          {gen_id, {load_id}}}}};
+        { enw::Connection{{pcc_id, ep::outflow}, {load_id, ep::inflow}},
+          enw::Connection{{gen_id, ep::outflow}, {load_id, ep::inflow}}}}};
   // test 1: simulate with a fragility curve that never fails
   // - confirm the statistics show load always met
   // TODO: re-enable test below

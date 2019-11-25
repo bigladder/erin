@@ -12,6 +12,8 @@
 #include "erin/distribution.h"
 #include "erin/element.h"
 #include "erin/fragility.h"
+#include "erin/network.h"
+#include "erin/port.h"
 #include "erin/stream.h"
 #include "erin/type.h"
 #include <exception>
@@ -136,14 +138,14 @@ namespace ERIN
         read_streams(const StreamInfo& si) = 0;
       virtual std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() = 0;
-      virtual std::unordered_map<std::string, std::shared_ptr<Component>>
+      virtual std::unordered_map<std::string, std::unique_ptr<Component>>
         read_components(
             const std::unordered_map<std::string, StreamType>& stm,
             const std::unordered_map<std::string, std::vector<LoadItem>>&
               loads_by_id) = 0;
-      virtual std::unordered_map<std::string,
-        std::unordered_map<std::string, std::vector<std::string>>>
-        read_networks() = 0;
+      virtual std::unordered_map<
+        std::string,
+        std::vector<::erin::network::Connection>> read_networks() = 0;
       virtual std::unordered_map<std::string, Scenario> read_scenarios() = 0;
       virtual ~InputReader() = default;
   };
@@ -162,13 +164,13 @@ namespace ERIN
         read_streams(const StreamInfo& si) override;
       std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() override;
-      std::unordered_map<std::string, std::shared_ptr<Component>>
+      std::unordered_map<std::string, std::unique_ptr<Component>>
         read_components(
             const std::unordered_map<std::string, StreamType>& stm,
-            const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id)
-        override;
-      std::unordered_map<std::string,
-        std::unordered_map<std::string, std::vector<std::string>>>
+            const std::unordered_map<
+              std::string, std::vector<LoadItem>>& loads_by_id) override;
+      std::unordered_map<
+        std::string, std::vector<::erin::network::Connection>>
         read_networks() override;
       std::unordered_map<std::string, Scenario> read_scenarios() override;
 
@@ -210,12 +212,15 @@ namespace ERIN
     public:
       explicit Main(const std::string& input_toml);
       Main(
-          StreamInfo si,
-          std::unordered_map<std::string, StreamType> streams,
-          std::unordered_map<std::string, std::shared_ptr<Component>> comps,
-          std::unordered_map<std::string,
-            std::unordered_map<std::string, std::vector<std::string>>> networks,
-          std::unordered_map<std::string, Scenario> scenarios);
+          const StreamInfo& si,
+          const std::unordered_map<std::string, StreamType>& streams,
+          const std::unordered_map<
+            std::string,
+            std::unique_ptr<Component>>& comps,
+          const std::unordered_map<
+            std::string,
+            std::vector<::erin::network::Connection>>& networks,
+          const std::unordered_map<std::string, Scenario>& scenarios);
       ScenarioResults run(const std::string& scenario_id);
       AllResults run_all(RealTimeType sim_max_time);
       RealTimeType max_time_for_scenario(const std::string& scenario_id);
@@ -223,9 +228,10 @@ namespace ERIN
     private:
       StreamInfo stream_info;
       std::unordered_map<std::string, StreamType> stream_types_map;
-      std::unordered_map<std::string, std::shared_ptr<Component>> components;
-      std::unordered_map<std::string,
-        std::unordered_map<std::string, std::vector<std::string>>> networks;
+      std::unordered_map<std::string, std::unique_ptr<Component>> components;
+      std::unordered_map<
+        std::string,
+        std::vector<::erin::network::Connection>> networks;
       std::unordered_map<std::string, Scenario> scenarios;
 
       void check_data() const;

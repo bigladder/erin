@@ -5,7 +5,9 @@
 #include "erin/erin.h"
 
 int
-main() {
+main()
+{
+  namespace ep = ::erin::port;
   const std::string scenario_id{"blue_sky"};
   const std::string stream_id{"electricity"};
   const std::string net_id{"normal_operations"};
@@ -26,9 +28,10 @@ main() {
       {}, {}};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(stream_id, elec)};
-  std::unordered_map<std::string,
-    std::shared_ptr<::ERIN::Component>> components;
-  std::unordered_map<std::string, std::vector<std::string>> nw;
+  std::unordered_map<
+    std::string,
+    std::unique_ptr<::ERIN::Component>> components;
+  std::vector<::erin::network::Connection> nw;
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -45,18 +48,18 @@ main() {
   for (int j{0}; j < M; ++j) {
     std::string source_id =  src_prefix + std::to_string(j);
     std::string load_id = load_prefix + std::to_string(j);
-    components[source_id] = std::make_shared<::ERIN::SourceComponent>(
+    components[source_id] = std::make_unique<::ERIN::SourceComponent>(
         source_id,
         elec);
-    components[load_id] = std::make_shared<::ERIN::LoadComponent>(
+    components[load_id] = std::make_unique<::ERIN::LoadComponent>(
             load_id,
             elec,
             loads_by_scenario);
-    nw[source_id] = std::vector<std::string>{load_id};
+    nw.emplace_back(::erin::network::Connection{
+      ::erin::network::ComponentAndPort{source_id, ep::outflow},
+      ::erin::network::ComponentAndPort{load_id, ep::inflow}});
   }
-  std::unordered_map<std::string,
-    std::unordered_map<std::string, std::vector<std::string>>>
-      networks{{net_id, nw}};
+  std::unordered_map<std::string, decltype(nw)> networks{{net_id, nw}};
   std::cout << "construction completed!\n";
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   std::cout << "running!\n";

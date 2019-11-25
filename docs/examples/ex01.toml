@@ -33,9 +33,16 @@ input_stream = "electricity"
 [components.cluster_01_electric.load_profiles_by_scenario]
 blue_sky = "building_electrical"
 ############################################################
-[networks.normal_operations.network]
-# specify as: <source (generation) id> = ["<downstream/load id>", "<downstream/load id>", ...]
-electric_utility = ["cluster_01_electric"]
+[networks.normal_operations]
+# specify as and array of 2-tuples or 4-tuples.
+# if 2-tuples: [<source_component>, <sink_component>]
+# which maps to [<component_1_id>, <port_1_id>, <component_2_id>, <port_2_id>]
+# with component_1_id = <source_component>
+#      port_1_id = "outflow"
+#      component_2_id = <sink_component>
+#      port_2_id = "inflow"
+# if a 4-tuple, then the 4-tuple is specified explicitly
+connections = [["electric_utility", "cluster_01_electric"]]
 ############################################################
 [scenarios.blue_sky]
 time_units = "hours"

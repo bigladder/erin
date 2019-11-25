@@ -30,6 +30,7 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../test/erin_tests.cpp > tidy/erin_tests.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../test/erin_test_utils.h > tidy/erin_test_utils.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/type.h > tidy/type.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/port.h > tidy/port.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/stream.h > tidy/stream.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/fragility.h > tidy/fragility.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type' ../include/erin/element.h > tidy/element.h.txt

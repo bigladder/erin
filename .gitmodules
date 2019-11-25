@@ -8,3 +8,6 @@
 [submodule "vendor/toml11"]
 	path = vendor/toml11
 	url = https://github.com/ToruNiina/toml11.git
+[submodule "vendor/gsl"]
+	path = vendor/gsl
+	url = https://github.com/microsoft/GSL.git

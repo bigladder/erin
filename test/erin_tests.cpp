@@ -1290,26 +1290,23 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
           enw::Connection{{gen_id, ep::outflow}, {load_id, ep::inflow}}}}};
   // test 1: simulate with a fragility curve that never fails
   // - confirm the statistics show load always met
-  // TODO: re-enable test below
-  if (false) {
-    std::unordered_map<std::string, double> intensities_low{
-      { intensity_wind_speed, 0.0},
-        { intensity_flood, 0.0}};
-    std::unordered_map<std::string, ::ERIN::Scenario> scenarios_low{
-      { blue_sky,
+  std::unordered_map<std::string, double> intensities_low{
+    { intensity_wind_speed, 0.0},
+      { intensity_flood, 0.0}};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios_low{
+    { blue_sky,
+      ::ERIN::Scenario{
+        blue_sky, normal, 10, 1, [](){return 0;}, {}}},
+      { class_4_hurricane,
         ::ERIN::Scenario{
-          blue_sky, normal, 10, 1, [](){return 0;}, {}}},
-        { class_4_hurricane,
-          ::ERIN::Scenario{
-            class_4_hurricane,
-            emergency, 10, -1, [](){ return 100; }, intensities_low}}};
-    ::ERIN::Main m_low{si, streams, comps, networks, scenarios_low};
-    auto results_low = m_low.run(class_4_hurricane);
-    EXPECT_NEAR(
-        results_low.calc_energy_availability().at(load_id),
-        1.0,
-        tolerance);
-  }
+          class_4_hurricane,
+          emergency, 10, -1, [](){ return 100; }, intensities_low}}};
+  ::ERIN::Main m_low{si, streams, comps, networks, scenarios_low};
+  auto results_low = m_low.run(class_4_hurricane);
+  EXPECT_NEAR(
+      results_low.calc_energy_availability().at(load_id),
+      1.0,
+      tolerance);
 
   // test 2: simulate with a fragility curve that always fails
   // - confirm the statistics show 100% load not served

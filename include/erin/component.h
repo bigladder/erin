@@ -31,7 +31,6 @@ namespace ERIN
   {
     public:
       Component(const Component&) = delete;
-      Component& operator=(const Component&) = delete;
       Component(
           std::string id,
           ComponentType type,
@@ -45,14 +44,17 @@ namespace ERIN
           std::unordered_map<
             std::string,
             std::unique_ptr<erin::fragility::Curve>> fragilities);
+      Component& operator=(const Component&) = delete;
+      Component(Component&&) = delete;
+      Component& operator=(Component&&) = delete;
       virtual ~Component() = default;
-      virtual std::unique_ptr<Component> clone() const = 0;
+      [[nodiscard]] virtual std::unique_ptr<Component> clone() const = 0;
 
       [[nodiscard]] const std::string& get_id() const { return id; }
       [[nodiscard]] ComponentType get_component_type() const { return component_type; }
       [[nodiscard]] const StreamType& get_input_stream() const { return input_stream; }
       [[nodiscard]] const StreamType& get_output_stream() const { return output_stream; }
-      std::unordered_map<std::string, std::unique_ptr<erin::fragility::Curve>>
+      [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<erin::fragility::Curve>>
         clone_fragility_curves() const;
       [[nodiscard]] bool is_fragile() const { return has_fragilities; }
       // TODO: consider moving this elsewhere
@@ -103,7 +105,7 @@ namespace ERIN
           adevs::Digraph<FlowValueType>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
-      std::unique_ptr<Component> clone() const override;
+      [[nodiscard]] std::unique_ptr<Component> clone() const override;
 
     private:
       std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;
@@ -123,7 +125,7 @@ namespace ERIN
           std::unordered_map<
             std::string,
             std::unique_ptr<erin::fragility::Curve>> fragilities); 
-      std::unique_ptr<Component> clone() const override;
+      [[nodiscard]] std::unique_ptr<Component> clone() const override;
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType>& nw,
           const std::string& active_scenario,

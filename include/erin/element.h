@@ -23,9 +23,15 @@ namespace ERIN
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
-      // Delete copy constructors and assignment to prevent slicing issues...
+      // Delete copy and move operators to prevent slicing issues...
+      // see:
+      // http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c21-if-you-define-or-delete-any-default-operation-define-or-delete-them-all
+      // and http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c67-a-polymorphic-class-should-suppress-copying
+      virtual ~FlowElement() = default;
       FlowElement(const FlowElement&) = delete;
       FlowElement& operator=(const FlowElement&) = delete;
+      FlowElement(FlowElement&&) = delete;
+      FlowElement& operator=(const FlowElement&&) = delete;
 
       [[nodiscard]] const std::string& get_id() const { return id; }
       [[nodiscard]] virtual std::vector<Datum>

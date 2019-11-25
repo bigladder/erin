@@ -110,7 +110,8 @@ namespace ERIN
       adevs::Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
-      std::vector<ScenarioResults> get_results() const { return results; }
+      [[nodiscard]] std::vector<ScenarioResults>
+        get_results() const { return results; }
       void set_runner(const std::function<ScenarioResults(void)>& f) {
         runner = f;
       }
@@ -133,6 +134,13 @@ namespace ERIN
   class InputReader
   {
     public:
+      InputReader() = default;
+      InputReader(const InputReader&) = delete;
+      InputReader& operator=(const InputReader&) = delete;
+      InputReader(InputReader&&) = delete;
+      InputReader& operator=(InputReader&&) = delete;
+      virtual ~InputReader() = default;
+
       virtual StreamInfo read_stream_info() = 0;
       virtual std::unordered_map<std::string, StreamType>
         read_streams(const StreamInfo& si) = 0;
@@ -147,7 +155,6 @@ namespace ERIN
         std::string,
         std::vector<::erin::network::Connection>> read_networks() = 0;
       virtual std::unordered_map<std::string, Scenario> read_scenarios() = 0;
-      virtual ~InputReader() = default;
   };
 
   ////////////////////////////////////////////////////////////
@@ -177,9 +184,9 @@ namespace ERIN
     private:
       toml::value data;
 
-      std::vector<LoadItem>
+      [[nodiscard]] std::vector<LoadItem>
         get_loads_from_array(const std::vector<toml::table>& load_array) const;
-      std::vector<LoadItem>
+      [[nodiscard]] std::vector<LoadItem>
         load_loads_from_csv(const std::string& file_path) const;
   };
 

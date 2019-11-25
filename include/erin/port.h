@@ -3,6 +3,7 @@
 
 #ifndef ERIN_PORT_H
 #define ERIN_PORT_H
+#include <string>
 
 namespace erin::port
 {

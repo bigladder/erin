@@ -18,9 +18,11 @@ namespace erin::fragility
       Curve() = default;
       Curve(const Curve&) = delete;
       Curve& operator=(const Curve&) = delete;
+      Curve(Curve&&) = delete;
+      Curve& operator=(Curve&&) = delete;
       virtual ~Curve() = default;
 
-      virtual std::unique_ptr<Curve> clone() const = 0;
+      [[nodiscard]] virtual std::unique_ptr<Curve> clone() const = 0;
       virtual double apply(double x) const = 0;
   };
 
@@ -36,7 +38,7 @@ namespace erin::fragility
       Linear() = delete;
       Linear(double lower_bound, double upper_bound);
 
-      std::unique_ptr<Curve> clone() const override;
+      [[nodiscard]] std::unique_ptr<Curve> clone() const override;
       double apply(double x) const override;
 
     private:

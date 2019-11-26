@@ -72,7 +72,9 @@ namespace ERIN
       const auto& curve = it->second;
       auto intensity = intensity_pair.second;
       auto probability = curve->apply(intensity);
-      failure_probabilities.emplace_back(probability);
+      if (probability > 0.0) {
+        failure_probabilities.emplace_back(probability);
+      }
     }
     return failure_probabilities;
   }
@@ -153,29 +155,29 @@ namespace ERIN
       std::cout << "LoadComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
     }
-    // TODO: implement is_failed=true semantics
-    if (is_failed) {
-      std::ostringstream oss;
-      oss << "semantics for is_failed=true not yet implemented "
-             "for LoadComponent";
-      throw std::runtime_error(oss.str());
-    }
-    auto sink = new Sink(
-        get_id(),
-        ComponentType::Load,
-        get_input_stream(),
-        loads_by_scenario.at(active_scenario));
+    auto id = get_id();
+    auto stream = get_input_stream();
+    auto loads = loads_by_scenario.at(active_scenario);
+    auto sink = new Sink(id, ComponentType::Load, stream, loads);
     elements.emplace(sink);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "sink = " << sink << "\n";
     }
-    auto meter = new FlowMeter(get_id(), ComponentType::Load, get_input_stream());
+    auto meter = new FlowMeter(id, ComponentType::Load, stream);
     elements.emplace(meter);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "meter = " << meter << "\n";
     }
     connect_source_to_sink(network, meter, sink, false);
-    ports[ep::inflow] = meter;
+    if (is_failed) {
+      auto lim = new FlowLimits(id, ComponentType::Source, stream, 0.0, 0.0);
+      elements.emplace(lim);
+      connect_source_to_sink(network, lim, meter, true);
+      ports[ep::inflow] = lim;
+    }
+    else {
+      ports[ep::inflow] = meter;
+    }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network(...) exit\n";
     }
@@ -219,7 +221,7 @@ namespace ERIN
 
   PortsAndElements
   SourceComponent::add_to_network(
-      adevs::Digraph<FlowValueType>&,
+      adevs::Digraph<FlowValueType>& network,
       const std::string&,
       bool is_failed) const
   {
@@ -230,13 +232,15 @@ namespace ERIN
       std::cout << "SourceComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
     }
-    if (is_failed) {
-      std::ostringstream oss;
-      oss << "is_failed semantics not yet implemented for SourceComponent";
-      throw std::runtime_error(oss.str());
-    }
-    auto meter = new FlowMeter(get_id(), ComponentType::Source, get_output_stream());
+    auto id = get_id();
+    auto stream = get_output_stream();
+    auto meter = new FlowMeter(id, ComponentType::Source, stream);
     elements.emplace(meter);
+    if (is_failed) {
+      auto lim = new FlowLimits(id, ComponentType::Source, stream, 0.0, 0.0);
+      elements.emplace(lim);
+      connect_source_to_sink(network, lim, meter, true);
+    }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit\n";
     }

@@ -97,7 +97,7 @@ namespace ERIN
       [[nodiscard]] int get_number_of_occurrences() const {
         return num_occurrences;
       }
-      [[nodiscard]] const std::unordered_map<std::string,double>
+      [[nodiscard]] const std::unordered_map<std::string,double>&
         get_intensities() const { return intensities; }
 
       bool operator==(const Scenario& other) const;
@@ -240,12 +240,18 @@ namespace ERIN
         std::string,
         std::vector<::erin::network::Connection>> networks;
       std::unordered_map<std::string, Scenario> scenarios;
+      std::unordered_map<
+        std::string,
+        std::unordered_map<
+          std::string,
+          std::vector<double>>> failure_probs_by_comp_id_by_scenario_id;
 
       void check_data() const;
       bool run_devs(
           adevs::Simulator<PortValue>& sim,
           const RealTimeType max_time,
           const std::unordered_set<std::string>::size_type max_non_advance);
+      void generate_failure_fragilities();
   };
 }
 

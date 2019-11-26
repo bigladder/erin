@@ -809,7 +809,8 @@ namespace ERIN
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file
-  Main::Main(const std::string& input_file_path)
+  Main::Main(const std::string& input_file_path):
+    failure_probs_by_comp_id_by_scenario_id{}
   {
     auto reader = TomlInputReader{input_file_path};
     // Read data into private class fields
@@ -820,6 +821,7 @@ namespace ERIN
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
     check_data();
+    generate_failure_fragilities();
   }
 
   Main::Main(
@@ -836,7 +838,8 @@ namespace ERIN
     stream_types_map{streams_},
     components{},
     networks{networks_},
-    scenarios{scenarios_}
+    scenarios{scenarios_},
+    failure_probs_by_comp_id_by_scenario_id{}
   {
     for (const auto& pair: components_) {
       components.insert(
@@ -845,6 +848,38 @@ namespace ERIN
             pair.second->clone()));
     }
     check_data();
+    generate_failure_fragilities();
+  }
+
+  void
+  Main::generate_failure_fragilities()
+  {
+    for (const auto& s: scenarios) {
+      const auto& intensities = s.second.get_intensities();
+      std::unordered_map<std::string, std::vector<double>> m;
+      if (intensities.size() > 0) {
+        for (const auto& c_pair: components) {
+          const auto& c = c_pair.second;
+          if (!(c->is_fragile())) {
+            continue;
+          }
+          auto probs = c->apply_intensities(intensities);
+          // Sort with the highest probability first; that way if a 1.0 is
+          // present, we can end early...
+          std::sort(
+              probs.begin(), probs.end(),
+              [](double a, double b){ return a > b; });
+          if (probs.size() == 0) {
+            // no need to add an empty vector of probabilities
+            // note: probabilitie of 0.0 (i.e., never fail) are not added in
+            // apply_intensities
+            continue;
+          }
+          m[c_pair.first] = probs;
+        }
+      }
+      failure_probs_by_comp_id_by_scenario_id[s.first] = m;
+    }
   }
 
   ScenarioResults
@@ -876,7 +911,8 @@ namespace ERIN
     const auto network_id = the_scenario.get_network_id();
     const auto& connections = networks[network_id];
     auto elements = ::erin::network::build(
-        scenario_id, network, connections, components);
+        scenario_id, network, connections, components,
+        failure_probs_by_comp_id_by_scenario_id.at(scenario_id));
     adevs::Simulator<PortValue> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();

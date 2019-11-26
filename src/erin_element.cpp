@@ -87,11 +87,21 @@ namespace ERIN
     }
     if (inflow_provided && !outflow_provided) {
       report_outflow_achieved = true;
-      if (inflow >= 0.0 && inflow_achieved > inflow) {
-        throw AchievedMoreThanRequestedError();
+      if (inflow > 0.0 && inflow_achieved > inflow) {
+        std::ostringstream oss;
+        oss << "AchievedMoreThanRequestedError\n";
+        oss << "inflow >= 0.0 and inflow_achieved > inflow\n";
+        oss << "inflow: " << inflow << "\n";
+        oss << "inflow_achieved: " << inflow_achieved << "\n";
+        throw std::runtime_error(oss.str());
       }
-      if (inflow <= 0.0 && inflow_achieved < inflow) {
-        throw AchievedMoreThanRequestedError();
+      if (inflow < 0.0 && inflow_achieved < inflow) {
+        std::ostringstream oss;
+        oss << "AchievedMoreThanRequestedError\n";
+        oss << "inflow <= 0.0 and inflow_achieved < inflow\n";
+        oss << "inflow: " << inflow << "\n";
+        oss << "inflow_achieved: " << inflow_achieved << "\n";
+        throw std::runtime_error(oss.str());
       }
       const FlowState& fs = update_state_for_inflow_achieved(inflow_achieved);
       update_state(fs);
@@ -103,11 +113,21 @@ namespace ERIN
         report_outflow_achieved = true;
       }
       update_state(fs);
-      if (outflow >= 0.0 && outflow > outflow_request) {
-        throw AchievedMoreThanRequestedError();
+      if (outflow > 0.0 && outflow > outflow_request) {
+        std::ostringstream oss;
+        oss << "AchievedMoreThanRequestedError\n";
+        oss << "outflow >= 0.0 && outflow > outflow_request\n";
+        oss << "outflow: " << outflow << "\n";
+        oss << "outflow_request: " << outflow_request << "\n";
+        throw std::runtime_error(oss.str());
       }
-      if (outflow <= 0.0 && outflow < outflow_request) {
-        throw AchievedMoreThanRequestedError();
+      if (outflow < 0.0 && outflow < outflow_request) {
+        std::ostringstream oss;
+        oss << "AchievedMoreThanRequestedError\n";
+        oss << "outflow <= 0.0 && outflow < outflow_request\n";
+        oss << "outflow: " << outflow << "\n";
+        oss << "outflow_request: " << outflow_request << "\n";
+        throw std::runtime_error(oss.str());
       }
     }
     else if (inflow_provided && outflow_provided) {
@@ -315,10 +335,20 @@ namespace ERIN
     }
     FlowValueType in_{0.0};
     if (in > upper_limit) {
-      throw AchievedMoreThanRequestedError();
+      std::ostringstream oss;
+      oss << "AchievedMoreThanRequestedError\n";
+      oss << "in > upper_limit\n";
+      oss << "in: " << in << "\n";
+      oss << "upper_limit: " << upper_limit << "\n";
+      throw std::runtime_error(oss.str());
     }
     else if (in < lower_limit) {
-      throw AchievedMoreThanRequestedError();
+      std::ostringstream oss;
+      oss << "AchievedMoreThanRequestedError\n";
+      oss << "in < lower_limit\n";
+      oss << "in: " << in << "\n";
+      oss << "lower_limit: " << lower_limit << "\n";
+      throw std::runtime_error(oss.str());
     }
     else {
       in_ = in;

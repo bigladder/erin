@@ -1323,13 +1323,10 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
         emergency, 10, -1, [](){ return 100; }, intensities_high}}};
   ::ERIN::Main m_high{si, streams, comps, networks, scenarios_high};
   auto results_high = m_high.run(class_4_hurricane);
-  // TODO: re-enable test below
-  if (false) {
-    EXPECT_NEAR(
-        results_high.calc_energy_availability().at(load_id),
-        0.0,
-        tolerance);
-  }
+  EXPECT_NEAR(
+      results_high.calc_energy_availability().at(load_id),
+      0.0,
+      tolerance);
 }
 
 /*

@@ -22,7 +22,9 @@ namespace erin::network
       std::unordered_set<std::string>& comps_added,
       std::unordered_map<
         std::string,
-        ::ERIN::PortsAndElements>& ports_and_elements)
+        ::ERIN::PortsAndElements>& ports_and_elements,
+      const std::unordered_map<std::string, std::vector<double>>&
+        failure_probs_by_comp_id)
   {
     auto comp_it = comps_added.find(comp_id);
     if (comp_it == comps_added.end()) {
@@ -34,7 +36,17 @@ namespace erin::network
         throw std::runtime_error(oss.str());
       }
       const auto& c = it->second;
-      auto pe = c->add_to_network(network, scenario_id);
+      bool is_failed{false};
+      auto probs_it = failure_probs_by_comp_id.find(comp_id);
+      if (probs_it != failure_probs_by_comp_id.end()) {
+        for (const auto p: probs_it->second) {
+          if (p >= 1.0) {
+            is_failed = true;
+            break;
+          }
+        }
+      }
+      auto pe = c->add_to_network(network, scenario_id, is_failed);
       ports_and_elements[comp_id] = pe;
       comps_added.emplace(comp_id);
     }
@@ -117,7 +129,9 @@ namespace erin::network
       adevs::Digraph<ERIN::FlowValueType>& network,
       const std::vector<Connection>& connections,
       const std::unordered_map<
-        std::string, std::unique_ptr<ERIN::Component>>& components)
+        std::string, std::unique_ptr<ERIN::Component>>& components,
+      const std::unordered_map<
+        std::string, std::vector<double>>& failure_probs_by_comp_id)
   {
     std::unordered_set<::ERIN::FlowElement*> elements;
     std::unordered_set<std::string> comps_added;
@@ -128,9 +142,11 @@ namespace erin::network
       auto comp2_id = connection.second.component_id;
       auto port2_id = connection.second.port_id;
       add_if_not_added(
-          comp1_id, scenario_id, components, network, comps_added, pes);
+          comp1_id, scenario_id, components, network, comps_added, pes,
+          failure_probs_by_comp_id);
       add_if_not_added(
-          comp2_id, scenario_id, components, network, comps_added, pes);
+          comp2_id, scenario_id, components, network, comps_added, pes,
+          failure_probs_by_comp_id);
       connect(
           network,
           pes.at(comp1_id).port_map,

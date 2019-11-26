@@ -99,8 +99,8 @@ namespace ERIN
           std::unordered_map<std::string, std::vector<LoadItem>>
             loads_by_scenario,
           std::unordered_map<
-            std::string, std::unique_ptr<erin::fragility::Curve>>
-            fragilities);
+            std::string,
+            std::unique_ptr<erin::fragility::Curve>> fragilities);
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType>& nw,
           const std::string& active_scenario,

@@ -5,6 +5,7 @@
 #define ERIN_ELEMENT_H
 #include "erin/type.h"
 #include "erin/stream.h"
+#include <stdexcept>
 
 namespace ERIN
 {
@@ -98,8 +99,7 @@ namespace ERIN
           ComponentType component_type,
           StreamType stream_type,
           FlowValueType lower_limit,
-          FlowValueType upper_limit
-          );
+          FlowValueType upper_limit);
 
     protected:
       [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
@@ -248,16 +248,6 @@ namespace ERIN
     [[nodiscard]] const char* what() const noexcept override
     {
       return "SimultaneousIORequestError";
-    }
-  };
-
-  ////////////////////////////////////////////////////////////
-  // AchievedMoreThanRequestedError
-  struct AchievedMoreThanRequestedError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "AchievedMoreThanRequestedError";
     }
   };
 

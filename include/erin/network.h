@@ -60,7 +60,9 @@ namespace erin::network
       adevs::Digraph<ERIN::FlowValueType>& network,
       const std::vector<Connection>& connections,
       const std::unordered_map<
-        std::string, std::unique_ptr<ERIN::Component>>& components);
+        std::string, std::unique_ptr<ERIN::Component>>& components,
+      const std::unordered_map<
+        std::string, std::vector<double>>& failure_probs_by_comp_id);
 }
 
 #endif // ERIN_NETWORK_H

@@ -12,12 +12,13 @@
 namespace ERIN
 {
   using FlowValueType = double;
-  using RealTimeType = int;
+  using RealTimeType = long long;
   using LogicalTimeType = int;
+  using Time = adevs::SuperDenseTime<RealTimeType>;
   using PortValue = adevs::port_value<FlowValueType>;
 
   const FlowValueType flow_value_tolerance{1e-6};
-  const auto inf = adevs_inf<adevs::Time>();
+  const auto inf = adevs_inf<Time>();
 
   // Time Conversion Factors
   constexpr double seconds_per_minute{60.0};

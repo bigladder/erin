@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include "erin/erin.h"
+#include "erin/network.h"
 
 int
 main()

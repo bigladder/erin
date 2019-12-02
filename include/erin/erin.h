@@ -77,7 +77,7 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Scenario
-  class Scenario : public adevs::Atomic<PortValue>
+  class Scenario : public adevs::Atomic<PortValue, Time>
   {
     public:
       Scenario(
@@ -105,9 +105,9 @@ namespace ERIN
         return !(operator==(other));
       }
       void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
-      adevs::Time ta() override;
+      Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
       [[nodiscard]] std::vector<ScenarioResults>
@@ -248,7 +248,7 @@ namespace ERIN
 
       void check_data() const;
       bool run_devs(
-          adevs::Simulator<PortValue>& sim,
+          adevs::Simulator<PortValue, Time>& sim,
           const RealTimeType max_time,
           const std::unordered_set<std::string>::size_type max_non_advance);
       void generate_failure_fragilities();

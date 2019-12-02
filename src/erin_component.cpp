@@ -81,7 +81,7 @@ namespace ERIN
 
   void
   Component::connect_source_to_sink(
-      adevs::Digraph<FlowValueType>& network,
+      adevs::Digraph<FlowValueType, Time>& network,
       FlowElement* source,
       FlowElement* sink,
       bool both_way) const
@@ -144,7 +144,7 @@ namespace ERIN
 
   PortsAndElements
   LoadComponent::add_to_network(
-      adevs::Digraph<FlowValueType>& network,
+      adevs::Digraph<FlowValueType, Time>& network,
       const std::string& active_scenario,
       bool is_failed) const
   {
@@ -221,7 +221,7 @@ namespace ERIN
 
   PortsAndElements
   SourceComponent::add_to_network(
-      adevs::Digraph<FlowValueType>& network,
+      adevs::Digraph<FlowValueType, Time>& network,
       const std::string&,
       bool is_failed) const
   {

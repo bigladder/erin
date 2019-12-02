@@ -5,6 +5,7 @@
 #define ERIN_ELEMENT_H
 #include "erin/type.h"
 #include "erin/stream.h"
+#include "../../vendor/bdevs/include/adevs.h"
 #include <functional>
 #include <stdexcept>
 
@@ -12,7 +13,7 @@ namespace ERIN
 {
   ////////////////////////////////////////////////////////////
   // FlowElement - Abstract Class
-  class FlowElement : public adevs::Atomic<PortValue>
+  class FlowElement : public adevs::Atomic<PortValue, Time>
   {
     public:
       static const int inport_inflow_achieved;
@@ -20,9 +21,9 @@ namespace ERIN
       static const int outport_inflow_request;
       static const int outport_outflow_achieved;
       void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
-      adevs::Time ta() override;
+      Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
       // Delete copy and move operators to prevent slicing issues...
@@ -56,7 +57,7 @@ namespace ERIN
         update_state_for_outflow_request(FlowValueType outflow_) const;
       [[nodiscard]] virtual FlowState
         update_state_for_inflow_achieved(FlowValueType inflow_) const;
-      virtual adevs::Time calculate_time_advance();
+      virtual Time calculate_time_advance();
       virtual void update_on_internal_transition();
       virtual void update_on_external_transition();
       virtual void add_additional_outputs(std::vector<PortValue>& ys);
@@ -74,7 +75,7 @@ namespace ERIN
 
     private:
       std::string id;
-      adevs::Time time;
+      Time time;
       StreamType inflow_type;
       StreamType outflow_type;
       FlowValueType inflow;
@@ -169,7 +170,7 @@ namespace ERIN
 
     protected:
       void update_on_internal_transition() override;
-      adevs::Time calculate_time_advance() override;
+      Time calculate_time_advance() override;
       [[nodiscard]] FlowState update_state_for_inflow_achieved(
           FlowValueType inflow_) const override;
       void add_additional_outputs(std::vector<PortValue>& ys) override;

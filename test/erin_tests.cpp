@@ -97,7 +97,7 @@ TEST(ErinBasicsTest, TestLoadItem)
 {
   const auto li1 = ERIN::LoadItem(0, 1);
   const auto li2 = ERIN::LoadItem(4);
-  EXPECT_NEAR(li1.get_time_advance(li2), 4.0, tolerance);
+  EXPECT_NEAR(li1.get_time_advance(li2), 4, tolerance);
   EXPECT_EQ(li1.get_time(), 0);
   EXPECT_EQ(li1.get_value(), 1.0);
   EXPECT_EQ(li2.get_time(), 4);
@@ -135,15 +135,16 @@ TEST(ErinBasicsTest, StandaloneSink)
        ::ERIN::LoadItem{3}});
   auto meter = new ::ERIN::FlowMeter(
       "meter", ::ERIN::ComponentType::Load, st);
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter, ::ERIN::FlowMeter::inport_outflow_request
       );
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
+  }
   std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2};
   auto actual_times = meter->get_event_times();
   ::erin_test_utils::compare_vectors<::ERIN::RealTimeType>(expected_times, actual_times);
@@ -164,25 +165,24 @@ TEST(ErinBasicsTest, CanRunSourceSink)
           ::ERIN::LoadItem{2}});
   auto meter = new ::ERIN::FlowMeter(
       "meter", ::ERIN::ComponentType::Load, st);
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter, ::ERIN::FlowMeter::inport_outflow_request
       );
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
   }
   std::vector<::ERIN::RealTimeType> actual_time =
     meter->get_event_times();
   std::vector<::ERIN::FlowValueType> actual_flow =
     meter->get_achieved_flows();
-  EXPECT_EQ(expected_time.size(), actual_time.size());
+  auto et_size = expected_time.size();
+  EXPECT_EQ(et_size, actual_time.size());
   EXPECT_EQ(expected_flow.size(), actual_flow.size());
-  for (
-      std::vector<::ERIN::RealTimeType>::size_type i{0};
-      i < expected_time.size(); ++i) {
+  for (decltype(et_size) i{0}; i < et_size; ++i) {
     if (i >= actual_time.size()) {
       break;
     }
@@ -212,7 +212,7 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
           ::ERIN::LoadItem{2,40},
           ::ERIN::LoadItem{3,0},
           ::ERIN::LoadItem{4}});
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter1, ::ERIN::FlowMeter::inport_outflow_request);
@@ -228,10 +228,11 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   network.couple(
       lim, ::ERIN::FlowLimits::outport_outflow_achieved,
       meter1, ::ERIN::FlowMeter::inport_inflow_achieved);
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
+  }
   std::vector<::ERIN::RealTimeType> actual_time1 =
     meter1->get_event_times();
   std::vector<::ERIN::RealTimeType> actual_time2 =
@@ -314,7 +315,7 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
       ::ERIN::LoadItem{4}};
   auto sink = new ::ERIN::Sink(
       "electric_load", ::ERIN::ComponentType::Load, elec, load_profile);
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       genset_meter, ::ERIN::FlowMeter::inport_outflow_request);
@@ -336,10 +337,10 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   network.couple(
       genset_lim, ::ERIN::FlowLimits::outport_outflow_achieved,
       genset_meter, ::ERIN::FlowMeter::inport_inflow_achieved);
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  adevs::Time t;
-  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
+  ::ERIN::Time t;
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
     t = sim.now();
     std::cout << "The current time is: (" << t.real << ", " << t.logical
@@ -398,14 +399,14 @@ TEST(ErinBasicTest, CanRunUsingComponents)
     ::erin::network::ComponentAndPort{source_id, ::erin::port::outflow},
     ::erin::network::ComponentAndPort{load_id, ::erin::port::inflow}};
   std::string scenario_id{"bluesky"};
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   auto a = load->add_to_network(network, scenario_id);
   auto b = source->add_to_network(network, scenario_id);
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
   bool worked{false};
   int iworked{0};
-  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
     worked = true;
     ++iworked;
@@ -622,7 +623,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
         e.second.get_number_of_occurrences(),
         a->second.get_number_of_occurrences());
   }
-  adevs::Time dt_expected{1, 0};
+  ::ERIN::Time dt_expected{1, 0};
   auto scenario = actual.at(scenario_id);
   auto dt_actual = scenario.ta();
   EXPECT_EQ(dt_expected.logical, dt_actual.logical);
@@ -993,7 +994,7 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   std::unordered_map<std::string,::ERIN::RealTimeType> expected0_max_downtime{
     {"A0",0}};
   auto actual0_max_downtime = sr0.calc_max_downtime();
-  ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
+  ::erin_test_utils::compare_maps_exact<::ERIN::RealTimeType>(
       expected0_max_downtime, actual0_max_downtime, "max_downtime_with_sr0");
   // load_not_served
   std::unordered_map<std::string,::ERIN::FlowValueType> expected0_lns{
@@ -1061,8 +1062,8 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
     0.0,  // FlowValueType load_not_served
     4.0}; // FlowValueType total_energy
   auto actual = ::ERIN::calc_scenario_stats(ds);
-  EXPECT_NEAR(expected.uptime, actual.uptime, tolerance);
-  EXPECT_NEAR(expected.downtime, actual.downtime, tolerance);
+  EXPECT_EQ(expected.uptime, actual.uptime);
+  EXPECT_EQ(expected.downtime, actual.downtime);
   EXPECT_NEAR(expected.load_not_served, actual.load_not_served, tolerance);
   EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
 }

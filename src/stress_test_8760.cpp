@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 #include <iostream>
 #include "erin/erin.h"
+#include "erin/network.h"
 
 int
 main()

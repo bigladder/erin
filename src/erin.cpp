@@ -889,14 +889,14 @@ namespace ERIN
     const auto& the_scenario = it->second;
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
-    adevs::Digraph<FlowValueType> network;
+    adevs::Digraph<FlowValueType, Time> network;
     // 2.2. Interconnect components based on the network definition
     const auto network_id = the_scenario.get_network_id();
     const auto& connections = networks[network_id];
     auto elements = ::erin::network::build(
         scenario_id, network, connections, components,
         failure_probs_by_comp_id_by_scenario_id.at(scenario_id));
-    adevs::Simulator<PortValue> sim;
+    adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
     const auto max_non_advance{elements.size() * 10};
@@ -934,7 +934,7 @@ namespace ERIN
 
   bool
   Main::run_devs(
-      adevs::Simulator<PortValue>& sim,
+      adevs::Simulator<PortValue, Time>& sim,
       const RealTimeType max_time,
       const std::unordered_set<std::string>::size_type max_non_advance)
   {
@@ -968,7 +968,7 @@ namespace ERIN
   {
     std::unordered_map<std::string, std::vector<ScenarioResults>> out{};
     // 1. create the network and simulator
-    adevs::Simulator<PortValue> sim{};
+    adevs::Simulator<PortValue, Time> sim{};
     // 2. add all scenarios
     std::vector<Scenario*> copies{};
     for (const auto s: scenarios) {
@@ -1021,7 +1021,7 @@ namespace ERIN
       int max_occurrences_,
       std::function<RealTimeType(void)> calc_time_to_next_,
       std::unordered_map<std::string, double> intensities_):
-    adevs::Atomic<PortValue>(),
+    adevs::Atomic<PortValue, Time>(),
     name{std::move(name_)},
     network_id{std::move(network_id_)},
     duration{duration_},
@@ -1062,7 +1062,7 @@ namespace ERIN
   }
 
   void
-  Scenario::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  Scenario::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Scenario::delta_ext("
@@ -1088,12 +1088,12 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Scenario::delta_conf();name=" << name << "\n";
     }
-    auto e = adevs::Time{0,0};
+    auto e = Time{0,0};
     delta_int();
     delta_ext(e, xs);
   }
 
-  adevs::Time
+  Time
   Scenario::ta()
   {
     if (calc_time_to_next == nullptr) {
@@ -1104,7 +1104,7 @@ namespace ERIN
     }
     auto dt = calc_time_to_next();
     t += dt;
-    return adevs::Time{dt, 0};
+    return Time{dt, 0};
   }
 
   void

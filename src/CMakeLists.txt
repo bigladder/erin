@@ -79,10 +79,13 @@ endif()
 
 add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
 target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
+target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 add_executable(str8760 stress_test_8760.cpp ${sources} ${public_headers} ${private_headers})
 target_include_directories(str8760 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
+target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 add_executable(str8760x5000 stress_test_8760x5000.cpp ${sources} ${public_headers} ${private_headers})
 target_include_directories(str8760x5000 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
+target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 add_executable(limits limits.cpp)
 
 # Add Warnings

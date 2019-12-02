@@ -18,7 +18,7 @@ namespace erin::network
       const std::unordered_map<
         std::string,
         std::unique_ptr<ERIN::Component>>& components,
-      adevs::Digraph<ERIN::FlowValueType>& network,
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       std::unordered_set<std::string>& comps_added,
       std::unordered_map<
         std::string,
@@ -54,7 +54,7 @@ namespace erin::network
 
   void
   couple_source_to_sink(
-      adevs::Digraph<ERIN::FlowValueType>& network,
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       ::ERIN::FlowElement* src,
       ::ERIN::FlowElement* sink,
       bool two_way)
@@ -87,7 +87,7 @@ namespace erin::network
 
   void
   connect(
-      adevs::Digraph<ERIN::FlowValueType>& network,
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       const std::unordered_map<std::string, ::ERIN::FlowElement*>& port_map1,
       const std::string& port1,
       const std::unordered_map<std::string, ::ERIN::FlowElement*>& port_map2,
@@ -126,7 +126,7 @@ namespace erin::network
   std::unordered_set<::ERIN::FlowElement*>
   build(
       const std::string& scenario_id,
-      adevs::Digraph<ERIN::FlowValueType>& network,
+      adevs::Digraph<ERIN::FlowValueType, ::ERIN::Time>& network,
       const std::vector<Connection>& connections,
       const std::unordered_map<
         std::string, std::unique_ptr<ERIN::Component>>& components,

@@ -97,7 +97,7 @@ TEST(ErinBasicsTest, TestLoadItem)
 {
   const auto li1 = ERIN::LoadItem(0, 1);
   const auto li2 = ERIN::LoadItem(4);
-  EXPECT_NEAR(li1.get_time_advance(li2), 4, tolerance);
+  EXPECT_EQ(li1.get_time_advance(li2), 4);
   EXPECT_EQ(li1.get_time(), 0);
   EXPECT_EQ(li1.get_value(), 1.0);
   EXPECT_EQ(li2.get_time(), 4);

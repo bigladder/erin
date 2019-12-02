@@ -3,7 +3,7 @@
 require 'set'
 require 'pathname'
 
-CHECKS = "-*,cppcoreguidelines-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type"
+CHECKS = "-*,cppcoreguidelines-*,clang-analyzer-*"
 USE_BG = false
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 ROOT = File.expand_path(File.join(THIS_DIR, ".."))

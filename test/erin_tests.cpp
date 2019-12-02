@@ -244,21 +244,26 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   EXPECT_EQ(expected_time.size(), actual_time2.size());
   EXPECT_EQ(expected_flow.size(), actual_flow1.size());
   EXPECT_EQ(expected_flow.size(), actual_flow2.size());
-  for (int i{0}; i < expected_time.size(); ++i) {
-    if (i >= actual_time1.size())
+  auto expected_time_size = expected_time.size();
+  for (decltype(expected_time_size) i{0}; i < expected_time_size; ++i) {
+    if (i >= actual_time1.size()) {
       break;
+    }
     EXPECT_EQ(expected_time[i], actual_time1[i])
       << " times from meter1 differ at index " << i;
-    if (i >= actual_time2.size())
+    if (i >= actual_time2.size()) {
       break;
+    }
     EXPECT_EQ(expected_time[i], actual_time2[i])
       << " times from meter2 differ at index " << i;
-    if (i >= actual_flow1.size())
+    if (i >= actual_flow1.size()) {
       break;
+    }
     EXPECT_EQ(expected_flow[i], actual_flow1[i])
       << " flows from meter1 differ at index " << i;
-    if (i >= actual_flow2.size())
+    if (i >= actual_flow2.size()) {
       break;
+    }
     EXPECT_EQ(expected_flow[i], actual_flow2[i])
       << " flows from meter2 differ at index " << i;
   }
@@ -346,8 +351,10 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
     genset_meter->get_requested_flows();
   EXPECT_EQ(actual_genset_output.size(), requested_genset_output.size());
   EXPECT_EQ(load_profile.size() - 1, requested_genset_output.size());
-  for (int i{0}; i < requested_genset_output.size(); ++i)
+  auto rgo_size = requested_genset_output.size();
+  for (decltype(rgo_size) i{ 0 }; i < rgo_size; ++i) {
     EXPECT_EQ(requested_genset_output[i], load_profile[i].get_value());
+  }
   std::vector<::ERIN::FlowValueType> actual_fuel_output =
     diesel_fuel_meter->get_achieved_flows();
   std::vector<::ERIN::RealTimeType> actual_genset_output_times =
@@ -357,9 +364,11 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
       expected_genset_output_times.size(), actual_genset_output_times.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_fuel_output.size());
-  for (int i{0}; i < expected_genset_output.size(); ++i) {
-    if (i >= actual_genset_output.size())
+  auto ego_size = expected_genset_output.size();
+  for (decltype(ego_size) i{0}; i < ego_size; ++i) {
+    if (i >= actual_genset_output.size()) {
       break;
+    }
     EXPECT_EQ(expected_genset_output.at(i), actual_genset_output.at(i));
     EXPECT_EQ(
         expected_genset_output_times.at(i), actual_genset_output_times.at(i));

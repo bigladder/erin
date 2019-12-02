@@ -12,7 +12,6 @@ type = "electricity_medium_voltage"
 ############################################################
 # Loads
 [loads.building_electrical]
-time_unit = "hours"
 csv_file = "ex02.csv"
 ############################################################
 # Components

@@ -414,26 +414,18 @@ TEST(ErinBasicTest, CanRunUsingComponents)
   EXPECT_TRUE(worked);
 }
 
-TEST(ErinBasicTest, CanReadStreamInfoFromToml)
+TEST(ErinBasicTest, CanReadSimulationInfoFromToml)
 {
   std::stringstream ss{};
-  ss << "[stream_info]\n"
-        "# The commonality across all streams.\n"
-        "# We need to know what the common rate unit and quantity unit is.\n"
-        "# The rate unit should be the quantity unit per unit of time.\n"
+  ss << "[simulation_info]\n"
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
-        "# seconds_per_time_unit : Number\n"
-        "# defines how many seconds per unit of time used to specify the "
-          "quantity unit\n"
-        "# here since we are using kW and kJ, the answer is 1.0 second.\n"
-        "# However, if we were doing kW and kWh, we would use 3600 s "
-          "(i.e., 1 hour) here.\n"
-        "seconds_per_time_unit = 1.0\n";
+        "time_unit = \"hours\"\n"
+        "max_time = 3000\n";
   ::ERIN::TomlInputReader t{ss};
-  ::ERIN::StreamInfo expected{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo expected{"kW", "kJ", ::ERIN::TimeUnits::Hours, 3000};
   auto pt = &t;
-  auto actual = pt->read_stream_info();
+  auto actual = pt->read_simulation_info();
   EXPECT_EQ(expected, actual);
 }
 
@@ -451,7 +443,7 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
         "gallons = 7.366784013642577e-6\n"
         "liters = 2.7886224205242612e-5\n";
   ::ERIN::TomlInputReader t{ss};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   std::unordered_map<std::string, ::ERIN::StreamType> expected{
     std::make_pair("electricity", ::ERIN::StreamType(
           "electricity_medium_voltage", "kW", "kJ", 1.0, {}, {})),
@@ -471,9 +463,6 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
     EXPECT_EQ(e.second.get_type(), a->second.get_type());
     EXPECT_EQ(e.second.get_rate_units(), a->second.get_rate_units());
     EXPECT_EQ(e.second.get_quantity_units(), a->second.get_quantity_units());
-    EXPECT_EQ(
-        e.second.get_seconds_per_time_unit(),
-        a->second.get_seconds_per_time_unit());
     const auto eoru = e.second.get_other_rate_units();
     const auto aoru = a->second.get_other_rate_units();
     EXPECT_EQ(eoru.size(), aoru.size());
@@ -691,19 +680,14 @@ TEST(ErinBasicsTest, CanReadScenariosIntensities)
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
 {
   std::stringstream ss;
-  ss << "[stream_info]\n"
+  ss << "[simulation_info]\n"
         "# The commonality across all streams.\n"
         "# We need to know what the common rate unit and quantity unit is.\n"
         "# The rate unit should be the quantity unit per unit of time.\n"
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
-        "# seconds_per_time_unit : Number\n"
-        "# defines how many seconds per unit of time used to specify the "
-          "quantity unit\n"
-        "# here since we are using kW and kJ, the answer is 1.0 second.\n"
-        "# However, if we were doing kW and kWh, we would use 3600 s "
-          "(i.e., 1 hour) here.\n"
-        "seconds_per_time_unit = 1.0 \n"
+        "time_units = \"years\"\n"
+        "max_time = 1000\n"
         "[streams.electricity]\n"
         "type = \"electrity_medium_voltage\"\n"
         "[streams.diesel]\n"
@@ -737,7 +721,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader r{ss};
-  auto si = r.read_stream_info();
+  auto si = r.read_simulation_info();
   auto streams = r.read_streams(si);
   auto loads = r.read_loads();
   auto components = r.read_components(streams, loads);
@@ -765,10 +749,11 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
 TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
 {
   std::stringstream ss;
-  ss << "[stream_info]\n"
+  ss << "[simulation_info]\n"
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
-        "seconds_per_time_unit = 1.0\n"
+        "time_unit = \"years\"\n"
+        "max_time = 1000\n"
         "[streams.electricity]\n"
         "type = \"electrity\"\n"
         "############################################################\n"
@@ -794,7 +779,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "max_occurrences = 1\n"
         "network = \"normal_operations\"";
   ::ERIN::TomlInputReader r{ss};
-  auto si = r.read_stream_info();
+  auto si = r.read_simulation_info();
   auto streams = r.read_streams(si);
   auto loads = r.read_loads();
   auto components = r.read_components(streams, loads);
@@ -835,7 +820,7 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   loads.emplace_back(::ERIN::LoadItem{N});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(
         stream_id,
@@ -843,7 +828,7 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
           std::string{"electricity_medium_voltage"},
           si.get_rate_unit(),
           si.get_quantity_unit(),
-          si.get_seconds_per_time_unit(),
+          1,
           {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
@@ -935,7 +920,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   loads.emplace_back(::ERIN::LoadItem{max_time});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(
         stream_id,
@@ -943,7 +928,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
           std::string{"electricity_medium_voltage"},
           si.get_rate_unit(),
           si.get_quantity_unit(),
-          si.get_seconds_per_time_unit(),
+          1,
           {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
@@ -1104,7 +1089,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   loads.emplace_back(::ERIN::LoadItem{max_time});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(
         stream_id,
@@ -1112,7 +1097,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
           std::string{"electricity_medium_voltage"},
           si.get_rate_unit(),
           si.get_quantity_unit(),
-          si.get_seconds_per_time_unit(),
+          1,
           {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
@@ -1236,7 +1221,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
 {
   namespace enw = ::erin::network;
   namespace ep = ::erin::port;
-  ::ERIN::StreamInfo si{};
+  ::ERIN::SimulationInfo si{};
   const auto elec_id = std::string{"electrical"};
   const auto elec_stream = ::ERIN::StreamType(elec_id);
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
@@ -1345,6 +1330,54 @@ TEST(ErinBasicsTest, TestNetworkAsVectorOfConnections)
 
 }
 */
+
+TEST(ErinBasicsTest, TestTimeUnits)
+{
+  const std::string tag_for_seconds{"seconds"};
+  auto expected_tu_s = ::ERIN::TimeUnits::Seconds;
+  auto actual_tu_s = ::ERIN::tag_to_time_units(tag_for_seconds);
+  EXPECT_EQ(expected_tu_s, actual_tu_s);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_s), tag_for_seconds);
+  const std::string tag_for_minutes{"minutes"};
+  auto expected_tu_min = ::ERIN::TimeUnits::Minutes;
+  auto actual_tu_min = ::ERIN::tag_to_time_units(tag_for_minutes);
+  EXPECT_EQ(expected_tu_min, actual_tu_min);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_min), tag_for_minutes);
+  const std::string tag_for_hours{"hours"};
+  auto expected_tu_hrs = ::ERIN::TimeUnits::Hours;
+  auto actual_tu_hrs = ::ERIN::tag_to_time_units(tag_for_hours);
+  EXPECT_EQ(expected_tu_hrs, actual_tu_hrs);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_hrs), tag_for_hours);
+  const std::string tag_for_days{"days"};
+  auto expected_tu_days = ::ERIN::TimeUnits::Days;
+  auto actual_tu_days = ::ERIN::tag_to_time_units(tag_for_days);
+  EXPECT_EQ(expected_tu_days, actual_tu_days);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_days), tag_for_days);
+  const std::string tag_for_years{"years"};
+  auto expected_tu_years = ::ERIN::TimeUnits::Years;
+  auto actual_tu_years = ::ERIN::tag_to_time_units(tag_for_years);
+  EXPECT_EQ(expected_tu_years, actual_tu_years);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_years), tag_for_years);
+}
+
+TEST(ErinBasicsTest, TestTimeUnitConversion)
+{
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Years),
+      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_year));
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Days),
+      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_day));
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Hours),
+      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_hour));
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Minutes),
+      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_minute));
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Seconds),
+      1);
+}
 
 int
 main(int argc, char **argv)

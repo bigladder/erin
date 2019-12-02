@@ -7,6 +7,71 @@
 
 namespace ERIN
 {
+  TimeUnits
+  tag_to_time_units(const std::string& tag)
+  {
+    if ((tag == "s") || (tag == "second") || (tag == "seconds")) {
+      return TimeUnits::Seconds;
+    }
+    else if ((tag == "min") || (tag == "minute") || (tag == "minutes")) {
+      return TimeUnits::Minutes;
+    }
+    else if ((tag == "hr") || (tag == "hour") || (tag == "hours")) {
+      return TimeUnits::Hours;
+    }
+    else if ((tag == "day") || (tag == "days")) {
+      return TimeUnits::Days;
+    }
+    else if ((tag == "yr") || (tag == "year") || (tag == "years")) {
+      return TimeUnits::Years;
+    }
+    std::ostringstream oss;
+    oss << "unhandled tag \"" << tag << "\"";
+    throw std::invalid_argument(oss.str());
+  }
+
+  std::string
+  time_units_to_tag(TimeUnits tu)
+  {
+    switch(tu) {
+      case TimeUnits::Seconds:
+        return std::string{"seconds"};
+      case TimeUnits::Minutes:
+        return std::string{"minutes"};
+      case TimeUnits::Hours:
+        return std::string{"hours"};
+      case TimeUnits::Days:
+        return std::string{"days"};
+      case TimeUnits::Years:
+        return std::string{"years"};
+      default:
+        std::ostringstream oss;
+        oss << "Unhandled TimeUnits \"" << static_cast<int>(tu) << "\"";
+        throw std::invalid_argument(oss.str());
+    }
+  }
+
+  RealTimeType
+  time_to_seconds(RealTimeType t, TimeUnits u)
+  {
+    switch (u) {
+      case TimeUnits::Seconds:
+        return t;
+      case TimeUnits::Minutes:
+        return t * static_cast<RealTimeType>(seconds_per_minute);
+      case TimeUnits::Hours:
+        return t * static_cast<RealTimeType>(seconds_per_hour);
+      case TimeUnits::Days:
+        return t * static_cast<RealTimeType>(seconds_per_day);
+      case TimeUnits::Years:
+        return t * static_cast<RealTimeType>(seconds_per_year);
+      default:
+        std::ostringstream oss;
+        oss << "unhandled TimeUnits \"" << static_cast<int>(u) << "\"";
+        throw std::invalid_argument(oss.str());
+    }
+  }
+
   ComponentType
   tag_to_component_type(const std::string& tag)
   {

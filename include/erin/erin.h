@@ -141,9 +141,9 @@ namespace ERIN
       InputReader& operator=(InputReader&&) = delete;
       virtual ~InputReader() = default;
 
-      virtual StreamInfo read_stream_info() = 0;
+      virtual SimulationInfo read_simulation_info() = 0;
       virtual std::unordered_map<std::string, StreamType>
-        read_streams(const StreamInfo& si) = 0;
+        read_streams(const SimulationInfo& si) = 0;
       virtual std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() = 0;
       virtual std::unordered_map<std::string, std::unique_ptr<Component>>
@@ -166,9 +166,9 @@ namespace ERIN
       explicit TomlInputReader(const std::string& path);
       explicit TomlInputReader(std::istream& in);
 
-      StreamInfo read_stream_info() override;
+      SimulationInfo read_simulation_info() override;
       std::unordered_map<std::string, StreamType>
-        read_streams(const StreamInfo& si) override;
+        read_streams(const SimulationInfo& si) override;
       std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() override;
       std::unordered_map<std::string, std::unique_ptr<Component>>
@@ -219,7 +219,7 @@ namespace ERIN
     public:
       explicit Main(const std::string& input_toml);
       Main(
-          const StreamInfo& si,
+          const SimulationInfo& si,
           const std::unordered_map<std::string, StreamType>& streams,
           const std::unordered_map<
             std::string,
@@ -233,7 +233,7 @@ namespace ERIN
       RealTimeType max_time_for_scenario(const std::string& scenario_id);
 
     private:
-      StreamInfo stream_info;
+      SimulationInfo sim_info;
       std::unordered_map<std::string, StreamType> stream_types_map;
       std::unordered_map<std::string, std::unique_ptr<Component>> components;
       std::unordered_map<

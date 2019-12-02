@@ -23,8 +23,6 @@
 
 namespace ERIN
 {
-  const double seconds_per_hour{3600.0};
-
   ////////////////////////////////////////////////////////////
   // TomlInputReader
   TomlInputReader::TomlInputReader(toml::value data_):
@@ -47,41 +45,24 @@ namespace ERIN
     data = toml::parse(in, "input_from_string.toml");
   }
 
-  StreamInfo
-  TomlInputReader::read_stream_info()
+  SimulationInfo
+  TomlInputReader::read_simulation_info()
   {
-    const auto stream_info = toml::find(data, "stream_info");
-    const std::string rate_unit(
-        toml::find_or(stream_info, "rate_unit", "kW"));
-    const std::string quantity_unit(
-        toml::find_or(stream_info, "quantity_unit", "kJ"));
-    double default_seconds_per_time_unit{1.0};
-    if (rate_unit == "kW" && quantity_unit == "kJ")
-      default_seconds_per_time_unit = 1.0;
-    else if (rate_unit == "kW" && quantity_unit == "kWh")
-      default_seconds_per_time_unit = seconds_per_hour;
-    else
-      default_seconds_per_time_unit = -1.0;
-    const double seconds_per_time_unit(
-        toml::find_or(
-          stream_info, "seconds_per_time_unit",
-          default_seconds_per_time_unit));
-    if (seconds_per_time_unit < 0.0)
-      throw BadInputError();
-    StreamInfo si{rate_unit, quantity_unit, seconds_per_time_unit};
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "stream_info.rate_unit = "
-                << si.get_rate_unit() << "\n";
-      std::cout << "stream_info.quantity_unit = "
-                << si.get_quantity_unit() << "\n";
-      std::cout << "stream_info.seconds_per_time_unit = "
-                << si.get_seconds_per_time_unit() << "\n";
-    }
-    return si;
+    const auto sim_info = toml::find(data, "simulation_info");
+    const std::string rate_unit =
+      toml::find_or(sim_info, "rate_unit", "kW");
+    const std::string quantity_unit =
+      toml::find_or(sim_info, "quantity_unit", "kJ");
+    const std::string time_tag =
+      toml::find_or(sim_info, "time_unit", "years");
+    const TimeUnits time_units = tag_to_time_units(time_tag);
+    const RealTimeType max_time =
+      static_cast<RealTimeType>(toml::find_or(sim_info, "max_time", 1000));
+    return SimulationInfo{rate_unit, quantity_unit, time_units, max_time};
   }
 
   std::unordered_map<std::string, StreamType>
-  TomlInputReader::read_streams(const StreamInfo& si)
+  TomlInputReader::read_streams(const SimulationInfo&)
   {
     const auto toml_streams = toml::find<toml::table>(data, "streams");
     std::unordered_map<std::string, StreamType> stream_types_map;
@@ -112,9 +93,9 @@ namespace ERIN
             s.first,
             StreamType(
               stream_type,
-              si.get_rate_unit(),
-              si.get_quantity_unit(),
-              si.get_seconds_per_time_unit(),
+              "kW",
+              "kJ",
+              1.0,
               other_rate_units,
               other_quantity_units)));
     }
@@ -816,8 +797,8 @@ namespace ERIN
   {
     auto reader = TomlInputReader{input_file_path};
     // Read data into private class fields
-    stream_info = reader.read_stream_info();
-    stream_types_map = reader.read_streams(stream_info);
+    sim_info = reader.read_simulation_info();
+    stream_types_map = reader.read_streams(sim_info);
     auto loads_by_id = reader.read_loads();
     components = reader.read_components(stream_types_map, loads_by_id);
     networks = reader.read_networks();
@@ -827,7 +808,7 @@ namespace ERIN
   }
 
   Main::Main(
-      const StreamInfo& stream_info_,
+      const SimulationInfo& sim_info_,
       const std::unordered_map<std::string, StreamType>& streams_,
       const std::unordered_map<
         std::string,
@@ -836,7 +817,7 @@ namespace ERIN
         std::string,
         std::vector<::erin::network::Connection>>& networks_,
       const std::unordered_map<std::string, Scenario>& scenarios_):
-    stream_info{stream_info_},
+    sim_info{sim_info_},
     stream_types_map{streams_},
     components{},
     networks{networks_},

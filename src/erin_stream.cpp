@@ -7,8 +7,6 @@
 
 namespace ERIN
 {
-  constexpr double seconds_per_hour{3600.0}; 
-
   ////////////////////////////////////////////////////////////
   // StreamInfo
   StreamInfo::StreamInfo():
@@ -43,10 +41,50 @@ namespace ERIN
   bool
   StreamInfo::operator==(const StreamInfo& other) const
   {
-    if (this == &other) return true;
+    if (this == &other) {
+      return true;
+    }
     return (rate_unit == other.rate_unit) &&
            (quantity_unit == other.quantity_unit) &&
            (seconds_per_time_unit == other.seconds_per_time_unit);
+  }
+
+  ////////////////////////////////////////////////////////////
+  // SimulationInfo
+  SimulationInfo::SimulationInfo():
+    rate_unit{"kW"},
+    quantity_unit{"kJ"},
+    time_unit{TimeUnits::Seconds},
+    max_time{static_cast<RealTimeType>(1000*seconds_per_year)}
+  {
+  }
+
+  SimulationInfo::SimulationInfo(
+      const std::string& rate_unit_,
+      const std::string& quantity_unit_,
+      TimeUnits time_unit_,
+      RealTimeType max_time_):
+    rate_unit{rate_unit_},
+    quantity_unit{quantity_unit_},
+    time_unit{time_unit_},
+    max_time{max_time_}
+  {
+    if (max_time <= 0.0) {
+      std::ostringstream oss;
+      oss << "max_time must be greater than 0.0";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  bool
+  SimulationInfo::operator==(const SimulationInfo& other) const
+  {
+    if (this == &other) {
+      return true;
+    }
+    return (rate_unit == other.rate_unit) &&
+           (quantity_unit == other.quantity_unit) &&
+           (get_max_time_in_seconds() == other.get_max_time_in_seconds());
   }
 
   //////////////////////////////////////////////////////////// 

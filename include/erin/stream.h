@@ -36,6 +36,42 @@ namespace ERIN
       double seconds_per_time_unit;
   };
 
+  class SimulationInfo
+  {
+    public:
+      SimulationInfo();
+      SimulationInfo(
+          const std::string& rate_unit,
+          const std::string& quantity_unit,
+          TimeUnits time_unit,
+          RealTimeType max_time);
+      [[nodiscard]] const std::string& get_rate_unit() const {
+        return rate_unit;
+      }
+      [[nodiscard]] const std::string& get_quantity_unit() const {
+        return quantity_unit;
+      }
+      [[nodiscard]] TimeUnits get_time_units() const {
+        return time_unit;
+      }
+      [[nodiscard]] RealTimeType get_max_time() const {
+        return max_time;
+      }
+      [[nodiscard]] RealTimeType get_max_time_in_seconds() const {
+        return time_to_seconds(max_time, time_unit);
+      }
+      bool operator==(const SimulationInfo& other) const;
+      bool operator!=(const SimulationInfo& other) const {
+        return !(operator==(other));
+      }
+
+    private:
+      std::string rate_unit;
+      std::string quantity_unit;
+      TimeUnits time_unit;
+      RealTimeType max_time;
+  };
+
   ////////////////////////////////////////////////////////////
   // FlowState
   class FlowState

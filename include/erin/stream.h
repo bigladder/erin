@@ -10,32 +10,7 @@
 namespace ERIN
 {
   ////////////////////////////////////////////////////////////
-  // StreamInfo
-  class StreamInfo
-  {
-    public:
-      StreamInfo();
-      StreamInfo(
-          std::string rate_unit,
-          std::string quantity_unit);
-      StreamInfo(
-          std::string rate_unit,
-          std::string quantity_unit,
-          double default_seconds_per_time_unit);
-      [[nodiscard]] const std::string& get_rate_unit() const {return rate_unit;}
-      [[nodiscard]] const std::string& get_quantity_unit() const {return quantity_unit;}
-      [[nodiscard]] double get_seconds_per_time_unit() const {return seconds_per_time_unit;}
-      bool operator==(const StreamInfo& other) const;
-      bool operator!=(const StreamInfo& other) const {
-        return !(operator==(other));
-      }
-
-    private:
-      std::string rate_unit;
-      std::string quantity_unit;
-      double seconds_per_time_unit;
-  };
-
+  // SimulationInfo
   class SimulationInfo
   {
     public:

@@ -7,47 +7,6 @@
 
 namespace ERIN
 {
-  ////////////////////////////////////////////////////////////
-  // StreamInfo
-  StreamInfo::StreamInfo():
-    StreamInfo(std::string{"kW"}, std::string{"kJ"}, 1.0)
-  {
-  }
-
-  StreamInfo::StreamInfo(
-      std::string rate_unit_,
-      std::string  quantity_unit_):
-    rate_unit{std::move(rate_unit_)},
-    quantity_unit{std::move(quantity_unit_)},
-    seconds_per_time_unit{1.0}
-  {
-    if ((rate_unit == "kW") && (quantity_unit == "kJ"))
-      seconds_per_time_unit = 1.0;
-    else if ((rate_unit == "kW") && (quantity_unit == "kWh"))
-      seconds_per_time_unit = seconds_per_hour;
-    else
-      throw std::invalid_argument("rate_unit and quantity_unit not compatible");
-  }
-  StreamInfo::StreamInfo(
-      std::string rate_unit_,
-      std::string quantity_unit_,
-      double seconds_per_time_unit_):
-    rate_unit{std::move(rate_unit_)},
-    quantity_unit{std::move(quantity_unit_)},
-    seconds_per_time_unit{seconds_per_time_unit_}
-  {
-  }
-
-  bool
-  StreamInfo::operator==(const StreamInfo& other) const
-  {
-    if (this == &other) {
-      return true;
-    }
-    return (rate_unit == other.rate_unit) &&
-           (quantity_unit == other.quantity_unit) &&
-           (seconds_per_time_unit == other.seconds_per_time_unit);
-  }
 
   ////////////////////////////////////////////////////////////
   // SimulationInfo

@@ -155,22 +155,22 @@ namespace ERIN
       std::cout << "LoadComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
     }
-    auto id = get_id();
+    auto the_id = get_id();
     auto stream = get_input_stream();
     auto loads = loads_by_scenario.at(active_scenario);
-    auto sink = new Sink(id, ComponentType::Load, stream, loads);
+    auto sink = new Sink(the_id, ComponentType::Load, stream, loads);
     elements.emplace(sink);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "sink = " << sink << "\n";
     }
-    auto meter = new FlowMeter(id, ComponentType::Load, stream);
+    auto meter = new FlowMeter(the_id, ComponentType::Load, stream);
     elements.emplace(meter);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "meter = " << meter << "\n";
     }
     connect_source_to_sink(network, meter, sink, false);
     if (is_failed) {
-      auto lim = new FlowLimits(id, ComponentType::Source, stream, 0.0, 0.0);
+      auto lim = new FlowLimits(the_id, ComponentType::Source, stream, 0.0, 0.0);
       elements.emplace(lim);
       connect_source_to_sink(network, lim, meter, true);
       ports[ep::inflow] = lim;
@@ -232,12 +232,12 @@ namespace ERIN
       std::cout << "SourceComponent::add_to_network("
                    "adevs::Digraph<FlowValueType>& network)\n";
     }
-    auto id = get_id();
+    auto the_id = get_id();
     auto stream = get_output_stream();
-    auto meter = new FlowMeter(id, ComponentType::Source, stream);
+    auto meter = new FlowMeter(the_id, ComponentType::Source, stream);
     elements.emplace(meter);
     if (is_failed) {
-      auto lim = new FlowLimits(id, ComponentType::Source, stream, 0.0, 0.0);
+      auto lim = new FlowLimits(the_id, ComponentType::Source, stream, 0.0, 0.0);
       elements.emplace(lim);
       connect_source_to_sink(network, lim, meter, true);
     }

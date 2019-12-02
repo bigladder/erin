@@ -1,0 +1,44 @@
+/* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
+ * See the LICENSE file for additional terms and conditions. */
+
+#ifndef ERIN_DISTRIBUTION_H
+#define ERIN_DISTRIBUTION_H
+#include <chrono>
+#include <exception>
+#include <functional>
+#include <random>
+#include <sstream>
+
+namespace erin::distribution
+{
+  // TODO: consider going back to classes with simple data that can take a
+  // generator at a later point. Ideally, we'd like the distribution objects to
+  // all reference a single default_random_engine that is held by Main.
+  // Interface:
+  // - virtual void set_random_generator(const std::default_random_engine& g);
+  // - virtual T next_value();
+  // - virtual std::string get_type();
+  template <class T>
+  std::function<T(void)>
+  make_fixed(const T& value) 
+  {
+    return [value]() -> T { return value; };
+  };
+
+  template <class T>
+  std::function<T(void)>
+  make_random_integer(
+      const std::default_random_engine& generator, const T& lb, const T& ub)
+  {
+    if (lb >= ub) {
+      std::ostringstream oss{};
+      oss << "expected lower_bound < upper_bound but lower_bound = "
+        << lb << " and upper_bound = " << ub;
+      throw std::invalid_argument(oss.str());
+    }
+    std::uniform_int_distribution<T> d{lb, ub};
+    auto g = generator; // copy-assignment constructor
+    return [d, g]() mutable -> T { return d(g); };
+  }
+}
+#endif // ERIN_DISTRIBUTION_H

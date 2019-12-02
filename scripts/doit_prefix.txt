@@ -1,0 +1,22 @@
+#!/bin/bash
+date
+if ! cmake -DERIN_TESTING=ON -DDO_DEBUG_PRINT=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..; then
+  echo CMAKE CALL FAILED!
+  exit 1
+fi
+if ! cmake --build . -j 4; then
+  echo BUILD FAILED!
+  exit 1
+fi
+if ! ctest --output-on-failure; then
+  echo CTEST FAILED!
+  exit 1
+fi
+echo Running Regressions Suite...
+if ! ruby ../scripts/regression_test.rb; then
+  echo REGRESSIONS FOUND!
+  exit 1
+fi
+time ./bin/str8760
+mkdir -p tidy
+echo Running Clang Tidy...

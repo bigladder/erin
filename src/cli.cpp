@@ -1,13 +1,18 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
-#include <fstream>
-#include <iostream>
 #include "debug_utils.h"
 #include "erin/erin.h"
+#include "gsl/span"
+#include <fstream>
+#include <iostream>
+
+constexpr int num_args{4};
 
 int
-main(int argc, char *argv[]) {
-  if (argc != 5) {
+main(const int argc, const char* argv[])
+{
+  auto args = gsl::span<const char*>(argv, argc);
+  if (argc != (num_args + 1)) {
     std::cout << "USAGE: e2rin <input_file_path> <output_file_path> "
                  "<stats_file_path> <scenario_id>\n"
                  "  - input_file_path : path to TOML input file\n"
@@ -17,10 +22,10 @@ main(int argc, char *argv[]) {
                  "SETS Exit Code 1 if issues encountered, else sets 0\n";
     return 1;
   }
-  auto input_toml = std::string{argv[1]};
-  auto timeseries_csv = std::string{argv[2]};
-  auto stats_csv = std::string{argv[3]};
-  auto scenario_id = std::string{argv[4]};
+  std::string input_toml{args[1]};
+  std::string timeseries_csv{args[2]};
+  std::string stats_csv{args[3]};
+  std::string scenario_id{args[4]};
   std::cout << "input_toml      : " << input_toml << "\n";
   std::cout << "timeseries_csv  : " << timeseries_csv << "\n";
   std::cout << "stats_csv       : " << stats_csv << "\n";

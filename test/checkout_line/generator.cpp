@@ -10,13 +10,13 @@ adevs::Atomic<Customer>()
     std::vector<int> next_arrival_times{1, 2, 3, 5, 7, 8, 10, 11};
     std::vector<int> twaits{1, 4, 4, 2, 10, 20, 2, 1};
     assert(twaits.size() == next_arrival_times.size());
-    for (int idx=0; idx < twaits.size(); idx++)
-    {
+    auto twaits_size = twaits.size();
+    for (decltype(twaits_size) idx=0; idx < twaits_size; idx++) {
         auto c = Customer();
         next_arrival_time = next_arrival_times.at(idx);
         c.twait = twaits.at(idx);
         c.tenter = next_arrival_time - last_arrival_time;
-        _arrivals.push_back(c);
+        _arrivals.emplace_back(c);
         last_arrival_time = next_arrival_time;
     }
 }
@@ -56,5 +56,5 @@ Generator::delta_conf(std::vector<Customer>& x)
 void
 Generator::output_func(std::vector<Customer>& y)
 {
-    y.push_back(Customer(_arrivals.front()));
+    y.emplace_back(Customer(_arrivals.front()));
 }

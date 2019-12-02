@@ -1,5 +1,5 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE file for additional terms and conditions. */
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../vendor/toml11/toml.hpp"
@@ -7,6 +7,8 @@
 #include "debug_utils.h"
 #include "erin/erin.h"
 #include "erin_csv.h"
+#include "erin/fragility.h"
+#include "erin/port.h"
 #include "erin_generics.h"
 #include <algorithm>
 #include <cmath>
@@ -21,92 +23,7 @@
 
 namespace ERIN
 {
-  const FlowValueType flow_value_tolerance{1e-6};
-  const auto inf = adevs_inf<adevs::Time>();
-
-  ComponentType
-  tag_to_component_type(const std::string& tag)
-  {
-    if (tag == "load") {
-      return ComponentType::Load;
-    }
-    else if (tag == "source") {
-      return ComponentType::Source;
-    }
-    else if (tag == "converter") {
-      return ComponentType::Converter;
-    }
-    else {
-      std::ostringstream oss;
-      oss << "Unhandled tag \"" << tag << "\"";
-      throw std::invalid_argument(oss.str());
-    }
-  }
-
-  std::string
-  component_type_to_tag(ComponentType ct)
-  {
-    switch(ct) {
-      case ComponentType::Load:
-        return std::string{"load"};
-      case ComponentType::Source:
-        return std::string{"source"};
-      case ComponentType::Converter:
-        return std::string{"converter"};
-      default:
-        std::ostringstream oss;
-        oss << "Unhandled ComponentType \"" << static_cast<int>(ct) << "\"";
-        throw std::invalid_argument(oss.str());
-    }
-  }
-
-  void
-  print_datum(std::ostream& os, const Datum& d)
-  {
-    os << "time: " << d.time
-       << ", requested_value: " << d.requested_value
-       << ", achieved_value: " << d.achieved_value;
-  }
-
-  ////////////////////////////////////////////////////////////
-  // StreamInfo
-  StreamInfo::StreamInfo():
-    StreamInfo(std::string{"kW"}, std::string{"kJ"}, 1.0)
-  {
-  }
-
-  StreamInfo::StreamInfo(
-      std::string rate_unit_,
-      std::string  quantity_unit_):
-    rate_unit{std::move(rate_unit_)},
-    quantity_unit{std::move(quantity_unit_)},
-    seconds_per_time_unit{1.0}
-  {
-    if ((rate_unit == "kW") && (quantity_unit == "kJ"))
-      seconds_per_time_unit = 1.0;
-    else if ((rate_unit == "kW") && (quantity_unit == "kWh"))
-      seconds_per_time_unit = 3600.0;
-    else
-      throw BadInputError();
-  }
-  StreamInfo::StreamInfo(
-      std::string rate_unit_,
-      std::string quantity_unit_,
-      double seconds_per_time_unit_):
-    rate_unit{std::move(rate_unit_)},
-    quantity_unit{std::move(quantity_unit_)},
-    seconds_per_time_unit{seconds_per_time_unit_}
-  {
-  }
-
-  bool
-  StreamInfo::operator==(const StreamInfo& other) const
-  {
-    if (this == &other) return true;
-    return (rate_unit == other.rate_unit) &&
-           (quantity_unit == other.quantity_unit) &&
-           (seconds_per_time_unit == other.seconds_per_time_unit);
-  }
+  const double seconds_per_hour{3600.0};
 
   ////////////////////////////////////////////////////////////
   // TomlInputReader
@@ -142,7 +59,7 @@ namespace ERIN
     if (rate_unit == "kW" && quantity_unit == "kJ")
       default_seconds_per_time_unit = 1.0;
     else if (rate_unit == "kW" && quantity_unit == "kWh")
-      default_seconds_per_time_unit = 3600.0;
+      default_seconds_per_time_unit = seconds_per_hour;
     else
       default_seconds_per_time_unit = -1.0;
     const double seconds_per_time_unit(
@@ -296,7 +213,7 @@ namespace ERIN
         if (cells[0] != "t") {
           std::ostringstream oss;
           oss << "in file \"" << csv_path
-            << "\", first column should be \"t\" but is \""
+            << R"(", first column should be "t" but is ")"
             << cells[0] << "\"";
           oss << "row: " << row << "\n";
           ::erin_csv::stream_out(oss, cells);
@@ -305,7 +222,7 @@ namespace ERIN
         if (cells[1] != "v") {
           std::ostringstream oss;
           oss << "in file \"" << csv_path
-              << "\", second column should be \"v\" but is \""
+              << R"("", second column should be "v" but is ")"
               << cells[1] << "\"";
           oss << "row: " << "\n";
           ::erin_csv::stream_out(oss, cells);
@@ -362,7 +279,7 @@ namespace ERIN
     return the_loads;
   }
 
-  std::unordered_map<std::string, std::shared_ptr<Component>>
+  std::unordered_map<std::string, std::unique_ptr<Component>>
   TomlInputReader::read_components(
       const std::unordered_map<std::string, StreamType>& stream_types_map,
       const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id)
@@ -373,14 +290,15 @@ namespace ERIN
     }
     std::unordered_map<
       std::string,
-      std::shared_ptr<Component>> components{};
+      std::unique_ptr<Component>> components{};
     for (const auto& c: toml_comps) {
       toml::value t = c.second;
       toml::table tt = toml::get<toml::table>(t);
       auto it = tt.find("type");
       std::string component_type;
-      if (it != tt.end())
+      if (it != tt.end()) {
         component_type = toml::get<std::string>(it->second);
+      }
       // stream OR input_stream, output_stream
       std::string input_stream_id;
       std::string output_stream_id;
@@ -388,13 +306,16 @@ namespace ERIN
       if (it != tt.end()) {
         input_stream_id = toml::get<std::string>(it->second);
         output_stream_id = input_stream_id;
-      } else {
+      }
+      else {
         it = tt.find("input_stream");
-        if (it != tt.end())
+        if (it != tt.end()) {
           input_stream_id = toml::get<std::string>(it->second);
+        }
         it = tt.find("output_stream");
-        if (it != tt.end())
+        if (it != tt.end()) {
           output_stream_id = toml::get<std::string>(it->second);
+        }
       }
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "comp: " << c.first << ".input_stream_id  = "
@@ -403,11 +324,13 @@ namespace ERIN
                   << output_stream_id << "\n";
       }
       if (component_type == "source") {
-        std::shared_ptr<Component> source_comp =
-          std::make_shared<SourceComponent>(
+        std::unique_ptr<Component> source_comp =
+          std::make_unique<SourceComponent>(
               c.first, stream_types_map.at(output_stream_id));
-        components.insert(std::make_pair(c.first, source_comp));
-      } else if (component_type == "load") {
+        components.insert(
+            std::make_pair(c.first, std::move(source_comp)));
+      }
+      else if (component_type == "load") {
         std::unordered_map<std::string,std::vector<LoadItem>>
           loads_by_scenario{};
         it = tt.find("load_profiles_by_scenario");
@@ -434,24 +357,27 @@ namespace ERIN
               std::cout << ls.first << ": [";
               for (const auto& li: ls.second) {
                 std::cout << "(" << li.get_time();
-                if (li.get_is_end())
+                if (li.get_is_end()) {
                   std::cout << ")";
-                else
+                }
+                else {
                   std::cout << ", " << li.get_value() << "), ";
+                }
               }
               std::cout << "]\n";
             }
           }
-          std::shared_ptr<Component> load_comp =
-            std::make_shared<LoadComponent>(
+          std::unique_ptr<Component> load_comp =
+            std::make_unique<LoadComponent>(
                 c.first,
                 stream_types_map.at(input_stream_id),
                 loads_by_scenario);
           components.insert(
-              std::make_pair(c.first, load_comp));
+              std::make_pair(c.first, std::move(load_comp)));
         }
-        else
+        else {
           throw BadInputError();
+        }
       }
     }
     if constexpr (debug_level >= debug_level_high) {
@@ -463,37 +389,72 @@ namespace ERIN
     return components;
   }
 
-  std::unordered_map<std::string,
-    std::unordered_map<std::string, std::vector<std::string>>>
+  std::unordered_map<
+    std::string,
+    std::vector<::erin::network::Connection>>
   TomlInputReader::read_networks()
   {
+    namespace enw = ::erin::network;
+    namespace ep = ::erin::port;
     std::unordered_map<
       std::string,
-      std::unordered_map<std::string,std::vector<std::string>>> networks;
+      std::vector<enw::Connection>> networks;
     const auto toml_nets = toml::find<toml::table>(data, "networks");
     if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_nets.size() << " networks found\n";
     }
     for (const auto& n: toml_nets) {
-      std::unordered_map<std::string, std::vector<std::string>> nw_map;
-      toml::table toml_nw;
+      std::vector<enw::Connection> nw_list;
+      std::vector<std::vector<std::string>> raw_connects;
       auto nested_nw_table = toml::get<toml::table>(n.second);
-      auto nested_nw_it = nested_nw_table.find("network");
-      if (nested_nw_it != nested_nw_table.end())
-        toml_nw = toml::get<toml::table>(nested_nw_it->second);
-      for (const auto& nw_p: toml_nw) {
-        auto nodes = toml::get<std::vector<std::string>>(nw_p.second);
-        nw_map.insert(std::make_pair(nw_p.first, nodes));
+      auto nested_nw_it = nested_nw_table.find("connections");
+      if (nested_nw_it != nested_nw_table.end()) {
+        raw_connects = toml::get<std::vector<std::vector<std::string>>>(
+            nested_nw_it->second);
       }
-      networks.insert(std::make_pair(n.first, nw_map));
+      int item_num{0};
+      for (const auto& connect: raw_connects) {
+        std::string comp_01_id;
+        std::string comp_01_port;
+        std::string comp_02_id;
+        std::string comp_02_port;
+        auto num_items = connect.size();
+        if (num_items == 2) {
+          comp_01_id = connect.at(0);
+          comp_01_port = ep::outflow;
+          comp_02_id = connect.at(1);
+          comp_02_port = ep::inflow;
+        }
+        else if (num_items == 4) {
+          comp_01_id = connect.at(0);
+          comp_01_port = connect.at(1);
+          comp_02_id = connect.at(2);
+          comp_02_port = connect.at(3);
+        }
+        else {
+          std::ostringstream oss;
+          oss << "network " << nested_nw_it->first << " "
+              << "connection[" << item_num << "] "
+              << "doesn't have 2 or 4 items";
+          throw std::invalid_argument(oss.str());
+        }
+        nw_list.emplace_back(
+            enw::Connection{
+              enw::ComponentAndPort{comp_01_id, comp_01_port},
+              enw::ComponentAndPort{comp_02_id, comp_02_port}});
+        ++item_num;
+      }
+      networks.insert(std::make_pair(n.first, nw_list));
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& nw: networks) {
         std::cout << "network[" << nw.first << "]:\n";
-        for (const auto& fan: nw.second) {
-          for (const auto& node: fan.second) {
-            std::cout << "\tedge: (" << fan.first << " ==> " << node << ")\n";
-          }
+        for (const auto& connection: nw.second) {
+          std::cout << "\tedge: ("
+                    << connection.first.component_id
+                    << "[" << connection.first.port_id << "] <==> "
+                    << connection.second.component_id
+                    << "[" << connection.second.port_id << "])\n";
         }
       }
     }
@@ -503,30 +464,63 @@ namespace ERIN
   std::unordered_map<std::string, Scenario>
   TomlInputReader::read_scenarios()
   {
+    const std::string default_time_units{"hours"};
     std::unordered_map<std::string, Scenario> scenarios;
     const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");
     if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_scenarios.size() << " scenarios found\n";
     }
     for (const auto& s: toml_scenarios) {
-      const auto occurrence_distribution = toml::find<toml::table>(
+      const auto dist = toml::find<toml::table>(
           s.second, "occurrence_distribution");
-      const auto duration_distribution = toml::find<toml::table>(
-          s.second, "duration_distribution");
-      const auto max_time = toml::find<int>(s.second, "max_time");
+      const auto next_occurrence_dist =
+        ::erin_generics::read_toml_distribution<RealTimeType>(dist);
+      const auto time_units = toml::find_or(
+          s.second, "time_units", default_time_units);
+      if (time_units != default_time_units) {
+        std::ostringstream oss;
+        oss << "a time_unit other than hours is not supported at this time...\n";
+        oss << "time_unit = \"" << time_units << "\"\n";
+        throw std::runtime_error(oss.str());
+      }
+      const auto duration = toml::find<int>(s.second, "duration");
+      const auto max_occurrences = toml::find<int>(s.second, "max_occurrences");
       const auto network_id = toml::find<std::string>(s.second, "network");
+      std::unordered_map<std::string,double> intensity{};
+      auto intensity_tmp =
+        toml::find_or(
+            s.second, "intensity",
+            std::unordered_map<std::string,toml::value>{});
+      for (const auto& pair: intensity_tmp) {
+        double v{0.0};
+        try {
+          v = pair.second.as_floating();
+        }
+        catch (const toml::exception&) {
+          v = static_cast<double>(pair.second.as_integer());
+        }
+        intensity.insert(std::make_pair(pair.first, v));
+      }
       scenarios.insert(
           std::make_pair(
             s.first,
-            Scenario{s.first, network_id, max_time}));
+            Scenario{
+              s.first,
+              network_id,
+              duration,
+              max_occurrences,
+              next_occurrence_dist,
+              intensity}));
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& s: scenarios) {
         std::cout << "scenario[" << s.first << "]\n";
-        auto scenario = s.second;
-        std::cout << "\tname      : " << scenario.get_name() << "\n";
-        std::cout << "\tnetwork_id: " << scenario.get_network_id() << "\n";
-        std::cout << "\tmax_time  : " << scenario.get_max_time() << "\n";
+        std::cout << "\tname      : " << s.second.get_name() << "\n";
+        std::cout << "\tnetwork_id: " << s.second.get_network_id() << "\n";
+        std::cout << "\tduration  : " << s.second.get_duration() << "\n";
+        std::cout << "\tmax occur : " << s.second.get_max_occurrences() << "\n";
+        std::cout << "\tnum occur : " << s.second.get_number_of_occurrences()
+                  << "\n";
       }
     }
     return scenarios;
@@ -817,7 +811,8 @@ namespace ERIN
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file
-  Main::Main(const std::string& input_file_path)
+  Main::Main(const std::string& input_file_path):
+    failure_probs_by_comp_id_by_scenario_id{}
   {
     auto reader = TomlInputReader{input_file_path};
     // Read data into private class fields
@@ -828,24 +823,65 @@ namespace ERIN
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
     check_data();
+    generate_failure_fragilities();
   }
 
   Main::Main(
-      StreamInfo stream_info_,
-      std::unordered_map<std::string, StreamType> streams_,
-      std::unordered_map<std::string, std::shared_ptr<Component>> components_,
-      std::unordered_map<
+      const StreamInfo& stream_info_,
+      const std::unordered_map<std::string, StreamType>& streams_,
+      const std::unordered_map<
         std::string,
-        std::unordered_map<
-          std::string, std::vector<std::string>>> networks_,
-      std::unordered_map<std::string, Scenario> scenarios_):
-    stream_info{std::move(stream_info_)},
-    stream_types_map{std::move(streams_)},
-    components{std::move(components_)},
-    networks{std::move(networks_)},
-    scenarios{std::move(scenarios_)}
+        std::unique_ptr<Component>>& components_,
+      const std::unordered_map<
+        std::string,
+        std::vector<::erin::network::Connection>>& networks_,
+      const std::unordered_map<std::string, Scenario>& scenarios_):
+    stream_info{stream_info_},
+    stream_types_map{streams_},
+    components{},
+    networks{networks_},
+    scenarios{scenarios_},
+    failure_probs_by_comp_id_by_scenario_id{}
   {
+    for (const auto& pair: components_) {
+      components.insert(
+          std::make_pair(
+            pair.first,
+            pair.second->clone()));
+    }
     check_data();
+    generate_failure_fragilities();
+  }
+
+  void
+  Main::generate_failure_fragilities()
+  {
+    for (const auto& s: scenarios) {
+      const auto& intensities = s.second.get_intensities();
+      std::unordered_map<std::string, std::vector<double>> m;
+      if (intensities.size() > 0) {
+        for (const auto& c_pair: components) {
+          const auto& c = c_pair.second;
+          if (!(c->is_fragile())) {
+            continue;
+          }
+          auto probs = c->apply_intensities(intensities);
+          // Sort with the highest probability first; that way if a 1.0 is
+          // present, we can end early...
+          std::sort(
+              probs.begin(), probs.end(),
+              [](double a, double b){ return a > b; });
+          if (probs.size() == 0) {
+            // no need to add an empty vector of probabilities
+            // note: probabilitie of 0.0 (i.e., never fail) are not added in
+            // apply_intensities
+            continue;
+          }
+          m[c_pair.first] = probs;
+        }
+      }
+      failure_probs_by_comp_id_by_scenario_id[s.first] = m;
+    }
   }
 
   ScenarioResults
@@ -862,55 +898,45 @@ namespace ERIN
       oss << "scenario_id -- \"" << scenario_id << "\"" 
              " is not in available scenarios\n"; 
       oss << "possible choices: ";
-      for (const auto& item: scenarios)
+      for (const auto& item: scenarios) {
         oss << "\"" << item.first << "\", ";
+      }
       oss << "\n";
       throw std::invalid_argument(oss.str());
     }
-    // 1. Switch to reading the scenario_id from the input
-    const auto the_scenario = it->second;
+    // 1. Reference the relevant scenario
+    const auto& the_scenario = it->second;
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
     adevs::Digraph<FlowValueType> network;
     // 2.2. Interconnect components based on the network definition
     const auto network_id = the_scenario.get_network_id();
-    const auto the_nw = networks[network_id];
-    std::unordered_set<std::string> comps_in_use{};
-    for (const auto& nw: the_nw) {
-      comps_in_use.emplace(nw.first);
-      auto src = components[nw.first];
-      for (const auto& sink_id: nw.second) {
-        auto sink = components[sink_id];
-        comps_in_use.emplace(sink_id);
-        sink->add_input(src);
-      }
-    }
-    // 2.2. Add the components on the network
-    std::unordered_set<FlowElement*> elements;
-    for (const auto& comp_id: comps_in_use) {
-      auto c = components[comp_id];
-      auto es = c->add_to_network(network, scenario_id);
-      for (auto e: es) {
-        elements.emplace(e);
-      }
-    }
+    const auto& connections = networks[network_id];
+    auto elements = ::erin::network::build(
+        scenario_id, network, connections, components,
+        failure_probs_by_comp_id_by_scenario_id.at(scenario_id));
     adevs::Simulator<PortValue> sim;
     network.add(&sim);
-    const auto max_time = the_scenario.get_max_time();
-    const auto max_non_advance{comps_in_use.size() * 10};
-    auto sim_good = run_devs(sim, max_time, max_non_advance);
+    const auto duration = the_scenario.get_duration();
+    const auto max_non_advance{elements.size() * 10};
+    auto sim_good = run_devs(sim, duration, max_non_advance);
     // 3. Return outputs.
     std::unordered_map<std::string, std::vector<Datum>> results;
     std::unordered_map<std::string,ComponentType> comp_types;
     std::unordered_map<std::string,StreamType> stream_types;
     for (const auto& e: elements) {
-      auto vals = e->get_results(max_time);
+      auto vals = e->get_results(duration);
       if (!vals.empty()) {
         auto id{e->get_id()};
         auto in_st{e->get_inflow_type()};
         auto out_st{e->get_outflow_type()};
         if (in_st != out_st) {
-          throw MixedStreamsError();
+          std::ostringstream oss;
+          oss << "MixedStreamsError:\n";
+          oss << "input stream != output_stream but it should\n";
+          oss << "input stream: " << in_st.get_type() << "\n";
+          oss << "output stream: " << out_st.get_type() << "\n";
+          throw std::runtime_error(oss.str());
         }
         comp_types.insert(
             std::pair<std::string,ComponentType>(
@@ -966,9 +992,14 @@ namespace ERIN
     std::vector<Scenario*> copies{};
     for (const auto s: scenarios) {
       auto p = new Scenario{s.second};
+      auto scenario_id = p->get_name();
+      p->set_runner([this, scenario_id]() -> ScenarioResults {
+          return this->run(scenario_id);
+          });
       sim.add(p);
-      // NOTE: sim will delete all pointers when it is deleted.
-      // Therefore, we can safely store pointers in `copies` for reference.
+      // NOTE: sim will delete all pointers passed to it upon deletion.
+      // Therefore, we don't need to worry about deleting Scenario pointers
+      // (sim does it). Pointers in `copies` are there for reference.
       copies.emplace_back(p);
     }
     // 3. run the simulation
@@ -990,7 +1021,7 @@ namespace ERIN
       oss << "scenario_id \"" << scenario_id << "\" not found in scenarios";
       throw std::invalid_argument(oss.str());
     }
-    return it->second.get_max_time();
+    return it->second.get_duration();
   }
 
   void
@@ -999,387 +1030,40 @@ namespace ERIN
     // TODO: implement this
   }
 
-  ////////////////////////////////////////////////////////////
-  // Utility Functions
-  FlowValueType
-  clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper)
-  {
-    if (lower > upper) {
-      std::ostringstream oss;
-      oss << "ERIN::clamp_toward_0 error: lower (" << lower
-          << ") greater than upper (" << upper << ")"; 
-      throw std::invalid_argument(oss.str());
-    }
-    if (value > upper) {
-      if (upper > 0)
-        return upper;
-      else
-        return 0;
-    }
-    else if (value < lower) {
-      if (lower > 0)
-        return 0;
-      else
-        return lower;
-    }
-    return value;
-  }
-
-  template<class T>
-  void print_vec(const std::string& tag, const std::vector<T>& vs)
-  {
-    char mark = '=';
-    std::cout << tag;
-    for (const auto &v : vs) {
-      std::cout << mark << v;
-      if (mark == '=')
-        mark = ',';
-    }
-    std::cout << std::endl;
-  }
-
-  std::string
-  map_to_string(const std::unordered_map<std::string, FlowValueType>& m)
-  {
-    auto max_idx{m.size() - 1};
-    std::ostringstream oss;
-    oss << "{";
-    std::unordered_map<std::string, FlowValueType>::size_type idx{0};
-    for (const auto& p: m) {
-      oss << "{" << p.first << ", " << p.second << "}";
-      if (idx != max_idx)
-        oss << ", ";
-      ++idx;
-    }
-    oss << "}";
-    return oss.str();
-  }
-
-  ////////////////////////////////////////////////////////////
-  // LoadItem
-  LoadItem::LoadItem(RealTimeType t):
-    time{t},
-    value{-1},
-    is_end{true}
-  {
-    if (!is_good()) throw BadInputError();
-  }
-
-  LoadItem::LoadItem(RealTimeType t, FlowValueType v):
-    time{t},
-    value{v},
-    is_end{false}
-  {
-    if (!is_good()) throw BadInputError();
-  }
-
-  RealTimeType
-  LoadItem::get_time_advance(const LoadItem& next) const
-  {
-    return (next.get_time() - time);
-  }
-
-  //////////////////////////////////////////////////////////// 
-  // FlowState
-  FlowState::FlowState(FlowValueType in):
-    FlowState(in, in, 0.0, 0.0)
-  {
-  }
-
-  FlowState::FlowState(FlowValueType in, FlowValueType out):
-    FlowState(in, out, 0.0, std::fabs(in - out))
-  {
-  }
-
-  FlowState::FlowState(FlowValueType in, FlowValueType out, FlowValueType store):
-    FlowState(in, out, store, std::fabs(in - (out + store)))
-  {
-  }
-
-  FlowState::FlowState(
-      FlowValueType in,
-      FlowValueType out,
-      FlowValueType store,
-      FlowValueType loss):
-    inflow{in},
-    outflow{out},
-    storeflow{store},
-    lossflow{loss}
-  {
-    checkInvariants();
-  }
-
-  void
-  FlowState::checkInvariants() const
-  {
-    auto diff{inflow - (outflow + storeflow + lossflow)};
-    if (std::fabs(diff) > flow_value_tolerance) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cerr << "FlowState.inflow   : " << inflow << "\n";
-        std::cerr << "FlowState.outflow  : " << outflow << "\n";
-        std::cerr << "FlowState.storeflow: " << storeflow << "\n";
-        std::cerr << "FlowState.lossflow : " << lossflow << "\n";
-      }
-      throw FlowInvariantError();
-    }
-  }
-
-  ////////////////////////////////////////////////////////////
-  // StreamType
-  StreamType::StreamType():
-    StreamType("electricity") {}
-
-  StreamType::StreamType(const std::string& stream_type):
-    StreamType(stream_type, "kW", "kJ", 1.0)
-  {
-  }
-
-  StreamType::StreamType(
-      const std::string& stream_type,
-      const std::string& rate_units,
-      const std::string& quantity_units,
-      FlowValueType seconds_per_time_unit):
-    StreamType(
-        stream_type,
-        rate_units,
-        quantity_units,
-        seconds_per_time_unit,
-        std::unordered_map<std::string,FlowValueType>{},
-        std::unordered_map<std::string,FlowValueType>{})
-  {
-  }
-
-  StreamType::StreamType(
-      std::string stream_type,
-      std::string  r_units,
-      std::string  q_units,
-      FlowValueType s_per_time_unit,
-      std::unordered_map<std::string, FlowValueType>  other_r_units,
-      std::unordered_map<std::string, FlowValueType>  other_q_units
-      ):
-    type{std::move(stream_type)},
-    rate_units{std::move(r_units)},
-    quantity_units{std::move(q_units)},
-    seconds_per_time_unit{s_per_time_unit},
-    other_rate_units{std::move(other_r_units)},
-    other_quantity_units{std::move(other_q_units)}
-  {
-  }
-
-  bool
-  StreamType::operator==(const StreamType& other) const
-  {
-    if (this == &other) return true;
-    return (type == other.type) &&
-           (rate_units == other.rate_units) &&
-           (quantity_units == other.quantity_units) &&
-           (seconds_per_time_unit == other.seconds_per_time_unit);
-  }
-
-  bool
-  StreamType::operator!=(const StreamType& other) const
-  {
-    return !operator==(other);
-  }
-
-  std::ostream&
-  operator<<(std::ostream& os, const StreamType& st)
-  {
-    return os << "StreamType(type=\"" << st.get_type()
-              << "\", rate_units=\"" << st.get_rate_units()
-              << "\", quantity_units=\"" << st.get_quantity_units()
-              << "\", seconds_per_time_unit=" << st.get_seconds_per_time_unit()
-              << ", other_rate_units="
-              << map_to_string(st.get_other_rate_units())
-              << ", other_quantity_units="
-              << map_to_string(st.get_other_quantity_units())
-              << ")";
-  }
-
-  ////////////////////////////////////////////////////////////
-  // Component
-  Component::Component(
-      std::string id_,
-      ComponentType type_,
-      StreamType input_stream_,
-      StreamType output_stream_):
-    id{std::move(id_)},
-    component_type{type_},
-    input_stream{std::move(input_stream_)},
-    output_stream{std::move(output_stream_)},
-    inputs{},
-    connecting_element{nullptr}
-  {
-  }
-
-  void
-  Component::add_input(std::shared_ptr<Component>& c)
-  {
-    inputs.push_back(c);
-  }
-
-  FlowElement*
-  Component::get_connecting_element()
-  {
-    if (connecting_element == nullptr)
-      connecting_element = create_connecting_element();
-    return connecting_element;
-  }
-
-  void
-  Component::connect_source_to_sink(
-      adevs::Digraph<FlowValueType>& network,
-      FlowElement* source,
-      FlowElement* sink,
-      bool both_way) const
-  {
-    auto src_out = source->get_outflow_type();
-    auto sink_in = sink->get_inflow_type();
-    if (src_out != sink_in) {
-      throw MixedStreamsError();
-    }
-    network.couple(
-        sink, FlowMeter::outport_inflow_request,
-        source, FlowMeter::inport_outflow_request);
-    if (both_way) {
-      network.couple(
-          source, FlowMeter::outport_outflow_achieved,
-          sink, FlowMeter::inport_inflow_achieved);
-    }
-  }
-
-  ////////////////////////////////////////////////////////////
-  // LoadComponent
-  LoadComponent::LoadComponent(
-      const std::string& id_,
-      const StreamType& input_stream_,
-      std::unordered_map<
-        std::string,std::vector<LoadItem>> loads_by_scenario_):
-    Component(id_, ComponentType::Load, input_stream_, input_stream_),
-    loads_by_scenario{std::move(loads_by_scenario_)}
-  {
-  }
-
-  FlowElement*
-  LoadComponent::create_connecting_element()
-  {
-    if constexpr (debug_level >= debug_level_high) { 
-      std::cout << "LoadComponent::create_connecting_element()\n";
-    }
-    auto p = new FlowMeter(get_id(), ComponentType::Load, get_input_stream());
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "LoadComponent.connecting_element = " << p << "\n";
-    }
-    return p;
-  }
-
-  std::unordered_set<FlowElement*>
-  LoadComponent::add_to_network(
-      adevs::Digraph<FlowValueType>& network,
-      const std::string& active_scenario)
-  {
-    std::unordered_set<FlowElement*> elements;
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "LoadComponent::add_to_network("
-                   "adevs::Digraph<FlowValueType>& network)\n";
-    }
-    auto sink = new Sink(
-        get_id(),
-        ComponentType::Load,
-        get_input_stream(),
-        loads_by_scenario[active_scenario]);
-    elements.emplace(sink);
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "sink = " << sink << "\n";
-    }
-    auto meter = get_connecting_element();
-    elements.emplace(meter);
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "meter = " << meter << "\n";
-    }
-    connect_source_to_sink(network, meter, sink, false);
-    for (const auto& in: get_inputs()) {
-      auto p = in->get_connecting_element();
-      elements.emplace(p);
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "p = " << p << "\n";
-      }
-      if (p != nullptr) {
-        connect_source_to_sink(network, p, meter, true);
-      }
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "LoadComponent::add_to_network(...) exit\n";
-    }
-    return elements;
-  }
-
-  ////////////////////////////////////////////////////////////
-  // SourceComponent
-  SourceComponent::SourceComponent(
-      const std::string& id_,
-      const StreamType& output_stream_):
-    Component(id_, ComponentType::Source, output_stream_, output_stream_)
-  {
-  }
-
-  std::unordered_set<FlowElement*> 
-  SourceComponent::add_to_network(
-      adevs::Digraph<FlowValueType>&,
-      const std::string&)
-  {
-    std::unordered_set<FlowElement*> elements;
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "SourceComponent::add_to_network("
-                   "adevs::Digraph<FlowValueType>& network)\n";
-    }
-    // do nothing in this case. There is only the connecting element. If nobody
-    // connects to it, then it doesn't exist. If someone DOES connect, then the
-    // pointer eventually gets passed into the network coupling model
-    // TODO: what we need are wrappers for Element classes that track if
-    // they've been added to the simulation or not. If NOT, then we need to
-    // delete the resource at deletion time... otherwise, the simulator will
-    // delete them.
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "SourceComponent::add_to_network(...) exit\n";
-    }
-    return elements;
-  }
-
-  FlowElement*
-  SourceComponent::create_connecting_element()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "SourceComponent::create_connecting_element()\n";
-    }
-    auto p = new FlowMeter(get_id(), ComponentType::Source, get_output_stream());
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "SourceComponent.p = " << p << "\n";
-    }
-    return p;
-  }
 
   ////////////////////////////////////////////////////////////
   // Scenario
   Scenario::Scenario(
       std::string name_,
       std::string network_id_,
-      RealTimeType max_time_):
+      RealTimeType duration_,
+      int max_occurrences_,
+      std::function<RealTimeType(void)> calc_time_to_next_,
+      std::unordered_map<std::string, double> intensities_):
     adevs::Atomic<PortValue>(),
     name{std::move(name_)},
     network_id{std::move(network_id_)},
-    max_time{max_time_},
-    results{}
+    duration{duration_},
+    max_occurrences{max_occurrences_},
+    calc_time_to_next{calc_time_to_next_},
+    intensities{intensities_},
+    t{0},
+    num_occurrences{0},
+    results{},
+    runner{nullptr}
   {
   }
 
+  // TODO: revisit this. Not sure this is the right way to do equality for
+  // scenarios. Do we need equality?
   bool
   Scenario::operator==(const Scenario& other) const
   {
     if (this == &other) return true;
-    return (name == other.get_name()) &&
-           (network_id == other.get_network_id()) &&
-           (max_time == other.get_max_time());
+    return (name == other.name) &&
+           (network_id == other.network_id) &&
+           (duration == other.duration) &&
+           (max_occurrences == other.max_occurrences);
   }
 
   void
@@ -1388,8 +1072,12 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Scenario::delta_int();name=" << name << "\n";
     }
-    // TODO: kick off a network simulation
-    // TODO: add ScenarioResults to results
+    ++num_occurrences;
+    if (runner != nullptr) {
+      auto result = runner();
+      // TODO: add the current time and occurrence number to the results?
+      results.emplace_back(result);
+    }
   }
 
   void
@@ -1427,11 +1115,15 @@ namespace ERIN
   adevs::Time
   Scenario::ta()
   {
-    // Here, we're going to need to query the occurrence distribution and return.
-    // Just fixing something for now.
-    auto dt = adevs::Time{10,0};
-    t = t + dt;
-    return dt;
+    if (calc_time_to_next == nullptr) {
+      return inf;
+    }
+    if ((max_occurrences >= 0) && (num_occurrences >= max_occurrences)) {
+      return inf;
+    }
+    auto dt = calc_time_to_next();
+    t += dt;
+    return adevs::Time{dt, 0};
   }
 
   void
@@ -1442,569 +1134,5 @@ namespace ERIN
     // out to an aggregator on each transition, probably best just for each
     // scenario to track its local state and report back after simulation
     // finishes.
-  }
-
-  ////////////////////////////////////////////////////////////
-  // FlowElement
-  const int FlowElement::inport_inflow_achieved = 0;
-  const int FlowElement::inport_outflow_request = 1;
-  const int FlowElement::outport_inflow_request = 2;
-  const int FlowElement::outport_outflow_achieved = 3;
-
-  FlowElement::FlowElement(
-      std::string id_,
-      ComponentType component_type_,
-      StreamType st) :
-    FlowElement(std::move(id_), component_type_, st, st)
-  {
-  }
-
-  FlowElement::FlowElement(
-      std::string id_,
-      ComponentType component_type_,
-      StreamType in,
-      StreamType out):
-    adevs::Atomic<PortValue>(),
-    id{std::move(id_)},
-    time{0,0},
-    inflow_type{std::move(in)},
-    outflow_type{std::move(out)},
-    inflow{0},
-    outflow{0},
-    storeflow{0},
-    lossflow{0},
-    report_inflow_request{false},
-    report_outflow_achieved{false},
-    component_type{component_type_}
-  {
-    if (inflow_type.get_rate_units() != outflow_type.get_rate_units())
-      throw InconsistentStreamUnitsError();
-  }
-
-  void
-  FlowElement::delta_int()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::delta_int();id=" << id << "\n";
-    }
-    update_on_internal_transition();
-    report_inflow_request = false;
-    report_outflow_achieved = false;
-  }
-
-  void
-  FlowElement::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::delta_ext();id=" << id << "\n";
-    }
-    time = time + e;
-    bool inflow_provided{false};
-    bool outflow_provided{false};
-    FlowValueType inflow_achieved{0};
-    FlowValueType outflow_request{0};
-    for (const auto &x : xs) {
-      switch (x.port) {
-        case inport_inflow_achieved:
-          if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... <=inport_inflow_achieved\n";
-          }
-          inflow_provided = true;
-          inflow_achieved += x.value;
-          break;
-        case inport_outflow_request:
-          if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... <=inport_outflow_request\n";
-          }
-          outflow_provided = true;
-          outflow_request += x.value;
-          break;
-        default:
-          throw BadPortError();
-      }
-    }
-    if (inflow_provided && !outflow_provided) {
-      report_outflow_achieved = true;
-      if (inflow >= 0.0 && inflow_achieved > inflow) {
-        throw AchievedMoreThanRequestedError();
-      }
-      if (inflow <= 0.0 && inflow_achieved < inflow) {
-        throw AchievedMoreThanRequestedError();
-      }
-      const FlowState& fs = update_state_for_inflow_achieved(inflow_achieved);
-      update_state(fs);
-    }
-    else if (outflow_provided && !inflow_provided) {
-      report_inflow_request = true;
-      const FlowState fs = update_state_for_outflow_request(outflow_request);
-      if (std::fabs(fs.getOutflow() - outflow_request) > flow_value_tolerance) {
-        report_outflow_achieved = true;
-      }
-      update_state(fs);
-      if (outflow >= 0.0 && outflow > outflow_request) {
-        throw AchievedMoreThanRequestedError();
-      }
-      if (outflow <= 0.0 && outflow < outflow_request) {
-        throw AchievedMoreThanRequestedError();
-      }
-    }
-    else if (inflow_provided && outflow_provided) {
-      // assumption: we'll never get here...
-      throw SimultaneousIORequestError();
-    }
-    else {
-      throw BadPortError();
-    }
-    if (report_inflow_request || report_outflow_achieved) {
-      update_on_external_transition();
-      check_flow_invariants();
-    }
-  }
-
-  void
-  FlowElement::update_state(const FlowState& fs)
-  {
-    inflow = fs.getInflow();
-    outflow = fs.getOutflow();
-    storeflow = fs.getStoreflow();
-    lossflow = fs.getLossflow();
-  }
-
-  void
-  FlowElement::delta_conf(std::vector<PortValue>& xs)
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::delta_conf();id=" << id << "\n";
-    }
-    auto e = adevs::Time{0,0};
-    delta_int();
-    delta_ext(e, xs);
-  }
-
-  adevs::Time
-  FlowElement::calculate_time_advance()
-  {
-    return adevs_inf<adevs::Time>();
-  }
-
-  adevs::Time
-  FlowElement::ta()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::ta();id=" << id << "\n";
-    }
-    if (report_inflow_request || report_outflow_achieved) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... dt = (0,1)\n";
-      }
-      return adevs::Time{0, 1};
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "... dt = infinity\n";
-    }
-    return calculate_time_advance();
-  }
-
-  void
-  FlowElement::output_func(std::vector<PortValue>& ys)
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::output_func();id=" << id << "\n";
-    }
-    if (report_inflow_request) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... send=>outport_inflow_request\n";
-      }
-      ys.push_back(
-          adevs::port_value<FlowValueType>{outport_inflow_request, inflow});
-    }
-    if (report_outflow_achieved) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... send=>outport_outflow_achieved\n";
-      }
-      ys.push_back(
-          adevs::port_value<FlowValueType>{outport_outflow_achieved, outflow});
-    }
-    add_additional_outputs(ys);
-  }
-
-  void
-  FlowElement::add_additional_outputs(std::vector<PortValue>&)
-  {
-  }
-
-  FlowState
-  FlowElement::update_state_for_outflow_request(FlowValueType outflow_) const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::update_state_for_outflow_request();id=" << id << "\n";
-    }
-    return FlowState{outflow_, outflow_};
-  }
-
-  FlowState
-  FlowElement::update_state_for_inflow_achieved(FlowValueType inflow_) const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::update_state_for_inflow_achieved();id="
-                << id << "\n";
-    }
-    return FlowState{inflow_, inflow_};
-  }
-
-  void
-  FlowElement::update_on_internal_transition()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::update_on_internal_transition();id="
-                << id << "\n";
-    }
-  }
-
-  void
-  FlowElement::update_on_external_transition()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::update_on_external_transition();id="
-                << id << "\n";
-    }
-  }
-
-  void
-  FlowElement::print_state() const
-  {
-    print_state("");
-  }
-
-  void
-  FlowElement::print_state(const std::string& prefix) const
-  {
-    std::cout << prefix << "id=" << id << "\n"
-              << prefix << "time=(" << time.real << ", " << time.logical << ")\n"
-              << prefix << "inflow=" << inflow << "\n"
-              << prefix << "outflow=" << outflow << "\n"
-              << prefix << "storeflow=" << storeflow << "\n"
-              << prefix << "lossflow=" << lossflow << "\n"
-              << prefix << "report_inflow_request=" << report_inflow_request << "\n"
-              << prefix << "report_outflow_achieved=" << report_outflow_achieved << "\n";
-  }
-
-  void
-  FlowElement::check_flow_invariants() const
-  {
-    auto diff{inflow - (outflow + storeflow + lossflow)};
-    if (std::fabs(diff) > flow_value_tolerance) {
-      std::cout << "FlowElement ERROR! " << inflow << " != " << outflow << " + "
-        << storeflow << " + " << lossflow << "!\n";
-      throw FlowInvariantError();
-    }
-  }
-
-  ///////////////////////////////////////////////////////////////////
-  // FlowLimits
-  FlowLimits::FlowLimits(
-      std::string id,
-      ComponentType component_type,
-      StreamType stream_type,
-      FlowValueType low_lim,
-      FlowValueType up_lim) :
-    FlowElement(std::move(id), component_type, stream_type),
-    lower_limit{low_lim},
-    upper_limit{up_lim}
-  {
-    if (lower_limit > upper_limit) {
-      std::ostringstream oss;
-      oss << "FlowLimits error: lower_limit (" << lower_limit
-          << ") > upper_limit (" << upper_limit << ")";
-      throw std::invalid_argument(oss.str());
-    }
-  }
-
-  FlowState
-  FlowLimits::update_state_for_outflow_request(FlowValueType out) const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowLimits::update_state_for_outflow_request(" << out << ")\n";
-      print_state("... ");
-    }
-    FlowValueType out_{0.0};
-    if (out > upper_limit) {
-      out_ = upper_limit;
-    }
-    else if (out < lower_limit) {
-      out_ = lower_limit;
-    }
-    else {
-      out_ = out;
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      print_state("... ");
-      std::cout << "end FlowLimits::update_state_for_outflow_request\n";
-    }
-    return FlowState{out_, out_};
-  }
-
-  FlowState
-  FlowLimits::update_state_for_inflow_achieved(FlowValueType in) const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowLimits::update_state_for_inflow_achieved(" << in << ")\n";
-      print_state("... ");
-    }
-    FlowValueType in_{0.0};
-    if (in > upper_limit) {
-      throw AchievedMoreThanRequestedError();
-    }
-    else if (in < lower_limit) {
-      throw AchievedMoreThanRequestedError();
-    }
-    else {
-      in_ = in;
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      print_state("... ");
-      std::cout << "end FlowLimits::update_state_for_inflow_achieved\n";
-    }
-    return FlowState{in_, in_};
-  }
-
-  ////////////////////////////////////////////////////////////
-  // FlowMeter
-  FlowMeter::FlowMeter(
-      std::string id,
-      ComponentType component_type,
-      StreamType stream_type) :
-    FlowElement(std::move(id), component_type, stream_type),
-    event_times{},
-    requested_flows{},
-    achieved_flows{}
-  {
-  }
-
-  std::vector<RealTimeType>
-  FlowMeter::get_event_times() const
-  {
-    return std::vector<RealTimeType>(event_times);
-  }
-
-  std::vector<FlowValueType>
-  FlowMeter::get_achieved_flows() const
-  {
-    return std::vector<FlowValueType>(achieved_flows);
-  }
-
-  std::vector<FlowValueType>
-  FlowMeter::get_requested_flows() const
-  {
-    return std::vector<FlowValueType>(requested_flows);
-  }
-
-  std::vector<Datum>
-  FlowMeter::get_results(RealTimeType max_time) const
-  {
-    const auto num_events{event_times.size()};
-    if ((requested_flows.size() != num_events)
-        || (achieved_flows.size() != num_events)) {
-      throw InvariantError();
-    }
-    std::vector<Datum> results(num_events);
-    for (std::vector<Datum>::size_type i=0; i < num_events; ++i) {
-      results[i] = Datum{event_times[i], requested_flows[i], achieved_flows[i]};
-    }
-    if (results[num_events-1].time != max_time) {
-      results.emplace_back(Datum{max_time, 0.0, 0.0});
-    }
-    return results;
-  }
-
-  void
-  FlowMeter::update_on_external_transition()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowMeter::update_on_external_transition()\n";
-      print_state("... ");
-      print_vec<RealTimeType>("... event_times", event_times);
-      print_vec<FlowValueType>("... requested_flows", requested_flows);
-      print_vec<FlowValueType>("... achieved_flows", achieved_flows);
-    }
-    auto num_events{event_times.size()};
-    auto real_time{get_real_time()};
-    if (num_events == 0 || (num_events > 0 && event_times.back() != real_time)) {
-      event_times.push_back(real_time);
-      ++num_events;
-    }
-    auto num_achieved{achieved_flows.size()};
-    if (get_report_inflow_request()) {
-      requested_flows.push_back(get_inflow());
-      if (num_achieved == num_events && num_achieved > 0) {
-        auto &v = achieved_flows.back();
-        v = get_inflow();
-      }
-      else
-        achieved_flows.push_back(get_inflow());
-    }
-    else if (get_report_outflow_achieved()) {
-      if (num_achieved == num_events && num_achieved > 0) {
-        auto &v = achieved_flows.back();
-        v = get_outflow();
-      }
-      else
-        achieved_flows.push_back(get_outflow());
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      print_state("... ");
-      print_vec<RealTimeType>("... event_times", event_times);
-      print_vec<FlowValueType>("... requested_flows", requested_flows);
-      print_vec<FlowValueType>("... achieved_flows", achieved_flows);
-      std::cout << "end FlowMeter::update_on_external_transition()\n";
-    }
-  }
-
-  ////////////////////////////////////////////////////////////
-  // Converter
-  Converter::Converter(
-      std::string id,
-      ComponentType component_type,
-      StreamType input_stream_type,
-      StreamType output_stream_type,
-      std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-      std::function<FlowValueType(FlowValueType)> calc_input_from_output
-      ) :
-    FlowElement(
-        std::move(id),
-        component_type,
-        input_stream_type,
-        output_stream_type),
-    output_from_input{std::move(calc_output_from_input)},
-    input_from_output{std::move(calc_input_from_output)}
-  {
-  }
-
-  FlowState
-  Converter::update_state_for_outflow_request(FlowValueType outflow_) const
-  {
-    return FlowState{input_from_output(outflow_), outflow_};
-  }
-
-  FlowState
-  Converter::update_state_for_inflow_achieved(FlowValueType inflow_) const
-  {
-    return FlowState{inflow_, output_from_input(inflow_)};
-  }
-
-
-  ///////////////////////////////////////////////////////////////////
-  // Sink
-  Sink::Sink(
-      std::string id,
-      ComponentType component_type,
-      const StreamType& st,
-      const std::vector<LoadItem>& loads_):
-    FlowElement(std::move(id), component_type, st, st),
-    loads{loads_},
-    idx{-1},
-    num_loads{loads_.size()}
-  {
-    check_loads();
-  }
-
-  void
-  Sink::update_on_internal_transition()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Sink::update_on_internal_transition()\n";
-    }
-    ++idx;
-  }
-
-  adevs::Time
-  Sink::calculate_time_advance()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Sink::calculate_time_advance()\n";
-    }
-    if (idx < 0) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... dt = infinity\n";
-      }
-      return adevs::Time{0, 0};
-    }
-    std::vector<LoadItem>::size_type next_idx = idx + 1;
-    if (next_idx < num_loads) {
-      RealTimeType dt{loads[idx].get_time_advance(loads[next_idx])};
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... dt = (" << dt << ", 0)\n";
-      }
-      return adevs::Time{dt, 0};
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "... dt = infinity\n";
-    }
-    return adevs_inf<adevs::Time>();
-  }
-
-  FlowState
-  Sink::update_state_for_inflow_achieved(FlowValueType inflow_) const
-  {
-    return FlowState{inflow_};
-  }
-
-  void
-  Sink::add_additional_outputs(std::vector<PortValue>& ys)
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Sink::output_func()\n";
-    }
-    std::vector<LoadItem>::size_type next_idx = idx + 1;
-    auto max_idx{num_loads - 1};
-    if (next_idx < max_idx)
-      ys.push_back(
-          adevs::port_value<FlowValueType>{
-          outport_inflow_request, loads[next_idx].get_value()});
-  }
-
-  void
-  Sink::check_loads() const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Sink::check_loads\n";
-    }
-    auto N{loads.size()};
-    auto last_idx{N - 1};
-    if (N < 2) {
-      std::ostringstream oss;
-      oss << "Sink: must have at least two LoadItems but "
-             "only has " << N << std::endl;
-      throw std::invalid_argument(oss.str());
-    }
-    RealTimeType t{-1};
-    for (std::vector<LoadItem>::size_type idx_=0; idx_ < loads.size(); ++idx_) {
-      const auto& x{loads.at(idx_)};
-      auto t_{x.get_time()};
-      if (idx_ == last_idx) {
-        if (!x.get_is_end()) {
-          std::ostringstream oss;
-          oss << "Sink: LoadItem[" << idx_ << "] (last index) "
-                 "must not specify a value but it does..."
-              << std::endl;
-          throw std::invalid_argument(oss.str());
-        }
-      } else {
-        if (x.get_is_end()) {
-          std::ostringstream oss;
-          oss << "Sink: non-last LoadItem[" << idx_ << "] "
-                 "doesn't specify a value but it must..."
-              << std::endl;
-          throw std::invalid_argument(oss.str());
-        }
-      }
-      if ((t_ < 0) || (t_ <= t)) {
-        std::ostringstream oss;
-        oss << "Sink: LoadItems must have time points that are everywhere "
-               "increasing and positive but it doesn't..."
-            << std::endl;
-        throw std::invalid_argument(oss.str());
-      }
-    }
   }
 }

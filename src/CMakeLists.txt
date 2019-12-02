@@ -13,17 +13,39 @@
 #file(GLOB_RECURSE private_headers "${PROJECT_SOURCE_DIR}/src/[a-zA-Z]*.h")
 set(sources
   ${PROJECT_SOURCE_DIR}/src/erin.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_network.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_stream.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_type.cpp
 )
 
 set(public_headers
+  ${PROJECT_SOURCE_DIR}/include/erin/component.h
+  ${PROJECT_SOURCE_DIR}/include/erin/distribution.h
+  ${PROJECT_SOURCE_DIR}/include/erin/element.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
-  ${PROJECT_SOURCE_DIR}/include/erin/distributions.h
+  ${PROJECT_SOURCE_DIR}/include/erin/fragility.h
+  ${PROJECT_SOURCE_DIR}/include/erin/network.h
+  ${PROJECT_SOURCE_DIR}/include/erin/port.h
+  ${PROJECT_SOURCE_DIR}/include/erin/stream.h
+  ${PROJECT_SOURCE_DIR}/include/erin/type.h
 )
 
 set(private_headers
   ${PROJECT_SOURCE_DIR}/src/debug_utils.h
-  ${PROJECT_SOURCE_DIR}/src/erin_generics.h
   ${PROJECT_SOURCE_DIR}/src/erin_csv.h
+  ${PROJECT_SOURCE_DIR}/src/erin_generics.h
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/gsl
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/gsl_algorithm
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/gsl_assert
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/gsl_byte
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/gsl_util
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/multi_span
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/pointers
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/span
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/string_span
 )
 
 set(library_sources
@@ -40,6 +62,7 @@ option( ${CMAKE_PROJECT_NAME}_STATIC_LIB "Make a static library" ON )
 if (${CMAKE_PROJECT_NAME}_STATIC_LIB)
   add_library(${CMAKE_PROJECT_NAME} STATIC ${library_sources})
   set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-D${CMAKE_PROJECT_NAME}_STATIC_DEFINE")
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
 else()
   set(CMAKE_MACOSX_RPATH 1)
   add_library(${CMAKE_PROJECT_NAME} SHARED ${library_sources})
@@ -55,8 +78,11 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
 endif()
 
 add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
+target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
 add_executable(str8760 stress_test_8760.cpp ${sources} ${public_headers} ${private_headers})
+target_include_directories(str8760 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
 add_executable(str8760x5000 stress_test_8760x5000.cpp ${sources} ${public_headers} ${private_headers})
+target_include_directories(str8760x5000 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
 add_executable(limits limits.cpp)
 
 # Add Warnings

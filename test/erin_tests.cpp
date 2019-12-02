@@ -8,12 +8,16 @@
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
 #include "erin/erin.h"
-#include "erin/distributions.h"
+#include "erin/fragility.h"
+#include "erin/distribution.h"
+#include "erin/port.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
 #include <functional>
-#include <unordered_map>
+#include <memory>
+#include <random>
 #include <sstream>
+#include <unordered_map>
 
 
 const double tolerance{1e-6};
@@ -91,8 +95,8 @@ TEST(ErinUtilFunctions, TestClamp)
 
 TEST(ErinBasicsTest, TestLoadItem)
 {
-  const auto li1 = ::ERIN::LoadItem(0, 1);
-  const auto li2 = ::ERIN::LoadItem(4);
+  const auto li1 = ERIN::LoadItem(0, 1);
+  const auto li2 = ERIN::LoadItem(4);
   EXPECT_NEAR(li1.get_time_advance(li2), 4.0, tolerance);
   EXPECT_EQ(li1.get_time(), 0);
   EXPECT_EQ(li1.get_value(), 1.0);
@@ -103,17 +107,17 @@ TEST(ErinBasicsTest, TestLoadItem)
 
 TEST(ErinBasicsTest, FlowState)
 {
-  ::ERIN::FlowState fs{0.0, 0.0};
+  auto fs = ERIN::FlowState{0.0, 0.0};
   EXPECT_EQ(fs.getInflow(), 0.0);
   EXPECT_EQ(fs.getOutflow(), 0.0);
   EXPECT_EQ(fs.getStoreflow(), 0.0);
   EXPECT_EQ(fs.getLossflow(), 0.0);
-  fs = ::ERIN::FlowState{100.0, 50.0};
+  fs = ERIN::FlowState{100.0, 50.0};
   EXPECT_EQ(fs.getInflow(), 100.0);
   EXPECT_EQ(fs.getOutflow(), 50.0);
   EXPECT_EQ(fs.getStoreflow(), 0.0);
   EXPECT_EQ(fs.getLossflow(), 50.0);
-  fs = ::ERIN::FlowState{100.0, 0.0, 90.0};
+  fs = ERIN::FlowState{100.0, 0.0, 90.0};
   EXPECT_EQ(fs.getInflow(), 100.0);
   EXPECT_EQ(fs.getOutflow(), 0.0);
   EXPECT_EQ(fs.getStoreflow(), 90.0);
@@ -240,21 +244,26 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   EXPECT_EQ(expected_time.size(), actual_time2.size());
   EXPECT_EQ(expected_flow.size(), actual_flow1.size());
   EXPECT_EQ(expected_flow.size(), actual_flow2.size());
-  for (int i{0}; i < expected_time.size(); ++i) {
-    if (i >= actual_time1.size())
+  auto expected_time_size = expected_time.size();
+  for (decltype(expected_time_size) i{0}; i < expected_time_size; ++i) {
+    if (i >= actual_time1.size()) {
       break;
+    }
     EXPECT_EQ(expected_time[i], actual_time1[i])
       << " times from meter1 differ at index " << i;
-    if (i >= actual_time2.size())
+    if (i >= actual_time2.size()) {
       break;
+    }
     EXPECT_EQ(expected_time[i], actual_time2[i])
       << " times from meter2 differ at index " << i;
-    if (i >= actual_flow1.size())
+    if (i >= actual_flow1.size()) {
       break;
+    }
     EXPECT_EQ(expected_flow[i], actual_flow1[i])
       << " flows from meter1 differ at index " << i;
-    if (i >= actual_flow2.size())
+    if (i >= actual_flow2.size()) {
       break;
+    }
     EXPECT_EQ(expected_flow[i], actual_flow2[i])
       << " flows from meter2 differ at index " << i;
   }
@@ -342,8 +351,10 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
     genset_meter->get_requested_flows();
   EXPECT_EQ(actual_genset_output.size(), requested_genset_output.size());
   EXPECT_EQ(load_profile.size() - 1, requested_genset_output.size());
-  for (int i{0}; i < requested_genset_output.size(); ++i)
+  auto rgo_size = requested_genset_output.size();
+  for (decltype(rgo_size) i{ 0 }; i < rgo_size; ++i) {
     EXPECT_EQ(requested_genset_output[i], load_profile[i].get_value());
+  }
   std::vector<::ERIN::FlowValueType> actual_fuel_output =
     diesel_fuel_meter->get_achieved_flows();
   std::vector<::ERIN::RealTimeType> actual_genset_output_times =
@@ -353,9 +364,11 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
       expected_genset_output_times.size(), actual_genset_output_times.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output.size());
   EXPECT_EQ(expected_genset_output_times.size(), actual_fuel_output.size());
-  for (int i{0}; i < expected_genset_output.size(); ++i) {
-    if (i >= actual_genset_output.size())
+  auto ego_size = expected_genset_output.size();
+  for (decltype(ego_size) i{0}; i < ego_size; ++i) {
+    if (i >= actual_genset_output.size()) {
       break;
+    }
     EXPECT_EQ(expected_genset_output.at(i), actual_genset_output.at(i));
     EXPECT_EQ(
         expected_genset_output_times.at(i), actual_genset_output_times.at(i));
@@ -374,16 +387,20 @@ TEST(ErinBasicTest, CanRunUsingComponents)
             ::ERIN::LoadItem{2,40},
             ::ERIN::LoadItem{3,0},
             ::ERIN::LoadItem{4}}}});
-  std::shared_ptr<::ERIN::Component> source =
-    std::make_shared<::ERIN::SourceComponent>("electrical_pcc", elec);
-  std::shared_ptr<::ERIN::Component> load =
-    std::make_shared<::ERIN::LoadComponent>(
-        "electrical_load", elec, loads_by_scenario);
+  const std::string source_id{"electrical_pcc"};
+  std::unique_ptr<::ERIN::Component> source =
+    std::make_unique<::ERIN::SourceComponent>(source_id, elec);
+  const std::string load_id{"electrical_load"};
+  std::unique_ptr<::ERIN::Component> load =
+    std::make_unique<::ERIN::LoadComponent>(
+        load_id, elec, loads_by_scenario);
+  ::erin::network::Connection conn{
+    ::erin::network::ComponentAndPort{source_id, ::erin::port::outflow},
+    ::erin::network::ComponentAndPort{load_id, ::erin::port::inflow}};
   std::string scenario_id{"bluesky"};
-  load->add_input(source);
   adevs::Digraph<::ERIN::FlowValueType> network;
-  load->add_to_network(network, scenario_id);
-  source->add_to_network(network, scenario_id);
+  auto a = load->add_to_network(network, scenario_id);
+  auto b = source->add_to_network(network, scenario_id);
   adevs::Simulator<::ERIN::PortValue> sim;
   network.add(&sim);
   bool worked{false};
@@ -553,56 +570,122 @@ TEST(ErinBasicsTest, CanReadLoadsFromToml)
 
 TEST(ErinBasicsTest, CanReadNetworksFromToml)
 {
+  namespace enw = ::erin::network;
   std::stringstream ss{};
   ss << "############################################################\n"
-        "[networks.normal_operations.network]\n"
-        "# specify as: <source (generation) id> = ["
-                      "\"<downstream/load id>\", "
-                      "\"<downstream/load id>\", ...]\n"
-        "electric_utility = [\"cluster_01_electric\"]\n";
+        "[networks.normal_operations]\n"
+        R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n";
   ::ERIN::TomlInputReader t{ss};
-  std::unordered_map<
-    std::string,
-    std::unordered_map<
-      std::string,
-      std::vector<std::string>>>
-        expected{{"normal_operations", {{"electric_utility", {"cluster_01_electric"}}}}};
+  const std::string outflow{"outflow"};
+  const std::string inflow{"inflow"};
+  std::unordered_map<std::string, std::vector<enw::Connection>> expected{
+    { "normal_operations",
+      { enw::Connection{
+          enw::ComponentAndPort{"electric_utility", outflow},
+          enw::ComponentAndPort{"cluster_01_electric", inflow}}}}};
   auto pt = &t;
   auto actual = pt->read_networks();
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);
     ASSERT_TRUE(a != actual.end());
-    for (auto const& e_: e.second) {
-      const auto a_ = a->second.find(e_.first);
-      ASSERT_TRUE(a_ != a->second.end());
-      ASSERT_EQ(e_.second, a_->second);
-    }
+    auto e_conn = e.second.at(0);
+    auto a_conn = a->second.at(0);
+    ASSERT_EQ(e_conn.first.component_id, a_conn.first.component_id);
+    ASSERT_EQ(e_conn.first.port_id, a_conn.first.port_id);
+    ASSERT_EQ(e_conn.second.component_id, a_conn.second.component_id);
+    ASSERT_EQ(e_conn.second.port_id, a_conn.second.port_id);
   }
 }
 
-TEST(ErinBasicsTest, CanReadScenariosFromToml)
+TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
 {
   std::stringstream ss{};
   ss << "[scenarios.blue_sky]\n"
-        "occurrence_distribution = {type = \"fixed_probability\","
-                                  " probability = 1}\n"
-        "duration_distribution = {type = \"specified\", value = 8760,"
-                                " time_unit = \"hours\"}\n"
-        "max_time = 1\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"fixed\","
+                                  " value = 1}\n"
+        "duration = 8760\n"
+        "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader t{ss};
+  const std::string scenario_id{"blue_sky"};
   std::unordered_map<std::string, ::ERIN::Scenario> expected{{
-    std::string{"blue_sky"},
-    ::ERIN::Scenario{"blue_sky", "normal_operations", 1}}};
-  auto pt = &t;
-  auto actual = pt->read_scenarios();
+    scenario_id,
+    ::ERIN::Scenario{
+      scenario_id,
+      std::string{"normal_operations"},
+      8760,
+      1,
+      []() -> ::ERIN::RealTimeType { return 0; },
+      {}
+    }}};
+  auto actual = t.read_scenarios();
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);
     ASSERT_TRUE(a != actual.end());
-    EXPECT_EQ(e.second, a->second);
+    EXPECT_EQ(e.second.get_name(), a->second.get_name());
+    EXPECT_EQ(e.second.get_network_id(), a->second.get_network_id());
+    EXPECT_EQ(e.second.get_duration(), a->second.get_duration());
+    EXPECT_EQ(e.second.get_max_occurrences(), a->second.get_max_occurrences());
+    EXPECT_EQ(
+        e.second.get_number_of_occurrences(),
+        a->second.get_number_of_occurrences());
   }
+  adevs::Time dt_expected{1, 0};
+  auto scenario = actual.at(scenario_id);
+  auto dt_actual = scenario.ta();
+  EXPECT_EQ(dt_expected.logical, dt_actual.logical);
+  EXPECT_EQ(dt_expected.real, dt_actual.real);
+}
+
+TEST(ErinBasicsTest, CanReadScenariosFromTomlForRandIntDist)
+{
+  const std::string scenario_id{"blue_sky"};
+  const int lb{1};
+  const int ub{10};
+  std::stringstream ss{};
+  ss << "[scenarios." << scenario_id << "]\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"random_integer\","
+        " lower_bound = " << lb << ", upper_bound = " << ub << "}\n"
+        "duration = 8760\n"
+        "max_occurrences = 1\n"
+        "network = \"normal_operations\"\n";
+  ::ERIN::TomlInputReader t{ss};
+  auto actual = t.read_scenarios();
+  auto scenario = actual.at(scenario_id);
+  const int max_tries{100};
+  for (int i{0}; i < max_tries; ++i) {
+    auto dt_actual = scenario.ta();
+    auto dtr = dt_actual.real;
+    ASSERT_TRUE((dtr >= lb) && (dtr <= ub))
+      << "i = " << i << ", "
+      << "dtr = " << dtr << "\n";
+  }
+}
+
+TEST(ErinBasicsTest, CanReadScenariosIntensities)
+{
+  const std::string scenario_id{"class_4_hurricane"};
+  std::stringstream ss{};
+  ss << "[scenarios." << scenario_id << "]\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
+        "duration = 8760\n"
+        "max_occurrences = 1\n"
+        "network = \"emergency_operations\"\n"
+        "intensity.wind_speed_mph = 156\n"
+        "intensity.inundation_depth_ft = 4\n";
+  ::ERIN::TomlInputReader t{ss};
+  auto scenario_map = t.read_scenarios();
+  auto scenario = scenario_map.at(scenario_id);
+  std::unordered_map<std::string,double> expected{
+    {"wind_speed_mph", 156.0},
+    {"inundation_depth_ft", 4.0}};
+  auto actual = scenario.get_intensities();
+  EXPECT_EQ(expected.size(), actual.size());
 }
 
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
@@ -645,17 +728,13 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "[components.cluster_01_electric.load_profiles_by_scenario]\n"
         "blue_sky = \"building_electrical\"\n"
         "############################################################\n"
-        "[networks.normal_operations.network]\n"
-        "# specify as: <source (generation) id> = ["
-           "\"<downstream/load id>\", \"<downstream/load id>\", ...]\n"
-        "electric_utility = [\"cluster_01_electric\"]\n"
+        "[networks.normal_operations]\n"
+        R"(connections=[["electric_utility", "cluster_01_electric"]])" "\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
-        "occurrence_distribution = {type = \"fixed_probability\", "
-                                   "probability = 1}\n"
-        "duration_distribution = {type = \"specified\", value = 8760, "
-                                 "time_unit = \"hours\"}\n"
-        "max_time = 1\n"
+        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
+        "duration = 1\n"
+        "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader r{ss};
   auto si = r.read_stream_info();
@@ -706,15 +785,13 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "[components.cluster_01_electric.load_profiles_by_scenario]\n"
         "blue_sky = \"building_electrical\"\n"
         "############################################################\n"
-        "[networks.normal_operations.network]\n"
-        "electric_utility = [\"cluster_01_electric\"]\n"
+        "[networks.normal_operations]\n"
+        R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
-        "occurrence_distribution = {type = \"fixed_probability\","
-                                   "probability = 1}\n"
-        "duration_distribution = {type = \"specified\", value = 8760,"
-                                 "time_unit = \"hours\"}\n"
-        "max_time = 4\n"
+        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
+        "duration = 4\n"
+        "max_occurrences = 1\n"
         "network = \"normal_operations\"";
   ::ERIN::TomlInputReader r{ss};
   auto si = r.read_stream_info();
@@ -744,6 +821,8 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
 
 TEST(ErinBasicsTest, CanRun10ForSourceSink)
 {
+  namespace enw = ::erin::network;
+  namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
@@ -769,23 +848,38 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
-    std::make_pair(
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
+    components;
+  components.insert(
+      std::make_pair(
         source_id,
-        std::make_shared<::ERIN::SourceComponent>(
-          source_id,
-          streams[stream_id])),
-    std::make_pair(
+        std::make_unique<::ERIN::SourceComponent>(source_id, streams[stream_id])));
+  components.insert(
+      std::make_pair(
         load_id,
-        std::make_shared<::ERIN::LoadComponent>(
+        std::make_unique<::ERIN::LoadComponent>(
           load_id,
           streams[stream_id],
-          loads_by_scenario))};
+          loads_by_scenario)));
   std::unordered_map<
-    std::string, std::unordered_map<std::string, std::vector<std::string>>>
-    networks{{net_id, {{source_id, {load_id}}}}};
+    std::string, std::vector<enw::Connection>> networks{
+      { net_id,
+        { enw::Connection{
+            enw::ComponentAndPort{
+              source_id, ep::outflow},
+            enw::ComponentAndPort{
+              load_id, ep::inflow}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
-    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, 1}}};
+    {
+      scenario_id,
+      ::ERIN::Scenario{
+        scenario_id,
+        net_id,
+        1,
+        -1,
+        []() -> ::ERIN::RealTimeType { return 0; },
+        {}
+      }}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run(scenario_id);
   EXPECT_EQ(out.get_is_good(), true);
@@ -826,6 +920,8 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
 
 TEST(ErinBasicsTest, TestMaxTimeByScenario)
 {
+  namespace enw = ::erin::network;
+  namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
@@ -852,23 +948,39 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
-    std::make_pair(
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
+    components;
+  components.insert(
+      std::make_pair(
         source_id,
-        std::make_shared<::ERIN::SourceComponent>(
+        std::make_unique<::ERIN::SourceComponent>(
           source_id,
-          streams[stream_id])),
-    std::make_pair(
+          streams[stream_id])));
+  components.insert(
+      std::make_pair(
         load_id,
-        std::make_shared<::ERIN::LoadComponent>(
+        std::make_unique<::ERIN::LoadComponent>(
           load_id,
           streams[stream_id],
-          loads_by_scenario))};
+          loads_by_scenario)));
   std::unordered_map<
-    std::string, std::unordered_map<std::string, std::vector<std::string>>>
-    networks{{net_id, {{source_id, {load_id}}}}};
+    std::string, std::vector<enw::Connection>> networks{
+      { net_id,
+        { enw::Connection{
+            enw::ComponentAndPort{source_id, ep::outflow}},
+          enw::Connection{
+            enw::ComponentAndPort{load_id, ep::inflow}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
-    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, max_time}}};
+    {
+      scenario_id,
+      ::ERIN::Scenario{
+        scenario_id,
+        net_id,
+        max_time,
+        -1,
+        nullptr,
+        {}
+      }}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   auto actual = m.max_time_for_scenario(scenario_id);
   ::ERIN::RealTimeType expected = max_time;
@@ -972,11 +1084,13 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
 
 TEST(ErinBasicsTest, BasicScenarioTest)
 {
-  // we want to create one or more scenarios and simulate them in DEVS
-  // each scenario should be autonomous and not interact with any other
-  // the entire simulation has a max time limit.
+  // We want to create one or more scenarios and simulate them in DEVS
+  // each scenario should be autonomous and not interact with each other.
+  // The entire simulation has a max time limit.
   // This is where we may need to switch to long or int64_t if we go with
   // seconds for the time unit and 1000 years of simulation...
+  namespace enw = ::erin::network;
+  namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
@@ -1003,53 +1117,234 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> components{
-    std::make_pair(
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
+    components;
+  components.insert(
+      std::make_pair(
         source_id,
-        std::make_shared<::ERIN::SourceComponent>(
+        std::make_unique<::ERIN::SourceComponent>(
           source_id,
-          streams[stream_id])),
-    std::make_pair(
+          streams[stream_id])));
+  components.insert(
+      std::make_pair(
         load_id,
-        std::make_shared<::ERIN::LoadComponent>(
+        std::make_unique<::ERIN::LoadComponent>(
           load_id,
           streams[stream_id],
-          loads_by_scenario))};
+          loads_by_scenario)));
   std::unordered_map<
-    std::string, std::unordered_map<std::string, std::vector<std::string>>>
-    networks{{net_id, {{source_id, {load_id}}}}};
+    std::string, std::vector<enw::Connection>> networks{
+      { net_id,
+        { enw::Connection{
+            {source_id, ep::outflow},
+            {load_id, ep::inflow}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
-    {scenario_id, ::ERIN::Scenario{scenario_id, net_id, max_time}}};
+    {
+      scenario_id,
+      ::ERIN::Scenario{
+        scenario_id,
+        net_id,
+        max_time,
+        1,
+        [](){ return 100; },
+        {}
+      }}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
   ::ERIN::RealTimeType sim_max_time{1000};
   auto actual = m.run_all(sim_max_time);
   EXPECT_TRUE(actual.get_is_good());
   EXPECT_TRUE(actual.get_results().size() > 0);
-  // TODO: add the following tests after we get Distributions working
-  // for (const auto& r: actual.get_results()) {
-  //   EXPECT_TRUE(r.second.size() > 0);
-  // }
+  for (const auto& r: actual.get_results()) {
+    EXPECT_TRUE(r.second.size() > 0);
+  }
 }
 
 TEST(ErinBasicsTest, DistributionTest)
 {
-  const int fixed_value{1};
-  std::unique_ptr<::erin::dist::Distribution<int>> d_fixed =
-    std::make_unique<::erin::dist::FixedDistribution<int>>(fixed_value);
-  EXPECT_EQ(d_fixed->next_value(), fixed_value);
+  const int k{1};
+  auto d_fixed = ::erin::distribution::make_fixed<int>(k);
+  EXPECT_EQ(d_fixed(), k);
   const int lower_bound{0};
   const int upper_bound{10};
-  std::unique_ptr<::erin::dist::Distribution<int>> d_rand =
-    std::make_unique<::erin::dist::RandomIntegerDistribution<int>>(
-        lower_bound, upper_bound);
+  std::default_random_engine g{};
+  auto d_rand = ::erin::distribution::make_random_integer<int>(
+      g, lower_bound, upper_bound);
   const int max_times{1000};
   for (int i{0}; i < max_times; ++i) {
-    auto v{d_rand->next_value()};
+    auto v{d_rand()};
     EXPECT_TRUE((v >= lower_bound) && (v <= upper_bound))
       << "expected v to be between (" << lower_bound << ", "
       << upper_bound << "] " << "but was " << v;
   }
 }
+
+TEST(ErinBasicsTest, FragilityCurves)
+{
+  const double lb{120.0};
+  const double ub{180.0};
+  ::erin::fragility::Linear f{lb, ub};
+  EXPECT_EQ(0.0, f.apply(lb - 10.0));
+  EXPECT_EQ(1.0, f.apply(ub + 10.0));
+  auto probability_of_failure{f.apply((lb + ub) / 2.0)};
+  EXPECT_TRUE(
+      (probability_of_failure > 0.0) && (probability_of_failure < 1.0));
+}
+
+TEST(ErinBasicsTest, TestGetFragilityCurves)
+{
+  ::ERIN::StreamType st{"electricity"};
+  std::unordered_map<std::string,std::unique_ptr<::erin::fragility::Curve>>
+    fragilities;
+  fragilities.insert(
+      std::make_pair(
+        "wind_speed_mph",
+        std::make_unique<::erin::fragility::Linear>(120.0, 180.0)));
+  ::ERIN::SourceComponent c{"source", st, std::move(fragilities)};
+  std::unordered_map<std::string,double> intensities{{"wind_speed_mph", 150.0}};
+  auto probs = c.apply_intensities(intensities);
+  EXPECT_EQ(probs.size(), 1);
+  EXPECT_NEAR(probs.at(0), 0.5, 1e-6);
+}
+
+TEST(ErinBasicsTest, TestFailureChecker)
+{
+  ::erin::fragility::FailureChecker fc{};
+  std::vector<double> probs_1 = {0.0};
+  EXPECT_FALSE(fc.is_failed(probs_1));
+  std::vector<double> probs_2 = {1.0};
+  EXPECT_TRUE(fc.is_failed(probs_2));
+  std::vector<double> probs_3 = {0.5};
+  bool at_least_one_false{false};
+  bool at_least_one_true{false};
+  int max{100};
+  for (int i{0}; i < max; ++i) {
+    auto result = fc.is_failed(probs_3);
+    if (result) {
+      at_least_one_true = true;
+    }
+    if (!result) {
+      at_least_one_false = true;
+    }
+    if (at_least_one_false && at_least_one_true) {
+      break;
+    }
+  }
+  EXPECT_TRUE(at_least_one_false && at_least_one_true);
+}
+
+TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
+{
+  namespace enw = ::erin::network;
+  namespace ep = ::erin::port;
+  ::ERIN::StreamInfo si{};
+  const auto elec_id = std::string{"electrical"};
+  const auto elec_stream = ::ERIN::StreamType(elec_id);
+  std::unordered_map<std::string, ::ERIN::StreamType> streams{
+    {elec_id, elec_stream}};
+  const auto pcc_id = std::string{"electric_utility"};
+  const auto load_id = std::string{"cluster_01_electric"};
+  const auto gen_id = std::string{"emergency_generator"};
+  const auto inundation_depth_ft_lower_bound{6.0};
+  const auto inundation_depth_ft_upper_bound{14.0};
+  const auto wind_speed_mph_lower_bound{80.0};
+  const auto wind_speed_mph_upper_bound{160.0};
+  const auto intensity_wind_speed = std::string{"wind_speed_mph"};
+  const auto intensity_flood = std::string{"inundation_depth_ft"};
+  const auto blue_sky = std::string{"blue_sky"};
+  const auto class_4_hurricane = std::string{"class_4_hurricane"};
+  const auto normal = std::string{"normal_operations"};
+  const auto emergency = std::string{"emergency"};
+  std::unique_ptr<::erin::fragility::Curve> fc_inundation =
+    std::make_unique<::erin::fragility::Linear>(
+        inundation_depth_ft_lower_bound,
+        inundation_depth_ft_upper_bound);
+  std::unique_ptr<::erin::fragility::Curve> fc_wind =
+    std::make_unique<::erin::fragility::Linear>(
+        wind_speed_mph_lower_bound,
+        wind_speed_mph_upper_bound);
+  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+    fs_pcc{};
+  fs_pcc.insert(std::make_pair(intensity_wind_speed, fc_wind->clone()));
+  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+    fs_load{};
+  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+    fs_gen{};
+  fs_gen.insert(std::make_pair(intensity_flood, fc_inundation->clone()));
+  std::vector<::ERIN::LoadItem>
+    loads{::ERIN::LoadItem{0,100.0}, ::ERIN::LoadItem{100}};
+  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
+    loads_by_scenario{{blue_sky, loads}, {class_4_hurricane, loads}};
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>> comps;
+  comps.insert(
+      std::make_pair(
+        pcc_id,
+        std::make_unique<::ERIN::SourceComponent>(
+          pcc_id, elec_stream, std::move(fs_pcc))));
+  comps.insert(
+      std::make_pair(
+        load_id,
+        std::make_unique<::ERIN::LoadComponent>(
+          load_id, elec_stream, loads_by_scenario, std::move(fs_load))));
+  comps.insert(
+      std::make_pair(
+        gen_id,
+        std::make_unique<::ERIN::SourceComponent>(
+          gen_id, elec_stream, std::move(fs_gen))));
+  std::unordered_map<
+    std::string, std::vector<enw::Connection>> networks{
+      {normal,
+        { enw::Connection{{pcc_id, ep::outflow}, {load_id, ep::inflow}}}},
+      {emergency,
+        { enw::Connection{{pcc_id, ep::outflow}, {load_id, ep::inflow}},
+          enw::Connection{{gen_id, ep::outflow}, {load_id, ep::inflow}}}}};
+  // test 1: simulate with a fragility curve that never fails
+  // - confirm the statistics show load always met
+  std::unordered_map<std::string, double> intensities_low{
+    { intensity_wind_speed, 0.0},
+      { intensity_flood, 0.0}};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios_low{
+    { blue_sky,
+      ::ERIN::Scenario{
+        blue_sky, normal, 10, 1, [](){return 0;}, {}}},
+      { class_4_hurricane,
+        ::ERIN::Scenario{
+          class_4_hurricane,
+          emergency, 10, -1, [](){ return 100; }, intensities_low}}};
+  ::ERIN::Main m_low{si, streams, comps, networks, scenarios_low};
+  auto results_low = m_low.run(class_4_hurricane);
+  EXPECT_NEAR(
+      results_low.calc_energy_availability().at(load_id),
+      1.0,
+      tolerance);
+
+  // test 2: simulate with a fragility curve that always fails
+  // - confirm the statistics show 100% load not served
+  std::unordered_map<std::string, double> intensities_high{
+    { intensity_wind_speed, 300.0},
+    { intensity_flood, 20.0}};
+  std::unordered_map<std::string, ::ERIN::Scenario> scenarios_high{
+    { blue_sky,
+      ::ERIN::Scenario{
+        blue_sky, normal, 10, 1, [](){return 0;}, {}}},
+    { class_4_hurricane,
+      ::ERIN::Scenario{
+        class_4_hurricane,
+        emergency, 10, -1, [](){ return 100; }, intensities_high}}};
+  ::ERIN::Main m_high{si, streams, comps, networks, scenarios_high};
+  auto results_high = m_high.run(class_4_hurricane);
+  EXPECT_NEAR(
+      results_high.calc_energy_availability().at(load_id),
+      0.0,
+      tolerance);
+}
+
+/*
+// TODO: add this test for new network connections
+TEST(ErinBasicsTest, TestNetworkAsVectorOfConnections)
+{
+
+}
+*/
 
 int
 main(int argc, char **argv)

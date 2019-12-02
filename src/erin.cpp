@@ -23,6 +23,8 @@
 
 namespace ERIN
 {
+  const double seconds_per_hour{3600.0};
+
   ////////////////////////////////////////////////////////////
   // TomlInputReader
   TomlInputReader::TomlInputReader(toml::value data_):
@@ -57,7 +59,7 @@ namespace ERIN
     if (rate_unit == "kW" && quantity_unit == "kJ")
       default_seconds_per_time_unit = 1.0;
     else if (rate_unit == "kW" && quantity_unit == "kWh")
-      default_seconds_per_time_unit = 3600.0;
+      default_seconds_per_time_unit = seconds_per_hour;
     else
       default_seconds_per_time_unit = -1.0;
     const double seconds_per_time_unit(

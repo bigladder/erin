@@ -3,7 +3,7 @@
 
 #ifndef ERIN_NETWORK_H
 #define ERIN_NETWORK_H
-#include "../../vendor/bdevs/include/adevs.h"
+#include "adevs.h"
 #include "erin/component.h"
 #include "erin/element.h"
 #include "erin/type.h"

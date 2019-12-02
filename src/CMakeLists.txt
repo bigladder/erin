@@ -46,6 +46,10 @@ set(private_headers
   ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/pointers
   ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/span
   ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/string_span
+  ${PROJECT_SOURCE_DIR}/vendor/bdevs/include/adevs.h
+  ${PROJECT_SOURCE_DIR}/vendor/bdevs/include/adevs_base.h
+  ${PROJECT_SOURCE_DIR}/vendor/bdevs/include/adevs_pdevs.h
+  ${PROJECT_SOURCE_DIR}/vendor/bdevs/include/adevs_time.h
 )
 
 set(library_sources
@@ -63,9 +67,14 @@ if (${CMAKE_PROJECT_NAME}_STATIC_LIB)
   add_library(${CMAKE_PROJECT_NAME} STATIC ${library_sources})
   set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-D${CMAKE_PROJECT_NAME}_STATIC_DEFINE")
   target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 else()
   set(CMAKE_MACOSX_RPATH 1)
   add_library(${CMAKE_PROJECT_NAME} SHARED ${library_sources})
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 endif()
 
 include(GenerateExportHeader)
@@ -80,12 +89,15 @@ endif()
 add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
 target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
 target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(str8760 stress_test_8760.cpp ${sources} ${public_headers} ${private_headers})
 target_include_directories(str8760 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
-target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+target_include_directories(str8760 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+target_include_directories(str8760 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(str8760x5000 stress_test_8760x5000.cpp ${sources} ${public_headers} ${private_headers})
 target_include_directories(str8760x5000 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
-target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+target_include_directories(str8760x5000 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+target_include_directories(str8760x5000 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(limits limits.cpp)
 
 # Add Warnings

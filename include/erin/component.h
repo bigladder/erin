@@ -7,7 +7,7 @@
 #include "erin/element.h"
 #include "erin/fragility.h"
 #include "erin/stream.h"
-#include "../../vendor/bdevs/include/adevs.h"
+#include "adevs.h"
 #include <memory>
 #include <string>
 #include <unordered_map>

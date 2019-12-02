@@ -5,7 +5,7 @@
 #define ERIN_ELEMENT_H
 #include "erin/type.h"
 #include "erin/stream.h"
-#include "../../vendor/bdevs/include/adevs.h"
+#include "adevs.h"
 #include <functional>
 #include <stdexcept>
 

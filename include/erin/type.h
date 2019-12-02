@@ -3,7 +3,7 @@
 
 #ifndef ERIN_TYPE_H
 #define ERIN_TYPE_H
-#include "../../vendor/bdevs/include/adevs.h"
+#include "adevs.h"
 #include <iostream>
 #include <string>
 #include <unordered_map>

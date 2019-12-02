@@ -1,7 +1,7 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include "../vendor/bdevs/include/adevs.h"
+#include "adevs.h"
 #include "checkout_line/clerk.h"
 #include "checkout_line/customer.h"
 #include "checkout_line/generator.h"

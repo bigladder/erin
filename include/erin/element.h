@@ -5,6 +5,7 @@
 #define ERIN_ELEMENT_H
 #include "erin/type.h"
 #include "erin/stream.h"
+#include <functional>
 #include <stdexcept>
 
 namespace ERIN

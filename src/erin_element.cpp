@@ -26,7 +26,7 @@ namespace ERIN
       ComponentType component_type_,
       StreamType in,
       StreamType out):
-    adevs::Atomic<PortValue>(),
+    adevs::Atomic<PortValue, Time>(),
     id{std::move(id_)},
     time{0,0},
     inflow_type{std::move(in)},
@@ -55,7 +55,7 @@ namespace ERIN
   }
 
   void
-  FlowElement::delta_ext(adevs::Time e, std::vector<PortValue>& xs)
+  FlowElement::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::delta_ext();id=" << id << "\n";
@@ -158,18 +158,18 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::delta_conf();id=" << id << "\n";
     }
-    auto e = adevs::Time{0,0};
+    auto e = Time{0,0};
     delta_int();
     delta_ext(e, xs);
   }
 
-  adevs::Time
+  Time
   FlowElement::calculate_time_advance()
   {
-    return adevs_inf<adevs::Time>();
+    return inf;
   }
 
-  adevs::Time
+  Time
   FlowElement::ta()
   {
     if constexpr (debug_level >= debug_level_high) {
@@ -179,7 +179,7 @@ namespace ERIN
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "... dt = (0,1)\n";
       }
-      return adevs::Time{0, 1};
+      return Time{0, 1};
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "... dt = infinity\n";
@@ -285,12 +285,12 @@ namespace ERIN
   ///////////////////////////////////////////////////////////////////
   // FlowLimits
   FlowLimits::FlowLimits(
-      std::string id,
-      ComponentType component_type,
-      StreamType stream_type,
+      std::string id_,
+      ComponentType component_type_,
+      StreamType stream_type_,
       FlowValueType low_lim,
-      FlowValueType up_lim) :
-    FlowElement(std::move(id), component_type, stream_type),
+      FlowValueType up_lim):
+    FlowElement(std::move(id_), component_type_, stream_type_),
     lower_limit{low_lim},
     upper_limit{up_lim}
   {
@@ -509,7 +509,7 @@ namespace ERIN
     ++idx;
   }
 
-  adevs::Time
+  Time
   Sink::calculate_time_advance()
   {
     if constexpr (debug_level >= debug_level_high) {
@@ -519,7 +519,7 @@ namespace ERIN
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "... dt = infinity\n";
       }
-      return adevs::Time{0, 0};
+      return Time{0, 0};
     }
     std::vector<LoadItem>::size_type next_idx = idx + 1;
     if (next_idx < num_loads) {
@@ -527,12 +527,12 @@ namespace ERIN
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "... dt = (" << dt << ", 0)\n";
       }
-      return adevs::Time{dt, 0};
+      return Time{dt, 0};
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "... dt = infinity\n";
     }
-    return adevs_inf<adevs::Time>();
+    return inf;
   }
 
   FlowState

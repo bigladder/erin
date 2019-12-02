@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include "erin/erin.h"
+#include "erin/network.h"
 
 int
 main()
@@ -19,12 +20,12 @@ main()
   loads.emplace_back(::ERIN::LoadItem{N});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   ::ERIN::StreamType elec{
     std::string{"electricity_medium_voltage"},
       si.get_rate_unit(),
       si.get_quantity_unit(),
-      si.get_seconds_per_time_unit(),
+      1,
       {}, {}};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(stream_id, elec)};

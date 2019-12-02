@@ -1,14 +1,8 @@
-[stream_info]
-# The commonality across all streams.
-# We need to know what the common rate unit and quantity unit is.
-# The rate unit should be the quantity unit per unit of time.
+[simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"
-# seconds_per_time_unit : Number
-# defines how many seconds per unit of time used to specify the quantity unit
-# here since we are using kW and kJ, the answer is 1.0 second.
-# However, if we were doing kW and kWh, we would use 3600 s (i.e., 1 hour) here.
-seconds_per_time_unit = 1.0 
+time_unit = "hours"
+max_time = 4
 [streams.electricity]
 type = "electricity_medium_voltage"
 ############################################################

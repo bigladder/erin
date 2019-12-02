@@ -3,7 +3,7 @@
 
 #ifndef ERIN_ERIN_H
 #define ERIN_ERIN_H
-#include "../../vendor/bdevs/include/adevs.h"
+#include "adevs.h"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../../vendor/toml11/toml.hpp"
@@ -77,7 +77,7 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Scenario
-  class Scenario : public adevs::Atomic<PortValue>
+  class Scenario : public adevs::Atomic<PortValue, Time>
   {
     public:
       Scenario(
@@ -105,9 +105,9 @@ namespace ERIN
         return !(operator==(other));
       }
       void delta_int() override;
-      void delta_ext(adevs::Time e, std::vector<PortValue>& xs) override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
-      adevs::Time ta() override;
+      Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
       [[nodiscard]] std::vector<ScenarioResults>
@@ -141,9 +141,9 @@ namespace ERIN
       InputReader& operator=(InputReader&&) = delete;
       virtual ~InputReader() = default;
 
-      virtual StreamInfo read_stream_info() = 0;
+      virtual SimulationInfo read_simulation_info() = 0;
       virtual std::unordered_map<std::string, StreamType>
-        read_streams(const StreamInfo& si) = 0;
+        read_streams(const SimulationInfo& si) = 0;
       virtual std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() = 0;
       virtual std::unordered_map<std::string, std::unique_ptr<Component>>
@@ -166,9 +166,9 @@ namespace ERIN
       explicit TomlInputReader(const std::string& path);
       explicit TomlInputReader(std::istream& in);
 
-      StreamInfo read_stream_info() override;
+      SimulationInfo read_simulation_info() override;
       std::unordered_map<std::string, StreamType>
-        read_streams(const StreamInfo& si) override;
+        read_streams(const SimulationInfo& si) override;
       std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() override;
       std::unordered_map<std::string, std::unique_ptr<Component>>
@@ -219,7 +219,7 @@ namespace ERIN
     public:
       explicit Main(const std::string& input_toml);
       Main(
-          const StreamInfo& si,
+          const SimulationInfo& si,
           const std::unordered_map<std::string, StreamType>& streams,
           const std::unordered_map<
             std::string,
@@ -233,7 +233,7 @@ namespace ERIN
       RealTimeType max_time_for_scenario(const std::string& scenario_id);
 
     private:
-      StreamInfo stream_info;
+      SimulationInfo sim_info;
       std::unordered_map<std::string, StreamType> stream_types_map;
       std::unordered_map<std::string, std::unique_ptr<Component>> components;
       std::unordered_map<
@@ -248,7 +248,7 @@ namespace ERIN
 
       void check_data() const;
       bool run_devs(
-          adevs::Simulator<PortValue>& sim,
+          adevs::Simulator<PortValue, Time>& sim,
           const RealTimeType max_time,
           const std::unordered_set<std::string>::size_type max_non_advance);
       void generate_failure_fragilities();

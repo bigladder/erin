@@ -1,7 +1,7 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include "../vendor/bdevs/include/adevs.h"
+#include "adevs.h"
 #include "checkout_line/clerk.h"
 #include "checkout_line/customer.h"
 #include "checkout_line/generator.h"
@@ -97,7 +97,7 @@ TEST(ErinBasicsTest, TestLoadItem)
 {
   const auto li1 = ERIN::LoadItem(0, 1);
   const auto li2 = ERIN::LoadItem(4);
-  EXPECT_NEAR(li1.get_time_advance(li2), 4.0, tolerance);
+  EXPECT_EQ(li1.get_time_advance(li2), 4);
   EXPECT_EQ(li1.get_time(), 0);
   EXPECT_EQ(li1.get_value(), 1.0);
   EXPECT_EQ(li2.get_time(), 4);
@@ -135,15 +135,16 @@ TEST(ErinBasicsTest, StandaloneSink)
        ::ERIN::LoadItem{3}});
   auto meter = new ::ERIN::FlowMeter(
       "meter", ::ERIN::ComponentType::Load, st);
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter, ::ERIN::FlowMeter::inport_outflow_request
       );
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
+  }
   std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2};
   auto actual_times = meter->get_event_times();
   ::erin_test_utils::compare_vectors<::ERIN::RealTimeType>(expected_times, actual_times);
@@ -164,25 +165,24 @@ TEST(ErinBasicsTest, CanRunSourceSink)
           ::ERIN::LoadItem{2}});
   auto meter = new ::ERIN::FlowMeter(
       "meter", ::ERIN::ComponentType::Load, st);
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter, ::ERIN::FlowMeter::inport_outflow_request
       );
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
   }
   std::vector<::ERIN::RealTimeType> actual_time =
     meter->get_event_times();
   std::vector<::ERIN::FlowValueType> actual_flow =
     meter->get_achieved_flows();
-  EXPECT_EQ(expected_time.size(), actual_time.size());
+  auto et_size = expected_time.size();
+  EXPECT_EQ(et_size, actual_time.size());
   EXPECT_EQ(expected_flow.size(), actual_flow.size());
-  for (
-      std::vector<::ERIN::RealTimeType>::size_type i{0};
-      i < expected_time.size(); ++i) {
+  for (decltype(et_size) i{0}; i < et_size; ++i) {
     if (i >= actual_time.size()) {
       break;
     }
@@ -212,7 +212,7 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
           ::ERIN::LoadItem{2,40},
           ::ERIN::LoadItem{3,0},
           ::ERIN::LoadItem{4}});
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       meter1, ::ERIN::FlowMeter::inport_outflow_request);
@@ -228,10 +228,11 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   network.couple(
       lim, ::ERIN::FlowLimits::outport_outflow_achieved,
       meter1, ::ERIN::FlowMeter::inport_inflow_achieved);
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>())
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
+  }
   std::vector<::ERIN::RealTimeType> actual_time1 =
     meter1->get_event_times();
   std::vector<::ERIN::RealTimeType> actual_time2 =
@@ -314,7 +315,7 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
       ::ERIN::LoadItem{4}};
   auto sink = new ::ERIN::Sink(
       "electric_load", ::ERIN::ComponentType::Load, elec, load_profile);
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
       genset_meter, ::ERIN::FlowMeter::inport_outflow_request);
@@ -336,10 +337,10 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   network.couple(
       genset_lim, ::ERIN::FlowLimits::outport_outflow_achieved,
       genset_meter, ::ERIN::FlowMeter::inport_inflow_achieved);
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  adevs::Time t;
-  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
+  ::ERIN::Time t;
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
     t = sim.now();
     std::cout << "The current time is: (" << t.real << ", " << t.logical
@@ -398,14 +399,14 @@ TEST(ErinBasicTest, CanRunUsingComponents)
     ::erin::network::ComponentAndPort{source_id, ::erin::port::outflow},
     ::erin::network::ComponentAndPort{load_id, ::erin::port::inflow}};
   std::string scenario_id{"bluesky"};
-  adevs::Digraph<::ERIN::FlowValueType> network;
+  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   auto a = load->add_to_network(network, scenario_id);
   auto b = source->add_to_network(network, scenario_id);
-  adevs::Simulator<::ERIN::PortValue> sim;
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
   bool worked{false};
   int iworked{0};
-  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
+  while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
     worked = true;
     ++iworked;
@@ -414,26 +415,18 @@ TEST(ErinBasicTest, CanRunUsingComponents)
   EXPECT_TRUE(worked);
 }
 
-TEST(ErinBasicTest, CanReadStreamInfoFromToml)
+TEST(ErinBasicTest, CanReadSimulationInfoFromToml)
 {
   std::stringstream ss{};
-  ss << "[stream_info]\n"
-        "# The commonality across all streams.\n"
-        "# We need to know what the common rate unit and quantity unit is.\n"
-        "# The rate unit should be the quantity unit per unit of time.\n"
+  ss << "[simulation_info]\n"
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
-        "# seconds_per_time_unit : Number\n"
-        "# defines how many seconds per unit of time used to specify the "
-          "quantity unit\n"
-        "# here since we are using kW and kJ, the answer is 1.0 second.\n"
-        "# However, if we were doing kW and kWh, we would use 3600 s "
-          "(i.e., 1 hour) here.\n"
-        "seconds_per_time_unit = 1.0\n";
+        "time_unit = \"hours\"\n"
+        "max_time = 3000\n";
   ::ERIN::TomlInputReader t{ss};
-  ::ERIN::StreamInfo expected{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo expected{"kW", "kJ", ::ERIN::TimeUnits::Hours, 3000};
   auto pt = &t;
-  auto actual = pt->read_stream_info();
+  auto actual = pt->read_simulation_info();
   EXPECT_EQ(expected, actual);
 }
 
@@ -451,7 +444,7 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
         "gallons = 7.366784013642577e-6\n"
         "liters = 2.7886224205242612e-5\n";
   ::ERIN::TomlInputReader t{ss};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   std::unordered_map<std::string, ::ERIN::StreamType> expected{
     std::make_pair("electricity", ::ERIN::StreamType(
           "electricity_medium_voltage", "kW", "kJ", 1.0, {}, {})),
@@ -471,9 +464,6 @@ TEST(ErinBasicsTest, CanReadStreamsFromToml)
     EXPECT_EQ(e.second.get_type(), a->second.get_type());
     EXPECT_EQ(e.second.get_rate_units(), a->second.get_rate_units());
     EXPECT_EQ(e.second.get_quantity_units(), a->second.get_quantity_units());
-    EXPECT_EQ(
-        e.second.get_seconds_per_time_unit(),
-        a->second.get_seconds_per_time_unit());
     const auto eoru = e.second.get_other_rate_units();
     const auto aoru = a->second.get_other_rate_units();
     EXPECT_EQ(eoru.size(), aoru.size());
@@ -633,7 +623,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
         e.second.get_number_of_occurrences(),
         a->second.get_number_of_occurrences());
   }
-  adevs::Time dt_expected{1, 0};
+  ::ERIN::Time dt_expected{1, 0};
   auto scenario = actual.at(scenario_id);
   auto dt_actual = scenario.ta();
   EXPECT_EQ(dt_expected.logical, dt_actual.logical);
@@ -691,19 +681,14 @@ TEST(ErinBasicsTest, CanReadScenariosIntensities)
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
 {
   std::stringstream ss;
-  ss << "[stream_info]\n"
+  ss << "[simulation_info]\n"
         "# The commonality across all streams.\n"
         "# We need to know what the common rate unit and quantity unit is.\n"
         "# The rate unit should be the quantity unit per unit of time.\n"
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
-        "# seconds_per_time_unit : Number\n"
-        "# defines how many seconds per unit of time used to specify the "
-          "quantity unit\n"
-        "# here since we are using kW and kJ, the answer is 1.0 second.\n"
-        "# However, if we were doing kW and kWh, we would use 3600 s "
-          "(i.e., 1 hour) here.\n"
-        "seconds_per_time_unit = 1.0 \n"
+        "time_units = \"years\"\n"
+        "max_time = 1000\n"
         "[streams.electricity]\n"
         "type = \"electrity_medium_voltage\"\n"
         "[streams.diesel]\n"
@@ -737,7 +722,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader r{ss};
-  auto si = r.read_stream_info();
+  auto si = r.read_simulation_info();
   auto streams = r.read_streams(si);
   auto loads = r.read_loads();
   auto components = r.read_components(streams, loads);
@@ -765,10 +750,11 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
 TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
 {
   std::stringstream ss;
-  ss << "[stream_info]\n"
+  ss << "[simulation_info]\n"
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
-        "seconds_per_time_unit = 1.0\n"
+        "time_unit = \"years\"\n"
+        "max_time = 1000\n"
         "[streams.electricity]\n"
         "type = \"electrity\"\n"
         "############################################################\n"
@@ -794,7 +780,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "max_occurrences = 1\n"
         "network = \"normal_operations\"";
   ::ERIN::TomlInputReader r{ss};
-  auto si = r.read_stream_info();
+  auto si = r.read_simulation_info();
   auto streams = r.read_streams(si);
   auto loads = r.read_loads();
   auto components = r.read_components(streams, loads);
@@ -835,7 +821,7 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   loads.emplace_back(::ERIN::LoadItem{N});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(
         stream_id,
@@ -843,7 +829,7 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
           std::string{"electricity_medium_voltage"},
           si.get_rate_unit(),
           si.get_quantity_unit(),
-          si.get_seconds_per_time_unit(),
+          1,
           {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
@@ -935,7 +921,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   loads.emplace_back(::ERIN::LoadItem{max_time});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(
         stream_id,
@@ -943,7 +929,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
           std::string{"electricity_medium_voltage"},
           si.get_rate_unit(),
           si.get_quantity_unit(),
-          si.get_seconds_per_time_unit(),
+          1,
           {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
@@ -1008,7 +994,7 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   std::unordered_map<std::string,::ERIN::RealTimeType> expected0_max_downtime{
     {"A0",0}};
   auto actual0_max_downtime = sr0.calc_max_downtime();
-  ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
+  ::erin_test_utils::compare_maps_exact<::ERIN::RealTimeType>(
       expected0_max_downtime, actual0_max_downtime, "max_downtime_with_sr0");
   // load_not_served
   std::unordered_map<std::string,::ERIN::FlowValueType> expected0_lns{
@@ -1076,8 +1062,8 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
     0.0,  // FlowValueType load_not_served
     4.0}; // FlowValueType total_energy
   auto actual = ::ERIN::calc_scenario_stats(ds);
-  EXPECT_NEAR(expected.uptime, actual.uptime, tolerance);
-  EXPECT_NEAR(expected.downtime, actual.downtime, tolerance);
+  EXPECT_EQ(expected.uptime, actual.uptime);
+  EXPECT_EQ(expected.downtime, actual.downtime);
   EXPECT_NEAR(expected.load_not_served, actual.load_not_served, tolerance);
   EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
 }
@@ -1104,7 +1090,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   loads.emplace_back(::ERIN::LoadItem{max_time});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::StreamInfo si{"kW", "kJ", 1.0};
+  ::ERIN::SimulationInfo si{};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(
         stream_id,
@@ -1112,7 +1098,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
           std::string{"electricity_medium_voltage"},
           si.get_rate_unit(),
           si.get_quantity_unit(),
-          si.get_seconds_per_time_unit(),
+          1,
           {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
@@ -1236,7 +1222,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
 {
   namespace enw = ::erin::network;
   namespace ep = ::erin::port;
-  ::ERIN::StreamInfo si{};
+  ::ERIN::SimulationInfo si{};
   const auto elec_id = std::string{"electrical"};
   const auto elec_stream = ::ERIN::StreamType(elec_id);
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
@@ -1345,6 +1331,54 @@ TEST(ErinBasicsTest, TestNetworkAsVectorOfConnections)
 
 }
 */
+
+TEST(ErinBasicsTest, TestTimeUnits)
+{
+  const std::string tag_for_seconds{"seconds"};
+  auto expected_tu_s = ::ERIN::TimeUnits::Seconds;
+  auto actual_tu_s = ::ERIN::tag_to_time_units(tag_for_seconds);
+  EXPECT_EQ(expected_tu_s, actual_tu_s);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_s), tag_for_seconds);
+  const std::string tag_for_minutes{"minutes"};
+  auto expected_tu_min = ::ERIN::TimeUnits::Minutes;
+  auto actual_tu_min = ::ERIN::tag_to_time_units(tag_for_minutes);
+  EXPECT_EQ(expected_tu_min, actual_tu_min);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_min), tag_for_minutes);
+  const std::string tag_for_hours{"hours"};
+  auto expected_tu_hrs = ::ERIN::TimeUnits::Hours;
+  auto actual_tu_hrs = ::ERIN::tag_to_time_units(tag_for_hours);
+  EXPECT_EQ(expected_tu_hrs, actual_tu_hrs);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_hrs), tag_for_hours);
+  const std::string tag_for_days{"days"};
+  auto expected_tu_days = ::ERIN::TimeUnits::Days;
+  auto actual_tu_days = ::ERIN::tag_to_time_units(tag_for_days);
+  EXPECT_EQ(expected_tu_days, actual_tu_days);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_days), tag_for_days);
+  const std::string tag_for_years{"years"};
+  auto expected_tu_years = ::ERIN::TimeUnits::Years;
+  auto actual_tu_years = ::ERIN::tag_to_time_units(tag_for_years);
+  EXPECT_EQ(expected_tu_years, actual_tu_years);
+  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_years), tag_for_years);
+}
+
+TEST(ErinBasicsTest, TestTimeUnitConversion)
+{
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Years),
+      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_year));
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Days),
+      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_day));
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Hours),
+      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_hour));
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Minutes),
+      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_minute));
+  EXPECT_EQ(
+      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Seconds),
+      1);
+}
 
 int
 main(int argc, char **argv)

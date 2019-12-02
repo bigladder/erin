@@ -7,6 +7,7 @@
 #include "erin/element.h"
 #include "erin/fragility.h"
 #include "erin/stream.h"
+#include "adevs.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -62,13 +63,13 @@ namespace ERIN
           const std::unordered_map<std::string, double>& intensities);
 
       virtual PortsAndElements add_to_network(
-          adevs::Digraph<FlowValueType>& nw,
+          adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const = 0;
 
     protected:
       void connect_source_to_sink(
-          adevs::Digraph<FlowValueType>& nw,
+          adevs::Digraph<FlowValueType, Time>& nw,
           FlowElement* source,
           FlowElement* sink,
           bool both_way) const;
@@ -102,7 +103,7 @@ namespace ERIN
             std::string,
             std::unique_ptr<erin::fragility::Curve>> fragilities);
       PortsAndElements add_to_network(
-          adevs::Digraph<FlowValueType>& nw,
+          adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
@@ -127,7 +128,7 @@ namespace ERIN
             std::unique_ptr<erin::fragility::Curve>> fragilities); 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
       PortsAndElements add_to_network(
-          adevs::Digraph<FlowValueType>& nw,
+          adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
   };

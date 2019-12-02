@@ -1,0 +1,81 @@
+############################################################
+# Simulation Information
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+max_time = 1000
+############################################################
+# Streams
+[streams.electricity]
+type = "electricity_medium_voltage"
+############################################################
+# Loads
+[loads.building_electrical]
+csv_file = "ex02.csv"
+############################################################
+# Components
+[components.electric_utility]
+type = "source"
+output_stream = "electricity"
+fragilities = ["highly_vulnerable_to_wind"]
+[components.cluster_01_electric]
+type = "load"
+input_stream = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+loads_by_scenario.class_4_hurricane = "building_electrical"
+[components.emergency_generator]
+type = "source"
+output_stream = "electricity"
+fragilities = ["somewhat_vulnerable_to_flooding"]
+[components.bus]
+type = "muxer"
+inputs = ["inflow_grid", "inflow_genset"]
+outputs = ["outflow"]
+# "input_order" control means that power requests are routed in order upstream
+# through the input ports in the order they are specified: "inflow_grid" would
+# be asked to provide power first. If there is any lack of power,
+# "inflow_genset" would be asked to make up the difference.
+control_type = "input_order"
+############################################################
+# Fragility Curves
+[fragility.somewhat_vulnerable_to_flooding]
+vulnerable_to = "inundation_depth_ft"
+type = "linear"
+lower_bound = 6.0
+upper_bound = 14.0
+[fragility.highly_vulnerable_to_wind]
+vulnerable_to = "wind_speed_mph"
+type = "linear"
+lower_bound = 80.0
+upper_bound = 160.0
+############################################################
+# Networks
+[networks.normal_operations]
+# array of 2 or 4 element tuples each array holds a connection.  a 2-tuple of
+# ["A","B"] is short-hand for: ["A","outflow","B","inflow"] where "A" is the id
+# for component 1 "B" is the id for component 2 and "outflow" is the output
+# port of "A" which is connected to "inflow", the input port of "B". Outflow
+# and inflow are defined as per normal flow direction.
+connections = [["electric_utility", "cluster_01_electric"]]
+[networks.emergency_operations]
+connections = [
+  ["electric_utility", "outflow", "bus", "inflow_grid"],
+  ["emergency_generator", "outflow", "bus", "inflow_genset"],
+  ["bus", "cluster_01_electric"]]
+############################################################
+# Scenarios
+[scenarios.blue_sky]
+time_units = "hours"
+occurrence_distribution = {type = "fixed", value = 0}
+duration = 8760
+max_occurrences = 1
+network = "normal_operations"
+[scenarios.class_4_hurricane]
+time_units = "hours"
+occurrence_distribution = {type = "fixed", value = 87600}
+duration = 336
+max_occurrences = -1
+network = "emergency_operations"
+intensity.wind_speed_mph = 156
+intensity.inundation_depth_ft = 8

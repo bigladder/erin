@@ -23,6 +23,7 @@ configure_file(
   "ex02.csv"
   COPYONLY)
 add_executable(${CMAKE_PROJECT_NAME}_tests ${test_sources})
+target_include_directories(${CMAKE_PROJECT_NAME}_tests PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 
 include(GoogleTest)
 gtest_discover_tests(${CMAKE_PROJECT_NAME}_tests)

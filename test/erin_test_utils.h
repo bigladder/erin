@@ -30,6 +30,24 @@ namespace erin_test_utils
   }
 
   template <class T>
+  void compare_maps_exact(
+    const std::unordered_map<std::string, T>& expected,
+    const std::unordered_map<std::string, T>& actual,
+    const std::string& tag)
+  {
+    EXPECT_EQ(expected.size(), actual.size());
+    for (const auto& e : expected) {
+      auto a_it = actual.find(e.first);
+      ASSERT_FALSE(a_it == actual.end());
+      auto a_val = a_it->second;
+      auto e_val = e.second;
+      EXPECT_EQ(e_val, a_val)
+        << "tag: " << tag << "; "
+        << "key: " << e.first;
+    }
+  }
+
+  template <class T>
   void compare_vectors(
       const std::vector<T>& expected,
       const std::vector<T>& actual)

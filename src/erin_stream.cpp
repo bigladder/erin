@@ -7,46 +7,46 @@
 
 namespace ERIN
 {
-  constexpr double seconds_per_hour{3600.0}; 
+  constexpr RealTimeType default_max_time_years{1000};
+  constexpr RealTimeType defalut_max_time_s =
+    default_max_time_years * static_cast<RealTimeType>(seconds_per_year);
 
   ////////////////////////////////////////////////////////////
-  // StreamInfo
-  StreamInfo::StreamInfo():
-    StreamInfo(std::string{"kW"}, std::string{"kJ"}, 1.0)
+  // SimulationInfo
+  SimulationInfo::SimulationInfo():
+    rate_unit{"kW"},
+    quantity_unit{"kJ"},
+    time_unit{TimeUnits::Seconds},
+    max_time{defalut_max_time_s}
   {
   }
 
-  StreamInfo::StreamInfo(
-      std::string rate_unit_,
-      std::string  quantity_unit_):
-    rate_unit{std::move(rate_unit_)},
-    quantity_unit{std::move(quantity_unit_)},
-    seconds_per_time_unit{1.0}
+  SimulationInfo::SimulationInfo(
+      const std::string& rate_unit_,
+      const std::string& quantity_unit_,
+      TimeUnits time_unit_,
+      RealTimeType max_time_):
+    rate_unit{rate_unit_},
+    quantity_unit{quantity_unit_},
+    time_unit{time_unit_},
+    max_time{max_time_}
   {
-    if ((rate_unit == "kW") && (quantity_unit == "kJ"))
-      seconds_per_time_unit = 1.0;
-    else if ((rate_unit == "kW") && (quantity_unit == "kWh"))
-      seconds_per_time_unit = seconds_per_hour;
-    else
-      throw std::invalid_argument("rate_unit and quantity_unit not compatible");
-  }
-  StreamInfo::StreamInfo(
-      std::string rate_unit_,
-      std::string quantity_unit_,
-      double seconds_per_time_unit_):
-    rate_unit{std::move(rate_unit_)},
-    quantity_unit{std::move(quantity_unit_)},
-    seconds_per_time_unit{seconds_per_time_unit_}
-  {
+    if (max_time <= 0.0) {
+      std::ostringstream oss;
+      oss << "max_time must be greater than 0.0";
+      throw std::invalid_argument(oss.str());
+    }
   }
 
   bool
-  StreamInfo::operator==(const StreamInfo& other) const
+  SimulationInfo::operator==(const SimulationInfo& other) const
   {
-    if (this == &other) return true;
+    if (this == &other) {
+      return true;
+    }
     return (rate_unit == other.rate_unit) &&
            (quantity_unit == other.quantity_unit) &&
-           (seconds_per_time_unit == other.seconds_per_time_unit);
+           (get_max_time_in_seconds() == other.get_max_time_in_seconds());
   }
 
   //////////////////////////////////////////////////////////// 

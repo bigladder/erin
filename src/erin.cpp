@@ -272,9 +272,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_comps.size() << " components found\n";
     }
-    std::unordered_map<
-      std::string,
-      std::unique_ptr<Component>> components{};
+    std::unordered_map<std::string, std::unique_ptr<Component>> components{};
     for (const auto& c: toml_comps) {
       toml::value t = c.second;
       toml::table tt = toml::get<toml::table>(t);

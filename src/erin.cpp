@@ -123,7 +123,10 @@ namespace ERIN
       if (it == tt.end()) {
         auto it2 = tt.find("csv_file");
         if (it2 == tt.end()) {
-          throw BadInputError();
+          std::ostringstream oss;
+          oss << "BadInputError: missing field \"csv_file\" in "
+              << "\"loads\" section for " << load_item.first << "\"";
+          throw std::runtime_error(oss.str());
         }
         auto csv_file = toml::get<std::string>(it2->second);
         the_loads = load_loads_from_csv(csv_file);
@@ -312,9 +315,10 @@ namespace ERIN
             std::make_pair(c.first, std::move(source_comp)));
       }
       else if (component_type == "load") {
+        const std::string key_loads_by_scenario{"loads_by_scenario"};
         std::unordered_map<std::string,std::vector<LoadItem>>
           loads_by_scenario{};
-        it = tt.find("load_profiles_by_scenario");
+        it = tt.find(key_loads_by_scenario);
         if (it != tt.end()) {
           const auto& loads = toml::get<toml::table>(it->second);
           if constexpr (debug_level >= debug_level_high) {
@@ -322,13 +326,18 @@ namespace ERIN
                       " for component " << c.first << "\n";
           }
           for (const auto& lp: loads) {
-            const std::string load_id{toml::get<toml::string>(lp.second)}; 
+            const std::string load_id{toml::get<toml::string>(lp.second)};
             auto the_loads_it = loads_by_id.find(load_id);
-            if (the_loads_it != loads_by_id.end())
+            if (the_loads_it != loads_by_id.end()) {
               loads_by_scenario.insert(
                   std::make_pair(lp.first, the_loads_it->second));
-            else
-              throw BadInputError();
+            }
+            else {
+              std::ostringstream oss;
+              oss << "Input File Error reading load: "
+                  << "could not find load_id = \"" << load_id << "\"";
+              throw std::runtime_error(oss.str());
+            }
           }
           if constexpr (debug_level >= debug_level_high) {
             std::cout << loads_by_scenario.size() << " scenarios with loads\n";
@@ -357,7 +366,11 @@ namespace ERIN
               std::make_pair(c.first, std::move(load_comp)));
         }
         else {
-          throw BadInputError();
+          std::ostringstream oss;
+          oss << "BadInputError: could not find \""
+              << key_loads_by_scenario
+              << "\" in component type \"load\"";
+          throw std::runtime_error(oss.str());
         }
       }
     }

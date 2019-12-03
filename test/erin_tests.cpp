@@ -493,8 +493,7 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
-        "[components.cluster_01_electric.load_profiles_by_scenario]\n"
-        "blue_sky = \"load1\"\n";
+        "loads_by_scenario.blue_sky = \"load1\"\n";
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair("electricity", ::ERIN::StreamType(
@@ -710,8 +709,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
-        "[components.cluster_01_electric.load_profiles_by_scenario]\n"
-        "blue_sky = \"building_electrical\"\n"
+        "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "############################################################\n"
         "[networks.normal_operations]\n"
         R"(connections=[["electric_utility", "cluster_01_electric"]])" "\n"
@@ -768,8 +766,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
-        "[components.cluster_01_electric.load_profiles_by_scenario]\n"
-        "blue_sky = \"building_electrical\"\n"
+        "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "############################################################\n"
         "[networks.normal_operations]\n"
         R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n"

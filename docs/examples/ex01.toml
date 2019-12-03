@@ -24,8 +24,7 @@ output_stream = "electricity"
 [components.cluster_01_electric]
 type = "load"
 input_stream = "electricity"
-[components.cluster_01_electric.load_profiles_by_scenario]
-blue_sky = "building_electrical"
+loads_by_scenario.blue_sky = "building_electrical"
 ############################################################
 [networks.normal_operations]
 # specify as and array of 2-tuples or 4-tuples.

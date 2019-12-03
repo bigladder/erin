@@ -373,6 +373,12 @@ namespace ERIN
           throw std::runtime_error(oss.str());
         }
       }
+      else {
+        std::ostringstream oss;
+        oss << "BadInputError: unhandled component type \""
+            << component_type << "\"";
+        throw std::runtime_error(oss.str());
+      }
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& c: components) {

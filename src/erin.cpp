@@ -424,29 +424,45 @@ namespace ERIN
         ::erin::port::Type comp_02_port;
         int comp_02_port_num;
         auto num_items = connect.size();
-        if (num_items == 2) {
-          comp_01_id = connect.at(0);
+        const int infer_outflow0_to_inflow0{2};
+        const int infer_port_numbers{4};
+        const int explicit_connection{6};
+        const int inferred_port_number{0};
+        if (num_items == infer_outflow0_to_inflow0) {
+          const int idx_comp_01_id{0};
+          const int idx_comp_02_id{1};
+          comp_01_id = connect.at(idx_comp_01_id);
           comp_01_port = ep::Type::Outflow;
-          comp_01_port_num = 0;
-          comp_02_id = connect.at(1);
+          comp_01_port_num = inferred_port_number;
+          comp_02_id = connect.at(idx_comp_02_id);
           comp_02_port = ep::Type::Inflow;
-          comp_02_port_num = 0;
+          comp_02_port_num = inferred_port_number;
         }
-        else if (num_items == 4) {
-          comp_01_id = connect.at(0);
-          comp_01_port = ::erin::port::tag_to_type(connect.at(1));
-          comp_01_port_num = 0;
-          comp_02_id = connect.at(2);
-          comp_02_port = ::erin::port::tag_to_type(connect.at(3));
-          comp_02_port_num = 0;
+        else if (num_items == infer_port_numbers) {
+          const int idx_comp_01_id{0};
+          const int idx_comp_01_port_type{1};
+          const int idx_comp_02_id{2};
+          const int idx_comp_02_port_type{3};
+          comp_01_id = connect.at(idx_comp_01_id);
+          comp_01_port = ::erin::port::tag_to_type(connect.at(idx_comp_01_port_type));
+          comp_01_port_num = inferred_port_number;
+          comp_02_id = connect.at(idx_comp_02_id);
+          comp_02_port = ::erin::port::tag_to_type(connect.at(idx_comp_02_port_type));
+          comp_02_port_num = inferred_port_number;
         }
-        else if (num_items == 6) {
-          comp_01_id = connect.at(0);
-          comp_01_port = ::erin::port::tag_to_type(connect.at(1));
-          comp_01_port_num = std::stoi(connect.at(2));
-          comp_02_id = connect.at(3);
-          comp_02_port = ::erin::port::tag_to_type(connect.at(4));
-          comp_02_port_num = std::stoi(connect.at(5));
+        else if (num_items == explicit_connection) {
+          const int idx_comp_01_id{0};
+          const int idx_comp_01_port_type{1};
+          const int idx_comp_01_port_num{2};
+          const int idx_comp_02_id{3};
+          const int idx_comp_02_port_type{4};
+          const int idx_comp_02_port_num{5};
+          comp_01_id = connect.at(idx_comp_01_id);
+          comp_01_port = ::erin::port::tag_to_type(connect.at(idx_comp_01_port_type));
+          comp_01_port_num = std::stoi(connect.at(idx_comp_01_port_num));
+          comp_02_id = connect.at(idx_comp_02_id);
+          comp_02_port = ::erin::port::tag_to_type(connect.at(idx_comp_02_port_type));
+          comp_02_port_num = std::stoi(connect.at(idx_comp_02_port_num));
         }
         else {
           std::ostringstream oss;
@@ -941,7 +957,9 @@ namespace ERIN
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
-    int max_no_advance = static_cast<int>(elements.size()) * 10;
+    const int max_no_advance_factor{10};
+    int max_no_advance =
+      static_cast<int>(elements.size()) * max_no_advance_factor;
     auto sim_good = run_devs(sim, duration, max_no_advance);
     std::unordered_map<std::string, std::vector<Datum>> results;
     std::unordered_map<std::string,ComponentType> comp_types;

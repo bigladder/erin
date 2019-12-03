@@ -57,8 +57,8 @@ main()
             elec,
             loads_by_scenario);
     nw.emplace_back(::erin::network::Connection{
-      ::erin::network::ComponentAndPort{source_id, ep::outflow},
-      ::erin::network::ComponentAndPort{load_id, ep::inflow}});
+      ::erin::network::ComponentAndPort{source_id, ep::Type::Outflow, 0},
+      ::erin::network::ComponentAndPort{load_id, ep::Type::Inflow, 0}});
   }
   std::unordered_map<std::string, decltype(nw)> networks{{net_id, nw}};
   std::cout << "construction completed!\n";

@@ -247,12 +247,15 @@ namespace ERIN
           std::vector<double>>> failure_probs_by_comp_id_by_scenario_id;
 
       void check_data() const;
-      bool run_devs(
-          adevs::Simulator<PortValue, Time>& sim,
-          const RealTimeType max_time,
-          const std::unordered_set<std::string>::size_type max_non_advance);
       void generate_failure_fragilities();
   };
+
+  ////////////////////////////////////////////////////////////
+  // Helper Functions
+  bool run_devs(
+      adevs::Simulator<PortValue, Time>& sim,
+      const RealTimeType max_time,
+      const int max_no_advance);
 }
 
 #endif // ERIN_ERIN_H

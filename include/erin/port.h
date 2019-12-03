@@ -9,6 +9,15 @@ namespace erin::port
 {
   const std::string outflow{"outflow"}; 
   const std::string inflow{"inflow"};
+
+  enum class Type
+  {
+    Inflow = 0,
+    Outflow
+  };
+
+  Type tag_to_type(const std::string& tag);
+  std::string type_to_tag(Type t);
 }
 
 #endif // ERIN_PORT_H

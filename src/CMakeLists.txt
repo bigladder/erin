@@ -17,6 +17,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_network.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_port.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_stream.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_type.cpp
 )

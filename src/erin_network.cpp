@@ -71,59 +71,80 @@ namespace erin::network
 
   ::ERIN::FlowElement*
   get_from_map(
-      const std::unordered_map<std::string, ::ERIN::FlowElement*>& map,
-      const std::string& id,
+      const std::unordered_map<
+        ::erin::port::Type, std::vector<::ERIN::FlowElement*>>& map,
+      const ::erin::port::Type& id,
       const std::string& map_name,
-      const std::string& id_name)
+      const std::string& id_name,
+      std::vector<::ERIN::FlowElement*>::size_type idx)
   {
+    if (idx < 0) {
+      throw std::invalid_argument("index must be >= 0");
+    }
     auto it = map.find(id);
     if (it == map.end()) {
       std::ostringstream oss;
-      oss << id_name << " \"" << id << "\" not found in " << map_name;
+      oss << id_name << " \"" << ::erin::port::type_to_tag(id)
+          << "\" not found in " << map_name;
       throw std::runtime_error(oss.str());
     }
-    return (*it).second;
+    const auto& xs = (*it).second;
+    auto xs_size = xs.size();
+    if (idx >= xs_size) {
+      std::ostringstream oss;
+      oss << "index greater than size of vector for element \""
+          << ::erin::port::type_to_tag(id) << "\"\n";
+      oss << "vector.size() = " << xs_size << "\n";
+      oss << "map_name = \"" << map_name << "\"\n";
+      oss << "id_name = \"" << id_name << "\"\n";
+      throw std::invalid_argument(oss.str());
+    }
+    return xs[idx];
   }
 
   void
   connect(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
-      const std::unordered_map<std::string, ::ERIN::FlowElement*>& port_map1,
-      const std::string& port1,
-      const std::unordered_map<std::string, ::ERIN::FlowElement*>& port_map2,
-      const std::string& port2)
+      const std::unordered_map<
+        ::erin::port::Type, std::vector<::ERIN::FlowElement*>>& port_map1,
+      const ::erin::port::Type& port1,
+      const int& port1_num,
+      const std::unordered_map<
+        ::erin::port::Type, std::vector<::ERIN::FlowElement*>>& port_map2,
+      const ::erin::port::Type& port2,
+      const int& port2_num)
   {
     namespace ep = ::erin::port;
-    if ((port1 == ep::outflow) && (port2 == ep::inflow)) {
-      auto source = get_from_map(port_map1, port1, "port_map1", "port1");
-      auto sink = get_from_map(port_map2, port2, "port_map2", "port2");
+    if ((port1 == ep::Type::Outflow) && (port2 == ep::Type::Inflow)) {
+      auto source = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
+      auto sink = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
       couple_source_to_sink(network, source, sink);
     }
-    else if ((port1 == ep::inflow) && (port2 == ep::outflow)) {
-      auto source = get_from_map(port_map2, port2, "port_map2", "port2");
-      auto sink = get_from_map(port_map1, port1, "port_map1", "port1");
+    else if ((port1 == ep::Type::Inflow) && (port2 == ep::Type::Outflow)) {
+      auto source = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
+      auto sink = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
       couple_source_to_sink(network, source, sink);
     }
     else {
       std::ostringstream oss;
       oss << "unhandled port combination:\n";
-      oss << "port1 = " << port1 << "\n";
-      oss << "port2 = " << port2 << "\n";
+      oss << "port1 = " << ::erin::port::type_to_tag(port1) << "\n";
+      oss << "port2 = " << ::erin::port::type_to_tag(port2) << "\n";
       oss << "available port1:";
       for (const auto pair: port_map1) {
-        oss << ", " << pair.first;
+        oss << ", " << ::erin::port::type_to_tag(pair.first);
       }
       oss << "\n";
       oss << "available port2:";
       for (const auto pair: port_map2) {
-        oss << ", " << pair.first;
+        oss << ", " << ::erin::port::type_to_tag(pair.first);
       }
       oss << "\n";
       throw std::invalid_argument(oss.str());
     }
   }
 
-  std::unordered_set<::ERIN::FlowElement*>
+  std::vector<::ERIN::FlowElement*>
   build(
       const std::string& scenario_id,
       adevs::Digraph<ERIN::FlowValueType, ::ERIN::Time>& network,
@@ -138,9 +159,11 @@ namespace erin::network
     std::unordered_map<std::string, ::ERIN::PortsAndElements> pes;
     for (const auto connection: connections) {
       auto comp1_id = connection.first.component_id;
-      auto port1_id = connection.first.port_id;
+      auto port1_type = connection.first.port_type;
+      auto port1_num = connection.first.port_number;
       auto comp2_id = connection.second.component_id;
-      auto port2_id = connection.second.port_id;
+      auto port2_type = connection.second.port_type;
+      auto port2_num = connection.second.port_number;
       add_if_not_added(
           comp1_id, scenario_id, components, network, comps_added, pes,
           failure_probs_by_comp_id);
@@ -150,9 +173,11 @@ namespace erin::network
       connect(
           network,
           pes.at(comp1_id).port_map,
-          port1_id,
+          port1_type,
+          port1_num,
           pes.at(comp2_id).port_map,
-          port2_id);
+          port2_type,
+          port2_num);
     }
     for (const auto& pair: pes) {
       auto& es = pair.second.elements_added;
@@ -160,6 +185,6 @@ namespace erin::network
         elements.emplace(e);
       }
     }
-    return elements;
+    return std::vector<::ERIN::FlowElement*>(elements.begin(), elements.end());
   }
 }

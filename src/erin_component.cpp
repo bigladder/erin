@@ -137,8 +137,9 @@ namespace ERIN
     auto the_id = get_id();
     auto in_strm = get_input_stream();
     auto lbs = loads_by_scenario;
+    auto fcs = clone_fragility_curves();
     std::unique_ptr<Component> p =
-      std::make_unique<LoadComponent>(the_id, in_strm, lbs);
+      std::make_unique<LoadComponent>(the_id, in_strm, lbs, std::move(fcs));
     return p;
   }
 
@@ -150,10 +151,9 @@ namespace ERIN
   {
     namespace ep = ::erin::port;
     std::unordered_set<FlowElement*> elements;
-    std::unordered_map<std::string, FlowElement*> ports;
+    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports;
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "LoadComponent::add_to_network("
-                   "adevs::Digraph<FlowValueType>& network)\n";
+      std::cout << "LoadComponent::add_to_network(...)\n";
     }
     auto the_id = get_id();
     auto stream = get_input_stream();
@@ -173,10 +173,10 @@ namespace ERIN
       auto lim = new FlowLimits(the_id, ComponentType::Source, stream, 0.0, 0.0);
       elements.emplace(lim);
       connect_source_to_sink(network, lim, meter, true);
-      ports[ep::inflow] = lim;
+      ports[ep::Type::Inflow] = std::vector<FlowElement*>{lim};
     }
     else {
-      ports[ep::inflow] = meter;
+      ports[ep::Type::Inflow] = std::vector<FlowElement*>{meter};
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network(...) exit\n";
@@ -189,7 +189,25 @@ namespace ERIN
   SourceComponent::SourceComponent(
       const std::string& id_,
       const StreamType& output_stream_):
-    Component(id_, ComponentType::Source, output_stream_, output_stream_)
+    SourceComponent(id_, output_stream_, {}, Limits{false,0.0,0.0})
+  {
+  }
+
+  SourceComponent::SourceComponent(
+      const std::string& id_,
+      const StreamType& output_stream_,
+      const FlowValueType max_output_,
+      const FlowValueType min_output_):
+    SourceComponent(
+        id_, output_stream_, {}, Limits{true,min_output_,max_output_})
+  {
+  }
+
+  SourceComponent::SourceComponent(
+      const std::string& id_,
+      const StreamType& output_stream_,
+      const Limits& limits_):
+    SourceComponent(id_, output_stream_, {}, limits_)
   {
   }
 
@@ -198,12 +216,39 @@ namespace ERIN
       const StreamType& output_stream_,
       std::unordered_map<std::string,std::unique_ptr<::erin::fragility::Curve>>
         fragilities_):
+    SourceComponent(
+        id_, output_stream_, std::move(fragilities_), Limits{false,0.0,0.0})
+  {
+  }
+
+  SourceComponent::SourceComponent(
+      const std::string& id_,
+      const StreamType& output_stream_,
+      std::unordered_map<
+        std::string,
+        std::unique_ptr<erin::fragility::Curve>> fragilities_,
+      const FlowValueType max_output_,
+      const FlowValueType min_output_): 
+    SourceComponent(
+        id_, output_stream_, std::move(fragilities_),
+        Limits{true, min_output_, max_output_})
+  {
+  }
+
+  SourceComponent::SourceComponent(
+      const std::string& id_,
+      const StreamType& output_stream_,
+      std::unordered_map<
+        std::string,
+        std::unique_ptr<erin::fragility::Curve>> fragilities_,
+      const Limits& limits_):
     Component(
         id_,
         ComponentType::Source,
         output_stream_,
         output_stream_,
-        std::move(fragilities_))
+        std::move(fragilities_)),
+    limits{limits_}
   {
   }
 
@@ -215,7 +260,7 @@ namespace ERIN
     auto frags = clone_fragility_curves();
     std::unique_ptr<Component> p =
       std::make_unique<SourceComponent>(
-          the_id, out_strm, std::move(frags));
+          the_id, out_strm, std::move(frags), limits);
     return p;
   }
 
@@ -226,7 +271,7 @@ namespace ERIN
       bool is_failed) const
   {
     namespace ep = ::erin::port;
-    std::unordered_map<std::string, FlowElement*> ports;
+    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports;
     std::unordered_set<FlowElement*> elements;
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network("
@@ -236,15 +281,90 @@ namespace ERIN
     auto stream = get_output_stream();
     auto meter = new FlowMeter(the_id, ComponentType::Source, stream);
     elements.emplace(meter);
-    if (is_failed) {
-      auto lim = new FlowLimits(the_id, ComponentType::Source, stream, 0.0, 0.0);
+    if (is_failed || limits.is_limited) {
+      auto min_output = limits.minimum;
+      auto max_output = limits.maximum;
+      if (is_failed) {
+        min_output = 0.0;
+        max_output = 0.0;
+      }
+      auto lim = new FlowLimits(
+          the_id, ComponentType::Source, stream, min_output, max_output);
       elements.emplace(lim);
       connect_source_to_sink(network, lim, meter, true);
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit\n";
     }
-    ports[ep::outflow] = meter;
+    ports[ep::Type::Outflow] = std::vector<FlowElement*>{meter};
+    return PortsAndElements{ports, elements};
+  }
+
+  ////////////////////////////////////////////////////////////
+  // MuxerComponent
+  MuxerComponent::MuxerComponent(
+      const std::string& id_,
+      const StreamType& stream_,
+      const std::vector<std::string>& input_ports_,
+      const std::vector<std::string>& output_ports_,
+      const MuxerDispatchStrategy strategy_):
+    MuxerComponent(id_, stream_, input_ports, output_ports_, {}, strategy_)
+  {
+  }
+
+  MuxerComponent::MuxerComponent(
+      const std::string& id_,
+      const StreamType& stream_,
+      const std::vector<std::string>& input_ports_,
+      const std::vector<std::string>& output_ports_,
+      std::unordered_map<
+        std::string,
+        std::unique_ptr<erin::fragility::Curve>> fragilities_,
+      const MuxerDispatchStrategy strategy_):
+    Component(
+        id_,
+        ComponentType::Muxer,
+        stream_,
+        stream_,
+        std::move(fragilities_)),
+    input_ports{input_ports_},
+    output_ports{output_ports_},
+    strategy{strategy_}
+  {
+  }
+
+  std::unique_ptr<Component>
+  MuxerComponent::clone() const
+  {
+    auto the_id = get_id();
+    auto the_stream = get_input_stream();
+    auto the_fcs = clone_fragility_curves();
+    std::unique_ptr<Component> p =
+      std::make_unique<MuxerComponent>(
+          the_id,
+          the_stream,
+          input_ports,
+          output_ports,
+          std::move(the_fcs),
+          strategy);
+    return p;
+  }
+
+  PortsAndElements
+  MuxerComponent::add_to_network(
+      adevs::Digraph<FlowValueType, Time>& nw,
+      const std::string& active_scenario,
+      bool is_failed) const
+  {
+    namespace ep = ::erin::port;
+    std::unordered_set<FlowElement*> elements;
+    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports;
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "MuxerComponent::add_to_network(...)\n";
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "MuxerComponent::add_to_network(...) exit\n";
+    }
     return PortsAndElements{ports, elements};
   }
 }

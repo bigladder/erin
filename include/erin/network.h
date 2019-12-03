@@ -6,6 +6,7 @@
 #include "adevs.h"
 #include "erin/component.h"
 #include "erin/element.h"
+#include "erin/port.h"
 #include "erin/type.h"
 #include <memory>
 #include <string>
@@ -17,7 +18,8 @@ namespace erin::network
   struct ComponentAndPort
   {
     std::string component_id;
-    std::string port_id;
+    ::erin::port::Type port_type;
+    int port_number;
   };
 
   struct Connection
@@ -40,22 +42,30 @@ namespace erin::network
 
   void couple_source_to_sink(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
-      ERIN::FlowElement* src, ERIN::FlowElement* sink, bool two_way = true);
+      ERIN::FlowElement* src,
+      ERIN::FlowElement* sink,
+      bool two_way = true);
 
   ::ERIN::FlowElement* get_from_map(
-      const std::unordered_map<std::string, ::ERIN::FlowElement*>& map,
-      const std::string& id,
+      const std::unordered_map<
+        ::erin::port::Type, std::vector<::ERIN::FlowElement*>>& map,
+      const ::erin::port::Type& id,
       const std::string& map_name,
-      const std::string& id_name);
+      const std::string& id_name,
+      std::vector<::ERIN::FlowElement*>::size_type idx=0);
 
   void connect(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
-      const std::unordered_map<std::string, ERIN::FlowElement*>& port_map1,
-      const std::string& port1,
-      const std::unordered_map<std::string, ERIN::FlowElement*>& port_map2,
-      const std::string& port2);
+      const std::unordered_map<
+        ::erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map1,
+      const ::erin::port::Type& port1,
+      const int& port1_num,
+      const std::unordered_map<
+        ::erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map2,
+      const ::erin::port::Type& port2,
+      const int& port2_num);
 
-  std::unordered_set<ERIN::FlowElement*> build(
+  std::vector<ERIN::FlowElement*> build(
       const std::string& scenario_id,
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       const std::vector<Connection>& connections,

@@ -305,6 +305,8 @@ namespace ERIN
         std::cout << "comp: " << c.first << ".output_stream_id = "
                   << output_stream_id << "\n";
       }
+      // TODO: split into separate reader methods:
+      // `read_source_component`, `read_load_component`, `read_muxer_component`, etc.
       if (component_type == "source") {
         std::unique_ptr<Component> source_comp =
           std::make_unique<SourceComponent>(
@@ -371,6 +373,9 @@ namespace ERIN
           throw std::runtime_error(oss.str());
         }
       }
+      else if (component_type == "muxer") {
+        // TODO: implement
+      }
       else {
         std::ostringstream oss;
         oss << "BadInputError: unhandled component type \""
@@ -413,21 +418,35 @@ namespace ERIN
       int item_num{0};
       for (const auto& connect: raw_connects) {
         std::string comp_01_id;
-        std::string comp_01_port;
+        ::erin::port::Type comp_01_port;
+        int comp_01_port_num;
         std::string comp_02_id;
-        std::string comp_02_port;
+        ::erin::port::Type comp_02_port;
+        int comp_02_port_num;
         auto num_items = connect.size();
         if (num_items == 2) {
           comp_01_id = connect.at(0);
-          comp_01_port = ep::outflow;
+          comp_01_port = ep::Type::Outflow;
+          comp_01_port_num = 0;
           comp_02_id = connect.at(1);
-          comp_02_port = ep::inflow;
+          comp_02_port = ep::Type::Inflow;
+          comp_02_port_num = 0;
         }
         else if (num_items == 4) {
           comp_01_id = connect.at(0);
-          comp_01_port = connect.at(1);
+          comp_01_port = ::erin::port::tag_to_type(connect.at(1));
+          comp_01_port_num = 0;
           comp_02_id = connect.at(2);
-          comp_02_port = connect.at(3);
+          comp_02_port = ::erin::port::tag_to_type(connect.at(3));
+          comp_02_port_num = 0;
+        }
+        else if (num_items == 6) {
+          comp_01_id = connect.at(0);
+          comp_01_port = ::erin::port::tag_to_type(connect.at(1));
+          comp_01_port_num = std::stoi(connect.at(2));
+          comp_02_id = connect.at(3);
+          comp_02_port = ::erin::port::tag_to_type(connect.at(4));
+          comp_02_port_num = std::stoi(connect.at(5));
         }
         else {
           std::ostringstream oss;
@@ -438,8 +457,10 @@ namespace ERIN
         }
         nw_list.emplace_back(
             enw::Connection{
-              enw::ComponentAndPort{comp_01_id, comp_01_port},
-              enw::ComponentAndPort{comp_02_id, comp_02_port}});
+              enw::ComponentAndPort{
+                comp_01_id, comp_01_port, comp_01_port_num},
+              enw::ComponentAndPort{
+                comp_02_id, comp_02_port, comp_02_port_num}});
         ++item_num;
       }
       networks.insert(std::make_pair(n.first, nw_list));
@@ -450,9 +471,13 @@ namespace ERIN
         for (const auto& connection: nw.second) {
           std::cout << "\tedge: ("
                     << connection.first.component_id
-                    << "[" << connection.first.port_id << "] <==> "
+                    << "["
+                    << ::erin::port::type_to_tag(connection.first.port_type)
+                    << "] <==> "
                     << connection.second.component_id
-                    << "[" << connection.second.port_id << "])\n";
+                    << "["
+                    << ::erin::port::type_to_tag(connection.second.port_type)
+                    << "])\n";
         }
       }
     }
@@ -916,12 +941,14 @@ namespace ERIN
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
-    const auto max_non_advance{elements.size() * 10};
-    auto sim_good = run_devs(sim, duration, max_non_advance);
-    // 3. Return outputs.
+    int max_no_advance = static_cast<int>(elements.size()) * 10;
+    auto sim_good = run_devs(sim, duration, max_no_advance);
     std::unordered_map<std::string, std::vector<Datum>> results;
     std::unordered_map<std::string,ComponentType> comp_types;
     std::unordered_map<std::string,StreamType> stream_types;
+    if (!sim_good) {
+      return ScenarioResults{sim_good, results, stream_types, comp_types};
+    }
     for (const auto& e: elements) {
       auto vals = e->get_results(duration);
       if (!vals.empty()) {
@@ -949,37 +976,6 @@ namespace ERIN
     return ScenarioResults{sim_good, results, stream_types, comp_types};
   }
 
-  bool
-  Main::run_devs(
-      adevs::Simulator<PortValue, Time>& sim,
-      const RealTimeType max_time,
-      const std::unordered_set<std::string>::size_type max_non_advance)
-  {
-    bool sim_good{true};
-    std::unordered_set<std::string>::size_type non_advance_count{0};
-    for (
-        auto t = sim.now(), t_next = sim.next_event_time();
-        ((t_next < inf) && (t_next.real <= max_time));
-        sim.exec_next_event(), t = t_next, t_next = sim.next_event_time()) {
-      if (t_next.real == t.real) {
-        ++non_advance_count;
-      }
-      else {
-        non_advance_count = 0;
-      }
-      if (non_advance_count >= max_non_advance) {
-        sim_good = false;
-        break;
-      }
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "The current time is:\n";
-        std::cout << "... real   : " << t.real << "\n";
-        std::cout << "... logical: " << t.logical << "\n";
-      }
-    }
-    return sim_good;
-  }
-
   AllResults
   Main::run_all(RealTimeType sim_max_time)
   {
@@ -1001,8 +997,8 @@ namespace ERIN
       copies.emplace_back(p);
     }
     // 3. run the simulation
-    const auto max_non_advance{10};
-    const auto sim_good = run_devs(sim, sim_max_time, max_non_advance);
+    const int max_no_advance{10};
+    const auto sim_good = run_devs(sim, sim_max_time, max_no_advance);
     // 4. pull results into one map
     for (const auto s: copies) {
       out[s->get_name()] = s->get_results();
@@ -1132,5 +1128,38 @@ namespace ERIN
     // out to an aggregator on each transition, probably best just for each
     // scenario to track its local state and report back after simulation
     // finishes.
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Helper Functions
+  bool
+  run_devs(
+      adevs::Simulator<PortValue, Time>& sim,
+      const RealTimeType max_time,
+      const int max_no_advance)
+  {
+    bool sim_good{true};
+    int non_advance_count{0};
+    for (
+        auto t = sim.now(), t_next = sim.next_event_time();
+        ((t_next < inf) && (t_next.real <= max_time));
+        sim.exec_next_event(), t = t_next, t_next = sim.next_event_time()) {
+      if (t_next.real == t.real) {
+        ++non_advance_count;
+      }
+      else {
+        non_advance_count = 0;
+      }
+      if (non_advance_count >= max_no_advance) {
+        sim_good = false;
+        break;
+      }
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "The current time is:\n";
+        std::cout << "... real   : " << t.real << "\n";
+        std::cout << "... logical: " << t.logical << "\n";
+      }
+    }
+    return sim_good;
   }
 }

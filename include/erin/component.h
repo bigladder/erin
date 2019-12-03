@@ -6,6 +6,7 @@
 #include "erin/type.h"
 #include "erin/element.h"
 #include "erin/fragility.h"
+#include "erin/port.h"
 #include "erin/stream.h"
 #include "adevs.h"
 #include <memory>
@@ -21,7 +22,7 @@ namespace ERIN
    */
   struct PortsAndElements
   {
-    std::unordered_map<std::string, FlowElement*> port_map;
+    std::unordered_map<::erin::port::Type, std::vector<FlowElement*>> port_map;
     std::unordered_set<FlowElement*> elements_added;
   };
 
@@ -113,6 +114,15 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
+  // Limits
+  struct Limits
+  {
+    bool is_limited;
+    FlowValueType minimum;
+    FlowValueType maximum;
+  };
+
+  ////////////////////////////////////////////////////////////
   // SourceComponent
   class SourceComponent : public Component
   {
@@ -123,14 +133,82 @@ namespace ERIN
       SourceComponent(
           const std::string& id,
           const StreamType& output_stream,
+          const FlowValueType max_output,
+          const FlowValueType min_output = 0.0);
+      SourceComponent(
+          const std::string& id,
+          const StreamType& output_stream,
+          const Limits& limits);
+      SourceComponent(
+          const std::string& id,
+          const StreamType& output_stream,
           std::unordered_map<
             std::string,
-            std::unique_ptr<erin::fragility::Curve>> fragilities); 
+            std::unique_ptr<erin::fragility::Curve>> fragilities);
+      SourceComponent(
+          const std::string& id,
+          const StreamType& output_stream,
+          std::unordered_map<
+            std::string,
+            std::unique_ptr<erin::fragility::Curve>> fragilities,
+          const FlowValueType max_output,
+          const FlowValueType min_output = 0.0);
+      SourceComponent(
+          const std::string& id,
+          const StreamType& output_stream,
+          std::unordered_map<
+            std::string,
+            std::unique_ptr<erin::fragility::Curve>> fragilities,
+          const Limits& limits);
+
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
+
+    private:
+      Limits limits;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // MuxerDispatchStrategy
+  enum class MuxerDispatchStrategy
+  {
+    InOrder = 0
+  };
+
+  ////////////////////////////////////////////////////////////
+  // MuxerComponent
+  class MuxerComponent : public Component
+  {
+    public:
+      MuxerComponent(
+          const std::string& id,
+          const StreamType& stream,
+          const std::vector<std::string>& input_ports,
+          const std::vector<std::string>& output_ports,
+          const MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
+      MuxerComponent(
+          const std::string& id,
+          const StreamType& stream,
+          const std::vector<std::string>& input_ports,
+          const std::vector<std::string>& output_ports,
+          std::unordered_map<
+            std::string,
+            std::unique_ptr<erin::fragility::Curve>> fragilities,
+          const MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
+
+      [[nodiscard]] std::unique_ptr<Component> clone() const override;
+      PortsAndElements add_to_network(
+          adevs::Digraph<FlowValueType, Time>& nw,
+          const std::string& active_scenario,
+          bool is_failed = false) const override;
+
+    private:
+      std::vector<std::string> input_ports;
+      std::vector<std::string> output_ports;
+      MuxerDispatchStrategy strategy;
   };
 }
 

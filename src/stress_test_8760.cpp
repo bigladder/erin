@@ -53,8 +53,8 @@ main()
     networks{
       { net_id,
         {
-          { { source_id, ep::outflow},
-            { load_id, ep::inflow}}}}};
+          { { source_id, ep::Type::Outflow, 0},
+            { load_id, ep::Type::Inflow, 0}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{};
   scenarios.emplace(
       std::make_pair(

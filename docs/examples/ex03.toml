@@ -30,13 +30,18 @@ output_stream = "electricity"
 fragilities = ["somewhat_vulnerable_to_flooding"]
 [components.bus]
 type = "muxer"
+stream = "electricity"
 inputs = ["inflow_grid", "inflow_genset"]
 outputs = ["outflow"]
-# "input_order" control means that power requests are routed in order upstream
-# through the input ports in the order they are specified: "inflow_grid" would
-# be asked to provide power first. If there is any lack of power,
-# "inflow_genset" would be asked to make up the difference.
-control_type = "input_order"
+# An "in_order" dispatch strategy means that power requests are routed in order
+# upstream through the input ports in the order they are specified. That is,
+# "inflow_grid" would be asked to provide power first. If there is any lack of
+# power, "inflow_genset" would be asked to make up the difference. Note: on
+# the output side, if more than one output, outputs are handled differently in
+# that power shortages are always spread evenly across all outputs. Explicit
+# switches or changes in load requests are used to drop loads (or simulate
+# their dropping).
+dispatch_strategy = "in_order"
 ############################################################
 # Fragility Curves
 [fragility.somewhat_vulnerable_to_flooding]

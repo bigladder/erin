@@ -74,6 +74,13 @@ namespace ERIN
           FlowElement* source,
           FlowElement* sink,
           bool both_way) const;
+      void connect_source_to_sink_with_ports(
+          adevs::Digraph<FlowValueType, Time>& nw,
+          FlowElement* source,
+          int source_port,
+          FlowElement* sink,
+          int sink_port,
+          bool both_way) const;
 
     private:
       std::string id;
@@ -179,18 +186,21 @@ namespace ERIN
       MuxerComponent(
           const std::string& id,
           const StreamType& stream,
-          const std::vector<std::string>& input_ports,
-          const std::vector<std::string>& output_ports,
+          const int num_inflows,
+          const int num_outflows,
           const MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
       MuxerComponent(
           const std::string& id,
           const StreamType& stream,
-          const std::vector<std::string>& input_ports,
-          const std::vector<std::string>& output_ports,
+          const int num_inflows,
+          const int num_outflows,
           std::unordered_map<
             std::string,
             std::unique_ptr<erin::fragility::Curve>> fragilities,
           const MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
+
+      [[nodiscard]] int get_num_inflows() const { return num_inflows; }
+      [[nodiscard]] int get_num_outflows() const { return num_outflows; }
 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
       PortsAndElements add_to_network(
@@ -199,8 +209,8 @@ namespace ERIN
           bool is_failed = false) const override;
 
     private:
-      std::vector<std::string> input_ports;
-      std::vector<std::string> output_ports;
+      int num_inflows;
+      int num_outflows;
       MuxerDispatchStrategy strategy;
   };
 }

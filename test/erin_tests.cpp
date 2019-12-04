@@ -1384,17 +1384,15 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   const std::string muxer_id{"bus"};
   const std::string l1_id{"l1"};
   const std::string l2_id{"l2"};
-  const std::vector<std::string> inputs{s1_id, s2_id};
-  const std::vector<std::string> outputs{l1_id, l2_id};
-  const auto num_inputs{inputs.size()};
-  const auto num_outputs{outputs.size()};
+  const int num_inflows{2};
+  const int num_outflows{2};
   const ::ERIN::MuxerDispatchStrategy strategy =
     ::ERIN::MuxerDispatchStrategy::InOrder;
   const auto stream = ::ERIN::StreamType{"electrical"};
   const std::string scenario_id{"blue_sky"};
   std::unique_ptr<::ERIN::Component> m =
     std::make_unique<::ERIN::MuxerComponent>(
-        muxer_id, stream, inputs, outputs, strategy);
+        muxer_id, stream, num_inflows, num_outflows, strategy);
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     l1_loads_by_scenario{
       { scenario_id,
@@ -1439,18 +1437,16 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     {{l1_id, ep::Type::Inflow, 0}, {muxer_id, ep::Type::Outflow, 0}},
     {{l2_id, ep::Type::Inflow, 0}, {muxer_id, ep::Type::Outflow, 1}},
     {{muxer_id, ep::Type::Inflow, 0}, {s1_id, ep::Type::Outflow, 0}},
-    {{muxer_id, ep::Type::Inflow, 1}, {s2_id, ep::Type::Outflow, 1}}};
-  if (false) {
-    auto elements = enw::build(
-        scenario_id, network, connections, components, {});
-    adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
-    network.add(&sim);
-    const ::ERIN::RealTimeType duration{10};
-    const int max_no_advance{static_cast<int>(elements.size()) * 10};
-    auto is_good = ::ERIN::run_devs(sim, duration, max_no_advance);
-    EXPECT_TRUE(is_good);
-    // TODO: pull out processing info over sim results elements
-  }
+    {{muxer_id, ep::Type::Inflow, 1}, {s2_id, ep::Type::Outflow, 0}}};
+  auto elements = enw::build(
+      scenario_id, network, connections, components, {});
+  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
+  network.add(&sim);
+  const ::ERIN::RealTimeType duration{10};
+  const int max_no_advance{static_cast<int>(elements.size()) * 10};
+  auto is_good = ::ERIN::run_devs(sim, duration, max_no_advance);
+  EXPECT_TRUE(is_good);
+  // TODO: pull out processing info over sim results elements
 }
 
 int

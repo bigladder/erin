@@ -86,6 +86,18 @@ namespace ERIN
       FlowElement* sink,
       bool both_way) const
   {
+    connect_source_to_sink_with_ports(network, source, 0, sink, 0, both_way);
+  }
+
+  void
+  Component::connect_source_to_sink_with_ports(
+      adevs::Digraph<FlowValueType, Time>& network,
+      FlowElement* source,
+      int source_port,
+      FlowElement* sink,
+      int sink_port,
+      bool both_way) const
+  {
     auto src_out = source->get_outflow_type();
     auto sink_in = sink->get_inflow_type();
     if (src_out != sink_in) {
@@ -98,12 +110,12 @@ namespace ERIN
       throw std::runtime_error(oss.str());
     }
     network.couple(
-        sink, FlowMeter::outport_inflow_request,
-        source, FlowMeter::inport_outflow_request);
+        sink, FlowMeter::outport_inflow_request + sink_port,
+        source, FlowMeter::inport_outflow_request + source_port);
     if (both_way) {
       network.couple(
-          source, FlowMeter::outport_outflow_achieved,
-          sink, FlowMeter::inport_inflow_achieved);
+          source, FlowMeter::outport_outflow_achieved + source_port,
+          sink, FlowMeter::inport_inflow_achieved + sink_port);
     }
   }
 
@@ -305,18 +317,18 @@ namespace ERIN
   MuxerComponent::MuxerComponent(
       const std::string& id_,
       const StreamType& stream_,
-      const std::vector<std::string>& input_ports_,
-      const std::vector<std::string>& output_ports_,
+      const int num_inflows_,
+      const int num_outflows_,
       const MuxerDispatchStrategy strategy_):
-    MuxerComponent(id_, stream_, input_ports_, output_ports_, {}, strategy_)
+    MuxerComponent(id_, stream_, num_inflows_, num_outflows_, {}, strategy_)
   {
   }
 
   MuxerComponent::MuxerComponent(
       const std::string& id_,
       const StreamType& stream_,
-      const std::vector<std::string>& input_ports_,
-      const std::vector<std::string>& output_ports_,
+      const int num_inflows_,
+      const int num_outflows_,
       std::unordered_map<
         std::string,
         std::unique_ptr<erin::fragility::Curve>> fragilities_,
@@ -327,10 +339,26 @@ namespace ERIN
         stream_,
         stream_,
         std::move(fragilities_)),
-    input_ports{input_ports_},
-    output_ports{output_ports_},
+    num_inflows{num_inflows_},
+    num_outflows{num_outflows_},
     strategy{strategy_}
   {
+    const int min_ports{1};
+    const int max_ports{FlowElement::max_port_numbers};
+    if ((num_inflows < min_ports) || (num_inflows > max_ports)) {
+      std::ostringstream oss;
+      oss << "num_inflows must be >= " << min_ports
+          << " and <= " << max_ports << "; num_inflows="
+          << num_inflows << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if ((num_outflows < min_ports) || (num_outflows > max_ports)) {
+      std::ostringstream oss;
+      oss << "num_outflows must be >= " << min_ports
+          << " and <= " << max_ports << "; num_outflows="
+          << num_outflows << "\n";
+      throw std::invalid_argument(oss.str());
+    }
   }
 
   std::unique_ptr<Component>
@@ -343,8 +371,8 @@ namespace ERIN
       std::make_unique<MuxerComponent>(
           the_id,
           the_stream,
-          input_ports,
-          output_ports,
+          num_inflows,
+          num_outflows,
           std::move(the_fcs),
           strategy);
     return p;
@@ -353,7 +381,7 @@ namespace ERIN
   PortsAndElements
   MuxerComponent::add_to_network(
       adevs::Digraph<FlowValueType, Time>& nw,
-      const std::string& active_scenario,
+      const std::string&, // active_scenario
       bool is_failed) const
   {
     namespace ep = ::erin::port;
@@ -362,6 +390,55 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MuxerComponent::add_to_network(...)\n";
     }
+    auto the_id = get_id();
+    auto the_stream = get_input_stream();
+    FlowElement* mux = nullptr;
+    if (!is_failed) {
+      mux = new Mux(
+          the_id,
+          ComponentType::Muxer,
+          the_stream,
+          num_inflows,
+          num_outflows,
+          strategy);
+      elements.emplace(mux);
+    }
+    std::vector<FlowElement*> inflow_meters(num_inflows, nullptr);
+    std::vector<FlowElement*> outflow_meters(num_outflows, nullptr);
+    for (int i{0}; i < num_inflows; ++i) {
+      std::ostringstream oss;
+      oss << the_id << "-inflow(" << i << ")";
+      auto m = new FlowMeter(oss.str(), ComponentType::Muxer, the_stream);
+      inflow_meters[i] = m;
+      elements.emplace(m);
+      if (is_failed) {
+        auto lim = new FlowLimits(
+            the_id, ComponentType::Muxer, the_stream, 0.0, 0.0);
+        elements.emplace(lim);
+        connect_source_to_sink(nw, m, lim, true);
+      }
+      else {
+        connect_source_to_sink_with_ports(nw, m, 0, mux, i, true);
+      }
+    }
+    for (int i{0}; i < num_outflows; ++i) {
+      std::ostringstream oss;
+      oss << the_id << "-outflow(" << i << ")";
+      auto m = new FlowMeter(oss.str(), ComponentType::Muxer, the_stream);
+      outflow_meters[i] = m;
+      elements.emplace(m);
+      if (is_failed) {
+        auto lim = new FlowLimits(
+            the_id, ComponentType::Muxer, the_stream, 0.0, 0.0);
+        elements.emplace(lim);
+        connect_source_to_sink(nw, lim, m, true);
+      }
+      else {
+        connect_source_to_sink_with_ports(nw, mux, i, m, 0, true);
+      }
+    }
+    ports[ep::Type::Inflow] = inflow_meters;
+    ports[ep::Type::Outflow] = outflow_meters;
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MuxerComponent::add_to_network(...) exit\n";
     }

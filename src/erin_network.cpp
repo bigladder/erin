@@ -97,6 +97,7 @@ namespace erin::network
       oss << "vector.size() = " << xs_size << "\n";
       oss << "map_name = \"" << map_name << "\"\n";
       oss << "id_name = \"" << id_name << "\"\n";
+      oss << "idx = " << idx << "\n";
       throw std::invalid_argument(oss.str());
     }
     return xs[idx];

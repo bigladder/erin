@@ -667,11 +667,13 @@ namespace ERIN
     bool inflow_provided{false};
     bool outflow_provided{false};
     FlowValueType inflow_achieved{0};
-    std::set<int> inflow_ports_received;
-    std::set<int> outflow_ports_received;
+    int highest_inflow_port_received{-1};
+    int highest_outflow_port_received{-1};
     FlowValueType outflow_request{0};
     std::vector<FlowValueType> inflows_achieved(num_inflows, 0.0);
     std::vector<FlowValueType> outflows_request(num_outflows, 0.0);
+    auto new_inflows = inflows;
+    auto new_outflows = outflows;
     for (const auto &x : xs) {
       int port = x.port;
       int port_n_ia = port - inport_inflow_achieved;
@@ -679,23 +681,29 @@ namespace ERIN
       int port_n;
       if ((port_n_ia >= 0) && (port_n_ia < num_inflows)) {
         port_n = port_n_ia;
+        if (port_n > highest_inflow_port_received) {
+          highest_inflow_port_received = port_n;
+        }
         if constexpr (debug_level >= debug_level_high) {
           std::cout << "... <=inport_inflow_achieved(" << port_n << ")\n";
         }
         inflows_achieved[port_n] += x.value;
+        new_inflows[port_n] = x.value;
         inflow_achieved += x.value;
         inflow_provided = true;
-        inflow_ports_received.emplace(port_n);
       }
       else if ((port_n_or >= 0) && (port_n_or < num_outflows)) {
         port_n = port_n_or;
+        if (port_n > highest_outflow_port_received) {
+          highest_outflow_port_received = port_n;
+        }
         if constexpr (debug_level >= debug_level_high) {
           std::cout << "... <=inport_outflow_request(" << port_n << ")\n";
         }
         outflows_request[port_n] += x.value;
+        new_outflows[port_n] = x.value;
         outflow_request += x.value;
         outflow_provided = true;
-        outflow_ports_received.emplace(port_n);
       }
       else {
         std::ostringstream oss;
@@ -703,54 +711,40 @@ namespace ERIN
         throw std::runtime_error(oss.str());
       }
     }
+    FlowValueType total_inflow_achieved{0.0};
+    for (const auto x: new_inflows) {
+      total_inflow_achieved += x;
+    }
+    FlowValueType total_outflow_request{0.0};
+    for (const auto x: new_outflows) {
+      total_outflow_request += x;
+    }
     if (inflow_provided && !outflow_provided) {
       report_outflow_achieved = true;
-      if (inflow > 0.0 && inflow_achieved > inflow) {
+      if (total_inflow_achieved > inflow) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
-        oss << "inflow >= 0.0 and inflow_achieved > inflow\n";
+        oss << "inflow > 0.0 and total_inflow_achieved > inflow\n";
         oss << "inflow: " << inflow << "\n";
-        oss << "inflow_achieved: " << inflow_achieved << "\n";
-        throw std::runtime_error(oss.str());
-      }
-      if (inflow < 0.0 && inflow_achieved < inflow) {
-        std::ostringstream oss;
-        oss << "AchievedMoreThanRequestedError\n";
-        oss << "inflow <= 0.0 and inflow_achieved < inflow\n";
-        oss << "inflow: " << inflow << "\n";
-        oss << "inflow_achieved: " << inflow_achieved << "\n";
+        oss << "total_inflow_achieved: " << total_inflow_achieved << "\n";
         throw std::runtime_error(oss.str());
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
-        FlowValueType total_inflow = 0;
-        std::vector<FlowValueType> new_inflows(num_inflows, 0.0);
-        for (int idx{0}; idx < num_inflows; ++idx) {
-          auto it = inflow_ports_received.find(idx);
-          if (it == inflow_ports_received.end()) {
-            total_inflow += inflows[idx];
-            new_inflows[idx] = inflows[idx];
-          }
-          else {
-            total_inflow += inflows_achieved[idx];
-            new_inflows[idx] = inflows_achieved[idx];
-          }
-        }
-        auto diff = std::abs(outflow - total_inflow);
+        auto diff = std::abs(outflow - total_inflow_achieved);
         if (diff < flow_value_tolerance) {
           // Inflows match (within tolerance) requested outflows. Update state.
-          update_state(FlowState{total_inflow});
+          update_state(FlowState{total_inflow_achieved});
           inflows = new_inflows;
         }
         else {
           // use the reverse-begin iterator to access the "last" (largest)
           // value in the set
-          const auto last_port_received = *(inflow_ports_received.crbegin());
           const auto final_inflow_port = num_inflows - 1;
-          if (last_port_received < final_inflow_port) {
+          if (highest_inflow_port_received < final_inflow_port) {
             // Additional inflow ports exist.
             // Request to the next input port for difference remaining.
-            inflow_request = outflow - total_inflow;
-            inflow_port_for_request = last_port_received + 1;
+            inflow_request = outflow - total_inflow_achieved;
+            inflow_port_for_request = highest_inflow_port_received + 1;
             report_outflow_achieved = false;
             report_inflow_request = true;
           }
@@ -758,7 +752,7 @@ namespace ERIN
             // We've exhausted all inflow ports and are still deficient. Need
             // to update outflows.
             auto desired_outflow = outflow;
-            update_state(FlowState{total_inflow});
+            update_state(FlowState{total_inflow_achieved});
             inflows = new_inflows;
             FlowValueType reduction_factor{1.0};
             if (desired_outflow != 0.0) {
@@ -783,19 +777,7 @@ namespace ERIN
         // Whenever the outflow request updates, we always start querying
         // inflows from the first inflow port and update the inflow_request.
         inflow_port_for_request = 0;
-        inflow_request = 0.0;
-        std::vector<FlowValueType> new_outflows(num_outflows, 0.0);
-        for (int idx{0}; idx < num_outflows; ++idx) {
-          auto it = outflow_ports_received.find(idx);
-          if (it == outflow_ports_received.end()) {
-            inflow_request += outflows[idx];
-            new_outflows[idx] = outflows[idx];
-          }
-          else {
-            inflow_request += outflows_request[idx];
-            new_outflows[idx] = outflows_request[idx];
-          }
-        }
+        inflow_request = total_outflow_request;
         update_state(FlowState{inflow_request});
         outflows = new_outflows;
       }
@@ -805,20 +787,12 @@ namespace ERIN
             << static_cast<int>(strategy) << "\"";
         throw std::runtime_error(oss.str());
       }
-      if (outflow > 0.0 && outflow > outflow_request) {
+      if (outflow > total_outflow_request) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
-        oss << "outflow >= 0.0 && outflow > outflow_request\n";
+        oss << "outflow > total_outflow_request\n";
         oss << "outflow: " << outflow << "\n";
-        oss << "outflow_request: " << outflow_request << "\n";
-        throw std::runtime_error(oss.str());
-      }
-      if (outflow < 0.0 && outflow < outflow_request) {
-        std::ostringstream oss;
-        oss << "AchievedMoreThanRequestedError\n";
-        oss << "outflow <= 0.0 && outflow < outflow_request\n";
-        oss << "outflow: " << outflow << "\n";
-        oss << "outflow_request: " << outflow_request << "\n";
+        oss << "total_outflow_request: " << total_outflow_request << "\n";
         throw std::runtime_error(oss.str());
       }
     }

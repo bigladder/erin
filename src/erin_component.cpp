@@ -308,7 +308,7 @@ namespace ERIN
       const std::vector<std::string>& input_ports_,
       const std::vector<std::string>& output_ports_,
       const MuxerDispatchStrategy strategy_):
-    MuxerComponent(id_, stream_, input_ports, output_ports_, {}, strategy_)
+    MuxerComponent(id_, stream_, input_ports_, output_ports_, {}, strategy_)
   {
   }
 

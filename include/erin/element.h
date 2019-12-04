@@ -16,12 +16,13 @@ namespace ERIN
   class FlowElement : public adevs::Atomic<PortValue, Time>
   {
     public:
-      static const int inport_inflow_achieved;
-      static const int inport_outflow_request;
-      static const int outport_inflow_request;
-      static const int outport_outflow_achieved;
+      static constexpr int max_port_numbers{1000};
+      static constexpr int inport_inflow_achieved{0*max_port_numbers};
+      static constexpr int inport_outflow_request{1*max_port_numbers};
+      static constexpr int outport_inflow_request{2*max_port_numbers};
+      static constexpr int outport_outflow_achieved{3*max_port_numbers};
       void delta_int() override;
-      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      virtual void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
       Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
@@ -51,12 +52,19 @@ namespace ERIN
       FlowElement(
           std::string id, ComponentType component_type, StreamType flow_type);
       FlowElement(
-          std::string id, ComponentType component_type,
-          StreamType inflow_type, StreamType outflow_type);
+          std::string id,
+          ComponentType component_type,
+          StreamType inflow_type,
+          StreamType outflow_type);
       [[nodiscard]] virtual FlowState
         update_state_for_outflow_request(FlowValueType outflow_) const;
       [[nodiscard]] virtual FlowState
         update_state_for_inflow_achieved(FlowValueType inflow_) const;
+      void run_checks_after_receiving_inputs(
+          bool inflow_provided,
+          FlowValueType inflow_achieved,
+          bool outflow_provided,
+          FlowValueType outflow_request);
       virtual Time calculate_time_advance();
       virtual void update_on_internal_transition();
       virtual void update_on_external_transition();
@@ -68,12 +76,27 @@ namespace ERIN
       [[nodiscard]] bool get_report_outflow_achieved() const {
         return report_outflow_achieved;
       };
-      [[nodiscard]] FlowValueType get_inflow() const { return inflow; };
-      [[nodiscard]] FlowValueType get_outflow() const { return outflow; };
-      [[nodiscard]] FlowValueType get_storeflow() const { return storeflow; };
-      [[nodiscard]] FlowValueType get_lossflow() const { return lossflow; };
+      [[nodiscard]] FlowValueType get_inflow() const { return inflow; }
+      [[nodiscard]] FlowValueType get_outflow() const { return outflow; }
+      [[nodiscard]] FlowValueType get_storeflow() const { return storeflow; }
+      [[nodiscard]] FlowValueType get_lossflow() const { return lossflow; }
+      // for objects with multiple input and/or output ports
+      // only port values above 0 stored in inflows and outflows
+      [[nodiscard]] std::vector<FlowValueType> get_inflows() const {
+        return std::vector<FlowValueType>{inflow};
+      }
+      [[nodiscard]] std::vector<FlowValueType> get_outflows() const {
+        return std::vector<FlowValueType>{outflow};
+      }
+      [[nodiscard]] int get_num_inflows() const { return 1; }
+      [[nodiscard]] int get_num_outflows() const { return 1; }
 
-    private:
+      void update_state(const FlowState& fs);
+      static constexpr FlowValueType tol{1e-6};
+      void check_flow_invariants() const;
+
+      // Subclasses should treat these as read-only unless overriding
+      // DEVS methods
       std::string id;
       Time time;
       StreamType inflow_type;
@@ -85,10 +108,6 @@ namespace ERIN
       bool report_inflow_request;
       bool report_outflow_achieved;
       ComponentType component_type;
-
-      void update_state(const FlowState& fs);
-      static constexpr FlowValueType tol{1e-6};
-      void check_flow_invariants() const;
   };
 
   ////////////////////////////////////////////////////////////
@@ -181,6 +200,35 @@ namespace ERIN
       std::vector<LoadItem>::size_type num_loads;
 
       void check_loads() const;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // MuxerDispatchStrategy
+  enum class MuxerDispatchStrategy
+  {
+    InOrder = 0
+  };
+
+  ////////////////////////////////////////////////////////////
+  // Mux
+  class Mux : public FlowElement
+  {
+    public:
+      Mux(
+          std::string id,
+          ComponentType component_type,
+          const StreamType& stream_type,
+          int num_inflows,
+          int num_outflows,
+          MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+
+    protected:
+
+    private:
+      int num_inflows;
+      int num_outflows;
+      MuxerDispatchStrategy strategy;
   };
 
   ////////////////////////////////////////////////////////////

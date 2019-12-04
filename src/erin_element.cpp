@@ -3,16 +3,12 @@
 
 #include "erin/element.h"
 #include "debug_utils.h"
+#include <algorithm>
 
 namespace ERIN
 {
   ////////////////////////////////////////////////////////////
   // FlowElement
-  const int FlowElement::inport_inflow_achieved = 0;
-  const int FlowElement::inport_outflow_request = 1;
-  const int FlowElement::outport_inflow_request = 2;
-  const int FlowElement::outport_outflow_achieved = 3;
-
   FlowElement::FlowElement(
       std::string id_,
       ComponentType component_type_,
@@ -39,8 +35,11 @@ namespace ERIN
     report_outflow_achieved{false},
     component_type{component_type_}
   {
-    if (inflow_type.get_rate_units() != outflow_type.get_rate_units())
-      throw InconsistentStreamUnitsError();
+    if (inflow_type.get_rate_units() != outflow_type.get_rate_units()) {
+      std::ostringstream oss;
+      oss << "InconsistentStreamUnitsError: inflow != outflow stream type";
+      throw std::invalid_argument(oss.str());
+    }
   }
 
   void
@@ -82,9 +81,22 @@ namespace ERIN
           outflow_request += x.value;
           break;
         default:
-          throw BadPortError();
+          std::ostringstream oss;
+          oss << "BadPortError: unhandled port: \"" << x.port << "\"";
+          throw std::runtime_error(oss.str());
       }
     }
+    run_checks_after_receiving_inputs(
+        inflow_provided, inflow_achieved, outflow_provided, outflow_request);
+  }
+
+  void
+  FlowElement::run_checks_after_receiving_inputs(
+      bool inflow_provided,
+      FlowValueType inflow_achieved,
+      bool outflow_provided,
+      FlowValueType outflow_request)
+  {
     if (inflow_provided && !outflow_provided) {
       report_outflow_achieved = true;
       if (inflow > 0.0 && inflow_achieved > inflow) {
@@ -132,10 +144,14 @@ namespace ERIN
     }
     else if (inflow_provided && outflow_provided) {
       // assumption: we'll never get here...
-      throw SimultaneousIORequestError();
+      std::ostringstream oss;
+      oss << "SimultaneousIORequestError: assumption was we'd never get here...";
+      throw std::runtime_error(oss.str());
     }
     else {
-      throw BadPortError();
+      std::ostringstream oss;
+      oss << "BadPortError: no relevant ports detected...";
+      throw std::runtime_error(oss.str());
     }
     if (report_inflow_request || report_outflow_achieved) {
       update_on_external_transition();
@@ -599,4 +615,141 @@ namespace ERIN
       }
     }
   }
+
+  ////////////////////////////////////////////////////////////
+  // Mux
+  Mux::Mux(
+      std::string id,
+      ComponentType ct,
+      const StreamType& st,
+      int num_inflows_,
+      int num_outflows_,
+      MuxerDispatchStrategy strategy_):
+    FlowElement(std::move(id), ct, st, st),
+    num_inflows{num_inflows_},
+    num_outflows{num_outflows_},
+    strategy{strategy_}
+  {
+    if ((num_inflows < 0) || (num_inflows > max_port_numbers)) {
+      std::ostringstream oss;
+      oss << "Number of inflows on Mux must be 0 <= num_inflows <= "
+          << max_port_numbers << "; "
+          << "num_inflows = " << num_inflows << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if ((num_outflows < 0) || (num_outflows > max_port_numbers)) {
+      std::ostringstream oss;
+      oss << "Number of outflows on Mux must be 0 <= num_outflows <= "
+          << max_port_numbers << "; "
+          << "num_outflows = " << num_outflows << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  void
+  Mux::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Mux::delta_ext();id=" << id << "\n";
+    }
+    time = time + e;
+    bool inflow_provided{false};
+    bool outflow_provided{false};
+    FlowValueType inflow_achieved{0};
+    FlowValueType outflow_request{0};
+    std::vector<FlowValueType> inflows_achieved(num_inflows, 0.0);
+    std::vector<FlowValueType> outflows_request(num_outflows, 0.0);
+    for (const auto &x : xs) {
+      int port = x.port;
+      int port_n_ia = port - inport_inflow_achieved;
+      int port_n_or = port - inport_outflow_request;
+      int port_n;
+      if ((port_n_ia >= 0) && (port_n_ia < num_inflows)) {
+        port_n = port_n_ia;
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "... <=inport_inflow_achieved(" << port_n << ")\n";
+        }
+        inflows_achieved[port_n] += x.value;
+        inflow_achieved += x.value;
+        inflow_provided = true;
+      }
+      else if ((port_n_or >= 0) && (port_n_or < num_outflows)) {
+        port_n = port_n_or;
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "... <=inport_outflow_request(" << port_n << ")\n";
+        }
+        outflows_request[port_n] += x.value;
+        outflow_request += x.value;
+        outflow_provided = true;
+      }
+      else {
+        std::ostringstream oss;
+        oss << "BadPortError: unhandled port: \"" << x.port << "\"";
+        throw std::runtime_error(oss.str());
+      }
+    }
+    if (inflow_provided && !outflow_provided) {
+      report_outflow_achieved = true;
+      if (inflow > 0.0 && inflow_achieved > inflow) {
+        std::ostringstream oss;
+        oss << "AchievedMoreThanRequestedError\n";
+        oss << "inflow >= 0.0 and inflow_achieved > inflow\n";
+        oss << "inflow: " << inflow << "\n";
+        oss << "inflow_achieved: " << inflow_achieved << "\n";
+        throw std::runtime_error(oss.str());
+      }
+      if (inflow < 0.0 && inflow_achieved < inflow) {
+        std::ostringstream oss;
+        oss << "AchievedMoreThanRequestedError\n";
+        oss << "inflow <= 0.0 and inflow_achieved < inflow\n";
+        oss << "inflow: " << inflow << "\n";
+        oss << "inflow_achieved: " << inflow_achieved << "\n";
+        throw std::runtime_error(oss.str());
+      }
+      // TODO: add inflows_achieved to update_state_for_inflow_achieved
+      const FlowState& fs = update_state_for_inflow_achieved(inflow_achieved);
+      update_state(fs);
+    }
+    else if (outflow_provided && !inflow_provided) {
+      report_inflow_request = true;
+      // TODO: add outflows_request to update_state_for_outflow_request
+      const FlowState fs = update_state_for_outflow_request(outflow_request);
+      if (std::fabs(fs.getOutflow() - outflow_request) > flow_value_tolerance) {
+        report_outflow_achieved = true;
+      }
+      update_state(fs);
+      if (outflow > 0.0 && outflow > outflow_request) {
+        std::ostringstream oss;
+        oss << "AchievedMoreThanRequestedError\n";
+        oss << "outflow >= 0.0 && outflow > outflow_request\n";
+        oss << "outflow: " << outflow << "\n";
+        oss << "outflow_request: " << outflow_request << "\n";
+        throw std::runtime_error(oss.str());
+      }
+      if (outflow < 0.0 && outflow < outflow_request) {
+        std::ostringstream oss;
+        oss << "AchievedMoreThanRequestedError\n";
+        oss << "outflow <= 0.0 && outflow < outflow_request\n";
+        oss << "outflow: " << outflow << "\n";
+        oss << "outflow_request: " << outflow_request << "\n";
+        throw std::runtime_error(oss.str());
+      }
+    }
+    else if (inflow_provided && outflow_provided) {
+      // assumption: we'll never get here...
+      std::ostringstream oss;
+      oss << "SimultaneousIORequestError: assumption was we'd never get here...";
+      throw std::runtime_error(oss.str());
+    }
+    else {
+      std::ostringstream oss;
+      oss << "BadPortError: no relevant ports detected...";
+      throw std::runtime_error(oss.str());
+    }
+    if (report_inflow_request || report_outflow_achieved) {
+      update_on_external_transition();
+      check_flow_invariants();
+    }
+  }
+
 }

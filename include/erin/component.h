@@ -172,13 +172,6 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
-  // MuxerDispatchStrategy
-  enum class MuxerDispatchStrategy
-  {
-    InOrder = 0
-  };
-
-  ////////////////////////////////////////////////////////////
   // MuxerComponent
   class MuxerComponent : public Component
   {

@@ -27,14 +27,18 @@ input_stream = "electricity"
 loads_by_scenario.blue_sky = "building_electrical"
 ############################################################
 [networks.normal_operations]
-# specify as and array of 2-tuples or 4-tuples.
-# if 2-tuples: [<source_component>, <sink_component>]
-# which maps to [<component_1_id>, <port_1_id>, <component_2_id>, <port_2_id>]
-# with component_1_id = <source_component>
-#      port_1_id = "outflow"
-#      component_2_id = <sink_component>
-#      port_2_id = "inflow"
-# if a 4-tuple, then the 4-tuple is specified explicitly
+# Specify network as an array of 2, 4, or 6-tuples. The interpretation is as
+# follows:
+# 2-tuples: [<source_component_id>, <sink_component_id>]
+# this maps to:
+# [ <component_1_id=source_component_id>, <component_1_port_type="outflow">, <component_1_port_number=0>,
+#   <component_2_id=  sink_component_id>, <component_2_port_type= "inflow">, <component_2_port_number=0>]
+# 4-tuple: [<c1_id>, <c1_port_type>, <c2_id>, <c2_port_type>]
+# this maps to:
+# [ <component_1_id=c1_id>, <component_1_port_type=c1_port_type>, <component_1_port_number=0>,
+#   <component_2_id=c2_id>, <component_2_port_type=c2_port_type>, <component_2_port_number=0>]
+# 6-tuple: [ <component_1_id>, <component_1_port_type>, <component_1_port_number>,
+#            <component_2_id>, <component_2_port_type>, <component_2_port_number>]       
 connections = [["electric_utility", "cluster_01_electric"]]
 ############################################################
 [scenarios.blue_sky]

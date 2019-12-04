@@ -4,6 +4,8 @@
 #include "erin/element.h"
 #include "debug_utils.h"
 #include <algorithm>
+#include <cmath>
+#include <set>
 
 namespace ERIN
 {
@@ -628,22 +630,31 @@ namespace ERIN
     FlowElement(std::move(id), ct, st, st),
     num_inflows{num_inflows_},
     num_outflows{num_outflows_},
-    strategy{strategy_}
+    strategy{strategy_},
+    inflow_request{0.0},
+    inflow_port_for_request{0},
+    inflows{},
+    outflows{}
   {
-    if ((num_inflows < 0) || (num_inflows > max_port_numbers)) {
+    const int min_ports = 1;
+    if ((num_inflows < min_ports) || (num_inflows > max_port_numbers)) {
       std::ostringstream oss;
-      oss << "Number of inflows on Mux must be 0 <= num_inflows <= "
+      oss << "Number of inflows on Mux must be " << min_ports
+          << " <= num_inflows <= "
           << max_port_numbers << "; "
           << "num_inflows = " << num_inflows << "\n";
       throw std::invalid_argument(oss.str());
     }
-    if ((num_outflows < 0) || (num_outflows > max_port_numbers)) {
+    if ((num_outflows < min_ports) || (num_outflows > max_port_numbers)) {
       std::ostringstream oss;
-      oss << "Number of outflows on Mux must be 0 <= num_outflows <= "
+      oss << "Number of outflows on Mux must be " << min_ports
+          << " <= num_outflows <= "
           << max_port_numbers << "; "
           << "num_outflows = " << num_outflows << "\n";
       throw std::invalid_argument(oss.str());
     }
+    inflows = std::vector<FlowValueType>(num_inflows, 0.0);
+    outflows = std::vector<FlowValueType>(num_outflows, 0.0);
   }
 
   void
@@ -656,6 +667,8 @@ namespace ERIN
     bool inflow_provided{false};
     bool outflow_provided{false};
     FlowValueType inflow_achieved{0};
+    std::set<int> inflow_ports_received;
+    std::set<int> outflow_ports_received;
     FlowValueType outflow_request{0};
     std::vector<FlowValueType> inflows_achieved(num_inflows, 0.0);
     std::vector<FlowValueType> outflows_request(num_outflows, 0.0);
@@ -672,6 +685,7 @@ namespace ERIN
         inflows_achieved[port_n] += x.value;
         inflow_achieved += x.value;
         inflow_provided = true;
+        inflow_ports_received.emplace(port_n);
       }
       else if ((port_n_or >= 0) && (port_n_or < num_outflows)) {
         port_n = port_n_or;
@@ -681,6 +695,7 @@ namespace ERIN
         outflows_request[port_n] += x.value;
         outflow_request += x.value;
         outflow_provided = true;
+        outflow_ports_received.emplace(port_n);
       }
       else {
         std::ostringstream oss;
@@ -706,18 +721,90 @@ namespace ERIN
         oss << "inflow_achieved: " << inflow_achieved << "\n";
         throw std::runtime_error(oss.str());
       }
-      // TODO: add inflows_achieved to update_state_for_inflow_achieved
-      const FlowState& fs = update_state_for_inflow_achieved(inflow_achieved);
-      update_state(fs);
+      if (strategy == MuxerDispatchStrategy::InOrder) {
+        FlowValueType total_inflow = 0;
+        std::vector<FlowValueType> new_inflows(num_inflows, 0.0);
+        for (int idx{0}; idx < num_inflows; ++idx) {
+          auto it = inflow_ports_received.find(idx);
+          if (it == inflow_ports_received.end()) {
+            total_inflow += inflows[idx];
+            new_inflows[idx] = inflows[idx];
+          }
+          else {
+            total_inflow += inflows_achieved[idx];
+            new_inflows[idx] = inflows_achieved[idx];
+          }
+        }
+        auto diff = std::abs(outflow - total_inflow);
+        if (diff < flow_value_tolerance) {
+          // Inflows match (within tolerance) requested outflows. Update state.
+          update_state(FlowState{total_inflow});
+          inflows = new_inflows;
+        }
+        else {
+          // use the reverse-begin iterator to access the "last" (largest)
+          // value in the set
+          const auto last_port_received = *(inflow_ports_received.crbegin());
+          const auto final_inflow_port = num_inflows - 1;
+          if (last_port_received < final_inflow_port) {
+            // Additional inflow ports exist.
+            // Request to the next input port for difference remaining.
+            inflow_request = outflow - total_inflow;
+            inflow_port_for_request = last_port_received + 1;
+            report_outflow_achieved = false;
+            report_inflow_request = true;
+          }
+          else {
+            // We've exhausted all inflow ports and are still deficient. Need
+            // to update outflows.
+            auto desired_outflow = outflow;
+            update_state(FlowState{total_inflow});
+            inflows = new_inflows;
+            FlowValueType reduction_factor{1.0};
+            if (desired_outflow != 0.0) {
+              reduction_factor = outflow / desired_outflow;
+              for (auto& of: outflows) {
+                of *= reduction_factor;
+              }
+            }
+          }
+        }
+      }
+      else {
+        std::ostringstream oss;
+        oss << "unhandled dispatch strategy for Mux: \""
+            << static_cast<int>(strategy) << "\"";
+        throw std::runtime_error(oss.str());
+      }
     }
     else if (outflow_provided && !inflow_provided) {
       report_inflow_request = true;
-      // TODO: add outflows_request to update_state_for_outflow_request
-      const FlowState fs = update_state_for_outflow_request(outflow_request);
-      if (std::fabs(fs.getOutflow() - outflow_request) > flow_value_tolerance) {
-        report_outflow_achieved = true;
+      if (strategy == MuxerDispatchStrategy::InOrder) {
+        // Whenever the outflow request updates, we always start querying
+        // inflows from the first inflow port and update the inflow_request.
+        inflow_port_for_request = 0;
+        inflow_request = 0.0;
+        std::vector<FlowValueType> new_outflows(num_outflows, 0.0);
+        for (int idx{0}; idx < num_outflows; ++idx) {
+          auto it = outflow_ports_received.find(idx);
+          if (it == outflow_ports_received.end()) {
+            inflow_request += outflows[idx];
+            new_outflows[idx] = outflows[idx];
+          }
+          else {
+            inflow_request += outflows_request[idx];
+            new_outflows[idx] = outflows_request[idx];
+          }
+        }
+        update_state(FlowState{inflow_request});
+        outflows = new_outflows;
       }
-      update_state(fs);
+      else {
+        std::ostringstream oss;
+        oss << "unhandled dispatch strategy for Mux: \""
+            << static_cast<int>(strategy) << "\"";
+        throw std::runtime_error(oss.str());
+      }
       if (outflow > 0.0 && outflow > outflow_request) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
@@ -752,4 +839,45 @@ namespace ERIN
     }
   }
 
+  void
+  Mux::output_func(std::vector<PortValue>& ys)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "FlowElement::output_func();id=" << id << "\n";
+    }
+    if (report_inflow_request) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "... send=>outport_inflow_request\n";
+      }
+      if (strategy == MuxerDispatchStrategy::InOrder) {
+        ys.emplace_back(
+            adevs::port_value<FlowValueType>{
+              outport_inflow_request + inflow_port_for_request, inflow_request});
+      }
+      else {
+        std::ostringstream oss;
+        oss << "unhandled strategy \"" << static_cast<int>(strategy)
+            << "\"";
+        throw std::runtime_error(oss.str());
+      }
+    }
+    if (report_outflow_achieved) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "... send=>outport_outflow_achieved\n";
+      }
+      for (int idx{0}; idx < num_outflows; ++idx) {
+        ys.emplace_back(
+            adevs::port_value<FlowValueType>{
+              outport_outflow_achieved + idx,
+              outflows[idx]});
+      }
+    }
+  }
+
+  void
+  Mux::update_on_internal_transition()
+  {
+    inflow_request = 0.0;
+    inflow_port_for_request = 0;
+  }
 }

@@ -21,11 +21,12 @@ namespace ERIN
       static constexpr int inport_outflow_request{1*max_port_numbers};
       static constexpr int outport_inflow_request{2*max_port_numbers};
       static constexpr int outport_outflow_achieved{3*max_port_numbers};
+
       void delta_int() override;
       virtual void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
       Time ta() override;
-      void output_func(std::vector<PortValue>& ys) override;
+      virtual void output_func(std::vector<PortValue>& ys) override;
 
       // Delete copy and move operators to prevent slicing issues...
       // see:
@@ -222,13 +223,19 @@ namespace ERIN
           int num_outflows,
           MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void output_func(std::vector<PortValue>& xs) override;
 
     protected:
+      void update_on_internal_transition() override;
 
     private:
       int num_inflows;
       int num_outflows;
       MuxerDispatchStrategy strategy;
+      FlowValueType inflow_request;
+      int inflow_port_for_request;
+      std::vector<FlowValueType> inflows;
+      std::vector<FlowValueType> outflows;
   };
 
   ////////////////////////////////////////////////////////////

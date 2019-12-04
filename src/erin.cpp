@@ -961,37 +961,7 @@ namespace ERIN
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;
     auto sim_good = run_devs(sim, duration, max_no_advance);
-    std::unordered_map<std::string, std::vector<Datum>> results;
-    std::unordered_map<std::string,ComponentType> comp_types;
-    std::unordered_map<std::string,StreamType> stream_types;
-    if (!sim_good) {
-      return ScenarioResults{sim_good, results, stream_types, comp_types};
-    }
-    for (const auto& e: elements) {
-      auto vals = e->get_results(duration);
-      if (!vals.empty()) {
-        auto id{e->get_id()};
-        auto in_st{e->get_inflow_type()};
-        auto out_st{e->get_outflow_type()};
-        if (in_st != out_st) {
-          std::ostringstream oss;
-          oss << "MixedStreamsError:\n";
-          oss << "input stream != output_stream but it should\n";
-          oss << "input stream: " << in_st.get_type() << "\n";
-          oss << "output stream: " << out_st.get_type() << "\n";
-          throw std::runtime_error(oss.str());
-        }
-        comp_types.insert(
-            std::pair<std::string,ComponentType>(
-              id, e->get_component_type()));
-        stream_types.insert(
-            std::pair<std::string,StreamType>(
-              id, in_st));
-        results.insert(
-            std::pair<std::string,std::vector<Datum>>(e->get_id(), vals));
-      }
-    }
-    return ScenarioResults{sim_good, results, stream_types, comp_types};
+    return process_single_scenario_results(sim_good, elements, duration);
   }
 
   AllResults
@@ -1179,5 +1149,44 @@ namespace ERIN
       }
     }
     return sim_good;
+  }
+
+  ScenarioResults
+  process_single_scenario_results(
+      bool sim_good,
+      const std::vector<FlowElement*>& elements,
+      RealTimeType duration)
+  {
+    std::unordered_map<std::string,std::vector<Datum>> results;
+    std::unordered_map<std::string,ComponentType> comp_types;
+    std::unordered_map<std::string,StreamType> stream_types;
+    if (!sim_good) {
+      return ScenarioResults{sim_good, results, stream_types, comp_types};
+    }
+    for (const auto& e: elements) {
+      auto vals = e->get_results(duration);
+      if (!vals.empty()) {
+        auto id{e->get_id()};
+        auto in_st{e->get_inflow_type()};
+        auto out_st{e->get_outflow_type()};
+        if (in_st != out_st) {
+          std::ostringstream oss;
+          oss << "MixedStreamsError:\n";
+          oss << "input stream != output_stream but it should\n";
+          oss << "input stream: " << in_st.get_type() << "\n";
+          oss << "output stream: " << out_st.get_type() << "\n";
+          throw std::runtime_error(oss.str());
+        }
+        comp_types.insert(
+            std::pair<std::string,ComponentType>(
+              id, e->get_component_type()));
+        stream_types.insert(
+            std::pair<std::string,StreamType>(
+              id, in_st));
+        results.insert(
+            std::pair<std::string,std::vector<Datum>>(e->get_id(), vals));
+      }
+    }
+    return ScenarioResults{sim_good, results, stream_types, comp_types};
   }
 }

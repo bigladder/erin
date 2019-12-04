@@ -31,8 +31,8 @@ fragilities = ["somewhat_vulnerable_to_flooding"]
 [components.bus]
 type = "muxer"
 stream = "electricity"
-inputs = ["inflow_grid", "inflow_genset"]
-outputs = ["outflow"]
+num_inputs = 2
+num_outputs = 1
 # An "in_order" dispatch strategy means that power requests are routed in order
 # upstream through the input ports in the order they are specified. That is,
 # "inflow_grid" would be asked to provide power first. If there is any lack of

@@ -1447,8 +1447,9 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   const int max_no_advance{static_cast<int>(elements.size()) * 10};
   auto is_good = ::ERIN::run_devs(sim, duration, max_no_advance);
   EXPECT_TRUE(is_good);
-  auto results = ::ERIN::process_single_scenario_results(
+  auto sr = ::ERIN::process_single_scenario_results(
       is_good, elements, duration);
+  EXPECT_TRUE(sr.get_is_good());
 }
 
 int

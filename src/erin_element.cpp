@@ -700,12 +700,12 @@ namespace ERIN
     num_inflows{num_inflows_},
     num_outflows{num_outflows_},
     strategy{strategy_},
-    inflow_request{0.0},
-    inflow_port_for_request{0},
     inflows{},
     prev_inflows{},
+    inflows_achieved{},
     outflows{},
-    prev_outflows{}
+    prev_outflows{},
+    outflow_requests{}
   {
     const int min_ports = 1;
     if ((num_inflows < min_ports) || (num_inflows > max_port_numbers)) {
@@ -726,8 +726,10 @@ namespace ERIN
     }
     inflows = std::vector<FlowValueType>(num_inflows, 0.0);
     prev_inflows = std::vector<FlowValueType>(num_inflows, 0.0);
+    inflows_achieved = std::vector<FlowValueType>(num_inflows, 0.0);
     outflows = std::vector<FlowValueType>(num_outflows, 0.0);
     prev_outflows = std::vector<FlowValueType>(num_outflows, 0.0);
+    outflow_requests = std::vector<FlowValueType>(num_outflows, 0.0);
   }
 
   void
@@ -739,12 +741,8 @@ namespace ERIN
     update_time(e);
     bool inflow_provided{false};
     bool outflow_provided{false};
-    FlowValueType inflow_achieved{0};
     int highest_inflow_port_received{-1};
     int highest_outflow_port_received{-1};
-    FlowValueType outflow_request{0};
-    auto new_inflows = inflows;
-    auto new_outflows = outflows;
     for (const auto &x : xs) {
       int port = x.port;
       int port_n_ia = port - inport_inflow_achieved;
@@ -758,9 +756,8 @@ namespace ERIN
         if constexpr (debug_level >= debug_level_high) {
           std::cout << "... <=inport_inflow_achieved(" << port_n << ")\n";
         }
-        new_inflows[port_n] = x.value;
         prev_inflows[port_n] = x.value;
-        inflow_achieved += x.value;
+        inflows_achieved[port_n] = x.value;
         inflow_provided = true;
       }
       else if ((port_n_or >= 0) && (port_n_or < num_outflows)) {
@@ -771,9 +768,8 @@ namespace ERIN
         if constexpr (debug_level >= debug_level_high) {
           std::cout << "... <=inport_outflow_request(" << port_n << ")\n";
         }
-        new_outflows[port_n] = x.value;
         prev_outflows[port_n] = x.value;
-        outflow_request += x.value;
+        outflow_requests[port_n] = x.value;
         outflow_provided = true;
       }
       else {
@@ -783,11 +779,11 @@ namespace ERIN
       }
     }
     FlowValueType total_inflow_achieved{0.0};
-    for (const auto x: new_inflows) {
+    for (const auto x: inflows_achieved) {
       total_inflow_achieved += x;
     }
     FlowValueType total_outflow_request{0.0};
-    for (const auto x: new_outflows) {
+    for (const auto x: outflow_requests) {
       total_outflow_request += x;
     }
     if (inflow_provided && !outflow_provided) {
@@ -801,32 +797,47 @@ namespace ERIN
         throw std::runtime_error(oss.str());
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
-        auto of = get_outflow();
-        auto diff = std::abs(of - total_inflow_achieved);
-        if (diff < flow_value_tolerance) {
+        auto diff = total_outflow_request - total_inflow_achieved;
+        if (std::abs(diff) <= flow_value_tolerance) {
+          // We met the loads.
           update_state(FlowState{total_inflow_achieved});
-          inflows = new_inflows;
+          inflows = inflows_achieved;
+        }
+        else if (diff < neg_flow_value_tol) {
+          // we're oversupplying... reset
+          set_report_outflow_achieved(false);
+          set_report_inflow_request(true);
+          inflows = std::vector<FlowValueType>(num_inflows, 0.0);
+          std::vector<FlowValueType>::size_type inflow_port_for_request = 0;
+          inflows[inflow_port_for_request] = total_outflow_request;
+          inflows_achieved = inflows;
         }
         else {
+          // we're undersupplying
           const auto final_inflow_port = num_inflows - 1;
           if (highest_inflow_port_received < final_inflow_port) {
-            inflow_request = of - total_inflow_achieved;
-            inflow_port_for_request = highest_inflow_port_received + 1;
+            std::vector<FlowValueType>::size_type inflow_port_for_request =
+              highest_inflow_port_received + 1;
             set_report_outflow_achieved(false);
             set_report_inflow_request(true);
-            inflows = new_inflows;
-            inflows[inflow_port_for_request] = inflow_request;
+            inflows = inflows_achieved;
+            inflows[inflow_port_for_request] = diff;
+            inflows_achieved = inflows;
           }
           else {
-            // We've requested to all inflow ports and are still deficient on
-            // meeting outflow request. Update outflows.
-            auto desired_outflow = of;
+            // We've (apparently) requested to all inflow ports and are still
+            // deficient on meeting outflow request. Update outflows.
+            // TODO: what really needs to happen is we need to track all the
+            // ports we've sent inflow requests out on since *any* outflow
+            // requests last changed. That could be a stack and we could start
+            // with having all ports on the stack and just keep popping them
+            // each time we request out. If we just heard back from a port,
+            // we'd have to pop it from the stack until we have no more left.
             update_state(FlowState{total_inflow_achieved});
-            inflows = new_inflows;
+            inflows = inflows_achieved;
             FlowValueType reduction_factor{1.0};
-            if (desired_outflow != 0.0) {
-              reduction_factor = total_inflow_achieved / desired_outflow;
-              auto the_prev_outflows = outflows;
+            if (total_outflow_request != 0.0) {
+              reduction_factor = total_inflow_achieved / total_outflow_request;
               for (auto& of_item: outflows) {
                 of_item *= reduction_factor;
               }
@@ -840,17 +851,12 @@ namespace ERIN
                   << highest_outflow_port_received << "\n"
                   << "num_inflows           : " << num_inflows << "\n"
                   << "num_outflows          : " << num_outflows << "\n"
-                  << "desired_outflow       : " << desired_outflow << "\n"
                   << "total_inflow_achieved : " << total_inflow_achieved << "\n"
+                  << "total_outflow_request : " << total_outflow_request << "\n"
                   << "reduction_factor      : " << reduction_factor << "\n";
                 int i{0};
                 for (const auto& n : inflows) {
                   std::cout << "inflows[" << i << "]=" << n << "\n";
-                  ++i;
-                }
-                i = 0;
-                for (const auto& n : the_prev_outflows) {
-                  std::cout << "prev_outflows[" << i << "]=" << n << "\n";
                   ++i;
                 }
                 i = 0;
@@ -875,12 +881,13 @@ namespace ERIN
       if (strategy == MuxerDispatchStrategy::InOrder) {
         // Whenever the outflow request updates, we always start querying
         // inflows from the first inflow port and update the inflow_request.
-        inflow_port_for_request = 0;
-        inflow_request = total_outflow_request;
+        std::vector<FlowValueType>::size_type inflow_port_for_request = 0;
         inflows = std::vector<FlowValueType>(num_inflows, 0.0);
-        inflows[inflow_port_for_request] = inflow_request;
-        update_state(FlowState{inflow_request});
-        outflows = new_outflows;
+        inflows[inflow_port_for_request] = total_outflow_request;
+        inflows_achieved = inflows;
+        update_state(FlowState{total_outflow_request});
+        outflows = outflow_requests;
+        prev_outflows = outflows;
       }
       else {
         std::ostringstream oss;
@@ -960,12 +967,5 @@ namespace ERIN
         }
       }
     }
-  }
-
-  void
-  Mux::update_on_internal_transition()
-  {
-    inflow_request = 0.0;
-    inflow_port_for_request = 0;
   }
 }

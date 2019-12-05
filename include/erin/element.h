@@ -226,19 +226,16 @@ namespace ERIN
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void output_func(std::vector<PortValue>& xs) override;
 
-    protected:
-      void update_on_internal_transition() override;
-
     private:
       int num_inflows;
       int num_outflows;
       MuxerDispatchStrategy strategy;
-      FlowValueType inflow_request;
-      int inflow_port_for_request;
       std::vector<FlowValueType> inflows;
       std::vector<FlowValueType> prev_inflows;
-      std::vector<FlowValueType> outflows;
-      std::vector<FlowValueType> prev_outflows;
+      std::vector<FlowValueType> inflows_achieved;
+      std::vector<FlowValueType> outflows; // achieved
+      std::vector<FlowValueType> prev_outflows; // achieved, last sent
+      std::vector<FlowValueType> outflow_requests;
   };
 
   ////////////////////////////////////////////////////////////

@@ -36,6 +36,13 @@ Elements represent fundamental network actions:
   As requests change, that information is propagated.
   As achieved conditions change, that information is propagated.
   We are ultimately interested in the achieved conditions but the request information is never destroyed.
+- For a given ((source-comp,outflow-port-j), (sink-comp,inflow-port-l)) combination:
+  - at a given time:
+    - sink-comp would send at most 1 inflow-request message to source-comp
+    - source-comp would be silent if it (and all other upstream components) can meet the request
+    - source-comp would send at most 1 outflow-achieved message to sink-comp if
+      it cannot meet request OR if situations change for a pending request at a
+      later time (e.g., energy store runs out of stored energy)
 
 # Comments
 

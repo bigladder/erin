@@ -1453,9 +1453,14 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   auto results = sr.get_results();
   const std::vector<std::string> expected_keys{
     "s1", "s2", "l1", "l2",
-    "bus-input(0)", "bus-input(1)", "bus-output(0)", "bus-output(1)"};
+    "bus-inflow(0)", "bus-inflow(1)", "bus-outflow(0)", "bus-outflow(1)"};
   const auto expected_num_keys{expected_keys.size()};
   EXPECT_EQ(expected_num_keys, results.size());
+  for (const auto& k: expected_keys) {
+    auto it = results.find(k);
+    ASSERT_FALSE(it == results.end())
+      << "key \"" << k << "\" not found in results";
+  }
 }
 
 int

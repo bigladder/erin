@@ -1482,11 +1482,19 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       }
     }
   }
+  // TODO: update example to force s2 to go back to 0 and ensure it does.
   for (std::vector<::ERIN::Datum>::size_type i{0}; i < n_bus_outflow0; ++i) {
     const auto& e = expected_bus_outflow0[i];
     const auto& a = actual_bus_outflow0[i];
     EXPECT_EQ(e.time, a.time);
     EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
+      << "expected[" << i << "]{t=" << e.time
+      << ",r=" << e.requested_value
+      << ",a=" << e.achieved_value << "} "
+      << "!= actual[" << i << "]{t=" << a.time
+      << ",r=" << a.requested_value
+      << ",a=" << a.achieved_value << "}";
+    EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "

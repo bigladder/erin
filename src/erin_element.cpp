@@ -467,15 +467,30 @@ namespace ERIN
     auto num_requested{requested_flows.size()};
     auto num_achieved{achieved_flows.size()};
     if (get_report_inflow_request()) {
-      requested_flows.push_back(get_inflow());
-      ++num_requested;
+      if (num_requested == (num_events - 1)) {
+        requested_flows.push_back(get_inflow());
+        ++num_requested;
+      }
+      else if (num_requested == num_events) {
+        *requested_flows.rbegin() = get_inflow();
+      }
+      else {
+        std::ostringstream oss;
+        oss << "unexpected condition 1\n";
+        throw std::runtime_error(oss.str());
+      }
       if (num_achieved == num_events) {
         auto &v = achieved_flows.back();
         v = get_inflow();
       }
-      else {
+      else if (num_achieved == (num_events - 1)) {
         achieved_flows.push_back(get_inflow());
         ++num_achieved;
+      }
+      else {
+        std::ostringstream oss;
+        oss << "unexpected condition 2\n";
+        throw std::runtime_error(oss.str());
       }
     }
     if (get_report_outflow_achieved()) {
@@ -688,7 +703,9 @@ namespace ERIN
     inflow_request{0.0},
     inflow_port_for_request{0},
     inflows{},
-    outflows{}
+    prev_inflows{},
+    outflows{},
+    prev_outflows{}
   {
     const int min_ports = 1;
     if ((num_inflows < min_ports) || (num_inflows > max_port_numbers)) {
@@ -708,7 +725,9 @@ namespace ERIN
       throw std::invalid_argument(oss.str());
     }
     inflows = std::vector<FlowValueType>(num_inflows, 0.0);
+    prev_inflows = std::vector<FlowValueType>(num_inflows, 0.0);
     outflows = std::vector<FlowValueType>(num_outflows, 0.0);
+    prev_outflows = std::vector<FlowValueType>(num_outflows, 0.0);
   }
 
   void
@@ -724,8 +743,6 @@ namespace ERIN
     int highest_inflow_port_received{-1};
     int highest_outflow_port_received{-1};
     FlowValueType outflow_request{0};
-    std::vector<FlowValueType> inflows_achieved(num_inflows, 0.0);
-    std::vector<FlowValueType> outflows_request(num_outflows, 0.0);
     auto new_inflows = inflows;
     auto new_outflows = outflows;
     for (const auto &x : xs) {
@@ -741,8 +758,8 @@ namespace ERIN
         if constexpr (debug_level >= debug_level_high) {
           std::cout << "... <=inport_inflow_achieved(" << port_n << ")\n";
         }
-        inflows_achieved[port_n] += x.value;
         new_inflows[port_n] = x.value;
+        prev_inflows[port_n] = x.value;
         inflow_achieved += x.value;
         inflow_provided = true;
       }
@@ -754,8 +771,8 @@ namespace ERIN
         if constexpr (debug_level >= debug_level_high) {
           std::cout << "... <=inport_outflow_request(" << port_n << ")\n";
         }
-        outflows_request[port_n] += x.value;
         new_outflows[port_n] = x.value;
+        prev_outflows[port_n] = x.value;
         outflow_request += x.value;
         outflow_provided = true;
       }
@@ -784,35 +801,63 @@ namespace ERIN
         throw std::runtime_error(oss.str());
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
-        auto diff = std::abs(get_outflow() - total_inflow_achieved);
+        auto of = get_outflow();
+        auto diff = std::abs(of - total_inflow_achieved);
         if (diff < flow_value_tolerance) {
-          // Inflows match (within tolerance) requested outflows. Update state.
           update_state(FlowState{total_inflow_achieved});
           inflows = new_inflows;
         }
         else {
-          // use the reverse-begin iterator to access the "last" (largest)
-          // value in the set
           const auto final_inflow_port = num_inflows - 1;
           if (highest_inflow_port_received < final_inflow_port) {
-            // Additional inflow ports exist.
-            // Request to the next input port for difference remaining.
-            inflow_request = get_outflow() - total_inflow_achieved;
+            inflow_request = of - total_inflow_achieved;
             inflow_port_for_request = highest_inflow_port_received + 1;
             set_report_outflow_achieved(false);
             set_report_inflow_request(true);
+            inflows = new_inflows;
+            inflows[inflow_port_for_request] = inflow_request;
           }
           else {
-            // We've exhausted all inflow ports and are still deficient. Need
-            // to update outflows.
-            auto desired_outflow = get_outflow();
+            // We've requested to all inflow ports and are still deficient on
+            // meeting outflow request. Update outflows.
+            auto desired_outflow = of;
             update_state(FlowState{total_inflow_achieved});
             inflows = new_inflows;
             FlowValueType reduction_factor{1.0};
             if (desired_outflow != 0.0) {
               reduction_factor = total_inflow_achieved / desired_outflow;
-              for (auto& of: outflows) {
-                of *= reduction_factor;
+              auto the_prev_outflows = outflows;
+              for (auto& of_item: outflows) {
+                of_item *= reduction_factor;
+              }
+              if constexpr (debug_level >= debug_level_low) {
+                std::cout
+                  << "inflow                : " << get_inflow() << "\n"
+                  << "outflow               : " << get_outflow() << "\n"
+                  << "highest_inflow_port_received: "
+                  << highest_inflow_port_received << "\n"
+                  << "highest_outflow_port_received: "
+                  << highest_outflow_port_received << "\n"
+                  << "num_inflows           : " << num_inflows << "\n"
+                  << "num_outflows          : " << num_outflows << "\n"
+                  << "desired_outflow       : " << desired_outflow << "\n"
+                  << "total_inflow_achieved : " << total_inflow_achieved << "\n"
+                  << "reduction_factor      : " << reduction_factor << "\n";
+                int i{0};
+                for (const auto& n : inflows) {
+                  std::cout << "inflows[" << i << "]=" << n << "\n";
+                  ++i;
+                }
+                i = 0;
+                for (const auto& n : the_prev_outflows) {
+                  std::cout << "prev_outflows[" << i << "]=" << n << "\n";
+                  ++i;
+                }
+                i = 0;
+                for (const auto& n : outflows) {
+                  std::cout << "outflows[" << i << "]=" << n << "\n";
+                  ++i;
+                }
               }
             }
           }
@@ -832,6 +877,8 @@ namespace ERIN
         // inflows from the first inflow port and update the inflow_request.
         inflow_port_for_request = 0;
         inflow_request = total_outflow_request;
+        inflows = std::vector<FlowValueType>(num_inflows, 0.0);
+        inflows[inflow_port_for_request] = inflow_request;
         update_state(FlowState{inflow_request});
         outflows = new_outflows;
       }
@@ -870,18 +917,25 @@ namespace ERIN
   void
   Mux::output_func(std::vector<PortValue>& ys)
   {
-    if constexpr (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_low) {
       std::cout << "FlowElement::output_func();id=" << get_id() << "\n";
     }
     if (get_report_inflow_request()) {
-      if constexpr (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_low) {
         std::cout << "... send=>outport_inflow_request\n";
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
-        ys.emplace_back(
-            adevs::port_value<FlowValueType>{
-              outport_inflow_request + inflow_port_for_request,
-              inflow_request});
+        for (int i{0}; i < num_inflows; ++i) {
+          auto inflow_ = inflows[i];
+          auto prev_inflow_ = prev_inflows[i];
+          if (prev_inflow_ != inflow_) {
+            ys.emplace_back(
+                adevs::port_value<FlowValueType>{
+                  outport_inflow_request + i,
+                  inflow_});
+            prev_inflows[i] = inflow_;
+          }
+        }
       }
       else {
         std::ostringstream oss;
@@ -891,14 +945,19 @@ namespace ERIN
       }
     }
     if (get_report_outflow_achieved()) {
-      if constexpr (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_low) {
         std::cout << "... send=>outport_outflow_achieved\n";
       }
-      for (int idx{0}; idx < num_outflows; ++idx) {
-        ys.emplace_back(
-            adevs::port_value<FlowValueType>{
-              outport_outflow_achieved + idx,
-              outflows[idx]});
+      for (int i{0}; i < num_outflows; ++i) {
+        auto outflow_ = outflows[i];
+        auto prev_outflow_ = prev_outflows[i];
+        if (prev_outflow_ != outflow_) {
+          ys.emplace_back(
+              adevs::port_value<FlowValueType>{
+                outport_outflow_achieved + i,
+                outflow_});
+          prev_outflows[i] = outflow_;
+        }
       }
     }
   }

@@ -236,7 +236,9 @@ namespace ERIN
       FlowValueType inflow_request;
       int inflow_port_for_request;
       std::vector<FlowValueType> inflows;
+      std::vector<FlowValueType> prev_inflows;
       std::vector<FlowValueType> outflows;
+      std::vector<FlowValueType> prev_outflows;
   };
 
   ////////////////////////////////////////////////////////////

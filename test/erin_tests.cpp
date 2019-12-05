@@ -1450,6 +1450,12 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   auto sr = ::ERIN::process_single_scenario_results(
       is_good, elements, duration);
   EXPECT_TRUE(sr.get_is_good());
+  auto results = sr.get_results();
+  const std::vector<std::string> expected_keys{
+    "s1", "s2", "l1", "l2",
+    "bus-input(0)", "bus-input(1)", "bus-output(0)", "bus-output(1)"};
+  const auto expected_num_keys{expected_keys.size()};
+  EXPECT_EQ(expected_num_keys, results.size());
 }
 
 int

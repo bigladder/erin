@@ -413,9 +413,26 @@ namespace ERIN
   FlowMeter::get_results(RealTimeType max_time) const
   {
     const auto num_events{event_times.size()};
-    if ((requested_flows.size() != num_events)
-        || (achieved_flows.size() != num_events)) {
-      throw InvariantError();
+    const auto num_rfs = requested_flows.size();
+    const auto num_afs = achieved_flows.size();
+    if ((num_rfs != num_events) || (num_afs != num_events)) {
+      std::ostringstream oss;
+      oss << "invariant_error: requested_flows.size() "
+          << "!= achieved_flows.size() != num_events\n"
+          << "requested_flows.size(): " << num_rfs << "\n"
+          << "achieved_flows.size() : " << num_afs << "\n"
+          << "num_events            : " << num_events << "\n"
+          << "id                    : \"" << get_id() << "\"\n";
+      for (std::vector<RealTimeType>::size_type i{0}; i < num_events; ++i) {
+        oss << "event_times[" << i << "]      = " << event_times[i] << "\n";
+        if (i < num_rfs) {
+          oss << "requested_flows[" << i << "]  = " << requested_flows[i] << "\n";
+        }
+        if (i < num_afs) {
+          oss << "achieved_flows[" << i << "]   = " << achieved_flows[i] << "\n";
+        }
+      }
+      throw std::runtime_error(oss.str());
     }
     std::vector<Datum> results(num_events);
     for (std::vector<Datum>::size_type i=0; i < num_events; ++i) {
@@ -439,27 +456,52 @@ namespace ERIN
     }
     auto num_events{event_times.size()};
     auto real_time{get_real_time()};
-    if (num_events == 0 || (num_events > 0 && event_times.back() != real_time)) {
+    RealTimeType t_last{-1};
+    if (num_events > 0) {
+      t_last = event_times.back();
+    }
+    if (real_time > t_last) {
       event_times.push_back(real_time);
       ++num_events;
     }
+    auto num_requested{requested_flows.size()};
     auto num_achieved{achieved_flows.size()};
     if (get_report_inflow_request()) {
       requested_flows.push_back(get_inflow());
-      if (num_achieved == num_events && num_achieved > 0) {
+      ++num_requested;
+      if (num_achieved == num_events) {
         auto &v = achieved_flows.back();
         v = get_inflow();
       }
-      else
+      else {
         achieved_flows.push_back(get_inflow());
-    }
-    else if (get_report_outflow_achieved()) {
-      if (num_achieved == num_events && num_achieved > 0) {
-        auto &v = achieved_flows.back();
-        v = get_outflow();
+        ++num_achieved;
       }
-      else
-        achieved_flows.push_back(get_outflow());
+    }
+    if (get_report_outflow_achieved()) {
+      auto of = get_outflow();
+      if (num_achieved == num_events) {
+        auto &v = achieved_flows.back();
+        v = of;
+      }
+      else {
+        achieved_flows.push_back(of);
+        ++num_achieved;
+      }
+      if (num_requested < num_achieved) {
+        requested_flows.push_back(of);
+        ++num_requested;
+      }
+    }
+    if ((num_requested != num_achieved) && (num_events != num_achieved)) {
+      std::ostringstream oss;
+      oss << "FlowMeter: ";
+      oss << "invariant error: num_requested != num_achieved != num_events\n";
+      oss << "num_requested: " << num_requested << "\n";
+      oss << "num_achieved : " << num_achieved << "\n";
+      oss << "num_events   : " << num_events << "\n";
+      oss << "id           : \"" << get_id() << "\"\n";
+      throw std::runtime_error(oss.str());
     }
     if constexpr (debug_level >= debug_level_high) {
       print_state("... ");
@@ -661,9 +703,9 @@ namespace ERIN
   Mux::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Mux::delta_ext();id=" << id << "\n";
+      std::cout << "Mux::delta_ext();id=" << get_id() << "\n";
     }
-    time = time + e;
+    update_time(e);
     bool inflow_provided{false};
     bool outflow_provided{false};
     FlowValueType inflow_achieved{0};
@@ -720,17 +762,17 @@ namespace ERIN
       total_outflow_request += x;
     }
     if (inflow_provided && !outflow_provided) {
-      report_outflow_achieved = true;
-      if (total_inflow_achieved > inflow) {
+      set_report_outflow_achieved(true);
+      if (total_inflow_achieved > get_inflow()) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
-        oss << "inflow > 0.0 and total_inflow_achieved > inflow\n";
-        oss << "inflow: " << inflow << "\n";
+        oss << "total_inflow_achieved > inflow\n";
+        oss << "inflow: " << get_inflow() << "\n";
         oss << "total_inflow_achieved: " << total_inflow_achieved << "\n";
         throw std::runtime_error(oss.str());
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
-        auto diff = std::abs(outflow - total_inflow_achieved);
+        auto diff = std::abs(get_outflow() - total_inflow_achieved);
         if (diff < flow_value_tolerance) {
           // Inflows match (within tolerance) requested outflows. Update state.
           update_state(FlowState{total_inflow_achieved});
@@ -743,20 +785,20 @@ namespace ERIN
           if (highest_inflow_port_received < final_inflow_port) {
             // Additional inflow ports exist.
             // Request to the next input port for difference remaining.
-            inflow_request = outflow - total_inflow_achieved;
+            inflow_request = get_outflow() - total_inflow_achieved;
             inflow_port_for_request = highest_inflow_port_received + 1;
-            report_outflow_achieved = false;
-            report_inflow_request = true;
+            set_report_outflow_achieved(false);
+            set_report_inflow_request(true);
           }
           else {
             // We've exhausted all inflow ports and are still deficient. Need
             // to update outflows.
-            auto desired_outflow = outflow;
+            auto desired_outflow = get_outflow();
             update_state(FlowState{total_inflow_achieved});
             inflows = new_inflows;
             FlowValueType reduction_factor{1.0};
             if (desired_outflow != 0.0) {
-              reduction_factor = outflow / desired_outflow;
+              reduction_factor = total_inflow_achieved / desired_outflow;
               for (auto& of: outflows) {
                 of *= reduction_factor;
               }
@@ -772,7 +814,7 @@ namespace ERIN
       }
     }
     else if (outflow_provided && !inflow_provided) {
-      report_inflow_request = true;
+      set_report_inflow_request(true);
       if (strategy == MuxerDispatchStrategy::InOrder) {
         // Whenever the outflow request updates, we always start querying
         // inflows from the first inflow port and update the inflow_request.
@@ -787,11 +829,11 @@ namespace ERIN
             << static_cast<int>(strategy) << "\"";
         throw std::runtime_error(oss.str());
       }
-      if (outflow > total_outflow_request) {
+      if (get_outflow() > total_outflow_request) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
         oss << "outflow > total_outflow_request\n";
-        oss << "outflow: " << outflow << "\n";
+        oss << "outflow: " << get_outflow() << "\n";
         oss << "total_outflow_request: " << total_outflow_request << "\n";
         throw std::runtime_error(oss.str());
       }
@@ -807,7 +849,7 @@ namespace ERIN
       oss << "BadPortError: no relevant ports detected...";
       throw std::runtime_error(oss.str());
     }
-    if (report_inflow_request || report_outflow_achieved) {
+    if (get_report_inflow_request() || get_report_outflow_achieved()) {
       update_on_external_transition();
       check_flow_invariants();
     }
@@ -817,16 +859,17 @@ namespace ERIN
   Mux::output_func(std::vector<PortValue>& ys)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::output_func();id=" << id << "\n";
+      std::cout << "FlowElement::output_func();id=" << get_id() << "\n";
     }
-    if (report_inflow_request) {
+    if (get_report_inflow_request()) {
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "... send=>outport_inflow_request\n";
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
         ys.emplace_back(
             adevs::port_value<FlowValueType>{
-              outport_inflow_request + inflow_port_for_request, inflow_request});
+              outport_inflow_request + inflow_port_for_request,
+              inflow_request});
       }
       else {
         std::ostringstream oss;
@@ -835,7 +878,7 @@ namespace ERIN
         throw std::runtime_error(oss.str());
       }
     }
-    if (report_outflow_achieved) {
+    if (get_report_outflow_achieved()) {
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "... send=>outport_outflow_achieved\n";
       }

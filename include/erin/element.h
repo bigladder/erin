@@ -23,10 +23,10 @@ namespace ERIN
       static constexpr int outport_outflow_achieved{3*max_port_numbers};
 
       void delta_int() override;
-      virtual void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
       Time ta() override;
-      virtual void output_func(std::vector<PortValue>& ys) override;
+      void output_func(std::vector<PortValue>& ys) override;
 
       // Delete copy and move operators to prevent slicing issues...
       // see:
@@ -77,6 +77,8 @@ namespace ERIN
       [[nodiscard]] bool get_report_outflow_achieved() const {
         return report_outflow_achieved;
       };
+      void set_report_inflow_request(bool b) { report_inflow_request = b; }
+      void set_report_outflow_achieved(bool b) { report_outflow_achieved = b; }
       [[nodiscard]] FlowValueType get_inflow() const { return inflow; }
       [[nodiscard]] FlowValueType get_outflow() const { return outflow; }
       [[nodiscard]] FlowValueType get_storeflow() const { return storeflow; }
@@ -93,11 +95,10 @@ namespace ERIN
       [[nodiscard]] int get_num_outflows() const { return 1; }
 
       void update_state(const FlowState& fs);
-      static constexpr FlowValueType tol{1e-6};
       void check_flow_invariants() const;
+      void update_time(Time dt) { time = time + dt; }
 
-      // Subclasses should treat these as read-only unless overriding
-      // DEVS methods
+    private:
       std::string id;
       Time time;
       StreamType inflow_type;

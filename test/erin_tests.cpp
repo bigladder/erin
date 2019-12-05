@@ -1390,6 +1390,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     ::ERIN::MuxerDispatchStrategy::InOrder;
   const auto stream = ::ERIN::StreamType{"electrical"};
   const std::string scenario_id{"blue_sky"};
+  const ::ERIN::RealTimeType t_max{10};
   std::unique_ptr<::ERIN::Component> m =
     std::make_unique<::ERIN::MuxerComponent>(
         muxer_id, stream, num_inflows, num_outflows, strategy);
@@ -1397,7 +1398,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     l1_loads_by_scenario{
       { scenario_id,
         { ::ERIN::LoadItem{0,10},
-          ::ERIN::LoadItem{10}}}};
+          ::ERIN::LoadItem{t_max}}}};
   std::unique_ptr<::ERIN::Component> l1 =
     std::make_unique<::ERIN::LoadComponent>(
         l1_id,
@@ -1409,7 +1410,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
         { ::ERIN::LoadItem{0,0},
           ::ERIN::LoadItem{5,5},
           ::ERIN::LoadItem{8,10},
-          ::ERIN::LoadItem{10}}}};
+          ::ERIN::LoadItem{t_max}}}};
   std::unique_ptr<::ERIN::Component> l2 =
     std::make_unique<::ERIN::LoadComponent>(
         l2_id,
@@ -1442,11 +1443,12 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       scenario_id, network, connections, components, {});
   adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
-  const ::ERIN::RealTimeType duration{10};
+  const auto duration{t_max};
   const int max_no_advance{static_cast<int>(elements.size()) * 10};
   auto is_good = ::ERIN::run_devs(sim, duration, max_no_advance);
   EXPECT_TRUE(is_good);
-  // TODO: pull out processing info over sim results elements
+  auto results = ::ERIN::process_single_scenario_results(
+      is_good, elements, duration);
 }
 
 int

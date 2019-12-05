@@ -814,7 +814,17 @@ namespace ERIN
       auto dt = d.time - t0;
       t0 = d.time;
       if (dt <= 0) {
-        throw InvariantError();
+        std::ostringstream oss;
+        oss << "calc_scenario_stats";
+        oss << "invariant_error: dt <= 0; dt=" << dt << "\n";
+        int idx{0};
+        for (const auto& dd: ds) {
+          oss << "ds[" << idx << "]\n\t.time = " << dd.time << "\n";
+          oss << "\t.requested_value = " << dd.requested_value << "\n";
+          oss << "\t.achieved_value  = " << dd.achieved_value << "\n";
+          ++idx;
+        }
+        throw std::runtime_error(oss.str());
       }
       auto gap = std::fabs(req - ach);
       if (gap > flow_value_tolerance) {

@@ -17,7 +17,8 @@ namespace ERIN
   using Time = adevs::SuperDenseTime<RealTimeType>;
   using PortValue = adevs::port_value<FlowValueType>;
 
-  const FlowValueType flow_value_tolerance{1e-6};
+  constexpr FlowValueType flow_value_tolerance{1e-6};
+  constexpr FlowValueType neg_flow_value_tol = -1 * flow_value_tolerance;
   const auto inf = adevs_inf<Time>();
 
   // Time Conversion Factors

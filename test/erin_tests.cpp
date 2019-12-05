@@ -1461,6 +1461,13 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     ASSERT_FALSE(it == results.end())
       << "key \"" << k << "\" not found in results";
   }
+  const std::vector<::ERIN::Datum> expected_bus_outflow0{
+    ::ERIN::Datum{0,10.0,10.0},
+    ::ERIN::Datum{8,10.0,8.0},
+    ::ERIN::Datum{10,0.0,0.0}};
+  const auto expected_l1_inflow0 = expected_bus_outflow0;
+  const auto& actual_bus_outflow0 = results.at("bus-outflow(0)");
+  EXPECT_EQ(expected_bus_outflow0.size(), actual_bus_outflow0.size());
 }
 
 int

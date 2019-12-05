@@ -489,7 +489,19 @@ namespace ERIN
         ++num_achieved;
       }
       if (num_requested < num_achieved) {
-        requested_flows.push_back(of);
+        if (num_requested == 0) {
+          std::ostringstream oss;
+          oss << "no previous requested flows and an achieved flow shows up\n";
+          oss << "num_requested: " << num_requested << "\n";
+          oss << "num_achieved: " << num_achieved << "\n";
+          oss << "id: \"" << get_id() << "\"\n";
+          throw std::runtime_error(oss.str());
+        }
+        else {
+          // repeat the previous request -- requests don't change if upstream
+          // conditions change.
+          requested_flows.push_back(requested_flows.back());
+        }
         ++num_requested;
       }
     }

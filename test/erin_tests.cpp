@@ -1465,8 +1465,35 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     ::ERIN::Datum{0,10.0,10.0},
     ::ERIN::Datum{8,10.0,8.0},
     ::ERIN::Datum{10,0.0,0.0}};
+  const auto n_bus_outflow0 = expected_bus_outflow0.size();
   const auto& actual_bus_outflow0 = results.at("bus-outflow(0)");
-  EXPECT_EQ(expected_bus_outflow0.size(), actual_bus_outflow0.size());
+  EXPECT_EQ(n_bus_outflow0, actual_bus_outflow0.size());
+  if (true) {
+    std::cout << "RESULTS DUMP:\n";
+    for (const auto& r : results) {
+      const auto& k = r.first;
+      const auto& vs = r.second;
+      auto n = vs.size();
+      for (std::vector<::ERIN::Datum>::size_type i{0}; i < n; ++i) {
+        const auto& v = vs[i];
+        std::cout << k << "[" << i << "]{t=" << v.time
+                  << ",r=" << v.requested_value
+                  << ",a=" << v.achieved_value << "}\n";
+      }
+    }
+  }
+  for (std::vector<::ERIN::Datum>::size_type i{0}; i < n_bus_outflow0; ++i) {
+    const auto& e = expected_bus_outflow0[i];
+    const auto& a = actual_bus_outflow0[i];
+    EXPECT_EQ(e.time, a.time);
+    EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
+      << "expected[" << i << "]{t=" << e.time
+      << ",r=" << e.requested_value
+      << ",a=" << e.achieved_value << "} "
+      << "!= actual[" << i << "]{t=" << a.time
+      << ",r=" << a.requested_value
+      << ",a=" << a.achieved_value << "}";
+  }
   const auto expected_l1_inflow0 = expected_bus_outflow0;
   const auto& actual_l1_inflow0 = results.at("l1");
   EXPECT_EQ(expected_l1_inflow0.size(), actual_l1_inflow0.size());

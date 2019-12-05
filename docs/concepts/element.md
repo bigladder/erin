@@ -16,6 +16,27 @@ Elements represent fundamental network actions:
 - flow switching (on/off behavior; a gate, a switch)
 - ... others?
 
+# Invariants
+
+- There can be at most one unique (element/port, element/port) connection.
+  This implies that during an external transition, we receive input from an upstream or downstream element at most once.
+- Element ports are inflow or outflow (with respect to the element).
+  That is, an inflow port is flow into the element.
+  An outflow port is flow out of an element.
+  We never receive negative values on inflow or outflow ports. 
+  That is, flow never reverses direction.
+  To model flow changing direction requires hooking up explicit inflow and outflow ports for that purpose.
+  For example, the inflow port on an energy store would represent "charging".
+  Similarly, the outflow prot on the energy store would represent "discharge".
+- Flow requests propagate from sinks back to sources.
+  If nothing is heard from upstream, the request is assumed to be fulfilled. 
+  In response to a request, an upstream component may deliver less than requested, but never more.
+- Requests are stored and never "destoyed".
+  If conditions change such that a request can later be satisfied, that new information will be propagated.
+  As requests change, that information is propagated.
+  As achieved conditions change, that information is propagated.
+  We are ultimately interested in the achieved conditions but the request information is never destroyed.
+
 # Comments
 
 Is the Flow_meter a fundamental concept? Or should metering potentially be part of every Element?

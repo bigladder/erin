@@ -371,6 +371,22 @@ namespace ERIN
     return components;
   }
 
+  std::unordered_map<
+    std::string, // fragility curve id
+    std::unordered_map<
+      std::string, // intensity vulnerable to
+      std::unique_ptr<::erin::fragility::Curve>>>
+  TomlInputReader::read_fragility_data()
+  {
+    namespace ef = erin::fragility;
+    std::unordered_map<
+      std::string,
+      std::unordered_map<
+        std::string,
+        std::unique_ptr<ef::Curve>>> out;
+    return out;
+  }
+
   void
   TomlInputReader::read_source_component(
       const std::string& id,

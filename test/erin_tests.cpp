@@ -429,6 +429,38 @@ TEST(ErinBasicTest, CanReadSimulationInfoFromToml)
   EXPECT_EQ(expected, actual);
 }
 
+TEST(ErinBasicTest, CanReadFragilityCurvesFromToml)
+{
+  namespace ef = erin::fragility;
+  std::stringstream ss{};
+  ss << "############################################################\n"
+        "# Fragility Curves\n"
+        "[fragility.somewhat_vulnerable_to_flooding]\n"
+        "vulnerable_to = \"inundation_depth_ft\"\n"
+        "type = \"linear\"\n"
+        "lower_bound = 6.0\n"
+        "upper_bound = 14.0\n"
+        "[fragility.highly_vulnerable_to_wind]\n"
+        "vulnerable_to = \"wind_speed_mph\"\n"
+        "type = \"linear\"\n"
+        "lower_bound = 80.0\n"
+        "upper_bound = 160.0\n";
+  ::ERIN::TomlInputReader tir{ss};
+  std::unordered_map<
+    std::string, std::vector<std::unique_ptr<ef::Curve>>> expected{};
+  std::vector<std::unique_ptr<ef::Curve>> cs1(0);
+  cs1.emplace_back(std::make_unique<ef::Linear>(6.0, 14.0));
+  std::vector<std::unique_ptr<ef::Curve>> cs2(0);
+  cs2.emplace_back(std::make_unique<ef::Linear>(80.0, 160.0));
+  expected.insert(
+      std::make_pair("somewhat_vulnerable_to_flooding", std::move(cs1)));
+  expected.insert(
+      std::make_pair("highly_vulnerable_to_wind", std::move(cs2)));
+  auto actual = tir.read_fragility_data();
+  //EXPECT_EQ(expected.size(), actual.size());
+  //EXPECT_EQ(expected, actual);
+}
+
 TEST(ErinBasicsTest, CanReadStreamsFromToml)
 {
   std::stringstream ss{};

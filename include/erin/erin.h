@@ -155,6 +155,11 @@ namespace ERIN
         std::string,
         std::vector<::erin::network::Connection>> read_networks() = 0;
       virtual std::unordered_map<std::string, Scenario> read_scenarios() = 0;
+      virtual std::unordered_map<
+        std::string, // fragility curve id
+        std::unordered_map<
+          std::string, // intensity vulnerable to
+          std::unique_ptr<::erin::fragility::Curve>>> read_fragility_data() = 0;
   };
 
   ////////////////////////////////////////////////////////////
@@ -180,6 +185,12 @@ namespace ERIN
         std::string, std::vector<::erin::network::Connection>>
         read_networks() override;
       std::unordered_map<std::string, Scenario> read_scenarios() override;
+      std::unordered_map<
+        std::string, // fragility curve id
+        std::unordered_map<
+          std::string, // intensity vulnerable to
+          std::unique_ptr<::erin::fragility::Curve>>>
+            read_fragility_data() override;
 
     private:
       toml::value data;

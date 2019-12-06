@@ -317,14 +317,9 @@ namespace ERIN
       // `read_source_component`, `read_load_component`, `read_muxer_component`, etc.
       switch (component_type) {
         case ComponentType::Source:
-          {
-            std::unique_ptr<Component> source_comp =
-              std::make_unique<SourceComponent>(
-                  c.first, stream_types_map.at(output_stream_id));
-            components.insert(
-                std::make_pair(c.first, std::move(source_comp)));
-            break;
-          }
+          read_source_component(
+              c.first, stream_types_map.at(output_stream_id), components);
+          break;
         case ComponentType::Load:
           {
             const std::string key_loads_by_scenario{"loads_by_scenario"};
@@ -456,6 +451,18 @@ namespace ERIN
       }
     }
     return components;
+  }
+
+  void
+  TomlInputReader::read_source_component(
+      const std::string& id,
+      const StreamType& stream,
+      std::unordered_map<
+        std::string, std::unique_ptr<Component>>& components) const
+  {
+    std::unique_ptr<Component> source_comp =
+      std::make_unique<SourceComponent>(id, stream);
+    components.insert(std::make_pair(id, std::move(source_comp)));
   }
 
   std::unordered_map<

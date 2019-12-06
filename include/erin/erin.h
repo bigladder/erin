@@ -188,6 +188,11 @@ namespace ERIN
         get_loads_from_array(const std::vector<toml::table>& load_array) const;
       [[nodiscard]] std::vector<LoadItem>
         load_loads_from_csv(const std::string& file_path) const;
+      void read_source_component(
+          const std::string& id,
+          const StreamType& stream,
+          std::unordered_map<
+            std::string, std::unique_ptr<Component>>& comps) const;
   };
 
   ////////////////////////////////////////////////////////////

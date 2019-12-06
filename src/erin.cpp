@@ -286,7 +286,7 @@ namespace ERIN
       else {
         component_type = toml::get<std::string>(it->second);
       }
-      // stream OR input_stream, output_stream
+      // stream OR both input_stream and output_stream
       std::string input_stream_id;
       std::string output_stream_id;
       it = tt.find("stream");

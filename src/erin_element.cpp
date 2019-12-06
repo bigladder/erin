@@ -861,7 +861,7 @@ namespace ERIN
               for (auto& of_item: outflows) {
                 of_item *= reduction_factor;
               }
-              if constexpr (debug_level >= debug_level_low) {
+              if constexpr (debug_level >= debug_level_high) {
                 std::cout
                   << "inflow                : " << get_inflow() << "\n"
                   << "outflow               : " << get_outflow() << "\n"

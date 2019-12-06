@@ -84,6 +84,9 @@ namespace ERIN
     else if (tag == "converter") {
       return ComponentType::Converter;
     }
+    else if ((tag == "mux") || (tag == "bus") || (tag == "muxer")) {
+      return ComponentType::Muxer;
+    }
     else {
       std::ostringstream oss;
       oss << "Unhandled tag \"" << tag << "\"";
@@ -101,6 +104,8 @@ namespace ERIN
         return std::string{"source"};
       case ComponentType::Converter:
         return std::string{"converter"};
+      case ComponentType::Muxer:
+        return std::string{"muxer"};
       default:
         std::ostringstream oss;
         oss << "Unhandled ComponentType \"" << static_cast<int>(ct) << "\"";

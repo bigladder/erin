@@ -423,10 +423,9 @@ TEST(ErinBasicTest, CanReadSimulationInfoFromToml)
         "quantity_unit = \"kJ\"\n"
         "time_unit = \"hours\"\n"
         "max_time = 3000\n";
-  ::ERIN::TomlInputReader t{ss};
+  ::ERIN::TomlInputReader tir{ss};
   ::ERIN::SimulationInfo expected{"kW", "kJ", ::ERIN::TimeUnits::Hours, 3000};
-  auto pt = &t;
-  auto actual = pt->read_simulation_info();
+  auto actual = tir.read_simulation_info();
   EXPECT_EQ(expected, actual);
 }
 

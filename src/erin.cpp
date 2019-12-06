@@ -321,109 +321,20 @@ namespace ERIN
               c.first, stream_types_map.at(output_stream_id), components);
           break;
         case ComponentType::Load:
-          {
-            const std::string key_loads_by_scenario{"loads_by_scenario"};
-            std::unordered_map<std::string,std::vector<LoadItem>>
-              loads_by_scenario{};
-            it = tt.find(key_loads_by_scenario);
-            if (it != tt_end) {
-              const auto& loads = toml::get<toml::table>(it->second);
-              if constexpr (debug_level >= debug_level_high) {
-                std::cout << loads.size()
-                          << " load profile(s) by scenario"
-                          << " for component " << c.first << "\n";
-              }
-              for (const auto& lp: loads) {
-                const std::string load_id{toml::get<toml::string>(lp.second)};
-                auto the_loads_it = loads_by_id.find(load_id);
-                if (the_loads_it != loads_by_id.end()) {
-                  loads_by_scenario.insert(
-                      std::make_pair(lp.first, the_loads_it->second));
-                }
-                else {
-                  std::ostringstream oss;
-                  oss << "Input File Error reading load: "
-                      << "could not find load_id = \"" << load_id << "\"";
-                  throw std::runtime_error(oss.str());
-                }
-              }
-              if constexpr (debug_level >= debug_level_high) {
-                std::cout << loads_by_scenario.size()
-                          << " scenarios with loads\n";
-              }
-              if constexpr (debug_level >= debug_level_high) {
-                for (const auto& ls: loads_by_scenario) {
-                  std::cout << ls.first << ": [";
-                  for (const auto& li: ls.second) {
-                    std::cout << "(" << li.get_time();
-                    if (li.get_is_end()) {
-                      std::cout << ")";
-                    }
-                    else {
-                      std::cout << ", " << li.get_value() << "), ";
-                    }
-                  }
-                  std::cout << "]\n";
-                }
-              }
-              std::unique_ptr<Component> load_comp =
-                std::make_unique<LoadComponent>(
-                    c.first,
-                    stream_types_map.at(input_stream_id),
-                    loads_by_scenario);
-              components.insert(
-                  std::make_pair(c.first, std::move(load_comp)));
-            }
-            else {
-              std::ostringstream oss;
-              oss << "BadInputError: could not find \""
-                << key_loads_by_scenario
-                << "\" in component type \"load\"";
-              throw std::runtime_error(oss.str());
-            }
-            break;
-          }
+          read_load_component(
+              tt,
+              c.first,
+              stream_types_map.at(input_stream_id),
+              loads_by_id,
+              components);
+          break;
         case ComponentType::Muxer:
-          {
-            int num_inflows = 1;
-            it = tt.find("num_inflows");
-            if (it == tt_end) {
-              it = tt.find("num_inputs");
-              if (it != tt_end) {
-                num_inflows = toml::get<int>(it->second);
-              }
-            }
-            else {
-              num_inflows = toml::get<int>(it->second);
-            }
-            int num_outflows = 1;
-            it = tt.find("num_outflows");
-            if (it == tt_end) {
-              it = tt.find("num_outputs");
-              if (it != tt_end) {
-                num_outflows = toml::get<int>(it->second);
-              }
-            }
-            else {
-              num_outflows = toml::get<int>(it->second);
-            }
-            auto mds = MuxerDispatchStrategy::InOrder;
-            it = tt.find("dispatch_strategy");
-            if (it != tt_end) {
-              auto tag = toml::get<std::string>(it->second);
-              mds = tag_to_muxer_dispatch_strategy(tag);
-            }
-            std::unique_ptr<Component> mux_comp =
-              std::make_unique<MuxerComponent>(
-                  c.first,
-                  stream_types_map.at(input_stream_id),
-                  num_inflows,
-                  num_outflows,
-                  mds);
-            components.insert(
-                std::make_pair(c.first, std::move(mux_comp)));
-            break;
-          }
+          read_muxer_component(
+              tt,
+              c.first,
+              stream_types_map.at(input_stream_id),
+              components);
+          break;
         case ComponentType::Converter:
           {
             std::ostringstream oss;
@@ -463,6 +374,118 @@ namespace ERIN
     std::unique_ptr<Component> source_comp =
       std::make_unique<SourceComponent>(id, stream);
     components.insert(std::make_pair(id, std::move(source_comp)));
+  }
+
+  void
+  TomlInputReader::read_load_component(
+      const toml::table& tt,
+      const std::string& id,
+      const StreamType& stream,
+      const std::unordered_map<
+        std::string, std::vector<LoadItem>>& loads_by_id,
+      std::unordered_map<
+        std::string, std::unique_ptr<Component>>& components) const
+  {
+    const std::string key_loads_by_scenario{"loads_by_scenario"};
+    std::unordered_map<std::string,std::vector<LoadItem>>
+      loads_by_scenario{};
+    auto it = tt.find(key_loads_by_scenario);
+    const auto tt_end = tt.end();
+    if (it != tt_end) {
+      const auto& loads = toml::get<toml::table>(it->second);
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << loads.size()
+                  << " load profile(s) by scenario"
+                  << " for component " << id << "\n";
+      }
+      for (const auto& lp: loads) {
+        const std::string load_id{toml::get<toml::string>(lp.second)};
+        auto the_loads_it = loads_by_id.find(load_id);
+        if (the_loads_it != loads_by_id.end()) {
+          loads_by_scenario.insert(
+              std::make_pair(lp.first, the_loads_it->second));
+        }
+        else {
+          std::ostringstream oss;
+          oss << "Input File Error reading load: "
+            << "could not find load_id = \"" << load_id << "\"";
+          throw std::runtime_error(oss.str());
+        }
+      }
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << loads_by_scenario.size()
+          << " scenarios with loads\n";
+      }
+      if constexpr (debug_level >= debug_level_high) {
+        for (const auto& ls: loads_by_scenario) {
+          std::cout << ls.first << ": [";
+          for (const auto& li: ls.second) {
+            std::cout << "(" << li.get_time();
+            if (li.get_is_end()) {
+              std::cout << ")";
+            }
+            else {
+              std::cout << ", " << li.get_value() << "), ";
+            }
+          }
+          std::cout << "]\n";
+        }
+      }
+      std::unique_ptr<Component> load_comp =
+        std::make_unique<LoadComponent>(id, stream, loads_by_scenario);
+      components.insert(std::make_pair(id, std::move(load_comp)));
+    }
+    else {
+      std::ostringstream oss;
+      oss << "BadInputError: could not find \""
+        << key_loads_by_scenario
+        << "\" in component type \"load\"";
+      throw std::runtime_error(oss.str());
+    }
+  }
+
+  void
+  TomlInputReader::read_muxer_component(
+      const toml::table& tt,
+      const std::string& id,
+      const StreamType& stream,
+      std::unordered_map<
+        std::string, std::unique_ptr<Component>>& components) const
+  {
+    auto tt_end = tt.end();
+    int num_inflows = 1;
+    auto it = tt.find("num_inflows");
+    if (it == tt_end) {
+      it = tt.find("num_inputs");
+      if (it != tt_end) {
+        num_inflows = toml::get<int>(it->second);
+      }
+    }
+    else {
+      num_inflows = toml::get<int>(it->second);
+    }
+    int num_outflows = 1;
+    it = tt.find("num_outflows");
+    if (it == tt_end) {
+      it = tt.find("num_outputs");
+      if (it != tt_end) {
+        num_outflows = toml::get<int>(it->second);
+      }
+    }
+    else {
+      num_outflows = toml::get<int>(it->second);
+    }
+    auto mds = MuxerDispatchStrategy::InOrder;
+    it = tt.find("dispatch_strategy");
+    if (it != tt_end) {
+      auto tag = toml::get<std::string>(it->second);
+      mds = tag_to_muxer_dispatch_strategy(tag);
+    }
+    std::unique_ptr<Component> mux_comp =
+      std::make_unique<MuxerComponent>(
+          id, stream, num_inflows, num_outflows, mds);
+    components.insert(
+        std::make_pair(id, std::move(mux_comp)));
   }
 
   std::unordered_map<

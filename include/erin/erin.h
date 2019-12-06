@@ -193,6 +193,20 @@ namespace ERIN
           const StreamType& stream,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& comps) const;
+      void read_load_component(
+          const toml::table& tt,
+          const std::string& id,
+          const StreamType& stream,
+          const std::unordered_map<
+          std::string, std::vector<LoadItem>>& loads_by_id,
+          std::unordered_map<
+            std::string, std::unique_ptr<Component>>& components) const;
+      void read_muxer_component(
+          const toml::table& tt,
+          const std::string& id,
+          const StreamType& stream,
+          std::unordered_map<
+            std::string, std::unique_ptr<Component>>& components) const;
   };
 
   ////////////////////////////////////////////////////////////

@@ -371,19 +371,76 @@ namespace ERIN
     return components;
   }
 
-  std::unordered_map<
-    std::string, // fragility curve id
-    std::unordered_map<
-      std::string, // intensity vulnerable to
-      std::unique_ptr<::erin::fragility::Curve>>>
+  std::unordered_map<std::string, ::erin::fragility::FragilityCurve>
   TomlInputReader::read_fragility_data()
   {
     namespace ef = erin::fragility;
-    std::unordered_map<
-      std::string,
-      std::unordered_map<
-        std::string,
-        std::unique_ptr<ef::Curve>>> out;
+    std::unordered_map<std::string, ef::FragilityCurve> out;
+    const auto tt = toml::find<toml::table>(data, "fragility");
+    if (tt.empty()) {
+      return out;
+    }
+    for (const auto& pair : tt) {
+      const auto& curve_id = pair.first;
+      const auto& data_table = toml::get<toml::table>(pair.second);
+      std::string field_read;
+      std::string curve_type_tag;
+      try {
+        curve_type_tag = toml_helper::read_required_table_field<std::string>(
+          data_table, {"type"}, field_read);
+      }
+      catch (std::out_of_range&) {
+        std::ostringstream oss;
+        oss << "fragility curve '" << curve_id << "' does not "
+            << "declare its 'type'\n";
+        throw std::runtime_error(oss.str());
+      }
+      const auto curve_type = ef::tag_to_curve_type(curve_type_tag);
+      std::string vulnerable_to;
+      try {
+        vulnerable_to = toml_helper::read_required_table_field<std::string>(
+            data_table, {"vulnerable_to"}, field_read);
+      }
+      catch (std::out_of_range&) {
+        std::ostringstream oss;
+        oss << "required field 'vulnerable_to' for fragility curve '"
+            << vulnerable_to << "' missing";
+        throw std::runtime_error(oss.str());
+      }
+      switch (curve_type) {
+        case ef::CurveType::Linear:
+          {
+            double lower_bound;
+            double upper_bound;
+            try {
+              lower_bound = toml_helper::read_required_table_field<double>(
+                  data_table, {"lower_bound"}, field_read);
+              upper_bound = toml_helper::read_required_table_field<double>(
+                  data_table, {"upper_bound"}, field_read);
+            }
+            catch (std::out_of_range& e) {
+              std::ostringstream oss;
+              oss << "lower_bound and/or upper_bound not read correctly "
+                << "for '" << curve_id << "'; "
+                << "be sure to specify numbers with decimal points "
+                << "for TOML to parse.\n";
+              oss << "actual error: " << e.what() << "\n";
+              throw std::runtime_error(oss.str());
+            }
+            std::unique_ptr<ef::Curve> the_curve = std::make_unique<ef::Linear>(
+                lower_bound, upper_bound);
+            ef::FragilityCurve fc{vulnerable_to, std::move(the_curve)};
+            out.insert(std::make_pair(curve_id, std::move(fc)));
+            break;
+          }
+        default:
+          {
+            std::ostringstream oss;
+            oss << "unhandled curve type '" << static_cast<int>(curve_type) << "'";
+            throw std::runtime_error(oss.str());
+          }
+      }
+    }
     return out;
   }
 

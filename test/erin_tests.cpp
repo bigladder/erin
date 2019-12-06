@@ -18,7 +18,7 @@
 #include <random>
 #include <sstream>
 #include <unordered_map>
-
+#include <utility>
 
 const double tolerance{1e-6};
 
@@ -446,18 +446,23 @@ TEST(ErinBasicTest, CanReadFragilityCurvesFromToml)
         "lower_bound = 80.0\n"
         "upper_bound = 160.0\n";
   ::ERIN::TomlInputReader tir{ss};
-  std::unordered_map<
-    std::string, std::vector<std::unique_ptr<ef::Curve>>> expected{};
-  std::vector<std::unique_ptr<ef::Curve>> cs1(0);
-  cs1.emplace_back(std::make_unique<ef::Linear>(6.0, 14.0));
-  std::vector<std::unique_ptr<ef::Curve>> cs2(0);
-  cs2.emplace_back(std::make_unique<ef::Linear>(80.0, 160.0));
+  std::unordered_map<std::string, ef::FragilityCurve> expected{};
+  ef::FragilityCurve c1{
+    "inundation_depth_ft", std::make_unique<ef::Linear>(6.0, 14.0)};
+  ef::FragilityCurve c2{
+    "wind_speed_mph", std::make_unique<ef::Linear>(80.0, 160.0)};
   expected.insert(
-      std::make_pair("somewhat_vulnerable_to_flooding", std::move(cs1)));
+      std::move(
+        std::make_pair("somewhat_vulnerable_to_flooding", std::move(c1))));
   expected.insert(
-      std::make_pair("highly_vulnerable_to_wind", std::move(cs2)));
+      std::move(
+        std::make_pair("highly_vulnerable_to_wind", std::move(c2))));
   auto actual = tir.read_fragility_data();
-  //EXPECT_EQ(expected.size(), actual.size());
+  ASSERT_EQ(expected.size(), actual.size());
+  for (const auto& e_pair: expected) {
+    auto a_it = actual.find(e_pair.first);
+    ASSERT_FALSE(a_it == actual.end());
+  }
   //EXPECT_EQ(expected, actual);
 }
 

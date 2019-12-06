@@ -5,9 +5,22 @@
 #define ERIN_FRAGILITY_H
 #include <memory>
 #include <random>
+#include <string>
 
 namespace erin::fragility
 {
+
+  /**
+   * Curve types available.
+   */
+  enum class CurveType
+  {
+    Linear = 0
+  };
+
+  CurveType tag_to_curve_type(const std::string& tag);
+  std::string curve_type_to_tag(CurveType type);
+
   /**
    * A Fragility Curve that yields the chance of failure as a number
    * (0 <= n <= 1) given some intensity (a double).
@@ -66,6 +79,15 @@ namespace erin::fragility
     private:
       std::default_random_engine gen;
       std::uniform_real_distribution<double> dist;
+  };
+
+  /**
+   * Structure to hold the curve and the intensity it applies to (i.e., is vulnerable to).
+   */
+  struct FragilityCurve
+  {
+    std::string vulnerable_to;
+    std::unique_ptr<Curve> curve;
   };
 }
 

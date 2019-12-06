@@ -8,6 +8,29 @@
 namespace erin::fragility
 {
 
+  CurveType
+  tag_to_curve_type(const std::string& tag)
+  {
+    if (tag == "linear") {
+      return CurveType::Linear;
+    }
+    std::ostringstream oss;
+    oss << "unhandled curve type tag '" << tag << "'";
+    throw std::invalid_argument(oss.str());
+  }
+
+  std::string
+  curve_type_to_tag(CurveType t)
+  {
+    switch (t) {
+      case CurveType::Linear:
+        return std::string{"linear"};
+    }
+    std::ostringstream oss;
+    oss << "unhandled curve type '" << static_cast<int>(t) << "'";
+    throw std::runtime_error(oss.str());
+  }
+
   Linear::Linear(
       double lower_bound_,
       double upper_bound_):

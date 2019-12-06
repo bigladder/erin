@@ -80,7 +80,13 @@ namespace ERIN
       void set_report_inflow_request(bool b) { report_inflow_request = b; }
       void set_report_outflow_achieved(bool b) { report_outflow_achieved = b; }
       [[nodiscard]] FlowValueType get_inflow() const { return inflow; }
+      [[nodiscard]] FlowValueType get_inflow_request() const {
+        return inflow_request;
+      }
       [[nodiscard]] FlowValueType get_outflow() const { return outflow; }
+      [[nodiscard]] FlowValueType get_outflow_request() const {
+        return outflow_request;
+      }
       [[nodiscard]] FlowValueType get_storeflow() const { return storeflow; }
       [[nodiscard]] FlowValueType get_lossflow() const { return lossflow; }
       // for objects with multiple input and/or output ports
@@ -103,8 +109,10 @@ namespace ERIN
       Time time;
       StreamType inflow_type;
       StreamType outflow_type;
-      FlowValueType inflow;
-      FlowValueType outflow;
+      FlowValueType inflow; // achieved
+      FlowValueType inflow_request;
+      FlowValueType outflow; // achieved
+      FlowValueType outflow_request;
       FlowValueType storeflow;
       FlowValueType lossflow;
       bool report_inflow_request;
@@ -234,7 +242,7 @@ namespace ERIN
       std::vector<FlowValueType> prev_inflows;
       std::vector<FlowValueType> inflows_achieved;
       std::vector<FlowValueType> outflows; // achieved
-      std::vector<FlowValueType> prev_outflows; // achieved, last sent
+      std::vector<FlowValueType> prev_outflows;
       std::vector<FlowValueType> outflow_requests;
   };
 

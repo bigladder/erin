@@ -30,7 +30,9 @@ namespace ERIN
     inflow_type{std::move(in)},
     outflow_type{std::move(out)},
     inflow{0},
+    inflow_request{0},
     outflow{0},
+    outflow_request{0},
     storeflow{0},
     lossflow{0},
     report_inflow_request{false},
@@ -64,23 +66,23 @@ namespace ERIN
     time = time + e;
     bool inflow_provided{false};
     bool outflow_provided{false};
-    FlowValueType inflow_achieved{0};
-    FlowValueType outflow_request{0};
+    FlowValueType the_inflow_achieved{0};
+    FlowValueType the_outflow_request{0};
     for (const auto &x : xs) {
       switch (x.port) {
         case inport_inflow_achieved:
           if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... <=inport_inflow_achieved\n";
+            std::cout << "... <=inport_the_inflow_achieved\n";
           }
           inflow_provided = true;
-          inflow_achieved += x.value;
+          the_inflow_achieved += x.value;
           break;
         case inport_outflow_request:
           if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... <=inport_outflow_request\n";
+            std::cout << "... <=inport_the_outflow_request\n";
           }
           outflow_provided = true;
-          outflow_request += x.value;
+          the_outflow_request += x.value;
           break;
         default:
           std::ostringstream oss;
@@ -89,58 +91,73 @@ namespace ERIN
       }
     }
     run_checks_after_receiving_inputs(
-        inflow_provided, inflow_achieved, outflow_provided, outflow_request);
+        inflow_provided, the_inflow_achieved,
+        outflow_provided, the_outflow_request);
   }
 
   void
   FlowElement::run_checks_after_receiving_inputs(
       bool inflow_provided,
-      FlowValueType inflow_achieved,
+      FlowValueType the_inflow_achieved,
       bool outflow_provided,
-      FlowValueType outflow_request)
+      FlowValueType the_outflow_request)
   {
     if (inflow_provided && !outflow_provided) {
       report_outflow_achieved = true;
-      if (inflow > 0.0 && inflow_achieved > inflow) {
+      if ((inflow > 0.0) && (the_inflow_achieved > inflow_request)) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
-        oss << "inflow >= 0.0 and inflow_achieved > inflow\n";
+        oss << "inflow > 0.0 and the_inflow_achieved > inflow\n";
         oss << "inflow: " << inflow << "\n";
-        oss << "inflow_achieved: " << inflow_achieved << "\n";
+        oss << "the_inflow_achieved: " << the_inflow_achieved << "\n";
+        oss << "id = \"" << id << "\"\n";
         throw std::runtime_error(oss.str());
       }
-      if (inflow < 0.0 && inflow_achieved < inflow) {
+      if (the_inflow_achieved < neg_flow_value_tol) {
         std::ostringstream oss;
-        oss << "AchievedMoreThanRequestedError\n";
-        oss << "inflow <= 0.0 and inflow_achieved < inflow\n";
-        oss << "inflow: " << inflow << "\n";
-        oss << "inflow_achieved: " << inflow_achieved << "\n";
+        oss << "FlowReversalError!!!\n";
+        oss << "inflow should never be below 0.0!!!\n";
+        if (the_inflow_achieved < inflow_request) {
+          oss << "AchievedMoreThanRequestedError\n";
+          oss << "inflow < 0.0 and the_inflow_achieved < inflow_request\n";
+          oss << "inflow: " << inflow << "\n";
+          oss << "the_inflow_achieved: " << the_inflow_achieved << "\n";
+          oss << "inflow_request : " << inflow_request << "\n";
+        }
         throw std::runtime_error(oss.str());
       }
-      const FlowState& fs = update_state_for_inflow_achieved(inflow_achieved);
+      const FlowState& fs = update_state_for_inflow_achieved(the_inflow_achieved);
       update_state(fs);
     }
     else if (outflow_provided && !inflow_provided) {
       report_inflow_request = true;
+      outflow_request = the_outflow_request;
       const FlowState fs = update_state_for_outflow_request(outflow_request);
-      if (std::fabs(fs.getOutflow() - outflow_request) > flow_value_tolerance) {
+      // update what the inflow_request is based on all outflow_requests
+      inflow_request = fs.getInflow();
+      auto diff = std::fabs(fs.getOutflow() - outflow_request);
+      if (diff > flow_value_tolerance) {
         report_outflow_achieved = true;
       }
       update_state(fs);
       if (outflow > 0.0 && outflow > outflow_request) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
-        oss << "outflow >= 0.0 && outflow > outflow_request\n";
+        oss << "outflow > 0.0 && outflow > outflow_request\n";
         oss << "outflow: " << outflow << "\n";
         oss << "outflow_request: " << outflow_request << "\n";
         throw std::runtime_error(oss.str());
       }
-      if (outflow < 0.0 && outflow < outflow_request) {
+      if (outflow < neg_flow_value_tol) {
         std::ostringstream oss;
-        oss << "AchievedMoreThanRequestedError\n";
-        oss << "outflow <= 0.0 && outflow < outflow_request\n";
-        oss << "outflow: " << outflow << "\n";
-        oss << "outflow_request: " << outflow_request << "\n";
+        oss << "FlowReversalError\n";
+        oss << "outflow should not be negative\n";
+        if (outflow < outflow_request) {
+          oss << "AchievedMoreThanRequestedError\n";
+          oss << "outflow < 0.0 && outflow < outflow_request\n";
+          oss << "outflow: " << outflow << "\n";
+          oss << "outflow_request: " << outflow_request << "\n";
+        }
         throw std::runtime_error(oss.str());
       }
     }
@@ -768,6 +785,9 @@ namespace ERIN
         if constexpr (debug_level >= debug_level_high) {
           std::cout << "... <=inport_outflow_request(" << port_n << ")\n";
         }
+        // by setting both prev_outflows and outflow_requests we prevent
+        // reporting back downstream to the component. If, however, our
+        // outflows end up differing from requests, we will report.
         prev_outflows[port_n] = x.value;
         outflow_requests[port_n] = x.value;
         outflow_provided = true;
@@ -878,6 +898,7 @@ namespace ERIN
     }
     else if (outflow_provided && !inflow_provided) {
       set_report_inflow_request(true);
+      set_report_outflow_achieved(true);
       if (strategy == MuxerDispatchStrategy::InOrder) {
         // Whenever the outflow request updates, we always start querying
         // inflows from the first inflow port and update the inflow_request.
@@ -887,7 +908,6 @@ namespace ERIN
         inflows_achieved = inflows;
         update_state(FlowState{total_outflow_request});
         outflows = outflow_requests;
-        prev_outflows = outflows;
       }
       else {
         std::ostringstream oss;
@@ -954,10 +974,15 @@ namespace ERIN
     if (get_report_outflow_achieved()) {
       if constexpr (debug_level >= debug_level_low) {
         std::cout << "... send=>outport_outflow_achieved\n";
+        std::cout << "t = " << get_real_time() << "\n";
       }
       for (int i{0}; i < num_outflows; ++i) {
         auto outflow_ = outflows[i];
         auto prev_outflow_ = prev_outflows[i];
+        if constexpr (debug_level >= debug_level_low) {
+          std::cout << "outflow[" << i << "] = " << outflow_ << "\n";
+          std::cout << "prev_outflow[" << i << "] = " << prev_outflow_ << "\n";
+        }
         if (prev_outflow_ != outflow_) {
           ys.emplace_back(
               adevs::port_value<FlowValueType>{

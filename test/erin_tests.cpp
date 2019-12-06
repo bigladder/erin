@@ -1462,7 +1462,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     ASSERT_FALSE(it == results.end())
       << "key \"" << k << "\" not found in results";
   }
-  if (true) {
+  if (false) {
     std::cout << "RESULTS DUMP:\n";
     for (const auto& r : results) {
       const auto& k = r.first;

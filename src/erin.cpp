@@ -278,7 +278,12 @@ namespace ERIN
       toml::table tt = toml::get<toml::table>(t);
       auto it = tt.find("type");
       std::string component_type;
-      if (it != tt.end()) {
+      if (it == tt.end()) {
+        std::ostringstream oss;
+        oss << "failed to find 'type' for component " << c.first << "\n";
+        throw std::runtime_error(oss.str());
+      }
+      else {
         component_type = toml::get<std::string>(it->second);
       }
       // stream OR input_stream, output_stream

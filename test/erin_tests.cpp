@@ -493,7 +493,13 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
-        "loads_by_scenario.blue_sky = \"load1\"\n";
+        "loads_by_scenario.blue_sky = \"load1\"\n"
+        "[components.bus]\n"
+        "type = \"muxer\"\n"
+        "stream = \"electricity\"\n"
+        "num_inflows = 2\n"
+        "num_outflows = 1\n"
+        "dispatch_strategy = \"in_order\"\n";
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair("electricity", ::ERIN::StreamType(
@@ -517,8 +523,15 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         std::make_shared<::ERIN::LoadComponent>(
           std::string{"cluster_01_electric"},
           streams["electricity"],
-          loads))
-  };
+          loads)),
+    std::make_pair(
+        std::string{"bus"},
+        std::make_shared<::ERIN::MuxerComponent>(
+          std::string{"bus"},
+          streams["electricity"],
+          2,
+          1,
+          ::ERIN::MuxerDispatchStrategy::InOrder))};
   auto pt = &t;
   auto actual = pt->read_components(streams, loads_by_id);
   EXPECT_EQ(expected.size(), actual.size());

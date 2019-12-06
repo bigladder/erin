@@ -274,39 +274,47 @@ namespace ERIN
       std::cout << toml_comps.size() << " components found\n";
     }
     std::unordered_map<std::string, std::unique_ptr<Component>> components{};
+    std::string field_read;
     for (const auto& c: toml_comps) {
       toml::value t = c.second;
       const toml::table tt = toml::get<toml::table>(t);
-      const auto tt_end = tt.end();
-      auto it = tt.find("type");
-      ComponentType component_type;
       std::string comp_type_tag;
-      if (it == tt_end) {
+      try {
+        comp_type_tag = toml_helper::read_required_table_field<std::string>(
+            tt, {"type"}, field_read);
+      }
+      catch (std::out_of_range& e) {
         std::ostringstream oss;
         oss << "failed to find 'type' for component " << c.first << "\n";
         throw std::runtime_error(oss.str());
       }
-      else {
-        comp_type_tag = toml::get<std::string>(it->second);
+      ComponentType component_type;
+      try {
         component_type = tag_to_component_type(comp_type_tag);
       }
-      // stream OR both input_stream and output_stream
-      std::string input_stream_id;
-      std::string output_stream_id;
-      it = tt.find("stream");
-      if (it != tt_end) {
-        input_stream_id = toml::get<std::string>(it->second);
-        output_stream_id = input_stream_id;
+      catch (std::invalid_argument& e) {
+        std::ostringstream oss;
+        oss << "could not understand 'type' \""
+            << comp_type_tag << "\" for component "
+            << c.first << "\n";
+        throw std::runtime_error(oss.str());
       }
-      else {
-        it = tt.find("input_stream");
-        if (it != tt_end) {
-          input_stream_id = toml::get<std::string>(it->second);
-        }
-        it = tt.find("output_stream");
-        if (it != tt_end) {
-          output_stream_id = toml::get<std::string>(it->second);
-        }
+      std::string input_stream_id;
+      try {
+        input_stream_id =
+          toml_helper::read_required_table_field<std::string>(
+              tt, {"input_stream", "stream", "output_stream"}, field_read);
+      }
+      catch (std::out_of_range& e) {
+        std::ostringstream oss;
+        oss << "failed to find 'input_stream', 'stream', "
+            << "or 'output_stream' for component \"" << c.first << "\"\n";
+        throw std::runtime_error(oss.str());
+      }
+      auto output_stream_id = input_stream_id;
+      if (field_read != "stream") {
+        output_stream_id = toml_helper::read_optional_table_field<std::string>(
+            tt, {"output_stream"}, input_stream_id, field_read);
       }
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "comp: " << c.first << ".input_stream_id  = "
@@ -314,8 +322,6 @@ namespace ERIN
         std::cout << "comp: " << c.first << ".output_stream_id = "
                   << output_stream_id << "\n";
       }
-      // TODO: split into separate reader methods:
-      // `read_source_component`, `read_load_component`, `read_muxer_component`, etc.
       switch (component_type) {
         case ComponentType::Source:
           read_source_component(

@@ -38,6 +38,7 @@ set(private_headers
   ${PROJECT_SOURCE_DIR}/src/debug_utils.h
   ${PROJECT_SOURCE_DIR}/src/erin_csv.h
   ${PROJECT_SOURCE_DIR}/src/erin_generics.h
+  ${PROJECT_SOURCE_DIR}/src/toml_helper.h
   ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/gsl
   ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/gsl_algorithm
   ${PROJECT_SOURCE_DIR}/vendor/gsl/include/gsl/gsl_assert

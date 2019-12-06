@@ -10,6 +10,7 @@
 #include "erin/fragility.h"
 #include "erin/port.h"
 #include "erin_generics.h"
+#include "toml_helper.h"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -452,35 +453,14 @@ namespace ERIN
       std::unordered_map<
         std::string, std::unique_ptr<Component>>& components) const
   {
-    auto tt_end = tt.end();
-    int num_inflows = 1;
-    auto it = tt.find("num_inflows");
-    if (it == tt_end) {
-      it = tt.find("num_inputs");
-      if (it != tt_end) {
-        num_inflows = toml::get<int>(it->second);
-      }
-    }
-    else {
-      num_inflows = toml::get<int>(it->second);
-    }
-    int num_outflows = 1;
-    it = tt.find("num_outflows");
-    if (it == tt_end) {
-      it = tt.find("num_outputs");
-      if (it != tt_end) {
-        num_outflows = toml::get<int>(it->second);
-      }
-    }
-    else {
-      num_outflows = toml::get<int>(it->second);
-    }
-    auto mds = MuxerDispatchStrategy::InOrder;
-    it = tt.find("dispatch_strategy");
-    if (it != tt_end) {
-      auto tag = toml::get<std::string>(it->second);
-      mds = tag_to_muxer_dispatch_strategy(tag);
-    }
+    std::string field_read;
+    auto num_inflows = toml_helper::read_optional_table_field<int>(
+        tt, {"num_inflows", "num_inputs"}, 1, field_read);
+    auto num_outflows = toml_helper::read_optional_table_field<int>(
+        tt, {"num_outflows", "num_outputs"}, 1, field_read);
+    auto mds_tag = toml_helper::read_optional_table_field<std::string>(
+        tt, {"dispatch_strategy"}, "in_order", field_read);
+    auto mds = tag_to_muxer_dispatch_strategy(mds_tag);
     std::unique_ptr<Component> mux_comp =
       std::make_unique<MuxerComponent>(
           id, stream, num_inflows, num_outflows, mds);

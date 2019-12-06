@@ -27,10 +27,10 @@ namespace erin::fragility
   };
 
   /**
-   * A class to implement a linear fragility curve that starts at 0% change of
-   * failure from -infinity to the lower_bound, various linearly from 0% to
-   * 100% from lower to upper bound, and 100% for values of intensity at or
-   * above the upper bound.
+   * A class to implement a linear fragility curve that starts at 0% chance of
+   * failure from -infinity to the lower_bound, varies linearly from 0% to
+   * 100% from lower to upper bound, and 100% chance of failure for values of
+   * intensity at or above the upper bound.
    */
   class Linear : public Curve
   {

@@ -219,6 +219,9 @@ namespace ERIN
     InOrder = 0
   };
 
+  MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(std::string tag);
+  std::string muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds);
+
   ////////////////////////////////////////////////////////////
   // Mux
   class Mux : public FlowElement

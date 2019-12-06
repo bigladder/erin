@@ -705,6 +705,34 @@ namespace ERIN
   }
 
   ////////////////////////////////////////////////////////////
+  // MuxerDispatchStrategy
+  MuxerDispatchStrategy
+  tag_to_muxer_dispatch_strategy(std::string tag)
+  {
+    if (tag == "in_order") {
+      return MuxerDispatchStrategy::InOrder;
+    }
+    std::ostringstream oss;
+    oss << "unhandled tag \"" << tag << "\" for Muxer_dispatch_strategy\n";
+    throw std::runtime_error(oss.str());
+  }
+
+  std::string
+  muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds)
+  {
+    switch (mds) {
+      case MuxerDispatchStrategy::InOrder:
+        return std::string{"in_order"};
+      default:
+        break;
+    }
+    std::ostringstream oss;
+    oss << "unhandled Muxer_dispatch_strategy \""
+      << static_cast<int>(mds) << "\"\n";
+    throw std::runtime_error(oss.str());
+  }
+
+  ////////////////////////////////////////////////////////////
   // Mux
   Mux::Mux(
       std::string id,

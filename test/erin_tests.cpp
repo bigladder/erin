@@ -462,6 +462,12 @@ TEST(ErinBasicTest, CanReadFragilityCurvesFromToml)
   for (const auto& e_pair: expected) {
     auto a_it = actual.find(e_pair.first);
     ASSERT_FALSE(a_it == actual.end());
+    const auto& e_fc = e_pair.second;
+    const auto& a_fc = a_it->second;
+    EXPECT_EQ(e_fc.vulnerable_to, a_fc.vulnerable_to);
+    ASSERT_EQ(e_fc.curve->get_curve_type(), a_fc.curve->get_curve_type());
+    //ef::Linear& elc = e_fc.curve;
+    //ef::Linear& alc = a_fc.curve;
   }
   //EXPECT_EQ(expected, actual);
 }

@@ -459,15 +459,14 @@ TEST(ErinBasicTest, CanReadFragilityCurvesFromToml)
         std::make_pair("highly_vulnerable_to_wind", std::move(c2))));
   auto actual = tir.read_fragility_data();
   ASSERT_EQ(expected.size(), actual.size());
-  for (const auto& e_pair: expected) {
+  for (auto& e_pair: expected) {
     auto a_it = actual.find(e_pair.first);
     ASSERT_FALSE(a_it == actual.end());
-    const auto& e_fc = e_pair.second;
-    const auto& a_fc = a_it->second;
+    auto& e_fc = e_pair.second;
+    auto& a_fc = a_it->second;
     EXPECT_EQ(e_fc.vulnerable_to, a_fc.vulnerable_to);
     ASSERT_EQ(e_fc.curve->get_curve_type(), a_fc.curve->get_curve_type());
-    //ef::Linear& elc = e_fc.curve;
-    //ef::Linear& alc = a_fc.curve;
+    ASSERT_EQ(e_fc.curve->str(), a_fc.curve->str());
   }
   //EXPECT_EQ(expected, actual);
 }

@@ -69,6 +69,15 @@ namespace erin::fragility
     return dx / range;
   }
 
+  std::string
+  Linear::str() const
+  {
+    std::ostringstream oss;
+    oss << "Linear(lower_bound=" << lower_bound
+        << ",upper_bound=" << upper_bound << ")";
+    return oss.str();
+  }
+
   FailureChecker::FailureChecker():
     FailureChecker(std::default_random_engine{})
   {

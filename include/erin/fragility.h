@@ -38,6 +38,7 @@ namespace erin::fragility
       [[nodiscard]] virtual std::unique_ptr<Curve> clone() const = 0;
       virtual double apply(double x) const = 0;
       [[nodiscard]] virtual CurveType get_curve_type() const = 0;
+      [[nodiscard]] virtual std::string str() const = 0;
   };
 
   /**
@@ -57,6 +58,9 @@ namespace erin::fragility
       [[nodiscard]] CurveType get_curve_type() const override {
         return CurveType::Linear;
       }
+      [[nodiscard]] std::string str() const override;
+      [[nodiscard]] double get_lower_bound() const { return lower_bound; }
+      [[nodiscard]] double get_upper_bound() const { return upper_bound; }
 
     private:
       double lower_bound;

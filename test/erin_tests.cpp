@@ -466,9 +466,8 @@ TEST(ErinBasicTest, CanReadFragilityCurvesFromToml)
     auto& a_fc = a_it->second;
     EXPECT_EQ(e_fc.vulnerable_to, a_fc.vulnerable_to);
     ASSERT_EQ(e_fc.curve->get_curve_type(), a_fc.curve->get_curve_type());
-    ASSERT_EQ(e_fc.curve->str(), a_fc.curve->str());
+    EXPECT_EQ(e_fc.curve->str(), a_fc.curve->str());
   }
-  //EXPECT_EQ(expected, actual);
 }
 
 TEST(ErinBasicsTest, CanReadStreamsFromToml)

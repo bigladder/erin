@@ -1677,6 +1677,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "input_stream = \"electricity\"\n"
         "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "loads_by_scenario.class_4_hurricane = \"building_electrical\"\n"
+        "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
         "[components.emergency_generator]\n"
         "type = \"source\"\n"
         "output_stream = \"electricity\"\n"
@@ -1687,6 +1688,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "num_inflows = 2\n"
         "num_outflows = 1\n"
         "dispatch_strategy = \"in_order\"\n"
+        "fragilities = [\"highly_vulnerable_to_wind\", \"somewhat_vulnerable_to_flooding\"]\n"
         "[fragility.somewhat_vulnerable_to_flooding]\n"
         "vulnerable_to = \"inundation_depth_ft\"\n"
         "type = \"linear\"\n"
@@ -1724,9 +1726,15 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
   auto components = r.read_components(streams, loads, fragilities);
+  EXPECT_EQ(4, components.size());
   // Test that components have fragilities
   const auto& electric_utility = components["electric_utility"];
-  ASSERT_TRUE(electric_utility->is_fragile());
+  for (const auto& c_pair : components) {
+    const auto& c_id = c_pair.first; 
+    const auto& c = c_pair.second;
+    EXPECT_TRUE(c->is_fragile())
+      << "component '" << c_id << "' should be fragile but is not";
+  }
   if (false) {
     auto networks = r.read_networks();
     auto scenarios = r.read_scenarios();

@@ -24,6 +24,7 @@ type = "load"
 input_stream = "electricity"
 loads_by_scenario.blue_sky = "building_electrical"
 loads_by_scenario.class_4_hurricane = "building_electrical"
+fragilities = ["somewhat_vulnerable_to_flooding"]
 [components.emergency_generator]
 type = "source"
 output_stream = "electricity"
@@ -42,6 +43,7 @@ num_outflows = 1
 # switches or changes in load requests are used to drop loads (or simulate
 # their dropping).
 dispatch_strategy = "in_order"
+fragilities = ["highly_vulnerable_to_wind", "somewhat_vulnerable_to_flooding"]
 ############################################################
 # Fragility Curves
 [fragility.somewhat_vulnerable_to_flooding]

@@ -279,6 +279,7 @@ namespace ERIN
     std::unordered_map<std::string, std::unique_ptr<Component>> components{};
     std::string field_read;
     for (const auto& c: toml_comps) {
+      const auto& comp_id = c.first;
       toml::value t = c.second;
       const toml::table tt = toml::get<toml::table>(t);
       std::string comp_type_tag;
@@ -288,7 +289,7 @@ namespace ERIN
       }
       catch (std::out_of_range& e) {
         std::ostringstream oss;
-        oss << "failed to find 'type' for component " << c.first << "\n";
+        oss << "failed to find 'type' for component " << comp_id << "\n";
         throw std::runtime_error(oss.str());
       }
       ComponentType component_type;
@@ -299,7 +300,7 @@ namespace ERIN
         std::ostringstream oss;
         oss << "could not understand 'type' \""
             << comp_type_tag << "\" for component "
-            << c.first << "\n";
+            << comp_id << "\n";
         throw std::runtime_error(oss.str());
       }
       std::string input_stream_id;
@@ -311,7 +312,7 @@ namespace ERIN
       catch (std::out_of_range& e) {
         std::ostringstream oss;
         oss << "failed to find 'input_stream', 'stream', "
-            << "or 'output_stream' for component \"" << c.first << "\"\n";
+            << "or 'output_stream' for component \"" << comp_id << "\"\n";
         throw std::runtime_error(oss.str());
       }
       auto output_stream_id = input_stream_id;
@@ -327,7 +328,7 @@ namespace ERIN
         auto f_it = fragilities.find(fid);
         if (f_it == fragilities.end()) {
           std::ostringstream oss;
-          oss << "component '" << c.first << "' specified fragility '"
+          oss << "component '" << comp_id << "' specified fragility '"
               << fid << "' but that fragility doesn't appear in the"
               << "fragility curve map.";
           throw std::runtime_error(oss.str());
@@ -344,11 +345,11 @@ namespace ERIN
         }
       }
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "comp: " << c.first << ".input_stream_id  = "
+        std::cout << "comp: " << comp_id << ".input_stream_id  = "
                   << input_stream_id << "\n";
-        std::cout << "comp: " << c.first << ".output_stream_id = "
+        std::cout << "comp: " << comp_id << ".output_stream_id = "
                   << output_stream_id << "\n";
-        std::cout << "comp: " << c.first << ".fragilities = [";
+        std::cout << "comp: " << comp_id << ".fragilities = [";
         bool first{true};
         for (const auto& f: fragility_ids) {
           if (first) {
@@ -364,28 +365,39 @@ namespace ERIN
       }
       switch (component_type) {
         case ComponentType::Source:
-          read_source_component(
-              c.first,
-              stream_types_map.at(output_stream_id),
+          {
+            auto stream_type_it = stream_types_map.find(output_stream_id);
+            if (stream_type_it == stream_types_map.end()) {
+              std::ostringstream oss;
+              oss << "output stream '" << output_stream_id << "' not "
+                  << "found in stream_types_map for component '"
+                  << comp_id << "'";
+              throw std::runtime_error(oss.str());
+            }
+            const auto& stream_type = (*stream_type_it).second;
+            read_source_component(
+                comp_id,
+                stream_type,
+                components,
+                std::move(frags));
+            break;
+          }
+        case ComponentType::Load:
+          read_load_component(
+              tt,
+              comp_id,
+              stream_types_map.at(input_stream_id),
+              loads_by_id,
               components,
               std::move(frags));
           break;
-        case ComponentType::Load:
-          // TODO: add frags
-          read_load_component(
-              tt,
-              c.first,
-              stream_types_map.at(input_stream_id),
-              loads_by_id,
-              components);
-          break;
         case ComponentType::Muxer:
-          // TODO: add frags
           read_muxer_component(
               tt,
-              c.first,
+              comp_id,
               stream_types_map.at(input_stream_id),
-              components);
+              components,
+              std::move(frags));
           break;
         case ComponentType::Converter:
           {
@@ -511,7 +523,8 @@ namespace ERIN
       const std::unordered_map<
         std::string, std::vector<LoadItem>>& loads_by_id,
       std::unordered_map<
-        std::string, std::unique_ptr<Component>>& components) const
+        std::string, std::unique_ptr<Component>>& components,
+      fragility_map&& frags) const
   {
     const std::string key_loads_by_scenario{"loads_by_scenario"};
     std::unordered_map<std::string,std::vector<LoadItem>>
@@ -559,7 +572,7 @@ namespace ERIN
         }
       }
       std::unique_ptr<Component> load_comp =
-        std::make_unique<LoadComponent>(id, stream, loads_by_scenario);
+        std::make_unique<LoadComponent>(id, stream, loads_by_scenario, std::move(frags));
       components.insert(std::make_pair(id, std::move(load_comp)));
     }
     else {
@@ -577,7 +590,8 @@ namespace ERIN
       const std::string& id,
       const StreamType& stream,
       std::unordered_map<
-        std::string, std::unique_ptr<Component>>& components) const
+        std::string, std::unique_ptr<Component>>& components,
+      fragility_map&& frags) const
   {
     std::string field_read;
     auto num_inflows = toml_helper::read_optional_table_field<int>(
@@ -589,7 +603,7 @@ namespace ERIN
     auto mds = tag_to_muxer_dispatch_strategy(mds_tag);
     std::unique_ptr<Component> mux_comp =
       std::make_unique<MuxerComponent>(
-          id, stream, num_inflows, num_outflows, mds);
+          id, stream, num_inflows, num_outflows, std::move(frags), mds);
     components.insert(
         std::make_pair(id, std::move(mux_comp)));
   }

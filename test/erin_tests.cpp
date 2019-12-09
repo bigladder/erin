@@ -1656,6 +1656,97 @@ TEST(ErinBasicsTest, TestAddMultipleFragilitiesToAComponent)
   auto comp = ::ERIN::SourceComponent(id, stream, std::move(frags));
 }
 
+TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
+{
+  std::stringstream ss;
+  ss << "[simulation_info]\n"
+        "rate_unit = \"kW\"\n"
+        "quantity_unit = \"kJ\"\n"
+        "time_unit = \"years\"\n"
+        "max_time = 1000\n"
+        "[streams.electricity]\n"
+        "type = \"electricity_medium_voltage\"\n"
+        "[loads.building_electrical]\n"
+        "csv_file = \"ex02.csv\"\n"
+        "[components.electric_utility]\n"
+        "type = \"source\"\n"
+        "output_stream = \"electricity\"\n"
+        "fragilities = [\"highly_vulnerable_to_wind\"]\n"
+        "[components.cluster_01_electric]\n"
+        "type = \"load\"\n"
+        "input_stream = \"electricity\"\n"
+        "loads_by_scenario.blue_sky = \"building_electrical\"\n"
+        "loads_by_scenario.class_4_hurricane = \"building_electrical\"\n"
+        "[components.emergency_generator]\n"
+        "type = \"source\"\n"
+        "output_stream = \"electricity\"\n"
+        "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+        "[components.bus]\n"
+        "type = \"muxer\"\n"
+        "stream = \"electricity\"\n"
+        "num_inflows = 2\n"
+        "num_outflows = 1\n"
+        "dispatch_strategy = \"in_order\"\n"
+        "[fragility.somewhat_vulnerable_to_flooding]\n"
+        "vulnerable_to = \"inundation_depth_ft\"\n"
+        "type = \"linear\"\n"
+        "lower_bound = 6.0\n"
+        "upper_bound = 14.0\n"
+        "[fragility.highly_vulnerable_to_wind]\n"
+        "vulnerable_to = \"wind_speed_mph\"\n"
+        "type = \"linear\"\n"
+        "lower_bound = 80.0\n"
+        "upper_bound = 160.0\n"
+        "[networks.normal_operations]\n"
+        "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
+        "[networks.emergency_operations]\n"
+        "connections = [\n"
+        "  [\"electric_utility\", \"outflow\", \"0\", \"bus\", \"inflow\", \"0\"],\n"
+        "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
+        "  [\"bus\", \"cluster_01_electric\"]]\n"
+        "[scenarios.blue_sky]\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+        "duration = 8760\n"
+        "max_occurrences = 1\n"
+        "network = \"normal_operations\"\n"
+        "[scenarios.class_4_hurricane]\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"fixed\", value = 87600}\n"
+        "duration = 336\n"
+        "max_occurrences = -1\n"
+        "network = \"emergency_operations\"\n"
+        "intensity.wind_speed_mph = 156\n"
+        "intensity.inundation_depth_ft = 8\n";
+  ::ERIN::TomlInputReader r{ss};
+  auto si = r.read_simulation_info();
+  auto streams = r.read_streams(si);
+  auto loads = r.read_loads();
+  auto fragilities = r.read_fragility_data();
+  if (false) {
+    auto components = r.read_components(streams, loads);
+    auto networks = r.read_networks();
+    auto scenarios = r.read_scenarios();
+    ::ERIN::Main m{si, streams, components, networks, scenarios};
+    auto out = m.run("blue_sky");
+    EXPECT_EQ(out.get_is_good(), true);
+    EXPECT_EQ(out.get_results().size(), 2);
+    std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
+    // out.get_results() : Map String (Vector Datum)
+    for (const auto& item: out.get_results()) {
+      auto it = expected_keys.find(item.first);
+      EXPECT_TRUE(it != expected_keys.end());
+      ASSERT_EQ(item.second.size(), 2);
+      EXPECT_EQ(item.second.at(0).time, 0);
+      EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
+      EXPECT_EQ(item.second.at(0).requested_value, 1.0);
+      EXPECT_EQ(item.second.at(1).time, 4);
+      EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
+      EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
+    }
+  }
+}
+
 int
 main(int argc, char **argv)
 {

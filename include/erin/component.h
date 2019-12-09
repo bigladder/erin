@@ -17,6 +17,12 @@
 
 namespace ERIN
 {
+  using fragility_map = std::unordered_map<
+    std::string, // <-- the vulnerable_to identifier. E.g., wind_speed_mph,
+                 //     inundation_depth_ft, etc.
+    // vector of fragility curves that apply
+    std::vector<std::unique_ptr<::erin::fragility::Curve>>>;
+
   /**
    * Holds Ports and FlowElement pointers from a return of Component.add_to_network(...)
    */
@@ -43,9 +49,7 @@ namespace ERIN
           ComponentType type,
           StreamType input_stream,
           StreamType output_stream,
-          std::unordered_map<
-            std::string,
-            std::unique_ptr<erin::fragility::Curve>> fragilities);
+          fragility_map fragilities);
       Component& operator=(const Component&) = delete;
       Component(Component&&) = delete;
       Component& operator=(Component&&) = delete;
@@ -56,8 +60,7 @@ namespace ERIN
       [[nodiscard]] ComponentType get_component_type() const { return component_type; }
       [[nodiscard]] const StreamType& get_input_stream() const { return input_stream; }
       [[nodiscard]] const StreamType& get_output_stream() const { return output_stream; }
-      [[nodiscard]] std::unordered_map<std::string, std::unique_ptr<erin::fragility::Curve>>
-        clone_fragility_curves() const;
+      [[nodiscard]] fragility_map clone_fragility_curves() const;
       [[nodiscard]] bool is_fragile() const { return has_fragilities; }
       // TODO: consider moving this elsewhere
       std::vector<double> apply_intensities(
@@ -87,8 +90,7 @@ namespace ERIN
       ComponentType component_type;
       StreamType input_stream;
       StreamType output_stream;
-      std::unordered_map<
-        std::string, std::unique_ptr<erin::fragility::Curve>> fragilities;
+      fragility_map fragilities;
       bool has_fragilities;
   };
 
@@ -107,9 +109,7 @@ namespace ERIN
           const StreamType& input_stream,
           std::unordered_map<std::string, std::vector<LoadItem>>
             loads_by_scenario,
-          std::unordered_map<
-            std::string,
-            std::unique_ptr<erin::fragility::Curve>> fragilities);
+          fragility_map fragilities);
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
@@ -149,23 +149,17 @@ namespace ERIN
       SourceComponent(
           const std::string& id,
           const StreamType& output_stream,
-          std::unordered_map<
-            std::string,
-            std::unique_ptr<erin::fragility::Curve>> fragilities);
+          fragility_map fragilities);
       SourceComponent(
           const std::string& id,
           const StreamType& output_stream,
-          std::unordered_map<
-            std::string,
-            std::unique_ptr<erin::fragility::Curve>> fragilities,
+          fragility_map fragilities,
           const FlowValueType max_output,
           const FlowValueType min_output = 0.0);
       SourceComponent(
           const std::string& id,
           const StreamType& output_stream,
-          std::unordered_map<
-            std::string,
-            std::unique_ptr<erin::fragility::Curve>> fragilities,
+          fragility_map fragilities,
           const Limits& limits);
 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
@@ -194,9 +188,7 @@ namespace ERIN
           const StreamType& stream,
           const int num_inflows,
           const int num_outflows,
-          std::unordered_map<
-            std::string,
-            std::unique_ptr<erin::fragility::Curve>> fragilities,
+          fragility_map fragilities,
           const MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
 
       [[nodiscard]] int get_num_inflows() const { return num_inflows; }

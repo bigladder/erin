@@ -31,9 +31,7 @@ namespace ERIN
       ComponentType type_,
       StreamType input_stream_,
       StreamType output_stream_,
-      std::unordered_map<
-        std::string,
-        std::unique_ptr<::erin::fragility::Curve>> fragilities_):
+      fragility_map fragilities_):
     id{std::move(id_)},
     component_type{type_},
     input_stream{std::move(input_stream_)},
@@ -43,14 +41,18 @@ namespace ERIN
   {
   }
 
-  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
+  fragility_map
   Component::clone_fragility_curves() const
   {
-    std::unordered_map<
-      std::string, std::unique_ptr<::erin::fragility::Curve>> frags;
+    namespace ef = erin::fragility;
+    fragility_map frags;
     for (const auto& pair : fragilities) {
-      frags.insert(
-          std::make_pair(pair.first, pair.second->clone()));
+      std::vector<std::unique_ptr<ef::Curve>> vs;
+      const auto& curves = pair.second;
+      for (const auto& c : curves) {
+        vs.emplace_back(c->clone());
+      }
+      frags.insert(std::make_pair(pair.first, std::move(vs)));
     }
     return frags;
   }
@@ -69,11 +71,12 @@ namespace ERIN
       if (it == fragilities.end()) {
         continue;
       }
-      const auto& curve = it->second;
       auto intensity = intensity_pair.second;
-      auto probability = curve->apply(intensity);
-      if (probability > 0.0) {
-        failure_probabilities.emplace_back(probability);
+      for (const auto& c : it->second) {
+        auto probability = c->apply(intensity);
+        if (probability > 0.0) {
+          failure_probabilities.emplace_back(probability);
+        }
       }
     }
     return failure_probabilities;
@@ -135,10 +138,13 @@ namespace ERIN
       const StreamType& input_stream_,
       std::unordered_map<
         std::string, std::vector<LoadItem>> loads_by_scenario_,
-      std::unordered_map<
-        std::string, std::unique_ptr<::erin::fragility::Curve>> fragilities):
+      fragility_map fragilities):
     Component(
-        id_, ComponentType::Load, input_stream_, input_stream_, std::move(fragilities)),
+        id_,
+        ComponentType::Load,
+        input_stream_,
+        input_stream_,
+        std::move(fragilities)),
     loads_by_scenario{std::move(loads_by_scenario_)}
   {
   }
@@ -226,8 +232,7 @@ namespace ERIN
   SourceComponent::SourceComponent(
       const std::string& id_,
       const StreamType& output_stream_,
-      std::unordered_map<std::string,std::unique_ptr<::erin::fragility::Curve>>
-        fragilities_):
+      fragility_map fragilities_):
     SourceComponent(
         id_, output_stream_, std::move(fragilities_), Limits{false,0.0,0.0})
   {
@@ -236,9 +241,7 @@ namespace ERIN
   SourceComponent::SourceComponent(
       const std::string& id_,
       const StreamType& output_stream_,
-      std::unordered_map<
-        std::string,
-        std::unique_ptr<erin::fragility::Curve>> fragilities_,
+      fragility_map fragilities_,
       const FlowValueType max_output_,
       const FlowValueType min_output_): 
     SourceComponent(
@@ -250,9 +253,7 @@ namespace ERIN
   SourceComponent::SourceComponent(
       const std::string& id_,
       const StreamType& output_stream_,
-      std::unordered_map<
-        std::string,
-        std::unique_ptr<erin::fragility::Curve>> fragilities_,
+      fragility_map fragilities_,
       const Limits& limits_):
     Component(
         id_,
@@ -329,9 +330,7 @@ namespace ERIN
       const StreamType& stream_,
       const int num_inflows_,
       const int num_outflows_,
-      std::unordered_map<
-        std::string,
-        std::unique_ptr<erin::fragility::Curve>> fragilities_,
+      fragility_map fragilities_,
       const MuxerDispatchStrategy strategy_):
     Component(
         id_,

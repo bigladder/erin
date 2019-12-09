@@ -1229,13 +1229,12 @@ TEST(ErinBasicsTest, FragilityCurves)
 
 TEST(ErinBasicsTest, TestGetFragilityCurves)
 {
+  namespace ef = erin::fragility;
   ::ERIN::StreamType st{"electricity"};
-  std::unordered_map<std::string,std::unique_ptr<::erin::fragility::Curve>>
-    fragilities;
-  fragilities.insert(
-      std::make_pair(
-        "wind_speed_mph",
-        std::make_unique<::erin::fragility::Linear>(120.0, 180.0)));
+  ::ERIN::fragility_map fragilities;
+  std::vector<std::unique_ptr<ef::Curve>> vs;
+  vs.emplace_back(std::make_unique<::erin::fragility::Linear>(120.0, 180.0));
+  fragilities.insert(std::make_pair("wind_speed_mph", std::move(vs)));
   ::ERIN::SourceComponent c{"source", st, std::move(fragilities)};
   std::unordered_map<std::string,double> intensities{{"wind_speed_mph", 150.0}};
   auto probs = c.apply_intensities(intensities);
@@ -1273,6 +1272,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
 {
   namespace enw = ::erin::network;
   namespace ep = ::erin::port;
+  namespace ef = ::erin::fragility;
   ::ERIN::SimulationInfo si{};
   const auto elec_id = std::string{"electrical"};
   const auto elec_stream = ::ERIN::StreamType(elec_id);
@@ -1291,38 +1291,34 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
   const auto class_4_hurricane = std::string{"class_4_hurricane"};
   const auto normal = std::string{"normal_operations"};
   const auto emergency = std::string{"emergency"};
-  std::unique_ptr<::erin::fragility::Curve> fc_inundation =
-    std::make_unique<::erin::fragility::Linear>(
-        inundation_depth_ft_lower_bound,
-        inundation_depth_ft_upper_bound);
-  std::unique_ptr<::erin::fragility::Curve> fc_wind =
-    std::make_unique<::erin::fragility::Linear>(
-        wind_speed_mph_lower_bound,
-        wind_speed_mph_upper_bound);
-  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
-    fs_pcc{};
-  fs_pcc.insert(std::make_pair(intensity_wind_speed, fc_wind->clone()));
-  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
-    fs_load{};
-  std::unordered_map<std::string, std::unique_ptr<::erin::fragility::Curve>>
-    fs_gen{};
-  fs_gen.insert(std::make_pair(intensity_flood, fc_inundation->clone()));
+  std::unique_ptr<ef::Curve> fc_inundation =
+    std::make_unique<ef::Linear>(
+        inundation_depth_ft_lower_bound, inundation_depth_ft_upper_bound);
+  std::unique_ptr<ef::Curve> fc_wind =
+    std::make_unique<ef::Linear>(
+        wind_speed_mph_lower_bound, wind_speed_mph_upper_bound);
+  ::ERIN::fragility_map fs_pcc, fs_load, fs_gen;
+  std::vector<std::unique_ptr<ef::Curve>> vs_pcc, vs_gen;
+  vs_pcc.emplace_back(fc_wind->clone());
+  vs_gen.emplace_back(fc_inundation->clone());
+  fs_pcc.emplace(std::make_pair(intensity_wind_speed, std::move(vs_pcc)));
+  fs_gen.emplace(std::make_pair(intensity_flood, std::move(vs_gen)));
   std::vector<::ERIN::LoadItem>
     loads{::ERIN::LoadItem{0,100.0}, ::ERIN::LoadItem{100}};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{blue_sky, loads}, {class_4_hurricane, loads}};
   std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>> comps;
-  comps.insert(
+  comps.emplace(
       std::make_pair(
         pcc_id,
         std::make_unique<::ERIN::SourceComponent>(
           pcc_id, elec_stream, std::move(fs_pcc))));
-  comps.insert(
+  comps.emplace(
       std::make_pair(
         load_id,
         std::make_unique<::ERIN::LoadComponent>(
           load_id, elec_stream, loads_by_scenario, std::move(fs_load))));
-  comps.insert(
+  comps.emplace(
       std::make_pair(
         gen_id,
         std::make_unique<::ERIN::SourceComponent>(
@@ -1643,6 +1639,21 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
   }
+}
+
+TEST(ErinBasicsTest, TestAddMultipleFragilitiesToAComponent)
+{
+  namespace ef = erin::fragility;
+  std::string id{"source"};
+  auto stream = ::ERIN::StreamType{"electricity"};
+  std::unordered_map<std::string, std::vector<std::unique_ptr<ef::Curve>>> frags;
+  std::vector<std::unique_ptr<ef::Curve>> v1, v2;
+  v1.emplace_back(std::make_unique<ef::Linear>(80, 160.0));
+  v1.emplace_back(std::make_unique<ef::Linear>(40.0, 220.0));
+  v2.emplace_back(std::make_unique<ef::Linear>(4.0, 12.0));
+  frags.emplace(std::make_pair("wind_speed_mph", std::move(v1)));
+  frags.emplace(std::make_pair("flood_depth_ft", std::move(v2)));
+  auto comp = ::ERIN::SourceComponent(id, stream, std::move(frags));
 }
 
 int

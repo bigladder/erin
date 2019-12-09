@@ -151,7 +151,9 @@ namespace ERIN
         read_components(
             const std::unordered_map<std::string, StreamType>& stm,
             const std::unordered_map<std::string, std::vector<LoadItem>>&
-              loads_by_id) = 0;
+              loads_by_id,
+            const std::unordered_map<
+              std::string, ::erin::fragility::FragilityCurve>& fragilities) = 0;
       virtual std::unordered_map<
         std::string,
         std::vector<::erin::network::Connection>> read_networks() = 0;
@@ -178,7 +180,17 @@ namespace ERIN
         read_components(
             const std::unordered_map<std::string, StreamType>& stm,
             const std::unordered_map<
-              std::string, std::vector<LoadItem>>& loads_by_id) override;
+              std::string, std::vector<LoadItem>>& loads_by_id,
+            const std::unordered_map<
+              std::string, ::erin::fragility::FragilityCurve>& fragilities)
+        override;
+      std::unordered_map<std::string, std::unique_ptr<Component>>
+        read_components(
+            const std::unordered_map<std::string, StreamType>& stm,
+            const std::unordered_map<std::string, std::vector<LoadItem>>&
+              loads_by_id) {
+          return read_components(stm, loads_by_id, {});
+        }
       std::unordered_map<
         std::string, std::vector<::erin::network::Connection>>
         read_networks() override;

@@ -267,7 +267,9 @@ namespace ERIN
   std::unordered_map<std::string, std::unique_ptr<Component>>
   TomlInputReader::read_components(
       const std::unordered_map<std::string, StreamType>& stream_types_map,
-      const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id)
+      const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id,
+      const std::unordered_map<std::string, ::erin::fragility::FragilityCurve>&
+        fragilities)
   {
     const auto toml_comps = toml::find<toml::table>(data, "components");
     if constexpr (debug_level >= debug_level_high) {

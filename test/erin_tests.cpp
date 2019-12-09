@@ -1723,8 +1723,8 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   auto streams = r.read_streams(si);
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
+  auto components = r.read_components(streams, loads, fragilities);
   if (false) {
-    auto components = r.read_components(streams, loads);
     auto networks = r.read_networks();
     auto scenarios = r.read_scenarios();
     ::ERIN::Main m{si, streams, components, networks, scenarios};

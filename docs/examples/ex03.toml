@@ -68,15 +68,17 @@ upper_bound = 160.0
 # "inflow" port of "B".
 # 4-tuple:
 # ["A", "outflow", "B", "inflow"] maps to:
-# ["A", "outflow", 0, "B", "inflow", 0]
+# ["A", "outflow", "0", "B", "inflow", "0"]
 # 6-tuple: (full specification)
-# ["A", "outflow", 1, "B", "inflow", 0] would indicate that A's second outflow
+# ["A", "outflow", "1", "B", "inflow", "0"] would indicate that A's second outflow
 # port (ports are numbered from 0) is connected to B's first inflow port.
+# Note: due to limitations in TOML's C++ parsing library, all elements of an
+# array must be of the same type so we quote integer port ids
 connections = [["electric_utility", "cluster_01_electric"]]
 [networks.emergency_operations]
 connections = [
-  ["electric_utility", "outflow", 0, "bus", "inflow_grid"],
-  ["emergency_generator", "outflow", 0, "bus", "inflow_genset"],
+  ["electric_utility", "outflow", "0", "bus", "inflow", "0"],
+  ["emergency_generator", "outflow", "0", "bus", "inflow", "1"],
   ["bus", "cluster_01_electric"]]
 ############################################################
 # Scenarios

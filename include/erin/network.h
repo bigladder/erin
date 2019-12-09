@@ -22,11 +22,15 @@ namespace erin::network
     int port_number;
   };
 
+  bool operator==(const ComponentAndPort& a, const ComponentAndPort& b);
+
   struct Connection
   {
     ComponentAndPort first;
     ComponentAndPort second;
   };
+
+  bool operator==(const Connection& c1, const Connection& c2);
 
   void add_if_not_added(
       const std::string& comp_id,

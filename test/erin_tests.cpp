@@ -1658,6 +1658,9 @@ TEST(ErinBasicsTest, TestAddMultipleFragilitiesToAComponent)
 
 TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
 {
+  namespace enw = ::erin::network;
+  namespace ef = ::erin::fragility;
+  namespace ep = ::erin::port;
   std::stringstream ss;
   ss << "[simulation_info]\n"
         "rate_unit = \"kW\"\n"
@@ -1720,23 +1723,33 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "network = \"emergency_operations\"\n"
         "intensity.wind_speed_mph = 156\n"
         "intensity.inundation_depth_ft = 8\n";
+  const std::vector<int>::size_type num_comps{4};
+  const std::vector<int>::size_type num_networks{2};
   ::ERIN::TomlInputReader r{ss};
   auto si = r.read_simulation_info();
   auto streams = r.read_streams(si);
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
   auto components = r.read_components(streams, loads, fragilities);
-  EXPECT_EQ(4, components.size());
+  EXPECT_EQ(num_comps, components.size());
   // Test that components have fragilities
-  const auto& electric_utility = components["electric_utility"];
   for (const auto& c_pair : components) {
     const auto& c_id = c_pair.first; 
     const auto& c = c_pair.second;
     EXPECT_TRUE(c->is_fragile())
       << "component '" << c_id << "' should be fragile but is not";
   }
+  auto networks = r.read_networks();
+  ASSERT_EQ(num_networks, networks.size());
+  const auto& normal_nw = networks["normal_operations"];
+  const std::vector<enw::Connection> expected_normal_nw{
+    enw::Connection{
+      enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
+      enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0}},
+  };
+  ASSERT_EQ(expected_normal_nw.size(), normal_nw.size());
+  ASSERT_EQ(expected_normal_nw, normal_nw);
   if (false) {
-    auto networks = r.read_networks();
     auto scenarios = r.read_scenarios();
     ::ERIN::Main m{si, streams, components, networks, scenarios};
     auto out = m.run("blue_sky");

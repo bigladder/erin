@@ -11,6 +11,22 @@
 
 namespace erin::network
 {
+  bool
+  operator==(const ComponentAndPort& a, const ComponentAndPort& b)
+  {
+    return (a.component_id == b.component_id)
+      && (a.port_type == b.port_type)
+      && (a.port_number == b.port_number);
+  }
+
+  bool
+  operator==(const Connection& c1, const Connection& c2)
+  {
+    return ((c1.first == c2.first) && (c1.second == c2.second))
+      || ((c1.first == c2.second) && (c1.second == c2.first));
+      
+  }
+
   void
   add_if_not_added(
       const std::string& comp_id,

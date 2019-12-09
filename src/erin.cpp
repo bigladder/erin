@@ -271,6 +271,7 @@ namespace ERIN
       const std::unordered_map<std::string, ::erin::fragility::FragilityCurve>&
         fragilities)
   {
+    namespace ef = ::erin::fragility;
     const auto toml_comps = toml::find<toml::table>(data, "components");
     if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_comps.size() << " components found\n";
@@ -318,18 +319,59 @@ namespace ERIN
         output_stream_id = toml_helper::read_optional_table_field<std::string>(
             tt, {"output_stream"}, input_stream_id, field_read);
       }
+      std::vector<std::string> fragility_ids =
+        toml_helper::read_optional_table_field<std::vector<std::string>>(
+            tt, {"fragilities"}, std::vector<std::string>(0), field_read);
+      fragility_map frags;
+      for (const auto& fid : fragility_ids) {
+        auto f_it = fragilities.find(fid);
+        if (f_it == fragilities.end()) {
+          std::ostringstream oss;
+          oss << "component '" << c.first << "' specified fragility '"
+              << fid << "' but that fragility doesn't appear in the"
+              << "fragility curve map.";
+          throw std::runtime_error(oss.str());
+        }
+        const auto& fc = (*f_it).second;
+        auto it = frags.find(fc.vulnerable_to);
+        if (it == frags.end()) {
+          std::vector<std::unique_ptr<ef::Curve>> cs;
+          cs.emplace_back(fc.curve->clone());
+          frags.emplace(std::make_pair(fc.vulnerable_to, std::move(cs)));
+        }
+        else {
+          (*it).second.emplace_back(fc.curve->clone());
+        }
+      }
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "comp: " << c.first << ".input_stream_id  = "
                   << input_stream_id << "\n";
         std::cout << "comp: " << c.first << ".output_stream_id = "
                   << output_stream_id << "\n";
+        std::cout << "comp: " << c.first << ".fragilities = [";
+        bool first{true};
+        for (const auto& f: fragility_ids) {
+          if (first) {
+            std::cout << "[";
+            first = false;
+          }
+          else {
+            std::cout << ", ";
+          }
+          std::cout << f;
+        }
+        std::cout << "]\n";
       }
       switch (component_type) {
         case ComponentType::Source:
           read_source_component(
-              c.first, stream_types_map.at(output_stream_id), components);
+              c.first,
+              stream_types_map.at(output_stream_id),
+              components,
+              std::move(frags));
           break;
         case ComponentType::Load:
+          // TODO: add frags
           read_load_component(
               tt,
               c.first,
@@ -338,6 +380,7 @@ namespace ERIN
               components);
           break;
         case ComponentType::Muxer:
+          // TODO: add frags
           read_muxer_component(
               tt,
               c.first,
@@ -378,14 +421,15 @@ namespace ERIN
   {
     namespace ef = erin::fragility;
     std::unordered_map<std::string, ef::FragilityCurve> out;
-    const auto tt = toml::find<toml::table>(data, "fragility");
+    std::string field_read;
+    const auto& tt = toml_helper::read_optional_table_field<toml::table>(
+        toml::get<toml::table>(data), {"fragility"}, toml::table{}, field_read);
     if (tt.empty()) {
       return out;
     }
     for (const auto& pair : tt) {
       const auto& curve_id = pair.first;
       const auto& data_table = toml::get<toml::table>(pair.second);
-      std::string field_read;
       std::string curve_type_tag;
       try {
         curve_type_tag = toml_helper::read_required_table_field<std::string>(
@@ -451,10 +495,11 @@ namespace ERIN
       const std::string& id,
       const StreamType& stream,
       std::unordered_map<
-        std::string, std::unique_ptr<Component>>& components) const
+        std::string, std::unique_ptr<Component>>& components,
+      fragility_map&& frags) const
   {
     std::unique_ptr<Component> source_comp =
-      std::make_unique<SourceComponent>(id, stream);
+      std::make_unique<SourceComponent>(id, stream, std::move(frags));
     components.insert(std::make_pair(id, std::move(source_comp)));
   }
 
@@ -1025,7 +1070,9 @@ namespace ERIN
     sim_info = reader.read_simulation_info();
     stream_types_map = reader.read_streams(sim_info);
     auto loads_by_id = reader.read_loads();
-    components = reader.read_components(stream_types_map, loads_by_id);
+    auto fragilities = reader.read_fragility_data();
+    components = reader.read_components(
+        stream_types_map, loads_by_id, fragilities);
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
     check_data();

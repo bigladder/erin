@@ -1724,6 +1724,9 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
   auto components = r.read_components(streams, loads, fragilities);
+  // Test that components have fragilities
+  const auto& electric_utility = components["electric_utility"];
+  ASSERT_TRUE(electric_utility->is_fragile());
   if (false) {
     auto networks = r.read_networks();
     auto scenarios = r.read_scenarios();

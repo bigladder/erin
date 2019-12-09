@@ -209,7 +209,8 @@ namespace ERIN
           const std::string& id,
           const StreamType& stream,
           std::unordered_map<
-            std::string, std::unique_ptr<Component>>& comps) const;
+            std::string, std::unique_ptr<Component>>& comps,
+          fragility_map&& frags) const;
       void read_load_component(
           const toml::table& tt,
           const std::string& id,

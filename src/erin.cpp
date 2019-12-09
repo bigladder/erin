@@ -684,7 +684,10 @@ namespace ERIN
           std::ostringstream oss;
           oss << "network " << nested_nw_it->first << " "
               << "connection[" << item_num << "] "
-              << "doesn't have 2 or 4 items";
+              << "doesn't have " << infer_outflow0_to_inflow0
+              << ", " << infer_port_numbers
+              << ", or " << explicit_connection << " items\n"
+              << "num_items: " << num_items << "\n";
           throw std::invalid_argument(oss.str());
         }
         nw_list.emplace_back(
@@ -695,7 +698,7 @@ namespace ERIN
                 comp_02_id, comp_02_port, comp_02_port_num}});
         ++item_num;
       }
-      networks.insert(std::make_pair(n.first, nw_list));
+      networks.emplace(std::make_pair(n.first, nw_list));
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& nw: networks) {

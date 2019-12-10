@@ -44,6 +44,8 @@ namespace ERIN
   TimeUnits tag_to_time_units(const std::string& tag);
   std::string time_units_to_tag(TimeUnits tu);
   RealTimeType time_to_seconds(RealTimeType max_time, TimeUnits time_unit);
+  double convert_time_in_seconds_to(
+      const RealTimeType t, const TimeUnits to_units);
 
   ////////////////////////////////////////////////////////////
   // ComponentType

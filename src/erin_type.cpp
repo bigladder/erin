@@ -72,6 +72,29 @@ namespace ERIN
     }
   }
 
+  double
+  convert_time_in_seconds_to(const RealTimeType t, const TimeUnits to_units)
+  {
+    switch (to_units) {
+      case TimeUnits::Seconds:
+        return t;
+      case TimeUnits::Minutes:
+        return (t / seconds_per_minute);
+      case TimeUnits::Hours:
+        return (t / seconds_per_hour);
+      case TimeUnits::Days:
+        return (t / seconds_per_day);
+      case TimeUnits::Years:
+        return (t / seconds_per_year);
+      default:
+        {
+          std::ostringstream oss;
+          oss << "unhandled time units '" << static_cast<int>(to_units) << "'";
+          throw std::runtime_error(oss.str());
+        }
+    }
+  }
+
   ComponentType
   tag_to_component_type(const std::string& tag)
   {

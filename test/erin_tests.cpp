@@ -653,12 +653,14 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
         "network = \"normal_operations\"\n";
   ::ERIN::TomlInputReader t{ss};
   const std::string scenario_id{"blue_sky"};
+  const auto expected_duration
+    = static_cast<::ERIN::RealTimeType>(8760 * ::ERIN::seconds_per_hour);
   std::unordered_map<std::string, ::ERIN::Scenario> expected{{
     scenario_id,
     ::ERIN::Scenario{
       scenario_id,
       std::string{"normal_operations"},
-      8760,
+      expected_duration,
       1,
       []() -> ::ERIN::RealTimeType { return 0; },
       {}
@@ -769,6 +771,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         R"(connections=[["electric_utility", "cluster_01_electric"]])" "\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
+        "time_units = \"hours\"\n"
         "occurrence_distribution = {type = \"fixed\", value = 1}\n"
         "duration = 1\n"
         "max_occurrences = 1\n"
@@ -793,7 +796,9 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
     EXPECT_EQ(item.second.at(0).time, 0);
     EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
     EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(item.second.at(1).time, 1);
+    EXPECT_EQ(
+        item.second.at(1).time,
+        static_cast<::ERIN::RealTimeType>(1 * ::ERIN::seconds_per_hour) );
     EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
   }
@@ -826,6 +831,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
+        "time_units = \"hours\"\n"
         "occurrence_distribution = {type = \"fixed\", value = 1}\n"
         "duration = 4\n"
         "max_occurrences = 1\n"
@@ -850,7 +856,9 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
     EXPECT_EQ(item.second.at(0).time, 0);
     EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
     EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(item.second.at(1).time, 4);
+    EXPECT_EQ(
+        item.second.at(1).time,
+        static_cast<::ERIN::RealTimeType>(4 * ::ERIN::seconds_per_hour));
     EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
   }
@@ -940,8 +948,10 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
      {std::string{"B"}, ::ERIN::StreamType("electrical")}},
     {{std::string{"A"}, ::ERIN::ComponentType::Load},
      {std::string{"B"}, ::ERIN::ComponentType::Source}}};
-  auto actual = out.to_csv(4);
-  std::string expected{"time,A:achieved,A:requested,B:achieved,B:requested\n"
+  auto actual = out.to_csv(4, ::ERIN::TimeUnits::Seconds);
+  std::string expected{
+    "time (seconds),A:achieved (kW),A:requested (kW),"
+      "B:achieved (kW),B:requested (kW)\n"
     "0,1,1,10,10\n1,0.5,0.5,10,10\n2,0,0,5,5\n4,0,0,0,0\n"};
   EXPECT_EQ(expected, actual);
   ::ERIN::ScenarioResults out2{
@@ -950,8 +960,9 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
     {{std::string{"A"}, ::ERIN::StreamType("electrical")}},
     {{std::string{"A"}, ::ERIN::ComponentType::Load}}
   };
-  auto actual2 = out2.to_csv(4);
-  std::string expected2{"time,A:achieved,A:requested\n0,1,1\n4,0,0\n"};
+  auto actual2 = out2.to_csv(4, ::ERIN::TimeUnits::Seconds);
+  std::string expected2{
+    "time (seconds),A:achieved (kW),A:requested (kW)\n0,1,1\n4,0,0\n"};
   EXPECT_EQ(expected2, actual2);
 }
 
@@ -1762,8 +1773,44 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   const auto& actual_eo = networks["emergency_operations"];
   ASSERT_EQ(expected_eo.size(), actual_eo.size());
   ASSERT_EQ(expected_eo, actual_eo);
+  auto scenarios = r.read_scenarios();
+  constexpr ::ERIN::RealTimeType blue_sky_duration
+    = 8760 * ::ERIN::seconds_per_hour;
+  constexpr int blue_sky_max_occurrence = 1;
+  constexpr ::ERIN::RealTimeType hurricane_duration
+    = 336 * ::ERIN::seconds_per_hour;
+  constexpr int hurricane_max_occurrence = -1;
+  const std::unordered_map<std::string, ::ERIN::Scenario> expected_scenarios{
+    { "blue_sky",
+      ::ERIN::Scenario{
+        "blue_sky",
+        "normal_operations",
+        blue_sky_duration, 
+        blue_sky_max_occurrence,
+        []() -> ::ERIN::RealTimeType { return 0; },
+        {}}},
+    { "class_4_hurricane",
+      ::ERIN::Scenario{
+        "class_4_hurricane",
+        "emergency_operations",
+        hurricane_duration,
+        hurricane_max_occurrence,
+        []() -> ::ERIN::RealTimeType { return 87600; },
+        {{"wind_speed_mph", 156.0}, {"inundation_depth_ft", 8.0}}}}};
+  ASSERT_EQ(expected_scenarios.size(), scenarios.size());
+  for (const auto& scenario_pair : expected_scenarios) {
+    auto scenario_it = scenarios.find(scenario_pair.first);
+    ASSERT_TRUE(scenario_it != scenarios.end());
+    const auto& es = scenario_pair.second;
+    const auto& as = scenario_it->second;
+    EXPECT_EQ(es.get_name(), as.get_name());
+    EXPECT_EQ(es.get_network_id(), as.get_network_id());
+    EXPECT_EQ(es.get_duration(), as.get_duration());
+    EXPECT_EQ(es.get_max_occurrences(), as.get_max_occurrences());
+    EXPECT_EQ(es.get_intensities(), as.get_intensities());
+  }
+  //EXPECT_EQ(expected_scenarios, scenarios);
   if (false) {
-    auto scenarios = r.read_scenarios();
     ::ERIN::Main m{si, streams, components, networks, scenarios};
     auto out = m.run("blue_sky");
     EXPECT_EQ(out.get_is_good(), true);

@@ -733,15 +733,36 @@ namespace ERIN
           s.second, "occurrence_distribution");
       const auto next_occurrence_dist =
         ::erin_generics::read_toml_distribution<RealTimeType>(dist);
-      const auto time_units = toml::find_or(
+      const auto time_unit_str = toml::find_or(
           s.second, "time_units", default_time_units);
-      if (time_units != default_time_units) {
-        std::ostringstream oss;
-        oss << "a time_unit other than hours is not supported at this time...\n";
-        oss << "time_unit = \"" << time_units << "\"\n";
-        throw std::runtime_error(oss.str());
+      const auto time_units = tag_to_time_units(time_unit_str);
+      RealTimeType time_multiplier{1};
+      switch (time_units) {
+        case TimeUnits::Seconds:
+          time_multiplier = 1;
+          break;
+        case TimeUnits::Minutes:
+          time_multiplier = static_cast<RealTimeType>(seconds_per_minute);
+          break;
+        case TimeUnits::Hours:
+          time_multiplier = static_cast<RealTimeType>(seconds_per_hour);
+          break;
+        case TimeUnits::Days:
+          time_multiplier = static_cast<RealTimeType>(seconds_per_day);
+          break;
+        case TimeUnits::Years:
+          time_multiplier = static_cast<RealTimeType>(seconds_per_year);
+          break;
+        default:
+          {
+            std::ostringstream oss;
+            oss << "unhandled time units '" << static_cast<int>(time_units)
+                << "'";
+            throw std::runtime_error(oss.str());
+          }
       }
-      const auto duration = toml::find<int>(s.second, "duration");
+      const auto duration = static_cast<::ERIN::RealTimeType>(
+          toml::find<int>(s.second, "duration") * time_multiplier);
       const auto max_occurrences = toml::find<int>(s.second, "max_occurrences");
       const auto network_id = toml::find<std::string>(s.second, "network");
       std::unordered_map<std::string,double> intensity{};
@@ -809,7 +830,9 @@ namespace ERIN
   }
 
   std::string
-  ScenarioResults::to_csv(const RealTimeType& max_time) const
+  ScenarioResults::to_csv(
+      const RealTimeType& max_time,
+      TimeUnits time_units) const
   {
     if (!is_good) return std::string{};
     std::set<RealTimeType> times_set{max_time};
@@ -857,12 +880,12 @@ namespace ERIN
       }
     }
     std::ostringstream oss;
-    oss << "time";
+    oss << "time (" << time_units_to_tag(time_units) << ")";
     for (const auto k: keys)
-      oss << "," << k << ":achieved," << k << ":requested";
+      oss << "," << k << ":achieved (kW)," << k << ":requested (kW)";
     oss << "\n";
     for (std::vector<RealTimeType>::size_type i{0}; i < times.size(); ++i) {
-      oss << times[i];
+      oss << convert_time_in_seconds_to(times[i], time_units);
       for (const auto k: keys)
         oss << "," << values[k][i] << "," << requested_values[k][i];
       oss << "\n";
@@ -929,7 +952,7 @@ namespace ERIN
   }
 
   std::string
-  ScenarioResults::to_stats_csv()
+  ScenarioResults::to_stats_csv(TimeUnits time_units)
   {
     auto ea = calc_energy_availability();
     auto md = calc_max_downtime();
@@ -968,7 +991,7 @@ namespace ERIN
       oss << "," << sk << " energy used";
     }
     oss << "\n";
-    oss << "units,--,--,fraction,seconds,kJ";
+    oss << "units,--,--,fraction," << time_units_to_tag(time_units) << ",kJ";
     for (const auto k: stream_keys) {
       oss << ",kJ";
     }
@@ -978,7 +1001,7 @@ namespace ERIN
           << "," << component_type_to_tag(component_types.at(k))
           << "," << stream_types.at(k).get_type()
           << "," << ea.at(k)
-          << "," << md.at(k)
+          << "," << convert_time_in_seconds_to(md.at(k), time_units)
           << "," << lns.at(k);
       auto stats = statistics.at(k);
       auto st = stream_types.at(k);
@@ -1276,7 +1299,8 @@ namespace ERIN
     return (name == other.name) &&
            (network_id == other.network_id) &&
            (duration == other.duration) &&
-           (max_occurrences == other.max_occurrences);
+           (max_occurrences == other.max_occurrences) &&
+           (intensities == other.intensities);
   }
 
   void

@@ -61,7 +61,7 @@ namespace erin_generics
       throw std::runtime_error(oss.str());
     }
     auto type = toml::get<std::string>(it->second);
-    if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_low) {
+    if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
       std::cout << "type of distribution: " << type << "\n";
     }
     if (type == fixed_type) {

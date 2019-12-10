@@ -1,6 +1,6 @@
 parameter,type,stream,energy availability,max downtime,load not served,electricity_medium_voltage energy used
-units,--,--,fraction,seconds,kJ,kJ
-cluster_01_electric,load,electricity_medium_voltage,1,0,0,4
-electric_utility,source,electricity_medium_voltage,1,0,0,4
-total (source),,,,,,4
-total (load),,,,,,4
+units,--,--,fraction,hours,kJ,kJ
+cluster_01_electric,load,electricity_medium_voltage,1,0,0,14400
+electric_utility,source,electricity_medium_voltage,1,0,0,14400
+total (source),,,,,,14400
+total (load),,,,,,14400

@@ -11,6 +11,7 @@ constexpr int num_args{4};
 int
 main(const int argc, const char* argv[])
 {
+  const auto default_time_units = ::ERIN::TimeUnits::Hours;
   auto args = gsl::span<const char*>(argv, argc);
   if (argc != (num_args + 1)) {
     std::cout << "USAGE: e2rin <input_file_path> <output_file_path> "
@@ -45,13 +46,15 @@ main(const int argc, const char* argv[])
   }
   std::cout << "result of m.run(\"" << scenario_id << "\") = "
             << out.get_is_good() << "\n";
-  std::cout << "max_time = " << max_time << "\n";
+  std::cout << "max_time = "
+            << ::ERIN::convert_time_in_seconds_to(max_time, default_time_units)
+            << " " << ::ERIN::time_units_to_tag(default_time_units) << "\n";
   if (!out.get_is_good()) {
     return 1;
   }
   std::ofstream csv{timeseries_csv, std::ios::out | std::ios::trunc};
   if (csv.is_open()) {
-    csv << out.to_csv(max_time);
+    csv << out.to_csv(max_time, default_time_units);
   }
   else {
     std::cerr << "unable to open timeseries_csv for writing \""

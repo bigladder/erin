@@ -54,7 +54,9 @@ namespace ERIN
       [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const { return results; }
 
-      [[nodiscard]] std::string to_csv(const RealTimeType& max_time) const;
+      [[nodiscard]] std::string to_csv(
+          const RealTimeType& max_time,
+          TimeUnits time_units = TimeUnits::Hours) const;
       [[nodiscard]] std::unordered_map<std::string,double>
         calc_energy_availability();
       [[nodiscard]] std::unordered_map<std::string,RealTimeType>
@@ -63,7 +65,7 @@ namespace ERIN
         calc_load_not_served();
       [[nodiscard]] std::unordered_map<std::string,FlowValueType>
         calc_energy_usage_by_stream(ComponentType ct);
-      [[nodiscard]] std::string to_stats_csv();
+      [[nodiscard]] std::string to_stats_csv(TimeUnits time_units = TimeUnits::Hours);
 
     private:
       bool is_good;

@@ -167,6 +167,7 @@ namespace ERIN
     return the_loads;
   }
 
+  // TODO: adapt to read units for time and power from the csv file header
   std::vector<LoadItem>
   TomlInputReader::load_loads_from_csv(const std::string& csv_path) const
   {
@@ -197,18 +198,18 @@ namespace ERIN
         }
         if (cells[0] != "t") {
           std::ostringstream oss;
-          oss << "in file \"" << csv_path
-            << R"(", first column should be "t" but is ")"
-            << cells[0] << "\"";
+          oss << "in file '" << csv_path
+            << "', first column should be 't' but is '"
+            << cells[0] << "'";
           oss << "row: " << row << "\n";
           ::erin_csv::stream_out(oss, cells);
           throw std::runtime_error(oss.str());
         }
         if (cells[1] != "v") {
           std::ostringstream oss;
-          oss << "in file \"" << csv_path
-              << R"("", second column should be "v" but is ")"
-              << cells[1] << "\"";
+          oss << "in file '" << csv_path
+              << "', second column should be 'v' but is '"
+              << cells[1] << "'";
           oss << "row: " << "\n";
           ::erin_csv::stream_out(oss, cells);
           throw std::runtime_error(oss.str());
@@ -1188,11 +1189,11 @@ namespace ERIN
     const auto it = scenarios.find(scenario_id);
     if (it == scenarios.end()) {
       std::ostringstream oss;
-      oss << "scenario_id -- \"" << scenario_id << "\"" 
+      oss << "scenario_id '" << scenario_id << "'" 
              " is not in available scenarios\n"; 
-      oss << "possible choices: ";
+      oss << "avilable choices: ";
       for (const auto& item: scenarios) {
-        oss << "\"" << item.first << "\", ";
+        oss << "'" << item.first << "', ";
       }
       oss << "\n";
       throw std::invalid_argument(oss.str());

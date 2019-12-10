@@ -451,12 +451,41 @@ namespace ERIN
       }
       throw std::runtime_error(oss.str());
     }
-    std::vector<Datum> results(num_events);
+    std::vector<Datum>::size_type max_idx = 0;
     for (std::vector<Datum>::size_type i=0; i < num_events; ++i) {
-      results[i] = Datum{event_times[i], requested_flows[i], achieved_flows[i]};
+      const auto& t = event_times[i];
+      if (t <= max_time) {
+        max_idx = i;
+      }
+      else {
+        break;
+      }
     }
-    if (results[num_events-1].time != max_time) {
-      results.emplace_back(Datum{max_time, 0.0, 0.0});
+    bool time_0_missing{event_times[0] != 0};
+    bool max_time_missing{event_times[max_idx] < max_time};
+    std::vector<Datum>::size_type num_datums = num_events;
+    if (time_0_missing) {
+      ++num_datums;
+    }
+    if (max_time_missing) {
+      ++num_datums;
+    }
+    std::vector<Datum> results(num_datums);
+    for (std::vector<Datum>::size_type i=0; i < num_datums; ++i) {
+      auto j = i;
+      if (time_0_missing) {
+        if (i == 0) {
+          results[0] = Datum{0, 0.0, 0.0};
+          continue;
+        }
+        --j;
+      }
+      if (max_time_missing && (j > max_idx)) {
+        results[i] = Datum{max_time, 0.0, 0.0};
+      }
+      else {
+        results[i] = Datum{event_times[j], requested_flows[j], achieved_flows[j]};
+      }
     }
     return results;
   }
@@ -618,10 +647,12 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Sink::calculate_time_advance()\n";
+      std::cout << "id  = " << get_id() << "\n";
+      std::cout << "idx = " << idx << "\n";
     }
     if (idx < 0) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... dt = infinity\n";
+        std::cout << "... dt = (0, 0)\n";
       }
       return Time{0, 0};
     }
@@ -630,6 +661,22 @@ namespace ERIN
       RealTimeType dt{loads[idx].get_time_advance(loads[next_idx])};
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "... dt = (" << dt << ", 0)\n";
+        std::cout << "loads[" << idx << "].is_end = "
+                  << loads[idx].get_is_end() << "\n"
+                  << "loads[" << idx << "].time = "
+                  << loads[idx].get_time() << "\n";
+        if (!loads[idx].get_is_end()) {
+          std::cout << "loads[" << idx << "].value = "
+                    << loads[idx].get_value() << "\n";
+        }
+        std::cout << "loads[" << next_idx << "].is_end = "
+                  << loads[next_idx].get_is_end() << "\n"
+                  << "loads[" << next_idx << "].time = "
+                  << loads[next_idx].get_time() << "\n";
+        if (!loads[next_idx].get_is_end()) {
+          std::cout << "loads[" << next_idx << "].value = "
+                    << loads[next_idx].get_value() << "\n";
+        }
       }
       return Time{dt, 0};
     }
@@ -653,10 +700,15 @@ namespace ERIN
     }
     std::vector<LoadItem>::size_type next_idx = idx + 1;
     auto max_idx{num_loads - 1};
-    if (next_idx < max_idx)
+    if (next_idx < max_idx) {
       ys.emplace_back(
           adevs::port_value<FlowValueType>{
-          outport_inflow_request, loads[next_idx].get_value()});
+            outport_inflow_request, loads[next_idx].get_value()});
+    } else if (next_idx == max_idx) {
+      ys.emplace_back(
+          adevs::port_value<FlowValueType>{
+            outport_inflow_request, 0.0});
+    }
   }
 
   void
@@ -972,11 +1024,11 @@ namespace ERIN
   void
   Mux::output_func(std::vector<PortValue>& ys)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::output_func();id=" << get_id() << "\n";
     }
     if (get_report_inflow_request()) {
-      if constexpr (debug_level >= debug_level_low) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... send=>outport_inflow_request\n";
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
@@ -1000,14 +1052,14 @@ namespace ERIN
       }
     }
     if (get_report_outflow_achieved()) {
-      if constexpr (debug_level >= debug_level_low) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... send=>outport_outflow_achieved\n";
         std::cout << "t = " << get_real_time() << "\n";
       }
       for (int i{0}; i < num_outflows; ++i) {
         auto outflow_ = outflows[i];
         auto prev_outflow_ = prev_outflows[i];
-        if constexpr (debug_level >= debug_level_low) {
+        if constexpr (debug_level >= debug_level_high) {
           std::cout << "outflow[" << i << "] = " << outflow_ << "\n";
           std::cout << "prev_outflow[" << i << "] = " << prev_outflow_ << "\n";
         }

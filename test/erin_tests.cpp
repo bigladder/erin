@@ -145,18 +145,18 @@ TEST(ErinBasicsTest, StandaloneSink)
   while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
   }
-  std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2};
+  std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2, 3};
   auto actual_times = meter->get_event_times();
   ::erin_test_utils::compare_vectors<::ERIN::RealTimeType>(expected_times, actual_times);
-  std::vector<::ERIN::FlowValueType> expected_loads = {100, 10, 0};
+  std::vector<::ERIN::FlowValueType> expected_loads = {100, 10, 0, 0};
   auto actual_loads = meter->get_achieved_flows();
   ::erin_test_utils::compare_vectors<::ERIN::FlowValueType>(expected_loads, actual_loads);
 }
 
 TEST(ErinBasicsTest, CanRunSourceSink)
 {
-  std::vector<::ERIN::RealTimeType> expected_time = {0, 1};
-  std::vector<::ERIN::FlowValueType> expected_flow = {100, 0};
+  std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2};
+  std::vector<::ERIN::FlowValueType> expected_flow = {100, 0, 0};
   auto st = ::ERIN::StreamType("electrical");
   auto sink = new ::ERIN::Sink(
       "sink", ::ERIN::ComponentType::Load, st, {
@@ -198,8 +198,8 @@ TEST(ErinBasicsTest, CanRunSourceSink)
 
 TEST(ErinBasicTest, CanRunPowerLimitedSink)
 {
-  std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2, 3};
-  std::vector<::ERIN::FlowValueType> expected_flow = {50, 50, 40, 0};
+  std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2, 3, 4};
+  std::vector<::ERIN::FlowValueType> expected_flow = {50, 50, 40, 0, 0};
   auto elec = ::ERIN::StreamType("electrical");
   auto meter2 = new ::ERIN::FlowMeter("meter2", ::ERIN::ComponentType::Source, elec);
   auto lim = new ::ERIN::FlowLimits("lim", ::ERIN::ComponentType::Source, elec, 0, 50);
@@ -274,9 +274,9 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
 {
   const double diesel_generator_efficiency{0.36};
   const std::vector<::ERIN::RealTimeType> expected_genset_output_times{
-    0, 1, 2, 3};
+    0, 1, 2, 3, 4};
   const std::vector<::ERIN::FlowValueType> expected_genset_output{
-    50, 50, 40, 0};
+    50, 50, 40, 0, 0};
   auto calc_output_given_input =
     [=](::ERIN::FlowValueType input_kW) -> ::ERIN::FlowValueType {
       return input_kW * diesel_generator_efficiency;
@@ -290,6 +290,7 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
     calc_input_given_output(50),
     calc_input_given_output(40),
     calc_input_given_output(0),
+    calc_input_given_output(0)
   };
   auto diesel = ::ERIN::StreamType("diesel");
   auto elec = ::ERIN::StreamType("electrical");
@@ -309,10 +310,10 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
       "genset_meter", ::ERIN::ComponentType::Converter, elec);
   std::vector<::ERIN::LoadItem> load_profile{
     ::ERIN::LoadItem{0,160},
-      ::ERIN::LoadItem{1,80},
-      ::ERIN::LoadItem{2,40},
-      ::ERIN::LoadItem{3,0},
-      ::ERIN::LoadItem{4}};
+    ::ERIN::LoadItem{1,80},
+    ::ERIN::LoadItem{2,40},
+    ::ERIN::LoadItem{3,0},
+    ::ERIN::LoadItem{4}};
   auto sink = new ::ERIN::Sink(
       "electric_load", ::ERIN::ComponentType::Load, elec, load_profile);
   adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
@@ -343,18 +344,25 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
     t = sim.now();
-    std::cout << "The current time is: (" << t.real << ", " << t.logical
-              << ")" << std::endl;
+    //std::cout << "The current time is: (" << t.real << ", " << t.logical
+    //          << ")" << std::endl;
   }
   std::vector<::ERIN::FlowValueType> actual_genset_output =
     genset_meter->get_achieved_flows();
   std::vector<::ERIN::FlowValueType> requested_genset_output =
     genset_meter->get_requested_flows();
   EXPECT_EQ(actual_genset_output.size(), requested_genset_output.size());
-  EXPECT_EQ(load_profile.size() - 1, requested_genset_output.size());
+  EXPECT_EQ(load_profile.size(), requested_genset_output.size());
   auto rgo_size = requested_genset_output.size();
   for (decltype(rgo_size) i{ 0 }; i < rgo_size; ++i) {
-    EXPECT_EQ(requested_genset_output[i], load_profile[i].get_value());
+    if (i == (rgo_size - 1)) {
+      EXPECT_EQ(requested_genset_output[i], 0.0)
+        << "i = " << i << " which is the last index";
+    }
+    else {
+      EXPECT_EQ(requested_genset_output[i], load_profile[i].get_value())
+        << "i = " << i;
+    }
   }
   std::vector<::ERIN::FlowValueType> actual_fuel_output =
     diesel_fuel_meter->get_achieved_flows();
@@ -792,15 +800,17 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
     EXPECT_TRUE(it != expected_keys.end());
-    ASSERT_EQ(item.second.size(), 2);
+    ASSERT_EQ(item.second.size(), 3);
     EXPECT_EQ(item.second.at(0).time, 0);
     EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
     EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(
-        item.second.at(1).time,
-        static_cast<::ERIN::RealTimeType>(1 * ::ERIN::seconds_per_hour) );
+    EXPECT_EQ(item.second.at(1).time, 4);
     EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
+    EXPECT_EQ(item.second.at(2).time,
+        static_cast<::ERIN::RealTimeType>(1 * ::ERIN::seconds_per_hour));
+    EXPECT_NEAR(item.second.at(2).achieved_value, 0.0, tolerance);
+    EXPECT_NEAR(item.second.at(2).requested_value, 0.0, tolerance);
   }
 }
 
@@ -852,15 +862,18 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
   for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
     EXPECT_TRUE(it != expected_keys.end());
-    ASSERT_EQ(item.second.size(), 2);
+    ASSERT_EQ(item.second.size(), 3);
     EXPECT_EQ(item.second.at(0).time, 0);
     EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
     EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(
-        item.second.at(1).time,
-        static_cast<::ERIN::RealTimeType>(4 * ::ERIN::seconds_per_hour));
+    EXPECT_EQ(item.second.at(1).time, 4);
     EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
+    EXPECT_EQ(
+        item.second.at(2).time,
+        static_cast<::ERIN::RealTimeType>(4 * ::ERIN::seconds_per_hour));
+    EXPECT_NEAR(item.second.at(2).achieved_value, 0.0, tolerance);
+    EXPECT_NEAR(item.second.at(2).requested_value, 0.0, tolerance);
   }
 }
 
@@ -1567,6 +1580,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   }
   // bus-inflow(1)
   const std::vector<::ERIN::Datum> expected_bus_inflow1{
+    ::ERIN::Datum{0,0.0,0.0},
     ::ERIN::Datum{5,3.0,3.0},
     ::ERIN::Datum{8,8.0,4.0},
     ::ERIN::Datum{10,3.0,3.0},
@@ -1596,9 +1610,9 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   // bus-outflow(0)
   const std::vector<::ERIN::Datum> expected_bus_outflow0{
     ::ERIN::Datum{0,10.0,10.0},
-      ::ERIN::Datum{8,10.0,8.0},
-      ::ERIN::Datum{10,10.0,10.0},
-      ::ERIN::Datum{t_max,0.0,0.0}};
+    ::ERIN::Datum{8,10.0,8.0},
+    ::ERIN::Datum{10,10.0,10.0},
+    ::ERIN::Datum{t_max,0.0,0.0}};
   const auto n_bus_outflow0 = expected_bus_outflow0.size();
   const auto& actual_bus_outflow0 = results.at("bus-outflow(0)");
   EXPECT_EQ(n_bus_outflow0, actual_bus_outflow0.size());
@@ -1809,25 +1823,37 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
     EXPECT_EQ(es.get_max_occurrences(), as.get_max_occurrences());
     EXPECT_EQ(es.get_intensities(), as.get_intensities());
   }
-  //EXPECT_EQ(expected_scenarios, scenarios);
-  if (false) {
-    ::ERIN::Main m{si, streams, components, networks, scenarios};
-    auto out = m.run("blue_sky");
-    EXPECT_EQ(out.get_is_good(), true);
-    EXPECT_EQ(out.get_results().size(), 2);
-    std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
-    // out.get_results() : Map String (Vector Datum)
-    for (const auto& item: out.get_results()) {
-      auto it = expected_keys.find(item.first);
-      EXPECT_TRUE(it != expected_keys.end());
-      ASSERT_EQ(item.second.size(), 2);
-      EXPECT_EQ(item.second.at(0).time, 0);
-      EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
-      EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-      EXPECT_EQ(item.second.at(1).time, 4);
-      EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
-      EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
+  EXPECT_EQ(expected_scenarios, scenarios);
+  ::ERIN::Main m{si, streams, components, networks, scenarios};
+  auto out = m.run("blue_sky");
+  EXPECT_EQ(out.get_is_good(), true);
+  EXPECT_EQ(out.get_results().size(), 2);
+  std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
+  // out.get_results() : Map String (Vector Datum)
+  for (const auto& item: out.get_results()) {
+    auto it = expected_keys.find(item.first);
+    ASSERT_TRUE(it != expected_keys.end());
+    const auto& results = item.second;
+    int i{0};
+    for (const auto& x : results) {
+      std::cout << "id: " << item.first << "\n";
+      std::cout << "x[" << i << "].time            = " << x.time << "\n"
+                << "x[" << i << "].achieved_value  = " << x.achieved_value
+                << "\n"
+                << "x[" << i << "].requested_value = " << x.requested_value
+                << "\n";
+      ++i;
     }
+    ASSERT_EQ(item.second.size(), 3);
+    EXPECT_EQ(item.second.at(0).time, 0);
+    EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
+    EXPECT_EQ(item.second.at(0).requested_value, 1.0);
+    EXPECT_EQ(item.second.at(1).time, 4);
+    EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
+    EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
+    EXPECT_EQ(item.second.at(2).time, 31'536'000);
+    EXPECT_NEAR(item.second.at(2).achieved_value, 0.0, tolerance);
+    EXPECT_NEAR(item.second.at(2).requested_value, 0.0, tolerance);
   }
 }
 

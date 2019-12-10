@@ -1,3 +1,4 @@
 time (hours),cluster_01_electric:achieved (kW),cluster_01_electric:requested (kW),electric_utility:achieved (kW),electric_utility:requested (kW)
 0,1,1,1,1
+0.00111111,0,0,0,0
 4,0,0,0,0

@@ -43,9 +43,19 @@ namespace ERIN
 
   TimeUnits tag_to_time_units(const std::string& tag);
   std::string time_units_to_tag(TimeUnits tu);
-  RealTimeType time_to_seconds(RealTimeType max_time, TimeUnits time_unit);
+  RealTimeType time_to_seconds(double max_time, TimeUnits time_unit);
   double convert_time_in_seconds_to(
       const RealTimeType t, const TimeUnits to_units);
+
+  ////////////////////////////////////////////////////////////
+  // RateUnits
+  enum class RateUnits
+  {
+    KiloWatts = 0,
+  };
+
+  RateUnits tag_to_rate_units(const std::string& tag);
+  std::string rate_units_to_tag(RateUnits ru);
 
   ////////////////////////////////////////////////////////////
   // ComponentType

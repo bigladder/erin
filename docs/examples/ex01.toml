@@ -15,7 +15,9 @@ gallons = 7.366784013642577e-6
 liters = 2.7886224205242612e-5
 ############################################################
 [loads.building_electrical]
-loads = [{t=0,v=1.0},{t=4}]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,1.0],[4.0]]
 ############################################################
 [components.electric_utility]
 type = "source"
@@ -42,7 +44,7 @@ loads_by_scenario.blue_sky = "building_electrical"
 connections = [["electric_utility", "cluster_01_electric"]]
 ############################################################
 [scenarios.blue_sky]
-time_units = "hours"
+time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0}
 duration = 4
 max_occurrences = 1

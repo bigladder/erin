@@ -597,7 +597,9 @@ TEST(ErinBasicsTest, CanReadLoadsFromToml)
 {
   std::stringstream ss{};
   ss << "[loads.load1]\n"
-        "loads = [{t=0,v=1.0},{t=4}]\n";
+        "time_unit = \"seconds\"\n"
+        "rate_unit = \"kW\"\n"
+        "time_rate_pairs = [[0.0,1.0],[4.0]]\n";
   ::ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> expected{
     {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
@@ -764,7 +766,9 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "liters = 2.7886224205242612e-5\n"
         "############################################################\n"
         "[loads.building_electrical]\n"
-        "loads = [{t=0,v=1.0},{t=4}]\n"
+        "time_unit = \"hours\"\n"
+        "rate_unit = \"kW\"\n"
+        "time_rate_pairs = [[0.0,1.0],[4.0]]\n"
         "############################################################\n"
         "[components.electric_utility]\n"
         "type = \"source\"\n"
@@ -800,17 +804,13 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
     EXPECT_TRUE(it != expected_keys.end());
-    ASSERT_EQ(item.second.size(), 3);
+    ASSERT_EQ(item.second.size(), 2);
     EXPECT_EQ(item.second.at(0).time, 0);
     EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
     EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(item.second.at(1).time, 4);
+    EXPECT_EQ(item.second.at(1).time, 3600);
     EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
-    EXPECT_EQ(item.second.at(2).time,
-        static_cast<::ERIN::RealTimeType>(1 * ::ERIN::seconds_per_hour));
-    EXPECT_NEAR(item.second.at(2).achieved_value, 0.0, tolerance);
-    EXPECT_NEAR(item.second.at(2).requested_value, 0.0, tolerance);
   }
 }
 
@@ -862,18 +862,15 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
   for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
     EXPECT_TRUE(it != expected_keys.end());
-    ASSERT_EQ(item.second.size(), 3);
+    ASSERT_EQ(item.second.size(), 2);
     EXPECT_EQ(item.second.at(0).time, 0);
     EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
     EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(item.second.at(1).time, 4);
+    EXPECT_EQ(
+        item.second.at(1).time,
+        static_cast<::ERIN::RealTimeType>(4 * ::ERIN::seconds_per_hour));
     EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
-    EXPECT_EQ(
-        item.second.at(2).time,
-        static_cast<::ERIN::RealTimeType>(4 * ::ERIN::seconds_per_hour));
-    EXPECT_NEAR(item.second.at(2).achieved_value, 0.0, tolerance);
-    EXPECT_NEAR(item.second.at(2).requested_value, 0.0, tolerance);
   }
 }
 
@@ -1848,7 +1845,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
     EXPECT_EQ(item.second.at(0).time, 0);
     EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
     EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(item.second.at(1).time, 4);
+    EXPECT_EQ(item.second.at(1).time, 4 * 3'600);
     EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
     EXPECT_EQ(item.second.at(2).time, 31'536'000);

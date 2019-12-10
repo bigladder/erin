@@ -204,7 +204,10 @@ namespace ERIN
       toml::value data;
 
       [[nodiscard]] std::vector<LoadItem>
-        get_loads_from_array(const std::vector<toml::table>& load_array) const;
+        get_loads_from_array(
+            const std::vector<toml::value>& load_array,
+            TimeUnits time_units,
+            RateUnits rate_units) const;
       [[nodiscard]] std::vector<LoadItem>
         load_loads_from_csv(const std::string& file_path) const;
       void read_source_component(
@@ -229,6 +232,8 @@ namespace ERIN
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components,
           fragility_map&& frags) const;
+      [[nodiscard]] double read_number(const toml::value& v) const;
+      [[nodiscard]] double read_number(const std::string& v) const;
   };
 
   ////////////////////////////////////////////////////////////

@@ -72,6 +72,27 @@ namespace ERIN
     }
   }
 
+  RealTimeType
+  time_to_seconds(double t, TimeUnits u)
+  {
+    switch (u) {
+      case TimeUnits::Seconds:
+        return static_cast<RealTimeType>(t);
+      case TimeUnits::Minutes:
+        return static_cast<RealTimeType>(t * seconds_per_minute);
+      case TimeUnits::Hours:
+        return static_cast<RealTimeType>(t * seconds_per_hour);
+      case TimeUnits::Days:
+        return static_cast<RealTimeType>(t * seconds_per_day);
+      case TimeUnits::Years:
+        return static_cast<RealTimeType>(t * seconds_per_year);
+      default:
+        std::ostringstream oss;
+        oss << "unhandled TimeUnits \"" << static_cast<int>(u) << "\"";
+        throw std::invalid_argument(oss.str());
+    }
+  }
+
   double
   convert_time_in_seconds_to(const RealTimeType t, const TimeUnits to_units)
   {
@@ -93,6 +114,29 @@ namespace ERIN
           throw std::runtime_error(oss.str());
         }
     }
+  }
+
+  RateUnits
+  tag_to_rate_units(const std::string& tag)
+  {
+    if (tag == "kW") {
+      return RateUnits::KiloWatts;
+    }
+    std::ostringstream oss;
+    oss << "unsupported rate unit for tag = '" << tag << "'";
+    throw std::invalid_argument(oss.str());
+  }
+
+  std::string
+  rate_units_to_tag(RateUnits ru)
+  {
+    switch (ru) {
+      case RateUnits::KiloWatts:
+        return std::string{"kW"};
+    }
+    std::ostringstream oss;
+    oss << "unhandled rate unit '" << static_cast<int>(ru) << "'\n";
+    throw std::invalid_argument(oss.str());
   }
 
   ComponentType
@@ -148,7 +192,7 @@ namespace ERIN
   // LoadItem
   LoadItem::LoadItem(RealTimeType t):
     time{t},
-    value{-1},
+    value{0.0},
     is_end{true}
   {
     if (!is_good()) {

@@ -120,58 +120,149 @@ namespace ERIN
       toml::value tv = load_item.second;
       toml::table tt = toml::get<toml::table>(tv);
       std::vector<LoadItem> the_loads{};
-      auto it = tt.find("loads");
+      auto load_id = load_item.first;
+      auto it = tt.find("time_rate_pairs");
       if (it == tt.end()) {
         auto it2 = tt.find("csv_file");
         if (it2 == tt.end()) {
           std::ostringstream oss;
-          oss << "BadInputError: missing field \"csv_file\" in "
-              << "\"loads\" section for " << load_item.first << "\"";
+          oss << "BadInputError: missing field 'csv_file' in "
+              << "'loads' section for " << load_id << "\"";
           throw std::runtime_error(oss.str());
         }
         auto csv_file = toml::get<std::string>(it2->second);
         the_loads = load_loads_from_csv(csv_file);
       }
       else {
-        const auto load_array = toml::get<std::vector<toml::table>>(it->second);
-        the_loads = get_loads_from_array(load_array);
+        const auto load_array = toml::get<std::vector<toml::value>>(it->second);
+        const std::string not_found{"not_found"};
+        const auto time_unit_tag = toml::find_or(
+            tv, "time_unit", not_found);
+        if (time_unit_tag == not_found) {
+          std::ostringstream oss;
+          oss << "required field 'time_unit' not found for load '"
+              << load_id << "'\n";
+          throw std::runtime_error(oss.str());
+        }
+        TimeUnits time_unit{TimeUnits::Hours};
+        try {
+          time_unit = tag_to_time_units(time_unit_tag);
+        }
+        catch (std::invalid_argument& e) {
+          std::ostringstream oss;
+          oss << "unhandled time unit '" << time_unit_tag << "' "
+              << "for load '" << load_id << "'\n"; 
+          oss << "original error: " << e.what() << "\n";
+          throw std::runtime_error(oss.str());
+        }
+        const auto rate_unit_tag = toml::find_or(
+            tv, "rate_unit", not_found);
+        if (rate_unit_tag == not_found) {
+          std::ostringstream oss;
+          oss << "required field 'rate_unit' not found for load '"
+              << load_id << "'\n";
+          throw std::runtime_error(oss.str());
+        }
+        auto rate_unit = RateUnits::KiloWatts;
+        try {
+          rate_unit = tag_to_rate_units(rate_unit_tag);
+        }
+        catch (std::invalid_argument& e) {
+          std::ostringstream oss;
+          oss << "unhandled rate unit '" << rate_unit_tag << "' "
+              << "for load '" << load_id << "'\n"; 
+          oss << "original error: " << e.what() << "\n";
+          throw std::runtime_error(oss.str());
+        }
+        if (rate_unit != RateUnits::KiloWatts) {
+          std::ostringstream oss;
+          oss << "unsupported 'rate_unit' '" << rate_unit_tag << " for load '"
+              << load_id << "'\n";
+          oss << "supported rate units: 'kW'\n";
+          throw std::runtime_error(oss.str());
+        }
+        try {
+          the_loads = get_loads_from_array(load_array, time_unit, rate_unit);
+        }
+        catch (std::runtime_error& e) {
+          std::ostringstream oss;
+          oss << "could not read loads array for load '" << load_id << "'\n";
+          oss << "orignal error: " << e.what() << "\n";
+          throw std::runtime_error(e.what());
+        }
       }
       loads_by_id.insert(std::make_pair(load_item.first, the_loads));
     }
     return loads_by_id;
   }
 
+  double
+  TomlInputReader::read_number(const toml::value& v) const
+  {
+    double out{0.0};
+    try {
+      out = toml::get<double>(v);
+    }
+    catch (toml::exception& e) {
+      out = static_cast<double>(toml::get<int>(v));
+    }
+    return out;
+  }
+
+  double
+  TomlInputReader::read_number(const std::string& v) const
+  {
+    double out{0.0};
+    try {
+      out = std::stod(v);
+    }
+    catch (std::invalid_argument& e) {
+      out = static_cast<double>(std::stoi(v));
+    }
+    return out;
+  }
+
+
   std::vector<LoadItem>
   TomlInputReader::get_loads_from_array(
-      const std::vector<toml::table>& load_array) const
+      const std::vector<toml::value>& load_array,
+      TimeUnits time_units,
+      RateUnits rate_units) const
   {
+    if (rate_units != RateUnits::KiloWatts) {
+      std::ostringstream oss;
+      oss << "unhandled rate units '" << rate_units_to_tag(rate_units) << "'";
+      throw std::runtime_error(oss.str());
+    }
     std::vector<LoadItem> the_loads{};
     for (const auto& item: load_array) {
+      const auto& xs = toml::get<std::vector<toml::value>>(item);
+      const auto size = xs.size();
       RealTimeType the_time{};
       FlowValueType the_value{};
-      auto it_for_t = item.find("t");
-      if (it_for_t != item.end()) {
-        the_time = toml::get<RealTimeType>(it_for_t->second);
+      if ((size < 1) || (size > 2)) {
+        std::ostringstream oss;
+        oss << "time_rate_pairs must be 1 or 2 elements in length; "
+            << "size = " << size << "\n";
+        throw std::runtime_error(oss.str());
       }
-      else {
-        the_time = -1;
-      }
-      auto it_for_v = item.find("v");
-      if (it_for_v != item.end()) {
-        the_value = toml::get<FlowValueType>(it_for_v->second);
-        the_loads.emplace_back(LoadItem(the_time, the_value));
+      the_time = time_to_seconds(read_number(xs[0]), time_units);
+      if (size == 2) {
+        the_value = static_cast<FlowValueType>(read_number(xs[1]));
+        the_loads.emplace_back(LoadItem{the_time, the_value});
       } else {
-        the_loads.emplace_back(LoadItem(the_time));
+        the_loads.emplace_back(LoadItem{the_time});
       }
     }
     return the_loads;
   }
 
-  // TODO: adapt to read units for time and power from the csv file header
   std::vector<LoadItem>
   TomlInputReader::load_loads_from_csv(const std::string& csv_path) const
   {
     std::vector<LoadItem> the_loads{};
+    TimeUnits time_units{TimeUnits::Hours};
+    RateUnits rate_units{RateUnits::KiloWatts};
     RealTimeType t;
     FlowValueType v;
     std::ifstream ifs{csv_path};
@@ -194,30 +285,41 @@ namespace ERIN
           oss << "badly formatted file \"" << csv_path << "\"\n";
           oss << "row: " << row << "\n";
           ::erin_csv::stream_out(oss, cells);
+          ifs.close();
           throw std::runtime_error(oss.str());
         }
-        if (cells[0] != "t") {
+        try {
+          time_units = tag_to_time_units(cells[0]);
+        }
+        catch (std::invalid_argument& e) {
           std::ostringstream oss;
           oss << "in file '" << csv_path
-            << "', first column should be 't' but is '"
+            << "', first column should be a time unit tag but is '"
             << cells[0] << "'";
           oss << "row: " << row << "\n";
           ::erin_csv::stream_out(oss, cells);
+          oss << "original error: " << e.what() << "\n";
+          ifs.close();
           throw std::runtime_error(oss.str());
         }
-        if (cells[1] != "v") {
+        try {
+          rate_units = tag_to_rate_units(cells[1]);
+        }
+        catch (std::invalid_argument& e) {
           std::ostringstream oss;
           oss << "in file '" << csv_path
-              << "', second column should be 'v' but is '"
+              << "', second column should be a rate unit tag but is '"
               << cells[1] << "'";
           oss << "row: " << "\n";
           ::erin_csv::stream_out(oss, cells);
+          oss << "original error: " << e.what() << "\n";
+          ifs.close();
           throw std::runtime_error(oss.str());
         }
         continue;
       }
       try {
-        t = std::stoi(cells[0]);
+        t = time_to_seconds(read_number(cells[0]), time_units);
       }
       catch (const std::invalid_argument&) {
         std::ostringstream oss;
@@ -226,10 +328,11 @@ namespace ERIN
         oss << "row: " << row << "\n";
         ::erin_csv::stream_out(oss, cells);
         std::cerr << oss.str();
+        ifs.close();
         throw;
       }
       try {
-        v = std::stod(cells[1]);
+        v = read_number(cells[1]);
       }
       catch (const std::invalid_argument&) {
         std::ostringstream oss;
@@ -238,6 +341,7 @@ namespace ERIN
         oss << "row: " << row << "\n";
         ::erin_csv::stream_out(oss, cells);
         std::cerr << oss.str();
+        ifs.close();
         throw;
       }
       the_loads.emplace_back(LoadItem{t, v});
@@ -245,6 +349,7 @@ namespace ERIN
     if (the_loads.empty()) {
       std::ostringstream oss;
       oss << "the_loads is empty.\n";
+      ifs.close();
       throw std::runtime_error(oss.str());
     }
     auto& back = the_loads.back();
@@ -735,7 +840,7 @@ namespace ERIN
       const auto next_occurrence_dist =
         ::erin_generics::read_toml_distribution<RealTimeType>(dist);
       const auto time_unit_str = toml::find_or(
-          s.second, "time_units", default_time_units);
+          s.second, "time_unit", default_time_units);
       const auto time_units = tag_to_time_units(time_unit_str);
       RealTimeType time_multiplier{1};
       switch (time_units) {

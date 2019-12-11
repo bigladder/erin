@@ -221,6 +221,29 @@ namespace ERIN
     return (next.get_time() - time);
   }
 
+  bool
+  operator==(const LoadItem& a, const LoadItem& b)
+  {
+    return ((a.is_end == b.is_end) && (a.time == b.time)
+        && (a.is_end ? true : (a.value == b.value)));
+  }
+
+  bool
+  operator!=(const LoadItem& a, const LoadItem& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream& operator<<(std::ostream& os, const LoadItem& n)
+  {
+    std::string b = n.is_end ? "true" : "false";
+    os << "LoadItem("
+       << "time=" << n.time << ", "
+       << "value=" << n.value << ", "
+       << "is_end=" << b << ")";
+    return os;
+  }
+
   ////////////////////////////////////////////////////////////
   // Utility Functions
   FlowValueType

@@ -122,6 +122,30 @@ namespace ERIN
     }
   }
 
+  bool
+  Component::base_is_equal(const Component& other) const
+  {
+    // TODO: add comparison of fragilities
+    return (id == other.id)
+      && (component_type == other.component_type)
+      && (input_stream == other.input_stream)
+      && (output_stream == other.output_stream)
+      && (has_fragilities == other.has_fragilities);
+  }
+
+  std::string
+  Component::internals_to_string() const
+  {
+    std::ostringstream oss;
+    oss << "id=" << id << ", "
+        << "component_type=" << component_type_to_tag(component_type) << ", "
+        << "input_stream=" << input_stream << ", "
+        << "output_stream=" << output_stream << ", "
+        << "fragilities=..., "
+        << "has_fragilities=" << (has_fragilities ? "true" : "false");
+    return oss.str();
+  }
+
   ////////////////////////////////////////////////////////////
   // LoadComponent
   LoadComponent::LoadComponent(
@@ -202,6 +226,108 @@ namespace ERIN
     return PortsAndElements{ports, elements};
   }
 
+  bool
+  LoadComponent::equals(Component* other) const
+  {
+    if (other == nullptr) {
+      return false;
+    }
+    auto other_type = other->get_component_type();
+    if (other_type == ComponentType::Load) {
+      auto other_p = dynamic_cast<LoadComponent*>(other);
+      if (other_p == nullptr) {
+        return false;
+      }
+      return ((*this) == (*other_p));
+    }
+    return false;
+  }
+
+  bool
+  operator==(const LoadComponent& a, const LoadComponent& b)
+  {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "entering operator==(a, b)\n"
+                << "... a.id = " << a.get_id() << "\n"
+                << "... b.id = " << b.get_id() << "\n";
+    }
+    if (!a.base_is_equal(b)) {
+      if constexpr (debug_level >= debug_level_low) {
+        std::cout << "... not equal because a.base_is_equal(b) is false\n";
+      }
+      return false;
+    }
+    const auto& a_lbs = a.loads_by_scenario;
+    const auto& b_lbs = b.loads_by_scenario;
+    const auto num_a_items = a_lbs.size();
+    const auto num_b_items = b_lbs.size();
+    if (num_a_items != num_b_items) {
+      if constexpr (debug_level >= debug_level_low) {
+        std::cout << "... not equal because num_a_items "
+                  << "!= num_b_items\n"
+                  << "num_a_items: " << num_a_items << "\n"
+                  << "num_b_items: " << num_b_items << "\n";
+      }
+      return false;
+    }
+    for (const auto& a_pair : a_lbs) {
+      const auto& tag = a_pair.first;
+      auto b_it = b_lbs.find(tag);
+      if (b_it == b_lbs.end()) {
+        if constexpr (debug_level >= debug_level_low) {
+          std::cout << "... not equal because tag '" << tag << "' "
+            << "doesn't appear in b_lbs\n";
+        }
+        return false;
+      }
+      const auto& a_load_items = a_pair.second;
+      const auto& b_load_items = b_it->second;
+      const auto a_num_loads = a_load_items.size();
+      const auto b_num_loads = b_load_items.size();
+      if (a_num_loads != b_num_loads) {
+        if constexpr (debug_level >= debug_level_low) {
+          std::cout << "... not equal because a_num_loads != b_num_loads\n"
+            << "tag:         " << tag << "\n"
+            << "a_num_loads: " << a_num_loads << "\n"
+            << "b_num_loads: " << b_num_loads << "\n";
+        }
+        return false;
+      }
+      for (std::vector<LoadItem>::size_type i{0}; i < a_num_loads; ++i) {
+        const auto& a_load_item = a_load_items[i];
+        const auto& b_load_item = b_load_items[i];
+        if (a_load_item != b_load_item) {
+          if constexpr (debug_level >= debug_level_low) {
+            std::cout << "... not equal because a_load_item != b_load_item\n"
+              << "tag:         " << tag << "\n"
+              << "i:           " << i << "\n"
+              << "a_load_item: " << a_load_item << "\n"
+              << "b_load_item: " << b_load_item << "\n";
+          }
+          return false;
+        }
+      }
+    }
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "... is equal\n";
+    }
+    return true;
+  }
+
+  bool
+  operator!=(const LoadComponent& a, const LoadComponent& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const LoadComponent& n)
+  {
+    os << "LoadComponent(" << n.internals_to_string() << ", "
+       << "loads_by_scenario=...)";
+    return os;
+  }
+
   ////////////////////////////////////////////////////////////
   // Limits
   Limits::Limits():
@@ -231,6 +357,46 @@ namespace ERIN
     }
   }
 
+  bool
+  operator==(const Limits& a, const Limits& b)
+  {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "entering operator==(a, b) for Limits\n"
+                << "a = " << a << "\n"
+                << "b = " << b << "\n";
+    }
+    if (a.is_limited != b.is_limited) {
+      if constexpr (debug_level >= debug_level_low) {
+        std::cout << "... not equal because a.is_limited != b.is_limited\n";
+      }
+      return false;
+    }
+    if (a.is_limited) {
+      return (a.minimum == b.minimum) && (b.maximum == b.maximum);
+    }
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "... is equal\n";
+    }
+    return true;
+  }
+
+  bool
+  operator!=(const Limits& a, const Limits& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const Limits& n)
+  {
+    std::string b = n.is_limited ? "true" : "false";
+    os << "Limits("
+       << "is_limited=" << b << ", "
+       << "minimum=" << n.minimum << ", "
+       << "maximum=" << n.maximum << ")";
+    return os;
+  }
+
   ////////////////////////////////////////////////////////////
   // SourceComponent
   SourceComponent::SourceComponent(
@@ -246,7 +412,7 @@ namespace ERIN
       const FlowValueType max_output_,
       const FlowValueType min_output_):
     SourceComponent(
-        id_, output_stream_, {}, Limits{min_output_,max_output_})
+        id_, output_stream_, {}, Limits{min_output_, max_output_})
   {
   }
 
@@ -340,6 +506,51 @@ namespace ERIN
     }
     ports[ep::Type::Outflow] = std::vector<FlowElement*>{meter};
     return PortsAndElements{ports, elements};
+  }
+
+  bool
+  SourceComponent::equals(Component* other) const
+  {
+    if (other == nullptr) {
+      return false;
+    }
+    auto other_type = other->get_component_type();
+    if (other_type == ComponentType::Source) {
+      auto other_p = dynamic_cast<SourceComponent*>(other);
+      if (other_p == nullptr) {
+        return false;
+      }
+      return ((*this) == (*other_p));
+    }
+    return false;
+  }
+
+  bool
+  operator==(const SourceComponent& a, const SourceComponent& b)
+  {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "entering operator==(a, b) for SourceComponent\n"
+                << "a = " << a << "\n"
+                << "b = " << b << "\n";
+    }
+    if (!a.base_is_equal(b)) {
+      return false;
+    }
+    return (a.limits == b.limits);
+  }
+
+  bool
+  operator!=(const SourceComponent& a, const SourceComponent& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const SourceComponent& n)
+  {
+    os << "SourceComponent(" << n.internals_to_string() << ", "
+       << "limits=" << n.limits << ")";
+    return os;
   }
 
   ////////////////////////////////////////////////////////////
@@ -471,5 +682,83 @@ namespace ERIN
       std::cout << "MuxerComponent::add_to_network(...) exit\n";
     }
     return PortsAndElements{ports, elements};
+  }
+
+  bool
+  MuxerComponent::equals(Component* other) const
+  {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "enter MuxerComponent::equals(...)\n"
+                << "lhs.id = " << get_id() << "\n"
+                << "rhs.id = " << get_id() << "\n";
+    }
+    if (other == nullptr) {
+      if constexpr (debug_level >= debug_level_low) {
+        std::cout << "... not equal because other is null\n";
+      }
+      return false;
+    }
+    auto other_type = other->get_component_type();
+    if (other_type == ComponentType::Muxer) {
+      auto other_p = dynamic_cast<MuxerComponent*>(other);
+      if (other_p == nullptr) {
+        if constexpr (debug_level >= debug_level_low) {
+          std::cout << "... not equal because other "
+                    << "failed dynamic cast to MuxerComponent";
+        }
+        return false;
+      }
+      return ((*this) == (*other_p));
+    }
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "... not equal because other.type is '"
+                << component_type_to_tag(other_type) << "'\n";
+    }
+    return false;
+  }
+
+  bool
+  operator==(const MuxerComponent& a, const MuxerComponent& b)
+  {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "enter operator==(a, b)\n"
+                << "a.id = " << a.get_id() << "\n"
+                << "b.id = " << b.get_id() << "\n";
+    }
+    if (!a.base_is_equal(b)) {
+      if constexpr (debug_level >= debug_level_low) {
+        std::cout << "... not equal because a.base_is_equal(b) doesn't pass\n";
+      }
+      return false;
+    }
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "... a.num_inflows  = " << a.num_inflows << "\n";
+      std::cout << "... b.num_inflows  = " << b.num_inflows << "\n";
+      std::cout << "... a.num_outflows = " << a.num_outflows << "\n";
+      std::cout << "... b.num_outflows = " << b.num_outflows << "\n";
+      std::cout << "... a.strategy = "
+                << muxer_dispatch_strategy_to_string(a.strategy) << "\n";
+      std::cout << "... b.strategy = "
+                << muxer_dispatch_strategy_to_string(a.strategy) << "\n";
+    }
+    return (a.num_inflows == b.num_inflows)
+      && (a.num_outflows == b.num_outflows)
+      && (a.strategy == b.strategy);
+  }
+
+  bool
+  operator!=(const MuxerComponent& a, const MuxerComponent& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const MuxerComponent& n)
+  {
+    os << "MuxerComponent(" << n.internals_to_string() << ", "
+       << "num_inflows=" << n.num_inflows << ", "
+       << "num_outflows=" << n.num_outflows << ", "
+       << "strategy=" << muxer_dispatch_strategy_to_string(n.strategy) << ")";
+    return os;
   }
 }

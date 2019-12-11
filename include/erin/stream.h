@@ -117,6 +117,8 @@ namespace ERIN
           return other_quantity_units;
         }
 
+      friend std::ostream& operator<<(std::ostream& os, const StreamType& s);
+
     private:
       std::string type;
       std::string rate_units;
@@ -125,6 +127,8 @@ namespace ERIN
       std::unordered_map<std::string,FlowValueType> other_rate_units;
       std::unordered_map<std::string,FlowValueType> other_quantity_units;
   };
+
+  std::ostream& operator<<(std::ostream& os, const StreamType& s);
 }
 
 #endif // ERIN_STREAM_H

@@ -95,6 +95,10 @@ namespace ERIN
       [[nodiscard]] bool get_is_end() const { return is_end; }
       [[nodiscard]] RealTimeType get_time_advance(const LoadItem& next) const;
 
+      friend bool operator==(const LoadItem& a, const LoadItem& b);
+      friend bool operator!=(const LoadItem& a, const LoadItem& b);
+      friend std::ostream& operator<<(std::ostream& os, const LoadItem& n);
+
     private:
       RealTimeType time;
       FlowValueType value;
@@ -102,6 +106,10 @@ namespace ERIN
 
       [[nodiscard]] bool is_good() const { return (time >= 0); }
   };
+
+  bool operator==(const LoadItem& a, const LoadItem& b);
+  bool operator!=(const LoadItem& a, const LoadItem& b);
+  std::ostream& operator<<(std::ostream& os, const LoadItem& n);
 
   ////////////////////////////////////////////////////////////
   // Utility Functions

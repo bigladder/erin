@@ -71,6 +71,8 @@ namespace ERIN
           const std::string& active_scenario,
           bool is_failed = false) const = 0;
 
+      [[nodiscard]] virtual bool equals(Component* other) const = 0;
+
     protected:
       void connect_source_to_sink(
           adevs::Digraph<FlowValueType, Time>& nw,
@@ -84,6 +86,8 @@ namespace ERIN
           FlowElement* sink,
           int sink_port,
           bool both_way) const;
+      [[nodiscard]] bool base_is_equal(const Component& other) const;
+      [[nodiscard]] std::string internals_to_string() const;
 
     private:
       std::string id;
@@ -115,10 +119,19 @@ namespace ERIN
           const std::string& active_scenario,
           bool is_failed = false) const override;
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
+      [[nodiscard]] bool equals(Component* other) const override;
+
+      friend bool operator==(const LoadComponent& a, const LoadComponent& b);
+      friend bool operator!=(const LoadComponent& a, const LoadComponent& b);
+      friend std::ostream& operator<<(std::ostream& os, const LoadComponent& n);
 
     private:
       std::unordered_map<std::string,std::vector<LoadItem>> loads_by_scenario;
   };
+
+  bool operator==(const LoadComponent& a, const LoadComponent& b);
+  bool operator!=(const LoadComponent& a, const LoadComponent& b);
+  std::ostream& operator<<(std::ostream& os, const LoadComponent& n);
 
   ////////////////////////////////////////////////////////////
   // Limits
@@ -133,11 +146,19 @@ namespace ERIN
       [[nodiscard]] FlowValueType get_min() const { return minimum; }
       [[nodiscard]] FlowValueType get_max() const { return maximum; }
 
+      friend bool operator==(const Limits& a, const Limits& b);
+      friend bool operator!=(const Limits& a, const Limits& b);
+      friend std::ostream& operator<<(std::ostream& os, const Limits& n);
+
     private:
       bool is_limited;
       FlowValueType minimum;
       FlowValueType maximum;
   };
+
+  bool operator==(const Limits& a, const Limits& b);
+  bool operator!=(const Limits& a, const Limits& b);
+  std::ostream& operator<<(std::ostream& os, const Limits& n);
 
   ////////////////////////////////////////////////////////////
   // SourceComponent
@@ -177,10 +198,19 @@ namespace ERIN
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
+      [[nodiscard]] bool equals(Component* other) const override;
+
+      friend bool operator==(const SourceComponent& a, const SourceComponent& b);
+      friend bool operator!=(const SourceComponent& a, const SourceComponent& b);
+      friend std::ostream& operator<<(std::ostream& os, const SourceComponent& n);
 
     private:
       Limits limits;
   };
+
+  bool operator==(const SourceComponent& a, const SourceComponent& b);
+  bool operator!=(const SourceComponent& a, const SourceComponent& b);
+  std::ostream& operator<<(std::ostream& os, const SourceComponent& n);
 
   ////////////////////////////////////////////////////////////
   // MuxerComponent
@@ -209,12 +239,21 @@ namespace ERIN
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
+      [[nodiscard]] bool equals(Component* other) const override;
+
+      friend bool operator==(const MuxerComponent& a, const MuxerComponent& b);
+      friend bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
+      friend std::ostream& operator<<(std::ostream& os, const MuxerComponent& n);
 
     private:
       int num_inflows;
       int num_outflows;
       MuxerDispatchStrategy strategy;
   };
+
+  bool operator==(const MuxerComponent& a, const MuxerComponent& b);
+  bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
+  std::ostream& operator<<(std::ostream& os, const MuxerComponent& n);
 }
 
 #endif // ERIN_COMPONENT_H

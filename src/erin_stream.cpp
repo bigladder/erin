@@ -165,6 +165,4 @@ namespace ERIN
               << map_to_string(st.get_other_quantity_units())
               << ")";
   }
-
-
 }

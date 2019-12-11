@@ -538,8 +538,8 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         "type = \"source\"\n"
         "# Point of Common Coupling for Electric Utility\n"
         "output_stream = \"electricity\"\n"
-        "max_output = 10\n"
-        "min_output = 0\n"
+        "max_output = 10.0\n"
+        "min_output = 0.0\n"
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
@@ -587,13 +587,13 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
   auto pt = &t;
   auto actual = pt->read_components(streams, loads_by_id);
   EXPECT_EQ(expected.size(), actual.size());
-  for (auto const& e: expected) {
-    const auto a = actual.find(e.first);
-    ASSERT_TRUE(a != actual.end());
-    EXPECT_EQ(e.second->get_id(), a->second->get_id());
-    EXPECT_EQ(e.second->get_component_type(), a->second->get_component_type());
-    EXPECT_EQ(e.second->get_input_stream(), a->second->get_input_stream());
-    EXPECT_EQ(e.second->get_output_stream(), a->second->get_output_stream());
+  for (auto const& e_pair: expected) {
+    const auto& tag = e_pair.first;
+    const auto a_it = actual.find(tag);
+    ASSERT_TRUE(a_it != actual.end());
+    const auto& a = a_it->second;
+    const auto& e = e_pair.second;
+    EXPECT_TRUE(e->equals(a.get())) << "tag = " << tag;
   }
 }
 

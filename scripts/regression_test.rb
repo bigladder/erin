@@ -1,29 +1,55 @@
 # Run regression tests for the project.
 # Assumes that `diff` is available from the command line.
 # Author: Michael O'Keefe (2019-11-13)
+# To install dependencies, call `bundle install` from this project's top-level
+# folder.
 require 'tmpdir'
-THIS_DIR = File.expand_path(File.dirname(__FILE__))
-exe_path = File.expand_path(
-  File.join(THIS_DIR, "..", "build", "bin", "e2rin"))
-if !File.exist?(exe_path)
-  puts "Executable e2rin doesn't exist"
-  exit(1)
-end
-examples = Dir[
-  File.expand_path(File.join(THIS_DIR, "..", "build", "*.toml"))]
-# puts "Examples: #{examples}"
-num_issues = 0
-issues = {}
+require 'edn_turbo'
 
+THIS_DIR = File.expand_path(File.dirname(__FILE__))
+REFERENCE_PATH = File.expand_path(File.join(THIS_DIR, '..', 'test', 'reference'))
+REGRESSION_RUNS_PATH = File.join(REFERENCE_PATH, 'runs.edn')
+EXECUTABLES = {
+  "e2rin_single": File.join(THIS_DIR, "..", "build", "bin", "e2rin"),
+  #"e2rin_multi": File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi"),
+}
+
+# (Map String String) -> void
+# check that the path part of the tag to path map exists. Fails
+# and exits with code 1 if path doesn't exist.
+def check_path_map(m)
+  m.each do |tag, path|
+    if !File.exist?(path)
+      puts "Path for '#{tag}' not found at #{path}"
+      exit(1)
+    end
+  end
+end
+
+check_path_map(EXECUTABLES)
+check_path_map({"REGRESSION_RUNS_PATH": REGRESSION_RUNS_PATH})
+
+examples = EDN.read(File.read(REGRESSION_RUNS_PATH))
+puts "There are #{examples.length} regression examples..."
+
+$num_issues = 0
+$issues = {}
+
+# String String -> (Tuple Bool (Or String Nil))
+# - diff_target: String, path to the actual output of the recently run program
+# - expected_path: String, path to expected output to test regressions against
+# RETURN: 2-tuple of boolean and either string or nil
+# first of the 2-tuple is a boolean; if true, no differences; else false
+# if first element is false, the issue is reported in the string
 def run_diff(diff_target, expected_path)
   is_good = true
   issue = nil
   diff_path = 'temp.txt'
   if !File.exist?(diff_target)
-    return [false, "#{diff_target} doesn't exist"]
+    return [false, "actual file: #{diff_target} doesn't exist"]
   end
   if !File.exist?(expected_path)
-    return [false, "#{expected_path} doesn't exist"]
+    return [false, "expected file: #{expected_path} doesn't exist"]
   end
   status = system("diff #{diff_target} #{expected_path} > #{diff_path}")
   if status.nil? or !status
@@ -38,53 +64,54 @@ def run_diff(diff_target, expected_path)
   [is_good, issue]
 end
 
-examples.each do |ex|
-  root = File.basename(ex, '.*')
-  issues[root] = nil
-  expected_out = File.expand_path(
-    File.join(THIS_DIR, "..", "test", "reference", "#{root}-out.csv"))
-  expected_stats = File.expand_path(
-    File.join(THIS_DIR, "..", "test", "reference", "#{root}-stats.csv"))
-  scenario_id_path = File.expand_path(
-    File.join(THIS_DIR, "..", "test", "reference", "#{root}-scenario-id.txt"))
-  scenario_id = nil
-  if File.exist?(scenario_id_path)
-    scenario_id = File.read(scenario_id_path).strip
-  else
-    issues[root] = "scenario_id file not found at \"#{scenario_id_path}\""
-    num_issues += 1
-    next
-  end
-  puts "Running #{root}..."
+# Stringable Hash -> Nil
+# - id: Stringable, anything that has a decent string representation for a test id
+# - info: Hash table, with keys:
+#   - :engine: symbol, symbol corresponding to key in EXECUTABLES for path to the simulation engine
+#   - :args: string, the command-line arguments for the engine run
+#   - :"compare-generated-to-ref": (Hash String String), the key is the
+#     local output file, the corresponding value is the reference file to diff against
+def run_regression(id, info)
+  engine = info.fetch(:engine)
+  exe_path = EXECUTABLES.fetch(engine)
+  args = info.fetch(:args)
+  comparisons = info.fetch(:"compare-generated-to-ref")
+  puts "Running #{id}..."
   Dir.mktmpdir do |dir|
-    status = system("#{exe_path} #{ex} out.csv stats.csv \"#{scenario_id}\"")
+    cmd = "#{exe_path} #{args}"
+    status = system(cmd)
     if status.nil? or !status
-      issues[root] = "issue running #{exe_path}\n\tstatus: #{status}\n\texample: #{ex}\n\tscenario_id: #{scenario_id}"
-      num_issues += 1
-      next
+      $issues[id] = "issue running #{exe_path}\n\t"\
+        "status: #{status}\n\t"\
+        "id: #{id}\n\t"\
+        "args: #{args}\n\t"\
+        "command: \"#{cmd}\""
+      $num_issues += 1
+      return
     end
-    is_good, issue = run_diff('out.csv', expected_out)
-    if !is_good
-      issues[root] = issue
-      num_issues += 1
-      next
-    end
-    is_good, issue = run_diff('stats.csv', expected_stats)
-    if !is_good
-      issues[root] = issue
-      num_issues += 1
-      next
+    comparisons.each do |local_path, reference_path|
+      full_ref_path = File.join(REFERENCE_PATH, reference_path)
+      is_good, issue = run_diff(local_path, full_ref_path)
+      if !is_good
+        $issues[id] = issue
+        $num_issues += 1
+        return
+      end
     end
   end
 end
 
+examples.each_with_index do |ex, idx|
+  run_regression("#{idx}", ex)
+end
+
 puts("-"*60)
-if num_issues > 0
-  puts "#{num_issues} regressions found"
-  issues.keys.sort.each do |k|
-    next if issues[k].nil?
+if $num_issues > 0
+  puts "#{$num_issues} regressions found"
+  $issues.keys.sort.each do |k|
+    next if $issues[k].nil?
     puts "#{k}:"
-    puts "  #{issues[k]}"
+    puts "  #{$issues[k]}"
   end
   exit(1)
 else

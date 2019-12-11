@@ -1,0 +1,14 @@
+;; this file is written in EDN format:
+;; https://github.com/edn-format/edn
+[{:engine :e2rin_single
+  :args "ex01.toml out.csv stats.csv blue_sky"
+  :compare-generated-to-ref {"out.csv" "ex01-out.csv"
+                             "stats.csv" "ex01-stats.csv"}}
+ {:engine :e2rin_single
+  :args "ex02.toml out.csv stats.csv blue_sky"
+  :compare-generated-to-ref {"out.csv" "ex02-out.csv"
+                             "stats.csv" "ex02-stats.csv"}}
+ {:engine :e2rin_single
+  :args "ex03.toml out.csv stats.csv blue_sky"
+  :compare-generated-to-ref {"out.csv" "ex03-out.csv"
+                             "stats.csv" "ex03-stats.csv"}}]

@@ -196,7 +196,7 @@ TEST(ErinBasicsTest, CanRunSourceSink)
   }
 }
 
-TEST(ErinBasicTest, CanRunPowerLimitedSink)
+TEST(ErinBasicsTest, CanRunPowerLimitedSink)
 {
   std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2, 3, 4};
   std::vector<::ERIN::FlowValueType> expected_flow = {50, 50, 40, 0, 0};
@@ -270,7 +270,7 @@ TEST(ErinBasicTest, CanRunPowerLimitedSink)
   }
 }
 
-TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
+TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
 {
   const double diesel_generator_efficiency{0.36};
   const std::vector<::ERIN::RealTimeType> expected_genset_output_times{
@@ -385,7 +385,7 @@ TEST(ErinBasicTest, CanRunBasicDieselGensetExample)
   }
 }
 
-TEST(ErinBasicTest, CanRunUsingComponents)
+TEST(ErinBasicsTest, CanRunUsingComponents)
 {
   auto elec = ::ERIN::StreamType("electrical");
   auto loads_by_scenario = std::unordered_map<
@@ -423,7 +423,7 @@ TEST(ErinBasicTest, CanRunUsingComponents)
   EXPECT_TRUE(worked);
 }
 
-TEST(ErinBasicTest, CanReadSimulationInfoFromToml)
+TEST(ErinBasicsTest, CanReadSimulationInfoFromToml)
 {
   std::stringstream ss{};
   ss << "[simulation_info]\n"
@@ -437,7 +437,7 @@ TEST(ErinBasicTest, CanReadSimulationInfoFromToml)
   EXPECT_EQ(expected, actual);
 }
 
-TEST(ErinBasicTest, CanReadFragilityCurvesFromToml)
+TEST(ErinBasicsTest, CanReadFragilityCurvesFromToml)
 {
   namespace ef = erin::fragility;
   std::stringstream ss{};

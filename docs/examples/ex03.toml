@@ -12,13 +12,14 @@ type = "electricity_medium_voltage"
 ############################################################
 # Loads
 [loads.building_electrical]
-csv_file = "ex02.csv"
+csv_file = "ex03.csv"
 ############################################################
 # Components
 [components.electric_utility]
 type = "source"
 output_stream = "electricity"
 fragilities = ["highly_vulnerable_to_wind"]
+max_outflow = 10.0
 [components.cluster_01_electric]
 type = "load"
 input_stream = "electricity"

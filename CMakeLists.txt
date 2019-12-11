@@ -78,7 +78,11 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex02.csv"
   "ex02.csv"
   COPYONLY)
-#configure_file(
-#  "${PROJECT_SOURCE_DIR}/docs/examples/ex03.toml"
-#  "ex03.toml"
-#  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex03.toml"
+  "ex03.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex03.csv"
+  "ex03.csv"
+  COPYONLY)

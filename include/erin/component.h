@@ -122,11 +122,21 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Limits
-  struct Limits
+  class Limits
   {
-    bool is_limited;
-    FlowValueType minimum;
-    FlowValueType maximum;
+    public:
+      Limits();
+      Limits(FlowValueType max);
+      Limits(FlowValueType min, FlowValueType max);
+
+      [[nodiscard]] bool get_is_limited() const { return is_limited; }
+      [[nodiscard]] FlowValueType get_min() const { return minimum; }
+      [[nodiscard]] FlowValueType get_max() const { return maximum; }
+
+    private:
+      bool is_limited;
+      FlowValueType minimum;
+      FlowValueType maximum;
   };
 
   ////////////////////////////////////////////////////////////

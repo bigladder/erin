@@ -203,11 +203,40 @@ namespace ERIN
   }
 
   ////////////////////////////////////////////////////////////
+  // Limits
+  Limits::Limits():
+    is_limited{false},
+    minimum{0.0},
+    maximum{0.0}
+  {
+  }
+
+  Limits::Limits(FlowValueType max_):
+    Limits(0.0, max_)
+  {
+  }
+
+  Limits::Limits(FlowValueType min_, FlowValueType max_):
+    is_limited{true},
+    minimum{min_},
+    maximum{max_}
+  {
+    if (minimum > maximum) {
+      std::ostringstream oss;
+      oss << "invariant error: minimum cannot be greater "
+          << "than maximum in Limits\n"
+          << "minimum: " << minimum << "\n"
+          << "maximum: " << maximum << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  ////////////////////////////////////////////////////////////
   // SourceComponent
   SourceComponent::SourceComponent(
       const std::string& id_,
       const StreamType& output_stream_):
-    SourceComponent(id_, output_stream_, {}, Limits{false,0.0,0.0})
+    SourceComponent(id_, output_stream_, {}, Limits{})
   {
   }
 
@@ -217,7 +246,7 @@ namespace ERIN
       const FlowValueType max_output_,
       const FlowValueType min_output_):
     SourceComponent(
-        id_, output_stream_, {}, Limits{true,min_output_,max_output_})
+        id_, output_stream_, {}, Limits{min_output_,max_output_})
   {
   }
 
@@ -234,7 +263,7 @@ namespace ERIN
       const StreamType& output_stream_,
       fragility_map fragilities_):
     SourceComponent(
-        id_, output_stream_, std::move(fragilities_), Limits{false,0.0,0.0})
+        id_, output_stream_, std::move(fragilities_), Limits{})
   {
   }
 
@@ -246,7 +275,7 @@ namespace ERIN
       const FlowValueType min_output_): 
     SourceComponent(
         id_, output_stream_, std::move(fragilities_),
-        Limits{true, min_output_, max_output_})
+        Limits{min_output_, max_output_})
   {
   }
 
@@ -294,9 +323,9 @@ namespace ERIN
     auto stream = get_output_stream();
     auto meter = new FlowMeter(the_id, ComponentType::Source, stream);
     elements.emplace(meter);
-    if (is_failed || limits.is_limited) {
-      auto min_output = limits.minimum;
-      auto max_output = limits.maximum;
+    if (is_failed || limits.get_is_limited()) {
+      auto min_output = limits.get_min();
+      auto max_output = limits.get_max();
       if (is_failed) {
         min_output = 0.0;
         max_output = 0.0;

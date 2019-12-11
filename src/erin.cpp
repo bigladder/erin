@@ -482,6 +482,7 @@ namespace ERIN
             }
             const auto& stream_type = (*stream_type_it).second;
             read_source_component(
+                tt,
                 comp_id,
                 stream_type,
                 components,
@@ -610,6 +611,7 @@ namespace ERIN
 
   void
   TomlInputReader::read_source_component(
+      const toml::table& tt,
       const std::string& id,
       const StreamType& stream,
       std::unordered_map<

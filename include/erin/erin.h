@@ -211,6 +211,7 @@ namespace ERIN
       [[nodiscard]] std::vector<LoadItem>
         load_loads_from_csv(const std::string& file_path) const;
       void read_source_component(
+          const toml::table& tt,
           const std::string& id,
           const StreamType& stream,
           std::unordered_map<

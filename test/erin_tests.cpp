@@ -538,6 +538,8 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         "type = \"source\"\n"
         "# Point of Common Coupling for Electric Utility\n"
         "output_stream = \"electricity\"\n"
+        "max_output = 10\n"
+        "min_output = 0\n"
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
@@ -560,26 +562,28 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads{
     {scenario_id, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
   };
-  std::unordered_map<std::string, std::shared_ptr<::ERIN::Component>> expected{
-    std::make_pair(
+  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>> expected;
+  expected.emplace(std::make_pair(
         std::string{"electric_utility"},
-        std::make_shared<::ERIN::SourceComponent>(
+        std::make_unique<::ERIN::SourceComponent>(
           std::string{"electric_utility"},
-          streams["electricity"])),
-    std::make_pair(
+          streams["electricity"],
+          10,
+          0)));
+  expected.emplace(std::make_pair(
+      std::string{"cluster_01_electric"},
+      std::make_unique<::ERIN::LoadComponent>(
         std::string{"cluster_01_electric"},
-        std::make_shared<::ERIN::LoadComponent>(
-          std::string{"cluster_01_electric"},
-          streams["electricity"],
-          loads)),
-    std::make_pair(
+        streams["electricity"],
+        loads)));
+  expected.emplace(std::make_pair(
+      std::string{"bus"},
+      std::make_unique<::ERIN::MuxerComponent>(
         std::string{"bus"},
-        std::make_shared<::ERIN::MuxerComponent>(
-          std::string{"bus"},
-          streams["electricity"],
-          2,
-          1,
-          ::ERIN::MuxerDispatchStrategy::InOrder))};
+        streams["electricity"],
+        2,
+        1,
+        ::ERIN::MuxerDispatchStrategy::InOrder)));
   auto pt = &t;
   auto actual = pt->read_components(streams, loads_by_id);
   EXPECT_EQ(expected.size(), actual.size());

@@ -3,8 +3,9 @@
 
 #include "debug_utils.h"
 #include "erin/type.h"
-#include <stdexcept>
+#include <cmath>
 #include <sstream>
+#include <stdexcept>
 
 namespace ERIN
 {
@@ -199,6 +200,21 @@ namespace ERIN
     os << "time: " << d.time
        << ", requested_value: " << d.requested_value
        << ", achieved_value: " << d.achieved_value;
+  }
+
+  bool
+  operator==(const Datum& a, const Datum& b)
+  {
+    const auto r_diff = std::abs(a.requested_value - b.requested_value);
+    const auto a_diff = std::abs(a.achieved_value - b.achieved_value);
+    const auto& tol = flow_value_tolerance;
+    return (a.time == b.time) && (r_diff < tol) && (a_diff < tol);
+  }
+
+  bool
+  operator!=(const Datum& a, const Datum& b)
+  {
+    return !(a == b);
   }
 
   ////////////////////////////////////////////////////////////

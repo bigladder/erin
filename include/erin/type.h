@@ -82,6 +82,8 @@ namespace ERIN
 
   std::ostream& operator<<(std::ostream& os, const Datum& d);
   void print_datum(std::ostream& os, const Datum& d);
+  bool operator==(const Datum& a, const Datum& b);
+  bool operator!=(const Datum& a, const Datum& b);
 
   //////////////////////////////////////////////////////////// 
   // LoadItem

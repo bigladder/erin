@@ -160,9 +160,9 @@ namespace ERIN
               << "\", quantity_units=\"" << st.get_quantity_units()
               << "\", seconds_per_time_unit=" << st.get_seconds_per_time_unit()
               << ", other_rate_units="
-              << map_to_string(st.get_other_rate_units())
+              << map_to_string<FlowValueType>(st.get_other_rate_units())
               << ", other_quantity_units="
-              << map_to_string(st.get_other_quantity_units())
+              << map_to_string<FlowValueType>(st.get_other_quantity_units())
               << ")";
   }
 }

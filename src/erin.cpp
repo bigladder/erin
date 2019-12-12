@@ -1304,6 +1304,9 @@ namespace ERIN
     //       wrong.
     // The Run Algorithm
     // 0. Check if we have a valid scenario_id
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "enter Main::run(\"" << scenario_id << "\")\n";
+    }
     const auto it = scenarios.find(scenario_id);
     if (it == scenarios.end()) {
       std::ostringstream oss;
@@ -1318,15 +1321,21 @@ namespace ERIN
     }
     // 1. Reference the relevant scenario
     const auto& the_scenario = it->second;
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "... the_scenario = " << the_scenario << "\n";
+    }
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
     adevs::Digraph<FlowValueType, Time> network;
     // 2.2. Interconnect components based on the network definition
     const auto network_id = the_scenario.get_network_id();
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "... network_id = " << network_id << "\n";
+    }
     const auto& connections = networks[network_id];
+    const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = ::erin::network::build(
-        scenario_id, network, connections, components,
-        failure_probs_by_comp_id_by_scenario_id.at(scenario_id));
+        scenario_id, network, connections, components, fpbc);
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
@@ -1492,6 +1501,23 @@ namespace ERIN
     // finishes.
   }
 
+  std::ostream&
+  operator<<(std::ostream& os, const Scenario& s)
+  {
+    os << "Scenario("
+       << "name=\"" << s.name << "\", "
+       << "network_id=\"" << s.network_id << "\", "
+       << "duration=" << s.duration << ", "
+       << "max_occurrences=" << s.max_occurrences << ", "
+       << "calc_time_next=..., "
+       << "intensities=..., "
+       << "t=" << s.t << ", "
+       << "num_occurrences=" << s.num_occurrences << ", "
+       << "results=..., "
+       << "runner=...)";
+    return os;
+  }
+
   ////////////////////////////////////////////////////////////
   // Helper Functions
   bool
@@ -1531,18 +1557,45 @@ namespace ERIN
       const std::vector<FlowElement*>& elements,
       RealTimeType duration)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "entering process_single_scenario_results(...)\n";
+      std::cout << "... sim_good = " << (sim_good ? "true" : "false") << "\n";
+      std::cout << "... elements = " << vec_to_string<FlowElement*>(elements)
+                << "\n";
+      std::cout << "... duration = " << duration << "\n";
+    }
     std::unordered_map<std::string,std::vector<Datum>> results;
     std::unordered_map<std::string,ComponentType> comp_types;
     std::unordered_map<std::string,StreamType> stream_types;
     if (!sim_good) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "sim_good = false; return\n";
+      }
       return ScenarioResults{sim_good, results, stream_types, comp_types};
     }
+    int element_number{0};
     for (const auto& e: elements) {
       auto vals = e->get_results(duration);
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "... .............................\n";
+        std::cout << "... element_number: " << element_number << "\n";
+        std::cout << "... e: " << e << "\n";
+        std::cout << "... e.id: " << e->get_id() << "\n";
+        std::cout << "... e.element_type: "
+                  << element_type_to_tag(e->get_element_type()) << "\n";
+        std::cout << "... e.inflow_type : " << e->get_inflow_type() << "\n";
+        std::cout << "... e.outflow_type: " << e->get_outflow_type() << "\n";
+        auto the_ct = e->get_component_type();
+        std::cout << "... the_ct = " << static_cast<int>(the_ct) << "\n";
+        std::cout << "... e.component_type: "
+                  << component_type_to_tag(the_ct) << "\n";
+        std::cout << "... vals: " << vec_to_string<Datum>(vals) << "\n";
+      }
       if (!vals.empty()) {
         auto id{e->get_id()};
         auto in_st{e->get_inflow_type()};
         auto out_st{e->get_outflow_type()};
+        auto comp_type{e->get_component_type()};
         if (in_st != out_st) {
           std::ostringstream oss;
           oss << "MixedStreamsError:\n";
@@ -1551,15 +1604,14 @@ namespace ERIN
           oss << "output stream: " << out_st.get_type() << "\n";
           throw std::runtime_error(oss.str());
         }
-        comp_types.insert(
-            std::pair<std::string,ComponentType>(
-              id, e->get_component_type()));
-        stream_types.insert(
-            std::pair<std::string,StreamType>(
-              id, in_st));
-        results.insert(
-            std::pair<std::string,std::vector<Datum>>(e->get_id(), vals));
+        comp_types.emplace(std::make_pair(id, comp_type));
+        stream_types.emplace(std::make_pair(id, in_st));
+        results.emplace(std::make_pair(id, vals));
       }
+      ++element_number;
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "return\n";
     }
     return ScenarioResults{sim_good, results, stream_types, comp_types};
   }

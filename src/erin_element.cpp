@@ -9,19 +9,69 @@
 
 namespace ERIN
 {
+  ElementType
+  tag_to_element_type(const std::string& tag)
+  {
+    if (tag == "flow_limits") {
+      return ElementType::FlowLimits;
+    }
+    else if (tag == "flow_meter") {
+      return ElementType::FlowMeter;
+    }
+    else if (tag == "converter") {
+      return ElementType::Converter;
+    }
+    else if (tag == "sink") {
+      return ElementType::Sink;
+    }
+    else if (tag == "mux") {
+      return ElementType::Mux;
+    }
+    else {
+      std::ostringstream oss;
+      oss << "unhandled tag '" << tag << "' for element_type\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  std::string
+  element_type_to_tag(const ElementType& et)
+  {
+    switch (et) {
+      case ElementType::FlowLimits:
+        return std::string{"flow_limits"};
+      case ElementType::FlowMeter:
+        return std::string{"flow_meter"};
+      case ElementType::Converter:
+        return std::string{"converter"};
+      case ElementType::Sink:
+        return std::string{"sink"};
+      case ElementType::Mux:
+        return std::string{"mux"};
+      default:
+        {
+          std::ostringstream oss;
+          oss << "unhandled ElementType '" << static_cast<int>(et) << "'\n";
+          throw std::invalid_argument(oss.str());
+        }
+    }
+  }
+
   ////////////////////////////////////////////////////////////
   // FlowElement
   FlowElement::FlowElement(
       std::string id_,
       ComponentType component_type_,
+      ElementType element_type_,
       StreamType st) :
-    FlowElement(std::move(id_), component_type_, st, st)
+    FlowElement(std::move(id_), component_type_, element_type_, st, st)
   {
   }
 
   FlowElement::FlowElement(
       std::string id_,
       ComponentType component_type_,
+      ElementType element_type_,
       StreamType in,
       StreamType out):
     adevs::Atomic<PortValue, Time>(),
@@ -37,7 +87,8 @@ namespace ERIN
     lossflow{0},
     report_inflow_request{false},
     report_outflow_achieved{false},
-    component_type{component_type_}
+    component_type{component_type_},
+    element_type{element_type_}
   {
     if (inflow_type.get_rate_units() != outflow_type.get_rate_units()) {
       std::ostringstream oss;
@@ -325,7 +376,11 @@ namespace ERIN
       StreamType stream_type_,
       FlowValueType low_lim,
       FlowValueType up_lim):
-    FlowElement(std::move(id_), component_type_, stream_type_),
+    FlowElement(
+        std::move(id_),
+        component_type_,
+        ElementType::FlowLimits,
+        stream_type_),
     lower_limit{low_lim},
     upper_limit{up_lim}
   {
@@ -401,7 +456,11 @@ namespace ERIN
       std::string id,
       ComponentType component_type,
       StreamType stream_type) :
-    FlowElement(std::move(id), component_type, stream_type),
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::FlowMeter,
+        stream_type),
     event_times{},
     requested_flows{},
     achieved_flows{}
@@ -604,6 +663,7 @@ namespace ERIN
     FlowElement(
         std::move(id),
         component_type,
+        ElementType::Converter,
         input_stream_type,
         output_stream_type),
     output_from_input{std::move(calc_output_from_input)},
@@ -631,7 +691,11 @@ namespace ERIN
       ComponentType component_type,
       const StreamType& st,
       const std::vector<LoadItem>& loads_):
-    FlowElement(std::move(id), component_type, st, st),
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::Sink,
+        st),
     loads{loads_},
     idx{-1},
     num_loads{loads_.size()}
@@ -799,7 +863,11 @@ namespace ERIN
       int num_inflows_,
       int num_outflows_,
       MuxerDispatchStrategy strategy_):
-    FlowElement(std::move(id), ct, st, st),
+    FlowElement(
+        std::move(id),
+        ct,
+        ElementType::Mux,
+        st),
     num_inflows{num_inflows_},
     num_outflows{num_outflows_},
     strategy{strategy_},

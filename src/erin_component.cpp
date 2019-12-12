@@ -642,17 +642,17 @@ namespace ERIN
           strategy);
       elements.emplace(mux);
     }
+    auto the_ct = ComponentType::Muxer;
     std::vector<FlowElement*> inflow_meters(num_inflows, nullptr);
     std::vector<FlowElement*> outflow_meters(num_outflows, nullptr);
     for (int i{0}; i < num_inflows; ++i) {
       std::ostringstream oss;
       oss << the_id << "-inflow(" << i << ")";
-      auto m = new FlowMeter(oss.str(), ComponentType::Muxer, the_stream);
+      auto m = new FlowMeter(oss.str(), the_ct, the_stream);
       inflow_meters[i] = m;
       elements.emplace(m);
       if (is_failed) {
-        auto lim = new FlowLimits(
-            the_id, ComponentType::Muxer, the_stream, 0.0, 0.0);
+        auto lim = new FlowLimits(the_id, the_ct, the_stream, 0.0, 0.0);
         elements.emplace(lim);
         connect_source_to_sink(nw, m, lim, true);
       }
@@ -663,12 +663,11 @@ namespace ERIN
     for (int i{0}; i < num_outflows; ++i) {
       std::ostringstream oss;
       oss << the_id << "-outflow(" << i << ")";
-      auto m = new FlowMeter(oss.str(), ComponentType::Muxer, the_stream);
+      auto m = new FlowMeter(oss.str(), the_ct, the_stream);
       outflow_meters[i] = m;
       elements.emplace(m);
       if (is_failed) {
-        auto lim = new FlowLimits(
-            the_id, ComponentType::Muxer, the_stream, 0.0, 0.0);
+        auto lim = new FlowLimits(the_id, the_ct, the_stream, 0.0, 0.0);
         elements.emplace(lim);
         connect_source_to_sink(nw, lim, m, true);
       }

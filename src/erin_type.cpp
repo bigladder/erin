@@ -1,6 +1,7 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
+#include "debug_utils.h"
 #include "erin/type.h"
 #include <stdexcept>
 #include <sstream>
@@ -174,10 +175,22 @@ namespace ERIN
       case ComponentType::Muxer:
         return std::string{"muxer"};
       default:
-        std::ostringstream oss;
-        oss << "Unhandled ComponentType \"" << static_cast<int>(ct) << "\"";
-        throw std::invalid_argument(oss.str());
+        {
+          std::ostringstream oss;
+          oss << "Unhandled ComponentType \"" << static_cast<int>(ct) << "\"";
+          throw std::invalid_argument(oss.str());
+        }
     }
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const Datum& d)
+  {
+    os << "Datum("
+       << "time=" << d.time << ", "
+       << "requested_value=" << d.requested_value << ", "
+       << "achieved_value=" << d.requested_value << ")";
+    return os;
   }
 
   void
@@ -268,35 +281,5 @@ namespace ERIN
         return lower;
     }
     return value;
-  }
-
-  template<class T>
-  void print_vec(const std::string& tag, const std::vector<T>& vs)
-  {
-    char mark = '=';
-    std::cout << tag;
-    for (const auto &v : vs) {
-      std::cout << mark << v;
-      if (mark == '=')
-        mark = ',';
-    }
-    std::cout << std::endl;
-  }
-
-  std::string
-  map_to_string(const std::unordered_map<std::string, FlowValueType>& m)
-  {
-    auto max_idx{m.size() - 1};
-    std::ostringstream oss;
-    oss << "{";
-    std::unordered_map<std::string, FlowValueType>::size_type idx{0};
-    for (const auto& p: m) {
-      oss << "{" << p.first << ", " << p.second << "}";
-      if (idx != max_idx)
-        oss << ", ";
-      ++idx;
-    }
-    oss << "}";
-    return oss.str();
   }
 }

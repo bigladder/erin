@@ -119,6 +119,8 @@ namespace ERIN
         runner = f;
       }
 
+      friend std::ostream& operator<<(std::ostream& os, const Scenario& s);
+
     private:
       std::string name;
       std::string network_id;
@@ -131,6 +133,8 @@ namespace ERIN
       std::vector<ScenarioResults> results;
       std::function<ScenarioResults(void)> runner;
   };
+
+  std::ostream& operator<<(std::ostream& os, const Scenario& s);
 
   ////////////////////////////////////////////////////////////
   // InputReader

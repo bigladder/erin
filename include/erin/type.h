@@ -80,8 +80,8 @@ namespace ERIN
     FlowValueType achieved_value;
   };
 
-  void
-  print_datum(std::ostream& os, const Datum& d);
+  std::ostream& operator<<(std::ostream& os, const Datum& d);
+  void print_datum(std::ostream& os, const Datum& d);
 
   //////////////////////////////////////////////////////////// 
   // LoadItem
@@ -114,10 +114,75 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // Utility Functions
   FlowValueType clamp_toward_0(FlowValueType value, FlowValueType lower, FlowValueType upper);
+
   template<class T>
-  void print_vec(const std::string& tag, const std::vector<T>& vs);
-  std::string map_to_string(
-      const std::unordered_map<std::string,FlowValueType>& m);
+  std::string
+  vec_to_string(const std::vector<T>& vs)
+  {
+    std::ostringstream oss;
+    oss << '[';
+    bool first{true};
+    for (const auto &v : vs) {
+      if (first) {
+        first = false;
+      }
+      else {
+        oss << ',';
+      }
+      oss << v;
+    }
+    oss << ']';
+    return oss.str();
+  }
+
+  template<class T>
+  void
+  print_vec(const std::string& tag, const std::vector<T>& vs)
+  {
+    std::cout << tag << " = " << vec_to_string<T>(vs) << "\n";
+  }
+
+  template<class T>
+  std::string
+  map_to_string(const std::unordered_map<std::string, T>& m)
+  {
+    using size_type =
+      typename std::unordered_map<std::string,T>::size_type;
+    auto max_idx{m.size() - 1};
+    std::ostringstream oss;
+    oss << "{";
+    size_type idx{0};
+    for (const auto& p: m) {
+      oss << "{" << p.first << ", " << p.second << "}";
+      if (idx != max_idx) {
+        oss << ", ";
+      }
+      ++idx;
+    }
+    oss << "}";
+    return oss.str();
+  }
+
+  template<class T>
+  std::string
+  map_of_vec_to_string(const std::unordered_map<std::string, std::vector<T>>& m)
+  {
+    using size_type =
+      typename std::unordered_map<std::string,std::vector<T>>::size_type;
+    auto max_idx{m.size() - 1};
+    std::ostringstream oss;
+    oss << "{";
+    size_type idx{0};
+    for (const auto& p: m) {
+      oss << "{" << p.first << ", " << vec_to_string<T>(p.second) << "}";
+      if (idx != max_idx) {
+        oss << ", ";
+      }
+      ++idx;
+    }
+    oss << "}";
+    return oss.str();
+  }
 }
 
 #endif // ERIN_TYPE_H

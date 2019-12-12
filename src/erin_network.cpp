@@ -1,6 +1,7 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
+#include "debug_utils.h"
 #include "erin/network.h"
 #include "erin/port.h"
 #include <unordered_map>
@@ -11,6 +12,17 @@
 
 namespace erin::network
 {
+  std::ostream&
+  operator<<(std::ostream& os, const ComponentAndPort& cp)
+  {
+    namespace ep = ::erin::port;
+    os << "ComponentAndPort("
+       << "component_id=\"" << cp.component_id << "\", "
+       << "port_type=\"" << ep::type_to_tag(cp.port_type) << "\", "
+       << "port_number=" << cp.port_number << ")";
+    return os;
+  }
+
   bool
   operator==(const ComponentAndPort& a, const ComponentAndPort& b)
   {
@@ -25,6 +37,15 @@ namespace erin::network
     return ((c1.first == c2.first) && (c1.second == c2.second))
       || ((c1.first == c2.second) && (c1.second == c2.first));
       
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const Connection& c)
+  {
+    os << "Connection("
+       << "first=" << c.first << ", "
+       << "second=" << c.second << ")";
+    return os;
   }
 
   void
@@ -171,16 +192,29 @@ namespace erin::network
       const std::unordered_map<
         std::string, std::vector<double>>& failure_probs_by_comp_id)
   {
+    if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
+      namespace E = ::ERIN;
+      std::cout << "entering build(...)\n";
+      std::cout << "... failure_probs_by_comp_id = "
+                << E::map_of_vec_to_string<double>(failure_probs_by_comp_id)
+                << "\n";
+    }
     std::unordered_set<::ERIN::FlowElement*> elements;
     std::unordered_set<std::string> comps_added;
     std::unordered_map<std::string, ::ERIN::PortsAndElements> pes;
     for (const auto connection: connections) {
-      auto comp1_id = connection.first.component_id;
-      auto port1_type = connection.first.port_type;
-      auto port1_num = connection.first.port_number;
-      auto comp2_id = connection.second.component_id;
-      auto port2_type = connection.second.port_type;
-      auto port2_num = connection.second.port_number;
+      if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
+        std::cout << "... processing connection: " << connection << "\n";
+      }
+      const auto& comp1_id = connection.first.component_id;
+      const auto& port1_type = connection.first.port_type;
+      const auto& port1_num = connection.first.port_number;
+      const auto& comp2_id = connection.second.component_id;
+      const auto& port2_type = connection.second.port_type;
+      const auto& port2_num = connection.second.port_number;
+      if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
+        std::cout << "... connection: " << connection << "\n";
+      }
       add_if_not_added(
           comp1_id, scenario_id, components, network, comps_added, pes,
           failure_probs_by_comp_id);

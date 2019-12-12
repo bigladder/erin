@@ -11,6 +11,22 @@
 
 namespace ERIN
 {
+  /**
+   * ElementType - the types of Elements available
+   */
+  enum class ElementType
+  {
+    FlowLimits = 0,
+    FlowMeter,
+    Converter,
+    Sink,
+    Mux
+  };
+
+  ElementType tag_to_element_type(const std::string& tag);
+
+  std::string element_type_to_tag(const ElementType& et);
+
   ////////////////////////////////////////////////////////////
   // FlowElement - Abstract Class
   class FlowElement : public adevs::Atomic<PortValue, Time>
@@ -38,23 +54,30 @@ namespace ERIN
       FlowElement(FlowElement&&) = delete;
       FlowElement& operator=(const FlowElement&&) = delete;
 
-      [[nodiscard]] const std::string& get_id() const { return id; }
+      [[nodiscard]] std::string get_id() const { return id; }
       [[nodiscard]] virtual std::vector<Datum>
         get_results(RealTimeType /* max_time */) const {
           return std::vector<Datum>(0);
         }
-      [[nodiscard]] const StreamType& get_inflow_type() const { return inflow_type; };
-      [[nodiscard]] const StreamType& get_outflow_type() const { return outflow_type; };
+      [[nodiscard]] StreamType get_inflow_type() const { return inflow_type; };
+      [[nodiscard]] StreamType get_outflow_type() const { return outflow_type; };
       [[nodiscard]] ComponentType get_component_type() const {
         return component_type;
+      };
+      [[nodiscard]] ElementType get_element_type() const {
+        return element_type;
       };
 
     protected:
       FlowElement(
-          std::string id, ComponentType component_type, StreamType flow_type);
+          std::string id,
+          ComponentType component_type,
+          ElementType element_type,
+          StreamType flow_type);
       FlowElement(
           std::string id,
           ComponentType component_type,
+          ElementType element_type,
           StreamType inflow_type,
           StreamType outflow_type);
       [[nodiscard]] virtual FlowState
@@ -118,6 +141,7 @@ namespace ERIN
       bool report_inflow_request;
       bool report_outflow_achieved;
       ComponentType component_type;
+      ElementType element_type;
   };
 
   ////////////////////////////////////////////////////////////

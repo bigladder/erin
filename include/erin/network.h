@@ -8,6 +8,7 @@
 #include "erin/element.h"
 #include "erin/port.h"
 #include "erin/type.h"
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -22,6 +23,8 @@ namespace erin::network
     int port_number;
   };
 
+  std::ostream& operator<<(std::ostream& os, const ComponentAndPort& cp);  
+
   bool operator==(const ComponentAndPort& a, const ComponentAndPort& b);
 
   struct Connection
@@ -29,6 +32,8 @@ namespace erin::network
     ComponentAndPort first;
     ComponentAndPort second;
   };
+
+  std::ostream& operator<<(std::ostream& os, const Connection& c);  
 
   bool operator==(const Connection& c1, const Connection& c2);
 

@@ -10,7 +10,8 @@ THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REFERENCE_PATH = File.expand_path(File.join(THIS_DIR, '..', 'test', 'reference'))
 REGRESSION_RUNS_PATH = File.join(REFERENCE_PATH, 'runs.edn')
 EXECUTABLES = {
-  "e2rin_single": File.join(THIS_DIR, "..", "build", "bin", "e2rin"),
+  "e2rin_single": File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "e2rin")),
   #"e2rin_multi": File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi"),
 }
 

@@ -13,6 +13,6 @@
   :compare-generated-to-ref {"out.csv" "ex03-out.csv"
                              "stats.csv" "ex03-stats.csv"}}
  {:engine :e2rin_single
-  :args "ex03.toml out.csv stats.csv class_4_hurricane"
-  :compare-generated-to-ref {"out.csv" "ex03_class_4_hurricane.csv"
-                             "stats.csv" "ex03_class_4_hurricane_stats.csv"}}]
+  :args "ex03.toml out.csv stats.csv class_5_hurricane"
+  :compare-generated-to-ref {"out.csv" "ex03_class_5_hurricane.csv"
+                             "stats.csv" "ex03_class_5_hurricane_stats.csv"}}]

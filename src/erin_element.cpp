@@ -432,6 +432,12 @@ namespace ERIN
     const auto num_events{event_times.size()};
     const auto num_rfs = requested_flows.size();
     const auto num_afs = achieved_flows.size();
+    if (num_events == 0) {
+      std::vector<Datum> results{};
+      results.emplace_back(Datum{0, 0.0, 0.0});
+      results.emplace_back(Datum{max_time, 0.0, 0.0});
+      return results;
+    }
     if ((num_rfs != num_events) || (num_afs != num_events)) {
       std::ostringstream oss;
       oss << "invariant_error: requested_flows.size() "

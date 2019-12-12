@@ -97,5 +97,5 @@ occurrence_distribution = {type = "fixed", value = 87600}
 duration = 336
 max_occurrences = -1
 network = "emergency_operations"
-intensity.wind_speed_mph = 156
-intensity.inundation_depth_ft = 8
+intensity.wind_speed_mph = 200 # 156 # force failure deterministically
+intensity.inundation_depth_ft = 20 # 8 # force failure deterministically

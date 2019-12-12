@@ -1,0 +1,10 @@
+parameter,type,stream,energy availability,max downtime,load not served,electricity_medium_voltage energy used
+units,--,--,fraction,hours,kJ,kJ
+bus-inflow(0),muxer,electricity_medium_voltage,1,0,0,1.2096e+06
+bus-inflow(1),muxer,electricity_medium_voltage,1,0,0,0
+bus-outflow(0),muxer,electricity_medium_voltage,1,0,0,1.2096e+06
+cluster_01_electric,load,electricity_medium_voltage,1,0,0,1.2096e+06
+electric_utility,source,electricity_medium_voltage,1,0,0,1.2096e+06
+emergency_generator,source,electricity_medium_voltage,1,0,0,0
+total (source),,,,,,1.2096e+06
+total (load),,,,,,1.2096e+06

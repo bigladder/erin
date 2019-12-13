@@ -2076,6 +2076,37 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   }
 }
 
+TEST(ErinBasicsTest, AllResultsToCsv)
+{
+  namespace E = ::ERIN;
+  const E::RealTimeType hours_to_seconds{3600};
+  const bool is_good{true};
+  const std::string id_cluster_01_electric{"cluster_01_electric"};
+  const std::string id_electric_utility{"electric_utility"};
+  const std::string id_electricity{"electricity"};
+  const std::string id_blue_sky{"blue_sky"};
+  E::StreamType elec{id_electricity};
+  std::unordered_map<std::string,std::vector<E::Datum>> data{
+    { id_cluster_01_electric,
+      std::vector<E::Datum>{
+        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
+        E::Datum{4 * hours_to_seconds, 0.0, 0.0}}},
+    { id_electric_utility,
+      std::vector<E::Datum>{
+        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
+        E::Datum{4 * hours_to_seconds, 0.0, 0.0}}}};
+  std::unordered_map<std::string,E::StreamType> stream_types{
+    { id_cluster_01_electric, elec},
+    { id_electric_utility, elec}};
+  std::unordered_map<std::string, E::ComponentType> comp_types{
+    { id_cluster_01_electric, E::ComponentType::Load},
+    { id_electric_utility, E::ComponentType::Source}};
+  E::ScenarioResults sr{is_good, data, stream_types, comp_types};
+  std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
+    { id_blue_sky, { sr }}};
+  E::AllResults ar{is_good, results};
+}
+
 int
 main(int argc, char **argv)
 {

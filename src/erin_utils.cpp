@@ -3,6 +3,7 @@
 
 #include "erin/utils.h"
 #include "erin/type.h"
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -14,24 +15,23 @@ namespace erin::utils
   time_to_iso_8601_period(::ERIN::RealTimeType time_seconds)
   {
     namespace E = ::ERIN;
-    // TODO: fix to do something useful!
     if (time_seconds < 0) {
       return "";
     }
-    //const auto seconds_per_minute =
-    //  static_cast<RealTimeType>(E:seconds_per_minute);
+    const auto seconds_per_minute =
+      static_cast<E::RealTimeType>(E::seconds_per_minute);
     //const auto seconds_per_hour =
-    //  static_cast<RealTimeType>(E:seconds_per_hour);
+    //  static_cast<RealTimeType>(E::seconds_per_hour);
     //const auto seconds_per_hour =
-    //  static_cast<RealTimeType>(E:seconds_per_hour);
-    const auto years = time_seconds * 0;
-    const auto months = time_seconds * 0;
-    const auto days = time_seconds * 0;
+    //  static_cast<RealTimeType>(E::seconds_per_hour);
+    const auto seconds = time_seconds % seconds_per_minute;
+    const auto minutes = std::div(time_seconds, seconds_per_minute);
     const auto hours = time_seconds * 0;
-    const auto minutes = time_seconds * 0;
-    const auto seconds = time_seconds;
+    const auto days = time_seconds * 0;
+    const auto months = time_seconds * 0;
+    const auto years = time_seconds * 0;
     std::ostringstream oss;
-    oss << "P" 
+    oss << "P"
         << std::right << std::setfill('0') << std::setw(4)
         << years
         << "-"
@@ -45,7 +45,7 @@ namespace erin::utils
         << hours
         << ":"
         << std::right << std::setfill('0') << std::setw(2)
-        << minutes
+        << minutes.quot
         << ":"
         << std::right << std::setfill('0') << std::setw(2)
         << seconds;

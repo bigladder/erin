@@ -1167,7 +1167,8 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   loads.emplace_back(::ERIN::LoadItem{max_time});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{};
+  ::ERIN::SimulationInfo si{
+    "kW", "kJ", ::ERIN::TimeUnits::Years, 1000};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(
         stream_id,
@@ -1213,8 +1214,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
         {}
       }}};
   ::ERIN::Main m{si, streams, components, networks, scenarios};
-  ::ERIN::RealTimeType sim_max_time{1000};
-  auto actual = m.run_all(sim_max_time);
+  auto actual = m.run_all();
   EXPECT_TRUE(actual.get_is_good());
   EXPECT_TRUE(actual.get_results().size() > 0);
   for (const auto& r: actual.get_results()) {

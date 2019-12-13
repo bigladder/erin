@@ -1347,8 +1347,9 @@ namespace ERIN
   }
 
   AllResults
-  Main::run_all(RealTimeType sim_max_time)
+  Main::run_all()
   {
+    RealTimeType sim_max_time = sim_info.get_max_time_in_seconds();
     std::unordered_map<std::string, std::vector<ScenarioResults>> out{};
     // 1. create the network and simulator
     adevs::Simulator<PortValue, Time> sim{};

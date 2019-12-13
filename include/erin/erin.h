@@ -280,7 +280,7 @@ namespace ERIN
             std::vector<::erin::network::Connection>>& networks,
           const std::unordered_map<std::string, Scenario>& scenarios);
       ScenarioResults run(const std::string& scenario_id);
-      AllResults run_all(RealTimeType sim_max_time);
+      AllResults run_all();
       RealTimeType max_time_for_scenario(const std::string& scenario_id);
 
     private:

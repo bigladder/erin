@@ -257,6 +257,7 @@ namespace ERIN
         std::string, std::vector<ScenarioResults>> get_results() const {
           return results;
         }
+      [[nodiscard]] std::string to_csv() const;
 
     private:
       bool is_good;

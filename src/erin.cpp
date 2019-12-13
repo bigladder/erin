@@ -1218,6 +1218,12 @@ namespace ERIN
   {
   }
 
+  std::string
+  AllResults::to_csv() const
+  {
+    return "";
+  }
+
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file

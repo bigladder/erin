@@ -28,32 +28,24 @@ main(const int argc, const char* argv[])
   std::cout << "timeseries_csv  : " << timeseries_csv << "\n";
   std::cout << "stats_csv       : " << stats_csv << "\n";
 
+  auto m = ::ERIN::Main{input_toml};
+  auto out = m.run_all();
+  std::cout << "result of m.run_all() = "
+    << (out.get_is_good() ? "good" : "failed") << "\n";
+  if (!out.get_is_good()) {
+    return 1;
+  }
+  std::ofstream csv{timeseries_csv, std::ios::out | std::ios::trunc};
+  if (csv.is_open()) {
+    csv << out.to_csv();
+  }
+  else {
+    std::cerr << "unable to open timeseries_csv for writing \""
+      << timeseries_csv << "\"\n";
+    return 1;
+  }
+  csv.close();
   if (false) {
-    auto m = ::ERIN::Main{input_toml};
-    ::ERIN::AllResults out;
-    try {
-      out = m.run_all();
-    }
-    catch (const std::exception& e) {
-      std::cerr << "Error!\n"
-                   "Exception: " << e.what() << "\n";
-      return 1;
-    }
-    std::cout << "result of m.run_all() = "
-              << (out.get_is_good() ? "good" : "failed") << "\n";
-    if (!out.get_is_good()) {
-      return 1;
-    }
-    //std::ofstream csv{timeseries_csv, std::ios::out | std::ios::trunc};
-    //if (csv.is_open()) {
-    //  csv << out.to_csv(max_time, default_time_units);
-    //}
-    //else {
-    //  std::cerr << "unable to open timeseries_csv for writing \""
-    //            << timeseries_csv << "\"\n";
-    //  return 1;
-    //}
-    //csv.close();
     //std::ofstream stats{stats_csv, std::ios::out | std::ios::trunc};
     //if (stats.is_open()) {
     //  stats << out.to_stats_csv();

@@ -2,24 +2,30 @@
 ;; https://github.com/edn-format/edn
 [{:engine :e2rin_single
   :args "ex01.toml out.csv stats.csv blue_sky"
-  :compare-generated-to-ref {"out.csv" "ex01-out.csv"
-                             "stats.csv" "ex01-stats.csv"}}
+  :compare-generated-to-ref
+  {"out.csv" "ex01-out.csv"
+   "stats.csv" "ex01-stats.csv"}}
  {:engine :e2rin_single
   :args "ex02.toml out.csv stats.csv blue_sky"
-  :compare-generated-to-ref {"out.csv" "ex02-out.csv"
-                             "stats.csv" "ex02-stats.csv"}}
+  :compare-generated-to-ref
+  {"out.csv" "ex02-out.csv"
+   "stats.csv" "ex02-stats.csv"}}
  {:engine :e2rin_single
   :args "ex03.toml out.csv stats.csv blue_sky"
-  :compare-generated-to-ref {"out.csv" "ex03-out.csv"
-                             "stats.csv" "ex03-stats.csv"}}
+  :compare-generated-to-ref
+  {"out.csv" "ex03-out.csv"
+   "stats.csv" "ex03-stats.csv"}}
  {:engine :e2rin_single
   :args "ex03.toml out.csv stats.csv class_5_hurricane"
-  :compare-generated-to-ref {"out.csv" "ex03_class_5_hurricane.csv"
-                             "stats.csv" "ex03_class_5_hurricane_stats.csv"}}
+  :compare-generated-to-ref
+  {"out.csv" "ex03_class_5_hurricane.csv"
+   "stats.csv" "ex03_class_5_hurricane_stats.csv"}}
  {:engine :e2rin_single
   :args "ex03.toml out.csv stats.csv class_1_hurricane"
-  :compare-generated-to-ref {"out.csv" "ex03_class_1_hurricane.csv"
-                             "stats.csv" "ex03_class_1_hurricane_stats.csv"}}
+  :compare-generated-to-ref
+  {"out.csv" "ex03_class_1_hurricane.csv"
+   "stats.csv" "ex03_class_1_hurricane_stats.csv"}}
  {:engine :e2rin_multi
-  :args "ex03.toml out.csv stats.csv"
-  :compare-generated-to-ref {}}]
+  :args "ex01.toml out.csv stats.csv"
+  :compare-generated-to-ref
+  {#_"out.csv" #_"ex01-multi-out.csv"}}]

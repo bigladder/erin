@@ -45,7 +45,7 @@ main(const int argc, const char* argv[])
     return 1;
   }
   std::cout << "result of m.run(\"" << scenario_id << "\") = "
-            << out.get_is_good() << "\n";
+            << (out.get_is_good() ? "good" : "failed") << "\n";
   std::cout << "max_time = "
             << ::ERIN::convert_time_in_seconds_to(max_time, default_time_units)
             << " " << ::ERIN::time_units_to_tag(default_time_units) << "\n";

@@ -20,6 +20,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_port.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_stream.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_type.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_utils.cpp
 )
 
 set(public_headers
@@ -32,6 +33,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/port.h
   ${PROJECT_SOURCE_DIR}/include/erin/stream.h
   ${PROJECT_SOURCE_DIR}/include/erin/type.h
+  ${PROJECT_SOURCE_DIR}/include/erin/utils.h
 )
 
 set(private_headers

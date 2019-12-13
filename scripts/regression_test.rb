@@ -12,7 +12,8 @@ REGRESSION_RUNS_PATH = File.join(REFERENCE_PATH, 'runs.edn')
 EXECUTABLES = {
   "e2rin_single": File.expand_path(
     File.join(THIS_DIR, "..", "build", "bin", "e2rin")),
-  #"e2rin_multi": File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi"),
+  "e2rin_multi": File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi")),
 }
 
 # (Map String String) -> void

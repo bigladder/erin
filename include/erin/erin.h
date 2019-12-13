@@ -53,6 +53,10 @@ namespace ERIN
       [[nodiscard]] bool get_is_good() const { return is_good; }
       [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const { return results; }
+      [[nodiscard]] std::unordered_map<std::string, StreamType>
+        get_stream_types() const { return stream_types; }
+      [[nodiscard]] std::unordered_map<std::string, ComponentType>
+        get_component_types() const { return component_types; }
 
       [[nodiscard]] std::string to_csv(
           const RealTimeType& max_time,

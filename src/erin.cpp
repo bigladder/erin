@@ -9,6 +9,7 @@
 #include "erin_csv.h"
 #include "erin/fragility.h"
 #include "erin/port.h"
+#include "erin/utils.h"
 #include "erin_generics.h"
 #include "toml_helper.h"
 #include <algorithm>
@@ -1221,6 +1222,81 @@ namespace ERIN
   std::string
   AllResults::to_csv() const
   {
+    // TODO: need to organize by time. Map Time (Vec (Pair ScenarioID ScenarioResults))
+    // Q: should scenario results hold the scenario_id it corresponds to?
+    if (is_good) {
+      std::set<std::string> scenario_id_set;
+      std::set<std::string> comp_id_set;
+      // map from a pair of scenario occurrence time and scenario id to the
+      // scenario results (can only be one for a given pair).
+      std::map<
+        std::pair<RealTimeType,std::string>, ScenarioResults> outputs;
+      for (const auto& pair: results) {
+        const auto& scenario_id{pair.first};
+        const auto& results_for_scenario{pair.second};
+        if (results_for_scenario.size() == 0) {
+          continue;
+        }
+        scenario_id_set.emplace(scenario_id);
+        // Each scenario should have a network associated with it so the set
+        // of components in a scenario is constant.
+        bool first{true};
+        for (const auto& scenario_results : results_for_scenario) {
+          if (first) {
+            first = false;
+            const auto& comp_types{scenario_results.get_component_types()};
+            for (const auto& ct_pair: comp_types) {
+              const auto& comp_id{ct_pair.first};
+              comp_id_set.emplace(comp_id);
+            }
+          }
+          // TODO: scenario_results needs to record at what overall simulation
+          // time the scenario occurrs.
+          // auto scenario_start = scenario_results.get_start_time_in_seconds();
+          RealTimeType scenario_start{0};
+          outputs.emplace(
+              std::make_pair(
+                std::make_pair(scenario_start, scenario_id), scenario_results));
+        }
+      }
+      std::vector<std::string> scenario_ids(
+          scenario_id_set.begin(), scenario_id_set.end());
+      std::vector<std::string> comp_ids(comp_id_set.begin(), comp_id_set.end());
+      std::ostringstream oss;
+      oss << "scenario id,"
+             "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
+             "elapsed (hours)";
+      for (const auto& comp_id: comp_ids) {
+        oss << "," << comp_id << ":achieved (kW)"
+            << "," << comp_id << ":requested (kW)";
+      }
+      for (const auto& op_pair: outputs) {
+        const auto& scenario_time{op_pair.first.first};
+        const auto& scenario_id{op_pair.first.second};
+        const auto scenario_time_str =
+          ::erin::utils::time_to_iso_8601_period(scenario_time);
+        const auto& scenario_results{op_pair.second};
+        // TODO: need scenario_results.to_csv_lines(...) that takes in a list
+        // of all component rows to report on. The rows columns will be those
+        // passed in but if the scenario has a comp_id NOT in the keys, it
+        // should throw an exception.  Will return the csv lines (i.e.,
+        // return std::vector<std::string>)
+        //auto csv_lines = sceanrio_results.to_csv_lines(comp_ids); 
+        // TODO: scenario_results should know its duration...
+        //auto scenario_duration{scenario_results.get_duration()};
+        RealTimeType scenario_duration{4 * 3600};
+        auto csv_line = scenario_results.to_csv(scenario_duration);
+        std::vector<std::string> csv_lines;
+        std::stringstream ss(csv_line);
+        std::string line;
+        while (std::getline(ss, line, '\n')) {
+          oss << scenario_id << ","
+              << scenario_time_str << ","
+              << line << "\n";
+        }
+      }
+      return oss.str();
+    }
     return "";
   }
 

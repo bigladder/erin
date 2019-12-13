@@ -2134,6 +2134,50 @@ TEST(ErinBasicsTest, TimeToIso8601Period)
   expected = "P0000-00-00T00:01:00";
   achieved = eu::time_to_iso_8601_period(60);
   EXPECT_EQ(expected, achieved);
+  expected = "P0000-00-00T00:01:30";
+  achieved = eu::time_to_iso_8601_period(90);
+  EXPECT_EQ(expected, achieved);
+  expected = "P0000-00-00T01:00:00";
+  achieved = eu::time_to_iso_8601_period(3600);
+  EXPECT_EQ(expected, achieved);
+  expected = "P0000-00-00T01:30:30";
+  achieved = eu::time_to_iso_8601_period(3600 + (30 * 60) + 30);
+  EXPECT_EQ(expected, achieved);
+  //expected = "P0000-00-01T00:00:00";
+  //achieved = eu::time_to_iso_8601_period(3600 * 24);
+  //EXPECT_EQ(expected, achieved);
+}
+
+TEST(ErinBasicsTest, DayOfYearToDayOfMonth)
+{
+  namespace eu = erin::utils;
+  eu::Months_days_elapsed expected{0, 0};
+  auto achieved = eu::day_of_year_to_months_days_elapsed(0);
+  EXPECT_EQ(expected, achieved);
+  expected = eu::Months_days_elapsed{0, 1};
+  achieved = eu::day_of_year_to_months_days_elapsed(1);
+  EXPECT_EQ(expected, achieved);
+  expected = eu::Months_days_elapsed{0,1};
+  achieved = eu::day_of_year_to_months_days_elapsed(-364);
+  EXPECT_EQ(expected, achieved);
+  expected = eu::Months_days_elapsed{0,0};
+  achieved = eu::day_of_year_to_months_days_elapsed(365);
+  EXPECT_EQ(expected, achieved);
+  expected = eu::Months_days_elapsed{0,0};
+  achieved = eu::day_of_year_to_months_days_elapsed(-365);
+  EXPECT_EQ(expected, achieved);
+  expected = eu::Months_days_elapsed{0,0};
+  achieved = eu::day_of_year_to_months_days_elapsed(365*2);
+  EXPECT_EQ(expected, achieved);
+  expected = eu::Months_days_elapsed{1,0};
+  achieved = eu::day_of_year_to_months_days_elapsed(31);
+  EXPECT_EQ(expected, achieved);
+  expected = eu::Months_days_elapsed{1,1};
+  achieved = eu::day_of_year_to_months_days_elapsed(32);
+  EXPECT_EQ(expected, achieved);
+  expected = eu::Months_days_elapsed{6,2};
+  achieved = eu::day_of_year_to_months_days_elapsed(183);
+  EXPECT_EQ(expected, achieved);
 }
 
 int

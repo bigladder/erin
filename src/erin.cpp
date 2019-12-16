@@ -1235,7 +1235,8 @@ namespace ERIN
       // scenario results (can only be one for a given pair).
       // TODO: switch to std::reference_wrapper<ScenarioResults>
       std::map<
-        std::pair<RealTimeType,std::string>,ScenarioResults> outputs;
+        std::pair<RealTimeType,std::string>,
+        std::reference_wrapper<const ScenarioResults>> outputs;
       for (const auto& pair: results) {
         const auto& scenario_id{pair.first};
         const auto& results_for_scenario{pair.second};
@@ -1256,11 +1257,10 @@ namespace ERIN
             }
           }
           auto scenario_start = scenario_results.get_start_time_in_seconds();
-          // TODO: switch to using a reference wrapper for scenario_results vs
-          // copy...
           outputs.emplace(
               std::make_pair(
-                std::make_pair(scenario_start, scenario_id), scenario_results));
+                std::make_pair(scenario_start, scenario_id),
+                std::cref(scenario_results)));
         }
       }
       std::vector<std::string> scenario_ids(
@@ -1280,7 +1280,7 @@ namespace ERIN
         const auto& scenario_id{op_pair.first.second};
         const auto scenario_time_str =
           ::erin::utils::time_to_iso_8601_period(scenario_time);
-        const auto& scenario_results{op_pair.second};
+        const ScenarioResults& scenario_results = op_pair.second;
         // TODO: need scenario_results.to_csv_lines(...) that takes in a list
         // of all component rows to report on. The rows columns will be those
         // passed in but if the scenario has a comp_id NOT in the keys, it

@@ -1255,10 +1255,7 @@ namespace ERIN
               comp_id_set.emplace(comp_id);
             }
           }
-          // TODO: scenario_results needs to record at what overall simulation
-          // time the scenario occurrs.
-          // auto scenario_start = scenario_results.get_start_time_in_seconds();
-          RealTimeType scenario_start{0};
+          auto scenario_start = scenario_results.get_start_time_in_seconds();
           // TODO: switch to using a reference wrapper for scenario_results vs
           // copy...
           outputs.emplace(

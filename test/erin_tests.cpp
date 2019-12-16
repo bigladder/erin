@@ -2126,7 +2126,6 @@ TEST(ErinBasicsTest, AllResultsToCsv)
   EXPECT_EQ(expected_csv, actual_csv);
 }
 
-/*
 TEST(ErinBasicsTest, AllResultsToCsv2)
 {
   namespace E = ::ERIN;
@@ -2162,12 +2161,11 @@ TEST(ErinBasicsTest, AllResultsToCsv2)
     "elapsed (hours),cluster_01_electric:achieved (kW),"
     "cluster_01_electric:requested (kW),electric_utility:achieved (kW),"
     "electric_utility:requested (kW)\n"
-    "blue_sky,P0000-00-00T00:00:00,0,1,1,1,1\n"
-    "blue_sky,P0000-00-00T00:00:00,4,0,0,0,0\n"};
+    "blue_sky,P0000-00-00T10:00:00,0,1,1,1,1\n"
+    "blue_sky,P0000-00-00T10:00:00,4,0,0,0,0\n"};
   auto actual_csv = ar.to_csv();
   EXPECT_EQ(expected_csv, actual_csv);
 }
-*/
 
 TEST(ErinBasicsTest, TimeToIso8601Period)
 {

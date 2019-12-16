@@ -27,7 +27,10 @@ namespace ERIN
   constexpr double seconds_per_hour{seconds_per_minute * minutes_per_hour};
   constexpr double hours_per_day{24.0};
   constexpr double seconds_per_day{seconds_per_hour * hours_per_day};
-  constexpr double days_per_year{365.25};
+  // Note: there are actually 365.25 days per year but our time clock doesn't acknowledge
+  // leap years so we use a slightly lower factor. Hopefully, this won't bite us...
+  // For this simulation, one year is 365 days; period.
+  constexpr double days_per_year{365.0};
   constexpr double seconds_per_year{seconds_per_day * days_per_year};
 
   ////////////////////////////////////////////////////////////

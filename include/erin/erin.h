@@ -47,6 +47,7 @@ namespace ERIN
       ScenarioResults();
       ScenarioResults(
           bool is_good_,
+          RealTimeType scenario_start,
           const std::unordered_map<std::string,std::vector<Datum>>& results,
           const std::unordered_map<std::string,StreamType>& stream_types,
           const std::unordered_map<std::string,ComponentType>& component_types);
@@ -70,9 +71,13 @@ namespace ERIN
       [[nodiscard]] std::unordered_map<std::string,FlowValueType>
         calc_energy_usage_by_stream(ComponentType ct);
       [[nodiscard]] std::string to_stats_csv(TimeUnits time_units = TimeUnits::Hours);
+      [[nodiscard]] RealTimeType get_start_time_in_seconds() const {
+        return scenario_start_time;
+      }
 
     private:
       bool is_good;
+      RealTimeType scenario_start_time;
       std::unordered_map<std::string, std::vector<Datum>> results;
       std::unordered_map<std::string, StreamType> stream_types;
       std::unordered_map<std::string, ComponentType> component_types;
@@ -119,7 +124,9 @@ namespace ERIN
 
       [[nodiscard]] std::vector<ScenarioResults>
         get_results() const { return results; }
-      void set_runner(const std::function<ScenarioResults(void)>& f) {
+      // the runner function must be:
+      // RealTimeType scenario_start_time (seconds) -> ScenarioResults
+      void set_runner(const std::function<ScenarioResults(RealTimeType)>& f) {
         runner = f;
       }
 
@@ -135,7 +142,7 @@ namespace ERIN
       RealTimeType t;
       int num_occurrences;
       std::vector<ScenarioResults> results;
-      std::function<ScenarioResults(void)> runner;
+      std::function<ScenarioResults(RealTimeType)> runner;
   };
 
   std::ostream& operator<<(std::ostream& os, const Scenario& s);
@@ -284,7 +291,8 @@ namespace ERIN
             std::string,
             std::vector<::erin::network::Connection>>& networks,
           const std::unordered_map<std::string, Scenario>& scenarios);
-      ScenarioResults run(const std::string& scenario_id);
+      ScenarioResults run(
+          const std::string& scenario_id, RealTimeType scenario_start_s = 0);
       AllResults run_all();
       RealTimeType max_time_for_scenario(const std::string& scenario_id);
 
@@ -316,7 +324,8 @@ namespace ERIN
   ScenarioResults process_single_scenario_results(
       bool sim_good,
       const std::vector<FlowElement*>& elements,
-      RealTimeType duration);
+      RealTimeType duration,
+      RealTimeType scenario_start_time_s);
 }
 
 #endif // ERIN_ERIN_H

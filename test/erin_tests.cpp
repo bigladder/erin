@@ -948,8 +948,10 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
 
 TEST(ErinBasicsTest, ScenarioResultsToCSV)
 {
+  ::ERIN::RealTimeType start_time{0};
   ::ERIN::ScenarioResults out{
     true,
+    start_time,
     {{std::string{"A"},
       {
         ::ERIN::Datum{0,1.0,1.0},
@@ -972,6 +974,7 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
   EXPECT_EQ(expected, actual);
   ::ERIN::ScenarioResults out2{
     true,
+    start_time,
     {{std::string{"A"}, {::ERIN::Datum{0,1.0,1.0}}}},
     {{std::string{"A"}, ::ERIN::StreamType("electrical")}},
     {{std::string{"A"}, ::ERIN::ComponentType::Load}}
@@ -1054,8 +1057,10 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
 TEST(ErinBasicsTest, TestScenarioResultsMetrics)
 {
   // ## Example 0
+  ::ERIN::RealTimeType start_time{0};
   ::ERIN::ScenarioResults sr0{
     true,
+    start_time,
     {{ std::string{"A0"},
        { ::ERIN::Datum{0,1.0,1.0},
          ::ERIN::Datum{4,0.0,0.0}}}},
@@ -1090,6 +1095,7 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
   // ## Example 1
   ::ERIN::ScenarioResults sr1{
     true,
+    start_time,
     {{ std::string{"A1"},
        { ::ERIN::Datum{0,2.0,1.0},
          ::ERIN::Datum{2,0.5,0.5},
@@ -1524,8 +1530,9 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   const int max_no_advance{static_cast<int>(elements.size()) * 10};
   auto is_good = ::ERIN::run_devs(sim, duration, max_no_advance);
   EXPECT_TRUE(is_good);
+  ::ERIN::RealTimeType scenario_start_time_s{0};
   auto sr = ::ERIN::process_single_scenario_results(
-      is_good, elements, duration);
+      is_good, elements, duration, scenario_start_time_s);
   EXPECT_TRUE(sr.get_is_good());
   auto results = sr.get_results();
   const std::vector<std::string> expected_keys{
@@ -2102,7 +2109,9 @@ TEST(ErinBasicsTest, AllResultsToCsv)
   std::unordered_map<std::string, E::ComponentType> comp_types{
     { id_cluster_01_electric, E::ComponentType::Load},
     { id_electric_utility, E::ComponentType::Source}};
-  E::ScenarioResults sr{is_good, data, stream_types, comp_types};
+  E::RealTimeType scenario_start{0 * hours_to_seconds};
+  E::ScenarioResults sr{is_good, scenario_start, data, stream_types, comp_types};
+  EXPECT_EQ(scenario_start, sr.get_start_time_in_seconds());
   std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
     { id_blue_sky, { sr }}};
   E::AllResults ar{is_good, results};
@@ -2116,6 +2125,49 @@ TEST(ErinBasicsTest, AllResultsToCsv)
   auto actual_csv = ar.to_csv();
   EXPECT_EQ(expected_csv, actual_csv);
 }
+
+/*
+TEST(ErinBasicsTest, AllResultsToCsv2)
+{
+  namespace E = ::ERIN;
+  const E::RealTimeType hours_to_seconds{3600};
+  const bool is_good{true};
+  const std::string id_cluster_01_electric{"cluster_01_electric"};
+  const std::string id_electric_utility{"electric_utility"};
+  const std::string id_electricity{"electricity"};
+  const std::string id_blue_sky{"blue_sky"};
+  E::StreamType elec{id_electricity};
+  std::unordered_map<std::string,std::vector<E::Datum>> data{
+    { id_cluster_01_electric,
+      std::vector<E::Datum>{
+        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
+        E::Datum{4 * hours_to_seconds, 0.0, 0.0}}},
+    { id_electric_utility,
+      std::vector<E::Datum>{
+        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
+        E::Datum{4 * hours_to_seconds, 0.0, 0.0}}}};
+  std::unordered_map<std::string,E::StreamType> stream_types{
+    { id_cluster_01_electric, elec},
+    { id_electric_utility, elec}};
+  std::unordered_map<std::string, E::ComponentType> comp_types{
+    { id_cluster_01_electric, E::ComponentType::Load},
+    { id_electric_utility, E::ComponentType::Source}};
+  E::RealTimeType scenario_start{10 * hours_to_seconds};
+  E::ScenarioResults sr{is_good, scenario_start, data, stream_types, comp_types};
+  std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
+    { id_blue_sky, { sr }}};
+  E::AllResults ar{is_good, results};
+  const std::string expected_csv{
+    "scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
+    "elapsed (hours),cluster_01_electric:achieved (kW),"
+    "cluster_01_electric:requested (kW),electric_utility:achieved (kW),"
+    "electric_utility:requested (kW)\n"
+    "blue_sky,P0000-00-00T00:00:00,0,1,1,1,1\n"
+    "blue_sky,P0000-00-00T00:00:00,4,0,0,0,0\n"};
+  auto actual_csv = ar.to_csv();
+  EXPECT_EQ(expected_csv, actual_csv);
+}
+*/
 
 TEST(ErinBasicsTest, TimeToIso8601Period)
 {

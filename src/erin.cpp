@@ -929,24 +929,27 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // ScenarioResults
   ScenarioResults::ScenarioResults():
-    ScenarioResults(false,{},{},{})
+    ScenarioResults(false,0,{},{},{})
   {
   }
 
   ScenarioResults::ScenarioResults(
       bool is_good_,
+      RealTimeType scenario_start_time_,
       const std::unordered_map<std::string, std::vector<Datum>>& results_,
       const std::unordered_map<std::string, StreamType>& stream_types_,
       const std::unordered_map<std::string, ComponentType>& component_types_):
     is_good{is_good_},
+    scenario_start_time{scenario_start_time_},
     results{results_},
     stream_types{stream_types_},
     component_types{component_types_},
     statistics{},
     keys{}
   {
-    for (const auto& r: results)
+    for (const auto& r: results) {
       keys.emplace_back(r.first);
+    }
     std::sort(keys.begin(), keys.end());
   }
 
@@ -1390,7 +1393,7 @@ namespace ERIN
   }
 
   ScenarioResults
-  Main::run(const std::string& scenario_id)
+  Main::run(const std::string& scenario_id, RealTimeType scenario_start_s)
   {
     // TODO: check input structure to ensure that keys are available in maps that
     //       should be there. If not, provide a good error message about what's
@@ -1436,7 +1439,8 @@ namespace ERIN
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;
     auto sim_good = run_devs(sim, duration, max_no_advance);
-    return process_single_scenario_results(sim_good, elements, duration);
+    return process_single_scenario_results(
+        sim_good, elements, duration, scenario_start_s);
   }
 
   AllResults
@@ -1451,8 +1455,10 @@ namespace ERIN
     for (const auto s: scenarios) {
       auto p = new Scenario{s.second};
       auto scenario_id = p->get_name();
-      p->set_runner([this, scenario_id]() -> ScenarioResults {
-          return this->run(scenario_id);
+      p->set_runner(
+          // ss = scenario start (seconds)
+          [this, scenario_id](RealTimeType ss) -> ScenarioResults {
+            return this->run(scenario_id, ss);
           });
       sim.add(p);
       // NOTE: sim will delete all pointers passed to it upon deletion.
@@ -1533,8 +1539,7 @@ namespace ERIN
     }
     ++num_occurrences;
     if (runner != nullptr) {
-      auto result = runner();
-      // TODO: add the current time and occurrence number to the results?
+      auto result = runner(t);
       results.emplace_back(result);
     }
   }
@@ -1649,7 +1654,8 @@ namespace ERIN
   process_single_scenario_results(
       bool sim_good,
       const std::vector<FlowElement*>& elements,
-      RealTimeType duration)
+      RealTimeType duration,
+      RealTimeType scenario_start_s)
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "entering process_single_scenario_results(...)\n";
@@ -1665,7 +1671,8 @@ namespace ERIN
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "sim_good = false; return\n";
       }
-      return ScenarioResults{sim_good, results, stream_types, comp_types};
+      return ScenarioResults{
+        sim_good, scenario_start_s, results, stream_types, comp_types};
     }
     int element_number{0};
     for (const auto& e: elements) {
@@ -1707,6 +1714,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "return\n";
     }
-    return ScenarioResults{sim_good, results, stream_types, comp_types};
+    return ScenarioResults{
+      sim_good, scenario_start_s, results, stream_types, comp_types};
   }
 }

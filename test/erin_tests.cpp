@@ -2146,6 +2146,23 @@ TEST(ErinBasicsTest, TimeToIso8601Period)
   expected = "P0000-00-01T00:00:00";
   achieved = eu::time_to_iso_8601_period(3600 * 24);
   EXPECT_EQ(expected, achieved);
+  expected = "P0000-00-30T00:30:30";
+  achieved = eu::time_to_iso_8601_period((30 * 3600 * 24) + (30 * 60) + 30);
+  EXPECT_EQ(expected, achieved);
+  expected = "P0000-01-00T00:30:30";
+  achieved = eu::time_to_iso_8601_period((31 * 3600 * 24) + (30 * 60) + 30);
+  EXPECT_EQ(expected, achieved);
+  expected = "P0001-00-00T00:00:00";
+  achieved = eu::time_to_iso_8601_period(365 * 3600 * 24);
+  EXPECT_EQ(expected, achieved);
+  expected = "P0010-06-04T05:42:15";
+  achieved = eu::time_to_iso_8601_period(
+      (10 * 365 * 3600 * 24) //  10 years
+      + (185 * 3600 * 24)    // 185 days
+      + (5 * 3600)           //   5 hours
+      + (42 * 60)            //  42 minutes
+      + 15);                 //  15 seconds
+  EXPECT_EQ(expected, achieved);
 }
 
 TEST(ErinBasicsTest, DayOfYearToDayOfMonth)

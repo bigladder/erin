@@ -2158,8 +2158,13 @@ TEST(ErinBasicsTest, AllResultsToCsv)
   const std::string expected_stats_csv{
     "scenario id,number of occurrences,total time in scenario (hours),"
     "component id,type,stream,energy availability,max downtime (hours),"
-    "load not served (kJ),electricity_medium_voltage energy used (kJ)\n"
-    "blue_sky,1,4,"};
+    "load not served (kJ),electricity energy used (kJ)\n"
+    "blue_sky,1,4,cluster_01_electric,load,electricity,"
+    "1,0,0,14400\n"
+    "blue_sky,1,4,electric_utility,source,electricity,"
+    "1,0,0,14400\n"
+    "blue_sky,1,4,TOTAL (source),,,,,,14400\n"
+    "blue_sky,1,4,TOTAL (load),,,,,,14400\n"};
   auto actual_stats_csv = ar.to_stats_csv();
   EXPECT_EQ(expected_stats_csv, actual_stats_csv);
   */

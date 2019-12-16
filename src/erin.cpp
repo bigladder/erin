@@ -1244,8 +1244,7 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // AllResults
   AllResults::AllResults(bool is_good_):
-    is_good{is_good_},
-    results{}
+    AllResults(is_good_, {})
   {
   }
 
@@ -1253,22 +1252,16 @@ namespace ERIN
       bool is_good_,
       const std::unordered_map<std::string, std::vector<ScenarioResults>>& results_):
     is_good{is_good_},
-    results{results_}
+    results{results_},
+    scenario_id_set{},
+    comp_id_set{},
+    stream_key_set{},
+    scenario_ids{},
+    comp_ids{},
+    stream_keys{},
+    outputs{}
   {
-  }
-
-  std::string
-  AllResults::to_csv() const
-  {
-    // Q: should scenario results hold the scenario_id it corresponds to?
     if (is_good) {
-      std::set<std::string> scenario_id_set;
-      std::set<std::string> comp_id_set;
-      // map from a pair of scenario occurrence time and scenario id to the
-      // scenario results (can only be one for a given pair).
-      std::map<
-        std::pair<RealTimeType,std::string>,
-        std::reference_wrapper<const ScenarioResults>> outputs;
       for (const auto& pair: results) {
         const auto& scenario_id{pair.first};
         const auto& results_for_scenario{pair.second};
@@ -1287,6 +1280,10 @@ namespace ERIN
               const auto& comp_id{ct_pair.first};
               comp_id_set.emplace(comp_id);
             }
+            const auto& stream_types{scenario_results.get_stream_types()};
+            for (const auto& s: stream_types) {
+              stream_key_set.emplace(s.second.get_type());
+            }
           }
           auto scenario_start = scenario_results.get_start_time_in_seconds();
           outputs.emplace(
@@ -1295,9 +1292,19 @@ namespace ERIN
                 std::cref(scenario_results)));
         }
       }
-      std::vector<std::string> scenario_ids(
+      scenario_ids = std::vector<std::string>(
           scenario_id_set.begin(), scenario_id_set.end());
-      std::vector<std::string> comp_ids(comp_id_set.begin(), comp_id_set.end());
+      comp_ids = std::vector<std::string>(
+          comp_id_set.begin(), comp_id_set.end());
+      stream_keys = std::vector<std::string>(
+          stream_key_set.begin(), stream_key_set.end());
+    }
+  }
+
+  std::string
+  AllResults::to_csv() const
+  {
+    if (is_good) {
       std::ostringstream oss;
       oss << "scenario id,"
              "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
@@ -1328,15 +1335,18 @@ namespace ERIN
   std::string
   AllResults::to_stats_csv() const
   {
-    std::ostringstream oss;
-    oss << "scenario id,number of occurrences,total time in scenario (hours),"
-           "component id,type,stream,energy availability,"
-           "max downtime (hours),load not served (kJ)";
-    //for (const auto& stream_id: stream_ids) {
-    //  // add stream id
-    //}
-    oss << "\n";
-    return oss.str();
+    if (is_good) {
+      std::ostringstream oss;
+      oss << "scenario id,number of occurrences,total time in scenario (hours),"
+        "component id,type,stream,energy availability,"
+        "max downtime (hours),load not served (kJ)";
+      for (const auto& stream_id: stream_keys) {
+        oss << "," << stream_id << " energy used (kJ)";
+      }
+      oss << "\n";
+      return oss.str();
+    }
+    return "";
   }
 
   //////////////////////////////////////////////////////////// 

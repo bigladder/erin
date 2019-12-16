@@ -282,6 +282,18 @@ namespace ERIN
     private:
       bool is_good;
       std::unordered_map<std::string, std::vector<ScenarioResults>> results;
+      // generated
+      std::set<std::string> scenario_id_set;
+      std::set<std::string> comp_id_set;
+      std::set<std::string> stream_key_set;
+      std::vector<std::string> scenario_ids;
+      std::vector<std::string> comp_ids;
+      std::vector<std::string> stream_keys;
+      // map from a pair of scenario occurrence time and scenario id to the
+      // scenario results (can only be one for a given pair).
+      std::map<
+        std::pair<RealTimeType,std::string>,
+        std::reference_wrapper<const ScenarioResults>> outputs;
   };
 
   ////////////////////////////////////////////////////////////

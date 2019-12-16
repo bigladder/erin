@@ -1140,7 +1140,8 @@ namespace ERIN
       std::cout << "metrics done...\n";
     }
     std::ostringstream oss;
-    oss << "parameter,type,stream,energy availability,max downtime,load not served";
+    oss << "component id,type,stream,energy availability,max downtime ("
+        << time_units_to_tag(time_units) << "),load not served (kJ)";
     std::set<std::string> stream_key_set{};
     for (const auto& s: stream_types) {
       stream_key_set.emplace(s.second.get_type());
@@ -1150,12 +1151,7 @@ namespace ERIN
     // should not need. set is ordered/sorted.
     //std::sort(stream_keys.begin(), stream_keys.end());
     for (const auto sk: stream_keys) {
-      oss << "," << sk << " energy used";
-    }
-    oss << "\n";
-    oss << "units,--,--,fraction," << time_units_to_tag(time_units) << ",kJ";
-    for (const auto k: stream_keys) {
-      oss << ",kJ";
+      oss << "," << sk << " energy used (kJ)";
     }
     oss << "\n";
     for (const auto k: keys) {
@@ -1176,7 +1172,7 @@ namespace ERIN
       }
       oss << "\n";
     }
-    oss << "total (source),,,,,";
+    oss << "TOTAL (source),,,,,";
     for (const auto sk: stream_keys) {
       auto it = eubs_src.find(sk);
       if (it == eubs_src.end()) {
@@ -1186,7 +1182,7 @@ namespace ERIN
       oss << "," << (it->second);
     }
     oss << "\n";
-    oss << "total (load),,,,,";
+    oss << "TOTAL (load),,,,,";
     for (const auto sk: stream_keys) {
       auto it = eubs_load.find(sk);
       if (it == eubs_load.end()) {

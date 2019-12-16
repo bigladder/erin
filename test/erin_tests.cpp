@@ -2143,9 +2143,9 @@ TEST(ErinBasicsTest, TimeToIso8601Period)
   expected = "P0000-00-00T01:30:30";
   achieved = eu::time_to_iso_8601_period(3600 + (30 * 60) + 30);
   EXPECT_EQ(expected, achieved);
-  //expected = "P0000-00-01T00:00:00";
-  //achieved = eu::time_to_iso_8601_period(3600 * 24);
-  //EXPECT_EQ(expected, achieved);
+  expected = "P0000-00-01T00:00:00";
+  achieved = eu::time_to_iso_8601_period(3600 * 24);
+  EXPECT_EQ(expected, achieved);
 }
 
 TEST(ErinBasicsTest, DayOfYearToDayOfMonth)

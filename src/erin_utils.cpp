@@ -136,6 +136,8 @@ namespace erin::utils
       static_cast<E::RealTimeType>(E::minutes_per_hour);
     const auto seconds_per_hour =
       static_cast<E::RealTimeType>(E::seconds_per_hour);
+    const auto seconds_per_day =
+      static_cast<E::RealTimeType>(E::seconds_per_day);
     const auto hours_per_day =
       static_cast<E::RealTimeType>(E::hours_per_day);
     const auto seconds_per_year =
@@ -145,12 +147,13 @@ namespace erin::utils
     const auto minutes = minute_div.quot % minutes_per_hour;
     const auto hour_div = std::div(time_seconds, seconds_per_hour);
     const auto hours = hour_div.quot % hours_per_day;
-    const auto day_of_year_div = std::div(time_seconds, seconds_per_year);
+    const auto day_of_year_div = std::div(time_seconds, seconds_per_day);
     const auto day_of_year = day_of_year_div.quot % days_per_year;
     const auto month_days = day_of_year_to_months_days_elapsed(day_of_year);
     const auto days = month_days.get_elapsed_days_of_month();
     const auto months = month_days.get_elapsed_months();
-    const auto years = time_seconds * 0;
+    const auto year_div = std::div(time_seconds, seconds_per_year);
+    const auto years = year_div.quot;
     std::ostringstream oss;
     oss << "P"
         << std::right << std::setfill('0') << std::setw(4)

@@ -2302,6 +2302,19 @@ TEST(ErinBasicsTest, DayOfYearToDayOfMonth)
   EXPECT_EQ(expected, achieved);
 }
 
+TEST(ErinBasicsTest, TestIsSuperset)
+{
+  std::vector<std::string> a(0);
+  std::vector<std::string> b(0);
+  EXPECT_TRUE(::erin::utils::is_superset(a, b));
+  a = {"A", "B", "C"};
+  b = {"B", "C"};
+  EXPECT_TRUE(::erin::utils::is_superset(a, a));
+  EXPECT_TRUE(::erin::utils::is_superset(b, b));
+  EXPECT_TRUE(::erin::utils::is_superset(a, b));
+  EXPECT_FALSE(::erin::utils::is_superset(b, a));
+}
+
 int
 main(int argc, char **argv)
 {

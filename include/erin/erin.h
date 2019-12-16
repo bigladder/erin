@@ -62,6 +62,10 @@ namespace ERIN
 
       [[nodiscard]] std::string to_csv(
           TimeUnits time_units = TimeUnits::Hours) const;
+      [[nodiscard]] std::vector<std::string> to_csv_lines(
+          const std::vector<std::string>& comp_ids,
+          bool make_header = true,
+          TimeUnits time_units = TimeUnits::Hours) const;
       [[nodiscard]] std::unordered_map<std::string,double>
         calc_energy_availability();
       [[nodiscard]] std::unordered_map<std::string,RealTimeType>

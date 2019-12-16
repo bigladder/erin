@@ -175,4 +175,22 @@ namespace erin::utils
         << seconds;
     return oss.str();
   }
+
+  bool
+  is_superset(std::vector<std::string> superset, std::vector<std::string> compared_to)
+  {
+    for (const auto& ct_k: compared_to) {
+      bool found_it{false};
+      for (const auto& ss_k: superset) {
+        if (ss_k == ct_k) {
+          found_it = true;
+          break;
+        }
+      }
+      if (!found_it) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

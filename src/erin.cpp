@@ -955,32 +955,41 @@ namespace ERIN
     std::sort(keys.begin(), keys.end());
   }
 
-  std::string
-  ScenarioResults::to_csv(
+  std::vector<std::string>
+  ScenarioResults::to_csv_lines(
+      const std::vector<std::string>& comp_ids,
+      bool make_header,
       TimeUnits time_units) const
   {
-    const auto& max_time = scenario_duration;
-    if (!is_good) {
-      return std::string{};
+    if (!::erin::utils::is_superset(comp_ids, keys)) {
+      std::ostringstream oss;
+      oss << "comp_ids is not a superset of the keys defined in "
+             "this ScenarioResults";
+      throw std::invalid_argument(oss.str());
     }
-    std::set<RealTimeType> times_set{max_time};
+    if (!is_good) {
+      return std::vector<std::string>{};
+    }
+    std::vector<std::string> lines;
+    std::set<RealTimeType> times_set{scenario_duration};
     std::unordered_map<std::string, std::vector<FlowValueType>> values;
     std::unordered_map<std::string, std::vector<FlowValueType>> requested_values;
     std::unordered_map<std::string, FlowValueType> last_values;
     std::unordered_map<std::string, FlowValueType> last_requested_values;
-    for (const auto k: keys) {
+    for (const auto& k: keys) {
       values[k] = std::vector<FlowValueType>();
       requested_values[k] = std::vector<FlowValueType>();
       last_values[k] = 0.0;
       last_requested_values[k] = 0.0;
-      for (const auto d: results.at(k))
+      for (const auto& d: results.at(k)) {
         times_set.emplace(d.time);
+      }
     }
     std::vector<RealTimeType> times{times_set.begin(), times_set.end()};
     for (const auto p: results) {
       for (const auto t: times) {
         auto k{p.first};
-        if (t == max_time) {
+        if (t == scenario_duration) {
           values[k].emplace_back(0.0);
           requested_values[k].emplace_back(0.0);
         }
@@ -988,7 +997,7 @@ namespace ERIN
           bool found{false};
           auto last = last_values[k];
           auto last_request = last_requested_values[k];
-          for (const auto d: p.second) {
+          for (const auto& d: p.second) {
             if (d.time == t) {
               found = true;
               values[k].emplace_back(d.achieved_value);
@@ -997,8 +1006,9 @@ namespace ERIN
               last_requested_values[k] = d.requested_value;
               break;
             }
-            if (d.time > t)
+            if (d.time > t) {
               break;
+            }
           }
           if (!found) {
             values[k].emplace_back(last);
@@ -1007,16 +1017,40 @@ namespace ERIN
         }
       }
     }
-    std::ostringstream oss;
-    oss << "time (" << time_units_to_tag(time_units) << ")";
-    for (const auto k: keys)
-      oss << "," << k << ":achieved (kW)," << k << ":requested (kW)";
-    oss << "\n";
+    if (make_header) {
+      std::ostringstream oss;
+      oss << "time (" << time_units_to_tag(time_units) << ")";
+      for (const auto& k: comp_ids) {
+        oss << "," << k << ":achieved (kW)," << k << ":requested (kW)";
+      }
+      lines.emplace_back(oss.str());
+    }
     for (std::vector<RealTimeType>::size_type i{0}; i < times.size(); ++i) {
+      std::ostringstream oss;
       oss << convert_time_in_seconds_to(times[i], time_units);
-      for (const auto k: keys)
-        oss << "," << values[k][i] << "," << requested_values[k][i];
-      oss << "\n";
+      for (const auto& k: comp_ids) {
+        auto it = values.find(k);
+        if (it == values.end()) {
+          oss << ",,";
+          continue;
+        }
+        oss << ',' << values[k][i] << ',' << requested_values[k][i];
+      }
+      lines.emplace_back(oss.str());
+    }
+    return lines;
+  }
+
+  std::string
+  ScenarioResults::to_csv(TimeUnits time_units) const
+  {
+    if (!is_good) {
+      return std::string{};
+    }
+    auto lines = to_csv_lines(keys, true, time_units);
+    std::ostringstream oss;
+    for (const auto& line: lines) {
+      oss << line << '\n';
     }
     return oss.str();
   }
@@ -1283,26 +1317,11 @@ namespace ERIN
         const auto scenario_time_str =
           ::erin::utils::time_to_iso_8601_period(scenario_time);
         const ScenarioResults& scenario_results = op_pair.second;
-        // TODO: need scenario_results.to_csv_lines(...) that takes in a list
-        // of all component rows to report on. The rows columns will be those
-        // passed in but if the scenario has a comp_id NOT in the keys, it
-        // should throw an exception. Will return the csv lines (i.e.,
-        // return std::vector<std::string>)
-        //auto csv_lines = sceanrio_results.to_csv_lines(comp_ids, false); 
-        auto csv_line = scenario_results.to_csv();
-        std::vector<std::string> csv_lines;
-        std::stringstream ss(csv_line);
-        std::string line;
-        bool header{true};
-        while (std::getline(ss, line, '\n')) {
-          if (header) {
-            // throw away the header -- we already have that...
-            header = false;
-            continue;
-          }
+        auto csv_lines = scenario_results.to_csv_lines(comp_ids, false); 
+        for (const auto& line: csv_lines) {
           oss << scenario_id << ","
               << scenario_time_str << ","
-              << line << "\n";
+              << line << '\n';
         }
       }
       return oss.str();

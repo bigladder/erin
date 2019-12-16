@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <set>
@@ -1229,8 +1230,9 @@ namespace ERIN
       std::set<std::string> comp_id_set;
       // map from a pair of scenario occurrence time and scenario id to the
       // scenario results (can only be one for a given pair).
+      // TODO: switch to std::reference_wrapper<ScenarioResults>
       std::map<
-        std::pair<RealTimeType,std::string>, ScenarioResults> outputs;
+        std::pair<RealTimeType,std::string>,ScenarioResults> outputs;
       for (const auto& pair: results) {
         const auto& scenario_id{pair.first};
         const auto& results_for_scenario{pair.second};
@@ -1254,6 +1256,8 @@ namespace ERIN
           // time the scenario occurrs.
           // auto scenario_start = scenario_results.get_start_time_in_seconds();
           RealTimeType scenario_start{0};
+          // TODO: switch to using a reference wrapper for scenario_results vs
+          // copy...
           outputs.emplace(
               std::make_pair(
                 std::make_pair(scenario_start, scenario_id), scenario_results));
@@ -1270,6 +1274,7 @@ namespace ERIN
         oss << "," << comp_id << ":achieved (kW)"
             << "," << comp_id << ":requested (kW)";
       }
+      oss << '\n';
       for (const auto& op_pair: outputs) {
         const auto& scenario_time{op_pair.first.first};
         const auto& scenario_id{op_pair.first.second};
@@ -1289,7 +1294,13 @@ namespace ERIN
         std::vector<std::string> csv_lines;
         std::stringstream ss(csv_line);
         std::string line;
+        bool header{true};
         while (std::getline(ss, line, '\n')) {
+          if (header) {
+            // throw away the header -- we already have that...
+            header = false;
+            continue;
+          }
           oss << scenario_id << ","
               << scenario_time_str << ","
               << line << "\n";

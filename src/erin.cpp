@@ -929,18 +929,20 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // ScenarioResults
   ScenarioResults::ScenarioResults():
-    ScenarioResults(false,0,{},{},{})
+    ScenarioResults(false,0,0,{},{},{})
   {
   }
 
   ScenarioResults::ScenarioResults(
       bool is_good_,
       RealTimeType scenario_start_time_,
+      RealTimeType scenario_duration_,
       const std::unordered_map<std::string, std::vector<Datum>>& results_,
       const std::unordered_map<std::string, StreamType>& stream_types_,
       const std::unordered_map<std::string, ComponentType>& component_types_):
     is_good{is_good_},
     scenario_start_time{scenario_start_time_},
+    scenario_duration{scenario_duration_},
     results{results_},
     stream_types{stream_types_},
     component_types{component_types_},
@@ -955,10 +957,12 @@ namespace ERIN
 
   std::string
   ScenarioResults::to_csv(
-      const RealTimeType& max_time,
       TimeUnits time_units) const
   {
-    if (!is_good) return std::string{};
+    const auto& max_time = scenario_duration;
+    if (!is_good) {
+      return std::string{};
+    }
     std::set<RealTimeType> times_set{max_time};
     std::unordered_map<std::string, std::vector<FlowValueType>> values;
     std::unordered_map<std::string, std::vector<FlowValueType>> requested_values;
@@ -1284,11 +1288,8 @@ namespace ERIN
         // passed in but if the scenario has a comp_id NOT in the keys, it
         // should throw an exception. Will return the csv lines (i.e.,
         // return std::vector<std::string>)
-        //auto csv_lines = sceanrio_results.to_csv_lines(comp_ids); 
-        // TODO: scenario_results should know its duration...
-        //auto scenario_duration{scenario_results.get_duration()};
-        RealTimeType scenario_duration{4 * 3600};
-        auto csv_line = scenario_results.to_csv(scenario_duration);
+        //auto csv_lines = sceanrio_results.to_csv_lines(comp_ids, false); 
+        auto csv_line = scenario_results.to_csv();
         std::vector<std::string> csv_lines;
         std::stringstream ss(csv_line);
         std::string line;
@@ -1667,7 +1668,12 @@ namespace ERIN
         std::cout << "sim_good = false; return\n";
       }
       return ScenarioResults{
-        sim_good, scenario_start_s, results, stream_types, comp_types};
+        sim_good,
+        scenario_start_s,
+        duration,
+        results,
+        stream_types,
+        comp_types};
     }
     int element_number{0};
     for (const auto& e: elements) {
@@ -1710,6 +1716,11 @@ namespace ERIN
       std::cout << "return\n";
     }
     return ScenarioResults{
-      sim_good, scenario_start_s, results, stream_types, comp_types};
+      sim_good,
+      scenario_start_s, 
+      duration,
+      results,
+      stream_types,
+      comp_types};
   }
 }

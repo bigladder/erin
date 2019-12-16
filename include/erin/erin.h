@@ -48,6 +48,7 @@ namespace ERIN
       ScenarioResults(
           bool is_good_,
           RealTimeType scenario_start,
+          RealTimeType duration,
           const std::unordered_map<std::string,std::vector<Datum>>& results,
           const std::unordered_map<std::string,StreamType>& stream_types,
           const std::unordered_map<std::string,ComponentType>& component_types);
@@ -60,7 +61,6 @@ namespace ERIN
         get_component_types() const { return component_types; }
 
       [[nodiscard]] std::string to_csv(
-          const RealTimeType& max_time,
           TimeUnits time_units = TimeUnits::Hours) const;
       [[nodiscard]] std::unordered_map<std::string,double>
         calc_energy_availability();
@@ -74,10 +74,14 @@ namespace ERIN
       [[nodiscard]] RealTimeType get_start_time_in_seconds() const {
         return scenario_start_time;
       }
+      [[nodiscard]] RealTimeType get_duration_in_seconds() const {
+        return scenario_duration;
+      }
 
     private:
       bool is_good;
       RealTimeType scenario_start_time;
+      RealTimeType scenario_duration;
       std::unordered_map<std::string, std::vector<Datum>> results;
       std::unordered_map<std::string, StreamType> stream_types;
       std::unordered_map<std::string, ComponentType> component_types;

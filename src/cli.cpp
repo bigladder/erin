@@ -54,7 +54,7 @@ main(const int argc, const char* argv[])
   }
   std::ofstream csv{timeseries_csv, std::ios::out | std::ios::trunc};
   if (csv.is_open()) {
-    csv << out.to_csv(max_time, default_time_units);
+    csv << out.to_csv(default_time_units);
   }
   else {
     std::cerr << "unable to open timeseries_csv for writing \""

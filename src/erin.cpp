@@ -1226,14 +1226,12 @@ namespace ERIN
   std::string
   AllResults::to_csv() const
   {
-    // TODO: need to organize by time. Map Time (Vec (Pair ScenarioID ScenarioResults))
     // Q: should scenario results hold the scenario_id it corresponds to?
     if (is_good) {
       std::set<std::string> scenario_id_set;
       std::set<std::string> comp_id_set;
       // map from a pair of scenario occurrence time and scenario id to the
       // scenario results (can only be one for a given pair).
-      // TODO: switch to std::reference_wrapper<ScenarioResults>
       std::map<
         std::pair<RealTimeType,std::string>,
         std::reference_wrapper<const ScenarioResults>> outputs;
@@ -1284,7 +1282,7 @@ namespace ERIN
         // TODO: need scenario_results.to_csv_lines(...) that takes in a list
         // of all component rows to report on. The rows columns will be those
         // passed in but if the scenario has a comp_id NOT in the keys, it
-        // should throw an exception.  Will return the csv lines (i.e.,
+        // should throw an exception. Will return the csv lines (i.e.,
         // return std::vector<std::string>)
         //auto csv_lines = sceanrio_results.to_csv_lines(comp_ids); 
         // TODO: scenario_results should know its duration...

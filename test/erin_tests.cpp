@@ -2091,6 +2091,26 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   }
 }
 
+TEST(ErinBasicsTest, AllResultsToCsv0)
+{
+  namespace E = ::ERIN;
+  const bool is_good{true};
+  const E::RealTimeType hours_to_seconds{3600};
+  std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{};
+  E::AllResults ar{is_good, results};
+  const std::string expected_csv{
+    "scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
+    "elapsed (hours)\n"};
+  auto actual_csv = ar.to_csv();
+  EXPECT_EQ(expected_csv, actual_csv);
+  const std::string expected_stats_csv{
+    "scenario id,number of occurrences,total time in scenario (hours),"
+    "component id,type,stream,energy availability,max downtime (hours),"
+    "load not served (kJ)\n"};
+  auto actual_stats_csv = ar.to_stats_csv();
+  EXPECT_EQ(expected_stats_csv, actual_stats_csv);
+}
+
 TEST(ErinBasicsTest, AllResultsToCsv)
 {
   namespace E = ::ERIN;
@@ -2134,6 +2154,15 @@ TEST(ErinBasicsTest, AllResultsToCsv)
     "blue_sky,P0000-00-00T00:00:00,4,0,0,0,0\n"};
   auto actual_csv = ar.to_csv();
   EXPECT_EQ(expected_csv, actual_csv);
+  /*
+  const std::string expected_stats_csv{
+    "scenario id,number of occurrences,total time in scenario (hours),"
+    "component id,type,stream,energy availability,max downtime (hours),"
+    "load not served (kJ),electricity_medium_voltage energy used (kJ)\n"
+    "blue_sky,1,4,"};
+  auto actual_stats_csv = ar.to_stats_csv();
+  EXPECT_EQ(expected_stats_csv, actual_stats_csv);
+  */
 }
 
 TEST(ErinBasicsTest, AllResultsToCsv2)
@@ -2222,7 +2251,6 @@ TEST(ErinBasicsTest, AllResultsToCsv3)
   auto actual_csv = ar.to_csv();
   EXPECT_EQ(expected_csv, actual_csv);
 }
-
 
 TEST(ErinBasicsTest, TimeToIso8601Period)
 {

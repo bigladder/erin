@@ -1325,6 +1325,20 @@ namespace ERIN
     return "";
   }
 
+  std::string
+  AllResults::to_stats_csv() const
+  {
+    std::ostringstream oss;
+    oss << "scenario id,number of occurrences,total time in scenario (hours),"
+           "component id,type,stream,energy availability,"
+           "max downtime (hours),load not served (kJ)";
+    //for (const auto& stream_id: stream_ids) {
+    //  // add stream id
+    //}
+    oss << "\n";
+    return oss.str();
+  }
+
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file

@@ -277,6 +277,7 @@ namespace ERIN
           return results;
         }
       [[nodiscard]] std::string to_csv() const;
+      [[nodiscard]] std::string to_stats_csv() const;
 
     private:
       bool is_good;

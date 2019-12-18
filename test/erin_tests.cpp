@@ -2154,7 +2154,6 @@ TEST(ErinBasicsTest, AllResultsToCsv)
     "blue_sky,P0000-00-00T00:00:00,4,0,0,0,0\n"};
   auto actual_csv = ar.to_csv();
   EXPECT_EQ(expected_csv, actual_csv);
-  /*
   const std::string expected_stats_csv{
     "scenario id,number of occurrences,total time in scenario (hours),"
     "component id,type,stream,energy availability,max downtime (hours),"
@@ -2167,7 +2166,16 @@ TEST(ErinBasicsTest, AllResultsToCsv)
     "blue_sky,1,4,TOTAL (load),,,,,,14400\n"};
   auto actual_stats_csv = ar.to_stats_csv();
   EXPECT_EQ(expected_stats_csv, actual_stats_csv);
-  */
+}
+
+TEST(ErinBasicsTest, ScenarioStatsAddAndAddEq)
+{
+  ::ERIN::ScenarioStats a{1,2,1.0,1.0};
+  ::ERIN::ScenarioStats b{10,20,10.0,10.0};
+  ::ERIN::ScenarioStats expected{11,22,11.0,11.0};
+  EXPECT_EQ(a + b, expected);
+  a += b;
+  EXPECT_EQ(a, expected);
 }
 
 TEST(ErinBasicsTest, AllResultsToCsv2)

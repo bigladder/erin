@@ -37,7 +37,12 @@ namespace ERIN
     RealTimeType downtime;
     FlowValueType load_not_served;
     FlowValueType total_energy;
+
+    ScenarioStats& operator+=(const ScenarioStats& other);
   };
+
+  ScenarioStats operator+(const ScenarioStats& a, const ScenarioStats& b);
+  bool operator==(const ScenarioStats& a, const ScenarioStats& b);
 
   ////////////////////////////////////////////////////////////
   // ScenarioResults
@@ -59,6 +64,11 @@ namespace ERIN
         get_stream_types() const { return stream_types; }
       [[nodiscard]] std::unordered_map<std::string, ComponentType>
         get_component_types() const { return component_types; }
+      [[nodiscard]] std::unordered_map<std::string, ScenarioStats>
+        get_statistics() const { return statistics; }
+      [[nodiscard]] std::vector<std::string> get_component_ids() const {
+        return keys;
+      }
 
       [[nodiscard]] std::string to_csv(
           TimeUnits time_units = TimeUnits::Hours) const;
@@ -347,6 +357,15 @@ namespace ERIN
       const std::vector<FlowElement*>& elements,
       RealTimeType duration,
       RealTimeType scenario_start_time_s);
+
+  double calc_energy_availability_from_stats(const ScenarioStats& ss);
+
+  std::unordered_map<std::string, FlowValueType> calc_energy_usage_by_stream(
+      const std::vector<std::string>& comp_ids,
+      const ComponentType ct,
+      const std::unordered_map<std::string, ScenarioStats>& stats_by_comp,
+      const std::unordered_map<std::string, StreamType>& streams_by_comp,
+      const std::unordered_map<std::string, ComponentType>& comp_type_by_comp);
 }
 
 #endif // ERIN_ERIN_H

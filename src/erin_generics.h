@@ -31,8 +31,9 @@ namespace erin_generics
     std::unordered_map<std::string, TOut> out{};
     for (const auto k: keys) {
       auto stat_it = statistics.find(k);
-      if (stat_it == statistics.end())
+      if (stat_it == statistics.end()) {
         statistics[k] = calc_all_stats(results.at(k));
+      }
       out[k] = derive_stat(statistics[k]);
     }
     return out;

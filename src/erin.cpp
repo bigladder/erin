@@ -26,6 +26,38 @@
 
 namespace ERIN
 {
+  ScenarioStats&
+  ScenarioStats::operator+=(const ScenarioStats& other)
+  {
+    uptime += other.uptime;
+    downtime += other.downtime;
+    load_not_served += other.load_not_served;
+    total_energy += other.total_energy;
+    return *this;
+  }
+
+  ScenarioStats
+  operator+(const ScenarioStats& a, const ScenarioStats& b)
+  {
+    return ScenarioStats{
+      a.uptime + b.uptime,
+      a.downtime + b.downtime,
+      a.load_not_served + b.load_not_served,
+      a.total_energy + b.total_energy};
+  }
+
+  bool
+  operator==(const ScenarioStats& a, const ScenarioStats& b)
+  {
+    if ((a.uptime == b.uptime) && (a.downtime == b.downtime)) {
+      const auto diff_lns = std::abs(a.load_not_served - b.load_not_served);
+      const auto diff_te = std::abs(a.total_energy - b.total_energy);
+      const auto& fvt = flow_value_tolerance;
+      return (diff_lns < fvt) && (diff_te < fvt);
+    }
+    return false;
+  }
+
   ////////////////////////////////////////////////////////////
   // TomlInputReader
   TomlInputReader::TomlInputReader(toml::value data_):
@@ -953,6 +985,9 @@ namespace ERIN
       keys.emplace_back(r.first);
     }
     std::sort(keys.begin(), keys.end());
+    for (const auto& comp_id : keys) {
+      statistics[comp_id] = calc_scenario_stats(results[comp_id]);
+    }
   }
 
   std::vector<std::string>
@@ -1060,15 +1095,7 @@ namespace ERIN
   {
     return erin_generics::derive_statistic<double,Datum,ScenarioStats>(
       results, keys, statistics, calc_scenario_stats,
-      [](const ScenarioStats& ss) -> double {
-        auto numerator = static_cast<double>(ss.uptime);
-        auto denominator = static_cast<double>(ss.uptime + ss.downtime);
-        if ((ss.uptime + ss.downtime) == 0) {
-          return 0.0;
-        }
-        return numerator / denominator;
-      }
-    );
+      calc_energy_availability_from_stats);
   }
 
   std::unordered_map<std::string, RealTimeType>
@@ -1300,7 +1327,6 @@ namespace ERIN
           stream_key_set.begin(), stream_key_set.end());
     }
   }
-
   std::string
   AllResults::to_csv() const
   {
@@ -1331,19 +1357,163 @@ namespace ERIN
     }
     return "";
   }
-
   std::string
   AllResults::to_stats_csv() const
   {
     if (is_good) {
       std::ostringstream oss;
-      oss << "scenario id,number of occurrences,total time in scenario (hours),"
-        "component id,type,stream,energy availability,"
-        "max downtime (hours),load not served (kJ)";
+      oss << "scenario id"
+             ",number of occurrences"
+             ",total time in scenario (hours)"
+             ",component id"
+             ",type"
+             ",stream"
+             ",energy availability"
+             ",max downtime (hours)"
+             ",load not served (kJ)";
       for (const auto& stream_id: stream_keys) {
         oss << "," << stream_id << " energy used (kJ)";
       }
       oss << "\n";
+      for (const auto& scenario_id: scenario_ids) {
+        const auto& results_for_scenario = results.at(scenario_id);
+        const auto num_occurrences{results_for_scenario.size()};
+        if (num_occurrences == 0) {
+          continue;
+        }
+        const auto& stream_types = results_for_scenario[0].get_stream_types();
+        const auto& comp_types = results_for_scenario[0].get_component_types();
+        RealTimeType time_in_scenario{0};
+        std::unordered_map<std::string, ScenarioStats> stats_by_comp;
+        std::unordered_map<std::string, double> totals_by_stream_source;
+        std::unordered_map<std::string, double> totals_by_stream_load;
+        for (const auto& scenario_results: results_for_scenario) {
+          time_in_scenario += scenario_results.get_duration_in_seconds();
+          const auto& stats_by_comp_temp = scenario_results.get_statistics();
+          const auto& comp_ids = scenario_results.get_component_ids();
+          const auto totals_by_stream_source_temp = calc_energy_usage_by_stream(
+              comp_ids,
+              ComponentType::Source,
+              stats_by_comp_temp,
+              stream_types,
+              comp_types);
+          const auto totals_by_stream_load_temp = calc_energy_usage_by_stream(
+              comp_ids,
+              ComponentType::Load,
+              stats_by_comp_temp,
+              stream_types,
+              comp_types);
+          for (const auto& cid_stats_pair: stats_by_comp_temp) {
+            const auto& comp_id = cid_stats_pair.first;
+            const auto& stats = cid_stats_pair.second;
+            auto it = stats_by_comp.find(comp_id);
+            if (it == stats_by_comp.end()) {
+              stats_by_comp[comp_id] = stats;
+            }
+            else {
+              it->second += stats;
+            }
+          }
+          for (const auto& sn_total_pair : totals_by_stream_source_temp) {
+            const auto& stream_name = sn_total_pair.first;
+            const auto& total = sn_total_pair.second;
+            auto it = totals_by_stream_source.find(stream_name);
+            if (it == totals_by_stream_source.end()) {
+              totals_by_stream_source[stream_name] = total;
+            }
+            else {
+              it->second += total;
+            }
+          }
+          for (const auto& sn_total_pair : totals_by_stream_load_temp) {
+            const auto& stream_name = sn_total_pair.first;
+            const auto& total = sn_total_pair.second;
+            auto it = totals_by_stream_load.find(stream_name);
+            if (it == totals_by_stream_load.end()) {
+              totals_by_stream_load[stream_name] = total;
+            }
+            else {
+              it->second += total;
+            }
+          }
+        }
+        auto stats_by_comp_end = stats_by_comp.end();
+        for (const auto& comp_id: comp_ids) {
+          auto it_comp_id = stats_by_comp.find(comp_id);
+          if (it_comp_id == stats_by_comp_end) {
+            continue;
+          }
+          const auto& stats = stats_by_comp.at(comp_id);
+          std::string stream_name;
+          auto it_st = stream_types.find(comp_id);
+          if (it_st == stream_types.end()) {
+            stream_name = "--";
+          }
+          else {
+            stream_name = it_st->second.get_type();
+          }
+          std::string comp_type;
+          auto it_ct = comp_types.find(comp_id);
+          if (it_ct == comp_types.end()) {
+            comp_type = "--";
+          }
+          else {
+            const auto& ct = comp_types.at(comp_id);
+            comp_type = component_type_to_tag(ct);
+          }
+          const auto ea = calc_energy_availability_from_stats(stats);
+          const auto md = stats.downtime;
+          const auto lns = stats.load_not_served;
+          oss << scenario_id
+              << "," << num_occurrences
+              << "," <<
+              convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+              << "," << comp_id
+              << "," << comp_type
+              << "," << stream_name
+              << "," << ea
+              << "," << convert_time_in_seconds_to(md, TimeUnits::Hours)
+              << "," << lns;
+          for (const auto& s: stream_keys) {
+            if (s != stream_name) {
+              oss << ",0.0";
+              continue;
+            }
+            oss << "," << stats.total_energy;
+          }
+          oss  << "\n";
+        }
+        auto tbss_end = totals_by_stream_source.end();
+        oss << scenario_id
+            << "," << num_occurrences
+            << "," <<
+            convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+            << "," << "TOTAL (source),,,,,";
+        for (const auto& s: stream_keys) {
+          auto it = totals_by_stream_source.find(s);
+          if (it == tbss_end) {
+            oss << ",0.0";
+            continue;
+          }
+          oss << "," << it->second;
+        }
+        oss  << "\n";
+        auto tbsl_end = totals_by_stream_load.end();
+        oss << scenario_id
+            << "," << num_occurrences
+            << "," <<
+            convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+            << "," << "TOTAL (load),,,,,";
+        for (const auto& s: stream_keys) {
+          auto it = totals_by_stream_load.find(s);
+          if (it == tbsl_end) {
+            oss << ",0.0";
+            continue;
+          }
+          oss << "," << it->second;
+        }
+        oss  << "\n";
+      }
       return oss.str();
     }
     return "";
@@ -1761,5 +1931,43 @@ namespace ERIN
       results,
       stream_types,
       comp_types};
+  }
+
+  double
+  calc_energy_availability_from_stats(const ScenarioStats& ss)
+  {
+    auto numerator = static_cast<double>(ss.uptime);
+    auto denominator = static_cast<double>(ss.uptime + ss.downtime);
+    if ((ss.uptime + ss.downtime) == 0) {
+      return 0.0;
+    }
+    return numerator / denominator;
+  }
+
+  std::unordered_map<std::string, FlowValueType>
+  calc_energy_usage_by_stream(
+      const std::vector<std::string>& comp_ids,
+      const ComponentType ct,
+      const std::unordered_map<std::string, ScenarioStats>& stats_by_comp,
+      const std::unordered_map<std::string, StreamType>& streams_by_comp,
+      const std::unordered_map<std::string, ComponentType>& comp_type_by_comp)
+  {
+    std::unordered_map<std::string, FlowValueType> totals{};
+    for (const auto& comp_id: comp_ids) {
+      const auto& this_ct = comp_type_by_comp.at(comp_id);
+      if (this_ct != ct) {
+        continue;
+      }
+      const auto& stats = stats_by_comp.at(comp_id);
+      const auto& stream_name = streams_by_comp.at(comp_id).get_type();
+      auto it = totals.find(stream_name);
+      if (it == totals.end()) {
+        totals[stream_name] = stats.total_energy;
+      }
+      else {
+        totals[stream_name] += stats.total_energy;
+      }
+    }
+    return totals;
   }
 }

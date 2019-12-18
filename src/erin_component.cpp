@@ -47,10 +47,12 @@ namespace ERIN
     namespace ef = erin::fragility;
     fragility_map frags;
     for (const auto& pair : fragilities) {
-      std::vector<std::unique_ptr<ef::Curve>> vs;
       const auto& curves = pair.second;
-      for (const auto& c : curves) {
-        vs.emplace_back(c->clone());
+      auto num_curves = curves.size();
+      std::vector<std::unique_ptr<ef::Curve>> vs(num_curves);
+      for (decltype(num_curves) i{0}; i < num_curves; ++i) {
+        const auto& c = curves[i];
+        vs[i] = c->clone();
       }
       frags.insert(std::make_pair(pair.first, std::move(vs)));
     }
@@ -153,7 +155,7 @@ namespace ERIN
       const StreamType& input_stream_,
       std::unordered_map<
         std::string,std::vector<LoadItem>> loads_by_scenario_):
-    LoadComponent(id_, input_stream_, loads_by_scenario_, {})
+    LoadComponent(id_, input_stream_, std::move(loads_by_scenario_), {})
   {
   }
 

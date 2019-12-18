@@ -7,23 +7,11 @@
 #include <iostream>
 
 constexpr int num_args{3};
+constexpr auto default_time_units = ::ERIN::TimeUnits::Hours;
 
 int
-main(const int argc, const char* argv[])
+doit(const std::string& input_toml, const std::string& timeseries_csv, const std::string& stats_csv)
 {
-  const auto default_time_units = ::ERIN::TimeUnits::Hours;
-  auto args = gsl::span<const char*>(argv, argc);
-  if (argc != (num_args + 1)) {
-    std::cout << "USAGE: " << args[0] << " <input_file_path> <output_file_path> <stats_file_path>\n"
-                 "  - input_file_path : path to TOML input file\n"
-                 "  - output_file_path: path to CSV output file for time-series data\n"
-                 "  - stats_file_path : path to CSV output file for statistics\n"
-                 "SETS Exit Code 1 if issues encountered, else sets 0\n";
-    return 1;
-  }
-  std::string input_toml{args[1]};
-  std::string timeseries_csv{args[2]};
-  std::string stats_csv{args[3]};
   std::cout << "input_toml      : " << input_toml << "\n";
   std::cout << "timeseries_csv  : " << timeseries_csv << "\n";
   std::cout << "stats_csv       : " << stats_csv << "\n";
@@ -56,3 +44,28 @@ main(const int argc, const char* argv[])
   return 0;
 }
 
+int
+main(const int argc, const char* argv[])
+{
+  auto args = gsl::span<const char*>(argv, argc);
+  if (argc != (num_args + 1)) {
+    std::cout << "USAGE: " << args[0] << " <input_file_path> <output_file_path> <stats_file_path>\n"
+                 "  - input_file_path : path to TOML input file\n"
+                 "  - output_file_path: path to CSV output file for time-series data\n"
+                 "  - stats_file_path : path to CSV output file for statistics\n"
+                 "SETS Exit Code 1 if issues encountered, else sets 0\n";
+    return 1;
+  }
+  std::string input_toml{args[1]};
+  std::string timeseries_csv{args[2]};
+  std::string stats_csv{args[3]};
+  try {
+    return doit(input_toml, timeseries_csv, stats_csv);
+  }
+  catch (const std::exception& e) {
+    std::cerr << "Unknown exception!\n"
+                 "Message: " << e.what() << "\n";
+    return 1;
+  }
+  return 0;
+}

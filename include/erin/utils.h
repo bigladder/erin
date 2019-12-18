@@ -48,7 +48,9 @@ namespace erin::utils
 
   Months_days_elapsed day_of_year_to_months_days_elapsed(RealTimeType day_of_year);
 
-  bool is_superset(std::vector<std::string> superset, std::vector<std::string> compared_to);
+  bool is_superset(
+      const std::vector<std::string>& superset,
+      const std::vector<std::string>& compared_to);
 }
 
 #endif // ERIN_UTILS_H

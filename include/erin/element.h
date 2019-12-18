@@ -73,7 +73,7 @@ namespace ERIN
           std::string id,
           ComponentType component_type,
           ElementType element_type,
-          StreamType flow_type);
+          const StreamType& flow_type);
       FlowElement(
           std::string id,
           ComponentType component_type,
@@ -152,7 +152,7 @@ namespace ERIN
       FlowLimits(
           std::string id,
           ComponentType component_type,
-          StreamType stream_type,
+          const StreamType& stream_type,
           FlowValueType lower_limit,
           FlowValueType upper_limit);
 
@@ -171,7 +171,9 @@ namespace ERIN
   {
     public:
       FlowMeter(
-          std::string id, ComponentType component_type, StreamType stream_type);
+          std::string id,
+          ComponentType component_type,
+          const StreamType& stream_type);
       [[nodiscard]] std::vector<RealTimeType> get_event_times() const;
       [[nodiscard]] std::vector<FlowValueType> get_achieved_flows() const;
       [[nodiscard]] std::vector<FlowValueType> get_requested_flows() const;
@@ -243,7 +245,7 @@ namespace ERIN
     InOrder = 0
   };
 
-  MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(std::string tag);
+  MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(const std::string& tag);
   std::string muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds);
 
   ////////////////////////////////////////////////////////////

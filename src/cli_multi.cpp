@@ -45,15 +45,13 @@ main(const int argc, const char* argv[])
     return 1;
   }
   csv.close();
-  if (false) {
-    //std::ofstream stats{stats_csv, std::ios::out | std::ios::trunc};
-    //if (stats.is_open()) {
-    //  stats << out.to_stats_csv();
-    //}
-    //else {
-    //  std::cerr << "unable to open stats_csv for writing \""
-    //            << stats_csv << "\"\n";
-    //}
+  std::ofstream stats{stats_csv, std::ios::out | std::ios::trunc};
+  if (stats.is_open()) {
+    stats << out.to_stats_csv();
+  }
+  else {
+    std::cerr << "unable to open stats_csv for writing \""
+              << stats_csv << "\"\n";
   }
   return 0;
 }

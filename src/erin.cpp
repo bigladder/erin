@@ -350,6 +350,12 @@ namespace ERIN
           ifs.close();
           throw std::runtime_error(oss.str());
         }
+        if (rate_units != RateUnits::KiloWatts) {
+          std::ostringstream oss;
+          oss << "rate units other than kW are not currently supported\n"
+              << "rate_units = " << rate_units_to_tag(rate_units) << "\n";
+          throw std::runtime_error(oss.str());
+        }
         continue;
       }
       try {
@@ -1021,8 +1027,8 @@ namespace ERIN
       }
     }
     std::vector<RealTimeType> times{times_set.begin(), times_set.end()};
-    for (const auto p: results) {
-      for (const auto t: times) {
+    for (const auto& p: results) {
+      for (const auto& t: times) {
         auto k{p.first};
         if (t == scenario_duration) {
           values[k].emplace_back(0.0);
@@ -1122,7 +1128,7 @@ namespace ERIN
   ScenarioResults::calc_energy_usage_by_stream(ComponentType ct)
   {
     std::unordered_map<std::string, FlowValueType> out{};
-    for (const auto k: keys) {
+    for (const auto& k: keys) {
       auto stat_it = statistics.find(k);
       if (stat_it == statistics.end()) {
         statistics[k] = calc_scenario_stats(results.at(k));
@@ -1177,11 +1183,11 @@ namespace ERIN
       stream_key_set.begin(), stream_key_set.end()};
     // should not need. set is ordered/sorted.
     //std::sort(stream_keys.begin(), stream_keys.end());
-    for (const auto sk: stream_keys) {
+    for (const auto& sk: stream_keys) {
       oss << "," << sk << " energy used (kJ)";
     }
     oss << "\n";
-    for (const auto k: keys) {
+    for (const auto& k: keys) {
       oss << k
           << "," << component_type_to_tag(component_types.at(k))
           << "," << stream_types.at(k).get_type()
@@ -1190,7 +1196,7 @@ namespace ERIN
           << "," << lns.at(k);
       auto stats = statistics.at(k);
       auto st = stream_types.at(k);
-      for (const auto sk: stream_keys) {
+      for (const auto& sk: stream_keys) {
         if (st.get_type() != sk) {
           oss << ",0.0";
           continue;
@@ -1200,7 +1206,7 @@ namespace ERIN
       oss << "\n";
     }
     oss << "TOTAL (source),,,,,";
-    for (const auto sk: stream_keys) {
+    for (const auto& sk: stream_keys) {
       auto it = eubs_src.find(sk);
       if (it == eubs_src.end()) {
         oss << ",0.0";
@@ -1210,7 +1216,7 @@ namespace ERIN
     }
     oss << "\n";
     oss << "TOTAL (load),,,,,";
-    for (const auto sk: stream_keys) {
+    for (const auto& sk: stream_keys) {
       auto it = eubs_load.find(sk);
       if (it == eubs_load.end()) {
         oss << ",0.0";
@@ -1629,7 +1635,7 @@ namespace ERIN
     // 2.1. Instantiate a devs network
     adevs::Digraph<FlowValueType, Time> network;
     // 2.2. Interconnect components based on the network definition
-    const auto network_id = the_scenario.get_network_id();
+    const auto& network_id = the_scenario.get_network_id();
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "... network_id = " << network_id << "\n";
     }
@@ -1657,7 +1663,7 @@ namespace ERIN
     adevs::Simulator<PortValue, Time> sim{};
     // 2. add all scenarios
     std::vector<Scenario*> copies{};
-    for (const auto s: scenarios) {
+    for (const auto& s: scenarios) {
       auto p = new Scenario{s.second};
       auto scenario_id = p->get_name();
       p->set_runner(
@@ -1714,8 +1720,8 @@ namespace ERIN
     network_id{std::move(network_id_)},
     duration{duration_},
     max_occurrences{max_occurrences_},
-    calc_time_to_next{calc_time_to_next_},
-    intensities{intensities_},
+    calc_time_to_next{std::move(calc_time_to_next_)},
+    intensities{std::move(intensities_)},
     t{0},
     num_occurrences{0},
     results{},

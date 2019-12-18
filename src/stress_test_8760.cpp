@@ -1,12 +1,12 @@
 /* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
-#include <iostream>
-#include <string>
 #include "erin/erin.h"
 #include "erin/network.h"
+#include <iostream>
+#include <string>
 
-int
-main()
+void
+doit()
 {
   namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
@@ -73,6 +73,19 @@ main()
   }
   else {
     std::cout << "failure!\n";
+  }
+}
+
+int
+main()
+{
+  try {
+    doit();
+  }
+  catch (const std::exception& e) {
+    std::cerr << "Unhandled exception\n"
+              << "Exception: " << e.what() << "\n";
+    return 1;
   }
   return 0;
 }

@@ -63,7 +63,7 @@ namespace ERIN
       std::string id_,
       ComponentType component_type_,
       ElementType element_type_,
-      StreamType st) :
+      const StreamType& st) :
     FlowElement(std::move(id_), component_type_, element_type_, st, st)
   {
   }
@@ -373,7 +373,7 @@ namespace ERIN
   FlowLimits::FlowLimits(
       std::string id_,
       ComponentType component_type_,
-      StreamType stream_type_,
+      const StreamType& stream_type_,
       FlowValueType low_lim,
       FlowValueType up_lim):
     FlowElement(
@@ -455,7 +455,7 @@ namespace ERIN
   FlowMeter::FlowMeter(
       std::string id,
       ComponentType component_type,
-      StreamType stream_type) :
+      const StreamType& stream_type) :
     FlowElement(
         std::move(id),
         component_type,
@@ -664,8 +664,8 @@ namespace ERIN
         std::move(id),
         component_type,
         ElementType::Converter,
-        input_stream_type,
-        output_stream_type),
+        std::move(input_stream_type),
+        std::move(output_stream_type)),
     output_from_input{std::move(calc_output_from_input)},
     input_from_output{std::move(calc_input_from_output)}
   {
@@ -829,7 +829,7 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // MuxerDispatchStrategy
   MuxerDispatchStrategy
-  tag_to_muxer_dispatch_strategy(std::string tag)
+  tag_to_muxer_dispatch_strategy(const std::string& tag)
   {
     if (tag == "in_order") {
       return MuxerDispatchStrategy::InOrder;

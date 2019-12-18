@@ -46,6 +46,8 @@ namespace erin::utils
     365}; // December
   const auto days_per_year{*day_of_year_to_month.rbegin()};
   const auto num_months{days_per_month.size()};
+  const int max_month_idx = 11;
+  const int min_month_idx = 0;
 
   Months_days_elapsed::Months_days_elapsed(
       ERIN::RealTimeType m_,
@@ -53,7 +55,7 @@ namespace erin::utils
     months{m_},
     days{d_}
   {
-    if ((months < 0) || (months > 11)) {
+    if ((months < min_month_idx) || (months > max_month_idx)) {
       std::ostringstream oss;
       oss << "Months_days_elapsed: invalid month argument\n"
           << "months = " << months << " but this is "
@@ -177,7 +179,7 @@ namespace erin::utils
   }
 
   bool
-  is_superset(std::vector<std::string> superset, std::vector<std::string> compared_to)
+  is_superset(const std::vector<std::string>& superset, const std::vector<std::string>& compared_to)
   {
     for (const auto& ct_k: compared_to) {
       bool found_it{false};

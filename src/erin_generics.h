@@ -29,7 +29,7 @@ namespace erin_generics
       const std::function<TOut(const TStats&)>& derive_stat)
   {
     std::unordered_map<std::string, TOut> out{};
-    for (const auto k: keys) {
+    for (const auto& k: keys) {
       auto stat_it = statistics.find(k);
       if (stat_it == statistics.end()) {
         statistics[k] = calc_all_stats(results.at(k));
@@ -61,7 +61,7 @@ namespace erin_generics
       oss << "type of distribution not found in map!";
       throw std::runtime_error(oss.str());
     }
-    auto type = toml::get<std::string>(it->second);
+    const auto& type = toml::get<std::string>(it->second);
     if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
       std::cout << "type of distribution: " << type << "\n";
     }

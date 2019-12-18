@@ -169,12 +169,12 @@ namespace erin::network
       oss << "port1 = " << ::erin::port::type_to_tag(port1) << "\n";
       oss << "port2 = " << ::erin::port::type_to_tag(port2) << "\n";
       oss << "available port1:";
-      for (const auto pair: port_map1) {
+      for (const auto& pair: port_map1) {
         oss << ", " << ::erin::port::type_to_tag(pair.first);
       }
       oss << "\n";
       oss << "available port2:";
-      for (const auto pair: port_map2) {
+      for (const auto& pair: port_map2) {
         oss << ", " << ::erin::port::type_to_tag(pair.first);
       }
       oss << "\n";
@@ -202,7 +202,7 @@ namespace erin::network
     std::unordered_set<::ERIN::FlowElement*> elements;
     std::unordered_set<std::string> comps_added;
     std::unordered_map<std::string, ::ERIN::PortsAndElements> pes;
-    for (const auto connection: connections) {
+    for (const auto& connection: connections) {
       if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
         std::cout << "... processing connection: " << connection << "\n";
       }

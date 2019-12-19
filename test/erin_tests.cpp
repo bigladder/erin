@@ -2365,7 +2365,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "[simulation_info]\n"
     "rate_unit = \"kW\"\n"
     "quantity_unit = \"kJ\"\n"
-    "time_unit = \"hours\"\n"
+    "time_unit = \"seconds\"\n"
     "max_time = 100\n"
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
@@ -2413,14 +2413,14 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
     "  [\"bus\", \"cluster_01_electric\"]]\n"
     "[scenarios.blue_sky]\n"
-    "time_units = \"hours\"\n"
+    "time_units = \"seconds\"\n"
     "occurrence_distribution = {type = \"fixed\", value = 0}\n"
-    "duration = 8760\n"
+    "duration = 4\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
     "[scenarios.class_4_hurricane]\n"
     "time_units = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 100}\n"
+    "occurrence_distribution = {type = \"fixed\", value = 10}\n"
     "duration = 4\n"
     "max_occurrences = -1\n"
     "network = \"emergency_operations\"\n"
@@ -2428,10 +2428,18 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "intensity.inundation_depth_ft = 8\n";
   auto m = ::ERIN::make_main_from_string(input);
   auto results = m.run_all();
-  EXPECT_EQ(2, results.number_of_scenarios());
   std::vector<std::string> expected_scenario_ids{
     "blue_sky", "class_4_hurricane"};
+  std::unordered_map<
+    std::string,
+    std::vector<::ERIN::ScenarioResults>::size_type> expected_num_results{
+      {"blue_sky", 1},
+      {"class_4_hurricane", 10}};
+  EXPECT_EQ(
+      expected_scenario_ids.size(),
+      results.number_of_scenarios());
   EXPECT_EQ(expected_scenario_ids, results.get_scenario_ids());
+  EXPECT_EQ(expected_num_results, results.get_num_results());
 }
 
 int

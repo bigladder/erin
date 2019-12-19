@@ -77,7 +77,7 @@ namespace ERIN
           bool make_header = true,
           TimeUnits time_units = TimeUnits::Hours) const;
       [[nodiscard]] std::unordered_map<std::string,double>
-        calc_energy_availability();
+        calc_energy_availability() const;
       [[nodiscard]] std::unordered_map<std::string,RealTimeType>
         calc_max_downtime();
       [[nodiscard]] std::unordered_map<std::string,FlowValueType>
@@ -293,6 +293,9 @@ namespace ERIN
       [[nodiscard]] std::vector<std::string> get_scenario_ids() const {
         return scenario_ids;
       }
+      [[nodiscard]] std::unordered_map<
+        std::string, std::vector<ScenarioResults>::size_type>
+          get_num_results() const;
 
     private:
       bool is_good;

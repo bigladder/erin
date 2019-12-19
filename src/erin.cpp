@@ -1100,11 +1100,14 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, double>
-  ScenarioResults::calc_energy_availability()
+  ScenarioResults::calc_energy_availability() const
   {
-    return erin_generics::derive_statistic<double,Datum,ScenarioStats>(
-      results, keys, statistics, calc_scenario_stats,
-      calc_energy_availability_from_stats);
+    std::unordered_map<std::string, double> out;
+    for (const auto& comp_id : keys) {
+      const auto& stats = statistics.at(comp_id);
+      out[comp_id] = calc_energy_availability_from_stats(stats);
+    }
+    return out;
   }
 
   std::unordered_map<std::string, RealTimeType>
@@ -1526,6 +1529,24 @@ namespace ERIN
       return oss.str();
     }
     return "";
+  }
+
+  std::unordered_map<
+    std::string, std::vector<ScenarioResults>::size_type>
+  AllResults::get_num_results() const
+  {
+    using size_type = std::vector<ScenarioResults>::size_type;
+    std::unordered_map<std::string, size_type> out;
+    for (const auto& s: scenario_ids) {
+      auto it = results.find(s);
+      if (it == results.end()) {
+        std::ostringstream oss;
+        oss << "scenario id not in results '" << s << "'\n";
+        throw std::runtime_error(oss.str());
+      }
+      out[s] = (it->second).size();
+    }
+    return out;
   }
 
   //////////////////////////////////////////////////////////// 

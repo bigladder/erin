@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10) # required for gtest_discover_tests
+cmake_minimum_required(VERSION 3.15) # required for gtest_discover_tests
 
 project(ERIN)
 set(CMAKE_CXX_STANDARD 17)

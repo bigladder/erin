@@ -290,6 +290,9 @@ namespace ERIN
       [[nodiscard]] std::string to_stats_csv() const;
       [[nodiscard]] std::vector<std::string>::size_type
         number_of_scenarios() const { return scenario_ids.size(); }
+      [[nodiscard]] std::vector<std::string> get_scenario_ids() const {
+        return scenario_ids;
+      }
 
     private:
       bool is_good;

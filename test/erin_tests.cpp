@@ -2382,9 +2382,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "type = \"load\"\n"
     "input_stream = \"electricity\"\n"
     "loads_by_scenario.blue_sky = \"default\"\n"
-    "loads_by_scenario.class_1_hurricane = \"default\"\n"
     "loads_by_scenario.class_4_hurricane = \"default\"\n"
-    "loads_by_scenario.class_5_hurricane = \"default\"\n"
     "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
     "[components.emergency_generator]\n"
     "type = \"source\"\n"
@@ -2422,31 +2420,18 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "network = \"normal_operations\"\n"
     "[scenarios.class_4_hurricane]\n"
     "time_units = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 87600}\n"
-    "duration = 336\n"
+    "occurrence_distribution = {type = \"fixed\", value = 100}\n"
+    "duration = 4\n"
     "max_occurrences = -1\n"
     "network = \"emergency_operations\"\n"
     "intensity.wind_speed_mph = 156\n"
-    "intensity.inundation_depth_ft = 8\n"
-    "[scenarios.class_5_hurricane]\n"
-    "time_units = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 87600}\n"
-    "duration = 336\n"
-    "max_occurrences = -1\n"
-    "network = \"emergency_operations\"\n"
-    "intensity.wind_speed_mph = 200 # force failure deterministically\n"
-    "intensity.inundation_depth_ft = 20 # force failure deterministically\n"
-    "[scenarios.class_1_hurricane]\n"
-    "time_units = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 87600}\n"
-    "duration = 336\n"
-    "max_occurrences = -1\n"
-    "network = \"emergency_operations\"\n"
-    "intensity.wind_speed_mph = 74 # force survival deterministically\n"
-    "intensity.inundation_depth_ft = 2 # force survival deterministically\n";
+    "intensity.inundation_depth_ft = 8\n";
   auto m = ::ERIN::make_main_from_string(input);
   auto results = m.run_all();
-  EXPECT_EQ(4, results.number_of_scenarios());
+  EXPECT_EQ(2, results.number_of_scenarios());
+  std::vector<std::string> expected_scenario_ids{
+    "blue_sky", "class_4_hurricane"};
+  EXPECT_EQ(expected_scenario_ids, results.get_scenario_ids());
 }
 
 int

@@ -237,7 +237,7 @@ namespace ERIN
     try {
       out = toml::get<double>(v);
     }
-    catch (toml::exception& e) {
+    catch (toml::exception&) {
       out = static_cast<double>(toml::get<int>(v));
     }
     return out;
@@ -250,7 +250,7 @@ namespace ERIN
     try {
       out = std::stod(v);
     }
-    catch (std::invalid_argument& e) {
+    catch (std::invalid_argument&) {
       out = static_cast<double>(std::stoi(v));
     }
     return out;
@@ -435,6 +435,7 @@ namespace ERIN
       }
       catch (std::out_of_range& e) {
         std::ostringstream oss;
+        oss << "original error: " << e.what() << "\n";
         oss << "failed to find 'type' for component " << comp_id << "\n";
         throw std::runtime_error(oss.str());
       }
@@ -444,6 +445,7 @@ namespace ERIN
       }
       catch (std::invalid_argument& e) {
         std::ostringstream oss;
+        oss << "original error: " << e.what() << "\n";
         oss << "could not understand 'type' \""
             << comp_type_tag << "\" for component "
             << comp_id << "\n";
@@ -457,6 +459,7 @@ namespace ERIN
       }
       catch (std::out_of_range& e) {
         std::ostringstream oss;
+        oss << "original error: " << e.what() << "\n";
         oss << "failed to find 'input_stream', 'stream', "
             << "or 'output_stream' for component \"" << comp_id << "\"\n";
         throw std::runtime_error(oss.str());
@@ -901,16 +904,16 @@ namespace ERIN
           time_multiplier = 1;
           break;
         case TimeUnits::Minutes:
-          time_multiplier = static_cast<RealTimeType>(seconds_per_minute);
+          time_multiplier = rtt_seconds_per_minute;
           break;
         case TimeUnits::Hours:
-          time_multiplier = static_cast<RealTimeType>(seconds_per_hour);
+          time_multiplier = rtt_seconds_per_hour;
           break;
         case TimeUnits::Days:
-          time_multiplier = static_cast<RealTimeType>(seconds_per_day);
+          time_multiplier = rtt_seconds_per_day;
           break;
         case TimeUnits::Years:
-          time_multiplier = static_cast<RealTimeType>(seconds_per_year);
+          time_multiplier = rtt_seconds_per_year;
           break;
         default:
           {
@@ -1396,15 +1399,15 @@ namespace ERIN
         for (const auto& scenario_results: results_for_scenario) {
           time_in_scenario += scenario_results.get_duration_in_seconds();
           const auto& stats_by_comp_temp = scenario_results.get_statistics();
-          const auto& comp_ids = scenario_results.get_component_ids();
+          const auto& the_comp_ids = scenario_results.get_component_ids();
           const auto totals_by_stream_source_temp = calc_energy_usage_by_stream(
-              comp_ids,
+              the_comp_ids,
               ComponentType::Source,
               stats_by_comp_temp,
               stream_types,
               comp_types);
           const auto totals_by_stream_load_temp = calc_energy_usage_by_stream(
-              comp_ids,
+              the_comp_ids,
               ComponentType::Load,
               stats_by_comp_temp,
               stream_types,

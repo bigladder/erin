@@ -1445,20 +1445,21 @@ TEST(ErinBasicsTest, TestTimeUnits)
 
 TEST(ErinBasicsTest, TestTimeUnitConversion)
 {
+  ::ERIN::RealTimeType t{1};
   EXPECT_EQ(
-      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Years),
-      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_year));
+      ::ERIN::time_to_seconds(t, ::ERIN::TimeUnits::Years),
+      ::ERIN::rtt_seconds_per_year);
   EXPECT_EQ(
-      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Days),
-      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_day));
+      ::ERIN::time_to_seconds(t, ::ERIN::TimeUnits::Days),
+      ::ERIN::rtt_seconds_per_day);
   EXPECT_EQ(
-      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Hours),
-      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_hour));
+      ::ERIN::time_to_seconds(t, ::ERIN::TimeUnits::Hours),
+      ::ERIN::rtt_seconds_per_hour);
   EXPECT_EQ(
-      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Minutes),
-      static_cast<::ERIN::RealTimeType>(::ERIN::seconds_per_minute));
+      ::ERIN::time_to_seconds(t, ::ERIN::TimeUnits::Minutes),
+      ::ERIN::rtt_seconds_per_minute);
   EXPECT_EQ(
-      ::ERIN::time_to_seconds(1, ::ERIN::TimeUnits::Seconds),
+      ::ERIN::time_to_seconds(t, ::ERIN::TimeUnits::Seconds),
       1);
 }
 
@@ -1806,10 +1807,10 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   ASSERT_EQ(expected_eo, actual_eo);
   auto scenarios = r.read_scenarios();
   constexpr ::ERIN::RealTimeType blue_sky_duration
-    = 8760 * ::ERIN::seconds_per_hour;
+    = 8760 * ::ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
   constexpr ::ERIN::RealTimeType hurricane_duration
-    = 336 * ::ERIN::seconds_per_hour;
+    = 336 * ::ERIN::rtt_seconds_per_hour;
   constexpr int hurricane_max_occurrence = -1;
   const std::unordered_map<std::string, ::ERIN::Scenario> expected_scenarios{
     { "blue_sky",
@@ -1982,10 +1983,10 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   ASSERT_EQ(expected_eo, actual_eo);
   auto scenarios = r.read_scenarios();
   constexpr ::ERIN::RealTimeType blue_sky_duration
-    = 8760 * ::ERIN::seconds_per_hour;
+    = 8760 * ::ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
   constexpr ::ERIN::RealTimeType hurricane_duration
-    = 336 * ::ERIN::seconds_per_hour;
+    = 336 * ::ERIN::rtt_seconds_per_hour;
   constexpr int hurricane_max_occurrence = -1;
   const std::unordered_map<std::string, ::ERIN::Scenario> expected_scenarios{
     { "blue_sky",

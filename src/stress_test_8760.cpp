@@ -14,15 +14,15 @@ doit()
   std::string source_id{"electric_utility"};
   std::string load_id{"cluster_01_electric"};
   std::string net_id{"normal_operations"};
-  const int N{8760};
+  const ::ERIN::RealTimeType N{8760}; // hours
   std::vector<::ERIN::LoadItem> loads;
-  for (int i{0}; i < N; ++i) {
+  for (::ERIN::RealTimeType i{0}; i < N; ++i) {
     loads.emplace_back(::ERIN::LoadItem{i, 1.0});
   }
   loads.emplace_back(::ERIN::LoadItem{N});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{};
+  ::ERIN::SimulationInfo si{::ERIN::TimeUnits::Hours, N};
   std::unordered_map<std::string, ::ERIN::StreamType> streams{
     std::make_pair(
         stream_id,
@@ -62,7 +62,7 @@ doit()
         ::ERIN::Scenario(
           scenario_id,
           net_id,
-          N,
+          ::ERIN::time_to_seconds(N, ::ERIN::TimeUnits::Hours),
           -1,
           nullptr,
           {})));

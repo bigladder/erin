@@ -33,6 +33,15 @@ namespace ERIN
   constexpr double days_per_year{365.0};
   constexpr double seconds_per_year{seconds_per_day * days_per_year};
 
+  constexpr RealTimeType rtt_seconds_per_minute{60};
+  constexpr RealTimeType rtt_minutes_per_hour{60};
+  constexpr RealTimeType rtt_seconds_per_hour{rtt_seconds_per_minute * rtt_minutes_per_hour};
+  constexpr RealTimeType rtt_hours_per_day{24};
+  constexpr RealTimeType rtt_seconds_per_day{rtt_seconds_per_hour * rtt_hours_per_day};
+  // See note above about year length
+  constexpr RealTimeType rtt_days_per_year{365};
+  constexpr RealTimeType rtt_seconds_per_year{rtt_seconds_per_day * rtt_days_per_year};
+
   ////////////////////////////////////////////////////////////
   // TimeUnits
   enum class TimeUnits
@@ -47,6 +56,7 @@ namespace ERIN
   TimeUnits tag_to_time_units(const std::string& tag);
   std::string time_units_to_tag(TimeUnits tu);
   RealTimeType time_to_seconds(double max_time, TimeUnits time_unit);
+  RealTimeType time_to_seconds(RealTimeType time, TimeUnits time_units);
   double convert_time_in_seconds_to(
       const RealTimeType t, const TimeUnits to_units);
 

@@ -12,15 +12,15 @@ main()
   const std::string scenario_id{"blue_sky"};
   const std::string stream_id{"electricity"};
   const std::string net_id{"normal_operations"};
-  const int N{8760};
+  const ::ERIN::RealTimeType N{8760};
   std::vector<::ERIN::LoadItem> loads;
-  for (int i{0}; i < N; ++i) {
+  for (::ERIN::RealTimeType i{0}; i < N; ++i) {
     loads.emplace_back(::ERIN::LoadItem{i, 1.0});
   }
   loads.emplace_back(::ERIN::LoadItem{N});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{};
+  ::ERIN::SimulationInfo si{::ERIN::TimeUnits::Hours, N};
   ::ERIN::StreamType elec{
     std::string{"electricity_medium_voltage"},
       si.get_rate_unit(),
@@ -39,7 +39,7 @@ main()
       ::ERIN::Scenario{
         scenario_id,
         net_id,
-        N,
+        ::ERIN::time_to_seconds(N, ::ERIN::TimeUnits::Hours),
         -1,
         nullptr,
         {}}}};

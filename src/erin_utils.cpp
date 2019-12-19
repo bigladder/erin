@@ -132,29 +132,17 @@ namespace erin::utils
     if (time_seconds < 0) {
       return "";
     }
-    const auto seconds_per_minute =
-      static_cast<E::RealTimeType>(E::seconds_per_minute);
-    const auto minutes_per_hour =
-      static_cast<E::RealTimeType>(E::minutes_per_hour);
-    const auto seconds_per_hour =
-      static_cast<E::RealTimeType>(E::seconds_per_hour);
-    const auto seconds_per_day =
-      static_cast<E::RealTimeType>(E::seconds_per_day);
-    const auto hours_per_day =
-      static_cast<E::RealTimeType>(E::hours_per_day);
-    const auto seconds_per_year =
-      static_cast<E::RealTimeType>(E::seconds_per_year);
-    const auto seconds = time_seconds % seconds_per_minute;
-    const auto minute_div = std::div(time_seconds, seconds_per_minute);
-    const auto minutes = minute_div.quot % minutes_per_hour;
-    const auto hour_div = std::div(time_seconds, seconds_per_hour);
-    const auto hours = hour_div.quot % hours_per_day;
-    const auto day_of_year_div = std::div(time_seconds, seconds_per_day);
+    const auto seconds = time_seconds % E::rtt_seconds_per_minute;
+    const auto minute_div = std::div(time_seconds, E::rtt_seconds_per_minute);
+    const auto minutes = minute_div.quot % E::rtt_minutes_per_hour;
+    const auto hour_div = std::div(time_seconds, E::rtt_seconds_per_hour);
+    const auto hours = hour_div.quot % E::rtt_hours_per_day;
+    const auto day_of_year_div = std::div(time_seconds, E::rtt_seconds_per_day);
     const auto day_of_year = day_of_year_div.quot % days_per_year;
     const auto month_days = day_of_year_to_months_days_elapsed(day_of_year);
     const auto days = month_days.get_elapsed_days_of_month();
     const auto months = month_days.get_elapsed_months();
-    const auto year_div = std::div(time_seconds, seconds_per_year);
+    const auto year_div = std::div(time_seconds, E::rtt_seconds_per_year);
     const auto years = year_div.quot;
     std::ostringstream oss;
     oss << "P"

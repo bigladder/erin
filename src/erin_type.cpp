@@ -60,13 +60,13 @@ namespace ERIN
       case TimeUnits::Seconds:
         return t;
       case TimeUnits::Minutes:
-        return t * static_cast<RealTimeType>(seconds_per_minute);
+        return t * rtt_seconds_per_minute;
       case TimeUnits::Hours:
-        return t * static_cast<RealTimeType>(seconds_per_hour);
+        return t * rtt_seconds_per_hour;
       case TimeUnits::Days:
-        return t * static_cast<RealTimeType>(seconds_per_day);
+        return t * rtt_seconds_per_day;
       case TimeUnits::Years:
-        return t * static_cast<RealTimeType>(seconds_per_year);
+        return t * rtt_seconds_per_year;
       default:
         std::ostringstream oss;
         oss << "unhandled TimeUnits \"" << static_cast<int>(u) << "\"";
@@ -98,17 +98,18 @@ namespace ERIN
   double
   convert_time_in_seconds_to(const RealTimeType t, const TimeUnits to_units)
   {
+    double dt{static_cast<double>(t)};
     switch (to_units) {
       case TimeUnits::Seconds:
-        return t;
+        return dt;
       case TimeUnits::Minutes:
-        return (t / seconds_per_minute);
+        return dt / seconds_per_minute;
       case TimeUnits::Hours:
-        return (t / seconds_per_hour);
+        return dt / seconds_per_hour;
       case TimeUnits::Days:
-        return (t / seconds_per_day);
+        return dt / seconds_per_day;
       case TimeUnits::Years:
-        return (t / seconds_per_year);
+        return dt / seconds_per_year;
       default:
         {
           std::ostringstream oss;

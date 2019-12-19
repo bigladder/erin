@@ -8,16 +8,20 @@
 namespace ERIN
 {
   constexpr RealTimeType default_max_time_years{1000};
-  constexpr RealTimeType defalut_max_time_s =
-    default_max_time_years * static_cast<RealTimeType>(seconds_per_year);
+  constexpr RealTimeType default_max_time_s =
+    default_max_time_years * rtt_seconds_per_year;
 
   ////////////////////////////////////////////////////////////
   // SimulationInfo
   SimulationInfo::SimulationInfo():
-    rate_unit{"kW"},
-    quantity_unit{"kJ"},
-    time_unit{TimeUnits::Seconds},
-    max_time{defalut_max_time_s}
+    SimulationInfo("kW", "kJ", TimeUnits::Seconds, default_max_time_s)
+  {
+  }
+
+  SimulationInfo::SimulationInfo(
+    TimeUnits time_unit_,
+    RealTimeType max_time_):
+    SimulationInfo("kW", "kJ", time_unit_, max_time_)
   {
   }
 

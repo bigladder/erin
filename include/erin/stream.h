@@ -15,6 +15,7 @@ namespace ERIN
   {
     public:
       SimulationInfo();
+      SimulationInfo(TimeUnits time_units, RealTimeType max_time);
       SimulationInfo(
           const std::string& rate_unit,
           const std::string& quantity_unit,

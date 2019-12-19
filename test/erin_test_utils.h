@@ -23,9 +23,10 @@ namespace erin_test_utils
       ASSERT_FALSE(a_it == actual.end());
       auto a_val = a_it->second;
       auto e_val = e.second;
-      EXPECT_NEAR(e_val, a_val, tolerance)
-        << "tag: " << tag << "; "
-        << "key: " << e.first;
+      EXPECT_NEAR(
+        static_cast<double>(e_val),
+        static_cast<double>(a_val),
+        tolerance) << "tag: " << tag << "; key: " << e.first;
     }
   }
 

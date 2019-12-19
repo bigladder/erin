@@ -7,7 +7,6 @@
 #include <iostream>
 
 constexpr int num_args{3};
-constexpr auto default_time_units = ::ERIN::TimeUnits::Hours;
 
 int
 doit(const std::string& input_toml, const std::string& timeseries_csv, const std::string& stats_csv)

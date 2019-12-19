@@ -2445,6 +2445,8 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "intensity.wind_speed_mph = 74 # force survival deterministically\n"
     "intensity.inundation_depth_ft = 2 # force survival deterministically\n";
   auto m = ::ERIN::make_main_from_string(input);
+  auto results = m.run_all();
+  EXPECT_EQ(4, results.number_of_scenarios());
 }
 
 int

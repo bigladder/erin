@@ -22,6 +22,12 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex02.csv"
   "ex02.csv"
   COPYONLY)
+# The placement below is required for Visual Studio to find ex02.csv when it
+# runs unit tests from the IDE.
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex02.csv"
+  "${CMAKE_BINARY_DIR}/bin/ex02.csv"
+  COPYONLY)
 add_executable(${CMAKE_PROJECT_NAME}_tests ${test_sources})
 target_include_directories(${CMAKE_PROJECT_NAME}_tests PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 

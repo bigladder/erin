@@ -1708,6 +1708,22 @@ namespace ERIN
     // TODO: implement this
   }
 
+  Main
+  make_main_from_string(const std::string& raw_toml)
+  {
+    std::stringstream ss;
+    ss << raw_toml;
+    TomlInputReader tir{ss};
+    const auto si = tir.read_simulation_info();
+    const auto streams = tir.read_streams(si);
+    const auto loads = tir.read_loads();
+    const auto fragilities = tir.read_fragility_data();
+    const auto comps = tir.read_components(streams, loads, fragilities);
+    const auto networks = tir.read_networks();
+    const auto scenarios = tir.read_scenarios();
+    return Main{si, streams, comps, networks, scenarios};
+  }
+
 
   ////////////////////////////////////////////////////////////
   // Scenario

@@ -345,6 +345,8 @@ namespace ERIN
       void generate_failure_fragilities();
   };
 
+  Main make_main_from_string(const std::string& raw_toml);
+
   ////////////////////////////////////////////////////////////
   // Helper Functions
   bool run_devs(

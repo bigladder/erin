@@ -3,7 +3,10 @@
 
 #include "debug_utils.h"
 #include "erin/type.h"
+#include <algorithm>
 #include <cmath>
+#include <functional>
+#include <numeric>
 #include <sstream>
 #include <stdexcept>
 
@@ -217,6 +220,51 @@ namespace ERIN
   {
     return !(a == b);
   }
+
+  FlowValueType
+  sum_requested_load(const std::vector<Datum>& vs)
+  {
+    if (vs.size() < 2) {
+      return 0.0;
+    }
+    return std::inner_product(
+        std::next(vs.begin()), vs.end(),
+        vs.begin(), 0.0,
+        std::plus<FlowValueType>(),
+        [](const Datum& a, const Datum& b) -> FlowValueType {
+          const auto dt = a.time - b.time;
+          const auto flow = b.requested_value;
+          if (dt < 0) {
+            std::ostringstream oss;
+            oss << "invalid argument vs. Cannot have decreasing times";
+            throw std::invalid_argument(oss.str());
+          }
+          return static_cast<FlowValueType>(dt) * flow;
+        });
+  }
+
+  FlowValueType
+  sum_achieved_load(const std::vector<Datum>& vs)
+  {
+    if (vs.size() < 2) {
+      return 0.0;
+    }
+    return std::inner_product(
+        std::next(vs.begin()), vs.end(),
+        vs.begin(), 0.0,
+        std::plus<FlowValueType>(),
+        [](const Datum& a, const Datum& b) -> FlowValueType {
+          const auto dt = a.time - b.time;
+          const auto flow = b.achieved_value;
+          if (dt < 0) {
+            std::ostringstream oss;
+            oss << "invalid argument vs. Cannot have decreasing times";
+            throw std::invalid_argument(oss.str());
+          }
+          return static_cast<FlowValueType>(dt) * flow;
+        });
+  }
+
 
   ////////////////////////////////////////////////////////////
   // LoadItem

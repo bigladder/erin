@@ -91,6 +91,8 @@ namespace ERIN
       [[nodiscard]] RealTimeType get_duration_in_seconds() const {
         return scenario_duration;
       }
+      [[nodiscard]] std::unordered_map<std::string, double>
+        total_requested_loads_by_stream() const;
 
     private:
       bool is_good;

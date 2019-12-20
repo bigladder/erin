@@ -97,6 +97,8 @@ namespace ERIN
   void print_datum(std::ostream& os, const Datum& d);
   bool operator==(const Datum& a, const Datum& b);
   bool operator!=(const Datum& a, const Datum& b);
+  FlowValueType sum_requested_load(const std::vector<Datum>& vs);
+  FlowValueType sum_achieved_load(const std::vector<Datum>& vs);
 
   //////////////////////////////////////////////////////////// 
   // LoadItem

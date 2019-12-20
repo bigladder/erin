@@ -946,6 +946,127 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   EXPECT_EQ(out.get_is_good(), true);
 }
 
+TEST(ErinBasicsTest, ScenarioResultsMethods)
+{
+  namespace E = ::ERIN;
+  const E::RealTimeType start_time{0};
+  const E::RealTimeType duration{4};
+  const std::string elec_id{"electrical"};
+  const E::StreamType elec{elec_id};
+  const std::string A_id{"A"};
+  const std::string B_id{"B"};
+  const E::ScenarioResults sr{
+    true,
+    start_time,
+    duration,
+    { { A_id,
+        { E::Datum{0,1.0,1.0},
+          E::Datum{1,0.5,0.5},
+          E::Datum{2,0.0,0.0}}},
+      { B_id,
+        { E::Datum{0,10.0,10.0},
+          E::Datum{2,5.0,5.0},
+          E::Datum{4,0.0,0.0}}}},
+    { { A_id, elec}, { B_id, elec}},
+    { { A_id, E::ComponentType::Load},
+      { B_id, E::ComponentType::Source}}};
+  using T_stream_name = std::string;
+  using T_total_requested_load_kJ = double;
+  std::unordered_map<T_stream_name, T_total_requested_load_kJ> trlbs_expected{
+    { elec_id, 1.5}};
+  auto trlbs_actual = sr.total_requested_loads_by_stream();
+  ASSERT_EQ(trlbs_expected.size(), trlbs_actual.size());
+  for (const auto& expected_pair : trlbs_expected) {
+    const auto& key = expected_pair.first;
+    const auto& value = expected_pair.second;
+    auto it = trlbs_actual.find(key);
+    ASSERT_TRUE(it != trlbs_actual.end());
+    EXPECT_NEAR(it->second, value, tolerance);
+  }
+}
+
+TEST(ErinBasicsTest, TestSumRequestedLoad)
+{
+  namespace E = ::ERIN;
+  std::vector<E::Datum> vs{
+    E::Datum{0,1.0,1.0}, E::Datum{1,0.5,0.5}, E::Datum{2,0.0,0.0}};
+  E::FlowValueType expected = 1.5;
+  auto actual = E::sum_requested_load(vs);
+  EXPECT_NEAR(expected, actual, tolerance);
+  vs = std::vector<E::Datum>{
+    E::Datum{10,100.0,100.0},E::Datum{20,10.0,10.0},E::Datum{22,0.0,0.0}};
+  expected = ((10 - 0) * 0.0) + ((20 - 10) * 100.0) + ((22 - 20) * 10.0);
+  actual = E::sum_requested_load(vs);
+  EXPECT_NEAR(expected, actual, tolerance);
+  vs = std::vector<E::Datum>(0);
+  expected = 0.0;
+  actual = E::sum_requested_load(vs);
+  EXPECT_NEAR(expected, actual, tolerance);
+  try {
+    vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
+    actual = E::sum_requested_load(vs);
+    ASSERT_TRUE(false) << "expected exception but didn't throw";
+  }
+  catch (const std::invalid_argument&) {
+    ASSERT_TRUE(true);
+  }
+  catch (...) {
+    ASSERT_TRUE(false) << "unexpected exception thrown";
+  }
+}
+
+TEST(ErinBasicsTest, TestSumAchievedLoads)
+{
+  namespace E = ::ERIN;
+  std::vector<E::Datum> vs{
+    E::Datum{0,1.0,1.0}, E::Datum{1,0.5,0.5}, E::Datum{2,0.0,0.0}};
+  E::FlowValueType expected = 1.5;
+  auto actual = E::sum_achieved_load(vs);
+  EXPECT_NEAR(expected, actual, tolerance);
+  vs = std::vector<E::Datum>{
+    E::Datum{10,200.0,100.0},E::Datum{20,20.0,10.0},E::Datum{22,0.0,0.0}};
+  expected = ((10 - 0) * 0.0) + ((20 - 10) * 100.0) + ((22 - 20) * 10.0);
+  actual = E::sum_achieved_load(vs);
+  EXPECT_NEAR(expected, actual, tolerance);
+  vs = std::vector<E::Datum>(0);
+  expected = 0.0;
+  actual = E::sum_achieved_load(vs);
+  EXPECT_NEAR(expected, actual, tolerance);
+  try {
+    vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
+    actual = E::sum_achieved_load(vs);
+    ASSERT_TRUE(false) << "expected exception but didn't throw";
+  }
+  catch (const std::invalid_argument&) {
+    ASSERT_TRUE(true);
+  }
+  catch (...) {
+    ASSERT_TRUE(false) << "unexpected exception thrown";
+  }
+}
+
+TEST(ErinBasicsTest, TestTotalEnergyAvailability)
+{
+  /*
+     - GIVEN a ScenaroResults object
+       (def sr
+         #:scenario-results{:is-good? true
+                            :start-time-s 0
+                            :duration-s 4
+                            :results {:A [ #:datum{:time 0 :request 1.0 :achieved 1.0}
+                                           #:datum{:time 1 :request 0.5 :achieved 0.5}
+                                           #:datum{:time 2 :request 0.0 :achieved 0.0}]
+                                      :B [ #:datum{:time 0 :request 10.0 :achieved 10.0}
+                                           #:datum{:time 2 :request 5.0 :achieved 5.0}
+                                           #:datum{:time 4 :request 0.0 :achieved 0.0}]}
+                            :streams {:A :electricity, :B :electricity}
+                            :component-types {:A :load :B :source}})
+     - WHEN we call (.total_energy_availability_by_stream sr)
+     - THEN we get {:electricity 1.0}
+  */
+
+}
+
 TEST(ErinBasicsTest, ScenarioResultsToCSV)
 {
   ::ERIN::RealTimeType start_time{0};

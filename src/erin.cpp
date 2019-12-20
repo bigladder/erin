@@ -1234,6 +1234,33 @@ namespace ERIN
     return oss.str();
   }
 
+  std::unordered_map<std::string, double>
+  ScenarioResults::total_requested_loads_by_stream() const
+  {
+    std::unordered_map<std::string, double> out;
+    if (is_good) {
+      for (const auto& comp_id : keys) {
+        const auto& comp_type = component_types.at(comp_id);
+        if (comp_type != ComponentType::Load) {
+          continue;
+        }
+        const auto& stream = stream_types.at(comp_id);
+        const auto& stream_name = stream.get_type();
+        const auto& data = results.at(comp_id);
+        const auto sum = sum_requested_load(data);
+        auto it = out.find(stream_name);
+        if (it == out.end()) {
+          out[stream_name] = sum;
+        }
+        else {
+          it->second += sum;
+        }
+      }
+    }
+    return out;
+  }
+
+  // ScenarioStats
   ScenarioStats
   calc_scenario_stats(const std::vector<Datum>& ds)
   {

@@ -221,8 +221,11 @@ namespace ERIN
     return !(a == b);
   }
 
+  // Hidden function: helper for sum_*_load(const std::vector<Datum>& vs)
   FlowValueType
-  sum_requested_load(const std::vector<Datum>& vs)
+  sum_load_helper(
+      const std::vector<Datum>& vs,
+      const std::function<FlowValueType(const Datum& d)>& get_flow)
   {
     if (vs.size() < 2) {
       return 0.0;
@@ -231,9 +234,9 @@ namespace ERIN
         std::next(vs.begin()), vs.end(),
         vs.begin(), 0.0,
         std::plus<FlowValueType>(),
-        [](const Datum& a, const Datum& b) -> FlowValueType {
+        [&get_flow](const Datum& a, const Datum& b) -> FlowValueType {
           const auto dt = a.time - b.time;
-          const auto flow = b.requested_value;
+          const auto flow = get_flow(b);
           if (dt < 0) {
             std::ostringstream oss;
             oss << "invalid argument vs. Cannot have decreasing times";
@@ -244,25 +247,19 @@ namespace ERIN
   }
 
   FlowValueType
+  sum_requested_load(const std::vector<Datum>& vs)
+  {
+    return sum_load_helper(
+        vs,
+        [](const Datum& d) -> FlowValueType { return d.requested_value; });
+  }
+
+  FlowValueType
   sum_achieved_load(const std::vector<Datum>& vs)
   {
-    if (vs.size() < 2) {
-      return 0.0;
-    }
-    return std::inner_product(
-        std::next(vs.begin()), vs.end(),
-        vs.begin(), 0.0,
-        std::plus<FlowValueType>(),
-        [](const Datum& a, const Datum& b) -> FlowValueType {
-          const auto dt = a.time - b.time;
-          const auto flow = b.achieved_value;
-          if (dt < 0) {
-            std::ostringstream oss;
-            oss << "invalid argument vs. Cannot have decreasing times";
-            throw std::invalid_argument(oss.str());
-          }
-          return static_cast<FlowValueType>(dt) * flow;
-        });
+    return sum_load_helper(
+        vs,
+        [](const Datum& d) -> FlowValueType { return d.achieved_value; });
   }
 
 

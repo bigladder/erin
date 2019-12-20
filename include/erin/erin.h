@@ -93,6 +93,8 @@ namespace ERIN
       }
       [[nodiscard]] std::unordered_map<std::string, double>
         total_requested_loads_by_stream() const;
+      [[nodiscard]] std::unordered_map<std::string, double>
+        total_achieved_loads_by_stream() const;
 
     private:
       bool is_good;

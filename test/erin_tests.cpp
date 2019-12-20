@@ -960,8 +960,8 @@ TEST(ErinBasicsTest, ScenarioResultsMethods)
     start_time,
     duration,
     { { A_id,
-        { E::Datum{0,1.0,1.0},
-          E::Datum{1,0.5,0.5},
+        { E::Datum{0,2.0,1.0},
+          E::Datum{1,1.0,0.5},
           E::Datum{2,0.0,0.0}}},
       { B_id,
         { E::Datum{0,10.0,10.0},
@@ -972,8 +972,9 @@ TEST(ErinBasicsTest, ScenarioResultsMethods)
       { B_id, E::ComponentType::Source}}};
   using T_stream_name = std::string;
   using T_total_requested_load_kJ = double;
+  // total requested loads by stream
   std::unordered_map<T_stream_name, T_total_requested_load_kJ> trlbs_expected{
-    { elec_id, 1.5}};
+    { elec_id, 3.0}};
   auto trlbs_actual = sr.total_requested_loads_by_stream();
   ASSERT_EQ(trlbs_expected.size(), trlbs_actual.size());
   for (const auto& expected_pair : trlbs_expected) {
@@ -981,6 +982,18 @@ TEST(ErinBasicsTest, ScenarioResultsMethods)
     const auto& value = expected_pair.second;
     auto it = trlbs_actual.find(key);
     ASSERT_TRUE(it != trlbs_actual.end());
+    EXPECT_NEAR(it->second, value, tolerance);
+  }
+  // total achieved loads by stream
+  std::unordered_map<T_stream_name, T_total_requested_load_kJ> talbs_expected{
+    { elec_id, 1.5}};
+  auto talbs_actual = sr.total_achieved_loads_by_stream();
+  ASSERT_EQ(talbs_expected.size(), talbs_actual.size());
+  for (const auto& expected_pair : talbs_expected) {
+    const auto& key = expected_pair.first;
+    const auto& value = expected_pair.second;
+    auto it = talbs_actual.find(key);
+    ASSERT_TRUE(it != talbs_actual.end());
     EXPECT_NEAR(it->second, value, tolerance);
   }
 }

@@ -2579,32 +2579,30 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
         std::string{"class_4_hurricane"},
         std::unordered_map<std::string, std::vector<double>>{
           {std::string{"electricity"}, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}}}));
-  // total_energy_availabilities should be:
-  // (Map ScenarioID:String
-  //      (Map StreamName:String
-  //           (Vector TotalEnergyAvailability:Double)))
-  // total_energy_availability is the sum of all the consumed energy by stream
-  // over all loads divided by the sum of all requested energy by stream over
-  // all loads. For this specific problem, since we only have electricity, it should be:
-  // {"blue_sky" {"electricity" [1.0]}, "class_4_hurricane" {"electricity" [...]}}
-  // The point is that the class_4_hurricane results will be random and
-  // probably either a 1 or 0 but non-deterministic. This is the point of this
-  // test -- to make those random processes deterministic.
-  // Approach: ScenarioResults::total_requested_loads_by_stream() -> {StreamName:String TotalRequestedLoad:Double}
-  // Approach: ScenarioResults::total_achieved_loads_by_stream() -> {StreamName:String TotalAchievedLoad:Double}
-  // Approach: ScenarioResults::total_energy_availability() -> {StreamName:String TotalEnergyAvailability:Double}
-  // Query total_energy_availability from AllResults and format as {StreamName:String [TotalEnergyAvailability:Double ...]}.
-  // We should be able to build off of another test to write all the ScenarioResults methods.
-  // This test will only test that get_total_energy_availabilities() works...
   auto actual_teas = results.get_total_energy_availabilities();
-  /*
-  ASSERT_EQ(
-      actual_teas.at("blue_sky").size(),
-      expected_teas.at("blue_sky").size());
-  EXPECT_EQ(
-      actual_teas["blue_sky"][0],
-      expected_teas["blue_sky"][0]);
-  */
+  ASSERT_EQ(expected_teas.size(), actual_teas.size());
+  for (const auto& pair : expected_teas) {
+    const auto& scenario_id = pair.first;
+    const auto& expected_stream_to_teas_map = pair.second;
+    auto it = actual_teas.find(scenario_id);
+    ASSERT_TRUE(it != actual_teas.end());
+    const auto& actual_stream_to_teas_map = it->second;
+    ASSERT_EQ(
+        expected_stream_to_teas_map.size(),
+        actual_stream_to_teas_map.size());
+    for (const auto& sub_pair : expected_stream_to_teas_map) {
+      const auto& stream_name = sub_pair.first;
+      const auto& expected_teas = sub_pair.second;
+      auto sub_it = actual_stream_to_teas_map.find(stream_name);
+      ASSERT_TRUE(sub_it != actual_stream_to_teas_map.end());
+      const auto& actual_teas = sub_it->second;
+      auto num_teas = expected_teas.size();
+      ASSERT_EQ(num_teas, actual_teas.size());
+      for (decltype(num_teas) i{0}; i < num_teas; ++i) {
+        EXPECT_NEAR(expected_teas[i], actual_teas[i], tolerance);
+      }
+    }
+  }
 }
 
 int

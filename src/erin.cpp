@@ -1623,10 +1623,10 @@ namespace ERIN
     std::unordered_map<std::string, std::vector<double>>>
   AllResults::get_total_energy_availabilities() const
   {
-    //using size_type = std::vector<ScenarioResults>::size_type;
+    using size_type = std::vector<ScenarioResults>::size_type;
     using T_scenario_id = std::string;
     using T_stream_name = std::string;
-    using T_total_energy_availability = double;
+    using T_total_energy_availability = FlowValueType;
     using T_total_energy_availability_return =
       std::unordered_map<
         T_scenario_id,
@@ -1634,19 +1634,29 @@ namespace ERIN
           T_stream_name,
           std::vector<T_total_energy_availability>>>;
     T_total_energy_availability_return out;
-    /*
     for (const auto& scenario_id: scenario_ids) {
       const auto& srs = results.at(scenario_id);
       const auto num_srs = srs.size();
-      std::vector<double> vs(srs.size(), 0.0);
+      std::unordered_map<
+        T_stream_name,
+        std::vector<T_total_energy_availability>> data;
       for (size_type i{0}; i < num_srs; ++i) {
         const auto& sr = srs.at(i);
-        const auto& stats = srs.get_statistics();
-        //vs[i] = sr.calc_energy_availability();
+        const auto teabs = sr.total_energy_availability_by_stream();
+        for (const auto& pair : teabs) {
+          const auto& stream_name = pair.first;
+          const auto& tea = pair.second;
+          auto it = data.find(stream_name);
+          if (it == data.end()) {
+            data[stream_name] = std::vector<FlowValueType>{tea};
+          }
+          else {
+            it->second.emplace_back(tea);
+          }
+        }
       }
-      out[scenario_id] = vs;
+      out[scenario_id] = data;
     }
-    */
     return out;
   }
 

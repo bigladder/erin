@@ -971,7 +971,8 @@ TEST(ErinBasicsTest, ScenarioResultsMethods)
     { { A_id, E::ComponentType::Load},
       { B_id, E::ComponentType::Source}}};
   using T_stream_name = std::string;
-  using T_total_requested_load_kJ = double;
+  using T_total_requested_load_kJ = E::FlowValueType;
+  using T_total_energy_availability = E::FlowValueType;
   // total requested loads by stream
   std::unordered_map<T_stream_name, T_total_requested_load_kJ> trlbs_expected{
     { elec_id, 3.0}};
@@ -994,6 +995,18 @@ TEST(ErinBasicsTest, ScenarioResultsMethods)
     const auto& value = expected_pair.second;
     auto it = talbs_actual.find(key);
     ASSERT_TRUE(it != talbs_actual.end());
+    EXPECT_NEAR(it->second, value, tolerance);
+  }
+  // total energy availability by stream
+  std::unordered_map<T_stream_name, T_total_energy_availability> tea_expected{
+    { elec_id, 0.5}};
+  auto tea_actual = sr.total_energy_availability_by_stream();
+  ASSERT_EQ(tea_expected.size(), tea_actual.size());
+  for (const auto& expected_pair : tea_expected) {
+    const auto& key = expected_pair.first;
+    const auto& value = expected_pair.second;
+    auto it = tea_actual.find(key);
+    ASSERT_TRUE(it != tea_actual.end());
     EXPECT_NEAR(it->second, value, tolerance);
   }
 }
@@ -1056,28 +1069,6 @@ TEST(ErinBasicsTest, TestSumAchievedLoads)
   catch (...) {
     ASSERT_TRUE(false) << "unexpected exception thrown";
   }
-}
-
-TEST(ErinBasicsTest, TestTotalEnergyAvailability)
-{
-  /*
-     - GIVEN a ScenaroResults object
-       (def sr
-         #:scenario-results{:is-good? true
-                            :start-time-s 0
-                            :duration-s 4
-                            :results {:A [ #:datum{:time 0 :request 1.0 :achieved 1.0}
-                                           #:datum{:time 1 :request 0.5 :achieved 0.5}
-                                           #:datum{:time 2 :request 0.0 :achieved 0.0}]
-                                      :B [ #:datum{:time 0 :request 10.0 :achieved 10.0}
-                                           #:datum{:time 2 :request 5.0 :achieved 5.0}
-                                           #:datum{:time 4 :request 0.0 :achieved 0.0}]}
-                            :streams {:A :electricity, :B :electricity}
-                            :component-types {:A :load :B :source}})
-     - WHEN we call (.total_energy_availability_by_stream sr)
-     - THEN we get {:electricity 1.0}
-  */
-
 }
 
 TEST(ErinBasicsTest, ScenarioResultsToCSV)

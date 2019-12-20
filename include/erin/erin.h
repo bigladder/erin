@@ -91,10 +91,12 @@ namespace ERIN
       [[nodiscard]] RealTimeType get_duration_in_seconds() const {
         return scenario_duration;
       }
-      [[nodiscard]] std::unordered_map<std::string, double>
+      [[nodiscard]] std::unordered_map<std::string, FlowValueType>
         total_requested_loads_by_stream() const;
-      [[nodiscard]] std::unordered_map<std::string, double>
+      [[nodiscard]] std::unordered_map<std::string, FlowValueType>
         total_achieved_loads_by_stream() const;
+      [[nodiscard]] std::unordered_map<std::string, FlowValueType>
+        total_energy_availability_by_stream() const;
 
     private:
       bool is_good;
@@ -106,7 +108,7 @@ namespace ERIN
       std::unordered_map<std::string, ScenarioStats> statistics;
       std::vector<std::string> keys;
 
-      [[nodiscard]] std::unordered_map<std::string, double>
+      [[nodiscard]] std::unordered_map<std::string, FlowValueType>
         total_loads_by_stream_helper(
             const std::function<
               FlowValueType(const std::vector<Datum>& f)>& f) const;

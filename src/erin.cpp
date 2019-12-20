@@ -1234,7 +1234,7 @@ namespace ERIN
     return oss.str();
   }
 
-  std::unordered_map<std::string, double>
+  std::unordered_map<std::string, FlowValueType>
   ScenarioResults::total_loads_by_stream_helper(
       const std::function<
         FlowValueType(const std::vector<Datum>& f)>& sum_fn) const
@@ -1262,16 +1262,43 @@ namespace ERIN
     return out;
   }
 
-  std::unordered_map<std::string, double>
+  std::unordered_map<std::string, FlowValueType>
   ScenarioResults::total_requested_loads_by_stream() const
   {
     return total_loads_by_stream_helper(sum_requested_load);
   }
 
-  std::unordered_map<std::string, double>
+  std::unordered_map<std::string, FlowValueType>
   ScenarioResults::total_achieved_loads_by_stream() const
   {
     return total_loads_by_stream_helper(sum_achieved_load);
+  }
+
+  std::unordered_map<std::string, FlowValueType>
+  ScenarioResults::total_energy_availability_by_stream() const
+  {
+    std::unordered_map<std::string, FlowValueType> out;
+    const auto req = total_requested_loads_by_stream();
+    const auto ach = total_achieved_loads_by_stream();
+    if (req.size() != ach.size()) {
+      std::ostringstream oss;
+      oss << "number of requested loads by stream (" << req.size()
+          << ") doesn't equal number of achieved loads by stream ("
+          << ach.size() << ")";
+      throw std::runtime_error(oss.str());
+    }
+    for (const auto& pair : req) {
+      const auto& stream_name = pair.first;
+      const auto& requested_load_kJ = pair.second;
+      const auto& achieved_load_kJ = ach.at(stream_name);
+      if (requested_load_kJ == 0.0) {
+        out[stream_name] = 1.0;
+      }
+      else {
+        out[stream_name] = achieved_load_kJ / requested_load_kJ;
+      }
+    }
+    return out;
   }
 
   ////////////////////////////////////////////////////////////

@@ -105,6 +105,11 @@ namespace ERIN
       std::unordered_map<std::string, ComponentType> component_types;
       std::unordered_map<std::string, ScenarioStats> statistics;
       std::vector<std::string> keys;
+
+      [[nodiscard]] std::unordered_map<std::string, double>
+        total_loads_by_stream_helper(
+            const std::function<
+              FlowValueType(const std::vector<Datum>& f)>& f) const;
   };
 
   ScenarioStats calc_scenario_stats(const std::vector<Datum>& ds);

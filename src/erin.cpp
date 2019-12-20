@@ -1235,7 +1235,9 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, double>
-  ScenarioResults::total_requested_loads_by_stream() const
+  ScenarioResults::total_loads_by_stream_helper(
+      const std::function<
+        FlowValueType(const std::vector<Datum>& f)>& sum_fn) const
   {
     std::unordered_map<std::string, double> out;
     if (is_good) {
@@ -1247,7 +1249,7 @@ namespace ERIN
         const auto& stream = stream_types.at(comp_id);
         const auto& stream_name = stream.get_type();
         const auto& data = results.at(comp_id);
-        const auto sum = sum_requested_load(data);
+        const auto sum = sum_fn(data);
         auto it = out.find(stream_name);
         if (it == out.end()) {
           out[stream_name] = sum;
@@ -1261,29 +1263,15 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, double>
+  ScenarioResults::total_requested_loads_by_stream() const
+  {
+    return total_loads_by_stream_helper(sum_requested_load);
+  }
+
+  std::unordered_map<std::string, double>
   ScenarioResults::total_achieved_loads_by_stream() const
   {
-    std::unordered_map<std::string, double> out;
-    if (is_good) {
-      for (const auto& comp_id : keys) {
-        const auto& comp_type = component_types.at(comp_id);
-        if (comp_type != ComponentType::Load) {
-          continue;
-        }
-        const auto& stream = stream_types.at(comp_id);
-        const auto& stream_name = stream.get_type();
-        const auto& data = results.at(comp_id);
-        const auto sum = sum_achieved_load(data);
-        auto it = out.find(stream_name);
-        if (it == out.end()) {
-          out[stream_name] = sum;
-        }
-        else {
-          it->second += sum;
-        }
-      }
-    }
-    return out;
+    return total_loads_by_stream_helper(sum_achieved_load);
   }
 
   ////////////////////////////////////////////////////////////

@@ -1656,7 +1656,8 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     {{muxer_id, ep::Type::Inflow, 0}, {s1_id, ep::Type::Outflow, 0}},
     {{muxer_id, ep::Type::Inflow, 1}, {s2_id, ep::Type::Outflow, 0}}};
   auto elements = enw::build(
-      scenario_id, network, connections, components, {});
+      scenario_id, network, connections, components,
+      {}, []()->double{ return 0.0; });
   adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
   const auto duration{t_max};
@@ -2484,38 +2485,34 @@ TEST(ErinBasicsTest, TestIsSuperset)
 
 TEST(ErinBasicsTest, TestRepeatableRandom)
 {
-  // objective: load up a system such as example 03 and run it in a
-  // deterministic way (deterministic across platform).
-  // options:
-  // - set the random seed (is it deterministic across platform?)
-  // - set the random generators to constants (my preference)
-  // Note: still need a way to set the seed, though...
   std::string input =
     "[simulation_info]\n"
     "rate_unit = \"kW\"\n"
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 100\n"
+    "fixed_random_frac = 0.5\n"
+    "#random_seed = 1\n"
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.default]\n"
     "time_unit = \"hours\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1.0],[4.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[4.0]]\n"
     "[components.electric_utility]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
+    "max_outflow = 100.0\n"
     "fragilities = [\"highly_vulnerable_to_wind\"]\n"
-    "max_outflow = 10.0\n"
     "[components.cluster_01_electric]\n"
     "type = \"load\"\n"
     "input_stream = \"electricity\"\n"
     "loads_by_scenario.blue_sky = \"default\"\n"
     "loads_by_scenario.class_4_hurricane = \"default\"\n"
-    "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
     "[components.emergency_generator]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
+    "max_outflow = 50.0\n"
     "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
     "[components.bus]\n"
     "type = \"muxer\"\n"
@@ -2523,7 +2520,6 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "num_inflows = 2\n"
     "num_outflows = 1\n"
     "dispatch_strategy = \"in_order\"\n"
-    "fragilities = [\"highly_vulnerable_to_wind\", \"somewhat_vulnerable_to_flooding\"]\n"
     "[fragility.somewhat_vulnerable_to_flooding]\n"
     "vulnerable_to = \"inundation_depth_ft\"\n"
     "type = \"linear\"\n"
@@ -2555,13 +2551,14 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "network = \"emergency_operations\"\n"
     "intensity.wind_speed_mph = 156\n"
     "intensity.inundation_depth_ft = 8\n";
-  auto m = ::ERIN::make_main_from_string(input);
+  namespace E = ::ERIN;
+  auto m = E::make_main_from_string(input);
   auto results = m.run_all();
   std::vector<std::string> expected_scenario_ids{
     "blue_sky", "class_4_hurricane"};
   std::unordered_map<
     std::string,
-    std::vector<::ERIN::ScenarioResults>::size_type> expected_num_results{
+    std::vector<E::ScenarioResults>::size_type> expected_num_results{
       {"blue_sky", 1},
       {"class_4_hurricane", 10}};
   EXPECT_EQ(
@@ -2569,16 +2566,21 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
       results.number_of_scenarios());
   EXPECT_EQ(expected_scenario_ids, results.get_scenario_ids());
   EXPECT_EQ(expected_num_results, results.get_num_results());
-  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>> expected_teas;
+  std::unordered_map<
+    std::string,
+    std::unordered_map<std::string, std::vector<double>>> expected_teas;
   expected_teas.emplace(
       std::make_pair(
         std::string{"blue_sky"},
-        std::unordered_map<std::string, std::vector<double>>{{std::string{"electricity"}, {1.0}}}));
+        std::unordered_map<
+          std::string,
+          std::vector<double>>{{std::string{"electricity"}, {1.0}}}));
+  const std::vector<E::FlowValueType> ten_halves(10, 0.5);
   expected_teas.emplace(
       std::make_pair(
         std::string{"class_4_hurricane"},
         std::unordered_map<std::string, std::vector<double>>{
-          {std::string{"electricity"}, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}}}));
+          {std::string{"electricity"}, ten_halves}}));
   auto actual_teas = results.get_total_energy_availabilities();
   ASSERT_EQ(expected_teas.size(), actual_teas.size());
   for (const auto& pair : expected_teas) {
@@ -2599,7 +2601,137 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
       auto num_teas = expected_teas.size();
       ASSERT_EQ(num_teas, actual_teas.size());
       for (decltype(num_teas) i{0}; i < num_teas; ++i) {
-        EXPECT_NEAR(expected_teas[i], actual_teas[i], tolerance);
+        EXPECT_NEAR(expected_teas[i], actual_teas[i], tolerance)
+          << scenario_id << ":" << stream_name << "[" << i << "]"
+          << " expected_teas=" << expected_teas[i]
+          << " actual_teas  =" << actual_teas[i] << "\n";
+      }
+    }
+  }
+}
+
+TEST(ErinBasicsTest, TestRepeatableRandom2)
+{
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 100\n"
+    "fixed_random_frac = 0.1\n"
+    "#random_seed = 1\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[loads.default]\n"
+    "time_unit = \"hours\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[4.0]]\n"
+    "[components.electric_utility]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 100.0\n"
+    "fragilities = [\"highly_vulnerable_to_wind\"]\n"
+    "[components.cluster_01_electric]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "loads_by_scenario.class_4_hurricane = \"default\"\n"
+    "[components.emergency_generator]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 50.0\n"
+    "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+    "[components.bus]\n"
+    "type = \"muxer\"\n"
+    "stream = \"electricity\"\n"
+    "num_inflows = 2\n"
+    "num_outflows = 1\n"
+    "dispatch_strategy = \"in_order\"\n"
+    "[fragility.somewhat_vulnerable_to_flooding]\n"
+    "vulnerable_to = \"inundation_depth_ft\"\n"
+    "type = \"linear\"\n"
+    "lower_bound = 6.0\n"
+    "upper_bound = 14.0\n"
+    "[fragility.highly_vulnerable_to_wind]\n"
+    "vulnerable_to = \"wind_speed_mph\"\n"
+    "type = \"linear\"\n"
+    "lower_bound = 80.0\n"
+    "upper_bound = 160.0\n"
+    "[networks.normal_operations]\n"
+    "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
+    "[networks.emergency_operations]\n"
+    "connections = [\n"
+    "  [\"electric_utility\", \"outflow\", \"0\", \"bus\", \"inflow\", \"0\"],\n"
+    "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
+    "  [\"bus\", \"cluster_01_electric\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_units = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 4\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "[scenarios.class_4_hurricane]\n"
+    "time_units = \"hours\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 10}\n"
+    "duration = 4\n"
+    "max_occurrences = -1\n"
+    "network = \"emergency_operations\"\n"
+    "intensity.wind_speed_mph = 156\n"
+    "intensity.inundation_depth_ft = 8\n";
+  namespace E = ::ERIN;
+  auto m = E::make_main_from_string(input);
+  auto results = m.run_all();
+  std::vector<std::string> expected_scenario_ids{
+    "blue_sky", "class_4_hurricane"};
+  std::unordered_map<
+    std::string,
+    std::vector<E::ScenarioResults>::size_type> expected_num_results{
+      {"blue_sky", 1},
+      {"class_4_hurricane", 10}};
+  EXPECT_EQ(
+      expected_scenario_ids.size(),
+      results.number_of_scenarios());
+  EXPECT_EQ(expected_scenario_ids, results.get_scenario_ids());
+  EXPECT_EQ(expected_num_results, results.get_num_results());
+  std::unordered_map<
+    std::string,
+    std::unordered_map<std::string, std::vector<double>>> expected_teas;
+  expected_teas.emplace(
+      std::make_pair(
+        std::string{"blue_sky"},
+        std::unordered_map<
+          std::string,
+          std::vector<double>>{{std::string{"electricity"}, {1.0}}}));
+  const std::vector<E::FlowValueType> ten_zeros(10, 0.0);
+  expected_teas.emplace(
+      std::make_pair(
+        std::string{"class_4_hurricane"},
+        std::unordered_map<std::string, std::vector<double>>{
+          {std::string{"electricity"}, ten_zeros}}));
+  auto actual_teas = results.get_total_energy_availabilities();
+  ASSERT_EQ(expected_teas.size(), actual_teas.size());
+  for (const auto& pair : expected_teas) {
+    const auto& scenario_id = pair.first;
+    const auto& expected_stream_to_teas_map = pair.second;
+    auto it = actual_teas.find(scenario_id);
+    ASSERT_TRUE(it != actual_teas.end());
+    const auto& actual_stream_to_teas_map = it->second;
+    ASSERT_EQ(
+        expected_stream_to_teas_map.size(),
+        actual_stream_to_teas_map.size());
+    for (const auto& sub_pair : expected_stream_to_teas_map) {
+      const auto& stream_name = sub_pair.first;
+      const auto& expected_teas = sub_pair.second;
+      auto sub_it = actual_stream_to_teas_map.find(stream_name);
+      ASSERT_TRUE(sub_it != actual_stream_to_teas_map.end());
+      const auto& actual_teas = sub_it->second;
+      auto num_teas = expected_teas.size();
+      ASSERT_EQ(num_teas, actual_teas.size());
+      for (decltype(num_teas) i{0}; i < num_teas; ++i) {
+        EXPECT_NEAR(expected_teas[i], actual_teas[i], tolerance)
+          << scenario_id << ":" << stream_name << "[" << i << "]"
+          << " expected_teas=" << expected_teas[i]
+          << " actual_teas  =" << actual_teas[i] << "\n";
       }
     }
   }

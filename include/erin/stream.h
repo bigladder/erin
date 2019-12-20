@@ -4,6 +4,8 @@
 #ifndef ERIN_STREAM_H
 #define ERIN_STREAM_H
 #include "erin/type.h"
+#include <functional>
+#include <random>
 #include <string>
 #include <unordered_map>
 
@@ -21,6 +23,16 @@ namespace ERIN
           const std::string& quantity_unit,
           TimeUnits time_unit,
           RealTimeType max_time);
+      SimulationInfo(
+          const std::string& rate_unit,
+          const std::string& quantity_unit,
+          TimeUnits time_unit,
+          RealTimeType max_time,
+          //bool has_seed,
+          //unsigned int seed_value,
+          bool has_fixed_random_frac,
+          double fixed_random_frac);
+
       [[nodiscard]] const std::string& get_rate_unit() const {
         return rate_unit;
       }
@@ -36,16 +48,23 @@ namespace ERIN
       [[nodiscard]] RealTimeType get_max_time_in_seconds() const {
         return time_to_seconds(max_time, time_unit);
       }
+      //[[nodiscard]] bool has_random_seed() const { return has_seed; }
+      //[[nodiscard]] unsigned int get_random_seed() const { return seed; }
       bool operator==(const SimulationInfo& other) const;
       bool operator!=(const SimulationInfo& other) const {
         return !(operator==(other));
       }
+      [[nodiscard]] std::function<double()> make_random_function() const;
 
     private:
       std::string rate_unit;
       std::string quantity_unit;
       TimeUnits time_unit;
       RealTimeType max_time;
+      //bool has_seed;
+      //unsigned int seed;
+      bool has_fixed_random_frac;
+      double fixed_random_frac;
   };
 
   ////////////////////////////////////////////////////////////

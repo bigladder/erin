@@ -363,6 +363,7 @@ namespace ERIN
         std::unordered_map<
           std::string,
           std::vector<double>>> failure_probs_by_comp_id_by_scenario_id;
+      std::function<double()> rand_fn;
 
       void check_data() const;
       void generate_failure_fragilities();

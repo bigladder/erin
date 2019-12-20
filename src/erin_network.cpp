@@ -4,11 +4,12 @@
 #include "debug_utils.h"
 #include "erin/network.h"
 #include "erin/port.h"
+#include <functional>
+#include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
-#include <sstream>
 #include <vector>
-#include <stdexcept>
 
 namespace erin::network
 {
@@ -61,7 +62,8 @@ namespace erin::network
         std::string,
         ::ERIN::PortsAndElements>& ports_and_elements,
       const std::unordered_map<std::string, std::vector<double>>&
-        failure_probs_by_comp_id)
+        failure_probs_by_comp_id,
+      const std::function<double()>& rand_fn)
   {
     auto comp_it = comps_added.find(comp_id);
     if (comp_it == comps_added.end()) {
@@ -75,13 +77,33 @@ namespace erin::network
       const auto& c = it->second;
       bool is_failed{false};
       auto probs_it = failure_probs_by_comp_id.find(comp_id);
+      double random_fraction{0.0};
       if (probs_it != failure_probs_by_comp_id.end()) {
         for (const auto p: probs_it->second) {
+          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+            std::cout << "add_if_not_added(...)\n"
+                      << "... comp_id = " << comp_id << "\n"
+                      << "... p       = " << p << "\n";
+          }
           if (p >= 1.0) {
             is_failed = true;
             break;
           }
+          else if (p <= 0.0) {
+            continue;
+          }
+          else {
+            random_fraction = rand_fn();
+            if (random_fraction <= p) {
+              is_failed = true;
+              break;
+            }
+          }
         }
+      }
+      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+        std::cout << "add_if_not_added(...)\n"
+                  << "... is_failed = " << (is_failed ? "true" : "false") << "\n";
       }
       auto pe = c->add_to_network(network, scenario_id, is_failed);
       ports_and_elements[comp_id] = pe;
@@ -190,7 +212,8 @@ namespace erin::network
       const std::unordered_map<
         std::string, std::unique_ptr<ERIN::Component>>& components,
       const std::unordered_map<
-        std::string, std::vector<double>>& failure_probs_by_comp_id)
+        std::string, std::vector<double>>& failure_probs_by_comp_id,
+      const std::function<double()>& rand_fn)
   {
     if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
       namespace E = ::ERIN;
@@ -217,10 +240,10 @@ namespace erin::network
       }
       add_if_not_added(
           comp1_id, scenario_id, components, network, comps_added, pes,
-          failure_probs_by_comp_id);
+          failure_probs_by_comp_id, rand_fn);
       add_if_not_added(
           comp2_id, scenario_id, components, network, comps_added, pes,
-          failure_probs_by_comp_id);
+          failure_probs_by_comp_id, rand_fn);
       connect(
           network,
           pes.at(comp1_id).port_map,

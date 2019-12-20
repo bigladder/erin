@@ -14,7 +14,11 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // SimulationInfo
   SimulationInfo::SimulationInfo():
-    SimulationInfo("kW", "kJ", TimeUnits::Seconds, default_max_time_s)
+    SimulationInfo(
+        "kW",
+        "kJ",
+        TimeUnits::Seconds,
+        default_max_time_s)
   {
   }
 
@@ -30,10 +34,33 @@ namespace ERIN
       const std::string& quantity_unit_,
       TimeUnits time_unit_,
       RealTimeType max_time_):
+    SimulationInfo(
+        rate_unit_,
+        quantity_unit_,
+        time_unit_,
+        max_time_,
+        false,
+        0.0)
+  {
+  }
+
+  SimulationInfo::SimulationInfo(
+      const std::string& rate_unit_,
+      const std::string& quantity_unit_,
+      TimeUnits time_unit_,
+      RealTimeType max_time_,
+      //bool has_seed_,
+      //unsigned int seed_value_,
+      bool has_fixed_random_,
+      double fixed_random_):
     rate_unit{rate_unit_},
     quantity_unit{quantity_unit_},
     time_unit{time_unit_},
-    max_time{max_time_}
+    max_time{max_time_},
+    //has_seed{has_seed_},
+    //seed{seed_value_},
+    has_fixed_random_frac{has_fixed_random_},
+    fixed_random_frac{fixed_random_}
   {
     if (max_time <= 0.0) {
       std::ostringstream oss;
@@ -50,7 +77,19 @@ namespace ERIN
     }
     return (rate_unit == other.rate_unit) &&
            (quantity_unit == other.quantity_unit) &&
-           (get_max_time_in_seconds() == other.get_max_time_in_seconds());
+           (get_max_time_in_seconds() == other.get_max_time_in_seconds()) &&
+           (has_fixed_random_frac == other.has_fixed_random_frac) &&
+           (has_fixed_random_frac
+              ? (fixed_random_frac == other.fixed_random_frac)
+              : true);
+  }
+
+  std::function<double()>
+  SimulationInfo::make_random_function() const
+  {
+    return [this]() -> double {
+      return fixed_random_frac;
+    };
   }
 
   //////////////////////////////////////////////////////////// 

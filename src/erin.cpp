@@ -83,7 +83,8 @@ namespace ERIN
   SimulationInfo
   TomlInputReader::read_simulation_info()
   {
-    const auto sim_info = toml::find(data, "simulation_info");
+    const auto& sim_info = toml::find(data, "simulation_info");
+    const auto& tt = toml::find<toml::table>(data, "simulation_info");
     const std::string rate_unit =
       toml::find_or(sim_info, "rate_unit", "kW");
     const std::string quantity_unit =
@@ -91,9 +92,17 @@ namespace ERIN
     const std::string time_tag =
       toml::find_or(sim_info, "time_unit", "years");
     const TimeUnits time_units = tag_to_time_units(time_tag);
+    auto it_fixed_random_frac = tt.find("fixed_random_frac");
+    bool has_fixed{it_fixed_random_frac != tt.end()};
+    double fixed_random_frac{0.0};
+    if (has_fixed) {
+      fixed_random_frac = toml::get<double>(it_fixed_random_frac->second);
+    }
     const RealTimeType max_time =
       static_cast<RealTimeType>(toml::find_or(sim_info, "max_time", 1000));
-    return SimulationInfo{rate_unit, quantity_unit, time_units, max_time};
+    return SimulationInfo{
+      rate_unit, quantity_unit, time_units, max_time,
+      has_fixed, fixed_random_frac};
   }
 
   std::unordered_map<std::string, StreamType>
@@ -1678,6 +1687,10 @@ namespace ERIN
     scenarios = reader.read_scenarios();
     check_data();
     generate_failure_fragilities();
+    //if (sim_info.has_random_seed()) {
+    //  generator.seed(sim_info.get_random_seed());
+    //}
+    rand_fn = sim_info.make_random_function();
   }
 
   Main::Main(
@@ -1705,6 +1718,7 @@ namespace ERIN
     }
     check_data();
     generate_failure_fragilities();
+    rand_fn = sim_info.make_random_function();
   }
 
   void
@@ -1777,7 +1791,7 @@ namespace ERIN
     const auto& connections = networks[network_id];
     const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = ::erin::network::build(
-        scenario_id, network, connections, components, fpbc);
+        scenario_id, network, connections, components, fpbc, rand_fn);
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();

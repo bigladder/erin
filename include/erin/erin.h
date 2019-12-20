@@ -296,6 +296,10 @@ namespace ERIN
       [[nodiscard]] std::unordered_map<
         std::string, std::vector<ScenarioResults>::size_type>
           get_num_results() const;
+      [[nodiscard]] std::unordered_map<
+        std::string,
+        std::unordered_map<std::string, std::vector<double>>>
+          get_total_energy_availabilities() const;
 
     private:
       bool is_good;

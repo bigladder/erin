@@ -2359,8 +2359,12 @@ TEST(ErinBasicsTest, TestIsSuperset)
 
 TEST(ErinBasicsTest, TestRepeatableRandom)
 {
-  // objective: load up a system such as example 03, but run it in a deterministic way.
-  // Let's assume that we can hard-code all outputs from random generators.
+  // objective: load up a system such as example 03 and run it in a
+  // deterministic way (deterministic across platform).
+  // options:
+  // - set the random seed (is it deterministic across platform?)
+  // - set the random generators to constants (my preference)
+  // Note: still need a way to set the seed, though...
   std::string input =
     "[simulation_info]\n"
     "rate_unit = \"kW\"\n"
@@ -2440,6 +2444,42 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
       results.number_of_scenarios());
   EXPECT_EQ(expected_scenario_ids, results.get_scenario_ids());
   EXPECT_EQ(expected_num_results, results.get_num_results());
+  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>> expected_teas;
+  expected_teas.emplace(
+      std::make_pair(
+        std::string{"blue_sky"},
+        std::unordered_map<std::string, std::vector<double>>{{std::string{"electricity"}, {1.0}}}));
+  expected_teas.emplace(
+      std::make_pair(
+        std::string{"class_4_hurricane"},
+        std::unordered_map<std::string, std::vector<double>>{
+          {std::string{"electricity"}, {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}}}));
+  // total_energy_availabilities should be:
+  // (Map ScenarioID:String
+  //      (Map StreamName:String
+  //           (Vector TotalEnergyAvailability:Double)))
+  // total_energy_availability is the sum of all the consumed energy by stream
+  // over all loads divided by the sum of all requested energy by stream over
+  // all loads. For this specific problem, since we only have electricity, it should be:
+  // {"blue_sky" {"electricity" [1.0]}, "class_4_hurricane" {"electricity" [...]}}
+  // The point is that the class_4_hurricane results will be random and
+  // probably either a 1 or 0 but non-deterministic. This is the point of this
+  // test -- to make those random processes deterministic.
+  // Approach: ScenarioResults::total_requested_loads_by_stream() -> {StreamName:String TotalRequestedLoad:Double}
+  // Approach: ScenarioResults::total_achieved_loads_by_stream() -> {StreamName:String TotalAchievedLoad:Double}
+  // Approach: ScenarioResults::total_energy_availability() -> {StreamName:String TotalEnergyAvailability:Double}
+  // Query total_energy_availability from AllResults and format as {StreamName:String [TotalEnergyAvailability:Double ...]}.
+  // We should be able to build off of another test to write all the ScenarioResults methods.
+  // This test will only test that get_total_energy_availabilities() works...
+  auto actual_teas = results.get_total_energy_availabilities();
+  /*
+  ASSERT_EQ(
+      actual_teas.at("blue_sky").size(),
+      expected_teas.at("blue_sky").size());
+  EXPECT_EQ(
+      actual_teas["blue_sky"][0],
+      expected_teas["blue_sky"][0]);
+  */
 }
 
 int

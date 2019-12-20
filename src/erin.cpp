@@ -1549,6 +1549,38 @@ namespace ERIN
     return out;
   }
 
+  std::unordered_map<
+    std::string,
+    std::unordered_map<std::string, std::vector<double>>>
+  AllResults::get_total_energy_availabilities() const
+  {
+    //using size_type = std::vector<ScenarioResults>::size_type;
+    using T_scenario_id = std::string;
+    using T_stream_name = std::string;
+    using T_total_energy_availability = double;
+    using T_total_energy_availability_return =
+      std::unordered_map<
+        T_scenario_id,
+        std::unordered_map<
+          T_stream_name,
+          std::vector<T_total_energy_availability>>>;
+    T_total_energy_availability_return out;
+    /*
+    for (const auto& scenario_id: scenario_ids) {
+      const auto& srs = results.at(scenario_id);
+      const auto num_srs = srs.size();
+      std::vector<double> vs(srs.size(), 0.0);
+      for (size_type i{0}; i < num_srs; ++i) {
+        const auto& sr = srs.at(i);
+        const auto& stats = srs.get_statistics();
+        //vs[i] = sr.calc_energy_availability();
+      }
+      out[scenario_id] = vs;
+    }
+    */
+    return out;
+  }
+
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file

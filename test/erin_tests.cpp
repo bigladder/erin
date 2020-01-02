@@ -2984,6 +2984,83 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
   ASSERT_NE(sr2, sr12);
 }
 
+TEST(ErinBasicsTest, AllResultsEquality)
+{
+  namespace E = ::ERIN;
+  bool is_good{true};
+  E::RealTimeType start_time_s{0};
+  E::RealTimeType max_time_s{60};
+  E::ScenarioResults sr1{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  E::ScenarioResults sr2{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  E::ScenarioResults sr3{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"C", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"C", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"C", E::ComponentType::Source}}};
+  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map1{
+    {"A", {sr1}},
+    {"B", {sr1, sr2}}};
+  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map2{
+    {"A", {sr1}},
+    {"B", {sr1, sr2}}};
+  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map3{
+    {"A", {sr1}}};
+  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map4{
+    {"A", {sr1, sr2}},
+    {"C", {sr1}}};
+  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map5{
+    {"A", {sr1, sr2}},
+    {"B", {sr1, sr2}}};
+  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map6{
+    {"A", {sr1}},
+    {"B", {sr1, sr3}}};
+  const E::AllResults ar1{is_good, sr_map1};
+  const E::AllResults ar2{is_good, sr_map2};
+  ASSERT_EQ(ar1, ar2);
+  const E::AllResults ar3{!is_good, sr_map1};
+  ASSERT_NE(ar1, ar3);
+  const E::AllResults ar4{is_good, sr_map3};
+  ASSERT_NE(ar1, ar4);
+  const E::AllResults ar5{is_good, sr_map4};
+  ASSERT_NE(ar1, ar5);
+  const E::AllResults ar6{is_good, sr_map5};
+  ASSERT_NE(ar1, ar6);
+  const E::AllResults ar7{is_good, sr_map6};
+  ASSERT_NE(ar1, ar7);
+}
+
 int
 main(int argc, char **argv)
 {

@@ -316,6 +316,8 @@ namespace ERIN
         std::unordered_map<std::string, std::vector<double>>>
           get_total_energy_availabilities() const;
 
+      friend bool operator==(const AllResults& a, const AllResults& b);
+
     private:
       bool is_good;
       std::unordered_map<std::string, std::vector<ScenarioResults>> results;
@@ -332,6 +334,9 @@ namespace ERIN
         std::pair<RealTimeType,std::string>,
         std::reference_wrapper<const ScenarioResults>> outputs;
   };
+
+  bool operator==(const AllResults& a, const AllResults& b);
+  bool operator!=(const AllResults& a, const AllResults& b);
 
   ////////////////////////////////////////////////////////////
   // Main Class

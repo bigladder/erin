@@ -1759,6 +1759,48 @@ namespace ERIN
     return out;
   }
 
+  bool
+  all_results_results_equal(
+      const std::unordered_map<std::string,std::vector<ScenarioResults>>& a,
+      const std::unordered_map<std::string,std::vector<ScenarioResults>>& b)
+  {
+    auto a_size = a.size();
+    auto b_size = b.size();
+    if (a_size != b_size) {
+      return false;
+    }
+    for (const auto& item: a) {
+      auto b_it = b.find(item.first);
+      if (b_it == b.end()) {
+        return false;
+      }
+      auto a_item_size = item.second.size();
+      auto b_item_size = b_it->second.size();
+      if (a_item_size != b_item_size) {
+        return false;
+      }
+      for (decltype(a_item_size) i{0}; i < a_item_size; ++i) {
+        if (item.second[i] != b_it->second[i]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool
+  operator==(const AllResults& a, const AllResults& b)
+  {
+    return (a.is_good == b.is_good) &&
+      all_results_results_equal(a.results, b.results);
+  }
+
+  bool
+  operator!=(const AllResults& a, const AllResults& b)
+  {
+    return !(a == b);
+  }
+
   //////////////////////////////////////////////////////////// 
   // Main
   // main class that runs the simulation from file

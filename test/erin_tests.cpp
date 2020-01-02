@@ -2762,6 +2762,7 @@ TEST(ErinBasicsTest, TestThatRandomProcessDoesNotCreateTheSameSeriesTwice)
   namespace E = ::ERIN;
   E::SimulationInfo si1{"kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0};
   E::SimulationInfo si2{"kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0};
+  ASSERT_NE(si1.get_random_seed(), si2.get_random_seed());
   auto f1 = si1.make_random_function();
   auto f2 = si2.make_random_function();
   const int num_queries{100};

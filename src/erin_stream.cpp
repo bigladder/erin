@@ -4,6 +4,7 @@
 #include "erin/stream.h"
 #include "debug_utils.h"
 #include <chrono>
+#include <limits>
 #include <stdexcept>
 
 namespace ERIN
@@ -107,7 +108,10 @@ namespace ERIN
       namespace C = std::chrono;
       auto now = C::high_resolution_clock::now();
       auto d = now.time_since_epoch();
-      seed_value = d.count();
+      unsigned int range =
+        std::numeric_limits<unsigned int>::max()
+        - std::numeric_limits<unsigned int>::min();
+      seed_value = d.count() % range;
     }
     generator.seed(seed_value);
   }

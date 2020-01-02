@@ -60,7 +60,9 @@ namespace ERIN
     //has_seed{has_seed_},
     //seed{seed_value_},
     has_fixed_random_frac{has_fixed_random_},
-    fixed_random_frac{fixed_random_}
+    fixed_random_frac{fixed_random_},
+    generator{},
+    distribution{0.0,1.0}
   {
     if (max_time <= 0.0) {
       std::ostringstream oss;
@@ -85,10 +87,15 @@ namespace ERIN
   }
 
   std::function<double()>
-  SimulationInfo::make_random_function() const
+  SimulationInfo::make_random_function()
   {
+    if (has_fixed_random_frac) {
+      return [this]() -> double {
+        return fixed_random_frac;
+      };
+    }
     return [this]() -> double {
-      return fixed_random_frac;
+      return distribution(generator);
     };
   }
 

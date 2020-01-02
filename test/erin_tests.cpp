@@ -2737,6 +2737,26 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
   }
 }
 
+TEST(ErinBasicsTest, TestThatRandomProcessWorks)
+{
+  namespace E = ::ERIN;
+  E::SimulationInfo si{"kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0};
+  auto f = si.make_random_function();
+  double previous{0.0};
+  double current{0.0};
+  bool passed{false};
+  const int max_tries{100};
+  for (int i{0}; i < max_tries; ++i) {
+    current = f();
+    if ((i != 0) && (previous != current)) {
+      passed = true;
+      break;
+    }
+    previous = current;
+  }
+  ASSERT_TRUE(passed);
+}
+
 int
 main(int argc, char **argv)
 {

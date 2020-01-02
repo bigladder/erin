@@ -54,7 +54,7 @@ namespace ERIN
       bool operator!=(const SimulationInfo& other) const {
         return !(operator==(other));
       }
-      [[nodiscard]] std::function<double()> make_random_function() const;
+      [[nodiscard]] std::function<double()> make_random_function();
 
     private:
       std::string rate_unit;
@@ -65,6 +65,8 @@ namespace ERIN
       //unsigned int seed;
       bool has_fixed_random_frac;
       double fixed_random_frac;
+      std::default_random_engine generator;
+      std::uniform_real_distribution<double> distribution;
   };
 
   ////////////////////////////////////////////////////////////

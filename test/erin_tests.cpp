@@ -2799,6 +2799,81 @@ TEST(ErinBasicsTest, TestThatRandomProcessCreatesTheSameSeriesTwiceIfSeeded)
   EXPECT_EQ(series1, series2);
 }
 
+TEST(ErinBasicsTest, TestRepeatableRandom3)
+{
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 100\n"
+    "random_seed = 1\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[loads.default]\n"
+    "time_unit = \"hours\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[4.0]]\n"
+    "[components.electric_utility]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 100.0\n"
+    "fragilities = [\"highly_vulnerable_to_wind\"]\n"
+    "[components.cluster_01_electric]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "loads_by_scenario.class_4_hurricane = \"default\"\n"
+    "[components.emergency_generator]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 50.0\n"
+    "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+    "[components.bus]\n"
+    "type = \"muxer\"\n"
+    "stream = \"electricity\"\n"
+    "num_inflows = 2\n"
+    "num_outflows = 1\n"
+    "dispatch_strategy = \"in_order\"\n"
+    "[fragility.somewhat_vulnerable_to_flooding]\n"
+    "vulnerable_to = \"inundation_depth_ft\"\n"
+    "type = \"linear\"\n"
+    "lower_bound = 6.0\n"
+    "upper_bound = 14.0\n"
+    "[fragility.highly_vulnerable_to_wind]\n"
+    "vulnerable_to = \"wind_speed_mph\"\n"
+    "type = \"linear\"\n"
+    "lower_bound = 80.0\n"
+    "upper_bound = 160.0\n"
+    "[networks.normal_operations]\n"
+    "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
+    "[networks.emergency_operations]\n"
+    "connections = [\n"
+    "  [\"electric_utility\", \"outflow\", \"0\", \"bus\", \"inflow\", \"0\"],\n"
+    "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
+    "  [\"bus\", \"cluster_01_electric\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_units = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 4\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "[scenarios.class_4_hurricane]\n"
+    "time_units = \"hours\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 10}\n"
+    "duration = 4\n"
+    "max_occurrences = -1\n"
+    "network = \"emergency_operations\"\n"
+    "intensity.wind_speed_mph = 156\n"
+    "intensity.inundation_depth_ft = 8\n";
+  namespace E = ::ERIN;
+  auto m1 = E::make_main_from_string(input);
+  auto results1 = m1.run_all();
+  auto m2 = E::make_main_from_string(input);
+  auto results2 = m2.run_all();
+  EXPECT_EQ(results1, results2);
+}
+
 TEST(ErinBasicsTest, ScenarioResultsEquality)
 {
   namespace E = ::ERIN;

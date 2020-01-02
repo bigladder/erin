@@ -98,11 +98,18 @@ namespace ERIN
     if (has_fixed) {
       fixed_random_frac = toml::get<double>(it_fixed_random_frac->second);
     }
+    auto it_random_seed = tt.find("random_seed");
+    bool has_seed{it_random_seed != tt.end()};
+    unsigned int seed{0};
+    if (has_seed) {
+      seed = toml::get<unsigned int>(it_random_seed->second);
+    }
     const RealTimeType max_time =
       static_cast<RealTimeType>(toml::find_or(sim_info, "max_time", 1000));
     return SimulationInfo{
       rate_unit, quantity_unit, time_units, max_time,
-      has_fixed, fixed_random_frac};
+      has_fixed, fixed_random_frac,
+      has_seed, seed};
   }
 
   std::unordered_map<std::string, StreamType>

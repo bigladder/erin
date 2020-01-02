@@ -2777,10 +2777,13 @@ TEST(ErinBasicsTest, TestThatRandomProcessDoesNotCreateTheSameSeriesTwice)
 TEST(ErinBasicsTest, TestThatRandomProcessCreatesTheSameSeriesTwiceIfSeeded)
 {
   namespace E = ::ERIN;
+  unsigned int seed{1};
   E::SimulationInfo si1{
-    "kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0, true, 1};
+    "kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0, true, seed};
   E::SimulationInfo si2{
-    "kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0, true, 1};
+    "kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0, true, seed};
+  EXPECT_TRUE(si1.has_random_seed());
+  EXPECT_TRUE(si2.has_random_seed());
   auto f1 = si1.make_random_function();
   auto f2 = si2.make_random_function();
   const int num_queries{100};

@@ -55,7 +55,7 @@ namespace ERIN
       [[nodiscard]] RealTimeType get_max_time_in_seconds() const {
         return time_to_seconds(max_time, time_unit);
       }
-      //[[nodiscard]] bool has_random_seed() const { return has_seed; }
+      [[nodiscard]] bool has_random_seed() const { return has_seed; }
       //[[nodiscard]] unsigned int get_random_seed() const { return seed_value; }
       bool operator==(const SimulationInfo& other) const;
       bool operator!=(const SimulationInfo& other) const {

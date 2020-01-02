@@ -1310,6 +1310,96 @@ namespace ERIN
     return out;
   }
 
+  bool
+  scenario_results_results_equal(
+      const std::unordered_map<std::string, std::vector<Datum>>& a,
+      const std::unordered_map<std::string, std::vector<Datum>>& b)
+  {
+    auto a_size = a.size();
+    auto b_size = b.size();
+    if (a_size != b_size) {
+      return false;
+    }
+    for (const auto& item: a) {
+      auto b_it = b.find(item.first);
+      if (b_it == b.end()) {
+        return false;
+      }
+      auto a_item_size = item.second.size();
+      auto b_item_size = b_it->second.size();
+      if (a_item_size != b_item_size) {
+        return false;
+      }
+      for (decltype(a_item_size) i{0}; i < a_item_size; ++i) {
+        if (item.second[i] != b_it->second[i]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool
+  scenario_results_stream_types_equal(
+      const std::unordered_map<std::string, StreamType>& a,
+      const std::unordered_map<std::string, StreamType>& b)
+  {
+    auto a_size = a.size();
+    auto b_size = b.size();
+    if (a_size != b_size) {
+      return false;
+    }
+    for (const auto& item: a) {
+      auto b_it = b.find(item.first);
+      if (b_it == b.end()) {
+        return false;
+      }
+      if (item.second != b_it->second) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool
+  scenario_results_component_types_equal(
+      const std::unordered_map<std::string, ComponentType>& a,
+      const std::unordered_map<std::string, ComponentType>& b)
+  {
+    auto a_size = a.size();
+    auto b_size = b.size();
+    if (a_size != b_size) {
+      return false;
+    }
+    for (const auto& item: a) {
+      auto b_it = b.find(item.first);
+      if (b_it == b.end()) {
+        return false;
+      }
+      if (item.second != b_it->second) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool
+  operator==(const ScenarioResults& a, const ScenarioResults& b)
+  {
+    return (a.is_good == b.is_good) &&
+      (a.scenario_start_time == b.scenario_start_time) &&
+      (a.scenario_duration == b.scenario_duration) &&
+      scenario_results_results_equal(a.results, b.results) &&
+      scenario_results_stream_types_equal(a.stream_types, b.stream_types) &&
+      scenario_results_component_types_equal(a.component_types, b.component_types);
+  }
+
+  bool
+  operator!=(const ScenarioResults& a, const ScenarioResults& b)
+  {
+    return !(a == b);
+  }
+
   ////////////////////////////////////////////////////////////
   // ScenarioStats
   ScenarioStats

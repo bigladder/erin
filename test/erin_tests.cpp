@@ -2799,6 +2799,191 @@ TEST(ErinBasicsTest, TestThatRandomProcessCreatesTheSameSeriesTwiceIfSeeded)
   EXPECT_EQ(series1, series2);
 }
 
+TEST(ErinBasicsTest, ScenarioResultsEquality)
+{
+  namespace E = ::ERIN;
+  bool is_good{true};
+  E::RealTimeType start_time_s{0};
+  E::RealTimeType max_time_s{60};
+  E::ScenarioResults sr1{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  E::ScenarioResults sr2{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  ASSERT_EQ(sr1, sr2);
+  E::ScenarioResults sr3{
+    is_good,
+    start_time_s + 2,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr3);
+  ASSERT_NE(sr2, sr3);
+  E::ScenarioResults sr4{
+    !is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr4);
+  ASSERT_NE(sr2, sr4);
+  E::ScenarioResults sr5{
+    is_good,
+    start_time_s,
+    max_time_s - 1,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s - 1,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s - 1,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr5);
+  ASSERT_NE(sr2, sr5);
+  E::ScenarioResults sr6{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"C", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"C", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"C", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr6);
+  ASSERT_NE(sr2, sr6);
+  E::ScenarioResults sr7{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr7);
+  ASSERT_NE(sr2, sr7);
+  E::ScenarioResults sr8{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.5,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr8);
+  ASSERT_NE(sr2, sr8);
+  E::ScenarioResults sr9{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"C", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr9);
+  ASSERT_NE(sr2, sr9);
+  E::ScenarioResults sr10{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"gasoline"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr10);
+  ASSERT_NE(sr2, sr10);
+  E::ScenarioResults sr11{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"C", E::ComponentType::Source}}};
+  ASSERT_NE(sr1, sr11);
+  ASSERT_NE(sr2, sr11);
+  E::ScenarioResults sr12{
+    is_good,
+    start_time_s,
+    max_time_s,
+    std::unordered_map<std::string,std::vector<E::Datum>>{
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
+    std::unordered_map<std::string,E::StreamType>{
+      {"A", E::StreamType{"electricity"}},
+      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,E::ComponentType>{
+      {"A", E::ComponentType::Load},
+      {"B", E::ComponentType::Load}}};
+  ASSERT_NE(sr1, sr12);
+  ASSERT_NE(sr2, sr12);
+}
+
 int
 main(int argc, char **argv)
 {

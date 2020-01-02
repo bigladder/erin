@@ -98,6 +98,8 @@ namespace ERIN
       [[nodiscard]] std::unordered_map<std::string, FlowValueType>
         total_energy_availability_by_stream() const;
 
+      friend bool operator==(const ScenarioResults& a, const ScenarioResults& b);
+
     private:
       bool is_good;
       RealTimeType scenario_start_time;
@@ -115,6 +117,8 @@ namespace ERIN
   };
 
   ScenarioStats calc_scenario_stats(const std::vector<Datum>& ds);
+  bool operator==(const ScenarioResults& a, const ScenarioResults& b);
+  bool operator!=(const ScenarioResults& a, const ScenarioResults& b);
 
   ////////////////////////////////////////////////////////////
   // Scenario

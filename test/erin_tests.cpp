@@ -2784,6 +2784,8 @@ TEST(ErinBasicsTest, TestThatRandomProcessCreatesTheSameSeriesTwiceIfSeeded)
     "kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0, true, seed};
   EXPECT_TRUE(si1.has_random_seed());
   EXPECT_TRUE(si2.has_random_seed());
+  EXPECT_EQ(seed, si1.get_random_seed());
+  EXPECT_EQ(seed, si2.get_random_seed());
   auto f1 = si1.make_random_function();
   auto f2 = si2.make_random_function();
   const int num_queries{100};

@@ -28,10 +28,17 @@ namespace ERIN
           const std::string& quantity_unit,
           TimeUnits time_unit,
           RealTimeType max_time,
-          //bool has_seed,
-          //unsigned int seed_value,
           bool has_fixed_random_frac,
           double fixed_random_frac);
+      SimulationInfo(
+          const std::string& rate_unit,
+          const std::string& quantity_unit,
+          TimeUnits time_unit,
+          RealTimeType max_time,
+          bool has_fixed_random_frac,
+          double fixed_random_frac,
+          bool has_seed,
+          unsigned int seed_value);
 
       [[nodiscard]] const std::string& get_rate_unit() const {
         return rate_unit;
@@ -49,7 +56,7 @@ namespace ERIN
         return time_to_seconds(max_time, time_unit);
       }
       //[[nodiscard]] bool has_random_seed() const { return has_seed; }
-      //[[nodiscard]] unsigned int get_random_seed() const { return seed; }
+      //[[nodiscard]] unsigned int get_random_seed() const { return seed_value; }
       bool operator==(const SimulationInfo& other) const;
       bool operator!=(const SimulationInfo& other) const {
         return !(operator==(other));
@@ -61,12 +68,12 @@ namespace ERIN
       std::string quantity_unit;
       TimeUnits time_unit;
       RealTimeType max_time;
-      //bool has_seed;
-      //unsigned int seed;
       bool has_fixed_random_frac;
       double fixed_random_frac;
       std::mt19937 generator;
       std::uniform_real_distribution<double> distribution;
+      bool has_seed;
+      unsigned int seed_value;
   };
 
   ////////////////////////////////////////////////////////////

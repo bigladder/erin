@@ -19,14 +19,26 @@ namespace ERIN
         "kW",
         "kJ",
         TimeUnits::Seconds,
-        default_max_time_s)
+        default_max_time_s,
+        false,
+        0.0,
+        false,
+        0)
   {
   }
 
   SimulationInfo::SimulationInfo(
     TimeUnits time_unit_,
     RealTimeType max_time_):
-    SimulationInfo("kW", "kJ", time_unit_, max_time_)
+    SimulationInfo(
+        "kW",
+        "kJ",
+        time_unit_,
+        max_time_,
+        false,
+        0.0,
+        false,
+        0)
   {
   }
 
@@ -41,7 +53,9 @@ namespace ERIN
         time_unit_,
         max_time_,
         false,
-        0.0)
+        0.0,
+        false,
+        0)
   {
   }
 
@@ -50,31 +64,52 @@ namespace ERIN
       const std::string& quantity_unit_,
       TimeUnits time_unit_,
       RealTimeType max_time_,
-      //bool has_seed_,
-      //unsigned int seed_value_,
       bool has_fixed_random_,
       double fixed_random_):
+    SimulationInfo(
+        rate_unit_,
+        quantity_unit_,
+        time_unit_,
+        max_time_,
+        has_fixed_random_,
+        fixed_random_,
+        false,
+        0)
+  {
+  }
+
+  SimulationInfo::SimulationInfo(
+      const std::string& rate_unit_,
+      const std::string& quantity_unit_,
+      TimeUnits time_unit_,
+      RealTimeType max_time_,
+      bool has_fixed_random_,
+      double fixed_random_,
+      bool has_seed_,
+      unsigned int seed_value_):
     rate_unit{rate_unit_},
     quantity_unit{quantity_unit_},
     time_unit{time_unit_},
     max_time{max_time_},
-    //has_seed{has_seed_},
-    //seed{seed_value_},
     has_fixed_random_frac{has_fixed_random_},
     fixed_random_frac{fixed_random_},
     generator{},
-    distribution{0.0,1.0}
+    distribution{0.0,1.0},
+    has_seed{has_seed_},
+    seed_value{seed_value_}
   {
     if (max_time <= 0.0) {
       std::ostringstream oss;
       oss << "max_time must be greater than 0.0";
       throw std::invalid_argument(oss.str());
     }
-    namespace C = std::chrono;
-    auto now = C::high_resolution_clock::now();
-    auto d = now.time_since_epoch();
-    unsigned seed = d.count();
-    generator.seed(seed);
+    if (!has_seed) {
+      namespace C = std::chrono;
+      auto now = C::high_resolution_clock::now();
+      auto d = now.time_since_epoch();
+      seed_value = d.count();
+    }
+    generator.seed(seed_value);
   }
 
   bool

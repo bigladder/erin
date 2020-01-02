@@ -2757,6 +2757,23 @@ TEST(ErinBasicsTest, TestThatRandomProcessWorks)
   ASSERT_TRUE(passed);
 }
 
+TEST(ErinBasicsTest, TestThatRandomProcessDoesNotCreateTheSameSeriesTwice)
+{
+  namespace E = ::ERIN;
+  E::SimulationInfo si1{"kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0};
+  E::SimulationInfo si2{"kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0};
+  auto f1 = si1.make_random_function();
+  auto f2 = si2.make_random_function();
+  const int num_queries{100};
+  std::vector<double> series1(num_queries, 2.0);
+  std::vector<double> series2(num_queries, 2.0);
+  for (int i{0}; i < num_queries; ++i) {
+    series1[i] = f1();
+    series2[i] = f2();
+  }
+  EXPECT_NE(series1, series2);
+}
+
 int
 main(int argc, char **argv)
 {

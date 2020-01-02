@@ -65,7 +65,7 @@ namespace ERIN
       //unsigned int seed;
       bool has_fixed_random_frac;
       double fixed_random_frac;
-      std::default_random_engine generator;
+      std::mt19937 generator;
       std::uniform_real_distribution<double> distribution;
   };
 

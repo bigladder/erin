@@ -3,6 +3,7 @@
 
 #include "erin/stream.h"
 #include "debug_utils.h"
+#include <chrono>
 #include <stdexcept>
 
 namespace ERIN
@@ -69,6 +70,11 @@ namespace ERIN
       oss << "max_time must be greater than 0.0";
       throw std::invalid_argument(oss.str());
     }
+    namespace C = std::chrono;
+    auto now = C::high_resolution_clock::now();
+    auto d = now.time_since_epoch();
+    unsigned seed = d.count();
+    generator.seed(seed);
   }
 
   bool

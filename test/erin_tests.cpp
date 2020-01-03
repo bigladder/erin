@@ -427,9 +427,11 @@ TEST(ErinBasicsTest, CanReadSimulationInfoFromToml)
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
         "time_unit = \"hours\"\n"
-        "max_time = 3000\n";
+        "max_time = 3000\n"
+        "random_seed = 0\n";
   E::TomlInputReader tir{ss};
-  E::SimulationInfo expected{"kW", "kJ", E::TimeUnits::Hours, 3000};
+  E::SimulationInfo expected{
+    "kW", "kJ", E::TimeUnits::Hours, 3000, false, 0.0, true, 0};
   auto actual = tir.read_simulation_info();
   EXPECT_EQ(expected, actual);
 }

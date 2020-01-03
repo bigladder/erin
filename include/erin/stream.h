@@ -12,6 +12,93 @@
 namespace ERIN
 {
   ////////////////////////////////////////////////////////////
+  // RandomType
+  enum class RandomType
+  {
+    RandomProcess = 0,
+    FixedProcess
+  };
+
+  ////////////////////////////////////////////////////////////
+  // RandomInfo
+  class RandomInfo
+  {
+    public:
+      RandomInfo() = default;
+      virtual ~RandomInfo() = default;
+      RandomInfo(const RandomInfo&) = delete;
+      RandomInfo& operator=(const RandomInfo&) = delete;
+      RandomInfo(RandomInfo&&) = delete;
+      RandomInfo& operator=(RandomInfo&&) = delete;
+
+      virtual std::unique_ptr<RandomInfo> clone() const = 0;
+      virtual bool has_seed() const = 0;
+      virtual unsigned int get_seed() const = 0;
+      virtual RandomType get_type() const = 0;
+      virtual double call() = 0;
+  };
+
+  bool operator==(
+      const std::unique_ptr<RandomInfo>& a,
+      const std::unique_ptr<RandomInfo>& b);
+  bool operator!=(
+      const std::unique_ptr<RandomInfo>& a,
+      const std::unique_ptr<RandomInfo>& b);
+
+  ////////////////////////////////////////////////////////////
+  // RandomProcess
+  class RandomProcess : public RandomInfo
+  {
+    public:
+      RandomProcess();
+      RandomProcess(unsigned int seed);
+
+      std::unique_ptr<RandomInfo> clone() const override {
+        return std::make_unique<RandomProcess>(seed);
+      };
+      [[nodiscard]] bool has_seed() const override { return true; }
+      [[nodiscard]] unsigned int get_seed() const override { return seed; }
+      [[nodiscard]] RandomType get_type() const override {
+        return RandomType::RandomProcess;
+      }
+      double call() override;
+
+      friend bool operator==(const RandomProcess& a, const RandomProcess& b);
+
+    private:
+      unsigned int seed;
+      std::mt19937 generator;
+      std::uniform_real_distribution<double> distribution;
+  };
+
+  bool operator==(const RandomProcess& a, const RandomProcess& b);
+  bool operator!=(const RandomProcess& a, const RandomProcess& b);
+
+  ////////////////////////////////////////////////////////////
+  // FixedProcess
+  class FixedProcess : public RandomInfo
+  {
+    public:
+      FixedProcess(double fixed_value);
+
+      std::unique_ptr<RandomInfo> clone() const override {
+        return std::make_unique<FixedProcess>(fixed_value);
+      };
+      [[nodiscard]] bool has_seed() const override { return false; }
+      [[nodiscard]] unsigned int get_seed() const override { return 0; }
+      [[nodiscard]] RandomType get_type() const override { return RandomType::FixedProcess; }
+      double call() override { return fixed_value; }
+      
+      friend bool operator==(const FixedProcess& a, const FixedProcess& b);
+
+    private:
+      double fixed_value;
+  };
+
+  bool operator==(const FixedProcess& a, const FixedProcess& b);
+  bool operator!=(const FixedProcess& a, const FixedProcess& b);
+  
+  ////////////////////////////////////////////////////////////
   // SimulationInfo
   class SimulationInfo
   {
@@ -39,6 +126,13 @@ namespace ERIN
           double fixed_random_frac,
           bool has_seed,
           unsigned int seed_value);
+      // Rule of Five
+      // see https://stackoverflow.com/a/43263477
+      ~SimulationInfo() = default;
+      SimulationInfo(const SimulationInfo& other);
+      SimulationInfo& operator=(const SimulationInfo&);
+      SimulationInfo(SimulationInfo&& other) = default;
+      SimulationInfo& operator=(SimulationInfo&&) = default;
 
       [[nodiscard]] const std::string& get_rate_unit() const {
         return rate_unit;
@@ -55,26 +149,26 @@ namespace ERIN
       [[nodiscard]] RealTimeType get_max_time_in_seconds() const {
         return time_to_seconds(max_time, time_unit);
       }
-      [[nodiscard]] bool has_random_seed() const { return has_seed; }
-      [[nodiscard]] unsigned int get_random_seed() const { return seed_value; }
-      bool operator==(const SimulationInfo& other) const;
-      bool operator!=(const SimulationInfo& other) const {
-        return !(operator==(other));
+      [[nodiscard]] bool has_random_seed() const {
+        return random_process->has_seed();
+      }
+      [[nodiscard]] unsigned int get_random_seed() const {
+        return random_process->get_seed();
       }
       [[nodiscard]] std::function<double()> make_random_function();
+
+      friend bool operator==(const SimulationInfo& a, const SimulationInfo& b);
 
     private:
       std::string rate_unit;
       std::string quantity_unit;
       TimeUnits time_unit;
       RealTimeType max_time;
-      bool has_fixed_random_frac;
-      double fixed_random_frac;
-      std::mt19937 generator;
-      std::uniform_real_distribution<double> distribution;
-      bool has_seed;
-      unsigned int seed_value;
+      std::unique_ptr<RandomInfo> random_process;
   };
+
+  bool operator==(const SimulationInfo& a, const SimulationInfo& b);
+  bool operator!=(const SimulationInfo& a, const SimulationInfo& b);
 
   ////////////////////////////////////////////////////////////
   // FlowState

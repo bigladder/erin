@@ -2756,7 +2756,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
 TEST(ErinBasicsTest, TestThatRandomProcessWorks)
 {
   namespace E = ::ERIN;
-  E::SimulationInfo si{"kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0};
+  E::SimulationInfo si{"kW", "kJ", E::TimeUnits::Hours, 4};
   auto f = si.make_random_function();
   double previous{0.0};
   double current{0.0};

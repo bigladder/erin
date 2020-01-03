@@ -726,7 +726,8 @@ namespace ERIN
       }
       return Time{0, 0};
     }
-    std::vector<LoadItem>::size_type next_idx = idx + 1;
+    std::vector<LoadItem>::size_type next_idx =
+      static_cast<std::vector<LoadItem>::size_type>(idx) + 1;
     if (next_idx < num_loads) {
       RealTimeType dt{loads[idx].get_time_advance(loads[next_idx])};
       if constexpr (debug_level >= debug_level_high) {
@@ -768,7 +769,8 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Sink::output_func()\n";
     }
-    std::vector<LoadItem>::size_type next_idx = idx + 1;
+    std::vector<LoadItem>::size_type next_idx =
+      static_cast<std::vector<LoadItem>::size_type>(idx) + 1;
     auto max_idx{num_loads - 1};
     if (next_idx < max_idx) {
       ys.emplace_back(
@@ -991,7 +993,8 @@ namespace ERIN
           const auto final_inflow_port = num_inflows - 1;
           if (highest_inflow_port_received < final_inflow_port) {
             std::vector<FlowValueType>::size_type inflow_port_for_request =
-              highest_inflow_port_received + 1;
+              static_cast<std::vector<FlowValueType>::size_type>(
+                highest_inflow_port_received) + 1;
             set_report_outflow_achieved(false);
             set_report_inflow_request(true);
             inflows = inflows_achieved;

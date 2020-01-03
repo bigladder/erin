@@ -248,13 +248,13 @@ namespace ERIN
   bool
   operator==(const LoadComponent& a, const LoadComponent& b)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "entering operator==(a, b)\n"
                 << "... a.id = " << a.get_id() << "\n"
                 << "... b.id = " << b.get_id() << "\n";
     }
     if (!a.base_is_equal(b)) {
-      if constexpr (debug_level >= debug_level_low) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... not equal because a.base_is_equal(b) is false\n";
       }
       return false;
@@ -264,7 +264,7 @@ namespace ERIN
     const auto num_a_items = a_lbs.size();
     const auto num_b_items = b_lbs.size();
     if (num_a_items != num_b_items) {
-      if constexpr (debug_level >= debug_level_low) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... not equal because num_a_items "
                   << "!= num_b_items\n"
                   << "num_a_items: " << num_a_items << "\n"
@@ -276,7 +276,7 @@ namespace ERIN
       const auto& tag = a_pair.first;
       auto b_it = b_lbs.find(tag);
       if (b_it == b_lbs.end()) {
-        if constexpr (debug_level >= debug_level_low) {
+        if constexpr (debug_level >= debug_level_high) {
           std::cout << "... not equal because tag '" << tag << "' "
             << "doesn't appear in b_lbs\n";
         }
@@ -287,7 +287,7 @@ namespace ERIN
       const auto a_num_loads = a_load_items.size();
       const auto b_num_loads = b_load_items.size();
       if (a_num_loads != b_num_loads) {
-        if constexpr (debug_level >= debug_level_low) {
+        if constexpr (debug_level >= debug_level_high) {
           std::cout << "... not equal because a_num_loads != b_num_loads\n"
             << "tag:         " << tag << "\n"
             << "a_num_loads: " << a_num_loads << "\n"
@@ -299,7 +299,7 @@ namespace ERIN
         const auto& a_load_item = a_load_items[i];
         const auto& b_load_item = b_load_items[i];
         if (a_load_item != b_load_item) {
-          if constexpr (debug_level >= debug_level_low) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << "... not equal because a_load_item != b_load_item\n"
               << "tag:         " << tag << "\n"
               << "i:           " << i << "\n"
@@ -310,7 +310,7 @@ namespace ERIN
         }
       }
     }
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "... is equal\n";
     }
     return true;
@@ -362,13 +362,13 @@ namespace ERIN
   bool
   operator==(const Limits& a, const Limits& b)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "entering operator==(a, b) for Limits\n"
                 << "a = " << a << "\n"
                 << "b = " << b << "\n";
     }
     if (a.is_limited != b.is_limited) {
-      if constexpr (debug_level >= debug_level_low) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... not equal because a.is_limited != b.is_limited\n";
       }
       return false;
@@ -376,7 +376,7 @@ namespace ERIN
     if (a.is_limited) {
       return (a.minimum == b.minimum) && (b.maximum == b.maximum);
     }
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "... is equal\n";
     }
     return true;
@@ -530,7 +530,7 @@ namespace ERIN
   bool
   operator==(const SourceComponent& a, const SourceComponent& b)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "entering operator==(a, b) for SourceComponent\n"
                 << "a = " << a << "\n"
                 << "b = " << b << "\n";
@@ -688,13 +688,13 @@ namespace ERIN
   bool
   MuxerComponent::equals(Component* other) const
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "enter MuxerComponent::equals(...)\n"
                 << "lhs.id = " << get_id() << "\n"
                 << "rhs.id = " << get_id() << "\n";
     }
     if (other == nullptr) {
-      if constexpr (debug_level >= debug_level_low) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... not equal because other is null\n";
       }
       return false;
@@ -703,7 +703,7 @@ namespace ERIN
     if (other_type == ComponentType::Muxer) {
       auto other_p = dynamic_cast<MuxerComponent*>(other);
       if (other_p == nullptr) {
-        if constexpr (debug_level >= debug_level_low) {
+        if constexpr (debug_level >= debug_level_high) {
           std::cout << "... not equal because other "
                     << "failed dynamic cast to MuxerComponent";
         }
@@ -711,7 +711,7 @@ namespace ERIN
       }
       return ((*this) == (*other_p));
     }
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "... not equal because other.type is '"
                 << component_type_to_tag(other_type) << "'\n";
     }
@@ -721,18 +721,18 @@ namespace ERIN
   bool
   operator==(const MuxerComponent& a, const MuxerComponent& b)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "enter operator==(a, b)\n"
                 << "a.id = " << a.get_id() << "\n"
                 << "b.id = " << b.get_id() << "\n";
     }
     if (!a.base_is_equal(b)) {
-      if constexpr (debug_level >= debug_level_low) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "... not equal because a.base_is_equal(b) doesn't pass\n";
       }
       return false;
     }
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "... a.num_inflows  = " << a.num_inflows << "\n";
       std::cout << "... b.num_inflows  = " << b.num_inflows << "\n";
       std::cout << "... a.num_outflows = " << a.num_outflows << "\n";

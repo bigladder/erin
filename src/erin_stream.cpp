@@ -18,13 +18,13 @@ namespace ERIN
       const std::unique_ptr<RandomInfo>& a,
       const std::unique_ptr<RandomInfo>& b)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "unique_ptr<RandomInfo> == unique_ptr<RandomInfo>\n";
     }
     auto a_type = a->get_type();
     auto b_type = b->get_type();
     if (a_type != b_type) {
-      if constexpr (debug_level >= debug_level_low) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "a_type != b_type\n";
         std::cout << "a_type = " << static_cast<int>(a_type) << "\n";
         std::cout << "b_type = " << static_cast<int>(b_type) << "\n";
@@ -34,7 +34,7 @@ namespace ERIN
     switch (a_type) {
       case RandomType::RandomProcess:
         {
-          if constexpr (debug_level >= debug_level_low) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << "RandomProcess compare...\n";
           }
           const auto& a_rp = dynamic_cast<const RandomProcess&>(*a);
@@ -43,7 +43,7 @@ namespace ERIN
         }
       case RandomType::FixedProcess:
         {
-          if constexpr (debug_level >= debug_level_low) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << "FixedProcess compare...\n";
           }
           const auto& a_fp = dynamic_cast<const FixedProcess&>(*a);
@@ -52,7 +52,7 @@ namespace ERIN
         }
       default:
         {
-          if constexpr (debug_level >= debug_level_low) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << "unhandled process...\n";
           }
           std::ostringstream oss;
@@ -82,7 +82,7 @@ namespace ERIN
     namespace C = std::chrono;
     auto now = C::high_resolution_clock::now();
     auto d = now.time_since_epoch();
-    unsigned int range =
+    constexpr unsigned int range =
       std::numeric_limits<unsigned int>::max()
       - std::numeric_limits<unsigned int>::min();
     seed = d.count() % range;
@@ -107,7 +107,7 @@ namespace ERIN
   bool
   operator==(const RandomProcess& a, const RandomProcess& b)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "RandomProcess == RandomProcess...\n";
       std::cout << "a.seed = " << a.seed << "...\n";
       std::cout << "b.seed = " << b.seed << "...\n";
@@ -135,7 +135,7 @@ namespace ERIN
   bool
   operator==(const FixedProcess& a, const FixedProcess& b)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "FixedProcess == FixedProcess...\n";
       std::cout << "a.fixed_value = " << a.fixed_value << "...\n";
       std::cout << "b.fixed_value = " << b.fixed_value << "...\n";

@@ -196,17 +196,19 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
   std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2, 3, 4};
   std::vector<::ERIN::FlowValueType> expected_flow = {50, 50, 40, 0, 0};
   auto elec = ::ERIN::StreamType("electrical");
-  auto meter2 = new ::ERIN::FlowMeter("meter2", ::ERIN::ComponentType::Source, elec);
-  auto lim = new ::ERIN::FlowLimits("lim", ::ERIN::ComponentType::Source, elec, 0, 50);
-  auto meter1 = new ::ERIN::FlowMeter("meter1", ::ERIN::ComponentType::Load, elec);
+  auto meter2 = new ::ERIN::FlowMeter(
+      "meter2", ::ERIN::ComponentType::Source, elec);
+  auto lim = new ::ERIN::FlowLimits(
+      "lim", ::ERIN::ComponentType::Source, elec, 0, 50);
+  auto meter1 = new ::ERIN::FlowMeter(
+      "meter1", ::ERIN::ComponentType::Load, elec);
   auto sink = new ::ERIN::Sink(
       "electric-load", ::ERIN::ComponentType::Load, elec,
-      {
-          ::ERIN::LoadItem{0, 160},
-          ::ERIN::LoadItem{1,80},
-          ::ERIN::LoadItem{2,40},
-          ::ERIN::LoadItem{3,0},
-          ::ERIN::LoadItem{4}});
+      { ::ERIN::LoadItem{0, 160},
+        ::ERIN::LoadItem{1,80},
+        ::ERIN::LoadItem{2,40},
+        ::ERIN::LoadItem{3,0},
+        ::ERIN::LoadItem{4}});
   adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
       sink, ::ERIN::Sink::outport_inflow_request,
@@ -339,8 +341,6 @@ TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
   while (sim.next_event_time() < ::ERIN::inf) {
     sim.exec_next_event();
     t = sim.now();
-    //std::cout << "The current time is: (" << t.real << ", " << t.logical
-    //          << ")" << std::endl;
   }
   std::vector<::ERIN::FlowValueType> actual_genset_output =
     genset_meter->get_achieved_flows();
@@ -382,6 +382,7 @@ TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
 
 TEST(ErinBasicsTest, CanRunUsingComponents)
 {
+  namespace EP = ::erin::port;
   auto elec = ::ERIN::StreamType("electrical");
   auto loads_by_scenario = std::unordered_map<
     std::string, std::vector<::ERIN::LoadItem>>(
@@ -399,8 +400,8 @@ TEST(ErinBasicsTest, CanRunUsingComponents)
     std::make_unique<::ERIN::LoadComponent>(
         load_id, elec, loads_by_scenario);
   ::erin::network::Connection conn{
-    ::erin::network::ComponentAndPort{source_id, ::erin::port::Type::Outflow, 0},
-    ::erin::network::ComponentAndPort{load_id, ::erin::port::Type::Inflow, 0}};
+    ::erin::network::ComponentAndPort{source_id, EP::Type::Outflow, 0},
+    ::erin::network::ComponentAndPort{load_id, EP::Type::Inflow, 0}};
   std::string scenario_id{"bluesky"};
   adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   auto a = load->add_to_network(network, scenario_id);
@@ -420,14 +421,15 @@ TEST(ErinBasicsTest, CanRunUsingComponents)
 
 TEST(ErinBasicsTest, CanReadSimulationInfoFromToml)
 {
+  namespace E = ::ERIN;
   std::stringstream ss{};
   ss << "[simulation_info]\n"
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
         "time_unit = \"hours\"\n"
         "max_time = 3000\n";
-  ::ERIN::TomlInputReader tir{ss};
-  ::ERIN::SimulationInfo expected{"kW", "kJ", ::ERIN::TimeUnits::Hours, 3000};
+  E::TomlInputReader tir{ss};
+  E::SimulationInfo expected{"kW", "kJ", E::TimeUnits::Hours, 3000};
   auto actual = tir.read_simulation_info();
   EXPECT_EQ(expected, actual);
 }
@@ -631,8 +633,10 @@ TEST(ErinBasicsTest, CanReadNetworksFromToml)
   std::unordered_map<std::string, std::vector<enw::Connection>> expected{
     { "normal_operations",
       { enw::Connection{
-          enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
-          enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0}}}}};
+          enw::ComponentAndPort{
+            "electric_utility", ep::Type::Outflow, 0},
+          enw::ComponentAndPort{
+            "cluster_01_electric", ep::Type::Inflow, 0}}}}};
   auto pt = &t;
   auto actual = pt->read_networks();
   EXPECT_EQ(expected.size(), actual.size());
@@ -682,7 +686,9 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
     EXPECT_EQ(e.second.get_name(), a->second.get_name());
     EXPECT_EQ(e.second.get_network_id(), a->second.get_network_id());
     EXPECT_EQ(e.second.get_duration(), a->second.get_duration());
-    EXPECT_EQ(e.second.get_max_occurrences(), a->second.get_max_occurrences());
+    EXPECT_EQ(
+        e.second.get_max_occurrences(),
+        a->second.get_max_occurrences());
     EXPECT_EQ(
         e.second.get_number_of_occurrences(),
         a->second.get_number_of_occurrences());
@@ -798,7 +804,8 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
-  std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
+  std::unordered_set<std::string> expected_keys{
+    "cluster_01_electric", "electric_utility"};
   // out.get_results() : Map String (Vector Datum)
   for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
@@ -856,7 +863,8 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
-  std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
+  std::unordered_set<std::string> expected_keys{
+    "cluster_01_electric", "electric_utility"};
   // out.get_results() : Map String (Vector Datum)
   for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
@@ -907,7 +915,8 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   components.insert(
       std::make_pair(
         source_id,
-        std::make_unique<::ERIN::SourceComponent>(source_id, streams[stream_id])));
+        std::make_unique<::ERIN::SourceComponent>(
+          source_id, streams[stream_id])));
   components.insert(
       std::make_pair(
         load_id,
@@ -1394,7 +1403,8 @@ TEST(ErinBasicsTest, TestGetFragilityCurves)
   vs.emplace_back(std::make_unique<::erin::fragility::Linear>(120.0, 180.0));
   fragilities.insert(std::make_pair("wind_speed_mph", std::move(vs)));
   ::ERIN::SourceComponent c{"source", st, std::move(fragilities)};
-  std::unordered_map<std::string,double> intensities{{"wind_speed_mph", 150.0}};
+  std::unordered_map<std::string,double> intensities{
+    {"wind_speed_mph", 150.0}};
   auto probs = c.apply_intensities(intensities);
   EXPECT_EQ(probs.size(), 1);
   EXPECT_NEAR(probs.at(0), 0.5, 1e-6);
@@ -1808,7 +1818,9 @@ TEST(ErinBasicsTest, TestAddMultipleFragilitiesToAComponent)
   namespace ef = erin::fragility;
   std::string id{"source"};
   auto stream = ::ERIN::StreamType{"electricity"};
-  std::unordered_map<std::string, std::vector<std::unique_ptr<ef::Curve>>> frags;
+  std::unordered_map<
+    std::string,
+    std::vector<std::unique_ptr<ef::Curve>>> frags;
   std::vector<std::unique_ptr<ef::Curve>> v1, v2;
   v1.emplace_back(std::make_unique<ef::Linear>(80, 160.0));
   v1.emplace_back(std::make_unique<ef::Linear>(40.0, 220.0));
@@ -1853,7 +1865,8 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "num_inflows = 2\n"
         "num_outflows = 1\n"
         "dispatch_strategy = \"in_order\"\n"
-        "fragilities = [\"highly_vulnerable_to_wind\", \"somewhat_vulnerable_to_flooding\"]\n"
+        "fragilities = [\"highly_vulnerable_to_wind\", "
+                       "\"somewhat_vulnerable_to_flooding\"]\n"
         "[fragility.somewhat_vulnerable_to_flooding]\n"
         "vulnerable_to = \"inundation_depth_ft\"\n"
         "type = \"linear\"\n"
@@ -1868,8 +1881,10 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
         "[networks.emergency_operations]\n"
         "connections = [\n"
-        "  [\"electric_utility\", \"outflow\", \"0\", \"bus\", \"inflow\", \"0\"],\n"
-        "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
+        "  [\"electric_utility\", \"outflow\", \"0\", "
+           "\"bus\", \"inflow\", \"0\"],\n"
+        "  [\"emergency_generator\", \"outflow\", \"0\", "
+           "\"bus\", \"inflow\", \"1\"],\n"
         "  [\"bus\", \"cluster_01_electric\"]]\n"
         "[scenarios.blue_sky]\n"
         "time_units = \"hours\"\n"
@@ -1965,7 +1980,8 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
-  std::unordered_set<std::string> expected_keys{"cluster_01_electric", "electric_utility"};
+  std::unordered_set<std::string> expected_keys{
+    "cluster_01_electric", "electric_utility"};
   // out.get_results() : Map String (Vector Datum)
   for (const auto& item: out.get_results()) {
     auto it = expected_keys.find(item.first);
@@ -2029,7 +2045,8 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "num_inflows = 2\n"
         "num_outflows = 1\n"
         "dispatch_strategy = \"in_order\"\n"
-        "fragilities = [\"highly_vulnerable_to_wind\", \"somewhat_vulnerable_to_flooding\"]\n"
+        "fragilities = [\"highly_vulnerable_to_wind\", "
+                       "\"somewhat_vulnerable_to_flooding\"]\n"
         "[fragility.somewhat_vulnerable_to_flooding]\n"
         "vulnerable_to = \"inundation_depth_ft\"\n"
         "type = \"linear\"\n"
@@ -2044,8 +2061,10 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
         "[networks.emergency_operations]\n"
         "connections = [\n"
-        "  [\"electric_utility\", \"outflow\", \"0\", \"bus\", \"inflow\", \"0\"],\n"
-        "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
+        "  [\"electric_utility\", \"outflow\", \"0\", "
+           "\"bus\", \"inflow\", \"0\"],\n"
+        "  [\"emergency_generator\", \"outflow\", \"0\", "
+           "\"bus\", \"inflow\", \"1\"],\n"
         "  [\"bus\", \"cluster_01_electric\"]]\n"
         "[scenarios.blue_sky]\n"
         "time_units = \"hours\"\n"
@@ -2527,8 +2546,10 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
     "[networks.emergency_operations]\n"
     "connections = [\n"
-    "  [\"electric_utility\", \"outflow\", \"0\", \"bus\", \"inflow\", \"0\"],\n"
-    "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
+    "  [\"electric_utility\", \"outflow\", \"0\", "
+       "\"bus\", \"inflow\", \"0\"],\n"
+    "  [\"emergency_generator\", \"outflow\", \"0\", "
+       "\"bus\", \"inflow\", \"1\"],\n"
     "  [\"bus\", \"cluster_01_electric\"]]\n"
     "[scenarios.blue_sky]\n"
     "time_units = \"seconds\"\n"
@@ -2654,8 +2675,10 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
     "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
     "[networks.emergency_operations]\n"
     "connections = [\n"
-    "  [\"electric_utility\", \"outflow\", \"0\", \"bus\", \"inflow\", \"0\"],\n"
-    "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
+    "  [\"electric_utility\", \"outflow\", \"0\", "
+       "\"bus\", \"inflow\", \"0\"],\n"
+    "  [\"emergency_generator\", \"outflow\", \"0\", "
+       "\"bus\", \"inflow\", \"1\"],\n"
     "  [\"bus\", \"cluster_01_electric\"]]\n"
     "[scenarios.blue_sky]\n"
     "time_units = \"seconds\"\n"
@@ -2842,8 +2865,10 @@ TEST(ErinBasicsTest, TestRepeatableRandom3)
     "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
     "[networks.emergency_operations]\n"
     "connections = [\n"
-    "  [\"electric_utility\", \"outflow\", \"0\", \"bus\", \"inflow\", \"0\"],\n"
-    "  [\"emergency_generator\", \"outflow\", \"0\", \"bus\", \"inflow\", \"1\"],\n"
+    "  [\"electric_utility\", \"outflow\", \"0\", "
+       "\"bus\", \"inflow\", \"0\"],\n"
+    "  [\"emergency_generator\", \"outflow\", \"0\", "
+       "\"bus\", \"inflow\", \"1\"],\n"
     "  [\"bus\", \"cluster_01_electric\"]]\n"
     "[scenarios.blue_sky]\n"
     "time_units = \"seconds\"\n"
@@ -2930,13 +2955,14 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", E::ComponentType::Source}}};
   ASSERT_NE(sr1, sr4);
   ASSERT_NE(sr2, sr4);
+  auto mt2{max_time_s - 1};
   E::ScenarioResults sr5{
     is_good,
     start_time_s,
-    max_time_s - 1,
+    mt2,
     std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s - 1,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s - 1,0.0,0.0}}}},
+      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{mt2 - 1,0.0,0.0}}},
+      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{mt2 - 1,0.0,0.0}}}},
     std::unordered_map<std::string,E::StreamType>{
       {"A", E::StreamType{"electricity"}},
       {"B", E::StreamType{"electricity"}}},

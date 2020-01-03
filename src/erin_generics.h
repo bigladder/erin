@@ -94,5 +94,58 @@ namespace erin_generics
     oss << "type = \"" << type << "\"\n";
     throw std::runtime_error(oss.str());
   }
+
+  template <class KeyType, class ValType>
+  bool
+  unordered_map_equality(
+      const std::unordered_map<KeyType, ValType>& a,
+      const std::unordered_map<KeyType, ValType>& b)
+  {
+    auto a_size = a.size();
+    auto b_size = b.size();
+    if (a_size != b_size) {
+      return false;
+    }
+    for (const auto& item: a) {
+      auto b_it = b.find(item.first);
+      if (b_it == b.end()) {
+        return false;
+      }
+      if (item.second != b_it->second) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  template <class KeyType, class ValType>
+  bool
+  unordered_map_to_vector_equality(
+      const std::unordered_map<KeyType, std::vector<ValType>>& a,
+      const std::unordered_map<KeyType, std::vector<ValType>>& b)
+  {
+    auto a_size = a.size();
+    auto b_size = b.size();
+    if (a_size != b_size) {
+      return false;
+    }
+    for (const auto& item: a) {
+      auto b_it = b.find(item.first);
+      if (b_it == b.end()) {
+        return false;
+      }
+      auto a_item_size = item.second.size();
+      auto b_item_size = b_it->second.size();
+      if (a_item_size != b_item_size) {
+        return false;
+      }
+      for (decltype(a_item_size) i{0}; i < a_item_size; ++i) {
+        if (item.second[i] != b_it->second[i]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }
 #endif // ERIN_GENERICS_H

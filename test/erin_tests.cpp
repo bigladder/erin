@@ -24,13 +24,6 @@
 
 const double tolerance{1e-6};
 
-TEST(SetupTest, GoogleTestRuns)
-{
-  int x(1);
-  int y(1);
-  EXPECT_EQ(x, y);
-}
-
 TEST(AdevsUsageTest, CanRunCheckoutLineExample)
 {
   // Expected results from ADEVS manual

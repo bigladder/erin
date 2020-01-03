@@ -1991,12 +1991,14 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
     const auto& results = item.second;
     int i{0};
     for (const auto& x : results) {
-      std::cout << "id: " << item.first << "\n";
-      std::cout << "x[" << i << "].time            = " << x.time << "\n"
-                << "x[" << i << "].achieved_value  = " << x.achieved_value
-                << "\n"
-                << "x[" << i << "].requested_value = " << x.requested_value
-                << "\n";
+      if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
+        std::cout << "id: " << item.first << "\n";
+        std::cout << "x[" << i << "].time            = " << x.time << "\n"
+          << "x[" << i << "].achieved_value  = " << x.achieved_value
+          << "\n"
+          << "x[" << i << "].requested_value = " << x.requested_value
+          << "\n";
+      }
       ++i;
     }
     ASSERT_EQ(item.second.size(), 3);

@@ -3159,6 +3159,36 @@ TEST(ErinBasicsTest, AllResultsEquality)
   ASSERT_NE(ar1, ar7);
 }
 
+TEST(ErinBasicsTest, TestWeCanReadDistributionWithOptionalTimeUnits)
+{
+  namespace E = ::ERIN;
+  std::stringstream ss{};
+  ss << "[scenarios.a]\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"fixed\", time_units = \"years\", value = 10}\n"
+        "duration = 10\n"
+        "max_occurrences = 1\n"
+        "network = \"nw_A\"\n"
+        "[scenarios.b]\n"
+        "time_units = \"hours\"\n"
+        "occurrence_distribution = {type = \"fixed\", value = 10}\n"
+        "duration = 10\n"
+        "max_occurrences = 1\n"
+        "network = \"nw_B\"\n";
+  E::TomlInputReader t{ss};
+  auto scenario_map = t.read_scenarios();
+  auto a_it = scenario_map.find("a");
+  ASSERT_TRUE(a_it != scenario_map.end());
+  auto b_it = scenario_map.find("b");
+  ASSERT_TRUE(b_it != scenario_map.end());
+  auto& scenario_a = a_it->second;
+  auto dt_a = scenario_a.ta().real;
+  EXPECT_EQ(dt_a, E::rtt_seconds_per_year * 10);
+  auto& scenario_b = b_it->second;
+  auto dt_b = scenario_b.ta().real;
+  EXPECT_EQ(dt_b, 10);
+}
+
 int
 main(int argc, char **argv)
 {

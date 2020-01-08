@@ -53,6 +53,7 @@ namespace erin_generics
   std::function<T(void)>
   read_toml_distribution(const std::unordered_map<std::string, toml::value>& m)
   {
+    namespace E = ::ERIN;
     const std::string fixed_type{"fixed"}; 
     const std::string random_int_type{"random_integer"};
     auto it = m.find(std::string{"type"});
@@ -62,7 +63,7 @@ namespace erin_generics
       throw std::runtime_error(oss.str());
     }
     const auto& type = toml::get<std::string>(it->second);
-    if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
+    if constexpr (E::debug_level >= E::debug_level_high) {
       std::cout << "type of distribution: " << type << "\n";
     }
     if (type == fixed_type) {
@@ -73,7 +74,14 @@ namespace erin_generics
         throw std::runtime_error(oss.str());
       }
       auto v = toml::get<T>(it_v->second);
-      return ::erin::distribution::make_fixed<T>(v);
+      std::string time_units_tag{"seconds"};
+      auto it_time_units = m.find("time_units");
+      if (it_time_units != m.end()) {
+        time_units_tag = toml::get<std::string>(it_time_units->second);
+      }
+      auto time_units = E::tag_to_time_units(time_units_tag);
+      return ::erin::distribution::make_fixed<T>(
+          time_to_seconds(v, time_units));
     }
     else if (type == random_int_type) {
       std::default_random_engine g;

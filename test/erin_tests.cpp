@@ -3200,22 +3200,34 @@ TEST(ErinBasicsTest, TestWeCanReadDistributionWithOptionalTimeUnits)
   EXPECT_EQ(dt_b, 10);
 }
 
-TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
+ERIN::AllResults
+load_example_results(const std::vector<double>& fixed_rolls)
 {
-  // need a scenario of duration 10 hours that will run 4 times containing a
-  // network of two components A (source) and B (load). A always fails and B
-  // never fails per the given fragility and intensity combination. After
-  // simulation of a multi-scenario analysis, we should calculate a max
-  // downtime of 10 hours for B, NOT 40 hours.
   namespace E = ::ERIN;
+  std::string random_line{};
+  auto num_rolls{fixed_rolls.size()};
+  if (num_rolls == 1) {
+    std::ostringstream oss;
+    oss << "fixed_random_frac = " << fixed_rolls[0] << "\n";
+    random_line = oss.str();
+  }
+  else if (num_rolls > 1) {
+    std::ostringstream oss;
+    oss << "fixed_random_fracs = ";
+    std::string delim{"["};
+    for (const auto& x: fixed_rolls) {
+      oss << delim << x;
+      delim = ",";
+    }
+    oss << "]\n";
+    random_line = oss.str();
+  }
   std::string input =
     "[simulation_info]\n"
     "rate_unit = \"kW\"\n"
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"years\"\n"
-    "max_time = 40\n"
-    "fixed_random_frac = 0.5\n"
-    "[streams.electricity]\n"
+    "max_time = 40\n" + random_line + "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.load01]\n"
     "time_unit = \"hours\"\n"
@@ -3232,8 +3244,8 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
     "[fragility.frag01]\n"
     "vulnerable_to = \"intensity01\"\n"
     "type = \"linear\"\n"
-    "lower_bound = 5.0\n"
-    "upper_bound = 10.0\n"
+    "lower_bound = 10.0\n"
+    "upper_bound = 20.0\n"
     "[networks.nw01]\n"
     "connections = [[\"A\", \"B\"]]\n"
     "[scenarios.scenario01]\n"
@@ -3242,13 +3254,19 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
     "duration = 10\n"
     "max_occurrences = -1\n"
     "network = \"nw01\"\n"
-    "intensity.intensity01 = 20\n";
+    "intensity.intensity01 = 15\n";
+  auto m = E::make_main_from_string(input);
+  return m.run_all();
+}
+
+TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
+{
+  namespace E = ::ERIN;
   const std::string scenario_id{"scenario01"};
   const E::RealTimeType scenario_duration_hrs{10};
   const E::RealTimeType scenario_duration_s{
     scenario_duration_hrs * E::rtt_seconds_per_hour};
-  auto m = E::make_main_from_string(input);
-  auto results = m.run_all();
+  auto results = load_example_results({0.5});
   ASSERT_TRUE(results.get_is_good());
   auto actual_number_of_scenarios = results.number_of_scenarios();
   decltype(actual_number_of_scenarios) expected_number_of_scenarios{1};
@@ -3270,6 +3288,21 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
   auto bad_results = results.with_is_good_as(false);
   auto bad_stats = bad_results.get_stats();
   EXPECT_EQ(bad_stats.size(), 0);
+}
+
+TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
+{
+  namespace E = ::ERIN;
+  const std::string scenario_id{"scenario01"};
+  const E::RealTimeType scenario_duration_hrs{10};
+  const E::RealTimeType scenario_duration_s{
+    scenario_duration_hrs * E::rtt_seconds_per_hour};
+  // should translate to a [not-failed, not-failed, failed, failed] result for component A.
+  auto results = load_example_results({0.75, 0.75, 0.25, 0.25});
+  ASSERT_TRUE(results.get_is_good());
+  auto actual_number_of_scenarios = results.number_of_scenarios();
+  decltype(actual_number_of_scenarios) expected_number_of_scenarios{1};
+  EXPECT_EQ(expected_number_of_scenarios, actual_number_of_scenarios);
 }
 
 int

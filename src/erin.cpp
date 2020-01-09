@@ -1567,42 +1567,41 @@ namespace ERIN
           }
           oss  << "\n";
         }
-        oss << scenario_id
-            << "," << all_ss.num_occurrences
-            << "," <<
-            convert_time_in_seconds_to(
-                all_ss.time_in_scenario_s, TimeUnits::Hours)
-            << "," << "TOTAL (source),,,,,";
-        for (const auto& s: stream_keys) {
-          auto val = EG::find_or<std::string,double>(
-              all_ss.totals_by_stream_id_for_source_kJ, s, 0.0);
-          if (val == 0.0) {
-            oss << ",0.0";
-            continue;
-          }
-          oss << "," << val;
-        }
-        oss  << "\n";
-        oss << scenario_id
-            << "," << all_ss.num_occurrences
-            << "," <<
-            convert_time_in_seconds_to(
-                all_ss.time_in_scenario_s, TimeUnits::Hours)
-            << "," << "TOTAL (load),,,,,";
-        for (const auto& s: stream_keys) {
-          auto val = EG::find_or<std::string,double>(
-              all_ss.totals_by_stream_id_for_load_kJ, s, 0.0);
-          if (val == 0.0) {
-            oss << ",0.0";
-            continue;
-          }
-          oss << "," << val;
-        }
-        oss  << "\n";
+        write_total_line_for_stats_csv(
+            oss, scenario_id, all_ss,
+            all_ss.totals_by_stream_id_for_source_kJ, "source");
+        write_total_line_for_stats_csv(
+            oss, scenario_id, all_ss,
+            all_ss.totals_by_stream_id_for_load_kJ, "load");
       }
       return oss.str();
     }
     return "";
+  }
+
+  void
+  AllResults::write_total_line_for_stats_csv(
+      std::ostream& oss,
+      const std::string& scenario_id,
+      const AllScenarioStats& all_ss,
+      const std::unordered_map<std::string, double>& totals_by_stream,
+      const std::string& label) const
+  {
+    namespace EG = erin_generics;
+    oss << scenario_id
+        << "," << all_ss.num_occurrences
+        << "," << convert_time_in_seconds_to(
+            all_ss.time_in_scenario_s, TimeUnits::Hours)
+        << "," << "TOTAL (" << label << "),,,,,";
+    for (const auto& s: stream_keys) {
+      auto val = EG::find_or<std::string,double>(totals_by_stream, s, 0.0);
+      if (val == 0.0) {
+        oss << ",0.0";
+        continue;
+      }
+      oss << "," << val;
+    }
+    oss  << "\n";
   }
 
   std::unordered_map<std::string, AllScenarioStats>

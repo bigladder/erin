@@ -356,6 +356,13 @@ namespace ERIN
       std::map<
         std::pair<RealTimeType,std::string>,
         std::reference_wrapper<const ScenarioResults>> outputs;
+
+      void write_total_line_for_stats_csv(
+          std::ostream& oss,
+          const std::string& scenario_id,
+          const AllScenarioStats& all_ss,
+          const std::unordered_map<std::string, double>& totals_by_stream,
+          const std::string& label) const;
   };
 
   bool operator==(const AllResults& a, const AllResults& b);

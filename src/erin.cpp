@@ -1612,9 +1612,10 @@ namespace ERIN
           const auto md = stats.downtime;
           const auto lns = stats.load_not_served;
           oss << scenario_id
-              << "," << num_occurrences
+              << "," << all_ss.num_occurrences
               << "," <<
-              convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+              convert_time_in_seconds_to(
+                  all_ss.time_in_scenario_s, TimeUnits::Hours)
               << "," << comp_id
               << "," << comp_type
               << "," << stream_name

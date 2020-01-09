@@ -1501,6 +1501,7 @@ namespace ERIN
   std::string
   AllResults::to_stats_csv() const
   {
+    const auto& the_stats = get_stats();
     if (is_good) {
       std::ostringstream oss;
       oss << "scenario id"
@@ -1516,7 +1517,12 @@ namespace ERIN
         oss << "," << stream_id << " energy used (kJ)";
       }
       oss << "\n";
+      if (the_stats.empty()) {
+        return oss.str();
+      }
       for (const auto& scenario_id: scenario_ids) {
+        const auto& all_ss = the_stats.at(scenario_id);
+
         const auto& results_for_scenario = results.at(scenario_id);
         const auto num_occurrences{results_for_scenario.size()};
         if (num_occurrences == 0) {
@@ -1626,7 +1632,7 @@ namespace ERIN
         }
         auto tbss_end = totals_by_stream_source.end();
         oss << scenario_id
-            << "," << num_occurrences
+            << "," << all_ss.num_occurrences
             << "," <<
             convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
             << "," << "TOTAL (source),,,,,";

@@ -1591,23 +1591,19 @@ namespace ERIN
             continue;
           }
           const auto& stats = stats_by_comp.at(comp_id);
-          std::string stream_name;
-          auto it_st = stream_types.find(comp_id);
-          if (it_st == stream_types.end()) {
-            stream_name = "--";
-          }
-          else {
-            stream_name = it_st->second.get_type();
-          }
-          std::string comp_type;
-          auto it_ct = comp_types.find(comp_id);
-          if (it_ct == comp_types.end()) {
-            comp_type = "--";
-          }
-          else {
-            const auto& ct = comp_types.at(comp_id);
-            comp_type = component_type_to_tag(ct);
-          }
+          namespace EG = erin_generics;
+          std::string stream_name =
+            EG::find_and_transform_or<std::string, StreamType, std::string>(
+                stream_types, comp_id, "--",
+                [](const StreamType& st) -> std::string {
+                  return st.get_type();
+                });
+          std::string comp_type =
+            EG::find_and_transform_or<std::string, ComponentType, std::string>(
+                comp_types, comp_id, "--",
+                [](const ComponentType& ct) -> std::string {
+                  return component_type_to_tag(ct);
+                });
           const auto ea = calc_energy_availability_from_stats(stats);
           const auto lns = stats.load_not_served;
           oss << scenario_id

@@ -155,5 +155,20 @@ namespace erin_generics
     }
     return true;
   }
+
+  template <class KeyType, class Val1Type, class Val2Type>
+  Val2Type
+  find_and_transform_or(
+      const std::unordered_map<KeyType,Val1Type>& map,
+      const KeyType& key,
+      const Val2Type& default_return,
+      const std::function<Val2Type(const Val1Type&)>& f)
+  {
+    auto it = map.find(key);
+    if (it == map.end()) {
+      return default_return;
+    }
+    return f(it->second);
+  }
 }
 #endif // ERIN_GENERICS_H

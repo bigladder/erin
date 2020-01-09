@@ -1501,48 +1501,49 @@ namespace ERIN
   std::string
   AllResults::to_stats_csv() const
   {
-    namespace EG = erin_generics;
-    namespace CSV = erin_csv;
-    const auto& the_stats = get_stats();
-    if (is_good) {
-      std::ostringstream oss;
-      CSV::write_csv(oss, {
-          "scenario id",
-          "number of occurrences",
-          "total time in scenario (hours)",
-          "component id",
-          "type",
-          "stream",
-          "energy availability",
-          "max downtime (hours)",
-          "load not served (kJ)"}, true, false);
-      CSV::write_csv_with_tranform<std::string>(oss, stream_keys,
-          [](const std::string& s) -> std::string {
-            return s + " energy used (kJ)";
-          }, false, true);
-      if (the_stats.empty()) {
-        return oss.str();
-      }
-      for (const auto& scenario_id: scenario_ids) {
-        const auto& all_ss = the_stats.at(scenario_id);
-        auto the_end = all_ss.component_types_by_comp_id.end();
-        for (const auto& comp_id: comp_ids) {
-          auto it = all_ss.component_types_by_comp_id.find(comp_id);
-          if (it == the_end) {
-            continue;
-          }
-          write_component_line_for_stats_csv(oss, all_ss, comp_id, scenario_id);
-        }
-        write_total_line_for_stats_csv(
-            oss, scenario_id, all_ss,
-            all_ss.totals_by_stream_id_for_source_kJ, "source");
-        write_total_line_for_stats_csv(
-            oss, scenario_id, all_ss,
-            all_ss.totals_by_stream_id_for_load_kJ, "load");
-      }
+    const auto& stats = get_stats();
+    if (!is_good) 
+      return "";
+    std::ostringstream oss;
+    write_header_for_stats_csv(oss);
+    if (stats.empty())
       return oss.str();
+    for (const auto& scenario_id: scenario_ids) {
+      const auto& all_ss = stats.at(scenario_id);
+      auto the_end = all_ss.component_types_by_comp_id.end();
+      for (const auto& comp_id: comp_ids) {
+        auto it = all_ss.component_types_by_comp_id.find(comp_id);
+        if (it == the_end)
+          continue;
+        write_component_line_for_stats_csv(oss, all_ss, comp_id, scenario_id);
+      }
+      write_total_line_for_stats_csv(
+          oss, scenario_id, all_ss,
+          all_ss.totals_by_stream_id_for_source_kJ, "source");
+      write_total_line_for_stats_csv(
+          oss, scenario_id, all_ss,
+          all_ss.totals_by_stream_id_for_load_kJ, "load");
     }
-    return "";
+    return oss.str();
+  }
+
+  void
+  AllResults::write_header_for_stats_csv(std::ostream& oss) const
+  {
+    CSV::write_csv(oss, {
+        "scenario id",
+        "number of occurrences",
+        "total time in scenario (hours)",
+        "component id",
+        "type",
+        "stream",
+        "energy availability",
+        "max downtime (hours)",
+        "load not served (kJ)"}, true, false);
+    CSV::write_csv_with_tranform<std::string>(oss, stream_keys,
+        [](const std::string& s) -> std::string {
+          return s + " energy used (kJ)";
+        }, false, true);
   }
 
   void

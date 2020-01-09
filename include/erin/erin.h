@@ -368,6 +368,7 @@ namespace ERIN
           const AllScenarioStats& all_ss,
           const std::string& comp_id,
           const std::string& scenario_id) const;
+      void write_header_for_stats_csv(std::ostream& oss) const;
   };
 
   bool operator==(const AllResults& a, const AllResults& b);

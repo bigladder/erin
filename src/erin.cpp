@@ -1445,6 +1445,7 @@ namespace ERIN
           stream_key_set.begin(), stream_key_set.end());
     }
   }
+
   std::string
   AllResults::to_csv() const
   {
@@ -1475,6 +1476,7 @@ namespace ERIN
     }
     return "";
   }
+
   std::string
   AllResults::to_stats_csv() const
   {
@@ -1635,6 +1637,13 @@ namespace ERIN
       return oss.str();
     }
     return "";
+  }
+
+  std::unordered_map<std::string, AllScenarioStats>
+  AllResults::get_stats() const
+  {
+    std::unordered_map<std::string, AllScenarioStats> stats{};
+    return stats;
   }
 
   std::unordered_map<

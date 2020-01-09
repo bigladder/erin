@@ -3234,7 +3234,9 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
     "intensity.intensity01 = 20\n";
   auto m = E::make_main_from_string(input);
   auto results = m.run_all();
+  ASSERT_TRUE(results.get_is_good());
   EXPECT_EQ(1, results.number_of_scenarios());
+  auto stats = results.get_stats();
 }
 
 int

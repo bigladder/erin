@@ -286,6 +286,12 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
+  // AllScenarioStats
+  struct AllScenarioStats
+  {
+  };
+
+  ////////////////////////////////////////////////////////////
   // AllResults
   class AllResults
   {
@@ -303,6 +309,8 @@ namespace ERIN
         }
       [[nodiscard]] std::string to_csv() const;
       [[nodiscard]] std::string to_stats_csv() const;
+      [[nodiscard]] std::unordered_map<std::string, AllScenarioStats>
+        get_stats() const;
       [[nodiscard]] std::vector<std::string>::size_type
         number_of_scenarios() const { return scenario_ids.size(); }
       [[nodiscard]] std::vector<std::string> get_scenario_ids() const {

@@ -1609,7 +1609,6 @@ namespace ERIN
             comp_type = component_type_to_tag(ct);
           }
           const auto ea = calc_energy_availability_from_stats(stats);
-          const auto md = stats.downtime;
           const auto lns = stats.load_not_served;
           oss << scenario_id
               << "," << all_ss.num_occurrences
@@ -1620,7 +1619,9 @@ namespace ERIN
               << "," << comp_type
               << "," << stream_name
               << "," << ea
-              << "," << convert_time_in_seconds_to(md, TimeUnits::Hours)
+              << "," << convert_time_in_seconds_to(
+                  all_ss.max_downtime_by_comp_id_s.at(comp_id),
+                  TimeUnits::Hours)
               << "," << lns;
           for (const auto& s: stream_keys) {
             if (s != stream_name) {

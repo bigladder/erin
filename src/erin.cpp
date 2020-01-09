@@ -31,6 +31,7 @@ namespace ERIN
   {
     uptime += other.uptime;
     downtime += other.downtime;
+    max_downtime = std::max(max_downtime, other.max_downtime);
     load_not_served += other.load_not_served;
     total_energy += other.total_energy;
     return *this;
@@ -42,6 +43,7 @@ namespace ERIN
     return ScenarioStats{
       a.uptime + b.uptime,
       a.downtime + b.downtime,
+      std::max(a.max_downtime, b.max_downtime),
       a.load_not_served + b.load_not_served,
       a.total_energy + b.total_energy};
   }
@@ -49,7 +51,9 @@ namespace ERIN
   bool
   operator==(const ScenarioStats& a, const ScenarioStats& b)
   {
-    if ((a.uptime == b.uptime) && (a.downtime == b.downtime)) {
+    if ((a.uptime == b.uptime)
+        && (a.downtime == b.downtime)
+        && (a.max_downtime == b.max_downtime)) {
       const auto diff_lns = std::abs(a.load_not_served - b.load_not_served);
       const auto diff_te = std::abs(a.total_energy - b.total_energy);
       const auto& fvt = flow_value_tolerance;
@@ -1345,11 +1349,14 @@ namespace ERIN
   {
     RealTimeType uptime{0};
     RealTimeType downtime{0};
+    RealTimeType max_downtime{0};
+    RealTimeType contiguous_downtime{0};
     RealTimeType t0{0};
     FlowValueType req{0};
     FlowValueType ach{0};
     FlowValueType ach_energy{0};
     FlowValueType load_not_served{0.0};
+    bool was_down{false};
     for (const auto d: ds) {
       if (d.time == 0) {
         req = d.requested_value;
@@ -1374,16 +1381,30 @@ namespace ERIN
       auto gap = std::fabs(req - ach);
       if (gap > flow_value_tolerance) {
         downtime += dt;
+        if (was_down) {
+          contiguous_downtime += dt;
+        }
+        else {
+          contiguous_downtime = dt;
+        }
+        was_down = true;
       }
       else {
         uptime += dt;
+        max_downtime = std::max(contiguous_downtime, max_downtime);
+        was_down = false;
+        contiguous_downtime = 0;
       }
       load_not_served += dt * gap;
       req = d.requested_value;
       ach_energy += ach * dt;
       ach = d.achieved_value;
     }
-    return ScenarioStats{uptime, downtime, load_not_served, ach_energy};
+    if (was_down) {
+      max_downtime = std::max(contiguous_downtime, max_downtime);
+    }
+    return ScenarioStats{
+      uptime, downtime, max_downtime, load_not_served, ach_energy};
   }
 
   ////////////////////////////////////////////////////////////
@@ -1643,6 +1664,149 @@ namespace ERIN
   AllResults::get_stats() const
   {
     std::unordered_map<std::string, AllScenarioStats> stats{};
+    for (const auto& scenario_id: scenario_ids) {
+      const auto& results_for_scenario = results.at(scenario_id);
+      const auto num_occurrences{results_for_scenario.size()};
+      if (num_occurrences == 0) {
+        continue;
+      }
+      std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s{};
+      //const auto& stream_types = results_for_scenario[0].get_stream_types();
+      //const auto& comp_types = results_for_scenario[0].get_component_types();
+      //RealTimeType time_in_scenario{0};
+      std::unordered_map<std::string, ScenarioStats> stats_by_comp;
+      //std::unordered_map<std::string, double> totals_by_stream_source;
+      //std::unordered_map<std::string, double> totals_by_stream_load;
+      for (const auto& scenario_results: results_for_scenario) {
+      //  time_in_scenario += scenario_results.get_duration_in_seconds();
+        const auto& stats_by_comp_temp = scenario_results.get_statistics();
+      //  const auto& the_comp_ids = scenario_results.get_component_ids();
+      //  const auto totals_by_stream_source_temp = calc_energy_usage_by_stream(
+      //      the_comp_ids,
+      //      ComponentType::Source,
+      //      stats_by_comp_temp,
+      //      stream_types,
+      //      comp_types);
+      //  const auto totals_by_stream_load_temp = calc_energy_usage_by_stream(
+      //      the_comp_ids,
+      //      ComponentType::Load,
+      //      stats_by_comp_temp,
+      //      stream_types,
+      //      comp_types);
+        for (const auto& cid_stats_pair: stats_by_comp_temp) {
+          const auto& comp_id = cid_stats_pair.first;
+          const auto& stats = cid_stats_pair.second;
+          auto it = stats_by_comp.find(comp_id);
+          if (it == stats_by_comp.end()) {
+            stats_by_comp[comp_id] = stats;
+          }
+          else {
+            it->second += stats;
+          }
+        }
+      //  for (const auto& sn_total_pair : totals_by_stream_source_temp) {
+      //    const auto& stream_name = sn_total_pair.first;
+      //    const auto& total = sn_total_pair.second;
+      //    auto it = totals_by_stream_source.find(stream_name);
+      //    if (it == totals_by_stream_source.end()) {
+      //      totals_by_stream_source[stream_name] = total;
+      //    }
+      //    else {
+      //      it->second += total;
+      //    }
+      //  }
+      //  for (const auto& sn_total_pair : totals_by_stream_load_temp) {
+      //    const auto& stream_name = sn_total_pair.first;
+      //    const auto& total = sn_total_pair.second;
+      //    auto it = totals_by_stream_load.find(stream_name);
+      //    if (it == totals_by_stream_load.end()) {
+      //      totals_by_stream_load[stream_name] = total;
+      //    }
+      //    else {
+      //      it->second += total;
+      //    }
+      //  }
+      }
+      auto stats_by_comp_end = stats_by_comp.end();
+      for (const auto& comp_id: comp_ids) {
+        auto it_comp_id = stats_by_comp.find(comp_id);
+        if (it_comp_id == stats_by_comp_end) {
+          continue;
+        }
+        const auto& stats = it_comp_id->second;
+      //  std::string stream_name;
+      //  auto it_st = stream_types.find(comp_id);
+      //  if (it_st == stream_types.end()) {
+      //    stream_name = "--";
+      //  }
+      //  else {
+      //    stream_name = it_st->second.get_type();
+      //  }
+      //  std::string comp_type;
+      //  auto it_ct = comp_types.find(comp_id);
+      //  if (it_ct == comp_types.end()) {
+      //    comp_type = "--";
+      //  }
+      //  else {
+      //    const auto& ct = comp_types.at(comp_id);
+      //    comp_type = component_type_to_tag(ct);
+      //  }
+      //  const auto ea = calc_energy_availability_from_stats(stats);
+        max_downtime_by_comp_id_s[comp_id] = stats.max_downtime;
+      //  const auto lns = stats.load_not_served;
+      //  oss << scenario_id
+      //    << "," << num_occurrences
+      //    << "," <<
+      //    convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+      //    << "," << comp_id
+      //    << "," << comp_type
+      //    << "," << stream_name
+      //    << "," << ea
+      //    << "," << convert_time_in_seconds_to(md, TimeUnits::Hours)
+      //    << "," << lns;
+      //  for (const auto& s: stream_keys) {
+      //    if (s != stream_name) {
+      //      oss << ",0.0";
+      //      continue;
+      //    }
+      //    oss << "," << stats.total_energy;
+      //  }
+      //  oss  << "\n";
+      }
+      stats[scenario_id] = AllScenarioStats{
+        num_occurrences,
+        std::move(max_downtime_by_comp_id_s)};
+      //auto tbss_end = totals_by_stream_source.end();
+      //oss << scenario_id
+      //  << "," << num_occurrences
+      //  << "," <<
+      //  convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+      //  << "," << "TOTAL (source),,,,,";
+      //for (const auto& s: stream_keys) {
+      //  auto it = totals_by_stream_source.find(s);
+      //  if (it == tbss_end) {
+      //    oss << ",0.0";
+      //    continue;
+      //  }
+      //  oss << "," << it->second;
+      //}
+      //oss  << "\n";
+      //auto tbsl_end = totals_by_stream_load.end();
+      //oss << scenario_id
+      //  << "," << num_occurrences
+      //  << "," <<
+      //  convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+      //  << "," << "TOTAL (load),,,,,";
+      //for (const auto& s: stream_keys) {
+      //  auto it = totals_by_stream_load.find(s);
+      //  if (it == tbsl_end) {
+      //    oss << ",0.0";
+      //    continue;
+      //  }
+      //  oss << "," << it->second;
+      //}
+      //oss  << "\n";
+    }
     return stats;
   }
 
@@ -1704,6 +1868,12 @@ namespace ERIN
       out[scenario_id] = data;
     }
     return out;
+  }
+
+  AllResults
+  AllResults::with_is_good_as(bool is_good_) const
+  {
+    return AllResults{is_good_, results};
   }
 
   bool

@@ -35,6 +35,7 @@ namespace ERIN
   {
     RealTimeType uptime;
     RealTimeType downtime;
+    RealTimeType max_downtime;
     FlowValueType load_not_served;
     FlowValueType total_energy;
 
@@ -289,6 +290,8 @@ namespace ERIN
   // AllScenarioStats
   struct AllScenarioStats
   {
+    std::vector<ScenarioResults>::size_type num_occurrences;
+    std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s;
   };
 
   ////////////////////////////////////////////////////////////
@@ -313,7 +316,7 @@ namespace ERIN
         get_stats() const;
       [[nodiscard]] std::vector<std::string>::size_type
         number_of_scenarios() const { return scenario_ids.size(); }
-      [[nodiscard]] std::vector<std::string> get_scenario_ids() const {
+      [[nodiscard]] const std::vector<std::string>& get_scenario_ids() const {
         return scenario_ids;
       }
       [[nodiscard]] std::unordered_map<
@@ -323,6 +326,10 @@ namespace ERIN
         std::string,
         std::unordered_map<std::string, std::vector<double>>>
           get_total_energy_availabilities() const;
+      [[nodiscard]] const std::vector<std::string>& get_comp_ids() const {
+        return comp_ids;
+      }
+      [[nodiscard]] AllResults with_is_good_as(bool is_good) const;
 
       friend bool operator==(const AllResults& a, const AllResults& b);
 

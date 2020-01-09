@@ -1279,11 +1279,13 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
   ::ERIN::ScenarioStats expected{
     4,    // RealTimeType uptime
     0,    // RealTimeType downtime
+    0,    // RealTimeType max_downtime
     0.0,  // FlowValueType load_not_served
     4.0}; // FlowValueType total_energy
   auto actual = ::ERIN::calc_scenario_stats(ds);
   EXPECT_EQ(expected.uptime, actual.uptime);
   EXPECT_EQ(expected.downtime, actual.downtime);
+  EXPECT_EQ(expected.max_downtime, actual.max_downtime);
   EXPECT_NEAR(expected.load_not_served, actual.load_not_served, tolerance);
   EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
 }
@@ -2313,12 +2315,21 @@ TEST(ErinBasicsTest, AllResultsToCsv)
 
 TEST(ErinBasicsTest, ScenarioStatsAddAndAddEq)
 {
-  ::ERIN::ScenarioStats a{1,2,1.0,1.0};
-  ::ERIN::ScenarioStats b{10,20,10.0,10.0};
-  ::ERIN::ScenarioStats expected{11,22,11.0,11.0};
-  EXPECT_EQ(a + b, expected);
+  ::ERIN::ScenarioStats a{1,2,2,1.0,1.0};
+  ::ERIN::ScenarioStats b{10,20,10,10.0,10.0};
+  ::ERIN::ScenarioStats expected{11,22,10,11.0,11.0};
+  auto c = a + b;
+  EXPECT_EQ(c.uptime, expected.uptime);
+  EXPECT_EQ(c.downtime, expected.downtime);
+  EXPECT_EQ(c.max_downtime, expected.max_downtime);
+  EXPECT_EQ(c.load_not_served, expected.load_not_served);
+  EXPECT_EQ(c.total_energy, expected.total_energy);
   a += b;
-  EXPECT_EQ(a, expected);
+  EXPECT_EQ(a.uptime, expected.uptime);
+  EXPECT_EQ(a.downtime, expected.downtime);
+  EXPECT_EQ(a.max_downtime, expected.max_downtime);
+  EXPECT_EQ(a.load_not_served, expected.load_not_served);
+  EXPECT_EQ(a.total_energy, expected.total_energy);
 }
 
 TEST(ErinBasicsTest, AllResultsToCsv2)
@@ -3230,13 +3241,33 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
     "occurrence_distribution = {type = \"fixed\", time_units = \"years\", value = 10}\n"
     "duration = 10\n"
     "max_occurrences = -1\n"
-    "network = \"normal_operations\"\n"
+    "network = \"nw01\"\n"
     "intensity.intensity01 = 20\n";
+  const std::string scenario_id{"scenario01"};
+  const E::RealTimeType scenario_duration_hrs{10};
+  const E::RealTimeType scenario_duration_s{
+    scenario_duration_hrs * E::rtt_seconds_per_hour};
   auto m = E::make_main_from_string(input);
   auto results = m.run_all();
   ASSERT_TRUE(results.get_is_good());
-  EXPECT_EQ(1, results.number_of_scenarios());
+  auto actual_number_of_scenarios = results.number_of_scenarios();
+  decltype(actual_number_of_scenarios) expected_number_of_scenarios{1};
+  EXPECT_EQ(expected_number_of_scenarios, actual_number_of_scenarios);
   auto stats = results.get_stats();
+  ASSERT_EQ(expected_number_of_scenarios, stats.size());
+  auto all_ss_it = stats.find(scenario_id);
+  ASSERT_TRUE(all_ss_it != stats.end());
+  const auto& all_ss = all_ss_it->second;
+  const std::vector<E::ScenarioResults>::size_type expected_num_occurrences{4};
+  EXPECT_EQ(all_ss.num_occurrences, expected_num_occurrences);
+  const std::unordered_map<std::string, E::RealTimeType>::size_type expected_num_comps{2};
+  EXPECT_EQ(expected_num_comps, results.get_comp_ids().size());
+  EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
+  EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
+  EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
+  auto bad_results = results.with_is_good_as(false);
+  auto bad_stats = bad_results.get_stats();
+  EXPECT_EQ(bad_stats.size(), 0);
 }
 
 int

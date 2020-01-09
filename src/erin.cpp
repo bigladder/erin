@@ -1501,6 +1501,7 @@ namespace ERIN
   std::string
   AllResults::to_stats_csv() const
   {
+    namespace EG = erin_generics;
     const auto& the_stats = get_stats();
     if (is_good) {
       std::ostringstream oss;
@@ -1591,7 +1592,6 @@ namespace ERIN
             continue;
           }
           const auto& stats = stats_by_comp.at(comp_id);
-          namespace EG = erin_generics;
           std::string stream_name =
             EG::find_and_transform_or<std::string, StreamType, std::string>(
                 stream_types, comp_id, "--",

@@ -1529,7 +1529,7 @@ namespace ERIN
         if (num_occurrences == 0) {
           continue;
         }
-        const auto& stream_types = results_for_scenario[0].get_stream_types();
+        const auto& stream_types = all_ss.stream_types_by_comp_id;
         const auto& comp_types = results_for_scenario[0].get_component_types();
         RealTimeType time_in_scenario{0};
         std::unordered_map<std::string, ScenarioStats> stats_by_comp;
@@ -1676,7 +1676,7 @@ namespace ERIN
         continue;
       }
       std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s{};
-      //const auto& stream_types = results_for_scenario[0].get_stream_types();
+      const auto& stream_types = results_for_scenario[0].get_stream_types();
       //const auto& comp_types = results_for_scenario[0].get_component_types();
       RealTimeType time_in_scenario{0};
       std::unordered_map<std::string, ScenarioStats> stats_by_comp;
@@ -1781,7 +1781,8 @@ namespace ERIN
       stats[scenario_id] = AllScenarioStats{
         num_occurrences,
         time_in_scenario,
-        std::move(max_downtime_by_comp_id_s)};
+        std::move(max_downtime_by_comp_id_s),
+        stream_types};
       //auto tbss_end = totals_by_stream_source.end();
       //oss << scenario_id
       //  << "," << num_occurrences

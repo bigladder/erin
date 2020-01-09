@@ -3189,6 +3189,54 @@ TEST(ErinBasicsTest, TestWeCanReadDistributionWithOptionalTimeUnits)
   EXPECT_EQ(dt_b, 10);
 }
 
+TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
+{
+  // need a scenario of duration 10 hours that will run 4 times containing a
+  // network of two components A (source) and B (load). A always fails and B
+  // never fails per the given fragility and intensity combination. After
+  // simulation of a multi-scenario analysis, we should calculate a max
+  // downtime of 10 hours for B, NOT 40 hours.
+  namespace E = ::ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"years\"\n"
+    "max_time = 40\n"
+    "fixed_random_frac = 0.5\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[loads.load01]\n"
+    "time_unit = \"hours\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
+    "[components.A]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "fragilities = [\"frag01\"]\n"
+    "[components.B]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.scenario01 = \"load01\"\n"
+    "[fragility.frag01]\n"
+    "vulnerable_to = \"intensity01\"\n"
+    "type = \"linear\"\n"
+    "lower_bound = 5.0\n"
+    "upper_bound = 10.0\n"
+    "[networks.nw01]\n"
+    "connections = [[\"A\", \"B\"]]\n"
+    "[scenarios.scenario01]\n"
+    "time_units = \"hours\"\n"
+    "occurrence_distribution = {type = \"fixed\", time_units = \"years\", value = 10}\n"
+    "duration = 10\n"
+    "max_occurrences = -1\n"
+    "network = \"normal_operations\"\n"
+    "intensity.intensity01 = 20\n";
+  auto m = E::make_main_from_string(input);
+  auto results = m.run_all();
+  EXPECT_EQ(1, results.number_of_scenarios());
+}
+
 int
 main(int argc, char **argv)
 {

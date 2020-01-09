@@ -3265,6 +3265,7 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
   EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
+  EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("A"), 0.0);
   auto bad_results = results.with_is_good_as(false);
   auto bad_stats = bad_results.get_stats();
   EXPECT_EQ(bad_stats.size(), 0);

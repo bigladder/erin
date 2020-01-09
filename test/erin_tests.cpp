@@ -3303,6 +3303,18 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
   auto actual_number_of_scenarios = results.number_of_scenarios();
   decltype(actual_number_of_scenarios) expected_number_of_scenarios{1};
   EXPECT_EQ(expected_number_of_scenarios, actual_number_of_scenarios);
+  auto stats = results.get_stats();
+  ASSERT_EQ(expected_number_of_scenarios, stats.size());
+  auto all_ss_it = stats.find(scenario_id);
+  ASSERT_TRUE(all_ss_it != stats.end());
+  const auto& all_ss = all_ss_it->second;
+  const std::vector<E::ScenarioResults>::size_type expected_num_occurrences{4};
+  EXPECT_EQ(all_ss.num_occurrences, expected_num_occurrences);
+  const std::unordered_map<std::string, E::RealTimeType>::size_type expected_num_comps{2};
+  EXPECT_EQ(expected_num_comps, results.get_comp_ids().size());
+  EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
+  EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
+  EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
 }
 
 int

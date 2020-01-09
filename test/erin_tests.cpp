@@ -11,6 +11,7 @@
 #include "erin/erin.h"
 #include "erin/fragility.h"
 #include "erin/port.h"
+#include "erin/stream.h"
 #include "erin/type.h"
 #include "erin/utils.h"
 #include "erin_test_utils.h"
@@ -3315,6 +3316,21 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
   EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
+}
+
+TEST(ErinBasicsTest, TestRandomProcesses)
+{
+  double expected{0.5};
+  auto fp = ERIN::FixedProcess{expected};
+  EXPECT_EQ(fp.call(), expected);
+  std::vector<double> series{0.1, 0.2, 0.3};
+  auto fs = ERIN::FixedSeries{series};
+  //auto fs_alt = ERIN::FixedSeries{series};
+  //EXPECT_EQ(fs, fs_alt);
+  //EXPECT_EQ(fs.call(), series[0]);
+  //EXPECT_EQ(fs.call(), series[1]);
+  //EXPECT_EQ(fs.call(), series[2]);
+  //EXPECT_EQ(fs.call(), series[0]);
 }
 
 int

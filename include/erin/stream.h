@@ -16,7 +16,8 @@ namespace ERIN
   enum class RandomType
   {
     RandomProcess = 0,
-    FixedProcess
+    FixedProcess,
+    FixedSeries
   };
 
   ////////////////////////////////////////////////////////////
@@ -83,7 +84,7 @@ namespace ERIN
 
       std::unique_ptr<RandomInfo> clone() const override {
         return std::make_unique<FixedProcess>(fixed_value);
-      };
+      }
       [[nodiscard]] bool has_seed() const override { return false; }
       [[nodiscard]] unsigned int get_seed() const override { return 0; }
       [[nodiscard]] RandomType get_type() const override { return RandomType::FixedProcess; }
@@ -97,6 +98,34 @@ namespace ERIN
 
   bool operator==(const FixedProcess& a, const FixedProcess& b);
   bool operator!=(const FixedProcess& a, const FixedProcess& b);
+
+  ////////////////////////////////////////////////////////////
+  // FixedSeries
+  class FixedSeries : public RandomInfo
+  {
+    public:
+      FixedSeries(const std::vector<double>& series);
+      FixedSeries(
+          const std::vector<double>& series,
+          std::vector<double>::size_type idx);
+
+      std::unique_ptr<RandomInfo> clone() const override {
+        return std::make_unique<FixedSeries>(series, idx);
+      }
+      [[nodiscard]] bool has_seed() const override { return false; }
+      [[nodiscard]] unsigned int get_seed() const override { return 0; }
+      [[nodiscard]] RandomType get_type() const override { return RandomType::FixedSeries; }
+      double call() override;
+      
+      friend bool operator==(const FixedSeries& a, const FixedSeries& b);
+
+    private:
+      std::vector<double> series;
+      std::vector<double>::size_type idx;
+  };
+
+  bool operator==(const FixedSeries& a, const FixedSeries& b);
+  bool operator!=(const FixedSeries& a, const FixedSeries& b);
   
   ////////////////////////////////////////////////////////////
   // SimulationInfo

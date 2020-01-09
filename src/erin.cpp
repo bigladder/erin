@@ -1502,22 +1502,24 @@ namespace ERIN
   AllResults::to_stats_csv() const
   {
     namespace EG = erin_generics;
+    namespace CSV = erin_csv;
     const auto& the_stats = get_stats();
     if (is_good) {
       std::ostringstream oss;
-      oss << "scenario id"
-             ",number of occurrences"
-             ",total time in scenario (hours)"
-             ",component id"
-             ",type"
-             ",stream"
-             ",energy availability"
-             ",max downtime (hours)"
-             ",load not served (kJ)";
-      for (const auto& stream_id: stream_keys) {
-        oss << "," << stream_id << " energy used (kJ)";
-      }
-      oss << "\n";
+      CSV::write_csv(oss, {
+          "scenario id",
+          "number of occurrences",
+          "total time in scenario (hours)",
+          "component id",
+          "type",
+          "stream",
+          "energy availability",
+          "max downtime (hours)",
+          "load not served (kJ)"}, true, false);
+      CSV::write_csv_with_tranform<std::string>(oss, stream_keys,
+          [](const std::string& s) -> std::string {
+            return s + " energy used (kJ)";
+          }, false, true);
       if (the_stats.empty()) {
         return oss.str();
       }
@@ -1680,45 +1682,10 @@ namespace ERIN
           continue;
         }
         const auto& stats = it_comp_id->second;
-      //  std::string stream_name;
-      //  auto it_st = stream_types.find(comp_id);
-      //  if (it_st == stream_types.end()) {
-      //    stream_name = "--";
-      //  }
-      //  else {
-      //    stream_name = it_st->second.get_type();
-      //  }
-      //  std::string comp_type;
-      //  auto it_ct = comp_types.find(comp_id);
-      //  if (it_ct == comp_types.end()) {
-      //    comp_type = "--";
-      //  }
-      //  else {
-      //    const auto& ct = comp_types.at(comp_id);
-      //    comp_type = component_type_to_tag(ct);
-      //  }
         energy_availability_by_comp_id[comp_id] = calc_energy_availability_from_stats(stats);
         max_downtime_by_comp_id_s[comp_id] = stats.max_downtime;
         load_not_served_by_comp_id_kW[comp_id] = stats.load_not_served;
         total_energy_by_comp_id_kJ[comp_id] = stats.total_energy;
-      //  oss << scenario_id
-      //    << "," << num_occurrences
-      //    << "," <<
-      //    convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
-      //    << "," << comp_id
-      //    << "," << comp_type
-      //    << "," << stream_name
-      //    << "," << ea
-      //    << "," << convert_time_in_seconds_to(md, TimeUnits::Hours)
-      //    << "," << lns;
-      //  for (const auto& s: stream_keys) {
-      //    if (s != stream_name) {
-      //      oss << ",0.0";
-      //      continue;
-      //    }
-      //    oss << "," << stats.total_energy;
-      //  }
-      //  oss  << "\n";
       }
       stats[scenario_id] = AllScenarioStats{
         num_occurrences,
@@ -1731,36 +1698,6 @@ namespace ERIN
         std::move(total_energy_by_comp_id_kJ),
         std::move(totals_by_stream_source),
         std::move(totals_by_stream_load)};
-      //auto tbss_end = totals_by_stream_source.end();
-      //oss << scenario_id
-      //  << "," << num_occurrences
-      //  << "," <<
-      //  convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
-      //  << "," << "TOTAL (source),,,,,";
-      //for (const auto& s: stream_keys) {
-      //  auto it = totals_by_stream_source.find(s);
-      //  if (it == tbss_end) {
-      //    oss << ",0.0";
-      //    continue;
-      //  }
-      //  oss << "," << it->second;
-      //}
-      //oss  << "\n";
-      //auto tbsl_end = totals_by_stream_load.end();
-      //oss << scenario_id
-      //  << "," << num_occurrences
-      //  << "," <<
-      //  convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
-      //  << "," << "TOTAL (load),,,,,";
-      //for (const auto& s: stream_keys) {
-      //  auto it = totals_by_stream_load.find(s);
-      //  if (it == tbsl_end) {
-      //    oss << ",0.0";
-      //    continue;
-      //  }
-      //  oss << "," << it->second;
-      //}
-      //oss  << "\n";
     }
     return stats;
   }

@@ -291,6 +291,7 @@ namespace ERIN
   struct AllScenarioStats
   {
     std::vector<ScenarioResults>::size_type num_occurrences;
+    RealTimeType time_in_scenario_s;
     std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s;
   };
 

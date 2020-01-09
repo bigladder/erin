@@ -1634,7 +1634,8 @@ namespace ERIN
         oss << scenario_id
             << "," << all_ss.num_occurrences
             << "," <<
-            convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+            convert_time_in_seconds_to(
+                all_ss.time_in_scenario_s, TimeUnits::Hours)
             << "," << "TOTAL (source),,,,,";
         for (const auto& s: stream_keys) {
           auto it = totals_by_stream_source.find(s);
@@ -1679,12 +1680,12 @@ namespace ERIN
       std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s{};
       //const auto& stream_types = results_for_scenario[0].get_stream_types();
       //const auto& comp_types = results_for_scenario[0].get_component_types();
-      //RealTimeType time_in_scenario{0};
+      RealTimeType time_in_scenario{0};
       std::unordered_map<std::string, ScenarioStats> stats_by_comp;
       //std::unordered_map<std::string, double> totals_by_stream_source;
       //std::unordered_map<std::string, double> totals_by_stream_load;
       for (const auto& scenario_results: results_for_scenario) {
-      //  time_in_scenario += scenario_results.get_duration_in_seconds();
+        time_in_scenario += scenario_results.get_duration_in_seconds();
         const auto& stats_by_comp_temp = scenario_results.get_statistics();
       //  const auto& the_comp_ids = scenario_results.get_component_ids();
       //  const auto totals_by_stream_source_temp = calc_energy_usage_by_stream(
@@ -1781,6 +1782,7 @@ namespace ERIN
       }
       stats[scenario_id] = AllScenarioStats{
         num_occurrences,
+        time_in_scenario,
         std::move(max_downtime_by_comp_id_s)};
       //auto tbss_end = totals_by_stream_source.end();
       //oss << scenario_id

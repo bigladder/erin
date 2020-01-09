@@ -1523,75 +1523,14 @@ namespace ERIN
       }
       for (const auto& scenario_id: scenario_ids) {
         const auto& all_ss = the_stats.at(scenario_id);
-
-        const auto& results_for_scenario = results.at(scenario_id);
-        const auto num_occurrences{results_for_scenario.size()};
-        if (num_occurrences == 0) {
-          continue;
-        }
         const auto& stream_types = all_ss.stream_types_by_comp_id;
-        const auto& comp_types = results_for_scenario[0].get_component_types();
-        RealTimeType time_in_scenario{0};
-        std::unordered_map<std::string, ScenarioStats> stats_by_comp;
-        std::unordered_map<std::string, double> totals_by_stream_source;
-        std::unordered_map<std::string, double> totals_by_stream_load;
-        for (const auto& scenario_results: results_for_scenario) {
-          time_in_scenario += scenario_results.get_duration_in_seconds();
-          const auto& stats_by_comp_temp = scenario_results.get_statistics();
-          const auto& the_comp_ids = scenario_results.get_component_ids();
-          const auto totals_by_stream_source_temp = calc_energy_usage_by_stream(
-              the_comp_ids,
-              ComponentType::Source,
-              stats_by_comp_temp,
-              stream_types,
-              comp_types);
-          const auto totals_by_stream_load_temp = calc_energy_usage_by_stream(
-              the_comp_ids,
-              ComponentType::Load,
-              stats_by_comp_temp,
-              stream_types,
-              comp_types);
-          for (const auto& cid_stats_pair: stats_by_comp_temp) {
-            const auto& comp_id = cid_stats_pair.first;
-            const auto& stats = cid_stats_pair.second;
-            auto it = stats_by_comp.find(comp_id);
-            if (it == stats_by_comp.end()) {
-              stats_by_comp[comp_id] = stats;
-            }
-            else {
-              it->second += stats;
-            }
-          }
-          for (const auto& sn_total_pair : totals_by_stream_source_temp) {
-            const auto& stream_name = sn_total_pair.first;
-            const auto& total = sn_total_pair.second;
-            auto it = totals_by_stream_source.find(stream_name);
-            if (it == totals_by_stream_source.end()) {
-              totals_by_stream_source[stream_name] = total;
-            }
-            else {
-              it->second += total;
-            }
-          }
-          for (const auto& sn_total_pair : totals_by_stream_load_temp) {
-            const auto& stream_name = sn_total_pair.first;
-            const auto& total = sn_total_pair.second;
-            auto it = totals_by_stream_load.find(stream_name);
-            if (it == totals_by_stream_load.end()) {
-              totals_by_stream_load[stream_name] = total;
-            }
-            else {
-              it->second += total;
-            }
-          }
-        }
-        auto stats_by_comp_end = stats_by_comp.end();
+        const auto& comp_types = all_ss.component_types_by_comp_id;
+        auto the_end = all_ss.component_types_by_comp_id.end();
         for (const auto& comp_id: comp_ids) {
-          auto it_comp_id = stats_by_comp.find(comp_id);
-          if (it_comp_id == stats_by_comp_end) {
+          auto it = all_ss.component_types_by_comp_id.find(comp_id);
+          if (it == the_end) {
             continue;
           }
-          const auto& stats = stats_by_comp.at(comp_id);
           std::string stream_name =
             EG::find_and_transform_or<std::string, StreamType, std::string>(
                 stream_types, comp_id, "--",
@@ -1604,8 +1543,6 @@ namespace ERIN
                 [](const ComponentType& ct) -> std::string {
                   return component_type_to_tag(ct);
                 });
-          const auto ea = calc_energy_availability_from_stats(stats);
-          const auto lns = stats.load_not_served;
           oss << scenario_id
               << "," << all_ss.num_occurrences
               << "," <<
@@ -1614,21 +1551,20 @@ namespace ERIN
               << "," << comp_id
               << "," << comp_type
               << "," << stream_name
-              << "," << ea
+              << "," << all_ss.energy_availability_by_comp_id.at(comp_id)
               << "," << convert_time_in_seconds_to(
                   all_ss.max_downtime_by_comp_id_s.at(comp_id),
                   TimeUnits::Hours)
-              << "," << lns;
+              << "," << all_ss.load_not_served_by_comp_id_kW.at(comp_id);
           for (const auto& s: stream_keys) {
             if (s != stream_name) {
               oss << ",0.0";
               continue;
             }
-            oss << "," << stats.total_energy;
+            oss << "," << all_ss.total_energy_by_comp_id_kJ.at(comp_id);
           }
           oss  << "\n";
         }
-        auto tbss_end = totals_by_stream_source.end();
         oss << scenario_id
             << "," << all_ss.num_occurrences
             << "," <<
@@ -1636,27 +1572,29 @@ namespace ERIN
                 all_ss.time_in_scenario_s, TimeUnits::Hours)
             << "," << "TOTAL (source),,,,,";
         for (const auto& s: stream_keys) {
-          auto it = totals_by_stream_source.find(s);
-          if (it == tbss_end) {
+          auto val = EG::find_or<std::string,double>(
+              all_ss.totals_by_stream_id_for_source_kJ, s, 0.0);
+          if (val == 0.0) {
             oss << ",0.0";
             continue;
           }
-          oss << "," << it->second;
+          oss << "," << val;
         }
         oss  << "\n";
-        auto tbsl_end = totals_by_stream_load.end();
         oss << scenario_id
-            << "," << num_occurrences
+            << "," << all_ss.num_occurrences
             << "," <<
-            convert_time_in_seconds_to(time_in_scenario, TimeUnits::Hours)
+            convert_time_in_seconds_to(
+                all_ss.time_in_scenario_s, TimeUnits::Hours)
             << "," << "TOTAL (load),,,,,";
         for (const auto& s: stream_keys) {
-          auto it = totals_by_stream_load.find(s);
-          if (it == tbsl_end) {
+          auto val = EG::find_or<std::string,double>(
+              all_ss.totals_by_stream_id_for_load_kJ, s, 0.0);
+          if (val == 0.0) {
             oss << ",0.0";
             continue;
           }
-          oss << "," << it->second;
+          oss << "," << val;
         }
         oss  << "\n";
       }
@@ -1676,28 +1614,31 @@ namespace ERIN
         continue;
       }
       std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s{};
+      std::unordered_map<std::string, double> energy_availability_by_comp_id{};
+      std::unordered_map<std::string, double> load_not_served_by_comp_id_kW{};
+      std::unordered_map<std::string, double> total_energy_by_comp_id_kJ{};
       const auto& stream_types = results_for_scenario[0].get_stream_types();
-      //const auto& comp_types = results_for_scenario[0].get_component_types();
+      const auto& comp_types = results_for_scenario[0].get_component_types();
       RealTimeType time_in_scenario{0};
       std::unordered_map<std::string, ScenarioStats> stats_by_comp;
-      //std::unordered_map<std::string, double> totals_by_stream_source;
-      //std::unordered_map<std::string, double> totals_by_stream_load;
+      std::unordered_map<std::string, double> totals_by_stream_source;
+      std::unordered_map<std::string, double> totals_by_stream_load;
       for (const auto& scenario_results: results_for_scenario) {
         time_in_scenario += scenario_results.get_duration_in_seconds();
         const auto& stats_by_comp_temp = scenario_results.get_statistics();
-      //  const auto& the_comp_ids = scenario_results.get_component_ids();
-      //  const auto totals_by_stream_source_temp = calc_energy_usage_by_stream(
-      //      the_comp_ids,
-      //      ComponentType::Source,
-      //      stats_by_comp_temp,
-      //      stream_types,
-      //      comp_types);
-      //  const auto totals_by_stream_load_temp = calc_energy_usage_by_stream(
-      //      the_comp_ids,
-      //      ComponentType::Load,
-      //      stats_by_comp_temp,
-      //      stream_types,
-      //      comp_types);
+        const auto& the_comp_ids = scenario_results.get_component_ids();
+        const auto totals_by_stream_source_temp = calc_energy_usage_by_stream(
+            the_comp_ids,
+            ComponentType::Source,
+            stats_by_comp_temp,
+            stream_types,
+            comp_types);
+        const auto totals_by_stream_load_temp = calc_energy_usage_by_stream(
+            the_comp_ids,
+            ComponentType::Load,
+            stats_by_comp_temp,
+            stream_types,
+            comp_types);
         for (const auto& cid_stats_pair: stats_by_comp_temp) {
           const auto& comp_id = cid_stats_pair.first;
           const auto& stats = cid_stats_pair.second;
@@ -1709,28 +1650,28 @@ namespace ERIN
             it->second += stats;
           }
         }
-      //  for (const auto& sn_total_pair : totals_by_stream_source_temp) {
-      //    const auto& stream_name = sn_total_pair.first;
-      //    const auto& total = sn_total_pair.second;
-      //    auto it = totals_by_stream_source.find(stream_name);
-      //    if (it == totals_by_stream_source.end()) {
-      //      totals_by_stream_source[stream_name] = total;
-      //    }
-      //    else {
-      //      it->second += total;
-      //    }
-      //  }
-      //  for (const auto& sn_total_pair : totals_by_stream_load_temp) {
-      //    const auto& stream_name = sn_total_pair.first;
-      //    const auto& total = sn_total_pair.second;
-      //    auto it = totals_by_stream_load.find(stream_name);
-      //    if (it == totals_by_stream_load.end()) {
-      //      totals_by_stream_load[stream_name] = total;
-      //    }
-      //    else {
-      //      it->second += total;
-      //    }
-      //  }
+        for (const auto& sn_total_pair : totals_by_stream_source_temp) {
+          const auto& stream_name = sn_total_pair.first;
+          const auto& total = sn_total_pair.second;
+          auto it = totals_by_stream_source.find(stream_name);
+          if (it == totals_by_stream_source.end()) {
+            totals_by_stream_source[stream_name] = total;
+          }
+          else {
+            it->second += total;
+          }
+        }
+        for (const auto& sn_total_pair : totals_by_stream_load_temp) {
+          const auto& stream_name = sn_total_pair.first;
+          const auto& total = sn_total_pair.second;
+          auto it = totals_by_stream_load.find(stream_name);
+          if (it == totals_by_stream_load.end()) {
+            totals_by_stream_load[stream_name] = total;
+          }
+          else {
+            it->second += total;
+          }
+        }
       }
       auto stats_by_comp_end = stats_by_comp.end();
       for (const auto& comp_id: comp_ids) {
@@ -1756,9 +1697,10 @@ namespace ERIN
       //    const auto& ct = comp_types.at(comp_id);
       //    comp_type = component_type_to_tag(ct);
       //  }
-      //  const auto ea = calc_energy_availability_from_stats(stats);
+        energy_availability_by_comp_id[comp_id] = calc_energy_availability_from_stats(stats);
         max_downtime_by_comp_id_s[comp_id] = stats.max_downtime;
-      //  const auto lns = stats.load_not_served;
+        load_not_served_by_comp_id_kW[comp_id] = stats.load_not_served;
+        total_energy_by_comp_id_kJ[comp_id] = stats.total_energy;
       //  oss << scenario_id
       //    << "," << num_occurrences
       //    << "," <<
@@ -1782,7 +1724,13 @@ namespace ERIN
         num_occurrences,
         time_in_scenario,
         std::move(max_downtime_by_comp_id_s),
-        stream_types};
+        stream_types,
+        comp_types,
+        std::move(energy_availability_by_comp_id),
+        std::move(load_not_served_by_comp_id_kW),
+        std::move(total_energy_by_comp_id_kJ),
+        std::move(totals_by_stream_source),
+        std::move(totals_by_stream_load)};
       //auto tbss_end = totals_by_stream_source.end();
       //oss << scenario_id
       //  << "," << num_occurrences

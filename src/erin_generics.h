@@ -8,6 +8,7 @@
 #include "../vendor/toml11/toml.hpp"
 #pragma clang diagnostic pop
 #include "erin/distribution.h"
+#include "erin/type.h"
 #include "debug_utils.h"
 #include <exception>
 #include <functional>
@@ -154,6 +155,20 @@ namespace erin_generics
       }
     }
     return true;
+  }
+
+  template <class KeyType, class ValType>
+  ValType
+  find_or(
+      const std::unordered_map<KeyType,ValType>& map,
+      const KeyType& key,
+      const ValType& default_return)
+  {
+    auto it = map.find(key);
+    if (it == map.end()) {
+      return default_return;
+    }
+    return it->second;
   }
 
   template <class KeyType, class Val1Type, class Val2Type>

@@ -294,6 +294,12 @@ namespace ERIN
     RealTimeType time_in_scenario_s;
     std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s;
     std::unordered_map<std::string, StreamType> stream_types_by_comp_id;
+    std::unordered_map<std::string, ComponentType> component_types_by_comp_id;
+    std::unordered_map<std::string, double> energy_availability_by_comp_id;
+    std::unordered_map<std::string, double> load_not_served_by_comp_id_kW;
+    std::unordered_map<std::string, double> total_energy_by_comp_id_kJ;
+    std::unordered_map<std::string, double> totals_by_stream_id_for_source_kJ;
+    std::unordered_map<std::string, double> totals_by_stream_id_for_load_kJ;
   };
 
   ////////////////////////////////////////////////////////////

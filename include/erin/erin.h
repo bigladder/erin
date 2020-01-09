@@ -363,6 +363,11 @@ namespace ERIN
           const AllScenarioStats& all_ss,
           const std::unordered_map<std::string, double>& totals_by_stream,
           const std::string& label) const;
+      void write_component_line_for_stats_csv(
+          std::ostream& oss,
+          const AllScenarioStats& all_ss,
+          const std::string& comp_id,
+          const std::string& scenario_id) const;
   };
 
   bool operator==(const AllResults& a, const AllResults& b);

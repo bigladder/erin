@@ -1525,47 +1525,13 @@ namespace ERIN
       }
       for (const auto& scenario_id: scenario_ids) {
         const auto& all_ss = the_stats.at(scenario_id);
-        const auto& stream_types = all_ss.stream_types_by_comp_id;
-        const auto& comp_types = all_ss.component_types_by_comp_id;
         auto the_end = all_ss.component_types_by_comp_id.end();
         for (const auto& comp_id: comp_ids) {
           auto it = all_ss.component_types_by_comp_id.find(comp_id);
           if (it == the_end) {
             continue;
           }
-          std::string stream_name =
-            EG::find_and_transform_or<std::string, StreamType, std::string>(
-                stream_types, comp_id, "--",
-                [](const StreamType& st) -> std::string {
-                  return st.get_type();
-                });
-          std::string comp_type =
-            EG::find_and_transform_or<std::string, ComponentType, std::string>(
-                comp_types, comp_id, "--",
-                [](const ComponentType& ct) -> std::string {
-                  return component_type_to_tag(ct);
-                });
-          oss << scenario_id
-              << "," << all_ss.num_occurrences
-              << "," <<
-              convert_time_in_seconds_to(
-                  all_ss.time_in_scenario_s, TimeUnits::Hours)
-              << "," << comp_id
-              << "," << comp_type
-              << "," << stream_name
-              << "," << all_ss.energy_availability_by_comp_id.at(comp_id)
-              << "," << convert_time_in_seconds_to(
-                  all_ss.max_downtime_by_comp_id_s.at(comp_id),
-                  TimeUnits::Hours)
-              << "," << all_ss.load_not_served_by_comp_id_kW.at(comp_id);
-          for (const auto& s: stream_keys) {
-            if (s != stream_name) {
-              oss << ",0.0";
-              continue;
-            }
-            oss << "," << all_ss.total_energy_by_comp_id_kJ.at(comp_id);
-          }
-          oss  << "\n";
+          write_component_line_for_stats_csv(oss, all_ss, comp_id, scenario_id);
         }
         write_total_line_for_stats_csv(
             oss, scenario_id, all_ss,
@@ -1577,6 +1543,51 @@ namespace ERIN
       return oss.str();
     }
     return "";
+  }
+
+  void
+  AllResults::write_component_line_for_stats_csv(
+      std::ostream& oss,
+      const AllScenarioStats& all_ss,
+      const std::string& comp_id,
+      const std::string& scenario_id) const
+  {
+    namespace EG = erin_generics;
+    const auto& stream_types = all_ss.stream_types_by_comp_id;
+    const auto& comp_types = all_ss.component_types_by_comp_id;
+    std::string stream_name =
+      EG::find_and_transform_or<std::string, StreamType, std::string>(
+          stream_types, comp_id, "--",
+          [](const StreamType& st) -> std::string {
+            return st.get_type();
+          });
+    std::string comp_type =
+      EG::find_and_transform_or<std::string, ComponentType, std::string>(
+          comp_types, comp_id, "--",
+          [](const ComponentType& ct) -> std::string {
+            return component_type_to_tag(ct);
+          });
+    oss << scenario_id
+        << "," << all_ss.num_occurrences
+        << "," <<
+        convert_time_in_seconds_to(
+            all_ss.time_in_scenario_s, TimeUnits::Hours)
+        << "," << comp_id
+        << "," << comp_type
+        << "," << stream_name
+        << "," << all_ss.energy_availability_by_comp_id.at(comp_id)
+        << "," << convert_time_in_seconds_to(
+            all_ss.max_downtime_by_comp_id_s.at(comp_id),
+            TimeUnits::Hours)
+        << "," << all_ss.load_not_served_by_comp_id_kW.at(comp_id);
+    for (const auto& s: stream_keys) {
+      if (s != stream_name) {
+        oss << ",0.0";
+        continue;
+      }
+      oss << "," << all_ss.total_energy_by_comp_id_kJ.at(comp_id);
+    }
+    oss  << "\n";
   }
 
   void

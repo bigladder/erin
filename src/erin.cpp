@@ -1530,6 +1530,7 @@ namespace ERIN
   void
   AllResults::write_header_for_stats_csv(std::ostream& oss) const
   {
+    namespace CSV = erin_csv;
     CSV::write_csv(oss, {
         "scenario id",
         "number of occurrences",

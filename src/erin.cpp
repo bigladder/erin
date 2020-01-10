@@ -100,12 +100,8 @@ namespace ERIN
     auto fixed_random = read_fixed_random_for_sim_info(tt, has_fixed);
     bool has_series{false};
     auto fixed_series = read_fixed_series_for_sim_info(tt, has_series);
-    auto it_random_seed = tt.find("random_seed");
-    bool has_seed{it_random_seed != tt.end()};
-    unsigned int seed{0};
-    if (has_seed) {
-      seed = toml::get<unsigned int>(it_random_seed->second);
-    }
+    bool has_seed{false};
+    auto seed = read_random_seed_for_sim_info(tt, has_seed);
     const RealTimeType max_time =
       static_cast<RealTimeType>(toml::find_or(sim_info, "max_time", 1000));
     auto ri = make_random_info(
@@ -140,6 +136,19 @@ namespace ERIN
       fixed_series = toml::get<std::vector<double>>(it_fixed_series->second);
     }
     return fixed_series;
+  }
+
+  unsigned int
+  TomlInputReader::read_random_seed_for_sim_info(
+      const toml::table& tt, bool& has_seed) const
+  {
+    auto it_random_seed = tt.find("random_seed");
+    has_seed = (it_random_seed != tt.end());
+    unsigned int seed{0};
+    if (has_seed) {
+      seed = toml::get<unsigned int>(it_random_seed->second);
+    }
+    return seed;
   }
 
   std::unordered_map<std::string, StreamType>

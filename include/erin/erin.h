@@ -288,6 +288,8 @@ namespace ERIN
           const toml::table& tt, bool& found_it) const;
       std::vector<double> read_fixed_series_for_sim_info(
           const toml::table& tt, bool& found_it) const;
+      unsigned int read_random_seed_for_sim_info(
+          const toml::table& tt, bool& found_it) const;
   };
 
   ////////////////////////////////////////////////////////////

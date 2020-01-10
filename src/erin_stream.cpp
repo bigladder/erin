@@ -51,15 +51,15 @@ namespace ERIN
           const auto& b_fp = dynamic_cast<const FixedProcess&>(*b);
           return a_fp == b_fp;
         }
-      //case RandomType::FixedSeries:
-      //  {
-      //    if constexpr (debug_level >= debug_level_high) {
-      //      std::cout << "FixedSeries compare...\n";
-      //    }
-      //    const auto& a_fs = dynamic_cast<const FixedSeries&>(*a);
-      //    const auto& b_fs = dynamic_cast<const FixedSeries&>(*b);
-      //    return a_fs == b_fs;
-      //  }
+      case RandomType::FixedSeries:
+        {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "FixedSeries compare...\n";
+          }
+          const auto& a_fs = dynamic_cast<const FixedSeries&>(*a);
+          const auto& b_fs = dynamic_cast<const FixedSeries&>(*b);
+          return a_fs == b_fs;
+        }
       default:
         {
           if constexpr (debug_level >= debug_level_high) {
@@ -171,19 +171,22 @@ namespace ERIN
       std::vector<double>::size_type idx_):
     RandomInfo(),
     series{series_},
-    idx{idx_}
+    idx{idx_},
+    max_idx{}
   {
-    auto size = series.size();
-    if (size < 1) {
+    max_idx = series.size() - 1;
+    if (max_idx < 0) {
       std::ostringstream oss{};
-      oss << "the series given to FixedSeries must be at lease of size 1 or greater; "
-             "size: " << size;
+      oss << "the series given to FixedSeries must be at lease of size 1 or greater: "
+             "size = " << (max_idx + 1);
       throw std::invalid_argument(oss.str());
     }
-    if (idx >= size) {
+    if (idx > max_idx) {
       std::ostringstream oss;
       oss << "the index cannot be greater than the length of the series: "
-          << "size = " << size << "; idx = " << idx;
+          << "size = " << (max_idx + 1) << "; "
+          << "idx = " << idx << "; "
+          << "max_idx = " << max_idx;
       throw std::invalid_argument(oss.str());
     }
   }
@@ -191,13 +194,23 @@ namespace ERIN
   double
   FixedSeries::call()
   {
-    return 0.0;
+    auto v = series.at(idx);
+    increment_idx();
+    return v;
+  }
+
+  void
+  FixedSeries::increment_idx()
+  {
+    ++idx;
+    if (idx > max_idx)
+      idx = 0;
   }
 
   bool
   operator==(const FixedSeries& a, const FixedSeries& b)
   {
-    return false;
+    return (a.series == b.series) && (a.idx == b.idx);
   }
 
   bool

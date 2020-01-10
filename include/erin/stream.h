@@ -122,6 +122,9 @@ namespace ERIN
     private:
       std::vector<double> series;
       std::vector<double>::size_type idx;
+      std::vector<double>::size_type max_idx;
+
+      void increment_idx();
   };
 
   bool operator==(const FixedSeries& a, const FixedSeries& b);

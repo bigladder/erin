@@ -3316,6 +3316,8 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
   EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
+  //EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("A"), 0.5);
+  //EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("B"), 0.5);
 }
 
 TEST(ErinBasicsTest, TestRandomProcesses)
@@ -3325,12 +3327,19 @@ TEST(ErinBasicsTest, TestRandomProcesses)
   EXPECT_EQ(fp.call(), expected);
   std::vector<double> series{0.1, 0.2, 0.3};
   auto fs = ERIN::FixedSeries{series};
-  //auto fs_alt = ERIN::FixedSeries{series};
-  //EXPECT_EQ(fs, fs_alt);
-  //EXPECT_EQ(fs.call(), series[0]);
-  //EXPECT_EQ(fs.call(), series[1]);
-  //EXPECT_EQ(fs.call(), series[2]);
-  //EXPECT_EQ(fs.call(), series[0]);
+  auto fs_alt = ERIN::FixedSeries{series};
+  EXPECT_EQ(fs, fs_alt);
+  fs_alt.call();
+  EXPECT_NE(fs, fs_alt);
+  EXPECT_EQ(fs.call(), series[0]);
+  EXPECT_EQ(fs.call(), series[1]);
+  EXPECT_EQ(fs.call(), series[2]);
+  EXPECT_EQ(fs.call(), series[0]);
+  std::unique_ptr<ERIN::RandomInfo> a = std::make_unique<ERIN::FixedSeries>(series);
+  std::unique_ptr<ERIN::RandomInfo> b = std::make_unique<ERIN::FixedSeries>(series);
+  EXPECT_EQ(a, b);
+  b->call();
+  EXPECT_NE(a, b);
 }
 
 int

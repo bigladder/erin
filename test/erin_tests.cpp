@@ -3304,6 +3304,7 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
     scenario_duration_hrs * E::rtt_seconds_per_hour};
   // should translate to a [not-failed, not-failed, failed, failed] result for component A.
   auto m = load_example_results({0.75, 0.75, 0.25, 0.25});
+  const auto& si = m.get_sim_info();
   auto results = m.run_all();
   ASSERT_TRUE(results.get_is_good());
   auto actual_number_of_scenarios = results.number_of_scenarios();

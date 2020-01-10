@@ -129,7 +129,9 @@ namespace ERIN
       }
       [[nodiscard]] bool has_seed() const override { return false; }
       [[nodiscard]] unsigned int get_seed() const override { return 0; }
-      [[nodiscard]] RandomType get_type() const override { return RandomType::FixedSeries; }
+      [[nodiscard]] RandomType get_type() const override {
+        return RandomType::FixedSeries;
+      }
       double call() override;
       
       friend bool operator==(const FixedSeries& a, const FixedSeries& b);

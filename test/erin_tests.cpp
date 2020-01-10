@@ -3350,6 +3350,44 @@ TEST(ErinBasicsTest, TestRandomProcesses)
   EXPECT_NE(a, b);
 }
 
+TEST(ErinBasicsTest, Test_that_we_can_specify_different_random_processes)
+{
+  std::string stub = 
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"years\"\n"
+    "max_time = 40\n";
+  unsigned int seed{17};
+  std::vector<std::string> inputs{
+    "fixed_random = 0.5", 
+    "fixed_random_series = [0.25,0.5,0.75]",
+    "random_seed = " + std::to_string(seed),
+    ""};
+  std::vector<ERIN::RandomType> expected_types{
+    ERIN::RandomType::FixedProcess,
+    ERIN::RandomType::FixedSeries,
+    ERIN::RandomType::RandomProcess,
+    ERIN::RandomType::RandomProcess};
+  std::vector<bool> expect_known_seed{false, false, true, false};
+  std::vector<unsigned int> expected_seeds{0, 0, seed, 0};
+  using size_type = std::vector<std::string>::size_type;
+  for (size_type i{0}; i < inputs.size(); ++i) {
+    std::stringstream ss{};
+    ss << stub << inputs.at(i) << "\n";
+    ERIN::TomlInputReader tir{ss};
+    auto si = tir.read_simulation_info();
+    const auto& expected_type = expected_types.at(i);
+    EXPECT_EQ(si.get_random_type(), expected_type)
+      << "i = " << i << "\n"
+      << "inputs[i] = " << inputs.at(i);
+    if (expect_known_seed.at(i)) {
+      EXPECT_TRUE(si.has_random_seed());
+      EXPECT_EQ(si.get_random_seed(), expected_seeds.at(i));
+    }
+  }
+}
+
 int
 main(int argc, char **argv)
 {

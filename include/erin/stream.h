@@ -187,6 +187,9 @@ namespace ERIN
       [[nodiscard]] unsigned int get_random_seed() const {
         return random_process->get_seed();
       }
+      [[nodiscard]] RandomType get_random_type() const {
+        return random_process->get_type();
+      }
       [[nodiscard]] std::function<double()> make_random_function();
 
       friend bool operator==(const SimulationInfo& a, const SimulationInfo& b);

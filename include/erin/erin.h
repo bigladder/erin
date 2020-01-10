@@ -394,6 +394,9 @@ namespace ERIN
           const std::string& scenario_id, RealTimeType scenario_start_s = 0);
       AllResults run_all();
       RealTimeType max_time_for_scenario(const std::string& scenario_id);
+      [[nodiscard]] const SimulationInfo& get_sim_info() const {
+        return sim_info;
+      }
 
     private:
       SimulationInfo sim_info;

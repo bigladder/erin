@@ -3201,7 +3201,7 @@ TEST(ErinBasicsTest, TestWeCanReadDistributionWithOptionalTimeUnits)
   EXPECT_EQ(dt_b, 10);
 }
 
-ERIN::AllResults
+ERIN::Main
 load_example_results(
     const std::vector<double>& fixed_rolls,
     double intensity = 15.0)
@@ -3270,7 +3270,7 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
     scenario_duration_hrs * E::rtt_seconds_per_hour};
   auto m = load_example_results({0.5}, 30.0);
   const auto& si = m.get_sim_info();
-  EXPECT_EQ();
+  EXPECT_EQ(si.get_random_type(), E::RandomType::FixedProcess);
   auto results = m.run_all();
   ASSERT_TRUE(results.get_is_good());
   auto actual_number_of_scenarios = results.number_of_scenarios();
@@ -3303,7 +3303,8 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
   const E::RealTimeType scenario_duration_s{
     scenario_duration_hrs * E::rtt_seconds_per_hour};
   // should translate to a [not-failed, not-failed, failed, failed] result for component A.
-  auto results = load_example_results({0.75, 0.75, 0.25, 0.25});
+  auto m = load_example_results({0.75, 0.75, 0.25, 0.25});
+  auto results = m.run_all();
   ASSERT_TRUE(results.get_is_good());
   auto actual_number_of_scenarios = results.number_of_scenarios();
   decltype(actual_number_of_scenarios) expected_number_of_scenarios{1};

@@ -3202,7 +3202,9 @@ TEST(ErinBasicsTest, TestWeCanReadDistributionWithOptionalTimeUnits)
 }
 
 ERIN::AllResults
-load_example_results(const std::vector<double>& fixed_rolls)
+load_example_results(
+    const std::vector<double>& fixed_rolls,
+    double intensity = 15.0)
 {
   namespace E = ::ERIN;
   std::string random_line{};
@@ -3255,9 +3257,8 @@ load_example_results(const std::vector<double>& fixed_rolls)
     "duration = 10\n"
     "max_occurrences = -1\n"
     "network = \"nw01\"\n"
-    "intensity.intensity01 = 15\n";
-  auto m = E::make_main_from_string(input);
-  return m.run_all();
+    "intensity.intensity01 = " + std::to_string(intensity) + "\n";
+  return E::make_main_from_string(input);
 }
 
 TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
@@ -3267,7 +3268,10 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
   const E::RealTimeType scenario_duration_hrs{10};
   const E::RealTimeType scenario_duration_s{
     scenario_duration_hrs * E::rtt_seconds_per_hour};
-  auto results = load_example_results({0.5});
+  auto m = load_example_results({0.5}, 30.0);
+  const auto& si = m.get_sim_info();
+  EXPECT_EQ();
+  auto results = m.run_all();
   ASSERT_TRUE(results.get_is_good());
   auto actual_number_of_scenarios = results.number_of_scenarios();
   decltype(actual_number_of_scenarios) expected_number_of_scenarios{1};

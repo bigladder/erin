@@ -3324,9 +3324,8 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
   EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
-  //TODO: enable test to confirm energy availability calculation
-  //EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("A"), 0.5);
-  //EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("B"), 0.5);
+  EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("A"), 0.5);
+  EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("B"), 0.5);
 }
 
 TEST(ErinBasicsTest, TestRandomProcesses)

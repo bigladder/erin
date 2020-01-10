@@ -1,0 +1,26 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),bus-inflow(0):achieved (kW),bus-inflow(0):requested (kW),bus-inflow(1):achieved (kW),bus-inflow(1):requested (kW),bus-outflow(0):achieved (kW),bus-outflow(0):requested (kW),cluster_01_electric:achieved (kW),cluster_01_electric:requested (kW),electric_utility:achieved (kW),electric_utility:requested (kW),emergency_generator:achieved (kW),emergency_generator:requested (kW)
+blue_sky,P0000-00-00T00:00:00,0,,,,,,,1,1,1,1,,
+blue_sky,P0000-00-00T00:00:00,1200,,,,,,,10,10,10,10,,
+blue_sky,P0000-00-00T00:00:00,2400,,,,,,,1,1,1,1,,
+blue_sky,P0000-00-00T00:00:00,3600,,,,,,,0,0,0,0,,
+blue_sky,P0000-00-00T00:00:00,8760,,,,,,,0,0,0,0,,
+class_4_hurricane,P0010-00-00T00:00:00,0,1,1,0,0,1,1,1,1,1,1,0,0
+class_4_hurricane,P0010-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0020-00-00T00:00:00,0,0,0,0,0,0,1,0,1,0,0,0,0
+class_4_hurricane,P0020-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0030-00-00T00:00:00,0,0,1,1,1,1,1,1,1,0,1,1,1
+class_4_hurricane,P0030-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0040-00-00T00:00:00,0,0,0,0,0,0,1,0,1,0,0,0,0
+class_4_hurricane,P0040-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0050-00-00T00:00:00,0,0,0,0,0,0,1,0,1,0,0,0,0
+class_4_hurricane,P0050-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0060-00-00T00:00:00,0,1,1,0,0,1,1,1,1,1,1,0,0
+class_4_hurricane,P0060-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0070-00-00T00:00:00,0,0,0,0,0,0,1,0,1,0,0,0,0
+class_4_hurricane,P0070-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0080-00-00T00:00:00,0,1,1,0,0,1,1,1,1,1,1,0,0
+class_4_hurricane,P0080-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0090-00-00T00:00:00,0,0,0,0,0,0,1,0,1,0,0,0,0
+class_4_hurricane,P0090-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0
+class_4_hurricane,P0100-00-00T00:00:00,0,0,1,1,1,1,1,1,1,0,1,1,1
+class_4_hurricane,P0100-00-00T00:00:00,336,0,0,0,0,0,0,0,0,0,0,0,0

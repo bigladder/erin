@@ -1,0 +1,64 @@
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+max_time = 100
+fixed_random_series = [0.9,0.9,0.9,0.9,0.1,0.1,0.1,0.1]
+[streams.electricity]
+type = "electricity_medium_voltage"
+[loads.building_electrical]
+csv_file = "ex03.csv"
+[components.electric_utility]
+type = "source"
+output_stream = "electricity"
+fragilities = ["highly_vulnerable_to_wind"]
+max_outflow = 10.0
+[components.cluster_01_electric]
+type = "load"
+input_stream = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+loads_by_scenario.class_1_hurricane = "building_electrical"
+loads_by_scenario.class_4_hurricane = "building_electrical"
+loads_by_scenario.class_5_hurricane = "building_electrical"
+[components.emergency_generator]
+type = "source"
+output_stream = "electricity"
+fragilities = ["somewhat_vulnerable_to_flooding"]
+[components.bus]
+type = "muxer"
+stream = "electricity"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
+fragilities = ["highly_vulnerable_to_wind", "somewhat_vulnerable_to_flooding"]
+[fragility.somewhat_vulnerable_to_flooding]
+vulnerable_to = "inundation_depth_ft"
+type = "linear"
+lower_bound = 6.0
+upper_bound = 14.0
+[fragility.highly_vulnerable_to_wind]
+vulnerable_to = "wind_speed_mph"
+type = "linear"
+lower_bound = 80.0
+upper_bound = 180.0
+[networks.normal_operations]
+connections = [["electric_utility", "cluster_01_electric"]]
+[networks.emergency_operations]
+connections = [
+  ["electric_utility", "outflow", "0", "bus", "inflow", "0"],
+  ["emergency_generator", "outflow", "0", "bus", "inflow", "1"],
+  ["bus", "cluster_01_electric"]]
+[scenarios.blue_sky]
+time_units = "hours"
+occurrence_distribution = {type = "fixed", value = 0}
+duration = 8760
+max_occurrences = 1
+network = "normal_operations"
+[scenarios.class_4_hurricane]
+time_units = "hours"
+occurrence_distribution = {type = "fixed", time_units = "years", value = 10}
+duration = 336
+max_occurrences = -1
+network = "emergency_operations"
+intensity.wind_speed_mph = 156
+intensity.inundation_depth_ft = 8

@@ -96,11 +96,11 @@ namespace ERIN
     const std::string time_tag =
       toml::find_or(sim_info, "time_unit", "years");
     const TimeUnits time_units = tag_to_time_units(time_tag);
-    auto it_fixed_random_frac = tt.find("fixed_random_frac");
-    bool has_fixed{it_fixed_random_frac != tt.end()};
-    double fixed_random_frac{0.0};
+    auto it_fixed_random = tt.find("fixed_random");
+    bool has_fixed{it_fixed_random != tt.end()};
+    double fixed_random{0.0};
     if (has_fixed) {
-      fixed_random_frac = toml::get<double>(it_fixed_random_frac->second);
+      fixed_random = toml::get<double>(it_fixed_random->second);
     }
     auto it_fixed_series = tt.find("fixed_random_series");
     bool has_series{it_fixed_series != tt.end()};
@@ -117,7 +117,7 @@ namespace ERIN
     const RealTimeType max_time =
       static_cast<RealTimeType>(toml::find_or(sim_info, "max_time", 1000));
     auto ri = make_random_info(
-        has_fixed, fixed_random_frac,
+        has_fixed, fixed_random,
         has_seed, seed,
         has_series, fixed_series);
     return SimulationInfo{

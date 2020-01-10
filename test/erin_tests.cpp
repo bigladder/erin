@@ -2519,7 +2519,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 100\n"
-    "fixed_random_frac = 0.5\n"
+    "fixed_random = 0.5\n"
     "#random_seed = 1\n"
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
@@ -2648,7 +2648,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 100\n"
-    "fixed_random_frac = 0.1\n"
+    "fixed_random = 0.1\n"
     "#random_seed = 1\n"
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
@@ -3211,7 +3211,7 @@ load_example_results(
   auto num_rolls{fixed_rolls.size()};
   if (num_rolls == 1) {
     std::ostringstream oss;
-    oss << "fixed_random_frac = " << fixed_rolls[0] << "\n";
+    oss << "fixed_random = " << fixed_rolls[0] << "\n";
     random_line = oss.str();
   }
   else if (num_rolls > 1) {
@@ -3323,6 +3323,7 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
   EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
   EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
+  //TODO: enable test to confirm energy availability calculation
   //EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("A"), 0.5);
   //EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("B"), 0.5);
 }

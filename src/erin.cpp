@@ -98,12 +98,8 @@ namespace ERIN
     const TimeUnits time_units = tag_to_time_units(time_tag);
     bool has_fixed{false};
     auto fixed_random = read_fixed_random_for_sim_info(tt, has_fixed);
-    auto it_fixed_series = tt.find("fixed_random_series");
-    bool has_series{it_fixed_series != tt.end()};
-    std::vector<double> fixed_series{0.0};
-    if (has_series) {
-      fixed_series = toml::get<std::vector<double>>(it_fixed_series->second);
-    }
+    bool has_series{false};
+    auto fixed_series = read_fixed_series_for_sim_info(tt, has_series);
     auto it_random_seed = tt.find("random_seed");
     bool has_seed{it_random_seed != tt.end()};
     unsigned int seed{0};
@@ -131,6 +127,19 @@ namespace ERIN
       fixed_random = toml::get<double>(it_fixed_random->second);
     }
     return fixed_random;
+  }
+
+  std::vector<double>
+  TomlInputReader::read_fixed_series_for_sim_info(
+      const toml::table& tt, bool& has_series) const
+  {
+    auto it_fixed_series = tt.find("fixed_random_series");
+    has_series = (it_fixed_series != tt.end());
+    std::vector<double> fixed_series = {0.0};
+    if (has_series) {
+      fixed_series = toml::get<std::vector<double>>(it_fixed_series->second);
+    }
+    return fixed_series;
   }
 
   std::unordered_map<std::string, StreamType>

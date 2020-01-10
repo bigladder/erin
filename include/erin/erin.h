@@ -286,6 +286,8 @@ namespace ERIN
       [[nodiscard]] double read_number(const std::string& v) const;
       double read_fixed_random_for_sim_info(
           const toml::table& tt, bool& found_it) const;
+      std::vector<double> read_fixed_series_for_sim_info(
+          const toml::table& tt, bool& found_it) const;
   };
 
   ////////////////////////////////////////////////////////////

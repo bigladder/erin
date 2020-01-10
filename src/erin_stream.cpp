@@ -81,6 +81,37 @@ namespace ERIN
     return !(a == b);
   }
 
+  std::unique_ptr<RandomInfo>
+  make_random_info(
+      bool has_fixed_random,
+      double fixed_random,
+      bool has_seed,
+      unsigned int seed_value)
+  {
+    std::unique_ptr<RandomInfo> ri{};
+    if ((has_fixed_random) && (has_seed)) {
+      std::ostringstream oss;
+      oss << "cannot have fixed random AND specify random seed\n"
+             "has_fixed_random implies a fixed process\n"
+             "has_seed implies a random process\n"
+             "has_fixed_random and has_seed can be:\n"
+             "  (false, false) => random process seeded by clock\n"
+             "  (true, false) => fixed process with specified value\n"
+             "  (false, true) => random process with specified seed\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if (has_fixed_random) {
+      ri = std::make_unique<FixedProcess>(fixed_random);
+    }
+    else if (has_seed) {
+      ri = std::make_unique<RandomProcess>(seed_value);
+    }
+    else {
+      ri = std::make_unique<RandomProcess>();
+    }
+    return ri;
+  }
+
   ////////////////////////////////////////////////////////////
   // RandomProcess
   RandomProcess::RandomProcess() :
@@ -286,46 +317,43 @@ namespace ERIN
   }
 
   SimulationInfo::SimulationInfo(
-      const std::string& rate_unit_,
-      const std::string& quantity_unit_,
-      TimeUnits time_unit_,
-      RealTimeType max_time_,
+      const std::string& rate_unit,
+      const std::string& quantity_unit,
+      TimeUnits time_unit,
+      RealTimeType max_time,
       bool has_fixed_random,
       double fixed_random,
       bool has_seed,
       unsigned int seed_value):
+    SimulationInfo(
+        rate_unit,
+        quantity_unit,
+        time_unit,
+        max_time,
+        make_random_info(
+          has_fixed_random, fixed_random, has_seed, seed_value))
+  {
+  }
+
+  SimulationInfo::SimulationInfo(
+      const std::string& rate_unit_,
+      const std::string& quantity_unit_,
+      TimeUnits time_unit_,
+      RealTimeType max_time_,
+      std::unique_ptr<RandomInfo>&& random_process_):
     rate_unit{rate_unit_},
     quantity_unit{quantity_unit_},
     time_unit{time_unit_},
     max_time{max_time_},
-    random_process{}
+    random_process{std::move(random_process_)}
   {
     if (max_time <= 0.0) {
       std::ostringstream oss;
       oss << "max_time must be greater than 0.0";
       throw std::invalid_argument(oss.str());
     }
-    if ((has_fixed_random) && (has_seed)) {
-      std::ostringstream oss;
-      oss << "cannot have fixed random AND specify random seed\n"
-             "has_fixed_random implies a fixed process\n"
-             "has_seed implies a random process\n"
-             "has_fixed_random and has_seed can be:\n"
-             "  (false, false) => random process seeded by clock\n"
-             "  (true, false) => fixed process with specified value\n"
-             "  (false, true) => random process with specified seed\n";
-      throw std::invalid_argument(oss.str());
-    }
-    if (has_fixed_random) {
-      random_process = std::make_unique<FixedProcess>(fixed_random);
-    }
-    else if (has_seed) {
-      random_process = std::make_unique<RandomProcess>(seed_value);
-    }
-    else {
-      random_process = std::make_unique<RandomProcess>();
-    }
   }
+    
 
   SimulationInfo::SimulationInfo(const SimulationInfo& other):
     rate_unit{other.rate_unit},

@@ -46,6 +46,12 @@ namespace ERIN
       const std::unique_ptr<RandomInfo>& a,
       const std::unique_ptr<RandomInfo>& b);
 
+  std::unique_ptr<RandomInfo> make_random_info(
+      bool has_fixed_random,
+      double fixed_random,
+      bool has_seed,
+      unsigned int seed_value);
+
   ////////////////////////////////////////////////////////////
   // RandomProcess
   class RandomProcess : public RandomInfo
@@ -158,6 +164,13 @@ namespace ERIN
           double fixed_random_frac,
           bool has_seed,
           unsigned int seed_value);
+      SimulationInfo(
+          const std::string& rate_unit,
+          const std::string& quantity_unit,
+          TimeUnits time_unit,
+          RealTimeType max_time,
+          std::unique_ptr<RandomInfo>&& random_process);
+
       // Rule of Five
       // see https://stackoverflow.com/a/43263477
       ~SimulationInfo() = default;

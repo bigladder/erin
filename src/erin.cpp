@@ -110,10 +110,10 @@ namespace ERIN
     }
     const RealTimeType max_time =
       static_cast<RealTimeType>(toml::find_or(sim_info, "max_time", 1000));
+    auto ri = make_random_info(
+        has_fixed, fixed_random_frac, has_seed, seed);
     return SimulationInfo{
-      rate_unit, quantity_unit, time_units, max_time,
-      has_fixed, fixed_random_frac,
-      has_seed, seed};
+      rate_unit, quantity_unit, time_units, max_time, std::move(ri)};
   }
 
   std::unordered_map<std::string, StreamType>

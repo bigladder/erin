@@ -284,6 +284,8 @@ namespace ERIN
           fragility_map&& frags) const;
       [[nodiscard]] double read_number(const toml::value& v) const;
       [[nodiscard]] double read_number(const std::string& v) const;
+      double read_fixed_random_for_sim_info(
+          const toml::table& t, bool& found_it) const;
   };
 
   ////////////////////////////////////////////////////////////

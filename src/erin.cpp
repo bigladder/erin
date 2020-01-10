@@ -96,12 +96,8 @@ namespace ERIN
     const std::string time_tag =
       toml::find_or(sim_info, "time_unit", "years");
     const TimeUnits time_units = tag_to_time_units(time_tag);
-    auto it_fixed_random = tt.find("fixed_random");
-    bool has_fixed{it_fixed_random != tt.end()};
-    double fixed_random{0.0};
-    if (has_fixed) {
-      fixed_random = toml::get<double>(it_fixed_random->second);
-    }
+    bool has_fixed{false};
+    auto fixed_random = read_fixed_random_for_sim_info(tt, has_fixed);
     auto it_fixed_series = tt.find("fixed_random_series");
     bool has_series{it_fixed_series != tt.end()};
     std::vector<double> fixed_series{0.0};
@@ -122,6 +118,19 @@ namespace ERIN
         has_series, fixed_series);
     return SimulationInfo{
       rate_unit, quantity_unit, time_units, max_time, std::move(ri)};
+  }
+
+  double
+  TomlInputReader::read_fixed_random_for_sim_info(
+      const toml::table& tt, bool& has_fixed) const
+  {
+    auto it_fixed_random = tt.find("fixed_random");
+    has_fixed = (it_fixed_random != tt.end());
+    double fixed_random{0.0};
+    if (has_fixed) {
+      fixed_random = toml::get<double>(it_fixed_random->second);
+    }
+    return fixed_random;
   }
 
   std::unordered_map<std::string, StreamType>

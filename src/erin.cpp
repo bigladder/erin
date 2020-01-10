@@ -102,6 +102,12 @@ namespace ERIN
     if (has_fixed) {
       fixed_random_frac = toml::get<double>(it_fixed_random_frac->second);
     }
+    auto it_fixed_series = tt.find("fixed_random_series");
+    bool has_series{it_fixed_series != tt.end()};
+    std::vector<double> fixed_series{0.0};
+    if (has_series) {
+      fixed_series = toml::get<std::vector<double>>(it_fixed_series->second);
+    }
     auto it_random_seed = tt.find("random_seed");
     bool has_seed{it_random_seed != tt.end()};
     unsigned int seed{0};
@@ -111,7 +117,9 @@ namespace ERIN
     const RealTimeType max_time =
       static_cast<RealTimeType>(toml::find_or(sim_info, "max_time", 1000));
     auto ri = make_random_info(
-        has_fixed, fixed_random_frac, has_seed, seed);
+        has_fixed, fixed_random_frac,
+        has_seed, seed,
+        has_series, fixed_series);
     return SimulationInfo{
       rate_unit, quantity_unit, time_units, max_time, std::move(ri)};
   }

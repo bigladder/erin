@@ -112,6 +112,37 @@ namespace ERIN
     return ri;
   }
 
+  std::unique_ptr<RandomInfo>
+  make_random_info(
+      bool has_fixed_random,
+      double fixed_random,
+      bool has_seed,
+      unsigned int seed_value,
+      bool has_fixed_series,
+      const std::vector<double>& series)
+  {
+    if (!has_fixed_series) {
+      return make_random_info(has_fixed_random, fixed_random, has_seed, seed_value);
+    }
+    if (has_fixed_series && (has_fixed_random || has_seed)) {
+      std::ostringstream oss;
+      oss << "cannot have fixed_series AND (fixed_random OR has_seed) "
+             "at the same time\n"
+             "has_fixed_random implies a fixed process using a single number\n"
+             "has_fixed_series implies a fixed process using a single "
+             "series of numbers\n"
+             "has_seed implies a random process\n"
+             "has_fixed_random, has_seed, and has_fixed_series can be:\n"
+             "  (false, false, false) => random process seeded by clock\n"
+             "  (true, false, false) => fixed process with specified value\n"
+             "  (false, true, false) => random process with specified seed\n"
+             "  (false, false, true) => series of (repating) random values\n";
+      throw std::invalid_argument(oss.str());
+    }
+    std::unique_ptr<RandomInfo> ri = std::make_unique<FixedSeries>(series);
+    return ri;
+  }
+
   ////////////////////////////////////////////////////////////
   // RandomProcess
   RandomProcess::RandomProcess() :

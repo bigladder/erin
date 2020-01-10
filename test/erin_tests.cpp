@@ -3216,7 +3216,7 @@ load_example_results(
   }
   else if (num_rolls > 1) {
     std::ostringstream oss;
-    oss << "fixed_random_fracs = ";
+    oss << "fixed_random_series = ";
     std::string delim{"["};
     for (const auto& x: fixed_rolls) {
       oss << delim << x;
@@ -3305,6 +3305,7 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
   // should translate to a [not-failed, not-failed, failed, failed] result for component A.
   auto m = load_example_results({0.75, 0.75, 0.25, 0.25});
   const auto& si = m.get_sim_info();
+  ASSERT_EQ(si.get_random_type(), E::RandomType::FixedSeries);
   auto results = m.run_all();
   ASSERT_TRUE(results.get_is_good());
   auto actual_number_of_scenarios = results.number_of_scenarios();

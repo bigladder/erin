@@ -8,6 +8,7 @@
 #include <random>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace ERIN
 {
@@ -51,6 +52,14 @@ namespace ERIN
       double fixed_random,
       bool has_seed,
       unsigned int seed_value);
+
+  std::unique_ptr<RandomInfo> make_random_info(
+      bool has_fixed_random,
+      double fixed_random,
+      bool has_seed,
+      unsigned int seed_value,
+      bool has_fixed_series,
+      const std::vector<double>& series);
 
   ////////////////////////////////////////////////////////////
   // RandomProcess

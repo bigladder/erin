@@ -11,6 +11,7 @@
 #include "erin/erin.h"
 #include "erin/fragility.h"
 #include "erin/port.h"
+#include "erin/random.h"
 #include "erin/stream.h"
 #include "erin/type.h"
 #include "erin/utils.h"

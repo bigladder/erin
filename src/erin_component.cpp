@@ -841,7 +841,7 @@ namespace ERIN
   PortsAndElements
   ConverterComponent::add_to_network(
       adevs::Digraph<FlowValueType, Time>& nw,
-      const std::string& /* active_scenario */,
+      const std::string&, // active_scenario
       bool is_failed) const
   {
     namespace ep = ::erin::port;

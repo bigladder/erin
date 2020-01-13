@@ -98,6 +98,10 @@ namespace ERIN
       bool has_fragilities;
   };
 
+  bool operator==(const std::unique_ptr<Component>& a, const std::unique_ptr<Component>& b);
+  bool operator!=(const std::unique_ptr<Component>& a, const std::unique_ptr<Component>& b);
+  std::ostream& operator<<(std::ostream& os, const std::unique_ptr<Component>& n);
+
   ////////////////////////////////////////////////////////////
   // LoadComponent
   class LoadComponent : public Component
@@ -273,17 +277,16 @@ namespace ERIN
           bool is_failed = false) const override;
       [[nodiscard]] bool equals(Component* other) const override;
 
-      //friend bool operator==(const MuxerComponent& a, const MuxerComponent& b);
-      //friend bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
-      //friend std::ostream& operator<<(std::ostream& os, const MuxerComponent& n);
+      friend bool operator==(const ConverterComponent& a, const ConverterComponent& b);
+      friend std::ostream& operator<<(std::ostream& os, const ConverterComponent& n);
 
     private:
       FlowValueType const_eff;
   };
 
-  //bool operator==(const MuxerComponent& a, const MuxerComponent& b);
-  //bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
-  //std::ostream& operator<<(std::ostream& os, const MuxerComponent& n);
+  bool operator==(const ConverterComponent& a, const ConverterComponent& b);
+  bool operator!=(const ConverterComponent& a, const ConverterComponent& b);
+  std::ostream& operator<<(std::ostream& os, const ConverterComponent& n);
 }
 
 #endif // ERIN_COMPONENT_H

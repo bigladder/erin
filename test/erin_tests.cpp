@@ -3400,7 +3400,7 @@ load_converter_example()
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[streams.diesel]\n"
-    "type = \"diesel_fuel\"\n"
+    "type = \"diesel\"\n"
     "[loads.load01]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
@@ -3448,6 +3448,14 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
   ERIN::FlowValueType expected_source_energy_kJ{expected_load_energy_kJ / const_eff};
   auto source_stats = stats_by_comp_id.at("S");
   EXPECT_EQ(source_stats.total_energy, expected_source_energy_kJ);
+  const auto& conv = comps.at("C");
+  std::unique_ptr<ERIN::Component> expected_conv =
+    std::make_unique<ERIN::ConverterComponent>(
+        std::string{"C"},
+        ERIN::StreamType{std::string{"diesel"}},
+        ERIN::StreamType{std::string{"electricity"}},
+        const_eff);
+  EXPECT_EQ(expected_conv, conv);
 }
 
 int

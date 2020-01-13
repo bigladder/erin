@@ -148,6 +148,118 @@ namespace ERIN
     return oss.str();
   }
 
+  bool
+  operator==(const std::unique_ptr<Component>& a, const std::unique_ptr<Component>& b)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "operator==(unique_ptr<Component> a, unique_ptr<Component> b)\n";
+      std::cout << "a = " << a << "\n";
+      std::cout << "b = " << b << "\n";
+    }
+    if ((a.get() == nullptr) || (b.get() == nullptr)) {
+      return false;
+    }
+    auto a_type = a->get_component_type();
+    auto b_type = b->get_component_type();
+    if (a_type != b_type) {
+      return false;
+    }
+    switch (a_type) {
+      case ComponentType::Load:
+        {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "LoadComponent compare...\n";
+          }
+          const auto& a_load = dynamic_cast<const LoadComponent&>(*a);
+          const auto& b_load = dynamic_cast<const LoadComponent&>(*b);
+          return a_load == b_load;
+        }
+      case ComponentType::Source:
+        {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "SourceComponent compare...\n";
+          }
+          const auto& a_source = dynamic_cast<const SourceComponent&>(*a);
+          const auto& b_source = dynamic_cast<const SourceComponent&>(*b);
+          return a_source == b_source;
+        }
+      case ComponentType::Converter:
+        {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "ConverterComponent compare...\n";
+          }
+          const auto& a_conv = dynamic_cast<const ConverterComponent&>(*a);
+          const auto& b_conv = dynamic_cast<const ConverterComponent&>(*b);
+          return a_conv == b_conv;
+        }
+      case ComponentType::Muxer:
+        {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "MuxerComponent compare...\n";
+          }
+          const auto& a_mux = dynamic_cast<const MuxerComponent&>(*a);
+          const auto& b_mux = dynamic_cast<const MuxerComponent&>(*b);
+          return a_mux == b_mux;
+        }
+      default:
+        {
+          std::ostringstream oss;
+          oss << "unhandled component type " << static_cast<int>(a_type) << "\n";
+          throw std::invalid_argument(oss.str());
+        }
+    }
+  }
+
+  bool
+  operator!=(const std::unique_ptr<Component>& a, const std::unique_ptr<Component>& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream& operator<<(std::ostream& os, const std::unique_ptr<Component>& a)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "operator<<(std::ostream& os, std::unique_ptr<Component>& a)\n";
+    }
+    if (a.get() == nullptr) {
+      return os;
+    }
+    auto a_type = a->get_component_type();
+    switch (a_type) {
+      case ComponentType::Load:
+        {
+          const auto& a_load = dynamic_cast<const LoadComponent&>(*a);
+          os << a_load;
+          break;
+        }
+      case ComponentType::Source:
+        {
+          const auto& a_source = dynamic_cast<const SourceComponent&>(*a);
+          os << a_source;
+          break;
+        }
+      case ComponentType::Converter:
+        {
+          const auto& a_conv = dynamic_cast<const ConverterComponent&>(*a);
+          os << a_conv;
+          break;
+        }
+      case ComponentType::Muxer:
+        {
+          const auto& a_mux = dynamic_cast<const MuxerComponent&>(*a);
+          os << a_mux;
+          break;
+        }
+      default:
+        {
+          std::ostringstream oss;
+          oss << "unhandled component type " << static_cast<int>(a_type) << "\n";
+          throw std::invalid_argument(oss.str());
+        }
+    }
+    return os;
+  }
+
   ////////////////////////////////////////////////////////////
   // LoadComponent
   LoadComponent::LoadComponent(
@@ -836,7 +948,40 @@ namespace ERIN
   bool
   ConverterComponent::equals(Component* other) const
   {
-    throw std::runtime_error("not implemented");
-    return other != nullptr;
+    if (other == nullptr) {
+      return false;
+    }
+    auto other_type = other->get_component_type();
+    if (other_type == ComponentType::Converter) {
+      auto other_p = dynamic_cast<ConverterComponent*>(other);
+      if (other_p == nullptr) {
+        return false;
+      }
+      return ((*this) == (*other_p));
+    }
+    return false;
+  }
+
+  bool
+  operator==(const ConverterComponent& a, const ConverterComponent& b)
+  {
+    return (a.get_id() == b.get_id())
+      && (a.get_input_stream() == b.get_input_stream())
+      && (a.get_output_stream() == b.get_output_stream())
+      && (a.const_eff == b.const_eff);
+  }
+
+  bool
+  operator!=(const ConverterComponent& a, const ConverterComponent& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const ConverterComponent& n)
+  {
+    os << "ConverterComponent(" << n.internals_to_string()
+       << ", const_eff=" << n.const_eff << ")";
+    return os;
   }
 }

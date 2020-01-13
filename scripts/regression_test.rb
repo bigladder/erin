@@ -4,17 +4,31 @@
 # To install dependencies, call `bundle install` from this project's top-level
 # folder.
 require 'tmpdir'
-require 'edn_turbo'
+begin
+  require 'edn_turbo'
+rescue Exception
+  require 'edn'
+end
+require 'rubygems'
+
+IS_WIN = Gem.win_platform?
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REFERENCE_PATH = File.expand_path(File.join(THIS_DIR, '..', 'test', 'reference'))
 REGRESSION_RUNS_PATH = File.join(REFERENCE_PATH, 'runs.edn')
-EXECUTABLES = {
-  "e2rin_single": File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "e2rin")),
-  "e2rin_multi": File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi")),
-}
+EXECUTABLES = {}
+if IS_WIN
+  EXECUTABLES[:e2rin_single] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin.exe"))
+  EXECUTABLES[:e2rin_multi] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin_multi.exe"))
+else
+  EXECUTABLES[:e2rin_single] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "e2rin"))
+  EXECUTABLES[:e2rin_multi] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi"))
+end
+DIFF_PROGRAM = if IS_WIN then "FC" else "diff" end
 
 # (Map String String) -> void
 # check that the path part of the tag to path map exists. Fails
@@ -53,7 +67,7 @@ def run_diff(diff_target, expected_path)
   if !File.exist?(expected_path)
     return [false, "expected file: #{expected_path} doesn't exist"]
   end
-  status = system("diff #{diff_target} #{expected_path} > #{diff_path}")
+  status = system("#{DIFF_PROGRAM} #{diff_target} #{expected_path} > #{diff_path}")
   if status.nil? or !status
     is_good = false
     the_diff = ""

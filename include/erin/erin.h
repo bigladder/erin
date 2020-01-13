@@ -297,6 +297,10 @@ namespace ERIN
           const toml::table& tt, bool& found_it) const;
       unsigned int read_random_seed_for_sim_info(
           const toml::table& tt, bool& found_it) const;
+      [[nodiscard]] ComponentType
+        read_component_type(
+            const toml::table& tt,
+            const std::string& comp_id) const;
   };
 
   ////////////////////////////////////////////////////////////

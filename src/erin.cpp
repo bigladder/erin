@@ -473,7 +473,7 @@ namespace ERIN
         fragilities)
   {
     namespace ef = ::erin::fragility;
-    const auto toml_comps = toml::find<toml::table>(data, "components");
+    const auto& toml_comps = toml::find<toml::table>(data, "components");
     if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_comps.size() << " components found\n";
     }
@@ -482,30 +482,8 @@ namespace ERIN
     for (const auto& c: toml_comps) {
       const auto& comp_id = c.first;
       toml::value t = c.second;
-      const toml::table tt = toml::get<toml::table>(t);
-      std::string comp_type_tag;
-      try {
-        comp_type_tag = toml_helper::read_required_table_field<std::string>(
-            tt, {"type"}, field_read);
-      }
-      catch (std::out_of_range& e) {
-        std::ostringstream oss;
-        oss << "original error: " << e.what() << "\n";
-        oss << "failed to find 'type' for component " << comp_id << "\n";
-        throw std::runtime_error(oss.str());
-      }
-      ComponentType component_type;
-      try {
-        component_type = tag_to_component_type(comp_type_tag);
-      }
-      catch (std::invalid_argument& e) {
-        std::ostringstream oss;
-        oss << "original error: " << e.what() << "\n";
-        oss << "could not understand 'type' \""
-            << comp_type_tag << "\" for component "
-            << comp_id << "\n";
-        throw std::runtime_error(oss.str());
-      }
+      const toml::table& tt = toml::get<toml::table>(t);
+      auto component_type = read_component_type(tt, comp_id);
       std::string input_stream_id;
       try {
         input_stream_id =
@@ -618,8 +596,7 @@ namespace ERIN
           {
             std::ostringstream oss;
             oss << "unhandled component type\n";
-            oss << "type = \"" << comp_type_tag << "\" "
-              << "(" << static_cast<int>(component_type) << ")\n";
+            oss << "type = " << static_cast<int>(component_type) << "\n";
             throw std::runtime_error(oss.str());
             break;
           }
@@ -632,6 +609,38 @@ namespace ERIN
       }
     }
     return components;
+  }
+
+  ComponentType
+  TomlInputReader::read_component_type(
+      const toml::table& tt,
+      const std::string& comp_id) const
+  {
+    std::string field_read{};
+    std::string comp_type_tag{};
+    try {
+      comp_type_tag = toml_helper::read_required_table_field<std::string>(
+          tt, {"type"}, field_read);
+    }
+    catch (std::out_of_range& e) {
+      std::ostringstream oss;
+      oss << "original error: " << e.what() << "\n";
+      oss << "failed to find 'type' for component " << comp_id << "\n";
+      throw std::runtime_error(oss.str());
+    }
+    ComponentType component_type;
+    try {
+      component_type = tag_to_component_type(comp_type_tag);
+    }
+    catch (std::invalid_argument& e) {
+      std::ostringstream oss;
+      oss << "original error: " << e.what() << "\n";
+      oss << "could not understand 'type' \""
+        << comp_type_tag << "\" for component "
+        << comp_id << "\n";
+      throw std::runtime_error(oss.str());
+    }
+    return component_type;
   }
 
   std::unordered_map<std::string, ::erin::fragility::FragilityCurve>

@@ -594,7 +594,7 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
     ASSERT_TRUE(a_it != actual.end());
     const auto& a = a_it->second;
     const auto& e = e_pair.second;
-    EXPECT_TRUE(e->equals(a.get())) << "tag = " << tag;
+    EXPECT_EQ(e, a) << "tag = " << tag;
   }
 }
 

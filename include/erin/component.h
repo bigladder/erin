@@ -71,8 +71,6 @@ namespace ERIN
           const std::string& active_scenario,
           bool is_failed = false) const = 0;
 
-      [[nodiscard]] virtual bool equals(Component* other) const = 0;
-
     protected:
       void connect_source_to_sink(
           adevs::Digraph<FlowValueType, Time>& nw,
@@ -123,7 +121,6 @@ namespace ERIN
           const std::string& active_scenario,
           bool is_failed = false) const override;
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
-      [[nodiscard]] bool equals(Component* other) const override;
 
       friend bool operator==(const LoadComponent& a, const LoadComponent& b);
       friend bool operator!=(const LoadComponent& a, const LoadComponent& b);
@@ -202,7 +199,6 @@ namespace ERIN
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
-      [[nodiscard]] bool equals(Component* other) const override;
 
       friend bool operator==(const SourceComponent& a, const SourceComponent& b);
       friend bool operator!=(const SourceComponent& a, const SourceComponent& b);
@@ -243,7 +239,6 @@ namespace ERIN
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
-      [[nodiscard]] bool equals(Component* other) const override;
 
       friend bool operator==(const MuxerComponent& a, const MuxerComponent& b);
       friend bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
@@ -275,7 +270,6 @@ namespace ERIN
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const override;
-      [[nodiscard]] bool equals(Component* other) const override;
 
       friend bool operator==(const ConverterComponent& a, const ConverterComponent& b);
       friend std::ostream& operator<<(std::ostream& os, const ConverterComponent& n);

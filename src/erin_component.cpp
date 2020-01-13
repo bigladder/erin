@@ -341,23 +341,6 @@ namespace ERIN
   }
 
   bool
-  LoadComponent::equals(Component* other) const
-  {
-    if (other == nullptr) {
-      return false;
-    }
-    auto other_type = other->get_component_type();
-    if (other_type == ComponentType::Load) {
-      auto other_p = dynamic_cast<LoadComponent*>(other);
-      if (other_p == nullptr) {
-        return false;
-      }
-      return ((*this) == (*other_p));
-    }
-    return false;
-  }
-
-  bool
   operator==(const LoadComponent& a, const LoadComponent& b)
   {
     if constexpr (debug_level >= debug_level_high) {
@@ -623,23 +606,6 @@ namespace ERIN
   }
 
   bool
-  SourceComponent::equals(Component* other) const
-  {
-    if (other == nullptr) {
-      return false;
-    }
-    auto other_type = other->get_component_type();
-    if (other_type == ComponentType::Source) {
-      auto other_p = dynamic_cast<SourceComponent*>(other);
-      if (other_p == nullptr) {
-        return false;
-      }
-      return ((*this) == (*other_p));
-    }
-    return false;
-  }
-
-  bool
   operator==(const SourceComponent& a, const SourceComponent& b)
   {
     if constexpr (debug_level >= debug_level_high) {
@@ -798,39 +764,6 @@ namespace ERIN
   }
 
   bool
-  MuxerComponent::equals(Component* other) const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "enter MuxerComponent::equals(...)\n"
-                << "lhs.id = " << get_id() << "\n"
-                << "rhs.id = " << get_id() << "\n";
-    }
-    if (other == nullptr) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... not equal because other is null\n";
-      }
-      return false;
-    }
-    auto other_type = other->get_component_type();
-    if (other_type == ComponentType::Muxer) {
-      auto other_p = dynamic_cast<MuxerComponent*>(other);
-      if (other_p == nullptr) {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "... not equal because other "
-                    << "failed dynamic cast to MuxerComponent";
-        }
-        return false;
-      }
-      return ((*this) == (*other_p));
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "... not equal because other.type is '"
-                << component_type_to_tag(other_type) << "'\n";
-    }
-    return false;
-  }
-
-  bool
   operator==(const MuxerComponent& a, const MuxerComponent& b)
   {
     if constexpr (debug_level >= debug_level_high) {
@@ -943,23 +876,6 @@ namespace ERIN
     connect_source_to_sink(nw, in_meter, conv, true);
     connect_source_to_sink(nw, conv, out_meter, true);
     return PortsAndElements{ports, elements};
-  }
-
-  bool
-  ConverterComponent::equals(Component* other) const
-  {
-    if (other == nullptr) {
-      return false;
-    }
-    auto other_type = other->get_component_type();
-    if (other_type == ComponentType::Converter) {
-      auto other_p = dynamic_cast<ConverterComponent*>(other);
-      if (other_p == nullptr) {
-        return false;
-      }
-      return ((*this) == (*other_p));
-    }
-    return false;
   }
 
   bool

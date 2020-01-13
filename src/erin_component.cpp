@@ -762,4 +762,41 @@ namespace ERIN
        << "strategy=" << muxer_dispatch_strategy_to_string(n.strategy) << ")";
     return os;
   }
+
+  ////////////////////////////////////////////////////////////
+  // ConverterComponent
+  ConverterComponent::ConverterComponent(
+      const std::string& id_,
+      const StreamType& input_stream_,
+      const StreamType& output_stream_):
+    Component(
+        id_,
+        ComponentType::Converter,
+        input_stream_,
+        output_stream_)
+  {
+  }
+
+  std::unique_ptr<Component>
+  ConverterComponent::clone() const
+  {
+    std::unique_ptr<Component> p = std::make_unique<ConverterComponent>(
+        get_id(), get_input_stream(), get_output_stream());
+    return p;
+  }
+
+  PortsAndElements
+  ConverterComponent::add_to_network(
+      adevs::Digraph<FlowValueType, Time>& nw,
+      const std::string& active_scenario,
+      bool is_failed) const
+  {
+    return PortsAndElements{};
+  }
+
+  bool
+  ConverterComponent::equals(Component* other) const
+  {
+    return false;
+  }
 }

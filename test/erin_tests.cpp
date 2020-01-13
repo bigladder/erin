@@ -3388,6 +3388,56 @@ TEST(ErinBasicsTest, Test_that_we_can_specify_different_random_processes)
   }
 }
 
+ERIN::Main
+load_converter_example()
+{
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[streams.diesel]\n"
+    "type = \"diesel_fuel\"\n"
+    "[loads.load01]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"diesel\"\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.scenario01 = \"load01\"\n"
+    "[components.C]\n"
+    "type = \"converter\"\n"
+    "input_stream = \"diesel\"\n"
+    "output_stream = \"electricity\"\n"
+    "efficiency = 0.5\n"
+    "[networks.nw01]\n"
+    "connections = [[\"S\", \"C\"], [\"C\", \"L\"]]\n"
+    "[scenarios.scenario01]\n"
+    "time_units = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"nw01\"\n";
+  return ERIN::make_main_from_string(input);
+}
+
+TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
+{
+  auto m = load_converter_example();
+  const auto& comps = m.get_components();
+  using size_type = std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
+  const size_type expected_num_components{3};
+  EXPECT_EQ(expected_num_components, comps.size());
+  //auto results = m.run("scenario01");
+}
+
 int
 main(int argc, char **argv)
 {

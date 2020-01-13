@@ -282,6 +282,12 @@ namespace ERIN
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components,
           fragility_map&& frags) const;
+      void read_converter_component(
+          const std::string& id,
+          const StreamType& input_stream,
+          const StreamType& output_stream,
+          std::unordered_map<
+            std::string, std::unique_ptr<Component>>& components) const;
       [[nodiscard]] double read_number(const toml::value& v) const;
       [[nodiscard]] double read_number(const std::string& v) const;
       double read_fixed_random_for_sim_info(
@@ -403,6 +409,10 @@ namespace ERIN
       [[nodiscard]] const SimulationInfo& get_sim_info() const {
         return sim_info;
       }
+      [[nodiscard]] const std::unordered_map<
+        std::string, std::unique_ptr<Component>>& get_components() const {
+          return components;
+        }
 
     private:
       SimulationInfo sim_info;

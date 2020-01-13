@@ -254,6 +254,34 @@ namespace ERIN
   bool operator==(const MuxerComponent& a, const MuxerComponent& b);
   bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
   std::ostream& operator<<(std::ostream& os, const MuxerComponent& n);
+
+  ////////////////////////////////////////////////////////////
+  // ConverterComponent
+  class ConverterComponent : public Component
+  {
+    public:
+      ConverterComponent(
+          const std::string& id,
+          const StreamType& input_stream,
+          const StreamType& output_stream);
+
+      [[nodiscard]] std::unique_ptr<Component> clone() const override;
+      PortsAndElements add_to_network(
+          adevs::Digraph<FlowValueType, Time>& nw,
+          const std::string& active_scenario,
+          bool is_failed = false) const override;
+      [[nodiscard]] bool equals(Component* other) const override;
+
+      //friend bool operator==(const MuxerComponent& a, const MuxerComponent& b);
+      //friend bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
+      //friend std::ostream& operator<<(std::ostream& os, const MuxerComponent& n);
+
+    private:
+  };
+
+  //bool operator==(const MuxerComponent& a, const MuxerComponent& b);
+  //bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
+  //std::ostream& operator<<(std::ostream& os, const MuxerComponent& n);
 }
 
 #endif // ERIN_COMPONENT_H

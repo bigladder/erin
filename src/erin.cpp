@@ -606,11 +606,11 @@ namespace ERIN
           break;
         case ComponentType::Converter:
           {
-            std::ostringstream oss;
-            oss << "unimplemented component type\n";
-            oss << "type = \"" << comp_type_tag << "\" "
-                << "(" << static_cast<int>(component_type) << ")\n";
-            throw std::runtime_error(oss.str());
+            read_converter_component(
+                comp_id,
+                stream_types_map.at(input_stream_id),
+                stream_types_map.at(output_stream_id),
+                components);
             break;
           }
         default:
@@ -823,6 +823,30 @@ namespace ERIN
           id, stream, num_inflows, num_outflows, std::move(frags), mds);
     components.insert(
         std::make_pair(id, std::move(mux_comp)));
+  }
+
+  void
+  TomlInputReader::read_converter_component(
+      //const toml::table& tt,
+      const std::string& id,
+      const StreamType& input_stream,
+      const StreamType& output_stream,
+      std::unordered_map<
+        std::string, std::unique_ptr<Component>>& components) const
+      //fragility_map&& frags) const
+  {
+    //std::string field_read;
+    //auto num_inflows = toml_helper::read_optional_table_field<int>(
+    //    tt, {"num_inflows", "num_inputs"}, 1, field_read);
+    //auto num_outflows = toml_helper::read_optional_table_field<int>(
+    //    tt, {"num_outflows", "num_outputs"}, 1, field_read);
+    //auto mds_tag = toml_helper::read_optional_table_field<std::string>(
+    //    tt, {"dispatch_strategy"}, "in_order", field_read);
+    //auto mds = tag_to_muxer_dispatch_strategy(mds_tag);
+    std::unique_ptr<Component> converter_comp =
+      std::make_unique<ConverterComponent>(id, input_stream, output_stream);
+    components.insert(
+        std::make_pair(id, std::move(converter_comp)));
   }
 
   std::unordered_map<

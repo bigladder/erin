@@ -213,6 +213,12 @@ namespace ERIN
         read_fragility_data() = 0;
   };
 
+  struct StreamIDs
+  {
+    std::string input_stream_id;
+    std::string output_stream_id;
+  };
+
   ////////////////////////////////////////////////////////////
   // TomlInputReader
   class TomlInputReader : public InputReader
@@ -301,10 +307,9 @@ namespace ERIN
         read_component_type(
             const toml::table& tt,
             const std::string& comp_id) const;
-      [[nodiscard]] std::string
-        read_input_stream_id(
-            const toml::table& tt,
-            const std::string& comp_id) const;
+      [[nodiscard]] StreamIDs read_stream_ids(
+          const toml::table& tt,
+          const std::string& comp_id) const;
   };
 
   ////////////////////////////////////////////////////////////

@@ -484,12 +484,9 @@ namespace ERIN
       toml::value t = c.second;
       const toml::table& tt = toml::get<toml::table>(t);
       auto component_type = read_component_type(tt, comp_id);
-      auto input_stream_id = read_input_stream_id(tt, comp_id);
-      auto output_stream_id = input_stream_id;
-      if (field_read != "stream") {
-        output_stream_id = toml_helper::read_optional_table_field<std::string>(
-            tt, {"output_stream"}, input_stream_id, field_read);
-      }
+      auto stream_ids = read_stream_ids(tt, comp_id);
+      const auto& input_stream_id = stream_ids.input_stream_id;
+      const auto& output_stream_id = stream_ids.output_stream_id;
       std::vector<std::string> fragility_ids =
         toml_helper::read_optional_table_field<std::vector<std::string>>(
             tt, {"fragilities"}, std::vector<std::string>(0), field_read);
@@ -631,8 +628,8 @@ namespace ERIN
     return component_type;
   }
 
-  std::string
-  TomlInputReader::read_input_stream_id(
+  StreamIDs
+  TomlInputReader::read_stream_ids(
       const toml::table& tt,
       const std::string& comp_id) const
   {
@@ -650,7 +647,12 @@ namespace ERIN
           << "or 'output_stream' for component \"" << comp_id << "\"\n";
       throw std::runtime_error(oss.str());
     }
-    return input_stream_id;
+    auto output_stream_id = input_stream_id;
+    if (field_read != "stream") {
+      output_stream_id = toml_helper::read_optional_table_field<std::string>(
+          tt, {"output_stream"}, input_stream_id, field_read);
+    }
+    return StreamIDs{input_stream_id, output_stream_id};
   }
 
   std::unordered_map<std::string, ::erin::fragility::FragilityCurve>

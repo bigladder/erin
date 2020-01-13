@@ -4,11 +4,7 @@
 # To install dependencies, call `bundle install` from this project's top-level
 # folder.
 require 'tmpdir'
-begin
-  require 'edn_turbo'
-rescue Exception
-  require 'edn'
-end
+require 'edn'
 require 'rubygems'
 
 IS_WIN = Gem.win_platform?

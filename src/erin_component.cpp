@@ -806,10 +806,10 @@ namespace ERIN
     auto the_type = ComponentType::Converter;
     auto in_stream = get_input_stream();
     auto out_stream = get_output_stream();
-    auto in_meter = new FlowMeter(the_id, the_type, in_stream);
+    auto in_meter = new FlowMeter(the_id + ":inflow", the_type, in_stream);
     elements.emplace(in_meter);
     ports[ep::Type::Inflow] = std::vector<FlowElement*>{in_meter};
-    auto out_meter = new FlowMeter(the_id, the_type, out_stream);
+    auto out_meter = new FlowMeter(the_id + ":outflow", the_type, out_stream);
     elements.emplace(out_meter);
     ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter};
     auto out_from_in = [const_eff](FlowValueType in) -> FlowValueType {

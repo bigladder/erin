@@ -3436,6 +3436,14 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
   const size_type expected_num_components{3};
   EXPECT_EQ(expected_num_components, comps.size());
   auto results = m.run("scenario01");
+  EXPECT_TRUE(results.get_is_good());
+  auto stats_by_comp_id = results.get_statistics();
+  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 1);
+  auto load_stats = stats_by_comp_id.at("L");
+  ERIN::RealTimeType scenario_duration_s{10};
+  ERIN::FlowValueType load_kW{1.0};
+  ERIN::FlowValueType expected_load_energy_kJ{load_kW * scenario_duration_s};
+  EXPECT_EQ(load_stats.total_energy, expected_load_energy_kJ);
 }
 
 int

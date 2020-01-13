@@ -490,24 +490,13 @@ namespace ERIN
       auto frags = read_component_fragilities(tt, comp_id, fragilities);
       switch (component_type) {
         case ComponentType::Source:
-          {
-            auto stream_type_it = stream_types_map.find(output_stream_id);
-            if (stream_type_it == stream_types_map.end()) {
-              std::ostringstream oss;
-              oss << "output stream '" << output_stream_id << "' not "
-                  << "found in stream_types_map for component '"
-                  << comp_id << "'";
-              throw std::runtime_error(oss.str());
-            }
-            const auto& stream_type = (*stream_type_it).second;
-            read_source_component(
-                tt,
-                comp_id,
-                stream_type,
-                components,
-                std::move(frags));
-            break;
-          }
+          read_source_component(
+              tt,
+              comp_id,
+              stream_types_map.at(output_stream_id),
+              components,
+              std::move(frags));
+          break;
         case ComponentType::Load:
           read_load_component(
               tt,
@@ -526,15 +515,13 @@ namespace ERIN
               std::move(frags));
           break;
         case ComponentType::Converter:
-          {
-            read_converter_component(
-                tt,
-                comp_id,
-                stream_types_map.at(input_stream_id),
-                stream_types_map.at(output_stream_id),
-                components);
-            break;
-          }
+          read_converter_component(
+              tt,
+              comp_id,
+              stream_types_map.at(input_stream_id),
+              stream_types_map.at(output_stream_id),
+              components);
+          break;
         default:
           {
             std::ostringstream oss;

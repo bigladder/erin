@@ -137,9 +137,9 @@ namespace ERIN
           FlowValueType seconds_per_time_unit
           );
       StreamType(
-          std::string  type,
-          std::string  rate_units,
-          std::string  quantity_units,
+          std::string type,
+          std::string rate_units,
+          std::string quantity_units,
           FlowValueType seconds_per_time_unit,
           std::unordered_map<std::string, FlowValueType> other_rate_units,
           std::unordered_map<std::string, FlowValueType> other_quantity_units

@@ -301,6 +301,10 @@ namespace ERIN
         read_component_type(
             const toml::table& tt,
             const std::string& comp_id) const;
+      [[nodiscard]] std::string
+        read_input_stream_id(
+            const toml::table& tt,
+            const std::string& comp_id) const;
   };
 
   ////////////////////////////////////////////////////////////

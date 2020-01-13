@@ -484,19 +484,7 @@ namespace ERIN
       toml::value t = c.second;
       const toml::table& tt = toml::get<toml::table>(t);
       auto component_type = read_component_type(tt, comp_id);
-      std::string input_stream_id;
-      try {
-        input_stream_id =
-          toml_helper::read_required_table_field<std::string>(
-              tt, {"input_stream", "stream", "output_stream"}, field_read);
-      }
-      catch (std::out_of_range& e) {
-        std::ostringstream oss;
-        oss << "original error: " << e.what() << "\n";
-        oss << "failed to find 'input_stream', 'stream', "
-            << "or 'output_stream' for component \"" << comp_id << "\"\n";
-        throw std::runtime_error(oss.str());
-      }
+      auto input_stream_id = read_input_stream_id(tt, comp_id);
       auto output_stream_id = input_stream_id;
       if (field_read != "stream") {
         output_stream_id = toml_helper::read_optional_table_field<std::string>(
@@ -641,6 +629,28 @@ namespace ERIN
       throw std::runtime_error(oss.str());
     }
     return component_type;
+  }
+
+  std::string
+  TomlInputReader::read_input_stream_id(
+      const toml::table& tt,
+      const std::string& comp_id) const
+  {
+    std::string field_read;
+    std::string input_stream_id;
+    try {
+      input_stream_id =
+        toml_helper::read_required_table_field<std::string>(
+            tt, {"input_stream", "stream", "output_stream"}, field_read);
+    }
+    catch (std::out_of_range& e) {
+      std::ostringstream oss;
+      oss << "original error: " << e.what() << "\n";
+      oss << "failed to find 'input_stream', 'stream', "
+          << "or 'output_stream' for component \"" << comp_id << "\"\n";
+      throw std::runtime_error(oss.str());
+    }
+    return input_stream_id;
   }
 
   std::unordered_map<std::string, ::erin::fragility::FragilityCurve>

@@ -3456,6 +3456,14 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
         ERIN::StreamType{std::string{"electricity"}},
         const_eff);
   EXPECT_EQ(expected_conv, conv);
+  std::ostringstream oss;
+  oss << conv;
+  std::string expected_str{
+    "ConverterComponent(id=C, component_type=converter, "
+                       "input_stream=StreamType(type=\"diesel\", rate_units=\"kW\", quantity_units=\"kJ\", seconds_per_time_unit=1, other_rate_units={}, other_quantity_units={}), "
+                       "output_stream=StreamType(type=\"electricity\", rate_units=\"kW\", quantity_units=\"kJ\", seconds_per_time_unit=1, other_rate_units={}, other_quantity_units={}), "
+                       "fragilities=..., has_fragilities=false, const_eff=0.5)"};
+  EXPECT_EQ(oss.str(), expected_str);
 }
 
 int

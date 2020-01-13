@@ -768,31 +768,38 @@ namespace ERIN
   ConverterComponent::ConverterComponent(
       const std::string& id_,
       const StreamType& input_stream_,
-      const StreamType& output_stream_):
+      const StreamType& output_stream_,
+      const FlowValueType& const_eff_):
     Component(
         id_,
         ComponentType::Converter,
         input_stream_,
-        output_stream_)
+        output_stream_),
+    const_eff{const_eff_}
   {
+    if ((const_eff > 1.0) || (const_eff <= 0.0)) {
+      std::ostringstream oss;
+      oss << "const_eff not in the proper range (0 < const_eff <= 1.0)\n"
+          << "const_eff = " << const_eff << "\n";
+      throw std::invalid_argument(oss.str());
+    }
   }
 
   std::unique_ptr<Component>
   ConverterComponent::clone() const
   {
     std::unique_ptr<Component> p = std::make_unique<ConverterComponent>(
-        get_id(), get_input_stream(), get_output_stream());
+        get_id(), get_input_stream(), get_output_stream(), const_eff);
     return p;
   }
 
   PortsAndElements
   ConverterComponent::add_to_network(
       adevs::Digraph<FlowValueType, Time>& nw,
-      const std::string& active_scenario,
+      const std::string& /* active_scenario */,
       bool is_failed) const
   {
     namespace ep = ::erin::port;
-    FlowValueType const_eff{0.25};
     std::unordered_set<FlowElement*> elements;
     std::unordered_map<ep::Type, std::vector<FlowElement*>> ports;
     if constexpr (debug_level >= debug_level_high) {
@@ -812,10 +819,10 @@ namespace ERIN
     auto out_meter = new FlowMeter(the_id + ":outflow", the_type, out_stream);
     elements.emplace(out_meter);
     ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter};
-    auto out_from_in = [const_eff](FlowValueType in) -> FlowValueType {
+    auto out_from_in = [this](FlowValueType in) -> FlowValueType {
       return in * const_eff;
     };
-    auto in_from_out = [const_eff](FlowValueType out) -> FlowValueType {
+    auto in_from_out = [this](FlowValueType out) -> FlowValueType {
       return out / const_eff;
     };
     auto conv = new Converter(
@@ -829,6 +836,7 @@ namespace ERIN
   bool
   ConverterComponent::equals(Component* other) const
   {
-    return false;
+    throw std::runtime_error("not implemented");
+    return other != nullptr;
   }
 }

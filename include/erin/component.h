@@ -263,7 +263,8 @@ namespace ERIN
       ConverterComponent(
           const std::string& id,
           const StreamType& input_stream,
-          const StreamType& output_stream);
+          const StreamType& output_stream,
+          const FlowValueType& const_eff);
 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
       PortsAndElements add_to_network(
@@ -277,6 +278,7 @@ namespace ERIN
       //friend std::ostream& operator<<(std::ostream& os, const MuxerComponent& n);
 
     private:
+      FlowValueType const_eff;
   };
 
   //bool operator==(const MuxerComponent& a, const MuxerComponent& b);

@@ -607,6 +607,7 @@ namespace ERIN
         case ComponentType::Converter:
           {
             read_converter_component(
+                tt,
                 comp_id,
                 stream_types_map.at(input_stream_id),
                 stream_types_map.at(output_stream_id),
@@ -827,7 +828,7 @@ namespace ERIN
 
   void
   TomlInputReader::read_converter_component(
-      //const toml::table& tt,
+      const toml::table& tt,
       const std::string& id,
       const StreamType& input_stream,
       const StreamType& output_stream,
@@ -835,16 +836,12 @@ namespace ERIN
         std::string, std::unique_ptr<Component>>& components) const
       //fragility_map&& frags) const
   {
-    //std::string field_read;
-    //auto num_inflows = toml_helper::read_optional_table_field<int>(
-    //    tt, {"num_inflows", "num_inputs"}, 1, field_read);
-    //auto num_outflows = toml_helper::read_optional_table_field<int>(
-    //    tt, {"num_outflows", "num_outputs"}, 1, field_read);
-    //auto mds_tag = toml_helper::read_optional_table_field<std::string>(
-    //    tt, {"dispatch_strategy"}, "in_order", field_read);
-    //auto mds = tag_to_muxer_dispatch_strategy(mds_tag);
+    std::string field_read;
+    auto const_eff_val = toml_helper::read_required_table_field<toml::value>(
+        tt, {"constant_efficiency"}, field_read);
+    auto const_eff = read_number(const_eff_val);
     std::unique_ptr<Component> converter_comp =
-      std::make_unique<ConverterComponent>(id, input_stream, output_stream);
+      std::make_unique<ConverterComponent>(id, input_stream, output_stream, const_eff);
     components.insert(
         std::make_pair(id, std::move(converter_comp)));
   }

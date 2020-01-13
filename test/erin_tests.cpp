@@ -3416,7 +3416,7 @@ load_converter_example()
     "type = \"converter\"\n"
     "input_stream = \"diesel\"\n"
     "output_stream = \"electricity\"\n"
-    "efficiency = 0.5\n"
+    "constant_efficiency = 0.5\n"
     "[networks.nw01]\n"
     "connections = [[\"S\", \"C\"], [\"C\", \"L\"]]\n"
     "[scenarios.scenario01]\n"
@@ -3444,6 +3444,10 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
   ERIN::FlowValueType load_kW{1.0};
   ERIN::FlowValueType expected_load_energy_kJ{load_kW * scenario_duration_s};
   EXPECT_EQ(load_stats.total_energy, expected_load_energy_kJ);
+  ERIN::FlowValueType const_eff{0.5};
+  ERIN::FlowValueType expected_source_energy_kJ{expected_load_energy_kJ / const_eff};
+  auto source_stats = stats_by_comp_id.at("S");
+  EXPECT_EQ(source_stats.total_energy, expected_source_energy_kJ);
 }
 
 int

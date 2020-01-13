@@ -283,6 +283,7 @@ namespace ERIN
             std::string, std::unique_ptr<Component>>& components,
           fragility_map&& frags) const;
       void read_converter_component(
+          const toml::table& tt,
           const std::string& id,
           const StreamType& input_stream,
           const StreamType& output_stream,

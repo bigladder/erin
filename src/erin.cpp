@@ -487,49 +487,7 @@ namespace ERIN
       auto stream_ids = read_stream_ids(tt, comp_id);
       const auto& input_stream_id = stream_ids.input_stream_id;
       const auto& output_stream_id = stream_ids.output_stream_id;
-      std::vector<std::string> fragility_ids =
-        toml_helper::read_optional_table_field<std::vector<std::string>>(
-            tt, {"fragilities"}, std::vector<std::string>(0), field_read);
-      fragility_map frags;
-      for (const auto& fid : fragility_ids) {
-        auto f_it = fragilities.find(fid);
-        if (f_it == fragilities.end()) {
-          std::ostringstream oss;
-          oss << "component '" << comp_id << "' specified fragility '"
-              << fid << "' but that fragility doesn't appear in the"
-              << "fragility curve map.";
-          throw std::runtime_error(oss.str());
-        }
-        const auto& fc = (*f_it).second;
-        auto it = frags.find(fc.vulnerable_to);
-        if (it == frags.end()) {
-          std::vector<std::unique_ptr<ef::Curve>> cs;
-          cs.emplace_back(fc.curve->clone());
-          frags.emplace(std::make_pair(fc.vulnerable_to, std::move(cs)));
-        }
-        else {
-          (*it).second.emplace_back(fc.curve->clone());
-        }
-      }
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "comp: " << comp_id << ".input_stream_id  = "
-                  << input_stream_id << "\n";
-        std::cout << "comp: " << comp_id << ".output_stream_id = "
-                  << output_stream_id << "\n";
-        std::cout << "comp: " << comp_id << ".fragilities = [";
-        bool first{true};
-        for (const auto& f: fragility_ids) {
-          if (first) {
-            std::cout << "[";
-            first = false;
-          }
-          else {
-            std::cout << ", ";
-          }
-          std::cout << f;
-        }
-        std::cout << "]\n";
-      }
+      auto frags = read_component_fragilities(tt, comp_id, fragilities);
       switch (component_type) {
         case ComponentType::Source:
           {
@@ -652,7 +610,65 @@ namespace ERIN
       output_stream_id = toml_helper::read_optional_table_field<std::string>(
           tt, {"output_stream"}, input_stream_id, field_read);
     }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "comp: " << comp_id << ".input_stream_id  = "
+        << input_stream_id << "\n";
+      std::cout << "comp: " << comp_id << ".output_stream_id = "
+        << output_stream_id << "\n";
+    }
     return StreamIDs{input_stream_id, output_stream_id};
+  }
+
+  fragility_map
+  TomlInputReader::read_component_fragilities(
+      const toml::table& tt,
+      const std::string& comp_id,
+      const std::unordered_map<
+        std::string,
+        ::erin::fragility::FragilityCurve>& fragilities) const
+  {
+    namespace ef = erin::fragility;
+    std::string field_read{};
+    std::vector<std::string> fragility_ids =
+      toml_helper::read_optional_table_field<std::vector<std::string>>(
+          tt, {"fragilities"}, std::vector<std::string>(0), field_read);
+    fragility_map frags;
+    for (const auto& fid : fragility_ids) {
+      auto f_it = fragilities.find(fid);
+      if (f_it == fragilities.end()) {
+        std::ostringstream oss;
+        oss << "component '" << comp_id << "' specified fragility '"
+          << fid << "' but that fragility doesn't appear in the"
+          << "fragility curve map.";
+        throw std::runtime_error(oss.str());
+      }
+      const auto& fc = (*f_it).second;
+      auto it = frags.find(fc.vulnerable_to);
+      if (it == frags.end()) {
+        std::vector<std::unique_ptr<ef::Curve>> cs;
+        cs.emplace_back(fc.curve->clone());
+        frags.emplace(std::make_pair(fc.vulnerable_to, std::move(cs)));
+      }
+      else {
+        (*it).second.emplace_back(fc.curve->clone());
+      }
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "comp: " << comp_id << ".fragilities = [";
+      bool first{true};
+      for (const auto& f: fragility_ids) {
+        if (first) {
+          std::cout << "[";
+          first = false;
+        }
+        else {
+          std::cout << ", ";
+        }
+        std::cout << f;
+      }
+      std::cout << "]\n";
+    }
+    return frags;
   }
 
   std::unordered_map<std::string, ::erin::fragility::FragilityCurve>

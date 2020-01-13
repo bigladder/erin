@@ -310,6 +310,12 @@ namespace ERIN
       [[nodiscard]] StreamIDs read_stream_ids(
           const toml::table& tt,
           const std::string& comp_id) const;
+      [[nodiscard]] fragility_map read_component_fragilities(
+          const toml::table& tt,
+          const std::string& comp_id,
+          const std::unordered_map<
+            std::string,
+            ::erin::fragility::FragilityCurve>& fragilities) const;
   };
 
   ////////////////////////////////////////////////////////////

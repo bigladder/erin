@@ -3435,7 +3435,7 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
   using size_type = std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
   const size_type expected_num_components{3};
   EXPECT_EQ(expected_num_components, comps.size());
-  //auto results = m.run("scenario01");
+  auto results = m.run("scenario01");
 }
 
 int

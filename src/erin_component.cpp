@@ -791,7 +791,39 @@ namespace ERIN
       const std::string& active_scenario,
       bool is_failed) const
   {
-    return PortsAndElements{};
+    namespace ep = ::erin::port;
+    FlowValueType const_eff{0.25};
+    std::unordered_set<FlowElement*> elements;
+    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports;
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "ConverterComponent::add_to_network(...)\n";
+    }
+    if (is_failed) {
+      throw std::invalid_argument(
+          "unimplemented functionality for is_failed=true");
+    }
+    auto the_id = get_id();
+    auto the_type = ComponentType::Converter;
+    auto in_stream = get_input_stream();
+    auto out_stream = get_output_stream();
+    auto in_meter = new FlowMeter(the_id, the_type, in_stream);
+    elements.emplace(in_meter);
+    ports[ep::Type::Inflow] = std::vector<FlowElement*>{in_meter};
+    auto out_meter = new FlowMeter(the_id, the_type, out_stream);
+    elements.emplace(out_meter);
+    ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter};
+    auto out_from_in = [const_eff](FlowValueType in) -> FlowValueType {
+      return in * const_eff;
+    };
+    auto in_from_out = [const_eff](FlowValueType out) -> FlowValueType {
+      return out / const_eff;
+    };
+    auto conv = new Converter(
+        the_id, the_type, in_stream, out_stream, out_from_in, in_from_out);
+    elements.emplace(conv);
+    connect_source_to_sink(nw, in_meter, conv, true);
+    connect_source_to_sink(nw, conv, out_meter, true);
+    return PortsAndElements{ports, elements};
   }
 
   bool

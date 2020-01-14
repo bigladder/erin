@@ -9,11 +9,13 @@ namespace erin::port
 {
   const std::string outflow{"outflow"}; 
   const std::string inflow{"inflow"};
+  const std::string lossflow{"lossflow"};
 
   enum class Type
   {
     Inflow = 0,
-    Outflow
+    Outflow,
+    Lossflow
   };
 
   Type tag_to_type(const std::string& tag);

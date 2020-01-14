@@ -837,7 +837,7 @@ namespace ERIN
       return MuxerDispatchStrategy::InOrder;
     }
     std::ostringstream oss;
-    oss << "unhandled tag \"" << tag << "\" for Muxer_dispatch_strategy\n";
+    oss << "unhandled tag '" << tag << "' for Muxer_dispatch_strategy\n";
     throw std::runtime_error(oss.str());
   }
 

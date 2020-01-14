@@ -16,8 +16,11 @@ namespace erin::port
     if (tag == outflow) {
       return Type::Outflow;
     }
+    if (tag == lossflow) {
+      return Type::Lossflow;
+    }
     std::ostringstream oss;
-    oss << "unhandled tag \"" << tag << "\"";
+    oss << "unhandled tag '" << tag << "' in port type";
     throw std::invalid_argument(oss.str());
   }
 
@@ -29,9 +32,11 @@ namespace erin::port
         return inflow;
       case Type::Outflow:
         return outflow;
+      case Type::Lossflow:
+        return lossflow;
     }
     std::ostringstream oss;
-    oss << "unhandled port type \"" << static_cast<int>(t) << "\"";
+    oss << "unhandled port type '" << static_cast<int>(t) << "' for port type";
     throw std::invalid_argument(oss.str());
   }
 }

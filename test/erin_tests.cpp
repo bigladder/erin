@@ -3477,6 +3477,117 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
   EXPECT_EQ(oss.str(), expected_str);
 }
 
+ERIN::Main
+load_combined_heat_and_power_example()
+{
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[streams.natural_gas]\n"
+    "type = \"natural_gas\"\n"
+    "[streams.district_hot_water]\n"
+    "type = \"district_hot_water\"\n"
+    "[streams.waste_heat]\n"
+    "type = \"waste_heat\"\n"
+    "[loads.electric_load]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
+    "[loads.heating_load]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"natural_gas\"\n"
+    "[components.LE]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.scenario01 = \"electric_load\"\n"
+    "[components.LT]\n"
+    "type = \"load\"\n"
+    "input_stream = \"district_hot_water\"\n"
+    "loads_by_scenario.scenario01 = \"heating_load\"\n"
+    "[components.C0]\n"
+    "type = \"converter\"\n"
+    "inflow_stream = \"natural_gas\"\n"
+    "outflow_stream = \"district_hot_water\"\n"
+    "lossflow_stream = \"waste_heat\"\n"
+    "constant_efficiency = 0.5\n"
+    "[components.C1]\n"
+    "type = \"converter\"\n"
+    "inflow_stream = \"waste_heat\"\n"
+    "outflow_stream = \"electricity\"\n"
+    "constant_efficiency = 0.5\n"
+    "dispatch_strategy = \"dump_load\"\n"
+    "[networks.nw01]\n"
+    "connections = [[\"S\", \"C0\"], "
+                   "[\"C0\", \"LT\"], "
+                   "[\"C0\", \"lossflow\", \"C1\", \"inflow\"], "
+                   "[\"C1\", \"LE\"]]\n"
+    "[scenarios.scenario01]\n"
+    "time_units = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"nw01\"\n";
+  return ERIN::make_main_from_string(input);
+}
+
+TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
+{
+  auto m = load_combined_heat_and_power_example();
+  //const auto& comps = m.get_components();
+  //using size_type = std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
+  //const size_type expected_num_components{3};
+  //EXPECT_EQ(expected_num_components, comps.size());
+  //auto results = m.run("scenario01");
+  //EXPECT_TRUE(results.get_is_good());
+  //auto stats_by_comp_id = results.get_statistics();
+  //EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 1);
+  //auto load_stats = stats_by_comp_id.at("L");
+  //ERIN::RealTimeType scenario_duration_s{10};
+  //ERIN::FlowValueType load_kW{1.0};
+  //ERIN::FlowValueType expected_load_energy_kJ{load_kW * scenario_duration_s};
+  //EXPECT_EQ(load_stats.total_energy, expected_load_energy_kJ);
+  //ERIN::FlowValueType const_eff{0.5};
+  //ERIN::FlowValueType expected_source_energy_kJ{expected_load_energy_kJ / const_eff};
+  //auto source_stats = stats_by_comp_id.at("S");
+  //EXPECT_EQ(source_stats.total_energy, expected_source_energy_kJ);
+  //const auto& conv = comps.at("C");
+  //std::unique_ptr<ERIN::Component> expected_conv =
+  //  std::make_unique<ERIN::ConverterComponent>(
+  //      std::string{"C"},
+  //      ERIN::StreamType{std::string{"diesel"}},
+  //      ERIN::StreamType{std::string{"electricity"}},
+  //      const_eff);
+  //EXPECT_EQ(expected_conv, conv);
+  //std::ostringstream oss;
+  //oss << conv;
+  //std::string expected_str{
+  //  "ConverterComponent(id=C, component_type=converter, "
+  //                     "input_stream=StreamType(type=\"diesel\", "
+  //                                             "rate_units=\"kW\", "
+  //                                             "quantity_units=\"kJ\", "
+  //                                             "seconds_per_time_unit=1, "
+  //                                             "other_rate_units={}, "
+  //                                             "other_quantity_units={}), "
+  //                     "output_stream=StreamType(type=\"electricity\", "
+  //                                              "rate_units=\"kW\", "
+  //                                              "quantity_units=\"kJ\", "
+  //                                              "seconds_per_time_unit=1, "
+  //                                              "other_rate_units={}, "
+  //                                              "other_quantity_units={}), "
+  //                     "fragilities=..., has_fragilities=false, "
+  //                     "const_eff=0.5)"};
+  //EXPECT_EQ(oss.str(), expected_str);
+}
+
 int
 main(int argc, char **argv)
 {

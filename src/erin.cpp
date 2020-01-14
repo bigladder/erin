@@ -583,7 +583,16 @@ namespace ERIN
     try {
       input_stream_id =
         toml_helper::read_required_table_field<std::string>(
-            tt, {"input_stream", "stream", "output_stream"}, field_read);
+            tt,
+            { "input_stream",
+              "inflow_stream",
+              "inflow",
+              "stream",
+              "flow",
+              "output_stream",
+              "outflow_stream",
+              "outflow"},
+            field_read);
     }
     catch (std::out_of_range& e) {
       std::ostringstream oss;
@@ -593,9 +602,14 @@ namespace ERIN
       throw std::runtime_error(oss.str());
     }
     auto output_stream_id = input_stream_id;
-    if (field_read != "stream") {
+    if ((field_read != "stream") && (field_read != "flow")) {
       output_stream_id = toml_helper::read_optional_table_field<std::string>(
-          tt, {"output_stream"}, input_stream_id, field_read);
+          tt,
+          { "output_stream",
+            "outflow_stream",
+            "outflow"},
+          input_stream_id,
+          field_read);
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "comp: " << comp_id << ".input_stream_id  = "

@@ -97,7 +97,9 @@ namespace ERIN
       void print_state() const;
       void print_state(const std::string& prefix) const;
       [[nodiscard]] auto get_real_time() const { return time.real; };
-      [[nodiscard]] bool get_report_inflow_request() const { return report_inflow_request; };
+      [[nodiscard]] bool get_report_inflow_request() const {
+        return report_inflow_request;
+      };
       [[nodiscard]] bool get_report_outflow_achieved() const {
         return report_outflow_achieved;
       };
@@ -201,8 +203,7 @@ namespace ERIN
           StreamType input_stream_type,
           StreamType output_stream_type,
           std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-          std::function<FlowValueType(FlowValueType)> calc_input_from_output
-          );
+          std::function<FlowValueType(FlowValueType)> calc_input_from_output);
 
     protected:
       [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;

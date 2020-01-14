@@ -898,10 +898,7 @@ namespace ERIN
   bool
   operator==(const ConverterComponent& a, const ConverterComponent& b)
   {
-    return (a.get_id() == b.get_id())
-      && (a.get_input_stream() == b.get_input_stream())
-      && (a.get_output_stream() == b.get_output_stream())
-      && (a.const_eff == b.const_eff);
+    return a.base_is_equal(b) && (a.const_eff == b.const_eff);
   }
 
   bool

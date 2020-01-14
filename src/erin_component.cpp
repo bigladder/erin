@@ -16,12 +16,14 @@ namespace ERIN
       std::string id_,
       ComponentType type_,
       StreamType input_stream_,
-      StreamType output_stream_):
+      StreamType output_stream_,
+      StreamType lossflow_stream_):
     Component(
         std::move(id_),
         type_,
         std::move(input_stream_),
         std::move(output_stream_),
+        std::move(lossflow_stream_),
         {})
   {
   }
@@ -31,11 +33,13 @@ namespace ERIN
       ComponentType type_,
       StreamType input_stream_,
       StreamType output_stream_,
+      StreamType lossflow_stream_,
       fragility_map fragilities_):
     id{std::move(id_)},
     component_type{type_},
     input_stream{std::move(input_stream_)},
     output_stream{std::move(output_stream_)},
+    lossflow_stream{std::move(lossflow_stream_)},
     fragilities{std::move(fragilities_)},
     has_fragilities{!fragilities.empty()}
   {
@@ -280,6 +284,7 @@ namespace ERIN
     Component(
         id_,
         ComponentType::Load,
+        input_stream_,
         input_stream_,
         input_stream_,
         std::move(fragilities)),
@@ -552,6 +557,7 @@ namespace ERIN
         ComponentType::Source,
         output_stream_,
         output_stream_,
+        output_stream_,
         std::move(fragilities_)),
     limits{limits_}
   {
@@ -655,6 +661,7 @@ namespace ERIN
     Component(
         id_,
         ComponentType::Muxer,
+        stream_,
         stream_,
         stream_,
         std::move(fragilities_)),
@@ -814,12 +821,14 @@ namespace ERIN
       const std::string& id_,
       const StreamType& input_stream_,
       const StreamType& output_stream_,
+      const StreamType& lossflow_stream_,
       const FlowValueType& const_eff_):
     Component(
         id_,
         ComponentType::Converter,
         input_stream_,
-        output_stream_),
+        output_stream_,
+        lossflow_stream_),
     const_eff{const_eff_}
   {
     if ((const_eff > 1.0) || (const_eff <= 0.0)) {
@@ -834,7 +843,11 @@ namespace ERIN
   ConverterComponent::clone() const
   {
     std::unique_ptr<Component> p = std::make_unique<ConverterComponent>(
-        get_id(), get_input_stream(), get_output_stream(), const_eff);
+        get_id(),
+        get_input_stream(),
+        get_output_stream(),
+        get_lossflow_stream(),
+        const_eff);
     return p;
   }
 
@@ -858,9 +871,13 @@ namespace ERIN
     auto the_type = ComponentType::Converter;
     auto in_stream = get_input_stream();
     auto out_stream = get_output_stream();
+    auto loss_stream = get_lossflow_stream();
     auto in_meter = new FlowMeter(the_id + ":inflow", the_type, in_stream);
     elements.emplace(in_meter);
     ports[ep::Type::Inflow] = std::vector<FlowElement*>{in_meter};
+    auto loss_meter = new FlowMeter(the_id + ":lossflow", the_type, loss_stream);
+    elements.emplace(loss_meter);
+    ports[ep::Type::Lossflow] = std::vector<FlowElement*>{loss_meter};
     auto out_meter = new FlowMeter(the_id + ":outflow", the_type, out_stream);
     elements.emplace(out_meter);
     ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter};

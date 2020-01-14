@@ -217,6 +217,7 @@ namespace ERIN
   {
     std::string input_stream_id;
     std::string output_stream_id;
+    std::string lossflow_stream_id;
   };
 
   ////////////////////////////////////////////////////////////
@@ -293,6 +294,7 @@ namespace ERIN
           const std::string& id,
           const StreamType& input_stream,
           const StreamType& output_stream,
+          const StreamType& lossflow_stream,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components) const;
       [[nodiscard]] double read_number(const toml::value& v) const;

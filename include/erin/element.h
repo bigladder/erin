@@ -37,6 +37,7 @@ namespace ERIN
       static constexpr int inport_outflow_request{1*max_port_numbers};
       static constexpr int outport_inflow_request{2*max_port_numbers};
       static constexpr int outport_outflow_achieved{3*max_port_numbers};
+      static constexpr int outport_lossflow_achieved{4*max_port_numbers};
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;

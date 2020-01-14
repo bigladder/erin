@@ -487,6 +487,7 @@ namespace ERIN
       auto stream_ids = read_stream_ids(tt, comp_id);
       const auto& input_stream_id = stream_ids.input_stream_id;
       const auto& output_stream_id = stream_ids.output_stream_id;
+      const auto& lossflow_stream_id = stream_ids.lossflow_stream_id;
       auto frags = read_component_fragilities(tt, comp_id, fragilities);
       switch (component_type) {
         case ComponentType::Source:
@@ -520,6 +521,7 @@ namespace ERIN
               comp_id,
               stream_types_map.at(input_stream_id),
               stream_types_map.at(output_stream_id),
+              stream_types_map.at(lossflow_stream_id),
               components);
           break;
         default:
@@ -611,13 +613,23 @@ namespace ERIN
           input_stream_id,
           field_read);
     }
+    auto lossflow_stream_id = input_stream_id;
+    if ((field_read != "stream") && (field_read != "flow")) {
+      lossflow_stream_id = toml_helper::read_optional_table_field<std::string>(
+          tt,
+          { "lossflow_stream", "lossflow"},
+          input_stream_id,
+          field_read);
+    }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "comp: " << comp_id << ".input_stream_id  = "
         << input_stream_id << "\n";
       std::cout << "comp: " << comp_id << ".output_stream_id = "
         << output_stream_id << "\n";
+      std::cout << "comp: " << comp_id << ".output_stream_id = "
+        << lossflow_stream_id << "\n";
     }
-    return StreamIDs{input_stream_id, output_stream_id};
+    return StreamIDs{input_stream_id, output_stream_id, lossflow_stream_id};
   }
 
   fragility_map
@@ -870,6 +882,7 @@ namespace ERIN
       const std::string& id,
       const StreamType& input_stream,
       const StreamType& output_stream,
+      const StreamType& lossflow_stream,
       std::unordered_map<
         std::string, std::unique_ptr<Component>>& components) const
       //fragility_map&& frags) const
@@ -879,7 +892,8 @@ namespace ERIN
         tt, {"constant_efficiency"}, field_read);
     auto const_eff = read_number(const_eff_val);
     std::unique_ptr<Component> converter_comp =
-      std::make_unique<ConverterComponent>(id, input_stream, output_stream, const_eff);
+      std::make_unique<ConverterComponent>(
+          id, input_stream, output_stream, lossflow_stream, const_eff);
     components.insert(
         std::make_pair(id, std::move(converter_comp)));
   }

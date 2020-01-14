@@ -3438,7 +3438,8 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
   auto results = m.run("scenario01");
   EXPECT_TRUE(results.get_is_good());
   auto stats_by_comp_id = results.get_statistics();
-  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 1);
+  // num_components + 2 because for converter we have an input, output, and lossport meter
+  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 2);
   auto load_stats = stats_by_comp_id.at("L");
   ERIN::RealTimeType scenario_duration_s{10};
   ERIN::FlowValueType load_kW{1.0};
@@ -3454,6 +3455,7 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
         std::string{"C"},
         ERIN::StreamType{std::string{"diesel"}},
         ERIN::StreamType{std::string{"electricity"}},
+        ERIN::StreamType{std::string{"waste_heat"}},
         const_eff);
   EXPECT_EQ(expected_conv, conv);
   std::ostringstream oss;
@@ -3497,39 +3499,39 @@ load_combined_heat_and_power_example()
     "[loads.electric_load]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
     "[loads.heating_load]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
-    "output_stream = \"natural_gas\"\n"
+    "outflow = \"natural_gas\"\n"
     "[components.LE]\n"
     "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
+    "inflow = \"electricity\"\n"
     "loads_by_scenario.scenario01 = \"electric_load\"\n"
     "[components.LT]\n"
     "type = \"load\"\n"
-    "input_stream = \"district_hot_water\"\n"
+    "inflow = \"district_hot_water\"\n"
     "loads_by_scenario.scenario01 = \"heating_load\"\n"
     "[components.C0]\n"
     "type = \"converter\"\n"
-    "inflow_stream = \"natural_gas\"\n"
-    "outflow_stream = \"district_hot_water\"\n"
-    "lossflow_stream = \"waste_heat\"\n"
+    "inflow = \"natural_gas\"\n"
+    "outflow = \"electricity\"\n"
+    "lossflow = \"waste_heat\"\n"
     "constant_efficiency = 0.5\n"
     "[components.C1]\n"
     "type = \"converter\"\n"
-    "inflow_stream = \"waste_heat\"\n"
-    "outflow_stream = \"electricity\"\n"
+    "inflow = \"waste_heat\"\n"
+    "outflow = \"district_hot_water\"\n"
     "constant_efficiency = 0.5\n"
     "dispatch_strategy = \"dump_load\"\n"
     "[networks.nw01]\n"
     "connections = [[\"S\", \"C0\"], "
-                   "[\"C0\", \"LT\"], "
+                   "[\"C0\", \"LE\"], "
                    "[\"C0\", \"lossflow\", \"C1\", \"inflow\"], "
-                   "[\"C1\", \"LE\"]]\n"
+                   "[\"C1\", \"LT\"]]\n"
     "[scenarios.scenario01]\n"
     "time_units = \"seconds\"\n"
     "occurrence_distribution = {type = \"fixed\", value = 0}\n"
@@ -3546,7 +3548,7 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
   //using size_type = std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
   //const size_type expected_num_components{3};
   //EXPECT_EQ(expected_num_components, comps.size());
-  //auto results = m.run("scenario01");
+  auto results = m.run("scenario01");
   //EXPECT_TRUE(results.get_is_good());
   //auto stats_by_comp_id = results.get_statistics();
   //EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 1);

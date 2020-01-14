@@ -43,12 +43,14 @@ namespace ERIN
           std::string id,
           ComponentType type,
           StreamType input_stream,
-          StreamType output_stream);
+          StreamType output_stream,
+          StreamType lossflow_stream);
       Component(
           std::string id,
           ComponentType type,
           StreamType input_stream,
           StreamType output_stream,
+          StreamType lossflow_stream,
           fragility_map fragilities);
       Component& operator=(const Component&) = delete;
       Component(Component&&) = delete;
@@ -60,6 +62,7 @@ namespace ERIN
       [[nodiscard]] ComponentType get_component_type() const { return component_type; }
       [[nodiscard]] const StreamType& get_input_stream() const { return input_stream; }
       [[nodiscard]] const StreamType& get_output_stream() const { return output_stream; }
+      [[nodiscard]] const StreamType& get_lossflow_stream() const { return lossflow_stream; }
       [[nodiscard]] fragility_map clone_fragility_curves() const;
       [[nodiscard]] bool is_fragile() const { return has_fragilities; }
       // TODO: consider moving this elsewhere
@@ -92,6 +95,7 @@ namespace ERIN
       ComponentType component_type;
       StreamType input_stream;
       StreamType output_stream;
+      StreamType lossflow_stream;
       fragility_map fragilities;
       bool has_fragilities;
   };
@@ -263,6 +267,7 @@ namespace ERIN
           const std::string& id,
           const StreamType& input_stream,
           const StreamType& output_stream,
+          const StreamType& lossflow_stream,
           const FlowValueType& const_eff);
 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;

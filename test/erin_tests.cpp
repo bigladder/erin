@@ -3507,6 +3507,10 @@ load_combined_heat_and_power_example()
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
     "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
+    "[loads.waste_heat_load]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,1000.0],[10.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "outflow = \"natural_gas\"\n"
@@ -3518,6 +3522,18 @@ load_combined_heat_and_power_example()
     "type = \"load\"\n"
     "inflow = \"district_hot_water\"\n"
     "loads_by_scenario.scenario01 = \"heating_load\"\n"
+    "[components.LW]\n"
+    "type = \"load\"\n"
+    "description = \"waste heat load\"\n"
+    "inflow = \"waste_heat\"\n"
+    "loads_by_scenario.scenario01 = \"waste_heat_load\"\n"
+    "[components.M]\n"
+    "type = \"muxer\"\n"
+    "stream = \"waste_heat\"\n"
+    "num_inflows = 1\n"
+    "num_outflows = 2\n"
+    "dispatch_strategy = \"in_order\"\n"
+    "outflow_dispatch_strategy = \"in_order\"\n"
     "[components.C0]\n"
     "type = \"converter\"\n"
     "inflow = \"natural_gas\"\n"
@@ -3533,7 +3549,9 @@ load_combined_heat_and_power_example()
     "[networks.nw01]\n"
     "connections = [[\"S\", \"C0\"], "
                    "[\"C0\", \"LE\"], "
-                   "[\"C0\", \"lossflow\", \"C1\", \"inflow\"], "
+                   "[\"C0\", \"outflow\", \"1\", \"M\", \"inflow\", \"0\"], "
+                   "[\"M\", \"outflow\", \"0\", \"C1\", \"inflow\", \"0\"], "
+                   "[\"M\", \"outflow\", \"1\", \"LW\", \"inflow\", \"0\"], "
                    "[\"C1\", \"LT\"]]\n"
     "[scenarios.scenario01]\n"
     "time_units = \"seconds\"\n"
@@ -3549,12 +3567,12 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
   using size_type = std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
   auto m = load_combined_heat_and_power_example();
   const auto& comps = m.get_components();
-  const size_type expected_num_components{5};
+  const size_type expected_num_components{7};
   EXPECT_EQ(expected_num_components, comps.size());
   auto results = m.run("scenario01");
   EXPECT_TRUE(results.get_is_good());
   auto stats_by_comp_id = results.get_statistics();
-  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 4);
+  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 6);
   auto electrical_load_stats = stats_by_comp_id.at("LE");
   ERIN::RealTimeType scenario_duration_s{10};
   ERIN::FlowValueType electrical_load_kW{10.0};
@@ -3575,13 +3593,13 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
   EXPECT_EQ(
       thermal_load_stats.total_energy,
       expected_thermal_load_energy_kJ);
-  auto waste_energy_stats = stats_by_comp_id.at("C1:lossflow");
   ERIN::FlowValueType expected_waste_energy_kJ{
     (expected_source_energy_kJ * const_eff)
     - (expected_thermal_load_energy_kJ / const_eff)};
-  //EXPECT_EQ(
-  //    waste_energy_stats.total_energy,
-  //    expected_waste_energy_kJ);
+  auto waste_energy_stats = stats_by_comp_id.at("LW");
+  EXPECT_EQ(
+      waste_energy_stats.total_energy,
+      expected_waste_energy_kJ);
 }
 
 int

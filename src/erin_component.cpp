@@ -647,8 +647,16 @@ namespace ERIN
       const StreamType& stream_,
       const int num_inflows_,
       const int num_outflows_,
-      const MuxerDispatchStrategy strategy_):
-    MuxerComponent(id_, stream_, num_inflows_, num_outflows_, {}, strategy_)
+      const MuxerDispatchStrategy strategy_,
+      const MuxerDispatchStrategy output_strategy_):
+    MuxerComponent(
+        id_,
+        stream_,
+        num_inflows_,
+        num_outflows_,
+        {},
+        strategy_,
+        output_strategy_)
   {
   }
 
@@ -658,7 +666,8 @@ namespace ERIN
       const int num_inflows_,
       const int num_outflows_,
       fragility_map fragilities_,
-      const MuxerDispatchStrategy strategy_):
+      const MuxerDispatchStrategy strategy_,
+      const MuxerDispatchStrategy output_strategy_):
     Component(
         id_,
         ComponentType::Muxer,
@@ -668,7 +677,8 @@ namespace ERIN
         std::move(fragilities_)),
     num_inflows{num_inflows_},
     num_outflows{num_outflows_},
-    strategy{strategy_}
+    strategy{strategy_},
+    output_strategy{output_strategy_}
   {
     const int min_ports{1};
     const int max_ports{FlowElement::max_port_numbers};
@@ -701,7 +711,8 @@ namespace ERIN
           num_inflows,
           num_outflows,
           std::move(the_fcs),
-          strategy);
+          strategy,
+          output_strategy);
     return p;
   }
 
@@ -727,7 +738,8 @@ namespace ERIN
           the_stream,
           num_inflows,
           num_outflows,
-          strategy);
+          strategy,
+          output_strategy);
       elements.emplace(mux);
     }
     auto the_ct = ComponentType::Muxer;
@@ -878,10 +890,9 @@ namespace ERIN
     ports[ep::Type::Inflow] = std::vector<FlowElement*>{in_meter};
     auto loss_meter = new FlowMeter(the_id + ":lossflow", the_type, loss_stream);
     elements.emplace(loss_meter);
-    ports[ep::Type::Lossflow] = std::vector<FlowElement*>{loss_meter};
     auto out_meter = new FlowMeter(the_id + ":outflow", the_type, out_stream);
     elements.emplace(out_meter);
-    ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter};
+    ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter, loss_meter};
     auto out_from_in = [this](FlowValueType in) -> FlowValueType {
       return in * const_eff;
     };
@@ -893,7 +904,7 @@ namespace ERIN
     elements.emplace(conv);
     connect_source_to_sink(nw, in_meter, conv, true);
     connect_source_to_sink(nw, conv, out_meter, true);
-    erin::network::couple_source_loss_to_sink(nw, conv, loss_meter);
+    erin::network::couple_source_loss_to_sink(nw, conv, loss_meter, true);
     return PortsAndElements{ports, elements};
   }
 

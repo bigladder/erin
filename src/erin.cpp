@@ -866,12 +866,16 @@ namespace ERIN
         tt, {"num_inflows", "num_inputs"}, 1, field_read);
     auto num_outflows = toml_helper::read_optional_table_field<int>(
         tt, {"num_outflows", "num_outputs"}, 1, field_read);
-    auto mds_tag = toml_helper::read_optional_table_field<std::string>(
-        tt, {"dispatch_strategy"}, "in_order", field_read);
-    auto mds = tag_to_muxer_dispatch_strategy(mds_tag);
+    auto in_disp_tag = toml_helper::read_optional_table_field<std::string>(
+        tt, {"inflow_dispatch_strategy", "dispatch_strategy"}, "in_order", field_read);
+    auto in_disp = tag_to_muxer_dispatch_strategy(in_disp_tag);
+    auto out_disp_tag = toml_helper::read_optional_table_field<std::string>(
+        tt, {"outflow_dispatch_strategy"}, "distribute", field_read);
+    auto out_disp = tag_to_muxer_dispatch_strategy(out_disp_tag);
     std::unique_ptr<Component> mux_comp =
       std::make_unique<MuxerComponent>(
-          id, stream, num_inflows, num_outflows, std::move(frags), mds);
+          id, stream, num_inflows, num_outflows, std::move(frags),
+          in_disp, out_disp);
     components.insert(
         std::make_pair(id, std::move(mux_comp)));
   }

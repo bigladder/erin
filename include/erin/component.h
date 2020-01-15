@@ -226,14 +226,20 @@ namespace ERIN
           const StreamType& stream,
           const int num_inflows,
           const int num_outflows,
-          const MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
+          const MuxerDispatchStrategy strategy
+            = MuxerDispatchStrategy::InOrder,
+          const MuxerDispatchStrategy output_strategy
+            = MuxerDispatchStrategy::Distribute);
       MuxerComponent(
           const std::string& id,
           const StreamType& stream,
           const int num_inflows,
           const int num_outflows,
           fragility_map fragilities,
-          const MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
+          const MuxerDispatchStrategy strategy
+            = MuxerDispatchStrategy::InOrder,
+          const MuxerDispatchStrategy output_strategy
+            = MuxerDispatchStrategy::InOrder);
 
       [[nodiscard]] int get_num_inflows() const { return num_inflows; }
       [[nodiscard]] int get_num_outflows() const { return num_outflows; }
@@ -252,6 +258,7 @@ namespace ERIN
       int num_inflows;
       int num_outflows;
       MuxerDispatchStrategy strategy;
+      MuxerDispatchStrategy output_strategy;
   };
 
   bool operator==(const MuxerComponent& a, const MuxerComponent& b);

@@ -127,21 +127,22 @@ namespace ERIN
       switch (x.port) {
         case inport_inflow_achieved:
           if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... <=inport_the_inflow_achieved\n";
+            std::cout << "... receive<=inport_the_inflow_achieved\n";
           }
           inflow_provided = true;
           the_inflow_achieved += x.value;
           break;
         case inport_outflow_request:
           if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... <=inport_the_outflow_request\n";
+            std::cout << "... receive<=inport_the_outflow_request\n";
           }
           outflow_provided = true;
           the_outflow_request += x.value;
           break;
         case inport_lossflow_request:
           if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... <=inport_lossflow_request\n";
+            std::cout << "... receive<=inport_lossflow_request;id="
+                      << get_id() << "\n";
           }
           lossflow_provided = true;
           the_lossflow_request += x.value;
@@ -170,6 +171,23 @@ namespace ERIN
       FlowValueType the_lossflow_request)
   {
     if (inflow_provided && !outflow_provided) {
+      if (lossflow_provided) {
+        if constexpr (debug_level <= debug_level_high) {
+          std::cout << "inflow_provided "
+                    << "&& !outflow_provided "
+                    << "&& lossflow_provided;id=" << get_id() << "\n";
+        }
+        report_lossflow_achieved = true;
+        if (the_lossflow_request < lossflow) {
+          std::ostringstream oss;
+          oss << "cannot handle lossflow request less than available lossflow\n"
+            << "all lossflow must exit the element\n"
+            << "lossflow = " << lossflow << "\n"
+            << "the_lossflow_request = " << the_lossflow_request << "\n"
+            << "the_lossflow_request must be >= lossflow\n";
+          throw std::runtime_error(oss.str());
+        }
+      }
       report_outflow_achieved = true;
       if ((inflow > 0.0) && (the_inflow_achieved > inflow_request)) {
         std::ostringstream oss;
@@ -197,6 +215,23 @@ namespace ERIN
       update_state(fs);
     }
     else if (outflow_provided && !inflow_provided) {
+      if (lossflow_provided) {
+        if constexpr (debug_level <= debug_level_high) {
+          std::cout << "!inflow_provided "
+                    << "&& outflow_provided "
+                    << "&& lossflow_provided;id=" << get_id() << "\n";
+        }
+        report_lossflow_achieved = true;
+        if (the_lossflow_request < lossflow) {
+          std::ostringstream oss;
+          oss << "cannot handle lossflow request less than available lossflow\n"
+            << "all lossflow must exit the element\n"
+            << "lossflow = " << lossflow << "\n"
+            << "the_lossflow_request = " << the_lossflow_request << "\n"
+            << "the_lossflow_request must be >= lossflow\n";
+          throw std::runtime_error(oss.str());
+        }
+      }
       report_inflow_request = true;
       outflow_request = the_outflow_request;
       const FlowState fs = update_state_for_outflow_request(outflow_request);
@@ -228,7 +263,25 @@ namespace ERIN
         throw std::runtime_error(oss.str());
       }
     }
-    else if (lossflow_provided && !inflow_provided && !outflow_provided) {
+    else if (inflow_provided && outflow_provided) {
+      // assumption: we'll never get here...
+      std::ostringstream oss;
+      oss << "SimultaneousIORequestError: assumption was we'd never get here...\n";
+      oss << "... id=" << get_id() << "\n";
+      oss << "... inflow_provided=" << inflow_provided << "\n";
+      oss << "... outflow_provided=" << outflow_provided << "\n";
+      oss << "... lossflow_provided=" << lossflow_provided << "\n";
+      oss << "... the_inflow_achieved=" << the_inflow_achieved << "\n";
+      oss << "... the_outflow_request=" << the_outflow_request << "\n";
+      oss << "... the_lossflow_request=" << the_lossflow_request << "\n";
+      throw std::runtime_error(oss.str());
+    }
+    else if (lossflow_provided) {
+      if constexpr (debug_level <= debug_level_high) {
+        std::cout << "!inflow_provided "
+                  << "&& !outflow_provided "
+                  << "&& lossflow_provided;id=" << get_id() << "\n";
+      }
       report_lossflow_achieved = true;
       if (the_lossflow_request < lossflow) {
         std::ostringstream oss;
@@ -239,12 +292,6 @@ namespace ERIN
             << "the_lossflow_request must be >= lossflow\n";
         throw std::runtime_error(oss.str());
       }
-    }
-    else if (inflow_provided && outflow_provided) {
-      // assumption: we'll never get here...
-      std::ostringstream oss;
-      oss << "SimultaneousIORequestError: assumption was we'd never get here...";
-      throw std::runtime_error(oss.str());
     }
     else {
       std::ostringstream oss;
@@ -289,9 +336,12 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowElement::ta();id=" << id << "\n";
     }
-    if (report_inflow_request || report_outflow_achieved) {
+    bool flag{report_inflow_request
+              || report_outflow_achieved
+              || report_lossflow_achieved};
+    if (flag) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... dt = (0,1)\n";
+        std::cout << "... dt = (0,1);id=" << get_id() << "\n";
       }
       return Time{0, 1};
     }
@@ -309,17 +359,28 @@ namespace ERIN
     }
     if (report_inflow_request) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... send=>outport_inflow_request\n";
+        std::cout << "... send=>outport_inflow_request;id="
+                  << get_id() << "\n";
       }
       ys.emplace_back(
           adevs::port_value<FlowValueType>{outport_inflow_request, inflow});
     }
     if (report_outflow_achieved) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... send=>outport_outflow_achieved\n";
+        std::cout << "... send=>outport_outflow_achieved;id="
+                  << get_id() << "\n";
       }
       ys.emplace_back(
           adevs::port_value<FlowValueType>{outport_outflow_achieved, outflow});
+    }
+    if (report_lossflow_achieved) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "... send=>outport_lossflow_achieved;id="
+                  << get_id() << "\n";
+      }
+      ys.emplace_back(
+          adevs::port_value<FlowValueType>{
+            outport_lossflow_achieved, lossflow});
     }
     add_additional_outputs(ys);
   }
@@ -863,6 +924,9 @@ namespace ERIN
     if (tag == "in_order") {
       return MuxerDispatchStrategy::InOrder;
     }
+    else if (tag == "distribute") {
+      return MuxerDispatchStrategy::Distribute;
+    }
     std::ostringstream oss;
     oss << "unhandled tag '" << tag << "' for Muxer_dispatch_strategy\n";
     throw std::runtime_error(oss.str());
@@ -874,12 +938,12 @@ namespace ERIN
     switch (mds) {
       case MuxerDispatchStrategy::InOrder:
         return std::string{"in_order"};
-      default:
-        break;
+      case MuxerDispatchStrategy::Distribute:
+        return std::string{"distribute"};
     }
     std::ostringstream oss;
-    oss << "unhandled Muxer_dispatch_strategy \""
-      << static_cast<int>(mds) << "\"\n";
+    oss << "unhandled Muxer_dispatch_strategy '"
+      << static_cast<int>(mds) << "'\n";
     throw std::runtime_error(oss.str());
   }
 
@@ -891,7 +955,8 @@ namespace ERIN
       const StreamType& st,
       int num_inflows_,
       int num_outflows_,
-      MuxerDispatchStrategy strategy_):
+      MuxerDispatchStrategy strategy_,
+      MuxerDispatchStrategy outflow_strategy_):
     FlowElement(
         std::move(id),
         ct,
@@ -900,6 +965,7 @@ namespace ERIN
     num_inflows{num_inflows_},
     num_outflows{num_outflows_},
     strategy{strategy_},
+    outflow_strategy{outflow_strategy_},
     inflows{},
     prev_inflows{},
     inflows_achieved{},
@@ -954,7 +1020,8 @@ namespace ERIN
           highest_inflow_port_received = port_n;
         }
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "... <=inport_inflow_achieved(" << port_n << ")\n";
+          std::cout << "... receive<=inport_inflow_achieved(" << port_n << ");id="
+                    << get_id() << "\n";
         }
         prev_inflows[port_n] = x.value;
         inflows_achieved[port_n] = x.value;
@@ -966,7 +1033,8 @@ namespace ERIN
           highest_outflow_port_received = port_n;
         }
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "... <=inport_outflow_request(" << port_n << ")\n";
+          std::cout << "... receive<=inport_outflow_request(" << port_n << ");id="
+                    << get_id() << "\n";
         }
         // by setting both prev_outflows and outflow_requests we prevent
         // reporting back downstream to the component. If, however, our
@@ -1029,45 +1097,80 @@ namespace ERIN
             inflows_achieved = inflows;
           }
           else {
-            // We've (apparently) requested to all inflow ports and are still
+            // We've requested to all inflow ports and are still
             // deficient on meeting outflow request. Update outflows.
-            // TODO: what really needs to happen is we need to track all the
-            // ports we've sent inflow requests out on since *any* outflow
-            // requests last changed. That could be a stack and we could start
-            // with having all ports on the stack and just keep popping them
-            // each time we request out. If we just heard back from a port,
-            // we'd have to pop it from the stack until we have no more left.
+            if constexpr (debug_level <= debug_level_high) {
+              std::ostringstream oss{};
+              oss << "outflow request > inflow available\n";
+            }
             update_state(FlowState{total_inflow_achieved});
             inflows = inflows_achieved;
-            FlowValueType reduction_factor{1.0};
-            if (total_outflow_request != 0.0) {
-              reduction_factor = total_inflow_achieved / total_outflow_request;
-              for (auto& of_item: outflows) {
-                of_item *= reduction_factor;
+            switch (outflow_strategy) {
+              case MuxerDispatchStrategy::InOrder:
+                {
+                  // We start satisfying loads one by one in port order until there
+                  // is nothing left
+                  if constexpr (debug_level <= debug_level_high) {
+                    std::ostringstream oss{};
+                    oss << "InOrder outflow_strategy\n";
+                    oss << "get_report_inflow_request() = "
+                        << get_report_inflow_request() << "\n";
+                    oss << "get_report_outflow_achieved() = "
+                        << get_report_outflow_achieved() << "\n";
+                  }
+                  FlowValueType remaining_inflow{total_inflow_achieved};
+                  for (auto& of_item: outflows) {
+                    if (of_item >= remaining_inflow) {
+                      of_item = remaining_inflow;
+                    }
+                    remaining_inflow -= of_item;
+                  }
+                  break;
+                }
+              case MuxerDispatchStrategy::Distribute:
+                {
+                  // The inflows are distributed evenly over the outflows
+                  if (total_outflow_request != 0.0) {
+                    FlowValueType reduction_factor{1.0};
+                    reduction_factor = total_inflow_achieved / total_outflow_request;
+                    for (auto& of_item: outflows) {
+                      of_item *= reduction_factor;
+                    }
+                  }
+                  break;
+                }
+              default:
+                {
+                  std::ostringstream oss;
+                  oss << "unhandled output_strategy for Mux " << get_id() << "\n";
+                  throw std::runtime_error(oss.str());
+                }
+            }
+            if constexpr (debug_level >= debug_level_high) {
+              std::cout
+                << "muxer dispatch (in)   : "
+                << muxer_dispatch_strategy_to_string(strategy) << "\n"
+                << "muxer dispatch (out)  : "
+                << muxer_dispatch_strategy_to_string(outflow_strategy) << "\n"
+                << "inflow                : " << get_inflow() << "\n"
+                << "outflow               : " << get_outflow() << "\n"
+                << "highest_inflow_port_received: "
+                << highest_inflow_port_received << "\n"
+                << "highest_outflow_port_received: "
+                << highest_outflow_port_received << "\n"
+                << "num_inflows           : " << num_inflows << "\n"
+                << "num_outflows          : " << num_outflows << "\n"
+                << "total_inflow_achieved : " << total_inflow_achieved << "\n"
+                << "total_outflow_request : " << total_outflow_request << "\n";
+              int i{0};
+              for (const auto& n : inflows) {
+                std::cout << "inflows[" << i << "]=" << n << "\n";
+                ++i;
               }
-              if constexpr (debug_level >= debug_level_high) {
-                std::cout
-                  << "inflow                : " << get_inflow() << "\n"
-                  << "outflow               : " << get_outflow() << "\n"
-                  << "highest_inflow_port_received: "
-                  << highest_inflow_port_received << "\n"
-                  << "highest_outflow_port_received: "
-                  << highest_outflow_port_received << "\n"
-                  << "num_inflows           : " << num_inflows << "\n"
-                  << "num_outflows          : " << num_outflows << "\n"
-                  << "total_inflow_achieved : " << total_inflow_achieved << "\n"
-                  << "total_outflow_request : " << total_outflow_request << "\n"
-                  << "reduction_factor      : " << reduction_factor << "\n";
-                int i{0};
-                for (const auto& n : inflows) {
-                  std::cout << "inflows[" << i << "]=" << n << "\n";
-                  ++i;
-                }
-                i = 0;
-                for (const auto& n : outflows) {
-                  std::cout << "outflows[" << i << "]=" << n << "\n";
-                  ++i;
-                }
+              i = 0;
+              for (const auto& n : outflows) {
+                std::cout << "outflows[" << i << "]=" << n << "\n";
+                ++i;
               }
             }
           }
@@ -1109,14 +1212,23 @@ namespace ERIN
       }
     }
     else if (inflow_provided && outflow_provided) {
-      // assumption: we'll never get here...
-      std::ostringstream oss;
-      oss << "SimultaneousIORequestError: assumption was we'd never get here...";
-      throw std::runtime_error(oss.str());
+      if (total_inflow_achieved > total_outflow_request) {
+        std::ostringstream oss;
+        oss << "SimultaneousIORequestError: assumption was we'd never get here...\n";
+        oss << "... id=" << get_id() << "\n";
+        oss << "... total_inflow_achieved=" << total_inflow_achieved << "\n";
+        oss << "... total_outflow_request=" << total_outflow_request << "\n";
+        throw std::runtime_error(oss.str());
+      }
+      if (total_inflow_achieved < total_outflow_request) {
+        total_outflow_request = total_inflow_achieved;
+        set_report_outflow_achieved(true);
+      }
     }
     else {
       std::ostringstream oss;
-      oss << "BadPortError: no relevant ports detected...";
+      oss << "Unhandled port IO case...;"
+          << "id=" << get_id() << "\n";
       throw std::runtime_error(oss.str());
     }
     if (get_report_inflow_request() || get_report_outflow_achieved()) {
@@ -1129,11 +1241,12 @@ namespace ERIN
   Mux::output_func(std::vector<PortValue>& ys)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowElement::output_func();id=" << get_id() << "\n";
+      std::cout << "Mux::output_func();id=" << get_id() << "\n";
     }
     if (get_report_inflow_request()) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... send=>outport_inflow_request\n";
+        std::cout << "... send=>outport_inflow_request;id="
+                  << get_id() << "\n";
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
         for (int i{0}; i < num_inflows; ++i) {
@@ -1157,15 +1270,19 @@ namespace ERIN
     }
     if (get_report_outflow_achieved()) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... send=>outport_outflow_achieved\n";
-        std::cout << "t = " << get_real_time() << "\n";
+        std::cout << "... send=>outport_outflow_achieved;id="
+                  << get_id() << "\n";
+        std::cout << "... t = " << get_real_time() << ";id="
+                  << get_id() << "\n";
       }
       for (int i{0}; i < num_outflows; ++i) {
         auto outflow_ = outflows[i];
         auto prev_outflow_ = prev_outflows[i];
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "outflow[" << i << "] = " << outflow_ << "\n";
-          std::cout << "prev_outflow[" << i << "] = " << prev_outflow_ << "\n";
+          std::cout << "... outflow[" << i << "] = "
+                    << outflow_ << "\n";
+          std::cout << "... prev_outflow[" << i << "] = "
+                    << prev_outflow_ << "\n";
         }
         if (prev_outflow_ != outflow_) {
           ys.emplace_back(

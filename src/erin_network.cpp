@@ -132,11 +132,17 @@ namespace erin::network
   couple_source_loss_to_sink(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       ::ERIN::FlowElement* src,
-      ::ERIN::FlowElement* sink)
+      ::ERIN::FlowElement* sink,
+      bool two_way)
   {
     network.couple(
-        src, ::ERIN::FlowElement::outport_lossflow_achieved,
-        sink, ::ERIN::FlowElement::inport_inflow_achieved);
+        sink, ::ERIN::FlowElement::outport_inflow_request,
+        src, ::ERIN::FlowElement::inport_lossflow_request);
+    if (two_way) {
+      network.couple(
+          src, ::ERIN::FlowElement::outport_lossflow_achieved,
+          sink, ::ERIN::FlowElement::inport_inflow_achieved);
+    }
   }
 
   ::ERIN::FlowElement*

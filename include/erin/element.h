@@ -254,7 +254,8 @@ namespace ERIN
   // MuxerDispatchStrategy
   enum class MuxerDispatchStrategy
   {
-    InOrder = 0
+    InOrder = 0,
+    Distribute
   };
 
   MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(const std::string& tag);
@@ -271,7 +272,8 @@ namespace ERIN
           const StreamType& stream_type,
           int num_inflows,
           int num_outflows,
-          MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder);
+          MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder,
+          MuxerDispatchStrategy outflow_strategy = MuxerDispatchStrategy::Distribute);
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void output_func(std::vector<PortValue>& xs) override;
 
@@ -279,6 +281,7 @@ namespace ERIN
       int num_inflows;
       int num_outflows;
       MuxerDispatchStrategy strategy;
+      MuxerDispatchStrategy outflow_strategy;
       std::vector<FlowValueType> inflows;
       std::vector<FlowValueType> prev_inflows;
       std::vector<FlowValueType> inflows_achieved;

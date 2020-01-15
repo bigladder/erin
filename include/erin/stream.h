@@ -107,8 +107,7 @@ namespace ERIN
           FlowValueType in,
           FlowValueType out,
           FlowValueType store,
-          FlowValueType loss
-          );
+          FlowValueType loss);
 
       [[nodiscard]] FlowValueType getInflow() const { return inflow; };
       [[nodiscard]] FlowValueType getOutflow() const { return outflow; };

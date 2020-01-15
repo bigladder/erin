@@ -87,6 +87,7 @@ namespace ERIN
     lossflow{0},
     report_inflow_request{false},
     report_outflow_achieved{false},
+    report_lossflow_achieved{false},
     component_type{component_type_},
     element_type{element_type_}
   {
@@ -106,6 +107,7 @@ namespace ERIN
     update_on_internal_transition();
     report_inflow_request = false;
     report_outflow_achieved = false;
+    report_lossflow_achieved = false;
   }
 
   void
@@ -117,8 +119,10 @@ namespace ERIN
     time = time + e;
     bool inflow_provided{false};
     bool outflow_provided{false};
+    bool lossflow_provided{false};
     FlowValueType the_inflow_achieved{0};
     FlowValueType the_outflow_request{0};
+    FlowValueType the_lossflow_request{0};
     for (const auto &x : xs) {
       switch (x.port) {
         case inport_inflow_achieved:
@@ -135,15 +139,25 @@ namespace ERIN
           outflow_provided = true;
           the_outflow_request += x.value;
           break;
+        case inport_lossflow_request:
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "... <=inport_lossflow_request\n";
+          }
+          lossflow_provided = true;
+          the_lossflow_request += x.value;
+          break;
         default:
-          std::ostringstream oss;
-          oss << "BadPortError: unhandled port: \"" << x.port << "\"";
-          throw std::runtime_error(oss.str());
+          {
+            std::ostringstream oss;
+            oss << "BadPortError: unhandled port: \"" << x.port << "\"";
+            throw std::runtime_error(oss.str());
+          }
       }
     }
     run_checks_after_receiving_inputs(
         inflow_provided, the_inflow_achieved,
-        outflow_provided, the_outflow_request);
+        outflow_provided, the_outflow_request,
+        lossflow_provided, the_lossflow_request);
   }
 
   void
@@ -151,7 +165,9 @@ namespace ERIN
       bool inflow_provided,
       FlowValueType the_inflow_achieved,
       bool outflow_provided,
-      FlowValueType the_outflow_request)
+      FlowValueType the_outflow_request,
+      bool lossflow_provided,
+      FlowValueType the_lossflow_request)
   {
     if (inflow_provided && !outflow_provided) {
       report_outflow_achieved = true;
@@ -209,6 +225,18 @@ namespace ERIN
           oss << "outflow: " << outflow << "\n";
           oss << "outflow_request: " << outflow_request << "\n";
         }
+        throw std::runtime_error(oss.str());
+      }
+    }
+    else if (lossflow_provided && !inflow_provided && !outflow_provided) {
+      report_lossflow_achieved = true;
+      if (the_lossflow_request < lossflow) {
+        std::ostringstream oss;
+        oss << "cannot handle lossflow request less than available lossflow\n"
+            << "all lossflow must exit the element\n"
+            << "lossflow = " << lossflow << "\n"
+            << "the_lossflow_request = " << the_lossflow_request << "\n"
+            << "the_lossflow_request must be >= lossflow\n";
         throw std::runtime_error(oss.str());
       }
     }
@@ -682,7 +710,6 @@ namespace ERIN
   {
     return FlowState{inflow_, output_from_input(inflow_)};
   }
-
 
   ///////////////////////////////////////////////////////////////////
   // Sink

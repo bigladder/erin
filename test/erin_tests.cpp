@@ -3552,45 +3552,36 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
   const size_type expected_num_components{5};
   EXPECT_EQ(expected_num_components, comps.size());
   auto results = m.run("scenario01");
-  //EXPECT_TRUE(results.get_is_good());
-  //auto stats_by_comp_id = results.get_statistics();
-  //EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 1);
-  //auto load_stats = stats_by_comp_id.at("L");
-  //ERIN::RealTimeType scenario_duration_s{10};
-  //ERIN::FlowValueType load_kW{1.0};
-  //ERIN::FlowValueType expected_load_energy_kJ{load_kW * scenario_duration_s};
-  //EXPECT_EQ(load_stats.total_energy, expected_load_energy_kJ);
-  //ERIN::FlowValueType const_eff{0.5};
-  //ERIN::FlowValueType expected_source_energy_kJ{expected_load_energy_kJ / const_eff};
-  //auto source_stats = stats_by_comp_id.at("S");
-  //EXPECT_EQ(source_stats.total_energy, expected_source_energy_kJ);
-  //const auto& conv = comps.at("C");
-  //std::unique_ptr<ERIN::Component> expected_conv =
-  //  std::make_unique<ERIN::ConverterComponent>(
-  //      std::string{"C"},
-  //      ERIN::StreamType{std::string{"diesel"}},
-  //      ERIN::StreamType{std::string{"electricity"}},
-  //      const_eff);
-  //EXPECT_EQ(expected_conv, conv);
-  //std::ostringstream oss;
-  //oss << conv;
-  //std::string expected_str{
-  //  "ConverterComponent(id=C, component_type=converter, "
-  //                     "input_stream=StreamType(type=\"diesel\", "
-  //                                             "rate_units=\"kW\", "
-  //                                             "quantity_units=\"kJ\", "
-  //                                             "seconds_per_time_unit=1, "
-  //                                             "other_rate_units={}, "
-  //                                             "other_quantity_units={}), "
-  //                     "output_stream=StreamType(type=\"electricity\", "
-  //                                              "rate_units=\"kW\", "
-  //                                              "quantity_units=\"kJ\", "
-  //                                              "seconds_per_time_unit=1, "
-  //                                              "other_rate_units={}, "
-  //                                              "other_quantity_units={}), "
-  //                     "fragilities=..., has_fragilities=false, "
-  //                     "const_eff=0.5)"};
-  //EXPECT_EQ(oss.str(), expected_str);
+  EXPECT_TRUE(results.get_is_good());
+  auto stats_by_comp_id = results.get_statistics();
+  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 4);
+  auto electrical_load_stats = stats_by_comp_id.at("LE");
+  ERIN::RealTimeType scenario_duration_s{10};
+  ERIN::FlowValueType electrical_load_kW{10.0};
+  ERIN::FlowValueType expected_electrical_load_energy_kJ{
+    electrical_load_kW * scenario_duration_s};
+  EXPECT_EQ(
+      electrical_load_stats.total_energy,
+      expected_electrical_load_energy_kJ);
+  ERIN::FlowValueType const_eff{0.5};
+  ERIN::FlowValueType expected_source_energy_kJ{
+    expected_electrical_load_energy_kJ / const_eff};
+  auto source_stats = stats_by_comp_id.at("S");
+  EXPECT_EQ(source_stats.total_energy, expected_source_energy_kJ);
+  auto thermal_load_stats = stats_by_comp_id.at("LT");
+  ERIN::FlowValueType thermal_load_kW{1.0};
+  ERIN::FlowValueType expected_thermal_load_energy_kJ{
+    thermal_load_kW * scenario_duration_s};
+  EXPECT_EQ(
+      thermal_load_stats.total_energy,
+      expected_thermal_load_energy_kJ);
+  auto waste_energy_stats = stats_by_comp_id.at("C1:lossflow");
+  ERIN::FlowValueType expected_waste_energy_kJ{
+    (expected_source_energy_kJ * const_eff)
+    - (expected_thermal_load_energy_kJ / const_eff)};
+  //EXPECT_EQ(
+  //    waste_energy_stats.total_energy,
+  //    expected_waste_energy_kJ);
 }
 
 int

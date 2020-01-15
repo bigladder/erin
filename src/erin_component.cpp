@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/component.h"
+#include "erin/network.h"
 #include "erin/port.h"
 #include "debug_utils.h"
 #include <sstream>
@@ -892,6 +893,7 @@ namespace ERIN
     elements.emplace(conv);
     connect_source_to_sink(nw, in_meter, conv, true);
     connect_source_to_sink(nw, conv, out_meter, true);
+    erin::network::couple_source_loss_to_sink(nw, conv, loss_meter);
     return PortsAndElements{ports, elements};
   }
 

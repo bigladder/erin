@@ -35,9 +35,10 @@ namespace ERIN
       static constexpr int max_port_numbers{1000};
       static constexpr int inport_inflow_achieved{0*max_port_numbers};
       static constexpr int inport_outflow_request{1*max_port_numbers};
-      static constexpr int outport_inflow_request{2*max_port_numbers};
-      static constexpr int outport_outflow_achieved{3*max_port_numbers};
-      static constexpr int outport_lossflow_achieved{4*max_port_numbers};
+      static constexpr int inport_lossflow_request{2*max_port_numbers};
+      static constexpr int outport_inflow_request{3*max_port_numbers};
+      static constexpr int outport_outflow_achieved{4*max_port_numbers};
+      static constexpr int outport_lossflow_achieved{5*max_port_numbers};
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
@@ -89,22 +90,30 @@ namespace ERIN
           bool inflow_provided,
           FlowValueType inflow_achieved,
           bool outflow_provided,
-          FlowValueType outflow_request);
+          FlowValueType outflow_request,
+          bool lossflow_provided,
+          FlowValueType lossflow_request);
       virtual Time calculate_time_advance();
       virtual void update_on_internal_transition();
       virtual void update_on_external_transition();
       virtual void add_additional_outputs(std::vector<PortValue>& ys);
       void print_state() const;
       void print_state(const std::string& prefix) const;
-      [[nodiscard]] auto get_real_time() const { return time.real; };
+      [[nodiscard]] auto get_real_time() const { return time.real; }
       [[nodiscard]] bool get_report_inflow_request() const {
         return report_inflow_request;
-      };
+      }
       [[nodiscard]] bool get_report_outflow_achieved() const {
         return report_outflow_achieved;
-      };
+      }
+      [[nodiscard]] bool get_report_lossflow_achieved() const {
+        return report_lossflow_achieved;
+      }
       void set_report_inflow_request(bool b) { report_inflow_request = b; }
       void set_report_outflow_achieved(bool b) { report_outflow_achieved = b; }
+      void set_report_lossflow_achieved(bool b) {
+        report_lossflow_achieved = b;
+      }
       [[nodiscard]] FlowValueType get_inflow() const { return inflow; }
       [[nodiscard]] FlowValueType get_inflow_request() const {
         return inflow_request;
@@ -143,6 +152,7 @@ namespace ERIN
       FlowValueType lossflow;
       bool report_inflow_request;
       bool report_outflow_achieved;
+      bool report_lossflow_achieved;
       ComponentType component_type;
       ElementType element_type;
   };

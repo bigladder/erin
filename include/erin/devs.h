@@ -3,6 +3,7 @@
 
 #ifndef ERIN_DEVS_H
 #define ERIN_DEVS_H
+#include "erin/type.h"
 
 namespace erin::devs
 {
@@ -59,14 +60,16 @@ namespace erin::devs
   class FlowLimitsState
   {
     public:
-      FlowLimitsState(double lower_limit, double upper_limit);
+      FlowLimitsState(
+          ERIN::FlowValueType lower_limit,
+          ERIN::FlowValueType upper_limit);
 
-      [[nodiscard]] double get_lower_limit() const { return lower_limit; }
-      [[nodiscard]] double get_upper_limit() const { return upper_limit; }
+      [[nodiscard]] ERIN::FlowValueType get_lower_limit() const { return lower_limit; }
+      [[nodiscard]] ERIN::FlowValueType get_upper_limit() const { return upper_limit; }
 
     private:
-      double lower_limit;
-      double upper_limit;
+      ERIN::FlowValueType lower_limit;
+      ERIN::FlowValueType upper_limit;
   };
 
   //struct FlowLimitsState

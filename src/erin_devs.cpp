@@ -44,7 +44,9 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // FlowLimitsState
-  FlowLimitsState::FlowLimitsState(double lower_limit_, double upper_limit_):
+  FlowLimitsState::FlowLimitsState(
+      ERIN::FlowValueType lower_limit_,
+      ERIN::FlowValueType upper_limit_):
     lower_limit{lower_limit_},
     upper_limit{upper_limit_}
   {

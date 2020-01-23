@@ -463,22 +463,15 @@ namespace ERIN
       std::string id_,
       ComponentType component_type_,
       const StreamType& stream_type_,
-      FlowValueType low_lim,
-      FlowValueType up_lim):
+      FlowValueType lower_limit,
+      FlowValueType upper_limit):
     FlowElement(
         std::move(id_),
         component_type_,
         ElementType::FlowLimits,
         stream_type_),
-    lower_limit{low_lim},
-    upper_limit{up_lim}
+    state{lower_limit, upper_limit}
   {
-    if (lower_limit > upper_limit) {
-      std::ostringstream oss;
-      oss << "FlowLimits error: lower_limit (" << lower_limit
-          << ") > upper_limit (" << upper_limit << ")";
-      throw std::invalid_argument(oss.str());
-    }
   }
 
   FlowState
@@ -489,11 +482,11 @@ namespace ERIN
       print_state("... ");
     }
     FlowValueType out_{0.0};
-    if (out > upper_limit) {
-      out_ = upper_limit;
+    if (out > state.get_upper_limit()) {
+      out_ = state.get_upper_limit();
     }
-    else if (out < lower_limit) {
-      out_ = lower_limit;
+    else if (out < state.get_lower_limit()) {
+      out_ = state.get_lower_limit();
     }
     else {
       out_ = out;
@@ -513,20 +506,20 @@ namespace ERIN
       print_state("... ");
     }
     FlowValueType in_{0.0};
-    if (in > upper_limit) {
+    if (in > state.get_upper_limit()) {
       std::ostringstream oss;
       oss << "AchievedMoreThanRequestedError\n";
       oss << "in > upper_limit\n";
       oss << "in: " << in << "\n";
-      oss << "upper_limit: " << upper_limit << "\n";
+      oss << "upper_limit: " << state.get_upper_limit() << "\n";
       throw std::runtime_error(oss.str());
     }
-    else if (in < lower_limit) {
+    else if (in < state.get_lower_limit()) {
       std::ostringstream oss;
       oss << "AchievedMoreThanRequestedError\n";
       oss << "in < lower_limit\n";
       oss << "in: " << in << "\n";
-      oss << "lower_limit: " << lower_limit << "\n";
+      oss << "lower_limit: " << state.get_lower_limit() << "\n";
       throw std::runtime_error(oss.str());
     }
     else {

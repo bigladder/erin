@@ -41,4 +41,18 @@ namespace erin::devs
     }
     return Port{requested, new_achieved};
   }
+
+  ////////////////////////////////////////////////////////////
+  // FlowLimitsState
+  FlowLimitsState::FlowLimitsState(double lower_limit_, double upper_limit_):
+    lower_limit{lower_limit_},
+    upper_limit{upper_limit_}
+  {
+    if (lower_limit > upper_limit) {
+      std::ostringstream oss;
+      oss << "FlowLimitsState error: lower_limit (" << lower_limit
+          << ") > upper_limit (" << upper_limit << ")";
+      throw std::invalid_argument(oss.str());
+    }
+  }
 }

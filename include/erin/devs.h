@@ -56,6 +56,19 @@ namespace erin::devs
   //    virtual std::vector<PortValue> output_fn(const S& state) const = 0;
   //};
 
+  class FlowLimitsState
+  {
+    public:
+      FlowLimitsState(double lower_limit, double upper_limit);
+
+      [[nodiscard]] double get_lower_limit() const { return lower_limit; }
+      [[nodiscard]] double get_upper_limit() const { return upper_limit; }
+
+    private:
+      double lower_limit;
+      double upper_limit;
+  };
+
   //struct FlowLimitsState
   //{
   //  std::string id;

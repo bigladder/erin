@@ -5,6 +5,7 @@
 #define ERIN_ELEMENT_H
 #include "erin/type.h"
 #include "erin/stream.h"
+#include "erin/devs.h"
 #include "adevs.h"
 #include <functional>
 #include <stdexcept>
@@ -174,8 +175,7 @@ namespace ERIN
       [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
-      FlowValueType lower_limit;
-      FlowValueType upper_limit;
+      erin::devs::FlowLimitsState state;
   };
 
   ////////////////////////////////////////////////////////////

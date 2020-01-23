@@ -597,10 +597,12 @@ namespace ERIN
       for (std::vector<RealTimeType>::size_type i{0}; i < num_events; ++i) {
         oss << "event_times[" << i << "]      = " << event_times[i] << "\n";
         if (i < num_rfs) {
-          oss << "requested_flows[" << i << "]  = " << requested_flows[i] << "\n";
+          oss << "requested_flows[" << i << "]  = "
+              << requested_flows[i] << "\n";
         }
         if (i < num_afs) {
-          oss << "achieved_flows[" << i << "]   = " << achieved_flows[i] << "\n";
+          oss << "achieved_flows[" << i << "]   = "
+              << achieved_flows[i] << "\n";
         }
       }
       throw std::runtime_error(oss.str());

@@ -7,6 +7,7 @@
 #include "checkout_line/generator.h"
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
+#include "erin/devs.h"
 #include "erin/distribution.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"
@@ -3600,6 +3601,20 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
   EXPECT_EQ(
       waste_energy_stats.total_energy,
       expected_waste_energy_kJ);
+}
+
+TEST(ErinBasicsTest, Test_smart_port_object)
+{
+  namespace D = erin::devs;
+  D::Port p{};
+  EXPECT_EQ(p.get_achieved(), 0.0);
+  EXPECT_EQ(p.get_requested(), 0.0);
+  auto p1 = p.with_requested(20.0);
+  EXPECT_EQ(p1.get_requested(), 20.0);
+  EXPECT_EQ(p1.get_achieved(), 20.0);
+  auto p2 = p1.with_achieved(10.0);
+  EXPECT_EQ(p2.get_requested(), 20.0);
+  EXPECT_EQ(p2.get_achieved(), 10.0);
 }
 
 int

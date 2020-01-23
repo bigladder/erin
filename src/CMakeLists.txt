@@ -14,6 +14,7 @@
 set(sources
   ${PROJECT_SOURCE_DIR}/src/erin.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_devs.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_network.cpp
@@ -26,6 +27,7 @@ set(sources
 
 set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/component.h
+  ${PROJECT_SOURCE_DIR}/include/erin/devs.h
   ${PROJECT_SOURCE_DIR}/include/erin/distribution.h
   ${PROJECT_SOURCE_DIR}/include/erin/element.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h

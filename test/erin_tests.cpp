@@ -3603,7 +3603,7 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
       expected_waste_energy_kJ);
 }
 
-TEST(ErinBasicsTest, Test_smart_port_object)
+TEST(ErinDevs, Test_smart_port_object)
 {
   namespace D = erin::devs;
   namespace E = ERIN;
@@ -3642,6 +3642,8 @@ TEST(ErinBasicsTest, Test_smart_port_object)
   EXPECT_FALSE(p1.should_propagate_achieved_at(t2));
   auto p1a = p1.with_achieved(v2, t1);
   EXPECT_EQ(p1a.get_time_of_last_change(), t1);
+  EXPECT_EQ(p1a.get_requested(), p1.get_requested());
+  EXPECT_EQ(p1a.get_achieved(), v2);
   auto p2 = p1.with_requested(v1, t2);
   EXPECT_EQ(p2.get_time_of_last_change(), t1);
   EXPECT_EQ(p2.get_requested(), v1);

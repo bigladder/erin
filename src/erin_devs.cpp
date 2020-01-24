@@ -45,8 +45,8 @@ namespace erin::devs
   ////////////////////////////////////////////////////////////
   // FlowLimits
   FlowLimits::FlowLimits(
-      ERIN::FlowValueType lower_limit_,
-      ERIN::FlowValueType upper_limit_):
+      FlowValueType lower_limit_,
+      FlowValueType upper_limit_):
     lower_limit{lower_limit_},
     upper_limit{upper_limit_}
   {

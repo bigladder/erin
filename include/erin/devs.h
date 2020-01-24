@@ -7,6 +7,8 @@
 
 namespace erin::devs
 {
+  using FlowValueType = ERIN::FlowValueType;
+  using RealTimeType = ERIN::RealTimeType;
   //constexpr int max_port_numbers{1000};
   //constexpr int inport_inflow_available{0*max_port_numbers};
   //constexpr int inport_outflow_request{1*max_port_numbers};
@@ -40,6 +42,7 @@ namespace erin::devs
       double get_requested() const { return requested; }
       double get_achieved() const { return achieved; }
     private:
+
       double requested;
       double achieved;
   };
@@ -61,15 +64,15 @@ namespace erin::devs
   {
     public:
       FlowLimits(
-          ERIN::FlowValueType lower_limit,
-          ERIN::FlowValueType upper_limit);
+          FlowValueType lower_limit,
+          FlowValueType upper_limit);
 
-      [[nodiscard]] ERIN::FlowValueType get_lower_limit() const { return lower_limit; }
-      [[nodiscard]] ERIN::FlowValueType get_upper_limit() const { return upper_limit; }
+      [[nodiscard]] FlowValueType get_lower_limit() const { return lower_limit; }
+      [[nodiscard]] FlowValueType get_upper_limit() const { return upper_limit; }
 
     private:
-      ERIN::FlowValueType lower_limit;
-      ERIN::FlowValueType upper_limit;
+      FlowValueType lower_limit;
+      FlowValueType upper_limit;
   };
 
   //struct FlowLimits

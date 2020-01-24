@@ -3625,7 +3625,7 @@ TEST(ErinBasicsTest, Test_smart_port_object)
   EXPECT_FALSE(p.should_propagate_request_at(t2));
   EXPECT_FALSE(p.should_propagate_achieved_at(t2));
   auto p1 = p.with_requested(v1, t1);
-  //EXPECT_EQ(p1.get_time_of_last_change(), t1);
+  EXPECT_EQ(p1.get_time_of_last_change(), t1);
   //EXPECT_EQ(p1.get_requested(), v1);
   //EXPECT_EQ(p1.get_achieved(), v1);
   //EXPECT_FALSE(p1.should_propagate_request_at(t0));

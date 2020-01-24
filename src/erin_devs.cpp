@@ -12,7 +12,7 @@ namespace erin::devs
   {}
 
   Port::Port(RealTimeType t, FlowValueType r):
-    Port(0, r, r)
+    Port(t, r, r)
   {
   }
 
@@ -40,12 +40,11 @@ namespace erin::devs
   }
 
   Port
-  Port::with_requested(FlowValueType new_requested, RealTimeType time) const
+  Port::with_requested(FlowValueType new_request, RealTimeType time) const
   {
     // when we set a new request, we assume achieved is met until we hear
     // otherwise
-    auto p = Port{time, new_requested};
-    return p;
+    return Port{time, new_request};
   }
 
   //Port

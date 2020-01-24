@@ -175,7 +175,7 @@ namespace ERIN
       [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
-      erin::devs::FlowLimitsState state;
+      erin::devs::FlowLimits state;
   };
 
   ////////////////////////////////////////////////////////////

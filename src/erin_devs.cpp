@@ -43,8 +43,8 @@ namespace erin::devs
   }
 
   ////////////////////////////////////////////////////////////
-  // FlowLimitsState
-  FlowLimitsState::FlowLimitsState(
+  // FlowLimits
+  FlowLimits::FlowLimits(
       ERIN::FlowValueType lower_limit_,
       ERIN::FlowValueType upper_limit_):
     lower_limit{lower_limit_},
@@ -52,7 +52,7 @@ namespace erin::devs
   {
     if (lower_limit > upper_limit) {
       std::ostringstream oss;
-      oss << "FlowLimitsState error: lower_limit (" << lower_limit
+      oss << "FlowLimits error: lower_limit (" << lower_limit
           << ") > upper_limit (" << upper_limit << ")";
       throw std::invalid_argument(oss.str());
     }

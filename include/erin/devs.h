@@ -49,7 +49,8 @@ namespace erin::devs
 
       [[nodiscard]] Port with_requested(
           FlowValueType new_requested, RealTimeType time) const;
-      //Port with_achieved(FlowValueType achieved) const;
+      [[nodiscard]] Port with_achieved(
+          FlowValueType new_achieved, RealTimeType time) const;
 
     private:
       RealTimeType time_of_last_change;

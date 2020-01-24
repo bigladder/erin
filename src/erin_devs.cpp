@@ -52,22 +52,22 @@ namespace erin::devs
       new_request};
   }
 
-  //Port
-  //Port::with_achieved(double new_achieved) const
-  //{
-  //  // when we set an achieved flow, we do not touch the request; we are still
-  //  // requesting what we request regardless of what is achieved.
-  //  // if achieved is more than requested, that is an error.
-  //  if (new_achieved > requested) {
-  //    std::ostringstream oss;
-  //    oss << "achieved more than requested error!\n"
-  //        << "new_achieved: " << new_achieved << "\n"
-  //        << "requested   : " << requested << "\n"
-  //        << "achieved    : " << achieved << "\n";
-  //    throw std::invalid_argument(oss.str());
-  //  }
-  //  return Port{requested, new_achieved};
-  //}
+  Port
+  Port::with_achieved(FlowValueType new_achieved, RealTimeType time) const
+  {
+    // when we set an achieved flow, we do not touch the request; we are still
+    // requesting what we request regardless of what is achieved.
+    // if achieved is more than requested, that is an error.
+    //if (new_achieved > requested) {
+    //  std::ostringstream oss;
+    //  oss << "achieved more than requested error!\n"
+    //      << "new_achieved: " << new_achieved << "\n"
+    //      << "requested   : " << requested << "\n"
+    //      << "achieved    : " << achieved << "\n";
+    //  throw std::invalid_argument(oss.str());
+    //}
+    return Port{time_of_last_change, requested, new_achieved};
+  }
 
   ////////////////////////////////////////////////////////////
   // FlowLimits

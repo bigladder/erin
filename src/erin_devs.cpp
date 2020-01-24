@@ -26,11 +26,7 @@ namespace erin::devs
   bool
   Port::should_propagate_request_at(RealTimeType time) const
   {
-    return false;
-    //if (time == last_update) {
-    //  return request_changed;
-    //}
-    //return false;
+    return time == time_of_last_change;
   }
 
   bool
@@ -44,6 +40,13 @@ namespace erin::devs
   {
     // when we set a new request, we assume achieved is met until we hear
     // otherwise
+    if (time < time_of_last_change) {
+      std::ostringstream oss;
+      oss << "invalid time argument: time flowing backwards...\n"
+          << "time = " << time << "\n"
+          << "time_of_last_change = " << time_of_last_change << "\n";
+      throw std::invalid_argument(oss.str());
+    }
     return Port{time, new_request};
   }
 

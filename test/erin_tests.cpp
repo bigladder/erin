@@ -3626,15 +3626,21 @@ TEST(ErinBasicsTest, Test_smart_port_object)
   EXPECT_FALSE(p.should_propagate_achieved_at(t2));
   auto p1 = p.with_requested(v1, t1);
   EXPECT_EQ(p1.get_time_of_last_change(), t1);
-  //EXPECT_EQ(p1.get_requested(), v1);
-  //EXPECT_EQ(p1.get_achieved(), v1);
-  //EXPECT_FALSE(p1.should_propagate_request_at(t0));
-  //EXPECT_FALSE(p1.should_propagate_achieved_at(t0));
-  //EXPECT_TRUE(p1.should_propagate_request_at(t1));
-  //EXPECT_FALSE(p1.should_propagate_achieved_at(t1));
-  //EXPECT_FALSE(p1.should_propagate_request_at(t2));
-  //EXPECT_FALSE(p1.should_propagate_achieved_at(t2));
-  //EXPECT_EQ(p1.get_last_update(), 10);
+  try {
+    auto p_junk = p1.with_requested(v2, t0);
+    ASSERT_FALSE(true) << "didn't catch a reverse time exception...";
+  } catch (const std::invalid_argument&) {
+    // passed
+  }
+  EXPECT_EQ(p1.get_requested(), v1);
+  EXPECT_EQ(p1.get_achieved(), v1);
+  EXPECT_FALSE(p1.should_propagate_request_at(t0));
+  EXPECT_FALSE(p1.should_propagate_achieved_at(t0));
+  EXPECT_TRUE(p1.should_propagate_request_at(t1));
+  EXPECT_FALSE(p1.should_propagate_achieved_at(t1));
+  EXPECT_FALSE(p1.should_propagate_request_at(t2));
+  EXPECT_FALSE(p1.should_propagate_achieved_at(t2));
+  //EXPECT_EQ(p1.get_time_of_last_change(), 10);
   //EXPECT_EQ(p1.get_requested(), 20.0);
   //EXPECT_EQ(p1.get_achieved(), 20.0);
   //auto p2 = p1.with_achieved(10.0);

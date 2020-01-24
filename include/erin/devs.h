@@ -36,15 +36,15 @@ namespace erin::devs
     public:
       Port();
   //    Port(double requested);
-      Port(double requested, double achieved);
-      Port with_requested(double requested) const;
-      Port with_achieved(double achieved) const;
-      double get_requested() const { return requested; }
-      double get_achieved() const { return achieved; }
-    private:
+      Port(FlowValueType requested, FlowValueType achieved);
+      Port with_requested(FlowValueType requested) const;
+      Port with_achieved(FlowValueType achieved) const;
+      FlowValueType get_requested() const { return requested; }
+      FlowValueType get_achieved() const { return achieved; }
 
-      double requested;
-      double achieved;
+    private:
+      FlowValueType requested;
+      FlowValueType achieved;
   };
 
   //template <class S>

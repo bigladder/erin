@@ -47,7 +47,9 @@ namespace erin::devs
           << "time_of_last_change = " << time_of_last_change << "\n";
       throw std::invalid_argument(oss.str());
     }
-    return Port{time, new_request};
+    return Port{
+      new_request == requested ? time_of_last_change : time,
+      new_request};
   }
 
   //Port

@@ -106,20 +106,20 @@ TEST(ErinBasicsTest, TestLoadItem)
 TEST(ErinBasicsTest, FlowState)
 {
   auto fs = ERIN::FlowState{0.0, 0.0};
-  EXPECT_EQ(fs.getInflow(), 0.0);
-  EXPECT_EQ(fs.getOutflow(), 0.0);
-  EXPECT_EQ(fs.getStoreflow(), 0.0);
-  EXPECT_EQ(fs.getLossflow(), 0.0);
+  EXPECT_EQ(fs.get_inflow(), 0.0);
+  EXPECT_EQ(fs.get_outflow(), 0.0);
+  EXPECT_EQ(fs.get_storeflow(), 0.0);
+  EXPECT_EQ(fs.get_lossflow(), 0.0);
   fs = ERIN::FlowState{100.0, 50.0};
-  EXPECT_EQ(fs.getInflow(), 100.0);
-  EXPECT_EQ(fs.getOutflow(), 50.0);
-  EXPECT_EQ(fs.getStoreflow(), 0.0);
-  EXPECT_EQ(fs.getLossflow(), 50.0);
+  EXPECT_EQ(fs.get_inflow(), 100.0);
+  EXPECT_EQ(fs.get_outflow(), 50.0);
+  EXPECT_EQ(fs.get_storeflow(), 0.0);
+  EXPECT_EQ(fs.get_lossflow(), 50.0);
   fs = ERIN::FlowState{100.0, 0.0, 90.0};
-  EXPECT_EQ(fs.getInflow(), 100.0);
-  EXPECT_EQ(fs.getOutflow(), 0.0);
-  EXPECT_EQ(fs.getStoreflow(), 90.0);
-  EXPECT_EQ(fs.getLossflow(), 10.0);
+  EXPECT_EQ(fs.get_inflow(), 100.0);
+  EXPECT_EQ(fs.get_outflow(), 0.0);
+  EXPECT_EQ(fs.get_storeflow(), 90.0);
+  EXPECT_EQ(fs.get_lossflow(), 10.0);
 }
 
 TEST(ErinBasicsTest, StandaloneSink)

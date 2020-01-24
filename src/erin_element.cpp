@@ -236,8 +236,8 @@ namespace ERIN
       outflow_request = the_outflow_request;
       const FlowState fs = update_state_for_outflow_request(outflow_request);
       // update what the inflow_request is based on all outflow_requests
-      inflow_request = fs.getInflow();
-      auto diff = std::fabs(fs.getOutflow() - outflow_request);
+      inflow_request = fs.get_inflow();
+      auto diff = std::fabs(fs.get_outflow() - outflow_request);
       if (diff > flow_value_tolerance) {
         report_outflow_achieved = true;
       }
@@ -307,10 +307,10 @@ namespace ERIN
   void
   FlowElement::update_state(const FlowState& fs)
   {
-    inflow = fs.getInflow();
-    outflow = fs.getOutflow();
-    storeflow = fs.getStoreflow();
-    lossflow = fs.getLossflow();
+    inflow = fs.get_inflow();
+    outflow = fs.get_outflow();
+    storeflow = fs.get_storeflow();
+    lossflow = fs.get_lossflow();
   }
 
   void

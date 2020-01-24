@@ -35,16 +35,28 @@ namespace erin::devs
   {
     public:
       Port();
-  //    Port(double requested);
-      Port(FlowValueType requested, FlowValueType achieved);
-      Port with_requested(FlowValueType requested) const;
-      Port with_achieved(FlowValueType achieved) const;
-      FlowValueType get_requested() const { return requested; }
-      FlowValueType get_achieved() const { return achieved; }
+      Port(RealTimeType time);
+      Port(RealTimeType time, FlowValueType requested);
+      Port(RealTimeType time, FlowValueType requested, FlowValueType achieved);
+
+      [[nodiscard]] RealTimeType get_time_of_last_change() const {
+        return time_of_last_change;
+      }
+      [[nodiscard]] FlowValueType get_requested() const { return requested; }
+      [[nodiscard]] FlowValueType get_achieved() const { return achieved; }
+      [[nodiscard]] bool should_propagate_request_at(RealTimeType time) const;
+      [[nodiscard]] bool should_propagate_achieved_at(RealTimeType time) const;
+
+      [[nodiscard]] Port with_requested(
+          FlowValueType new_requested, RealTimeType time) const;
+      //Port with_achieved(FlowValueType achieved) const;
 
     private:
+      RealTimeType time_of_last_change;
       FlowValueType requested;
       FlowValueType achieved;
+      //bool request_changed;
+      //bool achieved_changed;
   };
 
   //template <class S>

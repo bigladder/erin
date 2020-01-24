@@ -8,39 +8,62 @@
 namespace erin::devs
 {
   Port::Port():
-    Port(0.0, 0.0)
+    Port(-1, 0.0, 0.0)
   {}
 
-  Port::Port(double r, double a):
+  Port::Port(RealTimeType t, FlowValueType r):
+    Port(0, r, r)
+  {
+  }
+
+  Port::Port(RealTimeType t, FlowValueType r, FlowValueType a):
+    time_of_last_change{t},
     requested{r},
     achieved{a}
   {
   }
 
-  Port
-  Port::with_requested(double new_requested) const
+  bool
+  Port::should_propagate_request_at(RealTimeType time) const
   {
-    // when we set a new request, we assume achieved is met until we hear
-    // otherwise
-    return Port{new_requested, new_requested};
+    return false;
+    //if (time == last_update) {
+    //  return request_changed;
+    //}
+    //return false;
+  }
+
+  bool
+  Port::should_propagate_achieved_at(RealTimeType time) const
+  {
+    return false;
   }
 
   Port
-  Port::with_achieved(double new_achieved) const
+  Port::with_requested(FlowValueType new_requested, RealTimeType time) const
   {
-    // when we set an achieved flow, we do not touch the request; we are still
-    // requesting what we request regardless of what is achieved.
-    // if achieved is more than requested, that is an error.
-    if (new_achieved > requested) {
-      std::ostringstream oss;
-      oss << "achieved more than requested error!\n"
-          << "new_achieved: " << new_achieved << "\n"
-          << "requested   : " << requested << "\n"
-          << "achieved    : " << achieved << "\n";
-      throw std::invalid_argument(oss.str());
-    }
-    return Port{requested, new_achieved};
+    // when we set a new request, we assume achieved is met until we hear
+    // otherwise
+    auto p = Port{time, new_requested};
+    return p;
   }
+
+  //Port
+  //Port::with_achieved(double new_achieved) const
+  //{
+  //  // when we set an achieved flow, we do not touch the request; we are still
+  //  // requesting what we request regardless of what is achieved.
+  //  // if achieved is more than requested, that is an error.
+  //  if (new_achieved > requested) {
+  //    std::ostringstream oss;
+  //    oss << "achieved more than requested error!\n"
+  //        << "new_achieved: " << new_achieved << "\n"
+  //        << "requested   : " << requested << "\n"
+  //        << "achieved    : " << achieved << "\n";
+  //    throw std::invalid_argument(oss.str());
+  //  }
+  //  return Port{requested, new_achieved};
+  //}
 
   ////////////////////////////////////////////////////////////
   // FlowLimits

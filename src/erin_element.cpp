@@ -222,16 +222,6 @@ namespace ERIN
                     << "&& lossflow_provided;id=" << get_id() << "\n";
         }
         report_lossflow_achieved = true;
-        if (the_lossflow_request < lossflow) {
-          std::ostringstream oss;
-          oss << "2. cannot handle lossflow request less than available lossflow\n"
-            << "all lossflow must exit the element\n"
-            << "lossflow = " << lossflow << "\n"
-            << "time = (" << time.real << ", " << time.logical << ")\n"
-            << "the_lossflow_request = " << the_lossflow_request << "\n"
-            << "the_lossflow_request must be >= lossflow\n";
-          throw std::runtime_error(oss.str());
-        }
       }
       report_inflow_request = true;
       outflow_request = the_outflow_request;
@@ -261,6 +251,18 @@ namespace ERIN
           oss << "outflow: " << outflow << "\n";
           oss << "outflow_request: " << outflow_request << "\n";
         }
+        throw std::runtime_error(oss.str());
+      }
+      if (lossflow_provided && (the_lossflow_request < lossflow)) {
+        std::ostringstream oss;
+        oss << "2. cannot handle lossflow request less than available lossflow\n"
+          << "all lossflow must exit the element\n"
+          << "lossflow = " << lossflow << "\n"
+          << "the_lossflow_request = " << the_lossflow_request << "\n"
+          << "outflow = " << outflow << "\n"
+          << "the_outflow_request = " << the_outflow_request << "\n"
+          << "time = (" << time.real << ", " << time.logical << ")\n"
+          << "the_lossflow_request must be >= lossflow\n";
         throw std::runtime_error(oss.str());
       }
     }

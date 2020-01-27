@@ -1,0 +1,92 @@
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "seconds"
+max_time = 10
+[streams.electricity]
+type = "electricity"
+[streams.natural_gas]
+type = "natural_gas"
+[streams.district_hot_water]
+type = "district_hot_water"
+[streams.waste_heat]
+type = "waste_heat"
+[loads.electric_load]
+time_unit = "seconds"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,10.0],[10.0]]
+[loads.heating_load]
+time_unit = "seconds"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,1.0],[10.0]]
+[loads.waste_heat_load]
+time_unit = "seconds"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,1000.0],[100.0]]
+[components.S]
+# S = source of natural 
+type = "source"
+outflow = "natural_gas"
+[components.LE]
+# LE = load, electrical
+type = "load"
+inflow = "electricity"
+loads_by_scenario.scenario01 = "electric_load"
+[components.LT]
+# LT = load, thermal
+type = "load"
+inflow = "district_hot_water"
+loads_by_scenario.scenario01 = "heating_load"
+[components.LW0]
+# LW0 = load, waste-heat
+type = "load"
+description = "waste heat load"
+inflow = "waste_heat"
+loads_by_scenario.scenario01 = "waste_heat_load"
+[components.LW1]
+# LW1 = load, waste-heat
+type = "load"
+description = "waste heat load"
+inflow = "waste_heat"
+loads_by_scenario.scenario01 = "waste_heat_load"
+[components.M]
+# M = muxer
+type = "muxer"
+stream = "waste_heat"
+num_inflows = 1
+num_outflows = 2
+inflow_dispatch_strategy = "in_order"
+outflow_dispatch_strategy = "in_order"
+[components.C0]
+# C0 = converter 0, natural-gas to electricity
+type = "converter"
+inflow = "natural_gas"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency = 0.5
+[components.C1]
+# C1 = converter 1, waste-heat to district hot water (heat exchanger)
+type = "converter"
+inflow = "waste_heat"
+outflow = "district_hot_water"
+lossflow = "waste_heat"
+constant_efficiency = 0.5
+dispatch_strategy = "dump_load"
+[networks.nw01]
+# Note: c0.outflow.1 is the "lossflow"
+# TODO: change to use lossflow at the component level?
+# right now, C0.lossflow(0) is designated as C0.outflow(1) but should we call
+# out lossflow directly?
+connections = [["S", "C0"],
+               ["C0", "LE"],
+               ["C0", "outflow", "1", "M", "inflow", "0"],
+               ["M", "outflow", "0", "C1", "inflow", "0"],
+               ["M", "outflow", "1", "LW0", "inflow", "0"],
+               ["C1", "LT"],
+               ["C1", "outflow", "1", "LW1", "inflow", "0"]]
+[scenarios.scenario01]
+time_unit = "seconds"
+occurrence_distribution = {type = "fixed", value = 0}
+duration = 10
+max_occurrences = 1
+network = "nw01"

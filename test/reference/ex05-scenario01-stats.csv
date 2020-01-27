@@ -1,0 +1,17 @@
+component id,type,stream,energy availability,max downtime (hours),load not served (kJ),district_hot_water energy used (kJ),electricity energy used (kJ),natural_gas energy used (kJ),waste_heat energy used (kJ)
+C0:inflow,converter,natural_gas,1,0,0,0.0,0.0,200,0.0
+C0:lossflow,converter,waste_heat,0,0.00277778,9920,0.0,0.0,0.0,100
+C0:outflow,converter,electricity,1,0,0,0.0,100,0.0,0.0
+C1:inflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,20
+C1:lossflow,converter,waste_heat,0,0.00277778,9990,0.0,0.0,0.0,10
+C1:outflow,converter,district_hot_water,1,0,0,10,0.0,0.0,0.0
+LE,load,electricity,1,0,0,0.0,100,0.0,0.0
+LT,load,district_hot_water,1,0,0,10,0.0,0.0,0.0
+LW0,load,waste_heat,0,0.00277778,9920,0.0,0.0,0.0,80
+LW1,load,waste_heat,0,0.00277778,9990,0.0,0.0,0.0,10
+M-inflow(0),muxer,waste_heat,0,0.00277778,9920,0.0,0.0,0.0,100
+M-outflow(0),muxer,waste_heat,1,0,0,0.0,0.0,0.0,20
+M-outflow(1),muxer,waste_heat,0,0.00277778,9920,0.0,0.0,0.0,80
+S,source,natural_gas,1,0,0,0.0,0.0,200,0.0
+TOTAL (source),,,,,,0.0,0.0,200,0.0
+TOTAL (load),,,,,,10,100,0.0,90

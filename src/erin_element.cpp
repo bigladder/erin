@@ -172,7 +172,7 @@ namespace ERIN
   {
     if (inflow_provided && !outflow_provided) {
       if (lossflow_provided) {
-        if constexpr (debug_level <= debug_level_high) {
+        if constexpr (debug_level >= debug_level_high) {
           std::cout << "inflow_provided "
                     << "&& !outflow_provided "
                     << "&& lossflow_provided;id=" << get_id() << "\n";
@@ -180,7 +180,7 @@ namespace ERIN
         report_lossflow_achieved = true;
         if (the_lossflow_request < lossflow) {
           std::ostringstream oss;
-          oss << "cannot handle lossflow request less than available lossflow\n"
+          oss << "1. cannot handle lossflow request less than available lossflow\n"
             << "all lossflow must exit the element\n"
             << "lossflow = " << lossflow << "\n"
             << "the_lossflow_request = " << the_lossflow_request << "\n"
@@ -216,7 +216,7 @@ namespace ERIN
     }
     else if (outflow_provided && !inflow_provided) {
       if (lossflow_provided) {
-        if constexpr (debug_level <= debug_level_high) {
+        if constexpr (debug_level >= debug_level_high) {
           std::cout << "!inflow_provided "
                     << "&& outflow_provided "
                     << "&& lossflow_provided;id=" << get_id() << "\n";
@@ -224,9 +224,10 @@ namespace ERIN
         report_lossflow_achieved = true;
         if (the_lossflow_request < lossflow) {
           std::ostringstream oss;
-          oss << "cannot handle lossflow request less than available lossflow\n"
+          oss << "2. cannot handle lossflow request less than available lossflow\n"
             << "all lossflow must exit the element\n"
             << "lossflow = " << lossflow << "\n"
+            << "time = (" << time.real << ", " << time.logical << ")\n"
             << "the_lossflow_request = " << the_lossflow_request << "\n"
             << "the_lossflow_request must be >= lossflow\n";
           throw std::runtime_error(oss.str());
@@ -277,7 +278,7 @@ namespace ERIN
       throw std::runtime_error(oss.str());
     }
     else if (lossflow_provided) {
-      if constexpr (debug_level <= debug_level_high) {
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "!inflow_provided "
                   << "&& !outflow_provided "
                   << "&& lossflow_provided;id=" << get_id() << "\n";
@@ -285,7 +286,7 @@ namespace ERIN
       report_lossflow_achieved = true;
       if (the_lossflow_request < lossflow) {
         std::ostringstream oss;
-        oss << "cannot handle lossflow request less than available lossflow\n"
+        oss << "3. cannot handle lossflow request less than available lossflow\n"
             << "all lossflow must exit the element\n"
             << "lossflow = " << lossflow << "\n"
             << "the_lossflow_request = " << the_lossflow_request << "\n"
@@ -1094,7 +1095,7 @@ namespace ERIN
           else {
             // We've requested to all inflow ports and are still
             // deficient on meeting outflow request. Update outflows.
-            if constexpr (debug_level <= debug_level_high) {
+            if constexpr (debug_level >= debug_level_high) {
               std::ostringstream oss{};
               oss << "outflow request > inflow available\n";
             }
@@ -1105,7 +1106,7 @@ namespace ERIN
                 {
                   // We start satisfying loads one by one in port order until there
                   // is nothing left
-                  if constexpr (debug_level <= debug_level_high) {
+                  if constexpr (debug_level >= debug_level_high) {
                     std::ostringstream oss{};
                     oss << "InOrder outflow_strategy\n";
                     oss << "get_report_inflow_request() = "

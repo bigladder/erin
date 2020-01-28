@@ -1028,7 +1028,7 @@ TEST(ErinBasicsTest, TestSumRequestedLoad)
   EXPECT_NEAR(expected, actual, tolerance);
   vs = std::vector<E::Datum>{
     E::Datum{10,100.0,100.0},E::Datum{20,10.0,10.0},E::Datum{22,0.0,0.0}};
-  expected = ((10 - 0) * 0.0) + ((20 - 10) * 100.0) + ((22 - 20) * 10.0);
+  expected = ((10.0 - 0.0) * 0.0) + ((20.0 - 10.0) * 100.0) + ((22.0 - 20.0) * 10.0);
   actual = E::sum_requested_load(vs);
   EXPECT_NEAR(expected, actual, tolerance);
   vs = std::vector<E::Datum>(0);
@@ -1058,7 +1058,7 @@ TEST(ErinBasicsTest, TestSumAchievedLoads)
   EXPECT_NEAR(expected, actual, tolerance);
   vs = std::vector<E::Datum>{
     E::Datum{10,200.0,100.0},E::Datum{20,20.0,10.0},E::Datum{22,0.0,0.0}};
-  expected = ((10 - 0) * 0.0) + ((20 - 10) * 100.0) + ((22 - 20) * 10.0);
+  expected = ((10.0 - 0.0) * 0.0) + ((20.0 - 10.0) * 100.0) + ((22.0 - 20.0) * 10.0);
   actual = E::sum_achieved_load(vs);
   EXPECT_NEAR(expected, actual, tolerance);
   vs = std::vector<E::Datum>(0);

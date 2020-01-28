@@ -30,7 +30,7 @@ namespace erin::devs
   }
 
   bool
-  Port::should_propagate_achieved_at(RealTimeType time) const
+  Port::should_propagate_achieved_at(RealTimeType /* time */) const
   {
     return false;
   }
@@ -53,7 +53,7 @@ namespace erin::devs
   }
 
   Port
-  Port::with_achieved(FlowValueType new_achieved, RealTimeType time) const
+  Port::with_achieved(FlowValueType new_achieved, RealTimeType /* time */) const
   {
     // when we set an achieved flow, we do not touch the request; we are still
     // requesting what we request regardless of what is achieved.

@@ -3718,6 +3718,30 @@ TEST(ErinComponents, Test_passthrough_component)
   auto m = E::make_main_from_string(input);
   auto results = m.run("scenario0");
   EXPECT_TRUE(results.get_is_good());
+  auto results_map = results.get_results();
+  EXPECT_EQ(3, results_map.size());
+  auto comp_ids = results.get_component_ids();
+  std::vector<std::string> expected_comp_ids{"L","P","S"};
+  ASSERT_EQ(expected_comp_ids.size(), comp_ids.size());
+  EXPECT_EQ(expected_comp_ids, comp_ids);
+  E::StreamType elec{"electricity"};
+  std::unordered_map<std::string, E::StreamType> expected_streams{
+    {"L", elec}, {"P", elec}, {"S", elec}};
+  auto streams = results.get_stream_types();
+  EXPECT_EQ(expected_streams, streams);
+  auto comps = results.get_component_types();
+  std::unordered_map<std::string, E::ComponentType> expected_comps{
+    {"L", E::ComponentType::Load},
+    {"P", E::ComponentType::PassThrough},
+    {"S", E::ComponentType::Source}};
+  EXPECT_EQ(3, comps.size());
+  EXPECT_EQ(expected_comps, comps);
+  auto stats = results.get_statistics();
+  std::unordered_map<std::string, E::ScenarioStats> expected_stats{
+    {"L", E::ScenarioStats{10,0,0,0.0,100.0}},
+    {"P", E::ScenarioStats{10,0,0,0.0,100.0}},
+    {"S", E::ScenarioStats{10,0,0,0.0,100.0}}};
+  EXPECT_EQ(stats.size(), expected_stats.size());
 }
 
 int

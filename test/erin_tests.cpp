@@ -3672,7 +3672,7 @@ TEST(ErinComponents, Test_passthrough_component)
     "[loads.load0]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -3686,7 +3686,7 @@ TEST(ErinComponents, Test_passthrough_component)
     "[networks.nw0]\n"
     "connections = [[\"S\", \"P\"], [\"P\", \"L\"]]\n"
     "[scenarios.scenario0]\n"
-    "time_units = \"seconds\"\n"
+    "time_unit = \"seconds\"\n"
     "duration = 10\n"
     "occurrence_distribution = {type = \"fixed\", value = 0}\n"
     "max_occurrences = 1\n"
@@ -3742,6 +3742,57 @@ TEST(ErinComponents, Test_passthrough_component)
     {"P", E::ScenarioStats{10,0,0,0.0,100.0}},
     {"S", E::ScenarioStats{10,0,0,0.0,100.0}}};
   EXPECT_EQ(stats.size(), expected_stats.size());
+  for (const auto& s_item: expected_stats) {
+    const auto& id = s_item.first;
+    const auto& expected_stat = s_item.second;
+    auto it = stats.find(id);
+    ASSERT_TRUE(it != stats.end());
+    EXPECT_EQ(expected_stat, it->second) << "id = " << id;
+  }
+}
+
+TEST(ErinComponents, Test_passthrough_component_with_fragility)
+{
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[loads.load0]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "[components.P]\n"
+    "type = \"pass_through\"\n"
+    "stream = \"electricity\"\n"
+    "fragilities = [\"frag01\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.scenario0 = \"load0\"\n"
+    "[fragility.frag01]\n"
+    "vulnerable_to = \"intensity01\"\n"
+    "type = \"linear\"\n"
+    "lower_bound = 10.0\n"
+    "upper_bound = 20.0\n"
+    "[networks.nw0]\n"
+    "connections = [[\"S\", \"P\"], [\"P\", \"L\"]]\n"
+    "[scenarios.scenario0]\n"
+    "time_unit = \"seconds\"\n"
+    "duration = 10\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "max_occurrences = 1\n"
+    "intensity.intensity01 = 30.0\n"
+    "network = \"nw0\"\n";
+  namespace E = ::ERIN;
+  auto m = E::make_main_from_string(input);
+  auto results = m.run("scenario0");
 }
 
 int

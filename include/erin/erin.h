@@ -44,6 +44,8 @@ namespace ERIN
 
   ScenarioStats operator+(const ScenarioStats& a, const ScenarioStats& b);
   bool operator==(const ScenarioStats& a, const ScenarioStats& b);
+  bool operator!=(const ScenarioStats& a, const ScenarioStats& b);
+  std::ostream& operator<<(std::ostream& os, const ScenarioStats& s);
 
   ////////////////////////////////////////////////////////////
   // ScenarioResults

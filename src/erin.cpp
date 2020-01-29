@@ -62,6 +62,23 @@ namespace ERIN
     return false;
   }
 
+  bool
+  operator!=(const ScenarioStats& a, const ScenarioStats& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const ScenarioStats& s)
+  {
+    os << "ScenarioStats(uptime=" << s.uptime << ", "
+       << "downtime=" << s.downtime << ", "
+       << "max_downtime=" << s.max_downtime << ", "
+       << "load_not_served=" << s.load_not_served << ", "
+       << "total_energy=" << s.total_energy << ")";
+    return os;
+  }
+
   ////////////////////////////////////////////////////////////
   // TomlInputReader
   TomlInputReader::TomlInputReader(toml::value data_):

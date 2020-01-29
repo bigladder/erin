@@ -936,6 +936,19 @@ namespace ERIN
     PassThroughComponent(
         std::move(id_),
         std::move(stream_),
+        Limits{},
+        {})
+  {
+  }
+
+  PassThroughComponent::PassThroughComponent(
+      const std::string& id_,
+      const StreamType& stream_,
+      const Limits& limits_):
+    PassThroughComponent(
+        std::move(id_),
+        std::move(stream_),
+        std::move(limits_),
         {})
   {
   }
@@ -944,13 +957,27 @@ namespace ERIN
       const std::string& id_,
       const StreamType& stream_,
       fragility_map fragilities):
+    PassThroughComponent(
+        std::move(id_),
+        std::move(stream_),
+        Limits{},
+        std::move(fragilities))
+  {
+  }
+
+  PassThroughComponent::PassThroughComponent(
+      const std::string& id_,
+      const StreamType& stream_,
+      const Limits& limits_,
+      fragility_map fragilities):
     Component(
         id_,
         ComponentType::PassThrough,
         stream_,
         stream_,
         stream_,
-        std::move(fragilities))
+        std::move(fragilities)),
+    limits{limits_}
   {
   }
 
@@ -961,6 +988,7 @@ namespace ERIN
     std::unique_ptr<Component> p = std::make_unique<PassThroughComponent>(
         get_id(),
         get_input_stream(),
+        limits,
         std::move(fcs));
     return p;
   }

@@ -908,15 +908,30 @@ namespace ERIN
   }
 
   void TomlInputReader::read_passthrough_component(
-      const toml::table&, // tt
+      const toml::table& tt,
       const std::string& id,
       const StreamType& stream,
       std::unordered_map<
         std::string, std::unique_ptr<Component>>& components,
       fragility_map&& frags) const
   {
-    std::unique_ptr<Component> pass_through_comp =
-      std::make_unique<PassThroughComponent>(id, stream, std::move(frags));
+    bool has_limits{false};
+    std::string field_read;
+    auto min_outflow = toml_helper::read_optional_table_field<FlowValueType>(
+        tt, {"min_outflow"}, 0.0, field_read);
+    has_limits = field_read == "min_outflow";
+    field_read = "";
+    auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
+        tt, {"max_outflow"}, min_outflow, field_read);
+    has_limits = has_limits || (field_read == "max_outflow");
+    std::unique_ptr<Component> pass_through_comp;
+    if (has_limits) {
+      pass_through_comp = std::make_unique<PassThroughComponent>(
+          id, stream, Limits{min_outflow, max_outflow}, std::move(frags));
+    } else {
+      pass_through_comp = std::make_unique<PassThroughComponent>(
+          id, stream, std::move(frags));
+    }
     components.insert(
         std::make_pair(id, std::move(pass_through_comp)));
   }

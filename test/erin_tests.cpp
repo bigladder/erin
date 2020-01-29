@@ -3808,6 +3808,66 @@ TEST(ErinComponents, Test_passthrough_component_with_fragility)
   }
 }
 
+TEST(ErinComponents, Test_passthrough_component_with_limits)
+{
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[loads.load0]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "[components.P]\n"
+    "type = \"pass_through\"\n"
+    "stream = \"electricity\"\n"
+    "max_outflow = 5.0\n"
+    "min_outflow = 0.0\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.scenario0 = \"load0\"\n"
+    "[networks.nw0]\n"
+    "connections = [[\"S\", \"P\"], [\"P\", \"L\"]]\n"
+    "[scenarios.scenario0]\n"
+    "time_unit = \"seconds\"\n"
+    "duration = 10\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "max_occurrences = 1\n"
+    "network = \"nw0\"\n";
+  namespace E = ::ERIN;
+  auto m = E::make_main_from_string(input);
+  auto results = m.run("scenario0");
+  auto stats = results.get_statistics();
+  //std::unordered_map<std::string, E::ScenarioStats> expected_stats{
+  //  {"L", E::ScenarioStats{10,10,10,50.0,50.0}},
+  //  {"P", E::ScenarioStats{10,10,10,50.0,50.0}},
+  //  {"S", E::ScenarioStats{10,10,10,50.0,50.0}}};
+  //EXPECT_EQ(stats.size(), expected_stats.size());
+  //for (const auto& s_item: expected_stats) {
+  //  const auto& id = s_item.first;
+  //  const auto& expected_stat = s_item.second;
+  //  auto it = stats.find(id);
+  //  ASSERT_TRUE(it != stats.end());
+  //  EXPECT_EQ(expected_stat, it->second) << "id = " << id;
+  //}
+}
+
+TEST(ErinComponents, Test_that_clone_works_for_passthrough_component)
+{
+  auto c = ERIN::PassThroughComponent(
+      "P", ERIN::StreamType{"electricity"}, ERIN::Limits{0.0,100.0}, {});
+  auto p = c.clone();
+  EXPECT_EQ(c, dynamic_cast<ERIN::PassThroughComponent&>(*p));
+}
+
 int
 main(int argc, char **argv)
 {

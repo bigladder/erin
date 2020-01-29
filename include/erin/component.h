@@ -305,6 +305,15 @@ namespace ERIN
       PassThroughComponent(
           const std::string& id,
           const StreamType& stream,
+          const Limits& limits);
+      PassThroughComponent(
+          const std::string& id,
+          const StreamType& stream,
+          fragility_map fragilities);
+      PassThroughComponent(
+          const std::string& id,
+          const StreamType& stream,
+          const Limits& limits,
           fragility_map fragilities);
 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
@@ -315,6 +324,9 @@ namespace ERIN
 
       friend bool operator==(const PassThroughComponent& a, const PassThroughComponent& b);
       friend std::ostream& operator<<(std::ostream& os, const PassThroughComponent& n);
+
+    private:
+      Limits limits;
   };
 
   bool operator==(const PassThroughComponent& a, const PassThroughComponent& b);

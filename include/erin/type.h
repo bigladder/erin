@@ -77,7 +77,8 @@ namespace ERIN
     Load = 0,
     Source,
     Converter,
-    Muxer
+    Muxer,
+    PassThrough
   };
 
   ComponentType tag_to_component_type(const std::string& tag);

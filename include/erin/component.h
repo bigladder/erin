@@ -293,6 +293,29 @@ namespace ERIN
   bool operator==(const ConverterComponent& a, const ConverterComponent& b);
   bool operator!=(const ConverterComponent& a, const ConverterComponent& b);
   std::ostream& operator<<(std::ostream& os, const ConverterComponent& n);
+
+  ////////////////////////////////////////////////////////////
+  // PassThroughComponent
+  class PassThroughComponent : public Component
+  {
+    public:
+      PassThroughComponent(
+          const std::string& id,
+          const StreamType& stream);
+
+      [[nodiscard]] std::unique_ptr<Component> clone() const override;
+      PortsAndElements add_to_network(
+          adevs::Digraph<FlowValueType, Time>& nw,
+          const std::string& active_scenario,
+          bool is_failed = false) const override;
+
+      friend bool operator==(const PassThroughComponent& a, const PassThroughComponent& b);
+      friend std::ostream& operator<<(std::ostream& os, const PassThroughComponent& n);
+  };
+
+  bool operator==(const PassThroughComponent& a, const PassThroughComponent& b);
+  bool operator!=(const PassThroughComponent& a, const PassThroughComponent& b);
+  std::ostream& operator<<(std::ostream& os, const PassThroughComponent& n);
 }
 
 #endif // ERIN_COMPONENT_H

@@ -160,6 +160,9 @@ namespace ERIN
     else if ((tag == "mux") || (tag == "bus") || (tag == "muxer")) {
       return ComponentType::Muxer;
     }
+    else if (tag == "pass_through") {
+      return ComponentType::PassThrough;
+    }
     else {
       std::ostringstream oss;
       oss << "Unhandled tag \"" << tag << "\"";
@@ -179,6 +182,8 @@ namespace ERIN
         return std::string{"converter"};
       case ComponentType::Muxer:
         return std::string{"muxer"};
+      case ComponentType::PassThrough:
+        return std::string{"pass_through"};
       default:
         {
           std::ostringstream oss;

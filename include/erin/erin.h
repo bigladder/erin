@@ -297,6 +297,12 @@ namespace ERIN
           const StreamType& lossflow_stream,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components) const;
+      void read_passthrough_component(
+          const toml::table& tt,
+          const std::string& id,
+          const StreamType& stream,
+          std::unordered_map<
+            std::string, std::unique_ptr<Component>>& components) const;
       [[nodiscard]] double read_number(const toml::value& v) const;
       [[nodiscard]] double read_number(const std::string& v) const;
       double read_fixed_random_for_sim_info(

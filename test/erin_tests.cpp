@@ -3659,6 +3659,67 @@ TEST(ErinDevs, Test_smart_port_object)
   //EXPECT_EQ(p2.get_achieved(), 10.0);
 }
 
+TEST(ErinComponents, Test_passthrough_component)
+{
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[loads.load0]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "[components.P]\n"
+    "type = \"pass_through\"\n"
+    "stream = \"electricity\"\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.scenario0 = \"load0\"\n"
+    "[networks.nw0]\n"
+    "connections = [[\"S\", \"P\"], [\"P\", \"L\"]]\n"
+    "[scenarios.scenario0]\n"
+    "time_units = \"seconds\"\n"
+    "duration = 10\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "max_occurrences = 1\n"
+    "network = \"nw0\"\n";
+  namespace E = ::ERIN;
+  auto pt = E::ComponentType::PassThrough;
+  EXPECT_EQ("pass_through", E::component_type_to_tag(pt));
+  EXPECT_EQ(E::tag_to_component_type("pass_through"), pt);
+  auto ptc = E::PassThroughComponent{"my_comp", E::StreamType("electrical")};
+  auto ptc2 = E::PassThroughComponent{"my_comp", E::StreamType("electrical")};
+  std::ostringstream oss;
+  oss << ptc;
+  std::string stream_str{
+    "StreamType(type=\"electrical\", "
+    "rate_units=\"kW\", "
+    "quantity_units=\"kJ\", "
+    "seconds_per_time_unit=1, "
+    "other_rate_units={}, "
+    "other_quantity_units={})"};
+  EXPECT_EQ(
+      std::string{"PassThroughComponent("} +
+      std::string{"id=my_comp, "} +
+      std::string{"component_type=pass_through, "} +
+      std::string{"input_stream="} + stream_str + std::string{", "} +
+      std::string{"output_stream="} + stream_str + std::string{", "} +
+      std::string{"fragilities=..., has_fragilities=false)"},
+      oss.str());
+  EXPECT_EQ(ptc, ptc2);
+  auto m = E::make_main_from_string(input);
+  auto results = m.run("scenario0");
+  EXPECT_TRUE(results.get_is_good());
+}
+
 int
 main(int argc, char **argv)
 {

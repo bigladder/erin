@@ -516,12 +516,21 @@ namespace ERIN
               std::move(frags));
           break;
         case ComponentType::Converter:
+          // TODO: add fragilities
           read_converter_component(
               tt,
               comp_id,
               stream_types_map.at(input_stream_id),
               stream_types_map.at(output_stream_id),
               stream_types_map.at(lossflow_stream_id),
+              components);
+          break;
+        case ComponentType::PassThrough:
+          // TODO: add fragilities
+          read_passthrough_component(
+              tt,
+              comp_id,
+              stream_types_map.at(input_stream_id),
               components);
           break;
         default:
@@ -878,6 +887,19 @@ namespace ERIN
           in_disp, out_disp);
     components.insert(
         std::make_pair(id, std::move(mux_comp)));
+  }
+
+  void TomlInputReader::read_passthrough_component(
+      const toml::table&, // tt
+      const std::string& id,
+      const StreamType& stream,
+      std::unordered_map<
+        std::string, std::unique_ptr<Component>>& components) const
+  {
+    std::unique_ptr<Component> pass_through_comp =
+      std::make_unique<PassThroughComponent>(id, stream);
+    components.insert(
+        std::make_pair(id, std::move(pass_through_comp)));
   }
 
   void

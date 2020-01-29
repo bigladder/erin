@@ -933,47 +933,66 @@ namespace ERIN
   PassThroughComponent::PassThroughComponent(
       const std::string& id_,
       const StreamType& stream_):
+    PassThroughComponent(
+        std::move(id_),
+        std::move(stream_),
+        {})
+  {
+  }
+
+  PassThroughComponent::PassThroughComponent(
+      const std::string& id_,
+      const StreamType& stream_,
+      fragility_map fragilities):
     Component(
         id_,
         ComponentType::PassThrough,
         stream_,
         stream_,
-        stream_)
+        stream_,
+        std::move(fragilities))
   {
   }
 
   std::unique_ptr<Component>
   PassThroughComponent::clone() const
   {
+    auto fcs = clone_fragility_curves();
     std::unique_ptr<Component> p = std::make_unique<PassThroughComponent>(
         get_id(),
-        get_input_stream());
+        get_input_stream(),
+        std::move(fcs));
     return p;
   }
 
   PortsAndElements
   PassThroughComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>&, // nw
+      adevs::Digraph<FlowValueType, Time>& nw,
       const std::string&, // active_scenario
       bool is_failed) const
   {
     namespace ep = ::erin::port;
     std::unordered_set<FlowElement*> elements;
     std::unordered_map<ep::Type, std::vector<FlowElement*>> ports;
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "PassThroughComponent::add_to_network(...)\n";
-    }
-    if (is_failed) {
-      throw std::invalid_argument(
-          "unimplemented functionality for is_failed=true");
-    }
     auto the_id = get_id();
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "PassThroughComponent::add_to_network(...);id="
+                << the_id << "\n";
+    }
     auto the_type = ComponentType::PassThrough;
     auto stream = get_input_stream();
     auto meter = new FlowMeter(the_id, the_type, stream);
     elements.emplace(meter);
-    ports[ep::Type::Inflow] = std::vector<FlowElement*>{meter};
     ports[ep::Type::Outflow] = std::vector<FlowElement*>{meter};
+    if (is_failed) {
+      auto limits = new FlowLimits(the_id, the_type, stream, 0.0, 0.0);
+      elements.emplace(limits);
+      connect_source_to_sink(nw, limits, meter, true);
+      ports[ep::Type::Inflow] = std::vector<FlowElement*>{limits};
+    }
+    else {
+      ports[ep::Type::Inflow] = std::vector<FlowElement*>{meter};
+    }
     return PortsAndElements{ports, elements};
   }
 

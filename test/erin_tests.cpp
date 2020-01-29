@@ -3764,7 +3764,7 @@ TEST(ErinComponents, Test_passthrough_component_with_fragility)
     "[loads.load0]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -3793,6 +3793,19 @@ TEST(ErinComponents, Test_passthrough_component_with_fragility)
   namespace E = ::ERIN;
   auto m = E::make_main_from_string(input);
   auto results = m.run("scenario0");
+  auto stats = results.get_statistics();
+  std::unordered_map<std::string, E::ScenarioStats> expected_stats{
+    {"L", E::ScenarioStats{0,10,10,100.0,0.0}},
+    {"P", E::ScenarioStats{0,10,10,100.0,0.0}},
+    {"S", E::ScenarioStats{10,0,0,0.0,0.0}}};
+  EXPECT_EQ(stats.size(), expected_stats.size());
+  for (const auto& s_item: expected_stats) {
+    const auto& id = s_item.first;
+    const auto& expected_stat = s_item.second;
+    auto it = stats.find(id);
+    ASSERT_TRUE(it != stats.end());
+    EXPECT_EQ(expected_stat, it->second) << "id = " << id;
+  }
 }
 
 int

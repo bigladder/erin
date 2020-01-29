@@ -304,7 +304,8 @@ namespace ERIN
           const std::string& id,
           const StreamType& stream,
           std::unordered_map<
-            std::string, std::unique_ptr<Component>>& components) const;
+            std::string, std::unique_ptr<Component>>& components,
+          fragility_map&& frags) const;
       [[nodiscard]] double read_number(const toml::value& v) const;
       [[nodiscard]] double read_number(const std::string& v) const;
       double read_fixed_random_for_sim_info(

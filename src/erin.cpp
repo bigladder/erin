@@ -548,7 +548,8 @@ namespace ERIN
               tt,
               comp_id,
               stream_types_map.at(input_stream_id),
-              components);
+              components,
+              std::move(frags));
           break;
         default:
           {
@@ -911,10 +912,11 @@ namespace ERIN
       const std::string& id,
       const StreamType& stream,
       std::unordered_map<
-        std::string, std::unique_ptr<Component>>& components) const
+        std::string, std::unique_ptr<Component>>& components,
+      fragility_map&& frags) const
   {
     std::unique_ptr<Component> pass_through_comp =
-      std::make_unique<PassThroughComponent>(id, stream);
+      std::make_unique<PassThroughComponent>(id, stream, std::move(frags));
     components.insert(
         std::make_pair(id, std::move(pass_through_comp)));
   }

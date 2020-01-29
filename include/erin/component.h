@@ -302,6 +302,10 @@ namespace ERIN
       PassThroughComponent(
           const std::string& id,
           const StreamType& stream);
+      PassThroughComponent(
+          const std::string& id,
+          const StreamType& stream,
+          fragility_map fragilities);
 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
       PortsAndElements add_to_network(

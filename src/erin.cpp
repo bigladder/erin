@@ -534,7 +534,7 @@ namespace ERIN
           break;
         case ComponentType::Converter:
           {
-          if constexpr (debug_level >= debug_level_low) {
+          if constexpr (debug_level >= debug_level_high) {
             std::cout << "ComponentType::Converter found!\n"
                       << "comp_id = " << comp_id << "\n"
                       << "frags.size() = " << frags.size() << "\n";
@@ -1834,13 +1834,13 @@ namespace ERIN
             comp_types);
         for (const auto& cid_stats_pair: stats_by_comp_temp) {
           const auto& comp_id = cid_stats_pair.first;
-          const auto& stats = cid_stats_pair.second;
+          const auto& comp_stats = cid_stats_pair.second;
           auto it = stats_by_comp.find(comp_id);
           if (it == stats_by_comp.end()) {
-            stats_by_comp[comp_id] = stats;
+            stats_by_comp[comp_id] = comp_stats;
           }
           else {
-            it->second += stats;
+            it->second += comp_stats;
           }
         }
         for (const auto& sn_total_pair : totals_by_stream_source_temp) {
@@ -1872,11 +1872,11 @@ namespace ERIN
         if (it_comp_id == stats_by_comp_end) {
           continue;
         }
-        const auto& stats = it_comp_id->second;
-        energy_availability_by_comp_id[comp_id] = calc_energy_availability_from_stats(stats);
-        max_downtime_by_comp_id_s[comp_id] = stats.max_downtime;
-        load_not_served_by_comp_id_kW[comp_id] = stats.load_not_served;
-        total_energy_by_comp_id_kJ[comp_id] = stats.total_energy;
+        const auto& comp_stats = it_comp_id->second;
+        energy_availability_by_comp_id[comp_id] = calc_energy_availability_from_stats(comp_stats);
+        max_downtime_by_comp_id_s[comp_id] = comp_stats.max_downtime;
+        load_not_served_by_comp_id_kW[comp_id] = comp_stats.load_not_served;
+        total_energy_by_comp_id_kJ[comp_id] = comp_stats.total_energy;
       }
       stats[scenario_id] = AllScenarioStats{
         num_occurrences,

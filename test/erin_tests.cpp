@@ -3845,6 +3845,7 @@ TEST(ErinComponents, Test_passthrough_component_with_limits)
   namespace E = ::ERIN;
   auto m = E::make_main_from_string(input);
   auto results = m.run("scenario0");
+  ASSERT_TRUE(results.get_is_good());
   auto stats = results.get_statistics();
   std::unordered_map<std::string, E::ScenarioStats> expected_stats{
     // load is aware of unmet requests
@@ -3869,6 +3870,88 @@ TEST(ErinComponents, Test_that_clone_works_for_passthrough_component)
       "P", ERIN::StreamType{"electricity"}, ERIN::Limits{0.0,100.0}, {});
   auto p = c.clone();
   EXPECT_EQ(c, dynamic_cast<ERIN::PassThroughComponent&>(*p));
+}
+
+TEST(ErinComponents, Test_converter_component_with_fragilities)
+{
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[streams.electricity]\n"
+    "type = \"electricity\"\n"
+    "[streams.natural_gas]\n"
+    "type = \"natural_gas\"\n"
+    "[streams.waste_heat]\n"
+    "type = \"waste_heat\"\n"
+    "[loads.load0]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "outflow = \"natural_gas\"\n"
+    "[components.C]\n"
+    "type = \"converter\"\n"
+    "inflow = \"natural_gas\"\n"
+    "outflow = \"electricity\"\n"
+    "lossflow = \"waste_heat\"\n"
+    "constant_efficiency = 0.5\n"
+    "fragilities = [\"frag01\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.scenario0 = \"load0\"\n"
+    "[fragility.frag01]\n"
+    "vulnerable_to = \"intensity01\"\n"
+    "type = \"linear\"\n"
+    "lower_bound = 10.0\n"
+    "upper_bound = 20.0\n"
+    "[networks.nw0]\n"
+    "connections = [[\"S\", \"C\"], [\"C\", \"L\"]]\n"
+    "[scenarios.scenario0]\n"
+    "time_unit = \"seconds\"\n"
+    "duration = 10\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "max_occurrences = 1\n"
+    "intensity.intensity01 = 30.0\n"
+    "network = \"nw0\"\n";
+  namespace E = ::ERIN;
+  auto m = E::make_main_from_string(input);
+  const auto& comps = m.get_components();
+  const auto& c = comps.at("C");
+  ASSERT_TRUE(c->is_fragile());
+  const auto& c1 = c->clone();
+  ASSERT_TRUE(c1->is_fragile());
+  ASSERT_EQ(
+      dynamic_cast<E::ConverterComponent&>(*c),
+      dynamic_cast<E::ConverterComponent&>(*c1));
+  //auto results = m.run("scenario0");
+  //ASSERT_TRUE(results.get_is_good());
+  //auto stats = results.get_statistics();
+  //std::unordered_map<std::string, E::ScenarioStats> expected_stats{
+  //  {"L", E::ScenarioStats{0,10,10,100.0,0.0}},
+  //  {"C:inflow", E::ScenarioStats{0,10,10,100.0,0.0}},
+  //  {"C:outflow", E::ScenarioStats{0,10,10,200.0,0.0}},
+  //  {"C:lossflow", E::ScenarioStats{10,0,0,0.0,0.0}},
+  //  {"S", E::ScenarioStats{0,0,0,0.0,0.0}}};
+  //EXPECT_EQ(stats.size(), expected_stats.size());
+  //std::vector<std::string> available_ids;
+  //std::for_each(
+  //    stats.begin(),
+  //    stats.end(),
+  //    [&](const std::pair<std::string, E::ScenarioStats>& item) {
+  //      available_ids.emplace_back(item.first);
+  //    });
+  //for (const auto& s_item: expected_stats) {
+  //  const auto& id = s_item.first;
+  //  const auto& expected_stat = s_item.second;
+  //  auto it = stats.find(id);
+  //  ASSERT_TRUE(it != stats.end()) << "expected id = " << id;
+  //  EXPECT_EQ(expected_stat, it->second) << "id = " << id;
+  //}
 }
 
 int

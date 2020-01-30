@@ -298,7 +298,8 @@ namespace ERIN
           const StreamType& output_stream,
           const StreamType& lossflow_stream,
           std::unordered_map<
-            std::string, std::unique_ptr<Component>>& components) const;
+            std::string, std::unique_ptr<Component>>& components,
+          fragility_map&& frags) const;
       void read_passthrough_component(
           const toml::table& tt,
           const std::string& id,

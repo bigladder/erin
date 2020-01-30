@@ -836,12 +836,30 @@ namespace ERIN
       const StreamType& output_stream_,
       const StreamType& lossflow_stream_,
       const FlowValueType& const_eff_):
+    ConverterComponent(
+        std::move(id_),
+        std::move(input_stream_),
+        std::move(output_stream_),
+        std::move(lossflow_stream_),
+        const_eff_,
+        {})
+  {
+  }
+
+  ConverterComponent::ConverterComponent(
+      const std::string& id_,
+      const StreamType& input_stream_,
+      const StreamType& output_stream_,
+      const StreamType& lossflow_stream_,
+      const FlowValueType& const_eff_,
+      fragility_map fragilities_):
     Component(
-        id_,
+        std::move(id_),
         ComponentType::Converter,
-        input_stream_,
-        output_stream_,
-        lossflow_stream_),
+        std::move(input_stream_),
+        std::move(output_stream_),
+        std::move(lossflow_stream_),
+        std::move(fragilities_)),
     const_eff{const_eff_}
   {
     if ((const_eff > 1.0) || (const_eff <= 0.0)) {
@@ -855,12 +873,14 @@ namespace ERIN
   std::unique_ptr<Component>
   ConverterComponent::clone() const
   {
+    auto fcs = clone_fragility_curves();
     std::unique_ptr<Component> p = std::make_unique<ConverterComponent>(
         get_id(),
         get_input_stream(),
         get_output_stream(),
         get_lossflow_stream(),
-        const_eff);
+        const_eff,
+        std::move(fcs));
     return p;
   }
 

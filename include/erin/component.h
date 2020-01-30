@@ -277,6 +277,14 @@ namespace ERIN
           const StreamType& lossflow_stream,
           const FlowValueType& const_eff);
 
+      ConverterComponent(
+          const std::string& id,
+          const StreamType& input_stream,
+          const StreamType& output_stream,
+          const StreamType& lossflow_stream,
+          const FlowValueType& const_eff,
+          fragility_map fragilities);
+
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,

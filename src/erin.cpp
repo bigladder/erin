@@ -533,17 +533,27 @@ namespace ERIN
               std::move(frags));
           break;
         case ComponentType::Converter:
-          // TODO: add fragilities
+          {
+          if constexpr (debug_level >= debug_level_low) {
+            std::cout << "ComponentType::Converter found!\n"
+                      << "comp_id = " << comp_id << "\n"
+                      << "frags.size() = " << frags.size() << "\n";
+            for (const auto& f : frags) {
+              std::cout << "f.first = " << f.first << "\n";
+              std::cout << "f.second.size()" << f.second.size() << "\n";
+            }
+          }
           read_converter_component(
               tt,
               comp_id,
               stream_types_map.at(input_stream_id),
               stream_types_map.at(output_stream_id),
               stream_types_map.at(lossflow_stream_id),
-              components);
+              components,
+              std::move(frags));
           break;
+          }
         case ComponentType::PassThrough:
-          // TODO: add fragilities
           read_passthrough_component(
               tt,
               comp_id,
@@ -944,8 +954,8 @@ namespace ERIN
       const StreamType& output_stream,
       const StreamType& lossflow_stream,
       std::unordered_map<
-        std::string, std::unique_ptr<Component>>& components) const
-      //fragility_map&& frags) const
+        std::string, std::unique_ptr<Component>>& components,
+      fragility_map&& frags) const
   {
     std::string field_read;
     auto const_eff_val = toml_helper::read_required_table_field<toml::value>(
@@ -953,7 +963,8 @@ namespace ERIN
     auto const_eff = read_number(const_eff_val);
     std::unique_ptr<Component> converter_comp =
       std::make_unique<ConverterComponent>(
-          id, input_stream, output_stream, lossflow_stream, const_eff);
+          id, input_stream, output_stream, lossflow_stream,
+          const_eff, std::move(frags));
     components.insert(
         std::make_pair(id, std::move(converter_comp)));
   }

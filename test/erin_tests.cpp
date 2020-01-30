@@ -3846,18 +3846,21 @@ TEST(ErinComponents, Test_passthrough_component_with_limits)
   auto m = E::make_main_from_string(input);
   auto results = m.run("scenario0");
   auto stats = results.get_statistics();
-  //std::unordered_map<std::string, E::ScenarioStats> expected_stats{
-  //  {"L", E::ScenarioStats{10,10,10,50.0,50.0}},
-  //  {"P", E::ScenarioStats{10,10,10,50.0,50.0}},
-  //  {"S", E::ScenarioStats{10,10,10,50.0,50.0}}};
-  //EXPECT_EQ(stats.size(), expected_stats.size());
-  //for (const auto& s_item: expected_stats) {
-  //  const auto& id = s_item.first;
-  //  const auto& expected_stat = s_item.second;
-  //  auto it = stats.find(id);
-  //  ASSERT_TRUE(it != stats.end());
-  //  EXPECT_EQ(expected_stat, it->second) << "id = " << id;
-  //}
+  std::unordered_map<std::string, E::ScenarioStats> expected_stats{
+    // load is aware of unmet requests
+    {"L", E::ScenarioStats{0,10,10,50.0,50.0}},
+    // pass-through is aware of unmet requests
+    {"P", E::ScenarioStats{0,10,10,50.0,50.0}},
+    // from source's point of view, it meets all requests
+    {"S", E::ScenarioStats{10,0,0,0.0,50.0}}};
+  EXPECT_EQ(stats.size(), expected_stats.size());
+  for (const auto& s_item: expected_stats) {
+    const auto& id = s_item.first;
+    const auto& expected_stat = s_item.second;
+    auto it = stats.find(id);
+    ASSERT_TRUE(it != stats.end());
+    EXPECT_EQ(expected_stat, it->second) << "id = " << id;
+  }
 }
 
 TEST(ErinComponents, Test_that_clone_works_for_passthrough_component)

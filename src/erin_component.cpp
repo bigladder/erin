@@ -1013,13 +1013,22 @@ namespace ERIN
     elements.emplace(meter);
     ports[ep::Type::Outflow] = std::vector<FlowElement*>{meter};
     if (is_failed) {
-      auto limits = new FlowLimits(the_id, the_type, stream, 0.0, 0.0);
-      elements.emplace(limits);
-      connect_source_to_sink(nw, limits, meter, true);
-      ports[ep::Type::Inflow] = std::vector<FlowElement*>{limits};
+      auto the_limits = new FlowLimits(the_id, the_type, stream, 0.0, 0.0);
+      elements.emplace(the_limits);
+      connect_source_to_sink(nw, the_limits, meter, true);
+      ports[ep::Type::Inflow] = std::vector<FlowElement*>{the_limits};
     }
     else {
-      ports[ep::Type::Inflow] = std::vector<FlowElement*>{meter};
+      if (limits.get_is_limited()) {
+        auto lims = new FlowLimits(
+            the_id, the_type, stream, limits.get_min(), limits.get_max());
+        elements.emplace(lims);
+        connect_source_to_sink(nw, lims, meter, true);
+        ports[ep::Type::Inflow] = std::vector<FlowElement*>{lims};
+      }
+      else {
+        ports[ep::Type::Inflow] = std::vector<FlowElement*>{meter};
+      }
     }
     return PortsAndElements{ports, elements};
   }

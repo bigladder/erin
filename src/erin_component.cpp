@@ -837,10 +837,10 @@ namespace ERIN
       const StreamType& lossflow_stream_,
       const FlowValueType& const_eff_):
     ConverterComponent(
-        std::move(id_),
-        std::move(input_stream_),
-        std::move(output_stream_),
-        std::move(lossflow_stream_),
+        id_,
+        input_stream_,
+        output_stream_,
+        lossflow_stream_,
         const_eff_,
         {})
   {
@@ -854,11 +854,11 @@ namespace ERIN
       const FlowValueType& const_eff_,
       fragility_map fragilities_):
     Component(
-        std::move(id_),
+        id_,
         ComponentType::Converter,
-        std::move(input_stream_),
-        std::move(output_stream_),
-        std::move(lossflow_stream_),
+        input_stream_,
+        output_stream_,
+        lossflow_stream_,
         std::move(fragilities_)),
     const_eff{const_eff_}
   {
@@ -960,8 +960,8 @@ namespace ERIN
       const std::string& id_,
       const StreamType& stream_):
     PassThroughComponent(
-        std::move(id_),
-        std::move(stream_),
+        id_,
+        stream_,
         Limits{},
         {})
   {
@@ -972,9 +972,9 @@ namespace ERIN
       const StreamType& stream_,
       const Limits& limits_):
     PassThroughComponent(
-        std::move(id_),
-        std::move(stream_),
-        std::move(limits_),
+        id_,
+        stream_,
+        limits_,
         {})
   {
   }
@@ -984,8 +984,8 @@ namespace ERIN
       const StreamType& stream_,
       fragility_map fragilities):
     PassThroughComponent(
-        std::move(id_),
-        std::move(stream_),
+        id_,
+        stream_,
         Limits{},
         std::move(fragilities))
   {

@@ -3928,30 +3928,23 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
   ASSERT_EQ(
       dynamic_cast<E::ConverterComponent&>(*c),
       dynamic_cast<E::ConverterComponent&>(*c1));
-  //auto results = m.run("scenario0");
-  //ASSERT_TRUE(results.get_is_good());
-  //auto stats = results.get_statistics();
-  //std::unordered_map<std::string, E::ScenarioStats> expected_stats{
-  //  {"L", E::ScenarioStats{0,10,10,100.0,0.0}},
-  //  {"C:inflow", E::ScenarioStats{0,10,10,100.0,0.0}},
-  //  {"C:outflow", E::ScenarioStats{0,10,10,200.0,0.0}},
-  //  {"C:lossflow", E::ScenarioStats{10,0,0,0.0,0.0}},
-  //  {"S", E::ScenarioStats{0,0,0,0.0,0.0}}};
-  //EXPECT_EQ(stats.size(), expected_stats.size());
-  //std::vector<std::string> available_ids;
-  //std::for_each(
-  //    stats.begin(),
-  //    stats.end(),
-  //    [&](const std::pair<std::string, E::ScenarioStats>& item) {
-  //      available_ids.emplace_back(item.first);
-  //    });
-  //for (const auto& s_item: expected_stats) {
-  //  const auto& id = s_item.first;
-  //  const auto& expected_stat = s_item.second;
-  //  auto it = stats.find(id);
-  //  ASSERT_TRUE(it != stats.end()) << "expected id = " << id;
-  //  EXPECT_EQ(expected_stat, it->second) << "id = " << id;
-  //}
+  auto results = m.run("scenario0");
+  ASSERT_TRUE(results.get_is_good());
+  auto stats = results.get_statistics();
+  std::unordered_map<std::string, E::ScenarioStats> expected_stats{
+    {"L", E::ScenarioStats{0,10,10,100.0,0.0}},
+    {"C:inflow", E::ScenarioStats{10,0,0,0.0,0.0}},
+    {"C:outflow", E::ScenarioStats{0,10,10,100.0,0.0}},
+    {"C:lossflow", E::ScenarioStats{10,0,0,0.0,0.0}},
+    {"S", E::ScenarioStats{10,0,0,0.0,0.0}}};
+  EXPECT_EQ(stats.size(), expected_stats.size());
+  for (const auto& s_item: expected_stats) {
+    const auto& id = s_item.first;
+    const auto& expected_stat = s_item.second;
+    auto it = stats.find(id);
+    ASSERT_TRUE(it != stats.end()) << "expected id = " << id;
+    EXPECT_EQ(expected_stat, it->second) << "id = " << id;
+  }
 }
 
 int

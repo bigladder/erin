@@ -896,10 +896,6 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "ConverterComponent::add_to_network(...)\n";
     }
-    if (is_failed) {
-      throw std::invalid_argument(
-          "unimplemented functionality for is_failed=true");
-    }
     auto the_id = get_id();
     auto the_type = ComponentType::Converter;
     auto in_stream = get_input_stream();
@@ -913,18 +909,28 @@ namespace ERIN
     auto out_meter = new FlowMeter(the_id + ":outflow", the_type, out_stream);
     elements.emplace(out_meter);
     ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter, loss_meter};
-    auto out_from_in = [this](FlowValueType in) -> FlowValueType {
-      return in * const_eff;
-    };
-    auto in_from_out = [this](FlowValueType out) -> FlowValueType {
-      return out / const_eff;
-    };
-    auto conv = new Converter(
-        the_id, the_type, in_stream, out_stream, out_from_in, in_from_out);
-    elements.emplace(conv);
-    connect_source_to_sink(nw, in_meter, conv, true);
-    connect_source_to_sink(nw, conv, out_meter, true);
-    erin::network::couple_source_loss_to_sink(nw, conv, loss_meter, true);
+    if (is_failed) {
+      auto lim_out = new FlowLimits(the_id, the_type, out_stream, 0.0, 0.0);
+      elements.emplace(lim_out);
+      auto lim_loss = new FlowLimits(the_id, the_type, loss_stream, 0.0, 0.0);
+      elements.emplace(lim_loss);
+      connect_source_to_sink(nw, lim_out, out_meter, true);
+      connect_source_to_sink(nw, lim_loss, loss_meter, true);
+    }
+    else {
+      auto out_from_in = [this](FlowValueType in) -> FlowValueType {
+        return in * const_eff;
+      };
+      auto in_from_out = [this](FlowValueType out) -> FlowValueType {
+        return out / const_eff;
+      };
+      auto conv = new Converter(
+          the_id, the_type, in_stream, out_stream, out_from_in, in_from_out);
+      elements.emplace(conv);
+      connect_source_to_sink(nw, in_meter, conv, true);
+      connect_source_to_sink(nw, conv, out_meter, true);
+      erin::network::couple_source_loss_to_sink(nw, conv, loss_meter, true);
+    }
     return PortsAndElements{ports, elements};
   }
 

@@ -1219,7 +1219,8 @@ namespace ERIN
         throw std::runtime_error(oss.str());
       }
       if (total_inflow_achieved < total_outflow_request) {
-        total_outflow_request = total_inflow_achieved;
+        // Below is true but not used. Here for reference.
+        // total_outflow_request = total_inflow_achieved;
         set_report_outflow_achieved(true);
       }
     }

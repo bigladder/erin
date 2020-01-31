@@ -19,11 +19,6 @@ set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 option( ${CMAKE_PROJECT_NAME}_TESTING "Build ERIN testing targets" OFF)
 option( ${CMAKE_PROJECT_NAME}_COVERAGE "Generate coverage reports" OFF)
 option(BUILD_DOC "Build documentation" OFF)
-option(DO_DEBUG_PRINT "Use debug print statements" ON)
-
-if (DO_DEBUG_PRINT)
-  add_compile_definitions(DEBUG_PRINT)
-endif (DO_DEBUG_PRINT)
 
 # Set up testing/coverage
 if (${CMAKE_PROJECT_NAME}_TESTING)

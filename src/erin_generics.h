@@ -76,7 +76,7 @@ namespace erin_generics
       }
       auto v = toml::get<T>(it_v->second);
       std::string time_units_tag{"seconds"};
-      auto it_time_units = m.find("time_units");
+      auto it_time_units = m.find("time_unit");
       if (it_time_units != m.end()) {
         time_units_tag = toml::get<std::string>(it_time_units->second);
       }

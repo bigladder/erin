@@ -22,7 +22,7 @@ loads_by_scenario.blue_sky = "building_electrical"
 connections = [["electric_utility", "cluster_01_electric"]]
 ############################################################
 [scenarios.blue_sky]
-time_units = "hours"
+time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0}
 duration = 4
 max_occurrences = 1

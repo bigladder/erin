@@ -88,13 +88,13 @@ connections = [
 ############################################################
 # Scenarios
 [scenarios.blue_sky]
-time_units = "hours"
+time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0}
 duration = 8760
 max_occurrences = 1
 network = "normal_operations"
 [scenarios.class_4_hurricane]
-time_units = "hours"
+time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 87600}
 duration = 336
 max_occurrences = -1
@@ -102,7 +102,7 @@ network = "emergency_operations"
 intensity.wind_speed_mph = 156
 intensity.inundation_depth_ft = 8
 [scenarios.class_5_hurricane]
-time_units = "hours"
+time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 87600}
 duration = 336
 max_occurrences = -1
@@ -110,7 +110,7 @@ network = "emergency_operations"
 intensity.wind_speed_mph = 200 # force failure deterministically
 intensity.inundation_depth_ft = 20 # force failure deterministically
 [scenarios.class_1_hurricane]
-time_units = "hours"
+time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 87600}
 duration = 336
 max_occurrences = -1

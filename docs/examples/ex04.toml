@@ -49,14 +49,14 @@ connections = [
   ["emergency_generator", "outflow", "0", "bus", "inflow", "1"],
   ["bus", "cluster_01_electric"]]
 [scenarios.blue_sky]
-time_units = "hours"
+time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0}
 duration = 8760
 max_occurrences = 1
 network = "normal_operations"
 [scenarios.class_4_hurricane]
-time_units = "hours"
-occurrence_distribution = {type = "fixed", time_units = "years", value = 10}
+time_unit = "hours"
+occurrence_distribution = {type = "fixed", time_unit = "years", value = 10}
 duration = 336
 max_occurrences = -1
 network = "emergency_operations"

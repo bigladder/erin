@@ -745,8 +745,7 @@ namespace ERIN
       StreamType input_stream_type,
       StreamType output_stream_type,
       std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-      std::function<FlowValueType(FlowValueType)> calc_input_from_output
-      ) :
+      std::function<FlowValueType(FlowValueType)> calc_input_from_output):
     FlowElement(
         std::move(id),
         component_type,

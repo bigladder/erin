@@ -15,14 +15,9 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-#include <functional>
-#include <iostream>
-#include <memory>
 #include <set>
 #include <sstream>
 #include <stdexcept>
-#include <unordered_set>
-#include <utility>
 
 namespace ERIN
 {
@@ -1085,7 +1080,7 @@ namespace ERIN
   {
     const std::string default_time_units{"hours"};
     std::unordered_map<std::string, Scenario> scenarios;
-    const auto toml_scenarios = toml::find<toml::table>(data, "scenarios");
+    const auto& toml_scenarios = toml::find<toml::table>(data, "scenarios");
     if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_scenarios.size() << " scenarios found\n";
     }
@@ -1094,7 +1089,7 @@ namespace ERIN
           s.second, "occurrence_distribution");
       const auto next_occurrence_dist =
         ::erin_generics::read_toml_distribution<RealTimeType>(dist);
-      const auto time_unit_str = toml::find_or(
+      const auto& time_unit_str = toml::find_or(
           s.second, "time_unit", default_time_units);
       const auto time_units = tag_to_time_units(time_unit_str);
       RealTimeType time_multiplier{1};
@@ -1123,7 +1118,7 @@ namespace ERIN
           }
       }
       const auto duration = static_cast<::ERIN::RealTimeType>(
-          toml::find<int>(s.second, "duration") * time_multiplier);
+          toml::find<RealTimeType>(s.second, "duration") * time_multiplier);
       const auto max_occurrences = toml::find<int>(s.second, "max_occurrences");
       const auto network_id = toml::find<std::string>(s.second, "network");
       std::unordered_map<std::string,double> intensity{};
@@ -2132,7 +2127,10 @@ namespace ERIN
     const int max_no_advance_factor{10};
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;
-    auto sim_good = run_devs(sim, duration, max_no_advance);
+    auto sim_good = run_devs(
+        sim, duration, max_no_advance,
+        "scenario_run:" + scenario_id +
+        "(" + std::to_string(scenario_start_s) + ")");
     return process_single_scenario_results(
         sim_good, elements, duration, scenario_start_s);
   }
@@ -2152,6 +2150,9 @@ namespace ERIN
       p->set_runner(
           // ss = scenario start (seconds)
           [this, scenario_id](RealTimeType ss) -> ScenarioResults {
+            if constexpr (debug_level >= debug_level_high) {
+              std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
+            }
             return this->run(scenario_id, ss);
           });
       sim.add(p);
@@ -2161,8 +2162,8 @@ namespace ERIN
       copies.emplace_back(p);
     }
     // 3. run the simulation
-    const int max_no_advance{10};
-    const auto sim_good = run_devs(sim, sim_max_time, max_no_advance);
+    const int max_no_advance{static_cast<int>(components.size()) * 10};
+    const auto sim_good = run_devs(sim, sim_max_time, max_no_advance, "run_all:scenario");
     // 4. pull results into one map
     for (const auto s: copies) {
       out[s->get_name()] = s->get_results();
@@ -2333,7 +2334,8 @@ namespace ERIN
   run_devs(
       adevs::Simulator<PortValue, Time>& sim,
       const RealTimeType max_time,
-      const int max_no_advance)
+      const int max_no_advance,
+      const std::string& run_id)
   {
     bool sim_good{true};
     int non_advance_count{0};
@@ -2349,6 +2351,14 @@ namespace ERIN
       }
       if (non_advance_count >= max_no_advance) {
         sim_good = false;
+        if constexpr (debug_level >= debug_level_low) {
+          std::cout << "ERROR: non_advance_count > max_no_advance:\n";
+          std::cout << "run_id           : " << run_id << "\n";
+          std::cout << "non_advance_count: " << non_advance_count << "\n";
+          std::cout << "max_no_advance   : " << max_no_advance << "\n";
+          std::cout << "time.real        : " << t.real << "\n";
+          std::cout << "time.logical     : " << t.logical << "\n";
+        }
         break;
       }
       if constexpr (debug_level >= debug_level_high) {

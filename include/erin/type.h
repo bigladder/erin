@@ -20,6 +20,7 @@ namespace ERIN
   constexpr FlowValueType flow_value_tolerance{1e-6};
   constexpr FlowValueType neg_flow_value_tol = -1 * flow_value_tolerance;
   const auto inf = adevs_inf<Time>();
+  constexpr int precision_for_output{16};
 
   // Time Conversion Factors
   constexpr double seconds_per_minute{60.0};

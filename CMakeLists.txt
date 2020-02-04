@@ -89,3 +89,39 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex05.toml"
   "ex05.toml"
   COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06.toml"
+  "ex06.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06-emergency-electric-1.csv"
+  "ex06-emergency-electric-1.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06-emergency-electric-2.csv"
+  "ex06-emergency-electric-2.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06-emergency-heating-1.csv"
+  "ex06-emergency-heating-1.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06-emergency-heating-2.csv"
+  "ex06-emergency-heating-2.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06-normal-electric-1.csv"
+  "ex06-normal-electric-1.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06-normal-electric-2.csv"
+  "ex06-normal-electric-2.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06-normal-heating-1.csv"
+  "ex06-normal-heating-1.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex06-normal-heating-2.csv"
+  "ex06-normal-heating-2.csv"
+  COPYONLY)

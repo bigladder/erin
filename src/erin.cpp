@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -1263,8 +1264,10 @@ namespace ERIN
       }
       lines.emplace_back(oss.str());
     }
-    for (std::vector<RealTimeType>::size_type i{0}; i < times.size(); ++i) {
+    using size_type = std::vector<RealTimeType>::size_type;
+    for (size_type i{0}; i < times.size(); ++i) {
       std::ostringstream oss;
+      oss << std::setprecision(16);
       oss << convert_time_in_seconds_to(times[i], time_units);
       for (const auto& k: comp_ids) {
         auto it = values.find(k);

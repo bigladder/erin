@@ -3947,6 +3947,71 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
   }
 }
 
+TEST(ErinElements, Test_that_converter_yields_lossflow)
+{
+  std::unique_ptr<ERIN::FlowElement> c = std::make_unique<ERIN::Converter>(
+      "conv",
+      ERIN::ComponentType::Converter,
+      ERIN::StreamType{"coal"},
+      ERIN::StreamType{"electricity"},
+      [](ERIN::FlowValueType input) -> ERIN::FlowValueType { return input * 0.5; },
+      [](ERIN::FlowValueType output) -> ERIN::FlowValueType { return output * 2.0; });
+  // 1. lossflow request of 100,000 comes in at (0,0)
+  // 2. inflow request of 10 comes in at (0,1)
+  // 3. call delta_int()
+  // 4. call output_func() and check values of ys ; do we report the right lossflow?
+  ERIN::Time t0{0,0};
+  ERIN::Time dt{0,1};
+  auto lossflow_request = ERIN::PortValue{ERIN::FlowElement::inport_lossflow_request, 100000.0}; 
+  auto outflow_request = ERIN::PortValue{ERIN::FlowElement::inport_outflow_request, 10.0};
+  std::vector<ERIN::PortValue> v1 = {lossflow_request};
+  std::vector<ERIN::PortValue> v2 = {outflow_request};
+  auto dt_next = c->ta();
+  EXPECT_EQ(dt_next, ERIN::inf);
+  c->delta_ext(t0+dt, v1);
+  dt_next = c->ta();
+  EXPECT_EQ(dt_next, dt);
+  std::vector<ERIN::PortValue> outputs1;
+  c->output_func(outputs1);
+  c->delta_int();
+  dt_next = c->ta();
+  // lossflow_achieved
+  ASSERT_EQ(1, outputs1.size());
+  EXPECT_EQ(ERIN::FlowElement::outport_lossflow_achieved, outputs1[0].port);
+  EXPECT_EQ(0.0, outputs1[0].value);
+  EXPECT_EQ(dt_next, ERIN::inf);
+  c->delta_ext(dt, v2);
+  dt_next = c->ta();
+  EXPECT_EQ(dt_next, dt);
+  std::vector<ERIN::PortValue> outputs2;
+  c->output_func(outputs2);
+  // inflow_request + lossflow_achieved needs to be reported again
+  bool found_inflow_request{false};
+  bool found_lossflow_achieved{false};
+  for (const auto& p: outputs2) {
+    if (p.port == ERIN::FlowElement::outport_inflow_request) {
+      if (found_inflow_request) {
+        ASSERT_TRUE(false) << "multiple inflow requests found!";
+      }
+      found_inflow_request = true;
+      EXPECT_EQ(20.0, p.value);
+    } else if (p.port == ERIN::FlowElement::outport_lossflow_achieved) {
+      if (found_lossflow_achieved) {
+        ASSERT_TRUE(false) << "multiple lossflow achieved values found!";
+      }
+      found_lossflow_achieved = true;
+      EXPECT_EQ(10.0, p.value);
+    } else {
+      ASSERT_TRUE(false)
+        << "unexpected port found in outputs2: "
+        << p.port << " with value: " << p.value;
+    }
+  }
+  ASSERT_TRUE(found_inflow_request) << "no inflow request found";
+  ASSERT_TRUE(found_lossflow_achieved) << "no lossflow achieved found";
+  ASSERT_EQ(2, outputs2.size());
+}
+
 int
 main(int argc, char **argv)
 {

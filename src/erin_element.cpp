@@ -85,6 +85,9 @@ namespace ERIN
     outflow_request{0},
     storeflow{0},
     lossflow{0},
+    lossflow_request{0},
+    spillage{0},
+    lossflow_connected{false},
     report_inflow_request{false},
     report_outflow_achieved{false},
     report_lossflow_achieved{false},
@@ -127,14 +130,14 @@ namespace ERIN
       switch (x.port) {
         case inport_inflow_achieved:
           if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... receive<=inport_the_inflow_achieved\n";
+            std::cout << "... receive<=inport_inflow_achieved\n";
           }
           inflow_provided = true;
           the_inflow_achieved += x.value;
           break;
         case inport_outflow_request:
           if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... receive<=inport_the_outflow_request\n";
+            std::cout << "... receive<=inport_outflow_request\n";
           }
           outflow_provided = true;
           the_outflow_request += x.value;
@@ -146,6 +149,7 @@ namespace ERIN
           }
           lossflow_provided = true;
           the_lossflow_request += x.value;
+          lossflow_connected = true;
           break;
         default:
           {
@@ -177,16 +181,8 @@ namespace ERIN
                     << "&& !outflow_provided "
                     << "&& lossflow_provided;id=" << get_id() << "\n";
         }
-        report_lossflow_achieved = true;
-        if (the_lossflow_request < lossflow) {
-          std::ostringstream oss;
-          oss << "1. cannot handle lossflow request less than available lossflow\n"
-            << "all lossflow must exit the element\n"
-            << "lossflow = " << lossflow << "\n"
-            << "the_lossflow_request = " << the_lossflow_request << "\n"
-            << "the_lossflow_request must be >= lossflow\n";
-          throw std::runtime_error(oss.str());
-        }
+        lossflow_request = the_lossflow_request;
+        spillage = 0.0; // reset spillage when request updated
       }
       report_outflow_achieved = true;
       if ((inflow > 0.0) && (the_inflow_achieved > inflow_request)) {
@@ -212,7 +208,21 @@ namespace ERIN
         throw std::runtime_error(oss.str());
       }
       const FlowState& fs = update_state_for_inflow_achieved(the_inflow_achieved);
+      // if 
+      // - another element cares to hear about lossflow (lossflow_connected)
+      // - AND actual lossflow (fs.get_lossflow()) is different than requested
+      //   (lossflow_request)
+      // - AND the actual lossflow (fs.get_lossflow()) is different than what
+      //   was previously reported (lossflow, the PREVIOUS value)
+      // THEN report_lossflow_achieved
+      report_lossflow_achieved = (
+          lossflow_connected
+          && (std::fabs(lossflow_request - fs.get_lossflow()) > flow_value_tolerance)
+          && (std::fabs(lossflow - fs.get_lossflow()) > flow_value_tolerance));
       update_state(fs);
+      if (lossflow_request < lossflow) {
+        spillage = lossflow - lossflow_request;
+      }
     }
     else if (outflow_provided && !inflow_provided) {
       if (lossflow_provided) {
@@ -221,7 +231,8 @@ namespace ERIN
                     << "&& outflow_provided "
                     << "&& lossflow_provided;id=" << get_id() << "\n";
         }
-        report_lossflow_achieved = true;
+        lossflow_request = the_lossflow_request;
+        spillage = 0.0;
       }
       report_inflow_request = true;
       outflow_request = the_outflow_request;
@@ -232,7 +243,21 @@ namespace ERIN
       if (diff > flow_value_tolerance) {
         report_outflow_achieved = true;
       }
+      // if 
+      // - another element cares to hear about lossflow (lossflow_connected)
+      // - AND actual lossflow (fs.get_lossflow()) is different than requested
+      //   (lossflow_request)
+      // - AND the actual lossflow (fs.get_lossflow()) is different than what
+      //   was previously reported (lossflow, the PREVIOUS value)
+      // THEN report_lossflow_achieved
+      report_lossflow_achieved = (
+          lossflow_connected
+          && (std::fabs(lossflow_request - fs.get_lossflow()) > flow_value_tolerance)
+          && (std::fabs(lossflow - fs.get_lossflow()) > flow_value_tolerance));
       update_state(fs);
+      if (lossflow_request < lossflow) {
+        spillage = lossflow - lossflow_request;
+      }
       if (outflow > 0.0 && outflow > outflow_request) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
@@ -251,18 +276,6 @@ namespace ERIN
           oss << "outflow: " << outflow << "\n";
           oss << "outflow_request: " << outflow_request << "\n";
         }
-        throw std::runtime_error(oss.str());
-      }
-      if (lossflow_provided && (the_lossflow_request < lossflow)) {
-        std::ostringstream oss;
-        oss << "2. cannot handle lossflow request less than available lossflow\n"
-          << "all lossflow must exit the element\n"
-          << "lossflow = " << lossflow << "\n"
-          << "the_lossflow_request = " << the_lossflow_request << "\n"
-          << "outflow = " << outflow << "\n"
-          << "the_outflow_request = " << the_outflow_request << "\n"
-          << "time = (" << time.real << ", " << time.logical << ")\n"
-          << "the_lossflow_request must be >= lossflow\n";
         throw std::runtime_error(oss.str());
       }
     }
@@ -285,15 +298,21 @@ namespace ERIN
                   << "&& !outflow_provided "
                   << "&& lossflow_provided;id=" << get_id() << "\n";
       }
-      report_lossflow_achieved = true;
-      if (the_lossflow_request < lossflow) {
-        std::ostringstream oss;
-        oss << "3. cannot handle lossflow request less than available lossflow\n"
-            << "all lossflow must exit the element\n"
-            << "lossflow = " << lossflow << "\n"
-            << "the_lossflow_request = " << the_lossflow_request << "\n"
-            << "the_lossflow_request must be >= lossflow\n";
-        throw std::runtime_error(oss.str());
+      // if 
+      // - another element cares to hear about lossflow (lossflow_connected)
+      // - AND current lossflow request (the_lossflow_request) is different
+      //   than previous (lossflow_request)
+      // - AND current lossflow request (the_lossflow_request) is different
+      //   from what was previously reported (lossflow)
+      // THEN report_lossflow_achieved
+      report_lossflow_achieved = (
+          lossflow_connected
+          && (the_lossflow_request != lossflow_request)
+          && (the_lossflow_request != lossflow));
+      lossflow_request = the_lossflow_request;
+      spillage = 0.0;
+      if (lossflow_request < lossflow) {
+        spillage = lossflow - lossflow_request;
       }
     }
     else {
@@ -383,7 +402,7 @@ namespace ERIN
       }
       ys.emplace_back(
           adevs::port_value<FlowValueType>{
-            outport_lossflow_achieved, lossflow});
+            outport_lossflow_achieved, lossflow - spillage});
     }
     add_additional_outputs(ys);
   }
@@ -1006,7 +1025,7 @@ namespace ERIN
     bool outflow_provided{false};
     int highest_inflow_port_received{-1};
     int highest_outflow_port_received{-1};
-    for (const auto &x : xs) {
+    for (const auto& x : xs) {
       int port = x.port;
       int port_n_ia = port - inport_inflow_achieved;
       int port_n_or = port - inport_outflow_request;
@@ -1056,12 +1075,16 @@ namespace ERIN
     }
     if (inflow_provided && !outflow_provided) {
       set_report_outflow_achieved(true);
-      if (total_inflow_achieved > get_inflow()) {
+      if (total_inflow_achieved > total_outflow_request) {
         std::ostringstream oss;
         oss << "AchievedMoreThanRequestedError\n";
-        oss << "total_inflow_achieved > inflow\n";
+        oss << "total_outflow_request > inflow\n";
         oss << "inflow: " << get_inflow() << "\n";
         oss << "total_inflow_achieved: " << total_inflow_achieved << "\n";
+        oss << "total_outflow_request: " << total_outflow_request << "\n";
+        oss << "id: " << get_id() << "\n";
+        oss << "time: (" << get_real_time() << ", "
+                         << get_logical_time() << ")\n";
         throw std::runtime_error(oss.str());
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
@@ -1116,11 +1139,15 @@ namespace ERIN
                         << get_report_outflow_achieved() << "\n";
                   }
                   FlowValueType remaining_inflow{total_inflow_achieved};
-                  for (auto& of_item: outflows) {
-                    if (of_item >= remaining_inflow) {
-                      of_item = remaining_inflow;
+                  using size_type = std::vector<FlowValueType>::size_type;
+                  auto num_ofs = outflows.size();
+                  for (size_type of_idx{0}; of_idx < num_ofs; ++of_idx) {
+                    if (outflow_requests[of_idx] >= remaining_inflow) {
+                      outflows[of_idx] = remaining_inflow;
+                    } else {
+                      outflows[of_idx] = outflow_requests[of_idx];
                     }
-                    remaining_inflow -= of_item;
+                    remaining_inflow -= outflows[of_idx];
                   }
                   break;
                 }

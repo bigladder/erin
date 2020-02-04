@@ -101,6 +101,7 @@ namespace ERIN
       void print_state() const;
       void print_state(const std::string& prefix) const;
       [[nodiscard]] auto get_real_time() const { return time.real; }
+      [[nodiscard]] auto get_logical_time() const { return time.logical; }
       [[nodiscard]] bool get_report_inflow_request() const {
         return report_inflow_request;
       }
@@ -150,7 +151,10 @@ namespace ERIN
       FlowValueType outflow; // achieved
       FlowValueType outflow_request;
       FlowValueType storeflow;
-      FlowValueType lossflow;
+      FlowValueType lossflow; // achieved
+      FlowValueType lossflow_request;
+      FlowValueType spillage; // achieved
+      bool lossflow_connected;
       bool report_inflow_request;
       bool report_outflow_achieved;
       bool report_lossflow_achieved;

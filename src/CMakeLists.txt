@@ -17,6 +17,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_devs.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_graphviz.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_network.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_port.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_random.cpp
@@ -32,6 +33,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/element.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
   ${PROJECT_SOURCE_DIR}/include/erin/fragility.h
+  ${PROJECT_SOURCE_DIR}/include/erin/graphviz.h
   ${PROJECT_SOURCE_DIR}/include/erin/network.h
   ${PROJECT_SOURCE_DIR}/include/erin/port.h
   ${PROJECT_SOURCE_DIR}/include/erin/random.h

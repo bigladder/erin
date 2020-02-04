@@ -11,6 +11,7 @@
 #include "erin/distribution.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"
+#include "erin/graphviz.h"
 #include "erin/port.h"
 #include "erin/random.h"
 #include "erin/stream.h"
@@ -4010,6 +4011,26 @@ TEST(ErinElements, Test_that_converter_yields_lossflow)
   ASSERT_TRUE(found_inflow_request) << "no inflow request found";
   ASSERT_TRUE(found_lossflow_achieved) << "no lossflow achieved found";
   ASSERT_EQ(2, outputs2.size());
+}
+
+TEST(ErinGraphviz, Test_that_we_can_generate_graphviz)
+{
+  namespace en = erin::network;
+  namespace ep = erin::port;
+  std::vector<en::Connection> nw = {
+    en::Connection{
+      en::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
+      en::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0}}};
+  namespace eg = erin::graphviz;
+  std::string expected =
+    "digraph ex01_normal_operations {\n"
+    "  node [shape=record];\n"
+    "  cluster_01_electric [shape=record,label=\"<I0> I(0)|<name> cluster_01_electric\"];\n"
+    "  electric_utility [shape=record,label=\"<name> electric_utility|<O0> O(0)\"];\n"
+    "  electric_utility:O0 -> cluster_01_electric:I0;\n"
+    "}";
+  auto actual = eg::network_to_dot(nw, "ex01_normal_operations");
+  EXPECT_EQ(expected, actual);
 }
 
 int

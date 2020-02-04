@@ -66,7 +66,6 @@ namespace ERIN
           throw std::invalid_argument(oss.str());
         }
     }
-    return true;
   }
 
   bool

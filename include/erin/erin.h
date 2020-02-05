@@ -158,11 +158,9 @@ namespace ERIN
       Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
-      [[nodiscard]] std::vector<ScenarioResults>
-        get_results() const { return results; }
       // the runner function must be:
       // RealTimeType scenario_start_time (seconds) -> ScenarioResults
-      void set_runner(const std::function<ScenarioResults(RealTimeType)>& f) {
+      void set_runner(const std::function<void(RealTimeType)>& f) {
         runner = f;
       }
 
@@ -177,8 +175,7 @@ namespace ERIN
       std::unordered_map<std::string, double> intensities;
       RealTimeType t;
       int num_occurrences;
-      std::vector<ScenarioResults> results;
-      std::function<ScenarioResults(RealTimeType)> runner;
+      std::function<void(RealTimeType)> runner;
   };
 
   std::ostream& operator<<(std::ostream& os, const Scenario& s);

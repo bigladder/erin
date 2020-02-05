@@ -2146,31 +2146,28 @@ namespace ERIN
     // 1. create the network and simulator
     adevs::Simulator<PortValue, Time> sim{};
     // 2. add all scenarios
-    std::vector<Scenario*> copies{};
     for (const auto& s: scenarios) {
       auto p = new Scenario{s.second};
       auto scenario_id = p->get_name();
+      out[scenario_id] = std::vector<ScenarioResults>{};
       p->set_runner(
           // ss = scenario start (seconds)
-          [this, scenario_id](RealTimeType ss) -> ScenarioResults {
+          [this, scenario_id, &out](RealTimeType ss) {
             if constexpr (debug_level >= debug_level_high) {
               std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
             }
-            return this->run(scenario_id, ss);
+            auto result = this->run(scenario_id, ss);
+            auto& results = out.at(scenario_id);
+            results.emplace_back(result);
           });
-      sim.add(p);
       // NOTE: sim will delete all pointers passed to it upon deletion.
       // Therefore, we don't need to worry about deleting Scenario pointers
-      // (sim does it). Pointers in `copies` are there for reference.
-      copies.emplace_back(p);
+      // (sim does it).
+      sim.add(p);
     }
     // 3. run the simulation
     const int max_no_advance{static_cast<int>(components.size()) * 10};
     const auto sim_good = run_devs(sim, sim_max_time, max_no_advance, "run_all:scenario");
-    // 4. pull results into one map
-    for (const auto s: copies) {
-      out[s->get_name()] = s->get_results();
-    }
     return AllResults{sim_good, out};
   }
 
@@ -2227,7 +2224,6 @@ namespace ERIN
     intensities{std::move(intensities_)},
     t{0},
     num_occurrences{0},
-    results{},
     runner{nullptr}
   {
   }
@@ -2253,8 +2249,7 @@ namespace ERIN
     }
     ++num_occurrences;
     if (runner != nullptr) {
-      auto result = runner(t);
-      results.emplace_back(result);
+      runner(t);
     }
   }
 
@@ -2437,6 +2432,7 @@ namespace ERIN
         stream_types.emplace(std::make_pair(id, in_st));
         results.emplace(std::make_pair(id, vals));
       }
+      e->clear_results();
       ++element_number;
     }
     if constexpr (debug_level >= debug_level_high) {

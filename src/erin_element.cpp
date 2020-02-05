@@ -592,6 +592,8 @@ namespace ERIN
   std::vector<Datum>
   FlowMeter::get_results(RealTimeType max_time) const
   {
+    using size_type_D = std::vector<Datum>::size_type;
+    using size_type_RTT = std::vector<RealTimeType>::size_type;
     const auto num_events{event_times.size()};
     const auto num_rfs = requested_flows.size();
     const auto num_afs = achieved_flows.size();
@@ -609,7 +611,7 @@ namespace ERIN
           << "achieved_flows.size() : " << num_afs << "\n"
           << "num_events            : " << num_events << "\n"
           << "id                    : \"" << get_id() << "\"\n";
-      for (std::vector<RealTimeType>::size_type i{0}; i < num_events; ++i) {
+      for (size_type_RTT i{0}; i < num_events; ++i) {
         oss << "event_times[" << i << "]      = " << event_times[i] << "\n";
         if (i < num_rfs) {
           oss << "requested_flows[" << i << "]  = "
@@ -622,8 +624,8 @@ namespace ERIN
       }
       throw std::runtime_error(oss.str());
     }
-    std::vector<Datum>::size_type max_idx = 0;
-    for (std::vector<Datum>::size_type i=0; i < num_events; ++i) {
+    size_type_D max_idx = 0;
+    for (size_type_D i=0; i < num_events; ++i) {
       const auto& t = event_times[i];
       if (t <= max_time) {
         max_idx = i;
@@ -634,7 +636,7 @@ namespace ERIN
     }
     bool time_0_missing{event_times[0] != 0};
     bool max_time_missing{event_times[max_idx] < max_time};
-    std::vector<Datum>::size_type num_datums = num_events;
+    size_type_D num_datums = num_events;
     if (time_0_missing) {
       ++num_datums;
     }
@@ -642,7 +644,7 @@ namespace ERIN
       ++num_datums;
     }
     std::vector<Datum> results(num_datums);
-    for (std::vector<Datum>::size_type i=0; i < num_datums; ++i) {
+    for (size_type_D i=0; i < num_datums; ++i) {
       auto j = i;
       if (time_0_missing) {
         if (i == 0) {
@@ -655,10 +657,21 @@ namespace ERIN
         results[i] = Datum{max_time, 0.0, 0.0};
       }
       else {
-        results[i] = Datum{event_times[j], requested_flows[j], achieved_flows[j]};
+        results[i] = Datum{
+          event_times[j],
+          requested_flows[j],
+          achieved_flows[j]};
       }
     }
     return results;
+  }
+
+  void
+  FlowMeter::clear_results()
+  {
+    event_times.clear();
+    requested_flows.clear();
+    achieved_flows.clear();
   }
 
   void

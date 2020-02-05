@@ -2,6 +2,7 @@
 * See the LICENSE file for additional terms and conditions. */
 #include "debug_utils.h"
 #include "erin/erin.h"
+#include "erin/version.h"
 #include "gsl/span"
 #include <fstream>
 #include <iostream>
@@ -46,6 +47,8 @@ doit(const std::string& input_toml, const std::string& timeseries_csv, const std
 int
 main(const int argc, const char* argv[])
 {
+  namespace ev = erin::version;
+  std::cout << "e2rin_multi version " << ev::version_string << "\n";
   auto args = gsl::span<const char*>(argv, argc);
   if (argc != (num_args + 1)) {
     std::cout << "USAGE: " << args[0] << " <input_file_path> <output_file_path> <stats_file_path>\n"

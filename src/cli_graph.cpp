@@ -4,6 +4,7 @@
 #include "erin/erin.h"
 #include "erin/graphviz.h"
 #include "erin/network.h"
+#include "erin/version.h"
 #include "gsl/span"
 #include <fstream>
 #include <iostream>
@@ -60,6 +61,8 @@ doit(const std::string& input_toml, const std::string& dot_file_path, const std:
 int
 main(const int argc, const char* argv[])
 {
+  namespace ev = erin::version;
+  std::cout << "e2rin_graph version " << ev::version_string << "\n";
   auto args = gsl::span<const char*>(argv, argc);
   if (argc != (num_args + 1)) {
     std::cout << "USAGE: " << args[0] << " <input_file_path> <output_file_path> <stats_file_path>\n"

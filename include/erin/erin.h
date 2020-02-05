@@ -445,6 +445,10 @@ namespace ERIN
         std::string, std::unique_ptr<Component>>& get_components() const {
           return components;
         }
+      [[nodiscard]] const std::unordered_map<
+        std::string, std::vector<::erin::network::Connection>>& get_networks() const {
+          return networks;
+        }
 
     private:
       SimulationInfo sim_info;

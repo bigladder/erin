@@ -51,6 +51,8 @@ namespace erin::utils
   bool is_superset(
       const std::vector<std::string>& superset,
       const std::vector<std::string>& compared_to);
+
+  std::string path_to_filename(const std::string& path);
 }
 
 #endif // ERIN_UTILS_H

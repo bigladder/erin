@@ -183,4 +183,22 @@ namespace erin::utils
     }
     return true;
   }
+
+  std::string
+  path_to_filename(const std::string& path)
+  {
+    using size_type = std::string::size_type;
+    size_type filename_idx{0};
+    for (size_type i{0}; i < path.size(); ++i) {
+      auto& c = path[i];
+      if ((c == '/') || (c == '\\')) {
+        filename_idx = i + 1;
+      }
+    }
+    std::ostringstream oss;
+    for (size_type i{filename_idx}; i < path.size(); ++i) {
+      oss << path[i];
+    }
+    return oss.str();
+  }
 }

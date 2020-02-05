@@ -4,6 +4,7 @@
 #include "erin/erin.h"
 #include "erin/graphviz.h"
 #include "erin/network.h"
+#include "erin/utils.h"
 #include "erin/version.h"
 #include "gsl/span"
 #include <fstream>
@@ -62,10 +63,12 @@ int
 main(const int argc, const char* argv[])
 {
   namespace ev = erin::version;
-  std::cout << "e2rin_graph version " << ev::version_string << "\n";
+  namespace eu = erin::utils;
   auto args = gsl::span<const char*>(argv, argc);
   if (argc != (num_args + 1)) {
-    std::cout << "USAGE: " << args[0] << " <input_file_path> <output_file_path> <stats_file_path>\n"
+    auto exe_name = eu::path_to_filename(args[0]);
+    std::cout << exe_name << " version " << ev::version_string << "\n";
+    std::cout << "USAGE: " << exe_name << " <input_file_path> <output_file_path> <stats_file_path>\n"
                  "  - input_file_path : path to TOML input file\n"
                  "  - dot_file_path   : path to Graphviz DOT file to write\n"
                  "  - network_id      : id for the network to plot from input_file_path\n"

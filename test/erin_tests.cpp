@@ -4045,6 +4045,19 @@ TEST(ErinBasicsTest, Test_that_we_can_access_version_info_programmatically)
   EXPECT_EQ(ev::version_string, oss.str());
 }
 
+TEST(ErinBasicsTest, Test_that_path_to_filename_works)
+{
+  namespace eu = erin::utils;
+  std::string path0{"e2rin"};
+  std::string expected_filename0{"e2rin"};
+  EXPECT_EQ(expected_filename0, eu::path_to_filename(path0));
+  std::string path1{"./bin/e2rin"};
+  std::string expected_filename1{"e2rin"};
+  EXPECT_EQ(expected_filename1, eu::path_to_filename(path1));
+  std::string path2{".\\bin\\Debug\\e2rin.exe"};
+  std::string expected_filename2{"e2rin.exe"};
+}
+
 int
 main(int argc, char **argv)
 {

@@ -691,14 +691,14 @@ namespace ERIN
       t_last = event_times.back();
     }
     if (real_time > t_last) {
-      event_times.push_back(real_time);
+      event_times.emplace_back(real_time);
       ++num_events;
     }
     auto num_requested{requested_flows.size()};
     auto num_achieved{achieved_flows.size()};
     if (get_report_inflow_request()) {
       if (num_requested == (num_events - 1)) {
-        requested_flows.push_back(get_inflow());
+        requested_flows.emplace_back(get_inflow());
         ++num_requested;
       }
       else if (num_requested == num_events) {
@@ -714,7 +714,7 @@ namespace ERIN
         v = get_inflow();
       }
       else if (num_achieved == (num_events - 1)) {
-        achieved_flows.push_back(get_inflow());
+        achieved_flows.emplace_back(get_inflow());
         ++num_achieved;
       }
       else {
@@ -730,7 +730,7 @@ namespace ERIN
         v = of;
       }
       else {
-        achieved_flows.push_back(of);
+        achieved_flows.emplace_back(of);
         ++num_achieved;
       }
       if (num_requested < num_achieved) {
@@ -745,7 +745,7 @@ namespace ERIN
         else {
           // repeat the previous request -- requests don't change if upstream
           // conditions change.
-          requested_flows.push_back(requested_flows.back());
+          requested_flows.emplace_back(requested_flows.back());
         }
         ++num_requested;
       }

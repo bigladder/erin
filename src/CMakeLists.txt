@@ -107,21 +107,25 @@ target_include_directories(e2rin
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(e2rin_multi cli_multi.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin_multi PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
-target_include_directories(e2rin_multi PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
-target_include_directories(e2rin_multi PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
+target_include_directories(e2rin_multi
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(e2rin_graph cli_graph.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin_graph PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
-target_include_directories(e2rin_graph PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
-target_include_directories(e2rin_graph PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
+target_include_directories(e2rin_graph
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(str8760 stress_test_8760.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(str8760 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
-target_include_directories(str8760 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
-target_include_directories(str8760 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
+target_include_directories(str8760
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(str8760x5000 stress_test_8760x5000.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(str8760x5000 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
-target_include_directories(str8760x5000 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
-target_include_directories(str8760x5000 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
+target_include_directories(str8760x5000
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(limits limits.cpp)
 
 # Add Warnings

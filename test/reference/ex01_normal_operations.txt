@@ -1,0 +1,6 @@
+digraph normal_operations {
+  node [shape=record];
+  cluster_01_electric [shape=record,label="<I0> I(0)|<name> cluster_01_electric"];
+  electric_utility [shape=record,label="<name> electric_utility|<O0> O(0)"];
+  electric_utility:O0 -> cluster_01_electric:I0;
+}

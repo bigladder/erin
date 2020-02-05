@@ -18,11 +18,15 @@ if IS_WIN
     File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin.exe"))
   EXECUTABLES[:e2rin_multi] = File.expand_path(
     File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin_multi.exe"))
+  EXECUTABLES[:e2rin_graph] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin_graph.exe"))
 else
   EXECUTABLES[:e2rin_single] = File.expand_path(
     File.join(THIS_DIR, "..", "build", "bin", "e2rin"))
   EXECUTABLES[:e2rin_multi] = File.expand_path(
     File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi"))
+  EXECUTABLES[:e2rin_graph] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "e2rin_graph"))
 end
 DIFF_PROGRAM = if IS_WIN then "FC" else "diff" end
 

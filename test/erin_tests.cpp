@@ -4029,7 +4029,7 @@ TEST(ErinGraphviz, Test_that_we_can_generate_graphviz)
     "  electric_utility [shape=record,label=\"<name> electric_utility|<O0> O(0)\"];\n"
     "  electric_utility:O0 -> cluster_01_electric:I0;\n"
     "}";
-  auto actual = eg::network_to_dot(nw, "ex01_normal_operations");
+  auto actual = eg::network_to_dot(nw, "ex01_normal_operations", false);
   EXPECT_EQ(expected, actual);
 }
 

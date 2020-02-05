@@ -19,7 +19,8 @@ namespace erin::graphviz
 
   std::string network_to_dot(
       const std::vector<en::Connection>&,
-      const std::string& graph_name);
+      const std::string& graph_name,
+      const bool use_html_label=true);
 }
 
 #endif // ERIN_GRAPHVIZ_H

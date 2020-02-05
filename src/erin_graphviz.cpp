@@ -72,25 +72,61 @@ namespace erin::graphviz
         label << "|<O" << op << "> O(" << op << ")";
       }
     }
+    return "\"" + label.str() + "\"";
+  }
+
+  std::string
+  build_label_html(const std::string& id, const PortCounts& pc)
+  {
+    std::ostringstream label;
+    label << "<\n"
+          << "    <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\">\n"
+          << "      <TR>\n";
+    auto num_inports = pc.input_ports.size();
+    if (num_inports > 0) {
+      for (auto ip: pc.input_ports) {
+        label << "        <TD PORT=\"I" << ip << "\" BGCOLOR=\"lightgrey\">"
+              << "I(" << ip << ")" << "</TD>\n";
+      }
+    }
+    label << "        <TD PORT=\"name\">" << id << "</TD>\n";
+    auto num_outports = pc.output_ports.size();
+    if (num_outports > 0) {
+      for (auto op: pc.output_ports) {
+        label << "        <TD PORT=\"O" << op << "\" BGCOLOR=\"lightgrey\">"
+              << "O(" << op << ")" << "</TD>\n";
+      }
+    }
+    label << "      </TR>\n"
+          << "    </TABLE>>";
     return label.str();
   }
 
   std::string network_to_dot(
       const std::vector<en::Connection>& network,
-      const std::string& graph_name)
+      const std::string& graph_name,
+      const bool use_html_label)
   {
     std::ostringstream connections;
     std::ostringstream declarations;
     std::map<std::string, PortCounts> ports;
     std::string tab{"  "};
     declarations
-      << "digraph " << graph_name << " {\n"
-      << tab << "node [shape=record];\n";
+      << "digraph " << graph_name << " {\n";
+    std::string shape_type;
+    if (use_html_label) {
+      shape_type = "none";
+    } else {
+      shape_type = "record";
+      declarations << tab << "node [shape=" << shape_type << "];\n";
+    }
     for (const auto& connection: network) {
       const auto& c1 = connection.first;
       const auto& c2 = connection.second;
       record_port_number(c1, ports);
       record_port_number(c2, ports);
+      // to add colors to the edges, add the snippet below to the end:
+      //<< " [color=\"black\"];\n";
       connections
         << tab
         << c1.component_id << ":" << "O" << c1.port_number << " -> "
@@ -99,10 +135,15 @@ namespace erin::graphviz
     for (const auto& item: ports) {
       const auto& id = item.first;
       const auto& pc = item.second;
-      auto label = build_label(id, pc);
+      std::string label;
+      if (use_html_label) {
+        label = build_label_html(id, pc);
+      } else {
+        label = build_label(id, pc);
+      }
       declarations
         << tab << id
-        << " [shape=record,label=\"" << label << "\"];\n";
+        << " [shape=" << shape_type << ",label=" << label << "];\n";
     }
     return declarations.str() + connections.str() + "}";
   }

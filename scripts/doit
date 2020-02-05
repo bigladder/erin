@@ -32,6 +32,7 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/type.h > tidy/type.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/utils.h > tidy/utils.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/graphviz.h > tidy/graphviz.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/version.h > tidy/version.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/port.h > tidy/port.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/stream.h > tidy/stream.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/fragility.h > tidy/fragility.h.txt

@@ -6,3 +6,4 @@ build/
 builds/
 cmake-build-debug/
 todo.txt
+*.xlsx

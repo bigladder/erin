@@ -17,6 +17,7 @@
 #include "erin/stream.h"
 #include "erin/type.h"
 #include "erin/utils.h"
+#include "erin/version.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
 #include <functional>
@@ -4031,6 +4032,17 @@ TEST(ErinGraphviz, Test_that_we_can_generate_graphviz)
     "}";
   auto actual = eg::network_to_dot(nw, "ex01_normal_operations", false);
   EXPECT_EQ(expected, actual);
+}
+
+TEST(ErinBasicsTest, Test_that_we_can_access_version_info_programmatically)
+{
+  namespace ev = erin::version;
+  EXPECT_TRUE(ev::major_version >= 0);
+  EXPECT_TRUE(ev::minor_version >= 0);
+  EXPECT_TRUE(ev::release_number >= 0);
+  std::ostringstream oss;
+  oss << ev::major_version << "." << ev::minor_version << "." << ev::release_number;
+  EXPECT_EQ(ev::version_string, oss.str());
 }
 
 int

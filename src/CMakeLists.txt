@@ -11,6 +11,10 @@
 #file(GLOB_RECURSE sources "${PROJECT_SOURCE_DIR}/src/[a-zA-Z]*.cpp")
 #file(GLOB_RECURSE public_headers "${PROJECT_SOURCE_DIR}/include/${CMAKE_PROJECT_NAME}/[a-zA-Z]*.h")
 #file(GLOB_RECURSE private_headers "${PROJECT_SOURCE_DIR}/src/[a-zA-Z]*.h")
+configure_file(
+  ${PROJECT_SOURCE_DIR}/include/erin/version.h.in
+  ${PROJECT_SOURCE_DIR}/include/erin/version.h)
+
 set(sources
   ${PROJECT_SOURCE_DIR}/src/erin.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
@@ -40,6 +44,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/stream.h
   ${PROJECT_SOURCE_DIR}/include/erin/type.h
   ${PROJECT_SOURCE_DIR}/include/erin/utils.h
+  ${PROJECT_SOURCE_DIR}/include/erin/version.h
 )
 
 set(private_headers
@@ -97,9 +102,10 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
 endif()
 
 add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
-target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
-target_include_directories(e2rin PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
+target_include_directories(e2rin
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(e2rin_multi cli_multi.cpp ${sources} ${public_headers} ${private_headers})
 target_include_directories(e2rin_multi PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
 target_include_directories(e2rin_multi PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")

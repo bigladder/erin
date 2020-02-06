@@ -1173,15 +1173,15 @@ namespace ERIN
       bool is_good_,
       RealTimeType scenario_start_time_,
       RealTimeType scenario_duration_,
-      const std::unordered_map<std::string, std::vector<Datum>>& results_,
-      const std::unordered_map<std::string, StreamType>& stream_types_,
-      const std::unordered_map<std::string, ComponentType>& component_types_):
+      std::unordered_map<std::string, std::vector<Datum>> results_,
+      std::unordered_map<std::string, StreamType> stream_types_,
+      std::unordered_map<std::string, ComponentType> component_types_):
     is_good{is_good_},
     scenario_start_time{scenario_start_time_},
     scenario_duration{scenario_duration_},
-    results{results_},
-    stream_types{stream_types_},
-    component_types{component_types_},
+    results{std::move(results_)},
+    stream_types{std::move(stream_types_)},
+    component_types{std::move(component_types_)},
     statistics{},
     keys{}
   {
@@ -1534,7 +1534,7 @@ namespace ERIN
     FlowValueType ach_energy{0};
     FlowValueType load_not_served{0.0};
     bool was_down{false};
-    for (const auto d: ds) {
+    for (const auto& d: ds) {
       if (d.time == 0) {
         req = d.requested_value;
         ach = d.achieved_value;

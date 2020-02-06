@@ -57,9 +57,9 @@ namespace ERIN
           bool is_good_,
           RealTimeType scenario_start,
           RealTimeType duration,
-          const std::unordered_map<std::string,std::vector<Datum>>& results,
-          const std::unordered_map<std::string,StreamType>& stream_types,
-          const std::unordered_map<std::string,ComponentType>& component_types);
+          std::unordered_map<std::string,std::vector<Datum>> results,
+          std::unordered_map<std::string,StreamType> stream_types,
+          std::unordered_map<std::string,ComponentType> component_types);
       [[nodiscard]] bool get_is_good() const { return is_good; }
       [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const { return results; }

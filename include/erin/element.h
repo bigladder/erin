@@ -19,14 +19,15 @@ namespace ERIN
   class FlowWriter
   {
     public:
-      virtual ~FlowWriter() = default;
+      FlowWriter() = default;
       FlowWriter(const FlowWriter&) = delete;
       FlowWriter& operator=(const FlowWriter&) = delete;
       FlowWriter(FlowWriter&&) = delete;
       FlowWriter& operator=(FlowWriter&&) = delete;
-      virtual std::unique_ptr<FlowWriter> clone() const = 0;
+      virtual ~FlowWriter() = default;
 
-      virtual int register_id(
+      [[nodiscard]] virtual std::unique_ptr<FlowWriter> clone() const = 0;
+      [[nodiscard]] virtual int register_id(
           const std::string& element_tag,
           const std::string& stream_tag,
           bool record_history) = 0;
@@ -35,8 +36,47 @@ namespace ERIN
           RealTimeType time,
           FlowValueType requested_flow,
           FlowValueType achieved_flow) = 0;
-      //virtual std::unordered_map<std::string, std::vector<Datum>>
-      //  get_results() const = 0;
+      virtual void finalize_at_time(RealTimeType time) = 0;
+      [[nodiscard]] virtual std::unordered_map<std::string, std::vector<Datum>>
+        get_results() const = 0;
+  };
+
+  ////////////////////////////////////////////////////////////
+  // DefaultFlowWriter
+  class DefaultFlowWriter : public FlowWriter
+  {
+    public:
+      using size_type_D = std::vector<Datum>::size_type;
+      using size_type_H = std::vector<std::vector<Datum>>::size_type;
+      using size_type_B = std::vector<bool>::size_type;
+
+      DefaultFlowWriter();
+
+      [[nodiscard]] std::unique_ptr<FlowWriter> clone() const override;
+      [[nodiscard]] int register_id(
+          const std::string& element_tag,
+          const std::string& stream_tag,
+          bool record_history) override;
+      void write_data(
+          int element_id,
+          RealTimeType time,
+          FlowValueType requested_flow,
+          FlowValueType achieved_flow) override;
+      void finalize_at_time(RealTimeType time) override;
+      [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
+        get_results() const override;
+
+    private:
+      RealTimeType current_time;
+      int next_id;
+      std::vector<Datum> current_status;
+      std::unordered_map<std::string, int> element_tag_to_id;
+      std::unordered_map<int, std::string> element_id_to_tag;
+      std::unordered_map<int, std::string> element_id_to_stream_tag;
+      std::vector<bool> recording_flags;
+      std::vector<std::vector<Datum>> history;
+      int num_elements() const { return next_id; }
+      // int get_next_id();
   };
 
   /**

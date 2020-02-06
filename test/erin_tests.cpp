@@ -4058,6 +4058,26 @@ TEST(ErinBasicsTest, Test_that_path_to_filename_works)
   std::string expected_filename2{"e2rin.exe"};
 }
 
+TEST(ErinElements, Test_flow_writer_implementation)
+{
+  auto fw = ERIN::DefaultFlowWriter();
+  auto id1 = fw.register_id("element-1", "electricity", true);
+  fw.write_data(id1, 0, 0.0, 0.0);
+  fw.write_data(id1, 0, 10.0, 10.0);
+  fw.write_data(id1, 0, 10.0, 8.0);
+  fw.write_data(id1, 5, 5.0, 5.0);
+  fw.finalize_at_time(10);
+  auto actual = fw.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>> expected{
+    {
+      "element-1",
+      std::vector<ERIN::Datum>{
+        ERIN::Datum{0,10.0,8.0},
+        ERIN::Datum{5,5.0,5.0},
+        ERIN::Datum{10,0.0,0.0}}}};
+  EXPECT_EQ(actual, expected);
+}
+
 int
 main(int argc, char **argv)
 {

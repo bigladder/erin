@@ -10,6 +10,7 @@
 #include <functional>
 #include <memory>
 #include <stdexcept>
+#include <unordered_map>
 
 namespace ERIN
 {
@@ -19,12 +20,20 @@ namespace ERIN
   {
     public:
       virtual ~FlowWriter() = default;
+      FlowWriter(const FlowWriter&) = delete;
+      FlowWriter& operator=(const FlowWriter&) = delete;
+      FlowWriter(FlowWriter&&) = delete;
+      FlowWriter& operator=(FlowWriter&&) = delete;
+      virtual std::unique_ptr<FlowWriter> clone() const = 0;
+
       virtual int register_id(const std::string& id) = 0;
       virtual void write_data(
           int numeric_id,
           RealTimeType time,
           FlowValueType requested_flow,
           FlowValueType achieved_flow) = 0;
+      //virtual std::unordered_map<std::string, std::vector<Datum>>
+      //  get_results() const = 0;
   };
 
   /**

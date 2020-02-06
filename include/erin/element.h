@@ -78,7 +78,15 @@ namespace ERIN
       std::vector<bool> recording_flags;
       std::vector<std::vector<Datum>> history;
       int num_elements() const { return next_id; }
-      // int get_next_id();
+      int get_next_id() {
+        auto element_id{next_id};
+        ++next_id;
+        return element_id;
+      }
+      void ensure_element_tag_is_unique(const std::string& element_tag) const;
+      void ensure_element_id_is_valid(int element_id) const;
+      void ensure_time_is_valid(RealTimeType time) const;
+      void record_history_and_update_current_time(RealTimeType time);
   };
 
   /**
@@ -116,7 +124,7 @@ namespace ERIN
       Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
-      virtual void set_flow_writer(std::shared_ptr<FlowWriter> /* writer */) {}
+      virtual void set_flow_writer(const std::shared_ptr<FlowWriter>& /* writer */) {}
 
       // Delete copy and move operators to prevent slicing issues...
       // see:
@@ -269,7 +277,7 @@ namespace ERIN
       [[nodiscard]] std::vector<Datum>
         get_results(RealTimeType max_time) const override;
       void clear_results() override;
-      void set_flow_writer(std::shared_ptr<FlowWriter> writer) override {
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override {
         flow_writer = writer;
       }
 

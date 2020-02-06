@@ -85,15 +85,9 @@ namespace ERIN
       const std::string& stream_tag,
       bool record_history)
   {
-    int element_id = next_id;
-    ++next_id;
+    auto element_id = get_next_id();
+    ensure_element_tag_is_unique(element_tag);
     current_status.emplace_back(Datum{current_time,0.0,0.0});
-    auto it = element_tag_to_id.find(element_tag);
-    if (it != element_tag_to_id.end()) {
-      std::ostringstream oss;
-      oss << "element_tag '" << element_tag << "' already registered!";
-      throw std::invalid_argument(oss.str());
-    }
     element_tag_to_id.emplace(std::make_pair(element_tag, element_id));
     element_id_to_tag.emplace(std::make_pair(element_id, element_tag));
     element_id_to_stream_tag.emplace(std::make_pair(element_id, stream_tag));
@@ -103,14 +97,21 @@ namespace ERIN
   }
 
   void
-  DefaultFlowWriter::write_data(
-      int element_id,
-      RealTimeType time,
-      FlowValueType requested_flow,
-      FlowValueType achieved_flow)
+  DefaultFlowWriter::ensure_element_tag_is_unique(
+      const std::string& element_tag) const
+  {
+    auto it = element_tag_to_id.find(element_tag);
+    if (it != element_tag_to_id.end()) {
+      std::ostringstream oss;
+      oss << "element_tag '" << element_tag << "' already registered!";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  void
+  DefaultFlowWriter::ensure_element_id_is_valid(int element_id) const
   {
     auto num = num_elements();
-    auto num_st = static_cast<size_type_D>(num);
     if ((element_id >= num) || (element_id < 0)) {
       std::ostringstream oss;
       oss << "element_id is invalid. "
@@ -118,6 +119,11 @@ namespace ERIN
           << "element_id: " << element_id << "\n";
       throw std::invalid_argument(oss.str());
     }
+  }
+
+  void
+  DefaultFlowWriter::ensure_time_is_valid(RealTimeType time) const
+  {
     if (time < current_time) {
       std::ostringstream oss;
       oss << "time is invalid. "
@@ -126,16 +132,35 @@ namespace ERIN
           << "current_time: " << current_time << "\n";
       throw std::invalid_argument(oss.str());
     }
-    if (time > current_time) {
-      for (size_type_D i{0}; i < num_st; ++i) {
-        auto& d = current_status[i];
-        if (recording_flags[i]) {
-          d.time = current_time;
-          history[i].emplace_back(d);
-        }
-        d.time = time;
+  }
+
+  void
+  DefaultFlowWriter::record_history_and_update_current_time(RealTimeType time)
+  {
+    auto num = num_elements();
+    auto num_st = static_cast<size_type_D>(num);
+    for (size_type_D i{0}; i < num_st; ++i) {
+      auto& d = current_status[i];
+      if (recording_flags[i]) {
+        d.time = current_time;
+        history[i].emplace_back(d);
       }
-      current_time = time;
+      d.time = time;
+    }
+    current_time = time;
+  }
+
+  void
+  DefaultFlowWriter::write_data(
+      int element_id,
+      RealTimeType time,
+      FlowValueType requested_flow,
+      FlowValueType achieved_flow)
+  {
+    ensure_element_id_is_valid(element_id);
+    ensure_time_is_valid(time);
+    if (time > current_time) {
+      record_history_and_update_current_time(time);
     }
     current_status[element_id] = Datum{time,requested_flow,achieved_flow};
   }
@@ -170,10 +195,10 @@ namespace ERIN
   {
     std::unordered_map<std::string, std::vector<Datum>> out{};
     for (const auto& tag_id: element_tag_to_id) {
-      const auto& element_tag = tag_id.first;
+      auto element_tag = tag_id.first;
       auto element_id = tag_id.second;
       if (recording_flags[element_id]) {
-        out[element_tag] = std::move(history[element_id]);
+        out[element_tag] = history[element_id];
       }
     }
     return out;

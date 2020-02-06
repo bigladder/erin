@@ -8,10 +8,25 @@
 #include "erin/devs.h"
 #include "adevs.h"
 #include <functional>
+#include <memory>
 #include <stdexcept>
 
 namespace ERIN
 {
+  ////////////////////////////////////////////////////////////
+  // FlowWriter
+  class FlowWriter
+  {
+    public:
+      virtual ~FlowWriter() = default;
+      virtual int register_id(const std::string& id) = 0;
+      virtual void write_data(
+          int numeric_id,
+          RealTimeType time,
+          FlowValueType requested_flow,
+          FlowValueType achieved_flow) = 0;
+  };
+
   /**
    * ElementType - the types of Elements available
    */
@@ -46,6 +61,8 @@ namespace ERIN
       void delta_conf(std::vector<PortValue>& xs) override;
       Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
+
+      virtual void set_flow_writer(std::shared_ptr<FlowWriter> /* writer */) {}
 
       // Delete copy and move operators to prevent slicing issues...
       // see:
@@ -198,6 +215,9 @@ namespace ERIN
       [[nodiscard]] std::vector<Datum>
         get_results(RealTimeType max_time) const override;
       void clear_results() override;
+      void set_flow_writer(std::shared_ptr<FlowWriter> writer) override {
+        flow_writer = writer;
+      }
 
     protected:
       void update_on_external_transition() override;
@@ -206,6 +226,7 @@ namespace ERIN
       std::vector<RealTimeType> event_times;
       std::vector<FlowValueType> requested_flows;
       std::vector<FlowValueType> achieved_flows;
+      std::shared_ptr<FlowWriter> flow_writer;
   };
 
   ////////////////////////////////////////////////////////////

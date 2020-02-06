@@ -567,7 +567,8 @@ namespace ERIN
         stream_type),
     event_times{},
     requested_flows{},
-    achieved_flows{}
+    achieved_flows{},
+    flow_writer{}
   {
   }
 

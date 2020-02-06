@@ -26,9 +26,12 @@ namespace ERIN
       FlowWriter& operator=(FlowWriter&&) = delete;
       virtual std::unique_ptr<FlowWriter> clone() const = 0;
 
-      virtual int register_id(const std::string& id) = 0;
+      virtual int register_id(
+          const std::string& element_tag,
+          const std::string& stream_tag,
+          bool record_history) = 0;
       virtual void write_data(
-          int numeric_id,
+          int element_id,
           RealTimeType time,
           FlowValueType requested_flow,
           FlowValueType achieved_flow) = 0;

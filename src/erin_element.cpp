@@ -626,7 +626,7 @@ namespace ERIN
       throw std::runtime_error(oss.str());
     }
     size_type_D max_idx = 0;
-    for (size_type_D i=0; i < num_events; ++i) {
+    for (size_type_D i{0}; i < num_events; ++i) {
       const auto& t = event_times[i];
       if (t <= max_time) {
         max_idx = i;
@@ -645,7 +645,7 @@ namespace ERIN
       ++num_datums;
     }
     std::vector<Datum> results(num_datums);
-    for (size_type_D i=0; i < num_datums; ++i) {
+    for (size_type_D i{0}; i < num_datums; ++i) {
       auto j = i;
       if (time_0_missing) {
         if (i == 0) {

@@ -129,8 +129,10 @@ namespace ERIN
     if (time > current_time) {
       for (size_type_D i{0}; i < num_st; ++i) {
         auto& d = current_status[i];
-        if (recording_flags[i])
+        if (recording_flags[i]) {
+          d.time = current_time;
           history[i].emplace_back(d);
+        }
         d.time = time;
       }
       current_time = time;
@@ -143,16 +145,20 @@ namespace ERIN
   {
     auto num = num_elements();
     auto num_st = static_cast<size_type_D>(num);
+    auto d_final = Datum{time,0.0,0.0};
     for (size_type_D i{0}; i < num_st; ++i) {
       if (recording_flags[i]) {
-        history[i].emplace_back(current_status[i]);
+        if (current_time == time) {
+          history[i].emplace_back(d_final);
+        } else {
+          history[i].emplace_back(current_status[i]);
+        }
       }
     }
-    auto d = Datum{time,0.0,0.0};
     if (time > current_time) {
       for (size_type_D i{0}; i < num_st; ++i) {
         if (recording_flags[i]) {
-          history[i].emplace_back(d);
+          history[i].emplace_back(d_final);
         }
       }
     }

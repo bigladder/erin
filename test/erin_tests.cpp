@@ -4076,30 +4076,30 @@ TEST(ErinElements, Test_flow_writer_implementation)
         ERIN::Datum{5,5.0,5.0},
         ERIN::Datum{10,0.0,0.0}}}};
   EXPECT_EQ(actual, expected);
-  auto fw1 = ERIN::DefaultFlowWriter();
-  auto id1 = fw1.register_id("electric_load_1:inflow", "electricity", true);
-  auto id2 = fw1.register_id("diesel_genset_1:outflow", "electricity", true);
-  auto id3 = fw1.register_id("electric_load_2:inflow", "electricity", true);
-  auto id4 = fw1.register_id("diesel_genset_2:outflow", "electricity", true);
-  auto id5 = fw1.register_id("diesel_fuel_tank:outflow", "diesel_fuel", true);
+  fw.clear();
+  auto id1 = fw.register_id("electric_load_1:inflow", "electricity", true);
+  auto id2 = fw.register_id("diesel_genset_1:outflow", "electricity", true);
+  auto id3 = fw.register_id("electric_load_2:inflow", "electricity", true);
+  auto id4 = fw.register_id("diesel_genset_2:outflow", "electricity", true);
+  auto id5 = fw.register_id("diesel_fuel_tank:outflow", "diesel_fuel", true);
   // start
-  fw1.write_data(id1, 0, 10.0, 10.0);
-  fw1.write_data(id2, 0, 10.0, 10.0);
-  fw1.write_data(id3, 0, 5.0, 5.0);
-  fw1.write_data(id4, 0, 5.0, 5.0);
-  fw1.write_data(id5, 0, 30.0, 30.0);
+  fw.write_data(id1, 0, 10.0, 10.0);
+  fw.write_data(id2, 0, 10.0, 10.0);
+  fw.write_data(id3, 0, 5.0, 5.0);
+  fw.write_data(id4, 0, 5.0, 5.0);
+  fw.write_data(id5, 0, 30.0, 30.0);
   // 5 seconds
-  fw1.write_data(id3, 5, 10.0, 10.0);
-  fw1.write_data(id4, 5, 10.0, 10.0);
-  fw1.write_data(id5, 5, 40.0, 35.0);
-  fw1.write_data(id4, 5, 10.0, 7.5);
-  fw1.write_data(id3, 5, 10.0, 7.5);
+  fw.write_data(id3, 5, 10.0, 10.0);
+  fw.write_data(id4, 5, 10.0, 10.0);
+  fw.write_data(id5, 5, 40.0, 35.0);
+  fw.write_data(id4, 5, 10.0, 7.5);
+  fw.write_data(id3, 5, 10.0, 7.5);
   // 10 seconds
-  fw1.write_data(id3, 10, 5.0, 5.0);
-  fw1.write_data(id4, 10, 5.0, 5.0);
-  fw1.write_data(id5, 10, 30.0, 30.0);
-  fw1.finalize_at_time(10);
-  auto actual1 = fw1.get_results();
+  fw.write_data(id3, 10, 5.0, 5.0);
+  fw.write_data(id4, 10, 5.0, 5.0);
+  fw.write_data(id5, 10, 30.0, 30.0);
+  fw.finalize_at_time(10);
+  auto actual1 = fw.get_results();
   std::unordered_map<std::string, std::vector<ERIN::Datum>> expected1{
     {
       "electric_load_1:inflow", // id1

@@ -179,6 +179,19 @@ namespace ERIN
     return out;
   }
 
+  void
+  DefaultFlowWriter::clear()
+  {
+    current_time = 0;
+    next_id = 0;
+    current_status.clear();
+    element_tag_to_id.clear();
+    element_id_to_tag.clear();
+    element_id_to_stream_tag.clear();
+    recording_flags.clear();
+    history.clear();
+  }
+
   ////////////////////////////////////////////////////////////
   // FlowElement
   FlowElement::FlowElement(

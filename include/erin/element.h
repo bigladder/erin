@@ -39,6 +39,7 @@ namespace ERIN
       virtual void finalize_at_time(RealTimeType time) = 0;
       [[nodiscard]] virtual std::unordered_map<std::string, std::vector<Datum>>
         get_results() const = 0;
+      virtual void clear() = 0;
   };
 
   ////////////////////////////////////////////////////////////
@@ -65,6 +66,7 @@ namespace ERIN
       void finalize_at_time(RealTimeType time) override;
       [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const override;
+      void clear() override;
 
     private:
       RealTimeType current_time;

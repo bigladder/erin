@@ -58,13 +58,15 @@ namespace ERIN
           RealTimeType scenario_start,
           RealTimeType duration,
           std::unordered_map<std::string,std::vector<Datum>> results,
-          std::unordered_map<std::string,StreamType> stream_types,
+          std::unordered_map<std::string,std::string> stream_ids,
           std::unordered_map<std::string,ComponentType> component_types);
       [[nodiscard]] bool get_is_good() const { return is_good; }
       [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const { return results; }
-      [[nodiscard]] std::unordered_map<std::string, StreamType>
-        get_stream_types() const { return stream_types; }
+      //[[nodiscard]] std::unordered_map<std::string, StreamType>
+      //  get_stream_types() const { return stream_types; }
+      [[nodiscard]] std::unordered_map<std::string, std::string>
+        get_stream_ids() const { return stream_ids; }
       [[nodiscard]] std::unordered_map<std::string, ComponentType>
         get_component_types() const { return component_types; }
       [[nodiscard]] std::unordered_map<std::string, ScenarioStats>
@@ -108,7 +110,7 @@ namespace ERIN
       RealTimeType scenario_start_time;
       RealTimeType scenario_duration;
       std::unordered_map<std::string, std::vector<Datum>> results;
-      std::unordered_map<std::string, StreamType> stream_types;
+      std::unordered_map<std::string, std::string> stream_ids;
       std::unordered_map<std::string, ComponentType> component_types;
       std::unordered_map<std::string, ScenarioStats> statistics;
       std::vector<std::string> keys;
@@ -334,7 +336,7 @@ namespace ERIN
     std::vector<ScenarioResults>::size_type num_occurrences;
     RealTimeType time_in_scenario_s;
     std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s;
-    std::unordered_map<std::string, StreamType> stream_types_by_comp_id;
+    std::unordered_map<std::string, std::string> stream_types_by_comp_id;
     std::unordered_map<std::string, ComponentType> component_types_by_comp_id;
     std::unordered_map<std::string, double> energy_availability_by_comp_id;
     std::unordered_map<std::string, double> load_not_served_by_comp_id_kW;
@@ -488,8 +490,15 @@ namespace ERIN
       const std::vector<std::string>& comp_ids,
       const ComponentType ct,
       const std::unordered_map<std::string, ScenarioStats>& stats_by_comp,
-      const std::unordered_map<std::string, StreamType>& streams_by_comp,
+      const std::unordered_map<std::string, std::string>& streams_by_comp,
       const std::unordered_map<std::string, ComponentType>& comp_type_by_comp);
+
+  std::unordered_map<std::string,std::string>
+  stream_types_to_stream_ids(
+      const std::unordered_map<std::string,StreamType>& stm);
+  std::unordered_map<std::string,std::string>
+  stream_types_to_stream_ids(
+      std::unordered_map<std::string,StreamType>&& stm);
 }
 
 #endif // ERIN_ERIN_H

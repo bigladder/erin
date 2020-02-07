@@ -1174,13 +1174,13 @@ namespace ERIN
       RealTimeType scenario_start_time_,
       RealTimeType scenario_duration_,
       std::unordered_map<std::string, std::vector<Datum>> results_,
-      std::unordered_map<std::string, StreamType> stream_types_,
+      std::unordered_map<std::string, std::string> stream_ids_,
       std::unordered_map<std::string, ComponentType> component_types_):
     is_good{is_good_},
     scenario_start_time{scenario_start_time_},
     scenario_duration{scenario_duration_},
     results{std::move(results_)},
-    stream_types{std::move(stream_types_)},
+    stream_ids{std::move(stream_ids_)},
     component_types{std::move(component_types_)},
     statistics{},
     keys{}
@@ -1336,7 +1336,7 @@ namespace ERIN
       if (stat_it == statistics.end()) {
         statistics[k] = calc_scenario_stats(results.at(k));
       }
-      auto st_id = stream_types.at(k).get_type();
+      auto st_id = stream_ids.at(k);
       auto the_ct = component_types.at(k);
       if (the_ct == ct) {
         auto it = out.find(st_id);
@@ -1379,8 +1379,8 @@ namespace ERIN
     oss << "component id,type,stream,energy availability,max downtime ("
         << time_units_to_tag(time_units) << "),load not served (kJ)";
     std::set<std::string> stream_key_set{};
-    for (const auto& s: stream_types) {
-      stream_key_set.emplace(s.second.get_type());
+    for (const auto& s: stream_ids) {
+      stream_key_set.emplace(s.second);
     }
     std::vector<std::string> stream_keys{
       stream_key_set.begin(), stream_key_set.end()};
@@ -1391,16 +1391,16 @@ namespace ERIN
     }
     oss << "\n";
     for (const auto& k: keys) {
+      auto s_id = stream_ids.at(k);
       oss << k
           << "," << component_type_to_tag(component_types.at(k))
-          << "," << stream_types.at(k).get_type()
+          << "," << s_id
           << "," << ea.at(k)
           << "," << convert_time_in_seconds_to(md.at(k), time_units)
           << "," << lns.at(k);
       auto stats = statistics.at(k);
-      auto st = stream_types.at(k);
       for (const auto& sk: stream_keys) {
-        if (st.get_type() != sk) {
+        if (s_id != sk) {
           oss << ",0.0";
           continue;
         }
@@ -1443,8 +1443,7 @@ namespace ERIN
         if (comp_type != ComponentType::Load) {
           continue;
         }
-        const auto& stream = stream_types.at(comp_id);
-        const auto& stream_name = stream.get_type();
+        const auto& stream_name = stream_ids.at(comp_id);
         const auto& data = results.at(comp_id);
         const auto sum = sum_fn(data);
         auto it = out.find(stream_name);
@@ -1507,8 +1506,8 @@ namespace ERIN
       (a.scenario_duration == b.scenario_duration) &&
       EG::unordered_map_to_vector_equality<std::string, Datum>(
           a.results, b.results) &&
-      EG::unordered_map_equality<std::string, StreamType>(
-          a.stream_types, b.stream_types) &&
+      EG::unordered_map_equality<std::string, std::string>(
+          a.stream_ids, b.stream_ids) &&
       EG::unordered_map_equality<std::string, ComponentType>(
           a.component_types, b.component_types);
   }
@@ -1623,9 +1622,9 @@ namespace ERIN
               const auto& comp_id{ct_pair.first};
               comp_id_set.emplace(comp_id);
             }
-            const auto& stream_types{scenario_results.get_stream_types()};
-            for (const auto& s: stream_types) {
-              stream_key_set.emplace(s.second.get_type());
+            const auto& stream_ids{scenario_results.get_stream_ids()};
+            for (const auto& s: stream_ids) {
+              stream_key_set.emplace(s.second);
             }
           }
           auto scenario_start = scenario_results.get_start_time_in_seconds();
@@ -1735,11 +1734,7 @@ namespace ERIN
     const auto& stream_types = all_ss.stream_types_by_comp_id;
     const auto& comp_types = all_ss.component_types_by_comp_id;
     std::string stream_name =
-      EG::find_and_transform_or<std::string, StreamType, std::string>(
-          stream_types, comp_id, "--",
-          [](const StreamType& st) -> std::string {
-            return st.get_type();
-          });
+      EG::find_or<std::string, std::string>(stream_types, comp_id, "--");
     std::string comp_type =
       EG::find_and_transform_or<std::string, ComponentType, std::string>(
           comp_types, comp_id, "--",
@@ -1808,7 +1803,7 @@ namespace ERIN
       std::unordered_map<std::string, double> energy_availability_by_comp_id{};
       std::unordered_map<std::string, double> load_not_served_by_comp_id_kW{};
       std::unordered_map<std::string, double> total_energy_by_comp_id_kJ{};
-      const auto& stream_types = results_for_scenario[0].get_stream_types();
+      const auto& stream_ids = results_for_scenario[0].get_stream_ids();
       const auto& comp_types = results_for_scenario[0].get_component_types();
       RealTimeType time_in_scenario{0};
       std::unordered_map<std::string, ScenarioStats> stats_by_comp;
@@ -1822,13 +1817,13 @@ namespace ERIN
             the_comp_ids,
             ComponentType::Source,
             stats_by_comp_temp,
-            stream_types,
+            stream_ids,
             comp_types);
         const auto totals_by_stream_load_temp = calc_energy_usage_by_stream(
             the_comp_ids,
             ComponentType::Load,
             stats_by_comp_temp,
-            stream_types,
+            stream_ids,
             comp_types);
         for (const auto& cid_stats_pair: stats_by_comp_temp) {
           const auto& comp_id = cid_stats_pair.first;
@@ -1880,7 +1875,7 @@ namespace ERIN
         num_occurrences,
         time_in_scenario,
         std::move(max_downtime_by_comp_id_s),
-        stream_types,
+        stream_ids,
         comp_types,
         std::move(energy_availability_by_comp_id),
         std::move(load_not_served_by_comp_id_kW),
@@ -2124,6 +2119,9 @@ namespace ERIN
     const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = ::erin::network::build(
         scenario_id, network, connections, components, fpbc, rand_fn);
+    // TODO:
+    // 1. create a shared pointer to a FlowWriter
+    // 2. loop over elements and add FlowWriter
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
@@ -2134,6 +2132,11 @@ namespace ERIN
         sim, duration, max_no_advance,
         "scenario_run:" + scenario_id +
         "(" + std::to_string(scenario_start_s) + ")");
+    // TODO:
+    // 3. call FlowWriter->finalize_at_time(duration);
+    // 4. create a SimulationResults object from a FlowWriter
+    // - stream-line the SimulationResults object to do less and be leaner
+    // - alternatively, make the FlowWriter take over the SimulationResults role?
     return process_single_scenario_results(
         sim_good, elements, duration, scenario_start_s);
   }
@@ -2384,7 +2387,7 @@ namespace ERIN
     }
     std::unordered_map<std::string,std::vector<Datum>> results;
     std::unordered_map<std::string,ComponentType> comp_types;
-    std::unordered_map<std::string,StreamType> stream_types;
+    std::unordered_map<std::string,std::string> stream_ids;
     if (!sim_good) {
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "sim_good = false; return\n";
@@ -2394,7 +2397,7 @@ namespace ERIN
         scenario_start_s,
         duration,
         results,
-        stream_types,
+        stream_ids,
         comp_types};
     }
     int element_number{0};
@@ -2417,19 +2420,19 @@ namespace ERIN
       }
       if (!vals.empty()) {
         auto id{e->get_id()};
-        auto in_st{e->get_inflow_type()};
-        auto out_st{e->get_outflow_type()};
+        auto in_st{e->get_inflow_type().get_type()};
+        auto out_st{e->get_outflow_type().get_type()};
         auto comp_type{e->get_component_type()};
         if (in_st != out_st) {
           std::ostringstream oss;
           oss << "MixedStreamsError:\n";
           oss << "input stream != output_stream but it should\n";
-          oss << "input stream: " << in_st.get_type() << "\n";
-          oss << "output stream: " << out_st.get_type() << "\n";
+          oss << "input stream: " << in_st << "\n";
+          oss << "output stream: " << out_st << "\n";
           throw std::runtime_error(oss.str());
         }
         comp_types.emplace(std::make_pair(id, comp_type));
-        stream_types.emplace(std::make_pair(id, in_st));
+        stream_ids.emplace(std::make_pair(id, in_st));
         results.emplace(std::make_pair(id, vals));
       }
       e->clear_results();
@@ -2442,9 +2445,9 @@ namespace ERIN
       sim_good,
       scenario_start_s, 
       duration,
-      results,
-      stream_types,
-      comp_types};
+      std::move(results),
+      std::move(stream_ids),
+      std::move(comp_types)};
   }
 
   double
@@ -2463,7 +2466,7 @@ namespace ERIN
       const std::vector<std::string>& comp_ids,
       const ComponentType ct,
       const std::unordered_map<std::string, ScenarioStats>& stats_by_comp,
-      const std::unordered_map<std::string, StreamType>& streams_by_comp,
+      const std::unordered_map<std::string, std::string>& streams_by_comp,
       const std::unordered_map<std::string, ComponentType>& comp_type_by_comp)
   {
     std::unordered_map<std::string, FlowValueType> totals{};
@@ -2473,7 +2476,7 @@ namespace ERIN
         continue;
       }
       const auto& stats = stats_by_comp.at(comp_id);
-      const auto& stream_name = streams_by_comp.at(comp_id).get_type();
+      const auto& stream_name = streams_by_comp.at(comp_id);
       auto it = totals.find(stream_name);
       if (it == totals.end()) {
         totals[stream_name] = stats.total_energy;
@@ -2483,5 +2486,32 @@ namespace ERIN
       }
     }
     return totals;
+  }
+
+  std::unordered_map<std::string,std::string>
+  stream_types_to_stream_ids(
+      const std::unordered_map<std::string,StreamType>& stream_types)
+  {
+    std::unordered_map<std::string,std::string> stream_ids{};
+    for (const auto& item: stream_types) {
+      stream_ids[item.first] = item.second.get_type();
+    }
+    return stream_ids;
+  }
+
+  std::unordered_map<std::string,std::string>
+  stream_types_to_stream_ids(
+      std::unordered_map<std::string,StreamType>&& stream_types)
+  {
+    std::unordered_map<std::string,std::string> stream_ids{};
+    for (auto it = stream_types.cbegin(); it != stream_types.cend();) {
+      auto& s = it->second;
+      stream_ids.emplace(
+          std::make_pair(
+            std::move(it->first),
+            std::move(s.get_type())));
+      it = stream_types.erase(it);
+    }
+    return stream_ids;
   }
 }

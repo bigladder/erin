@@ -961,7 +961,6 @@ TEST(ErinBasicsTest, ScenarioResultsMethods)
   const E::RealTimeType start_time{0};
   const E::RealTimeType duration{4};
   const std::string elec_id{"electrical"};
-  const E::StreamType elec{elec_id};
   const std::string A_id{"A"};
   const std::string B_id{"B"};
   const E::ScenarioResults sr{
@@ -976,7 +975,7 @@ TEST(ErinBasicsTest, ScenarioResultsMethods)
         { E::Datum{0,10.0,10.0},
           E::Datum{2,5.0,5.0},
           E::Datum{4,0.0,0.0}}}},
-    { { A_id, elec}, { B_id, elec}},
+    { { A_id, elec_id}, { B_id, elec_id}},
     { { A_id, E::ComponentType::Load},
       { B_id, E::ComponentType::Source}}};
   using T_stream_name = std::string;
@@ -1084,6 +1083,7 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
 {
   ::ERIN::RealTimeType start_time{0};
   ::ERIN::RealTimeType duration{4};
+  std::string elec_stream_id{"electrical"};
   ::ERIN::ScenarioResults out{
     true,
     start_time,
@@ -1098,8 +1098,8 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
          ::ERIN::Datum{0,10.0,10.0},
          ::ERIN::Datum{2,5.0,5.0},
          ::ERIN::Datum{4,0.0,0.0}}}},
-    {{std::string{"A"}, ::ERIN::StreamType("electrical")},
-     {std::string{"B"}, ::ERIN::StreamType("electrical")}},
+    {{std::string{"A"}, elec_stream_id},
+     {std::string{"B"}, elec_stream_id}},
     {{std::string{"A"}, ::ERIN::ComponentType::Load},
      {std::string{"B"}, ::ERIN::ComponentType::Source}}};
   auto actual = out.to_csv(::ERIN::TimeUnits::Seconds);
@@ -1114,7 +1114,7 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
     start_time,
     duration,
     {{std::string{"A"}, {::ERIN::Datum{0,1.0,1.0}}}},
-    {{std::string{"A"}, ::ERIN::StreamType("electrical")}},
+    {{std::string{"A"}, elec_stream_id}},
     {{std::string{"A"}, ::ERIN::ComponentType::Load}}
   };
   auto actual2 = out2.to_csv(::ERIN::TimeUnits::Seconds);
@@ -1205,7 +1205,7 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
        { ::ERIN::Datum{0,1.0,1.0},
          ::ERIN::Datum{4,0.0,0.0}}}},
     {{ std::string{"A0"},
-       ::ERIN::StreamType("electrical")}},
+       std::string{"electrical"}}},
     {{ std::string{"A0"},
        ::ERIN::ComponentType::Source}}};
   // energy_availability
@@ -1242,7 +1242,7 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
          ::ERIN::Datum{2,0.5,0.5},
          ::ERIN::Datum{4,0.0,0.0}}}},
     {{ std::string{"A1"},
-       ::ERIN::StreamType("electrical")}},
+       std::string{"electrical"}}},
     {{ std::string{"A1"},
        ::ERIN::ComponentType::Source}}};
   // energy_availability
@@ -2270,7 +2270,6 @@ TEST(ErinBasicsTest, AllResultsToCsv)
   const std::string id_electric_utility{"electric_utility"};
   const std::string id_electricity{"electricity"};
   const std::string id_blue_sky{"blue_sky"};
-  E::StreamType elec{id_electricity};
   std::unordered_map<std::string,std::vector<E::Datum>> data{
     { id_cluster_01_electric,
       std::vector<E::Datum>{
@@ -2280,9 +2279,9 @@ TEST(ErinBasicsTest, AllResultsToCsv)
       std::vector<E::Datum>{
         E::Datum{0 * hours_to_seconds, 1.0, 1.0},
         E::Datum{4 * hours_to_seconds, 0.0, 0.0}}}};
-  std::unordered_map<std::string,E::StreamType> stream_types{
-    { id_cluster_01_electric, elec},
-    { id_electric_utility, elec}};
+  std::unordered_map<std::string,std::string> stream_types{
+    { id_cluster_01_electric, id_electricity},
+    { id_electric_utility, id_electricity}};
   std::unordered_map<std::string, E::ComponentType> comp_types{
     { id_cluster_01_electric, E::ComponentType::Load},
     { id_electric_utility, E::ComponentType::Source}};
@@ -2346,7 +2345,6 @@ TEST(ErinBasicsTest, AllResultsToCsv2)
   const std::string id_electric_utility{"electric_utility"};
   const std::string id_electricity{"electricity"};
   const std::string id_blue_sky{"blue_sky"};
-  E::StreamType elec{id_electricity};
   std::unordered_map<std::string,std::vector<E::Datum>> data{
     { id_cluster_01_electric,
       std::vector<E::Datum>{
@@ -2356,9 +2354,9 @@ TEST(ErinBasicsTest, AllResultsToCsv2)
       std::vector<E::Datum>{
         E::Datum{0 * hours_to_seconds, 1.0, 1.0},
         E::Datum{4 * hours_to_seconds, 0.0, 0.0}}}};
-  std::unordered_map<std::string,E::StreamType> stream_types{
-    { id_cluster_01_electric, elec},
-    { id_electric_utility, elec}};
+  std::unordered_map<std::string,std::string> stream_types{
+    { id_cluster_01_electric, id_electricity},
+    { id_electric_utility, id_electricity}};
   std::unordered_map<std::string, E::ComponentType> comp_types{
     { id_cluster_01_electric, E::ComponentType::Load},
     { id_electric_utility, E::ComponentType::Source}};
@@ -2389,7 +2387,6 @@ TEST(ErinBasicsTest, AllResultsToCsv3)
   const std::string id_electric_utility{"electric_utility"};
   const std::string id_electricity{"electricity"};
   const std::string id_blue_sky{"blue_sky"};
-  E::StreamType elec{id_electricity};
   std::unordered_map<std::string,std::vector<E::Datum>> data{
     { id_cluster_01_electric,
       std::vector<E::Datum>{
@@ -2399,9 +2396,9 @@ TEST(ErinBasicsTest, AllResultsToCsv3)
       std::vector<E::Datum>{
         E::Datum{0 * hours_to_seconds, 1.0, 1.0},
         E::Datum{8 * hours_to_seconds, 0.0, 0.0}}}};
-  std::unordered_map<std::string,E::StreamType> stream_types{
-    { id_cluster_01_electric, elec},
-    { id_electric_utility, elec}};
+  std::unordered_map<std::string,std::string> stream_types{
+    { id_cluster_01_electric, id_electricity},
+    { id_electric_utility, id_electricity}};
   std::unordered_map<std::string, E::ComponentType> comp_types{
     { id_cluster_01_electric, E::ComponentType::Load},
     { id_electric_utility, E::ComponentType::Source}};
@@ -2925,9 +2922,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -2938,9 +2935,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -2952,9 +2949,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -2967,9 +2964,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -2983,9 +2980,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{mt2 - 1,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{mt2 - 1,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -2998,9 +2995,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"C", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"C", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"C", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"C", E::ComponentType::Source}}};
@@ -3013,9 +3010,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -3028,9 +3025,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.5,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -3043,9 +3040,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"C", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"C", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -3058,9 +3055,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"gasoline"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"gasoline"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -3073,9 +3070,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"C", E::ComponentType::Source}}};
@@ -3088,9 +3085,9 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Load}}};
@@ -3111,9 +3108,9 @@ TEST(ErinBasicsTest, AllResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -3124,9 +3121,9 @@ TEST(ErinBasicsTest, AllResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"B", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"B", E::ComponentType::Source}}};
@@ -3137,9 +3134,9 @@ TEST(ErinBasicsTest, AllResultsEquality)
     std::unordered_map<std::string,std::vector<E::Datum>>{
       {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
       {"C", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,E::StreamType>{
-      {"A", E::StreamType{"electricity"}},
-      {"C", E::StreamType{"electricity"}}},
+    std::unordered_map<std::string,std::string>{
+      {"A", std::string{"electricity"}},
+      {"C", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
       {"C", E::ComponentType::Source}}};
@@ -3726,10 +3723,12 @@ TEST(ErinComponents, Test_passthrough_component)
   std::vector<std::string> expected_comp_ids{"L","P","S"};
   ASSERT_EQ(expected_comp_ids.size(), comp_ids.size());
   EXPECT_EQ(expected_comp_ids, comp_ids);
-  E::StreamType elec{"electricity"};
-  std::unordered_map<std::string, E::StreamType> expected_streams{
-    {"L", elec}, {"P", elec}, {"S", elec}};
-  auto streams = results.get_stream_types();
+  std::string elec{"electricity"};
+  std::unordered_map<std::string,std::string> expected_streams{
+    {"L", elec},
+    {"P", elec},
+    {"S", elec}};
+  auto streams = results.get_stream_ids();
   EXPECT_EQ(expected_streams, streams);
   auto comps = results.get_component_types();
   std::unordered_map<std::string, E::ComponentType> expected_comps{

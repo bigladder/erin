@@ -9,7 +9,7 @@ THIS_DIR = File.expand_path(File.dirname(__FILE__))
 ROOT = File.expand_path(File.join(THIS_DIR, ".."))
 ROOT_PN = Pathname.new(ROOT)
 SRC_FILES = Dir.glob(File.join(ROOT, "**", "*.{h,cpp}")).reject do |f|
-  f.include?("vendor") or f.include?("build")
+  f.include?("vendor") or f.include?("build") or (not (f =~ /(\/|\\)test(\/|\\)/).nil?)
 end
 puts "SRC_FILES (#{SRC_FILES.length}):\n"
 lines = []

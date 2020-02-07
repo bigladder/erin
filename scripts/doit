@@ -20,15 +20,6 @@ fi
 time ./bin/str8760
 mkdir -p tidy
 echo Running Clang Tidy...
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/checkout_line/generator.cpp > tidy/generator.cpp.txt
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/checkout_line/observer.h > tidy/observer.h.txt
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/checkout_line/clerk.cpp > tidy/clerk.cpp.txt
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/checkout_line/observer.cpp > tidy/observer.cpp.txt
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/checkout_line/clerk.h > tidy/clerk.h.txt
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/checkout_line/customer.h > tidy/customer.h.txt
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/checkout_line/generator.h > tidy/generator.h.txt
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/erin_tests.cpp > tidy/erin_tests.cpp.txt
-clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../test/erin_test_utils.h > tidy/erin_test_utils.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/type.h > tidy/type.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/utils.h > tidy/utils.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/graphviz.h > tidy/graphviz.h.txt

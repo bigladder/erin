@@ -482,7 +482,8 @@ namespace ERIN
       bool sim_good,
       const std::vector<FlowElement*>& elements,
       RealTimeType duration,
-      RealTimeType scenario_start_time_s);
+      RealTimeType scenario_start_time_s,
+      std::unordered_map<std::string,std::vector<Datum>> results);
 
   double calc_energy_availability_from_stats(const ScenarioStats& ss);
 

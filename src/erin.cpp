@@ -2119,9 +2119,10 @@ namespace ERIN
     const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = ::erin::network::build(
         scenario_id, network, connections, components, fpbc, rand_fn);
-    // TODO:
-    // 1. create a shared pointer to a FlowWriter
-    // 2. loop over elements and add FlowWriter
+    std::shared_ptr<FlowWriter> fw = std::make_shared<DefaultFlowWriter>();
+    for (auto e_ptr: elements) {
+      e_ptr->set_flow_writer(fw);
+    }
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
@@ -2132,13 +2133,14 @@ namespace ERIN
         sim, duration, max_no_advance,
         "scenario_run:" + scenario_id +
         "(" + std::to_string(scenario_start_s) + ")");
-    // TODO:
-    // 3. call FlowWriter->finalize_at_time(duration);
+    fw->finalize_at_time(duration);
     // 4. create a SimulationResults object from a FlowWriter
     // - stream-line the SimulationResults object to do less and be leaner
     // - alternatively, make the FlowWriter take over the SimulationResults role?
+    auto results = fw->get_results();
+    fw->clear();
     return process_single_scenario_results(
-        sim_good, elements, duration, scenario_start_s);
+        sim_good, elements, duration, scenario_start_s, std::move(results));
   }
 
   AllResults
@@ -2376,7 +2378,8 @@ namespace ERIN
       bool sim_good,
       const std::vector<FlowElement*>& elements,
       RealTimeType duration,
-      RealTimeType scenario_start_s)
+      RealTimeType scenario_start_s,
+      std::unordered_map<std::string,std::vector<Datum>> results)
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "entering process_single_scenario_results(...)\n";
@@ -2385,7 +2388,6 @@ namespace ERIN
                 << "\n";
       std::cout << "... duration = " << duration << "\n";
     }
-    std::unordered_map<std::string,std::vector<Datum>> results;
     std::unordered_map<std::string,ComponentType> comp_types;
     std::unordered_map<std::string,std::string> stream_ids;
     if (!sim_good) {
@@ -2396,13 +2398,12 @@ namespace ERIN
         sim_good,
         scenario_start_s,
         duration,
-        results,
-        stream_ids,
-        comp_types};
+        std::move(results),
+        std::move(stream_ids),
+        std::move(comp_types)};
     }
     int element_number{0};
     for (const auto& e: elements) {
-      auto vals = e->get_results(duration);
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "... .............................\n";
         std::cout << "... element_number: " << element_number << "\n";
@@ -2416,9 +2417,8 @@ namespace ERIN
         std::cout << "... the_ct = " << static_cast<int>(the_ct) << "\n";
         std::cout << "... e.component_type: "
                   << component_type_to_tag(the_ct) << "\n";
-        std::cout << "... vals: " << vec_to_string<Datum>(vals) << "\n";
       }
-      if (!vals.empty()) {
+      if (e->get_element_type() == ElementType::FlowMeter) {
         auto id{e->get_id()};
         auto in_st{e->get_inflow_type().get_type()};
         auto out_st{e->get_outflow_type().get_type()};
@@ -2433,7 +2433,6 @@ namespace ERIN
         }
         comp_types.emplace(std::make_pair(id, comp_type));
         stream_ids.emplace(std::make_pair(id, in_st));
-        results.emplace(std::make_pair(id, vals));
       }
       e->clear_results();
       ++element_number;

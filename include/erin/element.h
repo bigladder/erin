@@ -277,9 +277,7 @@ namespace ERIN
       [[nodiscard]] std::vector<Datum>
         get_results(RealTimeType max_time) const override;
       void clear_results() override;
-      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override {
-        flow_writer = writer;
-      }
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
 
     protected:
       void update_on_external_transition() override;
@@ -289,6 +287,7 @@ namespace ERIN
       std::vector<FlowValueType> requested_flows;
       std::vector<FlowValueType> achieved_flows;
       std::shared_ptr<FlowWriter> flow_writer;
+      int element_id;
   };
 
   ////////////////////////////////////////////////////////////

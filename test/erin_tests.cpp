@@ -21,6 +21,7 @@
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
 #include <functional>
+#include <iomanip>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -1670,17 +1671,27 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   auto elements = enw::build(
       scenario_id, network, connections, components,
       {}, []()->double{ return 0.0; });
+  std::shared_ptr<ERIN::FlowWriter> fw =
+    std::make_shared<ERIN::DefaultFlowWriter>();
+  for (auto e: elements) {
+    e->set_flow_writer(fw);
+  }
   adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   network.add(&sim);
   const auto duration{t_max};
   const int max_no_advance{static_cast<int>(elements.size()) * 10};
   auto is_good = ::ERIN::run_devs(sim, duration, max_no_advance, "test");
   EXPECT_TRUE(is_good);
+  fw->finalize_at_time(t_max);
+  auto fw_results = fw->get_results();
   ::ERIN::RealTimeType scenario_start_time_s{0};
   auto sr = ::ERIN::process_single_scenario_results(
-      is_good, elements, duration, scenario_start_time_s);
+      is_good, elements, duration, scenario_start_time_s,
+      fw_results);
   EXPECT_TRUE(sr.get_is_good());
   auto results = sr.get_results();
+  EXPECT_EQ(results, fw_results);
+  fw->clear();
   const std::vector<std::string> expected_keys{
     "s1", "s2", "l1", "l2",
     "bus-inflow(0)", "bus-inflow(1)", "bus-outflow(0)", "bus-outflow(1)"};
@@ -1715,11 +1726,21 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   const auto n_bus_inflow0 = expected_bus_inflow0.size();
   const auto& actual_bus_inflow0 = results.at("bus-inflow(0)");
   EXPECT_EQ(n_bus_inflow0, actual_bus_inflow0.size());
-  for (std::vector<::ERIN::Datum>::size_type i{0}; i < n_bus_inflow0; ++i) {
+  using size_type = std::vector<::ERIN::Datum>::size_type;
+  size_type min_bus_inflow_0_size{std::min(n_bus_inflow0, actual_bus_inflow0.size())};
+  for (size_type i{0}; i < min_bus_inflow_0_size; ++i) {
     const auto& e = expected_bus_inflow0[i];
     const auto& a = actual_bus_inflow0[i];
-    EXPECT_EQ(e.time, a.time);
+    EXPECT_EQ(e.time, a.time)
+      << "bus-inflow(0):"
+      << "expected[" << i << "]{t=" << e.time
+      << ",r=" << e.requested_value
+      << ",a=" << e.achieved_value << "} "
+      << "!= actual[" << i << "]{t=" << a.time
+      << ",r=" << a.requested_value
+      << ",a=" << a.achieved_value << "}";
     EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
+      << "bus-inflow(0):"
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "
@@ -1727,12 +1748,22 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
     EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
+      << "bus-inflow(0):"
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "
       << "!= actual[" << i << "]{t=" << a.time
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
+    if (true and (n_bus_inflow0 != actual_bus_inflow0.size())) {
+      std::cout << "bus-inflow(0):"
+                << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
+                << ",r=" << std::setw(6) << e.requested_value
+                << ",a=" << std::setw(6) << e.achieved_value << "} "
+                << "| actual[" << std::setw(2) << i << "]{t=" << std::setw(4) << a.time
+                << ",r=" << std::setw(6) << a.requested_value
+                << ",a=" << std::setw(6) << a.achieved_value << "}\n";
+    }
   }
   // bus-inflow(1)
   const std::vector<::ERIN::Datum> expected_bus_inflow1{
@@ -1744,11 +1775,20 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   const auto n_bus_inflow1 = expected_bus_inflow1.size();
   const auto& actual_bus_inflow1 = results.at("bus-inflow(1)");
   EXPECT_EQ(n_bus_inflow1, actual_bus_inflow1.size());
-  for (std::vector<::ERIN::Datum>::size_type i{0}; i < n_bus_inflow1; ++i) {
+  size_type min_bus_inflow_1_size{std::min(n_bus_inflow1, actual_bus_inflow1.size())};
+  for (size_type i{0}; i < min_bus_inflow_1_size; ++i) {
     const auto& e = expected_bus_inflow1[i];
     const auto& a = actual_bus_inflow1[i];
-    EXPECT_EQ(e.time, a.time);
+    EXPECT_EQ(e.time, a.time)
+      << "bus-inflow(1):"
+      << "expected[" << i << "]{t=" << e.time
+      << ",r=" << e.requested_value
+      << ",a=" << e.achieved_value << "} "
+      << "!= actual[" << i << "]{t=" << a.time
+      << ",r=" << a.requested_value
+      << ",a=" << a.achieved_value << "}";
     EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
+      << "bus-inflow(1):"
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "
@@ -1756,27 +1796,48 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
     EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
+      << "bus-inflow(1):"
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "
       << "!= actual[" << i << "]{t=" << a.time
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
+    if (true and (n_bus_inflow1 != actual_bus_inflow1.size())) {
+      std::cout << "bus-inflow(1):"
+                << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
+                << ",r=" << std::setw(6) << e.requested_value
+                << ",a=" << std::setw(6) << e.achieved_value << "} "
+                << "| actual[" << std::setw(2) << i << "]{t=" << std::setw(4) << a.time
+                << ",r=" << std::setw(6) << a.requested_value
+                << ",a=" << std::setw(6) << a.achieved_value << "}\n";
+    }
   }
   // bus-outflow(0)
   const std::vector<::ERIN::Datum> expected_bus_outflow0{
     ::ERIN::Datum{0,10.0,10.0},
+    ::ERIN::Datum{5,10.0,10.0},
     ::ERIN::Datum{8,10.0,8.0},
     ::ERIN::Datum{10,10.0,10.0},
     ::ERIN::Datum{t_max,0.0,0.0}};
   const auto n_bus_outflow0 = expected_bus_outflow0.size();
   const auto& actual_bus_outflow0 = results.at("bus-outflow(0)");
   EXPECT_EQ(n_bus_outflow0, actual_bus_outflow0.size());
-  for (std::vector<::ERIN::Datum>::size_type i{0}; i < n_bus_outflow0; ++i) {
+  size_type min_bus_outflow_0{
+    std::min(n_bus_outflow0, actual_bus_outflow0.size())};
+  for (size_type i{0}; i < min_bus_outflow_0; ++i) {
     const auto& e = expected_bus_outflow0[i];
     const auto& a = actual_bus_outflow0[i];
-    EXPECT_EQ(e.time, a.time);
+    EXPECT_EQ(e.time, a.time)
+      << "bus-outflow(0):"
+      << "expected[" << i << "]{t=" << e.time
+      << ",r=" << e.requested_value
+      << ",a=" << e.achieved_value << "} "
+      << "!= actual[" << i << "]{t=" << a.time
+      << ",r=" << a.requested_value
+      << ",a=" << a.achieved_value << "}";
     EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
+      << "bus-outflow(0):"
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "
@@ -1784,12 +1845,22 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
     EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
+      << "bus-outflow(0):"
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "
       << "!= actual[" << i << "]{t=" << a.time
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
+    if (true and (n_bus_outflow0 != actual_bus_outflow0.size())) {
+      std::cout << "bus-outflow(0):"
+                << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
+                << ",r=" << std::setw(6) << e.requested_value
+                << ",a=" << std::setw(6) << e.achieved_value << "} "
+                << "| actual[" << std::setw(2) << i << "]{t=" << std::setw(4) << a.time
+                << ",r=" << std::setw(6) << a.requested_value
+                << ",a=" << std::setw(6) << a.achieved_value << "}\n";
+    }
   }
   // bus-outflow(1)
   const std::vector<::ERIN::Datum> expected_bus_outflow1{
@@ -1801,11 +1872,20 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   const auto n_bus_outflow1 = expected_bus_outflow1.size();
   const auto& actual_bus_outflow1 = results.at("bus-outflow(1)");
   EXPECT_EQ(n_bus_outflow1, actual_bus_outflow1.size());
-  for (std::vector<::ERIN::Datum>::size_type i{0}; i < n_bus_outflow1; ++i) {
+  size_type min_bus_outflow_1{std::min(n_bus_outflow1, actual_bus_outflow1.size())};
+  for (size_type i{0}; i < min_bus_outflow_1; ++i) {
     const auto& e = expected_bus_outflow1[i];
     const auto& a = actual_bus_outflow1[i];
-    EXPECT_EQ(e.time, a.time);
+    EXPECT_EQ(e.time, a.time)
+      << "bus-outflow(1):"
+      << "expected[" << i << "]{t=" << e.time
+      << ",r=" << e.requested_value
+      << ",a=" << e.achieved_value << "} "
+      << "!= actual[" << i << "]{t=" << a.time
+      << ",r=" << a.requested_value
+      << ",a=" << a.achieved_value << "}";
     EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
+      << "bus-outflow(1):"
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "
@@ -1813,12 +1893,22 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
     EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
+      << "bus-outflow(1):"
       << "expected[" << i << "]{t=" << e.time
       << ",r=" << e.requested_value
       << ",a=" << e.achieved_value << "} "
       << "!= actual[" << i << "]{t=" << a.time
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
+    if (true and (n_bus_outflow1 != actual_bus_outflow1.size())) {
+      std::cout << "bus-outflow(1):"
+                << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
+                << ",r=" << std::setw(6) << e.requested_value
+                << ",a=" << std::setw(6) << e.achieved_value << "} "
+                << "| actual[" << std::setw(2) << i << "]{t=" << std::setw(4) << a.time
+                << ",r=" << std::setw(6) << a.requested_value
+                << ",a=" << std::setw(6) << a.achieved_value << "}\n";
+    }
   }
 }
 
@@ -2187,24 +2277,28 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         std::string{"electric_utility"},
         std::vector<::ERIN::Datum>{
           ::ERIN::Datum{0          , 0.0, 0.0},
+          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
           ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(
         std::string{"emergency_generator"},
         std::vector<::ERIN::Datum>{
           ::ERIN::Datum{0          , 0.0, 0.0},
+          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
           ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(
         std::string{"bus-inflow(0)"},
         std::vector<::ERIN::Datum>{
           ::ERIN::Datum{0          , 0.0, 0.0},
+          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
           ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(
         std::string{"bus-inflow(1)"},
         std::vector<::ERIN::Datum>{
           ::ERIN::Datum{0          , 0.0, 0.0},
+          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
           ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(

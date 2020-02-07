@@ -173,18 +173,10 @@ namespace ERIN
     auto d_final = Datum{time,0.0,0.0};
     for (size_type_D i{0}; i < num_st; ++i) {
       if (recording_flags[i]) {
-        if (current_time == time) {
-          history[i].emplace_back(d_final);
-        } else {
+        if (current_time < time) {
           history[i].emplace_back(current_status[i]);
         }
-      }
-    }
-    if (time > current_time) {
-      for (size_type_D i{0}; i < num_st; ++i) {
-        if (recording_flags[i]) {
-          history[i].emplace_back(d_final);
-        }
+        history[i].emplace_back(d_final);
       }
     }
     current_time = time;
@@ -728,7 +720,8 @@ namespace ERIN
     event_times{},
     requested_flows{},
     achieved_flows{},
-    flow_writer{}
+    flow_writer{nullptr},
+    element_id{-1}
   {
   }
 
@@ -836,6 +829,22 @@ namespace ERIN
   }
 
   void
+  FlowMeter::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    bool record_history{true};
+    element_id = flow_writer->register_id(
+        get_id(),
+        get_outflow_type().get_type(),
+        record_history);
+    flow_writer->write_data(
+        element_id,
+        get_real_time(),
+        get_outflow_request(),
+        get_outflow());
+  }
+
+  void
   FlowMeter::update_on_external_transition()
   {
     if constexpr (debug_level >= debug_level_high) {
@@ -847,6 +856,13 @@ namespace ERIN
     }
     auto num_events{event_times.size()};
     auto real_time{get_real_time()};
+    if (element_id >= 0) {
+      flow_writer->write_data(
+          element_id,
+          real_time,
+          get_outflow_request(),
+          get_outflow());
+    }
     RealTimeType t_last{-1};
     if (num_events > 0) {
       t_last = event_times.back();

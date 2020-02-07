@@ -2506,10 +2506,7 @@ namespace ERIN
     std::unordered_map<std::string,std::string> stream_ids{};
     for (auto it = stream_types.cbegin(); it != stream_types.cend();) {
       auto& s = it->second;
-      stream_ids.emplace(
-          std::make_pair(
-            std::move(it->first),
-            std::move(s.get_type())));
+      stream_ids.emplace(std::make_pair(it->first, s.get_type()));
       it = stream_types.erase(it);
     }
     return stream_ids;

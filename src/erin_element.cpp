@@ -717,115 +717,9 @@ namespace ERIN
         component_type,
         ElementType::FlowMeter,
         stream_type),
-    event_times{},
-    requested_flows{},
-    achieved_flows{},
     flow_writer{nullptr},
     element_id{-1}
   {
-  }
-
-  std::vector<RealTimeType>
-  FlowMeter::get_event_times() const
-  {
-    return std::vector<RealTimeType>(event_times);
-  }
-
-  std::vector<FlowValueType>
-  FlowMeter::get_achieved_flows() const
-  {
-    return std::vector<FlowValueType>(achieved_flows);
-  }
-
-  std::vector<FlowValueType>
-  FlowMeter::get_requested_flows() const
-  {
-    return std::vector<FlowValueType>(requested_flows);
-  }
-
-  std::vector<Datum>
-  FlowMeter::get_results(RealTimeType max_time) const
-  {
-    using size_type_D = std::vector<Datum>::size_type;
-    using size_type_RTT = std::vector<RealTimeType>::size_type;
-    const auto num_events{event_times.size()};
-    const auto num_rfs = requested_flows.size();
-    const auto num_afs = achieved_flows.size();
-    if (num_events == 0) {
-      std::vector<Datum> results{};
-      results.emplace_back(Datum{0, 0.0, 0.0});
-      results.emplace_back(Datum{max_time, 0.0, 0.0});
-      return results;
-    }
-    if ((num_rfs != num_events) || (num_afs != num_events)) {
-      std::ostringstream oss;
-      oss << "invariant_error: requested_flows.size() "
-          << "!= achieved_flows.size() != num_events\n"
-          << "requested_flows.size(): " << num_rfs << "\n"
-          << "achieved_flows.size() : " << num_afs << "\n"
-          << "num_events            : " << num_events << "\n"
-          << "id                    : \"" << get_id() << "\"\n";
-      for (size_type_RTT i{0}; i < num_events; ++i) {
-        oss << "event_times[" << i << "]      = " << event_times[i] << "\n";
-        if (i < num_rfs) {
-          oss << "requested_flows[" << i << "]  = "
-              << requested_flows[i] << "\n";
-        }
-        if (i < num_afs) {
-          oss << "achieved_flows[" << i << "]   = "
-              << achieved_flows[i] << "\n";
-        }
-      }
-      throw std::runtime_error(oss.str());
-    }
-    size_type_D max_idx = 0;
-    for (size_type_D i{0}; i < num_events; ++i) {
-      const auto& t = event_times[i];
-      if (t <= max_time) {
-        max_idx = i;
-      }
-      else {
-        break;
-      }
-    }
-    bool time_0_missing{event_times[0] != 0};
-    bool max_time_missing{event_times[max_idx] < max_time};
-    size_type_D num_datums = num_events;
-    if (time_0_missing) {
-      ++num_datums;
-    }
-    if (max_time_missing) {
-      ++num_datums;
-    }
-    std::vector<Datum> results(num_datums);
-    for (size_type_D i{0}; i < num_datums; ++i) {
-      auto j = i;
-      if (time_0_missing) {
-        if (i == 0) {
-          results[0] = Datum{0, 0.0, 0.0};
-          continue;
-        }
-        --j;
-      }
-      if (max_time_missing && (j > max_idx)) {
-        results[i] = Datum{max_time, 0.0, 0.0};
-      }
-      else {
-        results[i] = Datum{
-          event_times[j],
-          requested_flows[j],
-          achieved_flows[j]};
-      }
-    }
-    return results;
-  }
-
-  void
-  FlowMeter::clear_results()
-  {
-    event_times.clear();
-    requested_flows.clear();
-    achieved_flows.clear();
   }
 
   void
@@ -850,11 +744,8 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "FlowMeter::update_on_external_transition()\n";
       print_state("... ");
-      print_vec<RealTimeType>("... event_times", event_times);
-      print_vec<FlowValueType>("... requested_flows", requested_flows);
-      print_vec<FlowValueType>("... achieved_flows", achieved_flows);
+      std::cout << "... element_id = " << element_id << "\n";
     }
-    auto num_events{event_times.size()};
     auto real_time{get_real_time()};
     if (element_id >= 0) {
       flow_writer->write_data(
@@ -862,87 +753,6 @@ namespace ERIN
           real_time,
           get_outflow_request(),
           get_outflow());
-    }
-    RealTimeType t_last{-1};
-    if (num_events > 0) {
-      t_last = event_times.back();
-    }
-    if (real_time > t_last) {
-      event_times.emplace_back(real_time);
-      ++num_events;
-    }
-    auto num_requested{requested_flows.size()};
-    auto num_achieved{achieved_flows.size()};
-    if (get_report_inflow_request()) {
-      if (num_requested == (num_events - 1)) {
-        requested_flows.emplace_back(get_inflow());
-        ++num_requested;
-      }
-      else if (num_requested == num_events) {
-        *requested_flows.rbegin() = get_inflow();
-      }
-      else {
-        std::ostringstream oss;
-        oss << "unexpected condition 1\n";
-        throw std::runtime_error(oss.str());
-      }
-      if (num_achieved == num_events) {
-        auto &v = achieved_flows.back();
-        v = get_inflow();
-      }
-      else if (num_achieved == (num_events - 1)) {
-        achieved_flows.emplace_back(get_inflow());
-        ++num_achieved;
-      }
-      else {
-        std::ostringstream oss;
-        oss << "unexpected condition 2\n";
-        throw std::runtime_error(oss.str());
-      }
-    }
-    if (get_report_outflow_achieved()) {
-      auto of = get_outflow();
-      if (num_achieved == num_events) {
-        auto &v = achieved_flows.back();
-        v = of;
-      }
-      else {
-        achieved_flows.emplace_back(of);
-        ++num_achieved;
-      }
-      if (num_requested < num_achieved) {
-        if (num_requested == 0) {
-          std::ostringstream oss;
-          oss << "no previous requested flows and an achieved flow shows up\n";
-          oss << "num_requested: " << num_requested << "\n";
-          oss << "num_achieved: " << num_achieved << "\n";
-          oss << "id: \"" << get_id() << "\"\n";
-          throw std::runtime_error(oss.str());
-        }
-        else {
-          // repeat the previous request -- requests don't change if upstream
-          // conditions change.
-          requested_flows.emplace_back(requested_flows.back());
-        }
-        ++num_requested;
-      }
-    }
-    if ((num_requested != num_achieved) && (num_events != num_achieved)) {
-      std::ostringstream oss;
-      oss << "FlowMeter: ";
-      oss << "invariant error: num_requested != num_achieved != num_events\n";
-      oss << "num_requested: " << num_requested << "\n";
-      oss << "num_achieved : " << num_achieved << "\n";
-      oss << "num_events   : " << num_events << "\n";
-      oss << "id           : \"" << get_id() << "\"\n";
-      throw std::runtime_error(oss.str());
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      print_state("... ");
-      print_vec<RealTimeType>("... event_times", event_times);
-      print_vec<FlowValueType>("... requested_flows", requested_flows);
-      print_vec<FlowValueType>("... achieved_flows", achieved_flows);
-      std::cout << "end FlowMeter::update_on_external_transition()\n";
     }
   }
 

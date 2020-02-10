@@ -137,11 +137,6 @@ namespace ERIN
       FlowElement& operator=(const FlowElement&&) = delete;
 
       [[nodiscard]] std::string get_id() const { return id; }
-      [[nodiscard]] virtual std::vector<Datum>
-        get_results(RealTimeType /* max_time */) const {
-          return std::vector<Datum>(0);
-        }
-      virtual void clear_results() {}
       [[nodiscard]] StreamType get_inflow_type() const { return inflow_type; };
       [[nodiscard]] StreamType get_outflow_type() const { return outflow_type; };
       [[nodiscard]] ComponentType get_component_type() const {
@@ -271,21 +266,12 @@ namespace ERIN
           std::string id,
           ComponentType component_type,
           const StreamType& stream_type);
-      [[nodiscard]] std::vector<RealTimeType> get_event_times() const;
-      [[nodiscard]] std::vector<FlowValueType> get_achieved_flows() const;
-      [[nodiscard]] std::vector<FlowValueType> get_requested_flows() const;
-      [[nodiscard]] std::vector<Datum>
-        get_results(RealTimeType max_time) const override;
-      void clear_results() override;
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
 
     protected:
       void update_on_external_transition() override;
 
     private:
-      std::vector<RealTimeType> event_times;
-      std::vector<FlowValueType> requested_flows;
-      std::vector<FlowValueType> achieved_flows;
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
   };

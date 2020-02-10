@@ -500,6 +500,21 @@ namespace ERIN
   std::unordered_map<std::string,std::string>
   stream_types_to_stream_ids(
       std::unordered_map<std::string,StreamType>&& stm);
+
+  std::vector<RealTimeType>
+    get_times_from_results_for_component(
+        const std::unordered_map<std::string, std::vector<Datum>>& results,
+        const std::string& comp_id);
+
+  std::vector<FlowValueType>
+    get_actual_flows_from_results_for_component(
+        const std::unordered_map<std::string, std::vector<Datum>>& results,
+        const std::string& comp_id);
+
+  std::vector<FlowValueType>
+    get_requested_flows_from_results_for_component(
+        const std::unordered_map<std::string, std::vector<Datum>>& results,
+        const std::string& comp_id);
 }
 
 #endif // ERIN_ERIN_H

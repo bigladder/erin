@@ -2434,7 +2434,6 @@ namespace ERIN
         comp_types.emplace(std::make_pair(id, comp_type));
         stream_ids.emplace(std::make_pair(id, in_st));
       }
-      e->clear_results();
       ++element_number;
     }
     if constexpr (debug_level >= debug_level_high) {
@@ -2509,5 +2508,52 @@ namespace ERIN
       it = stream_types.erase(it);
     }
     return stream_ids;
+  }
+
+  template <class T>
+  std::vector<T>
+  unpack_results(
+      const std::unordered_map<std::string, std::vector<Datum>>& results,
+      const std::string& comp_id,
+      const std::function<T(const Datum&)>& f)
+  {
+    auto it = results.find(comp_id);
+    if (it == results.end()) {
+      return std::vector<T>{};
+    }
+    const auto& data = results.at(comp_id);
+    std::vector<T> output(data.size());
+    std::transform(data.cbegin(), data.cend(), output.begin(), f);
+    return output;
+  }
+
+  std::vector<RealTimeType>
+  get_times_from_results_for_component(
+      const std::unordered_map<std::string, std::vector<Datum>>& results,
+      const std::string& comp_id)
+  {
+    return unpack_results<RealTimeType>(
+        results, comp_id,
+        [](const Datum& d) -> RealTimeType { return d.time; });
+  }
+
+  std::vector<FlowValueType>
+  get_actual_flows_from_results_for_component(
+      const std::unordered_map<std::string, std::vector<Datum>>& results,
+      const std::string& comp_id)
+  {
+    return unpack_results<FlowValueType>(
+        results, comp_id,
+        [](const Datum& d) -> FlowValueType { return d.achieved_value; });
+  }
+
+  std::vector<FlowValueType>
+  get_requested_flows_from_results_for_component(
+      const std::unordered_map<std::string, std::vector<Datum>>& results,
+      const std::string& comp_id)
+  {
+    return unpack_results<FlowValueType>(
+        results, comp_id,
+        [](const Datum& d) -> FlowValueType { return d.requested_value; });
   }
 }

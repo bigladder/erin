@@ -73,10 +73,47 @@ namespace ERIN
   {
   }
 
+  DefaultFlowWriter::DefaultFlowWriter(
+      bool is_final_,
+      RealTimeType current_time_,
+      int next_id_,
+      const std::vector<Datum>& current_status_,
+      const std::unordered_map<std::string, int>& element_tag_to_id_,
+      const std::unordered_map<int, std::string>& element_id_to_tag_,
+      const std::unordered_map<int, std::string>& element_id_to_stream_tag_,
+      const std::vector<bool>& recording_flags_,
+      std::vector<std::vector<Datum>>&& history_):
+    FlowWriter(),
+    is_final{is_final_},
+    current_time{current_time_},
+    next_id{next_id_},
+    current_status{current_status_},
+    element_tag_to_id{element_tag_to_id_},
+    element_id_to_tag{element_id_to_tag_},
+    element_id_to_stream_tag{element_id_to_stream_tag_},
+    recording_flags{recording_flags_},
+    history{std::move(history_)}
+  {
+  }
+
   std::unique_ptr<FlowWriter>
   DefaultFlowWriter::clone() const
   {
-    std::unique_ptr<FlowWriter> p = std::make_unique<DefaultFlowWriter>();
+    std::vector<std::vector<Datum>> new_history(num_elements());
+    for (size_type_H i{0}; i < static_cast<size_type_H>(num_elements()); ++i) {
+      std::vector<Datum> xs{history[i]};
+      new_history[i] = std::move(xs);
+    }
+    std::unique_ptr<FlowWriter> p = std::make_unique<DefaultFlowWriter>(
+        is_final,
+        current_time,
+        next_id,
+        current_status,
+        element_tag_to_id,
+        element_id_to_tag,
+        element_id_to_stream_tag,
+        recording_flags,
+        std::move(new_history));
     return p;
   }
 
@@ -126,6 +163,7 @@ namespace ERIN
       std::ostringstream oss;
       oss << "element_id is invalid. "
           << "element_id must be >= 0 and < " << num_elements() << "\n"
+          << "and element_id cannot be larger than the number of elements - 1\n"
           << "element_id: " << element_id << "\n";
       throw std::invalid_argument(oss.str());
     }

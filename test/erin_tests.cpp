@@ -1771,7 +1771,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << "!= actual[" << i << "]{t=" << a.time
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
-    if (true and (n_bus_inflow0 != actual_bus_inflow0.size())) {
+    if (true && (n_bus_inflow0 != actual_bus_inflow0.size())) {
       std::cout << "bus-inflow(0):"
                 << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
                 << ",r=" << std::setw(6) << e.requested_value
@@ -1819,7 +1819,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << "!= actual[" << i << "]{t=" << a.time
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
-    if (true and (n_bus_inflow1 != actual_bus_inflow1.size())) {
+    if (true && (n_bus_inflow1 != actual_bus_inflow1.size())) {
       std::cout << "bus-inflow(1):"
                 << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
                 << ",r=" << std::setw(6) << e.requested_value
@@ -1868,7 +1868,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << "!= actual[" << i << "]{t=" << a.time
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
-    if (true and (n_bus_outflow0 != actual_bus_outflow0.size())) {
+    if (true && (n_bus_outflow0 != actual_bus_outflow0.size())) {
       std::cout << "bus-outflow(0):"
                 << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
                 << ",r=" << std::setw(6) << e.requested_value
@@ -1916,7 +1916,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       << "!= actual[" << i << "]{t=" << a.time
       << ",r=" << a.requested_value
       << ",a=" << a.achieved_value << "}";
-    if (true and (n_bus_outflow1 != actual_bus_outflow1.size())) {
+    if (true && (n_bus_outflow1 != actual_bus_outflow1.size())) {
       std::cout << "bus-outflow(1):"
                 << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
                 << ",r=" << std::setw(6) << e.requested_value

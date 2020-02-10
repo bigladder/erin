@@ -61,6 +61,7 @@ namespace ERIN
   // DefaultFlowWriter
   DefaultFlowWriter::DefaultFlowWriter():
     FlowWriter(),
+    is_final{false},
     current_time{0},
     next_id{0},
     current_status{},
@@ -85,6 +86,7 @@ namespace ERIN
       const std::string& stream_tag,
       bool record_history)
   {
+    ensure_not_final();
     auto element_id = get_next_id();
     ensure_element_tag_is_unique(element_tag);
     current_status.emplace_back(Datum{current_time,0.0,0.0});
@@ -94,6 +96,14 @@ namespace ERIN
     recording_flags.emplace_back(record_history);
     history.emplace_back(std::vector<Datum>{});
     return element_id;
+  }
+
+  void
+  DefaultFlowWriter::ensure_not_final() const
+  {
+    if (is_final) {
+      throw std::runtime_error("invalid operation on a finalized FlowWriter");
+    }
   }
 
   void
@@ -157,6 +167,7 @@ namespace ERIN
       FlowValueType requested_flow,
       FlowValueType achieved_flow)
   {
+    ensure_not_final();
     ensure_element_id_is_valid(element_id);
     ensure_time_is_valid(time);
     if (time > current_time) {
@@ -168,6 +179,7 @@ namespace ERIN
   void
   DefaultFlowWriter::finalize_at_time(RealTimeType time)
   {
+    is_final = true;
     auto num = num_elements();
     auto num_st = static_cast<size_type_D>(num);
     auto d_final = Datum{time,0.0,0.0};
@@ -180,6 +192,7 @@ namespace ERIN
       }
     }
     current_time = time;
+    current_status.clear();
   }
 
   std::unordered_map<std::string, std::vector<Datum>>
@@ -207,6 +220,7 @@ namespace ERIN
     element_id_to_stream_tag.clear();
     recording_flags.clear();
     history.clear();
+    is_final = false;
   }
 
   ////////////////////////////////////////////////////////////

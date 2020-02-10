@@ -4171,11 +4171,13 @@ TEST(ErinElements, Test_flow_writer_implementation)
 {
   auto fw = ERIN::DefaultFlowWriter();
   auto id = fw.register_id("element", "electricity", true);
+  ERIN::RealTimeType t_max{10};
   fw.write_data(id, 0, 0.0, 0.0);
   fw.write_data(id, 0, 10.0, 10.0);
   fw.write_data(id, 0, 10.0, 8.0);
   fw.write_data(id, 5, 5.0, 5.0);
-  fw.finalize_at_time(10);
+  fw.finalize_at_time(t_max);
+  ASSERT_THROW(fw.write_data(id, t_max+1, 10.0, 10.0), std::runtime_error);
   auto actual = fw.get_results();
   std::unordered_map<std::string, std::vector<ERIN::Datum>> expected{
     {

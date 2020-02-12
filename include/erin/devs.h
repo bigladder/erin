@@ -4,11 +4,14 @@
 #ifndef ERIN_DEVS_H
 #define ERIN_DEVS_H
 #include "erin/type.h"
+#include <iostream>
+#include <string>
 
 namespace erin::devs
 {
   using FlowValueType = ERIN::FlowValueType;
   using RealTimeType = ERIN::RealTimeType;
+  constexpr RealTimeType infinity{-1};
   //constexpr int max_port_numbers{1000};
   //constexpr int inport_inflow_available{0*max_port_numbers};
   //constexpr int inport_outflow_request{1*max_port_numbers};
@@ -52,6 +55,9 @@ namespace erin::devs
       [[nodiscard]] Port with_achieved(
           FlowValueType new_achieved, RealTimeType time) const;
 
+      friend bool operator==(const Port& a, const Port& b);
+      friend std::ostream& operator<<(std::ostream& os, const Port& p);
+
     private:
       RealTimeType time_of_last_change;
       FlowValueType requested;
@@ -59,6 +65,10 @@ namespace erin::devs
       //bool request_changed;
       //bool achieved_changed;
   };
+
+  bool operator==(const Port& a, const Port& b);
+  bool operator!=(const Port& a, const Port& b);
+  std::ostream& operator<<(std::ostream& os, const Port& p);
 
   //template <class S>
   //class Atomic
@@ -87,6 +97,31 @@ namespace erin::devs
       FlowValueType lower_limit;
       FlowValueType upper_limit;
   };
+
+  struct FlowLimitsState
+  {
+    RealTimeType time;
+    Port inflow_port;
+    Port outflow_port;
+    FlowValueType lower_limit;
+    FlowValueType upper_limit;
+  };
+
+  RealTimeType
+  flow_limits_time_advance(const FlowLimitsState& state);
+
+  FlowLimitsState
+  flow_limits_external_transition_on_outflow_request(
+      const FlowLimitsState& state,
+      RealTimeType elapsed_time,
+      FlowValueType outflow_request);
+
+  FlowLimitsState
+  flow_limits_internal_transition(const FlowLimitsState& state);
+
+  bool operator==(const FlowLimitsState& a, const FlowLimitsState& b);
+  bool operator!=(const FlowLimitsState& a, const FlowLimitsState& b);
+  std::ostream& operator<<(std::ostream& os, const FlowLimitsState& s);
 
   //struct FlowLimits
   //{

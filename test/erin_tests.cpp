@@ -4289,6 +4289,29 @@ TEST(ErinElements, Test_flow_writer_clone)
   EXPECT_EQ(expected_requested_flows2, actual_requested_flows2);
 }
 
+TEST(ErinDevs, Test_new_functional_flow_limits_object)
+{
+  namespace ED = erin::devs;
+  ED::FlowLimitsState s0{
+    // time, inflow-port, outflow-port
+    0,ED::Port{},ED::Port{},
+    // lower-limit, upper-limit
+    0.0,100.0};
+  auto dt0 = ED::flow_limits_time_advance(s0);
+  EXPECT_EQ(dt0, ED::infinity); // ED::infinity is the representation we use for infinity
+  auto s1 = ED::flow_limits_external_transition_on_outflow_request(s0, 2, 10.0);
+  ED::FlowLimitsState expected_s1{
+    2,
+    ED::Port{2,10.0,10.0},
+    ED::Port{2,10.0,10.0},
+    0.0,100.0};
+  EXPECT_EQ(s1, expected_s1);
+  auto dt1 = ED::flow_limits_time_advance(s1);
+  EXPECT_EQ(dt1, 0);
+  auto s2 = ED::flow_limits_internal_transition(s1);
+  EXPECT_EQ(s2, expected_s1);
+}
+
 int
 main(int argc, char **argv)
 {

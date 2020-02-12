@@ -69,6 +69,30 @@ namespace erin::devs
     return Port{time_of_last_change, requested, new_achieved};
   }
 
+  bool
+  operator==(const Port& a, const Port& b)
+  {
+    return (a.time_of_last_change == b.time_of_last_change)
+        && (a.requested == b.requested)
+        && (a.achieved == b.achieved);
+  }
+
+  bool
+  operator!=(const Port& a, const Port& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const Port& p)
+  {
+    os << "Port("
+       << "time_of_last_change=" << p.time_of_last_change << ", "
+       << "requested=" << p.requested << ", "
+       << "achieved=" << p.achieved << ")";
+    return os;
+  }
+
   ////////////////////////////////////////////////////////////
   // FlowLimits
   FlowLimits::FlowLimits(
@@ -83,5 +107,67 @@ namespace erin::devs
           << ") > upper_limit (" << upper_limit << ")";
       throw std::invalid_argument(oss.str());
     }
+  }
+
+  bool
+  operator==(const FlowLimitsState& a, const FlowLimitsState& b)
+  {
+    return (a.time == b.time)
+      && (a.inflow_port == b.inflow_port)
+      && (a.outflow_port == b.outflow_port)
+      && (a.lower_limit == b.lower_limit)
+      && (a.upper_limit == b.upper_limit);
+  }
+
+  bool
+  operator!=(const FlowLimitsState& a, const FlowLimitsState& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const FlowLimitsState& s)
+  {
+    os << "FlowLimitsState(time=" << s.time << ", "
+       << "inflow_port=" << s.inflow_port << ", "
+       << "outflow_port=" << s.outflow_port << ", "
+       << "lower_limit=" << s.lower_limit << ", "
+       << "upper_limit=" << s.upper_limit << ")";
+    return os;
+  }
+
+  RealTimeType
+  flow_limits_time_advance(const FlowLimitsState& state)
+  {
+    const auto& t = state.time;
+    const auto& ip = state.inflow_port;
+    const auto& op = state.outflow_port;
+    if (ip.should_propagate_request_at(t) || op.should_propagate_achieved_at(t)) {
+      return 0;
+    }
+    return infinity;
+  }
+
+  FlowLimitsState
+  flow_limits_external_transition_on_outflow_request(
+      const FlowLimitsState& state,
+      RealTimeType elapsed_time,
+      FlowValueType outflow_request)
+  {
+    const auto& ip = state.inflow_port;
+    const auto& op = state.outflow_port;
+    auto t = state.time + elapsed_time;
+    return FlowLimitsState{
+      t,
+      ip.with_requested(outflow_request, t),
+      op.with_requested(outflow_request, t),
+      state.lower_limit,
+      state.upper_limit};
+  }
+
+  FlowLimitsState
+  flow_limits_internal_transition(const FlowLimitsState& state)
+  {
+    return state;
   }
 }

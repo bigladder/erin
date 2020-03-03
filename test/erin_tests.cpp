@@ -4374,6 +4374,16 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
   EXPECT_EQ(s6, expected_s6);
 }
 
+
+TEST(ErinBasicsTest, Test_that_compare_vectors_unordered_works)
+{
+  namespace eu = erin::utils;
+  std::vector<int> xs{1,2,3,4};
+  std::vector<int> ys{4,3,2,1};
+  EXPECT_TRUE(eu::compare_vectors_unordered<int>(xs, ys));
+}
+
+
 int
 main(int argc, char **argv)
 {

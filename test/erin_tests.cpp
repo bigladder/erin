@@ -4292,24 +4292,77 @@ TEST(ErinElements, Test_flow_writer_clone)
 TEST(ErinDevs, Test_new_functional_flow_limits_object)
 {
   namespace ED = erin::devs;
+  using size_type = std::vector<ED::PortValue>::size_type;
   ED::FlowLimitsState s0{
-    // time, inflow-port, outflow-port
-    0,ED::Port{},ED::Port{},
-    // lower-limit, upper-limit
-    0.0,100.0};
+    // time, inflow_port, outflow_port
+    0, ED::Port{}, ED::Port{},
+    // lower_limit, upper_limit, report_inflow_request, report_outflow_achieved
+    0.0, 100.0, false, false};
   auto dt0 = ED::flow_limits_time_advance(s0);
   EXPECT_EQ(dt0, ED::infinity); // ED::infinity is the representation we use for infinity
   auto s1 = ED::flow_limits_external_transition_on_outflow_request(s0, 2, 10.0);
   ED::FlowLimitsState expected_s1{
     2,
-    ED::Port{2,10.0,10.0},
-    ED::Port{2,10.0,10.0},
-    0.0,100.0};
+    ED::Port{2, 10.0, 10.0},
+    ED::Port{2, 10.0, 10.0},
+    0.0, 100.0, true, false};
   EXPECT_EQ(s1, expected_s1);
   auto dt1 = ED::flow_limits_time_advance(s1);
   EXPECT_EQ(dt1, 0);
+  auto ys2 = ED::flow_limits_output_function(s1);
+  std::vector<ED::PortValue> expected_ys2 = {
+    ED::PortValue{ED::outport_inflow_request, 10.0}};
+  ASSERT_EQ(ys2.size(), expected_ys2.size());
+  for (size_type i{0}; i < expected_ys2.size(); ++i) {
+    const auto& y2 = ys2.at(i);
+    const auto& ey2 = expected_ys2.at(i);
+    EXPECT_EQ(y2.port, ey2.port) << "i=" << i;
+    EXPECT_EQ(y2.value, ey2.value) << "i=" << i;
+  }
   auto s2 = ED::flow_limits_internal_transition(s1);
-  EXPECT_EQ(s2, expected_s1);
+  ED::FlowLimitsState expected_s2{
+    2,
+    ED::Port{2, 10.0, 10.0},
+    ED::Port{2, 10.0, 10.0},
+    0.0, 100.0, false, false};
+  EXPECT_EQ(s2, expected_s2);
+  auto s3 = ED::flow_limits_external_transition_on_inflow_achieved(s2, 0, 8.0);
+  ED::FlowLimitsState expected_s3{
+    2,
+    ED::Port{2,10.0,8.0},
+    ED::Port{2,10.0,8.0},
+    0.0, 100.0, false, true};
+  EXPECT_EQ(s3, expected_s3);
+  auto dt3 = ED::flow_limits_time_advance(s3);
+  EXPECT_EQ(dt3, 0);
+  auto ys3 = ED::flow_limits_output_function(s3);
+  std::vector<ED::PortValue> expected_ys3 = {
+    ED::PortValue{ED::outport_outflow_achieved, 8.0}};
+  ASSERT_EQ(ys3.size(), expected_ys3.size());
+  for (size_type i{0}; i < expected_ys3.size(); ++i) {
+    const auto& y3 = ys3.at(i);
+    const auto& ey3 = expected_ys3.at(i);
+    EXPECT_EQ(y3.port, ey3.port);
+    EXPECT_EQ(y3.value, ey3.value);
+  }
+  auto s4 = ED::flow_limits_internal_transition(s3);
+  ED::FlowLimitsState expected_s4{
+    2,
+    ED::Port{2,10.0,8.0},
+    ED::Port{2,10.0,8.0},
+    0.0, 100.0, false, false};
+  EXPECT_EQ(s4, expected_s4);
+  auto dt4 = ED::flow_limits_time_advance(s4);
+  EXPECT_EQ(dt4, ED::infinity);
+  std::vector<ED::PortValue> xs = {
+    ED::PortValue{ED::inport_outflow_request, 200.0}};
+  auto s5 = ED::flow_limits_external_transition(s4, 2, xs);
+  ED::FlowLimitsState expected_s5{
+    4,
+    ED::Port{4, 100.0, 100.0},
+    ED::Port{4, 200.0, 100.0},
+    0.0, 100.0, true, true};
+  EXPECT_EQ(s5, expected_s5);
 }
 
 int

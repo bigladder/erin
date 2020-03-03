@@ -6,18 +6,20 @@
 #include "erin/type.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace erin::devs
 {
   using FlowValueType = ERIN::FlowValueType;
   using RealTimeType = ERIN::RealTimeType;
+  using PortValue = ERIN::PortValue;
   constexpr RealTimeType infinity{-1};
-  //constexpr int max_port_numbers{1000};
-  //constexpr int inport_inflow_available{0*max_port_numbers};
-  //constexpr int inport_outflow_request{1*max_port_numbers};
+  constexpr int max_port_numbers{1000};
+  constexpr int inport_inflow_achieved{0*max_port_numbers};
+  constexpr int inport_outflow_request{1*max_port_numbers};
   //constexpr int inport_lossflow_request{2*max_port_numbers};
-  //constexpr int outport_inflow_request{3*max_port_numbers};
-  //constexpr int outport_outflow_achieved{4*max_port_numbers};
+  constexpr int outport_inflow_request{3*max_port_numbers};
+  constexpr int outport_outflow_achieved{4*max_port_numbers};
   //constexpr int outport_lossflow_achieved{5*max_port_numbers};
 
   //template <class TReal, class TLogical>
@@ -52,6 +54,8 @@ namespace erin::devs
 
       [[nodiscard]] Port with_requested(
           FlowValueType new_requested, RealTimeType time) const;
+      [[nodiscard]] Port with_requested_and_achieved(
+          FlowValueType new_requested, FlowValueType new_achieved, RealTimeType time) const;
       [[nodiscard]] Port with_achieved(
           FlowValueType new_achieved, RealTimeType time) const;
 
@@ -105,10 +109,18 @@ namespace erin::devs
     Port outflow_port;
     FlowValueType lower_limit;
     FlowValueType upper_limit;
+    bool report_inflow_request;
+    bool report_outflow_achieved;
   };
 
   RealTimeType
   flow_limits_time_advance(const FlowLimitsState& state);
+
+  FlowLimitsState
+  flow_limits_external_transition(
+      const FlowLimitsState& state,
+      RealTimeType elapsed_time,
+      const std::vector<PortValue>& xs);
 
   FlowLimitsState
   flow_limits_external_transition_on_outflow_request(
@@ -117,7 +129,15 @@ namespace erin::devs
       FlowValueType outflow_request);
 
   FlowLimitsState
+  flow_limits_external_transition_on_inflow_achieved(
+      const FlowLimitsState& state,
+      RealTimeType elapsed_time,
+      FlowValueType inflow_achieved);
+
+  FlowLimitsState
   flow_limits_internal_transition(const FlowLimitsState& state);
+
+  std::vector<PortValue> flow_limits_output_function(const FlowLimitsState& state);
 
   bool operator==(const FlowLimitsState& a, const FlowLimitsState& b);
   bool operator!=(const FlowLimitsState& a, const FlowLimitsState& b);

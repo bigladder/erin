@@ -4381,6 +4381,12 @@ TEST(ErinBasicsTest, Test_that_compare_vectors_unordered_works)
   std::vector<int> xs{1,2,3,4};
   std::vector<int> ys{4,3,2,1};
   EXPECT_TRUE(eu::compare_vectors_unordered<int>(xs, ys));
+  xs = std::vector<int>{1,2,3};
+  ys = std::vector<int>{4,3,2};
+  EXPECT_FALSE(eu::compare_vectors_unordered<int>(xs, ys));
+  xs = std::vector<int>{1,2,3,4};
+  ys = std::vector<int>{4,3,2};
+  EXPECT_FALSE(eu::compare_vectors_unordered<int>(xs, ys));
 }
 
 

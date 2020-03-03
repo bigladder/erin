@@ -4363,6 +4363,15 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
     ED::Port{4, 200.0, 100.0},
     0.0, 100.0, true, true};
   EXPECT_EQ(s5, expected_s5);
+  std::vector<ED::PortValue> xs5 = {
+    ED::PortValue{ED::inport_inflow_achieved, 55.0}};
+  auto s6 = ED::flow_limits_external_transition(s5, 0, xs5);
+  ED::FlowLimitsState expected_s6{
+    4,
+    ED::Port{4, 100.0, 55.0},
+    ED::Port{4, 200.0, 55.0},
+    0.0, 100.0, false, true};
+  EXPECT_EQ(s6, expected_s6);
 }
 
 int

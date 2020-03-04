@@ -696,8 +696,7 @@ namespace ERIN
         component_type_,
         ElementType::FlowLimits,
         stream_type_),
-    state{lower_limit, upper_limit},
-    s{0,
+    state{0,
       erin::devs::Port{0, 0.0},
       erin::devs::Port{0, 0.0},
       lower_limit,
@@ -710,20 +709,21 @@ namespace ERIN
   void
   FlowLimits::delta_int()
   {
-    s = erin::devs::flow_limits_internal_transition(s);
+    state = erin::devs::flow_limits_internal_transition(state);
   }
 
   void
-  FlowLimits::delta_ext(Time e, std::vector<PortValue>& xs)
+  FlowLimits::delta_ext(Time dt, std::vector<PortValue>& xs)
   {
-    s = erin::devs::flow_limits_external_transition(s, e.real, xs);
+    state = erin::devs::flow_limits_external_transition(
+        state, dt.real, xs);
   }
 
   void
   FlowLimits::delta_conf(std::vector<PortValue>& xs)
   {
-    s = erin::devs::flow_limits_external_transition(
-        erin::devs::flow_limits_internal_transition(s),
+    state = erin::devs::flow_limits_external_transition(
+        erin::devs::flow_limits_internal_transition(state),
         0,
         xs);
   }
@@ -731,7 +731,7 @@ namespace ERIN
   Time
   FlowLimits::ta()
   {
-    auto dt = erin::devs::flow_limits_time_advance(s);
+    auto dt = erin::devs::flow_limits_time_advance(state);
     if (dt == erin::devs::infinity)
       return inf;
     return Time{dt, 1};
@@ -740,7 +740,7 @@ namespace ERIN
   void
   FlowLimits::output_func(std::vector<PortValue>& ys)
   {
-    erin::devs::flow_limits_output_function_mutable(s, ys);
+    erin::devs::flow_limits_output_function_mutable(state, ys);
   }
 
   ////////////////////////////////////////////////////////////

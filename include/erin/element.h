@@ -269,8 +269,7 @@ namespace ERIN
     void output_func(std::vector<PortValue>& ys) override;
 
     private:
-      erin::devs::FlowLimits state;
-      erin::devs::FlowLimitsState s; 
+      erin::devs::FlowLimitsState state;
   };
 
   ////////////////////////////////////////////////////////////

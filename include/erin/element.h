@@ -268,10 +268,6 @@ namespace ERIN
     Time ta() override;
     void output_func(std::vector<PortValue>& ys) override;
 
-    protected:
-      [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
-      [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
-
     private:
       erin::devs::FlowLimits state;
       erin::devs::FlowLimitsState s; 

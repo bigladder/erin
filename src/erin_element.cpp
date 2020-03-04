@@ -743,64 +743,6 @@ namespace ERIN
     erin::devs::flow_limits_output_function_mutable(s, ys);
   }
 
-  FlowState
-  FlowLimits::update_state_for_outflow_request(FlowValueType out) const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowLimits::update_state_for_outflow_request(" << out << ")\n";
-      print_state("... ");
-    }
-    FlowValueType out_{0.0};
-    if (out > state.get_upper_limit()) {
-      out_ = state.get_upper_limit();
-    }
-    else if (out < state.get_lower_limit()) {
-      out_ = state.get_lower_limit();
-    }
-    else {
-      out_ = out;
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      print_state("... ");
-      std::cout << "end FlowLimits::update_state_for_outflow_request\n";
-    }
-    return FlowState{out_, out_};
-  }
-
-  FlowState
-  FlowLimits::update_state_for_inflow_achieved(FlowValueType in) const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowLimits::update_state_for_inflow_achieved(" << in << ")\n";
-      print_state("... ");
-    }
-    FlowValueType in_{0.0};
-    if (in > state.get_upper_limit()) {
-      std::ostringstream oss;
-      oss << "AchievedMoreThanRequestedError\n";
-      oss << "in > upper_limit\n";
-      oss << "in: " << in << "\n";
-      oss << "upper_limit: " << state.get_upper_limit() << "\n";
-      throw std::runtime_error(oss.str());
-    }
-    else if (in < state.get_lower_limit()) {
-      std::ostringstream oss;
-      oss << "AchievedMoreThanRequestedError\n";
-      oss << "in < lower_limit\n";
-      oss << "in: " << in << "\n";
-      oss << "lower_limit: " << state.get_lower_limit() << "\n";
-      throw std::runtime_error(oss.str());
-    }
-    else {
-      in_ = in;
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      print_state("... ");
-      std::cout << "end FlowLimits::update_state_for_inflow_achieved\n";
-    }
-    return FlowState{in_, in_};
-  }
-
   ////////////////////////////////////////////////////////////
   // FlowMeter
   FlowMeter::FlowMeter(

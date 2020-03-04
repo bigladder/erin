@@ -4292,7 +4292,11 @@ TEST(ErinElements, Test_flow_writer_clone)
 TEST(ErinDevs, Test_new_functional_flow_limits_object)
 {
   namespace ED = erin::devs;
+  namespace EU = erin::utils;
   using size_type = std::vector<ED::PortValue>::size_type;
+  auto compare_ports = [](const ED::PortValue& a, const ED::PortValue& b) -> bool {
+    return (a.port == b.port) && (a.value == b.value);
+  };
   ED::FlowLimitsState s0{
     // time, inflow_port, outflow_port
     0, ED::Port{}, ED::Port{},
@@ -4338,13 +4342,9 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
   auto ys3 = ED::flow_limits_output_function(s3);
   std::vector<ED::PortValue> expected_ys3 = {
     ED::PortValue{ED::outport_outflow_achieved, 8.0}};
-  ASSERT_EQ(ys3.size(), expected_ys3.size());
-  for (size_type i{0}; i < expected_ys3.size(); ++i) {
-    const auto& y3 = ys3.at(i);
-    const auto& ey3 = expected_ys3.at(i);
-    EXPECT_EQ(y3.port, ey3.port);
-    EXPECT_EQ(y3.value, ey3.value);
-  }
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys3, expected_ys3, compare_ports));
   auto s4 = ED::flow_limits_internal_transition(s3);
   ED::FlowLimitsState expected_s4{
     2,
@@ -4363,17 +4363,32 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
     ED::Port{4, 200.0, 100.0},
     0.0, 100.0, true, true};
   EXPECT_EQ(s5, expected_s5);
-  std::vector<ED::PortValue> xs5 = {
+  auto ys5 = ED::flow_limits_output_function(s5);
+  std::vector<ED::PortValue> expected_ys5 = {
+    ED::PortValue{ED::outport_outflow_achieved, 100.0},
+    ED::PortValue{ED::outport_inflow_request, 100.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys5, expected_ys5, compare_ports));
+  auto s6 = ED::flow_limits_internal_transition(s5);
+  auto dt6 = ED::flow_limits_time_advance(s6);
+  ASSERT_EQ(dt6, ED::infinity);
+  std::vector<ED::PortValue> xs6 = {
     ED::PortValue{ED::inport_inflow_achieved, 55.0}};
-  auto s6 = ED::flow_limits_external_transition(s5, 0, xs5);
-  ED::FlowLimitsState expected_s6{
+  auto s7 = ED::flow_limits_external_transition(s6, 0, xs6);
+  ED::FlowLimitsState expected_s7{
     4,
     ED::Port{4, 100.0, 55.0},
     ED::Port{4, 200.0, 55.0},
     0.0, 100.0, false, true};
-  EXPECT_EQ(s6, expected_s6);
+  EXPECT_EQ(s7, expected_s7);
+  auto ys7 = ED::flow_limits_output_function(s7);
+  std::vector<ED::PortValue> expected_ys7{
+    ED::PortValue{ED::outport_outflow_achieved, 55.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys7, expected_ys7, compare_ports));
 }
-
 
 TEST(ErinBasicsTest, Test_that_compare_vectors_unordered_works)
 {
@@ -4388,7 +4403,6 @@ TEST(ErinBasicsTest, Test_that_compare_vectors_unordered_works)
   ys = std::vector<int>{4,3,2};
   EXPECT_FALSE(eu::compare_vectors_unordered<int>(xs, ys));
 }
-
 
 int
 main(int argc, char **argv)

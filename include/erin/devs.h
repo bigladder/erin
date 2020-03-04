@@ -137,7 +137,13 @@ namespace erin::devs
   FlowLimitsState
   flow_limits_internal_transition(const FlowLimitsState& state);
 
-  std::vector<PortValue> flow_limits_output_function(const FlowLimitsState& state);
+  std::vector<PortValue>
+  flow_limits_output_function(const FlowLimitsState& state);
+
+  void 
+  flow_limits_output_function_mutable(
+      const FlowLimitsState& state,
+      std::vector<PortValue>& ys);
 
   bool operator==(const FlowLimitsState& a, const FlowLimitsState& b);
   bool operator!=(const FlowLimitsState& a, const FlowLimitsState& b);

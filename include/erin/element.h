@@ -262,12 +262,19 @@ namespace ERIN
           FlowValueType lower_limit,
           FlowValueType upper_limit);
 
+    void delta_int() override;
+    void delta_ext(Time e, std::vector<PortValue>& xs) override;
+    void delta_conf(std::vector<PortValue>& xs) override;
+    Time ta() override;
+    void output_func(std::vector<PortValue>& ys) override;
+
     protected:
       [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
       [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
       erin::devs::FlowLimits state;
+      erin::devs::FlowLimitsState s; 
   };
 
   ////////////////////////////////////////////////////////////

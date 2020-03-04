@@ -696,8 +696,51 @@ namespace ERIN
         component_type_,
         ElementType::FlowLimits,
         stream_type_),
-    state{lower_limit, upper_limit}
+    state{lower_limit, upper_limit},
+    s{0,
+      erin::devs::Port{0, 0.0},
+      erin::devs::Port{0, 0.0},
+      lower_limit,
+      upper_limit,
+      false,
+      false}
   {
+  }
+
+  void
+  FlowLimits::delta_int()
+  {
+    s = erin::devs::flow_limits_internal_transition(s);
+  }
+
+  void
+  FlowLimits::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    s = erin::devs::flow_limits_external_transition(s, e.real, xs);
+  }
+
+  void
+  FlowLimits::delta_conf(std::vector<PortValue>& xs)
+  {
+    s = erin::devs::flow_limits_external_transition(
+        erin::devs::flow_limits_internal_transition(s),
+        0,
+        xs);
+  }
+
+  Time
+  FlowLimits::ta()
+  {
+    auto dt = erin::devs::flow_limits_time_advance(s);
+    if (dt == erin::devs::infinity)
+      return inf;
+    return Time{dt, 1};
+  }
+
+  void
+  FlowLimits::output_func(std::vector<PortValue>& ys)
+  {
+    erin::devs::flow_limits_output_function_mutable(s, ys);
   }
 
   FlowState

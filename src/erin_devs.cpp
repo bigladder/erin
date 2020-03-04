@@ -286,15 +286,19 @@ namespace erin::devs
   std::vector<PortValue>
   flow_limits_output_function(const FlowLimitsState& state)
   {
-    std::vector<PortValue> out{};
+    std::vector<PortValue> ys{};
+    flow_limits_output_function_mutable(state, ys);
+    return ys;
+  }
+
+  void
+  flow_limits_output_function_mutable(const FlowLimitsState& state, std::vector<PortValue>& ys)
+  {
     const auto& ip = state.inflow_port;
     const auto& op = state.outflow_port;
-    if (state.report_inflow_request) {
-      out.emplace_back(PortValue{outport_inflow_request, ip.get_requested()});
-    }
-    if (state.report_outflow_achieved) {
-      out.emplace_back(PortValue{outport_outflow_achieved, op.get_achieved()});
-    }
-    return out;
+    if (state.report_inflow_request)
+      ys.emplace_back(PortValue{outport_inflow_request, ip.get_requested()});
+    if (state.report_outflow_achieved)
+      ys.emplace_back(PortValue{outport_outflow_achieved, op.get_achieved()});
   }
 }

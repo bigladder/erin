@@ -696,13 +696,7 @@ namespace ERIN
         component_type_,
         ElementType::FlowLimits,
         stream_type_),
-    state{0,
-      erin::devs::Port{0, 0.0},
-      erin::devs::Port{0, 0.0},
-      lower_limit,
-      upper_limit,
-      false,
-      false}
+    state{erin::devs::make_flow_limits_state(lower_limit, upper_limit)}
   {
   }
 

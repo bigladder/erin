@@ -131,6 +131,52 @@ namespace erin::devs
     }
   }
 
+  FlowLimitsState
+  make_flow_limits_state(
+      FlowValueType lower_limit,
+      FlowValueType upper_limit)
+  {
+    return make_flow_limits_state(
+        0,
+        Port{0, lower_limit, lower_limit},
+        Port{0, lower_limit, lower_limit},
+        lower_limit,
+        upper_limit,
+        false,
+        false);
+  }
+
+  FlowLimitsState
+  make_flow_limits_state(
+      RealTimeType time,
+      Port inflow_port,
+      Port outflow_port,
+      FlowValueType lower_limit,
+      FlowValueType upper_limit,
+      bool report_inflow_request,
+      bool report_outflow_achieved)
+  {
+    if (time < 0)
+      throw std::invalid_argument("time must be >= 0");
+    if (time < inflow_port.get_time_of_last_change())
+      throw std::invalid_argument(
+          "time cannot be less than time of last change of inflow_port");
+    if (time < outflow_port.get_time_of_last_change())
+      throw std::invalid_argument(
+          "time cannot be less than time of last change of outflow_port");
+    if (lower_limit > upper_limit)
+      throw std::invalid_argument("lower_limit must be <= upper_limit");
+    return FlowLimitsState{
+      time,
+      inflow_port,
+      outflow_port,
+      lower_limit,
+      upper_limit,
+      report_inflow_request,
+      report_outflow_achieved
+    };
+  }
+
   bool
   operator==(const FlowLimitsState& a, const FlowLimitsState& b)
   {

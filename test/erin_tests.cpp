@@ -4297,11 +4297,12 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
   auto compare_ports = [](const ED::PortValue& a, const ED::PortValue& b) -> bool {
     return (a.port == b.port) && (a.value == b.value);
   };
+  ED::FlowLimits limits{0.0, 100.0};
   ED::FlowLimitsState s0{
     // time, inflow_port, outflow_port
     0, ED::Port{}, ED::Port{},
-    // lower_limit, upper_limit, report_inflow_request, report_outflow_achieved
-    0.0, 100.0, false, false};
+    // FlowLimits, report_inflow_request, report_outflow_achieved
+    limits, false, false};
   auto dt0 = ED::flow_limits_time_advance(s0);
   EXPECT_EQ(dt0, ED::infinity); // ED::infinity is the representation we use for infinity
   auto s1 = ED::flow_limits_external_transition_on_outflow_request(s0, 2, 10.0);
@@ -4309,7 +4310,7 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
     2,
     ED::Port{2, 10.0, 10.0},
     ED::Port{2, 10.0, 10.0},
-    0.0, 100.0, true, false};
+    limits, true, false};
   EXPECT_EQ(s1, expected_s1);
   auto dt1 = ED::flow_limits_time_advance(s1);
   EXPECT_EQ(dt1, 0);
@@ -4328,14 +4329,14 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
     2,
     ED::Port{2, 10.0, 10.0},
     ED::Port{2, 10.0, 10.0},
-    0.0, 100.0, false, false};
+    limits, false, false};
   EXPECT_EQ(s2, expected_s2);
   auto s3 = ED::flow_limits_external_transition_on_inflow_achieved(s2, 0, 8.0);
   ED::FlowLimitsState expected_s3{
     2,
     ED::Port{2,10.0,8.0},
     ED::Port{2,10.0,8.0},
-    0.0, 100.0, false, true};
+    limits, false, true};
   EXPECT_EQ(s3, expected_s3);
   auto dt3 = ED::flow_limits_time_advance(s3);
   EXPECT_EQ(dt3, 0);
@@ -4350,7 +4351,7 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
     2,
     ED::Port{2,10.0,8.0},
     ED::Port{2,10.0,8.0},
-    0.0, 100.0, false, false};
+    limits, false, false};
   EXPECT_EQ(s4, expected_s4);
   auto dt4 = ED::flow_limits_time_advance(s4);
   EXPECT_EQ(dt4, ED::infinity);
@@ -4361,7 +4362,7 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
     4,
     ED::Port{4, 100.0, 100.0},
     ED::Port{4, 200.0, 100.0},
-    0.0, 100.0, true, true};
+    limits, true, true};
   EXPECT_EQ(s5, expected_s5);
   auto ys5 = ED::flow_limits_output_function(s5);
   std::vector<ED::PortValue> expected_ys5 = {
@@ -4380,7 +4381,7 @@ TEST(ErinDevs, Test_new_functional_flow_limits_object)
     4,
     ED::Port{4, 100.0, 55.0},
     ED::Port{4, 200.0, 55.0},
-    0.0, 100.0, false, true};
+    limits, false, true};
   EXPECT_EQ(s7, expected_s7);
   auto ys7 = ED::flow_limits_output_function(s7);
   std::vector<ED::PortValue> expected_ys7{

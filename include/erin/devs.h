@@ -97,10 +97,17 @@ namespace erin::devs
       [[nodiscard]] FlowValueType get_lower_limit() const { return lower_limit; }
       [[nodiscard]] FlowValueType get_upper_limit() const { return upper_limit; }
 
+      friend bool operator==(const FlowLimits& a, const FlowLimits& b);
+      friend std::ostream& operator<<(std::ostream& os, const FlowLimits& f);
+
     private:
       FlowValueType lower_limit;
       FlowValueType upper_limit;
   };
+
+  bool operator==(const FlowLimits& a, const FlowLimits& b);
+  bool operator!=(const FlowLimits& a, const FlowLimits& b);
+  std::ostream& operator<<(std::ostream& os, const FlowLimits& f);
 
   const RealTimeType default_start_time{0};
   const FlowValueType default_upper_flow_limit{1e12};
@@ -117,8 +124,9 @@ namespace erin::devs
       default_start_time,
       default_lower_flow_limit,
       default_lower_flow_limit};
-    FlowValueType lower_limit{default_lower_flow_limit};
-    FlowValueType upper_limit{default_upper_flow_limit};
+    FlowLimits limits{
+      default_lower_flow_limit,
+      default_upper_flow_limit};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
   };

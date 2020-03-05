@@ -716,10 +716,7 @@ namespace ERIN
   void
   FlowLimits::delta_conf(std::vector<PortValue>& xs)
   {
-    state = erin::devs::flow_limits_external_transition(
-        erin::devs::flow_limits_internal_transition(state),
-        0,
-        xs);
+    state = erin::devs::flow_limits_confluent_transition(state, xs);
   }
 
   Time

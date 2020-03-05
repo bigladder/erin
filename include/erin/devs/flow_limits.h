@@ -11,6 +11,8 @@
 
 namespace erin::devs
 {
+  ////////////////////////////////////////////////////////////
+  // helper classes and functions
   class FlowLimits
   {
     public:
@@ -33,6 +35,8 @@ namespace erin::devs
   bool operator!=(const FlowLimits& a, const FlowLimits& b);
   std::ostream& operator<<(std::ostream& os, const FlowLimits& f);
 
+  ////////////////////////////////////////////////////////////
+  // state
   const RealTimeType default_start_time{0};
   const FlowValueType default_upper_flow_limit{1e12};
   const FlowValueType default_lower_flow_limit{0.0};
@@ -72,9 +76,18 @@ namespace erin::devs
       bool report_inflow_request,
       bool report_outflow_achieved);
 
+  ////////////////////////////////////////////////////////////
+  // time advance
   RealTimeType
   flow_limits_time_advance(const FlowLimitsState& state);
 
+  ////////////////////////////////////////////////////////////
+  // internal transition
+  FlowLimitsState
+  flow_limits_internal_transition(const FlowLimitsState& state);
+
+  ////////////////////////////////////////////////////////////
+  // external transition
   FlowLimitsState
   flow_limits_external_transition(
       const FlowLimitsState& state,
@@ -93,9 +106,14 @@ namespace erin::devs
       RealTimeType elapsed_time,
       FlowValueType inflow_achieved);
 
+  ////////////////////////////////////////////////////////////
+  // confluent transition
   FlowLimitsState
-  flow_limits_internal_transition(const FlowLimitsState& state);
+  flow_limits_confluent_transition(
+      const FlowLimitsState& state, const std::vector<PortValue>& xs);
 
+  ////////////////////////////////////////////////////////////
+  // output function
   std::vector<PortValue>
   flow_limits_output_function(const FlowLimitsState& state);
 
@@ -103,6 +121,5 @@ namespace erin::devs
   flow_limits_output_function_mutable(
       const FlowLimitsState& state,
       std::vector<PortValue>& ys);
-
 }
 #endif // ERIN_DEVS_FLOW_LIMITS_H

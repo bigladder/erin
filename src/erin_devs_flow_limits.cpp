@@ -125,6 +125,19 @@ namespace erin::devs
   }
 
   FlowLimitsState
+  flow_limits_internal_transition(const FlowLimitsState& state)
+  {
+    return FlowLimitsState{
+      state.time,
+      state.inflow_port,
+      state.outflow_port,
+      state.limits,
+      false,
+      false
+    };
+  }
+
+  FlowLimitsState
   flow_limits_external_transition(
       const FlowLimitsState& state,
       RealTimeType elapsed_time,
@@ -224,16 +237,12 @@ namespace erin::devs
   }
 
   FlowLimitsState
-  flow_limits_internal_transition(const FlowLimitsState& state)
+  flow_limits_confluent_transition(
+      const FlowLimitsState& state,
+      const std::vector<PortValue>& xs)
   {
-    return FlowLimitsState{
-      state.time,
-      state.inflow_port,
-      state.outflow_port,
-      state.limits,
-      false,
-      false
-    };
+    return flow_limits_external_transition(
+        flow_limits_internal_transition(state), 0, xs);
   }
 
   std::vector<PortValue>

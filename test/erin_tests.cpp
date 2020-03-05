@@ -9,6 +9,7 @@
 #include "debug_utils.h"
 #include "erin/devs.h"
 #include "erin/devs/flow_limits.h"
+#include "erin/devs/converter.h"
 #include "erin/distribution.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"
@@ -4290,7 +4291,7 @@ TEST(ErinElements, Test_flow_writer_clone)
   EXPECT_EQ(expected_requested_flows2, actual_requested_flows2);
 }
 
-TEST(ErinDevs, Test_new_functional_flow_limits_object)
+TEST(ErinDevs, Test_flow_limits_functions)
 {
   namespace ED = erin::devs;
   namespace EU = erin::utils;
@@ -4404,6 +4405,23 @@ TEST(ErinBasicsTest, Test_that_compare_vectors_unordered_works)
   xs = std::vector<int>{1,2,3,4};
   ys = std::vector<int>{4,3,2};
   EXPECT_FALSE(eu::compare_vectors_unordered<int>(xs, ys));
+}
+
+TEST(ErinDevs, Test_converter_functions)
+{
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  using size_type = std::vector<ED::PortValue>::size_type;
+  ED::FlowValueType constant_efficiency{0.25};
+  auto s0 = ED::make_converter_state(constant_efficiency);
+  std::unique_ptr<ED::ConversionFun> cf =
+    std::make_unique<ED::ConstantEfficiencyFun>(constant_efficiency);
+  ED::ConverterState expected_s0{
+    // time, inflow_port, outflow_port, lossflow_port
+    0, ED::Port{}, ED::Port{}, ED::Port{},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, false, false};
+  EXPECT_EQ(s0, expected_s0);
 }
 
 int

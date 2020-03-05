@@ -8,6 +8,7 @@
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
 #include "erin/devs.h"
+#include "erin/devs/flow_limits.h"
 #include "erin/distribution.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"

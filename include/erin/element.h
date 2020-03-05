@@ -6,6 +6,7 @@
 #include "erin/type.h"
 #include "erin/stream.h"
 #include "erin/devs.h"
+#include "erin/devs/flow_limits.h"
 #include "adevs.h"
 #include <functional>
 #include <memory>

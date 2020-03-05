@@ -22,20 +22,6 @@ namespace erin::devs
   constexpr int outport_outflow_achieved{4*max_port_numbers};
   //constexpr int outport_lossflow_achieved{5*max_port_numbers};
 
-  //template <class TReal, class TLogical>
-  //class Time
-  //{
-  //  public:
-  //    Time();
-  //    Time(TReal dt);
-  //    Time(TReal dt, TLogical logical);
-  //    [[nodiscard]] TReal get_real() const { return real; }
-  //    [[nodiscard]] TLogical get_logical() const { return logical; }
-  //  private:
-  //    TReal real;
-  //    TLogical logical;
-  //};
-
   class Port
   {
     public:
@@ -66,143 +52,11 @@ namespace erin::devs
       RealTimeType time_of_last_change;
       FlowValueType requested;
       FlowValueType achieved;
-      //bool request_changed;
-      //bool achieved_changed;
   };
 
   bool operator==(const Port& a, const Port& b);
   bool operator!=(const Port& a, const Port& b);
   std::ostream& operator<<(std::ostream& os, const Port& p);
-
-  //template <class S>
-  //class Atomic
-  //{
-  //  public:
-  //    virtual Time time_advance(const S& state) const = 0;
-  //    virtual S internal_transition(const S& previous_state) const = 0;
-  //    virtual S external_transition(const S& previous_state, const Time& elapsed, const std::vector<PortValue>& xs) const = 0;
-  //    virtual S confluent_transition(const S& previous_state, const Time& elapsed, const std::vector<PortValue>& xs) const {
-  //      return external_transition(internal_transition(previous_state), Time{0,0}, xs);
-  //    }
-  //    virtual std::vector<PortValue> output_fn(const S& state) const = 0;
-  //};
-
-  class FlowLimits
-  {
-    public:
-      FlowLimits(
-          FlowValueType lower_limit,
-          FlowValueType upper_limit);
-
-      [[nodiscard]] FlowValueType get_lower_limit() const { return lower_limit; }
-      [[nodiscard]] FlowValueType get_upper_limit() const { return upper_limit; }
-
-      friend bool operator==(const FlowLimits& a, const FlowLimits& b);
-      friend std::ostream& operator<<(std::ostream& os, const FlowLimits& f);
-
-    private:
-      FlowValueType lower_limit;
-      FlowValueType upper_limit;
-  };
-
-  bool operator==(const FlowLimits& a, const FlowLimits& b);
-  bool operator!=(const FlowLimits& a, const FlowLimits& b);
-  std::ostream& operator<<(std::ostream& os, const FlowLimits& f);
-
-  const RealTimeType default_start_time{0};
-  const FlowValueType default_upper_flow_limit{1e12};
-  const FlowValueType default_lower_flow_limit{0.0};
-
-  struct FlowLimitsState
-  {
-    RealTimeType time{default_start_time};
-    Port inflow_port{
-      default_start_time,
-      default_lower_flow_limit,
-      default_lower_flow_limit};
-    Port outflow_port{
-      default_start_time,
-      default_lower_flow_limit,
-      default_lower_flow_limit};
-    FlowLimits limits{
-      default_lower_flow_limit,
-      default_upper_flow_limit};
-    bool report_inflow_request{false};
-    bool report_outflow_achieved{false};
-  };
-
-  bool operator==(const FlowLimitsState& a, const FlowLimitsState& b);
-  bool operator!=(const FlowLimitsState& a, const FlowLimitsState& b);
-  std::ostream& operator<<(std::ostream& os, const FlowLimitsState& s);
-
-  FlowLimitsState make_flow_limits_state(
-      FlowValueType lower_limit,
-      FlowValueType upper_limit);
-
-  FlowLimitsState make_flow_limits_state(
-      RealTimeType time,
-      Port inflow_port,
-      Port outflow_port,
-      FlowValueType lower_limit,
-      FlowValueType upper_limit,
-      bool report_inflow_request,
-      bool report_outflow_achieved);
-
-  RealTimeType
-  flow_limits_time_advance(const FlowLimitsState& state);
-
-  FlowLimitsState
-  flow_limits_external_transition(
-      const FlowLimitsState& state,
-      RealTimeType elapsed_time,
-      const std::vector<PortValue>& xs);
-
-  FlowLimitsState
-  flow_limits_external_transition_on_outflow_request(
-      const FlowLimitsState& state,
-      RealTimeType elapsed_time,
-      FlowValueType outflow_request);
-
-  FlowLimitsState
-  flow_limits_external_transition_on_inflow_achieved(
-      const FlowLimitsState& state,
-      RealTimeType elapsed_time,
-      FlowValueType inflow_achieved);
-
-  FlowLimitsState
-  flow_limits_internal_transition(const FlowLimitsState& state);
-
-  std::vector<PortValue>
-  flow_limits_output_function(const FlowLimitsState& state);
-
-  void 
-  flow_limits_output_function_mutable(
-      const FlowLimitsState& state,
-      std::vector<PortValue>& ys);
-
-  //struct FlowLimits
-  //{
-  //  std::string id;
-  //  PortFlow inflow_port;
-  //  PortFlow outflow_port;
-  //  std::string inflow_stream;
-  //  std::string outflow_stream;
-  //  double lower_limit;
-  //  double upper_limit;
-  //};
-
-  //class FlowLimits : public Atomic<FlowLimits>
-  //{
-  //  public:
-  //    FlowLimits();
-  //    virtual Time time_advance(const S& state) const override;
-  //    virtual S internal_transition(const S& previous_state) const override;
-  //    virtual S external_transition(const S& previous_state, const Time& elapsed, const std::vector<PortValue>& xs) const override;
-  //    virtual S confluent_transition(const S& previous_state, const Time& elapsed, const std::vector<PortValue>& xs) const {
-  //      return external_transition(internal_transition(previous_state), Time{0,0}, xs);
-  //    }
-  //    virtual std::vector<PortValue> output_fn(const S& state) const override;
-  //};
 }
 
 #endif // ERIN_DEVS_H

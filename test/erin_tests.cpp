@@ -4449,6 +4449,25 @@ TEST(ErinDevs, Test_converter_functions)
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     std::move(cf->clone()), false, false, false};
   EXPECT_EQ(expected_s2, s2);
+  auto dt2 = ED::converter_time_advance(s2);
+  EXPECT_EQ(dt2, ED::infinity);
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_inflow_achieved, 20.0}};
+  auto s3 = ED::converter_external_transition(s2, 1, xs2);
+  ED::ConverterState expected_s3{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    3, ED::Port{3, 40.0, 20.0}, ED::Port{3, 10.0, 5.0}, ED::Port{0, 0.0}, ED::Port{3, 15.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, true, false};
+  EXPECT_EQ(expected_s3, s3);
+  auto dt3 = ED::converter_time_advance(s3);
+  EXPECT_EQ(dt3, 0);
+  auto ys3 = ED::converter_output_function(s3);
+  std::vector<ED::PortValue> expected_ys3{
+    ED::PortValue{ED::outport_outflow_achieved, 5.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys3, expected_ys3, compare_ports));
   //TODO: test scenarios with all combinations of inflow_acheived, outflow_request, and lossflow_request
   // - one at a time, two at a time, and all three
 }

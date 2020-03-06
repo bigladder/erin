@@ -140,6 +140,7 @@ namespace erin::devs
   LossflowPorts
   update_lossflow_ports(
       RealTimeType time,
+      FlowValueType lossflow_achieved,
       const Port& lossflow_port,
       const Port& wasteflow_port);
 

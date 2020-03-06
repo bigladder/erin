@@ -253,26 +253,24 @@ namespace erin::devs
       RealTimeType new_time,
       FlowValueType outflow_request)
   {
-    const auto& ip = state.inflow_port;
-    const auto& op = state.outflow_port;
-    const auto& lp = state.lossflow_port;
-    const auto& wp = state.wasteflow_port;
-    const auto& f = state.conversion_fun;
-    auto inflow_request = f->inflow_given_outflow(outflow_request);
-    auto lossflow_achieved = f->lossflow_given_outflow(outflow_request);
-    auto new_op{op.with_requested(outflow_request, new_time)};
-    auto new_ip{ip.with_requested(inflow_request, new_time)};
+    auto inflow_request =
+      state.conversion_fun->inflow_given_outflow(outflow_request);
+    auto lossflow_achieved =
+      state.conversion_fun->lossflow_given_outflow(outflow_request);
+    auto new_op{state.outflow_port.with_requested(outflow_request, new_time)};
+    auto new_ip{state.inflow_port.with_requested(inflow_request, new_time)};
     auto loss_ports = update_lossflow_ports(
         new_time,
-        lp.with_achieved(lossflow_achieved, new_time),
-        wp.with_requested_and_achieved(0.0, 0.0, new_time));
+        lossflow_achieved,
+        state.lossflow_port,
+        state.wasteflow_port);
     return ConverterState{
       new_time,
-      std::move(new_ip),
-      std::move(new_op),
-      std::move(loss_ports.lossflow_port),
-      std::move(loss_ports.wasteflow_port),
-      f->clone(),
+      new_ip,
+      new_op,
+      loss_ports.lossflow_port,
+      loss_ports.wasteflow_port,
+      state.conversion_fun->clone(),
       new_ip.should_propagate_request_at(new_time),
       state.report_outflow_achieved,
       loss_ports.lossflow_port.should_propagate_achieved_at(new_time),
@@ -285,26 +283,24 @@ namespace erin::devs
       RealTimeType new_time,
       FlowValueType inflow_achieved)
   {
-    const auto& ip = state.inflow_port;
-    const auto& op = state.outflow_port;
-    const auto& lp = state.lossflow_port;
-    const auto& wp = state.wasteflow_port;
-    const auto& f = state.conversion_fun;
-    auto outflow_achieved = f->outflow_given_inflow(inflow_achieved);
-    auto lossflow_achieved = f->lossflow_given_inflow(inflow_achieved);
-    auto new_op{op.with_achieved(outflow_achieved, new_time)};
-    auto new_ip{ip.with_achieved(inflow_achieved, new_time)};
+    auto outflow_achieved =
+      state.conversion_fun->outflow_given_inflow(inflow_achieved);
+    auto lossflow_achieved =
+      state.conversion_fun->lossflow_given_inflow(inflow_achieved);
+    auto new_ip{state.inflow_port.with_achieved(inflow_achieved, new_time)};
+    auto new_op{state.outflow_port.with_achieved(outflow_achieved, new_time)};
     auto loss_ports = update_lossflow_ports(
         new_time,
-        lp.with_achieved(lossflow_achieved, new_time),
-        wp.with_requested_and_achieved(0.0, 0.0, new_time));
+        lossflow_achieved,
+        state.lossflow_port,
+        state.wasteflow_port);
     return ConverterState{
       new_time,
-      std::move(new_ip),
-      std::move(new_op),
-      std::move(loss_ports.lossflow_port),
-      std::move(loss_ports.wasteflow_port),
-      f->clone(),
+      new_ip,
+      new_op,
+      loss_ports.lossflow_port,
+      loss_ports.wasteflow_port,
+      state.conversion_fun->clone(),
       state.report_inflow_request,
       new_op.should_propagate_achieved_at(new_time),
       loss_ports.lossflow_port.should_propagate_achieved_at(new_time),
@@ -319,6 +315,7 @@ namespace erin::devs
   {
     auto loss_ports = update_lossflow_ports(
         new_time,
+        state.lossflow_port.get_achieved() + state.wasteflow_port.get_achieved(),
         state.lossflow_port.with_requested(lossflow_request, new_time),
         state.wasteflow_port);
     return ConverterState{
@@ -337,18 +334,18 @@ namespace erin::devs
   LossflowPorts
   update_lossflow_ports(
       RealTimeType time,
+      FlowValueType achieved,
       const Port& lossflow_port,
       const Port& wasteflow_port)
   {
     const auto& requested = lossflow_port.get_requested();
-    const auto& achieved = lossflow_port.get_achieved() + wasteflow_port.get_achieved(); 
-    if (requested > achieved)
+    if (requested >= achieved)
       return LossflowPorts{
-        lossflow_port.with_requested_and_achieved(requested, achieved, time),
+        lossflow_port.with_achieved(achieved, time),
         wasteflow_port.with_requested_and_achieved(0.0, 0.0, time)};
     auto waste = achieved - requested;
     return LossflowPorts{
-      lossflow_port.with_requested_and_achieved(requested, requested, time),
+      lossflow_port.with_achieved(requested, time),
       wasteflow_port.with_requested_and_achieved(waste, waste, time)};
   }
 

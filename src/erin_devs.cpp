@@ -75,7 +75,7 @@ namespace erin::devs
   }
 
   Port
-  Port::with_achieved(FlowValueType new_achieved, RealTimeType /* time */) const
+  Port::with_achieved(FlowValueType new_achieved, RealTimeType time) const
   {
     // when we set an achieved flow, we do not touch the request; we are still
     // requesting what we request regardless of what is achieved.
@@ -88,7 +88,10 @@ namespace erin::devs
     //      << "achieved    : " << achieved << "\n";
     //  throw std::invalid_argument(oss.str());
     //}
-    return Port{time_of_last_change, requested, new_achieved};
+    auto t{time_of_last_change};
+    if (achieved != new_achieved)
+      t = time;
+    return Port{t, requested, new_achieved};
   }
 
   bool

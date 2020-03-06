@@ -799,6 +799,9 @@ namespace ERIN
         ElementType::Converter,
         std::move(input_stream_type),
         std::move(output_stream_type)),
+    state{
+      erin::devs::make_converter_state(
+          calc_output_from_input, calc_input_from_output)},
     output_from_input{std::move(calc_output_from_input)},
     input_from_output{std::move(calc_input_from_output)}
   {

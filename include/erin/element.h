@@ -6,6 +6,7 @@
 #include "erin/type.h"
 #include "erin/stream.h"
 #include "erin/devs.h"
+#include "erin/devs/converter.h"
 #include "erin/devs/flow_limits.h"
 #include "adevs.h"
 #include <functional>
@@ -305,11 +306,18 @@ namespace ERIN
           std::function<FlowValueType(FlowValueType)> calc_output_from_input,
           std::function<FlowValueType(FlowValueType)> calc_input_from_output);
 
+      //void delta_int() override;
+      //void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      //void delta_conf(std::vector<PortValue>& xs) override;
+      //Time ta() override;
+      //void output_func(std::vector<PortValue>& ys) override;
+
     protected:
       [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
       [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
+      erin::devs::ConverterState state;
       std::function<FlowValueType(FlowValueType)> output_from_input;
       std::function<FlowValueType(FlowValueType)> input_from_output;
   };

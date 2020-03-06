@@ -4428,11 +4428,19 @@ TEST(ErinDevs, Test_converter_functions)
   auto s1 = ED::converter_external_transition(s0, 2, xs0);
   ED::ConverterState expected_s1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{2, 30.0}, ED::Port{2, 0.0},
+    2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{0, 0.0}, ED::Port{2, 30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     std::move(cf->clone()), true, false, false};
+  EXPECT_EQ(expected_s1, s1);
   auto dt1 = ED::converter_time_advance(s1);
   EXPECT_EQ(dt1, 0);
+  auto s2 = ED::converter_internal_transition(s1);
+  ED::ConverterState expected_s2{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{0, 0.0}, ED::Port{2, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, false, false};
+  EXPECT_EQ(expected_s2, s2);
   //TODO: test scenarios with all combinations of inflow_acheived, outflow_request, and lossflow_request
   // - one at a time, two at a time, and all three
 }

@@ -133,7 +133,8 @@ namespace erin::devs
               << "inflow_port=" << a.inflow_port << ", "
               << "outflow_port=" << a.outflow_port << ", "
               << "lossflow_port=" << a.lossflow_port << ", "
-              << "conversion_fun=" << a.conversion_fun << ", "
+              << "wasteflow_port=" << a.wasteflow_port << ", "
+              << "conversion_fun=" << (*a.conversion_fun) << ", "
               << "report_inflow_request=" << a.report_inflow_request << ", "
               << "report_outflow_request=" << a.report_outflow_achieved << ", "
               << "report_lossflow_request=" << a.report_lossflow_achieved << ")";
@@ -162,6 +163,22 @@ namespace erin::devs
     if (state.report_inflow_request || state.report_outflow_achieved || state.report_lossflow_achieved)
       return 0;
     return infinity;
+  }
+
+  ConverterState
+  converter_internal_transition(const ConverterState& state)
+  {
+    return ConverterState{
+      state.time, // internal transitions alsways take 0 time
+      state.inflow_port,
+      state.outflow_port,
+      state.lossflow_port,
+      state.wasteflow_port,
+      state.conversion_fun->clone(),
+      false,
+      false,
+      false,
+    };
   }
 
   ConverterState

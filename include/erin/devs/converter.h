@@ -108,8 +108,8 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // internal transition
-  //ConverterState
-  //converter_internal_transition(const ConverterState& state);
+  ConverterState
+  converter_internal_transition(const ConverterState& state);
 
   ////////////////////////////////////////////////////////////
   // external transition

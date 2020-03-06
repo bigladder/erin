@@ -4511,9 +4511,17 @@ TEST(ErinDevs, Test_converter_functions)
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
   ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_c), std::invalid_argument);
 
-  //std::vector<ED::PortValue> xs_d{
-  //  ED::PortValue{ED::inport_outflow_request, 10.0},
-  //  ED::PortValue{ED::inport_lossflow_request, 30.0}};
+  std::vector<ED::PortValue> xs_d{
+    ED::PortValue{ED::inport_outflow_request, 10.0},
+    ED::PortValue{ED::inport_lossflow_request, 30.0}};
+  auto s_d = ED::converter_external_transition(s0, 10, xs_d);
+  ED::ConverterState expected_s_d{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    10, ED::Port{10, 40.0}, ED::Port{10, 10.0}, ED::Port{10, 30.0}, ED::Port{0, 0.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), true, false, false};
+  EXPECT_EQ(s_d, expected_s_d);
+
   //std::vector<ED::PortValue> xs_e{
   //  ED::PortValue{ED::inport_outflow_request, 10.0},
   //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};

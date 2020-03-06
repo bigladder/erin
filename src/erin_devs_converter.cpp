@@ -322,8 +322,8 @@ namespace erin::devs
       new_time,
       state.inflow_port,
       state.outflow_port,
-      std::move(loss_ports.lossflow_port),
-      std::move(loss_ports.wasteflow_port),
+      loss_ports.lossflow_port,
+      loss_ports.wasteflow_port,
       state.conversion_fun->clone(),
       state.report_inflow_request,
       state.report_outflow_achieved,
@@ -347,6 +347,15 @@ namespace erin::devs
     return LossflowPorts{
       lossflow_port.with_achieved(requested, time),
       wasteflow_port.with_requested_and_achieved(waste, waste, time)};
+  }
+
+  ConverterState
+  converter_confluent_transition(
+      const ConverterState& state,
+      const std::vector<PortValue>& xs)
+  {
+    return converter_external_transition(
+        converter_internal_transition(state), 0, xs);
   }
 
   std::vector<PortValue>

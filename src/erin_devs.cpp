@@ -22,6 +22,14 @@ namespace erin::devs
     requested{r},
     achieved{a}
   {
+    if (achieved > requested) {
+      std::ostringstream oss;
+      oss << "achieved more than requested error!\n"
+          << "time_of_last_change : " << time_of_last_change << "\n"
+          << "requested           : " << requested << "\n"
+          << "achieved            : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+    }
   }
 
   bool
@@ -79,15 +87,6 @@ namespace erin::devs
   {
     // when we set an achieved flow, we do not touch the request; we are still
     // requesting what we request regardless of what is achieved.
-    // if achieved is more than requested, that is an error.
-    //if (new_achieved > requested) {
-    //  std::ostringstream oss;
-    //  oss << "achieved more than requested error!\n"
-    //      << "new_achieved: " << new_achieved << "\n"
-    //      << "requested   : " << requested << "\n"
-    //      << "achieved    : " << achieved << "\n";
-    //  throw std::invalid_argument(oss.str());
-    //}
     auto t{time_of_last_change};
     if (achieved != new_achieved)
       t = time;

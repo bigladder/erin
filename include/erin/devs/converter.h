@@ -146,10 +146,10 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // confluent transition
-  //ConverterState
-  //converter_confluent_transition(
-  //    const ConverterState& state,
-  //    const std::vector<PortValue>& xs); 
+  ConverterState
+  converter_confluent_transition(
+      const ConverterState& state,
+      const std::vector<PortValue>& xs); 
 
   ////////////////////////////////////////////////////////////
   // output function

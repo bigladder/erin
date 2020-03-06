@@ -4522,9 +4522,11 @@ TEST(ErinDevs, Test_converter_functions)
     cf->clone(), true, false, false};
   EXPECT_EQ(s_d, expected_s_d);
 
-  //std::vector<ED::PortValue> xs_e{
-  //  ED::PortValue{ED::inport_outflow_request, 10.0},
-  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  std::vector<ED::PortValue> xs_e{
+    ED::PortValue{ED::inport_outflow_request, 10.0},
+    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_e), std::invalid_argument);
+
   //std::vector<ED::PortValue> xs_f{
   //  ED::PortValue{ED::inport_lossflow_request, 30.0},
   //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};

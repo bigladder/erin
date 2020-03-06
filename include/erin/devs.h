@@ -20,7 +20,7 @@ namespace erin::devs
   constexpr int inport_lossflow_request{2*max_port_numbers};
   constexpr int outport_inflow_request{3*max_port_numbers};
   constexpr int outport_outflow_achieved{4*max_port_numbers};
-  //constexpr int outport_lossflow_achieved{5*max_port_numbers};
+  constexpr int outport_lossflow_achieved{5*max_port_numbers};
 
   class Port
   {

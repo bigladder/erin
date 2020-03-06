@@ -351,4 +351,34 @@ namespace erin::devs
       lossflow_port.with_requested_and_achieved(requested, requested, time),
       wasteflow_port.with_requested_and_achieved(waste, waste, time)};
   }
+
+  std::vector<PortValue>
+  converter_output_function(const ConverterState& state)
+  {
+    std::vector<PortValue> ys{};
+    converter_output_function_mutable(state, ys);
+    return ys;
+  }
+
+  void 
+  converter_output_function_mutable(
+      const ConverterState& state,
+      std::vector<PortValue>& ys)
+  {
+    if (state.report_inflow_request)
+      ys.emplace_back(
+          PortValue{
+            outport_inflow_request,
+            state.inflow_port.get_requested()});
+    if (state.report_outflow_achieved)
+      ys.emplace_back(
+          PortValue{
+            outport_outflow_achieved,
+            state.outflow_port.get_achieved()});
+    if (state.report_lossflow_achieved)
+      ys.emplace_back(
+          PortValue{
+            outport_lossflow_achieved,
+            state.lossflow_port.get_achieved()});
+  }
 }

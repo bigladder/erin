@@ -152,13 +152,13 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // output function
-  //std::vector<PortValue>
-  //converter_output_function(const ConverterState& state);
+  std::vector<PortValue>
+  converter_output_function(const ConverterState& state);
 
-  //void 
-  //converter_output_function_mutable(
-  //    const FlowLimitsState& state,
-  //    std::vector<PortValue>& ys);
+  void 
+  converter_output_function_mutable(
+      const ConverterState& state,
+      std::vector<PortValue>& ys);
 }
 
 #endif // ERIN_DEVS_CONVERTER_H

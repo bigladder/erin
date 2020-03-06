@@ -4291,14 +4291,16 @@ TEST(ErinElements, Test_flow_writer_clone)
   EXPECT_EQ(expected_requested_flows2, actual_requested_flows2);
 }
 
+bool compare_ports(const erin::devs::PortValue& a, const erin::devs::PortValue& b)
+{
+  return (a.port == b.port) && (a.value == b.value);
+};
+
 TEST(ErinDevs, Test_flow_limits_functions)
 {
   namespace ED = erin::devs;
   namespace EU = erin::utils;
   using size_type = std::vector<ED::PortValue>::size_type;
-  auto compare_ports = [](const ED::PortValue& a, const ED::PortValue& b) -> bool {
-    return (a.port == b.port) && (a.value == b.value);
-  };
   ED::FlowLimits limits{0.0, 100.0};
   ED::FlowLimitsState s0{
     // time, inflow_port, outflow_port
@@ -4434,6 +4436,12 @@ TEST(ErinDevs, Test_converter_functions)
   EXPECT_EQ(expected_s1, s1);
   auto dt1 = ED::converter_time_advance(s1);
   EXPECT_EQ(dt1, 0);
+  auto ys1 = ED::converter_output_function(s1);
+  std::vector<ED::PortValue> expected_ys1{
+    ED::PortValue{ED::outport_inflow_request, 40.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys1, expected_ys1, compare_ports));
   auto s2 = ED::converter_internal_transition(s1);
   ED::ConverterState expected_s2{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port

@@ -244,6 +244,13 @@ namespace erin::devs
     if (got_outflow_request)
       new_state = converter_external_transition_on_outflow_request(
           new_state, new_time, outflow_request);
+    // prevent reporting already known information
+    if ((got_inflow_achieved) && (new_state.inflow_port.get_achieved() == inflow_achieved))
+      new_state.report_inflow_request = false;
+    if ((got_outflow_request) && (new_state.outflow_port.get_achieved() == outflow_request))
+      new_state.report_outflow_achieved = false;
+    if ((got_lossflow_request) && (new_state.lossflow_port.get_achieved() == lossflow_request))
+      new_state.report_lossflow_achieved = false;
     return new_state;
   }
 

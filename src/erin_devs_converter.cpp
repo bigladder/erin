@@ -118,6 +118,7 @@ namespace erin::devs
       && (a.inflow_port == b.inflow_port)
       && (a.outflow_port == b.outflow_port)
       && (a.lossflow_port == b.lossflow_port)
+      && (a.wasteflow_port == b.wasteflow_port)
       && ((*a.conversion_fun) == (*b.conversion_fun))
       && (a.report_inflow_request == b.report_inflow_request)
       && (a.report_outflow_achieved == b.report_outflow_achieved)
@@ -144,7 +145,193 @@ namespace erin::devs
     std::unique_ptr<ConversionFun> p =
       std::make_unique<ConstantEfficiencyFun>(constant_efficiency);
     return ConverterState{
-      0, Port{}, Port{}, Port{},
-      std::move(p), false, false, false};
+      0,            // time
+      Port{0, 0.0}, // inflow_port
+      Port{0, 0.0}, // outflow_port
+      Port{0, 0.0}, // lossflow_port
+      Port{0, 0.0}, // wasteflow_port
+      std::move(p), // conversion_fun
+      false,        // report_inflow_request
+      false,        // report_outflow_achieved
+      false};       // report_lossflow_achieved
+  }
+
+  RealTimeType
+  converter_time_advance(const ConverterState& state)
+  {
+    if (state.report_inflow_request || state.report_outflow_achieved || state.report_lossflow_achieved)
+      return 0;
+    return infinity;
+  }
+
+  ConverterState
+  converter_external_transition(
+      const ConverterState& state,
+      RealTimeType elapsed_time,
+      const std::vector<PortValue>& xs)
+  {
+    bool got_outflow_request{false};
+    bool got_inflow_achieved{false};
+    bool got_lossflow_request{false};
+    FlowValueType outflow_request{0.0};
+    FlowValueType inflow_achieved{0.0};
+    FlowValueType lossflow_request{0.0};
+    for (const auto& x: xs) {
+      switch (x.port) {
+        case inport_outflow_request:
+          {
+            got_outflow_request = true;
+            outflow_request += x.value;
+            break;
+          }
+        case inport_inflow_achieved:
+          {
+            got_inflow_achieved = true;
+            inflow_achieved += x.value;
+            break;
+          }
+        case inport_lossflow_request:
+          {
+            got_lossflow_request = true;
+            lossflow_request += x.value;
+            break;
+          }
+        default:
+          {
+            std::ostringstream oss;
+            oss << "unhandled port " << x.port
+                << " in converter_external_transition(...)";
+            throw std::invalid_argument(oss.str());
+          }
+      }
+    }
+    const auto& t = state.time;
+    auto new_time = t + elapsed_time;
+    ConverterState new_state{
+      new_time,
+      state.inflow_port,
+      state.outflow_port,
+      state.lossflow_port,
+      state.wasteflow_port,
+      state.conversion_fun->clone(),
+      state.report_inflow_request,
+      state.report_outflow_achieved,
+      state.report_lossflow_achieved,
+    };
+    if (got_inflow_achieved)
+      new_state = converter_external_transition_on_inflow_achieved(
+          new_state, new_time, inflow_achieved);
+    if (got_lossflow_request)
+      new_state = converter_external_transition_on_lossflow_request(
+          new_state, new_time, lossflow_request);
+    if (got_outflow_request)
+      new_state = converter_external_transition_on_outflow_request(
+          new_state, new_time, outflow_request);
+    return new_state;
+  }
+
+  ConverterState
+  converter_external_transition_on_outflow_request(
+      const ConverterState& state,
+      RealTimeType new_time,
+      FlowValueType outflow_request)
+  {
+    const auto& ip = state.inflow_port;
+    const auto& op = state.outflow_port;
+    const auto& lp = state.lossflow_port;
+    const auto& wp = state.wasteflow_port;
+    const auto& f = state.conversion_fun;
+    auto inflow_request = f->inflow_given_outflow(outflow_request);
+    auto lossflow_achieved = f->lossflow_given_outflow(outflow_request);
+    auto new_op{op.with_requested(outflow_request, new_time)};
+    auto new_ip{ip.with_requested(inflow_request, new_time)};
+    auto loss_ports = update_lossflow_ports(
+        new_time,
+        lp.with_achieved(lossflow_achieved, new_time),
+        wp.with_requested_and_achieved(0.0, 0.0, new_time));
+    return ConverterState{
+      new_time,
+      std::move(new_ip),
+      std::move(new_op),
+      std::move(loss_ports.lossflow_port),
+      std::move(loss_ports.wasteflow_port),
+      f->clone(),
+      new_ip.should_propagate_request_at(new_time),
+      state.report_outflow_achieved,
+      loss_ports.lossflow_port.should_propagate_achieved_at(new_time),
+    };
+  }
+
+  ConverterState
+  converter_external_transition_on_inflow_achieved(
+      const ConverterState& state,
+      RealTimeType new_time,
+      FlowValueType inflow_achieved)
+  {
+    const auto& ip = state.inflow_port;
+    const auto& op = state.outflow_port;
+    const auto& lp = state.lossflow_port;
+    const auto& wp = state.wasteflow_port;
+    const auto& f = state.conversion_fun;
+    auto outflow_achieved = f->outflow_given_inflow(inflow_achieved);
+    auto lossflow_achieved = f->lossflow_given_inflow(inflow_achieved);
+    auto new_op{op.with_achieved(outflow_achieved, new_time)};
+    auto new_ip{ip.with_achieved(inflow_achieved, new_time)};
+    auto loss_ports = update_lossflow_ports(
+        new_time,
+        lp.with_achieved(lossflow_achieved, new_time),
+        wp.with_requested_and_achieved(0.0, 0.0, new_time));
+    return ConverterState{
+      new_time,
+      std::move(new_ip),
+      std::move(new_op),
+      std::move(loss_ports.lossflow_port),
+      std::move(loss_ports.wasteflow_port),
+      f->clone(),
+      state.report_inflow_request,
+      new_op.should_propagate_achieved_at(new_time),
+      loss_ports.lossflow_port.should_propagate_achieved_at(new_time),
+    };
+  }
+
+  ConverterState
+  converter_external_transition_on_lossflow_request(
+      const ConverterState& state,
+      RealTimeType new_time,
+      FlowValueType lossflow_request)
+  {
+    auto loss_ports = update_lossflow_ports(
+        new_time,
+        state.lossflow_port.with_requested(lossflow_request, new_time),
+        state.wasteflow_port);
+    return ConverterState{
+      new_time,
+      state.inflow_port,
+      state.outflow_port,
+      std::move(loss_ports.lossflow_port),
+      std::move(loss_ports.wasteflow_port),
+      state.conversion_fun->clone(),
+      state.report_inflow_request,
+      state.report_outflow_achieved,
+      loss_ports.lossflow_port.should_propagate_achieved_at(new_time),
+    };
+  }
+
+  LossflowPorts
+  update_lossflow_ports(
+      RealTimeType time,
+      const Port& lossflow_port,
+      const Port& wasteflow_port)
+  {
+    const auto& requested = lossflow_port.get_requested();
+    const auto& achieved = lossflow_port.get_achieved() + wasteflow_port.get_achieved(); 
+    if (requested > achieved)
+      return LossflowPorts{
+        lossflow_port.with_requested_and_achieved(requested, achieved, time),
+        wasteflow_port.with_requested_and_achieved(0.0, 0.0, time)};
+    auto waste = achieved - requested;
+    return LossflowPorts{
+      lossflow_port.with_requested_and_achieved(requested, requested, time),
+      wasteflow_port.with_requested_and_achieved(waste, waste, time)};
   }
 }

@@ -47,6 +47,7 @@ namespace erin::devs
     public:
       ConstantEfficiencyFun();
       explicit ConstantEfficiencyFun(FlowValueType constant_efficiency);
+      ~ConstantEfficiencyFun() = default;
       ConstantEfficiencyFun(const ConstantEfficiencyFun&) = delete;
       ConstantEfficiencyFun& operator=(const ConstantEfficiencyFun&) = delete;
       ConstantEfficiencyFun(ConstantEfficiencyFun&&) = delete;
@@ -80,6 +81,7 @@ namespace erin::devs
     Port inflow_port{0, 0.0, 0.0};
     Port outflow_port{0, 0.0, 0.0};
     Port lossflow_port{0, 0.0, 0.0};
+    Port wasteflow_port{0, 0.0, 0.0};
     std::unique_ptr<ConversionFun> conversion_fun{};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
@@ -93,10 +95,16 @@ namespace erin::devs
   ConverterState
   make_converter_state(FlowValueType constant_efficiency);
 
+  struct LossflowPorts
+  {
+    Port lossflow_port{0, 0.0, 0.0};
+    Port wasteflow_port{0, 0.0, 0.0};
+  };
+
   ////////////////////////////////////////////////////////////
   // time advance
-  //RealTimeType
-  //converter_time_advance(const ConverterState& state);
+  RealTimeType
+  converter_time_advance(const ConverterState& state);
 
   ////////////////////////////////////////////////////////////
   // internal transition
@@ -105,11 +113,35 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // external transition
-  //ConverterState
-  //converter_external_transition(
-  //    const ConverterState& state,
-  //    RealTimeType elapsed_time,
-  //    const std::vector<PortValue>& xs); 
+  ConverterState
+  converter_external_transition(
+      const ConverterState& state,
+      RealTimeType elapsed_time,
+      const std::vector<PortValue>& xs); 
+
+  ConverterState
+  converter_external_transition_on_outflow_request(
+      const ConverterState& state,
+      RealTimeType new_time,
+      FlowValueType outflow_request);
+
+  ConverterState
+  converter_external_transition_on_inflow_achieved(
+      const ConverterState& state,
+      RealTimeType new_time,
+      FlowValueType inflow_achieved);
+
+  ConverterState
+  converter_external_transition_on_lossflow_request(
+      const ConverterState& state,
+      RealTimeType new_time,
+      FlowValueType lossflow_request);
+
+  LossflowPorts
+  update_lossflow_ports(
+      RealTimeType time,
+      const Port& lossflow_port,
+      const Port& wasteflow_port);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

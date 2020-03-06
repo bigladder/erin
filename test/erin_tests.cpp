@@ -4623,6 +4623,22 @@ TEST(ErinDevs, Test_converter_functions)
   EXPECT_EQ(s_g1, expected_s_g1);
 }
 
+TEST(ErinDevs, Test_function_based_efficiency)
+{
+  namespace ED = erin::devs;
+  namespace E = ERIN;
+  auto f_in_to_out = [](E::FlowValueType inflow) -> E::FlowValueType {
+    return inflow * 0.25;
+  };
+  auto f_out_to_in = [](E::FlowValueType outflow) -> E::FlowValueType {
+    return outflow / 0.25;
+  };
+  std::unique_ptr<ED::ConversionFun> f =
+    std::make_unique<ED::FunctionBasedEfficiencyFun>(f_in_to_out, f_out_to_in);
+  EXPECT_EQ(40.0, f->inflow_given_outflow(10.0));
+  EXPECT_EQ(10.0, f->outflow_given_inflow(40.0));
+}
+
 int
 main(int argc, char **argv)
 {

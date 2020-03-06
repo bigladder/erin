@@ -14,7 +14,7 @@ namespace erin::devs
   bool
   operator==(const ConversionFun& a, const ConversionFun& b)
   {
-    if constexpr (ERIN::debug_level <= ERIN::debug_level_low)
+    if constexpr (ERIN::debug_level <= ERIN::debug_level_high)
     {
       std::cout << "entering operator==(const ConversionFun& a, const ConversionFun& b)\n";
     }
@@ -29,8 +29,14 @@ namespace erin::devs
       const auto& bb = dynamic_cast<const ConstantEfficiencyFun&>(b);
       return aa == bb;
     }
+    if (typeid(FunctionBasedEfficiencyFun) == a_idx)
+    {
+      const auto& aa = dynamic_cast<const FunctionBasedEfficiencyFun&>(a);
+      const auto& bb = dynamic_cast<const FunctionBasedEfficiencyFun&>(b);
+      return aa == bb;
+    }
     std::ostringstream oss{};
-    oss << "unhandled type " << a_idx.name() << "\n";
+    oss << "I'm sorry, this is an unhandled type " << a_idx.name() << "\n";
     throw std::runtime_error(oss.str());
   }
 
@@ -47,6 +53,10 @@ namespace erin::devs
     
     if (typeid(ConstantEfficiencyFun) == idx) {
       const auto& aa = dynamic_cast<const ConstantEfficiencyFun&>(a);
+      return os << aa;
+    }
+    if (typeid(FunctionBasedEfficiencyFun) == idx) {
+      const auto& aa = dynamic_cast<const FunctionBasedEfficiencyFun&>(a);
       return os << aa;
     }
     std::ostringstream oss{};
@@ -112,6 +122,63 @@ namespace erin::devs
               << ")";
   }
 
+  FunctionBasedEfficiencyFun::FunctionBasedEfficiencyFun():
+    FunctionBasedEfficiencyFun(
+        [](FlowValueType a) -> FlowValueType { return a; },
+        [](FlowValueType a) -> FlowValueType { return a; })
+  {
+  }
+
+  FunctionBasedEfficiencyFun::FunctionBasedEfficiencyFun(
+      std::function<FlowValueType(FlowValueType)> calc_output_from_input_,
+      std::function<FlowValueType(FlowValueType)> calc_input_from_output_):
+    ConversionFun(),
+    calc_output_from_input{calc_output_from_input_},
+    calc_input_from_output{calc_input_from_output_}
+  {
+  }
+
+  std::unique_ptr<ConversionFun>
+  FunctionBasedEfficiencyFun::clone() const
+  {
+    std::unique_ptr<ConversionFun> p = std::make_unique<FunctionBasedEfficiencyFun>(
+        calc_output_from_input, calc_input_from_output);
+    return p;
+  }
+
+  FlowValueType
+  FunctionBasedEfficiencyFun::outflow_given_inflow(FlowValueType inflow) const
+  {
+    return calc_output_from_input(inflow);
+  }
+
+  FlowValueType
+  FunctionBasedEfficiencyFun::inflow_given_outflow(FlowValueType outflow) const
+  {
+    return calc_input_from_output(outflow);
+  }
+
+  bool
+  operator==(const FunctionBasedEfficiencyFun& a, const FunctionBasedEfficiencyFun& b)
+  {
+    return (&a.calc_output_from_input == &b.calc_output_from_input)
+      && (&a.calc_input_from_output == &b.calc_input_from_output);
+  }
+
+  bool
+  operator!=(const FunctionBasedEfficiencyFun& a, const FunctionBasedEfficiencyFun& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const FunctionBasedEfficiencyFun& a)
+  {
+    return os << "FunctionBasedEfficiencyFun("
+              << "calc_output_from_input=" << (&a.calc_output_from_input) << ", "
+              << "calc_input_from_output=" << (&a.calc_input_from_output) << ")";
+  }
+
   bool operator==(const ConverterState& a, const ConverterState& b)
   {
     return (a.time == b.time)
@@ -145,6 +212,26 @@ namespace erin::devs
   {
     std::unique_ptr<ConversionFun> p =
       std::make_unique<ConstantEfficiencyFun>(constant_efficiency);
+    return ConverterState{
+      0,            // time
+      Port{0, 0.0}, // inflow_port
+      Port{0, 0.0}, // outflow_port
+      Port{0, 0.0}, // lossflow_port
+      Port{0, 0.0}, // wasteflow_port
+      std::move(p), // conversion_fun
+      false,        // report_inflow_request
+      false,        // report_outflow_achieved
+      false};       // report_lossflow_achieved
+  }
+
+  ConverterState
+  make_converter_state(
+      std::function<FlowValueType(FlowValueType)> calc_output_from_input,
+      std::function<FlowValueType(FlowValueType)> calc_input_from_output)
+  {
+    std::unique_ptr<ConversionFun> p =
+      std::make_unique<FunctionBasedEfficiencyFun>(
+          calc_output_from_input, calc_input_from_output);
     return ConverterState{
       0,            // time
       Port{0, 0.0}, // inflow_port

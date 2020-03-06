@@ -5,6 +5,7 @@
 #define ERIN_DEVS_CONVERTER_H
 #include "erin/type.h"
 #include "erin/devs.h"
+#include <functional>
 #include <iostream>
 #include <string>
 #include <typeinfo>
@@ -73,6 +74,36 @@ namespace erin::devs
   bool operator!=(const ConstantEfficiencyFun& a, const ConstantEfficiencyFun& b);
   std::ostream& operator<<(std::ostream& os, const ConstantEfficiencyFun& a);
 
+  class FunctionBasedEfficiencyFun : public ConversionFun
+  {
+    public:
+      FunctionBasedEfficiencyFun();
+      FunctionBasedEfficiencyFun(
+          std::function<FlowValueType(FlowValueType)> calc_output_from_input,
+          std::function<FlowValueType(FlowValueType)> calc_input_from_output);
+      ~FunctionBasedEfficiencyFun() = default;
+      FunctionBasedEfficiencyFun(const FunctionBasedEfficiencyFun&) = delete;
+      FunctionBasedEfficiencyFun& operator=(const FunctionBasedEfficiencyFun&) = delete;
+      FunctionBasedEfficiencyFun(FunctionBasedEfficiencyFun&&) = delete;
+      FunctionBasedEfficiencyFun& operator=(FunctionBasedEfficiencyFun&&) = delete;
+
+      std::unique_ptr<ConversionFun> clone() const override;
+      FlowValueType outflow_given_inflow(FlowValueType inflow) const override;
+      FlowValueType inflow_given_outflow(FlowValueType outflow) const override;
+
+      friend bool operator==(const FunctionBasedEfficiencyFun& a, const FunctionBasedEfficiencyFun& b);
+
+      friend std::ostream& operator<<(std::ostream& os, const FunctionBasedEfficiencyFun& a);
+
+    private:
+      std::function<FlowValueType(FlowValueType)> calc_output_from_input;
+      std::function<FlowValueType(FlowValueType)> calc_input_from_output;
+  };
+
+  bool operator==(const FunctionBasedEfficiencyFun& a, const FunctionBasedEfficiencyFun& b);
+  bool operator!=(const FunctionBasedEfficiencyFun& a, const FunctionBasedEfficiencyFun& b);
+  std::ostream& operator<<(std::ostream& os, const FunctionBasedEfficiencyFun& a);
+
   ////////////////////////////////////////////////////////////
   // state
   struct ConverterState
@@ -94,6 +125,11 @@ namespace erin::devs
 
   ConverterState
   make_converter_state(FlowValueType constant_efficiency);
+
+  ConverterState
+  make_converter_state(
+      std::function<FlowValueType(FlowValueType)> calc_output_from_input,
+      std::function<FlowValueType(FlowValueType)> calc_input_from_output);
 
   struct LossflowPorts
   {

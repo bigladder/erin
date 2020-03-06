@@ -4522,25 +4522,22 @@ TEST(ErinDevs, Test_converter_functions)
     cf->clone(), true, false, false};
   EXPECT_EQ(s_d, expected_s_d);
 
+  // ... the below 3 all throw because we're getting an inflow achieved without a request for it
   std::vector<ED::PortValue> xs_e{
     ED::PortValue{ED::inport_outflow_request, 10.0},
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
   ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_e), std::invalid_argument);
 
-  //std::vector<ED::PortValue> xs_f{
-  //  ED::PortValue{ED::inport_lossflow_request, 30.0},
-  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  //std::vector<ED::PortValue> xs_f{
-  //  ED::PortValue{ED::inport_outflow_request, 10.0},
-  //  ED::PortValue{ED::inport_lossflow_request, 30.0},
-  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  //auto s_c = ED::converter_external_transition(s0, 10, xs_c);
-  //auto s_d = ED::converter_external_transition(s0, 10, xs_d);
-  //auto s_e = ED::converter_external_transition(s0, 10, xs_e);
-  //auto s_f = ED::converter_external_transition(s0, 10, xs_f);
-  //TODO: test scenarios with all combinations of inflow_acheived, outflow_request, and lossflow_request
-  // - one at a time, two at a time, and all three
+  std::vector<ED::PortValue> xs_f{
+    ED::PortValue{ED::inport_lossflow_request, 30.0},
+    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_f), std::invalid_argument);
 
+  std::vector<ED::PortValue> xs_g{
+    ED::PortValue{ED::inport_outflow_request, 10.0},
+    ED::PortValue{ED::inport_lossflow_request, 30.0},
+    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_g), std::invalid_argument);
 }
 
 int

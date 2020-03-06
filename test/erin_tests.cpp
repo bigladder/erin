@@ -4486,7 +4486,9 @@ TEST(ErinDevs, Test_converter_functions)
     2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{2, 2.0}, ED::Port{2, 28.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, false, false};
+
   // Test Multiple Events for a Single External Transition
+  // Starting from a "Zero" State
   std::vector<ED::PortValue> xs_a{
     ED::PortValue{ED::inport_outflow_request, 10.0}};
   auto s_a = ED::converter_external_transition(s0, 10, xs_a);
@@ -4538,6 +4540,70 @@ TEST(ErinDevs, Test_converter_functions)
     ED::PortValue{ED::inport_lossflow_request, 30.0},
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
   ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_g), std::invalid_argument);
+  
+  // Test Multiple Events for a Single External Transition
+  ED::ConverterState s_m{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    2, ED::Port{2, 80.0}, ED::Port{2, 20.0}, ED::Port{0, 0.0}, ED::Port{2, 60.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, false, false};
+  //std::vector<ED::PortValue> xs_a{
+  //  ED::PortValue{ED::inport_outflow_request, 10.0}};
+  auto s_a1 = ED::converter_external_transition(s_m, 10, xs_a);
+  ED::ConverterState expected_s_a1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 40.0}, ED::Port{12, 10.0}, ED::Port{0, 0.0}, ED::Port{12, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), true, false, false};
+  EXPECT_EQ(s_a1, expected_s_a1);
+
+  //std::vector<ED::PortValue> xs_b{
+  //  ED::PortValue{ED::inport_lossflow_request, 30.0}};
+  auto s_b1 = ED::converter_external_transition(s_m, 10, xs_b);
+  ED::ConverterState expected_s_b1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{2, 80.0}, ED::Port{2, 20.0}, ED::Port{12, 30.0}, ED::Port{12, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, false, false};
+  EXPECT_EQ(s_b1, expected_s_b1);
+
+  //std::vector<ED::PortValue> xs_c{
+  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  auto s_c1 = ED::converter_external_transition(s_m, 10, xs_c);
+  ED::ConverterState expected_s_c1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 80.0, 40.0}, ED::Port{12, 20.0, 10.0}, ED::Port{0, 0.0}, ED::Port{12, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, true, false};
+  EXPECT_EQ(s_c1, expected_s_c1);
+
+  //std::vector<ED::PortValue> xs_d{
+  //  ED::PortValue{ED::inport_outflow_request, 10.0},
+  //  ED::PortValue{ED::inport_lossflow_request, 30.0}};
+  auto s_d1 = ED::converter_external_transition(s_m, 10, xs_d);
+  ED::ConverterState expected_s_d1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 40.0}, ED::Port{12, 10.0}, ED::Port{12, 30.0}, ED::Port{12, 0.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), true, false, false};
+  EXPECT_EQ(s_d1, expected_s_d1);
+
+  //// ... the below 3 all throw because we're getting an inflow achieved without a request for it
+  //std::vector<ED::PortValue> xs_e{
+  //  ED::PortValue{ED::inport_outflow_request, 10.0},
+  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  //ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_e), std::invalid_argument);
+
+  //std::vector<ED::PortValue> xs_f{
+  //  ED::PortValue{ED::inport_lossflow_request, 30.0},
+  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  //ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_f), std::invalid_argument);
+
+  //std::vector<ED::PortValue> xs_g{
+  //  ED::PortValue{ED::inport_outflow_request, 10.0},
+  //  ED::PortValue{ED::inport_lossflow_request, 30.0},
+  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  //ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_g), std::invalid_argument);
 }
 
 int

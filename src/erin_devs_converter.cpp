@@ -1,7 +1,6 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include "erin/devs.h"
 #include "erin/devs/converter.h"
 #include "debug_utils.h"
 #include <algorithm>

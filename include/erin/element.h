@@ -306,11 +306,11 @@ namespace ERIN
           std::function<FlowValueType(FlowValueType)> calc_output_from_input,
           std::function<FlowValueType(FlowValueType)> calc_input_from_output);
 
-      //void delta_int() override;
-      //void delta_ext(Time e, std::vector<PortValue>& xs) override;
-      //void delta_conf(std::vector<PortValue>& xs) override;
-      //Time ta() override;
-      //void output_func(std::vector<PortValue>& ys) override;
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
 
     protected:
       [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
@@ -386,6 +386,8 @@ namespace ERIN
       std::vector<FlowValueType> outflows; // achieved
       std::vector<FlowValueType> prev_outflows;
       std::vector<FlowValueType> outflow_requests;
+
+      void update_outflows_using_inorder_dispatch(FlowValueType remaining_inflow);
   };
 
   ////////////////////////////////////////////////////////////

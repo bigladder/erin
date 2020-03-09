@@ -807,6 +807,45 @@ namespace ERIN
   {
   }
 
+  void
+  Converter::delta_int()
+  {
+    state = erin::devs::converter_internal_transition(state);
+  }
+
+  void
+  Converter::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::detla_ext("
+                << "e=Time{" << e.real << "," << e.logical << "}, "
+                << "xs=" << vec_to_string<PortValue>(xs) << ")\n";
+      std::cout << "id = " << get_id() << "\n";
+    }
+    state = erin::devs::converter_external_transition(state, e.real, xs);
+  }
+
+  void
+  Converter::delta_conf(std::vector<PortValue>& xs)
+  {
+    state = erin::devs::converter_confluent_transition(state, xs);
+  }
+
+  Time
+  Converter::ta()
+  {
+    auto dt = erin::devs::converter_time_advance(state);
+    if (dt == erin::devs::infinity)
+      return inf;
+    return Time{dt, 1};
+  }
+
+  void
+  Converter::output_func(std::vector<PortValue>& ys)
+  {
+    erin::devs::converter_output_function_mutable(state, ys);
+  }
+
   FlowState
   Converter::update_state_for_outflow_request(FlowValueType outflow_) const
   {
@@ -1046,10 +1085,42 @@ namespace ERIN
   }
 
   void
+  Mux::update_outflows_using_inorder_dispatch(FlowValueType remaining_inflow)
+  {
+    using size_type = std::vector<FlowValueType>::size_type;
+    auto num_ofs = outflows.size();
+    for (size_type of_idx{0}; of_idx < num_ofs; ++of_idx) {
+      if (outflow_requests[of_idx] >= remaining_inflow) {
+        outflows[of_idx] = remaining_inflow;
+      } else {
+        outflows[of_idx] = outflow_requests[of_idx];
+      }
+      remaining_inflow -= outflows[of_idx];
+    }
+  }
+
+  void
   Mux::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Mux::delta_ext();id=" << get_id() << "\n";
+      std::cout << "Mux::delta_ext();"
+                << "id=" << get_id() << ";"
+                << "time={" << get_real_time() << ", " << get_logical_time() << "}\n";
+      bool first{true};
+      std::cout << "xs=";
+      for (const auto& x : xs) {
+        if (first) {
+          first = false;
+          std::cout << "[";
+        } else {
+          std::cout << ", ";
+        }
+        std::cout << "{port=" << x.port << ", value=" << x.value << "}";
+      }
+      if (xs.size() > 0)
+        std::cout << "]\n";
+      else
+        std::cout << "[]\n";
     }
     update_time(e);
     bool inflow_provided{false};
@@ -1066,22 +1137,20 @@ namespace ERIN
         if (port_n > highest_inflow_port_received) {
           highest_inflow_port_received = port_n;
         }
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "... receive<=inport_inflow_achieved(" << port_n << ");id="
-                    << get_id() << "\n";
-        }
         prev_inflows[port_n] = x.value;
         inflows_achieved[port_n] = x.value;
         inflow_provided = true;
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "... receive<=inport_inflow_achieved(" << port_n << ");id="
+                    << get_id() << "\n";
+          std::cout << "... prev_inflows = " << vec_to_string(prev_inflows) << "\n";
+          std::cout << "... inflows_achieved = " << vec_to_string(inflows_achieved) << "\n";
+        }
       }
       else if ((port_n_or >= 0) && (port_n_or < num_outflows)) {
         port_n = port_n_or;
         if (port_n > highest_outflow_port_received) {
           highest_outflow_port_received = port_n;
-        }
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "... receive<=inport_outflow_request(" << port_n << ");id="
-                    << get_id() << "\n";
         }
         // by setting both prev_outflows and outflow_requests we prevent
         // reporting back downstream to the component. If, however, our
@@ -1089,6 +1158,12 @@ namespace ERIN
         prev_outflows[port_n] = x.value;
         outflow_requests[port_n] = x.value;
         outflow_provided = true;
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "... receive<=inport_outflow_request(" << port_n << ");id="
+                    << get_id() << "\n";
+          std::cout << "... prev_outflows    = " << vec_to_string(prev_outflows) << "\n";
+          std::cout << "... outflow_requests = " << vec_to_string(outflow_requests) << "\n";
+        }
       }
       else {
         std::ostringstream oss;
@@ -1104,7 +1179,21 @@ namespace ERIN
     for (const auto x: outflow_requests) {
       total_outflow_request += x;
     }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "... PRIOR TO PROCESSING:\n";
+      std::cout << "... total_inflow_achieved = " << total_inflow_achieved << "\n";
+      std::cout << "... total_outflow_request = " << total_outflow_request << "\n";
+      std::cout << "... inflows = " << vec_to_string(inflows) << "\n";
+      std::cout << "... prev_inflows = " << vec_to_string(prev_inflows) << "\n";
+      std::cout << "... inflows_achieved = " << vec_to_string(inflows_achieved) << "\n";
+      std::cout << "... outflows = " << vec_to_string(outflows) << "\n";
+      std::cout << "... prev_outflows = " << vec_to_string(prev_outflows) << "\n";
+      std::cout << "... outflow_requests = " << vec_to_string(outflow_requests) << "\n";
+    }
     if (inflow_provided && !outflow_provided) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "inflow_provided && !outflow_provided\n";
+      }
       set_report_outflow_achieved(true);
       if (total_inflow_achieved > total_outflow_request) {
         std::ostringstream oss;
@@ -1120,12 +1209,22 @@ namespace ERIN
       }
       if (strategy == MuxerDispatchStrategy::InOrder) {
         auto diff = total_outflow_request - total_inflow_achieved;
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "... diff = " << diff << "\n";
+        }
         if (std::abs(diff) <= flow_value_tolerance) {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "... we met the loads\n";
+          }
           // We met the loads.
           update_state(FlowState{total_inflow_achieved});
           inflows = inflows_achieved;
+          update_outflows_using_inorder_dispatch(total_inflow_achieved);
         }
         else if (diff < neg_flow_value_tol) {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "... we're oversupplying; reset\n";
+          }
           // we're oversupplying... reset
           set_report_outflow_achieved(false);
           set_report_inflow_request(true);
@@ -1135,6 +1234,9 @@ namespace ERIN
           inflows_achieved = inflows;
         }
         else {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "... we're undersupplying\n";
+          }
           // we're undersupplying
           const auto final_inflow_port = num_inflows - 1;
           if (highest_inflow_port_received < final_inflow_port) {
@@ -1169,17 +1271,7 @@ namespace ERIN
                     oss << "get_report_outflow_achieved() = "
                         << get_report_outflow_achieved() << "\n";
                   }
-                  FlowValueType remaining_inflow{total_inflow_achieved};
-                  using size_type = std::vector<FlowValueType>::size_type;
-                  auto num_ofs = outflows.size();
-                  for (size_type of_idx{0}; of_idx < num_ofs; ++of_idx) {
-                    if (outflow_requests[of_idx] >= remaining_inflow) {
-                      outflows[of_idx] = remaining_inflow;
-                    } else {
-                      outflows[of_idx] = outflow_requests[of_idx];
-                    }
-                    remaining_inflow -= outflows[of_idx];
-                  }
+                  update_outflows_using_inorder_dispatch(total_inflow_achieved);
                   break;
                 }
               case MuxerDispatchStrategy::Distribute:
@@ -1239,6 +1331,9 @@ namespace ERIN
       }
     }
     else if (outflow_provided && !inflow_provided) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "outflow_provided && !inflow_provided\n";
+      }
       set_report_inflow_request(true);
       set_report_outflow_achieved(true);
       if (strategy == MuxerDispatchStrategy::InOrder) {
@@ -1267,6 +1362,9 @@ namespace ERIN
       }
     }
     else if (inflow_provided && outflow_provided) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "inflow_provided && outflow_provided\n";
+      }
       if (total_inflow_achieved > total_outflow_request) {
         std::ostringstream oss;
         oss << "SimultaneousIORequestError: assumption was we'd never get here...\n";
@@ -1291,13 +1389,26 @@ namespace ERIN
       update_on_external_transition();
       check_flow_invariants();
     }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "... AT ALGORITHM END:\n";
+      std::cout << "... total_inflow_achieved = " << total_inflow_achieved << "\n";
+      std::cout << "... total_outflow_request = " << total_outflow_request << "\n";
+      std::cout << "... inflows = " << vec_to_string(inflows) << "\n";
+      std::cout << "... prev_inflows = " << vec_to_string(prev_inflows) << "\n";
+      std::cout << "... inflows_achieved = " << vec_to_string(inflows_achieved) << "\n";
+      std::cout << "... outflows = " << vec_to_string(outflows) << "\n";
+      std::cout << "... prev_outflows = " << vec_to_string(prev_outflows) << "\n";
+      std::cout << "... outflow_requests = " << vec_to_string(outflow_requests) << "\n";
+    }
   }
 
   void
   Mux::output_func(std::vector<PortValue>& ys)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Mux::output_func();id=" << get_id() << "\n";
+      std::cout << "Mux::output_func();"
+                << "id=" << get_id() << ";"
+                << "time={" << get_real_time() << ", " << get_logical_time() << "}\n";
     }
     if (get_report_inflow_request()) {
       if constexpr (debug_level >= debug_level_high) {
@@ -1348,6 +1459,23 @@ namespace ERIN
           prev_outflows[i] = outflow_;
         }
       }
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "... ys = ";
+      bool first{true};
+      for (const auto y : ys) {
+        if (first) {
+          std::cout << "[";
+          first = false;
+        } else {
+          std::cout << ", ";
+        }
+        std::cout << "{port=" << y.port << ", value=" << y.value << "}";
+      }
+      if (ys.size() > 0)
+        std::cout << "]\n";
+      else
+        std::cout << "[]\n";
     }
   }
 }

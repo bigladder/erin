@@ -1,0 +1,42 @@
+/* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+ * See the LICENSE file for additional terms and conditions. */
+
+#ifndef ERIN_DEVS_LOAD_H
+#define ERIN_DEVS_LOAD_H
+#include "erin/devs.h"
+
+namespace erin::devs
+{
+  ////////////////////////////////////////////////////////////
+  // helper classes and functions
+  struct DurationLoad
+  {
+    RealTimeType duration{0};
+    FlowValueType load{0.0};
+  };
+
+  ////////////////////////////////////////////////////////////
+  // state
+  struct LoadState
+  {
+  };
+
+  LoadState make_load_state(const std::vector<DurationLoad>& duration_loads);
+
+  ////////////////////////////////////////////////////////////
+  // time advance
+
+  ////////////////////////////////////////////////////////////
+  // internal transition
+
+  ////////////////////////////////////////////////////////////
+  // external transition
+
+  ////////////////////////////////////////////////////////////
+  // confluent transition
+
+  ////////////////////////////////////////////////////////////
+  // output function
+}
+
+#endif // ERIN_DEVS_CONVERTER_H

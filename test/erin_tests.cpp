@@ -10,6 +10,7 @@
 #include "erin/devs.h"
 #include "erin/devs/flow_limits.h"
 #include "erin/devs/converter.h"
+#include "erin/devs/load.h"
 #include "erin/distribution.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"
@@ -4637,6 +4638,17 @@ TEST(ErinDevs, Test_function_based_efficiency)
     std::make_unique<ED::FunctionBasedEfficiencyFun>(f_in_to_out, f_out_to_in);
   EXPECT_EQ(40.0, f->inflow_given_outflow(10.0));
   EXPECT_EQ(10.0, f->outflow_given_inflow(40.0));
+}
+
+TEST(ErinDevs, Test_function_based_load)
+{
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  ED::LoadState s0 = ED::make_load_state(
+      std::vector<ED::DurationLoad>{
+        ED::DurationLoad{10, 100.0},
+        ED::DurationLoad{100, 10.0},
+        ED::DurationLoad{ED::infinity, 0.0}});
 }
 
 int

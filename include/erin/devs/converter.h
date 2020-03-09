@@ -3,8 +3,8 @@
 
 #ifndef ERIN_DEVS_CONVERTER_H
 #define ERIN_DEVS_CONVERTER_H
-#include "erin/type.h"
 #include "erin/devs.h"
+#include "erin/type.h"
 #include <functional>
 #include <iostream>
 #include <string>

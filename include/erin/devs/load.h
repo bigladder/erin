@@ -4,29 +4,36 @@
 #ifndef ERIN_DEVS_LOAD_H
 #define ERIN_DEVS_LOAD_H
 #include "erin/devs.h"
+#include "erin/type.h"
 #include <vector>
 
 namespace erin::devs
 {
   ////////////////////////////////////////////////////////////
   // helper classes and functions
-  struct DurationLoad
-  {
-    RealTimeType duration{0};
-    FlowValueType load{0.0};
-  };
+  using LoadItem = ERIN::LoadItem;
 
   ////////////////////////////////////////////////////////////
   // state
 
   struct LoadState
   {
+    RealTimeType time{0};
     int number_of_loads{0};
-    std::vector<DurationLoad> duration_loads{};
+    std::vector<LoadItem> loads{};
     int current_index{0};
+    Port inflow_port{};
   };
 
-  LoadState make_load_state(const std::vector<DurationLoad>& duration_loads);
+  LoadState make_load_state(const std::vector<LoadItem>& loads);
+
+  RealTimeType load_current_time(const LoadState& state);
+
+  RealTimeType load_next_time(const LoadState& state);
+
+  FlowValueType load_current_request(const LoadState& state);
+
+  FlowValueType load_current_achieved(const LoadState& state);
 
   ////////////////////////////////////////////////////////////
   // time advance
@@ -38,6 +45,10 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // external transition
+  LoadState load_external_transition(
+      const LoadState& state,
+      RealTimeType dt,
+      const std::vector<PortValue>& xs);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

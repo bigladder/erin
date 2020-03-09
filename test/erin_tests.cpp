@@ -4646,12 +4646,14 @@ TEST(ErinDevs, Test_function_based_load)
   namespace ED = erin::devs;
   namespace EU = erin::utils;
   ED::LoadState s0 = ED::make_load_state(
-      std::vector<ED::DurationLoad>{
-        ED::DurationLoad{10, 100.0},
-        ED::DurationLoad{100, 10.0},
-        ED::DurationLoad{ED::infinity, 0.0}});
+      std::vector<ED::LoadItem>{
+        ED::LoadItem{0, 100.0},
+        ED::LoadItem{10, 10.0},
+        ED::LoadItem{100, 10.0}, // should NOT cause a new event -- same load request.
+        ED::LoadItem{200}});
   auto dt0 = ED::load_time_advance(s0);
   EXPECT_EQ(dt0, 0);
+  EXPECT_EQ(ED::load_current_time(s0), 0);
   auto ys0 = ED::load_output_function(s0);
   std::vector<ED::PortValue> expected_ys0{
     ED::PortValue{ED::outport_inflow_request, 100.0}};
@@ -4661,6 +4663,25 @@ TEST(ErinDevs, Test_function_based_load)
   auto s1 = ED::load_internal_transition(s0);
   auto dt1 = ED::load_time_advance(s1);
   EXPECT_EQ(dt1, 10);
+  EXPECT_EQ(ED::load_current_time(s1), 0);
+  auto ys1 = ED::load_output_function(s1);
+  std::vector<ED::PortValue> expected_ys1{
+    ED::PortValue{ED::outport_inflow_request, 10.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys1, expected_ys1, compare_ports));
+  auto s2 = ED::load_internal_transition(s1);
+  auto dt2 = ED::load_time_advance(s2);
+  EXPECT_EQ(dt2, 90);
+  EXPECT_EQ(ED::load_current_time(s2), 10);
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_inflow_achieved, 5.0}};
+  auto s3 = ED::load_external_transition(s2, 50, xs2);
+  auto dt3 = ED::load_time_advance(s3);
+  EXPECT_EQ(dt3, 40);
+  EXPECT_EQ(ED::load_current_time(s3), 60);
+  EXPECT_EQ(ED::load_current_request(s3), 10.0);
+  EXPECT_EQ(ED::load_current_achieved(s3), 5.0);
 }
 
 int

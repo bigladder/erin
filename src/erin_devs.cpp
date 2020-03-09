@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/devs.h"
+#include "debug_utils.h"
 #include <algorithm>
 #include <sstream>
 #include <stdexcept>
@@ -35,18 +36,33 @@ namespace erin::devs
   bool
   Port::should_propagate_request_at(RealTimeType time) const
   {
-    return time == time_of_last_change;
+    bool result = (time == time_of_last_change);
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "Port::should_propagate_request_at(time=" << time << ") = ";
+      std::cout << (result ? "true" : "false") << "\n";
+    }
+    return result;
   }
 
   bool
   Port::should_propagate_achieved_at(RealTimeType time) const
   {
-    return (time == time_of_last_change) && (achieved != requested);
+    bool result = (time == time_of_last_change) && (achieved != requested);
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "Port::should_propagate_achieved_at(time=" << time << ") = ";
+      std::cout << (result ? "true" : "false") << "\n";
+    }
+    return result;
   }
 
   Port
   Port::with_requested(FlowValueType new_request, RealTimeType time) const
   {
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "Port::with_requested("
+                << "new_request=" << new_request << ", "
+                << "time=" << time << ")\n";
+    }
     // when we set a new request, we assume achieved is met until we hear
     // otherwise
     if (time < time_of_last_change) {
@@ -67,6 +83,12 @@ namespace erin::devs
       FlowValueType new_achieved,
       RealTimeType time) const
   {
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "Port::with_requested_and_achieved("
+                << "new_requested=" << new_request << ", "
+                << "new_achieved=" << new_achieved << ", "
+                << "time=" << time << ")\n";
+    }
     // when we set a new request, we assume achieved is met until we hear
     // otherwise
     if (time < time_of_last_change) {
@@ -85,6 +107,11 @@ namespace erin::devs
   Port
   Port::with_achieved(FlowValueType new_achieved, RealTimeType time) const
   {
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "Port::with_achieved("
+                << "new_achieved=" << new_achieved << ", "
+                << "time=" << time << ")\n";
+    }
     // when we set an achieved flow, we do not touch the request; we are still
     // requesting what we request regardless of what is achieved.
     auto t{time_of_last_change};

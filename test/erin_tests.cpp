@@ -4644,11 +4644,23 @@ TEST(ErinDevs, Test_function_based_load)
 {
   namespace E = ERIN;
   namespace ED = erin::devs;
+  namespace EU = erin::utils;
   ED::LoadState s0 = ED::make_load_state(
       std::vector<ED::DurationLoad>{
         ED::DurationLoad{10, 100.0},
         ED::DurationLoad{100, 10.0},
         ED::DurationLoad{ED::infinity, 0.0}});
+  auto dt0 = ED::load_time_advance(s0);
+  EXPECT_EQ(dt0, 0);
+  auto ys0 = ED::load_output_function(s0);
+  std::vector<ED::PortValue> expected_ys0{
+    ED::PortValue{ED::outport_inflow_request, 100.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys0, expected_ys0, compare_ports));
+  auto s1 = ED::load_internal_transition(s0);
+  auto dt1 = ED::load_time_advance(s1);
+  EXPECT_EQ(dt1, 10);
 }
 
 int

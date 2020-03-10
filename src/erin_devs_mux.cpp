@@ -25,6 +25,7 @@ namespace erin::devs
     check_num_flows("num_inflows", num_inflows);
     check_num_flows("num_outflows", num_outflows);
     return MuxState{
+      0,
       num_inflows,
       num_outflows,
       std::vector<Port>(num_inflows),
@@ -32,8 +33,28 @@ namespace erin::devs
   }
 
   RealTimeType
+  mux_current_time(const MuxState& state)
+  {
+    return state.time;
+  }
+
+  RealTimeType
   mux_time_advance(const MuxState& /* state */)
   {
     return infinity;
+  }
+
+  MuxState
+  mux_external_transition(
+      const MuxState& state,
+      RealTimeType dt,
+      const std::vector<PortValue>& xs)
+  {
+    return MuxState{
+      state.time + dt,
+      state.num_inflows,
+      state.num_outflows,
+      state.inflow_ports,
+      state.outflow_ports};
   }
 }

@@ -4778,6 +4778,11 @@ TEST(ErinDevs, Test_function_based_mux)
   auto s0 = ED::make_mux_state(num_inports, num_outports);
   auto dt = ED::mux_time_advance(s0);
   EXPECT_EQ(dt, ED::infinity);
+  EXPECT_EQ(ED::mux_current_time(s0), 0);
+  std::vector<ED::PortValue> xs0{
+    ED::PortValue{ED::inport_outflow_request + 0, 100.0}};
+  auto s1 = ED::mux_external_transition(s0, 10, xs0);
+  EXPECT_EQ(ED::mux_current_time(s1), 10);
 }
 
 int

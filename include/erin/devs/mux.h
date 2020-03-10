@@ -18,6 +18,7 @@ namespace erin::devs
 
   struct MuxState
   {
+    RealTimeType time{0};
     int num_inflows{0};
     int num_outflows{0};
     std::vector<Port> inflow_ports{};
@@ -25,6 +26,8 @@ namespace erin::devs
   };
 
   MuxState make_mux_state(int num_inflows, int num_outflows);
+
+  RealTimeType mux_current_time(const MuxState& state);
 
   ////////////////////////////////////////////////////////////
   // time advance
@@ -35,6 +38,10 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // external transition
+  MuxState mux_external_transition(
+      const MuxState& state,
+      RealTimeType dt,
+      const std::vector<PortValue>& xs);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

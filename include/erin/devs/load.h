@@ -17,7 +17,6 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // state
-
   struct LoadState
   {
     RealTimeType time{0};

@@ -13,6 +13,9 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // state
+  const int minimum_number_of_ports{1};
+  const int maximum_number_of_ports{max_port_numbers};
+
   struct MuxState
   {
     int num_inflows{0};

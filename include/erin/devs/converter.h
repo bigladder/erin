@@ -128,8 +128,8 @@ namespace erin::devs
 
   ConverterState
   make_converter_state(
-      std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-      std::function<FlowValueType(FlowValueType)> calc_input_from_output);
+      const std::function<FlowValueType(FlowValueType)>& calc_output_from_input,
+      const std::function<FlowValueType(FlowValueType)>& calc_input_from_output);
 
   struct LossflowPorts
   {

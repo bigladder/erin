@@ -132,8 +132,8 @@ namespace erin::devs
       std::function<FlowValueType(FlowValueType)> calc_output_from_input_,
       std::function<FlowValueType(FlowValueType)> calc_input_from_output_):
     ConversionFun(),
-    calc_output_from_input{calc_output_from_input_},
-    calc_input_from_output{calc_input_from_output_}
+    calc_output_from_input{std::move(calc_output_from_input_)},
+    calc_input_from_output{std::move(calc_input_from_output_)}
   {
   }
 
@@ -225,8 +225,8 @@ namespace erin::devs
 
   ConverterState
   make_converter_state(
-      std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-      std::function<FlowValueType(FlowValueType)> calc_input_from_output)
+      const std::function<FlowValueType(FlowValueType)>& calc_output_from_input,
+      const std::function<FlowValueType(FlowValueType)>& calc_input_from_output)
   {
     std::unique_ptr<ConversionFun> p =
       std::make_unique<FunctionBasedEfficiencyFun>(

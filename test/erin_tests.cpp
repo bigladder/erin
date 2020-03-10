@@ -4749,6 +4749,22 @@ TEST(ErinDevs, Test_function_based_load)
   EXPECT_EQ(ED::load_next_time(s6a), ED::infinity);
   EXPECT_EQ(ED::load_current_request(s6a), 0.0);
   EXPECT_EQ(ED::load_current_achieved(s6a), 0.0);
+
+  ASSERT_THROW(
+      ED::check_loads(std::vector<ED::LoadItem>{}),
+      std::invalid_argument);
+
+  ASSERT_THROW(
+      ED::check_loads(std::vector<ED::LoadItem>{
+        ED::LoadItem{0,10.0},
+        ED::LoadItem{10,0.0}}),
+      std::invalid_argument);
+
+  ASSERT_THROW(
+      ED::check_loads(std::vector<ED::LoadItem>{
+        ED::LoadItem{10,10.0},
+        ED::LoadItem{5}}),
+      std::invalid_argument);
 }
 
 int

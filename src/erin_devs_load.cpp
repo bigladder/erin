@@ -8,6 +8,49 @@
 
 namespace erin::devs
 {
+  void
+  check_loads(const std::vector<LoadItem>& loads)
+  {
+    using size_type = std::vector<LoadItem>::size_type;
+    auto N{loads.size()};
+    auto last_idx{N - 1};
+    if (N < 2) {
+      std::ostringstream oss;
+      oss << "loads must have at least two LoadItems but "
+             "only " << N << " provided\n";
+      throw std::invalid_argument(oss.str());
+    }
+    RealTimeType t_last{-1};
+    for (size_type idx{0}; idx < loads.size(); ++idx) {
+      const auto& x = loads[idx];
+      auto t = x.get_time();
+      if (idx == last_idx) {
+        if (!x.get_is_end()) {
+          std::ostringstream oss;
+          oss << "LoadItem[" << idx << "] (last index) "
+              << "must not specify a value but it does...\n";
+          throw std::invalid_argument(oss.str());
+        }
+      } else {
+        if (x.get_is_end()) {
+          std::ostringstream oss;
+          oss << "non-last LoadItem[" << idx << "] "
+              << "doesn't specify a value but it must...\n";
+          throw std::invalid_argument(oss.str());
+        }
+      }
+      if ((t < 0) || (t <= t_last)) {
+        std::ostringstream oss;
+        oss << "LoadItems must have time points that are everywhere "
+            << "increasing and positive but it doesn't...\n"
+            << "t[" << idx << "] = " << t << "\n"
+            << "t[" << (idx - 1) << "] = " << t_last << "\n";
+        throw std::invalid_argument(oss.str());
+      }
+      t_last = t;
+    }
+  }
+
   LoadState
   make_load_state(const std::vector<LoadItem>& loads)
   {

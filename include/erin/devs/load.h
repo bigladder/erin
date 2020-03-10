@@ -52,6 +52,9 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // confluent transition
+  LoadState load_confluent_transition(
+      const LoadState& state,
+      const std::vector<PortValue>& xs);
 
   ////////////////////////////////////////////////////////////
   // output function

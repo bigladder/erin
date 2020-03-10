@@ -109,6 +109,16 @@ namespace erin::devs
       state.inflow_port.with_achieved(inflow_achieved, new_time)};
   }
 
+  LoadState
+  load_confluent_transition(
+      const LoadState& state,
+      const std::vector<PortValue>& xs)
+  {
+    auto dt = load_time_advance(state);
+    return load_internal_transition(
+        load_external_transition(state, dt, xs));
+  }
+
   std::vector<PortValue>
   load_output_function(const LoadState& state)
   {

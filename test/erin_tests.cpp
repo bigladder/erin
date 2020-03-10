@@ -4737,6 +4737,18 @@ TEST(ErinDevs, Test_function_based_load)
   EXPECT_EQ(ED::load_next_time(s6), ED::infinity);
   EXPECT_EQ(ED::load_current_request(s6), 0.0);
   EXPECT_EQ(ED::load_current_achieved(s6), 0.0);
+  auto dt6 = ED::load_time_advance(s6);
+  EXPECT_EQ(dt6, ED::infinity);
+
+  // test confluent update from state 
+  std::vector<ED::PortValue> xs5{
+    ED::PortValue{ED::inport_inflow_achieved, 8.0}};
+  auto s6a = ED::load_confluent_transition(s5, xs5);
+  EXPECT_EQ(s6a.current_index, 3);
+  EXPECT_EQ(ED::load_current_time(s6a), 200);
+  EXPECT_EQ(ED::load_next_time(s6a), ED::infinity);
+  EXPECT_EQ(ED::load_current_request(s6a), 0.0);
+  EXPECT_EQ(ED::load_current_achieved(s6a), 0.0);
 }
 
 int

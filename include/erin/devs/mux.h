@@ -13,6 +13,15 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // state
+  struct MuxState
+  {
+    int num_inflows{0};
+    int num_outflows{0};
+    std::vector<Port> inflow_ports{};
+    std::vector<Port> outflow_ports{};
+  };
+
+  MuxState make_mux_state(int num_inflows, int num_outflows);
 
   ////////////////////////////////////////////////////////////
   // time advance

@@ -11,6 +11,7 @@
 #include "erin/devs/flow_limits.h"
 #include "erin/devs/converter.h"
 #include "erin/devs/load.h"
+#include "erin/devs/mux.h"
 #include "erin/distribution.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"
@@ -4769,7 +4770,12 @@ TEST(ErinDevs, Test_function_based_load)
 
 TEST(ErinDevs, Test_function_based_mux)
 {
-
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  int num_inports{3};
+  int num_outports{3};
+  auto s0 = ED::make_mux_state(num_inports, num_outports);
 }
 
 int

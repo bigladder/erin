@@ -67,4 +67,4 @@ namespace erin::devs
       const LoadState& state, std::vector<PortValue>& ys);
 }
 
-#endif // ERIN_DEVS_CONVERTER_H
+#endif // ERIN_DEVS_LOAD_H

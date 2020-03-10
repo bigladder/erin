@@ -11,12 +11,13 @@ namespace erin::devs
   LoadState
   make_load_state(const std::vector<LoadItem>& loads)
   {
+    auto num_loads{loads.size()};
     return LoadState{
       0,
-      static_cast<int>(loads.size()),
+      static_cast<int>(num_loads),
       loads,
       -1,
-      Port{0, 0.0}};
+      Port{-1, 0.0}};
   }
 
   RealTimeType
@@ -49,8 +50,6 @@ namespace erin::devs
   RealTimeType
   load_time_advance(const LoadState& state)
   {
-    if (state.current_index < 0)
-      return 0;
     auto next_idx = state.current_index + 1;
     if (next_idx < state.number_of_loads) {
       auto next_time = load_next_time(state);
@@ -62,18 +61,21 @@ namespace erin::devs
   LoadState
   load_internal_transition(const LoadState& state)
   {
-    auto next_time = load_next_time(state);
-    if (next_time == infinity)
+    auto max_idx = state.number_of_loads - 1;
+    if (state.current_index >= max_idx)
       return state;
     auto next_idx = state.current_index + 1;
+    const auto& next_load = state.loads[next_idx];
+    FlowValueType load_value{0.0};
+    if (!next_load.get_is_end())
+      load_value = next_load.get_value();
+    auto next_time{next_load.get_time()};
     return LoadState{
       next_time,
       state.number_of_loads,
       state.loads,
       next_idx,
-      state.inflow_port.with_requested(
-          state.loads[next_idx].get_value(),
-          next_time)};
+      state.inflow_port.with_requested(load_value, next_time)};
   }
 
   LoadState
@@ -118,12 +120,17 @@ namespace erin::devs
   void
   load_output_function_mutable(const LoadState& state, std::vector<PortValue>& ys)
   {
-    auto next_idx = state.current_index + 1;
+    auto next_state = load_internal_transition(state);
     auto max_idx{state.number_of_loads - 1};
-    if (next_idx < max_idx)
-      ys.emplace_back(
-          PortValue{outport_inflow_request, state.loads[next_idx].get_value()});
-    else if (next_idx == max_idx)
+    if (next_state.current_index < max_idx) {
+      if (next_state.inflow_port.should_propagate_request_at(next_state.time)) {
+        ys.emplace_back(
+            PortValue{
+              outport_inflow_request,
+              next_state.inflow_port.get_requested()});
+      }
+    } else if (next_state.current_index == max_idx) {
       ys.emplace_back(PortValue{outport_inflow_request, 0.0});
+    }
   }
 }

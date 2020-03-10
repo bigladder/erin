@@ -4767,6 +4767,11 @@ TEST(ErinDevs, Test_function_based_load)
       std::invalid_argument);
 }
 
+TEST(ErinDevs, Test_function_based_mux)
+{
+
+}
+
 int
 main(int argc, char **argv)
 {

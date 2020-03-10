@@ -9,6 +9,7 @@
 #include "erin/devs/converter.h"
 #include "erin/devs/flow_limits.h"
 #include "erin/devs/load.h"
+#include "erin/devs/mux.h"
 #include "adevs.h"
 #include <functional>
 #include <memory>

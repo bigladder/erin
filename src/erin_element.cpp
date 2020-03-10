@@ -870,136 +870,41 @@ namespace ERIN
         component_type,
         ElementType::Sink,
         st),
-    loads{loads_},
-    idx{-1},
-    num_loads{loads_.size()}
+    state{erin::devs::make_load_state(loads_)}
   {
-    check_loads();
   }
 
   void
-  Sink::update_on_internal_transition()
+  Sink::delta_int()
   {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Sink::update_on_internal_transition()\n";
-    }
-    ++idx;
+    state = erin::devs::load_internal_transition(state);
+  }
+
+  void
+  Sink::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    state = erin::devs::load_external_transition(state, e.real, xs);
+  }
+
+  void
+  Sink::delta_conf(std::vector<PortValue>& xs)
+  {
+    state = erin::devs::load_confluent_transition(state, xs);
   }
 
   Time
-  Sink::calculate_time_advance()
+  Sink::ta()
   {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Sink::calculate_time_advance()\n";
-      std::cout << "id  = " << get_id() << "\n";
-      std::cout << "idx = " << idx << "\n";
-    }
-    if (idx < 0) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... dt = (0, 0)\n";
-      }
-      return Time{0, 0};
-    }
-    std::vector<LoadItem>::size_type next_idx =
-      static_cast<std::vector<LoadItem>::size_type>(idx) + 1;
-    if (next_idx < num_loads) {
-      RealTimeType dt{loads[idx].get_time_advance(loads[next_idx])};
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... dt = (" << dt << ", 0)\n";
-        std::cout << "loads[" << idx << "].is_end = "
-                  << loads[idx].get_is_end() << "\n"
-                  << "loads[" << idx << "].time = "
-                  << loads[idx].get_time() << "\n";
-        if (!loads[idx].get_is_end()) {
-          std::cout << "loads[" << idx << "].value = "
-                    << loads[idx].get_value() << "\n";
-        }
-        std::cout << "loads[" << next_idx << "].is_end = "
-                  << loads[next_idx].get_is_end() << "\n"
-                  << "loads[" << next_idx << "].time = "
-                  << loads[next_idx].get_time() << "\n";
-        if (!loads[next_idx].get_is_end()) {
-          std::cout << "loads[" << next_idx << "].value = "
-                    << loads[next_idx].get_value() << "\n";
-        }
-      }
-      return Time{dt, 0};
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "... dt = infinity\n";
-    }
-    return inf;
-  }
-
-  FlowState
-  Sink::update_state_for_inflow_achieved(FlowValueType inflow_) const
-  {
-    return FlowState{inflow_};
+    auto dt = erin::devs::load_time_advance(state);
+    if (dt == erin::devs::infinity)
+      return inf;
+    return Time{dt, 1};
   }
 
   void
-  Sink::add_additional_outputs(std::vector<PortValue>& ys)
+  Sink::output_func(std::vector<PortValue>& ys)
   {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Sink::output_func()\n";
-    }
-    std::vector<LoadItem>::size_type next_idx =
-      static_cast<std::vector<LoadItem>::size_type>(idx) + 1;
-    auto max_idx{num_loads - 1};
-    if (next_idx < max_idx) {
-      ys.emplace_back(
-          adevs::port_value<FlowValueType>{
-            outport_inflow_request, loads[next_idx].get_value()});
-    } else if (next_idx == max_idx) {
-      ys.emplace_back(
-          adevs::port_value<FlowValueType>{
-            outport_inflow_request, 0.0});
-    }
-  }
-
-  void
-  Sink::check_loads() const
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Sink::check_loads\n";
-    }
-    auto N{loads.size()};
-    auto last_idx{N - 1};
-    if (N < 2) {
-      std::ostringstream oss;
-      oss << "Sink: must have at least two LoadItems but "
-             "only has " << N << std::endl;
-      throw std::invalid_argument(oss.str());
-    }
-    RealTimeType t{-1};
-    for (std::vector<LoadItem>::size_type idx_=0; idx_ < loads.size(); ++idx_) {
-      const auto& x{loads.at(idx_)};
-      auto t_{x.get_time()};
-      if (idx_ == last_idx) {
-        if (!x.get_is_end()) {
-          std::ostringstream oss;
-          oss << "Sink: LoadItem[" << idx_ << "] (last index) "
-                 "must not specify a value but it does..."
-              << std::endl;
-          throw std::invalid_argument(oss.str());
-        }
-      } else {
-        if (x.get_is_end()) {
-          std::ostringstream oss;
-          oss << "Sink: non-last LoadItem[" << idx_ << "] "
-                 "doesn't specify a value but it must..."
-              << std::endl;
-          throw std::invalid_argument(oss.str());
-        }
-      }
-      if ((t_ < 0) || (t_ <= t)) {
-        std::ostringstream oss;
-        oss << "Sink: LoadItems must have time points that are everywhere "
-               "increasing and positive but it doesn't..."
-            << std::endl;
-        throw std::invalid_argument(oss.str());
-      }
-    }
+    erin::devs::load_output_function_mutable(state, ys);
   }
 
   ////////////////////////////////////////////////////////////

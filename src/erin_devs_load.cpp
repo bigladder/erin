@@ -54,6 +54,7 @@ namespace erin::devs
   LoadState
   make_load_state(const std::vector<LoadItem>& loads)
   {
+    check_loads(loads);
     auto num_loads{loads.size()};
     return LoadState{
       0,

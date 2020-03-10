@@ -8,6 +8,7 @@
 #include "erin/devs.h"
 #include "erin/devs/converter.h"
 #include "erin/devs/flow_limits.h"
+#include "erin/devs/load.h"
 #include "adevs.h"
 #include <functional>
 #include <memory>
@@ -333,19 +334,14 @@ namespace ERIN
           const StreamType& stream_type,
           const std::vector<LoadItem>& loads);
 
-    protected:
-      void update_on_internal_transition() override;
-      Time calculate_time_advance() override;
-      [[nodiscard]] FlowState update_state_for_inflow_achieved(
-          FlowValueType inflow_) const override;
-      void add_additional_outputs(std::vector<PortValue>& ys) override;
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
 
     private:
-      std::vector<LoadItem> loads;
-      int idx;
-      std::vector<LoadItem>::size_type num_loads;
-
-      void check_loads() const;
+      erin::devs::LoadState state;
   };
 
   ////////////////////////////////////////////////////////////

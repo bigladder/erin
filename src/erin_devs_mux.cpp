@@ -30,4 +30,10 @@ namespace erin::devs
       std::vector<Port>(num_inflows),
       std::vector<Port>(num_outflows)};
   }
+
+  RealTimeType
+  mux_time_advance(const MuxState& /* state */)
+  {
+    return infinity;
+  }
 }

@@ -4776,6 +4776,8 @@ TEST(ErinDevs, Test_function_based_mux)
   int num_inports{3};
   int num_outports{3};
   auto s0 = ED::make_mux_state(num_inports, num_outports);
+  auto dt = ED::mux_time_advance(s0);
+  EXPECT_EQ(dt, ED::infinity);
 }
 
 int

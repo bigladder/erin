@@ -208,4 +208,36 @@ namespace erin::devs
       std::move(inflow_ports),
       std::move(outflow_ports)};
   }
+
+  std::vector<PortValue>
+  mux_output_function(const MuxState& state)
+  {
+    std::vector<PortValue> ys{};
+    mux_output_function_mutable(state, ys);
+    return ys;
+  }
+
+  void
+  mux_output_function_mutable(
+      const MuxState& state,
+      std::vector<PortValue>& ys)
+  {
+    using size_type = std::vector<PortValue>::size_type;
+    for (size_type idx{0}; idx < state.inflow_ports.size(); ++idx) {
+      const auto& ip = state.inflow_ports[idx];
+      if (ip.should_propagate_request_at(state.time))
+        ys.emplace_back(
+            PortValue{
+              outport_inflow_request + static_cast<int>(idx), 
+              ip.get_requested()});
+    }
+    for (size_type idx{0}; idx < state.outflow_ports.size(); ++idx) {
+      const auto& op = state.outflow_ports[idx];
+      if (op.should_propagate_achieved_at(state.time))
+        ys.emplace_back(
+            PortValue{
+              outport_outflow_achieved + static_cast<int>(idx),
+              op.get_achieved()});
+    }
+  }
 }

@@ -5,6 +5,7 @@
 #define ERIN_DEVS_MUX_H
 #include "erin/devs.h"
 #include "erin/type.h"
+#include <vector>
 
 namespace erin::devs
 {
@@ -48,6 +49,11 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // output function
+  std::vector<PortValue> mux_output_function(const MuxState& state);
+
+  void mux_output_function_mutable(
+      const MuxState& state,
+      std::vector<PortValue>& ys);
 }
 
 #endif // ERIN_DEVS_MUX_H

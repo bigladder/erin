@@ -4785,6 +4785,12 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_EQ(ED::mux_current_time(s1), 10);
   auto dt1 = ED::mux_time_advance(s1);
   EXPECT_EQ(dt1, 0);
+  auto ys1 = ED::mux_output_function(s1);
+  std::vector<ED::PortValue> expected_ys1{
+    ED::PortValue{ED::outport_inflow_request + 0, 100.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys1, expected_ys1, compare_ports));
 }
 
 int

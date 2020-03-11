@@ -36,7 +36,7 @@ namespace erin::devs
   bool
   Port::should_propagate_request_at(RealTimeType time) const
   {
-    bool result = (time == time_of_last_change);
+    bool result = (time == time_of_last_change) && (achieved == requested);
     if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
       std::cout << "Port::should_propagate_request_at(time=" << time << ") = ";
       std::cout << (result ? "true" : "false") << "\n";

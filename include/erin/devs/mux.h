@@ -5,12 +5,35 @@
 #define ERIN_DEVS_MUX_H
 #include "erin/devs.h"
 #include "erin/type.h"
+#include <string>
 #include <vector>
 
 namespace erin::devs
 {
   ////////////////////////////////////////////////////////////
   // helper classes and functions
+  void mux_check_num_flows(const std::string& tag, int n);
+
+  bool mux_should_report(
+      RealTimeType time,
+      const std::vector<Port>& inflow_ports,
+      const std::vector<Port>& outflow_ports);
+
+  std::vector<Port> distribute_inflow_to_outflow_in_order(
+      const std::vector<Port>& outflows,
+      FlowValueType amount,
+      RealTimeType time);
+
+  std::vector<Port> request_difference_from_next_highest_inflow_port(
+      const std::vector<Port> inflow_ports,
+      int idx_of_request,
+      FlowValueType request,
+      RealTimeType time);
+
+  std::vector<Port> rerequest_inflows_in_order(
+      const std::vector<Port>& inflow_ports,
+      FlowValueType total_outflow_request,
+      RealTimeType time);
 
   ////////////////////////////////////////////////////////////
   // state
@@ -24,6 +47,7 @@ namespace erin::devs
     int num_outflows{0};
     std::vector<Port> inflow_ports{};
     std::vector<Port> outflow_ports{};
+    bool do_report{false};
   };
 
   MuxState make_mux_state(int num_inflows, int num_outflows);
@@ -36,6 +60,7 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // internal transition
+  MuxState mux_internal_transition(const MuxState& state);
 
   ////////////////////////////////////////////////////////////
   // external transition

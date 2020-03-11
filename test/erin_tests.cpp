@@ -4782,6 +4782,12 @@ TEST(ErinDevs, Test_function_based_mux)
   std::vector<ED::PortValue> xs0{
     ED::PortValue{ED::inport_outflow_request + 0, 100.0}};
   auto s1 = ED::mux_external_transition(s0, 10, xs0);
+  EXPECT_TRUE(
+      ED::mux_should_report(
+        s1.time,
+        s1.inflow_ports,
+        s1.outflow_ports));
+  EXPECT_TRUE(s1.do_report);
   EXPECT_EQ(ED::mux_current_time(s1), 10);
   auto dt1 = ED::mux_time_advance(s1);
   EXPECT_EQ(dt1, 0);
@@ -4791,6 +4797,10 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys1, expected_ys1, compare_ports));
+  auto s2 = ED::mux_internal_transition(s1);
+  EXPECT_EQ(ED::mux_current_time(s2), 10);
+  auto dt2 = ED::mux_time_advance(s2);
+  EXPECT_EQ(dt2, ED::infinity);
 }
 
 int

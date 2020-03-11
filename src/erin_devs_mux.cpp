@@ -9,7 +9,7 @@
 namespace erin::devs
 {
   void
-  check_num_flows(const std::string& tag, int n)
+  mux_check_num_flows(const std::string& tag, int n)
   {
     if ((n < minimum_number_of_ports) || (n > maximum_number_of_ports)) {
       std::ostringstream oss{};
@@ -20,47 +20,21 @@ namespace erin::devs
     }
   }
 
-  MuxState
-  make_mux_state(int num_inflows, int num_outflows)
+  bool
+  mux_should_report(
+      RealTimeType time,
+      const std::vector<Port>& inflow_ports,
+      const std::vector<Port>& outflow_ports)
   {
-    check_num_flows("num_inflows", num_inflows);
-    check_num_flows("num_outflows", num_outflows);
-    return MuxState{
-      0,
-      num_inflows,
-      num_outflows,
-      std::vector<Port>(num_inflows),
-      std::vector<Port>(num_outflows)};
-  }
-
-  RealTimeType
-  mux_current_time(const MuxState& state)
-  {
-    return state.time;
-  }
-
-  RealTimeType
-  mux_time_advance(const MuxState& state)
-  {
-    bool report{false};
-    const auto& t = state.time;
-    for (const auto& ip : state.inflow_ports) {
-      if (ip.should_propagate_request_at(t)) {
-        report = true;
-        break;
-      }
+    for (const auto& ip : inflow_ports) {
+      if (ip.should_propagate_request_at(time))
+        return true;
     }
-    if (!report) {
-      for (const auto& op : state.outflow_ports) {
-        if (op.should_propagate_achieved_at(t)) {
-          report = true;
-          break;
-        }
-      }
+    for (const auto& op : outflow_ports) {
+      if (op.should_propagate_achieved_at(time))
+        return true;
     }
-    if (report)
-      return 0;
-    return infinity;
+    return false;
   }
 
   std::vector<Port>
@@ -141,6 +115,46 @@ namespace erin::devs
   }
 
   MuxState
+  make_mux_state(int num_inflows, int num_outflows)
+  {
+    mux_check_num_flows("num_inflows", num_inflows);
+    mux_check_num_flows("num_outflows", num_outflows);
+    return MuxState{
+      0,
+      num_inflows,
+      num_outflows,
+      std::vector<Port>(num_inflows),
+      std::vector<Port>(num_outflows),
+      false};
+  }
+
+  RealTimeType
+  mux_current_time(const MuxState& state)
+  {
+    return state.time;
+  }
+
+  RealTimeType
+  mux_time_advance(const MuxState& state)
+  {
+    if (state.do_report)
+      return 0;
+    return infinity;
+  }
+
+  MuxState
+  mux_internal_transition(const MuxState& state)
+  {
+    return MuxState{
+      state.time,
+      state.num_inflows,
+      state.num_outflows,
+      state.inflow_ports,
+      state.outflow_ports,
+      false};
+  }
+
+  MuxState
   mux_external_transition(
       const MuxState& state,
       RealTimeType dt,
@@ -201,12 +215,14 @@ namespace erin::devs
       outflow_ports = distribute_inflow_to_outflow_in_order(
           outflow_ports, total_inflow_achieved, time);
     }
+    bool do_report = mux_should_report(time, inflow_ports, outflow_ports);
     return MuxState{
       time,
       state.num_inflows,
       state.num_outflows,
       std::move(inflow_ports),
-      std::move(outflow_ports)};
+      std::move(outflow_ports),
+      do_report};
   }
 
   std::vector<PortValue>

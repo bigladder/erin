@@ -4801,6 +4801,20 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_EQ(ED::mux_current_time(s2), 10);
   auto dt2 = ED::mux_time_advance(s2);
   EXPECT_EQ(dt2, ED::infinity);
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_inflow_achieved + 0, 50.0}};
+  auto s3 = ED::mux_external_transition(s2, 2, xs2);
+  EXPECT_EQ(ED::mux_current_time(s3), 12);
+  auto dt3 = ED::mux_time_advance(s3);
+  EXPECT_EQ(dt3, 0);
+  auto ys3 = ED::mux_output_function(s3);
+  std::vector<ED::PortValue> expected_ys3{
+    ED::PortValue{ED::outport_inflow_request + 1, 50.0}};
+  EXPECT_EQ(ys3.size(), expected_ys3.size());
+  //std::cout << "ys3 = " << ERIN::vec_to_string<ED::PortValue>(ys3) << "\n";
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys3, expected_ys3, compare_ports));
 }
 
 int

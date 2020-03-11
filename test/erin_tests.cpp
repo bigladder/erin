@@ -4830,10 +4830,20 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys5, expected_ys5, compare_ports));
-  // call confluent function that port 3 can only do 20 (not 30)
-  auto s6 = ED::mux_internal_transition(s5);
+  std::vector<ED::PortValue> xs5{
+    ED::PortValue{ED::inport_inflow_achieved + 2, 20.0}};
+  auto s6 = ED::mux_confluent_transition(s5, xs5);
   auto dt6 = ED::mux_time_advance(s6);
-  EXPECT_EQ(dt6, ED::infinity);
+  EXPECT_EQ(dt6, 0);
+  auto ys6 = ED::mux_output_function(s6);
+  std::vector<ED::PortValue> expected_ys6{
+    ED::PortValue{ED::outport_outflow_achieved + 0, 90.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys6, expected_ys6, compare_ports));
+  auto s7 = ED::mux_internal_transition(s6);
+  auto dt7 = ED::mux_time_advance(s7);
+  EXPECT_EQ(dt7, ED::infinity);
 }
 
 int

@@ -71,6 +71,9 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // confluent transition
+  MuxState mux_confluent_transition(
+      const MuxState& state,
+      const std::vector<PortValue>& xs);
 
   ////////////////////////////////////////////////////////////
   // output function

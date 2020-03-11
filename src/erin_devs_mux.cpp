@@ -225,6 +225,24 @@ namespace erin::devs
       do_report};
   }
 
+  MuxState
+  mux_confluent_transition(
+      const MuxState& state,
+      const std::vector<PortValue>& xs)
+  {
+    auto dt = mux_time_advance(state);
+    auto s0 = mux_external_transition(state, dt, xs);
+    auto s1 = mux_internal_transition(s0);
+    bool do_report = mux_should_report(s1.time, s1.inflow_ports, s1.outflow_ports);
+    return MuxState{
+      s1.time,
+      s1.num_inflows,
+      s1.num_outflows,
+      std::move(s1.inflow_ports),
+      std::move(s1.outflow_ports),
+      do_report};
+  }
+
   std::vector<PortValue>
   mux_output_function(const MuxState& state)
   {

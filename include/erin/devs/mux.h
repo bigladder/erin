@@ -25,7 +25,7 @@ namespace erin::devs
       RealTimeType time);
 
   std::vector<Port> request_difference_from_next_highest_inflow_port(
-      const std::vector<Port> inflow_ports,
+      const std::vector<Port>& inflow_ports,
       int idx_of_request,
       FlowValueType request,
       RealTimeType time);

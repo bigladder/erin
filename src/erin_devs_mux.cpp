@@ -78,7 +78,7 @@ namespace erin::devs
 
   std::vector<Port>
   request_difference_from_next_highest_inflow_port(
-      const std::vector<Port> inflow_ports,
+      const std::vector<Port>& inflow_ports,
       int idx_of_request,
       FlowValueType request,
       RealTimeType time)
@@ -231,21 +231,6 @@ namespace erin::devs
             inflow_ports, total_outflow_request, time);
         outflow_ports = distribute_inflow_to_outflow_in_order(
             outflow_ports, total_outflow_request, time);
-      } else if (got_inflow && (!got_outflow)) {
-        // undersupplying... need to re-request to inflows for more unless
-        // we've already heard from the highest port
-        if (highest_inflow_port_received >= (state.num_inflows - 1)) {
-          outflow_ports = distribute_inflow_to_outflow_in_order(
-              outflow_ports, total_inflow_achieved, time);
-        } else {
-          inflow_ports = request_difference_from_next_highest_inflow_port(
-              inflow_ports,
-              highest_inflow_port_received + 1,
-              (-1 * diff),
-              time);
-          outflow_ports = distribute_inflow_to_outflow_in_order(
-              outflow_ports, total_outflow_request, time);
-        }
       } else {
         // undersupplying... need to re-request to inflows for more unless
         // we've already heard from the highest port

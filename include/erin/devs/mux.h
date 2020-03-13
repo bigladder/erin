@@ -12,6 +12,16 @@ namespace erin::devs
 {
   ////////////////////////////////////////////////////////////
   // helper classes and functions
+  enum class MuxerDispatchStrategy
+  {
+    InOrder = 0,
+    Distribute
+  };
+
+  MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(const std::string& tag);
+
+  std::string muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds);
+
   void mux_check_num_flows(const std::string& tag, int n);
 
   bool mux_should_report(
@@ -20,6 +30,17 @@ namespace erin::devs
       const std::vector<Port>& outflow_ports);
 
   std::vector<Port> distribute_inflow_to_outflow_in_order(
+      const std::vector<Port>& outflows,
+      FlowValueType amount,
+      RealTimeType time);
+
+  std::vector<Port> distribute_inflow_to_outflow_evenly(
+      const std::vector<Port>& outflows,
+      FlowValueType amount,
+      RealTimeType time);
+
+  std::vector<Port> distribute_inflow_to_outflow(
+      MuxerDispatchStrategy outflow_strategy,
       const std::vector<Port>& outflows,
       FlowValueType amount,
       RealTimeType time);
@@ -48,9 +69,13 @@ namespace erin::devs
     std::vector<Port> inflow_ports{};
     std::vector<Port> outflow_ports{};
     bool do_report{false};
+    MuxerDispatchStrategy outflow_strategy{MuxerDispatchStrategy::Distribute};
   };
 
-  MuxState make_mux_state(int num_inflows, int num_outflows);
+  MuxState make_mux_state(
+      int num_inflows,
+      int num_outflows,
+      MuxerDispatchStrategy = MuxerDispatchStrategy::Distribute);
 
   RealTimeType mux_current_time(const MuxState& state);
 

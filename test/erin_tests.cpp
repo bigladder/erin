@@ -3678,7 +3678,8 @@ load_combined_heat_and_power_example()
 
 TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
 {
-  using size_type = std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
+  using size_type =
+    std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
   auto m = load_combined_heat_and_power_example();
   const auto& comps = m.get_components();
   const size_type expected_num_components{7};

@@ -77,6 +77,57 @@ namespace erin::devs
   }
 
   std::vector<Port>
+  distribute_inflow_to_outflow_evenly(
+      const std::vector<Port>& outflows,
+      FlowValueType amount,
+      RealTimeType time)
+  {
+    using size_type = std::vector<Port>::size_type;
+    if (amount < 0.0) {
+      std::ostringstream oss{};
+      oss << "amount must be >= 0.0\n"
+          << "amount = " << amount << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    std::vector<Port> new_outflows{};
+    FlowValueType total_requested{0.0};
+    for (size_type idx{0}; idx < outflows.size(); ++idx)
+      total_requested += outflows[idx].get_requested();
+    auto reduction_factor{0.0};
+    if (total_requested > 0.0)
+      reduction_factor = amount / total_requested;
+    for (size_type idx{0}; idx < outflows.size(); ++idx) {
+      const auto& of = outflows[idx];
+      auto achieved{of.get_requested() * reduction_factor};
+      new_outflows.emplace_back(of.with_achieved(achieved, time));
+    }
+    return new_outflows;
+  }
+
+  std::vector<Port>
+  distribute_inflow_to_outflow(
+      MuxerDispatchStrategy outflow_strategy,
+      const std::vector<Port>& outflows,
+      FlowValueType amount,
+      RealTimeType time)
+  {
+    auto outflow_ports{outflows};
+    if (outflow_strategy == MuxerDispatchStrategy::InOrder)
+      outflow_ports = distribute_inflow_to_outflow_in_order(
+          outflow_ports, amount, time);
+    else if (outflow_strategy == MuxerDispatchStrategy::Distribute)
+      outflow_ports = distribute_inflow_to_outflow_evenly(
+          outflow_ports, amount, time);
+    else {
+      std::ostringstream oss{};
+      oss << "unhandled muxer dispatch strategy "
+          << static_cast<int>(outflow_strategy) << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    return outflow_ports;
+  }
+
+  std::vector<Port>
   request_difference_from_next_highest_inflow_port(
       const std::vector<Port>& inflow_ports,
       int idx_of_request,
@@ -115,8 +166,40 @@ namespace erin::devs
     return new_inflows;
   }
 
+  MuxerDispatchStrategy
+  tag_to_muxer_dispatch_strategy(const std::string& tag)
+  {
+    if (tag == "in_order") {
+      return MuxerDispatchStrategy::InOrder;
+    }
+    else if (tag == "distribute") {
+      return MuxerDispatchStrategy::Distribute;
+    }
+    std::ostringstream oss;
+    oss << "unhandled tag '" << tag << "' for Muxer_dispatch_strategy\n";
+    throw std::runtime_error(oss.str());
+  }
+
+  std::string
+  muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds)
+  {
+    switch (mds) {
+      case MuxerDispatchStrategy::InOrder:
+        return std::string{"in_order"};
+      case MuxerDispatchStrategy::Distribute:
+        return std::string{"distribute"};
+    }
+    std::ostringstream oss;
+    oss << "unhandled Muxer_dispatch_strategy '"
+      << static_cast<int>(mds) << "'\n";
+    throw std::runtime_error(oss.str());
+  }
+
   MuxState
-  make_mux_state(int num_inflows, int num_outflows)
+  make_mux_state(
+      int num_inflows,
+      int num_outflows,
+      MuxerDispatchStrategy strategy)
   {
     mux_check_num_flows("num_inflows", num_inflows);
     mux_check_num_flows("num_outflows", num_outflows);
@@ -126,7 +209,8 @@ namespace erin::devs
       num_outflows,
       std::vector<Port>(num_inflows),
       std::vector<Port>(num_outflows),
-      false};
+      false,
+      strategy};
   }
 
   RealTimeType
@@ -152,7 +236,8 @@ namespace erin::devs
       state.num_outflows,
       state.inflow_ports,
       state.outflow_ports,
-      false};
+      false,
+      state.outflow_strategy};
   }
 
   MuxState
@@ -218,8 +303,8 @@ namespace erin::devs
       }
       inflow_ports = rerequest_inflows_in_order(
           inflow_ports, total_outflow_request, time);
-      outflow_ports = distribute_inflow_to_outflow_in_order(
-          outflow_ports, total_outflow_request, time);
+      outflow_ports = distribute_inflow_to_outflow(
+          state.outflow_strategy, outflow_ports, total_outflow_request, time);
     } else if (diff < ERIN::neg_flow_value_tol) {
       if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
         std::cout << "...undersupplying\n";
@@ -229,22 +314,22 @@ namespace erin::devs
         // we've already heard from the highest port
         inflow_ports = rerequest_inflows_in_order(
             inflow_ports, total_outflow_request, time);
-        outflow_ports = distribute_inflow_to_outflow_in_order(
-            outflow_ports, total_outflow_request, time);
+        outflow_ports = distribute_inflow_to_outflow(
+            state.outflow_strategy, outflow_ports, total_outflow_request, time);
       } else {
         // undersupplying... need to re-request to inflows for more unless
         // we've already heard from the highest port
         if (highest_inflow_port_received >= (state.num_inflows - 1)) {
-          outflow_ports = distribute_inflow_to_outflow_in_order(
-              outflow_ports, total_inflow_achieved, time);
+          outflow_ports = distribute_inflow_to_outflow(
+              state.outflow_strategy, outflow_ports, total_inflow_achieved, time);
         } else {
           inflow_ports = request_difference_from_next_highest_inflow_port(
               inflow_ports,
               highest_inflow_port_received + 1,
               (-1 * diff),
               time);
-          outflow_ports = distribute_inflow_to_outflow_in_order(
-              outflow_ports, total_outflow_request, time);
+          outflow_ports = distribute_inflow_to_outflow(
+              state.outflow_strategy, outflow_ports, total_outflow_request, time);
         }
       }
     } else {
@@ -252,8 +337,8 @@ namespace erin::devs
         std::cout << "...inflows equal outflows\n";
       }
       // diff ~= 0.0, redistribute outflows just in case
-      outflow_ports = distribute_inflow_to_outflow_in_order(
-          outflow_ports, total_outflow_request, time);
+      outflow_ports = distribute_inflow_to_outflow(
+          state.outflow_strategy, outflow_ports, total_outflow_request, time);
     }
     bool do_report = mux_should_report(time, inflow_ports, outflow_ports);
     return MuxState{
@@ -262,7 +347,8 @@ namespace erin::devs
       state.num_outflows,
       std::move(inflow_ports),
       std::move(outflow_ports),
-      do_report};
+      do_report,
+      state.outflow_strategy};
   }
 
   MuxState
@@ -280,7 +366,8 @@ namespace erin::devs
       s1.num_outflows,
       std::move(s1.inflow_ports),
       std::move(s1.outflow_ports),
-      do_report};
+      do_report,
+      state.outflow_strategy};
   }
 
   std::vector<PortValue>

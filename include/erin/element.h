@@ -347,14 +347,17 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // MuxerDispatchStrategy
-  enum class MuxerDispatchStrategy
-  {
-    InOrder = 0,
-    Distribute
-  };
+  //enum class MuxerDispatchStrategy
+  //{
+  //  InOrder = 0,
+  //  Distribute
+  //};
 
-  MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(const std::string& tag);
-  std::string muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds);
+  //MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(const std::string& tag);
+  //std::string muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds);
+  using erin::devs::MuxerDispatchStrategy;
+  using erin::devs::tag_to_muxer_dispatch_strategy;
+  using erin::devs::muxer_dispatch_strategy_to_string;
 
   ////////////////////////////////////////////////////////////
   // Mux
@@ -369,10 +372,15 @@ namespace ERIN
           int num_outflows,
           MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder,
           MuxerDispatchStrategy outflow_strategy = MuxerDispatchStrategy::Distribute);
+
+      void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
       void output_func(std::vector<PortValue>& xs) override;
 
     private:
+      erin::devs::MuxState state;
       int num_inflows;
       int num_outflows;
       MuxerDispatchStrategy strategy;

@@ -2354,7 +2354,7 @@ namespace ERIN
       }
       if (non_advance_count >= max_no_advance) {
         sim_good = false;
-        if constexpr (debug_level >= debug_level_low) {
+        if constexpr (debug_level >= debug_level_high) {
           std::cout << "ERROR: non_advance_count > max_no_advance:\n";
           std::cout << "run_id           : " << run_id << "\n";
           std::cout << "non_advance_count: " << non_advance_count << "\n";

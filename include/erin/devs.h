@@ -29,6 +29,12 @@ namespace erin::devs
       Port(RealTimeType time);
       Port(RealTimeType time, FlowValueType requested);
       Port(RealTimeType time, FlowValueType requested, FlowValueType achieved);
+      Port(
+          RealTimeType time,
+          FlowValueType requested,
+          FlowValueType achieved,
+          bool propagate_request,
+          bool propagate_achieved);
 
       [[nodiscard]] RealTimeType get_time_of_last_change() const {
         return time_of_last_change;
@@ -52,6 +58,8 @@ namespace erin::devs
       RealTimeType time_of_last_change;
       FlowValueType requested;
       FlowValueType achieved;
+      bool propagate_request;
+      bool propagate_achieved;
   };
 
   bool operator==(const Port& a, const Port& b);

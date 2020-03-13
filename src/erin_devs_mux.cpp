@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/devs/mux.h"
+#include "debug_utils.h"
 #include <cmath>
 #include <sstream>
 #include <stdexcept>
@@ -160,9 +161,17 @@ namespace erin::devs
       RealTimeType dt,
       const std::vector<PortValue>& xs)
   {
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "mux_external_transition(\n"
+                << "  state=...,\n"
+                << "  dt=" << dt << ",\n"
+                << "  xs=" << ERIN::vec_to_string<PortValue>(xs) << ")\n";
+    }
     auto time{state.time + dt};
     auto inflow_ports{state.inflow_ports};
     auto outflow_ports{state.outflow_ports};
+    bool got_inflow{false};
+    bool got_outflow{false};
     int highest_inflow_port_received{-1};
     for (const auto& x : xs) {
       int port = x.port;
@@ -174,10 +183,12 @@ namespace erin::devs
         if (port_n > highest_inflow_port_received)
           highest_inflow_port_received = port_n;
         inflow_ports[port_n] = inflow_ports[port_n].with_achieved(x.value, time);
+        got_inflow = true;
       }
       else if ((port_n_or >= 0) && (port_n_or < state.num_outflows)) {
         port_n = port_n_or;
         outflow_ports[port_n] = outflow_ports[port_n].with_requested(x.value, time);
+        got_outflow = true;
       }
       else {
         std::ostringstream oss;
@@ -192,28 +203,72 @@ namespace erin::devs
     for (const auto& op : outflow_ports)
       total_outflow_request += op.get_requested();
     auto diff{total_inflow_achieved - total_outflow_request};
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "... total_inflow_achieved: " << total_inflow_achieved << "\n"
+                << "... total_outflow_request: " << total_outflow_request << "\n"
+                << "... diff                 : " << diff << "\n"
+                << "... got_inflow           : " << (got_inflow ? "true" : "false") << "\n"
+                << "... got_outflow          : " << (got_outflow ? "true" : "false") << "\n";
+    }
     if (diff > ERIN::flow_value_tolerance) {
       // oversupplying... need to re-request to inflows so they give
       // less. Restart requests from port zero.
+      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+        std::cout << "...oversupplying\n";
+      }
       inflow_ports = rerequest_inflows_in_order(
           inflow_ports, total_outflow_request, time);
+      outflow_ports = distribute_inflow_to_outflow_in_order(
+          outflow_ports, total_outflow_request, time);
     } else if (diff < ERIN::neg_flow_value_tol) {
-      // undersupplying... need to re-request to inflows for more unless
-      // we've already heard from the highest port
-      if (highest_inflow_port_received >= (state.num_inflows - 1)) {
+      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+        std::cout << "...undersupplying\n";
+      }
+      if (got_outflow && (!got_inflow)) {
+        // undersupplying... need to re-request to inflows for more unless
+        // we've already heard from the highest port
+        inflow_ports = rerequest_inflows_in_order(
+            inflow_ports, total_outflow_request, time);
         outflow_ports = distribute_inflow_to_outflow_in_order(
-            outflow_ports, total_inflow_achieved, time);
+            outflow_ports, total_outflow_request, time);
+      } else if (got_inflow && (!got_outflow)) {
+        // undersupplying... need to re-request to inflows for more unless
+        // we've already heard from the highest port
+        if (highest_inflow_port_received >= (state.num_inflows - 1)) {
+          outflow_ports = distribute_inflow_to_outflow_in_order(
+              outflow_ports, total_inflow_achieved, time);
+        } else {
+          inflow_ports = request_difference_from_next_highest_inflow_port(
+              inflow_ports,
+              highest_inflow_port_received + 1,
+              (-1 * diff),
+              time);
+          outflow_ports = distribute_inflow_to_outflow_in_order(
+              outflow_ports, total_outflow_request, time);
+        }
       } else {
-        inflow_ports = request_difference_from_next_highest_inflow_port(
-            inflow_ports,
-            highest_inflow_port_received + 1,
-            (-1 * diff),
-            time);
+        // undersupplying... need to re-request to inflows for more unless
+        // we've already heard from the highest port
+        if (highest_inflow_port_received >= (state.num_inflows - 1)) {
+          outflow_ports = distribute_inflow_to_outflow_in_order(
+              outflow_ports, total_inflow_achieved, time);
+        } else {
+          inflow_ports = request_difference_from_next_highest_inflow_port(
+              inflow_ports,
+              highest_inflow_port_received + 1,
+              (-1 * diff),
+              time);
+          outflow_ports = distribute_inflow_to_outflow_in_order(
+              outflow_ports, total_outflow_request, time);
+        }
       }
     } else {
+      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+        std::cout << "...inflows equal outflows\n";
+      }
       // diff ~= 0.0, redistribute outflows just in case
       outflow_ports = distribute_inflow_to_outflow_in_order(
-          outflow_ports, total_inflow_achieved, time);
+          outflow_ports, total_outflow_request, time);
     }
     bool do_report = mux_should_report(time, inflow_ports, outflow_ports);
     return MuxState{

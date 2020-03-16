@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/devs/storage.h"
+#include <algorithm>
 #include <cmath>
 #include <sstream>
 #include <stdexcept>
@@ -18,6 +19,148 @@ namespace erin::devs
           << "soc = " << soc << "\n";
       throw std::invalid_argument(oss.str());
     }
+  }
+
+  void
+  storage_check_flow(FlowValueType flow)
+  {
+    if (flow < 0.0) {
+      std::ostringstream oss{};
+      oss << "invalid flow: flow must be >= 0.0\n"
+          << "flow = " << flow << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  void
+  storage_check_elapsed_time(RealTimeType dt)
+  {
+    if (dt < 0) {
+      std::ostringstream oss{};
+      oss << "dt must by >= 0\n"
+          << "dt = " << dt << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  double
+  update_soc(
+      double soc,
+      FlowValueType inflow_achieved,
+      FlowValueType outflow_achieved,
+      RealTimeType dt,
+      FlowValueType capacity)
+  {
+    auto net_inflow{inflow_achieved - outflow_achieved};
+    auto cap_change{net_inflow * dt};
+    auto soc_change{cap_change / capacity};
+    return (soc + soc_change);
+  }
+
+  StorageState
+  storage_external_transition_on_outflow_request(
+      const StorageData& data,
+      const StorageState& state,
+      FlowValueType outflow_request,
+      RealTimeType dt,
+      RealTimeType time)
+  {
+    storage_check_flow(outflow_request);
+    storage_check_elapsed_time(dt);
+    auto ip{state.inflow_port};
+    auto op{state.outflow_port};
+    op = op.with_requested(outflow_request, time);
+    auto soc = update_soc(
+        state.soc,
+        state.inflow_port.get_achieved(),
+        state.outflow_port.get_achieved(),
+        dt, data.capacity);
+    if (soc == 1.0)
+      ip = ip.with_requested(
+          std::clamp(0.0, data.max_charge_rate, outflow_request),
+          time);
+    else
+      ip = ip.with_requested(data.max_charge_rate, time);
+    if (soc == 0.0)
+      op = op.with_achieved(ip.get_requested(), time);
+    return StorageState{
+      time,
+      soc,
+      ip,
+      op,
+      ip.should_propagate_request_at(time),
+      op.should_propagate_achieved_at(time)};
+  }
+
+  StorageState
+  storage_external_transition_on_inflow_achieved(
+      const StorageData& data,
+      const StorageState& state,
+      FlowValueType inflow_achieved,
+      RealTimeType dt,
+      RealTimeType time)
+  {
+    storage_check_flow(inflow_achieved);
+    storage_check_elapsed_time(dt);
+    auto ip{state.inflow_port};
+    auto op{state.outflow_port};
+    ip = ip.with_achieved(inflow_achieved, time);
+    auto soc = update_soc(
+        state.soc,
+        state.inflow_port.get_achieved(),
+        state.outflow_port.get_achieved(),
+        dt, data.capacity);
+    auto ip_ach{ip.get_achieved()};
+    auto op_ach{op.get_achieved()};
+    if ((soc == 1.0) && (ip_ach > op_ach))
+      ip = ip.with_requested(op_ach, time);
+    if ((soc == 0.0) && (op_ach > ip_ach))
+      op = op.with_achieved(ip_ach, time);
+    return StorageState{
+      time,
+      soc,
+      ip,
+      op,
+      ip.should_propagate_request_at(time),
+      op.should_propagate_achieved_at(time)};
+  }
+
+  StorageState
+  storage_external_transition_on_in_out_flow(
+      const StorageData& data,
+      const StorageState& state,
+      FlowValueType outflow_request,
+      FlowValueType inflow_achieved,
+      RealTimeType dt,
+      RealTimeType time)
+  {
+    auto ip{state.inflow_port};
+    auto op{state.outflow_port};
+    op = op.with_requested(outflow_request, time);
+    ip = ip.with_achieved(inflow_achieved, time);
+    auto net_inflow{inflow_achieved - outflow_request};
+    auto soc = update_soc(
+        state.soc,
+        state.inflow_port.get_achieved(),
+        state.outflow_port.get_achieved(),
+        dt, data.capacity);
+    if ((soc == 1.0) && (net_inflow > 0.0))
+      ip = ip.with_requested(
+          std::clamp(0.0, data.max_charge_rate, outflow_request),
+          time);
+    if ((soc == 0.0) && (net_inflow < 0.0)) {
+      auto flow = std::clamp(
+          0.0, data.max_charge_rate, outflow_request);
+      op = op.with_achieved(flow, time);
+      ip = ip.with_requested(flow, time);
+    }
+    return StorageState{
+      time,
+      soc,
+      ip,
+      op,
+      ip.should_propagate_request_at(time),
+      op.should_propagate_achieved_at(time)};
   }
 
   std::ostream&
@@ -47,7 +190,7 @@ namespace erin::devs
       FlowValueType capacity,
       FlowValueType max_charge_rate)
   {
-    if (capacity < 0.0) {
+    if (capacity <= 0.0) {
       std::ostringstream oss{};
       oss << "capacity must be >= 0.0\n"
           << "capacity = " << capacity << "\n";
@@ -111,15 +254,21 @@ namespace erin::devs
     if (net_inflow == 0.0)
       return infinity;
     if (net_inflow > 0.0) {
-      if (state.soc == 1.0) {
+      if (state.soc == 1.0)
         return 0;
-      }
       auto available_cap{(1.0 - state.soc) * data.capacity};
       auto time_to_fill{available_cap / net_inflow};
       return static_cast<RealTimeType>(std::floor(time_to_fill));
     }
     // net_inflow < 0.0
     if (state.soc == 0.0)
+      return 0;
+    auto inflow_request{state.inflow_port.get_requested()};
+    if ((state.soc < 1.0) && (inflow_request < data.max_charge_rate))
+      return 0;
+    auto max_inflow_at_full_charge{
+      std::clamp(0.0, data.max_charge_rate, -1.0 * net_inflow)};
+    if ((state.soc == 1.0) && (inflow_request < max_inflow_at_full_charge))
       return 0;
     auto available_store{state.soc * data.capacity};
     auto time_to_drain{available_store / (-1.0 * net_inflow)};
@@ -191,24 +340,20 @@ namespace erin::devs
       }
     }
     auto time{state.time + elapsed_time};
-    auto ip{state.inflow_port};
-    auto op{state.outflow_port};
-    if (got_outflow_request)
-      op = op.with_requested(outflow_request, time);
-    if (got_inflow_achieved)
-      ip = op.with_achieved(inflow_achieved, time);
-    auto net_inflow{
-      state.inflow_port.get_achieved()
-      - state.outflow_port.get_achieved()};
-    auto cap_change{net_inflow * elapsed_time};
-    auto soc_change{cap_change / data.capacity};
-    return StorageState{
-      state.time + elapsed_time,
-      state.soc + soc_change,
-      ip,
-      op,
-      ip.should_propagate_request_at(time),
-      op.should_propagate_achieved_at(time)};
+    if (got_outflow_request && (!got_inflow_achieved))
+      return storage_external_transition_on_outflow_request(
+          data, state, outflow_request, elapsed_time, time);
+    if (got_inflow_achieved && (!got_outflow_request))
+      return storage_external_transition_on_inflow_achieved(
+          data, state, inflow_achieved, elapsed_time, time);
+    if (got_inflow_achieved && got_outflow_request)
+      return storage_external_transition_on_in_out_flow(
+          data, state, outflow_request, inflow_achieved, elapsed_time, time);
+    std::ostringstream oss{};
+    oss << "unhandled situation: external transition with neither inflow or outflow\n"
+        << "got_inflow_achieved = " << got_inflow_achieved << "\n"
+        << "got_outflow_request = " << got_outflow_request << "\n";
+    throw std::runtime_error(oss.str());
   }
 
   std::vector<PortValue>

@@ -4884,6 +4884,7 @@ TEST(ErinDevs, Test_function_based_storage_element)
   ED::FlowValueType max_charge_rate{1.0};
   double initial_soc{0.5};
   ASSERT_THROW(ED::storage_make_data(-1.0, 1.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_data(0.0, 1.0), std::invalid_argument);
   ASSERT_THROW(ED::storage_make_data(2.0, 0.0), std::invalid_argument);
   ASSERT_THROW(ED::storage_make_data(2.0, -1.0), std::invalid_argument);
   auto data = ED::storage_make_data(capacity, max_charge_rate);
@@ -4926,19 +4927,28 @@ TEST(ErinDevs, Test_function_based_storage_element)
     std::cout << "s2 = " << s2 << "\n";
     std::cout << "data = " << data << "\n";
   }
-
-  //std::vector<ED::PortValue> xs0{
-  //  ED::PortValue{ED::inport_outflow_request, 1.0}};
-  //auto s1 = ED::storage_external_transition(data, s0, 2, xs0);
-  //auto dt1 = ED::storage_time_advance(data, s1);
-  //EXPECT_EQ(dt1, 50);
-  //EXPECT_EQ(ED::storage_current_time(s1), 2);
-  //EXPECT_EQ(ED::storage_current_soc(s1), 0.5);
-  //auto ys1 = ED::storage_output_function(s1);
-  //std::vector<ED::PortValue> expected_ys1{};
-  //EXPECT_TRUE(
-  //    EU::compare_vectors_unordered_with_fn<ED::PortValue>(
-  //      ys1, expected_ys1, compare_ports));
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_outflow_request, 1.0}};
+  auto s3 = ED::storage_external_transition(data, s2, 10, xs2);
+  auto dt3 = ED::storage_time_advance(data, s3);
+  if (true) {
+    std::cout << "s2 = " << s2 << "\n";
+    std::cout << "s3 = " << s3 << "\n";
+  }
+  EXPECT_EQ(dt3, 0);
+  EXPECT_EQ(ED::storage_current_time(s3), 60);
+  EXPECT_EQ(ED::storage_current_soc(s3), 1.0);
+  auto ys3 = ED::storage_output_function(data, s3);
+  std::vector<ED::PortValue> expected_ys3{
+    ED::PortValue{ED::outport_inflow_request, max_charge_rate}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys3, expected_ys3, compare_ports));
+  if (true) {
+    std::cout << "ys3 = " << E::vec_to_string<ED::PortValue>(ys3) << "\n";
+    std::cout << "expected_ys3 = "
+              << E::vec_to_string<ED::PortValue>(expected_ys3) << "\n";
+  }
 }
 
 int

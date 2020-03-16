@@ -11,6 +11,11 @@ namespace erin::devs
 {
   ////////////////////////////////////////////////////////////
   // helper classes and functions
+  double update_soc(
+      FlowValueType inflow_achieved,
+      FlowValueType outflow_achieved,
+      RealTimeType dt,
+      FlowValueType capacity);
 
   ////////////////////////////////////////////////////////////
   // state
@@ -20,7 +25,7 @@ namespace erin::devs
    */
   struct StorageData
   {
-    FlowValueType capacity{0.0};
+    FlowValueType capacity{1.0};
     FlowValueType max_charge_rate{1.0};
   };
 
@@ -70,6 +75,28 @@ namespace erin::devs
       const StorageState& state,
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs);
+
+  StorageState storage_external_transition_on_outflow_request(
+      const StorageData& data,
+      const StorageState& state,
+      FlowValueType outflow_request,
+      RealTimeType dt,
+      RealTimeType time);
+
+  StorageState storage_external_transition_on_inflow_achieved(
+      const StorageData& data,
+      const StorageState& state,
+      FlowValueType inflow_achieved,
+      RealTimeType dt,
+      RealTimeType time);
+
+  StorageState storage_external_transition_on_in_out_flow(
+      const StorageData& data,
+      const StorageState& state,
+      FlowValueType outflow_request,
+      FlowValueType inflow_achieved,
+      RealTimeType dt,
+      RealTimeType time);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

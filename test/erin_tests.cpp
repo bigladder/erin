@@ -12,6 +12,7 @@
 #include "erin/devs/converter.h"
 #include "erin/devs/load.h"
 #include "erin/devs/mux.h"
+#include "erin/devs/storage.h"
 #include "erin/distribution.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"
@@ -4872,6 +4873,21 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys8, expected_ys8, compare_ports));
+}
+
+TEST(ErinDevs, Test_function_based_storage_element)
+{
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  ED::FlowValueType capacity{100.0};
+  double initial_soc{0.5};
+  ASSERT_THROW(ED::storage_make_state(-1.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_state(1.0, 2.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_state(1.0, -0.5), std::invalid_argument);
+  auto s0 = ED::storage_make_state(capacity, initial_soc);
+  //auto dt0 = ED::storage_time_advance(s0);
+  //EXPECT_EQ(dt0, ED::infinity);
 }
 
 int

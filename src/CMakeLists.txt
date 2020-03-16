@@ -23,6 +23,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_devs_flow_limits.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_load.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_mux.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_devs_storage.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_graphviz.cpp
@@ -41,6 +42,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/devs/flow_limits.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/load.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/mux.h
+  ${PROJECT_SOURCE_DIR}/include/erin/devs/storage.h
   ${PROJECT_SOURCE_DIR}/include/erin/distribution.h
   ${PROJECT_SOURCE_DIR}/include/erin/element.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h

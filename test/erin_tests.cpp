@@ -4882,12 +4882,18 @@ TEST(ErinDevs, Test_function_based_storage_element)
   namespace EU = erin::utils;
   ED::FlowValueType capacity{100.0};
   double initial_soc{0.5};
-  ASSERT_THROW(ED::storage_make_state(-1.0), std::invalid_argument);
-  ASSERT_THROW(ED::storage_make_state(1.0, 2.0), std::invalid_argument);
-  ASSERT_THROW(ED::storage_make_state(1.0, -0.5), std::invalid_argument);
-  auto s0 = ED::storage_make_state(capacity, initial_soc);
-  //auto dt0 = ED::storage_time_advance(s0);
-  //EXPECT_EQ(dt0, ED::infinity);
+  ASSERT_THROW(ED::storage_make_data(-1.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_state(2.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_state(-0.5), std::invalid_argument);
+  auto data = ED::storage_make_data(capacity);
+  auto s0 = ED::storage_make_state(initial_soc);
+  auto dt0 = ED::storage_time_advance(data, s0);
+  EXPECT_EQ(dt0, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s0), 0);
+  EXPECT_EQ(ED::storage_current_soc(s0), initial_soc);
+  std::vector<ED::PortValue> xs0{
+    ED::PortValue{ED::inport_outflow_request, 1.0}};
+  auto s1 = ED::storage_external_transition(data, s0, 2, xs0);
 }
 
 int

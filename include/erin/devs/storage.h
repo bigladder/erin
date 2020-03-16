@@ -13,9 +13,21 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // state
-  struct StorageState
+  /**
+   * StorageData: immutable (constant) reference data that doesn't change
+   * over a simulation
+   */
+  struct StorageData
   {
     FlowValueType capacity{0.0};
+  };
+
+  /**
+   * StorageState: state that may change between time-steps
+   */
+  struct StorageState
+  {
+    RealTimeType time{0};
     double soc{0.0}; // soc = state of charge (0 <= soc <= 1)
     Port inflow_port{0, 0.0, 0.0};
     Port outflow_port{0, 0.0, 0.0};
@@ -23,16 +35,30 @@ namespace erin::devs
     bool report_outflow_achieved{false};
   };
 
-  StorageState storage_make_state(FlowValueType capacity, double soc=1.0);
+  StorageData storage_make_data(FlowValueType capacity);
+
+  StorageState storage_make_state(double soc=1.0);
+
+  RealTimeType storage_current_time(const StorageState& state);
+
+  double storage_current_soc(const StorageState& state);
 
   ////////////////////////////////////////////////////////////
   // time advance
+  RealTimeType storage_time_advance(
+      const StorageData& data,
+      const StorageState& state);
 
   ////////////////////////////////////////////////////////////
   // internal transition
 
   ////////////////////////////////////////////////////////////
   // external transition
+  StorageState storage_external_transition(
+      const StorageData& data,
+      const StorageState& state,
+      RealTimeType elapsed_time,
+      const std::vector<PortValue>& xs);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

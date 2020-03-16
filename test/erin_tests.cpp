@@ -4881,23 +4881,38 @@ TEST(ErinDevs, Test_function_based_storage_element)
   namespace ED = erin::devs;
   namespace EU = erin::utils;
   ED::FlowValueType capacity{100.0};
+  ED::FlowValueType max_charge_rate{1.0};
   double initial_soc{0.5};
-  ASSERT_THROW(ED::storage_make_data(-1.0), std::invalid_argument);
-  ASSERT_THROW(ED::storage_make_state(2.0), std::invalid_argument);
-  ASSERT_THROW(ED::storage_make_state(-0.5), std::invalid_argument);
-  auto data = ED::storage_make_data(capacity);
-  auto s0 = ED::storage_make_state(initial_soc);
+  ASSERT_THROW(ED::storage_make_data(-1.0, 1.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_data(2.0, 0.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_data(2.0, -1.0), std::invalid_argument);
+  auto data = ED::storage_make_data(capacity, max_charge_rate);
+  ASSERT_THROW(ED::storage_make_state(data, -1.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_state(data, 1.1), std::invalid_argument);
+  auto s0 = ED::storage_make_state(data, initial_soc);
   auto dt0 = ED::storage_time_advance(data, s0);
-  EXPECT_EQ(dt0, ED::infinity);
+  EXPECT_EQ(dt0, 0);
   EXPECT_EQ(ED::storage_current_time(s0), 0);
   EXPECT_EQ(ED::storage_current_soc(s0), initial_soc);
-  std::vector<ED::PortValue> xs0{
-    ED::PortValue{ED::inport_outflow_request, 1.0}};
-  auto s1 = ED::storage_external_transition(data, s0, 2, xs0);
-  auto dt1 = ED::storage_time_advance(data, s1);
-  EXPECT_EQ(dt1, 50);
-  EXPECT_EQ(ED::storage_current_time(s1), 2);
-  EXPECT_EQ(ED::storage_current_soc(s1), 0.5);
+  auto ys0 = ED::storage_output_function(s0);
+  std::vector<ED::PortValue> expected_ys0{
+    ED::PortValue{ED::outport_inflow_request, max_charge_rate}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys0, expected_ys0, compare_ports));
+  auto s1 = ED::storage_internal_transition(data, s0);
+  //std::vector<ED::PortValue> xs0{
+  //  ED::PortValue{ED::inport_outflow_request, 1.0}};
+  //auto s1 = ED::storage_external_transition(data, s0, 2, xs0);
+  //auto dt1 = ED::storage_time_advance(data, s1);
+  //EXPECT_EQ(dt1, 50);
+  //EXPECT_EQ(ED::storage_current_time(s1), 2);
+  //EXPECT_EQ(ED::storage_current_soc(s1), 0.5);
+  //auto ys1 = ED::storage_output_function(s1);
+  //std::vector<ED::PortValue> expected_ys1{};
+  //EXPECT_TRUE(
+  //    EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+  //      ys1, expected_ys1, compare_ports));
 }
 
 int

@@ -20,6 +20,7 @@ namespace erin::devs
   struct StorageData
   {
     FlowValueType capacity{0.0};
+    FlowValueType max_charge_rate{1.0};
   };
 
   /**
@@ -35,9 +36,11 @@ namespace erin::devs
     bool report_outflow_achieved{false};
   };
 
-  StorageData storage_make_data(FlowValueType capacity);
+  StorageData storage_make_data(
+      FlowValueType capacity,
+      FlowValueType max_charge_rate);
 
-  StorageState storage_make_state(double soc=1.0);
+  StorageState storage_make_state(const StorageData& data, double soc=1.0);
 
   RealTimeType storage_current_time(const StorageState& state);
 
@@ -51,6 +54,9 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // internal transition
+  StorageState storage_internal_transition(
+      const StorageData& data,
+      const StorageState& state);
 
   ////////////////////////////////////////////////////////////
   // external transition
@@ -65,6 +71,12 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // output function
+  std::vector<PortValue> storage_output_function(
+      const StorageState& state);
+
+  void storage_output_function_mutable(
+      const StorageState& state,
+      std::vector<PortValue>& ys);
 }
 
 

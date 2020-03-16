@@ -21,7 +21,9 @@ namespace erin::devs
   }
 
   StorageData
-  storage_make_data(FlowValueType capacity)
+  storage_make_data(
+      FlowValueType capacity,
+      FlowValueType max_charge_rate)
   {
     if (capacity < 0.0) {
       std::ostringstream oss{};
@@ -29,20 +31,30 @@ namespace erin::devs
           << "capacity = " << capacity << "\n";
       throw std::invalid_argument(oss.str());
     }
-    return StorageData{capacity};
+    if (max_charge_rate <= 0.0) {
+      std::ostringstream oss{};
+      oss << "max_charge_rate must be > 0.0\n"
+          << "max_charge_rate = " << max_charge_rate << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    return StorageData{capacity, max_charge_rate};
   }
 
   StorageState
   storage_make_state(
+      const StorageData& data,
       double soc)
   {
     storage_check_soc(soc);
+    FlowValueType requested_charge{0.0}; 
+    if (soc < 1.0)
+      requested_charge = data.max_charge_rate;
     return StorageState{
       0,
       soc,
+      Port{0, requested_charge, requested_charge},
       Port{0, 0.0, 0.0},
-      Port{0, 0.0, 0.0},
-      false,
+      requested_charge != 0.0,
       false};
   }
 
@@ -63,6 +75,8 @@ namespace erin::devs
       const StorageData& data,
       const StorageState& state)
   {
+    if (state.report_inflow_request || state.report_outflow_achieved)
+      return 0;
     storage_check_soc(state.soc);
     auto net_inflow{
       state.inflow_port.get_achieved()
@@ -83,6 +97,36 @@ namespace erin::devs
     auto available_store{state.soc * data.capacity};
     auto time_to_drain{available_store / (-1.0 * net_inflow)};
     return static_cast<RealTimeType>(std::floor(time_to_drain));
+  }
+
+  StorageState
+  storage_internal_transition(
+      const StorageData& data,
+      const StorageState& state)
+  {
+    auto dt{storage_time_advance(data, state)};
+    auto time{state.time + dt};
+    auto net_inflow{
+      state.inflow_port.get_achieved()
+      - state.outflow_port.get_achieved()};
+    auto capacity_increase{dt * net_inflow};
+    auto soc_increase{capacity_increase / data.capacity};
+    auto soc{state.soc + soc_increase};
+    auto ip{state.inflow_port};
+    auto op{state.outflow_port};
+    if (soc == 1.0) {
+      ip = ip.with_requested(0.0, time);
+    }
+    if (soc == 0.0) {
+      op = op.with_achieved(0.0, time);
+    }
+    return StorageState{
+      time,
+      soc,
+      ip,
+      op,
+      ip.should_propagate_request_at(time),
+      op.should_propagate_achieved_at(time)};
   }
 
   StorageState
@@ -138,5 +182,30 @@ namespace erin::devs
       op,
       ip.should_propagate_request_at(time),
       op.should_propagate_achieved_at(time)};
+  }
+
+  std::vector<PortValue>
+  storage_output_function(
+      const StorageState& state)
+  {
+    std::vector<PortValue> ys{};
+    storage_output_function_mutable(state, ys);
+    return ys;
+  }
+
+  void storage_output_function_mutable(
+      const StorageState& state,
+      std::vector<PortValue>& ys)
+  {
+    if (state.report_inflow_request)
+      ys.emplace_back(
+          PortValue{
+            outport_inflow_request,
+            state.inflow_port.get_requested()});
+    if (state.report_outflow_achieved)
+      ys.emplace_back(
+          PortValue{
+            outport_outflow_achieved,
+            state.outflow_port.get_achieved()});
   }
 }

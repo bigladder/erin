@@ -5,6 +5,7 @@
 #define ERIN_DEVS_STORAGE_H
 #include "erin/devs.h"
 #include "erin/type.h"
+#include <iostream>
 
 namespace erin::devs
 {
@@ -23,6 +24,8 @@ namespace erin::devs
     FlowValueType max_charge_rate{1.0};
   };
 
+  std::ostream& operator<<(std::ostream& os, const StorageData& data);
+
   /**
    * StorageState: state that may change between time-steps
    */
@@ -35,6 +38,8 @@ namespace erin::devs
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
   };
+
+  std::ostream& operator<<(std::ostream& os, const StorageState& state);
 
   StorageData storage_make_data(
       FlowValueType capacity,
@@ -72,9 +77,11 @@ namespace erin::devs
   ////////////////////////////////////////////////////////////
   // output function
   std::vector<PortValue> storage_output_function(
+      const StorageData& data,
       const StorageState& state);
 
   void storage_output_function_mutable(
+      const StorageData& data,
       const StorageState& state,
       std::vector<PortValue>& ys);
 }

@@ -20,6 +20,28 @@ namespace erin::devs
     }
   }
 
+  std::ostream&
+  operator<<(std::ostream& os, const StorageData& data)
+  {
+    return (os << "StorageData{"
+               << "capacity=" << data.capacity << ", "
+               << "max_charge_rate=" << data.max_charge_rate << "}");
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const StorageState& state)
+  {
+    bool rir{state.report_inflow_request};
+    bool roa{state.report_outflow_achieved};
+    return (os << "StorageState{"
+               << "time=" << state.time << ", "
+               << "soc=" << state.soc << ", "
+               << "inflow_port=" << state.inflow_port << ", "
+               << "outflow_port=" << state.outflow_port << ", "
+               << "report_inflow_request=" << rir << ", "
+               << "report_outflow_achieved=" << roa << "}");
+  }
+
   StorageData
   storage_make_data(
       FlowValueType capacity,
@@ -52,7 +74,12 @@ namespace erin::devs
     return StorageState{
       0,
       soc,
-      Port{0, requested_charge, requested_charge},
+      Port{
+        0,
+        requested_charge,
+        requested_charge,
+        requested_charge != 0.0,
+        false},
       Port{0, 0.0, 0.0},
       requested_charge != 0.0,
       false};
@@ -125,8 +152,8 @@ namespace erin::devs
       soc,
       ip,
       op,
-      ip.should_propagate_request_at(time),
-      op.should_propagate_achieved_at(time)};
+      false,
+      false};
   }
 
   StorageState
@@ -186,26 +213,53 @@ namespace erin::devs
 
   std::vector<PortValue>
   storage_output_function(
+      const StorageData& data,
       const StorageState& state)
   {
     std::vector<PortValue> ys{};
-    storage_output_function_mutable(state, ys);
+    storage_output_function_mutable(data, state, ys);
     return ys;
   }
 
   void storage_output_function_mutable(
+      const StorageData& data,
       const StorageState& state,
       std::vector<PortValue>& ys)
   {
-    if (state.report_inflow_request)
-      ys.emplace_back(
-          PortValue{
-            outport_inflow_request,
-            state.inflow_port.get_requested()});
-    if (state.report_outflow_achieved)
-      ys.emplace_back(
-          PortValue{
-            outport_outflow_achieved,
-            state.outflow_port.get_achieved()});
+    auto dt{storage_time_advance(data, state)};
+    auto time{state.time + dt};
+    if (dt == 0) {
+      if (state.inflow_port.should_propagate_request_at(time))
+        ys.emplace_back(
+            PortValue{
+              outport_inflow_request,
+              state.inflow_port.get_requested()});
+      if (state.outflow_port.should_propagate_achieved_at(time))
+        ys.emplace_back(
+            PortValue{
+              outport_outflow_achieved,
+              state.outflow_port.get_achieved()});
+    } else if (dt > 0) {
+      auto ip{state.inflow_port};
+      auto op{state.outflow_port};
+      auto net_inflow{
+        state.inflow_port.get_achieved()
+        - state.outflow_port.get_achieved()};
+      if (net_inflow > 0.0) {
+        ip = ip.with_requested(0.0, time);
+      } else if (net_inflow < 0.0) {
+        op = op.with_achieved(0.0, time);
+      }
+      if (ip.should_propagate_request_at(time))
+        ys.emplace_back(
+            PortValue{
+              outport_inflow_request,
+              ip.get_requested()});
+      if (op.should_propagate_achieved_at(time))
+        ys.emplace_back(
+            PortValue{
+              outport_outflow_achieved,
+              op.get_achieved()});
+    }
   }
 }

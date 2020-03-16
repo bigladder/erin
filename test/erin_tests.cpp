@@ -4901,6 +4901,10 @@ TEST(ErinDevs, Test_function_based_storage_element)
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys0, expected_ys0, compare_ports));
   auto s1 = ED::storage_internal_transition(data, s0);
+  auto dt1 = ED::storage_time_advance(data, s1);
+  EXPECT_EQ(dt1, 50);
+  EXPECT_EQ(ED::storage_current_time(s1), 0);
+  EXPECT_EQ(ED::storage_current_soc(s1), initial_soc);
   //std::vector<ED::PortValue> xs0{
   //  ED::PortValue{ED::inport_outflow_request, 1.0}};
   //auto s1 = ED::storage_external_transition(data, s0, 2, xs0);

@@ -20,7 +20,7 @@ namespace erin::devs
     Port inflow_port{0, 0.0, 0.0};
     Port outflow_port{0, 0.0, 0.0};
     bool report_inflow_request{false};
-    bool report_outflow_request{false};
+    bool report_outflow_achieved{false};
   };
 
   StorageState storage_make_state(FlowValueType capacity, double soc=1.0);

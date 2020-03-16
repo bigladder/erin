@@ -4894,6 +4894,10 @@ TEST(ErinDevs, Test_function_based_storage_element)
   std::vector<ED::PortValue> xs0{
     ED::PortValue{ED::inport_outflow_request, 1.0}};
   auto s1 = ED::storage_external_transition(data, s0, 2, xs0);
+  auto dt1 = ED::storage_time_advance(data, s1);
+  EXPECT_EQ(dt1, 50);
+  EXPECT_EQ(ED::storage_current_time(s1), 2);
+  EXPECT_EQ(ED::storage_current_soc(s1), 0.5);
 }
 
 int

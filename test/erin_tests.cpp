@@ -4926,7 +4926,7 @@ TEST(ErinDevs, Test_function_based_storage_element)
   EXPECT_EQ(dt2, ED::infinity);
   EXPECT_EQ(ED::storage_current_time(s2), 50);
   EXPECT_EQ(ED::storage_current_soc(s2), 1.0);
-  if (true) {
+  if (false) {
     std::cout << "s1 = " << s1 << "\n";
     std::cout << "s2 = " << s2 << "\n";
     std::cout << "data = " << data << "\n";
@@ -4956,10 +4956,27 @@ TEST(ErinDevs, Test_function_based_storage_element)
   auto s4 = ED::storage_internal_transition(data, s3);
   auto dt4 = ED::storage_time_advance(data, s4);
   EXPECT_EQ(dt4, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s3), 60);
+  EXPECT_EQ(ED::storage_current_soc(s3), 1.0);
   if (false) {
     std::cout << "s3 = " << s3 << "\n";
     std::cout << "s4 = " << s4 << "\n";
   }
+  std::vector<ED::PortValue> xs4{
+    ED::PortValue{ED::inport_outflow_request, 2 * max_charge_rate}};
+  auto s5 = ED::storage_external_transition(data, s4, 20, xs4);
+  auto dt5 = ED::storage_time_advance(data, s5);
+  EXPECT_EQ(dt5, 100);
+  EXPECT_EQ(ED::storage_current_time(s5), 80);
+  EXPECT_EQ(ED::storage_current_soc(s5), 1.0);
+  auto ys5 = ED::storage_output_function(data, s5);
+  std::vector<ED::PortValue> expected_ys5{
+    ED::PortValue{ED::outport_outflow_achieved, max_charge_rate}};
+  auto s6 = ED::storage_internal_transition(data, s5);
+  auto dt6 = ED::storage_time_advance(data, s6);
+  EXPECT_EQ(dt6, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s6), 180);
+  EXPECT_EQ(ED::storage_current_soc(s6), 0.0);
 }
 
 int

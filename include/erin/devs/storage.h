@@ -12,6 +12,14 @@ namespace erin::devs
 {
   ////////////////////////////////////////////////////////////
   // helper classes and functions
+  bool storage_is_full(double soc);
+
+  bool storage_is_empty(double soc);
+
+  double calc_time_to_fill(double soc, double capacity, double inflow);
+
+  double calc_time_to_drain(double soc, double capacity, double outflow);
+
   template <class N>
   void assert_positive(N number, const std::string& msg)
   {

@@ -11,6 +11,39 @@
 
 namespace erin::devs
 {
+  bool
+  storage_is_full(double soc)
+  {
+    return (std::abs(1.0 - soc) <= ERIN::flow_value_tolerance);
+  }
+
+  bool
+  storage_is_empty(double soc)
+  {
+    return (std::abs(soc) <= ERIN::flow_value_tolerance);
+  }
+
+  double
+  calc_time_to_fill(double soc, double capacity, double inflow)
+  {
+    assert_positive<double>(
+        inflow,
+        "inflow in calc_time_to_fill must be positive");
+    auto available_cap{(1.0 - soc) * capacity};
+    return (available_cap / inflow);
+  }
+
+  double calc_time_to_drain(
+      double soc,
+      double capacity,
+      double outflow)
+  {
+    assert_positive<double>(
+        outflow, "outflow in calc_time_to_drain must be > 0");
+    auto available_store{soc * capacity};
+    return (available_store / outflow);
+  }
+
   void
   storage_check_soc(const FlowValueType& soc)
   {
@@ -65,7 +98,12 @@ namespace erin::devs
     auto net_inflow{inflow_achieved - outflow_achieved};
     auto cap_change{net_inflow * dt};
     auto soc_change{cap_change / capacity};
-    return (soc + soc_change);
+    auto next_soc{soc + soc_change};
+    if (storage_is_full(next_soc))
+      return 1.0;
+    if (storage_is_empty(next_soc))
+      return 0.0;
+    return next_soc;
   }
 
   StorageState
@@ -269,27 +307,32 @@ namespace erin::devs
     auto net_inflow{
       state.inflow_port.get_achieved()
       - state.outflow_port.get_achieved()};
-    if (net_inflow == 0.0)
+    auto high_soc{1.0 - ERIN::flow_value_tolerance};
+    if (std::abs(net_inflow) <= ERIN::flow_value_tolerance)
       return infinity;
-    if (net_inflow > 0.0) {
-      if (state.soc == 1.0)
+    if (net_inflow > ERIN::flow_value_tolerance) {
+      if (state.soc >= high_soc)
         return 0;
-      auto available_cap{(1.0 - state.soc) * data.capacity};
-      auto time_to_fill{available_cap / net_inflow};
+      auto time_to_fill{
+        calc_time_to_fill(state.soc, data.capacity, net_inflow)};
+      if (time_to_fill < 1.0)
+        return 1;
       return static_cast<RealTimeType>(std::floor(time_to_fill));
     }
     // net_inflow < 0.0
-    if (state.soc == 0.0)
+    if (state.soc <= ERIN::flow_value_tolerance)
       return 0;
     auto inflow_request{state.inflow_port.get_requested()};
-    if ((state.soc < 1.0) && (inflow_request < data.max_charge_rate))
+    if ((state.soc < high_soc) && (inflow_request < data.max_charge_rate))
       return 0;
     auto max_inflow_at_full_charge{
       std::clamp(-1 * net_inflow, 0.0, data.max_charge_rate)};
-    if ((state.soc == 1.0) && (inflow_request < max_inflow_at_full_charge))
+    if ((state.soc < high_soc) && (inflow_request < max_inflow_at_full_charge))
       return 0;
-    auto available_store{state.soc * data.capacity};
-    auto time_to_drain{available_store / (-1.0 * net_inflow)};
+    auto time_to_drain{
+      calc_time_to_drain(state.soc, data.capacity, (-1.0 * net_inflow))};
+    if (time_to_drain < 1.0)
+      return 1;
     return static_cast<RealTimeType>(std::floor(time_to_drain));
   }
 
@@ -326,6 +369,32 @@ namespace erin::devs
       op = op.with_achieved(
           std::clamp(op.get_requested(), 0.0, ip.get_achieved()),
           time);
+    }
+    if ((soc > 0.0) && (soc < 1.0)) {
+      auto inflow_achieved{state.inflow_port.get_achieved()};
+      auto outflow_achieved{state.outflow_port.get_achieved()};
+      auto net_inflow{inflow_achieved - outflow_achieved};
+      if (net_inflow > 0.0) {
+        auto time_to_fill{
+          calc_time_to_fill(state.soc, data.capacity, net_inflow)};
+        if (time_to_fill < 1.0) {
+          auto remaining_capacity{(1.0 - state.soc) * data.capacity};
+          auto new_net_inflow{(remaining_capacity / 1.0)};
+          ip = ip.with_requested(
+              new_net_inflow + outflow_achieved,
+              time);
+        }
+      } else if (net_inflow < 0.0) {
+        auto time_to_drain{
+          calc_time_to_drain(state.soc, data.capacity, (-1 * net_inflow))};
+        if (time_to_drain < 1.0) {
+          auto remaining_capacity{state.soc * data.capacity};
+          auto new_net_outflow{(remaining_capacity / 1.0)};
+          op = op.with_achieved(
+              new_net_outflow + inflow_achieved,
+              time);
+        }
+      }
     }
     return StorageState{
       time,

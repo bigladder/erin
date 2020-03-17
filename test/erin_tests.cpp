@@ -4975,7 +4975,7 @@ TEST(ErinDevs, Test_function_based_storage_element)
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys5, expected_ys5, compare_ports));
-  if (true) {
+  if (false) {
     std::cout << "s4           = " << s4 << "\n";
     std::cout << "s5           = " << s5 << "\n";
     std::cout << "ys5          = " << E::vec_to_string<ED::PortValue>(ys5) << "\n";
@@ -5045,6 +5045,17 @@ TEST(ErinDevs, Test_function_based_storage_element)
   EXPECT_EQ(dt11, 66);
   EXPECT_EQ(ED::storage_current_time(s11), 400);
   EXPECT_EQ(ED::storage_current_soc(s11), 1.0);
+  auto ys11 = ED::storage_output_function(data, s11);
+  std::vector<ED::PortValue> expected_ys11{
+    ED::PortValue{ED::outport_outflow_achieved, 1.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys10, expected_ys10, compare_ports));
+  auto s12 = ED::storage_internal_transition(data, s11);
+  auto dt12 = ED::storage_time_advance(data, s12);
+  EXPECT_EQ(dt12, 1);
+  EXPECT_EQ(ED::storage_current_time(s12), 466);
+  EXPECT_TRUE(std::abs(ED::storage_current_soc(s12) - 0.01) < 1e-6);
 }
 
 int

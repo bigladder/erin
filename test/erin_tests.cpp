@@ -5055,7 +5055,26 @@ TEST(ErinDevs, Test_function_based_storage_element)
   auto dt12 = ED::storage_time_advance(data, s12);
   EXPECT_EQ(dt12, 1);
   EXPECT_EQ(ED::storage_current_time(s12), 466);
-  EXPECT_TRUE(std::abs(ED::storage_current_soc(s12) - 0.01) < 1e-6);
+  EXPECT_TRUE(std::abs(ED::storage_current_soc(s12) - 0.01) < E::flow_value_tolerance);
+  auto ys12 = ED::storage_output_function(data, s12);
+  std::vector<ED::PortValue> expected_ys12{
+    ED::PortValue{ED::outport_outflow_achieved, 1.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys12, expected_ys12, compare_ports));
+  if (false) {
+    std::cout << "ys12          = " << E::vec_to_string<ED::PortValue>(ys12) << "\n";
+    std::cout << "expected_ys12 = " << E::vec_to_string<ED::PortValue>(expected_ys12) << "\n";
+  }
+  auto s13 = ED::storage_internal_transition(data, s12);
+  auto dt13 = ED::storage_time_advance(data, s13);
+  EXPECT_EQ(dt13, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s13), 467);
+  EXPECT_EQ(ED::storage_current_soc(s13), 0.0);
+  if (false) {
+    std::cout << "s12 = " << s12 << "\n";
+    std::cout << "s13 = " << s13 << "\n";
+  }
 }
 
 int

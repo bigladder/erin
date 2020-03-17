@@ -99,9 +99,9 @@ namespace erin::devs
     auto cap_change{net_inflow * dt};
     auto soc_change{cap_change / capacity};
     auto next_soc{soc + soc_change};
-    if (storage_is_full(next_soc))
+    if (storage_is_full(next_soc) || (next_soc > 1.0))
       return 1.0;
-    if (storage_is_empty(next_soc))
+    if (storage_is_empty(next_soc) || (next_soc < 0.0))
       return 0.0;
     return next_soc;
   }

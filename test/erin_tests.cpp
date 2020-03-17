@@ -3765,9 +3765,11 @@ TEST(ErinDevs, Test_smart_port_object)
   EXPECT_EQ(p2.get_achieved(), v1);
   EXPECT_FALSE(p2.should_propagate_request_at(t0));
   EXPECT_FALSE(p2.should_propagate_achieved_at(t0));
-  std::cout << "p=" << p << "\n";
-  std::cout << "p1=" << p1 << "\n";
-  std::cout << "p2=" << p2 << "\n";
+  if (false) {
+    std::cout << "p=" << p << "\n";
+    std::cout << "p1=" << p1 << "\n";
+    std::cout << "p2=" << p2 << "\n";
+  }
   EXPECT_TRUE(p2.should_propagate_request_at(t1));
   EXPECT_FALSE(p2.should_propagate_achieved_at(t1));
   EXPECT_FALSE(p2.should_propagate_request_at(t2));
@@ -4816,7 +4818,9 @@ TEST(ErinDevs, Test_function_based_mux)
   std::vector<ED::PortValue> expected_ys3{
     ED::PortValue{ED::outport_inflow_request + 1, 50.0}};
   EXPECT_EQ(ys3.size(), expected_ys3.size());
-  //std::cout << "ys3 = " << ERIN::vec_to_string<ED::PortValue>(ys3) << "\n";
+  if (false) {
+    std::cout << "ys3 = " << ERIN::vec_to_string<ED::PortValue>(ys3) << "\n";
+  }
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys3, expected_ys3, compare_ports));
@@ -4838,8 +4842,10 @@ TEST(ErinDevs, Test_function_based_mux)
   std::vector<ED::PortValue> xs5{
     ED::PortValue{ED::inport_inflow_achieved + 2, 20.0}};
   auto s6 = ED::mux_confluent_transition(s5, xs5);
-  std::cout << "s6.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s6.inflow_ports) << "\n";
-  std::cout << "s6.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s6.outflow_ports) << "\n";
+  if (false) {
+    std::cout << "s6.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s6.inflow_ports) << "\n";
+    std::cout << "s6.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s6.outflow_ports) << "\n";
+  }
   auto dt6 = ED::mux_time_advance(s6);
   EXPECT_EQ(dt6, 0);
   auto ys6 = ED::mux_output_function(s6);
@@ -4849,8 +4855,10 @@ TEST(ErinDevs, Test_function_based_mux)
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys6, expected_ys6, compare_ports));
   auto s7 = ED::mux_internal_transition(s6);
-  std::cout << "s7.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s7.inflow_ports) << "\n";
-  std::cout << "s7.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s7.outflow_ports) << "\n";
+  if (false) {
+    std::cout << "s7.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s7.inflow_ports) << "\n";
+    std::cout << "s7.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s7.outflow_ports) << "\n";
+  }
   auto dt7 = ED::mux_time_advance(s7);
   EXPECT_EQ(dt7, ED::infinity);
   std::vector<ED::PortValue> xs7{
@@ -4865,10 +4873,12 @@ TEST(ErinDevs, Test_function_based_mux)
     ED::PortValue{ED::outport_inflow_request + 1, 0.0},
     ED::PortValue{ED::outport_inflow_request + 2, 0.0},
     ED::PortValue{ED::outport_outflow_achieved + 0, 100.0}};
-  std::cout << "expected_ys8 = " << ERIN::vec_to_string<ED::PortValue>(expected_ys8) << "\n";
-  std::cout << "ys8          = " << ERIN::vec_to_string<ED::PortValue>(ys8) << "\n";
-  std::cout << "s8.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.inflow_ports) << "\n";
-  std::cout << "s8.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.outflow_ports) << "\n";
+  if (false) {
+    std::cout << "expected_ys8 = " << ERIN::vec_to_string<ED::PortValue>(expected_ys8) << "\n";
+    std::cout << "ys8          = " << ERIN::vec_to_string<ED::PortValue>(ys8) << "\n";
+    std::cout << "s8.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.inflow_ports) << "\n";
+    std::cout << "s8.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.outflow_ports) << "\n";
+  }
   EXPECT_EQ(ys8.size(), expected_ys8.size());
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(

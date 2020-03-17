@@ -12,6 +12,14 @@
 
 namespace ERIN
 {
+  std::ostream&
+  operator<<(std::ostream& os, const PortValue& pv)
+  {
+    return os << "PortValue{"
+              << "port=" << pv.port << ", "
+              << "value=" << pv.value << "}";
+  }
+
   TimeUnits
   tag_to_time_units(const std::string& tag)
   {

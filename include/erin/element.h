@@ -6,6 +6,10 @@
 #include "erin/type.h"
 #include "erin/stream.h"
 #include "erin/devs.h"
+#include "erin/devs/converter.h"
+#include "erin/devs/flow_limits.h"
+#include "erin/devs/load.h"
+#include "erin/devs/mux.h"
 #include "adevs.h"
 #include <functional>
 #include <memory>
@@ -262,12 +266,14 @@ namespace ERIN
           FlowValueType lower_limit,
           FlowValueType upper_limit);
 
-    protected:
-      [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
-      [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
 
     private:
-      erin::devs::FlowLimits state;
+      erin::devs::FlowLimitsState state;
   };
 
   ////////////////////////////////////////////////////////////
@@ -302,11 +308,18 @@ namespace ERIN
           std::function<FlowValueType(FlowValueType)> calc_output_from_input,
           std::function<FlowValueType(FlowValueType)> calc_input_from_output);
 
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
     protected:
       [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
       [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
 
     private:
+      erin::devs::ConverterState state;
       std::function<FlowValueType(FlowValueType)> output_from_input;
       std::function<FlowValueType(FlowValueType)> input_from_output;
   };
@@ -322,31 +335,29 @@ namespace ERIN
           const StreamType& stream_type,
           const std::vector<LoadItem>& loads);
 
-    protected:
-      void update_on_internal_transition() override;
-      Time calculate_time_advance() override;
-      [[nodiscard]] FlowState update_state_for_inflow_achieved(
-          FlowValueType inflow_) const override;
-      void add_additional_outputs(std::vector<PortValue>& ys) override;
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
 
     private:
-      std::vector<LoadItem> loads;
-      int idx;
-      std::vector<LoadItem>::size_type num_loads;
-
-      void check_loads() const;
+      erin::devs::LoadState state;
   };
 
   ////////////////////////////////////////////////////////////
   // MuxerDispatchStrategy
-  enum class MuxerDispatchStrategy
-  {
-    InOrder = 0,
-    Distribute
-  };
+  //enum class MuxerDispatchStrategy
+  //{
+  //  InOrder = 0,
+  //  Distribute
+  //};
 
-  MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(const std::string& tag);
-  std::string muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds);
+  //MuxerDispatchStrategy tag_to_muxer_dispatch_strategy(const std::string& tag);
+  //std::string muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds);
+  using erin::devs::MuxerDispatchStrategy;
+  using erin::devs::tag_to_muxer_dispatch_strategy;
+  using erin::devs::muxer_dispatch_strategy_to_string;
 
   ////////////////////////////////////////////////////////////
   // Mux
@@ -361,10 +372,15 @@ namespace ERIN
           int num_outflows,
           MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder,
           MuxerDispatchStrategy outflow_strategy = MuxerDispatchStrategy::Distribute);
+
+      void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
       void output_func(std::vector<PortValue>& xs) override;
 
     private:
+      erin::devs::MuxState state;
       int num_inflows;
       int num_outflows;
       MuxerDispatchStrategy strategy;
@@ -375,6 +391,8 @@ namespace ERIN
       std::vector<FlowValueType> outflows; // achieved
       std::vector<FlowValueType> prev_outflows;
       std::vector<FlowValueType> outflow_requests;
+
+      void update_outflows_using_inorder_dispatch(FlowValueType remaining_inflow);
   };
 
   ////////////////////////////////////////////////////////////

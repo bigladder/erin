@@ -5,6 +5,8 @@
 #define ERIN_UTILS_H
 #include "erin/type.h"
 #include <iostream>
+#include <vector>
+#include <functional>
 
 namespace erin::utils
 {
@@ -53,6 +55,60 @@ namespace erin::utils
       const std::vector<std::string>& compared_to);
 
   std::string path_to_filename(const std::string& path);
+
+  template <class T>
+  bool
+  compare_vectors_unordered(const std::vector<T>& xs, const std::vector<T>& ys)
+  {
+    using size_type = typename std::vector<T>::size_type;
+    if (xs.size() != ys.size())
+      return false;
+    std::vector<bool> used_ys(ys.size(), false);
+    for (size_type i{0}; i < xs.size(); ++i) {
+      const auto& x = xs.at(i);
+      bool found_matching_y{false};
+      for (size_type j{0}; j < xs.size(); ++j) {
+        if (!used_ys.at(j)) {
+          const auto& y = ys.at(j);
+          if (x == y) {
+            used_ys[j] = true;
+            found_matching_y = true;
+            break;
+          }
+        }
+      }
+      if (!found_matching_y)
+        return false;
+    }
+    return true;
+  }
+
+  template <class T>
+  bool
+  compare_vectors_unordered_with_fn(const std::vector<T>& xs, const std::vector<T>& ys, const std::function<bool(const T&, const T&)>& f)
+  {
+    using size_type = typename std::vector<T>::size_type;
+    if (xs.size() != ys.size())
+      return false;
+    std::vector<bool> used_ys(ys.size(), false);
+    for (size_type i{0}; i < xs.size(); ++i) {
+      const auto& x = xs.at(i);
+      bool found_matching_y{false};
+      for (size_type j{0}; j < xs.size(); ++j) {
+        if (!used_ys.at(j)) {
+          const auto& y = ys.at(j);
+          if (f(x, y)) {
+            used_ys[j] = true;
+            found_matching_y = true;
+            break;
+          }
+        }
+      }
+      if (!found_matching_y)
+        return false;
+    }
+    return true;
+  }
 }
 
 #endif // ERIN_UTILS_H

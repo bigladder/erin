@@ -8,6 +8,11 @@
 #include "checkout_line/observer.h"
 #include "debug_utils.h"
 #include "erin/devs.h"
+#include "erin/devs/flow_limits.h"
+#include "erin/devs/converter.h"
+#include "erin/devs/load.h"
+#include "erin/devs/mux.h"
+#include "erin/devs/storage.h"
 #include "erin/distribution.h"
 #include "erin/erin.h"
 #include "erin/fragility.h"
@@ -3674,7 +3679,8 @@ load_combined_heat_and_power_example()
 
 TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
 {
-  using size_type = std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
+  using size_type =
+    std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
   auto m = load_combined_heat_and_power_example();
   const auto& comps = m.get_components();
   const size_type expected_num_components{7};
@@ -3759,6 +3765,11 @@ TEST(ErinDevs, Test_smart_port_object)
   EXPECT_EQ(p2.get_achieved(), v1);
   EXPECT_FALSE(p2.should_propagate_request_at(t0));
   EXPECT_FALSE(p2.should_propagate_achieved_at(t0));
+  if (false) {
+    std::cout << "p=" << p << "\n";
+    std::cout << "p1=" << p1 << "\n";
+    std::cout << "p2=" << p2 << "\n";
+  }
   EXPECT_TRUE(p2.should_propagate_request_at(t1));
   EXPECT_FALSE(p2.should_propagate_achieved_at(t1));
   EXPECT_FALSE(p2.should_propagate_request_at(t2));
@@ -4287,6 +4298,793 @@ TEST(ErinElements, Test_flow_writer_clone)
   std::vector<ERIN::FlowValueType> expected_requested_flows2 = {10.0,20.0,0.0};
   auto actual_requested_flows2 = ERIN::get_requested_flows_from_results_for_component(results2, "element");
   EXPECT_EQ(expected_requested_flows2, actual_requested_flows2);
+}
+
+bool compare_ports(const erin::devs::PortValue& a, const erin::devs::PortValue& b)
+{
+  return (a.port == b.port) && (a.value == b.value);
+};
+
+TEST(ErinDevs, Test_flow_limits_functions)
+{
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  using size_type = std::vector<ED::PortValue>::size_type;
+  ED::FlowLimits limits{0.0, 100.0};
+  ED::FlowLimitsState s0{
+    // time, inflow_port, outflow_port
+    0, ED::Port{}, ED::Port{},
+    // FlowLimits, report_inflow_request, report_outflow_achieved
+    limits, false, false};
+  auto dt0 = ED::flow_limits_time_advance(s0);
+  EXPECT_EQ(dt0, ED::infinity); // ED::infinity is the representation we use for infinity
+  auto s1 = ED::flow_limits_external_transition_on_outflow_request(s0, 2, 10.0);
+  ED::FlowLimitsState expected_s1{
+    2,
+    ED::Port{2, 10.0, 10.0, true, false},
+    ED::Port{2, 10.0, 10.0, true, false},
+    limits, true, false};
+  EXPECT_EQ(s1, expected_s1);
+  auto dt1 = ED::flow_limits_time_advance(s1);
+  EXPECT_EQ(dt1, 0);
+  auto ys2 = ED::flow_limits_output_function(s1);
+  std::vector<ED::PortValue> expected_ys2 = {
+    ED::PortValue{ED::outport_inflow_request, 10.0}};
+  ASSERT_EQ(ys2.size(), expected_ys2.size());
+  for (size_type i{0}; i < expected_ys2.size(); ++i) {
+    const auto& y2 = ys2.at(i);
+    const auto& ey2 = expected_ys2.at(i);
+    EXPECT_EQ(y2.port, ey2.port) << "i=" << i;
+    EXPECT_EQ(y2.value, ey2.value) << "i=" << i;
+  }
+  auto s2 = ED::flow_limits_internal_transition(s1);
+  ED::FlowLimitsState expected_s2{
+    2,
+    ED::Port{2, 10.0, 10.0},
+    ED::Port{2, 10.0, 10.0},
+    limits, false, false};
+  EXPECT_EQ(s2, expected_s2);
+  auto s3 = ED::flow_limits_external_transition_on_inflow_achieved(s2, 0, 8.0);
+  ED::FlowLimitsState expected_s3{
+    2,
+    ED::Port{2,10.0,8.0},
+    ED::Port{2,10.0,8.0},
+    limits, false, true};
+  EXPECT_EQ(s3, expected_s3);
+  auto dt3 = ED::flow_limits_time_advance(s3);
+  EXPECT_EQ(dt3, 0);
+  auto ys3 = ED::flow_limits_output_function(s3);
+  std::vector<ED::PortValue> expected_ys3 = {
+    ED::PortValue{ED::outport_outflow_achieved, 8.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys3, expected_ys3, compare_ports));
+  auto s4 = ED::flow_limits_internal_transition(s3);
+  ED::FlowLimitsState expected_s4{
+    2,
+    ED::Port{2,10.0,8.0},
+    ED::Port{2,10.0,8.0},
+    limits, false, false};
+  EXPECT_EQ(s4, expected_s4);
+  auto dt4 = ED::flow_limits_time_advance(s4);
+  EXPECT_EQ(dt4, ED::infinity);
+  std::vector<ED::PortValue> xs = {
+    ED::PortValue{ED::inport_outflow_request, 200.0}};
+  auto s5 = ED::flow_limits_external_transition(s4, 2, xs);
+  ED::FlowLimitsState expected_s5{
+    4,
+    ED::Port{4, 100.0, 100.0},
+    ED::Port{4, 200.0, 100.0},
+    limits, true, true};
+  EXPECT_EQ(s5, expected_s5);
+  auto ys5 = ED::flow_limits_output_function(s5);
+  std::vector<ED::PortValue> expected_ys5 = {
+    ED::PortValue{ED::outport_outflow_achieved, 100.0},
+    ED::PortValue{ED::outport_inflow_request, 100.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys5, expected_ys5, compare_ports));
+  auto s6 = ED::flow_limits_internal_transition(s5);
+  auto dt6 = ED::flow_limits_time_advance(s6);
+  ASSERT_EQ(dt6, ED::infinity);
+  std::vector<ED::PortValue> xs6 = {
+    ED::PortValue{ED::inport_inflow_achieved, 55.0}};
+  auto s7 = ED::flow_limits_external_transition(s6, 0, xs6);
+  ED::FlowLimitsState expected_s7{
+    4,
+    ED::Port{4, 100.0, 55.0},
+    ED::Port{4, 200.0, 55.0},
+    limits, false, true};
+  EXPECT_EQ(s7, expected_s7);
+  auto ys7 = ED::flow_limits_output_function(s7);
+  std::vector<ED::PortValue> expected_ys7{
+    ED::PortValue{ED::outport_outflow_achieved, 55.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys7, expected_ys7, compare_ports));
+}
+
+TEST(ErinBasicsTest, Test_that_compare_vectors_unordered_works)
+{
+  namespace eu = erin::utils;
+  std::vector<int> xs{1,2,3,4};
+  std::vector<int> ys{4,3,2,1};
+  EXPECT_TRUE(eu::compare_vectors_unordered<int>(xs, ys));
+  xs = std::vector<int>{1,2,3};
+  ys = std::vector<int>{4,3,2};
+  EXPECT_FALSE(eu::compare_vectors_unordered<int>(xs, ys));
+  xs = std::vector<int>{1,2,3,4};
+  ys = std::vector<int>{4,3,2};
+  EXPECT_FALSE(eu::compare_vectors_unordered<int>(xs, ys));
+}
+
+TEST(ErinDevs, Test_converter_functions)
+{
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  using size_type = std::vector<ED::PortValue>::size_type;
+  ED::FlowValueType constant_efficiency{0.25};
+  auto s0 = ED::make_converter_state(constant_efficiency);
+  std::unique_ptr<ED::ConversionFun> cf =
+    std::make_unique<ED::ConstantEfficiencyFun>(constant_efficiency);
+  ED::ConverterState expected_s0{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    0, ED::Port{0, 0.0}, ED::Port{0, 0.0}, ED::Port{0, 0.0}, ED::Port{0, 0.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, false, false};
+  EXPECT_EQ(s0, expected_s0);
+  auto dt0 = ED::converter_time_advance(s0);
+  EXPECT_EQ(dt0, ED::infinity);
+  std::vector<ED::PortValue> xs0{ED::PortValue{ED::inport_outflow_request, 10.0}};
+  auto s1 = ED::converter_external_transition(s0, 2, xs0);
+  ED::ConverterState expected_s1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{0, 0.0}, ED::Port{2, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), true, false, false};
+  EXPECT_EQ(expected_s1, s1);
+  auto dt1 = ED::converter_time_advance(s1);
+  EXPECT_EQ(dt1, 0);
+  auto ys1 = ED::converter_output_function(s1);
+  std::vector<ED::PortValue> expected_ys1{
+    ED::PortValue{ED::outport_inflow_request, 40.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys1, expected_ys1, compare_ports));
+  auto s2 = ED::converter_internal_transition(s1);
+  ED::ConverterState expected_s2{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{0, 0.0}, ED::Port{2, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, false, false};
+  EXPECT_EQ(expected_s2, s2);
+  auto dt2 = ED::converter_time_advance(s2);
+  EXPECT_EQ(dt2, ED::infinity);
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_inflow_achieved, 20.0}};
+  auto s3 = ED::converter_external_transition(s2, 1, xs2);
+  ED::ConverterState expected_s3{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    3, ED::Port{3, 40.0, 20.0}, ED::Port{3, 10.0, 5.0}, ED::Port{0, 0.0}, ED::Port{3, 15.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, true, false};
+  EXPECT_EQ(expected_s3, s3);
+  auto dt3 = ED::converter_time_advance(s3);
+  EXPECT_EQ(dt3, 0);
+  auto ys3 = ED::converter_output_function(s3);
+  std::vector<ED::PortValue> expected_ys3{
+    ED::PortValue{ED::outport_outflow_achieved, 5.0}};
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys3, expected_ys3, compare_ports));
+  auto s4 = ED::converter_internal_transition(s3);
+  ED::ConverterState expected_s4{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    3, ED::Port{3, 40.0, 20.0}, ED::Port{3, 10.0, 5.0}, ED::Port{0, 0.0}, ED::Port{3, 15.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, false, false};
+  EXPECT_EQ(s4, expected_s4);
+  auto dt4 = ED::converter_time_advance(s4);
+  EXPECT_EQ(dt4, ED::infinity);
+  // Test Confluent Transitions
+  std::vector<ED::PortValue> xs1a{
+    ED::PortValue{ED::inport_lossflow_request, 2.0}};
+  auto s2a = ED::converter_confluent_transition(s1, xs1a);
+  ED::ConverterState expected_s2a{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{2, 2.0}, ED::Port{2, 28.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, false, false};
+
+  // Test Multiple Events for a Single External Transition
+  // Starting from a "Zero" State
+  std::vector<ED::PortValue> xs_a{
+    ED::PortValue{ED::inport_outflow_request, 10.0}};
+  auto s_a = ED::converter_external_transition(s0, 10, xs_a);
+  ED::ConverterState expected_s_a{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    10, ED::Port{10, 40.0}, ED::Port{10, 10.0}, ED::Port{0, 0.0}, ED::Port{10, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), true, false, false};
+  EXPECT_EQ(s_a, expected_s_a);
+
+  std::vector<ED::PortValue> xs_b{
+    ED::PortValue{ED::inport_lossflow_request, 30.0}};
+  auto s_b = ED::converter_external_transition(s0, 10, xs_b);
+  ED::ConverterState expected_s_b{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    10, ED::Port{0, 0.0}, ED::Port{0, 0.0}, ED::Port{10, 30.0, 0.0}, ED::Port{0, 0.0, 0.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, false, true};
+  EXPECT_EQ(s_b, expected_s_b);
+
+  std::vector<ED::PortValue> xs_c{
+    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_c), std::invalid_argument);
+
+  std::vector<ED::PortValue> xs_d{
+    ED::PortValue{ED::inport_outflow_request, 10.0},
+    ED::PortValue{ED::inport_lossflow_request, 30.0}};
+  auto s_d = ED::converter_external_transition(s0, 10, xs_d);
+  ED::ConverterState expected_s_d{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    10, ED::Port{10, 40.0}, ED::Port{10, 10.0}, ED::Port{10, 30.0}, ED::Port{0, 0.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), true, false, false};
+  EXPECT_EQ(s_d, expected_s_d);
+
+  // ... the below 3 all throw because we're getting an inflow achieved without a request for it
+  std::vector<ED::PortValue> xs_e{
+    ED::PortValue{ED::inport_outflow_request, 10.0},
+    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_e), std::invalid_argument);
+
+  std::vector<ED::PortValue> xs_f{
+    ED::PortValue{ED::inport_lossflow_request, 30.0},
+    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_f), std::invalid_argument);
+
+  std::vector<ED::PortValue> xs_g{
+    ED::PortValue{ED::inport_outflow_request, 10.0},
+    ED::PortValue{ED::inport_lossflow_request, 30.0},
+    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_g), std::invalid_argument);
+  
+  // Test Multiple Events for a Single External Transition
+  ED::ConverterState s_m{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    2, ED::Port{2, 80.0}, ED::Port{2, 20.0}, ED::Port{0, 0.0}, ED::Port{2, 60.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    std::move(cf->clone()), false, false, false};
+  //std::vector<ED::PortValue> xs_a{
+  //  ED::PortValue{ED::inport_outflow_request, 10.0}};
+  auto s_a1 = ED::converter_external_transition(s_m, 10, xs_a);
+  ED::ConverterState expected_s_a1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 40.0}, ED::Port{12, 10.0}, ED::Port{0, 0.0}, ED::Port{12, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), true, false, false};
+  EXPECT_EQ(s_a1, expected_s_a1);
+
+  //std::vector<ED::PortValue> xs_b{
+  //  ED::PortValue{ED::inport_lossflow_request, 30.0}};
+  auto s_b1 = ED::converter_external_transition(s_m, 10, xs_b);
+  ED::ConverterState expected_s_b1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{2, 80.0}, ED::Port{2, 20.0}, ED::Port{12, 30.0}, ED::Port{12, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, false, false};
+  EXPECT_EQ(s_b1, expected_s_b1);
+
+  //std::vector<ED::PortValue> xs_c{
+  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  auto s_c1 = ED::converter_external_transition(s_m, 10, xs_c);
+  ED::ConverterState expected_s_c1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 80.0, 40.0}, ED::Port{12, 20.0, 10.0}, ED::Port{0, 0.0}, ED::Port{12, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, true, false};
+  EXPECT_EQ(s_c1, expected_s_c1);
+
+  //std::vector<ED::PortValue> xs_d{
+  //  ED::PortValue{ED::inport_outflow_request, 10.0},
+  //  ED::PortValue{ED::inport_lossflow_request, 30.0}};
+  auto s_d1 = ED::converter_external_transition(s_m, 10, xs_d);
+  ED::ConverterState expected_s_d1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 40.0}, ED::Port{12, 10.0}, ED::Port{12, 30.0}, ED::Port{12, 0.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), true, false, false};
+  EXPECT_EQ(s_d1, expected_s_d1);
+
+  //std::vector<ED::PortValue> xs_e{
+  //  ED::PortValue{ED::inport_outflow_request, 10.0},
+  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  auto s_e1 = ED::converter_external_transition(s_m, 10, xs_e);
+  ED::ConverterState expected_s_e1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 40.0}, ED::Port{12, 10.0}, ED::Port{0, 0.0}, ED::Port{12, 30.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, false, false};
+  EXPECT_EQ(s_e1, expected_s_e1);
+
+  //std::vector<ED::PortValue> xs_f{
+  //  ED::PortValue{ED::inport_lossflow_request, 30.0},
+  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  auto s_f1 = ED::converter_external_transition(s_m, 10, xs_f);
+  ED::ConverterState expected_s_f1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 80.0, 40.0}, ED::Port{12, 20.0, 10.0}, ED::Port{12, 30.0}, ED::Port{12, 0.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, true, false};
+  EXPECT_EQ(s_f1, expected_s_f1);
+
+  //std::vector<ED::PortValue> xs_g{
+  //  ED::PortValue{ED::inport_outflow_request, 10.0},
+  //  ED::PortValue{ED::inport_lossflow_request, 30.0},
+  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
+  auto s_g1 = ED::converter_external_transition(s_m, 10, xs_g);
+  ED::ConverterState expected_s_g1{
+    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
+    12, ED::Port{12, 40.0}, ED::Port{12, 10.0}, ED::Port{12, 30.0}, ED::Port{12, 0.0},
+    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
+    cf->clone(), false, false, false};
+  EXPECT_EQ(s_g1, expected_s_g1);
+}
+
+TEST(ErinDevs, Test_function_based_efficiency)
+{
+  namespace ED = erin::devs;
+  namespace E = ERIN;
+  auto f_in_to_out = [](E::FlowValueType inflow) -> E::FlowValueType {
+    return inflow * 0.25;
+  };
+  auto f_out_to_in = [](E::FlowValueType outflow) -> E::FlowValueType {
+    return outflow / 0.25;
+  };
+  std::unique_ptr<ED::ConversionFun> f =
+    std::make_unique<ED::FunctionBasedEfficiencyFun>(f_in_to_out, f_out_to_in);
+  EXPECT_EQ(40.0, f->inflow_given_outflow(10.0));
+  EXPECT_EQ(10.0, f->outflow_given_inflow(40.0));
+}
+
+TEST(ErinDevs, Test_function_based_load)
+{
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  auto s0 = ED::make_load_state(
+      std::vector<ED::LoadItem>{
+        ED::LoadItem{0, 100.0},
+        ED::LoadItem{10, 10.0},
+        ED::LoadItem{100, 10.0}, // should NOT cause a new event -- same load request.
+        ED::LoadItem{200}});
+  EXPECT_FALSE(s0.inflow_port.should_propagate_request_at(0));
+  EXPECT_EQ(s0.current_index, -1);
+  EXPECT_EQ(ED::load_current_time(s0), 0);
+  EXPECT_EQ(ED::load_next_time(s0), 0);
+  EXPECT_EQ(ED::load_current_request(s0), 0.0);
+  EXPECT_EQ(ED::load_current_achieved(s0), 0.0);
+  auto dt0 = ED::load_time_advance(s0);
+  EXPECT_EQ(dt0, 0);
+  auto ys0 = ED::load_output_function(s0);
+  std::vector<ED::PortValue> expected_ys0{
+    ED::PortValue{ED::outport_inflow_request, 100.0}};
+  EXPECT_EQ(ys0.size(), expected_ys0.size());
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys0, expected_ys0, compare_ports));
+  auto s1 = ED::load_internal_transition(s0);
+  EXPECT_EQ(s1.current_index, 0);
+  EXPECT_EQ(ED::load_current_time(s1), 0);
+  EXPECT_EQ(ED::load_next_time(s1), 10);
+  EXPECT_EQ(ED::load_current_request(s1), 100.0);
+  EXPECT_EQ(ED::load_current_achieved(s1), 100.0);
+  auto dt1 = ED::load_time_advance(s1);
+  EXPECT_EQ(dt1, 10);
+  auto ys1 = ED::load_output_function(s1);
+  std::vector<ED::PortValue> expected_ys1{
+    ED::PortValue{ED::outport_inflow_request, 10.0}};
+  EXPECT_EQ(ys1.size(), expected_ys1.size());
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys1, expected_ys1, compare_ports));
+  auto s2 = ED::load_internal_transition(s1);
+  EXPECT_EQ(s2.current_index, 1);
+  EXPECT_EQ(ED::load_current_time(s2), 10);
+  EXPECT_EQ(ED::load_next_time(s2), 100);
+  EXPECT_EQ(ED::load_current_request(s2), 10.0);
+  EXPECT_EQ(ED::load_current_achieved(s2), 10.0);
+  auto dt2 = ED::load_time_advance(s2);
+  EXPECT_EQ(dt2, 90);
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_inflow_achieved, 5.0}};
+  auto s3 = ED::load_external_transition(s2, 50, xs2);
+  EXPECT_EQ(s3.current_index, 1);
+  EXPECT_EQ(ED::load_current_time(s3), 60);
+  EXPECT_EQ(ED::load_next_time(s3), 100);
+  EXPECT_EQ(ED::load_current_request(s3), 10.0);
+  EXPECT_EQ(ED::load_current_achieved(s3), 5.0);
+  auto dt3 = ED::load_time_advance(s3);
+  EXPECT_EQ(dt3, 40);
+  std::vector<ED::PortValue> xs3{
+    ED::PortValue{ED::inport_inflow_achieved, 10.0}};
+  auto s4 = ED::load_external_transition(s3, 10, xs3);
+  EXPECT_EQ(s4.current_index, 1);
+  EXPECT_EQ(ED::load_current_time(s4), 70);
+  EXPECT_EQ(ED::load_next_time(s4), 100);
+  EXPECT_EQ(ED::load_current_request(s4), 10.0);
+  EXPECT_EQ(ED::load_current_achieved(s4), 10.0);
+  auto dt4 = ED::load_time_advance(s4);
+  EXPECT_EQ(dt4, 30);
+  auto ys4 = ED::load_output_function(s4);
+  // we get no output because the requested load is the same as current -- no
+  // change to propagate!
+  std::vector<ED::PortValue> expected_ys4{};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys4, expected_ys4, compare_ports));
+  auto s5 = ED::load_internal_transition(s4);
+  EXPECT_EQ(s5.current_index, 2);
+  EXPECT_EQ(ED::load_current_time(s5), 100);
+  EXPECT_EQ(ED::load_next_time(s5), 200);
+  EXPECT_EQ(ED::load_current_request(s5), 10.0);
+  EXPECT_EQ(ED::load_current_achieved(s5), 10.0);
+  auto dt5 = ED::load_time_advance(s5);
+  EXPECT_EQ(dt5, 100);
+  auto ys5 = ED::load_output_function(s5);
+  std::vector<ED::PortValue> expected_ys5{
+    ED::PortValue{ED::outport_inflow_request, 0.0}};
+  EXPECT_EQ(ys5.size(), expected_ys5.size());
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys5, expected_ys5, compare_ports));
+  auto s6 = ED::load_internal_transition(s5);
+  EXPECT_EQ(s6.current_index, 3);
+  EXPECT_EQ(ED::load_current_time(s6), 200);
+  EXPECT_EQ(ED::load_next_time(s6), ED::infinity);
+  EXPECT_EQ(ED::load_current_request(s6), 0.0);
+  EXPECT_EQ(ED::load_current_achieved(s6), 0.0);
+  auto dt6 = ED::load_time_advance(s6);
+  EXPECT_EQ(dt6, ED::infinity);
+
+  // test confluent update from state 
+  std::vector<ED::PortValue> xs5{
+    ED::PortValue{ED::inport_inflow_achieved, 8.0}};
+  auto s6a = ED::load_confluent_transition(s5, xs5);
+  EXPECT_EQ(s6a.current_index, 3);
+  EXPECT_EQ(ED::load_current_time(s6a), 200);
+  EXPECT_EQ(ED::load_next_time(s6a), ED::infinity);
+  EXPECT_EQ(ED::load_current_request(s6a), 0.0);
+  EXPECT_EQ(ED::load_current_achieved(s6a), 0.0);
+
+  ASSERT_THROW(
+      ED::check_loads(std::vector<ED::LoadItem>{}),
+      std::invalid_argument);
+
+  ASSERT_THROW(
+      ED::check_loads(std::vector<ED::LoadItem>{
+        ED::LoadItem{0,10.0},
+        ED::LoadItem{10,0.0}}),
+      std::invalid_argument);
+
+  ASSERT_THROW(
+      ED::check_loads(std::vector<ED::LoadItem>{
+        ED::LoadItem{10,10.0},
+        ED::LoadItem{5}}),
+      std::invalid_argument);
+}
+
+TEST(ErinDevs, Test_function_based_mux)
+{
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  int num_inports{3};
+  int num_outports{3};
+  auto s0 = ED::make_mux_state(num_inports, num_outports);
+  auto dt0 = ED::mux_time_advance(s0);
+  EXPECT_EQ(dt0, ED::infinity);
+  EXPECT_EQ(ED::mux_current_time(s0), 0);
+  std::vector<ED::PortValue> xs0{
+    ED::PortValue{ED::inport_outflow_request + 0, 100.0}};
+  auto s1 = ED::mux_external_transition(s0, 10, xs0);
+  EXPECT_TRUE(
+      ED::mux_should_report(
+        s1.time,
+        s1.inflow_ports,
+        s1.outflow_ports));
+  EXPECT_TRUE(s1.do_report);
+  EXPECT_EQ(ED::mux_current_time(s1), 10);
+  auto dt1 = ED::mux_time_advance(s1);
+  EXPECT_EQ(dt1, 0);
+  auto ys1 = ED::mux_output_function(s1);
+  std::vector<ED::PortValue> expected_ys1{
+    ED::PortValue{ED::outport_inflow_request + 0, 100.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys1, expected_ys1, compare_ports));
+  auto s2 = ED::mux_internal_transition(s1);
+  EXPECT_EQ(ED::mux_current_time(s2), 10);
+  auto dt2 = ED::mux_time_advance(s2);
+  EXPECT_EQ(dt2, ED::infinity);
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_inflow_achieved + 0, 50.0}};
+  auto s3 = ED::mux_external_transition(s2, 2, xs2);
+  EXPECT_EQ(ED::mux_current_time(s3), 12);
+  auto dt3 = ED::mux_time_advance(s3);
+  EXPECT_EQ(dt3, 0);
+  auto ys3 = ED::mux_output_function(s3);
+  std::vector<ED::PortValue> expected_ys3{
+    ED::PortValue{ED::outport_inflow_request + 1, 50.0}};
+  EXPECT_EQ(ys3.size(), expected_ys3.size());
+  if (false) {
+    std::cout << "ys3 = " << ERIN::vec_to_string<ED::PortValue>(ys3) << "\n";
+  }
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys3, expected_ys3, compare_ports));
+  auto s4 = ED::mux_internal_transition(s3);
+  auto dt4 = ED::mux_time_advance(s4);
+  EXPECT_EQ(dt4, ED::infinity);
+  std::vector<ED::PortValue> xs4{
+    ED::PortValue{ED::inport_inflow_achieved + 1, 20.0}};
+  auto s5 = ED::mux_external_transition(s4, 0, xs4);
+  EXPECT_EQ(ED::mux_current_time(s5), 12);
+  auto dt5 = ED::mux_time_advance(s5);
+  EXPECT_EQ(dt5, 0);
+  auto ys5 = ED::mux_output_function(s5);
+  std::vector<ED::PortValue> expected_ys5{
+    ED::PortValue{ED::outport_inflow_request + 2, 30.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys5, expected_ys5, compare_ports));
+  std::vector<ED::PortValue> xs5{
+    ED::PortValue{ED::inport_inflow_achieved + 2, 20.0}};
+  auto s6 = ED::mux_confluent_transition(s5, xs5);
+  if (false) {
+    std::cout << "s6.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s6.inflow_ports) << "\n";
+    std::cout << "s6.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s6.outflow_ports) << "\n";
+  }
+  auto dt6 = ED::mux_time_advance(s6);
+  EXPECT_EQ(dt6, 0);
+  auto ys6 = ED::mux_output_function(s6);
+  std::vector<ED::PortValue> expected_ys6{
+    ED::PortValue{ED::outport_outflow_achieved + 0, 90.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys6, expected_ys6, compare_ports));
+  auto s7 = ED::mux_internal_transition(s6);
+  if (false) {
+    std::cout << "s7.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s7.inflow_ports) << "\n";
+    std::cout << "s7.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s7.outflow_ports) << "\n";
+  }
+  auto dt7 = ED::mux_time_advance(s7);
+  EXPECT_EQ(dt7, ED::infinity);
+  std::vector<ED::PortValue> xs7{
+    ED::PortValue{ED::inport_outflow_request + 1, 100.0}};
+  auto s8 = ED::mux_external_transition(s7, 10, xs7);
+  EXPECT_EQ(ED::mux_current_time(s8), 22);
+  auto dt8 = ED::mux_time_advance(s8);
+  EXPECT_EQ(dt8, 0);
+  auto ys8 = ED::mux_output_function(s8);
+  std::vector<ED::PortValue> expected_ys8{
+    ED::PortValue{ED::outport_inflow_request + 0, 200.0},
+    ED::PortValue{ED::outport_inflow_request + 1, 0.0},
+    ED::PortValue{ED::outport_inflow_request + 2, 0.0},
+    ED::PortValue{ED::outport_outflow_achieved + 0, 100.0}};
+  if (false) {
+    std::cout << "expected_ys8 = " << ERIN::vec_to_string<ED::PortValue>(expected_ys8) << "\n";
+    std::cout << "ys8          = " << ERIN::vec_to_string<ED::PortValue>(ys8) << "\n";
+    std::cout << "s8.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.inflow_ports) << "\n";
+    std::cout << "s8.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.outflow_ports) << "\n";
+  }
+  EXPECT_EQ(ys8.size(), expected_ys8.size());
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys8, expected_ys8, compare_ports));
+}
+
+TEST(ErinDevs, Test_function_based_storage_element)
+{
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  ED::FlowValueType capacity{100.0};
+  ED::FlowValueType max_charge_rate{1.0};
+  double initial_soc{0.5};
+  ASSERT_THROW(ED::storage_make_data(-1.0, 1.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_data(0.0, 1.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_data(2.0, 0.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_data(2.0, -1.0), std::invalid_argument);
+  auto data = ED::storage_make_data(capacity, max_charge_rate);
+  ASSERT_THROW(ED::storage_make_state(data, -1.0), std::invalid_argument);
+  ASSERT_THROW(ED::storage_make_state(data, 1.1), std::invalid_argument);
+  auto s0 = ED::storage_make_state(data, initial_soc);
+  auto dt0 = ED::storage_time_advance(data, s0);
+  EXPECT_EQ(dt0, 0);
+  EXPECT_EQ(ED::storage_current_time(s0), 0);
+  EXPECT_EQ(ED::storage_current_soc(s0), initial_soc);
+  auto ys0 = ED::storage_output_function(data, s0);
+  std::vector<ED::PortValue> expected_ys0{
+    ED::PortValue{ED::outport_inflow_request, max_charge_rate}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys0, expected_ys0, compare_ports));
+  auto s1 = ED::storage_internal_transition(data, s0);
+  if (false) {
+    std::cout << "s0 = " << s0 << "\n";
+    std::cout << "s1 = " << s1 << "\n";
+  }
+  auto dt1 = ED::storage_time_advance(data, s1);
+  EXPECT_EQ(dt1, 50);
+  EXPECT_EQ(ED::storage_current_time(s1), 0);
+  EXPECT_EQ(ED::storage_current_soc(s1), initial_soc);
+  auto ys1 = ED::storage_output_function(data, s1);
+  std::vector<ED::PortValue> expected_ys1{
+    ED::PortValue{ED::outport_inflow_request, 0.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys1, expected_ys1, compare_ports));
+  if (false) {
+    std::cout << "ys1 = " << E::vec_to_string<ED::PortValue>(ys1) << "\n";
+    std::cout << "expected_ys1 = "
+              << E::vec_to_string<ED::PortValue>(expected_ys1) << "\n";
+  }
+  auto s2 = ED::storage_internal_transition(data, s1);
+  auto dt2 = ED::storage_time_advance(data, s2);
+  EXPECT_EQ(dt2, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s2), 50);
+  EXPECT_EQ(ED::storage_current_soc(s2), 1.0);
+  if (false) {
+    std::cout << "s1 = " << s1 << "\n";
+    std::cout << "s2 = " << s2 << "\n";
+    std::cout << "data = " << data << "\n";
+  }
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_outflow_request, max_charge_rate}};
+  auto s3 = ED::storage_external_transition(data, s2, 10, xs2);
+  auto dt3 = ED::storage_time_advance(data, s3);
+  if (false) {
+    std::cout << "s2 = " << s2 << "\n";
+    std::cout << "s3 = " << s3 << "\n";
+  }
+  EXPECT_EQ(dt3, 0);
+  EXPECT_EQ(ED::storage_current_time(s3), 60);
+  EXPECT_EQ(ED::storage_current_soc(s3), 1.0);
+  auto ys3 = ED::storage_output_function(data, s3);
+  std::vector<ED::PortValue> expected_ys3{
+    ED::PortValue{ED::outport_inflow_request, max_charge_rate}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys3, expected_ys3, compare_ports));
+  if (false) {
+    std::cout << "ys3 = " << E::vec_to_string<ED::PortValue>(ys3) << "\n";
+    std::cout << "expected_ys3 = "
+              << E::vec_to_string<ED::PortValue>(expected_ys3) << "\n";
+  }
+  auto s4 = ED::storage_internal_transition(data, s3);
+  auto dt4 = ED::storage_time_advance(data, s4);
+  EXPECT_EQ(dt4, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s3), 60);
+  EXPECT_EQ(ED::storage_current_soc(s3), 1.0);
+  if (false) {
+    std::cout << "s3 = " << s3 << "\n";
+    std::cout << "s4 = " << s4 << "\n";
+  }
+  std::vector<ED::PortValue> xs4{
+    ED::PortValue{ED::inport_outflow_request, 2 * max_charge_rate}};
+  auto s5 = ED::storage_external_transition(data, s4, 20, xs4);
+  auto dt5 = ED::storage_time_advance(data, s5);
+  EXPECT_EQ(dt5, 100);
+  EXPECT_EQ(ED::storage_current_time(s5), 80);
+  EXPECT_EQ(ED::storage_current_soc(s5), 1.0);
+  auto ys5 = ED::storage_output_function(data, s5);
+  std::vector<ED::PortValue> expected_ys5{
+    ED::PortValue{ED::outport_outflow_achieved, max_charge_rate}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys5, expected_ys5, compare_ports));
+  if (false) {
+    std::cout << "s4           = " << s4 << "\n";
+    std::cout << "s5           = " << s5 << "\n";
+    std::cout << "ys5          = " << E::vec_to_string<ED::PortValue>(ys5) << "\n";
+    std::cout << "expected_ys5 = " << E::vec_to_string<ED::PortValue>(expected_ys5) << "\n";
+  }
+  auto s6 = ED::storage_internal_transition(data, s5);
+  auto dt6 = ED::storage_time_advance(data, s6);
+  EXPECT_EQ(dt6, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s6), 180);
+  EXPECT_EQ(ED::storage_current_soc(s6), 0.0);
+  std::vector<ED::PortValue> xs6{
+    ED::PortValue{ED::inport_inflow_achieved, 0.5 * max_charge_rate}};
+  auto s7 = ED::storage_external_transition(data, s6, 15, xs6);
+  auto dt7 = ED::storage_time_advance(data, s7);
+  EXPECT_EQ(dt7, 0);
+  EXPECT_EQ(ED::storage_current_time(s7), 195);
+  EXPECT_EQ(ED::storage_current_soc(s7), 0.0);
+  auto ys7 = ED::storage_output_function(data, s7);
+  std::vector<ED::PortValue> expected_ys7{
+    ED::PortValue{ED::outport_outflow_achieved, 0.5 * max_charge_rate}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys7, expected_ys7, compare_ports));
+  auto s8 = ED::storage_internal_transition(data, s7);
+  auto dt8 = ED::storage_time_advance(data, s8);
+  EXPECT_EQ(dt8, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s8), 195);
+  EXPECT_EQ(ED::storage_current_soc(s8), 0.0);
+  std::vector<ED::PortValue> xs8{
+    ED::PortValue{ED::inport_outflow_request, 0.0}};
+  auto s9 = ED::storage_external_transition(data, s8, 5, xs8);
+  auto dt9 = ED::storage_time_advance(data, s9);
+  EXPECT_EQ(dt9, 200);
+  EXPECT_EQ(ED::storage_current_time(s9), 200);
+  EXPECT_EQ(ED::storage_current_soc(s9), 0.0);
+  if (false) {
+    std::cout << "s6 = " << s6 << "\n";
+    std::cout << "s7 = " << s7 << "\n";
+    std::cout << "s8 = " << s8 << "\n";
+    std::cout << "s9 = " << s9 << "\n";
+  }
+  auto ys9 = ED::storage_output_function(data, s9);
+  std::vector<ED::PortValue> expected_ys9{
+    ED::PortValue{ED::outport_inflow_request, 0.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys9, expected_ys9, compare_ports));
+  std::vector<ED::PortValue> xs9{
+    ED::PortValue{ED::inport_outflow_request, 2.5 * max_charge_rate}};
+  auto s10 = ED::storage_confluent_transition(data, s9, xs9);
+  auto dt10 = ED::storage_time_advance(data, s10);
+  EXPECT_EQ(dt10, 0);
+  EXPECT_EQ(ED::storage_current_time(s10), 400);
+  EXPECT_EQ(ED::storage_current_soc(s10), 1.0);
+  if (false) {
+    std::cout << "s9  = " << s9 << "\n";
+    std::cout << "s10 = " << s10 << "\n";
+  }
+  auto ys10 = ED::storage_output_function(data, s10);
+  std::vector<ED::PortValue> expected_ys10{
+    ED::PortValue{ED::outport_inflow_request, max_charge_rate}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys10, expected_ys10, compare_ports));
+  auto s11 = ED::storage_internal_transition(data, s10);
+  auto dt11 = ED::storage_time_advance(data, s11);
+  EXPECT_EQ(dt11, 66);
+  EXPECT_EQ(ED::storage_current_time(s11), 400);
+  EXPECT_EQ(ED::storage_current_soc(s11), 1.0);
+  auto ys11 = ED::storage_output_function(data, s11);
+  std::vector<ED::PortValue> expected_ys11{
+    ED::PortValue{ED::outport_outflow_achieved, 1.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys10, expected_ys10, compare_ports));
+  auto s12 = ED::storage_internal_transition(data, s11);
+  auto dt12 = ED::storage_time_advance(data, s12);
+  EXPECT_EQ(dt12, 1);
+  EXPECT_EQ(ED::storage_current_time(s12), 466);
+  EXPECT_TRUE(std::abs(ED::storage_current_soc(s12) - 0.01) < E::flow_value_tolerance);
+  auto ys12 = ED::storage_output_function(data, s12);
+  std::vector<ED::PortValue> expected_ys12{
+    ED::PortValue{ED::outport_outflow_achieved, 1.0}};
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys12, expected_ys12, compare_ports));
+  if (false) {
+    std::cout << "ys12          = " << E::vec_to_string<ED::PortValue>(ys12) << "\n";
+    std::cout << "expected_ys12 = " << E::vec_to_string<ED::PortValue>(expected_ys12) << "\n";
+  }
+  auto s13 = ED::storage_internal_transition(data, s12);
+  auto dt13 = ED::storage_time_advance(data, s13);
+  EXPECT_EQ(dt13, ED::infinity);
+  EXPECT_EQ(ED::storage_current_time(s13), 467);
+  EXPECT_EQ(ED::storage_current_soc(s13), 0.0);
+  if (false) {
+    std::cout << "s12 = " << s12 << "\n";
+    std::cout << "s13 = " << s13 << "\n";
+  }
 }
 
 int

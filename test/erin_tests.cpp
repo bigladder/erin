@@ -4902,6 +4902,10 @@ TEST(ErinDevs, Test_function_based_storage_element)
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys0, expected_ys0, compare_ports));
   auto s1 = ED::storage_internal_transition(data, s0);
+  if (false) {
+    std::cout << "s0 = " << s0 << "\n";
+    std::cout << "s1 = " << s1 << "\n";
+  }
   auto dt1 = ED::storage_time_advance(data, s1);
   EXPECT_EQ(dt1, 50);
   EXPECT_EQ(ED::storage_current_time(s1), 0);
@@ -4922,16 +4926,16 @@ TEST(ErinDevs, Test_function_based_storage_element)
   EXPECT_EQ(dt2, ED::infinity);
   EXPECT_EQ(ED::storage_current_time(s2), 50);
   EXPECT_EQ(ED::storage_current_soc(s2), 1.0);
-  if (false) {
+  if (true) {
     std::cout << "s1 = " << s1 << "\n";
     std::cout << "s2 = " << s2 << "\n";
     std::cout << "data = " << data << "\n";
   }
   std::vector<ED::PortValue> xs2{
-    ED::PortValue{ED::inport_outflow_request, 1.0}};
+    ED::PortValue{ED::inport_outflow_request, max_charge_rate}};
   auto s3 = ED::storage_external_transition(data, s2, 10, xs2);
   auto dt3 = ED::storage_time_advance(data, s3);
-  if (true) {
+  if (false) {
     std::cout << "s2 = " << s2 << "\n";
     std::cout << "s3 = " << s3 << "\n";
   }
@@ -4944,10 +4948,17 @@ TEST(ErinDevs, Test_function_based_storage_element)
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys3, expected_ys3, compare_ports));
-  if (true) {
+  if (false) {
     std::cout << "ys3 = " << E::vec_to_string<ED::PortValue>(ys3) << "\n";
     std::cout << "expected_ys3 = "
               << E::vec_to_string<ED::PortValue>(expected_ys3) << "\n";
+  }
+  auto s4 = ED::storage_internal_transition(data, s3);
+  auto dt4 = ED::storage_time_advance(data, s4);
+  EXPECT_EQ(dt4, ED::infinity);
+  if (false) {
+    std::cout << "s3 = " << s3 << "\n";
+    std::cout << "s4 = " << s4 << "\n";
   }
 }
 

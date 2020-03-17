@@ -6,11 +6,48 @@
 #include "erin/devs.h"
 #include "erin/type.h"
 #include <iostream>
+#include <string>
 
 namespace erin::devs
 {
   ////////////////////////////////////////////////////////////
   // helper classes and functions
+  template <class N>
+  void assert_positive(N number, const std::string& msg)
+  {
+    if (number <= 0) {
+      std::ostringstream oss{};
+      oss << "number must be > 0\n"
+          << "number = " << number << "\n"
+          << "message: " << msg << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  template <class N>
+  void assert_non_negative(N number, const std::string& msg)
+  {
+    if (number < 0) {
+      std::ostringstream oss{};
+      oss << "number must be >= 0\n"
+          << "number = " << number << "\n"
+          << "message: " << msg << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  template <class N>
+  void assert_fraction(N number, const std::string& msg)
+  {
+    if ((number < 0) || (number > 1)) {
+      std::ostringstream oss{};
+      oss << "number must be >= 0 and <= 1\n"
+          << "number = " << number << "\n"
+          << "message: " << msg << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
   double update_soc(
       FlowValueType inflow_achieved,
       FlowValueType outflow_achieved,

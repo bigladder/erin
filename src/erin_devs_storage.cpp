@@ -4,6 +4,7 @@
 #include "erin/devs/storage.h"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -51,6 +52,16 @@ namespace erin::devs
       RealTimeType dt,
       FlowValueType capacity)
   {
+    assert_fraction<double>(
+        soc, "soc in update_soc");
+    assert_non_negative<FlowValueType>(
+        inflow_achieved, "inflow_achieved in update_soc");
+    assert_non_negative<FlowValueType>(
+        outflow_achieved, "outflow_achieved in update_soc");
+    assert_non_negative<RealTimeType>(
+        dt, "dt in update_soc");
+    assert_positive<FlowValueType>(
+        capacity, "capacity in update_soc");
     auto net_inflow{inflow_achieved - outflow_achieved};
     auto cap_change{net_inflow * dt};
     auto soc_change{cap_change / capacity};
@@ -74,10 +85,11 @@ namespace erin::devs
         state.soc,
         state.inflow_port.get_achieved(),
         state.outflow_port.get_achieved(),
-        dt, data.capacity);
+        dt,
+        data.capacity);
     if (soc == 1.0)
       ip = ip.with_requested(
-          std::clamp(0.0, data.max_charge_rate, outflow_request),
+          std::clamp(outflow_request, 0.0, data.max_charge_rate),
           time);
     else
       ip = ip.with_requested(data.max_charge_rate, time);
@@ -109,7 +121,8 @@ namespace erin::devs
         state.soc,
         state.inflow_port.get_achieved(),
         state.outflow_port.get_achieved(),
-        dt, data.capacity);
+        dt,
+        data.capacity);
     auto ip_ach{ip.get_achieved()};
     auto op_ach{op.get_achieved()};
     if ((soc == 1.0) && (ip_ach > op_ach))
@@ -143,14 +156,12 @@ namespace erin::devs
         state.soc,
         state.inflow_port.get_achieved(),
         state.outflow_port.get_achieved(),
-        dt, data.capacity);
+        dt,
+        data.capacity);
+    auto flow = std::clamp(outflow_request, 0.0, data.max_charge_rate);
     if ((soc == 1.0) && (net_inflow > 0.0))
-      ip = ip.with_requested(
-          std::clamp(0.0, data.max_charge_rate, outflow_request),
-          time);
+      ip = ip.with_requested(flow, time);
     if ((soc == 0.0) && (net_inflow < 0.0)) {
-      auto flow = std::clamp(
-          0.0, data.max_charge_rate, outflow_request);
       op = op.with_achieved(flow, time);
       ip = ip.with_requested(flow, time);
     }
@@ -267,7 +278,7 @@ namespace erin::devs
     if ((state.soc < 1.0) && (inflow_request < data.max_charge_rate))
       return 0;
     auto max_inflow_at_full_charge{
-      std::clamp(0.0, data.max_charge_rate, -1.0 * net_inflow)};
+      std::clamp(-1 * net_inflow, 0.0, data.max_charge_rate)};
     if ((state.soc == 1.0) && (inflow_request < max_inflow_at_full_charge))
       return 0;
     auto available_store{state.soc * data.capacity};
@@ -281,20 +292,27 @@ namespace erin::devs
       const StorageState& state)
   {
     auto dt{storage_time_advance(data, state)};
+    if ((dt == infinity) || (dt < 0)) {
+      std::ostringstream oss{};
+      oss << "internal transition after an infinite or negative time advance...\n"
+          << "dt = " << dt << "\n";
+      throw std::runtime_error(oss.str());
+    }
     auto time{state.time + dt};
-    auto net_inflow{
-      state.inflow_port.get_achieved()
-      - state.outflow_port.get_achieved()};
-    auto capacity_increase{dt * net_inflow};
-    auto soc_increase{capacity_increase / data.capacity};
-    auto soc{state.soc + soc_increase};
+    auto soc = update_soc(
+        state.soc,
+        state.inflow_port.get_achieved(),
+        state.outflow_port.get_achieved(),
+        dt,
+        data.capacity);
     auto ip{state.inflow_port};
     auto op{state.outflow_port};
-    if (soc == 1.0) {
-      ip = ip.with_requested(0.0, time);
-    }
+    auto flow = std::clamp(op.get_requested(), 0.0, data.max_charge_rate);
+    if (soc == 1.0)
+      ip = ip.with_requested(flow, time);
     if (soc == 0.0) {
-      op = op.with_achieved(0.0, time);
+      ip = op.with_requested(flow, time);
+      op = op.with_achieved(flow, time);
     }
     return StorageState{
       time,

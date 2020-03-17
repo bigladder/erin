@@ -88,11 +88,11 @@ namespace erin::devs
           << "time_of_last_change = " << time_of_last_change << "\n";
       throw std::invalid_argument(oss.str());
     }
-    bool request_changed{new_request != requested};
+    bool request_changed{std::abs(new_request - requested) > ERIN::flow_value_tolerance};
     return Port{
       request_changed ? time : time_of_last_change,
       new_request,
-      new_request,
+      request_changed? new_request : achieved,
       request_changed ? true : propagate_request,
       false};
   }

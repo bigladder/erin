@@ -387,6 +387,16 @@ namespace erin::devs
     throw std::runtime_error(oss.str());
   }
 
+  StorageState
+  storage_confluent_transition(
+      const StorageData& data,
+      const StorageState& state,
+      const std::vector<PortValue>& xs)
+  {
+    auto next_state = storage_internal_transition(data, state);
+    return storage_external_transition(data, next_state, 0, xs);
+  }
+
   std::vector<PortValue>
   storage_output_function(
       const StorageData& data,
@@ -415,17 +425,23 @@ namespace erin::devs
             PortValue{
               outport_outflow_achieved,
               state.outflow_port.get_achieved()});
-    } else if (dt > 0) {
+      return;
+    }
+    if (dt > 0) {
       auto ip{state.inflow_port};
       auto op{state.outflow_port};
       auto net_inflow{
         state.inflow_port.get_achieved()
         - state.outflow_port.get_achieved()};
-      if (net_inflow > 0.0) {
+      if (net_inflow > 0.0)
         ip = ip.with_requested(0.0, time);
-      } else if (net_inflow < 0.0) {
-        op = op.with_achieved(0.0, time);
-      }
+      if (net_inflow < 0.0)
+        op = op.with_achieved(
+            std::clamp(
+              op.get_requested(),
+              0.0,
+              ip.get_achieved()),
+            time);
       if (ip.should_propagate_request_at(time))
         ys.emplace_back(
             PortValue{
@@ -436,6 +452,11 @@ namespace erin::devs
             PortValue{
               outport_outflow_achieved,
               op.get_achieved()});
+      return;
     }
+    std::ostringstream oss{};
+    oss << "dt < 0\n"
+        << "dt = " << dt << "\n";
+    throw std::runtime_error(oss.str());
   }
 }

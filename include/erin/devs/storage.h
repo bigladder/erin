@@ -137,6 +137,10 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // confluent transition
+  StorageState storage_confluent_transition(
+      const StorageData& data,
+      const StorageState& state,
+      const std::vector<PortValue>& xs);
 
   ////////////////////////////////////////////////////////////
   // output function

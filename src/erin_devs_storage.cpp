@@ -94,7 +94,12 @@ namespace erin::devs
     else
       ip = ip.with_requested(data.max_charge_rate, time);
     if (soc == 0.0)
-      op = op.with_achieved(ip.get_requested(), time);
+      op = op.with_achieved(
+          std::clamp(
+            outflow_request,
+            0.0,
+            data.max_charge_rate),
+          time);
     return StorageState{
       time,
       soc,
@@ -128,7 +133,9 @@ namespace erin::devs
     if ((soc == 1.0) && (ip_ach > op_ach))
       ip = ip.with_requested(op_ach, time);
     if ((soc == 0.0) && (op_ach > ip_ach))
-      op = op.with_achieved(ip_ach, time);
+      op = op.with_achieved(
+          std::clamp(ip_ach, 0.0, op.get_requested()),
+          time);
     return StorageState{
       time,
       soc,
@@ -307,12 +314,18 @@ namespace erin::devs
         data.capacity);
     auto ip{state.inflow_port};
     auto op{state.outflow_port};
-    auto flow = std::clamp(op.get_requested(), 0.0, data.max_charge_rate);
-    if (soc == 1.0)
-      ip = ip.with_requested(flow, time);
+    if (soc == 1.0) {
+      ip = ip.with_requested(
+          std::clamp(op.get_requested(), 0.0, data.max_charge_rate),
+          time);
+    }
+    else {
+      ip = ip.with_requested(data.max_charge_rate, time);
+    }
     if (soc == 0.0) {
-      ip = op.with_requested(flow, time);
-      op = op.with_achieved(flow, time);
+      op = op.with_achieved(
+          std::clamp(op.get_requested(), 0.0, ip.get_achieved()),
+          time);
     }
     return StorageState{
       time,

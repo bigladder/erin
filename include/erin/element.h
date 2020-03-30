@@ -370,7 +370,6 @@ namespace ERIN
           const StreamType& stream_type,
           int num_inflows,
           int num_outflows,
-          MuxerDispatchStrategy strategy = MuxerDispatchStrategy::InOrder,
           MuxerDispatchStrategy outflow_strategy = MuxerDispatchStrategy::Distribute);
 
       void delta_int() override;

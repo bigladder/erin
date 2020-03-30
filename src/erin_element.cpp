@@ -946,7 +946,6 @@ namespace ERIN
       const StreamType& st,
       int num_inflows_,
       int num_outflows_,
-      MuxerDispatchStrategy strategy_,
       MuxerDispatchStrategy outflow_strategy_):
     FlowElement(
         std::move(id),

@@ -738,7 +738,6 @@ namespace ERIN
           the_stream,
           num_inflows,
           num_outflows,
-          strategy,
           output_strategy);
       elements.emplace(mux);
     }

@@ -55,7 +55,6 @@ type = "muxer"
 stream = "waste_heat"
 num_inflows = 1
 num_outflows = 2
-inflow_dispatch_strategy = "in_order"
 outflow_dispatch_strategy = "in_order"
 [components.C0]
 # C0 = converter 0, natural-gas to electricity

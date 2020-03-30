@@ -5091,52 +5091,34 @@ TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
 {
   auto st = ::ERIN::StreamType("electrical");
   ERIN::RealTimeType t_max{3};
+  std::string id{"load"};
   auto sink = new ::ERIN::Sink(
-      "load",
+      id,
       ::ERIN::ComponentType::Load,
       st,
       {::ERIN::LoadItem{0,100},
        ::ERIN::LoadItem{1,10},
        ::ERIN::LoadItem{2,0},
        ::ERIN::LoadItem{t_max}});
-  auto meter = new ::ERIN::FlowMeter(
-      "meter",
-      ::ERIN::ComponentType::Load,
-      st);
   std::shared_ptr<ERIN::FlowWriter> fw =
     std::make_shared<ERIN::DefaultFlowWriter>();
-  meter->set_flow_writer(fw);
   sink->set_record_history(true);
   sink->set_flow_writer(fw);
-  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
-  network.couple(
-      sink, ::ERIN::Sink::outport_inflow_request,
-      meter, ::ERIN::FlowMeter::inport_outflow_request);
   adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
-  network.add(&sim);
+  sim.add(sink);
   while (sim.next_event_time() < ::ERIN::inf)
     sim.exec_next_event();
   std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2, 3};
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
   fw->clear();
-  auto actual_times = ERIN::get_times_from_results_for_component(results, "meter");
+  auto actual_times = ERIN::get_times_from_results_for_component(results, id);
   ASSERT_TRUE(
       ::erin_test_utils::compare_vectors_functional<::ERIN::RealTimeType>(
         expected_times,
         actual_times));
   std::vector<::ERIN::FlowValueType> expected_loads = {100, 10, 0, 0};
-  auto actual_loads = ERIN::get_actual_flows_from_results_for_component(results, "meter");
-  ASSERT_TRUE(
-      ::erin_test_utils::compare_vectors_functional<::ERIN::FlowValueType>(
-        expected_loads,
-        actual_loads));
-  actual_times = ERIN::get_times_from_results_for_component(results, "load");
-  ASSERT_TRUE(
-      ::erin_test_utils::compare_vectors_functional<::ERIN::RealTimeType>(
-        expected_times,
-        actual_times));
-  actual_loads = ERIN::get_actual_flows_from_results_for_component(results, "load");
+  auto actual_loads = ERIN::get_actual_flows_from_results_for_component(results, id);
   ASSERT_TRUE(
       ::erin_test_utils::compare_vectors_functional<::ERIN::FlowValueType>(
         expected_loads,

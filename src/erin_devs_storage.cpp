@@ -117,8 +117,7 @@ namespace erin::devs
     storage_check_flow(outflow_request);
     storage_check_elapsed_time(dt);
     auto ip{state.inflow_port};
-    auto op{state.outflow_port};
-    op = op.with_requested(outflow_request, time);
+    auto op = state.outflow_port.with_requested(outflow_request, time);
     auto soc = update_soc(
         state.soc,
         state.inflow_port.get_achieved(),

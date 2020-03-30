@@ -959,8 +959,6 @@ namespace ERIN
         outflow_strategy_)},
     num_inflows{num_inflows_},
     num_outflows{num_outflows_},
-    strategy{strategy_},
-    outflow_strategy{outflow_strategy_},
     inflows{},
     prev_inflows{},
     inflows_achieved{},

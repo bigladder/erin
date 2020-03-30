@@ -383,8 +383,6 @@ namespace ERIN
       erin::devs::MuxState state;
       int num_inflows;
       int num_outflows;
-      MuxerDispatchStrategy strategy;
-      MuxerDispatchStrategy outflow_strategy;
       std::vector<FlowValueType> inflows;
       std::vector<FlowValueType> prev_inflows;
       std::vector<FlowValueType> inflows_achieved;

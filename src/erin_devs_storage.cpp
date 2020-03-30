@@ -325,8 +325,8 @@ namespace erin::devs
     if ((state.soc < high_soc) && (inflow_request < data.max_charge_rate))
       return 0;
     auto max_inflow_at_full_charge{
-      std::clamp(-1 * net_inflow, 0.0, data.max_charge_rate)};
-    if ((state.soc < high_soc) && (inflow_request < max_inflow_at_full_charge))
+      std::clamp(state.outflow_port.get_requested(), 0.0, data.max_charge_rate)};
+    if ((state.soc >= high_soc) && (inflow_request < max_inflow_at_full_charge))
       return 0;
     auto time_to_drain{
       calc_time_to_drain(state.soc, data.capacity, (-1.0 * net_inflow))};

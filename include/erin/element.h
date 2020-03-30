@@ -142,6 +142,7 @@ namespace ERIN
       void output_func(std::vector<PortValue>& ys) override;
 
       virtual void set_flow_writer(const std::shared_ptr<FlowWriter>& /* writer */) {}
+      virtual void set_record_history(bool /* record_history */) {}
 
       // Delete copy and move operators to prevent slicing issues...
       // see:
@@ -341,8 +342,14 @@ namespace ERIN
       Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_record_history(bool record_history) override;
+
     private:
       erin::devs::LoadState state;
+      std::shared_ptr<FlowWriter> flow_writer;
+      int element_id;
+      bool record_history;
   };
 
   ////////////////////////////////////////////////////////////

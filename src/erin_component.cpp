@@ -320,7 +320,7 @@ namespace ERIN
     auto the_id = get_id();
     auto stream = get_input_stream();
     auto loads = loads_by_scenario.at(active_scenario);
-    auto sink = new Sink(the_id, ComponentType::Load, stream, loads);
+    auto sink = new Sink(the_id + "-sink", ComponentType::Load, stream, loads);
     elements.emplace(sink);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "sink = " << sink << "\n";
@@ -332,7 +332,7 @@ namespace ERIN
     }
     connect_source_to_sink(network, meter, sink, false);
     if (is_failed) {
-      auto lim = new FlowLimits(the_id, ComponentType::Source, stream, 0.0, 0.0);
+      auto lim = new FlowLimits(the_id + "-limits", ComponentType::Source, stream, 0.0, 0.0);
       elements.emplace(lim);
       connect_source_to_sink(network, lim, meter, true);
       ports[ep::Type::Inflow] = std::vector<FlowElement*>{lim};

@@ -3,8 +3,9 @@
 
 #ifndef ERIN_TEST_UTILS_H
 #define ERIN_TEST_UTILS_H
-#include <unordered_map>
 #include "gtest/gtest.h"
+#include <iostream>
+#include <unordered_map>
 
 
 namespace erin_test_utils
@@ -57,6 +58,29 @@ namespace erin_test_utils
     ASSERT_EQ(expected_size, actual.size());
     for (decltype(expected_size) i{0}; i < expected_size; ++i)
       EXPECT_EQ(expected[i], actual[i]) << "vectors differ at index " << i;
+  }
+
+  template <class T>
+  bool compare_vectors_functional(
+      const std::vector<T>& expected,
+      const std::vector<T>& actual)
+  {
+    auto expected_size{expected.size()};
+    if (expected_size != actual.size()) {
+      std::cout << "expected_size != actual.size()\n"
+                << "expected_size = " << expected_size << "\n"
+                << "actual.size() = " << actual.size() << "\n";
+      return false;
+    }
+    for (decltype(expected_size) i{0}; i < expected_size; ++i) {
+      if (expected[i] != actual[i]) {
+        std::cout << "expected[" << i << "] != actual[" << i << "]\n"
+                  << "expected[" << i << "] = " << expected[i] << "\n"
+                  << "actual[" << i << "] = " << actual[i] << "\n";
+        return false;
+      }
+    }
+    return true;
   }
 }
 

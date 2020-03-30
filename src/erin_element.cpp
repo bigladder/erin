@@ -870,26 +870,81 @@ namespace ERIN
         component_type,
         ElementType::Sink,
         st),
-    state{erin::devs::make_load_state(loads_)}
+    state{erin::devs::make_load_state(loads_)},
+    flow_writer{nullptr},
+    element_id{-1},
+    record_history{false}
   {
+  }
+
+  void
+  Sink::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    if (flow_writer && record_history && (element_id == -1)) {
+      element_id = flow_writer->register_id(
+          get_id(),
+          get_outflow_type().get_type(),
+          record_history);
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
+    }
+  }
+
+  void
+  Sink::set_record_history(bool record_history_)
+  {
+    if ((!record_history) && record_history_ && (element_id == -1) && flow_writer) {
+      element_id = flow_writer->register_id(
+          get_id(),
+          get_outflow_type().get_type(),
+          record_history);
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
+    }
+    record_history = record_history_;
   }
 
   void
   Sink::delta_int()
   {
     state = erin::devs::load_internal_transition(state);
+    if (flow_writer && record_history && (element_id != -1))
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
   }
 
   void
   Sink::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     state = erin::devs::load_external_transition(state, e.real, xs);
+    if (flow_writer && record_history && (element_id != -1))
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
   }
 
   void
   Sink::delta_conf(std::vector<PortValue>& xs)
   {
     state = erin::devs::load_confluent_transition(state, xs);
+    if (flow_writer && record_history && (element_id != -1))
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
   }
 
   Time
@@ -906,37 +961,6 @@ namespace ERIN
   {
     erin::devs::load_output_function_mutable(state, ys);
   }
-
-  ////////////////////////////////////////////////////////////
-  // MuxerDispatchStrategy
-  //MuxerDispatchStrategy
-  //tag_to_muxer_dispatch_strategy(const std::string& tag)
-  //{
-  //  if (tag == "in_order") {
-  //    return MuxerDispatchStrategy::InOrder;
-  //  }
-  //  else if (tag == "distribute") {
-  //    return MuxerDispatchStrategy::Distribute;
-  //  }
-  //  std::ostringstream oss;
-  //  oss << "unhandled tag '" << tag << "' for Muxer_dispatch_strategy\n";
-  //  throw std::runtime_error(oss.str());
-  //}
-
-  //std::string
-  //muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds)
-  //{
-  //  switch (mds) {
-  //    case MuxerDispatchStrategy::InOrder:
-  //      return std::string{"in_order"};
-  //    case MuxerDispatchStrategy::Distribute:
-  //      return std::string{"distribute"};
-  //  }
-  //  std::ostringstream oss;
-  //  oss << "unhandled Muxer_dispatch_strategy '"
-  //    << static_cast<int>(mds) << "'\n";
-  //  throw std::runtime_error(oss.str());
-  //}
 
   ////////////////////////////////////////////////////////////
   // Mux

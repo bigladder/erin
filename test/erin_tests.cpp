@@ -5106,6 +5106,7 @@ TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
   std::shared_ptr<ERIN::FlowWriter> fw =
     std::make_shared<ERIN::DefaultFlowWriter>();
   meter->set_flow_writer(fw);
+  sink->set_record_history(true);
   sink->set_flow_writer(fw);
   adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
   network.couple(
@@ -5120,10 +5121,26 @@ TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
   auto results = fw->get_results();
   fw->clear();
   auto actual_times = ERIN::get_times_from_results_for_component(results, "meter");
-  ::erin_test_utils::compare_vectors<::ERIN::RealTimeType>(expected_times, actual_times);
+  ASSERT_TRUE(
+      ::erin_test_utils::compare_vectors_functional<::ERIN::RealTimeType>(
+        expected_times,
+        actual_times));
   std::vector<::ERIN::FlowValueType> expected_loads = {100, 10, 0, 0};
   auto actual_loads = ERIN::get_actual_flows_from_results_for_component(results, "meter");
-  ::erin_test_utils::compare_vectors<::ERIN::FlowValueType>(expected_loads, actual_loads);
+  ASSERT_TRUE(
+      ::erin_test_utils::compare_vectors_functional<::ERIN::FlowValueType>(
+        expected_loads,
+        actual_loads));
+  actual_times = ERIN::get_times_from_results_for_component(results, "load");
+  ASSERT_TRUE(
+      ::erin_test_utils::compare_vectors_functional<::ERIN::RealTimeType>(
+        expected_times,
+        actual_times));
+  actual_loads = ERIN::get_actual_flows_from_results_for_component(results, "load");
+  ASSERT_TRUE(
+      ::erin_test_utils::compare_vectors_functional<::ERIN::FlowValueType>(
+        expected_loads,
+        actual_loads));
 }
 
 int

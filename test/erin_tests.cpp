@@ -609,8 +609,7 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         std::string{"bus"},
         streams["electricity"],
         2,
-        1,
-        ::ERIN::MuxerDispatchStrategy::InOrder)));
+        1)));
   auto pt = &t;
   auto actual = pt->read_components(streams, loads_by_id);
   EXPECT_EQ(expected.size(), actual.size());

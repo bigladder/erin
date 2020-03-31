@@ -1635,14 +1635,12 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   const std::string l2_id{"l2"};
   const int num_inflows{2};
   const int num_outflows{2};
-  const ::ERIN::MuxerDispatchStrategy strategy =
-    ::ERIN::MuxerDispatchStrategy::InOrder;
   const auto stream = ::ERIN::StreamType{"electrical"};
   const std::string scenario_id{"blue_sky"};
   const ::ERIN::RealTimeType t_max{12};
   std::unique_ptr<::ERIN::Component> m =
     std::make_unique<::ERIN::MuxerComponent>(
-        muxer_id, stream, num_inflows, num_outflows, strategy);
+        muxer_id, stream, num_inflows, num_outflows);
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     l1_loads_by_scenario{
       { scenario_id,

@@ -226,8 +226,6 @@ namespace ERIN
           const StreamType& stream,
           const int num_inflows,
           const int num_outflows,
-          const MuxerDispatchStrategy strategy
-            = MuxerDispatchStrategy::InOrder,
           const MuxerDispatchStrategy output_strategy
             = MuxerDispatchStrategy::Distribute);
       MuxerComponent(
@@ -236,8 +234,6 @@ namespace ERIN
           const int num_inflows,
           const int num_outflows,
           fragility_map fragilities,
-          const MuxerDispatchStrategy strategy
-            = MuxerDispatchStrategy::InOrder,
           const MuxerDispatchStrategy output_strategy
             = MuxerDispatchStrategy::InOrder);
 
@@ -257,7 +253,6 @@ namespace ERIN
     private:
       int num_inflows;
       int num_outflows;
-      MuxerDispatchStrategy strategy;
       MuxerDispatchStrategy output_strategy;
   };
 

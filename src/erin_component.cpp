@@ -647,7 +647,6 @@ namespace ERIN
       const StreamType& stream_,
       const int num_inflows_,
       const int num_outflows_,
-      const MuxerDispatchStrategy strategy_,
       const MuxerDispatchStrategy output_strategy_):
     MuxerComponent(
         id_,
@@ -655,7 +654,6 @@ namespace ERIN
         num_inflows_,
         num_outflows_,
         {},
-        strategy_,
         output_strategy_)
   {
   }
@@ -666,7 +664,6 @@ namespace ERIN
       const int num_inflows_,
       const int num_outflows_,
       fragility_map fragilities_,
-      const MuxerDispatchStrategy strategy_,
       const MuxerDispatchStrategy output_strategy_):
     Component(
         id_,
@@ -677,7 +674,6 @@ namespace ERIN
         std::move(fragilities_)),
     num_inflows{num_inflows_},
     num_outflows{num_outflows_},
-    strategy{strategy_},
     output_strategy{output_strategy_}
   {
     const int min_ports{1};
@@ -711,7 +707,6 @@ namespace ERIN
           num_inflows,
           num_outflows,
           std::move(the_fcs),
-          strategy,
           output_strategy);
     return p;
   }
@@ -801,14 +796,14 @@ namespace ERIN
       std::cout << "... b.num_inflows  = " << b.num_inflows << "\n";
       std::cout << "... a.num_outflows = " << a.num_outflows << "\n";
       std::cout << "... b.num_outflows = " << b.num_outflows << "\n";
-      std::cout << "... a.strategy = "
-                << muxer_dispatch_strategy_to_string(a.strategy) << "\n";
-      std::cout << "... b.strategy = "
-                << muxer_dispatch_strategy_to_string(a.strategy) << "\n";
+      std::cout << "... a.output_strategy = "
+                << muxer_dispatch_strategy_to_string(a.output_strategy) << "\n";
+      std::cout << "... b.output_strategy = "
+                << muxer_dispatch_strategy_to_string(b.output_strategy) << "\n";
     }
     return (a.num_inflows == b.num_inflows)
       && (a.num_outflows == b.num_outflows)
-      && (a.strategy == b.strategy);
+      && (a.output_strategy == b.output_strategy);
   }
 
   bool
@@ -823,7 +818,7 @@ namespace ERIN
     os << "MuxerComponent(" << n.internals_to_string() << ", "
        << "num_inflows=" << n.num_inflows << ", "
        << "num_outflows=" << n.num_outflows << ", "
-       << "strategy=" << muxer_dispatch_strategy_to_string(n.strategy) << ")";
+       << "output_strategy=" << muxer_dispatch_strategy_to_string(n.output_strategy) << ")";
     return os;
   }
 

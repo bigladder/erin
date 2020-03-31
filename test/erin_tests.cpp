@@ -27,6 +27,7 @@
 #include "gtest/gtest.h"
 #include <functional>
 #include <iomanip>
+#include <iostream>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -5094,44 +5095,55 @@ check_times_and_loads(
     const std::vector<ERIN::FlowValueType>& expected_loads,
     const std::string& id)
 {
-  auto actual_times = ERIN::get_times_from_results_for_component(results, id);
+  namespace E = ERIN;
+  auto actual_times = E::get_times_from_results_for_component(results, id);
   bool flag =
-    erin_test_utils::compare_vectors_functional<ERIN::RealTimeType>(
+    erin_test_utils::compare_vectors_functional<E::RealTimeType>(
         expected_times,
         actual_times);
-  auto actual_loads = ERIN::get_actual_flows_from_results_for_component(results, id);
-  return (
-      flag && erin_test_utils::compare_vectors_functional<ERIN::FlowValueType>(
-        expected_loads,
-        actual_loads));
+  auto actual_loads = E::get_actual_flows_from_results_for_component(results, id);
+  flag = flag && erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+      expected_loads, actual_loads);
+  if (!flag)
+    std::cout << "key: " << id << "\n"
+              << "expected_times = "
+              << E::vec_to_string<E::RealTimeType>(expected_times) << "\n"
+              << "expected_loads = "
+              << E::vec_to_string<E::FlowValueType>(expected_loads) << "\n"
+              << "actual_times   = "
+              << E::vec_to_string<E::RealTimeType>(actual_times) << "\n"
+              << "actual_loads   = "
+              << E::vec_to_string<E::FlowValueType>(actual_loads) << "\n";
+  return flag;
 }
 
 TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
 {
-  auto st = ::ERIN::StreamType("electrical");
-  ERIN::RealTimeType t_max{3};
+  namespace E = ERIN;
+  auto st = E::StreamType("electrical");
+  E::RealTimeType t_max{3};
   std::string id{"load"};
-  auto sink = new ::ERIN::Sink(
+  auto sink = new E::Sink(
       id,
-      ::ERIN::ComponentType::Load,
+      E::ComponentType::Load,
       st,
-      {::ERIN::LoadItem{0,100},
-       ::ERIN::LoadItem{1,10},
-       ::ERIN::LoadItem{2,0},
-       ::ERIN::LoadItem{t_max}});
-  std::shared_ptr<ERIN::FlowWriter> fw =
-    std::make_shared<ERIN::DefaultFlowWriter>();
+      {E::LoadItem{0,100},
+       E::LoadItem{1,10},
+       E::LoadItem{2,0},
+       E::LoadItem{t_max}});
+  std::shared_ptr<E::FlowWriter> fw =
+    std::make_shared<E::DefaultFlowWriter>();
   sink->set_recording_on();
   sink->set_flow_writer(fw);
-  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
+  adevs::Simulator<E::PortValue, E::Time> sim;
   sim.add(sink);
-  while (sim.next_event_time() < ::ERIN::inf)
+  while (sim.next_event_time() < E::inf)
     sim.exec_next_event();
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
   fw->clear();
-  std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2, 3};
-  std::vector<::ERIN::FlowValueType> expected_loads = {100, 10, 0, 0};
+  std::vector<E::RealTimeType> expected_times = {0, 1, 2, 3};
+  std::vector<E::FlowValueType> expected_loads = {100, 10, 0, 0};
   ASSERT_TRUE(
       check_times_and_loads(results, expected_times, expected_loads, id)
       ) << "key: " << id;
@@ -5154,7 +5166,7 @@ TEST(ErinBasicsTest, Test_sink_and_flow_limits_with_port_logging)
   std::string limits_id{"limits"};
   E::FlowValueType lower_limit{0.0};
   E::FlowValueType upper_limit{50.0};
-  auto limits = new ::ERIN::FlowLimits(
+  auto limits = new E::FlowLimits(
       limits_id,
       E::ComponentType::Source,
       st,
@@ -5215,7 +5227,7 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
     [constant_efficiency](E::FlowValueType outflow) -> E::FlowValueType {
       return outflow / constant_efficiency;
     };
-  auto converter = new ::ERIN::Converter(
+  auto converter = new E::Converter(
       converter_id,
       E::ComponentType::Converter,
       st_in,
@@ -5273,6 +5285,134 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
         converter_id + "-lossflow")
       ) << "key: " << converter_id << "-lossflow";
 }
+
+TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
+{
+  namespace E = ERIN;
+  auto st = E::StreamType("electrical");
+  E::RealTimeType t_max{3};
+  std::string sink0_id{"sink0"};
+  std::string sink1_id{"sink1"};
+  auto sink0 = new E::Sink(
+      sink0_id,
+      E::ComponentType::Load,
+      st,
+      {E::LoadItem{0,100},
+       E::LoadItem{1,10},
+       E::LoadItem{2,0},
+       E::LoadItem{t_max}});
+  auto sink1 = new E::Sink(
+      sink1_id,
+      E::ComponentType::Load,
+      st,
+      {E::LoadItem{0,100},
+       E::LoadItem{1,10},
+       E::LoadItem{2,0},
+       E::LoadItem{t_max}});
+  std::string mux_id{"mux"};
+  int num_inflows{2};
+  int num_outflows{2};
+  auto mux = new E::Mux(
+      mux_id,
+      E::ComponentType::Muxer,
+      st,
+      num_inflows,
+      num_outflows,
+      E::MuxerDispatchStrategy::InOrder);
+  std::string limit0_id{"limit0"};
+  E::FlowValueType lower_limit0{0.0};
+  E::FlowValueType upper_limit0{50.0};
+  auto limit0 = new E::FlowLimits(
+      limit0_id,
+      E::ComponentType::Source,
+      st,
+      lower_limit0,
+      upper_limit0);
+  std::string limit1_id{"limit1"};
+  E::FlowValueType lower_limit1{0.0};
+  E::FlowValueType upper_limit1{20.0};
+  auto limit1 = new E::FlowLimits(
+      limit1_id,
+      E::ComponentType::Source,
+      st,
+      lower_limit1,
+      upper_limit1);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  sink0->set_flow_writer(fw);
+  sink0->set_recording_on();
+  sink1->set_flow_writer(fw);
+  sink1->set_recording_on();
+  mux->set_flow_writer(fw);
+  mux->set_recording_on();
+  limit0->set_flow_writer(fw);
+  limit0->set_recording_on();
+  limit1->set_flow_writer(fw);
+  limit1->set_recording_on();
+  adevs::Digraph<E::FlowValueType, E::Time> network;
+  network.couple(
+      sink0, E::Sink::outport_inflow_request,
+      mux, E::Mux::inport_outflow_request);
+  network.couple(
+      sink1, E::Sink::outport_inflow_request,
+      mux, E::Mux::inport_outflow_request + 1);
+  network.couple(
+      mux, E::Mux::outport_inflow_request,
+      limit0, E::FlowLimits::inport_outflow_request);
+  network.couple(
+      mux, E::Mux::outport_inflow_request + 1,
+      limit1, E::FlowLimits::inport_outflow_request);
+  network.couple(
+      limit0, E::FlowLimits::outport_outflow_achieved,
+      mux, E::Mux::inport_inflow_achieved);
+  network.couple(
+      limit1, E::FlowLimits::outport_outflow_achieved,
+      mux, E::Mux::inport_inflow_achieved + 1);
+  network.couple(
+      mux, E::Mux::outport_outflow_achieved,
+      sink0, E::Sink::inport_inflow_achieved);
+  network.couple(
+      mux, E::Mux::outport_outflow_achieved + 1,
+      sink1, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  while (sim.next_event_time() < E::inf)
+    sim.exec_next_event();
+  fw->finalize_at_time(t_max);
+  auto results = fw->get_results();
+  fw->clear();
+  // Sink0 recorded data
+  std::vector<E::RealTimeType> expected_times = {0, 1, 2, 3};
+  std::vector<E::FlowValueType> expected_loads0 = {70.0, 10.0, 0.0, 0.0};
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_loads0, sink0_id));
+  // Sink1 recorded data
+  std::vector<E::FlowValueType> expected_loads1 = {0.0, 10.0, 0.0, 0.0};
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_loads1, sink1_id));
+  // Mux recorded data -- outflow0
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_loads0, mux_id + "-outflow(0)"));
+  // Mux recorded data -- outflow1
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_loads1, mux_id + "-outflow(1)"));
+  // Mux recorded data -- inflow0
+  std::vector<E::FlowValueType> expected_inflows0 = {50.0, 20.0, 0.0, 0.0};
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_inflows0, mux_id + "-inflow(0)"));
+  // Mux recorded data -- inflow1
+  std::vector<E::FlowValueType> expected_inflows1 = {20.0, 0.0, 0.0, 0.0};
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_inflows1, mux_id + "-inflow(1)"));
+  // FlowLimits0
+  ASSERT_TRUE(
+      check_times_and_loads(
+        results, expected_times, expected_inflows0, limit0_id));
+  // FlowLimits1
+  ASSERT_TRUE(
+      check_times_and_loads(
+        results, expected_times, expected_inflows1, limit1_id));
+}
+
 
 int
 main(int argc, char **argv)

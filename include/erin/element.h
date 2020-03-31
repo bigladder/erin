@@ -398,6 +398,9 @@ namespace ERIN
       Time ta() override;
       void output_func(std::vector<PortValue>& xs) override;
 
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
     private:
       erin::devs::MuxState state;
       int num_inflows;
@@ -408,8 +411,14 @@ namespace ERIN
       std::vector<FlowValueType> outflows; // achieved
       std::vector<FlowValueType> prev_outflows;
       std::vector<FlowValueType> outflow_requests;
+      std::shared_ptr<FlowWriter> flow_writer;
+      std::vector<int> outflow_element_ids;
+      std::vector<int> inflow_element_ids;
+      bool record_history;
 
       void update_outflows_using_inorder_dispatch(FlowValueType remaining_inflow);
+
+      void log_ports();
   };
 
   ////////////////////////////////////////////////////////////

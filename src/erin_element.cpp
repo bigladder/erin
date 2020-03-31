@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <string>
 
 namespace ERIN
 {
@@ -1080,7 +1081,11 @@ namespace ERIN
     inflows_achieved{},
     outflows{},
     prev_outflows{},
-    outflow_requests{}
+    outflow_requests{},
+    flow_writer{nullptr},
+    outflow_element_ids{},
+    inflow_element_ids{},
+    record_history{false}
   {
     const int min_ports = 1;
     if ((num_inflows < min_ports) || (num_inflows > max_port_numbers)) {
@@ -1111,6 +1116,7 @@ namespace ERIN
   Mux::delta_int()
   {
     state = erin::devs::mux_internal_transition(state);
+    log_ports();
   }
 
   void
@@ -1132,12 +1138,14 @@ namespace ERIN
   Mux::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     state = erin::devs::mux_external_transition(state, e.real, xs);
+    log_ports();
   }
 
   void
   Mux::delta_conf(std::vector<PortValue>& xs)
   {
     state = erin::devs::mux_confluent_transition(state, xs);
+    log_ports();
   }
 
   Time
@@ -1153,5 +1161,65 @@ namespace ERIN
   Mux::output_func(std::vector<PortValue>& ys)
   {
     erin::devs::mux_output_function_mutable(state, ys);
+  }
+
+  void
+  Mux::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  Mux::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
+  }
+
+  void
+  Mux::log_ports()
+  {
+    using size_type = std::vector<int>::size_type;
+    auto ni = static_cast<size_type>(state.num_inflows);
+    auto no = static_cast<size_type>(state.num_outflows);
+    if (flow_writer && record_history) {
+      if (ni != inflow_element_ids.size()) {
+        auto the_id = get_id();
+        for (size_type i{0}; i < ni; ++i) {
+          inflow_element_ids.emplace_back(
+              flow_writer->register_id(
+                the_id + "-inflow(" + std::to_string(i) + ")",
+                get_inflow_type().get_type(),
+                record_history));
+        }
+      }
+      if (no != outflow_element_ids.size()) {
+        auto the_id = get_id();
+        for (size_type i{0}; i < no; ++i) {
+          outflow_element_ids.emplace_back(
+              flow_writer->register_id(
+                the_id + "-outflow(" + std::to_string(i) + ")",
+                get_outflow_type().get_type(),
+                record_history));
+        }
+      }
+      for (size_type i{0}; i < outflow_element_ids.size(); ++i) {
+        const auto& op = state.outflow_ports[i];
+        flow_writer->write_data(
+            outflow_element_ids[i],
+            state.time,
+            op.get_requested(),
+            op.get_achieved());
+      }
+      for (size_type i{0}; i < inflow_element_ids.size(); ++i) {
+        const auto& ip = state.inflow_ports[i];
+        flow_writer->write_data(
+            inflow_element_ids[i],
+            state.time,
+            ip.get_requested(),
+            ip.get_achieved());
+      }
+    }
   }
 }

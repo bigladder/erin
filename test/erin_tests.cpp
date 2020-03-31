@@ -36,12 +36,20 @@
 
 const double tolerance{1e-6};
 
+bool check_times_and_loads(
+    const std::unordered_map<std::string, std::vector<ERIN::Datum>>& results,
+    const std::vector<ERIN::RealTimeType>& expected_times,
+    const std::vector<ERIN::FlowValueType>& expected_loads,
+    const std::string& id,
+    bool use_requested = false);
+
 bool
 check_times_and_loads(
     const std::unordered_map<std::string, std::vector<ERIN::Datum>>& results,
     const std::vector<ERIN::RealTimeType>& expected_times,
     const std::vector<ERIN::FlowValueType>& expected_loads,
-    const std::string& id)
+    const std::string& id,
+    bool use_requested)
 {
   namespace E = ERIN;
   auto actual_times = E::get_times_from_results_for_component(results, id);
@@ -49,7 +57,11 @@ check_times_and_loads(
     erin_test_utils::compare_vectors_functional<E::RealTimeType>(
         expected_times,
         actual_times);
-  auto actual_loads = E::get_actual_flows_from_results_for_component(results, id);
+  std::vector<E::FlowValueType> actual_loads{};
+  if (use_requested)
+    actual_loads = E::get_requested_flows_from_results_for_component(results, id);
+  else
+    actual_loads = E::get_actual_flows_from_results_for_component(results, id);
   flag = flag && erin_test_utils::compare_vectors_functional<E::FlowValueType>(
       expected_loads, actual_loads);
   if (!flag)
@@ -60,7 +72,7 @@ check_times_and_loads(
               << E::vec_to_string<E::FlowValueType>(expected_loads) << "\n"
               << "actual_times   = "
               << E::vec_to_string<E::RealTimeType>(actual_times) << "\n"
-              << "actual_loads   = "
+              << (use_requested ? "requested_loads=" : "actual_loads   = ")
               << E::vec_to_string<E::FlowValueType>(actual_loads) << "\n";
   return flag;
 }
@@ -206,118 +218,90 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
 
 TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
 {
-  ERIN::RealTimeType t_max{4};
+  namespace E = ERIN;
+  E::RealTimeType t_max{4};
   const double diesel_generator_efficiency{0.36};
-  const std::vector<::ERIN::RealTimeType> expected_genset_output_times{
+  const std::vector<E::RealTimeType> expected_genset_output_times{
     0, 1, 2, 3, t_max};
-  const std::vector<::ERIN::FlowValueType> expected_genset_output{
+  const std::vector<E::FlowValueType> expected_genset_output{
     50, 50, 40, 0, 0};
   auto calc_output_given_input =
-    [=](::ERIN::FlowValueType input_kW) -> ::ERIN::FlowValueType {
+    [=](E::FlowValueType input_kW) -> E::FlowValueType {
       return input_kW * diesel_generator_efficiency;
     };
   auto calc_input_given_output =
-    [=](::ERIN::FlowValueType output_kW) -> ::ERIN::FlowValueType {
+    [=](E::FlowValueType output_kW) -> E::FlowValueType {
       return output_kW / diesel_generator_efficiency;
     };
-  const std::vector<::ERIN::FlowValueType> expected_fuel_output{
+  const std::vector<E::FlowValueType> expected_fuel_output{
     calc_input_given_output(50),
     calc_input_given_output(50),
     calc_input_given_output(40),
     calc_input_given_output(0),
     calc_input_given_output(0)
   };
-  auto diesel = ::ERIN::StreamType("diesel");
-  auto elec = ::ERIN::StreamType("electrical");
-  auto diesel_fuel_meter = new ::ERIN::FlowMeter(
-      "diesel_fuel_meter", ::ERIN::ComponentType::Source, diesel);
+  auto diesel = E::StreamType("diesel");
+  auto elec = E::StreamType("electrical");
+  std::string converter_id{"converter"};
   auto genset_tx = new ::ERIN::Converter(
-      "genset_tx",
-      ::ERIN::ComponentType::Converter,
+      converter_id,
+      E::ComponentType::Converter,
       diesel,
       elec,
       calc_output_given_input,
       calc_input_given_output
       );
-  auto genset_lim = new ::ERIN::FlowLimits(
-      "genset_lim", ::ERIN::ComponentType::Converter, elec, 0, 50);
-  auto genset_meter = new ::ERIN::FlowMeter(
-      "genset_meter", ::ERIN::ComponentType::Converter, elec);
-  std::vector<::ERIN::LoadItem> load_profile{
-    ::ERIN::LoadItem{0,160},
-    ::ERIN::LoadItem{1,80},
-    ::ERIN::LoadItem{2,40},
-    ::ERIN::LoadItem{3,0},
-    ::ERIN::LoadItem{t_max}};
-  auto sink = new ::ERIN::Sink(
-      "electric_load", ::ERIN::ComponentType::Load, elec, load_profile);
-  std::shared_ptr<ERIN::FlowWriter> fw = std::make_shared<ERIN::DefaultFlowWriter>();
-  diesel_fuel_meter->set_flow_writer(fw);
-  genset_meter->set_flow_writer(fw);
-  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
+  std::string limit_id{"lim"};
+  auto genset_lim = new E::FlowLimits(
+      limit_id, E::ComponentType::Converter, elec, 0, 50);
+  std::vector<E::LoadItem> load_profile{
+    E::LoadItem{0,160},
+    E::LoadItem{1,80},
+    E::LoadItem{2,40},
+    E::LoadItem{3,0},
+    E::LoadItem{t_max}};
+  std::vector<E::FlowValueType> requested_loads = {160, 80, 40, 0, 0};
+  std::string sink_id{"sink"};
+  auto sink = new E::Sink(
+      sink_id, E::ComponentType::Load, elec, load_profile);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+
+  genset_tx->set_flow_writer(fw);
+  genset_tx->set_recording_on();
+  genset_lim->set_flow_writer(fw);
+  genset_lim->set_recording_on();
+  sink->set_flow_writer(fw);
+  sink->set_recording_on();
+
+  adevs::Digraph<E::FlowValueType, E::Time> network;
   network.couple(
-      sink, ::ERIN::Sink::outport_inflow_request,
-      genset_meter, ::ERIN::FlowMeter::inport_outflow_request);
+      sink, E::Sink::outport_inflow_request,
+      genset_lim, E::FlowLimits::inport_outflow_request);
   network.couple(
-      genset_meter, ::ERIN::FlowMeter::outport_inflow_request,
-      genset_lim, ::ERIN::FlowLimits::inport_outflow_request);
+      genset_lim, E::FlowLimits::outport_inflow_request,
+      genset_tx, E::Converter::inport_outflow_request);
   network.couple(
-      genset_lim, ::ERIN::FlowLimits::outport_inflow_request,
-      genset_tx, ::ERIN::Converter::inport_outflow_request);
+      genset_tx, E::Converter::outport_outflow_achieved,
+      genset_lim, E::FlowLimits::inport_inflow_achieved);
   network.couple(
-      genset_tx, ::ERIN::Converter::outport_inflow_request,
-      diesel_fuel_meter, ::ERIN::FlowMeter::inport_outflow_request);
-  network.couple(
-      diesel_fuel_meter, ::ERIN::FlowMeter::outport_outflow_achieved,
-      genset_tx, ::ERIN::Converter::inport_inflow_achieved);
-  network.couple(
-      genset_tx, ::ERIN::Converter::outport_outflow_achieved,
-      genset_lim, ::ERIN::FlowLimits::inport_inflow_achieved);
-  network.couple(
-      genset_lim, ::ERIN::FlowLimits::outport_outflow_achieved,
-      genset_meter, ::ERIN::FlowMeter::inport_inflow_achieved);
-  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
+      genset_lim, E::FlowLimits::outport_outflow_achieved,
+      sink, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim;
   network.add(&sim);
-  ::ERIN::Time t;
-  while (sim.next_event_time() < ::ERIN::inf) {
+  while (sim.next_event_time() < E::inf)
     sim.exec_next_event();
-    t = sim.now();
-  }
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
   fw->clear();
-  auto actual_genset_output = ERIN::get_actual_flows_from_results_for_component(results, "genset_meter");
-  auto requested_genset_output = ERIN::get_requested_flows_from_results_for_component(results, "genset_meter");
-  EXPECT_EQ(actual_genset_output.size(), requested_genset_output.size());
-  EXPECT_EQ(load_profile.size(), requested_genset_output.size());
-  auto rgo_size = requested_genset_output.size();
-  for (decltype(rgo_size) i{ 0 }; i < rgo_size; ++i) {
-    if (i == (rgo_size - 1)) {
-      EXPECT_EQ(requested_genset_output[i], 0.0)
-        << "i = " << i << " which is the last index";
-    }
-    else {
-      EXPECT_EQ(requested_genset_output[i], load_profile[i].get_value())
-        << "i = " << i;
-    }
-  }
-  auto actual_fuel_output = ERIN::get_actual_flows_from_results_for_component(results, "diesel_fuel_meter");
-  auto actual_genset_output_times = ERIN::get_times_from_results_for_component(results, "genset_meter");
-  EXPECT_EQ(expected_genset_output.size(), actual_genset_output.size());
-  EXPECT_EQ(
-      expected_genset_output_times.size(), actual_genset_output_times.size());
-  EXPECT_EQ(expected_genset_output_times.size(), actual_genset_output.size());
-  EXPECT_EQ(expected_genset_output_times.size(), actual_fuel_output.size());
-  auto ego_size = expected_genset_output.size();
-  for (decltype(ego_size) i{0}; i < ego_size; ++i) {
-    if (i >= actual_genset_output.size()) {
-      break;
-    }
-    EXPECT_EQ(expected_genset_output.at(i), actual_genset_output.at(i));
-    EXPECT_EQ(
-        expected_genset_output_times.at(i), actual_genset_output_times.at(i));
-    EXPECT_EQ(expected_fuel_output.at(i), actual_fuel_output.at(i));
-  }
+  ASSERT_TRUE(
+      check_times_and_loads(
+        results, expected_genset_output_times, expected_genset_output, limit_id));
+  ASSERT_TRUE(
+      check_times_and_loads(
+        results, expected_genset_output_times, requested_loads, limit_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(
+        results, expected_genset_output_times, expected_fuel_output, converter_id + "-inflow"));
 }
 
 TEST(ErinBasicsTest, CanRunUsingComponents)

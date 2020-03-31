@@ -895,20 +895,10 @@ namespace ERIN
   }
 
   void
-  Sink::set_record_history(bool record_history_)
+  Sink::set_recording_on()
   {
-    if ((!record_history) && record_history_ && (element_id == -1) && flow_writer) {
-      element_id = flow_writer->register_id(
-          get_id(),
-          get_outflow_type().get_type(),
-          record_history);
-      flow_writer->write_data(
-          element_id,
-          state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
-    }
-    record_history = record_history_;
+    record_history = true;
+    set_flow_writer(flow_writer);
   }
 
   void

@@ -5102,7 +5102,7 @@ TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
        ::ERIN::LoadItem{t_max}});
   std::shared_ptr<ERIN::FlowWriter> fw =
     std::make_shared<ERIN::DefaultFlowWriter>();
-  sink->set_record_history(true);
+  sink->set_recording_on();
   sink->set_flow_writer(fw);
   adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
   sim.add(sink);

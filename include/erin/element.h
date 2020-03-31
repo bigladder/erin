@@ -273,8 +273,14 @@ namespace ERIN
       Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
     private:
       erin::devs::FlowLimitsState state;
+      std::shared_ptr<FlowWriter> flow_writer;
+      int element_id;
+      bool record_history;
   };
 
   ////////////////////////////////////////////////////////////

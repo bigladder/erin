@@ -5125,6 +5125,63 @@ TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
         actual_loads));
 }
 
+TEST(ErinBasicsTest, Test_sink_and_flow_limits_with_port_logging)
+{
+  namespace E = ERIN;
+  auto st = E::StreamType("electrical");
+  E::RealTimeType t_max{3};
+  std::string sink_id{"sink"};
+  auto sink = new E::Sink(
+      sink_id,
+      E::ComponentType::Load,
+      st,
+      {E::LoadItem{0,100},
+       E::LoadItem{1,10},
+       E::LoadItem{2,0},
+       E::LoadItem{t_max}});
+  std::string limits_id{"limits"};
+  E::FlowValueType lower_limit{0.0};
+  E::FlowValueType upper_limit{50.0};
+  auto limits = new ::ERIN::FlowLimits(
+      limits_id,
+      E::ComponentType::Source,
+      st,
+      lower_limit,
+      upper_limit);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  sink->set_flow_writer(fw);
+  sink->set_recording_on();
+  limits->set_flow_writer(fw);
+  limits->set_recording_on();
+  adevs::Digraph<E::FlowValueType, E::Time> network;
+  network.couple(
+      sink, E::Sink::outport_inflow_request,
+      limits, E::FlowLimits::inport_outflow_request);
+  network.couple(
+      limits, E::FlowLimits::outport_outflow_achieved,
+      sink, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  while (sim.next_event_time() < E::inf) {
+    sim.exec_next_event();
+  }
+  fw->finalize_at_time(t_max);
+  auto results = fw->get_results();
+  fw->clear();
+  // Sink recorded data
+  std::vector<E::RealTimeType> expected_times = {0, 1, 2, 3};
+  auto actual_times = E::get_times_from_results_for_component(results, sink_id);
+  erin_test_utils::compare_vectors<E::RealTimeType>(expected_times, actual_times);
+  std::vector<E::FlowValueType> expected_loads = {50, 10, 0, 0};
+  auto actual_loads = E::get_actual_flows_from_results_for_component(results, sink_id);
+  erin_test_utils::compare_vectors<E::FlowValueType>(expected_loads, actual_loads);
+  // FlowLimits recorded data
+  actual_times = E::get_times_from_results_for_component(results, limits_id);
+  erin_test_utils::compare_vectors<E::RealTimeType>(expected_times, actual_times);
+  actual_loads = E::get_actual_flows_from_results_for_component(results, limits_id);
+  erin_test_utils::compare_vectors<E::FlowValueType>(expected_loads, actual_loads);
+}
+
 int
 main(int argc, char **argv)
 {

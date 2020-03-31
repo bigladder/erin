@@ -696,7 +696,10 @@ namespace ERIN
         component_type_,
         ElementType::FlowLimits,
         stream_type_),
-    state{erin::devs::make_flow_limits_state(lower_limit, upper_limit)}
+    state{erin::devs::make_flow_limits_state(lower_limit, upper_limit)},
+    flow_writer{nullptr},
+    element_id{-1},
+    record_history{false}
   {
   }
 
@@ -704,6 +707,12 @@ namespace ERIN
   FlowLimits::delta_int()
   {
     state = erin::devs::flow_limits_internal_transition(state);
+    if (flow_writer && record_history && (element_id != -1))
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
   }
 
   void
@@ -711,12 +720,24 @@ namespace ERIN
   {
     state = erin::devs::flow_limits_external_transition(
         state, dt.real, xs);
+    if (flow_writer && record_history && (element_id != -1))
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
   }
 
   void
   FlowLimits::delta_conf(std::vector<PortValue>& xs)
   {
     state = erin::devs::flow_limits_confluent_transition(state, xs);
+    if (flow_writer && record_history && (element_id != -1))
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
   }
 
   Time
@@ -732,6 +753,30 @@ namespace ERIN
   FlowLimits::output_func(std::vector<PortValue>& ys)
   {
     erin::devs::flow_limits_output_function_mutable(state, ys);
+  }
+
+  void
+  FlowLimits::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    if (flow_writer && record_history && (element_id == -1)) {
+      element_id = flow_writer->register_id(
+          get_id(),
+          get_outflow_type().get_type(),
+          record_history);
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
+    }
+  }
+
+  void
+  FlowLimits::set_recording_on()
+  {
+    record_history = true;
+    set_flow_writer(flow_writer);
   }
 
   ////////////////////////////////////////////////////////////
@@ -878,30 +923,6 @@ namespace ERIN
   }
 
   void
-  Sink::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
-  {
-    flow_writer = writer;
-    if (flow_writer && record_history && (element_id == -1)) {
-      element_id = flow_writer->register_id(
-          get_id(),
-          get_outflow_type().get_type(),
-          record_history);
-      flow_writer->write_data(
-          element_id,
-          state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
-    }
-  }
-
-  void
-  Sink::set_recording_on()
-  {
-    record_history = true;
-    set_flow_writer(flow_writer);
-  }
-
-  void
   Sink::delta_int()
   {
     state = erin::devs::load_internal_transition(state);
@@ -950,6 +971,30 @@ namespace ERIN
   Sink::output_func(std::vector<PortValue>& ys)
   {
     erin::devs::load_output_function_mutable(state, ys);
+  }
+
+  void
+  Sink::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    if (flow_writer && record_history && (element_id == -1)) {
+      element_id = flow_writer->register_id(
+          get_id(),
+          get_outflow_type().get_type(),
+          record_history);
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
+    }
+  }
+
+  void
+  Sink::set_recording_on()
+  {
+    record_history = true;
+    set_flow_writer(flow_writer);
   }
 
   ////////////////////////////////////////////////////////////

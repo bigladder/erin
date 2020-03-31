@@ -711,8 +711,8 @@ namespace ERIN
       flow_writer->write_data(
           element_id,
           state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
   }
 
   void
@@ -724,8 +724,8 @@ namespace ERIN
       flow_writer->write_data(
           element_id,
           state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
   }
 
   void
@@ -736,8 +736,8 @@ namespace ERIN
       flow_writer->write_data(
           element_id,
           state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
   }
 
   Time
@@ -767,8 +767,8 @@ namespace ERIN
       flow_writer->write_data(
           element_id,
           state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
     }
   }
 

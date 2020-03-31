@@ -324,10 +324,6 @@ namespace ERIN
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
 
-    protected:
-      [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
-      [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
-
     private:
       erin::devs::ConverterState state;
       std::function<FlowValueType(FlowValueType)> output_from_input;

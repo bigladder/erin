@@ -900,18 +900,6 @@ namespace ERIN
     erin::devs::converter_output_function_mutable(state, ys);
   }
 
-  FlowState
-  Converter::update_state_for_outflow_request(FlowValueType outflow_) const
-  {
-    return FlowState{input_from_output(outflow_), outflow_};
-  }
-
-  FlowState
-  Converter::update_state_for_inflow_achieved(FlowValueType inflow_) const
-  {
-    return FlowState{inflow_, output_from_input(inflow_)};
-  }
-
   void
   Converter::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
   {

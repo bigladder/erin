@@ -403,20 +403,10 @@ namespace ERIN
 
     private:
       erin::devs::MuxState state;
-      int num_inflows;
-      int num_outflows;
-      std::vector<FlowValueType> inflows;
-      std::vector<FlowValueType> prev_inflows;
-      std::vector<FlowValueType> inflows_achieved;
-      std::vector<FlowValueType> outflows; // achieved
-      std::vector<FlowValueType> prev_outflows;
-      std::vector<FlowValueType> outflow_requests;
       std::shared_ptr<FlowWriter> flow_writer;
       std::vector<int> outflow_element_ids;
       std::vector<int> inflow_element_ids;
       bool record_history;
-
-      void update_outflows_using_inorder_dispatch(FlowValueType remaining_inflow);
 
       void log_ports();
   };

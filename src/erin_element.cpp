@@ -1074,42 +1074,11 @@ namespace ERIN
         num_inflows_,
         num_outflows_,
         outflow_strategy_)},
-    num_inflows{num_inflows_},
-    num_outflows{num_outflows_},
-    inflows{},
-    prev_inflows{},
-    inflows_achieved{},
-    outflows{},
-    prev_outflows{},
-    outflow_requests{},
     flow_writer{nullptr},
     outflow_element_ids{},
     inflow_element_ids{},
     record_history{false}
   {
-    const int min_ports = 1;
-    if ((num_inflows < min_ports) || (num_inflows > max_port_numbers)) {
-      std::ostringstream oss;
-      oss << "Number of inflows on Mux must be " << min_ports
-          << " <= num_inflows <= "
-          << max_port_numbers << "; "
-          << "num_inflows = " << num_inflows << "\n";
-      throw std::invalid_argument(oss.str());
-    }
-    if ((num_outflows < min_ports) || (num_outflows > max_port_numbers)) {
-      std::ostringstream oss;
-      oss << "Number of outflows on Mux must be " << min_ports
-          << " <= num_outflows <= "
-          << max_port_numbers << "; "
-          << "num_outflows = " << num_outflows << "\n";
-      throw std::invalid_argument(oss.str());
-    }
-    inflows = std::vector<FlowValueType>(num_inflows, 0.0);
-    prev_inflows = std::vector<FlowValueType>(num_inflows, 0.0);
-    inflows_achieved = std::vector<FlowValueType>(num_inflows, 0.0);
-    outflows = std::vector<FlowValueType>(num_outflows, 0.0);
-    prev_outflows = std::vector<FlowValueType>(num_outflows, 0.0);
-    outflow_requests = std::vector<FlowValueType>(num_outflows, 0.0);
   }
 
   void
@@ -1117,21 +1086,6 @@ namespace ERIN
   {
     state = erin::devs::mux_internal_transition(state);
     log_ports();
-  }
-
-  void
-  Mux::update_outflows_using_inorder_dispatch(FlowValueType remaining_inflow)
-  {
-    using size_type = std::vector<FlowValueType>::size_type;
-    auto num_ofs = outflows.size();
-    for (size_type of_idx{0}; of_idx < num_ofs; ++of_idx) {
-      if (outflow_requests[of_idx] >= remaining_inflow) {
-        outflows[of_idx] = remaining_inflow;
-      } else {
-        outflows[of_idx] = outflow_requests[of_idx];
-      }
-      remaining_inflow -= outflows[of_idx];
-    }
   }
 
   void

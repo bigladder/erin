@@ -848,7 +848,13 @@ namespace ERIN
       erin::devs::make_converter_state(
           calc_output_from_input, calc_input_from_output)},
     output_from_input{std::move(calc_output_from_input)},
-    input_from_output{std::move(calc_input_from_output)}
+    input_from_output{std::move(calc_input_from_output)},
+    flow_writer{nullptr},
+    inflow_element_id{-1},
+    outflow_element_id{-1},
+    lossflow_element_id{-1},
+    wasteflow_element_id{-1},
+    record_history{false}
   {
   }
 
@@ -856,6 +862,7 @@ namespace ERIN
   Converter::delta_int()
   {
     state = erin::devs::converter_internal_transition(state);
+    log_ports();
   }
 
   void
@@ -868,12 +875,14 @@ namespace ERIN
       std::cout << "id = " << get_id() << "\n";
     }
     state = erin::devs::converter_external_transition(state, e.real, xs);
+    log_ports();
   }
 
   void
   Converter::delta_conf(std::vector<PortValue>& xs)
   {
     state = erin::devs::converter_confluent_transition(state, xs);
+    log_ports();
   }
 
   Time
@@ -901,6 +910,67 @@ namespace ERIN
   Converter::update_state_for_inflow_achieved(FlowValueType inflow_) const
   {
     return FlowState{inflow_, output_from_input(inflow_)};
+  }
+
+  void
+  Converter::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  Converter::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
+  }
+
+  void
+  Converter::log_ports()
+  {
+    if (flow_writer && record_history) {
+      if (inflow_element_id == -1)
+        inflow_element_id = flow_writer->register_id(
+            get_id() + "-inflow",
+            get_inflow_type().get_type(),
+            record_history);
+      if (outflow_element_id == -1)
+        outflow_element_id = flow_writer->register_id(
+            get_id(),
+            get_outflow_type().get_type(),
+            record_history);
+      if (lossflow_element_id == -1)
+        lossflow_element_id = flow_writer->register_id(
+            get_id() + "-lossflow",
+            get_outflow_type().get_type(),
+            record_history);
+      if (wasteflow_element_id == -1)
+        wasteflow_element_id = flow_writer->register_id(
+            get_id() + "-wasteflow",
+            get_outflow_type().get_type(),
+            record_history);
+      flow_writer->write_data(
+          inflow_element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
+      flow_writer->write_data(
+          outflow_element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
+      flow_writer->write_data(
+          lossflow_element_id,
+          state.time,
+          state.lossflow_port.get_requested(),
+          state.lossflow_port.get_achieved());
+      flow_writer->write_data(
+          wasteflow_element_id,
+          state.time,
+          state.wasteflow_port.get_requested(),
+          state.wasteflow_port.get_achieved());
+    }
   }
 
   ///////////////////////////////////////////////////////////////////

@@ -321,6 +321,9 @@ namespace ERIN
       Time ta() override;
       void output_func(std::vector<PortValue>& ys) override;
 
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
     protected:
       [[nodiscard]] FlowState update_state_for_outflow_request(FlowValueType outflow_) const override;
       [[nodiscard]] FlowState update_state_for_inflow_achieved(FlowValueType inflow_) const override;
@@ -329,6 +332,14 @@ namespace ERIN
       erin::devs::ConverterState state;
       std::function<FlowValueType(FlowValueType)> output_from_input;
       std::function<FlowValueType(FlowValueType)> input_from_output;
+      std::shared_ptr<FlowWriter> flow_writer;
+      int inflow_element_id;
+      int outflow_element_id;
+      int lossflow_element_id;
+      int wasteflow_element_id;
+      bool record_history;
+
+      void log_ports();
   };
 
   ////////////////////////////////////////////////////////////

@@ -5171,15 +5171,140 @@ TEST(ErinBasicsTest, Test_sink_and_flow_limits_with_port_logging)
   // Sink recorded data
   std::vector<E::RealTimeType> expected_times = {0, 1, 2, 3};
   auto actual_times = E::get_times_from_results_for_component(results, sink_id);
-  erin_test_utils::compare_vectors<E::RealTimeType>(expected_times, actual_times);
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::RealTimeType>(
+        expected_times,
+        actual_times)) << "key: " << sink_id << "; type = times";
   std::vector<E::FlowValueType> expected_loads = {50, 10, 0, 0};
   auto actual_loads = E::get_actual_flows_from_results_for_component(results, sink_id);
-  erin_test_utils::compare_vectors<E::FlowValueType>(expected_loads, actual_loads);
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+        expected_loads,
+        actual_loads)) << "key: " << sink_id << "; type = loads";
   // FlowLimits recorded data
   actual_times = E::get_times_from_results_for_component(results, limits_id);
-  erin_test_utils::compare_vectors<E::RealTimeType>(expected_times, actual_times);
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::RealTimeType>(
+        expected_times,
+        actual_times)) << "key: " << limits_id << "; type = times";
   actual_loads = E::get_actual_flows_from_results_for_component(results, limits_id);
-  erin_test_utils::compare_vectors<E::FlowValueType>(expected_loads, actual_loads);
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+        expected_loads,
+        actual_loads)) << "key: " << limits_id << "; type = loads";
+}
+
+TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
+{
+  namespace E = ERIN;
+  auto st_out = E::StreamType("electrical");
+  auto st_in = E::StreamType("natural_gas");
+  E::RealTimeType t_max{3};
+  std::string sink_id{"sink"};
+  auto sink = new E::Sink(
+      sink_id,
+      E::ComponentType::Load,
+      st_out,
+      {E::LoadItem{0,100},
+       E::LoadItem{1,10},
+       E::LoadItem{2,0},
+       E::LoadItem{t_max}});
+  std::string converter_id{"converter"};
+  E::FlowValueType constant_efficiency{0.5};
+  std::function<E::FlowValueType(E::FlowValueType)> outflow_given_inflow =
+    [constant_efficiency](E::FlowValueType inflow) -> E::FlowValueType {
+      return inflow * constant_efficiency;
+    };
+  std::function<E::FlowValueType(E::FlowValueType)> inflow_given_outflow =
+    [constant_efficiency](E::FlowValueType outflow) -> E::FlowValueType {
+      return outflow / constant_efficiency;
+    };
+  auto converter = new ::ERIN::Converter(
+      converter_id,
+      E::ComponentType::Converter,
+      st_in,
+      st_out,
+      outflow_given_inflow,
+      inflow_given_outflow);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  sink->set_flow_writer(fw);
+  sink->set_recording_on();
+  converter->set_flow_writer(fw);
+  converter->set_recording_on();
+  adevs::Digraph<E::FlowValueType, E::Time> network;
+  network.couple(
+      sink, E::Sink::outport_inflow_request,
+      converter, E::Converter::inport_outflow_request);
+  network.couple(
+      converter, E::Converter::outport_outflow_achieved,
+      sink, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  while (sim.next_event_time() < E::inf)
+    sim.exec_next_event();
+  fw->finalize_at_time(t_max);
+  auto results = fw->get_results();
+  fw->clear();
+  // Sink recorded data
+  std::vector<E::RealTimeType> expected_times = {0, 1, 2, 3};
+  auto actual_times = E::get_times_from_results_for_component(results, sink_id);
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::RealTimeType>(
+        expected_times,
+        actual_times)) << "key: " << sink_id << "; type = times";
+  std::vector<E::FlowValueType> expected_loads = {100.0, 10.0, 0.0, 0.0};
+  auto actual_loads = E::get_actual_flows_from_results_for_component(results, sink_id);
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+        expected_loads,
+        actual_loads)) << "key: " << sink_id << "; type = loads";
+  // Converter recorded data -- outflow
+  actual_times = E::get_times_from_results_for_component(results, converter_id);
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::RealTimeType>(
+        expected_times,
+        actual_times)) << "key: " << converter_id << "; type = times";
+  actual_loads = E::get_actual_flows_from_results_for_component(results, converter_id);
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+        expected_loads,
+        actual_loads)) << "key: " << converter_id << "; type = loads";
+  // ... -- inflow
+  std::vector<E::FlowValueType> expected_loads_inflow = {200.0, 20.0, 0.0, 0.0};
+  actual_times = E::get_times_from_results_for_component(results, converter_id + "-inflow");
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::RealTimeType>(
+        expected_times,
+        actual_times)) << "key: " << converter_id << "-inflow; type = times";
+  actual_loads = E::get_actual_flows_from_results_for_component(results, converter_id + "-inflow");
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+        expected_loads_inflow,
+        actual_loads)) << "key: " << converter_id << "-inflow; type = loads";
+  // ... -- wasteflow
+  actual_times = E::get_times_from_results_for_component(results, converter_id + "-wasteflow");
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::RealTimeType>(
+        expected_times,
+        actual_times)) << "key: " << converter_id << "-wasteflow; type = times";
+  std::vector<E::FlowValueType> expected_loads_wasteflow = {100.0, 10.0, 0.0, 0.0};
+  actual_loads = E::get_actual_flows_from_results_for_component(results, converter_id + "-wasteflow");
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+        expected_loads_wasteflow,
+        actual_loads)) << "key: " << converter_id << "-wasteflow; type = loads";
+  // ... -- lossflow
+  actual_times = E::get_times_from_results_for_component(results, converter_id + "-lossflow");
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::RealTimeType>(
+        expected_times,
+        actual_times)) << "key: " << converter_id << "-lossflow; type = times";
+  std::vector<E::FlowValueType> expected_loads_lossflow = {0.0, 0.0, 0.0, 0.0};
+  actual_loads = E::get_actual_flows_from_results_for_component(results, converter_id + "-lossflow");
+  ASSERT_TRUE(
+      erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+        expected_loads_lossflow,
+        actual_loads)) << "key: " << converter_id << "-lossflow; type = loads";
 }
 
 int

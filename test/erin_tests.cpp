@@ -36,6 +36,35 @@
 
 const double tolerance{1e-6};
 
+bool
+check_times_and_loads(
+    const std::unordered_map<std::string, std::vector<ERIN::Datum>>& results,
+    const std::vector<ERIN::RealTimeType>& expected_times,
+    const std::vector<ERIN::FlowValueType>& expected_loads,
+    const std::string& id)
+{
+  namespace E = ERIN;
+  auto actual_times = E::get_times_from_results_for_component(results, id);
+  bool flag =
+    erin_test_utils::compare_vectors_functional<E::RealTimeType>(
+        expected_times,
+        actual_times);
+  auto actual_loads = E::get_actual_flows_from_results_for_component(results, id);
+  flag = flag && erin_test_utils::compare_vectors_functional<E::FlowValueType>(
+      expected_loads, actual_loads);
+  if (!flag)
+    std::cout << "key: " << id << "\n"
+              << "expected_times = "
+              << E::vec_to_string<E::RealTimeType>(expected_times) << "\n"
+              << "expected_loads = "
+              << E::vec_to_string<E::FlowValueType>(expected_loads) << "\n"
+              << "actual_times   = "
+              << E::vec_to_string<E::RealTimeType>(actual_times) << "\n"
+              << "actual_loads   = "
+              << E::vec_to_string<E::FlowValueType>(actual_loads) << "\n";
+  return flag;
+}
+
 TEST(AdevsUsageTest, CanRunCheckoutLineExample)
 {
   // Expected results from ADEVS manual
@@ -131,165 +160,48 @@ TEST(ErinBasicsTest, FlowState)
   EXPECT_EQ(fs.get_lossflow(), 10.0);
 }
 
-TEST(ErinBasicsTest, StandaloneSink)
-{
-  auto st = ::ERIN::StreamType("electrical");
-  ERIN::RealTimeType t_max{3};
-  auto sink = new ::ERIN::Sink(
-      "load", ::ERIN::ComponentType::Load, st,
-      {::ERIN::LoadItem{0,100},
-       ::ERIN::LoadItem{1,10},
-       ::ERIN::LoadItem{2,0},
-       ::ERIN::LoadItem{t_max}});
-  auto meter = new ::ERIN::FlowMeter(
-      "meter", ::ERIN::ComponentType::Load, st);
-  std::shared_ptr<ERIN::FlowWriter> fw =
-    std::make_shared<ERIN::DefaultFlowWriter>();
-  meter->set_flow_writer(fw);
-  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
-  network.couple(
-      sink, ::ERIN::Sink::outport_inflow_request,
-      meter, ::ERIN::FlowMeter::inport_outflow_request);
-  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
-  network.add(&sim);
-  while (sim.next_event_time() < ::ERIN::inf) {
-    sim.exec_next_event();
-  }
-  std::vector<::ERIN::RealTimeType> expected_times = {0, 1, 2, 3};
-  fw->finalize_at_time(t_max);
-  auto results = fw->get_results();
-  fw->clear();
-  auto actual_times = ERIN::get_times_from_results_for_component(results, "meter");
-  ::erin_test_utils::compare_vectors<::ERIN::RealTimeType>(expected_times, actual_times);
-  std::vector<::ERIN::FlowValueType> expected_loads = {100, 10, 0, 0};
-  auto actual_loads = ERIN::get_actual_flows_from_results_for_component(results, "meter");
-  ::erin_test_utils::compare_vectors<::ERIN::FlowValueType>(expected_loads, actual_loads);
-}
-
-TEST(ErinBasicsTest, CanRunSourceSink)
-{
-  std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2};
-  std::vector<::ERIN::FlowValueType> expected_flow = {100, 0, 0};
-  ERIN::RealTimeType t_max{2};
-  auto st = ::ERIN::StreamType("electrical");
-  auto sink = new ::ERIN::Sink(
-      "sink", ::ERIN::ComponentType::Load, st, {
-          ::ERIN::LoadItem{0,100},
-          ::ERIN::LoadItem{1,0},
-          ::ERIN::LoadItem{t_max}});
-  auto meter = new ::ERIN::FlowMeter(
-      "meter", ::ERIN::ComponentType::Load, st);
-  std::shared_ptr<ERIN::FlowWriter> fw =
-    std::make_shared<ERIN::DefaultFlowWriter>();
-  meter->set_flow_writer(fw);
-  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
-  network.couple(
-      sink, ::ERIN::Sink::outport_inflow_request,
-      meter, ::ERIN::FlowMeter::inport_outflow_request
-      );
-  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
-  network.add(&sim);
-  while (sim.next_event_time() < ::ERIN::inf) {
-    sim.exec_next_event();
-  }
-  fw->finalize_at_time(t_max);
-  auto results = fw->get_results();
-  auto actual_time = ERIN::get_times_from_results_for_component(results, "meter");
-  auto actual_flow = ERIN::get_actual_flows_from_results_for_component(results, "meter");
-  auto et_size = expected_time.size();
-  EXPECT_EQ(et_size, actual_time.size());
-  EXPECT_EQ(expected_flow.size(), actual_flow.size());
-  for (decltype(et_size) i{0}; i < et_size; ++i) {
-    if (i >= actual_time.size()) {
-      break;
-    }
-    EXPECT_EQ(expected_time[i], actual_time[i])
-      << "times differ at index " << i;
-    if (i >= actual_flow.size()) {
-      break;
-    }
-    EXPECT_EQ(expected_flow[i], actual_flow[i])
-      << "loads differ at index " << i;
-  }
-}
-
 TEST(ErinBasicsTest, CanRunPowerLimitedSink)
 {
-  ERIN::RealTimeType t_max{4};
-  std::vector<::ERIN::RealTimeType> expected_time = {0, 1, 2, 3, t_max};
-  std::vector<::ERIN::FlowValueType> expected_flow = {50, 50, 40, 0, 0};
-  auto elec = ::ERIN::StreamType("electrical");
-  auto meter2 = new ::ERIN::FlowMeter(
-      "meter2", ::ERIN::ComponentType::Source, elec);
-  auto lim = new ::ERIN::FlowLimits(
-      "lim", ::ERIN::ComponentType::Source, elec, 0, 50);
-  auto meter1 = new ::ERIN::FlowMeter(
-      "meter1", ::ERIN::ComponentType::Load, elec);
-  auto sink = new ::ERIN::Sink(
-      "electric-load", ::ERIN::ComponentType::Load, elec,
-      { ::ERIN::LoadItem{0, 160},
-        ::ERIN::LoadItem{1,80},
-        ::ERIN::LoadItem{2,40},
-        ::ERIN::LoadItem{3,0},
-        ::ERIN::LoadItem{t_max}});
-  std::shared_ptr<ERIN::FlowWriter> fw = std::make_shared<ERIN::DefaultFlowWriter>();
-  meter1->set_flow_writer(fw);
-  meter2->set_flow_writer(fw);
-  adevs::Digraph<::ERIN::FlowValueType, ::ERIN::Time> network;
+  namespace E = ERIN;
+  E::RealTimeType t_max{4};
+  std::vector<E::RealTimeType> expected_time = {0, 1, 2, 3, t_max};
+  std::vector<E::FlowValueType> expected_flow = {50, 50, 40, 0, 0};
+  auto elec = E::StreamType("electrical");
+  std::string limit_id{"lim"};
+  auto lim = new E::FlowLimits(limit_id, E::ComponentType::Source, elec, 0, 50);
+  std::string sink_id{"load"};
+  auto sink = new E::Sink(
+      sink_id,
+      E::ComponentType::Load,
+      elec,
+      { E::LoadItem{0, 160},
+        E::LoadItem{1,80},
+        E::LoadItem{2,40},
+        E::LoadItem{3,0},
+        E::LoadItem{t_max}});
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  lim->set_flow_writer(fw);
+  lim->set_recording_on();
+  sink->set_flow_writer(fw);
+  sink->set_recording_on();
+  adevs::Digraph<E::FlowValueType, E::Time> network;
   network.couple(
-      sink, ::ERIN::Sink::outport_inflow_request,
-      meter1, ::ERIN::FlowMeter::inport_outflow_request);
+      sink, E::Sink::outport_inflow_request,
+      lim, E::FlowLimits::inport_outflow_request);
   network.couple(
-      meter1, ::ERIN::FlowMeter::outport_inflow_request,
-      lim, ::ERIN::FlowLimits::inport_outflow_request);
-  network.couple(
-      lim, ::ERIN::FlowLimits::outport_inflow_request,
-      meter2, ::ERIN::FlowMeter::inport_outflow_request);
-  network.couple(
-      meter2, ::ERIN::FlowMeter::outport_outflow_achieved,
-      lim, ::ERIN::FlowLimits::inport_inflow_achieved);
-  network.couple(
-      lim, ::ERIN::FlowLimits::outport_outflow_achieved,
-      meter1, ::ERIN::FlowMeter::inport_inflow_achieved);
-  adevs::Simulator<::ERIN::PortValue, ::ERIN::Time> sim;
+      lim, E::FlowLimits::outport_outflow_achieved,
+      sink, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim;
   network.add(&sim);
-  while (sim.next_event_time() < ::ERIN::inf) {
+  while (sim.next_event_time() < E::inf)
     sim.exec_next_event();
-  }
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
   fw->clear();
-  auto actual_time1 = ERIN::get_times_from_results_for_component(results, "meter1");
-  auto actual_time2 = ERIN::get_times_from_results_for_component(results, "meter2");
-  auto actual_flow1 = ERIN::get_actual_flows_from_results_for_component(results, "meter1");
-  auto actual_flow2 = ERIN::get_actual_flows_from_results_for_component(results, "meter2");
-  EXPECT_EQ(expected_time.size(), actual_time1.size());
-  EXPECT_EQ(expected_time.size(), actual_time2.size());
-  EXPECT_EQ(expected_flow.size(), actual_flow1.size());
-  EXPECT_EQ(expected_flow.size(), actual_flow2.size());
-  auto expected_time_size = expected_time.size();
-  for (decltype(expected_time_size) i{0}; i < expected_time_size; ++i) {
-    if (i >= actual_time1.size()) {
-      break;
-    }
-    EXPECT_EQ(expected_time[i], actual_time1[i])
-      << " times from meter1 differ at index " << i;
-    if (i >= actual_time2.size()) {
-      break;
-    }
-    EXPECT_EQ(expected_time[i], actual_time2[i])
-      << " times from meter2 differ at index " << i;
-    if (i >= actual_flow1.size()) {
-      break;
-    }
-    EXPECT_EQ(expected_flow[i], actual_flow1[i])
-      << " flows from meter1 differ at index " << i;
-    if (i >= actual_flow2.size()) {
-      break;
-    }
-    EXPECT_EQ(expected_flow[i], actual_flow2[i])
-      << " flows from meter2 differ at index " << i;
-  }
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_time, expected_flow, sink_id));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_time, expected_flow, limit_id));
 }
 
 TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
@@ -609,7 +521,8 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         std::string{"bus"},
         streams["electricity"],
         2,
-        1)));
+        1,
+        ERIN::MuxerDispatchStrategy::InOrder)));
   auto pt = &t;
   auto actual = pt->read_components(streams, loads_by_id);
   EXPECT_EQ(expected.size(), actual.size());
@@ -5083,35 +4996,6 @@ TEST(ErinDevs, Test_function_based_storage_element)
     std::cout << "s12 = " << s12 << "\n";
     std::cout << "s13 = " << s13 << "\n";
   }
-}
-
-bool
-check_times_and_loads(
-    const std::unordered_map<std::string, std::vector<ERIN::Datum>>& results,
-    const std::vector<ERIN::RealTimeType>& expected_times,
-    const std::vector<ERIN::FlowValueType>& expected_loads,
-    const std::string& id)
-{
-  namespace E = ERIN;
-  auto actual_times = E::get_times_from_results_for_component(results, id);
-  bool flag =
-    erin_test_utils::compare_vectors_functional<E::RealTimeType>(
-        expected_times,
-        actual_times);
-  auto actual_loads = E::get_actual_flows_from_results_for_component(results, id);
-  flag = flag && erin_test_utils::compare_vectors_functional<E::FlowValueType>(
-      expected_loads, actual_loads);
-  if (!flag)
-    std::cout << "key: " << id << "\n"
-              << "expected_times = "
-              << E::vec_to_string<E::RealTimeType>(expected_times) << "\n"
-              << "expected_loads = "
-              << E::vec_to_string<E::FlowValueType>(expected_loads) << "\n"
-              << "actual_times   = "
-              << E::vec_to_string<E::RealTimeType>(actual_times) << "\n"
-              << "actual_loads   = "
-              << E::vec_to_string<E::FlowValueType>(actual_loads) << "\n";
-  return flag;
 }
 
 TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)

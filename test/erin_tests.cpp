@@ -1463,7 +1463,6 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
       1.0,
       tolerance);
 
-  std::cout << "starting test 2\n";
   // test 2: simulate with a fragility curve that always fails
   // - confirm the statistics show 100% load not served
   std::unordered_map<std::string, double> intensities_high{

@@ -109,7 +109,10 @@ def run_regression(id, info)
       full_ref_path = File.join(REFERENCE_PATH, reference_path)
       is_good, issue = run_diff(local_path, full_ref_path)
       if !is_good
-        $issues[id] = issue
+        $issues[id] = issue + "\n\tlocal_path: #{local_path}\n\t"\
+          "reference_path: #{reference_path}\n\t"\
+          "args: #{args}\n\t"\
+          "command: \"#{cmd}\"\n\n"
         $num_issues += 1
         return
       end

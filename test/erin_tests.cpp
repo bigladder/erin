@@ -1452,7 +1452,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
         emergency, 10, -1, [](){ return 100; }, intensities_low}}};
   E::Main m_low{si, streams, comps, networks, scenarios_low};
   auto results_low = m_low.run(class_4_hurricane);
-  if (true) {
+  if (false) {
     std::cout << "results_low:\n";
     for (const auto& pair : results_low.get_results())
       std::cout << "... " << pair.first << ": "
@@ -1479,7 +1479,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
         emergency, 10, -1, [](){ return 100; }, intensities_high}}};
   E::Main m_high{si, streams, comps, networks, scenarios_high};
   auto results_high = m_high.run(class_4_hurricane);
-  if (true) {
+  if (false) {
     std::cout << "results_high:\n";
     for (const auto& pair : results_high.get_results())
       std::cout << "... " << pair.first << ": "
@@ -1647,7 +1647,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     ASSERT_FALSE(it == results.end())
       << "key \"" << k << "\" not found in results";
   }
-  if (true) {
+  if (false) {
     std::cout << "RESULTS DUMP:\n";
     for (const auto& r : results) {
       const auto& k = r.first;

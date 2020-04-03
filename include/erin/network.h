@@ -82,7 +82,8 @@ namespace erin::network
       const std::unordered_map<
         ::erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map2,
       const ::erin::port::Type& port2,
-      const int& port2_num);
+      const int& port2_num,
+      bool two_way = false);
 
   std::vector<ERIN::FlowElement*> build(
       const std::string& scenario_id,
@@ -92,7 +93,8 @@ namespace erin::network
         std::string, std::unique_ptr<ERIN::Component>>& components,
       const std::unordered_map<
         std::string, std::vector<double>>& failure_probs_by_comp_id,
-      const std::function<double()>& rand_fn);
+      const std::function<double()>& rand_fn,
+      bool two_way = false);
 }
 
 #endif // ERIN_NETWORK_H

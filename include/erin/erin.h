@@ -478,10 +478,11 @@ namespace ERIN
 
   ScenarioResults process_single_scenario_results(
       bool sim_good,
-      const std::vector<FlowElement*>& elements,
       RealTimeType duration,
       RealTimeType scenario_start_time_s,
-      std::unordered_map<std::string,std::vector<Datum>> results);
+      std::unordered_map<std::string,std::vector<Datum>> results,
+      std::unordered_map<std::string,std::string> stream_ids,
+      std::unordered_map<std::string,ComponentType> comp_types);
 
   double calc_energy_availability_from_stats(const ScenarioStats& ss);
 

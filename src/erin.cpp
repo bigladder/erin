@@ -365,8 +365,8 @@ namespace ERIN
     std::vector<LoadItem> the_loads{};
     TimeUnits time_units{TimeUnits::Hours};
     RateUnits rate_units{RateUnits::KiloWatts};
-    RealTimeType t;
-    FlowValueType v;
+    RealTimeType t{0};
+    FlowValueType v{0.0};
     std::ifstream ifs{csv_path};
     if (!ifs.is_open()) {
       std::ostringstream oss;
@@ -757,8 +757,8 @@ namespace ERIN
       switch (curve_type) {
         case ef::CurveType::Linear:
           {
-            double lower_bound;
-            double upper_bound;
+            double lower_bound{0.0};
+            double upper_bound{0.0};
             try {
               lower_bound = toml_helper::read_required_table_field<double>(
                   data_table, {"lower_bound"}, field_read);
@@ -988,11 +988,11 @@ namespace ERIN
       int item_num{0};
       for (const auto& connect: raw_connects) {
         std::string comp_01_id;
-        ::erin::port::Type comp_01_port;
-        int comp_01_port_num;
+        ep::Type comp_01_port{ep::Type::Outflow};
+        int comp_01_port_num{0};
         std::string comp_02_id;
-        ::erin::port::Type comp_02_port;
-        int comp_02_port_num;
+        ep::Type comp_02_port{ep::Type::Inflow};
+        int comp_02_port_num{0};
         auto num_items = connect.size();
         const int infer_outflow0_to_inflow0{2};
         const int infer_port_numbers{4};
@@ -1014,10 +1014,10 @@ namespace ERIN
           const int idx_comp_02_id{2};
           const int idx_comp_02_port_type{3};
           comp_01_id = connect.at(idx_comp_01_id);
-          comp_01_port = ::erin::port::tag_to_type(connect.at(idx_comp_01_port_type));
+          comp_01_port = ep::tag_to_type(connect.at(idx_comp_01_port_type));
           comp_01_port_num = inferred_port_number;
           comp_02_id = connect.at(idx_comp_02_id);
-          comp_02_port = ::erin::port::tag_to_type(connect.at(idx_comp_02_port_type));
+          comp_02_port = ep::tag_to_type(connect.at(idx_comp_02_port_type));
           comp_02_port_num = inferred_port_number;
         }
         else if (num_items == explicit_connection) {
@@ -1028,10 +1028,10 @@ namespace ERIN
           const int idx_comp_02_port_type{4};
           const int idx_comp_02_port_num{5};
           comp_01_id = connect.at(idx_comp_01_id);
-          comp_01_port = ::erin::port::tag_to_type(connect.at(idx_comp_01_port_type));
+          comp_01_port = ep::tag_to_type(connect.at(idx_comp_01_port_type));
           comp_01_port_num = std::stoi(connect.at(idx_comp_01_port_num));
           comp_02_id = connect.at(idx_comp_02_id);
-          comp_02_port = ::erin::port::tag_to_type(connect.at(idx_comp_02_port_type));
+          comp_02_port = ep::tag_to_type(connect.at(idx_comp_02_port_type));
           comp_02_port_num = std::stoi(connect.at(idx_comp_02_port_num));
         }
         else {
@@ -1296,7 +1296,7 @@ namespace ERIN
   std::unordered_map<std::string, double>
   ScenarioResults::calc_energy_availability() const
   {
-    std::unordered_map<std::string, double> out;
+    std::unordered_map<std::string, double> out{};
     for (const auto& comp_id : keys) {
       const auto& stats = statistics.at(comp_id);
       out[comp_id] = calc_energy_availability_from_stats(stats);
@@ -1376,16 +1376,14 @@ namespace ERIN
     oss << "component id,type,stream,energy availability,max downtime ("
         << time_units_to_tag(time_units) << "),load not served (kJ)";
     std::set<std::string> stream_key_set{};
-    for (const auto& s: stream_ids) {
+    for (const auto& s: stream_ids)
       stream_key_set.emplace(s.second);
-    }
     std::vector<std::string> stream_keys{
       stream_key_set.begin(), stream_key_set.end()};
     // should not need. set is ordered/sorted.
     //std::sort(stream_keys.begin(), stream_keys.end());
-    for (const auto& sk: stream_keys) {
+    for (const auto& sk: stream_keys)
       oss << "," << sk << " energy used (kJ)";
-    }
     oss << "\n";
     for (const auto& k: keys) {
       auto s_id = stream_ids.at(k);
@@ -1433,13 +1431,26 @@ namespace ERIN
       const std::function<
         FlowValueType(const std::vector<Datum>& f)>& sum_fn) const
   {
-    std::unordered_map<std::string, double> out;
+    if constexpr (debug_level >= debug_level_high)
+      std::cout << "ScenarioResults::total_loads_by_stream_helper()\n";
+    std::unordered_map<std::string, double> out{};
     if (is_good) {
       for (const auto& comp_id : keys) {
-        const auto& comp_type = component_types.at(comp_id);
-        if (comp_type != ComponentType::Load) {
-          continue;
+        if constexpr (debug_level >= debug_level_high)
+          std::cout << "looking up '" << comp_id << "'\n";
+        auto comp_type_it = component_types.find(comp_id);
+        if (comp_type_it == component_types.end()) {
+          std::ostringstream oss{};
+          oss << "expected the key '" << comp_id << "' to be in "
+              << "component_types but it was not\n"
+              << "component_types:\n";
+          for (const auto& pair : component_types)
+            oss << "\t" << pair.first << " : " << component_type_to_tag(pair.second) << "\n";
+          throw std::runtime_error(oss.str());
         }
+        const auto& comp_type = comp_type_it->second;
+        if (comp_type != ComponentType::Load)
+          continue;
         const auto& stream_name = stream_ids.at(comp_id);
         const auto& data = results.at(comp_id);
         const auto sum = sum_fn(data);
@@ -1458,21 +1469,31 @@ namespace ERIN
   std::unordered_map<std::string, FlowValueType>
   ScenarioResults::total_requested_loads_by_stream() const
   {
+    if constexpr (debug_level >= debug_level_high)
+      std::cout << "ScenarioResults::total_requested_loads_by_stream()\n";
     return total_loads_by_stream_helper(sum_requested_load);
   }
 
   std::unordered_map<std::string, FlowValueType>
   ScenarioResults::total_achieved_loads_by_stream() const
   {
+    if constexpr (debug_level >= debug_level_high)
+      std::cout << "ScenarioResults::total_achieved_loads_by_stream()\n";
     return total_loads_by_stream_helper(sum_achieved_load);
   }
 
   std::unordered_map<std::string, FlowValueType>
   ScenarioResults::total_energy_availability_by_stream() const
   {
-    std::unordered_map<std::string, FlowValueType> out;
+    if constexpr (debug_level >= debug_level_high)
+      std::cout << "ScenarioResults::total_energy_availability_by_stream()\n";
+    std::unordered_map<std::string, FlowValueType> out{};
     const auto req = total_requested_loads_by_stream();
+    if constexpr (debug_level >= debug_level_high)
+      std::cout << "successfully called total_requested_loads_by_stream()\n";
     const auto ach = total_achieved_loads_by_stream();
+    if constexpr (debug_level >= debug_level_high)
+      std::cout << "successfully called total_achieved_loads_by_stream()\n";
     if (req.size() != ach.size()) {
       std::ostringstream oss;
       oss << "number of requested loads by stream (" << req.size()
@@ -1906,6 +1927,8 @@ namespace ERIN
     std::unordered_map<std::string, std::vector<double>>>
   AllResults::get_total_energy_availabilities() const
   {
+    if constexpr (debug_level >= debug_level_high)
+      std::cout << "AllResults::get_total_energy_availabilities()\n";
     using size_type = std::vector<ScenarioResults>::size_type;
     using T_scenario_id = std::string;
     using T_stream_name = std::string;
@@ -1916,26 +1939,32 @@ namespace ERIN
         std::unordered_map<
           T_stream_name,
           std::vector<T_total_energy_availability>>>;
-    T_total_energy_availability_return out;
+    T_total_energy_availability_return out{};
     for (const auto& scenario_id: scenario_ids) {
+      if constexpr (debug_level >= debug_level_high)
+        std::cout << "... processing " << scenario_id << "\n";
       const auto& srs = results.at(scenario_id);
       const auto num_srs = srs.size();
       std::unordered_map<
         T_stream_name,
-        std::vector<T_total_energy_availability>> data;
+        std::vector<T_total_energy_availability>> data{};
       for (size_type i{0}; i < num_srs; ++i) {
+        if constexpr (debug_level >= debug_level_high)
+          std::cout << "... scenario_results[" << i << "]\n";
         const auto& sr = srs.at(i);
+        if constexpr (debug_level >= debug_level_high)
+          std::cout << "... calling sr.total_energy_availability_by_stream()\n";
         const auto teabs = sr.total_energy_availability_by_stream();
+        if constexpr (debug_level >= debug_level_high)
+          std::cout << "... called sr.total_energy_availability_by_stream()\n";
         for (const auto& pair : teabs) {
           const auto& stream_name = pair.first;
           const auto& tea = pair.second;
           auto it = data.find(stream_name);
-          if (it == data.end()) {
+          if (it == data.end())
             data[stream_name] = std::vector<FlowValueType>{tea};
-          }
-          else {
+          else
             it->second.emplace_back(tea);
-          }
         }
       }
       out[scenario_id] = data;
@@ -2115,7 +2144,7 @@ namespace ERIN
     const auto& connections = networks[network_id];
     const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = ::erin::network::build(
-        scenario_id, network, connections, components, fpbc, rand_fn);
+        scenario_id, network, connections, components, fpbc, rand_fn, true);
     std::shared_ptr<FlowWriter> fw = std::make_shared<DefaultFlowWriter>();
     for (auto e_ptr: elements) {
       e_ptr->set_flow_writer(fw);
@@ -2135,9 +2164,34 @@ namespace ERIN
     // - stream-line the SimulationResults object to do less and be leaner
     // - alternatively, make the FlowWriter take over the SimulationResults role?
     auto results = fw->get_results();
+    auto stream_ids = fw->get_stream_ids();
+    auto comp_types = fw->get_component_types();
     fw->clear();
+    if (comp_types.size() != stream_ids.size()) {
+      std::ostringstream oss{};
+      oss << "comp_types.size() != stream_ids.size()\n"
+          << "comp_types.size() = " << comp_types.size() << "\n"
+          << "stream_ids.size() = " << stream_ids.size() << "\n";
+      throw std::runtime_error(oss.str());
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "results:\n";
+      for (const auto& p : results)
+        std::cout << "... " << p.first << ": " << vec_to_string<Datum>(p.second) << "\n";
+      std::cout << "stream_ids:\n";
+      for (const auto& p : stream_ids)
+        std::cout << "... " << p.first << ": " << p.second << "\n";
+      std::cout << "comp_types:\n";
+      for (const auto& p : comp_types)
+        std::cout << "... " << p.first << ": " << component_type_to_tag(p.second) << "\n";
+    }
     return process_single_scenario_results(
-        sim_good, elements, duration, scenario_start_s, std::move(results));
+        sim_good,
+        duration,
+        scenario_start_s,
+        std::move(results),
+        std::move(stream_ids),
+        std::move(comp_types));
   }
 
   AllResults
@@ -2373,24 +2427,13 @@ namespace ERIN
   ScenarioResults
   process_single_scenario_results(
       bool sim_good,
-      const std::vector<FlowElement*>& elements,
       RealTimeType duration,
       RealTimeType scenario_start_s,
-      std::unordered_map<std::string,std::vector<Datum>> results)
+      std::unordered_map<std::string,std::vector<Datum>> results,
+      std::unordered_map<std::string,std::string> stream_ids,
+      std::unordered_map<std::string,ComponentType> comp_types)
   {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "entering process_single_scenario_results(...)\n";
-      std::cout << "... sim_good = " << (sim_good ? "true" : "false") << "\n";
-      std::cout << "... elements = " << vec_to_string<FlowElement*>(elements)
-                << "\n";
-      std::cout << "... duration = " << duration << "\n";
-    }
-    std::unordered_map<std::string,ComponentType> comp_types;
-    std::unordered_map<std::string,std::string> stream_ids;
-    if (!sim_good) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "sim_good = false; return\n";
-      }
+    if (!sim_good)
       return ScenarioResults{
         sim_good,
         scenario_start_s,
@@ -2398,44 +2441,6 @@ namespace ERIN
         std::move(results),
         std::move(stream_ids),
         std::move(comp_types)};
-    }
-    int element_number{0};
-    for (const auto& e: elements) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... .............................\n";
-        std::cout << "... element_number: " << element_number << "\n";
-        std::cout << "... e: " << e << "\n";
-        std::cout << "... e.id: " << e->get_id() << "\n";
-        std::cout << "... e.element_type: "
-                  << element_type_to_tag(e->get_element_type()) << "\n";
-        std::cout << "... e.inflow_type : " << e->get_inflow_type() << "\n";
-        std::cout << "... e.outflow_type: " << e->get_outflow_type() << "\n";
-        auto the_ct = e->get_component_type();
-        std::cout << "... the_ct = " << static_cast<int>(the_ct) << "\n";
-        std::cout << "... e.component_type: "
-                  << component_type_to_tag(the_ct) << "\n";
-      }
-      if (e->get_element_type() == ElementType::FlowMeter) {
-        auto id{e->get_id()};
-        auto in_st{e->get_inflow_type().get_type()};
-        auto out_st{e->get_outflow_type().get_type()};
-        auto comp_type{e->get_component_type()};
-        if (in_st != out_st) {
-          std::ostringstream oss;
-          oss << "MixedStreamsError:\n";
-          oss << "input stream != output_stream but it should\n";
-          oss << "input stream: " << in_st << "\n";
-          oss << "output stream: " << out_st << "\n";
-          throw std::runtime_error(oss.str());
-        }
-        comp_types.emplace(std::make_pair(id, comp_type));
-        stream_ids.emplace(std::make_pair(id, in_st));
-      }
-      ++element_number;
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "return\n";
-    }
     return ScenarioResults{
       sim_good,
       scenario_start_s, 
@@ -2450,9 +2455,8 @@ namespace ERIN
   {
     auto numerator = static_cast<double>(ss.uptime);
     auto denominator = static_cast<double>(ss.uptime + ss.downtime);
-    if ((ss.uptime + ss.downtime) == 0) {
+    if ((ss.uptime + ss.downtime) == 0)
       return 0.0;
-    }
     return numerator / denominator;
   }
 

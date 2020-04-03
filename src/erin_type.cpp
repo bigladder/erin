@@ -156,26 +156,21 @@ namespace ERIN
   ComponentType
   tag_to_component_type(const std::string& tag)
   {
-    if (tag == "load") {
+    if (tag == "load")
       return ComponentType::Load;
-    }
-    else if (tag == "source") {
+    if (tag == "source")
       return ComponentType::Source;
-    }
-    else if (tag == "converter") {
+    if (tag == "converter")
       return ComponentType::Converter;
-    }
-    else if ((tag == "mux") || (tag == "bus") || (tag == "muxer")) {
+    if ((tag == "mux") || (tag == "bus") || (tag == "muxer"))
       return ComponentType::Muxer;
-    }
-    else if (tag == "pass_through") {
+    if (tag == "pass_through")
       return ComponentType::PassThrough;
-    }
-    else {
-      std::ostringstream oss;
-      oss << "Unhandled tag \"" << tag << "\"";
-      throw std::invalid_argument(oss.str());
-    }
+    if ((tag == "info") || (tag == "informational") || (tag == "optional"))
+      return ComponentType::Informational;
+    std::ostringstream oss;
+    oss << "Unhandled tag \"" << tag << "\"";
+    throw std::invalid_argument(oss.str());
   }
 
   std::string
@@ -192,6 +187,8 @@ namespace ERIN
         return std::string{"muxer"};
       case ComponentType::PassThrough:
         return std::string{"pass_through"};
+      case ComponentType::Informational:
+        return std::string{"informational"};
       default:
         {
           std::ostringstream oss;

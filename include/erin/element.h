@@ -34,6 +34,7 @@ namespace ERIN
       [[nodiscard]] virtual int register_id(
           const std::string& element_tag,
           const std::string& stream_tag,
+          ComponentType comp_type,
           bool record_history) = 0;
       virtual void write_data(
           int element_id,
@@ -43,6 +44,10 @@ namespace ERIN
       virtual void finalize_at_time(RealTimeType time) = 0;
       [[nodiscard]] virtual std::unordered_map<std::string, std::vector<Datum>>
         get_results() const = 0;
+      [[nodiscard]] virtual std::unordered_map<std::string,ComponentType>
+        get_component_types() const = 0;
+      [[nodiscard]] virtual std::unordered_map<std::string,std::string>
+        get_stream_ids() const = 0;
       virtual void clear() = 0;
   };
 
@@ -64,6 +69,7 @@ namespace ERIN
           const std::unordered_map<std::string, int>& element_tag_to_id,
           const std::unordered_map<int, std::string>& element_id_to_tag,
           const std::unordered_map<int, std::string>& element_id_to_stream_tag,
+          const std::unordered_map<int, ComponentType>& element_id_to_comp_type,
           const std::vector<bool>& recording_flags,
           std::vector<std::vector<Datum>>&& history);
 
@@ -71,6 +77,7 @@ namespace ERIN
       [[nodiscard]] int register_id(
           const std::string& element_tag,
           const std::string& stream_tag,
+          ComponentType comp_type,
           bool record_history) override;
       void write_data(
           int element_id,
@@ -80,6 +87,10 @@ namespace ERIN
       void finalize_at_time(RealTimeType time) override;
       [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const override;
+      [[nodiscard]] std::unordered_map<std::string,std::string>
+        get_stream_ids() const override;
+      [[nodiscard]] std::unordered_map<std::string,ComponentType>
+        get_component_types() const override;
       void clear() override;
 
     private:
@@ -90,6 +101,7 @@ namespace ERIN
       std::unordered_map<std::string, int> element_tag_to_id;
       std::unordered_map<int, std::string> element_id_to_tag;
       std::unordered_map<int, std::string> element_id_to_stream_tag;
+      std::unordered_map<int, ComponentType> element_id_to_comp_type;
       std::vector<bool> recording_flags;
       std::vector<std::vector<Datum>> history;
 
@@ -293,6 +305,7 @@ namespace ERIN
           ComponentType component_type,
           const StreamType& stream_type);
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
 
     protected:
       void update_on_external_transition() override;
@@ -300,6 +313,7 @@ namespace ERIN
     private:
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
+      bool record_history;
   };
 
   ////////////////////////////////////////////////////////////

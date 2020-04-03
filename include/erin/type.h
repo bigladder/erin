@@ -81,7 +81,8 @@ namespace ERIN
     Source,
     Converter,
     Muxer,
-    PassThrough
+    PassThrough,
+    Informational
   };
 
   ComponentType tag_to_component_type(const std::string& tag);

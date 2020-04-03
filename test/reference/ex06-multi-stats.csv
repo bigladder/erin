@@ -15,9 +15,9 @@ blue_sky,1,8760,cluster_1_thermal,load,steam,1,0,0,0.0,0.0,3.1536e+11,0.0
 blue_sky,1,8760,cluster_2_electric,load,electricity,1,0,0,0.0,1.26144e+11,0.0,0.0
 blue_sky,1,8760,cluster_2_thermal,load,steam,1,0,0,0.0,0.0,6.3072e+11,0.0
 blue_sky,1,8760,coal_pile,source,coal,1,0,0,1.1826e+12,0.0,0.0,0.0
-blue_sky,1,8760,coal_to_steam:inflow,converter,coal,1,0,0,1.1826e+12,0.0,0.0,0.0
-blue_sky,1,8760,coal_to_steam:lossflow,converter,waste_heat,0,8760,2.91708e+12,0.0,0.0,0.0,2.3652e+11
-blue_sky,1,8760,coal_to_steam:outflow,converter,steam,1,0,0,0.0,0.0,9.4608e+11,0.0
+blue_sky,1,8760,coal_to_steam-inflow,converter,coal,1,0,0,1.1826e+12,0.0,0.0,0.0
+blue_sky,1,8760,coal_to_steam-lossflow,converter,waste_heat,0,8760,2.91708e+12,0.0,0.0,0.0,2.3652e+11
+blue_sky,1,8760,coal_to_steam-outflow,converter,steam,1,0,0,0.0,0.0,9.4608e+11,0.0
 blue_sky,1,8760,elec_line_from_utility,pass_through,electricity,1,0,0,0.0,1.89216e+11,0.0,0.0
 blue_sky,1,8760,elec_line_to_c1,pass_through,electricity,1,0,0,0.0,6.3072e+10,0.0,0.0
 blue_sky,1,8760,elec_line_to_c2,pass_through,electricity,1,0,0,0.0,1.26144e+11,0.0,0.0
@@ -33,9 +33,9 @@ blue_sky,1,8760,steam_line_to_c2,pass_through,steam,1,0,0,0.0,0.0,6.3072e+11,0.0
 blue_sky,1,8760,steam_loop-inflow(0),muxer,steam,1,0,0,0.0,0.0,9.4608e+11,0.0
 blue_sky,1,8760,steam_loop-outflow(0),muxer,steam,1,0,0,0.0,0.0,3.1536e+11,0.0
 blue_sky,1,8760,steam_loop-outflow(1),muxer,steam,1,0,0,0.0,0.0,6.3072e+11,0.0
-blue_sky,1,8760,waste_heat_to_electricity:inflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
-blue_sky,1,8760,waste_heat_to_electricity:lossflow,converter,waste_heat,0,8760,3.1536e+12,0.0,0.0,0.0,0
-blue_sky,1,8760,waste_heat_to_electricity:outflow,converter,electricity,1,0,0,0.0,0,0.0,0.0
+blue_sky,1,8760,waste_heat_to_electricity-inflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
+blue_sky,1,8760,waste_heat_to_electricity-lossflow,converter,waste_heat,0,8760,3.1536e+12,0.0,0.0,0.0,0
+blue_sky,1,8760,waste_heat_to_electricity-outflow,converter,electricity,1,0,0,0.0,0,0.0,0.0
 blue_sky,1,8760,waste_sink_1,load,waste_heat,0,8760,2.91708e+12,0.0,0.0,0.0,2.3652e+11
 blue_sky,1,8760,waste_sink_2,load,waste_heat,0,8760,3.1536e+12,0.0,0.0,0.0,0
 blue_sky,1,8760,TOTAL (source),,,,,,1.1826e+12,1.89216e+11,0.0,0.0
@@ -56,9 +56,9 @@ ice_jam_flood,10,3360,cluster_1_thermal,load,steam,1,0,0,0.0,0.0,1.2096e+11,0.0
 ice_jam_flood,10,3360,cluster_2_electric,load,electricity,1,0,0,0.0,2.4192e+10,0.0,0.0
 ice_jam_flood,10,3360,cluster_2_thermal,load,steam,1,0,0,0.0,0.0,2.4192e+11,0.0
 ice_jam_flood,10,3360,coal_pile,source,coal,1,0,0,4.536e+11,0.0,0.0,0.0
-ice_jam_flood,10,3360,coal_to_steam:inflow,converter,coal,1,0,0,4.536e+11,0.0,0.0,0.0
-ice_jam_flood,10,3360,coal_to_steam:lossflow,converter,waste_heat,0,336,1.11888e+12,0.0,0.0,0.0,9.072e+10
-ice_jam_flood,10,3360,coal_to_steam:outflow,converter,steam,1,0,0,0.0,0.0,3.6288e+11,0.0
+ice_jam_flood,10,3360,coal_to_steam-inflow,converter,coal,1,0,0,4.536e+11,0.0,0.0,0.0
+ice_jam_flood,10,3360,coal_to_steam-lossflow,converter,waste_heat,0,336,1.11888e+12,0.0,0.0,0.0,9.072e+10
+ice_jam_flood,10,3360,coal_to_steam-outflow,converter,steam,1,0,0,0.0,0.0,3.6288e+11,0.0
 ice_jam_flood,10,3360,elec_line_from_utility,pass_through,electricity,1,0,0,0.0,3.6288e+10,0.0,0.0
 ice_jam_flood,10,3360,elec_line_to_c1,pass_through,electricity,1,0,0,0.0,1.2096e+10,0.0,0.0
 ice_jam_flood,10,3360,elec_line_to_c2,pass_through,electricity,1,0,0,0.0,2.4192e+10,0.0,0.0
@@ -74,9 +74,9 @@ ice_jam_flood,10,3360,steam_line_to_c2,pass_through,steam,1,0,0,0.0,0.0,2.4192e+
 ice_jam_flood,10,3360,steam_loop-inflow(0),muxer,steam,1,0,0,0.0,0.0,3.6288e+11,0.0
 ice_jam_flood,10,3360,steam_loop-outflow(0),muxer,steam,1,0,0,0.0,0.0,1.2096e+11,0.0
 ice_jam_flood,10,3360,steam_loop-outflow(1),muxer,steam,1,0,0,0.0,0.0,2.4192e+11,0.0
-ice_jam_flood,10,3360,waste_heat_to_electricity:inflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
-ice_jam_flood,10,3360,waste_heat_to_electricity:lossflow,converter,waste_heat,0,336,1.2096e+12,0.0,0.0,0.0,0
-ice_jam_flood,10,3360,waste_heat_to_electricity:outflow,converter,electricity,1,0,0,0.0,0,0.0,0.0
+ice_jam_flood,10,3360,waste_heat_to_electricity-inflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
+ice_jam_flood,10,3360,waste_heat_to_electricity-lossflow,converter,waste_heat,0,336,1.2096e+12,0.0,0.0,0.0,0
+ice_jam_flood,10,3360,waste_heat_to_electricity-outflow,converter,electricity,1,0,0,0.0,0,0.0,0.0
 ice_jam_flood,10,3360,waste_sink_1,load,waste_heat,0,336,1.11888e+12,0.0,0.0,0.0,9.072e+10
 ice_jam_flood,10,3360,waste_sink_2,load,waste_heat,0,336,1.2096e+12,0.0,0.0,0.0,0
 ice_jam_flood,10,3360,TOTAL (source),,,,,,4.536e+11,3.6288e+10,0.0,0.0

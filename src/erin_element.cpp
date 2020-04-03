@@ -69,6 +69,7 @@ namespace ERIN
     element_tag_to_id{},
     element_id_to_tag{},
     element_id_to_stream_tag{},
+    element_id_to_comp_type{},
     recording_flags{},
     history{}
   {
@@ -82,6 +83,7 @@ namespace ERIN
       const std::unordered_map<std::string, int>& element_tag_to_id_,
       const std::unordered_map<int, std::string>& element_id_to_tag_,
       const std::unordered_map<int, std::string>& element_id_to_stream_tag_,
+      const std::unordered_map<int, ComponentType>& element_id_to_comp_type_,
       const std::vector<bool>& recording_flags_,
       std::vector<std::vector<Datum>>&& history_):
     FlowWriter(),
@@ -92,6 +94,7 @@ namespace ERIN
     element_tag_to_id{element_tag_to_id_},
     element_id_to_tag{element_id_to_tag_},
     element_id_to_stream_tag{element_id_to_stream_tag_},
+    element_id_to_comp_type{element_id_to_comp_type_},
     recording_flags{recording_flags_},
     history{std::move(history_)}
   {
@@ -113,6 +116,7 @@ namespace ERIN
         element_tag_to_id,
         element_id_to_tag,
         element_id_to_stream_tag,
+        element_id_to_comp_type,
         recording_flags,
         std::move(new_history));
     return p;
@@ -122,6 +126,7 @@ namespace ERIN
   DefaultFlowWriter::register_id(
       const std::string& element_tag,
       const std::string& stream_tag,
+      ComponentType comp_type,
       bool record_history)
   {
     ensure_not_final();
@@ -131,6 +136,7 @@ namespace ERIN
     element_tag_to_id.emplace(std::make_pair(element_tag, element_id));
     element_id_to_tag.emplace(std::make_pair(element_id, element_tag));
     element_id_to_stream_tag.emplace(std::make_pair(element_id, stream_tag));
+    element_id_to_comp_type.emplace(std::make_pair(element_id, comp_type));
     recording_flags.emplace_back(record_history);
     history.emplace_back(std::vector<Datum>{});
     return element_id;
@@ -241,9 +247,48 @@ namespace ERIN
     for (const auto& tag_id: element_tag_to_id) {
       auto element_tag = tag_id.first;
       auto element_id = tag_id.second;
-      if (recording_flags[element_id]) {
+      if (recording_flags[element_id])
         out[element_tag] = history[element_id];
-      }
+    }
+    return out;
+  }
+
+  std::unordered_map<std::string,std::string>
+  DefaultFlowWriter::get_stream_ids() const
+  {
+    std::unordered_map<std::string, std::string> out{};
+    for (const auto& pair : element_id_to_tag) {
+      const auto& id = pair.first;
+      const auto& tag = pair.second;
+      auto it = element_id_to_stream_tag.find(id);
+      std::string stream{};
+      if (it != element_id_to_stream_tag.end())
+        stream = it->second;
+      else
+        throw std::runtime_error(
+            "id '" + std::to_string(id) +
+            "' not found in element_id_to_stream_tag");
+      out.emplace(std::make_pair(tag, stream));
+    }
+    return out;
+  }
+
+  std::unordered_map<std::string,ComponentType>
+  DefaultFlowWriter::get_component_types() const
+  {
+    std::unordered_map<std::string, ComponentType> out{};
+    for (const auto& pair : element_id_to_tag) {
+      const auto& id = pair.first;
+      const auto& tag = pair.second;
+      auto it = element_id_to_comp_type.find(id);
+      ComponentType type{ComponentType::Informational};
+      if (it != element_id_to_comp_type.end())
+        type = it->second;
+      else
+        throw std::runtime_error(
+            "element id '" + std::to_string(id) +
+            "' not found in element_id_to_comp_type for tag '" + tag + "'");
+      out.emplace(std::make_pair(tag, type));
     }
     return out;
   }
@@ -764,6 +809,7 @@ namespace ERIN
       element_id = flow_writer->register_id(
           get_id(),
           get_outflow_type().get_type(),
+          get_component_type(),
           record_history);
       flow_writer->write_data(
           element_id,
@@ -792,7 +838,8 @@ namespace ERIN
         ElementType::FlowMeter,
         stream_type),
     flow_writer{nullptr},
-    element_id{-1}
+    element_id{-1},
+    record_history{true}
   {
   }
 
@@ -800,34 +847,31 @@ namespace ERIN
   FlowMeter::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
   {
     flow_writer = writer;
-    bool record_history{true};
-    element_id = flow_writer->register_id(
-        get_id(),
-        get_outflow_type().get_type(),
-        record_history);
-    flow_writer->write_data(
-        element_id,
-        get_real_time(),
-        get_outflow_request(),
-        get_outflow());
+    update_on_external_transition();
+  }
+
+  void
+  FlowMeter::set_recording_on()
+  {
+    record_history = true;
+    update_on_external_transition();
   }
 
   void
   FlowMeter::update_on_external_transition()
   {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "FlowMeter::update_on_external_transition()\n";
-      print_state("... ");
-      std::cout << "... element_id = " << element_id << "\n";
-    }
-    auto real_time{get_real_time()};
-    if (element_id >= 0) {
+    if ((element_id == -1) && flow_writer && record_history)
+      element_id = flow_writer->register_id(
+          get_id(),
+          get_outflow_type().get_type(),
+          get_component_type(),
+          record_history);
+    if ((element_id != -1) && flow_writer)
       flow_writer->write_data(
           element_id,
-          real_time,
+          get_real_time(),
           get_outflow_request(),
           get_outflow());
-    }
   }
 
   ////////////////////////////////////////////////////////////
@@ -923,21 +967,25 @@ namespace ERIN
         inflow_element_id = flow_writer->register_id(
             get_id() + "-inflow",
             get_inflow_type().get_type(),
+            get_component_type(),
             record_history);
       if (outflow_element_id == -1)
         outflow_element_id = flow_writer->register_id(
             get_id(),
             get_outflow_type().get_type(),
+            get_component_type(),
             record_history);
       if (lossflow_element_id == -1)
         lossflow_element_id = flow_writer->register_id(
             get_id() + "-lossflow",
             get_outflow_type().get_type(),
+            get_component_type(),
             record_history);
       if (wasteflow_element_id == -1)
         wasteflow_element_id = flow_writer->register_id(
             get_id() + "-wasteflow",
             get_outflow_type().get_type(),
+            get_component_type(),
             record_history);
       flow_writer->write_data(
           inflow_element_id,
@@ -1040,6 +1088,7 @@ namespace ERIN
       element_id = flow_writer->register_id(
           get_id(),
           get_outflow_type().get_type(),
+          get_component_type(),
           record_history);
       flow_writer->write_data(
           element_id,
@@ -1145,6 +1194,7 @@ namespace ERIN
               flow_writer->register_id(
                 the_id + "-inflow(" + std::to_string(i) + ")",
                 get_inflow_type().get_type(),
+                get_component_type(),
                 record_history));
         }
       }
@@ -1155,6 +1205,7 @@ namespace ERIN
               flow_writer->register_id(
                 the_id + "-outflow(" + std::to_string(i) + ")",
                 get_outflow_type().get_type(),
+                get_component_type(),
                 record_history));
         }
       }

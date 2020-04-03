@@ -51,6 +51,24 @@ namespace erin::devs
     }
   }
 
+  LoadData
+  make_load_data(const std::vector<LoadItem>& loads)
+  {
+    check_loads(loads);
+    auto num_loads = loads.size();
+    std::vector<RealTimeType> times(num_loads, 0);
+    std::vector<FlowValueType> load_values(num_loads, 0.0);
+    for (decltype(num_loads) i{0}; i < num_loads; ++i) {
+      times[i] = loads[i].get_time();
+      if (!loads[i].get_is_end())
+        load_values[i] = loads[i].get_value();
+    }
+    return LoadData{
+      static_cast<int>(num_loads),
+      std::move(times),
+      std::move(load_values)};
+  }
+
   LoadState
   make_load_state(const std::vector<LoadItem>& loads)
   {

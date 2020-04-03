@@ -17,6 +17,13 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // state
+  struct LoadData
+  {
+    int number_of_loads{0};
+    std::vector<RealTimeType> times{};
+    std::vector<FlowValueType> load_values{};
+  };
+
   struct LoadState
   {
     RealTimeType time{0};
@@ -25,6 +32,8 @@ namespace erin::devs
     int current_index{0};
     Port inflow_port{};
   };
+
+  LoadData make_load_data(const std::vector<LoadItem>& loads);
 
   LoadState make_load_state(const std::vector<LoadItem>& loads);
 

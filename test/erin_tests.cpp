@@ -4591,6 +4591,12 @@ TEST(ErinDevs, Test_function_based_load)
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
+  auto d = ED::make_load_data(
+      std::vector<ED::LoadItem>{
+        ED::LoadItem{0, 100.0},
+        ED::LoadItem{10, 10.0},
+        ED::LoadItem{100, 10.0}, // should NOT cause a new event -- same load request.
+        ED::LoadItem{200}});
   auto s0 = ED::make_load_state(
       std::vector<ED::LoadItem>{
         ED::LoadItem{0, 100.0},

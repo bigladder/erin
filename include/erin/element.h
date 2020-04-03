@@ -373,6 +373,7 @@ namespace ERIN
       void set_recording_on() override;
 
     private:
+      erin::devs::LoadData data;
       erin::devs::LoadState state;
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;

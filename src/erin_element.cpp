@@ -1022,7 +1022,8 @@ namespace ERIN
         component_type,
         ElementType::Sink,
         st),
-    state{erin::devs::make_load_state(loads_)},
+    data{erin::devs::make_load_data(loads_)},
+    state{erin::devs::make_load_state()},
     flow_writer{nullptr},
     element_id{-1},
     record_history{false}
@@ -1032,7 +1033,7 @@ namespace ERIN
   void
   Sink::delta_int()
   {
-    state = erin::devs::load_internal_transition(state);
+    state = erin::devs::load_internal_transition(data, state);
     if (flow_writer && record_history && (element_id != -1))
       flow_writer->write_data(
           element_id,
@@ -1056,7 +1057,7 @@ namespace ERIN
   void
   Sink::delta_conf(std::vector<PortValue>& xs)
   {
-    state = erin::devs::load_confluent_transition(state, xs);
+    state = erin::devs::load_confluent_transition(data, state, xs);
     if (flow_writer && record_history && (element_id != -1))
       flow_writer->write_data(
           element_id,
@@ -1068,7 +1069,7 @@ namespace ERIN
   Time
   Sink::ta()
   {
-    auto dt = erin::devs::load_time_advance(state);
+    auto dt = erin::devs::load_time_advance(data, state);
     if (dt == erin::devs::infinity)
       return inf;
     return Time{dt, 1};
@@ -1077,7 +1078,7 @@ namespace ERIN
   void
   Sink::output_func(std::vector<PortValue>& ys)
   {
-    erin::devs::load_output_function_mutable(state, ys);
+    erin::devs::load_output_function_mutable(data, state, ys);
   }
 
   void

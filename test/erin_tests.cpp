@@ -4597,108 +4597,103 @@ TEST(ErinDevs, Test_function_based_load)
         ED::LoadItem{10, 10.0},
         ED::LoadItem{100, 10.0}, // should NOT cause a new event -- same load request.
         ED::LoadItem{200}});
-  auto s0 = ED::make_load_state(
-      std::vector<ED::LoadItem>{
-        ED::LoadItem{0, 100.0},
-        ED::LoadItem{10, 10.0},
-        ED::LoadItem{100, 10.0}, // should NOT cause a new event -- same load request.
-        ED::LoadItem{200}});
+  auto s0 = ED::make_load_state();
   EXPECT_FALSE(s0.inflow_port.should_propagate_request_at(0));
   EXPECT_EQ(s0.current_index, -1);
   EXPECT_EQ(ED::load_current_time(s0), 0);
-  EXPECT_EQ(ED::load_next_time(s0), 0);
+  EXPECT_EQ(ED::load_next_time(d, s0), 0);
   EXPECT_EQ(ED::load_current_request(s0), 0.0);
   EXPECT_EQ(ED::load_current_achieved(s0), 0.0);
-  auto dt0 = ED::load_time_advance(s0);
+  auto dt0 = ED::load_time_advance(d, s0);
   EXPECT_EQ(dt0, 0);
-  auto ys0 = ED::load_output_function(s0);
+  auto ys0 = ED::load_output_function(d, s0);
   std::vector<ED::PortValue> expected_ys0{
     ED::PortValue{ED::outport_inflow_request, 100.0}};
   EXPECT_EQ(ys0.size(), expected_ys0.size());
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys0, expected_ys0, compare_ports));
-  auto s1 = ED::load_internal_transition(s0);
+  auto s1 = ED::load_internal_transition(d, s0);
   EXPECT_EQ(s1.current_index, 0);
   EXPECT_EQ(ED::load_current_time(s1), 0);
-  EXPECT_EQ(ED::load_next_time(s1), 10);
+  EXPECT_EQ(ED::load_next_time(d, s1), 10);
   EXPECT_EQ(ED::load_current_request(s1), 100.0);
   EXPECT_EQ(ED::load_current_achieved(s1), 100.0);
-  auto dt1 = ED::load_time_advance(s1);
+  auto dt1 = ED::load_time_advance(d, s1);
   EXPECT_EQ(dt1, 10);
-  auto ys1 = ED::load_output_function(s1);
+  auto ys1 = ED::load_output_function(d, s1);
   std::vector<ED::PortValue> expected_ys1{
     ED::PortValue{ED::outport_inflow_request, 10.0}};
   EXPECT_EQ(ys1.size(), expected_ys1.size());
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys1, expected_ys1, compare_ports));
-  auto s2 = ED::load_internal_transition(s1);
+  auto s2 = ED::load_internal_transition(d, s1);
   EXPECT_EQ(s2.current_index, 1);
   EXPECT_EQ(ED::load_current_time(s2), 10);
-  EXPECT_EQ(ED::load_next_time(s2), 100);
+  EXPECT_EQ(ED::load_next_time(d, s2), 100);
   EXPECT_EQ(ED::load_current_request(s2), 10.0);
   EXPECT_EQ(ED::load_current_achieved(s2), 10.0);
-  auto dt2 = ED::load_time_advance(s2);
+  auto dt2 = ED::load_time_advance(d, s2);
   EXPECT_EQ(dt2, 90);
   std::vector<ED::PortValue> xs2{
     ED::PortValue{ED::inport_inflow_achieved, 5.0}};
   auto s3 = ED::load_external_transition(s2, 50, xs2);
   EXPECT_EQ(s3.current_index, 1);
   EXPECT_EQ(ED::load_current_time(s3), 60);
-  EXPECT_EQ(ED::load_next_time(s3), 100);
+  EXPECT_EQ(ED::load_next_time(d, s3), 100);
   EXPECT_EQ(ED::load_current_request(s3), 10.0);
   EXPECT_EQ(ED::load_current_achieved(s3), 5.0);
-  auto dt3 = ED::load_time_advance(s3);
+  auto dt3 = ED::load_time_advance(d, s3);
   EXPECT_EQ(dt3, 40);
   std::vector<ED::PortValue> xs3{
     ED::PortValue{ED::inport_inflow_achieved, 10.0}};
   auto s4 = ED::load_external_transition(s3, 10, xs3);
   EXPECT_EQ(s4.current_index, 1);
   EXPECT_EQ(ED::load_current_time(s4), 70);
-  EXPECT_EQ(ED::load_next_time(s4), 100);
+  EXPECT_EQ(ED::load_next_time(d, s4), 100);
   EXPECT_EQ(ED::load_current_request(s4), 10.0);
   EXPECT_EQ(ED::load_current_achieved(s4), 10.0);
-  auto dt4 = ED::load_time_advance(s4);
+  auto dt4 = ED::load_time_advance(d, s4);
   EXPECT_EQ(dt4, 30);
-  auto ys4 = ED::load_output_function(s4);
+  auto ys4 = ED::load_output_function(d, s4);
   // we get no output because the requested load is the same as current -- no
   // change to propagate!
   std::vector<ED::PortValue> expected_ys4{};
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys4, expected_ys4, compare_ports));
-  auto s5 = ED::load_internal_transition(s4);
+  auto s5 = ED::load_internal_transition(d, s4);
   EXPECT_EQ(s5.current_index, 2);
   EXPECT_EQ(ED::load_current_time(s5), 100);
-  EXPECT_EQ(ED::load_next_time(s5), 200);
+  EXPECT_EQ(ED::load_next_time(d, s5), 200);
   EXPECT_EQ(ED::load_current_request(s5), 10.0);
   EXPECT_EQ(ED::load_current_achieved(s5), 10.0);
-  auto dt5 = ED::load_time_advance(s5);
+  auto dt5 = ED::load_time_advance(d, s5);
   EXPECT_EQ(dt5, 100);
-  auto ys5 = ED::load_output_function(s5);
+  auto ys5 = ED::load_output_function(d, s5);
   std::vector<ED::PortValue> expected_ys5{
     ED::PortValue{ED::outport_inflow_request, 0.0}};
   EXPECT_EQ(ys5.size(), expected_ys5.size());
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys5, expected_ys5, compare_ports));
-  auto s6 = ED::load_internal_transition(s5);
+  auto s6 = ED::load_internal_transition(d, s5);
   EXPECT_EQ(s6.current_index, 3);
   EXPECT_EQ(ED::load_current_time(s6), 200);
-  EXPECT_EQ(ED::load_next_time(s6), ED::infinity);
+  EXPECT_EQ(ED::load_next_time(d, s6), ED::infinity);
   EXPECT_EQ(ED::load_current_request(s6), 0.0);
   EXPECT_EQ(ED::load_current_achieved(s6), 0.0);
-  auto dt6 = ED::load_time_advance(s6);
+  auto dt6 = ED::load_time_advance(d, s6);
   EXPECT_EQ(dt6, ED::infinity);
 
   // test confluent update from state 
   std::vector<ED::PortValue> xs5{
     ED::PortValue{ED::inport_inflow_achieved, 8.0}};
-  auto s6a = ED::load_confluent_transition(s5, xs5);
+  auto s6a = ED::load_confluent_transition(d, s5, xs5);
   EXPECT_EQ(s6a.current_index, 3);
   EXPECT_EQ(ED::load_current_time(s6a), 200);
-  EXPECT_EQ(ED::load_next_time(s6a), ED::infinity);
+  EXPECT_EQ(ED::load_next_time(d, s6a), ED::infinity);
   EXPECT_EQ(ED::load_current_request(s6a), 0.0);
   EXPECT_EQ(ED::load_current_achieved(s6a), 0.0);
 

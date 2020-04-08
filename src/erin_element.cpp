@@ -145,9 +145,8 @@ namespace ERIN
   void
   DefaultFlowWriter::ensure_not_final() const
   {
-    if (is_final) {
+    if (is_final)
       throw std::runtime_error("invalid operation on a finalized FlowWriter");
-    }
   }
 
   void
@@ -167,7 +166,7 @@ namespace ERIN
   {
     auto num = num_elements();
     if ((element_id >= num) || (element_id < 0)) {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "element_id is invalid. "
           << "element_id must be >= 0 and < " << num_elements() << "\n"
           << "and element_id cannot be larger than the number of elements - 1\n"
@@ -180,7 +179,7 @@ namespace ERIN
   DefaultFlowWriter::ensure_time_is_valid(RealTimeType time) const
   {
     if (time < current_time) {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "time is invalid. "
           << "This value indicates time is flowing backward!\n"
           << "time: " << time << "\n"
@@ -215,9 +214,8 @@ namespace ERIN
     ensure_not_final();
     ensure_element_id_is_valid(element_id);
     ensure_time_is_valid(time);
-    if (time > current_time) {
+    if (time > current_time)
       record_history_and_update_current_time(time);
-    }
     current_status[element_id] = Datum{time,requested_flow,achieved_flow};
   }
 

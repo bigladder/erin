@@ -5322,7 +5322,6 @@ TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
         results, expected_times, expected_inflows1, limit1_id));
 }
 
-
 int
 main(int argc, char **argv)
 {

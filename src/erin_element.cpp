@@ -62,16 +62,20 @@ namespace ERIN
   // DefaultFlowWriter
   DefaultFlowWriter::DefaultFlowWriter():
     FlowWriter(),
+    recording_started{false},
     is_final{false},
     current_time{0},
     next_id{0},
-    current_status{},
+    current_requests{},
+    current_achieved{},
     element_tag_to_id{},
     element_id_to_tag{},
     element_id_to_stream_tag{},
     element_id_to_comp_type{},
     recording_flags{},
-    history{}
+    time_history{},
+    request_history{},
+    achieved_history{}
   {
   }
 
@@ -83,15 +87,16 @@ namespace ERIN
       bool record_history)
   {
     ensure_not_final();
+    ensure_not_recording();
     auto element_id = get_next_id();
     ensure_element_tag_is_unique(element_tag);
-    current_status.emplace_back(Datum{current_time,0.0,0.0});
+    current_requests.emplace_back(0.0);
+    current_achieved.emplace_back(0.0);
     element_tag_to_id.emplace(std::make_pair(element_tag, element_id));
     element_id_to_tag.emplace(std::make_pair(element_id, element_tag));
     element_id_to_stream_tag.emplace(std::make_pair(element_id, stream_tag));
     element_id_to_comp_type.emplace(std::make_pair(element_id, comp_type));
     recording_flags.emplace_back(record_history);
-    history.emplace_back(std::vector<Datum>{});
     return element_id;
   }
 
@@ -100,6 +105,13 @@ namespace ERIN
   {
     if (is_final)
       throw std::runtime_error("invalid operation on a finalized FlowWriter");
+  }
+
+  void
+  DefaultFlowWriter::ensure_not_recording() const
+  {
+    if (recording_started)
+      throw std::runtime_error("invalid operation on a recording FlowWriter");
   }
 
   void
@@ -144,15 +156,13 @@ namespace ERIN
   void
   DefaultFlowWriter::record_history_and_update_current_time(RealTimeType time)
   {
-    auto num = num_elements();
-    auto num_st = static_cast<size_type_D>(num);
-    for (size_type_D i{0}; i < num_st; ++i) {
-      auto& d = current_status[i];
+    recording_started = true;
+    time_history.emplace_back(current_time);
+    for (size_type_D i{0}; i < static_cast<size_type_D>(num_elements()); ++i) {
       if (recording_flags[i]) {
-        d.time = current_time;
-        history[i].emplace_back(d);
+        request_history.emplace_back(current_requests[i]);
+        achieved_history.emplace_back(current_achieved[i]);
       }
-      d.time = time;
     }
     current_time = time;
   }
@@ -169,7 +179,8 @@ namespace ERIN
     ensure_time_is_valid(time);
     if (time > current_time)
       record_history_and_update_current_time(time);
-    current_status[element_id] = Datum{time,requested_flow,achieved_flow};
+    current_requests[element_id] = requested_flow;
+    current_achieved[element_id] = achieved_flow;
   }
 
   void
@@ -178,28 +189,35 @@ namespace ERIN
     is_final = true;
     auto num = num_elements();
     auto num_st = static_cast<size_type_D>(num);
-    auto d_final = Datum{time,0.0,0.0};
+    if (time > current_time)
+      record_history_and_update_current_time(time);
+    time_history.emplace_back(time);
     for (size_type_D i{0}; i < num_st; ++i) {
       if (recording_flags[i]) {
-        if (current_time < time) {
-          history[i].emplace_back(current_status[i]);
-        }
-        history[i].emplace_back(d_final);
+        request_history.emplace_back(0.0);
+        achieved_history.emplace_back(0.0);
       }
     }
-    current_time = time;
-    current_status.clear();
+    current_requests.clear();
+    current_achieved.clear();
   }
 
   std::unordered_map<std::string, std::vector<Datum>>
   DefaultFlowWriter::get_results() const
   {
+    auto num_elem = num_elements();
+    auto num_events = time_history.size();
     std::unordered_map<std::string, std::vector<Datum>> out{};
     for (const auto& tag_id: element_tag_to_id) {
       auto element_tag = tag_id.first;
       auto element_id = tag_id.second;
-      if (recording_flags[element_id])
-        out[element_tag] = history[element_id];
+      std::vector<Datum> data(num_events);
+      for (decltype(num_events) i{0}; i < num_events; ++i)
+        data[i] = Datum{
+          time_history[i],
+          request_history[i*num_elem + element_id],
+          achieved_history[i*num_elem + element_id]};
+      out[element_tag] = std::move(data);
     }
     return out;
   }
@@ -247,15 +265,20 @@ namespace ERIN
   void
   DefaultFlowWriter::clear()
   {
+    recording_started = false;
+    is_final = false;
     current_time = 0;
     next_id = 0;
-    current_status.clear();
+    current_requests.clear();
+    current_achieved.clear();
     element_tag_to_id.clear();
     element_id_to_tag.clear();
     element_id_to_stream_tag.clear();
+    element_id_to_comp_type.clear();
     recording_flags.clear();
-    history.clear();
-    is_final = false;
+    time_history.clear();
+    request_history.clear();
+    achieved_history.clear();
   }
 
   ////////////////////////////////////////////////////////////

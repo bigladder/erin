@@ -93,9 +93,9 @@ namespace ERIN
   // Datum
   struct Datum
   {
-    RealTimeType time;
-    FlowValueType requested_value;
-    FlowValueType achieved_value;
+    RealTimeType time{0};
+    FlowValueType requested_value{0.0};
+    FlowValueType achieved_value{0.0};
   };
 
   std::ostream& operator<<(std::ostream& os, const Datum& d);

@@ -81,16 +81,20 @@ namespace ERIN
       void clear() override;
 
     private:
+      bool recording_started;
       bool is_final;
       RealTimeType current_time;
       int next_id;
-      std::vector<Datum> current_status;
+      std::vector<FlowValueType> current_requests;
+      std::vector<FlowValueType> current_achieved;
       std::unordered_map<std::string, int> element_tag_to_id;
       std::unordered_map<int, std::string> element_id_to_tag;
       std::unordered_map<int, std::string> element_id_to_stream_tag;
       std::unordered_map<int, ComponentType> element_id_to_comp_type;
       std::vector<bool> recording_flags;
-      std::vector<std::vector<Datum>> history;
+      std::vector<RealTimeType> time_history;
+      std::vector<FlowValueType> request_history;
+      std::vector<FlowValueType> achieved_history;
 
       int num_elements() const { return next_id; }
       int get_next_id() {
@@ -103,6 +107,7 @@ namespace ERIN
       void ensure_time_is_valid(RealTimeType time) const;
       void record_history_and_update_current_time(RealTimeType time);
       void ensure_not_final() const;
+      void ensure_not_recording() const;
   };
 
   /**

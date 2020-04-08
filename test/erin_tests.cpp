@@ -4201,22 +4201,16 @@ TEST(ErinElements, Test_flow_writer_implementation)
   }
 }
 
-TEST(ErinElements, Test_flow_writer_clone)
+TEST(ErinElements, Test_flow_writer)
 {
   std::unique_ptr<ERIN::FlowWriter> fw1 = std::make_unique<ERIN::DefaultFlowWriter>();
   auto id = fw1->register_id(
       "element", "stream", ERIN::ComponentType::Load, true);
   fw1->write_data(id, 0, 10.0, 10.0);
-  auto fw2 = fw1->clone();
   fw1->write_data(id, 4, 20.0, 10.0);
   fw1->finalize_at_time(10);
   auto results1 = fw1->get_results();
   fw1->clear();
-  fw2->write_data(id, 5, 20.0, 10.0);
-  fw2->finalize_at_time(12);
-  auto results2 = fw2->get_results();
-  fw2->clear();
-  // fw1
   std::vector<ERIN::RealTimeType> expected_times1 = {0,4,10};
   auto actual_times1 = ERIN::get_times_from_results_for_component(results1, "element");
   EXPECT_EQ(expected_times1, actual_times1);
@@ -4226,16 +4220,6 @@ TEST(ErinElements, Test_flow_writer_clone)
   std::vector<ERIN::FlowValueType> expected_requested_flows1 = {10.0,20.0,0.0};
   auto actual_requested_flows1 = ERIN::get_requested_flows_from_results_for_component(results1, "element");
   EXPECT_EQ(expected_requested_flows1, actual_requested_flows1);
-  // fw2
-  std::vector<ERIN::RealTimeType> expected_times2 = {0,5,12};
-  auto actual_times2 = ERIN::get_times_from_results_for_component(results2, "element");
-  EXPECT_EQ(expected_times2, actual_times2);
-  std::vector<ERIN::FlowValueType> expected_achieved_flows2 = {10.0,10.0,0.0};
-  auto actual_achieved_flows2 = ERIN::get_actual_flows_from_results_for_component(results2, "element");
-  EXPECT_EQ(expected_achieved_flows2, actual_achieved_flows2);
-  std::vector<ERIN::FlowValueType> expected_requested_flows2 = {10.0,20.0,0.0};
-  auto actual_requested_flows2 = ERIN::get_requested_flows_from_results_for_component(results2, "element");
-  EXPECT_EQ(expected_requested_flows2, actual_requested_flows2);
 }
 
 bool compare_ports(const erin::devs::PortValue& a, const erin::devs::PortValue& b)

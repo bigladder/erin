@@ -30,7 +30,6 @@ namespace ERIN
       FlowWriter& operator=(FlowWriter&&) = delete;
       virtual ~FlowWriter() = default;
 
-      [[nodiscard]] virtual std::unique_ptr<FlowWriter> clone() const = 0;
       [[nodiscard]] virtual int register_id(
           const std::string& element_tag,
           const std::string& stream_tag,
@@ -61,19 +60,7 @@ namespace ERIN
       using size_type_B = std::vector<bool>::size_type;
 
       DefaultFlowWriter();
-      DefaultFlowWriter(
-          bool is_final,
-          RealTimeType current_time,
-          int next_id,
-          const std::vector<Datum>& current_status,
-          const std::unordered_map<std::string, int>& element_tag_to_id,
-          const std::unordered_map<int, std::string>& element_id_to_tag,
-          const std::unordered_map<int, std::string>& element_id_to_stream_tag,
-          const std::unordered_map<int, ComponentType>& element_id_to_comp_type,
-          const std::vector<bool>& recording_flags,
-          std::vector<std::vector<Datum>>&& history);
 
-      [[nodiscard]] std::unique_ptr<FlowWriter> clone() const override;
       [[nodiscard]] int register_id(
           const std::string& element_tag,
           const std::string& stream_tag,

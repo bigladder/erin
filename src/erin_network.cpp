@@ -164,17 +164,13 @@ namespace erin::network
   }
 
   ERIN::ElementPort
-  // ERIN::FlowElement*
   get_from_map(
       const std::unordered_map<
         erin::port::Type, std::vector<ERIN::ElementPort>>& map,
-      //const std::unordered_map<
-      //  erin::port::Type, std::vector<ERIN::FlowElement*>>& map,
       const erin::port::Type& id,
       const std::string& map_name,
       const std::string& id_name,
       std::vector<ERIN::ElementPort>::size_type idx)
-      //std::vector<ERIN::FlowElement*>::size_type idx)
   {
     if (idx < 0)
       throw std::invalid_argument("index must be >= 0");
@@ -232,14 +228,10 @@ namespace erin::network
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       const std::unordered_map<
         erin::port::Type, std::vector<ERIN::ElementPort>>& port_map1,
-      //const std::unordered_map<
-      //  erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map1,
       const erin::port::Type& port1,
       const int& port1_num,
       const std::unordered_map<
         erin::port::Type, std::vector<ERIN::ElementPort>>& port_map2,
-      // const std::unordered_map<
-      //  erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map2,
       const erin::port::Type& port2,
       const int& port2_num,
       bool two_way)
@@ -251,7 +243,6 @@ namespace erin::network
       connect_source_to_sink_with_ports(
           network, source.element, source.port,
           sink.element, sink.port, two_way);
-      // couple_source_to_sink(network, source, sink, two_way);
     }
     else if ((port1 == ep::Type::Inflow) && (port2 == ep::Type::Outflow)) {
       auto source = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
@@ -259,7 +250,6 @@ namespace erin::network
       connect_source_to_sink_with_ports(
           network, source.element, source.port,
           sink.element, sink.port, two_way);
-      // couple_source_to_sink(network, source, sink, two_way);
     }
     else if ((port1 == ep::Type::Lossflow) && (port2 == ep::Type::Inflow)) {
       auto source = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
@@ -267,7 +257,6 @@ namespace erin::network
       couple_source_loss_to_sink_with_ports(
           network, source.element, source.port,
           sink.element, sink.port, two_way);
-      // couple_source_loss_to_sink(network, source, sink, two_way);
     }
     else if ((port1 == ep::Type::Inflow) && (port2 == ep::Type::Lossflow)) {
       auto source = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
@@ -275,7 +264,6 @@ namespace erin::network
       couple_source_loss_to_sink_with_ports(
           network, source.element, source.port,
           sink.element, sink.port, two_way);
-      // couple_source_loss_to_sink(network, source, sink, two_way);
     }
     else {
       std::ostringstream oss{};

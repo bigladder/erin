@@ -38,7 +38,6 @@ namespace ERIN
   struct PortsAndElements
   {
     std::unordered_map<::erin::port::Type, std::vector<ElementPort>> port_map{};
-    // std::unordered_map<::erin::port::Type, std::vector<FlowElement*>> port_map{};
     std::unordered_set<FlowElement*> elements_added{};
   };
 

@@ -24,12 +24,22 @@ namespace ERIN
     std::vector<std::unique_ptr<::erin::fragility::Curve>>>;
 
   /**
+   * Holds a FlowElement and the Port it should be connected on
+   */
+  struct ElementPort
+  {
+    FlowElement* element{nullptr};
+    int port{0};
+  };
+
+  /**
    * Holds Ports and FlowElement pointers from a return of Component.add_to_network(...)
    */
   struct PortsAndElements
   {
-    std::unordered_map<::erin::port::Type, std::vector<FlowElement*>> port_map;
-    std::unordered_set<FlowElement*> elements_added;
+    // REFACT std::unordered_map<::erin::port::Type, std::vector<ElementPort>> port_map{};
+    std::unordered_map<::erin::port::Type, std::vector<FlowElement*>> port_map{};
+    std::unordered_set<FlowElement*> elements_added{};
   };
 
   ////////////////////////////////////////////////////////////

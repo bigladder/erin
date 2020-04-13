@@ -301,8 +301,8 @@ namespace ERIN
   {
     namespace ep = erin::port;
     std::unordered_set<FlowElement*> elements;
-    // REFACT std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
-    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
+    std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
+    // std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
     if constexpr (debug_level >= debug_level_high)
       std::cout << "LoadComponent::add_to_network(...)\n";
     auto the_id = get_id();
@@ -322,12 +322,12 @@ namespace ERIN
           0.0);
       elements.emplace(lim);
       connect_source_to_sink(network, lim, sink, true);
-      // REFACT ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim, 0}};
-      ports[ep::Type::Inflow] = std::vector<FlowElement*>{lim};
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim, 0}};
+      // ports[ep::Type::Inflow] = std::vector<FlowElement*>{lim};
     }
     else {
-      // REFACT ports[ep::Type::Inflow] = std::vector<ElementPort>{{sink, 0}};
-      ports[ep::Type::Inflow] = std::vector<FlowElement*>{sink};
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{sink, 0}};
+      // ports[ep::Type::Inflow] = std::vector<FlowElement*>{sink};
     }
     if constexpr (debug_level >= debug_level_high)
       std::cout << "LoadComponent::add_to_network(...) exit\n";
@@ -571,8 +571,8 @@ namespace ERIN
       bool is_failed) const
   {
     namespace ep = erin::port;
-    //std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
-    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
+    std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
+    // std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
     std::unordered_set<FlowElement*> elements{};
     if constexpr (debug_level >= debug_level_high)
       std::cout << "SourceComponent::add_to_network("
@@ -594,8 +594,8 @@ namespace ERIN
           the_id, ComponentType::Source, stream, min_output, max_output);
       elements.emplace(lim);
       lim->set_recording_on();
-      // REFACT ports[ep::Type::Outflow] = std::vector<ElementPort>{{lim, 0}};
-      ports[ep::Type::Outflow] = std::vector<FlowElement*>{lim};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
+      // ports[ep::Type::Outflow] = std::vector<FlowElement*>{lim};
     }
     else {
       if constexpr (debug_level >= debug_level_high)
@@ -603,8 +603,8 @@ namespace ERIN
       auto meter = new FlowMeter(the_id, ComponentType::Source, stream);
       elements.emplace(meter);
       meter->set_recording_on();
-      // REFACT ports[ep::Type::Outflow] = std::vector<ElementPort>{{meter, 0}};
-      ports[ep::Type::Outflow] = std::vector<FlowElement*>{meter};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};
+      // ports[ep::Type::Outflow] = std::vector<FlowElement*>{meter};
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit\n";
@@ -719,18 +719,18 @@ namespace ERIN
   {
     namespace ep = erin::port;
     std::unordered_set<FlowElement*> elements{};
-    // REFACT std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
-    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
+    std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
+    // std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MuxerComponent::add_to_network(...)\n";
     }
     auto the_id = get_id();
     auto the_stream = get_input_stream();
     auto the_ct = ComponentType::Muxer;
-    // REFACT std::vector<ElementPort> inflow_meters{};
-    // REFACT std::vector<ElementPort> outflow_meters{};
-    std::vector<FlowElement*> inflow_meters{};
-    std::vector<FlowElement*> outflow_meters{};
+    std::vector<ElementPort> inflow_meters{};
+    std::vector<ElementPort> outflow_meters{};
+    // std::vector<FlowElement*> inflow_meters{};
+    // std::vector<FlowElement*> outflow_meters{};
     if (!is_failed) {
       auto mux = new Mux(
           the_id,
@@ -747,8 +747,8 @@ namespace ERIN
             the_stream);
         elements.emplace(meter);
         meter->set_recording_on();
-        // REFACT inflow_meters.emplace_back({meter, 0});
-        inflow_meters.emplace_back(meter);
+        inflow_meters.emplace_back(ElementPort{meter, 0});
+        // inflow_meters.emplace_back(meter);
         connect_source_to_sink_with_ports(
             nw, meter, 0, mux, i, true);
       }
@@ -759,8 +759,8 @@ namespace ERIN
             the_stream);
         elements.emplace(meter);
         meter->set_recording_on();
-        // REFACT outflow_meters.emplace_back({meter, 0});
-        outflow_meters.emplace_back(meter);
+        outflow_meters.emplace_back(ElementPort{meter, 0});
+        // outflow_meters.emplace_back(meter);
         connect_source_to_sink_with_ports(
             nw, mux, i, meter, 0, true);
       }
@@ -775,8 +775,8 @@ namespace ERIN
             0.0);
         elements.emplace(lim);
         lim->set_recording_on();
-        // REFACT inflow_meters.emplace_back({lim, 0});
-        inflow_meters.emplace_back(lim);
+        inflow_meters.emplace_back(ElementPort{lim, 0});
+        // inflow_meters.emplace_back(lim);
       }
       for (int i{0}; i < num_outflows; ++i) {
         auto lim = new FlowLimits(
@@ -787,8 +787,8 @@ namespace ERIN
             0.0);
         elements.emplace(lim);
         lim->set_recording_on();
-        // REFACT outflow_meters.emplace_back({lim, 0});
-        outflow_meters.emplace_back(lim);
+        outflow_meters.emplace_back(ElementPort{lim, 0});
+        // outflow_meters.emplace_back(lim);
       }
     }
     ports[ep::Type::Inflow] = inflow_meters;
@@ -906,8 +906,8 @@ namespace ERIN
       bool is_failed) const
   {
     namespace ep = erin::port;
-    // REFACT std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
-    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
+    std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
+    // std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
     std::unordered_set<FlowElement*> elements{};
     if constexpr (debug_level >= debug_level_high)
       std::cout << "ConverterComponent::add_to_network(...)\n";
@@ -930,10 +930,10 @@ namespace ERIN
       lim_waste->set_recording_on();
       elements.emplace(lim_waste);
       connect_source_to_sink(nw, lim_waste, lim_loss, true);
-      // REFACT ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim_in, 0}};
-      // REFACT ports[ep::Type::Outflow] = std::vector<ElementPort>{{lim_out, 0}, {lim_loss, 0}};
-      ports[ep::Type::Inflow] = std::vector<FlowElement*>{lim_in};
-      ports[ep::Type::Outflow] = std::vector<FlowElement*>{lim_out, lim_loss};
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim_in, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{lim_out, 0}, {lim_loss, 0}};
+      // ports[ep::Type::Inflow] = std::vector<FlowElement*>{lim_in};
+      // ports[ep::Type::Outflow] = std::vector<FlowElement*>{lim_out, lim_loss};
     }
     else {
       auto eff{const_eff};
@@ -959,10 +959,10 @@ namespace ERIN
       connect_source_to_sink(nw, in_meter, conv, true);
       connect_source_to_sink(nw, conv, out_meter, true);
       erin::network::couple_source_loss_to_sink(nw, conv, loss_meter, true);
-      // REFACT ports[ep::Type::Inflow] = std::vector<ElementPort>{{in_meter, 0}};
-      // REFACT ports[ep::Type::Outflow] = std::vector<ElementPort>{{out_meter, 0}, {loss_meter, 0}};
-      ports[ep::Type::Inflow] = std::vector<FlowElement*>{in_meter};
-      ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter, loss_meter};
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{in_meter, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{out_meter, 0}, {loss_meter, 0}};
+      // ports[ep::Type::Inflow] = std::vector<FlowElement*>{in_meter};
+      // ports[ep::Type::Outflow] = std::vector<FlowElement*>{out_meter, loss_meter};
     }
     return PortsAndElements{ports, elements};
   }
@@ -1059,8 +1059,8 @@ namespace ERIN
       bool is_failed) const
   {
     namespace ep = erin::port;
-    // REFACT std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
-    std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
+    std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
+    // std::unordered_map<ep::Type, std::vector<FlowElement*>> ports{};
     std::unordered_set<FlowElement*> elements{};
     auto the_id = get_id();
     if constexpr (debug_level >= debug_level_high) {
@@ -1079,19 +1079,19 @@ namespace ERIN
       auto the_limits = new FlowLimits(the_id, the_type, stream, min_limit, max_limit);
       elements.emplace(the_limits);
       the_limits->set_recording_on();
-      // REFACT ports[ep::Type::Inflow] = std::vector<ElementPort>{{the_limits, 0}};
-      // REFACT ports[ep::Type::Outflow] = std::vector<ElementPort>{{the_limits, 0}};
-      ports[ep::Type::Inflow] = std::vector<FlowElement*>{the_limits};
-      ports[ep::Type::Outflow] = std::vector<FlowElement*>{the_limits};
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{the_limits, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{the_limits, 0}};
+      // ports[ep::Type::Inflow] = std::vector<FlowElement*>{the_limits};
+      // ports[ep::Type::Outflow] = std::vector<FlowElement*>{the_limits};
     }
     else {
       auto meter = new FlowMeter(the_id, the_type, stream);
       elements.emplace(meter);
       meter->set_recording_on();
-      // REFACT ports[ep::Type::Inflow] = std::vector<ElementPort>{{meter, 0}};
-      // REFACT ports[ep::Type::Outflow] = std::vector<ElementPort>{{meter, 0}};
-      ports[ep::Type::Inflow] = std::vector<FlowElement*>{meter};
-      ports[ep::Type::Outflow] = std::vector<FlowElement*>{meter};
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{meter, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{meter, 0}};
+      // ports[ep::Type::Inflow] = std::vector<FlowElement*>{meter};
+      // ports[ep::Type::Outflow] = std::vector<FlowElement*>{meter};
     }
     return PortsAndElements{ports, elements};
   }

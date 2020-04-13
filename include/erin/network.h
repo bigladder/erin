@@ -73,17 +73,17 @@ namespace erin::network
       int sink_port,
       bool two_way = true);
 
-  // REFACT ERIN::ElementPort get_from_map(
-  ERIN::FlowElement* get_from_map(
-      // REFACT const std::unordered_map<
-      //   erin::port::Type, std::vector<ERIN::ElementPort>>& map,
+  ERIN::ElementPort get_from_map(
+  // ERIN::FlowElement* get_from_map(
       const std::unordered_map<
-        erin::port::Type, std::vector<ERIN::FlowElement*>>& map,
+         erin::port::Type, std::vector<ERIN::ElementPort>>& map,
+      //const std::unordered_map<
+      //  erin::port::Type, std::vector<ERIN::FlowElement*>>& map,
       const erin::port::Type& id,
       const std::string& map_name,
       const std::string& id_name,
-      // REFACT std::vector<ERIN::ElementPort>::size_type idx=0);
-      std::vector<ERIN::FlowElement*>::size_type idx=0);
+      std::vector<ERIN::ElementPort>::size_type idx=0);
+      // std::vector<ERIN::FlowElement*>::size_type idx=0);
 
   void connect_source_to_sink_with_ports(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -95,16 +95,16 @@ namespace erin::network
 
   void connect(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
-      // REFACT const std::unordered_map<
-      //   erin::port::Type, std::vector<ERIN::ElementPort>>& port_map1,
       const std::unordered_map<
-        erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map1,
+         erin::port::Type, std::vector<ERIN::ElementPort>>& port_map1,
+      // const std::unordered_map<
+      //   erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map1,
       const ::erin::port::Type& port1,
       const int& port1_num,
-      // REFACT const std::unordered_map<
-      //   erin::port::Type, std::vector<ERIN::ElementPort>>& port_map2,
       const std::unordered_map<
-        erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map2,
+         erin::port::Type, std::vector<ERIN::ElementPort>>& port_map2,
+      // const std::unordered_map<
+      //   erin::port::Type, std::vector<ERIN::FlowElement*>>& port_map2,
       const ::erin::port::Type& port2,
       const int& port2_num,
       bool two_way = false);

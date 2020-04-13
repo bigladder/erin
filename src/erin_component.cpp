@@ -108,24 +108,13 @@ namespace ERIN
       int sink_port,
       bool both_way) const
   {
-    auto src_out = source->get_outflow_type();
-    auto sink_in = sink->get_inflow_type();
-    if (src_out != sink_in) {
-      std::ostringstream oss;
-      oss << "MixedStreamsError:\n";
-      oss << "source output stream != sink input stream for component ";
-      oss << component_type_to_tag(get_component_type()) << "\n";
-      oss << "source output stream: " << src_out.get_type() << "\n";
-      oss << "sink input stream: " << sink_in.get_type() << "\n";
-      throw std::runtime_error(oss.str());
-    }
-    network.couple(
-        sink, FlowMeter::outport_inflow_request + sink_port,
-        source, FlowMeter::inport_outflow_request + source_port);
-    if (both_way)
-      network.couple(
-          source, FlowMeter::outport_outflow_achieved + source_port,
-          sink, FlowMeter::inport_inflow_achieved + sink_port);
+    erin::network::connect_source_to_sink_with_ports(
+        network,
+        source,
+        source_port,
+        sink,
+        sink_port,
+        both_way);
   }
 
   bool

@@ -127,14 +127,7 @@ namespace erin::network
       ERIN::FlowElement* sink,
       bool two_way)
   {
-    network.couple(
-        sink, ERIN::FlowElement::outport_inflow_request,
-        src, ERIN::FlowElement::inport_outflow_request);
-    if (two_way) {
-      network.couple(
-          src, ERIN::FlowElement::outport_outflow_achieved,
-          sink, ERIN::FlowElement::inport_inflow_achieved);
-    }
+    connect_source_to_sink_with_ports(network, src, 0, sink, 0, two_way);
   }
 
   void
@@ -187,6 +180,33 @@ namespace erin::network
     return xs[idx];
   }
 
+  void connect_source_to_sink_with_ports(
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
+      ERIN::FlowElement* source,
+      int source_port,
+      ERIN::FlowElement* sink,
+      int sink_port,
+      bool both_way)
+  {
+    auto src_out = source->get_outflow_type();
+    auto sink_in = sink->get_inflow_type();
+    if (src_out != sink_in) {
+      std::ostringstream oss{};
+      oss << "MixedStreamsError:\n"
+          << "source output stream != sink input stream for component "
+          << "source output stream: " << src_out.get_type() << "\n"
+          << "sink input stream: " << sink_in.get_type() << "\n";
+      throw std::runtime_error(oss.str());
+    }
+    network.couple(
+        sink, ERIN::FlowElement::outport_inflow_request + sink_port,
+        source, ERIN::FlowElement::inport_outflow_request + source_port);
+    if (both_way)
+      network.couple(
+          source, ERIN::FlowElement::outport_outflow_achieved + source_port,
+          sink, ERIN::FlowElement::inport_inflow_achieved + sink_port);
+  }
+
   void
   connect(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -200,7 +220,7 @@ namespace erin::network
       const int& port2_num,
       bool two_way)
   {
-    namespace ep = ::erin::port;
+    namespace ep = erin::port;
     if ((port1 == ep::Type::Outflow) && (port2 == ep::Type::Inflow)) {
       auto source = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
       auto sink = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);

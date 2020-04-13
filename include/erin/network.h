@@ -73,6 +73,14 @@ namespace erin::network
       const std::string& id_name,
       std::vector<::ERIN::FlowElement*>::size_type idx=0);
 
+  void connect_source_to_sink_with_ports(
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
+      ERIN::FlowElement* source,
+      int source_port,
+      ERIN::FlowElement* sink,
+      int sink_port,
+      bool both_way);
+
   void connect(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       const std::unordered_map<

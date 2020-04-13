@@ -1614,7 +1614,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
       two_way);
   std::shared_ptr<E::FlowWriter> fw =
     std::make_shared<E::DefaultFlowWriter>();
-  std::vector<E::FlowElement*>::size_type expected_num_elements{9};
+  std::vector<E::FlowElement*>::size_type expected_num_elements{5};
   EXPECT_EQ(elements.size(), expected_num_elements);
   for (auto e: elements)
     e->set_flow_writer(fw);

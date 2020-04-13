@@ -706,7 +706,7 @@ namespace ERIN
 
   PortsAndElements
   MuxerComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>& nw,
+      adevs::Digraph<FlowValueType, Time>& /* nw */,
       const std::string&, // active_scenario
       bool is_failed) const
   {
@@ -728,29 +728,12 @@ namespace ERIN
           num_inflows,
           num_outflows,
           output_strategy);
+      mux->set_recording_on();
       elements.emplace(mux);
-      for (int i{0}; i < num_inflows; ++i) {
-        auto meter = new FlowMeter(
-            the_id + "-inflow(" + std::to_string(i) + ")",
-            the_ct,
-            the_stream);
-        elements.emplace(meter);
-        meter->set_recording_on();
-        inflow_meters.emplace_back(ElementPort{meter, 0});
-        connect_source_to_sink_with_ports(
-            nw, meter, 0, mux, i, true);
-      }
-      for (int i{0}; i < num_outflows; ++i) {
-        auto meter = new FlowMeter(
-            the_id + "-outflow(" + std::to_string(i) + ")",
-            the_ct,
-            the_stream);
-        elements.emplace(meter);
-        meter->set_recording_on();
-        outflow_meters.emplace_back(ElementPort{meter, 0});
-        connect_source_to_sink_with_ports(
-            nw, mux, i, meter, 0, true);
-      }
+      for (int i{0}; i < num_inflows; ++i)
+        inflow_meters.emplace_back(ElementPort{mux, i});
+      for (int i{0}; i < num_outflows; ++i)
+        outflow_meters.emplace_back(ElementPort{mux, i});
     }
     else {
       for (int i{0}; i < num_inflows; ++i) {

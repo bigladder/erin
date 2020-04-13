@@ -279,9 +279,9 @@ namespace erin::network
                 << E::map_of_vec_to_string<double>(failure_probs_by_comp_id)
                 << "\n";
     }
-    std::unordered_set<E::FlowElement*> elements;
-    std::unordered_set<std::string> comps_added;
-    std::unordered_map<std::string, E::PortsAndElements> pes;
+    std::unordered_set<E::FlowElement*> elements{};
+    std::unordered_set<std::string> comps_added{};
+    std::unordered_map<std::string, E::PortsAndElements> pes{};
     for (const auto& connection: connections) {
       if constexpr (E::debug_level >= E::debug_level_high) {
         std::cout << "... processing connection: " << connection << "\n";

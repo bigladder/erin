@@ -2138,17 +2138,15 @@ namespace ERIN
     adevs::Digraph<FlowValueType, Time> network;
     // 2.2. Interconnect components based on the network definition
     const auto& network_id = the_scenario.get_network_id();
-    if constexpr (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_high)
       std::cout << "... network_id = " << network_id << "\n";
-    }
     const auto& connections = networks[network_id];
     const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
-    auto elements = ::erin::network::build(
+    auto elements = erin::network::build(
         scenario_id, network, connections, components, fpbc, rand_fn, true);
     std::shared_ptr<FlowWriter> fw = std::make_shared<DefaultFlowWriter>();
-    for (auto e_ptr: elements) {
+    for (auto e_ptr: elements)
       e_ptr->set_flow_writer(fw);
-    }
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();

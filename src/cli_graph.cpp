@@ -25,11 +25,11 @@ doit(const std::string& input_toml, const std::string& dot_file_path, const std:
 
   auto m = ERIN::Main{input_toml};
   const auto& network_map = m.get_networks();
-  std::vector<en::Connection> network;
+  std::vector<en::Connection> network{};
   try {
     network = network_map.at(network_id);
   } catch (const std::out_of_range&) {
-    std::ostringstream oss;
+    std::ostringstream oss{};
     oss << "network with id '" << network_id << "' not found\n";
     oss << "available options: ";
     bool first{true};
@@ -47,9 +47,8 @@ doit(const std::string& input_toml, const std::string& dot_file_path, const std:
     return 1;
   }
   std::ofstream dot{dot_file_path, std::ios::out | std::ios::trunc};
-  if (dot.is_open()) {
+  if (dot.is_open())
     dot << eg::network_to_dot(network, network_id);
-  }
   else {
     std::cerr << "unable to open dot_file_path for writing \""
       << dot_file_path << "\"\n";

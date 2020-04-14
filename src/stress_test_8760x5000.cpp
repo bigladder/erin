@@ -32,7 +32,7 @@ main()
   std::unordered_map<
     std::string,
     std::unique_ptr<::ERIN::Component>> components;
-  std::vector<::erin::network::Connection> nw;
+  std::vector<::erin::network::Connection> nw{};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,

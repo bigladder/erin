@@ -1101,8 +1101,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
     std::string, std::vector<enw::Connection>> networks{
       { net_id,
         { enw::Connection{
-            enw::ComponentAndPort{source_id, ep::Type::Outflow, 0}},
-          enw::Connection{
+            enw::ComponentAndPort{source_id, ep::Type::Outflow, 0},
             enw::ComponentAndPort{load_id, ep::Type::Inflow, 0}}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {

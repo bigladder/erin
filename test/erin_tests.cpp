@@ -564,7 +564,7 @@ TEST(ErinBasicsTest, CanReadNetworksFromToml)
   std::stringstream ss{};
   ss << "############################################################\n"
         "[networks.normal_operations]\n"
-        R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n";
+        "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n";
   ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, std::vector<enw::Connection>> expected{
     { "normal_operations",
@@ -2147,20 +2147,20 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   const std::vector<enw::Connection> expected_normal_nw{
     enw::Connection{
       enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
-        enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0}},
+      enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0}},
   };
   ASSERT_EQ(expected_normal_nw.size(), normal_nw.size());
   ASSERT_EQ(expected_normal_nw, normal_nw);
   const std::vector<enw::Connection> expected_eo{
     enw::Connection{
       enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
-        enw::ComponentAndPort{"bus", ep::Type::Inflow, 0}},
-      enw::Connection{
-        enw::ComponentAndPort{"emergency_generator", ep::Type::Outflow, 0},
-        enw::ComponentAndPort{"bus", ep::Type::Inflow, 1}},
-      enw::Connection{
-        enw::ComponentAndPort{"bus", ep::Type::Outflow, 0},
-        enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0}}};
+      enw::ComponentAndPort{"bus", ep::Type::Inflow, 0}},
+    enw::Connection{
+      enw::ComponentAndPort{"emergency_generator", ep::Type::Outflow, 0},
+      enw::ComponentAndPort{"bus", ep::Type::Inflow, 1}},
+    enw::Connection{
+      enw::ComponentAndPort{"bus", ep::Type::Outflow, 0},
+      enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0}}};
   const auto& actual_eo = networks["emergency_operations"];
   ASSERT_EQ(expected_eo.size(), actual_eo.size());
   ASSERT_EQ(expected_eo, actual_eo);

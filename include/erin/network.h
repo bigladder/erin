@@ -19,9 +19,9 @@ namespace erin::network
 {
   struct ComponentAndPort
   {
-    std::string component_id;
-    erin::port::Type port_type;
-    int port_number;
+    std::string component_id{};
+    erin::port::Type port_type{erin::port::Type::Inflow};
+    int port_number{0};
   };
 
   std::ostream& operator<<(std::ostream& os, const ComponentAndPort& cp);  
@@ -30,8 +30,8 @@ namespace erin::network
 
   struct Connection
   {
-    ComponentAndPort first;
-    ComponentAndPort second;
+    ComponentAndPort first{};
+    ComponentAndPort second{};
   };
 
   std::ostream& operator<<(std::ostream& os, const Connection& c);  

@@ -565,7 +565,7 @@ TEST(ErinBasicsTest, CanReadNetworksFromToml)
   ss << "############################################################\n"
         "[networks.normal_operations]\n"
         R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n";
-  ::ERIN::TomlInputReader t{ss};
+  ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, std::vector<enw::Connection>> expected{
     { "normal_operations",
       { enw::Connection{
@@ -600,18 +600,18 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
         "duration = 8760\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
-  ::ERIN::TomlInputReader t{ss};
+  ERIN::TomlInputReader t{ss};
   const std::string scenario_id{"blue_sky"};
   const auto expected_duration
     = static_cast<::ERIN::RealTimeType>(8760 * ::ERIN::seconds_per_hour);
   std::unordered_map<std::string, ::ERIN::Scenario> expected{{
     scenario_id,
-    ::ERIN::Scenario{
+    ERIN::Scenario{
       scenario_id,
       std::string{"normal_operations"},
       expected_duration,
       1,
-      []() -> ::ERIN::RealTimeType { return 0; },
+      []() -> ERIN::RealTimeType { return 0; },
       {}
     }}};
   auto actual = t.read_scenarios();
@@ -629,7 +629,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
         e.second.get_number_of_occurrences(),
         a->second.get_number_of_occurrences());
   }
-  ::ERIN::Time dt_expected{1, 0};
+  ERIN::Time dt_expected{1, 0};
   auto scenario = actual.at(scenario_id);
   auto dt_actual = scenario.ta();
   EXPECT_EQ(dt_expected.logical, dt_actual.logical);
@@ -649,7 +649,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForRandIntDist)
         "duration = 8760\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
-  ::ERIN::TomlInputReader t{ss};
+  ERIN::TomlInputReader t{ss};
   auto actual = t.read_scenarios();
   auto scenario = actual.at(scenario_id);
   const int max_tries{100};
@@ -674,7 +674,7 @@ TEST(ErinBasicsTest, CanReadScenariosIntensities)
         "network = \"emergency_operations\"\n"
         "intensity.wind_speed_mph = 156\n"
         "intensity.inundation_depth_ft = 4\n";
-  ::ERIN::TomlInputReader t{ss};
+  ERIN::TomlInputReader t{ss};
   auto scenario_map = t.read_scenarios();
   auto scenario = scenario_map.at(scenario_id);
   std::unordered_map<std::string,double> expected{
@@ -721,7 +721,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "############################################################\n"
         "[networks.normal_operations]\n"
-        R"(connections=[["electric_utility", "cluster_01_electric"]])" "\n"
+        "connections=[[\"electric_utility\", \"cluster_01_electric\"]]\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
         "time_unit = \"hours\"\n"
@@ -729,14 +729,14 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "duration = 1\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
-  ::ERIN::TomlInputReader r{ss};
+  ERIN::TomlInputReader r{ss};
   auto si = r.read_simulation_info();
   auto streams = r.read_streams(si);
   auto loads = r.read_loads();
   auto components = r.read_components(streams, loads);
   auto networks = r.read_networks();
   auto scenarios = r.read_scenarios();
-  ::ERIN::Main m{si, streams, components, networks, scenarios};
+  ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -780,7 +780,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "############################################################\n"
         "[networks.normal_operations]\n"
-        R"(connections = [["electric_utility", "cluster_01_electric"]])" "\n"
+        "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
         "time_unit = \"hours\"\n"
@@ -788,14 +788,14 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "duration = 4\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"";
-  ::ERIN::TomlInputReader r{ss};
+  ERIN::TomlInputReader r{ss};
   auto si = r.read_simulation_info();
   auto streams = r.read_streams(si);
   auto loads = r.read_loads();
   auto components = r.read_components(streams, loads);
   auto networks = r.read_networks();
   auto scenarios = r.read_scenarios();
-  ::ERIN::Main m{si, streams, components, networks, scenarios};
+  ERIN::Main m{si, streams, components, networks, scenarios};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);

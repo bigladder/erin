@@ -81,6 +81,10 @@ namespace erin::network
       const std::string& id_name,
       std::vector<ERIN::ElementPort>::size_type idx=0);
 
+  void check_stream_consistency(
+      const std::string& source,
+      const std::string& sink);
+
   void connect_source_to_sink_with_ports(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       ERIN::FlowElement* source,

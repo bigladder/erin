@@ -154,6 +154,10 @@ namespace erin::network
       int sink_port,
       bool two_way)
   {
+    // TODO: fix lossflow on FlowElement OR change how flows are associated with ports
+    // check_stream_consistency(
+    //     src->get_lossflow_type().get_type(),
+    //     sink->get_inflow_type().get_type());
     network.couple(
         sink, ::ERIN::FlowElement::outport_inflow_request + sink_port,
         src, ::ERIN::FlowElement::inport_lossflow_request + source_port);
@@ -196,6 +200,23 @@ namespace erin::network
     return xs[idx];
   }
 
+  void
+  check_stream_consistency(
+      const std::string& source,
+      const std::string& sink)
+  {
+    if (source != sink) {
+      std::ostringstream oss{};
+      oss << "MixedStreamsError:\n"
+          // REFAC << "source output stream != sink input stream or connection stream for component "
+          << "source output stream != sink input stream for component "
+          // REFAC << "connection stream: " << stream << "\n"
+          << "source output stream: " << source << "\n"
+          << "sink input stream   : " << sink << "\n";
+      throw std::runtime_error(oss.str());
+    }
+  }
+
   void connect_source_to_sink_with_ports(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       ERIN::FlowElement* source,
@@ -204,16 +225,9 @@ namespace erin::network
       int sink_port,
       bool both_way)
   {
-    auto src_out = source->get_outflow_type();
-    auto sink_in = sink->get_inflow_type();
-    if (src_out != sink_in) {
-      std::ostringstream oss{};
-      oss << "MixedStreamsError:\n"
-          << "source output stream != sink input stream for component "
-          << "source output stream: " << src_out.get_type() << "\n"
-          << "sink input stream: " << sink_in.get_type() << "\n";
-      throw std::runtime_error(oss.str());
-    }
+    check_stream_consistency(
+        source->get_outflow_type().get_type(),
+        sink->get_inflow_type().get_type());
     network.couple(
         sink, ERIN::FlowElement::outport_inflow_request + sink_port,
         source, ERIN::FlowElement::inport_outflow_request + source_port);

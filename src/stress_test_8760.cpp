@@ -48,6 +48,14 @@ doit()
           load_id,
           streams.at(stream_id),
           loads_by_scenario)));
+  // REFAC std::unordered_map<
+  //   std::string, std::vector<::erin::network::Connection>>
+  //   networks{
+  //     { net_id,
+  //       {
+  //         { { source_id, ep::Type::Outflow, 0},
+  //           { load_id, ep::Type::Inflow, 0},
+  //           "stuff"}}}};
   std::unordered_map<
     std::string, std::vector<::erin::network::Connection>>
     networks{

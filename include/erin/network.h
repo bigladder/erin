@@ -32,6 +32,7 @@ namespace erin::network
   {
     ComponentAndPort first{};
     ComponentAndPort second{};
+    // REFAC std::string stream{};
   };
 
   std::ostream& operator<<(std::ostream& os, const Connection& c);  
@@ -84,6 +85,7 @@ namespace erin::network
   void check_stream_consistency(
       const std::string& source,
       const std::string& sink);
+    // REFAC const std::string& stream)
 
   void connect_source_to_sink_with_ports(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -92,6 +94,7 @@ namespace erin::network
       ERIN::FlowElement* sink,
       int sink_port,
       bool both_way);
+  // REFAC const std::string& stream);
 
   void connect(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,

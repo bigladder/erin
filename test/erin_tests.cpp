@@ -325,6 +325,10 @@ TEST(ErinBasicsTest, CanRunUsingComponents)
   std::unique_ptr<E::Component> load =
     std::make_unique<E::LoadComponent>(
         load_id, elec, loads_by_scenario);
+  // REFAC EN::Connection conn{
+  //   EN::ComponentAndPort{source_id, EP::Type::Outflow, 0},
+  //   EN::ComponentAndPort{load_id, EP::Type::Inflow, 0},
+  //   "electrical"};
   EN::Connection conn{
     EN::ComponentAndPort{source_id, EP::Type::Outflow, 0},
     EN::ComponentAndPort{load_id, EP::Type::Inflow, 0}};
@@ -564,8 +568,17 @@ TEST(ErinBasicsTest, CanReadNetworksFromToml)
   std::stringstream ss{};
   ss << "############################################################\n"
         "[networks.normal_operations]\n"
+        // REFAC "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n";
         "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n";
   ERIN::TomlInputReader t{ss};
+  // REFAC std::unordered_map<std::string, std::vector<enw::Connection>> expected{
+  //    { "normal_operations",
+  //      { enw::Connection{
+  //          enw::ComponentAndPort{
+  //            "electric_utility", ep::Type::Outflow, 0},
+  //          enw::ComponentAndPort{
+  //            "cluster_01_electric", ep::Type::Inflow, 0},
+  //          "electricity"}}}};
   std::unordered_map<std::string, std::vector<enw::Connection>> expected{
     { "normal_operations",
       { enw::Connection{
@@ -587,6 +600,7 @@ TEST(ErinBasicsTest, CanReadNetworksFromToml)
     ASSERT_EQ(e_conn.second.component_id, a_conn.second.component_id);
     ASSERT_EQ(e_conn.second.port_type, a_conn.second.port_type);
     ASSERT_EQ(e_conn.second.port_number, a_conn.second.port_number);
+    // REFAC ASSERT_EQ(e_conn.stream, a_conn.stream);
   }
 }
 
@@ -695,13 +709,17 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "quantity_unit = \"kJ\"\n"
         "time_unit = \"years\"\n"
         "max_time = 1000\n"
+        // REFAC delete below
         "[streams.electricity]\n"
         "type = \"electrity_medium_voltage\"\n"
+        // REFAC delete below
         "[streams.diesel]\n"
         "type = \"diesel_fuel\"\n"
+        // REFAC delete below
         "[streams.diesel.other_rate_units]\n"
         "gallons__hour = 0.026520422449113276\n"
         "liters__hour = 0.1003904071388734\n"
+        // REFAC delete below
         "[streams.diesel.other_quantity_units]\n"
         "gallons = 7.366784013642577e-6\n"
         "liters = 2.7886224205242612e-5\n"
@@ -721,6 +739,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "############################################################\n"
         "[networks.normal_operations]\n"
+        // REFAC "connections=[[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity_medium_voltage\"]]\n"
         "connections=[[\"electric_utility\", \"cluster_01_electric\"]]\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
@@ -764,6 +783,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "quantity_unit = \"kJ\"\n"
         "time_unit = \"years\"\n"
         "max_time = 1000\n"
+        // REFAC delete below
         "[streams.electricity]\n"
         "type = \"electrity\"\n"
         "############################################################\n"
@@ -780,6 +800,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "############################################################\n"
         "[networks.normal_operations]\n"
+        // REFAC "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
         "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
         "############################################################\n"
         "[scenarios.blue_sky]\n"
@@ -860,6 +881,15 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
           load_id,
           streams[stream_id],
           loads_by_scenario)));
+  // REFAC std::unordered_map<
+  //  std::string, std::vector<enw::Connection>> networks{
+  //    { net_id,
+  //      { enw::Connection{
+  //          enw::ComponentAndPort{
+  //            source_id, ep::Type::Outflow, 0},
+  //          enw::ComponentAndPort{
+  //            load_id, ep::Type::Inflow, 0},
+  //          "electricity_medium_voltage"}}}};
   std::unordered_map<
     std::string, std::vector<enw::Connection>> networks{
       { net_id,
@@ -1097,6 +1127,13 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
           load_id,
           streams[stream_id],
           loads_by_scenario)));
+  // REFAC std::unordered_map<
+  //   std::string, std::vector<enw::Connection>> networks{
+  //     { net_id,
+  //       { enw::Connection{
+  //           enw::ComponentAndPort{source_id, ep::Type::Outflow, 0},
+  //           enw::ComponentAndPort{load_id, ep::Type::Inflow, 0},
+  //           "electricity_medium_voltage"}}}};
   std::unordered_map<
     std::string, std::vector<enw::Connection>> networks{
       { net_id,
@@ -1274,6 +1311,13 @@ TEST(ErinBasicsTest, BasicScenarioTest)
           load_id,
           streams[stream_id],
           loads_by_scenario)));
+  // REFAC std::unordered_map<
+  //   std::string, std::vector<enw::Connection>> networks{
+  //     { net_id,
+  //       { enw::Connection{
+  //           { source_id, ep::Type::Outflow, 0},
+  //           { load_id, ep::Type::Inflow, 0},
+  //           "electricity_medium_voltage"}}}};
   std::unordered_map<
     std::string, std::vector<enw::Connection>> networks{
       { net_id,
@@ -1429,6 +1473,16 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
         gen_id,
         std::make_unique<E::SourceComponent>(
           gen_id, elec_stream, std::move(fs_gen))));
+  // REFAC std::unordered_map<
+  //   std::string, std::vector<enw::Connection>> networks{
+  //     { normal,
+  //       { enw::Connection{ { pcc_id, ep::Type::Outflow, 0},
+  //                          { load_id, ep::Type::Inflow, 0},
+  //                          elec_id}}},
+  //     { emergency,
+  //       { enw::Connection{ { gen_id, ep::Type::Outflow, 0},
+  //                          { load_id, ep::Type::Inflow, 0},
+  //                          elec_id}}}};
   std::unordered_map<
     std::string, std::vector<enw::Connection>> networks{
       { normal,
@@ -1601,6 +1655,11 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   components.insert(std::make_pair(s1_id, std::move(s1)));
   components.insert(std::make_pair(s2_id, std::move(s2)));
   adevs::Digraph<E::FlowValueType, E::Time> network;
+  // REFAC const std::vector<enw::Connection> connections{
+  //   {{l1_id, ep::Type::Inflow, 0}, {muxer_id, ep::Type::Outflow, 0}, "electrical"},
+  //   {{l2_id, ep::Type::Inflow, 0}, {muxer_id, ep::Type::Outflow, 1}, "electrical"},
+  //   {{muxer_id, ep::Type::Inflow, 0}, {s1_id, ep::Type::Outflow, 0}, "electrical"},
+  //   {{muxer_id, ep::Type::Inflow, 1}, {s2_id, ep::Type::Outflow, 0}, "electrical"}};
   const std::vector<enw::Connection> connections{
     {{l1_id, ep::Type::Inflow, 0}, {muxer_id, ep::Type::Outflow, 0}},
     {{l2_id, ep::Type::Inflow, 0}, {muxer_id, ep::Type::Outflow, 1}},
@@ -1884,6 +1943,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "quantity_unit = \"kJ\"\n"
         "time_unit = \"years\"\n"
         "max_time = 1000\n"
+        // REFAC delete below
         "[streams.electricity]\n"
         "type = \"electricity_medium_voltage\"\n"
         "[loads.building_electrical]\n"
@@ -1921,8 +1981,15 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "lower_bound = 80.0\n"
         "upper_bound = 160.0\n"
         "[networks.normal_operations]\n"
+        // REFAC
+        // "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity_medium_voltage\"]]\n"
         "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
         "[networks.emergency_operations]\n"
+        // REFAC
+        // "connections = [\n"
+        // "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity_medium_voltage\"],\n"
+        // "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity_medium_voltage\"],\n"
+        // "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity_medium_voltage\"]]\n"
         "connections = [\n"
         "  [\"electric_utility\", \"outflow\", \"0\", "
            "\"bus\", \"inflow\", \"0\"],\n"
@@ -1962,6 +2029,11 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   auto networks = r.read_networks();
   ASSERT_EQ(num_networks, networks.size());
   const auto& normal_nw = networks["normal_operations"];
+  // REFAC const std::vector<enw::Connection> expected_normal_nw{
+  //   enw::Connection{
+  //     enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
+  //     enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
+  //     "electricity_medium_voltage"}};
   const std::vector<enw::Connection> expected_normal_nw{
     enw::Connection{
       enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
@@ -1969,6 +2041,19 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   };
   ASSERT_EQ(expected_normal_nw.size(), normal_nw.size());
   ASSERT_EQ(expected_normal_nw, normal_nw);
+  // REFAC const std::vector<enw::Connection> expected_eo{
+  //   enw::Connection{
+  //     enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
+  //     enw::ComponentAndPort{"bus", ep::Type::Inflow, 0},
+  //     "electricity_medium_voltage"},
+  //   enw::Connection{
+  //     enw::ComponentAndPort{"emergency_generator", ep::Type::Outflow, 0},
+  //     enw::ComponentAndPort{"bus", ep::Type::Inflow, 1},
+  //     "electricity_medium_voltage"},
+  //   enw::Connection{
+  //     enw::ComponentAndPort{"bus", ep::Type::Outflow, 0},
+  //     enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
+  //     "electricity_medium_voltage"}};
   const std::vector<enw::Connection> expected_eo{
     enw::Connection{
       enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
@@ -2066,6 +2151,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "quantity_unit = \"kJ\"\n"
         "time_unit = \"years\"\n"
         "max_time = 1000\n"
+        // REFAC remove below
         "[streams.electricity]\n"
         "type = \"electricity_medium_voltage\"\n"
         "[loads.building_electrical]\n"
@@ -2103,8 +2189,13 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "lower_bound = 80.0\n"
         "upper_bound = 160.0\n"
         "[networks.normal_operations]\n"
+        // REFAC "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity_medium_voltage\"]]\n"
         "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
         "[networks.emergency_operations]\n"
+        // REFAC "connections = [\n"
+        //  "  [\"electric_utility:OUT(0)\", "\"bus:IN(0)\", \"electricity_medium_voltage\"],\n"
+        //  "  [\"emergency_generator:OUT(0)\", "\"bus:IN(1)\", \"electricity_medium_voltage\"],\n"
+        //  "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity_medium_voltage\"]]\n"
         "connections = [\n"
         "  [\"electric_utility\", \"outflow\", \"0\", "
            "\"bus\", \"inflow\", \"0\"],\n"
@@ -2144,6 +2235,11 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   auto networks = r.read_networks();
   ASSERT_EQ(num_networks, networks.size());
   const auto& normal_nw = networks["normal_operations"];
+  // REFACT const std::vector<enw::Connection> expected_normal_nw{
+  //   enw::Connection{
+  //     enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
+  //     enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
+  //     "electricity_medium_voltage"}};
   const std::vector<enw::Connection> expected_normal_nw{
     enw::Connection{
       enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
@@ -2151,6 +2247,19 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   };
   ASSERT_EQ(expected_normal_nw.size(), normal_nw.size());
   ASSERT_EQ(expected_normal_nw, normal_nw);
+  // REFACT const std::vector<enw::Connection> expected_eo{
+  //   enw::Connection{
+  //     enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
+  //     enw::ComponentAndPort{"bus", ep::Type::Inflow, 0},
+  //     "electricity_medium_voltage"},
+  //   enw::Connection{
+  //     enw::ComponentAndPort{"emergency_generator", ep::Type::Outflow, 0},
+  //     enw::ComponentAndPort{"bus", ep::Type::Inflow, 1},
+  //     "electricity_medium_voltage"},
+  //   enw::Connection{
+  //     enw::ComponentAndPort{"bus", ep::Type::Outflow, 0},
+  //     enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
+  //     "electricity_medium_voltage"}};
   const std::vector<enw::Connection> expected_eo{
     enw::Connection{
       enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
@@ -2560,6 +2669,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "max_time = 100\n"
     "fixed_random = 0.5\n"
     "#random_seed = 1\n"
+    // REFAC delete below
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.default]\n"
@@ -2598,8 +2708,13 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "lower_bound = 80.0\n"
     "upper_bound = 160.0\n"
     "[networks.normal_operations]\n"
+    // REFAC "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
     "[networks.emergency_operations]\n"
+    // REFAC "connections = [\n"
+    // "  [\"electric_utility:OUT(0)\", "\"bus:IN(0)\", \"electricity\"],\n"
+    // "  [\"emergency_generator:OUT(0)\", "\"bus:IN(1)\", \"electricity\"],\n"
+    // "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
     "connections = [\n"
     "  [\"electric_utility\", \"outflow\", \"0\", "
        "\"bus\", \"inflow\", \"0\"],\n"
@@ -2690,6 +2805,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
     "max_time = 100\n"
     "fixed_random = 0.1\n"
     "#random_seed = 1\n"
+    // REFAC delete below
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.default]\n"
@@ -2728,8 +2844,13 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
     "lower_bound = 80.0\n"
     "upper_bound = 160.0\n"
     "[networks.normal_operations]\n"
+    // REFAC "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
     "[networks.emergency_operations]\n"
+    // REFAC "connections = [\n"
+    // "  [\"electric_utility:OUT(0)\", "\"bus:IN(0)\", \"electricity\"],\n"
+    // "  [\"emergency_generator:OUT(0)\", "\"bus:IN(1)\", \"electricity\"],\n"
+    // "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
     "connections = [\n"
     "  [\"electric_utility\", \"outflow\", \"0\", "
        "\"bus\", \"inflow\", \"0\"],\n"
@@ -2880,6 +3001,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom3)
     "time_unit = \"seconds\"\n"
     "max_time = 100\n"
     "random_seed = 1\n"
+    // REFAC delete below
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.default]\n"
@@ -2918,8 +3040,13 @@ TEST(ErinBasicsTest, TestRepeatableRandom3)
     "lower_bound = 80.0\n"
     "upper_bound = 160.0\n"
     "[networks.normal_operations]\n"
+    // REFAC "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"electric_utility\", \"cluster_01_electric\"]]\n"
     "[networks.emergency_operations]\n"
+    // REFAC "connections = [\n"
+    // "  [\"electric_utility:OUT(0)\", "\"bus:IN(0)\", \"electricity\"],\n"
+    // "  [\"emergency_generator:OUT(0)\", "\"bus:IN(1)\", \"electricity\"],\n"
+    // "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
     "connections = [\n"
     "  [\"electric_utility\", \"outflow\", \"0\", "
        "\"bus\", \"inflow\", \"0\"],\n"
@@ -3270,6 +3397,7 @@ load_example_results(
     "rate_unit = \"kW\"\n"
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"years\"\n"
+    // REFAC remove the streams.electricity
     "max_time = 40\n" + random_line + "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.load01]\n"
@@ -3290,6 +3418,7 @@ load_example_results(
     "lower_bound = 10.0\n"
     "upper_bound = 20.0\n"
     "[networks.nw01]\n"
+    // REFAC "connections = [[\"A:OUT(0)\", \"B:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"A\", \"B\"]]\n"
     "[scenarios.scenario01]\n"
     "time_unit = \"hours\"\n"
@@ -3436,8 +3565,10 @@ load_converter_example()
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 10\n"
+    // REFAC remove 
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
+    // REFAC remove 
     "[streams.diesel]\n"
     "type = \"diesel\"\n"
     "[loads.load01]\n"
@@ -3457,6 +3588,7 @@ load_converter_example()
     "output_stream = \"electricity\"\n"
     "constant_efficiency = 0.5\n"
     "[networks.nw01]\n"
+    // REFAC "connections = [[\"S:OUT(0)\", \"C:IN(0)\", \"diesel\"], [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"S\", \"C\"], [\"C\", \"L\"]]\n"
     "[scenarios.scenario01]\n"
     "time_unit = \"seconds\"\n"
@@ -3530,12 +3662,16 @@ load_combined_heat_and_power_example()
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 10\n"
+    // REFAC remove
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
+    // REFAC remove
     "[streams.natural_gas]\n"
     "type = \"natural_gas\"\n"
+    // REFAC remove
     "[streams.district_hot_water]\n"
     "type = \"district_hot_water\"\n"
+    // REFAC remove
     "[streams.waste_heat]\n"
     "type = \"waste_heat\"\n"
     "[loads.electric_load]\n"
@@ -3561,11 +3697,13 @@ load_combined_heat_and_power_example()
     "type = \"load\"\n"
     "inflow = \"district_hot_water\"\n"
     "loads_by_scenario.scenario01 = \"heating_load\"\n"
+    // REFAC remove
     "[components.LW]\n"
     "type = \"load\"\n"
     "description = \"waste heat load\"\n"
     "inflow = \"waste_heat\"\n"
     "loads_by_scenario.scenario01 = \"waste_heat_load\"\n"
+    // REFAC remove
     "[components.M]\n"
     "type = \"muxer\"\n"
     "stream = \"waste_heat\"\n"
@@ -3586,6 +3724,10 @@ load_combined_heat_and_power_example()
     "constant_efficiency = 0.5\n"
     "dispatch_strategy = \"dump_load\"\n"
     "[networks.nw01]\n"
+    // REFAC "connections = [[\"S:OUT(0)\", \"C0:IN(0)\", \"natural_gas\"], "
+    //                "[\"C0:OUT(0)\", \"LE:IN(0)\", \"electricity\"], "
+    //                "[\"C0:OUT(1)\", \"C1:IN(0)\", \"waste_heat\"], "
+    //                "[\"C1:OUT(0)\", \"LT:IN(0)\", \"district_hot_water\"]]\n"
     "connections = [[\"S\", \"C0\"], "
                    "[\"C0\", \"LE\"], "
                    "[\"C0\", \"outflow\", \"1\", \"M\", \"inflow\", \"0\"], "
@@ -3711,6 +3853,7 @@ TEST(ErinComponents, Test_passthrough_component)
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 10\n"
+    // REFAC remove
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.load0]\n"
@@ -3728,6 +3871,7 @@ TEST(ErinComponents, Test_passthrough_component)
     "input_stream = \"electricity\"\n"
     "loads_by_scenario.scenario0 = \"load0\"\n"
     "[networks.nw0]\n"
+    // REFAC "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"S\", \"P\"], [\"P\", \"L\"]]\n"
     "[scenarios.scenario0]\n"
     "time_unit = \"seconds\"\n"
@@ -3805,6 +3949,7 @@ TEST(ErinComponents, Test_passthrough_component_with_fragility)
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 10\n"
+    // REFAC remove
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.load0]\n"
@@ -3828,6 +3973,7 @@ TEST(ErinComponents, Test_passthrough_component_with_fragility)
     "lower_bound = 10.0\n"
     "upper_bound = 20.0\n"
     "[networks.nw0]\n"
+    // REFAC "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"S\", \"P\"], [\"P\", \"L\"]]\n"
     "[scenarios.scenario0]\n"
     "time_unit = \"seconds\"\n"
@@ -3862,6 +4008,7 @@ TEST(ErinComponents, Test_passthrough_component_with_limits)
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 10\n"
+    // REFAC delete
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
     "[loads.load0]\n"
@@ -3881,6 +4028,7 @@ TEST(ErinComponents, Test_passthrough_component_with_limits)
     "input_stream = \"electricity\"\n"
     "loads_by_scenario.scenario0 = \"load0\"\n"
     "[networks.nw0]\n"
+    // REFAC "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"S\", \"P\"], [\"P\", \"L\"]]\n"
     "[scenarios.scenario0]\n"
     "time_unit = \"seconds\"\n"
@@ -3926,10 +4074,13 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 10\n"
+    // REFAC remove
     "[streams.electricity]\n"
     "type = \"electricity\"\n"
+    // REFAC remove
     "[streams.natural_gas]\n"
     "type = \"natural_gas\"\n"
+    // REFAC remove
     "[streams.waste_heat]\n"
     "type = \"waste_heat\"\n"
     "[loads.load0]\n"
@@ -3956,6 +4107,7 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
     "lower_bound = 10.0\n"
     "upper_bound = 20.0\n"
     "[networks.nw0]\n"
+    // REFAC "connections = [[\"S:OUT(0)\", \"C:IN(0)\", \"natural_gas\"], [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
     "connections = [[\"S\", \"C\"], [\"C\", \"L\"]]\n"
     "[scenarios.scenario0]\n"
     "time_unit = \"seconds\"\n"
@@ -4063,6 +4215,11 @@ TEST(ErinGraphviz, Test_that_we_can_generate_graphviz)
 {
   namespace en = erin::network;
   namespace ep = erin::port;
+  // REFAC std::vector<en::Connection> nw = {
+  //   en::Connection{
+  //     en::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
+  //     en::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
+  //     "electricity"}};
   std::vector<en::Connection> nw = {
     en::Connection{
       en::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},

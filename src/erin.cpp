@@ -480,6 +480,7 @@ namespace ERIN
 
   std::unordered_map<std::string, std::unique_ptr<Component>>
   TomlInputReader::read_components(
+      // REFAC delete the line below
       const std::unordered_map<std::string, StreamType>& stream_types_map,
       const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id,
       const std::unordered_map<std::string, ::erin::fragility::FragilityCurve>&
@@ -507,6 +508,7 @@ namespace ERIN
           read_source_component(
               tt,
               comp_id,
+              // REFAC output_stream_id,
               stream_types_map.at(output_stream_id),
               components,
               std::move(frags));
@@ -515,6 +517,7 @@ namespace ERIN
           read_load_component(
               tt,
               comp_id,
+              // REFAC input_stream_id,
               stream_types_map.at(input_stream_id),
               loads_by_id,
               components,
@@ -524,6 +527,7 @@ namespace ERIN
           read_muxer_component(
               tt,
               comp_id,
+              // REFAC input_stream_id,
               stream_types_map.at(input_stream_id),
               components,
               std::move(frags));
@@ -542,8 +546,11 @@ namespace ERIN
           read_converter_component(
               tt,
               comp_id,
+              // REFAC input_stream_id,
               stream_types_map.at(input_stream_id),
+              // REFAC output_stream_id,
               stream_types_map.at(output_stream_id),
+              // REFAC lossflow_stream_id,
               stream_types_map.at(lossflow_stream_id),
               components,
               std::move(frags));
@@ -553,6 +560,7 @@ namespace ERIN
           read_passthrough_component(
               tt,
               comp_id,
+              // REFAC input_stream_id,
               stream_types_map.at(input_stream_id),
               components,
               std::move(frags));
@@ -795,6 +803,7 @@ namespace ERIN
   TomlInputReader::read_source_component(
       const toml::table& tt,
       const std::string& id,
+      // REFAC const std::string& stream,
       const StreamType& stream,
       std::unordered_map<
         std::string, std::unique_ptr<Component>>& components,
@@ -811,6 +820,8 @@ namespace ERIN
     if (is_limited) {
       lim = Limits{min_outflow, max_outflow};
     }
+    // REFAC std::unique_ptr<Component> source_comp =
+    //   std::make_unique<SourceComponent>(id, StreamType(stream), std::move(frags), lim);
     std::unique_ptr<Component> source_comp =
       std::make_unique<SourceComponent>(id, stream, std::move(frags), lim);
     components.insert(std::make_pair(id, std::move(source_comp)));
@@ -820,6 +831,7 @@ namespace ERIN
   TomlInputReader::read_load_component(
       const toml::table& tt,
       const std::string& id,
+      // REFAC const std::string& stream,
       const StreamType& stream,
       const std::unordered_map<
         std::string, std::vector<LoadItem>>& loads_by_id,
@@ -872,6 +884,8 @@ namespace ERIN
           std::cout << "]\n";
         }
       }
+      // REFAC std::unique_ptr<Component> load_comp =
+      //   std::make_unique<LoadComponent>(id, StreamType(stream), loads_by_scenario, std::move(frags));
       std::unique_ptr<Component> load_comp =
         std::make_unique<LoadComponent>(id, stream, loads_by_scenario, std::move(frags));
       components.insert(std::make_pair(id, std::move(load_comp)));
@@ -889,6 +903,7 @@ namespace ERIN
   TomlInputReader::read_muxer_component(
       const toml::table& tt,
       const std::string& id,
+      // REFAC const std::string& stream,
       const StreamType& stream,
       std::unordered_map<
         std::string, std::unique_ptr<Component>>& components,
@@ -902,6 +917,10 @@ namespace ERIN
     auto out_disp_tag = toml_helper::read_optional_table_field<std::string>(
         tt, {"dispatch_strategy", "outflow_dispatch_strategy"}, "distribute", field_read);
     auto out_disp = tag_to_muxer_dispatch_strategy(out_disp_tag);
+    // REFAC std::unique_ptr<Component> mux_comp =
+    //   std::make_unique<MuxerComponent>(
+    //       id, StreamType(stream), num_inflows, num_outflows, std::move(frags),
+    //       out_disp);
     std::unique_ptr<Component> mux_comp =
       std::make_unique<MuxerComponent>(
           id, stream, num_inflows, num_outflows, std::move(frags),
@@ -913,6 +932,7 @@ namespace ERIN
   void TomlInputReader::read_passthrough_component(
       const toml::table& tt,
       const std::string& id,
+      // REFAC const std::string& stream,
       const StreamType& stream,
       std::unordered_map<
         std::string, std::unique_ptr<Component>>& components,
@@ -929,9 +949,13 @@ namespace ERIN
     has_limits = has_limits || (field_read == "max_outflow");
     std::unique_ptr<Component> pass_through_comp;
     if (has_limits) {
+      // REFAC pass_through_comp = std::make_unique<PassThroughComponent>(
+      //     id, StreamType(stream), Limits{min_outflow, max_outflow}, std::move(frags));
       pass_through_comp = std::make_unique<PassThroughComponent>(
           id, stream, Limits{min_outflow, max_outflow}, std::move(frags));
     } else {
+      // REFAC pass_through_comp = std::make_unique<PassThroughComponent>(
+      //     id, StreamType(stream), std::move(frags));
       pass_through_comp = std::make_unique<PassThroughComponent>(
           id, stream, std::move(frags));
     }
@@ -943,8 +967,11 @@ namespace ERIN
   TomlInputReader::read_converter_component(
       const toml::table& tt,
       const std::string& id,
+      // REFAC const std::string& input_stream,
       const StreamType& input_stream,
+      // REFAC const std::string& output_stream,
       const StreamType& output_stream,
+      // REFAC const std::string& lossflow_stream,
       const StreamType& lossflow_stream,
       std::unordered_map<
         std::string, std::unique_ptr<Component>>& components,
@@ -954,6 +981,14 @@ namespace ERIN
     auto const_eff_val = toml_helper::read_required_table_field<toml::value>(
         tt, {"constant_efficiency"}, field_read);
     auto const_eff = read_number(const_eff_val);
+    // REFAC std::unique_ptr<Component> converter_comp =
+    //   std::make_unique<ConverterComponent>(
+    //       id,
+    //       StreamType(input_stream),
+    //       StreamType(output_stream),
+    //       StreamType(lossflow_stream),
+    //       const_eff,
+    //       std::move(frags));
     std::unique_ptr<Component> converter_comp =
       std::make_unique<ConverterComponent>(
           id, input_stream, output_stream, lossflow_stream,
@@ -987,17 +1022,43 @@ namespace ERIN
       }
       int item_num{0};
       for (const auto& connect: raw_connects) {
+        // REFAC delete, move below
         std::string comp_01_id;
+        // REFAC delete, move below
         ep::Type comp_01_port{ep::Type::Outflow};
+        // REFAC delete, move below
         int comp_01_port_num{0};
+        // REFAC delete, move below
         std::string comp_02_id;
+        // REFAC delete, move below
         ep::Type comp_02_port{ep::Type::Inflow};
+        // REFAC delete, move below
         int comp_02_port_num{0};
         auto num_items = connect.size();
         const int infer_outflow0_to_inflow0{2};
+        // REFAC const decltype(num_items) expected_num_items{3};
         const int infer_port_numbers{4};
         const int explicit_connection{6};
         const int inferred_port_number{0};
+        // REFAC
+        // if (num_items != expected_num_items) {
+        //   std::ostringstream oss{};
+        //   oss << "network " << nested_nw_it->first << " "
+        //       << "connection[" << item_num << "] "
+        //       << "doesn't have " << expected_num_items << " items\n"
+        //       << "num_items: " << num_items << "\n";
+        //   throw std::invalid_argument(oss.str());
+        // }
+        // const auto& comp_01_tag = connect[0];
+        // const auto& comp_02_tag = connect[1];
+        // const auto& stream_id = connect[2];
+        // const auto comp_01_id = parse_component_id(comp_01_tag);
+        // const auto comp_01_port = parse_component_port(comp_01_tag);
+        // const auto comp_01_port_num = parse_component_port_num(comp_01_tag);
+        // const auto comp_02_id = parse_component_id(comp_02_tag);
+        // const auto comp_02_port = parse_component_port(comp_02_tag);
+        // const auto comp_02_port_num = parse_component_port_num(comp_02_tag);
+        // REFAC delete below
         if (num_items == infer_outflow0_to_inflow0) {
           const int idx_comp_01_id{0};
           const int idx_comp_02_id{1};
@@ -1044,6 +1105,13 @@ namespace ERIN
               << "num_items: " << num_items << "\n";
           throw std::invalid_argument(oss.str());
         }
+        // REFACT nw_list.emplace_back(
+        //     enw::Connection{
+        //       enw::ComponentAndPort{
+        //         comp_01_id, comp_01_port, comp_01_port_num},
+        //       enw::ComponentAndPort{
+        //         comp_02_id, comp_02_port, comp_02_port_num},
+        //       stream_id});
         nw_list.emplace_back(
             enw::Connection{
               enw::ComponentAndPort{
@@ -2031,9 +2099,11 @@ namespace ERIN
     auto reader = TomlInputReader{input_file_path};
     // Read data into private class fields
     sim_info = reader.read_simulation_info();
+    // REFAC delete the line below
     stream_types_map = reader.read_streams(sim_info);
     auto loads_by_id = reader.read_loads();
     auto fragilities = reader.read_fragility_data();
+    // REFAC components = reader.read_components(loads_by_id, fragilities);
     components = reader.read_components(
         stream_types_map, loads_by_id, fragilities);
     networks = reader.read_networks();

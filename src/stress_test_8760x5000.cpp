@@ -56,6 +56,11 @@ main()
             load_id,
             elec,
             loads_by_scenario);
+    // REFAC nw.emplace_back(
+    //   erin::network::Connection{
+    //      erin::network::ComponentAndPort{source_id, ep::Type::Outflow, 0},
+    //      erin::network::ComponentAndPort{load_id, ep::Type::Inflow, 0},
+    //      "stuff"});
     nw.emplace_back(::erin::network::Connection{
       ::erin::network::ComponentAndPort{source_id, ep::Type::Outflow, 0},
       ::erin::network::ComponentAndPort{load_id, ep::Type::Inflow, 0}});

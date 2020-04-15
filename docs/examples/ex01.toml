@@ -41,6 +41,7 @@ loads_by_scenario.blue_sky = "building_electrical"
 #   <component_2_id=c2_id>, <component_2_port_type=c2_port_type>, <component_2_port_number=0>]
 # 6-tuple: [ <component_1_id>, <component_1_port_type>, <component_1_port_number>,
 #            <component_2_id>, <component_2_port_type>, <component_2_port_number>]       
+# REFAC connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity_medium_voltage"]]
 connections = [["electric_utility", "cluster_01_electric"]]
 ############################################################
 [scenarios.blue_sky]

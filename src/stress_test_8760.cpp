@@ -27,7 +27,7 @@ doit()
     std::make_pair(
         stream_id,
         ::ERIN::StreamType(
-          std::string{"electricity_medium_voltage"},
+          std::string{"electricity"},
           si.get_rate_unit(),
           si.get_quantity_unit(),
           1,
@@ -54,7 +54,7 @@ doit()
         {
           { { source_id, ep::Type::Outflow, 0},
             { load_id, ep::Type::Inflow, 0},
-            "stuff"}}}};
+            "electricity"}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{};
   scenarios.emplace(
       std::make_pair(

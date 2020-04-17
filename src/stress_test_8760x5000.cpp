@@ -22,7 +22,7 @@ main()
     loads_by_scenario{{scenario_id, loads}};
   ::ERIN::SimulationInfo si{::ERIN::TimeUnits::Hours, N};
   ::ERIN::StreamType elec{
-    std::string{"electricity_medium_voltage"},
+    std::string{stream_id},
       si.get_rate_unit(),
       si.get_quantity_unit(),
       1,
@@ -59,7 +59,7 @@ main()
         erin::network::Connection{
           erin::network::ComponentAndPort{source_id, ep::Type::Outflow, 0},
           erin::network::ComponentAndPort{load_id, ep::Type::Inflow, 0},
-          "electricity_medium_voltage"});
+          stream_id});
   }
   std::unordered_map<std::string, decltype(nw)> networks{{net_id, nw}};
   std::cout << "construction completed!\n";

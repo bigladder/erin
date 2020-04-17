@@ -26,9 +26,8 @@ main()
       si.get_rate_unit(),
       si.get_quantity_unit(),
       1,
-      {}, {}};
-  std::unordered_map<std::string, ::ERIN::StreamType> streams{
-    std::make_pair(stream_id, elec)};
+      {},
+      {}};
   std::unordered_map<
     std::string,
     std::unique_ptr<::ERIN::Component>> components;
@@ -56,18 +55,15 @@ main()
             load_id,
             elec,
             loads_by_scenario);
-    // REFAC nw.emplace_back(
-    //   erin::network::Connection{
-    //      erin::network::ComponentAndPort{source_id, ep::Type::Outflow, 0},
-    //      erin::network::ComponentAndPort{load_id, ep::Type::Inflow, 0},
-    //      "stuff"});
-    nw.emplace_back(::erin::network::Connection{
-      ::erin::network::ComponentAndPort{source_id, ep::Type::Outflow, 0},
-      ::erin::network::ComponentAndPort{load_id, ep::Type::Inflow, 0}});
+    nw.emplace_back(
+        erin::network::Connection{
+          erin::network::ComponentAndPort{source_id, ep::Type::Outflow, 0},
+          erin::network::ComponentAndPort{load_id, ep::Type::Inflow, 0},
+          "electricity_medium_voltage"});
   }
   std::unordered_map<std::string, decltype(nw)> networks{{net_id, nw}};
   std::cout << "construction completed!\n";
-  ::ERIN::Main m{si, streams, components, networks, scenarios};
+  ::ERIN::Main m{si, components, networks, scenarios};
   std::cout << "running!\n";
   auto out = m.run(scenario_id);
   std::cout << "done!\n";

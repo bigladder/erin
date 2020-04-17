@@ -32,7 +32,7 @@ namespace erin::network
   {
     ComponentAndPort first{};
     ComponentAndPort second{};
-    // REFAC std::string stream{};
+    std::string stream{};
   };
 
   std::ostream& operator<<(std::ostream& os, const Connection& c);  
@@ -58,7 +58,8 @@ namespace erin::network
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       ERIN::FlowElement* src,
       ERIN::FlowElement* sink,
-      bool two_way = true);
+      bool two_way,
+      const std::string& stream);
 
   void couple_source_loss_to_sink(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -84,8 +85,8 @@ namespace erin::network
 
   void check_stream_consistency(
       const std::string& source,
-      const std::string& sink);
-    // REFAC const std::string& stream)
+      const std::string& sink,
+      const std::string& stream);
 
   void connect_source_to_sink_with_ports(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -93,8 +94,8 @@ namespace erin::network
       int source_port,
       ERIN::FlowElement* sink,
       int sink_port,
-      bool both_way);
-  // REFAC const std::string& stream);
+      bool both_way,
+      const std::string& stream);
 
   void connect(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -106,7 +107,8 @@ namespace erin::network
          erin::port::Type, std::vector<ERIN::ElementPort>>& port_map2,
       const ::erin::port::Type& port2,
       const int& port2_num,
-      bool two_way = false);
+      bool two_way,
+      const std::string& stream);
 
   std::vector<ERIN::FlowElement*> build(
       const std::string& scenario_id,

@@ -48,21 +48,13 @@ doit()
           load_id,
           streams.at(stream_id),
           loads_by_scenario)));
-  // REFAC std::unordered_map<
-  //   std::string, std::vector<::erin::network::Connection>>
-  //   networks{
-  //     { net_id,
-  //       {
-  //         { { source_id, ep::Type::Outflow, 0},
-  //           { load_id, ep::Type::Inflow, 0},
-  //           "stuff"}}}};
   std::unordered_map<
-    std::string, std::vector<::erin::network::Connection>>
-    networks{
+    std::string, std::vector<::erin::network::Connection>> networks{
       { net_id,
         {
           { { source_id, ep::Type::Outflow, 0},
-            { load_id, ep::Type::Inflow, 0}}}}};
+            { load_id, ep::Type::Inflow, 0},
+            "stuff"}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{};
   scenarios.emplace(
       std::make_pair(
@@ -74,7 +66,7 @@ doit()
           -1,
           nullptr,
           {})));
-  auto m = ::ERIN::Main(si, streams, components, networks, scenarios);
+  auto m = ::ERIN::Main(si, components, networks, scenarios);
   auto out = m.run(scenario_id);
   if (out.get_is_good()) {
     std::cout << "success!\n";

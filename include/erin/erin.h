@@ -199,7 +199,6 @@ namespace ERIN
         read_loads() = 0;
       virtual std::unordered_map<std::string, std::unique_ptr<Component>>
         read_components(
-            const std::unordered_map<std::string, StreamType>& stm,
             const std::unordered_map<std::string, std::vector<LoadItem>>&
               loads_by_id,
             const std::unordered_map<
@@ -233,34 +232,19 @@ namespace ERIN
         read_streams(const SimulationInfo& si) override;
       std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() override;
-      // REFAC std::unordered_map<std::string, std::unique_ptr<Component>>
-      //   read_components(
-      //       const std::unordered_map<
-      //         std::string, std::vector<LoadItem>>& loads_by_id,
-      //       const std::unordered_map<
-      //         std::string, ::erin::fragility::FragilityCurve>& fragilities)
-      //   override;
       std::unordered_map<std::string, std::unique_ptr<Component>>
         read_components(
-            const std::unordered_map<std::string, StreamType>& stm,
             const std::unordered_map<
               std::string, std::vector<LoadItem>>& loads_by_id,
             const std::unordered_map<
               std::string, ::erin::fragility::FragilityCurve>& fragilities)
         override;
-      // REFAC std::unordered_map<std::string, std::unique_ptr<Component>>
-      //   read_components(
-      //       const std::unordered_map<std::string, std::vector<LoadItem>>&
-      //         loads_by_id) {
-      //     return read_components(loads_by_id, {});
-      //   }
       std::unordered_map<std::string, std::unique_ptr<Component>>
-        read_components(
-            const std::unordered_map<std::string, StreamType>& stm,
-            const std::unordered_map<std::string, std::vector<LoadItem>>&
-              loads_by_id) {
-          return read_components(stm, loads_by_id, {});
-        }
+      read_components(
+          const std::unordered_map<std::string, std::vector<LoadItem>>&
+            loads_by_id) {
+        return read_components(loads_by_id, {});
+      }
       std::unordered_map<
         std::string, std::vector<::erin::network::Connection>>
         read_networks() override;
@@ -281,16 +265,14 @@ namespace ERIN
       void read_source_component(
           const toml::table& tt,
           const std::string& id,
-          // REFAC const std::string& stream,
-          const StreamType& stream,
+          const std::string& stream,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& comps,
           fragility_map&& frags) const;
       void read_load_component(
           const toml::table& tt,
           const std::string& id,
-          // REFAC const std::string& stream,
-          const StreamType& stream,
+          const std::string& stream,
           const std::unordered_map<
           std::string, std::vector<LoadItem>>& loads_by_id,
           std::unordered_map<
@@ -299,28 +281,23 @@ namespace ERIN
       void read_muxer_component(
           const toml::table& tt,
           const std::string& id,
-          // REFAC const std::string& stream,
-          const StreamType& stream,
+          const std::string& stream,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components,
           fragility_map&& frags) const;
       void read_converter_component(
           const toml::table& tt,
           const std::string& id,
-          // REFAC const std::string& input_stream,
-          const StreamType& input_stream,
-          // REFAC const std::string& output_stream,
-          const StreamType& output_stream,
-          // REFAC const std::string& lossflow_stream,
-          const StreamType& lossflow_stream,
+          const std::string& input_stream,
+          const std::string& output_stream,
+          const std::string& lossflow_stream,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components,
           fragility_map&& frags) const;
       void read_passthrough_component(
           const toml::table& tt,
           const std::string& id,
-          // REFAC const std::string& stream,
-          const StreamType& stream,
+          const std::string& stream,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components,
           fragility_map&& frags) const;
@@ -443,8 +420,6 @@ namespace ERIN
       explicit Main(const std::string& input_toml);
       Main(
           const SimulationInfo& si,
-          // REFAC remove below
-          const std::unordered_map<std::string, StreamType>& streams,
           const std::unordered_map<
             std::string,
             std::unique_ptr<Component>>& comps,
@@ -470,8 +445,6 @@ namespace ERIN
 
     private:
       SimulationInfo sim_info;
-      // REFAC delete
-      std::unordered_map<std::string, StreamType> stream_types_map;
       std::unordered_map<std::string, std::unique_ptr<Component>> components;
       std::unordered_map<
         std::string,
@@ -536,6 +509,12 @@ namespace ERIN
     get_requested_flows_from_results_for_component(
         const std::unordered_map<std::string, std::vector<Datum>>& results,
         const std::string& comp_id);
+
+  std::string parse_component_id(const std::string& tag);
+
+  erin::port::Type parse_component_port(const std::string& tag);
+
+  int parse_component_port_num(const std::string& tag);
 }
 
 #endif // ERIN_ERIN_H

@@ -94,9 +94,11 @@ namespace ERIN
       adevs::Digraph<FlowValueType, Time>& network,
       FlowElement* source,
       FlowElement* sink,
-      bool both_way) const
+      bool both_way,
+      const std::string& stream) const
   {
-    connect_source_to_sink_with_ports(network, source, 0, sink, 0, both_way);
+    connect_source_to_sink_with_ports(
+        network, source, 0, sink, 0, both_way, stream);
   }
 
   void
@@ -106,7 +108,8 @@ namespace ERIN
       int source_port,
       FlowElement* sink,
       int sink_port,
-      bool both_way) const
+      bool both_way,
+      const std::string& stream) const
   {
     erin::network::connect_source_to_sink_with_ports(
         network,
@@ -114,7 +117,8 @@ namespace ERIN
         source_port,
         sink,
         sink_port,
-        both_way);
+        both_way,
+        stream);
   }
 
   bool
@@ -306,6 +310,7 @@ namespace ERIN
       std::cout << "LoadComponent::add_to_network(...)\n";
     auto the_id = get_id();
     auto stream = get_input_stream();
+    auto stream_name = stream.get_type();
     auto loads = loads_by_scenario.at(active_scenario);
     auto sink = new Sink(the_id, ComponentType::Load, stream, loads);
     sink->set_recording_on();
@@ -320,7 +325,7 @@ namespace ERIN
           0.0,
           0.0);
       elements.emplace(lim);
-      connect_source_to_sink(network, lim, sink, true);
+      connect_source_to_sink(network, lim, sink, true, stream_name);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim, 0}};
     }
     else {
@@ -881,8 +886,11 @@ namespace ERIN
     auto the_id = get_id();
     auto the_type = ComponentType::Converter;
     auto in_stream = get_input_stream();
+    auto in_stream_name = in_stream.get_type();
     auto out_stream = get_output_stream();
+    auto out_stream_name = out_stream.get_type();
     auto loss_stream = get_lossflow_stream();
+    auto loss_stream_name = loss_stream.get_type();
     if (is_failed) {
       auto lim_in = new FlowLimits(the_id + "-inflow", the_type, in_stream, 0.0, 0.0);
       elements.emplace(lim_in);
@@ -896,7 +904,7 @@ namespace ERIN
       auto lim_waste = new FlowLimits(the_id + "-wasteflow", the_type, loss_stream, 0.0, 0.0);
       lim_waste->set_recording_on();
       elements.emplace(lim_waste);
-      connect_source_to_sink(nw, lim_waste, lim_loss, true);
+      connect_source_to_sink(nw, lim_waste, lim_loss, true, loss_stream_name);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim_in, 0}};
       ports[ep::Type::Outflow] = std::vector<ElementPort>{{lim_out, 0}, {lim_loss, 0}};
     }
@@ -921,8 +929,8 @@ namespace ERIN
           the_id + "-lossflow", the_type, loss_stream);
       loss_meter->set_recording_on();
       elements.emplace(loss_meter);
-      connect_source_to_sink(nw, in_meter, conv, true);
-      connect_source_to_sink(nw, conv, out_meter, true);
+      connect_source_to_sink(nw, in_meter, conv, true, in_stream_name);
+      connect_source_to_sink(nw, conv, out_meter, true, out_stream_name);
       erin::network::couple_source_loss_to_sink(nw, conv, loss_meter, true);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{in_meter, 0}};
       ports[ep::Type::Outflow] = std::vector<ElementPort>{{out_meter, 0}, {loss_meter, 0}};

@@ -88,14 +88,16 @@ namespace ERIN
           adevs::Digraph<FlowValueType, Time>& nw,
           FlowElement* source,
           FlowElement* sink,
-          bool both_way) const;
+          bool both_way,
+          const std::string& stream) const;
       void connect_source_to_sink_with_ports(
           adevs::Digraph<FlowValueType, Time>& nw,
           FlowElement* source,
           int source_port,
           FlowElement* sink,
           int sink_port,
-          bool both_way) const;
+          bool both_way,
+          const std::string& stream) const;
       [[nodiscard]] bool base_is_equal(const Component& other) const;
       [[nodiscard]] std::string internals_to_string() const;
 

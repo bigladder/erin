@@ -35,24 +35,18 @@ namespace erin::network
   bool
   operator==(const Connection& c1, const Connection& c2)
   {
-    // REFAC return (c1.stream == c2.stream)
-    // && ( ((c1.first == c2.first) && (c1.second == c2.second))
-    //      || ((c1.first == c2.second) && (c1.second == c2.first)) );
-    return ((c1.first == c2.first) && (c1.second == c2.second))
-      || ((c1.first == c2.second) && (c1.second == c2.first));
-      
+    return (c1.stream == c2.stream)
+      && (  ((c1.first == c2.first) && (c1.second == c2.second))
+         || ((c1.first == c2.second) && (c1.second == c2.first)) );
   }
 
   std::ostream&
   operator<<(std::ostream& os, const Connection& c)
   {
-    // REFAC os << "Connection("
-    //    << "first=" << c.first << ", "
-    //    << "second=" << c.second << ", "
-    //    << "stream=\"" << c.stream << "\")";
     os << "Connection("
        << "first=" << c.first << ", "
-       << "second=" << c.second << ")";
+       << "second=" << c.second << ", "
+       << "stream=\"" << c.stream << "\")";
     return os;
   }
 
@@ -131,9 +125,11 @@ namespace erin::network
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       ERIN::FlowElement* src,
       ERIN::FlowElement* sink,
-      bool two_way)
+      bool two_way,
+      const std::string& stream)
   {
-    connect_source_to_sink_with_ports(network, src, 0, sink, 0, two_way);
+    connect_source_to_sink_with_ports(
+        network, src, 0, sink, 0, two_way, stream);
   }
 
   void
@@ -159,17 +155,14 @@ namespace erin::network
       int source_port,
       ERIN::FlowElement* sink,
       int sink_port,
-      bool two_way)
-  // REFAC const std::string& stream)
+      bool two_way,
+      const std::string& /* stream */)
   {
-    // REFAC check_stream_consistency(
-    //     src->get_lossflow_type().get_type(),
-    //     sink->get_inflow_type().get_type(),
-    //     stream);
     // TODO: fix lossflow on FlowElement OR change how flows are associated with ports
     // check_stream_consistency(
     //     src->get_lossflow_type().get_type(),
-    //     sink->get_inflow_type().get_type());
+    //     sink->get_inflow_type().get_type(),
+    //     stream);
     network.couple(
         sink, ::ERIN::FlowElement::outport_inflow_request + sink_port,
         src, ::ERIN::FlowElement::inport_lossflow_request + source_port);
@@ -215,16 +208,14 @@ namespace erin::network
   void
   check_stream_consistency(
       const std::string& source,
-      const std::string& sink)
-    // REFAC const std::string& stream)
+      const std::string& sink,
+      const std::string& stream)
   {
-    // REFAC if ((source != sink) || (stream != source)) {
-    if (source != sink) {
+    if ((source != sink) || (stream != source)) {
       std::ostringstream oss{};
       oss << "MixedStreamsError:\n"
-          // REFAC << "source output stream != sink input stream or connection stream for component "
-          << "source output stream != sink input stream for component "
-          // REFAC << "connection stream: " << stream << "\n"
+          << "source output stream != sink input stream or connection stream for component!\n"
+          << "connection stream: " << stream << "\n"
           << "source output stream: " << source << "\n"
           << "sink input stream   : " << sink << "\n";
       throw std::runtime_error(oss.str());
@@ -237,16 +228,13 @@ namespace erin::network
       int source_port,
       ERIN::FlowElement* sink,
       int sink_port,
-      bool both_way)
-    // REFAC const std::string& stream)
+      bool both_way,
+      const std::string& stream)
   {
-    // REFAC check_stream_consistency(
-    //     source->get_outflow_type().get_type(),
-    //     sink->get_inflow_type().get_type(),
-    //     stream);
     check_stream_consistency(
         source->get_outflow_type().get_type(),
-        sink->get_inflow_type().get_type());
+        sink->get_inflow_type().get_type(),
+        stream);
     network.couple(
         sink, ERIN::FlowElement::outport_inflow_request + sink_port,
         source, ERIN::FlowElement::inport_outflow_request + source_port);
@@ -267,49 +255,37 @@ namespace erin::network
         erin::port::Type, std::vector<ERIN::ElementPort>>& port_map2,
       const erin::port::Type& port2,
       const int& port2_num,
-      bool two_way)
-  // REFAC const std::string& stream)
+      bool two_way,
+      const std::string& stream)
   {
     namespace ep = erin::port;
     if ((port1 == ep::Type::Outflow) && (port2 == ep::Type::Inflow)) {
       auto source = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
       auto sink = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
-      // REFAC connect_source_to_sink_with_ports(
-      //     network, source.element, source.port,
-      //     sink.element, sink.port, two_way, stream);
       connect_source_to_sink_with_ports(
           network, source.element, source.port,
-          sink.element, sink.port, two_way);
+          sink.element, sink.port, two_way, stream);
     }
     else if ((port1 == ep::Type::Inflow) && (port2 == ep::Type::Outflow)) {
       auto source = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
       auto sink = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
-      // REFAC connect_source_to_sink_with_ports(
-      //     network, source.element, source.port,
-      //     sink.element, sink.port, two_way, stream);
       connect_source_to_sink_with_ports(
           network, source.element, source.port,
-          sink.element, sink.port, two_way);
+          sink.element, sink.port, two_way, stream);
     }
     else if ((port1 == ep::Type::Lossflow) && (port2 == ep::Type::Inflow)) {
       auto source = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
       auto sink = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
-      // REFAC couple_source_loss_to_sink_with_ports(
-      //     network, source.element, source.port,
-      //     sink.element, sink.port, two_way, stream);
       couple_source_loss_to_sink_with_ports(
           network, source.element, source.port,
-          sink.element, sink.port, two_way);
+          sink.element, sink.port, two_way, stream);
     }
     else if ((port1 == ep::Type::Inflow) && (port2 == ep::Type::Lossflow)) {
       auto source = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
       auto sink = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
-      // REFAC couple_source_loss_to_sink_with_ports(
-      //     network, source.element, source.port,
-      //     sink.element, sink.port, two_way, stream);
       couple_source_loss_to_sink_with_ports(
           network, source.element, source.port,
-          sink.element, sink.port, two_way);
+          sink.element, sink.port, two_way, stream);
     }
     else {
       std::ostringstream oss{};
@@ -359,7 +335,7 @@ namespace erin::network
       const auto& comp2_id = connection.second.component_id;
       const auto& port2_type = connection.second.port_type;
       const auto& port2_num = connection.second.port_number;
-      // REFAC const auto& stream = connection.stream;
+      const auto& stream = connection.stream;
       if constexpr (E::debug_level >= E::debug_level_high)
         std::cout << "... connection: " << connection << "\n";
       add_if_not_added(
@@ -376,7 +352,8 @@ namespace erin::network
           pes.at(comp2_id).port_map,
           port2_type,
           port2_num,
-          two_way);
+          two_way,
+          stream);
     }
     for (const auto& pair: pes) {
       auto& es = pair.second.elements_added;

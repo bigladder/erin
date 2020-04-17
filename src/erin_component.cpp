@@ -310,7 +310,7 @@ namespace ERIN
       std::cout << "LoadComponent::add_to_network(...)\n";
     auto the_id = get_id();
     auto stream = get_input_stream();
-    auto stream_name = stream.get_type();
+    const auto& stream_name = stream.get_type();
     auto loads = loads_by_scenario.at(active_scenario);
     auto sink = new Sink(the_id, ComponentType::Load, stream, loads);
     sink->set_recording_on();
@@ -886,11 +886,11 @@ namespace ERIN
     auto the_id = get_id();
     auto the_type = ComponentType::Converter;
     auto in_stream = get_input_stream();
-    auto in_stream_name = in_stream.get_type();
+    const auto& in_stream_name = in_stream.get_type();
     auto out_stream = get_output_stream();
-    auto out_stream_name = out_stream.get_type();
+    const auto& out_stream_name = out_stream.get_type();
     auto loss_stream = get_lossflow_stream();
-    auto loss_stream_name = loss_stream.get_type();
+    const auto& loss_stream_name = loss_stream.get_type();
     if (is_failed) {
       auto lim_in = new FlowLimits(the_id + "-inflow", the_type, in_stream, 0.0, 0.0);
       elements.emplace(lim_in);

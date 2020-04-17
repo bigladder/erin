@@ -2539,7 +2539,7 @@ namespace ERIN
   parse_component_port_num(const std::string& tag)
   {
     int port_num{0};
-    auto pos = tag.find("(");
+    auto pos = tag.find('(');
     if (pos == std::string::npos)
       return port_num;
     auto substr = tag.substr(pos + 1, tag.size());

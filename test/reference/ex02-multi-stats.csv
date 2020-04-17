@@ -1,5 +1,5 @@
-scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity_medium_voltage energy used (kJ)
-blue_sky,1,4,cluster_01_electric,load,electricity_medium_voltage,1,0,0,14400
-blue_sky,1,4,electric_utility,source,electricity_medium_voltage,1,0,0,14400
+scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ)
+blue_sky,1,4,cluster_01_electric,load,electricity,1,0,0,14400
+blue_sky,1,4,electric_utility,source,electricity,1,0,0,14400
 blue_sky,1,4,TOTAL (source),,,,,,14400
 blue_sky,1,4,TOTAL (load),,,,,,14400

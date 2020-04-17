@@ -1,5 +1,5 @@
-component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity_medium_voltage energy used (kJ)
-cluster_01_electric,load,electricity_medium_voltage,1,0,0,14400
-electric_utility,source,electricity_medium_voltage,1,0,0,14400
+component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ)
+cluster_01_electric,load,electricity,1,0,0,14400
+electric_utility,source,electricity,1,0,0,14400
 TOTAL (source),,,,,,14400
 TOTAL (load),,,,,,14400

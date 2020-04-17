@@ -3,18 +3,6 @@ rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
 max_time = 1000
-# REFAC remove
-[streams.electricity]
-type = "electricity"
-# REFAC remove
-[streams.steam]
-type = "steam"
-# REFAC remove
-[streams.waste_heat]
-type = "waste_heat"
-# REFAC remove
-[streams.coal]
-type = "coal"
 [loads.normal_electric_cluster_1]
 csv_file = "ex06-normal-electric-1.csv"
 [loads.normal_electric_cluster_2]
@@ -31,11 +19,6 @@ csv_file = "ex06-emergency-electric-2.csv"
 csv_file = "ex06-emergency-heating-1.csv"
 [loads.emergency_steam_cluster_2]
 csv_file = "ex06-emergency-heating-2.csv"
-# REFAC remove
-[loads.waste_heat_load]
-time_unit = "hours"
-rate_unit = "kW"
-time_rate_pairs = [[0.0, 100000.0], [876000.0]]
 [components.electric_utility]
 type = "source"
 outflow = "electricity"
@@ -59,18 +42,6 @@ type = "load"
 inflow = "steam"
 loads_by_scenario.blue_sky = "normal_steam_cluster_2"
 loads_by_scenario.ice_jam_flood = "emergency_steam_cluster_2"
-# REFAC remove
-[components.waste_sink_1]
-type = "load"
-inflow = "waste_heat"
-loads_by_scenario.blue_sky = "waste_heat_load"
-loads_by_scenario.ice_jam_flood = "waste_heat_load"
-# REFAC remove
-[components.waste_sink_2]
-type = "load"
-inflow = "waste_heat"
-loads_by_scenario.blue_sky = "waste_heat_load"
-loads_by_scenario.ice_jam_flood = "waste_heat_load"
 [components.coal_to_steam]
 type = "converter"
 inflow = "coal"
@@ -81,13 +52,6 @@ constant_efficiency = 0.8
 # TODO: model this as a storage unit with possible periodic resupply
 type = "source"
 outflow = "coal"
-# REFAC remove
-[components.chp_mux]
-type = "muxer"
-stream = "waste_heat"
-num_inflows = 1
-num_outflows = 2
-outflow_dispatch_strategy = "in_order"
 [components.steam_loop]
 type = "muxer"
 stream = "steam"
@@ -140,65 +104,29 @@ stream = "steam"
 type = "pass_through"
 stream = "steam"
 [networks.nw_1]
-# REFAC connections = [
-#    # Electric Network
-#    ["electric_utility:OUT(0)", "elec_line_from_utility:IN(0)", "electricity"],
-#    ["elec_line_from_utility:OUT(0)", "electric_bus:IN(0)", "electricity"],
-#    ["waste_heat_to_electricity:OUT(0)", "electric_bus:IN(1)", "electricity"],
-#    ["electric_bus:OUT(0)", "elec_line_to_c1:IN(0)", "electricity"],
-#    ["electric_bus:OUT(1)", "elec_line_to_c2:IN(0)", "electricity"],
-#    ["elec_line_to_c1:OUT(0)", "cluster_1_electric:IN(0)", "electricity"],
-#    ["elec_line_to_c2:OUT(0)", "cluster_2_electric:IN(0)", "electricity"],
-#    # Thermal Network
-#    ["coal_pile:OUT(0)", "coal_to_steam:IN(0)", "coal"],
-#    ["coal_to_steam:OUT(0)", "steam_loop:IN(0)", "steam"],
-#    ["steam_loop:OUT(0)", "steam_line_to_c1:IN(0)", "steam"],
-#    ["steam_line_to_c1:OUT(0)", "c1_steam_mux:IN(0)", "steam"],
-#    ["c1_steam_mux:OUT(0)", "cluster_1_thermal:IN(0)", "steam"],
-#    ["c1_steam_mux:OUT(1)", "steam_c1_to_c2:IN(0)", "steam"],
-#    ["steam_c1_to_c2:OUT(0)", "c2_steam_mux:IN(1)", "steam"],
-#    ["steam_loop:OUT(1)", "steam_line_to_c2:IN(0)", "steam"],
-#    ["steam_line_to_c2:OUT(0)", "c2_steam_mux:IN(0)", "steam"],
-#    ["c2_steam_mux:OUT(0)", "cluster_2_thermal:IN(0)", "steam"],
-#    ["c2_steam_mux:OUT(1)", "steam_c2_to_c1:IN(0)", "steam"],
-#    ["steam_c2_to_c1:OUT(0)", "c1_steam_mux:IN(1)", "steam"],
-#    ["coal_to_steam:OUT(1)", "waste_heat_to_electricity:IN(0)", "waste_heat"]]
 connections = [
   # Electric Network
-  ["electric_utility", "elec_line_from_utility"],
-  ["elec_line_from_utility", "electric_bus"],
-  ["waste_heat_to_electricity", "outflow", "0",
-   "electric_bus", "inflow", "1"],
-  ["electric_bus", "elec_line_to_c1"],
-  ["electric_bus", "outflow", "1",
-   "elec_line_to_c2", "inflow", "0"],
-  ["elec_line_to_c1", "cluster_1_electric"],
-  ["elec_line_to_c2", "cluster_2_electric"],
+  ["electric_utility:OUT(0)", "elec_line_from_utility:IN(0)", "electricity"],
+  ["elec_line_from_utility:OUT(0)", "electric_bus:IN(0)", "electricity"],
+  ["waste_heat_to_electricity:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["electric_bus:OUT(0)", "elec_line_to_c1:IN(0)", "electricity"],
+  ["electric_bus:OUT(1)", "elec_line_to_c2:IN(0)", "electricity"],
+  ["elec_line_to_c1:OUT(0)", "cluster_1_electric:IN(0)", "electricity"],
+  ["elec_line_to_c2:OUT(0)", "cluster_2_electric:IN(0)", "electricity"],
   # Thermal Network
-  ["coal_pile", "coal_to_steam"],
-  ["coal_to_steam", "steam_loop"],
-  ["steam_loop", "steam_line_to_c1"],
-  ["steam_line_to_c1", "c1_steam_mux"],
-  ["c1_steam_mux", "cluster_1_thermal"],
-  ["c1_steam_mux", "outflow", "1",
-   "steam_c1_to_c2", "inflow", "0"],
-  ["steam_c1_to_c2", "outflow", "0",
-   "c2_steam_mux", "inflow", "1"],
-  ["steam_loop", "outflow", "1",
-   "steam_line_to_c2", "inflow", "0"],
-  ["steam_line_to_c2", "c2_steam_mux"],
-  ["c2_steam_mux", "cluster_2_thermal"],
-  ["c2_steam_mux", "outflow", "1",
-   "steam_c2_to_c1", "inflow", "0"],
-  ["steam_c2_to_c1", "outflow", "0",
-   "c1_steam_mux", "inflow", "1"],
-  ["coal_to_steam", "outflow", "1",
-   "chp_mux", "inflow", "0"],
-  ["chp_mux", "waste_heat_to_electricity"],
-  ["chp_mux", "outflow", "1",
-   "waste_sink_1", "inflow", "0"],
-  ["waste_heat_to_electricity", "outflow", "1",
-   "waste_sink_2", "inflow", "0"]]
+  ["coal_pile:OUT(0)", "coal_to_steam:IN(0)", "coal"],
+  ["coal_to_steam:OUT(0)", "steam_loop:IN(0)", "steam"],
+  ["steam_loop:OUT(0)", "steam_line_to_c1:IN(0)", "steam"],
+  ["steam_line_to_c1:OUT(0)", "c1_steam_mux:IN(0)", "steam"],
+  ["c1_steam_mux:OUT(0)", "cluster_1_thermal:IN(0)", "steam"],
+  ["c1_steam_mux:OUT(1)", "steam_c1_to_c2:IN(0)", "steam"],
+  ["steam_c1_to_c2:OUT(0)", "c2_steam_mux:IN(1)", "steam"],
+  ["steam_loop:OUT(1)", "steam_line_to_c2:IN(0)", "steam"],
+  ["steam_line_to_c2:OUT(0)", "c2_steam_mux:IN(0)", "steam"],
+  ["c2_steam_mux:OUT(0)", "cluster_2_thermal:IN(0)", "steam"],
+  ["c2_steam_mux:OUT(1)", "steam_c2_to_c1:IN(0)", "steam"],
+  ["steam_c2_to_c1:OUT(0)", "c1_steam_mux:IN(1)", "steam"],
+  ["coal_to_steam:OUT(1)", "waste_heat_to_electricity:IN(0)", "waste_heat"]]
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0}

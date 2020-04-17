@@ -6,10 +6,6 @@ quantity_unit = "kJ"
 time_unit = "years"
 max_time = 1000
 ############################################################
-# Streams
-[streams.electricity]
-type = "electricity_medium_voltage"
-############################################################
 # Loads
 [loads.building_electrical]
 csv_file = "ex03.csv"
@@ -62,34 +58,12 @@ upper_bound = 160.0
 ############################################################
 # Networks
 [networks.normal_operations]
-# array of 2, 4, or 6 element tuples each array holds a connection.
-# 2-tuple:
-# ["A","B"] is short-hand for: ["A","outflow",0,"B","inflow",0] where "A" is
-# the id for the first component and "B" is the id for the second component.
-# "Outflow" indicates the port type (inflow or outflow). Inflow and Outflow are
-# determined per the "normal flow direction". The "0" values indicate the port
-# number for the case of components with multiple ports; port numbering starts
-# at 0. Thus, this connects the first "outflow" port of "A" to the first
-# "inflow" port of "B".
-# 4-tuple:
-# ["A", "outflow", "B", "inflow"] maps to:
-# ["A", "outflow", "0", "B", "inflow", "0"]
-# 6-tuple: (full specification)
-# ["A", "outflow", "1", "B", "inflow", "0"] would indicate that A's second outflow
-# port (ports are numbered from 0) is connected to B's first inflow port.
-# Note: due to limitations in TOML's C++ parsing library, all elements of an
-# array must be of the same type so we quote integer port ids
-# REFAC connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity_medium_voltage"]]
-connections = [["electric_utility", "cluster_01_electric"]]
+connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 [networks.emergency_operations]
-# REFAC connections = [
-#   ["electric_utility:OUT(0)", "bus:IN(0)", "electricity_medium_voltage"],
-#   ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity_medium_voltage"],
-#   ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity_medium_voltage"]]
 connections = [
-  ["electric_utility", "outflow", "0", "bus", "inflow", "0"],
-  ["emergency_generator", "outflow", "0", "bus", "inflow", "1"],
-  ["bus", "cluster_01_electric"]]
+  ["electric_utility:OUT(0)", "bus:IN(0)", "electricity"],
+  ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity"],
+  ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 ############################################################
 # Scenarios
 [scenarios.blue_sky]

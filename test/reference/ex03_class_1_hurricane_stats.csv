@@ -1,9 +1,9 @@
-component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity_medium_voltage energy used (kJ)
-bus-inflow(0),muxer,electricity_medium_voltage,1,0,0,1.2096e+06
-bus-inflow(1),muxer,electricity_medium_voltage,1,0,0,0
-bus-outflow(0),muxer,electricity_medium_voltage,1,0,0,1.2096e+06
-cluster_01_electric,load,electricity_medium_voltage,1,0,0,1.2096e+06
-electric_utility,source,electricity_medium_voltage,1,0,0,1.2096e+06
-emergency_generator,source,electricity_medium_voltage,1,0,0,0
+component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ)
+bus-inflow(0),muxer,electricity,1,0,0,1.2096e+06
+bus-inflow(1),muxer,electricity,1,0,0,0
+bus-outflow(0),muxer,electricity,1,0,0,1.2096e+06
+cluster_01_electric,load,electricity,1,0,0,1.2096e+06
+electric_utility,source,electricity,1,0,0,1.2096e+06
+emergency_generator,source,electricity,1,0,0,0
 TOTAL (source),,,,,,1.2096e+06
 TOTAL (load),,,,,,1.2096e+06

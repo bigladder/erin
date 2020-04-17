@@ -4,8 +4,6 @@ quantity_unit = "kJ"
 time_unit = "years"
 max_time = 100
 fixed_random_series = [0.9,0.9,0.9,0.9,0.1,0.1,0.1,0.1]
-[streams.electricity]
-type = "electricity_medium_voltage"
 [loads.building_electrical]
 csv_file = "ex03.csv"
 [components.electric_utility]
@@ -42,17 +40,12 @@ type = "linear"
 lower_bound = 80.0
 upper_bound = 180.0
 [networks.normal_operations]
-# REFAC connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity_medium_voltage"]]
-connections = [["electric_utility", "cluster_01_electric"]]
+connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 [networks.emergency_operations]
-# REFAC connections = [
-#   ["electric_utility:OUT(0)", "bus:IN(0)", "electricity_medium_voltage"],
-#   ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity_medium_voltage"],
-#   ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity_medium_voltage"]]
 connections = [
-  ["electric_utility", "outflow", "0", "bus", "inflow", "0"],
-  ["emergency_generator", "outflow", "0", "bus", "inflow", "1"],
-  ["bus", "cluster_01_electric"]]
+  ["electric_utility:OUT(0)", "bus:IN(0)", "electricity"],
+  ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity"],
+  ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0}

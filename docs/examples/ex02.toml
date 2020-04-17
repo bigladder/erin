@@ -3,8 +3,6 @@ rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
 max_time = 4
-[streams.electricity]
-type = "electricity_medium_voltage"
 ############################################################
 [loads.building_electrical]
 csv_file = "ex02.csv"
@@ -19,8 +17,7 @@ input_stream = "electricity"
 loads_by_scenario.blue_sky = "building_electrical"
 ############################################################
 [networks.normal_operations]
-# REFAC connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity_medium_voltage"]]
-connections = [["electric_utility", "cluster_01_electric"]]
+connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 ############################################################
 [scenarios.blue_sky]
 time_unit = "hours"

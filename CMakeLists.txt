@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15) # required for gtest_discover_tests
 
-project(ERIN VERSION 0.0.13 LANGUAGES CXX)
+project(ERIN VERSION 0.0.14 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 

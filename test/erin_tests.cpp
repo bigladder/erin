@@ -5232,6 +5232,8 @@ TEST(ErinBasicsTest, Test_example_8)
   auto m = E::make_main_from_string(input);
   auto si = m.get_sim_info();
   EXPECT_EQ(si.get_time_units(), E::TimeUnits::Hours);
+  EXPECT_EQ(si.get_max_time(), 10);
+  EXPECT_EQ(si.get_max_time_in_seconds(), 36000);
   auto results = m.run_all();
 }
 

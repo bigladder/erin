@@ -153,6 +153,46 @@ namespace ERIN
     throw std::invalid_argument(oss.str());
   }
 
+  WorkUnits
+  tag_to_work_units(const std::string& tag)
+  {
+    if (tag == "kJ")
+      return WorkUnits::KiloJoules;
+    if (tag == "kWh")
+      return WorkUnits::KiloWattHours;
+    std::ostringstream oss{};
+    oss << "unhandled work unit for tag = '" << tag << "'\n";
+    throw std::invalid_argument(oss.str());
+  }
+
+  std::string
+  work_units_to_tag(WorkUnits wu)
+  {
+    switch (wu) {
+      case WorkUnits::KiloJoules:
+        return std::string{"kJ"};
+      case WorkUnits::KiloWattHours:
+        return std::string{"kWh"};
+    }
+    std::ostringstream oss{};
+    oss << "unhandled work unit '" << static_cast<int>(wu) << "'\n";
+    throw std::invalid_argument(oss.str());
+  }
+
+  FlowValueType
+  work_to_kJ(FlowValueType work, WorkUnits units)
+  {
+    switch (units) {
+      case WorkUnits::KiloJoules:
+        return work;
+      case WorkUnits::KiloWattHours:
+        return 3600.0 * work;
+    }
+    std::ostringstream oss{};
+    oss << "unhandled work unit '" << static_cast<int>(units) << "'\n";
+    throw std::invalid_argument(oss.str());
+  }
+
   ComponentType
   tag_to_component_type(const std::string& tag)
   {

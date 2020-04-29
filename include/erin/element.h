@@ -9,6 +9,7 @@
 #include "erin/devs/converter.h"
 #include "erin/devs/flow_limits.h"
 #include "erin/devs/load.h"
+#include "erin/devs/storage.h"
 #include "erin/devs/mux.h"
 #include "adevs.h"
 #include <functional>
@@ -119,7 +120,8 @@ namespace ERIN
     FlowMeter,
     Converter,
     Sink,
-    Mux
+    Mux,
+    Store
   };
 
   ElementType tag_to_element_type(const std::string& tag);
@@ -415,6 +417,36 @@ namespace ERIN
       std::vector<int> inflow_element_ids;
       bool record_history;
 
+      void log_ports();
+  };
+
+  ////////////////////////////////////////////////////////////
+  // Storage
+  class Storage : public FlowElement
+  {
+    public:
+      Storage(
+          std::string id,
+          ComponentType component_type,
+          const StreamType& stream_type,
+          FlowValueType capacity);
+
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& xs) override;
+
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
+    private:
+      erin::devs::StorageData data;
+      erin::devs::StorageState state;
+      std::shared_ptr<FlowWriter> flow_writer;
+      bool record_history;
+      int inflow_element_id;
+      int outflow_element_id;
       void log_ports();
   };
 

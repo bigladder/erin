@@ -64,7 +64,7 @@ namespace ERIN
       const RealTimeType t, const TimeUnits to_units);
 
   ////////////////////////////////////////////////////////////
-  // RateUnits
+  // RateUnits - Work per Unit Time
   enum class RateUnits
   {
     KiloWatts = 0,
@@ -72,6 +72,18 @@ namespace ERIN
 
   RateUnits tag_to_rate_units(const std::string& tag);
   std::string rate_units_to_tag(RateUnits ru);
+
+  //////////////////////////////////////////////////////////// 
+  // WorkUnits
+  enum class WorkUnits
+  {
+    KiloJoules = 0,
+    KiloWattHours,
+  };
+
+  WorkUnits tag_to_work_units(const std::string& tag);
+  std::string work_units_to_tag(WorkUnits wu);
+  FlowValueType work_to_kJ(FlowValueType work, WorkUnits units);
 
   ////////////////////////////////////////////////////////////
   // ComponentType

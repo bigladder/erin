@@ -1202,4 +1202,105 @@ namespace ERIN
       }
     }
   }
+
+  ////////////////////////////////////////////////////////////
+  // Storage
+  Storage::Storage(
+      std::string id,
+      ComponentType ct,
+      const StreamType& st,
+      FlowValueType capacity):
+    FlowElement(
+        std::move(id),
+        ct,
+        ElementType::Store,
+        st),
+    data{erin::devs::storage_make_data(capacity, capacity)},
+    state{erin::devs::storage_make_state(data)},
+    flow_writer{nullptr},
+    record_history{false},
+    inflow_element_id{-1},
+    outflow_element_id{-1}
+  {
+  }
+
+  void
+  Storage::delta_int()
+  {
+    state = erin::devs::storage_internal_transition(data, state);
+    log_ports();
+  }
+
+  void
+  Storage::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    state = erin::devs::storage_external_transition(data, state, e.real, xs);
+    log_ports();
+  }
+
+  void
+  Storage::delta_conf(std::vector<PortValue>& xs)
+  {
+    state = erin::devs::storage_confluent_transition(data, state, xs);
+    log_ports();
+  }
+
+  Time
+  Storage::ta()
+  {
+    auto dt = erin::devs::storage_time_advance(data, state);
+    if (dt == erin::devs::infinity)
+      return inf;
+    return Time{dt, 1};
+  }
+
+  void
+  Storage::output_func(std::vector<PortValue>& ys)
+  {
+    erin::devs::storage_output_function_mutable(data, state, ys);
+  }
+
+  void
+  Storage::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  Storage::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
+  }
+
+  void
+  Storage::log_ports()
+  {
+    if (flow_writer && record_history) {
+      if (inflow_element_id == -1)
+        inflow_element_id = flow_writer->register_id(
+            get_id() + "-inflow",
+            get_inflow_type().get_type(),
+            get_component_type(),
+            record_history);
+      if (outflow_element_id == -1)
+        outflow_element_id = flow_writer->register_id(
+            get_id() + "-outflow",
+            get_outflow_type().get_type(),
+            get_component_type(),
+            record_history);
+      flow_writer->write_data(
+          inflow_element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
+      flow_writer->write_data(
+          outflow_element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
+    }
+  }
+
 }

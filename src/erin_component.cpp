@@ -1079,4 +1079,100 @@ namespace ERIN
   {
     return !(a == b);
   }
+
+  ////////////////////////////////////////////////////////////
+  // StorageComponent
+  StorageComponent::StorageComponent(
+      const std::string& id_,
+      const StreamType& stream_,
+      const FlowValueType& capacity_):
+    StorageComponent(
+        id_,
+        stream_,
+        capacity_,
+        {})
+  {
+  }
+
+  StorageComponent::StorageComponent(
+      const std::string& id_,
+      const StreamType& stream_,
+      const FlowValueType& capacity_,
+      fragility_map fragilities):
+    Component(
+        id_,
+        ComponentType::Storage,
+        stream_,
+        stream_,
+        stream_,
+        std::move(fragilities)),
+    capacity{capacity_}
+  {
+  }
+
+  std::unique_ptr<Component>
+  StorageComponent::clone() const
+  {
+    auto fcs = clone_fragility_curves();
+    std::unique_ptr<Component> p = std::make_unique<StorageComponent>(
+        get_id(),
+        get_input_stream(),
+        capacity,
+        std::move(fcs));
+    return p;
+  }
+
+  PortsAndElements
+  StorageComponent::add_to_network(
+      adevs::Digraph<FlowValueType,Time>& /* nw */,
+      const std::string& /* active_scenario */,
+      bool is_failed) const
+  {
+    namespace ep = erin::port;
+    std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
+    std::unordered_set<FlowElement*> elements{};
+    auto the_id = get_id();
+    if constexpr (debug_level >= debug_level_high)
+      std::cout << "StorageComponent::add_to_network(...);id="
+                << the_id << "\n";
+    auto the_type = ComponentType::Storage;
+    auto stream = get_input_stream();
+    if (is_failed) {
+      FlowValueType min_limit{0.0};
+      FlowValueType max_limit{0.0};
+      auto the_limits = new FlowLimits(the_id, the_type, stream, min_limit, max_limit);
+      elements.emplace(the_limits);
+      the_limits->set_recording_on();
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{the_limits, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{the_limits, 0}};
+    }
+    else {
+      auto store = new Storage(the_id, the_type, stream, capacity);
+      elements.emplace(store);
+      store->set_recording_on();
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{store, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{store, 0}};
+    }
+    return PortsAndElements{ports, elements};
+  }
+
+  bool
+  operator==(const StorageComponent& a, const StorageComponent& b)
+  {
+    return a.base_is_equal(b) && (a.capacity == b.capacity);
+  }
+
+  bool
+  operator!=(const StorageComponent& a, const StorageComponent& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream& operator<<(std::ostream& os, const StorageComponent& n)
+  {
+    os << "StorageComponent("
+       << n.internals_to_string() << ", "
+       << "capacity=" << n.capacity << ")";
+    return os;
+  }
 }

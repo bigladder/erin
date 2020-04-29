@@ -9,6 +9,7 @@
 #include "erin_csv.h"
 #include "erin/fragility.h"
 #include "erin/port.h"
+#include "erin/type.h"
 #include "erin/utils.h"
 #include "erin_generics.h"
 #include "toml_helper.h"
@@ -952,26 +953,19 @@ namespace ERIN
         std::string, std::unique_ptr<Component>>& components,
       fragility_map&& frags) const
   {
-    //bool has_limits{false};
-    //std::string field_read;
-    //auto min_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-    //    tt, {"min_outflow"}, 0.0, field_read);
-    //has_limits = field_read == "min_outflow";
-    //field_read = "";
-    //auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-    //    tt, {"max_outflow"}, min_outflow, field_read);
-    //has_limits = has_limits || (field_read == "max_outflow");
-    //std::unique_ptr<Component> pass_through_comp;
-    //if (has_limits)
-    //  pass_through_comp = std::make_unique<PassThroughComponent>(
-    //      id, StreamType(stream), Limits{min_outflow, max_outflow}, std::move(frags));
-    //else
-    //  pass_through_comp = std::make_unique<PassThroughComponent>(
-    //      id, StreamType(stream), std::move(frags));
-    //components.insert(
-    //    std::make_pair(id, std::move(pass_through_comp)));
+    std::string field_read;
+    auto capacity = toml_helper::read_required_table_field<FlowValueType>(
+        tt, {"capacity"}, field_read);
+    field_read = "";
+    auto capacity_units_tag = toml_helper::read_optional_table_field<std::string>(
+        tt, {"capacity_units", "capacity_unit"}, "kJ", field_read);
+    auto capacity_units = tag_to_work_units(capacity_units_tag);
+    capacity = work_to_kJ(capacity, capacity_units);
+    std::unique_ptr<Component> store = std::make_unique<PassThroughComponent>(
+        id, StreamType(stream), capacity, std::move(frags));
+    components.insert(
+        std::make_pair(id, std::move(store)));
   }
-
 
   void
   TomlInputReader::read_converter_component(

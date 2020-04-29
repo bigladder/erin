@@ -346,6 +346,38 @@ namespace ERIN
   bool operator==(const PassThroughComponent& a, const PassThroughComponent& b);
   bool operator!=(const PassThroughComponent& a, const PassThroughComponent& b);
   std::ostream& operator<<(std::ostream& os, const PassThroughComponent& n);
+
+  ////////////////////////////////////////////////////////////
+  // StorageComponent
+  class StorageComponent : public Component
+  {
+    public:
+      StorageComponent(
+          const std::string& id,
+          const StreamType& stream,
+          const FlowValueType& capacity);
+      StorageComponent(
+          const std::string& id,
+          const StreamType& stream,
+          const FlowValueType& capacity,
+          fragility_map fragilities);
+
+      [[nodiscard]] std::unique_ptr<Component> clone() const override;
+      PortsAndElements add_to_network(
+          adevs::Digraph<FlowValueType, Time>& nw,
+          const std::string& active_scenario,
+          bool is_failed = false) const override;
+
+      friend bool operator==(const StorageComponent& a, const StorageComponent& b);
+      friend std::ostream& operator<<(std::ostream& os, const StorageComponent& n);
+
+    private:
+      FlowValueType capacity;
+  };
+
+  bool operator==(const StorageComponent& a, const StorageComponent& b);
+  bool operator!=(const StorageComponent& a, const StorageComponent& b);
+  std::ostream& operator<<(std::ostream& os, const StorageComponent& n);
 }
 
 #endif // ERIN_COMPONENT_H

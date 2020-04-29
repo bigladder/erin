@@ -5230,11 +5230,15 @@ TEST(ErinBasicsTest, Test_example_8)
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n";
   auto m = E::make_main_from_string(input);
-  auto si = m.get_sim_info();
+  const auto& si = m.get_sim_info();
   EXPECT_EQ(si.get_time_units(), E::TimeUnits::Hours);
   EXPECT_EQ(si.get_max_time(), 10);
   EXPECT_EQ(si.get_max_time_in_seconds(), 36000);
   EXPECT_EQ(m.max_time_for_scenario("blue_sky"), 36000);
+  const auto& comps = m.get_components();
+  EXPECT_EQ(comps.size(), 3);
+  const auto& nws = m.get_networks();
+  EXPECT_EQ(nws.size(), 1);
   auto results = m.run_all();
 }
 

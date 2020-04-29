@@ -5191,6 +5191,48 @@ TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
         results, expected_times, expected_inflows1, limit1_id));
 }
 
+TEST(ErinBasicsTest, Test_example_8)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"hours\"\n"
+    "max_time = 10\n"
+    "[loads.building_electrical]\n"
+    "time_unit = \"hours\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "[components.electric_source]\n"
+    "type = \"source\"\n"
+    "max_outflow = 5.0\n"
+    "outflow = \"electricity\"\n"
+    "[components.electric_battery]\n"
+    "type = \"store\"\n"
+    "outflow = \"electricity\"\n"
+    "inflow = \"electricity\"\n"
+    "capacity_unit = \"kWh\"\n"
+    "capacity = 20.0\n"
+    "[components.electric_load]\n"
+    "type = \"load\"\n"
+    "inflow = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"building_electrical\"\n"
+    "[networks.normal_operations]\n"
+    "connections = [\n"
+    "  [\"electric_source:OUT(0)\", \"electric_battery:IN(0)\", \"electricity\"],\n"
+    "  [\"electric_battery:OUT(0)\", \"electric_load:IN(0)\", \"electricity\"],\n"
+    "]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"hours\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n";
+  auto m = E::make_main_from_string(input);
+  //auto results = m.run_all();
+}
+
 int
 main(int argc, char **argv)
 {

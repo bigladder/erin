@@ -82,7 +82,8 @@ namespace ERIN
     Converter,
     Muxer,
     PassThrough,
-    Informational
+    Informational,
+    Storage
   };
 
   ComponentType tag_to_component_type(const std::string& tag);

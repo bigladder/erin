@@ -168,6 +168,8 @@ namespace ERIN
       return ComponentType::PassThrough;
     if ((tag == "info") || (tag == "informational") || (tag == "optional"))
       return ComponentType::Informational;
+    if ((tag == "store") || (tag == "storage"))
+      return ComponentType::Storage;
     std::ostringstream oss;
     oss << "Unhandled tag \"" << tag << "\"";
     throw std::invalid_argument(oss.str());

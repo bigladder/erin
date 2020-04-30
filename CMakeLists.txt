@@ -125,3 +125,7 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex06-normal-heating-2.csv"
   "ex06-normal-heating-2.csv"
   COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex08.toml"
+  "ex08.toml"
+  COPYONLY)

@@ -198,6 +198,15 @@ namespace ERIN
           const auto& b_mux = dynamic_cast<const MuxerComponent&>(*b);
           return a_mux == b_mux;
         }
+      case ComponentType::Storage:
+        {
+          if constexpr (debug_level >= debug_level_high) {
+            std::cout << "StorageComponent compare...\n";
+          }
+          const auto& a_store = dynamic_cast<const StorageComponent&>(*a);
+          const auto& b_store = dynamic_cast<const StorageComponent&>(*b);
+          return a_store == b_store;
+        }
       default:
         {
           std::ostringstream oss;
@@ -245,6 +254,12 @@ namespace ERIN
         {
           const auto& a_mux = dynamic_cast<const MuxerComponent&>(*a);
           os << a_mux;
+          break;
+        }
+      case ComponentType::Storage:
+        {
+          const auto& a_store = dynamic_cast<const StorageComponent&>(*a);
+          os << a_store;
           break;
         }
       default:

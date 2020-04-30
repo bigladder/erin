@@ -231,6 +231,8 @@ namespace ERIN
         return std::string{"pass_through"};
       case ComponentType::Informational:
         return std::string{"informational"};
+      case ComponentType::Storage:
+        return std::string{"storage"};
       default:
         {
           std::ostringstream oss;

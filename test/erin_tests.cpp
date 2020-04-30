@@ -5240,6 +5240,7 @@ TEST(ErinBasicsTest, Test_example_8)
   const auto& nws = m.get_networks();
   EXPECT_EQ(nws.size(), 1);
   auto results = m.run_all();
+  EXPECT_TRUE(results.get_is_good());
 }
 
 int

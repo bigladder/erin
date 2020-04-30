@@ -1085,11 +1085,13 @@ namespace ERIN
   StorageComponent::StorageComponent(
       const std::string& id_,
       const StreamType& stream_,
-      const FlowValueType& capacity_):
+      FlowValueType capacity_,
+      FlowValueType max_charge_rate_):
     StorageComponent(
         id_,
         stream_,
         capacity_,
+        max_charge_rate_,
         {})
   {
   }
@@ -1097,7 +1099,8 @@ namespace ERIN
   StorageComponent::StorageComponent(
       const std::string& id_,
       const StreamType& stream_,
-      const FlowValueType& capacity_,
+      FlowValueType capacity_,
+      FlowValueType max_charge_rate_,
       fragility_map fragilities):
     Component(
         id_,
@@ -1106,8 +1109,17 @@ namespace ERIN
         stream_,
         stream_,
         std::move(fragilities)),
-    capacity{capacity_}
+    capacity{capacity_},
+    max_charge_rate{max_charge_rate_}
   {
+    if (capacity <= 0.0)
+      throw std::invalid_argument(
+          "capacity cannot be less than or equal to 0.0: capacity = "
+          + std::to_string(capacity));
+    if (max_charge_rate < 0.0)
+      throw std::invalid_argument(
+          "max_charge_rate cannot be less than 0.0: max_charge_rate = "
+          + std::to_string(max_charge_rate));
   }
 
   std::unique_ptr<Component>
@@ -1118,6 +1130,7 @@ namespace ERIN
         get_id(),
         get_input_stream(),
         capacity,
+        max_charge_rate,
         std::move(fcs));
     return p;
   }
@@ -1147,7 +1160,8 @@ namespace ERIN
       ports[ep::Type::Outflow] = std::vector<ElementPort>{{the_limits, 0}};
     }
     else {
-      auto store = new Storage(the_id, the_type, stream, capacity);
+      auto store = new Storage(
+          the_id, the_type, stream, capacity, max_charge_rate);
       elements.emplace(store);
       store->set_recording_on();
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{store, 0}};

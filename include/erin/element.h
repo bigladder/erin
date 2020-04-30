@@ -429,7 +429,8 @@ namespace ERIN
           std::string id,
           ComponentType component_type,
           const StreamType& stream_type,
-          FlowValueType capacity);
+          FlowValueType capacity,
+          FlowValueType max_charge_rate);
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
@@ -447,6 +448,7 @@ namespace ERIN
       bool record_history;
       int inflow_element_id;
       int outflow_element_id;
+
       void log_ports();
   };
 

@@ -5212,6 +5212,7 @@ TEST(ErinBasicsTest, Test_example_8)
     "type = \"store\"\n"
     "outflow = \"electricity\"\n"
     "inflow = \"electricity\"\n"
+    "max_inflow = 5.0\n"
     "capacity_unit = \"kWh\"\n"
     "capacity = 20.0\n"
     "[components.electric_load]\n"
@@ -5241,6 +5242,63 @@ TEST(ErinBasicsTest, Test_example_8)
   EXPECT_EQ(nws.size(), 1);
   auto results = m.run_all();
   EXPECT_TRUE(results.get_is_good());
+  auto srs = results.get_results();
+  EXPECT_EQ(srs.size(), 1);
+  EXPECT_EQ(results.number_of_scenarios(), 1);
+  const auto& scenario_ids = results.get_scenario_ids();
+  EXPECT_EQ(scenario_ids.size(), 1);
+  EXPECT_EQ(scenario_ids[0], "blue_sky");
+  const auto& blue_sky_sr = srs["blue_sky"];
+  EXPECT_EQ(blue_sky_sr.size(), 1);
+  const auto& bsr = blue_sky_sr[0];
+  EXPECT_TRUE(bsr.get_is_good());
+  const auto& blue_sky_data = bsr.get_results();
+  for (const auto& pair : blue_sky_data) {
+    std::cout << "item: " << pair.first << "\n";
+    for (const auto& x : pair.second) {
+      std::cout << "- " << x << "\n";
+    }
+  }
+  const auto& d0_load = blue_sky_data.at("electric_load")[0];
+  const E::Datum d0_load_expected{0, 10.0, 10.0};
+  EXPECT_EQ(d0_load, d0_load_expected);
+  const auto& d1_load = blue_sky_data.at("electric_load")[1];
+  const E::Datum d1_load_expected{14400, 10.0, 5.0};
+  EXPECT_EQ(d1_load, d1_load_expected);
+  const auto& d2_load = blue_sky_data.at("electric_load")[2];
+  const E::Datum d2_load_expected{36000, 0.0, 0.0};
+  EXPECT_EQ(d2_load, d2_load_expected);
+
+  const auto& d0_battery = blue_sky_data.at("electric_battery-inflow")[0];
+  const E::Datum d0_battery_expected{0, 5.0, 5.0};
+  EXPECT_EQ(d0_battery, d0_battery_expected);
+  const auto& d1_battery = blue_sky_data.at("electric_battery-inflow")[1];
+  const E::Datum d1_battery_expected{14400, 5.0, 5.0};
+  EXPECT_EQ(d1_battery, d1_battery_expected);
+  const auto& d2_battery = blue_sky_data.at("electric_battery-inflow")[2];
+  const E::Datum d2_battery_expected{36000, 0.0, 0.0};
+  EXPECT_EQ(d2_battery, d2_battery_expected);
+
+  const auto& d0_battery_out = blue_sky_data.at("electric_battery-outflow")[0];
+  const E::Datum d0_battery_out_expected{0, 10.0, 10.0};
+  EXPECT_EQ(d0_battery_out, d0_battery_out_expected);
+  const auto& d1_battery_out = blue_sky_data.at("electric_battery-outflow")[1];
+  const E::Datum d1_battery_out_expected{14400, 10.0, 5.0};
+  EXPECT_EQ(d1_battery_out, d1_battery_out_expected);
+  const auto& d2_battery_out = blue_sky_data.at("electric_battery-outflow")[2];
+  const E::Datum d2_battery_out_expected{36000, 0.0, 0.0};
+  EXPECT_EQ(d2_battery_out, d2_battery_out_expected);
+
+  const auto& d0_source = blue_sky_data.at("electric_source")[0];
+  const E::Datum d0_source_expected{0, 5.0, 5.0};
+  EXPECT_EQ(d0_source, d0_source_expected);
+  const auto& d1_source = blue_sky_data.at("electric_source")[1];
+  const E::Datum d1_source_expected{14400, 5.0, 5.0};
+  EXPECT_EQ(d1_source, d1_source_expected);
+  const auto& d2_source = blue_sky_data.at("electric_source")[2];
+  const E::Datum d2_source_expected{36000, 0.0, 0.0};
+  EXPECT_EQ(d2_source, d2_source_expected);
+  //auto stats = results.get_stats();
 }
 
 int

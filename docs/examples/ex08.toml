@@ -19,6 +19,7 @@ outflow = "electricity"
 inflow = "electricity"
 capacity_unit = "kWh"
 capacity = 20.0
+max_inflow = 5.0
 [components.electric_load]
 type = "load"
 inflow = "electricity"

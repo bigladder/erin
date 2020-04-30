@@ -28,7 +28,12 @@ namespace toml_helper
         return toml::get<T>(it->second);
       }
     }
-    throw std::out_of_range("required keys not found in table");
+    std::ostringstream oss{};
+    oss << "Required keys not found in table. Keys searched for: \n";
+    for (const auto& k : keys) {
+      oss << "- key: '" << k << "'\n";
+    }
+    throw std::out_of_range(oss.str());
   }
 
   template <class T>
@@ -40,8 +45,7 @@ namespace toml_helper
   {
     try {
       return read_required_table_field<T>(tt, keys, field_read);
-    }
-    catch (const std::out_of_range&) {
+    } catch (const std::out_of_range&) {
       return default_value;
     }
   }

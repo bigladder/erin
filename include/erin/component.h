@@ -355,11 +355,13 @@ namespace ERIN
       StorageComponent(
           const std::string& id,
           const StreamType& stream,
-          const FlowValueType& capacity);
+          FlowValueType capacity,
+          FlowValueType max_charge_rate);
       StorageComponent(
           const std::string& id,
           const StreamType& stream,
-          const FlowValueType& capacity,
+          FlowValueType capacity,
+          FlowValueType max_charge_rate,
           fragility_map fragilities);
 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
@@ -373,6 +375,7 @@ namespace ERIN
 
     private:
       FlowValueType capacity;
+      FlowValueType max_charge_rate;
   };
 
   bool operator==(const StorageComponent& a, const StorageComponent& b);

@@ -246,7 +246,7 @@ namespace ERIN
     os << "Datum("
        << "time=" << d.time << ", "
        << "requested_value=" << d.requested_value << ", "
-       << "achieved_value=" << d.requested_value << ")";
+       << "achieved_value=" << d.achieved_value << ")";
     return os;
   }
 

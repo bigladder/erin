@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/devs/storage.h"
+#include "debug_utils.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -267,8 +268,9 @@ namespace erin::devs
   {
     storage_check_soc(soc);
     FlowValueType requested_charge{0.0}; 
-    if (soc < 1.0)
+    if (soc < 1.0) {
       requested_charge = data.max_charge_rate;
+    }
     return StorageState{
       0,
       soc,
@@ -340,6 +342,10 @@ namespace erin::devs
       const StorageData& data,
       const StorageState& state)
   {
+    namespace E = ERIN;
+    if constexpr (E::debug_level >= E::debug_level_high) {
+      std::cout << "storage_internal_transition(...)\n";
+    }
     auto dt{storage_time_advance(data, state)};
     if ((dt == infinity) || (dt < 0)) {
       std::ostringstream oss{};
@@ -354,6 +360,13 @@ namespace erin::devs
         state.outflow_port.get_achieved(),
         dt,
         data.capacity);
+    if constexpr (E::debug_level >= E::debug_level_high) {
+      std::cout << "state.time = " << state.time <<"\n";
+      std::cout << "time = " << time <<"\n";
+      std::cout << "dt = " << dt <<"\n";
+      std::cout << "state.soc = " << state.soc <<"\n";
+      std::cout << "soc = " << soc <<"\n";
+    }
     auto ip{state.inflow_port};
     auto op{state.outflow_port};
     if (soc == 1.0) {
@@ -394,6 +407,12 @@ namespace erin::devs
               time);
         }
       }
+    }
+    if constexpr (E::debug_level >= E::debug_level_high) {
+      std::cout << "time = " << time <<"\n";
+      std::cout << "soc = " << soc <<"\n";
+      std::cout << "ip = " << ip <<"\n";
+      std::cout << "op = " << op <<"\n";
     }
     return StorageState{
       time,
@@ -480,46 +499,71 @@ namespace erin::devs
       const StorageState& state,
       std::vector<PortValue>& ys)
   {
+    namespace E = ERIN;
+    if constexpr (E::debug_level >= E::debug_level_high) {
+      std::cout << "storage_output_function_mutable(...)\n";
+    }
     auto dt{storage_time_advance(data, state)};
     auto time{state.time + dt};
+    if constexpr (E::debug_level >= E::debug_level_high) {
+      std::cout << "dt = " << dt << "\n";
+      std::cout << "time = " << time << "\n";
+    }
     if (dt == 0) {
-      if (state.inflow_port.should_propagate_request_at(time))
+      if (state.inflow_port.should_propagate_request_at(time)) {
         ys.emplace_back(
             PortValue{
               outport_inflow_request,
               state.inflow_port.get_requested()});
-      if (state.outflow_port.should_propagate_achieved_at(time))
+      }
+      if (state.outflow_port.should_propagate_achieved_at(time)) {
         ys.emplace_back(
             PortValue{
               outport_outflow_achieved,
               state.outflow_port.get_achieved()});
+      }
       return;
     }
     if (dt > 0) {
-      auto ip{state.inflow_port};
-      auto op{state.outflow_port};
+      Port ip{state.inflow_port};
+      Port op{state.outflow_port};
+      auto inflow_achieved = state.inflow_port.get_achieved();
       auto net_inflow{
-        state.inflow_port.get_achieved()
+        inflow_achieved
         - state.outflow_port.get_achieved()};
-      if (net_inflow > 0.0)
+      if constexpr (E::debug_level >= E::debug_level_high) {
+        std::cout << "net_inflow = " << net_inflow << "\n";
+      }
+      if (net_inflow > 0.0) {
         ip = ip.with_requested(0.0, time);
-      if (net_inflow < 0.0)
+      } else if (net_inflow < 0.0) {
         op = op.with_achieved(
             std::clamp(
               op.get_requested(),
               0.0,
-              ip.get_achieved()),
+              inflow_achieved),
             time);
-      if (ip.should_propagate_request_at(time))
+      }
+      if (ip.should_propagate_request_at(time)) {
+        if constexpr (E::debug_level >= E::debug_level_high) {
+          std::cout << "emplacing outport_inflow_request = "
+                    << ip.get_requested() << "\n";
+        }
         ys.emplace_back(
             PortValue{
               outport_inflow_request,
               ip.get_requested()});
-      if (op.should_propagate_achieved_at(time))
+      }
+      if (op.should_propagate_achieved_at(time)) {
+        if constexpr (E::debug_level >= E::debug_level_high) {
+          std::cout << "emplacing outport_outflow_achieved = "
+                    << op.get_achieved() << "\n";
+        }
         ys.emplace_back(
             PortValue{
               outport_outflow_achieved,
               op.get_achieved()});
+      }
       return;
     }
     std::ostringstream oss{};

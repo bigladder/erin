@@ -961,8 +961,10 @@ namespace ERIN
         tt, {"capacity_units", "capacity_unit"}, "kJ", field_read);
     auto capacity_units = tag_to_work_units(capacity_units_tag);
     capacity = work_to_kJ(capacity, capacity_units);
-    std::unique_ptr<Component> store = std::make_unique<PassThroughComponent>(
-        id, StreamType(stream), capacity, std::move(frags));
+    auto max_charge_rate = toml_helper::read_required_table_field<FlowValueType>(
+        tt, {"max_inflow", "max_charge", "max_charge_rate"}, field_read);
+    std::unique_ptr<Component> store = std::make_unique<StorageComponent>(
+        id, StreamType(stream), capacity, max_charge_rate, std::move(frags));
     components.insert(
         std::make_pair(id, std::move(store)));
   }
@@ -2132,8 +2134,9 @@ namespace ERIN
     auto elements = erin::network::build(
         scenario_id, network, connections, components, fpbc, rand_fn, true);
     std::shared_ptr<FlowWriter> fw = std::make_shared<DefaultFlowWriter>();
-    for (auto e_ptr: elements)
+    for (auto e_ptr: elements) {
       e_ptr->set_flow_writer(fw);
+    }
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();

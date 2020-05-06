@@ -129,8 +129,8 @@ namespace erin::graphviz
       //<< " [color=\"black\"];\n";
       connections
         << tab
-        << c1.component_id << ":" << "O" << c1.port_number << " -> "
-        << c2.component_id << ":" << "I" << c2.port_number << ";\n";
+        << c1.component_id << ":" << "O" << c1.port_number << ":s -> "
+        << c2.component_id << ":" << "I" << c2.port_number << ":n;\n";
     }
     for (const auto& item: ports) {
       const auto& id = item.first;

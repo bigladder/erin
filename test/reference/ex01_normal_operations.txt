@@ -13,5 +13,5 @@ digraph normal_operations {
         <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
       </TR>
     </TABLE>>];
-  electric_utility:O0 -> cluster_01_electric:I0;
+  electric_utility:O0:s -> cluster_01_electric:I0:n;
 }

@@ -182,11 +182,12 @@ namespace ERIN
   FlowValueType
   work_to_kJ(FlowValueType work, WorkUnits units)
   {
+    constexpr FlowValueType kWh_to_kJ{3600.0};
     switch (units) {
       case WorkUnits::KiloJoules:
         return work;
       case WorkUnits::KiloWattHours:
-        return 3600.0 * work;
+        return kWh_to_kJ * work;
     }
     std::ostringstream oss{};
     oss << "unhandled work unit '" << static_cast<int>(units) << "'\n";

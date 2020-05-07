@@ -3867,7 +3867,6 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
     {"C-inflow", E::ScenarioStats{10,0,0,0.0,0.0}},
     {"C-outflow", E::ScenarioStats{0,10,10,100.0,0.0}},
     {"C-lossflow", E::ScenarioStats{10,0,0,0.0,0.0}},
-    {"C-wasteflow", E::ScenarioStats{10,0,0,0.0,0.0}},
     {"S", E::ScenarioStats{10,0,0,0.0,0.0}}};
   EXPECT_EQ(stats.size(), expected_stats.size());
   for (const auto& s_item: expected_stats) {

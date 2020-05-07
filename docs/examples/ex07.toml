@@ -4,6 +4,7 @@ rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
 max_time = 100
+fixed_random = 0.5
 [streams.electricity]
 type = "electricity"
 [streams.steam]

@@ -905,7 +905,6 @@ namespace ERIN
     auto out_stream = get_output_stream();
     const auto& out_stream_name = out_stream.get_type();
     auto loss_stream = get_lossflow_stream();
-    const auto& loss_stream_name = loss_stream.get_type();
     if (is_failed) {
       auto lim_in = new FlowLimits(the_id + "-inflow", the_type, in_stream, 0.0, 0.0);
       elements.emplace(lim_in);
@@ -916,10 +915,6 @@ namespace ERIN
       auto lim_loss = new FlowLimits(the_id + "-lossflow", the_type, loss_stream, 0.0, 0.0);
       lim_loss->set_recording_on();
       elements.emplace(lim_loss);
-      auto lim_waste = new FlowLimits(the_id + "-wasteflow", the_type, loss_stream, 0.0, 0.0);
-      lim_waste->set_recording_on();
-      elements.emplace(lim_waste);
-      connect_source_to_sink(nw, lim_waste, lim_loss, true, loss_stream_name);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim_in, 0}};
       ports[ep::Type::Outflow] = std::vector<ElementPort>{{lim_out, 0}, {lim_loss, 0}};
     }

@@ -66,7 +66,10 @@ namespace erin::devs
         amount -= request;
       }
     }
-    if (amount != 0.0) {
+    if (amount < 0.0) {
+      amount = 0.0;
+    }
+    if ((amount != 0.0) && (amount > ERIN::flow_value_tolerance)) {
       std::ostringstream oss{};
       oss << "inflow amount was greater than total requested\n"
           << "total requested: " << total_requested << "\n"
@@ -112,12 +115,14 @@ namespace erin::devs
       RealTimeType time)
   {
     auto outflow_ports{outflows};
-    if (outflow_strategy == MuxerDispatchStrategy::InOrder)
+    if (outflow_strategy == MuxerDispatchStrategy::InOrder) {
       outflow_ports = distribute_inflow_to_outflow_in_order(
           outflow_ports, amount, time);
-    else if (outflow_strategy == MuxerDispatchStrategy::Distribute)
+    }
+    else if (outflow_strategy == MuxerDispatchStrategy::Distribute) {
       outflow_ports = distribute_inflow_to_outflow_evenly(
           outflow_ports, amount, time);
+    }
     else {
       std::ostringstream oss{};
       oss << "unhandled muxer dispatch strategy "
@@ -144,10 +149,12 @@ namespace erin::devs
     }
     auto new_inflows{inflow_ports};
     for (int idx{idx_of_request}; idx < num_inflows; ++idx) {
-      if (idx == idx_of_request)
+      if (idx == idx_of_request) {
         new_inflows[idx] = new_inflows[idx].with_requested(request, time);
-      else
+      }
+      else {
         new_inflows[idx] = new_inflows[idx].with_requested(0.0, time);
+      }
     }
     return new_inflows;
   }
@@ -265,8 +272,9 @@ namespace erin::devs
       int port_n{-1};
       if ((port_n_ia >= 0) && (port_n_ia < state.num_inflows)) {
         port_n = port_n_ia;
-        if (port_n > highest_inflow_port_received)
+        if (port_n > highest_inflow_port_received) {
           highest_inflow_port_received = port_n;
+        }
         inflow_ports[port_n] = inflow_ports[port_n].with_achieved(x.value, time);
         got_inflow = true;
       }
@@ -276,17 +284,19 @@ namespace erin::devs
         got_outflow = true;
       }
       else {
-        std::ostringstream oss;
+        std::ostringstream oss{};
         oss << "BadPortError: unhandled port: \"" << x.port << "\"";
         throw std::runtime_error(oss.str());
       }
     }
     FlowValueType total_inflow_achieved{0.0};
-    for (const auto& ip : inflow_ports)
+    for (const auto& ip : inflow_ports) {
       total_inflow_achieved += ip.get_achieved();
+    }
     FlowValueType total_outflow_request{0.0};
-    for (const auto& op : outflow_ports)
+    for (const auto& op : outflow_ports) {
       total_outflow_request += op.get_requested();
+    }
     auto diff{total_inflow_achieved - total_outflow_request};
     if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
       std::cout << "... total_inflow_achieved: " << total_inflow_achieved << "\n"

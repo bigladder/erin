@@ -544,11 +544,10 @@ namespace ERIN
         spillage = lossflow - lossflow_request;
       }
     }
-    else if (outflow_provided && !inflow_provided) {
+    else if (outflow_provided) {
       if (lossflow_provided) {
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "!inflow_provided "
-                    << "&& outflow_provided "
+          std::cout << "outflow_provided "
                     << "&& lossflow_provided;id=" << get_id() << "\n";
         }
         lossflow_request = the_lossflow_request;
@@ -598,19 +597,6 @@ namespace ERIN
         }
         throw std::runtime_error(oss.str());
       }
-    }
-    else if (inflow_provided && outflow_provided) {
-      // assumption: we'll never get here...
-      std::ostringstream oss;
-      oss << "SimultaneousIORequestError: assumption was we'd never get here...\n";
-      oss << "... id=" << get_id() << "\n";
-      oss << "... inflow_provided=" << inflow_provided << "\n";
-      oss << "... outflow_provided=" << outflow_provided << "\n";
-      oss << "... lossflow_provided=" << lossflow_provided << "\n";
-      oss << "... the_inflow_achieved=" << the_inflow_achieved << "\n";
-      oss << "... the_outflow_request=" << the_outflow_request << "\n";
-      oss << "... the_lossflow_request=" << the_lossflow_request << "\n";
-      throw std::runtime_error(oss.str());
     }
     else if (lossflow_provided) {
       if constexpr (debug_level >= debug_level_high) {

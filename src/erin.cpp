@@ -1190,10 +1190,18 @@ namespace ERIN
       bool make_header,
       TimeUnits time_units) const
   {
-    if (!::erin::utils::is_superset(comp_ids, keys)) {
-      std::ostringstream oss;
+    if (!erin::utils::is_superset(comp_ids, keys)) {
+      std::ostringstream oss{};
       oss << "comp_ids is not a superset of the keys defined in "
-             "this ScenarioResults";
+             "this ScenarioResults\n"
+             "keys:\n";
+      for (const auto& k : keys) {
+        oss << k << "\n";
+      }
+      oss << "comp_ids:\n";
+      for (const auto& c_id : comp_ids) {
+        oss << c_id << "\n";
+      }
       throw std::invalid_argument(oss.str());
     }
     if (!is_good) {

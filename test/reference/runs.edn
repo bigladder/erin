@@ -55,6 +55,11 @@
   :compare-generated-to-ref
   {"out.txt" "ex01_normal_operations.txt"}}
  {:engine :e2rin_multi
+  :args "ex07.toml out.csv stats.csv"
+  :compare-generated-to-ref
+  {"out.csv" "ex07-out.csv"
+   "stats.csv" "ex07-stats.csv"}}
+ {:engine :e2rin_multi
   :args "ex08.toml out.csv stats.csv"
   :compare-generated-to-ref
   {"out.csv" "ex08-out.csv"

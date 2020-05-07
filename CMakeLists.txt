@@ -126,6 +126,58 @@ configure_file(
   "ex06-normal-heating-2.csv"
   COPYONLY)
 configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-emergency-electric-mcc.csv"
+  "ex07-emergency-electric-mcc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-emergency-electric-oc.csv"
+  "ex07-emergency-electric-oc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-emergency-heating-mcc.csv"
+  "ex07-emergency-heating-mcc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-emergency-heating-oc.csv"
+  "ex07-emergency-heating-oc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-emergency-steam-mcc.csv"
+  "ex07-emergency-steam-mcc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-emergency-steam-oc.csv"
+  "ex07-emergency-steam-oc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-normal-electric-mcc.csv"
+  "ex07-normal-electric-mcc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-normal-electric-oc.csv"
+  "ex07-normal-electric-oc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-normal-heating-mcc.csv"
+  "ex07-normal-heating-mcc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-normal-heating-oc.csv"
+  "ex07-normal-heating-oc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-normal-steam-mcc.csv"
+  "ex07-normal-steam-mcc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07-normal-steam-oc.csv"
+  "ex07-normal-steam-oc.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex07.toml"
+  "ex07.toml"
+  COPYONLY)
+configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex08.toml"
   "ex08.toml"
   COPYONLY)

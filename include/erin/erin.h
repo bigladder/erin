@@ -193,7 +193,7 @@ namespace ERIN
       virtual ~InputReader() = default;
 
       virtual SimulationInfo read_simulation_info() = 0;
-      virtual std::unordered_map<std::string, StreamType>
+      virtual std::unordered_map<std::string, std::string>
         read_streams(const SimulationInfo& si) = 0;
       virtual std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() = 0;
@@ -228,7 +228,7 @@ namespace ERIN
       explicit TomlInputReader(std::istream& in);
 
       SimulationInfo read_simulation_info() override;
-      std::unordered_map<std::string, StreamType>
+      std::unordered_map<std::string, std::string>
         read_streams(const SimulationInfo& si) override;
       std::unordered_map<std::string, std::vector<LoadItem>>
         read_loads() override;
@@ -497,10 +497,10 @@ namespace ERIN
 
   std::unordered_map<std::string,std::string>
   stream_types_to_stream_ids(
-      const std::unordered_map<std::string,StreamType>& stm);
+      const std::unordered_map<std::string,std::string>& stm);
   std::unordered_map<std::string,std::string>
   stream_types_to_stream_ids(
-      std::unordered_map<std::string,StreamType>&& stm);
+      std::unordered_map<std::string,std::string>&& stm);
 
   std::vector<RealTimeType>
     get_times_from_results_for_component(

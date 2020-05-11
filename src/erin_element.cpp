@@ -383,7 +383,7 @@ namespace ERIN
       std::string id_,
       ComponentType component_type_,
       ElementType element_type_,
-      const StreamType& st) :
+      const std::string& st) :
     FlowElement(std::move(id_), component_type_, element_type_, st, st)
   {
   }
@@ -392,8 +392,8 @@ namespace ERIN
       std::string id_,
       ComponentType component_type_,
       ElementType element_type_,
-      StreamType in,
-      StreamType out):
+      std::string in,
+      std::string out):
     adevs::Atomic<PortValue, Time>(),
     id{std::move(id_)},
     time{0,0},
@@ -414,11 +414,6 @@ namespace ERIN
     component_type{component_type_},
     element_type{element_type_}
   {
-    if (inflow_type.get_rate_units() != outflow_type.get_rate_units()) {
-      std::ostringstream oss;
-      oss << "InconsistentStreamUnitsError: inflow != outflow stream type";
-      throw std::invalid_argument(oss.str());
-    }
   }
 
   void
@@ -779,9 +774,10 @@ namespace ERIN
   {
     auto diff{inflow - (outflow + storeflow + lossflow)};
     if (std::fabs(diff) > flow_value_tolerance) {
-      std::cout << "FlowElement ERROR! " << inflow << " != " << outflow << " + "
-        << storeflow << " + " << lossflow << "!\n";
-      throw FlowInvariantError();
+      std::ostringstream oss{};
+      oss << "FlowElement ERROR! " << inflow << " != " << outflow << " + "
+          << storeflow << " + " << lossflow << "!\n";
+      throw std::runtime_error(oss.str());
     }
   }
 
@@ -790,7 +786,7 @@ namespace ERIN
   FlowLimits::FlowLimits(
       std::string id_,
       ComponentType component_type_,
-      const StreamType& stream_type_,
+      const std::string& stream_type_,
       FlowValueType lower_limit,
       FlowValueType upper_limit):
     FlowElement(
@@ -864,7 +860,7 @@ namespace ERIN
     if (flow_writer && record_history && (element_id == -1)) {
       element_id = flow_writer->register_id(
           get_id(),
-          get_outflow_type().get_type(),
+          get_outflow_type(),
           get_component_type(),
           record_history);
       flow_writer->write_data(
@@ -887,7 +883,7 @@ namespace ERIN
   FlowMeter::FlowMeter(
       std::string id,
       ComponentType component_type,
-      const StreamType& stream_type) :
+      const std::string& stream_type) :
     FlowElement(
         std::move(id),
         component_type,
@@ -919,7 +915,7 @@ namespace ERIN
     if ((element_id == -1) && flow_writer && record_history)
       element_id = flow_writer->register_id(
           get_id(),
-          get_outflow_type().get_type(),
+          get_outflow_type(),
           get_component_type(),
           record_history);
     if ((element_id != -1) && flow_writer)
@@ -935,8 +931,8 @@ namespace ERIN
   Converter::Converter(
       std::string id,
       ComponentType component_type,
-      StreamType input_stream_type,
-      StreamType output_stream_type,
+      std::string input_stream_type,
+      std::string output_stream_type,
       std::function<FlowValueType(FlowValueType)> calc_output_from_input,
       std::function<FlowValueType(FlowValueType)> calc_input_from_output):
     FlowElement(
@@ -1022,25 +1018,25 @@ namespace ERIN
       if (inflow_element_id == -1)
         inflow_element_id = flow_writer->register_id(
             get_id() + "-inflow",
-            get_inflow_type().get_type(),
+            get_inflow_type(),
             get_component_type(),
             record_history);
       if (outflow_element_id == -1)
         outflow_element_id = flow_writer->register_id(
             get_id(),
-            get_outflow_type().get_type(),
+            get_outflow_type(),
             get_component_type(),
             record_history);
       if (lossflow_element_id == -1)
         lossflow_element_id = flow_writer->register_id(
             get_id() + "-lossflow",
-            get_outflow_type().get_type(),
+            get_outflow_type(),
             get_component_type(),
             record_history);
       if (wasteflow_element_id == -1)
         wasteflow_element_id = flow_writer->register_id(
             get_id() + "-wasteflow",
-            get_outflow_type().get_type(),
+            get_outflow_type(),
             get_component_type(),
             record_history);
       flow_writer->write_data(
@@ -1071,7 +1067,7 @@ namespace ERIN
   Sink::Sink(
       std::string id,
       ComponentType component_type,
-      const StreamType& st,
+      const std::string& st,
       const std::vector<LoadItem>& loads_):
     FlowElement(
         std::move(id),
@@ -1144,7 +1140,7 @@ namespace ERIN
     if (flow_writer && record_history && (element_id == -1)) {
       element_id = flow_writer->register_id(
           get_id(),
-          get_outflow_type().get_type(),
+          get_outflow_type(),
           get_component_type(),
           record_history);
       flow_writer->write_data(
@@ -1167,7 +1163,7 @@ namespace ERIN
   Mux::Mux(
       std::string id,
       ComponentType ct,
-      const StreamType& st,
+      const std::string& st,
       int num_inflows_,
       int num_outflows_,
       MuxerDispatchStrategy outflow_strategy_):
@@ -1250,7 +1246,7 @@ namespace ERIN
           inflow_element_ids.emplace_back(
               flow_writer->register_id(
                 the_id + "-inflow(" + std::to_string(i) + ")",
-                get_inflow_type().get_type(),
+                get_inflow_type(),
                 get_component_type(),
                 record_history));
         }
@@ -1261,7 +1257,7 @@ namespace ERIN
           outflow_element_ids.emplace_back(
               flow_writer->register_id(
                 the_id + "-outflow(" + std::to_string(i) + ")",
-                get_outflow_type().get_type(),
+                get_outflow_type(),
                 get_component_type(),
                 record_history));
         }
@@ -1290,7 +1286,7 @@ namespace ERIN
   Storage::Storage(
       std::string id,
       ComponentType ct,
-      const StreamType& st,
+      const std::string& st,
       FlowValueType capacity,
       FlowValueType max_charge_rate):
     FlowElement(
@@ -1409,14 +1405,14 @@ namespace ERIN
       if (inflow_element_id == -1) {
         inflow_element_id = flow_writer->register_id(
             get_id() + "-inflow",
-            get_inflow_type().get_type(),
+            get_inflow_type(),
             get_component_type(),
             record_history);
       }
       if (outflow_element_id == -1) {
         outflow_element_id = flow_writer->register_id(
             get_id() + "-outflow",
-            get_outflow_type().get_type(),
+            get_outflow_type(),
             get_component_type(),
             record_history);
       }

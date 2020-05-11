@@ -23,15 +23,8 @@ doit()
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
   ::ERIN::SimulationInfo si{::ERIN::TimeUnits::Hours, N};
-  std::unordered_map<std::string, ::ERIN::StreamType> streams{
-    std::make_pair(
-        stream_id,
-        ::ERIN::StreamType(
-          std::string{"electricity"},
-          si.get_rate_unit(),
-          si.get_quantity_unit(),
-          1,
-          {}, {}))};
+  std::unordered_map<std::string, std::string> streams{
+    std::make_pair(stream_id, stream_id)};
   std::unordered_map<
     std::string,
     std::unique_ptr<::ERIN::Component>> components;
@@ -40,13 +33,13 @@ doit()
         source_id,
         std::make_unique<::ERIN::SourceComponent>(
           source_id,
-          streams.at(stream_id))));
+          stream_id)));
   components.insert(
       std::make_pair(
         load_id,
         std::make_unique<::ERIN::LoadComponent>(
           load_id,
-          streams.at(stream_id),
+          stream_id,
           loads_by_scenario)));
   std::unordered_map<
     std::string, std::vector<::erin::network::Connection>> networks{
@@ -54,7 +47,7 @@ doit()
         {
           { { source_id, ep::Type::Outflow, 0},
             { load_id, ep::Type::Inflow, 0},
-            "electricity"}}}};
+            stream_id}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{};
   scenarios.emplace(
       std::make_pair(

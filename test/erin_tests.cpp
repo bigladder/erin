@@ -178,7 +178,7 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
   E::RealTimeType t_max{4};
   std::vector<E::RealTimeType> expected_time = {0, 1, 2, 3, t_max};
   std::vector<E::FlowValueType> expected_flow = {50, 50, 40, 0, 0};
-  auto elec = E::StreamType("electrical");
+  std::string elec{"electrical"};
   std::string limit_id{"lim"};
   auto lim = new E::FlowLimits(limit_id, E::ComponentType::Source, elec, 0, 50);
   std::string sink_id{"load"};
@@ -240,8 +240,8 @@ TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
     calc_input_given_output(0),
     calc_input_given_output(0)
   };
-  auto diesel = E::StreamType("diesel");
-  auto elec = E::StreamType("electrical");
+  std::string diesel{"diesel"};
+  std::string elec{"electrical"};
   std::string converter_id{"converter"};
   auto genset_tx = new ::ERIN::Converter(
       converter_id,
@@ -310,7 +310,7 @@ TEST(ErinBasicsTest, CanRunUsingComponents)
   namespace EN = erin::network;
   namespace E = ERIN;
   const std::string stream_name{"electrical"};
-  auto elec = E::StreamType(stream_name);
+  std::string elec{stream_name};
   auto loads_by_scenario = std::unordered_map<
     std::string, std::vector<E::LoadItem>>(
         {{"bluesky", {
@@ -435,10 +435,7 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         "num_outflows = 1\n"
         "dispatch_strategy = \"in_order\"\n";
   ::ERIN::TomlInputReader t{ss};
-  std::unordered_map<std::string, ::ERIN::StreamType> streams{
-    std::make_pair("electricity", ::ERIN::StreamType(
-          "electricity", "kW", "kJ", 1.0, {}, {}))
-  };
+  std::string stream_id{"electricity"};
   std::string scenario_id{"blue_sky"};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
@@ -451,20 +448,20 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         std::string{"electric_utility"},
         std::make_unique<::ERIN::SourceComponent>(
           std::string{"electric_utility"},
-          streams["electricity"],
+          stream_id,
           10,
           0)));
   expected.emplace(std::make_pair(
       std::string{"cluster_01_electric"},
       std::make_unique<::ERIN::LoadComponent>(
         std::string{"cluster_01_electric"},
-        streams["electricity"],
+        stream_id,
         loads)));
   expected.emplace(std::make_pair(
       std::string{"bus"},
       std::make_unique<::ERIN::MuxerComponent>(
         std::string{"bus"},
-        streams["electricity"],
+        stream_id,
         2,
         1,
         ERIN::MuxerDispatchStrategy::InOrder)));
@@ -773,15 +770,6 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
   ::ERIN::SimulationInfo si{};
-  std::unordered_map<std::string, ::ERIN::StreamType> streams{
-    std::make_pair(
-        stream_id,
-        ::ERIN::StreamType(
-          std::string{"electricity_medium_voltage"},
-          si.get_rate_unit(),
-          si.get_quantity_unit(),
-          1,
-          {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
@@ -791,13 +779,13 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
       std::make_pair(
         source_id,
         std::make_unique<::ERIN::SourceComponent>(
-          source_id, streams[stream_id])));
+          source_id, stream_id)));
   components.insert(
       std::make_pair(
         load_id,
         std::make_unique<::ERIN::LoadComponent>(
           load_id,
-          streams[stream_id],
+          stream_id,
           loads_by_scenario)));
   std::unordered_map<
     std::string, std::vector<enw::Connection>> networks{
@@ -807,7 +795,7 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
                              source_id, ep::Type::Outflow, 0},
                            enw::ComponentAndPort{
                              load_id, ep::Type::Inflow, 0},
-                           "electricity_medium_voltage"}}}};
+                           stream_id}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -1010,15 +998,6 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
   ::ERIN::SimulationInfo si{};
-  std::unordered_map<std::string, ::ERIN::StreamType> streams{
-    std::make_pair(
-        stream_id,
-        ::ERIN::StreamType(
-          std::string{"electricity_medium_voltage"},
-          si.get_rate_unit(),
-          si.get_quantity_unit(),
-          1,
-          {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
@@ -1029,13 +1008,13 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
         source_id,
         std::make_unique<::ERIN::SourceComponent>(
           source_id,
-          streams[stream_id])));
+          stream_id)));
   components.insert(
       std::make_pair(
         load_id,
         std::make_unique<::ERIN::LoadComponent>(
           load_id,
-          streams[stream_id],
+          stream_id,
           loads_by_scenario)));
   std::unordered_map<
     std::string, std::vector<enw::Connection>> networks{
@@ -1043,7 +1022,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
         { enw::Connection{
                            enw::ComponentAndPort{source_id, ep::Type::Outflow, 0},
                            enw::ComponentAndPort{load_id, ep::Type::Inflow, 0},
-                           "electricity_medium_voltage"}}}};
+                           stream_id}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -1174,7 +1153,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   namespace enw = ::erin::network;
   namespace ep = ::erin::port;
   std::string scenario_id{"blue_sky"};
-  std::string stream_id{"electricity"};
+  std::string stream_id{"electricity_medium_voltage"};
   std::string source_id{"electric_utility"};
   std::string load_id{"cluster_01_electric"};
   std::string net_id{"normal_operations"};
@@ -1188,15 +1167,6 @@ TEST(ErinBasicsTest, BasicScenarioTest)
     loads_by_scenario{{scenario_id, loads}};
   ::ERIN::SimulationInfo si{
     "kW", "kJ", ::ERIN::TimeUnits::Years, 1000};
-  std::unordered_map<std::string, ::ERIN::StreamType> streams{
-    std::make_pair(
-        stream_id,
-        ::ERIN::StreamType(
-          std::string{"electricity_medium_voltage"},
-          si.get_rate_unit(),
-          si.get_quantity_unit(),
-          1,
-          {}, {}))};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
@@ -1207,13 +1177,13 @@ TEST(ErinBasicsTest, BasicScenarioTest)
         source_id,
         std::make_unique<::ERIN::SourceComponent>(
           source_id,
-          streams[stream_id])));
+          stream_id)));
   components.insert(
       std::make_pair(
         load_id,
         std::make_unique<::ERIN::LoadComponent>(
           load_id,
-          streams[stream_id],
+          stream_id,
           loads_by_scenario)));
   std::unordered_map<
     std::string, std::vector<enw::Connection>> networks{
@@ -1221,7 +1191,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
         { enw::Connection{
                            { source_id, ep::Type::Outflow, 0},
                            { load_id, ep::Type::Inflow, 0},
-                           "electricity_medium_voltage"}}}};
+                           stream_id}}}};
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -1276,7 +1246,7 @@ TEST(ErinBasicsTest, FragilityCurves)
 TEST(ErinBasicsTest, TestGetFragilityCurves)
 {
   namespace ef = erin::fragility;
-  ::ERIN::StreamType st{"electricity"};
+  std::string st{"electricity"};
   ::ERIN::fragility_map fragilities;
   std::vector<std::unique_ptr<ef::Curve>> vs;
   vs.emplace_back(std::make_unique<::erin::fragility::Linear>(120.0, 180.0));
@@ -1323,9 +1293,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
   namespace ef = erin::fragility;
   E::SimulationInfo si{};
   const auto elec_id = std::string{"electrical"};
-  const auto elec_stream = E::StreamType(elec_id);
-  std::unordered_map<std::string, E::StreamType> streams{
-    {elec_id, elec_stream}};
+  const auto elec_stream_id = std::string{elec_id};
   const auto pcc_id = std::string{"electric_utility"};
   const auto load_id = std::string{"cluster_01_electric"};
   const auto gen_id = std::string{"emergency_generator"};
@@ -1360,17 +1328,17 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
       std::make_pair(
         pcc_id,
         std::make_unique<E::SourceComponent>(
-          pcc_id, elec_stream, std::move(fs_pcc))));
+          pcc_id, elec_stream_id, std::move(fs_pcc))));
   comps.emplace(
       std::make_pair(
         load_id,
         std::make_unique<E::LoadComponent>(
-          load_id, elec_stream, loads_by_scenario, std::move(fs_load))));
+          load_id, elec_stream_id, loads_by_scenario, std::move(fs_load))));
   comps.emplace(
       std::make_pair(
         gen_id,
         std::make_unique<E::SourceComponent>(
-          gen_id, elec_stream, std::move(fs_gen))));
+          gen_id, elec_stream_id, std::move(fs_gen))));
   std::unordered_map<
   std::string, std::vector<enw::Connection>> networks{
     { normal,
@@ -1497,7 +1465,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   const std::string l2_id{"l2"};
   const int num_inflows{2};
   const int num_outflows{2};
-  const auto stream = E::StreamType{"electrical"};
+  const std::string stream{"electrical"};
   const std::string scenario_id{"blue_sky"};
   const E::RealTimeType t_max{12};
   std::unique_ptr<E::Component> m =
@@ -1804,7 +1772,7 @@ TEST(ErinBasicsTest, TestAddMultipleFragilitiesToAComponent)
   namespace E = ERIN;
   namespace ef = erin::fragility;
   std::string id{"source"};
-  auto stream = E::StreamType{"electricity"};
+  const std::string stream{"electricity"};
   std::unordered_map<
     std::string,
     std::vector<std::unique_ptr<ef::Curve>>> frags;
@@ -3418,27 +3386,17 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
   std::unique_ptr<ERIN::Component> expected_conv =
     std::make_unique<ERIN::ConverterComponent>(
         std::string{"C"},
-        ERIN::StreamType{std::string{"diesel"}},
-        ERIN::StreamType{std::string{"electricity"}},
-        ERIN::StreamType{std::string{"waste_heat"}},
+        std::string{"diesel"},
+        std::string{"electricity"},
+        std::string{"waste_heat"},
         const_eff);
   EXPECT_EQ(expected_conv, conv);
   std::ostringstream oss;
   oss << conv;
   std::string expected_str{
     "ConverterComponent(id=C, component_type=converter, "
-                       "input_stream=StreamType(type=\"diesel\", "
-                                               "rate_units=\"kW\", "
-                                               "quantity_units=\"kJ\", "
-                                               "seconds_per_time_unit=1, "
-                                               "other_rate_units={}, "
-                                               "other_quantity_units={}), "
-                       "output_stream=StreamType(type=\"electricity\", "
-                                                "rate_units=\"kW\", "
-                                                "quantity_units=\"kJ\", "
-                                                "seconds_per_time_unit=1, "
-                                                "other_rate_units={}, "
-                                                "other_quantity_units={}), "
+                       "input_stream=\"diesel\", "
+                       "output_stream=\"electricity\", "
                        "fragilities=..., has_fragilities=false, "
                        "const_eff=0.5)"};
   EXPECT_EQ(oss.str(), expected_str);
@@ -3634,17 +3592,11 @@ TEST(ErinComponents, Test_passthrough_component)
   auto pt = E::ComponentType::PassThrough;
   EXPECT_EQ("pass_through", E::component_type_to_tag(pt));
   EXPECT_EQ(E::tag_to_component_type("pass_through"), pt);
-  auto ptc = E::PassThroughComponent{"my_comp", E::StreamType("electrical")};
-  auto ptc2 = E::PassThroughComponent{"my_comp", E::StreamType("electrical")};
+  auto ptc = E::PassThroughComponent{"my_comp", std::string{"electrical"}};
+  auto ptc2 = E::PassThroughComponent{"my_comp", std::string{"electrical"}};
   std::ostringstream oss;
   oss << ptc;
-  std::string stream_str{
-    "StreamType(type=\"electrical\", "
-    "rate_units=\"kW\", "
-    "quantity_units=\"kJ\", "
-    "seconds_per_time_unit=1, "
-    "other_rate_units={}, "
-    "other_quantity_units={})"};
+  std::string stream_str{"\"electrical\""};
   EXPECT_EQ(
       std::string{"PassThroughComponent("} +
       std::string{"id=my_comp, "} +
@@ -3804,7 +3756,7 @@ TEST(ErinComponents, Test_passthrough_component_with_limits)
 TEST(ErinComponents, Test_that_clone_works_for_passthrough_component)
 {
   auto c = ERIN::PassThroughComponent(
-      "P", ERIN::StreamType{"electricity"}, ERIN::Limits{0.0,100.0}, {});
+      "P", std::string{"electricity"}, ERIN::Limits{0.0,100.0}, {});
   auto p = c.clone();
   EXPECT_EQ(c, dynamic_cast<ERIN::PassThroughComponent&>(*p));
 }
@@ -3883,8 +3835,8 @@ TEST(ErinElements, Test_that_converter_yields_lossflow)
   std::unique_ptr<ERIN::FlowElement> c = std::make_unique<ERIN::Converter>(
       "conv",
       ERIN::ComponentType::Converter,
-      ERIN::StreamType{"coal"},
-      ERIN::StreamType{"electricity"},
+      std::string{"coal"},
+      std::string{"electricity"},
       [](ERIN::FlowValueType input) -> ERIN::FlowValueType { return input * 0.5; },
       [](ERIN::FlowValueType output) -> ERIN::FlowValueType { return output * 2.0; });
   // 1. lossflow request of 100,000 comes in at (0,0)
@@ -4897,7 +4849,7 @@ TEST(ErinDevs, Test_function_based_storage_element)
 TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
 {
   namespace E = ERIN;
-  auto st = E::StreamType("electrical");
+  std::string st{"electrical"};
   E::RealTimeType t_max{3};
   std::string id{"load"};
   auto sink = new E::Sink(
@@ -4929,7 +4881,7 @@ TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
 TEST(ErinBasicsTest, Test_sink_and_flow_limits_with_port_logging)
 {
   namespace E = ERIN;
-  auto st = E::StreamType("electrical");
+  std::string st{"electrical"};
   E::RealTimeType t_max{3};
   std::string sink_id{"sink"};
   auto sink = new E::Sink(
@@ -4982,8 +4934,8 @@ TEST(ErinBasicsTest, Test_sink_and_flow_limits_with_port_logging)
 TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
 {
   namespace E = ERIN;
-  auto st_out = E::StreamType("electrical");
-  auto st_in = E::StreamType("natural_gas");
+  std::string st_out{"electrical"};
+  std::string st_in{"natural_gas"};
   E::RealTimeType t_max{3};
   std::string sink_id{"sink"};
   auto sink = new E::Sink(
@@ -5066,7 +5018,7 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
 TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
 {
   namespace E = ERIN;
-  auto st = E::StreamType("electrical");
+  std::string st{"electrical"};
   E::RealTimeType t_max{3};
   std::string sink0_id{"sink0"};
   std::string sink1_id{"sink1"};

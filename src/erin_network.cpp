@@ -232,8 +232,8 @@ namespace erin::network
       const std::string& stream)
   {
     check_stream_consistency(
-        source->get_outflow_type().get_type(),
-        sink->get_inflow_type().get_type(),
+        source->get_outflow_type(),
+        sink->get_inflow_type(),
         stream);
     network.couple(
         sink, ERIN::FlowElement::outport_inflow_request + sink_port,

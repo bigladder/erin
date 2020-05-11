@@ -51,15 +51,15 @@ namespace ERIN
       Component(
           std::string id,
           ComponentType type,
-          StreamType input_stream,
-          StreamType output_stream,
-          StreamType lossflow_stream);
+          std::string input_stream,
+          std::string output_stream,
+          std::string lossflow_stream);
       Component(
           std::string id,
           ComponentType type,
-          StreamType input_stream,
-          StreamType output_stream,
-          StreamType lossflow_stream,
+          std::string input_stream,
+          std::string output_stream,
+          std::string lossflow_stream,
           fragility_map fragilities);
       Component& operator=(const Component&) = delete;
       Component(Component&&) = delete;
@@ -69,9 +69,9 @@ namespace ERIN
 
       [[nodiscard]] const std::string& get_id() const { return id; }
       [[nodiscard]] ComponentType get_component_type() const { return component_type; }
-      [[nodiscard]] const StreamType& get_input_stream() const { return input_stream; }
-      [[nodiscard]] const StreamType& get_output_stream() const { return output_stream; }
-      [[nodiscard]] const StreamType& get_lossflow_stream() const { return lossflow_stream; }
+      [[nodiscard]] const std::string& get_input_stream() const { return input_stream; }
+      [[nodiscard]] const std::string& get_output_stream() const { return output_stream; }
+      [[nodiscard]] const std::string& get_lossflow_stream() const { return lossflow_stream; }
       [[nodiscard]] fragility_map clone_fragility_curves() const;
       [[nodiscard]] bool is_fragile() const { return has_fragilities; }
       // TODO: consider moving this elsewhere
@@ -104,9 +104,9 @@ namespace ERIN
     private:
       std::string id;
       ComponentType component_type;
-      StreamType input_stream;
-      StreamType output_stream;
-      StreamType lossflow_stream;
+      std::string input_stream;
+      std::string output_stream;
+      std::string lossflow_stream;
       fragility_map fragilities;
       bool has_fragilities;
   };
@@ -122,12 +122,12 @@ namespace ERIN
     public:
       LoadComponent(
           const std::string& id,
-          const StreamType& input_stream,
+          const std::string& input_stream,
           std::unordered_map<std::string, std::vector<LoadItem>>
             loads_by_scenario);
       LoadComponent(
           const std::string& id,
-          const StreamType& input_stream,
+          const std::string& input_stream,
           std::unordered_map<std::string, std::vector<LoadItem>>
             loads_by_scenario,
           fragility_map fragilities);
@@ -183,29 +183,29 @@ namespace ERIN
     public:
       SourceComponent(
           const std::string& id,
-          const StreamType& output_stream);
+          const std::string& output_stream);
       SourceComponent(
           const std::string& id,
-          const StreamType& output_stream,
+          const std::string& output_stream,
           const FlowValueType max_output,
           const FlowValueType min_output = 0.0);
       SourceComponent(
           const std::string& id,
-          const StreamType& output_stream,
+          const std::string& output_stream,
           const Limits& limits);
       SourceComponent(
           const std::string& id,
-          const StreamType& output_stream,
+          const std::string& output_stream,
           fragility_map fragilities);
       SourceComponent(
           const std::string& id,
-          const StreamType& output_stream,
+          const std::string& output_stream,
           fragility_map fragilities,
           const FlowValueType max_output,
           const FlowValueType min_output = 0.0);
       SourceComponent(
           const std::string& id,
-          const StreamType& output_stream,
+          const std::string& output_stream,
           fragility_map fragilities,
           const Limits& limits);
 
@@ -234,14 +234,14 @@ namespace ERIN
     public:
       MuxerComponent(
           const std::string& id,
-          const StreamType& stream,
+          const std::string& stream,
           const int num_inflows,
           const int num_outflows,
           const MuxerDispatchStrategy output_strategy
             = MuxerDispatchStrategy::Distribute);
       MuxerComponent(
           const std::string& id,
-          const StreamType& stream,
+          const std::string& stream,
           const int num_inflows,
           const int num_outflows,
           fragility_map fragilities,
@@ -278,16 +278,16 @@ namespace ERIN
     public:
       ConverterComponent(
           const std::string& id,
-          const StreamType& input_stream,
-          const StreamType& output_stream,
-          const StreamType& lossflow_stream,
+          const std::string& input_stream,
+          const std::string& output_stream,
+          const std::string& lossflow_stream,
           const FlowValueType& const_eff);
 
       ConverterComponent(
           const std::string& id,
-          const StreamType& input_stream,
-          const StreamType& output_stream,
-          const StreamType& lossflow_stream,
+          const std::string& input_stream,
+          const std::string& output_stream,
+          const std::string& lossflow_stream,
           const FlowValueType& const_eff,
           fragility_map fragilities);
 
@@ -315,18 +315,18 @@ namespace ERIN
     public:
       PassThroughComponent(
           const std::string& id,
-          const StreamType& stream);
+          const std::string& stream);
       PassThroughComponent(
           const std::string& id,
-          const StreamType& stream,
+          const std::string& stream,
           const Limits& limits);
       PassThroughComponent(
           const std::string& id,
-          const StreamType& stream,
+          const std::string& stream,
           fragility_map fragilities);
       PassThroughComponent(
           const std::string& id,
-          const StreamType& stream,
+          const std::string& stream,
           const Limits& limits,
           fragility_map fragilities);
 
@@ -354,12 +354,12 @@ namespace ERIN
     public:
       StorageComponent(
           const std::string& id,
-          const StreamType& stream,
+          const std::string& stream,
           FlowValueType capacity,
           FlowValueType max_charge_rate);
       StorageComponent(
           const std::string& id,
-          const StreamType& stream,
+          const std::string& stream,
           FlowValueType capacity,
           FlowValueType max_charge_rate,
           fragility_map fragilities);

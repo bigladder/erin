@@ -25,7 +25,7 @@ ScenarioResults should contain:
 - start\_time :: RealTimeType
 - duration :: RealTimeType
 - results :: (Map String (Vector Datum))
-- streams :: (Map String StreamType)
+- streams :: (Set String), the stream types in the scenario/network
 - component\_types :: (Map String ComponentType)
 
 Datum is:

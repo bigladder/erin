@@ -21,13 +21,7 @@ main()
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
   ::ERIN::SimulationInfo si{::ERIN::TimeUnits::Hours, N};
-  ::ERIN::StreamType elec{
-    std::string{stream_id},
-      si.get_rate_unit(),
-      si.get_quantity_unit(),
-      1,
-      {},
-      {}};
+  std::string elec{stream_id};
   std::unordered_map<
     std::string,
     std::unique_ptr<::ERIN::Component>> components;

@@ -165,11 +165,11 @@ namespace ERIN
     return seed;
   }
 
-  std::unordered_map<std::string, StreamType>
+  std::unordered_map<std::string, std::string>
   TomlInputReader::read_streams(const SimulationInfo&)
   {
     const auto toml_streams = toml::find<toml::table>(data, "streams");
-    std::unordered_map<std::string, StreamType> stream_types_map;
+    std::unordered_map<std::string, std::string> stream_types_map;
     for (const auto& s: toml_streams) {
       toml::value t = s.second;
       toml::table tt = toml::get<toml::table>(t);
@@ -193,15 +193,7 @@ namespace ERIN
                 toml::get<FlowValueType>(p.second)));
       }
       const std::string stream_type{toml::find<std::string>(t, "type")};
-      stream_types_map.insert(std::make_pair(
-            s.first,
-            StreamType(
-              stream_type,
-              "kW",
-              "kJ",
-              1.0,
-              other_rate_units,
-              other_quantity_units)));
+      stream_types_map.insert(std::make_pair(s.first, stream_type));
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& x: stream_types_map) {
@@ -820,7 +812,7 @@ namespace ERIN
       lim = Limits{min_outflow, max_outflow};
     }
     std::unique_ptr<Component> source_comp = std::make_unique<SourceComponent>(
-        id, StreamType(stream), std::move(frags), lim);
+        id, std::string(stream), std::move(frags), lim);
     components.insert(std::make_pair(id, std::move(source_comp)));
   }
 
@@ -881,7 +873,7 @@ namespace ERIN
         }
       }
       std::unique_ptr<Component> load_comp = std::make_unique<LoadComponent>(
-            id, StreamType(stream), loads_by_scenario, std::move(frags));
+            id, std::string(stream), loads_by_scenario, std::move(frags));
       components.insert(std::make_pair(id, std::move(load_comp)));
     }
     else {
@@ -911,7 +903,7 @@ namespace ERIN
         tt, {"dispatch_strategy", "outflow_dispatch_strategy"}, "distribute", field_read);
     auto out_disp = tag_to_muxer_dispatch_strategy(out_disp_tag);
     std::unique_ptr<Component> mux_comp = std::make_unique<MuxerComponent>(
-        id, StreamType(stream), num_inflows, num_outflows, std::move(frags),
+        id, std::string(stream), num_inflows, num_outflows, std::move(frags),
         out_disp);
     components.insert(
         std::make_pair(id, std::move(mux_comp)));
@@ -937,10 +929,10 @@ namespace ERIN
     std::unique_ptr<Component> pass_through_comp;
     if (has_limits)
       pass_through_comp = std::make_unique<PassThroughComponent>(
-          id, StreamType(stream), Limits{min_outflow, max_outflow}, std::move(frags));
+          id, std::string(stream), Limits{min_outflow, max_outflow}, std::move(frags));
     else
       pass_through_comp = std::make_unique<PassThroughComponent>(
-          id, StreamType(stream), std::move(frags));
+          id, std::string(stream), std::move(frags));
     components.insert(
         std::make_pair(id, std::move(pass_through_comp)));
   }
@@ -964,7 +956,7 @@ namespace ERIN
     auto max_charge_rate = toml_helper::read_required_table_field<FlowValueType>(
         tt, {"max_inflow", "max_charge", "max_charge_rate"}, field_read);
     std::unique_ptr<Component> store = std::make_unique<StorageComponent>(
-        id, StreamType(stream), capacity, max_charge_rate, std::move(frags));
+        id, std::string(stream), capacity, max_charge_rate, std::move(frags));
     components.insert(
         std::make_pair(id, std::move(store)));
   }
@@ -987,9 +979,9 @@ namespace ERIN
     std::unique_ptr<Component> converter_comp =
       std::make_unique<ConverterComponent>(
           id,
-          StreamType(input_stream),
-          StreamType(output_stream),
-          StreamType(lossflow_stream),
+          std::string(input_stream),
+          std::string(output_stream),
+          std::string(lossflow_stream),
           const_eff,
           std::move(frags));
     components.insert(
@@ -2484,23 +2476,23 @@ namespace ERIN
 
   std::unordered_map<std::string,std::string>
   stream_types_to_stream_ids(
-      const std::unordered_map<std::string,StreamType>& stream_types)
+      const std::unordered_map<std::string,std::string>& stream_types)
   {
     std::unordered_map<std::string,std::string> stream_ids{};
     for (const auto& item: stream_types) {
-      stream_ids[item.first] = item.second.get_type();
+      stream_ids[item.first] = item.second;
     }
     return stream_ids;
   }
 
   std::unordered_map<std::string,std::string>
   stream_types_to_stream_ids(
-      std::unordered_map<std::string,StreamType>&& stream_types)
+      std::unordered_map<std::string,std::string>&& stream_types)
   {
     std::unordered_map<std::string,std::string> stream_ids{};
     for (auto it = stream_types.cbegin(); it != stream_types.cend();) {
-      auto& s = it->second;
-      stream_ids.emplace(std::make_pair(it->first, s.get_type()));
+      const auto& s = it->second;
+      stream_ids.emplace(std::make_pair(it->first, s));
       it = stream_types.erase(it);
     }
     return stream_ids;

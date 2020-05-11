@@ -161,8 +161,8 @@ namespace ERIN
       FlowElement& operator=(const FlowElement&&) = delete;
 
       [[nodiscard]] std::string get_id() const { return id; }
-      [[nodiscard]] StreamType get_inflow_type() const { return inflow_type; };
-      [[nodiscard]] StreamType get_outflow_type() const { return outflow_type; };
+      [[nodiscard]] std::string get_inflow_type() const { return inflow_type; };
+      [[nodiscard]] std::string get_outflow_type() const { return outflow_type; };
       [[nodiscard]] ComponentType get_component_type() const {
         return component_type;
       };
@@ -175,13 +175,13 @@ namespace ERIN
           std::string id,
           ComponentType component_type,
           ElementType element_type,
-          const StreamType& flow_type);
+          const std::string& flow_type);
       FlowElement(
           std::string id,
           ComponentType component_type,
           ElementType element_type,
-          StreamType inflow_type,
-          StreamType outflow_type);
+          std::string inflow_type,
+          std::string outflow_type);
       [[nodiscard]] virtual FlowState
         update_state_for_outflow_request(FlowValueType outflow_) const;
       [[nodiscard]] virtual FlowState
@@ -243,8 +243,8 @@ namespace ERIN
     private:
       std::string id;
       Time time;
-      StreamType inflow_type;
-      StreamType outflow_type;
+      std::string inflow_type;
+      std::string outflow_type;
       FlowValueType inflow; // achieved
       FlowValueType inflow_request;
       FlowValueType outflow; // achieved
@@ -269,7 +269,7 @@ namespace ERIN
       FlowLimits(
           std::string id,
           ComponentType component_type,
-          const StreamType& stream_type,
+          const std::string& stream_type,
           FlowValueType lower_limit,
           FlowValueType upper_limit);
 
@@ -297,7 +297,7 @@ namespace ERIN
       FlowMeter(
           std::string id,
           ComponentType component_type,
-          const StreamType& stream_type);
+          const std::string& stream_type);
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
 
@@ -318,8 +318,8 @@ namespace ERIN
       Converter(
           std::string id,
           ComponentType component_type,
-          StreamType input_stream_type,
-          StreamType output_stream_type,
+          std::string input_stream_type,
+          std::string output_stream_type,
           std::function<FlowValueType(FlowValueType)> calc_output_from_input,
           std::function<FlowValueType(FlowValueType)> calc_input_from_output);
 
@@ -354,7 +354,7 @@ namespace ERIN
       Sink(
           std::string id,
           ComponentType component_type,
-          const StreamType& stream_type,
+          const std::string& stream_type,
           const std::vector<LoadItem>& loads);
 
       void delta_int() override;
@@ -396,7 +396,7 @@ namespace ERIN
       Mux(
           std::string id,
           ComponentType component_type,
-          const StreamType& stream_type,
+          const std::string& stream_type,
           int num_inflows,
           int num_outflows,
           MuxerDispatchStrategy outflow_strategy = MuxerDispatchStrategy::Distribute);
@@ -428,7 +428,7 @@ namespace ERIN
       Storage(
           std::string id,
           ComponentType component_type,
-          const StreamType& stream_type,
+          const std::string& stream_type,
           FlowValueType capacity,
           FlowValueType max_charge_rate);
 
@@ -450,86 +450,6 @@ namespace ERIN
       int outflow_element_id;
 
       void log_ports();
-  };
-
-  ////////////////////////////////////////////////////////////
-  // MixedStreamsError
-  struct MixedStreamsError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "MixedStreamsError";
-    }
-  };
-
-  ////////////////////////////////////////////////////////////
-  // InvariantError
-  struct InvariantError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "InvariantError";
-    }
-  };
-
-  ////////////////////////////////////////////////////////////
-  // InconsistentStreamUnitsError
-  struct InconsistentStreamTypesError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "InconsistentStreamTypesError";
-    }
-  };
-
-  ////////////////////////////////////////////////////////////
-  // InconsistentStreamUnitsError
-  struct InconsistentStreamUnitsError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "InconsistentStreamUnitsError";
-    }
-  };
-
-  ////////////////////////////////////////////////////////////
-  // FlowInvariantError
-  struct FlowInvariantError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "FlowInvariantError";
-    }
-  };
-
-  ////////////////////////////////////////////////////////////
-  // BadPortError
-  struct BadPortError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "BadPortError";
-    }
-  };
-
-  ////////////////////////////////////////////////////////////
-  // SimultaneousIORequestError
-  struct SimultaneousIORequestError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "SimultaneousIORequestError";
-    }
-  };
-
-  ////////////////////////////////////////////////////////////
-  // BadInputError
-  struct BadInputError : public std::exception
-  {
-    [[nodiscard]] const char* what() const noexcept override
-    {
-      return "BadInputError";
-    }
   };
 }
 

@@ -5204,10 +5204,12 @@ TEST(ErinBasicsTest, Test_example_8)
   const auto& bsr = blue_sky_sr[0];
   EXPECT_TRUE(bsr.get_is_good());
   const auto& blue_sky_data = bsr.get_results();
-  for (const auto& pair : blue_sky_data) {
-    std::cout << "item: " << pair.first << "\n";
-    for (const auto& x : pair.second) {
-      std::cout << "- " << x << "\n";
+  if constexpr (false) {
+    for (const auto& pair : blue_sky_data) {
+      std::cout << "item: " << pair.first << "\n";
+      for (const auto& x : pair.second) {
+        std::cout << "- " << x << "\n";
+      }
     }
   }
   const auto& d0_load = blue_sky_data.at("electric_load")[0];
@@ -5249,7 +5251,6 @@ TEST(ErinBasicsTest, Test_example_8)
   const auto& d2_source = blue_sky_data.at("electric_source")[2];
   const E::Datum d2_source_expected{36000, 0.0, 0.0};
   EXPECT_EQ(d2_source, d2_source_expected);
-  //auto stats = results.get_stats();
 }
 
 int

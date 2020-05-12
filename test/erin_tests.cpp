@@ -5253,6 +5253,58 @@ TEST(ErinBasicsTest, Test_example_8)
   EXPECT_EQ(d2_source, d2_source_expected);
 }
 
+TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"hours\"\n"
+    "max_time = 10\n"
+    "[loads.LP1]\n"
+    "time_unit = \"hours\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "outflow = \"natural_gas\"\n"
+    "[components.C]\n"
+    "type = \"converter\"\n"
+    "inflow = \"natural_gas\"\n"
+    "outflow = \"electricity\"\n"
+    "constant_efficiency = 0.5\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "inflow = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"LP1\"\n"
+    "[networks.normal_operations]\n"
+    "connections = [\n"
+    "  [\"S:OUT(0)\", \"C:IN(0)\", \"natural_gas\"],\n"
+    "  [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"],\n"
+    "]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"hours\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n";
+  auto m = E::make_main_from_string(input);
+  auto results = m.run_all();
+  auto stats = results.to_stats_csv();
+  std::string expected{
+    "scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ),natural_gas energy used (kJ)\n"
+    "blue_sky,1,10,C-inflow,converter,natural_gas,1,0,0,0.0,720000\n"
+    "blue_sky,1,10,C-lossflow,converter,natural_gas,1,0,0,0.0,0\n"
+    "blue_sky,1,10,C-outflow,converter,electricity,1,0,0,360000,0.0\n"
+    //"blue_sky,1,10,C-wasteflow,converter,electricity,1,0,0,360000,0.0\n"
+    "blue_sky,1,10,L,load,electricity,1,0,0,360000,0.0\n"
+    "blue_sky,1,10,S,source,natural_gas,1,0,0,0.0,720000\n"
+    "blue_sky,1,10,TOTAL (source),,,,,,0.0,720000\n"
+    "blue_sky,1,10,TOTAL (load),,,,,,360000,0.0\n"};
+  EXPECT_EQ(stats, expected);
+}
+
 int
 main(int argc, char **argv)
 {

@@ -5273,6 +5273,7 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
     "type = \"converter\"\n"
     "inflow = \"natural_gas\"\n"
     "outflow = \"electricity\"\n"
+    "lossflow = \"waste_heat\"\n"
     "constant_efficiency = 0.5\n"
     "[components.L]\n"
     "type = \"load\"\n"
@@ -5293,15 +5294,16 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
   auto results = m.run_all();
   auto stats = results.to_stats_csv();
   std::string expected{
-    "scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ),natural_gas energy used (kJ)\n"
-    "blue_sky,1,10,C-inflow,converter,natural_gas,1,0,0,0.0,720000\n"
-    "blue_sky,1,10,C-lossflow,converter,natural_gas,1,0,0,0.0,0\n"
-    "blue_sky,1,10,C-outflow,converter,electricity,1,0,0,360000,0.0\n"
-    //"blue_sky,1,10,C-wasteflow,converter,electricity,1,0,0,360000,0.0\n"
-    "blue_sky,1,10,L,load,electricity,1,0,0,360000,0.0\n"
-    "blue_sky,1,10,S,source,natural_gas,1,0,0,0.0,720000\n"
-    "blue_sky,1,10,TOTAL (source),,,,,,0.0,720000\n"
-    "blue_sky,1,10,TOTAL (load),,,,,,360000,0.0\n"};
+    "scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),"
+    "electricity energy used (kJ),natural_gas energy used (kJ),waste_heat energy used (kJ)\n"
+    "blue_sky,1,10,C-inflow,converter,natural_gas,1,0,0,0.0,720000,0.0\n"
+    "blue_sky,1,10,C-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0\n"
+    "blue_sky,1,10,C-outflow,converter,electricity,1,0,0,360000,0.0,0.0\n"
+    "blue_sky,1,10,L,load,electricity,1,0,0,360000,0.0,0.0\n"
+    "blue_sky,1,10,S,source,natural_gas,1,0,0,0.0,720000,0.0\n"
+    "blue_sky,1,10,TOTAL (source),,,,,,0.0,720000,0.0\n"
+    "blue_sky,1,10,TOTAL (load),,,,,,360000,0.0,0.0\n"
+  };
   EXPECT_EQ(stats, expected);
 }
 

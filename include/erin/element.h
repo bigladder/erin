@@ -136,10 +136,8 @@ namespace ERIN
       static constexpr int max_port_numbers{1000};
       static constexpr int inport_inflow_achieved{0*max_port_numbers};
       static constexpr int inport_outflow_request{1*max_port_numbers};
-      static constexpr int inport_lossflow_request{2*max_port_numbers};
-      static constexpr int outport_inflow_request{3*max_port_numbers};
-      static constexpr int outport_outflow_achieved{4*max_port_numbers};
-      static constexpr int outport_lossflow_achieved{5*max_port_numbers};
+      static constexpr int outport_inflow_request{2*max_port_numbers};
+      static constexpr int outport_outflow_achieved{3*max_port_numbers};
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
@@ -149,6 +147,9 @@ namespace ERIN
 
       virtual void set_flow_writer(const std::shared_ptr<FlowWriter>& /* writer */) {}
       virtual void set_recording_on() {}
+
+      [[nodiscard]] virtual std::string get_inflow_type_by_port(int inflow_port) const = 0;
+      [[nodiscard]] virtual std::string get_outflow_type_by_port(int outflow_port) const = 0;
 
       // Delete copy and move operators to prevent slicing issues...
       // see:
@@ -282,6 +283,13 @@ namespace ERIN
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
 
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
+
     private:
       erin::devs::FlowLimitsState state;
       std::shared_ptr<FlowWriter> flow_writer;
@@ -300,6 +308,13 @@ namespace ERIN
           const std::string& stream_type);
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
+
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
 
     protected:
       void update_on_external_transition() override;
@@ -332,6 +347,19 @@ namespace ERIN
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
 
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
+      [[nodiscard]] std::string get_outflow_type_by_port(int outflow_port) const override {
+        switch (outflow_port) {
+          case 1:
+          case 2:
+            return lossflow_stream;
+          default:
+            return get_outflow_type();
+        }
+      };
+
     private:
       erin::devs::ConverterState state;
       std::function<FlowValueType(FlowValueType)> output_from_input;
@@ -342,6 +370,7 @@ namespace ERIN
       int lossflow_element_id;
       int wasteflow_element_id;
       bool record_history;
+      std::string lossflow_stream;
 
       void log_ports();
   };
@@ -365,6 +394,13 @@ namespace ERIN
 
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
+
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
 
     private:
       erin::devs::LoadData data;
@@ -405,10 +441,17 @@ namespace ERIN
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
       Time ta() override;
-      void output_func(std::vector<PortValue>& xs) override;
+      void output_func(std::vector<PortValue>& ys) override;
 
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
+
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
 
     private:
       erin::devs::MuxState state;
@@ -436,10 +479,17 @@ namespace ERIN
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
       void delta_conf(std::vector<PortValue>& xs) override;
       Time ta() override;
-      void output_func(std::vector<PortValue>& xs) override;
+      void output_func(std::vector<PortValue>& ys) override;
 
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
+
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
 
     private:
       erin::devs::StorageData data;

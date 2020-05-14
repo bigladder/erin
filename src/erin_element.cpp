@@ -457,15 +457,6 @@ namespace ERIN
           outflow_provided = true;
           the_outflow_request += x.value;
           break;
-        case inport_lossflow_request:
-          if constexpr (debug_level >= debug_level_high) {
-            std::cout << "... receive<=inport_lossflow_request;id="
-                      << get_id() << "\n";
-          }
-          lossflow_provided = true;
-          the_lossflow_request += x.value;
-          lossflow_connected = true;
-          break;
         default:
           {
             std::ostringstream oss;
@@ -696,15 +687,6 @@ namespace ERIN
       ys.emplace_back(
           adevs::port_value<FlowValueType>{outport_outflow_achieved, outflow});
     }
-    if (report_lossflow_achieved) {
-      if constexpr (debug_level >= debug_level_high) {
-        std::cout << "... send=>outport_lossflow_achieved;id="
-                  << get_id() << "\n";
-      }
-      ys.emplace_back(
-          adevs::port_value<FlowValueType>{
-            outport_lossflow_achieved, lossflow - spillage});
-    }
     add_additional_outputs(ys);
   }
 
@@ -842,8 +824,9 @@ namespace ERIN
   FlowLimits::ta()
   {
     auto dt = erin::devs::flow_limits_time_advance(state);
-    if (dt == erin::devs::infinity)
+    if (dt == erin::devs::infinity) {
       return inf;
+    }
     return Time{dt, 1};
   }
 
@@ -951,7 +934,8 @@ namespace ERIN
     outflow_element_id{-1},
     lossflow_element_id{-1},
     wasteflow_element_id{-1},
-    record_history{false}
+    record_history{false},
+    lossflow_stream{"waste_heat"}
   {
   }
 
@@ -986,8 +970,9 @@ namespace ERIN
   Converter::ta()
   {
     auto dt = erin::devs::converter_time_advance(state);
-    if (dt == erin::devs::infinity)
+    if (dt == erin::devs::infinity) {
       return inf;
+    }
     return Time{dt, 1};
   }
 
@@ -1015,30 +1000,34 @@ namespace ERIN
   Converter::log_ports()
   {
     if (flow_writer && record_history) {
-      if (inflow_element_id == -1)
+      if (inflow_element_id == -1) {
         inflow_element_id = flow_writer->register_id(
             get_id() + "-inflow",
             get_inflow_type(),
             get_component_type(),
             record_history);
-      if (outflow_element_id == -1)
+      }
+      if (outflow_element_id == -1) {
         outflow_element_id = flow_writer->register_id(
-            get_id(),
+            get_id() + "-outflow",
             get_outflow_type(),
             get_component_type(),
             record_history);
-      if (lossflow_element_id == -1)
+      }
+      if (lossflow_element_id == -1) {
         lossflow_element_id = flow_writer->register_id(
             get_id() + "-lossflow",
-            get_outflow_type(),
+            lossflow_stream,
             get_component_type(),
             record_history);
-      if (wasteflow_element_id == -1)
+      }
+      if (wasteflow_element_id == -1) {
         wasteflow_element_id = flow_writer->register_id(
             get_id() + "-wasteflow",
-            get_outflow_type(),
+            lossflow_stream,
             get_component_type(),
             record_history);
+      }
       flow_writer->write_data(
           inflow_element_id,
           state.time,
@@ -1122,8 +1111,9 @@ namespace ERIN
   Sink::ta()
   {
     auto dt = erin::devs::load_time_advance(data, state);
-    if (dt == erin::devs::infinity)
+    if (dt == erin::devs::infinity) {
       return inf;
+    }
     return Time{dt, 1};
   }
 
@@ -1186,6 +1176,9 @@ namespace ERIN
   void
   Mux::delta_int()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "MUX[" << get_id() << "] delta_int\n";
+    }
     state = erin::devs::mux_internal_transition(state);
     log_ports();
   }
@@ -1193,6 +1186,12 @@ namespace ERIN
   void
   Mux::delta_ext(Time e, std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "MUX[" << get_id() << "] delta_ext\n";
+      for (const auto& x : xs) {
+        std::cout << "- (" << x.port << ", " << x.value << ")\n";
+      }
+    }
     state = erin::devs::mux_external_transition(state, e.real, xs);
     log_ports();
   }
@@ -1200,6 +1199,12 @@ namespace ERIN
   void
   Mux::delta_conf(std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "MUX[" << get_id() << "] delta_conf\n";
+      for (const auto& x : xs) {
+        std::cout << "- (" << x.port << ", " << x.value << ")\n";
+      }
+    }
     state = erin::devs::mux_confluent_transition(state, xs);
     log_ports();
   }
@@ -1207,9 +1212,21 @@ namespace ERIN
   Time
   Mux::ta()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "MUX[" << get_id() << "] ta\n";
+    }
     auto dt = erin::devs::mux_time_advance(state);
-    if (dt == erin::devs::infinity)
+    if (dt == erin::devs::infinity) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "- t = " << erin::devs::mux_current_time(state) << "\n";
+        std::cout << "- dt = inf\n";
+      }
       return inf;
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "- t = " << erin::devs::mux_current_time(state) << "\n";
+      std::cout << "- dt = (" << dt << ", 1)\n";
+    }
     return Time{dt, 1};
   }
 
@@ -1217,6 +1234,12 @@ namespace ERIN
   Mux::output_func(std::vector<PortValue>& ys)
   {
     erin::devs::mux_output_function_mutable(state, ys);
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "MUX[" << get_id() << "] output_func\n";
+      for (const auto& y : ys) {
+        std::cout << "- (" << y.port << ", " << y.value << ")\n";
+      }
+    }
   }
 
   void

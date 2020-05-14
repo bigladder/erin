@@ -5,20 +5,6 @@ quantity_unit = "kJ"
 time_unit = "years"
 max_time = 100
 fixed_random = 0.5
-[streams.electricity]
-type = "electricity"
-[streams.steam]
-type = "steam"
-[streams.natural_gas]
-type = "natural_gas"
-[streams.biomethane]
-type = "biomethane"
-[streams.biomass]
-type = "biomass"
-[streams.heating]
-type = "heating"
-[streams.waste_heat]
-type = "waste_heat"
 [loads.normal_electric_mission_critical_consumer]
 csv_file = "ex07-normal-electric-mcc.csv"
 [loads.normal_electric_other_consumer]
@@ -87,24 +73,12 @@ inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
 constant_efficiency = 0.35
-[components.chp_loss_1]
-type = "muxer"
-stream = "waste_heat"
-num_inflows = 1
-num_outflows = 2
-outflow_dispatch_strategy = "in_order"
 [components.chp_steam]
 type = "converter"
 inflow = "waste_heat"
 outflow = "steam"
 lossflow = "waste_heat"
 constant_efficiency = 0.35
-[components.chp_loss_2]
-type = "muxer"
-stream = "waste_heat"
-num_inflows = 1
-num_outflows = 2
-outflow_dispatch_strategy = "in_order"
 [components.chp_heating]
 type = "converter"
 inflow = "waste_heat"
@@ -125,12 +99,6 @@ outflow = "steam"
 lossflow = "waste_heat"
 constant_efficiency = 0.45
 fragilities = ["somewhat_vulnerable_to_flooding"]
-[components.biomass_boiler_loss_1]
-type = "muxer"
-stream = "waste_heat"
-num_inflows = 1
-num_outflows = 2
-outflow_dispatch_strategy = "in_order"
 [components.biomass_boiler_heating]
 type = "converter"
 inflow = "waste_heat"

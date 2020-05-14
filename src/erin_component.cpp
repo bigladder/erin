@@ -321,8 +321,9 @@ namespace ERIN
     namespace ep = erin::port;
     std::unordered_set<FlowElement*> elements;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network(...)\n";
+    }
     auto the_id = get_id();
     auto stream = get_input_stream();
     const auto& stream_name{stream};
@@ -330,8 +331,9 @@ namespace ERIN
     auto sink = new Sink(the_id, ComponentType::Load, stream, loads);
     sink->set_recording_on();
     elements.emplace(sink);
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "sink = " << sink << "\n";
+    }
     if (is_failed) {
       auto lim = new FlowLimits(
           the_id + "-limits",
@@ -346,8 +348,9 @@ namespace ERIN
     else {
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{sink, 0}};
     }
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network(...) exit\n";
+    }
     return PortsAndElements{ports, elements};
   }
 
@@ -590,19 +593,22 @@ namespace ERIN
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network("
                 << "adevs::Digraph<FlowValueType>& network)\n";
+    }
     auto the_id = get_id();
     auto stream = get_output_stream();
     if (is_failed || limits.get_is_limited()) {
-      if constexpr (debug_level >= debug_level_high)
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "is_failed || is_limited\n";
+      }
       auto min_output = limits.get_min();
       auto max_output = limits.get_max();
       if (is_failed) {
-        if constexpr (debug_level >= debug_level_high)
+        if constexpr (debug_level >= debug_level_high) {
           std::cout << "is_failed = true; setting min/max output to 0.0\n";
+        }
         min_output = 0.0;
         max_output = 0.0;
       }
@@ -613,15 +619,17 @@ namespace ERIN
       ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
     }
     else {
-      if constexpr (debug_level >= debug_level_high)
+      if constexpr (debug_level >= debug_level_high) {
         std::cout << "!is_failed\n";
+      }
       auto meter = new FlowMeter(the_id, ComponentType::Source, stream);
       elements.emplace(meter);
       meter->set_recording_on();
       ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};
     }
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit\n";
+    }
     return PortsAndElements{ports, elements};
   }
 
@@ -733,8 +741,9 @@ namespace ERIN
     namespace ep = erin::port;
     std::unordered_set<FlowElement*> elements{};
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "MuxerComponent::add_to_network(...)\n";
+    }
     auto the_id = get_id();
     auto the_stream = get_input_stream();
     auto the_ct = ComponentType::Muxer;
@@ -750,10 +759,12 @@ namespace ERIN
           output_strategy);
       mux->set_recording_on();
       elements.emplace(mux);
-      for (int i{0}; i < num_inflows; ++i)
+      for (int i{0}; i < num_inflows; ++i) {
         inflow_meters.emplace_back(ElementPort{mux, i});
-      for (int i{0}; i < num_outflows; ++i)
+      }
+      for (int i{0}; i < num_outflows; ++i) {
         outflow_meters.emplace_back(ElementPort{mux, i});
+      }
     }
     else {
       for (int i{0}; i < num_inflows; ++i) {
@@ -781,8 +792,9 @@ namespace ERIN
     }
     ports[ep::Type::Inflow] = inflow_meters;
     ports[ep::Type::Outflow] = outflow_meters;
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "MuxerComponent::add_to_network(...) exit\n";
+    }
     return PortsAndElements{ports, elements};
   }
 
@@ -889,21 +901,20 @@ namespace ERIN
 
   PortsAndElements
   ConverterComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>& nw,
+      adevs::Digraph<FlowValueType, Time>&, // nw
       const std::string&, // active_scenario
       bool is_failed) const
   {
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "ConverterComponent::add_to_network(...)\n";
+    }
     auto the_id = get_id();
     auto the_type = ComponentType::Converter;
     auto in_stream = get_input_stream();
-    const auto& in_stream_name{in_stream};
     auto out_stream = get_output_stream();
-    const auto& out_stream_name{out_stream};
     auto loss_stream = get_lossflow_stream();
     if (is_failed) {
       auto lim_in = new FlowLimits(the_id + "-inflow", the_type, in_stream, 0.0, 0.0);
@@ -915,8 +926,15 @@ namespace ERIN
       auto lim_loss = new FlowLimits(the_id + "-lossflow", the_type, loss_stream, 0.0, 0.0);
       lim_loss->set_recording_on();
       elements.emplace(lim_loss);
+      auto lim_waste = new FlowLimits(the_id + "-wasteflow", the_type, loss_stream, 0.0, 0.0);
+      lim_waste->set_recording_on();
+      elements.emplace(lim_waste);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim_in, 0}};
       ports[ep::Type::Outflow] = std::vector<ElementPort>{{lim_out, 0}, {lim_loss, 0}};
+      // auto lim_waste = new FlowLimits(the_id + "-wasteflow", the_type, loss_stream, 0.0, 0.0);
+      // elements.emplace(lim_waste);
+      // auto waste_flow_id = flow_logger.connect_to_waste(lim_waste, 0, loss_stream);
+      // conv->set_waste_port_flow_id(waste_flow_id);
     }
     else {
       auto eff{const_eff};
@@ -929,21 +947,14 @@ namespace ERIN
       auto conv = new Converter(
           the_id, the_type, in_stream, out_stream, out_from_in, in_from_out);
       elements.emplace(conv);
-      auto in_meter = new FlowMeter(the_id + "-inflow", the_type, in_stream);
-      in_meter->set_recording_on();
-      elements.emplace(in_meter);
-      auto out_meter = new FlowMeter(the_id + "-outflow", the_type, out_stream);
-      out_meter->set_recording_on();
-      elements.emplace(out_meter);
-      auto loss_meter = new FlowMeter(
-          the_id + "-lossflow", the_type, loss_stream);
-      loss_meter->set_recording_on();
-      elements.emplace(loss_meter);
-      connect_source_to_sink(nw, in_meter, conv, true, in_stream_name);
-      connect_source_to_sink(nw, conv, out_meter, true, out_stream_name);
-      erin::network::couple_source_loss_to_sink(nw, conv, loss_meter, true);
-      ports[ep::Type::Inflow] = std::vector<ElementPort>{{in_meter, 0}};
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{{out_meter, 0}, {loss_meter, 0}};
+      conv->set_recording_on();
+      // ports[ep::Type::Inflow] = std::vector<ElementPortStream>{{conv, 0, in_stream}};
+      // ports[ep::Type::Outflow] = std::vector<ElementPortStream>{
+      //  {conv, 0, out_stream}, {conv, 1, loss_stream}};
+      // auto waste_flow_id = flow_logger.connect_to_waste(conv, 2, loss_stream);
+      // conv->set_waste_port_flow_id(waste_flow_id);
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{conv, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{conv, 0}, {conv, 1}};
     }
     return PortsAndElements{ports, elements};
   }
@@ -1043,9 +1054,10 @@ namespace ERIN
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
     auto the_id = get_id();
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "PassThroughComponent::add_to_network(...);id="
                 << the_id << "\n";
+    }
     auto the_type = ComponentType::PassThrough;
     auto stream = get_input_stream();
     if (is_failed || limits.get_is_limited()) {
@@ -1155,9 +1167,10 @@ namespace ERIN
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
     auto the_id = get_id();
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "StorageComponent::add_to_network(...);id="
                 << the_id << "\n";
+    }
     auto the_type = ComponentType::Storage;
     auto stream = get_input_stream();
     if (is_failed) {

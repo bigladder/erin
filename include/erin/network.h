@@ -61,20 +61,6 @@ namespace erin::network
       bool two_way,
       const std::string& stream);
 
-  void couple_source_loss_to_sink(
-      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
-      ERIN::FlowElement* src,
-      ERIN::FlowElement* sink,
-      bool two_way = true);
-
-  void couple_source_loss_to_sink_with_ports(
-      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
-      ERIN::FlowElement* src,
-      int source_port,
-      ERIN::FlowElement* sink,
-      int sink_port,
-      bool two_way = true);
-
   ERIN::ElementPort get_from_map(
       const std::unordered_map<
          erin::port::Type, std::vector<ERIN::ElementPort>>& map,

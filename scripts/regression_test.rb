@@ -54,13 +54,14 @@ $issues = {}
 # String String -> (Tuple Bool (Or String Nil))
 # - diff_target: String, path to the actual output of the recently run program
 # - expected_path: String, path to expected output to test regressions against
+# - diff_path: nil or string, if nil, defaults to 'temp.txt', else path to diff file
 # RETURN: 2-tuple of boolean and either string or nil
 # first of the 2-tuple is a boolean; if true, no differences; else false
 # if first element is false, the issue is reported in the string
-def run_diff(diff_target, expected_path)
+def run_diff(diff_target, expected_path, diff_path=nil)
   is_good = true
   issue = nil
-  diff_path = 'temp.txt'
+  diff_path = 'temp.txt' if diff_path.nil?
   if !File.exist?(diff_target)
     return [false, "actual file: #{diff_target} doesn't exist"]
   end
@@ -73,9 +74,16 @@ def run_diff(diff_target, expected_path)
     the_diff = ""
     if File.exist?(diff_path)
       the_diff = File.read(diff_path)
-      File.delete(diff_path)
+      File.open(diff_path, 'a') do |f|
+        f.write("== EXPECTED ==" + ("="*40) + "\n")
+        f.write(File.read(expected_path))
+        f.write("== ACTUAL ==" + ("="*40) + "\n")
+        f.write(File.read(diff_target))
+      end
     end
     issue = "regression in #{diff_target}:\n#{the_diff}"
+  else
+    File.delete(diff_path) if File.exist?(diff_path)
   end
   [is_good, issue]
 end
@@ -107,12 +115,14 @@ def run_regression(id, info)
     end
     comparisons.each do |local_path, reference_path|
       full_ref_path = File.join(REFERENCE_PATH, reference_path)
-      is_good, issue = run_diff(local_path, full_ref_path)
+      diff_path = "diff_for_#{id}.txt"
+      is_good, issue = run_diff(local_path, full_ref_path, diff_path)
       if !is_good
         $issues[id] = issue + "\n\tlocal_path: #{local_path}\n\t"\
           "reference_path: #{reference_path}\n\t"\
           "args: #{args}\n\t"\
-          "command: \"#{cmd}\"\n\n"
+          "command: \"#{cmd}\"\n\t"\
+          "diff_file: \"#{diff_path}\"\n\n"
         $num_issues += 1
         return
       end

@@ -132,46 +132,6 @@ namespace erin::network
         network, src, 0, sink, 0, two_way, stream);
   }
 
-  void
-  couple_source_loss_to_sink(
-      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
-      ::ERIN::FlowElement* src,
-      ::ERIN::FlowElement* sink,
-      bool two_way)
-  {
-    network.couple(
-        sink, ::ERIN::FlowElement::outport_inflow_request,
-        src, ::ERIN::FlowElement::inport_lossflow_request);
-    if (two_way)
-      network.couple(
-          src, ::ERIN::FlowElement::outport_lossflow_achieved,
-          sink, ::ERIN::FlowElement::inport_inflow_achieved);
-  }
-
-  void
-  couple_source_loss_to_sink_with_ports(
-      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
-      ERIN::FlowElement* src,
-      int source_port,
-      ERIN::FlowElement* sink,
-      int sink_port,
-      bool two_way,
-      const std::string& /* stream */)
-  {
-    // TODO: fix lossflow on FlowElement OR change how flows are associated with ports
-    // check_stream_consistency(
-    //     src->get_lossflow_type().get_type(),
-    //     sink->get_inflow_type().get_type(),
-    //     stream);
-    network.couple(
-        sink, ::ERIN::FlowElement::outport_inflow_request + sink_port,
-        src, ::ERIN::FlowElement::inport_lossflow_request + source_port);
-    if (two_way)
-      network.couple(
-          src, ::ERIN::FlowElement::outport_lossflow_achieved + source_port,
-          sink, ::ERIN::FlowElement::inport_inflow_achieved + sink_port);
-  }
-
   ERIN::ElementPort
   get_from_map(
       const std::unordered_map<
@@ -232,16 +192,17 @@ namespace erin::network
       const std::string& stream)
   {
     check_stream_consistency(
-        source->get_outflow_type(),
-        sink->get_inflow_type(),
+        source->get_outflow_type_by_port(source_port),
+        sink->get_inflow_type_by_port(sink_port),
         stream);
     network.couple(
         sink, ERIN::FlowElement::outport_inflow_request + sink_port,
         source, ERIN::FlowElement::inport_outflow_request + source_port);
-    if (both_way)
+    if (both_way) {
       network.couple(
           source, ERIN::FlowElement::outport_outflow_achieved + source_port,
           sink, ERIN::FlowElement::inport_inflow_achieved + sink_port);
+    }
   }
 
   void
@@ -270,20 +231,6 @@ namespace erin::network
       auto source = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
       auto sink = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
       connect_source_to_sink_with_ports(
-          network, source.element, source.port,
-          sink.element, sink.port, two_way, stream);
-    }
-    else if ((port1 == ep::Type::Lossflow) && (port2 == ep::Type::Inflow)) {
-      auto source = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
-      auto sink = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
-      couple_source_loss_to_sink_with_ports(
-          network, source.element, source.port,
-          sink.element, sink.port, two_way, stream);
-    }
-    else if ((port1 == ep::Type::Inflow) && (port2 == ep::Type::Lossflow)) {
-      auto source = get_from_map(port_map2, port2, "port_map2", "port2", port2_num);
-      auto sink = get_from_map(port_map1, port1, "port_map1", "port1", port1_num);
-      couple_source_loss_to_sink_with_ports(
           network, source.element, source.port,
           sink.element, sink.port, two_way, stream);
     }

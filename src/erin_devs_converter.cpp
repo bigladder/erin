@@ -279,6 +279,7 @@ namespace erin::devs
     FlowValueType outflow_request{0.0};
     FlowValueType inflow_achieved{0.0};
     FlowValueType lossflow_request{0.0};
+    constexpr int inport_lossflow_request{inport_outflow_request + 1};
     for (const auto& x: xs) {
       switch (x.port) {
         case inport_outflow_request:
@@ -491,20 +492,23 @@ namespace erin::devs
       const ConverterState& state,
       std::vector<PortValue>& ys)
   {
-    if (state.report_inflow_request)
+    if (state.report_inflow_request) {
       ys.emplace_back(
           PortValue{
             outport_inflow_request,
             state.inflow_port.get_requested()});
-    if (state.report_outflow_achieved)
+    }
+    if (state.report_outflow_achieved) {
       ys.emplace_back(
           PortValue{
             outport_outflow_achieved,
             state.outflow_port.get_achieved()});
-    if (state.report_lossflow_achieved)
+    }
+    if (state.report_lossflow_achieved) {
       ys.emplace_back(
           PortValue{
-            outport_lossflow_achieved,
+            outport_outflow_achieved + 1,
             state.lossflow_port.get_achieved()});
+    }
   }
 }

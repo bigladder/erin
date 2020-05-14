@@ -3369,9 +3369,9 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
   auto results = m.run("scenario01");
   EXPECT_TRUE(results.get_is_good());
   auto stats_by_comp_id = results.get_statistics();
-  // num_components + 2 because for converter we have an input, output, and
-  // lossport
-  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 2);
+  // num_components + 3 because for converter we have an input (the one we
+  // count) plus output, lossport, and wasteport
+  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 3);
   auto load_stats = stats_by_comp_id.at("L");
   ERIN::RealTimeType scenario_duration_s{10};
   ERIN::FlowValueType load_kW{1.0};
@@ -3444,6 +3444,7 @@ load_combined_heat_and_power_example()
     "type = \"converter\"\n"
     "inflow = \"waste_heat\"\n"
     "outflow = \"district_hot_water\"\n"
+    "lossflow = \"waste_heat\"\n"
     "constant_efficiency = 0.5\n"
     "dispatch_strategy = \"dump_load\"\n"
     "[networks.nw01]\n"
@@ -3471,7 +3472,7 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
   auto results = m.run("scenario01");
   EXPECT_TRUE(results.get_is_good());
   auto stats_by_comp_id = results.get_statistics();
-  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 4);
+  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 6);
   auto electrical_load_stats = stats_by_comp_id.at("LE");
   ERIN::RealTimeType scenario_duration_s{10};
   ERIN::FlowValueType electrical_load_kW{10.0};
@@ -3819,6 +3820,7 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
     {"C-inflow", E::ScenarioStats{10,0,0,0.0,0.0}},
     {"C-outflow", E::ScenarioStats{0,10,10,100.0,0.0}},
     {"C-lossflow", E::ScenarioStats{10,0,0,0.0,0.0}},
+    {"C-wasteflow", E::ScenarioStats{10,0,0,0.0,0.0}},
     {"S", E::ScenarioStats{10,0,0,0.0,0.0}}};
   EXPECT_EQ(stats.size(), expected_stats.size());
   for (const auto& s_item: expected_stats) {
@@ -3845,8 +3847,16 @@ TEST(ErinElements, Test_that_converter_yields_lossflow)
   // 4. call output_func() and check values of ys ; do we report the right lossflow?
   ERIN::Time t0{0,0};
   ERIN::Time dt{0,1};
-  auto lossflow_request = ERIN::PortValue{ERIN::FlowElement::inport_lossflow_request, 100000.0}; 
-  auto outflow_request = ERIN::PortValue{ERIN::FlowElement::inport_outflow_request, 10.0};
+  int inport_lossflow_request{ERIN::FlowElement::inport_outflow_request + 1};
+  int outport_lossflow_achieved{ERIN::FlowElement::outport_outflow_achieved + 1};
+  auto lossflow_request = ERIN::PortValue{
+    inport_lossflow_request,
+    100000.0
+  }; 
+  auto outflow_request = ERIN::PortValue{
+    ERIN::FlowElement::inport_outflow_request,
+    10.0
+  };
   std::vector<ERIN::PortValue> v1 = {lossflow_request};
   std::vector<ERIN::PortValue> v2 = {outflow_request};
   auto dt_next = c->ta();
@@ -3860,7 +3870,7 @@ TEST(ErinElements, Test_that_converter_yields_lossflow)
   dt_next = c->ta();
   // lossflow_achieved
   ASSERT_EQ(1, outputs1.size());
-  EXPECT_EQ(ERIN::FlowElement::outport_lossflow_achieved, outputs1[0].port);
+  EXPECT_EQ(outport_lossflow_achieved, outputs1[0].port);
   EXPECT_EQ(0.0, outputs1[0].value);
   EXPECT_EQ(dt_next, ERIN::inf);
   c->delta_ext(dt, v2);
@@ -3878,7 +3888,7 @@ TEST(ErinElements, Test_that_converter_yields_lossflow)
       }
       found_inflow_request = true;
       EXPECT_EQ(20.0, p.value);
-    } else if (p.port == ERIN::FlowElement::outport_lossflow_achieved) {
+    } else if (p.port == outport_lossflow_achieved) {
       if (found_lossflow_achieved) {
         ASSERT_TRUE(false) << "multiple lossflow achieved values found!";
       }
@@ -4245,8 +4255,10 @@ TEST(ErinDevs, Test_converter_functions)
   auto dt4 = ED::converter_time_advance(s4);
   EXPECT_EQ(dt4, ED::infinity);
   // Test Confluent Transitions
+  const int inport_lossflow_request{ED::inport_outflow_request + 1};
+  const int outport_lossflow_achieved{ED::outport_outflow_achieved + 1};
   std::vector<ED::PortValue> xs1a{
-    ED::PortValue{ED::inport_lossflow_request, 2.0}};
+    ED::PortValue{inport_lossflow_request, 2.0}};
   auto s2a = ED::converter_confluent_transition(s1, xs1a);
   ED::ConverterState expected_s2a{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
@@ -4267,7 +4279,7 @@ TEST(ErinDevs, Test_converter_functions)
   EXPECT_EQ(s_a, expected_s_a);
 
   std::vector<ED::PortValue> xs_b{
-    ED::PortValue{ED::inport_lossflow_request, 30.0}};
+    ED::PortValue{inport_lossflow_request, 30.0}};
   auto s_b = ED::converter_external_transition(s0, 10, xs_b);
   ED::ConverterState expected_s_b{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
@@ -4282,7 +4294,7 @@ TEST(ErinDevs, Test_converter_functions)
 
   std::vector<ED::PortValue> xs_d{
     ED::PortValue{ED::inport_outflow_request, 10.0},
-    ED::PortValue{ED::inport_lossflow_request, 30.0}};
+    ED::PortValue{inport_lossflow_request, 30.0}};
   auto s_d = ED::converter_external_transition(s0, 10, xs_d);
   ED::ConverterState expected_s_d{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
@@ -4298,13 +4310,13 @@ TEST(ErinDevs, Test_converter_functions)
   ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_e), std::invalid_argument);
 
   std::vector<ED::PortValue> xs_f{
-    ED::PortValue{ED::inport_lossflow_request, 30.0},
+    ED::PortValue{inport_lossflow_request, 30.0},
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
   ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_f), std::invalid_argument);
 
   std::vector<ED::PortValue> xs_g{
     ED::PortValue{ED::inport_outflow_request, 10.0},
-    ED::PortValue{ED::inport_lossflow_request, 30.0},
+    ED::PortValue{inport_lossflow_request, 30.0},
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
   ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_g), std::invalid_argument);
   
@@ -4990,7 +5002,9 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
       ) << "key: " << sink_id;
   // Converter recorded data -- outflow
   ASSERT_TRUE(
-      check_times_and_loads(results, expected_times, expected_loads, converter_id)
+      check_times_and_loads(
+        results, expected_times, expected_loads,
+        converter_id + "-outflow")
       ) << "key: " << converter_id;
   // ... -- inflow
   std::vector<E::FlowValueType> expected_loads_inflow = {200.0, 20.0, 0.0, 0.0};
@@ -5303,8 +5317,7 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
     "blue_sky,1,10,C-inflow,converter,natural_gas,1,0,0,0.0,720000,0.0\n"
     "blue_sky,1,10,C-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0\n"
     "blue_sky,1,10,C-outflow,converter,electricity,1,0,0,360000,0.0,0.0\n"
-    // TODO: enable below
-    //"blue_sky,1,10,C-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,360000\n"
+    "blue_sky,1,10,C-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,360000\n"
     "blue_sky,1,10,L,load,electricity,1,0,0,360000,0.0,0.0\n"
     "blue_sky,1,10,S,source,natural_gas,1,0,0,0.0,720000,0.0\n"
     "blue_sky,1,10,TOTAL (source),,,,,,0.0,720000,0.0\n"
@@ -5314,6 +5327,261 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
     //"blue_sky,1,10,ENERGY BALANCE,0,,,,,,,\n"
   };
   EXPECT_EQ(stats, expected);
+}
+
+TEST(ErinBasicsTest, Test_energy_balance_on_devs_mux)
+{
+  namespace ED = erin::devs;
+  std::vector<double> achieved_for_input_0{1.0,0.5,0.1, 0.0};
+  std::vector<double> achieved_for_input_1{1.0,0.5,0.1, 0.0};
+  std::vector<double> request_for_output_0{10.0,100.0,5.0};
+  std::vector<double> request_for_output_1{10.0,100.0,5.0};
+  ED::RealTimeType dt{0};
+  int num_checks{0};
+  for (const auto ach_in_0 : achieved_for_input_0) {
+    for (const auto ach_in_1 : achieved_for_input_1) {
+      for (const auto req_out_0 : request_for_output_0) {
+        for (const auto req_out_1 : request_for_output_1) {
+          ++num_checks;
+          std::ostringstream oss{};
+          oss << "num_checks=" << num_checks << "\n"
+              << "ach_in_0=" << ach_in_0 << "\n"
+              << "ach_in_1=" << ach_in_1 << "\n"
+              << "req_out_0=" << req_out_0 << "\n"
+              << "req_out_1=" << req_out_1 << "\n";
+          std::string setup = oss.str();
+          auto s0 = ED::make_mux_state(2, 2, ED::MuxerDispatchStrategy::InOrder);
+          double requested{req_out_0 + req_out_1};
+          double achieved{requested}; // initial assumption
+          std::vector<ED::PortValue> requested_pvs{
+            ED::PortValue{ED::inport_outflow_request + 0, req_out_0},
+            ED::PortValue{ED::inport_outflow_request + 1, req_out_1},
+          };
+          auto s1 = ED::mux_external_transition(s0, dt, requested_pvs);
+          auto dt1 = ED::mux_time_advance(s1);
+          auto ys1 = ED::mux_output_function(s1);
+          ASSERT_EQ(ys1.size(), 1);
+          EXPECT_EQ(ys1[0].port, ED::outport_inflow_request + 0);
+          EXPECT_NEAR(ys1[0].value, requested, 1e-6);
+          EXPECT_NEAR(ED::mux_get_outflow_request(s1), ED::mux_get_inflow_request(s1), 1e-6) << setup;
+          EXPECT_NEAR(ED::mux_get_outflow_achieved(s1), ED::mux_get_inflow_achieved(s1), 1e-6) << setup;
+          EXPECT_NEAR(ED::mux_get_outflow_request(s1), requested, 1e-6) << setup;
+          EXPECT_NEAR(ED::mux_get_outflow_achieved(s1), requested, 1e-6) << setup;
+          // response from inport 1 -- may or may not be enough
+          std::vector<ED::PortValue> achieved_pvs{
+            ED::PortValue{ED::inport_inflow_achieved + 0, requested * ach_in_0},
+          };
+          achieved = (requested * ach_in_0);
+          auto s2 = mux_external_transition(s1, dt, achieved_pvs);
+          std::string setup_i0 = std::string{"after response from inflow 0\n"} + setup;
+          //EXPECT_NEAR(ED::mux_get_outflow_request(s2), ED::mux_get_inflow_request(s2), 1e-6) << setup_i0;
+          EXPECT_NEAR(ED::mux_get_outflow_achieved(s2), ED::mux_get_inflow_achieved(s2), 1e-6) << setup_i0;
+          EXPECT_NEAR(ED::mux_get_outflow_request(s2), requested, 1e-6) << setup_i0;
+          // note: still requested below because we immediately request the difference to port 1 and assume we achieve it
+          EXPECT_NEAR(ED::mux_get_outflow_achieved(s2), requested, 1e-6) << setup_i0;
+          auto dt2 = mux_time_advance(s2);
+          if (ach_in_0 == 1.0) {
+            EXPECT_EQ(dt2, ED::infinity);
+          }
+          else {
+            // didn't get enough... request from inport 1
+            std::string setup_i1 = std::string{"after response from inflow 1\n"} + setup;
+            EXPECT_EQ(dt2, 0);
+            auto ys2 = mux_output_function(s2);
+            ASSERT_EQ(ys2.size(), 1);
+            EXPECT_EQ(ys2[0].port, ED::outport_inflow_request + 1);
+            EXPECT_NEAR(ys2[0].value, requested - achieved, 1e-6);
+            achieved = achieved + ((requested - achieved) * ach_in_1);
+            achieved_pvs = std::vector{
+              ED::PortValue{ED::inport_inflow_achieved + 1, (requested - (requested * ach_in_0)) * ach_in_1},
+            };
+            auto s3 = mux_external_transition(s2, dt, achieved_pvs);
+            auto dt3 = mux_time_advance(s3);
+            if (ach_in_1 == 1.0) {
+              EXPECT_EQ(dt3, ED::infinity);
+              EXPECT_NEAR(ED::mux_get_outflow_achieved(s3), ED::mux_get_inflow_achieved(s3), 1e-6) << setup_i1;
+              EXPECT_NEAR(ED::mux_get_outflow_request(s3), requested, 1e-6) << setup_i1;
+              // note: still requested below because we requested the difference to port 1 and achieved it
+              // note: normally, we woudn't hear back from port 1 since it achieved its request...
+              EXPECT_NEAR(ED::mux_get_outflow_achieved(s3), requested, 1e-6) << setup_i1;
+            }
+            else {
+              // didn't meet loads; inform downstream
+              auto ys3 = mux_output_function(s3);
+              if (achieved >= req_out_0) {
+                // only need to inform output 2 of a problem
+                ASSERT_EQ(ys3.size(), 1);
+                EXPECT_EQ(ys3[0].port, ED::outport_outflow_achieved + 1);
+                EXPECT_NEAR(ys3[0].value, achieved - req_out_0, 1e-6);
+              }
+              else {
+                ASSERT_EQ(ys3.size(), 2);
+                EXPECT_EQ(ys3[0].port, ED::outport_outflow_achieved + 0);
+                EXPECT_NEAR(ys3[0].value, achieved, 1e-6);
+                EXPECT_EQ(ys3[1].port, ED::outport_outflow_achieved + 1);
+                EXPECT_NEAR(ys3[1].value, 0.0, 1e-6);
+              }
+              achieved = (requested * ach_in_0) + ((requested - (requested * ach_in_0)) * ach_in_1);
+              EXPECT_NEAR(ED::mux_get_outflow_achieved(s3), ED::mux_get_inflow_achieved(s3), 1e-6) << setup_i1;
+              EXPECT_NEAR(ED::mux_get_outflow_request(s3), requested, 1e-6) << setup_i1;
+              // note: all ports reported in and we are deficient so reporting...
+              EXPECT_NEAR(ED::mux_get_outflow_achieved(s3), achieved, 1e-6) << setup_i1;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+TEST(ErinBasicsTest, Test_energy_balance_on_mux_element)
+{
+  namespace E = ERIN;
+  std::vector<double> achieved_for_input_0{1.0,0.5,0.1, 0.0};
+  std::vector<double> achieved_for_input_1{1.0,0.5,0.1, 0.0};
+  std::vector<double> request_for_output_0{10.0,100.0,5.0};
+  std::vector<double> request_for_output_1{10.0,100.0,5.0};
+  E::RealTimeType dt{0};
+  int num_checks{0};
+  for (const auto ach_in_0 : achieved_for_input_0) {
+    for (const auto ach_in_1 : achieved_for_input_1) {
+      for (const auto req_out_0 : request_for_output_0) {
+        for (const auto req_out_1 : request_for_output_1) {
+          ++num_checks;
+          std::ostringstream oss{};
+          oss << "num_checks=" << num_checks << "\n"
+              << "ach_in_0=" << ach_in_0 << "\n"
+              << "ach_in_1=" << ach_in_1 << "\n"
+              << "req_out_0=" << req_out_0 << "\n"
+              << "req_out_1=" << req_out_1 << "\n";
+          std::string setup = oss.str();
+          std::unique_ptr<E::FlowElement> p = std::make_unique<E::Mux>(
+              "mux",
+              E::ComponentType::Muxer,
+              "electricity",
+              2,
+              2,
+              E::MuxerDispatchStrategy::InOrder);
+          double requested{req_out_0 + req_out_1};
+          double achieved{requested}; // initial assumption
+          std::vector<E::PortValue> xs0{
+            E::PortValue{E::FlowElement::inport_outflow_request + 0, req_out_0},
+            E::PortValue{E::FlowElement::inport_outflow_request + 1, req_out_1},
+          };
+          std::vector<E::PortValue> xs1{
+            E::PortValue{
+              E::FlowElement::inport_inflow_achieved + 0,
+              requested * ach_in_0},
+          };
+          std::vector<E::PortValue> xs2{
+            E::PortValue{
+              E::FlowElement::inport_inflow_achieved + 1,
+              (requested - (requested * ach_in_0)) * ach_in_1},
+          };
+          auto dt_logical_advance = E::Time{0, 1};
+          // Exercise Begin
+          auto dt0 = p->ta();
+          ASSERT_EQ(dt0, E::inf) << setup;
+          p->delta_ext(dt_logical_advance, xs0);
+          auto dt1 = p->ta();
+          ASSERT_EQ(dt1, dt_logical_advance) << setup;
+          std::vector<E::PortValue> ys1{};
+          p->output_func(ys1);
+          ASSERT_EQ(ys1.size(), 1) << setup;
+          ASSERT_EQ(ys1[0].port, E::FlowElement::outport_inflow_request + 0) << setup;
+          ASSERT_NEAR(ys1[0].value, requested, 1e-6) << setup;
+          p->delta_int();
+          auto dt2 = p->ta();
+          ASSERT_EQ(dt2, E::inf) << setup;
+          if (ach_in_0 == 1.0) {
+            continue;
+          }
+          p->delta_ext(dt_logical_advance, xs1);
+          auto dt3 = p->ta();
+          ASSERT_EQ(dt3, dt_logical_advance) << setup;
+          std::vector<E::PortValue> ys2{};
+          p->output_func(ys2);
+          ASSERT_EQ(ys2.size(), 1) << setup;
+          ASSERT_EQ(ys2[0].port, E::FlowElement::outport_inflow_request + 1) << setup;
+          ASSERT_NEAR(ys2[0].value, requested * (1.0 - ach_in_0), 1e-6) << setup;
+          p->delta_int();
+          auto dt4 = p->ta();
+          ASSERT_EQ(dt4, E::inf) << setup;
+          if (ach_in_1 == 1.0) {
+            continue;
+          }
+          p->delta_ext(dt_logical_advance, xs2);
+          achieved = requested * (ach_in_0 + ((1.0 - ach_in_0) * ach_in_1));
+          auto dt5 = p->ta();
+          ASSERT_EQ(dt5, dt_logical_advance) << setup;
+          std::vector<E::PortValue> ys3{};
+          p->output_func(ys3);
+          if (achieved >= req_out_0) {
+            ASSERT_EQ(ys3.size(), 1) << setup;
+            ASSERT_EQ(ys3[0].port, E::FlowElement::outport_outflow_achieved + 1) << setup;
+            ASSERT_NEAR(ys3[0].value, achieved - req_out_0, 1e-6) << setup;
+
+          }
+          else {
+            ASSERT_EQ(ys3.size(), 2) << setup;
+            ASSERT_EQ(ys3[0].port, E::FlowElement::outport_outflow_achieved + 0) << setup;
+            ASSERT_NEAR(ys3[0].value, achieved, 1e-6) << setup;
+            ASSERT_EQ(ys3[1].port, E::FlowElement::outport_outflow_achieved + 1) << setup;
+            ASSERT_NEAR(ys3[1].value, 0.0, 1e-6) << setup;
+          }
+          p->delta_int();
+          auto dt6 = p->ta();
+          ASSERT_EQ(dt6, E::inf) << setup;
+        }
+      }
+    }
+  }
+}
+
+TEST(ErinBasicsTest, Test_energy_balance_on_mux_with_replay)
+{
+  namespace ED = erin::devs;
+  auto s0 = ED::make_mux_state(3, 2, ED::MuxerDispatchStrategy::InOrder);
+  auto dt0 = ED::mux_time_advance(s0);
+  ASSERT_EQ(dt0, ED::infinity);
+  std::vector<ED::PortValue> xs0{
+    ED::PortValue{ED::inport_outflow_request + 0, 2000.0},
+    ED::PortValue{ED::inport_outflow_request + 1, 2000.0},
+  };
+  auto s1 = ED::mux_external_transition(s0, 0, xs0);
+  EXPECT_NEAR(ED::mux_get_outflow_request(s1), 4000.0, 1e-6);
+  EXPECT_NEAR(ED::mux_get_outflow_achieved(s1), ED::mux_get_inflow_achieved(s1), 1e-6);
+  auto dt1 = ED::mux_time_advance(s1);
+  ASSERT_EQ(dt1, 0);
+  auto ys1 = ED::mux_output_function(s1);
+  ASSERT_EQ(ys1.size(), 1);
+  ASSERT_EQ(ys1[0].port, ED::outport_inflow_request + 0);
+  ASSERT_EQ(ys1[0].value, 4000.0);
+  auto s2 = ED::mux_internal_transition(s1);
+  EXPECT_NEAR(ED::mux_get_outflow_request(s2), 4000.0, 1e-6);
+  EXPECT_NEAR(ED::mux_get_outflow_achieved(s2), ED::mux_get_inflow_achieved(s2), 1e-6);
+  auto dt2 = ED::mux_time_advance(s2);
+  ASSERT_EQ(dt2, ED::infinity);
+  std::vector<ED::PortValue> xs2{
+    ED::PortValue{ED::inport_inflow_achieved + 0, 2228.57},
+  };
+  auto s3 = ED::mux_external_transition(s2, 0, xs2);
+  EXPECT_NEAR(ED::mux_get_outflow_request(s3), 4000.0, 1e-6);
+  EXPECT_NEAR(ED::mux_get_outflow_achieved(s3), ED::mux_get_inflow_achieved(s3), 1e-6);
+  auto dt3 = ED::mux_time_advance(s3);
+  ASSERT_EQ(dt3, 0);
+  auto ys3 = ED::mux_output_function(s3);
+  ASSERT_EQ(ys3.size(), 1);
+  ASSERT_EQ(ys3[0].port, ED::outport_inflow_request + 1);
+  ASSERT_NEAR(ys3[0].value, 1771.43, 0.005);
+  std::vector<ED::PortValue> xs3{
+    ED::PortValue{ED::inport_inflow_achieved + 0, 1448.57},
+  };
+  auto s4 = ED::mux_confluent_transition(s3, xs3);
+  EXPECT_NEAR(ED::mux_get_outflow_request(s4), 4000.0, 1e-6);
+  EXPECT_NEAR(ED::mux_get_outflow_achieved(s4), ED::mux_get_inflow_achieved(s4), 1e-6);
+  auto dt4 = ED::mux_time_advance(s4);
+  ASSERT_EQ(dt4, 0);
 }
 
 int

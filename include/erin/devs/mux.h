@@ -79,6 +79,14 @@ namespace erin::devs
 
   RealTimeType mux_current_time(const MuxState& state);
 
+  FlowValueType mux_get_inflow_request(const MuxState& state);
+
+  FlowValueType mux_get_outflow_request(const MuxState& state);
+
+  FlowValueType mux_get_inflow_achieved(const MuxState& state);
+
+  FlowValueType mux_get_outflow_achieved(const MuxState& state);
+
   ////////////////////////////////////////////////////////////
   // time advance
   RealTimeType mux_time_advance(const MuxState& state);

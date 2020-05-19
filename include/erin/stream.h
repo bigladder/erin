@@ -121,6 +121,20 @@ namespace ERIN
       FlowValueType lossflow;
       void checkInvariants() const;
   };
+
+  ////////////////////////////////////////////////////////////
+  // StreamRole
+  enum class StreamRole
+  {
+    Source = 0,
+    Load,
+    Waste,
+    Circulatory,
+  };
+
+  StreamRole tag_to_stream_role(const std::string& tag);
+
+  std::string stream_role_to_tag(const StreamRole& role);
 }
 
 #endif // ERIN_STREAM_H

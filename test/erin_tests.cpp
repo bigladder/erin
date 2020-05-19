@@ -5330,6 +5330,22 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
   EXPECT_EQ(stats, expected);
 }
 
+TEST(ErinBasicsTest, Test_stream_role_to_and_from_string)
+{
+  namespace E = ERIN;
+  std::vector<E::StreamRole> roles{
+    E::StreamRole::Source,
+    E::StreamRole::Load,
+    E::StreamRole::Waste,
+    E::StreamRole::Circulatory,
+  };
+  for (const auto& role : roles) {
+    auto role_tag = E::stream_role_to_tag(role);
+    auto role_2 = E::tag_to_stream_role(role_tag);
+    EXPECT_EQ(role_2, role);
+  }
+}
+
 TEST(ErinBasicsTest, Test_energy_balance_on_devs_mux)
 {
   namespace ED = erin::devs;

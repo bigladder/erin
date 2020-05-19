@@ -202,4 +202,42 @@ namespace ERIN
       throw std::runtime_error("FlowState::checkInvariants");
     }
   }
+
+  StreamRole
+  tag_to_stream_role(const std::string& tag)
+  {
+    if (tag == "source") {
+      return StreamRole::Source;
+    }
+    else if (tag == "load") {
+      return StreamRole::Load;
+    }
+    else if (tag == "waste") {
+      return StreamRole::Waste;
+    }
+    else if (tag == "circulatory") {
+      return StreamRole::Circulatory;
+    }
+    std::ostringstream oss{};
+    oss << "tag_to_stream_role: unhandled tag '" << tag << "'";
+    throw std::invalid_argument(oss.str());
+  }
+
+  std::string
+  stream_role_to_tag(const StreamRole& role)
+  {
+    switch (role) {
+      case StreamRole::Source:
+        return std::string{"source"};
+      case StreamRole::Load:
+        return std::string{"load"};
+      case StreamRole::Waste:
+        return std::string{"waste"};
+      case StreamRole::Circulatory:
+        return std::string{"circulatory"};
+    }
+    std::ostringstream oss{};
+    oss << "unhandled StreamRole '" << static_cast<int>(role) << "'\n";
+    throw std::invalid_argument(oss.str());
+  }
 }

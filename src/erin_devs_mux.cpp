@@ -117,7 +117,7 @@ namespace erin::devs
       FlowValueType amount,
       RealTimeType time)
   {
-    auto outflow_ports{outflows};
+    const auto& outflow_ports{outflows};
     if (outflow_strategy == MuxerDispatchStrategy::InOrder) {
       return distribute_inflow_to_outflow_in_order(
           outflow_ports, amount, time);
@@ -322,7 +322,6 @@ namespace erin::devs
     auto time{state.time + dt};
     auto inflow_ports{state.inflow_ports};
     auto outflow_ports{state.outflow_ports};
-    bool got_inflow{false};
     bool got_outflow{false};
     int highest_inflow_port_received{-1};
     for (const auto& x : xs) {
@@ -336,7 +335,6 @@ namespace erin::devs
           highest_inflow_port_received = port_n;
         }
         inflow_ports[port_n] = inflow_ports[port_n].with_achieved(x.value, time);
-        got_inflow = true;
       }
       else if ((port_n_or >= 0) && (port_n_or < state.num_outflows)) {
         port_n = port_n_or;
@@ -364,8 +362,6 @@ namespace erin::devs
                 << "... total_outflow_request: "
                 << total_outflow_request << "\n"
                 << "... diff                 : " << diff << "\n"
-                << "... got_inflow           : "
-                << (got_inflow ? "true" : "false") << "\n"
                 << "... got_outflow          : "
                 << (got_outflow ? "true" : "false") << "\n"
                 << "... highest_inflow_port_received: "

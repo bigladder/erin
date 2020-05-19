@@ -936,7 +936,7 @@ namespace ERIN
     lossflow_element_id{-1},
     wasteflow_element_id{-1},
     record_history{false},
-    lossflow_stream{lossflow_stream_}
+    lossflow_stream{std::move(lossflow_stream_)}
   {
   }
 

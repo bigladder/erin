@@ -5309,8 +5309,9 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
   auto stats = results.to_stats_csv();
   // Updated Stats CSV Output Header:
   // scenario id,number of occurrences,total time in scenario (hours),
-  // source component id,source port,receiving component id,receiving port,type,role,stream,energy availability,max downtime (hours),load not served (kJ),
-  // [<stream> energy used (kJ),]+
+  // +source component id,+source port,+receiving component id,+receiving port,-component id,type,+role,stream,energy availability,max downtime (hours),load not served (kJ)
+  // [,<stream> energy used (kJ)]+
+  // role is one of source, load, circulatory, and waste
   std::string expected{
     "scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),"
     "electricity energy used (kJ),natural_gas energy used (kJ),waste_heat energy used (kJ)\n"
@@ -5322,8 +5323,8 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
     "blue_sky,1,10,S,source,natural_gas,1,0,0,0.0,720000,0.0\n"
     "blue_sky,1,10,TOTAL (source),,,,,,0.0,720000,0.0\n"
     "blue_sky,1,10,TOTAL (load),,,,,,360000,0.0,0.0\n"
+    //"blue_sky,1,10,TOTAL (waste),,,,,,0.0,0.0,360000\n"
     // TODO: enable below
-    //"blue_sky,1,10,TOTAL (load),,,,,,360000,0.0,360000\n"
     //"blue_sky,1,10,ENERGY BALANCE,0,,,,,,,\n"
   };
   EXPECT_EQ(stats, expected);

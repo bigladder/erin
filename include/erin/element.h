@@ -336,7 +336,8 @@ namespace ERIN
           std::string input_stream_type,
           std::string output_stream_type,
           std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-          std::function<FlowValueType(FlowValueType)> calc_input_from_output);
+          std::function<FlowValueType(FlowValueType)> calc_input_from_output,
+          std::string lossflow_stream = std::string{"waste_heat"});
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;

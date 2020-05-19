@@ -917,7 +917,8 @@ namespace ERIN
       std::string input_stream_type,
       std::string output_stream_type,
       std::function<FlowValueType(FlowValueType)> calc_output_from_input,
-      std::function<FlowValueType(FlowValueType)> calc_input_from_output):
+      std::function<FlowValueType(FlowValueType)> calc_input_from_output,
+      std::string lossflow_stream_):
     FlowElement(
         std::move(id),
         component_type,
@@ -935,7 +936,7 @@ namespace ERIN
     lossflow_element_id{-1},
     wasteflow_element_id{-1},
     record_history{false},
-    lossflow_stream{"waste_heat"}
+    lossflow_stream{lossflow_stream_}
   {
   }
 

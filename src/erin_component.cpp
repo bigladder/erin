@@ -945,7 +945,8 @@ namespace ERIN
         return out / eff;
       };
       auto conv = new Converter(
-          the_id, the_type, in_stream, out_stream, out_from_in, in_from_out);
+          the_id, the_type, in_stream, out_stream, out_from_in, in_from_out,
+          loss_stream);
       elements.emplace(conv);
       conv->set_recording_on();
       // ports[ep::Type::Inflow] = std::vector<ElementPortStream>{{conv, 0, in_stream}};

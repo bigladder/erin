@@ -35,6 +35,7 @@ namespace ERIN
           const std::string& element_tag,
           const std::string& stream_tag,
           ComponentType comp_type,
+          PortRole port_role,
           bool record_history) = 0;
       virtual void write_data(
           int element_id,
@@ -46,6 +47,8 @@ namespace ERIN
         get_results() const = 0;
       [[nodiscard]] virtual std::unordered_map<std::string,ComponentType>
         get_component_types() const = 0;
+      [[nodiscard]] virtual std::unordered_map<std::string,PortRole>
+        get_port_roles() const = 0;
       [[nodiscard]] virtual std::unordered_map<std::string,std::string>
         get_stream_ids() const = 0;
       virtual void clear() = 0;
@@ -66,6 +69,7 @@ namespace ERIN
           const std::string& element_tag,
           const std::string& stream_tag,
           ComponentType comp_type,
+          PortRole port_role,
           bool record_history) override;
       void write_data(
           int element_id,
@@ -79,6 +83,8 @@ namespace ERIN
         get_stream_ids() const override;
       [[nodiscard]] std::unordered_map<std::string,ComponentType>
         get_component_types() const override;
+      [[nodiscard]] virtual std::unordered_map<std::string,PortRole>
+        get_port_roles() const override;
       void clear() override;
 
     private:
@@ -92,6 +98,7 @@ namespace ERIN
       std::unordered_map<int, std::string> element_id_to_tag;
       std::unordered_map<int, std::string> element_id_to_stream_tag;
       std::unordered_map<int, ComponentType> element_id_to_comp_type;
+      std::unordered_map<int, PortRole> element_id_to_port_role;
       std::vector<bool> recording_flags;
       std::vector<RealTimeType> time_history;
       std::vector<FlowValueType> request_history;
@@ -272,7 +279,8 @@ namespace ERIN
           ComponentType component_type,
           const std::string& stream_type,
           FlowValueType lower_limit,
-          FlowValueType upper_limit);
+          FlowValueType upper_limit,
+          PortRole role = PortRole::Outflow);
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
@@ -295,6 +303,7 @@ namespace ERIN
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
       bool record_history;
+      PortRole port_role;
   };
 
   ////////////////////////////////////////////////////////////
@@ -305,7 +314,8 @@ namespace ERIN
       FlowMeter(
           std::string id,
           ComponentType component_type,
-          const std::string& stream_type);
+          const std::string& stream_type,
+          PortRole port_role = PortRole::Outflow);
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
 
@@ -323,6 +333,7 @@ namespace ERIN
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
       bool record_history;
+      PortRole port_role;
   };
 
   ////////////////////////////////////////////////////////////

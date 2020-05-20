@@ -84,6 +84,7 @@ namespace ERIN
       const std::string& element_tag,
       const std::string& stream_tag,
       ComponentType comp_type,
+      PortRole port_role,
       bool record_history)
   {
     ensure_not_final();
@@ -96,6 +97,7 @@ namespace ERIN
     element_id_to_tag.emplace(std::make_pair(element_id, element_tag));
     element_id_to_stream_tag.emplace(std::make_pair(element_id, stream_tag));
     element_id_to_comp_type.emplace(std::make_pair(element_id, comp_type));
+    element_id_to_port_role.emplace(std::make_pair(element_id, port_role));
     recording_flags.emplace_back(record_history);
     return element_id;
   }
@@ -347,13 +349,37 @@ namespace ERIN
       const auto& tag = pair.second;
       auto it = element_id_to_comp_type.find(id);
       ComponentType type{ComponentType::Informational};
-      if (it != element_id_to_comp_type.end())
+      if (it != element_id_to_comp_type.end()) {
         type = it->second;
-      else
+      }
+      else {
         throw std::runtime_error(
             "element id '" + std::to_string(id) +
             "' not found in element_id_to_comp_type for tag '" + tag + "'");
+      }
       out.emplace(std::make_pair(tag, type));
+    }
+    return out;
+  }
+
+  std::unordered_map<std::string, PortRole>
+  DefaultFlowWriter::get_port_roles() const
+  {
+    std::unordered_map<std::string, PortRole> out{};
+    for (const auto& pair : element_id_to_tag) {
+      const auto& id = pair.first;
+      const auto& tag = pair.second;
+      auto it = element_id_to_port_role.find(id);
+      PortRole role{PortRole::Inflow};
+      if (it != element_id_to_port_role.end()) {
+        role = it->second;
+      }
+      else {
+        throw std::runtime_error(
+            "element id '" + std::to_string(id) +
+            "' not found in element_id_to_port_role for tag '" + tag + "'");
+      }
+      out.emplace(std::make_pair(tag, role));
     }
     return out;
   }
@@ -770,7 +796,8 @@ namespace ERIN
       ComponentType component_type_,
       const std::string& stream_type_,
       FlowValueType lower_limit,
-      FlowValueType upper_limit):
+      FlowValueType upper_limit,
+      PortRole port_role_):
     FlowElement(
         std::move(id_),
         component_type_,
@@ -779,7 +806,8 @@ namespace ERIN
     state{erin::devs::make_flow_limits_state(lower_limit, upper_limit)},
     flow_writer{nullptr},
     element_id{-1},
-    record_history{false}
+    record_history{false},
+    port_role{port_role_}
   {
   }
 
@@ -787,12 +815,13 @@ namespace ERIN
   FlowLimits::delta_int()
   {
     state = erin::devs::flow_limits_internal_transition(state);
-    if (flow_writer && record_history && (element_id != -1))
+    if (flow_writer && record_history && (element_id != -1)) {
       flow_writer->write_data(
           element_id,
           state.time,
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());
+    }
   }
 
   void
@@ -800,24 +829,26 @@ namespace ERIN
   {
     state = erin::devs::flow_limits_external_transition(
         state, dt.real, xs);
-    if (flow_writer && record_history && (element_id != -1))
+    if (flow_writer && record_history && (element_id != -1)) {
       flow_writer->write_data(
           element_id,
           state.time,
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());
+    }
   }
 
   void
   FlowLimits::delta_conf(std::vector<PortValue>& xs)
   {
     state = erin::devs::flow_limits_confluent_transition(state, xs);
-    if (flow_writer && record_history && (element_id != -1))
+    if (flow_writer && record_history && (element_id != -1)) {
       flow_writer->write_data(
           element_id,
           state.time,
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());
+    }
   }
 
   Time
@@ -845,6 +876,7 @@ namespace ERIN
           get_id(),
           get_outflow_type(),
           get_component_type(),
+          port_role,
           record_history);
       flow_writer->write_data(
           element_id,
@@ -866,7 +898,8 @@ namespace ERIN
   FlowMeter::FlowMeter(
       std::string id,
       ComponentType component_type,
-      const std::string& stream_type) :
+      const std::string& stream_type,
+      PortRole port_role_) :
     FlowElement(
         std::move(id),
         component_type,
@@ -874,7 +907,8 @@ namespace ERIN
         stream_type),
     flow_writer{nullptr},
     element_id{-1},
-    record_history{true}
+    record_history{true},
+    port_role{port_role_}
   {
   }
 
@@ -895,18 +929,21 @@ namespace ERIN
   void
   FlowMeter::update_on_external_transition()
   {
-    if ((element_id == -1) && flow_writer && record_history)
+    if ((element_id == -1) && flow_writer && record_history) {
       element_id = flow_writer->register_id(
           get_id(),
           get_outflow_type(),
           get_component_type(),
+          port_role,
           record_history);
-    if ((element_id != -1) && flow_writer)
+    }
+    if ((element_id != -1) && flow_writer) {
       flow_writer->write_data(
           element_id,
           get_real_time(),
           get_outflow_request(),
           get_outflow());
+    }
   }
 
   ////////////////////////////////////////////////////////////
@@ -1006,6 +1043,7 @@ namespace ERIN
             get_id() + "-inflow",
             get_inflow_type(),
             get_component_type(),
+            PortRole::Inflow,
             record_history);
       }
       if (outflow_element_id == -1) {
@@ -1013,6 +1051,7 @@ namespace ERIN
             get_id() + "-outflow",
             get_outflow_type(),
             get_component_type(),
+            PortRole::Outflow,
             record_history);
       }
       if (lossflow_element_id == -1) {
@@ -1020,6 +1059,7 @@ namespace ERIN
             get_id() + "-lossflow",
             lossflow_stream,
             get_component_type(),
+            PortRole::Outflow,
             record_history);
       }
       if (wasteflow_element_id == -1) {
@@ -1027,6 +1067,7 @@ namespace ERIN
             get_id() + "-wasteflow",
             lossflow_stream,
             get_component_type(),
+            PortRole::WasteInflow,
             record_history);
       }
       flow_writer->write_data(
@@ -1133,6 +1174,7 @@ namespace ERIN
           get_id(),
           get_outflow_type(),
           get_component_type(),
+          PortRole::LoadInflow,
           record_history);
       flow_writer->write_data(
           element_id,
@@ -1272,6 +1314,7 @@ namespace ERIN
                 the_id + "-inflow(" + std::to_string(i) + ")",
                 get_inflow_type(),
                 get_component_type(),
+                PortRole::Inflow,
                 record_history));
         }
       }
@@ -1283,6 +1326,7 @@ namespace ERIN
                 the_id + "-outflow(" + std::to_string(i) + ")",
                 get_outflow_type(),
                 get_component_type(),
+                PortRole::Outflow,
                 record_history));
         }
       }
@@ -1431,6 +1475,7 @@ namespace ERIN
             get_id() + "-inflow",
             get_inflow_type(),
             get_component_type(),
+            PortRole::Inflow,
             record_history);
       }
       if (outflow_element_id == -1) {
@@ -1438,6 +1483,7 @@ namespace ERIN
             get_id() + "-outflow",
             get_outflow_type(),
             get_component_type(),
+            PortRole::Outflow,
             record_history);
       }
       flow_writer->write_data(

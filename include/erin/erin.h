@@ -59,7 +59,8 @@ namespace ERIN
           RealTimeType duration,
           std::unordered_map<std::string,std::vector<Datum>> results,
           std::unordered_map<std::string,std::string> stream_ids,
-          std::unordered_map<std::string,ComponentType> component_types);
+          std::unordered_map<std::string,ComponentType> component_types,
+          std::unordered_map<std::string,PortRole> port_roles);
       [[nodiscard]] bool get_is_good() const { return is_good; }
       [[nodiscard]] std::unordered_map<std::string, std::vector<Datum>>
         get_results() const { return results; }
@@ -72,6 +73,8 @@ namespace ERIN
       [[nodiscard]] std::vector<std::string> get_component_ids() const {
         return keys;
       }
+      [[nodiscard]] std::unordered_map<std::string, PortRole>
+        get_port_roles_by_port_id() const { return port_roles_by_port_id; }
 
       [[nodiscard]] std::string to_csv(
           TimeUnits time_units = TimeUnits::Hours) const;
@@ -110,6 +113,7 @@ namespace ERIN
       std::unordered_map<std::string, std::vector<Datum>> results;
       std::unordered_map<std::string, std::string> stream_ids;
       std::unordered_map<std::string, ComponentType> component_types;
+      std::unordered_map<std::string, PortRole> port_roles_by_port_id;
       std::unordered_map<std::string, ScenarioStats> statistics;
       std::vector<std::string> keys;
 
@@ -340,11 +344,13 @@ namespace ERIN
     std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s;
     std::unordered_map<std::string, std::string> stream_types_by_comp_id;
     std::unordered_map<std::string, ComponentType> component_types_by_comp_id;
+    std::unordered_map<std::string, PortRole> port_roles_by_port_id;
     std::unordered_map<std::string, double> energy_availability_by_comp_id;
     std::unordered_map<std::string, double> load_not_served_by_comp_id_kW;
     std::unordered_map<std::string, double> total_energy_by_comp_id_kJ;
     std::unordered_map<std::string, double> totals_by_stream_id_for_source_kJ;
     std::unordered_map<std::string, double> totals_by_stream_id_for_load_kJ;
+    std::unordered_map<std::string, double> totals_by_stream_id_for_waste_kJ;
   };
 
   ////////////////////////////////////////////////////////////
@@ -484,7 +490,8 @@ namespace ERIN
       RealTimeType scenario_start_time_s,
       std::unordered_map<std::string,std::vector<Datum>> results,
       std::unordered_map<std::string,std::string> stream_ids,
-      std::unordered_map<std::string,ComponentType> comp_types);
+      std::unordered_map<std::string,ComponentType> comp_types,
+      std::unordered_map<std::string,PortRole> port_roles);
 
   double calc_energy_availability_from_stats(const ScenarioStats& ss);
 
@@ -494,6 +501,13 @@ namespace ERIN
       const std::unordered_map<std::string, ScenarioStats>& stats_by_comp,
       const std::unordered_map<std::string, std::string>& streams_by_comp,
       const std::unordered_map<std::string, ComponentType>& comp_type_by_comp);
+
+  std::unordered_map<std::string, FlowValueType> calc_energy_usage_by_port_role(
+      const std::vector<std::string>& port_ids,
+      const PortRole role,
+      const std::unordered_map<std::string, ScenarioStats>& stats_by_port_id,
+      const std::unordered_map<std::string, std::string>& streams_by_port_id,
+      const std::unordered_map<std::string, PortRole>& port_role_by_port_id);
 
   std::unordered_map<std::string,std::string>
   stream_types_to_stream_ids(

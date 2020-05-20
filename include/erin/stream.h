@@ -123,18 +123,19 @@ namespace ERIN
   };
 
   ////////////////////////////////////////////////////////////
-  // StreamRole
-  enum class StreamRole
+  // PortRole
+  enum class PortRole
   {
-    Source = 0,
-    Load,
-    Waste,
-    Circulatory,
+    Inflow = 0,
+    LoadInflow,
+    WasteInflow,
+    Outflow,
+    SourceOutflow
   };
 
-  StreamRole tag_to_stream_role(const std::string& tag);
+  PortRole tag_to_port_role(const std::string& tag);
 
-  std::string stream_role_to_tag(const StreamRole& role);
+  std::string port_role_to_tag(const PortRole& role);
 }
 
 #endif // ERIN_STREAM_H

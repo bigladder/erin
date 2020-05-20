@@ -613,7 +613,8 @@ namespace ERIN
         max_output = 0.0;
       }
       auto lim = new FlowLimits(
-          the_id, ComponentType::Source, stream, min_output, max_output);
+          the_id, ComponentType::Source, stream, min_output, max_output,
+          PortRole::SourceOutflow);
       elements.emplace(lim);
       lim->set_recording_on();
       ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
@@ -622,7 +623,8 @@ namespace ERIN
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "!is_failed\n";
       }
-      auto meter = new FlowMeter(the_id, ComponentType::Source, stream);
+      auto meter = new FlowMeter(the_id, ComponentType::Source, stream,
+          PortRole::SourceOutflow);
       elements.emplace(meter);
       meter->set_recording_on();
       ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};

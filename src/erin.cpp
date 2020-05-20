@@ -1147,7 +1147,7 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // ScenarioResults
   ScenarioResults::ScenarioResults():
-    ScenarioResults(false,0,0,{},{},{})
+    ScenarioResults(false,0,0,{},{},{},{})
   {
   }
 
@@ -1157,13 +1157,15 @@ namespace ERIN
       RealTimeType scenario_duration_,
       std::unordered_map<std::string, std::vector<Datum>> results_,
       std::unordered_map<std::string, std::string> stream_ids_,
-      std::unordered_map<std::string, ComponentType> component_types_):
+      std::unordered_map<std::string, ComponentType> component_types_,
+      std::unordered_map<std::string, PortRole> port_roles_):
     is_good{is_good_},
     scenario_start_time{scenario_start_time_},
     scenario_duration{scenario_duration_},
     results{std::move(results_)},
     stream_ids{std::move(stream_ids_)},
     component_types{std::move(component_types_)},
+    port_roles_by_port_id{std::move(port_roles_)},
     statistics{},
     keys{}
   {
@@ -1414,6 +1416,12 @@ namespace ERIN
         continue;
       }
       oss << "," << (it->second);
+    }
+    oss << "\n";
+    oss << "TOTAL (waste),,,,,";
+    auto stream_keys_size = stream_keys.size();
+    for (decltype(stream_keys_size) i{0}; i < stream_keys_size; ++i) {
+      oss << ",0.0";
     }
     oss << "\n";
     return oss.str();
@@ -1689,19 +1697,22 @@ namespace ERIN
   AllResults::to_stats_csv() const
   {
     const auto& stats = get_stats();
-    if (!is_good) 
+    if (!is_good) {
       return "";
+    }
     std::ostringstream oss;
     write_header_for_stats_csv(oss);
-    if (stats.empty())
+    if (stats.empty()) {
       return oss.str();
+    }
     for (const auto& scenario_id: scenario_ids) {
       const auto& all_ss = stats.at(scenario_id);
       auto the_end = all_ss.component_types_by_comp_id.end();
       for (const auto& comp_id: comp_ids) {
         auto it = all_ss.component_types_by_comp_id.find(comp_id);
-        if (it == the_end)
+        if (it == the_end) {
           continue;
+        }
         write_component_line_for_stats_csv(oss, all_ss, comp_id, scenario_id);
       }
       write_total_line_for_stats_csv(
@@ -1710,6 +1721,9 @@ namespace ERIN
       write_total_line_for_stats_csv(
           oss, scenario_id, all_ss,
           all_ss.totals_by_stream_id_for_load_kJ, "load");
+      write_total_line_for_stats_csv(
+          oss, scenario_id, all_ss,
+          all_ss.totals_by_stream_id_for_waste_kJ, "waste");
     }
     return oss.str();
   }
@@ -1816,26 +1830,35 @@ namespace ERIN
       std::unordered_map<std::string, double> total_energy_by_comp_id_kJ{};
       const auto& stream_ids = results_for_scenario[0].get_stream_ids();
       const auto& comp_types = results_for_scenario[0].get_component_types();
+      const auto& port_roles_by_port_id = results_for_scenario[0].get_port_roles_by_port_id();
       RealTimeType time_in_scenario{0};
-      std::unordered_map<std::string, ScenarioStats> stats_by_comp;
-      std::unordered_map<std::string, double> totals_by_stream_source;
-      std::unordered_map<std::string, double> totals_by_stream_load;
+      std::unordered_map<std::string, ScenarioStats> stats_by_comp{};
+      std::unordered_map<std::string, double> totals_by_stream_source{};
+      std::unordered_map<std::string, double> totals_by_stream_load{};
+      std::unordered_map<std::string, double> totals_by_stream_waste{};
       for (const auto& scenario_results: results_for_scenario) {
         time_in_scenario += scenario_results.get_duration_in_seconds();
         const auto& stats_by_comp_temp = scenario_results.get_statistics();
         const auto& the_comp_ids = scenario_results.get_component_ids();
-        const auto totals_by_stream_source_temp = calc_energy_usage_by_stream(
+        const auto totals_by_stream_source_temp = calc_energy_usage_by_port_role(
             the_comp_ids,
-            ComponentType::Source,
+            PortRole::SourceOutflow,
             stats_by_comp_temp,
             stream_ids,
-            comp_types);
-        const auto totals_by_stream_load_temp = calc_energy_usage_by_stream(
+            port_roles_by_port_id);
+        const auto totals_by_stream_load_temp = calc_energy_usage_by_port_role(
             the_comp_ids,
-            ComponentType::Load,
+            PortRole::LoadInflow,
             stats_by_comp_temp,
             stream_ids,
-            comp_types);
+            port_roles_by_port_id);
+        const auto totals_by_stream_waste_temp = calc_energy_usage_by_port_role(
+            the_comp_ids,
+            PortRole::WasteInflow,
+            stats_by_comp_temp,
+            stream_ids,
+            port_roles_by_port_id);
+        
         for (const auto& cid_stats_pair: stats_by_comp_temp) {
           const auto& comp_id = cid_stats_pair.first;
           const auto& comp_stats = cid_stats_pair.second;
@@ -1869,6 +1892,17 @@ namespace ERIN
             it->second += total;
           }
         }
+        for (const auto& sn_total_pair : totals_by_stream_waste_temp) {
+          const auto& stream_name = sn_total_pair.first;
+          const auto& total = sn_total_pair.second;
+          auto it = totals_by_stream_waste.find(stream_name);
+          if (it == totals_by_stream_waste.end()) {
+            totals_by_stream_waste[stream_name] = total;
+          }
+          else {
+            it->second += total;
+          }
+        }
       }
       auto stats_by_comp_end = stats_by_comp.end();
       for (const auto& comp_id: comp_ids) {
@@ -1888,11 +1922,13 @@ namespace ERIN
         std::move(max_downtime_by_comp_id_s),
         stream_ids,
         comp_types,
+        port_roles_by_port_id,
         std::move(energy_availability_by_comp_id),
         std::move(load_not_served_by_comp_id_kW),
         std::move(total_energy_by_comp_id_kJ),
         std::move(totals_by_stream_source),
-        std::move(totals_by_stream_load)};
+        std::move(totals_by_stream_load),
+        std::move(totals_by_stream_waste)};
     }
     return stats;
   }
@@ -2154,6 +2190,7 @@ namespace ERIN
     auto results = fw->get_results();
     auto stream_ids = fw->get_stream_ids();
     auto comp_types = fw->get_component_types();
+    auto port_roles = fw->get_port_roles();
     fw->clear();
     if (comp_types.size() != stream_ids.size()) {
       std::ostringstream oss{};
@@ -2164,14 +2201,17 @@ namespace ERIN
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "results:\n";
-      for (const auto& p : results)
+      for (const auto& p : results) {
         std::cout << "... " << p.first << ": " << vec_to_string<Datum>(p.second) << "\n";
+      }
       std::cout << "stream_ids:\n";
-      for (const auto& p : stream_ids)
+      for (const auto& p : stream_ids) {
         std::cout << "... " << p.first << ": " << p.second << "\n";
+      }
       std::cout << "comp_types:\n";
-      for (const auto& p : comp_types)
+      for (const auto& p : comp_types) {
         std::cout << "... " << p.first << ": " << component_type_to_tag(p.second) << "\n";
+      }
     }
     return process_single_scenario_results(
         sim_good,
@@ -2179,7 +2219,8 @@ namespace ERIN
         scenario_start_s,
         std::move(results),
         std::move(stream_ids),
-        std::move(comp_types));
+        std::move(comp_types),
+        std::move(port_roles));
   }
 
   AllResults
@@ -2418,23 +2459,28 @@ namespace ERIN
       RealTimeType scenario_start_s,
       std::unordered_map<std::string,std::vector<Datum>> results,
       std::unordered_map<std::string,std::string> stream_ids,
-      std::unordered_map<std::string,ComponentType> comp_types)
+      std::unordered_map<std::string,ComponentType> comp_types,
+      std::unordered_map<std::string,PortRole> port_roles)
   {
-    if (!sim_good)
+    if (!sim_good) {
       return ScenarioResults{
         sim_good,
         scenario_start_s,
         duration,
         std::move(results),
         std::move(stream_ids),
-        std::move(comp_types)};
+        std::move(comp_types),
+        std::move(port_roles)
+      };
+    }
     return ScenarioResults{
       sim_good,
       scenario_start_s, 
       duration,
       std::move(results),
       std::move(stream_ids),
-      std::move(comp_types)};
+      std::move(comp_types),
+      std::move(port_roles)};
   }
 
   double
@@ -2463,6 +2509,33 @@ namespace ERIN
       }
       const auto& stats = stats_by_comp.at(comp_id);
       const auto& stream_name = streams_by_comp.at(comp_id);
+      auto it = totals.find(stream_name);
+      if (it == totals.end()) {
+        totals[stream_name] = stats.total_energy;
+      }
+      else {
+        totals[stream_name] += stats.total_energy;
+      }
+    }
+    return totals;
+  }
+
+  std::unordered_map<std::string, FlowValueType>
+  calc_energy_usage_by_port_role(
+      const std::vector<std::string>& port_ids,
+      const PortRole role,
+      const std::unordered_map<std::string, ScenarioStats>& stats_by_port_id,
+      const std::unordered_map<std::string, std::string>& streams_by_port_id,
+      const std::unordered_map<std::string, PortRole>& port_role_by_port_id)
+  {
+    std::unordered_map<std::string, FlowValueType> totals{};
+    for (const auto& port_id: port_ids) {
+      const auto& this_role = port_role_by_port_id.at(port_id);
+      if (this_role != role) {
+        continue;
+      }
+      const auto& stats = stats_by_port_id.at(port_id);
+      const auto& stream_name = streams_by_port_id.at(port_id);
       auto it = totals.find(stream_name);
       if (it == totals.end()) {
         totals[stream_name] = stats.total_energy;

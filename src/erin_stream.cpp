@@ -203,41 +203,46 @@ namespace ERIN
     }
   }
 
-  StreamRole
-  tag_to_stream_role(const std::string& tag)
+  PortRole
+  tag_to_port_role(const std::string& tag)
   {
-    if (tag == "source") {
-      return StreamRole::Source;
+    if (tag == "inflow") {
+      return PortRole::Inflow;
     }
-    else if (tag == "load") {
-      return StreamRole::Load;
+    else if (tag == "load-inflow") {
+      return PortRole::LoadInflow;
     }
-    else if (tag == "waste") {
-      return StreamRole::Waste;
+    else if (tag == "waste-inflow") {
+      return PortRole::WasteInflow;
     }
-    else if (tag == "circulatory") {
-      return StreamRole::Circulatory;
+    else if (tag == "outflow") {
+      return PortRole::Outflow;
+    }
+    else if (tag == "source-outflow") {
+      return PortRole::SourceOutflow;
     }
     std::ostringstream oss{};
-    oss << "tag_to_stream_role: unhandled tag '" << tag << "'";
+    oss << "tag_to_port_role: unhandled tag '" << tag << "'";
     throw std::invalid_argument(oss.str());
   }
 
   std::string
-  stream_role_to_tag(const StreamRole& role)
+  port_role_to_tag(const PortRole& role)
   {
     switch (role) {
-      case StreamRole::Source:
-        return std::string{"source"};
-      case StreamRole::Load:
-        return std::string{"load"};
-      case StreamRole::Waste:
-        return std::string{"waste"};
-      case StreamRole::Circulatory:
-        return std::string{"circulatory"};
+      case PortRole::Inflow:
+        return std::string{"inflow"};
+      case PortRole::LoadInflow:
+        return std::string{"load-inflow"};
+      case PortRole::WasteInflow:
+        return std::string{"waste-inflow"};
+      case PortRole::Outflow:
+        return std::string{"outflow"};
+      case PortRole::SourceOutflow:
+        return std::string{"source-outflow"};
     }
     std::ostringstream oss{};
-    oss << "unhandled StreamRole '" << static_cast<int>(role) << "'\n";
+    oss << "unhandled PortRole '" << static_cast<int>(role) << "'\n";
     throw std::invalid_argument(oss.str());
   }
 }

@@ -834,7 +834,9 @@ TEST(ErinBasicsTest, ScenarioResultsMethods)
           E::Datum{4,0.0,0.0}}}},
     { { A_id, elec_id}, { B_id, elec_id}},
     { { A_id, E::ComponentType::Load},
-      { B_id, E::ComponentType::Source}}};
+      { B_id, E::ComponentType::Source}},
+    { { A_id, E::PortRole::LoadInflow},
+      { B_id, E::PortRole::SourceOutflow}}};
   using T_stream_name = std::string;
   using T_total_requested_load_kJ = E::FlowValueType;
   using T_total_energy_availability = E::FlowValueType;
@@ -958,7 +960,10 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
     {{std::string{"A"}, elec_stream_id},
      {std::string{"B"}, elec_stream_id}},
     {{std::string{"A"}, ::ERIN::ComponentType::Load},
-     {std::string{"B"}, ::ERIN::ComponentType::Source}}};
+     {std::string{"B"}, ::ERIN::ComponentType::Source}},
+    {{std::string{"A"}, ::ERIN::PortRole::LoadInflow},
+     {std::string{"B"}, ::ERIN::PortRole::SourceOutflow}},
+  };
   auto actual = out.to_csv(::ERIN::TimeUnits::Seconds);
   std::string expected{
     "time (seconds),A:achieved (kW),A:requested (kW),"
@@ -972,7 +977,8 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
     duration,
     {{std::string{"A"}, {::ERIN::Datum{0,1.0,1.0}}}},
     {{std::string{"A"}, elec_stream_id}},
-    {{std::string{"A"}, ::ERIN::ComponentType::Load}}
+    {{std::string{"A"}, ::ERIN::ComponentType::Load}},
+    {{std::string{"A"}, ::ERIN::PortRole::LoadInflow}},
   };
   auto actual2 = out2.to_csv(::ERIN::TimeUnits::Seconds);
   std::string expected2{
@@ -1055,7 +1061,10 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
     {{ std::string{"A0"},
        std::string{"electrical"}}},
     {{ std::string{"A0"},
-       ::ERIN::ComponentType::Source}}};
+       ::ERIN::ComponentType::Source}},
+    {{ std::string{"A0"},
+       ::ERIN::PortRole::SourceOutflow}},
+  };
   // energy_availability
   std::unordered_map<std::string,double> expected0{{"A0",1.0}};
   auto actual0 = sr0.calc_energy_availability();
@@ -1092,7 +1101,10 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
     {{ std::string{"A1"},
        std::string{"electrical"}}},
     {{ std::string{"A1"},
-       ::ERIN::ComponentType::Source}}};
+       ::ERIN::ComponentType::Source}},
+    {{ std::string{"A1"},
+       ::ERIN::PortRole::SourceOutflow}},
+  };
   // energy_availability
   std::unordered_map<std::string,double> expected1{{"A1",0.5}};
   auto actual1 = sr1.calc_energy_availability();
@@ -1539,10 +1551,11 @@ TEST(ErinBasicsTest, TestMuxerComponent)
   auto fw_results = fw->get_results();
   auto fw_stream_ids = fw->get_stream_ids();
   auto fw_comp_types = fw->get_component_types();
+  auto fw_port_roles = fw->get_port_roles();
   E::RealTimeType scenario_start_time_s{0};
   auto sr = E::process_single_scenario_results(
       is_good, duration, scenario_start_time_s,
-      fw_results, fw_stream_ids, fw_comp_types);
+      fw_results, fw_stream_ids, fw_comp_types, fw_port_roles);
   EXPECT_TRUE(sr.get_is_good());
   auto results = sr.get_results();
   EXPECT_EQ(results, fw_results);
@@ -2231,10 +2244,14 @@ TEST(ErinBasicsTest, AllResultsToCsv)
   std::unordered_map<std::string, E::ComponentType> comp_types{
     { id_cluster_01_electric, E::ComponentType::Load},
     { id_electric_utility, E::ComponentType::Source}};
+  std::unordered_map<std::string, E::PortRole> port_roles{
+    { id_cluster_01_electric, E::PortRole::LoadInflow},
+    { id_electric_utility, E::PortRole::SourceOutflow}};
   E::RealTimeType scenario_start{0 * hours_to_seconds};
   E::RealTimeType duration{4 * hours_to_seconds};
   E::ScenarioResults sr{
-    is_good, scenario_start, duration, data, stream_types, comp_types};
+    is_good, scenario_start, duration, data,
+    stream_types, comp_types, port_roles};
   EXPECT_EQ(scenario_start, sr.get_start_time_in_seconds());
   EXPECT_EQ(duration, sr.get_duration_in_seconds());
   std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
@@ -2258,7 +2275,8 @@ TEST(ErinBasicsTest, AllResultsToCsv)
     "blue_sky,1,4,electric_utility,source,electricity,"
     "1,0,0,14400\n"
     "blue_sky,1,4,TOTAL (source),,,,,,14400\n"
-    "blue_sky,1,4,TOTAL (load),,,,,,14400\n"};
+    "blue_sky,1,4,TOTAL (load),,,,,,14400\n"
+    "blue_sky,1,4,TOTAL (waste),,,,,,0.0\n"};
   auto actual_stats_csv = ar.to_stats_csv();
   EXPECT_EQ(expected_stats_csv, actual_stats_csv);
 }
@@ -2306,10 +2324,14 @@ TEST(ErinBasicsTest, AllResultsToCsv2)
   std::unordered_map<std::string, E::ComponentType> comp_types{
     { id_cluster_01_electric, E::ComponentType::Load},
     { id_electric_utility, E::ComponentType::Source}};
+  std::unordered_map<std::string, E::PortRole> port_roles{
+    { id_cluster_01_electric, E::PortRole::LoadInflow},
+    { id_electric_utility, E::PortRole::SourceOutflow}};
   E::RealTimeType scenario_start{10 * hours_to_seconds};
   E::RealTimeType duration{4 * hours_to_seconds};
   E::ScenarioResults sr{
-    is_good, scenario_start, duration, data, stream_types, comp_types};
+    is_good, scenario_start, duration, data,
+    stream_types, comp_types, port_roles};
   std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
     { id_blue_sky, { sr }}};
   E::AllResults ar{is_good, results};
@@ -2348,10 +2370,14 @@ TEST(ErinBasicsTest, AllResultsToCsv3)
   std::unordered_map<std::string, E::ComponentType> comp_types{
     { id_cluster_01_electric, E::ComponentType::Load},
     { id_electric_utility, E::ComponentType::Source}};
+  std::unordered_map<std::string, E::PortRole> port_roles{
+    { id_cluster_01_electric, E::PortRole::LoadInflow},
+    { id_electric_utility, E::PortRole::SourceOutflow}};
   E::RealTimeType scenario_start{10 * hours_to_seconds};
   E::RealTimeType duration{8 * hours_to_seconds};
   E::ScenarioResults sr{
-    is_good, scenario_start, duration, data, stream_types, comp_types};
+    is_good, scenario_start, duration, data,
+    stream_types, comp_types, port_roles};
   EXPECT_EQ(duration, sr.get_duration_in_seconds());
   std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
     { id_blue_sky, { sr }}};
@@ -2862,7 +2888,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   E::ScenarioResults sr2{
     is_good,
     start_time_s,
@@ -2875,7 +2904,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_EQ(sr1, sr2);
   E::ScenarioResults sr3{
     is_good,
@@ -2889,7 +2921,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr3);
   ASSERT_NE(sr2, sr3);
   E::ScenarioResults sr4{
@@ -2904,7 +2939,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr4);
   ASSERT_NE(sr2, sr4);
   auto mt2{max_time_s - 1};
@@ -2920,7 +2958,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr5);
   ASSERT_NE(sr2, sr5);
   E::ScenarioResults sr6{
@@ -2935,7 +2976,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"C", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"C", E::ComponentType::Source}}};
+      {"C", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"C", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr6);
   ASSERT_NE(sr2, sr6);
   E::ScenarioResults sr7{
@@ -2950,7 +2994,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr7);
   ASSERT_NE(sr2, sr7);
   E::ScenarioResults sr8{
@@ -2965,7 +3012,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr8);
   ASSERT_NE(sr2, sr8);
   E::ScenarioResults sr9{
@@ -2977,10 +3027,13 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
     std::unordered_map<std::string,std::string>{
       {"A", std::string{"electricity"}},
-      {"C", std::string{"electricity"}}},
+      {"C", std::string{"electricity"}}}, // TODO check this; shouldn't it be "B"?
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr9);
   ASSERT_NE(sr2, sr9);
   E::ScenarioResults sr10{
@@ -2995,7 +3048,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr10);
   ASSERT_NE(sr2, sr10);
   E::ScenarioResults sr11{
@@ -3010,7 +3066,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"C", E::ComponentType::Source}}};
+      {"C", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr11);
   ASSERT_NE(sr2, sr11);
   E::ScenarioResults sr12{
@@ -3025,7 +3084,10 @@ TEST(ErinBasicsTest, ScenarioResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Load}}};
+      {"B", E::ComponentType::Load}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   ASSERT_NE(sr1, sr12);
   ASSERT_NE(sr2, sr12);
 }
@@ -3048,7 +3110,10 @@ TEST(ErinBasicsTest, AllResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   E::ScenarioResults sr2{
     is_good,
     start_time_s,
@@ -3061,7 +3126,10 @@ TEST(ErinBasicsTest, AllResultsEquality)
       {"B", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}}};
+      {"B", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"B", E::PortRole::SourceOutflow}}};
   E::ScenarioResults sr3{
     is_good,
     start_time_s,
@@ -3074,7 +3142,10 @@ TEST(ErinBasicsTest, AllResultsEquality)
       {"C", std::string{"electricity"}}},
     std::unordered_map<std::string,E::ComponentType>{
       {"A", E::ComponentType::Load},
-      {"C", E::ComponentType::Source}}};
+      {"C", E::ComponentType::Source}},
+    std::unordered_map<std::string,E::PortRole>{
+      {"A", E::PortRole::LoadInflow},
+      {"C", E::PortRole::SourceOutflow}}};
   std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map1{
     {"A", {sr1}},
     {"B", {sr1, sr2}}};
@@ -3954,7 +4025,7 @@ TEST(ErinElements, Test_flow_writer_implementation)
 {
   auto fw = ERIN::DefaultFlowWriter();
   auto id = fw.register_id(
-      "element", "electricity", ERIN::ComponentType::Load, true);
+      "element", "electricity", ERIN::ComponentType::Load, ERIN::PortRole::LoadInflow, true);
   ERIN::RealTimeType t_max{10};
   fw.write_data(id, 0, 0.0, 0.0);
   fw.write_data(id, 0, 10.0, 10.0);
@@ -3974,19 +4045,19 @@ TEST(ErinElements, Test_flow_writer_implementation)
   fw.clear();
   auto id1 = fw.register_id(
       "electric_load_1:inflow", "electricity",
-      ERIN::ComponentType::Load, true);
+      ERIN::ComponentType::Load, ERIN::PortRole::LoadInflow, true);
   auto id2 = fw.register_id(
       "diesel_genset_1:outflow", "electricity",
-      ERIN::ComponentType::Converter, true);
+      ERIN::ComponentType::Converter, ERIN::PortRole::Outflow, true);
   auto id3 = fw.register_id(
       "electric_load_2:inflow", "electricity",
-      ERIN::ComponentType::Load, true);
+      ERIN::ComponentType::Load, ERIN::PortRole::LoadInflow, true);
   auto id4 = fw.register_id(
       "diesel_genset_2:outflow", "electricity",
-      ERIN::ComponentType::Converter, true);
+      ERIN::ComponentType::Converter, ERIN::PortRole::Outflow, true);
   auto id5 = fw.register_id(
       "diesel_fuel_tank:outflow", "diesel_fuel",
-      ERIN::ComponentType::Source, true);
+      ERIN::ComponentType::Source, ERIN::PortRole::SourceOutflow, true);
   // start
   fw.write_data(id1, 0, 10.0, 10.0);
   fw.write_data(id2, 0, 10.0, 10.0);
@@ -4051,7 +4122,7 @@ TEST(ErinElements, Test_flow_writer)
 {
   std::unique_ptr<ERIN::FlowWriter> fw1 = std::make_unique<ERIN::DefaultFlowWriter>();
   auto id = fw1->register_id(
-      "element", "stream", ERIN::ComponentType::Load, true);
+      "element", "stream", ERIN::ComponentType::Load, ERIN::PortRole::LoadInflow, true);
   fw1->write_data(id, 0, 10.0, 10.0);
   fw1->write_data(id, 4, 20.0, 10.0);
   fw1->finalize_at_time(10);
@@ -5323,25 +5394,26 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
     "blue_sky,1,10,S,source,natural_gas,1,0,0,0.0,720000,0.0\n"
     "blue_sky,1,10,TOTAL (source),,,,,,0.0,720000,0.0\n"
     "blue_sky,1,10,TOTAL (load),,,,,,360000,0.0,0.0\n"
-    //"blue_sky,1,10,TOTAL (waste),,,,,,0.0,0.0,360000\n"
+    "blue_sky,1,10,TOTAL (waste),,,,,,0.0,0.0,360000\n"
     // TODO: enable below
     //"blue_sky,1,10,ENERGY BALANCE,0,,,,,,,\n"
   };
   EXPECT_EQ(stats, expected);
 }
 
-TEST(ErinBasicsTest, Test_stream_role_to_and_from_string)
+TEST(ErinBasicsTest, Test_port_role_to_and_from_string_roundtrip)
 {
   namespace E = ERIN;
-  std::vector<E::StreamRole> roles{
-    E::StreamRole::Source,
-    E::StreamRole::Load,
-    E::StreamRole::Waste,
-    E::StreamRole::Circulatory,
+  std::vector<E::PortRole> roles{
+    E::PortRole::Inflow,
+    E::PortRole::LoadInflow,
+    E::PortRole::WasteInflow,
+    E::PortRole::Outflow,
+    E::PortRole::SourceOutflow,
   };
   for (const auto& role : roles) {
-    auto role_tag = E::stream_role_to_tag(role);
-    auto role_2 = E::tag_to_stream_role(role_tag);
+    auto role_tag = E::port_role_to_tag(role);
+    auto role_2 = E::tag_to_port_role(role_tag);
     EXPECT_EQ(role_2, role);
   }
 }

@@ -90,6 +90,8 @@ namespace ERIN
         calc_load_not_served();
       [[nodiscard]] std::unordered_map<std::string,FlowValueType>
         calc_energy_usage_by_stream(ComponentType ct);
+      [[nodiscard]] std::unordered_map<std::string,FlowValueType>
+        calc_energy_usage_by_role(PortRole role);
       [[nodiscard]] std::string to_stats_csv(TimeUnits time_units = TimeUnits::Hours);
       [[nodiscard]] RealTimeType get_start_time_in_seconds() const {
         return scenario_start_time;

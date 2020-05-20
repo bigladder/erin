@@ -12,3 +12,4 @@ LT,load,district_hot_water,1,0,0,10,0.0,0.0,0.0
 S,source,natural_gas,1,0,0,0.0,0.0,200,0.0
 TOTAL (source),,,,,,0.0,0.0,200,0.0
 TOTAL (load),,,,,,10,100,0.0,0.0
+TOTAL (waste),,,,,,0.0,0.0,0.0,90

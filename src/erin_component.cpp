@@ -928,15 +928,12 @@ namespace ERIN
       auto lim_loss = new FlowLimits(the_id + "-lossflow", the_type, loss_stream, 0.0, 0.0);
       lim_loss->set_recording_on();
       elements.emplace(lim_loss);
-      auto lim_waste = new FlowLimits(the_id + "-wasteflow", the_type, loss_stream, 0.0, 0.0);
+      auto lim_waste = new FlowLimits(
+          the_id + "-wasteflow", the_type, loss_stream, 0.0, 0.0, PortRole::WasteInflow);
       lim_waste->set_recording_on();
       elements.emplace(lim_waste);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim_in, 0}};
       ports[ep::Type::Outflow] = std::vector<ElementPort>{{lim_out, 0}, {lim_loss, 0}};
-      // auto lim_waste = new FlowLimits(the_id + "-wasteflow", the_type, loss_stream, 0.0, 0.0);
-      // elements.emplace(lim_waste);
-      // auto waste_flow_id = flow_logger.connect_to_waste(lim_waste, 0, loss_stream);
-      // conv->set_waste_port_flow_id(waste_flow_id);
     }
     else {
       auto eff{const_eff};
@@ -951,11 +948,6 @@ namespace ERIN
           loss_stream);
       elements.emplace(conv);
       conv->set_recording_on();
-      // ports[ep::Type::Inflow] = std::vector<ElementPortStream>{{conv, 0, in_stream}};
-      // ports[ep::Type::Outflow] = std::vector<ElementPortStream>{
-      //  {conv, 0, out_stream}, {conv, 1, loss_stream}};
-      // auto waste_flow_id = flow_logger.connect_to_waste(conv, 2, loss_stream);
-      // conv->set_waste_port_flow_id(waste_flow_id);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{conv, 0}};
       ports[ep::Type::Outflow] = std::vector<ElementPort>{{conv, 0}, {conv, 1}};
     }

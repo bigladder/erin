@@ -1347,8 +1347,24 @@ namespace ERIN
     auto ea = calc_energy_availability();
     auto md = calc_max_downtime();
     auto lns = calc_load_not_served();
-    auto eubs_src = calc_energy_usage_by_stream(ComponentType::Source);
-    auto eubs_load = calc_energy_usage_by_stream(ComponentType::Load);
+    auto eubs_src = calc_energy_usage_by_port_role(
+        keys,
+        PortRole::SourceOutflow,
+        statistics,
+        stream_ids,
+        port_roles_by_port_id);
+    auto eubs_load = calc_energy_usage_by_port_role(
+        keys,
+        PortRole::LoadInflow,
+        statistics,
+        stream_ids,
+        port_roles_by_port_id);
+    auto eubs_waste = calc_energy_usage_by_port_role(
+        keys,
+        PortRole::WasteInflow,
+        statistics,
+        stream_ids,
+        port_roles_by_port_id);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "metrics printout\n";
       std::cout << "results:\n";
@@ -1419,9 +1435,13 @@ namespace ERIN
     }
     oss << "\n";
     oss << "TOTAL (waste),,,,,";
-    auto stream_keys_size = stream_keys.size();
-    for (decltype(stream_keys_size) i{0}; i < stream_keys_size; ++i) {
-      oss << ",0.0";
+    for (const auto& sk: stream_keys) {
+      auto it = eubs_waste.find(sk);
+      if (it == eubs_waste.end()) {
+        oss << ",0.0";
+        continue;
+      }
+      oss << "," << (it->second);
     }
     oss << "\n";
     return oss.str();
@@ -1822,6 +1842,10 @@ namespace ERIN
       const auto& results_for_scenario = results.at(scenario_id);
       const auto num_occurrences{results_for_scenario.size()};
       if (num_occurrences == 0) {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "num_occurrences of " << scenario_id << " == 0\n"
+                    << "continuing...\n";
+        }
         continue;
       }
       std::unordered_map<std::string, RealTimeType> max_downtime_by_comp_id_s{};
@@ -1831,6 +1855,14 @@ namespace ERIN
       const auto& stream_ids = results_for_scenario[0].get_stream_ids();
       const auto& comp_types = results_for_scenario[0].get_component_types();
       const auto& port_roles_by_port_id = results_for_scenario[0].get_port_roles_by_port_id();
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "port_roles_by_port_id: \n";
+        for (const auto& p : port_roles_by_port_id) {
+          std::cout << "\t" << p.first << " : "
+                    << port_role_to_tag(p.second) << "\n";
+        }
+        std::cout << "----------------------------\n";
+      }
       RealTimeType time_in_scenario{0};
       std::unordered_map<std::string, ScenarioStats> stats_by_comp{};
       std::unordered_map<std::string, double> totals_by_stream_source{};
@@ -1858,7 +1890,6 @@ namespace ERIN
             stats_by_comp_temp,
             stream_ids,
             port_roles_by_port_id);
-        
         for (const auto& cid_stats_pair: stats_by_comp_temp) {
           const auto& comp_id = cid_stats_pair.first;
           const auto& comp_stats = cid_stats_pair.second;

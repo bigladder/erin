@@ -3,3 +3,4 @@ cluster_01_electric,load,electricity,1,0,0,14400
 electric_utility,source,electricity,1,0,0,14400
 TOTAL (source),,,,,,14400
 TOTAL (load),,,,,,14400
+TOTAL (waste),,,,,,0.0

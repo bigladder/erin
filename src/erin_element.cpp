@@ -72,6 +72,7 @@ namespace ERIN
     element_id_to_tag{},
     element_id_to_stream_tag{},
     element_id_to_comp_type{},
+    element_id_to_port_role{},
     recording_flags{},
     time_history{},
     request_history{},
@@ -1085,6 +1086,14 @@ namespace ERIN
           state.time,
           state.lossflow_port.get_requested(),
           state.lossflow_port.get_achieved());
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "ID = " << get_id() << "-wasteflow\n"
+                  << "time = " << state.time << "\n"
+                  << "wasteflow-request  = "
+                  << state.wasteflow_port.get_requested() << "\n"
+                  << "wasteflow-achieved = "
+                  << state.wasteflow_port.get_achieved() << "\n";
+      }
       flow_writer->write_data(
           wasteflow_element_id,
           state.time,

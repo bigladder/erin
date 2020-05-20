@@ -7,3 +7,4 @@ electric_utility,source,electricity,1,0,0,1.2096e+06
 emergency_generator,source,electricity,1,0,0,0
 TOTAL (source),,,,,,1.2096e+06
 TOTAL (load),,,,,,1.2096e+06
+TOTAL (waste),,,,,,0.0

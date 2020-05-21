@@ -2277,7 +2277,9 @@ TEST(ErinBasicsTest, AllResultsToCsv)
     "blue_sky,1,4,TOTAL (source),,,,,,14400\n"
     "blue_sky,1,4,TOTAL (load),,,,,,14400\n"
     "blue_sky,1,4,TOTAL (storage),,,,,,0.0\n"
-    "blue_sky,1,4,TOTAL (waste),,,,,,0.0\n"};
+    "blue_sky,1,4,TOTAL (waste),,,,,,0.0\n"
+    "blue_sky,1,4,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,\n"
+  };
   auto actual_stats_csv = ar.to_stats_csv();
   EXPECT_EQ(expected_stats_csv, actual_stats_csv);
 }
@@ -5397,8 +5399,7 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
     "blue_sky,1,10,TOTAL (load),,,,,,360000,0.0,0.0\n"
     "blue_sky,1,10,TOTAL (storage),,,,,,0.0,0.0,0.0\n"
     "blue_sky,1,10,TOTAL (waste),,,,,,0.0,0.0,360000\n"
-    // TODO: enable below
-    //"blue_sky,1,10,ENERGY BALANCE,0,,,,,,,\n"
+    "blue_sky,1,10,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,\n"
   };
   EXPECT_EQ(stats, expected);
 }

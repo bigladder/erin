@@ -1426,6 +1426,10 @@ namespace ERIN
       }
       oss << "\n";
     }
+    FlowValueType total_source{0.0};
+    FlowValueType total_load{0.0};
+    FlowValueType total_storage{0.0};
+    FlowValueType total_waste{0.0};
     oss << "TOTAL (source),,,,,";
     for (const auto& sk: stream_keys) {
       auto it = eubs_src.find(sk);
@@ -1434,6 +1438,7 @@ namespace ERIN
         continue;
       }
       oss << "," << (it->second);
+      total_source += it->second;
     }
     oss << "\n";
     oss << "TOTAL (load),,,,,";
@@ -1444,6 +1449,7 @@ namespace ERIN
         continue;
       }
       oss << "," << (it->second);
+      total_load += it->second;
     }
     oss << "\n";
     oss << "TOTAL (storage),,,,,";
@@ -1455,7 +1461,9 @@ namespace ERIN
         oss << ",0.0";
         continue;
       }
-      oss << "," << (it_store->second - it_dschg->second);
+      auto net_storage = (it_store->second - it_dschg->second);
+      oss << "," << net_storage;
+      total_storage += net_storage;
     }
     oss << "\n";
     oss << "TOTAL (waste),,,,,";
@@ -1466,6 +1474,15 @@ namespace ERIN
         continue;
       }
       oss << "," << (it->second);
+      total_waste += it->second;
+    }
+    oss << "\n";
+    oss << "ENERGY BALANCE (source-(load+storage+waste)),";
+    oss << (total_source - (total_load + total_storage + total_waste));
+    oss << ",,,,";
+    auto num_sks{stream_keys.size()};
+    for (decltype(num_sks) i{0}; i < num_sks; ++i) {
+      oss << ",";
     }
     oss << "\n";
     return oss.str();
@@ -1771,6 +1788,26 @@ namespace ERIN
       write_total_line_for_stats_csv(
           oss, scenario_id, all_ss,
           all_ss.totals_by_stream_id_for_waste_kJ, "waste");
+      FlowValueType total_source{0.0};
+      FlowValueType total_load{0.0};
+      FlowValueType total_storage{0.0};
+      FlowValueType total_waste{0.0};
+      for (const auto& p : all_ss.totals_by_stream_id_for_source_kJ) {
+        total_source += p.second;
+      }
+      for (const auto& p : all_ss.totals_by_stream_id_for_load_kJ) {
+        total_load += p.second;
+      }
+      for (const auto& p : all_ss.totals_by_stream_id_for_storage_kJ) {
+        total_storage += p.second;
+      }
+      for (const auto& p : all_ss.totals_by_stream_id_for_waste_kJ) {
+        total_waste += p.second;
+      }
+      FlowValueType balance{
+        total_source - (total_load + total_storage + total_waste)};
+      write_energy_balance_line_for_stats_csv(
+          oss, scenario_id, all_ss, balance);
     }
     return oss.str();
   }
@@ -1857,6 +1894,26 @@ namespace ERIN
         continue;
       }
       oss << "," << val;
+    }
+    oss  << "\n";
+  }
+
+  void
+  AllResults::write_energy_balance_line_for_stats_csv(
+      std::ostream& oss,
+      const std::string& scenario_id,
+      const AllScenarioStats& all_ss,
+      const FlowValueType& balance) const
+  {
+    oss << scenario_id
+        << "," << all_ss.num_occurrences
+        << "," << convert_time_in_seconds_to(
+            all_ss.time_in_scenario_s, TimeUnits::Hours)
+        << "," << "ENERGY BALANCE (source-(load+storage+waste)),"
+        << balance << ",,,,";
+    auto num_sks{stream_keys.size()};
+    for (decltype(num_sks) i{0}; i < num_sks; ++i) {
+      oss << ",";
     }
     oss  << "\n";
   }

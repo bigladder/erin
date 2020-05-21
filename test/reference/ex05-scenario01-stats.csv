@@ -14,3 +14,4 @@ TOTAL (source),,,,,,0.0,0.0,200,0.0
 TOTAL (load),,,,,,10,100,0.0,0.0
 TOTAL (storage),,,,,,0.0,0.0,0.0,0.0
 TOTAL (waste),,,,,,0.0,0.0,0.0,90
+ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,,

@@ -5,3 +5,4 @@ TOTAL (source),,,,,,5.184e+07
 TOTAL (load),,,,,,5.184e+07
 TOTAL (storage),,,,,,0.0
 TOTAL (waste),,,,,,0.0
+ENERGY BALANCE (source-(load+storage+waste)),0,,,,,

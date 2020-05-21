@@ -9,3 +9,4 @@ blue_sky,1,10,TOTAL (source),,,,,,180000
 blue_sky,1,10,TOTAL (load),,,,,,252000
 blue_sky,1,10,TOTAL (storage),,,,,,-72000
 blue_sky,1,10,TOTAL (waste),,,,,,0.0
+blue_sky,1,10,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,

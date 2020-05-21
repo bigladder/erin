@@ -39,6 +39,7 @@ blue_sky,1,8760,TOTAL (source),,,,,,1.1826e+12,1.89216e+11,0.0,0.0
 blue_sky,1,8760,TOTAL (load),,,,,,0.0,1.89216e+11,9.4608e+11,0.0
 blue_sky,1,8760,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0
 blue_sky,1,8760,TOTAL (waste),,,,,,0.0,0.0,0.0,2.3652e+11
+blue_sky,1,8760,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,,
 ice_jam_flood,10,3360,c1_steam_mux-inflow(0),muxer,steam,1,0,0,0.0,0.0,1.2096e+11,0.0
 ice_jam_flood,10,3360,c1_steam_mux-inflow(1),muxer,steam,1,0,0,0.0,0.0,0,0.0
 ice_jam_flood,10,3360,c1_steam_mux-outflow(0),muxer,steam,1,0,0,0.0,0.0,1.2096e+11,0.0
@@ -79,3 +80,4 @@ ice_jam_flood,10,3360,TOTAL (source),,,,,,4.536e+11,3.6288e+10,0.0,0.0
 ice_jam_flood,10,3360,TOTAL (load),,,,,,0.0,3.6288e+10,3.6288e+11,0.0
 ice_jam_flood,10,3360,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0
 ice_jam_flood,10,3360,TOTAL (waste),,,,,,0.0,0.0,0.0,9.072e+10
+ice_jam_flood,10,3360,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,,

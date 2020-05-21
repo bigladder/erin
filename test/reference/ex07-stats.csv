@@ -56,6 +56,7 @@ blue_sky,1,8760,TOTAL (source),,,,,,9.8112e+10,0.0,0.0,5.03241e+11,0.0,0.0
 blue_sky,1,8760,TOTAL (load),,,,,,0.0,1.26144e+11,1.26144e+11,0.0,1.26144e+11,0.0
 blue_sky,1,8760,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0,0.0,0.0
 blue_sky,1,8760,TOTAL (waste),,,,,,0.0,0.0,0.0,0.0,0.0,2.22921e+11
+blue_sky,1,8760,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,,,,
 category_4_hurricane,3,1008,biomass_boiler_heating-inflow,converter,waste_heat,0,336,4.71744e+09,0.0,0.0,0.0,0.0,0.0,0
 category_4_hurricane,3,1008,biomass_boiler_heating-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,0
 category_4_hurricane,3,1008,biomass_boiler_heating-outflow,converter,heating,0,336,1.41523e+09,0.0,0.0,0,0.0,0.0,0.0
@@ -113,3 +114,4 @@ category_4_hurricane,3,1008,TOTAL (source),,,,,,0.0,0.0,0.0,2.28058e+10,0.0,0.0
 category_4_hurricane,3,1008,TOTAL (load),,,,,,0.0,7.2576e+09,3.55968e+09,0.0,4.71744e+09,0.0
 category_4_hurricane,3,1008,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0,0.0,0.0
 category_4_hurricane,3,1008,TOTAL (waste),,,,,,0.0,0.0,0.0,0.0,0.0,7.27104e+09
+category_4_hurricane,3,1008,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,,,,

@@ -129,8 +129,10 @@ namespace ERIN
     Inflow = 0,
     LoadInflow,
     WasteInflow,
+    StorageInflow,
     Outflow,
-    SourceOutflow
+    SourceOutflow,
+    StorageOutflow
   };
 
   PortRole tag_to_port_role(const std::string& tag);

@@ -215,11 +215,17 @@ namespace ERIN
     else if (tag == "waste-inflow") {
       return PortRole::WasteInflow;
     }
+    else if (tag == "storage-inflow") {
+      return PortRole::StorageInflow;
+    }
     else if (tag == "outflow") {
       return PortRole::Outflow;
     }
     else if (tag == "source-outflow") {
       return PortRole::SourceOutflow;
+    }
+    else if (tag == "storage-outflow") {
+      return PortRole::StorageOutflow;
     }
     std::ostringstream oss{};
     oss << "tag_to_port_role: unhandled tag '" << tag << "'";
@@ -236,10 +242,14 @@ namespace ERIN
         return std::string{"load-inflow"};
       case PortRole::WasteInflow:
         return std::string{"waste-inflow"};
+      case PortRole::StorageInflow:
+        return std::string{"storage-inflow"};
       case PortRole::Outflow:
         return std::string{"outflow"};
       case PortRole::SourceOutflow:
         return std::string{"source-outflow"};
+      case PortRole::StorageOutflow:
+        return std::string{"storage-outflow"};
     }
     std::ostringstream oss{};
     oss << "unhandled PortRole '" << static_cast<int>(role) << "'\n";

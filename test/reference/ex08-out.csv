@@ -1,4 +1,4 @@
-scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),electric_battery-inflow:achieved (kW),electric_battery-inflow:requested (kW),electric_battery-outflow:achieved (kW),electric_battery-outflow:requested (kW),electric_load:achieved (kW),electric_load:requested (kW),electric_source:achieved (kW),electric_source:requested (kW)
-blue_sky,P0000-00-00T00:00:00,0,5,5,10,10,10,10,5,5
-blue_sky,P0000-00-00T00:00:00,4,5,5,5,10,5,10,5,5
-blue_sky,P0000-00-00T00:00:00,10,0,0,0,0,0,0,0,0
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),electric_battery-discharge:achieved (kW),electric_battery-discharge:requested (kW),electric_battery-inflow:achieved (kW),electric_battery-inflow:requested (kW),electric_battery-outflow:achieved (kW),electric_battery-outflow:requested (kW),electric_battery-storeflow:achieved (kW),electric_battery-storeflow:requested (kW),electric_load:achieved (kW),electric_load:requested (kW),electric_source:achieved (kW),electric_source:requested (kW)
+blue_sky,P0000-00-00T00:00:00,0,5,5,5,5,10,10,0,0,10,10,5,5
+blue_sky,P0000-00-00T00:00:00,4,0,5,5,5,5,10,0,0,5,10,5,5
+blue_sky,P0000-00-00T00:00:00,10,0,0,0,0,0,0,0,0,0,0,0,0

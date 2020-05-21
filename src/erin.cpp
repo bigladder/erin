@@ -1365,6 +1365,18 @@ namespace ERIN
         statistics,
         stream_ids,
         port_roles_by_port_id);
+    auto eubs_storeflow = calc_energy_usage_by_port_role(
+        keys,
+        PortRole::StorageInflow,
+        statistics,
+        stream_ids,
+        port_roles_by_port_id);
+    auto eubs_discharge = calc_energy_usage_by_port_role(
+        keys,
+        PortRole::StorageOutflow,
+        statistics,
+        stream_ids,
+        port_roles_by_port_id);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "metrics printout\n";
       std::cout << "results:\n";
@@ -1432,6 +1444,18 @@ namespace ERIN
         continue;
       }
       oss << "," << (it->second);
+    }
+    oss << "\n";
+    oss << "TOTAL (storage),,,,,";
+    for (const auto& sk: stream_keys) {
+      auto it_store = eubs_storeflow.find(sk);
+      auto it_dschg = eubs_discharge.find(sk);
+      if ((it_store == eubs_storeflow.end())
+          || (it_dschg == eubs_discharge.end())) {
+        oss << ",0.0";
+        continue;
+      }
+      oss << "," << (it_store->second - it_dschg->second);
     }
     oss << "\n";
     oss << "TOTAL (waste),,,,,";
@@ -1743,6 +1767,9 @@ namespace ERIN
           all_ss.totals_by_stream_id_for_load_kJ, "load");
       write_total_line_for_stats_csv(
           oss, scenario_id, all_ss,
+          all_ss.totals_by_stream_id_for_storage_kJ, "storage");
+      write_total_line_for_stats_csv(
+          oss, scenario_id, all_ss,
           all_ss.totals_by_stream_id_for_waste_kJ, "waste");
     }
     return oss.str();
@@ -1867,6 +1894,7 @@ namespace ERIN
       std::unordered_map<std::string, ScenarioStats> stats_by_comp{};
       std::unordered_map<std::string, double> totals_by_stream_source{};
       std::unordered_map<std::string, double> totals_by_stream_load{};
+      std::unordered_map<std::string, double> totals_by_stream_storage{};
       std::unordered_map<std::string, double> totals_by_stream_waste{};
       for (const auto& scenario_results: results_for_scenario) {
         time_in_scenario += scenario_results.get_duration_in_seconds();
@@ -1887,6 +1915,18 @@ namespace ERIN
         const auto totals_by_stream_waste_temp = calc_energy_usage_by_port_role(
             the_comp_ids,
             PortRole::WasteInflow,
+            stats_by_comp_temp,
+            stream_ids,
+            port_roles_by_port_id);
+        const auto totals_by_stream_storeflow_temp = calc_energy_usage_by_port_role(
+            the_comp_ids,
+            PortRole::StorageInflow,
+            stats_by_comp_temp,
+            stream_ids,
+            port_roles_by_port_id);
+        const auto totals_by_stream_discharge_temp = calc_energy_usage_by_port_role(
+            the_comp_ids,
+            PortRole::StorageOutflow,
             stats_by_comp_temp,
             stream_ids,
             port_roles_by_port_id);
@@ -1918,6 +1958,18 @@ namespace ERIN
           auto it = totals_by_stream_load.find(stream_name);
           if (it == totals_by_stream_load.end()) {
             totals_by_stream_load[stream_name] = total;
+          }
+          else {
+            it->second += total;
+          }
+        }
+        for (const auto& sn_total_pair : totals_by_stream_storeflow_temp) {
+          const auto& stream_name = sn_total_pair.first;
+          auto dschg = totals_by_stream_discharge_temp.at(stream_name);
+          auto total = sn_total_pair.second - dschg;
+          auto it = totals_by_stream_storage.find(stream_name);
+          if (it == totals_by_stream_storage.end()) {
+            totals_by_stream_storage[stream_name] = total;
           }
           else {
             it->second += total;
@@ -1959,6 +2011,7 @@ namespace ERIN
         std::move(total_energy_by_comp_id_kJ),
         std::move(totals_by_stream_source),
         std::move(totals_by_stream_load),
+        std::move(totals_by_stream_storage),
         std::move(totals_by_stream_waste)};
     }
     return stats;

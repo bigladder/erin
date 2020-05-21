@@ -1376,7 +1376,9 @@ namespace ERIN
     flow_writer{nullptr},
     record_history{false},
     inflow_element_id{-1},
-    outflow_element_id{-1}
+    outflow_element_id{-1},
+    storeflow_element_id{-1},
+    discharge_element_id{-1}
   {
   }
 
@@ -1460,11 +1462,14 @@ namespace ERIN
     log_ports();
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Storage::set_recording_on();id = " << get_id() << "\n";
-      std::cout << "record_history = " << record_history << "\n";
+      std::cout << "data = " << data << "\n";
+      std::cout << "state = " << state << "\n";
       std::cout << "flow_writer == nullptr: " << (flow_writer == nullptr) << "\n";
+      std::cout << "record_history = " << record_history << "\n";
       std::cout << "inflow_element_id = " << inflow_element_id << "\n";
       std::cout << "outflow_element_id = " << outflow_element_id << "\n";
-      std::cout << "state = " << state << "\n";
+      std::cout << "storeflow_element_id = " << storeflow_element_id << "\n";
+      std::cout << "discharge_element_id = " << discharge_element_id << "\n";
     }
   }
 
@@ -1473,10 +1478,13 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Storage::log_ports();id = " << get_id() << "\n";
+      std::cout << "data = " << data << "\n";
+      std::cout << "state = " << state << "\n";
+      std::cout << "record_history = " << record_history << "\n";
       std::cout << "inflow_element_id = " << inflow_element_id << "\n";
       std::cout << "outflow_element_id = " << outflow_element_id << "\n";
-      std::cout << "record_history = " << record_history << "\n";
-      std::cout << "state = " << state << "\n";
+      std::cout << "storeflow_element_id = " << storeflow_element_id << "\n";
+      std::cout << "discharge_element_id = " << discharge_element_id << "\n";
     }
     if (flow_writer && record_history) {
       if (inflow_element_id == -1) {
@@ -1495,6 +1503,22 @@ namespace ERIN
             PortRole::Outflow,
             record_history);
       }
+      if (storeflow_element_id == -1) {
+        storeflow_element_id = flow_writer->register_id(
+            get_id() + "-storeflow",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::StorageInflow,
+            record_history);
+      }
+      if (discharge_element_id == -1) {
+        discharge_element_id = flow_writer->register_id(
+            get_id() + "-discharge",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::StorageOutflow,
+            record_history);
+      }
       flow_writer->write_data(
           inflow_element_id,
           state.time,
@@ -1505,6 +1529,22 @@ namespace ERIN
           state.time,
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());
+      auto storeflow_requested{
+        state.inflow_port.get_requested()
+        - state.outflow_port.get_requested()};
+      auto storeflow_achieved{
+        state.inflow_port.get_achieved()
+        - state.outflow_port.get_achieved()};
+      flow_writer->write_data(
+          storeflow_element_id,
+          state.time,
+          storeflow_requested >= 0.0 ? storeflow_requested : 0.0,
+          storeflow_achieved >= 0.0 ? storeflow_achieved : 0.0);
+      flow_writer->write_data(
+          discharge_element_id,
+          state.time,
+          storeflow_requested < 0.0 ? (-1.0 * storeflow_requested) : 0.0,
+          storeflow_achieved < 0.0 ? (-1.0 * storeflow_achieved) : 0.0);
     }
   }
 }

@@ -510,6 +510,8 @@ namespace ERIN
       bool record_history;
       int inflow_element_id;
       int outflow_element_id;
+      int storeflow_element_id;
+      int discharge_element_id;
 
       void log_ports();
   };

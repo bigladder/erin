@@ -352,6 +352,7 @@ namespace ERIN
     std::unordered_map<std::string, double> total_energy_by_comp_id_kJ;
     std::unordered_map<std::string, double> totals_by_stream_id_for_source_kJ;
     std::unordered_map<std::string, double> totals_by_stream_id_for_load_kJ;
+    std::unordered_map<std::string, double> totals_by_stream_id_for_storage_kJ;
     std::unordered_map<std::string, double> totals_by_stream_id_for_waste_kJ;
   };
 

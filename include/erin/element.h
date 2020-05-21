@@ -83,7 +83,7 @@ namespace ERIN
         get_stream_ids() const override;
       [[nodiscard]] std::unordered_map<std::string,ComponentType>
         get_component_types() const override;
-      [[nodiscard]] virtual std::unordered_map<std::string,PortRole>
+      [[nodiscard]] std::unordered_map<std::string,PortRole>
         get_port_roles() const override;
       void clear() override;
 

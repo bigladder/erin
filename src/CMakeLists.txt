@@ -30,6 +30,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_network.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_port.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_random.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_reliability.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_stream.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_type.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_utils.cpp
@@ -51,6 +52,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/network.h
   ${PROJECT_SOURCE_DIR}/include/erin/port.h
   ${PROJECT_SOURCE_DIR}/include/erin/random.h
+  ${PROJECT_SOURCE_DIR}/include/erin/reliability.h
   ${PROJECT_SOURCE_DIR}/include/erin/stream.h
   ${PROJECT_SOURCE_DIR}/include/erin/type.h
   ${PROJECT_SOURCE_DIR}/include/erin/utils.h

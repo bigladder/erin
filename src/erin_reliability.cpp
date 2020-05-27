@@ -22,38 +22,28 @@ namespace ERIN
   }
 
   std::unordered_map<size_type, std::vector<TimeState>>
-  calc_reliability_schedule()
+  calc_reliability_schedule(
+      const std::vector<size_type>& component_id_to_failure_mode_distribution_id,
+      const std::vector<size_type>& component_id_to_repair_mode_distribution_id,
+      const std::vector<size_type>& distribution_id_to_distribution_type,
+      const std::vector<size_type>& distribution_id_to_distribution_type_id,
+      const std::vector<std::int64_t>& fixed_distribution_attr_value
+      )
   {
-    constexpr size_type DISTRIBUTION_TYPE_FIXED = 0;
-    std::vector<size_type> component_id_to_failure_mode_distribution_id{0};
-    std::vector<size_type> component_id_to_repair_mode_distribution_id{1};
     const auto num_components = component_id_to_failure_mode_distribution_id.size();
-    std::vector<size_type> distribution_id_to_distribution_type{
-      DISTRIBUTION_TYPE_FIXED,
-        DISTRIBUTION_TYPE_FIXED,
-    };
-    std::vector<size_type> distribution_id_to_distribution_type_id{0, 1};
-    std::vector<std::int64_t> fixed_distribution_attr_value{5, 1};
     std::unordered_map<size_type, std::vector<size_type>> failure_mode_types_to_component_ids{};
     std::unordered_map<size_type, std::vector<size_type>> failure_mode_types_to_dist_ids{};
     std::unordered_map<size_type, std::vector<size_type>> repair_types_to_component_ids{};
     std::unordered_map<size_type, std::vector<size_type>> repair_types_to_dist_ids{};
     std::vector<std::int64_t> comp_id_to_time(num_components, 0);
-    std::unordered_map<size_type, std::vector<std::int64_t>> comp_id_to_reliability_schedule_times{};
-    std::unordered_map<size_type, std::vector<bool>> comp_id_to_reliability_schedule_states{};
     std::unordered_map<size_type, std::vector<TimeState>> comp_id_to_reliability_schedule{};
     for (size_type component_id{0}; component_id < num_components; ++component_id) {
-      comp_id_to_reliability_schedule_times.emplace(component_id, std::vector<std::int64_t>{0});
-      comp_id_to_reliability_schedule_states.emplace(component_id, std::vector<bool>{true});
       comp_id_to_reliability_schedule.emplace(
           std::pair<size_type, std::vector<TimeState>>(
             component_id,
             std::vector<TimeState>{TimeState{0, true}}));
       const auto& failure_mode_distribution_id = component_id_to_failure_mode_distribution_id.at(component_id);
       const auto& repair_mode_distribution_id = component_id_to_repair_mode_distribution_id.at(component_id);
-      //if ((failure_mode_distribution_id == 0) || (repair_mode_distribution_id == 0)) {
-      //  continue;
-      //}
       const auto& fm_dist_type_id = distribution_id_to_distribution_type.at(failure_mode_distribution_id);
       const auto& repair_dist_type_id = distribution_id_to_distribution_type.at(repair_mode_distribution_id);
       auto it_fm_type = failure_mode_types_to_component_ids.find(fm_dist_type_id);
@@ -95,8 +85,6 @@ namespace ERIN
               {
                 dt = fixed_distribution_attr_value.at(dist_id);
                 auto next_time = time + dt;
-                comp_id_to_reliability_schedule_times[comp_id].emplace_back(next_time);
-                comp_id_to_reliability_schedule_states[comp_id].emplace_back(false);
                 comp_id_to_reliability_schedule[comp_id].emplace_back(
                     TimeState{next_time, false});
                 comp_id_to_time[comp_id] = next_time;
@@ -126,8 +114,6 @@ namespace ERIN
               {
                 dt = fixed_distribution_attr_value.at(dist_id);
                 auto next_time = time + dt;
-                comp_id_to_reliability_schedule_times[comp_id].emplace_back(next_time);
-                comp_id_to_reliability_schedule_states[comp_id].emplace_back(true);
                 comp_id_to_reliability_schedule[comp_id].emplace_back(
                     TimeState{next_time, true});
                 comp_id_to_time[comp_id] = next_time;

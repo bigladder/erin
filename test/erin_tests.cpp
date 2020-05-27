@@ -5679,6 +5679,19 @@ TEST(ErinBasicsTest, Test_energy_balance_on_mux_with_replay)
 
 TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
 {
+  /*
+   * auto c = ERIN::ReliabilityCoordinator{};
+   * ERIN::size_type comp_id{0};
+   * auto failure_id = c.add_fixed_cdf(5);
+   * auto repair_id = c.add_fixed_cdf(1);
+   * c.add_failure_mode(
+   *    comp_id,
+   *    "standard failure",
+   *    failure_id, ERIN::CdfType::Fixed,
+   *    repair_id, ERIN::CdfType::Fixed);
+   * std::int64_t final_time{10};
+   * auto reliability_schedule = c.calc_reliability_schedule(final_time);
+   */
   std::vector<ERIN::size_type> component_id_to_failure_mode_distribution_id{0};
   std::vector<ERIN::size_type> component_id_to_repair_mode_distribution_id{1};
   std::vector<ERIN::size_type> distribution_id_to_distribution_type{

@@ -44,25 +44,27 @@ namespace ERIN
             std::vector<TimeState>{TimeState{0, true}}));
       const auto& failure_mode_distribution_id = component_id_to_failure_mode_distribution_id.at(component_id);
       const auto& repair_mode_distribution_id = component_id_to_repair_mode_distribution_id.at(component_id);
-      const auto& fm_dist_type_id = distribution_id_to_distribution_type.at(failure_mode_distribution_id);
-      const auto& repair_dist_type_id = distribution_id_to_distribution_type.at(repair_mode_distribution_id);
-      auto it_fm_type = failure_mode_types_to_component_ids.find(fm_dist_type_id);
+      const auto& fm_dist_type_id = distribution_id_to_distribution_type_id.at(failure_mode_distribution_id);
+      const auto& repair_dist_type_id = distribution_id_to_distribution_type_id.at(repair_mode_distribution_id);
+      const auto& fm_dist_type = distribution_id_to_distribution_type.at(failure_mode_distribution_id);
+      const auto& repair_dist_type = distribution_id_to_distribution_type.at(repair_mode_distribution_id);
+      auto it_fm_type = failure_mode_types_to_component_ids.find(fm_dist_type);
       if (it_fm_type == failure_mode_types_to_component_ids.end()) {
-        failure_mode_types_to_component_ids[fm_dist_type_id] = {component_id};
-        failure_mode_types_to_dist_ids[fm_dist_type_id] = {failure_mode_distribution_id};
+        failure_mode_types_to_component_ids[fm_dist_type] = {component_id};
+        failure_mode_types_to_dist_ids[fm_dist_type] = {failure_mode_distribution_id};
       }
       else {
-        failure_mode_types_to_component_ids[fm_dist_type_id].emplace_back(component_id);
-        failure_mode_types_to_dist_ids[fm_dist_type_id].emplace_back(failure_mode_distribution_id);
+        failure_mode_types_to_component_ids[fm_dist_type].emplace_back(component_id);
+        failure_mode_types_to_dist_ids[fm_dist_type].emplace_back(failure_mode_distribution_id);
       }
-      auto it_rm_type = repair_types_to_component_ids.find(repair_dist_type_id);
+      auto it_rm_type = repair_types_to_component_ids.find(repair_dist_type);
       if (it_rm_type == repair_types_to_component_ids.end()) {
-        repair_types_to_component_ids[repair_dist_type_id] = {component_id};
-        repair_types_to_dist_ids[repair_dist_type_id] = {repair_mode_distribution_id};
+        repair_types_to_component_ids[repair_dist_type] = {component_id};
+        repair_types_to_dist_ids[repair_dist_type] = {repair_mode_distribution_id};
       }
       else {
-        repair_types_to_component_ids[repair_dist_type_id].emplace_back(component_id);
-        repair_types_to_dist_ids[repair_dist_type_id].emplace_back(repair_mode_distribution_id);
+        repair_types_to_component_ids[repair_dist_type].emplace_back(component_id);
+        repair_types_to_dist_ids[repair_dist_type].emplace_back(repair_mode_distribution_id);
       }
     }
     const std::int64_t final_time{10};

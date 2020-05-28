@@ -4,6 +4,7 @@
 #ifndef ERIN_RELIABILITY_H
 #define ERIN_RELIABILITY_H
 #include "erin/type.h"
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -49,6 +50,33 @@ namespace ERIN
   bool operator==(const TimeState& a, const TimeState& b);
   bool operator!=(const TimeState& a, const TimeState& b);
 
+  class ReliabilityCoordinator
+  {
+    public:
+      ReliabilityCoordinator();
+
+      size_type add_fixed_cdf(std::int64_t value);
+
+      size_type add_failure_mode(
+          const size_type& comp_id,
+          const std::string& name,
+          const size_type& failure_cdf_id,
+          const CdfType& failure_cdf_type,
+          const size_type& repair_cdf_id,
+          const CdfType& repair_cdf_type);
+
+      std::unordered_map<size_type, std::vector<TimeState>>
+      calc_reliability_schedule(std::int64_t final_time) const;
+
+    private:
+      Fixed_CDF fixed_cdf;
+      FailureMode fms;
+      size_type next_fixed_cdf_id;
+      size_type next_fm_id;
+      std::set<size_type> components;
+  };
+
+  /*
   std::unordered_map<size_type, std::vector<TimeState>>
   calc_reliability_schedule(
       const std::vector<size_type>& component_id_to_failure_mode_distribution_id,
@@ -57,6 +85,7 @@ namespace ERIN
       const std::vector<size_type>& distribution_id_to_distribution_type_id,
       const std::vector<std::int64_t>& fixed_distribution_attr_value
       );
+      */
 }
 
 #endif // ERIN_RELIABILITY_H

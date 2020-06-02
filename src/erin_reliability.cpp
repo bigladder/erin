@@ -4,7 +4,7 @@
 #include "erin/reliability.h"
 #include <iostream>
 #include <utility>
-//#include <sstream>
+#include <stdexcept>
 
 namespace ERIN
 {
@@ -108,7 +108,7 @@ namespace ERIN
           }
         default:
           {
-            std::cout << "shouldn't be here...\n";
+            throw std::runtime_error("unhandled Cumulative Density Function");
           }
       }
     }
@@ -124,23 +124,24 @@ namespace ERIN
       bool next_state
       ) const
   {
-    size_type count{0};
+    size_type num_past_final_time{0};
     for (const auto& comp_id : components) {
       auto& t = comp_id_to_time[comp_id];
       if (t > final_time) {
-        ++count;
+        ++num_past_final_time;
         continue;
       }
       auto& dt = comp_id_to_dt[comp_id];
       t = t + dt;
       dt = -1;
-      comp_id_to_reliability_schedule[comp_id].emplace_back(TimeState{t, next_state});
+      comp_id_to_reliability_schedule[comp_id].emplace_back(
+          TimeState{t, next_state});
       if (t > final_time) {
-        ++count;
+        ++num_past_final_time;
         continue;
       }
     }
-    return count;
+    return num_past_final_time;
   }
 
   std::unordered_map<size_type, std::vector<TimeState>>

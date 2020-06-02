@@ -13,13 +13,17 @@
 namespace ERIN
 {
   using size_type = std::vector<std::int64_t>::size_type;
-  constexpr size_type DISTRIBUTION_TYPE_FIXED{0};
 
+  // Data Structs
   struct TimeState
   {
     std::int64_t time{0};
     FlowValueType state{1.0};
   };
+
+  bool operator==(const TimeState& a, const TimeState& b);
+  bool operator!=(const TimeState& a, const TimeState& b);
+  std::ostream& operator<<(std::ostream& os, const TimeState& ts);
 
   enum class CdfType
   {
@@ -28,7 +32,6 @@ namespace ERIN
     //Weibull
   };
 
-  // move to hidden interface
   struct FailureMode
   {
     std::vector<size_type> component_id{};
@@ -39,17 +42,13 @@ namespace ERIN
     std::vector<CdfType> repair_cdf_type{};
   };
 
-  // move to hidden interface
   struct Fixed_CDF
   {
     std::vector<std::int64_t> value{};
     std::vector<std::int64_t> time_multiplier{}; // to convert from given units to seconds
   };
 
-  bool operator==(const TimeState& a, const TimeState& b);
-  bool operator!=(const TimeState& a, const TimeState& b);
-  std::ostream& operator<<(std::ostream& os, const TimeState& ts);
-
+  // Main Class to do Reliability Schedule Creation
   class ReliabilityCoordinator
   {
     public:

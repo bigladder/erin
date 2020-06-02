@@ -122,7 +122,7 @@ namespace ERIN
       std::unordered_map<size_type, std::vector<TimeState>>&
         comp_id_to_reliability_schedule,
       std::int64_t final_time,
-      bool next_state
+      FlowValueType next_state
       ) const
   {
     size_type num_past_final_time{0};
@@ -166,7 +166,7 @@ namespace ERIN
           comp_id_to_dt,
           comp_id_to_reliability_schedule,
           final_time,
-          false);
+          0.0);
       if (count == num_components) {
         break;
       }
@@ -176,7 +176,7 @@ namespace ERIN
           comp_id_to_dt,
           comp_id_to_reliability_schedule,
           final_time,
-          true);
+          1.0);
       if (count == num_components) {
         break;
       }

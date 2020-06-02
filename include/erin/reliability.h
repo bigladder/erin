@@ -15,12 +15,10 @@ namespace ERIN
   using size_type = std::vector<std::int64_t>::size_type;
   constexpr size_type DISTRIBUTION_TYPE_FIXED{0};
 
-  // move to hidden interface
   struct TimeState
   {
     std::int64_t time{0};
-    bool state{true};
-    // std::string failure_mode{}; // which failure mode caused the issue
+    FlowValueType state{1.0};
   };
 
   enum class CdfType
@@ -90,7 +88,7 @@ namespace ERIN
           std::unordered_map<size_type, std::vector<TimeState>>&
             comp_id_to_reliability_schedule,
           std::int64_t final_time,
-          bool next_state) const;
+          FlowValueType next_state) const;
   };
 }
 

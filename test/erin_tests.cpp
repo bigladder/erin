@@ -5694,10 +5694,10 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
   auto reliability_schedule = c.calc_reliability_schedule(final_time);
   EXPECT_EQ(reliability_schedule.size(), 1);
   std::vector<ERIN::TimeState> expected{
-    ERIN::TimeState{0, true},
-    ERIN::TimeState{5, false},
-    ERIN::TimeState{6, true},
-    ERIN::TimeState{11, false},
+    ERIN::TimeState{0, 1.0},
+    ERIN::TimeState{5, 0.0},
+    ERIN::TimeState{6, 1.0},
+    ERIN::TimeState{11, 0.0},
   };
   EXPECT_EQ(reliability_schedule.at(0), expected);
 }

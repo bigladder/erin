@@ -72,12 +72,82 @@ namespace ERIN
     return id;
   }
 
+  void
+  ReliabilityCoordinator::calc_next_events(
+      std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,
+      bool is_failure
+      ) const
+  {
+    const auto num_fms{fms.component_id.size()};
+    for (size_type i{0}; i < num_fms; ++i) {
+      const auto& comp_id = fms.component_id.at(i);
+      size_type cdf_id{0};
+      if (is_failure) {
+        cdf_id = fms.failure_cdf.at(i);
+      }
+      else {
+        cdf_id = fms.repair_cdf.at(i);
+      }
+      auto cdf_type = CdfType::Fixed;
+      if (is_failure) {
+        cdf_type = fms.failure_cdf_type.at(i);
+      }
+      else {
+        cdf_type = fms.repair_cdf_type.at(i);
+      }
+      switch (cdf_type) {
+        case CdfType::Fixed:
+          {
+            auto v = fixed_cdf.value.at(cdf_id);
+            auto m = fixed_cdf.time_multiplier.at(cdf_id);
+            auto dt = v * m;
+            auto& dt_fm = comp_id_to_dt[comp_id]; 
+            if ((dt_fm == -1) || (dt < dt_fm)) {
+              dt_fm = dt;
+            }
+          }
+        default:
+          {
+            std::cout << "shouldn't be here...\n";
+          }
+      }
+    }
+  }
+
+  size_type
+  ReliabilityCoordinator::update_schedule(
+      std::unordered_map<size_type, std::int64_t>& comp_id_to_time,
+      std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,
+      std::unordered_map<size_type, std::vector<TimeState>>&
+        comp_id_to_reliability_schedule,
+      std::int64_t final_time,
+      bool next_state
+      ) const
+  {
+    size_type count{0};
+    for (const auto& comp_id : components) {
+      auto& t = comp_id_to_time[comp_id];
+      if (t > final_time) {
+        ++count;
+        continue;
+      }
+      auto& dt = comp_id_to_dt[comp_id];
+      t = t + dt;
+      dt = -1;
+      comp_id_to_reliability_schedule[comp_id].emplace_back(TimeState{t, next_state});
+      if (t > final_time) {
+        ++count;
+        continue;
+      }
+    }
+    return count;
+  }
+
   std::unordered_map<size_type, std::vector<TimeState>>
   ReliabilityCoordinator::calc_reliability_schedule(
       std::int64_t final_time) const
   {
     const auto num_components{components.size()};
-    const auto num_fms{fms.component_id.size()};
     std::unordered_map<size_type, std::int64_t> comp_id_to_time{};
     std::unordered_map<size_type, std::int64_t> comp_id_to_dt{};
     std::unordered_map<size_type, std::vector<TimeState>> comp_id_to_reliability_schedule{};
@@ -88,83 +158,23 @@ namespace ERIN
     }
     size_type count{0};
     while (true) {
-      for (size_type i{0}; i < num_fms; ++i) {
-        const auto& comp_id = fms.component_id.at(i);
-        const auto& failure_cdf_id = fms.failure_cdf.at(i);
-        const auto& failure_cdf_type = fms.failure_cdf_type.at(i);
-        switch (failure_cdf_type) {
-          case CdfType::Fixed:
-            {
-              auto v = fixed_cdf.value.at(failure_cdf_id);
-              auto m = fixed_cdf.time_multiplier.at(failure_cdf_id);
-              auto dt = v * m;
-              auto& dt_f = comp_id_to_dt[comp_id]; 
-              if ((dt_f == -1) || (dt < dt_f)) {
-                dt_f = dt;
-              }
-            }
-          default:
-            {
-              std::cout << "shouldn't be here...\n";
-            }
-        }
-      }
-      count = 0;
-      for (const auto& comp_id : components) {
-        auto& t = comp_id_to_time[comp_id];
-        if (t > final_time) {
-          ++count;
-          continue;
-        }
-        auto& dt = comp_id_to_dt[comp_id];
-        t = t + dt;
-        dt = -1;
-        comp_id_to_reliability_schedule[comp_id].emplace_back(TimeState{t, false});
-        if (t > final_time) {
-          ++count;
-          continue;
-        }
-      }
+      calc_next_events(comp_id_to_dt, true);
+      count = update_schedule(
+          comp_id_to_time,
+          comp_id_to_dt,
+          comp_id_to_reliability_schedule,
+          final_time,
+          false);
       if (count == num_components) {
         break;
       }
-      for (size_type i{0}; i < fms.component_id.size(); ++i) {
-        const auto& comp_id = fms.component_id.at(i);
-        const auto& repair_cdf_id = fms.repair_cdf.at(i);
-        const auto& repair_cdf_type = fms.repair_cdf_type.at(i);
-        switch (repair_cdf_type) {
-          case CdfType::Fixed:
-            {
-              auto v = fixed_cdf.value.at(repair_cdf_id);
-              auto m = fixed_cdf.time_multiplier.at(repair_cdf_id);
-              auto dt = v * m;
-              auto& dt_r = comp_id_to_dt[comp_id]; 
-              if ((dt_r == -1) || (dt < dt_r)) {
-                dt_r = dt;
-              }
-            }
-          default:
-            {
-              std::cout << "shouldn't be here...\n";
-            }
-        }
-      }
-      count = 0;
-      for (const auto& comp_id : components) {
-        auto& t = comp_id_to_time[comp_id];
-        if (t > final_time) {
-          ++count;
-          continue;
-        }
-        auto& dt = comp_id_to_dt[comp_id];
-        t = t + dt;
-        dt = -1;
-        comp_id_to_reliability_schedule[comp_id].emplace_back(TimeState{t, true});
-        if (t >= final_time) {
-          ++count;
-          continue;
-        }
-      }
+      calc_next_events(comp_id_to_dt, false);
+      count = update_schedule(
+          comp_id_to_time,
+          comp_id_to_dt,
+          comp_id_to_reliability_schedule,
+          final_time,
+          true);
       if (count == num_components) {
         break;
       }

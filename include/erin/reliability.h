@@ -78,6 +78,19 @@ namespace ERIN
       size_type next_fixed_cdf_id;
       size_type next_fm_id;
       std::set<size_type> components;
+
+      void calc_next_events(
+          std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,
+          bool is_failure) const;
+
+      size_type
+      update_schedule(
+          std::unordered_map<size_type, std::int64_t>& comp_id_to_time,
+          std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,
+          std::unordered_map<size_type, std::vector<TimeState>>&
+            comp_id_to_reliability_schedule,
+          std::int64_t final_time,
+          bool next_state) const;
   };
 }
 

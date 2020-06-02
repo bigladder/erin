@@ -5683,8 +5683,8 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
   std::int64_t final_time{10};
   auto reliability_schedule_1 = c.calc_reliability_schedule(final_time);
   EXPECT_EQ(reliability_schedule_1.size(), 0);
-  auto failure_id = c.add_fixed_cdf(5);
-  auto repair_id = c.add_fixed_cdf(1);
+  auto failure_id = c.add_fixed_cdf(5, ERIN::TimeUnits::Seconds);
+  auto repair_id = c.add_fixed_cdf(1, ERIN::TimeUnits::Seconds);
   ERIN::size_type comp_id{0};
   c.add_failure_mode(
       comp_id,
@@ -5693,39 +5693,13 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
       repair_id, ERIN::CdfType::Fixed);
   auto reliability_schedule = c.calc_reliability_schedule(final_time);
   EXPECT_EQ(reliability_schedule.size(), 1);
-  //std::vector<ERIN::TimeState> expected{
-  //  ERIN::TimeState{0, true},
-  //  ERIN::TimeState{5, false},
-  //  ERIN::TimeState{6, true},
-  //  ERIN::TimeState{11, false},
-  //};
-  //EXPECT_EQ(reliability_schedule.at(0), expected);
-  /*
-  std::vector<ERIN::size_type> component_id_to_failure_mode_distribution_id{0};
-  std::vector<ERIN::size_type> component_id_to_repair_mode_distribution_id{1};
-  std::vector<ERIN::size_type> distribution_id_to_distribution_type{
-    ERIN::DISTRIBUTION_TYPE_FIXED,
-    ERIN::DISTRIBUTION_TYPE_FIXED,
-  };
-  std::vector<ERIN::size_type> distribution_id_to_distribution_type_id{0, 1};
-  std::vector<std::int64_t> fixed_distribution_attr_value{5, 1};
-  auto reliability_schedule = ERIN::calc_reliability_schedule(
-      component_id_to_failure_mode_distribution_id,
-      component_id_to_repair_mode_distribution_id,
-      distribution_id_to_distribution_type,
-      distribution_id_to_distribution_type_id,
-      fixed_distribution_attr_value
-      );
-  EXPECT_EQ(reliability_schedule.size(), 1);
   std::vector<ERIN::TimeState> expected{
     ERIN::TimeState{0, true},
     ERIN::TimeState{5, false},
     ERIN::TimeState{6, true},
     ERIN::TimeState{11, false},
   };
-
   EXPECT_EQ(reliability_schedule.at(0), expected);
-  */
 }
 
 

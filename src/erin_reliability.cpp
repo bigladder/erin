@@ -21,6 +21,15 @@ namespace ERIN
     return !(a == b);
   }
 
+  std::ostream&
+  operator<<(std::ostream& os, const TimeState& ts)
+  {
+    return os << "TimeState(time="
+              << ts.time << ", "
+              << (ts.state ? "true" : "false")
+              << ")";
+  }
+
   ReliabilityCoordinator::ReliabilityCoordinator():
     fixed_cdf{},
     fms{},
@@ -31,12 +40,14 @@ namespace ERIN
   }
 
   size_type
-  ReliabilityCoordinator::add_fixed_cdf(std::int64_t value)
+  ReliabilityCoordinator::add_fixed_cdf(
+      std::int64_t value,
+      TimeUnits units)
   {
     auto id{next_fixed_cdf_id};
     ++next_fixed_cdf_id;
     fixed_cdf.value.emplace_back(value);
-    fixed_cdf.time_multiplier.emplace_back(3600);
+    fixed_cdf.time_multiplier.emplace_back(time_to_seconds(1.0, units));
     return id;
   }
 
@@ -66,6 +77,7 @@ namespace ERIN
       std::int64_t final_time) const
   {
     const auto num_components{components.size()};
+    const auto num_fms{fms.component_id.size()};
     std::unordered_map<size_type, std::int64_t> comp_id_to_time{};
     std::unordered_map<size_type, std::int64_t> comp_id_to_dt{};
     std::unordered_map<size_type, std::vector<TimeState>> comp_id_to_reliability_schedule{};
@@ -76,7 +88,7 @@ namespace ERIN
     }
     size_type count{0};
     while (true) {
-      for (size_type i{0}; i < fms.component_id.size(); ++i) {
+      for (size_type i{0}; i < num_fms; ++i) {
         const auto& comp_id = fms.component_id.at(i);
         const auto& failure_cdf_id = fms.failure_cdf.at(i);
         const auto& failure_cdf_type = fms.failure_cdf_type.at(i);
@@ -107,11 +119,11 @@ namespace ERIN
         auto& dt = comp_id_to_dt[comp_id];
         t = t + dt;
         dt = -1;
+        comp_id_to_reliability_schedule[comp_id].emplace_back(TimeState{t, false});
         if (t > final_time) {
           ++count;
           continue;
         }
-        comp_id_to_reliability_schedule[comp_id].emplace_back(TimeState{t, false});
       }
       if (count == num_components) {
         break;
@@ -139,14 +151,19 @@ namespace ERIN
       }
       count = 0;
       for (const auto& comp_id : components) {
-        const auto& t = comp_id_to_time[comp_id];
-        const auto& dt = comp_id_to_dt[comp_id];
-        auto next_t = t + dt;
-        comp_id_to_time[comp_id] = next_t;
-        if (next_t >= final_time) {
+        auto& t = comp_id_to_time[comp_id];
+        if (t > final_time) {
           ++count;
+          continue;
         }
-        comp_id_to_reliability_schedule[comp_id].emplace_back(TimeState{next_t, true});
+        auto& dt = comp_id_to_dt[comp_id];
+        t = t + dt;
+        dt = -1;
+        comp_id_to_reliability_schedule[comp_id].emplace_back(TimeState{t, true});
+        if (t >= final_time) {
+          ++count;
+          continue;
+        }
       }
       if (count == num_components) {
         break;

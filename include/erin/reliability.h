@@ -4,6 +4,7 @@
 #ifndef ERIN_RELIABILITY_H
 #define ERIN_RELIABILITY_H
 #include "erin/type.h"
+#include <iostream>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -49,13 +50,16 @@ namespace ERIN
 
   bool operator==(const TimeState& a, const TimeState& b);
   bool operator!=(const TimeState& a, const TimeState& b);
+  std::ostream& operator<<(std::ostream& os, const TimeState& ts);
 
   class ReliabilityCoordinator
   {
     public:
       ReliabilityCoordinator();
 
-      size_type add_fixed_cdf(std::int64_t value);
+      size_type add_fixed_cdf(
+          std::int64_t value,
+          TimeUnits units = TimeUnits::Hours);
 
       size_type add_failure_mode(
           const size_type& comp_id,

@@ -85,14 +85,14 @@ namespace ERIN
       if (is_failure) {
         cdf_id = fms.failure_cdf.at(i);
       }
-      else {
+      else { // is_repair
         cdf_id = fms.repair_cdf.at(i);
       }
       auto cdf_type = CdfType::Fixed;
       if (is_failure) {
         cdf_type = fms.failure_cdf_type.at(i);
       }
-      else {
+      else { // is_repair
         cdf_type = fms.repair_cdf_type.at(i);
       }
       switch (cdf_type) {
@@ -105,6 +105,7 @@ namespace ERIN
             if ((dt_fm == -1) || (dt < dt_fm)) {
               dt_fm = dt;
             }
+            break;
           }
         default:
           {

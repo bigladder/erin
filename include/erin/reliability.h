@@ -25,9 +25,9 @@ namespace ERIN
 
   enum class CdfType
   {
-    Fixed = 0,
-    Normal,
-    Weibull
+    Fixed = 0//,
+    //Normal,
+    //Weibull
   };
 
   // move to hidden interface

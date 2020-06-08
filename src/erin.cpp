@@ -2197,7 +2197,7 @@ namespace ERIN
   // main class that runs the simulation from file
   Main::Main(const std::string& input_file_path):
     failure_probs_by_comp_id_by_scenario_id{},
-    rc{}
+    reliability_schedule{}
   {
     auto reader = TomlInputReader{input_file_path};
     // Read data into private class fields
@@ -2209,9 +2209,6 @@ namespace ERIN
     scenarios = reader.read_scenarios();
     check_data();
     generate_failure_fragilities();
-    //if (sim_info.has_random_seed()) {
-    //  generator.seed(sim_info.get_random_seed());
-    //}
     rand_fn = sim_info.make_random_function();
   }
 
@@ -2223,13 +2220,16 @@ namespace ERIN
       const std::unordered_map<
         std::string,
         std::vector<::erin::network::Connection>>& networks_,
-      const std::unordered_map<std::string, Scenario>& scenarios_):
+      const std::unordered_map<std::string, Scenario>& scenarios_,
+      const std::unordered_map<size_type, std::vector<TimeState>>&
+        reliability_schedule_
+      ):
     sim_info{sim_info_},
     components{},
     networks{networks_},
     scenarios{scenarios_},
     failure_probs_by_comp_id_by_scenario_id{},
-    rc{}
+    reliability_schedule{reliability_schedule_}
   {
     for (const auto& pair: components_) {
       components.insert(

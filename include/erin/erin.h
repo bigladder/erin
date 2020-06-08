@@ -448,7 +448,10 @@ namespace ERIN
           const std::unordered_map<
             std::string,
             std::vector<::erin::network::Connection>>& networks,
-          const std::unordered_map<std::string, Scenario>& scenarios);
+          const std::unordered_map<std::string, Scenario>& scenarios,
+          const std::unordered_map<size_type, std::vector<TimeState>>&
+            reliability_schedule = {}
+          );
       ScenarioResults run(
           const std::string& scenario_id, RealTimeType scenario_start_s = 0);
       AllResults run_all();
@@ -464,9 +467,10 @@ namespace ERIN
         std::string, std::vector<::erin::network::Connection>>& get_networks() const {
           return networks;
         }
-      [[nodiscard]] ReliabilityCoordinator get_reliability_coordinator() const {
-        return rc;
-      }
+      [[nodiscard]] std::unordered_map<size_type, std::vector<TimeState>>
+        get_reliability_schedule() const {
+          return reliability_schedule;
+        }
 
     private:
       SimulationInfo sim_info;
@@ -481,7 +485,8 @@ namespace ERIN
           std::string,
           std::vector<double>>> failure_probs_by_comp_id_by_scenario_id;
       std::function<double()> rand_fn;
-      ReliabilityCoordinator rc;
+      std::unordered_map<size_type, std::vector<TimeState>>
+        reliability_schedule;
 
       void check_data() const;
       void generate_failure_fragilities();

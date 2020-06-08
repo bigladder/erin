@@ -5745,7 +5745,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
     "network = \"normal_operations\"\n"
     "calculate_reliability = true\n";
   auto m = E::make_main_from_string(input);
-  auto rc = m.get_reliability_coordinator();
+  auto sch = m.get_reliability_schedule();
 }
 
 int

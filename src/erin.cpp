@@ -2196,7 +2196,8 @@ namespace ERIN
   // Main
   // main class that runs the simulation from file
   Main::Main(const std::string& input_file_path):
-    failure_probs_by_comp_id_by_scenario_id{}
+    failure_probs_by_comp_id_by_scenario_id{},
+    rc{}
   {
     auto reader = TomlInputReader{input_file_path};
     // Read data into private class fields
@@ -2227,7 +2228,8 @@ namespace ERIN
     components{},
     networks{networks_},
     scenarios{scenarios_},
-    failure_probs_by_comp_id_by_scenario_id{}
+    failure_probs_by_comp_id_by_scenario_id{},
+    rc{}
   {
     for (const auto& pair: components_) {
       components.insert(

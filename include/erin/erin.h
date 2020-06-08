@@ -14,6 +14,7 @@
 #include "erin/fragility.h"
 #include "erin/network.h"
 #include "erin/port.h"
+#include "erin/reliability.h"
 #include "erin/stream.h"
 #include "erin/type.h"
 #include <exception>
@@ -463,6 +464,9 @@ namespace ERIN
         std::string, std::vector<::erin::network::Connection>>& get_networks() const {
           return networks;
         }
+      [[nodiscard]] ReliabilityCoordinator get_reliability_coordinator() const {
+        return rc;
+      }
 
     private:
       SimulationInfo sim_info;
@@ -477,6 +481,7 @@ namespace ERIN
           std::string,
           std::vector<double>>> failure_probs_by_comp_id_by_scenario_id;
       std::function<double()> rand_fn;
+      ReliabilityCoordinator rc;
 
       void check_data() const;
       void generate_failure_fragilities();

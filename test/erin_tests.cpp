@@ -5702,6 +5702,51 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
   EXPECT_EQ(reliability_schedule.at(0), expected);
 }
 
+TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 100.0\n"
+    "failure_modes = [\"standard\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[networks.normal_operations]\n"
+    "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto rc = m.get_reliability_coordinator();
+}
 
 int
 main(int argc, char **argv)

@@ -5744,8 +5744,22 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
     "calculate_reliability = true\n";
+  auto rc = E::ReliabilityCoordinator();
+  auto id_break = rc.add_fixed_cdf(5, E::TimeUnits::Seconds);
+  auto id_repair = rc.add_fixed_cdf(2, E::TimeUnits::Seconds);
+  E::size_type id_S{0};
+  auto id_fm = rc.add_failure_mode(
+          id_S,
+          std::string{"standard"},
+          id_break,
+          E::CdfType::Fixed,
+          id_repair,
+          E::CdfType::Fixed);
+  std::int64_t final_time{10};
+  auto expected_sch = rc.calc_reliability_schedule(final_time);
   auto m = E::make_main_from_string(input);
   auto sch = m.get_reliability_schedule();
+  //EXPECT_EQ(sch.size(), expected_sch.size());
 }
 
 int

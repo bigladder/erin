@@ -5775,12 +5775,6 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
   auto sch = m.get_reliability_schedule();
   EXPECT_EQ(sch.size(), expected_sch.size());
   EXPECT_EQ(sch, expected_sch);
-  //for (const auto& item : expected_sch) {
-  //  auto it = sch.find(item.first);
-  //  ASSERT_TRUE(it != sch.end());
-  //  const auto& v = item.second;
-  //  EXPECT_EQ(v, it->second);
-  //}
 }
 
 int

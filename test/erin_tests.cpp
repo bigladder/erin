@@ -5775,6 +5775,8 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
   auto sch = m.get_reliability_schedule();
   EXPECT_EQ(sch.size(), expected_sch.size());
   EXPECT_EQ(sch, expected_sch);
+  auto results = m.run_all();
+  EXPECT_TRUE(results.get_is_good());
 }
 
 int

@@ -5790,18 +5790,18 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
     expected_results{
       { std::string{"S"},
         std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0},
-          ERIN::Datum{5, 0.0},
-          ERIN::Datum{7, 100.0},
-          ERIN::Datum{10, 0.0}}},
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
       { std::string{"L"},
         std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0},
-          ERIN::Datum{5, 0.0},
-          ERIN::Datum{7, 100.0},
-          ERIN::Datum{10, 0.0}}}};
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
   ASSERT_EQ(expected_results.size(), bs_data.size());
-  //EXPECT_EQ(expected_results, bs_data);
+  EXPECT_EQ(expected_results, bs_data);
   //for (const auto& item : expected_results) {
   //  auto it = results.find(item.first);
   //  ASSERT_TRUE(it != results.end())

@@ -55,44 +55,49 @@ namespace ERIN
 
   ReliabilityCoordinator::ReliabilityCoordinator():
     fixed_cdf{},
+    cdfs{},
     fms{},
+    fm_comp_links{},
+    components{},
     next_fixed_cdf_id{0},
-    next_fm_id{0},
-    components{}
+    next_cdf_id{0},
+    next_fm_id{0}
   {
   }
 
   size_type
-  ReliabilityCoordinator::add_fixed_cdf(
-      std::int64_t value,
-      TimeUnits units)
+  ReliabilityCoordinator::add_fixed_cdf(std::int64_t value_in_seconds)
   {
     auto id{next_fixed_cdf_id};
     ++next_fixed_cdf_id;
-    fixed_cdf.value.emplace_back(value);
-    fixed_cdf.time_multiplier.emplace_back(time_to_seconds(1.0, units));
+    fixed_cdf.value.emplace_back(value_in_seconds);
+    cdfs.subtype_id.emplace_back(id);
+    cdfs.cdf_type.emplace_back(CdfType::Fixed);
     return id;
   }
 
   size_type
   ReliabilityCoordinator::add_failure_mode(
-      const size_type& comp_id,
       const std::string& name,
       const size_type& failure_cdf_id,
-      const CdfType& failure_cdf_type,
-      const size_type& repair_cdf_id,
-      const CdfType& repair_cdf_type)
+      const size_type& repair_cdf_id)
   {
     auto id{next_fm_id};
-    fms.component_id.emplace_back(comp_id);
     fms.name.emplace_back(name);
     fms.failure_cdf.emplace_back(failure_cdf_id);
-    fms.failure_cdf_type.emplace_back(failure_cdf_type);
     fms.repair_cdf.emplace_back(repair_cdf_id);
-    fms.repair_cdf_type.emplace_back(repair_cdf_type);
     ++next_fm_id;
-    components.emplace(comp_id);
     return id;
+  }
+
+  void
+  ReliabilityCoordinator::link_component_with_failure_mode(
+      const size_type& component_id,
+      const size_type& failure_mode_id)
+  {
+    fm_comp_links.component_id.emplace_back(component_id);
+    fm_comp_links.failure_mode_id.emplace_back(failure_mode_id);
+    components.emplace(component_id);
   }
 
   void
@@ -101,29 +106,27 @@ namespace ERIN
       bool is_failure
       ) const
   {
-    const auto num_fms{fms.component_id.size()};
-    for (size_type i{0}; i < num_fms; ++i) {
-      const auto& comp_id = fms.component_id.at(i);
+    const auto num_fm_comp_links{fm_comp_links.failure_mode_id.size()};
+    for (size_type i{0}; i < num_fm_comp_links; ++i) {
+      const auto& comp_id = fm_comp_links.component_id.at(i);
+      const auto& fm_id = fm_comp_links.failure_mode_id.at(i);
       size_type cdf_id{0};
+      CdfType cdf_type{};
+      size_type cdf_subtype_id{0};
       if (is_failure) {
-        cdf_id = fms.failure_cdf.at(i);
+        cdf_id = fms.failure_cdf.at(fm_id);
+        cdf_type = cdfs.cdf_type.at(cdf_id);
+        cdf_subtype_id = cdfs.subtype_id.at(cdf_id);
       }
       else { // is_repair
         cdf_id = fms.repair_cdf.at(i);
-      }
-      auto cdf_type = CdfType::Fixed;
-      if (is_failure) {
-        cdf_type = fms.failure_cdf_type.at(i);
-      }
-      else { // is_repair
-        cdf_type = fms.repair_cdf_type.at(i);
+        cdf_type = cdfs.cdf_type.at(cdf_id);
+        cdf_subtype_id = cdfs.subtype_id.at(cdf_id);
       }
       switch (cdf_type) {
         case CdfType::Fixed:
           {
-            auto v = fixed_cdf.value.at(cdf_id);
-            auto m = fixed_cdf.time_multiplier.at(cdf_id);
-            auto dt = v * m;
+            auto dt = fixed_cdf.value.at(cdf_id);
             auto& dt_fm = comp_id_to_dt[comp_id]; 
             if ((dt_fm == -1) || (dt < dt_fm)) {
               dt_fm = dt;

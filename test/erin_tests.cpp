@@ -5699,14 +5699,14 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
   std::int64_t final_time{10};
   auto reliability_schedule_1 = c.calc_reliability_schedule(final_time);
   EXPECT_EQ(reliability_schedule_1.size(), 0);
-  auto failure_id = c.add_fixed_cdf(5, ERIN::TimeUnits::Seconds);
-  auto repair_id = c.add_fixed_cdf(1, ERIN::TimeUnits::Seconds);
-  ERIN::size_type comp_id{0};
-  c.add_failure_mode(
-      comp_id,
+  auto failure_id = c.add_fixed_cdf(5);
+  auto repair_id = c.add_fixed_cdf(1);
+  auto fm_id = c.add_failure_mode(
       "standard failure",
-      failure_id, ERIN::CdfType::Fixed,
-      repair_id, ERIN::CdfType::Fixed);
+      failure_id,
+      repair_id);
+  ERIN::size_type comp_id{0};
+  c.link_component_with_failure_mode(comp_id, fm_id);
   auto reliability_schedule = c.calc_reliability_schedule(final_time);
   EXPECT_EQ(reliability_schedule.size(), 1);
   std::vector<ERIN::TimeState> expected{

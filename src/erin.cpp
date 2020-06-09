@@ -1218,7 +1218,7 @@ namespace ERIN
                   tt, {"time_unit", "time_units"}, std::string{"hours"},
                   field_read);
             auto tu = tag_to_time_units(time_tag);
-            auto cdf_id = rc.add_fixed_cdf(value, tu);
+            auto cdf_id = rc.add_fixed_cdf(time_to_seconds(value, tu));
             out[cdf_string_id] = cdf_id;
           }
         default:

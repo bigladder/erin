@@ -5775,8 +5775,40 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
   auto sch = m.get_reliability_schedule();
   EXPECT_EQ(sch.size(), expected_sch.size());
   EXPECT_EQ(sch, expected_sch);
-  auto results = m.run_all();
-  EXPECT_TRUE(results.get_is_good());
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0},
+          ERIN::Datum{5, 0.0},
+          ERIN::Datum{7, 100.0},
+          ERIN::Datum{10, 0.0}}},
+      { std::string{"L"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0},
+          ERIN::Datum{5, 0.0},
+          ERIN::Datum{7, 100.0},
+          ERIN::Datum{10, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  //EXPECT_EQ(expected_results, bs_data);
+  //for (const auto& item : expected_results) {
+  //  auto it = results.find(item.first);
+  //  ASSERT_TRUE(it != results.end())
+  //    << "couldn't find "
+  //    << item.first
+  //    << " in results";
+  //}
 }
 
 int

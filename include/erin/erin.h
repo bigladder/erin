@@ -209,13 +209,22 @@ namespace ERIN
             const std::unordered_map<std::string, std::vector<LoadItem>>&
               loads_by_id,
             const std::unordered_map<
-              std::string, ::erin::fragility::FragilityCurve>& fragilities) = 0;
+              std::string, ::erin::fragility::FragilityCurve>& fragilities,
+            const std::unordered_map<
+              std::string, size_type>& cdfs,
+            const std::unordered_map<
+              std::string, size_type>& fms,
+            ReliabilityCoordinator& rc) = 0;
       virtual std::unordered_map<
         std::string,
         std::vector<::erin::network::Connection>> read_networks() = 0;
       virtual std::unordered_map<std::string, Scenario> read_scenarios() = 0;
       virtual std::unordered_map<std::string,::erin::fragility::FragilityCurve>
         read_fragility_data() = 0;
+      virtual std::unordered_map<std::string, size_type>
+        read_cumulative_distributions(ReliabilityCoordinator& rc) = 0;
+      virtual std::unordered_map<std::string, size_type>
+        read_failure_modes(ReliabilityCoordinator& rc) = 0;
   };
 
   struct StreamIDs
@@ -244,20 +253,26 @@ namespace ERIN
             const std::unordered_map<
               std::string, std::vector<LoadItem>>& loads_by_id,
             const std::unordered_map<
-              std::string, ::erin::fragility::FragilityCurve>& fragilities)
-        override;
+              std::string, ::erin::fragility::FragilityCurve>& fragilities,
+            const std::unordered_map<
+              std::string, size_type>& cdfs,
+            const std::unordered_map<
+              std::string, size_type>& fms,
+            ReliabilityCoordinator& rc) override;
       std::unordered_map<std::string, std::unique_ptr<Component>>
-      read_components(
-          const std::unordered_map<std::string, std::vector<LoadItem>>&
-            loads_by_id) {
-        return read_components(loads_by_id, {});
-      }
+        read_components(
+            const std::unordered_map<std::string, std::vector<LoadItem>>&
+              loads_by_id);
       std::unordered_map<
         std::string, std::vector<::erin::network::Connection>>
         read_networks() override;
       std::unordered_map<std::string, Scenario> read_scenarios() override;
       std::unordered_map<std::string,::erin::fragility::FragilityCurve>
         read_fragility_data() override;
+      std::unordered_map<std::string, size_type>
+        read_cumulative_distributions(ReliabilityCoordinator& rc) override;
+      std::unordered_map<std::string, size_type>
+        read_failure_modes(ReliabilityCoordinator& rc) override;
 
     private:
       toml::value data;
@@ -327,6 +342,10 @@ namespace ERIN
         read_component_type(
             const toml::table& tt,
             const std::string& comp_id) const;
+      [[nodiscard]] CdfType
+        read_cdf_type(
+            const toml::table& tt,
+            const std::string& cdf_id) const;
       [[nodiscard]] StreamIDs read_stream_ids(
           const toml::table& tt,
           const std::string& comp_id) const;

@@ -475,9 +475,12 @@ namespace ERIN
   TomlInputReader::read_components(
       const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id,
       const std::unordered_map<std::string, ::erin::fragility::FragilityCurve>&
-        fragilities)
+        fragilities,
+      const std::unordered_map<std::string, size_type>& cdfs,
+      const std::unordered_map<std::string, size_type>& fms,
+      ReliabilityCoordinator& rc)
   {
-    namespace ef = ::erin::fragility;
+    namespace ef = erin::fragility;
     const auto& toml_comps = toml::find<toml::table>(data, "components");
     if constexpr (debug_level >= debug_level_high) {
       std::cout << toml_comps.size() << " components found\n";
@@ -576,6 +579,20 @@ namespace ERIN
     return components;
   }
 
+  std::unordered_map<std::string, std::unique_ptr<Component>>
+  TomlInputReader::read_components(
+      const std::unordered_map<std::string, std::vector<LoadItem>>&
+        loads_by_id)
+  {
+    ReliabilityCoordinator rc{};
+    return read_components(
+        loads_by_id,
+        {},
+        {},
+        {},
+        rc);
+  }
+
   ComponentType
   TomlInputReader::read_component_type(
       const toml::table& tt,
@@ -607,6 +624,39 @@ namespace ERIN
     }
     return component_type;
   }
+
+  CdfType
+  TomlInputReader::read_cdf_type(
+      const toml::table& tt,
+      const std::string& cdf_id) const
+  {
+    std::string field_read{};
+    std::string cdf_type_tag{};
+    try {
+      cdf_type_tag = toml_helper::read_required_table_field<std::string>(
+          tt, {"type"}, field_read);
+    }
+    catch (std::out_of_range& e) {
+      std::ostringstream oss{};
+      oss << "original error: " << e.what() << "\n";
+      oss << "failed to find 'type' for cdf " << cdf_id << "\n";
+      throw std::runtime_error(oss.str());
+    }
+    CdfType cdf_type{};
+    try {
+      cdf_type = tag_to_cdf_type(cdf_type_tag);
+    }
+    catch (std::invalid_argument& e) {
+      std::ostringstream oss{};
+      oss << "original error: " << e.what() << "\n";
+      oss << "could not understand 'type' \""
+        << cdf_type_tag << "\" for component "
+        << cdf_id << "\n";
+      throw std::runtime_error(oss.str());
+    }
+    return cdf_type;
+  }
+
 
   StreamIDs
   TomlInputReader::read_stream_ids(
@@ -1142,6 +1192,73 @@ namespace ERIN
       }
     }
     return scenarios;
+  }
+
+  std::unordered_map<std::string, size_type>
+  TomlInputReader::read_cumulative_distributions(
+      ReliabilityCoordinator& rc)
+  {
+    const auto& toml_cdfs = toml::find_or<toml::table>(
+        data, "cdf", toml::table{});
+    std::unordered_map<std::string, size_type> out{};
+    for (const auto& toml_cdf : toml_cdfs) {
+      const auto& cdf_string_id = toml_cdf.first;
+      toml::value t = toml_cdf.second;
+      const toml::table& tt = toml::get<toml::table>(t);
+      const auto& cdf_type = read_cdf_type(tt, cdf_string_id);
+      switch (cdf_type) {
+        case CdfType::Fixed:
+          {
+            std::string field_read{""};
+            RealTimeType value =
+              toml_helper::read_required_table_field<RealTimeType>(
+                  tt, {"value"}, field_read);
+            std::string time_tag =
+              toml_helper::read_optional_table_field<std::string>(
+                  tt, {"time_unit", "time_units"}, std::string{"hours"},
+                  field_read);
+            auto tu = tag_to_time_units(time_tag);
+            auto cdf_id = rc.add_fixed_cdf(value, tu);
+            out[cdf_string_id] = cdf_id;
+          }
+        default:
+          {
+            std::ostringstream oss{};
+            oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
+            throw std::invalid_argument(oss.str());
+          }
+      }
+    }
+    return out;
+  }
+
+  std::unordered_map<std::string, size_type>
+  TomlInputReader::read_failure_modes(
+      ReliabilityCoordinator& rc)
+  {
+    const auto& toml_fms = toml::find_or<toml::table>(
+        data, "failure_mode", toml::table{});
+    std::unordered_map<std::string, size_type> out{};
+    for (const auto& toml_fm : toml_fms) {
+      const auto& fm_string_id = toml_fm.first;
+      toml::value t = toml_fm.second;
+      const toml::table& tt = toml::get<toml::table>(t);
+      std::string field_read{};
+      const auto& failure_cdf_string_id =
+        toml_helper::read_required_table_field<std::string>(
+            tt, {"failure_cdf"}, field_read);
+      const auto& repair_cdf_string_id =
+        toml_helper::read_required_table_field<std::string>(
+            tt, {"repair_cdf"}, field_read);
+      //auto fm_id = rc.add_failure_mode(
+      //    const size_type& comp_id,
+      //    const std::string& name,
+      //    const size_type& failure_cdf_id,
+      //    const CdfType& failure_cdf_type,
+      //    const size_type& repair_cdf_id,
+      //    const CdfType& repair_cdf_type);
+    }
+    return out;
   }
 
   ////////////////////////////////////////////////////////////
@@ -2196,15 +2313,23 @@ namespace ERIN
   // Main
   // main class that runs the simulation from file
   Main::Main(const std::string& input_file_path):
-    failure_probs_by_comp_id_by_scenario_id{},
-    reliability_schedule{}
+    failure_probs_by_comp_id_by_scenario_id{}
   {
     auto reader = TomlInputReader{input_file_path};
     // Read data into private class fields
     sim_info = reader.read_simulation_info();
     auto loads_by_id = reader.read_loads();
     auto fragilities = reader.read_fragility_data();
-    components = reader.read_components(loads_by_id, fragilities);
+    ReliabilityCoordinator rc{};
+    // cdfs is map<string, size_type>
+    auto cdfs = reader.read_cumulative_distributions(rc);
+    // fms is map<string, size_type>
+    auto fms = reader.read_failure_modes(rc);
+    // components needs to be modified to add component_id as size_type?
+    components = reader.read_components(loads_by_id, fragilities, cdfs, fms, rc);
+    reliability_schedule = rc.calc_reliability_schedule(
+        sim_info.get_max_time()
+        );
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
     check_data();
@@ -2426,10 +2551,17 @@ namespace ERIN
     const auto si = tir.read_simulation_info();
     const auto loads = tir.read_loads();
     const auto fragilities = tir.read_fragility_data();
-    const auto comps = tir.read_components(loads, fragilities);
+    ReliabilityCoordinator rc{};
+    const auto cdfs = tir.read_cumulative_distributions(rc);
+    const auto fms = tir.read_failure_modes(rc);
+    const auto comps = tir.read_components(
+        loads, fragilities, cdfs, fms, rc);
     const auto networks = tir.read_networks();
     const auto scenarios = tir.read_scenarios();
-    return Main{si, comps, networks, scenarios};
+    const auto reliability_schedule = rc.calc_reliability_schedule(
+        si.get_max_time_in_seconds()
+        );
+    return Main{si, comps, networks, scenarios, reliability_schedule};
   }
 
 

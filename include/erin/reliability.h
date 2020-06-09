@@ -32,19 +32,38 @@ namespace ERIN
     //Weibull
   };
 
+  std::string cdf_type_to_tag(CdfType cdf_type);
+  CdfType tag_to_cdf_type(const std::string& tag);
+
   struct FailureMode
   {
+    // TODO: remove component_id
     std::vector<size_type> component_id{};
     std::vector<std::string> name{};
     std::vector<size_type> failure_cdf{};
+    // TODO: remove failure_cdf_type
     std::vector<CdfType> failure_cdf_type{};
     std::vector<size_type> repair_cdf{};
+    // TODO: remove repair_cdf_type
     std::vector<CdfType> repair_cdf_type{};
   };
+
+  /*
+  struct Cdf {
+    std::vector<size_type> subtype_id{};
+    std::vector<CdfType> cdf_type{};
+  };
+
+  struct FailureMode_Component_Link {
+    std::vector<size_type> failure_mode_id{};
+    std::vector<size_type> component_id{};
+  };
+  */
 
   struct Fixed_CDF
   {
     std::vector<std::int64_t> value{};
+    // TODO: remove time_multiplier, just make value always be seconds
     std::vector<std::int64_t> time_multiplier{}; // to convert from given units to seconds
   };
 
@@ -65,12 +84,33 @@ namespace ERIN
           const CdfType& failure_cdf_type,
           const size_type& repair_cdf_id,
           const CdfType& repair_cdf_type);
+      /*
+      size_type add_fixed_cdf(
+          std::int64_t value_in_seconds);
+
+      size_type add_failure_mode(
+          const std::string& name,
+          const size_type& failure_cdf_id,
+          const size_type& repair_cdf_id
+          );
+
+      void link_component_with_failure_mode(
+          const size_type& comp_id,
+          const size_type& fm_id);
+
+      */
 
       std::unordered_map<size_type, std::vector<TimeState>>
       calc_reliability_schedule(std::int64_t final_time) const;
 
     private:
       Fixed_CDF fixed_cdf;
+      /*
+      Cdf cdfs;
+      size_type next_cdf_id;
+      FailureMode_Component_Link fm_comp_links;
+      size_type next_comp_fm_link_id;
+      */
       FailureMode fms;
       size_type next_fixed_cdf_id;
       size_type next_fm_id;

@@ -59,7 +59,9 @@ doit()
           -1,
           nullptr,
           {})));
-  auto m = ::ERIN::Main(si, components, networks, scenarios);
+  std::unordered_map<ERIN::size_type, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto out = m.run(scenario_id);
   if (out.get_is_good()) {
     std::cout << "success!\n";

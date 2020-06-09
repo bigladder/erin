@@ -30,6 +30,29 @@ namespace ERIN
               << ")";
   }
 
+  std::string
+  cdf_type_to_tag(CdfType cdf_type)
+  {
+    switch (cdf_type) {
+      case CdfType::Fixed:
+        return std::string{"fixed"};
+    }
+    std::ostringstream oss{};
+    oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
+    throw std::invalid_argument(oss.str());
+  }
+
+  CdfType
+  tag_to_cdf_type(const std::string& tag)
+  {
+    if (tag == "fixed") {
+      return CdfType::Fixed;
+    }
+    std::ostringstream oss{};
+    oss << "unhandled tag `" << tag << "` in tag_to_cdf_type";
+    throw std::invalid_argument(oss.str());
+  }
+
   ReliabilityCoordinator::ReliabilityCoordinator():
     fixed_cdf{},
     fms{},

@@ -57,7 +57,9 @@ main()
   }
   std::unordered_map<std::string, decltype(nw)> networks{{net_id, nw}};
   std::cout << "construction completed!\n";
-  ::ERIN::Main m{si, components, networks, scenarios};
+  std::unordered_map<ERIN::size_type, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   std::cout << "running!\n";
   auto out = m.run(scenario_id);
   std::cout << "done!\n";

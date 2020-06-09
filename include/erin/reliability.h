@@ -37,12 +37,13 @@ namespace ERIN
 
   struct FailureMode
   {
-    std::vector<std::string> name{};
+    std::vector<std::string> tag{};
     std::vector<size_type> failure_cdf{};
     std::vector<size_type> repair_cdf{};
   };
 
   struct Cdf {
+    std::vector<std::string> tag{};
     std::vector<size_type> subtype_id{};
     std::vector<CdfType> cdf_type{};
   };
@@ -57,6 +58,11 @@ namespace ERIN
     std::vector<std::int64_t> value{};
   };
 
+  struct Component_meta
+  {
+    std::vector<std::string> tag{};
+  };
+
   // Main Class to do Reliability Schedule Creation
   class ReliabilityCoordinator
   {
@@ -64,10 +70,11 @@ namespace ERIN
       ReliabilityCoordinator();
 
       size_type add_fixed_cdf(
+          const std::string& tag,
           std::int64_t value_in_seconds);
 
       size_type add_failure_mode(
-          const std::string& name,
+          const std::string& tag,
           const size_type& failure_cdf_id,
           const size_type& repair_cdf_id
           );
@@ -75,6 +82,10 @@ namespace ERIN
       void link_component_with_failure_mode(
           const size_type& comp_id,
           const size_type& fm_id);
+
+      size_type register_component(const std::string& tag);
+
+      [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
 
       std::unordered_map<size_type, std::vector<TimeState>>
       calc_reliability_schedule(std::int64_t final_time) const;
@@ -85,9 +96,11 @@ namespace ERIN
       FailureMode fms;
       FailureMode_Component_Link fm_comp_links;
       std::set<size_type> components;
+      Component_meta comp_meta;
       size_type next_fixed_cdf_id;
       size_type next_cdf_id;
       size_type next_fm_id;
+      size_type next_comp_id;
 
       void calc_next_events(
           std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,

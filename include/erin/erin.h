@@ -211,8 +211,6 @@ namespace ERIN
             const std::unordered_map<
               std::string, ::erin::fragility::FragilityCurve>& fragilities,
             const std::unordered_map<
-              std::string, size_type>& cdfs,
-            const std::unordered_map<
               std::string, size_type>& fms,
             ReliabilityCoordinator& rc) = 0;
       virtual std::unordered_map<
@@ -224,7 +222,9 @@ namespace ERIN
       virtual std::unordered_map<std::string, size_type>
         read_cumulative_distributions(ReliabilityCoordinator& rc) = 0;
       virtual std::unordered_map<std::string, size_type>
-        read_failure_modes(ReliabilityCoordinator& rc) = 0;
+        read_failure_modes(
+            const std::unordered_map<std::string, size_type>& cdf_ids,
+            ReliabilityCoordinator& rc) = 0;
   };
 
   struct StreamIDs
@@ -255,8 +255,6 @@ namespace ERIN
             const std::unordered_map<
               std::string, ::erin::fragility::FragilityCurve>& fragilities,
             const std::unordered_map<
-              std::string, size_type>& cdfs,
-            const std::unordered_map<
               std::string, size_type>& fms,
             ReliabilityCoordinator& rc) override;
       std::unordered_map<std::string, std::unique_ptr<Component>>
@@ -272,7 +270,9 @@ namespace ERIN
       std::unordered_map<std::string, size_type>
         read_cumulative_distributions(ReliabilityCoordinator& rc) override;
       std::unordered_map<std::string, size_type>
-        read_failure_modes(ReliabilityCoordinator& rc) override;
+        read_failure_modes(
+            const std::unordered_map<std::string, size_type>& cdf_ids,
+            ReliabilityCoordinator& rc) override;
 
     private:
       toml::value data;

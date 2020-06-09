@@ -1882,7 +1882,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
   ERIN::ReliabilityCoordinator rc{};
-  auto components = r.read_components(loads, fragilities, {}, {}, rc);
+  auto components = r.read_components(loads, fragilities, {}, rc);
   EXPECT_EQ(num_comps, components.size());
   // Test that components have fragilities
   for (const auto& c_pair : components) {
@@ -2065,7 +2065,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
   ERIN::ReliabilityCoordinator rc{};
-  auto components = r.read_components(loads, fragilities, {}, {}, rc);
+  auto components = r.read_components(loads, fragilities, {}, rc);
   EXPECT_EQ(num_comps, components.size());
   // Test that components have fragilities
   for (const auto& c_pair : components) {
@@ -5699,13 +5699,13 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
   std::int64_t final_time{10};
   auto reliability_schedule_1 = c.calc_reliability_schedule(final_time);
   EXPECT_EQ(reliability_schedule_1.size(), 0);
-  auto failure_id = c.add_fixed_cdf(5);
-  auto repair_id = c.add_fixed_cdf(1);
+  auto failure_id = c.add_fixed_cdf("f", 5);
+  auto repair_id = c.add_fixed_cdf("r", 1);
   auto fm_id = c.add_failure_mode(
       "standard failure",
       failure_id,
       repair_id);
-  ERIN::size_type comp_id{0};
+  auto comp_id = c.register_component("c");
   c.link_component_with_failure_mode(comp_id, fm_id);
   auto reliability_schedule = c.calc_reliability_schedule(final_time);
   EXPECT_EQ(reliability_schedule.size(), 1);
@@ -5761,21 +5761,26 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
     "network = \"normal_operations\"\n"
     "calculate_reliability = true\n";
   auto rc = E::ReliabilityCoordinator();
-  //auto id_break = rc.add_fixed_cdf(5, E::TimeUnits::Seconds);
-  //auto id_repair = rc.add_fixed_cdf(2, E::TimeUnits::Seconds);
-  //E::size_type id_S{0};
-  //auto id_fm = rc.add_failure_mode(
-  //        id_S,
-  //        std::string{"standard"},
-  //        id_break,
-  //        E::CdfType::Fixed,
-  //        id_repair,
-  //        E::CdfType::Fixed);
-  //std::int64_t final_time{10};
-  //auto expected_sch = rc.calc_reliability_schedule(final_time);
-  //auto m = E::make_main_from_string(input);
-  //auto sch = m.get_reliability_schedule();
-  //EXPECT_EQ(sch.size(), expected_sch.size());
+  auto id_break = rc.add_fixed_cdf("break", 5);
+  auto id_repair = rc.add_fixed_cdf("repair", 2);
+  auto id_fm = rc.add_failure_mode(
+          "standard",
+          id_break,
+          id_repair);
+  auto id_S = rc.register_component("S");
+  rc.link_component_with_failure_mode(id_S, id_fm);
+  std::int64_t final_time{10};
+  auto expected_sch = rc.calc_reliability_schedule(final_time);
+  auto m = E::make_main_from_string(input);
+  auto sch = m.get_reliability_schedule();
+  EXPECT_EQ(sch.size(), expected_sch.size());
+  EXPECT_EQ(sch, expected_sch);
+  //for (const auto& item : expected_sch) {
+  //  auto it = sch.find(item.first);
+  //  ASSERT_TRUE(it != sch.end());
+  //  const auto& v = item.second;
+  //  EXPECT_EQ(v, it->second);
+  //}
 }
 
 int

@@ -58,19 +58,23 @@ namespace ERIN
     cdfs{},
     fms{},
     fm_comp_links{},
-    components{},
+    comp_meta{},
     next_fixed_cdf_id{0},
     next_cdf_id{0},
-    next_fm_id{0}
+    next_fm_id{0},
+    next_comp_id{0}
   {
   }
 
   size_type
-  ReliabilityCoordinator::add_fixed_cdf(std::int64_t value_in_seconds)
+  ReliabilityCoordinator::add_fixed_cdf(
+      const std::string& tag,
+      std::int64_t value_in_seconds)
   {
     auto id{next_fixed_cdf_id};
     ++next_fixed_cdf_id;
     fixed_cdf.value.emplace_back(value_in_seconds);
+    cdfs.tag.emplace_back(tag);
     cdfs.subtype_id.emplace_back(id);
     cdfs.cdf_type.emplace_back(CdfType::Fixed);
     return id;
@@ -78,12 +82,12 @@ namespace ERIN
 
   size_type
   ReliabilityCoordinator::add_failure_mode(
-      const std::string& name,
+      const std::string& tag,
       const size_type& failure_cdf_id,
       const size_type& repair_cdf_id)
   {
     auto id{next_fm_id};
-    fms.name.emplace_back(name);
+    fms.tag.emplace_back(tag);
     fms.failure_cdf.emplace_back(failure_cdf_id);
     fms.repair_cdf.emplace_back(repair_cdf_id);
     ++next_fm_id;
@@ -97,7 +101,21 @@ namespace ERIN
   {
     fm_comp_links.component_id.emplace_back(component_id);
     fm_comp_links.failure_mode_id.emplace_back(failure_mode_id);
-    components.emplace(component_id);
+    if (component_id >= comp_meta.tag.size()) {
+      std::ostringstream oss{};
+      oss << "Attempt to add unregistered component_id `"
+          << component_id << "`";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  size_type
+  ReliabilityCoordinator::register_component(const std::string& tag)
+  {
+    auto id{next_comp_id};
+    ++next_comp_id;
+    comp_meta.tag.emplace_back(tag);
+    return id;
   }
 
   void
@@ -152,7 +170,8 @@ namespace ERIN
       ) const
   {
     size_type num_past_final_time{0};
-    for (const auto& comp_id : components) {
+    auto num_components{comp_meta.tag.size()};
+    for (size_type comp_id{0}; comp_id < num_components; ++comp_id) {
       auto& t = comp_id_to_time[comp_id];
       if (t > final_time) {
         ++num_past_final_time;
@@ -175,11 +194,11 @@ namespace ERIN
   ReliabilityCoordinator::calc_reliability_schedule(
       std::int64_t final_time) const
   {
-    const auto num_components{components.size()};
+    const auto num_components{comp_meta.tag.size()};
     std::unordered_map<size_type, std::int64_t> comp_id_to_time{};
     std::unordered_map<size_type, std::int64_t> comp_id_to_dt{};
     std::unordered_map<size_type, std::vector<TimeState>> comp_id_to_reliability_schedule{};
-    for (const auto& comp_id : components) {
+    for (size_type comp_id{0}; comp_id < num_components; ++comp_id) {
       comp_id_to_time[comp_id] = 0;
       comp_id_to_dt[comp_id] = -1;
       comp_id_to_reliability_schedule[comp_id] = std::vector<TimeState>{TimeState{0, true}};

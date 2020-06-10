@@ -5814,15 +5814,37 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
 
 TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
 {
-  ERIN::ReliabilityCoordinator rc{};
-  auto cdf_break_id = rc.add_fixed_cdf("break", 5);
-  auto cdf_repair_id = rc.add_fixed_cdf("repair", 2);
+  namespace E = ERIN;
+  E::ReliabilityCoordinator rc{};
+  auto cdf_break_id = rc.add_fixed_cdf("break", 10);
+  auto cdf_repair_id = rc.add_fixed_cdf("repair", 5);
   auto fm_standard_id = rc.add_failure_mode(
       "standard", cdf_break_id, cdf_repair_id);
-  auto comp_id = rc.register_component("S");
+  std::string comp_string_id{"S"};
+  auto comp_id = rc.register_component(comp_string_id);
   rc.link_component_with_failure_mode(comp_id, fm_standard_id);
   ERIN::RealTimeType final_time{100};
   auto sch = rc.calc_reliability_schedule_by_component_tag(final_time);
+  std::unordered_map<std::string, std::vector<E::TimeState>>
+    expected_sch{
+      { comp_string_id,
+        std::vector<E::TimeState>{
+          E::TimeState{0, 1.0},
+          E::TimeState{10, 0.0},
+          E::TimeState{15, 1.0},
+          E::TimeState{25, 0.0},
+          E::TimeState{30, 1.0},
+          E::TimeState{40, 0.0},
+          E::TimeState{45, 1.0},
+          E::TimeState{55, 0.0},
+          E::TimeState{60, 1.0},
+          E::TimeState{70, 0.0},
+          E::TimeState{75, 1.0},
+          E::TimeState{85, 0.0},
+          E::TimeState{90, 1.0},
+          E::TimeState{100, 0.0},
+          E::TimeState{105, 1.0}}}};
+  ASSERT_EQ(sch, expected_sch);
 }
 
 int

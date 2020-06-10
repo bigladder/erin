@@ -369,7 +369,7 @@ namespace ERIN
     }
     bool in_header{true};
     for (int row{0}; ifs.good(); ++row) {
-      auto cells = ::erin_csv::read_row(ifs);
+      auto cells = erin_csv::read_row(ifs);
       if (cells.size() == 0) {
         break;
       }
@@ -379,7 +379,7 @@ namespace ERIN
           std::ostringstream oss;
           oss << "badly formatted file \"" << csv_path << "\"\n";
           oss << "row: " << row << "\n";
-          ::erin_csv::stream_out(oss, cells);
+          erin_csv::stream_out(oss, cells);
           ifs.close();
           throw std::runtime_error(oss.str());
         }
@@ -392,7 +392,7 @@ namespace ERIN
             << "', first column should be a time unit tag but is '"
             << cells[0] << "'";
           oss << "row: " << row << "\n";
-          ::erin_csv::stream_out(oss, cells);
+          erin_csv::stream_out(oss, cells);
           oss << "original error: " << e.what() << "\n";
           ifs.close();
           throw std::runtime_error(oss.str());
@@ -406,13 +406,13 @@ namespace ERIN
               << "', second column should be a rate unit tag but is '"
               << cells[1] << "'";
           oss << "row: " << "\n";
-          ::erin_csv::stream_out(oss, cells);
+          erin_csv::stream_out(oss, cells);
           oss << "original error: " << e.what() << "\n";
           ifs.close();
           throw std::runtime_error(oss.str());
         }
         if (rate_units != RateUnits::KiloWatts) {
-          std::ostringstream oss;
+          std::ostringstream oss{};
           oss << "rate units other than kW are not currently supported\n"
               << "rate_units = " << rate_units_to_tag(rate_units) << "\n";
           throw std::runtime_error(oss.str());
@@ -427,7 +427,7 @@ namespace ERIN
         oss << "failed to convert string to int on row " << row << ".\n";
         oss << "t = std::stoi(" << cells[0] << ");\n";
         oss << "row: " << row << "\n";
-        ::erin_csv::stream_out(oss, cells);
+        erin_csv::stream_out(oss, cells);
         std::cerr << oss.str();
         ifs.close();
         throw;
@@ -440,7 +440,7 @@ namespace ERIN
         oss << "failed to convert string to double on row " << row << ".\n";
         oss << "v = std::stod(" << cells[1] << ");\n";
         oss << "row: " << row << "\n";
-        ::erin_csv::stream_out(oss, cells);
+        erin_csv::stream_out(oss, cells);
         std::cerr << oss.str();
         ifs.close();
         throw;

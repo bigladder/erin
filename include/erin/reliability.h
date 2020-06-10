@@ -96,12 +96,7 @@ namespace ERIN
       Cdf cdfs;
       FailureMode fms;
       FailureMode_Component_Link fm_comp_links;
-      std::set<size_type> components;
       Component_meta comp_meta;
-      size_type next_fixed_cdf_id;
-      size_type next_cdf_id;
-      size_type next_fm_id;
-      size_type next_comp_id;
 
       void calc_next_events(
           std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,

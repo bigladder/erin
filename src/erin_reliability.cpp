@@ -24,10 +24,9 @@ namespace ERIN
   std::ostream&
   operator<<(std::ostream& os, const TimeState& ts)
   {
-    return os << "TimeState(time="
-              << ts.time << ", "
-              << (ts.state ? "true" : "false")
-              << ")";
+    return os << "TimeState("
+              << "time=" << ts.time << ", "
+              << "state=" << ts.state << ")";
   }
 
   std::string
@@ -58,11 +57,7 @@ namespace ERIN
     cdfs{},
     fms{},
     fm_comp_links{},
-    comp_meta{},
-    next_fixed_cdf_id{0},
-    next_cdf_id{0},
-    next_fm_id{0},
-    next_comp_id{0}
+    comp_meta{}
   {
   }
 
@@ -71,8 +66,7 @@ namespace ERIN
       const std::string& tag,
       RealTimeType value_in_seconds)
   {
-    auto id{next_fixed_cdf_id};
-    ++next_fixed_cdf_id;
+    auto id{cdfs.tag.size()};
     fixed_cdf.value.emplace_back(value_in_seconds);
     cdfs.tag.emplace_back(tag);
     cdfs.subtype_id.emplace_back(id);
@@ -86,11 +80,10 @@ namespace ERIN
       const size_type& failure_cdf_id,
       const size_type& repair_cdf_id)
   {
-    auto id{next_fm_id};
+    auto id{fms.tag.size()};
     fms.tag.emplace_back(tag);
     fms.failure_cdf.emplace_back(failure_cdf_id);
     fms.repair_cdf.emplace_back(repair_cdf_id);
-    ++next_fm_id;
     return id;
   }
 
@@ -112,8 +105,7 @@ namespace ERIN
   size_type
   ReliabilityCoordinator::register_component(const std::string& tag)
   {
-    auto id{next_comp_id};
-    ++next_comp_id;
+    auto id{comp_meta.tag.size()};
     comp_meta.tag.emplace_back(tag);
     return id;
   }

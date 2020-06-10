@@ -42,7 +42,10 @@ namespace ERIN
     output_stream{std::move(output_stream_)},
     lossflow_stream{std::move(lossflow_stream_)},
     fragilities{std::move(fragilities_)},
-    has_fragilities{!fragilities.empty()}
+    has_fragilities{!fragilities.empty()},
+    has_reliability{false},
+    schedule_times{},
+    schedule_values{}
   {
   }
 
@@ -129,7 +132,10 @@ namespace ERIN
       && (component_type == other.component_type)
       && (input_stream == other.input_stream)
       && (output_stream == other.output_stream)
-      && (has_fragilities == other.has_fragilities);
+      && (has_fragilities == other.has_fragilities)
+      && (has_reliability == other.has_reliability)
+      && (schedule_times == other.schedule_times)
+      && (schedule_values == other.schedule_values);
   }
 
   std::string
@@ -143,6 +149,24 @@ namespace ERIN
         << "fragilities=..., "
         << "has_fragilities=" << (has_fragilities ? "true" : "false");
     return oss.str();
+  }
+
+  void
+  Component::set_reliability_schedule(
+      const std::vector<RealTimeType>& schedule_times_,
+      const std::vector<FlowValueType>& schedule_values_
+      )
+  {
+    if (schedule_times_.size() != schedule_values_.size()) {
+      std::ostringstream oss{};
+      oss << "schedule_times and schedule_values sizes must equal!\n"
+          << "schedule_times.size() = " << schedule_times_.size() << "\n"
+          << "schedule_values.size() = " << schedule_values.size() << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    has_reliability = (schedule_times_.size() > 0);
+    schedule_times = schedule_times_;
+    schedule_values = schedule_values_;
   }
 
   bool

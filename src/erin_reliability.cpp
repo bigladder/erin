@@ -69,7 +69,7 @@ namespace ERIN
   size_type
   ReliabilityCoordinator::add_fixed_cdf(
       const std::string& tag,
-      std::int64_t value_in_seconds)
+      RealTimeType value_in_seconds)
   {
     auto id{next_fixed_cdf_id};
     ++next_fixed_cdf_id;
@@ -118,9 +118,22 @@ namespace ERIN
     return id;
   }
 
+  size_type
+  ReliabilityCoordinator::lookup_cdf_by_tag(const std::string& tag) const
+  {
+    for (size_type i{0}; i < cdfs.tag.size(); ++i) {
+      if (cdfs.tag[i] == tag) {
+        return i;
+      }
+    }
+    std::ostringstream oss{};
+    oss << "tag `" << tag << "` not found in CDF list";
+    throw std::invalid_argument(oss.str());
+  }
+
   void
   ReliabilityCoordinator::calc_next_events(
-      std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,
+      std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
       bool is_failure
       ) const
   {
@@ -144,7 +157,7 @@ namespace ERIN
       switch (cdf_type) {
         case CdfType::Fixed:
           {
-            auto dt = fixed_cdf.value.at(cdf_id);
+            auto dt = fixed_cdf.value.at(cdf_subtype_id);
             auto& dt_fm = comp_id_to_dt[comp_id]; 
             if ((dt_fm == -1) || (dt < dt_fm)) {
               dt_fm = dt;
@@ -161,11 +174,11 @@ namespace ERIN
 
   size_type
   ReliabilityCoordinator::update_schedule(
-      std::unordered_map<size_type, std::int64_t>& comp_id_to_time,
-      std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,
+      std::unordered_map<size_type, RealTimeType>& comp_id_to_time,
+      std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
       std::unordered_map<size_type, std::vector<TimeState>>&
         comp_id_to_reliability_schedule,
-      std::int64_t final_time,
+      RealTimeType final_time,
       FlowValueType next_state
       ) const
   {
@@ -192,11 +205,11 @@ namespace ERIN
 
   std::unordered_map<size_type, std::vector<TimeState>>
   ReliabilityCoordinator::calc_reliability_schedule(
-      std::int64_t final_time) const
+      RealTimeType final_time) const
   {
     const auto num_components{comp_meta.tag.size()};
-    std::unordered_map<size_type, std::int64_t> comp_id_to_time{};
-    std::unordered_map<size_type, std::int64_t> comp_id_to_dt{};
+    std::unordered_map<size_type, RealTimeType> comp_id_to_time{};
+    std::unordered_map<size_type, RealTimeType> comp_id_to_dt{};
     std::unordered_map<size_type, std::vector<TimeState>> comp_id_to_reliability_schedule{};
     for (size_type comp_id{0}; comp_id < num_components; ++comp_id) {
       comp_id_to_time[comp_id] = 0;
@@ -227,5 +240,18 @@ namespace ERIN
       }
     }
     return comp_id_to_reliability_schedule;
+  }
+
+  std::unordered_map<std::string, std::vector<TimeState>>
+  ReliabilityCoordinator::calc_reliability_schedule_by_component_tag(
+      RealTimeType final_time) const
+  {
+    auto sch = calc_reliability_schedule(final_time);
+    std::unordered_map<std::string, std::vector<TimeState>> out{};
+    for (size_type comp_id{0}; comp_id < comp_meta.tag.size(); ++comp_id) {
+      const auto& tag = comp_meta.tag[comp_id];
+      out[tag] = std::move(sch[comp_id]);
+    }
+    return out;
   }
 }

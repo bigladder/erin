@@ -66,3 +66,9 @@ struct TimeState {
   double state{0.0};
 };
 ```
+
+The reliability schedule is held in a mapping between component id and a vector of TimeState.
+The vector of TimeState is pre-calculated from time zero to the maximum time of the simulation.
+Whenever a scenario is activated, the relevant component TimeState vectors are clipped to the scenario's start and end times.
+
+An `On_Off_Switch` element is used to turn the given component on/off per the reliability schedule.

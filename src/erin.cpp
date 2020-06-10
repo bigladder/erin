@@ -1184,6 +1184,8 @@ namespace ERIN
         }
         intensity.insert(std::make_pair(pair.first, v));
       }
+      bool calc_reliability =
+        toml::find_or(s.second, "calculate_reliability", false);
       scenarios.insert(
           std::make_pair(
             s.first,
@@ -1193,7 +1195,8 @@ namespace ERIN
               duration,
               max_occurrences,
               next_occurrence_dist,
-              intensity}));
+              intensity,
+              calc_reliability}));
     }
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& s: scenarios) {
@@ -2357,7 +2360,7 @@ namespace ERIN
     auto fms = reader.read_failure_modes(cdfs, rc);
     // components needs to be modified to add component_id as size_type?
     components = reader.read_components(loads_by_id, fragilities, fms, rc);
-    reliability_schedule = rc.calc_reliability_schedule(
+    reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
         sim_info.get_max_time()
         );
     networks = reader.read_networks();
@@ -2376,7 +2379,7 @@ namespace ERIN
         std::string,
         std::vector<::erin::network::Connection>>& networks_,
       const std::unordered_map<std::string, Scenario>& scenarios_,
-      const std::unordered_map<size_type, std::vector<TimeState>>&
+      const std::unordered_map<std::string, std::vector<TimeState>>&
         reliability_schedule_
       ):
     sim_info{sim_info_},
@@ -2456,13 +2459,27 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "... the_scenario = " << the_scenario << "\n";
     }
+    // 1.1. If the_scenario.get_calc_reliability() is false, be sure to clear reliability schedule
+    auto do_reliability = the_scenario.get_calc_reliability();
+    for (auto& comp_item : components) {
+      auto& comp = comp_item.second;
+      if (do_reliability) {
+        std::vector<RealTimeType> schedule_times{};
+        std::vector<FlowValueType> schedule_values{};
+        comp->set_reliability_schedule(schedule_times, schedule_values);
+      }
+      else {
+        comp->disable_reliability();
+      }
+    }
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
     adevs::Digraph<FlowValueType, Time> network;
     // 2.2. Interconnect components based on the network definition
     const auto& network_id = the_scenario.get_network_id();
-    if constexpr (debug_level >= debug_level_high)
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "... network_id = " << network_id << "\n";
+    }
     const auto& connections = networks[network_id];
     const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = erin::network::build(
@@ -2537,7 +2554,7 @@ namespace ERIN
           // ss = scenario start (seconds)
           [this, scenario_id, &out](RealTimeType ss) {
             if constexpr (debug_level >= debug_level_high) {
-              std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
+            std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
             }
             auto result = this->run(scenario_id, ss);
             auto& results = out.at(scenario_id);
@@ -2588,9 +2605,9 @@ namespace ERIN
         loads, fragilities, fms, rc);
     const auto networks = tir.read_networks();
     const auto scenarios = tir.read_scenarios();
-    const auto reliability_schedule = rc.calc_reliability_schedule(
-        si.get_max_time_in_seconds()
-        );
+    const auto reliability_schedule =
+      rc.calc_reliability_schedule_by_component_tag(
+          si.get_max_time_in_seconds());
     return Main{si, comps, networks, scenarios, reliability_schedule};
   }
 
@@ -2603,7 +2620,8 @@ namespace ERIN
       RealTimeType duration_,
       int max_occurrences_,
       std::function<RealTimeType(void)> calc_time_to_next_,
-      std::unordered_map<std::string, double> intensities_):
+      std::unordered_map<std::string, double> intensities_,
+      bool calc_reliability_):
     adevs::Atomic<PortValue, Time>(),
     name{std::move(name_)},
     network_id{std::move(network_id_)},
@@ -2613,7 +2631,8 @@ namespace ERIN
     intensities{std::move(intensities_)},
     t{0},
     num_occurrences{0},
-    runner{nullptr}
+    runner{nullptr},
+    calc_reliability{calc_reliability_}
   {
   }
 
@@ -2627,7 +2646,8 @@ namespace ERIN
            (network_id == other.network_id) &&
            (duration == other.duration) &&
            (max_occurrences == other.max_occurrences) &&
-           (intensities == other.intensities);
+           (intensities == other.intensities) &&
+           (calc_reliability == other.calc_reliability);
   }
 
   void
@@ -2711,7 +2731,9 @@ namespace ERIN
        << "t=" << s.t << ", "
        << "num_occurrences=" << s.num_occurrences << ", "
        << "results=..., "
-       << "runner=...)";
+       << "runner=..., "
+       << "calc_reliability=" << (s.calc_reliability ? "true" : "false")
+       << ")";
     return os;
   }
 

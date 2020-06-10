@@ -12,12 +12,10 @@
 
 namespace ERIN
 {
-  using size_type = std::vector<std::int64_t>::size_type;
-
   // Data Structs
   struct TimeState
   {
-    std::int64_t time{0};
+    RealTimeType time{0};
     FlowValueType state{1.0};
   };
 
@@ -55,7 +53,7 @@ namespace ERIN
 
   struct Fixed_CDF
   {
-    std::vector<std::int64_t> value{};
+    std::vector<RealTimeType> value{};
   };
 
   struct Component_meta
@@ -71,7 +69,7 @@ namespace ERIN
 
       size_type add_fixed_cdf(
           const std::string& tag,
-          std::int64_t value_in_seconds);
+          RealTimeType value_in_seconds);
 
       size_type add_failure_mode(
           const std::string& tag,
@@ -88,7 +86,10 @@ namespace ERIN
       [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
 
       std::unordered_map<size_type, std::vector<TimeState>>
-      calc_reliability_schedule(std::int64_t final_time) const;
+      calc_reliability_schedule(RealTimeType final_time) const;
+
+      std::unordered_map<std::string, std::vector<TimeState>>
+      calc_reliability_schedule_by_component_tag(RealTimeType final_time) const;
 
     private:
       Fixed_CDF fixed_cdf;
@@ -103,18 +104,20 @@ namespace ERIN
       size_type next_comp_id;
 
       void calc_next_events(
-          std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,
+          std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
           bool is_failure) const;
 
       size_type
       update_schedule(
-          std::unordered_map<size_type, std::int64_t>& comp_id_to_time,
-          std::unordered_map<size_type, std::int64_t>& comp_id_to_dt,
+          std::unordered_map<size_type, RealTimeType>& comp_id_to_time,
+          std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
           std::unordered_map<size_type, std::vector<TimeState>>&
             comp_id_to_reliability_schedule,
-          std::int64_t final_time,
+          RealTimeType final_time,
           FlowValueType next_state) const;
   };
+
+
 }
 
 #endif // ERIN_RELIABILITY_H

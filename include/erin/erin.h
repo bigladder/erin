@@ -141,7 +141,8 @@ namespace ERIN
           RealTimeType duration,
           int max_occurrences,
           std::function<RealTimeType(void)> calc_time_to_next,
-          std::unordered_map<std::string, double> intensities);
+          std::unordered_map<std::string, double> intensities,
+          bool calc_reliability);
 
       [[nodiscard]] const std::string& get_name() const { return name; }
       [[nodiscard]] const std::string& get_network_id() const {
@@ -154,6 +155,9 @@ namespace ERIN
       }
       [[nodiscard]] const std::unordered_map<std::string,double>&
         get_intensities() const { return intensities; }
+      [[nodiscard]] bool get_calc_reliability() const {
+        return calc_reliability;
+      }
 
       bool operator==(const Scenario& other) const;
       bool operator!=(const Scenario& other) const {
@@ -183,6 +187,7 @@ namespace ERIN
       RealTimeType t;
       int num_occurrences;
       std::function<void(RealTimeType)> runner;
+      bool calc_reliability;
   };
 
   std::ostream& operator<<(std::ostream& os, const Scenario& s);
@@ -468,7 +473,7 @@ namespace ERIN
             std::string,
             std::vector<::erin::network::Connection>>& networks,
           const std::unordered_map<std::string, Scenario>& scenarios,
-          const std::unordered_map<size_type, std::vector<TimeState>>&
+          const std::unordered_map<std::string, std::vector<TimeState>>&
             reliability_schedule = {}
           );
       ScenarioResults run(
@@ -486,7 +491,7 @@ namespace ERIN
         std::string, std::vector<::erin::network::Connection>>& get_networks() const {
           return networks;
         }
-      [[nodiscard]] std::unordered_map<size_type, std::vector<TimeState>>
+      [[nodiscard]] std::unordered_map<std::string, std::vector<TimeState>>
         get_reliability_schedule() const {
           return reliability_schedule;
         }
@@ -504,7 +509,7 @@ namespace ERIN
           std::string,
           std::vector<double>>> failure_probs_by_comp_id_by_scenario_id;
       std::function<double()> rand_fn;
-      std::unordered_map<size_type, std::vector<TimeState>>
+      std::unordered_map<std::string, std::vector<TimeState>>
         reliability_schedule;
 
       void check_data() const;

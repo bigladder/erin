@@ -11,6 +11,7 @@
 
 namespace ERIN
 {
+  using size_type = std::vector<std::int64_t>::size_type;
   using FlowValueType = double;
   using RealTimeType = long long;
   using LogicalTimeType = int;

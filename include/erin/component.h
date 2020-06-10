@@ -82,6 +82,14 @@ namespace ERIN
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
           bool is_failed = false) const = 0;
+      void set_reliability_schedule(
+          const std::vector<RealTimeType>& schedule_times,
+          const std::vector<FlowValueType>& schedule_values);
+      void disable_reliability() {
+        has_reliability = false;
+        schedule_times.clear();
+        schedule_values.clear();
+      }
 
     protected:
       void connect_source_to_sink(
@@ -109,6 +117,9 @@ namespace ERIN
       std::string lossflow_stream;
       fragility_map fragilities;
       bool has_fragilities;
+      bool has_reliability;
+      std::vector<RealTimeType> schedule_times;
+      std::vector<FlowValueType> schedule_values;
   };
 
   bool operator==(const std::unique_ptr<Component>& a, const std::unique_ptr<Component>& b);

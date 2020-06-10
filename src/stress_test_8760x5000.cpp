@@ -26,16 +26,17 @@ main()
     std::string,
     std::unique_ptr<::ERIN::Component>> components;
   std::vector<::erin::network::Connection> nw{};
-  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+  std::unordered_map<std::string, ERIN::Scenario> scenarios{
     {
       scenario_id,
-      ::ERIN::Scenario{
+      ERIN::Scenario{
         scenario_id,
         net_id,
         ::ERIN::time_to_seconds(N, ::ERIN::TimeUnits::Hours),
         -1,
         nullptr,
-        {}}}};
+        {},
+        false}}};
   const int M{5000};
   std::string src_prefix{"source_"};
   std::string load_prefix{"load_"};
@@ -57,7 +58,7 @@ main()
   }
   std::unordered_map<std::string, decltype(nw)> networks{{net_id, nw}};
   std::cout << "construction completed!\n";
-  std::unordered_map<ERIN::size_type, std::vector<ERIN::TimeState>>
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
   ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   std::cout << "running!\n";

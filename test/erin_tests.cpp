@@ -5845,6 +5845,19 @@ TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
           E::TimeState{100, 0.0},
           E::TimeState{105, 1.0}}}};
   ASSERT_EQ(sch, expected_sch);
+  E::RealTimeType scenario_start{62};
+  E::RealTimeType scenario_end{87};
+  auto clipped_sch = E::clip_schedule_to<std::string>(
+      sch, scenario_start, scenario_end);
+  std::unordered_map<std::string, std::vector<E::TimeState>>
+    expected_clipped_sch{
+      { comp_string_id,
+        std::vector<E::TimeState>{
+          E::TimeState{62-62, 1.0},
+          E::TimeState{70-62, 0.0},
+          E::TimeState{75-62, 1.0},
+          E::TimeState{85-62, 0.0}}}};
+  ASSERT_EQ(clipped_sch, expected_clipped_sch);
 }
 
 int

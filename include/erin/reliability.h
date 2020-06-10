@@ -112,7 +112,39 @@ namespace ERIN
           FlowValueType next_state) const;
   };
 
-
+  template <class T>
+  std::unordered_map<T, std::vector<TimeState>>
+  clip_schedule_to(
+      const std::unordered_map<T, std::vector<TimeState>>& schedule,
+      RealTimeType start_time,
+      RealTimeType end_time)
+  {
+    std::unordered_map<T, std::vector<TimeState>> new_sch{};
+    for (const auto& item : schedule) {
+      std::vector<TimeState> tss{};
+      FlowValueType state{1.0};
+      for (const auto& ts : item.second) {
+        if (ts.time < start_time) {
+          state = ts.state;
+          continue;
+        }
+        else if (ts.time == start_time) {
+            tss.emplace_back(ts);
+        }
+        else if ((ts.time > start_time) and (ts.time <= end_time)) {
+          if (tss.size() == 0) {
+            tss.emplace_back(TimeState{0, state});
+          }
+          tss.emplace_back(TimeState{ts.time - start_time, ts.state});
+        }
+        else if (ts.time > end_time) {
+          break;
+        }
+      }
+      new_sch[item.first] = std::move(tss);
+    }
+    return new_sch;
+  }
 }
 
 #endif // ERIN_RELIABILITY_H

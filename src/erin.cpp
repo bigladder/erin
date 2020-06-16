@@ -13,6 +13,7 @@
 #include "erin/utils.h"
 #include "erin_generics.h"
 #include "toml_helper.h"
+#include "gsl/pointers"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -2547,7 +2548,7 @@ namespace ERIN
     adevs::Simulator<PortValue, Time> sim{};
     // 2. add all scenarios
     for (const auto& s: scenarios) {
-      auto p = new Scenario{s.second};
+      gsl::owner<Scenario*> p = new Scenario{s.second};
       auto scenario_id = p->get_name();
       out[scenario_id] = std::vector<ScenarioResults>{};
       p->set_runner(
@@ -2564,6 +2565,7 @@ namespace ERIN
       // Therefore, we don't need to worry about deleting Scenario pointers
       // (sim does it).
       sim.add(p);
+      p = nullptr;
     }
     // 3. run the simulation
     const int max_no_advance{static_cast<int>(components.size()) * 10};

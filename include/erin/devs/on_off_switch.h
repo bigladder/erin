@@ -30,6 +30,8 @@ namespace erin::devs
     FlowValueType state{1.0};
     Port inflow_port{0, 0.0, 0.0};
     Port outflow_port{0, 0.0, 0.0};
+    bool report_inflow_request{false};
+    bool report_outflow_achieved{false};
   };
 
   bool operator==(const OnOffSwitchState& a, const OnOffSwitchState& b);
@@ -51,8 +53,10 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // internal transition
-  //OnOffSwitchState
-  //on_off_switch_internal_transition(const OnOffSwitchState& state);
+  OnOffSwitchState
+  on_off_switch_internal_transition(
+      const OnOffSwitchData& data,
+      const OnOffSwitchState& state);
 
   ////////////////////////////////////////////////////////////
   // external transition
@@ -69,6 +73,7 @@ namespace erin::devs
   on_off_switch_confluent_transition(
       const OnOffSwitchState& state,
       const std::vector<PortValue>& xs); 
+  */
 
   ////////////////////////////////////////////////////////////
   // output function
@@ -79,7 +84,6 @@ namespace erin::devs
   on_off_switch_output_function_mutable(
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys);
-  */
 }
 
 #endif // ERIN_DEVS_ON_OFF_SWITCH_H

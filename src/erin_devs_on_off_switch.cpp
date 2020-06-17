@@ -41,7 +41,9 @@ namespace erin::devs
         (a.time == b.time)
         && (a.state == b.state)
         && (a.inflow_port == b.inflow_port)
-        && (a.outflow_port == b.outflow_port));
+        && (a.outflow_port == b.outflow_port)
+        && (a.report_inflow_request == b.report_inflow_request)
+        && (a.report_outflow_achieved == b.report_outflow_achieved));
   }
 
   bool
@@ -58,7 +60,9 @@ namespace erin::devs
               << "time=" << a.time << ", "
               << "state=" << a.state << ", "
               << "inflow_port=" << a.inflow_port << ", "
-              << "outflow_port=" << a.outflow_port << ")";
+              << "outflow_port=" << a.outflow_port << ", " 
+              << "report_inflow_request=" << a.report_inflow_request << ", "
+              << "report_outflow_achieved=" << a.report_outflow_achieved << ")";
   }
 
   OnOffSwitchData
@@ -98,7 +102,9 @@ namespace erin::devs
       0,            // time
       init_state,   // state
       Port{0, 0.0}, // inflow_port
-      Port{0, 0.0}  // outflow_port
+      Port{0, 0.0}, // outflow_port
+      false,
+      false
     };
   }
 
@@ -110,12 +116,46 @@ namespace erin::devs
       const OnOffSwitchState& state)
   {
     auto now = state.time;
+    if (state.report_inflow_request || state.report_outflow_achieved) {
+      return 0;
+    }
     for (const auto& t : data.schedule_times) {
       if (t > now) {
         return (t - now);
       }
     }
     return infinity;
+  }
+
+  ////////////////////////////////////////////////////////////
+  // internal transition
+  OnOffSwitchState
+  on_off_switch_internal_transition(
+      const OnOffSwitchData& data,
+      const OnOffSwitchState& state)
+  {
+    using st = std::vector<RealTimeType>::size_type;
+    auto dt = on_off_switch_time_advance(data, state);
+    auto next_time = state.time + dt;
+    auto next_state = state.state;
+    for (st i{0}; i < data.schedule_times.size(); ++i) {
+      const auto& t = data.schedule_times[i];
+      if (t == next_time) {
+        next_state = data.schedule_values[i];
+        break;
+      }
+      if (t > next_time) {
+        break;
+      }
+    }
+    return OnOffSwitchState{
+      next_time,
+      next_state,
+      state.inflow_port,
+      state.outflow_port,
+      false,
+      false
+    };
   }
 
   ////////////////////////////////////////////////////////////
@@ -181,7 +221,38 @@ namespace erin::devs
       new_time,
       state.state,
       ip,
-      op
+      op,
+      ip.should_propagate_request_at(new_time),
+      op.should_propagate_achieved_at(new_time)
     };
+  }
+
+  ////////////////////////////////////////////////////////////
+  // output function
+  std::vector<PortValue>
+  on_off_switch_output_function(const OnOffSwitchState& state)
+  {
+    std::vector<PortValue> ys{};
+    on_off_switch_output_function_mutable(state, ys);
+    return ys;
+  }
+
+  void 
+  on_off_switch_output_function_mutable(
+      const OnOffSwitchState& state,
+      std::vector<PortValue>& ys)
+  {
+    if (state.report_inflow_request) {
+      ys.emplace_back(
+          PortValue{
+            outport_inflow_request,
+            state.inflow_port.get_requested()});
+    }
+    if (state.report_outflow_achieved) {
+      ys.emplace_back(
+          PortValue{
+            outport_outflow_achieved,
+            state.outflow_port.get_achieved()});
+    }
   }
 }

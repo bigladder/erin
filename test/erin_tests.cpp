@@ -5871,7 +5871,11 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
     E::TimeState{7, 1.0},
     E::TimeState{12, 0.0},
     E::TimeState{14, 1.0}};
-  auto s = ED::make_on_off_switch_state(schedule);
+  ED::OnOffSwitchState expected_s0{
+  };
+  auto s0 = ED::make_on_off_switch_state(schedule);
+  auto dt0 = ED::on_off_switch_time_advance(s0);
+  EXPECT_EQ(dt0, 5);
 }
 
 int

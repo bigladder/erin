@@ -5871,18 +5871,26 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
     E::TimeState{7, 1.0},
     E::TimeState{12, 0.0},
     E::TimeState{14, 1.0}};
+  ED::OnOffSwitchData expected_data{
+    std::vector<E::RealTimeType>{0,5,7,12,14},
+    std::vector<E::FlowValueType>{1.0,0.0,1.0,0.0,1.0}
+  };
+  auto data = ED::make_on_off_switch_data(schedule);
+  EXPECT_EQ(data, expected_data);
   ED::OnOffSwitchState expected_s0{
     0,
     1.0,
     ED::Port{0, 0.0},
-    ED::Port{0, 0.0},
-    std::vector<E::RealTimeType>{0, 5, 7, 12, 14},
-    std::vector<E::FlowValueType>{1.0, 0.0, 1.0, 0.0, 1.0},
+    ED::Port{0, 0.0}
   };
-  auto s0 = ED::make_on_off_switch_state(schedule);
+  auto s0 = ED::make_on_off_switch_state(data);
   EXPECT_EQ(s0, expected_s0);
-  auto dt0 = ED::on_off_switch_time_advance(s0);
+  auto dt0 = ED::on_off_switch_time_advance(data, s0);
   EXPECT_EQ(dt0, 5);
+  std::vector<E::PortValue> xs{
+    E::PortValue{ED::inport_outflow_request, 100.0}};
+  auto s1 = ED::on_off_switch_external_transition(s0, 1, xs);
+  EXPECT_NE(s1, s0);
 }
 
 int

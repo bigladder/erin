@@ -14,33 +14,45 @@
 
 namespace erin::devs
 {
+  struct OnOffSwitchData
+  {
+    std::vector<RealTimeType> schedule_times{};
+    std::vector<FlowValueType> schedule_values{};
+  };
+
+  bool operator==(const OnOffSwitchData& a, const OnOffSwitchData& b);
+  bool operator!=(const OnOffSwitchData& a, const OnOffSwitchData& b);
+  std::ostream& operator<<(std::ostream& os, const OnOffSwitchData& a);
+
   struct OnOffSwitchState
   {
     RealTimeType time{0};
     FlowValueType state{1.0};
     Port inflow_port{0, 0.0, 0.0};
     Port outflow_port{0, 0.0, 0.0};
-    std::vector<RealTimeType> schedule_times{};
-    std::vector<FlowValueType> schedule_values{};
   };
 
   bool operator==(const OnOffSwitchState& a, const OnOffSwitchState& b);
   bool operator!=(const OnOffSwitchState& a, const OnOffSwitchState& b);
   std::ostream& operator<<(std::ostream& os, const OnOffSwitchState& a);
 
+  OnOffSwitchData
+  make_on_off_switch_data(const std::vector<ERIN::TimeState>& schedule);
+
   OnOffSwitchState
-  make_on_off_switch_state(const std::vector<ERIN::TimeState>& schedule);
+  make_on_off_switch_state(const OnOffSwitchData& data);
 
   ////////////////////////////////////////////////////////////
   // time advance
   RealTimeType
-  on_off_switch_time_advance(const OnOffSwitchState& state);
+  on_off_switch_time_advance(
+      const OnOffSwitchData& data,
+      const OnOffSwitchState& state);
 
-  /*
   ////////////////////////////////////////////////////////////
   // internal transition
-  OnOffSwitchState
-  on_off_switch_internal_transition(const OnOffSwitchState& state);
+  //OnOffSwitchState
+  //on_off_switch_internal_transition(const OnOffSwitchState& state);
 
   ////////////////////////////////////////////////////////////
   // external transition
@@ -50,6 +62,7 @@ namespace erin::devs
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs); 
 
+  /*
   ////////////////////////////////////////////////////////////
   // confluent transition
   OnOffSwitchState

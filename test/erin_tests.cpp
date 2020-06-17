@@ -5872,8 +5872,15 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
     E::TimeState{12, 0.0},
     E::TimeState{14, 1.0}};
   ED::OnOffSwitchState expected_s0{
+    0,
+    1.0,
+    ED::Port{0, 0.0},
+    ED::Port{0, 0.0},
+    std::vector<E::RealTimeType>{0, 5, 7, 12, 14},
+    std::vector<E::FlowValueType>{1.0, 0.0, 1.0, 0.0, 1.0},
   };
   auto s0 = ED::make_on_off_switch_state(schedule);
+  EXPECT_EQ(s0, expected_s0);
   auto dt0 = ED::on_off_switch_time_advance(s0);
   EXPECT_EQ(dt0, 5);
 }

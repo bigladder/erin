@@ -24,9 +24,9 @@ namespace erin::devs
     std::vector<FlowValueType> schedule_values{};
   };
 
-  //bool operator==(const OnOffSwitchState& a, const OnOffSwitchState& b);
-  //bool operator!=(const OnOffSwitchState& a, const OnOffSwitchState& b);
-  //std::ostream& operator<<(std::ostream& os, const OnOffSwitchState& a);
+  bool operator==(const OnOffSwitchState& a, const OnOffSwitchState& b);
+  bool operator!=(const OnOffSwitchState& a, const OnOffSwitchState& b);
+  std::ostream& operator<<(std::ostream& os, const OnOffSwitchState& a);
 
   OnOffSwitchState
   make_on_off_switch_state(const std::vector<ERIN::TimeState>& schedule);

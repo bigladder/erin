@@ -2361,11 +2361,20 @@ namespace ERIN
     auto fms = reader.read_failure_modes(cdfs, rc);
     // components needs to be modified to add component_id as size_type?
     components = reader.read_components(loads_by_id, fragilities, fms, rc);
-    reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
-        sim_info.get_max_time()
-        );
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
+    bool calculate_the_reliability_schedule{false};
+    for (const auto& item : scenarios) {
+      if (item.second.get_calc_reliability()) {
+        calculate_the_reliability_schedule = true;
+        break;
+      }
+    }
+    if (calculate_the_reliability_schedule) {
+      reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
+          sim_info.get_max_time()
+          );
+    }
     check_data();
     generate_failure_fragilities();
     rand_fn = sim_info.make_random_function();
@@ -2462,16 +2471,13 @@ namespace ERIN
     }
     // 1.1. If the_scenario.get_calc_reliability() is false, be sure to clear reliability schedule
     auto do_reliability = the_scenario.get_calc_reliability();
-    for (auto& comp_item : components) {
-      auto& comp = comp_item.second;
-      if (do_reliability) {
-        std::vector<RealTimeType> schedule_times{};
-        std::vector<FlowValueType> schedule_values{};
-        comp->set_reliability_schedule(schedule_times, schedule_values);
-      }
-      else {
-        comp->disable_reliability();
-      }
+    std::unordered_map<std::string, std::vector<TimeState>>
+      clipped_reliability_schedule{};
+    if (do_reliability) {
+      clipped_reliability_schedule = clip_schedule_to<std::string>(
+          reliability_schedule,
+          scenario_start_s,
+          scenario_start_s + the_scenario.get_duration());
     }
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network

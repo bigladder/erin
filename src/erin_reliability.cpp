@@ -171,8 +171,7 @@ namespace ERIN
       std::unordered_map<size_type, std::vector<TimeState>>&
         comp_id_to_reliability_schedule,
       RealTimeType final_time,
-      FlowValueType next_state
-      ) const
+      bool next_state) const
   {
     size_type num_past_final_time{0};
     auto num_components{comp_meta.tag.size()};
@@ -202,11 +201,13 @@ namespace ERIN
     const auto num_components{comp_meta.tag.size()};
     std::unordered_map<size_type, RealTimeType> comp_id_to_time{};
     std::unordered_map<size_type, RealTimeType> comp_id_to_dt{};
-    std::unordered_map<size_type, std::vector<TimeState>> comp_id_to_reliability_schedule{};
+    std::unordered_map<size_type, std::vector<TimeState>>
+      comp_id_to_reliability_schedule{};
     for (size_type comp_id{0}; comp_id < num_components; ++comp_id) {
       comp_id_to_time[comp_id] = 0;
       comp_id_to_dt[comp_id] = -1;
-      comp_id_to_reliability_schedule[comp_id] = std::vector<TimeState>{TimeState{0, true}};
+      comp_id_to_reliability_schedule[comp_id] =
+        std::vector<TimeState>{TimeState{0, true}};
     }
     size_type count{0};
     while (true) {
@@ -216,7 +217,7 @@ namespace ERIN
           comp_id_to_dt,
           comp_id_to_reliability_schedule,
           final_time,
-          0.0);
+          false);
       if (count == num_components) {
         break;
       }
@@ -226,7 +227,7 @@ namespace ERIN
           comp_id_to_dt,
           comp_id_to_reliability_schedule,
           final_time,
-          1.0);
+          true);
       if (count == num_components) {
         break;
       }

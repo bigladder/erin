@@ -16,7 +16,7 @@ namespace ERIN
   struct TimeState
   {
     RealTimeType time{0};
-    FlowValueType state{1.0};
+    bool state{true};
   };
 
   bool operator==(const TimeState& a, const TimeState& b);
@@ -109,7 +109,7 @@ namespace ERIN
           std::unordered_map<size_type, std::vector<TimeState>>&
             comp_id_to_reliability_schedule,
           RealTimeType final_time,
-          FlowValueType next_state) const;
+          bool next_state) const;
   };
 
   template <class T>
@@ -122,7 +122,7 @@ namespace ERIN
     std::unordered_map<T, std::vector<TimeState>> new_sch{};
     for (const auto& item : schedule) {
       std::vector<TimeState> tss{};
-      FlowValueType state{1.0};
+      bool state{true};
       for (const auto& ts : item.second) {
         if (ts.time < start_time) {
           state = ts.state;

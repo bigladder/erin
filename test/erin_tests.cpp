@@ -5718,10 +5718,10 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
   auto reliability_schedule = c.calc_reliability_schedule(final_time);
   EXPECT_EQ(reliability_schedule.size(), 1);
   std::vector<ERIN::TimeState> expected{
-    ERIN::TimeState{0, 1.0},
-    ERIN::TimeState{5, 0.0},
-    ERIN::TimeState{6, 1.0},
-    ERIN::TimeState{11, 0.0},
+    ERIN::TimeState{0, true},
+    ERIN::TimeState{5, false},
+    ERIN::TimeState{6, true},
+    ERIN::TimeState{11, false},
   };
   EXPECT_EQ(reliability_schedule.at(0), expected);
 }
@@ -5830,21 +5830,21 @@ TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
     expected_sch{
       { comp_string_id,
         std::vector<E::TimeState>{
-          E::TimeState{0, 1.0},
-          E::TimeState{10, 0.0},
-          E::TimeState{15, 1.0},
-          E::TimeState{25, 0.0},
-          E::TimeState{30, 1.0},
-          E::TimeState{40, 0.0},
-          E::TimeState{45, 1.0},
-          E::TimeState{55, 0.0},
-          E::TimeState{60, 1.0},
-          E::TimeState{70, 0.0},
-          E::TimeState{75, 1.0},
-          E::TimeState{85, 0.0},
-          E::TimeState{90, 1.0},
-          E::TimeState{100, 0.0},
-          E::TimeState{105, 1.0}}}};
+          E::TimeState{0,  true},
+          E::TimeState{10, false},
+          E::TimeState{15, true},
+          E::TimeState{25, false},
+          E::TimeState{30, true},
+          E::TimeState{40, false},
+          E::TimeState{45, true},
+          E::TimeState{55, false},
+          E::TimeState{60, true},
+          E::TimeState{70, false},
+          E::TimeState{75, true},
+          E::TimeState{85, false},
+          E::TimeState{90, true},
+          E::TimeState{100, false},
+          E::TimeState{105, true}}}};
   ASSERT_EQ(sch, expected_sch);
   E::RealTimeType scenario_start{62};
   E::RealTimeType scenario_end{87};
@@ -5854,10 +5854,10 @@ TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
     expected_clipped_sch{
       { comp_string_id,
         std::vector<E::TimeState>{
-          E::TimeState{62-62, 1.0},
-          E::TimeState{70-62, 0.0},
-          E::TimeState{75-62, 1.0},
-          E::TimeState{85-62, 0.0}}}};
+          E::TimeState{62-62, true},
+          E::TimeState{70-62, false},
+          E::TimeState{75-62, true},
+          E::TimeState{85-62, false}}}};
   ASSERT_EQ(clipped_sch, expected_clipped_sch);
 }
 
@@ -5866,20 +5866,22 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
   namespace ED = erin::devs;
   namespace E = ERIN;
   std::vector<E::TimeState> schedule{
-    E::TimeState{0, 1.0},
-    E::TimeState{5, 0.0},
-    E::TimeState{7, 1.0},
-    E::TimeState{12, 0.0},
-    E::TimeState{14, 1.0}};
+    E::TimeState{0, true},
+    E::TimeState{5, false},
+    E::TimeState{7, true},
+    E::TimeState{12, false},
+    E::TimeState{14, true}};
   ED::OnOffSwitchData expected_data{
     std::vector<E::RealTimeType>{0,5,7,12,14},
-    std::vector<E::FlowValueType>{1.0,0.0,1.0,0.0,1.0}
+    std::vector<bool>{true,false,true,false,true},
+    std::vector<E::RealTimeType>::size_type{5}
   };
   auto data = ED::make_on_off_switch_data(schedule);
   EXPECT_EQ(data, expected_data);
   ED::OnOffSwitchState expected_s{
     0,
-    1.0,
+    true,
+    1,
     ED::Port{0, 0.0},
     ED::Port{0, 0.0},
     false,
@@ -5898,12 +5900,15 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
   std::vector<ED::PortValue> expected_ys{
     E::PortValue{ED::outport_inflow_request, 100.0}
   };
-  auto ys = ED::on_off_switch_output_function(s);
+  auto ys = ED::on_off_switch_output_function(data, s);
   ASSERT_EQ(expected_ys.size(), ys.size());
   EXPECT_EQ(expected_ys[0].port, ys[0].port);
   EXPECT_EQ(expected_ys[0].value, ys[0].value);
   s = ED::on_off_switch_internal_transition(data, s);
-  //auto s2 = ED::on_off_switch_internal_transition(data, s1);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 4);
+  ys = ED::on_off_switch_output_function(data, s);
+  // TODO: confluent transition + test everything again with the switch off
 }
 
 int

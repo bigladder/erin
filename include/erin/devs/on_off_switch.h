@@ -16,8 +16,9 @@ namespace erin::devs
 {
   struct OnOffSwitchData
   {
-    std::vector<RealTimeType> schedule_times{};
-    std::vector<FlowValueType> schedule_values{};
+    std::vector<RealTimeType> times{};
+    std::vector<bool> states{};
+    std::vector<RealTimeType>::size_type num_items;
   };
 
   bool operator==(const OnOffSwitchData& a, const OnOffSwitchData& b);
@@ -27,7 +28,8 @@ namespace erin::devs
   struct OnOffSwitchState
   {
     RealTimeType time{0};
-    FlowValueType state{1.0};
+    bool state{true};
+    std::vector<RealTimeType>::size_type next_index{0};
     Port inflow_port{0, 0.0, 0.0};
     Port outflow_port{0, 0.0, 0.0};
     bool report_inflow_request{false};
@@ -78,10 +80,13 @@ namespace erin::devs
   ////////////////////////////////////////////////////////////
   // output function
   std::vector<PortValue>
-  on_off_switch_output_function(const OnOffSwitchState& state);
+  on_off_switch_output_function(
+      const OnOffSwitchData& data,
+      const OnOffSwitchState& state);
 
   void 
   on_off_switch_output_function_mutable(
+      const OnOffSwitchData& data,
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys);
 }

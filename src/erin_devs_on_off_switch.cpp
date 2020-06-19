@@ -248,20 +248,29 @@ namespace erin::devs
   }
 
   ////////////////////////////////////////////////////////////
+  // confluent transition
+  OnOffSwitchState
+  on_off_switch_confluent_transition(
+      const OnOffSwitchData& data,
+      const OnOffSwitchState& state,
+      const std::vector<PortValue>& xs)
+  {
+    auto s = on_off_switch_internal_transition(data, state);
+    return on_off_switch_external_transition(s, 0, xs);
+  }
+
+  ////////////////////////////////////////////////////////////
   // output function
   std::vector<PortValue>
-  on_off_switch_output_function(
-      const OnOffSwitchData& data,
-      const OnOffSwitchState& state)
+  on_off_switch_output_function(const OnOffSwitchState& state)
   {
     std::vector<PortValue> ys{};
-    on_off_switch_output_function_mutable(data, state, ys);
+    on_off_switch_output_function_mutable(state, ys);
     return ys;
   }
 
   void 
   on_off_switch_output_function_mutable(
-      const OnOffSwitchData& data,
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys)
   {

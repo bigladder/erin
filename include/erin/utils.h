@@ -61,8 +61,9 @@ namespace erin::utils
   compare_vectors_unordered(const std::vector<T>& xs, const std::vector<T>& ys)
   {
     using size_type = typename std::vector<T>::size_type;
-    if (xs.size() != ys.size())
+    if (xs.size() != ys.size()) {
       return false;
+    }
     std::vector<bool> used_ys(ys.size(), false);
     for (size_type i{0}; i < xs.size(); ++i) {
       const auto& x = xs.at(i);
@@ -77,8 +78,9 @@ namespace erin::utils
           }
         }
       }
-      if (!found_matching_y)
+      if (!found_matching_y) {
         return false;
+      }
     }
     return true;
   }
@@ -88,8 +90,9 @@ namespace erin::utils
   compare_vectors_unordered_with_fn(const std::vector<T>& xs, const std::vector<T>& ys, const std::function<bool(const T&, const T&)>& f)
   {
     using size_type = typename std::vector<T>::size_type;
-    if (xs.size() != ys.size())
+    if (xs.size() != ys.size()) {
       return false;
+    }
     std::vector<bool> used_ys(ys.size(), false);
     for (size_type i{0}; i < xs.size(); ++i) {
       const auto& x = xs.at(i);
@@ -104,8 +107,9 @@ namespace erin::utils
           }
         }
       }
-      if (!found_matching_y)
+      if (!found_matching_y) {
         return false;
+      }
     }
     return true;
   }

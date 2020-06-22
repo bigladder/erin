@@ -1539,11 +1539,11 @@ namespace ERIN
           std::cout << "}\n";
         }
       }
-      ::erin_generics::print_unordered_map("ea", ea);
-      ::erin_generics::print_unordered_map("md", md);
-      ::erin_generics::print_unordered_map("lns", lns);
-      ::erin_generics::print_unordered_map("eubs_src", eubs_src);
-      ::erin_generics::print_unordered_map("eubs_load", eubs_load);
+      erin_generics::print_unordered_map("ea", ea);
+      erin_generics::print_unordered_map("md", md);
+      erin_generics::print_unordered_map("lns", lns);
+      erin_generics::print_unordered_map("eubs_src", eubs_src);
+      erin_generics::print_unordered_map("eubs_load", eubs_load);
       std::cout << "metrics done...\n";
     }
     std::ostringstream oss;
@@ -2469,7 +2469,6 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "... the_scenario = " << the_scenario << "\n";
     }
-    // 1.1. If the_scenario.get_calc_reliability() is false, be sure to clear reliability schedule
     auto do_reliability = the_scenario.get_calc_reliability();
     std::unordered_map<std::string, std::vector<TimeState>>
       clipped_reliability_schedule{};
@@ -2478,6 +2477,9 @@ namespace ERIN
           reliability_schedule,
           scenario_start_s,
           scenario_start_s + the_scenario.get_duration());
+      clipped_reliability_schedule = rezero_times<std::string>(
+          reliability_schedule,
+          scenario_start_s);
     }
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
@@ -2490,7 +2492,8 @@ namespace ERIN
     const auto& connections = networks[network_id];
     const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = erin::network::build(
-        scenario_id, network, connections, components, fpbc, rand_fn, true);
+        scenario_id, network, connections, components, fpbc, rand_fn, true,
+        clipped_reliability_schedule);
     std::shared_ptr<FlowWriter> fw = std::make_shared<DefaultFlowWriter>();
     for (auto e_ptr: elements) {
       e_ptr->set_flow_writer(fw);

@@ -163,12 +163,12 @@ namespace erin::devs
       auto ip = state.inflow_port;
       auto op = state.outflow_port;
       if (next_state) {
-        op = op.with_achieved(op.get_requested(), next_time);
         ip = ip.with_requested(op.get_requested(), next_time);
+        op = op.with_achieved(op.get_requested(), next_time);
       }
       else {
-        op = op.with_achieved(0.0, next_time);
         ip = ip.with_requested(0.0, next_time);
+        op = op.with_achieved(0.0, next_time);
       }
       return OnOffSwitchState{
         next_time,
@@ -211,7 +211,7 @@ namespace erin::devs
           }
         default:
           {
-            std::ostringstream oss;
+            std::ostringstream oss{};
             oss << "unhandled port " << x.port
                 << " in on_off_switch_external_transition(...)";
             throw std::invalid_argument(oss.str());
@@ -234,6 +234,9 @@ namespace erin::devs
     }
     else {
       ip = ip.with_requested(0.0, new_time);
+      if (got_outflow_request) {
+        op = op.with_requested(outflow_request, new_time);
+      }
       op = op.with_achieved(0.0, new_time);
     }
     return OnOffSwitchState{

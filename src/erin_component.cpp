@@ -325,6 +325,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network(...)\n";
     }
+    bool has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto stream = get_input_stream();
     const auto& stream_name{stream};
@@ -587,7 +588,7 @@ namespace ERIN
 
   PortsAndElements
   SourceComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>& /* network */,
+      adevs::Digraph<FlowValueType, Time>& network,
       const std::string&,
       bool is_failed,
       const std::vector<TimeState>& reliability_schedule) const
@@ -599,6 +600,7 @@ namespace ERIN
       std::cout << "SourceComponent::add_to_network("
                 << "adevs::Digraph<FlowValueType>& network)\n";
     }
+    bool has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto stream = get_output_stream();
     if (is_failed || limits.get_is_limited()) {
@@ -618,18 +620,49 @@ namespace ERIN
           the_id, ComponentType::Source, stream, min_output, max_output,
           PortRole::SourceOutflow);
       elements.emplace(lim);
-      lim->set_recording_on();
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
+      if (has_reliability) {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "has_reliability = true\n";
+        }
+        auto on_off = new OnOffSwitch(
+            the_id, ComponentType::Source, stream, reliability_schedule);
+        on_off->set_recording_on();
+        elements.emplace(on_off);
+        connect_source_to_sink(network, lim, on_off, true, stream);
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
+      }
+      else {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "has_reliability = false\n";
+        }
+        lim->set_recording_on();
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
+      }
     }
     else {
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "!is_failed\n";
       }
-      auto meter = new FlowMeter(the_id, ComponentType::Source, stream,
-          PortRole::SourceOutflow);
-      elements.emplace(meter);
-      meter->set_recording_on();
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};
+      if (has_reliability) {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "has_reliability = true\n";
+        }
+        auto on_off = new OnOffSwitch(
+            the_id, ComponentType::Source, stream, reliability_schedule);
+        elements.emplace(on_off);
+        on_off->set_recording_on();
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
+      }
+      else {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "has_reliability = false\n";
+        }
+        auto meter = new FlowMeter(the_id, ComponentType::Source, stream,
+            PortRole::SourceOutflow);
+        elements.emplace(meter);
+        meter->set_recording_on();
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};
+      }
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit\n";

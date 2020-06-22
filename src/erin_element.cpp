@@ -28,6 +28,9 @@ namespace ERIN
     else if (tag == "mux") {
       return ElementType::Mux;
     }
+    else if (tag == "on_off_switch") {
+      return ElementType::OnOffSwitch;
+    }
     else {
       std::ostringstream oss;
       oss << "unhandled tag '" << tag << "' for element_type\n";
@@ -49,9 +52,11 @@ namespace ERIN
         return std::string{"sink"};
       case ElementType::Mux:
         return std::string{"mux"};
+      case ElementType::OnOffSwitch:
+        return std::string{"on_off_switch"};
       default:
         {
-          std::ostringstream oss;
+          std::ostringstream oss{};
           oss << "unhandled ElementType '" << static_cast<int>(et) << "'\n";
           throw std::invalid_argument(oss.str());
         }
@@ -1545,6 +1550,129 @@ namespace ERIN
           state.time,
           storeflow_requested < 0.0 ? (-1.0 * storeflow_requested) : 0.0,
           storeflow_achieved < 0.0 ? (-1.0 * storeflow_achieved) : 0.0);
+    }
+  }
+
+  ////////////////////////////////////////////////////////////
+  // OnOffSwitch
+  OnOffSwitch::OnOffSwitch(
+      std::string id,
+      ComponentType component_type,
+      const std::string& stream_type,
+      const std::vector<TimeState>& schedule):
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::OnOffSwitch,
+        stream_type),
+    data{erin::devs::make_on_off_switch_data(schedule)},
+    state{erin::devs::make_on_off_switch_state(data)},
+    flow_writer{nullptr},
+    record_history{false},
+    element_id{-1}
+  {
+  }
+
+  void
+  OnOffSwitch::delta_int()
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::delta_int(...); id = " << get_id() << "\n";
+    }
+    state = erin::devs::on_off_switch_internal_transition(data, state);
+    log_ports();
+  }
+
+  void
+  OnOffSwitch::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::delta_ext(...); id = " << get_id() << "\n";
+    }
+    state = erin::devs::on_off_switch_external_transition(state, e.real, xs);
+    log_ports();
+  }
+
+  void
+  OnOffSwitch::delta_conf(std::vector<PortValue>& xs)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::delta_conf(...); id = " << get_id() << "\n";
+    }
+    state = erin::devs::on_off_switch_confluent_transition(data, state, xs);
+    log_ports();
+  }
+
+  Time
+  OnOffSwitch::ta()
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::ta(...); id = " << get_id() << "\n";
+    }
+    auto dt = erin::devs::on_off_switch_time_advance(data, state);
+    if (dt == erin::devs::infinity) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "dt = infinity\n";
+      }
+      return inf; 
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "dt = " << dt << "\n";
+    }
+    return Time{dt, 1};
+  }
+
+  void
+  OnOffSwitch::output_func(std::vector<PortValue>& ys)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::output_func(...); id = " << get_id() << "\n";
+    }
+    erin::devs::on_off_switch_output_function_mutable(state, ys);
+  }
+
+  void
+  OnOffSwitch::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  OnOffSwitch::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
+  }
+
+  void
+  OnOffSwitch::log_ports()
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::log_ports(...); id = " << get_id() << "\n";
+      std::cout << "flow_writer == nullptr = " << (flow_writer == nullptr) << "\n";
+      std::cout << "record_history = " << record_history << "\n";
+    }
+    if (flow_writer && record_history) {
+      if (element_id == -1) {
+        element_id = flow_writer->register_id(
+            get_id(),
+            get_inflow_type(),
+            get_component_type(),
+            PortRole::Outflow,
+            record_history);
+      }
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "elementid= " << element_id << "\n"
+                  << "time     = " << state.time << "\n"
+                  << "request  = " << state.outflow_port.get_requested() << "\n"
+                  << "achieved = " << state.outflow_port.get_achieved() << "\n";
+      }
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
     }
   }
 }

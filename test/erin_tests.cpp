@@ -5809,8 +5809,8 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
           ERIN::Datum{5, 100.0, 0.0},
           ERIN::Datum{7, 100.0, 100.0},
           ERIN::Datum{10, 0.0, 0.0}}}};
-  //ASSERT_EQ(expected_results.size(), bs_data.size());
-  //EXPECT_EQ(expected_results, bs_data);
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  EXPECT_EQ(expected_results, bs_data);
 }
 
 TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)

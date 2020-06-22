@@ -145,6 +145,23 @@ namespace ERIN
     }
     return new_sch;
   }
+
+  template <class T>
+  std::unordered_map<T, std::vector<TimeState>>
+  rezero_times(
+      const std::unordered_map<T, std::vector<TimeState>>& schedule,
+      RealTimeType start_time)
+  {
+    std::unordered_map<T, std::vector<TimeState>> new_sch{};
+    for (const auto& item : schedule) {
+      std::vector<TimeState> tss{};
+      for (const auto& ts : item.second) {
+        tss.emplace_back(TimeState{ts.time - start_time, ts.state});
+      }
+      new_sch[item.first] = std::move(tss);
+    }
+    return new_sch;
+  }
 }
 
 #endif // ERIN_RELIABILITY_H

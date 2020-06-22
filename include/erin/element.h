@@ -9,8 +9,10 @@
 #include "erin/devs/converter.h"
 #include "erin/devs/flow_limits.h"
 #include "erin/devs/load.h"
+#include "erin/devs/on_off_switch.h"
 #include "erin/devs/storage.h"
 #include "erin/devs/mux.h"
+#include "erin/reliability.h"
 #include "adevs.h"
 #include <functional>
 #include <memory>
@@ -128,7 +130,8 @@ namespace ERIN
     Converter,
     Sink,
     Mux,
-    Store
+    Store,
+    OnOffSwitch
   };
 
   ElementType tag_to_element_type(const std::string& tag);
@@ -498,10 +501,10 @@ namespace ERIN
 
       [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
         return get_inflow_type();
-      };
+      }
       [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
         return get_outflow_type();
-      };
+      }
 
     private:
       erin::devs::StorageData data;
@@ -512,6 +515,43 @@ namespace ERIN
       int outflow_element_id;
       int storeflow_element_id;
       int discharge_element_id;
+
+      void log_ports();
+  };
+
+  ////////////////////////////////////////////////////////////
+  // OnOffSwitch
+  class OnOffSwitch : public FlowElement
+  {
+    public:
+      OnOffSwitch(
+          std::string id,
+          ComponentType component_type,
+          const std::string& stream_type,
+          const std::vector<TimeState>& schedule);
+
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      }
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      }
+
+    private:
+      erin::devs::OnOffSwitchData data;
+      erin::devs::OnOffSwitchState state;
+      std::shared_ptr<FlowWriter> flow_writer;
+      bool record_history;
+      int element_id;
 
       void log_ports();
   };

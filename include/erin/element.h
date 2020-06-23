@@ -361,6 +361,7 @@ namespace ERIN
 
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
+      void set_wasteflow_recording_on();
 
       [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
         return get_inflow_type();
@@ -385,6 +386,7 @@ namespace ERIN
       int lossflow_element_id;
       int wasteflow_element_id;
       bool record_history;
+      bool record_wasteflow_history;
       std::string lossflow_stream;
 
       void log_ports();

@@ -979,7 +979,7 @@ namespace ERIN
 
   PortsAndElements
   ConverterComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>&, // nw
+      adevs::Digraph<FlowValueType, Time>& nw,
       const std::string&, // active_scenario
       bool is_failed,
       const std::vector<TimeState>& reliability_schedule) const
@@ -990,6 +990,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "ConverterComponent::add_to_network(...)\n";
     }
+    auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto the_type = ComponentType::Converter;
     auto in_stream = get_input_stream();
@@ -1024,9 +1025,35 @@ namespace ERIN
           the_id, the_type, in_stream, out_stream, out_from_in, in_from_out,
           loss_stream);
       elements.emplace(conv);
-      conv->set_recording_on();
-      ports[ep::Type::Inflow] = std::vector<ElementPort>{{conv, 0}};
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{{conv, 0}, {conv, 1}};
+      if (has_reliability) {
+        conv->set_wasteflow_recording_on();
+        auto m_inflow = new FlowMeter(
+            the_id + "-inflow", the_type, in_stream, PortRole::Inflow);
+        m_inflow->set_recording_on();
+        elements.emplace(m_inflow);
+        auto on_off_outflow = new OnOffSwitch(
+            the_id + "-outflow", the_type, out_stream, reliability_schedule);
+        on_off_outflow->set_recording_on();
+        elements.emplace(on_off_outflow);
+        auto on_off_lossflow = new OnOffSwitch(
+            the_id + "-lossflow", the_type, loss_stream, reliability_schedule);
+        on_off_lossflow->set_recording_on();
+        elements.emplace(on_off_lossflow);
+        connect_source_to_sink_with_ports(
+            nw, m_inflow, 0, conv, 0, true, in_stream);
+        connect_source_to_sink_with_ports(
+            nw, conv, 0, on_off_outflow, 0, true, out_stream);
+        connect_source_to_sink_with_ports(
+            nw, conv, 1, on_off_lossflow, 0, true, loss_stream);
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{m_inflow, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{
+          {on_off_outflow, 0}, {on_off_lossflow, 0}};
+      }
+      else {
+        conv->set_recording_on();
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{conv, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{conv, 0}, {conv, 1}};
+      }
     }
     return PortsAndElements{ports, elements};
   }

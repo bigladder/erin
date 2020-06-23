@@ -5726,7 +5726,7 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
   EXPECT_EQ(reliability_schedule.at(0), expected);
 }
 
-TEST(ErinBasicsTest, Test_that_reliability_works_on_components)
+TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
 {
   namespace E = ERIN;
   std::string input =

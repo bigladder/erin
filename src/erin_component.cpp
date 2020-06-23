@@ -780,7 +780,7 @@ namespace ERIN
 
   PortsAndElements
   MuxerComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>& /* nw */,
+      adevs::Digraph<FlowValueType, Time>& nw,
       const std::string&, // active_scenario
       bool is_failed,
       const std::vector<TimeState>& reliability_schedule) const
@@ -791,6 +791,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MuxerComponent::add_to_network(...)\n";
     }
+    auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto the_stream = get_input_stream();
     auto the_ct = ComponentType::Muxer;
@@ -804,13 +805,43 @@ namespace ERIN
           num_inflows,
           num_outflows,
           output_strategy);
-      mux->set_recording_on();
+      if (!has_reliability) {
+        mux->set_recording_on();
+      }
       elements.emplace(mux);
       for (int i{0}; i < num_inflows; ++i) {
-        inflow_meters.emplace_back(ElementPort{mux, i});
+        if (has_reliability) {
+          auto m = new FlowMeter(
+              the_id + "-inflow(" + std::to_string(i) + ")",
+              the_ct,
+              the_stream,
+              PortRole::Inflow);
+          m->set_recording_on();
+          elements.emplace(m);
+          connect_source_to_sink_with_ports(
+              nw, m, 0, mux, i, true, the_stream);
+          inflow_meters.emplace_back(ElementPort{m, 0});
+        }
+        else {
+          inflow_meters.emplace_back(ElementPort{mux, i});
+        }
       }
       for (int i{0}; i < num_outflows; ++i) {
-        outflow_meters.emplace_back(ElementPort{mux, i});
+        if (has_reliability) {
+          auto on_off = new OnOffSwitch(
+              the_id + "-outflow(" + std::to_string(i) + ")",
+              the_ct,
+              the_stream,
+              reliability_schedule);
+          on_off->set_recording_on();
+          elements.emplace(on_off);
+          connect_source_to_sink_with_ports(
+              nw, mux, i, on_off, 0, true, the_stream);
+          outflow_meters.emplace_back(ElementPort{on_off, 0});
+        }
+        else {
+          outflow_meters.emplace_back(ElementPort{mux, i});
+        }
       }
     }
     else {

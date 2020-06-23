@@ -5900,6 +5900,139 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
   EXPECT_EQ(expected_results, bs_data);
 }
 
+TEST(ErinBasicsTest, Test_that_reliability_works_on_mux_component)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S1]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 50.0\n"
+    "[components.S2]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "[components.L1]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[components.L2]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[components.M]\n"
+    "type = \"muxer\"\n"
+    "num_inflows = 2\n"
+    "num_outflows = 2\n"
+    "stream = \"electricity\"\n"
+    "dispatch_strategy = \"in_order\"\n"
+    "failure_modes = [\"standard\"]\n"
+    "[networks.normal_operations]\n"
+    "connections = [\n"
+    "    [\"S1:OUT(0)\",  \"M:IN(0)\", \"electricity\"],\n"
+    "    [\"S2:OUT(0)\",  \"M:IN(1)\", \"electricity\"],\n"
+    "    [ \"M:OUT(0)\", \"L1:IN(0)\", \"electricity\"],\n"
+    "    [ \"M:OUT(1)\", \"L2:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S1"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 200.0, 50.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 200.0, 50.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"S2"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 150.0, 150.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 150.0, 150.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"M-inflow(0)"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 200.0, 50.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 200.0, 50.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"M-inflow(1)"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 150.0, 150.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 150.0, 150.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"M-outflow(0)"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"M-outflow(1)"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L1"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L2"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  if (false) {
+    for (const auto& item : bs_data) {
+      std::cout << item.first << "\n";
+      for (const auto& d : item.second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  EXPECT_EQ(expected_results, bs_data);
+}
+
 TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
 {
   namespace E = ERIN;

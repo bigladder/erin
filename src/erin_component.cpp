@@ -328,7 +328,6 @@ namespace ERIN
     bool has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto stream = get_input_stream();
-    const auto& stream_name{stream};
     auto loads = loads_by_scenario.at(active_scenario);
     auto sink = new Sink(the_id, ComponentType::Load, stream, loads);
     sink->set_recording_on();
@@ -344,8 +343,18 @@ namespace ERIN
           0.0,
           0.0);
       elements.emplace(lim);
-      connect_source_to_sink(network, lim, sink, true, stream_name);
+      connect_source_to_sink(network, lim, sink, true, stream);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim, 0}};
+    }
+    else if (has_reliability) {
+      auto on_off = new OnOffSwitch(
+          the_id + "-limits",
+          ComponentType::Source,
+          stream,
+          reliability_schedule);
+      elements.emplace(on_off);
+      connect_source_to_sink(network, on_off, sink, true, stream);
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{on_off, 0}};
     }
     else {
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{sink, 0}};

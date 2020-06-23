@@ -6162,6 +6162,118 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_converter_component)
   EXPECT_EQ(expected_results, bs_data);
 }
 
+TEST(ErinBasicsTest, Test_that_reliability_works_on_pass_through_component)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "[components.P]\n"
+    "type = \"pass_through\"\n"
+    "stream = \"electricity\"\n"
+    "failure_modes = [\"standard\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[networks.normal_operations]\n"
+    "connections = [\n"
+    "    [\"S:OUT(0)\",  \"P:IN(0)\", \"electricity\"],\n"
+    "    [\"P:OUT(0)\",  \"L:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"P"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  if (false) {
+    std::vector<std::string> keys{};
+    std::cout << "actual keys:\n";
+    for (const auto& item : bs_data) {
+      std::cout << "- " << item.first << "\n";
+    }
+    std::cout << "expected keys:\n";
+    for (const auto& item : expected_results) {
+      const auto& k = item.first;
+      std::cout << "- " << k << "\n";
+      keys.emplace_back(k);
+      auto it = bs_data.find(k);
+      ASSERT_TRUE(it != bs_data.end()) << "expected key '" << k << "' not found in bs_data\n";
+    }
+    std::sort(keys.begin(), keys.end());
+    for (const auto& k : keys) {
+      std::cout << k << ":\n";
+      std::cout << "- EXPECTED:\n";
+      for (const auto& d : expected_results[k]) {
+        std::cout << "  " << d << "\n";
+      }
+      std::cout << "- ACTUAL:\n";
+      auto it = bs_data.find(k);
+      ASSERT_TRUE(it != bs_data.end());
+      for (const auto& d : it->second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  EXPECT_EQ(expected_results, bs_data);
+}
+
+
 TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
 {
   namespace E = ERIN;

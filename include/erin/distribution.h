@@ -3,14 +3,19 @@
 
 #ifndef ERIN_DISTRIBUTION_H
 #define ERIN_DISTRIBUTION_H
+#include "erin/type.h"
 #include <chrono>
 #include <exception>
 #include <functional>
 #include <random>
 #include <sstream>
+#include <string>
 
 namespace erin::distribution
 {
+  using size_type = std::vector<std::int64_t>::size_type;
+  using RealTimeType = ERIN::RealTimeType;
+
   // TODO: consider going back to classes with simple data that can take a
   // generator at a later point. Ideally, we'd like the distribution objects to
   // all reference a single default_random_engine that is held by Main.
@@ -40,5 +45,39 @@ namespace erin::distribution
     auto g = generator; // copy-assignment constructor
     return [d, g]() mutable -> T { return d(g); };
   }
+
+  enum class CdfType
+  {
+    Fixed = 0//,
+    //Normal,
+    //Weibull
+  };
+
+  std::string cdf_type_to_tag(CdfType cdf_type);
+  CdfType tag_to_cdf_type(const std::string& tag);
+
+  struct Cdf {
+    std::vector<std::string> tag{};
+    std::vector<size_type> subtype_id{};
+    std::vector<CdfType> cdf_type{};
+  };
+
+  struct Fixed_CDF
+  {
+    std::vector<RealTimeType> value{};
+  };
+
+  class CumulativeDistributionSystem
+  {
+    public:
+      CumulativeDistributionSystem();
+
+      size_type add_fixed_cdf(const std::string& tag, RealTimeType value_in_seconds);
+      RealTimeType next_time_advance(size_type cdf_id);
+
+    private:
+      Cdf cdf;
+      Fixed_CDF fixed_cdf;
+  };
 }
 #endif // ERIN_DISTRIBUTION_H

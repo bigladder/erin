@@ -6554,6 +6554,16 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
         ys, expected_ys, compare_ports));
 }
 
+TEST(ErinBasicsTest, Test_cumulative_distribution_system_usage)
+{
+  namespace E = ERIN;
+  namespace ED = erin::distribution;
+  ED::CumulativeDistributionSystem cds{};
+  E::RealTimeType fixed_dt{10};
+  auto cdf_id = cds.add_fixed_cdf("some_cdf", fixed_dt);
+  EXPECT_EQ(cds.next_time_advance(cdf_id), fixed_dt);
+}
+
 int
 main(int argc, char **argv)
 {

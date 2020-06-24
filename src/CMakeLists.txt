@@ -25,6 +25,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_devs_mux.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_on_off_switch.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_storage.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_graphviz.cpp

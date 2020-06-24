@@ -67,9 +67,10 @@ namespace ERIN
       RealTimeType value_in_seconds)
   {
     auto id{cdfs.tag.size()};
+    auto subtype_id{fixed_cdf.value.size()};
     fixed_cdf.value.emplace_back(value_in_seconds);
     cdfs.tag.emplace_back(tag);
-    cdfs.subtype_id.emplace_back(id);
+    cdfs.subtype_id.emplace_back(subtype_id);
     cdfs.cdf_type.emplace_back(CdfType::Fixed);
     return id;
   }

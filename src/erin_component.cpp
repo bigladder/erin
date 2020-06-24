@@ -1281,7 +1281,7 @@ namespace ERIN
 
   PortsAndElements
   StorageComponent::add_to_network(
-      adevs::Digraph<FlowValueType,Time>& /* nw */,
+      adevs::Digraph<FlowValueType,Time>& nw,
       const std::string& /* active_scenario */,
       bool is_failed,
       const std::vector<TimeState>& reliability_schedule) const
@@ -1289,6 +1289,7 @@ namespace ERIN
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
+    auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "StorageComponent::add_to_network(...);id="
@@ -1299,19 +1300,57 @@ namespace ERIN
     if (is_failed) {
       FlowValueType min_limit{0.0};
       FlowValueType max_limit{0.0};
-      auto the_limits = new FlowLimits(the_id, the_type, stream, min_limit, max_limit);
-      elements.emplace(the_limits);
-      the_limits->set_recording_on();
-      ports[ep::Type::Inflow] = std::vector<ElementPort>{{the_limits, 0}};
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{{the_limits, 0}};
+      auto inflow = new FlowMeter(
+          the_id + "-inflow", the_type, stream, PortRole::Inflow);
+      elements.emplace(inflow);
+      inflow->set_recording_on();
+      auto outflow = new FlowLimits(
+          the_id + "-outflow", the_type, stream, min_limit, max_limit);
+      elements.emplace(outflow);
+      outflow->set_recording_on();
+      auto storeflow = new FlowMeter(
+          the_id + "-storeflow", the_type, stream, PortRole::StorageInflow);
+      elements.emplace(storeflow);
+      storeflow->set_recording_on();
+      auto discharge = new FlowMeter(
+          the_id + "-discharge", the_type, stream, PortRole::StorageOutflow);
+      elements.emplace(discharge);
+      discharge->set_recording_on();
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{inflow, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{outflow, 0}};
     }
     else {
       auto store = new Storage(
           the_id, the_type, stream, capacity, max_charge_rate);
       elements.emplace(store);
-      store->set_recording_on();
-      ports[ep::Type::Inflow] = std::vector<ElementPort>{{store, 0}};
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{{store, 0}};
+      if (has_reliability) {
+        store->set_storeflow_discharge_recording_on();
+        auto on_off_inflow = new OnOffSwitch(
+            the_id + "-inflow",
+            the_type,
+            stream,
+            reliability_schedule);
+        elements.emplace(on_off_inflow);
+        on_off_inflow->set_recording_on();
+        auto on_off_outflow = new OnOffSwitch(
+            the_id + "-outflow",
+            the_type,
+            stream,
+            reliability_schedule);
+        on_off_outflow->set_recording_on();
+        elements.emplace(on_off_outflow);
+        connect_source_to_sink_with_ports(
+            nw, on_off_inflow, 0, store, 0, true, stream);
+        connect_source_to_sink_with_ports(
+            nw, store, 0, on_off_outflow, 0, true, stream);
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{on_off_inflow, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{on_off_outflow, 0}};
+      }
+      else {
+        store->set_recording_on();
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{store, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{store, 0}};
+      }
     }
     return PortsAndElements{ports, elements};
   }

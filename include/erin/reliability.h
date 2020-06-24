@@ -131,7 +131,7 @@ namespace ERIN
         else if (ts.time == start_time) {
             tss.emplace_back(ts);
         }
-        else if ((ts.time > start_time) and (ts.time <= end_time)) {
+        else if ((ts.time > start_time) && (ts.time <= end_time)) {
           if (tss.size() == 0) {
             tss.emplace_back(TimeState{0, state});
           }

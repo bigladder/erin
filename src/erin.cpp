@@ -2354,7 +2354,7 @@ namespace ERIN
   Main::Main(const std::string& input_file_path):
     failure_probs_by_comp_id_by_scenario_id{}
   {
-    auto reader = TomlInputReader{input_file_path};
+    TomlInputReader reader{input_file_path};
     // Read data into private class fields
     sim_info = reader.read_simulation_info();
     auto loads_by_id = reader.read_loads();

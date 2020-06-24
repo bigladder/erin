@@ -178,7 +178,8 @@ namespace ERIN
       }
       else {
         std::cout << "WARNING! Element " << i << " not recorded!\n";
-        std::cout << "Element " << i << " is " << element_id_to_tag[i] << "\n";
+        auto idx = static_cast<const int>(i);
+        std::cout << "Element " << i << " is " << element_id_to_tag[idx] << "\n";
       }
     }
     if constexpr (E::debug_level >= E::debug_level_high) {
@@ -1060,14 +1061,14 @@ namespace ERIN
     }
     erin::devs::converter_output_function_mutable(state, ys);
     if constexpr (debug_level >= debug_level_high) {
-      for (const auto& y : ys) {
+      for (const auto& the_y : ys) {
         std::cout << "y.port = "
-                  << ((y.port == outport_outflow_achieved)
+                  << ((the_y.port == outport_outflow_achieved)
                   ? "outport_outflow_achieved" :
-                  ( (y.port == outport_inflow_request) ?
+                  ( (the_y.port == outport_inflow_request) ?
                     "outport_inflow_request" :
-                    std::to_string(y.port))) << "\n";
-        std::cout << "y.value = " << y.value << "\n";
+                    std::to_string(the_y.port))) << "\n";
+        std::cout << "y.value = " << the_y.value << "\n";
       }
     }
   }
@@ -1363,8 +1364,8 @@ namespace ERIN
     erin::devs::mux_output_function_mutable(state, ys);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] output_func\n";
-      for (const auto& y : ys) {
-        std::cout << "- (" << y.port << ", " << y.value << ")\n";
+      for (const auto& the_y : ys) {
+        std::cout << "- (" << the_y.port << ", " << the_y.value << ")\n";
       }
     }
   }

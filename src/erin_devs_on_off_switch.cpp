@@ -71,7 +71,8 @@ namespace erin::devs
   make_on_off_switch_data(
       const std::vector<ERIN::TimeState>& schedule)
   {
-    FlowValueType last_state{-1.0};
+    bool last_state{false};
+    bool first_item{true};
     RealTimeType last_time{-1};
     std::vector<RealTimeType> times{};
     std::vector<bool> states{};
@@ -82,9 +83,10 @@ namespace erin::devs
             << ERIN::vec_to_string<ERIN::TimeState>(schedule) << "\n";
         throw std::invalid_argument(oss.str());
       }
-      if ((last_state == -1.0) || (item.state != last_state)) {
+      if (first_item || (item.state != last_state)) {
         times.emplace_back(item.time);
         states.emplace_back(item.state);
+        first_item = false;
       }
       last_state = item.state;
       last_time = item.time;

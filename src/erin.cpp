@@ -1217,13 +1217,15 @@ namespace ERIN
   TomlInputReader::read_cumulative_distributions(
       ReliabilityCoordinator& rc)
   {
-    const auto& toml_cdfs = toml::find_or<toml::table>(
-        data, "cdf", toml::table{});
+    const auto& toml_cdfs = toml::find_or(data, "cdf", toml::table{});
     std::unordered_map<std::string, size_type> out{};
+    if (toml_cdfs.size() == 0) {
+      return out;
+    }
     for (const auto& toml_cdf : toml_cdfs) {
       const auto& cdf_string_id = toml_cdf.first;
-      toml::value t = toml_cdf.second;
-      const toml::table& tt = toml::get<toml::table>(t);
+      const auto& t = toml_cdf.second;
+      const auto& tt = toml::get<toml::table>(t);
       const auto& cdf_type = read_cdf_type(tt, cdf_string_id);
       switch (cdf_type) {
         case CdfType::Fixed:
@@ -1258,9 +1260,12 @@ namespace ERIN
       const std::unordered_map<std::string, size_type>& cdf_ids,
       ReliabilityCoordinator& rc)
   {
-    const auto& toml_fms = toml::find_or<toml::table>(
+    const auto& toml_fms = toml::find_or(
         data, "failure_mode", toml::table{});
     std::unordered_map<std::string, size_type> out{};
+    if (toml_fms.size() == 0) {
+      return out;
+    }
     for (const auto& toml_fm : toml_fms) {
       const auto& fm_string_id = toml_fm.first;
       toml::value t = toml_fm.second;

@@ -1137,7 +1137,7 @@ namespace ERIN
       const auto dist = toml::find<toml::table>(
           s.second, "occurrence_distribution");
       const auto next_occurrence_dist =
-        ::erin_generics::read_toml_distribution<RealTimeType>(dist);
+          erin_generics::read_toml_distribution<RealTimeType>(dist);
       const auto& time_unit_str = toml::find_or(
           s.second, "time_unit", default_time_units);
       const auto time_units = tag_to_time_units(time_unit_str);

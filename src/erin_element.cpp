@@ -1642,7 +1642,8 @@ namespace ERIN
       std::string id,
       ComponentType component_type,
       const std::string& stream_type,
-      const std::vector<TimeState>& schedule):
+      const std::vector<TimeState>& schedule,
+      PortRole port_role_):
     FlowElement(
         std::move(id),
         component_type,
@@ -1652,7 +1653,8 @@ namespace ERIN
     state{erin::devs::make_on_off_switch_state(data)},
     flow_writer{nullptr},
     record_history{false},
-    element_id{-1}
+    element_id{-1},
+    port_role{port_role_}
   {
   }
 
@@ -1742,7 +1744,7 @@ namespace ERIN
             get_id(),
             get_inflow_type(),
             get_component_type(),
-            PortRole::Outflow,
+            port_role,
             record_history);
       }
       if constexpr (debug_level >= debug_level_high) {

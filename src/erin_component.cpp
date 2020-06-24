@@ -634,7 +634,8 @@ namespace ERIN
           std::cout << "has_reliability = true\n";
         }
         auto on_off = new OnOffSwitch(
-            the_id, ComponentType::Source, stream, reliability_schedule);
+            the_id, ComponentType::Source, stream, reliability_schedule,
+            PortRole::SourceOutflow);
         on_off->set_recording_on();
         elements.emplace(on_off);
         connect_source_to_sink(network, lim, on_off, true, stream);
@@ -657,7 +658,8 @@ namespace ERIN
           std::cout << "has_reliability = true\n";
         }
         auto on_off = new OnOffSwitch(
-            the_id, ComponentType::Source, stream, reliability_schedule);
+            the_id, ComponentType::Source, stream, reliability_schedule,
+            PortRole::SourceOutflow);
         elements.emplace(on_off);
         on_off->set_recording_on();
         ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
@@ -832,7 +834,8 @@ namespace ERIN
               the_id + "-outflow(" + std::to_string(i) + ")",
               the_ct,
               the_stream,
-              reliability_schedule);
+              reliability_schedule,
+              PortRole::Outflow);
           on_off->set_recording_on();
           elements.emplace(on_off);
           connect_source_to_sink_with_ports(
@@ -1032,11 +1035,13 @@ namespace ERIN
         m_inflow->set_recording_on();
         elements.emplace(m_inflow);
         auto on_off_outflow = new OnOffSwitch(
-            the_id + "-outflow", the_type, out_stream, reliability_schedule);
+            the_id + "-outflow", the_type, out_stream, reliability_schedule,
+            PortRole::Outflow);
         on_off_outflow->set_recording_on();
         elements.emplace(on_off_outflow);
         auto on_off_lossflow = new OnOffSwitch(
-            the_id + "-lossflow", the_type, loss_stream, reliability_schedule);
+            the_id + "-lossflow", the_type, loss_stream, reliability_schedule,
+            PortRole::Outflow);
         on_off_lossflow->set_recording_on();
         elements.emplace(on_off_lossflow);
         connect_source_to_sink_with_ports(
@@ -1173,7 +1178,8 @@ namespace ERIN
       elements.emplace(the_limits);
       if (has_reliability && (!is_failed)) {
         auto on_off = new OnOffSwitch(
-            the_id, the_type, stream, reliability_schedule);
+            the_id, the_type, stream, reliability_schedule,
+            PortRole::Outflow);
         elements.emplace(on_off);
         on_off->set_recording_on();
         connect_source_to_sink_with_ports(
@@ -1329,14 +1335,16 @@ namespace ERIN
             the_id + "-inflow",
             the_type,
             stream,
-            reliability_schedule);
+            reliability_schedule,
+            PortRole::Inflow);
         elements.emplace(on_off_inflow);
         on_off_inflow->set_recording_on();
         auto on_off_outflow = new OnOffSwitch(
             the_id + "-outflow",
             the_type,
             stream,
-            reliability_schedule);
+            reliability_schedule,
+            PortRole::Inflow);
         on_off_outflow->set_recording_on();
         elements.emplace(on_off_outflow);
         connect_source_to_sink_with_ports(

@@ -532,7 +532,8 @@ namespace ERIN
           std::string id,
           ComponentType component_type,
           const std::string& stream_type,
-          const std::vector<TimeState>& schedule);
+          const std::vector<TimeState>& schedule,
+          PortRole port_role = PortRole::Outflow);
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
@@ -556,6 +557,7 @@ namespace ERIN
       std::shared_ptr<FlowWriter> flow_writer;
       bool record_history;
       int element_id;
+      PortRole port_role;
 
       void log_ports();
   };

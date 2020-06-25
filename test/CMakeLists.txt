@@ -31,5 +31,16 @@ configure_file(
 add_executable(${CMAKE_PROJECT_NAME}_tests ${test_sources})
 target_include_directories(${CMAKE_PROJECT_NAME}_tests PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 
+add_executable(test_erin_distribution
+  ${PROJECT_SOURCE_DIR}/test/erin_distribution.test.cpp)
+target_include_directories(test_erin_distribution
+  PRIVATE
+  ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/src
+  ${PROJECT_SOURCE_DIR}/vendor/bdevs/include
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include
+  ${PROJECT_SOURCE_DIR}/vendor/toml11
+  )
+
 include(GoogleTest)
 gtest_discover_tests(${CMAKE_PROJECT_NAME}_tests)

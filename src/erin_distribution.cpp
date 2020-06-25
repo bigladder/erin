@@ -2,11 +2,65 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/distribution.h"
+#include <cmath>
 #include <stdexcept>
 #include <random>
 
 namespace erin::distribution
 {
+  double
+  erfinv(double x)
+  {
+    /*
+     * From "A handy approximation for the error function and its inverse"
+     * by Sergei Winitzki February 6, 2008
+     * a = 8887/63473
+     * erfinv(x) ~= [
+     *    ((-2) / (pi * a))
+     *    - (ln(1 - x**2) / 2)
+     *    + sqrt(
+     *        ( (2 / (pi * a)) + (ln(1 - x**2) / 2) )**2
+     *        - ((1/a) * ln(1 - x**2)))
+     *    ] ** (1/2)
+     *  OR
+     *  A = C * (2.0 / pi)
+     *  B = ln(1 - x**2)
+     *  C = 1/a
+     *  D = B / 2
+     *  erfinv(x) ~= ((-A) + (-D) + sqrt((A + D)**2 - (C*B)))**0.5
+     *
+     *  domain is (-1, 1) but outliter values are allowed (they just get
+     *  cropped)
+     */
+    constexpr double extent{3.0};
+    constexpr double max_domain{1.0};
+    if (x <= -max_domain) {
+      return -extent;
+    }
+    if (x >= max_domain) {
+      return extent;
+    }
+    constexpr double pi{3.1415'9265'3589'7932'3846'26433};
+    constexpr double a{8'887.0/63'473.0};
+    constexpr double C{1.0/a};
+    constexpr double A{(C * 2.0) / pi};
+    double B = std::log(1.0 - (x * x));
+    double D{B / 2.0};
+    double sum_A_D{A + D};
+    double sum_A_D2{sum_A_D * sum_A_D};
+    auto answer = std::sqrt((-A) + (-D) + std::sqrt(sum_A_D2 - (C*B)));
+    if (x < 0.0) {
+      answer = (-1.0) * answer;
+    }
+    if (answer > extent) {
+      answer = extent;
+    }
+    if (answer < -extent) {
+      answer = -extent;
+    }
+    return answer;
+  }
+
   std::string
   cdf_type_to_tag(CdfType cdf_type)
   {
@@ -15,6 +69,8 @@ namespace erin::distribution
         return std::string{"fixed"};
       case CdfType::Uniform:
         return std::string{"uniform"};
+      case CdfType::Normal:
+        return std::string{"normal"};
     }
     std::ostringstream oss{};
     oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
@@ -30,6 +86,9 @@ namespace erin::distribution
     if (tag == "uniform") {
       return CdfType::Uniform;
     }
+    if (tag == "normal") {
+      return CdfType::Normal;
+    }
     std::ostringstream oss{};
     oss << "unhandled tag `" << tag << "` in tag_to_cdf_type";
     throw std::invalid_argument(oss.str());
@@ -39,6 +98,7 @@ namespace erin::distribution
     cdf{},
     fixed_cdf{},
     uniform_cdf{},
+    normal_cdf{},
     g{},
     dist{0.0, 1.0}
   {
@@ -78,6 +138,22 @@ namespace erin::distribution
     cdf.tag.emplace_back(tag);
     cdf.subtype_id.emplace_back(subtype_id);
     cdf.cdf_type.emplace_back(CdfType::Uniform);
+    return id;
+  }
+
+  size_type
+  CumulativeDistributionSystem::add_normal_cdf(
+      const std::string& tag,
+      RealTimeType mean_s,
+      RealTimeType stddev_s)
+  {
+    auto id{cdf.tag.size()};
+    auto subtype_id{normal_cdf.average.size()};
+    normal_cdf.average.emplace_back(mean_s);
+    normal_cdf.stddev.emplace_back(stddev_s);
+    cdf.tag.emplace_back(tag);
+    cdf.subtype_id.emplace_back(subtype_id);
+    cdf.cdf_type.emplace_back(CdfType::Normal);
     return id;
   }
 
@@ -127,6 +203,16 @@ namespace erin::distribution
           auto ub = uniform_cdf.upper_bound.at(subtype_id);
           auto delta = ub - lb;
           dt = static_cast<RealTimeType>(fraction * delta + lb);
+          break;
+        }
+      case CdfType::Normal:
+        {
+          constexpr double sqrt2{1.4142'1356'2373'0951};
+          auto avg = static_cast<double>(normal_cdf.average.at(subtype_id));
+          auto sd  = static_cast<double>(normal_cdf.stddev.at(subtype_id));
+          dt = static_cast<RealTimeType>(
+              std::round(
+                avg + sd * sqrt2 * erfinv(2.0 * fraction - 1.0)));
           break;
         }
       default:

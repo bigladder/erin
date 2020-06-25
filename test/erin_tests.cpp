@@ -27,6 +27,7 @@
 #include "erin/version.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
+#include <cmath>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -6578,6 +6579,27 @@ TEST(ErinBasicsTest, Test_uniform_cumulative_distribution_system_usage)
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), lower_dt);
   double dice_roll_3{0.5};
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), (lower_dt + upper_dt) / 2);
+}
+
+TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
+{
+  namespace E = ERIN;
+  namespace ED = erin::distribution;
+  ED::CumulativeDistributionSystem cds{};
+  E::RealTimeType mean{1000};
+  E::RealTimeType stddev{50};
+  auto cdf_id = cds.add_normal_cdf("a_normal_cdf", mean, stddev);
+  double dice_roll_1{0.5};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), mean);
+  double dice_roll_2{0.0};
+  constexpr double sqrt2{1.4142'1356'2373'0951};
+  EXPECT_EQ(
+      cds.next_time_advance(cdf_id, dice_roll_2),
+      mean - static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
+  double dice_roll_3{1.0};
+  EXPECT_EQ(
+      cds.next_time_advance(cdf_id, dice_roll_3),
+      mean + static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
 }
 
 int

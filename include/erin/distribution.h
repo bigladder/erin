@@ -50,8 +50,9 @@ namespace erin::distribution
   {
     Fixed = 0,
     Uniform,
-    //Normal,
-    //Weibull
+    Normal,
+    //Weibull,
+    //Table // from times and variate: variate is from (0,1) time must be always increasing
   };
 
   std::string cdf_type_to_tag(CdfType cdf_type);
@@ -74,6 +75,20 @@ namespace erin::distribution
     std::vector<RealTimeType> upper_bound{};
   };
 
+  struct Normal_CDF
+  {
+    std::vector<RealTimeType> average{};
+    std::vector<RealTimeType> stddev{};
+  };
+
+  //struct Table_CDF
+  //{
+  //  std::vector<double> variates{};
+  //  std::vector<double> times{};
+  //  std::vector<size_type> start_idx{};
+  //  std::vector<size_type> end_idx{};
+  //};
+
   class CumulativeDistributionSystem
   {
     public:
@@ -88,6 +103,11 @@ namespace erin::distribution
           RealTimeType lower_bound_s,
           RealTimeType upper_bound_s);
 
+      size_type add_normal_cdf(
+          const std::string& tag,
+          RealTimeType mean_s,
+          RealTimeType stddev_s);
+
       [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
 
       RealTimeType next_time_advance(size_type cdf_id);
@@ -98,6 +118,8 @@ namespace erin::distribution
       Cdf cdf;
       Fixed_CDF fixed_cdf;
       Uniform_CDF uniform_cdf;
+      Normal_CDF normal_cdf;
+      //Table_CDF table_cdf;
       std::default_random_engine g;
       std::uniform_real_distribution<double> dist;
   };

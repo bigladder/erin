@@ -29,32 +29,8 @@ namespace ERIN
               << "state=" << ts.state << ")";
   }
 
-  std::string
-  cdf_type_to_tag(CdfType cdf_type)
-  {
-    switch (cdf_type) {
-      case CdfType::Fixed:
-        return std::string{"fixed"};
-    }
-    std::ostringstream oss{};
-    oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
-    throw std::invalid_argument(oss.str());
-  }
-
-  CdfType
-  tag_to_cdf_type(const std::string& tag)
-  {
-    if (tag == "fixed") {
-      return CdfType::Fixed;
-    }
-    std::ostringstream oss{};
-    oss << "unhandled tag `" << tag << "` in tag_to_cdf_type";
-    throw std::invalid_argument(oss.str());
-  }
-
   ReliabilityCoordinator::ReliabilityCoordinator():
-    fixed_cdf{},
-    cdfs{},
+    cds{},
     fms{},
     fm_comp_links{},
     comp_meta{}
@@ -66,13 +42,7 @@ namespace ERIN
       const std::string& tag,
       RealTimeType value_in_seconds)
   {
-    auto id{cdfs.tag.size()};
-    auto subtype_id{fixed_cdf.value.size()};
-    fixed_cdf.value.emplace_back(value_in_seconds);
-    cdfs.tag.emplace_back(tag);
-    cdfs.subtype_id.emplace_back(subtype_id);
-    cdfs.cdf_type.emplace_back(CdfType::Fixed);
-    return id;
+    return cds.add_fixed_cdf(tag, value_in_seconds);
   }
 
   size_type
@@ -114,53 +84,29 @@ namespace ERIN
   size_type
   ReliabilityCoordinator::lookup_cdf_by_tag(const std::string& tag) const
   {
-    for (size_type i{0}; i < cdfs.tag.size(); ++i) {
-      if (cdfs.tag[i] == tag) {
-        return i;
-      }
-    }
-    std::ostringstream oss{};
-    oss << "tag `" << tag << "` not found in CDF list";
-    throw std::invalid_argument(oss.str());
+    return cds.lookup_cdf_by_tag(tag);
   }
 
   void
   ReliabilityCoordinator::calc_next_events(
       std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
-      bool is_failure
-      ) const
+      bool is_failure)
   {
     const auto num_fm_comp_links{fm_comp_links.failure_mode_id.size()};
     for (size_type i{0}; i < num_fm_comp_links; ++i) {
       const auto& comp_id = fm_comp_links.component_id.at(i);
       const auto& fm_id = fm_comp_links.failure_mode_id.at(i);
       size_type cdf_id{0};
-      CdfType cdf_type{};
-      size_type cdf_subtype_id{0};
       if (is_failure) {
         cdf_id = fms.failure_cdf.at(fm_id);
-        cdf_type = cdfs.cdf_type.at(cdf_id);
-        cdf_subtype_id = cdfs.subtype_id.at(cdf_id);
       }
       else { // is_repair
         cdf_id = fms.repair_cdf.at(i);
-        cdf_type = cdfs.cdf_type.at(cdf_id);
-        cdf_subtype_id = cdfs.subtype_id.at(cdf_id);
       }
-      switch (cdf_type) {
-        case CdfType::Fixed:
-          {
-            auto dt = fixed_cdf.value.at(cdf_subtype_id);
-            auto& dt_fm = comp_id_to_dt[comp_id]; 
-            if ((dt_fm == -1) || (dt < dt_fm)) {
-              dt_fm = dt;
-            }
-            break;
-          }
-        default:
-          {
-            throw std::runtime_error("unhandled Cumulative Density Function");
-          }
+      auto dt = cds.next_time_advance(cdf_id);
+      auto& dt_fm = comp_id_to_dt[comp_id]; 
+      if ((dt_fm == -1) || (dt < dt_fm)) {
+        dt_fm = dt;
       }
     }
   }
@@ -197,7 +143,7 @@ namespace ERIN
 
   std::unordered_map<size_type, std::vector<TimeState>>
   ReliabilityCoordinator::calc_reliability_schedule(
-      RealTimeType final_time) const
+      RealTimeType final_time)
   {
     const auto num_components{comp_meta.tag.size()};
     std::unordered_map<size_type, RealTimeType> comp_id_to_time{};
@@ -238,7 +184,7 @@ namespace ERIN
 
   std::unordered_map<std::string, std::vector<TimeState>>
   ReliabilityCoordinator::calc_reliability_schedule_by_component_tag(
-      RealTimeType final_time) const
+      RealTimeType final_time)
   {
     auto sch = calc_reliability_schedule(final_time);
     std::unordered_map<std::string, std::vector<TimeState>> out{};

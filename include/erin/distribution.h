@@ -73,6 +73,7 @@ namespace erin::distribution
       CumulativeDistributionSystem();
 
       size_type add_fixed_cdf(const std::string& tag, RealTimeType value_in_seconds);
+      [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
       RealTimeType next_time_advance(size_type cdf_id);
 
     private:

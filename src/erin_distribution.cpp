@@ -49,6 +49,20 @@ namespace erin::distribution
     return id;
   }
 
+  size_type
+  CumulativeDistributionSystem::lookup_cdf_by_tag(
+      const std::string& tag) const
+  {
+    for (size_type i{0}; i < cdf.tag.size(); ++i) {
+      if (cdf.tag[i] == tag) {
+        return i;
+      }
+    }
+    std::ostringstream oss{};
+    oss << "tag `" << tag << "` not found in CDF list";
+    throw std::invalid_argument(oss.str());
+  }
+
   RealTimeType
   CumulativeDistributionSystem::next_time_advance(size_type cdf_id)
   {

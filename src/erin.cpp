@@ -641,7 +641,7 @@ namespace ERIN
     return component_type;
   }
 
-  CdfType
+  erin::distribution::CdfType
   TomlInputReader::read_cdf_type(
       const toml::table& tt,
       const std::string& cdf_id) const
@@ -658,9 +658,9 @@ namespace ERIN
       oss << "failed to find 'type' for cdf " << cdf_id << "\n";
       throw std::runtime_error(oss.str());
     }
-    CdfType cdf_type{};
+    erin::distribution::CdfType cdf_type{};
     try {
-      cdf_type = tag_to_cdf_type(cdf_type_tag);
+      cdf_type = erin::distribution::tag_to_cdf_type(cdf_type_tag);
     }
     catch (std::invalid_argument& e) {
       std::ostringstream oss{};
@@ -1228,7 +1228,7 @@ namespace ERIN
       const auto& tt = toml::get<toml::table>(t);
       const auto& cdf_type = read_cdf_type(tt, cdf_string_id);
       switch (cdf_type) {
-        case CdfType::Fixed:
+        case erin::distribution::CdfType::Fixed:
           {
             std::string field_read{""};
             RealTimeType value =

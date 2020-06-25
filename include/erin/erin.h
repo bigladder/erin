@@ -347,7 +347,7 @@ namespace ERIN
         read_component_type(
             const toml::table& tt,
             const std::string& comp_id) const;
-      [[nodiscard]] CdfType
+      [[nodiscard]] erin::distribution::CdfType
         read_cdf_type(
             const toml::table& tt,
             const std::string& cdf_id) const;

@@ -6554,7 +6554,7 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
         ys, expected_ys, compare_ports));
 }
 
-TEST(ErinBasicsTest, Test_cumulative_distribution_system_usage)
+TEST(ErinBasicsTest, Test_fixed_cumulative_distribution_system_usage)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
@@ -6562,6 +6562,22 @@ TEST(ErinBasicsTest, Test_cumulative_distribution_system_usage)
   E::RealTimeType fixed_dt{10};
   auto cdf_id = cds.add_fixed_cdf("some_cdf", fixed_dt);
   EXPECT_EQ(cds.next_time_advance(cdf_id), fixed_dt);
+}
+
+TEST(ErinBasicsTest, Test_uniform_cumulative_distribution_system_usage)
+{
+  namespace E = ERIN;
+  namespace ED = erin::distribution;
+  ED::CumulativeDistributionSystem cds{};
+  E::RealTimeType lower_dt{10};
+  E::RealTimeType upper_dt{50};
+  auto cdf_id = cds.add_uniform_cdf("a_uniform_cdf", lower_dt, upper_dt);
+  double dice_roll_1{1.0};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), upper_dt);
+  double dice_roll_2{0.0};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), lower_dt);
+  double dice_roll_3{0.5};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), (lower_dt + upper_dt) / 2);
 }
 
 int

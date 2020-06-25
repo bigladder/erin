@@ -48,7 +48,8 @@ namespace erin::distribution
 
   enum class CdfType
   {
-    Fixed = 0//,
+    Fixed = 0,
+    Uniform,
     //Normal,
     //Weibull
   };
@@ -67,18 +68,38 @@ namespace erin::distribution
     std::vector<RealTimeType> value{};
   };
 
+  struct Uniform_CDF
+  {
+    std::vector<RealTimeType> lower_bound{};
+    std::vector<RealTimeType> upper_bound{};
+  };
+
   class CumulativeDistributionSystem
   {
     public:
       CumulativeDistributionSystem();
 
-      size_type add_fixed_cdf(const std::string& tag, RealTimeType value_in_seconds);
+      size_type add_fixed_cdf(
+          const std::string& tag,
+          RealTimeType value_in_seconds);
+
+      size_type add_uniform_cdf(
+          const std::string& tag,
+          RealTimeType lower_bound_s,
+          RealTimeType upper_bound_s);
+
       [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
+
       RealTimeType next_time_advance(size_type cdf_id);
+
+      RealTimeType next_time_advance(size_type cdf_id, double fraction) const;
 
     private:
       Cdf cdf;
       Fixed_CDF fixed_cdf;
+      Uniform_CDF uniform_cdf;
+      std::default_random_engine g;
+      std::uniform_real_distribution<double> dist;
   };
 }
 #endif // ERIN_DISTRIBUTION_H

@@ -12,6 +12,7 @@
 #include "erin/devs/converter.h"
 #include "erin/devs/load.h"
 #include "erin/devs/mux.h"
+#include "erin/devs/on_off_switch.h"
 #include "erin/devs/storage.h"
 #include "erin/distribution.h"
 #include "erin/erin.h"
@@ -19,6 +20,7 @@
 #include "erin/graphviz.h"
 #include "erin/port.h"
 #include "erin/random.h"
+#include "erin/reliability.h"
 #include "erin/stream.h"
 #include "erin/type.h"
 #include "erin/utils.h"
@@ -554,7 +556,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
   const std::string scenario_id{"blue_sky"};
   const auto expected_duration
     = static_cast<::ERIN::RealTimeType>(8760 * ::ERIN::seconds_per_hour);
-  std::unordered_map<std::string, ::ERIN::Scenario> expected{{
+  std::unordered_map<std::string, ERIN::Scenario> expected{{
     scenario_id,
     ERIN::Scenario{
       scenario_id,
@@ -562,8 +564,8 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
       expected_duration,
       1,
       []() -> ERIN::RealTimeType { return 0; },
-      {}
-    }}};
+      {},
+      false}}};
   auto actual = t.read_scenarios();
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
@@ -675,7 +677,9 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   auto components = r.read_components(loads);
   auto networks = r.read_networks();
   auto scenarios = r.read_scenarios();
-  ERIN::Main m{si, components, networks, scenarios};
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -731,7 +735,9 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
   auto components = r.read_components(loads);
   auto networks = r.read_networks();
   auto scenarios = r.read_scenarios();
-  ERIN::Main m{si, components, networks, scenarios};
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -799,15 +805,18 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
     {
       scenario_id,
-      ::ERIN::Scenario{
+      ERIN::Scenario{
         scenario_id,
         net_id,
         1,
         -1,
         []() -> ::ERIN::RealTimeType { return 0; },
-        {}
+        {},
+        false
       }}};
-  ::ERIN::Main m{si, components, networks, scenarios};
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto out = m.run(scenario_id);
   EXPECT_EQ(out.get_is_good(), true);
 }
@@ -940,10 +949,10 @@ TEST(ErinBasicsTest, TestSumAchievedLoads)
 
 TEST(ErinBasicsTest, ScenarioResultsToCSV)
 {
-  ::ERIN::RealTimeType start_time{0};
-  ::ERIN::RealTimeType duration{4};
+  ERIN::RealTimeType start_time{0};
+  ERIN::RealTimeType duration{4};
   std::string elec_stream_id{"electrical"};
-  ::ERIN::ScenarioResults out{
+  ERIN::ScenarioResults out{
     true,
     start_time,
     duration,
@@ -971,7 +980,7 @@ TEST(ErinBasicsTest, ScenarioResultsToCSV)
     "0,1,1,10,10\n1,0.5,0.5,10,10\n2,0,0,5,5\n4,0,0,0,0\n"};
   EXPECT_EQ(expected, actual);
   duration = 4;
-  ::ERIN::ScenarioResults out2{
+  ERIN::ScenarioResults out2{
     true,
     start_time,
     duration,
@@ -1029,81 +1038,84 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
                            enw::ComponentAndPort{source_id, ep::Type::Outflow, 0},
                            enw::ComponentAndPort{load_id, ep::Type::Inflow, 0},
                            stream_id}}}};
-  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+  std::unordered_map<std::string, ERIN::Scenario> scenarios{
     {
       scenario_id,
-      ::ERIN::Scenario{
+      ERIN::Scenario{
         scenario_id,
         net_id,
         max_time,
         -1,
         nullptr,
-        {}
+        {},
+        false
       }}};
-  ::ERIN::Main m{si, components, networks, scenarios};
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto actual = m.max_time_for_scenario(scenario_id);
-  ::ERIN::RealTimeType expected = max_time;
+  ERIN::RealTimeType expected = max_time;
   EXPECT_EQ(expected, actual);
 }
 
 TEST(ErinBasicsTest, TestScenarioResultsMetrics)
 {
   // ## Example 0
-  ::ERIN::RealTimeType start_time{0};
-  ::ERIN::RealTimeType duration{4};
-  ::ERIN::ScenarioResults sr0{
+  ERIN::RealTimeType start_time{0};
+  ERIN::RealTimeType duration{4};
+  ERIN::ScenarioResults sr0{
     true,
     start_time,
     duration,
     {{ std::string{"A0"},
-       { ::ERIN::Datum{0,1.0,1.0},
-         ::ERIN::Datum{4,0.0,0.0}}}},
+       { ERIN::Datum{0,1.0,1.0},
+         ERIN::Datum{4,0.0,0.0}}}},
     {{ std::string{"A0"},
        std::string{"electrical"}}},
     {{ std::string{"A0"},
-       ::ERIN::ComponentType::Source}},
+       ERIN::ComponentType::Source}},
     {{ std::string{"A0"},
-       ::ERIN::PortRole::SourceOutflow}},
+       ERIN::PortRole::SourceOutflow}},
   };
   // energy_availability
   std::unordered_map<std::string,double> expected0{{"A0",1.0}};
   auto actual0 = sr0.calc_energy_availability();
-  ::erin_test_utils::compare_maps<double>(
+  erin_test_utils::compare_maps<double>(
       expected0, actual0, "energy_availability_with_sr0");
   // max_downtime
   std::unordered_map<std::string,::ERIN::RealTimeType> expected0_max_downtime{
     {"A0",0}};
   auto actual0_max_downtime = sr0.calc_max_downtime();
-  ::erin_test_utils::compare_maps_exact<::ERIN::RealTimeType>(
+  erin_test_utils::compare_maps_exact<::ERIN::RealTimeType>(
       expected0_max_downtime, actual0_max_downtime, "max_downtime_with_sr0");
   // load_not_served
   std::unordered_map<std::string,::ERIN::FlowValueType> expected0_lns{
     {"A0",0.0}};
   auto actual0_lns = sr0.calc_load_not_served();
-  ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
+  erin_test_utils::compare_maps<::ERIN::FlowValueType>(
       expected0_lns, actual0_lns, "load_not_served_with_sr0");
   // energy_usage_by_stream
   std::unordered_map<std::string,::ERIN::FlowValueType> expected0_eubs{
     {"electrical", 4.0}};
   auto actual0_eubs = sr0.calc_energy_usage_by_stream(
-      ::ERIN::ComponentType::Source);
-  ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
+      ERIN::ComponentType::Source);
+  erin_test_utils::compare_maps<::ERIN::FlowValueType>(
       expected0_eubs, actual0_eubs, "energy_usage_by_stream_with_sr0");
   // ## Example 1
-  ::ERIN::ScenarioResults sr1{
+  ERIN::ScenarioResults sr1{
     true,
     start_time,
     duration,
     {{ std::string{"A1"},
-       { ::ERIN::Datum{0,2.0,1.0},
-         ::ERIN::Datum{2,0.5,0.5},
-         ::ERIN::Datum{4,0.0,0.0}}}},
+       { ERIN::Datum{0,2.0,1.0},
+         ERIN::Datum{2,0.5,0.5},
+         ERIN::Datum{4,0.0,0.0}}}},
     {{ std::string{"A1"},
        std::string{"electrical"}}},
     {{ std::string{"A1"},
-       ::ERIN::ComponentType::Source}},
+       ERIN::ComponentType::Source}},
     {{ std::string{"A1"},
-       ::ERIN::PortRole::SourceOutflow}},
+       ERIN::PortRole::SourceOutflow}},
   };
   // energy_availability
   std::unordered_map<std::string,double> expected1{{"A1",0.5}};
@@ -1141,7 +1153,7 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
   // RealTimeType downtime;
   // FlowValueType load_not_served;
   // FlowValueType total_energy;
-  ::ERIN::ScenarioStats expected{
+  ERIN::ScenarioStats expected{
     4,    // RealTimeType uptime
     0,    // RealTimeType downtime
     0,    // RealTimeType max_downtime
@@ -1204,18 +1216,21 @@ TEST(ErinBasicsTest, BasicScenarioTest)
                            { source_id, ep::Type::Outflow, 0},
                            { load_id, ep::Type::Inflow, 0},
                            stream_id}}}};
-  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+  std::unordered_map<std::string, ERIN::Scenario> scenarios{
     {
       scenario_id,
-      ::ERIN::Scenario{
+      ERIN::Scenario{
         scenario_id,
         net_id,
         max_time,
         1,
         [](){ return 100; },
-        {}
+        {},
+        false
       }}};
-  ::ERIN::Main m{si, components, networks, scenarios};
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto actual = m.run_all();
   EXPECT_TRUE(actual.get_is_good());
   EXPECT_TRUE(actual.get_results().size() > 0);
@@ -1368,11 +1383,11 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
     { intensity_flood, 0.0}};
   std::unordered_map<std::string, E::Scenario> scenarios_low{
     { blue_sky,
-      E::Scenario{blue_sky, normal, 10, 1, [](){return 0;}, {}}},
+      E::Scenario{blue_sky, normal, 10, 1, [](){return 0;}, {}, false}},
     { class_4_hurricane,
       E::Scenario{
         class_4_hurricane,
-        emergency, 10, -1, [](){ return 100; }, intensities_low}}};
+        emergency, 10, -1, [](){ return 100; }, intensities_low, false}}};
   E::Main m_low{si, comps, networks, scenarios_low};
   auto results_low = m_low.run(class_4_hurricane);
   if (false) {
@@ -1394,11 +1409,11 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
   std::unordered_map<std::string, E::Scenario> scenarios_high{
     { blue_sky,
       E::Scenario{
-        blue_sky, normal, 10, 1, [](){return 0;}, {}}},
+        blue_sky, normal, 10, 1, [](){return 0;}, {}, false}},
     { class_4_hurricane,
       E::Scenario{
         class_4_hurricane,
-        emergency, 10, -1, [](){ return 100; }, intensities_high}}};
+        emergency, 10, -1, [](){ return 100; }, intensities_high, false}}};
   E::Main m_high{si, comps, networks, scenarios_high};
   auto results_high = m_high.run(class_4_hurricane);
   if (false) {
@@ -1870,7 +1885,8 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   auto si = r.read_simulation_info();
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
-  auto components = r.read_components(loads, fragilities);
+  ERIN::ReliabilityCoordinator rc{};
+  auto components = r.read_components(loads, fragilities, {}, rc);
   EXPECT_EQ(num_comps, components.size());
   // Test that components have fragilities
   for (const auto& c_pair : components) {
@@ -1914,21 +1930,23 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   constexpr int hurricane_max_occurrence = -1;
   const std::unordered_map<std::string, ::ERIN::Scenario> expected_scenarios{
     { "blue_sky",
-      ::ERIN::Scenario{
+      ERIN::Scenario{
         "blue_sky",
         "normal_operations",
         blue_sky_duration, 
         blue_sky_max_occurrence,
         []() -> ::ERIN::RealTimeType { return 0; },
-        {}}},
+        {},
+        false}},
     { "class_4_hurricane",
-      ::ERIN::Scenario{
+      ERIN::Scenario{
         "class_4_hurricane",
         "emergency_operations",
         hurricane_duration,
         hurricane_max_occurrence,
         []() -> ::ERIN::RealTimeType { return 87600; },
-        {{"wind_speed_mph", 156.0}, {"inundation_depth_ft", 8.0}}}}};
+        {{"wind_speed_mph", 156.0}, {"inundation_depth_ft", 8.0}},
+        false}}};
   ASSERT_EQ(expected_scenarios.size(), scenarios.size());
   for (const auto& scenario_pair : expected_scenarios) {
     auto scenario_it = scenarios.find(scenario_pair.first);
@@ -1942,7 +1960,9 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
     EXPECT_EQ(es.get_intensities(), as.get_intensities());
   }
   EXPECT_EQ(expected_scenarios, scenarios);
-  ::ERIN::Main m{si, components, networks, scenarios};
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -2050,7 +2070,8 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   auto si = r.read_simulation_info();
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
-  auto components = r.read_components(loads, fragilities);
+  ERIN::ReliabilityCoordinator rc{};
+  auto components = r.read_components(loads, fragilities, {}, rc);
   EXPECT_EQ(num_comps, components.size());
   // Test that components have fragilities
   for (const auto& c_pair : components) {
@@ -2094,21 +2115,23 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   constexpr int hurricane_max_occurrence = -1;
   const std::unordered_map<std::string, ::ERIN::Scenario> expected_scenarios{
     { "blue_sky",
-      ::ERIN::Scenario{
+      ERIN::Scenario{
         "blue_sky",
         "normal_operations",
         blue_sky_duration, 
         blue_sky_max_occurrence,
         []() -> ::ERIN::RealTimeType { return 0; },
-        {}}},
+        {},
+        false}},
     { "class_4_hurricane",
-      ::ERIN::Scenario{
+      ERIN::Scenario{
         "class_4_hurricane",
         "emergency_operations",
         hurricane_duration,
         hurricane_max_occurrence,
         []() -> ::ERIN::RealTimeType { return 87600; },
-        {{"wind_speed_mph", 200.0}, {"inundation_depth_ft", 20.0}}}}};
+        {{"wind_speed_mph", 200.0}, {"inundation_depth_ft", 20.0}},
+        false}}};
   ASSERT_EQ(expected_scenarios.size(), scenarios.size());
   for (const auto& scenario_pair : expected_scenarios) {
     auto scenario_it = scenarios.find(scenario_pair.first);
@@ -2122,7 +2145,9 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
     EXPECT_EQ(es.get_intensities(), as.get_intensities());
   }
   EXPECT_EQ(expected_scenarios, scenarios);
-  ::ERIN::Main m{si, components, networks, scenarios};
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto out = m.run("class_4_hurricane");
   EXPECT_EQ(out.get_is_good(), true);
   std::unordered_set<std::string> expected_keys{
@@ -3567,9 +3592,6 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
   EXPECT_EQ(
       thermal_load_stats.total_energy,
       expected_thermal_load_energy_kJ);
-  ERIN::FlowValueType expected_waste_energy_kJ{
-    (expected_source_energy_kJ * const_eff)
-    - (expected_thermal_load_energy_kJ / const_eff)};
 }
 
 TEST(ErinDevs, Test_smart_port_object)
@@ -5674,6 +5696,862 @@ TEST(ErinBasicsTest, Test_energy_balance_on_mux_with_replay)
   EXPECT_NEAR(ED::mux_get_outflow_achieved(s4), ED::mux_get_inflow_achieved(s4), 1e-6);
   auto dt4 = ED::mux_time_advance(s4);
   ASSERT_EQ(dt4, 0);
+}
+
+TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
+{
+  auto c = ERIN::ReliabilityCoordinator{};
+  std::int64_t final_time{10};
+  auto reliability_schedule_1 = c.calc_reliability_schedule(final_time);
+  EXPECT_EQ(reliability_schedule_1.size(), 0);
+  auto failure_id = c.add_fixed_cdf("f", 5);
+  auto repair_id = c.add_fixed_cdf("r", 1);
+  auto fm_id = c.add_failure_mode(
+      "standard failure",
+      failure_id,
+      repair_id);
+  auto comp_id = c.register_component("c");
+  c.link_component_with_failure_mode(comp_id, fm_id);
+  auto reliability_schedule = c.calc_reliability_schedule(final_time);
+  EXPECT_EQ(reliability_schedule.size(), 1);
+  std::vector<ERIN::TimeState> expected{
+    ERIN::TimeState{0, true},
+    ERIN::TimeState{5, false},
+    ERIN::TimeState{6, true},
+    ERIN::TimeState{11, false},
+  };
+  EXPECT_EQ(reliability_schedule.at(0), expected);
+}
+
+TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 100.0\n"
+    "failure_modes = [\"standard\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[networks.normal_operations]\n"
+    "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto rc = E::ReliabilityCoordinator();
+  auto id_break = rc.add_fixed_cdf("break", 5);
+  auto id_repair = rc.add_fixed_cdf("repair", 2);
+  auto id_fm = rc.add_failure_mode(
+          "standard",
+          id_break,
+          id_repair);
+  auto id_S = rc.register_component("S");
+  rc.link_component_with_failure_mode(id_S, id_fm);
+  std::int64_t final_time{10};
+  auto expected_sch =
+    rc.calc_reliability_schedule_by_component_tag(final_time);
+  auto m = E::make_main_from_string(input);
+  auto sch = m.get_reliability_schedule();
+  EXPECT_EQ(sch.size(), expected_sch.size());
+  EXPECT_EQ(sch, expected_sch);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  EXPECT_EQ(expected_results, bs_data);
+}
+
+TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 100.0\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "failure_modes = [\"standard\"]\n"
+    "[networks.normal_operations]\n"
+    "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto rc = E::ReliabilityCoordinator();
+  auto id_break = rc.add_fixed_cdf("break", 5);
+  auto id_repair = rc.add_fixed_cdf("repair", 2);
+  auto id_fm = rc.add_failure_mode(
+          "standard",
+          id_break,
+          id_repair);
+  auto id_L = rc.register_component("L");
+  rc.link_component_with_failure_mode(id_L, id_fm);
+  std::int64_t final_time{10};
+  auto expected_sch =
+    rc.calc_reliability_schedule_by_component_tag(final_time);
+  auto m = E::make_main_from_string(input);
+  auto sch = m.get_reliability_schedule();
+  EXPECT_EQ(sch.size(), expected_sch.size());
+  EXPECT_EQ(sch, expected_sch);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  EXPECT_EQ(expected_results, bs_data);
+}
+
+TEST(ErinBasicsTest, Test_that_reliability_works_on_mux_component)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S1]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "max_outflow = 50.0\n"
+    "[components.S2]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "[components.L1]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[components.L2]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[components.M]\n"
+    "type = \"muxer\"\n"
+    "num_inflows = 2\n"
+    "num_outflows = 2\n"
+    "stream = \"electricity\"\n"
+    "dispatch_strategy = \"in_order\"\n"
+    "failure_modes = [\"standard\"]\n"
+    "[networks.normal_operations]\n"
+    "connections = [\n"
+    "    [\"S1:OUT(0)\",  \"M:IN(0)\", \"electricity\"],\n"
+    "    [\"S2:OUT(0)\",  \"M:IN(1)\", \"electricity\"],\n"
+    "    [ \"M:OUT(0)\", \"L1:IN(0)\", \"electricity\"],\n"
+    "    [ \"M:OUT(1)\", \"L2:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S1"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 200.0, 50.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 200.0, 50.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"S2"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 150.0, 150.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 150.0, 150.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"M-inflow(0)"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 200.0, 50.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 200.0, 50.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"M-inflow(1)"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 150.0, 150.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 150.0, 150.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"M-outflow(0)"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"M-outflow(1)"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L1"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L2"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  if (false) {
+    for (const auto& item : bs_data) {
+      std::cout << item.first << "\n";
+      for (const auto& d : item.second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  EXPECT_EQ(expected_results, bs_data);
+}
+
+TEST(ErinBasicsTest, Test_that_reliability_works_on_converter_component)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"natural_gas\"\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[components.C]\n"
+    "type = \"converter\"\n"
+    "input_stream = \"natural_gas\"\n"
+    "output_stream = \"electricity\"\n"
+    "lossflow = \"waste_heat\"\n"
+    "constant_efficiency = 0.5\n"
+    "failure_modes = [\"standard\"]\n"
+    "[networks.normal_operations]\n"
+    "connections = [\n"
+    "    [\"S:OUT(0)\",  \"C:IN(0)\", \"natural_gas\"],\n"
+    "    [\"C:OUT(0)\",  \"L:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 200.0, 200.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 200.0, 200.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"C-inflow"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 200.0, 200.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 200.0, 200.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"C-outflow"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"C-lossflow"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 0.0, 0.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 0.0, 0.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"C-wasteflow"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  if (false) {
+    std::vector<std::string> keys{};
+    std::cout << "actual keys:\n";
+    for (const auto& item : bs_data) {
+      std::cout << "- " << item.first << "\n";
+    }
+    std::cout << "expected keys:\n";
+    for (const auto& item : expected_results) {
+      const auto& k = item.first;
+      std::cout << "- " << k << "\n";
+      keys.emplace_back(k);
+      auto it = bs_data.find(k);
+      ASSERT_TRUE(it != bs_data.end()) << "expected key '" << k << "' not found in bs_data\n";
+    }
+    std::sort(keys.begin(), keys.end());
+    for (const auto& k : keys) {
+      std::cout << k << ":\n";
+      std::cout << "- EXPECTED:\n";
+      for (const auto& d : expected_results[k]) {
+        std::cout << "  " << d << "\n";
+      }
+      std::cout << "- ACTUAL:\n";
+      auto it = bs_data.find(k);
+      ASSERT_TRUE(it != bs_data.end());
+      for (const auto& d : it->second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  EXPECT_EQ(expected_results, bs_data);
+}
+
+TEST(ErinBasicsTest, Test_that_reliability_works_on_pass_through_component)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "[components.P]\n"
+    "type = \"pass_through\"\n"
+    "stream = \"electricity\"\n"
+    "failure_modes = [\"standard\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[networks.normal_operations]\n"
+    "connections = [\n"
+    "    [\"S:OUT(0)\",  \"P:IN(0)\", \"electricity\"],\n"
+    "    [\"P:OUT(0)\",  \"L:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"P"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  if (false) {
+    std::vector<std::string> keys{};
+    std::cout << "actual keys:\n";
+    for (const auto& item : bs_data) {
+      std::cout << "- " << item.first << "\n";
+    }
+    std::cout << "expected keys:\n";
+    for (const auto& item : expected_results) {
+      const auto& k = item.first;
+      std::cout << "- " << k << "\n";
+      keys.emplace_back(k);
+      auto it = bs_data.find(k);
+      ASSERT_TRUE(it != bs_data.end()) << "expected key '" << k << "' not found in bs_data\n";
+    }
+    std::sort(keys.begin(), keys.end());
+    for (const auto& k : keys) {
+      std::cout << k << ":\n";
+      std::cout << "- EXPECTED:\n";
+      for (const auto& d : expected_results[k]) {
+        std::cout << "  " << d << "\n";
+      }
+      std::cout << "- ACTUAL:\n";
+      auto it = bs_data.find(k);
+      ASSERT_TRUE(it != bs_data.end());
+      for (const auto& d : it->second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  EXPECT_EQ(expected_results, bs_data);
+}
+
+TEST(ErinBasicsTest, Test_that_reliability_works_on_storage_component)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[cdf.break]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.repair]\n"
+    "type = \"fixed\"\n"
+    "value = 2\n"
+    "time_unit = \"seconds\"\n"
+    "[failure_mode.standard]\n"
+    "failure_cdf = \"break\"\n"
+    "repair_cdf = \"repair\"\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "[components.BATTERY]\n"
+    "type = \"store\"\n"
+    "outflow = \"electricity\"\n"
+    "inflow = \"electricity\"\n"
+    "max_inflow = 50.0\n"
+    "capacity_unit = \"kJ\"\n"
+    "capacity = 300.0\n"
+    "failure_modes = [\"standard\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[networks.normal_operations]\n"
+    "connections = [\n"
+    "    [\"S:OUT(0)\",  \"BATTERY:IN(0)\", \"electricity\"],\n"
+    "    [\"BATTERY:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"normal_operations\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results = out.get_results();
+  ASSERT_EQ(results.size(), 1);
+  auto blue_sky_it = results.find("blue_sky");
+  ASSERT_TRUE(blue_sky_it != results.end());
+  const auto& raw_bs_data = results["blue_sky"];
+  ASSERT_EQ(raw_bs_data.size(), 1);
+  const auto& bs_scenario_results = raw_bs_data.at(0);
+  ASSERT_TRUE(bs_scenario_results.get_is_good());
+  const auto& bs_data = bs_scenario_results.get_results();
+  std::unordered_map<std::string, std::vector<ERIN::Datum>>
+    expected_results{
+      { std::string{"S"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 50.0, 50.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 50.0, 50.0},
+          ERIN::Datum{8, 50.0, 50.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"BATTERY-inflow"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 50.0, 50.0},
+          ERIN::Datum{5, 50.0, 0.0},
+          ERIN::Datum{7, 50.0, 50.0},
+          ERIN::Datum{8, 50.0, 50.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"BATTERY-outflow"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{8, 100.0, 50.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"BATTERY-storeflow"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 0.0, 0.0},
+          ERIN::Datum{5, 50.0, 0.0},
+          ERIN::Datum{7, 0.0, 0.0},
+          ERIN::Datum{8, 0.0, 0.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"BATTERY-discharge"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 50.0, 50.0},
+          ERIN::Datum{5, 0.0, 0.0},
+          ERIN::Datum{7, 50.0, 50.0},
+          ERIN::Datum{8, 50.0, 0.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"L"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 100.0, 100.0},
+          ERIN::Datum{5, 100.0, 0.0},
+          ERIN::Datum{7, 100.0, 100.0},
+          ERIN::Datum{8, 100.0, 50.0},
+          ERIN::Datum{10, 0.0, 0.0}}}};
+  ASSERT_EQ(expected_results.size(), bs_data.size());
+  if (false) {
+    std::vector<std::string> keys{};
+    std::cout << "actual keys:\n";
+    for (const auto& item : bs_data) {
+      std::cout << "- " << item.first << "\n";
+    }
+    std::cout << "expected keys:\n";
+    for (const auto& item : expected_results) {
+      const auto& k = item.first;
+      std::cout << "- " << k << "\n";
+      keys.emplace_back(k);
+      auto it = bs_data.find(k);
+      ASSERT_TRUE(it != bs_data.end()) << "expected key '" << k << "' not found in bs_data\n";
+    }
+    std::sort(keys.begin(), keys.end());
+    for (const auto& k : keys) {
+      std::cout << k << ":\n";
+      std::cout << "- EXPECTED:\n";
+      for (const auto& d : expected_results[k]) {
+        std::cout << "  " << d << "\n";
+      }
+      std::cout << "- ACTUAL:\n";
+      auto it = bs_data.find(k);
+      ASSERT_TRUE(it != bs_data.end());
+      for (const auto& d : it->second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  EXPECT_EQ(expected_results, bs_data);
+}
+
+TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
+{
+  namespace E = ERIN;
+  E::ReliabilityCoordinator rc{};
+  auto cdf_break_id = rc.add_fixed_cdf("break", 10);
+  auto cdf_repair_id = rc.add_fixed_cdf("repair", 5);
+  auto fm_standard_id = rc.add_failure_mode(
+      "standard", cdf_break_id, cdf_repair_id);
+  std::string comp_string_id{"S"};
+  auto comp_id = rc.register_component(comp_string_id);
+  rc.link_component_with_failure_mode(comp_id, fm_standard_id);
+  ERIN::RealTimeType final_time{100};
+  auto sch = rc.calc_reliability_schedule_by_component_tag(final_time);
+  std::unordered_map<std::string, std::vector<E::TimeState>>
+    expected_sch{
+      { comp_string_id,
+        std::vector<E::TimeState>{
+          E::TimeState{0,  true},
+          E::TimeState{10, false},
+          E::TimeState{15, true},
+          E::TimeState{25, false},
+          E::TimeState{30, true},
+          E::TimeState{40, false},
+          E::TimeState{45, true},
+          E::TimeState{55, false},
+          E::TimeState{60, true},
+          E::TimeState{70, false},
+          E::TimeState{75, true},
+          E::TimeState{85, false},
+          E::TimeState{90, true},
+          E::TimeState{100, false},
+          E::TimeState{105, true}}}};
+  ASSERT_EQ(sch, expected_sch);
+  E::RealTimeType scenario_start{62};
+  E::RealTimeType scenario_end{87};
+  auto clipped_sch = E::clip_schedule_to<std::string>(
+      sch, scenario_start, scenario_end);
+  std::unordered_map<std::string, std::vector<E::TimeState>>
+    expected_clipped_sch{
+      { comp_string_id,
+        std::vector<E::TimeState>{
+          E::TimeState{62-62, true},
+          E::TimeState{70-62, false},
+          E::TimeState{75-62, true},
+          E::TimeState{85-62, false}}}};
+  ASSERT_EQ(clipped_sch, expected_clipped_sch);
+}
+
+TEST(ErinBasicsTest, Test_that_switch_element_works)
+{
+  namespace ED = erin::devs;
+  namespace E = ERIN;
+  std::vector<E::TimeState> schedule{
+    E::TimeState{0, true},
+    E::TimeState{5, false},
+    E::TimeState{7, true},
+    E::TimeState{12, false},
+    E::TimeState{14, true}};
+  ED::OnOffSwitchData expected_data{
+    std::vector<E::RealTimeType>{0,5,7,12,14},
+    std::vector<bool>{true,false,true,false,true},
+    std::vector<E::RealTimeType>::size_type{5}
+  };
+  auto data = ED::make_on_off_switch_data(schedule);
+  EXPECT_EQ(data, expected_data);
+  ED::OnOffSwitchState expected_s{
+    0,
+    true,
+    1,
+    ED::Port{0, 0.0},
+    ED::Port{0, 0.0},
+    false,
+    false
+  };
+  auto s = ED::make_on_off_switch_state(data);
+  EXPECT_EQ(s, expected_s);
+  auto dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 5);
+  std::vector<E::PortValue> xs{
+    E::PortValue{ED::inport_outflow_request, 100.0}};
+  s = ED::on_off_switch_external_transition(s, 1, xs);
+  EXPECT_NE(s, expected_s);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 0);
+  std::vector<ED::PortValue> expected_ys{
+    E::PortValue{ED::outport_inflow_request, 100.0}
+  };
+  auto ys = ED::on_off_switch_output_function(s);
+  ASSERT_EQ(expected_ys.size(), ys.size());
+  EXPECT_EQ(expected_ys[0].port, ys[0].port);
+  EXPECT_EQ(expected_ys[0].value, ys[0].value);
+  s = ED::on_off_switch_internal_transition(data, s);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 4);
+  ys = ED::on_off_switch_output_function(s);
+  expected_ys = std::vector<ED::PortValue>{};
+  EXPECT_EQ(expected_ys.size(), ys.size());
+  s = ED::on_off_switch_internal_transition(data, s);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 0);
+  ys = ED::on_off_switch_output_function(s);
+  expected_ys = std::vector<ED::PortValue>{
+    ED::PortValue{ED::outport_inflow_request, 0.0},
+    ED::PortValue{ED::outport_outflow_achieved, 0.0},
+  };
+  EXPECT_TRUE(
+      erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys, expected_ys, compare_ports));
+  s = ED::on_off_switch_internal_transition(data, s);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 2);
+  ys = ED::on_off_switch_output_function(s);
+  EXPECT_EQ(ys.size(), 0);
+  s = ED::on_off_switch_internal_transition(data, s);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 0);
+  ys = ED::on_off_switch_output_function(s);
+  expected_ys = std::vector<ED::PortValue>{
+    ED::PortValue{ED::outport_inflow_request, 100.0},
+    ED::PortValue{ED::outport_outflow_achieved, 100.0}};
+  EXPECT_TRUE(
+      erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys, expected_ys, compare_ports));
+  s = ED::on_off_switch_internal_transition(data, s);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 5);
+  xs = std::vector<E::PortValue>{
+    E::PortValue{ED::inport_outflow_request, 50.0}};
+  s = ED::on_off_switch_confluent_transition(data, s, xs);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 0);
+  EXPECT_EQ(s.time, 12);
+  EXPECT_FALSE(s.state);
+  ys = ED::on_off_switch_output_function(s);
+  expected_ys = std::vector<ED::PortValue>{
+    ED::PortValue{ED::outport_inflow_request, 0.0},
+    ED::PortValue{ED::outport_outflow_achieved, 0.0}};
+  EXPECT_TRUE(
+      erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys, expected_ys, compare_ports));
 }
 
 int

@@ -64,11 +64,14 @@ namespace erin::network
         ERIN::PortsAndElements>& ports_and_elements,
       const std::unordered_map<std::string, std::vector<double>>&
         failure_probs_by_comp_id,
-      const std::function<double()>& rand_fn)
+      const std::function<double()>& rand_fn,
+      const std::unordered_map<std::string, std::vector<ERIN::TimeState>>& 
+        reliability_schedule)
   {
     auto comp_it = comps_added.find(comp_id);
-    if (comp_it != comps_added.end())
+    if (comp_it != comps_added.end()) {
       return;
+    }
     auto it = components.find(comp_id);
     if (it == components.end()) {
       std::ostringstream oss;
@@ -88,34 +91,44 @@ namespace erin::network
                     << "... p       = " << p << "\n";
         }
         if (p >= 1.0) {
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high)
+          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
             std::cout << "... (p >= 1.0) => is_failed = true\n";
+          }
           is_failed = true;
           break;
         }
         else if (p <= 0.0) {
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high)
+          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
             std::cout << "... (p <= 0.0) => is_failed = false; checking next p...\n";
+          }
           continue;
         }
         else {
           random_fraction = rand_fn();
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high)
+          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
             std::cout << "... random_fraction = " << random_fraction << "\n";
+          }
           if (random_fraction <= p) {
-            if constexpr (ERIN::debug_level >= ERIN::debug_level_high)
+            if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
               std::cout << "... (random_fraction <= p) => is_failed = true\n";
+            }
             is_failed = true;
             break;
           }
         }
       }
     }
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high)
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
       std::cout << "add_if_not_added(...)\n"
                 << "... comp_id = '" << comp_id << "'\n"
                 << "... is_failed = " << (is_failed ? "true" : "false") << "\n";
-    auto pe = c->add_to_network(network, scenario_id, is_failed);
+    }
+    std::vector<ERIN::TimeState> rel_sch{};
+    auto reliability_it = reliability_schedule.find(comp_id);
+    if (reliability_it != reliability_schedule.end()) {
+      rel_sch = reliability_it->second;
+    }
+    auto pe = c->add_to_network(network, scenario_id, is_failed, rel_sch);
     ports_and_elements[comp_id] = pe;
     comps_added.emplace(comp_id);
   }
@@ -251,17 +264,19 @@ namespace erin::network
     }
   }
 
-  std::vector<::ERIN::FlowElement*>
+  std::vector<ERIN::FlowElement*>
   build(
       const std::string& scenario_id,
-      adevs::Digraph<ERIN::FlowValueType, ::ERIN::Time>& network,
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
       const std::vector<Connection>& connections,
       const std::unordered_map<
         std::string, std::unique_ptr<ERIN::Component>>& components,
       const std::unordered_map<
         std::string, std::vector<double>>& failure_probs_by_comp_id,
       const std::function<double()>& rand_fn,
-      bool two_way)
+      bool two_way,
+      const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
+        reliability_schedule)
   {
     namespace E = ERIN;
     if constexpr (E::debug_level >= E::debug_level_high) {
@@ -274,8 +289,9 @@ namespace erin::network
     std::unordered_set<std::string> comps_added{};
     std::unordered_map<std::string, E::PortsAndElements> pes{};
     for (const auto& connection: connections) {
-      if constexpr (E::debug_level >= E::debug_level_high)
+      if constexpr (E::debug_level >= E::debug_level_high) {
         std::cout << "... processing connection: " << connection << "\n";
+      }
       const auto& comp1_id = connection.first.component_id;
       const auto& port1_type = connection.first.port_type;
       const auto& port1_num = connection.first.port_number;
@@ -283,14 +299,15 @@ namespace erin::network
       const auto& port2_type = connection.second.port_type;
       const auto& port2_num = connection.second.port_number;
       const auto& stream = connection.stream;
-      if constexpr (E::debug_level >= E::debug_level_high)
+      if constexpr (E::debug_level >= E::debug_level_high) {
         std::cout << "... connection: " << connection << "\n";
+      }
       add_if_not_added(
           comp1_id, scenario_id, components, network, comps_added, pes,
-          failure_probs_by_comp_id, rand_fn);
+          failure_probs_by_comp_id, rand_fn, reliability_schedule);
       add_if_not_added(
           comp2_id, scenario_id, components, network, comps_added, pes,
-          failure_probs_by_comp_id, rand_fn);
+          failure_probs_by_comp_id, rand_fn, reliability_schedule);
       connect(
           network,
           pes.at(comp1_id).port_map,
@@ -304,8 +321,9 @@ namespace erin::network
     }
     for (const auto& pair: pes) {
       auto& es = pair.second.elements_added;
-      for (auto e: es)
+      for (auto e: es) {
         elements.emplace(e);
+      }
     }
     return std::vector<::ERIN::FlowElement*>(elements.begin(), elements.end());
   }

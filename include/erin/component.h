@@ -7,6 +7,7 @@
 #include "erin/element.h"
 #include "erin/fragility.h"
 #include "erin/port.h"
+#include "erin/reliability.h"
 #include "erin/stream.h"
 #include "adevs.h"
 #include <memory>
@@ -81,7 +82,8 @@ namespace ERIN
       virtual PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
-          bool is_failed = false) const = 0;
+          bool is_failed = false,
+          const std::vector<TimeState>& reliability_schedule = {}) const = 0;
 
     protected:
       void connect_source_to_sink(
@@ -134,7 +136,8 @@ namespace ERIN
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
-          bool is_failed = false) const override;
+          bool is_failed = false,
+          const std::vector<TimeState>& reliability_schedule = {}) const override;
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
 
       friend bool operator==(const LoadComponent& a, const LoadComponent& b);
@@ -213,7 +216,8 @@ namespace ERIN
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
-          bool is_failed = false) const override;
+          bool is_failed = false,
+          const std::vector<TimeState>& reliability_schedule = {}) const override;
 
       friend bool operator==(const SourceComponent& a, const SourceComponent& b);
       friend bool operator!=(const SourceComponent& a, const SourceComponent& b);
@@ -255,7 +259,8 @@ namespace ERIN
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
-          bool is_failed = false) const override;
+          bool is_failed = false,
+          const std::vector<TimeState>& reliability_schedule = {}) const override;
 
       friend bool operator==(const MuxerComponent& a, const MuxerComponent& b);
       friend bool operator!=(const MuxerComponent& a, const MuxerComponent& b);
@@ -295,7 +300,8 @@ namespace ERIN
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
-          bool is_failed = false) const override;
+          bool is_failed = false,
+          const std::vector<TimeState>& reliability_schedule = {}) const override;
 
       friend bool operator==(const ConverterComponent& a, const ConverterComponent& b);
       friend std::ostream& operator<<(std::ostream& os, const ConverterComponent& n);
@@ -334,7 +340,8 @@ namespace ERIN
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
-          bool is_failed = false) const override;
+          bool is_failed = false,
+          const std::vector<TimeState>& reliability_schedule = {}) const override;
 
       friend bool operator==(const PassThroughComponent& a, const PassThroughComponent& b);
       friend std::ostream& operator<<(std::ostream& os, const PassThroughComponent& n);
@@ -368,7 +375,8 @@ namespace ERIN
       PortsAndElements add_to_network(
           adevs::Digraph<FlowValueType, Time>& nw,
           const std::string& active_scenario,
-          bool is_failed = false) const override;
+          bool is_failed = false,
+          const std::vector<TimeState>& reliability_schedule = {}) const override;
 
       friend bool operator==(const StorageComponent& a, const StorageComponent& b);
       friend std::ostream& operator<<(std::ostream& os, const StorageComponent& n);

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15) # required for gtest_discover_tests
 
-project(ERIN VERSION 0.0.16 LANGUAGES CXX)
+project(ERIN VERSION 0.0.17 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
@@ -180,4 +180,8 @@ configure_file(
 configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex08.toml"
   "ex08.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex09.toml"
+  "ex09.toml"
   COPYONLY)

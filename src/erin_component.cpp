@@ -316,7 +316,8 @@ namespace ERIN
   LoadComponent::add_to_network(
       adevs::Digraph<FlowValueType, Time>& network,
       const std::string& active_scenario,
-      bool is_failed) const
+      bool is_failed,
+      const std::vector<TimeState>& reliability_schedule) const
   {
     namespace ep = erin::port;
     std::unordered_set<FlowElement*> elements;
@@ -324,9 +325,9 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "LoadComponent::add_to_network(...)\n";
     }
+    bool has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto stream = get_input_stream();
-    const auto& stream_name{stream};
     auto loads = loads_by_scenario.at(active_scenario);
     auto sink = new Sink(the_id, ComponentType::Load, stream, loads);
     sink->set_recording_on();
@@ -342,8 +343,18 @@ namespace ERIN
           0.0,
           0.0);
       elements.emplace(lim);
-      connect_source_to_sink(network, lim, sink, true, stream_name);
+      connect_source_to_sink(network, lim, sink, true, stream);
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{lim, 0}};
+    }
+    else if (has_reliability) {
+      auto on_off = new OnOffSwitch(
+          the_id + "-limits",
+          ComponentType::Source,
+          stream,
+          reliability_schedule);
+      elements.emplace(on_off);
+      connect_source_to_sink(network, on_off, sink, true, stream);
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{on_off, 0}};
     }
     else {
       ports[ep::Type::Inflow] = std::vector<ElementPort>{{sink, 0}};
@@ -586,9 +597,10 @@ namespace ERIN
 
   PortsAndElements
   SourceComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>& /* network */,
+      adevs::Digraph<FlowValueType, Time>& network,
       const std::string&,
-      bool is_failed) const
+      bool is_failed,
+      const std::vector<TimeState>& reliability_schedule) const
   {
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
@@ -597,6 +609,7 @@ namespace ERIN
       std::cout << "SourceComponent::add_to_network("
                 << "adevs::Digraph<FlowValueType>& network)\n";
     }
+    bool has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto stream = get_output_stream();
     if (is_failed || limits.get_is_limited()) {
@@ -616,18 +629,51 @@ namespace ERIN
           the_id, ComponentType::Source, stream, min_output, max_output,
           PortRole::SourceOutflow);
       elements.emplace(lim);
-      lim->set_recording_on();
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
+      if (has_reliability) {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "has_reliability = true\n";
+        }
+        auto on_off = new OnOffSwitch(
+            the_id, ComponentType::Source, stream, reliability_schedule,
+            PortRole::SourceOutflow);
+        on_off->set_recording_on();
+        elements.emplace(on_off);
+        connect_source_to_sink(network, lim, on_off, true, stream);
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
+      }
+      else {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "has_reliability = false\n";
+        }
+        lim->set_recording_on();
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
+      }
     }
     else {
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "!is_failed\n";
       }
-      auto meter = new FlowMeter(the_id, ComponentType::Source, stream,
-          PortRole::SourceOutflow);
-      elements.emplace(meter);
-      meter->set_recording_on();
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};
+      if (has_reliability) {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "has_reliability = true\n";
+        }
+        auto on_off = new OnOffSwitch(
+            the_id, ComponentType::Source, stream, reliability_schedule,
+            PortRole::SourceOutflow);
+        elements.emplace(on_off);
+        on_off->set_recording_on();
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
+      }
+      else {
+        if constexpr (debug_level >= debug_level_high) {
+          std::cout << "has_reliability = false\n";
+        }
+        auto meter = new FlowMeter(the_id, ComponentType::Source, stream,
+            PortRole::SourceOutflow);
+        elements.emplace(meter);
+        meter->set_recording_on();
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};
+      }
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit\n";
@@ -736,9 +782,10 @@ namespace ERIN
 
   PortsAndElements
   MuxerComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>& /* nw */,
+      adevs::Digraph<FlowValueType, Time>& nw,
       const std::string&, // active_scenario
-      bool is_failed) const
+      bool is_failed,
+      const std::vector<TimeState>& reliability_schedule) const
   {
     namespace ep = erin::port;
     std::unordered_set<FlowElement*> elements{};
@@ -746,6 +793,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MuxerComponent::add_to_network(...)\n";
     }
+    auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto the_stream = get_input_stream();
     auto the_ct = ComponentType::Muxer;
@@ -759,13 +807,44 @@ namespace ERIN
           num_inflows,
           num_outflows,
           output_strategy);
-      mux->set_recording_on();
+      if (!has_reliability) {
+        mux->set_recording_on();
+      }
       elements.emplace(mux);
       for (int i{0}; i < num_inflows; ++i) {
-        inflow_meters.emplace_back(ElementPort{mux, i});
+        if (has_reliability) {
+          auto m = new FlowMeter(
+              the_id + "-inflow(" + std::to_string(i) + ")",
+              the_ct,
+              the_stream,
+              PortRole::Inflow);
+          m->set_recording_on();
+          elements.emplace(m);
+          connect_source_to_sink_with_ports(
+              nw, m, 0, mux, i, true, the_stream);
+          inflow_meters.emplace_back(ElementPort{m, 0});
+        }
+        else {
+          inflow_meters.emplace_back(ElementPort{mux, i});
+        }
       }
       for (int i{0}; i < num_outflows; ++i) {
-        outflow_meters.emplace_back(ElementPort{mux, i});
+        if (has_reliability) {
+          auto on_off = new OnOffSwitch(
+              the_id + "-outflow(" + std::to_string(i) + ")",
+              the_ct,
+              the_stream,
+              reliability_schedule,
+              PortRole::Outflow);
+          on_off->set_recording_on();
+          elements.emplace(on_off);
+          connect_source_to_sink_with_ports(
+              nw, mux, i, on_off, 0, true, the_stream);
+          outflow_meters.emplace_back(ElementPort{on_off, 0});
+        }
+        else {
+          outflow_meters.emplace_back(ElementPort{mux, i});
+        }
       }
     }
     else {
@@ -903,9 +982,10 @@ namespace ERIN
 
   PortsAndElements
   ConverterComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>&, // nw
+      adevs::Digraph<FlowValueType, Time>& nw,
       const std::string&, // active_scenario
-      bool is_failed) const
+      bool is_failed,
+      const std::vector<TimeState>& reliability_schedule) const
   {
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
@@ -913,6 +993,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "ConverterComponent::add_to_network(...)\n";
     }
+    auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto the_type = ComponentType::Converter;
     auto in_stream = get_input_stream();
@@ -947,9 +1028,37 @@ namespace ERIN
           the_id, the_type, in_stream, out_stream, out_from_in, in_from_out,
           loss_stream);
       elements.emplace(conv);
-      conv->set_recording_on();
-      ports[ep::Type::Inflow] = std::vector<ElementPort>{{conv, 0}};
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{{conv, 0}, {conv, 1}};
+      if (has_reliability) {
+        conv->set_wasteflow_recording_on();
+        auto m_inflow = new FlowMeter(
+            the_id + "-inflow", the_type, in_stream, PortRole::Inflow);
+        m_inflow->set_recording_on();
+        elements.emplace(m_inflow);
+        auto on_off_outflow = new OnOffSwitch(
+            the_id + "-outflow", the_type, out_stream, reliability_schedule,
+            PortRole::Outflow);
+        on_off_outflow->set_recording_on();
+        elements.emplace(on_off_outflow);
+        auto on_off_lossflow = new OnOffSwitch(
+            the_id + "-lossflow", the_type, loss_stream, reliability_schedule,
+            PortRole::Outflow);
+        on_off_lossflow->set_recording_on();
+        elements.emplace(on_off_lossflow);
+        connect_source_to_sink_with_ports(
+            nw, m_inflow, 0, conv, 0, true, in_stream);
+        connect_source_to_sink_with_ports(
+            nw, conv, 0, on_off_outflow, 0, true, out_stream);
+        connect_source_to_sink_with_ports(
+            nw, conv, 1, on_off_lossflow, 0, true, loss_stream);
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{m_inflow, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{
+          {on_off_outflow, 0}, {on_off_lossflow, 0}};
+      }
+      else {
+        conv->set_recording_on();
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{conv, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{conv, 0}, {conv, 1}};
+      }
     }
     return PortsAndElements{ports, elements};
   }
@@ -1041,13 +1150,15 @@ namespace ERIN
 
   PortsAndElements
   PassThroughComponent::add_to_network(
-      adevs::Digraph<FlowValueType, Time>& /* nw */,
+      adevs::Digraph<FlowValueType, Time>& nw,
       const std::string&, // active_scenario
-      bool is_failed) const
+      bool is_failed,
+      const std::vector<TimeState>& reliability_schedule) const
   {
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
+    auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "PassThroughComponent::add_to_network(...);id="
@@ -1062,11 +1173,33 @@ namespace ERIN
         min_limit = 0.0;
         max_limit = 0.0;
       }
-      auto the_limits = new FlowLimits(the_id, the_type, stream, min_limit, max_limit);
+      auto the_limits = new FlowLimits(
+          the_id, the_type, stream, min_limit, max_limit);
       elements.emplace(the_limits);
-      the_limits->set_recording_on();
-      ports[ep::Type::Inflow] = std::vector<ElementPort>{{the_limits, 0}};
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{{the_limits, 0}};
+      if (has_reliability && (!is_failed)) {
+        auto on_off = new OnOffSwitch(
+            the_id, the_type, stream, reliability_schedule,
+            PortRole::Outflow);
+        elements.emplace(on_off);
+        on_off->set_recording_on();
+        connect_source_to_sink_with_ports(
+            nw, the_limits, 0, on_off, 0, true, stream);
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{the_limits, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{on_off, 0}};
+      }
+      else {
+        the_limits->set_recording_on();
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{the_limits, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{the_limits, 0}};
+      }
+    }
+    else if (has_reliability) {
+      auto on_off = new OnOffSwitch(
+          the_id, the_type, stream, reliability_schedule);
+      elements.emplace(on_off);
+      on_off->set_recording_on();
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{on_off, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{on_off, 0}};
     }
     else {
       auto meter = new FlowMeter(the_id, the_type, stream);
@@ -1154,13 +1287,15 @@ namespace ERIN
 
   PortsAndElements
   StorageComponent::add_to_network(
-      adevs::Digraph<FlowValueType,Time>& /* nw */,
+      adevs::Digraph<FlowValueType,Time>& nw,
       const std::string& /* active_scenario */,
-      bool is_failed) const
+      bool is_failed,
+      const std::vector<TimeState>& reliability_schedule) const
   {
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
+    auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "StorageComponent::add_to_network(...);id="
@@ -1171,19 +1306,59 @@ namespace ERIN
     if (is_failed) {
       FlowValueType min_limit{0.0};
       FlowValueType max_limit{0.0};
-      auto the_limits = new FlowLimits(the_id, the_type, stream, min_limit, max_limit);
-      elements.emplace(the_limits);
-      the_limits->set_recording_on();
-      ports[ep::Type::Inflow] = std::vector<ElementPort>{{the_limits, 0}};
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{{the_limits, 0}};
+      auto inflow = new FlowMeter(
+          the_id + "-inflow", the_type, stream, PortRole::Inflow);
+      elements.emplace(inflow);
+      inflow->set_recording_on();
+      auto outflow = new FlowLimits(
+          the_id + "-outflow", the_type, stream, min_limit, max_limit);
+      elements.emplace(outflow);
+      outflow->set_recording_on();
+      auto storeflow = new FlowMeter(
+          the_id + "-storeflow", the_type, stream, PortRole::StorageInflow);
+      elements.emplace(storeflow);
+      storeflow->set_recording_on();
+      auto discharge = new FlowMeter(
+          the_id + "-discharge", the_type, stream, PortRole::StorageOutflow);
+      elements.emplace(discharge);
+      discharge->set_recording_on();
+      ports[ep::Type::Inflow] = std::vector<ElementPort>{{inflow, 0}};
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{outflow, 0}};
     }
     else {
       auto store = new Storage(
           the_id, the_type, stream, capacity, max_charge_rate);
       elements.emplace(store);
-      store->set_recording_on();
-      ports[ep::Type::Inflow] = std::vector<ElementPort>{{store, 0}};
-      ports[ep::Type::Outflow] = std::vector<ElementPort>{{store, 0}};
+      if (has_reliability) {
+        store->set_storeflow_discharge_recording_on();
+        auto on_off_inflow = new OnOffSwitch(
+            the_id + "-inflow",
+            the_type,
+            stream,
+            reliability_schedule,
+            PortRole::Inflow);
+        elements.emplace(on_off_inflow);
+        on_off_inflow->set_recording_on();
+        auto on_off_outflow = new OnOffSwitch(
+            the_id + "-outflow",
+            the_type,
+            stream,
+            reliability_schedule,
+            PortRole::Inflow);
+        on_off_outflow->set_recording_on();
+        elements.emplace(on_off_outflow);
+        connect_source_to_sink_with_ports(
+            nw, on_off_inflow, 0, store, 0, true, stream);
+        connect_source_to_sink_with_ports(
+            nw, store, 0, on_off_outflow, 0, true, stream);
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{on_off_inflow, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{on_off_outflow, 0}};
+      }
+      else {
+        store->set_recording_on();
+        ports[ep::Type::Inflow] = std::vector<ElementPort>{{store, 0}};
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{store, 0}};
+      }
     }
     return PortsAndElements{ports, elements};
   }

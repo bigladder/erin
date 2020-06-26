@@ -7,6 +7,7 @@
 #include "erin/component.h"
 #include "erin/element.h"
 #include "erin/port.h"
+#include "erin/reliability.h"
 #include "erin/type.h"
 #include <functional>
 #include <iostream>
@@ -52,7 +53,9 @@ namespace erin::network
         ERIN::PortsAndElements>& ports_and_elements,
       const std::unordered_map<std::string, std::vector<double>>&
         failure_probs_by_comp_id,
-      const std::function<double()>& rand_fn);
+      const std::function<double()>& rand_fn,
+      const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
+        reliability_schedule);
 
   void couple_source_to_sink(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -105,7 +108,10 @@ namespace erin::network
       const std::unordered_map<
         std::string, std::vector<double>>& failure_probs_by_comp_id,
       const std::function<double()>& rand_fn,
-      bool two_way = false);
+      bool two_way = false,
+      const std::unordered_map<
+        std::string, std::vector<ERIN::TimeState>>& reliability_schedule = {}
+      );
 }
 
 #endif // ERIN_NETWORK_H

@@ -4,6 +4,7 @@
 #ifndef ERIN_TYPE_H
 #define ERIN_TYPE_H
 #include "adevs.h"
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -11,8 +12,9 @@
 
 namespace ERIN
 {
+  using size_type = std::vector<std::int64_t>::size_type;
   using FlowValueType = double;
-  using RealTimeType = long long;
+  using RealTimeType = std::int64_t;
   using LogicalTimeType = int;
   using Time = adevs::SuperDenseTime<RealTimeType>;
   using PortValue = adevs::port_value<FlowValueType>;

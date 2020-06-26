@@ -48,18 +48,21 @@ doit()
           { { source_id, ep::Type::Outflow, 0},
             { load_id, ep::Type::Inflow, 0},
             stream_id}}}};
-  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{};
+  std::unordered_map<std::string, ERIN::Scenario> scenarios{};
   scenarios.emplace(
       std::make_pair(
         scenario_id, 
-        ::ERIN::Scenario(
+        ERIN::Scenario(
           scenario_id,
           net_id,
-          ::ERIN::time_to_seconds(N, ::ERIN::TimeUnits::Hours),
+          ERIN::time_to_seconds(N, ::ERIN::TimeUnits::Hours),
           -1,
           nullptr,
-          {})));
-  auto m = ::ERIN::Main(si, components, networks, scenarios);
+          {},
+          false)));
+  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
+    reliability_schedule{};
+  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
   auto out = m.run(scenario_id);
   if (out.get_is_good()) {
     std::cout << "success!\n";

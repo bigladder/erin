@@ -14,6 +14,7 @@
 #include "erin/fragility.h"
 #include "erin/network.h"
 #include "erin/port.h"
+#include "erin/reliability.h"
 #include "erin/stream.h"
 #include "erin/type.h"
 #include <exception>
@@ -140,7 +141,8 @@ namespace ERIN
           RealTimeType duration,
           int max_occurrences,
           std::function<RealTimeType(void)> calc_time_to_next,
-          std::unordered_map<std::string, double> intensities);
+          std::unordered_map<std::string, double> intensities,
+          bool calc_reliability);
 
       [[nodiscard]] const std::string& get_name() const { return name; }
       [[nodiscard]] const std::string& get_network_id() const {
@@ -153,6 +155,9 @@ namespace ERIN
       }
       [[nodiscard]] const std::unordered_map<std::string,double>&
         get_intensities() const { return intensities; }
+      [[nodiscard]] bool get_calc_reliability() const {
+        return calc_reliability;
+      }
 
       bool operator==(const Scenario& other) const;
       bool operator!=(const Scenario& other) const {
@@ -182,6 +187,7 @@ namespace ERIN
       RealTimeType t;
       int num_occurrences;
       std::function<void(RealTimeType)> runner;
+      bool calc_reliability;
   };
 
   std::ostream& operator<<(std::ostream& os, const Scenario& s);
@@ -208,13 +214,22 @@ namespace ERIN
             const std::unordered_map<std::string, std::vector<LoadItem>>&
               loads_by_id,
             const std::unordered_map<
-              std::string, ::erin::fragility::FragilityCurve>& fragilities) = 0;
+              std::string, ::erin::fragility::FragilityCurve>& fragilities,
+            const std::unordered_map<
+              std::string, size_type>& fms,
+            ReliabilityCoordinator& rc) = 0;
       virtual std::unordered_map<
         std::string,
         std::vector<::erin::network::Connection>> read_networks() = 0;
       virtual std::unordered_map<std::string, Scenario> read_scenarios() = 0;
       virtual std::unordered_map<std::string,::erin::fragility::FragilityCurve>
         read_fragility_data() = 0;
+      virtual std::unordered_map<std::string, size_type>
+        read_cumulative_distributions(ReliabilityCoordinator& rc) = 0;
+      virtual std::unordered_map<std::string, size_type>
+        read_failure_modes(
+            const std::unordered_map<std::string, size_type>& cdf_ids,
+            ReliabilityCoordinator& rc) = 0;
   };
 
   struct StreamIDs
@@ -243,20 +258,26 @@ namespace ERIN
             const std::unordered_map<
               std::string, std::vector<LoadItem>>& loads_by_id,
             const std::unordered_map<
-              std::string, ::erin::fragility::FragilityCurve>& fragilities)
-        override;
+              std::string, ::erin::fragility::FragilityCurve>& fragilities,
+            const std::unordered_map<
+              std::string, size_type>& fms,
+            ReliabilityCoordinator& rc) override;
       std::unordered_map<std::string, std::unique_ptr<Component>>
-      read_components(
-          const std::unordered_map<std::string, std::vector<LoadItem>>&
-            loads_by_id) {
-        return read_components(loads_by_id, {});
-      }
+        read_components(
+            const std::unordered_map<std::string, std::vector<LoadItem>>&
+              loads_by_id);
       std::unordered_map<
         std::string, std::vector<::erin::network::Connection>>
         read_networks() override;
       std::unordered_map<std::string, Scenario> read_scenarios() override;
       std::unordered_map<std::string,::erin::fragility::FragilityCurve>
         read_fragility_data() override;
+      std::unordered_map<std::string, size_type>
+        read_cumulative_distributions(ReliabilityCoordinator& rc) override;
+      std::unordered_map<std::string, size_type>
+        read_failure_modes(
+            const std::unordered_map<std::string, size_type>& cdf_ids,
+            ReliabilityCoordinator& rc) override;
 
     private:
       toml::value data;
@@ -326,6 +347,10 @@ namespace ERIN
         read_component_type(
             const toml::table& tt,
             const std::string& comp_id) const;
+      [[nodiscard]] CdfType
+        read_cdf_type(
+            const toml::table& tt,
+            const std::string& cdf_id) const;
       [[nodiscard]] StreamIDs read_stream_ids(
           const toml::table& tt,
           const std::string& comp_id) const;
@@ -447,7 +472,10 @@ namespace ERIN
           const std::unordered_map<
             std::string,
             std::vector<::erin::network::Connection>>& networks,
-          const std::unordered_map<std::string, Scenario>& scenarios);
+          const std::unordered_map<std::string, Scenario>& scenarios,
+          const std::unordered_map<std::string, std::vector<TimeState>>&
+            reliability_schedule = {}
+          );
       ScenarioResults run(
           const std::string& scenario_id, RealTimeType scenario_start_s = 0);
       AllResults run_all();
@@ -463,6 +491,10 @@ namespace ERIN
         std::string, std::vector<::erin::network::Connection>>& get_networks() const {
           return networks;
         }
+      [[nodiscard]] std::unordered_map<std::string, std::vector<TimeState>>
+        get_reliability_schedule() const {
+          return reliability_schedule;
+        }
 
     private:
       SimulationInfo sim_info;
@@ -477,6 +509,8 @@ namespace ERIN
           std::string,
           std::vector<double>>> failure_probs_by_comp_id_by_scenario_id;
       std::function<double()> rand_fn;
+      std::unordered_map<std::string, std::vector<TimeState>>
+        reliability_schedule;
 
       void check_data() const;
       void generate_failure_fragilities();

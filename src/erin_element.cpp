@@ -28,6 +28,9 @@ namespace ERIN
     else if (tag == "mux") {
       return ElementType::Mux;
     }
+    else if (tag == "on_off_switch") {
+      return ElementType::OnOffSwitch;
+    }
     else {
       std::ostringstream oss;
       oss << "unhandled tag '" << tag << "' for element_type\n";
@@ -49,9 +52,11 @@ namespace ERIN
         return std::string{"sink"};
       case ElementType::Mux:
         return std::string{"mux"};
+      case ElementType::OnOffSwitch:
+        return std::string{"on_off_switch"};
       default:
         {
-          std::ostringstream oss;
+          std::ostringstream oss{};
           oss << "unhandled ElementType '" << static_cast<int>(et) << "'\n";
           throw std::invalid_argument(oss.str());
         }
@@ -173,6 +178,8 @@ namespace ERIN
       }
       else {
         std::cout << "WARNING! Element " << i << " not recorded!\n";
+        auto idx = static_cast<const int>(i);
+        std::cout << "Element " << i << " is " << element_id_to_tag[idx] << "\n";
       }
     }
     if constexpr (E::debug_level >= E::debug_level_high) {
@@ -974,6 +981,7 @@ namespace ERIN
     lossflow_element_id{-1},
     wasteflow_element_id{-1},
     record_history{false},
+    record_wasteflow_history{false},
     lossflow_stream{std::move(lossflow_stream_)}
   {
   }
@@ -981,7 +989,14 @@ namespace ERIN
   void
   Converter::delta_int()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::delta_int(); id = " << get_id() << "\n";
+      std::cout << "state before:\n" << state << "\n";
+    }
     state = erin::devs::converter_internal_transition(state);
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "state after:\n" << state << "\n";
+    }
     log_ports();
   }
 
@@ -991,26 +1006,49 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "Converter::detla_ext("
                 << "e=Time{" << e.real << "," << e.logical << "}, "
-                << "xs=" << vec_to_string<PortValue>(xs) << ")\n";
+                << "xs=" << vec_to_string<PortValue>(xs) << ")\n"
+                << "(for reference)\n"
+                << "inport_outflow_request = " << inport_outflow_request << "\n"
+                << "inport_inflow_achieved = " << inport_inflow_achieved << "\n"
+                << "inport_lossflow_request= " << (inport_outflow_request + 1) << "\n";
       std::cout << "id = " << get_id() << "\n";
     }
     state = erin::devs::converter_external_transition(state, e.real, xs);
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "state after:\n" << state << "\n";
+    }
     log_ports();
   }
 
   void
   Converter::delta_conf(std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::detla_conf(); id = " << get_id() << "\n";
+      std::cout << "state before: " << state << "\n";
+    }
     state = erin::devs::converter_confluent_transition(state, xs);
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "state after:\n" << state << "\n";
+    }
     log_ports();
   }
 
   Time
   Converter::ta()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::ta(); id = " << get_id() << "\n";
+    }
     auto dt = erin::devs::converter_time_advance(state);
     if (dt == erin::devs::infinity) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "dt = infinity\n";
+      }
       return inf;
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "dt = " << dt << "\n";
     }
     return Time{dt, 1};
   }
@@ -1018,12 +1056,29 @@ namespace ERIN
   void
   Converter::output_func(std::vector<PortValue>& ys)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::output_func(); id = " << get_id() << "\n";
+    }
     erin::devs::converter_output_function_mutable(state, ys);
+    if constexpr (debug_level >= debug_level_high) {
+      for (const auto& the_y : ys) {
+        std::cout << "y.port = "
+                  << ((the_y.port == outport_outflow_achieved)
+                  ? "outport_outflow_achieved" :
+                  ( (the_y.port == outport_inflow_request) ?
+                    "outport_inflow_request" :
+                    std::to_string(the_y.port))) << "\n";
+        std::cout << "y.value = " << the_y.value << "\n";
+      }
+    }
   }
 
   void
   Converter::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::set_flow_writer(); id = " << get_id() << "\n";
+    }
     flow_writer = writer;
     log_ports();
   }
@@ -1031,15 +1086,34 @@ namespace ERIN
   void
   Converter::set_recording_on()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::set_recording_on(); id = " << get_id() << "\n";
+    }
     record_history = true;
+    log_ports();
+  }
+
+  void
+  Converter::set_wasteflow_recording_on()
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::set_wasteflow_recording_on(); id = " << get_id() << "\n";
+    }
+    record_wasteflow_history = true;
     log_ports();
   }
 
   void
   Converter::log_ports()
   {
-    if (flow_writer && record_history) {
-      if (inflow_element_id == -1) {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Converter::log_ports(); id = " << get_id() << "\n"
+                << "flow_writer == nullptr   = " << (flow_writer == nullptr) << "\n"
+                << "record_history           = " << record_history << "\n"
+                << "record_wasteflow_history = " << record_wasteflow_history << "\n";
+    }
+    if (flow_writer && (record_history || record_wasteflow_history)) {
+      if ((inflow_element_id == -1) && record_history) {
         inflow_element_id = flow_writer->register_id(
             get_id() + "-inflow",
             get_inflow_type(),
@@ -1047,7 +1121,7 @@ namespace ERIN
             PortRole::Inflow,
             record_history);
       }
-      if (outflow_element_id == -1) {
+      if ((outflow_element_id == -1) && record_history) {
         outflow_element_id = flow_writer->register_id(
             get_id() + "-outflow",
             get_outflow_type(),
@@ -1055,7 +1129,7 @@ namespace ERIN
             PortRole::Outflow,
             record_history);
       }
-      if (lossflow_element_id == -1) {
+      if ((lossflow_element_id == -1) && record_history) {
         lossflow_element_id = flow_writer->register_id(
             get_id() + "-lossflow",
             lossflow_stream,
@@ -1069,23 +1143,25 @@ namespace ERIN
             lossflow_stream,
             get_component_type(),
             PortRole::WasteInflow,
-            record_history);
+            (record_history || record_wasteflow_history));
       }
-      flow_writer->write_data(
-          inflow_element_id,
-          state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
-      flow_writer->write_data(
-          outflow_element_id,
-          state.time,
-          state.outflow_port.get_requested(),
-          state.outflow_port.get_achieved());
-      flow_writer->write_data(
-          lossflow_element_id,
-          state.time,
-          state.lossflow_port.get_requested(),
-          state.lossflow_port.get_achieved());
+      if (record_history) {
+        flow_writer->write_data(
+            inflow_element_id,
+            state.time,
+            state.inflow_port.get_requested(),
+            state.inflow_port.get_achieved());
+        flow_writer->write_data(
+            outflow_element_id,
+            state.time,
+            state.outflow_port.get_requested(),
+            state.outflow_port.get_achieved());
+        flow_writer->write_data(
+            lossflow_element_id,
+            state.time,
+            state.lossflow_port.get_requested(),
+            state.lossflow_port.get_achieved());
+      }
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "ID = " << get_id() << "-wasteflow\n"
                   << "time = " << state.time << "\n"
@@ -1288,8 +1364,8 @@ namespace ERIN
     erin::devs::mux_output_function_mutable(state, ys);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] output_func\n";
-      for (const auto& y : ys) {
-        std::cout << "- (" << y.port << ", " << y.value << ")\n";
+      for (const auto& the_y : ys) {
+        std::cout << "- (" << the_y.port << ", " << the_y.value << ")\n";
       }
     }
   }
@@ -1375,6 +1451,7 @@ namespace ERIN
     state{erin::devs::storage_make_state(data)},
     flow_writer{nullptr},
     record_history{false},
+    record_storeflow_and_discharge{false},
     inflow_element_id{-1},
     outflow_element_id{-1},
     storeflow_element_id{-1},
@@ -1474,6 +1551,13 @@ namespace ERIN
   }
 
   void
+  Storage::set_storeflow_discharge_recording_on()
+  {
+    record_storeflow_and_discharge = true;
+    log_ports();
+  }
+
+  void
   Storage::log_ports()
   {
     if constexpr (debug_level >= debug_level_high) {
@@ -1486,22 +1570,24 @@ namespace ERIN
       std::cout << "storeflow_element_id = " << storeflow_element_id << "\n";
       std::cout << "discharge_element_id = " << discharge_element_id << "\n";
     }
-    if (flow_writer && record_history) {
-      if (inflow_element_id == -1) {
-        inflow_element_id = flow_writer->register_id(
-            get_id() + "-inflow",
-            get_inflow_type(),
-            get_component_type(),
-            PortRole::Inflow,
-            record_history);
-      }
-      if (outflow_element_id == -1) {
-        outflow_element_id = flow_writer->register_id(
-            get_id() + "-outflow",
-            get_outflow_type(),
-            get_component_type(),
-            PortRole::Outflow,
-            record_history);
+    if (flow_writer && (record_history || record_storeflow_and_discharge)) {
+      if (record_history) {
+        if (inflow_element_id == -1) {
+          inflow_element_id = flow_writer->register_id(
+              get_id() + "-inflow",
+              get_inflow_type(),
+              get_component_type(),
+              PortRole::Inflow,
+              true);
+        }
+        if (outflow_element_id == -1) {
+          outflow_element_id = flow_writer->register_id(
+              get_id() + "-outflow",
+              get_outflow_type(),
+              get_component_type(),
+              PortRole::Outflow,
+              true);
+        }
       }
       if (storeflow_element_id == -1) {
         storeflow_element_id = flow_writer->register_id(
@@ -1509,7 +1595,7 @@ namespace ERIN
             get_outflow_type(),
             get_component_type(),
             PortRole::StorageInflow,
-            record_history);
+            true);
       }
       if (discharge_element_id == -1) {
         discharge_element_id = flow_writer->register_id(
@@ -1517,18 +1603,20 @@ namespace ERIN
             get_outflow_type(),
             get_component_type(),
             PortRole::StorageOutflow,
-            record_history);
+            true);
       }
-      flow_writer->write_data(
-          inflow_element_id,
-          state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
-      flow_writer->write_data(
-          outflow_element_id,
-          state.time,
-          state.outflow_port.get_requested(),
-          state.outflow_port.get_achieved());
+      if (record_history) {
+        flow_writer->write_data(
+            inflow_element_id,
+            state.time,
+            state.inflow_port.get_requested(),
+            state.inflow_port.get_achieved());
+        flow_writer->write_data(
+            outflow_element_id,
+            state.time,
+            state.outflow_port.get_requested(),
+            state.outflow_port.get_achieved());
+      }
       auto storeflow_requested{
         state.inflow_port.get_requested()
         - state.outflow_port.get_requested()};
@@ -1545,6 +1633,131 @@ namespace ERIN
           state.time,
           storeflow_requested < 0.0 ? (-1.0 * storeflow_requested) : 0.0,
           storeflow_achieved < 0.0 ? (-1.0 * storeflow_achieved) : 0.0);
+    }
+  }
+
+  ////////////////////////////////////////////////////////////
+  // OnOffSwitch
+  OnOffSwitch::OnOffSwitch(
+      std::string id,
+      ComponentType component_type,
+      const std::string& stream_type,
+      const std::vector<TimeState>& schedule,
+      PortRole port_role_):
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::OnOffSwitch,
+        stream_type),
+    data{erin::devs::make_on_off_switch_data(schedule)},
+    state{erin::devs::make_on_off_switch_state(data)},
+    flow_writer{nullptr},
+    record_history{false},
+    element_id{-1},
+    port_role{port_role_}
+  {
+  }
+
+  void
+  OnOffSwitch::delta_int()
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::delta_int(...); id = " << get_id() << "\n";
+    }
+    state = erin::devs::on_off_switch_internal_transition(data, state);
+    log_ports();
+  }
+
+  void
+  OnOffSwitch::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::delta_ext(...); id = " << get_id() << "\n";
+    }
+    state = erin::devs::on_off_switch_external_transition(state, e.real, xs);
+    log_ports();
+  }
+
+  void
+  OnOffSwitch::delta_conf(std::vector<PortValue>& xs)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::delta_conf(...); id = " << get_id() << "\n";
+    }
+    state = erin::devs::on_off_switch_confluent_transition(data, state, xs);
+    log_ports();
+  }
+
+  Time
+  OnOffSwitch::ta()
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::ta(...); id = " << get_id() << "\n";
+    }
+    auto dt = erin::devs::on_off_switch_time_advance(data, state);
+    if (dt == erin::devs::infinity) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "dt = infinity\n";
+      }
+      return inf; 
+    }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "dt = " << dt << "\n";
+    }
+    return Time{dt, 1};
+  }
+
+  void
+  OnOffSwitch::output_func(std::vector<PortValue>& ys)
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::output_func(...); id = " << get_id() << "\n";
+    }
+    erin::devs::on_off_switch_output_function_mutable(state, ys);
+  }
+
+  void
+  OnOffSwitch::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  OnOffSwitch::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
+  }
+
+  void
+  OnOffSwitch::log_ports()
+  {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "OnOffSwitch::log_ports(...); id = " << get_id() << "\n";
+      std::cout << "flow_writer == nullptr = " << (flow_writer == nullptr) << "\n";
+      std::cout << "record_history = " << record_history << "\n";
+    }
+    if (flow_writer && record_history) {
+      if (element_id == -1) {
+        element_id = flow_writer->register_id(
+            get_id(),
+            get_inflow_type(),
+            get_component_type(),
+            port_role,
+            record_history);
+      }
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "elementid= " << element_id << "\n"
+                  << "time     = " << state.time << "\n"
+                  << "request  = " << state.outflow_port.get_requested() << "\n"
+                  << "achieved = " << state.outflow_port.get_achieved() << "\n";
+      }
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
     }
   }
 }

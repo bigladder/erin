@@ -23,6 +23,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_devs_flow_limits.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_load.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_mux.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_devs_on_off_switch.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_storage.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
@@ -30,6 +31,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_network.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_port.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_random.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_reliability.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_stream.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_type.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_utils.cpp
@@ -42,6 +44,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/devs/flow_limits.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/load.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/mux.h
+  ${PROJECT_SOURCE_DIR}/include/erin/devs/on_off_switch.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/storage.h
   ${PROJECT_SOURCE_DIR}/include/erin/distribution.h
   ${PROJECT_SOURCE_DIR}/include/erin/element.h
@@ -51,6 +54,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/network.h
   ${PROJECT_SOURCE_DIR}/include/erin/port.h
   ${PROJECT_SOURCE_DIR}/include/erin/random.h
+  ${PROJECT_SOURCE_DIR}/include/erin/reliability.h
   ${PROJECT_SOURCE_DIR}/include/erin/stream.h
   ${PROJECT_SOURCE_DIR}/include/erin/type.h
   ${PROJECT_SOURCE_DIR}/include/erin/utils.h

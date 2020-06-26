@@ -16,6 +16,16 @@ For our use, the entity / component / system has the following definitions:
 - component: a collection of data; usually a struct of vectors
 - system: a pure function or a class that operates on entities having attributes of one or more specific components
 
+See also, [2]:
+
+> [An] ECS [...] consists of:
+
+> - Entity: a unique identifier (a number). Imagine it like an ID in a database.
+> - Component: a data blob (a struct). This is the data that is associated with an entity. It is up to the user to create the data type, by creating a struct or a class in C++.
+> - System: data transformation (a function). This is any function that operates on a number of components. The user will write simple functions that take components as inputs and produce components as outputs. It is just any C++ function, really.
+
+[2]: https://wickedengine.net/2019/09/29/entity-component-system/
+
 ## Decision
 
 This is mainly a decision based on how the code is growing and seeing the weaknesses of large object hierarchies.

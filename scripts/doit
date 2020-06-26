@@ -19,6 +19,9 @@ if ! bundle exec ruby ../scripts/regression_test.rb; then
 fi
 time ./bin/str8760
 mkdir -p tidy
+rm -f cppcheck_report.txt
+echo Running cppcheck...
+cppcheck -i/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/vendor --project=/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/build/compile_commands.json > cppcheck_report.txt 2>&1
 echo Running Clang Tidy...
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/type.h > tidy/type.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/utils.h > tidy/utils.h.txt
@@ -55,6 +58,7 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_random.cpp > tidy/erin_random.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/cli_graph.cpp > tidy/cli_graph.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_type.cpp > tidy/erin_type.cpp.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_distribution.cpp > tidy/erin_distribution.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_component.cpp > tidy/erin_component.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_utils.cpp > tidy/erin_utils.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/toml_helper.h > tidy/toml_helper.h.txt
@@ -63,6 +67,7 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_devs_flow_limits.cpp > tidy/erin_devs_flow_limits.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/debug_utils.h > tidy/debug_utils.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_stream.cpp > tidy/erin_stream.cpp.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_ecs.h > tidy/erin_ecs.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_devs_converter.cpp > tidy/erin_devs_converter.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/stress_test_8760x5000.cpp > tidy/stress_test_8760x5000.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_network.cpp > tidy/erin_network.cpp.txt

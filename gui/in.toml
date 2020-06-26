@@ -1,0 +1,36 @@
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "hours"
+max_time = 4
+############################################################
+[loads.building_electrical]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,1.0],[4.0]]
+############################################################
+[components.electric_utility]
+type = "source"
+# Point of Common Coupling for Electric Utility
+output_stream = "electricity"
+[components.cluster_01_electric]
+type = "load"
+input_stream = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+############################################################
+[networks.normal_operations]
+# Specify network as an array of 3-tuples.
+# The interpretation is as follows:
+# 3-tuples: [COMPONENT_AND_PORT, COMPONENT_AND_PORT, STREAM_ID]
+# COMPONENT_AND_PORT := COMPONENT_ID ":" ("IN" | "OUT") "(" \d+ ")" ;
+# COMPONENT_ID := STRING_IDENTIFIER ;
+# STREAM_ID := STRING_IDENTIFIER ;
+# STRING_IDENTIFIER := [a-zA-Z_] [a-zA-Z_0-9]* ;
+connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
+############################################################
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = {type = "fixed", value = 0}
+duration = 4
+max_occurrences = 1
+network = "normal_operations"

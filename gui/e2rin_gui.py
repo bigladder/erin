@@ -11,5 +11,10 @@ def run():
     output_file_path = os.path.join(path, 'out.csv')
     stats_file_path = os.path.join(path, 'stats.csv')
     process = subprocess.Popen([bin_path, input_file_path, output_file_path, stats_file_path], stdout=subprocess.PIPE)
+    stdout = process.communicate()[0]
+    stdout = stdout.decode("utf-8")
+    text_file = open("stdout", "w")
+    text_file.write(stdout)
+    text_file.close()
 
-#run()
+run()

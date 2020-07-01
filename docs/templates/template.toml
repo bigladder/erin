@@ -4,8 +4,8 @@ parameter "simulation_duration_in_years", :default=>100
 parameter "random_setting", :default=>"Auto" # "Auto" | "Seed"
 parameter "random_seed", :default=>17
 # Load Profile
-parameter "load_profile_building_id", :default=>["mc", "mc", "other", "other"]
 parameter "load_profile_scenario_id", :default=>["blue_sky", "class_4_hurricane"]
+parameter "load_profile_building_id", :default=>["mc", "mc", "other", "other"]
 parameter "load_profile_enduse", :default=>["electrical", "electrical", "electrical", "electrical"]
 parameter "load_profile_file", :default=>["mc_blue_sky_electrical.csv", "mc_class_4_hurricane_electrical.csv", "other_blue_sky_electrical.csv", "other_class_4_hurricane_electrical.csv"]
 # Scenario
@@ -13,7 +13,10 @@ parameter "scenario_id", :default=>["blue_sky", "class_4_hurricane"]
 parameter "scenario_duration_in_hours", :default=>[8760, 336]
 parameter "scenario_max_occurrence", :default=>[1, -1]
 parameter "scenario_fixed_frequency_in_years", :default=>[0, 30]
-# Building Level
+# Building-to-Cluster Connectivity
+# Cluster-to-Community Connectivity
+# Community-to-Utility Connectivity
+# Building Level Configuration
 parameter "building_level_building_id", :default=>["mc", "other"]
 parameter "building_level_egen_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_egen_eff_pct", :default=>[38.0, 38.0]
@@ -26,23 +29,21 @@ parameter "building_level_gas_boiler_peak_heat_gen_kW", :default=>[25.0, 25.0]
 parameter "building_level_echiller_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_echiller_peak_cooling_kW", :default=>[50.0, 50.0]
 parameter "building_level_echiller_eff_pct", :default=>[540.0, 540.0]
+# Cluster Level Configuration
+# Community Level Configuration
 %>
-<%
-  require 'set'
-
-  def is_true(x)
-    (x == true) || (x.to_s.downcase.strip == "true")
-  end
-
-  def equals(x, y)
-    (x.to_s.downcase.strip == y.to_s.downcase.strip)
-  end
-
-  building_info = {}
-  enduse_set = Set.new
-  fuels_set = Set.new
-  num_buildings = building_level_building_id.length
-%>
+<% require 'set' %>
+<%  def is_true(x) %>
+<%    (x == true) || (x.to_s.downcase.strip == "true") %>
+<%  end %>
+<%  def equals(x, y) %>
+<%    (x.to_s.downcase.strip == y.to_s.downcase.strip) %>
+<%  end %>
+<%  enduse_set = Set.new %>
+<%  fuels_set = Set.new %>
+<%  load_id_set = Set.new %>
+<%  load_ids = [] %>
+<%  num_buildings = building_level_building_id.length %>
 [simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"
@@ -53,17 +54,16 @@ random_seed = <%= random_seed.to_i %>
 max_time = <%= simulation_duration_in_years %>
 ############################################################
 <% load_profile_building_id.each_with_index do |building_id, idx| %>
-  <%
-  s_id = load_profile_scenario_id[idx]
-  enduse = load_profile_enduse[idx]
-  enduse_set << enduse
-  file = load_profile_file[idx]
-  building_info[building_id] = {enduse => {s_id => file}} if !building_info.include?(building_id)
-  building_info[building_id][enduse] = {s_id => file} if building_info.include?(building_id) && !building_info[building_id].include?(enduse)
-  building_info[building_id][enduse][s_id] = file if building_info.include?(building_id) && building_info[building_id].include?(enduse) && !building_info[building_id][enduse].include?(s_id)
-  %>
-[loads.<%= building_id %>_<%= enduse %>_<%= s_id %>]
-csv_file = "<%= load_profile_file[idx] %>"
+<% s_id = load_profile_scenario_id[idx] %>
+<% enduse = load_profile_enduse[idx] %>
+<% enduse_set << enduse %>
+<% file = load_profile_file[idx] %>
+<% load_id = "#{building_id}_#{enduse}_#{s_id}" %>
+<% puts "WARNING! Duplicate load_id `#{load_id}`" if load_id_set.include?(load_id) %>
+<% load_id_set << load_id %>
+<% load_ids << load_id %>
+[loads.<%= load_id %>]
+csv_file = "<%= file %>"
 <% end %>
 ############################################################
 [components.electric_source]
@@ -76,15 +76,21 @@ stream = "electricity"
 num_inflows = 1
 num_outflows = <%= num_buildings %>
 <% end %>
-<% building_info.keys.sort.each do |building_id| %>
-  <% building_info[building_id].keys.sort.each do |enduse| %>
-[components.<%= building_id %>_<%= enduse %>_load]
+<% b_id_enduses = Set.new %>
+<% load_profile_building_id.each_with_index do |b_id, idx| %>
+<% enduse = load_profile_enduse[idx] %>
+<% tag = "#{b_id}_#{enduse}" %>
+<% next if b_id_enduses.include?(tag) %>
+<% b_id_enduses << tag %>
+[components.<%= b_id %>_<%= enduse %>]
 type = "load"
 inflow = "<%= enduse %>"
-    <% building_info[building_id][enduse].keys.sort.each do |s_id| %>
-loads_by_scenario.<%= s_id %> = "<%= building_id %>_<%= enduse %>_<%= s_id %>"
-    <% end %>
-  <% end %>
+<% load_profile_scenario_id.each_with_index do |s_id, idx2| %>
+<% if ((load_profile_building_id[idx2] == b_id) && (load_profile_enduse[idx2] == enduse)) %>
+<% load_id = load_ids[idx2] %>
+loads_by_scenario.<%= s_id %> = "<%= load_id %>"
+<% end %>
+<% end %>
 <% end %>
 ############################################################
 [networks.nw]

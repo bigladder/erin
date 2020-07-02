@@ -20,12 +20,12 @@ parameter "scenario_fixed_frequency_in_years", :default=>[0, 30]
 parameter "building_level_building_id", :default=>["mc", "other"]
 parameter "building_level_egen_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_egen_eff_pct", :default=>[38.0, 38.0]
-parameter "building_level_egen_peak_pwr_kW", :default=>[100.0, 100.0]
+#parameter "building_level_egen_peak_pwr_kW", :default=>[100.0, 100.0] # Not currently supported in the engine
 parameter "building_level_heat_storage_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_heat_storage_cap_kWh", :default=>[0.0, 0.0]
 parameter "building_level_gas_boiler_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
-parameter "building_level_gas_boiler_peak_heat_gen_kW", :default=>[25.0, 25.0]
+#parameter "building_level_gas_boiler_peak_heat_gen_kW", :default=>[25.0, 25.0] # Not currently supported in the engine
 parameter "building_level_echiller_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_echiller_peak_cooling_kW", :default=>[50.0, 50.0]
 parameter "building_level_echiller_eff_pct", :default=>[540.0, 540.0]
@@ -92,6 +92,33 @@ loads_by_scenario.<%= s_id %> = "<%= load_id %>"
 <% end %>
 <% end %>
 <% end %>
+<% building_level_building_id.sort.each_with_index do |b_id, idx| %>
+<% if is_true(building_level_egen_flag[idx]) %>
+[component.<%= b_id %>_emergency_generator]
+type = "converter"
+inflow = "natural_gas"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency = <%= building_level_egen_eff_pct[idx].to_f / 100.0 %>
+<% end # if %>
+<% if is_true(building_level_heat_storage_flag[idx]) %>
+[component.<%= b_id %>_heat_storage]
+type = "store"
+outflow = "heating"
+inflow = "heating"
+capacity_unit = "kWh"
+capacity = <%= building_level_heat_storage_cap_kWh[idx].to_f %>
+max_inflow = <%= building_level_heat_storage_cap_kWh[idx].to_f / 10.0 %>
+<% end # if %>
+<% if is_true(building_level_gas_boiler_flag[idx]) %>
+[component.<%= b_id %>_gas_boiler]
+type = "converter"
+outflow = "heating"
+inflow = "natural_gas"
+lossflow = "waste_heat"
+constant_efficiency = <%= building_level_gas_boiler_eff_pct[idx].to_f %>
+<% end # if %>
+<% end # building_level_building_id.sort.each_with_index %>
 ############################################################
 [networks.nw]
 connections = [
@@ -109,4 +136,3 @@ duration = <%= scenario_duration_in_hours[idx] %>
 max_occurrences = <%= scenario_max_occurrence[idx].to_i %>
 network = "nw"
 <% end %>
-

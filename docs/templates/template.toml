@@ -26,9 +26,9 @@ parameter "building_level_heat_storage_cap_kWh", :default=>[0.0, 0.0]
 parameter "building_level_gas_boiler_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
 #parameter "building_level_gas_boiler_peak_heat_gen_kW", :default=>[25.0, 25.0] # Not currently supported in the engine
-parameter "building_level_echiller_flag", :default=>["FALSE", "FALSE"]
-parameter "building_level_echiller_peak_cooling_kW", :default=>[50.0, 50.0]
-parameter "building_level_echiller_eff_pct", :default=>[540.0, 540.0]
+#parameter "building_level_echiller_flag", :default=>["FALSE", "FALSE"] # Can't handle chillers yet
+#parameter "building_level_echiller_peak_cooling_kW", :default=>[50.0, 50.0] # Can't handle chillers yet
+#parameter "building_level_echiller_eff_pct", :default=>[540.0, 540.0] # Can't handle chillers yet
 # Cluster Level Configuration
 # Community Level Configuration
 %>

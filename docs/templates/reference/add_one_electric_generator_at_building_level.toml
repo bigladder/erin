@@ -48,6 +48,7 @@ connections = [
   ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
   ["building_level_electric_bus:OUT(0)", "mc_electric_bus:IN(0)", "electricity"],
   ["mc_electric_generator:OUT(0)", "mc_electric_bus:IN(1)", "electricity"],
+  ["mc_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
   ["natural_gas_source:OUT(0)", "mc_electric_generator:IN(0)", "natural_gas"],
   ["building_level_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
   ]

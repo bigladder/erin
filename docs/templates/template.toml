@@ -165,15 +165,22 @@ constant_efficiency = <%= building_level_gas_boiler_eff_pct[idx].to_f %>
 ############################################################
 [networks.nw]
 connections = [
+<% if (num_buildings == 1) and !is_true(building_level_egen_flag[0])           %>
+<%   b_id = building_level_building_id[0]                                      %>
+  ["electricity_source:OUT(0)", "<%= b_id %>_electricity:IN(0)", "electricity"],
+<% else                                                                        %>
   ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
+<% end                                                                         %>
 <% num_buildings.times do |n|                                                  %>
+<%   next if num_buildings == 1 and !is_true(building_level_egen_flag[0])      %>
 <%   b_id = building_level_building_id[n]                                      %>
 <%   if is_true(building_level_egen_flag[n])                                   %>
   ["building_level_electric_bus:OUT(<%= n %>)", "<%= b_id %>_electric_bus:IN(0)", "electricity"],
   ["<%= b_id %>_electric_generator:OUT(0)", "<%= b_id %>_electric_bus:IN(1)", "electricity"],
+  ["<%= b_id %>_electric_bus:OUT(0)", "<%= b_id %>_electricity:IN(0)", "electricity"],
   ["natural_gas_source:OUT(0)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
 <%   else                                                                      %>
-  ["building_level_electric_bus:OUT(<%= n %>)", "<%= building_level_building_id[n] %>_electricity:IN(0)", "electricity"],
+  ["building_level_electric_bus:OUT(<%= n %>)", "<%= b_id %>_electricity:IN(0)", "electricity"],
 <%   end                                                                       %>
 <% end                                                                         %>
   ]

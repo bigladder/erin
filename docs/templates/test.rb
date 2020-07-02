@@ -193,4 +193,21 @@ class TestTemplate < Minitest::Test
     run_and_compare(ps, 'add_one_electric_generator_at_building_level')
     assert(run_e2rin('add_one_electric_generator_at_building_level', ps[:load_profile_file]))
   end
+
+  def test_only_one_building_with_electric_loads
+    ps = default_params
+    ps[:load_profile_scenario_id] = ["blue_sky"]
+    ps[:load_profile_building_id] = ["b1"]
+    ps[:load_profile_enduse] = ["electricity"]
+    ps[:load_profile_file] = ["b1_blue_sky_electricity.csv"]
+    ps[:building_level_building_id] = ["b1"]
+    ps[:building_level_egen_flag] = ["FALSE"]
+    ps[:building_level_egen_eff_pct] = [32.0]
+    ps[:building_level_heat_storage_flag] = ["FALSE"]
+    ps[:building_level_heat_storage_cap_kWh] = [0.0]
+    ps[:building_level_gas_boiler_flag] = ["FALSE"]
+    ps[:building_level_gas_boiler_eff_pct] = [85.0]
+    run_and_compare(ps, 'only_one_building_with_electric_loads')
+    assert(run_e2rin('only_one_building_with_electric_loads', ps[:load_profile_file]))
+  end
 end

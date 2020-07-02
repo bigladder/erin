@@ -2,3 +2,5 @@
 *.csv
 test.toml
 test.pxt
+*.gv
+*.png

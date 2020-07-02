@@ -13,21 +13,22 @@ require 'stringio'
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 
 class TestTemplate < Minitest::Test
-  def call_modelkit(args, output_file, dir)
+  def call_modelkit(args, output_file)
     cmd = "modelkit template-compose #{args}"
     val = {}
-    Dir.chdir(dir) do
-      out, err, s = Open3.capture3(cmd, chdir: THIS_DIR)
-      exist = File.exist?(output_file)
-      val[:cmd] = cmd
-      val[:success] = s.success? && exist
-      val[:exit] = s.success?
-      val[:output_exists] = exist
-      val[:output] = nil
-      val[:stdout] = out
-      val[:stderr] = err
-      val[:output] = File.read(output_file) if exist
-    end
+    out = ""
+    err = ""
+    `modelkit template-compose #{args}`
+    success = ($?.to_i == 0)
+    exist = File.exist?(output_file)
+    val[:cmd] = cmd
+    val[:success] = success && exist
+    val[:exit] = success
+    val[:output_exists] = exist
+    val[:output] = nil
+    val[:stdout] = out
+    val[:stderr] = err
+    val[:output] = File.read(output_file) if exist
     return val
   end
 
@@ -40,20 +41,21 @@ class TestTemplate < Minitest::Test
     s.string
   end
 
-  def setup
-    @input_file = "ex.pxt"
-    @output_file = "test.toml"
-  end
-
-  def teardown
+  def ensure_directory_clean
     File.delete(@output_file) if File.exist?(@output_file)
   end
 
+  def setup
+    @input_file = "ex.pxt"
+    @output_file = "test.toml"
+    ensure_directory_clean
+  end
+
+  def teardown
+  end
+
   def test_ex_template_expected
-    template_file = "ex.pxt"
-    out_file = File.join(THIS_DIR, @output_file)
-    tmp_file = File.join(THIS_DIR, template_file)
-    out = call_modelkit("--dirs=\"#{THIS_DIR}\" --output=\"#{out_file}\" \"#{tmp_file}\"", out_file, THIS_DIR)
+    out = call_modelkit("--output=\"test.toml\" --files=\"ex.pxt\" \"template.toml\"", "test.toml")
     err_str = error_string(out)
     assert(out[:success], err_str)
     assert(!out[:output].nil?, err_str)

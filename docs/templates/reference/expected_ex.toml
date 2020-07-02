@@ -40,4 +40,3 @@ occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
 duration = 8760
 max_occurrences = 1
 network = "nw"
-

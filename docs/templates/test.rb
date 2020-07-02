@@ -13,6 +13,45 @@ require 'stringio'
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 
 class TestTemplate < Minitest::Test
+  def default_params
+    {
+      # General
+      :simulation_duration_in_years => 100,
+      :random_setting => "Auto",
+      :random_seed => 17,
+      # Load Profile
+      :load_profile_scenario_id => ["blue_sky", "blue_sky"],
+      :load_profile_building_id => ["mc", "other"],
+      :load_profile_enduse => ["electricity", "electricity"],
+      :load_profile_file => ["mc_blue_sky_electricity.csv", "other_blue_sky_electricity.csv"],
+      # Scenario
+      :scenario_id => ["blue_sky"],
+      :scenario_duration_in_hours => [8760],
+      :scenario_max_occurrence => [1],
+      :scenario_fixed_frequency_in_years => [0],
+      # Building-to-Cluster Connectivity
+      # Cluster-to-Community Connectivity
+      # Community-to-Utility Connectivity
+      # Building Level Configuration
+      :building_level_building_id => ["mc", "other"],
+      :building_level_egen_flag => ["FALSE", "FALSE"],
+      :building_level_egen_eff_pct => [32.0, 32.0],
+      #:building_level_egen_peak_pwr_kW => [100.0, 100.0],
+      :building_level_heat_storage_flag => ["FALSE", "FALSE"],
+      :building_level_heat_storage_cap_kWh => [0.0, 0.0],
+      :building_level_gas_boiler_flag => ["FALSE", "FALSE"],
+      :building_level_gas_boiler_eff_pct => [85.0, 85.0],
+      #:building_level_gas_boiler_peak_heat_gen_kW => [50.0, 50.0],
+      :building_level_echiller_flag => ["FALSE", "FALSE"],
+      :building_level_echiller_peak_cooling_kW => [50.0, 50.0],
+      # Community Level Configuration
+    }
+  end
+
+  def write_params(params, path)
+    File.write(path, params.to_s.gsub(/^{/, '').gsub(/}$/, '').gsub(/, :/, ",\n:"))
+  end
+
   def call_modelkit(args, output_file)
     cmd = "modelkit template-compose #{args}"
     val = {}
@@ -42,20 +81,28 @@ class TestTemplate < Minitest::Test
   end
 
   def ensure_directory_clean
-    File.delete(@output_file) if File.exist?(@output_file)
+    [@output_file, @params_file].each do |path|
+      File.delete(path) if File.exist?(path)
+    end
   end
 
   def setup
-    @input_file = "ex.pxt"
+    @params_file = "test.pxt"
+    @template_file = "template.toml"
     @output_file = "test.toml"
     ensure_directory_clean
   end
 
   def teardown
+    ensure_directory_clean
   end
 
-  def test_ex_template_expected
-    out = call_modelkit("--output=\"test.toml\" --files=\"ex.pxt\" \"template.toml\"", "test.toml")
+  def test_defaults
+    write_params(default_params, @params_file)
+    out = call_modelkit(
+      "--output=\"#{@output_file}\" --files=\"#{@params_file}\" " +
+      "\"#{@template_file}\"",
+      @output_file)
     err_str = error_string(out)
     assert(out[:success], err_str)
     assert(!out[:output].nil?, err_str)

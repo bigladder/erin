@@ -33,17 +33,17 @@ parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
 # Community Level Configuration
 %>
 <% require 'set' %>
-<%  def is_true(x) %>
-<%    (x == true) || (x.to_s.downcase.strip == "true") %>
-<%  end %>
-<%  def equals(x, y) %>
-<%    (x.to_s.downcase.strip == y.to_s.downcase.strip) %>
-<%  end %>
-<%  enduse_set = Set.new %>
-<%  fuels_set = Set.new %>
-<%  load_id_set = Set.new %>
-<%  load_ids = [] %>
-<%  num_buildings = building_level_building_id.length %>
+<% def is_true(x) %>
+<%   (x == true) || (x.to_s.downcase.strip == "true") %>
+<% end %>
+<% def equals(x, y) %>
+<%   (x.to_s.downcase.strip == y.to_s.downcase.strip) %>
+<% end %>
+<% enduse_set = Set.new %>
+<% fuels_set = Set.new %>
+<% load_id_set = Set.new %>
+<% load_ids = [] %>
+<% num_buildings = building_level_building_id.length %>
 [simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"

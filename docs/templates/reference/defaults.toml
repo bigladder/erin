@@ -30,8 +30,8 @@ loads_by_scenario.blue_sky = "other_electricity_blue_sky"
 [networks.nw]
 connections = [
   ["electric_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(0)", "mc_electricity_load:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(1)", "other_electricity_load:IN(0)", "electricity"],
+  ["building_level_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+  ["building_level_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
   ]
 ############################################################
 [scenarios.blue_sky]

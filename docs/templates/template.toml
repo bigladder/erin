@@ -124,7 +124,7 @@ constant_efficiency = <%= building_level_gas_boiler_eff_pct[idx].to_f %>
 connections = [
   ["electric_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
 <% num_buildings.times do |n| %>
-  ["building_level_electric_bus:OUT(<%= n %>)", "<%= building_level_building_id[n] %>_electricity_load:IN(0)", "electricity"],
+  ["building_level_electric_bus:OUT(<%= n %>)", "<%= building_level_building_id[n] %>_electricity:IN(0)", "electricity"],
 <% end %>
   ]
 ############################################################

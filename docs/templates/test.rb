@@ -49,6 +49,29 @@ class TestTemplate < Minitest::Test
     }
   end
 
+  def e2rin_path
+    path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_multi')
+    return path1 if File.exist?(path1)
+  end
+
+  def run_e2rin(input_tag, load_profiles)
+    load_profiles.each do |profile_name|
+      File.open(profile_name + ".csv", 'w') do |f|
+        f.write("hours,kW\n")
+        f.write("0,1\n")
+        f.write("10000,0\n")
+      end
+    end
+    input_path = File.join(THIS_DIR, 'reference', input_tag + ".toml")
+    `#{e2rin_path} #{input_path} out.csv stats.csv`
+    success = ($?.to_i == 0)
+    (load_profiles + ['out', 'stats']).each do |name|
+      path = name + '.csv'
+      File.delete(path) if File.exist?(path)
+    end
+    return success
+  end
+
   def write_params(params, path)
     File.write(path, params.to_s.gsub(/^{/, '').gsub(/}$/, '').gsub(/, :/, ",\n:"))
   end
@@ -113,6 +136,7 @@ class TestTemplate < Minitest::Test
 
   def test_defaults
     run_and_compare(default_params, 'defaults')
+    assert(run_e2rin('defaults', []))
   end
 
   def test_multiple_scenarios

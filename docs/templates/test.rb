@@ -94,7 +94,8 @@ class TestTemplate < Minitest::Test
   #   stdout: string, standard output
   #   stderr: string, standard error
   #   }
-  def call_modelkit(args, output_file)
+  def call_modelkit(pxt_file, tmp_file, output_file)
+    args = "--output=\"#{output_file}\" --files=\"#{pxt_file}\" \"#{tmp_file}\""
     cmd = "modelkit template-compose #{args}"
     val = {}
     out = ""
@@ -110,6 +111,7 @@ class TestTemplate < Minitest::Test
     val[:stdout] = out
     val[:stderr] = err
     val[:output] = File.read(output_file) if exist
+    val[:pxt] = if File.exist?(pxt_file) then File.read(pxt_file) else nil end
     return val
   end
 
@@ -151,10 +153,7 @@ class TestTemplate < Minitest::Test
   # - runs modelkit and asserts output is the same as reference
   def run_and_compare(params, reference_tag)
     write_params(params, @params_file)
-    out = call_modelkit(
-      "--output=\"#{@output_file}\" --files=\"#{@params_file}\" " +
-      "\"#{@template_file}\"",
-      @output_file)
+    out = call_modelkit(@params_file, @template_file, @output_file)
     err_str = error_string(out)
     assert(out[:success], err_str)
     assert(!out[:output].nil?, err_str)

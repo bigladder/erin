@@ -56,6 +56,11 @@ class TestTemplate < Minitest::Test
     return path1 if File.exist?(path1)
   end
 
+  def e2rin_graph_path
+    path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_graph')
+    return path1 if File.exist?(path1)
+  end
+
   # - input_tag: string, the tag for the input file, such as 'defaults', for reference/defaults.toml
   # - load_profiles: (array string), the csv files for the load profiles
   # RETURN: bool
@@ -70,6 +75,28 @@ class TestTemplate < Minitest::Test
     input_path = File.join(THIS_DIR, 'reference', input_tag + ".toml")
     `#{e2rin_path} #{input_path} out.csv stats.csv`
     success = ($?.to_i == 0)
+    (load_profiles + ['out.csv', 'stats.csv']).each do |path|
+      File.delete(path) if File.exist?(path)
+    end
+    return success
+  end
+
+  # - input_tag: string, the tag for the input file, such as 'defaults', for reference/defaults.toml
+  # - load_profiles: (array string), the csv files for the load profiles
+  # RETURN: bool
+  def run_e2rin_graph(input_tag, load_profiles)
+    load_profiles.each do |path|
+      File.open(path, 'w') do |f|
+        f.write("hours,kW\n")
+        f.write("0,1\n")
+        f.write("10000,0\n")
+      end
+    end
+    input_path = File.join(THIS_DIR, 'reference', input_tag + ".toml")
+    `#{e2rin_graph_path} #{input_path} #{input_tag}.gv nw`
+    success = ($?.to_i == 0)
+    `dot -Tpng #{input_tag}.gv -o #{input_tag}.png`
+    success = success and ($?.to_i == 0)
     (load_profiles + ['out.csv', 'stats.csv']).each do |path|
       File.delete(path) if File.exist?(path)
     end
@@ -165,6 +192,7 @@ class TestTemplate < Minitest::Test
     ps = default_params
     run_and_compare(ps, 'defaults')
     assert(run_e2rin('defaults', ps[:load_profile_file]))
+    assert(run_e2rin_graph('defaults', ps[:load_profile_file]))
   end
 
   def test_multiple_scenarios
@@ -184,6 +212,7 @@ class TestTemplate < Minitest::Test
     ps[:scenario_fixed_frequency_in_years] += [10]*2
     run_and_compare(ps, 'multiple_scenarios')
     assert(run_e2rin('multiple_scenarios', ps[:load_profile_file]))
+    assert(run_e2rin_graph('multiple_scenarios', ps[:load_profile_file]))
   end
 
   def test_add_one_electric_generator_at_building_level
@@ -191,7 +220,14 @@ class TestTemplate < Minitest::Test
     ps[:building_level_egen_flag][0] = "TRUE"
     ps[:building_level_egen_eff_pct][0] = 42.0
     run_and_compare(ps, 'add_one_electric_generator_at_building_level')
-    assert(run_e2rin('add_one_electric_generator_at_building_level', ps[:load_profile_file]))
+    assert(
+      run_e2rin(
+        'add_one_electric_generator_at_building_level',
+        ps[:load_profile_file]))
+    assert(
+      run_e2rin_graph(
+        'add_one_electric_generator_at_building_level',
+        ps[:load_profile_file]))
   end
 
   def test_only_one_building_with_electric_loads
@@ -208,6 +244,12 @@ class TestTemplate < Minitest::Test
     ps[:building_level_gas_boiler_flag] = ["FALSE"]
     ps[:building_level_gas_boiler_eff_pct] = [85.0]
     run_and_compare(ps, 'only_one_building_with_electric_loads')
-    assert(run_e2rin('only_one_building_with_electric_loads', ps[:load_profile_file]))
+    assert(
+      run_e2rin(
+        'only_one_building_with_electric_loads', ps[:load_profile_file]))
+    assert(
+      run_e2rin_graph(
+        'only_one_building_with_electric_loads',
+        ps[:load_profile_file]))
   end
 end

@@ -42,8 +42,8 @@ class TestTemplate < Minitest::Test
       :building_level_gas_boiler_flag => ["FALSE", "FALSE"],
       :building_level_gas_boiler_eff_pct => [85.0, 85.0],
       #:building_level_gas_boiler_peak_heat_gen_kW => [50.0, 50.0],
-      :building_level_echiller_flag => ["FALSE", "FALSE"],
-      :building_level_echiller_peak_cooling_kW => [50.0, 50.0],
+      #:building_level_echiller_flag => ["FALSE", "FALSE"],
+      #:building_level_echiller_peak_cooling_kW => [50.0, 50.0],
       # Community Level Configuration
     }
   end

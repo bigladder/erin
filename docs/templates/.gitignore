@@ -1,5 +1,4 @@
 *.out
-out.csv
-stats.csv
+*.csv
 test.toml
 test.pxt

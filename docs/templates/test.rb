@@ -186,4 +186,12 @@ class TestTemplate < Minitest::Test
     run_and_compare(ps, 'multiple_scenarios')
     assert(run_e2rin('multiple_scenarios', ps[:load_profile_file]))
   end
+
+  def test_add_one_electric_generator_at_building_level
+    ps = default_params
+    ps[:building_level_egen_flag][0] = "TRUE"
+    ps[:building_level_egen_eff_pct][0] = 42.0
+    run_and_compare(ps, 'add_one_electric_generator_at_building_level')
+    assert(run_e2rin('add_one_electric_generator_at_building_level', ps[:load_profile_file]))
+  end
 end

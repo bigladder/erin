@@ -41,6 +41,8 @@ parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
 <% end %>
 <% enduse_set = Set.new %>
 <% fuels_set = Set.new %>
+<% fuels_set << "electricity" %>
+<% building_level_egen_flag.each {|f| fuels_set << "natural_gas" if is_true(f)} %>
 <% load_id_set = Set.new %>
 <% load_ids = [] %>
 <% num_buildings = building_level_building_id.length %>
@@ -66,15 +68,18 @@ max_time = <%= simulation_duration_in_years %>
 csv_file = "<%= file %>"
 <% end %>
 ############################################################
-[components.electric_source]
+<% fuels_set.each do |fuel| %>
+[components.<%= fuel %>_source]
 type = "source"
-outflow = "electricity"
+outflow = "<%= fuel %>"
+<% end # fuels_set.each do ... %>
 <% if num_buildings > 1 %>
 [components.building_level_electric_bus]
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
 num_outflows = <%= num_buildings %>
+dispatch_strategy = "in_order"
 <% end %>
 <% b_id_enduses = Set.new %>
 <% load_profile_building_id.each_with_index do |b_id, idx| %>
@@ -94,15 +99,21 @@ loads_by_scenario.<%= s_id %> = "<%= load_id %>"
 <% end %>
 <% building_level_building_id.sort.each_with_index do |b_id, idx| %>
 <% if is_true(building_level_egen_flag[idx]) %>
-[component.<%= b_id %>_emergency_generator]
+[components.<%= b_id %>_electric_generator]
 type = "converter"
 inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
 constant_efficiency = <%= building_level_egen_eff_pct[idx].to_f / 100.0 %>
+[components.<%= b_id %>_electric_bus]
+type = "muxer"
+stream = "electricity"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
 <% end # if %>
 <% if is_true(building_level_heat_storage_flag[idx]) %>
-[component.<%= b_id %>_heat_storage]
+[components.<%= b_id %>_heat_storage]
 type = "store"
 outflow = "heating"
 inflow = "heating"
@@ -111,7 +122,7 @@ capacity = <%= building_level_heat_storage_cap_kWh[idx].to_f %>
 max_inflow = <%= building_level_heat_storage_cap_kWh[idx].to_f / 10.0 %>
 <% end # if %>
 <% if is_true(building_level_gas_boiler_flag[idx]) %>
-[component.<%= b_id %>_gas_boiler]
+[components.<%= b_id %>_gas_boiler]
 type = "converter"
 outflow = "heating"
 inflow = "natural_gas"
@@ -122,9 +133,16 @@ constant_efficiency = <%= building_level_gas_boiler_eff_pct[idx].to_f %>
 ############################################################
 [networks.nw]
 connections = [
-  ["electric_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
+  ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
 <% num_buildings.times do |n| %>
+<% b_id = building_level_building_id[n] %>
+<% if is_true(building_level_egen_flag[n]) %>
+  ["building_level_electric_bus:OUT(<%= n %>)", "<%= b_id %>_electric_bus:IN(0)", "electricity"],
+  ["<%= b_id %>_electric_generator:OUT(0)", "<%= b_id %>_electric_bus:IN(1)", "electricity"],
+  ["natural_gas_source:OUT(0)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
+<% else %>
   ["building_level_electric_bus:OUT(<%= n %>)", "<%= building_level_building_id[n] %>_electricity:IN(0)", "electricity"],
+<% end %>
 <% end %>
   ]
 ############################################################

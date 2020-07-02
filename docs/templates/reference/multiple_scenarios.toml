@@ -18,7 +18,7 @@ csv_file = "mc_s2_electricity.csv"
 [loads.other_electricity_s2]
 csv_file = "other_s2_electricity.csv"
 ############################################################
-[components.electric_source]
+[components.electricity_source]
 type = "source"
 outflow = "electricity"
 [components.building_level_electric_bus]
@@ -26,6 +26,7 @@ type = "muxer"
 stream = "electricity"
 num_inflows = 1
 num_outflows = 2
+dispatch_strategy = "in_order"
 [components.mc_electricity]
 type = "load"
 inflow = "electricity"
@@ -41,7 +42,7 @@ loads_by_scenario.s2 = "other_electricity_s2"
 ############################################################
 [networks.nw]
 connections = [
-  ["electric_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
+  ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
   ["building_level_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
   ["building_level_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
   ]

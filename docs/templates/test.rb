@@ -14,6 +14,7 @@ THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REMOVE_FILES = true
 
 class TestTemplate < Minitest::Test
+  # RETURN: (Hash symbol any), the default parameters for the template
   def default_params
     {
       # General
@@ -49,14 +50,18 @@ class TestTemplate < Minitest::Test
     }
   end
 
+  # RETURN: string, path to the e2rin_multi executable
   def e2rin_path
     path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_multi')
     return path1 if File.exist?(path1)
   end
 
+  # - input_tag: string, the tag for the input file, such as 'defaults', for reference/defaults.toml
+  # - load_profiles: (array string), the csv files for the load profiles
+  # RETURN: bool
   def run_e2rin(input_tag, load_profiles)
-    load_profiles.each do |profile_name|
-      File.open(profile_name + ".csv", 'w') do |f|
+    load_profiles.each do |path|
+      File.open(path, 'w') do |f|
         f.write("hours,kW\n")
         f.write("0,1\n")
         f.write("10000,0\n")
@@ -65,17 +70,30 @@ class TestTemplate < Minitest::Test
     input_path = File.join(THIS_DIR, 'reference', input_tag + ".toml")
     `#{e2rin_path} #{input_path} out.csv stats.csv`
     success = ($?.to_i == 0)
-    (load_profiles + ['out', 'stats']).each do |name|
-      path = name + '.csv'
+    (load_profiles + ['out.csv', 'stats.csv']).each do |path|
       File.delete(path) if File.exist?(path)
     end
     return success
   end
 
+  # - params: (Hash symbol any), the parameters to write
+  # - path: string, path to the pxt file to write out
+  # RETURN: nil
   def write_params(params, path)
     File.write(path, params.to_s.gsub(/^{/, '').gsub(/}$/, '').gsub(/, :/, ",\n:"))
   end
 
+  # - args: string, arguments to be appended after "modelkit template-compose "
+  # - output_file: string, path to the output file to expect
+  # RETURN: {
+  #   cmd: string, the command run,
+  #   success: bool, true if successful, else false
+  #   exit: bool, true if we got a 0 exit code form modelkit
+  #   output_exists: bool, true if output was rendered
+  #   output: (Or nil string), if output from rendered template exists, place here; else nil
+  #   stdout: string, standard output
+  #   stderr: string, standard error
+  #   }
   def call_modelkit(args, output_file)
     cmd = "modelkit template-compose #{args}"
     val = {}
@@ -95,6 +113,8 @@ class TestTemplate < Minitest::Test
     return val
   end
 
+  # - v: (Hash ...), any hash
+  # RETURN: string, a print-out of the hash into a string
   def error_string(v)
     s = StringIO.new
     s.write("ERROR:\n")
@@ -104,6 +124,9 @@ class TestTemplate < Minitest::Test
     s.string
   end
 
+  # RETURN: nil
+  # SIDE-EFFECTS:
+  # - ensures the @output_file and @params_file are removed if exist
   def ensure_directory_clean
     [@output_file, @params_file].each do |path|
       File.delete(path) if File.exist?(path) and REMOVE_FILES
@@ -121,6 +144,11 @@ class TestTemplate < Minitest::Test
     ensure_directory_clean
   end
 
+  # - params: (Hash ..), the params
+  # - reference_tag: string, tag identifying the reference file to compare to; e.g., 'default' for reference/default.toml
+  # RETURN: nil
+  # SIDE-EFFECTS:
+  # - runs modelkit and asserts output is the same as reference
   def run_and_compare(params, reference_tag)
     write_params(params, @params_file)
     out = call_modelkit(
@@ -135,8 +163,9 @@ class TestTemplate < Minitest::Test
   end
 
   def test_defaults
-    run_and_compare(default_params, 'defaults')
-    assert(run_e2rin('defaults', []))
+    ps = default_params
+    run_and_compare(ps, 'defaults')
+    assert(run_e2rin('defaults', ps[:load_profile_file]))
   end
 
   def test_multiple_scenarios
@@ -155,5 +184,6 @@ class TestTemplate < Minitest::Test
     ps[:scenario_max_occurrence] += [-1]*2
     ps[:scenario_fixed_frequency_in_years] += [10]*2
     run_and_compare(ps, 'multiple_scenarios')
+    assert(run_e2rin('multiple_scenarios', ps[:load_profile_file]))
   end
 end

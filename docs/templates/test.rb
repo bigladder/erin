@@ -11,6 +11,7 @@ require 'open3'
 require 'stringio'
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
+REMOVE_FILES = true
 
 class TestTemplate < Minitest::Test
   def default_params
@@ -82,7 +83,7 @@ class TestTemplate < Minitest::Test
 
   def ensure_directory_clean
     [@output_file, @params_file].each do |path|
-      File.delete(path) if File.exist?(path)
+      File.delete(path) if File.exist?(path) and REMOVE_FILES
     end
   end
 
@@ -97,8 +98,8 @@ class TestTemplate < Minitest::Test
     ensure_directory_clean
   end
 
-  def test_defaults
-    write_params(default_params, @params_file)
+  def run_and_compare(params, reference_tag)
+    write_params(params, @params_file)
     out = call_modelkit(
       "--output=\"#{@output_file}\" --files=\"#{@params_file}\" " +
       "\"#{@template_file}\"",
@@ -106,7 +107,29 @@ class TestTemplate < Minitest::Test
     err_str = error_string(out)
     assert(out[:success], err_str)
     assert(!out[:output].nil?, err_str)
-    expected = File.read(File.join(THIS_DIR, 'reference', 'expected_ex.toml'))
+    expected = File.read(File.join('reference', "#{reference_tag}.toml"))
     assert_equal(out[:output], expected, err_str)
+  end
+
+  def test_defaults
+    run_and_compare(default_params, 'defaults')
+  end
+
+  def test_multiple_scenarios
+    ps = default_params
+    ps[:load_profile_scenario_id] += ["s1"]*2 + ["s2"]*2
+    ps[:load_profile_building_id] += ["mc", "other"]*2
+    ps[:load_profile_enduse] += ["electricity"]*4
+    ps[:load_profile_file] += [
+      "mc_s1_electricity.csv",
+      "other_s1_electricity.csv",
+      "mc_s2_electricity.csv",
+      "other_s2_electricity.csv",
+    ]
+    ps[:scenario_id] += ["s1", "s2"]
+    ps[:scenario_duration_in_hours] += [500]*2
+    ps[:scenario_max_occurrence] += [-1]*2
+    ps[:scenario_fixed_frequency_in_years] += [10]*2
+    run_and_compare(ps, 'multiple_scenarios')
   end
 end

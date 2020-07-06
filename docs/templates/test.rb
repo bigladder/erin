@@ -269,4 +269,21 @@ class TestTemplate < Minitest::Test
       run_e2rin_graph(
         'one_building_has_thermal_storage', ps[:load_profile_file]))
   end
+
+  def test_one_building_has_boiler
+    ps = default_params
+    ps[:load_profile_scenario_id] << "blue_sky"
+    ps[:load_profile_building_id] << "mc"
+    ps[:load_profile_enduse] << "heating"
+    ps[:load_profile_file] << "mc_blue_sky_heating.csv"
+    ps[:building_level_gas_boiler_flag][0] = "TRUE"
+    ps[:building_level_gas_boiler_eff_pct][0] = 85.0
+    run_and_compare(ps, 'one_building_has_boiler')
+    assert(
+      run_e2rin(
+        'one_building_has_boiler', ps[:load_profile_file]))
+    assert(
+      run_e2rin_graph(
+        'one_building_has_boiler', ps[:load_profile_file]))
+  end
 end

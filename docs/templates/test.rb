@@ -252,4 +252,21 @@ class TestTemplate < Minitest::Test
         'only_one_building_with_electric_loads',
         ps[:load_profile_file]))
   end
+
+  def test_one_building_has_thermal_storage
+    ps = default_params
+    ps[:load_profile_scenario_id] << "blue_sky"
+    ps[:load_profile_building_id] << "mc"
+    ps[:load_profile_enduse] << "heating"
+    ps[:load_profile_file] << "mc_blue_sky_heating.csv"
+    ps[:building_level_heat_storage_flag][0] = "TRUE"
+    ps[:building_level_heat_storage_cap_kWh][0] = 100.0
+    run_and_compare(ps, 'one_building_has_thermal_storage')
+    assert(
+      run_e2rin(
+        'one_building_has_thermal_storage', ps[:load_profile_file]))
+    assert(
+      run_e2rin_graph(
+        'one_building_has_thermal_storage', ps[:load_profile_file]))
+  end
 end

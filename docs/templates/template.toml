@@ -47,23 +47,61 @@ parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
 <% fuels_set << "electricity"                                                  %>
 <% building_level_enduses = {}                                                 %>
 <% building_required_fuels = {}                                                %>
+<% buildings_requiring_heat = 0                                                %>
+<% buildings_requiring_elec = 0                                                %>
+<% buildings_requiring_cool = 0                                                %>
+<% heated_buildings = Set.new                                                  %>
+<% electrified_buildings = Set.new                                             %>
+<% cooled_buildings = Set.new                                                  %>
+<% heated_building_ids = []                                                    %>
+<% heated_building_tes_flags = []                                              %>
+<% heated_building_tes_caps = []                                               %>
+<% heated_building_boiler_flags = []                                           %>
+<% heated_building_boiler_effs = []                                            %>
+<% building_config = {}                                                        %>
+<%                                                                             %>
+<% building_level_building_id.each_with_index do |b_id, n|                     %>
+<%   if building_config.include?(b_id)                                         %>
+# WARNING! Building ID "<%= b_id %>" appears more than once!
+<%   end                                                                       %>
+<%   building_config[b_id] = {                                                 %>
+<%     has_tes: is_true(building_level_heat_storage_flag[n]),                  %>
+<%     tes_cap_kWh: building_level_heat_storage_cap_kWh[n].to_f,               %>
+<%     has_boiler: is_true(building_level_gas_boiler_flag[n]),                 %>
+<%     boiler_eff: building_level_gas_boiler_eff_pct[n].to_f / 100.0,          %>
+<%   }                                                                         %>
+<% end                                                                         %>
 <%                                                                             %>
 <% load_profile_building_id.each_with_index do |b_id, idx|                     %>
 <%   enduse = load_profile_enduse[idx]                                         %>
-<%   if !building_level_enduses.include?(b_id)                                 %>
-<%     building_level_enduses[b_id] = Set.new([enduse])                        %>
-<%   else                                                                      %>
+<%   if building_level_enduses.include?(b_id)                                  %>
 <%     building_level_enduses[b_id] << enduse                                  %>
+<%   else                                                                      %>
+<%     building_level_enduses[b_id] = Set.new([enduse])                        %>
 <%   end                                                                       %>
 <%   if enduse == 'electricity'                                                %>
+<%     electrified_buildings << b_id                                           %>
 <%     if !building_required_fuels.include?(b_id)                              %>
 <%       building_required_fuels[b_id] = Set.new([enduse])                     %>
 <%     else                                                                    %>
 <%       building_required_fuels[b_id] << enduse                               %>
 <%     end                                                                     %>
+<%   elsif enduse == 'heating'                                                 %>
+<%     heated_buildings << b_id                                                %>
+<%     heated_building_ids << b_id                                             %>
+<%     heated_building_tes_flags << building_config[b_id][:has_tes]            %>
+<%     heated_building_tes_caps << building_config[b_id][:tes_cap_kWh]         %>
+<%     heated_building_boiler_flags << building_config[b_id][:has_boiler]      %>
+<%     heated_building_boiler_effs << building_config[b_id][:boiler_eff]       %>
+<%   elsif enduse == 'cooling'                                                 %>
+<%     buildings_requiring_cool += 1                                           %>
 <%   else                                                                      %>
+# WARNING! ENDUSE `<%= enduse %>` for building "<%= b_id %>" not processed!
 <%   end                                                                       %>
 <% end                                                                         %>
+<%                                                                             %>
+<% buildings_requiring_elec = electrified_buildings.size                       %>
+<% buildings_requiring_heat = heated_buildings.size                            %>
 <%                                                                             %>
 <% building_level_egen_flag.each_with_index do |flag, idx|                     %>
 <%   b_id = building_level_building_id[idx]                                    %>
@@ -103,6 +141,11 @@ csv_file = "<%= file %>"
 [components.<%= fuel %>_source]
 type = "source"
 outflow = "<%= fuel %>"
+<% end                                                                         %>
+<% if buildings_requiring_heat > 0                                             %>
+[components.heating_source]
+type = "source"
+outflow = "heating"
 <% end                                                                         %>
 <% if num_buildings > 1                                                        %>
 [components.building_level_electric_bus]
@@ -145,7 +188,7 @@ num_outflows = 1
 dispatch_strategy = "in_order"
 <%   end                                                                       %>
 <%   if is_true(building_level_heat_storage_flag[idx])                         %>
-[components.<%= b_id %>_heat_storage]
+[components.<%= b_id %>_thermal_storage]
 type = "store"
 outflow = "heating"
 inflow = "heating"
@@ -171,6 +214,9 @@ connections = [
 <% else                                                                        %>
   ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
 <% end                                                                         %>
+<% if heated_building_ids.length > 1                                           %>
+  ["heating_source:OUT(0)", "building_level_heating_manifold:IN(0)", "heating"],
+<% end                                                                         %>
 <% num_buildings.times do |n|                                                  %>
 <%   next if num_buildings == 1 and !is_true(building_level_egen_flag[0])      %>
 <%   b_id = building_level_building_id[n]                                      %>
@@ -181,6 +227,42 @@ connections = [
   ["natural_gas_source:OUT(0)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
 <%   else                                                                      %>
   ["building_level_electric_bus:OUT(<%= n %>)", "<%= b_id %>_electricity:IN(0)", "electricity"],
+<%   end                                                                       %>
+<% end                                                                         %>
+<% heated_building_ids.each_with_index do |b_id, n|                            %>
+<%   if buildings_requiring_heat == 1                                          %>
+<%     if heated_building_tes_flags[n] && heated_building_boiler_flags[n]      %>
+  ["natural_gas_source:OUT(<%= n %>)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
+  ["<%= b_id %>_gas_boiler:OUT(0)", "<%= b_id %>_thermal_bus:IN(0)", "heating"],
+  ["heating_source:OUT(<%= n %>)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
+  ["<%= b_id %>_thermal_storage:OUT(0)", "<%= b_id %>_thermal_bus:IN(1)", "heating"],
+  ["<%= b_id %>_thermal_bus:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
+<%     elsif heated_building_boiler_flags[n]                                   %>
+  ["natural_gas_source:OUT(<%= n %>)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
+  ["<%= b_id %>_gas_boiler:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
+<%     elsif heated_building_tes_flags[n]                                      %>
+  ["heating_source:OUT(<%= n %>)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
+  ["<%= b_id %>_thermal_storage:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
+<%     else                                                                    %>
+  ["heating_source:OUT(<%= n %>)", "<%= b_id %>_heating:IN(0)", "heating"],
+<%     end                                                                     %>
+<%   else                                                                      %>
+<%     if heated_building_tes_flags[n] and heated_building_boiler_flags[n]     %>
+  ["natural_gas_source:OUT(<%= n %>)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
+  ["<%= b_id %>_gas_boiler:OUT(0)", "<%= b_id %>_thermal_bus:IN(0)", "heating"],
+  ["building_level_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
+  ["<%= b_id %>_thermal_storage:OUT(0)", "<%= b_id %>_thermal_bus:IN(1)", "heating"],
+  ["<%= b_id %>_thermal_bus:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
+<%     elsif heated_building_boiler_flags[n]                                   %>
+  ["natural_gas_source:OUT(<%= n %>)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
+  ["<%= b_id %>_gas_boiler:OUT(0)", "<%= b_id %>_heating_manifold:IN(0)", "heating"],
+  ["building_level_heating_manifold:OUT(0)", "<%= b_id %>_heating_manifold:IN(0)", "heating"],
+<%     elsif heated_building_tes_flags[n]                                      %>
+  ["building_level_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
+  ["<%= b_id %>_thermal_storage:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
+<%     else                                                                    %>
+  ["building_level_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_heating:IN(0)", "heating"],
+<%     end                                                                     %>
 <%   end                                                                       %>
 <% end                                                                         %>
   ]

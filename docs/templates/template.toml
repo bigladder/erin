@@ -184,6 +184,18 @@ parameter "node_level_ng_supply_node", :default=>[]
 <%     load_profile_building_id,                                               %>
 <%     load_profile_enduse,                                                    %>
 <%     load_profile_file,                                                      %>
+<%     building_level_building_id,                                             %>
+<%     building_level_egen_flag,                                               %>
+<%     building_level_egen_eff_pct,                                            %>
+<%     building_level_heat_storage_flag,                                       %>
+<%     building_level_heat_storage_cap_kWh,                                    %>
+<%     building_level_gas_boiler_flag,                                         %>
+<%     building_level_gas_boiler_eff_pct,                                      %>
+<%     building_level_electricity_supply_node,                                 %>
+<%     node_level_id,                                                          %>
+<%     node_level_ng_power_plant_flag,                                         %>
+<%     node_level_ng_power_plant_eff_pct,                                      %>
+<%     node_level_ng_supply_node,                                              %>
 <%     )                                                                       %>
 <% load_data = s.process_load_data                                             %>
 <% if load_data[:warnings].length > 0                                          %>

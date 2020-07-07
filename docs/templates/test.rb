@@ -184,7 +184,9 @@ class TestTemplate < Minitest::Test
   def run_and_compare(params, reference_tag, save_rendered_template = true)
     write_params(params, @params_file)
     out = call_modelkit(@params_file, @template_file, @output_file)
-    FileUtils.cp(@output_file, reference_tag + '.toml') if save_rendered_template
+    if File.exist?(@output_file) and save_rendered_template
+      FileUtils.cp(@output_file, reference_tag + '.toml')
+    end
     err_str = error_string(out)
     assert(out[:success], err_str)
     assert(!out[:output].nil?, err_str)
@@ -247,6 +249,7 @@ class TestTemplate < Minitest::Test
     ps[:building_level_heat_storage_cap_kWh] = [0.0]
     ps[:building_level_gas_boiler_flag] = ["FALSE"]
     ps[:building_level_gas_boiler_eff_pct] = [85.0]
+    ps[:building_level_electricity_supply_node] = ["utility"]
     run_and_compare(ps, 'only_one_building_with_electric_loads')
     assert(
       run_e2rin(

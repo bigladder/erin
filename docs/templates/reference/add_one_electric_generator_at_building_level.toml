@@ -10,13 +10,13 @@ csv_file = "mc_blue_sky_electricity.csv"
 [loads.other_electricity_blue_sky]
 csv_file = "other_blue_sky_electricity.csv"
 ############################################################
-[components.electricity_source]
+[components.utility_electricity_source]
 type = "source"
 outflow = "electricity"
-[components.natural_gas_source]
+[components.utility_natural_gas_source]
 type = "source"
 outflow = "natural_gas"
-[components.building_level_electric_bus]
+[components.cluster_0_electric_bus]
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
@@ -45,12 +45,12 @@ dispatch_strategy = "in_order"
 ############################################################
 [networks.nw]
 connections = [
-  ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(0)", "mc_electric_bus:IN(0)", "electricity"],
+  ["utility_electricity_source:OUT(0)", "cluster_0_electric_bus:IN(0)", "electricity"],
+  ["cluster_0_electric_bus:OUT(0)", "mc_electric_bus:IN(0)", "electricity"],
   ["mc_electric_generator:OUT(0)", "mc_electric_bus:IN(1)", "electricity"],
   ["mc_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
-  ["natural_gas_source:OUT(0)", "mc_electric_generator:IN(0)", "natural_gas"],
+  ["cluster_0_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
+  ["utility_natural_gas_source:OUT(0)", "mc_electric_generator:IN(0)", "natural_gas"],
   ]
 ############################################################
 [scenarios.blue_sky]

@@ -8,7 +8,7 @@ max_time = 100
 [loads.b1_electricity_blue_sky]
 csv_file = "b1_blue_sky_electricity.csv"
 ############################################################
-[components.electricity_source]
+[components.utility_electricity_source]
 type = "source"
 outflow = "electricity"
 [components.b1_electricity]
@@ -18,7 +18,7 @@ loads_by_scenario.blue_sky = "b1_electricity_blue_sky"
 ############################################################
 [networks.nw]
 connections = [
-  ["electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+  ["utility_electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],
   ]
 ############################################################
 [scenarios.blue_sky]

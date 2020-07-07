@@ -6,6 +6,7 @@
 # This module uses Ruby's standard unit test library, MiniTest
 # This library assumes that Modelkit is installed and available from the
 # commandline
+require 'fileutils'
 require 'minitest/autorun'
 require 'open3'
 require 'stringio'
@@ -31,9 +32,6 @@ class TestTemplate < Minitest::Test
       :scenario_duration_in_hours => [8760],
       :scenario_max_occurrence => [1],
       :scenario_fixed_frequency_in_years => [0],
-      # Building-to-Cluster Connectivity
-      # Cluster-to-Community Connectivity
-      # Community-to-Utility Connectivity
       # Building Level Configuration
       :building_level_building_id => ["mc", "other"],
       :building_level_egen_flag => ["FALSE", "FALSE"],
@@ -43,11 +41,15 @@ class TestTemplate < Minitest::Test
       :building_level_heat_storage_cap_kWh => [0.0, 0.0],
       :building_level_gas_boiler_flag => ["FALSE", "FALSE"],
       :building_level_gas_boiler_eff_pct => [85.0, 85.0],
+      :building_level_electricity_supply_node => ["utility", "utility"],
       #:building_level_gas_boiler_peak_heat_gen_kW => [50.0, 50.0],
       #:building_level_echiller_flag => ["FALSE", "FALSE"],
       #:building_level_echiller_peak_cooling_kW => [50.0, 50.0],
-      # Cluster Level Configuration
-      # Community Level Configuration
+      # Node Level Configuration -- Cluster and Community
+      :node_level_id => [],
+      :node_level_ng_power_plant_flag => [],
+      :node_level_ng_power_plant_eff_pct => [],
+      :node_level_ng_supply_node => [],
     }
   end
 
@@ -179,9 +181,10 @@ class TestTemplate < Minitest::Test
   # RETURN: nil
   # SIDE-EFFECTS:
   # - runs modelkit and asserts output is the same as reference
-  def run_and_compare(params, reference_tag)
+  def run_and_compare(params, reference_tag, save_rendered_template = true)
     write_params(params, @params_file)
     out = call_modelkit(@params_file, @template_file, @output_file)
+    FileUtils.cp(@output_file, reference_tag + '.toml') if save_rendered_template
     err_str = error_string(out)
     assert(out[:success], err_str)
     assert(!out[:output].nil?, err_str)
@@ -309,52 +312,53 @@ class TestTemplate < Minitest::Test
         'all_building_config_options_true', ps[:load_profile_file]))
   end
 
-  def test_electric_generation_at_the_cluster_level
-    ps = {
-      # General
-      :simulation_duration_in_years => 100,
-      :random_setting => "Auto",
-      :random_seed => 17,
-      # Load Profile
-      :load_profile_scenario_id => ["blue_sky", "blue_sky"],
-      :load_profile_building_id => ["mc", "other"],
-      :load_profile_enduse => ["electricity", "electricity"],
-      :load_profile_file => ["mc_blue_sky_electricity.csv", "other_blue_sky_electricity.csv"],
-      # Scenario
-      :scenario_id => ["blue_sky"],
-      :scenario_duration_in_hours => [8760],
-      :scenario_max_occurrence => [1],
-      :scenario_fixed_frequency_in_years => [0],
-      # Building Level Configuration
-      :building_level_building_id => ["mc", "other"],
-      :building_level_egen_flag => ["FALSE", "FALSE"],
-      :building_level_egen_eff_pct => [32.0, 32.0],
-      #:building_level_egen_peak_pwr_kW => [100.0, 100.0],
-      :building_level_heat_storage_flag => ["FALSE", "FALSE"],
-      :building_level_heat_storage_cap_kWh => [0.0, 0.0],
-      :building_level_gas_boiler_flag => ["FALSE", "FALSE"],
-      :building_level_gas_boiler_eff_pct => [85.0, 85.0],
-      :building_level_electricity_supply_node => [1, 1],
-      #:building_level_gas_boiler_peak_heat_gen_kW => [50.0, 50.0],
-      #:building_level_echiller_flag => ["FALSE", "FALSE"],
-      #:building_level_echiller_peak_cooling_kW => [50.0, 50.0],
-      # Node Level Configuration
-      :node_level_id => ["cluster_01"],
-      :node_level_ng_power_plant_flag => ["TRUE"],
-      #:node_level_ng_chp_flag => ["FALSE"],
-      #:node_level_ng_boiler_flag => ["FALSE"],
-      #:node_level_tes_flag => ["FALSE"],
-      #:node_level_absorption_chiller_flag => ["FALSE", "FALSE"],
-      #:node_level_electric_chiller_flag => ["FALSE", "FALSE"],
-      :node_level_ng_supply_node => ["utility"],
-      # Community Level Configuration
-    }
-    run_and_compare(ps, 'electric_generation_at_the_cluster_level')
-    assert(
-      run_e2rin(
-        'electric_generation_at_the_cluster_level', ps[:load_profile_file]))
-    assert(
-      run_e2rin_graph(
-        'electric_generation_at_the_cluster_level', ps[:load_profile_file]))
-  end
+  #def test_electric_generation_at_the_cluster_level
+  #  ps = {
+  #    # General
+  #    :simulation_duration_in_years => 100,
+  #    :random_setting => "Auto",
+  #    :random_seed => 17,
+  #    # Load Profile
+  #    :load_profile_scenario_id => ["blue_sky", "blue_sky"],
+  #    :load_profile_building_id => ["mc", "other"],
+  #    :load_profile_enduse => ["electricity", "electricity"],
+  #    :load_profile_file => ["mc_blue_sky_electricity.csv", "other_blue_sky_electricity.csv"],
+  #    # Scenario
+  #    :scenario_id => ["blue_sky"],
+  #    :scenario_duration_in_hours => [8760],
+  #    :scenario_max_occurrence => [1],
+  #    :scenario_fixed_frequency_in_years => [0],
+  #    # Building Level Configuration
+  #    :building_level_building_id => ["mc", "other"],
+  #    :building_level_egen_flag => ["FALSE", "FALSE"],
+  #    :building_level_egen_eff_pct => [32.0, 32.0],
+  #    #:building_level_egen_peak_pwr_kW => [100.0, 100.0],
+  #    :building_level_heat_storage_flag => ["FALSE", "FALSE"],
+  #    :building_level_heat_storage_cap_kWh => [0.0, 0.0],
+  #    :building_level_gas_boiler_flag => ["FALSE", "FALSE"],
+  #    :building_level_gas_boiler_eff_pct => [85.0, 85.0],
+  #    :building_level_electricity_supply_node => ["cluster_0", "cluster_0"],
+  #    #:building_level_gas_boiler_peak_heat_gen_kW => [50.0, 50.0],
+  #    #:building_level_echiller_flag => ["FALSE", "FALSE"],
+  #    #:building_level_echiller_peak_cooling_kW => [50.0, 50.0],
+  #    # Node Level Configuration
+  #    :node_level_id => ["cluster_0"],
+  #    :node_level_ng_power_plant_flag => ["TRUE"],
+  #    :node_level_ng_power_plant_eff_pct => [42.0],
+  #    #:node_level_ng_chp_flag => ["FALSE"],
+  #    #:node_level_ng_boiler_flag => ["FALSE"],
+  #    #:node_level_tes_flag => ["FALSE"],
+  #    #:node_level_absorption_chiller_flag => ["FALSE", "FALSE"],
+  #    #:node_level_electric_chiller_flag => ["FALSE", "FALSE"],
+  #    :node_level_ng_supply_node => ["utility"],
+  #    # Community Level Configuration
+  #  }
+  #  run_and_compare(ps, 'electric_generation_at_the_cluster_level', true)
+  #  assert(
+  #    run_e2rin(
+  #      'electric_generation_at_the_cluster_level', ps[:load_profile_file]))
+  #  assert(
+  #    run_e2rin_graph(
+  #      'electric_generation_at_the_cluster_level', ps[:load_profile_file]))
+  #end
 end

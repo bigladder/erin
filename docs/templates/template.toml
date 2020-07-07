@@ -13,9 +13,6 @@ parameter "scenario_id", :default=>["blue_sky", "class_4_hurricane"]
 parameter "scenario_duration_in_hours", :default=>[8760, 336]
 parameter "scenario_max_occurrence", :default=>[1, -1]
 parameter "scenario_fixed_frequency_in_years", :default=>[0, 30]
-# Building-to-Cluster Connectivity
-# Cluster-to-Community Connectivity
-# Community-to-Utility Connectivity
 # Building Level Configuration
 parameter "building_level_building_id", :default=>["mc", "other"]
 parameter "building_level_egen_flag", :default=>["FALSE", "FALSE"]
@@ -25,14 +22,20 @@ parameter "building_level_heat_storage_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_heat_storage_cap_kWh", :default=>[0.0, 0.0]
 parameter "building_level_gas_boiler_flag", :default=>["FALSE", "FALSE"]
 parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
+parameter "building_level_electricity_supply_node", :default=>["utility", "utility"]
 #parameter "building_level_gas_boiler_peak_heat_gen_kW", :default=>[25.0, 25.0] # Not currently supported in the engine
 #parameter "building_level_echiller_flag", :default=>["FALSE", "FALSE"] # Can't handle chillers yet
 #parameter "building_level_echiller_peak_cooling_kW", :default=>[50.0, 50.0] # Can't handle chillers yet
 #parameter "building_level_echiller_eff_pct", :default=>[540.0, 540.0] # Can't handle chillers yet
-# Cluster Level Configuration
-# Community Level Configuration
+# Node Level Configuration -- Node is either Cluster or Community Level (or beyond)
+parameter "node_level_id", :default=>[]
+parameter "node_level_ng_power_plant_flag", :default=>[]
+parameter "node_level_ng_power_plant_eff_pct", :default=>[]
+parameter "node_level_ng_supply_node", :default=>[]
 %>
 <% require 'set'                                                               %>
+<% NG = 'natural_gas'                                                          %>
+<% E = 'electricity'                                                           %>
 <%                                                                             %>
 <% def is_true(x)                                                              %>
 <%   (x == true) || (x.to_s.downcase.strip == "true")                          %>
@@ -62,10 +65,26 @@ parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
 <% heated_building_boiler_effs = []                                            %>
 <% ng_building_ids = []                                                        %>
 <% building_config = {}                                                        %>
+<% node_config = {}                                                            %>
+<% electricity_supplied_by_node = {}                                           %>
+<% ng_supplied_by_node = {}                                                    %>
+<%                                                                             %>
+<% node_level_id.each_with_index do |n_id, n|                                  %>
+<%   if node_config.include?(n_id)                                             %>
+# WARNING! Node ID "<%= n_id %>" appears more than once in node_level_id!
+# Previous value being overwritten...
+<%   end                                                                       %>
+<%   node_config[n_id] = {                                                     %>
+<%     has_ng_pwr_plant: is_true(node_level_ng_power_plant_flag[n]),           %>
+<%     ng_pwr_plant_eff: node_level_ng_power_plant_eff_pct[n].to_f / 100.0,    %>
+<%     ng_supply_node: node_level_ng_supply_node[n].strip,                     %>
+<%   }                                                                         %>
+<% end                                                                         %>
 <%                                                                             %>
 <% building_level_building_id.each_with_index do |b_id, n|                     %>
 <%   if building_config.include?(b_id)                                         %>
-# WARNING! Building ID "<%= b_id %>" appears more than once!
+# WARNING! Building ID "<%= b_id %>" appears more than once in
+# building_level_building_id! Previous value being overwritten...
 <%   end                                                                       %>
 <%   building_config[b_id] = {                                                 %>
 <%     has_egen: is_true(building_level_egen_flag[n]),                         %>
@@ -74,25 +93,53 @@ parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
 <%     tes_cap_kWh: building_level_heat_storage_cap_kWh[n].to_f,               %>
 <%     has_boiler: is_true(building_level_gas_boiler_flag[n]),                 %>
 <%     boiler_eff: building_level_gas_boiler_eff_pct[n].to_f / 100.0,          %>
+<%     e_supply_node: building_level_electricity_supply_node[n].strip,         %>
+<%     ng_supply_node: "utility",                                              %>
+<%     enduses: Set.new,                                                       %>
 <%   }                                                                         %>
 <% end                                                                         %>
 <%                                                                             %>
 <% load_profile_building_id.each_with_index do |b_id, idx|                     %>
 <%   enduse = load_profile_enduse[idx]                                         %>
+<%   cfg = building_config[b_id]                                               %>
+<%   cfg[:enduses] << enduse                                                   %>
+<%   e_sup_node = cfg[:e_supply_node]                                          %>
+<%   if (!e_sup_node.empty?) and (enduse == E)                                 %>
+<%     if electricity_supplied_by_node.include?(e_sup_node)                    %>
+<%       if !electricity_supplied_by_node[e_sup_node].include?(b_id)           %>
+<%         electricity_supplied_by_node[e_sup_node] << b_id                    %>
+<%       end                                                                   %>
+<%     else                                                                    %>
+<%       electricity_supplied_by_node[e_sup_node] = [b_id]                     %>
+<%     end                                                                     %>
+<%   end                                                                       %>
+<%   ng_sup_node = cfg[:ng_supply_node]                                        %>
+<%   uses_ng = ((enduse == NG) or                                              %>
+<%              ((enduse == E) and cfg[:has_egen]) or                          %>
+<%              ((enduse == 'heating') and cfg[:has_boiler]))                  %>
+<%   if (!ng_sup_node.empty?) and uses_ng                                      %>
+<%     if ng_supplied_by_node.include?(ng_sup_node)                            %>
+<%       if !ng_supplied_by_node[ng_sup_node].include?(b_id)                   %>
+<%         ng_supplied_by_node[ng_sup_node] << b_id                            %>
+<%       end                                                                   %>
+<%     else                                                                    %>
+<%       ng_supplied_by_node[ng_sup_node] = [b_id]                             %>
+<%     end                                                                     %>
+<%   end                                                                       %>
 <%   if building_level_enduses.include?(b_id)                                  %>
 <%     building_level_enduses[b_id] << enduse                                  %>
 <%   else                                                                      %>
 <%     building_level_enduses[b_id] = Set.new([enduse])                        %>
 <%   end                                                                       %>
-<%   if enduse == 'electricity'                                                %>
+<%   if enduse == E                                                            %>
 <%     electrified_buildings << b_id                                           %>
 <%     if !building_required_fuels.include?(b_id)                              %>
 <%       building_required_fuels[b_id] = Set.new([enduse])                     %>
 <%     else                                                                    %>
 <%       building_required_fuels[b_id] << enduse                               %>
 <%     end                                                                     %>
-<%     if building_config[b_id][:has_egen]                                     %>
-<%       fuels_set << "natural_gas"                                            %>
+<%     if cfg[:has_egen]                                                       %>
+<%       fuels_set << NG                                                       %>
 <%       if !ng_buildings.include?(b_id)                                       %>
 <%         ng_building_ids << b_id                                             %>
 <%       end                                                                   %>
@@ -157,26 +204,64 @@ max_time = <%= simulation_duration_in_years %>
 csv_file = "<%= file %>"
 <% end                                                                         %>
 ############################################################
+<% electricity_supplied_by_node.keys.sort.each do |n_id|                       %>
+<%   is_src_node = !node_config.include?(n_id)                                 %>
+<%   if (electricity_supplied_by_node[n_id].length > 0) and is_src_node        %>
+[components.<%= n_id %>_electricity_source]
+type = "source"
+outflow = "<%= E %>"
+<%   end                                                                       %>
+<% end                                                                         %>
+<% ng_supplied_by_node.keys.sort.each do |n_id|                                %>
+<%   is_src_node = !node_config.include?(n_id)                                 %>
+<%   if (ng_supplied_by_node[n_id].length > 0) and is_src_node                 %>
+[components.<%= n_id %>_natural_gas_source]
+type = "source"
+outflow = "<%= NG %>"
+<%   end                                                                       %>
+<% end                                                                         %>
+<% node_config.keys.sort.each_with_index do |n_id, n|                          %>
+<%   cfg = node_config[n_id]                                                   %>
+<%   if cfg[:has_ng_pwr_plant]                                                 %>
+<%     supply_node = cfg[:ng_supply_node]                                      %>
+<%     is_src_node = !node_config.include?(supply_node)                        %>
+<%     if is_src_node                                                          %>
+[components.<%= supply_node %>_natural_gas_source]
+type = "source"
+outflow = "<%= NG %>"
+<%     end                                                                     %>
+[components.<%= n_id %>_gas_power_plant]
+type = "converter"
+inflow = "natural_gas"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency = <%= cfg[:ng_pwr_plant_eff] %>
+<%   end                                                                       %>
+<% end                                                                         %>
 <% fuels_set.each do |fuel|                                                    %>
+<%   next if ['natural_gas', 'electricity'].include?(fuel)                     %>
 [components.<%= fuel %>_source]
 type = "source"
 outflow = "<%= fuel %>"
 <% end                                                                         %>
 <% if buildings_requiring_heat > 0                                             %>
-[components.heating_source]
+[components.utility_heating_source]
 type = "source"
 outflow = "heating"
 <% end                                                                         %>
-<% if num_buildings > 1                                                        %>
-[components.building_level_electric_bus]
+<% electricity_supplied_by_node.keys.sort.each_with_index do |n_id, n|         %>
+<%   num_supplied = electricity_supplied_by_node[n_id].length                  %>
+<%   if num_supplied > 1                                                       %>
+[components.cluster_<%= n %>_electric_bus]
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
-num_outflows = <%= num_buildings %>
+num_outflows = <%= num_supplied %>
 dispatch_strategy = "in_order"
+<%   end                                                                       %>
 <% end                                                                         %>
 <% if buildings_requiring_heat > 1                                             %>
-[components.building_level_heating_manifold]
+[components.cluster_0_heating_manifold]
 type = "muxer"
 stream = "heating"
 num_inflows = 1
@@ -184,7 +269,7 @@ num_outflows = <%= buildings_requiring_heat %>
 dispatch_strategy = "in_order"
 <% end                                                                         %>
 <% if num_ng_buildings > 1                                                     %>
-[components.building_level_natural_gas_manifold]
+[components.cluster_0_natural_gas_manifold]
 type = "muxer"
 stream = "natural_gas"
 num_inflows = 1
@@ -258,89 +343,100 @@ dispatch_strategy = "in_order"
 ############################################################
 [networks.nw]
 connections = [
-<% if (num_buildings == 1) and !is_true(building_level_egen_flag[0])           %>
-<%   b_id = building_level_building_id[0]                                      %>
-  ["electricity_source:OUT(0)", "<%= b_id %>_electricity:IN(0)", "electricity"],
-<% else                                                                        %>
-  ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
-<% end                                                                         %>
-<% num_buildings.times do |n|                                                  %>
-<%   next if num_buildings == 1 and !is_true(building_level_egen_flag[0])      %>
-<%   b_id = building_level_building_id[n]                                      %>
-<%   if is_true(building_level_egen_flag[n])                                   %>
-  ["building_level_electric_bus:OUT(<%= n %>)", "<%= b_id %>_electric_bus:IN(0)", "electricity"],
+<% electricity_supplied_by_node.keys.sort.each_with_index do |n_id, n|         %>
+<%   is_src_node = !node_config.include?(n_id)                                 %>
+<%   num_supplied = electricity_supplied_by_node[n_id].length                  %>
+<%   next if num_supplied == 0                                                 %>
+<%   electricity_supplied_by_node[n_id].each_with_index do |b_id, nn|          %>
+<%     cfg = building_config[b_id]                                             %>
+<%     if num_supplied == 1 and !cfg[:has_egen]                                %>
+  ["<%= n_id %>_electricity_source:OUT(0)", "<%= b_id %>_electricity:IN(0)", "electricity"],
+<%       break                                                                 %>
+<%     elsif num_supplied == 1 and cfg[:has_egen]                              %>
+  ["<%= n_id %>_electricity_source:OUT(0)", "<%= b_id %>_electric_bus:IN(0)", "electricity"],
   ["<%= b_id %>_electric_generator:OUT(0)", "<%= b_id %>_electric_bus:IN(1)", "electricity"],
   ["<%= b_id %>_electric_bus:OUT(0)", "<%= b_id %>_electricity:IN(0)", "electricity"],
-<%   else                                                                      %>
-  ["building_level_electric_bus:OUT(<%= n %>)", "<%= b_id %>_electricity:IN(0)", "electricity"],
+<%       break                                                                 %>
+<%     elsif nn == 0                                                           %>
+  ["<%= n_id %>_electricity_source:OUT(0)", "cluster_<%= n %>_electric_bus:IN(0)", "electricity"],
+<%     end                                                                     %>
+<%     if cfg[:has_egen]                                                       %>
+  ["cluster_<%= n %>_electric_bus:OUT(<%= nn %>)", "<%= b_id %>_electric_bus:IN(0)", "electricity"],
+  ["<%= b_id %>_electric_generator:OUT(0)", "<%= b_id %>_electric_bus:IN(1)", "electricity"],
+  ["<%= b_id %>_electric_bus:OUT(0)", "<%= b_id %>_electricity:IN(0)", "electricity"],
+<%     else                                                                    %>
+  ["cluster_<%= n %>_electric_bus:OUT(<%= nn %>)", "<%= b_id %>_electricity:IN(0)", "electricity"],
+<%     end                                                                     %>
 <%   end                                                                       %>
 <% end                                                                         %>
-<% if num_ng_buildings > 1                                                     %>
-  ["natural_gas_source:OUT(0)", "building_level_natural_gas_manifold:IN(0)", "natural_gas"],
-<% end                                                                         %>
-<% ng_building_ids.each_with_index do |b_id, n|                                %>
-<%   cfg = building_config[b_id]                                               %>
-<%   if num_ng_buildings == 1                                                  %>
-<%     if cfg[:has_egen] and cfg[:has_boiler]                                  %>
-  ["natural_gas_source:OUT(0)", "<%= b_id %>_natural_gas_manifold:IN(0)", "natural_gas"],
+<% ng_supplied_by_node.keys.sort.each_with_index do |n_id, n|                  %>
+<%   is_src_node = !node_config.include?(n_id)                                 %>
+<%   num_supplied = ng_supplied_by_node[n_id].length                           %>
+<%   next if num_supplied == 0                                                 %>
+<%   ng_supplied_by_node[n_id].each_with_index do |b_id, nn|                   %>
+<%     cfg = building_config[b_id]                                             %>
+<%     if num_supplied == 1 and cfg[:has_egen] and cfg[:has_boiler]            %>
+  ["<%= n_id %>_natural_gas_source:OUT(0)", "<%= b_id %>_natural_gas_manifold:IN(0)", "natural_gas"],
   ["<%= b_id %>_natural_gas_manifold:OUT(0)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
   ["<%= b_id %>_natural_gas_manifold:OUT(1)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
-<%     elsif cfg[:has_egen]                                                    %>
-  ["natural_gas_source:OUT(0)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
-<%     elsif cfg[:has_boiler]                                                  %>
-  ["natural_gas_source:OUT(0)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
-<%     else                                                                    %>
-# ERROR! Unhandled Natural Gas Case for Building <%= b_id %>
+<%       break                                                                 %>
+<%     elsif num_supplied == 1 and cfg[:has_egen]                              %>
+  ["<%= n_id %>_natural_gas_source:OUT(0)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
+<%       break                                                                 %>
+<%     elsif num_supplied == 1 and cfg[:has_boiler]                            %>
+  ["<%= n_id %>_natural_gas_source:OUT(0)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
+<%       break                                                                 %>
+<%     elsif nn == 0                                                           %>
+  ["<%= n_id %>_natural_gas_source:OUT(0)", "cluster_<%= n %>_natural_gas_manifold:IN(0)", "natural_gas"],
 <%     end                                                                     %>
-<%   else                                                                      %>
 <%     if cfg[:has_egen] and cfg[:has_boiler]                                  %>
-  ["building_level_natural_gas_manifold:OUT(<%= n %>)", "<%= b_id %>_natural_gas_manifold:IN(0)", "natural_gas"],
+  ["cluster_<%= n %>_natural_gas_manifold:OUT(<%= nn %>)", "<%= b_id %>_natural_gas_manifold:IN(0)", "natural_gas"],
   ["<%= b_id %>_natural_gas_manifold:OUT(0)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
   ["<%= b_id %>_natural_gas_manifold:OUT(1)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
 <%     elsif cfg[:has_egen]                                                    %>
-  ["building_level_natural_gas_manifold:OUT(<%= n %>)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
+  ["cluster_<%= n %>_natural_gas_manifold:OUT(<%= nn %>)", "<%= b_id %>_electric_generator:IN(0)", "natural_gas"],
 <%     elsif cfg[:has_boiler]                                                  %>
-  ["building_level_natural_gas_manifold:OUT(<%= n %>)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
+  ["cluster_<%= n %>_natural_gas_manifold:OUT(<%= nn %>)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
 <%     else                                                                    %>
-# ERROR! Unhandled Natural Gas Case for Building <%= b_id %>
+  ["cluster_<%= n %>_natural_gas_manifold:OUT(<%= nn %>)", "<%= b_id %>_natural_gas:IN(0)", "electricity"],
 <%     end                                                                     %>
 <%   end                                                                       %>
 <% end                                                                         %>
 <% if heated_building_ids.length > 1                                           %>
-  ["heating_source:OUT(0)", "building_level_heating_manifold:IN(0)", "heating"],
+  ["utility_heating_source:OUT(0)", "cluster_0_heating_manifold:IN(0)", "heating"],
 <% end                                                                         %>
 <% heated_building_ids.each_with_index do |b_id, n|                            %>
 <%   if buildings_requiring_heat == 1                                          %>
 <%     if heated_building_tes_flags[n] && heated_building_boiler_flags[n]      %>
   ["<%= b_id %>_gas_boiler:OUT(0)", "<%= b_id %>_heating_manifold:IN(0)", "heating"],
-  ["heating_source:OUT(0)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
+  ["utility_heating_source:OUT(0)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
   ["<%= b_id %>_thermal_storage:OUT(0)", "<%= b_id %>_heating_manifold:IN(1)", "heating"],
   ["<%= b_id %>_heating_manifold:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
 <%     elsif heated_building_boiler_flags[n]                                   %>
   ["<%= b_id %>_gas_boiler:OUT(0)", "<%= b_id %>_heating_manifold:IN(0)", "heating"],
-  ["heating_source:OUT(0)", "<%= b_id %>_heating_manifold:IN(1)", "heating"],
+  ["utility_heating_source:OUT(0)", "<%= b_id %>_heating_manifold:IN(1)", "heating"],
   ["<%= b_id %>_heating_manifold:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
 <%     elsif heated_building_tes_flags[n]                                      %>
-  ["heating_source:OUT(0)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
+  ["utility_heating_source:OUT(0)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
   ["<%= b_id %>_thermal_storage:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
 <%     else                                                                    %>
-  ["heating_source:OUT(<%= n %>)", "<%= b_id %>_heating:IN(0)", "heating"],
+  ["utility_heating_source:OUT(<%= n %>)", "<%= b_id %>_heating:IN(0)", "heating"],
 <%     end                                                                     %>
 <%   else                                                                      %>
 <%     if heated_building_tes_flags[n] and heated_building_boiler_flags[n]     %>
   ["<%= b_id %>_gas_boiler:OUT(0)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
   ["<%= b_id %>_thermal_storage:OUT(0)", "<%= b_id %>_heating_manifold:IN(0)", "heating"],
-  ["building_level_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_heating_manifold:IN(1)", "heating"],
+  ["cluster_0_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_heating_manifold:IN(1)", "heating"],
   ["<%= b_id %>_heating_manifold:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
 <%     elsif heated_building_boiler_flags[n]                                   %>
   ["<%= b_id %>_gas_boiler:OUT(0)", "<%= b_id %>_heating_manifold:IN(0)", "heating"],
-  ["building_level_heating_manifold:OUT(0)", "<%= b_id %>_heating_manifold:IN(1)", "heating"],
+  ["cluster_0_heating_manifold:OUT(0)", "<%= b_id %>_heating_manifold:IN(1)", "heating"],
   ["<%= b_id %>_heating_manifold:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
 <%     elsif heated_building_tes_flags[n]                                      %>
-  ["building_level_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
+  ["cluster_0_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_thermal_storage:IN(0)", "heating"],
   ["<%= b_id %>_thermal_storage:OUT(0)", "<%= b_id %>_heating:IN(0)", "heating"],
 <%     else                                                                    %>
-  ["building_level_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_heating:IN(0)", "heating"],
+  ["cluster_0_heating_manifold:OUT(<%= n %>)", "<%= b_id %>_heating:IN(0)", "heating"],
 <%     end                                                                     %>
 <%   end                                                                       %>
 <% end                                                                         %>

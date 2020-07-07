@@ -4,3 +4,11 @@ test.toml
 test.pxt
 *.gv
 *.png
+add_one_electric_generator_at_building_level.toml
+all_building_config_options_true.toml
+defaults.toml
+electric_generation_at_the_cluster_level.toml
+multiple_scenarios.toml
+one_building_has_boiler.toml
+one_building_has_thermal_storage.toml
+only_one_building_with_electric_loads.toml

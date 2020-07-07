@@ -179,12 +179,13 @@ parameter "node_level_ng_supply_node", :default=>[]
 <% end                                                                         %>
 <%                                                                             %>
 <% num_buildings = building_level_building_id.length                           %>
-<% load_data = Support.process_load_data(                                      %>
-<%     load_profile_building_id,                                               %>
+<% s = Support.new(                                                            %>
 <%     load_profile_scenario_id,                                               %>
+<%     load_profile_building_id,                                               %>
 <%     load_profile_enduse,                                                    %>
 <%     load_profile_file,                                                      %>
 <%     )                                                                       %>
+<% load_data = s.process_load_data                                             %>
 <% if load_data[:warnings].length > 0                                          %>
 # WARNING! ISSUES WITH load_profile_* data:
 <%   load_data[:warnings].each do |w|                                          %>

@@ -33,6 +33,7 @@ parameter "node_level_ng_power_plant_flag", :default=>[]
 parameter "node_level_ng_power_plant_eff_pct", :default=>[]
 parameter "node_level_ng_supply_node", :default=>[]
 %>
+<% require_relative 'support.rb'                                               %>
 <% require 'set'                                                               %>
 <% NG = 'natural_gas'                                                          %>
 <% E = 'electricity'                                                           %>
@@ -177,9 +178,19 @@ parameter "node_level_ng_supply_node", :default=>[]
 <%   end                                                                       %>
 <% end                                                                         %>
 <%                                                                             %>
-<% load_id_set = Set.new                                                       %>
-<% load_ids = []                                                               %>
 <% num_buildings = building_level_building_id.length                           %>
+<% load_data = Support.process_load_data(                                      %>
+<%     load_profile_building_id,                                               %>
+<%     load_profile_scenario_id,                                               %>
+<%     load_profile_enduse,                                                    %>
+<%     load_profile_file,                                                      %>
+<%     )                                                                       %>
+<% if load_data[:warnings].length > 0                                          %>
+# WARNING! ISSUES WITH load_profile_* data:
+<%   load_data[:warnings].each do |w|                                          %>
+# - <%= w %>
+<%   end                                                                       %>
+<% end                                                                         %>
 [simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"
@@ -189,19 +200,9 @@ random_seed = <%= random_seed.to_i %>
 <% end                                                                         %>
 max_time = <%= simulation_duration_in_years %>
 ############################################################
-<% load_profile_building_id.each_with_index do |building_id, idx|              %>
-<%   s_id = load_profile_scenario_id[idx]                                      %>
-<%   enduse = load_profile_enduse[idx]                                         %>
-<%   enduse_set << enduse                                                      %>
-<%   file = load_profile_file[idx]                                             %>
-<%   load_id = "#{building_id}_#{enduse}_#{s_id}"                              %>
-<%   if load_id_set.include?(load_id)                                          %>
-<%     puts "WARNING! Duplicate load_id `#{load_id}`"                          %>
-<%   end                                                                       %>
-<%   load_id_set << load_id                                                    %>
-<%   load_ids << load_id                                                       %>
-[loads.<%= load_id %>]
-csv_file = "<%= file %>"
+<% load_data[:loads].each do |load|                                            %>
+[loads.<%= load[:load_id] %>]
+csv_file = "<%= load[:file] %>"
 <% end                                                                         %>
 ############################################################
 <% electricity_supplied_by_node.keys.sort.each do |n_id|                       %>
@@ -288,7 +289,7 @@ inflow = "<%= enduse %>"
 <%   load_profile_scenario_id.each_with_index do |s_id, idx2|                  %>
 <%     if ((load_profile_building_id[idx2] == b_id) and                        %>
 <%         (load_profile_enduse[idx2] == enduse))                              %>
-<%       load_id = load_ids[idx2]                                              %>
+<%       load_id = load_data[:load_ids][idx2]                                  %>
 loads_by_scenario.<%= s_id %> = "<%= load_id %>"
 <%     end                                                                     %>
 <%   end                                                                       %>

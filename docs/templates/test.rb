@@ -388,7 +388,7 @@ class TestTemplate < Minitest::Test
     )
   end
 
-  def test_support_lib
+  def test_support_lib_with_defaults
     s = make_support_instance(default_params)
     comps = s.components
     expected_comp_ids = Set.new(["mc_electricity", "other_electricity", "utility_electricity_bus", "utility_electricity_source"])

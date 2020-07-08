@@ -587,48 +587,14 @@ class TestTemplate < Minitest::Test
 
   def test_support_lib_with_only_one_building_with_electric_loads
     compare_support_lib_outputs(
-      make_support_instance(add_one_electric_generator_at_building_level_params),
+      make_support_instance(only_one_building_with_electric_loads_params),
       [
         {
-          id: "mc_electricity",
-          string: "[components.mc_electricity]\n"\
+          id: "b1_electricity",
+          string: "[components.b1_electricity]\n"\
           "type = \"load\"\n"\
           "inflow = \"electricity\"\n"\
-          "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"
-        },
-        {
-          id: "mc_electricity_bus",
-          string: "[components.mc_electricity_bus]\n"\
-          "type = \"muxer\"\n"\
-          "stream = \"electricity\"\n"\
-          "num_inflows = 2\n"\
-          "num_outflows = 1\n"\
-          "dispatch_strategy = \"in_order\"\n"
-        },
-        {
-          id: "mc_electric_generator",
-          string: "[components.mc_electric_generator]\n"\
-          "type = \"converter\"\n"\
-          "inflow = \"natural_gas\"\n"\
-          "outflow = \"electricity\"\n"\
-          "lossflow = \"waste_heat\"\n"\
-          "constant_efficiency = 0.42\n"
-        },
-        {
-          id: "other_electricity",
-          string: "[components.other_electricity]\n"\
-          "type = \"load\"\n"\
-          "inflow = \"electricity\"\n"\
-          "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"
-        },
-        {
-          id: "utility_electricity_bus",
-          string: "[components.utility_electricity_bus]\n"\
-          "type = \"muxer\"\n"\
-          "stream = \"electricity\"\n"\
-          "num_inflows = 1\n"\
-          "num_outflows = 2\n"\
-          "dispatch_strategy = \"in_order\"\n",
+          "loads_by_scenario.blue_sky = \"b1_electricity_blue_sky\"\n"
         },
         {
           id: "utility_electricity_source",
@@ -636,22 +602,10 @@ class TestTemplate < Minitest::Test
           "type = \"source\"\n"\
           "outflow = \"electricity\"\n"
         },
-        {
-          id: "utility_natural_gas_source",
-          string: "[components.utility_natural_gas_source]\n"\
-          "type = \"source\"\n"\
-          "outflow = \"natural_gas\"\n"
-        }
       ],
-      [ ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
-        ["utility_electricity_bus:OUT(0)", "mc_electricity_bus:IN(0)", "electricity"],
-        ["mc_electric_generator:OUT(0)", "mc_electricity_bus:IN(1)", "electricity"],
-        ["mc_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-        ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
-        ["utility_natural_gas_source:OUT(0)", "mc_electric_generator:IN(0)", "natural_gas"],
+      [ ["utility_electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],
       ],
       false
     )
   end
-
 end

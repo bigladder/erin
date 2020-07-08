@@ -98,6 +98,17 @@ class TestTemplate < Minitest::Test
     ps
   end
 
+  def one_building_has_thermal_storage_params
+    ps = default_params
+    ps[:load_profile_scenario_id] << "blue_sky"
+    ps[:load_profile_building_id] << "mc"
+    ps[:load_profile_enduse] << "heating"
+    ps[:load_profile_file] << "mc_blue_sky_heating.csv"
+    ps[:building_level_heat_storage_flag][0] = "TRUE"
+    ps[:building_level_heat_storage_cap_kWh][0] = 100.0
+    ps
+  end
+
   # RETURN: string, path to the e2rin_multi executable
   def e2rin_path
     path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_multi')
@@ -279,13 +290,7 @@ class TestTemplate < Minitest::Test
   end
 
   def test_one_building_has_thermal_storage
-    ps = default_params
-    ps[:load_profile_scenario_id] << "blue_sky"
-    ps[:load_profile_building_id] << "mc"
-    ps[:load_profile_enduse] << "heating"
-    ps[:load_profile_file] << "mc_blue_sky_heating.csv"
-    ps[:building_level_heat_storage_flag][0] = "TRUE"
-    ps[:building_level_heat_storage_cap_kWh][0] = 100.0
+    ps = one_building_has_thermal_storage_params
     run_and_compare(ps, 'one_building_has_thermal_storage')
     assert(
       run_e2rin(

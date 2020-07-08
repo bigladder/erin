@@ -55,6 +55,32 @@ class TestTemplate < Minitest::Test
     }
   end
 
+  # RETURN: (Hash symbol any), the default parameters for the template
+  def multiple_scenarios_params
+    ps = default_params
+    ps[:load_profile_scenario_id] += ["s1"]*2 + ["s2"]*2
+    ps[:load_profile_building_id] += ["mc", "other"]*2
+    ps[:load_profile_enduse] += ["electricity"]*4
+    ps[:load_profile_file] += [
+      "mc_s1_electricity.csv",
+      "other_s1_electricity.csv",
+      "mc_s2_electricity.csv",
+      "other_s2_electricity.csv",
+    ]
+    ps[:scenario_id] += ["s1", "s2"]
+    ps[:scenario_duration_in_hours] += [500]*2
+    ps[:scenario_max_occurrence] += [-1]*2
+    ps[:scenario_fixed_frequency_in_years] += [10]*2
+    ps
+  end
+
+  def add_one_electric_generator_at_building_level_params
+    ps = default_params
+    ps[:building_level_egen_flag][0] = "TRUE"
+    ps[:building_level_egen_eff_pct][0] = 42.0
+    ps
+  end
+
   # RETURN: string, path to the e2rin_multi executable
   def e2rin_path
     path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_multi')
@@ -203,24 +229,6 @@ class TestTemplate < Minitest::Test
     assert(run_e2rin_graph('defaults', ps[:load_profile_file]))
   end
 
-  def multiple_scenarios_params
-    ps = default_params
-    ps[:load_profile_scenario_id] += ["s1"]*2 + ["s2"]*2
-    ps[:load_profile_building_id] += ["mc", "other"]*2
-    ps[:load_profile_enduse] += ["electricity"]*4
-    ps[:load_profile_file] += [
-      "mc_s1_electricity.csv",
-      "other_s1_electricity.csv",
-      "mc_s2_electricity.csv",
-      "other_s2_electricity.csv",
-    ]
-    ps[:scenario_id] += ["s1", "s2"]
-    ps[:scenario_duration_in_hours] += [500]*2
-    ps[:scenario_max_occurrence] += [-1]*2
-    ps[:scenario_fixed_frequency_in_years] += [10]*2
-    ps
-  end
-
   def test_multiple_scenarios
     ps = multiple_scenarios_params
     run_and_compare(ps, 'multiple_scenarios')
@@ -229,9 +237,7 @@ class TestTemplate < Minitest::Test
   end
 
   def test_add_one_electric_generator_at_building_level
-    ps = default_params
-    ps[:building_level_egen_flag][0] = "TRUE"
-    ps[:building_level_egen_eff_pct][0] = 42.0
+    ps = add_one_electric_generator_at_building_level_params
     run_and_compare(ps, 'add_one_electric_generator_at_building_level')
     assert(
       run_e2rin(
@@ -484,4 +490,7 @@ class TestTemplate < Minitest::Test
     actual_conns = Set.new(conns)
     assert_equal(expected_conns, actual_conns)
   end
+
+  #def test_support_lib_with_add_one_electric_generator_at_building_level
+  #end
 end

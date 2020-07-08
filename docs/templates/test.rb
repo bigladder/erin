@@ -9,7 +9,9 @@
 require 'fileutils'
 require 'minitest/autorun'
 require 'open3'
+require 'set'
 require 'stringio'
+require_relative "support.rb"
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REMOVE_FILES = true
@@ -364,4 +366,41 @@ class TestTemplate < Minitest::Test
   #    run_e2rin_graph(
   #      'electric_generation_at_the_cluster_level', ps[:load_profile_file]))
   #end
+
+  def make_support_instance(ps)
+    Support.new(
+      ps[:load_profile_scenario_id],
+      ps[:load_profile_building_id],
+      ps[:load_profile_enduse],
+      ps[:load_profile_file],
+      ps[:building_level_building_id],
+      ps[:building_level_egen_flag],
+      ps[:building_level_egen_eff_pct],
+      ps[:building_level_heat_storage_flag],
+      ps[:building_level_heat_storage_cap_kWh],
+      ps[:building_level_gas_boiler_flag],
+      ps[:building_level_gas_boiler_eff_pct],
+      ps[:building_level_electricity_supply_node],
+      ps[:node_level_id],
+      ps[:node_level_ng_power_plant_flag],
+      ps[:node_level_ng_power_plant_eff_pct],
+      ps[:node_level_ng_supply_node]
+    )
+  end
+
+  def test_support_lib
+    s = make_support_instance(default_params)
+    comps = s.components
+    expected_comp_ids = Set.new(["mc_electricity", "other_electricity", "utility_electricity_bus", "utility_electricity_source"])
+    actual_comp_ids = Set.new(comps.map {|c| c[:id]})
+    assert_equal(expected_comp_ids, actual_comp_ids)
+    conns = s.connections
+    expected_conns = Set.new([
+      ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
+      ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+      ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"]
+    ])
+    actual_conns = Set.new(conns)
+    assert_equal(expected_conns, actual_conns)
+  end
 end

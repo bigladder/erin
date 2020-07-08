@@ -279,6 +279,7 @@ class Support
         end
       end
     end
+    # TODO: go through the node_configs and add any more components and connections that are electrical
     node_sources.each do |n_id, building_ids|
       n = building_ids.length
       # TODO: check the below; only want to add a source if the node is not in the @node_config map...
@@ -291,12 +292,12 @@ class Support
         mux_id = add_cluster_level_mux(n_id, 1, n, ELECTRICITY, comps)
         add_connection(src_id, 0, mux_id, 0, ELECTRICITY, conns)
         building_ids.each_with_index do |pair, idx|
-          sink_id, sink_port = pair
+          _, conn_info = pair
+          sink_id, sink_port = conn_info
           add_connection(mux_id, idx, sink_id, sink_port, ELECTRICITY, conns)
         end
       end
     end
-    # TODO: go through the node_configs and add any more components and connections that are electrical
     @connections += conns.sort
     @components += comps.keys.sort.map {|k| comps[k]}
   end

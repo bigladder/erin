@@ -81,6 +81,23 @@ class TestTemplate < Minitest::Test
     ps
   end
 
+  def only_one_building_with_electric_loads_params
+    ps = default_params
+    ps[:load_profile_scenario_id] = ["blue_sky"]
+    ps[:load_profile_building_id] = ["b1"]
+    ps[:load_profile_enduse] = ["electricity"]
+    ps[:load_profile_file] = ["b1_blue_sky_electricity.csv"]
+    ps[:building_level_building_id] = ["b1"]
+    ps[:building_level_egen_flag] = ["FALSE"]
+    ps[:building_level_egen_eff_pct] = [32.0]
+    ps[:building_level_heat_storage_flag] = ["FALSE"]
+    ps[:building_level_heat_storage_cap_kWh] = [0.0]
+    ps[:building_level_gas_boiler_flag] = ["FALSE"]
+    ps[:building_level_gas_boiler_eff_pct] = [85.0]
+    ps[:building_level_electricity_supply_node] = ["utility"]
+    ps
+  end
+
   # RETURN: string, path to the e2rin_multi executable
   def e2rin_path
     path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_multi')
@@ -250,19 +267,7 @@ class TestTemplate < Minitest::Test
   end
 
   def test_only_one_building_with_electric_loads
-    ps = default_params
-    ps[:load_profile_scenario_id] = ["blue_sky"]
-    ps[:load_profile_building_id] = ["b1"]
-    ps[:load_profile_enduse] = ["electricity"]
-    ps[:load_profile_file] = ["b1_blue_sky_electricity.csv"]
-    ps[:building_level_building_id] = ["b1"]
-    ps[:building_level_egen_flag] = ["FALSE"]
-    ps[:building_level_egen_eff_pct] = [32.0]
-    ps[:building_level_heat_storage_flag] = ["FALSE"]
-    ps[:building_level_heat_storage_cap_kWh] = [0.0]
-    ps[:building_level_gas_boiler_flag] = ["FALSE"]
-    ps[:building_level_gas_boiler_eff_pct] = [85.0]
-    ps[:building_level_electricity_supply_node] = ["utility"]
+    ps = only_one_building_with_electric_loads_params
     run_and_compare(ps, 'only_one_building_with_electric_loads')
     assert(
       run_e2rin(
@@ -579,4 +584,74 @@ class TestTemplate < Minitest::Test
       false
     )
   end
+
+  def test_support_lib_with_only_one_building_with_electric_loads
+    compare_support_lib_outputs(
+      make_support_instance(add_one_electric_generator_at_building_level_params),
+      [
+        {
+          id: "mc_electricity",
+          string: "[components.mc_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"
+        },
+        {
+          id: "mc_electricity_bus",
+          string: "[components.mc_electricity_bus]\n"\
+          "type = \"muxer\"\n"\
+          "stream = \"electricity\"\n"\
+          "num_inflows = 2\n"\
+          "num_outflows = 1\n"\
+          "dispatch_strategy = \"in_order\"\n"
+        },
+        {
+          id: "mc_electric_generator",
+          string: "[components.mc_electric_generator]\n"\
+          "type = \"converter\"\n"\
+          "inflow = \"natural_gas\"\n"\
+          "outflow = \"electricity\"\n"\
+          "lossflow = \"waste_heat\"\n"\
+          "constant_efficiency = 0.42\n"
+        },
+        {
+          id: "other_electricity",
+          string: "[components.other_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"
+        },
+        {
+          id: "utility_electricity_bus",
+          string: "[components.utility_electricity_bus]\n"\
+          "type = \"muxer\"\n"\
+          "stream = \"electricity\"\n"\
+          "num_inflows = 1\n"\
+          "num_outflows = 2\n"\
+          "dispatch_strategy = \"in_order\"\n",
+        },
+        {
+          id: "utility_electricity_source",
+          string: "[components.utility_electricity_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"electricity\"\n"
+        },
+        {
+          id: "utility_natural_gas_source",
+          string: "[components.utility_natural_gas_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"natural_gas\"\n"
+        }
+      ],
+      [ ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(0)", "mc_electricity_bus:IN(0)", "electricity"],
+        ["mc_electric_generator:OUT(0)", "mc_electricity_bus:IN(1)", "electricity"],
+        ["mc_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
+        ["utility_natural_gas_source:OUT(0)", "mc_electric_generator:IN(0)", "natural_gas"],
+      ],
+      false
+    )
+  end
+
 end

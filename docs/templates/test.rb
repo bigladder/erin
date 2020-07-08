@@ -399,7 +399,7 @@ class TestTemplate < Minitest::Test
     )
   end
 
-  def compare_support_lib_outputs(s, expected_comps, expected_conns)
+  def compare_support_lib_outputs(s, expected_comps, expected_conns, verbose = false)
     comps = s.components
     expected_comp_ids = Set.new(expected_comps.map {|c| c[:id]})
     actual_comp_ids = Set.new(comps.map {|c| c[:id]})
@@ -407,7 +407,17 @@ class TestTemplate < Minitest::Test
     expected_comp_values = Set.new(expected_comps.map {|c| c[:string]})
     actual_comp_values = Set.new(comps.map {|c| c[:string]})
     actual_comp_values.each do |item|
-      assert(expected_comp_values.include?(item), "#{item} not in expected set")
+      msg = ""
+      if verbose
+        msg += "\nactual:\n#{item}\n"
+        msg += "="*60 + "\n"
+        expected_comp_values.each_with_index do |x, idx|
+          msg += "\nexpected(#{idx}):\n#{x}\n"
+          msg += "-"*60 + "\n"
+        end
+        msg += ("="*60 + "\n")
+      end
+      assert(expected_comp_values.include?(item), "#{item} not in expected set\n#{msg}\n")
     end
     assert_equal(expected_comp_values.size, actual_comp_values.size)
     assert_equal(expected_comp_values, actual_comp_values)
@@ -501,51 +511,72 @@ class TestTemplate < Minitest::Test
     )
   end
 
-  #def test_support_lib_with_add_one_electric_generator_at_building_level
-  #  s = make_support_instance(multiple_scenarios_params)
-  #  comps = s.components
-  #  expected_comp_ids = Set.new(["mc_electricity", "other_electricity", "utility_electricity_bus", "utility_electricity_source"])
-  #  actual_comp_ids = Set.new(comps.map {|c| c[:id]})
-  #  assert_equal(expected_comp_ids, actual_comp_ids)
-  #  expected_comp_values = Set.new([
-  #    "[components.utility_electricity_source]\n"\
-  #    "type = \"source\"\n"\
-  #    "outflow = \"electricity\"\n",
-
-  #    "[components.utility_electricity_bus]\n"\
-  #    "type = \"muxer\"\n"\
-  #    "stream = \"electricity\"\n"\
-  #    "num_inflows = 1\n"\
-  #    "num_outflows = 2\n"\
-  #    "dispatch_strategy = \"in_order\"\n",
-
-  #    "[components.mc_electricity]\n"\
-  #    "type = \"load\"\n"\
-  #    "inflow = \"electricity\"\n"\
-  #    "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"\
-  #    "loads_by_scenario.s1 = \"mc_electricity_s1\"\n"\
-  #    "loads_by_scenario.s2 = \"mc_electricity_s2\"\n",
-
-  #    "[components.other_electricity]\n"\
-  #    "type = \"load\"\n"\
-  #    "inflow = \"electricity\"\n"\
-  #    "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"\
-  #    "loads_by_scenario.s1 = \"other_electricity_s1\"\n"\
-  #    "loads_by_scenario.s2 = \"other_electricity_s2\"\n"
-  #  ])
-  #  actual_comp_values = Set.new(comps.map {|c| c[:string]})
-  #  actual_comp_values.each do |item|
-  #    assert(expected_comp_values.include?(item), "#{item} not in expected set")
-  #  end
-  #  assert_equal(expected_comp_values.size, actual_comp_values.size)
-  #  assert_equal(expected_comp_values, actual_comp_values)
-  #  conns = s.connections
-  #  expected_conns = Set.new([
-  #    ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
-  #    ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-  #    ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"]
-  #  ])
-  #  actual_conns = Set.new(conns)
-  #  assert_equal(expected_conns, actual_conns)
-  #end
+  def test_support_lib_with_add_one_electric_generator_at_building_level
+    compare_support_lib_outputs(
+      make_support_instance(add_one_electric_generator_at_building_level_params),
+      [
+        {
+          id: "mc_electricity",
+          string: "[components.mc_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"
+        },
+        {
+          id: "mc_electricity_bus",
+          string: "[components.mc_electricity_bus]\n"\
+          "type = \"muxer\"\n"\
+          "stream = \"electricity\"\n"\
+          "num_inflows = 2\n"\
+          "num_outflows = 1\n"\
+          "dispatch_strategy = \"in_order\"\n"
+        },
+        {
+          id: "mc_electric_generator",
+          string: "[components.mc_electric_generator]\n"\
+          "type = \"converter\"\n"\
+          "inflow = \"natural_gas\"\n"\
+          "outflow = \"electricity\"\n"\
+          "lossflow = \"waste_heat\"\n"\
+          "constant_efficiency = 0.42\n"
+        },
+        {
+          id: "other_electricity",
+          string: "[components.other_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"
+        },
+        {
+          id: "utility_electricity_bus",
+          string: "[components.utility_electricity_bus]\n"\
+          "type = \"muxer\"\n"\
+          "stream = \"electricity\"\n"\
+          "num_inflows = 1\n"\
+          "num_outflows = 2\n"\
+          "dispatch_strategy = \"in_order\"\n",
+        },
+        {
+          id: "utility_electricity_source",
+          string: "[components.utility_electricity_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"electricity\"\n"
+        },
+        {
+          id: "utility_natural_gas_source",
+          string: "[components.utility_natural_gas_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"natural_gas\"\n"
+        }
+      ],
+      [ ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(0)", "mc_electricity_bus:IN(0)", "electricity"],
+        ["mc_electric_generator:OUT(0)", "mc_electricity_bus:IN(1)", "electricity"],
+        ["mc_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
+        ["utility_natural_gas_source:OUT(0)", "mc_electric_generator:IN(0)", "natural_gas"],
+      ],
+      false
+    )
+  end
 end

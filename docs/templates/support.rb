@@ -183,18 +183,41 @@ class Support
     end
   end
 
-  def make_building_electrical_enduse(building_id)
-    scenarios_string = ""
+  def make_scenario_string(building_id, enduse)
+    strings = []
+    @building_level_building_id.each_with_index do |b_id, n|
+      next unless building_id == b_id
+      @load_profile_scenario_id.each_with_index do |s_id, nn|
+        next unless @load_profile_building_id[nn] == b_id
+        next unless @load_profile_enduse[nn] == enduse
+        load_id = @load_ids[nn]
+        strings << "loads_by_scenario.#{ s_id } = \"#{ load_id }\""
+      end
+    end
+    strings.join("\n")
+  end
+
+  def add_if_not_added(dict, id, value)
+    if !dict.include?(id)
+      dict[id] = value
+      true
+    else
+      false
+    end
+  end
+
+  def add_building_electrical_enduse(building_id, comps)
+    scenarios_string = make_scenario_string(building_id, ELECTRICITY)
     id = "#{building_id}_#{ELECTRICITY}"
     s = "[components.#{building_id}_#{ELECTRICITY}]\n"\
       "type = \"load\"\n"\
       "inflow = \"#{ELECTRICITY}\"\n#{scenarios_string}"
-    [id, {id: id, string: s}]
+    add_if_not_added(comps, id, {id: id, string: s})
   end
 
-  def make_building_electrical_bus(building_id)
+  def add_building_electrical_bus(building_id, comps)
     id = "#{building_id}_electrical_bus"
-    [id, {id: id, string: ""}]
+    add_if_not_added(comps, id, {id: id, string: ""})
   end
 
   def _add_electrical_connections_and_components
@@ -204,11 +227,9 @@ class Support
     @building_config.keys.sort.each_with_index do |b_id, n|
       cfg = @building_config[b_id]
       next unless cfg[:enduses].include?(ELECTRICITY)
-      comp_id, comp = make_building_electrical_enduse(b_id)
-      comps[comp_id] = comp
+      add_building_electrical_enduse(b_id, comps)
       if cfg[:has_egen]
-        comp_id, comp = make_building_electrical_bus(b_id)
-        comps[comp_id] = comp
+        add_building_electrical_bus(b_id, comps)
         cfg[:enduses] << NATURAL_GAS # to fuel the electric generator
       end
     end

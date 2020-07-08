@@ -194,7 +194,7 @@ class Support
         strings << "loads_by_scenario.#{ s_id } = \"#{ load_id }\""
       end
     end
-    strings.join("\n")
+    strings.sort.join("\n")
   end
 
   def add_if_not_added(dict, id, string)
@@ -212,7 +212,7 @@ class Support
     id = "#{building_id}_#{ELECTRICITY}"
     s = "[components.#{building_id}_#{ELECTRICITY}]\n"\
       "type = \"load\"\n"\
-      "inflow = \"#{ELECTRICITY}\"\n#{scenarios_string}"
+      "inflow = \"#{ELECTRICITY}\"\n#{scenarios_string}\n"
     add_if_not_added(comps, id, s)
     id
   end

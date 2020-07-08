@@ -399,34 +399,12 @@ class TestTemplate < Minitest::Test
     )
   end
 
-  def test_support_lib_with_defaults
-    s = make_support_instance(default_params)
+  def compare_support_lib_outputs(s, expected_comps, expected_conns)
     comps = s.components
-    expected_comp_ids = Set.new(["mc_electricity", "other_electricity", "utility_electricity_bus", "utility_electricity_source"])
+    expected_comp_ids = Set.new(expected_comps.map {|c| c[:id]})
     actual_comp_ids = Set.new(comps.map {|c| c[:id]})
     assert_equal(expected_comp_ids, actual_comp_ids)
-    expected_comp_values = Set.new([
-      "[components.utility_electricity_source]\n"\
-      "type = \"source\"\n"\
-      "outflow = \"electricity\"\n",
-
-      "[components.utility_electricity_bus]\n"\
-      "type = \"muxer\"\n"\
-      "stream = \"electricity\"\n"\
-      "num_inflows = 1\n"\
-      "num_outflows = 2\n"\
-      "dispatch_strategy = \"in_order\"\n",
-
-      "[components.mc_electricity]\n"\
-      "type = \"load\"\n"\
-      "inflow = \"electricity\"\n"\
-      "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n",
-
-      "[components.other_electricity]\n"\
-      "type = \"load\"\n"\
-      "inflow = \"electricity\"\n"\
-      "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"
-    ])
+    expected_comp_values = Set.new(expected_comps.map {|c| c[:string]})
     actual_comp_values = Set.new(comps.map {|c| c[:string]})
     actual_comp_values.each do |item|
       assert(expected_comp_values.include?(item), "#{item} not in expected set")
@@ -434,63 +412,140 @@ class TestTemplate < Minitest::Test
     assert_equal(expected_comp_values.size, actual_comp_values.size)
     assert_equal(expected_comp_values, actual_comp_values)
     conns = s.connections
-    expected_conns = Set.new([
-      ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
-      ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-      ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"]
-    ])
+    expected_conns = Set.new(expected_conns)
     actual_conns = Set.new(conns)
     assert_equal(expected_conns, actual_conns)
+  end
+
+  def test_support_lib_with_defaults
+    compare_support_lib_outputs(
+      make_support_instance(default_params),
+      [
+        {
+          id: "mc_electricity",
+          string: "[components.mc_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"
+        },
+        {
+          id: "other_electricity",
+          string: "[components.other_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"
+        },
+        {
+          id: "utility_electricity_bus",
+          string: "[components.utility_electricity_bus]\n"\
+          "type = \"muxer\"\n"\
+          "stream = \"electricity\"\n"\
+          "num_inflows = 1\n"\
+          "num_outflows = 2\n"\
+          "dispatch_strategy = \"in_order\"\n",
+        },
+        {
+          id: "utility_electricity_source",
+          string: "[components.utility_electricity_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"electricity\"\n"
+        }
+      ],
+      [ ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"] ]
+    )
   end
 
   def test_support_lib_with_multiple_scenarios
-    s = make_support_instance(multiple_scenarios_params)
-    comps = s.components
-    expected_comp_ids = Set.new(["mc_electricity", "other_electricity", "utility_electricity_bus", "utility_electricity_source"])
-    actual_comp_ids = Set.new(comps.map {|c| c[:id]})
-    assert_equal(expected_comp_ids, actual_comp_ids)
-    expected_comp_values = Set.new([
-      "[components.utility_electricity_source]\n"\
-      "type = \"source\"\n"\
-      "outflow = \"electricity\"\n",
-
-      "[components.utility_electricity_bus]\n"\
-      "type = \"muxer\"\n"\
-      "stream = \"electricity\"\n"\
-      "num_inflows = 1\n"\
-      "num_outflows = 2\n"\
-      "dispatch_strategy = \"in_order\"\n",
-
-      "[components.mc_electricity]\n"\
-      "type = \"load\"\n"\
-      "inflow = \"electricity\"\n"\
-      "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"\
-      "loads_by_scenario.s1 = \"mc_electricity_s1\"\n"\
-      "loads_by_scenario.s2 = \"mc_electricity_s2\"\n",
-
-      "[components.other_electricity]\n"\
-      "type = \"load\"\n"\
-      "inflow = \"electricity\"\n"\
-      "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"\
-      "loads_by_scenario.s1 = \"other_electricity_s1\"\n"\
-      "loads_by_scenario.s2 = \"other_electricity_s2\"\n"
-    ])
-    actual_comp_values = Set.new(comps.map {|c| c[:string]})
-    actual_comp_values.each do |item|
-      assert(expected_comp_values.include?(item), "#{item} not in expected set")
-    end
-    assert_equal(expected_comp_values.size, actual_comp_values.size)
-    assert_equal(expected_comp_values, actual_comp_values)
-    conns = s.connections
-    expected_conns = Set.new([
-      ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
-      ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-      ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"]
-    ])
-    actual_conns = Set.new(conns)
-    assert_equal(expected_conns, actual_conns)
+    compare_support_lib_outputs(
+      make_support_instance(multiple_scenarios_params),
+      [
+        {
+          id: "mc_electricity",
+          string: "[components.mc_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"\
+          "loads_by_scenario.s1 = \"mc_electricity_s1\"\n"\
+          "loads_by_scenario.s2 = \"mc_electricity_s2\"\n",
+        },
+        {
+          id: "other_electricity",
+          string: "[components.other_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"\
+          "loads_by_scenario.s1 = \"other_electricity_s1\"\n"\
+          "loads_by_scenario.s2 = \"other_electricity_s2\"\n"
+        },
+        {
+          id: "utility_electricity_bus",
+          string: "[components.utility_electricity_bus]\n"\
+          "type = \"muxer\"\n"\
+          "stream = \"electricity\"\n"\
+          "num_inflows = 1\n"\
+          "num_outflows = 2\n"\
+          "dispatch_strategy = \"in_order\"\n",
+        },
+        {
+          id: "utility_electricity_source",
+          string: "[components.utility_electricity_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"electricity\"\n"
+        }
+      ],
+      [ ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"] ]
+    )
   end
 
   #def test_support_lib_with_add_one_electric_generator_at_building_level
+  #  s = make_support_instance(multiple_scenarios_params)
+  #  comps = s.components
+  #  expected_comp_ids = Set.new(["mc_electricity", "other_electricity", "utility_electricity_bus", "utility_electricity_source"])
+  #  actual_comp_ids = Set.new(comps.map {|c| c[:id]})
+  #  assert_equal(expected_comp_ids, actual_comp_ids)
+  #  expected_comp_values = Set.new([
+  #    "[components.utility_electricity_source]\n"\
+  #    "type = \"source\"\n"\
+  #    "outflow = \"electricity\"\n",
+
+  #    "[components.utility_electricity_bus]\n"\
+  #    "type = \"muxer\"\n"\
+  #    "stream = \"electricity\"\n"\
+  #    "num_inflows = 1\n"\
+  #    "num_outflows = 2\n"\
+  #    "dispatch_strategy = \"in_order\"\n",
+
+  #    "[components.mc_electricity]\n"\
+  #    "type = \"load\"\n"\
+  #    "inflow = \"electricity\"\n"\
+  #    "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"\
+  #    "loads_by_scenario.s1 = \"mc_electricity_s1\"\n"\
+  #    "loads_by_scenario.s2 = \"mc_electricity_s2\"\n",
+
+  #    "[components.other_electricity]\n"\
+  #    "type = \"load\"\n"\
+  #    "inflow = \"electricity\"\n"\
+  #    "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"\
+  #    "loads_by_scenario.s1 = \"other_electricity_s1\"\n"\
+  #    "loads_by_scenario.s2 = \"other_electricity_s2\"\n"
+  #  ])
+  #  actual_comp_values = Set.new(comps.map {|c| c[:string]})
+  #  actual_comp_values.each do |item|
+  #    assert(expected_comp_values.include?(item), "#{item} not in expected set")
+  #  end
+  #  assert_equal(expected_comp_values.size, actual_comp_values.size)
+  #  assert_equal(expected_comp_values, actual_comp_values)
+  #  conns = s.connections
+  #  expected_conns = Set.new([
+  #    ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
+  #    ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+  #    ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"]
+  #  ])
+  #  actual_conns = Set.new(conns)
+  #  assert_equal(expected_conns, actual_conns)
   #end
 end

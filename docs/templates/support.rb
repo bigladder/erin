@@ -1,6 +1,9 @@
 require 'set'
 
 class Support
+  ELECTRICITY = 'electricity'
+  NATURAL_GAS = 'natural_gas'
+  attr_reader :components, :connections, :loads, :load_ids
   def initialize(load_profile_scenario_id,
                  load_profile_building_id,
                  load_profile_enduse,
@@ -40,8 +43,34 @@ class Support
     @node_level_ng_power_plant_eff_pct = node_level_ng_power_plant_eff_pct
     @node_level_ng_supply_node = node_level_ng_supply_node
     _check_node_level_data
+    _create_load_data
     _create_node_config
     _create_building_config
+    @connections = []
+    @components = []
+    _add_electrical_connections_and_components
+    _add_ng_connections_and_components
+    _add_heating_connections_and_components
+  end
+
+  private
+
+  def _create_load_data
+    @loads = []
+    @load_ids = []
+    load_id_set = Set.new
+    @load_profile_building_id.each_with_index do |b_id, n|
+      s_id = @load_profile_scenario_id[n]
+      enduse = @load_profile_enduse[n]
+      file = @load_profile_file[n]
+      load_id = "#{b_id}_#{enduse}_#{s_id}"
+      if load_id_set.include?(load_id)
+        raise "ERROR! Duplicate load_id \"#{load_id}\""
+      end
+      load_id_set << load_id
+      @load_ids << load_id
+      @loads << {load_id: load_id, file: file}
+    end
   end
 
   # INTERNAL METHOD
@@ -106,37 +135,14 @@ class Support
     (x.to_s.downcase.strip == y.to_s.downcase.strip)
   end
 
-  # - building_ids: (Array string), array of building ids
-  # - scenario_ids: (Array string), array of scenario ids
-  # - enduses: (Array string), array of enduses
-  # - load_profiles: (Array string), array of paths to csv files with the loads
-  # RETURN: {
-  #   :warnings => (Array string), any warnings found
-  #   :loads => (Array {:load_id=>string, :file=>string}), the load data
-  #   :load_ids => (Array string), the load ids used
-  #   }
-  def process_load_data
-    loads = []
-    warns = []
-    load_id_set = Set.new
-    load_ids = []
+  # INTERNAL METHOD
+  def _enduses_for_building(id)
+    enduses = Set.new
     @load_profile_building_id.each_with_index do |b_id, n|
-      s_id = @load_profile_scenario_id[n]
-      enduse = @load_profile_enduse[n]
-      file = @load_profile_file[n]
-      load_id = "#{b_id}_#{enduse}_#{s_id}"
-      if load_id_set.include?(load_id)
-        warns << "WARNING! Duplicate load_id \"#{load_id}\""
-      end
-      load_id_set << load_id
-      load_ids << load_id
-      loads << {load_id: load_id, file: file}
+      next unless b_id == id
+      enduses << @load_profile_enduse[n]
     end
-    {
-      warnings: warns,
-      loads: loads,
-      load_ids: load_ids,
-    }
+    enduses
   end
 
   # INTERNAL METHOD
@@ -156,7 +162,7 @@ class Support
         boiler_eff: @building_level_gas_boiler_eff_pct[n].to_f / 100.0,
         e_supply_node: @building_level_electricity_supply_node[n].strip,
         ng_supply_node: "utility",
-        enduses: Set.new,
+        enduses: _enduses_for_building(b_id),
       }
     end
   end
@@ -177,9 +183,42 @@ class Support
     end
   end
 
-  def get_connections
+  def make_building_electrical_enduse(building_id)
+    scenarios_string = ""
+    id = "#{building_id}_#{ELECTRICITY}"
+    s = "[components.#{building_id}_#{ELECTRICITY}]\n"\
+      "type = \"load\"\n"\
+      "inflow = \"#{ELECTRICITY}\"\n#{scenarios_string}"
+    [id, {id: id, string: s}]
   end
 
-  def get_components
+  def make_building_electrical_bus(building_id)
+    id = "#{building_id}_electrical_bus"
+    [id, {id: id, string: ""}]
+  end
+
+  def _add_electrical_connections_and_components
+    conns = []
+    comps = {}
+    #node_sources = {}
+    @building_config.keys.sort.each_with_index do |b_id, n|
+      cfg = @building_config[b_id]
+      next unless cfg[:enduses].include?(ELECTRICITY)
+      comp_id, comp = make_building_electrical_enduse(b_id)
+      comps[comp_id] = comp
+      if cfg[:has_egen]
+        comp_id, comp = make_building_electrical_bus(b_id)
+        comps[comp_id] = comp
+        cfg[:enduses] << NATURAL_GAS # to fuel the electric generator
+      end
+    end
+    @connections += conns.sort
+    @components += comps.keys.sort.map {|k| comps[k]}
+  end
+
+  def _add_ng_connections_and_components
+  end
+
+  def  _add_heating_connections_and_components
   end
 end

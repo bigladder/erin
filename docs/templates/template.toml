@@ -197,13 +197,6 @@ parameter "node_level_ng_supply_node", :default=>[]
 <%     node_level_ng_power_plant_eff_pct,                                      %>
 <%     node_level_ng_supply_node,                                              %>
 <%     )                                                                       %>
-<% load_data = s.process_load_data                                             %>
-<% if load_data[:warnings].length > 0                                          %>
-# WARNING! ISSUES WITH load_profile_* data:
-<%   load_data[:warnings].each do |w|                                          %>
-# - <%= w %>
-<%   end                                                                       %>
-<% end                                                                         %>
 [simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"
@@ -213,7 +206,7 @@ random_seed = <%= random_seed.to_i %>
 <% end                                                                         %>
 max_time = <%= simulation_duration_in_years %>
 ############################################################
-<% load_data[:loads].each do |load|                                            %>
+<% s.loads.each do |load|                                                      %>
 [loads.<%= load[:load_id] %>]
 csv_file = "<%= load[:file] %>"
 <% end                                                                         %>
@@ -302,7 +295,7 @@ inflow = "<%= enduse %>"
 <%   load_profile_scenario_id.each_with_index do |s_id, idx2|                  %>
 <%     if ((load_profile_building_id[idx2] == b_id) and                        %>
 <%         (load_profile_enduse[idx2] == enduse))                              %>
-<%       load_id = load_data[:load_ids][idx2]                                  %>
+<%       load_id = s.load_ids[idx2]                                            %>
 loads_by_scenario.<%= s_id %> = "<%= load_id %>"
 <%     end                                                                     %>
 <%   end                                                                       %>
@@ -412,7 +405,7 @@ connections = [
 <%     elsif cfg[:has_boiler]                                                  %>
   ["cluster_<%= n %>_natural_gas_manifold:OUT(<%= nn %>)", "<%= b_id %>_gas_boiler:IN(0)", "natural_gas"],
 <%     else                                                                    %>
-  ["cluster_<%= n %>_natural_gas_manifold:OUT(<%= nn %>)", "<%= b_id %>_natural_gas:IN(0)", "electricity"],
+  ["cluster_<%= n %>_natural_gas_manifold:OUT(<%= nn %>)", "<%= b_id %>_natural_gas:IN(0)", "natural_gas"],
 <%     end                                                                     %>
 <%   end                                                                       %>
 <% end                                                                         %>

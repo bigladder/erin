@@ -443,6 +443,38 @@ class TestTemplate < Minitest::Test
     expected_comp_ids = Set.new(["mc_electricity", "other_electricity", "utility_electricity_bus", "utility_electricity_source"])
     actual_comp_ids = Set.new(comps.map {|c| c[:id]})
     assert_equal(expected_comp_ids, actual_comp_ids)
+    expected_comp_values = Set.new([
+      "[components.utility_electricity_source]\n"\
+      "type = \"source\"\n"\
+      "outflow = \"electricity\"\n",
+
+      "[components.utility_electricity_bus]\n"\
+      "type = \"muxer\"\n"\
+      "stream = \"electricity\"\n"\
+      "num_inflows = 1\n"\
+      "num_outflows = 2\n"\
+      "dispatch_strategy = \"in_order\"\n",
+
+      "[components.mc_electricity]\n"\
+      "type = \"load\"\n"\
+      "inflow = \"electricity\"\n"\
+      "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"\
+      "loads_by_scenario.s1 = \"mc_electricity_s1\"\n"\
+      "loads_by_scenario.s2 = \"mc_electricity_s2\"\n",
+
+      "[components.other_electricity]\n"\
+      "type = \"load\"\n"\
+      "inflow = \"electricity\"\n"\
+      "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"\
+      "loads_by_scenario.s1 = \"other_electricity_s1\"\n"\
+      "loads_by_scenario.s2 = \"other_electricity_s2\"\n"
+    ])
+    actual_comp_values = Set.new(comps.map {|c| c[:string]})
+    actual_comp_values.each do |item|
+      assert(expected_comp_values.include?(item), "#{item} not in expected set")
+    end
+    assert_equal(expected_comp_values.size, actual_comp_values.size)
+    assert_equal(expected_comp_values, actual_comp_values)
     conns = s.connections
     expected_conns = Set.new([
       ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],

@@ -613,4 +613,72 @@ class TestTemplate < Minitest::Test
       false
     )
   end
+
+  def test_support_lib_with_one_building_has_thermal_storage
+    compare_support_lib_outputs(
+      make_support_instance(one_building_has_thermal_storage_params),
+      [
+        {
+          id: "utility_electricity_source",
+          string: "[components.utility_electricity_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"electricity\"\n"
+        },
+        {
+          id: "utility_heating_source",
+          string: "[components.utility_heating_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"heating\"\n"
+        },
+        {
+          id: "utility_electricity_bus",
+          string: "[components.utility_electricity_bus]\n"\
+          "type = \"muxer\"\n"\
+          "stream = \"electricity\"\n"\
+          "num_inflows = 1\n"\
+          "num_outflows = 2\n"\
+          "dispatch_strategy = \"in_order\"\n"
+        },
+        {
+          id: "mc_electricity",
+          string: "[components.mc_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"mc_electricity_blue_sky\"\n"
+        },
+        {
+          id: "other_electricity",
+          string: "[components.other_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"other_electricity_blue_sky\"\n"
+        },
+        {
+          id: "mc_heating",
+          string: "[components.mc_heating]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"heating\"\n"\
+          "loads_by_scenario.blue_sky = \"mc_heating_blue_sky\"\n"
+        },
+        {
+          id: "mc_thermal_storage",
+          string: "[components.mc_thermal_storage]\n"\
+          "type = \"store\"\n"\
+          "outflow = \"heating\"\n"\
+          "inflow = \"heating\"\n"\
+          "capacity_unit = \"kWh\"\n"\
+          "capacity = 100.0\n"\
+          "max_inflow = 10.0\n"
+        },
+      ],
+      [ 
+        ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+        ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
+        ["utility_heating_source:OUT(0)", "mc_thermal_storage:IN(0)", "heating"],
+        ["mc_thermal_storage:OUT(0)", "mc_heating:IN(0)", "heating"],
+      ],
+      true
+    )
+  end
 end

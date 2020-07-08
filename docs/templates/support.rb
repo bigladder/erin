@@ -159,10 +159,12 @@ class Support
         egen_eff: @building_level_egen_eff_pct[n].to_f / 100.0,
         has_tes: is_true(@building_level_heat_storage_flag[n]),
         tes_cap_kWh: @building_level_heat_storage_cap_kWh[n].to_f,
+        tes_max_inflow_kW: @building_level_heat_storage_cap_kWh[n].to_f / 10.0,
         has_boiler: is_true(@building_level_gas_boiler_flag[n]),
         boiler_eff: @building_level_gas_boiler_eff_pct[n].to_f / 100.0,
         e_supply_node: @building_level_electricity_supply_node[n].strip,
         ng_supply_node: "utility",
+        heating_supply_node: "utility",
         enduses: _enduses_for_building(b_id),
       }
     end
@@ -218,6 +220,16 @@ class Support
     id
   end
 
+  def add_building_heating_enduse(building_id, comps)
+    scenarios_string = make_scenario_string(building_id, HEATING)
+    id = "#{building_id}_#{HEATING}"
+    s = "[components.#{building_id}_#{HEATING}]\n"\
+      "type = \"load\"\n"\
+      "inflow = \"#{HEATING}\"\n#{scenarios_string}\n"
+    add_if_not_added(comps, id, s)
+    id
+  end
+
   def add_building_electrical_bus(building_id, comps)
     id = "#{building_id}_#{ELECTRICITY}_bus"
     s = "[components.#{id}]\n"
@@ -249,6 +261,15 @@ class Support
     s = "[components.#{id}]\n"\
       "type = \"source\"\n"\
       "outflow = \"#{NATURAL_GAS}\"\n"
+    add_if_not_added(comps, id, s)
+    id
+  end
+
+  def add_heating_source(node_id, comps)
+    id = "#{node_id}_#{HEATING}_source"
+    s = "[components.#{id}]\n"\
+      "type = \"source\"\n"\
+      "outflow = \"#{HEATING}\"\n"
     add_if_not_added(comps, id, s)
     id
   end
@@ -334,10 +355,25 @@ class Support
     node_sources = {}
     @building_config.keys.sort.each_with_index do |b_id, n|
       cfg = @building_config[b_id]
-      if cfg[:enduses].include?(NATURAL_GAS)
-        raise "NATURAL GAS enduse not implemented for #{b_id}"
-      end
-      if cfg[:enduses].include?(ELECTRICITY) and cfg[:has_egen]
+      if cfg[:enduses].include?(ELECTRICITY) and cfg[:has_egen] and cfg[:enduses].include?(HEATING) and cfg[:has_boiler]
+        egen_id = make_building_egen_id(b_id)
+        boiler_id = add_boiler(b_id, cfg[:boiler_eff], comps)
+        bus_id = add_cluster_level_mux(b_id, 1, 2, NATURAL_GAS, comps)
+        add_connection(bus_id, 0, egen_id, 0, NATURAL_GAS, conns)
+        add_connection(bus_id, 1, boiler_id, 0, NATURAL_GAS, conns)
+        conn_info = [bus_id, 0]
+        ng_sup_node = cfg[:ng_supply_node]
+        if !ng_sup_node.empty?
+          if node_sources.include?(ng_sup_node)
+            node_sources[ng_sup_node][b_id] = conn_info
+          else
+            node_sources[ng_sup_node] = {b_id => conn_info}
+          end
+        else
+          raise "A building-level natural-gas electric generator is specified for "\
+            "#{b_id} but no upstream natural gas supply is given..."
+        end
+      elsif cfg[:enduses].include?(ELECTRICITY) and cfg[:has_egen]
         egen_id = make_building_egen_id(b_id)
         conn_info = [egen_id, 0]
         ng_sup_node = cfg[:ng_supply_node]
@@ -351,9 +387,22 @@ class Support
           raise "A building-level natural-gas electric generator is specified for "\
             "#{b_id} but no upstream natural gas supply is given..."
         end
-      end
-      if cfg[:enduses].include?(HEATING) and cfg[:has_boiler]
-        puts "Warning! Not implemented yet..."
+      elsif cfg[:enduses].include?(HEATING) and cfg[:has_boiler]
+        boiler_id = add_boiler(b_id, cfg[:boiler_eff], comps)
+        conn_info = [boiler_id, 0]
+        ng_sup_node = cfg[:ng_supply_node]
+        if !ng_sup_node.empty?
+          if node_sources.include?(ng_sup_node)
+            node_sources[ng_sup_node][b_id] = conn_info
+          else
+            node_sources[ng_sup_node] = {b_id => conn_info}
+          end
+        else
+          raise "A building-level natural-gas electric generator is specified for "\
+            "#{b_id} but no upstream natural gas supply is given..."
+        end
+      elsif cfg[:enduses].include?(NATURAL_GAS)
+        raise "NATURAL GAS enduse not implemented for #{b_id}"
       end
     end
     # TODO: go through the node_configs and add any more components and connections that are electrical
@@ -379,6 +428,127 @@ class Support
     @components += comps.keys.sort.map {|k| comps[k]}
   end
 
+  def add_boiler(building_id, boiler_eff, comps)
+    id = "#{building_id}_gas_boiler"
+    s = "[components.#{id}]\n"\
+      "type = \"converter\"\n"\
+      "outflow = \"heating\"\n"\
+      "inflow = \"natural_gas\"\n"\
+      "lossflow = \"waste_heat\"\n"\
+      "constant_efficiency = #{boiler_eff}\n"
+    add_if_not_added(comps, id, s)
+    id
+  end
+
+  def add_thermal_energy_storage(building_id, capacity_kWh, max_inflow_kW, comps)
+    id = "#{building_id}_thermal_storage"
+    s = "[components.#{id}]\n"\
+      "type = \"store\"\n"\
+      "outflow = \"heating\"\n"\
+      "inflow = \"heating\"\n"\
+      "capacity_unit = \"kWh\"\n"\
+      "capacity = #{capacity_kWh}\n"\
+      "max_inflow = #{max_inflow_kW}\n"
+    add_if_not_added(comps, id, s)
+    id
+  end
+
+  # TODO: idea
+  # integrate heating, natural gas, and electrical in one "add components"
+  # loop. We need to be able to do all buildng config, then all node config,
+  # and THEN process all node sources
   def  _add_heating_connections_and_components
+    conns = []
+    comps = {}
+    ht_node_sources = {}
+    @building_config.keys.sort.each_with_index do |b_id, n|
+      cfg = @building_config[b_id]
+      next unless cfg[:enduses].include?(HEATING)
+      eu_id = add_building_heating_enduse(b_id, comps)
+      if cfg[:has_tes] and cfg[:has_boiler]
+        tes_id = add_thermal_energy_storage(b_id, cfg[:tes_cap_kWh], cfg[:tes_max_inflow_kW], comps)
+        boiler_id = add_boiler(b_id, cfg[:boiler_eff], comps)
+        ht_sup_node = cfg[:heating_supply_node]
+        if !ht_sup_node.empty?
+          bus_id = add_cluster_level_mux(b_id, 2, 1, HEATING, comps)
+          add_connection(bus_id, 0, eu_id, 0, HEATING, conns)
+          add_connection(tes_id, 0, bus_id, 0, HEATING, conns)
+          add_connection(boiler_id, 0, bus_id, 1, HEATING, conns)
+          conn_info = [tes_id, 0]
+          if ht_node_sources.include?(ht_sup_node)
+            ht_node_sources[ht_sup_node][b_id] = conn_info
+          else
+            ht_node_sources[ht_sup_node] = {b_id => conn_info}
+          end
+        else
+          add_connection(boiler_id, 0, tes_id, 0, HEATING, conns)
+          add_connection(tes_id, 0, eu_id, 0, HEATING, conns)
+        end
+      elsif cfg[:has_tes]
+        tes_id = add_thermal_energy_storage(b_id, cfg[:tes_cap_kWh], cfg[:tes_max_inflow_kW], comps)
+        add_connection(tes_id, 0, eu_id, 0, HEATING, conns)
+        conn_info = [tes_id, 0]
+        ht_sup_node = cfg[:heating_supply_node]
+        if !ht_sup_node.empty?
+          if ht_node_sources.include?(ht_sup_node)
+            ht_node_sources[ht_sup_node][b_id] = conn_info
+          else
+            ht_node_sources[ht_sup_node] = {b_id => conn_info}
+          end
+        else
+          raise "A building-level TES is specified for "\
+            "#{b_id} but no upstream heating supply is given..."
+        end
+      elsif cfg[:has_boiler]
+        boiler_id = add_boiler(b_id, cfg[:boiler_eff], comps)
+        ht_sup_node = cfg[:heating_supply_node]
+        if !ht_sup_node.empty?
+          bus_id = add_cluster_level_mux(b_id, 2, 1, HEATING, comps)
+          add_connection(boiler_id, 0, bus_id, 1, HEATING, conns)
+          conn_info = [bus_id, 0]
+          if ht_node_sources.include?(ht_sup_node)
+            ht_node_sources[ht_sup_node][b_id] = conn_info
+          else
+            ht_node_sources[ht_sup_node] = {b_id => conn_info}
+          end
+        else
+          add_connection(boiler_id, 0, eu_id, 0, HEATING, conns)
+        end
+      else
+        conn_info = [eu_id, 0]
+        ht_sup_node = cfg[:heating_supply_node]
+        if !ht_sup_node.empty?
+          if ht_node_sources.include?(ht_sup_node)
+            ht_node_sources[ht_sup_node][b_id] = conn_info
+          else
+            ht_node_sources[ht_sup_node] = {b_id => conn_info}
+          end
+        else
+          raise "A building-level heating demand is specified for "\
+            "#{b_id} but no upstream heating supply is given..."
+        end
+      end
+    end
+    # TODO: go through the node_configs and add any more components and connections that are electrical
+    ht_node_sources.each do |n_id, building_ids|
+      n = building_ids.length
+      # TODO: check the below; only want to add a source if the node is not in the @node_config map...
+      src_id = add_heating_source(n_id, comps)
+      if n == 1
+        b_id = building_ids.keys[0]
+        sink_id, sink_port = building_ids[b_id]
+        add_connection(src_id, 0, sink_id, sink_port, HEATING, conns)
+      else
+        bus_id = add_cluster_level_mux(n_id, 1, n, HEATING, comps)
+        add_connection(src_id, 0, bus_id, 0, HEATING, conns)
+        building_ids.each_with_index do |pair, idx|
+          _, conn_info = pair
+          sink_id, sink_port = conn_info
+          add_connection(bus_id, idx, sink_id, sink_port, HEATING, conns)
+        end
+      end
+    end
+    @connections += conns.sort
+    @components += comps.keys.sort.map {|k| comps[k]}
   end
 end

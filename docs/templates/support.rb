@@ -197,8 +197,9 @@ class Support
     strings.join("\n")
   end
 
-  def add_if_not_added(dict, id, value)
+  def add_if_not_added(dict, id, string)
     if !dict.include?(id)
+      value = {id: id, string: string}
       dict[id] = value
       true
     else
@@ -212,27 +213,90 @@ class Support
     s = "[components.#{building_id}_#{ELECTRICITY}]\n"\
       "type = \"load\"\n"\
       "inflow = \"#{ELECTRICITY}\"\n#{scenarios_string}"
-    add_if_not_added(comps, id, {id: id, string: s})
+    add_if_not_added(comps, id, s)
+    id
   end
 
   def add_building_electrical_bus(building_id, comps)
     id = "#{building_id}_electrical_bus"
-    add_if_not_added(comps, id, {id: id, string: ""})
+    s = "[components.#{building_id}_electric_bus]\n"
+    s += "type = \"muxer\"\n"
+    s += "stream = \"electricity\"\n"
+    s += "num_inflows = 2\n"
+    s += "num_outflows = 1\n"
+    s += "dispatch_strategy = \"in_order\"\n"
+    add_if_not_added(comps, id, s)
+    id
+  end
+
+  def add_connection(src_id, src_port, sink_id, sink_port, flow, conns)
+    conns << ["#{src_id}:OUT(#{src_port})", "#{sink_id}:IN(#{sink_port})", flow]
+    true
+  end
+
+  def add_electrical_source(node_id, comps)
+    id = "#{node_id}_#{ELECTRICITY}_source"
+    s = "[components.#{id}]\n"
+    s += "type = \"source\"\n"
+    s += "outflow = \"#{ELECTRICITY}\"\n"
+    add_if_not_added(comps, id, s)
+    id
+  end
+
+  def add_cluster_level_mux(node_id, num_inflows, num_outflows, flow, comps)
+    id = "#{node_id}_#{flow}_bus"
+    s = "[components.#{id}]\n"
+    s += "type = \"muxer\"\n"
+    s += "stream = \"#{flow}\"\n"
+    s += "num_inflows = #{num_inflows}\n"
+    s += "num_outflows = #{num_outflows}\n"
+    s += "dispatch_strategy = \"in_order\"\n"
+    add_if_not_added(comps, id, s)
+    id
   end
 
   def _add_electrical_connections_and_components
     conns = []
     comps = {}
-    #node_sources = {}
+    node_sources = {}
     @building_config.keys.sort.each_with_index do |b_id, n|
       cfg = @building_config[b_id]
       next unless cfg[:enduses].include?(ELECTRICITY)
-      add_building_electrical_enduse(b_id, comps)
+      eu_id = add_building_electrical_enduse(b_id, comps)
+      conn_info = [eu_id, 0]
       if cfg[:has_egen]
-        add_building_electrical_bus(b_id, comps)
+        bus_id = add_building_electrical_bus(b_id, comps)
         cfg[:enduses] << NATURAL_GAS # to fuel the electric generator
+        add_connection(bus_id, 0, eu_id, 0, ELECTRICITY, conns)
+        conn_info = [bus_id, 1]
+      end
+      e_sup_node = cfg[:e_supply_node]
+      if !e_sup_node.empty?
+        if node_sources.include?(e_sup_node)
+          node_sources[e_sup_node][b_id] = conn_info
+        else
+          node_sources[e_sup_node] = {b_id => conn_info}
+        end
       end
     end
+    node_sources.each do |n_id, building_ids|
+      n = building_ids.length
+      # TODO: check the below; only want to add a source if the node is not in the @node_config map...
+      src_id = add_electrical_source(n_id, comps)
+      if n == 1
+        b_id = building_ids.keys[0]
+        sink_id, sink_port = building_ids[b_id]
+        add_connection(src_id, 0, sink_id, sink_port, ELECTRICITY, conns)
+      else
+        mux_id = add_cluster_level_mux(n_id, 1, n, ELECTRICITY, comps)
+        add_connection(src_id, 0, mux_id, 0, ELECTRICITY, conns)
+        building_ids.each_with_index do |pair, idx|
+          sink_id, sink_port = pair
+          add_connection(mux_id, idx, sink_id, sink_port, ELECTRICITY, conns)
+        end
+      end
+    end
+    # TODO: go through the node_configs and add any more components and connections that are electrical
     @connections += conns.sort
     @components += comps.keys.sort.map {|k| comps[k]}
   end

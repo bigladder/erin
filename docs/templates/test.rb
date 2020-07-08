@@ -203,7 +203,7 @@ class TestTemplate < Minitest::Test
     assert(run_e2rin_graph('defaults', ps[:load_profile_file]))
   end
 
-  def test_multiple_scenarios
+  def multiple_scenarios_params
     ps = default_params
     ps[:load_profile_scenario_id] += ["s1"]*2 + ["s2"]*2
     ps[:load_profile_building_id] += ["mc", "other"]*2
@@ -218,6 +218,11 @@ class TestTemplate < Minitest::Test
     ps[:scenario_duration_in_hours] += [500]*2
     ps[:scenario_max_occurrence] += [-1]*2
     ps[:scenario_fixed_frequency_in_years] += [10]*2
+    ps
+  end
+
+  def test_multiple_scenarios
+    ps = multiple_scenarios_params
     run_and_compare(ps, 'multiple_scenarios')
     assert(run_e2rin('multiple_scenarios', ps[:load_profile_file]))
     assert(run_e2rin_graph('multiple_scenarios', ps[:load_profile_file]))

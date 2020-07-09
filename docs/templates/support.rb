@@ -13,14 +13,6 @@ class Support
     @load_profile = load_profile
     _check_load_profile_data
     @building_level = building_level
-    @building_level_building_id = building_level.map {|x| x[:id]}
-    @building_level_egen_flag = building_level.map {|x| x[:egen_flag]}
-    @building_level_egen_eff_pct = building_level.map {|x| x[:egen_eff_pct].to_f}
-    @building_level_heat_storage_flag = building_level.map {|x| x[:heat_storage_flag]}
-    @building_level_heat_storage_cap_kWh = building_level.map {|x| x[:heat_storage_cap_kWh].to_f}
-    @building_level_gas_boiler_flag = building_level.map {|x| x[:gas_boiler_flag]}
-    @building_level_gas_boiler_eff_pct = building_level.map {|x| x[:gas_boiler_eff_pct].to_f}
-    @building_level_electricity_supply_node = building_level.map {|x| x[:electricity_supply_node]}
     _check_building_level_data
     @node_level = node_level
     @node_level_id = node_level.map {|x| x[:id]}
@@ -109,7 +101,9 @@ class Support
     end
   end
 
-  def _assert_not_empty(x, msg)
+  def _assert_not_empty(map, key)
+    x = map[key]
+    msg = "ERROR! Value for key #{key} cannot be empty in #{map}"
     raise msg if x.strip.empty?
   end
 
@@ -117,38 +111,59 @@ class Support
     raise msg unless [ELECTRICITY, HEATING, COOLING].include?(x)
   end
 
+  def _assert_proper_flag(map, key)
+    x = map[key]
+    dc_x = x.to_s.strip.downcase
+    if x == true or x == false or dc_x == "true" or dc_x == "false"
+      return
+    end
+    raise "ERROR! Value at key #{key} is not a proper flag in #{map}"
+  end
+
   # INTERNAL METHOD
   def _check_load_profile_data
     @load_profile.each do |item|
-      _assert_not_empty(
-        item[:scenario_id],
-        "ERROR! scenario_id cannot be empty for #{item}")
-      _assert_not_empty(
-        item[:building_id],
-        "ERROR! building_id cannot be empty for #{item}")
+      _assert_not_empty(item, :scenario_id)
+      _assert_not_empty(item, :building_id)
       _assert_proper_enduse(
         item[:enduse],
         "ERROR! unexpected enduse for #{item}")
-      _assert_not_empty(
-        item[:file],
-        "ERROR! cannot have blank file for #{item}")
+      _assert_not_empty(item, :file)
     end
+  end
+
+  def _assert_float_within_range(map, key, low, high)
+    f = map[key].to_f
+    if (f >= low) and (f <= high)
+      return
+    end
+    raise "ERROR! Value at key `#{key}` (#{f}) is not between "\
+      "#{low} and #{high} (inclusive) in #{map}"
+  end
+
+  def _assert_positive_number(map, key)
+    x = map[key].to_f
+    return if x > 0.0
+    raise "ERROR! Value at key `#{key}` not greater than 0.0 in #{map}"
   end
 
   # INTERNAL METHOD
   def _check_building_level_data
-    _assert_lengths_the_same(
-      [
-        @building_level_building_id,
-        @building_level_egen_flag,
-        @building_level_egen_eff_pct,
-        @building_level_heat_storage_flag,
-        @building_level_heat_storage_cap_kWh,
-        @building_level_gas_boiler_flag,
-        @building_level_gas_boiler_eff_pct,
-        @building_level_electricity_supply_node
-      ],
-      "building_level_* data should all have the same length")
+    @building_level.each do |item|
+      _assert_not_empty(item, :id)
+      _assert_proper_flag(item, :egen_flag)
+      if is_true(item[:egen_flag])
+        _assert_float_within_range(item, :egen_eff_pct, 0.01, 100.0)
+      end
+      _assert_proper_flag(item, :heat_storage_flag)
+      if is_true(item[:heat_storage_flag])
+        _assert_positive_number(item, :heat_storage_cap_kWh)
+      end
+      _assert_proper_flag(item, :gas_boiler_flag)
+      if is_true(item[:gas_boiler_flag])
+        _assert_float_within_range(item, :gas_boiler_eff_pct, 0.01, 100.0)
+      end
+    end
   end
 
   # INTERNAL METHOD

@@ -18,10 +18,10 @@ csv_file = "mc_s2_electricity.csv"
 [loads.other_electricity_s2]
 csv_file = "other_s2_electricity.csv"
 ############################################################
-[components.electricity_source]
+[components.utility_electricity_source]
 type = "source"
 outflow = "electricity"
-[components.building_level_electric_bus]
+[components.cluster_0_electric_bus]
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
@@ -42,9 +42,9 @@ loads_by_scenario.s2 = "other_electricity_s2"
 ############################################################
 [networks.nw]
 connections = [
-  ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
+  ["utility_electricity_source:OUT(0)", "cluster_0_electric_bus:IN(0)", "electricity"],
+  ["cluster_0_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+  ["cluster_0_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
   ]
 ############################################################
 [scenarios.blue_sky]

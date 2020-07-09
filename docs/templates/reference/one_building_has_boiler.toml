@@ -12,16 +12,16 @@ csv_file = "other_blue_sky_electricity.csv"
 [loads.mc_heating_blue_sky]
 csv_file = "mc_blue_sky_heating.csv"
 ############################################################
-[components.electricity_source]
+[components.utility_electricity_source]
 type = "source"
 outflow = "electricity"
-[components.natural_gas_source]
+[components.utility_natural_gas_source]
 type = "source"
 outflow = "natural_gas"
-[components.heating_source]
+[components.utility_heating_source]
 type = "source"
 outflow = "heating"
-[components.building_level_electric_bus]
+[components.cluster_0_electric_bus]
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
@@ -54,12 +54,12 @@ dispatch_strategy = "in_order"
 ############################################################
 [networks.nw]
 connections = [
-  ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
-  ["natural_gas_source:OUT(0)", "mc_gas_boiler:IN(0)", "natural_gas"],
+  ["utility_electricity_source:OUT(0)", "cluster_0_electric_bus:IN(0)", "electricity"],
+  ["cluster_0_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+  ["cluster_0_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
+  ["utility_natural_gas_source:OUT(0)", "mc_gas_boiler:IN(0)", "natural_gas"],
   ["mc_gas_boiler:OUT(0)", "mc_heating_manifold:IN(0)", "heating"],
-  ["heating_source:OUT(0)", "mc_heating_manifold:IN(1)", "heating"],
+  ["utility_heating_source:OUT(0)", "mc_heating_manifold:IN(1)", "heating"],
   ["mc_heating_manifold:OUT(0)", "mc_heating:IN(0)", "heating"],
   ]
 ############################################################

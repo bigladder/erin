@@ -12,9 +12,6 @@
 :scenario_duration_in_hours => [8760],
 :scenario_max_occurrence => [1],
 :scenario_fixed_frequency_in_years => [0],
-# Building-to-Cluster Connectivity
-# Cluster-to-Community Connectivity
-# Community-to-Utility Connectivity
 # Building Level Configuration
 :building_level_building_id => ["mc", "other"],
 :building_level_egen_flag => ["FALSE", "FALSE"],
@@ -24,7 +21,12 @@
 :building_level_heat_storage_cap_kWh => [0.0, 0.0],
 :building_level_gas_boiler_flag => ["FALSE", "FALSE"],
 :building_level_gas_boiler_eff_pct => [85.0, 85.0],
+:building_level_electricity_supply_node => ["utility", "utility"],
 #:building_level_gas_boiler_peak_heat_gen_kW => [50.0, 50.0],
 #:building_level_echiller_flag => ["FALSE", "FALSE"],
 #:building_level_echiller_peak_cooling_kW => [50.0, 50.0],
-# Community Level Configuration
+# Node Level Configuration -- Cluster and Community
+:node_level_id => [],
+:node_level_ng_power_plant_flag => [],
+:node_level_ng_power_plant_eff_pct => [],
+:node_level_ng_supply_node => [],

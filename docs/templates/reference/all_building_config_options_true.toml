@@ -14,28 +14,28 @@ csv_file = "mc_blue_sky_heating.csv"
 [loads.other_heating_blue_sky]
 csv_file = "other_blue_sky_heating.csv"
 ############################################################
-[components.electricity_source]
+[components.utility_electricity_source]
 type = "source"
 outflow = "electricity"
-[components.natural_gas_source]
+[components.utility_natural_gas_source]
 type = "source"
 outflow = "natural_gas"
-[components.heating_source]
+[components.utility_heating_source]
 type = "source"
 outflow = "heating"
-[components.building_level_electric_bus]
+[components.cluster_0_electric_bus]
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
 num_outflows = 2
 dispatch_strategy = "in_order"
-[components.building_level_heating_manifold]
+[components.cluster_0_heating_manifold]
 type = "muxer"
 stream = "heating"
 num_inflows = 1
 num_outflows = 2
 dispatch_strategy = "in_order"
-[components.building_level_natural_gas_manifold]
+[components.cluster_0_natural_gas_manifold]
 type = "muxer"
 stream = "natural_gas"
 num_inflows = 1
@@ -134,28 +134,28 @@ dispatch_strategy = "in_order"
 ############################################################
 [networks.nw]
 connections = [
-  ["electricity_source:OUT(0)", "building_level_electric_bus:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(0)", "mc_electric_bus:IN(0)", "electricity"],
+  ["utility_electricity_source:OUT(0)", "cluster_0_electric_bus:IN(0)", "electricity"],
+  ["cluster_0_electric_bus:OUT(0)", "mc_electric_bus:IN(0)", "electricity"],
   ["mc_electric_generator:OUT(0)", "mc_electric_bus:IN(1)", "electricity"],
   ["mc_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-  ["building_level_electric_bus:OUT(1)", "other_electric_bus:IN(0)", "electricity"],
+  ["cluster_0_electric_bus:OUT(1)", "other_electric_bus:IN(0)", "electricity"],
   ["other_electric_generator:OUT(0)", "other_electric_bus:IN(1)", "electricity"],
   ["other_electric_bus:OUT(0)", "other_electricity:IN(0)", "electricity"],
-  ["natural_gas_source:OUT(0)", "building_level_natural_gas_manifold:IN(0)", "natural_gas"],
-  ["building_level_natural_gas_manifold:OUT(0)", "mc_natural_gas_manifold:IN(0)", "natural_gas"],
+  ["utility_natural_gas_source:OUT(0)", "cluster_0_natural_gas_manifold:IN(0)", "natural_gas"],
+  ["cluster_0_natural_gas_manifold:OUT(0)", "mc_natural_gas_manifold:IN(0)", "natural_gas"],
   ["mc_natural_gas_manifold:OUT(0)", "mc_electric_generator:IN(0)", "natural_gas"],
   ["mc_natural_gas_manifold:OUT(1)", "mc_gas_boiler:IN(0)", "natural_gas"],
-  ["building_level_natural_gas_manifold:OUT(1)", "other_natural_gas_manifold:IN(0)", "natural_gas"],
+  ["cluster_0_natural_gas_manifold:OUT(1)", "other_natural_gas_manifold:IN(0)", "natural_gas"],
   ["other_natural_gas_manifold:OUT(0)", "other_electric_generator:IN(0)", "natural_gas"],
   ["other_natural_gas_manifold:OUT(1)", "other_gas_boiler:IN(0)", "natural_gas"],
-  ["heating_source:OUT(0)", "building_level_heating_manifold:IN(0)", "heating"],
+  ["utility_heating_source:OUT(0)", "cluster_0_heating_manifold:IN(0)", "heating"],
   ["mc_gas_boiler:OUT(0)", "mc_thermal_storage:IN(0)", "heating"],
   ["mc_thermal_storage:OUT(0)", "mc_heating_manifold:IN(0)", "heating"],
-  ["building_level_heating_manifold:OUT(0)", "mc_heating_manifold:IN(1)", "heating"],
+  ["cluster_0_heating_manifold:OUT(0)", "mc_heating_manifold:IN(1)", "heating"],
   ["mc_heating_manifold:OUT(0)", "mc_heating:IN(0)", "heating"],
   ["other_gas_boiler:OUT(0)", "other_thermal_storage:IN(0)", "heating"],
   ["other_thermal_storage:OUT(0)", "other_heating_manifold:IN(0)", "heating"],
-  ["building_level_heating_manifold:OUT(1)", "other_heating_manifold:IN(1)", "heating"],
+  ["cluster_0_heating_manifold:OUT(1)", "other_heating_manifold:IN(1)", "heating"],
   ["other_heating_manifold:OUT(0)", "other_heating:IN(0)", "heating"],
   ]
 ############################################################

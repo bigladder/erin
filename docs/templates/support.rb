@@ -9,11 +9,13 @@ class Support
   attr_reader :components, :connections, :loads, :load_ids
 
   def initialize(load_profile, building_level, node_level)
+    @load_profile = load_profile
     @load_profile_scenario_id = load_profile.map {|x| x[:scenario_id]}
     @load_profile_building_id = load_profile.map {|x| x[:building_id]}
     @load_profile_enduse = load_profile.map {|x| x[:enduse]}
     @load_profile_file = load_profile.map {|x| x[:file]}
     _check_load_profile_data
+    @building_level = building_level
     @building_level_building_id = building_level.map {|x| x[:id]}
     @building_level_egen_flag = building_level.map {|x| x[:egen_flag]}
     @building_level_egen_eff_pct = building_level.map {|x| x[:egen_eff_pct].to_f}
@@ -23,6 +25,7 @@ class Support
     @building_level_gas_boiler_eff_pct = building_level.map {|x| x[:gas_boiler_eff_pct].to_f}
     @building_level_electricity_supply_node = building_level.map {|x| x[:electricity_supply_node]}
     _check_building_level_data
+    @node_level = node_level
     @node_level_id = node_level.map {|x| x[:id]}
     @node_level_ng_power_plant_flag = node_level.map {|x| x[:ng_power_plant_flag]}
     @node_level_ng_power_plant_eff_pct = node_level.map {|x| x[:ng_power_plant_eff_pct].to_f}
@@ -79,10 +82,11 @@ class Support
     @loads = []
     @load_ids = []
     load_id_set = Set.new
-    @load_profile_building_id.each_with_index do |b_id, n|
-      s_id = @load_profile_scenario_id[n]
-      enduse = @load_profile_enduse[n]
-      file = @load_profile_file[n]
+    @load_profile.each_with_index do |item, n|
+      b_id = item[:building_id]
+      s_id = item[:scenario_id]
+      enduse = item[:enduse]
+      file = item[:file]
       load_id = "#{b_id}_#{enduse}_#{s_id}"
       if load_id_set.include?(load_id)
         raise "ERROR! Duplicate load_id \"#{load_id}\""
@@ -210,11 +214,13 @@ class Support
 
   def make_scenario_string(building_id, enduse)
     strings = []
-    @building_level_building_id.each_with_index do |b_id, n|
+    @building_level.each_with_index do |item, n|
+      b_id = item[:id]
       next unless building_id == b_id
-      @load_profile_scenario_id.each_with_index do |s_id, nn|
-        next unless @load_profile_building_id[nn] == b_id
-        next unless @load_profile_enduse[nn] == enduse
+      @load_profile.each_with_index do |lp_item, nn|
+        s_id = lp_item[:scenario_id]
+        next unless lp_item[:building_id] == b_id
+        next unless lp_item[:enduse] == enduse
         load_id = @load_ids[nn]
         strings << "loads_by_scenario.#{ s_id } = \"#{ load_id }\""
       end

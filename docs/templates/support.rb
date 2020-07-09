@@ -26,6 +26,10 @@ class Support
     _add_heating_connections_and_components
   end
 
+  # - csv_path: string, the path to a CSV file
+  # ASSUMPTION: The file has headers in the first row and each row is the same
+  # length.
+  # RETURN: (array (hash symbol string)), the data read in
   def self.load_csv(csv_path)
     data = []
     headers = nil
@@ -42,6 +46,10 @@ class Support
     data
   end
 
+  # - csv_path: string, the path to a CSV file
+  # ASSUMPTION: The file has headers in the first row and only one row of data
+  # (on the second row). Rows are the same length.
+  # RETURN: (hash symbol string), the data read in
   def self.load_key_value_csv(csv_path)
     data = {}
     headers = nil
@@ -67,7 +75,7 @@ class Support
     @loads = []
     @load_ids = []
     load_id_set = Set.new
-    @load_profile.each_with_index do |item, n|
+    @load_profile.each do |item|
       b_id = item[:building_id]
       s_id = item[:scenario_id]
       enduse = item[:enduse]
@@ -97,10 +105,10 @@ class Support
     end
   end
 
-  def _assert_not_empty(map, key)
+  def _assert_string_not_empty(map, key)
     x = map[key]
     msg = "ERROR! Value for key #{key} cannot be empty in #{map}"
-    raise msg if x.strip.empty?
+    raise msg if x.to_s.strip.empty?
   end
 
   def _assert_proper_enduse(x, msg)
@@ -119,12 +127,12 @@ class Support
   # INTERNAL METHOD
   def _check_load_profile_data
     @load_profile.each do |item|
-      _assert_not_empty(item, :scenario_id)
-      _assert_not_empty(item, :building_id)
+      _assert_string_not_empty(item, :scenario_id)
+      _assert_string_not_empty(item, :building_id)
       _assert_proper_enduse(
         item[:enduse],
         "ERROR! unexpected enduse for #{item}")
-      _assert_not_empty(item, :file)
+      _assert_string_not_empty(item, :file)
     end
   end
 
@@ -146,7 +154,7 @@ class Support
   # INTERNAL METHOD
   def _check_building_level_data
     @building_level.each do |item|
-      _assert_not_empty(item, :id)
+      _assert_string_not_empty(item, :id)
       _assert_proper_flag(item, :egen_flag)
       if is_true(item[:egen_flag])
         _assert_float_within_range(item, :egen_eff_pct, 0.01, 100.0)
@@ -165,7 +173,7 @@ class Support
   # INTERNAL METHOD
   def _check_node_level_data
     @node_level.each do |item|
-      _assert_not_empty(item, :id)
+      _assert_string_not_empty(item, :id)
       _assert_proper_flag(item, :ng_power_plant_flag)
       if is_true(item[:ng_power_plant_flag])
         _assert_float_within_range(item, :ng_power_plant_eff_pct, 0.01, 100.0)
@@ -237,14 +245,14 @@ class Support
 
   def make_scenario_string(building_id, enduse)
     strings = []
-    @building_level.each_with_index do |item, n|
+    @building_level.each do |item|
       b_id = item[:id]
       next unless building_id == b_id
-      @load_profile.each_with_index do |lp_item, nn|
+      @load_profile.each_with_index do |lp_item, idx|
         s_id = lp_item[:scenario_id]
         next unless lp_item[:building_id] == b_id
         next unless lp_item[:enduse] == enduse
-        load_id = @load_ids[nn]
+        load_id = @load_ids[idx]
         strings << "loads_by_scenario.#{ s_id } = \"#{ load_id }\""
       end
     end
@@ -273,36 +281,38 @@ class Support
     id
   end
 
-  def add_building_electrical_enduse(building_id, comps)
-    scenarios_string = make_scenario_string(building_id, ELECTRICITY)
-    id = "#{building_id}_#{ELECTRICITY}"
-    s = "[components.#{building_id}_#{ELECTRICITY}]\n"\
+  def add_load(building_id, enduse, comps)
+    scenarios_string = make_scenario_string(building_id, enduse)
+    id = "#{building_id}_#{enduse}"
+    s = "[components.#{building_id}_#{enduse}]\n"\
       "type = \"load\"\n"\
-      "inflow = \"#{ELECTRICITY}\"\n#{scenarios_string}\n"
+      "inflow = \"#{enduse}\"\n#{scenarios_string}\n"
     add_if_not_added(comps, id, s)
     id
   end
 
+  def add_building_electrical_enduse(building_id, comps)
+    add_load(building_id, ELECTRICITY, comps)
+  end
+
   def add_building_heating_enduse(building_id, comps)
-    scenarios_string = make_scenario_string(building_id, HEATING)
-    id = "#{building_id}_#{HEATING}"
-    s = "[components.#{building_id}_#{HEATING}]\n"\
-      "type = \"load\"\n"\
-      "inflow = \"#{HEATING}\"\n#{scenarios_string}\n"
+    add_load(building_id, HEATING, comps)
+  end
+
+  def add_muxer(id, stream, num_inflows, num_outflows, comps)
+    s = "[components.#{id}]\n"\
+      "type = \"muxer\"\n"\
+      "stream = \"#{stream}\"\n"\
+      "num_inflows = #{num_inflows}\n"\
+      "num_outflows = #{num_outflows}\n"\
+      "dispatch_strategy = \"in_order\"\n"
     add_if_not_added(comps, id, s)
     id
   end
 
   def add_building_electrical_bus(building_id, comps)
     id = "#{building_id}_#{ELECTRICITY}_bus"
-    s = "[components.#{id}]\n"
-    s += "type = \"muxer\"\n"
-    s += "stream = \"electricity\"\n"
-    s += "num_inflows = 2\n"
-    s += "num_outflows = 1\n"
-    s += "dispatch_strategy = \"in_order\"\n"
-    add_if_not_added(comps, id, s)
-    id
+    add_muxer(id, ELECTRICITY, 2, 1, comps)
   end
 
   def add_connection(src_id, src_port, sink_id, sink_port, flow, conns)
@@ -310,43 +320,32 @@ class Support
     true
   end
 
-  def add_electrical_source(node_id, comps)
-    id = "#{node_id}_#{ELECTRICITY}_source"
-    s = "[components.#{id}]\n"
-    s += "type = \"source\"\n"
-    s += "outflow = \"#{ELECTRICITY}\"\n"
+  def add_source(id, outflow, comps)
+    s = "[components.#{id}]\n"\
+      "type = \"source\"\n"\
+      "outflow = \"#{outflow}\"\n"
     add_if_not_added(comps, id, s)
     id
+  end
+
+  def add_electrical_source(node_id, comps)
+    id = "#{node_id}_#{ELECTRICITY}_source"
+    add_source(id, ELECTRICITY, comps)
   end
 
   def add_natural_gas_source(node_id, comps)
     id = "#{node_id}_#{NATURAL_GAS}_source"
-    s = "[components.#{id}]\n"\
-      "type = \"source\"\n"\
-      "outflow = \"#{NATURAL_GAS}\"\n"
-    add_if_not_added(comps, id, s)
-    id
+    add_source(id, NATURAL_GAS, comps)
   end
 
   def add_heating_source(node_id, comps)
     id = "#{node_id}_#{HEATING}_source"
-    s = "[components.#{id}]\n"\
-      "type = \"source\"\n"\
-      "outflow = \"#{HEATING}\"\n"
-    add_if_not_added(comps, id, s)
-    id
+    add_source(id, HEATING, comps)
   end
 
   def add_cluster_level_mux(node_id, num_inflows, num_outflows, flow, comps)
     id = "#{node_id}_#{flow}_bus"
-    s = "[components.#{id}]\n"
-    s += "type = \"muxer\"\n"
-    s += "stream = \"#{flow}\"\n"
-    s += "num_inflows = #{num_inflows}\n"
-    s += "num_outflows = #{num_outflows}\n"
-    s += "dispatch_strategy = \"in_order\"\n"
-    add_if_not_added(comps, id, s)
-    id
+    add_muxer(id, flow, num_inflows, num_outflows, comps)
   end
 
   def make_building_egen_id(building_id)
@@ -355,14 +354,7 @@ class Support
 
   def add_building_electric_generator(building_id, generator_efficiency, comps)
     id = make_building_egen_id(building_id)
-    s = "[components.#{id}]\n"\
-      "type = \"converter\"\n"\
-      "inflow = \"natural_gas\"\n"\
-      "outflow = \"electricity\"\n"\
-      "lossflow = \"waste_heat\"\n"\
-      "constant_efficiency = #{generator_efficiency}\n"
-    add_if_not_added(comps, id, s)
-    id
+    add_converter(id, generator_efficiency, NATURAL_GAS, ELECTRICITY, comps)
   end
 
   def _add_electrical_connections_and_components

@@ -197,23 +197,10 @@ parameter "node_level_ng_supply_node", :default=>[]
 <% end                                                                         %>
 <%                                                                             %>
 <% num_buildings = building_level_building_id.length                           %>
-<% s = Support.new(                                                            %>
-<%     load_profile_scenario_id,                                               %>
-<%     load_profile_building_id,                                               %>
-<%     load_profile_enduse,                                                    %>
-<%     load_profile_file,                                                      %>
-<%     building_level_building_id,                                             %>
-<%     building_level_egen_flag,                                               %>
-<%     building_level_egen_eff_pct,                                            %>
-<%     building_level_heat_storage_flag,                                       %>
-<%     building_level_heat_storage_cap_kWh,                                    %>
-<%     building_level_gas_boiler_flag,                                         %>
-<%     building_level_gas_boiler_eff_pct,                                      %>
-<%     building_level_electricity_supply_node,                                 %>
-<%     node_level_id,                                                          %>
-<%     node_level_ng_power_plant_flag,                                         %>
-<%     node_level_ng_power_plant_eff_pct,                                      %>
-<%     node_level_ng_supply_node,                                              %>
+<% s = Support.make(                                                           %>
+<%     load_profile,                                                           %>
+<%     building_level,                                                         %>
+<%     node_level,                                                             %>
 <%     )                                                                       %>
 [simulation_info]
 rate_unit = "kW"

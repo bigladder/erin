@@ -1,3 +1,3 @@
-load_profile_scenario_id,load_profile_building_id,load_profile_enduse,load_profile_file
+scenario_id,building_id,enduse,file
 "blue_sky","mc","electricity","mc_blue_sky_electricity.csv"
 "blue_sky","other","electricity","other_blue_sky_electricity.csv"

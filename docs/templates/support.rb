@@ -11,24 +11,24 @@ class Support
   def self.make(load_profile, building_level, node_level)
     Support.new(
       # Load Profile
-      load_profile.map {|x| x[:load_profile_scenario_id]},
-      load_profile.map {|x| x[:load_profile_building_id]},
-      load_profile.map {|x| x[:load_profile_enduse]},
-      load_profile.map {|x| x[:load_profile_file]},
+      load_profile.map {|x| x[:scenario_id]},
+      load_profile.map {|x| x[:building_id]},
+      load_profile.map {|x| x[:enduse]},
+      load_profile.map {|x| x[:file]},
       # Building Level
-      building_level.map {|x| x[:building_level_building_id]},
-      building_level.map {|x| x[:building_level_egen_flag]},
-      building_level.map {|x| x[:building_level_egen_eff_pct].to_f},
-      building_level.map {|x| x[:building_level_heat_storage_flag]},
-      building_level.map {|x| x[:building_level_heat_storage_cap_kWh].to_f},
-      building_level.map {|x| x[:building_level_gas_boiler_flag]},
-      building_level.map {|x| x[:building_level_gas_boiler_eff_pct].to_f},
-      building_level.map {|x| x[:building_level_electricity_supply_node]},
+      building_level.map {|x| x[:id]},
+      building_level.map {|x| x[:egen_flag]},
+      building_level.map {|x| x[:egen_eff_pct].to_f},
+      building_level.map {|x| x[:heat_storage_flag]},
+      building_level.map {|x| x[:heat_storage_cap_kWh].to_f},
+      building_level.map {|x| x[:gas_boiler_flag]},
+      building_level.map {|x| x[:gas_boiler_eff_pct].to_f},
+      building_level.map {|x| x[:electricity_supply_node]},
       # Node Level
-      node_level.map {|x| x[:node_level_id]},
-      node_level.map {|x| x[:node_level_ng_power_plant_flag]},
-      node_level.map {|x| x[:node_level_ng_power_plant_eff_pct].to_f},
-      node_level.map {|x| x[:node_level_ng_supply_node]}
+      node_level.map {|x| x[:id]},
+      node_level.map {|x| x[:ng_power_plant_flag]},
+      node_level.map {|x| x[:ng_power_plant_eff_pct].to_f},
+      node_level.map {|x| x[:ng_supply_node]}
     )
   end
 

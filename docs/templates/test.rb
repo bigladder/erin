@@ -178,7 +178,14 @@ class TestTemplate < Minitest::Test
   # NOTE: checks that all headers are in data and that
   #       all arrays at data[header[n]] have the same length
   # RETURN: nil
-  def write_csv(csv_path, headers, data)
+  def write_csv(csv_path, headers, data, new_headers = nil)
+    if new_headers.nil?
+      new_headers = headers
+    end
+    if new_headers.length != headers.length
+      raise "ERROR! new_headers.length (#{new_headers.length}) "\
+        "!= headers.length (#{headers.length})"
+    end
     num_rows = nil
     headers.each do |h|
       if !data.include?(h)
@@ -192,7 +199,7 @@ class TestTemplate < Minitest::Test
     end
     File.open(csv_path, 'w') do |f|
       csv = CSV.new(f)
-      csv << headers.map(&:to_s)
+      csv << new_headers.map(&:to_s)
       num_rows.times.each do |idx|
         row = []
         headers.each do |h|
@@ -315,14 +322,16 @@ class TestTemplate < Minitest::Test
     write_csv(
       @load_profile_csv,
       [:load_profile_scenario_id, :load_profile_building_id,
-       :load_profile_enduse, :load_profile_enduse, :load_profile_file],
-      params
+       :load_profile_enduse, :load_profile_file],
+      params,
+      [:scenario_id, :building_id, :enduse, :file],
     )
     write_csv(
       @scenario_csv,
       [:scenario_id, :scenario_duration_in_hours, :scenario_max_occurrence,
        :scenario_fixed_frequency_in_years],
-      params
+      params,
+      [:id, :duration_in_hours, :max_occurrence, :fixed_frequency_in_years],
     )
     write_csv(
       @building_level_csv,
@@ -331,13 +340,17 @@ class TestTemplate < Minitest::Test
        :building_level_heat_storage_cap_kWh, :building_level_gas_boiler_flag,
        :building_level_gas_boiler_eff_pct,
        :building_level_electricity_supply_node],
-      params
+      params,
+      [:id, :egen_flag, :egen_eff_pct, :heat_storage_flag,
+       :heat_storage_cap_kWh, :gas_boiler_flag,
+       :gas_boiler_eff_pct, :electricity_supply_node],
     )
     write_csv(
       @node_level_csv,
       [:node_level_id, :node_level_ng_power_plant_flag,
        :node_level_ng_power_plant_eff_pct, :node_level_ng_supply_node],
-      params
+      params,
+      [:id, :ng_power_plant_flag, :ng_power_plant_eff_pct, :ng_supply_node],
     )
     out = call_modelkit(@params_file, @template_file, @output_file)
     if File.exist?(@output_file) and save_rendered_template

@@ -1,1 +1,1 @@
-node_level_id,node_level_ng_power_plant_flag,node_level_ng_power_plant_eff_pct,node_level_ng_supply_node
+id,ng_power_plant_flag,ng_power_plant_eff_pct,ng_supply_node

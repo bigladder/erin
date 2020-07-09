@@ -455,10 +455,10 @@ connections = [
   ]
 ############################################################
 <% scenario.each_with_index do |scen| %>
-[scenarios.<%= scen[:scenario_id] %>]
+[scenarios.<%= scen[:id] %>]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = <%= (scen[:scenario_fixed_frequency_in_years].to_f * 8760).to_i %>, time_unit="hours"}
-duration = <%= scen[:scenario_duration_in_hours].to_i %>
-max_occurrences = <%= scen[:scenario_max_occurrence].to_i %>
+occurrence_distribution = {type = "fixed", value = <%= (scen[:fixed_frequency_in_years].to_f * 8760).to_i %>, time_unit="hours"}
+duration = <%= scen[:duration_in_hours].to_i %>
+max_occurrences = <%= scen[:max_occurrence].to_i %>
 network = "nw"
 <% end %>

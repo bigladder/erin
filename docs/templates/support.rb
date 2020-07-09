@@ -15,10 +15,6 @@ class Support
     @building_level = building_level
     _check_building_level_data
     @node_level = node_level
-    @node_level_id = node_level.map {|x| x[:id]}
-    @node_level_ng_power_plant_flag = node_level.map {|x| x[:ng_power_plant_flag]}
-    @node_level_ng_power_plant_eff_pct = node_level.map {|x| x[:ng_power_plant_eff_pct].to_f}
-    @node_level_ng_supply_node = node_level.map {|x| x[:ng_supply_node]}
     _check_node_level_data
     _create_load_data
     _create_node_config
@@ -168,14 +164,13 @@ class Support
 
   # INTERNAL METHOD
   def _check_node_level_data
-    _assert_lengths_the_same(
-      [
-        @node_level_id,
-        @node_level_ng_power_plant_flag,
-        @node_level_ng_power_plant_eff_pct,
-        @node_level_ng_supply_node
-      ],
-      "node_level_* data should all have the same length")
+    @node_level.each do |item|
+      _assert_not_empty(item, :id)
+      _assert_proper_flag(item, :ng_power_plant_flag)
+      if is_true(item[:ng_power_plant_flag])
+        _assert_float_within_range(item, :ng_power_plant_eff_pct, 0.01, 100.0)
+      end
+    end
   end
 
   # INTERNAL METHOD

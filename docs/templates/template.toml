@@ -5,39 +5,6 @@ parameter "load_profile_csv_path", :default=>"load-profile.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
 parameter "building_level_csv_path", :default=>"building-level.csv"
 parameter "node_level_csv_path", :default=>"node-level.csv"
-# General
-parameter "simulation_duration_in_years", :default=>100
-parameter "random_setting", :default=>"Auto" # "Auto" | "Seed"
-parameter "random_seed", :default=>17
-# Load Profile
-parameter "load_profile_scenario_id", :default=>["blue_sky", "class_4_hurricane"]
-parameter "load_profile_building_id", :default=>["mc", "mc", "other", "other"]
-parameter "load_profile_enduse", :default=>["electrical", "electrical", "electrical", "electrical"]
-parameter "load_profile_file", :default=>["mc_blue_sky_electrical.csv", "mc_class_4_hurricane_electrical.csv", "other_blue_sky_electrical.csv", "other_class_4_hurricane_electrical.csv"]
-# Scenario
-parameter "scenario_id", :default=>["blue_sky", "class_4_hurricane"]
-parameter "scenario_duration_in_hours", :default=>[8760, 336]
-parameter "scenario_max_occurrence", :default=>[1, -1]
-parameter "scenario_fixed_frequency_in_years", :default=>[0, 30]
-# Building Level Configuration
-parameter "building_level_building_id", :default=>["mc", "other"]
-parameter "building_level_egen_flag", :default=>["FALSE", "FALSE"]
-parameter "building_level_egen_eff_pct", :default=>[38.0, 38.0]
-#parameter "building_level_egen_peak_pwr_kW", :default=>[100.0, 100.0] # Not currently supported in the engine
-parameter "building_level_heat_storage_flag", :default=>["FALSE", "FALSE"]
-parameter "building_level_heat_storage_cap_kWh", :default=>[0.0, 0.0]
-parameter "building_level_gas_boiler_flag", :default=>["FALSE", "FALSE"]
-parameter "building_level_gas_boiler_eff_pct", :default=>[42.0, 42.0]
-parameter "building_level_electricity_supply_node", :default=>["utility", "utility"]
-#parameter "building_level_gas_boiler_peak_heat_gen_kW", :default=>[25.0, 25.0] # Not currently supported in the engine
-#parameter "building_level_echiller_flag", :default=>["FALSE", "FALSE"] # Can't handle chillers yet
-#parameter "building_level_echiller_peak_cooling_kW", :default=>[50.0, 50.0] # Can't handle chillers yet
-#parameter "building_level_echiller_eff_pct", :default=>[540.0, 540.0] # Can't handle chillers yet
-# Node Level Configuration -- Node is either Cluster or Community Level (or beyond)
-parameter "node_level_id", :default=>[]
-parameter "node_level_ng_power_plant_flag", :default=>[]
-parameter "node_level_ng_power_plant_eff_pct", :default=>[]
-parameter "node_level_ng_supply_node", :default=>[]
 %>
 <% require_relative 'support.rb'                                               %>
 <% require 'set'                                                               %>

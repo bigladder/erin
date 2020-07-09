@@ -246,8 +246,8 @@ class TestTemplate < Minitest::Test
   #   stdout: string, standard output
   #   stderr: string, standard error
   #   }
-  def call_modelkit(pxt_file, tmp_file, output_file)
-    args = "--output=\"#{output_file}\" --files=\"#{pxt_file}\" \"#{tmp_file}\""
+  def call_modelkit(tmp_file, output_file)
+    args = "--output=\"#{output_file}\" \"#{tmp_file}\""
     cmd = "modelkit template-compose #{args}"
     val = {}
     out = ""
@@ -263,7 +263,6 @@ class TestTemplate < Minitest::Test
     val[:stdout] = out
     val[:stderr] = err
     val[:output] = File.read(output_file) if exist
-    val[:pxt] = if File.exist?(pxt_file) then File.read(pxt_file) else nil end
     return val
   end
 
@@ -280,10 +279,10 @@ class TestTemplate < Minitest::Test
 
   # RETURN: nil
   # SIDE-EFFECTS:
-  # - ensures the @output_file and @params_file are removed if exist
+  # - ensures generated files are removed if exist
   def ensure_directory_clean
     all_paths = [
-      @output_file, @params_file, @general_csv, @load_profile_csv,
+      @output_file, @general_csv, @load_profile_csv,
       @scenario_csv, @building_level_csv, @node_level_csv
     ]
     all_paths.each do |path|
@@ -292,7 +291,6 @@ class TestTemplate < Minitest::Test
   end
 
   def setup
-    @params_file = "test.pxt"
     @template_file = "template.toml"
     @output_file = "test.toml"
     @general_csv = "general.csv"
@@ -313,7 +311,6 @@ class TestTemplate < Minitest::Test
   # SIDE-EFFECTS:
   # - runs modelkit and asserts output is the same as reference
   def run_and_compare(params, reference_tag, save_rendered_template = true)
-    write_params(params, @params_file)
     write_key_value_csv(
       @general_csv,
       [:simulation_duration_in_years, :random_setting, :random_seed],
@@ -352,7 +349,7 @@ class TestTemplate < Minitest::Test
       params,
       [:id, :ng_power_plant_flag, :ng_power_plant_eff_pct, :ng_supply_node],
     )
-    out = call_modelkit(@params_file, @template_file, @output_file)
+    out = call_modelkit(@template_file, @output_file)
     if File.exist?(@output_file) and save_rendered_template
       FileUtils.cp(@output_file, reference_tag + '.toml')
     end

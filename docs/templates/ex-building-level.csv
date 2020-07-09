@@ -1,0 +1,3 @@
+building_level_building_id,building_level_egen_flag,building_level_egen_eff_pct,building_level_heat_storage_flag,building_level_heat_storage_cap_kWh,building_level_gas_boiler_flag,building_level_gas_boiler_eff_pct, building_level_electricity_supply_node
+"mc","FALSE",32.0,"FALSE",0.0,"FALSE",85.0,"utility"
+"other","FALSE",32.0,"FALSE",0.0,"FALSE",85.0,"utility"

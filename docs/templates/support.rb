@@ -1,10 +1,13 @@
 require 'set'
+require 'csv'
 
 class Support
   ELECTRICITY = 'electricity'
   NATURAL_GAS = 'natural_gas'
   HEATING = 'heating'
+
   attr_reader :components, :connections, :loads, :load_ids
+
   def initialize(load_profile_scenario_id,
                  load_profile_building_id,
                  load_profile_enduse,
@@ -52,6 +55,22 @@ class Support
     _add_electrical_connections_and_components
     _add_ng_connections_and_components
     _add_heating_connections_and_components
+  end
+
+  def self.load_csv(csv_path)
+    data = []
+    headers = nil
+    CSV.foreach(csv_path) do |row|
+      if headers.nil?
+        headers = row.map {|x| x.strip.to_sym}
+      else
+        data << headers.zip(row).reduce({}) do |map, hr|
+          map[hr[0]] = hr[1].strip
+          map
+        end
+      end
+    end
+    data
   end
 
   private

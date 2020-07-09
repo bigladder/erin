@@ -1,0 +1,2 @@
+scenario_id,scenario_duration_in_hours,scenario_max_occurrence,scenario_fixed_frequency_in_years
+"blue_sky",8760,1,0

@@ -1,3 +1,9 @@
+# File IO
+:general_csv_path => "ex-general.csv",
+:load_profile_csv_path => "ex-load-profile.csv",
+:scenario_csv_path => "ex-scenario.csv",
+:building_level_csv_path => "ex-building-level.csv",
+:node_level_csv_path => "ex-node-level.csv",
 # General
 :simulation_duration_in_years => 100,
 :random_setting => "Auto",

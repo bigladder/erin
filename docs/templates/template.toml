@@ -41,6 +41,18 @@ parameter "node_level_ng_supply_node", :default=>[]
 %>
 <% require_relative 'support.rb'                                               %>
 <% require 'set'                                                               %>
+<% general = Support.load_csv(general_csv_path)                                %>
+<% load_profile = Support.load_csv(load_profile_csv_path)                      %>
+<% scenario = Support.load_csv(scenario_csv_path)                              %>
+<% building_level = Support.load_csv(building_level_csv_path)                  %>
+<% node_level = Support.load_csv(node_level_csv_path)                          %>
+<% if false                                                                    %>
+<%   puts "general:\n#{general}\n"                                             %>
+<%   puts "load_profile:\n#{load_profile}\n"                                   %>
+<%   puts "scenario:\n#{scenario}\n"                                           %>
+<%   puts "building_level:\n#{building_level}\n"                               %>
+<%   puts "node_level:\n#{node_level}\n"                                       %>
+<% end                                                                         %>
 <% NG = 'natural_gas'                                                          %>
 <% E = 'electricity'                                                           %>
 <%                                                                             %>

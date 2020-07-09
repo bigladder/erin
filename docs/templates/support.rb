@@ -5,15 +5,12 @@ class Support
   ELECTRICITY = 'electricity'
   NATURAL_GAS = 'natural_gas'
   HEATING = 'heating'
+  COOLING = 'cooling'
 
   attr_reader :components, :connections, :loads, :load_ids
 
   def initialize(load_profile, building_level, node_level)
     @load_profile = load_profile
-    @load_profile_scenario_id = load_profile.map {|x| x[:scenario_id]}
-    @load_profile_building_id = load_profile.map {|x| x[:building_id]}
-    @load_profile_enduse = load_profile.map {|x| x[:enduse]}
-    @load_profile_file = load_profile.map {|x| x[:file]}
     _check_load_profile_data
     @building_level = building_level
     @building_level_building_id = building_level.map {|x| x[:id]}
@@ -112,16 +109,30 @@ class Support
     end
   end
 
+  def _assert_not_empty(x, msg)
+    raise msg if x.strip.empty?
+  end
+
+  def _assert_proper_enduse(x, msg)
+    raise msg unless [ELECTRICITY, HEATING, COOLING].include?(x)
+  end
+
   # INTERNAL METHOD
   def _check_load_profile_data
-    _assert_lengths_the_same(
-      [
-        @load_profile_scenario_id,
-        @load_profile_building_id,
-        @load_profile_enduse,
-        @load_profile_file
-      ],
-      "load_profile_* data should all have the same length")
+    @load_profile.each do |item|
+      _assert_not_empty(
+        item[:scenario_id],
+        "ERROR! scenario_id cannot be empty for #{item}")
+      _assert_not_empty(
+        item[:building_id],
+        "ERROR! building_id cannot be empty for #{item}")
+      _assert_proper_enduse(
+        item[:enduse],
+        "ERROR! unexpected enduse for #{item}")
+      _assert_not_empty(
+        item[:file],
+        "ERROR! cannot have blank file for #{item}")
+    end
   end
 
   # INTERNAL METHOD
@@ -201,14 +212,15 @@ class Support
   def _create_node_config
     return if !@node_config.nil?
     @node_config = {}
-    @node_level_id.each_with_index do |n_id, n|
+    @node_level.each do |item|
+      n_id = item[:id]
       if @node_config.include?(n_id)
         raise "node id \"#{n_id}\" multiply defined in node_config"
       end
       @node_config[n_id] = {
-        has_ng_pwr_plant: is_true(@node_level_ng_power_plant_flag[n]),
-        ng_pwr_plant_eff: @node_level_ng_power_plant_eff_pct[n].to_f / 100.0,
-        ng_supply_node: @node_level_ng_supply_node[n].strip,
+        has_ng_pwr_plant: is_true(item[:ng_power_plant_flag]),
+        ng_pwr_plant_eff: item[:ng_power_plant_eff_pct].to_f / 100.0,
+        ng_supply_node: item[:ng_supply_node].strip,
       }
     end
   end

@@ -8,25 +8,7 @@ class Support
 
   attr_reader :components, :connections, :loads, :load_ids
 
-  def self.make(load_profile, building_level, node_level)
-    Support.new(
-      load_profile,
-      building_level,
-      # Node Level
-      node_level.map {|x| x[:id]},
-      node_level.map {|x| x[:ng_power_plant_flag]},
-      node_level.map {|x| x[:ng_power_plant_eff_pct].to_f},
-      node_level.map {|x| x[:ng_supply_node]}
-    )
-  end
-
-  def initialize(load_profile, building_level,
-                 # Node Level
-                 node_level_id,
-                 node_level_ng_power_plant_flag,
-                 node_level_ng_power_plant_eff_pct,
-                 node_level_ng_supply_node
-                )
+  def initialize(load_profile, building_level, node_level)
     @load_profile_scenario_id = load_profile.map {|x| x[:scenario_id]}
     @load_profile_building_id = load_profile.map {|x| x[:building_id]}
     @load_profile_enduse = load_profile.map {|x| x[:enduse]}
@@ -41,10 +23,10 @@ class Support
     @building_level_gas_boiler_eff_pct = building_level.map {|x| x[:gas_boiler_eff_pct].to_f}
     @building_level_electricity_supply_node = building_level.map {|x| x[:electricity_supply_node]}
     _check_building_level_data
-    @node_level_id = node_level_id
-    @node_level_ng_power_plant_flag = node_level_ng_power_plant_flag
-    @node_level_ng_power_plant_eff_pct = node_level_ng_power_plant_eff_pct
-    @node_level_ng_supply_node = node_level_ng_supply_node
+    @node_level_id = node_level.map {|x| x[:id]}
+    @node_level_ng_power_plant_flag = node_level.map {|x| x[:ng_power_plant_flag]}
+    @node_level_ng_power_plant_eff_pct = node_level.map {|x| x[:ng_power_plant_eff_pct].to_f}
+    @node_level_ng_supply_node = node_level.map {|x| x[:ng_supply_node]}
     _check_node_level_data
     _create_load_data
     _create_node_config
@@ -118,6 +100,9 @@ class Support
       if size.nil?
         size = xs.size
       elsif size != xs.size
+        puts "array_of_arrays:\n#{array_of_arrays}"
+        puts "array_of_arrays.nil? = #{array_of_arrays.nil?}"
+        puts "array_of_arrays.length = #{array_of_arrays.length}"
         raise "Array lengths not the same #{msg}"
       end
     end

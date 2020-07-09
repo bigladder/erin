@@ -179,9 +179,7 @@ class TestTemplate < Minitest::Test
   #       all arrays at data[header[n]] have the same length
   # RETURN: nil
   def write_csv(csv_path, headers, data, new_headers = nil)
-    if new_headers.nil?
-      new_headers = headers
-    end
+    new_headers = headers if new_headers.nil?
     if new_headers.length != headers.length
       raise "ERROR! new_headers.length (#{new_headers.length}) "\
         "!= headers.length (#{headers.length})"
@@ -521,12 +519,16 @@ class TestTemplate < Minitest::Test
         electricity_supply_node: ps[:building_level_electricity_supply_node][idx],
       }
     end
-    Support.new(load_profile, building_level,
-      ps[:node_level_id],
-      ps[:node_level_ng_power_plant_flag],
-      ps[:node_level_ng_power_plant_eff_pct],
-      ps[:node_level_ng_supply_node]
-    )
+    node_level = []
+    ps[:node_level_id].each_with_index do |n_id, idx|
+      node_level << {
+        id: n_id,
+        ng_power_plant_flag: ps[:node_level_ng_power_plant_flag][idx],
+        ng_power_plant_eff_pct: ps[:node_level_ng_power_plant_eff_pct][idx],
+        ng_supply_node: ps[:node_level_ng_supply_node][idx],
+      }
+    end
+    Support.new(load_profile, building_level, node_level)
   end
 
   def compare_support_lib_outputs(s, expected_comps, expected_conns, verbose = false)

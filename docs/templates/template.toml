@@ -168,11 +168,7 @@ parameter "node_level_csv_path", :default=>"node-level.csv"
 <% end                                                                         %>
 <%                                                                             %>
 <% num_buildings = building_level.length                                       %>
-<% s = Support.make(                                                           %>
-<%     load_profile,                                                           %>
-<%     building_level,                                                         %>
-<%     node_level,                                                             %>
-<%     )                                                                       %>
+<% s = Support.new(load_profile, building_level, node_level)                   %>
 [simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"

@@ -508,16 +508,20 @@ class TestTemplate < Minitest::Test
         file: ps[:load_profile_file][idx]
       }
     end
-    Support.new(
-      load_profile,
-      ps[:building_level_building_id],
-      ps[:building_level_egen_flag],
-      ps[:building_level_egen_eff_pct],
-      ps[:building_level_heat_storage_flag],
-      ps[:building_level_heat_storage_cap_kWh],
-      ps[:building_level_gas_boiler_flag],
-      ps[:building_level_gas_boiler_eff_pct],
-      ps[:building_level_electricity_supply_node],
+    building_level = []
+    ps[:building_level_building_id].each_with_index do |b_id, idx|
+      building_level << {
+        id: b_id,
+        egen_flag: ps[:building_level_egen_flag][idx],
+        egen_eff_pct: ps[:building_level_egen_eff_pct][idx],
+        heat_storage_flag: ps[:building_level_heat_storage_flag][idx],
+        heat_storage_cap_kWh: ps[:building_level_heat_storage_cap_kWh][idx],
+        gas_boiler_flag: ps[:building_level_gas_boiler_flag][idx],
+        gas_boiler_eff_pct: ps[:building_level_gas_boiler_eff_pct][idx],
+        electricity_supply_node: ps[:building_level_electricity_supply_node][idx],
+      }
+    end
+    Support.new(load_profile, building_level,
       ps[:node_level_id],
       ps[:node_level_ng_power_plant_flag],
       ps[:node_level_ng_power_plant_eff_pct],

@@ -11,15 +11,7 @@ class Support
   def self.make(load_profile, building_level, node_level)
     Support.new(
       load_profile,
-      # Building Level
-      building_level.map {|x| x[:id]},
-      building_level.map {|x| x[:egen_flag]},
-      building_level.map {|x| x[:egen_eff_pct].to_f},
-      building_level.map {|x| x[:heat_storage_flag]},
-      building_level.map {|x| x[:heat_storage_cap_kWh].to_f},
-      building_level.map {|x| x[:gas_boiler_flag]},
-      building_level.map {|x| x[:gas_boiler_eff_pct].to_f},
-      building_level.map {|x| x[:electricity_supply_node]},
+      building_level,
       # Node Level
       node_level.map {|x| x[:id]},
       node_level.map {|x| x[:ng_power_plant_flag]},
@@ -28,16 +20,7 @@ class Support
     )
   end
 
-  def initialize(load_profile,
-                 # Building Level
-                 building_level_building_id,
-                 building_level_egen_flag,
-                 building_level_egen_eff_pct,
-                 building_level_heat_storage_flag,
-                 building_level_heat_storage_cap_kWh,
-                 building_level_gas_boiler_flag,
-                 building_level_gas_boiler_eff_pct,
-                 building_level_electricity_supply_node,
+  def initialize(load_profile, building_level,
                  # Node Level
                  node_level_id,
                  node_level_ng_power_plant_flag,
@@ -49,15 +32,14 @@ class Support
     @load_profile_enduse = load_profile.map {|x| x[:enduse]}
     @load_profile_file = load_profile.map {|x| x[:file]}
     _check_load_profile_data
-    @building_level_building_id = building_level_building_id
-    @building_level_egen_flag = building_level_egen_flag
-    @building_level_egen_eff_pct = building_level_egen_eff_pct
-    #building_level_egen_peak_pwr_kW
-    @building_level_heat_storage_flag = building_level_heat_storage_flag
-    @building_level_heat_storage_cap_kWh = building_level_heat_storage_cap_kWh
-    @building_level_gas_boiler_flag = building_level_gas_boiler_flag
-    @building_level_gas_boiler_eff_pct = building_level_gas_boiler_eff_pct
-    @building_level_electricity_supply_node = building_level_electricity_supply_node
+    @building_level_building_id = building_level.map {|x| x[:id]}
+    @building_level_egen_flag = building_level.map {|x| x[:egen_flag]}
+    @building_level_egen_eff_pct = building_level.map {|x| x[:egen_eff_pct].to_f}
+    @building_level_heat_storage_flag = building_level.map {|x| x[:heat_storage_flag]}
+    @building_level_heat_storage_cap_kWh = building_level.map {|x| x[:heat_storage_cap_kWh].to_f}
+    @building_level_gas_boiler_flag = building_level.map {|x| x[:gas_boiler_flag]}
+    @building_level_gas_boiler_eff_pct = building_level.map {|x| x[:gas_boiler_eff_pct].to_f}
+    @building_level_electricity_supply_node = building_level.map {|x| x[:electricity_supply_node]}
     _check_building_level_data
     @node_level_id = node_level_id
     @node_level_ng_power_plant_flag = node_level_ng_power_plant_flag

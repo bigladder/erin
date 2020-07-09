@@ -3,7 +3,7 @@
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
-max_time = 100
+max_time = 100 # ...
 ############################################################
 [loads.mc_electricity_blue_sky]
 csv_file = "mc_blue_sky_electricity.csv"
@@ -22,7 +22,7 @@ outflow = "heating"
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
-num_outflows = 2
+num_outflows = 2 # ...
 dispatch_strategy = "in_order"
 [components.mc_electricity]
 type = "load"
@@ -41,8 +41,8 @@ type = "store"
 outflow = "heating"
 inflow = "heating"
 capacity_unit = "kWh"
-capacity = 100.0
-max_inflow = 10.0
+capacity = 100.0 # ...
+max_inflow = 10.0 # ...
 ############################################################
 [networks.nw]
 connections = [
@@ -56,6 +56,6 @@ connections = [
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
-duration = 8760
-max_occurrences = 1
+duration = 8760 # ...
+max_occurrences = 1 # ...
 network = "nw"

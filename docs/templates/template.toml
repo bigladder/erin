@@ -178,9 +178,9 @@ rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
 <% if equals(general[:random_setting], "seed")                                 %>
-random_seed = <%= general[:random_seed].to_i %>
+random_seed = <%= general[:random_seed].to_i %> # ...
 <% end                                                                         %>
-max_time = <%= general[:simulation_duration_in_years] %>
+max_time = <%= general[:simulation_duration_in_years] %> # ...
 ############################################################
 <% s.loads.each do |load|                                                      %>
 [loads.<%= load[:load_id] %>]
@@ -218,7 +218,7 @@ type = "converter"
 inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
-constant_efficiency = <%= cfg[:ng_pwr_plant_eff] %>
+constant_efficiency = <%= cfg[:ng_pwr_plant_eff] %> # ...
 <%   end                                                                       %>
 <% end                                                                         %>
 <% fuels_set.each do |fuel|                                                    %>
@@ -239,7 +239,7 @@ outflow = "heating"
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
-num_outflows = <%= num_supplied %>
+num_outflows = <%= num_supplied %> # ...
 dispatch_strategy = "in_order"
 <%   end                                                                       %>
 <% end                                                                         %>
@@ -248,7 +248,7 @@ dispatch_strategy = "in_order"
 type = "muxer"
 stream = "heating"
 num_inflows = 1
-num_outflows = <%= buildings_requiring_heat %>
+num_outflows = <%= buildings_requiring_heat %> # ...
 dispatch_strategy = "in_order"
 <% end                                                                         %>
 <% if num_ng_buildings > 1                                                     %>
@@ -256,7 +256,7 @@ dispatch_strategy = "in_order"
 type = "muxer"
 stream = "natural_gas"
 num_inflows = 1
-num_outflows = <%= num_ng_buildings %>
+num_outflows = <%= num_ng_buildings %> # ...
 dispatch_strategy = "in_order"
 <% end                                                                         %>
 <% b_id_enduses = Set.new                                                      %>
@@ -284,7 +284,7 @@ type = "converter"
 inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
-constant_efficiency = <%= item[:egen_eff_pct].to_f / 100.0 %>
+constant_efficiency = <%= item[:egen_eff_pct].to_f / 100.0 %> # ...
 [components.<%= b_id %>_electric_bus]
 type = "muxer"
 stream = "electricity"
@@ -298,8 +298,8 @@ type = "store"
 outflow = "heating"
 inflow = "heating"
 capacity_unit = "kWh"
-capacity = <%= item[:heat_storage_cap_kWh].to_f %>
-max_inflow = <%= item[:heat_storage_cap_kWh].to_f / 10.0 %>
+capacity = <%= item[:heat_storage_cap_kWh].to_f %> # ...
+max_inflow = <%= item[:heat_storage_cap_kWh].to_f / 10.0 %> # ...
 <%   end                                                                       %>
 <%   if is_true(item[:gas_boiler_flag])                                        %>
 [components.<%= b_id %>_gas_boiler]
@@ -307,7 +307,7 @@ type = "converter"
 outflow = "heating"
 inflow = "natural_gas"
 lossflow = "waste_heat"
-constant_efficiency = <%= item[:gas_boiler_eff_pct].to_f / 100.0 %>
+constant_efficiency = <%= item[:gas_boiler_eff_pct].to_f / 100.0 %> # ...
 [components.<%= b_id %>_heating_manifold]
 type = "muxer"
 stream = "heating"
@@ -430,7 +430,7 @@ connections = [
 [scenarios.<%= scen[:id] %>]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = <%= (scen[:fixed_frequency_in_years].to_f * 8760).to_i %>, time_unit="hours"}
-duration = <%= scen[:duration_in_hours].to_i %>
-max_occurrences = <%= scen[:max_occurrence].to_i %>
+duration = <%= scen[:duration_in_hours].to_i %> # ...
+max_occurrences = <%= scen[:max_occurrence].to_i %> # ...
 network = "nw"
 <% end %>

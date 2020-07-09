@@ -3,7 +3,7 @@
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
-max_time = 100
+max_time = 100 # ...
 ############################################################
 [loads.b1_electricity_blue_sky]
 csv_file = "b1_blue_sky_electricity.csv"
@@ -24,6 +24,6 @@ connections = [
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
-duration = 8760
-max_occurrences = 1
+duration = 8760 # ...
+max_occurrences = 1 # ...
 network = "nw"

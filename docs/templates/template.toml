@@ -41,7 +41,7 @@ parameter "node_level_ng_supply_node", :default=>[]
 %>
 <% require_relative 'support.rb'                                               %>
 <% require 'set'                                                               %>
-<% general = Support.load_csv(general_csv_path)                                %>
+<% general = Support.load_key_value_csv(general_csv_path)                      %>
 <% load_profile = Support.load_csv(load_profile_csv_path)                      %>
 <% scenario = Support.load_csv(scenario_csv_path)                              %>
 <% building_level = Support.load_csv(building_level_csv_path)                  %>
@@ -206,10 +206,10 @@ parameter "node_level_ng_supply_node", :default=>[]
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
-<% if equals(random_setting, "seed")                                           %>
-random_seed = <%= random_seed.to_i %>
+<% if equals(general[:random_setting], "seed")                                 %>
+random_seed = <%= general[:random_seed].to_i %>
 <% end                                                                         %>
-max_time = <%= simulation_duration_in_years %>
+max_time = <%= general[:simulation_duration_in_years] %>
 ############################################################
 <% s.loads.each do |load|                                                      %>
 [loads.<%= load[:load_id] %>]
@@ -454,11 +454,11 @@ connections = [
 <% end                                                                         %>
   ]
 ############################################################
-<% scenario_id.each_with_index do |s_id, idx|                                  %>
-[scenarios.<%= s_id %>]
+<% scenario.each_with_index do |scen| %>
+[scenarios.<%= scen[:scenario_id] %>]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = <%= (scenario_fixed_frequency_in_years[idx] * 8760).to_i %>, time_unit="hours"}
-duration = <%= scenario_duration_in_hours[idx] %>
-max_occurrences = <%= scenario_max_occurrence[idx].to_i %>
+occurrence_distribution = {type = "fixed", value = <%= (scen[:scenario_fixed_frequency_in_years].to_f * 8760).to_i %>, time_unit="hours"}
+duration = <%= scen[:scenario_duration_in_hours].to_i %>
+max_occurrences = <%= scen[:scenario_max_occurrence].to_i %>
 network = "nw"
-<% end                                                                         %>
+<% end %>

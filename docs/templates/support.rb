@@ -98,6 +98,25 @@ class Support
     data
   end
 
+  def self.load_key_value_csv(csv_path)
+    data = {}
+    headers = nil
+    CSV.foreach(csv_path) do |row|
+      if headers.nil?
+        headers = row.map {|x| x.strip.to_sym}
+        headers.each do |h|
+          data[h] = nil
+        end
+      else
+        headers.zip(row).each do |hr|
+          data[hr[0]] = hr[1].strip
+        end
+        break
+      end
+    end
+    data
+  end
+
   private
 
   def _create_load_data

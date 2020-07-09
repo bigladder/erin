@@ -499,11 +499,17 @@ class TestTemplate < Minitest::Test
   #end
 
   def make_support_instance(ps)
+    load_profile = []
+    ps[:load_profile_scenario_id].each_with_index do |s_id, idx|
+      load_profile << {
+        scenario_id: s_id,
+        building_id: ps[:load_profile_building_id][idx],
+        enduse: ps[:load_profile_enduse][idx],
+        file: ps[:load_profile_file][idx]
+      }
+    end
     Support.new(
-      ps[:load_profile_scenario_id],
-      ps[:load_profile_building_id],
-      ps[:load_profile_enduse],
-      ps[:load_profile_file],
+      load_profile,
       ps[:building_level_building_id],
       ps[:building_level_egen_flag],
       ps[:building_level_egen_eff_pct],

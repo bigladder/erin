@@ -10,11 +10,7 @@ class Support
 
   def self.make(load_profile, building_level, node_level)
     Support.new(
-      # Load Profile
-      load_profile.map {|x| x[:scenario_id]},
-      load_profile.map {|x| x[:building_id]},
-      load_profile.map {|x| x[:enduse]},
-      load_profile.map {|x| x[:file]},
+      load_profile,
       # Building Level
       building_level.map {|x| x[:id]},
       building_level.map {|x| x[:egen_flag]},
@@ -32,11 +28,7 @@ class Support
     )
   end
 
-  def initialize(
-    load_profile_scenario_id,
-                 load_profile_building_id,
-                 load_profile_enduse,
-                 load_profile_file,
+  def initialize(load_profile,
                  # Building Level
                  building_level_building_id,
                  building_level_egen_flag,
@@ -52,10 +44,10 @@ class Support
                  node_level_ng_power_plant_eff_pct,
                  node_level_ng_supply_node
                 )
-    @load_profile_scenario_id = load_profile_scenario_id
-    @load_profile_building_id = load_profile_building_id
-    @load_profile_enduse = load_profile_enduse
-    @load_profile_file = load_profile_file
+    @load_profile_scenario_id = load_profile.map {|x| x[:scenario_id]}
+    @load_profile_building_id = load_profile.map {|x| x[:building_id]}
+    @load_profile_enduse = load_profile.map {|x| x[:enduse]}
+    @load_profile_file = load_profile.map {|x| x[:file]}
     _check_load_profile_data
     @building_level_building_id = building_level_building_id
     @building_level_egen_flag = building_level_egen_flag

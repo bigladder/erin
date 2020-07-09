@@ -88,38 +88,41 @@ parameter "node_level_ng_supply_node", :default=>[]
 <% electricity_supplied_by_node = {}                                           %>
 <% ng_supplied_by_node = {}                                                    %>
 <%                                                                             %>
-<% node_level_id.each_with_index do |n_id, n|                                  %>
+<% node_level.each_with_index do |item, n|                                     %>
+<%   n_id = item[:id]                                                          %>
 <%   if node_config.include?(n_id)                                             %>
 # WARNING! Node ID "<%= n_id %>" appears more than once in node_level_id!
 # Previous value being overwritten...
 <%   end                                                                       %>
 <%   node_config[n_id] = {                                                     %>
-<%     has_ng_pwr_plant: is_true(node_level_ng_power_plant_flag[n]),           %>
-<%     ng_pwr_plant_eff: node_level_ng_power_plant_eff_pct[n].to_f / 100.0,    %>
-<%     ng_supply_node: node_level_ng_supply_node[n].strip,                     %>
+<%     has_ng_pwr_plant: is_true(item[:ng_power_plant_flag]),                  %>
+<%     ng_pwr_plant_eff: item[:ng_power_plant_eff_pct].to_f / 100.0,           %>
+<%     ng_supply_node: item[:ng_supply_node].strip,                            %>
 <%   }                                                                         %>
 <% end                                                                         %>
 <%                                                                             %>
-<% building_level_building_id.each_with_index do |b_id, n|                     %>
+<% building_level.each_with_index do |item, n|                                 %>
+<%   b_id = item[:id]                                                          %>
 <%   if building_config.include?(b_id)                                         %>
 # WARNING! Building ID "<%= b_id %>" appears more than once in
 # building_level_building_id! Previous value being overwritten...
 <%   end                                                                       %>
 <%   building_config[b_id] = {                                                 %>
-<%     has_egen: is_true(building_level_egen_flag[n]),                         %>
-<%     egen_eff: building_level_egen_eff_pct[n].to_f,                          %>
-<%     has_tes: is_true(building_level_heat_storage_flag[n]),                  %>
-<%     tes_cap_kWh: building_level_heat_storage_cap_kWh[n].to_f,               %>
-<%     has_boiler: is_true(building_level_gas_boiler_flag[n]),                 %>
-<%     boiler_eff: building_level_gas_boiler_eff_pct[n].to_f / 100.0,          %>
-<%     e_supply_node: building_level_electricity_supply_node[n].strip,         %>
+<%     has_egen: is_true(item[:egen_flag]),                                    %>
+<%     egen_eff: item[:egen_eff_pct].to_f,                                     %>
+<%     has_tes: is_true(item[:heat_storage_flag]),                             %>
+<%     tes_cap_kWh: item[:heat_storage_cap_kWh].to_f,                          %>
+<%     has_boiler: is_true(item[:gas_boiler_flag]),                            %>
+<%     boiler_eff: item[:gas_boiler_eff_pct].to_f / 100.0,                     %>
+<%     e_supply_node: item[:electricity_supply_node].strip,                    %>
 <%     ng_supply_node: "utility",                                              %>
 <%     enduses: Set.new,                                                       %>
 <%   }                                                                         %>
 <% end                                                                         %>
 <%                                                                             %>
-<% load_profile_building_id.each_with_index do |b_id, idx|                     %>
-<%   enduse = load_profile_enduse[idx]                                         %>
+<% load_profile.each_with_index do |item, idx|                                 %>
+<%   b_id = item[:building_id]                                                 %>
+<%   enduse = item[:enduse]                                                    %>
 <%   cfg = building_config[b_id]                                               %>
 <%   cfg[:enduses] << enduse                                                   %>
 <%   e_sup_node = cfg[:e_supply_node]                                          %>
@@ -189,14 +192,15 @@ parameter "node_level_ng_supply_node", :default=>[]
 <% buildings_requiring_heat = heated_buildings.size                            %>
 <% num_ng_buildings = ng_buildings.length                                      %>
 <%                                                                             %>
-<% building_level_egen_flag.each_with_index do |flag, idx|                     %>
-<%   b_id = building_level_building_id[idx]                                    %>
+<% building_level.each_with_index do |item, idx|                               %>
+<%   flag = item[:egen_flag]                                                   %>
+<%   b_id = item[:id]                                                          %>
 <%   if is_true(flag)                                                          %>
 <%     fuels_set << "natural_gas"                                              %>
 <%   end                                                                       %>
 <% end                                                                         %>
 <%                                                                             %>
-<% num_buildings = building_level_building_id.length                           %>
+<% num_buildings = building_level.length                                       %>
 <% s = Support.make(                                                           %>
 <%     load_profile,                                                           %>
 <%     building_level,                                                         %>
@@ -289,30 +293,31 @@ num_outflows = <%= num_ng_buildings %>
 dispatch_strategy = "in_order"
 <% end                                                                         %>
 <% b_id_enduses = Set.new                                                      %>
-<% load_profile_building_id.each_with_index do |b_id, idx|                     %>
-<%   enduse = load_profile_enduse[idx]                                         %>
-<%   tag = "#{b_id}_#{enduse}"                                                 %>
+<% load_profile.each_with_index do |item, idx|                                 %>
+<%   enduse = item[:enduse]                                                    %>
+<%   tag = "#{item[:building_id]}_#{enduse}"                                   %>
 <%   next if b_id_enduses.include?(tag)                                        %>
 <%   b_id_enduses << tag                                                       %>
-[components.<%= b_id %>_<%= enduse %>]
+[components.<%= item[:building_id] %>_<%= enduse %>]
 type = "load"
 inflow = "<%= enduse %>"
-<%   load_profile_scenario_id.each_with_index do |s_id, idx2|                  %>
-<%     if ((load_profile_building_id[idx2] == b_id) and                        %>
-<%         (load_profile_enduse[idx2] == enduse))                              %>
+<%   load_profile.each_with_index do |item2, idx2|                             %>
+<%     if ((item2[:building_id] == item[:building_id]) and                     %>
+<%         (item2[:enduse] == enduse))                                         %>
 <%       load_id = s.load_ids[idx2]                                            %>
-loads_by_scenario.<%= s_id %> = "<%= load_id %>"
+loads_by_scenario.<%= item2[:scenario_id] %> = "<%= load_id %>"
 <%     end                                                                     %>
 <%   end                                                                       %>
 <% end                                                                         %>
-<% building_level_building_id.sort.each_with_index do |b_id, idx|              %>
-<%   if is_true(building_level_egen_flag[idx])                                 %>
+<% building_level.each_with_index do |item, idx|                               %>
+<%   b_id = item[:id]                                                          %>
+<%   if is_true(item[:egen_flag])                                              %>
 [components.<%= b_id %>_electric_generator]
 type = "converter"
 inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
-constant_efficiency = <%= building_level_egen_eff_pct[idx].to_f / 100.0 %>
+constant_efficiency = <%= item[:egen_eff_pct].to_f / 100.0 %>
 [components.<%= b_id %>_electric_bus]
 type = "muxer"
 stream = "electricity"
@@ -320,29 +325,29 @@ num_inflows = 2
 num_outflows = 1
 dispatch_strategy = "in_order"
 <%   end                                                                       %>
-<%   if is_true(building_level_heat_storage_flag[idx])                         %>
+<%   if is_true(item[:heat_storage_flag])                                      %>
 [components.<%= b_id %>_thermal_storage]
 type = "store"
 outflow = "heating"
 inflow = "heating"
 capacity_unit = "kWh"
-capacity = <%= building_level_heat_storage_cap_kWh[idx].to_f %>
-max_inflow = <%= building_level_heat_storage_cap_kWh[idx].to_f / 10.0 %>
+capacity = <%= item[:heat_storage_cap_kWh].to_f %>
+max_inflow = <%= item[:heat_storage_cap_kWh].to_f / 10.0 %>
 <%   end                                                                       %>
-<%   if is_true(building_level_gas_boiler_flag[idx])                           %>
+<%   if is_true(item[:gas_boiler_flag])                                        %>
 [components.<%= b_id %>_gas_boiler]
 type = "converter"
 outflow = "heating"
 inflow = "natural_gas"
 lossflow = "waste_heat"
-constant_efficiency = <%= building_level_gas_boiler_eff_pct[idx].to_f / 100.0 %>
+constant_efficiency = <%= item[:gas_boiler_eff_pct].to_f / 100.0 %>
 [components.<%= b_id %>_heating_manifold]
 type = "muxer"
 stream = "heating"
 num_inflows = 2
 num_outflows = 1
 dispatch_strategy = "in_order"
-<%     if is_true(building_level_egen_flag[idx])                               %>
+<%     if is_true(item[:egen_flag])                                            %>
 [components.<%= b_id %>_natural_gas_manifold]
 type = "muxer"
 stream = "natural_gas"

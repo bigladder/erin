@@ -6,6 +6,7 @@
 # This module uses Ruby's standard unit test library, MiniTest
 # This library assumes that Modelkit is installed and available from the
 # commandline
+require 'csv'
 require 'fileutils'
 require 'minitest/autorun'
 require 'open3'
@@ -169,6 +170,64 @@ class TestTemplate < Minitest::Test
     File.write(path, params.to_s.gsub(/^{/, '').gsub(/}$/, '').gsub(/, :/, ",\n:"))
   end
 
+  # - csv_path: string, path to csv file to write
+  # - headers: (array symbol), the column headers to write
+  # - data: (Hash symbol any), the data to pull headers from. Data having an
+  #     entry symbol in headers must be an array of object convertable to
+  #     string of the same length
+  # NOTE: checks that all headers are in data and that
+  #       all arrays at data[header[n]] have the same length
+  # RETURN: nil
+  def write_csv(csv_path, headers, data)
+    num_rows = nil
+    headers.each do |h|
+      if !data.include?(h)
+        raise "ERROR: data does not include header \"#{h}\""
+      end
+      if num_rows.nil?
+        num_rows = data[h].length
+      elsif num_rows != data[h].length
+        raise "ERROR: data[#{h}].length != #{num_rows} (inconsisent lengths of fields)"
+      end
+    end
+    File.open(csv_path, 'w') do |f|
+      csv = CSV.new(f)
+      csv << headers.map(&:to_s)
+      num_rows.times.each do |idx|
+        row = []
+        headers.each do |h|
+          row << data[h][idx].to_s
+        end
+        csv << row
+      end
+    end
+    nil
+  end
+
+  # - csv_path: string, path to csv file to write
+  # - headers: (array symbol), the column headers to write
+  # - data: (Hash symbol any), the data to pull headers from. All data must be
+  #     convertable to a string
+  # NOTE: checks that all headers are in data
+  # RETURN: nil
+  def write_key_value_csv(csv_path, headers, data)
+    headers.each do |h|
+      if !data.include?(h)
+        raise "ERROR: data does not include header \"#{h}\""
+      end
+    end
+    File.open(csv_path, 'w') do |f|
+      csv = CSV.new(f)
+      csv << headers.map(&:to_s)
+      row = []
+      headers.each do |h|
+        row << data[h].to_s
+      end
+      csv << row
+    end
+    nil
+  end
+
   # - args: string, arguments to be appended after "modelkit template-compose "
   # - output_file: string, path to the output file to expect
   # RETURN: {
@@ -216,7 +275,11 @@ class TestTemplate < Minitest::Test
   # SIDE-EFFECTS:
   # - ensures the @output_file and @params_file are removed if exist
   def ensure_directory_clean
-    [@output_file, @params_file].each do |path|
+    all_paths = [
+      @output_file, @params_file, @general_csv, @load_profile_csv,
+      @scenario_csv, @building_level_csv, @node_level_csv
+    ]
+    all_paths.each do |path|
       File.delete(path) if File.exist?(path) and REMOVE_FILES
     end
   end
@@ -225,6 +288,11 @@ class TestTemplate < Minitest::Test
     @params_file = "test.pxt"
     @template_file = "template.toml"
     @output_file = "test.toml"
+    @general_csv = "general.csv"
+    @load_profile_csv = "load-profile.csv"
+    @scenario_csv = "scenario.csv"
+    @building_level_csv = "building-level.csv"
+    @node_level_csv = "node-level.csv"
     ensure_directory_clean
   end
 
@@ -239,6 +307,38 @@ class TestTemplate < Minitest::Test
   # - runs modelkit and asserts output is the same as reference
   def run_and_compare(params, reference_tag, save_rendered_template = true)
     write_params(params, @params_file)
+    write_key_value_csv(
+      @general_csv,
+      [:simulation_duration_in_years, :random_setting, :random_seed],
+      params
+    )
+    write_csv(
+      @load_profile_csv,
+      [:load_profile_scenario_id, :load_profile_building_id,
+       :load_profile_enduse, :load_profile_enduse, :load_profile_file],
+      params
+    )
+    write_csv(
+      @scenario_csv,
+      [:scenario_id, :scenario_duration_in_hours, :scenario_max_occurrence,
+       :scenario_fixed_frequency_in_years],
+      params
+    )
+    write_csv(
+      @building_level_csv,
+      [:building_level_building_id, :building_level_egen_flag,
+       :building_level_egen_eff_pct, :building_level_heat_storage_flag,
+       :building_level_heat_storage_cap_kWh, :building_level_gas_boiler_flag,
+       :building_level_gas_boiler_eff_pct,
+       :building_level_electricity_supply_node],
+      params
+    )
+    write_csv(
+      @node_level_csv,
+      [:node_level_id, :node_level_ng_power_plant_flag,
+       :node_level_ng_power_plant_eff_pct, :node_level_ng_supply_node],
+      params
+    )
     out = call_modelkit(@params_file, @template_file, @output_file)
     if File.exist?(@output_file) and save_rendered_template
       FileUtils.cp(@output_file, reference_tag + '.toml')

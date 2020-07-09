@@ -1,4 +1,10 @@
 <%#INITIALIZE
+# File IO
+parameter "general_csv_path", :default=>"general.csv"
+parameter "load_profile_csv_path", :default=>"load-profile.csv"
+parameter "scenario_csv_path", :default=>"scenario.csv"
+parameter "building_level_csv_path", :default=>"building-level.csv"
+parameter "node_level_csv_path", :default=>"node-level.csv"
 # General
 parameter "simulation_duration_in_years", :default=>100
 parameter "random_setting", :default=>"Auto" # "Auto" | "Seed"

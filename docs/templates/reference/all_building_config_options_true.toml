@@ -3,7 +3,7 @@
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
-max_time = 100
+max_time = 100 # ...
 ############################################################
 [loads.mc_electricity_blue_sky]
 csv_file = "mc_blue_sky_electricity.csv"
@@ -27,19 +27,19 @@ outflow = "heating"
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
-num_outflows = 2
+num_outflows = 2 # ...
 dispatch_strategy = "in_order"
 [components.cluster_0_heating_manifold]
 type = "muxer"
 stream = "heating"
 num_inflows = 1
-num_outflows = 2
+num_outflows = 2 # ...
 dispatch_strategy = "in_order"
 [components.cluster_0_natural_gas_manifold]
 type = "muxer"
 stream = "natural_gas"
 num_inflows = 1
-num_outflows = 2
+num_outflows = 2 # ...
 dispatch_strategy = "in_order"
 [components.mc_electricity]
 type = "load"
@@ -62,7 +62,7 @@ type = "converter"
 inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
-constant_efficiency = 0.32
+constant_efficiency = 0.32 # ...
 [components.mc_electric_bus]
 type = "muxer"
 stream = "electricity"
@@ -74,14 +74,14 @@ type = "store"
 outflow = "heating"
 inflow = "heating"
 capacity_unit = "kWh"
-capacity = 100.0
-max_inflow = 10.0
+capacity = 100.0 # ...
+max_inflow = 10.0 # ...
 [components.mc_gas_boiler]
 type = "converter"
 outflow = "heating"
 inflow = "natural_gas"
 lossflow = "waste_heat"
-constant_efficiency = 0.85
+constant_efficiency = 0.85 # ...
 [components.mc_heating_manifold]
 type = "muxer"
 stream = "heating"
@@ -99,7 +99,7 @@ type = "converter"
 inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
-constant_efficiency = 0.32
+constant_efficiency = 0.32 # ...
 [components.other_electric_bus]
 type = "muxer"
 stream = "electricity"
@@ -111,14 +111,14 @@ type = "store"
 outflow = "heating"
 inflow = "heating"
 capacity_unit = "kWh"
-capacity = 100.0
-max_inflow = 10.0
+capacity = 100.0 # ...
+max_inflow = 10.0 # ...
 [components.other_gas_boiler]
 type = "converter"
 outflow = "heating"
 inflow = "natural_gas"
 lossflow = "waste_heat"
-constant_efficiency = 0.85
+constant_efficiency = 0.85 # ...
 [components.other_heating_manifold]
 type = "muxer"
 stream = "heating"
@@ -162,6 +162,6 @@ connections = [
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
-duration = 8760
-max_occurrences = 1
+duration = 8760 # ...
+max_occurrences = 1 # ...
 network = "nw"

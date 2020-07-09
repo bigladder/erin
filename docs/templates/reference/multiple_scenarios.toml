@@ -3,7 +3,7 @@
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
-max_time = 100
+max_time = 100 # ...
 ############################################################
 [loads.mc_electricity_blue_sky]
 csv_file = "mc_blue_sky_electricity.csv"
@@ -25,7 +25,7 @@ outflow = "electricity"
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
-num_outflows = 2
+num_outflows = 2 # ...
 dispatch_strategy = "in_order"
 [components.mc_electricity]
 type = "load"
@@ -50,18 +50,18 @@ connections = [
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
-duration = 8760
-max_occurrences = 1
+duration = 8760 # ...
+max_occurrences = 1 # ...
 network = "nw"
 [scenarios.s1]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 87600, time_unit="hours"}
-duration = 500
-max_occurrences = -1
+duration = 500 # ...
+max_occurrences = -1 # ...
 network = "nw"
 [scenarios.s2]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 87600, time_unit="hours"}
-duration = 500
-max_occurrences = -1
+duration = 500 # ...
+max_occurrences = -1 # ...
 network = "nw"

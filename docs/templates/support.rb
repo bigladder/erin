@@ -1,14 +1,34 @@
 require 'set'
+require 'csv'
 
 class Support
   ELECTRICITY = 'electricity'
   NATURAL_GAS = 'natural_gas'
   HEATING = 'heating'
+
   attr_reader :components, :connections, :loads, :load_ids
-  def initialize(load_profile_scenario_id,
-                 load_profile_building_id,
-                 load_profile_enduse,
-                 load_profile_file,
+
+  def self.make(load_profile, building_level, node_level)
+    Support.new(
+      load_profile,
+      # Building Level
+      building_level.map {|x| x[:id]},
+      building_level.map {|x| x[:egen_flag]},
+      building_level.map {|x| x[:egen_eff_pct].to_f},
+      building_level.map {|x| x[:heat_storage_flag]},
+      building_level.map {|x| x[:heat_storage_cap_kWh].to_f},
+      building_level.map {|x| x[:gas_boiler_flag]},
+      building_level.map {|x| x[:gas_boiler_eff_pct].to_f},
+      building_level.map {|x| x[:electricity_supply_node]},
+      # Node Level
+      node_level.map {|x| x[:id]},
+      node_level.map {|x| x[:ng_power_plant_flag]},
+      node_level.map {|x| x[:ng_power_plant_eff_pct].to_f},
+      node_level.map {|x| x[:ng_supply_node]}
+    )
+  end
+
+  def initialize(load_profile,
                  # Building Level
                  building_level_building_id,
                  building_level_egen_flag,
@@ -24,10 +44,10 @@ class Support
                  node_level_ng_power_plant_eff_pct,
                  node_level_ng_supply_node
                 )
-    @load_profile_scenario_id = load_profile_scenario_id
-    @load_profile_building_id = load_profile_building_id
-    @load_profile_enduse = load_profile_enduse
-    @load_profile_file = load_profile_file
+    @load_profile_scenario_id = load_profile.map {|x| x[:scenario_id]}
+    @load_profile_building_id = load_profile.map {|x| x[:building_id]}
+    @load_profile_enduse = load_profile.map {|x| x[:enduse]}
+    @load_profile_file = load_profile.map {|x| x[:file]}
     _check_load_profile_data
     @building_level_building_id = building_level_building_id
     @building_level_egen_flag = building_level_egen_flag
@@ -52,6 +72,41 @@ class Support
     _add_electrical_connections_and_components
     _add_ng_connections_and_components
     _add_heating_connections_and_components
+  end
+
+  def self.load_csv(csv_path)
+    data = []
+    headers = nil
+    CSV.foreach(csv_path) do |row|
+      if headers.nil?
+        headers = row.map {|x| x.strip.to_sym}
+      else
+        data << headers.zip(row).reduce({}) do |map, hr|
+          map[hr[0]] = hr[1].strip
+          map
+        end
+      end
+    end
+    data
+  end
+
+  def self.load_key_value_csv(csv_path)
+    data = {}
+    headers = nil
+    CSV.foreach(csv_path) do |row|
+      if headers.nil?
+        headers = row.map {|x| x.strip.to_sym}
+        headers.each do |h|
+          data[h] = nil
+        end
+      else
+        headers.zip(row).each do |hr|
+          data[hr[0]] = hr[1].strip
+        end
+        break
+      end
+    end
+    data
   end
 
   private
@@ -210,6 +265,18 @@ class Support
     end
   end
 
+  def add_converter(id, const_eff, inflow, outflow, comps, lossflow = nil)
+    lossflow = "waste_heat" if lossflow.nil?
+    s = "[components.#{id}]\n"\
+      "type = \"converter\"\n"\
+      "inflow = \"#{inflow}\"\n"\
+      "outflow = \"#{outflow}\"\n"\
+      "lossflow = \"#{lossflow}\"\n"\
+      "constant_efficiency = #{const_eff}\n"
+    add_if_not_added(comps, id, s)
+    id
+  end
+
   def add_building_electrical_enduse(building_id, comps)
     scenarios_string = make_scenario_string(building_id, ELECTRICITY)
     id = "#{building_id}_#{ELECTRICITY}"
@@ -328,9 +395,31 @@ class Support
       end
     end
     # TODO: go through the node_configs and add any more components and connections that are electrical
+    @node_config.keys.sort.each_with_index do |n_id, idx|
+      cfg = @node_config[n_id]
+      if cfg[:has_ng_pwr_plant] and node_sources.include?(n_id)
+        pp_id = add_converter(
+          "#{n_id}_ng_power_plant",
+          cfg[:ng_pwr_plant_eff],
+          NATURAL_GAS, ELECTRICITY, comps)
+        n = node_sources[n_id].length
+        if n == 1
+          b_id = node_sources[n_id].keys[0]
+          tgt_id, tgt_port = node_sources[n_id][b_id]
+          add_connection(pp_id, 0, tgt_id, tgt_port, ELECTRICITY, conns)
+        else
+          bus_id = add_cluster_level_mux(n_id, 1, n, ELECTRICITY, comps)
+          add_connection(pp_id, 0, bus_id, 0, ELECTRICITY, conns)
+          node_sources[n_id].keys.sort.each_with_index do |b_id, idx|
+            tgt_id, tgt_port = node_sources[n_id][b_id]
+            add_connection(bus_id, idx, tgt_id, tgt_port, ELECTRICITY, conns)
+          end
+        end
+      end
+    end
     node_sources.each do |n_id, building_ids|
       n = building_ids.length
-      # TODO: check the below; only want to add a source if the node is not in the @node_config map...
+      next if @node_config.include?(n_id)
       src_id = add_electrical_source(n_id, comps)
       if n == 1
         b_id = building_ids.keys[0]
@@ -405,10 +494,30 @@ class Support
         raise "NATURAL GAS enduse not implemented for #{b_id}"
       end
     end
-    # TODO: go through the node_configs and add any more components and connections that are electrical
+    @node_config.keys.sort.each_with_index do |n_id, idx|
+      cfg = @node_config[n_id]
+      if cfg[:has_ng_pwr_plant]
+        pp_id = add_converter(
+          "#{n_id}_ng_power_plant",
+          cfg[:ng_pwr_plant_eff],
+          NATURAL_GAS, ELECTRICITY, comps)
+        ng_sup_node = cfg[:ng_supply_node]
+        conn_info = [pp_id, 0]
+        if !ng_sup_node.empty?
+          if node_sources.include?(ng_sup_node)
+            node_sources[ng_sup_node][n_id] = conn_info
+          else
+            node_sources[ng_sup_node] = {n_id => conn_info}
+          end
+        else
+          raise "#{NATURAL_GAS} supply node empty but a #{NATURAL_GAS} "\
+            "power-plant requires power for node #{n_id}"
+        end
+      end
+    end
     node_sources.each do |n_id, building_ids|
       n = building_ids.length
-      # TODO: check the below; only want to add a source if the node is not in the @node_config map...
+      next if @node_config.include?(n_id)
       src_id = add_natural_gas_source(n_id, comps)
       if n == 1
         b_id = building_ids.keys[0]

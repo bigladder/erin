@@ -6,6 +6,7 @@
 # This module uses Ruby's standard unit test library, MiniTest
 # This library assumes that Modelkit is installed and available from the
 # commandline
+require 'csv'
 require 'fileutils'
 require 'minitest/autorun'
 require 'open3'
@@ -169,6 +170,71 @@ class TestTemplate < Minitest::Test
     File.write(path, params.to_s.gsub(/^{/, '').gsub(/}$/, '').gsub(/, :/, ",\n:"))
   end
 
+  # - csv_path: string, path to csv file to write
+  # - headers: (array symbol), the column headers to write
+  # - data: (Hash symbol any), the data to pull headers from. Data having an
+  #     entry symbol in headers must be an array of object convertable to
+  #     string of the same length
+  # NOTE: checks that all headers are in data and that
+  #       all arrays at data[header[n]] have the same length
+  # RETURN: nil
+  def write_csv(csv_path, headers, data, new_headers = nil)
+    if new_headers.nil?
+      new_headers = headers
+    end
+    if new_headers.length != headers.length
+      raise "ERROR! new_headers.length (#{new_headers.length}) "\
+        "!= headers.length (#{headers.length})"
+    end
+    num_rows = nil
+    headers.each do |h|
+      if !data.include?(h)
+        raise "ERROR: data does not include header \"#{h}\""
+      end
+      if num_rows.nil?
+        num_rows = data[h].length
+      elsif num_rows != data[h].length
+        raise "ERROR: data[#{h}].length != #{num_rows} (inconsisent lengths of fields)"
+      end
+    end
+    File.open(csv_path, 'w') do |f|
+      csv = CSV.new(f)
+      csv << new_headers.map(&:to_s)
+      num_rows.times.each do |idx|
+        row = []
+        headers.each do |h|
+          row << data[h][idx].to_s
+        end
+        csv << row
+      end
+    end
+    nil
+  end
+
+  # - csv_path: string, path to csv file to write
+  # - headers: (array symbol), the column headers to write
+  # - data: (Hash symbol any), the data to pull headers from. All data must be
+  #     convertable to a string
+  # NOTE: checks that all headers are in data
+  # RETURN: nil
+  def write_key_value_csv(csv_path, headers, data)
+    headers.each do |h|
+      if !data.include?(h)
+        raise "ERROR: data does not include header \"#{h}\""
+      end
+    end
+    File.open(csv_path, 'w') do |f|
+      csv = CSV.new(f)
+      csv << headers.map(&:to_s)
+      row = []
+      headers.each do |h|
+        row << data[h].to_s
+      end
+      csv << row
+    end
+    nil
+  end
+
   # - args: string, arguments to be appended after "modelkit template-compose "
   # - output_file: string, path to the output file to expect
   # RETURN: {
@@ -180,8 +246,8 @@ class TestTemplate < Minitest::Test
   #   stdout: string, standard output
   #   stderr: string, standard error
   #   }
-  def call_modelkit(pxt_file, tmp_file, output_file)
-    args = "--output=\"#{output_file}\" --files=\"#{pxt_file}\" \"#{tmp_file}\""
+  def call_modelkit(tmp_file, output_file)
+    args = "--output=\"#{output_file}\" \"#{tmp_file}\""
     cmd = "modelkit template-compose #{args}"
     val = {}
     out = ""
@@ -197,7 +263,6 @@ class TestTemplate < Minitest::Test
     val[:stdout] = out
     val[:stderr] = err
     val[:output] = File.read(output_file) if exist
-    val[:pxt] = if File.exist?(pxt_file) then File.read(pxt_file) else nil end
     return val
   end
 
@@ -214,17 +279,25 @@ class TestTemplate < Minitest::Test
 
   # RETURN: nil
   # SIDE-EFFECTS:
-  # - ensures the @output_file and @params_file are removed if exist
+  # - ensures generated files are removed if exist
   def ensure_directory_clean
-    [@output_file, @params_file].each do |path|
+    all_paths = [
+      @output_file, @general_csv, @load_profile_csv,
+      @scenario_csv, @building_level_csv, @node_level_csv
+    ]
+    all_paths.each do |path|
       File.delete(path) if File.exist?(path) and REMOVE_FILES
     end
   end
 
   def setup
-    @params_file = "test.pxt"
     @template_file = "template.toml"
     @output_file = "test.toml"
+    @general_csv = "general.csv"
+    @load_profile_csv = "load-profile.csv"
+    @scenario_csv = "scenario.csv"
+    @building_level_csv = "building-level.csv"
+    @node_level_csv = "node-level.csv"
     ensure_directory_clean
   end
 
@@ -238,8 +311,45 @@ class TestTemplate < Minitest::Test
   # SIDE-EFFECTS:
   # - runs modelkit and asserts output is the same as reference
   def run_and_compare(params, reference_tag, save_rendered_template = true)
-    write_params(params, @params_file)
-    out = call_modelkit(@params_file, @template_file, @output_file)
+    write_key_value_csv(
+      @general_csv,
+      [:simulation_duration_in_years, :random_setting, :random_seed],
+      params
+    )
+    write_csv(
+      @load_profile_csv,
+      [:load_profile_scenario_id, :load_profile_building_id,
+       :load_profile_enduse, :load_profile_file],
+      params,
+      [:scenario_id, :building_id, :enduse, :file],
+    )
+    write_csv(
+      @scenario_csv,
+      [:scenario_id, :scenario_duration_in_hours, :scenario_max_occurrence,
+       :scenario_fixed_frequency_in_years],
+      params,
+      [:id, :duration_in_hours, :max_occurrence, :fixed_frequency_in_years],
+    )
+    write_csv(
+      @building_level_csv,
+      [:building_level_building_id, :building_level_egen_flag,
+       :building_level_egen_eff_pct, :building_level_heat_storage_flag,
+       :building_level_heat_storage_cap_kWh, :building_level_gas_boiler_flag,
+       :building_level_gas_boiler_eff_pct,
+       :building_level_electricity_supply_node],
+      params,
+      [:id, :egen_flag, :egen_eff_pct, :heat_storage_flag,
+       :heat_storage_cap_kWh, :gas_boiler_flag,
+       :gas_boiler_eff_pct, :electricity_supply_node],
+    )
+    write_csv(
+      @node_level_csv,
+      [:node_level_id, :node_level_ng_power_plant_flag,
+       :node_level_ng_power_plant_eff_pct, :node_level_ng_supply_node],
+      params,
+      [:id, :ng_power_plant_flag, :ng_power_plant_eff_pct, :ng_supply_node],
+    )
+    out = call_modelkit(@template_file, @output_file)
     if File.exist?(@output_file) and save_rendered_template
       FileUtils.cp(@output_file, reference_tag + '.toml')
     end
@@ -389,11 +499,17 @@ class TestTemplate < Minitest::Test
   #end
 
   def make_support_instance(ps)
+    load_profile = []
+    ps[:load_profile_scenario_id].each_with_index do |s_id, idx|
+      load_profile << {
+        scenario_id: s_id,
+        building_id: ps[:load_profile_building_id][idx],
+        enduse: ps[:load_profile_enduse][idx],
+        file: ps[:load_profile_file][idx]
+      }
+    end
     Support.new(
-      ps[:load_profile_scenario_id],
-      ps[:load_profile_building_id],
-      ps[:load_profile_enduse],
-      ps[:load_profile_file],
+      load_profile,
       ps[:building_level_building_id],
       ps[:building_level_egen_flag],
       ps[:building_level_egen_eff_pct],
@@ -678,7 +794,83 @@ class TestTemplate < Minitest::Test
         ["utility_heating_source:OUT(0)", "mc_thermal_storage:IN(0)", "heating"],
         ["mc_thermal_storage:OUT(0)", "mc_heating:IN(0)", "heating"],
       ],
+      false
+    )
+  end
+
+  def test_support_library_with_electric_generation_at_the_cluster_level
+    ps = {
+      # General
+      :simulation_duration_in_years => 100,
+      :random_setting => "Auto",
+      :random_seed => 17,
+      # Load Profile
+      :load_profile_scenario_id => ["blue_sky"],
+      :load_profile_building_id => ["b1"],
+      :load_profile_enduse => ["electricity"],
+      :load_profile_file => ["b1_blue_sky_electricity.csv"],
+      # Scenario
+      :scenario_id => ["blue_sky"],
+      :scenario_duration_in_hours => [8760],
+      :scenario_max_occurrence => [1],
+      :scenario_fixed_frequency_in_years => [0],
+      # Building Level Configuration
+      :building_level_building_id => ["b1"],
+      :building_level_egen_flag => ["FALSE"],
+      :building_level_egen_eff_pct => [32.0],
+      #:building_level_egen_peak_pwr_kW => [100.0, 100.0],
+      :building_level_heat_storage_flag => ["FALSE"],
+      :building_level_heat_storage_cap_kWh => [0.0],
+      :building_level_gas_boiler_flag => ["FALSE"],
+      :building_level_gas_boiler_eff_pct => [85.0],
+      :building_level_electricity_supply_node => ["cluster_0"],
+      #:building_level_gas_boiler_peak_heat_gen_kW => [50.0, 50.0],
+      #:building_level_echiller_flag => ["FALSE", "FALSE"],
+      #:building_level_echiller_peak_cooling_kW => [50.0, 50.0],
+      # Node Level Configuration
+      :node_level_id => ["cluster_0"],
+      :node_level_ng_power_plant_flag => ["TRUE"],
+      :node_level_ng_power_plant_eff_pct => [42.0],
+      #:node_level_ng_chp_flag => ["FALSE"],
+      #:node_level_ng_boiler_flag => ["FALSE"],
+      #:node_level_tes_flag => ["FALSE"],
+      #:node_level_absorption_chiller_flag => ["FALSE", "FALSE"],
+      #:node_level_electric_chiller_flag => ["FALSE", "FALSE"],
+      :node_level_ng_supply_node => ["utility"],
+      # Community Level Configuration
+    }
+    compare_support_lib_outputs(
+      make_support_instance(ps),
+      [
+        {
+          id: "utility_natural_gas_source",
+          string: "[components.utility_natural_gas_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"natural_gas\"\n"
+        },
+        {
+          id: "cluster_0_ng_power_plant",
+          string: "[components.cluster_0_ng_power_plant]\n"\
+          "type = \"converter\"\n"\
+          "inflow = \"natural_gas\"\n"\
+          "outflow = \"electricity\"\n"\
+          "lossflow = \"waste_heat\"\n"\
+          "constant_efficiency = 0.42\n"
+        },
+        {
+          id: "b1_electricity",
+          string: "[components.b1_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"b1_electricity_blue_sky\"\n"
+        },
+      ],
+      [ 
+        ["utility_natural_gas_source:OUT(0)", "cluster_0_ng_power_plant:IN(0)", "natural_gas"],
+        ["cluster_0_ng_power_plant:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+      ],
       true
     )
   end
+
 end

@@ -1,0 +1,3 @@
+scenario_id,building_id,enduse,file
+"blue_sky","mc","electricity","mc_blue_sky_electricity.csv"
+"blue_sky","other","electricity","other_blue_sky_electricity.csv"

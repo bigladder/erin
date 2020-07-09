@@ -273,6 +273,18 @@ class Support
     end
   end
 
+  def add_converter(id, const_eff, inflow, outflow, comps, lossflow = nil)
+    lossflow = "waste_heat" if lossflow.nil?
+    s = "[components.#{id}]\n"\
+      "type = \"converter\"\n"\
+      "inflow = \"#{inflow}\"\n"\
+      "outflow = \"#{outflow}\"\n"\
+      "lossflow = \"#{lossflow}\"\n"\
+      "constant_efficiency = #{const_eff}\n"
+    add_if_not_added(comps, id, s)
+    id
+  end
+
   def add_building_electrical_enduse(building_id, comps)
     scenarios_string = make_scenario_string(building_id, ELECTRICITY)
     id = "#{building_id}_#{ELECTRICITY}"
@@ -391,9 +403,31 @@ class Support
       end
     end
     # TODO: go through the node_configs and add any more components and connections that are electrical
+    @node_config.keys.sort.each_with_index do |n_id, idx|
+      cfg = @node_config[n_id]
+      if cfg[:has_ng_pwr_plant] and node_sources.include?(n_id)
+        pp_id = add_converter(
+          "#{n_id}_ng_power_plant",
+          cfg[:ng_pwr_plant_eff],
+          NATURAL_GAS, ELECTRICITY, comps)
+        n = node_sources[n_id].length
+        if n == 1
+          b_id = node_sources[n_id].keys[0]
+          tgt_id, tgt_port = node_sources[n_id][b_id]
+          add_connection(pp_id, 0, tgt_id, tgt_port, ELECTRICITY, conns)
+        else
+          bus_id = add_cluster_level_mux(n_id, 1, n, ELECTRICITY, comps)
+          add_connection(pp_id, 0, bus_id, 0, ELECTRICITY, conns)
+          node_sources[n_id].keys.sort.each_with_index do |b_id, idx|
+            tgt_id, tgt_port = node_sources[n_id][b_id]
+            add_connection(bus_id, idx, tgt_id, tgt_port, ELECTRICITY, conns)
+          end
+        end
+      end
+    end
     node_sources.each do |n_id, building_ids|
       n = building_ids.length
-      # TODO: check the below; only want to add a source if the node is not in the @node_config map...
+      next if @node_config.include?(n_id)
       src_id = add_electrical_source(n_id, comps)
       if n == 1
         b_id = building_ids.keys[0]
@@ -468,10 +502,30 @@ class Support
         raise "NATURAL GAS enduse not implemented for #{b_id}"
       end
     end
-    # TODO: go through the node_configs and add any more components and connections that are electrical
+    @node_config.keys.sort.each_with_index do |n_id, idx|
+      cfg = @node_config[n_id]
+      if cfg[:has_ng_pwr_plant]
+        pp_id = add_converter(
+          "#{n_id}_ng_power_plant",
+          cfg[:ng_pwr_plant_eff],
+          NATURAL_GAS, ELECTRICITY, comps)
+        ng_sup_node = cfg[:ng_supply_node]
+        conn_info = [pp_id, 0]
+        if !ng_sup_node.empty?
+          if node_sources.include?(ng_sup_node)
+            node_sources[ng_sup_node][n_id] = conn_info
+          else
+            node_sources[ng_sup_node] = {n_id => conn_info}
+          end
+        else
+          raise "#{NATURAL_GAS} supply node empty but a #{NATURAL_GAS} "\
+            "power-plant requires power for node #{n_id}"
+        end
+      end
+    end
     node_sources.each do |n_id, building_ids|
       n = building_ids.length
-      # TODO: check the below; only want to add a source if the node is not in the @node_config map...
+      next if @node_config.include?(n_id)
       src_id = add_natural_gas_source(n_id, comps)
       if n == 1
         b_id = building_ids.keys[0]

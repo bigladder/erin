@@ -788,7 +788,83 @@ class TestTemplate < Minitest::Test
         ["utility_heating_source:OUT(0)", "mc_thermal_storage:IN(0)", "heating"],
         ["mc_thermal_storage:OUT(0)", "mc_heating:IN(0)", "heating"],
       ],
+      false
+    )
+  end
+
+  def test_support_library_with_electric_generation_at_the_cluster_level
+    ps = {
+      # General
+      :simulation_duration_in_years => 100,
+      :random_setting => "Auto",
+      :random_seed => 17,
+      # Load Profile
+      :load_profile_scenario_id => ["blue_sky"],
+      :load_profile_building_id => ["b1"],
+      :load_profile_enduse => ["electricity"],
+      :load_profile_file => ["b1_blue_sky_electricity.csv"],
+      # Scenario
+      :scenario_id => ["blue_sky"],
+      :scenario_duration_in_hours => [8760],
+      :scenario_max_occurrence => [1],
+      :scenario_fixed_frequency_in_years => [0],
+      # Building Level Configuration
+      :building_level_building_id => ["b1"],
+      :building_level_egen_flag => ["FALSE"],
+      :building_level_egen_eff_pct => [32.0],
+      #:building_level_egen_peak_pwr_kW => [100.0, 100.0],
+      :building_level_heat_storage_flag => ["FALSE"],
+      :building_level_heat_storage_cap_kWh => [0.0],
+      :building_level_gas_boiler_flag => ["FALSE"],
+      :building_level_gas_boiler_eff_pct => [85.0],
+      :building_level_electricity_supply_node => ["cluster_0"],
+      #:building_level_gas_boiler_peak_heat_gen_kW => [50.0, 50.0],
+      #:building_level_echiller_flag => ["FALSE", "FALSE"],
+      #:building_level_echiller_peak_cooling_kW => [50.0, 50.0],
+      # Node Level Configuration
+      :node_level_id => ["cluster_0"],
+      :node_level_ng_power_plant_flag => ["TRUE"],
+      :node_level_ng_power_plant_eff_pct => [42.0],
+      #:node_level_ng_chp_flag => ["FALSE"],
+      #:node_level_ng_boiler_flag => ["FALSE"],
+      #:node_level_tes_flag => ["FALSE"],
+      #:node_level_absorption_chiller_flag => ["FALSE", "FALSE"],
+      #:node_level_electric_chiller_flag => ["FALSE", "FALSE"],
+      :node_level_ng_supply_node => ["utility"],
+      # Community Level Configuration
+    }
+    compare_support_lib_outputs(
+      make_support_instance(ps),
+      [
+        {
+          id: "utility_natural_gas_source",
+          string: "[components.utility_natural_gas_source]\n"\
+          "type = \"source\"\n"\
+          "outflow = \"natural_gas\"\n"
+        },
+        {
+          id: "cluster_0_ng_power_plant",
+          string: "[components.cluster_0_ng_power_plant]\n"\
+          "type = \"converter\"\n"\
+          "inflow = \"natural_gas\"\n"\
+          "outflow = \"electricity\"\n"\
+          "lossflow = \"waste_heat\"\n"\
+          "constant_efficiency = 0.42\n"
+        },
+        {
+          id: "b1_electricity",
+          string: "[components.b1_electricity]\n"\
+          "type = \"load\"\n"\
+          "inflow = \"electricity\"\n"\
+          "loads_by_scenario.blue_sky = \"b1_electricity_blue_sky\"\n"
+        },
+      ],
+      [ 
+        ["utility_natural_gas_source:OUT(0)", "cluster_0_ng_power_plant:IN(0)", "natural_gas"],
+        ["cluster_0_ng_power_plant:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+      ],
       true
     )
   end
+
 end

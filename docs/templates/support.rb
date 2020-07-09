@@ -165,9 +165,9 @@ class Support
   # INTERNAL METHOD
   def _enduses_for_building(id)
     enduses = Set.new
-    @load_profile_building_id.each_with_index do |b_id, n|
-      next unless b_id == id
-      enduses << @load_profile_enduse[n]
+    @load_profile.each do |item|
+      next unless item[:building_id] == id
+      enduses << item[:enduse]
     end
     enduses
   end
@@ -176,19 +176,20 @@ class Support
   def _create_building_config
     return if !@building_config.nil?
     @building_config = {}
-    @building_level_building_id.each_with_index do |b_id, n|
+    @building_level.each do |item|
+      b_id = item[:id]
       if @building_config.include?(b_id)
         raise "Building ID \"#{b_id}\" is multiply defined!"
       end
       @building_config[b_id] = {
-        has_egen: is_true(@building_level_egen_flag[n]),
-        egen_eff: @building_level_egen_eff_pct[n].to_f / 100.0,
-        has_tes: is_true(@building_level_heat_storage_flag[n]),
-        tes_cap_kWh: @building_level_heat_storage_cap_kWh[n].to_f,
-        tes_max_inflow_kW: @building_level_heat_storage_cap_kWh[n].to_f / 10.0,
-        has_boiler: is_true(@building_level_gas_boiler_flag[n]),
-        boiler_eff: @building_level_gas_boiler_eff_pct[n].to_f / 100.0,
-        e_supply_node: @building_level_electricity_supply_node[n].strip,
+        has_egen: is_true(item[:egen_flag]),
+        egen_eff: item[:egen_eff_pct].to_f / 100.0,
+        has_tes: is_true(item[:heat_storage_flag]),
+        tes_cap_kWh: item[:heat_storage_cap_kWh].to_f,
+        tes_max_inflow_kW: item[:heat_storage_cap_kWh].to_f / 10.0,
+        has_boiler: is_true(item[:gas_boiler_flag]),
+        boiler_eff: item[:gas_boiler_eff_pct].to_f / 100.0,
+        e_supply_node: item[:electricity_supply_node].strip,
         ng_supply_node: "utility",
         heating_supply_node: "utility",
         enduses: _enduses_for_building(b_id),

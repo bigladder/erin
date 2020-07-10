@@ -527,14 +527,7 @@ class Support
 
   def add_boiler(building_id, boiler_eff, comps)
     id = "#{building_id}_gas_boiler"
-    s = "[components.#{id}]\n"\
-      "type = \"converter\"\n"\
-      "outflow = \"heating\"\n"\
-      "inflow = \"natural_gas\"\n"\
-      "lossflow = \"waste_heat\"\n"\
-      "constant_efficiency = #{boiler_eff}\n"
-    add_if_not_added(comps, id, s)
-    id
+    add_converter(id, boiler_eff, NATURAL_GAS, HEATING, comps)
   end
 
   def add_thermal_energy_storage(building_id, capacity_kWh, max_inflow_kW, comps)

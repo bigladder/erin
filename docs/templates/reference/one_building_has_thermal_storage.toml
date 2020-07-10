@@ -12,26 +12,10 @@ csv_file = "other_blue_sky_electricity.csv"
 [loads.mc_heating_blue_sky]
 csv_file = "mc_blue_sky_heating.csv"
 ############################################################
-[components.utility_electricity_source]
-type = "source"
-outflow = "electricity"
-[components.utility_heating_source]
-type = "source"
-outflow = "heating"
-[components.cluster_0_electric_bus]
-type = "muxer"
-stream = "electricity"
-num_inflows = 1
-num_outflows = 2 # ...
-dispatch_strategy = "in_order"
 [components.mc_electricity]
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "mc_electricity_blue_sky"
-[components.other_electricity]
-type = "load"
-inflow = "electricity"
-loads_by_scenario.blue_sky = "other_electricity_blue_sky"
 [components.mc_heating]
 type = "load"
 inflow = "heating"
@@ -41,16 +25,32 @@ type = "store"
 outflow = "heating"
 inflow = "heating"
 capacity_unit = "kWh"
-capacity = 100.0 # ...
-max_inflow = 10.0 # ...
+capacity = 100.0
+max_inflow = 10.0
+[components.other_electricity]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "other_electricity_blue_sky"
+[components.utility_electricity_bus]
+type = "muxer"
+stream = "electricity"
+num_inflows = 1
+num_outflows = 2
+dispatch_strategy = "in_order"
+[components.utility_electricity_source]
+type = "source"
+outflow = "electricity"
+[components.utility_heating_source]
+type = "source"
+outflow = "heating"
 ############################################################
 [networks.nw]
 connections = [
-  ["utility_electricity_source:OUT(0)", "cluster_0_electric_bus:IN(0)", "electricity"],
-  ["cluster_0_electric_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
-  ["cluster_0_electric_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
-  ["utility_heating_source:OUT(0)", "mc_thermal_storage:IN(0)", "heating"],
+  ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
+  ["utility_electricity_bus:OUT(1)", "other_electricity:IN(0)", "electricity"],
+  ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
   ["mc_thermal_storage:OUT(0)", "mc_heating:IN(0)", "heating"],
+  ["utility_heating_source:OUT(0)", "mc_thermal_storage:IN(0)", "heating"],
   ]
 ############################################################
 [scenarios.blue_sky]

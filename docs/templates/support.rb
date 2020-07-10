@@ -7,7 +7,7 @@ class Support
   HEATING = 'heating'
   COOLING = 'cooling'
 
-  attr_reader :components, :connections, :loads, :load_ids
+  attr_reader :connections, :loads, :load_ids
 
   def initialize(load_profile, building_level, node_level)
     @load_profile = load_profile
@@ -20,10 +20,14 @@ class Support
     _create_node_config
     _create_building_config
     @connections = []
-    @components = []
+    @comps = {}
     _add_electrical_connections_and_components
     _add_ng_connections_and_components
     _add_heating_connections_and_components
+  end
+
+  def components
+    @comps.keys.sort.map {|k| @comps[k]}
   end
 
   # - csv_path: string, the path to a CSV file
@@ -259,17 +263,17 @@ class Support
     strings.sort.join("\n")
   end
 
-  def add_if_not_added(dict, id, string)
-    if !dict.include?(id)
+  def add_if_not_added(id, string)
+    if !@comps.include?(id)
       value = {id: id, string: string}
-      dict[id] = value
+      @comps[id] = value
       true
     else
       false
     end
   end
 
-  def add_converter(id, const_eff, inflow, outflow, comps, lossflow = nil)
+  def add_converter(id, const_eff, inflow, outflow, lossflow = nil)
     lossflow = "waste_heat" if lossflow.nil?
     s = "[components.#{id}]\n"\
       "type = \"converter\"\n"\
@@ -277,42 +281,42 @@ class Support
       "outflow = \"#{outflow}\"\n"\
       "lossflow = \"#{lossflow}\"\n"\
       "constant_efficiency = #{const_eff}\n"
-    add_if_not_added(comps, id, s)
+    add_if_not_added(id, s)
     id
   end
 
-  def add_load(building_id, enduse, comps)
+  def add_load(building_id, enduse)
     scenarios_string = make_scenario_string(building_id, enduse)
     id = "#{building_id}_#{enduse}"
     s = "[components.#{building_id}_#{enduse}]\n"\
       "type = \"load\"\n"\
       "inflow = \"#{enduse}\"\n#{scenarios_string}\n"
-    add_if_not_added(comps, id, s)
+    add_if_not_added(id, s)
     id
   end
 
-  def add_building_electrical_enduse(building_id, comps)
-    add_load(building_id, ELECTRICITY, comps)
+  def add_building_electrical_enduse(building_id)
+    add_load(building_id, ELECTRICITY)
   end
 
-  def add_building_heating_enduse(building_id, comps)
-    add_load(building_id, HEATING, comps)
+  def add_building_heating_enduse(building_id)
+    add_load(building_id, HEATING)
   end
 
-  def add_muxer(id, stream, num_inflows, num_outflows, comps)
+  def add_muxer(id, stream, num_inflows, num_outflows)
     s = "[components.#{id}]\n"\
       "type = \"muxer\"\n"\
       "stream = \"#{stream}\"\n"\
       "num_inflows = #{num_inflows}\n"\
       "num_outflows = #{num_outflows}\n"\
       "dispatch_strategy = \"in_order\"\n"
-    add_if_not_added(comps, id, s)
+    add_if_not_added(id, s)
     id
   end
 
-  def add_building_electrical_bus(building_id, comps)
+  def add_building_electrical_bus(building_id)
     id = "#{building_id}_#{ELECTRICITY}_bus"
-    add_muxer(id, ELECTRICITY, 2, 1, comps)
+    add_muxer(id, ELECTRICITY, 2, 1)
   end
 
   def add_connection(src_id, src_port, sink_id, sink_port, flow, conns)
@@ -320,55 +324,54 @@ class Support
     true
   end
 
-  def add_source(id, outflow, comps)
+  def add_source(id, outflow)
     s = "[components.#{id}]\n"\
       "type = \"source\"\n"\
       "outflow = \"#{outflow}\"\n"
-    add_if_not_added(comps, id, s)
+    add_if_not_added(id, s)
     id
   end
 
-  def add_electrical_source(node_id, comps)
+  def add_electrical_source(node_id)
     id = "#{node_id}_#{ELECTRICITY}_source"
-    add_source(id, ELECTRICITY, comps)
+    add_source(id, ELECTRICITY)
   end
 
-  def add_natural_gas_source(node_id, comps)
+  def add_natural_gas_source(node_id)
     id = "#{node_id}_#{NATURAL_GAS}_source"
-    add_source(id, NATURAL_GAS, comps)
+    add_source(id, NATURAL_GAS)
   end
 
-  def add_heating_source(node_id, comps)
+  def add_heating_source(node_id)
     id = "#{node_id}_#{HEATING}_source"
-    add_source(id, HEATING, comps)
+    add_source(id, HEATING)
   end
 
-  def add_cluster_level_mux(node_id, num_inflows, num_outflows, flow, comps)
+  def add_cluster_level_mux(node_id, num_inflows, num_outflows, flow)
     id = "#{node_id}_#{flow}_bus"
-    add_muxer(id, flow, num_inflows, num_outflows, comps)
+    add_muxer(id, flow, num_inflows, num_outflows)
   end
 
   def make_building_egen_id(building_id)
     "#{building_id}_electric_generator"
   end
 
-  def add_building_electric_generator(building_id, generator_efficiency, comps)
+  def add_building_electric_generator(building_id, generator_efficiency)
     id = make_building_egen_id(building_id)
-    add_converter(id, generator_efficiency, NATURAL_GAS, ELECTRICITY, comps)
+    add_converter(id, generator_efficiency, NATURAL_GAS, ELECTRICITY)
   end
 
   def _add_electrical_connections_and_components
     conns = []
-    comps = {}
     node_sources = {}
     @building_config.keys.sort.each_with_index do |b_id, n|
       cfg = @building_config[b_id]
       next unless cfg[:enduses].include?(ELECTRICITY)
-      eu_id = add_building_electrical_enduse(b_id, comps)
+      eu_id = add_building_electrical_enduse(b_id)
       conn_info = [eu_id, 0]
       if cfg[:has_egen]
-        bus_id = add_building_electrical_bus(b_id, comps)
-        gen_id = add_building_electric_generator(b_id, cfg[:egen_eff], comps)
+        bus_id = add_building_electrical_bus(b_id)
+        gen_id = add_building_electric_generator(b_id, cfg[:egen_eff])
         add_connection(bus_id, 0, eu_id, 0, ELECTRICITY, conns)
         add_connection(gen_id, 0, bus_id, 1, ELECTRICITY, conns)
         conn_info = [bus_id, 0]
@@ -389,14 +392,14 @@ class Support
         pp_id = add_converter(
           "#{n_id}_ng_power_plant",
           cfg[:ng_pwr_plant_eff],
-          NATURAL_GAS, ELECTRICITY, comps)
+          NATURAL_GAS, ELECTRICITY)
         n = node_sources[n_id].length
         if n == 1
           b_id = node_sources[n_id].keys[0]
           tgt_id, tgt_port = node_sources[n_id][b_id]
           add_connection(pp_id, 0, tgt_id, tgt_port, ELECTRICITY, conns)
         else
-          bus_id = add_cluster_level_mux(n_id, 1, n, ELECTRICITY, comps)
+          bus_id = add_cluster_level_mux(n_id, 1, n, ELECTRICITY)
           add_connection(pp_id, 0, bus_id, 0, ELECTRICITY, conns)
           node_sources[n_id].keys.sort.each_with_index do |b_id, idx|
             tgt_id, tgt_port = node_sources[n_id][b_id]
@@ -408,13 +411,13 @@ class Support
     node_sources.each do |n_id, building_ids|
       n = building_ids.length
       next if @node_config.include?(n_id)
-      src_id = add_electrical_source(n_id, comps)
+      src_id = add_electrical_source(n_id)
       if n == 1
         b_id = building_ids.keys[0]
         sink_id, sink_port = building_ids[b_id]
         add_connection(src_id, 0, sink_id, sink_port, ELECTRICITY, conns)
       else
-        mux_id = add_cluster_level_mux(n_id, 1, n, ELECTRICITY, comps)
+        mux_id = add_cluster_level_mux(n_id, 1, n, ELECTRICITY)
         add_connection(src_id, 0, mux_id, 0, ELECTRICITY, conns)
         building_ids.keys.sort.each_with_index do |b_id, idx|
           sink_id, sink_port = building_ids[b_id]
@@ -423,19 +426,17 @@ class Support
       end
     end
     @connections += conns.sort
-    @components += comps.keys.sort.map {|k| comps[k]}
   end
 
   def _add_ng_connections_and_components
     conns = []
-    comps = {}
     node_sources = {}
     @building_config.keys.sort.each_with_index do |b_id, n|
       cfg = @building_config[b_id]
       if cfg[:enduses].include?(ELECTRICITY) and cfg[:has_egen] and cfg[:enduses].include?(HEATING) and cfg[:has_boiler]
         egen_id = make_building_egen_id(b_id)
-        boiler_id = add_boiler(b_id, cfg[:boiler_eff], comps)
-        bus_id = add_cluster_level_mux(b_id, 1, 2, NATURAL_GAS, comps)
+        boiler_id = add_boiler(b_id, cfg[:boiler_eff])
+        bus_id = add_cluster_level_mux(b_id, 1, 2, NATURAL_GAS)
         add_connection(bus_id, 0, egen_id, 0, NATURAL_GAS, conns)
         add_connection(bus_id, 1, boiler_id, 0, NATURAL_GAS, conns)
         conn_info = [bus_id, 0]
@@ -465,7 +466,7 @@ class Support
             "#{b_id} but no upstream natural gas supply is given..."
         end
       elsif cfg[:enduses].include?(HEATING) and cfg[:has_boiler]
-        boiler_id = add_boiler(b_id, cfg[:boiler_eff], comps)
+        boiler_id = add_boiler(b_id, cfg[:boiler_eff])
         conn_info = [boiler_id, 0]
         ng_sup_node = cfg[:ng_supply_node]
         if !ng_sup_node.empty?
@@ -488,7 +489,7 @@ class Support
         pp_id = add_converter(
           "#{n_id}_ng_power_plant",
           cfg[:ng_pwr_plant_eff],
-          NATURAL_GAS, ELECTRICITY, comps)
+          NATURAL_GAS, ELECTRICITY)
         ng_sup_node = cfg[:ng_supply_node]
         conn_info = [pp_id, 0]
         if !ng_sup_node.empty?
@@ -506,13 +507,13 @@ class Support
     node_sources.each do |n_id, building_ids|
       n = building_ids.length
       next if @node_config.include?(n_id)
-      src_id = add_natural_gas_source(n_id, comps)
+      src_id = add_natural_gas_source(n_id)
       if n == 1
         b_id = building_ids.keys[0]
         sink_id, sink_port = building_ids[b_id]
         add_connection(src_id, 0, sink_id, sink_port, NATURAL_GAS, conns)
       else
-        mux_id = add_cluster_level_mux(n_id, 1, n, NATURAL_GAS, comps)
+        mux_id = add_cluster_level_mux(n_id, 1, n, NATURAL_GAS)
         add_connection(src_id, 0, mux_id, 0, NATURAL_GAS, conns)
         building_ids.each_with_index do |pair, idx|
           _, conn_info = pair
@@ -522,15 +523,14 @@ class Support
       end
     end
     @connections += conns.sort
-    @components += comps.keys.sort.map {|k| comps[k]}
   end
 
-  def add_boiler(building_id, boiler_eff, comps)
+  def add_boiler(building_id, boiler_eff)
     id = "#{building_id}_gas_boiler"
-    add_converter(id, boiler_eff, NATURAL_GAS, HEATING, comps)
+    add_converter(id, boiler_eff, NATURAL_GAS, HEATING)
   end
 
-  def add_store(id, stream, capacity_kWh, max_inflow_kW, comps)
+  def add_store(id, stream, capacity_kWh, max_inflow_kW)
     s = "[components.#{id}]\n"\
       "type = \"store\"\n"\
       "outflow = \"#{stream}\"\n"\
@@ -538,13 +538,13 @@ class Support
       "capacity_unit = \"kWh\"\n"\
       "capacity = #{capacity_kWh}\n"\
       "max_inflow = #{max_inflow_kW}\n"
-    add_if_not_added(comps, id, s)
+    add_if_not_added(id, s)
     id
   end
 
-  def add_thermal_energy_storage(building_id, capacity_kWh, max_inflow_kW, comps)
+  def add_thermal_energy_storage(building_id, capacity_kWh, max_inflow_kW)
     id = "#{building_id}_thermal_storage"
-    add_store(id, HEATING, capacity_kWh, max_inflow_kW, comps)
+    add_store(id, HEATING, capacity_kWh, max_inflow_kW)
   end
 
   # TODO: idea
@@ -553,18 +553,17 @@ class Support
   # and THEN process all node sources
   def  _add_heating_connections_and_components
     conns = []
-    comps = {}
     ht_node_sources = {}
     @building_config.keys.sort.each_with_index do |b_id, n|
       cfg = @building_config[b_id]
       next unless cfg[:enduses].include?(HEATING)
-      eu_id = add_building_heating_enduse(b_id, comps)
+      eu_id = add_building_heating_enduse(b_id)
       if cfg[:has_tes] and cfg[:has_boiler]
-        tes_id = add_thermal_energy_storage(b_id, cfg[:tes_cap_kWh], cfg[:tes_max_inflow_kW], comps)
-        boiler_id = add_boiler(b_id, cfg[:boiler_eff], comps)
+        tes_id = add_thermal_energy_storage(b_id, cfg[:tes_cap_kWh], cfg[:tes_max_inflow_kW])
+        boiler_id = add_boiler(b_id, cfg[:boiler_eff])
         ht_sup_node = cfg[:heating_supply_node]
         if !ht_sup_node.empty?
-          bus_id = add_cluster_level_mux(b_id, 2, 1, HEATING, comps)
+          bus_id = add_cluster_level_mux(b_id, 2, 1, HEATING)
           add_connection(bus_id, 0, eu_id, 0, HEATING, conns)
           add_connection(tes_id, 0, bus_id, 0, HEATING, conns)
           add_connection(boiler_id, 0, bus_id, 1, HEATING, conns)
@@ -579,7 +578,7 @@ class Support
           add_connection(tes_id, 0, eu_id, 0, HEATING, conns)
         end
       elsif cfg[:has_tes]
-        tes_id = add_thermal_energy_storage(b_id, cfg[:tes_cap_kWh], cfg[:tes_max_inflow_kW], comps)
+        tes_id = add_thermal_energy_storage(b_id, cfg[:tes_cap_kWh], cfg[:tes_max_inflow_kW])
         add_connection(tes_id, 0, eu_id, 0, HEATING, conns)
         conn_info = [tes_id, 0]
         ht_sup_node = cfg[:heating_supply_node]
@@ -594,11 +593,12 @@ class Support
             "#{b_id} but no upstream heating supply is given..."
         end
       elsif cfg[:has_boiler]
-        boiler_id = add_boiler(b_id, cfg[:boiler_eff], comps)
+        boiler_id = add_boiler(b_id, cfg[:boiler_eff])
         ht_sup_node = cfg[:heating_supply_node]
         if !ht_sup_node.empty?
-          bus_id = add_cluster_level_mux(b_id, 2, 1, HEATING, comps)
+          bus_id = add_cluster_level_mux(b_id, 2, 1, HEATING)
           add_connection(boiler_id, 0, bus_id, 1, HEATING, conns)
+          add_connection(bus_id, 0, eu_id, 0, HEATING, conns)
           conn_info = [bus_id, 0]
           if ht_node_sources.include?(ht_sup_node)
             ht_node_sources[ht_sup_node][b_id] = conn_info
@@ -627,13 +627,13 @@ class Support
     ht_node_sources.each do |n_id, building_ids|
       n = building_ids.length
       # TODO: check the below; only want to add a source if the node is not in the @node_config map...
-      src_id = add_heating_source(n_id, comps)
+      src_id = add_heating_source(n_id)
       if n == 1
         b_id = building_ids.keys[0]
         sink_id, sink_port = building_ids[b_id]
         add_connection(src_id, 0, sink_id, sink_port, HEATING, conns)
       else
-        bus_id = add_cluster_level_mux(n_id, 1, n, HEATING, comps)
+        bus_id = add_cluster_level_mux(n_id, 1, n, HEATING)
         add_connection(src_id, 0, bus_id, 0, HEATING, conns)
         building_ids.each_with_index do |pair, idx|
           _, conn_info = pair
@@ -643,6 +643,5 @@ class Support
       end
     end
     @connections += conns.sort
-    @components += comps.keys.sort.map {|k| comps[k]}
   end
 end

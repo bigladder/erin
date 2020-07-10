@@ -9,7 +9,7 @@ parameter "node_level_csv_path", :default=>"node-level.csv"
 <% require_relative 'support.rb'                                               %>
 <% THIS_DIR = File.dirname(__FILE__)                                           %>
 <% general=nil;load_profile=nil;scenario=nil;building_level=nil                %>
-<% node_level=nil,num_buildings=nil;supp=nil                                   %>
+<% node_level=nil;num_buildings=nil;supp=nil                                   %>
 <% Dir.chdir(THIS_DIR) do                                                      %>
 <%   general = Support.load_key_value_csv(general_csv_path)                    %>
 <%   load_profile = Support.load_csv(load_profile_csv_path)                    %>

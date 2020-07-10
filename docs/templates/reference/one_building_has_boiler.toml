@@ -16,41 +16,50 @@ csv_file = "mc_blue_sky_heating.csv"
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "mc_electricity_blue_sky"
+
 [components.mc_gas_boiler]
 type = "converter"
 inflow = "natural_gas"
 outflow = "heating"
 lossflow = "waste_heat"
 constant_efficiency = 0.85
+
 [components.mc_heating]
 type = "load"
 inflow = "heating"
 loads_by_scenario.blue_sky = "mc_heating_blue_sky"
+
 [components.mc_heating_bus]
 type = "muxer"
 stream = "heating"
 num_inflows = 2
 num_outflows = 1
 dispatch_strategy = "in_order"
+
 [components.other_electricity]
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "other_electricity_blue_sky"
+
 [components.utility_electricity_bus]
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
 num_outflows = 2
 dispatch_strategy = "in_order"
+
 [components.utility_electricity_source]
 type = "source"
 outflow = "electricity"
+
 [components.utility_heating_source]
 type = "source"
 outflow = "heating"
+
 [components.utility_natural_gas_source]
 type = "source"
 outflow = "natural_gas"
+
 ############################################################
 [networks.nw]
 connections = [

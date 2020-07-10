@@ -16,10 +16,12 @@ csv_file = "mc_blue_sky_heating.csv"
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "mc_electricity_blue_sky"
+
 [components.mc_heating]
 type = "load"
 inflow = "heating"
 loads_by_scenario.blue_sky = "mc_heating_blue_sky"
+
 [components.mc_thermal_storage]
 type = "store"
 outflow = "heating"
@@ -27,22 +29,27 @@ inflow = "heating"
 capacity_unit = "kWh"
 capacity = 100.0
 max_inflow = 10.0
+
 [components.other_electricity]
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "other_electricity_blue_sky"
+
 [components.utility_electricity_bus]
 type = "muxer"
 stream = "electricity"
 num_inflows = 1
 num_outflows = 2
 dispatch_strategy = "in_order"
+
 [components.utility_electricity_source]
 type = "source"
 outflow = "electricity"
+
 [components.utility_heating_source]
 type = "source"
 outflow = "heating"
+
 ############################################################
 [networks.nw]
 connections = [

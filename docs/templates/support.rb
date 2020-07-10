@@ -530,17 +530,21 @@ class Support
     add_converter(id, boiler_eff, NATURAL_GAS, HEATING, comps)
   end
 
-  def add_thermal_energy_storage(building_id, capacity_kWh, max_inflow_kW, comps)
-    id = "#{building_id}_thermal_storage"
+  def add_store(id, stream, capacity_kWh, max_inflow_kW, comps)
     s = "[components.#{id}]\n"\
       "type = \"store\"\n"\
-      "outflow = \"heating\"\n"\
-      "inflow = \"heating\"\n"\
+      "outflow = \"#{stream}\"\n"\
+      "inflow = \"#{stream}\"\n"\
       "capacity_unit = \"kWh\"\n"\
       "capacity = #{capacity_kWh}\n"\
       "max_inflow = #{max_inflow_kW}\n"
     add_if_not_added(comps, id, s)
     id
+  end
+
+  def add_thermal_energy_storage(building_id, capacity_kWh, max_inflow_kW, comps)
+    id = "#{building_id}_thermal_storage"
+    add_store(id, HEATING, capacity_kWh, max_inflow_kW, comps)
   end
 
   # TODO: idea

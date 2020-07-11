@@ -1,0 +1,120 @@
+<%#INITIALIZE
+# File IO
+parameter "general_csv_path", :default=>"general.csv"
+parameter "load_profile_csv_path", :default=>"load-profile.csv"
+parameter "scenario_csv_path", :default=>"scenario.csv"
+parameter "building_level_csv_path", :default=>"building-level.csv"
+parameter "node_level_csv_path", :default=>"node-level.csv"
+%>
+<%
+   require 'set'
+   require_relative 'support.rb'
+   THIS_DIR = File.dirname(__FILE__)
+   data = {}
+   Dir.chdir(THIS_DIR) do
+     data[:general] = Support.load_key_value_csv(general_csv_path)
+     data[:load_profile] = Support.load_csv("ex-v2-load-profile.csv")
+     data[:scenario] = Support.load_csv("ex-v2-scenario.csv")
+     data[:load_component] = Support.load_csv("ex-v2-load-component.csv")
+     data[:source_component] = Support.load_csv("ex-v2-source-component.csv")
+     data[:network_link] = Support.load_csv("ex-v2-network-link.csv")
+     data[:location] = Set.new
+     data[:connections] = []
+   end
+%>
+############################################################
+# General Simulation Information
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+<% if data[:general][:random_setting].strip.downcase == "seed" %>
+random_seed = <%= data[:general][:random_seed].to_i %> # ...
+<% end %>
+max_time = <%= data[:general][:simulation_duration_in_years] %> # ...
+############################################################
+# Load Profiles
+<% data[:load_profile].each do |lp| %>
+<%   lp[:id] = "#{lp[:building_id]}_#{lp[:enduse]}_#{lp[:scenario_id]}" %>
+[loads.<%= lp[:id] %>]
+csv_file = "<%= lp[:file] %>"
+<% end %>
+############################################################
+# Components
+<% data[:source_component].each do |c| %>
+<%   c[:id] = "#{c[:location_id]}_#{c[:outflow]}_source" %>
+<%   data[:location] << c[:location_id] %>
+[components.<%= c[:id] %>]
+type = "source"
+outflow = "<%= c[:outflow] %>"
+<%   if c[:is_limited].strip.downcase == "true" %>
+max_outflow = <%= c[:max_outflow_kW] %> # ...
+<%   end %>
+<% end %>
+<% data[:load_component].each do |c| %>
+<%   c[:id] = "#{c[:location_id]}_#{c[:inflow]}" %>
+<%   data[:location] << c[:location_id] %>
+[components.<%= c[:id] %>]
+type = "load"
+input_stream = "<%= c[:inflow] %>"
+<%   data[:load_profile].each do |lp| %>
+<%     next unless ( (lp[:building_id] == c[:location_id]) and %>
+<%                   (c[:inflow] == lp[:enduse]) ) %>
+loads_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
+<%   end %>
+<% end %>
+<% %>
+<% %>
+############################################################
+# Fragility Curves
+<% %>
+[fragility.]
+vulnerable_to = ""
+type = "linear"
+lower_bound = 2.0 # ...
+upper_bound = 6.0 # ...
+<% %>
+############################################################
+# Cumulative Distribution Functions
+<% %>
+[cdf.]
+type = "fixed"
+value = <%= 5 %> # ...
+time_unit = "seconds"
+<% %>
+<% %>
+[cdf.]
+type = "uniform"
+value = <%= 5 %> # ...
+time_unit = "seconds"
+<% %>
+############################################################
+# Failure Modes
+<% %>
+[failure_mode.]
+failure_cdf = ""
+repair_cdf = ""
+<% %>
+############################################################
+# Networks
+[networks.nw]
+connections = [
+<% data[:connections].each do |conn| %>
+  ["<%= conn[0] %>", "<%= conn[1] %>", "<%= conn[2] %>"],
+<% end %>
+  ]
+############################################################
+# Scenarios
+<% data[:scenario].each do |s| %>
+[scenarios.<%= s[:id] %>]
+time_unit = "hours"
+occurrence_distribution = "<%= s[:occurrence_distribution] %>"
+duration = <%= s[:duration_in_hours].to_i %> # ...
+max_occurrences = <%= s[:max_occurrence].to_i %> # ...
+<%   if s[:calc_reliability].strip.downcase == "true" %>
+calculate_reliability = true
+<%   else %>
+calculate_reliability = false
+<%   end %>
+network = "nw"
+<% end %>

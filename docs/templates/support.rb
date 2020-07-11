@@ -30,6 +30,148 @@ class Support
     @comps.keys.sort.map {|k| @comps[k]}
   end
 
+  def self.ensure_components_have_ids(data)
+    comp_key_and_postfixs = [
+      [:source_component, [:location_id, :outflow], "source"],
+      [:load_component, [:location_id, :inflow], ""],
+    ]
+    comp_key_and_postfixs.each do |tuple|
+      key, attribs, postfix = tuple
+      data.fetch(key, []).each do |c|
+        next if c.include?(:id)
+        parts = []
+        attribs.each do |a|
+          parts << c.fetch(a).to_s.strip
+        end
+        parts << postfix unless postfix.empty?
+        c[:id] = parts.join("_")
+      end
+    end
+  end
+
+  def self.find_flow_source_for_location(data, location_id, flow)
+    src = nil
+    data.fetch(:source_component, []).each do |s|
+      next unless (s[:outflow] == flow) and (s[:location_id] == location_id)
+      if src.nil?
+        src = s
+      else
+        raise "Duplicate source found at location "\
+          "'#{location_id}' for flow '#{flow}'"
+      end
+    end
+    src
+  end
+
+  # - data: (hash symbol various), a hash table with keys
+  #   - :general, (Hash symbol value)
+  #   - :load_component
+  #   - :load_profile, an array of Hash with keys:
+  #     - :scenario_id
+  #     - :building_id
+  #     - :enduse
+  #     - :file
+  #   - :scenario, an array of Hash with keys:
+  #     - :id, string, scenario id
+  #     - :duration_in_hours, number, duration
+  #     - :occurrence_distribution, string, id of the distribution to use
+  #     - :calc_reliability, boolean string ("TRUE" or "FALSE")
+  #     - :max_occurrence, integer, -1 = unlimited; otherwise, the max number
+  #       of occurrences
+  #   - :load_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the load
+  #     - :inflow, string, the inflow type (e.g., 'electricity', 'heating',
+  #       'cooling', 'natural_gas', etc.)
+  #   - :source_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the source
+  #     - :outflow, string, the outflow provided (e.g., 'electricity', 'natural_gas', 'diesel')
+  #     - :is_limited, boolean string ("TRUE" or "FALSE"), whether or not the source is limited
+  #     - :max_outflow_kW, number, the maximum outflow in kW
+  #   - :network_link, an array of Hash with keys:
+  #     - :source_location_id, string, location_id for the source of the flow
+  #     - :destination_location_id, string, location_id for the destination of the flow
+  #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
+  # for each load (and corresponding location)
+  #   for each enduse
+  #     find all other equipment at that location with a relevant outflow to the enduse
+  #     find any inflow streams directly relevant to the enduse
+  #       create muxers if more than one inflow stream is coming in
+  #       record relevant connections
+  #       record connection points (comp_id and port) for hookup to higher connections
+  # for each location not having a load
+  #   for each outflow
+  #     find all equipment at that location with relevant outflow to the enduse
+  #     find all outflow streams for that outflow
+  #       create muxers if more than one outflow stream location
+  #       pull all relevant connection points and record
+  #       for all inflows, record relevant connection points for upstream 
+  #       remove location from the processing list
+  #
+  def self.generate_connections(data)
+    ensure_components_have_ids(data)
+    puts(data)
+    the_comps = {}
+    the_conns = []
+    connect_pts = {} # by node/location
+    #locations = Set.new
+    data[:connection] = []
+    data.fetch(:load_component, []).each do |lc|
+      inflow = lc.fetch(:inflow)
+      loc = lc.fetch(:location_id)
+      #locations << loc
+      incoming_sources = []
+      data.fetch(:network_link, []).each do |nw_link|
+        next if (nw_link.fetch(:flow) != inflow) or (nw_link.fetch(:destination_location_id) != loc)
+        src_id = nw_link.fetch(:source_location_id)
+        incoming_sources << src_id
+      end
+      if incoming_sources.length == 1
+        src = incoming_sources[0]
+        if connect_pts.include?(src)
+          connect_pts[src][inflow] = [lc.fetch(:id), 0]
+        else
+          connect_pts[src] = {inflow => [lc.fetch(:id), 0]}
+        end
+      end
+      #srcs = data[:source_component].select {|c| c[:location_id] == loc and c[:outflow] == inflow}
+      #num = srcs.length
+      ##convs = data[:converter_components].select {|c| c[:location_id] == loc and c[:outflow] == inflow}
+      ##store = 
+      #incoming_sources = []
+      #if num == 0
+      #elsif num == 1
+      #else
+      #end
+    end
+    puts("data:\n#{data}")
+    puts("connect_pts:\n#{connect_pts}")
+    connect_pts.each do |loc, flow_map|
+      flow_map.each do |flow, conn_info|
+        src = find_flow_source_for_location(data, loc, flow)
+        next if src.nil?
+        id, port = conn_info
+        data[:connection] << [src[:id] + ":OUT(0)", "#{id}:IN(#{port})", flow]
+      end
+    end
+    puts("data:\n#{data}")
+    # for each load (and corresponding location)
+    #   for each enduse
+    #     find all other equipment at that location with a relevant outflow to the enduse
+    #     find any inflow streams directly relevant to the enduse
+    #       create muxers if more than one inflow stream is coming in
+    #       record relevant connections
+    #       record connection points (comp_id and port) for hookup to higher connections
+    # for each location not having a load
+    #   for each outflow
+    #     find all equipment at that location with relevant outflow to the enduse
+    #     find all outflow streams for that outflow
+    #       create muxers if more than one outflow stream location
+    #       pull all relevant connection points and record
+    #       for all inflows, record relevant connection points for upstream 
+    #       remove location from the processing list
+    data
+  end
+
   # - csv_path: string, the path to a CSV file
   # ASSUMPTION: The file has headers in the first row and each row is the same
   # length.

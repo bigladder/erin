@@ -37,6 +37,7 @@ class Support
     comp_key_and_postfixs = [
       [:source_component, [:location_id, :outflow], "source"],
       [:load_component, [:location_id, :inflow], ""],
+      [:converter_component, [:location_id, :outflow], "generator"],
     ]
     comp_key_and_postfixs.each do |tuple|
       key, attribs, postfix = tuple
@@ -91,6 +92,17 @@ class Support
   #     - :location_id, string, the location of the load
   #     - :inflow, string, the inflow type (e.g., 'electricity', 'heating',
   #       'cooling', 'natural_gas', etc.)
+  #   - :converter_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the converter
+  #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", etc.)
+  #     - :outflow, string, the outflow type (e.g., "electricity", "heating", etc.)
+  #     - :lossflow, string, optional. defaults to "waste_heat". The lossflow stream
+  #     - :constant_efficiency, number, where 0.0 < efficiency <= 1.0, the efficiency of conversion
+  #   - :muxer_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the muxer
+  #     - :flow, string, the type of flow through the muxer (e.g., 'electricity', 'natural_gas', 'coal', etc.)
+  #     - :num_inflows, integer, number > 0, the number of inflow ports
+  #     - :num_outflows, integer, number > 0, the number of outflow ports
   #   - :source_component, an array of Hash with keys:
   #     - :location_id, string, the location of the source
   #     - :outflow, string, the outflow provided (e.g., 'electricity', 'natural_gas', 'diesel')
@@ -125,18 +137,85 @@ class Support
       inflow = lc.fetch(:inflow)
       loc = lc.fetch(:location_id)
       #locations << loc
+      # refactor
       incoming_sources = []
       data.fetch(:network_link, []).each do |nw_link|
         next if (nw_link.fetch(:flow) != inflow) or (nw_link.fetch(:destination_location_id) != loc)
+        puts("found a relevant link:\n#{nw_link}")
         src_id = nw_link.fetch(:source_location_id)
         incoming_sources << src_id
       end
-      if incoming_sources.length == 1
+      local_sources = []
+      data.fetch(:converter_component, []).each do |cc|
+        cc_loc = cc.fetch(:location_id)
+        cc_outflow = cc.fetch(:outflow)
+        next unless (cc_loc == loc) and (cc_outflow == inflow)
+        puts("found a relevant converter:\n#{cc}")
+        cc_id = cc.fetch(:id)
+        local_sources << cc_id
+        cc_inflow = cc.fetch(:inflow)
+        # Refactor the Below
+        data.fetch(:network_link, []).each do |nw_link|
+          next if (nw_link.fetch(:flow) != cc_inflow) or (nw_link.fetch(:destination_location_id) != loc)
+          src_id = nw_link.fetch(:source_location_id)
+          if connect_pts.include?(src_id)
+            connect_pts[src_id][cc_inflow] = [cc_id, 0]
+          else
+            connect_pts[src_id] = {cc_inflow => [cc_id, 0]}
+          end
+        end
+      end
+      num_incoming = incoming_sources.length
+      num_local = local_sources.length
+      num_sources = num_incoming + num_local
+      puts("num_sources = #{num_sources}")
+      puts("num_local = #{num_local}")
+      puts("num_incoming = #{num_incoming}")
+      if num_sources == 1 and num_incoming == 1
         src = incoming_sources[0]
         if connect_pts.include?(src)
+          # NOTE: change connect_pts to: (Map SourceLocationID (Map FlowID (Array (Tuple CompID InflowPort))))
           connect_pts[src][inflow] = [lc.fetch(:id), 0]
         else
           connect_pts[src] = {inflow => [lc.fetch(:id), 0]}
+        end
+      elsif num_sources == 1 and num_local == 1
+        raise "not implemented"
+        # ...
+      elsif num_sources > 1
+        new_mux = {
+          location_id: loc,
+          id: "#{loc}_#{inflow}_bus",
+          flow: inflow,
+          num_inflows: num_sources,
+          num_outflows: 1,
+        }
+        if data.include?(:muxer_component)
+          data[:muxer_component] << new_mux
+        else
+          data[:muxer_component] = [new_mux]
+        end
+        data[:connection] << [
+          "#{new_mux.fetch(:id)}:OUT(0)",
+          "#{lc.fetch(:id)}:IN(0)",
+          inflow,
+        ]
+        local_sources.each_with_index do |src_id, idx|
+          port = idx + num_incoming
+          data[:connection] << [
+            "#{src_id}:OUT(0)",
+            "#{new_mux.fetch(:id)}:IN(#{port})",
+            inflow]
+        end
+        if num_incoming == 1
+          src = incoming_sources[0]
+          if connect_pts.include?(src)
+            connect_pts[src][inflow] = [new_mux.fetch(:id), 0]
+          else
+            connect_pts[src] = {inflow => [new_mux.fetch(:id), 0]}
+          end
+        else
+          raise "not implemented"
         end
       end
       #srcs = data[:source_component].select {|c| c[:location_id] == loc and c[:outflow] == inflow}
@@ -154,7 +233,7 @@ class Support
         src = find_flow_source_for_location(data, loc, flow)
         next if src.nil?
         id, port = conn_info
-        data[:connection] << [src[:id] + ":OUT(0)", "#{id}:IN(#{port})", flow]
+        data[:connection] << [src.fetch(:id) + ":OUT(0)", "#{id}:IN(#{port})", flow]
       end
     end
     # for each load (and corresponding location)

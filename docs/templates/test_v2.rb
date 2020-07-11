@@ -61,4 +61,68 @@ class TestTemplate < Minitest::Test
     ])
     assert_equal(expected, achieved)
   end
+
+  def test_connecting_3_sources_at_one_location_to_3_sinks_at_another
+    data = {
+      load_component: [
+        {
+          location_id: "b1",
+          inflow: "electricity",
+        },
+        {
+          location_id: "b1",
+          inflow: "heating",
+        },
+        {
+          location_id: "b1",
+          inflow: "dhw",
+        },
+      ],
+      source_component: [
+        {
+          location_id: "utility",
+          outflow: "electricity",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+        {
+          location_id: "utility",
+          outflow: "heating",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+        {
+          location_id: "utility",
+          outflow: "dhw",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+      ],
+      network_link: [
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "heating",
+        },
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "dhw",
+        },
+      ],
+    }
+    Support.generate_connections(data)
+    achieved = Set.new(data[:connection])
+    expected = Set.new([
+      ["utility_electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+      ["utility_dhw_source:OUT(0)", "b1_dhw:IN(0)", "dhw"],
+      ["utility_heating_source:OUT(0)", "b1_heating:IN(0)", "heating"],
+    ])
+    assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
+  end
 end

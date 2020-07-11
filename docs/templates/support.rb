@@ -30,6 +30,9 @@ class Support
     @comps.keys.sort.map {|k| @comps[k]}
   end
 
+  # Assign an id to each component in data if it doesn't already have one
+  # - data: (hash symbol any), see generate_connections for details
+  # RETURN: nil, adds ids to the components if they don't already have them
   def self.ensure_components_have_ids(data)
     comp_key_and_postfixs = [
       [:source_component, [:location_id, :outflow], "source"],
@@ -49,6 +52,12 @@ class Support
     end
   end
 
+  # find and return the source component object for location_id and flow. If
+  # not found, return nil.
+  # - data: (hash symbol various), see generate_connections for details
+  # - location_id: string, the location at which to find source
+  # - flow: string, the source flow to find
+  # RETURN: hash corresponding to the source component or nil if not found
   def self.find_flow_source_for_location(data, location_id, flow)
     src = nil
     data.fetch(:source_component, []).each do |s|
@@ -109,9 +118,6 @@ class Support
   #
   def self.generate_connections(data)
     ensure_components_have_ids(data)
-    puts(data)
-    the_comps = {}
-    the_conns = []
     connect_pts = {} # by node/location
     #locations = Set.new
     data[:connection] = []
@@ -143,8 +149,6 @@ class Support
       #else
       #end
     end
-    puts("data:\n#{data}")
-    puts("connect_pts:\n#{connect_pts}")
     connect_pts.each do |loc, flow_map|
       flow_map.each do |flow, conn_info|
         src = find_flow_source_for_location(data, loc, flow)
@@ -153,7 +157,6 @@ class Support
         data[:connection] << [src[:id] + ":OUT(0)", "#{id}:IN(#{port})", flow]
       end
     end
-    puts("data:\n#{data}")
     # for each load (and corresponding location)
     #   for each enduse
     #     find all other equipment at that location with a relevant outflow to the enduse

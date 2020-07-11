@@ -54,9 +54,7 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    puts "="*60 + "\n"
     Support.generate_connections(data)
-    puts "="*60 + "\n"
     achieved = Set.new(data[:connection])
     expected = Set.new([
       ["utility_electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],

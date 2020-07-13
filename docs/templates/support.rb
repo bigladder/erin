@@ -196,22 +196,6 @@ class Support
   #     - :source_location_id, string, location_id for the source of the flow
   #     - :destination_location_id, string, location_id for the destination of the flow
   #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
-  # for each load (and corresponding location)
-  #   for each enduse
-  #     find all other equipment at that location with a relevant outflow to the enduse
-  #     find any inflow streams directly relevant to the enduse
-  #       create muxers if more than one inflow stream is coming in
-  #       record relevant connections
-  #       record connection points (comp_id and port) for hookup to higher connections
-  # for each location not having a load
-  #   for each outflow
-  #     find all equipment at that location with relevant outflow to the enduse
-  #     find all outflow streams for that outflow
-  #       create muxers if more than one outflow stream location
-  #       pull all relevant connection points and record
-  #       for all inflows, record relevant connection points for upstream 
-  #       remove location from the processing list
-  #
   def self.generate_connections(data)
     ensure_components_have_ids(data)
     connect_pts = {} # by node/location
@@ -312,15 +296,6 @@ class Support
           end
         end
       end
-      #srcs = data[:source_component].select {|c| c[:location_id] == loc and c[:outflow] == inflow}
-      #num = srcs.length
-      ##convs = data[:converter_components].select {|c| c[:location_id] == loc and c[:outflow] == inflow}
-      ##store = 
-      #incoming_sources = []
-      #if num == 0
-      #elsif num == 1
-      #else
-      #end
     end
     connect_pts.each do |loc, flow_map|
       flow_map.each do |flow, conn_info|
@@ -330,21 +305,6 @@ class Support
         data[:connection] << [src.fetch(:id) + ":OUT(0)", "#{id}:IN(#{port})", flow]
       end
     end
-    # for each load (and corresponding location)
-    #   for each enduse
-    #     find all other equipment at that location with a relevant outflow to the enduse
-    #     find any inflow streams directly relevant to the enduse
-    #       create muxers if more than one inflow stream is coming in
-    #       record relevant connections
-    #       record connection points (comp_id and port) for hookup to higher connections
-    # for each location not having a load
-    #   for each outflow
-    #     find all equipment at that location with relevant outflow to the enduse
-    #     find all outflow streams for that outflow
-    #       create muxers if more than one outflow stream location
-    #       pull all relevant connection points and record
-    #       for all inflows, record relevant connection points for upstream 
-    #       remove location from the processing list
     data
   end
 

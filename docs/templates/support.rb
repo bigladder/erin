@@ -30,6 +30,27 @@ class Support
     @comps.keys.sort.map {|k| @comps[k]}
   end
 
+  def self.make_id_unique(data, id)
+    if data.include?(:ids_in_use)
+      ids_in_use = data[:ids_in_use]
+    else
+      ids_in_use = Set.new
+      data[:ids_in_use] = ids_in_use
+    end
+    test_id = id
+    while ids_in_use.include?(test_id)
+      m = test_id.match(/(.*?)(\d*)$/)
+      n = if m[2].empty? then 1 else m[2].to_i + 1 end
+      if m[1].end_with?("_")
+        test_id = m[1] + n.to_s
+      else
+        test_id = m[1] + "_" + n.to_s
+      end
+    end
+    ids_in_use << test_id
+    test_id
+  end
+
   # Assign an id to each component in data if it doesn't already have one
   # - data: (hash symbol any), see generate_connections for details
   # RETURN: nil, adds ids to the components if they don't already have them
@@ -49,7 +70,8 @@ class Support
           parts << c.fetch(a).to_s.strip
         end
         parts << postfix unless postfix.empty?
-        c[:id] = parts.join("_")
+        id = make_id_unique(data, parts.join("_"))
+        c[:id] = id
       end
     end
   end
@@ -100,7 +122,7 @@ class Support
   # (Array Hash)
   # RETURN: string, id of the new mux added
   def self.add_muxer_component(data, location_id, flow, num_inflows, num_outflows)
-    id = "#{location_id}_#{flow}_bus"
+    id = make_id_unique(data, "#{location_id}_#{flow}_bus")
     new_mux = {
       location_id: location_id,
       id: id,
@@ -245,8 +267,26 @@ class Support
           inflow,
         ]
       elsif num_stores > 1
-        # create two buses
-        raise "not implemented"
+        inflow_bus = add_muxer_component(data, loc, inflow, 1, num_stores)
+        outflow_bus = add_muxer_component(data, loc, inflow, num_stores, 1)
+        sink_id = inflow_bus
+        local_stores.each_with_index do |store, idx|
+          data[:connection] << [
+            "#{inflow_bus}:OUT(#{idx})",
+            "#{store}:IN(0)",
+            inflow,
+          ]
+          data[:connection] << [
+            "#{store}:OUT(0)",
+            "#{outflow_bus}:IN(#{idx})",
+            inflow,
+          ]
+        end
+        data[:connection] << [
+          "#{outflow_bus}:OUT(0)",
+          "#{lc.fetch(:id)}:IN(0)",
+          inflow,
+        ]
       end
       if num_sources == 1 and num_incoming == 1
         src = incoming_sources[0]

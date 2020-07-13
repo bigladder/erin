@@ -410,4 +410,58 @@ class TestTemplate < Minitest::Test
     ])
     assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
   end
+
+  def test_multiple_sources_for_a_load
+    data = {
+      load_component: [
+        {
+          location_id: "b1",
+          inflow: "electricity",
+        },
+      ],
+      source_component: [
+        {
+          location_id: "c1",
+          outflow: "electricity",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+        {
+          location_id: "c2",
+          outflow: "electricity",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+      ],
+      converter_component: [
+      ],
+      storage_component: [
+      ],
+      network_link: [
+        {
+          source_location_id: "c1",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+        {
+          source_location_id: "c2",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+      ],
+    }
+    Support.generate_connections(data)
+    assert_equal(data.fetch(:load_component, []).length, 1)
+    assert_equal(data.fetch(:source_component, []).length, 2)
+    assert_equal(data.fetch(:converter_component, []).length, 0)
+    assert_equal(data.fetch(:storage_component, []).length, 0)
+    assert_equal(data.fetch(:muxer_component, []).length, 1)
+    achieved = Set.new(data[:connection])
+    expected = Set.new([
+      ["c1_electricity_source:OUT(0)", "b1_electricity_bus:IN(0)", "electricity"],
+      ["c2_electricity_source:OUT(0)", "b1_electricity_bus:IN(1)", "electricity"],
+      ["b1_electricity_bus:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+    ])
+    assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
+  end
 end

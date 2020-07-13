@@ -304,15 +304,12 @@ class Support
           port = idx + num_incoming
           add_connection_(data, src_id, 0, mux_id, port, inflow)
         end
-        if num_incoming == 1
-          src = incoming_sources[0]
-          if connect_pts.include?(src)
-            connect_pts[src][inflow] = [mux_id, 0]
+        incoming_sources.each_with_index do |src_id, idx|
+          if connect_pts.include?(src_id)
+            connect_pts[src_id][inflow] = [mux_id, idx]
           else
-            connect_pts[src] = {inflow => [mux_id, 0]}
+            connect_pts[src_id] = {inflow => [mux_id, idx]}
           end
-        else
-          raise "not implemented"
         end
       end
       #srcs = data[:source_component].select {|c| c[:location_id] == loc and c[:outflow] == inflow}

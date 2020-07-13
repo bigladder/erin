@@ -38,6 +38,7 @@ class Support
       [:source_component, [:location_id, :outflow], "source"],
       [:load_component, [:location_id, :inflow], ""],
       [:converter_component, [:location_id, :outflow], "generator"],
+      [:storage_component, [:location_id, :flow], "store"],
     ]
     comp_key_and_postfixs.each do |tuple|
       key, attribs, postfix = tuple
@@ -125,6 +126,11 @@ class Support
   #     - :outflow, string, the outflow provided (e.g., 'electricity', 'natural_gas', 'diesel')
   #     - :is_limited, boolean string ("TRUE" or "FALSE"), whether or not the source is limited
   #     - :max_outflow_kW, number, the maximum outflow in kW
+  #   - :storage_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the storage
+  #     - :flow, string, the flow being stored (e.g., "electricity", "diesel", etc.)
+  #     - :capacity_kWh, number, > 0, the capacity of the store in kWh
+  #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
   #   - :network_link, an array of Hash with keys:
   #     - :source_location_id, string, location_id for the source of the flow
   #     - :destination_location_id, string, location_id for the destination of the flow
@@ -179,10 +185,46 @@ class Support
           end
         end
       end
+      local_stores = []
+      data.fetch(:storage_component, []).each do |store|
+        store_loc = store.fetch(:location_id)
+        store_flow = store.fetch(:flow)
+        next unless (store_loc == loc) and (store_flow == inflow)
+        store_id = store.fetch(:id)
+        local_stores << store_id
+        store_flow = store.fetch(:flow)
+        # Refactor the Below
+        store_source_ids = find_nw_srcs_for_flow_and_dest(
+          data.fetch(:network_link, []),
+          store_flow,
+          loc)
+        store_source_ids.each do |src_id|
+          if connect_pts.include?(src_id)
+            connect_pts[src_id][store_flow] = [store_id, 0]
+          else
+            connect_pts[src_id] = {store_flow => [store_id, 0]}
+          end
+        end
+      end
       num_incoming = incoming_sources.length
       num_local = local_sources.length
+      num_stores = local_stores.length
       num_sources = num_incoming + num_local
-      if num_sources == 1 and num_incoming == 1
+      if num_sources == 1 and num_incoming == 1 and num_stores == 1
+        src = incoming_sources[0]
+        store_id = local_stores[0]
+        if connect_pts.include?(src)
+          # NOTE: change connect_pts to: (Map SourceLocationID (Map FlowID (Array (Tuple CompID InflowPort))))
+          connect_pts[src][inflow] = [store_id, 0]
+        else
+          connect_pts[src] = {inflow => [store_id, 0]}
+        end
+        data[:connection] << [
+          "#{store_id}:OUT(0)",
+          "#{lc.fetch(:id)}:IN(0)",
+          inflow,
+        ]
+      elsif num_sources == 1 and num_incoming == 1 and num_stores == 0
         src = incoming_sources[0]
         if connect_pts.include?(src)
           # NOTE: change connect_pts to: (Map SourceLocationID (Map FlowID (Array (Tuple CompID InflowPort))))
@@ -190,7 +232,7 @@ class Support
         else
           connect_pts[src] = {inflow => [lc.fetch(:id), 0]}
         end
-      elsif num_sources == 1 and num_local == 1
+      elsif num_sources == 1 and num_local == 1 and num_stores == 0
         raise "not implemented"
         # ...
       elsif num_sources > 1
@@ -206,11 +248,21 @@ class Support
         else
           data[:muxer_component] = [new_mux]
         end
-        data[:connection] << [
-          "#{new_mux.fetch(:id)}:OUT(0)",
-          "#{lc.fetch(:id)}:IN(0)",
-          inflow,
-        ]
+        if num_stores == 0
+          data[:connection] << [
+            "#{new_mux.fetch(:id)}:OUT(0)",
+            "#{lc.fetch(:id)}:IN(0)",
+            inflow,
+          ]
+        elsif num_stores == 1
+          store = local_stores[0]
+          data[:connection] << [
+            "#{store.fetch(:id)}:OUT(0)",
+            "#{lc.fetch(:id)}:IN(0)",
+            inflow,
+          ]
+        elsif num_stores > 1
+        end
         local_sources.each_with_index do |src_id, idx|
           port = idx + num_incoming
           data[:connection] << [

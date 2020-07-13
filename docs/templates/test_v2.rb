@@ -190,4 +190,45 @@ class TestTemplate < Minitest::Test
     ])
     assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
   end
+
+  def test_connecting_utility_electricity_to_local_source_plus_battery
+    data = {
+      load_component: [
+        {
+          location_id: "b1",
+          inflow: "electricity",
+        },
+      ],
+      source_component: [
+        {
+          location_id: "utility",
+          outflow: "electricity",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+      ],
+      storage_component: [
+        {
+          location_id: "b1",
+          flow: "electricity",
+          capacity_kWh: 100.0,
+          max_inflow_kW: 10.0,
+        },
+      ],
+      network_link: [
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+      ],
+    }
+    Support.generate_connections(data)
+    achieved = Set.new(data[:connection])
+    expected = Set.new([
+      ["utility_electricity_source:OUT(0)", "b1_electricity_store:IN(0)", "electricity"],
+      ["b1_electricity_store:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+    ])
+    assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
+  end
 end

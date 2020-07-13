@@ -138,6 +138,20 @@ class Support
     id
   end
 
+  def self.add_connection_(data, src_id, src_port, sink_id, sink_port, flow)
+    conn = [
+      "#{src_id}:OUT(#{src_port})",
+      "#{sink_id}:IN(#{sink_port})",
+      flow,
+    ]
+    if data.include?(:connection)
+      data[:connection] << conn
+    else
+      data[:connection] = [conn]
+    end
+    data
+  end
+
   # - data: (hash symbol various), a hash table with keys
   #   - :general, (Hash symbol value)
   #   - :load_component
@@ -261,32 +275,16 @@ class Support
       if num_stores == 1
         store_id = local_stores[0]
         sink_id = store_id
-        data[:connection] << [
-          "#{store_id}:OUT(0)",
-          "#{lc.fetch(:id)}:IN(0)",
-          inflow,
-        ]
+        add_connection_(data, store_id, 0, lc.fetch(:id), 0, inflow)
       elsif num_stores > 1
         inflow_bus = add_muxer_component(data, loc, inflow, 1, num_stores)
         outflow_bus = add_muxer_component(data, loc, inflow, num_stores, 1)
         sink_id = inflow_bus
         local_stores.each_with_index do |store, idx|
-          data[:connection] << [
-            "#{inflow_bus}:OUT(#{idx})",
-            "#{store}:IN(0)",
-            inflow,
-          ]
-          data[:connection] << [
-            "#{store}:OUT(0)",
-            "#{outflow_bus}:IN(#{idx})",
-            inflow,
-          ]
+          add_connection_(data, inflow_bus, idx, store, 0, inflow)
+          add_connection_(data, store, 0, outflow_bus, idx, inflow)
         end
-        data[:connection] << [
-          "#{outflow_bus}:OUT(0)",
-          "#{lc.fetch(:id)}:IN(0)",
-          inflow,
-        ]
+        add_connection_(data, outflow_bus, 0, lc.fetch(:id), 0, inflow)
       end
       if num_sources == 1 and num_incoming == 1
         src = incoming_sources[0]
@@ -298,24 +296,13 @@ class Support
         end
       elsif num_sources == 1 and num_local == 1
         src = local_sources[0]
-        data[:connection] << [
-          "#{src}:OUT(0)",
-          "#{sink_id}:IN(0)",
-          inflow,
-        ]
+        add_connection_(data, src, 0, sink_id, 0, inflow)
       elsif num_sources > 1
         mux_id = add_muxer_component(data, loc, inflow, num_sources, 1)
-        data[:connection] << [
-          "#{mux_id}:OUT(0)",
-          "#{sink_id}:IN(0)",
-          inflow,
-        ]
+        add_connection_(data, mux_id, 0, sink_id, 0, inflow)
         local_sources.each_with_index do |src_id, idx|
           port = idx + num_incoming
-          data[:connection] << [
-            "#{src_id}:OUT(0)",
-            "#{mux_id}:IN(#{port})",
-            inflow]
+          add_connection_(data, src_id, 0, mux_id, port, inflow)
         end
         if num_incoming == 1
           src = incoming_sources[0]

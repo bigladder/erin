@@ -169,9 +169,7 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    puts "="*60 + "\n"
     Support.generate_connections(data)
-    puts "="*60 + "\n"
     assert(data.include?(:muxer_component))
     assert(data.fetch(:muxer_component, []).length == 1)
     actual_mux_data = data.fetch(:muxer_component, []).fetch(0, {})

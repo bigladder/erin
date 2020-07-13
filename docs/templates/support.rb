@@ -73,6 +73,23 @@ class Support
     src
   end
 
+  # Find the network links having the given flow and destination location id.
+  # - nw_links: (Array {:source_location_id => string, location_id for the source of the flow,
+  #                     :destination_location_id => string, location_id for the destination of the flow,
+  #                     :flow => string, the type of flow (e.g., 'electricity', 'heating', etc.)})
+  # RETURN: (Array string), if no link found, the array is empty. Else, filled
+  # with the source ids as a strings of all sources found
+  def self.find_nw_srcs_for_flow_and_dest(nw_links, flow, dest_id)
+    links = []
+    nw_links.each do |nw_link|
+      same_flow = nw_link.fetch(:flow) == flow
+      same_dest = nw_link.fetch(:destination_location_id) == dest_id
+      next unless same_flow and same_dest
+      links << nw_link.fetch(:source_location_id)
+    end
+    links
+  end
+
   # - data: (hash symbol various), a hash table with keys
   #   - :general, (Hash symbol value)
   #   - :load_component
@@ -137,27 +154,24 @@ class Support
       inflow = lc.fetch(:inflow)
       loc = lc.fetch(:location_id)
       #locations << loc
-      # refactor
-      incoming_sources = []
-      data.fetch(:network_link, []).each do |nw_link|
-        next if (nw_link.fetch(:flow) != inflow) or (nw_link.fetch(:destination_location_id) != loc)
-        puts("found a relevant link:\n#{nw_link}")
-        src_id = nw_link.fetch(:source_location_id)
-        incoming_sources << src_id
-      end
+      incoming_sources = find_nw_srcs_for_flow_and_dest(
+        data.fetch(:network_link, []),
+        inflow,
+        loc)
       local_sources = []
       data.fetch(:converter_component, []).each do |cc|
         cc_loc = cc.fetch(:location_id)
         cc_outflow = cc.fetch(:outflow)
         next unless (cc_loc == loc) and (cc_outflow == inflow)
-        puts("found a relevant converter:\n#{cc}")
         cc_id = cc.fetch(:id)
         local_sources << cc_id
         cc_inflow = cc.fetch(:inflow)
         # Refactor the Below
-        data.fetch(:network_link, []).each do |nw_link|
-          next if (nw_link.fetch(:flow) != cc_inflow) or (nw_link.fetch(:destination_location_id) != loc)
-          src_id = nw_link.fetch(:source_location_id)
+        cc_source_ids = find_nw_srcs_for_flow_and_dest(
+          data.fetch(:network_link, []),
+          cc_inflow,
+          loc)
+        cc_source_ids.each do |src_id|
           if connect_pts.include?(src_id)
             connect_pts[src_id][cc_inflow] = [cc_id, 0]
           else
@@ -168,9 +182,6 @@ class Support
       num_incoming = incoming_sources.length
       num_local = local_sources.length
       num_sources = num_incoming + num_local
-      puts("num_sources = #{num_sources}")
-      puts("num_local = #{num_local}")
-      puts("num_incoming = #{num_incoming}")
       if num_sources == 1 and num_incoming == 1
         src = incoming_sources[0]
         if connect_pts.include?(src)

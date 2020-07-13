@@ -210,29 +210,28 @@ class Support
       num_local = local_sources.length
       num_stores = local_stores.length
       num_sources = num_incoming + num_local
-      if num_sources == 1 and num_incoming == 1 and num_stores == 1
-        src = incoming_sources[0]
+      sink_id = lc.fetch(:id)
+      if num_stores == 1
         store_id = local_stores[0]
-        if connect_pts.include?(src)
-          # NOTE: change connect_pts to: (Map SourceLocationID (Map FlowID (Array (Tuple CompID InflowPort))))
-          connect_pts[src][inflow] = [store_id, 0]
-        else
-          connect_pts[src] = {inflow => [store_id, 0]}
-        end
+        sink_id = store_id
         data[:connection] << [
           "#{store_id}:OUT(0)",
           "#{lc.fetch(:id)}:IN(0)",
           inflow,
         ]
-      elsif num_sources == 1 and num_incoming == 1 and num_stores == 0
+      elsif num_stores > 1
+        # create two buses
+        raise "not implemented"
+      end
+      if num_sources == 1 and num_incoming == 1
         src = incoming_sources[0]
         if connect_pts.include?(src)
           # NOTE: change connect_pts to: (Map SourceLocationID (Map FlowID (Array (Tuple CompID InflowPort))))
-          connect_pts[src][inflow] = [lc.fetch(:id), 0]
+          connect_pts[src][inflow] = [sink_id, 0]
         else
-          connect_pts[src] = {inflow => [lc.fetch(:id), 0]}
+          connect_pts[src] = {inflow => [sink_id, 0]}
         end
-      elsif num_sources == 1 and num_local == 1 and num_stores == 0
+      elsif num_sources == 1 and num_local == 1
         raise "not implemented"
         # ...
       elsif num_sources > 1
@@ -248,21 +247,11 @@ class Support
         else
           data[:muxer_component] = [new_mux]
         end
-        if num_stores == 0
-          data[:connection] << [
-            "#{new_mux.fetch(:id)}:OUT(0)",
-            "#{lc.fetch(:id)}:IN(0)",
-            inflow,
-          ]
-        elsif num_stores == 1
-          store = local_stores[0]
-          data[:connection] << [
-            "#{store.fetch(:id)}:OUT(0)",
-            "#{lc.fetch(:id)}:IN(0)",
-            inflow,
-          ]
-        elsif num_stores > 1
-        end
+        data[:connection] << [
+          "#{new_mux.fetch(:id)}:OUT(0)",
+          "#{sink_id}:IN(0)",
+          inflow,
+        ]
         local_sources.each_with_index do |src_id, idx|
           port = idx + num_incoming
           data[:connection] << [

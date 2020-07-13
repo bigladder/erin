@@ -91,6 +91,31 @@ class Support
     links
   end
 
+  # - data: Hash, the data hash table
+  # - location_id: string, the id for the location to add the mux
+  # - flow: string, id for the flow to use
+  # - num_inflows: integer, num_inflows > 0, the number of inflows
+  # - num_outflows: integer, num_outflows > 0, the number of outflows
+  # SIDE_EFFECTS: adds the new mux to the :muxer_component field of data,
+  # (Array Hash)
+  # RETURN: string, id of the new mux added
+  def self.add_muxer_component(data, location_id, flow, num_inflows, num_outflows)
+    id = "#{location_id}_#{flow}_bus"
+    new_mux = {
+      location_id: location_id,
+      id: id,
+      flow: flow,
+      num_inflows: num_inflows,
+      num_outflows: num_outflows,
+    }
+    if data.include?(:muxer_component)
+      data[:muxer_component] << new_mux
+    else
+      data[:muxer_component] = [new_mux]
+    end
+    id
+  end
+
   # - data: (hash symbol various), a hash table with keys
   #   - :general, (Hash symbol value)
   #   - :load_component
@@ -235,20 +260,9 @@ class Support
         raise "not implemented"
         # ...
       elsif num_sources > 1
-        new_mux = {
-          location_id: loc,
-          id: "#{loc}_#{inflow}_bus",
-          flow: inflow,
-          num_inflows: num_sources,
-          num_outflows: 1,
-        }
-        if data.include?(:muxer_component)
-          data[:muxer_component] << new_mux
-        else
-          data[:muxer_component] = [new_mux]
-        end
+        mux_id = add_muxer_component(data, loc, inflow, num_sources, 1)
         data[:connection] << [
-          "#{new_mux.fetch(:id)}:OUT(0)",
+          "#{mux_id}:OUT(0)",
           "#{sink_id}:IN(0)",
           inflow,
         ]
@@ -256,15 +270,15 @@ class Support
           port = idx + num_incoming
           data[:connection] << [
             "#{src_id}:OUT(0)",
-            "#{new_mux.fetch(:id)}:IN(#{port})",
+            "#{mux_id}:IN(#{port})",
             inflow]
         end
         if num_incoming == 1
           src = incoming_sources[0]
           if connect_pts.include?(src)
-            connect_pts[src][inflow] = [new_mux.fetch(:id), 0]
+            connect_pts[src][inflow] = [mux_id, 0]
           else
-            connect_pts[src] = {inflow => [new_mux.fetch(:id), 0]}
+            connect_pts[src] = {inflow => [mux_id, 0]}
           end
         else
           raise "not implemented"

@@ -257,8 +257,12 @@ class Support
           connect_pts[src] = {inflow => [sink_id, 0]}
         end
       elsif num_sources == 1 and num_local == 1
-        raise "not implemented"
-        # ...
+        src = local_sources[0]
+        data[:connection] << [
+          "#{src}:OUT(0)",
+          "#{sink_id}:IN(0)",
+          inflow,
+        ]
       elsif num_sources > 1
         mux_id = add_muxer_component(data, loc, inflow, num_sources, 1)
         data[:connection] << [

@@ -304,4 +304,52 @@ class TestTemplate < Minitest::Test
     ])
     assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
   end
+
+  def test_local_egen_only_for_electric_load
+    data = {
+      load_component: [
+        {
+          location_id: "b1",
+          inflow: "electricity",
+        },
+      ],
+      source_component: [
+        {
+          location_id: "utility",
+          outflow: "natural_gas",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+      ],
+      converter_component: [
+        {
+          location_id: "b1",
+          inflow: "natural_gas",
+          outflow: "electricity",
+          constant_efficiency: 0.5,
+        },
+      ],
+      storage_component: [
+      ],
+      network_link: [
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "natural_gas",
+        },
+      ],
+    }
+    Support.generate_connections(data)
+    assert_equal(data.fetch(:load_component, []).length, 1)
+    assert_equal(data.fetch(:source_component, []).length, 1)
+    assert_equal(data.fetch(:converter_component, []).length, 1)
+    assert_equal(data.fetch(:storage_component, []).length, 0)
+    assert_equal(data.fetch(:muxer_component, []).length, 0)
+    achieved = Set.new(data[:connection])
+    expected = Set.new([
+      ["utility_natural_gas_source:OUT(0)", "b1_electricity_generator:IN(0)", "natural_gas"],
+      ["b1_electricity_generator:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+    ])
+    assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
+  end
 end

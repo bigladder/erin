@@ -229,6 +229,11 @@ class TestTemplate < Minitest::Test
       ["utility_electricity_source:OUT(0)", "b1_electricity_store:IN(0)", "electricity"],
       ["b1_electricity_store:OUT(0)", "b1_electricity:IN(0)", "electricity"],
     ])
+    assert_equal(data.fetch(:converter_component, []).length, 0)
+    assert_equal(data.fetch(:storage_component, []).length, 1)
+    assert_equal(data.fetch(:load_component, []).length, 1)
+    assert_equal(data.fetch(:source_component, []).length, 1)
+    assert_equal(data.fetch(:muxer_component, []).length, 0)
     assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
   end
 end

@@ -302,7 +302,7 @@ class Support
         src = find_flow_source_for_location(data, loc, flow)
         next if src.nil?
         id, port = conn_info
-        data[:connection] << [src.fetch(:id) + ":OUT(0)", "#{id}:IN(#{port})", flow]
+        add_connection_(data, src.fetch(:id), 0, id, port, flow)
       end
     end
     data

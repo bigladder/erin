@@ -26,7 +26,7 @@ class TestTemplate < Minitest::Test
 
   def test_data_includes_connection
     data = {}
-    Support.generate_connections(data)
+    Support.generate_connections_v2(data)
     assert(data.include?(:connection))
   end
 

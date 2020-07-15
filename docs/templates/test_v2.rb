@@ -169,7 +169,7 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections(data)
+    Support.generate_connections_v2(data)
     assert(data.include?(:muxer_component))
     assert(data.fetch(:muxer_component, []).length == 1)
     actual_mux_data = data.fetch(:muxer_component, []).fetch(0, {})
@@ -223,7 +223,7 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections(data)
+    Support.generate_connections_v2(data)
     achieved = Set.new(data[:connection])
     expected = Set.new([
       ["utility_electricity_source:OUT(0)", "b1_electricity_store:IN(0)", "electricity"],

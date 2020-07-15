@@ -466,11 +466,6 @@ class TestTemplate < Minitest::Test
   end
 
   def test_cluster_level_electrical_generation_from_utility_natural_gas
-    # TODO: next steps to enable this: we currently march over all locations
-    # specifying a load but a community location might have neither a load nor
-    # a source. We need to be sure to look at all locations referenced as links
-    # to a location having a load and "follow the tree". We could possibly use
-    # a set to do something like this?
     data = {
       load_component: [
         {

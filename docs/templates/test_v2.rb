@@ -116,7 +116,7 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections(data)
+    Support.generate_connections_v2(data)
     achieved = Set.new(data[:connection])
     expected = Set.new([
       ["utility_electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],

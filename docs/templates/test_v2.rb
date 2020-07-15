@@ -288,7 +288,7 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections(data)
+    Support.generate_connections_v2(data)
     assert_equal(data.fetch(:load_component, []).length, 1)
     assert_equal(data.fetch(:source_component, []).length, 2)
     assert_equal(data.fetch(:converter_component, []).length, 1)

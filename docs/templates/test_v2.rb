@@ -464,4 +464,62 @@ class TestTemplate < Minitest::Test
     ])
     assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
   end
+
+  def test_cluster_level_electrical_generation_from_utility_natural_gas
+    # TODO: next steps to enable this: we currently march over all locations
+    # specifying a load but a community location might have neither a load nor
+    # a source. We need to be sure to look at all locations referenced as links
+    # to a location having a load and "follow the tree". We could possibly use
+    # a set to do something like this?
+    data = {
+      load_component: [
+        {
+          location_id: "b1",
+          inflow: "electricity",
+        },
+      ],
+      source_component: [
+        {
+          location_id: "utility",
+          outflow: "natural_gas",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+      ],
+      converter_component: [
+        {
+          location_id: "cluster",
+          inflow: "natural_gas",
+          outflow: "electricity",
+          constant_efficiency: 0.5,
+        },
+      ],
+      storage_component: [
+      ],
+      network_link: [
+        {
+          source_location_id: "cluster",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+        {
+          source_location_id: "utility",
+          destination_location_id: "cluster",
+          flow: "natural_gas",
+        },
+      ],
+    }
+    Support.generate_connections_v2(data)
+    assert_equal(data.fetch(:load_component, []).length, 1)
+    assert_equal(data.fetch(:source_component, []).length, 1)
+    assert_equal(data.fetch(:converter_component, []).length, 1)
+    assert_equal(data.fetch(:storage_component, []).length, 0)
+    assert_equal(data.fetch(:muxer_component, []).length, 0)
+    achieved = Set.new(data[:connection])
+    expected = Set.new([
+      ["utility_natural_gas_source:OUT(0)", "cluster_electricity_generator:IN(0)", "natural_gas"],
+      ["cluster_electricity_generator:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+    ])
+    assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
+  end
 end

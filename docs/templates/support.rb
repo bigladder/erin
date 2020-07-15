@@ -96,6 +96,37 @@ class Support
     src
   end
 
+  # find and return source component(s) for the given location_id and flow. If
+  # not found, return nil.
+  # - data: (hash symbol various), see generate_connections for details
+  # - location_id: string, the location at which to find source
+  # - flow: string, the source flow to find
+  # RETURN: hash corresponding to the source component or nil if not found
+  def self.find_sources_for_location(data, location_id, flow)
+    src_comp = find_flow_source_for_location(data, location_id, flow)
+    return src_comp unless src_comp.nil?
+    data.fetch(:storage_component, []).each do |store|
+      next unless (store[:flow] == flow) and (store[:location_id] == location_id)
+      if src_comp.nil?
+        src_comp = store
+      else
+        raise "Duplicate storage found at location "\
+          "'#{location_id}' for flow '#{flow}'"
+      end
+    end
+    return src_comp unless src_comp.nil?
+    data.fetch(:converter_component, []).each do |cc|
+      next unless (cc[:outflow] == flow) and (cc[:location_id] == location_id)
+      if src_comp.nil?
+        src_comp = cc
+      else
+        raise "Duplicate converter found at location "\
+          "'#{location_id}' for flow '#{flow}'"
+      end
+    end
+    src_comp
+  end
+
   # Find the network links having the given flow and destination location id.
   # - nw_links: (Array {:source_location_id => string, location_id for the source of the flow,
   #                     :destination_location_id => string, location_id for the destination of the flow,
@@ -152,6 +183,164 @@ class Support
     data
   end
 
+  def self.get_all_locations(data)
+    comp_keys = [
+      :source_component,
+      :load_component,
+      :converter_component,
+      :storage_component,
+    ]
+    locations = Set.new
+    comp_keys.each do |k|
+      data.fetch(k, []).each do |c|
+        locations << c[:location_id]
+      end
+    end
+    locations
+  end
+
+  def self.flows_at_location(data, loc)
+    flows = Set.new
+    data.fetch(:load_component, []).each do |lc|
+      next unless lc.fetch(:location_id) == loc
+      flows << lc.fetch(:inflow)
+    end
+    data.fetch(:converter_component, []).each do |cc|
+      next unless cc.fetch(:location_id) == loc
+      flows << cc.fetch(:inflow)
+      flows << cc.fetch(:outflow)
+    end
+    data.fetch(:source_component, []).each do |sc|
+      next unless sc.fetch(:location_id) == loc
+      flows << sc.fetch(:outflow)
+    end
+    data.fetch(:storage_component, []).each do |sc|
+      next unless sc.fetch(:location_id) == loc
+      flows << sc.fetch(:flow)
+    end
+    data.fetch(:network_link, []).each do |link|
+      src = link.fetch(:source_location_id)
+      dst = link.fetch(:destination_location_id)
+      next unless src == loc or dst == loc
+      flows << link.fetch(:flow)
+    end
+    flows.to_a.sort
+  end
+
+  def self.get_outflows_at_location(data, location_id)
+    comp_keys = [
+      [:source_component, :outflow],
+      #[:load_component, ], # no outflows for a load
+      [:converter_component, :outflow],
+      [:storage_component, :flow],
+      #[:muxer_component, :flow],
+    ]
+    outflows = Set.new
+    comp_keys.each do |k, attr|
+      data.fetch(k, []).each do |c|
+        outflows << c[attr]
+      end
+    end
+    outflows 
+  end
+
+  def self.get_inflows_at_location(data, location_id)
+    comp_keys = [
+      # [:source_component, :outflow], # no inflows for a source
+      [:load_component, :inflow], # no outflows for a load
+      [:converter_component, :inflow],
+      [:storage_component, :flow],
+      #[:muxer_component, :flow],
+    ]
+    inflows = Set.new
+    comp_keys.each do |k, attr|
+      data.fetch(k, []).each do |c|
+        inflows << c[attr]
+      end
+    end
+    inflows 
+  end
+
+  def self.get_outbound_links(data, source_location_id, flow_id)
+    outbound_links = []
+    data.fetch(:network_link, []).each do |link|
+      flow = link.fetch(:flow)
+      src_loc = link.fetch(:source_location_id)
+      next unless (src_loc == source_location_id) and (flow == flow_id)
+      outbound_links << link
+    end
+    outbound_links
+  end
+
+  def self.get_inbound_links(data, dest_location_id, flow_id)
+    inbound_links = []
+    data.fetch(:network_link, []).each do |link|
+      flow = link.fetch(:flow)
+      dest_loc = link.fetch(:destination_location_id)
+      next unless (dest_location_id == dest_loc) and (flow_id == flow)
+      inbound_links << link
+    end
+    inbound_links
+  end
+
+  def self.get_internal_loads(data, loc, flow)
+    inflow_port = 0
+    loads = []
+    data.fetch(:converter_component, []).each do |cc|
+      next unless cc.fetch(:location_id) == loc and cc.fetch(:inflow) == flow
+      conn_info = [cc.fetch(:id), inflow_port]
+      loads << conn_info
+    end
+    loads
+  end
+
+  def self.get_loads(data, loc, flow)
+    inflow_port = 0
+    loads = []
+    data.fetch(:load_component, []).each do |lc|
+      next unless lc.fetch(:inflow) == flow and lc.fetch(:location_id) == loc
+      conn_info = [lc.fetch(:id), inflow_port]
+      loads << conn_info
+    end
+    loads
+  end
+
+  def self.get_stores(data, loc, flow)
+    inflow_port = 0
+    outflow_port = 0
+    stores = []
+    data.fetch(:storage_component, []).each do |sc|
+      next unless sc.fetch(:flow) == flow and sc.fetch(:location_id) == loc
+      conn_info = [sc.fetch(:id), inflow_port, outflow_port]
+      stores << conn_info
+    end
+    stores
+  end
+
+  def self.get_sources(data, loc, flow)
+    outflow_port = 0
+    sources = []
+    data.fetch(:source_component, []).each do |sc|
+      next unless sc.fetch(:outflow) == flow and sc.fetch(:location_id) == loc
+      conn_info = [sc.fetch(:id), outflow_port]
+      sources << conn_info
+    end
+    sources
+  end
+
+  def self.get_converters(data, loc, outflow)
+    outflow_port = 0
+    converters = []
+    data.fetch(:converter_component, []).each do |cc|
+      same_flow = (cc.fetch(:outflow) == outflow)
+      same_loc = (cc.fetch(:location_id) == loc)
+      next unless same_flow and same_loc
+      conn_info = [cc.fetch(:id), outflow_port]
+      converters << conn_info
+    end
+    converters
+  end
+
   # - data: (hash symbol various), a hash table with keys
   #   - :general, (Hash symbol value)
   #   - :load_component
@@ -192,6 +381,366 @@ class Support
   #     - :flow, string, the flow being stored (e.g., "electricity", "diesel", etc.)
   #     - :capacity_kWh, number, > 0, the capacity of the store in kWh
   #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
+  #   - :pass_through_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the pass-through
+  #     - :flow, string, the flow being passed through (e.g., 'electricity', 'diesel')
+  #   - :network_link, an array of Hash with keys:
+  #     - :source_location_id, string, location_id for the source of the flow
+  #     - :destination_location_id, string, location_id for the destination of the flow
+  #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
+  def self.generate_connections_v2(data)
+    puts("\n" + ("="*60))
+    data.keys.sort.each do |k|
+      puts("data[#{k}] = (length: #{data[k].length})\n#{data[k]}")
+    end
+    puts("-"*40)
+    ensure_components_have_ids(data)
+    inflow_points = {} # (Hash LocationID (Hash FuelID (Tuple ComponentID Port)))
+    outflow_points = {} # (Hash LocationID (Hash FuelID (Tuple ComponentID Port)))
+    locations = get_all_locations(data)
+    data[:connection] = []
+    locations.each do |loc|
+      puts("loc: #{loc}")
+      flows_at_location(data, loc).each do |flow|
+        puts("flow: #{flow}")
+        outbound_links = get_outbound_links(data, loc, flow)
+        inbound_links = get_inbound_links(data, loc, flow)
+        internal_loads = get_internal_loads(data, loc, flow)
+        loads = get_loads(data, loc, flow)
+        stores = get_stores(data, loc, flow)
+        sources = get_sources(data, loc, flow)
+        converters = get_converters(data, loc, flow)
+        num_outbound = outbound_links.length
+        num_inbound = inbound_links.length
+        num_internal_loads = internal_loads.length
+        num_loads = loads.length
+        num_stores = stores.length
+        num_sources = sources.length
+        num_converters = converters.length
+        puts(".. num_outbound: #{num_outbound}")
+        puts(".. num_inbound: #{num_inbound}")
+        puts(".. num_internal_loads: #{num_internal_loads}")
+        puts(".. num_loads: #{num_loads}")
+        puts(".. num_stores: #{num_stores}")
+        puts(".. num_sources: #{num_sources}")
+        puts(".. num_converters: #{num_converters}")
+        # 1. identify the connection info for the outflow point for this fuel and location IF ANY
+        # 2. identify the connection info for the inflow point for this fuel and location IF ANY
+        # 3. internally connect all components for the given location and fuel, creating buses if necessary
+        # FINAL OUTFLOWS / STORAGE COMPONENTS INTERFACE
+        num_total_outflows = (num_outbound > 0 ? 1 : 0) + num_internal_loads + num_loads
+        num_total_inflows = num_converters + (num_inbound > 0 ? 1 : 0) + num_sources    
+        if num_total_outflows == 1 and num_stores == 1
+          store_id, _, store_outport = stores[0]
+          if num_loads == 1
+            load_id, load_port = loads[0]
+            add_connection_(data, store_id, store_outport, load_id, load_port, flow)
+          elsif num_internal_loads == 1
+            il_id, il_port = internal_loads[0]
+            add_connection_(data, store_id, store_outport, il_id, il_port, flow)
+          elsif num_outbound > 0
+            conn_info = [store_id, store_outport]
+            if outflow_points.include?(loc)
+              outflow_points[loc][flow] = conn_info
+            else
+              outflow_points[loc] = {flow => conn_info} 
+            end
+          end
+        elsif num_total_outflows == 1 and num_stores > 1
+          bus = add_muxer_component(
+            data, loc, flow, num_stores, num_total_outflows)
+          stores.each_with_index do |s, idx|
+            id, _, outflow_port = s
+            add_connection_(data, id, outflow_port, bus, idx)
+          end
+          if num_loads == 1
+            load_id, load_port = loads[0]
+            add_connection_(data, bus, 0, load_id, load_port, flow)
+          elsif num_internal_loads == 1
+            il_id, il_port = internal_loads[0]
+            add_connection_(data, bus, 0, il_id, il_port, flow)
+          elsif num_outbound > 0
+            conn_info = [bus, 0]
+            if outflow_points.include?(loc)
+              outflow_points[loc][flow] = conn_info
+            else
+              outflow_points[loc] = {flow => conn_info} 
+            end
+          end
+        elsif num_total_outflows > 1 and num_stores == 1
+          bus = add_muxer_component(
+            data, loc, flow, num_stores, num_total_outflows)
+          store_id, _, store_port = stores[0]
+          add_connection_(data, store_id, store_port, bus, 0, flow)
+          loads.each_with_index do |ld, idx|
+            load_id, load_port = ld
+            add_connection_(
+              data, bus, idx, load_id, load_port, flow)
+          end
+          internal_loads.each_with_index do |il, idx|
+            id, port = il
+            add_connection_(data, bus, idx + num_loads, id, port, flow)
+          end
+          if num_outbound > 0
+            conn_info = [bus, num_loads + num_internal_loads]
+            if outflow_points.include?(loc)
+              outflow_points[loc][flow] = conn_info
+            else
+              outflow_points[loc] = {flow => conn_info} 
+            end
+          end
+        elsif num_total_outflows > 1 and num_stores > 1
+          bus = add_muxer_component(
+            data, loc, flow, num_total_inflows, num_total_outflows)
+          # connect up the bus: loads first, then internal loads, then an
+          # outbound link is stored in outflow_points if it exists (to be
+          # connected later)
+          loads.each_with_index do |ld, idx|
+            id, port = ld
+            add_connection_(data, bus, idx, id, port, flow)
+          end
+          internal_loads.each_with_index do |il, idx|
+            id, port = il
+            add_connection_(data, bus, idx + num_loads, id, port, flow)
+          end
+          if num_outbound > 0
+            conn_info = [bus, num_loads + num_internal_loads]
+            if outflow_points.include?(loc)
+              outflow_points[loc][flow] = conn_info
+            else
+              outflow_points[loc] = {flow => conn_info} 
+            end
+          end
+          stores.each_with_index do |s, idx|
+            id, _, port = s
+            add_connection_(data, id, port, bus, idx)
+          end
+        end
+        # STORAGE COMPONENTS AND FINAL OUTPUTS / CONVERTERS, INFLOWS, and SOURCES INTERFACE
+        if num_total_inflows == 1
+          if num_stores == 1
+            store_id, store_port, _ = stores[0]
+            sources.each do |s|
+              id, port = s
+              add_connection_(data, id, port, store_id, store_port, flow)
+            end
+            if num_inbound > 0
+              conn_info = [store_id, store_port]
+              if inflow_points.include?(loc)
+                inflow_points[loc][flow] = conn_info
+              else
+                inflow_points[loc] = {flow => conn_info}
+              end
+            end
+            converters.each_with_index do |cc, idx|
+              id, port = cc
+              add_connection_(data, id, port, store_id, store_port, flow)
+            end
+          elsif num_stores > 1
+            bus = add_muxer_component(
+              data, loc, flow, num_total_inflows, num_stores)
+            stores.each_with_index do |s, idx|
+              id, port, _ = s
+              add_connection_(data, bus, idx, id, port, flow)
+            end
+            sources.each_with_index do |s, idx|
+              id, port = s
+              add_connection_(data, id, port, bus, idx, flow)
+            end
+            if num_inbound > 0
+              conn_info = [bus, num_sources]
+              if inflow_points.include?(loc)
+                inflow_points[loc][flow] = conn_info
+              else
+                inflow_points[loc] = {flow => conn_info}
+              end
+            end
+            converters.each_with_index do |cc, idx|
+              id, port = cc
+              add_connection_(
+                data,
+                id, port,
+                bus, idx + num_sources + (num_inbound > 0 ? 1 : 0),
+                flow)
+            end
+          elsif num_stores == 0 and num_total_outflows == 1
+            sources.each do |sc|
+              sc_id, sc_port = sc
+              loads.each do |ld|
+                ld_id, ld_port = ld
+                add_connection_(data, sc_id, sc_port, ld_id, ld_port, flow)
+              end
+              internal_loads.each do |il|
+                il_id, il_port = il
+                add_connection_(data, sc_id, sc_port, il_id, il_port, flow)
+              end
+              if num_outbound > 0
+                conn_info = [sc_id, sc_port]
+                if outflow_points.include?(loc)
+                  outflow_points[loc][flow] = conn_info
+                else
+                  outflow_points[loc] = {flow => conn_info}
+                end
+              end
+            end
+            if num_inbound > 0
+              loads.each do |ld|
+                if inflow_points.include?(loc)
+                  inflow_points[loc][flow] = ld
+                else
+                  inflow_points[loc] = {flow => ld}
+                end
+              end
+              internal_loads.each do |il|
+                if inflow_points.include?(loc)
+                  inflow_points[loc][flow] = il
+                else
+                  inflow_points[loc] = {flow => il}
+                end
+              end
+              if num_outbound > 0
+                # for locations A, B, C, we have a link from A->B and B->C with
+                # some fuel but nothing is going on at B. Should we delete A->B
+                # and B->C and add A->C?
+                raise "not implemented"
+              end
+            end
+            converters.each do |cc|
+              id, port = cc
+              loads.each do |ld|
+                ld_id, ld_port = ld
+                add_connection_(data, id, port, ld_id, ld_port, flow)
+              end
+              internal_loads.each do |il|
+                il_id, il_port = il
+                add_connection_(data, id, port, il_id, il_port, flow)
+              end
+              if num_outbound > 0
+                conn_info = cc
+                if outflow_points.include?(loc)
+                  outflow_points[loc][flow] = conn_info
+                else
+                  outflow_points[loc] = {flow => conn_info}
+                end
+              end
+            end
+          elsif num_stores == 0 and num_total_outflows > 1
+          end
+        elsif num_total_inflows > 1
+          inbus = add_muxer_component(
+            data, loc, flow,
+            num_total_inflows,
+            (num_stores > 0 ? num_stores : num_total_outflows)
+          )
+          # connect to inbus: sources, inbound links, and converters
+          sources.each_with_index do |s, idx|
+            id, port = s
+            add_connection_(data, id, port, inbus, idx, flow)
+          end
+          if num_inbound > 0
+            conn_info = [inbus, num_sources]
+            if inflow_points.include?(loc)
+              inflow_points[loc][flow] = conn_info
+            else
+              inflow_points[loc] = {flow => conn_info}
+            end
+          end
+          converters.each_with_index do |cc, idx|
+            id, port = cc
+            add_connection_(
+              data,
+              id, port,
+              inbus, num_sources + (num_inbound > 0 ? 1 : 0),
+              flow
+            )
+          end
+          if num_stores > 0
+            stores.each_with_index do |sc, idx|
+              id, inport, _ = sc
+              add_connection_(data, inbus, idx, id, inport, flow) 
+            end
+          elsif num_total_outflows > 0
+            loads.each_with_index do |ld, idx|
+              id, port = ld
+              add_connection_(data, inbus, idx, id, port, flow)
+            end
+            internal_loads.each_with_index do |il, idx|
+              id, port = il
+              add_connection_(data, inbus, idx + num_loads, id, port, flow)
+            end
+            if num_outbound > 0
+              conn_info = [inbus, num_loads + num_internal_loads]
+              if outflow_points.include?(loc)
+                outflow_points[loc][flow] = conn_info
+              else
+                outflow_points[loc] = {flow => conn_info}
+              end
+            end
+          end
+        end
+      end
+    end
+    puts("inflow_points:\n#{inflow_points}")
+    puts("outflow_points:\n#{outflow_points}")
+    puts(("="*60) + "\n")
+    data.fetch(:network_link, []).each do |link|
+      src = link.fetch(:source_location_id)
+      tgt = link.fetch(:destination_location_id)
+      flow = link.fetch(:flow)
+      src_conn_info = outflow_points.fetch(src).fetch(flow)
+      tgt_conn_info = inflow_points.fetch(tgt).fetch(flow)
+      add_connection_(
+        data,
+        src_conn_info[0], src_conn_info[1],
+        tgt_conn_info[0], tgt_conn_info[1],
+        flow)
+    end
+    data
+  end
+
+  # - data: (hash symbol various), a hash table with keys
+  #   - :general, (Hash symbol value)
+  #   - :load_component
+  #   - :load_profile, an array of Hash with keys:
+  #     - :scenario_id
+  #     - :building_id
+  #     - :enduse
+  #     - :file
+  #   - :scenario, an array of Hash with keys:
+  #     - :id, string, scenario id
+  #     - :duration_in_hours, number, duration
+  #     - :occurrence_distribution, string, id of the distribution to use
+  #     - :calc_reliability, boolean string ("TRUE" or "FALSE")
+  #     - :max_occurrence, integer, -1 = unlimited; otherwise, the max number
+  #       of occurrences
+  #   - :load_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the load
+  #     - :inflow, string, the inflow type (e.g., 'electricity', 'heating',
+  #       'cooling', 'natural_gas', etc.)
+  #   - :converter_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the converter
+  #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", etc.)
+  #     - :outflow, string, the outflow type (e.g., "electricity", "heating", etc.)
+  #     - :lossflow, string, optional. defaults to "waste_heat". The lossflow stream
+  #     - :constant_efficiency, number, where 0.0 < efficiency <= 1.0, the efficiency of conversion
+  #   - :muxer_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the muxer
+  #     - :flow, string, the type of flow through the muxer (e.g., 'electricity', 'natural_gas', 'coal', etc.)
+  #     - :num_inflows, integer, number > 0, the number of inflow ports
+  #     - :num_outflows, integer, number > 0, the number of outflow ports
+  #   - :source_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the source
+  #     - :outflow, string, the outflow provided (e.g., 'electricity', 'natural_gas', 'diesel')
+  #     - :is_limited, boolean string ("TRUE" or "FALSE"), whether or not the source is limited
+  #     - :max_outflow_kW, number, the maximum outflow in kW
+  #   - :storage_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the storage
+  #     - :flow, string, the flow being stored (e.g., "electricity", "diesel", etc.)
+  #     - :capacity_kWh, number, > 0, the capacity of the store in kWh
+  #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
+  #   - :pass_through_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the pass-through
+  #     - :flow, string, the flow being passed through (e.g., 'electricity', 'diesel')
   #   - :network_link, an array of Hash with keys:
   #     - :source_location_id, string, location_id for the source of the flow
   #     - :destination_location_id, string, location_id for the destination of the flow
@@ -299,7 +848,8 @@ class Support
     end
     connect_pts.each do |loc, flow_map|
       flow_map.each do |flow, conn_info|
-        src = find_flow_source_for_location(data, loc, flow)
+        #src = find_flow_source_for_location(data, loc, flow)
+        src = find_sources_for_location(data, loc, flow)
         next if src.nil?
         id, port = conn_info
         add_connection_(data, src.fetch(:id), 0, id, port, flow)

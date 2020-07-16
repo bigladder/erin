@@ -403,6 +403,47 @@ class Support
     end
   end
 
+  def self.connect_sinks_to_upstream_bus(data, groups, bus, flow, max=nil, start_port=nil)
+    n = 0
+    conn_port = start_port || 0
+    groups.each do |conns|
+      conns.each_with_index do |conn, idx|
+        if !max.nil? and n >= max
+          puts "data:\n#{data}"
+          puts "groups:\n#{groups}"
+          puts "bus:\n#{bus}"
+          puts "flow:\n#{flow}"
+          puts "max:\n#{max}"
+          puts "start_port:\n#{start_port}"
+          puts "n:\n#{n}"
+          raise "More than the maximum number of connections made!"
+        end
+        id, port = conn
+        add_connection_(data, bus, conn_port, id, port, flow)
+        conn_port += 1
+        n += 1
+      end
+    end
+    n
+  end
+
+  def self.connect_sources_to_downstream_bus(data, groups, bus, flow, max=nil, start_port=nil)
+    n = 0
+    conn_port = start_port || 0
+    groups.each do |conns|
+      conns.each_with_index do |conn, idx|
+        if !max.nil? and n >= max
+          raise "More than the maximum number of connections made!"
+        end
+        id, port = conn
+        add_connection_(data, id, port, bus, conn_port, flow)
+        conn_port += 1
+        n += 1
+      end
+    end
+    n
+  end
+
   # - data: (hash symbol various), a hash table with keys
   #   - :general, (Hash symbol value)
   #   - :load_component
@@ -491,167 +532,95 @@ class Support
         num_total_inflows = num_converters + (num_inbound > 0 ? 1 : 0) + num_sources    
         if num_total_outflows == 1 and num_stores == 1
           store_id, _, store_outport = stores[0]
-          if num_loads == 1
-            load_id, load_port = loads[0]
-            add_connection_(data, store_id, store_outport, load_id, load_port, flow)
-          elsif num_internal_loads == 1
-            il_id, il_port = internal_loads[0]
-            add_connection_(data, store_id, store_outport, il_id, il_port, flow)
-          elsif num_outbound > 0
+          connect_sinks_to_upstream_bus(
+            data, [loads, internal_loads], store_id, flow, 1)
+          if num_outbound > 0
             conn_info = [store_id, store_outport]
             assign_in_hash(outflow_points, [loc, flow], conn_info)
           end
         elsif num_total_outflows > 0 and num_stores > 0
           bus = add_muxer_component(
             data, loc, flow, num_total_inflows, num_total_outflows)
-          # connect up the bus: loads first, then internal loads, then an
-          # outbound link is stored in outflow_points if it exists (to be
-          # connected later)
-          loads.each_with_index do |ld, idx|
-            id, port = ld
-            add_connection_(data, bus, idx, id, port, flow)
-          end
-          internal_loads.each_with_index do |il, idx|
-            id, port = il
-            add_connection_(data, bus, idx + num_loads, id, port, flow)
-          end
+          connect_sinks_to_upstream_bus(
+            data, [loads, internal_loads], bus, flow)
           if num_outbound > 0
             conn_info = [bus, num_loads + num_internal_loads]
             assign_in_hash(outflow_points, [loc, flow], conn_info)
           end
-          stores.each_with_index do |s, idx|
-            id, _, port = s
-            add_connection_(data, id, port, bus, idx, flow)
-          end
+          connect_sources_to_downstream_bus(data, [stores], bus, flow)
         end
         # STORAGE COMPONENTS AND FINAL OUTPUTS / CONVERTERS, INFLOWS, and SOURCES INTERFACE
-        if num_total_inflows == 1
-          if num_stores == 1
-            store_id, store_port, _ = stores[0]
-            sources.each do |s|
-              id, port = s
-              add_connection_(data, id, port, store_id, store_port, flow)
-            end
-            if num_inbound > 0
-              conn_info = [store_id, store_port]
-              if inflow_points.include?(loc)
-                inflow_points[loc][flow] = conn_info
-              else
-                inflow_points[loc] = {flow => conn_info}
-              end
-            end
-            converters.each_with_index do |cc, idx|
-              id, port = cc
-              add_connection_(data, id, port, store_id, store_port, flow)
-            end
-          elsif num_stores > 1
-            bus = add_muxer_component(
-              data, loc, flow, num_total_inflows, num_stores)
-            stores.each_with_index do |s, idx|
-              id, port, _ = s
-              add_connection_(data, bus, idx, id, port, flow)
-            end
-            sources.each_with_index do |s, idx|
-              id, port = s
-              add_connection_(data, id, port, bus, idx, flow)
-            end
-            if num_inbound > 0
-              conn_info = [bus, num_sources]
-              assign_in_hash(inflow_points, [loc, flow], conn_info)
-            end
-            converters.each_with_index do |cc, idx|
-              id, port = cc
-              add_connection_(
-                data,
-                id, port,
-                bus, idx + num_sources + (num_inbound > 0 ? 1 : 0),
-                flow)
-            end
-          elsif num_stores == 0 and num_total_outflows == 1
-            sources.each do |sc|
-              sc_id, sc_port = sc
-              loads.each do |ld|
-                ld_id, ld_port = ld
-                add_connection_(data, sc_id, sc_port, ld_id, ld_port, flow)
-              end
-              internal_loads.each do |il|
-                il_id, il_port = il
-                add_connection_(data, sc_id, sc_port, il_id, il_port, flow)
-              end
-              if num_outbound > 0
-                conn_info = [sc_id, sc_port]
-                assign_in_hash(outflow_points, [loc, flow], conn_info)
-              end
-            end
-            if num_inbound > 0
-              loads.each do |ld|
-                assign_in_hash(inflow_points, [loc, flow], ld)
-              end
-              internal_loads.each do |il|
-                assign_in_hash(inflow_points, [loc, flow], il)
-              end
-              if num_outbound > 0
-                # for locations A, B, C, we have a link from A->B and B->C with
-                # some fuel but nothing is going on at B. Should we delete A->B
-                # and B->C and add A->C?
-                raise "not implemented"
-              end
-            end
-            converters.each do |cc|
-              id, port = cc
-              loads.each do |ld|
-                ld_id, ld_port = ld
-                add_connection_(data, id, port, ld_id, ld_port, flow)
-              end
-              internal_loads.each do |il|
-                il_id, il_port = il
-                add_connection_(data, id, port, il_id, il_port, flow)
-              end
-              if num_outbound > 0
-                conn_info = cc
-                assign_in_hash(outflow_points, [loc, flow], conn_info)
-              end
-            end
-          elsif num_stores == 0 and num_total_outflows > 1
+        if num_total_inflows == 1 and num_stores == 1
+          store_id, store_port, _ = stores[0]
+          next_port = connect_sources_to_downstream_bus(
+            data, [sources], store_id, flow, 1)
+          if num_inbound > 0
+            conn_info = [store_id, store_port]
+            assign_in_hash(inflow_points, [loc, flow], conn_info)
           end
-        elsif num_total_inflows > 1
+          connect_sources_to_downstream_bus(
+            data, [converters], store_id, flow, 1, next_port) if next_port == 0 and num_inbound == 0
+        elsif num_total_inflows > 0 and num_stores > 0
+          bus = add_muxer_component(
+            data, loc, flow, num_total_inflows, num_stores)
+          connect_sinks_to_upstream_bus(data, [stores], bus, flow)
+          connect_sources_to_downstream_bus(data, [sources], bus, flow)
+          assign_in_hash(inflow_points, [loc, flow], [bus, num_sources]) if num_inbound > 0
+          connect_sources_to_downstream_bus(
+            data, [converters], bus, flow, nil,
+            num_sources + (num_inbound > 0 ? 1 : 0))
+        elsif num_stores == 0 and num_total_outflows == 1 and num_total_inflows == 1
+          sources.each do |sc|
+            sc_id, sc_port = sc
+            if num_loads > 0 or num_internal_loads > 0
+              connect_sinks_to_upstream_bus(
+                data, [loads, internal_loads], sc_id, flow, 1, sc_port)
+            end
+            assign_in_hash(outflow_points, [loc, flow], sc) if num_outbound > 0
+          end
+          if num_inbound > 0
+            loads.each do |ld|
+              assign_in_hash(inflow_points, [loc, flow], ld)
+            end
+            internal_loads.each do |il|
+              assign_in_hash(inflow_points, [loc, flow], il)
+            end
+            if num_outbound > 0
+              # for locations A, B, C, we have a link from A->B and B->C with
+              # some fuel but nothing is going on at B. Should we delete A->B
+              # and B->C and add A->C?
+              raise "not implemented"
+            end
+          end
+          converters.each do |cc|
+            id, port = cc
+            if num_loads > 0 or num_internal_loads > 0
+              connect_sinks_to_upstream_bus(
+                data, [loads, internal_loads], id, flow, 1, port)
+            end
+            assign_in_hash(outflow_points, [loc, flow], cc) if num_outbound > 0
+          end
+        elsif num_stores == 0 and num_total_outflows > 0 and num_total_inflows > 0
           inbus = add_muxer_component(
             data, loc, flow,
             num_total_inflows,
             (num_stores > 0 ? num_stores : num_total_outflows)
           )
-          # connect to inbus: sources, inbound links, and converters
-          sources.each_with_index do |s, idx|
-            id, port = s
-            add_connection_(data, id, port, inbus, idx, flow)
-          end
+          connect_sources_to_downstream_bus(
+            data, [sources], inbus, flow)
           if num_inbound > 0
             conn_info = [inbus, num_sources]
             assign_in_hash(inflow_points, [loc, flow], conn_info)
           end
-          converters.each_with_index do |cc, idx|
-            id, port = cc
-            add_connection_(
-              data,
-              id, port,
-              inbus, num_sources + (num_inbound > 0 ? 1 : 0),
-              flow
-            )
-          end
+          connect_sources_to_downstream_bus(
+            data, [converters], inbus, flow,
+            nil, num_sources + (num_inbound > 0 ? 1 : 0))
           if num_stores > 0
-            stores.each_with_index do |sc, idx|
-              id, inport, _ = sc
-              add_connection_(data, inbus, idx, id, inport, flow) 
-            end
+            connect_sinks_to_upstream_bus(
+              data, [stores], inbus, flow)
           elsif num_total_outflows > 0
-            loads.each_with_index do |ld, idx|
-              id, port = ld
-              add_connection_(data, inbus, idx, id, port, flow)
-            end
-            internal_loads.each_with_index do |il, idx|
-              id, port = il
-              add_connection_(data, inbus, idx + num_loads, id, port, flow)
-            end
+            connect_sinks_to_upstream_bus(
+              data, [loads, internal_loads], inbus, flow)
             if num_outbound > 0
               conn_info = [inbus, num_loads + num_internal_loads]
               assign_in_hash(outflow_points, [loc, flow], conn_info)

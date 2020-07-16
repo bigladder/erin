@@ -920,7 +920,6 @@ class Support
     end
     connect_pts.each do |loc, flow_map|
       flow_map.each do |flow, conn_info|
-        #src = find_flow_source_for_location(data, loc, flow)
         src = find_sources_for_location(data, loc, flow)
         next if src.nil?
         id, port = conn_info

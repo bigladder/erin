@@ -62,8 +62,6 @@ input_stream = "<%= c[:inflow] %>"
 loads_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
 <%   end %>
 <% end %>
-<% %>
-<% %>
 ############################################################
 # Fragility Curves
 <% data.fetch(:fragility_curve, []).each do |fc| %>

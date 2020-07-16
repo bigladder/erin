@@ -253,28 +253,19 @@ class Support
   # RETURN: (Array string), the flows at a given location
   def self.flows_at_location(data, loc)
     flows = Set.new
-    data.fetch(:load_component, []).each do |lc|
-      next unless lc.fetch(:location_id) == loc
-      flows << lc.fetch(:inflow)
-    end
-    data.fetch(:converter_component, []).each do |cc|
-      next unless cc.fetch(:location_id) == loc
-      flows << cc.fetch(:inflow)
-      flows << cc.fetch(:outflow)
-    end
-    data.fetch(:source_component, []).each do |sc|
-      next unless sc.fetch(:location_id) == loc
-      flows << sc.fetch(:outflow)
-    end
-    data.fetch(:storage_component, []).each do |sc|
-      next unless sc.fetch(:location_id) == loc
-      flows << sc.fetch(:flow)
-    end
-    data.fetch(:network_link, []).each do |link|
-      src = link.fetch(:source_location_id)
-      dst = link.fetch(:destination_location_id)
-      next unless src == loc or dst == loc
-      flows << link.fetch(:flow)
+    comps = [
+      [:load_component, [:location_id], [:inflow]],
+      [:converter_component, [:location_id], [:inflow, :outflow]],
+      [:source_component, [:location_id], [:outflow]],
+      [:storage_component, [:location_id], [:flow]],
+      [:network_link, [:source_location_id, :destination_location_id], [:flow]],
+    ]
+    comps.each do |k, loc_keys, flow_keys|
+      data.fetch(k, []).each do |c|
+        flag = loc_keys.reduce(false) {|f, k| f or (c.fetch(k)==loc)}
+        next unless flag
+        flow_keys.each {|k| flows << c.fetch(k)}
+      end
     end
     flows.to_a.sort
   end

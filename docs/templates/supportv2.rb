@@ -566,16 +566,14 @@ class Support
       src = link.fetch(:source_location_id)
       tgt = link.fetch(:destination_location_id)
       flow = link.fetch(:flow)
-      scs = points.fetch(src, {}).fetch(flow, {}).fetch(:source, nil)
-      tcs = points.fetch(tgt, {}).fetch(flow, {}).fetch(:dest, nil)
-      if scs.nil? or tcs.nil?
-        puts "WARNING! Bad Network Data"
-        puts "Trying to connect #{src} to #{tgt} for #{flow} "\
-          "but no available connections"
-      else
-        sc = scs.shift unless scs.nil?
-        tc = scs.shift unless tcs.nil?
+      begin
+        sc = points[src][flow][:source].shift
+        tc = points[tgt][flow][:dest].shift
         add_connection(sc[0], sc[1], tc[0], tc[1], flow)
+      rescue
+        puts "WARNING! Bad Connection"
+        puts "Trying to connect '#{src}' to '#{tgt}' with '#{flow}' "\
+          "but insufficient connection information"
       end
     end
   end

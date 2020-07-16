@@ -90,6 +90,7 @@ class Support
         c[:id] = id
       end
     end
+    nil
   end
 
   # find and return the source component object for location_id and flow. If

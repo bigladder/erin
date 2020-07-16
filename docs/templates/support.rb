@@ -30,6 +30,10 @@ class Support
     @comps.keys.sort.map {|k| @comps[k]}
   end
 
+  # - data: Hash
+  # SIDE_EFFECT: Adds the set :ids_in_use to Hash if doesn't exist, else
+  # returns the existing key
+  # RETURN: (Set string), the ids in use
   def self.get_ids_in_use(data)
     ids_in_use = nil
     if data.include?(:ids_in_use)
@@ -41,6 +45,12 @@ class Support
     ids_in_use
   end
 
+  # - data: Hash, the data dictionary
+  # - id: string, the identity to make unique
+  # SIDE-EFFECT: stores the unique identity in "ids_in_use" to ensure we don't
+  # duplicate an id. Makes an id unique by adding a number at the end of the
+  # standard tag or incrementing an existing number
+  # RETURN: string, the unique identity
   def self.make_id_unique(data, id)
     ids_in_use = get_ids_in_use(data)
     test_id = id

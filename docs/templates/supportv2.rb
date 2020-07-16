@@ -61,7 +61,7 @@ class Support
     :storage_component,
   )
 
-  def initialize(data)
+  def initialize(data, root_path=nil)
     @ids_in_use = Set.new
     @converter_component = data.fetch(:converter_component, [])
     @load_component = data.fetch(:load_component, [])
@@ -70,6 +70,7 @@ class Support
     @network_link = data.fetch(:network_link, [])
     @source_component = data.fetch(:source_component, [])
     @storage_component = data.fetch(:storage_component, [])
+    expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids
     @connections = []
     generate_connections
@@ -119,6 +120,13 @@ class Support
   end
 
   private
+
+  def expand_load_profile_paths(root_path)
+    @load_profile.each do |lp|
+      bn = File.basename(lp[:file])
+      lp[:file] = File.expand_path(File.join(root_dir, bn))
+    end
+  end
 
   # - id: string, the identity to make unique
   # SIDE-EFFECT: stores the unique identity in "ids_in_use" to ensure we don't

@@ -5,6 +5,7 @@ parameter "load_profile_csv_path", :default=>"load-profile.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
 parameter "building_level_csv_path", :default=>"building-level.csv"
 parameter "node_level_csv_path", :default=>"node-level.csv"
+parameter "expand_load_paths", :default=>false
 %>
 <%
    require 'set'
@@ -19,7 +20,11 @@ parameter "node_level_csv_path", :default=>"node-level.csv"
      data[:source_component] = Support.load_csv("ex-v2-source-component.csv")
      data[:network_link] = Support.load_csv("ex-v2-network-link.csv")
    end
-   s = Support.new(data)
+   if expand_load_paths
+     s = Support.new(data, THIS_DIR)
+   else
+     s = Support.new(data)
+   end
 %>
 ############################################################
 # General Simulation Information

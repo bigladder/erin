@@ -93,14 +93,34 @@ class Support
     nil
   end
 
-  #def self.find_components_by_location_and_flow(data, loc, flow, comp_type, flow_key)
-  #  cs = []
-  #  data.fetch(comp_type, []).each do |c|
-  #    next unless (c[flow_key] == flow) and (c[:location_id] == loc)
-  #    cs << c
-  #  end
-  #  cs
-  #end
+  # - data: Hash, the data dictionary
+  # - loc: string, location id
+  # - flow: string, flow id
+  # - comp_type: symbol, the key into data for the array of components
+  # - loc_key: symbol, the key into the items in the array of components above
+  #   for location to filter on
+  # - flow_key: symbol, the key into the items in the array of components that
+  #   yields flow to filter on
+  # - container: (or nil container), an optional container to pass in and use
+  # RETURN: (Container Hash), the components selected by location and flow
+  # Note: defaults to a container type of Array
+  def self.get_components_by_location_and_flow(data, loc, flow, comp_type, loc_key, flow_key, container=nil)
+    cs = container || []
+    data.fetch(comp_type, []).each do |c|
+      same_flow = c.fetch(flow_key) == flow
+      same_loc = c.fetch(loc_key) == loc
+      next unless same_flow and same_loc
+      cs << c
+    end
+    cs
+  end
+
+  def self.get_conn_info_by_location_and_flow(data, loc, flow, comp_type, loc_key, flow_key, ports)
+    get_components_by_location_and_flow(
+      data, loc, flow, comp_type, loc_key, flow_key).map do |c|
+        [c.fetch(:id)] + ports
+    end
+  end
 
   # !!! DEPRECATE !!!
   #
@@ -270,118 +290,52 @@ class Support
     flows.to_a.sort
   end
 
-  def self.get_outflows_at_location(data, location_id)
-    comp_keys = [
-      [:source_component, :outflow],
-      #[:load_component, ], # no outflows for a load
-      [:converter_component, :outflow],
-      [:storage_component, :flow],
-      #[:muxer_component, :flow],
-    ]
-    outflows = Set.new
-    comp_keys.each do |k, attr|
-      data.fetch(k, []).each do |c|
-        outflows << c[attr]
-      end
-    end
-    outflows 
-  end
-
-  def self.get_inflows_at_location(data, location_id)
-    comp_keys = [
-      # [:source_component, :outflow], # no inflows for a source
-      [:load_component, :inflow], # no outflows for a load
-      [:converter_component, :inflow],
-      [:storage_component, :flow],
-      #[:muxer_component, :flow],
-    ]
-    inflows = Set.new
-    comp_keys.each do |k, attr|
-      data.fetch(k, []).each do |c|
-        inflows << c[attr]
-      end
-    end
-    inflows 
-  end
-
   def self.get_outbound_links(data, source_location_id, flow_id)
-    outbound_links = []
-    data.fetch(:network_link, []).each do |link|
-      flow = link.fetch(:flow)
-      src_loc = link.fetch(:source_location_id)
-      next unless (src_loc == source_location_id) and (flow == flow_id)
-      outbound_links << link
-    end
-    outbound_links
+    get_components_by_location_and_flow(
+      data, source_location_id, flow_id,
+      :network_link, :source_location_id, :flow)
   end
 
   def self.get_inbound_links(data, dest_location_id, flow_id)
-    inbound_links = []
-    data.fetch(:network_link, []).each do |link|
-      flow = link.fetch(:flow)
-      dest_loc = link.fetch(:destination_location_id)
-      next unless (dest_location_id == dest_loc) and (flow_id == flow)
-      inbound_links << link
-    end
-    inbound_links
+    get_components_by_location_and_flow(
+      data, dest_location_id, flow_id,
+      :network_link, :destination_location_id, :flow)
   end
 
   def self.get_internal_loads(data, loc, flow)
     inflow_port = 0
-    loads = []
-    data.fetch(:converter_component, []).each do |cc|
-      next unless cc.fetch(:location_id) == loc and cc.fetch(:inflow) == flow
-      conn_info = [cc.fetch(:id), inflow_port]
-      loads << conn_info
-    end
-    loads
+    get_conn_info_by_location_and_flow(
+      data, loc, flow,
+      :converter_component, :location_id, :inflow, [inflow_port])
   end
 
   def self.get_loads(data, loc, flow)
     inflow_port = 0
-    loads = []
-    data.fetch(:load_component, []).each do |lc|
-      next unless lc.fetch(:inflow) == flow and lc.fetch(:location_id) == loc
-      conn_info = [lc.fetch(:id), inflow_port]
-      loads << conn_info
-    end
-    loads
+    get_conn_info_by_location_and_flow(
+      data, loc, flow,
+      :load_component, :location_id, :inflow, [inflow_port])
   end
 
   def self.get_stores(data, loc, flow)
     inflow_port = 0
     outflow_port = 0
-    stores = []
-    data.fetch(:storage_component, []).each do |sc|
-      next unless sc.fetch(:flow) == flow and sc.fetch(:location_id) == loc
-      conn_info = [sc.fetch(:id), inflow_port, outflow_port]
-      stores << conn_info
-    end
-    stores
+    get_conn_info_by_location_and_flow(
+      data, loc, flow,
+      :storage_component, :location_id, :flow, [inflow_port, outflow_port])
   end
 
   def self.get_sources(data, loc, flow)
     outflow_port = 0
-    sources = []
-    data.fetch(:source_component, []).each do |sc|
-      next unless sc.fetch(:outflow) == flow and sc.fetch(:location_id) == loc
-      conn_info = [sc.fetch(:id), outflow_port]
-      sources << conn_info
-    end
-    sources
+    get_conn_info_by_location_and_flow(
+      data, loc, flow,
+      :source_component, :location_id, :outflow, [outflow_port])
   end
 
   def self.get_converters(data, loc, outflow)
     outflow_port = 0
-    converters = []
-    data.fetch(:converter_component, []).each do |cc|
-      same_flow = (cc.fetch(:outflow) == outflow)
-      same_loc = (cc.fetch(:location_id) == loc)
-      next unless same_flow and same_loc
-      conn_info = [cc.fetch(:id), outflow_port]
-      converters << conn_info
-    end
-    converters
+    get_conn_info_by_location_and_flow(
+      data, loc, outflow,
+      :converter_component, :location_id, :outflow, [outflow_port])
   end
 
   # - data: (hash symbol various), a hash table with keys

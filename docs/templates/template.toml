@@ -5,6 +5,7 @@ parameter "load_profile_csv_path", :default=>"load-profile.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
 parameter "building_level_csv_path", :default=>"building-level.csv"
 parameter "node_level_csv_path", :default=>"node-level.csv"
+parameter "expand_load_paths", :default=>false
 %>
 <% require_relative 'support.rb'                                               %>
 <% THIS_DIR = File.dirname(__FILE__)                                           %>
@@ -13,6 +14,12 @@ parameter "node_level_csv_path", :default=>"node-level.csv"
 <% Dir.chdir(THIS_DIR) do                                                      %>
 <%   general = Support.load_key_value_csv(general_csv_path)                    %>
 <%   load_profile = Support.load_csv(load_profile_csv_path)                    %>
+<%   if expand_load_paths                                                      %>
+<%     load_profile.each do |lp|                                               %>
+<%       bn = File.basename(lp[:file])                                         %>
+<%       lp[:file] = File.expand_path(File.join(THIS_DIR, bn))                 %>
+<%     end                                                                     %>
+<%   end                                                                       %>
 <%   scenario = Support.load_csv(scenario_csv_path)                            %>
 <%   building_level = Support.load_csv(building_level_csv_path)                %>
 <%   node_level = Support.load_csv(node_level_csv_path)                        %>

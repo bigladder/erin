@@ -4,3 +4,4 @@
 :scenario_csv_path => "ex-scenario.csv",
 :building_level_csv_path => "ex-building-level.csv",
 :node_level_csv_path => "ex-node-level.csv",
+:expand_load_paths => true,

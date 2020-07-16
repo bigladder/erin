@@ -2,10 +2,10 @@
 # Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
 # See the LICENSE file for additional terms and conditions.
 ######################################################################
-# This is a unit test file for template.toml and various examples of exercising it.
-# This module uses Ruby's standard unit test library, MiniTest
-# This library assumes that Modelkit is installed and available from the
-# commandline
+# This is a unit test library for the support library for use in conjunction
+# with template.toml. This module uses Ruby's standard unit test library,
+# MiniTest This library assumes that Modelkit is installed and available from
+# the commandline.
 require 'csv'
 require 'fileutils'
 require 'minitest/autorun'

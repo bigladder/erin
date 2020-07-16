@@ -501,42 +501,7 @@ class Support
             conn_info = [store_id, store_outport]
             assign_in_hash(outflow_points, [loc, flow], conn_info)
           end
-        elsif num_total_outflows == 1 and num_stores > 1
-          bus = add_muxer_component(
-            data, loc, flow, num_stores, num_total_outflows)
-          stores.each_with_index do |s, idx|
-            id, _, outflow_port = s
-            add_connection_(data, id, outflow_port, bus, idx, flow)
-          end
-          if num_loads == 1
-            load_id, load_port = loads[0]
-            add_connection_(data, bus, 0, load_id, load_port, flow)
-          elsif num_internal_loads == 1
-            il_id, il_port = internal_loads[0]
-            add_connection_(data, bus, 0, il_id, il_port, flow)
-          elsif num_outbound > 0
-            conn_info = [bus, 0]
-            assign_in_hash(outflow_points, [loc, flow], conn_info)
-          end
-        elsif num_total_outflows > 1 and num_stores == 1
-          bus = add_muxer_component(
-            data, loc, flow, num_stores, num_total_outflows)
-          store_id, _, store_port = stores[0]
-          add_connection_(data, store_id, store_port, bus, 0, flow)
-          loads.each_with_index do |ld, idx|
-            load_id, load_port = ld
-            add_connection_(
-              data, bus, idx, load_id, load_port, flow)
-          end
-          internal_loads.each_with_index do |il, idx|
-            id, port = il
-            add_connection_(data, bus, idx + num_loads, id, port, flow)
-          end
-          if num_outbound > 0
-            conn_info = [bus, num_loads + num_internal_loads]
-            assign_in_hash(outflow_points, [loc, flow], conn_info)
-          end
-        elsif num_total_outflows > 1 and num_stores > 1
+        elsif num_total_outflows > 0 and num_stores > 0
           bus = add_muxer_component(
             data, loc, flow, num_total_inflows, num_total_outflows)
           # connect up the bus: loads first, then internal loads, then an
@@ -556,7 +521,7 @@ class Support
           end
           stores.each_with_index do |s, idx|
             id, _, port = s
-            add_connection_(data, id, port, bus, idx)
+            add_connection_(data, id, port, bus, idx, flow)
           end
         end
         # STORAGE COMPONENTS AND FINAL OUTPUTS / CONVERTERS, INFLOWS, and SOURCES INTERFACE

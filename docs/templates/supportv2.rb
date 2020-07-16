@@ -54,6 +54,7 @@ class Support
     :connections,
     :converter_component,
     :load_component,
+    :load_profile,
     :muxer_component,
     :network_link,
     :source_component,
@@ -64,6 +65,7 @@ class Support
     @ids_in_use = Set.new
     @converter_component = data.fetch(:converter_component, [])
     @load_component = data.fetch(:load_component, [])
+    @load_profile = data.fetch(:load_profile, [])
     @muxer_component = data.fetch(:muxer_component, [])
     @network_link = data.fetch(:network_link, [])
     @source_component = data.fetch(:source_component, [])
@@ -142,11 +144,13 @@ class Support
   # RETURN: nil, adds ids to the components if they don't already have them
   def ensure_components_have_ids
     comp_infos = [
-      [@source_component, [:location_id, :outflow], "source"],
-      [@load_component, [:location_id, :inflow], ""],
       [@converter_component, [:location_id, :outflow], "generator"],
+      [@load_component, [:location_id, :inflow], ""],
+      [@load_profile, [:building_id, :enduse, :scenario_id], ""],
+      [@source_component, [:location_id, :outflow], "source"],
       [@storage_component, [:location_id, :flow], "store"],
     ]
+    # lp[:id] = "#{lp[:building_id]}_#{lp[:enduse]}_#{lp[:scenario_id]}" %>
     comp_infos.each do |tuple|
       cs, attribs, postfix = tuple
       cs.each do |c|
@@ -562,9 +566,17 @@ class Support
       src = link.fetch(:source_location_id)
       tgt = link.fetch(:destination_location_id)
       flow = link.fetch(:flow)
-      sc = points[src][flow][:source].shift
-      tc = points[tgt][flow][:dest].shift
-      add_connection(sc[0], sc[1], tc[0], tc[1], flow)
+      scs = points.fetch(src, {}).fetch(flow, {}).fetch(:source, nil)
+      tcs = points.fetch(tgt, {}).fetch(flow, {}).fetch(:dest, nil)
+      if scs.nil? or tcs.nil?
+        puts "WARNING! Bad Network Data"
+        puts "Trying to connect #{src} to #{tgt} for #{flow} "\
+          "but no available connections"
+      else
+        sc = scs.shift unless scs.nil?
+        tc = scs.shift unless tcs.nil?
+        add_connection(sc[0], sc[1], tc[0], tc[1], flow)
+      end
     end
   end
 end

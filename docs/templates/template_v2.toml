@@ -18,8 +18,6 @@ parameter "node_level_csv_path", :default=>"node-level.csv"
      data[:load_component] = Support.load_csv("ex-v2-load-component.csv")
      data[:source_component] = Support.load_csv("ex-v2-source-component.csv")
      data[:network_link] = Support.load_csv("ex-v2-network-link.csv")
-     data[:location] = Set.new
-     data[:connections] = []
    end
    s = Support.new(data)
 %>
@@ -35,16 +33,13 @@ random_seed = <%= data[:general][:random_seed].to_i %> # ...
 max_time = <%= data[:general][:simulation_duration_in_years] %> # ...
 ############################################################
 # Load Profiles
-<% data[:load_profile].each do |lp| %>
-<%   lp[:id] = "#{lp[:building_id]}_#{lp[:enduse]}_#{lp[:scenario_id]}" %>
+<% s.load_profile.each do |lp| %>
 [loads.<%= lp[:id] %>]
 csv_file = "<%= lp[:file] %>"
 <% end %>
 ############################################################
 # Components
-<% data[:source_component].each do |c| %>
-<%   c[:id] = "#{c[:location_id]}_#{c[:outflow]}_source" %>
-<%   data[:location] << c[:location_id] %>
+<% s.source_component.each do |c| %>
 [components.<%= c[:id] %>]
 type = "source"
 outflow = "<%= c[:outflow] %>"
@@ -52,9 +47,7 @@ outflow = "<%= c[:outflow] %>"
 max_outflow = <%= c[:max_outflow_kW] %> # ...
 <%   end %>
 <% end %>
-<% data[:load_component].each do |c| %>
-<%   c[:id] = "#{c[:location_id]}_#{c[:inflow]}" %>
-<%   data[:location] << c[:location_id] %>
+<% s.load_component.each do |c| %>
 [components.<%= c[:id] %>]
 type = "load"
 input_stream = "<%= c[:inflow] %>"
@@ -68,39 +61,39 @@ loads_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
 <% %>
 ############################################################
 # Fragility Curves
-<% %>
+<% data.fetch(:fragility_curve, []).each do |fc| %>
 [fragility.]
 vulnerable_to = ""
 type = "linear"
 lower_bound = 2.0 # ...
 upper_bound = 6.0 # ...
-<% %>
+<% end %>
 ############################################################
 # Cumulative Distribution Functions
-<% %>
+<% data.fetch(:fixed_cdf, []).each do |cdf| %>
 [cdf.]
 type = "fixed"
 value = <%= 5 %> # ...
 time_unit = "seconds"
-<% %>
-<% %>
+<% end %>
+<% data.fetch(:uniform_cdf, []).each do |cdf| %>
 [cdf.]
 type = "uniform"
 value = <%= 5 %> # ...
 time_unit = "seconds"
-<% %>
+<% end %>
 ############################################################
 # Failure Modes
-<% %>
+<% data.fetch(:failure_mode, []).each do |fm| %>
 [failure_mode.]
 failure_cdf = ""
 repair_cdf = ""
-<% %>
+<% end %>
 ############################################################
 # Networks
 [networks.nw]
 connections = [
-<% data[:connections].each do |conn| %>
+<% s.connections.each do |conn| %>
   ["<%= conn[0] %>", "<%= conn[1] %>", "<%= conn[2] %>"],
 <% end %>
   ]

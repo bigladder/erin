@@ -421,9 +421,6 @@ class Support
         puts(".. num_stores: #{num_stores}") if verbose
         puts(".. num_sources: #{num_sources}") if verbose
         puts(".. num_converters: #{num_converters}") if verbose
-        # 1. identify the connection info for the outflow point for this fuel and location IF ANY
-        # 2. identify the connection info for the inflow point for this fuel and location IF ANY
-        # 3. internally connect all components for the given location and fuel, creating buses if necessary
         # FINAL OUTFLOWS / STORAGE COMPONENTS INTERFACE
         num_total_outflows = (num_outbound > 0 ? 1 : 0) + num_internal_loads + num_loads
         num_total_inflows = num_converters + (num_inbound > 0 ? 1 : 0) + num_sources    

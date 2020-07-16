@@ -338,12 +338,28 @@ class Support
       :converter_component, :location_id, :outflow, [outflow_port])
   end
 
-  def self.add_to_hash(h, keys, value)
+  def self.assign_in_hash(h, keys, value)
     h_ = h
     last_idx = keys.length - 1
     keys.each_with_index do |k, idx|
       if idx == last_idx
         h_[k] = value
+      else
+        if !h_.include?(k)
+          h_[k] = {}
+        end
+        h_ = h_[k]
+      end
+    end
+    h
+  end
+
+  def self.update_in_hash(h, keys)
+    h_ = h
+    last_idx = keys.length - 1
+    keys.each_with_index do |k, idx|
+      if idx == last_idx
+        h_[k] = yield(h_[k])
       else
         if !h_.include?(k)
           h_[k] = {}
@@ -450,7 +466,7 @@ class Support
             add_connection_(data, store_id, store_outport, il_id, il_port, flow)
           elsif num_outbound > 0
             conn_info = [store_id, store_outport]
-            add_to_hash(outflow_points, [loc, flow], conn_info)
+            assign_in_hash(outflow_points, [loc, flow], conn_info)
           end
         elsif num_total_outflows == 1 and num_stores > 1
           bus = add_muxer_component(
@@ -467,7 +483,7 @@ class Support
             add_connection_(data, bus, 0, il_id, il_port, flow)
           elsif num_outbound > 0
             conn_info = [bus, 0]
-            add_to_hash(outflow_points, [loc, flow], conn_info)
+            assign_in_hash(outflow_points, [loc, flow], conn_info)
           end
         elsif num_total_outflows > 1 and num_stores == 1
           bus = add_muxer_component(
@@ -485,7 +501,7 @@ class Support
           end
           if num_outbound > 0
             conn_info = [bus, num_loads + num_internal_loads]
-            add_to_hash(outflow_points, [loc, flow], conn_info)
+            assign_in_hash(outflow_points, [loc, flow], conn_info)
           end
         elsif num_total_outflows > 1 and num_stores > 1
           bus = add_muxer_component(
@@ -503,7 +519,7 @@ class Support
           end
           if num_outbound > 0
             conn_info = [bus, num_loads + num_internal_loads]
-            add_to_hash(outflow_points, [loc, flow], conn_info)
+            assign_in_hash(outflow_points, [loc, flow], conn_info)
           end
           stores.each_with_index do |s, idx|
             id, _, port = s
@@ -543,7 +559,7 @@ class Support
             end
             if num_inbound > 0
               conn_info = [bus, num_sources]
-              add_to_hash(inflow_points, [loc, flow], conn_info)
+              assign_in_hash(inflow_points, [loc, flow], conn_info)
             end
             converters.each_with_index do |cc, idx|
               id, port = cc
@@ -566,15 +582,15 @@ class Support
               end
               if num_outbound > 0
                 conn_info = [sc_id, sc_port]
-                add_to_hash(outflow_points, [loc, flow], conn_info)
+                assign_in_hash(outflow_points, [loc, flow], conn_info)
               end
             end
             if num_inbound > 0
               loads.each do |ld|
-                add_to_hash(inflow_points, [loc, flow], ld)
+                assign_in_hash(inflow_points, [loc, flow], ld)
               end
               internal_loads.each do |il|
-                add_to_hash(inflow_points, [loc, flow], il)
+                assign_in_hash(inflow_points, [loc, flow], il)
               end
               if num_outbound > 0
                 # for locations A, B, C, we have a link from A->B and B->C with
@@ -595,7 +611,7 @@ class Support
               end
               if num_outbound > 0
                 conn_info = cc
-                add_to_hash(outflow_points, [loc, flow], conn_info)
+                assign_in_hash(outflow_points, [loc, flow], conn_info)
               end
             end
           elsif num_stores == 0 and num_total_outflows > 1
@@ -613,7 +629,7 @@ class Support
           end
           if num_inbound > 0
             conn_info = [inbus, num_sources]
-            add_to_hash(inflow_points, [loc, flow], conn_info)
+            assign_in_hash(inflow_points, [loc, flow], conn_info)
           end
           converters.each_with_index do |cc, idx|
             id, port = cc
@@ -640,7 +656,7 @@ class Support
             end
             if num_outbound > 0
               conn_info = [inbus, num_loads + num_internal_loads]
-              add_to_hash(outflow_points, [loc, flow], conn_info)
+              assign_in_hash(outflow_points, [loc, flow], conn_info)
             end
           end
         end
@@ -653,24 +669,14 @@ class Support
       src = link.fetch(:source_location_id)
       dest = link.fetch(:destination_location_id)
       flow = link.fetch(:flow)
-      if points.include?(src)
-        if points[src].include?(flow)
-          points[src][flow][:source_count] += 1
-        else
-          points[src][flow] = {:source_count => 1, :dest_count => 0}
-        end
-      else
-        points[src] = {flow => {:source_count => 1, :dest_count => 0}}
-      end
-      if points.include?(dest)
-        if points[dest].include?(flow)
-          points[dest][flow][:dest_count] += 1
-        else
-          points[dest][flow] = {:source_count => 0, :dest_count => 1}
-        end
-      else
-        points[dest] = {flow => {:source_count => 0, :dest_count => 1}}
-      end
+      update_in_hash(
+        points, [src, flow, :source_count]) {|v| (v.nil? ? 1 : v + 1)}
+      update_in_hash(
+        points, [src, flow, :dest_count]) {|v| (v.nil? ? 0 : v)}
+      update_in_hash(
+        points, [dest, flow, :dest_count]) {|v| (v.nil? ? 1 : v + 1)}
+      update_in_hash(
+        points, [dest, flow, :source_count]) {|v| (v.nil? ? 0 : v)}
     end
     points.each do |loc, flow_map|
       flow_map.each do |flow, info|

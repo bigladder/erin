@@ -207,6 +207,15 @@ class Support
     id
   end
 
+  # - data: Hash, the data dictionary
+  # - src_id: string, the source id
+  # - src_port: integer, the source port
+  # - sink_id: string, the sink id
+  # - sink_port: integer, the sink port
+  # - flow: string, the flow
+  # SIDE-EFFECT: adds a new connection to the :connection array in data, adding
+  # that key if it doesn't already exist
+  # RETURN: data
   def self.add_connection_(data, src_id, src_port, sink_id, sink_port, flow)
     conn = [
       "#{src_id}:OUT(#{src_port})",
@@ -221,6 +230,8 @@ class Support
     data
   end
 
+  # - data: Hash, the data dictionary
+  # RETURN: (Set string), all locations referenced by all components
   def self.get_all_locations(data)
     comp_keys = [
       :source_component,
@@ -237,6 +248,9 @@ class Support
     locations
   end
 
+  # - data: Hash, data dictionary
+  # - loc: string, the location id
+  # RETURN: (Array string), the flows at a given location
   def self.flows_at_location(data, loc)
     flows = Set.new
     data.fetch(:load_component, []).each do |lc|

@@ -1,10 +1,13 @@
 <%#INITIALIZE
 # File IO
+parameter "converter_component_csv_path", :default=>"converter-component.csv"
+parameter "fixed_cdf_csv_path", :default=>"fixed-cdf.csv"
 parameter "general_csv_path", :default=>"general.csv"
+parameter "load_component_csv_path", :default=>"load-component.csv"
 parameter "load_profile_csv_path", :default=>"load-profile.csv"
+parameter "network_link_csv_path", :default=>"network-link.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
-parameter "building_level_csv_path", :default=>"building-level.csv"
-parameter "node_level_csv_path", :default=>"node-level.csv"
+parameter "source_component_csv_path", :default=>"source-component.csv"
 parameter "expand_load_paths", :default=>false
 %>
 <%
@@ -13,12 +16,14 @@ parameter "expand_load_paths", :default=>false
    THIS_DIR = File.dirname(__FILE__)
    data = {}
    Dir.chdir(THIS_DIR) do
+     data[:converter_component] = Support.load_csv(converter_component_csv_path)
+     data[:fixed_cdf] = Support.load_csv(fixed_cdf_csv_path)
      data[:general] = Support.load_key_value_csv(general_csv_path)
-     data[:load_profile] = Support.load_csv("ex-v2-load-profile.csv")
-     data[:scenario] = Support.load_csv("ex-v2-scenario.csv")
-     data[:load_component] = Support.load_csv("ex-v2-load-component.csv")
-     data[:source_component] = Support.load_csv("ex-v2-source-component.csv")
-     data[:network_link] = Support.load_csv("ex-v2-network-link.csv")
+     data[:load_component] = Support.load_csv(load_component_csv_path)
+     data[:load_profile] = Support.load_csv(load_profile_csv_path)
+     data[:network_link] = Support.load_csv(network_link_csv_path)
+     data[:scenario] = Support.load_csv(scenario_csv_path)
+     data[:source_component] = Support.load_csv(source_component_csv_path)
    end
    if expand_load_paths
      s = Support.new(data, THIS_DIR)
@@ -55,12 +60,20 @@ max_outflow = <%= c[:max_outflow_kW] %> # ...
 <% s.load_component.each do |c| %>
 [components.<%= c[:id] %>]
 type = "load"
-input_stream = "<%= c[:inflow] %>"
+inflow = "<%= c[:inflow] %>"
 <%   data[:load_profile].each do |lp| %>
 <%     next unless ( (lp[:building_id] == c[:location_id]) and %>
 <%                   (c[:inflow] == lp[:enduse]) ) %>
 loads_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
 <%   end %>
+<% end %>
+<% s.muxer_component.each do |c| %>
+[components.<%= c[:id] %>]
+type = "muxer"
+stream = "<%= c[:flow] %>"
+num_inflows = <%= c[:num_inflows] %> # ...
+num_outflows = <%= c[:num_outflows] %> # ...
+dispatch_strategy = "in_order"
 <% end %>
 ############################################################
 # Fragility Curves
@@ -73,11 +86,11 @@ upper_bound = 6.0 # ...
 <% end %>
 ############################################################
 # Cumulative Distribution Functions
-<% data.fetch(:fixed_cdf, []).each do |cdf| %>
-[cdf.]
+<% s.fixed_cdf.each do |cdf| %>
+[cdf.<%= cdf[:id] %>]
 type = "fixed"
-value = <%= 5 %> # ...
-time_unit = "seconds"
+value = <%= cdf[:value_in_hours].to_f.round %> # ...
+time_unit = "hours"
 <% end %>
 <% data.fetch(:uniform_cdf, []).each do |cdf| %>
 [cdf.]
@@ -102,13 +115,14 @@ connections = [
   ]
 ############################################################
 # Scenarios
-<% data[:scenario].each do |s| %>
-[scenarios.<%= s[:id] %>]
+<% data[:scenario].each do |scen| %>
+[scenarios.<%= scen[:id] %>]
 time_unit = "hours"
-occurrence_distribution = "<%= s[:occurrence_distribution] %>"
-duration = <%= s[:duration_in_hours].to_i %> # ...
-max_occurrences = <%= s[:max_occurrence].to_i %> # ...
-<%   if s[:calc_reliability].strip.downcase == "true" %>
+<% cdf = s.cdf_for_id(scen[:occurrence_distribution]) %>
+occurrence_distribution = {type = "<%= cdf[:type] %>", value = <%= cdf[:value_in_hours].to_f.round %>, time_unit="hours"}
+duration = <%= scen[:duration_in_hours].to_i %> # ...
+max_occurrences = <%= scen[:max_occurrence].to_i %> # ...
+<%   if scen[:calc_reliability].strip.downcase == "true" %>
 calculate_reliability = true
 <%   else %>
 calculate_reliability = false

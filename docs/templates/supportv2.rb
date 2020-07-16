@@ -3,13 +3,40 @@ require 'csv'
 
 class Support
   # - data: (hash symbol various), a hash table with keys
+  #   - :converter_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the converter
+  #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", etc.)
+  #     - :outflow, string, the outflow type (e.g., "electricity", "heating", etc.)
+  #     - :lossflow, string, optional. defaults to "waste_heat". The lossflow stream
+  #     - :constant_efficiency, number, where 0.0 < efficiency <= 1.0, the efficiency of conversion
+  #   - :fixed_cdf, (Array (Hash symbol value)) with these symbols
+  #     - :id, string, the id of the fixed cdf
+  #     - :value_in_hours, number, the fixed value in hours
   #   - :general, (Hash symbol value)
-  #   - :load_component
+  #     - :simulation_duration_in_years, number, the duration in years
+  #     - :random_setting, string, one of #{"Auto", "Seed"}
+  #     - :random_seed, integer, the random seed
+  #   - :load_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the load
+  #     - :inflow, string, the inflow type (e.g., 'electricity', 'heating',
+  #       'cooling', 'natural_gas', etc.)
   #   - :load_profile, an array of Hash with keys:
   #     - :scenario_id
   #     - :building_id
   #     - :enduse
   #     - :file
+  #   - :muxer_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the muxer
+  #     - :flow, string, the type of flow through the muxer (e.g., 'electricity', 'natural_gas', 'coal', etc.)
+  #     - :num_inflows, integer, number > 0, the number of inflow ports
+  #     - :num_outflows, integer, number > 0, the number of outflow ports
+  #   - :network_link, an array of Hash with keys:
+  #     - :source_location_id, string, location_id for the source of the flow
+  #     - :destination_location_id, string, location_id for the destination of the flow
+  #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
+  #   - :pass_through_component, an array of Hash with keys:
+  #     - :location_id, string, the location of the pass-through
+  #     - :flow, string, the flow being passed through (e.g., 'electricity', 'diesel')
   #   - :scenario, an array of Hash with keys:
   #     - :id, string, scenario id
   #     - :duration_in_hours, number, duration
@@ -17,21 +44,6 @@ class Support
   #     - :calc_reliability, boolean string ("TRUE" or "FALSE")
   #     - :max_occurrence, integer, -1 = unlimited; otherwise, the max number
   #       of occurrences
-  #   - :load_component, an array of Hash with keys:
-  #     - :location_id, string, the location of the load
-  #     - :inflow, string, the inflow type (e.g., 'electricity', 'heating',
-  #       'cooling', 'natural_gas', etc.)
-  #   - :converter_component, an array of Hash with keys:
-  #     - :location_id, string, the location of the converter
-  #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", etc.)
-  #     - :outflow, string, the outflow type (e.g., "electricity", "heating", etc.)
-  #     - :lossflow, string, optional. defaults to "waste_heat". The lossflow stream
-  #     - :constant_efficiency, number, where 0.0 < efficiency <= 1.0, the efficiency of conversion
-  #   - :muxer_component, an array of Hash with keys:
-  #     - :location_id, string, the location of the muxer
-  #     - :flow, string, the type of flow through the muxer (e.g., 'electricity', 'natural_gas', 'coal', etc.)
-  #     - :num_inflows, integer, number > 0, the number of inflow ports
-  #     - :num_outflows, integer, number > 0, the number of outflow ports
   #   - :source_component, an array of Hash with keys:
   #     - :location_id, string, the location of the source
   #     - :outflow, string, the outflow provided (e.g., 'electricity', 'natural_gas', 'diesel')
@@ -42,17 +54,10 @@ class Support
   #     - :flow, string, the flow being stored (e.g., "electricity", "diesel", etc.)
   #     - :capacity_kWh, number, > 0, the capacity of the store in kWh
   #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
-  #   - :pass_through_component, an array of Hash with keys:
-  #     - :location_id, string, the location of the pass-through
-  #     - :flow, string, the flow being passed through (e.g., 'electricity', 'diesel')
-  #   - :network_link, an array of Hash with keys:
-  #     - :source_location_id, string, location_id for the source of the flow
-  #     - :destination_location_id, string, location_id for the destination of the flow
-  #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
 
   attr_reader(
-    :connections,
     :converter_component,
+    :fixed_cdf,
     :load_component,
     :load_profile,
     :muxer_component,
@@ -64,16 +69,33 @@ class Support
   def initialize(data, root_path=nil)
     @ids_in_use = Set.new
     @converter_component = data.fetch(:converter_component, [])
+    @fixed_cdf = data.fetch(:fixed_cdf, [])
     @load_component = data.fetch(:load_component, [])
     @load_profile = data.fetch(:load_profile, [])
     @muxer_component = data.fetch(:muxer_component, [])
     @network_link = data.fetch(:network_link, [])
     @source_component = data.fetch(:source_component, [])
     @storage_component = data.fetch(:storage_component, [])
+    process_cdfs
     expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids
     @connections = []
     generate_connections
+  end
+
+  def connections
+    @connections.sort
+  end
+
+  def cdf_for_id(id)
+    item = nil
+    @fixed_cdf.each do |cdf|
+      if id == cdf[:id]
+        item = cdf 
+        break
+      end
+    end
+    item
   end
 
   # - csv_path: string, the path to a CSV file
@@ -120,6 +142,12 @@ class Support
   end
 
   private
+
+  def process_cdfs
+    @fixed_cdf.each do |cdf|
+      cdf[:type] = "fixed"
+    end
+  end
 
   def expand_load_profile_paths(root_path)
     @load_profile.each do |lp|

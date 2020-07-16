@@ -567,5 +567,4 @@ class Support
       add_connection(sc[0], sc[1], tc[0], tc[1], flow)
     end
   end
-
 end

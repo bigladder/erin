@@ -8,7 +8,7 @@ parameter "node_level_csv_path", :default=>"node-level.csv"
 %>
 <%
    require 'set'
-   require_relative 'support.rb'
+   require_relative 'supportv2.rb'
    THIS_DIR = File.dirname(__FILE__)
    data = {}
    Dir.chdir(THIS_DIR) do
@@ -21,6 +21,7 @@ parameter "node_level_csv_path", :default=>"node-level.csv"
      data[:location] = Set.new
      data[:connections] = []
    end
+   s = Support.new(data)
 %>
 ############################################################
 # General Simulation Information

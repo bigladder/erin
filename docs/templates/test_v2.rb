@@ -26,8 +26,8 @@ class TestTemplate < Minitest::Test
 
   def test_data_includes_connection
     data = {}
-    Support.generate_connections_v2(data)
-    assert(data.include?(:connection))
+    s = Support.new(data)
+    assert(s.connections.empty?)
   end
 
   def test_connecting_a_single_source_and_sink_electrically
@@ -54,8 +54,8 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    achieved = Set.new(data[:connection])
+    s = Support.new(data)
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["utility_electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],
     ])
@@ -116,8 +116,8 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    achieved = Set.new(data[:connection])
+    s = Support.new(data)
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["utility_electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],
       ["utility_dhw_source:OUT(0)", "b1_dhw:IN(0)", "dhw"],
@@ -169,10 +169,9 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    assert(data.include?(:muxer_component))
-    assert(data.fetch(:muxer_component, []).length == 1)
-    actual_mux_data = data.fetch(:muxer_component, []).fetch(0, {})
+    s = Support.new(data)
+    assert(s.muxer_component.length == 1)
+    actual_mux_data = s.muxer_component.fetch(0, {})
     expected_mux_data_keys = Set.new([:location_id, :id, :flow, :num_inflows, :num_outflows])
     actual_mux_data_keys = Set.new(actual_mux_data.keys)
     assert_equal(expected_mux_data_keys, actual_mux_data_keys)
@@ -181,7 +180,7 @@ class TestTemplate < Minitest::Test
     assert_equal(actual_mux_data.fetch(:flow, ""), "electricity")
     assert_equal(actual_mux_data.fetch(:num_inflows, 0), 2)
     assert_equal(actual_mux_data.fetch(:num_outflows, 0), 1)
-    achieved = Set.new(data[:connection])
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["utility_electricity_source:OUT(0)", "b1_electricity_bus:IN(0)", "electricity"],
       ["utility_natural_gas_source:OUT(0)", "b1_electricity_generator:IN(0)", "natural_gas"],
@@ -223,17 +222,17 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    achieved = Set.new(data[:connection])
+    s = Support.new(data)
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["utility_electricity_source:OUT(0)", "b1_electricity_store:IN(0)", "electricity"],
       ["b1_electricity_store:OUT(0)", "b1_electricity:IN(0)", "electricity"],
     ])
-    assert_equal(data.fetch(:converter_component, []).length, 0)
-    assert_equal(data.fetch(:storage_component, []).length, 1)
-    assert_equal(data.fetch(:load_component, []).length, 1)
-    assert_equal(data.fetch(:source_component, []).length, 1)
-    assert_equal(data.fetch(:muxer_component, []).length, 0)
+    assert_equal(s.converter_component.length, 0)
+    assert_equal(s.storage_component.length, 1)
+    assert_equal(s.load_component.length, 1)
+    assert_equal(s.source_component.length, 1)
+    assert_equal(s.muxer_component.length, 0)
     assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
   end
 
@@ -288,13 +287,13 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    assert_equal(data.fetch(:load_component, []).length, 1)
-    assert_equal(data.fetch(:source_component, []).length, 2)
-    assert_equal(data.fetch(:converter_component, []).length, 1)
-    assert_equal(data.fetch(:storage_component, []).length, 1)
-    assert_equal(data.fetch(:muxer_component, []).length, 1)
-    achieved = Set.new(data[:connection])
+    s = Support.new(data)
+    assert_equal(s.load_component.length, 1)
+    assert_equal(s.source_component.length, 2)
+    assert_equal(s.converter_component.length, 1)
+    assert_equal(s.storage_component.length, 1)
+    assert_equal(s.muxer_component.length, 1)
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["utility_natural_gas_source:OUT(0)", "b1_electricity_generator:IN(0)", "natural_gas"],
       ["b1_electricity_generator:OUT(0)", "b1_electricity_bus:IN(1)", "electricity"],
@@ -339,13 +338,13 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    assert_equal(data.fetch(:load_component, []).length, 1)
-    assert_equal(data.fetch(:source_component, []).length, 1)
-    assert_equal(data.fetch(:converter_component, []).length, 1)
-    assert_equal(data.fetch(:storage_component, []).length, 0)
-    assert_equal(data.fetch(:muxer_component, []).length, 0)
-    achieved = Set.new(data[:connection])
+    s = Support.new(data)
+    assert_equal(s.load_component.length, 1)
+    assert_equal(s.source_component.length, 1)
+    assert_equal(s.converter_component.length, 1)
+    assert_equal(s.storage_component.length, 0)
+    assert_equal(s.muxer_component.length, 0)
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["utility_natural_gas_source:OUT(0)", "b1_electricity_generator:IN(0)", "natural_gas"],
       ["b1_electricity_generator:OUT(0)", "b1_electricity:IN(0)", "electricity"],
@@ -393,13 +392,13 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    assert_equal(data.fetch(:load_component, []).length, 1)
-    assert_equal(data.fetch(:source_component, []).length, 1)
-    assert_equal(data.fetch(:converter_component, []).length, 0)
-    assert_equal(data.fetch(:storage_component, []).length, 2)
-    assert_equal(data.fetch(:muxer_component, []).length, 2)
-    achieved = Set.new(data[:connection])
+    s = Support.new(data)
+    assert_equal(s.load_component.length, 1)
+    assert_equal(s.source_component.length, 1)
+    assert_equal(s.converter_component.length, 0)
+    assert_equal(s.storage_component.length, 2)
+    assert_equal(s.muxer_component.length, 2)
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["utility_electricity_source:OUT(0)", "b1_electricity_bus_1:IN(0)", "electricity"],
       ["b1_electricity_bus_1:OUT(0)", "b1_electricity_store:IN(0)", "electricity"],
@@ -450,13 +449,13 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    assert_equal(data.fetch(:load_component, []).length, 1)
-    assert_equal(data.fetch(:source_component, []).length, 2)
-    assert_equal(data.fetch(:converter_component, []).length, 0)
-    assert_equal(data.fetch(:storage_component, []).length, 0)
-    assert_equal(data.fetch(:muxer_component, []).length, 1)
-    achieved = Set.new(data[:connection])
+    s = Support.new(data)
+    assert_equal(s.load_component.length, 1)
+    assert_equal(s.source_component.length, 2)
+    assert_equal(s.converter_component.length, 0)
+    assert_equal(s.storage_component.length, 0)
+    assert_equal(s.muxer_component.length, 1)
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["c1_electricity_source:OUT(0)", "b1_electricity_bus:IN(0)", "electricity"],
       ["c2_electricity_source:OUT(0)", "b1_electricity_bus:IN(1)", "electricity"],
@@ -504,13 +503,13 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections_v2(data)
-    assert_equal(data.fetch(:load_component, []).length, 1)
-    assert_equal(data.fetch(:source_component, []).length, 1)
-    assert_equal(data.fetch(:converter_component, []).length, 1)
-    assert_equal(data.fetch(:storage_component, []).length, 0)
-    assert_equal(data.fetch(:muxer_component, []).length, 0)
-    achieved = Set.new(data[:connection])
+    s = Support.new(data)
+    assert_equal(s.load_component.length, 1)
+    assert_equal(s.source_component.length, 1)
+    assert_equal(s.converter_component.length, 1)
+    assert_equal(s.storage_component.length, 0)
+    assert_equal(s.muxer_component.length, 0)
+    achieved = Set.new(s.connections)
     expected = Set.new([
       ["utility_natural_gas_source:OUT(0)", "cluster_electricity_generator:IN(0)", "natural_gas"],
       ["cluster_electricity_generator:OUT(0)", "b1_electricity:IN(0)", "electricity"],

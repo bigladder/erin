@@ -302,11 +302,7 @@ class TestTemplate < Minitest::Test
   # SIDE-EFFECTS:
   # - ensures generated files are removed if exist
   def ensure_directory_clean
-    all_paths = [
-      @output_file, @converter_component_csv, @general_csv,
-      @load_component_csv, @load_profile_csv, @network_link_csv,
-      @scenario_csv, @source_component_csv,
-    ]
+    all_paths = [@output_file] + @all_csvs
     all_paths.each do |path|
       File.delete(path) if File.exist?(path) and REMOVE_FILES
     end
@@ -323,7 +319,6 @@ class TestTemplate < Minitest::Test
     @network_link_csv = "network-link.csv"
     @scenario_csv = "scenario.csv"
     @source_component_csv = "source-component.csv"
-    ensure_directory_clean
     @all_csvs = [
       @converter_component_csv,
       @fixed_cdf_csv,
@@ -334,6 +329,7 @@ class TestTemplate < Minitest::Test
       @scenario_csv,
       @source_component_csv,
     ]
+    ensure_directory_clean
   end
 
   def teardown

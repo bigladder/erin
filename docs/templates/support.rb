@@ -93,12 +93,16 @@ class Support
     nil
   end
 
+  # !!! DEPRECATE !!!
+  #
   # find and return the source component object for location_id and flow. If
   # not found, return nil.
   # - data: (hash symbol various), see generate_connections for details
   # - location_id: string, the location at which to find source
   # - flow: string, the source flow to find
   # RETURN: hash corresponding to the source component or nil if not found
+  #
+  # !!! DEPRECATE !!!
   def self.find_flow_source_for_location(data, location_id, flow)
     src = nil
     data.fetch(:source_component, []).each do |s|
@@ -113,12 +117,16 @@ class Support
     src
   end
 
+  # !!! DEPRECATE !!!
+  #
   # find and return source component(s) for the given location_id and flow. If
   # not found, return nil.
   # - data: (hash symbol various), see generate_connections for details
   # - location_id: string, the location at which to find source
   # - flow: string, the source flow to find
   # RETURN: hash corresponding to the source component or nil if not found
+  #
+  # !!! DEPRECATE !!!
   def self.find_sources_for_location(data, location_id, flow)
     src_comp = find_flow_source_for_location(data, location_id, flow)
     return src_comp unless src_comp.nil?
@@ -144,12 +152,16 @@ class Support
     src_comp
   end
 
+  # !!! DEPRECATE !!!
+  #
   # Find the network links having the given flow and destination location id.
   # - nw_links: (Array {:source_location_id => string, location_id for the source of the flow,
   #                     :destination_location_id => string, location_id for the destination of the flow,
   #                     :flow => string, the type of flow (e.g., 'electricity', 'heating', etc.)})
   # RETURN: (Array string), if no link found, the array is empty. Else, filled
   # with the source ids as a strings of all sources found
+  #
+  # !!! DEPRECATE !!!
   def self.find_nw_srcs_for_flow_and_dest(nw_links, flow, dest_id)
     links = []
     nw_links.each do |nw_link|

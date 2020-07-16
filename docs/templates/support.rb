@@ -30,13 +30,19 @@ class Support
     @comps.keys.sort.map {|k| @comps[k]}
   end
 
-  def self.make_id_unique(data, id)
+  def self.get_ids_in_use(data)
+    ids_in_use = nil
     if data.include?(:ids_in_use)
       ids_in_use = data[:ids_in_use]
     else
       ids_in_use = Set.new
       data[:ids_in_use] = ids_in_use
     end
+    ids_in_use
+  end
+
+  def self.make_id_unique(data, id)
+    ids_in_use = get_ids_in_use(data)
     test_id = id
     while ids_in_use.include?(test_id)
       m = test_id.match(/(.*?)(\d*)$/)

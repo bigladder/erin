@@ -1,0 +1,62 @@
+<%#INITIALIZE
+# File IO
+parameter "general_csv_path", :default=>"general.csv"
+parameter "load_profile_csv_path", :default=>"load-profile.csv"
+parameter "scenario_csv_path", :default=>"scenario.csv"
+parameter "building_level_csv_path", :default=>"building-level.csv"
+parameter "node_level_csv_path", :default=>"node-level.csv"
+parameter "expand_load_paths", :default=>true
+%>
+<% require_relative 'support.rb'                                               %>
+<% THIS_DIR = File.dirname(__FILE__)                                           %>
+<% general=nil;load_profile=nil;scenario=nil;building_level=nil                %>
+<% node_level=nil;num_buildings=nil;supp=nil                                   %>
+<% Dir.chdir(THIS_DIR) do                                                      %>
+<%   general = Support.load_key_value_csv(general_csv_path)                    %>
+<%   load_profile = Support.load_csv(load_profile_csv_path)                    %>
+<%   if expand_load_paths                                                      %>
+<%     load_profile.each do |lp|                                               %>
+<%       bn = File.basename(lp[:file])                                         %>
+<%       lp[:file] = File.expand_path(File.join(THIS_DIR, bn))                 %>
+<%     end                                                                     %>
+<%   end                                                                       %>
+<%   scenario = Support.load_csv(scenario_csv_path)                            %>
+<%   building_level = Support.load_csv(building_level_csv_path)                %>
+<%   node_level = Support.load_csv(node_level_csv_path)                        %>
+<%   num_buildings = building_level.length                                     %>
+<%   supp = Support.new(load_profile, building_level, node_level)              %>
+<% end                                                                         %>
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+<% if general[:random_setting].strip.downcase == "seed"                        %>
+random_seed = <%= general[:random_seed].to_i %> # ...
+<% end                                                                         %>
+max_time = <%= general[:simulation_duration_in_years] %> # ...
+############################################################
+<% supp.loads.each do |load|                                                   %>
+[loads.<%= load[:load_id] %>]
+csv_file = "<%= load[:file] %>"
+<% end                                                                         %>
+############################################################
+<% supp.components.each do |comp|                                              %>
+<%= comp[:string] %>
+
+<% end                                                                         %>
+############################################################
+[networks.nw]
+connections = [
+<% supp.connections.each do |conn|                                             %>
+  ["<%= conn[0] %>", "<%= conn[1] %>", "<%= conn[2] %>"],
+<% end                                                                         %>
+  ]
+############################################################
+<% scenario.each do |scen|                                                     %>
+[scenarios.<%= scen[:id] %>]
+time_unit = "hours"
+occurrence_distribution = {type = "fixed", value = <%= (scen[:fixed_frequency_in_years].to_f * 8760).to_i %>, time_unit="hours"}
+duration = <%= scen[:duration_in_hours].to_i %> # ...
+max_occurrences = <%= scen[:max_occurrence].to_i %> # ...
+network = "nw"
+<% end %>

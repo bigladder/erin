@@ -370,6 +370,39 @@ class Support
     h
   end
 
+  # - data: hash, data dictionary
+  # - h: hash, the hash to update. Should contain count_key and conn_key
+  # - ref_conn: hash, reference for connection info by loc and flow
+  # - loc: string, location id
+  # - flow: string, flow_id
+  # - is_source: bool, true if source, false if for dest
+  # - count_key: symbol, the key to query from h to get the count
+  # - conn_key: symbol, key to add connections to in h
+  # RETURN: nil
+  # SIDE-EFFECTS: Adds an array of all connections for linking to the conn_key of h
+  def self.add_link_connect_points(data, h, ref_conn, loc, flow, is_source)
+    count_key, conn_key = (
+      is_source ? [:source_count, :source] : [:dest_count, :dest])
+    tgt = ref_conn.fetch(loc, {}).fetch(flow, nil)
+    count = h[count_key]
+    if !tgt.nil?
+      if count == 1
+        h[conn_key] = [tgt]
+      elsif count > 1
+        bus = nil
+        if is_source
+          bus = add_muxer_component(data, loc, flow, 1, count)
+          add_connection_(data, tgt[0], tgt[1], bus, 0, flow)
+        else
+          bus = add_muxer_component(data, loc, flow, count, 1)
+          add_connection_(data, bus, 0, tgt[0], tgt[1], flow)
+        end
+        h[conn_key] = []
+        count.times {|idx| h[conn_key] << [bus, idx]}
+      end
+    end
+  end
+
   # - data: (hash symbol various), a hash table with keys
   #   - :general, (Hash symbol value)
   #   - :load_component
@@ -680,32 +713,10 @@ class Support
     end
     points.each do |loc, flow_map|
       flow_map.each do |flow, info|
-        src = outflow_points.fetch(loc, {}).fetch(flow, nil)
-        if !src.nil?
-          if info[:source_count] == 1
-            info[:source] = [src]
-          elsif info[:source_count] > 1
-            bus = add_muxer_component(data, loc, flow, 1, info[:source_count])
-            add_connection_(data, src[0], src[1], bus, 0, flow)
-            info[:source] = []
-            info[:source_count].times do |idx|
-              info[:source] << [bus, idx]
-            end
-          end
-        end
-        tgt = inflow_points.fetch(loc, {}).fetch(flow, nil)
-        if !tgt.nil?
-          if info[:dest_count] == 1
-            info[:dest] = [tgt]
-          elsif info[:dest_count] > 1
-            bus = add_muxer_component(data, loc, flow, info[:dest_count], 1)
-            add_connection_(data, bus, 0, tgt[0], tgt[1], flow)
-            info[:dest] = []
-            info[:dest_count].times do |idx|
-              info[:dest] << [bus, idx]
-            end
-          end
-        end
+        add_link_connect_points(
+          data, info, outflow_points, loc, flow, true)
+        add_link_connect_points(
+          data, info, inflow_points, loc, flow, false)
       end
     end
     puts("points:\n#{points}") if verbose

@@ -393,7 +393,7 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections(data)
+    Support.generate_connections_v2(data)
     assert_equal(data.fetch(:load_component, []).length, 1)
     assert_equal(data.fetch(:source_component, []).length, 1)
     assert_equal(data.fetch(:converter_component, []).length, 0)
@@ -401,12 +401,12 @@ class TestTemplate < Minitest::Test
     assert_equal(data.fetch(:muxer_component, []).length, 2)
     achieved = Set.new(data[:connection])
     expected = Set.new([
-      ["utility_electricity_source:OUT(0)", "b1_electricity_bus:IN(0)", "electricity"],
-      ["b1_electricity_bus:OUT(0)", "b1_electricity_store:IN(0)", "electricity"],
-      ["b1_electricity_store:OUT(0)", "b1_electricity_bus_1:IN(0)", "electricity"],
-      ["b1_electricity_bus:OUT(1)", "b1_electricity_store_1:IN(0)", "electricity"],
-      ["b1_electricity_store_1:OUT(0)", "b1_electricity_bus_1:IN(1)", "electricity"],
-      ["b1_electricity_bus_1:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+      ["utility_electricity_source:OUT(0)", "b1_electricity_bus_1:IN(0)", "electricity"],
+      ["b1_electricity_bus_1:OUT(0)", "b1_electricity_store:IN(0)", "electricity"],
+      ["b1_electricity_store:OUT(0)", "b1_electricity_bus:IN(0)", "electricity"],
+      ["b1_electricity_bus_1:OUT(1)", "b1_electricity_store_1:IN(0)", "electricity"],
+      ["b1_electricity_store_1:OUT(0)", "b1_electricity_bus:IN(1)", "electricity"],
+      ["b1_electricity_bus:OUT(0)", "b1_electricity:IN(0)", "electricity"],
     ])
     assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
   end
@@ -450,7 +450,7 @@ class TestTemplate < Minitest::Test
         },
       ],
     }
-    Support.generate_connections(data)
+    Support.generate_connections_v2(data)
     assert_equal(data.fetch(:load_component, []).length, 1)
     assert_equal(data.fetch(:source_component, []).length, 2)
     assert_equal(data.fetch(:converter_component, []).length, 0)

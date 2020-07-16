@@ -388,21 +388,21 @@ class Support
   #     - :source_location_id, string, location_id for the source of the flow
   #     - :destination_location_id, string, location_id for the destination of the flow
   #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
-  def self.generate_connections_v2(data)
-    puts("\n" + ("="*60))
+  def self.generate_connections_v2(data, verbose = false)
+    puts("\n" + ("="*60)) if verbose
     data.keys.sort.each do |k|
-      puts("data[#{k}] = (length: #{data[k].length})\n#{data[k]}")
+      puts("data[#{k}] = (length: #{data[k].length})\n#{data[k]}") if verbose
     end
-    puts("-"*40)
+    puts("-"*40) if verbose
     ensure_components_have_ids(data)
     inflow_points = {} # (Hash LocationID (Hash FuelID (Tuple ComponentID Port)))
     outflow_points = {} # (Hash LocationID (Hash FuelID (Tuple ComponentID Port)))
     locations = get_all_locations(data)
     data[:connection] = []
     locations.each do |loc|
-      puts("loc: #{loc}")
+      puts("loc: #{loc}") if verbose
       flows_at_location(data, loc).each do |flow|
-        puts("flow: #{flow}")
+        puts("flow: #{flow}") if verbose
         outbound_links = get_outbound_links(data, loc, flow)
         inbound_links = get_inbound_links(data, loc, flow)
         internal_loads = get_internal_loads(data, loc, flow)
@@ -417,13 +417,13 @@ class Support
         num_stores = stores.length
         num_sources = sources.length
         num_converters = converters.length
-        puts(".. num_outbound: #{num_outbound}")
-        puts(".. num_inbound: #{num_inbound}")
-        puts(".. num_internal_loads: #{num_internal_loads}")
-        puts(".. num_loads: #{num_loads}")
-        puts(".. num_stores: #{num_stores}")
-        puts(".. num_sources: #{num_sources}")
-        puts(".. num_converters: #{num_converters}")
+        puts(".. num_outbound: #{num_outbound}") if verbose
+        puts(".. num_inbound: #{num_inbound}") if verbose
+        puts(".. num_internal_loads: #{num_internal_loads}") if verbose
+        puts(".. num_loads: #{num_loads}") if verbose
+        puts(".. num_stores: #{num_stores}") if verbose
+        puts(".. num_sources: #{num_sources}") if verbose
+        puts(".. num_converters: #{num_converters}") if verbose
         # 1. identify the connection info for the outflow point for this fuel and location IF ANY
         # 2. identify the connection info for the inflow point for this fuel and location IF ANY
         # 3. internally connect all components for the given location and fuel, creating buses if necessary
@@ -451,7 +451,7 @@ class Support
             data, loc, flow, num_stores, num_total_outflows)
           stores.each_with_index do |s, idx|
             id, _, outflow_port = s
-            add_connection_(data, id, outflow_port, bus, idx)
+            add_connection_(data, id, outflow_port, bus, idx, flow)
           end
           if num_loads == 1
             load_id, load_port = loads[0]
@@ -680,21 +680,76 @@ class Support
         end
       end
     end
-    puts("inflow_points:\n#{inflow_points}")
-    puts("outflow_points:\n#{outflow_points}")
-    puts(("="*60) + "\n")
+    puts("inflow_points:\n#{inflow_points}") if verbose
+    puts("outflow_points:\n#{outflow_points}") if verbose
+    points = {}
+    data.fetch(:network_link, []).each do |link|
+      src = link.fetch(:source_location_id)
+      dest = link.fetch(:destination_location_id)
+      flow = link.fetch(:flow)
+      if points.include?(src)
+        if points[src].include?(flow)
+          points[src][flow][:source_count] += 1
+        else
+          points[src][flow] = {:source_count => 1, :dest_count => 0}
+        end
+      else
+        points[src] = {flow => {:source_count => 1, :dest_count => 0}}
+      end
+      if points.include?(dest)
+        if points[dest].include?(flow)
+          points[dest][flow][:dest_count] += 1
+        else
+          points[dest][flow] = {:source_count => 0, :dest_count => 1}
+        end
+      else
+        points[dest] = {flow => {:source_count => 0, :dest_count => 1}}
+      end
+    end
+    points.each do |loc, flow_map|
+      flow_map.each do |flow, info|
+        src = outflow_points.fetch(loc, {}).fetch(flow, nil)
+        if !src.nil?
+          if info[:source_count] == 1
+            info[:source] = [src]
+          elsif info[:source_count] > 1
+            bus = add_muxer_component(data, loc, flow, 1, info[:source_count])
+            add_connection_(data, src[0], src[1], bus, 0, flow)
+            info[:source] = []
+            info[:source_count].times do |idx|
+              info[:source] << [bus, idx]
+            end
+          end
+        end
+        tgt = inflow_points.fetch(loc, {}).fetch(flow, nil)
+        if !tgt.nil?
+          if info[:dest_count] == 1
+            info[:dest] = [tgt]
+          elsif info[:dest_count] > 1
+            bus = add_muxer_component(data, loc, flow, info[:dest_count], 1)
+            add_connection_(data, bus, 0, tgt[0], tgt[1], flow)
+            info[:dest] = []
+            info[:dest_count].times do |idx|
+              info[:dest] << [bus, idx]
+            end
+          end
+        end
+      end
+    end
+    puts("points:\n#{points}") if verbose
     data.fetch(:network_link, []).each do |link|
       src = link.fetch(:source_location_id)
       tgt = link.fetch(:destination_location_id)
       flow = link.fetch(:flow)
-      src_conn_info = outflow_points.fetch(src).fetch(flow)
-      tgt_conn_info = inflow_points.fetch(tgt).fetch(flow)
-      add_connection_(
-        data,
-        src_conn_info[0], src_conn_info[1],
-        tgt_conn_info[0], tgt_conn_info[1],
-        flow)
+      sc = points[src][flow][:source].shift
+      tc = points[tgt][flow][:dest].shift
+      add_connection_(data, sc[0], sc[1], tc[0], tc[1], flow)
     end
+    puts(("-"*40) + "\n") if verbose
+    data.keys.sort.each do |k|
+      puts("data[#{k}] = (length: #{data[k].length})\n#{data[k]}") if verbose
+    end
+    puts(("="*60) + "\n") if verbose
     data
   end
 

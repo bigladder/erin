@@ -93,6 +93,15 @@ class Support
     nil
   end
 
+  #def self.find_components_by_location_and_flow(data, loc, flow, comp_type, flow_key)
+  #  cs = []
+  #  data.fetch(comp_type, []).each do |c|
+  #    next unless (c[flow_key] == flow) and (c[:location_id] == loc)
+  #    cs << c
+  #  end
+  #  cs
+  #end
+
   # !!! DEPRECATE !!!
   #
   # find and return the source component object for location_id and flow. If

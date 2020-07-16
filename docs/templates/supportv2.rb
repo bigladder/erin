@@ -55,18 +55,15 @@ class Support
     :converter_component,
     :load_component,
     :muxer_component,
-    :muxer_component,
     :network_link,
     :source_component,
     :storage_component,
   )
 
-
   def initialize(data)
     @ids_in_use = Set.new
     @converter_component = data.fetch(:converter_component, [])
     @load_component = data.fetch(:load_component, [])
-    @muxer_component = []
     @muxer_component = data.fetch(:muxer_component, [])
     @network_link = data.fetch(:network_link, [])
     @source_component = data.fetch(:source_component, [])

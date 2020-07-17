@@ -17,6 +17,15 @@ class Support
   #   - :fixed_cdf, (Array (Hash symbol value)) with these symbols
   #     - :id, string, the id of the fixed cdf
   #     - :value_in_hours, number, the fixed value in hours
+  #   - :fragility_curve, (Array (Hash symbol value)) with these symbols
+  #     - :id, string, the id of the fragility curve
+  #     - :vulnerable_to, string, the damage intensity vulnerable to
+  #     - :type, string, the only option is "linear" right now
+  #     - :lower_bound, number, the value outside of which no damage occurrs
+  #     - :upper_bound, number, the value outside of which certain destruction occurs
+  #   - :component_fragility, (Array (Hash symbol value)) with these symbols
+  #     - :component_id, string, id of the component the curve is applied to
+  #     - :fragility_id, string, id of the fragility curve
   #   - :general, (Hash symbol value)
   #     - :simulation_duration_in_years, number, the duration in years
   #     - :random_setting, string, one of #{"Auto", "Seed"}
@@ -61,9 +70,11 @@ class Support
   #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
 
   attr_reader(
+    :component_fragility,
     :converter_component,
     :damage_intensity,
     :fixed_cdf,
+    :fragility_curve,
     :load_component,
     :load_profile,
     :muxer_component,
@@ -75,9 +86,11 @@ class Support
 
   def initialize(data, root_path=nil)
     @ids_in_use = Set.new
+    @component_fragility = data.fetch(:component_fragility, [])
     @converter_component = data.fetch(:converter_component, [])
     @damage_intensity = data.fetch(:damage_intensity, [])
     @fixed_cdf = data.fetch(:fixed_cdf, [])
+    @fragility_curve = data.fetch(:fragility_curve, [])
     @load_component = data.fetch(:load_component, [])
     @load_profile = data.fetch(:load_profile, [])
     @muxer_component = data.fetch(:muxer_component, [])
@@ -109,6 +122,18 @@ class Support
 
   def damage_intensities_for_scenario(scenario_id)
     @damage_intensity.select {|di| di[:scenario_id] == scenario_id}
+  end
+
+  def fragilities_for_component(comp_id)
+    frag_ids = Set.new
+    @component_fragility.each do |cf|
+      frag_ids << cf[:fragility_id] if cf[:component_id] == comp_id
+    end
+    frags = []
+    @fragility_curve.each do |fc|
+      frags << fc if frag_ids.include?(fc[:id])
+    end
+    frags
   end
 
   # - csv_path: string, the path to a CSV file

@@ -567,4 +567,51 @@ class TestTemplate < Minitest::Test
     ])
     assert_equal(expected, achieved, "non-matches: #{achieved - expected}")
   end
+
+  def test_getting_fragility_curve_data
+    data = {}
+    s = Support.new(data)
+    assert_equal(0, s.fragility_curve.length)
+    data = {
+      fragility_curve: [
+        {
+          id: "highly_vulnerable_to_inundation",
+          vulnerable_to: "inundation_height_ft",
+          lower_bound: 6.0,
+          upper_bound: 12.0,
+        },
+        {
+          id: "somewhat_vulnerable_to_wind",
+          vulnerable_to: "wind_speed_mph",
+          lower_bound: 120.0,
+          upper_bound: 200.0,
+        },
+        {
+          id: "does_it_blend?",
+          vulnerable_to: "blending",
+          lower_bound: 2.0,
+          upper_bound: 10.0,
+        },
+      ],
+      component_fragility: [
+        {
+          component_id: "b1_boiler",
+          fragility_id: "highly_vulnerable_to_inundation",
+        },
+        {
+          component_id: "b1_boiler",
+          fragility_id: "somewhat_vulnerable_to_wind",
+        },
+        {
+          component_id: "b2_boiler",
+          fragility_id: "does_it_blend?",
+        },
+      ],
+    }
+    s = Support.new(data)
+    assert_equal(3, s.fragility_curve.length)
+    assert_equal(
+      Set.new(["somewhat_vulnerable_to_wind", "highly_vulnerable_to_inundation"]),
+      Set.new(s.fragilities_for_component("b1_boiler").map {|f|f[:id]}))
+  end
 end

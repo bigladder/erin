@@ -30,6 +30,23 @@ class TestTemplate < Minitest::Test
     assert(s.connections.empty?)
   end
 
+  def test_expanding_paths
+    data = {
+      load_profile: [
+        {
+          scenario_id: "s1",
+          building_id: "b1",
+          enduse: "electricity",
+          file: "a.csv",
+        },
+      ],
+    }
+    s = Support.new(data, THIS_DIR)
+    assert(s.load_profile.length == 1)
+    assert_equal(File.basename(s.load_profile[0][:file]), "a.csv")
+    assert(s.load_profile[0][:file].length > "a.csv".length)
+  end
+
   def test_connecting_a_single_source_and_sink_electrically
     data = {
       load_component: [

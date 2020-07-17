@@ -152,7 +152,7 @@ class Support
   def expand_load_profile_paths(root_path)
     @load_profile.each do |lp|
       bn = File.basename(lp[:file])
-      lp[:file] = File.expand_path(File.join(root_dir, bn))
+      lp[:file] = File.expand_path(File.join(root_path, bn))
     end
   end
 

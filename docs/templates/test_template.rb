@@ -626,26 +626,178 @@ class TestTemplate < Minitest::Test
         'one_building_has_boiler', load_profiles))
   end
 
-  #def test_all_building_config_options_true
-  #  ps = default_params
-  #  ps[:load_profile_scenario_id] += ["blue_sky"]*2
-  #  ps[:load_profile_building_id] += ["mc", "other"]
-  #  ps[:load_profile_enduse] += ["heating"]*2
-  #  ps[:load_profile_file] += ["mc_blue_sky_heating.csv", "other_blue_sky_heating.csv"]
-  #  ps[:building_level_egen_flag] = ["TRUE"]*2
-  #  ps[:building_level_egen_eff_pct] = [32.0, 32.0]
-  #  ps[:building_level_heat_storage_flag] = ["TRUE"]*2
-  #  ps[:building_level_heat_storage_cap_kWh] = [100.0]*2
-  #  ps[:building_level_gas_boiler_flag] = ["TRUE"]*2
-  #  ps[:building_level_gas_boiler_eff_pct] = [85.0]*2
-  #  run_and_compare(ps, 'all_building_config_options_true')
-  #  assert(
-  #    run_e2rin(
-  #      'all_building_config_options_true', ps[:load_profile_file]))
-  #  assert(
-  #    run_e2rin_graph(
-  #      'all_building_config_options_true', ps[:load_profile_file]))
-  #end
+  def test_all_building_config_options_true
+    ps = {
+      :converter_component => [
+        {
+          :location_id => "mc",
+          :inflow => "natural_gas",
+          :outflow => "electricity",
+          :lossflow => "waste_heat",
+          :constant_efficiency => 0.32,
+        },
+        {
+          :location_id => "other",
+          :inflow => "natural_gas",
+          :outflow => "electricity",
+          :lossflow => "waste_heat",
+          :constant_efficiency => 0.32,
+        },
+        {
+          :location_id => "mc",
+          :inflow => "natural_gas",
+          :outflow => "heating",
+          :lossflow => "waste_heat",
+          :constant_efficiency => 0.85,
+        },
+        {
+          :location_id => "other",
+          :inflow => "natural_gas",
+          :outflow => "heating",
+          :lossflow => "waste_heat",
+          :constant_efficiency => 0.85,
+        },
+      ],
+      :fixed_cdf => [
+        {
+          :id => "always",
+          :value_in_hours => 0,
+        },
+      ],
+      :general => {
+        :simulation_duration_in_years => 100,
+        :random_setting => "Auto",
+        :random_seed => 17,
+      },
+      :load_component => [
+        {
+          :location_id => "mc",
+          :inflow => "electricity",
+        },
+        {
+          :location_id => "other",
+          :inflow => "electricity",
+        },
+        {
+          :location_id => "mc",
+          :inflow => "heating",
+        },
+        {
+          :location_id => "other",
+          :inflow => "heating",
+        },
+      ],
+      :load_profile => [
+        {
+          :scenario_id => "blue_sky",
+          :building_id => "mc",
+          :enduse => "electricity",
+          :file => "mc_blue_sky_electricity.csv",
+        },
+        {
+          :scenario_id => "blue_sky",
+          :building_id => "other",
+          :enduse => "electricity",
+          :file => "other_blue_sky_electricity.csv",
+        },
+        {
+          :scenario_id => "blue_sky",
+          :building_id => "mc",
+          :enduse => "heating",
+          :file => "mc_blue_sky_heating.csv",
+        },
+        {
+          :scenario_id => "blue_sky",
+          :building_id => "other",
+          :enduse => "heating",
+          :file => "other_blue_sky_heating.csv",
+        },
+      ],
+      :network_link => [
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "mc",
+          :flow => "electricity",
+        },
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "other",
+          :flow => "electricity",
+        },
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "mc",
+          :flow => "natural_gas",
+        },
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "other",
+          :flow => "natural_gas",
+        },
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "mc",
+          :flow => "heating",
+        },
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "other",
+          :flow => "heating",
+        },
+      ],
+      :scenario => [
+        {
+          :id => "blue_sky",
+          :duration_in_hours => 8760,
+          :occurrence_distribution => "always",
+          :calc_reliability => false,
+          :max_occurrence => 1,
+        },
+      ],
+      :source_component => [
+        {
+          :location_id => "utility",
+          :outflow => "electricity",
+          :is_limited => "FALSE",
+          :max_outflow_kW => 0.0,
+        },
+        {
+          :location_id => "utility",
+          :outflow => "natural_gas",
+          :is_limited => "FALSE",
+          :max_outflow_kW => 0.0,
+        },
+        {
+          :location_id => "utility",
+          :outflow => "heating",
+          :is_limited => "FALSE",
+          :max_outflow_kW => 0.0,
+        },
+      ],
+      :storage_component => [
+        {
+          :location_id => "mc",
+          :flow => "heating",
+          :capacity_kWh => 100.0,
+          :max_inflow_kW => 10.0,
+        },
+        {
+          :location_id => "other",
+          :flow => "heating",
+          :capacity_kWh => 100.0,
+          :max_inflow_kW => 10.0,
+        },
+      ],
+    }
+    run_and_compare(ps, 'all_building_config_options_true')
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(
+      run_e2rin(
+        'all_building_config_options_true', load_profiles))
+    assert(
+      run_e2rin_graph(
+        'all_building_config_options_true', load_profiles))
+  end
 
   #def make_support_instance(ps)
   #  load_profile = []

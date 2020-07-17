@@ -17,11 +17,6 @@ require_relative "support.rb"
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 
 class TestTemplate < Minitest::Test
-  def setup
-  end
-
-  def teardown
-  end
 
   def test_data_includes_connection
     data = {}

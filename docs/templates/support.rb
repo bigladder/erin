@@ -3,6 +3,9 @@ require 'csv'
 
 class Support
   # - data: (hash symbol various), a hash table with keys
+  #   - :component_fragility, an array of Hash with keys:
+  #     - :component_id, string, the component to apply the fragility curve to
+  #     - :fragility_id, string, the fragility curve id to be applied
   #   - :converter_component, an array of Hash with keys:
   #     - :location_id, string, the location of the converter
   #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", etc.)
@@ -20,7 +23,6 @@ class Support
   #   - :fragility_curve, (Array (Hash symbol value)) with these symbols
   #     - :id, string, the id of the fragility curve
   #     - :vulnerable_to, string, the damage intensity vulnerable to
-  #     - :type, string, the only option is "linear" right now
   #     - :lower_bound, number, the value outside of which no damage occurrs
   #     - :upper_bound, number, the value outside of which certain destruction occurs
   #   - :component_fragility, (Array (Hash symbol value)) with these symbols

@@ -19,6 +19,7 @@ class TestTemplate < Minitest::Test
 
   def most_basic_params
     {
+      :component_fragility => [],
       :converter_component => [],
       :damage_intensity => [],
       :fixed_cdf => [
@@ -27,6 +28,7 @@ class TestTemplate < Minitest::Test
           :value_in_hours => 8760*30,
         },
       ],
+      :fragility_curve => [],
       :general => {
         :simulation_duration_in_years => 100,
         :random_setting => "Auto",
@@ -77,6 +79,7 @@ class TestTemplate < Minitest::Test
   # RETURN: (Hash symbol any), the default parameters for the template
   def default_params
     {
+      :component_fragility => [],
       :converter_component => [],
       :damage_intensity => [],
       :fixed_cdf => [
@@ -85,6 +88,7 @@ class TestTemplate < Minitest::Test
           :value_in_hours => 0,
         },
       ],
+      :fragility_curve => [],
       :general => {
         :simulation_duration_in_years => 100,
         :random_setting => "Auto",
@@ -114,6 +118,18 @@ class TestTemplate < Minitest::Test
           :file => "other_blue_sky_electricity.csv",
         },
       ],
+      :network_link => [
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "mc",
+          :flow => "electricity",
+        },
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "other",
+          :flow => "electricity",
+        },
+      ],
       :scenario => [
         {
           :id => "blue_sky",
@@ -132,18 +148,6 @@ class TestTemplate < Minitest::Test
         },
       ],
       :storage_component => [],
-      :network_link => [
-        {
-          :source_location_id => "utility",
-          :destination_location_id => "mc",
-          :flow => "electricity",
-        },
-        {
-          :source_location_id => "utility",
-          :destination_location_id => "other",
-          :flow => "electricity",
-        },
-      ],
     }
   end
 
@@ -460,9 +464,12 @@ class TestTemplate < Minitest::Test
     @params_file = "params.pxt"
     @template_file = "template.toml"
     @output_file = "test.toml"
+    # ------------ CSV Files -------------------------------
+    @component_fragility_csv = "component-fragility.csv"
     @converter_component_csv = "converter-component.csv"
     @damage_intensity_csv = "damage-intensity.csv"
     @fixed_cdf_csv = "fixed-cdf.csv"
+    @fragility_curve_csv = "fragility-curve.csv"
     @general_csv = "general.csv"
     @load_component_csv = "load-component.csv"
     @load_profile_csv = "load-profile.csv"
@@ -471,9 +478,11 @@ class TestTemplate < Minitest::Test
     @source_component_csv = "source-component.csv"
     @storage_component_csv = "storage-component.csv"
     @all_csvs = [
+      @component_fragility_csv,
       @converter_component_csv,
       @damage_intensity_csv,
       @fixed_cdf_csv,
+      @fragility_curve_csv,
       @general_csv,
       @load_component_csv,
       @load_profile_csv,
@@ -497,6 +506,12 @@ class TestTemplate < Minitest::Test
   def run_and_compare(data, reference_tag, save_rendered_template = true)
     info = [
       [
+        @component_fragility_csv,
+        [:component_id, :fragility_id],
+        :component_fragility,
+        :normal_table,
+      ],
+      [
         @converter_component_csv,
         [:location_id, :inflow, :outflow, :lossflow, :constant_efficiency],
         :converter_component,
@@ -512,6 +527,12 @@ class TestTemplate < Minitest::Test
         @fixed_cdf_csv,
         [:id, :value_in_hours],
         :fixed_cdf,
+        :normal_table,
+      ],
+      [
+        @fragility_curve_csv,
+        [:id, :vulnerable_to, :lower_bound, :upper_bound],
+        :fragility_curve,
         :normal_table,
       ],
       [
@@ -697,6 +718,7 @@ class TestTemplate < Minitest::Test
 
   def test_all_building_config_options_true
     ps = {
+      :component_fragility => [],
       :converter_component => [
         {
           :location_id => "mc",
@@ -734,6 +756,7 @@ class TestTemplate < Minitest::Test
           :value_in_hours => 0,
         },
       ],
+      :fragility_curve => [],
       :general => {
         :simulation_duration_in_years => 100,
         :random_setting => "Auto",
@@ -884,6 +907,41 @@ class TestTemplate < Minitest::Test
       },
     ]
     tag = 'add_damage_intensities_to_scenario'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_fragility_curves_and_damage_intensity_to_scenarios
+    ps = most_basic_params
+    ps[:component_fragility] = [
+      {
+        component_id: "utility_electricity_source",
+        fragility_id: "highly_vulnerable_to_wind",
+      },
+    ]
+    ps[:damage_intensity] = [
+      {
+        scenario_id: "s1",
+        name: "wind_speed_mph",
+        value: 150.0,
+      },
+      {
+        scenario_id: "s1",
+        name: "inundation_depth_ft",
+        value: 12.0,
+      },
+    ]
+    ps[:fragility_curve] = [
+      {
+        id: "highly_vulnerable_to_wind",
+        vulnerable_to: "wind_speed_mph",
+        lower_bound: 80.0,
+        upper_bound: 160.0,
+      },
+    ]
+    tag = 'add_fragility_curves_and_damage_intensity_to_scenarios'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(run_e2rin(tag, load_profiles))

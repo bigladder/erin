@@ -1,6 +1,9 @@
 # File IO
+:component_fragility_csv_path => "ex-component-fragility.csv",
 :converter_component_csv_path => "ex-converter-component.csv",
+:damage_intensity_csv_path => "ex-damage-intensity.csv",
 :fixed_cdf_csv_path => "ex-fixed-cdf.csv",
+:fragility_curve_csv_path => "ex-fragility-curve.csv",
 :general_csv_path => "ex-general.csv",
 :load_component_csv_path => "ex-load-component.csv",
 :load_profile_csv_path => "ex-load-profile.csv",

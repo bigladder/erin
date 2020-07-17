@@ -170,22 +170,31 @@ class TestTemplate < Minitest::Test
     ps
   end
 
-  #def only_one_building_with_electric_loads_params
-  #  ps = default_params
-  #  ps[:load_profile_scenario_id] = ["blue_sky"]
-  #  ps[:load_profile_building_id] = ["b1"]
-  #  ps[:load_profile_enduse] = ["electricity"]
-  #  ps[:load_profile_file] = ["b1_blue_sky_electricity.csv"]
-  #  ps[:building_level_building_id] = ["b1"]
-  #  ps[:building_level_egen_flag] = ["FALSE"]
-  #  ps[:building_level_egen_eff_pct] = [32.0]
-  #  ps[:building_level_heat_storage_flag] = ["FALSE"]
-  #  ps[:building_level_heat_storage_cap_kWh] = [0.0]
-  #  ps[:building_level_gas_boiler_flag] = ["FALSE"]
-  #  ps[:building_level_gas_boiler_eff_pct] = [85.0]
-  #  ps[:building_level_electricity_supply_node] = ["utility"]
-  #  ps
-  #end
+  def only_one_building_with_electric_loads_params
+    ps = default_params
+    ps[:load_profile] = [
+      {
+        :scenario_id => "blue_sky",
+        :building_id => "b1",
+        :enduse => "electricity",
+        :file => "b1_blue_sky_electricity.csv",
+      },
+    ]
+    ps[:load_component] = [
+      {
+        :location_id => "b1",
+        :inflow => "electricity",
+      },
+    ]
+    ps[:network_link] = [
+      {
+        :source_location_id => "utility",
+        :destination_location_id => "b1",
+        :flow => "electricity",
+      },
+    ]
+    ps
+  end
 
   #def one_building_has_thermal_storage_params
   #  ps = default_params
@@ -508,17 +517,17 @@ class TestTemplate < Minitest::Test
         load_profiles))
   end
 
-  #def test_only_one_building_with_electric_loads
-  #  ps = only_one_building_with_electric_loads_params
-  #  run_and_compare(ps, 'only_one_building_with_electric_loads')
-  #  assert(
-  #    run_e2rin(
-  #      'only_one_building_with_electric_loads', ps[:load_profile_file]))
-  #  assert(
-  #    run_e2rin_graph(
-  #      'only_one_building_with_electric_loads',
-  #      ps[:load_profile_file]))
-  #end
+  def test_only_one_building_with_electric_loads
+    ps = only_one_building_with_electric_loads_params
+    run_and_compare(ps, 'only_one_building_with_electric_loads')
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(
+      run_e2rin(
+        'only_one_building_with_electric_loads', load_profiles))
+    assert(
+      run_e2rin_graph(
+        'only_one_building_with_electric_loads', load_profiles))
+  end
 
   #def test_one_building_has_thermal_storage
   #  ps = one_building_has_thermal_storage_params

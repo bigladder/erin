@@ -13,7 +13,7 @@ require 'set'
 require 'stringio'
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
-REMOVE_FILES = true
+REMOVE_FILES = false
 
 class TestTemplate < Minitest::Test
   # RETURN: (Hash symbol any), the default parameters for the template
@@ -397,7 +397,7 @@ class TestTemplate < Minitest::Test
   end
 
   def setup
-    @template_file = "template_v2.toml"
+    @template_file = "template.toml"
     @output_file = "test.toml"
     @converter_component_csv = "converter-component.csv"
     @fixed_cdf_csv = "fixed-cdf.csv"

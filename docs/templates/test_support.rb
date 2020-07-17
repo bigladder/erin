@@ -12,7 +12,7 @@ require 'minitest/autorun'
 require 'open3'
 require 'set'
 require 'stringio'
-require_relative "supportv2.rb"
+require_relative "support.rb"
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REMOVE_FILES = true

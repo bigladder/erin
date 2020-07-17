@@ -15,7 +15,6 @@ require 'stringio'
 require_relative "support.rb"
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
-REMOVE_FILES = true
 
 class TestTemplate < Minitest::Test
   def setup

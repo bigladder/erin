@@ -9,7 +9,7 @@ parameter "network_link_csv_path", :default=>"network-link.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
 parameter "source_component_csv_path", :default=>"source-component.csv"
 parameter "storage_component_csv_path", :default=>"storage-component.csv"
-parameter "expand_load_paths", :default=>false
+parameter "expand_load_paths", :default=>true
 %>
 <%
    require 'set'

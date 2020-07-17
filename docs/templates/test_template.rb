@@ -347,7 +347,8 @@ class TestTemplate < Minitest::Test
   #   stderr: string, standard error
   #   }
   def call_modelkit(tmp_file, output_file)
-    args = "--output=\"#{output_file}\" \"#{tmp_file}\""
+    File.write(@params_file, ":expand_load_paths => false,")
+    args = "--output=\"#{output_file}\" --file=\"#{@params_file}\" \"#{tmp_file}\""
     cmd = "modelkit template-compose #{args}"
     val = {}
     out = ""
@@ -390,13 +391,14 @@ class TestTemplate < Minitest::Test
   # SIDE-EFFECTS:
   # - ensures generated files are removed if exist
   def ensure_directory_clean
-    all_paths = [@output_file] + @all_csvs
+    all_paths = [@params_file, @output_file] + @all_csvs
     all_paths.each do |path|
       File.delete(path) if File.exist?(path) and REMOVE_FILES
     end
   end
 
   def setup
+    @params_file = "params.pxt"
     @template_file = "template.toml"
     @output_file = "test.toml"
     @converter_component_csv = "converter-component.csv"

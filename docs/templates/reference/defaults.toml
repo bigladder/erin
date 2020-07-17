@@ -1,37 +1,49 @@
 
+
+############################################################
+# General Simulation Information
 [simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
 max_time = 100 # ...
 ############################################################
+# Load Profiles
 [loads.mc_electricity_blue_sky]
 csv_file = "mc_blue_sky_electricity.csv"
 [loads.other_electricity_blue_sky]
 csv_file = "other_blue_sky_electricity.csv"
 ############################################################
+# Components
+[components.utility_electricity_source]
+type = "source"
+outflow = "electricity"
 [components.mc_electricity]
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "mc_electricity_blue_sky"
-
 [components.other_electricity]
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "other_electricity_blue_sky"
-
 [components.utility_electricity_bus]
 type = "muxer"
 stream = "electricity"
-num_inflows = 1
-num_outflows = 2
+num_inflows = 1 # ...
+num_outflows = 2 # ...
 dispatch_strategy = "in_order"
-
-[components.utility_electricity_source]
-type = "source"
-outflow = "electricity"
-
 ############################################################
+# Fragility Curves
+############################################################
+# Cumulative Distribution Functions
+[cdf.always]
+type = "fixed"
+value = 0 # ...
+time_unit = "hours"
+############################################################
+# Failure Modes
+############################################################
+# Networks
 [networks.nw]
 connections = [
   ["utility_electricity_bus:OUT(0)", "mc_electricity:IN(0)", "electricity"],
@@ -39,9 +51,11 @@ connections = [
   ["utility_electricity_source:OUT(0)", "utility_electricity_bus:IN(0)", "electricity"],
   ]
 ############################################################
+# Scenarios
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
 duration = 8760 # ...
 max_occurrences = 1 # ...
+calculate_reliability = false
 network = "nw"

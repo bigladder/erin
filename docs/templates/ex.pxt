@@ -1,7 +1,11 @@
 # File IO
+:converter_component_csv_path => "ex-converter-component.csv",
+:fixed_cdf_csv_path => "ex-fixed-cdf.csv",
 :general_csv_path => "ex-general.csv",
+:load_component_csv_path => "ex-load-component.csv",
 :load_profile_csv_path => "ex-load-profile.csv",
+:network_link_csv_path => "ex-network-link.csv",
 :scenario_csv_path => "ex-scenario.csv",
-:building_level_csv_path => "ex-building-level.csv",
-:node_level_csv_path => "ex-node-level.csv",
+:source_component_csv_path => "ex-source-component.csv",
+:storage_component_csv_path => "ex-storage-component.csv",
 :expand_load_paths => true,

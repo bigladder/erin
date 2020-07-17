@@ -3,6 +3,9 @@ require 'csv'
 
 class Support
   # - data: (hash symbol various), a hash table with keys
+  #   - :component_failure_mode, an array of Hash with keys:
+  #     - :component_id, string, the component id to apply to
+  #     - :failure_mode_id, string, the failure mode to apply
   #   - :component_fragility, an array of Hash with keys:
   #     - :component_id, string, the component to apply the fragility curve to
   #     - :fragility_id, string, the fragility curve id to be applied
@@ -73,6 +76,7 @@ class Support
   #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
 
   attr_reader(
+    :component_failure_mode,
     :component_fragility,
     :converter_component,
     :damage_intensity,
@@ -90,6 +94,7 @@ class Support
 
   def initialize(data, root_path=nil)
     @ids_in_use = Set.new
+    @component_failure_mode = data.fetch(:component_failure_mode, [])
     @component_fragility = data.fetch(:component_fragility, [])
     @converter_component = data.fetch(:converter_component, [])
     @damage_intensity = data.fetch(:damage_intensity, [])
@@ -139,6 +144,18 @@ class Support
       frags << fc if frag_ids.include?(fc[:id])
     end
     frags
+  end
+
+  def failure_modes_for_component(comp_id)
+    fm_ids = Set.new
+    @component_failure_mode.each do |cfm|
+      fm_ids << cfm[:failure_mode_id] if cfm[:component_id] == comp_id
+    end
+    fms = []
+    @failure_mode.each do |fm|
+      fms << fm if fm_ids.include?(fm[:id])
+    end
+    fms
   end
 
   # - csv_path: string, the path to a CSV file

@@ -619,5 +619,43 @@ class TestTemplate < Minitest::Test
     data = {}
     s = Support.new(data)
     assert_equal(0, s.failure_mode.length)
+    data = {
+      component_failure_mode: [
+        component_id: "utility_electricity_source",
+        failure_mode_id: "typical_utility_reliability",
+      ],
+      failure_mode: [
+        {
+          id: "typical_utility_reliability",
+          failure_cdf: "fixed_10_years",
+          repair_cdf: "fixed_4_hours",
+        },
+        {
+          id: "boiler_reliability",
+          failure_cdf: "fixed_10_years",
+          repair_cdf: "uniform_range_4_to_36_hours",
+        },
+        {
+          id: "electric_generator_starter",
+          failure_cdf: "fixed_10_years",
+          repair_cdf: "uniform_range_4_to_36_hours",
+        },
+      ],
+      fixed_cdf: [
+        {
+          id: "fixed_10_years",
+          value_in_hours: 8760 * 10,
+        },
+        {
+          id: "fixed_4_hours",
+          value_in_hours: 4,
+        },
+      ],
+    }
+    s = Support.new(data)
+    assert_equal(3, s.failure_mode.length)
+    assert_equal(
+      Set.new(["typical_utility_reliability"]),
+      Set.new(s.failure_modes_for_component("utility_electricity_source").map {|f|f[:id]}))
   end
 end

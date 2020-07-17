@@ -13,7 +13,7 @@ require 'set'
 require 'stringio'
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
-REMOVE_FILES = false
+REMOVE_FILES = true
 
 class TestTemplate < Minitest::Test
   # RETURN: (Hash symbol any), the default parameters for the template

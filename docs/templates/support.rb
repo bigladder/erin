@@ -68,6 +68,7 @@ class Support
     :load_profile,
     :muxer_component,
     :network_link,
+    :scenario,
     :source_component,
     :storage_component,
   )
@@ -81,6 +82,7 @@ class Support
     @load_profile = data.fetch(:load_profile, [])
     @muxer_component = data.fetch(:muxer_component, [])
     @network_link = data.fetch(:network_link, [])
+    @scenario = data.fetch(:scenario, [])
     @source_component = data.fetch(:source_component, [])
     @storage_component = data.fetch(:storage_component, [])
     process_cdfs

@@ -67,6 +67,14 @@ inflow = "<%= c[:inflow] %>"
 loads_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
 <%   end %>
 <% end %>
+<% s.converter_component.each do |c| %>
+[components.<%= c[:id] %>]
+type = "converter"
+inflow = "<%= c[:inflow] %>"
+outflow = "<%= c[:outflow] %>"
+lossflow = "<%= c[:lossflow] %>"
+constant_efficiency = <%= c[:constant_efficiency] %> # ...
+<% end %>
 <% s.muxer_component.each do |c| %>
 [components.<%= c[:id] %>]
 type = "muxer"

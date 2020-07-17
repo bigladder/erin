@@ -141,12 +141,34 @@ class TestTemplate < Minitest::Test
     ps
   end
 
-  #def add_one_electric_generator_at_building_level_params
-  #  ps = default_params
-  #  ps[:building_level_egen_flag][0] = "TRUE"
-  #  ps[:building_level_egen_eff_pct][0] = 42.0
-  #  ps
-  #end
+  def add_one_electric_generator_at_building_level_params
+    ps = default_params
+    ps[:converter_component] += [
+      {
+        :location_id => "mc",
+        :inflow => "natural_gas",
+        :outflow => "electricity",
+        :lossflow => "waste_heat",
+        :constant_efficiency => 0.42,
+      },
+    ]
+    ps[:source_component] += [
+      {
+        :location_id => "utility",
+        :outflow => "natural_gas",
+        :is_limited => "FALSE",
+        :max_outflow_kW => 0.0,
+      },
+    ]
+    ps[:network_link] += [
+      {
+        :source_location_id => "utility",
+        :destination_location_id => "mc",
+        :flow => "natural_gas",
+      },
+    ]
+    ps
+  end
 
   #def only_one_building_with_electric_loads_params
   #  ps = default_params
@@ -472,18 +494,19 @@ class TestTemplate < Minitest::Test
     assert(run_e2rin_graph('multiple_scenarios', load_profiles))
   end
 
-  #def test_add_one_electric_generator_at_building_level
-  #  ps = add_one_electric_generator_at_building_level_params
-  #  run_and_compare(ps, 'add_one_electric_generator_at_building_level')
-  #  assert(
-  #    run_e2rin(
-  #      'add_one_electric_generator_at_building_level',
-  #      ps[:load_profile_file]))
-  #  assert(
-  #    run_e2rin_graph(
-  #      'add_one_electric_generator_at_building_level',
-  #      ps[:load_profile_file]))
-  #end
+  def test_add_one_electric_generator_at_building_level
+    ps = add_one_electric_generator_at_building_level_params
+    run_and_compare(ps, 'add_one_electric_generator_at_building_level')
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(
+      run_e2rin(
+        'add_one_electric_generator_at_building_level',
+        load_profiles))
+    assert(
+      run_e2rin_graph(
+        'add_one_electric_generator_at_building_level',
+        load_profiles))
+  end
 
   #def test_only_one_building_with_electric_loads
   #  ps = only_one_building_with_electric_loads_params

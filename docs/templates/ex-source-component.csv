@@ -1,0 +1,2 @@
+location_id,outflow,is_limited,max_outflow_kW
+utility,electricity,FALSE,0.0

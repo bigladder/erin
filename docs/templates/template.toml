@@ -1,6 +1,7 @@
 <%#INITIALIZE
 # File IO
 parameter "converter_component_csv_path", :default=>"converter-component.csv"
+parameter "damage_intensity_csv_path", :default=>"damage-intensity.csv"
 parameter "fixed_cdf_csv_path", :default=>"fixed-cdf.csv"
 parameter "general_csv_path", :default=>"general.csv"
 parameter "load_component_csv_path", :default=>"load-component.csv"
@@ -18,6 +19,7 @@ parameter "expand_load_paths", :default=>true
    data = {}
    Dir.chdir(THIS_DIR) do
      data[:converter_component] = Support.load_csv(converter_component_csv_path)
+     data[:damage_intensity] = Support.load_csv(damage_intensity_csv_path)
      data[:fixed_cdf] = Support.load_csv(fixed_cdf_csv_path)
      data[:general] = Support.load_key_value_csv(general_csv_path)
      data[:load_component] = Support.load_csv(load_component_csv_path)
@@ -134,10 +136,10 @@ connections = [
   ]
 ############################################################
 # Scenarios
-<% data[:scenario].each do |scen| %>
+<% s.scenario.each do |scen| %>
 [scenarios.<%= scen[:id] %>]
 time_unit = "hours"
-<% cdf = s.cdf_for_id(scen[:occurrence_distribution]) %>
+<%   cdf = s.cdf_for_id(scen[:occurrence_distribution]) %>
 occurrence_distribution = {type = "<%= cdf[:type] %>", value = <%= cdf[:value_in_hours].to_f.round %>, time_unit="hours"}
 duration = <%= scen[:duration_in_hours].to_i %> # ...
 max_occurrences = <%= scen[:max_occurrence].to_i %> # ...
@@ -147,4 +149,7 @@ calculate_reliability = true
 calculate_reliability = false
 <%   end %>
 network = "nw"
+<%   s.damage_intensities_for_scenario(scen[:id]).each do |di| %>
+intensity.<%= di[:name] %> = <%= di[:value] %> # ...
+<%   end %>
 <% end %>

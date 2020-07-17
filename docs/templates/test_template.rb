@@ -16,10 +16,69 @@ THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REMOVE_FILES = true
 
 class TestTemplate < Minitest::Test
+
+  def most_basic_params
+    {
+      :converter_component => [],
+      :damage_intensity => [],
+      :fixed_cdf => [
+        {
+          :id => "every_30_years",
+          :value_in_hours => 8760*30,
+        },
+      ],
+      :general => {
+        :simulation_duration_in_years => 100,
+        :random_setting => "Auto",
+        :random_seed => 17,
+      },
+      :load_component => [
+        {
+          :location_id => "b1",
+          :inflow => "electricity",
+        },
+      ],
+      :load_profile => [
+        {
+          :scenario_id => "s1",
+          :building_id => "b1",
+          :enduse => "electricity",
+          :file => "s1_b1_electricity.csv",
+        },
+      ],
+      :scenario => [
+        {
+          :id => "s1",
+          :duration_in_hours => 14*24,
+          :occurrence_distribution => "every_30_years",
+          :calc_reliability => false,
+          :max_occurrence => -1,
+        },
+      ],
+      :source_component => [
+        {
+          :location_id => "utility",
+          :outflow => "electricity",
+          :is_limited => "FALSE",
+          :max_outflow_kW => 0.0,
+        },
+      ],
+      :storage_component => [],
+      :network_link => [
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "b1",
+          :flow => "electricity",
+        },
+      ],
+    }
+  end
+
   # RETURN: (Hash symbol any), the default parameters for the template
   def default_params
     {
       :converter_component => [],
+      :damage_intensity => [],
       :fixed_cdf => [
         {
           :id => "always",
@@ -402,6 +461,7 @@ class TestTemplate < Minitest::Test
     @template_file = "template.toml"
     @output_file = "test.toml"
     @converter_component_csv = "converter-component.csv"
+    @damage_intensity_csv = "damage-intensity.csv"
     @fixed_cdf_csv = "fixed-cdf.csv"
     @general_csv = "general.csv"
     @load_component_csv = "load-component.csv"
@@ -412,6 +472,7 @@ class TestTemplate < Minitest::Test
     @storage_component_csv = "storage-component.csv"
     @all_csvs = [
       @converter_component_csv,
+      @damage_intensity_csv,
       @fixed_cdf_csv,
       @general_csv,
       @load_component_csv,
@@ -439,6 +500,12 @@ class TestTemplate < Minitest::Test
         @converter_component_csv,
         [:location_id, :inflow, :outflow, :lossflow, :constant_efficiency],
         :converter_component,
+        :normal_table,
+      ],
+      [
+        @damage_intensity_csv,
+        [:scenario_id, :name, :value],
+        :damage_intensity,
         :normal_table,
       ],
       [
@@ -660,6 +727,7 @@ class TestTemplate < Minitest::Test
           :constant_efficiency => 0.85,
         },
       ],
+      :damage_intensity => [],
       :fixed_cdf => [
         {
           :id => "always",
@@ -799,5 +867,26 @@ class TestTemplate < Minitest::Test
     assert(
       run_e2rin_graph(
         'all_building_config_options_true', load_profiles))
+  end
+
+  def test_add_damage_intensities_to_scenario
+    ps = most_basic_params
+    ps[:damage_intensity] = [
+      {
+        scenario_id: "s1",
+        name: "wind_speed_mph",
+        value: 150.0,
+      },
+      {
+        scenario_id: "s1",
+        name: "inundation_depth_ft",
+        value: 12.0,
+      },
+    ]
+    tag = 'add_damage_intensities_to_scenario'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
   end
 end

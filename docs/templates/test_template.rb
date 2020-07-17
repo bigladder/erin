@@ -571,22 +571,60 @@ class TestTemplate < Minitest::Test
         'one_building_has_thermal_storage', load_profiles))
   end
 
-  #def test_one_building_has_boiler
-  #  ps = default_params
-  #  ps[:load_profile_scenario_id] << "blue_sky"
-  #  ps[:load_profile_building_id] << "mc"
-  #  ps[:load_profile_enduse] << "heating"
-  #  ps[:load_profile_file] << "mc_blue_sky_heating.csv"
-  #  ps[:building_level_gas_boiler_flag][0] = "TRUE"
-  #  ps[:building_level_gas_boiler_eff_pct][0] = 85.0
-  #  run_and_compare(ps, 'one_building_has_boiler')
-  #  assert(
-  #    run_e2rin(
-  #      'one_building_has_boiler', ps[:load_profile_file]))
-  #  assert(
-  #    run_e2rin_graph(
-  #      'one_building_has_boiler', ps[:load_profile_file]))
-  #end
+  def test_one_building_has_boiler
+    ps = default_params
+    ps[:converter_component] << {
+      :location_id => "mc",
+      :inflow => "natural_gas",
+      :outflow => "heating",
+      :lossflow => "waste_heat",
+      :constant_efficiency => 0.85,
+    }
+    ps[:load_component] << {
+      :location_id => "mc",
+      :inflow => "heating",
+    }
+    ps[:load_profile] << {
+      :scenario_id => "blue_sky",
+      :building_id => "mc",
+      :enduse => "heating",
+      :file => "mc_blue_sky_heating.csv",
+    }
+    ps[:network_link] += [
+      {
+        :source_location_id => "utility",
+        :destination_location_id => "mc",
+        :flow => "heating",
+      },
+      {
+        :source_location_id => "utility",
+        :destination_location_id => "mc",
+        :flow => "natural_gas",
+      },
+    ]
+    ps[:source_component] += [
+      {
+        :location_id => "utility",
+        :outflow => "heating",
+        :is_limited => "FALSE",
+        :max_outflow_kW => 0.0,
+      },
+      {
+        :location_id => "utility",
+        :outflow => "natural_gas",
+        :is_limited => "FALSE",
+        :max_outflow_kW => 0.0,
+      },
+    ]
+    run_and_compare(ps, 'one_building_has_boiler')
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(
+      run_e2rin(
+        'one_building_has_boiler', load_profiles))
+    assert(
+      run_e2rin_graph(
+        'one_building_has_boiler', load_profiles))
+  end
 
   #def test_all_building_config_options_true
   #  ps = default_params

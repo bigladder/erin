@@ -614,4 +614,10 @@ class TestTemplate < Minitest::Test
       Set.new(["somewhat_vulnerable_to_wind", "highly_vulnerable_to_inundation"]),
       Set.new(s.fragilities_for_component("b1_boiler").map {|f|f[:id]}))
   end
+
+  def test_getting_failure_mode_data
+    data = {}
+    s = Support.new(data)
+    assert_equal(0, s.failure_mode.length)
+  end
 end

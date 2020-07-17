@@ -17,6 +17,10 @@ class Support
   #     - :name, string, the name of the damage metric (e.g., "wind_speed_mph",
   #       "inundation_depth_ft", etc.)
   #     - :value, number, the value of the damage metric (e.g., 150, 12, etc.)
+  #   - :failure_mode, (Array Hash) with keys for Hash as follows:
+  #     - :id, string, the id of the failure mode
+  #     - :failure_cdf, string, the id of the failure CDF
+  #     - :repair_cdf, string, the id of the repair CDF
   #   - :fixed_cdf, (Array (Hash symbol value)) with these symbols
   #     - :id, string, the id of the fixed cdf
   #     - :value_in_hours, number, the fixed value in hours
@@ -25,9 +29,6 @@ class Support
   #     - :vulnerable_to, string, the damage intensity vulnerable to
   #     - :lower_bound, number, the value outside of which no damage occurrs
   #     - :upper_bound, number, the value outside of which certain destruction occurs
-  #   - :component_fragility, (Array (Hash symbol value)) with these symbols
-  #     - :component_id, string, id of the component the curve is applied to
-  #     - :fragility_id, string, id of the fragility curve
   #   - :general, (Hash symbol value)
   #     - :simulation_duration_in_years, number, the duration in years
   #     - :random_setting, string, one of #{"Auto", "Seed"}
@@ -75,6 +76,7 @@ class Support
     :component_fragility,
     :converter_component,
     :damage_intensity,
+    :failure_mode,
     :fixed_cdf,
     :fragility_curve,
     :load_component,
@@ -91,6 +93,7 @@ class Support
     @component_fragility = data.fetch(:component_fragility, [])
     @converter_component = data.fetch(:converter_component, [])
     @damage_intensity = data.fetch(:damage_intensity, [])
+    @failure_mode = data.fetch(:failure_mode, [])
     @fixed_cdf = data.fetch(:fixed_cdf, [])
     @fragility_curve = data.fetch(:fragility_curve, [])
     @load_component = data.fetch(:load_component, [])

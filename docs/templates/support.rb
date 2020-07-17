@@ -9,6 +9,11 @@ class Support
   #     - :outflow, string, the outflow type (e.g., "electricity", "heating", etc.)
   #     - :lossflow, string, optional. defaults to "waste_heat". The lossflow stream
   #     - :constant_efficiency, number, where 0.0 < efficiency <= 1.0, the efficiency of conversion
+  #   - :damage_intensity, an array of Hash with keys:
+  #     - :scenario_id, the scenario that the damage intensity applies to
+  #     - :name, string, the name of the damage metric (e.g., "wind_speed_mph",
+  #       "inundation_depth_ft", etc.)
+  #     - :value, number, the value of the damage metric (e.g., 150, 12, etc.)
   #   - :fixed_cdf, (Array (Hash symbol value)) with these symbols
   #     - :id, string, the id of the fixed cdf
   #     - :value_in_hours, number, the fixed value in hours
@@ -57,6 +62,7 @@ class Support
 
   attr_reader(
     :converter_component,
+    :damage_intensity,
     :fixed_cdf,
     :load_component,
     :load_profile,
@@ -69,6 +75,7 @@ class Support
   def initialize(data, root_path=nil)
     @ids_in_use = Set.new
     @converter_component = data.fetch(:converter_component, [])
+    @damage_intensity = data.fetch(:damage_intensity, [])
     @fixed_cdf = data.fetch(:fixed_cdf, [])
     @load_component = data.fetch(:load_component, [])
     @load_profile = data.fetch(:load_profile, [])
@@ -96,6 +103,10 @@ class Support
       end
     end
     item
+  end
+
+  def damage_intensities_for_scenario(scenario_id)
+    @damage_intensity.select {|di| di[:scenario_id] == scenario_id}
   end
 
   # - csv_path: string, the path to a CSV file

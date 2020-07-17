@@ -41,6 +41,29 @@ class TestTemplate < Minitest::Test
     assert(s.load_profile[0][:file].length > "a.csv".length)
   end
 
+  def test_scenarios_having_intensities
+    data = {
+      scenario: [
+        {
+          id: "s1",
+          duration_in_hours: 24*14,
+          occurrence_distribution: "every_30_years",
+          calc_reliability: "FALSE",
+          max_occurrence: 1,
+        },
+      ],
+      damage_intensity: [
+        {
+          scenario_id: "s1",
+          name: "wind_speed_mph",
+          value: 24.0,
+        },
+      ],
+    }
+    s = Support.new(data)
+    assert(!s.damage_intensities_for_scenario("s1").empty?)
+  end
+
   def test_connecting_a_single_source_and_sink_electrically
     data = {
       load_component: [

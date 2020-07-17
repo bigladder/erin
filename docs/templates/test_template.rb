@@ -72,6 +72,7 @@ class TestTemplate < Minitest::Test
           :max_outflow_kW => 0.0,
         },
       ],
+      :storage_component => [],
       :network_link => [
         {
           :source_location_id => "utility",
@@ -196,16 +197,37 @@ class TestTemplate < Minitest::Test
     ps
   end
 
-  #def one_building_has_thermal_storage_params
-  #  ps = default_params
-  #  ps[:load_profile_scenario_id] << "blue_sky"
-  #  ps[:load_profile_building_id] << "mc"
-  #  ps[:load_profile_enduse] << "heating"
-  #  ps[:load_profile_file] << "mc_blue_sky_heating.csv"
-  #  ps[:building_level_heat_storage_flag][0] = "TRUE"
-  #  ps[:building_level_heat_storage_cap_kWh][0] = 100.0
-  #  ps
-  #end
+  def one_building_has_thermal_storage_params
+    ps = default_params
+    ps[:load_profile] << {
+      :scenario_id => "blue_sky",
+      :building_id => "mc",
+      :enduse => "heating",
+      :file => "mc_blue_sky_heating.csv",
+    }
+    ps[:load_component] << {
+      :location_id => "mc",
+      :inflow => "heating",
+    }
+    ps[:source_component] << {
+      :location_id => "utility",
+      :outflow => "heating",
+      :is_limited => "FALSE",
+      :max_outflow_kW => 0.0,
+    }
+    ps[:storage_component] << {
+      :location_id => "mc",
+      :flow => "heating",
+      :capacity_kWh => 100.0,
+      :max_inflow_kW => 10.0,
+    }
+    ps[:network_link] << {
+      :source_location_id => "utility",
+      :destination_location_id => "mc",
+      :flow => "heating",
+    }
+    ps
+  end
 
   # RETURN: string, path to the e2rin_multi executable
   def e2rin_path
@@ -385,6 +407,7 @@ class TestTemplate < Minitest::Test
     @network_link_csv = "network-link.csv"
     @scenario_csv = "scenario.csv"
     @source_component_csv = "source-component.csv"
+    @storage_component_csv = "storage-component.csv"
     @all_csvs = [
       @converter_component_csv,
       @fixed_cdf_csv,
@@ -394,6 +417,7 @@ class TestTemplate < Minitest::Test
       @network_link_csv,
       @scenario_csv,
       @source_component_csv,
+      @storage_component_csv,
     ]
     ensure_directory_clean
   end
@@ -456,6 +480,12 @@ class TestTemplate < Minitest::Test
         @source_component_csv,
         [:location_id, :outflow, :is_limited, :max_outflow_kW],
         :source_component,
+        :normal_table,
+      ],
+      [
+        @storage_component_csv,
+        [:location_id, :flow, :capacity_kWh, :max_inflow_kW],
+        :storage_component,
         :normal_table,
       ],
     ]
@@ -529,16 +559,17 @@ class TestTemplate < Minitest::Test
         'only_one_building_with_electric_loads', load_profiles))
   end
 
-  #def test_one_building_has_thermal_storage
-  #  ps = one_building_has_thermal_storage_params
-  #  run_and_compare(ps, 'one_building_has_thermal_storage')
-  #  assert(
-  #    run_e2rin(
-  #      'one_building_has_thermal_storage', ps[:load_profile_file]))
-  #  assert(
-  #    run_e2rin_graph(
-  #      'one_building_has_thermal_storage', ps[:load_profile_file]))
-  #end
+  def test_one_building_has_thermal_storage
+    ps = one_building_has_thermal_storage_params
+    run_and_compare(ps, 'one_building_has_thermal_storage')
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(
+      run_e2rin(
+        'one_building_has_thermal_storage', load_profiles))
+    assert(
+      run_e2rin_graph(
+        'one_building_has_thermal_storage', load_profiles))
+  end
 
   #def test_one_building_has_boiler
   #  ps = default_params

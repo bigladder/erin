@@ -8,6 +8,7 @@ parameter "load_profile_csv_path", :default=>"load-profile.csv"
 parameter "network_link_csv_path", :default=>"network-link.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
 parameter "source_component_csv_path", :default=>"source-component.csv"
+parameter "storage_component_csv_path", :default=>"storage-component.csv"
 parameter "expand_load_paths", :default=>false
 %>
 <%
@@ -24,6 +25,7 @@ parameter "expand_load_paths", :default=>false
      data[:network_link] = Support.load_csv(network_link_csv_path)
      data[:scenario] = Support.load_csv(scenario_csv_path)
      data[:source_component] = Support.load_csv(source_component_csv_path)
+     data[:storage_component] = Support.load_csv(storage_component_csv_path)
    end
    if expand_load_paths
      s = Support.new(data, THIS_DIR)
@@ -74,6 +76,15 @@ inflow = "<%= c[:inflow] %>"
 outflow = "<%= c[:outflow] %>"
 lossflow = "<%= c[:lossflow] %>"
 constant_efficiency = <%= c[:constant_efficiency] %> # ...
+<% end %>
+<% s.storage_component.each do |c| %>
+[components.<%= c[:id] %>]
+type = "store"
+inflow = "<%= c[:flow] %>"
+outflow = "<%= c[:flow] %>"
+capacity_unit = "kWh"
+capacity = <%= c[:capacity_kWh] %> # ...
+max_inflow = <%= c[:max_inflow_kW] %> # ...
 <% end %>
 <% s.muxer_component.each do |c| %>
 [components.<%= c[:id] %>]

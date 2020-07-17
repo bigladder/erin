@@ -87,24 +87,59 @@ class TestTemplate < Minitest::Test
     }
   end
 
-  ## RETURN: (Hash symbol any), the default parameters for the template
-  #def multiple_scenarios_params
-  #  ps = default_params
-  #  ps[:load_profile_scenario_id] += ["s1"]*2 + ["s2"]*2
-  #  ps[:load_profile_building_id] += ["mc", "other"]*2
-  #  ps[:load_profile_enduse] += ["electricity"]*4
-  #  ps[:load_profile_file] += [
-  #    "mc_s1_electricity.csv",
-  #    "other_s1_electricity.csv",
-  #    "mc_s2_electricity.csv",
-  #    "other_s2_electricity.csv",
-  #  ]
-  #  ps[:scenario_id] += ["s1", "s2"]
-  #  ps[:scenario_duration_in_hours] += [500]*2
-  #  ps[:scenario_max_occurrence] += [-1]*2
-  #  ps[:scenario_fixed_frequency_in_years] += [10]*2
-  #  ps
-  #end
+  # RETURN: (Hash symbol any), the default parameters for the template
+  def multiple_scenarios_params
+    ps = default_params
+    ps[:fixed_cdf] += [
+      {
+        :id => "fixed_10yrs",
+        :value_in_hours => 8760 * 10,
+      },
+    ]
+    ps[:load_profile] += [
+      {
+        :scenario_id => "s1",
+        :building_id => "mc",
+        :enduse => "electricity",
+        :file => "mc_s1_electricity.csv",
+      },
+      {
+        :scenario_id => "s1",
+        :building_id => "other",
+        :enduse => "electricity",
+        :file => "other_s1_electricity.csv",
+      },
+      {
+        :scenario_id => "s2",
+        :building_id => "mc",
+        :enduse => "electricity",
+        :file => "mc_s2_electricity.csv",
+      },
+      {
+        :scenario_id => "s2",
+        :building_id => "other",
+        :enduse => "electricity",
+        :file => "other_s2_electricity.csv",
+      },
+    ]
+    ps[:scenario] += [
+      {
+        :id => "s1",
+        :duration_in_hours => 500,
+        :occurrence_distribution => "fixed_10yrs",
+        :calc_reliability => false,
+        :max_occurrence => -1,
+      },
+      {
+        :id => "s2",
+        :duration_in_hours => 500,
+        :occurrence_distribution => "fixed_10yrs",
+        :calc_reliability => false,
+        :max_occurrence => -1,
+      },
+    ]
+    ps
+  end
 
   #def add_one_electric_generator_at_building_level_params
   #  ps = default_params
@@ -429,12 +464,13 @@ class TestTemplate < Minitest::Test
     assert(run_e2rin_graph('defaults', load_profiles))
   end
 
-  #def test_multiple_scenarios
-  #  ps = multiple_scenarios_params
-  #  run_and_compare(ps, 'multiple_scenarios')
-  #  assert(run_e2rin('multiple_scenarios', ps[:load_profile_file]))
-  #  assert(run_e2rin_graph('multiple_scenarios', ps[:load_profile_file]))
-  #end
+  def test_multiple_scenarios
+    ps = multiple_scenarios_params
+    run_and_compare(ps, 'multiple_scenarios')
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin('multiple_scenarios', load_profiles))
+    assert(run_e2rin_graph('multiple_scenarios', load_profiles))
+  end
 
   #def test_add_one_electric_generator_at_building_level
   #  ps = add_one_electric_generator_at_building_level_params

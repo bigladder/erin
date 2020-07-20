@@ -4,6 +4,7 @@ test.toml
 test.pxt
 *.gv
 *.png
+add_chp.toml
 add_damage_intensities_to_scenario.toml
 add_failure_modes_to_a_component.toml
 add_fragility_curves_and_damage_intensity_to_scenarios.toml

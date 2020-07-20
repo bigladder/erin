@@ -160,12 +160,10 @@ class Support
     fms
   end
 
-  def pass_through_components_for_link(link_id, flow)
+  def pass_through_components_for_link(link_id)
     pts = []
     @pass_through_component.each do |pt|
-      same_link = pt.fetch(:link_id) == link_id
-      same_flow = pt.fetch(:flow) == flow
-      pts << pt if same_link and same_flow
+      pts << pt if pt.fetch(:link_id) == link_id 
     end
     pts
   end
@@ -257,6 +255,7 @@ class Support
       [@load_profile, [:building_id, :enduse, :scenario_id], ""],
       [@source_component, [:location_id, :outflow], "source"],
       [@storage_component, [:location_id, :flow], "store"],
+      [@network_link, [:source_location_id, "to", :destination_location_id, :flow], ""],
     ]
     # lp[:id] = "#{lp[:building_id]}_#{lp[:enduse]}_#{lp[:scenario_id]}" %>
     comp_infos.each do |tuple|
@@ -265,7 +264,11 @@ class Support
         next if c.include?(:id)
         parts = []
         attribs.each do |a|
-          parts << c.fetch(a).to_s.strip
+          if a.is_a?(String)
+            parts << a
+          else
+            parts << c.fetch(a).to_s.strip
+          end
         end
         parts << postfix unless postfix.empty?
         id = make_id_unique(parts.join("_"))
@@ -673,9 +676,9 @@ class Support
     @network_link.each do |link|
       src = link.fetch(:source_location_id)
       tgt = link.fetch(:destination_location_id)
-      link_id = "#{src}->#{tgt}"
+      link_id = link.fetch(:id)
       flow = link.fetch(:flow)
-      pts = pass_through_components_for_link(link_id, flow)
+      pts = pass_through_components_for_link(link_id)
       num_pts = pts.length
       begin
         sc = points[src][flow][:source].shift
@@ -691,9 +694,9 @@ class Support
           add_connection(pt_id, pt_outflow_port, tc[0], tc[1], flow)
         else
           inflow_bus = add_muxer_component(
-            link_id, flow, 1, num_pts, "#{link_id}_#{flow}_inflow_bus")
+            link_id, flow, 1, num_pts, "#{link_id}_inflow_bus")
           outflow_bus = add_muxer_component(
-            link_id, flow, num_pts, 1, "#{link_id}_#{flow}_outflow_bus")
+            link_id, flow, num_pts, 1, "#{link_id}_outflow_bus")
           add_connection(sc[0], sc[1], inflow_bus, 0, flow)
           pts.each_with_index do |pt, port|
             add_connection(inflow_bus, port, pt.fetch(:id), 0, flow)

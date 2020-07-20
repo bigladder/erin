@@ -688,7 +688,7 @@ class TestTemplate < Minitest::Test
       pass_through_component: [
         {
           id: "electric_lines",
-          link_id: "c1->b1",
+          link_id: "c1_to_b1_electricity",
           flow: "electricity",
         },
       ]
@@ -726,12 +726,12 @@ class TestTemplate < Minitest::Test
       pass_through_component: [
         {
           id: "electric_lines_A",
-          link_id: "c1->b1",
+          link_id: "c1_to_b1_electricity",
           flow: "electricity",
         },
         {
           id: "electric_lines_B",
-          link_id: "c1->b1",
+          link_id: "c1_to_b1_electricity",
           flow: "electricity",
         },
       ]
@@ -740,12 +740,12 @@ class TestTemplate < Minitest::Test
     assert_equal(2, s.pass_through_component.length)
     assert_equal(2, s.muxer_component.length)
     expected_conns = Set.new([
-      ["c1_electricity_source:OUT(0)", "c1->b1_electricity_inflow_bus:IN(0)", "electricity"],
-      ["c1->b1_electricity_inflow_bus:OUT(0)", "electric_lines_A:IN(0)", "electricity"],
-      ["electric_lines_A:OUT(0)", "c1->b1_electricity_outflow_bus:IN(0)", "electricity"],
-      ["c1->b1_electricity_inflow_bus:OUT(1)", "electric_lines_B:IN(0)", "electricity"],
-      ["electric_lines_B:OUT(0)", "c1->b1_electricity_outflow_bus:IN(1)", "electricity"],
-      ["c1->b1_electricity_outflow_bus:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+      ["c1_electricity_source:OUT(0)", "c1_to_b1_electricity_inflow_bus:IN(0)", "electricity"],
+      ["c1_to_b1_electricity_inflow_bus:OUT(0)", "electric_lines_A:IN(0)", "electricity"],
+      ["electric_lines_A:OUT(0)", "c1_to_b1_electricity_outflow_bus:IN(0)", "electricity"],
+      ["c1_to_b1_electricity_inflow_bus:OUT(1)", "electric_lines_B:IN(0)", "electricity"],
+      ["electric_lines_B:OUT(0)", "c1_to_b1_electricity_outflow_bus:IN(1)", "electricity"],
+      ["c1_to_b1_electricity_outflow_bus:OUT(0)", "b1_electricity:IN(0)", "electricity"],
     ])
     actual_conns = Set.new(s.connections)
     assert_equal(expected_conns, actual_conns)

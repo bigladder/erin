@@ -55,6 +55,7 @@ class Support
   #     - :destination_location_id, string, location_id for the destination of the flow
   #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
   #   - :pass_through_component, an array of Hash with keys:
+  #     - :id, string, id of the pass-through component
   #     - :link_id, string, the network link having the pass-through component
   #     - :flow, string, the flow being passed through (e.g., 'electricity', 'diesel')
   #   - :scenario, an array of Hash with keys:

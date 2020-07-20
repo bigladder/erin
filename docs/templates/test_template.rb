@@ -19,9 +19,11 @@ class TestTemplate < Minitest::Test
 
   def most_basic_params
     {
+      :component_failure_mode => [],
       :component_fragility => [],
       :converter_component => [],
       :damage_intensity => [],
+      :failure_mode => [],
       :fixed_cdf => [
         {
           :id => "every_30_years",
@@ -80,9 +82,11 @@ class TestTemplate < Minitest::Test
   # RETURN: (Hash symbol any), the default parameters for the template
   def default_params
     {
+      :component_failure_mode => [],
       :component_fragility => [],
       :converter_component => [],
       :damage_intensity => [],
+      :failure_mode => [],
       :fixed_cdf => [
         {
           :id => "always",
@@ -467,9 +471,11 @@ class TestTemplate < Minitest::Test
     @template_file = "template.toml"
     @output_file = "test.toml"
     # ------------ CSV Files -------------------------------
+    @component_failure_mode_csv = "component-failure-mode.csv"
     @component_fragility_csv = "component-fragility.csv"
     @converter_component_csv = "converter-component.csv"
     @damage_intensity_csv = "damage-intensity.csv"
+    @failure_mode_csv = "failure-mode.csv"
     @fixed_cdf_csv = "fixed-cdf.csv"
     @fragility_curve_csv = "fragility-curve.csv"
     @general_csv = "general.csv"
@@ -481,9 +487,11 @@ class TestTemplate < Minitest::Test
     @source_component_csv = "source-component.csv"
     @storage_component_csv = "storage-component.csv"
     @all_csvs = [
+      @component_failure_mode_csv,
       @component_fragility_csv,
       @converter_component_csv,
       @damage_intensity_csv,
+      @failure_mode_csv,
       @fixed_cdf_csv,
       @fragility_curve_csv,
       @general_csv,
@@ -510,6 +518,12 @@ class TestTemplate < Minitest::Test
   def run_and_compare(data, reference_tag, save_rendered_template = true)
     info = [
       [
+        @component_failure_mode_csv,
+        [:component_id, :failure_mode_id],
+        :component_failure_mode,
+        :normal_table,
+      ],
+      [
         @component_fragility_csv,
         [:component_id, :fragility_id],
         :component_fragility,
@@ -525,6 +539,12 @@ class TestTemplate < Minitest::Test
         @damage_intensity_csv,
         [:scenario_id, :name, :value],
         :damage_intensity,
+        :normal_table,
+      ],
+      [
+        @failure_mode_csv,
+        [:id, :failure_cdf, :repair_cdf],
+        :failure_mode,
         :normal_table,
       ],
       [
@@ -728,6 +748,7 @@ class TestTemplate < Minitest::Test
 
   def test_all_building_config_options_true
     ps = {
+      :component_failure_mode => [],
       :component_fragility => [],
       :converter_component => [
         {
@@ -760,6 +781,7 @@ class TestTemplate < Minitest::Test
         },
       ],
       :damage_intensity => [],
+      :failure_mode => [],
       :fixed_cdf => [
         {
           :id => "always",
@@ -974,6 +996,38 @@ class TestTemplate < Minitest::Test
       },
     ]
     tag = 'add_multiple_pass_through_components_on_a_link'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_failure_modes_to_a_component
+    ps = most_basic_params
+    ps[:component_failure_mode] += [
+      {
+        component_id: "utility_electricity_source",
+        failure_mode_id: "typical_utility_failures",
+      },
+    ]
+    ps[:failure_mode] += [
+      {
+        id: "typical_utility_failures",
+        failure_cdf: "every_10_hours",
+        repair_cdf: "every_4_years",
+      },
+    ]
+    ps[:fixed_cdf] += [
+      {
+        id: "every_10_hours",
+        value_in_hours: 10,
+      },
+      {
+        id: "every_4_years",
+        value_in_hours: 8760*4,
+      },
+    ]
+    tag = 'add_failure_modes_to_a_component'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(run_e2rin(tag, load_profiles))

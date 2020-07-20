@@ -663,5 +663,43 @@ class TestTemplate < Minitest::Test
     data = {}
     s = Support.new(data)
     assert_equal(0, s.pass_through_component.length)
+    data = {
+      source_component: [
+        {
+          location_id: "c1",
+          outflow: "electricity",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+      ],
+      load_component: [
+        {
+          location_id: "b1",
+          inflow: "electricity",
+        },
+      ],
+      network_link: [
+        {
+          source_location_id: "c1",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+      ],
+      pass_through_component: [
+        {
+          id: "electric_lines",
+          link_id: "c1->b1",
+          flow: "electricity",
+        },
+      ]
+    }
+    s = Support.new(data)
+    assert_equal(1, s.pass_through_component.length)
+    expected_conns = Set.new([
+      ["c1_electricity_source:OUT(0)", "electric_lines:IN(0)", "electricity"],
+      ["electric_lines:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+    ])
+    actual_conns = Set.new(s.connections)
+    assert_equal(expected_conns, actual_conns)
   end
 end

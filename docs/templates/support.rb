@@ -55,7 +55,7 @@ class Support
   #     - :destination_location_id, string, location_id for the destination of the flow
   #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
   #   - :pass_through_component, an array of Hash with keys:
-  #     - :location_id, string, the location of the pass-through
+  #     - :link_id, string, the network link having the pass-through component
   #     - :flow, string, the flow being passed through (e.g., 'electricity', 'diesel')
   #   - :scenario, an array of Hash with keys:
   #     - :id, string, scenario id
@@ -158,6 +158,16 @@ class Support
       fms << fm if fm_ids.include?(fm[:id])
     end
     fms
+  end
+
+  def pass_through_components_for_link(link_id, flow)
+    pts = []
+    @pass_through_component.each do |pt|
+      same_link = pt.fetch(:link_id) == link_id
+      same_flow = pt.fetch(:flow) == flow
+      pts << pt if same_link and same_flow
+    end
+    pts
   end
 
   # - csv_path: string, the path to a CSV file
@@ -663,11 +673,24 @@ class Support
     @network_link.each do |link|
       src = link.fetch(:source_location_id)
       tgt = link.fetch(:destination_location_id)
+      link_id = "#{src}->#{tgt}"
       flow = link.fetch(:flow)
+      pts = pass_through_components_for_link(link_id, flow)
       begin
         sc = points[src][flow][:source].shift
         tc = points[tgt][flow][:dest].shift
-        add_connection(sc[0], sc[1], tc[0], tc[1], flow)
+        if pts.empty?
+          add_connection(sc[0], sc[1], tc[0], tc[1], flow)
+        elsif pts.length == 1
+          pt = pts[0]
+          pt_outflow_port = 0
+          pt_inflow_port = 0
+          pt_id = pt.fetch(:id)
+          add_connection(sc[0], sc[1], pt_id, pt_inflow_port, flow)
+          add_connection(pt_id, pt_outflow_port, tc[0], tc[1], flow)
+        else
+          raise "Not implemented!"
+        end
       rescue
         puts "WARNING! Bad Connection"
         puts "Trying to connect '#{src}' to '#{tgt}' with '#{flow}' "\

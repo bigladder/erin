@@ -701,5 +701,53 @@ class TestTemplate < Minitest::Test
     ])
     actual_conns = Set.new(s.connections)
     assert_equal(expected_conns, actual_conns)
+    data = {
+      source_component: [
+        {
+          location_id: "c1",
+          outflow: "electricity",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+      ],
+      load_component: [
+        {
+          location_id: "b1",
+          inflow: "electricity",
+        },
+      ],
+      network_link: [
+        {
+          source_location_id: "c1",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+      ],
+      pass_through_component: [
+        {
+          id: "electric_lines_A",
+          link_id: "c1->b1",
+          flow: "electricity",
+        },
+        {
+          id: "electric_lines_B",
+          link_id: "c1->b1",
+          flow: "electricity",
+        },
+      ]
+    }
+    s = Support.new(data)
+    assert_equal(2, s.pass_through_component.length)
+    assert_equal(2, s.muxer_component.length)
+    expected_conns = Set.new([
+      ["c1_electricity_source:OUT(0)", "c1->b1_electricity_inflow_bus:IN(0)", "electricity"],
+      ["c1->b1_electricity_inflow_bus:OUT(0)", "electric_lines_A:IN(0)", "electricity"],
+      ["electric_lines_A:OUT(0)", "c1->b1_electricity_outflow_bus:IN(0)", "electricity"],
+      ["c1->b1_electricity_inflow_bus:OUT(1)", "electric_lines_B:IN(0)", "electricity"],
+      ["electric_lines_B:OUT(0)", "c1->b1_electricity_outflow_bus:IN(1)", "electricity"],
+      ["c1->b1_electricity_outflow_bus:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+    ])
+    actual_conns = Set.new(s.connections)
+    assert_equal(expected_conns, actual_conns)
   end
 end

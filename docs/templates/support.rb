@@ -307,8 +307,8 @@ class Support
   # - num_outflows: integer, num_outflows > 0, the number of outflows
   # SIDE_EFFECTS: adds the new mux to @muxer_component
   # RETURN: string, id of the new mux added
-  def add_muxer_component(location_id, flow, num_inflows, num_outflows)
-    id = make_id_unique("#{location_id}_#{flow}_bus")
+  def add_muxer_component(location_id, flow, num_inflows, num_outflows, id=nil)
+    id ||= make_id_unique("#{location_id}_#{flow}_bus")
     new_mux = {
       location_id: location_id,
       id: id,
@@ -676,12 +676,13 @@ class Support
       link_id = "#{src}->#{tgt}"
       flow = link.fetch(:flow)
       pts = pass_through_components_for_link(link_id, flow)
+      num_pts = pts.length
       begin
         sc = points[src][flow][:source].shift
         tc = points[tgt][flow][:dest].shift
         if pts.empty?
           add_connection(sc[0], sc[1], tc[0], tc[1], flow)
-        elsif pts.length == 1
+        elsif num_pts == 1
           pt = pts[0]
           pt_outflow_port = 0
           pt_inflow_port = 0
@@ -689,7 +690,16 @@ class Support
           add_connection(sc[0], sc[1], pt_id, pt_inflow_port, flow)
           add_connection(pt_id, pt_outflow_port, tc[0], tc[1], flow)
         else
-          raise "Not implemented!"
+          inflow_bus = add_muxer_component(
+            link_id, flow, 1, num_pts, "#{link_id}_#{flow}_inflow_bus")
+          outflow_bus = add_muxer_component(
+            link_id, flow, num_pts, 1, "#{link_id}_#{flow}_outflow_bus")
+          add_connection(sc[0], sc[1], inflow_bus, 0, flow)
+          pts.each_with_index do |pt, port|
+            add_connection(inflow_bus, port, pt.fetch(:id), 0, flow)
+            add_connection(pt.fetch(:id), 0, outflow_bus, port, flow)
+          end
+          add_connection(outflow_bus, 0, tc[0], tc[1], flow)
         end
       rescue
         puts "WARNING! Bad Connection"

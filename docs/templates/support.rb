@@ -20,6 +20,14 @@ class Support
   #     - :name, string, the name of the damage metric (e.g., "wind_speed_mph",
   #       "inundation_depth_ft", etc.)
   #     - :value, number, the value of the damage metric (e.g., 150, 12, etc.)
+  #   - :dual_outflow_converter_component
+  #     - :location_id, string, the location of the dual-outflow converter
+  #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", "coal", etc.)
+  #     - :primary_outflow, string, the primary outflow type (e.g., "electricity", "heating")
+  #     - :secondary_outflow, string, the secondary outflow type (e.g., "heating", "electricity")
+  #     - :lossflow, string, optional. defaults to "waste_heat"
+  #     - :primary_efficiency, number, 0.0 < efficiency <= 1.0
+  #     - :secondary_efficiency, number, 0.0 < efficiency <= 1.0
   #   - :failure_mode, (Array Hash) with keys for Hash as follows:
   #     - :id, string, the id of the failure mode
   #     - :failure_cdf, string, the id of the failure CDF
@@ -115,6 +123,8 @@ class Support
     expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids
     @connections = []
+    process_dual_outflow_converter_component(
+      data.fetch(:dual_outflow_converter_component, []))
     generate_connections
   end
 
@@ -213,6 +223,42 @@ class Support
   end
 
   private
+
+  def add_converter_component(eff, loc, inflow, outflow, lossflow="waste_heat", id=nil)
+    id ||= make_id_unique("#{loc}_#{outflow}_generator")
+    @converter_component << {
+      id: id,
+      location_id: loc,
+      inflow: inflow,
+      outflow: outflow,
+      lossflow: lossflow,
+      constant_efficiency: eff,
+    }
+    id
+  end
+
+  def process_dual_outflow_converter_component(dual_outflow_comps)
+    dual_outflow_comps.each do |c|
+      id = c.fetch(
+        :id,
+        "#{c.fetch(:location_id)}_dual_"\
+        "#{c.fetch(:primary_outflow)}_"\
+        "#{c.fetch(:secondary_outflow)}_generator")
+      inf = c.fetch(:inflow)
+      out1 = c.fetch(:primary_outflow)
+      out2 = c.fetch(:secondary_outflow)
+      loss = c.fetch(:lossflow, "waste_heat")
+      cc1 = add_converter_component(
+        c.fetch(:primary_efficiency),
+        c.fetch(:location_id),
+        inf, out1, loss, id + "_stage_1")
+      cc2 = add_converter_component(
+        c.fetch(:secondary_efficiency),
+        c.fetch(:location_id),
+        loss, out2, loss, id + "_stage_2")
+      add_connection(cc1, 1, cc2, 0, loss)
+    end
+  end
 
   def process_cdfs
     @fixed_cdf.each do |cdf|

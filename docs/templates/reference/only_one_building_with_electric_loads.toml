@@ -1,0 +1,47 @@
+
+
+############################################################
+# General Simulation Information
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+max_time = 100 # ...
+############################################################
+# Load Profiles
+[loads.b1_electricity_blue_sky]
+csv_file = "b1_blue_sky_electricity.csv"
+############################################################
+# Components
+[components.utility_electricity_source]
+type = "source"
+outflow = "electricity"
+[components.b1_electricity]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "b1_electricity_blue_sky"
+############################################################
+# Fragility Curves
+############################################################
+# Cumulative Distribution Functions
+[cdf.always]
+type = "fixed"
+value = 0 # ...
+time_unit = "hours"
+############################################################
+# Failure Modes
+############################################################
+# Networks
+[networks.nw]
+connections = [
+  ["utility_electricity_source:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+  ]
+############################################################
+# Scenarios
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
+duration = 8760 # ...
+max_occurrences = 1 # ...
+calculate_reliability = false
+network = "nw"

@@ -23,6 +23,7 @@ class TestTemplate < Minitest::Test
       :component_fragility => [],
       :converter_component => [],
       :damage_intensity => [],
+      :dual_outflow_converter_component => [],
       :failure_mode => [],
       :fixed_cdf => [
         {
@@ -86,6 +87,7 @@ class TestTemplate < Minitest::Test
       :component_fragility => [],
       :converter_component => [],
       :damage_intensity => [],
+      :dual_outflow_converter_component => [],
       :failure_mode => [],
       :fixed_cdf => [
         {
@@ -475,6 +477,7 @@ class TestTemplate < Minitest::Test
     @component_fragility_csv = "component-fragility.csv"
     @converter_component_csv = "converter-component.csv"
     @damage_intensity_csv = "damage-intensity.csv"
+    @dual_outflow_converter_component_csv = "dual-outflow-converter-component.csv"
     @failure_mode_csv = "failure-mode.csv"
     @fixed_cdf_csv = "fixed-cdf.csv"
     @fragility_curve_csv = "fragility-curve.csv"
@@ -491,6 +494,7 @@ class TestTemplate < Minitest::Test
       @component_fragility_csv,
       @converter_component_csv,
       @damage_intensity_csv,
+      @dual_outflow_converter_component_csv,
       @failure_mode_csv,
       @fixed_cdf_csv,
       @fragility_curve_csv,
@@ -539,6 +543,16 @@ class TestTemplate < Minitest::Test
         @damage_intensity_csv,
         [:scenario_id, :name, :value],
         :damage_intensity,
+        :normal_table,
+      ],
+      [
+        @dual_outflow_converter_component_csv,
+        [
+          :location_id, :inflow, :primary_outflow,
+          :secondary_outflow, :lossflow, :primary_efficiency,
+          :secondary_efficiency,
+        ],
+        :dual_outflow_converter_component,
         :normal_table,
       ],
       [
@@ -781,6 +795,7 @@ class TestTemplate < Minitest::Test
         },
       ],
       :damage_intensity => [],
+      :dual_outflow_converter_component => [],
       :failure_mode => [],
       :fixed_cdf => [
         {
@@ -1028,6 +1043,48 @@ class TestTemplate < Minitest::Test
       },
     ]
     tag = 'add_failure_modes_to_a_component'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_chp
+    ps = most_basic_params
+    ps[:dual_outflow_converter_component] = [
+      {
+        location_id: "b1",
+        inflow: "natural_gas",
+        primary_outflow: "electricity",
+        secondary_outflow: "heating",
+        lossflow: "waste_heat",
+        primary_efficiency: 0.4,
+        secondary_efficiency: 0.85,
+      },
+    ]
+    ps[:load_component] << {location_id: "b1", inflow: "heating"}
+    ps[:load_profile] << {
+      scenario_id: "s1",
+      building_id: "b1",
+      enduse: "heating",
+      file: "s1_b1_heating.csv",
+    }
+    ps[:source_component] = [
+      {
+        location_id: "utility",
+        outflow: "natural_gas",
+        is_limited: "FALSE",
+        max_outflow_kW: 0.0,
+      },
+    ]
+    ps[:network_link] = [
+      {
+        source_location_id: "utility",
+        destination_location_id: "b1",
+        flow: "natural_gas",
+      },
+    ]
+    tag = 'add_chp'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(run_e2rin(tag, load_profiles))

@@ -750,4 +750,82 @@ class TestTemplate < Minitest::Test
     actual_conns = Set.new(s.connections)
     assert_equal(expected_conns, actual_conns)
   end
+
+  def test_data_read
+    data = {
+      component_failure_mode: [
+        {
+          component_id: "utility_electricity_source",
+          failure_mode_id: "typical_utility_failures"
+        }
+      ],
+      component_fragility: [],
+      converter_component: [],
+      damage_intensity: [],
+      failure_mode: [
+        {
+          id: "typical_utility_failures",
+          failure_cdf: "every_10_hours",
+          repair_cdf: "every_4_years"
+        }
+      ],
+      fixed_cdf: [
+        {
+          id: "every_10_hours",
+          value_in_hours: "10"
+        },
+        {
+          id: "every_4_years",
+          value_in_hours: "35040"
+        }
+      ],
+      fragility_curve: [],
+      general: {
+        simulation_duration_in_years: "100",
+        random_setting: "Auto",
+        random_seed: "17"
+      },
+      load_component: [
+        {
+          location_id: "b1",
+          inflow: "electricity"
+        }
+      ],
+      load_profile: [
+        {
+          scenario_id: "s1",
+          building_id: "b1",
+          enduse: "electricity",
+          file: "s1_b1_electricity.csv"
+        }
+      ],
+      network_link: [
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "electricity"
+        }
+      ],
+      pass_through_component: [],
+      scenario: [
+        {
+          id: "s1",
+          duration_in_hours: "336",
+          occurrence_distribution: "every_30_years",
+          calc_reliability: "false",
+          max_occurrence: "-1"
+        }
+      ],
+      source_component: [
+        {
+          location_id: "utility",
+          outflow: "electricity",
+          is_limited: "FALSE",
+          max_outflow_kW: "0.0"
+        }
+      ],
+      storage_component: []
+    }
+    _ = Support.new(data)
+  end
 end

@@ -6,6 +6,7 @@ test.pxt
 *.png
 add_damage_intensities_to_scenario.toml
 add_fragility_curves_and_damage_intensity_to_scenarios.toml
+add_multiple_pass_through_components_on_a_link.toml
 add_one_electric_generator_at_building_level.toml
 all_building_config_options_true.toml
 defaults.toml

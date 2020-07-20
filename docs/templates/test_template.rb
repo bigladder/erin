@@ -48,6 +48,7 @@ class TestTemplate < Minitest::Test
           :file => "s1_b1_electricity.csv",
         },
       ],
+      :pass_through_component => [],
       :scenario => [
         {
           :id => "s1",
@@ -130,6 +131,7 @@ class TestTemplate < Minitest::Test
           :flow => "electricity",
         },
       ],
+      :pass_through_component => [],
       :scenario => [
         {
           :id => "blue_sky",
@@ -474,6 +476,7 @@ class TestTemplate < Minitest::Test
     @load_component_csv = "load-component.csv"
     @load_profile_csv = "load-profile.csv"
     @network_link_csv = "network-link.csv"
+    @pass_through_component_csv = "pass-through-component.csv"
     @scenario_csv = "scenario.csv"
     @source_component_csv = "source-component.csv"
     @storage_component_csv = "storage-component.csv"
@@ -487,6 +490,7 @@ class TestTemplate < Minitest::Test
       @load_component_csv,
       @load_profile_csv,
       @network_link_csv,
+      @pass_through_component_csv,
       @scenario_csv,
       @source_component_csv,
       @storage_component_csv,
@@ -557,6 +561,12 @@ class TestTemplate < Minitest::Test
         @network_link_csv,
         [:source_location_id, :destination_location_id, :flow],
         :network_link,
+        :normal_table,
+      ],
+      [
+        @pass_through_component_csv,
+        [:id, :link_id, :flow],
+        :pass_through_component,
         :normal_table,
       ],
       [
@@ -838,6 +848,7 @@ class TestTemplate < Minitest::Test
           :flow => "heating",
         },
       ],
+      :pass_through_component => [],
       :scenario => [
         {
           :id => "blue_sky",
@@ -942,6 +953,27 @@ class TestTemplate < Minitest::Test
       },
     ]
     tag = 'add_fragility_curves_and_damage_intensity_to_scenarios'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_multiple_pass_through_components_on_a_link
+    ps = most_basic_params
+    ps[:pass_through_component] = [
+      {
+        id: "electric_lines_A",
+        link_id: "utility_to_b1_electricity",
+        flow: "electricity",
+      },
+      {
+        id: "electric_lines_B",
+        link_id: "utility_to_b1_electricity",
+        flow: "electricity",
+      },
+    ]
+    tag = 'add_multiple_pass_through_components_on_a_link'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(run_e2rin(tag, load_profiles))

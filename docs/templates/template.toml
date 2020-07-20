@@ -9,6 +9,7 @@ parameter "general_csv_path", :default=>"general.csv"
 parameter "load_component_csv_path", :default=>"load-component.csv"
 parameter "load_profile_csv_path", :default=>"load-profile.csv"
 parameter "network_link_csv_path", :default=>"network-link.csv"
+parameter "pass_through_component_csv_path", :default=>"pass-through-component.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
 parameter "source_component_csv_path", :default=>"source-component.csv"
 parameter "storage_component_csv_path", :default=>"storage-component.csv"
@@ -29,6 +30,7 @@ parameter "expand_load_paths", :default=>true
      data[:load_component] = Support.load_csv(load_component_csv_path)
      data[:load_profile] = Support.load_csv(load_profile_csv_path)
      data[:network_link] = Support.load_csv(network_link_csv_path)
+     data[:pass_through_component] = Support.load_csv(pass_through_component_csv_path)
      data[:scenario] = Support.load_csv(scenario_csv_path)
      data[:source_component] = Support.load_csv(source_component_csv_path)
      data[:storage_component] = Support.load_csv(storage_component_csv_path)
@@ -115,6 +117,15 @@ stream = "<%= c[:flow] %>"
 num_inflows = <%= c[:num_inflows] %> # ...
 num_outflows = <%= c[:num_outflows] %> # ...
 dispatch_strategy = "in_order"
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+<%   end %>
+<% end %>
+<% s.pass_through_component.each do |c| %>
+[components.<%= c[:id] %>]
+type = "pass_through"
+stream = "<%= c[:flow] %>"
 <%   fs = s.fragilities_for_component(c[:id]) %>
 <%   if fs.length > 0 %>
 fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]

@@ -23,7 +23,7 @@ class TestTemplate < Minitest::Test
       :component_fragility => [],
       :converter_component => [],
       :damage_intensity => [],
-      :dual_outflow_converter_component => [],
+      :dual_outflow_converter_comp => [],
       :failure_mode => [],
       :fixed_cdf => [
         {
@@ -87,7 +87,7 @@ class TestTemplate < Minitest::Test
       :component_fragility => [],
       :converter_component => [],
       :damage_intensity => [],
-      :dual_outflow_converter_component => [],
+      :dual_outflow_converter_comp => [],
       :failure_mode => [],
       :fixed_cdf => [
         {
@@ -477,7 +477,7 @@ class TestTemplate < Minitest::Test
     @component_fragility_csv = "component-fragility.csv"
     @converter_component_csv = "converter-component.csv"
     @damage_intensity_csv = "damage-intensity.csv"
-    @dual_outflow_converter_component_csv = "dual-outflow-converter-component.csv"
+    @dual_outflow_converter_comp_csv = "dual-outflow-converter-comp.csv"
     @failure_mode_csv = "failure-mode.csv"
     @fixed_cdf_csv = "fixed-cdf.csv"
     @fragility_curve_csv = "fragility-curve.csv"
@@ -494,7 +494,7 @@ class TestTemplate < Minitest::Test
       @component_fragility_csv,
       @converter_component_csv,
       @damage_intensity_csv,
-      @dual_outflow_converter_component_csv,
+      @dual_outflow_converter_comp_csv,
       @failure_mode_csv,
       @fixed_cdf_csv,
       @fragility_curve_csv,
@@ -546,13 +546,13 @@ class TestTemplate < Minitest::Test
         :normal_table,
       ],
       [
-        @dual_outflow_converter_component_csv,
+        @dual_outflow_converter_comp_csv,
         [
           :location_id, :inflow, :primary_outflow,
           :secondary_outflow, :lossflow, :primary_efficiency,
           :secondary_efficiency,
         ],
-        :dual_outflow_converter_component,
+        :dual_outflow_converter_comp,
         :normal_table,
       ],
       [
@@ -795,7 +795,7 @@ class TestTemplate < Minitest::Test
         },
       ],
       :damage_intensity => [],
-      :dual_outflow_converter_component => [],
+      :dual_outflow_converter_comp => [],
       :failure_mode => [],
       :fixed_cdf => [
         {
@@ -1051,7 +1051,7 @@ class TestTemplate < Minitest::Test
 
   def test_add_chp
     ps = most_basic_params
-    ps[:dual_outflow_converter_component] = [
+    ps[:dual_outflow_converter_comp] = [
       {
         location_id: "b1",
         inflow: "natural_gas",

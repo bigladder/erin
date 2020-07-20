@@ -20,7 +20,7 @@ class Support
   #     - :name, string, the name of the damage metric (e.g., "wind_speed_mph",
   #       "inundation_depth_ft", etc.)
   #     - :value, number, the value of the damage metric (e.g., 150, 12, etc.)
-  #   - :dual_outflow_converter_component
+  #   - :dual_outflow_converter_comp
   #     - :location_id, string, the location of the dual-outflow converter
   #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", "coal", etc.)
   #     - :primary_outflow, string, the primary outflow type (e.g., "electricity", "heating")
@@ -123,8 +123,8 @@ class Support
     expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids
     @connections = []
-    process_dual_outflow_converter_component(
-      data.fetch(:dual_outflow_converter_component, []))
+    process_dual_outflow_converter_comp(
+      data.fetch(:dual_outflow_converter_comp, []))
     generate_connections
   end
 
@@ -237,7 +237,7 @@ class Support
     id
   end
 
-  def process_dual_outflow_converter_component(dual_outflow_comps)
+  def process_dual_outflow_converter_comp(dual_outflow_comps)
     dual_outflow_comps.each do |c|
       id = c.fetch(
         :id,

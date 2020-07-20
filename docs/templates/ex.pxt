@@ -3,7 +3,7 @@
 :component_fragility_csv_path => "ex-component-fragility.csv",
 :converter_component_csv_path => "ex-converter-component.csv",
 :damage_intensity_csv_path => "ex-damage-intensity.csv",
-:dual_outflow_converter_component_csv => "ex-dual-outflow-converter-component.csv",
+:dual_outflow_converter_comp_csv => "ex-dual-outflow-converter-comp.csv",
 :failure_mode_csv_path => "ex-failure-mode.csv",
 :fixed_cdf_csv_path => "ex-fixed-cdf.csv",
 :fragility_curve_csv_path => "ex-fragility-curve.csv",

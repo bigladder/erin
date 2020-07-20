@@ -829,7 +829,7 @@ class TestTemplate < Minitest::Test
     _ = Support.new(data)
   end
 
-  def test_add_dual_output_converter_component
+  def test_add_dual_outflow_converter_comp
     data = {
       source_component: [
         {
@@ -849,7 +849,7 @@ class TestTemplate < Minitest::Test
           inflow: "heating",
         },
       ],
-      dual_outflow_converter_component: [
+      dual_outflow_converter_comp: [
         {
           location_id: "b1",
           inflow: "natural_gas",

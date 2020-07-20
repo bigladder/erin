@@ -870,43 +870,29 @@ class TestTemplate < Minitest::Test
     }
     s = Support.new(data)
     assert_equal(2, s.converter_component.length)
-    #data = {
-    #  source_component: [
-    #    {
-    #      location_id: "c1",
-    #      outflow: "electricity",
-    #      is_limited: "FALSE",
-    #      max_outflow_kW: 0.0,
-    #    },
-    #  ],
-    #  load_component: [
-    #    {
-    #      location_id: "b1",
-    #      inflow: "electricity",
-    #    },
-    #  ],
-    #  network_link: [
-    #    {
-    #      source_location_id: "c1",
-    #      destination_location_id: "b1",
-    #      flow: "electricity",
-    #    },
-    #  ],
-    #  pass_through_component: [
-    #    {
-    #      id: "electric_lines",
-    #      link_id: "c1_to_b1_electricity",
-    #      flow: "electricity",
-    #    },
-    #  ]
-    #}
-    #s = Support.new(data)
-    #assert_equal(1, s.pass_through_component.length)
-    #expected_conns = Set.new([
-    #  ["c1_electricity_source:OUT(0)", "electric_lines:IN(0)", "electricity"],
-    #  ["electric_lines:OUT(0)", "b1_electricity:IN(0)", "electricity"],
-    #])
-    #actual_conns = Set.new(s.connections)
-    #assert_equal(expected_conns, actual_conns)
+    expected = Set.new([
+      [
+        "utility_natural_gas_source:OUT(0)",
+        "b1_dual_electricity_heating_generator_stage_1:IN(0)",
+        "natural_gas",
+      ],
+      [
+        "b1_dual_electricity_heating_generator_stage_1:OUT(0)",
+        "b1_electricity:IN(0)",
+        "electricity",
+      ],
+      [
+        "b1_dual_electricity_heating_generator_stage_1:OUT(1)",
+        "b1_dual_electricity_heating_generator_stage_2:IN(0)",
+        "waste_heat",
+      ],
+      [
+        "b1_dual_electricity_heating_generator_stage_2:OUT(0)",
+        "b1_heating:IN(0)",
+        "heating",
+      ],
+    ])
+    actual = Set.new(s.connections)
+    assert_equal(expected, actual)
   end
 end

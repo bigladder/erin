@@ -658,4 +658,10 @@ class TestTemplate < Minitest::Test
       Set.new(["typical_utility_reliability"]),
       Set.new(s.failure_modes_for_component("utility_electricity_source").map {|f|f[:id]}))
   end
+
+  def test_pass_through_components_on_network_links
+    data = {}
+    s = Support.new(data)
+    assert_equal(0, s.pass_through_component.length)
+  end
 end

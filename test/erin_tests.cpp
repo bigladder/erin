@@ -6591,6 +6591,7 @@ TEST(ErinBasicsTest, Test_uncontrolled_source)
     "network = \"nw\"\n";
   auto m = E::make_main_from_string(input);
   auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
 }
 
 int

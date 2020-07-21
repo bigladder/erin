@@ -577,6 +577,15 @@ namespace ERIN
               components,
               std::move(frags));
           break;
+        case ComponentType::UncontrolledSource:
+          read_uncontrolled_source_component(
+              tt,
+              comp_id,
+              output_stream_id,
+              loads_by_id,
+              components,
+              std::move(frags));
+          break;
         default:
           {
             std::ostringstream oss;
@@ -1001,6 +1010,50 @@ namespace ERIN
           id, std::string(stream), std::move(frags));
     components.insert(
         std::make_pair(id, std::move(pass_through_comp)));
+  }
+
+  void TomlInputReader::read_uncontrolled_source_component(
+      const toml::table& tt,
+      const std::string& id,
+      const std::string& outflow,
+      const std::unordered_map<
+        std::string, std::vector<LoadItem>>& profiles_by_id,
+      std::unordered_map<
+        std::string, std::unique_ptr<Component>>& components,
+      fragility_map&& frags) const
+  {
+    const std::string key_supply_by_scenario{"supply_by_scenario"};
+    std::unordered_map<std::string,std::vector<LoadItem>>
+      supply_by_scenario{};
+    auto it = tt.find(key_supply_by_scenario);
+    const auto tt_end = tt.end();
+    if (it != tt_end) {
+      const auto& profiles = toml::get<toml::table>(it->second);
+      for (const auto& p: profiles) {
+        const std::string profile_id{toml::get<toml::string>(p.second)};
+        auto the_profile_it = profiles_by_id.find(profile_id);
+        if (the_profile_it != profiles_by_id.end()) {
+          supply_by_scenario.insert(
+              std::make_pair(p.first, the_profile_it->second));
+        }
+        else {
+          std::ostringstream oss{};
+          oss << "Input File Error reading load: "
+              << "could not find supply_id = \"" << profile_id << "\"";
+          throw std::runtime_error(oss.str());
+        }
+      }
+      std::unique_ptr<Component> uncontrolled_src_comp = std::make_unique<UncontrolledSourceComponent>(
+          id, std::string(outflow), supply_by_scenario, std::move(frags));
+      components.insert(std::make_pair(id, std::move(uncontrolled_src_comp)));
+    }
+    else {
+      std::ostringstream oss{};
+      oss << "BadInputError: could not find \""
+          << key_supply_by_scenario
+          << "\" in component type \"uncontrolled_source\"";
+      throw std::runtime_error(oss.str());
+    }
   }
 
   void TomlInputReader::read_storage_component(

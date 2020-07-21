@@ -211,6 +211,8 @@ namespace ERIN
       return ComponentType::Informational;
     if ((tag == "store") || (tag == "storage"))
       return ComponentType::Storage;
+    if (tag == "uncontrolled_source")
+      return ComponentType::UncontrolledSource;
     std::ostringstream oss;
     oss << "Unhandled tag \"" << tag << "\"";
     throw std::invalid_argument(oss.str());
@@ -234,6 +236,8 @@ namespace ERIN
         return std::string{"informational"};
       case ComponentType::Storage:
         return std::string{"storage"};
+      case ComponentType::UncontrolledSource:
+        return std::string{"uncontrolled_source"};
       default:
         {
           std::ostringstream oss;

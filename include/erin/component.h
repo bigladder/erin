@@ -389,6 +389,53 @@ namespace ERIN
   bool operator==(const StorageComponent& a, const StorageComponent& b);
   bool operator!=(const StorageComponent& a, const StorageComponent& b);
   std::ostream& operator<<(std::ostream& os, const StorageComponent& n);
+
+  ////////////////////////////////////////////////////////////
+  // UncontrolledSourceComponent
+  class UncontrolledSourceComponent : public Component
+  {
+    public:
+      UncontrolledSourceComponent(
+          const std::string& id,
+          const std::string& outflow,
+          std::unordered_map<std::string, std::vector<LoadItem>>
+            supply_by_scenario);
+      UncontrolledSourceComponent(
+          const std::string& id,
+          const std::string& output_stream,
+          std::unordered_map<std::string, std::vector<LoadItem>>
+            supply_by_scenario,
+          fragility_map fragilities);
+      PortsAndElements add_to_network(
+          adevs::Digraph<FlowValueType, Time>& nw,
+          const std::string& active_scenario,
+          bool is_failed = false,
+          const std::vector<TimeState>& reliability_schedule = {}) const override;
+      [[nodiscard]] std::unique_ptr<Component> clone() const override;
+
+      friend bool operator==(
+          const UncontrolledSourceComponent& a,
+          const UncontrolledSourceComponent& b);
+      friend bool operator!=(
+          const UncontrolledSourceComponent& a,
+          const UncontrolledSourceComponent& b);
+      friend std::ostream& operator<<(
+          std::ostream& os,
+          const UncontrolledSourceComponent& n);
+
+    private:
+      std::unordered_map<std::string,std::vector<LoadItem>> supply_by_scenario;
+  };
+
+  bool operator==(
+      const UncontrolledSourceComponent& a,
+      const UncontrolledSourceComponent& b);
+  bool operator!=(
+      const UncontrolledSourceComponent& a,
+      const UncontrolledSourceComponent& b);
+  std::ostream& operator<<(
+      std::ostream& os,
+      const UncontrolledSourceComponent& n);
 }
 
 #endif // ERIN_COMPONENT_H

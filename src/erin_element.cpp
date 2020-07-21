@@ -31,8 +31,11 @@ namespace ERIN
     else if (tag == "on_off_switch") {
       return ElementType::OnOffSwitch;
     }
+    else if (tag == "uncontrolled_source") {
+      return ElementType::UncontrolledSource;
+    }
     else {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "unhandled tag '" << tag << "' for element_type\n";
       throw std::invalid_argument(oss.str());
     }
@@ -54,6 +57,8 @@ namespace ERIN
         return std::string{"mux"};
       case ElementType::OnOffSwitch:
         return std::string{"on_off_switch"};
+      case ElementType::UncontrolledSource:
+        return std::string{"uncontrolled_source"};
       default:
         {
           std::ostringstream oss{};
@@ -1759,5 +1764,113 @@ namespace ERIN
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());
     }
+  }
+
+  ////////////////////////////////////////////////////////////
+  // UncontrolledSource
+  UncontrolledSource::UncontrolledSource(
+      std::string id,
+      ComponentType component_type,
+      const std::string& stream_type,
+      const std::vector<LoadItem>& profile):
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::UncontrolledSource,
+        stream_type),
+    data{erin::devs::make_uncontrolled_source_data(profile)},
+    state{erin::devs::make_uncontrolled_source_state()},
+    flow_writer{nullptr},
+    element_id{-1},
+    lossflow_element_id{-1},
+    record_history{false}
+  {
+  }
+
+  void
+  UncontrolledSource::delta_int()
+  {
+    state = erin::devs::uncontrolled_src_internal_transition(data, state);
+    log_ports();
+  }
+
+  void
+  UncontrolledSource::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    state = erin::devs::uncontrolled_src_external_transition(
+        data, state, e.real, xs);
+    log_ports();
+  }
+
+  void
+  UncontrolledSource::delta_conf(std::vector<PortValue>& xs)
+  {
+    state = erin::devs::uncontrolled_src_confluent_transition(
+        data, state, xs);
+    log_ports();
+  }
+
+  Time
+  UncontrolledSource::ta()
+  {
+    auto dt = erin::devs::uncontrolled_src_time_advance(data, state);
+    if (dt == erin::devs::infinity) {
+      return inf;
+    }
+    return Time{dt, 1};
+  }
+
+  void
+  UncontrolledSource::output_func(std::vector<PortValue>& ys)
+  {
+    erin::devs::uncontrolled_src_output_function_mutable(data, state, ys);
+    log_ports();
+  }
+
+  void
+  UncontrolledSource::log_ports()
+  {
+    if (flow_writer && record_history) {
+      if (element_id == -1) {
+        element_id = flow_writer->register_id(
+            get_id() + "-outflow",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::SourceOutflow,
+            record_history);
+      }
+      if (lossflow_element_id == -1) {
+        lossflow_element_id = flow_writer->register_id(
+            get_id() + "-lossflow",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::WasteInflow,
+            record_history);
+      }
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
+      flow_writer->write_data(
+          lossflow_element_id,
+          state.time,
+          state.spill_port.get_requested(),
+          state.spill_port.get_achieved());
+    }
+  }
+
+  void
+  UncontrolledSource::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  UncontrolledSource::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
   }
 }

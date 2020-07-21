@@ -6554,6 +6554,45 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
         ys, expected_ys, compare_ports));
 }
 
+TEST(ErinBasicsTest, Test_uncontrolled_source)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[loads.supply]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0]]\n"
+    "[components.US]\n"
+    "type = \"uncontrolled_source\"\n"
+    "output_stream = \"electricity\"\n"
+    "supply_by_scenario.blue_sky = \"supply\"\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[networks.nw]\n"
+    "connections = [\n"
+    "    [\"US:OUT(0)\",  \"L:IN(0)\", \"electricity\"],\n"
+    "    ]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"nw\"\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+}
+
 int
 main(int argc, char **argv)
 {

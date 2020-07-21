@@ -97,7 +97,8 @@ namespace ERIN
     Muxer,
     PassThrough,
     Informational,
-    Storage
+    Storage,
+    UncontrolledSource
   };
 
   ComponentType tag_to_component_type(const std::string& tag);

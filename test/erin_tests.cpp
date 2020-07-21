@@ -32,6 +32,7 @@
 #include <iostream>
 #include <memory>
 #include <random>
+#include <set>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -6592,6 +6593,19 @@ TEST(ErinBasicsTest, Test_uncontrolled_source)
   auto m = E::make_main_from_string(input);
   auto out = m.run_all();
   EXPECT_TRUE(out.get_is_good());
+  auto results_map = out.get_results();
+  ASSERT_EQ(1, results_map.size());
+  const auto& bs_res = results_map["blue_sky"];
+  ASSERT_EQ(1, bs_res.size());
+  const auto& bs_res0 = bs_res[0];
+  const auto& comp_ids = bs_res0.get_component_ids();
+  std::set<std::string> expected_comp_ids{"US-outflow", "US-lossflow", "L"};
+  std::set<std::string> actual_comp_ids{};
+  for (const auto& id : comp_ids) {
+    actual_comp_ids.emplace(id);
+  }
+  EXPECT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
+  EXPECT_EQ(actual_comp_ids, expected_comp_ids);
 }
 
 int

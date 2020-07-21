@@ -16,16 +16,86 @@ THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REMOVE_FILES = true
 
 class TestTemplate < Minitest::Test
+
+  def most_basic_params
+    {
+      :component_failure_mode => [],
+      :component_fragility => [],
+      :converter_component => [],
+      :damage_intensity => [],
+      :dual_outflow_converter_comp => [],
+      :failure_mode => [],
+      :fixed_cdf => [
+        {
+          :id => "every_30_years",
+          :value_in_hours => 8760*30,
+        },
+      ],
+      :fragility_curve => [],
+      :general => {
+        :simulation_duration_in_years => 100,
+        :random_setting => "Auto",
+        :random_seed => 17,
+      },
+      :load_component => [
+        {
+          :location_id => "b1",
+          :inflow => "electricity",
+        },
+      ],
+      :load_profile => [
+        {
+          :scenario_id => "s1",
+          :building_id => "b1",
+          :enduse => "electricity",
+          :file => "s1_b1_electricity.csv",
+        },
+      ],
+      :pass_through_component => [],
+      :scenario => [
+        {
+          :id => "s1",
+          :duration_in_hours => 14*24,
+          :occurrence_distribution => "every_30_years",
+          :calc_reliability => false,
+          :max_occurrence => -1,
+        },
+      ],
+      :source_component => [
+        {
+          :location_id => "utility",
+          :outflow => "electricity",
+          :is_limited => "FALSE",
+          :max_outflow_kW => 0.0,
+        },
+      ],
+      :storage_component => [],
+      :network_link => [
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "b1",
+          :flow => "electricity",
+        },
+      ],
+    }
+  end
+
   # RETURN: (Hash symbol any), the default parameters for the template
   def default_params
     {
+      :component_failure_mode => [],
+      :component_fragility => [],
       :converter_component => [],
+      :damage_intensity => [],
+      :dual_outflow_converter_comp => [],
+      :failure_mode => [],
       :fixed_cdf => [
         {
           :id => "always",
           :value_in_hours => 0,
         },
       ],
+      :fragility_curve => [],
       :general => {
         :simulation_duration_in_years => 100,
         :random_setting => "Auto",
@@ -55,6 +125,19 @@ class TestTemplate < Minitest::Test
           :file => "other_blue_sky_electricity.csv",
         },
       ],
+      :network_link => [
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "mc",
+          :flow => "electricity",
+        },
+        {
+          :source_location_id => "utility",
+          :destination_location_id => "other",
+          :flow => "electricity",
+        },
+      ],
+      :pass_through_component => [],
       :scenario => [
         {
           :id => "blue_sky",
@@ -73,18 +156,6 @@ class TestTemplate < Minitest::Test
         },
       ],
       :storage_component => [],
-      :network_link => [
-        {
-          :source_location_id => "utility",
-          :destination_location_id => "mc",
-          :flow => "electricity",
-        },
-        {
-          :source_location_id => "utility",
-          :destination_location_id => "other",
-          :flow => "electricity",
-        },
-      ],
     }
   end
 
@@ -401,22 +472,37 @@ class TestTemplate < Minitest::Test
     @params_file = "params.pxt"
     @template_file = "template.toml"
     @output_file = "test.toml"
+    # ------------ CSV Files -------------------------------
+    @component_failure_mode_csv = "component-failure-mode.csv"
+    @component_fragility_csv = "component-fragility.csv"
     @converter_component_csv = "converter-component.csv"
+    @damage_intensity_csv = "damage-intensity.csv"
+    @dual_outflow_converter_comp_csv = "dual-outflow-converter-comp.csv"
+    @failure_mode_csv = "failure-mode.csv"
     @fixed_cdf_csv = "fixed-cdf.csv"
+    @fragility_curve_csv = "fragility-curve.csv"
     @general_csv = "general.csv"
     @load_component_csv = "load-component.csv"
     @load_profile_csv = "load-profile.csv"
     @network_link_csv = "network-link.csv"
+    @pass_through_component_csv = "pass-through-component.csv"
     @scenario_csv = "scenario.csv"
     @source_component_csv = "source-component.csv"
     @storage_component_csv = "storage-component.csv"
     @all_csvs = [
+      @component_failure_mode_csv,
+      @component_fragility_csv,
       @converter_component_csv,
+      @damage_intensity_csv,
+      @dual_outflow_converter_comp_csv,
+      @failure_mode_csv,
       @fixed_cdf_csv,
+      @fragility_curve_csv,
       @general_csv,
       @load_component_csv,
       @load_profile_csv,
       @network_link_csv,
+      @pass_through_component_csv,
       @scenario_csv,
       @source_component_csv,
       @storage_component_csv,
@@ -436,15 +522,55 @@ class TestTemplate < Minitest::Test
   def run_and_compare(data, reference_tag, save_rendered_template = true)
     info = [
       [
+        @component_failure_mode_csv,
+        [:component_id, :failure_mode_id],
+        :component_failure_mode,
+        :normal_table,
+      ],
+      [
+        @component_fragility_csv,
+        [:component_id, :fragility_id],
+        :component_fragility,
+        :normal_table,
+      ],
+      [
         @converter_component_csv,
         [:location_id, :inflow, :outflow, :lossflow, :constant_efficiency],
         :converter_component,
         :normal_table,
       ],
       [
+        @damage_intensity_csv,
+        [:scenario_id, :name, :value],
+        :damage_intensity,
+        :normal_table,
+      ],
+      [
+        @dual_outflow_converter_comp_csv,
+        [
+          :location_id, :inflow, :primary_outflow,
+          :secondary_outflow, :lossflow, :primary_efficiency,
+          :secondary_efficiency,
+        ],
+        :dual_outflow_converter_comp,
+        :normal_table,
+      ],
+      [
+        @failure_mode_csv,
+        [:id, :failure_cdf, :repair_cdf],
+        :failure_mode,
+        :normal_table,
+      ],
+      [
         @fixed_cdf_csv,
         [:id, :value_in_hours],
         :fixed_cdf,
+        :normal_table,
+      ],
+      [
+        @fragility_curve_csv,
+        [:id, :vulnerable_to, :lower_bound, :upper_bound],
+        :fragility_curve,
         :normal_table,
       ],
       [
@@ -469,6 +595,12 @@ class TestTemplate < Minitest::Test
         @network_link_csv,
         [:source_location_id, :destination_location_id, :flow],
         :network_link,
+        :normal_table,
+      ],
+      [
+        @pass_through_component_csv,
+        [:id, :link_id, :flow],
+        :pass_through_component,
         :normal_table,
       ],
       [
@@ -630,6 +762,8 @@ class TestTemplate < Minitest::Test
 
   def test_all_building_config_options_true
     ps = {
+      :component_failure_mode => [],
+      :component_fragility => [],
       :converter_component => [
         {
           :location_id => "mc",
@@ -660,12 +794,16 @@ class TestTemplate < Minitest::Test
           :constant_efficiency => 0.85,
         },
       ],
+      :damage_intensity => [],
+      :dual_outflow_converter_comp => [],
+      :failure_mode => [],
       :fixed_cdf => [
         {
           :id => "always",
           :value_in_hours => 0,
         },
       ],
+      :fragility_curve => [],
       :general => {
         :simulation_duration_in_years => 100,
         :random_setting => "Auto",
@@ -747,6 +885,7 @@ class TestTemplate < Minitest::Test
           :flow => "heating",
         },
       ],
+      :pass_through_component => [],
       :scenario => [
         {
           :id => "blue_sky",
@@ -799,5 +938,156 @@ class TestTemplate < Minitest::Test
     assert(
       run_e2rin_graph(
         'all_building_config_options_true', load_profiles))
+  end
+
+  def test_add_damage_intensities_to_scenario
+    ps = most_basic_params
+    ps[:damage_intensity] = [
+      {
+        scenario_id: "s1",
+        name: "wind_speed_mph",
+        value: 150.0,
+      },
+      {
+        scenario_id: "s1",
+        name: "inundation_depth_ft",
+        value: 12.0,
+      },
+    ]
+    tag = 'add_damage_intensities_to_scenario'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_fragility_curves_and_damage_intensity_to_scenarios
+    ps = most_basic_params
+    ps[:component_fragility] = [
+      {
+        component_id: "utility_electricity_source",
+        fragility_id: "highly_vulnerable_to_wind",
+      },
+    ]
+    ps[:damage_intensity] = [
+      {
+        scenario_id: "s1",
+        name: "wind_speed_mph",
+        value: 150.0,
+      },
+      {
+        scenario_id: "s1",
+        name: "inundation_depth_ft",
+        value: 12.0,
+      },
+    ]
+    ps[:fragility_curve] = [
+      {
+        id: "highly_vulnerable_to_wind",
+        vulnerable_to: "wind_speed_mph",
+        lower_bound: 80.0,
+        upper_bound: 160.0,
+      },
+    ]
+    tag = 'add_fragility_curves_and_damage_intensity_to_scenarios'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_multiple_pass_through_components_on_a_link
+    ps = most_basic_params
+    ps[:pass_through_component] = [
+      {
+        id: "electric_lines_A",
+        link_id: "utility_to_b1_electricity",
+        flow: "electricity",
+      },
+      {
+        id: "electric_lines_B",
+        link_id: "utility_to_b1_electricity",
+        flow: "electricity",
+      },
+    ]
+    tag = 'add_multiple_pass_through_components_on_a_link'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_failure_modes_to_a_component
+    ps = most_basic_params
+    ps[:component_failure_mode] += [
+      {
+        component_id: "utility_electricity_source",
+        failure_mode_id: "typical_utility_failures",
+      },
+    ]
+    ps[:failure_mode] += [
+      {
+        id: "typical_utility_failures",
+        failure_cdf: "every_10_hours",
+        repair_cdf: "every_4_years",
+      },
+    ]
+    ps[:fixed_cdf] += [
+      {
+        id: "every_10_hours",
+        value_in_hours: 10,
+      },
+      {
+        id: "every_4_years",
+        value_in_hours: 8760*4,
+      },
+    ]
+    tag = 'add_failure_modes_to_a_component'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_chp
+    ps = most_basic_params
+    ps[:dual_outflow_converter_comp] = [
+      {
+        location_id: "b1",
+        inflow: "natural_gas",
+        primary_outflow: "electricity",
+        secondary_outflow: "heating",
+        lossflow: "waste_heat",
+        primary_efficiency: 0.4,
+        secondary_efficiency: 0.85,
+      },
+    ]
+    ps[:load_component] << {location_id: "b1", inflow: "heating"}
+    ps[:load_profile] << {
+      scenario_id: "s1",
+      building_id: "b1",
+      enduse: "heating",
+      file: "s1_b1_heating.csv",
+    }
+    ps[:source_component] = [
+      {
+        location_id: "utility",
+        outflow: "natural_gas",
+        is_limited: "FALSE",
+        max_outflow_kW: 0.0,
+      },
+    ]
+    ps[:network_link] = [
+      {
+        source_location_id: "utility",
+        destination_location_id: "b1",
+        flow: "natural_gas",
+      },
+    ]
+    tag = 'add_chp'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
   end
 end

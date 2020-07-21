@@ -1,11 +1,18 @@
 <%#INITIALIZE
 # File IO
+parameter "component_failure_mode_csv_path", :default=>"component-failure-mode.csv"
+parameter "component_fragility_csv_path", :default=>"component-fragility.csv"
 parameter "converter_component_csv_path", :default=>"converter-component.csv"
+parameter "damage_intensity_csv_path", :default=>"damage-intensity.csv"
+parameter "dual_outflow_converter_comp_csv", :default=>"dual-outflow-converter-comp.csv"
+parameter "failure_mode_csv_path", :default=>"failure-mode.csv"
 parameter "fixed_cdf_csv_path", :default=>"fixed-cdf.csv"
+parameter "fragility_curve_csv_path", :default=>"fragility-curve.csv"
 parameter "general_csv_path", :default=>"general.csv"
 parameter "load_component_csv_path", :default=>"load-component.csv"
 parameter "load_profile_csv_path", :default=>"load-profile.csv"
 parameter "network_link_csv_path", :default=>"network-link.csv"
+parameter "pass_through_component_csv_path", :default=>"pass-through-component.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
 parameter "source_component_csv_path", :default=>"source-component.csv"
 parameter "storage_component_csv_path", :default=>"storage-component.csv"
@@ -17,12 +24,19 @@ parameter "expand_load_paths", :default=>true
    THIS_DIR = File.dirname(__FILE__)
    data = {}
    Dir.chdir(THIS_DIR) do
+     data[:component_failure_mode] = Support.load_csv(component_failure_mode_csv_path)
+     data[:component_fragility] = Support.load_csv(component_fragility_csv_path)
      data[:converter_component] = Support.load_csv(converter_component_csv_path)
+     data[:damage_intensity] = Support.load_csv(damage_intensity_csv_path)
+     data[:dual_outflow_converter_comp] = Support.load_csv(dual_outflow_converter_comp_csv)
+     data[:failure_mode] = Support.load_csv(failure_mode_csv_path)
      data[:fixed_cdf] = Support.load_csv(fixed_cdf_csv_path)
+     data[:fragility_curve] = Support.load_csv(fragility_curve_csv_path)
      data[:general] = Support.load_key_value_csv(general_csv_path)
      data[:load_component] = Support.load_csv(load_component_csv_path)
      data[:load_profile] = Support.load_csv(load_profile_csv_path)
      data[:network_link] = Support.load_csv(network_link_csv_path)
+     data[:pass_through_component] = Support.load_csv(pass_through_component_csv_path)
      data[:scenario] = Support.load_csv(scenario_csv_path)
      data[:source_component] = Support.load_csv(source_component_csv_path)
      data[:storage_component] = Support.load_csv(storage_component_csv_path)
@@ -58,15 +72,31 @@ outflow = "<%= c[:outflow] %>"
 <%   if c[:is_limited].strip.downcase == "true" %>
 max_outflow = <%= c[:max_outflow_kW] %> # ...
 <%   end %>
+<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   if fms.length > 0 %>
+failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+<%   end %>
 <% end %>
 <% s.load_component.each do |c| %>
 [components.<%= c[:id] %>]
 type = "load"
 inflow = "<%= c[:inflow] %>"
-<%   data[:load_profile].each do |lp| %>
+<%   s.load_profile.each do |lp| %>
 <%     next unless ( (lp[:building_id] == c[:location_id]) and %>
 <%                   (c[:inflow] == lp[:enduse]) ) %>
 loads_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
+<%   end %>
+<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   if fms.length > 0 %>
+failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
 <%   end %>
 <% end %>
 <% s.converter_component.each do |c| %>
@@ -76,6 +106,14 @@ inflow = "<%= c[:inflow] %>"
 outflow = "<%= c[:outflow] %>"
 lossflow = "<%= c[:lossflow] %>"
 constant_efficiency = <%= c[:constant_efficiency] %> # ...
+<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   if fms.length > 0 %>
+failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+<%   end %>
 <% end %>
 <% s.storage_component.each do |c| %>
 [components.<%= c[:id] %>]
@@ -85,6 +123,14 @@ outflow = "<%= c[:flow] %>"
 capacity_unit = "kWh"
 capacity = <%= c[:capacity_kWh] %> # ...
 max_inflow = <%= c[:max_inflow_kW] %> # ...
+<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   if fms.length > 0 %>
+failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+<%   end %>
 <% end %>
 <% s.muxer_component.each do |c| %>
 [components.<%= c[:id] %>]
@@ -93,15 +139,36 @@ stream = "<%= c[:flow] %>"
 num_inflows = <%= c[:num_inflows] %> # ...
 num_outflows = <%= c[:num_outflows] %> # ...
 dispatch_strategy = "in_order"
+<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   if fms.length > 0 %>
+failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+<%   end %>
+<% end %>
+<% s.pass_through_component.each do |c| %>
+[components.<%= c[:id] %>]
+type = "pass_through"
+stream = "<%= c[:flow] %>"
+<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   if fms.length > 0 %>
+failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+<%   end %>
 <% end %>
 ############################################################
 # Fragility Curves
-<% data.fetch(:fragility_curve, []).each do |fc| %>
-[fragility.]
-vulnerable_to = ""
+<% s.fragility_curve.each do |fc| %>
+[fragility.<%= fc[:id] %>]
+vulnerable_to = "<%= fc[:vulnerable_to] %>"
 type = "linear"
-lower_bound = 2.0 # ...
-upper_bound = 6.0 # ...
+lower_bound = <%= fc[:lower_bound] %> # ...
+upper_bound = <%= fc[:upper_bound] %> # ...
 <% end %>
 ############################################################
 # Cumulative Distribution Functions
@@ -111,18 +178,12 @@ type = "fixed"
 value = <%= cdf[:value_in_hours].to_f.round %> # ...
 time_unit = "hours"
 <% end %>
-<% data.fetch(:uniform_cdf, []).each do |cdf| %>
-[cdf.]
-type = "uniform"
-value = <%= 5 %> # ...
-time_unit = "seconds"
-<% end %>
 ############################################################
 # Failure Modes
-<% data.fetch(:failure_mode, []).each do |fm| %>
-[failure_mode.]
-failure_cdf = ""
-repair_cdf = ""
+<% s.failure_mode.each do |fm| %>
+[failure_mode.<%= fm.fetch(:id) %>]
+failure_cdf = "<%= fm.fetch(:failure_cdf) %>"
+repair_cdf = "<%= fm.fetch(:repair_cdf) %>"
 <% end %>
 ############################################################
 # Networks
@@ -134,10 +195,10 @@ connections = [
   ]
 ############################################################
 # Scenarios
-<% data[:scenario].each do |scen| %>
+<% s.scenario.each do |scen| %>
 [scenarios.<%= scen[:id] %>]
 time_unit = "hours"
-<% cdf = s.cdf_for_id(scen[:occurrence_distribution]) %>
+<%   cdf = s.cdf_for_id(scen[:occurrence_distribution]) %>
 occurrence_distribution = {type = "<%= cdf[:type] %>", value = <%= cdf[:value_in_hours].to_f.round %>, time_unit="hours"}
 duration = <%= scen[:duration_in_hours].to_i %> # ...
 max_occurrences = <%= scen[:max_occurrence].to_i %> # ...
@@ -147,4 +208,7 @@ calculate_reliability = true
 calculate_reliability = false
 <%   end %>
 network = "nw"
+<%   s.damage_intensities_for_scenario(scen[:id]).each do |di| %>
+intensity.<%= di[:name] %> = <%= di[:value] %> # ...
+<%   end %>
 <% end %>

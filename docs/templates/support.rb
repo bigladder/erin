@@ -3,6 +3,12 @@ require 'csv'
 
 class Support
   # - data: (hash symbol various), a hash table with keys
+  #   - :component_failure_mode, an array of Hash with keys:
+  #     - :component_id, string, the component id to apply to
+  #     - :failure_mode_id, string, the failure mode to apply
+  #   - :component_fragility, an array of Hash with keys:
+  #     - :component_id, string, the component to apply the fragility curve to
+  #     - :fragility_id, string, the fragility curve id to be applied
   #   - :converter_component, an array of Hash with keys:
   #     - :location_id, string, the location of the converter
   #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", etc.)
@@ -14,9 +20,26 @@ class Support
   #     - :name, string, the name of the damage metric (e.g., "wind_speed_mph",
   #       "inundation_depth_ft", etc.)
   #     - :value, number, the value of the damage metric (e.g., 150, 12, etc.)
+  #   - :dual_outflow_converter_comp
+  #     - :location_id, string, the location of the dual-outflow converter
+  #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", "coal", etc.)
+  #     - :primary_outflow, string, the primary outflow type (e.g., "electricity", "heating")
+  #     - :secondary_outflow, string, the secondary outflow type (e.g., "heating", "electricity")
+  #     - :lossflow, string, optional. defaults to "waste_heat"
+  #     - :primary_efficiency, number, 0.0 < efficiency <= 1.0
+  #     - :secondary_efficiency, number, 0.0 < efficiency <= 1.0
+  #   - :failure_mode, (Array Hash) with keys for Hash as follows:
+  #     - :id, string, the id of the failure mode
+  #     - :failure_cdf, string, the id of the failure CDF
+  #     - :repair_cdf, string, the id of the repair CDF
   #   - :fixed_cdf, (Array (Hash symbol value)) with these symbols
   #     - :id, string, the id of the fixed cdf
   #     - :value_in_hours, number, the fixed value in hours
+  #   - :fragility_curve, (Array (Hash symbol value)) with these symbols
+  #     - :id, string, the id of the fragility curve
+  #     - :vulnerable_to, string, the damage intensity vulnerable to
+  #     - :lower_bound, number, the value outside of which no damage occurrs
+  #     - :upper_bound, number, the value outside of which certain destruction occurs
   #   - :general, (Hash symbol value)
   #     - :simulation_duration_in_years, number, the duration in years
   #     - :random_setting, string, one of #{"Auto", "Seed"}
@@ -40,7 +63,8 @@ class Support
   #     - :destination_location_id, string, location_id for the destination of the flow
   #     - :flow, string, the type of flow (e.g., 'electricity', 'heating', etc.)
   #   - :pass_through_component, an array of Hash with keys:
-  #     - :location_id, string, the location of the pass-through
+  #     - :id, string, id of the pass-through component
+  #     - :link_id, string, the network link having the pass-through component
   #     - :flow, string, the flow being passed through (e.g., 'electricity', 'diesel')
   #   - :scenario, an array of Hash with keys:
   #     - :id, string, scenario id
@@ -61,32 +85,46 @@ class Support
   #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
 
   attr_reader(
+    :component_failure_mode,
+    :component_fragility,
     :converter_component,
     :damage_intensity,
+    :failure_mode,
     :fixed_cdf,
+    :fragility_curve,
     :load_component,
     :load_profile,
     :muxer_component,
     :network_link,
+    :pass_through_component,
+    :scenario,
     :source_component,
     :storage_component,
   )
 
   def initialize(data, root_path=nil)
     @ids_in_use = Set.new
+    @component_failure_mode = data.fetch(:component_failure_mode, [])
+    @component_fragility = data.fetch(:component_fragility, [])
     @converter_component = data.fetch(:converter_component, [])
     @damage_intensity = data.fetch(:damage_intensity, [])
+    @failure_mode = data.fetch(:failure_mode, [])
     @fixed_cdf = data.fetch(:fixed_cdf, [])
+    @fragility_curve = data.fetch(:fragility_curve, [])
     @load_component = data.fetch(:load_component, [])
     @load_profile = data.fetch(:load_profile, [])
     @muxer_component = data.fetch(:muxer_component, [])
     @network_link = data.fetch(:network_link, [])
+    @pass_through_component = data.fetch(:pass_through_component, [])
+    @scenario = data.fetch(:scenario, [])
     @source_component = data.fetch(:source_component, [])
     @storage_component = data.fetch(:storage_component, [])
     process_cdfs
     expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids
     @connections = []
+    process_dual_outflow_converter_comp(
+      data.fetch(:dual_outflow_converter_comp, []))
     generate_connections
   end
 
@@ -107,6 +145,38 @@ class Support
 
   def damage_intensities_for_scenario(scenario_id)
     @damage_intensity.select {|di| di[:scenario_id] == scenario_id}
+  end
+
+  def fragilities_for_component(comp_id)
+    frag_ids = Set.new
+    @component_fragility.each do |cf|
+      frag_ids << cf[:fragility_id] if cf[:component_id] == comp_id
+    end
+    frags = []
+    @fragility_curve.each do |fc|
+      frags << fc if frag_ids.include?(fc[:id])
+    end
+    frags
+  end
+
+  def failure_modes_for_component(comp_id)
+    fm_ids = Set.new
+    @component_failure_mode.each do |cfm|
+      fm_ids << cfm[:failure_mode_id] if cfm[:component_id] == comp_id
+    end
+    fms = []
+    @failure_mode.each do |fm|
+      fms << fm if fm_ids.include?(fm[:id])
+    end
+    fms
+  end
+
+  def pass_through_components_for_link(link_id)
+    pts = []
+    @pass_through_component.each do |pt|
+      pts << pt if pt.fetch(:link_id) == link_id 
+    end
+    pts
   end
 
   # - csv_path: string, the path to a CSV file
@@ -154,6 +224,42 @@ class Support
 
   private
 
+  def add_converter_component(eff, loc, inflow, outflow, lossflow="waste_heat", id=nil)
+    id ||= make_id_unique("#{loc}_#{outflow}_generator")
+    @converter_component << {
+      id: id,
+      location_id: loc,
+      inflow: inflow,
+      outflow: outflow,
+      lossflow: lossflow,
+      constant_efficiency: eff,
+    }
+    id
+  end
+
+  def process_dual_outflow_converter_comp(dual_outflow_comps)
+    dual_outflow_comps.each do |c|
+      id = c.fetch(
+        :id,
+        "#{c.fetch(:location_id)}_dual_"\
+        "#{c.fetch(:primary_outflow)}_"\
+        "#{c.fetch(:secondary_outflow)}_generator")
+      inf = c.fetch(:inflow)
+      out1 = c.fetch(:primary_outflow)
+      out2 = c.fetch(:secondary_outflow)
+      loss = c.fetch(:lossflow, "waste_heat")
+      cc1 = add_converter_component(
+        c.fetch(:primary_efficiency),
+        c.fetch(:location_id),
+        inf, out1, loss, id + "_stage_1")
+      cc2 = add_converter_component(
+        c.fetch(:secondary_efficiency),
+        c.fetch(:location_id),
+        loss, out2, loss, id + "_stage_2")
+      add_connection(cc1, 1, cc2, 0, loss)
+    end
+  end
+
   def process_cdfs
     @fixed_cdf.each do |cdf|
       cdf[:type] = "fixed"
@@ -196,6 +302,7 @@ class Support
       [@load_profile, [:building_id, :enduse, :scenario_id], ""],
       [@source_component, [:location_id, :outflow], "source"],
       [@storage_component, [:location_id, :flow], "store"],
+      [@network_link, [:source_location_id, "to", :destination_location_id, :flow], ""],
     ]
     # lp[:id] = "#{lp[:building_id]}_#{lp[:enduse]}_#{lp[:scenario_id]}" %>
     comp_infos.each do |tuple|
@@ -204,7 +311,11 @@ class Support
         next if c.include?(:id)
         parts = []
         attribs.each do |a|
-          parts << c.fetch(a).to_s.strip
+          if a.is_a?(String)
+            parts << a
+          else
+            parts << c.fetch(a).to_s.strip
+          end
         end
         parts << postfix unless postfix.empty?
         id = make_id_unique(parts.join("_"))
@@ -246,8 +357,8 @@ class Support
   # - num_outflows: integer, num_outflows > 0, the number of outflows
   # SIDE_EFFECTS: adds the new mux to @muxer_component
   # RETURN: string, id of the new mux added
-  def add_muxer_component(location_id, flow, num_inflows, num_outflows)
-    id = make_id_unique("#{location_id}_#{flow}_bus")
+  def add_muxer_component(location_id, flow, num_inflows, num_outflows, id=nil)
+    id ||= make_id_unique("#{location_id}_#{flow}_bus")
     new_mux = {
       location_id: location_id,
       id: id,
@@ -612,11 +723,34 @@ class Support
     @network_link.each do |link|
       src = link.fetch(:source_location_id)
       tgt = link.fetch(:destination_location_id)
+      link_id = link.fetch(:id)
       flow = link.fetch(:flow)
+      pts = pass_through_components_for_link(link_id)
+      num_pts = pts.length
       begin
         sc = points[src][flow][:source].shift
         tc = points[tgt][flow][:dest].shift
-        add_connection(sc[0], sc[1], tc[0], tc[1], flow)
+        if pts.empty?
+          add_connection(sc[0], sc[1], tc[0], tc[1], flow)
+        elsif num_pts == 1
+          pt = pts[0]
+          pt_outflow_port = 0
+          pt_inflow_port = 0
+          pt_id = pt.fetch(:id)
+          add_connection(sc[0], sc[1], pt_id, pt_inflow_port, flow)
+          add_connection(pt_id, pt_outflow_port, tc[0], tc[1], flow)
+        else
+          inflow_bus = add_muxer_component(
+            link_id, flow, 1, num_pts, "#{link_id}_inflow_bus")
+          outflow_bus = add_muxer_component(
+            link_id, flow, num_pts, 1, "#{link_id}_outflow_bus")
+          add_connection(sc[0], sc[1], inflow_bus, 0, flow)
+          pts.each_with_index do |pt, port|
+            add_connection(inflow_bus, port, pt.fetch(:id), 0, flow)
+            add_connection(pt.fetch(:id), 0, outflow_bus, port, flow)
+          end
+          add_connection(outflow_bus, 0, tc[0], tc[1], flow)
+        end
       rescue
         puts "WARNING! Bad Connection"
         puts "Trying to connect '#{src}' to '#{tgt}' with '#{flow}' "\

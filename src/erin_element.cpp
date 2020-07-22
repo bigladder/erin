@@ -1924,22 +1924,36 @@ namespace ERIN
   void
   Mover::delta_int()
   {
+    state = erin::devs::mover_internal_transition(data, state);
+    log_ports();
   }
 
   void
   Mover::delta_ext(Time e, std::vector<PortValue>& xs)
   {
+    state = erin::devs::mover_external_transition(data, state, e.real, xs);
+    log_ports();
   }
 
   void
   Mover::delta_conf(std::vector<PortValue>& xs)
   {
+    state = erin::devs::mover_confluent_transition(data, state, xs);
+    log_ports();
   }
 
   Time
   Mover::ta()
   {
-    return inf;
+    auto dt = erin::devs::mover_time_advance(data, state);
+    Time dt_out{};
+    if (dt == erin::devs::infinity) {
+      dt_out = inf;
+    }
+    else {
+      dt_out = Time{dt, 1};
+    }
+    return dt_out;
   }
 
   void

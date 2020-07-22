@@ -1581,7 +1581,7 @@ namespace ERIN
   PortsAndElements
   MoverComponent::add_to_network(
       adevs::Digraph<FlowValueType, Time>& nw,
-      const std::string& active_scenario,
+      const std::string& /* active_scenario */,
       bool is_failed,
       const std::vector<TimeState>& reliability_schedule) const
   {

@@ -46,16 +46,34 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // time advance
+  RealTimeType
+  mover_time_advance(
+      const MoverData& data,
+      const MoverState& state);
 
   ////////////////////////////////////////////////////////////
   // internal transition
+  MoverState
+  mover_internal_transition(
+      const MoverData& data,
+      const MoverState& state);
 
   ////////////////////////////////////////////////////////////
   // external transition
-
+  MoverState
+  mover_external_transition(
+      const MoverData& data,
+      const MoverState& state,
+      RealTimeType elapsed_time,
+      const std::vector<PortValue>& xs);
 
   ////////////////////////////////////////////////////////////
   // confluent transition
+  MoverState
+  mover_confluent_transition(
+      const MoverData& data,
+      const MoverState& state,
+      const std::vector<PortValue>& xs); 
 
   ////////////////////////////////////////////////////////////
   // output function

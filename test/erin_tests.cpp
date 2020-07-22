@@ -6688,7 +6688,7 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
     "US-inflow", "US-outflow", "US-lossflow",
     "L", "S", "M-inflow(0)", "M-inflow(1)", "M-outflow"};
   ASSERT_EQ(expected_comp_ids.size(), rez.size());
-  if (true) {
+  if (false) {
     for (const auto& item : rez) {
       std::cout << item.first << ":\n";
       for (const auto& d : item.second) {
@@ -6703,17 +6703,14 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
   }
   ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
   EXPECT_EQ(actual_comp_ids, expected_comp_ids);
-  //auto ss_map = bs_res0.get_statistics();
-  //ERIN::FlowValueType L_load_not_served{5*50.0};
-  //ERIN::FlowValueType L_total_energy{5*50.0 + 5*100.0};
-  //ERIN::RealTimeType L_max_downtime{5};
-  //auto L_ss = ss_map["L"];
-  //EXPECT_EQ(L_ss.load_not_served, L_load_not_served);
-  //EXPECT_EQ(L_ss.total_energy, L_total_energy);
-  //EXPECT_EQ(L_ss.max_downtime, L_max_downtime);
-  //ERIN::FlowValueType US_inflow_total_energy{5*50.0 + 3*120.0 + 2*100.0};
-  //auto USin_ss = ss_map["US-inflow"];
-  //EXPECT_EQ(USin_ss.total_energy, US_inflow_total_energy);
+  auto ss_map = bs_res0.get_statistics();
+  ERIN::RealTimeType L_max_downtime{10};
+  ERIN::FlowValueType L_total_energy{(5*50.0 + 3*120.0 + 2*100.0)*(1.0 + (1.0 / 5.0))};
+  ERIN::FlowValueType L_load_not_served{10*1000.0 - L_total_energy};
+  auto L_ss = ss_map["L"];
+  EXPECT_EQ(L_ss.max_downtime, L_max_downtime);
+  EXPECT_EQ(L_ss.load_not_served, L_load_not_served);
+  EXPECT_EQ(L_ss.total_energy, L_total_energy);
 }
 
 

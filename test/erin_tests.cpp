@@ -6601,10 +6601,12 @@ TEST(ErinBasicsTest, Test_uncontrolled_source)
   const auto& rez = bs_res0.get_results();
   std::set<std::string> expected_comp_ids{"US-inflow", "US-outflow", "US-lossflow", "L"};
   ASSERT_EQ(expected_comp_ids.size(), rez.size());
-  for (const auto& item : rez) {
-    std::cout << item.first << ":\n";
-    for (const auto& d : item.second) {
-      std::cout << "  " << d << "\n";
+  if (false) {
+    for (const auto& item : rez) {
+      std::cout << item.first << ":\n";
+      for (const auto& d : item.second) {
+        std::cout << "  " << d << "\n";
+      }
     }
   }
   const auto& comp_ids = bs_res0.get_component_ids();

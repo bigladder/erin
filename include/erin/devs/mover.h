@@ -59,6 +59,15 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // output function
+  std::vector<PortValue>
+  mover_output_function(const MoverData& d, const MoverState& s);
+
+  void
+  mover_output_function_mutable(
+      const MoverData& d,
+      const MoverState& s,
+      std::vector<PortValue>& ys);
+
 }
 
 #endif // ERIN_DEVS_MOVER_H

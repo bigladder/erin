@@ -1645,6 +1645,7 @@ namespace ERIN
         ports[ep::Type::Outflow] = {{on_off, 0}};
       }
       else {
+        m->set_recording_on();
         ports[ep::Type::Outflow] = {{m, 0}};
       }
     }

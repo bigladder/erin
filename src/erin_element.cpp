@@ -1945,16 +1945,21 @@ namespace ERIN
   void
   Mover::output_func(std::vector<PortValue>& ys)
   {
+    erin::devs::mover_output_function_mutable(data, state, ys);
   }
 
   void
   Mover::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
   {
+    flow_writer = writer;
+    log_ports();
   }
 
   void
   Mover::set_recording_on()
   {
+    record_history = true;
+    log_ports();
   }
 
   std::string
@@ -1975,5 +1980,46 @@ namespace ERIN
   void
   Mover::log_ports()
   {
+    if (flow_writer && record_history) {
+      if (inflow0_element_id == -1) {
+        inflow0_element_id = flow_writer->register_id(
+            get_id() + "-inflow(0)",
+            inflow0,
+            get_component_type(),
+            PortRole::Inflow,
+            record_history);
+      }
+      if (inflow1_element_id == -1) {
+        inflow1_element_id = flow_writer->register_id(
+            get_id() + "-inflow(1)",
+            inflow1,
+            get_component_type(),
+            PortRole::Inflow,
+            record_history);
+      }
+      if (outflow_element_id == -1) {
+        outflow_element_id = flow_writer->register_id(
+            get_id() + "-outflow",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::Outflow,
+            record_history);
+      }
+      flow_writer->write_data(
+          inflow0_element_id,
+          state.time,
+          state.inflow0_port.get_requested(),
+          state.inflow0_port.get_achieved());
+      flow_writer->write_data(
+          inflow1_element_id,
+          state.time,
+          state.inflow1_port.get_requested(),
+          state.inflow1_port.get_achieved());
+      flow_writer->write_data(
+          outflow_element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
+    }
   }
 }

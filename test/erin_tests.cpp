@@ -6677,15 +6677,17 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
     "network = \"nw\"\n";
   auto m = E::make_main_from_string(input);
   auto out = m.run_all();
-  //EXPECT_TRUE(out.get_is_good());
-  //auto results_map = out.get_results();
-  //ASSERT_EQ(1, results_map.size());
-  //const auto& bs_res = results_map["blue_sky"];
-  //ASSERT_EQ(1, bs_res.size());
-  //const auto& bs_res0 = bs_res[0];
-  //const auto& rez = bs_res0.get_results();
-  //std::set<std::string> expected_comp_ids{"US-inflow", "US-outflow", "US-lossflow", "L"};
-  //ASSERT_EQ(expected_comp_ids.size(), rez.size());
+  EXPECT_TRUE(out.get_is_good());
+  auto results_map = out.get_results();
+  ASSERT_EQ(1, results_map.size());
+  const auto& bs_res = results_map["blue_sky"];
+  ASSERT_EQ(1, bs_res.size());
+  const auto& bs_res0 = bs_res[0];
+  const auto& rez = bs_res0.get_results();
+  std::set<std::string> expected_comp_ids{
+    "US-inflow", "US-outflow", "US-lossflow",
+    "L", "S", "M-inflow(0)", "M-inflow(1)", "M-outflow"};
+  ASSERT_EQ(expected_comp_ids.size(), rez.size());
   //if (false) {
   //  for (const auto& item : rez) {
   //    std::cout << item.first << ":\n";

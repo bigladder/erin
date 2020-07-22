@@ -68,4 +68,22 @@ namespace erin::devs
               << "report_outflow_achieved = "
               << a.report_outflow_achieved << ")";
   }
+
+  ////////////////////////////////////////////////////////////
+  // output function
+  std::vector<PortValue>
+  mover_output_function(const MoverData& d, const MoverState& s)
+  {
+    std::vector<PortValue> ys{};
+    mover_output_function_mutable(d, s, ys);
+    return ys;
+  }
+
+  void
+  mover_output_function_mutable(
+      const MoverData& d,
+      const MoverState& s,
+      std::vector<PortValue>& ys)
+  {
+  }
 }

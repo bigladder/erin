@@ -1783,6 +1783,7 @@ namespace ERIN
     state{erin::devs::make_uncontrolled_source_state()},
     flow_writer{nullptr},
     element_id{-1},
+    inflow_element_id{-1},
     lossflow_element_id{-1},
     record_history{false}
   {
@@ -1837,6 +1838,14 @@ namespace ERIN
             get_id() + "-outflow",
             get_outflow_type(),
             get_component_type(),
+            PortRole::Outflow,
+            record_history);
+      }
+      if (inflow_element_id == -1) {
+        inflow_element_id = flow_writer->register_id(
+            get_id() + "-inflow",
+            get_inflow_type(),
+            get_component_type(),
             PortRole::SourceOutflow,
             record_history);
       }
@@ -1853,6 +1862,11 @@ namespace ERIN
           state.time,
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());
+      flow_writer->write_data(
+          inflow_element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
       flow_writer->write_data(
           lossflow_element_id,
           state.time,

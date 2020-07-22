@@ -596,6 +596,7 @@ namespace ERIN
       erin::devs::UncontrolledSourceState state;
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
+      int inflow_element_id;
       int lossflow_element_id;
       bool record_history;
 

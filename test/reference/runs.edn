@@ -68,5 +68,9 @@
   :args "ex09.toml out.csv stats.csv"
   :compare-generated-to-ref
   {"out.csv" "ex09-out.csv"
-   "stats.csv" "ex09-stats.csv"}}]
- 
+   "stats.csv" "ex09-stats.csv"}}
+ {:engine :e2rin_multi
+  :args "ex10.toml out.csv stats.csv"
+  :compare-generated-to-ref
+  {"out.csv" "ex10-out.csv"
+   "stats.csv" "ex10-stats.csv"}}]

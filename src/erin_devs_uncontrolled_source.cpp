@@ -56,6 +56,7 @@ namespace erin::devs
   {
     return (a.time == b.time) &&
            (a.index == b.index) &&
+           (a.inflow_port == b.inflow_port) &&
            (a.outflow_port == b.outflow_port) &&
            (a.spill_port == b.spill_port);
   }
@@ -72,6 +73,7 @@ namespace erin::devs
     return os << "UncontrolledSourceState("
               << "time = " << a.time << ", "
               << "index = " << a.index << ", "
+              << "inflow_port = " << a.inflow_port << ", "
               << "outflow_port = " << a.outflow_port << ", "
               << "spill_port = " << a.spill_port << ", "
               << "report_outflow_at_current_index = "
@@ -131,6 +133,7 @@ namespace erin::devs
     else if (next_index < data.num_items) {
       auto next_time = data.times[next_index];
       auto next_supply = data.supply[next_index];
+      auto inflow = state.inflow_port.with_requested(next_supply, next_time);
       auto out = state.outflow_port;
       auto spill = state.spill_port.with_requested(next_supply, next_time);
       auto out_req = out.get_requested();
@@ -146,6 +149,7 @@ namespace erin::devs
       uss.index = static_cast<int>(next_index);
       uss.report_outflow_at_current_index =
         out.should_propagate_achieved_at(next_time);
+      uss.inflow_port = std::move(inflow);
       uss.outflow_port = std::move(out);
       uss.spill_port = std::move(spill);
     }
@@ -205,6 +209,7 @@ namespace erin::devs
     return UncontrolledSourceState{
       next_time,
       state.index,
+      state.inflow_port,
       std::move(out),
       std::move(spill),
       report

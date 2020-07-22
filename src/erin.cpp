@@ -586,6 +586,14 @@ namespace ERIN
               components,
               std::move(frags));
           break;
+        case ComponentType::Mover:
+          read_mover_component(
+              tt,
+              comp_id,
+              output_stream_id,
+              components,
+              std::move(frags));
+          break;
         default:
           {
             std::ostringstream oss;
@@ -1012,7 +1020,29 @@ namespace ERIN
         std::make_pair(id, std::move(pass_through_comp)));
   }
 
-  void TomlInputReader::read_uncontrolled_source_component(
+  void
+  TomlInputReader::read_mover_component(
+      const toml::table& tt,
+      const std::string& id,
+      const std::string& outflow,
+      std::unordered_map<
+        std::string, std::unique_ptr<Component>>& components,
+      fragility_map&& frags) const
+  {
+    std::string field_read{};
+    auto inflow0 = toml_helper::read_required_table_field<std::string>(
+        tt, {"inflow0"}, field_read);
+    auto inflow1 = toml_helper::read_required_table_field<std::string>(
+        tt, {"inflow1"}, field_read);
+    auto COP = toml_helper::read_required_table_field<FlowValueType>(
+        tt, {"COP","cop"}, field_read);
+    auto m = std::make_unique<MoverComponent>(
+        id, inflow0, inflow1, outflow, COP, std::move(frags));
+    components.insert(std::make_pair(id, std::move(m)));
+  }
+
+  void
+  TomlInputReader::read_uncontrolled_source_component(
       const toml::table& tt,
       const std::string& id,
       const std::string& outflow,

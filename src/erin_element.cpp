@@ -34,6 +34,9 @@ namespace ERIN
     else if (tag == "uncontrolled_source") {
       return ElementType::UncontrolledSource;
     }
+    else if (tag == "mover") {
+      return ElementType::Mover;
+    }
     else {
       std::ostringstream oss{};
       oss << "unhandled tag '" << tag << "' for element_type\n";
@@ -59,6 +62,8 @@ namespace ERIN
         return std::string{"on_off_switch"};
       case ElementType::UncontrolledSource:
         return std::string{"uncontrolled_source"};
+      case ElementType::Mover:
+        return std::string{"mover"};
       default:
         {
           std::ostringstream oss{};
@@ -1887,5 +1892,88 @@ namespace ERIN
   {
     record_history = true;
     log_ports();
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Mover
+  Mover::Mover(
+      std::string id,
+      ComponentType component_type,
+      const std::string& inflow0_,
+      const std::string& inflow1_,
+      const std::string& outflow,
+      FlowValueType COP):
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::Mover,
+        inflow0_,
+        outflow),
+    inflow0{inflow0_},
+    inflow1{inflow1_},
+    data{erin::devs::make_mover_data(COP)},
+    state{erin::devs::make_mover_state()},
+    flow_writer{nullptr},
+    inflow0_element_id{-1},
+    inflow1_element_id{-1},
+    outflow_element_id{-1},
+    record_history{false}
+  {
+  }
+
+  void
+  Mover::delta_int()
+  {
+  }
+
+  void
+  Mover::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+  }
+
+  void
+  Mover::delta_conf(std::vector<PortValue>& xs)
+  {
+  }
+
+  Time
+  Mover::ta()
+  {
+    return inf;
+  }
+
+  void
+  Mover::output_func(std::vector<PortValue>& ys)
+  {
+  }
+
+  void
+  Mover::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+  }
+
+  void
+  Mover::set_recording_on()
+  {
+  }
+
+  std::string
+  Mover::get_inflow_type_by_port(int inflow_port) const
+  {
+    std::string inflow{};
+    if (inflow_port == 0) {
+      inflow = inflow0;
+    }
+    else if (inflow_port == 1) {
+      inflow = inflow1;
+    }
+    else {
+    }
+    return inflow;
+  }
+
+  void
+  Mover::log_ports()
+  {
   }
 }

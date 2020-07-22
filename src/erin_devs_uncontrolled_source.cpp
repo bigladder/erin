@@ -97,7 +97,7 @@ namespace erin::devs
       std::cout << "uncontrolled_src_time_advance(...)\n"
                 << "- state = " << state << "\n";
     }
-    auto next_index = static_cast<size_type>(state.index + 1);
+    auto next_index = static_cast<size_type>(state.index) + 1;
     RealTimeType ta{0};
     if (state.report_outflow_at_current_index) {
       ta = 0;
@@ -149,9 +149,9 @@ namespace erin::devs
       uss.index = static_cast<int>(next_index);
       uss.report_outflow_at_current_index =
         out.should_propagate_achieved_at(next_time);
-      uss.inflow_port = std::move(inflow);
-      uss.outflow_port = std::move(out);
-      uss.spill_port = std::move(spill);
+      uss.inflow_port = inflow;
+      uss.outflow_port = out;
+      uss.spill_port = spill;
     }
     return uss;
   }
@@ -210,8 +210,8 @@ namespace erin::devs
       next_time,
       state.index,
       state.inflow_port,
-      std::move(out),
-      std::move(spill),
+      out,
+      spill,
       report
     };
   }

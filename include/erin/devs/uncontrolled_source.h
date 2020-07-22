@@ -41,9 +41,10 @@ namespace erin::devs
   struct UncontrolledSourceState
   {
     RealTimeType time{0};
-    size_type index{0};
+    int index{-1};
     Port outflow_port{}; // normal supply outflow
     Port spill_port{};   // unused supply goes out here
+    bool report_outflow_at_current_index{false};
   };
 
   bool operator==(const UncontrolledSourceState& a, const UncontrolledSourceState& b);

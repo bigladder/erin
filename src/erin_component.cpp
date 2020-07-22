@@ -1449,6 +1449,11 @@ namespace ERIN
     else {
       bool has_reliability{reliability_schedule.size() > 0};
       auto profile = supply_by_scenario.at(active_scenario);
+      if constexpr (debug_level >= debug_level_high) {
+        for (const auto& p : profile) {
+          std::cout << "p = " << p << "\n";
+        }
+      }
       auto ucs = new UncontrolledSource(
           the_id, ComponentType::UncontrolledSource, stream, profile);
       elements.emplace(ucs);

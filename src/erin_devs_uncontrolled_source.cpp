@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/devs/uncontrolled_source.h"
+#include "debug_utils.h"
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
@@ -72,7 +73,9 @@ namespace erin::devs
               << "time = " << a.time << ", "
               << "index = " << a.index << ", "
               << "outflow_port = " << a.outflow_port << ", "
-              << "spill_port = " << a.spill_port << ")";
+              << "spill_port = " << a.spill_port << ", "
+              << "report_outflow_at_current_index = "
+              << a.report_outflow_at_current_index << ")";
   }
 
   UncontrolledSourceState
@@ -88,10 +91,23 @@ namespace erin::devs
       const UncontrolledSourceData& data,
       const UncontrolledSourceState& state)
   {
-    auto next_index = state.index + 1;
-    auto ta = infinity;
-    if (next_index < data.num_items) {
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "uncontrolled_src_time_advance(...)\n"
+                << "- state = " << state << "\n";
+    }
+    auto next_index = static_cast<size_type>(state.index + 1);
+    RealTimeType ta{0};
+    if (state.report_outflow_at_current_index) {
+      ta = 0;
+    }
+    else if (next_index < data.num_items) {
       ta = data.times[next_index] - state.time;
+    }
+    else {
+      ta = infinity;
+    }
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "- ta = " << ta << "\n";
     }
     return ta;
   }
@@ -103,29 +119,37 @@ namespace erin::devs
       const UncontrolledSourceData& data,
       const UncontrolledSourceState& state)
   {
-    auto next_index = state.index + 1;
-    if (next_index >= data.num_items) {
-      return state;
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "uncontrolled_src_internal_transition(...)\n"
+                << "- state = " << state << "\n";
     }
-    auto next_time = data.times[next_index];
-    auto next_supply = data.supply[next_index];
-    auto out = state.outflow_port;
-    auto spill = state.spill_port;
-    auto out_req = out.get_requested();
-    if (next_supply >= out_req) {
-      out = out.with_achieved(out_req, next_time);
-      spill = spill.with_achieved(next_supply - out_req, next_time);
+    UncontrolledSourceState uss{state};
+    auto next_index = static_cast<size_type>(state.index) + 1;
+    if (uss.report_outflow_at_current_index) {
+      uss.report_outflow_at_current_index = false;
     }
-    else {
-      out = out.with_achieved(next_supply, next_time);
-      spill = spill.with_achieved(0.0, next_time);
+    else if (next_index < data.num_items) {
+      auto next_time = data.times[next_index];
+      auto next_supply = data.supply[next_index];
+      auto out = state.outflow_port;
+      auto spill = state.spill_port.with_requested(next_supply, next_time);
+      auto out_req = out.get_requested();
+      if (next_supply >= out_req) {
+        out = out.with_achieved(out_req, next_time);
+        spill = spill.with_achieved(next_supply - out_req, next_time);
+      }
+      else {
+        out = out.with_achieved(next_supply, next_time);
+        spill = spill.with_achieved(0.0, next_time);
+      }
+      uss.time = next_time;
+      uss.index = static_cast<int>(next_index);
+      uss.report_outflow_at_current_index =
+        out.should_propagate_achieved_at(next_time);
+      uss.outflow_port = std::move(out);
+      uss.spill_port = std::move(spill);
     }
-    return UncontrolledSourceState{
-      next_time,
-      next_index,
-      std::move(out),
-      std::move(spill)
-    };
+    return uss;
   }
 
   ////////////////////////////////////////////////////////////
@@ -137,6 +161,11 @@ namespace erin::devs
       RealTimeType dt,
       const std::vector<PortValue>& xs)
   {
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "uncontrolled_src_external_transition(...)\n"
+                << "- state = " << state << "\n"
+                << "- xs = " << ERIN::vec_to_string<PortValue>(xs) << "\n";
+    }
     FlowValueType outflow_request{0.0};
     for (const auto& x : xs) {
       switch (x.port) {
@@ -153,10 +182,12 @@ namespace erin::devs
           }
       }
     }
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "- outflow_request = " << outflow_request << "\n";
+    }
     auto next_time = state.time + dt;
-    auto supply = (state.index < data.num_items) ?
-      data.supply[state.index]
-      : 0.0;
+    auto index = static_cast<size_type>(state.index);
+    auto supply = (index < data.num_items) ?  data.supply[index] : 0.0;
     auto out = state.outflow_port.with_requested(outflow_request, next_time);
     auto spill = state.spill_port.with_requested(supply, next_time);
     if (supply >= outflow_request) {
@@ -167,8 +198,17 @@ namespace erin::devs
       out = out.with_achieved(supply, next_time);
       spill = spill.with_achieved(0.0, next_time);
     }
+    bool report{out.should_propagate_achieved_at(next_time)};
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "- new value of report* = " << report << "\n";
+    }
     return UncontrolledSourceState{
-      next_time, state.index, std::move(out), std::move(spill)};
+      next_time,
+      state.index,
+      std::move(out),
+      std::move(spill),
+      report
+    };
   }
 
   ////////////////////////////////////////////////////////////
@@ -200,26 +240,26 @@ namespace erin::devs
 
   void 
   uncontrolled_src_output_function_mutable(
-      const UncontrolledSourceData& data,
+      const UncontrolledSourceData& /* data */,
       const UncontrolledSourceState& state,
       std::vector<PortValue>& ys)
   {
-    auto next_index = state.index + 1;
-    if (next_index < data.num_items) {
-      auto next_time = data.times[next_index];
-      auto supply = data.supply[next_index];
-      auto out_req = state.outflow_port.get_requested();
-      auto out = state.outflow_port;
-      if (supply >= out_req) {
-        out = out.with_achieved(out_req, next_time);
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "uncontrolled_src_output_function_mutable(...)\n"
+                << "- state = " << state << "\n";
+    }
+    if (state.report_outflow_at_current_index) {
+      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+        std::cout << "- time = " << state.time << "\n"
+                  << "- adding to outport_outflow_achieved\n"
+                  << "- out_req = "
+                  << state.outflow_port.get_requested() << "\n"
+                  << "- out_ach = "
+                  << state.outflow_port.get_achieved() << "\n";
       }
-      else {
-        out = out.with_achieved(supply, next_time);
-      }
-      if (out.should_propagate_achieved_at(next_time)) {
-        ys.emplace_back(
-            PortValue{outport_outflow_achieved, out.get_achieved()});
-      }
+      ys.emplace_back(
+          PortValue{outport_outflow_achieved,
+                    state.outflow_port.get_achieved()});
     }
   }
 }

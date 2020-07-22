@@ -205,7 +205,8 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "DefaultFlowWriter::write_data(...)\n"
-                << "element_id     = " << element_id << "\n"
+                << "element_id     = " << element_id << " ("
+                << element_id_to_tag[element_id] << ")\n"
                 << "time           = " << time << "\n"
                 << "requested_flow = " << requested_flow << "\n"
                 << "achieved_flow  = " << achieved_flow << "\n";

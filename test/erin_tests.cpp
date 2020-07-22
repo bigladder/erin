@@ -6688,20 +6688,20 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
     "US-inflow", "US-outflow", "US-lossflow",
     "L", "S", "M-inflow(0)", "M-inflow(1)", "M-outflow"};
   ASSERT_EQ(expected_comp_ids.size(), rez.size());
-  //if (false) {
-  //  for (const auto& item : rez) {
-  //    std::cout << item.first << ":\n";
-  //    for (const auto& d : item.second) {
-  //      std::cout << "  " << d << "\n";
-  //    }
-  //  }
-  //}
-  //const auto& comp_ids = bs_res0.get_component_ids();
-  //std::set<std::string> actual_comp_ids{};
-  //for (const auto& id : comp_ids) {
-  //  actual_comp_ids.emplace(id);
-  //}
-  //ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
+  if (true) {
+    for (const auto& item : rez) {
+      std::cout << item.first << ":\n";
+      for (const auto& d : item.second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  const auto& comp_ids = bs_res0.get_component_ids();
+  std::set<std::string> actual_comp_ids{};
+  for (const auto& id : comp_ids) {
+    actual_comp_ids.emplace(id);
+  }
+  ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
   //EXPECT_EQ(actual_comp_ids, expected_comp_ids);
   //auto ss_map = bs_res0.get_statistics();
   //ERIN::FlowValueType L_load_not_served{5*50.0};

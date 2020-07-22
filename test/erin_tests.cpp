@@ -6702,7 +6702,7 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
     actual_comp_ids.emplace(id);
   }
   ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
-  //EXPECT_EQ(actual_comp_ids, expected_comp_ids);
+  EXPECT_EQ(actual_comp_ids, expected_comp_ids);
   //auto ss_map = bs_res0.get_statistics();
   //ERIN::FlowValueType L_load_not_served{5*50.0};
   //ERIN::FlowValueType L_total_energy{5*50.0 + 5*100.0};

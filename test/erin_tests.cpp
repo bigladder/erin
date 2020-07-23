@@ -6713,6 +6713,70 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
   EXPECT_EQ(L_ss.total_energy, L_total_energy);
 }
 
+TEST(ErinBasicsTest, Test_adding_an_efficiency_option_to_storage)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,25.0],[10.0]]\n"
+    "[components.supply]\n"
+    "type = \"source\"\n"
+    "outflow = \"electricity\"\n"
+    "max_outflow = 0.0\n"
+    "[components.store_0]\n"
+    "type = \"store\"\n"
+    "inflow = \"electricity\"\n"
+    "outflow = \"electricity\"\n"
+    "max_inflow = 50.0\n"
+    "capacity_unit = \"kWh\"\n"
+    "capacity = 200.0\n"
+    "efficiency = 0.5\n"
+    "init_soc = 0.5\n"
+    "[components.store_1]\n"
+    "type = \"store\"\n"
+    "inflow = \"electricity\"\n"
+    "outflow = \"electricity\"\n"
+    "max_inflow = 100.0\n"
+    "capacity_unit = \"kWh\"\n"
+    "capacity = 200.0\n"
+    "charge_efficiency = 0.5\n"
+    "init_soc = 0.5\n"
+    "[components.store_2]\n"
+    "type = \"store\"\n"
+    "inflow = \"electricity\"\n"
+    "outflow = \"electricity\"\n"
+    "max_inflow = 100.0\n"
+    "capacity_unit = \"kWh\"\n"
+    "capacity = 800.0\n"
+    "discharge_efficiency = 0.5\n"
+    "init_soc = 0.5\n"
+    "[components.load]\n"
+    "type = \"load\"\n"
+    "inflow = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[networks.nw]\n"
+    "connections = [\n"
+    "    [\"supply:OUT(0)\",  \"store_2:IN(0)\", \"electricity\"],\n"
+    "    [\"store_2:OUT(0)\",  \"store_1:IN(0)\", \"electricity\"],\n"
+    "    [\"store_1:OUT(0)\",  \"store_0:IN(0)\", \"electricity\"],\n"
+    "    [\"store_0:OUT(0)\",  \"load:IN(0)\", \"electricity\"],\n"
+    "    ]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"nw\"\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+}
 
 int
 main(int argc, char **argv)

@@ -494,7 +494,8 @@ namespace ERIN
           ComponentType component_type,
           const std::string& stream_type,
           FlowValueType capacity,
-          FlowValueType max_charge_rate);
+          FlowValueType max_charge_rate,
+          FlowValueType init_soc = 1.0);
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;

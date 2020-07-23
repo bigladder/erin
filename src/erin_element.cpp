@@ -1452,14 +1452,15 @@ namespace ERIN
       ComponentType ct,
       const std::string& st,
       FlowValueType capacity,
-      FlowValueType max_charge_rate):
+      FlowValueType max_charge_rate,
+      FlowValueType init_soc):
     FlowElement(
         std::move(id),
         ct,
         ElementType::Store,
         st),
     data{erin::devs::storage_make_data(capacity, max_charge_rate)},
-    state{erin::devs::storage_make_state(data)},
+    state{erin::devs::storage_make_state(data, init_soc)},
     flow_writer{nullptr},
     record_history{false},
     record_storeflow_and_discharge{false},

@@ -256,10 +256,29 @@ namespace ERIN
           os << a_mux;
           break;
         }
+      case ComponentType::PassThrough:
+        {
+          const auto& a_pt = dynamic_cast<const PassThroughComponent&>(*a);
+          os << a_pt;
+          break;
+        }
       case ComponentType::Storage:
         {
           const auto& a_store = dynamic_cast<const StorageComponent&>(*a);
           os << a_store;
+          break;
+        }
+      case ComponentType::UncontrolledSource:
+        {
+          const auto& a_us =
+            dynamic_cast<const UncontrolledSourceComponent&>(*a);
+          os << a_us;
+          break;
+        }
+      case ComponentType::Mover:
+        {
+          const auto& a_m = dynamic_cast<const MoverComponent&>(*a);
+          os << a_m;
           break;
         }
       default:
@@ -1381,5 +1400,291 @@ namespace ERIN
        << n.internals_to_string() << ", "
        << "capacity=" << n.capacity << ")";
     return os;
+  }
+
+  ////////////////////////////////////////////////////////////
+  // UncontrolledSourceComponent
+  UncontrolledSourceComponent::UncontrolledSourceComponent(
+      const std::string& id_,
+      const std::string& outflow_,
+      std::unordered_map<std::string, std::vector<LoadItem>>
+        supply_by_scenario_):
+    UncontrolledSourceComponent(id_, outflow_, std::move(supply_by_scenario_), {})
+  {
+  }
+
+  UncontrolledSourceComponent::UncontrolledSourceComponent(
+      const std::string& id_,
+      const std::string& outflow_,
+      std::unordered_map<std::string, std::vector<LoadItem>>
+        supply_by_scenario_,
+      fragility_map fragilities):
+    Component(
+        id_,
+        ComponentType::UncontrolledSource,
+        outflow_,
+        outflow_,
+        outflow_,
+        std::move(fragilities)),
+    supply_by_scenario{std::move(supply_by_scenario_)}
+  {
+  }
+
+  std::unique_ptr<Component>
+  UncontrolledSourceComponent::clone() const
+  {
+    auto the_id = get_id();
+    auto flow = get_output_stream();
+    auto sbs = supply_by_scenario;
+    auto fcs = clone_fragility_curves();
+    std::unique_ptr<Component> p =
+      std::make_unique<UncontrolledSourceComponent>(
+          the_id, flow, sbs, std::move(fcs));
+    return p;
+  }
+
+  PortsAndElements
+  UncontrolledSourceComponent::add_to_network(
+      adevs::Digraph<FlowValueType, Time>& network,
+      const std::string& active_scenario,
+      bool is_failed,
+      const std::vector<TimeState>& reliability_schedule) const
+  {
+    namespace ep = erin::port;
+    std::unordered_set<FlowElement*> elements;
+    std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
+    auto the_id = get_id();
+    auto stream = get_output_stream();
+    if (is_failed) {
+      auto lim = new FlowLimits(
+          the_id + "-outflow",
+          ComponentType::UncontrolledSource,
+          stream,
+          0.0,
+          0.0);
+      elements.emplace(lim);
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{{lim, 0}};
+    }
+    else {
+      bool has_reliability{reliability_schedule.size() > 0};
+      auto profile = supply_by_scenario.at(active_scenario);
+      if constexpr (debug_level >= debug_level_high) {
+        for (const auto& p : profile) {
+          std::cout << "p = " << p << "\n";
+        }
+      }
+      auto ucs = new UncontrolledSource(
+          the_id, ComponentType::UncontrolledSource, stream, profile);
+      elements.emplace(ucs);
+      ucs->set_recording_on();
+      if (has_reliability) {
+        auto on_off = new OnOffSwitch(
+            the_id + "-limits",
+            ComponentType::UncontrolledSource,
+            stream,
+            reliability_schedule);
+        elements.emplace(on_off);
+        connect_source_to_sink(network, ucs, on_off, true, stream);
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{on_off, 0}};
+      }
+      else {
+        ports[ep::Type::Outflow] = std::vector<ElementPort>{{ucs, 0}};
+      }
+    }
+    return PortsAndElements{ports, elements};
+  }
+
+  bool operator==(
+      const UncontrolledSourceComponent& a,
+      const UncontrolledSourceComponent& b)
+  {
+    if (!a.base_is_equal(b)) {
+      return false;
+    }
+    const auto& a_sbs = a.supply_by_scenario;
+    const auto& b_sbs = b.supply_by_scenario;
+    const auto num_a_items = a_sbs.size();
+    const auto num_b_items = b_sbs.size();
+    if (num_a_items != num_b_items) {
+      return false;
+    }
+    for (const auto& a_pair : a_sbs) {
+      const auto& tag = a_pair.first;
+      auto b_it = b_sbs.find(tag);
+      if (b_it == b_sbs.end()) {
+        return false;
+      }
+      const auto& a_load_items = a_pair.second;
+      const auto& b_load_items = b_it->second;
+      const auto a_num_loads = a_load_items.size();
+      const auto b_num_loads = b_load_items.size();
+      if (a_num_loads != b_num_loads) {
+        return false;
+      }
+      for (std::vector<LoadItem>::size_type i{0}; i < a_num_loads; ++i) {
+        const auto& a_load_item = a_load_items[i];
+        const auto& b_load_item = b_load_items[i];
+        if (a_load_item != b_load_item) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  bool operator!=(
+      const UncontrolledSourceComponent& a,
+      const UncontrolledSourceComponent& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream& operator<<(
+      std::ostream& os,
+      const UncontrolledSourceComponent& usc)
+  {
+    return os << "UncontrolledSourceComponent(" << usc.internals_to_string() << ", "
+              << "supply_by_scenario=...)";
+  }
+
+  ////////////////////////////////////////////////////////////
+  // MoverComponent
+  MoverComponent::MoverComponent(
+      const std::string& id,
+      const std::string& inflow0,
+      const std::string& inflow1,
+      const std::string& outflow,
+      FlowValueType COP):
+    MoverComponent(id, inflow0, inflow1, outflow, COP, {})
+  {
+  }
+
+  MoverComponent::MoverComponent(
+      const std::string& id,
+      const std::string& inflow0,
+      const std::string& inflow1_,
+      const std::string& outflow,
+      FlowValueType COP_,
+      fragility_map fragilities):
+    Component(
+        id,
+        ComponentType::Mover,
+        inflow0,
+        outflow,
+        std::string{""}, // lossflow
+        std::move(fragilities)),
+    inflow1{inflow1_},
+    COP{COP_}
+  {
+  }
+
+  PortsAndElements
+  MoverComponent::add_to_network(
+      adevs::Digraph<FlowValueType, Time>& nw,
+      const std::string& /* active_scenario */,
+      bool is_failed,
+      const std::vector<TimeState>& reliability_schedule) const
+  {
+    namespace ep = erin::port;
+    std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
+    std::unordered_set<FlowElement*> elements;
+    auto has_reliability{reliability_schedule.size() > 0};
+    auto the_id = get_id();
+    auto the_ct = ComponentType::Mover;
+    auto inflow0 = get_input_stream();
+    auto outflow = get_output_stream();
+    if (is_failed) {
+      auto lim0 = new FlowLimits(
+          the_id + "-inflow0",
+          the_ct,
+          inflow0,
+          0.0,
+          0.0);
+      elements.emplace(lim0);
+      lim0->set_recording_on();
+      auto lim1 = new FlowLimits(
+          the_id + "-inflow1",
+          the_ct,
+          inflow1,
+          0.0,
+          0.0);
+      elements.emplace(lim1);
+      lim1->set_recording_on();
+      auto lim2 = new FlowLimits(
+          the_id + "-outflow",
+          the_ct,
+          outflow,
+          0.0,
+          0.0);
+      elements.emplace(lim2);
+      lim2->set_recording_on();
+      ports[ep::Type::Inflow] = {{lim0,0}, {lim1,0}};
+      ports[ep::Type::Outflow] = {{lim2,0}};
+    }
+    else {
+      auto m = new Mover(
+          the_id,
+          the_ct,
+          inflow0,
+          inflow1,
+          outflow,
+          COP);
+      elements.emplace(m);
+      ports[ep::Type::Inflow] = {{m,0}, {m,1}};
+      if (has_reliability) {
+        auto on_off = new OnOffSwitch(
+            the_id + "-outflow",
+            the_ct,
+            outflow,
+            reliability_schedule,
+            PortRole::Outflow);
+        on_off->set_recording_on();
+        elements.emplace(on_off);
+        connect_source_to_sink_with_ports(
+            nw, m, 0, on_off, 0, true, outflow);
+        ports[ep::Type::Outflow] = {{on_off, 0}};
+      }
+      else {
+        m->set_recording_on();
+        ports[ep::Type::Outflow] = {{m, 0}};
+      }
+    }
+    return PortsAndElements{ports, elements};
+  }
+
+  std::unique_ptr<Component>
+  MoverComponent::clone() const
+  {
+    auto the_id = get_id();
+    auto inflow = get_input_stream();
+    auto outflow = get_output_stream();
+    auto fcs = clone_fragility_curves();
+    std::unique_ptr<Component> p =
+      std::make_unique<MoverComponent>(
+          the_id, inflow, inflow1, outflow, COP, std::move(fcs));
+    return p;
+  }
+
+  bool
+  operator==(const MoverComponent& a, const MoverComponent& b)
+  {
+    return a.base_is_equal(b) &&
+           (a.inflow1 == b.inflow1) &&
+           (a.COP == b.COP);
+  }
+
+  bool
+  operator!=(const MoverComponent& a, const MoverComponent& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const MoverComponent& m)
+  {
+    return os << "MoverComponent("
+              << m.internals_to_string() << ", "
+              << "inflow1 = " << m.inflow1 << ", "
+              << "COP = " << m.COP << ")";
   }
 }

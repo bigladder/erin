@@ -76,6 +76,16 @@ Consistent approach to handling error callbacks.
 
 Unit tests are created by googletest and automatically detected by CTest and added to the test suite
 
+## Graphviz Visualization of the Network Topology
+
+One of the programs that builds with E2RIN is `e2rin_graph`.
+`e2rin_graph` can be used to generate a Graphviz input file from your input TOML file.
+Although the graphviz input file can be created with no external dependencies, a Graphviz installation is required to actually create an output image.
+
+Graphviz can be installed from [here](https://www.graphviz.org/).
+
+The `e2rin_graph` program provides usage help including how to call Graphviz to generate your picture.
+
 ## Formatting: Clang format (TODO)
 
 ## Code Coverage: Codecov (TODO)

@@ -301,7 +301,7 @@ namespace ERIN
           const std::string& id,
           const std::string& stream,
           const std::unordered_map<
-          std::string, std::vector<LoadItem>>& loads_by_id,
+            std::string, std::vector<LoadItem>>& loads_by_id,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components,
           fragility_map&& frags) const;
@@ -332,6 +332,22 @@ namespace ERIN
           const toml::table& tt,
           const std::string& id,
           const std::string& stream,
+          std::unordered_map<
+            std::string, std::unique_ptr<Component>>& components,
+          fragility_map&& frags) const;
+      void read_uncontrolled_source_component(
+          const toml::table& tt,
+          const std::string& id,
+          const std::string& outflow,
+          const std::unordered_map<
+            std::string, std::vector<LoadItem>>& profiles_by_id,
+          std::unordered_map<
+            std::string, std::unique_ptr<Component>>& components,
+          fragility_map&& frags) const;
+      void read_mover_component(
+          const toml::table& tt,
+          const std::string& id,
+          const std::string& outflow,
           std::unordered_map<
             std::string, std::unique_ptr<Component>>& components,
           fragility_map&& frags) const;

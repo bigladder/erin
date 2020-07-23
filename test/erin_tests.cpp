@@ -33,6 +33,7 @@
 #include <iostream>
 #include <memory>
 #include <random>
+#include <set>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -6600,6 +6601,164 @@ TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
   EXPECT_EQ(
       cds.next_time_advance(cdf_id, dice_roll_3),
       mean + static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
+}
+
+TEST(ErinBasicsTest, Test_uncontrolled_source)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.default]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "[loads.supply]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0]]\n"
+    "[components.US]\n"
+    "type = \"uncontrolled_source\"\n"
+    "output_stream = \"electricity\"\n"
+    "supply_by_scenario.blue_sky = \"supply\"\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"default\"\n"
+    "[networks.nw]\n"
+    "connections = [\n"
+    "    [\"US:OUT(0)\",  \"L:IN(0)\", \"electricity\"],\n"
+    "    ]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"nw\"\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results_map = out.get_results();
+  ASSERT_EQ(1, results_map.size());
+  const auto& bs_res = results_map["blue_sky"];
+  ASSERT_EQ(1, bs_res.size());
+  const auto& bs_res0 = bs_res[0];
+  const auto& rez = bs_res0.get_results();
+  std::set<std::string> expected_comp_ids{"US-inflow", "US-outflow", "US-lossflow", "L"};
+  ASSERT_EQ(expected_comp_ids.size(), rez.size());
+  if (false) {
+    for (const auto& item : rez) {
+      std::cout << item.first << ":\n";
+      for (const auto& d : item.second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  const auto& comp_ids = bs_res0.get_component_ids();
+  std::set<std::string> actual_comp_ids{};
+  for (const auto& id : comp_ids) {
+    actual_comp_ids.emplace(id);
+  }
+  ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
+  EXPECT_EQ(actual_comp_ids, expected_comp_ids);
+  auto ss_map = bs_res0.get_statistics();
+  ERIN::FlowValueType L_load_not_served{5*50.0};
+  ERIN::FlowValueType L_total_energy{5*50.0 + 5*100.0};
+  ERIN::RealTimeType L_max_downtime{5};
+  auto L_ss = ss_map["L"];
+  EXPECT_EQ(L_ss.load_not_served, L_load_not_served);
+  EXPECT_EQ(L_ss.total_energy, L_total_energy);
+  EXPECT_EQ(L_ss.max_downtime, L_max_downtime);
+  ERIN::FlowValueType US_inflow_total_energy{5*50.0 + 3*120.0 + 2*100.0};
+  auto USin_ss = ss_map["US-inflow"];
+  EXPECT_EQ(USin_ss.total_energy, US_inflow_total_energy);
+}
+
+TEST(ErinBasicsTest, Test_mover_element_addition)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"seconds\"\n"
+    "max_time = 10\n"
+    "[loads.environment]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,1000.0],[10.0]]\n"
+    "[loads.cooling]\n"
+    "time_unit = \"seconds\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0]]\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "outflow = \"electricity\"\n"
+    "[components.US]\n"
+    "type = \"uncontrolled_source\"\n"
+    "output_stream = \"heat\"\n"
+    "supply_by_scenario.blue_sky = \"cooling\"\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"heat\"\n"
+    "loads_by_scenario.blue_sky = \"environment\"\n"
+    "[components.M]\n"
+    "type = \"mover\"\n"
+    "inflow0 = \"heat\"\n"
+    "inflow1 = \"electricity\"\n"
+    "outflow = \"heat\"\n"
+    "COP = 5.0\n"
+    "[networks.nw]\n"
+    "connections = [\n"
+    "    [\"US:OUT(0)\",  \"M:IN(0)\", \"heat\"],\n"
+    "    [\"S:OUT(0)\",  \"M:IN(1)\", \"electricity\"],\n"
+    "    [\"M:OUT(0)\",  \"L:IN(0)\", \"heat\"],\n"
+    "    ]\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 10\n"
+    "max_occurrences = 1\n"
+    "network = \"nw\"\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results_map = out.get_results();
+  ASSERT_EQ(1, results_map.size());
+  const auto& bs_res = results_map["blue_sky"];
+  ASSERT_EQ(1, bs_res.size());
+  const auto& bs_res0 = bs_res[0];
+  const auto& rez = bs_res0.get_results();
+  std::set<std::string> expected_comp_ids{
+    "US-inflow", "US-outflow", "US-lossflow",
+    "L", "S", "M-inflow(0)", "M-inflow(1)", "M-outflow"};
+  ASSERT_EQ(expected_comp_ids.size(), rez.size());
+  if (false) {
+    for (const auto& item : rez) {
+      std::cout << item.first << ":\n";
+      for (const auto& d : item.second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  const auto& comp_ids = bs_res0.get_component_ids();
+  std::set<std::string> actual_comp_ids{};
+  for (const auto& id : comp_ids) {
+    actual_comp_ids.emplace(id);
+  }
+  ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
+  EXPECT_EQ(actual_comp_ids, expected_comp_ids);
+  auto ss_map = bs_res0.get_statistics();
+  ERIN::RealTimeType L_max_downtime{10};
+  ERIN::FlowValueType L_total_energy{(5*50.0 + 3*120.0 + 2*100.0)*(1.0 + (1.0 / 5.0))};
+  ERIN::FlowValueType L_load_not_served{10*1000.0 - L_total_energy};
+  auto L_ss = ss_map["L"];
+  EXPECT_EQ(L_ss.max_downtime, L_max_downtime);
+  EXPECT_EQ(L_ss.load_not_served, L_load_not_served);
+  EXPECT_EQ(L_ss.total_energy, L_total_energy);
 }
 
 int

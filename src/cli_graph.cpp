@@ -67,11 +67,16 @@ main(const int argc, const char* argv[])
   if (argc != (num_args + 1)) {
     auto exe_name = eu::path_to_filename(args[0]);
     std::cout << exe_name << " version " << ev::version_string << "\n";
-    std::cout << "USAGE: " << exe_name << " <input_file_path> <output_file_path> <stats_file_path>\n"
+    std::cout << "USAGE: " << exe_name << " <input_file_path> <dot_file_path> <network_id>\n"
                  "  - input_file_path : path to TOML input file\n"
                  "  - dot_file_path   : path to Graphviz DOT file to write\n"
                  "  - network_id      : id for the network to plot from input_file_path\n"
-                 "SETS Exit Code 1 if issues encountered, else sets 0\n";
+                 "SETS Exit Code 1 if issues encountered, else sets 0\n"
+                 "\n\n------------------------------------------------------------\n"
+                 "Upon successful execution, you can render your dot file into a png as follows:\n"
+                 "> dot -Tpng input.gv -o output.png\n"
+                 "  The above generates a png (-Tpng) from the input.gv and saves to output.png (-o)\n"
+                 "------------------------------------------------------------\n";
     return 1;
   }
   std::string input_toml{args[1]};

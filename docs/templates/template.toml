@@ -86,8 +86,7 @@ fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
 type = "load"
 inflow = "<%= c[:inflow] %>"
 <%   s.load_profile.each do |lp| %>
-<%     next unless ( (lp[:building_id] == c[:location_id]) and %>
-<%                   (c[:inflow] == lp[:enduse]) ) %>
+<%     next unless lp[:component_id] == c[:id] %>
 loads_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
 <%   end %>
 <%   fms = s.failure_modes_for_component(c[:id]) %>

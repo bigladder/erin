@@ -39,6 +39,7 @@ class TestTemplate < Minitest::Test
       },
       :load_component => [
         {
+          :id => "b1_electricity",
           :location_id => "b1",
           :inflow => "electricity",
         },
@@ -46,8 +47,8 @@ class TestTemplate < Minitest::Test
       :load_profile => [
         {
           :scenario_id => "s1",
-          :building_id => "b1",
-          :enduse => "electricity",
+          :component_id => "b1_electricity",
+          :flow => "electricity",
           :file => "s1_b1_electricity.csv",
         },
       ],
@@ -103,10 +104,12 @@ class TestTemplate < Minitest::Test
       },
       :load_component => [
         {
+          :id => "mc_electricity",
           :location_id => "mc",
           :inflow => "electricity",
         },
         {
+          :id => "other_electricity",
           :location_id => "other",
           :inflow => "electricity",
         },
@@ -114,14 +117,14 @@ class TestTemplate < Minitest::Test
       :load_profile => [
         {
           :scenario_id => "blue_sky",
-          :building_id => "mc",
-          :enduse => "electricity",
+          :component_id => "mc_electricity",
+          :flow => "electricity",
           :file => "mc_blue_sky_electricity.csv",
         },
         {
           :scenario_id => "blue_sky",
-          :building_id => "other",
-          :enduse => "electricity",
+          :component_id => "other_electricity",
+          :flow => "electricity",
           :file => "other_blue_sky_electricity.csv",
         },
       ],
@@ -171,26 +174,26 @@ class TestTemplate < Minitest::Test
     ps[:load_profile] += [
       {
         :scenario_id => "s1",
-        :building_id => "mc",
-        :enduse => "electricity",
+        :component_id => "mc_electricity",
+        :flow => "electricity",
         :file => "mc_s1_electricity.csv",
       },
       {
         :scenario_id => "s1",
-        :building_id => "other",
-        :enduse => "electricity",
+        :component_id => "other_electricity",
+        :flow => "electricity",
         :file => "other_s1_electricity.csv",
       },
       {
         :scenario_id => "s2",
-        :building_id => "mc",
-        :enduse => "electricity",
+        :component_id => "mc_electricity",
+        :flow => "electricity",
         :file => "mc_s2_electricity.csv",
       },
       {
         :scenario_id => "s2",
-        :building_id => "other",
-        :enduse => "electricity",
+        :component_id => "other_electricity",
+        :flow => "electricity",
         :file => "other_s2_electricity.csv",
       },
     ]
@@ -247,13 +250,14 @@ class TestTemplate < Minitest::Test
     ps[:load_profile] = [
       {
         :scenario_id => "blue_sky",
-        :building_id => "b1",
-        :enduse => "electricity",
+        :component_id => "b1_electricity",
+        :flow => "electricity",
         :file => "b1_blue_sky_electricity.csv",
       },
     ]
     ps[:load_component] = [
       {
+        :id => "b1_electricity",
         :location_id => "b1",
         :inflow => "electricity",
       },
@@ -272,11 +276,12 @@ class TestTemplate < Minitest::Test
     ps = default_params
     ps[:load_profile] << {
       :scenario_id => "blue_sky",
-      :building_id => "mc",
-      :enduse => "heating",
+      :component_id => "mc_heating",
+      :flow => "heating",
       :file => "mc_blue_sky_heating.csv",
     }
     ps[:load_component] << {
+      :id => "mc_heating",
       :location_id => "mc",
       :inflow => "heating",
     }
@@ -587,7 +592,7 @@ class TestTemplate < Minitest::Test
       ],
       [
         @load_profile_csv,
-        [:scenario_id, :building_id, :enduse, :file],
+        [:scenario_id, :component_id, :flow, :file],
         :load_profile,
         :normal_table,
       ],
@@ -715,13 +720,14 @@ class TestTemplate < Minitest::Test
       :constant_efficiency => 0.85,
     }
     ps[:load_component] << {
+      :id => "mc_heating",
       :location_id => "mc",
       :inflow => "heating",
     }
     ps[:load_profile] << {
       :scenario_id => "blue_sky",
-      :building_id => "mc",
-      :enduse => "heating",
+      :component_id => "mc_heating",
+      :flow => "heating",
       :file => "mc_blue_sky_heating.csv",
     }
     ps[:network_link] += [
@@ -811,18 +817,22 @@ class TestTemplate < Minitest::Test
       },
       :load_component => [
         {
+          :id => "mc_electricity",
           :location_id => "mc",
           :inflow => "electricity",
         },
         {
+          :id => "other_electricity",
           :location_id => "other",
           :inflow => "electricity",
         },
         {
+          :id => "mc_heating",
           :location_id => "mc",
           :inflow => "heating",
         },
         {
+          :id => "other_heating",
           :location_id => "other",
           :inflow => "heating",
         },
@@ -830,26 +840,26 @@ class TestTemplate < Minitest::Test
       :load_profile => [
         {
           :scenario_id => "blue_sky",
-          :building_id => "mc",
-          :enduse => "electricity",
+          :component_id => "mc_electricity",
+          :flow => "electricity",
           :file => "mc_blue_sky_electricity.csv",
         },
         {
           :scenario_id => "blue_sky",
-          :building_id => "other",
-          :enduse => "electricity",
+          :component_id => "other_electricity",
+          :flow => "electricity",
           :file => "other_blue_sky_electricity.csv",
         },
         {
           :scenario_id => "blue_sky",
-          :building_id => "mc",
-          :enduse => "heating",
+          :component_id => "mc_heating",
+          :flow => "heating",
           :file => "mc_blue_sky_heating.csv",
         },
         {
           :scenario_id => "blue_sky",
-          :building_id => "other",
-          :enduse => "heating",
+          :component_id => "other_heating",
+          :flow => "heating",
           :file => "other_blue_sky_heating.csv",
         },
       ],
@@ -1062,11 +1072,15 @@ class TestTemplate < Minitest::Test
         secondary_efficiency: 0.85,
       },
     ]
-    ps[:load_component] << {location_id: "b1", inflow: "heating"}
+    ps[:load_component] << {
+      id: "b1_heating",
+      location_id: "b1",
+      inflow: "heating",
+    }
     ps[:load_profile] << {
       scenario_id: "s1",
-      building_id: "b1",
-      enduse: "heating",
+      component_id: "b1_heating",
+      flow: "heating",
       file: "s1_b1_heating.csv",
     }
     ps[:source_component] = [

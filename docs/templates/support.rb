@@ -10,6 +10,7 @@ class Support
   #     - :component_id, string, the component to apply the fragility curve to
   #     - :fragility_id, string, the fragility curve id to be applied
   #   - :converter_component, an array of Hash with keys:
+  #     - :id, string, id of the converter_component
   #     - :location_id, string, the location of the converter
   #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", etc.)
   #     - :outflow, string, the outflow type (e.g., "electricity", "heating", etc.)
@@ -49,10 +50,10 @@ class Support
   #     - :inflow, string, the inflow type (e.g., 'electricity', 'heating',
   #       'cooling', 'natural_gas', etc.)
   #   - :load_profile, an array of Hash with keys:
-  #     - :scenario_id
-  #     - :building_id
-  #     - :enduse
-  #     - :file
+  #     - :scenario_id, string, the id of the scenario
+  #     - :component_id, string, id of a load_component or uncontrolled_src
+  #     - :flow, string, the flow for the load profile
+  #     - :file, string, path to the csv file to load
   #   - :muxer_component, an array of Hash with keys:
   #     - :location_id, string, the location of the muxer
   #     - :flow, string, the type of flow through the muxer (e.g., 'electricity', 'natural_gas', 'coal', etc.)
@@ -83,6 +84,10 @@ class Support
   #     - :flow, string, the flow being stored (e.g., "electricity", "diesel", etc.)
   #     - :capacity_kWh, number, > 0, the capacity of the store in kWh
   #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
+  #   - :uncontrolled_src, an array of Hash with keys:
+  #     - :id, string, id of the uncontrolled source
+  #     - :location_id, string, the location of the uncontrolled source
+  #     - :flow, string, the flow from the uncontrolled source
 
   attr_reader(
     :component_failure_mode,
@@ -299,7 +304,7 @@ class Support
     comp_infos = [
       [@converter_component, [:location_id, :outflow], "generator"],
       [@load_component, [:location_id, :inflow], ""],
-      [@load_profile, [:building_id, :enduse, :scenario_id], ""],
+      [@load_profile, [:component_id, :scenario_id], ""],
       [@source_component, [:location_id, :outflow], "source"],
       [@storage_component, [:location_id, :flow], "store"],
       [@network_link, [:source_location_id, "to", :destination_location_id, :flow], ""],

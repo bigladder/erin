@@ -9,9 +9,11 @@
 #include "erin/devs/converter.h"
 #include "erin/devs/flow_limits.h"
 #include "erin/devs/load.h"
+#include "erin/devs/mover.h"
+#include "erin/devs/mux.h"
 #include "erin/devs/on_off_switch.h"
 #include "erin/devs/storage.h"
-#include "erin/devs/mux.h"
+#include "erin/devs/uncontrolled_source.h"
 #include "erin/reliability.h"
 #include "adevs.h"
 #include <functional>
@@ -131,7 +133,9 @@ namespace ERIN
     Sink,
     Mux,
     Store,
-    OnOffSwitch
+    OnOffSwitch,
+    UncontrolledSource,
+    Mover
   };
 
   ElementType tag_to_element_type(const std::string& tag);
@@ -561,6 +565,87 @@ namespace ERIN
 
       void log_ports();
   };
+
+  ////////////////////////////////////////////////////////////
+  // UncontrolledSource
+  class UncontrolledSource : public FlowElement
+  {
+    public:
+      UncontrolledSource(
+          std::string id,
+          ComponentType component_type,
+          const std::string& stream_type,
+          const std::vector<LoadItem>& profile);
+
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
+
+    private:
+      erin::devs::UncontrolledSourceData data;
+      erin::devs::UncontrolledSourceState state;
+      std::shared_ptr<FlowWriter> flow_writer;
+      int element_id;
+      int inflow_element_id;
+      int lossflow_element_id;
+      bool record_history;
+
+      void log_ports();
+  };
+
+  ////////////////////////////////////////////////////////////
+  // Mover
+  class Mover : public FlowElement
+  {
+    public:
+      Mover(
+          std::string id,
+          ComponentType component_type,
+          const std::string& inflow0,
+          const std::string& inflow1,
+          const std::string& outflow,
+          FlowValueType COP);
+
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
+      [[nodiscard]] std::string get_inflow_type_by_port(int inflow_port) const override;
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
+
+    private:
+      std::string inflow0;
+      std::string inflow1;
+      erin::devs::MoverData data;
+      erin::devs::MoverState state;
+      std::shared_ptr<FlowWriter> flow_writer;
+      int inflow0_element_id;
+      int inflow1_element_id;
+      int outflow_element_id;
+      bool record_history;
+
+      void log_ports();
+  };
+
 }
 
 #endif // ERIN_ELEMENT_H

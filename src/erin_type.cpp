@@ -197,43 +197,74 @@ namespace ERIN
   ComponentType
   tag_to_component_type(const std::string& tag)
   {
-    if (tag == "load")
-      return ComponentType::Load;
-    if (tag == "source")
-      return ComponentType::Source;
-    if (tag == "converter")
-      return ComponentType::Converter;
-    if ((tag == "mux") || (tag == "bus") || (tag == "muxer"))
-      return ComponentType::Muxer;
-    if (tag == "pass_through")
-      return ComponentType::PassThrough;
-    if ((tag == "info") || (tag == "informational") || (tag == "optional"))
-      return ComponentType::Informational;
-    if ((tag == "store") || (tag == "storage"))
-      return ComponentType::Storage;
-    std::ostringstream oss;
-    oss << "Unhandled tag \"" << tag << "\"";
-    throw std::invalid_argument(oss.str());
+    ComponentType ct{};
+    if (tag == "load") {
+      ct = ComponentType::Load;
+    }
+    else if (tag == "source") {
+      ct = ComponentType::Source;
+    }
+    else if (tag == "converter") {
+      ct = ComponentType::Converter;
+    }
+    else if ((tag == "mux") || (tag == "bus") || (tag == "muxer")) {
+      ct = ComponentType::Muxer;
+    }
+    else if (tag == "pass_through") {
+      ct = ComponentType::PassThrough;
+    }
+    else if ((tag == "info") || (tag == "informational") || (tag == "optional")) {
+      ct = ComponentType::Informational;
+    }
+    else if ((tag == "store") || (tag == "storage")) {
+      ct = ComponentType::Storage;
+    }
+    else if (tag == "uncontrolled_source") {
+      ct = ComponentType::UncontrolledSource;
+    }
+    else if (tag == "mover") {
+      ct = ComponentType::Mover;
+    }
+    else {
+      std::ostringstream oss{};
+      oss << "Unhandled tag \"" << tag << "\"";
+      throw std::invalid_argument(oss.str());
+    }
+    return ct;
   }
 
   std::string
   component_type_to_tag(ComponentType ct)
   {
+    std::string tag{};
     switch(ct) {
       case ComponentType::Load:
-        return std::string{"load"};
+        tag = std::string{"load"};
+        break;
       case ComponentType::Source:
-        return std::string{"source"};
+        tag = std::string{"source"};
+        break;
       case ComponentType::Converter:
-        return std::string{"converter"};
+        tag = std::string{"converter"};
+        break;
       case ComponentType::Muxer:
-        return std::string{"muxer"};
+        tag = std::string{"muxer"};
+        break;
       case ComponentType::PassThrough:
-        return std::string{"pass_through"};
+        tag = std::string{"pass_through"};
+        break;
       case ComponentType::Informational:
-        return std::string{"informational"};
+        tag = std::string{"informational"};
+        break;
       case ComponentType::Storage:
-        return std::string{"storage"};
+        tag = std::string{"storage"};
+        break;
+      case ComponentType::UncontrolledSource:
+        tag = std::string{"uncontrolled_source"};
+        break;
+      case ComponentType::Mover:
+        tag = std::string{"mover"};
+        break;
       default:
         {
           std::ostringstream oss;
@@ -241,6 +272,7 @@ namespace ERIN
           throw std::invalid_argument(oss.str());
         }
     }
+    return tag;
   }
 
   std::ostream&

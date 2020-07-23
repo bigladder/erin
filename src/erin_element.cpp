@@ -31,8 +31,14 @@ namespace ERIN
     else if (tag == "on_off_switch") {
       return ElementType::OnOffSwitch;
     }
+    else if (tag == "uncontrolled_source") {
+      return ElementType::UncontrolledSource;
+    }
+    else if (tag == "mover") {
+      return ElementType::Mover;
+    }
     else {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "unhandled tag '" << tag << "' for element_type\n";
       throw std::invalid_argument(oss.str());
     }
@@ -54,6 +60,10 @@ namespace ERIN
         return std::string{"mux"};
       case ElementType::OnOffSwitch:
         return std::string{"on_off_switch"};
+      case ElementType::UncontrolledSource:
+        return std::string{"uncontrolled_source"};
+      case ElementType::Mover:
+        return std::string{"mover"};
       default:
         {
           std::ostringstream oss{};
@@ -200,7 +210,8 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "DefaultFlowWriter::write_data(...)\n"
-                << "element_id     = " << element_id << "\n"
+                << "element_id     = " << element_id << " ("
+                << element_id_to_tag[element_id] << ")\n"
                 << "time           = " << time << "\n"
                 << "requested_flow = " << requested_flow << "\n"
                 << "achieved_flow  = " << achieved_flow << "\n";
@@ -1755,6 +1766,271 @@ namespace ERIN
       }
       flow_writer->write_data(
           element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
+    }
+  }
+
+  ////////////////////////////////////////////////////////////
+  // UncontrolledSource
+  UncontrolledSource::UncontrolledSource(
+      std::string id,
+      ComponentType component_type,
+      const std::string& stream_type,
+      const std::vector<LoadItem>& profile):
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::UncontrolledSource,
+        stream_type),
+    data{erin::devs::make_uncontrolled_source_data(profile)},
+    state{erin::devs::make_uncontrolled_source_state()},
+    flow_writer{nullptr},
+    element_id{-1},
+    inflow_element_id{-1},
+    lossflow_element_id{-1},
+    record_history{false}
+  {
+  }
+
+  void
+  UncontrolledSource::delta_int()
+  {
+    state = erin::devs::uncontrolled_src_internal_transition(data, state);
+    log_ports();
+  }
+
+  void
+  UncontrolledSource::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    state = erin::devs::uncontrolled_src_external_transition(
+        data, state, e.real, xs);
+    log_ports();
+  }
+
+  void
+  UncontrolledSource::delta_conf(std::vector<PortValue>& xs)
+  {
+    state = erin::devs::uncontrolled_src_confluent_transition(
+        data, state, xs);
+    log_ports();
+  }
+
+  Time
+  UncontrolledSource::ta()
+  {
+    auto dt = erin::devs::uncontrolled_src_time_advance(data, state);
+    if (dt == erin::devs::infinity) {
+      return inf;
+    }
+    return Time{dt, 1};
+  }
+
+  void
+  UncontrolledSource::output_func(std::vector<PortValue>& ys)
+  {
+    erin::devs::uncontrolled_src_output_function_mutable(data, state, ys);
+    log_ports();
+  }
+
+  void
+  UncontrolledSource::log_ports()
+  {
+    if (flow_writer && record_history) {
+      if (element_id == -1) {
+        element_id = flow_writer->register_id(
+            get_id() + "-outflow",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::Outflow,
+            record_history);
+      }
+      if (inflow_element_id == -1) {
+        inflow_element_id = flow_writer->register_id(
+            get_id() + "-inflow",
+            get_inflow_type(),
+            get_component_type(),
+            PortRole::SourceOutflow,
+            record_history);
+      }
+      if (lossflow_element_id == -1) {
+        lossflow_element_id = flow_writer->register_id(
+            get_id() + "-lossflow",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::WasteInflow,
+            record_history);
+      }
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
+      flow_writer->write_data(
+          inflow_element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
+      flow_writer->write_data(
+          lossflow_element_id,
+          state.time,
+          state.spill_port.get_requested(),
+          state.spill_port.get_achieved());
+    }
+  }
+
+  void
+  UncontrolledSource::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  UncontrolledSource::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Mover
+  Mover::Mover(
+      std::string id,
+      ComponentType component_type,
+      const std::string& inflow0_,
+      const std::string& inflow1_,
+      const std::string& outflow,
+      FlowValueType COP):
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::Mover,
+        inflow0_,
+        outflow),
+    inflow0{inflow0_},
+    inflow1{inflow1_},
+    data{erin::devs::make_mover_data(COP)},
+    state{erin::devs::make_mover_state()},
+    flow_writer{nullptr},
+    inflow0_element_id{-1},
+    inflow1_element_id{-1},
+    outflow_element_id{-1},
+    record_history{false}
+  {
+  }
+
+  void
+  Mover::delta_int()
+  {
+    state = erin::devs::mover_internal_transition(data, state);
+    log_ports();
+  }
+
+  void
+  Mover::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    state = erin::devs::mover_external_transition(data, state, e.real, xs);
+    log_ports();
+  }
+
+  void
+  Mover::delta_conf(std::vector<PortValue>& xs)
+  {
+    state = erin::devs::mover_confluent_transition(data, state, xs);
+    log_ports();
+  }
+
+  Time
+  Mover::ta()
+  {
+    auto dt = erin::devs::mover_time_advance(data, state);
+    Time dt_out{};
+    if (dt == erin::devs::infinity) {
+      dt_out = inf;
+    }
+    else {
+      dt_out = Time{dt, 1};
+    }
+    return dt_out;
+  }
+
+  void
+  Mover::output_func(std::vector<PortValue>& ys)
+  {
+    erin::devs::mover_output_function_mutable(data, state, ys);
+  }
+
+  void
+  Mover::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  Mover::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
+  }
+
+  std::string
+  Mover::get_inflow_type_by_port(int inflow_port) const
+  {
+    std::string the_inflow{};
+    if (inflow_port == 0) {
+      the_inflow = inflow0;
+    }
+    else if (inflow_port == 1) {
+      the_inflow = inflow1;
+    }
+    else {
+    }
+    return the_inflow;
+  }
+
+  void
+  Mover::log_ports()
+  {
+    if (flow_writer && record_history) {
+      if (inflow0_element_id == -1) {
+        inflow0_element_id = flow_writer->register_id(
+            get_id() + "-inflow(0)",
+            inflow0,
+            get_component_type(),
+            PortRole::Inflow,
+            record_history);
+      }
+      if (inflow1_element_id == -1) {
+        inflow1_element_id = flow_writer->register_id(
+            get_id() + "-inflow(1)",
+            inflow1,
+            get_component_type(),
+            PortRole::Inflow,
+            record_history);
+      }
+      if (outflow_element_id == -1) {
+        outflow_element_id = flow_writer->register_id(
+            get_id() + "-outflow",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::Outflow,
+            record_history);
+      }
+      flow_writer->write_data(
+          inflow0_element_id,
+          state.time,
+          state.inflow0_port.get_requested(),
+          state.inflow0_port.get_achieved());
+      flow_writer->write_data(
+          inflow1_element_id,
+          state.time,
+          state.inflow1_port.get_requested(),
+          state.inflow1_port.get_achieved());
+      flow_writer->write_data(
+          outflow_element_id,
           state.time,
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());

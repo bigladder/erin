@@ -6776,6 +6776,9 @@ TEST(ErinBasicsTest, Test_adding_an_efficiency_option_to_storage)
     "network = \"nw\"\n";
   auto m = E::make_main_from_string(input);
   auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results_map = out.get_results();
+  ASSERT_EQ(1, results_map.size());
 }
 
 int

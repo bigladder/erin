@@ -1979,16 +1979,16 @@ namespace ERIN
   std::string
   Mover::get_inflow_type_by_port(int inflow_port) const
   {
-    std::string inflow{};
+    std::string the_inflow{};
     if (inflow_port == 0) {
-      inflow = inflow0;
+      the_inflow = inflow0;
     }
     else if (inflow_port == 1) {
-      inflow = inflow1;
+      the_inflow = inflow1;
     }
     else {
     }
-    return inflow;
+    return the_inflow;
   }
 
   void

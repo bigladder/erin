@@ -6789,6 +6789,21 @@ TEST(ErinBasicsTest, Test_adding_an_efficiency_option_to_storage)
     "store_2-inflow", "store_2-outflow", "store_2-storeflow", "store_2-discharge",
     "supply", "load"};
   ASSERT_EQ(expected_comp_ids.size(), rez.size());
+  if (true) {
+    for (const auto& item : rez) {
+      std::cout << item.first << ":\n";
+      for (const auto& d : item.second) {
+        std::cout << "  " << d << "\n";
+      }
+    }
+  }
+  const auto& comp_ids = bs_res0.get_component_ids();
+  std::set<std::string> actual_comp_ids{};
+  for (const auto& id : comp_ids) {
+    actual_comp_ids.emplace(id);
+  }
+  ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
+  EXPECT_EQ(actual_comp_ids, expected_comp_ids);
 }
 
 int

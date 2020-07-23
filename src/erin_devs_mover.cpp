@@ -185,14 +185,14 @@ namespace erin::devs
     }
     else if (got_inflow0_achieved) {
       p_in0 = p_in0.with_achieved(inflow0_achieved, new_time);
-      p_in1 = p_in1.with_achieved(
+      p_in1 = p_in1.with_requested(
           inflow0_achieved * (1.0 / data.COP), new_time);
       p_out = p_out.with_achieved(
-          p_in0.get_achieved() * (1.0 + (1.0 / data.COP)), new_time);
+          inflow0_achieved * (1.0 + (1.0 / data.COP)), new_time);
     }
     else if (got_inflow1_achieved) {
       p_in0 = p_in0.with_achieved(inflow1_achieved * data.COP, new_time);
-      p_in1 = p_in1.with_achieved(inflow1_achieved, new_time);
+      p_in1 = p_in1.with_requested(inflow1_achieved, new_time);
       p_out = p_out.with_achieved(
           inflow1_achieved * (1.0 + data.COP), new_time);
     }

@@ -6779,6 +6779,16 @@ TEST(ErinBasicsTest, Test_adding_an_efficiency_option_to_storage)
   EXPECT_TRUE(out.get_is_good());
   auto results_map = out.get_results();
   ASSERT_EQ(1, results_map.size());
+  const auto& bs_res = results_map["blue_sky"];
+  ASSERT_EQ(1, bs_res.size());
+  const auto& bs_res0 = bs_res[0];
+  const auto& rez = bs_res0.get_results();
+  std::set<std::string> expected_comp_ids{
+    "store_0-inflow", "store_0-outflow", "store_0-storeflow", "store_0-discharge",
+    "store_1-inflow", "store_1-outflow", "store_1-storeflow", "store_1-discharge",
+    "store_2-inflow", "store_2-outflow", "store_2-storeflow", "store_2-discharge",
+    "supply", "load"};
+  ASSERT_EQ(expected_comp_ids.size(), rez.size());
 }
 
 int

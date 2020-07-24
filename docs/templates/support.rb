@@ -628,7 +628,7 @@ class Support
   def connect_in_series(comp_bundles, loc, flow, inflow_points, outflow_points)
     bs = comp_bundles.reject {|b| b.empty?}
     if bs.length > 1
-      bs[..-2].zip(bs[1..]).each do |outflows, inflows|
+      bs[0..-2].zip(bs[1..-1]).each do |outflows, inflows|
         num_outflows = outflows.length
         num_inflows = inflows.length
         if num_outflows == 1 and num_inflows == 1

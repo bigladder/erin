@@ -319,7 +319,7 @@ class Support
       [@network_link, [:source_location_id, "to", :destination_location_id, :flow], ""],
       [@source_component, [:location_id, :outflow], "source"],
       [@storage_component, [:location_id, :flow], "store"],
-      [@uncontrolled_src, [:location_id, :outflow], "_uncontrolled"],
+      [@uncontrolled_src, [:location_id, :outflow], "uncontrolled"],
     ]
     # lp[:id] = "#{lp[:building_id]}_#{lp[:enduse]}_#{lp[:scenario_id]}" %>
     comp_infos.each do |tuple|

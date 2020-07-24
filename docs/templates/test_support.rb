@@ -897,70 +897,36 @@ class TestTemplate < Minitest::Test
     assert_equal(expected, actual)
   end
 
-  #def add_uncontrolled_source
-  #  data = {
-  #    source_component: [
-  #      {
-  #        location_id: "utility",
-  #        outflow: "natural_gas",
-  #        is_limited: "FALSE",
-  #        max_outflow_kW: 0.0,
-  #      },
-  #    ],
-  #    load_component: [
-  #      {
-  #        location_id: "b1",
-  #        inflow: "electricity",
-  #      },
-  #      {
-  #        location_id: "b1",
-  #        inflow: "heating",
-  #      },
-  #    ],
-  #    dual_outflow_converter_comp: [
-  #      {
-  #        location_id: "b1",
-  #        inflow: "natural_gas",
-  #        primary_outflow: "electricity",
-  #        secondary_outflow: "heating",
-  #        lossflow: "waste_heat",
-  #        primary_efficiency: 0.4,
-  #        secondary_efficiency: 0.8,
-  #      },
-  #    ],
-  #    network_link: [
-  #      {
-  #        source_location_id: "utility",
-  #        destination_location_id: "b1",
-  #        flow: "natural_gas",
-  #      },
-  #    ],
-  #  }
-  #  s = Support.new(data)
-  #  assert_equal(2, s.converter_component.length)
-  #  expected = Set.new([
-  #    [
-  #      "utility_natural_gas_source:OUT(0)",
-  #      "b1_dual_electricity_heating_generator_stage_1:IN(0)",
-  #      "natural_gas",
-  #    ],
-  #    [
-  #      "b1_dual_electricity_heating_generator_stage_1:OUT(0)",
-  #      "b1_electricity:IN(0)",
-  #      "electricity",
-  #    ],
-  #    [
-  #      "b1_dual_electricity_heating_generator_stage_1:OUT(1)",
-  #      "b1_dual_electricity_heating_generator_stage_2:IN(0)",
-  #      "waste_heat",
-  #    ],
-  #    [
-  #      "b1_dual_electricity_heating_generator_stage_2:OUT(0)",
-  #      "b1_heating:IN(0)",
-  #      "heating",
-  #    ],
-  #  ])
-  #  actual = Set.new(s.connections)
-  #  assert_equal(expected, actual)
-  #end
+  def test_add_uncontrolled_source_component
+    data = {
+      load_component: [
+        {
+          id: "b1_electricity",
+          location_id: "b1",
+          inflow: "electricity",
+        },
+      ],
+      network_link: [
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+      ],
+      uncontrolled_src: [
+        {
+          id: "utility_pv_array",
+          location_id: "utility",
+          outflow: "electricity",
+        },
+      ],
+    }
+    s = Support.new(data)
+    assert_equal(1, s.uncontrolled_src.length)
+    expected = Set.new([
+      ["utility_pv_array:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+    ])
+    actual = Set.new(s.connections)
+    assert_equal(expected, actual)
+  end
 end

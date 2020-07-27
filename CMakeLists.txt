@@ -1,3 +1,5 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 cmake_minimum_required(VERSION 3.15) # required for gtest_discover_tests
 
 project(ERIN VERSION 0.0.17 LANGUAGES CXX)

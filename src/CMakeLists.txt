@@ -1,3 +1,5 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 # Main library
 # Note from https://cmake.org/cmake/help/latest/command/file.html
 # Note: We do not recommend using GLOB to collect a list of source files from

@@ -1,6 +1,7 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 # Run regression tests for the project.
 # Assumes that `diff` is available from the command line.
-# Author: Michael O'Keefe (2019-11-13)
 # To install dependencies, call `bundle install` from this project's top-level
 # folder.
 require 'tmpdir'

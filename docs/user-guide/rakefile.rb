@@ -3,7 +3,14 @@
 require 'rake/clean'
 
 def make_pdf(md_path, pdf_path)
-  `pandoc --pdf-engine xelatex -V geometry:margin=1in --out #{pdf_path} #{md_path}`
+  args = [
+    "--pdf-engine xelatex",
+    "--number-sections",
+    "-V geometry:margin=1in",
+    "--filter pandoc-crossref",
+    "--out #{pdf_path}",
+  ]
+  `pandoc #{args.join(' ')} #{md_path}`
 end
 
 def make_doc(md_path, doc_path)

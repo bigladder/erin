@@ -7,8 +7,8 @@ documentclass: scrartcl
 number-sections: true
 figureTitle: "Figure"
 tableTitle: "Table"
-figPrefix: "figure"
-tblPrefix: "table"
+figPrefix: "Figure"
+tblPrefix: "Table"
 ...
 # Introduction
 
@@ -279,35 +279,146 @@ The file consists of the following sections that describe the various concepts d
 - `networks`: networks are described here
 - `scenarios`: scenarios are described here
 
-Valid entries for each of the sections are described in [@tbl:sim-info]. <!-- ; @tbl:loads; @tbl:comps; @tbl:frags; @tbl:cdf; @tbl:fms; @tbl:nws; @tbl:scenarios]. -->
+Valid entries for each of the sections are described in [@tbl:sim-info; @tbl:loads; @tbl:comps-common; @tbl:source; @tbl:load; @tbl:converter]. <!-- @tbl:frags; @tbl:cdf; @tbl:fms; @tbl:nws; @tbl:scenarios]. -->
 
 The types given are one of:
 
-* string: a string of characters in "quotes"
+* str: a string of characters in "quotes"
 * real: a real number (0.0, 1.5, 2e7, etc.)
 * int: an integer
-* array of *x*: an array of the given type
+* $[X]$: an array of the given type, $X$
+* $\left[\left[X\right]\right]$: an array of arrays of $X$
+* time: time unit. One of {"years", "days", "hours", "minutes", "seconds"}
+* cap: capacity unit. One of {"kJ", "kWh"}
+* disp: dispatch strategy. One of {"distribute", "in_order"}.
+* frac: real fraction. $0.0 \le$ frac $\le 1.0$
+* frac>0: real fraction greater than 0.0. $0.0 <$ frac $\le 1.0$
+* rate: the rate unit. Currently, only "kW" is accepted.
+* $X \rightarrow Y$: designates a map data structure (a.k.a., dictionary, hash table, table, etc.).
+  Associates $Y$ with $X$.
 
 | key | type | required? | notes |
 |----|--|--|--------|
-| `time_unit` | string | no | The time unit. Default "years". One of {years, seconds, hours}. |
-| `fixed_random` | real | no | Sets the random roll to a fixed value (0.0 $\ge$ r $\ge$ 1.0) |
-| `fixed_random_series` | array of real | no | Sets random numbers to the given series. |
-| `random_seed` | real | no | Sets the random number generator's seed. |
-| `max_time` | int | no | Maximum simulation time. Default: 1000. |
+| `time_unit` | time | no | The time unit. Default "years" |
+| `fixed_random` | frac | no | Sets the random roll to a fixed value |
+| `fixed_random_series` | [real] | no | Sets random numbers to the given series |
+| `random_seed` | real | no | Sets the random number generator's seed |
+| `max_time` | int | no | Maximum simulation time. Default: 1000 |
 
-: `simulation_info` specification key {#tbl:sim-info}
+: `simulation_info` specification {#tbl:sim-info}
 
 Note: [@tbl:sim-info] specifies various random values. At most, one of these values can be specified.
 
 | key | type | required? | notes |
 |----|--|--|--------|
-| `csv_file` | string | no | path to CSV file with profile. |
-| `time_rate_pairs` | array of array of real | no | array of (time, rate) pairs. |
-| `time_unit` | string | no | one of {years, seconds, hours}. |
-| `rate_unit` | string | no | one of {"kW"}. |
+| `csv_file` | str | no | path to CSV file with profile |
+| `time_rate_pairs` | [[real]] | no | array of (time, rate) pairs |
+| `time_unit` | time | no | time unit for `time_rate_pairs` |
+| `rate_unit` | rate | no | rate unit for `time_rate_pairs` |
 
-: `loads` specification key {#tbl:loads}
+: `loads` specification {#tbl:loads}
+
+For [@tbl:loads], one must specify either a `csv_file` *or* `time_rate_pairs`, `time_unit`, and `rate_unit`.
+Unfortunately, only "kW" is available for `rate_unit` at the moment although `time_unit` accepts "years", "seconds", or "hours".
+Practically speaking, you will almost always use a `csv_file` unless you just want to test a simple load.
+
+For the `csv_file`, the header must be "hours,kW" with data filled into the rows below.
+The "hours" column is the elapsed time in hours.
+The "kW" column is the flow in kW.
+The first column header can be set to values beside "hours"; any time unit is valid.
+However, the rate unit is currently locked in as "kW".
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `failure_modes` | [str] | no | failure mode ids for component |
+| `fragilities` | [str] | no | fragility curve ids for component |
+
+: `components`: common attributes {#tbl:comps-common}
+
+[@tbl:comps-common] lists the attributes common to all components.
+These relate to reliability and resilience: failure modes and fragility curves.
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `type` | str | yes | must be "source" |
+| `outflow` | str | yes | type of outflow |
+| `max_outflow` | real | no | maximum allowable outflow |
+
+: `components`: Source Component {#tbl:source}
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `type` | str | yes | must be "load" |
+| `inflow` | str | yes | type of outflow |
+| `loads_by_scenario` | str $\rightarrow$ str | yes | map of scenario id to load id |
+
+: `components`: Load Component {#tbl:load}
+
+In [@tbl:load], the `loads_by_scenario` structure is specified as follows:
+
+```toml
+loads_by_scenario.scenario_id_1 = "load_id_1"
+loads_by_scenario.scenario_id_2 = "load_id_2"
+```
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `type` | str | yes | must be "converter" |
+| `inflow` | str | yes | type of inflow |
+| `outflow` | str | yes | type of outflow |
+| `lossflow` | str | no | type of lossflow. Default: inflow |
+| `constant_efficiency` | frac>0 | constant efficiency |
+
+: `components`: Converter Component {#tbl:converter}
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `type` | str | yes | must be "store" |
+| `flow` | str | yes | type of flow (inflow, outflow, stored) |
+| `capacity_unit` | cap | no | capacity unit. Default: "kJ" |
+| `capacity` | real | capacity of the store |
+| `max_inflow` | real | maximum inflow (charge rate) |
+
+: `components`: Storage Component {#tbl:store}
+
+During simulation, the `max_inflow` sets the requested charging rate for a storage unit (see [@tbl:store]).
+By default, a storage unit will always request to charge itself to its maximum capacity.
+However, it will always honor its discharge request above its charge request.
+That is, if discharge is requested, it will discharge rather than charge.
+If charging and discharging at the same time, charge flow will "short circuit" to meet the discharge request first.
+Any flow left over will charge the store.
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `type` | str | yes | must be "muxer" |
+| `flow` | str | yes | type of flow (inflow, outflow) |
+| `num_inflows` | int | yes | the number of inflow ports |
+| `num_outflows` | int | the number of outflow ports |
+| `dispatch_strategy` | disp | no | dispatch strategy. Default: "in_order" |
+
+: `components`: Storage Component {#tbl:muxer}
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `type` | str | yes | must be "pass_through" |
+| `flow` | str | yes | type of flow (inflow, outflow) |
+
+: `components`: Pass-Through Component {#tbl:pass-through}
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `type` | str | yes | must be "uncontrolled_source" |
+| `flow` | str | yes | type of flow (inflow, outflow) |
+
+: `components`: Uncontrolled Source Component {#tbl:uncontrolled-src}
+
+| key | type | required? | notes |
+|----|--|--|--------|
+| `type` | str | yes | must be "mover" |
+| `flow` | str | yes | type of flow (inflow, outflow) |
+
+: `components`: Mover Component {#tbl:mover}
+
 
 # Command-Line Tool
 

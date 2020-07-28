@@ -2,19 +2,26 @@
 # Author: Michael O'Keefe, 2020-07-24
 require 'rake/clean'
 
+COMMON_ARGS = [
+  "--number-sections",
+  "--filter pandoc-crossref",
+  "--syntax-definition=toml.xml",
+]
+
 def make_pdf(md_path, pdf_path)
-  args = [
+  args = COMMON_ARGS + [
     "--pdf-engine xelatex",
-    "--number-sections",
     "-V geometry:margin=1in",
-    "--filter pandoc-crossref",
-    "--out #{pdf_path}",
   ]
-  `pandoc #{args.join(' ')} #{md_path}`
+  `pandoc #{args.join(' ')} --out #{pdf_path} #{md_path}`
 end
 
 def make_doc(md_path, doc_path)
-  `pandoc --from=markdown --to=docx --out #{doc_path} #{md_path}`
+  args = COMMON_ARGS + [
+    "--from=markdown",
+    "--to=docx",
+  ]
+  `pandoc #{args.join(' ')} --out #{doc_path} #{md_path}`
 end
 
 MARKDOWN_FILES = FileList['./*.md']

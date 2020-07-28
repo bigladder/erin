@@ -9,6 +9,7 @@ figureTitle: "Figure"
 tableTitle: "Table"
 figPrefix: "Figure"
 tblPrefix: "Table"
+secPrefix: "Section"
 ...
 # Introduction
 
@@ -261,7 +262,7 @@ For example, above-ground power lines may have a fragility to wind speed.
 If a scenario specifies a wind speed of 150 mph, the above-ground power line component will use its fragility curve to look up its change of failure.
 For fragility, a component is evaluated for failure at scenario start and either passes (staying up during the scenario) or fails (going down for the entire scenario).
 
-# Input File Format
+# Input File Format {#sec:input-file-format}
 
 The simulation engine is a command-line program.
 Even when it is accessed via the Excel User Interface, a text-based input file is written to describe the network of components and scenarios to simulate.
@@ -570,6 +571,42 @@ In [@tbl:scenarios], the `occurrence_distribution` is currently implemented as a
 
 The possible values for the `occurrence_distribution` table are given in [@tbl:cdf].
 
+# Output Metrics
+
+The metrics used to assess resilience are given an overview in this section.
+[@fig:metrics] depicts the metrics graphically.
+It is important to note that metrics are calculated *by load* and *per scenario*.
+
+![Resilience and Energy Metrics](images/metrics.png){#fig:metrics}
+
+As seen in [@fig:metrics], there are three basic calculations:
+
+- energy availability
+- load not served
+- and max downtime
+
+[@fig:metrics] shows four areas of flow integration over time: $A$, $B$, $C$, and $D$.
+The sum of $A$, $B$, and $D$ is the energy delivered to this load for this scenario.
+$C$ represents the load not served.
+The ratio of $\frac{(A+B+D) \times 100 \%}{A+B+C+D}$ is the energy availability.
+The duration of load interruption (from $t_0$ to $t_1$) is the max downtime.
+
+The energy availability is calculated as follows:
+
+$$EA = \frac{E_{achieved} \times 100 \%}{E_{requested}}$$
+
+In the above equation, the energy, $E$, is the integral of the flow, $f$, over time:
+
+$$E = \int_{0}^{t_N}{f \cdot dt}$$
+
+Max downtime is the duration of load interruption:
+
+$$T_{\textrm{down}} = \int{dt}\; \textrm{where} \; f_{\textrm{achived}} < f_{\textrm{requested}}$$
+
+Load not served is then:
+
+$$E_{\textrm{not served}} = \int_{t_0}^{t_N}{(f_{\textrm{requested}} - f_{\textrm{achieved}}) \cdot dt}$$
+
 # Command-Line Tool
 
 Three command-line programs are available for simulation and assistance.
@@ -588,6 +625,34 @@ Simulates a single scenario and generates results.
 - `stats_file_path`: path to CSV output file for statistics
 - `scenario_id`: the id of the scenario to run
 
+The output from the call to `e2rin` will be written into two files: an output file and a statistics file.
+
+The output file has the column headers shown in [@tbl:e2rin-out].
+
+| Column            | Description                                                           |
+| --                | --------                                                              |
+| time (hours)      | the elapsed time since scenario start in hours                        |
+| \*:achieved (kW)  | the achieved flow at the event time for each component/port recorded  |
+| \*:requested (kW) | the requested flow at the event time for each component/port recorded |
+
+: `e2rin` Output {#tbl:e2rin-out}
+
+The statistics file has the column headers shown in [@tbl:e2rin-stats].
+
+| Column               | Description                                                    |
+| --                   | --------                                                       |
+| component id         | the id of the component                                        |
+| type                 | the type of the component (e.g., load, source, etc.)           |
+| stream               | the stream flowing through the given component / port          |
+| energy availability  | the energy availability for the given component                |
+| max downtime (hours) | the maximum number of contiguous hours when load not fully met |
+| load not served (kJ) | the load not served in kJ                                      |
+| $X$ energy used (kJ) | for each flow, report out the energy used in kJ                |
+| TOTAL ($X$)          | the total energy used by flow by component type                |
+| ENERGY BALANCE       | a sum of the energy balance. Should be 0                       |
+
+: `e2rin` Statistics {#tbl:e2rin-stats}
+
 ## `e2rin_multi`
 
 Simulates all scenarios in the input file over the simulation time and generates results.
@@ -600,20 +665,324 @@ Simulates all scenarios in the input file over the simulation time and generates
 - `output_file_path`: path to CSV output file for time-series data
 - `stats_file_path`: path to CSV output file for statistics
 
+The output files from `e2rin_multi` are very similar to those shown in [@tbl:e2rin-out; @tbl:e2rin-stats].
+The main difference is that `e2rin_multi` aggregates across multiple scenario instances and multiple scenario types.
+The column headers used in the event output file for `e2rin_multi` are shown in [@tbl:e2rin-multi-out].
+
+| Column              | Description                                                           |
+| --                  | --------                                                              |
+| scenario id         | the id of the scenario simulated                                      |
+| sceanrio start time | start time of scenario in ISO 8601 duration format                    |
+| elapsed (hours)     | the elapsed time since scenario start in hours                        |
+| \*:achieved (kW)    | the achieved flow at the event time for each component/port recorded  |
+| \*:requested (kW)   | the requested flow at the event time for each component/port recorded |
+
+: `e2rin_multi` Output {#tbl:e2rin-multi-out}
+
+The statistics file for `e2rin_multi` has the column headers as shown in [@tbl:e2rin-multi-stats].
+
+| Column               | Description                                                    |
+| --                   | --------                                                       |
+| scenario id | scenario id for the scenario reported out |
+| number of occurrences | number of times the scenario occurred during simulation |
+| total time in scenario (hours) | total time spent in the scenario during simulation |
+| component id         | the id of the component                                        |
+| type                 | the type of the component (e.g., load, source, etc.)           |
+| stream               | the stream flowing through the given component / port          |
+| energy availability  | the energy availability for the given component                |
+| max downtime (hours) | the maximum number of contiguous hours when load not fully met |
+| load not served (kJ) | the load not served in kJ                                      |
+| $X$ energy used (kJ) | for each flow, report out the energy used in kJ                |
+| TOTAL ($X$)          | the total energy used by flow by component type                |
+| ENERGY BALANCE       | a sum of the energy balance. Should be 0                       |
+
+: `e2rin_multi` Statistics {#tbl:e2rin-multi-stats}
+
 ## `e2rin_graph`
 
+Generates an input file for use with [Graphviz](https://graphviz.gitlab.io/).
+Graphviz is an external dependency.
+You do not need Graphviz to generate the Graphviz input file.
+However, you *do* need Graphviz to process that input file into a `.png` or `.pdf` file.
+
+**USAGE**:
+
+`e2rin_graph` `<input_file_path>` `<dot_file_path>` `<network_id>`
+
+- `input_file_path`: path to TOML input file
+- `dot_file_path`: path to Graphviz DOT file to write
+- `network_id`: id for the network to plot from input_file_path
+
+Upon successful execution, you can render your Graphviz dot file into a PNG (image file) as follows:
+
+- `dot -Tpng input.gv -o output.png`
+  The above generates a png (`-Tpng`) from the `input.gv` and saves to `output.png` (`-o`)
+
+Similarly, you can render your Graphviz dot file into a PDF as follows:
+
+- `dot -Tpdf input.gv -o output.pdf`
+  The above generates a png (`-Tpdf`) from the `input.gv` and saves to `output.pdf` (`-o`)
 
 # Microsoft Excel User Interface
 
-<!--
+A simple interface using Microsoft Excel has been created to ease the creation of an input data file for `e2rin`.
+This interface runs the simulation on behalf of the user and also pulls the input
+Due to limitations in Excel's Visual Basic, the current version of the Microsoft Excel user interface is limited to the Windows Operating System.
 
-Show the overview of the template for a given location and give an overview of what a location is.
+## Software Dependency: Modelkit/Params Framework
 
--->
+*Modelkit/Params* is required to allow the Microsoft Excel user interface to render an input file template for `e2rin_multi`.
+*Modelkit/Params* is a third party dependency available as open-source software from Big Ladder Software:
+
+[https://bigladdersoftware.com/projects/modelkit/](https://bigladdersoftware.com/projects/modelkit/)
+
+Please install *Modelkit Catalyst*.
+Version 0.5 or later is required.
+
+Further detail about *Modelkit* can be found at the above link.
 
 ## Additional Concept: Location
 
-## Modelkit/Params Template Engine
+To make it easier for modelers to specify a network of components, the Excel user interface introduces an additional concept called a "location".
+A location is open-ended although the names and ids must follow the same rules for ids as in the input file (see [@sec:input-file-format]).
 
+At a given location, any number of components can be specified.
+The Excel User Interface uses Big Ladder's *Modelkit/Params* to render an input file from a template.
+That template assumes a given topology for each location as shown in [@fig:location-topology].
+
+![Topology at a Location](images/location-topology.png){#fig:location-topology}
+
+As depicted in [@fig:location-topology], for any given flow type, the following sets of components are in series:
+
+- all loads: load components, internal loads, and outbound links
+- all storage for the given flow type (multiples are in parallel)
+- all mover components: multiples are in parallel
+- all converters and sources: converters (including CHP which is modeled as chained converters), internal sources, uncontrolled sources, inbound links, and normal source components
+
+## Additional Concept: Network Link
+
+The location topology template shown in [@fig:location-topology] alludes to inbound and outbound links.
+The links themselves are called "network links".
+They are similar to normal connections except that they connect locations.
+
+We believe the template in [@fig:location-topology] to be typical of how components at a location are typically connected, topologically speaking.
+However, if further variation is needed, it can often be achieved by creating multiple locations and linking them together.
+For example, if one wanted to model two storage units in *series* (vs *parallel*), they need only create a storage in location $A$ and another in location $B$ and denote that location $B$ has a network link from $B$ to $A$.
+
+## Interface Overview
+
+The Excel user interface to `e2rin_multi` is laid out in a logical manner to help new users to specify a component network to simulate.
+
+The major screens are:
+
+- Instructions (see [@fig:excel-instructions])
+- Settings (see [@fig:excel-settings])
+- Components (see [@fig:excel-components])
+- Network (see [@fig:excel-network])
+- Scenarios (see [@fig:excel-scenarios])
+
+The "Instructions" sheet gives light instructions on how to use the workbook.
+The "Settings" tab is where the path to `e2rin_multi.exe` is set.
+A modeler can also add additional statistical distributions, failure modes, and fragility curves here.
+The "Components" tab is where a modeler can add different types of components to a location.
+The "Network" tab is where network links between locations can be specified.
+The "Scenarios" tab is where different Scenarios can be added and configured.
+
+![Excel Interface: Instructions Sheet](images/screenshots/instructions.png){#fig:excel-instructions}
+
+![Excel Interface: Settings Sheet](images/screenshots/set-path.png){#fig:excel-settings}
+
+![Excel Interface: Components Sheet](images/screenshots/remove-component.png){#fig:excel-components}
+
+![Excel Interface: Network Sheet](images/screenshots/network-start.png){#fig:excel-network}
+
+![Excel Interface: Scenario Sheet](images/screenshots/scenarios.png){#fig:excel-scenarios}
 
 # Example Problem
+
+In this final section, we will specify a simple problem using both the input file and the Excel User Interface.
+The problem will involve a single building with an electrical load, an electric generator on-site, and a utility supply of natural gas.
+We will simulate two scenarios: a blue-sky scenario and a class 4 hurricane scenario.
+
+An iconic sketch of the network we will build appears in [@fig:example-network].
+
+![Example Network](images/schematic-example.png){#fig:example-network}
+
+The steps to create this network and simulate it are as follows:
+
+## Text Input File
+
+1. Open a new file `input.toml` for editing using your favorite text editor.
+   Add the following simulation information:
+
+```toml
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+max_time = 100
+```
+
+2. Create a simple load profile by hand.
+   Open the file `load-profile.csv` in your favorite text editor.
+   Type in the following and save:
+
+```csv
+hours,kW
+0,100
+8760,0
+```
+
+3. Back in `input.toml`, add the load profile information at the end of the file:
+
+```toml
+[loads.lp1]
+csv_file = "load-profile.csv"
+```
+
+4. Next, still within `input.toml`, let's add the components:
+
+```toml
+[components.utility_ng_source]
+type = "source"
+outflow = "natural_gas"
+
+[components.b1_electricity]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "lp1"
+loads_by_scenario.c4_hurricane = "lp1"
+
+[components.b1_electric_generator]
+type = "converter"
+inflow = "natural_gas"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency = 0.42
+fragilities = ["flooding", "wind"]
+```
+
+In the table above, we have added a natural gas source (`utility_ng_source`), an electrical load at building 1 (`b1_electricity`), and an electrical generator at building 1 (`b1_electric_generator`).
+The electric generator has an efficiency of 42% and has two fragilities: "`flooding`" and "`wind`".
+Neither of the fragilities have been specified yet so we'll tackle them next.
+
+5. Within `input.toml`, specify the fragility curves.
+
+```toml
+[fragility.flooding]
+vulnerable_to = "inundation_depth_ft"
+type = "linear"
+lower_bound = 4.0
+upper_bound = 8.0
+
+[fragility.wind]
+vulnerable_to = "wind_speed_mph"
+type = "linear"
+lower_bound = 150.0
+upper_bound = 220.0
+```
+
+These fragility curves reflect the specific situation of the equipment versus the threat. 
+
+6. Specify the network connections.
+
+```toml
+[networks.nw]
+connections = [
+  ["utility_ng_source:OUT(0)", "b1_electric_generator:IN(0)", "natural_gas"],
+  ["b1_electric_generator:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+  ]
+```
+
+7. Specify the scenarios.
+
+```toml
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = {type = "linear", value = 0, time_unit="hours"}
+duration = 8760
+max_occurrences = 1
+calculate_reliability = true
+network = "nw"
+[scenarios.c4_hurricane]
+time_unit = "days"
+occurrence_distribution = {type = "linear", value = 30, time_unit="years"}
+duration = 14
+max_occurrences = -1
+calculate_reliability = true
+network = "nw"
+intensity.wind_speed_mph = 155.0
+intensity.inundation_depth_ft = 6.0
+```
+
+The finished file should look like the following:
+
+```toml
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+max_time = 100
+
+[loads.lp1]
+csv_file = "load-profile.csv"
+
+[components.utility_ng_source]
+type = "source"
+outflow = "natural_gas"
+
+[components.b1_electricity]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "lp1"
+loads_by_scenario.c4_hurricane = "lp1"
+
+[components.b1_electric_generator]
+type = "converter"
+inflow = "natural_gas"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency = 0.42
+fragilities = ["flooding", "wind"]
+
+[fragility.flooding]
+vulnerable_to = "inundation_depth_ft"
+type = "linear"
+lower_bound = 4.0
+upper_bound = 8.0
+
+[fragility.wind]
+vulnerable_to = "wind_speed_mph"
+type = "linear"
+lower_bound = 150.0
+upper_bound = 220.0
+
+[networks.nw]
+connections = [
+  ["utility_ng_source:OUT(0)", "b1_electric_generator:IN(0)", "natural_gas"],
+  ["b1_electric_generator:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+  ]
+
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
+duration = 8760
+max_occurrences = 1
+network = "nw"
+
+[scenarios.c4_hurricane]
+time_unit = "days"
+occurrence_distribution = {type = "fixed", value = 30, time_unit="years"}
+duration = 14
+max_occurrences = -1
+network = "nw"
+intensity.wind_speed_mph = 155.0
+intensity.inundation_depth_ft = 6.0
+```
+
+The file can be called as `e2rin_multi.exe input.toml out.csv stats.csv`.
+This assumes that `e2rin_multi.exe` is on your path.
+
+## Excel User Interface
+
+

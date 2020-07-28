@@ -24,26 +24,35 @@ def make_doc(md_path, doc_path)
   `pandoc #{args.join(' ')} --out #{doc_path} #{md_path}`
 end
 
+def make_tex(md_path, tex_path)
+  args = COMMON_ARGS + [
+    "--from=markdown",
+    "--to=latex",
+  ]
+  `pandoc #{args.join(' ')} --out #{tex_path} #{md_path}`
+end
+
+def add_task(path, ext, fn, files)
+  name = path + ext
+  file name => [path, "rakefile.rb"] do
+    fn.(path, name)
+  end
+  files << name
+  CLEAN << name
+end
+
 MARKDOWN_FILES = FileList['./*.md']
 PDF_FILES = []
 DOC_FILES = []
+TEX_FILES = []
 MARKDOWN_FILES.each do |path|
-  pdf_name = path + ".pdf"
-  file pdf_name => [path, "rakefile.rb"] do
-    make_pdf(path, pdf_name)
-  end
-  PDF_FILES << pdf_name
-  CLEAN << pdf_name
-  doc_name = path + ".docx"
-  file doc_name => [path, "rakefile.rb"] do
-    make_doc(path, doc_name)
-  end
-  DOC_FILES << doc_name
-  CLEAN << doc_name
+  add_task(path, ".pdf", ->(path, name) { make_pdf(path, name) }, PDF_FILES)
+  add_task(path, ".docx", ->(path, name) { make_doc(path, name) }, DOC_FILES)
+  add_task(path, ".tex", ->(path, name) { make_tex(path, name) }, TEX_FILES)
 end
 
 desc "build the user's guide using Pandoc"
-task :build => (PDF_FILES + DOC_FILES) do
+task :build => (PDF_FILES + DOC_FILES + TEX_FILES) do
   puts "building the User Guide ..."
 end
 

@@ -29,12 +29,15 @@ The main contributions of this tool that we maintain are unique in aggregate are
 
 - the tool accounts for both reliability (failure and repair) as well as resilience to various scenarios (design basis threats)
 - while also accounting for topology and interaction between an open-ended number of energy networks
-- while providing key energy usage, resilience, and reliability metrics for the modeler / planner.
+- while providing key energy usage, resilience, and reliability metrics for the modeler / planner
+- and the tool is available as open-source software.
 
 Several command-line programs are included with the *E^2^RIN* distribution including 3 key executables along with a library written in the *C++* programming language.
-The 3 executables will be given attention in this User's Guide as they are of particular interest to modelers.
+Documentation of the library itself is beyond the scope of this document.
+However, the 3 executables will be given attention in this User's Guide as they are of particular interest to modelers.
 
 The minimal user interface written in Microsoft Excel uses the command-line simulation tool behind the scenes as well as a *Modelkit/Params*[^2] template to make it easier to use.
+We will cover usage of the Microsoft Excel interface in addition to the command-line programs.
 
 [^1]: E^2^RIN originally stood for Energy, Economics, and Resilience of Interacting Networks.
 However, the economics portion has been moved out of the engine itself.
@@ -279,13 +282,16 @@ The file consists of the following sections that describe the various concepts d
 - `networks`: networks are described here
 - `scenarios`: scenarios are described here
 
-Valid entries for each of the sections are described in [@tbl:sim-info; @tbl:loads; @tbl:comps-common; @tbl:source; @tbl:load; @tbl:converter]. <!-- @tbl:frags; @tbl:cdf; @tbl:fms; @tbl:nws; @tbl:scenarios]. -->
+Valid entries for each of the sections are described in [@tbl:sim-info; @tbl:loads; @tbl:comps-common; @tbl:source; @tbl:load; @tbl:converter; @tbl:pass-through; @tbl:uncontrolled-src; @tbl:mover; @tbl:frags; @tbl:cdf; @tbl:fm; @tbl:nw; @tbl:scenarios].
 
 The types given are one of:
 
 * str: a string of characters in "quotes"
+* bool: true or false
 * real: a real number (0.0, 1.5, 2e7, etc.)
+* real>0: a real number greater than 0.0. $0.0 <$ real>0
 * int: an integer
+* int>0: an integer > 0
 * $[X]$: an array of the given type, $X$
 * $\left[\left[X\right]\right]$: an array of arrays of $X$
 * time: time unit. One of {"years", "days", "hours", "minutes", "seconds"}
@@ -297,24 +303,56 @@ The types given are one of:
 * $X \rightarrow Y$: designates a map data structure (a.k.a., dictionary, hash table, table, etc.).
   Associates $Y$ with $X$.
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `time_unit` | time | no | The time unit. Default "years" |
-| `fixed_random` | frac | no | Sets the random roll to a fixed value |
-| `fixed_random_series` | [real] | no | Sets random numbers to the given series |
-| `random_seed` | real | no | Sets the random number generator's seed |
-| `max_time` | int | no | Maximum simulation time. Default: 1000 |
+In the TOML input file, all constructs except `simulation_info` have an id.
+The id is used when one construct references another.
+
+This looks as follows:
+
+```toml
+[loads.load_id_1]
+...
+[loads.load_id_2]
+...
+[components.comp_id_1]
+...
+[components.comp_id_2]
+...
+[fragility.fragility_id_1]
+...
+[cdf.cdf_id_1]
+...
+[failure_mode.fm_id_1]
+...
+[networks.nw_id_1]
+...
+[scenarios.scen_id_1]
+...
+```
+
+An id must follow the rules of TOML "bare keys"[^bare-keys] with the exception that dashes (`-`) are not allowed and the key must start with an ASCII letter:
+
+> Bare keys may only contain ASCII letters, ASCII digits, underscores, ... .
+
+[^bare-keys]: see https://toml.io/en/v1.0.0-rc.1#keys
+
+| key                   | type   | required? | notes                                   |
+| ----                  | --     | --        | --------                                |
+| `time_unit`           | time   | no        | The time unit. Default "years"          |
+| `fixed_random`        | frac   | no        | Sets the random roll to a fixed value   |
+| `fixed_random_series` | [real] | no        | Sets random numbers to the given series |
+| `random_seed`         | real   | no        | Sets the random number generator's seed |
+| `max_time`            | int    | no        | Maximum simulation time. Default: 1000  |
 
 : `simulation_info` specification {#tbl:sim-info}
 
 Note: [@tbl:sim-info] specifies various random values. At most, one of these values can be specified.
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `csv_file` | str | no | path to CSV file with profile |
-| `time_rate_pairs` | [[real]] | no | array of (time, rate) pairs |
-| `time_unit` | time | no | time unit for `time_rate_pairs` |
-| `rate_unit` | rate | no | rate unit for `time_rate_pairs` |
+| key               | type         | required? | notes                           |
+| ----              | --           | --        | --------                        |
+| `csv_file`        | str          | no        | path to CSV file with profile   |
+| `time_rate_pairs` | \[\[real\]\] | no        | array of (time, rate) pairs     |
+| `time_unit`       | time         | no        | time unit for `time_rate_pairs` |
+| `rate_unit`       | rate         | no        | rate unit for `time_rate_pairs` |
 
 : `loads` specification {#tbl:loads}
 
@@ -328,29 +366,29 @@ The "kW" column is the flow in kW.
 The first column header can be set to values beside "hours"; any time unit is valid.
 However, the rate unit is currently locked in as "kW".
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `failure_modes` | [str] | no | failure mode ids for component |
-| `fragilities` | [str] | no | fragility curve ids for component |
+| key             | type    | required? | notes                             |
+| ----            | --      | --        | --------                          |
+| `failure_modes` | \[str\] | no        | failure mode ids for component    |
+| `fragilities`   | \[str\] | no        | fragility curve ids for component |
 
 : `components`: common attributes {#tbl:comps-common}
 
 [@tbl:comps-common] lists the attributes common to all components.
 These relate to reliability and resilience: failure modes and fragility curves.
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `type` | str | yes | must be "source" |
-| `outflow` | str | yes | type of outflow |
-| `max_outflow` | real | no | maximum allowable outflow |
+| key           | type | required? | notes                     |
+| ----          | --   | --        | --------                  |
+| `type`        | str  | yes       | must be "source"          |
+| `outflow`     | str  | yes       | type of outflow           |
+| `max_outflow` | real | no        | maximum allowable outflow |
 
 : `components`: Source Component {#tbl:source}
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `type` | str | yes | must be "load" |
-| `inflow` | str | yes | type of outflow |
-| `loads_by_scenario` | str $\rightarrow$ str | yes | map of scenario id to load id |
+| key                 | type                  | required? | notes                         |
+| ----                | --                    | --        | --------                      |
+| `type`              | str                   | yes       | must be "load"                |
+| `inflow`            | str                   | yes       | type of outflow               |
+| `loads_by_scenario` | str $\rightarrow$ str | yes       | map of scenario id to load id |
 
 : `components`: Load Component {#tbl:load}
 
@@ -361,23 +399,23 @@ loads_by_scenario.scenario_id_1 = "load_id_1"
 loads_by_scenario.scenario_id_2 = "load_id_2"
 ```
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `type` | str | yes | must be "converter" |
-| `inflow` | str | yes | type of inflow |
-| `outflow` | str | yes | type of outflow |
-| `lossflow` | str | no | type of lossflow. Default: inflow |
-| `constant_efficiency` | frac>0 | constant efficiency |
+| key                   | type   | required? | notes                             |
+| ----                  | --     | --        | --------                          |
+| `type`                | str    | yes       | must be "converter"               |
+| `inflow`              | str    | yes       | type of inflow                    |
+| `outflow`             | str    | yes       | type of outflow                   |
+| `lossflow`            | str    | no        | type of lossflow. Default: inflow |
+| `constant_efficiency` | frac>0 | yes       | constant efficiency               |
 
 : `components`: Converter Component {#tbl:converter}
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `type` | str | yes | must be "store" |
-| `flow` | str | yes | type of flow (inflow, outflow, stored) |
-| `capacity_unit` | cap | no | capacity unit. Default: "kJ" |
-| `capacity` | real | capacity of the store |
-| `max_inflow` | real | maximum inflow (charge rate) |
+| key             | type | required? | notes                                  |
+| ----            | --   | --        | --------                               |
+| `type`          | str  | yes       | must be "store"                        |
+| `flow`          | str  | yes       | type of flow (inflow, outflow, stored) |
+| `capacity_unit` | cap  | no        | capacity unit. Default: "kJ"           |
+| `capacity`      | real | yes       | capacity of the store                  |
+| `max_inflow`    | real | yes       | maximum inflow (charge rate)           |
 
 : `components`: Storage Component {#tbl:store}
 
@@ -388,52 +426,182 @@ That is, if discharge is requested, it will discharge rather than charge.
 If charging and discharging at the same time, charge flow will "short circuit" to meet the discharge request first.
 Any flow left over will charge the store.
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `type` | str | yes | must be "muxer" |
-| `flow` | str | yes | type of flow (inflow, outflow) |
-| `num_inflows` | int | yes | the number of inflow ports |
-| `num_outflows` | int | the number of outflow ports |
-| `dispatch_strategy` | disp | no | dispatch strategy. Default: "in_order" |
+| key                 | type | required? | notes                                  |
+| ----                | --   | --        | --------                               |
+| `type`              | str  | yes       | must be "muxer"                        |
+| `flow`              | str  | yes       | type of flow (inflow, outflow)         |
+| `num_inflows`       | int  | yes       | the number of inflow ports             |
+| `num_outflows`      | int  | yes       | the number of outflow ports            |
+| `dispatch_strategy` | disp | no        | dispatch strategy. Default: "in_order" |
 
 : `components`: Storage Component {#tbl:muxer}
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `type` | str | yes | must be "pass_through" |
-| `flow` | str | yes | type of flow (inflow, outflow) |
+| key    | type | required? | notes                          |
+| ----   | --   | --        | --------                       |
+| `type` | str  | yes       | must be "pass_through"         |
+| `flow` | str  | yes       | type of flow (inflow, outflow) |
 
 : `components`: Pass-Through Component {#tbl:pass-through}
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `type` | str | yes | must be "uncontrolled_source" |
-| `flow` | str | yes | type of flow (inflow, outflow) |
+| key                  | type                  | required? | notes                          |
+| ----                 | --                    | --        | --------                       |
+| `type`               | str                   | yes       | must be "uncontrolled_source"  |
+| `outflow`            | str                   | yes       | type of outflow                |
+| `supply_by_scenario` | str $\rightarrow$ str | yes       | scenario id to load profile id |
 
 : `components`: Uncontrolled Source Component {#tbl:uncontrolled-src}
 
-| key | type | required? | notes |
-|----|--|--|--------|
-| `type` | str | yes | must be "mover" |
-| `flow` | str | yes | type of flow (inflow, outflow) |
+Similar to the load component, the uncontrolled source's `supply_by_scenario` specifies supply profiles by scenario.
+These look like the following:
+
+```toml
+supply_by_scenario.scenario_id_1 = "load_id_1"
+supply_by_scenario.scenario_id_2 = "load_id_2"
+```
+
+Note that the uncontrolled source supply profiles are also drawn from the same section of the input file specified as `loads`.
+
+| key       | type   | required? | notes                                               |
+| ----      | --     | --        | --------                                            |
+| `type`    | str    | yes       | must be "mover"                                     |
+| `inflow0` | str    | yes       | the inflow being "moved"                            |
+| `inflow1` | str    | yes       | the "support" inflow that enables "moving" to occur |
+| `outflow` | str    | yes       | the outflow                                         |
+| `cop`     | real>0 | yes       | the coefficient of performance                      |
 
 : `components`: Mover Component {#tbl:mover}
 
+In [@tbl:mover], the `cop` field ties together the three flows `inflow0`, `inflow1`, and `outflow` using the following relations:
+
+$$cop = \frac{inflow_0}{inflow_1}$$
+
+$$inflow_0 = cop \times inflow_1$$
+
+$$inflow_1 = inflow_0 \times \frac{1}{cop}$$
+
+$$outflow = (1 + cop) \times inflow_1 = (1 + \frac{1}{cop}) \times inflow_0 = inflow_0 + inflow_1$$
+
+| key             | type | required? | notes                                                      |
+| ----            | --   | --        | --------                                                   |
+| `vulnerable_to` | str  | yes       | the scenario intensity (i.e., damage metric) vulnerable to |
+| `type`          | str  | yes       | must be "linear"                                           |
+| `lower_bound`   | real | yes       | the value below which we are impervious to damage          |
+| `upper_bound`   | real | yes       | the value above which we face certain destruction          |
+
+: `fragility` specification {#tbl:frags}
+
+Fragility curves are specified using the attributes listed in [@tbl:frags].
+[@fig:fragility-curve] shows a graphical representation of the data specification.
+
+![Fragility Curve](images/fragility-curve.png){#fig:fragility-curve}
+
+A fragility curve maps a scenario's intensity (i.e., damage metric) to a probability of failure.
+We must specify which damage metric is of interest and also the curve relationship.
+Currently, the only available fragility curve type is linear.
+For the linear curve, we specify the `lower_bound`, the bound below which we are impervious to destruction.
+We also specify the `upper_bound`, the bound above which we face certain destruction.
+
+| key         | type | required? | notes                                         |
+| ----        | --   | --        | --------                                      |
+| `type`      | str  | yes       | must be "linear"                              |
+| `value`     | real | yes       | the value of the fixed CDF                    |
+| `time_unit` | time | yes       | the time unit used to specify the fixed value |
+
+: `cdf` specification {#tbl:cdf}
+
+[@tbl:cdf] specifies a cumulative distribution function.
+At this time, the only distribution type available is "fixed".
+A fixed distribution is a degenerate distribution that always samples a single point -- the `value`.
+
+| key           | type | required? | notes              |
+| ----          | --   | --        | --------           |
+| `failure_cdf` | str  | yes       | the failure CDF id |
+| `repair_cdf`  | str  | yes       | the repair CDF id  |
+
+: `failure_mode` specification {#tbl:fm}
+
+| key           | type        | required? | notes           |
+| ----          | --          | --        | --------        |
+| `connections` | \[\[str\]\] | yes       | the connections |
+
+: `networks` specification {#tbl:nw}
+
+The `networks` data definition involves a "mini-language" to specify connections.
+The language is as follows:
+
+```toml
+connections = [
+  [ "src_comp_id:OUT(outflow_port)", "sink_comp_id:IN(inflow_port)", "flow"],
+  ...
+  ]
+```
+
+The `connections` key is an array of 3-tuples.
+The first element of the 3-tuple is the source component id separated by a ":" and then the word "OUT(.)".
+You will type the outflow port in place of the ".".
+Note that numbering starts from 0.
+
+The second element of the 3-tuple is the sink component id.
+That is, the component that *receives* the flow.
+The sink component id is written, then a ":", and finally the word "IN(.)".
+You will type the inflow port id in place of the ".".
+Numbering of inflow ports starts from 0.
+
+The final element of the 3-tuple is the flow id.
+You are requested to write the flow id as a check that ports are not being wired incorrectly.
+
+| key                       | type                   | required? | notes                                                 |
+| ----                      | --                     | --        | --------                                              |
+| `time_unit`               | time                   | no        | time units for scenario. Default: "hours"             |
+| `occurrence_distribution` | table                  | yes       | see notes in text                                     |
+| `duration`                | int>0                  | yes       | the duration of the scenario                          |
+| `max_occurrences`         | int                    | yes       | the maximum number of occurrences. -1 means unlimited |
+| `calculate_reliability`   | bool                   | no        | whether to calculate reliability. Default: false      |
+| `network`                 | str                    | yes       | the id of the network to use                          |
+| `intensity`               | str $\rightarrow$ real | no        | specify intensity (damage metric) values              |
+
+: `scenarios` specification {#tbl:scenarios}
+
+In [@tbl:scenarios], the `occurrence_distribution` is currently implemented as a literal table:
+
+```toml
+  occurrence_distribution = { type = "linear", value = 8, time_unit = "hours" }
+```
+
+The possible values for the `occurrence_distribution` table are given in [@tbl:cdf].
 
 # Command-Line Tool
 
+Three command-line programs are available for simulation and assistance.
+They will be given an overview here.
 
-## e2rin_single
+## `e2rin`
 
-## e2rin_multi
+Simulates a single scenario and generates results.
 
-## e2rin_graph
+**USAGE**:
 
-<!--
+`e2rin` `<input_file_path>` `<output_file_path>` `<stats_file_path>` `<scenario_id>`
 
+- `input_file_path`: path to TOML input file
+- `output_file_path`: path to CSV output file for time-series data
+- `stats_file_path`: path to CSV output file for statistics
+- `scenario_id`: the id of the scenario to run
 
+## `e2rin_multi`
 
--->
+Simulates all scenarios in the input file over the simulation time and generates results.
+
+**USAGE**:
+
+`e2rin_multi` `<input_file_path>` `<output_file_path>` `<stats_file_path>`
+
+- `input_file_path`: path to TOML input file
+- `output_file_path`: path to CSV output file for time-series data
+- `stats_file_path`: path to CSV output file for statistics
+
+## `e2rin_graph`
+
 
 # Microsoft Excel User Interface
 

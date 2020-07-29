@@ -2,7 +2,7 @@
 title: "User's Guide"
 subtitle: "Reliability Calculation Tool and Excel User Interface"
 author: "Big Ladder Software"
-date: "July 28, 2020"
+date: "July 29, 2020"
 documentclass: scrartcl
 number-sections: true
 figureTitle: "Figure"
@@ -13,16 +13,6 @@ secPrefix: "Section"
 ...
 # Introduction
 
-<!--
-
-What's the purpose of the user guide.
-What's the purpose of the tool.
-What was it made to do.
-What are the pieces.
-Perhaps don't explain the acronym here.
-
--->
-
 The purpose of this User's Guide is to give a working introduction to the command-line version of the resilience calculation tool (*E^2^RIN*[^1]) and a user interface for the tool written in Microsoft Excel.
 
 The purpose of the tool itself is to simulate the energy flows through a district energy system composed of an interacting network of components.
@@ -31,7 +21,8 @@ The main contributions of this tool that we maintain are unique in aggregate are
 - the tool accounts for both reliability (failure and repair) as well as resilience to various scenarios (design basis threats)
 - while also accounting for topology and interaction between an open-ended number of energy networks
 - while providing key energy usage, resilience, and reliability metrics for the modeler / planner
-- and the tool is available as open-source software.
+
+The resilience calculation tool is available as open-source software written in C++.
 
 Several command-line programs are included with the *E^2^RIN* distribution including 3 key executables along with a library written in the *C++* programming language.
 Documentation of the library itself is beyond the scope of this document.
@@ -53,17 +44,17 @@ In this section, we describe the simulation process to assess the resilience of 
 District Energy Systems play a major role in enabling resilient communities.
 However, resilience is contextual.
 That is, one must specify what one is resilient to.
-This is specified in the tool using various "scenarios" which represent normal operation and various Design Basis Threats.
+This is specified in the tool using various “scenarios” which represent normal operation and various Design Basis Threats.
 Design Basis Threats are low-probability, high-impact events such as hurricanes, flooding, earthquakes, terrorist attacks, tornadoes, ice storms, viral pandemics, etc.
 Taking into account relevant Design Basis Threats is necessary for enabling resilient public communities.
 
 The tool operates over networks that supply energy to both individual buildings and districts.
 These networks are comprised of components (loads, generation, distribution/routing, storage, and transmission assets) and connections.
 These connections form the topology of the network -- what is connected to what.
-Multiple flows of energy / material can be modeled: notably, both thermal (heating/cooling) and electrical flows and their interactions.
+Multiple flows of energy can be modeled: notably, both thermal (heating/cooling) and electrical flows and their interactions.
 
-This network of components is subject to various scenarios which represent one or more ideal cases (i.e., "blue-sky") as well as Design Basis Threats (also known as "black-sky" events).
-Each scenario has a probability of occurrence and zero or more "damage intensities" associated with it such as wind speed, vibration, water inundation level, etc.
+This network of components is subject to various scenarios which represent one or more ideal cases (i.e., “blue-sky”) as well as Design Basis Threats (also known as “black-sky” events).
+Each scenario has a probability of occurrence and zero or more “damage intensities” associated with it such as wind speed, vibration, water inundation level, etc.
 Fragility curves are used to relate the scenario's damage intensities with the percentage chance that a given component will fail to work under the duress of the scenario.
 
 Additionally, reliability statistics can be associated with components to model their routine failure and repair times and to take reliability into account in conjunction with various threats.
@@ -75,8 +66,8 @@ This can, in turn, help planners to see whether a proposed system or change to a
 
 The workflow for using the tool is as follows:
 
-* using a piece of paper, sketch out the network of locations and components and how they are connected
-* using either the Excel user interface or a text editor, build an input file that describes:
+- using a piece of paper, sketch out the network of locations and components and how they are connected
+- using either the Excel user interface or a text editor, build an input file that describes:
   - the network of components
     - component physical characteristics
     - component failure modes
@@ -87,7 +78,7 @@ The workflow for using the tool is as follows:
     - the occurrence distribution
     - damage intensities involved
   - load profiles associated with each load for each scenario
-* simulate the given network over the given scenarios and examine the results
+- simulate the given network over the given scenarios and examine the results
 
 The simulation is specified using a discrete event simulator.
 Events include:
@@ -112,10 +103,14 @@ Understanding the concepts will help when authoring an input file as well as in 
 
 ## Flows
 
-A flow is any movement of a type of energy (usually) or material.
+A flow is any movement of a type of energy.
 Examples include "electricity", "heated water for district heating", and "chilled water for cooling".
 The flows specified are open-ended and not prescribed by the tool.
 However, to aid new users, the Excel User Interface does limit the available flows to those typically used in an assessment.
+
+By being imaginative, flows that are traditionally not considered as "energy flows" can be modeled as well.
+For example, a supply of potable water pumped to a building can be modeled by phrasing it in terms of enthalpy times mass flow rate: $h \times \dot{m}$ (making assumptions for line pressures and temperatures).
+This allows the contribution of a pump (changing the pressure and thus the flow work across the pump) to easily be taken into account.
 
 A flow has a direction associated with it.
 A flow can be zero (i.e., nothing is flowing) but cannot be negative.
@@ -133,12 +128,16 @@ A component must have at least one port: inflow or outflow.
 The fidelity of modeling is that of a 1-line diagram and accounts for energy flows only.
 A component need only be taken into account if:
 
-* it's function will significantly affect network flows
-* and it's failure is statistically significant in the face of either reliability or fragility to a threat
+- it's function will significantly affect network flows
+- and it's failure is statistically significant in the face of either reliability or fragility to a threat
+
+For example, a relatively efficient stretch of pipe in a district heating system can be ignored from an energy standpoint if it's losses are insignificant compared to other equipment.
+However, if that stretch of pipe is deemed to have a statistically significant possibility of failure during a threat event such as an earthquake, it should be modeled.
+In this instance, a pass-through component (see below) with a fragility curve (see below) may be a good choice.
 
 ## Component Types
 
-Because we model components at a high-level of abstraction, a small number of component types can actually model a large number of real-world components.
+Because we model components at a high-level of abstraction, a few component types are all that's needed to model many real-world components.
 In this section, we discuss the available component types and their characteristics.
 
 ### Component Type: Load
@@ -155,7 +154,7 @@ A source typically represents useful energy into the system such as electrical e
 
 ### Component Type: Uncontrolled Source
 
-A normally source responds to a request up to the available max output power (which defaults to being unlimited).
+Normally, a source responds to a request up to its available max output power (which defaults to being unlimited).
 In contrast, an uncontrolled source cannot be commanded to a given outflow because the source is uncontrollable.
 Typical examples of uncontrolled sources are electricity generated from a photovoltaic array, heat generated from concentrating solar troughs, or electricity from a wind farm.
 Another typical uncontrolled source is heat to be removed from a building as a "cooling load".
@@ -168,7 +167,7 @@ Note: functionally, a supply profile and load profile are the same thing.
 A converter represents any component that takes in one kind of flow and converts it to another type of flow, usually with some loss.
 Converters have an efficiency associated with them.
 The current version of the tool only supports a constant-efficiency.
-Typical examples of converter components are boilers, electric generators (fired by diesel fuel or natural gas), transformers, and line-losses.
+Typical examples of converter components are boilers, electric generators (e.g., fired by diesel fuel or natural gas), transformers, and line-losses.
 
 The loss flow from one component can be chained into another converter component to simulate various loss-heat recovery mechanisms and equipment such as combined heat and power (CHP) equipment.
 
@@ -180,12 +179,15 @@ The storage component cannot accept more flow than it has capacity to store.
 Similarly, a storage component cannot discharge more flow than it has stored.
 Typical examples of a storage component include battery systems, pumped hydro, diesel fuel storage tanks, coal piles, and thermal energy storage tanks.
 
-The current version of the storage tank does not have an efficiency or leakage component associated with it although these elements can be approximated with converter components.
+The current version of the storage tank does not have an efficiency or leakage component associated with it.
+However, charge/discharge efficiency can be approximated with converter components and leakage via a small draw load.
 
 ### Component Type: Pass-Through
 
 A pass-through component is a component that physically exists on the system but that only passes flow through itself without disruption.
-This is useful for giving a location to associate failure modes and fragility curves (discussed below) as failure of the component may result in a loss of a flow.
+As such, it is does not change the energy flow of the network.
+Therefore, the main use for a pass-through component is in providing equipment to associate failure modes and fragility curves (discussed below) with.
+Since failure of the component results in a loss of a flow, it may be important to take into account.
 Typical examples of pass-through components are above-ground and below-ground power lines, natural-gas pipe runs, district heating pipe runs, etc.
 
 ### Component Type: Muxer
@@ -200,12 +202,13 @@ There are two dispatch strategies available in the current tool:
 - in-order dispatch: all flow is requested to be satisfied from the first inflow port first.
   If that flow is insufficient, the second inflow port is requested for the remainder until all inflow ports are exhausted.
   For cases where outflow request is not met, the first outflow port is satisfied first.
-  If flow remains, the next port is satisfied, etc.
+  If flow remains, that flow is routed to the next port until it is satisfied or the flow is spent, and so on to the next port, etc.
 - distribute dispatch: all flow is distributed between all ports.
   In this strategy, requests are distributed evenly between inflow ports.
   When flow is insufficient to meet all outflow request, available flow is distributed evenly to outflow ports.
 
-These two flow strategies should be sufficient to mimic basic dispatch strategies.
+These strategies are not sophisticated enough to cover advanced energy saving strategies.
+However, they should be sufficient to mimic basic dispatch strategies for assessing load supply.
 
 ### Component Type: Mover
 
@@ -228,7 +231,7 @@ A connection describes:
 
 ## Scenarios
 
-Scenarios represent both typical usage (i.e., blue sky events) as well as design basis threat events (a class 4 hurricane, an earthquake, a land-slide, etc.).
+Scenarios represent both typical usage (i.e., blue sky events) and design basis threat events (class 4 hurricanes, earthquakes, land-slides, etc.).
 
 A scenario has:
 
@@ -250,7 +253,7 @@ For example, a diesel back-up generator may have one failure mode associated wit
 
 Every failure mode in the simulation is turned into an "availability schedule".
 That is, for each failure mode, the dual cumulative distribution functions are alternatively sampled from time 0 to the end of the overall simulation time to derive a schedule of "available" and "failed".
-When a scenario where reliability is calculated is scheduled to occur, the relevant portion of the availability schedules for any component are used to "schedule" the component as available and failed to simulate routine reliability events.
+When a scenario where reliability is calculated is scheduled to occur, the relevant portion of the availability schedules for components with failure modes are used to "schedule" the component as available and failed to simulate routine reliability events during that scenario's simulation.
 
 ## Resilience: Intensities (Damage Metrics) and Fragility Curves
 
@@ -259,7 +262,7 @@ Each scenario can specify an intensity or damage metric.
 Any component having a fragility curve that responds to one or more of the scenario intensities is evaluated for failure due to the scenario's intensity.
 
 For example, above-ground power lines may have a fragility to wind speed.
-If a scenario specifies a wind speed of 150 mph, the above-ground power line component will use its fragility curve to look up its change of failure.
+If a scenario specifies a wind speed of 150 mph, the above-ground power line component will use its fragility curve to look up its chance of failure.
 For fragility, a component is evaluated for failure at scenario start and either passes (staying up during the scenario) or fails (going down for the entire scenario).
 
 # Input File Format {#sec:input-file-format}
@@ -551,15 +554,15 @@ Numbering of inflow ports starts from 0.
 The final element of the 3-tuple is the flow id.
 You are requested to write the flow id as a check that ports are not being wired incorrectly.
 
-| key                       | type                   | required? | notes                                                 |
-| ----                      | --                     | --        | --------                                              |
-| `time_unit`               | time                   | no        | time units for scenario. Default: "hours"             |
-| `occurrence_distribution` | table                  | yes       | see notes in text                                     |
-| `duration`                | int>0                  | yes       | the duration of the scenario                          |
-| `max_occurrences`         | int                    | yes       | the maximum number of occurrences. -1 means unlimited |
-| `calculate_reliability`   | bool                   | no        | whether to calculate reliability. Default: false      |
-| `network`                 | str                    | yes       | the id of the network to use                          |
-| `intensity`               | str $\rightarrow$ real | no        | specify intensity (damage metric) values              |
+| key                          | type                   | required? | notes                                                 |
+| ----                         | --                     | --        | --------                                              |
+| `time_unit`                  | time                   | no        | time units for scenario. Default: "hours"             |
+| `occurrence_` `distribution` | table                  | yes       | see notes in text                                     |
+| `duration`                   | int>0                  | yes       | the duration of the scenario                          |
+| `max_occurrences`            | int                    | yes       | the maximum number of occurrences. -1 means unlimited |
+| `calculate_` `reliability`   | bool                   | no        | whether to calculate reliability. Default: false      |
+| `network`                    | str                    | yes       | the id of the network to use                          |
+| `intensity`                  | str $\rightarrow$ real | no        | specify intensity (damage metric) values              |
 
 : `scenarios` specification {#tbl:scenarios}
 
@@ -597,7 +600,7 @@ $$EA = \frac{E_{achieved} \times 100 \%}{E_{requested}}$$
 
 In the above equation, the energy, $E$, is the integral of the flow, $f$, over time:
 
-$$E = \int_{0}^{t_N}{f \cdot dt}$$
+$$E = \int_{t=0}^{t_{end}}{f \cdot dt}$$
 
 Max downtime is the duration of load interruption:
 
@@ -605,7 +608,7 @@ $$T_{\textrm{down}} = \int{dt}\; \textrm{where} \; f_{\textrm{achived}} < f_{\te
 
 Load not served is then:
 
-$$E_{\textrm{not served}} = \int_{t_0}^{t_N}{(f_{\textrm{requested}} - f_{\textrm{achieved}}) \cdot dt}$$
+$$E_{\textrm{not served}} = \int_{t=0}^{t_{end}}{(f_{\textrm{requested}} - f_{\textrm{achieved}}) \cdot dt}$$
 
 # Command-Line Tool
 
@@ -723,6 +726,10 @@ Similarly, you can render your Graphviz dot file into a PDF as follows:
 - `dot -Tpdf input.gv -o output.pdf`
   The above generates a png (`-Tpdf`) from the `input.gv` and saves to `output.pdf` (`-o`)
 
+`e2rin_graph` is capable of creating sophisticated topological graphs such as the one in [@fig:topology-example].
+
+![Topology Example of a Network Rendered with Graphviz and `e2rin_graph`](images/topology-example.png){#fig:topology-example width=75%}
+
 # Microsoft Excel User Interface
 
 A simple interface using Microsoft Excel has been created to ease the creation of an input data file for `e2rin`.
@@ -771,7 +778,7 @@ For example, if one wanted to model two storage units in *series* (vs *parallel*
 
 ## Interface Overview
 
-The Excel user interface to `e2rin_multi` is laid out in a logical manner to help new users to specify a component network to simulate.
+The Excel user interface to `e2rin_multi` is laid out logically to help new users specify a component network to simulate.
 
 The major screens are:
 
@@ -788,15 +795,15 @@ The "Components" tab is where a modeler can add different types of components to
 The "Network" tab is where network links between locations can be specified.
 The "Scenarios" tab is where different Scenarios can be added and configured.
 
-![Excel Interface: Instructions Sheet](images/screenshots/instructions.png){#fig:excel-instructions}
+![Excel Interface: Instructions Sheet](images/screenshots/instructions.png){#fig:excel-instructions width=50%}
 
-![Excel Interface: Settings Sheet](images/screenshots/set-path.png){#fig:excel-settings}
+![Excel Interface: Settings Sheet](images/screenshots/set-path.png){#fig:excel-settings width=50%}
 
-![Excel Interface: Components Sheet](images/screenshots/remove-component.png){#fig:excel-components}
+![Excel Interface: Components Sheet](images/screenshots/remove-component.png){#fig:excel-components width=50%}
 
-![Excel Interface: Network Sheet](images/screenshots/network-start.png){#fig:excel-network}
+![Excel Interface: Network Sheet](images/screenshots/network-start.png){#fig:excel-network width=50%}
 
-![Excel Interface: Scenario Sheet](images/screenshots/scenarios.png){#fig:excel-scenarios}
+![Excel Interface: Scenario Sheet](images/screenshots/scenarios.png){#fig:excel-scenarios width=50%}
 
 # Example Problem
 
@@ -864,7 +871,7 @@ fragilities = ["flooding", "wind"]
 
 In the table above, we have added a natural gas source (`utility_ng_source`), an electrical load at building 1 (`b1_electricity`), and an electrical generator at building 1 (`b1_electric_generator`).
 The electric generator has an efficiency of 42% and has two fragilities: "`flooding`" and "`wind`".
-Neither of the fragilities have been specified yet so we'll tackle them next.
+Neither of the fragilities have been specified yet, so we'll tackle them next.
 
 5. Within `input.toml`, specify the fragility curves.
 
@@ -996,19 +1003,19 @@ Using the Excel Interface, we will create the same problem specified in [@fig:ex
 - `support.rb`
 - `template.toml`
 
-![Required files to run the Excel UI](images/screenshots/required-files.png){#fig:required-files}
+![Required files to run the Excel UI](images/screenshots/required-files.png){#fig:required-files width=50%}
 
 An easy way to get the path to `e2rin_multi.exe` is to find it in the file system and, while holding the SHIFT key, right click on the file and select "Copy as Path" as shown in [@fig:copying-the-path].
 The value so copied can be pasted into the cell with the path in the Settings sheet.
 Be sure to save the workbook once you've set the path.
 
-![Easy Way to Copy the Path to `e2rin_multi.exe`](images/screenshots/getting-the-path-to-e2rin_multi.png){#fig:copying-the-path}
+![Easy Way to Copy the Path to `e2rin_multi.exe`](images/screenshots/getting-the-path-to-e2rin_multi.png){#fig:copying-the-path width=50%}
 
 2. We will start by adding two fragility curves.
    See [@fig:excel-step-a; @fig:excel-step-b].
 
 We'll call the first fragility curve "wind" and set the "Vulnerable To" field to  "`wind_speed_mph`" with a range from 150 to 220 mph.
-The second fragility curve we'll call "flooding" and set the "Vulnerable To" field to "inundation_depth_ft" with bounds of 4.0 to 8.0 feet.
+The second fragility curve we'll call "flooding" and set the "Vulnerable To" field to "`inundation_depth_ft`" with bounds of 4.0 to 8.0 feet.
 
 ![Add Fragility Curve #1](images/screenshots/a.png){#fig:excel-step-a width=50%}
 

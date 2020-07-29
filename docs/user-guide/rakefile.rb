@@ -8,6 +8,7 @@ COMMON_ARGS = [
   "--number-sections",
   "--filter pandoc-crossref",
   "--syntax-definition=toml.xml",
+  "--table-of-contents",
 ]
 
 def make_pdf(md_path, pdf_path)
@@ -54,7 +55,7 @@ def add_task(path, ext, fn, files)
   CLEAN << name
 end
 
-MARKDOWN_FILES = FileList['./*.md']
+MARKDOWN_FILES = FileList['./*.md'].exclude("./README.md")
 PDF_FILES = []
 DOC_FILES = []
 TEX_FILES = []

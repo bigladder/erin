@@ -1,3 +1,5 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 # Build the User's Guide using Pandoc
 # Author: Michael O'Keefe, 2020-07-24
 require 'rake/clean'

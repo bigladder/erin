@@ -430,15 +430,15 @@ That is, if discharge is requested, it will discharge rather than charge.
 If charging and discharging at the same time, charge flow will "short circuit" to meet the discharge request first.
 Any flow left over will charge the store.
 
-| key                 | type | required? | notes                                  |
-| ----                | --   | --        | --------                               |
-| `type`              | str  | yes       | must be "muxer"                        |
-| `flow`              | str  | yes       | type of flow (inflow, outflow)         |
-| `num_inflows`       | int  | yes       | the number of inflow ports             |
-| `num_outflows`      | int  | yes       | the number of outflow ports            |
-| `dispatch_strategy` | disp | no        | dispatch strategy. Default: "in_order" |
+| key                 | type | required? | notes                                    |
+| ----                | --   | --        | --------                                 |
+| `type`              | str  | yes       | must be "muxer"                          |
+| `flow`              | str  | yes       | type of flow (inflow, outflow)           |
+| `num_inflows`       | int  | yes       | the number of inflow ports               |
+| `num_outflows`      | int  | yes       | the number of outflow ports              |
+| `dispatch_strategy` | disp | no        | dispatch strategy. Default: "`in_order`" |
 
-: `components`: Storage Component {#tbl:muxer}
+: `components`: Muxer Component {#tbl:muxer}
 
 | key    | type | required? | notes                          |
 | ----   | --   | --        | --------                       |

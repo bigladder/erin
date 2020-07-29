@@ -6713,7 +6713,6 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
   EXPECT_EQ(L_ss.total_energy, L_total_energy);
 }
 
-
 int
 main(int argc, char **argv)
 {

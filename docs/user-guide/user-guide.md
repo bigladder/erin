@@ -824,7 +824,7 @@ max_time = 100
 ```
 
 2. Create a simple load profile by hand.
-   Open the file `load-profile.csv` in your favorite text editor.
+   Open the file `b1-load-profile.csv` in your favorite text editor.
    Type in the following and save:
 
 ```csv
@@ -837,7 +837,7 @@ hours,kW
 
 ```toml
 [loads.lp1]
-csv_file = "load-profile.csv"
+csv_file = "b1-load-profile.csv"
 ```
 
 4. Next, still within `input.toml`, let's add the components:
@@ -925,7 +925,7 @@ time_unit = "years"
 max_time = 100
 
 [loads.lp1]
-csv_file = "load-profile.csv"
+csv_file = "b1-load-profile.csv"
 
 [components.utility_ng_source]
 type = "source"
@@ -985,4 +985,80 @@ This assumes that `e2rin_multi.exe` is on your path.
 
 ## Excel User Interface
 
+Using the Excel Interface, we will create the same problem specified in [@fig:example-network].
 
+1. Open the workbook and ensure the path to `e2rin_multi.exe` is set.
+   See [@fig:excel-settings].
+   Also, ensure you have the four required files in one directory as shown in [@fig:required-files]:
+
+- `e2rin_gui.xlsm`
+- `e2rin_multi.exe`
+- `support.rb`
+- `template.toml`
+
+![Required files to run the Excel UI](images/screenshots/required-files.png){#fig:required-files}
+
+An easy way to get the path to `e2rin_multi.exe` is to find it in the file system and, while holding the SHIFT key, right click on the file and select "Copy as Path" as shown in [@fig:copying-the-path].
+The value so copied can be pasted into the cell with the path in the Settings sheet.
+Be sure to save the workbook once you've set the path.
+
+![Easy Way to Copy the Path to `e2rin_multi.exe`](images/screenshots/getting-the-path-to-e2rin_multi.png){#fig:copying-the-path}
+
+2. We will start by adding two fragility curves.
+   See [@fig:excel-step-a; @fig:excel-step-b].
+
+We'll call the first fragility curve "wind" and set the "Vulnerable To" field to  "`wind_speed_mph`" with a range from 150 to 220 mph.
+The second fragility curve we'll call "flooding" and set the "Vulnerable To" field to "inundation_depth_ft" with bounds of 4.0 to 8.0 feet.
+
+![Add Fragility Curve #1](images/screenshots/a.png){#fig:excel-step-a width=50%}
+
+![Add Fragility Curve #2](images/screenshots/b.png){#fig:excel-step-b width=50%}
+
+3. Next we'll begin filling in the Components as shown in [@fig:excel-step-1; @fig:excel-step-2; @fig:excel-step-3; @fig:excel-step-4; @fig:excel-step-5; @fig:excel-step-6; @fig:excel-step-7; @fig:excel-step-c; @fig:excel-step-8].
+
+![Add Components](images/screenshots/1.png){#fig:excel-step-1 width=50%}
+
+![Add Source Components](images/screenshots/2.png){#fig:excel-step-2 width=50%}
+
+![Add Source Component Dialogue](images/screenshots/3.png){#fig:excel-step-3 width=50%}
+
+![Add Load Component](images/screenshots/4.png){#fig:excel-step-4 width=50%}
+
+![Add Load Component Dialogue](images/screenshots/5.png){#fig:excel-step-5 width=50%}
+
+![Add Converter Component](images/screenshots/6.png){#fig:excel-step-6 width=50%}
+
+![Add Converter Component Dialogue](images/screenshots/7.png){#fig:excel-step-7 width=50%}
+
+![Add Fragility Curves to Converter Components](images/screenshots/c.png){#fig:excel-step-c width=50%}
+
+![All Components Added](images/screenshots/8.png){#fig:excel-step-8 width=50%}
+
+4. With all the components added, move on to the "Network" sheet.
+   We must add a network link between the "utility" location and the "b1" (building #1) location as shown in [@fig:excel-step-9; @fig:excel-step-10].
+
+![The Network Tab](images/screenshots/9.png){#fig:excel-step-9 width=50%}
+
+![Adding a Network Link from `utility` to `b1`](images/screenshots/10.png){#fig:excel-step-10 width=50%}
+
+5. Finally, add the scenarios and intensity values as shown in [@fig:excel-step-11; @fig:excel-step-12; @fig:excel-step-13; @fig:excel-step-14; @fig:excel-step-15; @fig:excel-step-16; @fig:excel-step-17; @fig:excel-step-18; @fig:excel-step-19].
+
+![The Scenario Sheet](images/screenshots/11.png){#fig:excel-step-11 width=50%}
+
+![Adding the Blue Sky Scenario](images/screenshots/12.png){#fig:excel-step-12 width=50%}
+
+![Adding the Load Profile for Blue Sky](images/screenshots/13.png){#fig:excel-step-13 width=50%}
+
+![Adding the Hurricane Scenario](images/screenshots/14.png){#fig:excel-step-14 width=50%}
+
+![Adding the Load Profile for Hurricane](images/screenshots/15.png){#fig:excel-step-15 width=50%}
+
+![The Damage Metric UI](images/screenshots/16.png){#fig:excel-step-16 width=50%}
+
+![Adding Inundation Depth in Feet](images/screenshots/17.png){#fig:excel-step-17 width=50%}
+
+![Adding Wind Speed in MPH](images/screenshots/18.png){#fig:excel-step-18 width=50%}
+
+![The Finished Scenarios](images/screenshots/19.png){#fig:excel-step-19 width=50%}
+
+6. Finally, hit the run button to simulate the network.

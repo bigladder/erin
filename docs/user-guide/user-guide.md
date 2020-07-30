@@ -440,6 +440,26 @@ Any flow left over will charge the store.
 
 : `components`: Muxer Component {#tbl:muxer}
 
+In [@tbl:muxer], the `dispatch_strategy` refers to the strategy at the outflow of the muxer.
+The inflow strategy is always "`in_order`".
+That is, the first connected port gets the full request.
+If that inflow port can't meet the full flow, we request the remaining flow from the second inflow port, etc.
+The outflow strategy is set in the model input file using the `dispatch_strategy` key as shown in [@tbl:muxer].
+
+The `dispatch_strategy` for a muxer only manifests when there is a flow deficiency.
+That is, normally, all requests at each outflow port are achieved.
+However, when there is not enough flow, "`in_order`" dispatch feeds the first outflow port first and then turns its attention to the second and so on until flow runs out.
+For a "`distribute`" `dispatch_strategy`, when flow is lacking, the available flow is distributed evenly.
+
+Let's consider an example.
+A muxer with 4 outflow ports gets the following request: [50, 50, 50, 50] (= 200 kW).
+However, only 100 kW is available to supply these outflow requests.
+An "`in_order`" dispatch will provide [50, 50, 0, 0] (= 100 kW) to its four outflow ports.
+In contrast, a "`distribute`" `dispatch_strategy` will provide [25, 25, 25, 25] (= 100 kW) to each outflow port.
+Consider a non-uniform request of say [50, 10, 90, 50] (= 200 kW) on the same mux; again, however, only 100 kW is available.
+An "`in_order`" dispatch would provide [50, 10, 40, 0] (= 100 kW).
+In contrast, a "`distribute`" dispatch strategy would provide [30, 10, 30, 30] (= 100 kW) to each outflow port.
+
 | key    | type | required? | notes                          |
 | ----   | --   | --        | --------                       |
 | `type` | str  | yes       | must be "pass_through"         |

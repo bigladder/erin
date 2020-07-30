@@ -95,17 +95,59 @@ namespace erin::devs
           << "amount = " << amount << "\n";
       throw std::invalid_argument(oss.str());
     }
+    auto num_outflows{outflows.size()};
+    auto num_live{num_outflows};
+    FlowValueType even_flow{0.0};
+    std::vector<FlowValueType> outflow_supplies(num_live, 0.0);
+    std::vector<FlowValueType> outflow_requests(num_live, 0.0);
     std::vector<Port> new_outflows{};
     FlowValueType total_requested{0.0};
-    for (size_type idx{0}; idx < outflows.size(); ++idx)
-      total_requested += outflows[idx].get_requested();
-    auto reduction_factor{0.0};
-    if (total_requested > 0.0)
-      reduction_factor = amount / total_requested;
-    for (size_type idx{0}; idx < outflows.size(); ++idx) {
+    for (size_type idx{0}; idx < num_outflows; ++idx) {
+      auto req = outflows[idx].get_requested();
+      total_requested += req;
+      outflow_requests[idx] = req;
+    }
+    if (amount > total_requested) {
+      std::ostringstream oss{};
+      oss << "amount delivered is greater than total requested outflow!\n"
+          << "amount delivered: " << amount << "\n"
+          << "total_requested : " << total_requested << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    FlowValueType amount_remaining{amount};
+    int n{0};
+    constexpr int max_iter{100};
+    while ((num_live > 0) && (amount_remaining > 0.0)) {
+      n += 1;
+      if (n > max_iter) {
+        std::ostringstream oss{};
+        oss << "breaking out of infinite loop in "
+            << "distribute_inflow_to_outflow_evenly!\n";
+        throw std::invalid_argument(oss.str());
+      }
+      even_flow = amount_remaining / num_live;
+      num_live = 0;
+      for (size_type i{0}; i < num_outflows; ++i) {
+        auto s = outflow_supplies[i] + even_flow;
+        auto r = outflow_requests[i];
+        if (s > r) {
+          outflow_supplies[i] = r;
+          amount_remaining += ((s - r) - even_flow);
+        }
+        else if (s == r) {
+          outflow_supplies[i] = s;
+          amount_remaining -= even_flow;
+        }
+        else if (s < r) {
+          outflow_supplies[i] = s;
+          amount_remaining -= even_flow;
+          num_live += 1;
+        }
+      }
+    }
+    for (size_type idx{0}; idx < num_outflows; ++idx) {
       const auto& of = outflows[idx];
-      auto achieved{of.get_requested() * reduction_factor};
-      new_outflows.emplace_back(of.with_achieved(achieved, time));
+      new_outflows.emplace_back(of.with_achieved(outflow_supplies[idx], time));
     }
     return new_outflows;
   }

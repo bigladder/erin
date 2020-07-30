@@ -6713,6 +6713,79 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
   EXPECT_EQ(L_ss.total_energy, L_total_energy);
 }
 
+TEST(ErinBasicsTest, Test_muxer_dispatch_strategy)
+{
+  namespace ED = erin::devs;
+  namespace E = ERIN;
+  E::RealTimeType time{0};
+  E::FlowValueType outflow_achieved{100.0};
+  std::vector<ED::Port> outflow_ports{
+    ED::Port{time, 50.0},
+    ED::Port{time, 50.0},
+    ED::Port{time, 50.0},
+    ED::Port{time, 50.0},
+  };
+  std::vector<ED::Port> expected_outflows{
+    ED::Port{time, 50.0, 50.0},
+    ED::Port{time, 50.0, 50.0},
+    ED::Port{time, 50.0, 0.0},
+    ED::Port{time, 50.0, 0.0},
+  };
+  auto outflows = ED::distribute_inflow_to_outflow_in_order(
+      outflow_ports, outflow_achieved, time);
+  ASSERT_EQ(expected_outflows.size(), outflows.size());
+  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows.size(); ++idx) {
+    EXPECT_EQ(expected_outflows[idx], outflows[idx])
+      << "idx = " << idx << "\n";
+  }
+  std::vector<ED::Port> outflow_ports_irregular{
+    ED::Port{time, 50.0},
+    ED::Port{time, 10.0},
+    ED::Port{time, 90.0},
+    ED::Port{time, 50.0},
+  };
+  auto outflows_irregular = ED::distribute_inflow_to_outflow_in_order(
+      outflow_ports_irregular, outflow_achieved, time);
+  std::vector<ED::Port> expected_outflows_irregular{
+    ED::Port{time, 50.0, 50.0},
+    ED::Port{time, 10.0, 10.0},
+    ED::Port{time, 90.0, 40.0},
+    ED::Port{time, 50.0, 0.0},
+  };
+  ASSERT_EQ(expected_outflows_irregular.size(), outflows_irregular.size());
+  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_irregular.size(); ++idx) {
+    EXPECT_EQ(expected_outflows_irregular[idx], outflows_irregular[idx])
+      << "idx = " << idx << "\n";
+  }
+
+  std::vector<ED::Port> expected_outflows_dist{
+    ED::Port{time, 50.0, 25.0},
+    ED::Port{time, 50.0, 25.0},
+    ED::Port{time, 50.0, 25.0},
+    ED::Port{time, 50.0, 25.0},
+  };
+  auto outflows_dist = ED::distribute_inflow_to_outflow_evenly(
+      outflow_ports, outflow_achieved, time);
+  ASSERT_EQ(expected_outflows_dist.size(), outflows_dist.size());
+  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_dist.size(); ++idx) {
+    EXPECT_EQ(expected_outflows_dist[idx], outflows_dist[idx])
+      << "idx = " << idx << "\n";
+  }
+  auto outflows_dist_irregular = ED::distribute_inflow_to_outflow_evenly(
+      outflow_ports_irregular, outflow_achieved, time);
+  std::vector<ED::Port> expected_outflows_dist_irregular{
+    ED::Port{time, 50.0, 30.0},
+    ED::Port{time, 10.0, 10.0},
+    ED::Port{time, 90.0, 30.0},
+    ED::Port{time, 50.0, 30.0},
+  };
+  ASSERT_EQ(expected_outflows_dist_irregular.size(), outflows_dist_irregular.size());
+  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_dist_irregular.size(); ++idx) {
+    EXPECT_EQ(expected_outflows_dist_irregular[idx], outflows_dist_irregular[idx])
+      << "idx = " << idx << "\n";
+  }
+}
+
 int
 main(int argc, char **argv)
 {

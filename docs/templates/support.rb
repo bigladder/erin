@@ -86,6 +86,7 @@ class Support
   #     - :is_limited, boolean string ("TRUE" or "FALSE"), whether or not the source is limited
   #     - :max_outflow_kW, number, the maximum outflow in kW
   #   - :storage_component, an array of Hash with keys:
+  #     - :id, string, optional id
   #     - :location_id, string, the location of the storage
   #     - :flow, string, the flow being stored (e.g., "electricity", "diesel", etc.)
   #     - :capacity_kWh, number, > 0, the capacity of the store in kWh

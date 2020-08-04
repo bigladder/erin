@@ -1,5 +1,6 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 # Build the doit script such that it is up to date for all files in the repository.
-# Author: Michael O'Keefe (2019-11-20)
 require 'set'
 require 'pathname'
 

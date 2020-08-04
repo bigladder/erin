@@ -1,5 +1,6 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../vendor/toml11/toml.hpp"
@@ -983,7 +984,7 @@ namespace ERIN
     auto num_outflows = toml_helper::read_optional_table_field<int>(
         tt, {"num_outflows", "num_outputs"}, 1, field_read);
     auto out_disp_tag = toml_helper::read_optional_table_field<std::string>(
-        tt, {"dispatch_strategy", "outflow_dispatch_strategy"}, "distribute", field_read);
+        tt, {"dispatch_strategy", "outflow_dispatch_strategy"}, "in_order", field_read);
     auto out_disp = tag_to_muxer_dispatch_strategy(out_disp_tag);
     std::unique_ptr<Component> mux_comp = std::make_unique<MuxerComponent>(
         id, std::string(stream), num_inflows, num_outflows, std::move(frags),

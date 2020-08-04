@@ -1,5 +1,6 @@
-# runs a stress-test/benchmarking suite
-
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
+# Runs a stress-test/benchmarking suite.
 require 'open3'
 require 'time'
 

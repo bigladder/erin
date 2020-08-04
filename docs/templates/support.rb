@@ -128,6 +128,10 @@ class Support
     generate_connections
   end
 
+  def self.get_script_directory
+    __dir__
+  end
+
   def connections
     @connections.sort
   end

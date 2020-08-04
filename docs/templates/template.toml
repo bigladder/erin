@@ -21,7 +21,7 @@ parameter "expand_load_paths", :default=>true
 <%
    require 'set'
    require_relative 'support.rb'
-   THIS_DIR = File.dirname(__FILE__)
+   THIS_DIR = Support.get_script_directory
    data = {}
    Dir.chdir(THIS_DIR) do
      data[:component_failure_mode] = Support.load_csv(component_failure_mode_csv_path)

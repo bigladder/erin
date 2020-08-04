@@ -39,6 +39,7 @@ class TestTemplate < Minitest::Test
       },
       :load_component => [
         {
+          :id => "b1_electricity",
           :location_id => "b1",
           :inflow => "electricity",
         },
@@ -46,11 +47,12 @@ class TestTemplate < Minitest::Test
       :load_profile => [
         {
           :scenario_id => "s1",
-          :building_id => "b1",
-          :enduse => "electricity",
+          :component_id => "b1_electricity",
+          :flow => "electricity",
           :file => "s1_b1_electricity.csv",
         },
       ],
+      :mover_component => [],
       :pass_through_component => [],
       :scenario => [
         {
@@ -77,6 +79,7 @@ class TestTemplate < Minitest::Test
           :flow => "electricity",
         },
       ],
+      :uncontrolled_src => [],
     }
   end
 
@@ -103,10 +106,12 @@ class TestTemplate < Minitest::Test
       },
       :load_component => [
         {
+          :id => "mc_electricity",
           :location_id => "mc",
           :inflow => "electricity",
         },
         {
+          :id => "other_electricity",
           :location_id => "other",
           :inflow => "electricity",
         },
@@ -114,17 +119,18 @@ class TestTemplate < Minitest::Test
       :load_profile => [
         {
           :scenario_id => "blue_sky",
-          :building_id => "mc",
-          :enduse => "electricity",
+          :component_id => "mc_electricity",
+          :flow => "electricity",
           :file => "mc_blue_sky_electricity.csv",
         },
         {
           :scenario_id => "blue_sky",
-          :building_id => "other",
-          :enduse => "electricity",
+          :component_id => "other_electricity",
+          :flow => "electricity",
           :file => "other_blue_sky_electricity.csv",
         },
       ],
+      :mover_component => [],
       :network_link => [
         {
           :source_location_id => "utility",
@@ -156,6 +162,7 @@ class TestTemplate < Minitest::Test
         },
       ],
       :storage_component => [],
+      :uncontrolled_src => [],
     }
   end
 
@@ -171,26 +178,26 @@ class TestTemplate < Minitest::Test
     ps[:load_profile] += [
       {
         :scenario_id => "s1",
-        :building_id => "mc",
-        :enduse => "electricity",
+        :component_id => "mc_electricity",
+        :flow => "electricity",
         :file => "mc_s1_electricity.csv",
       },
       {
         :scenario_id => "s1",
-        :building_id => "other",
-        :enduse => "electricity",
+        :component_id => "other_electricity",
+        :flow => "electricity",
         :file => "other_s1_electricity.csv",
       },
       {
         :scenario_id => "s2",
-        :building_id => "mc",
-        :enduse => "electricity",
+        :component_id => "mc_electricity",
+        :flow => "electricity",
         :file => "mc_s2_electricity.csv",
       },
       {
         :scenario_id => "s2",
-        :building_id => "other",
-        :enduse => "electricity",
+        :component_id => "other_electricity",
+        :flow => "electricity",
         :file => "other_s2_electricity.csv",
       },
     ]
@@ -247,13 +254,14 @@ class TestTemplate < Minitest::Test
     ps[:load_profile] = [
       {
         :scenario_id => "blue_sky",
-        :building_id => "b1",
-        :enduse => "electricity",
+        :component_id => "b1_electricity",
+        :flow => "electricity",
         :file => "b1_blue_sky_electricity.csv",
       },
     ]
     ps[:load_component] = [
       {
+        :id => "b1_electricity",
         :location_id => "b1",
         :inflow => "electricity",
       },
@@ -272,11 +280,12 @@ class TestTemplate < Minitest::Test
     ps = default_params
     ps[:load_profile] << {
       :scenario_id => "blue_sky",
-      :building_id => "mc",
-      :enduse => "heating",
+      :component_id => "mc_heating",
+      :flow => "heating",
       :file => "mc_blue_sky_heating.csv",
     }
     ps[:load_component] << {
+      :id => "mc_heating",
       :location_id => "mc",
       :inflow => "heating",
     }
@@ -484,11 +493,13 @@ class TestTemplate < Minitest::Test
     @general_csv = "general.csv"
     @load_component_csv = "load-component.csv"
     @load_profile_csv = "load-profile.csv"
+    @mover_component_csv = "mover-component.csv"
     @network_link_csv = "network-link.csv"
     @pass_through_component_csv = "pass-through-component.csv"
     @scenario_csv = "scenario.csv"
     @source_component_csv = "source-component.csv"
     @storage_component_csv = "storage-component.csv"
+    @uncontrolled_src_csv = "uncontrolled-src.csv"
     @all_csvs = [
       @component_failure_mode_csv,
       @component_fragility_csv,
@@ -501,11 +512,13 @@ class TestTemplate < Minitest::Test
       @general_csv,
       @load_component_csv,
       @load_profile_csv,
+      @mover_component_csv,
       @network_link_csv,
       @pass_through_component_csv,
       @scenario_csv,
       @source_component_csv,
       @storage_component_csv,
+      @uncontrolled_src_csv,
     ]
     ensure_directory_clean
   end
@@ -587,8 +600,14 @@ class TestTemplate < Minitest::Test
       ],
       [
         @load_profile_csv,
-        [:scenario_id, :building_id, :enduse, :file],
+        [:scenario_id, :component_id, :flow, :file],
         :load_profile,
+        :normal_table,
+      ],
+      [
+        @mover_component_csv,
+        [:location_id, :flow_moved, :support_flow, :cop],
+        :mover_component,
         :normal_table,
       ],
       [
@@ -620,6 +639,12 @@ class TestTemplate < Minitest::Test
         @storage_component_csv,
         [:location_id, :flow, :capacity_kWh, :max_inflow_kW],
         :storage_component,
+        :normal_table,
+      ],
+      [
+        @uncontrolled_src_csv,
+        [:location_id, :outflow],
+        :uncontrolled_src,
         :normal_table,
       ],
     ]
@@ -715,13 +740,14 @@ class TestTemplate < Minitest::Test
       :constant_efficiency => 0.85,
     }
     ps[:load_component] << {
+      :id => "mc_heating",
       :location_id => "mc",
       :inflow => "heating",
     }
     ps[:load_profile] << {
       :scenario_id => "blue_sky",
-      :building_id => "mc",
-      :enduse => "heating",
+      :component_id => "mc_heating",
+      :flow => "heating",
       :file => "mc_blue_sky_heating.csv",
     }
     ps[:network_link] += [
@@ -811,18 +837,22 @@ class TestTemplate < Minitest::Test
       },
       :load_component => [
         {
+          :id => "mc_electricity",
           :location_id => "mc",
           :inflow => "electricity",
         },
         {
+          :id => "other_electricity",
           :location_id => "other",
           :inflow => "electricity",
         },
         {
+          :id => "mc_heating",
           :location_id => "mc",
           :inflow => "heating",
         },
         {
+          :id => "other_heating",
           :location_id => "other",
           :inflow => "heating",
         },
@@ -830,29 +860,30 @@ class TestTemplate < Minitest::Test
       :load_profile => [
         {
           :scenario_id => "blue_sky",
-          :building_id => "mc",
-          :enduse => "electricity",
+          :component_id => "mc_electricity",
+          :flow => "electricity",
           :file => "mc_blue_sky_electricity.csv",
         },
         {
           :scenario_id => "blue_sky",
-          :building_id => "other",
-          :enduse => "electricity",
+          :component_id => "other_electricity",
+          :flow => "electricity",
           :file => "other_blue_sky_electricity.csv",
         },
         {
           :scenario_id => "blue_sky",
-          :building_id => "mc",
-          :enduse => "heating",
+          :component_id => "mc_heating",
+          :flow => "heating",
           :file => "mc_blue_sky_heating.csv",
         },
         {
           :scenario_id => "blue_sky",
-          :building_id => "other",
-          :enduse => "heating",
+          :component_id => "other_heating",
+          :flow => "heating",
           :file => "other_blue_sky_heating.csv",
         },
       ],
+      :mover_component => [],
       :network_link => [
         {
           :source_location_id => "utility",
@@ -929,6 +960,7 @@ class TestTemplate < Minitest::Test
           :max_inflow_kW => 10.0,
         },
       ],
+      :uncontrolled_src => [],
     }
     run_and_compare(ps, 'all_building_config_options_true')
     load_profiles = ps[:load_profile].map {|p| p[:file]}
@@ -1062,11 +1094,15 @@ class TestTemplate < Minitest::Test
         secondary_efficiency: 0.85,
       },
     ]
-    ps[:load_component] << {location_id: "b1", inflow: "heating"}
+    ps[:load_component] << {
+      id: "b1_heating",
+      location_id: "b1",
+      inflow: "heating",
+    }
     ps[:load_profile] << {
       scenario_id: "s1",
-      building_id: "b1",
-      enduse: "heating",
+      component_id: "b1_heating",
+      flow: "heating",
       file: "s1_b1_heating.csv",
     }
     ps[:source_component] = [
@@ -1085,6 +1121,70 @@ class TestTemplate < Minitest::Test
       },
     ]
     tag = 'add_chp'
+    run_and_compare(ps, tag)
+    load_profiles = ps[:load_profile].map {|p| p[:file]}
+    assert(run_e2rin(tag, load_profiles))
+    assert(run_e2rin_graph(tag, load_profiles))
+  end
+
+  def test_add_cooling_load_and_chiller
+    ps = most_basic_params
+    ps[:load_component] = [
+      {
+        id: "environment_heat_sink",
+        location_id: "environment",
+        inflow: "heat_removed",
+      },
+    ]
+    ps[:uncontrolled_src] = [
+      {
+        location_id: "b1",
+        outflow: "heat_removed",
+      },
+    ]
+    ps[:load_profile] = [
+      {
+        scenario_id: "s1",
+        component_id: "b1_heat_removed_uncontrolled",
+        flow: "heat_removed",
+        file: "s1_b1_cooling.csv",
+      },
+      {
+        scenario_id: "s1",
+        component_id: "environment_heat_removed",
+        flow: "heat_removed",
+        file: "s1_environment_heat_sink.csv",
+      },
+    ]
+    ps[:source_component] = [
+      {
+        location_id: "utility",
+        outflow: "electricity",
+        is_limited: "FALSE",
+        max_outflow_kW: 0.0,
+      },
+    ]
+    ps[:mover_component] = [
+      {
+        location_id: "b1",
+        flow_moved: "heat_removed",
+        support_flow: "electricity",
+        cop: 5.0,
+      },
+    ]
+    ps[:network_link] = [
+      {
+        source_location_id: "utility",
+        destination_location_id: "b1",
+        flow: "electricity",
+      },
+      {
+        source_location_id: "b1",
+        destination_location_id: "environment",
+        flow: "heat_removed",
+      },
+    ]
+    tag = 'add_cooling_load_and_chiller'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(run_e2rin(tag, load_profiles))

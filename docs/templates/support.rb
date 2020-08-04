@@ -10,6 +10,7 @@ class Support
   #     - :component_id, string, the component to apply the fragility curve to
   #     - :fragility_id, string, the fragility curve id to be applied
   #   - :converter_component, an array of Hash with keys:
+  #     - :id, string, id of the converter_component
   #     - :location_id, string, the location of the converter
   #     - :inflow, string, the inflow type (e.g., "natural_gas", "diesel", etc.)
   #     - :outflow, string, the outflow type (e.g., "electricity", "heating", etc.)
@@ -49,10 +50,16 @@ class Support
   #     - :inflow, string, the inflow type (e.g., 'electricity', 'heating',
   #       'cooling', 'natural_gas', etc.)
   #   - :load_profile, an array of Hash with keys:
-  #     - :scenario_id
-  #     - :building_id
-  #     - :enduse
-  #     - :file
+  #     - :scenario_id, string, the id of the scenario
+  #     - :component_id, string, id of a load_component or uncontrolled_src
+  #     - :flow, string, the flow for the load profile
+  #     - :file, string, path to the csv file to load
+  #   - :mover_component, an array of Hash with keys:
+  #     - :id, string, the id of the mover
+  #     - :location_id, string, the location of the mover
+  #     - :flow_moved: string, the main flow being moved (e.g., "heating", "heat_removed", etc.)
+  #     - :support_flow: string, the support inflow required to do the moving (e.g., "electricity")
+  #     - :cop, number, the coefficient of performance relating the inflow_moved with inflow_support
   #   - :muxer_component, an array of Hash with keys:
   #     - :location_id, string, the location of the muxer
   #     - :flow, string, the type of flow through the muxer (e.g., 'electricity', 'natural_gas', 'coal', etc.)
@@ -79,10 +86,15 @@ class Support
   #     - :is_limited, boolean string ("TRUE" or "FALSE"), whether or not the source is limited
   #     - :max_outflow_kW, number, the maximum outflow in kW
   #   - :storage_component, an array of Hash with keys:
+  #     - :id, string, optional id
   #     - :location_id, string, the location of the storage
   #     - :flow, string, the flow being stored (e.g., "electricity", "diesel", etc.)
   #     - :capacity_kWh, number, > 0, the capacity of the store in kWh
   #     - :max_inflow_kW, number, >= 0, the maximum inflow to the storage in kW
+  #   - :uncontrolled_src, an array of Hash with keys:
+  #     - :id, string, id of the uncontrolled source
+  #     - :location_id, string, the location of the uncontrolled source
+  #     - :outflow, string, the flow from the uncontrolled source
 
   attr_reader(
     :component_failure_mode,
@@ -94,12 +106,14 @@ class Support
     :fragility_curve,
     :load_component,
     :load_profile,
+    :mover_component,
     :muxer_component,
     :network_link,
     :pass_through_component,
     :scenario,
     :source_component,
     :storage_component,
+    :uncontrolled_src,
   )
 
   def initialize(data, root_path=nil)
@@ -113,12 +127,14 @@ class Support
     @fragility_curve = data.fetch(:fragility_curve, [])
     @load_component = data.fetch(:load_component, [])
     @load_profile = data.fetch(:load_profile, [])
+    @mover_component = data.fetch(:mover_component, [])
     @muxer_component = data.fetch(:muxer_component, [])
     @network_link = data.fetch(:network_link, [])
     @pass_through_component = data.fetch(:pass_through_component, [])
     @scenario = data.fetch(:scenario, [])
     @source_component = data.fetch(:source_component, [])
     @storage_component = data.fetch(:storage_component, [])
+    @uncontrolled_src = data.fetch(:uncontrolled_src, [])
     process_cdfs
     expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids
@@ -303,10 +319,12 @@ class Support
     comp_infos = [
       [@converter_component, [:location_id, :outflow], "generator"],
       [@load_component, [:location_id, :inflow], ""],
-      [@load_profile, [:building_id, :enduse, :scenario_id], ""],
+      [@load_profile, [:component_id, :scenario_id], ""],
+      [@mover_component, [:location_id, :flow_moved], "mover"],
+      [@network_link, [:source_location_id, "to", :destination_location_id, :flow], ""],
       [@source_component, [:location_id, :outflow], "source"],
       [@storage_component, [:location_id, :flow], "store"],
-      [@network_link, [:source_location_id, "to", :destination_location_id, :flow], ""],
+      [@uncontrolled_src, [:location_id, :outflow], "uncontrolled"],
     ]
     # lp[:id] = "#{lp[:building_id]}_#{lp[:enduse]}_#{lp[:scenario_id]}" %>
     comp_infos.each do |tuple|
@@ -393,10 +411,13 @@ class Support
   # RETURN: (Set string), all locations referenced by all components
   def get_all_locations
     comps = [
-      @source_component,
-      @load_component,
       @converter_component,
+      @load_component,
+      @mover_component,
+      @muxer_component,
+      @source_component,
       @storage_component,
+      @uncontrolled_src,
     ]
     locations = Set.new
     comps.each do |cs|
@@ -416,7 +437,9 @@ class Support
       [@converter_component, [:location_id], [:inflow, :outflow]],
       [@source_component, [:location_id], [:outflow]],
       [@storage_component, [:location_id], [:flow]],
+      [@mover_component, [:location_id], [:flow_moved, :support_flow]],
       [@network_link, [:source_location_id, :destination_location_id], [:flow]],
+      [@uncontrolled_src, [:location_id], [:outflow]],
     ]
     comps.each do |cs, loc_keys, flow_keys|
       cs.each do |c|
@@ -442,9 +465,14 @@ class Support
 
   def get_internal_loads(loc, flow)
     inflow_port = 0
-    get_conn_info_by_location_and_flow(
+    loads_0 = get_conn_info_by_location_and_flow(
       loc, flow,
       @converter_component, :location_id, :inflow, [inflow_port])
+    support_inport = 1
+    loads_1 = get_conn_info_by_location_and_flow(
+      loc, flow,
+      @mover_component, :location_id, :support_flow, [support_inport])
+    loads_0 + loads_1
   end
 
   def get_loads(loc, flow)
@@ -474,6 +502,20 @@ class Support
     get_conn_info_by_location_and_flow(
       loc, outflow,
       @converter_component, :location_id, :outflow, [outflow_port])
+  end
+
+  def get_movers(loc, outflow)
+    outflow_port = 0
+    get_conn_info_by_location_and_flow(
+      loc, outflow,
+      @mover_component, :location_id, :flow_moved, [outflow_port])
+  end
+
+  def get_uncontrolled_sources(loc, flow)
+    outflow_port = 0
+    get_conn_info_by_location_and_flow(
+      loc, flow,
+      @uncontrolled_src, :location_id, :outflow, [outflow_port])
   end
 
   def assign_in_hash(h, keys, value)
@@ -580,6 +622,57 @@ class Support
     n
   end
 
+  # - comp_bundles: (list (list (or component-conneciton-info symbol)))
+  # - loc: string, id of the location
+  # - flow: string, id of the flow
+  # - inflow_points: Hash, inflow points for inter-location connections
+  # - outflow_points: Hash, outflow points for inter-location connections
+  # RETURN: nil
+  # NOTE: component-connection-info: (tuple id port)
+  # Adds muxers and connects everything up and returns a hash by symbol with connect info
+  def connect_in_series(comp_bundles, loc, flow, inflow_points, outflow_points)
+    bs = comp_bundles.reject {|b| b.empty?}
+    if bs.length > 1
+      bs[0..-2].zip(bs[1..-1]).each do |outflows, inflows|
+        num_outflows = outflows.length
+        num_inflows = inflows.length
+        if num_outflows == 1 and num_inflows == 1
+          if (inflows[0] == :inflow_port) and (outflows[0] == :outflow_port)
+            throw "unsupported operation"
+          elsif inflows[0] == :inflow_port
+            assign_in_hash(inflow_points, [loc, flow], outflows[0])
+          elsif outflows[0] == :outflow_port
+            assign_in_hash(outflow_points, [loc, flow], inflows[0])
+          else
+            inflow_id, inflow_port = inflows[0]
+            outflow_id, outflow_port = outflows[0]
+            add_connection(inflow_id, inflow_port, outflow_id, outflow_port, flow)
+          end
+        elsif num_outflows > 0 and num_inflows > 0
+          bus = add_muxer_component(loc, flow, num_inflows, num_outflows)
+          outflows.each_with_index do |outf, idx|
+            if outf == :outflow_port
+              assign_in_hash(outflow_points, [loc, flow], [bus, idx])
+            else
+              outflow_id, outflow_port = outf
+              add_connection(bus, idx, outflow_id, outflow_port, flow)
+            end
+          end
+          inflows.each_with_index do |inf, idx|
+            if inf == :inflow_port
+              assign_in_hash(inflow_points, [loc, flow], [bus, idx])
+            else
+              inflow_id, inflow_port = inf
+              add_connection(inflow_id, inflow_port, bus, idx, flow)
+            end
+          end
+        else
+          raise "should not be possible"
+        end
+      end
+    end
+  end
+
   def generate_connections
     inflow_points = {} # (Hash LocationID (Hash FuelID (Tuple ComponentID Port)))
     outflow_points = {} # (Hash LocationID (Hash FuelID (Tuple ComponentID Port)))
@@ -593,113 +686,16 @@ class Support
         stores = get_stores(loc, flow)
         sources = get_sources(loc, flow)
         converters = get_converters(loc, flow)
+        movers = get_movers(loc, flow)
+        ucs = get_uncontrolled_sources(loc, flow)
         num_outbound = outbound_links.length
         num_inbound = inbound_links.length
-        num_internal_loads = internal_loads.length
-        num_loads = loads.length
-        num_stores = stores.length
-        num_sources = sources.length
-        num_converters = converters.length
-        # FINAL OUTFLOWS / STORAGE COMPONENTS INTERFACE
-        num_total_outflows = (num_outbound > 0 ? 1 : 0) + num_internal_loads + num_loads
-        num_total_inflows = num_converters + (num_inbound > 0 ? 1 : 0) + num_sources    
-        if num_total_outflows == 1 and num_stores == 1
-          store_id, _, store_outport = stores[0]
-          connect_sinks_to_upstream_bus(
-            [loads, internal_loads], store_id, flow, 1)
-          if num_outbound > 0
-            conn_info = [store_id, store_outport]
-            assign_in_hash(outflow_points, [loc, flow], conn_info)
-          end
-        elsif num_total_outflows > 0 and num_stores > 0
-          bus = add_muxer_component(
-            loc, flow, num_total_inflows, num_total_outflows)
-          connect_sinks_to_upstream_bus(
-            [loads, internal_loads], bus, flow)
-          if num_outbound > 0
-            conn_info = [bus, num_loads + num_internal_loads]
-            assign_in_hash(outflow_points, [loc, flow], conn_info)
-          end
-          connect_sources_to_downstream_bus([stores], bus, flow)
-        end
-        # STORAGE COMPONENTS AND FINAL OUTPUTS / CONVERTERS, INFLOWS, and SOURCES INTERFACE
-        if num_total_inflows == 1 and num_stores == 1
-          store_id, store_port, _ = stores[0]
-          next_port = connect_sources_to_downstream_bus(
-            [sources], store_id, flow, 1)
-          if num_inbound > 0
-            conn_info = [store_id, store_port]
-            assign_in_hash(inflow_points, [loc, flow], conn_info)
-          end
-          connect_sources_to_downstream_bus(
-            [converters], store_id, flow, 1, next_port) if next_port == 0 and num_inbound == 0
-        elsif num_total_inflows > 0 and num_stores > 0
-          bus = add_muxer_component(
-            loc, flow, num_total_inflows, num_stores)
-          connect_sinks_to_upstream_bus([stores], bus, flow)
-          connect_sources_to_downstream_bus([sources], bus, flow)
-          assign_in_hash(inflow_points, [loc, flow], [bus, num_sources]) if num_inbound > 0
-          connect_sources_to_downstream_bus(
-            [converters], bus, flow, nil,
-            num_sources + (num_inbound > 0 ? 1 : 0))
-        elsif num_stores == 0 and num_total_outflows == 1 and num_total_inflows == 1
-          sources.each do |sc|
-            sc_id, sc_port = sc
-            if num_loads > 0 or num_internal_loads > 0
-              connect_sinks_to_upstream_bus(
-                [loads, internal_loads], sc_id, flow, 1, sc_port)
-            end
-            assign_in_hash(outflow_points, [loc, flow], sc) if num_outbound > 0
-          end
-          if num_inbound > 0
-            loads.each do |ld|
-              assign_in_hash(inflow_points, [loc, flow], ld)
-            end
-            internal_loads.each do |il|
-              assign_in_hash(inflow_points, [loc, flow], il)
-            end
-            if num_outbound > 0
-              # for locations A, B, C, we have a link from A->B and B->C with
-              # some fuel but nothing is going on at B. Should we delete A->B
-              # and B->C and add A->C?
-              raise "not implemented"
-            end
-          end
-          converters.each do |cc|
-            id, port = cc
-            if num_loads > 0 or num_internal_loads > 0
-              connect_sinks_to_upstream_bus(
-                [loads, internal_loads], id, flow, 1, port)
-            end
-            assign_in_hash(outflow_points, [loc, flow], cc) if num_outbound > 0
-          end
-        elsif num_stores == 0 and num_total_outflows > 0 and num_total_inflows > 0
-          inbus = add_muxer_component(
-            loc, flow,
-            num_total_inflows,
-            (num_stores > 0 ? num_stores : num_total_outflows)
-          )
-          connect_sources_to_downstream_bus(
-            [sources], inbus, flow)
-          if num_inbound > 0
-            conn_info = [inbus, num_sources]
-            assign_in_hash(inflow_points, [loc, flow], conn_info)
-          end
-          connect_sources_to_downstream_bus(
-            [converters], inbus, flow,
-            nil, num_sources + (num_inbound > 0 ? 1 : 0))
-          if num_stores > 0
-            connect_sinks_to_upstream_bus(
-              [stores], inbus, flow)
-          elsif num_total_outflows > 0
-            connect_sinks_to_upstream_bus(
-              [loads, internal_loads], inbus, flow)
-            if num_outbound > 0
-              conn_info = [inbus, num_loads + num_internal_loads]
-              assign_in_hash(outflow_points, [loc, flow], conn_info)
-            end
-          end
-        end
+        bundles = []
+        bundles << loads + internal_loads + (num_outbound > 0 ? [:outflow_port] : [])
+        bundles << stores
+        bundles << movers
+        bundles << sources + ucs + (num_inbound > 0 ? [:inflow_port] : []) + converters
+        connect_in_series(bundles, loc, flow, inflow_points, outflow_points)
       end
     end
     points = {}

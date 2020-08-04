@@ -29,8 +29,8 @@ class TestTemplate < Minitest::Test
       load_profile: [
         {
           scenario_id: "s1",
-          building_id: "b1",
-          enduse: "electricity",
+          component_id: "b1",
+          flow: "electricity",
           file: "a.csv",
         },
       ],
@@ -787,6 +787,7 @@ class TestTemplate < Minitest::Test
       },
       load_component: [
         {
+          id: "b1_electricity",
           location_id: "b1",
           inflow: "electricity"
         }
@@ -794,8 +795,8 @@ class TestTemplate < Minitest::Test
       load_profile: [
         {
           scenario_id: "s1",
-          building_id: "b1",
-          enduse: "electricity",
+          component_id: "b1_electricity",
+          flow: "electricity",
           file: "s1_b1_electricity.csv"
         }
       ],
@@ -891,6 +892,98 @@ class TestTemplate < Minitest::Test
         "b1_heating:IN(0)",
         "heating",
       ],
+    ])
+    actual = Set.new(s.connections)
+    assert_equal(expected, actual)
+  end
+
+  def test_add_uncontrolled_source_component
+    data = {
+      load_component: [
+        {
+          id: "b1_electricity",
+          location_id: "b1",
+          inflow: "electricity",
+        },
+      ],
+      network_link: [
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+      ],
+      uncontrolled_src: [
+        {
+          id: "utility_pv_array",
+          location_id: "utility",
+          outflow: "electricity",
+        },
+      ],
+    }
+    s = Support.new(data)
+    assert_equal(1, s.uncontrolled_src.length)
+    expected = Set.new([
+      ["utility_pv_array:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+    ])
+    actual = Set.new(s.connections)
+    assert_equal(expected, actual)
+  end
+
+  def test_add_movers
+    data = {
+      load_component: [
+        {
+          id: "b1_heating",
+          location_id: "b1",
+          inflow: "heating",
+        },
+      ],
+      network_link: [
+        {
+          source_location_id: "environment",
+          destination_location_id: "b1",
+          flow: "heating",
+        },
+        {
+          source_location_id: "utility",
+          destination_location_id: "b1",
+          flow: "electricity",
+        },
+      ],
+      mover_component: [
+        {
+          id: "b1_heat_pump",
+          location_id: "b1",
+          flow_moved: "heating",
+          support_flow: "electricity",
+          outflow: "heating",
+          cop: 5.0,
+        },
+      ],
+      source_component: [
+        {
+          id: "utility_electricity",
+          location_id: "utility",
+          outflow: "electricity",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+        {
+          id: "environment_heat_source",
+          location_id: "environment",
+          outflow: "heating",
+          is_limited: "FALSE",
+          max_outflow_kW: 0.0,
+        },
+      ],
+    }
+    s = Support.new(data)
+    assert_equal(1, s.mover_component.length)
+    expected = Set.new([
+      ["utility_electricity:OUT(0)", "b1_heat_pump:IN(1)", "electricity"],
+      ["environment_heat_source:OUT(0)", "b1_heat_pump:IN(0)", "heating"],
+      ["b1_heat_pump:OUT(0)", "b1_heating:IN(0)", "heating"],
     ])
     actual = Set.new(s.connections)
     assert_equal(expected, actual)

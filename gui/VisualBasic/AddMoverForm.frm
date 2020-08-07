@@ -1,14 +1,14 @@
 VERSION 5.00
-Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} AddSourceForm 
-   Caption         =   "Add Source"
-   ClientHeight    =   5055
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} AddMoverForm 
+   Caption         =   "Add Mover"
+   ClientHeight    =   4890
    ClientLeft      =   120
    ClientTop       =   450
-   ClientWidth     =   5820
-   OleObjectBlob   =   "AddSourceForm.frx":0000
+   ClientWidth     =   5835
+   OleObjectBlob   =   "AddMoverForm.frx":0000
    StartUpPosition =   1  'CenterOwner
 End
-Attribute VB_Name = "AddSourceForm"
+Attribute VB_Name = "AddMoverForm"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
@@ -194,16 +194,16 @@ Private Sub UserForm_Initialize()
     Set ws = Worksheets("menus")
     ws.Activate
     For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
-        With Me.OutflowInput
+        With Me.MainFlowInput
             .AddItem cLoc.Value
         End With
     Next cLoc
-
-    With Me.LimitedSourceInput
-        .AddItem "TRUE"
-        .AddItem "FALSE"
-    End With
-        
+    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+        With Me.SupportFlowInput
+            .AddItem cLoc.Value
+        End With
+    Next cLoc
+    
     Set ws = Worksheets("failure-mode")
     ws.Activate
     lRow = Cells(Rows.Count, 1).End(xlUp).Row
@@ -229,7 +229,7 @@ Private Sub UserForm_Initialize()
 
     CurvesListBox.MultiSelect = 2
     CurvesIncludeListBox.MultiSelect = 2
-        
+
 End Sub
 
 Private Sub CancelButton_Click()
@@ -242,6 +242,11 @@ Private Sub SaveButton_Click()
     Dim ParentSheet As Worksheet
     Dim Lr As Long
     Dim i As Integer
+    
+    'If COPInput.text <= 0 Or COPInput.text > 1 Then
+    '    MsgBox "COP must be greater than 0 and less than or equal to 1.0."
+    '    Exit Sub
+    'End If
     
     Set ParentSheet = Sheets("Components")
     ParentSheet.Activate
@@ -259,14 +264,15 @@ Private Sub SaveButton_Click()
        .Display3DShading = False
        .OnAction = "Module1.Mixed_State"
     End With
-    
-    Set ParentSheet = Sheets("source-component")
+            
+    Set ParentSheet = Sheets("mover-component")
+    ParentSheet.Activate
     Lr = LastRow(ParentSheet)
     ParentSheet.Range("A" & (Lr + 1)).Value = IDInput.text
     ParentSheet.Range("B" & (Lr + 1)).Value = LocationIDInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = OutflowInput.text
-    ParentSheet.Range("D" & (Lr + 1)).Value = LimitedSourceInput.text
-    ParentSheet.Range("E" & (Lr + 1)).Value = MaxOutflowInput.text
+    ParentSheet.Range("C" & (Lr + 1)).Value = MainFlowInput.text
+    ParentSheet.Range("D" & (Lr + 1)).Value = SupportFlowInput.text
+    ParentSheet.Range("E" & (Lr + 1)).Value = COPInput.text
 
     Set ParentSheet = Sheets("component-failure-mode")
     ParentSheet.Activate
@@ -288,5 +294,3 @@ Private Sub SaveButton_Click()
     Sheets("Components").Activate
     
 End Sub
-
-

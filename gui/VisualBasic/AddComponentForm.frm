@@ -23,7 +23,7 @@ Private Sub UserForm_Initialize()
     Set ws = Worksheets("menus")
     
     ws.Activate
-    For Each cLoc In ws.Range(Cells(6, 1), Cells(17, 1))
+    For Each cLoc In ws.Range(Cells(6, 1), Cells(19, 1))
         With Me.AddComponentInput
             .AddItem cLoc.Value
         End With
@@ -60,10 +60,14 @@ Private Sub AddComponentButton_Click()
         AddLoadForm.Show
     ElseIf AddComponentInput.text = "line (pass-through)" Then
         AddLineForm.Show
+    ElseIf AddComponentInput.text = "mover" Then
+        AddMoverForm.Show
     ElseIf AddComponentInput.text = "source" Then
         AddSourceForm.Show
     ElseIf AddComponentInput.text = "thermal energy storage (storage)" Then
         AddStorageForm.Show
+    ElseIf AddComponentInput.text = "uncontrolled source" Then
+        AddUncontrolledSourceForm.Show
     Else
         MsgBox "Invalid Entry"
     End If

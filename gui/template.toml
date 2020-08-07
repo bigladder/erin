@@ -11,17 +11,19 @@ parameter "fragility_curve_csv_path", :default=>"fragility-curve.csv"
 parameter "general_csv_path", :default=>"general.csv"
 parameter "load_component_csv_path", :default=>"load-component.csv"
 parameter "load_profile_csv_path", :default=>"load-profile.csv"
+parameter "mover_component_csv_path", :default=>"mover-component.csv"
 parameter "network_link_csv_path", :default=>"network-link.csv"
 parameter "pass_through_component_csv_path", :default=>"pass-through-component.csv"
 parameter "scenario_csv_path", :default=>"scenario.csv"
 parameter "source_component_csv_path", :default=>"source-component.csv"
 parameter "storage_component_csv_path", :default=>"storage-component.csv"
+parameter "uncontrolled_src_csv_path", :default=>"uncontrolled-src.csv"
 parameter "expand_load_paths", :default=>true
 %>
 <%
    require 'set'
    require_relative 'support.rb'
-   THIS_DIR = File.dirname(__FILE__)
+   THIS_DIR = Support.get_script_directory
    data = {}
    Dir.chdir(THIS_DIR) do
      data[:component_failure_mode] = Support.load_csv(component_failure_mode_csv_path)
@@ -35,11 +37,13 @@ parameter "expand_load_paths", :default=>true
      data[:general] = Support.load_key_value_csv(general_csv_path)
      data[:load_component] = Support.load_csv(load_component_csv_path)
      data[:load_profile] = Support.load_csv(load_profile_csv_path)
+     data[:mover_component] = Support.load_csv(mover_component_csv_path)
      data[:network_link] = Support.load_csv(network_link_csv_path)
      data[:pass_through_component] = Support.load_csv(pass_through_component_csv_path)
      data[:scenario] = Support.load_csv(scenario_csv_path)
      data[:source_component] = Support.load_csv(source_component_csv_path)
      data[:storage_component] = Support.load_csv(storage_component_csv_path)
+     data[:uncontrolled_src] = Support.load_csv(uncontrolled_src_csv_path)
    end
    if expand_load_paths
      s = Support.new(data, THIS_DIR)
@@ -81,13 +85,29 @@ failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
 fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
 <%   end %>
 <% end %>
+<% s.uncontrolled_src.each do |c| %>
+[components.<%= c[:id] %>]
+type = "uncontrolled_source"
+outflow = "<%= c[:outflow] %>"
+<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   if fms.length > 0 %>
+failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   s.load_profile.each do |lp| %>
+<%     next unless lp[:component_id] == c[:id] %>
+supply_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
+<%   end %>
+<% end %>
 <% s.load_component.each do |c| %>
 [components.<%= c[:id] %>]
 type = "load"
 inflow = "<%= c[:inflow] %>"
 <%   s.load_profile.each do |lp| %>
-<%     next unless ( (lp[:building_id] == c[:location_id]) and %>
-<%                   (c[:inflow] == lp[:enduse]) ) %>
+<%     next unless lp[:component_id] == c[:id] %>
 loads_by_scenario.<%= lp[:scenario_id] %> = "<%= lp[:id] %>"
 <%   end %>
 <%   fms = s.failure_modes_for_component(c[:id]) %>
@@ -123,6 +143,22 @@ outflow = "<%= c[:flow] %>"
 capacity_unit = "kWh"
 capacity = <%= c[:capacity_kWh] %> # ...
 max_inflow = <%= c[:max_inflow_kW] %> # ...
+<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   if fms.length > 0 %>
+failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+<%   end %>
+<%   fs = s.fragilities_for_component(c[:id]) %>
+<%   if fs.length > 0 %>
+fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+<%   end %>
+<% end %>
+<% s.mover_component.each do |c| %>
+[components.<%= c[:id] %>]
+type = "mover"
+inflow0 = "<%= c[:flow_moved] %>"
+inflow1 = "<%= c[:support_flow] %>"
+outflow = "<%= c[:flow_moved] %>"
+COP = <%= c[:cop] %> # ...
 <%   fms = s.failure_modes_for_component(c[:id]) %>
 <%   if fms.length > 0 %>
 failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]

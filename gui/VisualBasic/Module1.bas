@@ -322,6 +322,8 @@ Sub Run()
     Dim Sep As String
     Dim IsWin As Boolean
     Dim IsMac As Boolean
+    Dim Path As String
+    Dim folder As Object
     Dim pxt_path As String
     Dim template_path As String
     Dim output_path As String
@@ -358,12 +360,21 @@ Sub Run()
     ExportAsCSV Sheets("general")
     ExportAsCSV Sheets("load-component")
     ExportAsCSV Sheets("load-profile")
+    ExportAsCSV Sheets("mover-component")
     ExportAsCSV Sheets("muxer-component")
     ExportAsCSV Sheets("network-link")
     ExportAsCSV Sheets("pass-through-component")
     ExportAsCSV Sheets("scenario")
     ExportAsCSV Sheets("source-component")
     ExportAsCSV Sheets("storage-component")
+    ExportAsCSV Sheets("uncontrolled-src")
+    
+    Path = ThisWorkbook.Path & Sep & "in.toml"
+    Set folder = CreateObject("scripting.filesystemobject")
+
+    If folder.FileExists(Path) Then
+        folder.DeleteFile Path, True
+    End If
     
     'pxt_path = ThisWorkbook.Path & Sep & "in.pxt"
     template_path = ThisWorkbook.Path & Sep & "template.toml"

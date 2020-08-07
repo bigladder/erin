@@ -24,10 +24,10 @@ Private Sub UserForm_Initialize()
     Dim ws As Worksheet
     
     Set oDictionary = CreateObject("Scripting.Dictionary")
-    Set ws = Worksheets("Components")
+    Set ws = Worksheets("load-component")
     ws.Activate
     lRow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("C4:C" & lRow)
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
         With Me.LocationIDInput
             If oDictionary.exists(cLoc.Value) Then

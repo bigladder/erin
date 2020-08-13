@@ -193,22 +193,22 @@ Private Sub UserForm_Initialize()
 
     Set ws = Worksheets("menus")
     ws.Activate
-    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+    For Each cLoc In ws.Range("flows")
         With Me.InflowInput
             .AddItem cLoc.Value
         End With
     Next cLoc
-    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+    For Each cLoc In ws.Range("flows")
         With Me.PrimaryOutflowInput
             .AddItem cLoc.Value
         End With
     Next cLoc
-    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+    For Each cLoc In ws.Range("flows")
         With Me.SecondaryOutflowInput
             .AddItem cLoc.Value
         End With
     Next cLoc
-    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+    For Each cLoc In ws.Range("flows")
         With Me.LossflowInput
             .AddItem cLoc.Value
         End With

@@ -193,12 +193,12 @@ Private Sub UserForm_Initialize()
 
     Set ws = Worksheets("menus")
     ws.Activate
-    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+    For Each cLoc In ws.Range("flows")
         With Me.MainFlowInput
             .AddItem cLoc.Value
         End With
     Next cLoc
-    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+    For Each cLoc In ws.Range("flows")
         With Me.SupportFlowInput
             .AddItem cLoc.Value
         End With

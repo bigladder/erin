@@ -16,6 +16,45 @@ Attribute VB_Exposed = False
 ' Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
 ' See the LICENSE.txt file for additional terms and conditions.
 
+Private Sub UserForm_Initialize()
+    Dim oDictionary As Object
+    Dim lRow As Long
+    Dim rngItems As Range
+    Dim cLoc As Range
+    Dim ws As Worksheet
+    
+    Set oDictionary = CreateObject("Scripting.Dictionary")
+    Set ws = Worksheets("fixed-cdf")
+    ws.Activate
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
+    For Each cLoc In rngItems
+        With Me.FailureCDFInput
+            If oDictionary.exists(cLoc.Value) Then
+                'Do Nothing
+            Else
+                oDictionary.Add cLoc.Value, 0
+                .AddItem cLoc.Value
+            End If
+        End With
+    Next cLoc
+    Set oDictionary = CreateObject("Scripting.Dictionary")
+    Set ws = Worksheets("fixed-cdf")
+    ws.Activate
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
+    For Each cLoc In rngItems
+        With Me.RepairCDFInput
+            If oDictionary.exists(cLoc.Value) Then
+                'Do Nothing
+            Else
+                oDictionary.Add cLoc.Value, 0
+                .AddItem cLoc.Value
+            End If
+        End With
+    Next cLoc
+End Sub
+
 Private Sub CancelButton_Click()
 
     Unload Me

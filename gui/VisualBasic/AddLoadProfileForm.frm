@@ -38,10 +38,25 @@ Private Sub UserForm_Initialize()
             End If
         End With
     Next cLoc
+    Set oDictionary = CreateObject("Scripting.Dictionary")
+    Set ws = Worksheets("uncontrolled-src")
+    ws.Activate
+    lRow = Cells(Rows.Count, 3).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
+    For Each cLoc In rngItems
+        With Me.LocationIDInput
+            If oDictionary.exists(cLoc.Value) Then
+                'Do Nothing
+            Else
+                oDictionary.Add cLoc.Value, 0
+                .AddItem cLoc.Value
+            End If
+        End With
+    Next cLoc
 
     Set ws = Worksheets("menus")
     ws.Activate
-    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+    For Each cLoc In ws.Range("flows")
         With Me.FlowInput
             .AddItem cLoc.Value
         End With

@@ -186,7 +186,7 @@ Private Sub UserForm_Initialize()
     'initializes list of flows
     Set ws = Worksheets("menus")
     ws.Activate
-    For Each cLoc In ws.Range(Cells(22, 1), Cells(25, 1))
+    For Each cLoc In ws.Range("flows")
         With Me.FlowInput
             .AddItem cLoc.Value
         End With

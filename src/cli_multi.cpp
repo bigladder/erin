@@ -18,7 +18,7 @@ doit(const std::string& input_toml, const std::string& timeseries_csv, const std
   std::cout << "timeseries_csv  : " << timeseries_csv << "\n";
   std::cout << "stats_csv       : " << stats_csv << "\n";
 
-  auto m = ::ERIN::Main{input_toml};
+  auto m = ERIN::Main{input_toml};
   auto out = m.run_all();
   std::cout << "result of m.run_all() = "
     << (out.get_is_good() ? "good" : "failed") << "\n";

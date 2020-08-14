@@ -16,7 +16,8 @@
 namespace toml_helper
 {
   template <class T>
-  std::optional<T> read_table_field_with_optional(
+  std::optional<T>
+  read_table_field_with_optional(
       const toml::table& tt,
       const std::vector<std::string>& keys,
       std::string& field_read)
@@ -33,7 +34,8 @@ namespace toml_helper
   }
 
   template <class T>
-  T read_required_table_field(
+  T
+  read_required_table_field(
       const toml::table& tt,
       const std::vector<std::string>& keys,
       std::string& field_read)
@@ -51,7 +53,8 @@ namespace toml_helper
   }
 
   template <class T>
-  T read_optional_table_field(
+  T
+  read_optional_table_field(
       const toml::table& tt,
       const std::vector<std::string>& keys,
       const T& default_value,

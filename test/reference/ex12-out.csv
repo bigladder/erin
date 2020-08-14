@@ -1,0 +1,7 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),L:achieved (kW),L:requested (kW),S:achieved (kW),S:requested (kW)
+blue_sky,P0000-00-00T00:00:00,0,1,1,1,1
+blue_sky,P0000-00-00T00:00:00,10,0,1,0,1
+blue_sky,P0000-00-00T00:00:00,15,1,1,1,1
+blue_sky,P0000-00-00T00:00:00,25,0,1,0,1
+blue_sky,P0000-00-00T00:00:00,30,1,1,1,1
+blue_sky,P0000-00-00T00:00:00,40,0,0,0,0

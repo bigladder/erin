@@ -9,3 +9,4 @@ todo.txt
 *.xlsx
 *.trace
 header.txt
+.vimrc

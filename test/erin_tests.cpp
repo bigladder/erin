@@ -6786,6 +6786,82 @@ TEST(ErinBasicsTest, Test_muxer_dispatch_strategy)
   }
 }
 
+TEST(ErinBasicsTest, Test_reliability_schedule)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"hours\"\n"
+    "max_time = 40\n"
+    "############################################################\n"
+    "[loads.building_electrical]\n"
+    "time_unit = \"hours\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,1.0],[40.0]]\n"
+    "############################################################\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "failure_modes = [\"fm\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"building_electrical\"\n"
+    "############################################################\n"
+    "[cdf.every_10]\n"
+    "type = \"fixed\"\n"
+    "value = 10\n"
+    "time_unit = \"hours\"\n"
+    "[cdf.every_5]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"hours\"\n"
+    "############################################################\n"
+    "[failure_mode.fm]\n"
+    "failure_cdf = \"every_10\"\n"
+    "repair_cdf = \"every_5\"\n"
+    "############################################################\n"
+    "[networks.nw]\n"
+    "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "############################################################\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"hours\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 40\n"
+    "max_occurrences = 1\n"
+    "network = \"nw\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results_map = out.get_results();
+  ASSERT_EQ(1, results_map.size());
+  const auto& bs_res = results_map["blue_sky"];
+  ASSERT_EQ(1, bs_res.size());
+  const auto& bs_res0 = bs_res[0];
+  const auto& rez = bs_res0.get_results();
+  std::set<std::string> expected_comp_ids{"L", "S"};
+  ASSERT_EQ(expected_comp_ids.size(), rez.size());
+  const auto& comp_ids = bs_res0.get_component_ids();
+  std::set<std::string> actual_comp_ids{};
+  for (const auto& id : comp_ids) {
+    actual_comp_ids.emplace(id);
+  }
+  ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
+  EXPECT_EQ(actual_comp_ids, expected_comp_ids);
+  auto ss_map = bs_res0.get_statistics();
+  //0--10,15--25,30--40
+  ERIN::RealTimeType L_max_downtime{5*3600};
+  ERIN::FlowValueType L_load_not_served{10.0*3600.0*1.0};
+  ERIN::FlowValueType L_total_energy{40.0*3600*1.0 - L_load_not_served};
+  auto L_ss = ss_map["L"];
+  EXPECT_EQ(L_ss.max_downtime, L_max_downtime);
+  EXPECT_EQ(L_ss.load_not_served, L_load_not_served);
+  EXPECT_EQ(L_ss.total_energy, L_total_energy);
+}
+
 int
 main(int argc, char **argv)
 {

@@ -1261,10 +1261,10 @@ namespace ERIN
             std::unordered_map<std::string,toml::value>{});
       for (const auto& pair: intensity_tmp) {
         double v{0.0};
-        try {
+        if (pair.second.is_floating()) {
           v = pair.second.as_floating();
         }
-        catch (const toml::exception&) {
+        else {
           v = static_cast<double>(pair.second.as_integer());
         }
         intensity.insert(std::make_pair(pair.first, v));

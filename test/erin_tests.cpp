@@ -3600,7 +3600,7 @@ TEST(ErinDevs, Test_smart_port_object)
   EXPECT_FALSE(p.should_propagate_achieved_at(t2));
   auto p1 = p.with_requested(v1, t1);
   EXPECT_EQ(p1.get_time_of_last_change(), t1);
-  ASSERT_THROW(p1.with_requested(v2, t0), std::invalid_argument);
+  ASSERT_THROW(auto junk = p1.with_requested(v2, t0), std::invalid_argument);
   EXPECT_EQ(p1.get_requested(), v1);
   EXPECT_EQ(p1.get_achieved(), v1);
   EXPECT_FALSE(p1.should_propagate_request_at(t0));

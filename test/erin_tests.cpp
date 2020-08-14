@@ -905,17 +905,8 @@ TEST(ErinBasicsTest, TestSumRequestedLoad)
   expected = 0.0;
   actual = E::sum_requested_load(vs);
   EXPECT_NEAR(expected, actual, tolerance);
-  try {
-    vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
-    actual = E::sum_requested_load(vs);
-    ASSERT_TRUE(false) << "expected exception but didn't throw";
-  }
-  catch (const std::invalid_argument&) {
-    ASSERT_TRUE(true);
-  }
-  catch (...) {
-    ASSERT_TRUE(false) << "unexpected exception thrown";
-  }
+  vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
+  ASSERT_THROW(E::sum_requested_load(vs), std::invalid_argument);
 }
 
 TEST(ErinBasicsTest, TestSumAchievedLoads)
@@ -935,17 +926,8 @@ TEST(ErinBasicsTest, TestSumAchievedLoads)
   expected = 0.0;
   actual = E::sum_achieved_load(vs);
   EXPECT_NEAR(expected, actual, tolerance);
-  try {
-    vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
-    actual = E::sum_achieved_load(vs);
-    ASSERT_TRUE(false) << "expected exception but didn't throw";
-  }
-  catch (const std::invalid_argument&) {
-    ASSERT_TRUE(true);
-  }
-  catch (...) {
-    ASSERT_TRUE(false) << "unexpected exception thrown";
-  }
+  vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
+  ASSERT_THROW(E::sum_achieved_load(vs), std::invalid_argument);
 }
 
 TEST(ErinBasicsTest, ScenarioResultsToCSV)
@@ -3618,12 +3600,7 @@ TEST(ErinDevs, Test_smart_port_object)
   EXPECT_FALSE(p.should_propagate_achieved_at(t2));
   auto p1 = p.with_requested(v1, t1);
   EXPECT_EQ(p1.get_time_of_last_change(), t1);
-  try {
-    auto p_junk = p1.with_requested(v2, t0);
-    ASSERT_FALSE(true) << "didn't catch a reverse time exception...";
-  } catch (const std::invalid_argument&) {
-    // passed
-  }
+  ASSERT_THROW(p1.with_requested(v2, t0), std::invalid_argument);
   EXPECT_EQ(p1.get_requested(), v1);
   EXPECT_EQ(p1.get_achieved(), v1);
   EXPECT_FALSE(p1.should_propagate_request_at(t0));

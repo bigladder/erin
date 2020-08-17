@@ -10,10 +10,10 @@ csv_file = "ex02.csv"
 [components.electric_utility]
 type = "source"
 # Point of Common Coupling for Electric Utility
-output_stream = "electricity"
+outflow = "electricity"
 [components.cluster_01_electric]
 type = "load"
-input_stream = "electricity"
+inflow = "electricity"
 loads_by_scenario.blue_sky = "building_electrical"
 ############################################################
 [networks.normal_operations]

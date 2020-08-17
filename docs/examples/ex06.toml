@@ -54,10 +54,10 @@ type = "source"
 outflow = "coal"
 [components.steam_loop]
 type = "muxer"
-stream = "steam"
+flow = "steam"
 num_inflows = 1
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.waste_heat_to_electricity]
 type = "converter"
 inflow = "waste_heat"
@@ -66,43 +66,43 @@ lossflow = "waste_heat"
 constant_efficiency = 0.3
 [components.electric_bus]
 type = "muxer"
-stream = "electricity"
+flow = "electricity"
 num_inflows = 2
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.elec_line_from_utility]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.elec_line_to_c1]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.elec_line_to_c2]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.steam_line_to_c1]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.steam_line_to_c2]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.c1_steam_mux]
 type = "muxer"
-stream = "steam"
+flow = "steam"
 num_inflows = 2
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.c2_steam_mux]
 type = "muxer"
-stream = "steam"
+flow = "steam"
 num_inflows = 2
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.steam_c1_to_c2]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.steam_c2_to_c1]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [networks.nw_1]
 connections = [
   # Electric Network

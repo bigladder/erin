@@ -39,7 +39,6 @@ inflow = "waste_heat"
 outflow = "district_hot_water"
 lossflow = "waste_heat"
 constant_efficiency = 0.5
-dispatch_strategy = "dump_load"
 [networks.nw01]
 connections = [["S:OUT(0)", "C0:IN(0)", "natural_gas"],
                ["C0:OUT(0)", "LE:IN(0)", "electricity"],

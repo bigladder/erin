@@ -1,0 +1,68 @@
+
+
+############################################################
+# General Simulation Information
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+max_time = 100 # ...
+############################################################
+# Load Profiles
+[loads.b1_electricity_s1]
+csv_file = "s1_b1_electricity.csv"
+[loads.b1_heating_s1]
+csv_file = "s1_b1_heating.csv"
+############################################################
+# Components
+[components.utility_natural_gas_source]
+type = "source"
+outflow = "natural_gas"
+[components.b1_electricity]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.s1 = "b1_electricity_s1"
+[components.b1_heating]
+type = "load"
+inflow = "heating"
+loads_by_scenario.s1 = "b1_heating_s1"
+[components.b1_dual_electricity_heating_generator_stage_1]
+type = "converter"
+inflow = "natural_gas"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency = 0.4 # ...
+[components.b1_dual_electricity_heating_generator_stage_2]
+type = "converter"
+inflow = "waste_heat"
+outflow = "heating"
+lossflow = "waste_heat"
+constant_efficiency = 0.85 # ...
+############################################################
+# Fragility Curves
+############################################################
+# Cumulative Distribution Functions
+[cdf.every_30_years]
+type = "fixed"
+value = 262800 # ...
+time_unit = "hours"
+############################################################
+# Failure Modes
+############################################################
+# Networks
+[networks.nw]
+connections = [
+  ["b1_dual_electricity_heating_generator_stage_1:OUT(0)", "b1_electricity:IN(0)", "electricity"],
+  ["b1_dual_electricity_heating_generator_stage_1:OUT(1)", "b1_dual_electricity_heating_generator_stage_2:IN(0)", "waste_heat"],
+  ["b1_dual_electricity_heating_generator_stage_2:OUT(0)", "b1_heating:IN(0)", "heating"],
+  ["utility_natural_gas_source:OUT(0)", "b1_dual_electricity_heating_generator_stage_1:IN(0)", "natural_gas"],
+  ]
+############################################################
+# Scenarios
+[scenarios.s1]
+time_unit = "hours"
+occurrence_distribution = {type = "fixed", value = 262800, time_unit="hours"}
+duration = 336 # ...
+max_occurrences = -1 # ...
+calculate_reliability = false
+network = "nw"

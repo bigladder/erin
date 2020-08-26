@@ -16,18 +16,18 @@ type = "source"
 outflow = "electricity"
 [components.cooling_load]
 type = "uncontrolled_source"
-output_stream = "heat_removed"
+outflow = "heat_removed"
 supply_by_scenario.blue_sky = "cooling"
 [components.environment_sink]
 type = "load"
-input_stream = "heat_removed"
+inflow = "heat_removed"
 loads_by_scenario.blue_sky = "environment"
 [components.chiller]
 type = "mover"
 inflow0 = "heat_removed"
 inflow1 = "electricity"
 outflow = "heat_removed"
-COP = 5.0
+cop = 5.0
 [networks.nw]
 connections = [
     ["cooling_load:OUT(0)",  "chiller:IN(0)", "heat_removed"],

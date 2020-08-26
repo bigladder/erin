@@ -460,10 +460,11 @@ Consider a non-uniform request of say [50, 10, 90, 50] (= 200 kW) on the same mu
 An "`in_order`" dispatch would provide [50, 10, 40, 0] (= 100 kW).
 In contrast, a "`distribute`" dispatch strategy would provide [30, 10, 30, 30] (= 100 kW) to each outflow port.
 
-| key    | type | required? | notes                          |
-| ----   | --   | --        | --------                       |
-| `type` | str  | yes       | must be "pass_through"         |
-| `flow` | str  | yes       | type of flow (inflow, outflow) |
+| key           | type   | required? | notes                          |
+| ----          | --     | --        | --------                       |
+| `type`        | str    | yes       | must be "pass_through"         |
+| `flow`        | str    | yes       | type of flow (inflow, outflow) |
+| `max_outflow` | real>0 | no        | defaults to infinite flow      |
 
 : `components`: Pass-Through Component {#tbl:pass-through}
 

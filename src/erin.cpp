@@ -1002,21 +1002,20 @@ namespace ERIN
       fragility_map&& frags) const
   {
     bool has_limits{false};
-    std::string field_read;
-    auto min_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"min_outflow"}, 0.0, field_read);
-    has_limits = field_read == "min_outflow";
-    field_read = "";
+    std::string field_read{};
+    FlowValueType min_outflow{0.0};
     auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
         tt, {"max_outflow"}, min_outflow, field_read);
-    has_limits = has_limits || (field_read == "max_outflow");
+    has_limits = field_read == "max_outflow";
     std::unique_ptr<Component> pass_through_comp;
-    if (has_limits)
+    if (has_limits) {
       pass_through_comp = std::make_unique<PassThroughComponent>(
           id, std::string(stream), Limits{min_outflow, max_outflow}, std::move(frags));
-    else
+    }
+    else {
       pass_through_comp = std::make_unique<PassThroughComponent>(
           id, std::string(stream), std::move(frags));
+    }
     components.insert(
         std::make_pair(id, std::move(pass_through_comp)));
   }

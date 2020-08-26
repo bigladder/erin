@@ -15,8 +15,7 @@ max_outflow = 5.0
 outflow = "electricity"
 [components.electric_battery]
 type = "store"
-outflow = "electricity"
-inflow = "electricity"
+flow = "electricity"
 capacity_unit = "kWh"
 capacity = 20.0
 max_inflow = 5.0

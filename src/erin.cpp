@@ -888,11 +888,9 @@ namespace ERIN
     const auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
         tt, {"max_outflow", "max_output"}, 0.0, field_read);
     bool is_limited{field_read != ""};
-    const auto min_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"min_outflow", "min_output"}, 0.0, field_read);
-    is_limited = is_limited || (field_read != "");
     Limits lim{};
     if (is_limited) {
+      FlowValueType min_outflow{0.0};
       lim = Limits{min_outflow, max_outflow};
     }
     std::unique_ptr<Component> source_comp = std::make_unique<SourceComponent>(

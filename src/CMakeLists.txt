@@ -121,6 +121,9 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
   add_coverage(${CMAKE_PROJECT_NAME})
 endif()
 
+add_executable(e2rin_csv_test erin_csv.cpp erin_csv.h)
+target_include_directories(e2rin_csv_test
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
 add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
 target_include_directories(e2rin
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"

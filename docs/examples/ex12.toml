@@ -11,11 +11,11 @@ time_rate_pairs = [[0.0,1.0],[40.0]]
 ############################################################
 [components.S]
 type = "source"
-output_stream = "electricity"
+outflow = "electricity"
 failure_modes = ["fm"]
 [components.L]
 type = "load"
-input_stream = "electricity"
+inflow = "electricity"
 loads_by_scenario.blue_sky = "building_electrical"
 ############################################################
 [cdf.every_10]

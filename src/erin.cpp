@@ -2668,7 +2668,34 @@ namespace ERIN
     // 3. run the simulation
     const int max_no_advance{static_cast<int>(components.size()) * 10};
     const auto sim_good = run_devs(sim, sim_max_time, max_no_advance, "run_all:scenario");
-    return AllResults{sim_good, out};
+    if (!sim_good) {
+      return AllResults{sim_good, out};
+    }
+    bool all_subsims_good{true};
+    using size_type = std::vector<std::string>::size_type;
+    std::vector<std::string> problem_scenarios{};
+    std::vector<size_type> scenario_indexes{};
+    for (const auto& item : out) {
+      const auto& scenario_id = item.first;
+      const auto& results = item.second;
+      for (size_type idx{0}; idx < results.size(); ++idx) {
+        const auto& r = results[idx];
+        const auto r_is_good = r.get_is_good();
+        all_subsims_good = all_subsims_good && r_is_good;
+        if (!r_is_good) {
+          problem_scenarios.emplace_back(scenario_id);
+          scenario_indexes.emplace_back(idx);
+        }
+      }
+    }
+    if (problem_scenarios.size() > 0) {
+      std::cout << "ERROR! Issues simulating the following scenarios:\n";
+      for (size_type idx{0}; idx < problem_scenarios.size(); ++idx) {
+        std::cout << "Scenario " << problem_scenarios[idx]
+                  << "[" << scenario_indexes[idx] << "]\n";
+      }
+    }
+    return AllResults{all_subsims_good, out};
   }
 
   RealTimeType

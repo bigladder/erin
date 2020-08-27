@@ -2653,7 +2653,7 @@ namespace ERIN
           // ss = scenario start (seconds)
           [this, scenario_id, &out](RealTimeType ss) {
             if constexpr (debug_level >= debug_level_high) {
-            std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
+              std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
             }
             auto result = this->run(scenario_id, ss);
             auto& results = out.at(scenario_id);

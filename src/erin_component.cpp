@@ -625,12 +625,12 @@ namespace ERIN
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
     if constexpr (debug_level >= debug_level_high) {
+    auto the_id = get_id();
       std::cout << "SourceComponent::add_to_network("
                 << "adevs::Digraph<FlowValueType>& network); id = "
                 << the_id << "\n";
     }
     bool has_reliability{reliability_schedule.size() > 0};
-    auto the_id = get_id();
     auto stream = get_output_stream();
     if (is_failed || limits.get_is_limited()) {
       if constexpr (debug_level >= debug_level_high) {

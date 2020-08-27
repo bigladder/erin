@@ -158,7 +158,7 @@ namespace ERIN
   {
     public:
       Limits();
-      Limits(FlowValueType max);
+      explicit Limits(FlowValueType max);
       Limits(FlowValueType min, FlowValueType max);
 
       [[nodiscard]] bool get_is_limited() const { return is_limited; }

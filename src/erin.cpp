@@ -2613,10 +2613,58 @@ namespace ERIN
           << "stream_ids.size() = " << stream_ids.size() << "\n";
       throw std::runtime_error(oss.str());
     }
-    if constexpr (debug_level >= debug_level_high) {
+    if ((!sim_good) || (debug_level >= debug_level_high)) {
+      if (!sim_good) {
+        std::cout << "ERROR DUMP for " << scenario_id << ":\n";
+      }
       std::cout << "results:\n";
+      using size_type = std::vector<Datum>::size_type;
+      size_type num_results{0};
+      bool is_first{true};
       for (const auto& p : results) {
-        std::cout << "... " << p.first << ": " << vec_to_string<Datum>(p.second) << "\n";
+        if (is_first) {
+          is_first = false;
+          std::cout << p.first << ":time,"
+                    << p.first << ":requested,"
+                    << p.first << ":achieved";
+          num_results = p.second.size();
+        }
+        else {
+          std::cout << ","
+                    << p.first << ":time,"
+                    << p.first << ":requested,"
+                    << p.first << ":achieved";
+          num_results = std::max(num_results, results.size());
+        }
+      }
+      std::cout << "\n";
+      for (size_type idx{0}; idx < num_results; ++idx) {
+        is_first = true;
+        for (const auto& p : results) {
+          auto results_size = p.second.size();
+          if (is_first) {
+            if (idx < results_size) {
+              std::cout <<        p.second[idx].time
+                        << "," << p.second[idx].requested_value
+                        << "," << p.second[idx].achieved_value;
+            }
+            else {
+              std::cout << "--,--,--";
+            }
+            is_first = false;
+          }
+          else {
+            if (idx < results_size) {
+              std::cout << "," << p.second[idx].time
+                        << "," << p.second[idx].requested_value
+                        << "," << p.second[idx].achieved_value;
+              }
+            else {
+              std::cout << ",--,--,--";
+            }
+          }
+        }
+        std::cout << "\n";
       }
       std::cout << "stream_ids:\n";
       for (const auto& p : stream_ids) {
@@ -2873,14 +2921,12 @@ namespace ERIN
       }
       if (non_advance_count >= max_no_advance) {
         sim_good = false;
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "ERROR: non_advance_count > max_no_advance:\n";
-          std::cout << "run_id           : " << run_id << "\n";
-          std::cout << "non_advance_count: " << non_advance_count << "\n";
-          std::cout << "max_no_advance   : " << max_no_advance << "\n";
-          std::cout << "time.real        : " << t.real << "\n";
-          std::cout << "time.logical     : " << t.logical << "\n";
-        }
+        std::cout << "ERROR: non_advance_count > max_no_advance:\n";
+        std::cout << "run_id           : " << run_id << "\n";
+        std::cout << "non_advance_count: " << non_advance_count << "\n";
+        std::cout << "max_no_advance   : " << max_no_advance << "\n";
+        std::cout << "time.real        : " << t.real << " seconds\n";
+        std::cout << "time.logical     : " << t.logical << "\n";
         break;
       }
       if constexpr (debug_level >= debug_level_high) {

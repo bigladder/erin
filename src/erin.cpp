@@ -1002,21 +1002,20 @@ namespace ERIN
       fragility_map&& frags) const
   {
     bool has_limits{false};
-    std::string field_read;
-    auto min_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"min_outflow"}, 0.0, field_read);
-    has_limits = field_read == "min_outflow";
-    field_read = "";
+    std::string field_read{};
+    FlowValueType min_outflow{0.0};
     auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
         tt, {"max_outflow"}, min_outflow, field_read);
-    has_limits = has_limits || (field_read == "max_outflow");
+    has_limits = field_read == "max_outflow";
     std::unique_ptr<Component> pass_through_comp;
-    if (has_limits)
+    if (has_limits) {
       pass_through_comp = std::make_unique<PassThroughComponent>(
           id, std::string(stream), Limits{min_outflow, max_outflow}, std::move(frags));
-    else
+    }
+    else {
       pass_through_comp = std::make_unique<PassThroughComponent>(
           id, std::string(stream), std::move(frags));
+    }
     components.insert(
         std::make_pair(id, std::move(pass_through_comp)));
   }
@@ -1261,10 +1260,10 @@ namespace ERIN
             std::unordered_map<std::string,toml::value>{});
       for (const auto& pair: intensity_tmp) {
         double v{0.0};
-        try {
+        if (pair.second.is_floating()) {
           v = pair.second.as_floating();
         }
-        catch (const toml::exception&) {
+        else {
           v = static_cast<double>(pair.second.as_integer());
         }
         intensity.insert(std::make_pair(pair.first, v));
@@ -2436,11 +2435,15 @@ namespace ERIN
   // Main
   // main class that runs the simulation from file
   Main::Main(const std::string& input_file_path):
+    Main(TomlInputReader{input_file_path})
+  {
+  }
+
+  Main::Main(TomlInputReader reader):
+    sim_info{reader.read_simulation_info()},
     failure_probs_by_comp_id_by_scenario_id{}
   {
-    auto reader = TomlInputReader{input_file_path};
     // Read data into private class fields
-    sim_info = reader.read_simulation_info();
     auto loads_by_id = reader.read_loads();
     auto fragilities = reader.read_fragility_data();
     ReliabilityCoordinator rc{};
@@ -2452,18 +2455,9 @@ namespace ERIN
     components = reader.read_components(loads_by_id, fragilities, fms, rc);
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
-    bool calculate_the_reliability_schedule{false};
-    for (const auto& item : scenarios) {
-      if (item.second.get_calc_reliability()) {
-        calculate_the_reliability_schedule = true;
-        break;
-      }
-    }
-    if (calculate_the_reliability_schedule) {
-      reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
-          sim_info.get_max_time()
-          );
-    }
+    reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
+        sim_info.get_max_time_in_seconds()
+        );
     check_data();
     generate_failure_fragilities();
     rand_fn = sim_info.make_random_function();
@@ -2569,6 +2563,15 @@ namespace ERIN
       clipped_reliability_schedule = rezero_times<std::string>(
           reliability_schedule,
           scenario_start_s);
+      if constexpr (debug_level >= debug_level_high) {
+        for (const auto& item : clipped_reliability_schedule) {
+          std::cout << item.first << ":\n";
+          for (const auto& x : item.second) {
+            std::cout << x << " ";
+          }
+          std::cout << "\n";
+        }
+      }
     }
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
@@ -2692,23 +2695,9 @@ namespace ERIN
   Main
   make_main_from_string(const std::string& raw_toml)
   {
-    std::stringstream ss;
+    std::stringstream ss{};
     ss << raw_toml;
-    TomlInputReader tir{ss};
-    const auto si = tir.read_simulation_info();
-    const auto loads = tir.read_loads();
-    const auto fragilities = tir.read_fragility_data();
-    ReliabilityCoordinator rc{};
-    const auto cdfs = tir.read_cumulative_distributions(rc);
-    const auto fms = tir.read_failure_modes(cdfs, rc);
-    const auto comps = tir.read_components(
-        loads, fragilities, fms, rc);
-    const auto networks = tir.read_networks();
-    const auto scenarios = tir.read_scenarios();
-    const auto reliability_schedule =
-      rc.calc_reliability_schedule_by_component_tag(
-          si.get_max_time_in_seconds());
-    return Main{si, comps, networks, scenarios, reliability_schedule};
+    return Main{TomlInputReader{ss}};
   }
 
 

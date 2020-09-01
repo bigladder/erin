@@ -1674,9 +1674,13 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "OnOffSwitch::delta_int(...); id = " << get_id() << "\n";
+      std::cout << "before: state = " << state << "\n";
     }
     state = erin::devs::on_off_switch_internal_transition(data, state);
     log_ports();
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "after: state = " << state << "\n";
+    }
   }
 
   void
@@ -1684,9 +1688,13 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "OnOffSwitch::delta_ext(...); id = " << get_id() << "\n";
+      std::cout << "before: state = " << state << "\n";
     }
     state = erin::devs::on_off_switch_external_transition(state, e.real, xs);
     log_ports();
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "after: state = " << state << "\n";
+    }
   }
 
   void
@@ -1694,9 +1702,13 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "OnOffSwitch::delta_conf(...); id = " << get_id() << "\n";
+      std::cout << "before: state = " << state << "\n";
     }
     state = erin::devs::on_off_switch_confluent_transition(data, state, xs);
     log_ports();
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "before: state = " << state << "\n";
+    }
   }
 
   Time
@@ -1723,6 +1735,7 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "OnOffSwitch::output_func(...); id = " << get_id() << "\n";
+      std::cout << "state = " << state << "\n";
     }
     erin::devs::on_off_switch_output_function_mutable(state, ys);
   }

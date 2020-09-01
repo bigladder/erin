@@ -480,6 +480,7 @@ namespace ERIN
   {
     public:
       explicit Main(const std::string& input_toml);
+      explicit Main(TomlInputReader reader);
       Main(
           const SimulationInfo& si,
           const std::unordered_map<

@@ -312,12 +312,26 @@ class TestTemplate < Minitest::Test
   # RETURN: string, path to the e2rin_multi executable
   def e2rin_path
     path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_multi')
-    return path1 if File.exist?(path1)
+    path2 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'Debug', 'e2rin_multi.exe')
+    if File.exist?(path1)
+      path1
+    elsif File.exist?(path2)
+      path2
+    else
+      throw "Could not find path to e2rin_multi"
+    end
   end
 
   def e2rin_graph_path
     path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_graph')
-    return path1 if File.exist?(path1)
+    path2 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'Debug', 'e2rin_graph.exe')
+    if File.exist?(path1)
+      path1
+    elsif File.exist?(path2)
+      path2
+    else
+      throw "Could not find path to e2rin_graph"
+    end
   end
 
   # - input_tag: string, the tag for the input file, such as 'defaults', for reference/defaults.toml

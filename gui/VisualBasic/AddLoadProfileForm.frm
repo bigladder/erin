@@ -78,9 +78,10 @@ Private Sub SaveButton_Click()
     Set ParentSheet = Sheets("load-profile")
     Lr = LastRow(ParentSheet)
     ParentSheet.Range("A" & (Lr + 1)).Value = AddScenarioForm.IDInput.text
-    ParentSheet.Range("B" & (Lr + 1)).Value = LocationIDInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = FlowInput.text
-    ParentSheet.Range("D" & (Lr + 1)).Value = FileNameInput.text
+    ParentSheet.Range("B" & (Lr + 1)).Value = NameInput.text
+    ParentSheet.Range("C" & (Lr + 1)).Value = LocationIDInput.text
+    ParentSheet.Range("D" & (Lr + 1)).Value = FlowInput.text
+    ParentSheet.Range("E" & (Lr + 1)).Value = FileNameInput.text
     
     With AddScenarioForm.LoadProfilesList
         .AddItem NameInput.text

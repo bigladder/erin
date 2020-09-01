@@ -59,14 +59,14 @@ Public Sub ExportVisualBasicCode()
         On Error Resume Next
         err.Clear
         
-        Path = directory & Sep & VBComponent.name & extension
+        Path = directory & Sep & VBComponent.Name & extension
         Call VBComponent.Export(Path)
         
         If err.Number <> 0 Then
-            Call MsgBox("Failed to export " & VBComponent.name & " to " & Path, vbCritical)
+            Call MsgBox("Failed to export " & VBComponent.Name & " to " & Path, vbCritical)
         Else
             Count = Count + 1
-            Debug.Print "Exported " & Left$(VBComponent.name & ":" & Space(Padding), Padding) & Path
+            Debug.Print "Exported " & Left$(VBComponent.Name & ":" & Space(Padding), Padding) & Path
         End If
 
         On Error GoTo 0

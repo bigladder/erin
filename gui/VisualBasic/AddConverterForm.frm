@@ -221,15 +221,17 @@ Private Sub UserForm_Initialize()
         Me.Caption = "Add Generic Converter"
     End If
 
-    Set ws = Worksheets("failure-mode")
-    ws.Activate
-    lRow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRow)
-    For Each cLoc In rngItems
-        With Me.ModesListBox
-            .AddItem cLoc.Value
-        End With
-    Next cLoc
+    If Me.ModesListBox.ListCount = 0 Then
+        Set ws = Worksheets("failure-mode")
+        ws.Activate
+        lRow = Cells(Rows.Count, 1).End(xlUp).Row
+        Set rngItems = Range("A2:A" & lRow)
+        For Each cLoc In rngItems
+            With Me.ModesListBox
+                .AddItem cLoc.Value
+            End With
+        Next cLoc
+    End If
 
     ModesListBox.MultiSelect = 2
     ModesIncludeListBox.MultiSelect = 2
@@ -252,6 +254,7 @@ End Sub
 Private Sub CancelButton_Click()
 
     Unload Me
+    Sheets("Components").Activate
 
 End Sub
 

@@ -4,6 +4,13 @@ Attribute VB_Name = "Module1"
 
 Option Explicit
 
+Public Type SubComponent
+    ModesListBox As Variant
+    ModesIncludeListBox As Variant
+    CurvesListBox As Variant
+    CurvesIncludeListBox As Variant
+End Type
+
 Sub AddStatisticalDistribution()
     AddStatisticalDistributionForm.Show
 End Sub
@@ -28,7 +35,11 @@ Sub AddScenario()
     AddScenarioForm.Show
 End Sub
 
-Sub EditComponent()
+Sub DoNothing()
+    'Do nothing
+End Sub
+
+Sub EditItem()
     Dim CB As CheckBox
     Dim checkedRow As Integer
     Dim checkedID As String
@@ -40,8 +51,7 @@ Sub EditComponent()
             If CB.Value = 1 Then
                 checkedRow = CB.TopLeftCell.Row
                 checkedID = Cells(checkedRow, 2).Value
-                FindComponent (checkedID)
-                Mixed_State
+                FindItem (checkedID)
             End If
         End If
     Next
@@ -51,17 +61,17 @@ End Sub
 Sub SelectAll_Click()
     Dim CB As CheckBox
     For Each CB In ActiveSheet.CheckBoxes
-      If CB.name <> ActiveSheet.CheckBoxes("Select All").name Then
+      If CB.Name <> ActiveSheet.CheckBoxes("Select All").Name Then
         CB.Value = ActiveSheet.CheckBoxes("Select All").Value
         If CB.Value = xlOff Then
             Application.ScreenUpdating = False
             ActiveSheet.Shapes("remove_group").Visible = False
-            'Me.Shapes("compose_group").Visible = False
+            ActiveSheet.Shapes("edit_group").Visible = False
             'Me.Shapes("run_group").Visible = False
             Application.ScreenUpdating = True
         Else
             ActiveSheet.Shapes("remove_group").Visible = True
-            'Me.Shapes("compose_group").Visible = True
+            ActiveSheet.Shapes("edit_group").Visible = True
             'Me.Shapes("run_group").Visible = True
         End If
       End If
@@ -71,7 +81,7 @@ End Sub
 Sub Mixed_State()
     Dim CB As CheckBox
     For Each CB In ActiveSheet.CheckBoxes
-      If CB.name <> ActiveSheet.CheckBoxes("Select All").name And CB.Value <> ActiveSheet.CheckBoxes("Select All").Value And ActiveSheet.CheckBoxes("Select All").Value <> 2 Then
+      If CB.Name <> ActiveSheet.CheckBoxes("Select All").Name And CB.Value <> ActiveSheet.CheckBoxes("Select All").Value And ActiveSheet.CheckBoxes("Select All").Value <> 2 Then
         ActiveSheet.CheckBoxes("Select All").Value = 2
     Exit For
        Else
@@ -81,12 +91,12 @@ Sub Mixed_State()
     If ActiveSheet.CheckBoxes("Select All").Value = xlOff Then
        Application.ScreenUpdating = False
        ActiveSheet.Shapes("remove_group").Visible = False
-       'Me.Shapes("compose_group").Visible = False
+       ActiveSheet.Shapes("edit_group").Visible = False
        'Me.Shapes("run_group").Visible = False
        Application.ScreenUpdating = True
     Else
        ActiveSheet.Shapes("remove_group").Visible = True
-       'Me.Shapes("compose_group").Visible = True
+       ActiveSheet.Shapes("edit_group").Visible = True
        'Me.Shapes("run_group").Visible = True
     End If
 End Sub
@@ -115,7 +125,7 @@ Sub DeleteCheckboxandRow()
     Next
     Application.ScreenUpdating = False
     ActiveSheet.Shapes("remove_group").Visible = False
-    'Me.Shapes("compose_group").Visible = False
+    ActiveSheet.Shapes("edit_group").Visible = False
     'Me.Shapes("run_group").Visible = False
     Application.ScreenUpdating = True
 
@@ -134,28 +144,234 @@ Sub DeleteRows(myText As String)
         Set ws = ThisWorkbook.Sheets(vName)
         lRow = LastRow(ws)
         For iCntr = lRow To 1 Step -1
-            If ws.Cells(iCntr, 1) = myText Then
+            If ws.Cells(iCntr, 1) = myText Or ws.Cells(iCntr, 2) = myText Then
                 ws.Rows(iCntr).Delete
             End If
         Next iCntr
     Next vName
 End Sub
 
-Sub FindComponent(myText As String)
+Sub FindItem(myText As String)
+    Dim WorksheetArray As Variant
+    Dim vName As Variant
     Dim ws As Worksheet
     Dim lRow As Long
     Dim iCntr As Long
+    Dim TabName As String
+    Dim ComponentSubs As SubComponent
     
-    For Each ws In ThisWorkbook.Worksheets
+    WorksheetArray = Array("converter-component", "dual-outflow-converter-comp", "load-component", "load-profile", "mover-component", "muxer-component", "network-link", "pass-through-component", "scenario", "source-component", "storage-component", "uncontrolled-src")
+    For Each vName In WorksheetArray
+        Set ws = ThisWorkbook.Sheets(vName)
         lRow = LastRow(ws)
         For iCntr = lRow To 1 Step -1
             If ws.Cells(iCntr, 1) = myText Then
-                MsgBox ws.name
+                If ws.Name = "converter-component" Then
+                    With AddConverterForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .LocationIDInput = ws.Range("B" & iCntr).Value
+                        .InflowInput = ws.Range("C" & iCntr).Value
+                        .OutflowInput = ws.Range("D" & iCntr).Value
+                        .LossflowInput = ws.Range("E" & iCntr).Value
+                        .ConstantEfficiencyInput = ws.Range("F" & iCntr).Value
+                        ComponentSubs = getComponentSubs(myText)
+                        .ModesListBox.List = ComponentSubs.ModesListBox
+                        .ModesIncludeListBox.List = ComponentSubs.ModesIncludeListBox
+                        .CurvesListBox.List = ComponentSubs.CurvesListBox
+                        .CurvesIncludeListBox.List = ComponentSubs.CurvesIncludeListBox
+                        .Show
+                    End With
+                End If
+                If ws.Name = "dual-outflow-converter-comp" Then
+                    With AddDualConverterForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .LocationIDInput = ws.Range("B" & iCntr).Value
+                        .InflowInput = ws.Range("C" & iCntr).Value
+                        .PrimaryOutflowInput = ws.Range("D" & iCntr).Value
+                        .SecondaryOutflowInput = ws.Range("E" & iCntr).Value
+                        .LossflowInput = ws.Range("F" & iCntr).Value
+                        .PrimaryEfficiencyInput = ws.Range("G" & iCntr).Value
+                        .SecondaryEfficiencyInput = ws.Range("H" & iCntr).Value
+                        ComponentSubs = getComponentSubs(myText)
+                        .ModesListBox.List = ComponentSubs.ModesListBox
+                        .ModesIncludeListBox.List = ComponentSubs.ModesIncludeListBox
+                        .CurvesListBox.List = ComponentSubs.CurvesListBox
+                        .CurvesIncludeListBox.List = ComponentSubs.CurvesIncludeListBox
+                        .Show
+                    End With
+                End If
+                If ws.Name = "pass-through-component" Then
+                    With AddLineForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .NetworkLinkIDInput = ws.Range("B" & iCntr).Value
+                        .FlowInput = ws.Range("C" & iCntr).Value
+                        ComponentSubs = getComponentSubs(myText)
+                        .ModesListBox.List = ComponentSubs.ModesListBox
+                        .ModesIncludeListBox.List = ComponentSubs.ModesIncludeListBox
+                        .CurvesListBox.List = ComponentSubs.CurvesListBox
+                        .CurvesIncludeListBox.List = ComponentSubs.CurvesIncludeListBox
+                        .Show
+                    End With
+                End If
+                If ws.Name = "load-component" Then
+                    With AddLoadForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .LocationIDInput = ws.Range("B" & iCntr).Value
+                        .InflowInput = ws.Range("C" & iCntr).Value
+                        ComponentSubs = getComponentSubs(myText)
+                        .ModesListBox.List = ComponentSubs.ModesListBox
+                        .ModesIncludeListBox.List = ComponentSubs.ModesIncludeListBox
+                        .CurvesListBox.List = ComponentSubs.CurvesListBox
+                        .CurvesIncludeListBox.List = ComponentSubs.CurvesIncludeListBox
+                        .Show
+                    End With
+                End If
+                If ws.Name = "mover-component" Then
+                    With AddMoverForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .LocationIDInput = ws.Range("B" & iCntr).Value
+                        .MainFlowInput = ws.Range("C" & iCntr).Value
+                        .SupportFlowInput = ws.Range("D" & iCntr).Value
+                        .COPInput = ws.Range("E" & iCntr).Value
+                        ComponentSubs = getComponentSubs(myText)
+                        .ModesListBox.List = ComponentSubs.ModesListBox
+                        .ModesIncludeListBox.List = ComponentSubs.ModesIncludeListBox
+                        .CurvesListBox.List = ComponentSubs.CurvesListBox
+                        .CurvesIncludeListBox.List = ComponentSubs.CurvesIncludeListBox
+                        .Show
+                    End With
+                End If
+                If ws.Name = "network-link" Then
+                    With AddNetworkLinkForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .SourceLocationIDInput = ws.Range("B" & iCntr).Value
+                        .DestinationLocationIDInput = ws.Range("C" & iCntr).Value
+                        .FlowInput = ws.Range("D" & iCntr).Value
+                        .Show
+                    End With
+                End If
+                If ws.Name = "scenario" Then
+                    With AddScenarioForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .DurationInput = ws.Range("B" & iCntr).Value
+                        .OccDistributionInput = ws.Range("C" & iCntr).Value
+                        .CalcReliabilityInput = ws.Range("D" & iCntr).Value
+                        .MaxOccurancesInput = ws.Range("E" & iCntr).Value
+                        .Show
+                    End With
+                End If
+                If ws.Name = "source-component" Then
+                    With AddSourceForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .LocationIDInput = ws.Range("B" & iCntr).Value
+                        .OutflowInput = ws.Range("C" & iCntr).Value
+                        .LimitedSourceInput = ws.Range("D" & iCntr).Value
+                        .MaxOutflowInput = ws.Range("E" & iCntr).Value
+                        ComponentSubs = getComponentSubs(myText)
+                        .ModesListBox.List = ComponentSubs.ModesListBox
+                        .ModesIncludeListBox.List = ComponentSubs.ModesIncludeListBox
+                        .CurvesListBox.List = ComponentSubs.CurvesListBox
+                        .CurvesIncludeListBox.List = ComponentSubs.CurvesIncludeListBox
+                        .Show
+                    End With
+                End If
+                If ws.Name = "storage-component" Then
+                    With AddStorageForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .LocationIDInput = ws.Range("B" & iCntr).Value
+                        .StorageFlowInput = ws.Range("C" & iCntr).Value
+                        .StorageCapacityInput = ws.Range("D" & iCntr).Value
+                        .MaxStorageInflowInput = ws.Range("E" & iCntr).Value
+                        ComponentSubs = getComponentSubs(myText)
+                        .ModesListBox.List = ComponentSubs.ModesListBox
+                        .ModesIncludeListBox.List = ComponentSubs.ModesIncludeListBox
+                        .CurvesListBox.List = ComponentSubs.CurvesListBox
+                        .CurvesIncludeListBox.List = ComponentSubs.CurvesIncludeListBox
+                        .Show
+                    End With
+                End If
+                If ws.Name = "uncontrolled-src" Then
+                    With AddUncontrolledSourceForm
+                        .IDInput = ws.Range("A" & iCntr).Value
+                        .LocationIDInput = ws.Range("B" & iCntr).Value
+                        .OutflowInput = ws.Range("C" & iCntr).Value
+                        ComponentSubs = getComponentSubs(myText)
+                        .ModesListBox.List = ComponentSubs.ModesListBox
+                        .ModesIncludeListBox.List = ComponentSubs.ModesIncludeListBox
+                        .CurvesListBox.List = ComponentSubs.CurvesListBox
+                        .CurvesIncludeListBox.List = ComponentSubs.CurvesIncludeListBox
+                        .Show
+                    End With
+                End If
             End If
         Next iCntr
-    Next ws
+    Next vName
 End Sub
 
+Function getComponentSubs(myText As String) As SubComponent
+    Dim ComponentSubArray As Variant
+    Dim vSubName As Variant
+    Dim i As Long
+    Dim j As Long
+    Dim ws As Worksheet
+    Dim lRow As Long
+    Dim iSubCntr As Long
+    Dim ComponentSubs As SubComponent
+    Dim ModesListBox() As Variant
+    Dim ModesIncludeListBox() As Variant
+    Dim CurvesListBox() As Variant
+    Dim CurvesIncludeListBox() As Variant
+    
+    ComponentSubArray = Array("component-failure-mode", "component-fragility")
+    For Each vSubName In ComponentSubArray
+        Set ws = ThisWorkbook.Sheets(vSubName)
+        lRow = LastRow(ws)
+        i = 0
+        j = 0
+        For iSubCntr = 2 To lRow Step 1
+            If ws.Name = "component-failure-mode" Then
+                If ws.Cells(iSubCntr, 1) = myText Then
+                    ReDim Preserve ModesListBox(i)
+                    ModesListBox(i) = ws.Range("B" & iSubCntr).Value
+                    i = i + 1
+                Else
+                    ReDim Preserve ModesIncludeListBox(j)
+                    ModesIncludeListBox(j) = ws.Range("B" & iSubCntr).Value
+                    j = j + 1
+                End If
+            End If
+            If ws.Name = "component-fragility" Then
+                If ws.Cells(iSubCntr, 1) = myText Then
+                    ReDim Preserve CurvesListBox(i)
+                    CurvesListBox(i) = ws.Range("B" & iSubCntr).Value
+                    i = i + 1
+                Else
+                    ReDim Preserve CurvesIncludeListBox(j)
+                    CurvesIncludeListBox(j) = ws.Range("B" & iSubCntr).Value
+                    j = j + 1
+                End If
+            End If
+        Next iSubCntr
+    Next vSubName
+    ComponentSubs.ModesListBox = ModesListBox
+    ComponentSubs.ModesIncludeListBox = ModesIncludeListBox
+    ComponentSubs.CurvesListBox = CurvesListBox
+    ComponentSubs.CurvesIncludeListBox = CurvesIncludeListBox
+    getComponentSubs = ComponentSubs
+End Function
+
+Sub OpenForm(TabName As String)
+    Dim ws As Worksheet
+    Dim lRow As Long
+    Dim iCntr As Long
+    Dim TabName As String
+    
+    For Each ws In ThisWorkbook.Worksheets
+        If ws.Name = TabName Then
+            ws.Activate
+        
+    Next ws
+End Sub
 Sub ExportAsCSV(ParentSheet As Worksheet)
 
     Dim Sep As String
@@ -172,7 +388,7 @@ Sub ExportAsCSV(ParentSheet As Worksheet)
         .PasteSpecial xlPasteFormats
     End With
 
-    MyFileName = ThisWorkbook.Path & Sep & ParentSheet.name & ".csv"
+    MyFileName = ThisWorkbook.Path & Sep & ParentSheet.Name & ".csv"
 
     Application.DisplayAlerts = False
     TempWB.SaveAs Filename:=MyFileName, FileFormat:=xlCSV, CreateBackup:=False, Local:=True
@@ -191,7 +407,7 @@ Public Sub ExportWorksheetAndSaveAsCSV(ParentSheet As Worksheet)
     Set wbkExport = Application.Workbooks.Add
     shtToExport.Copy Before:=wbkExport.Worksheets(wbkExport.Worksheets.Count)
     Application.DisplayAlerts = False                       'Possibly overwrite without asking
-    wbkExport.SaveAs Filename:=ThisWorkbook.Path & Sep & ParentSheet.name & ".csv", FileFormat:=xlCSV
+    wbkExport.SaveAs Filename:=ThisWorkbook.Path & Sep & ParentSheet.Name & ".csv", FileFormat:=xlCSV
     Application.DisplayAlerts = True
     wbkExport.Close SaveChanges:=False
 
@@ -425,7 +641,7 @@ Sub CSVOutput(file_path As String)
  
  Set ThisWB = ActiveWorkbook
  Set otherWB = Workbooks.Open(file_path)
- Set testWS = ThisWB.Sheets(ActiveSheet.name)
+ Set testWS = ThisWB.Sheets(ActiveSheet.Name)
  
  If Not testWS Is Nothing Then
  Application.DisplayAlerts = False

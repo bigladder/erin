@@ -20,8 +20,30 @@ Private Sub AddLoadProfileScenario_Click()
     AddLoadProfileForm.Show
 End Sub
 
+Private Sub DeleteLoadProfileScenario_Click()
+    Dim i As Integer
+    
+    For i = Me.LoadProfilesList.ListCount - 1 To 0 Step -1
+        If Me.LoadProfilesList.Selected(i) = True Then
+            DeleteRows (Me.LoadProfilesList.List(i))
+            Me.LoadProfilesList.RemoveItem i
+        End If
+    Next i
+End Sub
+
 Private Sub AddDamageMetricScenario_Click()
     AddDamageMetricForm.Show
+End Sub
+
+Private Sub DeleteDamageMetricScenario_Click()
+    Dim i As Integer
+    
+    For i = Me.DamageMetricsList.ListCount - 1 To 0 Step -1
+        If Me.DamageMetricsList.Selected(i) = True Then
+            DeleteRows (Me.DamageMetricsList.List(i))
+            Me.DamageMetricsList.RemoveItem i
+        End If
+    Next i
 End Sub
 
 Private Sub UserForm_Initialize()
@@ -51,6 +73,9 @@ Private Sub UserForm_Initialize()
         .AddItem "TRUE"
         .AddItem "FALSE"
     End With
+    
+    LoadProfilesList.MultiSelect = 2
+    DamageMetricsList.MultiSelect = 2
             
 End Sub
 
@@ -70,7 +95,6 @@ Private Sub SaveButton_Click()
     ParentSheet.Activate
     Lr = Cells(Rows.Count, 2).End(xlUp).Row
     ParentSheet.Range("B" & (Lr + 1)).Value = IDInput.text
-    'ParentSheet.Range("C" & (Lr + 1)).Value = LocationIDInput.text
     MyLeft = Cells(Lr + 1, "A").Left
     MyTop = Cells(Lr + 1, "A").Top
     MyHeight = Cells(Lr + 1, "A").Height

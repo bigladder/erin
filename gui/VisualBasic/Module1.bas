@@ -352,6 +352,7 @@ Sub FindItem(idName As String)
 End Sub
 
 Function getComponentRow(ParentSheet As Worksheet, idName As String)
+    Dim idType As String
     Dim lRow As Long
     Dim rowCntr As Long
     Dim componentRow As Long
@@ -360,6 +361,14 @@ Function getComponentRow(ParentSheet As Worksheet, idName As String)
     Dim MyTop As Double
     Dim MyHeight As Double
     Dim MyWidth As Double
+    
+    If ParentSheet.Name = "Components" Then
+        idType = "component"
+    ElseIf ParentSheet.Name = "Network" Then
+        idType = "network link"
+    ElseIf ParentSheet.Name = "Scenarios" Then
+        idType = "scenario"
+    End If
     
     ParentSheet.Activate
     lRow = Cells(Rows.Count, 2).End(xlUp).Row
@@ -387,7 +396,7 @@ Function getComponentRow(ParentSheet As Worksheet, idName As String)
            .OnAction = "Module1.Mixed_State"
         End With
     Else
-        If MsgBox("Update current " & idName & " component?", vbYesNo) = vbNo Then
+        If MsgBox("Update current " & idName & " " & idType & "?", vbYesNo) = vbNo Then
             IsExit = True
             Exit Function
         End If

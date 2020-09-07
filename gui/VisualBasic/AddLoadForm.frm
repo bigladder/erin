@@ -170,7 +170,7 @@ End Sub
 
 Private Sub UserForm_Initialize()
     Dim oDictionary As Object
-    Dim lRow As Long
+    Dim lRowow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
@@ -178,8 +178,8 @@ Private Sub UserForm_Initialize()
     Set oDictionary = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("Components")
     ws.Activate
-    lRow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("C4:C" & lRow)
+    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
+    Set rngItems = Range("C4:C" & lRowow)
     For Each cLoc In rngItems
         With Me.LocationIDInput
             If oDictionary.exists(cLoc.Value) Then
@@ -201,8 +201,8 @@ Private Sub UserForm_Initialize()
 
     Set ws = Worksheets("failure-mode")
     ws.Activate
-    lRow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRow)
+    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRowow)
     For Each cLoc In rngItems
         With Me.ModesListBox
             .AddItem cLoc.Value
@@ -214,8 +214,8 @@ Private Sub UserForm_Initialize()
 
     Set ws = Worksheets("fragility-curve")
     ws.Activate
-    lRow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRow)
+    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRowow)
     For Each cLoc In rngItems
         With Me.CurvesListBox
             .AddItem cLoc.Value
@@ -230,52 +230,45 @@ End Sub
 Private Sub CancelButton_Click()
 
     Unload Me
+    Sheets("Components").Activate
 
 End Sub
 
 Private Sub SaveButton_Click()
+    Dim idName As String
     Dim ParentSheet As Worksheet
-    Dim Lr As Long
-    Dim i As Integer
+    Dim lRow As Long
+    Dim rowCntr As Long
+    Dim componentRow As Long
+    
+    idName = IDInput.text
+    IsExit = False
+    
+    componentRow = getComponentRow(idName)
+    If IsExit Then Exit Sub
     
     Set ParentSheet = Sheets("Components")
     ParentSheet.Activate
-    Lr = Cells(Rows.Count, 2).End(xlUp).Row
-    ParentSheet.Range("B" & (Lr + 1)).Value = IDInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = LocationIDInput.text
-    MyLeft = Cells(Lr + 1, "A").Left
-    MyTop = Cells(Lr + 1, "A").Top
-    MyHeight = Cells(Lr + 1, "A").Height
-    MyWidth = MyHeight = Cells(Lr + 1, "A").Width
-    ParentSheet.CheckBoxes.Add(MyLeft, MyTop, MyHeight, MyWidth).Select
-    With Selection
-       .Caption = ""
-       .Value = xlOff
-       .Display3DShading = False
-       .OnAction = "Module1.Mixed_State"
-    End With
+    ParentSheet.Range("B" & (componentRow)).Value = IDInput.text
+    ParentSheet.Range("C" & (componentRow)).Value = LocationIDInput.text
     
     Set ParentSheet = Sheets("load-component")
-    Lr = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (Lr + 1)).Value = IDInput.text
-    ParentSheet.Range("B" & (Lr + 1)).Value = LocationIDInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = InflowInput.text
-
-    Set ParentSheet = Sheets("component-failure-mode")
     ParentSheet.Activate
-    Lr = LastRow(ParentSheet)
-    For i = 0 To ModesIncludeListBox.ListCount - 1
-        ParentSheet.Range("A" & (Lr + i + 1)).Value = IDInput.text
-        ParentSheet.Range("B" & (Lr + i + 1)).Value = ModesIncludeListBox.List(i)
-    Next i
+    lRow = LastRow(ParentSheet)
+    For rowCntr = lRow To 1 Step -1
+        If ParentSheet.Cells(rowCntr, 1) = idName Then
+            componentRow = rowCntr
+            Exit For
+        Else
+            componentRow = (lRow + 1)
+        End If
+    Next rowCntr
     
-    Set ParentSheet = Sheets("component-fragility")
-    ParentSheet.Activate
-    Lr = LastRow(ParentSheet)
-    For i = 0 To CurvesIncludeListBox.ListCount - 1
-        ParentSheet.Range("A" & (Lr + i + 1)).Value = IDInput.text
-        ParentSheet.Range("B" & (Lr + i + 1)).Value = CurvesIncludeListBox.List(i)
-    Next i
+    ParentSheet.Range("A" & (componentRow)).Value = IDInput.text
+    ParentSheet.Range("B" & (componentRow)).Value = LocationIDInput.text
+    ParentSheet.Range("C" & (componentRow)).Value = InflowInput.text
+
+    AddComponentSubs AddLoadForm, idName
     
     Unload Me
     Sheets("Components").Activate

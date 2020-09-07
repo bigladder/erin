@@ -24,12 +24,12 @@ End Sub
 
 Private Sub SaveButton_Click()
     Dim ParentSheet As Worksheet
-    Dim Lr As Long
+    Dim lRow As Long
     
     Set ParentSheet = Sheets("fixed-cdf")
-    Lr = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (Lr + 1)).Value = IDInput.text
-    ParentSheet.Range("B" & (Lr + 1)).Value = ValueInput.text
+    lRow = LastRow(ParentSheet)
+    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.text
+    ParentSheet.Range("B" & (lRow + 1)).Value = ValueInput.text
     Unload Me
 
 End Sub

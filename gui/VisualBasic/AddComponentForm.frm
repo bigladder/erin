@@ -17,7 +17,7 @@ Attribute VB_Exposed = False
 ' See the LICENSE.txt file for additional terms and conditions.
 
 Private Sub UserForm_Initialize()
-    Dim lRow As Long
+    Dim lRowow As Long
     Dim cLoc As Range
     Dim ws As Worksheet
     Set ws = Worksheets("menus")

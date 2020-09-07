@@ -20,7 +20,7 @@ Private Sub UserForm_Initialize()
     Dim oDictionary1 As Object
     Dim oDictionary2 As Object
     Dim oItem As Object
-    Dim lRow As Long
+    Dim lRowow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
@@ -28,8 +28,8 @@ Private Sub UserForm_Initialize()
     Set oDictionary1 = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("Components")
     ws.Activate
-    lRow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("C4:C" & lRow)
+    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
+    Set rngItems = Range("C4:C" & lRowow)
     For Each cLoc In rngItems
         With Me.SourceLocationIDInput
             If oDictionary1.exists(cLoc.Value) Then
@@ -43,8 +43,8 @@ Private Sub UserForm_Initialize()
     Set oDictionary2 = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("Components")
     ws.Activate
-    lRow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("C4:C" & lRow)
+    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
+    Set rngItems = Range("C4:C" & lRowow)
     For Each cLoc In rngItems
         With Me.DestinationLocationIDInput
             If oDictionary2.exists(cLoc.Value) Then
@@ -75,20 +75,20 @@ End Sub
 
 Private Sub SaveButton_Click()
     Dim ParentSheet As Worksheet
-    Dim Lr As Long
+    Dim lRow As Long
     Dim i As Integer
     
     Set ParentSheet = Sheets("Network")
     ParentSheet.Activate
-    Lr = Cells(Rows.Count, 2).End(xlUp).Row
-    ParentSheet.Range("B" & (Lr + 1)).Value = IDInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = SourceLocationIDInput.text
-    ParentSheet.Range("D" & (Lr + 1)).Value = DestinationLocationIDInput.text
-    ParentSheet.Range("E" & (Lr + 1)).Value = FlowInput.text
-    MyLeft = Cells(Lr + 1, "A").Left
-    MyTop = Cells(Lr + 1, "A").Top
-    MyHeight = Cells(Lr + 1, "A").Height
-    MyWidth = MyHeight = Cells(Lr + 1, "A").Width
+    lRow = Cells(Rows.Count, 2).End(xlUp).Row
+    ParentSheet.Range("B" & (lRow + 1)).Value = IDInput.text
+    ParentSheet.Range("C" & (lRow + 1)).Value = SourceLocationIDInput.text
+    ParentSheet.Range("D" & (lRow + 1)).Value = DestinationLocationIDInput.text
+    ParentSheet.Range("E" & (lRow + 1)).Value = FlowInput.text
+    MyLeft = Cells(lRow + 1, "A").Left
+    MyTop = Cells(lRow + 1, "A").Top
+    MyHeight = Cells(lRow + 1, "A").Height
+    MyWidth = MyHeight = Cells(lRow + 1, "A").Width
     ParentSheet.CheckBoxes.Add(MyLeft, MyTop, MyHeight, MyWidth).Select
     With Selection
        .Caption = ""
@@ -98,11 +98,11 @@ Private Sub SaveButton_Click()
     End With
     
     Set ParentSheet = Sheets("network-link")
-    Lr = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (Lr + 1)).Value = IDInput.text
-    ParentSheet.Range("B" & (Lr + 1)).Value = SourceLocationIDInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = DestinationLocationIDInput.text
-    ParentSheet.Range("D" & (Lr + 1)).Value = FlowInput.text
+    lRow = LastRow(ParentSheet)
+    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.text
+    ParentSheet.Range("B" & (lRow + 1)).Value = SourceLocationIDInput.text
+    ParentSheet.Range("C" & (lRow + 1)).Value = DestinationLocationIDInput.text
+    ParentSheet.Range("D" & (lRow + 1)).Value = FlowInput.text
 
     Unload Me
     Sheets("Network").Activate

@@ -48,7 +48,7 @@ End Sub
 
 Private Sub UserForm_Initialize()
     Dim oDictionary As Object
-    Dim lRow As Long
+    Dim lRowow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
@@ -56,8 +56,8 @@ Private Sub UserForm_Initialize()
     Set oDictionary = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("fixed-cdf")
     ws.Activate
-    lRow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRow)
+    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRowow)
     For Each cLoc In rngItems
         With Me.OccDistributionInput
             If oDictionary.exists(cLoc.Value) Then
@@ -88,17 +88,17 @@ End Sub
 
 Private Sub SaveButton_Click()
     Dim ParentSheet As Worksheet
-    Dim Lr As Long
+    Dim lRow As Long
     Dim i As Integer
     
     Set ParentSheet = Sheets("Scenarios")
     ParentSheet.Activate
-    Lr = Cells(Rows.Count, 2).End(xlUp).Row
-    ParentSheet.Range("B" & (Lr + 1)).Value = IDInput.text
-    MyLeft = Cells(Lr + 1, "A").Left
-    MyTop = Cells(Lr + 1, "A").Top
-    MyHeight = Cells(Lr + 1, "A").Height
-    MyWidth = MyHeight = Cells(Lr + 1, "A").Width
+    lRow = Cells(Rows.Count, 2).End(xlUp).Row
+    ParentSheet.Range("B" & (lRow + 1)).Value = IDInput.text
+    MyLeft = Cells(lRow + 1, "A").Left
+    MyTop = Cells(lRow + 1, "A").Top
+    MyHeight = Cells(lRow + 1, "A").Height
+    MyWidth = MyHeight = Cells(lRow + 1, "A").Width
     ParentSheet.CheckBoxes.Add(MyLeft, MyTop, MyHeight, MyWidth).Select
     With Selection
        .Caption = ""
@@ -108,12 +108,12 @@ Private Sub SaveButton_Click()
     End With
     
     Set ParentSheet = Sheets("scenario")
-    Lr = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (Lr + 1)).Value = IDInput.text
-    ParentSheet.Range("B" & (Lr + 1)).Value = DurationInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = OccDistributionInput.text
-    ParentSheet.Range("D" & (Lr + 1)).Value = CalcReliabilityInput.text
-    ParentSheet.Range("E" & (Lr + 1)).Value = MaxOccurancesInput.text
+    lRow = LastRow(ParentSheet)
+    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.text
+    ParentSheet.Range("B" & (lRow + 1)).Value = DurationInput.text
+    ParentSheet.Range("C" & (lRow + 1)).Value = OccDistributionInput.text
+    ParentSheet.Range("D" & (lRow + 1)).Value = CalcReliabilityInput.text
+    ParentSheet.Range("E" & (lRow + 1)).Value = MaxOccurancesInput.text
 
     Unload Me
     Sheets("Scenarios").Activate

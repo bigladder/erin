@@ -28,14 +28,14 @@ End Sub
 
 Private Sub SaveButton_Click()
     Dim ParentSheet As Worksheet
-    Dim Lr As Long
+    Dim lRow As Long
     Dim i As Integer
     
     Set ParentSheet = Sheets("damage-intensity")
-    Lr = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (Lr + 1)).Value = AddScenarioForm.IDInput.text
-    ParentSheet.Range("B" & (Lr + 1)).Value = NameInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = ValueInput.text
+    lRow = LastRow(ParentSheet)
+    ParentSheet.Range("A" & (lRow + 1)).Value = AddScenarioForm.IDInput.text
+    ParentSheet.Range("B" & (lRow + 1)).Value = NameInput.text
+    ParentSheet.Range("C" & (lRow + 1)).Value = ValueInput.text
     
     With AddScenarioForm.DamageMetricsList
         .AddItem NameInput.text

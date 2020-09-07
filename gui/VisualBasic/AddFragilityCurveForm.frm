@@ -19,20 +19,22 @@ Attribute VB_Exposed = False
 Private Sub CancelButton_Click()
 
     Unload Me
+    Sheets("Settings").Activate
 
 End Sub
 
 Private Sub SaveButton_Click()
     Dim ParentSheet As Worksheet
-    Dim Lr As Long
+    Dim lRow As Long
     
     Set ParentSheet = Sheets("fragility-curve")
-    Lr = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (Lr + 1)).Value = IDInput.text
-    ParentSheet.Range("B" & (Lr + 1)).Value = VulnerableToInput.text
-    ParentSheet.Range("C" & (Lr + 1)).Value = LowerBoundInput.text
-    ParentSheet.Range("D" & (Lr + 1)).Value = UpperBoundInput.text
+    lRow = LastRow(ParentSheet)
+    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.text
+    ParentSheet.Range("B" & (lRow + 1)).Value = VulnerableToInput.text
+    ParentSheet.Range("C" & (lRow + 1)).Value = LowerBoundInput.text
+    ParentSheet.Range("D" & (lRow + 1)).Value = UpperBoundInput.text
     Unload Me
+    Sheets("Settings").Activate
 
 End Sub
 

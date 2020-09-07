@@ -351,8 +351,7 @@ Sub FindItem(idName As String)
     Next vName
 End Sub
 
-Function getComponentRow(idName As String)
-    Dim ParentSheet As Worksheet
+Function getComponentRow(ParentSheet As Worksheet, idName As String)
     Dim lRow As Long
     Dim rowCntr As Long
     Dim componentRow As Long
@@ -362,7 +361,6 @@ Function getComponentRow(idName As String)
     Dim MyHeight As Double
     Dim MyWidth As Double
     
-    Set ParentSheet = Sheets("Components")
     ParentSheet.Activate
     lRow = Cells(Rows.Count, 2).End(xlUp).Row
     NewComponent = True

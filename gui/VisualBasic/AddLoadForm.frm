@@ -244,7 +244,8 @@ Private Sub SaveButton_Click()
     idName = IDInput.text
     IsExit = False
     
-    componentRow = getComponentRow(idName)
+    Set ParentSheet = Sheets("Components")
+    componentRow = getComponentRow(ParentSheet, idName)
     If IsExit Then Exit Sub
     
     Set ParentSheet = Sheets("Components")
@@ -272,5 +273,6 @@ Private Sub SaveButton_Click()
     
     Unload Me
     Sheets("Components").Activate
+    Module1.Mixed_State
     
 End Sub

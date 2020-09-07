@@ -81,39 +81,46 @@ End Sub
 
 Private Sub CancelButton_Click()
 
-    Worksheets("Scenarios").Activate
     Unload Me
+    Worksheets("Scenarios").Activate
 
 End Sub
 
 Private Sub SaveButton_Click()
+    Dim idName As String
     Dim ParentSheet As Worksheet
     Dim lRow As Long
-    Dim i As Integer
+    Dim rowCntr As Long
+    Dim componentRow As Long
+    
+    idName = IDInput.text
+    IsExit = False
+    
+    Set ParentSheet = Sheets("Scenarios")
+    componentRow = getComponentRow(ParentSheet, idName)
+    If IsExit Then Exit Sub
     
     Set ParentSheet = Sheets("Scenarios")
     ParentSheet.Activate
-    lRow = Cells(Rows.Count, 2).End(xlUp).Row
-    ParentSheet.Range("B" & (lRow + 1)).Value = IDInput.text
-    MyLeft = Cells(lRow + 1, "A").Left
-    MyTop = Cells(lRow + 1, "A").Top
-    MyHeight = Cells(lRow + 1, "A").Height
-    MyWidth = MyHeight = Cells(lRow + 1, "A").Width
-    ParentSheet.CheckBoxes.Add(MyLeft, MyTop, MyHeight, MyWidth).Select
-    With Selection
-       .Caption = ""
-       .Value = xlOff
-       .Display3DShading = False
-       .OnAction = "Module1.Mixed_State"
-    End With
+    ParentSheet.Range("B" & (componentRow)).Value = IDInput.text
     
     Set ParentSheet = Sheets("scenario")
+    ParentSheet.Activate
     lRow = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.text
-    ParentSheet.Range("B" & (lRow + 1)).Value = DurationInput.text
-    ParentSheet.Range("C" & (lRow + 1)).Value = OccDistributionInput.text
-    ParentSheet.Range("D" & (lRow + 1)).Value = CalcReliabilityInput.text
-    ParentSheet.Range("E" & (lRow + 1)).Value = MaxOccurancesInput.text
+    For rowCntr = lRow To 1 Step -1
+        If ParentSheet.Cells(rowCntr, 1) = idName Then
+            componentRow = rowCntr
+            Exit For
+        Else
+            componentRow = (lRow + 1)
+        End If
+    Next rowCntr
+    
+    ParentSheet.Range("A" & (componentRow)).Value = IDInput.text
+    ParentSheet.Range("B" & (componentRow)).Value = DurationInput.text
+    ParentSheet.Range("C" & (componentRow)).Value = OccDistributionInput.text
+    ParentSheet.Range("D" & (componentRow)).Value = CalcReliabilityInput.text
+    ParentSheet.Range("E" & (componentRow)).Value = MaxOccurancesInput.text
 
     Unload Me
     Sheets("Scenarios").Activate

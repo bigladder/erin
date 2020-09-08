@@ -327,7 +327,6 @@ namespace erin::devs
     return sum;
   }
 
-
   RealTimeType
   mux_time_advance(const MuxState& state)
   {

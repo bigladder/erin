@@ -24,7 +24,7 @@ namespace erin::devs
   {
     public:
       Port();
-      Port(RealTimeType time);
+      explicit Port(RealTimeType time);
       Port(RealTimeType time, FlowValueType requested);
       Port(RealTimeType time, FlowValueType requested, FlowValueType achieved);
       Port(

@@ -624,8 +624,8 @@ namespace ERIN
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
-    if constexpr (debug_level >= debug_level_high) {
     auto the_id = get_id();
+    if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network("
                 << "adevs::Digraph<FlowValueType>& network); id = "
                 << the_id << "\n";

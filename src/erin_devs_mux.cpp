@@ -63,7 +63,7 @@ namespace erin::devs
       if (request >= remaining_supply) {
         new_outflows[idx] = op.with_achieved(remaining_supply, time);
         remaining_supply = 0.0;
-      } else if (request < remaining_supply) {
+      } else {
         new_outflows[idx] = op.with_achieved(request, time);
         remaining_supply -= request;
       }

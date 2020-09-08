@@ -1328,7 +1328,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] delta_ext\n";
       for (const auto& x : xs) {
-        std::cout << "- (" << x.port << ", " << x.value << ")\n";
+        std::cout << "- (inport = " << x.port << ", value = " << x.value << ")\n";
       }
     }
     state = erin::devs::mux_external_transition(state, e.real, xs);
@@ -1376,7 +1376,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] output_func\n";
       for (const auto& the_y : ys) {
-        std::cout << "- (" << the_y.port << ", " << the_y.value << ")\n";
+        std::cout << "- (outport = " << the_y.port << ", value = " << the_y.value << ")\n";
       }
     }
   }

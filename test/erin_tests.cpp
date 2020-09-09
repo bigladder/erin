@@ -4715,9 +4715,6 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_EQ(dt8, 0);
   auto ys8 = ED::mux_output_function(s8);
   std::vector<ED::PortValue> expected_ys8{
-    //ED::PortValue{ED::outport_inflow_request + 0, 200.0},
-    //ED::PortValue{ED::outport_inflow_request + 1, 0.0},
-    //ED::PortValue{ED::outport_inflow_request + 2, 0.0},
     ED::PortValue{ED::outport_outflow_achieved + 0, 45.0},
     ED::PortValue{ED::outport_outflow_achieved + 1, 45.0},
   };

@@ -4627,6 +4627,7 @@ TEST(ErinDevs, Test_function_based_mux)
   namespace EU = erin::utils;
   int num_inports{3};
   int num_outports{3};
+  // by default, uses the distribute strategy
   auto s0 = ED::make_mux_state(num_inports, num_outports);
   auto dt0 = ED::mux_time_advance(s0);
   EXPECT_EQ(dt0, ED::infinity);
@@ -4714,10 +4715,12 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_EQ(dt8, 0);
   auto ys8 = ED::mux_output_function(s8);
   std::vector<ED::PortValue> expected_ys8{
-    ED::PortValue{ED::outport_inflow_request + 0, 200.0},
-    ED::PortValue{ED::outport_inflow_request + 1, 0.0},
-    ED::PortValue{ED::outport_inflow_request + 2, 0.0},
-    ED::PortValue{ED::outport_outflow_achieved + 0, 100.0}};
+    //ED::PortValue{ED::outport_inflow_request + 0, 200.0},
+    //ED::PortValue{ED::outport_inflow_request + 1, 0.0},
+    //ED::PortValue{ED::outport_inflow_request + 2, 0.0},
+    ED::PortValue{ED::outport_outflow_achieved + 0, 45.0},
+    ED::PortValue{ED::outport_outflow_achieved + 1, 45.0},
+  };
   if (false) {
     std::cout << "expected_ys8 = " << ERIN::vec_to_string<ED::PortValue>(expected_ys8) << "\n";
     std::cout << "ys8          = " << ERIN::vec_to_string<ED::PortValue>(ys8) << "\n";

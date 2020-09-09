@@ -230,10 +230,7 @@ namespace erin::devs
     for (size_type idx{0}; idx < new_inflows.size(); ++idx) {
       auto achieved = new_inflows[idx].get_achieved();
       auto requested = new_inflows[idx].get_requested();
-      auto tolc = new_inflows[idx].get_time_of_last_change();
-      if ((tolc == time)
-          && (achieved < remaining_request)
-          && (achieved < requested)) {
+      if ((achieved < remaining_request) && (achieved < requested)) {
         new_inflows[idx] = new_inflows[idx].with_requested_and_achieved(
             remaining_request, achieved, time);
       }

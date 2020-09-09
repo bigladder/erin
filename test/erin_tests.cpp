@@ -6873,6 +6873,17 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
   EXPECT_EQ(inports_returned[0].get_achieved(), 5.0);
   EXPECT_EQ(inports_returned[1].get_achieved(), 5.0);
   EXPECT_EQ(inports_returned[2].get_achieved(), 10.0);
+  remaining_request = 25.0;
+  inports_returned = ED::request_inflows_intelligently(
+      inports, remaining_request, 1);
+  ASSERT_EQ(inports_returned.size(), 3);
+  EXPECT_EQ(remaining_request, 5.0);
+  EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
+  EXPECT_EQ(inports_returned[1].get_requested(), 20.0);
+  EXPECT_EQ(inports_returned[2].get_requested(), 15.0);
+  EXPECT_EQ(inports_returned[0].get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[1].get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[2].get_achieved(), 10.0);
 }
 
 int

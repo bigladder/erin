@@ -1326,7 +1326,7 @@ namespace ERIN
   Mux::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "MUX[" << get_id() << "] delta_ext\n";
+      std::cout << "MUX[" << get_id() << "] delta_ext, xs:\n";
       for (const auto& x : xs) {
         std::cout << "- (inport = " << x.port << ", value = " << x.value << ")\n";
       }

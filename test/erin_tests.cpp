@@ -6839,6 +6839,23 @@ TEST(ErinBasicsTest, Test_reliability_schedule)
   EXPECT_EQ(L_ss.total_energy, L_total_energy);
 }
 
+TEST(ErinBasicsTest, Test_request_ports_intelligently) {
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  auto inports = std::vector<ED::Port>{
+    ED::Port{0, 0.0}, ED::Port{0, 0.0}, ED::Port{0, 0.0}
+  };
+  E::FlowValueType total_request{30.0};
+  E::FlowValueType remaining_request{total_request};
+  auto inports_1 = ED::request_inflows_intelligently(
+      inports, remaining_request, 0);
+  ASSERT_EQ(inports_1.size(), 3);
+  EXPECT_EQ(remaining_request, 0.0);
+  EXPECT_EQ(inports_1[0].get_requested(), 30.0);
+  EXPECT_EQ(inports_1[1].get_requested(), 0.0);
+  EXPECT_EQ(inports_1[2].get_requested(), 0.0);
+}
+
 int
 main(int argc, char **argv)
 {

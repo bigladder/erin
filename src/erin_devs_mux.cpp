@@ -220,6 +220,31 @@ namespace erin::devs
   }
 
   std::vector<Port>
+  request_inflows_intelligently(
+      const std::vector<Port>& inflow_ports,
+      FlowValueType& remaining_request,
+      RealTimeType time)
+  {
+    using size_type = std::vector<Port>::size_type;
+    auto new_inflows{inflow_ports};
+    for (size_type idx{0}; idx < new_inflows.size(); ++idx) {
+      auto achieved = new_inflows[idx].get_achieved();
+      auto requested = new_inflows[idx].get_requested();
+      auto tolc = new_inflows[idx].get_time_of_last_change();
+      if ((tolc == time)
+          && (achieved < remaining_request)
+          && (achieved < requested)) {
+        new_inflows[idx] = new_inflows[idx].with_requested(achieved, time);
+      }
+      else {
+        new_inflows[idx] = new_inflows[idx].with_requested(remaining_request, time);
+      }
+      remaining_request -= new_inflows[idx].get_achieved();
+    }
+    return new_inflows;
+  }
+
+  std::vector<Port>
   rerequest_inflows_in_order(
       const std::vector<Port>& inflow_ports,
       FlowValueType total_outflow_request,

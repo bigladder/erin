@@ -56,6 +56,11 @@ namespace erin::devs
       FlowValueType total_outflow_request,
       RealTimeType time);
 
+  std::vector<Port> request_inflows_intelligently(
+      const std::vector<Port>& inflow_ports,
+      FlowValueType& remaining_request,
+      RealTimeType time);
+
   ////////////////////////////////////////////////////////////
   // state
   const int minimum_number_of_ports{1};

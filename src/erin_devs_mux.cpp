@@ -234,10 +234,12 @@ namespace erin::devs
       if ((tolc == time)
           && (achieved < remaining_request)
           && (achieved < requested)) {
-        new_inflows[idx] = new_inflows[idx].with_requested(achieved, time);
+        new_inflows[idx] = new_inflows[idx].with_requested_and_achieved(
+            remaining_request, achieved, time);
       }
       else {
-        new_inflows[idx] = new_inflows[idx].with_requested(remaining_request, time);
+        new_inflows[idx] = new_inflows[idx].with_requested(
+            remaining_request, time);
       }
       remaining_request -= new_inflows[idx].get_achieved();
     }

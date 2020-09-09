@@ -6847,13 +6847,32 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
   };
   E::FlowValueType total_request{30.0};
   E::FlowValueType remaining_request{total_request};
-  auto inports_1 = ED::request_inflows_intelligently(
+  auto inports_returned = ED::request_inflows_intelligently(
       inports, remaining_request, 0);
-  ASSERT_EQ(inports_1.size(), 3);
+  ASSERT_EQ(inports_returned.size(), 3);
   EXPECT_EQ(remaining_request, 0.0);
-  EXPECT_EQ(inports_1[0].get_requested(), 30.0);
-  EXPECT_EQ(inports_1[1].get_requested(), 0.0);
-  EXPECT_EQ(inports_1[2].get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[0].get_requested(), 30.0);
+  EXPECT_EQ(inports_returned[1].get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[2].get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[0].get_achieved(), 30.0);
+  EXPECT_EQ(inports_returned[1].get_achieved(), 0.0);
+  EXPECT_EQ(inports_returned[2].get_achieved(), 0.0);
+  inports = std::vector<ED::Port>{
+    ED::Port{0, 30.0, 5.0},
+    ED::Port{0, 25.0, 5.0},
+    ED::Port{0, 20.0, 10.0}
+  };
+  remaining_request = 25.0;
+  inports_returned = ED::request_inflows_intelligently(
+      inports, remaining_request, 0);
+  ASSERT_EQ(inports_returned.size(), 3);
+  EXPECT_EQ(remaining_request, 5.0);
+  EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
+  EXPECT_EQ(inports_returned[1].get_requested(), 20.0);
+  EXPECT_EQ(inports_returned[2].get_requested(), 15.0);
+  EXPECT_EQ(inports_returned[0].get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[1].get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[2].get_achieved(), 10.0);
 }
 
 int

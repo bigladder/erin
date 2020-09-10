@@ -441,8 +441,7 @@ namespace erin::devs
       //    inflow_ports, total_outflow_request, time);
       auto total_inflow_achieved_local = std::accumulate(
           inflow_ports.begin(), inflow_ports.end(), 0.0,
-          [](const ERIN::FlowValueType& sum, const Port& p)
-          -> ERIN::FlowValueType { return sum + p.get_achieved(); });
+          [](const auto& s, const auto& p) { return s + p.get_achieved(); });
       outflow_ports = distribute_inflow_to_outflow(
           state.outflow_strategy, outflow_ports, total_inflow_achieved_local, time);
     } else if (diff < ERIN::neg_flow_value_tol) {
@@ -456,8 +455,7 @@ namespace erin::devs
           inflow_ports, remaining_request, time);
       auto total_inflow_achieved_local = std::accumulate(
           inflow_ports.begin(), inflow_ports.end(), 0.0,
-          [](const ERIN::FlowValueType& sum, const Port& p)
-          -> ERIN::FlowValueType { return sum + p.get_achieved(); });
+          [](const auto& s, const auto& p) { return s + p.get_achieved(); });
       //inflow_ports = rerequest_inflows_in_order(
       //    inflow_ports, total_outflow_request, time);
       outflow_ports = distribute_inflow_to_outflow(

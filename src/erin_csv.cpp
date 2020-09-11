@@ -10,9 +10,10 @@ main(const int argc, const char* argv[])
   namespace csv = erin_csv;
   auto args = gsl::span<const char*>(argv, argc);
   if (argc != 2) {
-    std::cout << "USAGE: " << argv[0] << " <csv_file>\n";
-    std::cout << "- csv_file: path to a csv file\n";
-    std::cout << "\nPrints out the csv file to the command line\n";
+    std::cout << "USAGE: " << args[0] << " <csv_file>\n"
+              << "- csv_file: path to a csv file\n"
+              << "\nPrints out the csv file to the command line\n"
+              << std::flush;
     return 1;
   }
   std::string csv_path{args[1]};

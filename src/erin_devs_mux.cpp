@@ -228,7 +228,7 @@ namespace erin::devs
   std::vector<Port>
   request_inflows_intelligently(
       const std::vector<Port>& inflow_ports,
-      FlowValueType& remaining_request,
+      FlowValueType remaining_request,
       RealTimeType time)
   {
     using size_type = std::vector<Port>::size_type;
@@ -245,6 +245,9 @@ namespace erin::devs
             remaining_request, time);
       }
       remaining_request -= new_inflows[idx].get_achieved();
+      if (remaining_request < 0.0) {
+        remaining_request = 0.0;
+      }
     }
     return new_inflows;
   }
@@ -446,8 +449,6 @@ namespace erin::devs
       auto remaining_request{total_outflow_request};
       inflow_ports = request_inflows_intelligently(
           inflow_ports, remaining_request, time);
-      //inflow_ports = rerequest_inflows_in_order(
-      //    inflow_ports, total_outflow_request, time);
       auto total_inflow_achieved_local = std::accumulate(
           inflow_ports.begin(), inflow_ports.end(), 0.0,
           [](const auto& s, const auto& p) { return s + p.get_achieved(); });
@@ -457,52 +458,15 @@ namespace erin::devs
       if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
         std::cout << "...undersupplying\n";
       }
-      //if (got_outflow) {
-      // undersupplying... got a new requested outflow, rerequest inflows
       auto remaining_request{total_outflow_request};
       inflow_ports = request_inflows_intelligently(
           inflow_ports, remaining_request, time);
       auto total_inflow_achieved_local = std::accumulate(
           inflow_ports.begin(), inflow_ports.end(), 0.0,
           [](const auto& s, const auto& p) { return s + p.get_achieved(); });
-      //inflow_ports = rerequest_inflows_in_order(
-      //    inflow_ports, total_outflow_request, time);
       outflow_ports = distribute_inflow_to_outflow(
           state.outflow_strategy, outflow_ports,
           total_inflow_achieved_local, time);
-      //} else {
-      //  // undersupplying... need to re-request to inflows for more unless
-      //  // we've already heard from the highest port
-      //  if (highest_inflow_port_received >= (state.num_inflows - 1)) {
-      //    if constexpr (ERIN::debug_level >= ERIN::debug_level_low) {
-      //      std::cout << "...distributing inflow to outflow\n";
-      //    }
-      //    outflow_ports = distribute_inflow_to_outflow(
-      //        state.outflow_strategy, outflow_ports, total_inflow_achieved, time);
-      //  } else {
-      //    if constexpr (ERIN::debug_level >= ERIN::debug_level_low) {
-      //      std::cout << "...requesting difference from "
-      //                << "... next highest inflow port\n"
-      //                << "... next highest inflow port: "
-      //                << (highest_inflow_port_received + 1) << "\n"
-      //                << "... requested amount: " << (-1 * diff) << "\n";
-      //    }
-      //    inflow_ports = request_difference_from_next_highest_inflow_port(
-      //        inflow_ports,
-      //        highest_inflow_port_received + 1,
-      //        (-1 * diff),
-      //        time);
-      //    total_inflow_achieved = std::accumulate(
-      //        inflow_ports.begin(), inflow_ports.end(), 0.0,
-      //        [](const auto& s, const auto& p) { return s + p.get_achieved(); });
-      //    if constexpr (ERIN::debug_level >= ERIN::debug_level_low) {
-      //      std::cout << "... updated total_inflow_achieved: "
-      //                << total_inflow_achieved << "\n";
-      //    }
-      //    outflow_ports = distribute_inflow_to_outflow(
-      //        state.outflow_strategy, outflow_ports, total_inflow_achieved, time);
-      //  }
-      //}
     } else {
       if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
         std::cout << "...inflows equal outflows\n";

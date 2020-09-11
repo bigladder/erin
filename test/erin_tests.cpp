@@ -6850,7 +6850,6 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
   auto inports_returned = ED::request_inflows_intelligently(
       inports, remaining_request, 0);
   ASSERT_EQ(inports_returned.size(), 3);
-  EXPECT_EQ(remaining_request, 0.0);
   EXPECT_EQ(inports_returned[0].get_requested(), 30.0);
   EXPECT_EQ(inports_returned[1].get_requested(), 0.0);
   EXPECT_EQ(inports_returned[2].get_requested(), 0.0);
@@ -6866,7 +6865,6 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
   inports_returned = ED::request_inflows_intelligently(
       inports, remaining_request, 0);
   ASSERT_EQ(inports_returned.size(), 3);
-  EXPECT_EQ(remaining_request, 5.0);
   EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
   EXPECT_EQ(inports_returned[1].get_requested(), 20.0);
   EXPECT_EQ(inports_returned[2].get_requested(), 15.0);
@@ -6877,7 +6875,6 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
   inports_returned = ED::request_inflows_intelligently(
       inports, remaining_request, 1);
   ASSERT_EQ(inports_returned.size(), 3);
-  EXPECT_EQ(remaining_request, 5.0);
   EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
   EXPECT_EQ(inports_returned[1].get_requested(), 20.0);
   EXPECT_EQ(inports_returned[2].get_requested(), 15.0);

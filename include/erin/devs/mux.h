@@ -58,7 +58,7 @@ namespace erin::devs
 
   std::vector<Port> request_inflows_intelligently(
       const std::vector<Port>& inflow_ports,
-      FlowValueType& remaining_request,
+      FlowValueType remaining_request,
       RealTimeType time);
 
   ////////////////////////////////////////////////////////////

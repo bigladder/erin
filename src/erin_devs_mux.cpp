@@ -360,6 +360,13 @@ namespace erin::devs
   MuxState
   mux_internal_transition(const MuxState& state)
   {
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "mux_internal_transition(\n"
+                << "  state.inflow_ports = "
+                << ERIN::vec_to_string<Port>(state.inflow_ports) << "\n"
+                << "  state.outflow_ports = "
+                << ERIN::vec_to_string<Port>(state.outflow_ports) << ")\n";
+    }
     return MuxState{
       state.time,
       state.num_inflows,
@@ -385,8 +392,6 @@ namespace erin::devs
     auto time{state.time + dt};
     auto inflow_ports{state.inflow_ports};
     auto outflow_ports{state.outflow_ports};
-    bool got_outflow{false};
-    int highest_inflow_port_received{-1};
     for (const auto& x : xs) {
       int port = x.port;
       int port_n_ia = port - inport_inflow_achieved;
@@ -394,15 +399,23 @@ namespace erin::devs
       int port_n{-1};
       if ((port_n_ia >= 0) && (port_n_ia < state.num_inflows)) {
         port_n = port_n_ia;
-        if (port_n > highest_inflow_port_received) {
-          highest_inflow_port_received = port_n;
+        auto r{inflow_ports[port_n].get_requested()};
+        if (x.value > r) {
+          // We've received more than we requested; this can happen during
+          // confluent transitions where a previous inflow request arrived just
+          // as an outflow achieved for a previous request went out. What we'll
+          // do is custom set the Port value such that we ensure we propagate
+          // the new request back out. Signature below is:
+          // Port(RealTimeType t, FlowValueType r, FlowValueType a, bool r_prop, bool a_prop):
+          inflow_ports[port_n] = Port{time, r, r, true, false};
         }
-        inflow_ports[port_n] = inflow_ports[port_n].with_achieved(x.value, time);
+        else {
+          inflow_ports[port_n] = inflow_ports[port_n].with_achieved(x.value, time);
+        }
       }
       else if ((port_n_or >= 0) && (port_n_or < state.num_outflows)) {
         port_n = port_n_or;
         outflow_ports[port_n] = outflow_ports[port_n].with_requested(x.value, time);
-        got_outflow = true;
       }
       else {
         std::ostringstream oss{};
@@ -422,11 +435,7 @@ namespace erin::devs
                 << total_inflow_achieved << "\n"
                 << "... total_outflow_request: "
                 << total_outflow_request << "\n"
-                << "... diff                 : " << diff << "\n"
-                << "... got_outflow          : "
-                << (got_outflow ? "true" : "false") << "\n"
-                << "... highest_inflow_port_received: "
-                << highest_inflow_port_received << "\n";
+                << "... diff                 : " << diff << "\n";
     }
     if (diff > ERIN::flow_value_tolerance) {
       // oversupplying... need to re-request to inflows so they give

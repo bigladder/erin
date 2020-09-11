@@ -2590,7 +2590,7 @@ namespace ERIN
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
-    const int max_no_advance_factor{10};
+    const int max_no_advance_factor{10000};
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;
     auto sim_good = run_devs(

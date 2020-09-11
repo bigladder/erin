@@ -22,7 +22,8 @@ main(const int argc, const char* argv[])
     std::ostringstream oss;
     oss << "input file stream on \"" << csv_path
         << "\" failed to open for reading\n";
-    throw std::runtime_error(oss.str());
+    std::cout << oss.str() << "\n";
+    return 1;
   }
   std::cout << "Contents of " << csv_path << ":\n";
   for (int row{0}; ifs.good(); ++row) {

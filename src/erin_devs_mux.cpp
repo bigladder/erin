@@ -451,20 +451,13 @@ namespace erin::devs
       }
       inflow_ports = request_inflows_intelligently(
           inflow_ports, total_outflow_request, time);
-      auto total_inflow_achieved_local = std::accumulate(
+      total_inflow_achieved = std::accumulate(
           inflow_ports.begin(), inflow_ports.end(), 0.0,
           [](const auto& s, const auto& p) { return s + p.get_achieved(); });
-      outflow_ports = distribute_inflow_to_outflow(
-          state.outflow_strategy, outflow_ports,
-          total_inflow_achieved_local, time);
-    } else {
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "...inflows equal outflows\n";
-      }
-      // diff ~= 0.0, redistribute outflows just in case
-      outflow_ports = distribute_inflow_to_outflow(
-          state.outflow_strategy, outflow_ports, total_outflow_request, time);
     }
+    outflow_ports = distribute_inflow_to_outflow(
+        state.outflow_strategy, outflow_ports,
+        total_inflow_achieved, time);
     bool do_report = mux_should_report(time, inflow_ports, outflow_ports);
     return MuxState{
       time,

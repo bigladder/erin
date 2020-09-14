@@ -440,27 +440,17 @@ namespace erin::devs
                 << total_outflow_request << "\n"
                 << "... diff                 : " << diff << "\n";
     }
-    if (diff > ERIN::flow_value_tolerance) {
-      // oversupplying... need to re-request to inflows so they give
-      // less. Restart requests from port zero.
+    if (std::abs(diff) > ERIN::flow_value_tolerance) {
       if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "...oversupplying\n";
+        if (diff > 0.0) {
+          std::cout << "...oversupplying\n";
+        }
+        else {
+          std::cout << "...undersupplying\n";
+        }
       }
-      auto remaining_request{total_outflow_request};
       inflow_ports = request_inflows_intelligently(
-          inflow_ports, remaining_request, time);
-      auto total_inflow_achieved_local = std::accumulate(
-          inflow_ports.begin(), inflow_ports.end(), 0.0,
-          [](const auto& s, const auto& p) { return s + p.get_achieved(); });
-      outflow_ports = distribute_inflow_to_outflow(
-          state.outflow_strategy, outflow_ports, total_inflow_achieved_local, time);
-    } else if (diff < ERIN::neg_flow_value_tol) {
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "...undersupplying\n";
-      }
-      auto remaining_request{total_outflow_request};
-      inflow_ports = request_inflows_intelligently(
-          inflow_ports, remaining_request, time);
+          inflow_ports, total_outflow_request, time);
       auto total_inflow_achieved_local = std::accumulate(
           inflow_ports.begin(), inflow_ports.end(), 0.0,
           [](const auto& s, const auto& p) { return s + p.get_achieved(); });

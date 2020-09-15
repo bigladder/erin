@@ -1315,54 +1315,82 @@ namespace ERIN
   void
   Mux::delta_int()
   {
-    if constexpr (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_low) {
       std::cout << "MUX[" << get_id() << "] delta_int\n";
+      std::cout << "before:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
     }
     state = erin::devs::mux_internal_transition(state);
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "time: " << state.time << "\n";
+      std::cout << "after:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
+    }
     log_ports();
   }
 
   void
   Mux::delta_ext(Time e, std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "MUX[" << get_id() << "] delta_ext, xs:\n";
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "MUX[" << get_id() << "] delta_ext\n";
+      std::cout << "xs:\n";
       for (const auto& x : xs) {
         std::cout << "- (inport = " << x.port << ", value = " << x.value << ")\n";
       }
+      std::cout << "before:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
     }
     state = erin::devs::mux_external_transition(state, e.real, xs);
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "time: " << state.time << "\n";
+      std::cout << "after:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
+    }
     log_ports();
   }
 
   void
   Mux::delta_conf(std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_low) {
       std::cout << "MUX[" << get_id() << "] delta_conf\n";
+      std::cout << "xs:\n";
       for (const auto& x : xs) {
         std::cout << "- (" << x.port << ", " << x.value << ")\n";
       }
+      std::cout << "before:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
     }
     state = erin::devs::mux_confluent_transition(state, xs);
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "after:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
+    }
     log_ports();
   }
 
   Time
   Mux::ta()
   {
-    if constexpr (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_low) {
       std::cout << "MUX[" << get_id() << "] ta\n";
     }
     auto dt = erin::devs::mux_time_advance(state);
     if (dt == erin::devs::infinity) {
-      if constexpr (debug_level >= debug_level_high) {
+      if constexpr (debug_level >= debug_level_low) {
         std::cout << "- t = " << erin::devs::mux_current_time(state) << "\n";
         std::cout << "- dt = inf\n";
       }
       return inf;
     }
-    if constexpr (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_low) {
       std::cout << "- t = " << erin::devs::mux_current_time(state) << "\n";
       std::cout << "- dt = (" << dt << ", 1)\n";
     }
@@ -1373,8 +1401,9 @@ namespace ERIN
   Mux::output_func(std::vector<PortValue>& ys)
   {
     erin::devs::mux_output_function_mutable(state, ys);
-    if constexpr (debug_level >= debug_level_high) {
+    if constexpr (debug_level >= debug_level_low) {
       std::cout << "MUX[" << get_id() << "] output_func\n";
+      std::cout << "ys:\n";
       for (const auto& the_y : ys) {
         std::cout << "- (outport = " << the_y.port << ", value = " << the_y.value << ")\n";
       }
@@ -2047,6 +2076,20 @@ namespace ERIN
           state.time,
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());
+    }
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Helper
+  void
+  print_ports(
+      const std::vector<erin::devs::Port>& ports,
+      const std::string& tag)
+  {
+    int idx{0};
+    for (const auto& p : ports) {
+      std::cout << "... " << tag << "(" << idx << "): " << p << "\n";
+      ++idx;
     }
   }
 }

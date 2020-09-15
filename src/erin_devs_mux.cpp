@@ -355,8 +355,9 @@ namespace erin::devs
   RealTimeType
   mux_time_advance(const MuxState& state)
   {
-    if (state.do_report)
+    if (state.do_report) {
       return 0;
+    }
     return infinity;
   }
 

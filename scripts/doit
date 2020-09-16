@@ -1,6 +1,6 @@
 #!/bin/bash
 date
-if ! cmake -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..; then
+if ! cmake -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug ..; then
   echo CMAKE CALL FAILED!
   exit 1
 fi
@@ -59,6 +59,7 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_type.cpp > tidy/erin_type.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_devs_mover.cpp > tidy/erin_devs_mover.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_component.cpp > tidy/erin_component.cpp.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_csv.cpp > tidy/erin_csv.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_utils.cpp > tidy/erin_utils.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/toml_helper.h > tidy/toml_helper.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_devs_load.cpp > tidy/erin_devs_load.cpp.txt

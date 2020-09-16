@@ -624,34 +624,35 @@ namespace ERIN
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
+    auto the_id = get_id();
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network("
-                << "adevs::Digraph<FlowValueType>& network)\n";
+                << "adevs::Digraph<FlowValueType>& network); id = "
+                << the_id << "\n";
     }
     bool has_reliability{reliability_schedule.size() > 0};
-    auto the_id = get_id();
     auto stream = get_output_stream();
     if (is_failed || limits.get_is_limited()) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "is_failed || is_limited\n";
+        std::cout << "is_failed || is_limited; id = " << the_id << "\n";
       }
       auto min_output = limits.get_min();
       auto max_output = limits.get_max();
       if (is_failed) {
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "is_failed = true; setting min/max output to 0.0\n";
+          std::cout << "is_failed = true; setting min/max output to 0.0; id = " << the_id << "\n";
         }
         min_output = 0.0;
         max_output = 0.0;
       }
-      auto lim = new FlowLimits(
-          the_id, ComponentType::Source, stream, min_output, max_output,
-          PortRole::SourceOutflow);
-      elements.emplace(lim);
       if (has_reliability) {
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = true\n";
+          std::cout << "has_reliability = true; id = " << the_id << "\n";
         }
+        auto lim = new FlowLimits(
+            the_id, ComponentType::Source, stream, min_output, max_output,
+            PortRole::Outflow);
+        elements.emplace(lim);
         auto on_off = new OnOffSwitch(
             the_id, ComponentType::Source, stream, reliability_schedule,
             PortRole::SourceOutflow);
@@ -662,19 +663,23 @@ namespace ERIN
       }
       else {
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = false\n";
+          std::cout << "has_reliability = false; id = " << the_id << "\n";
         }
+        auto lim = new FlowLimits(
+            the_id, ComponentType::Source, stream, min_output, max_output,
+            PortRole::SourceOutflow);
+        elements.emplace(lim);
         lim->set_recording_on();
         ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
       }
     }
     else {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "!is_failed\n";
+        std::cout << "!is_failed; id = " << the_id << "\n";
       }
       if (has_reliability) {
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = true\n";
+          std::cout << "has_reliability = true; id = " << the_id << "\n";
         }
         auto on_off = new OnOffSwitch(
             the_id, ComponentType::Source, stream, reliability_schedule,
@@ -685,7 +690,7 @@ namespace ERIN
       }
       else {
         if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = false\n";
+          std::cout << "has_reliability = false; id = " << the_id << "\n";
         }
         auto meter = new FlowMeter(the_id, ComponentType::Source, stream,
             PortRole::SourceOutflow);
@@ -695,7 +700,7 @@ namespace ERIN
       }
     }
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "SourceComponent::add_to_network(...) exit\n";
+      std::cout << "SourceComponent::add_to_network(...) exit; id = " << the_id << "\n";
     }
     return PortsAndElements{ports, elements};
   }

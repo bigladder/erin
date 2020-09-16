@@ -888,11 +888,9 @@ namespace ERIN
     const auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
         tt, {"max_outflow", "max_output"}, 0.0, field_read);
     bool is_limited{field_read != ""};
-    const auto min_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"min_outflow", "min_output"}, 0.0, field_read);
-    is_limited = is_limited || (field_read != "");
     Limits lim{};
     if (is_limited) {
+      FlowValueType min_outflow{0.0};
       lim = Limits{min_outflow, max_outflow};
     }
     std::unique_ptr<Component> source_comp = std::make_unique<SourceComponent>(
@@ -2556,12 +2554,11 @@ namespace ERIN
     std::unordered_map<std::string, std::vector<TimeState>>
       clipped_reliability_schedule{};
     if (do_reliability) {
-      clipped_reliability_schedule = clip_schedule_to<std::string>(
-          reliability_schedule,
-          scenario_start_s,
-          scenario_start_s + the_scenario.get_duration());
       clipped_reliability_schedule = rezero_times<std::string>(
-          reliability_schedule,
+          clip_schedule_to<std::string>(
+            reliability_schedule,
+            scenario_start_s,
+            scenario_start_s + the_scenario.get_duration()),
           scenario_start_s);
       if constexpr (debug_level >= debug_level_high) {
         for (const auto& item : clipped_reliability_schedule) {
@@ -2593,7 +2590,7 @@ namespace ERIN
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
     const auto duration = the_scenario.get_duration();
-    const int max_no_advance_factor{10};
+    const int max_no_advance_factor{10000};
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;
     auto sim_good = run_devs(
@@ -2616,10 +2613,58 @@ namespace ERIN
           << "stream_ids.size() = " << stream_ids.size() << "\n";
       throw std::runtime_error(oss.str());
     }
-    if constexpr (debug_level >= debug_level_high) {
+    if ((!sim_good) || (debug_level >= debug_level_high)) {
+      if (!sim_good) {
+        std::cout << "ERROR DUMP for " << scenario_id << ":\n";
+      }
       std::cout << "results:\n";
+      using size_type = std::vector<Datum>::size_type;
+      size_type num_results{0};
+      bool is_first{true};
       for (const auto& p : results) {
-        std::cout << "... " << p.first << ": " << vec_to_string<Datum>(p.second) << "\n";
+        if (is_first) {
+          is_first = false;
+          std::cout << p.first << ":time,"
+                    << p.first << ":requested,"
+                    << p.first << ":achieved";
+          num_results = p.second.size();
+        }
+        else {
+          std::cout << ","
+                    << p.first << ":time,"
+                    << p.first << ":requested,"
+                    << p.first << ":achieved";
+          num_results = std::max(num_results, results.size());
+        }
+      }
+      std::cout << "\n";
+      for (size_type idx{0}; idx < num_results; ++idx) {
+        is_first = true;
+        for (const auto& p : results) {
+          auto results_size = p.second.size();
+          if (is_first) {
+            if (idx < results_size) {
+              std::cout <<        p.second[idx].time
+                        << "," << p.second[idx].requested_value
+                        << "," << p.second[idx].achieved_value;
+            }
+            else {
+              std::cout << "--,--,--";
+            }
+            is_first = false;
+          }
+          else {
+            if (idx < results_size) {
+              std::cout << "," << p.second[idx].time
+                        << "," << p.second[idx].requested_value
+                        << "," << p.second[idx].achieved_value;
+              }
+            else {
+              std::cout << ",--,--,--";
+            }
+          }
+        }
+        std::cout << "\n";
       }
       std::cout << "stream_ids:\n";
       for (const auto& p : stream_ids) {
@@ -2656,7 +2701,7 @@ namespace ERIN
           // ss = scenario start (seconds)
           [this, scenario_id, &out](RealTimeType ss) {
             if constexpr (debug_level >= debug_level_high) {
-            std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
+              std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
             }
             auto result = this->run(scenario_id, ss);
             auto& results = out.at(scenario_id);
@@ -2671,7 +2716,34 @@ namespace ERIN
     // 3. run the simulation
     const int max_no_advance{static_cast<int>(components.size()) * 10};
     const auto sim_good = run_devs(sim, sim_max_time, max_no_advance, "run_all:scenario");
-    return AllResults{sim_good, out};
+    if (!sim_good) {
+      return AllResults{sim_good, out};
+    }
+    bool all_subsims_good{true};
+    using size_type = std::vector<std::string>::size_type;
+    std::vector<std::string> problem_scenarios{};
+    std::vector<size_type> scenario_indexes{};
+    for (const auto& item : out) {
+      const auto& scenario_id = item.first;
+      const auto& results = item.second;
+      for (size_type idx{0}; idx < results.size(); ++idx) {
+        const auto& r = results[idx];
+        const auto r_is_good = r.get_is_good();
+        all_subsims_good = all_subsims_good && r_is_good;
+        if (!r_is_good) {
+          problem_scenarios.emplace_back(scenario_id);
+          scenario_indexes.emplace_back(idx);
+        }
+      }
+    }
+    if (problem_scenarios.size() > 0) {
+      std::cout << "ERROR! Issues simulating the following scenarios:\n";
+      for (size_type idx{0}; idx < problem_scenarios.size(); ++idx) {
+        std::cout << "Scenario " << problem_scenarios[idx]
+                  << "[" << scenario_indexes[idx] << "]\n";
+      }
+    }
+    return AllResults{all_subsims_good, out};
   }
 
   RealTimeType
@@ -2849,14 +2921,12 @@ namespace ERIN
       }
       if (non_advance_count >= max_no_advance) {
         sim_good = false;
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "ERROR: non_advance_count > max_no_advance:\n";
-          std::cout << "run_id           : " << run_id << "\n";
-          std::cout << "non_advance_count: " << non_advance_count << "\n";
-          std::cout << "max_no_advance   : " << max_no_advance << "\n";
-          std::cout << "time.real        : " << t.real << "\n";
-          std::cout << "time.logical     : " << t.logical << "\n";
-        }
+        std::cout << "ERROR: non_advance_count > max_no_advance:\n";
+        std::cout << "run_id           : " << run_id << "\n";
+        std::cout << "non_advance_count: " << non_advance_count << "\n";
+        std::cout << "max_no_advance   : " << max_no_advance << "\n";
+        std::cout << "time.real        : " << t.real << " seconds\n";
+        std::cout << "time.logical     : " << t.logical << "\n";
         break;
       }
       if constexpr (debug_level >= debug_level_high) {

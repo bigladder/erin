@@ -118,7 +118,9 @@ namespace erin::devs
           << "time_of_last_change = " << time_of_last_change << "\n";
       throw std::invalid_argument(oss.str());
     }
-    bool is_same{(new_request == requested) && (new_request == new_achieved)};
+    bool is_same{
+      (std::abs(new_request - requested) < ERIN::flow_value_tolerance)
+      && (std::abs(new_request - new_achieved) < ERIN::flow_value_tolerance)};
     return Port{
       is_same ? time_of_last_change : time,
       new_request,
@@ -137,7 +139,7 @@ namespace erin::devs
     }
     // when we set an achieved flow, we do not touch the request; we are still
     // requesting what we request regardless of what is achieved.
-    auto is_same{achieved == new_achieved};
+    auto is_same{std::abs(achieved - new_achieved) < ERIN::flow_value_tolerance};
     return Port{
       is_same ? time_of_last_change : time,
       requested,
@@ -150,8 +152,8 @@ namespace erin::devs
   operator==(const Port& a, const Port& b)
   {
     return (a.time_of_last_change == b.time_of_last_change)
-        && (a.requested == b.requested)
-        && (a.achieved == b.achieved);
+        && (std::abs(a.requested - b.requested) < ERIN::flow_value_tolerance)
+        && (std::abs(a.achieved - b.achieved) < ERIN::flow_value_tolerance);
   }
 
   bool

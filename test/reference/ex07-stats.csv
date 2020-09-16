@@ -1,10 +1,10 @@
 scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),biomass energy used (kJ),electricity energy used (kJ),heating energy used (kJ),natural_gas energy used (kJ),steam energy used (kJ),waste_heat energy used (kJ)
-blue_sky,1,8760,biomass_boiler_heating-inflow,converter,waste_heat,0,8760,2.8032e+10,0.0,0.0,0.0,0.0,0.0,5.39616e+10
+blue_sky,1,8760,biomass_boiler_heating-inflow,converter,waste_heat,0,8760,2.14245e+11,0.0,0.0,0.0,0.0,0.0,5.39616e+10
 blue_sky,1,8760,biomass_boiler_heating-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,0
-blue_sky,1,8760,biomass_boiler_heating-outflow,converter,heating,0,8760,8.4096e+09,0.0,0.0,1.61885e+10,0.0,0.0,0.0
+blue_sky,1,8760,biomass_boiler_heating-outflow,converter,heating,0,8760,6.42734e+10,0.0,0.0,1.61885e+10,0.0,0.0,0.0
 blue_sky,1,8760,biomass_boiler_heating-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,3.77731e+10
 blue_sky,1,8760,biomass_boiler_steam-inflow,converter,biomass,1,0,0,9.8112e+10,0.0,0.0,0.0,0.0,0.0
-blue_sky,1,8760,biomass_boiler_steam-lossflow,converter,waste_heat,0,8760,2.8032e+10,0.0,0.0,0.0,0.0,0.0,5.39616e+10
+blue_sky,1,8760,biomass_boiler_steam-lossflow,converter,waste_heat,0,8760,2.14245e+11,0.0,0.0,0.0,0.0,0.0,5.39616e+10
 blue_sky,1,8760,biomass_boiler_steam-outflow,converter,steam,1,0,0,0.0,0.0,0.0,0.0,4.41504e+10,0.0
 blue_sky,1,8760,biomass_boiler_steam-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,0
 blue_sky,1,8760,biomass_source,source,biomass,1,0,0,9.8112e+10,0.0,0.0,0.0,0.0,0.0
@@ -30,7 +30,7 @@ blue_sky,1,8760,electric_bus-outflow(0),muxer,electricity,1,0,0,0.0,6.3072e+10,0
 blue_sky,1,8760,electric_bus-outflow(1),muxer,electricity,1,0,0,0.0,6.3072e+10,0.0,0.0,0.0,0.0
 blue_sky,1,8760,electric_utility,source,electricity,1,0,0,0.0,0,0.0,0.0,0.0,0.0
 blue_sky,1,8760,heating_manifold-inflow(0),muxer,heating,0,8760,8.04619e+10,0.0,0.0,4.56821e+10,0.0,0.0,0.0
-blue_sky,1,8760,heating_manifold-inflow(1),muxer,heating,0,8760,8.4096e+09,0.0,0.0,1.61885e+10,0.0,0.0,0.0
+blue_sky,1,8760,heating_manifold-inflow(1),muxer,heating,0,8760,6.42734e+10,0.0,0.0,1.61885e+10,0.0,0.0,0.0
 blue_sky,1,8760,heating_manifold-inflow(2),muxer,heating,1,0,0,0.0,0.0,6.42734e+10,0.0,0.0,0.0
 blue_sky,1,8760,heating_manifold-outflow(0),muxer,heating,1,0,0,0.0,0.0,6.3072e+10,0.0,0.0,0.0
 blue_sky,1,8760,heating_manifold-outflow(1),muxer,heating,1,0,0,0.0,0.0,6.3072e+10,0.0,0.0,0.0
@@ -57,12 +57,12 @@ blue_sky,1,8760,TOTAL (load),,,,,,0.0,1.26144e+11,1.26144e+11,0.0,1.26144e+11,0.
 blue_sky,1,8760,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0,0.0,0.0
 blue_sky,1,8760,TOTAL (waste),,,,,,0.0,0.0,0.0,0.0,0.0,2.22921e+11
 blue_sky,1,8760,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,,,,
-category_4_hurricane,3,1008,biomass_boiler_heating-inflow,converter,waste_heat,0,336,4.71744e+09,0.0,0.0,0.0,0.0,0.0,0
+category_4_hurricane,3,1008,biomass_boiler_heating-inflow,converter,waste_heat,0,336,1.5431e+10,0.0,0.0,0.0,0.0,0.0,0
 category_4_hurricane,3,1008,biomass_boiler_heating-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,0
-category_4_hurricane,3,1008,biomass_boiler_heating-outflow,converter,heating,0,336,1.41523e+09,0.0,0.0,0,0.0,0.0,0.0
+category_4_hurricane,3,1008,biomass_boiler_heating-outflow,converter,heating,0,336,4.62931e+09,0.0,0.0,0,0.0,0.0,0.0
 category_4_hurricane,3,1008,biomass_boiler_heating-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,0
 category_4_hurricane,3,1008,biomass_boiler_steam-inflow,converter,biomass,0,336,5.6448e+09,0,0.0,0.0,0.0,0.0,0.0
-category_4_hurricane,3,1008,biomass_boiler_steam-lossflow,converter,waste_heat,0,336,4.71744e+09,0.0,0.0,0.0,0.0,0.0,0
+category_4_hurricane,3,1008,biomass_boiler_steam-lossflow,converter,waste_heat,0,336,1.5431e+10,0.0,0.0,0.0,0.0,0.0,0
 category_4_hurricane,3,1008,biomass_boiler_steam-outflow,converter,steam,0,336,2.54016e+09,0.0,0.0,0.0,0.0,0,0.0
 category_4_hurricane,3,1008,biomass_boiler_steam-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,0
 category_4_hurricane,3,1008,biomass_source,source,biomass,0,336,5.6448e+09,0,0.0,0.0,0.0,0.0,0.0
@@ -88,30 +88,30 @@ category_4_hurricane,3,1008,electric_bus-outflow(0),muxer,electricity,1,0,0,0.0,
 category_4_hurricane,3,1008,electric_bus-outflow(1),muxer,electricity,1,0,0,0.0,3.6288e+09,0.0,0.0,0.0,0.0
 category_4_hurricane,3,1008,electric_utility,source,electricity,1,0,0,0.0,0,0.0,0.0,0.0,0.0
 category_4_hurricane,3,1008,heating_manifold-inflow(0),muxer,heating,0,336,4.62931e+09,0.0,0.0,2.62829e+09,0.0,0.0,0.0
-category_4_hurricane,3,1008,heating_manifold-inflow(1),muxer,heating,0,336,1.41523e+09,0.0,0.0,0,0.0,0.0,0.0
-category_4_hurricane,3,1008,heating_manifold-inflow(2),muxer,heating,1,0,0,0.0,0.0,9.31392e+08,0.0,0.0,0.0
-category_4_hurricane,3,1008,heating_manifold-outflow(0),muxer,heating,0,336,6.912e+07,0.0,0.0,3.55968e+09,0.0,0.0,0.0
-category_4_hurricane,3,1008,heating_manifold-outflow(1),muxer,heating,0,336,3.6288e+09,0.0,0.0,0,0.0,0.0,0.0
+category_4_hurricane,3,1008,heating_manifold-inflow(1),muxer,heating,0,336,4.62931e+09,0.0,0.0,0,0.0,0.0,0.0
+category_4_hurricane,3,1008,heating_manifold-inflow(2),muxer,heating,1,0,0,0.0,0.0,4.62931e+09,0.0,0.0,0.0
+category_4_hurricane,3,1008,heating_manifold-outflow(0),muxer,heating,1,0,0,0.0,0.0,3.6288e+09,0.0,0.0,0.0
+category_4_hurricane,3,1008,heating_manifold-outflow(1),muxer,heating,1,0,0,0.0,0.0,3.6288e+09,0.0,0.0,0.0
 category_4_hurricane,3,1008,mission_critical_consumer_electricity,load,electricity,1,0,0,0.0,3.6288e+09,0.0,0.0,0.0,0.0
-category_4_hurricane,3,1008,mission_critical_consumer_heating,load,heating,0,336,6.912e+07,0.0,0.0,3.55968e+09,0.0,0.0,0.0
+category_4_hurricane,3,1008,mission_critical_consumer_heating,load,heating,1,0,0,0.0,0.0,3.6288e+09,0.0,0.0,0.0
 category_4_hurricane,3,1008,mission_critical_consumer_steam,load,steam,1,0,0,0.0,0.0,0.0,0.0,3.6288e+09,0.0
-category_4_hurricane,3,1008,natural_gas_boiler_heating-inflow,converter,natural_gas,1,0,0,0.0,0.0,0.0,2.06976e+09,0.0,0.0
+category_4_hurricane,3,1008,natural_gas_boiler_heating-inflow,converter,natural_gas,1,0,0,0.0,0.0,0.0,1.02874e+10,0.0,0.0
 category_4_hurricane,3,1008,natural_gas_boiler_heating-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,0
-category_4_hurricane,3,1008,natural_gas_boiler_heating-outflow,converter,heating,1,0,0,0.0,0.0,9.31392e+08,0.0,0.0,0.0
-category_4_hurricane,3,1008,natural_gas_boiler_heating-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,1.13837e+09
-category_4_hurricane,3,1008,natural_gas_manifold-inflow(0),muxer,natural_gas,1,0,0,0.0,0.0,0.0,2.06976e+09,0.0,0.0
+category_4_hurricane,3,1008,natural_gas_boiler_heating-outflow,converter,heating,1,0,0,0.0,0.0,4.62931e+09,0.0,0.0,0.0
+category_4_hurricane,3,1008,natural_gas_boiler_heating-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0.0,0.0,5.65805e+09
+category_4_hurricane,3,1008,natural_gas_manifold-inflow(0),muxer,natural_gas,1,0,0,0.0,0.0,0.0,1.02874e+10,0.0,0.0
 category_4_hurricane,3,1008,natural_gas_manifold-outflow(0),muxer,natural_gas,1,0,0,0.0,0.0,0.0,0,0.0,0.0
-category_4_hurricane,3,1008,natural_gas_manifold-outflow(1),muxer,natural_gas,1,0,0,0.0,0.0,0.0,2.06976e+09,0.0,0.0
-category_4_hurricane,3,1008,natural_gas_utility,source,natural_gas,1,0,0,0.0,0.0,0.0,2.06976e+09,0.0,0.0
+category_4_hurricane,3,1008,natural_gas_manifold-outflow(1),muxer,natural_gas,1,0,0,0.0,0.0,0.0,1.02874e+10,0.0,0.0
+category_4_hurricane,3,1008,natural_gas_utility,source,natural_gas,1,0,0,0.0,0.0,0.0,1.02874e+10,0.0,0.0
 category_4_hurricane,3,1008,other_consumer_electricity,load,electricity,1,0,0,0.0,3.6288e+09,0.0,0.0,0.0,0.0
-category_4_hurricane,3,1008,other_consumer_heating,load,heating,0,336,3.6288e+09,0.0,0.0,0,0.0,0.0,0.0
+category_4_hurricane,3,1008,other_consumer_heating,load,heating,1,0,0,0.0,0.0,3.6288e+09,0.0,0.0,0.0
 category_4_hurricane,3,1008,other_consumer_steam,load,steam,0,336,2.54016e+09,0.0,0.0,0.0,0.0,1.08864e+09,0.0
 category_4_hurricane,3,1008,steam_manifold-inflow(0),muxer,steam,0,336,2.54016e+09,0.0,0.0,0.0,0.0,4.71744e+09,0.0
 category_4_hurricane,3,1008,steam_manifold-inflow(1),muxer,steam,0,336,2.54016e+09,0.0,0.0,0.0,0.0,0,0.0
 category_4_hurricane,3,1008,steam_manifold-outflow(0),muxer,steam,1,0,0,0.0,0.0,0.0,0.0,3.6288e+09,0.0
 category_4_hurricane,3,1008,steam_manifold-outflow(1),muxer,steam,0,336,2.54016e+09,0.0,0.0,0.0,0.0,1.08864e+09,0.0
-category_4_hurricane,3,1008,TOTAL (source),,,,,,0.0,0.0,0.0,2.28058e+10,0.0,0.0
-category_4_hurricane,3,1008,TOTAL (load),,,,,,0.0,7.2576e+09,3.55968e+09,0.0,4.71744e+09,0.0
+category_4_hurricane,3,1008,TOTAL (source),,,,,,0.0,0.0,0.0,3.10234e+10,0.0,0.0
+category_4_hurricane,3,1008,TOTAL (load),,,,,,0.0,7.2576e+09,7.2576e+09,0.0,4.71744e+09,0.0
 category_4_hurricane,3,1008,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0,0.0,0.0
-category_4_hurricane,3,1008,TOTAL (waste),,,,,,0.0,0.0,0.0,0.0,0.0,7.27104e+09
-category_4_hurricane,3,1008,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,,,,
+category_4_hurricane,3,1008,TOTAL (waste),,,,,,0.0,0.0,0.0,0.0,0.0,1.17907e+10
+category_4_hurricane,3,1008,ENERGY BALANCE (source-(load+storage+waste)),-3.8147e-06,,,,,,,,,,

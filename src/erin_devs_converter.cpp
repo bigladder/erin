@@ -393,7 +393,18 @@ namespace erin::devs
       state.conversion_fun->outflow_given_inflow(inflow_achieved);
     auto lossflow_achieved =
       state.conversion_fun->lossflow_given_inflow(inflow_achieved);
-    auto new_ip{state.inflow_port.with_achieved(inflow_achieved, new_time)};
+    auto new_ip{state.inflow_port};
+    auto r{state.inflow_port.get_requested()};
+    if (inflow_achieved > r) {
+      // this can happen during confluent transitions when we lower our inflow
+      // request simultaneous to a new inflow achieved arriving
+      new_ip = erin::devs::Port{new_time, r, r, true, false};
+      outflow_achieved = state.conversion_fun->outflow_given_inflow(r);
+      lossflow_achieved = state.conversion_fun->lossflow_given_inflow(r);
+    }
+    else {
+      new_ip = state.inflow_port.with_achieved(inflow_achieved, new_time);
+    }
     auto new_op{state.outflow_port.with_achieved(outflow_achieved, new_time)};
     auto loss_ports = update_lossflow_ports(
         new_time,
@@ -407,7 +418,7 @@ namespace erin::devs
       loss_ports.lossflow_port,
       loss_ports.wasteflow_port,
       state.conversion_fun->clone(),
-      state.report_inflow_request,
+      new_ip.should_propagate_request_at(new_time),
       new_op.should_propagate_achieved_at(new_time),
       loss_ports.lossflow_port.should_propagate_achieved_at(new_time),
     };

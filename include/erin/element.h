@@ -646,6 +646,9 @@ namespace ERIN
       void log_ports();
   };
 
+  ////////////////////////////////////////////////////////////
+  // Helper
+  void print_ports(const std::vector<erin::devs::Port>& ports, const std::string& tag);
 }
 
 #endif // ERIN_ELEMENT_H

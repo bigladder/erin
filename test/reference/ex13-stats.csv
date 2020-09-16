@@ -1,0 +1,24 @@
+scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ)
+blue_sky,1,0.000277778,L1,load,electricity,0,0.000277778,5,5
+blue_sky,1,0.000277778,L2,load,electricity,0,0.000277778,10,0
+blue_sky,1,0.000277778,S,source,electricity,0,0.000277778,15,5
+blue_sky,1,0.000277778,load_combiner_1-inflow(0),muxer,electricity,0,0.000277778,5,5
+blue_sky,1,0.000277778,load_combiner_1-inflow(1),muxer,electricity,0,0.000277778,5,0
+blue_sky,1,0.000277778,load_combiner_1-outflow(0),muxer,electricity,0,0.000277778,5,5
+blue_sky,1,0.000277778,load_combiner_2-inflow(0),muxer,electricity,0,0.000277778,10,0
+blue_sky,1,0.000277778,load_combiner_2-inflow(1),muxer,electricity,0,0.000277778,10,0
+blue_sky,1,0.000277778,load_combiner_2-outflow(0),muxer,electricity,0,0.000277778,10,0
+blue_sky,1,0.000277778,load_mux_1-inflow(0),muxer,electricity,0,0.000277778,15,5
+blue_sky,1,0.000277778,load_mux_1-outflow(0),muxer,electricity,0,0.000277778,5,5
+blue_sky,1,0.000277778,load_mux_1-outflow(1),muxer,electricity,0,0.000277778,10,0
+blue_sky,1,0.000277778,load_mux_2-inflow(0),muxer,electricity,0,0.000277778,15,0
+blue_sky,1,0.000277778,load_mux_2-outflow(0),muxer,electricity,0,0.000277778,10,0
+blue_sky,1,0.000277778,load_mux_2-outflow(1),muxer,electricity,0,0.000277778,5,0
+blue_sky,1,0.000277778,loop-inflow(0),muxer,electricity,0,0.000277778,15,5
+blue_sky,1,0.000277778,loop-outflow(0),muxer,electricity,0,0.000277778,5,5
+blue_sky,1,0.000277778,loop-outflow(1),muxer,electricity,0,0.000277778,10,0
+blue_sky,1,0.000277778,TOTAL (source),,,,,,5
+blue_sky,1,0.000277778,TOTAL (load),,,,,,5
+blue_sky,1,0.000277778,TOTAL (storage),,,,,,0.0
+blue_sky,1,0.000277778,TOTAL (waste),,,,,,0.0
+blue_sky,1,0.000277778,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,

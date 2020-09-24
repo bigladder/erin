@@ -1,6 +1,6 @@
-# E2RIN (Economics, Energy-use, and Resilience of Interacting Networks)
+# ERIN (Energy Resilience of Interacting Networks)
 
-Main engine for the DISCO (District Infrastructure System Component Optimization) tool.
+ERIN is a district system energy-flow simulator that takes into account toplogy and disruption due to threat events and/or reliability-based failures.
 
 ## Running Google Test
 
@@ -78,13 +78,13 @@ Unit tests are created by googletest and automatically detected by CTest and add
 
 ## Graphviz Visualization of the Network Topology
 
-One of the programs that builds with E2RIN is `e2rin_graph`.
-`e2rin_graph` can be used to generate a Graphviz input file from your input TOML file.
+One of the programs that builds with ERIN is `erin_graph`.
+`erin_graph` can be used to generate a Graphviz input file from your input TOML file.
 Although the graphviz input file can be created with no external dependencies, a Graphviz installation is required to actually create an output image.
 
 Graphviz can be installed from [here](https://www.graphviz.org/).
 
-The `e2rin_graph` program provides usage help including how to call Graphviz to generate your picture.
+The `erin_graph` program provides usage help including how to call Graphviz to generate your picture.
 
 # Copyright and License
 

@@ -15,19 +15,19 @@ REFERENCE_PATH = File.expand_path(File.join(THIS_DIR, '..', 'test', 'reference')
 REGRESSION_RUNS_PATH = File.join(REFERENCE_PATH, 'runs.edn')
 EXECUTABLES = {}
 if IS_WIN
-  EXECUTABLES[:e2rin_single] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin.exe"))
-  EXECUTABLES[:e2rin_multi] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin_multi.exe"))
-  EXECUTABLES[:e2rin_graph] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin_graph.exe"))
+  EXECUTABLES[:erin_single] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "Debug", "erin.exe"))
+  EXECUTABLES[:erin_multi] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "Debug", "erin_multi.exe"))
+  EXECUTABLES[:erin_graph] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "Debug", "erin_graph.exe"))
 else
-  EXECUTABLES[:e2rin_single] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "e2rin"))
-  EXECUTABLES[:e2rin_multi] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi"))
-  EXECUTABLES[:e2rin_graph] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "e2rin_graph"))
+  EXECUTABLES[:erin_single] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "erin"))
+  EXECUTABLES[:erin_multi] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "erin_multi"))
+  EXECUTABLES[:erin_graph] = File.expand_path(
+    File.join(THIS_DIR, "..", "build", "bin", "erin_graph"))
 end
 DIFF_PROGRAM = if IS_WIN then "FC" else "diff" end
 

@@ -2,14 +2,15 @@
 
 ## Context
 
-Need a format to go from "dancer" to "E2RIN" and to provide an early interchange format for early problem specification.
+Need a format to run "ERIN" for early problem specification.
 
-Note: a stretch goal is to implement programmatic bindings between dancer and e2rin to allow skipping of the reading/writing to the file system.
-If e2rin is able to run cases fast and there are a lot of cases, a programmatic interface would allow us to skip reading/writing to the file system which could greatly enhance the speed.
+Note: a stretch goal is to implement a programmatic interface to erin to allow skipping of the reading/writing to the file system.
+If erin is able to run cases fast and there are a lot of cases, a programmatic interface would allow us to skip reading/writing to the file system which could greatly enhance the speed.
+
 However, we are starting with a data interchange format first because:
 
 1. it enables us to move forward and it does work for even the final solution (provided it is fast enough)
-2. we wouldn't want to build programmatic bindings until e2rin's API is fairly stable
+2. we wouldn't want to build programmatic bindings until erin's API is fairly stable
 
 The input format should be:
 

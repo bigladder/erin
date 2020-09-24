@@ -4014,14 +4014,14 @@ TEST(ErinBasicsTest, Test_that_we_can_access_version_info_programmatically)
 TEST(ErinBasicsTest, Test_that_path_to_filename_works)
 {
   namespace eu = erin::utils;
-  std::string path0{"e2rin"};
-  std::string expected_filename0{"e2rin"};
+  std::string path0{"erin"};
+  std::string expected_filename0{"erin"};
   EXPECT_EQ(expected_filename0, eu::path_to_filename(path0));
-  std::string path1{"./bin/e2rin"};
-  std::string expected_filename1{"e2rin"};
+  std::string path1{"./bin/erin"};
+  std::string expected_filename1{"erin"};
   EXPECT_EQ(expected_filename1, eu::path_to_filename(path1));
-  std::string path2{".\\bin\\Debug\\e2rin.exe"};
-  std::string expected_filename2{"e2rin.exe"};
+  std::string path2{".\\bin\\Debug\\erin.exe"};
+  std::string expected_filename2{"erin.exe"};
 }
 
 TEST(ErinElements, Test_flow_writer_implementation)

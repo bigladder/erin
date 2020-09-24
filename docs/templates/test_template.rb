@@ -309,35 +309,35 @@ class TestTemplate < Minitest::Test
     ps
   end
 
-  # RETURN: string, path to the e2rin_multi executable
-  def e2rin_path
-    path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_multi')
-    path2 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'Debug', 'e2rin_multi.exe')
+  # RETURN: string, path to the erin_multi executable
+  def erin_path
+    path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'erin_multi')
+    path2 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'Debug', 'erin_multi.exe')
     if File.exist?(path1)
       path1
     elsif File.exist?(path2)
       path2
     else
-      throw "Could not find path to e2rin_multi"
+      throw "Could not find path to erin_multi"
     end
   end
 
-  def e2rin_graph_path
-    path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'e2rin_graph')
-    path2 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'Debug', 'e2rin_graph.exe')
+  def erin_graph_path
+    path1 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'erin_graph')
+    path2 = File.join(THIS_DIR, '..', '..', 'build', 'bin', 'Debug', 'erin_graph.exe')
     if File.exist?(path1)
       path1
     elsif File.exist?(path2)
       path2
     else
-      throw "Could not find path to e2rin_graph"
+      throw "Could not find path to erin_graph"
     end
   end
 
   # - input_tag: string, the tag for the input file, such as 'defaults', for reference/defaults.toml
   # - load_profiles: (array string), the csv files for the load profiles
   # RETURN: bool
-  def run_e2rin(input_tag, load_profiles)
+  def run_erin(input_tag, load_profiles)
     load_profiles.each do |path|
       File.open(path, 'w') do |f|
         f.write("hours,kW\n")
@@ -346,7 +346,7 @@ class TestTemplate < Minitest::Test
       end
     end
     input_path = File.join(THIS_DIR, 'reference', input_tag + ".toml")
-    `#{e2rin_path} #{input_path} out.csv stats.csv`
+    `#{erin_path} #{input_path} out.csv stats.csv`
     success = ($?.to_i == 0)
     (load_profiles + ['out.csv', 'stats.csv']).each do |path|
       File.delete(path) if File.exist?(path)
@@ -357,7 +357,7 @@ class TestTemplate < Minitest::Test
   # - input_tag: string, the tag for the input file, such as 'defaults', for reference/defaults.toml
   # - load_profiles: (array string), the csv files for the load profiles
   # RETURN: bool
-  def run_e2rin_graph(input_tag, load_profiles)
+  def run_erin_graph(input_tag, load_profiles)
     load_profiles.each do |path|
       File.open(path, 'w') do |f|
         f.write("hours,kW\n")
@@ -366,7 +366,7 @@ class TestTemplate < Minitest::Test
       end
     end
     input_path = File.join(THIS_DIR, 'reference', input_tag + ".toml")
-    `#{e2rin_graph_path} #{input_path} #{input_tag}.gv nw`
+    `#{erin_graph_path} #{input_path} #{input_tag}.gv nw`
     success = ($?.to_i == 0)
     `dot -Tpng #{input_tag}.gv -o #{input_tag}.png`
     success = success and ($?.to_i == 0)
@@ -694,16 +694,16 @@ class TestTemplate < Minitest::Test
     ps = default_params
     run_and_compare(ps, 'defaults')
     load_profiles = ps[:load_profile].map {|p| p[:file]}
-    assert(run_e2rin('defaults', load_profiles))
-    assert(run_e2rin_graph('defaults', load_profiles))
+    assert(run_erin('defaults', load_profiles))
+    assert(run_erin_graph('defaults', load_profiles))
   end
 
   def test_multiple_scenarios
     ps = multiple_scenarios_params
     run_and_compare(ps, 'multiple_scenarios')
     load_profiles = ps[:load_profile].map {|p| p[:file]}
-    assert(run_e2rin('multiple_scenarios', load_profiles))
-    assert(run_e2rin_graph('multiple_scenarios', load_profiles))
+    assert(run_erin('multiple_scenarios', load_profiles))
+    assert(run_erin_graph('multiple_scenarios', load_profiles))
   end
 
   def test_add_one_electric_generator_at_building_level
@@ -711,11 +711,11 @@ class TestTemplate < Minitest::Test
     run_and_compare(ps, 'add_one_electric_generator_at_building_level')
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(
-      run_e2rin(
+      run_erin(
         'add_one_electric_generator_at_building_level',
         load_profiles))
     assert(
-      run_e2rin_graph(
+      run_erin_graph(
         'add_one_electric_generator_at_building_level',
         load_profiles))
   end
@@ -725,10 +725,10 @@ class TestTemplate < Minitest::Test
     run_and_compare(ps, 'only_one_building_with_electric_loads')
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(
-      run_e2rin(
+      run_erin(
         'only_one_building_with_electric_loads', load_profiles))
     assert(
-      run_e2rin_graph(
+      run_erin_graph(
         'only_one_building_with_electric_loads', load_profiles))
   end
 
@@ -737,10 +737,10 @@ class TestTemplate < Minitest::Test
     run_and_compare(ps, 'one_building_has_thermal_storage')
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(
-      run_e2rin(
+      run_erin(
         'one_building_has_thermal_storage', load_profiles))
     assert(
-      run_e2rin_graph(
+      run_erin_graph(
         'one_building_has_thermal_storage', load_profiles))
   end
 
@@ -793,10 +793,10 @@ class TestTemplate < Minitest::Test
     run_and_compare(ps, 'one_building_has_boiler')
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(
-      run_e2rin(
+      run_erin(
         'one_building_has_boiler', load_profiles))
     assert(
-      run_e2rin_graph(
+      run_erin_graph(
         'one_building_has_boiler', load_profiles))
   end
 
@@ -979,10 +979,10 @@ class TestTemplate < Minitest::Test
     run_and_compare(ps, 'all_building_config_options_true')
     load_profiles = ps[:load_profile].map {|p| p[:file]}
     assert(
-      run_e2rin(
+      run_erin(
         'all_building_config_options_true', load_profiles))
     assert(
-      run_e2rin_graph(
+      run_erin_graph(
         'all_building_config_options_true', load_profiles))
   end
 
@@ -1003,8 +1003,8 @@ class TestTemplate < Minitest::Test
     tag = 'add_damage_intensities_to_scenario'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
-    assert(run_e2rin(tag, load_profiles))
-    assert(run_e2rin_graph(tag, load_profiles))
+    assert(run_erin(tag, load_profiles))
+    assert(run_erin_graph(tag, load_profiles))
   end
 
   def test_add_fragility_curves_and_damage_intensity_to_scenarios
@@ -1038,8 +1038,8 @@ class TestTemplate < Minitest::Test
     tag = 'add_fragility_curves_and_damage_intensity_to_scenarios'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
-    assert(run_e2rin(tag, load_profiles))
-    assert(run_e2rin_graph(tag, load_profiles))
+    assert(run_erin(tag, load_profiles))
+    assert(run_erin_graph(tag, load_profiles))
   end
 
   def test_add_multiple_pass_through_components_on_a_link
@@ -1059,8 +1059,8 @@ class TestTemplate < Minitest::Test
     tag = 'add_multiple_pass_through_components_on_a_link'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
-    assert(run_e2rin(tag, load_profiles))
-    assert(run_e2rin_graph(tag, load_profiles))
+    assert(run_erin(tag, load_profiles))
+    assert(run_erin_graph(tag, load_profiles))
   end
 
   def test_add_failure_modes_to_a_component
@@ -1091,8 +1091,8 @@ class TestTemplate < Minitest::Test
     tag = 'add_failure_modes_to_a_component'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
-    assert(run_e2rin(tag, load_profiles))
-    assert(run_e2rin_graph(tag, load_profiles))
+    assert(run_erin(tag, load_profiles))
+    assert(run_erin_graph(tag, load_profiles))
   end
 
   def test_add_chp
@@ -1137,8 +1137,8 @@ class TestTemplate < Minitest::Test
     tag = 'add_chp'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
-    assert(run_e2rin(tag, load_profiles))
-    assert(run_e2rin_graph(tag, load_profiles))
+    assert(run_erin(tag, load_profiles))
+    assert(run_erin_graph(tag, load_profiles))
   end
 
   def test_add_cooling_load_and_chiller
@@ -1201,7 +1201,7 @@ class TestTemplate < Minitest::Test
     tag = 'add_cooling_load_and_chiller'
     run_and_compare(ps, tag)
     load_profiles = ps[:load_profile].map {|p| p[:file]}
-    assert(run_e2rin(tag, load_profiles))
-    assert(run_e2rin_graph(tag, load_profiles))
+    assert(run_erin(tag, load_profiles))
+    assert(run_erin_graph(tag, load_profiles))
   end
 end

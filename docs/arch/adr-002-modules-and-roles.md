@@ -21,14 +21,16 @@ It may be simpler and better to separate the pieces of the software tool into 3 
     - for Citadel, port to MySQL
 - "dancer"
     - currently using Ruby despite no 0.5 TOML support
-- "E2RIN"
+- "ERIN"
     - evaluate a single case
     - written in C++ (see ADR 1)
 
 
 ## Status
 
-Tentative
+No longer relevant.
+It became apparent that the vision to build DISCO, dancer, *and* ERIN was too ambitions for the available time and funding.
+Focus has come to just ERIN.
 
 
 ## Consequences

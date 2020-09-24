@@ -13,7 +13,7 @@ secPrefix: "Section"
 ...
 # Introduction
 
-The purpose of this User's Guide is to give a working introduction to the command-line version of the resilience calculation tool (*E^2^RIN*[^1]) and a user interface for the tool written in Microsoft Excel.
+The purpose of this User's Guide is to give a working introduction to the command-line version of the resilience calculation tool (*ERIN*[^1]) and a user interface for the tool written in Microsoft Excel.
 
 The purpose of the tool itself is to simulate the energy flows through a district energy system composed of an interacting network of components.
 The main contributions of this tool that we maintain are unique in aggregate are as follows:
@@ -24,16 +24,14 @@ The main contributions of this tool that we maintain are unique in aggregate are
 
 The resilience calculation tool is available as open-source software written in C++.
 
-Several command-line programs are included with the *E^2^RIN* distribution including 3 key executables along with a library written in the *C++* programming language.
+Several command-line programs are included with the *ERIN* distribution including 3 key executables along with a library written in the *C++* programming language.
 Documentation of the library itself is beyond the scope of this document.
 However, the 3 executables will be given attention in this User's Guide as they are of particular interest to modelers.
 
 The minimal user interface written in Microsoft Excel uses the command-line simulation tool behind the scenes as well as a *Modelkit/Params*[^2] template to make it easier to use.
 We will cover usage of the Microsoft Excel interface in addition to the command-line programs.
 
-[^1]: E^2^RIN originally stood for Energy, Economics, and Resilience of Interacting Networks.
-However, the economics portion has been moved out of the engine itself.
-The current name at the time of this writing is a working name subject to change in the future.
+[^1]: ERIN stands for Energy Resilience of Interacting Networks
 
 [^2]: *Modelkit/Params* is a separate open-source project [available](https://bigladdersoftware.com/projects/modelkit/) from Big Ladder Software.
 
@@ -636,22 +634,22 @@ $$E_{\textrm{not served}} = \int_{t=0}^{t_{end}}{(f_{\textrm{requested}} - f_{\t
 Three command-line programs are available for simulation and assistance.
 They will be given an overview here.
 
-## `e2rin`
+## `erin`
 
 Simulates a single scenario and generates results.
 
 **USAGE**:
 
-`e2rin` `<input_file_path>` `<output_file_path>` `<stats_file_path>` `<scenario_id>`
+`erin` `<input_file_path>` `<output_file_path>` `<stats_file_path>` `<scenario_id>`
 
 - `input_file_path`: path to TOML input file
 - `output_file_path`: path to CSV output file for time-series data
 - `stats_file_path`: path to CSV output file for statistics
 - `scenario_id`: the id of the scenario to run
 
-The output from the call to `e2rin` will be written into two files: an output file and a statistics file.
+The output from the call to `erin` will be written into two files: an output file and a statistics file.
 
-The output file has the column headers shown in [@tbl:e2rin-out].
+The output file has the column headers shown in [@tbl:erin-out].
 
 | Column            | Description                                                           |
 | --                | --------                                                              |
@@ -659,9 +657,9 @@ The output file has the column headers shown in [@tbl:e2rin-out].
 | \*:achieved (kW)  | the achieved flow at the event time for each component/port recorded  |
 | \*:requested (kW) | the requested flow at the event time for each component/port recorded |
 
-: `e2rin` Output {#tbl:e2rin-out}
+: `erin` Output {#tbl:erin-out}
 
-The statistics file has the column headers shown in [@tbl:e2rin-stats].
+The statistics file has the column headers shown in [@tbl:erin-stats].
 
 | Column               | Description                                                    |
 | --                   | --------                                                       |
@@ -675,23 +673,23 @@ The statistics file has the column headers shown in [@tbl:e2rin-stats].
 | TOTAL ($X$)          | the total energy used by flow by component type                |
 | ENERGY BALANCE       | a sum of the energy balance. Should be 0                       |
 
-: `e2rin` Statistics {#tbl:e2rin-stats}
+: `erin` Statistics {#tbl:erin-stats}
 
-## `e2rin_multi`
+## `erin_multi`
 
 Simulates all scenarios in the input file over the simulation time and generates results.
 
 **USAGE**:
 
-`e2rin_multi` `<input_file_path>` `<output_file_path>` `<stats_file_path>`
+`erin_multi` `<input_file_path>` `<output_file_path>` `<stats_file_path>`
 
 - `input_file_path`: path to TOML input file
 - `output_file_path`: path to CSV output file for time-series data
 - `stats_file_path`: path to CSV output file for statistics
 
-The output files from `e2rin_multi` are very similar to those shown in [@tbl:e2rin-out; @tbl:e2rin-stats].
-The main difference is that `e2rin_multi` aggregates across multiple scenario instances and multiple scenario types.
-The column headers used in the event output file for `e2rin_multi` are shown in [@tbl:e2rin-multi-out].
+The output files from `erin_multi` are very similar to those shown in [@tbl:erin-out; @tbl:erin-stats].
+The main difference is that `erin_multi` aggregates across multiple scenario instances and multiple scenario types.
+The column headers used in the event output file for `erin_multi` are shown in [@tbl:erin-multi-out].
 
 | Column              | Description                                                           |
 | --                  | --------                                                              |
@@ -701,9 +699,9 @@ The column headers used in the event output file for `e2rin_multi` are shown in 
 | \*:achieved (kW)    | the achieved flow at the event time for each component/port recorded  |
 | \*:requested (kW)   | the requested flow at the event time for each component/port recorded |
 
-: `e2rin_multi` Output {#tbl:e2rin-multi-out}
+: `erin_multi` Output {#tbl:erin-multi-out}
 
-The statistics file for `e2rin_multi` has the column headers as shown in [@tbl:e2rin-multi-stats].
+The statistics file for `erin_multi` has the column headers as shown in [@tbl:erin-multi-stats].
 
 | Column               | Description                                                    |
 | --                   | --------                                                       |
@@ -720,9 +718,9 @@ The statistics file for `e2rin_multi` has the column headers as shown in [@tbl:e
 | TOTAL ($X$)          | the total energy used by flow by component type                |
 | ENERGY BALANCE       | a sum of the energy balance. Should be 0                       |
 
-: `e2rin_multi` Statistics {#tbl:e2rin-multi-stats}
+: `erin_multi` Statistics {#tbl:erin-multi-stats}
 
-## `e2rin_graph`
+## `erin_graph`
 
 Generates an input file for use with [Graphviz](https://graphviz.gitlab.io/).
 Graphviz is an external dependency.
@@ -731,7 +729,7 @@ However, you *do* need Graphviz to process that input file into a `.png` or `.pd
 
 **USAGE**:
 
-`e2rin_graph` `<input_file_path>` `<dot_file_path>` `<network_id>`
+`erin_graph` `<input_file_path>` `<dot_file_path>` `<network_id>`
 
 - `input_file_path`: path to TOML input file
 - `dot_file_path`: path to Graphviz DOT file to write
@@ -747,19 +745,19 @@ Similarly, you can render your Graphviz dot file into a PDF as follows:
 - `dot -Tpdf input.gv -o output.pdf`
   The above generates a png (`-Tpdf`) from the `input.gv` and saves to `output.pdf` (`-o`)
 
-`e2rin_graph` is capable of creating sophisticated topological graphs such as the one in [@fig:topology-example].
+`erin_graph` is capable of creating sophisticated topological graphs such as the one in [@fig:topology-example].
 
-![Topology Example of a Network Rendered with Graphviz and `e2rin_graph`](images/topology-example.png){#fig:topology-example width=75%}
+![Topology Example of a Network Rendered with Graphviz and `erin_graph`](images/topology-example.png){#fig:topology-example width=75%}
 
 # Microsoft Excel User Interface
 
-A simple interface using Microsoft Excel has been created to ease the creation of an input data file for `e2rin`.
+A simple interface using Microsoft Excel has been created to ease the creation of an input data file for `erin`.
 This interface runs the simulation on behalf of the user and also pulls the input
 Due to limitations in Excel's Visual Basic, the current version of the Microsoft Excel user interface is limited to the Windows Operating System.
 
 ## Software Dependency: Modelkit/Params Framework
 
-*Modelkit/Params* is required to allow the Microsoft Excel user interface to render an input file template for `e2rin_multi`.
+*Modelkit/Params* is required to allow the Microsoft Excel user interface to render an input file template for `erin_multi`.
 *Modelkit/Params* is a third party dependency available as open-source software from Big Ladder Software:
 
 [https://bigladdersoftware.com/projects/modelkit/](https://bigladdersoftware.com/projects/modelkit/)
@@ -799,7 +797,7 @@ For example, if one wanted to model two storage units in *series* (vs *parallel*
 
 ## Interface Overview
 
-The Excel user interface to `e2rin_multi` is laid out logically to help new users specify a component network to simulate.
+The Excel user interface to `erin_multi` is laid out logically to help new users specify a component network to simulate.
 
 The major screens are:
 
@@ -810,7 +808,7 @@ The major screens are:
 - Scenarios (see [@fig:excel-scenarios])
 
 The "Instructions" sheet gives light instructions on how to use the workbook.
-The "Settings" tab is where the path to `e2rin_multi.exe` is set.
+The "Settings" tab is where the path to `erin_multi.exe` is set.
 A modeler can also add additional statistical distributions, failure modes, and fragility curves here.
 The "Components" tab is where a modeler can add different types of components to a location.
 The "Network" tab is where network links between locations can be specified.
@@ -1008,29 +1006,29 @@ intensity.wind_speed_mph = 155.0
 intensity.inundation_depth_ft = 6.0
 ```
 
-The file can be called as `e2rin_multi.exe input.toml out.csv stats.csv`.
-This assumes that `e2rin_multi.exe` is on your path.
+The file can be called as `erin_multi.exe input.toml out.csv stats.csv`.
+This assumes that `erin_multi.exe` is on your path.
 
 ## Excel User Interface
 
 Using the Excel Interface, we will create the same problem specified in [@fig:example-network].
 
-1. Open the workbook and ensure the path to `e2rin_multi.exe` is set.
+1. Open the workbook and ensure the path to `erin_multi.exe` is set.
    See [@fig:excel-settings].
    Also, ensure you have the four required files in one directory as shown in [@fig:required-files]:
 
-- `e2rin_gui.xlsm`
-- `e2rin_multi.exe`
+- `erin_gui.xlsm`
+- `erin_multi.exe`
 - `support.rb`
 - `template.toml`
 
 ![Required files to run the Excel UI](images/screenshots/required-files.png){#fig:required-files width=50%}
 
-An easy way to get the path to `e2rin_multi.exe` is to find it in the file system and, while holding the SHIFT key, right click on the file and select "Copy as Path" as shown in [@fig:copying-the-path].
+An easy way to get the path to `erin_multi.exe` is to find it in the file system and, while holding the SHIFT key, right click on the file and select "Copy as Path" as shown in [@fig:copying-the-path].
 The value so copied can be pasted into the cell with the path in the Settings sheet.
 Be sure to save the workbook once you've set the path.
 
-![Easy Way to Copy the Path to `e2rin_multi.exe`](images/screenshots/getting-the-path-to-e2rin_multi.png){#fig:copying-the-path width=50%}
+![Easy Way to Copy the Path to `erin_multi.exe`](images/screenshots/getting-the-path-to-erin_multi.png){#fig:copying-the-path width=50%}
 
 2. We will start by adding two fragility curves.
    See [@fig:excel-step-a; @fig:excel-step-b].

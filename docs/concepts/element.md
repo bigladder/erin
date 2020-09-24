@@ -1,6 +1,6 @@
 # Element
 
-Elements are used in the code (within E2RIN as C++ objects) to represent components.
+Elements are used in the code (within ERIN as C++ objects) to represent components.
 Typically, many elements are used to represent one component.
 Elements are meant to be "simple" (i.e., as opposed to complex); that is, Elements are concerned with doing one conceptual thing in an unencombered, untwisted, uninterleaved, and unfettered way.
 

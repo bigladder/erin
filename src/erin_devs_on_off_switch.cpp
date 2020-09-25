@@ -82,6 +82,8 @@ namespace erin::devs
       if (item.time <= last_time) {
         std::ostringstream oss{};
         oss << "times are not increasing for schedule:\n"
+            << "item.time = " << item.time << "\n"
+            << "last_time = " << last_time << "\n"
             << ERIN::vec_to_string<ERIN::TimeState>(schedule) << "\n";
         throw std::invalid_argument(oss.str());
       }

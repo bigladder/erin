@@ -211,7 +211,11 @@ class Support
         headers = row.map {|x| x.strip.to_sym}
       else
         data << headers.zip(row).reduce({}) do |map, hr|
-          map[hr[0]] = hr[1].strip
+          if hr[1].nil?
+            map[hr[0]] = ""
+          else
+            map[hr[0]] = hr[1].strip
+          end
           map
         end
       end

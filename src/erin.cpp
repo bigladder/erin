@@ -2554,12 +2554,10 @@ namespace ERIN
     std::unordered_map<std::string, std::vector<TimeState>>
       clipped_reliability_schedule{};
     if (do_reliability) {
-      clipped_reliability_schedule = rezero_times<std::string>(
-          clip_schedule_to<std::string>(
+      clipped_reliability_schedule = clip_schedule_to<std::string>(
             reliability_schedule,
             scenario_start_s,
-            scenario_start_s + the_scenario.get_duration()),
-          scenario_start_s);
+            scenario_start_s + the_scenario.get_duration());
       if constexpr (debug_level >= debug_level_high) {
         for (const auto& item : clipped_reliability_schedule) {
           std::cout << item.first << ":\n";

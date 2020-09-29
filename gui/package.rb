@@ -15,6 +15,7 @@ USER_GUIDE_FILE = File.join(
   __dir__, '..', 'docs', 'user-guide', 'user-guide.md.pdf')
 EXE_FILE = File.join(
   __dir__, '..', 'out', 'build', 'x64-Release', 'bin', 'erin_multi.exe')
+LICENSE = File.join(__dir__, '..', 'LICENSE.txt')
 
 
 def to_package_as(file_name)
@@ -33,6 +34,7 @@ MANIFEST = {
   TEMPLATE_FILE => to_package(TEMPLATE_FILE),
   USER_GUIDE_FILE => to_package_as('user-guide.pdf'),
   EXE_FILE => to_package(EXE_FILE),
+  LICENSE => to_package(LICENSE),
 }
 
 

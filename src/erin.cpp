@@ -2471,6 +2471,14 @@ namespace ERIN
     check_data();
     generate_failure_fragilities();
     rand_fn = sim_info.make_random_function();
+    if constexpr (debug_level >= debug_level_high) {
+      for (const auto& p : loads_by_id) {
+        std::cout << p.first << ":\n";
+        for (const auto& d : p.second) {
+          std::cout << "- " << d << "\n";
+        }
+      }
+    }
   }
 
   Main::Main(

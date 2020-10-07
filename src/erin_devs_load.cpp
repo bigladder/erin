@@ -109,8 +109,9 @@ namespace erin::devs
   load_internal_transition(const LoadData& data, const LoadState& state)
   {
     auto max_idx = data.number_of_loads - 1;
-    if (state.current_index >= max_idx)
+    if (state.current_index >= max_idx) {
       return state;
+    }
     auto next_idx = state.current_index + 1;
     auto next_time = data.times[next_idx];
     auto next_load = data.load_values[next_idx];
@@ -177,15 +178,13 @@ namespace erin::devs
   {
     auto next_state = load_internal_transition(data, state);
     auto max_idx{data.number_of_loads - 1};
-    if (next_state.current_index < max_idx) {
+    if (next_state.current_index <= max_idx) {
       if (next_state.inflow_port.should_propagate_request_at(next_state.time)) {
         ys.emplace_back(
             PortValue{
               outport_inflow_request,
               next_state.inflow_port.get_requested()});
       }
-    } else if (next_state.current_index == max_idx) {
-      ys.emplace_back(PortValue{outport_inflow_request, 0.0});
     }
   }
 }

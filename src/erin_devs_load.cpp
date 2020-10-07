@@ -60,8 +60,9 @@ namespace erin::devs
     std::vector<FlowValueType> load_values(num_loads, 0.0);
     for (decltype(num_loads) i{0}; i < num_loads; ++i) {
       times[i] = loads[i].get_time();
-      if (!loads[i].get_is_end())
+      if (!loads[i].get_is_end()) {
         load_values[i] = loads[i].get_value();
+      }
     }
     return LoadData{
       static_cast<int>(num_loads),

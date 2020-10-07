@@ -344,19 +344,15 @@ namespace ERIN
       const auto size = xs.size();
       RealTimeType the_time{};
       FlowValueType the_value{};
-      if ((size < 1) || (size > 2)) {
+      if (size != 2) {
         std::ostringstream oss;
-        oss << "time_rate_pairs must be 1 or 2 elements in length; "
+        oss << "time_rate_pairs must be 2 elements in length;"
             << "size = " << size << "\n";
         throw std::runtime_error(oss.str());
       }
       the_time = time_to_seconds(read_number(xs[0]), time_units);
-      if (size == 2) {
-        the_value = static_cast<FlowValueType>(read_number(xs[1]));
-        the_loads.emplace_back(LoadItem{the_time, the_value});
-      } else {
-        the_loads.emplace_back(LoadItem{the_time});
-      }
+      the_value = static_cast<FlowValueType>(read_number(xs[1]));
+      the_loads.emplace_back(LoadItem{the_time, the_value});
     }
     return the_loads;
   }
@@ -462,18 +458,11 @@ namespace ERIN
       ifs.close();
       throw std::runtime_error(oss.str());
     }
-    auto& back = the_loads.back();
-    back = LoadItem{back.get_time()};
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "loads read in:\n";
       for (const auto ld: the_loads) {
-        std::cout << "  {t: " << ld.get_time();
-        if (ld.get_is_end()) {
-          std::cout << "}\n";
-        }
-        else {
-          std::cout << ", v: " << ld.get_value() << "}\n";
-        }
+        std::cout << "  {t: " << ld.time;
+        std::cout << ", v: " << ld.value << "}\n";
       }
     }
     ifs.close();
@@ -950,13 +939,8 @@ namespace ERIN
         for (const auto& ls: loads_by_scenario) {
           std::cout << ls.first << ": [";
           for (const auto& li: ls.second) {
-            std::cout << "(" << li.get_time();
-            if (li.get_is_end()) {
-              std::cout << ")";
-            }
-            else {
-              std::cout << ", " << li.get_value() << "), ";
-            }
+            std::cout << "(" << li.time;
+            std::cout << ", " << li.value << "), ";
           }
           std::cout << "]\n";
         }

@@ -36,13 +36,8 @@ namespace erin::devs
     std::vector<FlowValueType> supply{};
     size_type num_items{0};
     for (const auto& li : loads) {
-      times.emplace_back(li.get_time());
-      if (li.get_is_end()) {
-        supply.emplace_back(0.0);
-      }
-      else {
-        supply.emplace_back(li.get_value());
-      }
+      times.emplace_back(li.time);
+      supply.emplace_back(li.value);
       ++num_items;
     }
     return UncontrolledSourceData{

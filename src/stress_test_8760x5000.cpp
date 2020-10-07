@@ -18,7 +18,6 @@ main()
   for (ERIN::RealTimeType i{0}; i < N; ++i) {
     loads.emplace_back(ERIN::LoadItem{i, 1.0});
   }
-  loads.emplace_back(ERIN::LoadItem{N});
   std::unordered_map<std::string, std::vector<ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
   ERIN::SimulationInfo si{ERIN::TimeUnits::Hours, N};

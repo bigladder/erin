@@ -7,7 +7,7 @@ max_time = 40
 [loads.building_electrical]
 time_unit = "hours"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,1.0],[40.0]]
+time_rate_pairs = [[0.0,1.0],[40.0,0.0]]
 ############################################################
 [components.S]
 type = "source"

@@ -13,31 +13,21 @@ namespace erin::devs
   {
     using size_type = std::vector<LoadItem>::size_type;
     auto N{loads.size()};
-    auto last_idx{N - 1};
-    if (N < 2) {
+    if (N < 1) {
       std::ostringstream oss;
-      oss << "loads must have at least two LoadItems but "
+      oss << "loads must have at least one LoadItems but "
              "only " << N << " provided\n";
       throw std::invalid_argument(oss.str());
     }
     RealTimeType t_last{-1};
     for (size_type idx{0}; idx < loads.size(); ++idx) {
       const auto& x = loads[idx];
-      auto t = x.get_time();
-      if (idx == last_idx) {
-        if (!x.get_is_end()) {
-          std::ostringstream oss;
-          oss << "LoadItem[" << idx << "] (last index) "
-              << "must not specify a value but it does...\n";
-          throw std::invalid_argument(oss.str());
-        }
-      } else {
-        if (x.get_is_end()) {
-          std::ostringstream oss;
-          oss << "non-last LoadItem[" << idx << "] "
-              << "doesn't specify a value but it must...\n";
-          throw std::invalid_argument(oss.str());
-        }
+      auto t = x.time;
+      auto v = x.value;
+      if (v < 0.0) {
+        std::ostringstream oss;
+        oss << "LoadItem[" << idx << "] has a negative load value. Negative flows are not allowed.\n";
+        throw std::invalid_argument(oss.str());
       }
       if ((t < 0) || (t <= t_last)) {
         std::ostringstream oss;
@@ -59,10 +49,8 @@ namespace erin::devs
     std::vector<RealTimeType> times(num_loads, 0);
     std::vector<FlowValueType> load_values(num_loads, 0.0);
     for (decltype(num_loads) i{0}; i < num_loads; ++i) {
-      times[i] = loads[i].get_time();
-      if (!loads[i].get_is_end()) {
-        load_values[i] = loads[i].get_value();
-      }
+      times[i] = loads[i].time;
+      load_values[i] = loads[i].value;
     }
     return LoadData{
       static_cast<int>(num_loads),

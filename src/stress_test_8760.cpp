@@ -9,36 +9,35 @@
 void
 doit()
 {
-  namespace ep = ::erin::port;
+  namespace ep = erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity"};
   std::string source_id{"electric_utility"};
   std::string load_id{"cluster_01_electric"};
   std::string net_id{"normal_operations"};
-  const ::ERIN::RealTimeType N{8760}; // hours
-  std::vector<::ERIN::LoadItem> loads;
-  for (::ERIN::RealTimeType i{0}; i < N; ++i) {
-    loads.emplace_back(::ERIN::LoadItem{i, 1.0});
+  const ERIN::RealTimeType N{8760}; // hours
+  std::vector<ERIN::LoadItem> loads;
+  for (ERIN::RealTimeType i{0}; i < N; ++i) {
+    loads.emplace_back(ERIN::LoadItem{i, 1.0});
   }
-  loads.emplace_back(::ERIN::LoadItem{N});
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
+  std::unordered_map<std::string, std::vector<ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{::ERIN::TimeUnits::Hours, N};
+  ERIN::SimulationInfo si{ERIN::TimeUnits::Hours, N};
   std::unordered_map<std::string, std::string> streams{
     std::make_pair(stream_id, stream_id)};
   std::unordered_map<
     std::string,
-    std::unique_ptr<::ERIN::Component>> components;
+    std::unique_ptr<ERIN::Component>> components;
   components.insert(
       std::make_pair(
         source_id,
-        std::make_unique<::ERIN::SourceComponent>(
+        std::make_unique<ERIN::SourceComponent>(
           source_id,
           stream_id)));
   components.insert(
       std::make_pair(
         load_id,
-        std::make_unique<::ERIN::LoadComponent>(
+        std::make_unique<ERIN::LoadComponent>(
           load_id,
           stream_id,
           loads_by_scenario)));
@@ -56,7 +55,7 @@ doit()
         ERIN::Scenario(
           scenario_id,
           net_id,
-          ERIN::time_to_seconds(N, ::ERIN::TimeUnits::Hours),
+          ERIN::time_to_seconds(N, ERIN::TimeUnits::Hours),
           -1,
           nullptr,
           {},

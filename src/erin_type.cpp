@@ -352,42 +352,16 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // LoadItem
-  LoadItem::LoadItem(RealTimeType t):
-    time{t},
-    value{0.0},
-    is_end{true}
-  {
-    if (!is_good()) {
-      std::ostringstream oss;
-      oss << "input is invalid for LoadItem{t=" << t << "}";
-      throw std::runtime_error(oss.str());
-    }
-  }
-
-  LoadItem::LoadItem(RealTimeType t, FlowValueType v):
-    time{t},
-    value{v},
-    is_end{false}
-  {
-    if (!is_good()) {
-      std::ostringstream oss;
-      oss << "input is invalid for LoadItem{t="
-          << t << ", v=" << v <<"}";
-      throw std::runtime_error(oss.str());
-    }
-  }
-
   RealTimeType
   LoadItem::get_time_advance(const LoadItem& next) const
   {
-    return (next.get_time() - time);
+    return (next.time - time);
   }
 
   bool
   operator==(const LoadItem& a, const LoadItem& b)
   {
-    return ((a.is_end == b.is_end) && (a.time == b.time)
-        && (a.is_end ? true : (a.value == b.value)));
+    return (a.time == b.time) && (a.value == b.value);
   }
 
   bool
@@ -398,12 +372,7 @@ namespace ERIN
 
   std::ostream& operator<<(std::ostream& os, const LoadItem& n)
   {
-    std::string b = n.is_end ? "true" : "false";
-    os << "LoadItem("
-       << "time=" << n.time << ", "
-       << "value=" << n.value << ", "
-       << "is_end=" << b << ")";
-    return os;
+    return os << "LoadItem(time=" << n.time << ", value=" << n.value << ")";
   }
 
   ////////////////////////////////////////////////////////////

@@ -229,6 +229,13 @@ namespace ERIN
         }
         auto csv_file = toml::get<std::string>(it2->second);
         the_loads = load_loads_from_csv(csv_file);
+        if constexpr (debug_level >= debug_level_high) {
+          int load_num{0};
+          for (const auto& ld : the_loads) {
+            std::cout << "- " << load_num << ": " << ld << "\n";
+            ++load_num;
+          }
+        }
       }
       else {
         const auto load_array = toml::get<std::vector<toml::value>>(it->second);
@@ -1421,6 +1428,22 @@ namespace ERIN
       bool make_header,
       TimeUnits time_units) const
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "ScenarioResults::to_csv_lines()\n";
+      std::cout << "comp_ids:\n";
+      for (const auto& id : comp_ids) {
+        std::cout << "- " << id << "\n";
+      }
+      std::cout << "make_header: " << make_header << "\n";
+      std::cout << "time_units : " << time_units_to_tag(time_units) << "\n";
+      std::cout << "results:\n";
+      for (const auto& p : results) {
+        std::cout << "- " << p.first << "\n";
+        for (const auto& d : p.second) {
+          std::cout << "  - " << d << "\n";
+        }
+      }
+    }
     if (!erin::utils::is_superset(comp_ids, keys)) {
       std::ostringstream oss{};
       oss << "comp_ids is not a superset of the keys defined in "
@@ -1450,7 +1473,12 @@ namespace ERIN
       last_values[k] = 0.0;
       last_requested_values[k] = 0.0;
       for (const auto& d: results.at(k)) {
-        times_set.emplace(d.time);
+        if (d.time > scenario_duration) {
+          break;
+        }
+        else {
+          times_set.emplace(d.time);
+        }
       }
     }
     std::vector<RealTimeType> times{times_set.begin(), times_set.end()};
@@ -2553,11 +2581,12 @@ namespace ERIN
     auto do_reliability = the_scenario.get_calc_reliability();
     std::unordered_map<std::string, std::vector<TimeState>>
       clipped_reliability_schedule{};
+    const auto duration = the_scenario.get_duration();
     if (do_reliability) {
       clipped_reliability_schedule = clip_schedule_to<std::string>(
             reliability_schedule,
             scenario_start_s,
-            scenario_start_s + the_scenario.get_duration());
+            scenario_start_s + duration);
       if constexpr (debug_level >= debug_level_high) {
         for (const auto& item : clipped_reliability_schedule) {
           std::cout << item.first << ":\n";
@@ -2587,7 +2616,6 @@ namespace ERIN
     }
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
-    const auto duration = the_scenario.get_duration();
     const int max_no_advance_factor{10000};
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;

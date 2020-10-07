@@ -441,7 +441,7 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
   std::string stream_id{"electricity"};
   std::string scenario_id{"blue_sky"};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
-    {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
+    {std::string{"load1"}, {ERIN::LoadItem{0,1.0},ERIN::LoadItem{4}}}
   };
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads{
     {scenario_id, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
@@ -771,12 +771,13 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   std::string net_id{"normal_operations"};
   const int N{10};
   std::vector<::ERIN::LoadItem> loads;
-  for (int i{0}; i < N; ++i)
-    loads.emplace_back(::ERIN::LoadItem{i, 1.0});
-  loads.emplace_back(::ERIN::LoadItem{N});
+  for (int i{0}; i < N; ++i) {
+    loads.emplace_back(ERIN::LoadItem{i, 1.0});
+  }
+  loads.emplace_back(ERIN::LoadItem{N});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{};
+  ERIN::SimulationInfo si{};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
@@ -995,7 +996,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   loads.emplace_back(::ERIN::LoadItem{max_time});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{};
+  ERIN::SimulationInfo si{};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
@@ -1004,13 +1005,13 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   components.insert(
       std::make_pair(
         source_id,
-        std::make_unique<::ERIN::SourceComponent>(
+        std::make_unique<ERIN::SourceComponent>(
           source_id,
           stream_id)));
   components.insert(
       std::make_pair(
         load_id,
-        std::make_unique<::ERIN::LoadComponent>(
+        std::make_unique<ERIN::LoadComponent>(
           load_id,
           stream_id,
           loads_by_scenario)));
@@ -1157,24 +1158,24 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   // The entire simulation has a max time limit.
   // This is where we may need to switch to long or int64_t if we go with
   // seconds for the time unit and 1000 years of simulation...
-  namespace enw = ::erin::network;
-  namespace ep = ::erin::port;
+  namespace enw = erin::network;
+  namespace ep = erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity_medium_voltage"};
   std::string source_id{"electric_utility"};
   std::string load_id{"cluster_01_electric"};
   std::string net_id{"normal_operations"};
-  const ::ERIN::RealTimeType max_time{10};
+  const ERIN::RealTimeType max_time{10};
   std::vector<::ERIN::LoadItem> loads;
-  for (::ERIN::RealTimeType i{0}; i < max_time; ++i) {
+  for (ERIN::RealTimeType i{0}; i < max_time; ++i) {
     loads.emplace_back(::ERIN::LoadItem{i, 1.0});
   }
   loads.emplace_back(::ERIN::LoadItem{max_time});
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
+  std::unordered_map<std::string, std::vector<ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{
+  ERIN::SimulationInfo si{
     "kW", "kJ", ::ERIN::TimeUnits::Years, 1000};
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
+  std::unordered_map<std::string, std::vector<ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
   std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
@@ -1182,13 +1183,13 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   components.insert(
       std::make_pair(
         source_id,
-        std::make_unique<::ERIN::SourceComponent>(
+        std::make_unique<ERIN::SourceComponent>(
           source_id,
           stream_id)));
   components.insert(
       std::make_pair(
         load_id,
-        std::make_unique<::ERIN::LoadComponent>(
+        std::make_unique<ERIN::LoadComponent>(
           load_id,
           stream_id,
           loads_by_scenario)));

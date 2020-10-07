@@ -88,8 +88,9 @@ namespace erin::devs
   load_next_time(const LoadData& data, const LoadState& state)
   {
     auto next_idx = state.current_index + 1;
-    if (next_idx < data.number_of_loads)
+    if (next_idx < data.number_of_loads) {
       return data.times[next_idx];
+    }
     return infinity;
   }
 
@@ -108,12 +109,11 @@ namespace erin::devs
   RealTimeType
   load_time_advance(const LoadData& data, const LoadState& state)
   {
-    auto next_idx = state.current_index + 1;
-    if (next_idx < data.number_of_loads) {
-      auto next_time = load_next_time(data, state);
-      return next_time - state.time;
+    auto next_time = load_next_time(data, state);
+    if (next_time == infinity) {
+      return infinity;
     }
-    return infinity;
+    return next_time - state.time;
   }
 
   LoadState

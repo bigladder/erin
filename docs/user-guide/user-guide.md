@@ -2,7 +2,7 @@
 title: "User's Guide"
 subtitle: "Reliability Calculation Tool and Excel User Interface"
 author: "Big Ladder Software"
-date: "July 29, 2020"
+date: "October 8, 2020"
 documentclass: scrartcl
 number-sections: true
 figureTitle: "Figure"
@@ -1015,12 +1015,13 @@ Using the Excel Interface, we will create the same problem specified in [@fig:ex
 
 1. Open the workbook and ensure the path to `erin_multi.exe` is set.
    See [@fig:excel-settings].
-   Also, ensure you have the four required files in one directory as shown in [@fig:required-files]:
+   Also, ensure you have the following files in one directory as shown in [@fig:required-files]:
 
 - `erin_gui.xlsm`
 - `erin_multi.exe`
 - `support.rb`
 - `template.toml`
+- `example-load.csv`: not required in general but we'll use it for this example
 
 ![Required files to run the Excel UI](images/screenshots/required-files.png){#fig:required-files width=50%}
 
@@ -1088,3 +1089,67 @@ The second fragility curve we'll call "flooding" and set the "Vulnerable To" fie
 ![The Finished Scenarios](images/screenshots/19.png){#fig:excel-step-19 width=50%}
 
 6. Finally, hit the run button to simulate the network.
+
+# When Things Don't Work: Checklist for MS Excel UI
+
+The Microsoft Excel user interface to the *ERIN* engine is a convenient way to access the power of the engine without having to manually write an input file.
+However, the decoupling between Excel and the *ERIN* engine adds just enough complexity to the picture that it can be difficult to determine what's wrong when things don't work as they should.
+This section provides a series of checks to help you methodically identify the source of any potential problems and either correct it yourself or help us to quickly pinpoint the issue.
+These instructions were written assuming you are using a recent version of Microsoft Windows as that is the only operating system supported by the MS Excel User Interface.
+
+- **Are you using MS Windows?**
+  Unfortunately, the link between Microsoft Excel and the *ERIN* engine is only supported on Microsoft Windows at this time.
+  If you are not using Microsoft Windows, you can still use the simulation engine directly or through the *Modelkit* template generation capability.
+- **Do you have Microsoft Excel installed?**
+  This may be obvious, but ensure that you actually have Microsoft Excel installed.
+  We are currently using Microsoft Excel for Office 365.
+  Any recent version of Microsoft Excel should work, but if you do have to submit a bug report, please note the version of Microsoft Excel you are using.
+  Unfortunately, other spreadsheet programs that can open and edit Microsoft Excel files such as Open Office or Libre Office do not work.
+- **Have you installed *Modelkit Catalyst*?**
+  *Modelkit Catalyst*, a free download available from Big Ladder Software, is a required pre-requisite for using the MS Excel User Interface.
+  If you haven't already installed it, please download it from [https://bigladdersoftware.com/projects/modelkit/](https://bigladdersoftware.com/projects/modelkit/).
+- **Is *Modelkit Catalyst* working correctly?**
+  To determine if *Modelkit* is installed correctly, go to the Windows start menu and type `cmd`.
+  This should bring up the option to launch the "Command Prompt".
+  Launch the "Command Prompt" and type `modelkit`.
+  You should see a help text return to you giving an overview of the *Modelkit* commandline interface options.
+  If you do not see this, right-click on your start menu button and select "settings" from the menu.
+  Type "Add or remove programs" in the search dialogue.
+  If you do not see "Modelkit Catalyst" in the list of installed programs, you have not yet installed *Modelkit* so stop here and download and install *Modelkit Catalyst*.
+  If you do see "Modelkit Catalyst", try uninstalling and reinstalling the program and try using the instructions again for the MS Excel UI example.
+  If you are still having problems, please submit a bug report for support.
+- **Is the *ERIN* simulation engine working correctly?**
+  Next, we need to confirm that the *ERIN* simulation engine is working correctly.
+  Unzipped a *fresh* folder from the original file zip archive to ensure there are no changes you made that are creating issues.
+  You can do this by right clicking on the zip archive and selecting "Extract All...".
+  Next, open "File Explorer".
+  If you are unfamiliar with how to do this, click on the Start menu and type "File Explorer" and open the application called "File Explorer".
+  In File Explorer, navigate to that extracted (i.e., unzipped) folder.
+  This folder should contain the `iea-annex-73-tool.xlsm`, `erin_multi.exe`, and several other files including this User's Guide.
+  In the address bar of File Explorer, type `CMD` to start a new command shell in that folder (or use any other method of opening a command shell at the folder of the unzipped contents).
+  In the "Command Prompt" that is opened, type `erin_multi.exe`.
+  You should see a usage message that also lists the version of the simulator.
+  If you do not see this, please submit a bug report for support.
+- **Did you enable macros when opening the Microsoft Excel workbook?**
+  Visual Basic for Applications Macros are required when using the Microsoft Excel User Interface.
+  When you opened the `xlsm` file, you should have been prompted with "SECURITY WARNING: Macros have been disabled."
+  You will need to hit the button to "Enable Content" in order to use the interface.
+- **Is the Microsoft Excel User Interface workbook in the same folder as `erin_multi.exe`, `support.rb`, and `template.toml`?**
+  If you are working from a freshly extracted (i.e., unzipped) folder, all the required files should be in the same folder together.
+  If you are not, please do start again from a freshly extracted folder to help us methodically debug the issue.
+- **Have you added the complete path to *ERIN* simulation engine in cell C2 of the "Settings" sheet?**
+  Even if you have already done this, it can't hurt to double check and cut and paste the path again.
+  Again, we recommend that you use the *freshly* extracted Excel workbook at this point (versus one you've already been typing in).
+  The best way to get the path to the `erin_multi.exe` simulation engine is to go to the freshly extracted folder using File Explorer, hold down the SHIFT key while right clicking on "`erin_multi.exe`", and select the option "Copy as path".
+  Then, open the Microsoft Excel User Interface and paste (CTRL+V) the path into cell C2 of the "Settings" sheet.
+  Note: even if you have spaces in your path, do not add quotes around your path.
+  The tool automatically surrounds the path in "double quotes" and if you add your own double quotes in cell C2, that will actually cause an error.
+  The path you paste in must be unquoted.
+- **Lastly, have you followed the details of the example tutorial *exactly*?**
+  There are known issues where you can formulate an incorrect problem using the Excel User Interface.
+  Common issues include:
+    - not having a proper load header: did you use the `example-load.csv` file as a reference?
+    - specifying an immediately occurring scenario with no occurrence limit: an occurrence distribution of "ALWAYS" must be accompanied by a Max Occurrence of 1 or more.
+    - is there a network link between sources and load locations?
+
+If, after exhausting all of the above checks, you are still having issues, please do not hesitate to contact us for support.

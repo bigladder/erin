@@ -15,6 +15,8 @@ USER_GUIDE_FILE = File.join(
   __dir__, '..', 'docs', 'user-guide', 'user-guide.md.pdf')
 EXE_FILE = File.join(
   __dir__, '..', 'out', 'build', 'x64-Release', 'bin', 'erin_multi.exe')
+EXAMPLE_LOAD_CSV = File.join(
+  __dir__, '..', 'docs', 'examples', 'ex02.csv')
 LICENSE = File.join(__dir__, '..', 'LICENSE.txt')
 
 
@@ -35,6 +37,7 @@ MANIFEST = {
   USER_GUIDE_FILE => to_package_as('user-guide.pdf'),
   EXE_FILE => to_package(EXE_FILE),
   LICENSE => to_package(LICENSE),
+  EXAMPLE_LOAD_CSV => to_package_as('example-load.csv'),
 }
 
 

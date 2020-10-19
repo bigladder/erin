@@ -122,13 +122,16 @@ namespace erin::devs
     }
     FlowValueType amount_remaining{amount};
     int n{0};
-    constexpr int max_iter{100};
-    while ((num_live > 0) && (amount_remaining > 0.0)) {
+    constexpr int max_iter{1000};
+    while ((num_live > 0) && (amount_remaining > ERIN::flow_value_tolerance)) {
       n += 1;
       if (n > max_iter) {
         std::ostringstream oss{};
         oss << "breaking out of infinite loop in "
-            << "distribute_inflow_to_outflow_evenly!\n";
+            << "distribute_inflow_to_outflow_evenly!\n"
+            << "n = " << n << "\n"
+            << "num_live = " << num_live << "\n"
+            << "amount_remaining = " << amount_remaining << "\n";
         throw std::invalid_argument(oss.str());
       }
       even_flow = amount_remaining / num_live;

@@ -526,7 +526,7 @@ We also specify the `upper_bound`, the bound above which we face certain destruc
 
 | key         | type | required? | notes                                         |
 | ----        | --   | --        | --------                                      |
-| `type`      | str  | yes       | must be "linear"                              |
+| `type`      | str  | yes       | must be "fixed"                               |
 | `value`     | real | yes       | the value of the fixed CDF                    |
 | `time_unit` | time | yes       | the time unit used to specify the fixed value |
 

@@ -15,6 +15,27 @@
 
 namespace toml_helper
 {
+  std::optional<std::string>
+  confirm_key_present(const toml::table& tt, const std::vector<std::string>& keys)
+  {
+    std::string field_read{};
+    auto tt_end = tt.end();
+    for (const auto& k: keys) {
+      auto it = tt.find(k);
+      if (it != tt_end) {
+        return std::optional<std::string>(k);
+      }
+    }
+    return std::nullopt;
+  }
+
+  bool
+  confirm_key_is_present(const toml::table& tt, const std::string& key)
+  {
+    return (tt.find(key) != tt.end());
+  }
+
+
   template <class T>
   std::optional<T>
   read_table_field_with_optional(
@@ -62,6 +83,51 @@ namespace toml_helper
   {
     auto out = read_table_field_with_optional<T>(tt, keys, field_read);
     return out.value_or(default_value);
+  }
+
+  std::optional<toml::value>
+  read_if_present(const toml::table& tt, std::string key)
+  {
+    const auto tt_end = tt.end();
+    const auto it = tt.find(key);
+    if (it == tt_end) {
+      return std::nullopt;
+    }
+    return std::optional<toml::value>(it->second);
+  }
+
+  double
+  read_number_from_table_as_double(
+      const toml::table& tt,
+      std::string key,
+      double default_value)
+  {
+    const auto optval = read_if_present(tt, key);
+    if (!optval.has_value()) {
+      return default_value;
+    }
+    const auto vx = *optval;
+    double val = vx.is_floating() ?
+      vx.as_floating(std::nothrow) :
+      static_cast<double>(vx.as_integer());
+    return val;
+  }
+
+  int
+  read_number_from_table_as_int(
+      const toml::table& tt,
+      const std::string key,
+      int default_value)
+  {
+    const auto optval = read_if_present(tt, key);
+    if (!optval.has_value()) {
+      return default_value;
+    }
+    const auto vx = *optval;
+    int val = vx.is_integer() ?
+      vx.as_integer(std::nothrow) :
+      static_cast<int>(vx.as_floating());
+    return val;
   }
 }
 

@@ -22,6 +22,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -353,6 +354,10 @@ namespace ERIN
           fragility_map&& frags) const;
       [[nodiscard]] double read_number(const toml::value& v) const;
       [[nodiscard]] double read_number(const std::string& v) const;
+      [[nodiscard]] std::optional<double>
+        read_optional_number(const toml::table& tt, const std::string& key);
+      [[nodiscard]] double
+        read_number_at(const toml::table& tt, const std::string& key);
       double read_fixed_random_for_sim_info(
           const toml::table& tt, bool& found_it) const;
       std::vector<double> read_fixed_series_for_sim_info(

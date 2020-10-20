@@ -111,7 +111,7 @@ namespace ERIN
       toml::find_or(sim_info, "quantity_unit", "kJ");
     const std::string time_tag =
       toml::find_or(sim_info, "time_unit", "years");
-    const TimeUnits time_units = tag_to_time_units(time_tag);
+    const auto time_units = tag_to_time_units(time_tag);
     bool has_fixed{false};
     auto fixed_random = read_fixed_random_for_sim_info(tt, has_fixed);
     bool has_series{false};
@@ -136,7 +136,7 @@ namespace ERIN
     has_fixed = (it_fixed_random != tt.end());
     double fixed_random{0.0};
     if (has_fixed) {
-      fixed_random = toml::get<double>(it_fixed_random->second);
+      fixed_random = read_number(it_fixed_random->second);
     }
     return fixed_random;
   }
@@ -147,9 +147,16 @@ namespace ERIN
   {
     auto it_fixed_series = tt.find("fixed_random_series");
     has_series = (it_fixed_series != tt.end());
-    std::vector<double> fixed_series = {0.0};
+    auto fixed_series = std::vector<double>{};
     if (has_series) {
-      fixed_series = toml::get<std::vector<double>>(it_fixed_series->second);
+      const auto& xs =
+        toml::get<std::vector<toml::value>>(it_fixed_series->second);
+      for (const auto& x : xs) {
+        fixed_series.emplace_back(read_number(x));
+      }
+    }
+    else {
+      fixed_series.emplace_back(0.0);
     }
     return fixed_series;
   }
@@ -162,7 +169,13 @@ namespace ERIN
     has_seed = (it_random_seed != tt.end());
     unsigned int seed{0};
     if (has_seed) {
-      seed = toml::get<unsigned int>(it_random_seed->second);
+      try {
+        seed = toml::get<unsigned int>(it_random_seed->second);
+      }
+      catch (toml::exception&) {
+        seed = static_cast<unsigned int>(
+            toml::get<double>(it_random_seed->second));
+      }
     }
     return seed;
   }
@@ -181,10 +194,12 @@ namespace ERIN
       auto it1 = tt.find("other_rate_units");
       if (it1 != tt.end()) {
         const auto oru = toml::get<toml::table>(it1->second);
-        for (const auto& p: oru)
-          other_rate_units.insert(std::pair<std::string,FlowValueType>(
+        for (const auto& p: oru) {
+          other_rate_units.insert(
+              std::pair<std::string, FlowValueType>(
                 p.first,
-                toml::get<FlowValueType>(p.second)));
+                read_number(p.second)));
+        }
       }
       auto it2  = tt.find("other_quantity_units");
       if (it2 != tt.end()) {
@@ -192,7 +207,7 @@ namespace ERIN
         for (const auto& p: oqu)
           other_quantity_units.insert(std::pair<std::string,FlowValueType>(
                 p.first,
-                toml::get<FlowValueType>(p.second)));
+                read_number(p.second)));
       }
       const std::string stream_type{toml::find<std::string>(t, "type")};
       stream_types_map.insert(std::make_pair(s.first, stream_type));
@@ -324,6 +339,28 @@ namespace ERIN
       out = static_cast<double>(std::stoi(v));
     }
     return out;
+  }
+
+
+  std::optional<double>
+  TomlInputReader::read_optional_number(const toml::table& tt, const std::string& key)
+  {
+    const auto& it = tt.find(key);
+    if (it == tt.end()) {
+      return {};
+    }
+    return read_number(it->second);
+  }
+
+
+  double
+  TomlInputReader::read_number_at(const toml::table& tt, const std::string& key)
+  {
+    const auto& it = tt.find(key);
+    if (it == tt.end()) {
+      throw std::runtime_error("expected key '" + key + "' to exist");
+    }
+    return read_number(it->second);
   }
 
 
@@ -751,7 +788,7 @@ namespace ERIN
       const std::string& comp_id,
       const std::unordered_map<
         std::string,
-        ::erin::fragility::FragilityCurve>& fragilities) const
+        erin::fragility::FragilityCurve>& fragilities) const
   {
     namespace ef = erin::fragility;
     std::string field_read{};
@@ -811,7 +848,7 @@ namespace ERIN
     for (const auto& pair : tt) {
       const auto& curve_id = pair.first;
       const auto& data_table = toml::get<toml::table>(pair.second);
-      std::string curve_type_tag;
+      std::string curve_type_tag{};
       try {
         curve_type_tag = toml_helper::read_required_table_field<std::string>(
           data_table, {"type"}, field_read);
@@ -837,23 +874,8 @@ namespace ERIN
       switch (curve_type) {
         case ef::CurveType::Linear:
           {
-            double lower_bound{0.0};
-            double upper_bound{0.0};
-            try {
-              lower_bound = toml_helper::read_required_table_field<double>(
-                  data_table, {"lower_bound"}, field_read);
-              upper_bound = toml_helper::read_required_table_field<double>(
-                  data_table, {"upper_bound"}, field_read);
-            }
-            catch (std::out_of_range& e) {
-              std::ostringstream oss;
-              oss << "lower_bound and/or upper_bound not read correctly "
-                << "for '" << curve_id << "'; "
-                << "be sure to specify numbers with decimal points "
-                << "for TOML to parse.\n";
-              oss << "actual error: " << e.what() << "\n";
-              throw std::runtime_error(oss.str());
-            }
+            auto lower_bound = read_number_at(data_table, "lower_bound");
+            auto upper_bound = read_number_at(data_table, "upper_bound");
             std::unique_ptr<ef::Curve> the_curve = std::make_unique<ef::Linear>(
                 lower_bound, upper_bound);
             ef::FragilityCurve fc{vulnerable_to, std::move(the_curve)};
@@ -880,10 +902,9 @@ namespace ERIN
         std::string, std::unique_ptr<Component>>& components,
       fragility_map&& frags) const
   {
-    std::string field_read;
-    const auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"max_outflow", "max_output"}, 0.0, field_read);
-    bool is_limited{field_read != ""};
+    const auto max_outflow = toml_helper::read_number_from_table_as_double(
+        tt, "max_outflow", -1.0);
+    bool is_limited{max_outflow != -1.0};
     Limits lim{};
     if (is_limited) {
       FlowValueType min_outflow{0.0};
@@ -968,10 +989,8 @@ namespace ERIN
       fragility_map&& frags) const
   {
     std::string field_read;
-    auto num_inflows = toml_helper::read_optional_table_field<int>(
-        tt, {"num_inflows", "num_inputs"}, 1, field_read);
-    auto num_outflows = toml_helper::read_optional_table_field<int>(
-        tt, {"num_outflows", "num_outputs"}, 1, field_read);
+    auto num_inflows = toml_helper::read_number_from_table_as_int(tt, "num_inflows", 1);
+    auto num_outflows = toml_helper::read_number_from_table_as_int(tt, "num_outflows", 1);
     auto out_disp_tag = toml_helper::read_optional_table_field<std::string>(
         tt, {"dispatch_strategy", "outflow_dispatch_strategy"}, "in_order", field_read);
     auto out_disp = tag_to_muxer_dispatch_strategy(out_disp_tag);
@@ -993,9 +1012,9 @@ namespace ERIN
     bool has_limits{false};
     std::string field_read{};
     FlowValueType min_outflow{0.0};
-    auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"max_outflow"}, min_outflow, field_read);
-    has_limits = field_read == "max_outflow";
+    auto max_outflow = toml_helper::read_number_from_table_as_double(
+        tt, "max_outflow", -1.0);
+    has_limits = (max_outflow != -1.0);
     std::unique_ptr<Component> pass_through_comp;
     if (has_limits) {
       pass_through_comp = std::make_unique<PassThroughComponent>(
@@ -1206,10 +1225,11 @@ namespace ERIN
       std::cout << toml_scenarios.size() << " scenarios found\n";
     }
     for (const auto& s: toml_scenarios) {
+      const auto& tt = toml::get<toml::table>(s.second);
       const auto dist = toml::find<toml::table>(
           s.second, "occurrence_distribution");
       const auto next_occurrence_dist =
-        ::erin_generics::read_toml_distribution<RealTimeType>(dist);
+        erin_generics::read_toml_distribution<RealTimeType>(dist);
       const auto& time_unit_str = toml::find_or(
           s.second, "time_unit", default_time_units);
       const auto time_units = tag_to_time_units(time_unit_str);
@@ -1238,9 +1258,16 @@ namespace ERIN
             throw std::runtime_error(oss.str());
           }
       }
-      const auto duration = static_cast<::ERIN::RealTimeType>(
-          toml::find<RealTimeType>(s.second, "duration") * time_multiplier);
-      const auto max_occurrences = toml::find<int>(s.second, "max_occurrences");
+      const auto duration = static_cast<RealTimeType>(
+          toml_helper::read_number_from_table_as_int(tt, "duration", -1)
+          * time_multiplier);
+      if (duration < 0) {
+        std::ostringstream oss;
+        oss << "duration must be present and > 0 in '" << s.first << "'\n";
+        throw std::runtime_error(oss.str());
+      }
+      const auto max_occurrences = toml_helper::read_number_from_table_as_int(
+          tt, "max_occurrences", -1);
       const auto network_id = toml::find<std::string>(s.second, "network");
       std::unordered_map<std::string,double> intensity{};
       auto intensity_tmp =
@@ -1304,8 +1331,12 @@ namespace ERIN
           {
             std::string field_read{""};
             RealTimeType value =
-              toml_helper::read_required_table_field<RealTimeType>(
-                  tt, {"value"}, field_read);
+              toml_helper::read_number_from_table_as_int(tt, "value", -1);
+            if (value < 0) {
+              std::ostringstream oss{};
+              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'value' field; field 'value' must be present and >= 0\n";
+              throw std::invalid_argument(oss.str());
+            }
             std::string time_tag =
               toml_helper::read_optional_table_field<std::string>(
                   tt, {"time_unit", "time_units"}, std::string{"hours"},

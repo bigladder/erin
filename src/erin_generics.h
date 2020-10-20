@@ -74,7 +74,13 @@ namespace erin_generics
         oss << "value missing from fixed distribution specification";
         throw std::runtime_error(oss.str());
       }
-      auto v = toml::get<T>(it_v->second);
+      T v{};
+      try {
+        v = toml::get<T>(it_v->second);
+      }
+      catch (std::exception&) {
+        v = static_cast<T>(toml::get<double>(it_v->second));
+      }
       std::string time_units_tag{"seconds"};
       auto it_time_units = m.find("time_unit");
       if (it_time_units != m.end()) {

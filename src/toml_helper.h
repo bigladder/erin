@@ -87,7 +87,7 @@ namespace toml_helper
   }
 
   std::optional<toml::value>
-  read_if_present(const toml::table& tt, std::string key)
+  read_if_present(const toml::table& tt, const std::string& key)
   {
     const auto tt_end = tt.end();
     const auto it = tt.find(key);
@@ -100,7 +100,7 @@ namespace toml_helper
   double
   read_number_from_table_as_double(
       const toml::table& tt,
-      std::string key,
+      const std::string& key,
       double default_value)
   {
     const auto optval = read_if_present(tt, key);
@@ -132,7 +132,7 @@ namespace toml_helper
   ERIN::RealTimeType
   read_number_from_table_as_int(
       const toml::table& tt,
-      const std::string key,
+      const std::string& key,
       ERIN::RealTimeType default_value)
   {
     namespace e = ERIN;

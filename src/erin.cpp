@@ -318,14 +318,10 @@ namespace ERIN
   double
   TomlInputReader::read_number(const toml::value& v) const
   {
-    double out{0.0};
-    try {
-      out = toml::get<double>(v);
+    if (v.is_floating()) {
+      return v.as_floating(std::nothrow);
     }
-    catch (toml::exception&) {
-      out = static_cast<double>(toml::get<int>(v));
-    }
-    return out;
+    return static_cast<double>(v.as_integer());
   }
 
   double

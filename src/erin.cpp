@@ -1214,6 +1214,7 @@ namespace ERIN
   std::unordered_map<std::string, Scenario>
   TomlInputReader::read_scenarios()
   {
+    namespace eg = erin_generics;
     const std::string default_time_units{"hours"};
     std::unordered_map<std::string, Scenario> scenarios;
     const auto& toml_scenarios = toml::find<toml::table>(data, "scenarios");
@@ -1224,8 +1225,7 @@ namespace ERIN
       const auto& tt = toml::get<toml::table>(s.second);
       const auto dist = toml::find<toml::table>(
           s.second, "occurrence_distribution");
-      const auto next_occurrence_dist =
-        erin_generics::read_toml_distribution<RealTimeType>(dist);
+      const auto next_occurrence_dist = eg::read_toml_distribution(dist);
       const auto& time_unit_str = toml::find_or(
           s.second, "time_unit", default_time_units);
       const auto time_units = tag_to_time_units(time_unit_str);

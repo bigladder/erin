@@ -114,6 +114,20 @@ namespace toml_helper
   }
 
   int
+  read_value_as_int(const toml::value& v)
+  {
+    return v.is_integer() ?
+      v.as_integer(std::nothrow) : static_cast<int>(v.as_floating());
+  }
+
+  double
+  read_value_as_double(const toml::value& v)
+  {
+    return v.is_floating() ?
+      v.as_floating(std::nothrow) : static_cast<double>(v.as_integer());
+  }
+
+  int
   read_number_from_table_as_int(
       const toml::table& tt,
       const std::string key,

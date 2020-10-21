@@ -7,6 +7,7 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../vendor/toml11/toml.hpp"
 #pragma clang diagnostic pop
+#include "erin/type.h"
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -113,11 +114,12 @@ namespace toml_helper
     return val;
   }
 
-  int
+  ERIN::RealTimeType
   read_value_as_int(const toml::value& v)
   {
     return v.is_integer() ?
-      v.as_integer(std::nothrow) : static_cast<int>(v.as_floating());
+      static_cast<ERIN::RealTimeType>(v.as_integer(std::nothrow)) :
+      static_cast<ERIN::RealTimeType>(v.as_floating());
   }
 
   double
@@ -127,21 +129,21 @@ namespace toml_helper
       v.as_floating(std::nothrow) : static_cast<double>(v.as_integer());
   }
 
-  int
+  ERIN::RealTimeType
   read_number_from_table_as_int(
       const toml::table& tt,
       const std::string key,
-      int default_value)
+      ERIN::RealTimeType default_value)
   {
+    namespace e = ERIN;
     const auto optval = read_if_present(tt, key);
     if (!optval.has_value()) {
       return default_value;
     }
     const auto vx = *optval;
-    int val = vx.is_integer() ?
-      vx.as_integer(std::nothrow) :
-      static_cast<int>(vx.as_floating());
-    return val;
+    return vx.is_integer() ?
+      static_cast<e::RealTimeType>(vx.as_integer(std::nothrow)) :
+      static_cast<e::RealTimeType>(vx.as_floating());
   }
 }
 

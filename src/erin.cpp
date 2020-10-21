@@ -985,8 +985,10 @@ namespace ERIN
       fragility_map&& frags) const
   {
     std::string field_read;
-    auto num_inflows = toml_helper::read_number_from_table_as_int(tt, "num_inflows", 1);
-    auto num_outflows = toml_helper::read_number_from_table_as_int(tt, "num_outflows", 1);
+    auto num_inflows = static_cast<int>(
+        toml_helper::read_number_from_table_as_int(tt, "num_inflows", 1));
+    auto num_outflows = static_cast<int>(
+        toml_helper::read_number_from_table_as_int(tt, "num_outflows", 1));
     auto out_disp_tag = toml_helper::read_optional_table_field<std::string>(
         tt, {"dispatch_strategy", "outflow_dispatch_strategy"}, "in_order", field_read);
     auto out_disp = tag_to_muxer_dispatch_strategy(out_disp_tag);
@@ -1254,9 +1256,9 @@ namespace ERIN
             throw std::runtime_error(oss.str());
           }
       }
-      const auto duration = static_cast<RealTimeType>(
+      const auto duration =
           toml_helper::read_number_from_table_as_int(tt, "duration", -1)
-          * time_multiplier);
+          * time_multiplier;
       if (duration < 0) {
         std::ostringstream oss;
         oss << "duration must be present and > 0 in '" << s.first << "'\n";
@@ -1289,7 +1291,7 @@ namespace ERIN
               s.first,
               network_id,
               duration,
-              max_occurrences,
+              static_cast<int>(max_occurrences),
               next_occurrence_dist,
               intensity,
               calc_reliability}));
@@ -1326,7 +1328,7 @@ namespace ERIN
         case CdfType::Fixed:
           {
             std::string field_read{""};
-            RealTimeType value =
+            auto value =
               toml_helper::read_number_from_table_as_int(tt, "value", -1);
             if (value < 0) {
               std::ostringstream oss{};

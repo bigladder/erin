@@ -185,7 +185,9 @@ namespace erin::distribution
   {
     if (cdf_id >= cdf.tag.size()) {
       std::ostringstream oss{};
-      oss << "cdf_id `" << cdf_id << "` is out of range\n";
+      oss << "cdf_id '" << cdf_id << "' is out of range\n"
+          << "- id     : " << cdf_id << "\n"
+          << "- max(id): " << (cdf.tag.size() - 1) << "\n";
       throw std::out_of_range(oss.str());
     }
     const auto& subtype_id = cdf.subtype_id.at(cdf_id);
@@ -219,6 +221,9 @@ namespace erin::distribution
         {
           throw std::runtime_error("unhandled Cumulative Density Function");
         }
+    }
+    if (dt < 0) {
+      dt = 0;
     }
     return dt;
   }

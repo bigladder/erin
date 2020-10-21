@@ -6571,6 +6571,10 @@ TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
   EXPECT_EQ(
       cds.next_time_advance(cdf_id, dice_roll_3),
       mean + static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
+  double dice_roll_4{0.0};
+  mean = 10;
+  cdf_id = cds.add_normal_cdf("a_normal_cdf_v2", mean, stddev);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_4), 0);
 }
 
 TEST(ErinBasicsTest, Test_uncontrolled_source)

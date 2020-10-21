@@ -1,6 +1,8 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 cmake_minimum_required(VERSION 3.15) # required for gtest_discover_tests
 
-project(ERIN VERSION 0.0.17 LANGUAGES CXX)
+project(ERIN VERSION 0.0.38 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
@@ -192,4 +194,16 @@ configure_file(
 configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex11.toml"
   "ex11.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex12.toml"
+  "ex12.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex13.toml"
+  "ex13.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex14.toml"
+  "ex14.toml"
   COPYONLY)

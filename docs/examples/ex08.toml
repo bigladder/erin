@@ -7,7 +7,7 @@ max_time = 10
 [loads.building_electrical]
 time_unit = "hours"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,10.0],[10.0]]
+time_rate_pairs = [[0.0,10.0],[10.0,0.0]]
 ############################################################
 [components.electric_source]
 type = "source"
@@ -15,8 +15,7 @@ max_outflow = 5.0
 outflow = "electricity"
 [components.electric_battery]
 type = "store"
-outflow = "electricity"
-inflow = "electricity"
+flow = "electricity"
 capacity_unit = "kWh"
 capacity = 20.0
 max_inflow = 5.0

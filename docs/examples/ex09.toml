@@ -7,7 +7,7 @@ max_time = 10
 [loads.profile1]
 time_unit = "seconds"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,100.0],[10.0]]
+time_rate_pairs = [[0.0,100.0],[10.0,0.0]]
 ############################################################
 [cdf.cdf_break]
 type = "fixed"

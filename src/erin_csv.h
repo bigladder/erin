@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 // reference: https://stackoverflow.com/a/1120224
 
 #ifndef ERIN_CSV_H
@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 namespace erin_csv
 {
@@ -18,6 +19,7 @@ namespace erin_csv
     std::vector<std::string> data;
     std::string line;
     std::getline(stream, line);
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
     if (line.empty()) {
       return data;
     }

@@ -6,18 +6,18 @@ max_time = 10
 [loads.default]
 time_unit = "seconds"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,100.0],[10.0]]
+time_rate_pairs = [[0.0,100.0],[10.0,0.0]]
 [loads.supply]
 time_unit = "seconds"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0]]
+time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0,0.0]]
 [components.US]
 type = "uncontrolled_source"
-output_stream = "electricity"
+outflow = "electricity"
 supply_by_scenario.blue_sky = "supply"
 [components.L]
 type = "load"
-input_stream = "electricity"
+inflow = "electricity"
 loads_by_scenario.blue_sky = "default"
 [networks.nw]
 connections = [

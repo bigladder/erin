@@ -1,6 +1,6 @@
 #!/bin/bash
 date
-if ! cmake -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..; then
+if ! cmake -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=${1:-Debug} ..; then
   echo CMAKE CALL FAILED!
   exit 1
 fi

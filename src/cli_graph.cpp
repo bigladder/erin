@@ -1,5 +1,6 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
+
 #include "debug_utils.h"
 #include "erin/erin.h"
 #include "erin/graphviz.h"

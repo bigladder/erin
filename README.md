@@ -1,6 +1,6 @@
-# E2RIN (Economics, Energy-use, and Resilience of Interacting Networks)
+# ERIN (Energy Resilience of Interacting Networks)
 
-Main engine for the DISCO (District Infrastructure System Component Optimization) tool.
+ERIN is a district system energy-flow simulator that takes into account toplogy and disruption due to threat events and/or reliability-based failures.
 
 ## Running Google Test
 
@@ -78,32 +78,26 @@ Unit tests are created by googletest and automatically detected by CTest and add
 
 ## Graphviz Visualization of the Network Topology
 
-One of the programs that builds with E2RIN is `e2rin_graph`.
-`e2rin_graph` can be used to generate a Graphviz input file from your input TOML file.
+One of the programs that builds with ERIN is `erin_graph`.
+`erin_graph` can be used to generate a Graphviz input file from your input TOML file.
 Although the graphviz input file can be created with no external dependencies, a Graphviz installation is required to actually create an output image.
 
 Graphviz can be installed from [here](https://www.graphviz.org/).
 
-The `e2rin_graph` program provides usage help including how to call Graphviz to generate your picture.
+The `erin_graph` program provides usage help including how to call Graphviz to generate your picture.
 
-## Formatting: Clang format (TODO)
+# Copyright and License
 
-## Code Coverage: Codecov (TODO)
-
-## CI: Travis-CI (TODO)
-
-Automatic builds, testing, packaging, and deployment.
-
-## Script Bindings (TODO)
-
-## Documentation: Doxygen + ReadTheDocs(?) (TODO)
-
-# LICENSE
+Copyright (c) 2020 Big Ladder Software, LLC. All Rights Reserved.
 
 See the LICENSE.txt file for the license for this project.
 
-The test example in test/checkout_line is adapted from the ADEVS manual and source code Copyright James Nutaro and released under a BSD License.
-The license file for that work is in test/checkout_line/copyright.txt.
+Original author of this source code is Michael O'Keefe, under employ of Big Ladder Software LLC.
+
+## Checkout Line Tests
+
+The test example in `test/checkout_line` is adapted from the ADEVS manual and source code Copyright James Nutaro and released under a BSD License.
+The license file for that work is in `test/checkout_line/copyright.txt`.
 The example has been slightly modified from the original to remove the need for file IO for specifying the problem and reading results.
 In addition, port numbers have been eliminated in preference to using the adevs::SimpleDigraph network model.
 Output to standard out from the Clerk model has also been turned off by default.
@@ -208,13 +202,3 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
-
-## Licensing: MIT
-
-Copyright 2019 Big Ladder Software LLC
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

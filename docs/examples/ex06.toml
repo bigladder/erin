@@ -54,10 +54,10 @@ type = "source"
 outflow = "coal"
 [components.steam_loop]
 type = "muxer"
-stream = "steam"
+flow = "steam"
 num_inflows = 1
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.waste_heat_to_electricity]
 type = "converter"
 inflow = "waste_heat"
@@ -66,49 +66,61 @@ lossflow = "waste_heat"
 constant_efficiency = 0.3
 [components.electric_bus]
 type = "muxer"
-stream = "electricity"
+flow = "electricity"
 num_inflows = 2
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.elec_line_from_utility]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.elec_line_to_c1]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.elec_line_to_c2]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.steam_line_to_c1]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.steam_line_to_c2]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.c1_steam_mux]
 type = "muxer"
-stream = "steam"
-num_inflows = 2
+flow = "steam"
+num_inflows = 1
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.c2_steam_mux]
 type = "muxer"
-stream = "steam"
-num_inflows = 2
+flow = "steam"
+num_inflows = 1
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
+[components.c1_steam_combiner]
+type = "muxer"
+flow = "steam"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
+[components.c2_steam_combiner]
+type = "muxer"
+flow = "steam"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
 [components.steam_c1_to_c2]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.steam_c2_to_c1]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [networks.nw_1]
 connections = [
   # Electric Network
   ["electric_utility:OUT(0)", "elec_line_from_utility:IN(0)", "electricity"],
-  ["elec_line_from_utility:OUT(0)", "electric_bus:IN(0)", "electricity"],
-  ["waste_heat_to_electricity:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["elec_line_from_utility:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["waste_heat_to_electricity:OUT(0)", "electric_bus:IN(0)", "electricity"],
   ["electric_bus:OUT(0)", "elec_line_to_c1:IN(0)", "electricity"],
   ["electric_bus:OUT(1)", "elec_line_to_c2:IN(0)", "electricity"],
   ["elec_line_to_c1:OUT(0)", "cluster_1_electric:IN(0)", "electricity"],
@@ -118,14 +130,16 @@ connections = [
   ["coal_to_steam:OUT(0)", "steam_loop:IN(0)", "steam"],
   ["steam_loop:OUT(0)", "steam_line_to_c1:IN(0)", "steam"],
   ["steam_line_to_c1:OUT(0)", "c1_steam_mux:IN(0)", "steam"],
-  ["c1_steam_mux:OUT(0)", "cluster_1_thermal:IN(0)", "steam"],
+  ["c1_steam_mux:OUT(0)", "c1_steam_combiner:IN(0)", "steam"],
   ["c1_steam_mux:OUT(1)", "steam_c1_to_c2:IN(0)", "steam"],
-  ["steam_c1_to_c2:OUT(0)", "c2_steam_mux:IN(1)", "steam"],
+  ["steam_c1_to_c2:OUT(0)", "c2_steam_combiner:IN(1)", "steam"],
   ["steam_loop:OUT(1)", "steam_line_to_c2:IN(0)", "steam"],
   ["steam_line_to_c2:OUT(0)", "c2_steam_mux:IN(0)", "steam"],
-  ["c2_steam_mux:OUT(0)", "cluster_2_thermal:IN(0)", "steam"],
+  ["c2_steam_mux:OUT(0)", "c2_steam_combiner:IN(0)", "steam"],
   ["c2_steam_mux:OUT(1)", "steam_c2_to_c1:IN(0)", "steam"],
-  ["steam_c2_to_c1:OUT(0)", "c1_steam_mux:IN(1)", "steam"],
+  ["steam_c2_to_c1:OUT(0)", "c1_steam_combiner:IN(1)", "steam"],
+  ["c1_steam_combiner:OUT(0)", "cluster_1_thermal:IN(0)", "steam"],
+  ["c2_steam_combiner:OUT(0)", "cluster_2_thermal:IN(0)", "steam"],
   ["coal_to_steam:OUT(1)", "waste_heat_to_electricity:IN(0)", "waste_heat"]]
 [scenarios.blue_sky]
 time_unit = "hours"

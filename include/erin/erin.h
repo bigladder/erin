@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_ERIN_H
 #define ERIN_ERIN_H
@@ -22,6 +22,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -353,6 +354,10 @@ namespace ERIN
           fragility_map&& frags) const;
       [[nodiscard]] double read_number(const toml::value& v) const;
       [[nodiscard]] double read_number(const std::string& v) const;
+      [[nodiscard]] std::optional<double>
+        read_optional_number(const toml::table& tt, const std::string& key);
+      [[nodiscard]] double
+        read_number_at(const toml::table& tt, const std::string& key);
       double read_fixed_random_for_sim_info(
           const toml::table& tt, bool& found_it) const;
       std::vector<double> read_fixed_series_for_sim_info(
@@ -480,6 +485,7 @@ namespace ERIN
   {
     public:
       explicit Main(const std::string& input_toml);
+      explicit Main(TomlInputReader reader);
       Main(
           const SimulationInfo& si,
           const std::unordered_map<

@@ -1,5 +1,6 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../vendor/toml11/toml.hpp"
@@ -110,7 +111,7 @@ namespace ERIN
       toml::find_or(sim_info, "quantity_unit", "kJ");
     const std::string time_tag =
       toml::find_or(sim_info, "time_unit", "years");
-    const TimeUnits time_units = tag_to_time_units(time_tag);
+    const auto time_units = tag_to_time_units(time_tag);
     bool has_fixed{false};
     auto fixed_random = read_fixed_random_for_sim_info(tt, has_fixed);
     bool has_series{false};
@@ -135,7 +136,7 @@ namespace ERIN
     has_fixed = (it_fixed_random != tt.end());
     double fixed_random{0.0};
     if (has_fixed) {
-      fixed_random = toml::get<double>(it_fixed_random->second);
+      fixed_random = read_number(it_fixed_random->second);
     }
     return fixed_random;
   }
@@ -146,9 +147,16 @@ namespace ERIN
   {
     auto it_fixed_series = tt.find("fixed_random_series");
     has_series = (it_fixed_series != tt.end());
-    std::vector<double> fixed_series = {0.0};
+    auto fixed_series = std::vector<double>{};
     if (has_series) {
-      fixed_series = toml::get<std::vector<double>>(it_fixed_series->second);
+      const auto& xs =
+        toml::get<std::vector<toml::value>>(it_fixed_series->second);
+      for (const auto& x : xs) {
+        fixed_series.emplace_back(read_number(x));
+      }
+    }
+    else {
+      fixed_series.emplace_back(0.0);
     }
     return fixed_series;
   }
@@ -161,7 +169,13 @@ namespace ERIN
     has_seed = (it_random_seed != tt.end());
     unsigned int seed{0};
     if (has_seed) {
-      seed = toml::get<unsigned int>(it_random_seed->second);
+      try {
+        seed = toml::get<unsigned int>(it_random_seed->second);
+      }
+      catch (toml::exception&) {
+        seed = static_cast<unsigned int>(
+            toml::get<double>(it_random_seed->second));
+      }
     }
     return seed;
   }
@@ -180,10 +194,12 @@ namespace ERIN
       auto it1 = tt.find("other_rate_units");
       if (it1 != tt.end()) {
         const auto oru = toml::get<toml::table>(it1->second);
-        for (const auto& p: oru)
-          other_rate_units.insert(std::pair<std::string,FlowValueType>(
+        for (const auto& p: oru) {
+          other_rate_units.insert(
+              std::pair<std::string, FlowValueType>(
                 p.first,
-                toml::get<FlowValueType>(p.second)));
+                read_number(p.second)));
+        }
       }
       auto it2  = tt.find("other_quantity_units");
       if (it2 != tt.end()) {
@@ -191,7 +207,7 @@ namespace ERIN
         for (const auto& p: oqu)
           other_quantity_units.insert(std::pair<std::string,FlowValueType>(
                 p.first,
-                toml::get<FlowValueType>(p.second)));
+                read_number(p.second)));
       }
       const std::string stream_type{toml::find<std::string>(t, "type")};
       stream_types_map.insert(std::make_pair(s.first, stream_type));
@@ -228,6 +244,13 @@ namespace ERIN
         }
         auto csv_file = toml::get<std::string>(it2->second);
         the_loads = load_loads_from_csv(csv_file);
+        if constexpr (debug_level >= debug_level_high) {
+          int load_num{0};
+          for (const auto& ld : the_loads) {
+            std::cout << "- " << load_num << ": " << ld << "\n";
+            ++load_num;
+          }
+        }
       }
       else {
         const auto load_array = toml::get<std::vector<toml::value>>(it->second);
@@ -295,14 +318,10 @@ namespace ERIN
   double
   TomlInputReader::read_number(const toml::value& v) const
   {
-    double out{0.0};
-    try {
-      out = toml::get<double>(v);
+    if (v.is_floating()) {
+      return v.as_floating(std::nothrow);
     }
-    catch (toml::exception&) {
-      out = static_cast<double>(toml::get<int>(v));
-    }
-    return out;
+    return static_cast<double>(v.as_integer());
   }
 
   double
@@ -316,6 +335,28 @@ namespace ERIN
       out = static_cast<double>(std::stoi(v));
     }
     return out;
+  }
+
+
+  std::optional<double>
+  TomlInputReader::read_optional_number(const toml::table& tt, const std::string& key)
+  {
+    const auto& it = tt.find(key);
+    if (it == tt.end()) {
+      return {};
+    }
+    return read_number(it->second);
+  }
+
+
+  double
+  TomlInputReader::read_number_at(const toml::table& tt, const std::string& key)
+  {
+    const auto& it = tt.find(key);
+    if (it == tt.end()) {
+      throw std::runtime_error("expected key '" + key + "' to exist");
+    }
+    return read_number(it->second);
   }
 
 
@@ -336,19 +377,15 @@ namespace ERIN
       const auto size = xs.size();
       RealTimeType the_time{};
       FlowValueType the_value{};
-      if ((size < 1) || (size > 2)) {
+      if (size != 2) {
         std::ostringstream oss;
-        oss << "time_rate_pairs must be 1 or 2 elements in length; "
+        oss << "time_rate_pairs must be 2 elements in length;"
             << "size = " << size << "\n";
         throw std::runtime_error(oss.str());
       }
       the_time = time_to_seconds(read_number(xs[0]), time_units);
-      if (size == 2) {
-        the_value = static_cast<FlowValueType>(read_number(xs[1]));
-        the_loads.emplace_back(LoadItem{the_time, the_value});
-      } else {
-        the_loads.emplace_back(LoadItem{the_time});
-      }
+      the_value = static_cast<FlowValueType>(read_number(xs[1]));
+      the_loads.emplace_back(LoadItem{the_time, the_value});
     }
     return the_loads;
   }
@@ -454,18 +491,11 @@ namespace ERIN
       ifs.close();
       throw std::runtime_error(oss.str());
     }
-    auto& back = the_loads.back();
-    back = LoadItem{back.get_time()};
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "loads read in:\n";
       for (const auto ld: the_loads) {
-        std::cout << "  {t: " << ld.get_time();
-        if (ld.get_is_end()) {
-          std::cout << "}\n";
-        }
-        else {
-          std::cout << ", v: " << ld.get_value() << "}\n";
-        }
+        std::cout << "  {t: " << ld.time;
+        std::cout << ", v: " << ld.value << "}\n";
       }
     }
     ifs.close();
@@ -754,7 +784,7 @@ namespace ERIN
       const std::string& comp_id,
       const std::unordered_map<
         std::string,
-        ::erin::fragility::FragilityCurve>& fragilities) const
+        erin::fragility::FragilityCurve>& fragilities) const
   {
     namespace ef = erin::fragility;
     std::string field_read{};
@@ -814,7 +844,7 @@ namespace ERIN
     for (const auto& pair : tt) {
       const auto& curve_id = pair.first;
       const auto& data_table = toml::get<toml::table>(pair.second);
-      std::string curve_type_tag;
+      std::string curve_type_tag{};
       try {
         curve_type_tag = toml_helper::read_required_table_field<std::string>(
           data_table, {"type"}, field_read);
@@ -840,23 +870,8 @@ namespace ERIN
       switch (curve_type) {
         case ef::CurveType::Linear:
           {
-            double lower_bound{0.0};
-            double upper_bound{0.0};
-            try {
-              lower_bound = toml_helper::read_required_table_field<double>(
-                  data_table, {"lower_bound"}, field_read);
-              upper_bound = toml_helper::read_required_table_field<double>(
-                  data_table, {"upper_bound"}, field_read);
-            }
-            catch (std::out_of_range& e) {
-              std::ostringstream oss;
-              oss << "lower_bound and/or upper_bound not read correctly "
-                << "for '" << curve_id << "'; "
-                << "be sure to specify numbers with decimal points "
-                << "for TOML to parse.\n";
-              oss << "actual error: " << e.what() << "\n";
-              throw std::runtime_error(oss.str());
-            }
+            auto lower_bound = read_number_at(data_table, "lower_bound");
+            auto upper_bound = read_number_at(data_table, "upper_bound");
             std::unique_ptr<ef::Curve> the_curve = std::make_unique<ef::Linear>(
                 lower_bound, upper_bound);
             ef::FragilityCurve fc{vulnerable_to, std::move(the_curve)};
@@ -883,15 +898,12 @@ namespace ERIN
         std::string, std::unique_ptr<Component>>& components,
       fragility_map&& frags) const
   {
-    std::string field_read;
-    const auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"max_outflow", "max_output"}, 0.0, field_read);
-    bool is_limited{field_read != ""};
-    const auto min_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"min_outflow", "min_output"}, 0.0, field_read);
-    is_limited = is_limited || (field_read != "");
+    const auto max_outflow = toml_helper::read_number_from_table_as_double(
+        tt, "max_outflow", -1.0);
+    bool is_limited{max_outflow != -1.0};
     Limits lim{};
     if (is_limited) {
+      FlowValueType min_outflow{0.0};
       lim = Limits{min_outflow, max_outflow};
     }
     std::unique_ptr<Component> source_comp = std::make_unique<SourceComponent>(
@@ -944,13 +956,8 @@ namespace ERIN
         for (const auto& ls: loads_by_scenario) {
           std::cout << ls.first << ": [";
           for (const auto& li: ls.second) {
-            std::cout << "(" << li.get_time();
-            if (li.get_is_end()) {
-              std::cout << ")";
-            }
-            else {
-              std::cout << ", " << li.get_value() << "), ";
-            }
+            std::cout << "(" << li.time;
+            std::cout << ", " << li.value << "), ";
           }
           std::cout << "]\n";
         }
@@ -978,12 +985,12 @@ namespace ERIN
       fragility_map&& frags) const
   {
     std::string field_read;
-    auto num_inflows = toml_helper::read_optional_table_field<int>(
-        tt, {"num_inflows", "num_inputs"}, 1, field_read);
-    auto num_outflows = toml_helper::read_optional_table_field<int>(
-        tt, {"num_outflows", "num_outputs"}, 1, field_read);
+    auto num_inflows = static_cast<int>(
+        toml_helper::read_number_from_table_as_int(tt, "num_inflows", 1));
+    auto num_outflows = static_cast<int>(
+        toml_helper::read_number_from_table_as_int(tt, "num_outflows", 1));
     auto out_disp_tag = toml_helper::read_optional_table_field<std::string>(
-        tt, {"dispatch_strategy", "outflow_dispatch_strategy"}, "distribute", field_read);
+        tt, {"dispatch_strategy", "outflow_dispatch_strategy"}, "in_order", field_read);
     auto out_disp = tag_to_muxer_dispatch_strategy(out_disp_tag);
     std::unique_ptr<Component> mux_comp = std::make_unique<MuxerComponent>(
         id, std::string(stream), num_inflows, num_outflows, std::move(frags),
@@ -1001,21 +1008,20 @@ namespace ERIN
       fragility_map&& frags) const
   {
     bool has_limits{false};
-    std::string field_read;
-    auto min_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"min_outflow"}, 0.0, field_read);
-    has_limits = field_read == "min_outflow";
-    field_read = "";
-    auto max_outflow = toml_helper::read_optional_table_field<FlowValueType>(
-        tt, {"max_outflow"}, min_outflow, field_read);
-    has_limits = has_limits || (field_read == "max_outflow");
+    std::string field_read{};
+    FlowValueType min_outflow{0.0};
+    auto max_outflow = toml_helper::read_number_from_table_as_double(
+        tt, "max_outflow", -1.0);
+    has_limits = (max_outflow != -1.0);
     std::unique_ptr<Component> pass_through_comp;
-    if (has_limits)
+    if (has_limits) {
       pass_through_comp = std::make_unique<PassThroughComponent>(
           id, std::string(stream), Limits{min_outflow, max_outflow}, std::move(frags));
-    else
+    }
+    else {
       pass_through_comp = std::make_unique<PassThroughComponent>(
           id, std::string(stream), std::move(frags));
+    }
     components.insert(
         std::make_pair(id, std::move(pass_through_comp)));
   }
@@ -1210,6 +1216,7 @@ namespace ERIN
   std::unordered_map<std::string, Scenario>
   TomlInputReader::read_scenarios()
   {
+    namespace eg = erin_generics;
     const std::string default_time_units{"hours"};
     std::unordered_map<std::string, Scenario> scenarios;
     const auto& toml_scenarios = toml::find<toml::table>(data, "scenarios");
@@ -1217,10 +1224,10 @@ namespace ERIN
       std::cout << toml_scenarios.size() << " scenarios found\n";
     }
     for (const auto& s: toml_scenarios) {
+      const auto& tt = toml::get<toml::table>(s.second);
       const auto dist = toml::find<toml::table>(
           s.second, "occurrence_distribution");
-      const auto next_occurrence_dist =
-          erin_generics::read_toml_distribution<RealTimeType>(dist);
+      const auto next_occurrence_dist = eg::read_toml_distribution(dist);
       const auto& time_unit_str = toml::find_or(
           s.second, "time_unit", default_time_units);
       const auto time_units = tag_to_time_units(time_unit_str);
@@ -1249,9 +1256,16 @@ namespace ERIN
             throw std::runtime_error(oss.str());
           }
       }
-      const auto duration = static_cast<::ERIN::RealTimeType>(
-          toml::find<RealTimeType>(s.second, "duration") * time_multiplier);
-      const auto max_occurrences = toml::find<int>(s.second, "max_occurrences");
+      const auto duration =
+          toml_helper::read_number_from_table_as_int(tt, "duration", -1)
+          * time_multiplier;
+      if (duration < 0) {
+        std::ostringstream oss;
+        oss << "duration must be present and > 0 in '" << s.first << "'\n";
+        throw std::runtime_error(oss.str());
+      }
+      const auto max_occurrences = toml_helper::read_number_from_table_as_int(
+          tt, "max_occurrences", -1);
       const auto network_id = toml::find<std::string>(s.second, "network");
       std::unordered_map<std::string,double> intensity{};
       auto intensity_tmp =
@@ -1260,10 +1274,10 @@ namespace ERIN
             std::unordered_map<std::string,toml::value>{});
       for (const auto& pair: intensity_tmp) {
         double v{0.0};
-        try {
+        if (pair.second.is_floating()) {
           v = pair.second.as_floating();
         }
-        catch (const toml::exception&) {
+        else {
           v = static_cast<double>(pair.second.as_integer());
         }
         intensity.insert(std::make_pair(pair.first, v));
@@ -1277,7 +1291,7 @@ namespace ERIN
               s.first,
               network_id,
               duration,
-              max_occurrences,
+              static_cast<int>(max_occurrences),
               next_occurrence_dist,
               intensity,
               calc_reliability}));
@@ -1314,9 +1328,13 @@ namespace ERIN
         case erin::distribution::CdfType::Fixed:
           {
             std::string field_read{""};
-            RealTimeType value =
-              toml_helper::read_required_table_field<RealTimeType>(
-                  tt, {"value"}, field_read);
+            auto value =
+              toml_helper::read_number_from_table_as_int(tt, "value", -1);
+            if (value < 0) {
+              std::ostringstream oss{};
+              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'value' field; field 'value' must be present and >= 0\n";
+              throw std::invalid_argument(oss.str());
+            }
             std::string time_tag =
               toml_helper::read_optional_table_field<std::string>(
                   tt, {"time_unit", "time_units"}, std::string{"hours"},
@@ -1423,6 +1441,22 @@ namespace ERIN
       bool make_header,
       TimeUnits time_units) const
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "ScenarioResults::to_csv_lines()\n";
+      std::cout << "comp_ids:\n";
+      for (const auto& id : comp_ids) {
+        std::cout << "- " << id << "\n";
+      }
+      std::cout << "make_header: " << make_header << "\n";
+      std::cout << "time_units : " << time_units_to_tag(time_units) << "\n";
+      std::cout << "results:\n";
+      for (const auto& p : results) {
+        std::cout << "- " << p.first << "\n";
+        for (const auto& d : p.second) {
+          std::cout << "  - " << d << "\n";
+        }
+      }
+    }
     if (!erin::utils::is_superset(comp_ids, keys)) {
       std::ostringstream oss{};
       oss << "comp_ids is not a superset of the keys defined in "
@@ -1452,7 +1486,12 @@ namespace ERIN
       last_values[k] = 0.0;
       last_requested_values[k] = 0.0;
       for (const auto& d: results.at(k)) {
-        times_set.emplace(d.time);
+        if (d.time > scenario_duration) {
+          break;
+        }
+        else {
+          times_set.emplace(d.time);
+        }
       }
     }
     std::vector<RealTimeType> times{times_set.begin(), times_set.end()};
@@ -2435,11 +2474,15 @@ namespace ERIN
   // Main
   // main class that runs the simulation from file
   Main::Main(const std::string& input_file_path):
+    Main(TomlInputReader{input_file_path})
+  {
+  }
+
+  Main::Main(TomlInputReader reader):
+    sim_info{reader.read_simulation_info()},
     failure_probs_by_comp_id_by_scenario_id{}
   {
-    TomlInputReader reader{input_file_path};
     // Read data into private class fields
-    sim_info = reader.read_simulation_info();
     auto loads_by_id = reader.read_loads();
     auto fragilities = reader.read_fragility_data();
     ReliabilityCoordinator rc{};
@@ -2451,21 +2494,20 @@ namespace ERIN
     components = reader.read_components(loads_by_id, fragilities, fms, rc);
     networks = reader.read_networks();
     scenarios = reader.read_scenarios();
-    bool calculate_the_reliability_schedule{false};
-    for (const auto& item : scenarios) {
-      if (item.second.get_calc_reliability()) {
-        calculate_the_reliability_schedule = true;
-        break;
-      }
-    }
-    if (calculate_the_reliability_schedule) {
-      reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
-          sim_info.get_max_time()
-          );
-    }
+    reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
+        sim_info.get_max_time_in_seconds()
+        );
     check_data();
     generate_failure_fragilities();
     rand_fn = sim_info.make_random_function();
+    if constexpr (debug_level >= debug_level_high) {
+      for (const auto& p : loads_by_id) {
+        std::cout << p.first << ":\n";
+        for (const auto& d : p.second) {
+          std::cout << "- " << d << "\n";
+        }
+      }
+    }
   }
 
   Main::Main(
@@ -2560,14 +2602,21 @@ namespace ERIN
     auto do_reliability = the_scenario.get_calc_reliability();
     std::unordered_map<std::string, std::vector<TimeState>>
       clipped_reliability_schedule{};
+    const auto duration = the_scenario.get_duration();
     if (do_reliability) {
       clipped_reliability_schedule = clip_schedule_to<std::string>(
-          reliability_schedule,
-          scenario_start_s,
-          scenario_start_s + the_scenario.get_duration());
-      clipped_reliability_schedule = rezero_times<std::string>(
-          reliability_schedule,
-          scenario_start_s);
+            reliability_schedule,
+            scenario_start_s,
+            scenario_start_s + duration);
+      if constexpr (debug_level >= debug_level_high) {
+        for (const auto& item : clipped_reliability_schedule) {
+          std::cout << item.first << ":\n";
+          for (const auto& x : item.second) {
+            std::cout << x << " ";
+          }
+          std::cout << "\n";
+        }
+      }
     }
     // 2. Construct and Run Simulation
     // 2.1. Instantiate a devs network
@@ -2588,8 +2637,7 @@ namespace ERIN
     }
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
-    const auto duration = the_scenario.get_duration();
-    const int max_no_advance_factor{10};
+    const int max_no_advance_factor{10000};
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;
     auto sim_good = run_devs(
@@ -2612,10 +2660,58 @@ namespace ERIN
           << "stream_ids.size() = " << stream_ids.size() << "\n";
       throw std::runtime_error(oss.str());
     }
-    if constexpr (debug_level >= debug_level_high) {
+    if ((!sim_good) || (debug_level >= debug_level_high)) {
+      if (!sim_good) {
+        std::cout << "ERROR DUMP for " << scenario_id << ":\n";
+      }
       std::cout << "results:\n";
+      using size_type = std::vector<Datum>::size_type;
+      size_type num_results{0};
+      bool is_first{true};
       for (const auto& p : results) {
-        std::cout << "... " << p.first << ": " << vec_to_string<Datum>(p.second) << "\n";
+        if (is_first) {
+          is_first = false;
+          std::cout << p.first << ":time,"
+                    << p.first << ":requested,"
+                    << p.first << ":achieved";
+          num_results = p.second.size();
+        }
+        else {
+          std::cout << ","
+                    << p.first << ":time,"
+                    << p.first << ":requested,"
+                    << p.first << ":achieved";
+          num_results = std::max(num_results, results.size());
+        }
+      }
+      std::cout << "\n";
+      for (size_type idx{0}; idx < num_results; ++idx) {
+        is_first = true;
+        for (const auto& p : results) {
+          auto results_size = p.second.size();
+          if (is_first) {
+            if (idx < results_size) {
+              std::cout <<        p.second[idx].time
+                        << "," << p.second[idx].requested_value
+                        << "," << p.second[idx].achieved_value;
+            }
+            else {
+              std::cout << "--,--,--";
+            }
+            is_first = false;
+          }
+          else {
+            if (idx < results_size) {
+              std::cout << "," << p.second[idx].time
+                        << "," << p.second[idx].requested_value
+                        << "," << p.second[idx].achieved_value;
+              }
+            else {
+              std::cout << ",--,--,--";
+            }
+          }
+        }
+        std::cout << "\n";
       }
       std::cout << "stream_ids:\n";
       for (const auto& p : stream_ids) {
@@ -2652,7 +2748,7 @@ namespace ERIN
           // ss = scenario start (seconds)
           [this, scenario_id, &out](RealTimeType ss) {
             if constexpr (debug_level >= debug_level_high) {
-            std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
+              std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
             }
             auto result = this->run(scenario_id, ss);
             auto& results = out.at(scenario_id);
@@ -2667,7 +2763,34 @@ namespace ERIN
     // 3. run the simulation
     const int max_no_advance{static_cast<int>(components.size()) * 10};
     const auto sim_good = run_devs(sim, sim_max_time, max_no_advance, "run_all:scenario");
-    return AllResults{sim_good, out};
+    if (!sim_good) {
+      return AllResults{sim_good, out};
+    }
+    bool all_subsims_good{true};
+    using size_type = std::vector<std::string>::size_type;
+    std::vector<std::string> problem_scenarios{};
+    std::vector<size_type> scenario_indexes{};
+    for (const auto& item : out) {
+      const auto& scenario_id = item.first;
+      const auto& results = item.second;
+      for (size_type idx{0}; idx < results.size(); ++idx) {
+        const auto& r = results[idx];
+        const auto r_is_good = r.get_is_good();
+        all_subsims_good = all_subsims_good && r_is_good;
+        if (!r_is_good) {
+          problem_scenarios.emplace_back(scenario_id);
+          scenario_indexes.emplace_back(idx);
+        }
+      }
+    }
+    if (problem_scenarios.size() > 0) {
+      std::cout << "ERROR! Issues simulating the following scenarios:\n";
+      for (size_type idx{0}; idx < problem_scenarios.size(); ++idx) {
+        std::cout << "Scenario " << problem_scenarios[idx]
+                  << "[" << scenario_indexes[idx] << "]\n";
+      }
+    }
+    return AllResults{all_subsims_good, out};
   }
 
   RealTimeType
@@ -2691,23 +2814,9 @@ namespace ERIN
   Main
   make_main_from_string(const std::string& raw_toml)
   {
-    std::stringstream ss;
+    std::stringstream ss{};
     ss << raw_toml;
-    TomlInputReader tir{ss};
-    const auto si = tir.read_simulation_info();
-    const auto loads = tir.read_loads();
-    const auto fragilities = tir.read_fragility_data();
-    ReliabilityCoordinator rc{};
-    const auto cdfs = tir.read_cumulative_distributions(rc);
-    const auto fms = tir.read_failure_modes(cdfs, rc);
-    const auto comps = tir.read_components(
-        loads, fragilities, fms, rc);
-    const auto networks = tir.read_networks();
-    const auto scenarios = tir.read_scenarios();
-    const auto reliability_schedule =
-      rc.calc_reliability_schedule_by_component_tag(
-          si.get_max_time_in_seconds());
-    return Main{si, comps, networks, scenarios, reliability_schedule};
+    return Main{TomlInputReader{ss}};
   }
 
 
@@ -2859,14 +2968,12 @@ namespace ERIN
       }
       if (non_advance_count >= max_no_advance) {
         sim_good = false;
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "ERROR: non_advance_count > max_no_advance:\n";
-          std::cout << "run_id           : " << run_id << "\n";
-          std::cout << "non_advance_count: " << non_advance_count << "\n";
-          std::cout << "max_no_advance   : " << max_no_advance << "\n";
-          std::cout << "time.real        : " << t.real << "\n";
-          std::cout << "time.logical     : " << t.logical << "\n";
-        }
+        std::cout << "ERROR: non_advance_count > max_no_advance:\n";
+        std::cout << "run_id           : " << run_id << "\n";
+        std::cout << "non_advance_count: " << non_advance_count << "\n";
+        std::cout << "max_no_advance   : " << max_no_advance << "\n";
+        std::cout << "time.real        : " << t.real << " seconds\n";
+        std::cout << "time.logical     : " << t.logical << "\n";
         break;
       }
       if constexpr (debug_level >= debug_level_high) {

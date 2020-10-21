@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_DEVS_MUX_H
 #define ERIN_DEVS_MUX_H
@@ -54,6 +54,11 @@ namespace erin::devs
   std::vector<Port> rerequest_inflows_in_order(
       const std::vector<Port>& inflow_ports,
       FlowValueType total_outflow_request,
+      RealTimeType time);
+
+  std::vector<Port> request_inflows_intelligently(
+      const std::vector<Port>& inflow_ports,
+      FlowValueType remaining_request,
       RealTimeType time);
 
   ////////////////////////////////////////////////////////////

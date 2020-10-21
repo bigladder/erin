@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #include "adevs.h"
 #include "checkout_line/clerk.h"
@@ -148,13 +148,11 @@ TEST(ErinUtilFunctions, TestClamp)
 TEST(ErinBasicsTest, TestLoadItem)
 {
   const auto li1 = ERIN::LoadItem(0, 1);
-  const auto li2 = ERIN::LoadItem(4);
+  const auto li2 = ERIN::LoadItem(4, 0);
   EXPECT_EQ(li1.get_time_advance(li2), 4);
-  EXPECT_EQ(li1.get_time(), 0);
-  EXPECT_EQ(li1.get_value(), 1.0);
-  EXPECT_EQ(li2.get_time(), 4);
-  EXPECT_FALSE(li1.get_is_end());
-  EXPECT_TRUE(li2.get_is_end());
+  EXPECT_EQ(li1.time, 0);
+  EXPECT_EQ(li1.value, 1.0);
+  EXPECT_EQ(li2.time, 4);
 }
 
 TEST(ErinBasicsTest, FlowState)
@@ -194,7 +192,7 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
         E::LoadItem{1,80},
         E::LoadItem{2,40},
         E::LoadItem{3,0},
-        E::LoadItem{t_max}});
+        E::LoadItem{t_max,0}});
   std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
   lim->set_flow_writer(fw);
   lim->set_recording_on();
@@ -263,7 +261,7 @@ TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
     E::LoadItem{1,80},
     E::LoadItem{2,40},
     E::LoadItem{3,0},
-    E::LoadItem{t_max}};
+    E::LoadItem{t_max,0.0}};
   std::vector<E::FlowValueType> requested_loads = {160, 80, 40, 0, 0};
   std::string sink_id{"sink"};
   auto sink = new E::Sink(
@@ -322,7 +320,7 @@ TEST(ErinBasicsTest, CanRunUsingComponents)
             E::LoadItem{1,80},
             E::LoadItem{2,40},
             E::LoadItem{3,0},
-            E::LoadItem{4}}}});
+            E::LoadItem{4,0}}}});
   const std::string source_id{"electrical_pcc"};
   std::unique_ptr<E::Component> source =
     std::make_unique<E::SourceComponent>(source_id, elec);
@@ -426,8 +424,8 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         "type = \"source\"\n"
         "# Point of Common Coupling for Electric Utility\n"
         "output_stream = \"electricity\"\n"
-        "max_output = 10.0\n"
-        "min_output = 0.0\n"
+        "max_outflow = 10.0\n"
+        "min_outflow = 0.0\n"
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
@@ -442,10 +440,10 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
   std::string stream_id{"electricity"};
   std::string scenario_id{"blue_sky"};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
-    {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
+    {std::string{"load1"}, {ERIN::LoadItem{0,1.0},ERIN::LoadItem{4,0.0}}}
   };
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads{
-    {scenario_id, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
+    {scenario_id, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4,0.0}}}
   };
   std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>> expected;
   expected.emplace(std::make_pair(
@@ -488,10 +486,10 @@ TEST(ErinBasicsTest, CanReadLoadsFromToml)
   ss << "[loads.load1]\n"
         "time_unit = \"seconds\"\n"
         "rate_unit = \"kW\"\n"
-        "time_rate_pairs = [[0.0,1.0],[4.0]]\n";
-  ::ERIN::TomlInputReader t{ss};
+        "time_rate_pairs = [[0.0,1.0],[4.0,0.0]]\n";
+  ERIN::TomlInputReader t{ss};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> expected{
-    {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4}}}
+    {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4,0.0}}}
   };
   auto actual = t.read_loads();
   EXPECT_EQ(expected.size(), actual.size());
@@ -500,11 +498,8 @@ TEST(ErinBasicsTest, CanReadLoadsFromToml)
     ASSERT_TRUE(a != actual.end());
     EXPECT_EQ(e.second.size(), a->second.size());
     for (std::vector<::ERIN::LoadItem>::size_type i{0}; i < e.second.size(); ++i) {
-      EXPECT_EQ(e.second[i].get_time(), a->second[i].get_time());
-      if (e.second[i].get_is_end())
-        EXPECT_EQ(e.second[i].get_is_end(), a->second[i].get_is_end());
-      else
-        EXPECT_EQ(e.second[i].get_value(), a->second[i].get_value());
+      EXPECT_EQ(e.second[i].time, a->second[i].time);
+      EXPECT_EQ(e.second[i].value, a->second[i].value);
     }
   }
 }
@@ -653,7 +648,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "[loads.building_electrical]\n"
         "time_unit = \"hours\"\n"
         "rate_unit = \"kW\"\n"
-        "time_rate_pairs = [[0.0,1.0],[4.0]]\n"
+        "time_rate_pairs = [[0.0,1.0],[4.0,0.0]]\n"
         "############################################################\n"
         "[components.electric_utility]\n"
         "type = \"source\"\n"
@@ -772,12 +767,12 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   std::string net_id{"normal_operations"};
   const int N{10};
   std::vector<::ERIN::LoadItem> loads;
-  for (int i{0}; i < N; ++i)
-    loads.emplace_back(::ERIN::LoadItem{i, 1.0});
-  loads.emplace_back(::ERIN::LoadItem{N});
+  for (int i{0}; i < N; ++i) {
+    loads.emplace_back(ERIN::LoadItem{i, 1.0});
+  }
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{};
+  ERIN::SimulationInfo si{};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
@@ -906,17 +901,8 @@ TEST(ErinBasicsTest, TestSumRequestedLoad)
   expected = 0.0;
   actual = E::sum_requested_load(vs);
   EXPECT_NEAR(expected, actual, tolerance);
-  try {
-    vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
-    actual = E::sum_requested_load(vs);
-    ASSERT_TRUE(false) << "expected exception but didn't throw";
-  }
-  catch (const std::invalid_argument&) {
-    ASSERT_TRUE(true);
-  }
-  catch (...) {
-    ASSERT_TRUE(false) << "unexpected exception thrown";
-  }
+  vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
+  ASSERT_THROW(E::sum_requested_load(vs), std::invalid_argument);
 }
 
 TEST(ErinBasicsTest, TestSumAchievedLoads)
@@ -936,17 +922,8 @@ TEST(ErinBasicsTest, TestSumAchievedLoads)
   expected = 0.0;
   actual = E::sum_achieved_load(vs);
   EXPECT_NEAR(expected, actual, tolerance);
-  try {
-    vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
-    actual = E::sum_achieved_load(vs);
-    ASSERT_TRUE(false) << "expected exception but didn't throw";
-  }
-  catch (const std::invalid_argument&) {
-    ASSERT_TRUE(true);
-  }
-  catch (...) {
-    ASSERT_TRUE(false) << "unexpected exception thrown";
-  }
+  vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
+  ASSERT_THROW(E::sum_achieved_load(vs), std::invalid_argument);
 }
 
 TEST(ErinBasicsTest, ScenarioResultsToCSV)
@@ -1011,10 +988,9 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   for (::ERIN::RealTimeType i{0}; i < max_time; ++i) {
     loads.emplace_back(::ERIN::LoadItem{i, 1.0});
   }
-  loads.emplace_back(::ERIN::LoadItem{max_time});
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{};
+  ERIN::SimulationInfo si{};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
@@ -1023,13 +999,13 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
   components.insert(
       std::make_pair(
         source_id,
-        std::make_unique<::ERIN::SourceComponent>(
+        std::make_unique<ERIN::SourceComponent>(
           source_id,
           stream_id)));
   components.insert(
       std::make_pair(
         load_id,
-        std::make_unique<::ERIN::LoadComponent>(
+        std::make_unique<ERIN::LoadComponent>(
           load_id,
           stream_id,
           loads_by_scenario)));
@@ -1176,24 +1152,23 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   // The entire simulation has a max time limit.
   // This is where we may need to switch to long or int64_t if we go with
   // seconds for the time unit and 1000 years of simulation...
-  namespace enw = ::erin::network;
-  namespace ep = ::erin::port;
+  namespace enw = erin::network;
+  namespace ep = erin::port;
   std::string scenario_id{"blue_sky"};
   std::string stream_id{"electricity_medium_voltage"};
   std::string source_id{"electric_utility"};
   std::string load_id{"cluster_01_electric"};
   std::string net_id{"normal_operations"};
-  const ::ERIN::RealTimeType max_time{10};
+  const ERIN::RealTimeType max_time{10};
   std::vector<::ERIN::LoadItem> loads;
-  for (::ERIN::RealTimeType i{0}; i < max_time; ++i) {
+  for (ERIN::RealTimeType i{0}; i < max_time; ++i) {
     loads.emplace_back(::ERIN::LoadItem{i, 1.0});
   }
-  loads.emplace_back(::ERIN::LoadItem{max_time});
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
+  std::unordered_map<std::string, std::vector<ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
-  ::ERIN::SimulationInfo si{
+  ERIN::SimulationInfo si{
     "kW", "kJ", ::ERIN::TimeUnits::Years, 1000};
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
+  std::unordered_map<std::string, std::vector<ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
   std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
@@ -1201,13 +1176,13 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   components.insert(
       std::make_pair(
         source_id,
-        std::make_unique<::ERIN::SourceComponent>(
+        std::make_unique<ERIN::SourceComponent>(
           source_id,
           stream_id)));
   components.insert(
       std::make_pair(
         load_id,
-        std::make_unique<::ERIN::LoadComponent>(
+        std::make_unique<ERIN::LoadComponent>(
           load_id,
           stream_id,
           loads_by_scenario)));
@@ -1349,7 +1324,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
   fs_pcc.emplace(std::make_pair(intensity_wind_speed, std::move(vs_pcc)));
   fs_gen.emplace(std::make_pair(intensity_flood, std::move(vs_gen)));
   std::vector<E::LoadItem>
-    loads{E::LoadItem{0,100.0}, E::LoadItem{100}};
+    loads{E::LoadItem{0,100.0}, E::LoadItem{100,0.0}};
   std::unordered_map<std::string, std::vector<E::LoadItem>>
     loads_by_scenario{{blue_sky, loads}, {class_4_hurricane, loads}};
   std::unordered_map<std::string, std::unique_ptr<E::Component>> comps;
@@ -1505,7 +1480,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
     l1_loads_by_scenario{
       { scenario_id,
         { E::LoadItem{0,10},
-          E::LoadItem{t_max}}}};
+          E::LoadItem{t_max, 0.0}}}};
   std::unique_ptr<E::Component> l1 =
     std::make_unique<E::LoadComponent>(
         l1_id,
@@ -1518,7 +1493,7 @@ TEST(ErinBasicsTest, TestMuxerComponent)
           E::LoadItem{5,5},
           E::LoadItem{8,10},
           E::LoadItem{10,5},
-          E::LoadItem{t_max}}}};
+          E::LoadItem{t_max,0}}}};
   std::unique_ptr<E::Component> l2 =
     std::make_unique<E::LoadComponent>(
         l2_id,
@@ -2527,7 +2502,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "[loads.default]\n"
     "time_unit = \"hours\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[4.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[4.0,0.0]]\n"
     "[components.electric_utility]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -2653,7 +2628,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
     "[loads.default]\n"
     "time_unit = \"hours\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[4.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[4.0,0.0]]\n"
     "[components.electric_utility]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -2839,7 +2814,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom3)
     "[loads.default]\n"
     "time_unit = \"hours\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[4.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[4.0,0.0]]\n"
     "[components.electric_utility]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -3271,7 +3246,7 @@ load_example_results(
     "[loads.load01]\n"
     "time_unit = \"hours\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,1.0],[10.0,0.0]]\n"
     "[components.A]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -3435,7 +3410,7 @@ load_converter_example()
     "[loads.load01]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,1.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "output_stream = \"diesel\"\n"
@@ -3515,15 +3490,15 @@ load_combined_heat_and_power_example()
     "[loads.electric_load]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
     "[loads.heating_load]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,1.0],[10.0,0.0]]\n"
     "[loads.waste_heat_load]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1000.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,1000.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "outflow = \"natural_gas\"\n"
@@ -3619,12 +3594,7 @@ TEST(ErinDevs, Test_smart_port_object)
   EXPECT_FALSE(p.should_propagate_achieved_at(t2));
   auto p1 = p.with_requested(v1, t1);
   EXPECT_EQ(p1.get_time_of_last_change(), t1);
-  try {
-    auto p_junk = p1.with_requested(v2, t0);
-    ASSERT_FALSE(true) << "didn't catch a reverse time exception...";
-  } catch (const std::invalid_argument&) {
-    // passed
-  }
+  ASSERT_THROW(auto _ = p1.with_requested(v2, t0), std::invalid_argument);
   EXPECT_EQ(p1.get_requested(), v1);
   EXPECT_EQ(p1.get_achieved(), v1);
   EXPECT_FALSE(p1.should_propagate_request_at(t0));
@@ -3668,7 +3638,7 @@ TEST(ErinComponents, Test_passthrough_component)
     "[loads.load0]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -3754,7 +3724,7 @@ TEST(ErinComponents, Test_passthrough_component_with_fragility)
     "[loads.load0]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -3809,7 +3779,7 @@ TEST(ErinComponents, Test_passthrough_component_with_limits)
     "[loads.load0]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
@@ -3871,7 +3841,7 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
     "[loads.load0]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "outflow = \"natural_gas\"\n"
@@ -4038,14 +4008,14 @@ TEST(ErinBasicsTest, Test_that_we_can_access_version_info_programmatically)
 TEST(ErinBasicsTest, Test_that_path_to_filename_works)
 {
   namespace eu = erin::utils;
-  std::string path0{"e2rin"};
-  std::string expected_filename0{"e2rin"};
+  std::string path0{"erin"};
+  std::string expected_filename0{"erin"};
   EXPECT_EQ(expected_filename0, eu::path_to_filename(path0));
-  std::string path1{"./bin/e2rin"};
-  std::string expected_filename1{"e2rin"};
+  std::string path1{"./bin/erin"};
+  std::string expected_filename1{"erin"};
   EXPECT_EQ(expected_filename1, eu::path_to_filename(path1));
-  std::string path2{".\\bin\\Debug\\e2rin.exe"};
-  std::string expected_filename2{"e2rin.exe"};
+  std::string path2{".\\bin\\Debug\\erin.exe"};
+  std::string expected_filename2{"erin.exe"};
 }
 
 TEST(ErinElements, Test_flow_writer_implementation)
@@ -4288,7 +4258,6 @@ TEST(ErinDevs, Test_converter_functions)
 {
   namespace ED = erin::devs;
   namespace EU = erin::utils;
-  using size_type = std::vector<ED::PortValue>::size_type;
   ED::FlowValueType constant_efficiency{0.25};
   auto s0 = ED::make_converter_state(constant_efficiency);
   std::unique_ptr<ED::ConversionFun> cf =
@@ -4297,7 +4266,7 @@ TEST(ErinDevs, Test_converter_functions)
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
     0, ED::Port{0, 0.0}, ED::Port{0, 0.0}, ED::Port{0, 0.0}, ED::Port{0, 0.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    std::move(cf->clone()), false, false, false};
+    cf->clone(), false, false, false};
   EXPECT_EQ(s0, expected_s0);
   auto dt0 = ED::converter_time_advance(s0);
   EXPECT_EQ(dt0, ED::infinity);
@@ -4307,7 +4276,7 @@ TEST(ErinDevs, Test_converter_functions)
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
     2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{0, 0.0}, ED::Port{2, 30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    std::move(cf->clone()), true, false, false};
+    cf->clone(), true, false, false};
   EXPECT_EQ(expected_s1, s1);
   auto dt1 = ED::converter_time_advance(s1);
   EXPECT_EQ(dt1, 0);
@@ -4322,7 +4291,7 @@ TEST(ErinDevs, Test_converter_functions)
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
     2, ED::Port{2, 40.0}, ED::Port{2, 10.0}, ED::Port{0, 0.0}, ED::Port{2, 30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    std::move(cf->clone()), false, false, false};
+    cf->clone(), false, false, false};
   EXPECT_EQ(expected_s2, s2);
   auto dt2 = ED::converter_time_advance(s2);
   EXPECT_EQ(dt2, ED::infinity);
@@ -4333,7 +4302,7 @@ TEST(ErinDevs, Test_converter_functions)
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
     3, ED::Port{3, 40.0, 20.0}, ED::Port{3, 10.0, 5.0}, ED::Port{0, 0.0}, ED::Port{3, 15.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    std::move(cf->clone()), false, true, false};
+    cf->clone(), false, true, false};
   EXPECT_EQ(expected_s3, s3);
   auto dt3 = ED::converter_time_advance(s3);
   EXPECT_EQ(dt3, 0);
@@ -4348,13 +4317,12 @@ TEST(ErinDevs, Test_converter_functions)
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
     3, ED::Port{3, 40.0, 20.0}, ED::Port{3, 10.0, 5.0}, ED::Port{0, 0.0}, ED::Port{3, 15.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    std::move(cf->clone()), false, false, false};
+    cf->clone(), false, false, false};
   EXPECT_EQ(s4, expected_s4);
   auto dt4 = ED::converter_time_advance(s4);
   EXPECT_EQ(dt4, ED::infinity);
   // Test Confluent Transitions
   const int inport_lossflow_request{ED::inport_outflow_request + 1};
-  const int outport_lossflow_achieved{ED::outport_outflow_achieved + 1};
   std::vector<ED::PortValue> xs1a{
     ED::PortValue{inport_lossflow_request, 2.0}};
   auto s2a = ED::converter_confluent_transition(s1, xs1a);
@@ -4386,9 +4354,11 @@ TEST(ErinDevs, Test_converter_functions)
     cf->clone(), false, false, true};
   EXPECT_EQ(s_b, expected_s_b);
 
+  // setting up an achieved more than requested situation
   std::vector<ED::PortValue> xs_c{
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_c), std::invalid_argument);
+  auto some_s = ED::converter_external_transition(s0, 10, xs_c);
+  EXPECT_TRUE(some_s.report_inflow_request);
 
   std::vector<ED::PortValue> xs_d{
     ED::PortValue{ED::inport_outflow_request, 10.0},
@@ -4401,29 +4371,41 @@ TEST(ErinDevs, Test_converter_functions)
     cf->clone(), true, false, false};
   EXPECT_EQ(s_d, expected_s_d);
 
-  // ... the below 3 all throw because we're getting an inflow achieved without a request for it
+  // ... we get an outflow request and somehow we get an overrequest at the
+  // same moment; it all works out
   std::vector<ED::PortValue> xs_e{
     ED::PortValue{ED::inport_outflow_request, 10.0},
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_e), std::invalid_argument);
+  some_s = ED::converter_external_transition(s0, 10, xs_e);
+  EXPECT_FALSE(some_s.report_inflow_request);
 
+  // a lossflow port cannot drive an inflow request. Therefore, inflow is going
+  // to get rerequested at 0 and lossflow request denied
   std::vector<ED::PortValue> xs_f{
     ED::PortValue{inport_lossflow_request, 30.0},
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_f), std::invalid_argument);
+  some_s = ED::converter_external_transition(s0, 10, xs_f);
+  EXPECT_TRUE(some_s.report_inflow_request);
+  EXPECT_EQ(some_s.inflow_port.get_requested(), 0.0);
+  EXPECT_EQ(some_s.lossflow_port.get_achieved(), 0.0);
 
+  // inflow, outflow, and lossflow just happen to be in sync. OK.
   std::vector<ED::PortValue> xs_g{
     ED::PortValue{ED::inport_outflow_request, 10.0},
     ED::PortValue{inport_lossflow_request, 30.0},
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  ASSERT_THROW(ED::converter_external_transition(s0, 10, xs_g), std::invalid_argument);
+  some_s = ED::converter_external_transition(s0, 10, xs_g);
+  EXPECT_FALSE(some_s.report_inflow_request);
+  EXPECT_EQ(some_s.inflow_port.get_requested(), 40.0);
+  EXPECT_EQ(some_s.lossflow_port.get_achieved(), 30.0);
+  EXPECT_EQ(some_s.outflow_port.get_achieved(), 10.0);
   
   // Test Multiple Events for a Single External Transition
   ED::ConverterState s_m{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
     2, ED::Port{2, 80.0}, ED::Port{2, 20.0}, ED::Port{0, 0.0}, ED::Port{2, 60.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    std::move(cf->clone()), false, false, false};
+    cf->clone(), false, false, false};
   //std::vector<ED::PortValue> xs_a{
   //  ED::PortValue{ED::inport_outflow_request, 10.0}};
   auto s_a1 = ED::converter_external_transition(s_m, 10, xs_a);
@@ -4526,7 +4508,7 @@ TEST(ErinDevs, Test_function_based_load)
         ED::LoadItem{0, 100.0},
         ED::LoadItem{10, 10.0},
         ED::LoadItem{100, 10.0}, // should NOT cause a new event -- same load request.
-        ED::LoadItem{200}});
+        ED::LoadItem{200, 0.0}});
   auto s0 = ED::make_load_state();
   EXPECT_FALSE(s0.inflow_port.should_propagate_request_at(0));
   EXPECT_EQ(s0.current_index, -1);
@@ -4630,18 +4612,6 @@ TEST(ErinDevs, Test_function_based_load)
   ASSERT_THROW(
       ED::check_loads(std::vector<ED::LoadItem>{}),
       std::invalid_argument);
-
-  ASSERT_THROW(
-      ED::check_loads(std::vector<ED::LoadItem>{
-        ED::LoadItem{0,10.0},
-        ED::LoadItem{10,0.0}}),
-      std::invalid_argument);
-
-  ASSERT_THROW(
-      ED::check_loads(std::vector<ED::LoadItem>{
-        ED::LoadItem{10,10.0},
-        ED::LoadItem{5}}),
-      std::invalid_argument);
 }
 
 TEST(ErinDevs, Test_function_based_mux)
@@ -4651,6 +4621,7 @@ TEST(ErinDevs, Test_function_based_mux)
   namespace EU = erin::utils;
   int num_inports{3};
   int num_outports{3};
+  // by default, uses the distribute strategy
   auto s0 = ED::make_mux_state(num_inports, num_outports);
   auto dt0 = ED::mux_time_advance(s0);
   EXPECT_EQ(dt0, ED::infinity);
@@ -4738,10 +4709,9 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_EQ(dt8, 0);
   auto ys8 = ED::mux_output_function(s8);
   std::vector<ED::PortValue> expected_ys8{
-    ED::PortValue{ED::outport_inflow_request + 0, 200.0},
-    ED::PortValue{ED::outport_inflow_request + 1, 0.0},
-    ED::PortValue{ED::outport_inflow_request + 2, 0.0},
-    ED::PortValue{ED::outport_outflow_achieved + 0, 100.0}};
+    ED::PortValue{ED::outport_outflow_achieved + 0, 45.0},
+    ED::PortValue{ED::outport_outflow_achieved + 1, 45.0},
+  };
   if (false) {
     std::cout << "expected_ys8 = " << ERIN::vec_to_string<ED::PortValue>(expected_ys8) << "\n";
     std::cout << "ys8          = " << ERIN::vec_to_string<ED::PortValue>(ys8) << "\n";
@@ -4969,7 +4939,7 @@ TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
       {E::LoadItem{0,100},
        E::LoadItem{1,10},
        E::LoadItem{2,0},
-       E::LoadItem{t_max}});
+       E::LoadItem{t_max,0}});
   std::shared_ptr<E::FlowWriter> fw =
     std::make_shared<E::DefaultFlowWriter>();
   sink->set_recording_on();
@@ -5001,7 +4971,7 @@ TEST(ErinBasicsTest, Test_sink_and_flow_limits_with_port_logging)
       {E::LoadItem{0,100},
        E::LoadItem{1,10},
        E::LoadItem{2,0},
-       E::LoadItem{t_max}});
+       E::LoadItem{t_max,0}});
   std::string limits_id{"limits"};
   E::FlowValueType lower_limit{0.0};
   E::FlowValueType upper_limit{50.0};
@@ -5055,7 +5025,7 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
       {E::LoadItem{0,100},
        E::LoadItem{1,10},
        E::LoadItem{2,0},
-       E::LoadItem{t_max}});
+       E::LoadItem{t_max,0}});
   std::string converter_id{"converter"};
   E::FlowValueType constant_efficiency{0.5};
   std::function<E::FlowValueType(E::FlowValueType)> outflow_given_inflow =
@@ -5141,7 +5111,7 @@ TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
       {E::LoadItem{0,100},
        E::LoadItem{1,10},
        E::LoadItem{2,0},
-       E::LoadItem{t_max}});
+       E::LoadItem{t_max,0}});
   auto sink1 = new E::Sink(
       sink1_id,
       E::ComponentType::Load,
@@ -5149,7 +5119,7 @@ TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
       {E::LoadItem{0,100},
        E::LoadItem{1,10},
        E::LoadItem{2,0},
-       E::LoadItem{t_max}});
+       E::LoadItem{t_max,0}});
   std::string mux_id{"mux"};
   int num_inflows{2};
   int num_outflows{2};
@@ -5266,7 +5236,7 @@ TEST(ErinBasicsTest, Test_example_8)
     "[loads.building_electrical]\n"
     "time_unit = \"hours\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
     "[components.electric_source]\n"
     "type = \"source\"\n"
     "max_outflow = 5.0\n"
@@ -5377,7 +5347,7 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
     "[loads.LP1]\n"
     "time_unit = \"hours\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "outflow = \"natural_gas\"\n"
@@ -5737,7 +5707,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
     "[loads.default]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
     "[cdf.break]\n"
     "type = \"fixed\"\n"
     "value = 5\n"
@@ -5824,7 +5794,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
     "[loads.default]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
     "[cdf.break]\n"
     "type = \"fixed\"\n"
     "value = 5\n"
@@ -5911,7 +5881,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_mux_component)
     "[loads.default]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
     "[cdf.break]\n"
     "type = \"fixed\"\n"
     "value = 5\n"
@@ -6044,7 +6014,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_converter_component)
     "[loads.default]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
     "[cdf.break]\n"
     "type = \"fixed\"\n"
     "value = 5\n"
@@ -6176,7 +6146,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_pass_through_component)
     "[loads.default]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
     "[cdf.break]\n"
     "type = \"fixed\"\n"
     "value = 5\n"
@@ -6287,7 +6257,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_storage_component)
     "[loads.default]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
     "[cdf.break]\n"
     "type = \"fixed\"\n"
     "value = 5\n"
@@ -6615,11 +6585,11 @@ TEST(ErinBasicsTest, Test_uncontrolled_source)
     "[loads.default]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
     "[loads.supply]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0,0.0]]\n"
     "[components.US]\n"
     "type = \"uncontrolled_source\"\n"
     "output_stream = \"electricity\"\n"
@@ -6689,11 +6659,11 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
     "[loads.environment]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1000.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,1000.0],[10.0,0.0]]\n"
     "[loads.cooling]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "outflow = \"electricity\"\n"
@@ -6759,6 +6729,199 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
   EXPECT_EQ(L_ss.max_downtime, L_max_downtime);
   EXPECT_EQ(L_ss.load_not_served, L_load_not_served);
   EXPECT_EQ(L_ss.total_energy, L_total_energy);
+}
+
+TEST(ErinBasicsTest, Test_muxer_dispatch_strategy)
+{
+  namespace ED = erin::devs;
+  namespace E = ERIN;
+  E::RealTimeType time{0};
+  E::FlowValueType outflow_achieved{100.0};
+  std::vector<ED::Port> outflow_ports{
+    ED::Port{time, 50.0},
+    ED::Port{time, 50.0},
+    ED::Port{time, 50.0},
+    ED::Port{time, 50.0},
+  };
+  std::vector<ED::Port> expected_outflows{
+    ED::Port{time, 50.0, 50.0},
+    ED::Port{time, 50.0, 50.0},
+    ED::Port{time, 50.0, 0.0},
+    ED::Port{time, 50.0, 0.0},
+  };
+  auto outflows = ED::distribute_inflow_to_outflow_in_order(
+      outflow_ports, outflow_achieved, time);
+  ASSERT_EQ(expected_outflows.size(), outflows.size());
+  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows.size(); ++idx) {
+    EXPECT_EQ(expected_outflows[idx], outflows[idx])
+      << "idx = " << idx << "\n";
+  }
+  std::vector<ED::Port> outflow_ports_irregular{
+    ED::Port{time, 50.0},
+    ED::Port{time, 10.0},
+    ED::Port{time, 90.0},
+    ED::Port{time, 50.0},
+  };
+  auto outflows_irregular = ED::distribute_inflow_to_outflow_in_order(
+      outflow_ports_irregular, outflow_achieved, time);
+  std::vector<ED::Port> expected_outflows_irregular{
+    ED::Port{time, 50.0, 50.0},
+    ED::Port{time, 10.0, 10.0},
+    ED::Port{time, 90.0, 40.0},
+    ED::Port{time, 50.0, 0.0},
+  };
+  ASSERT_EQ(expected_outflows_irregular.size(), outflows_irregular.size());
+  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_irregular.size(); ++idx) {
+    EXPECT_EQ(expected_outflows_irregular[idx], outflows_irregular[idx])
+      << "idx = " << idx << "\n";
+  }
+
+  std::vector<ED::Port> expected_outflows_dist{
+    ED::Port{time, 50.0, 25.0},
+    ED::Port{time, 50.0, 25.0},
+    ED::Port{time, 50.0, 25.0},
+    ED::Port{time, 50.0, 25.0},
+  };
+  auto outflows_dist = ED::distribute_inflow_to_outflow_evenly(
+      outflow_ports, outflow_achieved, time);
+  ASSERT_EQ(expected_outflows_dist.size(), outflows_dist.size());
+  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_dist.size(); ++idx) {
+    EXPECT_EQ(expected_outflows_dist[idx], outflows_dist[idx])
+      << "idx = " << idx << "\n";
+  }
+  auto outflows_dist_irregular = ED::distribute_inflow_to_outflow_evenly(
+      outflow_ports_irregular, outflow_achieved, time);
+  std::vector<ED::Port> expected_outflows_dist_irregular{
+    ED::Port{time, 50.0, 30.0},
+    ED::Port{time, 10.0, 10.0},
+    ED::Port{time, 90.0, 30.0},
+    ED::Port{time, 50.0, 30.0},
+  };
+  ASSERT_EQ(expected_outflows_dist_irregular.size(), outflows_dist_irregular.size());
+  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_dist_irregular.size(); ++idx) {
+    EXPECT_EQ(expected_outflows_dist_irregular[idx], outflows_dist_irregular[idx])
+      << "idx = " << idx << "\n";
+  }
+}
+
+TEST(ErinBasicsTest, Test_reliability_schedule)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"hours\"\n"
+    "max_time = 40\n"
+    "############################################################\n"
+    "[loads.building_electrical]\n"
+    "time_unit = \"hours\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,1.0],[40.0,0.0]]\n"
+    "############################################################\n"
+    "[components.S]\n"
+    "type = \"source\"\n"
+    "output_stream = \"electricity\"\n"
+    "failure_modes = [\"fm\"]\n"
+    "[components.L]\n"
+    "type = \"load\"\n"
+    "input_stream = \"electricity\"\n"
+    "loads_by_scenario.blue_sky = \"building_electrical\"\n"
+    "############################################################\n"
+    "[cdf.every_10]\n"
+    "type = \"fixed\"\n"
+    "value = 10\n"
+    "time_unit = \"hours\"\n"
+    "[cdf.every_5]\n"
+    "type = \"fixed\"\n"
+    "value = 5\n"
+    "time_unit = \"hours\"\n"
+    "############################################################\n"
+    "[failure_mode.fm]\n"
+    "failure_cdf = \"every_10\"\n"
+    "repair_cdf = \"every_5\"\n"
+    "############################################################\n"
+    "[networks.nw]\n"
+    "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "############################################################\n"
+    "[scenarios.blue_sky]\n"
+    "time_unit = \"hours\"\n"
+    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "duration = 40\n"
+    "max_occurrences = 1\n"
+    "network = \"nw\"\n"
+    "calculate_reliability = true\n";
+  auto m = E::make_main_from_string(input);
+  auto out = m.run_all();
+  EXPECT_TRUE(out.get_is_good());
+  auto results_map = out.get_results();
+  ASSERT_EQ(1, results_map.size());
+  const auto& bs_res = results_map["blue_sky"];
+  ASSERT_EQ(1, bs_res.size());
+  const auto& bs_res0 = bs_res[0];
+  const auto& rez = bs_res0.get_results();
+  std::set<std::string> expected_comp_ids{"L", "S"};
+  ASSERT_EQ(expected_comp_ids.size(), rez.size());
+  const auto& comp_ids = bs_res0.get_component_ids();
+  std::set<std::string> actual_comp_ids{};
+  for (const auto& id : comp_ids) {
+    actual_comp_ids.emplace(id);
+  }
+  ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
+  EXPECT_EQ(actual_comp_ids, expected_comp_ids);
+  auto ss_map = bs_res0.get_statistics();
+  //0--10,15--25,30--40
+  ERIN::RealTimeType L_max_downtime{5*3600};
+  ERIN::FlowValueType L_load_not_served{10.0*3600.0*1.0};
+  ERIN::FlowValueType L_total_energy{40.0*3600*1.0 - L_load_not_served};
+  auto L_ss = ss_map["L"];
+  EXPECT_EQ(L_ss.max_downtime, L_max_downtime);
+  EXPECT_EQ(L_ss.load_not_served, L_load_not_served);
+  EXPECT_EQ(L_ss.total_energy, L_total_energy);
+}
+
+TEST(ErinBasicsTest, Test_request_ports_intelligently) {
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  auto inports = std::vector<ED::Port>{
+    ED::Port{0, 0.0}, ED::Port{0, 0.0}, ED::Port{0, 0.0}
+  };
+  E::FlowValueType total_request{30.0};
+  E::FlowValueType remaining_request{total_request};
+  auto inports_returned = ED::request_inflows_intelligently(
+      inports, remaining_request, 0);
+  ASSERT_EQ(inports_returned.size(), 3);
+  EXPECT_EQ(inports_returned[0].get_requested(), 30.0);
+  EXPECT_EQ(inports_returned[1].get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[2].get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[0].get_achieved(), 30.0);
+  EXPECT_EQ(inports_returned[1].get_achieved(), 0.0);
+  EXPECT_EQ(inports_returned[2].get_achieved(), 0.0);
+  inports = std::vector<ED::Port>{
+    ED::Port{0, 30.0, 5.0},
+    ED::Port{0, 25.0, 5.0},
+    ED::Port{0, 20.0, 10.0}
+  };
+  remaining_request = 25.0;
+  inports_returned = ED::request_inflows_intelligently(
+      inports, remaining_request, 0);
+  ASSERT_EQ(inports_returned.size(), 3);
+  EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
+  EXPECT_EQ(inports_returned[1].get_requested(), 20.0);
+  EXPECT_EQ(inports_returned[2].get_requested(), 15.0);
+  EXPECT_EQ(inports_returned[0].get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[1].get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[2].get_achieved(), 10.0);
+  remaining_request = 25.0;
+  inports_returned = ED::request_inflows_intelligently(
+      inports, remaining_request, 1);
+  ASSERT_EQ(inports_returned.size(), 3);
+  EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
+  EXPECT_EQ(inports_returned[1].get_requested(), 20.0);
+  EXPECT_EQ(inports_returned[2].get_requested(), 15.0);
+  EXPECT_EQ(inports_returned[0].get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[1].get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[2].get_achieved(), 10.0);
 }
 
 int

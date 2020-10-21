@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_ELEMENT_H
 #define ERIN_ELEMENT_H
@@ -646,6 +646,9 @@ namespace ERIN
       void log_ports();
   };
 
+  ////////////////////////////////////////////////////////////
+  // Helper
+  void print_ports(const std::vector<erin::devs::Port>& ports, const std::string& tag);
 }
 
 #endif // ERIN_ELEMENT_H

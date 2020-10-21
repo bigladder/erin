@@ -1,8 +1,10 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #include "erin/devs/on_off_switch.h"
+#include "debug_utils.h"
 #include <algorithm>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <typeindex>
@@ -80,6 +82,8 @@ namespace erin::devs
       if (item.time <= last_time) {
         std::ostringstream oss{};
         oss << "times are not increasing for schedule:\n"
+            << "item.time = " << item.time << "\n"
+            << "last_time = " << last_time << "\n"
             << ERIN::vec_to_string<ERIN::TimeState>(schedule) << "\n";
         throw std::invalid_argument(oss.str());
       }
@@ -90,6 +94,12 @@ namespace erin::devs
       }
       last_state = item.state;
       last_time = item.time;
+    }
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      std::cout << "Making on/off switch. Processed schedule is:\n";
+      for (std::vector<RealTimeType>::size_type i{0}; i < times.size(); ++i) {
+        std::cout << "(time=" << times[i] << ", state=" << states.at(i) << ")\n";
+      }
     }
     return OnOffSwitchData{
       times,        // schedule_times
@@ -280,12 +290,18 @@ namespace erin::devs
       std::vector<PortValue>& ys)
   {
     if (state.report_inflow_request) {
+      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+        std::cout << "switch:I(0) <- " << state.inflow_port.get_requested() << "\n";
+      }
       ys.emplace_back(
           PortValue{
             outport_inflow_request,
             state.inflow_port.get_requested()});
     }
     if (state.report_outflow_achieved) {
+      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+        std::cout << "switch:O(0) -> " << state.outflow_port.get_achieved() << "\n";
+      }
       ys.emplace_back(
           PortValue{
             outport_outflow_achieved,

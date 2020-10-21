@@ -62,10 +62,10 @@ outflow = "biomass"
 fragilities = ["highly_vulnerable_to_flooding"]
 [components.chp_inputs]
 type = "muxer"
-stream = "natural_gas"
+flow = "natural_gas"
 num_inflows = 2
 num_outflows = 1
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 fragilities = ["somewhat_vulnerable_to_flooding"]
 [components.chp_electricity]
 type = "converter"
@@ -137,28 +137,28 @@ loads_by_scenario.blue_sky = "normal_heating_other_consumer"
 loads_by_scenario.category_4_hurricane = "emergency_heating_other_consumer"
 [components.natural_gas_manifold]
 type = "muxer"
-stream = "natural_gas"
+flow = "natural_gas"
 num_inflows = 1
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.electric_bus]
 type = "muxer"
-stream = "electricity"
+flow = "electricity"
 num_inflows = 2
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.steam_manifold]
 type = "muxer"
-stream = "steam"
+flow = "steam"
 num_inflows = 2
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.heating_manifold]
 type = "muxer"
-stream = "heating"
+flow = "heating"
 num_inflows = 3
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [networks.nw_1]
 connections = [
   # Natural Gas and Biomethane Network

@@ -1,3 +1,5 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 # Main library
 # Note from https://cmake.org/cmake/help/latest/command/file.html
 # Note: We do not recommend using GLOB to collect a list of source files from
@@ -120,18 +122,23 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
   add_coverage(${CMAKE_PROJECT_NAME})
 endif()
 
-add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin
+add_executable(erin_csv_test erin_csv.cpp erin_csv.h)
+target_include_directories(erin_csv_test
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
+add_executable(erin_single cli.cpp ${sources} ${public_headers} ${private_headers})
+set_target_properties(erin_single
+  PROPERTIES OUTPUT_NAME "erin") 
+target_include_directories(erin_single
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
-add_executable(e2rin_multi cli_multi.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin_multi
+add_executable(erin_multi cli_multi.cpp ${sources} ${public_headers} ${private_headers})
+target_include_directories(erin_multi
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
-add_executable(e2rin_graph cli_graph.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin_graph
+add_executable(erin_graph cli_graph.cpp ${sources} ${public_headers} ${private_headers})
+target_include_directories(erin_graph
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
@@ -149,17 +156,17 @@ add_executable(limits limits.cpp)
 
 # Add Warnings
 if(MSVC)
-  target_compile_options(e2rin PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
-  target_compile_options(e2rin_multi PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
-  target_compile_options(e2rin_graph PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
+  target_compile_options(erin_single PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
+  target_compile_options(erin_multi PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
+  target_compile_options(erin_graph PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(str8760 PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(str8760x5000 PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(limits PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
 else()
-  target_compile_options(e2rin PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
-  target_compile_options(e2rin_multi PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
-  target_compile_options(e2rin_graph PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
+  target_compile_options(erin_single PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
+  target_compile_options(erin_multi PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
+  target_compile_options(erin_graph PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(str8760 PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(str8760x5000 PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(limits PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")

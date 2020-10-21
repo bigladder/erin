@@ -7,15 +7,15 @@ max_time = 4
 [loads.building_electrical]
 time_unit = "hours"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,1.0],[4.0]]
+time_rate_pairs = [[0.0,1.0],[4.0,0.0]]
 ############################################################
 [components.electric_utility]
 type = "source"
 # Point of Common Coupling for Electric Utility
-output_stream = "electricity"
+outflow = "electricity"
 [components.cluster_01_electric]
 type = "load"
-input_stream = "electricity"
+inflow = "electricity"
 loads_by_scenario.blue_sky = "building_electrical"
 ############################################################
 [networks.normal_operations]

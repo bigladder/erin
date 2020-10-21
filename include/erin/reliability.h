@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_RELIABILITY_H
 #define ERIN_RELIABILITY_H
@@ -108,7 +108,7 @@ namespace ERIN
           continue;
         }
         else if (ts.time == start_time) {
-            tss.emplace_back(ts);
+            tss.emplace_back(TimeState{0, ts.state});
         }
         else if ((ts.time > start_time) && (ts.time <= end_time)) {
           if (tss.size() == 0) {
@@ -119,23 +119,6 @@ namespace ERIN
         else if (ts.time > end_time) {
           break;
         }
-      }
-      new_sch[item.first] = std::move(tss);
-    }
-    return new_sch;
-  }
-
-  template <class T>
-  std::unordered_map<T, std::vector<TimeState>>
-  rezero_times(
-      const std::unordered_map<T, std::vector<TimeState>>& schedule,
-      RealTimeType start_time)
-  {
-    std::unordered_map<T, std::vector<TimeState>> new_sch{};
-    for (const auto& item : schedule) {
-      std::vector<TimeState> tss{};
-      for (const auto& ts : item.second) {
-        tss.emplace_back(TimeState{ts.time - start_time, ts.state});
       }
       new_sch[item.first] = std::move(tss);
     }

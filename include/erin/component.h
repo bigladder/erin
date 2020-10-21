@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_COMPONENT_H
 #define ERIN_COMPONENT_H
@@ -158,7 +158,7 @@ namespace ERIN
   {
     public:
       Limits();
-      Limits(FlowValueType max);
+      explicit Limits(FlowValueType max);
       Limits(FlowValueType min, FlowValueType max);
 
       [[nodiscard]] bool get_is_limited() const { return is_limited; }

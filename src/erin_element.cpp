@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #include "erin/element.h"
 #include "debug_utils.h"
@@ -537,25 +537,15 @@ namespace ERIN
       }
       report_outflow_achieved = true;
       if ((inflow > 0.0) && (the_inflow_achieved > inflow_request)) {
-        std::ostringstream oss;
-        oss << "AchievedMoreThanRequestedError\n";
-        oss << "inflow > 0.0 and the_inflow_achieved > inflow\n";
-        oss << "inflow: " << inflow << "\n";
-        oss << "the_inflow_achieved: " << the_inflow_achieved << "\n";
-        oss << "id = \"" << id << "\"\n";
-        throw std::runtime_error(oss.str());
+        inflow = inflow_request;
+        the_inflow_achieved = inflow_request;
+        report_inflow_request = true;
+        report_outflow_achieved = false;
       }
       if (the_inflow_achieved < neg_flow_value_tol) {
         std::ostringstream oss;
         oss << "FlowReversalError!!!\n";
         oss << "inflow should never be below 0.0!!!\n";
-        if (the_inflow_achieved < inflow_request) {
-          oss << "AchievedMoreThanRequestedError\n";
-          oss << "inflow < 0.0 and the_inflow_achieved < inflow_request\n";
-          oss << "inflow: " << inflow << "\n";
-          oss << "the_inflow_achieved: " << the_inflow_achieved << "\n";
-          oss << "inflow_request : " << inflow_request << "\n";
-        }
         throw std::runtime_error(oss.str());
       }
       const FlowState& fs = update_state_for_inflow_achieved(the_inflow_achieved);
@@ -620,12 +610,6 @@ namespace ERIN
         std::ostringstream oss;
         oss << "FlowReversalError\n";
         oss << "outflow should not be negative\n";
-        if (outflow < outflow_request) {
-          oss << "AchievedMoreThanRequestedError\n";
-          oss << "outflow < 0.0 && outflow < outflow_request\n";
-          oss << "outflow: " << outflow << "\n";
-          oss << "outflow_request: " << outflow_request << "\n";
-        }
         throw std::runtime_error(oss.str());
       }
     }
@@ -833,6 +817,9 @@ namespace ERIN
   void
   FlowLimits::delta_int()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "FlowLimits[" << get_id() << "] delta_int\n";
+    }
     state = erin::devs::flow_limits_internal_transition(state);
     if (flow_writer && record_history && (element_id != -1)) {
       flow_writer->write_data(
@@ -846,6 +833,9 @@ namespace ERIN
   void
   FlowLimits::delta_ext(Time dt, std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "FlowLimits[" << get_id() << "] delta_ext\n";
+    }
     state = erin::devs::flow_limits_external_transition(
         state, dt.real, xs);
     if (flow_writer && record_history && (element_id != -1)) {
@@ -860,6 +850,9 @@ namespace ERIN
   void
   FlowLimits::delta_conf(std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "FlowLimits[" << get_id() << "] delta_conf\n";
+    }
     state = erin::devs::flow_limits_confluent_transition(state, xs);
     if (flow_writer && record_history && (element_id != -1)) {
       flow_writer->write_data(
@@ -883,6 +876,9 @@ namespace ERIN
   void
   FlowLimits::output_func(std::vector<PortValue>& ys)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "FlowLimits[" << get_id() << "] output_func\n";
+    }
     erin::devs::flow_limits_output_function_mutable(state, ys);
   }
 
@@ -1212,6 +1208,9 @@ namespace ERIN
   void
   Sink::delta_int()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Sink[" << get_id() << "] delta_int\n";
+    }
     state = erin::devs::load_internal_transition(data, state);
     if (flow_writer && record_history && (element_id != -1))
       flow_writer->write_data(
@@ -1224,6 +1223,16 @@ namespace ERIN
   void
   Sink::delta_ext(Time e, std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Sink[" << get_id() << "] delta_ext\n";
+      std::cout << "xs: inport_outflow_request = " << inport_outflow_request
+                << "; inport_inflow_achieved = " << inport_inflow_achieved
+                << "\n";
+      for (const auto& x : xs) {
+        std::cout << "- (x.port = " << x.port
+                  << ", x.value = " << x.value << ")\n";
+      }
+    }
     state = erin::devs::load_external_transition(state, e.real, xs);
     if (flow_writer && record_history && (element_id != -1))
       flow_writer->write_data(
@@ -1236,6 +1245,16 @@ namespace ERIN
   void
   Sink::delta_conf(std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Sink[" << get_id() << "] delta_conf\n";
+      std::cout << "xs: inport_outflow_request = " << inport_outflow_request
+                << "; inport_inflow_achieved = " << inport_inflow_achieved
+                << "\n";
+      for (const auto& x : xs) {
+        std::cout << "- (x.port = " << x.port
+                  << ", x.value = " << x.value << ")\n";
+      }
+    }
     state = erin::devs::load_confluent_transition(data, state, xs);
     if (flow_writer && record_history && (element_id != -1))
       flow_writer->write_data(
@@ -1248,6 +1267,9 @@ namespace ERIN
   Time
   Sink::ta()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Sink[" << get_id() << "] ta\n";
+    }
     auto dt = erin::devs::load_time_advance(data, state);
     if (dt == erin::devs::infinity) {
       return inf;
@@ -1258,6 +1280,9 @@ namespace ERIN
   void
   Sink::output_func(std::vector<PortValue>& ys)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Sink[" << get_id() << "] output_func\n";
+    }
     erin::devs::load_output_function_mutable(data, state, ys);
   }
 
@@ -1317,8 +1342,17 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] delta_int\n";
+      std::cout << "before:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
     }
     state = erin::devs::mux_internal_transition(state);
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "time: " << state.time << "\n";
+      std::cout << "after:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
+    }
     log_ports();
   }
 
@@ -1327,11 +1361,21 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] delta_ext\n";
+      std::cout << "xs:\n";
       for (const auto& x : xs) {
-        std::cout << "- (" << x.port << ", " << x.value << ")\n";
+        std::cout << "- (inport = " << x.port << ", value = " << x.value << ")\n";
       }
+      std::cout << "before:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
     }
     state = erin::devs::mux_external_transition(state, e.real, xs);
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "time: " << state.time << "\n";
+      std::cout << "after:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
+    }
     log_ports();
   }
 
@@ -1340,11 +1384,20 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] delta_conf\n";
+      std::cout << "xs:\n";
       for (const auto& x : xs) {
         std::cout << "- (" << x.port << ", " << x.value << ")\n";
       }
+      std::cout << "before:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
     }
     state = erin::devs::mux_confluent_transition(state, xs);
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "after:\n";
+      print_ports(state.inflow_ports, "IN");
+      print_ports(state.outflow_ports, "OUT");
+    }
     log_ports();
   }
 
@@ -1375,8 +1428,9 @@ namespace ERIN
     erin::devs::mux_output_function_mutable(state, ys);
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] output_func\n";
+      std::cout << "ys:\n";
       for (const auto& the_y : ys) {
-        std::cout << "- (" << the_y.port << ", " << the_y.value << ")\n";
+        std::cout << "- (outport = " << the_y.port << ", value = " << the_y.value << ")\n";
       }
     }
   }
@@ -1474,7 +1528,7 @@ namespace ERIN
   Storage::delta_int()
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Storage::delta_int(...); id = " << get_id() << "\n";
+      std::cout << "Storage[" << get_id() << "] delta_int\n";
     }
     state = erin::devs::storage_internal_transition(data, state);
     log_ports();
@@ -1484,7 +1538,7 @@ namespace ERIN
   Storage::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Storage::delta_ext(...); id = " << get_id() << "\n";
+      std::cout << "Storage[" << get_id() << "] delta_ext\n";
     }
     state = erin::devs::storage_external_transition(data, state, e.real, xs);
     log_ports();
@@ -1494,7 +1548,7 @@ namespace ERIN
   Storage::delta_conf(std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Storage::delta_conf(...); id = " << get_id() << "\n";
+      std::cout << "Storage[" << get_id() << "] delta_conf\n";
     }
     state = erin::devs::storage_confluent_transition(data, state, xs);
     log_ports();
@@ -1504,7 +1558,7 @@ namespace ERIN
   Storage::ta()
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Storage::ta(...); id = " << get_id() << "\n";
+      std::cout << "Storage[" << get_id() << "] ta\n";
     }
     auto dt = erin::devs::storage_time_advance(data, state);
     if (dt == erin::devs::infinity) {
@@ -1523,7 +1577,7 @@ namespace ERIN
   Storage::output_func(std::vector<PortValue>& ys)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Storage::output_func(...); id = " << get_id() << "\n";
+      std::cout << "Storage[" << get_id() << "] output_func\n";
     }
     erin::devs::storage_output_function_mutable(data, state, ys);
   }
@@ -1673,37 +1727,49 @@ namespace ERIN
   OnOffSwitch::delta_int()
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "OnOffSwitch::delta_int(...); id = " << get_id() << "\n";
+      std::cout << "OnOffSwitch[" << get_id() << "] delta_int\n";
+      std::cout << "before: state = " << state << "\n";
     }
     state = erin::devs::on_off_switch_internal_transition(data, state);
     log_ports();
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "after: state = " << state << "\n";
+    }
   }
 
   void
   OnOffSwitch::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "OnOffSwitch::delta_ext(...); id = " << get_id() << "\n";
+      std::cout << "OnOffSwitch[" << get_id() << "] delta_ext\n";
+      std::cout << "before: state = " << state << "\n";
     }
     state = erin::devs::on_off_switch_external_transition(state, e.real, xs);
     log_ports();
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "after: state = " << state << "\n";
+    }
   }
 
   void
   OnOffSwitch::delta_conf(std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "OnOffSwitch::delta_conf(...); id = " << get_id() << "\n";
+      std::cout << "OnOffSwitch[" << get_id() << "] delta_conf\n";
+      std::cout << "before: state = " << state << "\n";
     }
     state = erin::devs::on_off_switch_confluent_transition(data, state, xs);
     log_ports();
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "before: state = " << state << "\n";
+    }
   }
 
   Time
   OnOffSwitch::ta()
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "OnOffSwitch::ta(...); id = " << get_id() << "\n";
+      std::cout << "OnOffSwitch[" << get_id() << "] ta\n";
     }
     auto dt = erin::devs::on_off_switch_time_advance(data, state);
     if (dt == erin::devs::infinity) {
@@ -1722,7 +1788,8 @@ namespace ERIN
   OnOffSwitch::output_func(std::vector<PortValue>& ys)
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "OnOffSwitch::output_func(...); id = " << get_id() << "\n";
+      std::cout << "OnOffSwitch[" << get_id() << "] output_func\n";
+      std::cout << "state = " << state << "\n";
     }
     erin::devs::on_off_switch_output_function_mutable(state, ys);
   }
@@ -1797,6 +1864,9 @@ namespace ERIN
   void
   UncontrolledSource::delta_int()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "UncontrolledSource[" << get_id() << "] delta_int\n";
+    }
     state = erin::devs::uncontrolled_src_internal_transition(data, state);
     log_ports();
   }
@@ -1804,6 +1874,9 @@ namespace ERIN
   void
   UncontrolledSource::delta_ext(Time e, std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "UncontrolledSource[" << get_id() << "] delta_ext\n";
+    }
     state = erin::devs::uncontrolled_src_external_transition(
         data, state, e.real, xs);
     log_ports();
@@ -1812,6 +1885,9 @@ namespace ERIN
   void
   UncontrolledSource::delta_conf(std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "UncontrolledSource[" << get_id() << "] delta_conf\n";
+    }
     state = erin::devs::uncontrolled_src_confluent_transition(
         data, state, xs);
     log_ports();
@@ -1820,6 +1896,9 @@ namespace ERIN
   Time
   UncontrolledSource::ta()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "UncontrolledSource[" << get_id() << "] ta\n";
+    }
     auto dt = erin::devs::uncontrolled_src_time_advance(data, state);
     if (dt == erin::devs::infinity) {
       return inf;
@@ -1830,6 +1909,9 @@ namespace ERIN
   void
   UncontrolledSource::output_func(std::vector<PortValue>& ys)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "UncontrolledSource[" << get_id() << "] output_func\n";
+    }
     erin::devs::uncontrolled_src_output_function_mutable(data, state, ys);
     log_ports();
   }
@@ -1924,6 +2006,9 @@ namespace ERIN
   void
   Mover::delta_int()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Mover[" << get_id() << "] delta_int\n";
+    }
     state = erin::devs::mover_internal_transition(data, state);
     log_ports();
   }
@@ -1931,6 +2016,9 @@ namespace ERIN
   void
   Mover::delta_ext(Time e, std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Mover[" << get_id() << "] delta_ext\n";
+    }
     state = erin::devs::mover_external_transition(data, state, e.real, xs);
     log_ports();
   }
@@ -1938,6 +2026,9 @@ namespace ERIN
   void
   Mover::delta_conf(std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Mover[" << get_id() << "] delta_conf\n";
+    }
     state = erin::devs::mover_confluent_transition(data, state, xs);
     log_ports();
   }
@@ -1945,6 +2036,9 @@ namespace ERIN
   Time
   Mover::ta()
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Mover[" << get_id() << "] ta\n";
+    }
     auto dt = erin::devs::mover_time_advance(data, state);
     Time dt_out{};
     if (dt == erin::devs::infinity) {
@@ -1959,6 +2053,9 @@ namespace ERIN
   void
   Mover::output_func(std::vector<PortValue>& ys)
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "Mover[" << get_id() << "] output_func\n";
+    }
     erin::devs::mover_output_function_mutable(data, state, ys);
   }
 
@@ -2034,6 +2131,20 @@ namespace ERIN
           state.time,
           state.outflow_port.get_requested(),
           state.outflow_port.get_achieved());
+    }
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Helper
+  void
+  print_ports(
+      const std::vector<erin::devs::Port>& ports,
+      const std::string& tag)
+  {
+    int idx{0};
+    for (const auto& p : ports) {
+      std::cout << "... " << tag << "(" << idx << "): " << p << "\n";
+      ++idx;
     }
   }
 }

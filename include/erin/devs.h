@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_DEVS_H
 #define ERIN_DEVS_H
@@ -24,7 +24,7 @@ namespace erin::devs
   {
     public:
       Port();
-      Port(RealTimeType time);
+      explicit Port(RealTimeType time);
       Port(RealTimeType time, FlowValueType requested);
       Port(RealTimeType time, FlowValueType requested, FlowValueType achieved);
       Port(

@@ -79,4 +79,5 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_graphviz.cpp > tidy/erin_graphviz.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/cli_multi.cpp > tidy/cli_multi.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_devs_storage.cpp > tidy/erin_devs_storage.cpp.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/cli_test_cdf.cpp > tidy/cli_test_cdf.cpp.txt
 echo Done!

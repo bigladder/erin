@@ -42,10 +42,12 @@ namespace erin::distribution
     }
     constexpr double pi{3.1415'9265'3589'7932'3846'26433};
     constexpr double a{8'887.0/63'473.0};
-    constexpr double C{1.0/a};
-    constexpr double A{(C * 2.0) / pi};
+    constexpr double C{1.0 / a};
+    constexpr double two{2.0}; 
+    constexpr double C_times_2{C * two};
+    constexpr double A{C_times_2 / pi};
     double B = std::log(1.0 - (x * x));
-    double D{B / 2.0};
+    double D{B / two};
     double sum_A_D{A + D};
     double sum_A_D2{sum_A_D * sum_A_D};
     auto answer = std::sqrt((-A) + (-D) + std::sqrt(sum_A_D2 - (C*B)));

@@ -122,6 +122,10 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
   add_coverage(${CMAKE_PROJECT_NAME})
 endif()
 
+add_executable(erin_cdf_test cli_test_cdf.cpp ${sources} ${public_headers} ${private_headers})
+target_include_directories(erin_cdf_test
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 add_executable(erin_csv_test erin_csv.cpp erin_csv.h)
 target_include_directories(erin_csv_test
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")

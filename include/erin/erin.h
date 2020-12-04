@@ -226,7 +226,7 @@ namespace ERIN
       virtual std::unordered_map<std::string,::erin::fragility::FragilityCurve>
         read_fragility_data() = 0;
       virtual std::unordered_map<std::string, size_type>
-        read_cumulative_distributions(ReliabilityCoordinator& rc) = 0;
+        read_cumulative_distributions_depricated(ReliabilityCoordinator& rc) = 0;
       virtual std::unordered_map<std::string, size_type>
         read_failure_modes(
             const std::unordered_map<std::string, size_type>& cdf_ids,
@@ -274,7 +274,7 @@ namespace ERIN
       std::unordered_map<std::string,::erin::fragility::FragilityCurve>
         read_fragility_data() override;
       std::unordered_map<std::string, size_type>
-        read_cumulative_distributions(ReliabilityCoordinator& rc) override;
+        read_cumulative_distributions_depricated(ReliabilityCoordinator& rc) override;
       std::unordered_map<std::string, size_type>
         read_failure_modes(
             const std::unordered_map<std::string, size_type>& cdf_ids,

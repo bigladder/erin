@@ -1320,7 +1320,7 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, size_type>
-  TomlInputReader::read_cumulative_distributions(
+  TomlInputReader::read_cumulative_distributions_depricated(
       ReliabilityCoordinator& rc)
   {
     const auto& toml_cdfs = toml::find_or(data, "cdf", toml::table{});
@@ -2503,8 +2503,8 @@ namespace ERIN
     ReliabilityCoordinator rc{};
     // cdfs is map<string, size_type>
     // TODO: change the signature to store CDFs directly in a CumulativeDistributionSystem attribute of the class, cds
-    // TODO: auto cdfs = reader.read_cumulative_distributions(cds);
-    auto cdfs = reader.read_cumulative_distributions(rc);
+    // TODO: auto cdfs = reader.read_cumulative_distributions_depricated(cds);
+    auto cdfs = reader.read_cumulative_distributions_depricated(rc);
     // fms is map<string, size_type>
     auto fms = reader.read_failure_modes(cdfs, rc);
     // components needs to be modified to add component_id as size_type?

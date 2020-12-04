@@ -2497,6 +2497,7 @@ namespace ERIN
     auto fragilities = reader.read_fragility_data();
     // TODO: add a CumulativeDistributionSystem instance
     // TODO: CumulativeDistributionSystem cds{};
+    erin::distribution::CumulativeDistributionSystem cds{};
     // TODO: provide ReliabilityCoordinator with the cds
     // TODO: ReliabilityCoordinator rc{cds};
     ReliabilityCoordinator rc{};

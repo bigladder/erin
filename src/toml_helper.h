@@ -89,9 +89,8 @@ namespace toml_helper
   std::optional<toml::value>
   read_if_present(const toml::table& tt, const std::string& key)
   {
-    const auto tt_end = tt.end();
     const auto it = tt.find(key);
-    if (it == tt_end) {
+    if (it == tt.end()) {
       return std::nullopt;
     }
     return std::optional<toml::value>(it->second);

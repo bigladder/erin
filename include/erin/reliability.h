@@ -46,6 +46,9 @@ namespace ERIN
   {
     public:
       ReliabilityCoordinator();
+      // xTODO: add CDS as input to ReliabilityCoordinator
+      //explicit ReliabilityCoordinator(
+      //    const erin::distribution::CumulativeDistributionSystem& cds);
 
       size_type add_fixed_cdf(
           const std::string& tag,

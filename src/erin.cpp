@@ -1214,6 +1214,8 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, Scenario>
+  // TODO: change signature:
+  // TODO: TomlInputReader::read_scenarios(const std::unordered_map<std::string, ERIN::size_type>& cdfs)
   TomlInputReader::read_scenarios()
   {
     namespace eg = erin_generics;
@@ -1225,6 +1227,12 @@ namespace ERIN
     }
     for (const auto& s: toml_scenarios) {
       const auto& tt = toml::get<toml::table>(s.second);
+      // TODO: change occurrence_distribution to be just a string pointing to a CDF id
+      // TODO: const auto& next_occurrence_dist = toml::get<std::string>(tt, "occurrence_distribution");
+      // TODO: check that next_occurrence_dist is in the cdfs
+      // TODO: auto it = cdfs.find(next_occurrence_dist);
+      // TODO: if (it == cdfs.end()) { throw an error that we don't have a cdf corresponding to the given id }
+      // TODO: remove below two lines
       const auto dist = toml::find<toml::table>(
           s.second, "occurrence_distribution");
       const auto next_occurrence_dist = eg::read_toml_distribution(dist);
@@ -1292,6 +1300,7 @@ namespace ERIN
               network_id,
               duration,
               static_cast<int>(max_occurrences),
+              // TODO: change below to cdfs[next_occurrence_dist]
               next_occurrence_dist,
               intensity,
               calc_reliability}));
@@ -2484,19 +2493,32 @@ namespace ERIN
   {
     // Read data into private class fields
     auto loads_by_id = reader.read_loads();
+    // TODO*: add a repair CDF to the fragility datatype
     auto fragilities = reader.read_fragility_data();
+    // TODO: add a CumulativeDistributionSystem instance
+    // TODO: CumulativeDistributionSystem cds{};
+    // TODO: provide ReliabilityCoordinator with the cds
+    // TODO: ReliabilityCoordinator rc{cds};
     ReliabilityCoordinator rc{};
     // cdfs is map<string, size_type>
+    // TODO: change the signature to store CDFs directly in a CumulativeDistributionSystem attribute of the class, cds
+    // TODO: auto cdfs = reader.read_cumulative_distributions(cds);
     auto cdfs = reader.read_cumulative_distributions(rc);
     // fms is map<string, size_type>
     auto fms = reader.read_failure_modes(cdfs, rc);
     // components needs to be modified to add component_id as size_type?
     components = reader.read_components(loads_by_id, fragilities, fms, rc);
     networks = reader.read_networks();
+    // TODO: pass in cdfs to scenario to confirm that scenario is referencing an existing cdf
+    // TODO: scenarios = reader.read_scenarios(cdfs);
     scenarios = reader.read_scenarios();
     reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
         sim_info.get_max_time_in_seconds()
         );
+    // TODO: we can pre-calculate the scenario schedules as well. No reason to go into a double DEVS run...
+    // TODO: below, scenario_schedules :: std::unordered_map<std::string, std::vector<RealTimeType>>, (Map ScenarioID (Vec ScenarioStartTime))
+    // TODO: scenario_schedules should be a Main attribute
+    // TODO: scenario_schedules = calc_scenarios_schedule(scenarios, cds);
     check_data();
     generate_failure_fragilities();
     rand_fn = sim_info.make_random_function();
@@ -2827,6 +2849,7 @@ namespace ERIN
       std::string network_id_,
       RealTimeType duration_,
       int max_occurrences_,
+      // ERIN::size_type occurrence_dist,
       std::function<RealTimeType(void)> calc_time_to_next_,
       std::unordered_map<std::string, double> intensities_,
       bool calc_reliability_):

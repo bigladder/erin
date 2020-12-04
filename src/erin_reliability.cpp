@@ -37,6 +37,17 @@ namespace ERIN
   {
   }
 
+  // TODO: add CDS as input to ReliabilityCoordinator to COPY
+  //ReliabilityCoordinator::ReliabilityCoordinator(
+  //    const erin::distribution::CumulativeDistributionSystem& cds_
+  //    ):
+  //  cds{cds_},
+  //  fms{},
+  //  fm_comp_links{},
+  //  comp_meta{}
+  //{
+  //}
+
   size_type
   ReliabilityCoordinator::add_fixed_cdf(
       const std::string& tag,

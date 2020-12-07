@@ -46,9 +46,6 @@ namespace ERIN
   {
     public:
       ReliabilityCoordinator();
-      // xTODO: add CDS as input to ReliabilityCoordinator
-      //explicit ReliabilityCoordinator(
-      //    const erin::distribution::CumulativeDistributionSystem& cds);
 
       size_type add_fixed_cdf(
           const std::string& tag,
@@ -66,6 +63,7 @@ namespace ERIN
 
       size_type register_component(const std::string& tag);
 
+      // TODO[0]: delete this -- talk to the CDF directly
       [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
 
       std::unordered_map<size_type, std::vector<TimeState>>
@@ -75,11 +73,13 @@ namespace ERIN
       calc_reliability_schedule_by_component_tag(RealTimeType final_time);
 
     private:
+      // TODO[0]: remove this
       erin::distribution::CumulativeDistributionSystem cds;
       FailureMode fms;
       FailureMode_Component_Link fm_comp_links;
       Component_meta comp_meta;
 
+      // TODO[0]: pass a const ref to CumulativeDistributionSystem to this function
       void calc_next_events(
           std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
           bool is_failure);

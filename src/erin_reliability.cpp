@@ -92,12 +92,14 @@ namespace ERIN
     return id;
   }
 
+  // TODO[0]: delete
   size_type
   ReliabilityCoordinator::lookup_cdf_by_tag(const std::string& tag) const
   {
     return cds.lookup_cdf_by_tag(tag);
   }
 
+  // TODO[0]: add CumulativeDistributionSystem as a const arg ref to this function
   void
   ReliabilityCoordinator::calc_next_events(
       std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,

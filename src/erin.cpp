@@ -1322,6 +1322,121 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, size_type>
+  TomlInputReader::read_cumulative_distributions(
+      erin::distribution::CumulativeDistributionSystem& cds)
+  {
+    const auto& toml_cdfs = toml::find_or(data, "cdf", toml::table{});
+    std::unordered_map<std::string, size_type> out{};
+    if (toml_cdfs.size() == 0) {
+      return out;
+    }
+    for (const auto& toml_cdf : toml_cdfs) {
+      const auto& cdf_string_id = toml_cdf.first;
+      const auto& t = toml_cdf.second;
+      const auto& tt = toml::get<toml::table>(t);
+      const auto& cdf_type = read_cdf_type(tt, cdf_string_id);
+      switch (cdf_type) {
+        case erin::distribution::CdfType::Fixed:
+          {
+            std::string field_read{""};
+            auto value =
+              toml_helper::read_number_from_table_as_double(tt, "value", -1.0);
+            if (value < 0) {
+              std::ostringstream oss{};
+              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'value' field\n"
+                  << "field 'value' must be present and >= 0\n"
+                  << "value = " << value << "\n";
+              throw std::invalid_argument(oss.str());
+            }
+            std::string time_tag =
+              toml_helper::read_optional_table_field<std::string>(
+                  tt, {"time_unit", "time_units"}, std::string{"hours"},
+                  field_read);
+            auto tu = tag_to_time_units(time_tag);
+            auto cdf_id = cds.add_fixed_cdf(
+                cdf_string_id, time_to_seconds(value, tu));
+            out[cdf_string_id] = cdf_id;
+            break;
+          }
+        case erin::distribution::CdfType::Uniform:
+          {
+            std::string field_read{""};
+            auto lower_bound =
+              toml_helper::read_number_from_table_as_double(tt, "lower_bound", -1);
+            if (lower_bound < 0) {
+              std::ostringstream oss{};
+              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'lower_bound' field\n"
+                  << "field 'lower_bound' must be present and >= 0\n"
+                  << "lower_bound = " << lower_bound << "\n";
+              throw std::invalid_argument(oss.str());
+            }
+            auto upper_bound =
+              toml_helper::read_number_from_table_as_double(tt, "upper_bound", -1);
+            if (upper_bound < 0) {
+              std::ostringstream oss{};
+              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'upper_bound' field\n"
+                  << "field 'upper_bound' must be present and >= 0\n"
+                  << "upper_bound = " << upper_bound << "\n";
+              throw std::invalid_argument(oss.str());
+            }
+            std::string time_tag =
+              toml_helper::read_optional_table_field<std::string>(
+                  tt, {"time_unit", "time_units"}, std::string{"hours"},
+                  field_read);
+            auto tu = tag_to_time_units(time_tag);
+            auto cdf_id = cds.add_uniform_cdf(
+                cdf_string_id,
+                time_to_seconds(lower_bound, tu),
+                time_to_seconds(upper_bound, tu));
+            out[cdf_string_id] = cdf_id;
+            break;
+          }
+        case erin::distribution::CdfType::Normal:
+          {
+            std::string field_read{""};
+            auto mean =
+              toml_helper::read_number_from_table_as_double(tt, "mean", -1);
+            if (mean < 0) {
+              std::ostringstream oss{};
+              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'mean' field\n"
+                  << "field 'mean' must be present and >= 0\n"
+                  << "mean = " << mean << "\n";
+              throw std::invalid_argument(oss.str());
+            }
+            auto std_dev =
+              toml_helper::read_number_from_table_as_double(tt, "standard_deviation", -1);
+            if (std_dev < 0) {
+              std::ostringstream oss{};
+              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'standard_deviation' field\n"
+                  << "field 'standard_deviation' must be present and >= 0\n"
+                  << "standard_deviation = " << std_dev << "\n";
+              throw std::invalid_argument(oss.str());
+            }
+            std::string time_tag =
+              toml_helper::read_optional_table_field<std::string>(
+                  tt, {"time_unit", "time_units"}, std::string{"hours"},
+                  field_read);
+            auto tu = tag_to_time_units(time_tag);
+            auto cdf_id = cds.add_normal_cdf(
+                cdf_string_id,
+                time_to_seconds(mean, tu),
+                time_to_seconds(std_dev, tu));
+            out[cdf_string_id] = cdf_id;
+            break;
+          }
+        default:
+          {
+            std::ostringstream oss{};
+            oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
+            throw std::invalid_argument(oss.str());
+          }
+      }
+    }
+    return out;
+  }
+
+
+  std::unordered_map<std::string, size_type>
   TomlInputReader::read_cumulative_distributions_depricated(
       ReliabilityCoordinator& rc)
   {
@@ -2495,17 +2610,14 @@ namespace ERIN
   {
     // Read data into private class fields
     auto loads_by_id = reader.read_loads();
-    // TODO*: add a repair CDF to the fragility datatype
+    // TODO: add a repair CDF to the fragility datatype
     auto fragilities = reader.read_fragility_data();
-    // TODO: add a CumulativeDistributionSystem instance
-    // TODO: CumulativeDistributionSystem cds{};
-    erin::distribution::CumulativeDistributionSystem cds{};
-    // TODO: provide ReliabilityCoordinator with the cds
-    // TODO: ReliabilityCoordinator rc{cds};
+    // TODO[0]: add a CumulativeDistributionSystem instance below
+    //erin::distribution::CumulativeDistributionSystem cds{};
     ReliabilityCoordinator rc{};
     // cdfs is map<string, size_type>
-    // TODO: change the signature to store CDFs directly in a CumulativeDistributionSystem attribute of the class, cds
-    // TODO: auto cdfs = reader.read_cumulative_distributions_depricated(cds);
+    // TODO[0]: change the signature to store CDFs directly in a CumulativeDistributionSystem attribute of the class, cds
+    // TODO[0]: auto cdfs = reader.read_cumulative_distributions(cds);
     auto cdfs = reader.read_cumulative_distributions_depricated(rc);
     // fms is map<string, size_type>
     auto fms = reader.read_failure_modes(cdfs, rc);
@@ -2515,6 +2627,7 @@ namespace ERIN
     // TODO: pass in cdfs to scenario to confirm that scenario is referencing an existing cdf
     // TODO: scenarios = reader.read_scenarios(cdfs);
     scenarios = reader.read_scenarios();
+    // TODO[0]: pass in the CumulativeDistributionSystem as a const ref
     reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
         sim_info.get_max_time_in_seconds()
         );
@@ -2886,6 +2999,7 @@ namespace ERIN
            (calc_reliability == other.calc_reliability);
   }
 
+  // TODO[1]: remove
   void
   Scenario::delta_int()
   {
@@ -2898,6 +3012,7 @@ namespace ERIN
     }
   }
 
+  // TODO[1]: remove
   void
   Scenario::delta_ext(Time e, std::vector<PortValue>& xs)
   {
@@ -2919,6 +3034,7 @@ namespace ERIN
     // Nothing to do here. Should be no external transitions at this time.
   }
 
+  // TODO[1]: remove
   void
   Scenario::delta_conf(std::vector<PortValue>& xs)
   {
@@ -2930,6 +3046,7 @@ namespace ERIN
     delta_ext(e, xs);
   }
 
+  // TODO[1]: remove
   Time
   Scenario::ta()
   {
@@ -2944,6 +3061,7 @@ namespace ERIN
     return Time{dt, 0};
   }
 
+  // TODO[1]: remove
   void
   Scenario::output_func(std::vector<PortValue>&)
   {

@@ -560,6 +560,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
       std::string{"normal_operations"},
       expected_duration,
       1,
+      0,
       []() -> ERIN::RealTimeType { return 0; },
       {},
       false}}};
@@ -807,6 +808,7 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
         net_id,
         1,
         -1,
+        0,
         []() -> ::ERIN::RealTimeType { return 0; },
         {},
         false
@@ -1024,6 +1026,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
         net_id,
         max_time,
         -1,
+        0,
         nullptr,
         {},
         false
@@ -1201,6 +1204,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
         net_id,
         max_time,
         1,
+        0,
         [](){ return 100; },
         {},
         false
@@ -1360,11 +1364,11 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
     { intensity_flood, 0.0}};
   std::unordered_map<std::string, E::Scenario> scenarios_low{
     { blue_sky,
-      E::Scenario{blue_sky, normal, 10, 1, [](){return 0;}, {}, false}},
+      E::Scenario{blue_sky, normal, 10, 1, 0, [](){return 0;}, {}, false}},
     { class_4_hurricane,
       E::Scenario{
         class_4_hurricane,
-        emergency, 10, -1, [](){ return 100; }, intensities_low, false}}};
+        emergency, 10, -1, 0, [](){ return 100; }, intensities_low, false}}};
   E::Main m_low{si, comps, networks, scenarios_low};
   auto results_low = m_low.run(class_4_hurricane);
   if (false) {
@@ -1386,11 +1390,11 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
   std::unordered_map<std::string, E::Scenario> scenarios_high{
     { blue_sky,
       E::Scenario{
-        blue_sky, normal, 10, 1, [](){return 0;}, {}, false}},
+        blue_sky, normal, 10, 1, 0, [](){return 0;}, {}, false}},
     { class_4_hurricane,
       E::Scenario{
         class_4_hurricane,
-        emergency, 10, -1, [](){ return 100; }, intensities_high, false}}};
+        emergency, 10, -1, 0, [](){ return 100; }, intensities_high, false}}};
   E::Main m_high{si, comps, networks, scenarios_high};
   auto results_high = m_high.run(class_4_hurricane);
   if (false) {
@@ -1912,6 +1916,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "normal_operations",
         blue_sky_duration, 
         blue_sky_max_occurrence,
+        0,
         []() -> ::ERIN::RealTimeType { return 0; },
         {},
         false}},
@@ -1921,6 +1926,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "emergency_operations",
         hurricane_duration,
         hurricane_max_occurrence,
+        0,
         []() -> ::ERIN::RealTimeType { return 87600; },
         {{"wind_speed_mph", 156.0}, {"inundation_depth_ft", 8.0}},
         false}}};
@@ -2097,6 +2103,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "normal_operations",
         blue_sky_duration, 
         blue_sky_max_occurrence,
+        0,
         []() -> ::ERIN::RealTimeType { return 0; },
         {},
         false}},
@@ -2106,6 +2113,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "emergency_operations",
         hurricane_duration,
         hurricane_max_occurrence,
+        0,
         []() -> ::ERIN::RealTimeType { return 87600; },
         {{"wind_speed_mph", 200.0}, {"inundation_depth_ft", 20.0}},
         false}}};

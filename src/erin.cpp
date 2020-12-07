@@ -1300,7 +1300,9 @@ namespace ERIN
               network_id,
               duration,
               static_cast<int>(max_occurrences),
-              // TODO: change below to cdfs[next_occurrence_dist]
+              // TODO[0]: replace with cdfs[next_occurrence_dist]
+              0,
+              // TODO[0]: remove the below
               next_occurrence_dist,
               intensity,
               calc_reliability}));
@@ -2850,7 +2852,7 @@ namespace ERIN
       std::string network_id_,
       RealTimeType duration_,
       int max_occurrences_,
-      // ERIN::size_type occurrence_dist,
+      ERIN::size_type occurrence_dist_id_,
       std::function<RealTimeType(void)> calc_time_to_next_,
       std::unordered_map<std::string, double> intensities_,
       bool calc_reliability_):
@@ -2859,6 +2861,7 @@ namespace ERIN
     network_id{std::move(network_id_)},
     duration{duration_},
     max_occurrences{max_occurrences_},
+    occurrence_distribution_id{occurrence_dist_id_},
     calc_time_to_next{std::move(calc_time_to_next_)},
     intensities{std::move(intensities_)},
     t{0},
@@ -2878,6 +2881,7 @@ namespace ERIN
            (network_id == other.network_id) &&
            (duration == other.duration) &&
            (max_occurrences == other.max_occurrences) &&
+           (occurrence_distribution_id == other.occurrence_distribution_id) &&
            (intensities == other.intensities) &&
            (calc_reliability == other.calc_reliability);
   }
@@ -2958,6 +2962,7 @@ namespace ERIN
        << "network_id=\"" << s.network_id << "\", "
        << "duration=" << s.duration << ", "
        << "max_occurrences=" << s.max_occurrences << ", "
+       << "occurrence_distribution_id=" << s.occurrence_distribution_id << ", "
        << "calc_time_next=..., "
        << "intensities=..., "
        << "t=" << s.t << ", "

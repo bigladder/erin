@@ -141,6 +141,7 @@ namespace ERIN
           std::string network_id,
           RealTimeType duration,
           int max_occurrences,
+          size_type occurrence_distribution_id,
           std::function<RealTimeType(void)> calc_time_to_next,
           std::unordered_map<std::string, double> intensities,
           bool calc_reliability);
@@ -183,6 +184,7 @@ namespace ERIN
       std::string network_id;
       RealTimeType duration;
       int max_occurrences;
+      size_type occurrence_distribution_id;
       std::function<RealTimeType(void)> calc_time_to_next;
       std::unordered_map<std::string, double> intensities;
       RealTimeType t;

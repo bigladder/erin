@@ -52,14 +52,15 @@ doit()
   scenarios.emplace(
       std::make_pair(
         scenario_id, 
-        ERIN::Scenario(
+        ERIN::Scenario{
           scenario_id,
           net_id,
           ERIN::time_to_seconds(N, ERIN::TimeUnits::Hours),
           -1,
+          0,
           nullptr,
           {},
-          false)));
+          false}));
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
   ERIN::Main m{si, components, networks, scenarios, reliability_schedule};

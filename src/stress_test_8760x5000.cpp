@@ -34,6 +34,7 @@ main()
         net_id,
         ERIN::time_to_seconds(N, ERIN::TimeUnits::Hours),
         -1,
+        0,
         nullptr,
         {},
         false}}};

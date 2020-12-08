@@ -114,6 +114,9 @@ namespace erin::distribution
 
       RealTimeType next_time_advance(size_type cdf_id, double fraction) const;
 
+      //[[nodiscard]] std::vector<RealTimeType>
+      //  sample_upto_including(const RealTimeType max_time_s);
+
     private:
       Cdf cdf;
       Fixed_CDF fixed_cdf;

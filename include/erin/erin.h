@@ -133,16 +133,15 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Scenario
-  class Scenario : public adevs::Atomic<PortValue, Time>
+  class Scenario
   {
     public:
       Scenario(
           std::string name,
           std::string network_id,
-          RealTimeType duration,
+          RealTimeType duration_in_seconds,
           int max_occurrences,
           size_type occurrence_distribution_id,
-          std::function<RealTimeType(void)> calc_time_to_next,
           std::unordered_map<std::string, double> intensities,
           bool calc_reliability);
 
@@ -152,6 +151,9 @@ namespace ERIN
       }
       [[nodiscard]] RealTimeType get_duration() const { return duration; }
       [[nodiscard]] int get_max_occurrences() const { return max_occurrences; }
+      [[nodiscard]] size_type get_occurrence_distribution_id() const {
+        return occurrence_distribution_id;
+      }
       [[nodiscard]] int get_number_of_occurrences() const {
         return num_occurrences;
       }
@@ -161,23 +163,9 @@ namespace ERIN
         return calc_reliability;
       }
 
-      bool operator==(const Scenario& other) const;
-      bool operator!=(const Scenario& other) const {
-        return !(operator==(other));
-      }
-      void delta_int() override;
-      void delta_ext(Time e, std::vector<PortValue>& xs) override;
-      void delta_conf(std::vector<PortValue>& xs) override;
-      Time ta() override;
-      void output_func(std::vector<PortValue>& ys) override;
-
-      // the runner function must be:
-      // RealTimeType scenario_start_time (seconds) -> ScenarioResults
-      void set_runner(const std::function<void(RealTimeType)>& f) {
-        runner = f;
-      }
-
       friend std::ostream& operator<<(std::ostream& os, const Scenario& s);
+      friend bool operator==(const Scenario& a, const Scenario& b);
+      friend bool operator!=(const Scenario& a, const Scenario& b);
 
     private:
       std::string name;
@@ -185,15 +173,14 @@ namespace ERIN
       RealTimeType duration;
       int max_occurrences;
       size_type occurrence_distribution_id;
-      std::function<RealTimeType(void)> calc_time_to_next;
       std::unordered_map<std::string, double> intensities;
-      RealTimeType t;
       int num_occurrences;
-      std::function<void(RealTimeType)> runner;
       bool calc_reliability;
   };
 
   std::ostream& operator<<(std::ostream& os, const Scenario& s);
+  bool operator==(const Scenario& a, const Scenario& b);
+  bool operator!=(const Scenario& a, const Scenario& b);
 
   ////////////////////////////////////////////////////////////
   // InputReader
@@ -224,13 +211,13 @@ namespace ERIN
       virtual std::unordered_map<
         std::string,
         std::vector<::erin::network::Connection>> read_networks() = 0;
-      virtual std::unordered_map<std::string, Scenario> read_scenarios() = 0;
-      virtual std::unordered_map<std::string,::erin::fragility::FragilityCurve>
+      virtual std::unordered_map<std::string, Scenario> read_scenarios(
+          const std::unordered_map<std::string, size_type>& cdfs
+          ) = 0;
+      virtual std::unordered_map<std::string,erin::fragility::FragilityCurve>
         read_fragility_data() = 0;
       virtual std::unordered_map<std::string, size_type>
         read_cumulative_distributions(erin::distribution::CumulativeDistributionSystem& cds) = 0;
-      virtual std::unordered_map<std::string, size_type>
-        read_cumulative_distributions_depricated(ReliabilityCoordinator& rc) = 0;
       virtual std::unordered_map<std::string, size_type>
         read_failure_modes(
             const std::unordered_map<std::string, size_type>& cdf_ids,
@@ -274,13 +261,13 @@ namespace ERIN
       std::unordered_map<
         std::string, std::vector<::erin::network::Connection>>
         read_networks() override;
-      std::unordered_map<std::string, Scenario> read_scenarios() override;
+      std::unordered_map<std::string, Scenario> read_scenarios(
+          const std::unordered_map<std::string, ERIN::size_type>& cdfs
+          ) override;
       std::unordered_map<std::string,::erin::fragility::FragilityCurve>
         read_fragility_data() override;
       std::unordered_map<std::string, size_type>
         read_cumulative_distributions(erin::distribution::CumulativeDistributionSystem& cds) override;
-      std::unordered_map<std::string, size_type>
-        read_cumulative_distributions_depricated(ReliabilityCoordinator& rc) override;
       std::unordered_map<std::string, size_type>
         read_failure_modes(
             const std::unordered_map<std::string, size_type>& cdf_ids,
@@ -502,7 +489,9 @@ namespace ERIN
             std::vector<::erin::network::Connection>>& networks,
           const std::unordered_map<std::string, Scenario>& scenarios,
           const std::unordered_map<std::string, std::vector<TimeState>>&
-            reliability_schedule = {}
+            reliability_schedule = {},
+          const std::unordered_map<std::string, std::vector<RealTimeType>>&
+            scenario_schedules = {}
           );
       ScenarioResults run(
           const std::string& scenario_id, RealTimeType scenario_start_s = 0);
@@ -539,6 +528,8 @@ namespace ERIN
       std::function<double()> rand_fn;
       std::unordered_map<std::string, std::vector<TimeState>>
         reliability_schedule;
+      std::unordered_map<std::string, std::vector<RealTimeType>>
+        scenario_schedules;
 
       void check_data() const;
       void generate_failure_fragilities();
@@ -606,6 +597,13 @@ namespace ERIN
   erin::port::Type parse_component_port(const std::string& tag);
 
   int parse_component_port_num(const std::string& tag);
+
+  std::unordered_map<std::string, std::vector<RealTimeType>>
+  calc_scenario_schedule(
+      const RealTimeType max_time_s,
+      const std::unordered_map<std::string, Scenario>& scenarios,
+      const erin::distribution::CumulativeDistributionSystem& cds,
+      const std::function<double()>& rand_fn);
 }
 
 #endif // ERIN_ERIN_H

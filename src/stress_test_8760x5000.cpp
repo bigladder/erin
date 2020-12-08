@@ -35,7 +35,6 @@ main()
         ERIN::time_to_seconds(N, ERIN::TimeUnits::Hours),
         -1,
         0,
-        nullptr,
         {},
         false}}};
   const int M{5000};
@@ -61,7 +60,11 @@ main()
   std::cout << "construction completed!\n";
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
+    scenario_schedules{{scenario_id, {0}}};
+  ERIN::Main m{
+    si, components, networks, scenarios, reliability_schedule,
+    scenario_schedules};
   std::cout << "running!\n";
   auto out = m.run(scenario_id);
   std::cout << "done!\n";

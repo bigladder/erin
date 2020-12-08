@@ -34,9 +34,14 @@ repair_cdf = "every_5"
 [networks.nw]
 connections = [["S:OUT(0)", "L:IN(0)", "electricity"]]
 ############################################################
+[cdf.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 40
 max_occurrences = 1
 network = "nw"

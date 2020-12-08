@@ -28,9 +28,14 @@ loads_by_scenario.blue_sky = "building_electrical"
 # STRING_IDENTIFIER := [a-zA-Z_] [a-zA-Z_0-9]* ;
 connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 ############################################################
+[cdf.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 4
 max_occurrences = 1
 network = "normal_operations"

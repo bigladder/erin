@@ -17,6 +17,10 @@ time_unit = "seconds"
 type = "fixed"
 value = 2
 time_unit = "seconds"
+[cdf.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
 ############################################################
 [failure_mode.fm]
 failure_cdf = "cdf_break"
@@ -38,7 +42,7 @@ connections = [
 ############################################################
 [scenarios.blue_sky]
 time_unit = "seconds"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 10
 max_occurrences = 1
 network = "normal_operations"

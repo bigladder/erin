@@ -30,9 +30,14 @@ connections = [
   ["electric_battery:OUT(0)", "electric_load:IN(0)", "electricity"],
   ]
 ############################################################
+[cdf.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 10
 max_occurrences = 1
 network = "normal_operations"

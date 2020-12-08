@@ -3,7 +3,7 @@ rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
 max_time = 100
-fixed_random_series = [0.9,0.9,0.9,0.9,0.1,0.1,0.1,0.1]
+fixed_random_series = [0.9,0.1,0.1,0.1,0.1,0.9,0.9,0.9]
 [loads.building_electrical]
 csv_file = "ex03.csv"
 [components.electric_utility]
@@ -46,15 +46,23 @@ connections = [
   ["electric_utility:OUT(0)", "bus:IN(0)", "electricity"],
   ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity"],
   ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
+[cdf.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+[cdf.every_10_years]
+type = "fixed"
+value = 10
+time_unit = "years"
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 8760
 max_occurrences = 1
 network = "normal_operations"
 [scenarios.class_4_hurricane]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", time_unit = "years", value = 10}
+occurrence_distribution = "every_10_years"
 duration = 336
 max_occurrences = -1
 network = "emergency_operations"

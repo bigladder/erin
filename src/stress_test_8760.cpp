@@ -58,12 +58,15 @@ doit()
           ERIN::time_to_seconds(N, ERIN::TimeUnits::Hours),
           -1,
           0,
-          nullptr,
           {},
           false}));
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
+    scenario_schedules{{scenario_id, {0}}};
+  ERIN::Main m{
+    si, components, networks, scenarios, reliability_schedule,
+    scenario_schedules};
   auto out = m.run(scenario_id);
   if (out.get_is_good()) {
     std::cout << "success!\n";

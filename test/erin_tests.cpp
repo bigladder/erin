@@ -544,8 +544,7 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
   std::stringstream ss{};
   ss << "[scenarios.blue_sky]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\","
-                                  " value = 1}\n"
+        "occurrence_distribution = \"immediately\"\n"
         "duration = 8760\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
@@ -561,10 +560,12 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
       expected_duration,
       1,
       0,
-      []() -> ERIN::RealTimeType { return 0; },
       {},
       false}}};
-  auto actual = t.read_scenarios();
+  ERIN::size_type occurrence_distribution_id{0};
+  std::unordered_map<std::string,ERIN::size_type> cdfs{
+    {"immediately", occurrence_distribution_id}};
+  auto actual = t.read_scenarios(cdfs);
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);
@@ -581,35 +582,28 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
   }
   ERIN::Time dt_expected{1, 0};
   auto scenario = actual.at(scenario_id);
-  auto dt_actual = scenario.ta();
-  EXPECT_EQ(dt_expected.logical, dt_actual.logical);
-  EXPECT_EQ(dt_expected.real, dt_actual.real);
+  EXPECT_EQ(scenario.get_max_occurrences(), 1);
+  EXPECT_EQ(scenario.get_network_id(), "normal_operations");
+  EXPECT_EQ(scenario.get_occurrence_distribution_id(), occurrence_distribution_id);
+  EXPECT_EQ(scenario.get_duration(), 8760*3600);
+  EXPECT_EQ(scenario.get_name(), "blue_sky");
 }
 
 TEST(ErinBasicsTest, CanReadScenariosFromTomlForRandIntDist)
 {
   const std::string scenario_id{"blue_sky"};
-  const int lb{1};
-  const int ub{10};
   std::stringstream ss{};
   ss << "[scenarios." << scenario_id << "]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"random_integer\","
-        " lower_bound = " << lb << ", upper_bound = " << ub << "}\n"
+        "occurrence_distribution = \"1_to_10\"\n"
         "duration = 8760\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ERIN::TomlInputReader t{ss};
-  auto actual = t.read_scenarios();
+  std::unordered_map<std::string, ERIN::size_type> cdfs{{"1_to_10", 0}};
+  auto actual = t.read_scenarios(cdfs);
   auto scenario = actual.at(scenario_id);
-  const int max_tries{100};
-  for (int i{0}; i < max_tries; ++i) {
-    auto dt_actual = scenario.ta();
-    auto dtr = dt_actual.real;
-    ASSERT_TRUE((dtr >= lb) && (dtr <= ub))
-      << "i = " << i << ", "
-      << "dtr = " << dtr << "\n";
-  }
+  EXPECT_EQ(scenario.get_duration(), 8760*3600);
 }
 
 TEST(ErinBasicsTest, CanReadScenariosIntensities)
@@ -618,14 +612,15 @@ TEST(ErinBasicsTest, CanReadScenariosIntensities)
   std::stringstream ss{};
   ss << "[scenarios." << scenario_id << "]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
+        "occurrence_distribution = \"immediately\"\n"
         "duration = 8760\n"
         "max_occurrences = 1\n"
         "network = \"emergency_operations\"\n"
         "intensity.wind_speed_mph = 156\n"
         "intensity.inundation_depth_ft = 4\n";
   ERIN::TomlInputReader t{ss};
-  auto scenario_map = t.read_scenarios();
+  std::unordered_map<std::string, ERIN::size_type> cds{{"immediately",0}};
+  auto scenario_map = t.read_scenarios(cds);
   auto scenario = scenario_map.at(scenario_id);
   std::unordered_map<std::string,double> expected{
     {"wind_speed_mph", 156.0},
@@ -663,9 +658,14 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "[networks.normal_operations]\n"
         "connections=[[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
         "############################################################\n"
+        "[cds.every_hour]\n"
+        "type = \"fixed\"\n"
+        "value = 1\n"
+        "time_unit = \"hours\"\n"
+        "############################################################\n"
         "[scenarios.blue_sky]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
+        "occurrence_distribution = \"every_hour\"\n"
         "duration = 1\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
@@ -674,10 +674,17 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   auto loads = r.read_loads();
   auto components = r.read_components(loads);
   auto networks = r.read_networks();
-  auto scenarios = r.read_scenarios();
+  std::unordered_map<std::string, ERIN::size_type> cds{
+    {"every_hour", 0}};
+  auto scenarios = r.read_scenarios(cds);
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
+    scenario_schedules{
+      {"blue_sky", {3600}}};
+  ERIN::Main m{
+    si, components, networks, scenarios, reliability_schedule,
+    scenario_schedules};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -721,9 +728,14 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "[networks.normal_operations]\n"
         "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
         "############################################################\n"
+        "[cds.every_hour]\n"
+        "type = \"fixed\"\n"
+        "value = 1\n"
+        "time_unit = \"hours\"\n"
+        "############################################################\n"
         "[scenarios.blue_sky]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", value = 1}\n"
+        "occurrence_distribution = \"every_hour\"\n"
         "duration = 4\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"";
@@ -732,10 +744,15 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
   auto loads = r.read_loads();
   auto components = r.read_components(loads);
   auto networks = r.read_networks();
-  auto scenarios = r.read_scenarios();
+  std::unordered_map<std::string, ERIN::size_type> cds{{"every_hour", 0}};
+  auto scenarios = r.read_scenarios(cds);
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
+    scenario_schedules{{"blue_sky", {3600}}};
+  ERIN::Main m{
+    si, components, networks, scenarios, reliability_schedule,
+    scenario_schedules};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -809,13 +826,16 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
         1,
         -1,
         0,
-        []() -> ::ERIN::RealTimeType { return 0; },
         {},
         false
       }}};
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
+    scenario_schedules{{scenario_id, {0}}};
+  ERIN::Main m{
+    si, components, networks, scenarios, reliability_schedule,
+    scenario_schedules};
   auto out = m.run(scenario_id);
   EXPECT_EQ(out.get_is_good(), true);
 }
@@ -1027,7 +1047,6 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
         max_time,
         -1,
         0,
-        nullptr,
         {},
         false
       }}};
@@ -1162,15 +1181,16 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   std::string source_id{"electric_utility"};
   std::string load_id{"cluster_01_electric"};
   std::string net_id{"normal_operations"};
-  const ERIN::RealTimeType max_time{10};
+  const ERIN::RealTimeType scenario_duration_s{10};
   std::vector<::ERIN::LoadItem> loads;
-  for (ERIN::RealTimeType i{0}; i < max_time; ++i) {
-    loads.emplace_back(::ERIN::LoadItem{i, 1.0});
+  for (ERIN::RealTimeType i{0}; i < scenario_duration_s; ++i) {
+    loads.emplace_back(ERIN::LoadItem{i, 1.0});
   }
   std::unordered_map<std::string, std::vector<ERIN::LoadItem>>
     loads_by_scenario{{scenario_id, loads}};
+  const ERIN::RealTimeType max_simulation_time_s{1000LL * 8760LL * 3600LL};
   ERIN::SimulationInfo si{
-    "kW", "kJ", ::ERIN::TimeUnits::Years, 1000};
+    "kW", "kJ", ERIN::TimeUnits::Seconds, max_simulation_time_s};
   std::unordered_map<std::string, std::vector<ERIN::LoadItem>> loads_by_id{
     {load_id, loads}
   };
@@ -1196,22 +1216,28 @@ TEST(ErinBasicsTest, BasicScenarioTest)
                            { source_id, ep::Type::Outflow, 0},
                            { load_id, ep::Type::Inflow, 0},
                            stream_id}}}};
+  erin::distribution::CumulativeDistributionSystem cds{};
+  auto cdf_id = cds.add_fixed_cdf("every_100_seconds", 100);
   std::unordered_map<std::string, ERIN::Scenario> scenarios{
     {
       scenario_id,
       ERIN::Scenario{
         scenario_id,
         net_id,
-        max_time,
+        scenario_duration_s,
         1,
-        0,
-        [](){ return 100; },
+        cdf_id,
         {},
         false
       }}};
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  auto rand_fn = []()->double { return 0.5; };
+  auto scenario_schedules = ERIN::calc_scenario_schedule(
+      max_simulation_time_s, scenarios, cds, rand_fn);
+  ERIN::Main m{
+    si, components, networks, scenarios, reliability_schedule,
+    scenario_schedules};
   auto actual = m.run_all();
   EXPECT_TRUE(actual.get_is_good());
   EXPECT_TRUE(actual.get_results().size() > 0);
@@ -1363,13 +1389,27 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
     { intensity_wind_speed, 0.0},
     { intensity_flood, 0.0}};
   std::unordered_map<std::string, E::Scenario> scenarios_low{
-    { blue_sky,
-      E::Scenario{blue_sky, normal, 10, 1, 0, [](){return 0;}, {}, false}},
+    { blue_sky, // 0
+      E::Scenario{blue_sky, normal, 10, 1, 0, {}, false}},
     { class_4_hurricane,
       E::Scenario{
-        class_4_hurricane,
-        emergency, 10, -1, 0, [](){ return 100; }, intensities_low, false}}};
-  E::Main m_low{si, comps, networks, scenarios_low};
+        class_4_hurricane, // 100
+        emergency, 10, -1, 0, intensities_low, false}}};
+  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
+    scenario_schedules{
+      {blue_sky, {0}},
+      {class_4_hurricane, { 100*8760*3600,
+                            200*8760*3600,
+                            300*8760*3600,
+                            400*8760*3600,
+                            500*8760*3600,
+                            600*8760*3600,
+                            700*8760*3600,
+                            800*8760*3600,
+                            900*8760*3600,
+                            1000*8760*3600}}};
+  E::Main m_low{
+    si, comps, networks, scenarios_low, {}, scenario_schedules};
   auto results_low = m_low.run(class_4_hurricane);
   if (false) {
     std::cout << "results_low:\n";
@@ -1390,12 +1430,13 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
   std::unordered_map<std::string, E::Scenario> scenarios_high{
     { blue_sky,
       E::Scenario{
-        blue_sky, normal, 10, 1, 0, [](){return 0;}, {}, false}},
+        blue_sky, normal, 10, 1, 0, {}, false}},
     { class_4_hurricane,
       E::Scenario{
         class_4_hurricane,
-        emergency, 10, -1, 0, [](){ return 100; }, intensities_high, false}}};
-  E::Main m_high{si, comps, networks, scenarios_high};
+        emergency, 10, -1, 0, intensities_high, false}}};
+  E::Main m_high{
+    si, comps, networks, scenarios_high, {}, scenario_schedules};
   auto results_high = m_high.run(class_4_hurricane);
   if (false) {
     std::cout << "results_high:\n";
@@ -1846,15 +1887,23 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
         "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
         "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
+        "[cds.immediately]\n"
+        "type = \"fixed\"\n"
+        "value = 0\n"
+        "time_unit = \"hours\"\n"
+        "[cds.every_10_years]\n"
+        "type = \"fixed\"\n"
+        "value = 87600\n"
+        "time_unit = \"hours\"\n"
         "[scenarios.blue_sky]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+        "occurrence_distribution = \"immediately\"\n"
         "duration = 8760\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n"
         "[scenarios.class_4_hurricane]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", value = 87600}\n"
+        "occurrence_distribution = \"every_10_years\"\n"
         "duration = 336\n"
         "max_occurrences = -1\n"
         "network = \"emergency_operations\"\n"
@@ -1862,7 +1911,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "intensity.inundation_depth_ft = 8\n";
   const std::vector<int>::size_type num_comps{4};
   const std::vector<int>::size_type num_networks{2};
-  ::ERIN::TomlInputReader r{ss};
+  ERIN::TomlInputReader r{ss};
   auto si = r.read_simulation_info();
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
@@ -1902,14 +1951,17 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   const auto& actual_eo = networks["emergency_operations"];
   ASSERT_EQ(expected_eo.size(), actual_eo.size());
   ASSERT_EQ(expected_eo, actual_eo);
-  auto scenarios = r.read_scenarios();
-  constexpr ::ERIN::RealTimeType blue_sky_duration
-    = 8760 * ::ERIN::rtt_seconds_per_hour;
+  std::unordered_map<std::string, ERIN::size_type> cdfs{
+    {"immediately", 0},
+    {"every_10_years", 1}};
+  auto scenarios = r.read_scenarios(cdfs);
+  constexpr ERIN::RealTimeType blue_sky_duration
+    = 8760 * ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
-  constexpr ::ERIN::RealTimeType hurricane_duration
-    = 336 * ::ERIN::rtt_seconds_per_hour;
+  constexpr ERIN::RealTimeType hurricane_duration
+    = 336 * ERIN::rtt_seconds_per_hour;
   constexpr int hurricane_max_occurrence = -1;
-  const std::unordered_map<std::string, ::ERIN::Scenario> expected_scenarios{
+  const std::unordered_map<std::string, ERIN::Scenario> expected_scenarios{
     { "blue_sky",
       ERIN::Scenario{
         "blue_sky",
@@ -1917,7 +1969,6 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         blue_sky_duration, 
         blue_sky_max_occurrence,
         0,
-        []() -> ::ERIN::RealTimeType { return 0; },
         {},
         false}},
     { "class_4_hurricane",
@@ -1926,8 +1977,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "emergency_operations",
         hurricane_duration,
         hurricane_max_occurrence,
-        0,
-        []() -> ::ERIN::RealTimeType { return 87600; },
+        1,
         {{"wind_speed_mph", 156.0}, {"inundation_depth_ft", 8.0}},
         false}}};
   ASSERT_EQ(expected_scenarios.size(), scenarios.size());
@@ -2033,15 +2083,23 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
         "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
         "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
+        "[cdf.immediately]\n"
+        "type = \"fixed\"\n"
+        "value = 0\n"
+        "time_unit = \"hours\"\n"
+        "[cdf.every_10_years]\n"
+        "type = \"fixed\"\n"
+        "value = 87600\n"
+        "time_unit = \"hours\"\n"
         "[scenarios.blue_sky]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+        "occurrence_distribution = \"immediately\"\n"
         "duration = 8760\n"
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n"
         "[scenarios.class_4_hurricane]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", value = 87600}\n"
+        "occurrence_distribution = \"every_10_years\"\n"
         "duration = 336\n"
         "max_occurrences = -1\n"
         "network = \"emergency_operations\"\n"
@@ -2049,7 +2107,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "intensity.inundation_depth_ft = 20.0\n";
   const std::vector<int>::size_type num_comps{4};
   const std::vector<int>::size_type num_networks{2};
-  ::ERIN::TomlInputReader r{ss};
+  ERIN::TomlInputReader r{ss};
   auto si = r.read_simulation_info();
   auto loads = r.read_loads();
   auto fragilities = r.read_fragility_data();
@@ -2089,7 +2147,9 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   const auto& actual_eo = networks["emergency_operations"];
   ASSERT_EQ(expected_eo.size(), actual_eo.size());
   ASSERT_EQ(expected_eo, actual_eo);
-  auto scenarios = r.read_scenarios();
+  std::unordered_map<std::string, ERIN::size_type>
+    cdfs{{"immediately",0}, {"every_10_years", 1}};
+  auto scenarios = r.read_scenarios(cdfs);
   constexpr ::ERIN::RealTimeType blue_sky_duration
     = 8760 * ::ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
@@ -2104,7 +2164,6 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         blue_sky_duration, 
         blue_sky_max_occurrence,
         0,
-        []() -> ::ERIN::RealTimeType { return 0; },
         {},
         false}},
     { "class_4_hurricane",
@@ -2113,8 +2172,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "emergency_operations",
         hurricane_duration,
         hurricane_max_occurrence,
-        0,
-        []() -> ::ERIN::RealTimeType { return 87600; },
+        1,
         {{"wind_speed_mph", 200.0}, {"inundation_depth_ft", 20.0}},
         false}}};
   ASSERT_EQ(expected_scenarios.size(), scenarios.size());
@@ -2214,7 +2272,6 @@ TEST(ErinBasicsTest, AllResultsToCsv0)
 {
   namespace E = ::ERIN;
   const bool is_good{true};
-  const E::RealTimeType hours_to_seconds{3600};
   std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{};
   E::AllResults ar{is_good, results};
   const std::string expected_csv{
@@ -2296,9 +2353,9 @@ TEST(ErinBasicsTest, AllResultsToCsv)
 
 TEST(ErinBasicsTest, ScenarioStatsAddAndAddEq)
 {
-  ::ERIN::ScenarioStats a{1,2,2,1.0,1.0};
-  ::ERIN::ScenarioStats b{10,20,10,10.0,10.0};
-  ::ERIN::ScenarioStats expected{11,22,10,11.0,11.0};
+  ERIN::ScenarioStats a{1,2,2,1.0,1.0};
+  ERIN::ScenarioStats b{10,20,10,10.0,10.0};
+  ERIN::ScenarioStats expected{11,22,10,11.0,11.0};
   auto c = a + b;
   EXPECT_EQ(c.uptime, expected.uptime);
   EXPECT_EQ(c.downtime, expected.downtime);
@@ -2549,15 +2606,23 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
     "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
     "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
+    "[cdf.every_10_seconds]\n"
+    "type = \"fixed\"\n"
+    "value = 10\n"
+    "time_unit = \"seconds\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 4\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
     "[scenarios.class_4_hurricane]\n"
-    "time_unit = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 10}\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = \"every_10_seconds\"\n"
     "duration = 4\n"
     "max_occurrences = -1\n"
     "network = \"emergency_operations\"\n"
@@ -2570,7 +2635,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "blue_sky", "class_4_hurricane"};
   std::unordered_map<
     std::string,
-    std::vector<E::ScenarioResults>::size_type> expected_num_results{
+    E::size_type> expected_num_results{
       {"blue_sky", 1},
       {"class_4_hurricane", 10}};
   EXPECT_EQ(
@@ -2675,15 +2740,23 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
     "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
     "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
     "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"seconds\"\n"
+    "[cdf.every_10_seconds]\n"
+    "type = \"fixed\"\n"
+    "value = 10\n"
+    "time_unit = \"seconds\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 4\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
     "[scenarios.class_4_hurricane]\n"
-    "time_unit = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 10}\n"
+    "time_unit = \"seconds\"\n"
+    "occurrence_distribution = \"every_10_seconds\"\n"
     "duration = 4\n"
     "max_occurrences = -1\n"
     "network = \"emergency_operations\"\n"
@@ -2861,15 +2934,23 @@ TEST(ErinBasicsTest, TestRepeatableRandom3)
     "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
     "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
     "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
+    "[cdf.every_10_hours]\n"
+    "type = \"fixed\"\n"
+    "value = 10\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 4\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
     "[scenarios.class_4_hurricane]\n"
     "time_unit = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 10}\n"
+    "occurrence_distribution = \"every_10_hours\"\n"
     "duration = 4\n"
     "max_occurrences = -1\n"
     "network = \"emergency_operations\"\n"
@@ -3193,32 +3274,28 @@ TEST(ErinBasicsTest, AllResultsEquality)
 
 TEST(ErinBasicsTest, TestWeCanReadDistributionWithOptionalTimeUnits)
 {
-  namespace E = ::ERIN;
+  namespace E = ERIN;
   std::stringstream ss{};
   ss << "[scenarios.a]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", time_unit = \"years\", value = 10}\n"
+        "occurrence_distribution = \"every_10_years\"\n"
         "duration = 10\n"
         "max_occurrences = 1\n"
         "network = \"nw_A\"\n"
         "[scenarios.b]\n"
         "time_unit = \"hours\"\n"
-        "occurrence_distribution = {type = \"fixed\", value = 10}\n"
+        "occurrence_distribution = \"every_10_hours\"\n"
         "duration = 10\n"
         "max_occurrences = 1\n"
         "network = \"nw_B\"\n";
   E::TomlInputReader t{ss};
-  auto scenario_map = t.read_scenarios();
+  std::unordered_map<std::string, E::size_type>
+    cdfs{{"every_10_years", 0}, {"every_10_hours", 1}};
+  auto scenario_map = t.read_scenarios(cdfs);
   auto a_it = scenario_map.find("a");
   ASSERT_TRUE(a_it != scenario_map.end());
   auto b_it = scenario_map.find("b");
   ASSERT_TRUE(b_it != scenario_map.end());
-  auto& scenario_a = a_it->second;
-  auto dt_a = scenario_a.ta().real;
-  EXPECT_EQ(dt_a, E::rtt_seconds_per_year * 10);
-  auto& scenario_b = b_it->second;
-  auto dt_b = scenario_b.ta().real;
-  EXPECT_EQ(dt_b, 10);
 }
 
 ERIN::Main
@@ -3270,9 +3347,13 @@ load_example_results(
     "upper_bound = 20.0\n"
     "[networks.nw01]\n"
     "connections = [[\"A:OUT(0)\", \"B:IN(0)\", \"electricity\"]]\n"
+    "[cdf.every_10_years]\n"
+    "type = \"fixed\"\n"
+    "value = 10\n"
+    "time_unit = \"years\"\n"
     "[scenarios.scenario01]\n"
     "time_unit = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", time_unit = \"years\", value = 10}\n"
+    "occurrence_distribution = \"every_10_years\"\n"
     "duration = 10\n"
     "max_occurrences = -1\n"
     "network = \"nw01\"\n"
@@ -3433,9 +3514,13 @@ load_converter_example()
     "constant_efficiency = 0.5\n"
     "[networks.nw01]\n"
     "connections = [[\"S:OUT(0)\", \"C:IN(0)\", \"diesel\"], [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.scenario01]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"nw01\"\n";
@@ -3536,9 +3621,13 @@ load_combined_heat_and_power_example()
     "               [\"C0:OUT(0)\", \"LE:IN(0)\", \"electricity\"], "
     "               [\"C0:OUT(1)\", \"C1:IN(0)\", \"waste_heat\"], "
     "               [\"C1:OUT(0)\", \"LT:IN(0)\", \"district_hot_water\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.scenario01]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"nw01\"\n";
@@ -3659,10 +3748,14 @@ TEST(ErinComponents, Test_passthrough_component)
     "loads_by_scenario.scenario0 = \"load0\"\n"
     "[networks.nw0]\n"
     "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.scenario0]\n"
     "time_unit = \"seconds\"\n"
     "duration = 10\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "max_occurrences = 1\n"
     "network = \"nw0\"\n";
   namespace E = ::ERIN;
@@ -3751,10 +3844,14 @@ TEST(ErinComponents, Test_passthrough_component_with_fragility)
     "upper_bound = 20.0\n"
     "[networks.nw0]\n"
     "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.scenario0]\n"
     "time_unit = \"seconds\"\n"
     "duration = 10\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "max_occurrences = 1\n"
     "intensity.intensity01 = 30.0\n"
     "network = \"nw0\"\n";
@@ -3802,10 +3899,14 @@ TEST(ErinComponents, Test_passthrough_component_with_limits)
     "loads_by_scenario.scenario0 = \"load0\"\n"
     "[networks.nw0]\n"
     "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.scenario0]\n"
     "time_unit = \"seconds\"\n"
     "duration = 10\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "max_occurrences = 1\n"
     "network = \"nw0\"\n";
   namespace E = ::ERIN;
@@ -3871,10 +3972,14 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
     "upper_bound = 20.0\n"
     "[networks.nw0]\n"
     "connections = [[\"S:OUT(0)\", \"C:IN(0)\", \"natural_gas\"], [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.scenario0]\n"
     "time_unit = \"seconds\"\n"
     "duration = 10\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "max_occurrences = 1\n"
     "intensity.intensity01 = 30.0\n"
     "network = \"nw0\"\n";
@@ -5265,9 +5370,13 @@ TEST(ErinBasicsTest, Test_example_8)
     "  [\"electric_source:OUT(0)\", \"electric_battery:IN(0)\", \"electricity\"],\n"
     "  [\"electric_battery:OUT(0)\", \"electric_load:IN(0)\", \"electricity\"],\n"
     "]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n";
@@ -5374,9 +5483,13 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
     "  [\"S:OUT(0)\", \"C:IN(0)\", \"natural_gas\"],\n"
     "  [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"],\n"
     "]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n";
@@ -5680,19 +5793,21 @@ TEST(ErinBasicsTest, Test_energy_balance_on_mux_with_replay)
 
 TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
 {
-  auto c = ERIN::ReliabilityCoordinator{};
+  auto f = []()->double { return 0.5; };
+  ERIN::ReliabilityCoordinator rc{};
+  auto cds = erin::distribution::CumulativeDistributionSystem{};
   std::int64_t final_time{10};
-  auto reliability_schedule_1 = c.calc_reliability_schedule(final_time);
+  auto reliability_schedule_1 = rc.calc_reliability_schedule(f, cds, final_time);
   EXPECT_EQ(reliability_schedule_1.size(), 0);
-  auto failure_id = c.add_fixed_cdf("f", 5);
-  auto repair_id = c.add_fixed_cdf("r", 1);
-  auto fm_id = c.add_failure_mode(
+  auto failure_id = cds.add_fixed_cdf("f", 5);
+  auto repair_id = cds.add_fixed_cdf("r", 1);
+  auto fm_id = rc.add_failure_mode(
       "standard failure",
       failure_id,
       repair_id);
-  auto comp_id = c.register_component("c");
-  c.link_component_with_failure_mode(comp_id, fm_id);
-  auto reliability_schedule = c.calc_reliability_schedule(final_time);
+  auto comp_id = rc.register_component("c");
+  rc.link_component_with_failure_mode(comp_id, fm_id);
+  auto reliability_schedule = rc.calc_reliability_schedule(f, cds, final_time);
   EXPECT_EQ(reliability_schedule.size(), 1);
   std::vector<ERIN::TimeState> expected{
     ERIN::TimeState{0, true},
@@ -5738,16 +5853,22 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
     "loads_by_scenario.blue_sky = \"default\"\n"
     "[networks.normal_operations]\n"
     "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
     "calculate_reliability = true\n";
-  auto rc = E::ReliabilityCoordinator();
-  auto id_break = rc.add_fixed_cdf("break", 5);
-  auto id_repair = rc.add_fixed_cdf("repair", 2);
+  auto f = []()->double { return 0.5; };
+  erin::distribution::CumulativeDistributionSystem cds{};
+  E::ReliabilityCoordinator rc{};
+  auto id_break = cds.add_fixed_cdf("break", 5);
+  auto id_repair = cds.add_fixed_cdf("repair", 2);
   auto id_fm = rc.add_failure_mode(
           "standard",
           id_break,
@@ -5756,7 +5877,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
   rc.link_component_with_failure_mode(id_S, id_fm);
   std::int64_t final_time{10};
   auto expected_sch =
-    rc.calc_reliability_schedule_by_component_tag(final_time);
+    rc.calc_reliability_schedule_by_component_tag(f, cds, final_time);
   auto m = E::make_main_from_string(input);
   auto sch = m.get_reliability_schedule();
   EXPECT_EQ(sch.size(), expected_sch.size());
@@ -5825,16 +5946,22 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
     "failure_modes = [\"standard\"]\n"
     "[networks.normal_operations]\n"
     "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
     "calculate_reliability = true\n";
-  auto rc = E::ReliabilityCoordinator();
-  auto id_break = rc.add_fixed_cdf("break", 5);
-  auto id_repair = rc.add_fixed_cdf("repair", 2);
+  auto rand_fn = []()->double { return 0.5; };
+  erin::distribution::CumulativeDistributionSystem cds{};
+  E::ReliabilityCoordinator rc{};
+  auto id_break = cds.add_fixed_cdf("break", 5);
+  auto id_repair = cds.add_fixed_cdf("repair", 2);
   auto id_fm = rc.add_failure_mode(
           "standard",
           id_break,
@@ -5843,7 +5970,7 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
   rc.link_component_with_failure_mode(id_L, id_fm);
   std::int64_t final_time{10};
   auto expected_sch =
-    rc.calc_reliability_schedule_by_component_tag(final_time);
+    rc.calc_reliability_schedule_by_component_tag(rand_fn, cds, final_time);
   auto m = E::make_main_from_string(input);
   auto sch = m.get_reliability_schedule();
   EXPECT_EQ(sch.size(), expected_sch.size());
@@ -5929,9 +6056,13 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_mux_component)
     "    [\"S2:OUT(0)\",  \"M:IN(1)\", \"electricity\"],\n"
     "    [ \"M:OUT(0)\", \"L1:IN(0)\", \"electricity\"],\n"
     "    [ \"M:OUT(1)\", \"L2:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
@@ -6052,9 +6183,13 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_converter_component)
     "connections = [\n"
     "    [\"S:OUT(0)\",  \"C:IN(0)\", \"natural_gas\"],\n"
     "    [\"C:OUT(0)\",  \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
@@ -6181,9 +6316,13 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_pass_through_component)
     "connections = [\n"
     "    [\"S:OUT(0)\",  \"P:IN(0)\", \"electricity\"],\n"
     "    [\"P:OUT(0)\",  \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
@@ -6296,9 +6435,13 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_storage_component)
     "connections = [\n"
     "    [\"S:OUT(0)\",  \"BATTERY:IN(0)\", \"electricity\"],\n"
     "    [\"BATTERY:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"normal_operations\"\n"
@@ -6395,16 +6538,18 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_storage_component)
 TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
 {
   namespace E = ERIN;
+  auto rand_fn = []()->double { return 0.5; };
+  erin::distribution::CumulativeDistributionSystem cds{};
   E::ReliabilityCoordinator rc{};
-  auto cdf_break_id = rc.add_fixed_cdf("break", 10);
-  auto cdf_repair_id = rc.add_fixed_cdf("repair", 5);
+  auto cdf_break_id = cds.add_fixed_cdf("break", 10);
+  auto cdf_repair_id = cds.add_fixed_cdf("repair", 5);
   auto fm_standard_id = rc.add_failure_mode(
       "standard", cdf_break_id, cdf_repair_id);
   std::string comp_string_id{"S"};
   auto comp_id = rc.register_component(comp_string_id);
   rc.link_component_with_failure_mode(comp_id, fm_standard_id);
   ERIN::RealTimeType final_time{100};
-  auto sch = rc.calc_reliability_schedule_by_component_tag(final_time);
+  auto sch = rc.calc_reliability_schedule_by_component_tag(rand_fn, cds, final_time);
   std::unordered_map<std::string, std::vector<E::TimeState>>
     expected_sch{
       { comp_string_id,
@@ -6614,9 +6759,13 @@ TEST(ErinBasicsTest, Test_uncontrolled_source)
     "connections = [\n"
     "    [\"US:OUT(0)\",  \"L:IN(0)\", \"electricity\"],\n"
     "    ]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"nw\"\n";
@@ -6699,9 +6848,13 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
     "    [\"S:OUT(0)\",  \"M:IN(1)\", \"electricity\"],\n"
     "    [\"M:OUT(0)\",  \"L:IN(0)\", \"heat\"],\n"
     "    ]\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"nw\"\n";
@@ -6856,9 +7009,14 @@ TEST(ErinBasicsTest, Test_reliability_schedule)
     "[networks.nw]\n"
     "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
     "############################################################\n"
+    "[cdf.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
+    "############################################################\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"hours\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 40\n"
     "max_occurrences = 1\n"
     "network = \"nw\"\n"

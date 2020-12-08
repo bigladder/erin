@@ -5,6 +5,7 @@
 #define ERIN_RELIABILITY_H
 #include "erin/type.h"
 #include "erin/distribution.h"
+#include <functional>
 #include <iostream>
 #include <set>
 #include <string>
@@ -47,10 +48,6 @@ namespace ERIN
     public:
       ReliabilityCoordinator();
 
-      size_type add_fixed_cdf(
-          const std::string& tag,
-          RealTimeType value_in_seconds);
-
       size_type add_failure_mode(
           const std::string& tag,
           const size_type& failure_cdf_id,
@@ -63,26 +60,28 @@ namespace ERIN
 
       size_type register_component(const std::string& tag);
 
-      // TODO[0]: delete this -- talk to the CDF directly
-      [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
-
       std::unordered_map<size_type, std::vector<TimeState>>
-      calc_reliability_schedule(RealTimeType final_time);
+      calc_reliability_schedule(
+          const std::function<double()>& rand_fn,
+          const erin::distribution::CumulativeDistributionSystem& cds,
+          RealTimeType final_time) const;
 
       std::unordered_map<std::string, std::vector<TimeState>>
-      calc_reliability_schedule_by_component_tag(RealTimeType final_time);
+      calc_reliability_schedule_by_component_tag(
+          const std::function<double()>& rand_fn,
+          const erin::distribution::CumulativeDistributionSystem& cds,
+          RealTimeType final_time) const;
 
     private:
-      // TODO[0]: remove this
-      erin::distribution::CumulativeDistributionSystem cds;
       FailureMode fms;
       FailureMode_Component_Link fm_comp_links;
       Component_meta comp_meta;
 
-      // TODO[0]: pass a const ref to CumulativeDistributionSystem to this function
       void calc_next_events(
+          const std::function<double()>& rand_fn,
+          const erin::distribution::CumulativeDistributionSystem& cds,
           std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
-          bool is_failure);
+          bool is_failure) const;
 
       size_type
       update_schedule(

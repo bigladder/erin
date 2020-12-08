@@ -30,30 +30,10 @@ namespace ERIN
   }
 
   ReliabilityCoordinator::ReliabilityCoordinator():
-    cds{},
     fms{},
     fm_comp_links{},
     comp_meta{}
   {
-  }
-
-  // TODO: add CDS as input to ReliabilityCoordinator to COPY
-  //ReliabilityCoordinator::ReliabilityCoordinator(
-  //    const erin::distribution::CumulativeDistributionSystem& cds_
-  //    ):
-  //  cds{cds_},
-  //  fms{},
-  //  fm_comp_links{},
-  //  comp_meta{}
-  //{
-  //}
-
-  size_type
-  ReliabilityCoordinator::add_fixed_cdf(
-      const std::string& tag,
-      RealTimeType value_in_seconds)
-  {
-    return cds.add_fixed_cdf(tag, value_in_seconds);
   }
 
   size_type
@@ -92,18 +72,12 @@ namespace ERIN
     return id;
   }
 
-  // TODO[0]: delete
-  size_type
-  ReliabilityCoordinator::lookup_cdf_by_tag(const std::string& tag) const
-  {
-    return cds.lookup_cdf_by_tag(tag);
-  }
-
-  // TODO[0]: add CumulativeDistributionSystem as a const arg ref to this function
   void
   ReliabilityCoordinator::calc_next_events(
+      const std::function<double()>& rand_fn,
+      const erin::distribution::CumulativeDistributionSystem& cds,
       std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
-      bool is_failure)
+      bool is_failure) const
   {
     const auto num_fm_comp_links{fm_comp_links.failure_mode_id.size()};
     for (size_type i{0}; i < num_fm_comp_links; ++i) {
@@ -116,7 +90,7 @@ namespace ERIN
       else { // is_repair
         cdf_id = fms.repair_cdf.at(i);
       }
-      auto dt = cds.next_time_advance(cdf_id);
+      auto dt = cds.next_time_advance(cdf_id, rand_fn());
       auto& dt_fm = comp_id_to_dt[comp_id]; 
       if ((dt_fm == -1) || (dt < dt_fm)) {
         dt_fm = dt;
@@ -156,7 +130,9 @@ namespace ERIN
 
   std::unordered_map<size_type, std::vector<TimeState>>
   ReliabilityCoordinator::calc_reliability_schedule(
-      RealTimeType final_time)
+      const std::function<double()>& rand_fn,
+      const erin::distribution::CumulativeDistributionSystem& cds,
+      RealTimeType final_time) const
   {
     const auto num_components{comp_meta.tag.size()};
     std::unordered_map<size_type, RealTimeType> comp_id_to_time{};
@@ -171,7 +147,7 @@ namespace ERIN
     }
     size_type count{0};
     while (true) {
-      calc_next_events(comp_id_to_dt, true);
+      calc_next_events(rand_fn, cds, comp_id_to_dt, true);
       count = update_schedule(
           comp_id_to_time,
           comp_id_to_dt,
@@ -181,7 +157,7 @@ namespace ERIN
       if (count == num_components) {
         break;
       }
-      calc_next_events(comp_id_to_dt, false);
+      calc_next_events(rand_fn, cds, comp_id_to_dt, false);
       count = update_schedule(
           comp_id_to_time,
           comp_id_to_dt,
@@ -197,9 +173,11 @@ namespace ERIN
 
   std::unordered_map<std::string, std::vector<TimeState>>
   ReliabilityCoordinator::calc_reliability_schedule_by_component_tag(
-      RealTimeType final_time)
+      const std::function<double()>& rand_fn,
+      const erin::distribution::CumulativeDistributionSystem& cds,
+      RealTimeType final_time) const
   {
-    auto sch = calc_reliability_schedule(final_time);
+    auto sch = calc_reliability_schedule(rand_fn, cds, final_time);
     std::unordered_map<std::string, std::vector<TimeState>> out{};
     for (size_type comp_id{0}; comp_id < comp_meta.tag.size(); ++comp_id) {
       const auto& tag = comp_meta.tag[comp_id];

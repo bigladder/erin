@@ -229,4 +229,15 @@ namespace erin::distribution
     }
     return dt;
   }
+
+  //std::vector<RealTimeType>
+  //CumulativeDistributionSystem::sample_upto_including(
+  //    const RealTimeType max_time_s)
+  //{
+  //  std::vector<RealTimeType> samples{};
+  //  RealTimeType t{0};
+  //  while (true) {
+
+  //  }
+  //}
 }

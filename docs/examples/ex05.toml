@@ -44,9 +44,13 @@ connections = [["S:OUT(0)", "C0:IN(0)", "natural_gas"],
                ["C0:OUT(0)", "LE:IN(0)", "electricity"],
                ["C0:OUT(1)", "C1:IN(0)", "waste_heat"],
                ["C1:OUT(0)", "LT:IN(0)", "district_hot_water"]]
+[cdf.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
 [scenarios.scenario01]
 time_unit = "seconds"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 10
 max_occurrences = 1
 network = "nw01"

@@ -1214,11 +1214,12 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, Scenario>
-  // TODO: change signature:
-  // TODO: TomlInputReader::read_scenarios(const std::unordered_map<std::string, ERIN::size_type>& cdfs)
-  TomlInputReader::read_scenarios()
+  TomlInputReader::read_scenarios(
+      const std::unordered_map<std::string, ERIN::size_type>& cdfs
+      )
   {
     namespace eg = erin_generics;
+    const std::string occur_dist_tag{"occurrence_distribution"};
     const std::string default_time_units{"hours"};
     std::unordered_map<std::string, Scenario> scenarios;
     const auto& toml_scenarios = toml::find<toml::table>(data, "scenarios");
@@ -1227,15 +1228,16 @@ namespace ERIN
     }
     for (const auto& s: toml_scenarios) {
       const auto& tt = toml::get<toml::table>(s.second);
-      // TODO: change occurrence_distribution to be just a string pointing to a CDF id
-      // TODO: const auto& next_occurrence_dist = toml::get<std::string>(tt, "occurrence_distribution");
-      // TODO: check that next_occurrence_dist is in the cdfs
-      // TODO: auto it = cdfs.find(next_occurrence_dist);
-      // TODO: if (it == cdfs.end()) { throw an error that we don't have a cdf corresponding to the given id }
-      // TODO: remove below two lines
-      const auto dist = toml::find<toml::table>(
-          s.second, "occurrence_distribution");
-      const auto next_occurrence_dist = eg::read_toml_distribution(dist);
+      const auto next_occurrence_dist = toml::find<std::string>(
+          s.second, occur_dist_tag);
+      auto it = cdfs.find(next_occurrence_dist);
+      if (it == cdfs.end()) {
+        std::ostringstream oss{};
+        oss << occur_dist_tag << " '" << next_occurrence_dist << "' does not appear"
+            << " in the list of available cdf declarations. A typo?\n";
+        throw std::runtime_error(oss.str());
+      }
+      const auto occurrence_dist_id = it->second;
       const auto& time_unit_str = toml::find_or(
           s.second, "time_unit", default_time_units);
       const auto time_units = tag_to_time_units(time_unit_str);
@@ -1258,7 +1260,7 @@ namespace ERIN
           break;
         default:
           {
-            std::ostringstream oss;
+            std::ostringstream oss{};
             oss << "unhandled time units '" << static_cast<int>(time_units)
                 << "'";
             throw std::runtime_error(oss.str());
@@ -1300,10 +1302,7 @@ namespace ERIN
               network_id,
               duration,
               static_cast<int>(max_occurrences),
-              // TODO[0]: replace with cdfs[next_occurrence_dist]
-              0,
-              // TODO[0]: remove the below
-              next_occurrence_dist,
+              occurrence_dist_id,
               intensity,
               calc_reliability}));
     }
@@ -1421,53 +1420,6 @@ namespace ERIN
                 cdf_string_id,
                 time_to_seconds(mean, tu),
                 time_to_seconds(std_dev, tu));
-            out[cdf_string_id] = cdf_id;
-            break;
-          }
-        default:
-          {
-            std::ostringstream oss{};
-            oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
-            throw std::invalid_argument(oss.str());
-          }
-      }
-    }
-    return out;
-  }
-
-
-  std::unordered_map<std::string, size_type>
-  TomlInputReader::read_cumulative_distributions_depricated(
-      ReliabilityCoordinator& rc)
-  {
-    const auto& toml_cdfs = toml::find_or(data, "cdf", toml::table{});
-    std::unordered_map<std::string, size_type> out{};
-    if (toml_cdfs.size() == 0) {
-      return out;
-    }
-    for (const auto& toml_cdf : toml_cdfs) {
-      const auto& cdf_string_id = toml_cdf.first;
-      const auto& t = toml_cdf.second;
-      const auto& tt = toml::get<toml::table>(t);
-      const auto& cdf_type = read_cdf_type(tt, cdf_string_id);
-      switch (cdf_type) {
-        case erin::distribution::CdfType::Fixed:
-          {
-            std::string field_read{""};
-            auto value =
-              toml_helper::read_number_from_table_as_int(tt, "value", -1);
-            if (value < 0) {
-              std::ostringstream oss{};
-              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'value' field; field 'value' must be present and >= 0\n";
-              throw std::invalid_argument(oss.str());
-            }
-            std::string time_tag =
-              toml_helper::read_optional_table_field<std::string>(
-                  tt, {"time_unit", "time_units"}, std::string{"hours"},
-                  field_read);
-            auto tu = tag_to_time_units(time_tag);
-            auto cdf_id = rc.add_fixed_cdf(
-                cdf_string_id, time_to_seconds(value, tu));
             out[cdf_string_id] = cdf_id;
             break;
           }
@@ -2612,32 +2564,24 @@ namespace ERIN
     auto loads_by_id = reader.read_loads();
     // TODO: add a repair CDF to the fragility datatype
     auto fragilities = reader.read_fragility_data();
-    // TODO[0]: add a CumulativeDistributionSystem instance below
-    //erin::distribution::CumulativeDistributionSystem cds{};
-    ReliabilityCoordinator rc{};
+    erin::distribution::CumulativeDistributionSystem cds{};
     // cdfs is map<string, size_type>
-    // TODO[0]: change the signature to store CDFs directly in a CumulativeDistributionSystem attribute of the class, cds
-    // TODO[0]: auto cdfs = reader.read_cumulative_distributions(cds);
-    auto cdfs = reader.read_cumulative_distributions_depricated(rc);
+    auto cdfs = reader.read_cumulative_distributions(cds);
+    ReliabilityCoordinator rc{};
     // fms is map<string, size_type>
     auto fms = reader.read_failure_modes(cdfs, rc);
     // components needs to be modified to add component_id as size_type?
     components = reader.read_components(loads_by_id, fragilities, fms, rc);
     networks = reader.read_networks();
-    // TODO: pass in cdfs to scenario to confirm that scenario is referencing an existing cdf
-    // TODO: scenarios = reader.read_scenarios(cdfs);
-    scenarios = reader.read_scenarios();
-    // TODO[0]: pass in the CumulativeDistributionSystem as a const ref
+    scenarios = reader.read_scenarios(cdfs);
+    const auto max_time_s{sim_info.get_max_time_in_seconds()};
+    rand_fn = sim_info.make_random_function();
     reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
-        sim_info.get_max_time_in_seconds()
-        );
-    // TODO: we can pre-calculate the scenario schedules as well. No reason to go into a double DEVS run...
-    // TODO: below, scenario_schedules :: std::unordered_map<std::string, std::vector<RealTimeType>>, (Map ScenarioID (Vec ScenarioStartTime))
-    // TODO: scenario_schedules should be a Main attribute
-    // TODO: scenario_schedules = calc_scenarios_schedule(scenarios, cds);
+        rand_fn, cds, max_time_s);
+    scenario_schedules = calc_scenario_schedule(
+        max_time_s, scenarios, cds, rand_fn);
     check_data();
     generate_failure_fragilities();
-    rand_fn = sim_info.make_random_function();
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& p : loads_by_id) {
         std::cout << p.first << ":\n";
@@ -2658,14 +2602,17 @@ namespace ERIN
         std::vector<::erin::network::Connection>>& networks_,
       const std::unordered_map<std::string, Scenario>& scenarios_,
       const std::unordered_map<std::string, std::vector<TimeState>>&
-        reliability_schedule_
+        reliability_schedule_,
+      const std::unordered_map<std::string, std::vector<RealTimeType>>&
+        scenario_schedules_
       ):
     sim_info{sim_info_},
     components{},
     networks{networks_},
     scenarios{scenarios_},
     failure_probs_by_comp_id_by_scenario_id{},
-    reliability_schedule{reliability_schedule_}
+    reliability_schedule{reliability_schedule_},
+    scenario_schedules{scenario_schedules_}
   {
     for (const auto& pair: components_) {
       components.insert(
@@ -2673,9 +2620,9 @@ namespace ERIN
             pair.first,
             pair.second->clone()));
     }
+    rand_fn = sim_info.make_random_function();
     check_data();
     generate_failure_fragilities();
-    rand_fn = sim_info.make_random_function();
   }
 
   void
@@ -2873,62 +2820,23 @@ namespace ERIN
   AllResults
   Main::run_all()
   {
-    RealTimeType sim_max_time = sim_info.get_max_time_in_seconds();
     std::unordered_map<std::string, std::vector<ScenarioResults>> out{};
-    // 1. create the network and simulator
-    adevs::Simulator<PortValue, Time> sim{};
-    // 2. add all scenarios
     for (const auto& s: scenarios) {
-      gsl::owner<Scenario*> p = new Scenario{s.second};
-      auto scenario_id = p->get_name();
-      out[scenario_id] = std::vector<ScenarioResults>{};
-      p->set_runner(
-          // ss = scenario start (seconds)
-          [this, scenario_id, &out](RealTimeType ss) {
-            if constexpr (debug_level >= debug_level_high) {
-              std::cout << "run(\"" << scenario_id << "\", " << ss << ")...\n";
-            }
-            auto result = this->run(scenario_id, ss);
-            auto& results = out.at(scenario_id);
-            results.emplace_back(result);
-          });
-      // NOTE: sim will delete all pointers passed to it upon deletion.
-      // Therefore, we don't need to worry about deleting Scenario pointers
-      // (sim does it).
-      sim.add(p);
-      p = nullptr;
-    }
-    // 3. run the simulation
-    const int max_no_advance{static_cast<int>(components.size()) * 10};
-    const auto sim_good = run_devs(sim, sim_max_time, max_no_advance, "run_all:scenario");
-    if (!sim_good) {
-      return AllResults{sim_good, out};
-    }
-    bool all_subsims_good{true};
-    using size_type = std::vector<std::string>::size_type;
-    std::vector<std::string> problem_scenarios{};
-    std::vector<size_type> scenario_indexes{};
-    for (const auto& item : out) {
-      const auto& scenario_id = item.first;
-      const auto& results = item.second;
-      for (size_type idx{0}; idx < results.size(); ++idx) {
-        const auto& r = results[idx];
-        const auto r_is_good = r.get_is_good();
-        all_subsims_good = all_subsims_good && r_is_good;
-        if (!r_is_good) {
-          problem_scenarios.emplace_back(scenario_id);
-          scenario_indexes.emplace_back(idx);
+      const auto& scenario_id = s.first;
+      std::vector<ScenarioResults> results{};
+      for (const auto& start_time : scenario_schedules[scenario_id]) {
+        auto result = run(scenario_id, start_time);
+        if (result.get_is_good()) {
+          results.emplace_back(result);
+        } else {
+          std::ostringstream oss{};
+          oss << "problem running scenario \"" << scenario_id << "\"\n";
+          throw std::invalid_argument(oss.str());
         }
       }
+      out[scenario_id] = results;
     }
-    if (problem_scenarios.size() > 0) {
-      std::cout << "ERROR! Issues simulating the following scenarios:\n";
-      for (size_type idx{0}; idx < problem_scenarios.size(); ++idx) {
-        std::cout << "Scenario " << problem_scenarios[idx]
-                  << "[" << scenario_indexes[idx] << "]\n";
-      }
-    }
-    return AllResults{all_subsims_good, out};
+    return AllResults{true, out};
   }
 
   RealTimeType
@@ -2966,110 +2874,17 @@ namespace ERIN
       RealTimeType duration_,
       int max_occurrences_,
       ERIN::size_type occurrence_dist_id_,
-      std::function<RealTimeType(void)> calc_time_to_next_,
       std::unordered_map<std::string, double> intensities_,
       bool calc_reliability_):
-    adevs::Atomic<PortValue, Time>(),
     name{std::move(name_)},
     network_id{std::move(network_id_)},
     duration{duration_},
     max_occurrences{max_occurrences_},
     occurrence_distribution_id{occurrence_dist_id_},
-    calc_time_to_next{std::move(calc_time_to_next_)},
     intensities{std::move(intensities_)},
-    t{0},
     num_occurrences{0},
-    runner{nullptr},
     calc_reliability{calc_reliability_}
   {
-  }
-
-  // TODO: revisit this. Not sure this is the right way to do equality for
-  // scenarios. Do we need equality?
-  bool
-  Scenario::operator==(const Scenario& other) const
-  {
-    if (this == &other) return true;
-    return (name == other.name) &&
-           (network_id == other.network_id) &&
-           (duration == other.duration) &&
-           (max_occurrences == other.max_occurrences) &&
-           (occurrence_distribution_id == other.occurrence_distribution_id) &&
-           (intensities == other.intensities) &&
-           (calc_reliability == other.calc_reliability);
-  }
-
-  // TODO[1]: remove
-  void
-  Scenario::delta_int()
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Scenario::delta_int();name=" << name << "\n";
-    }
-    ++num_occurrences;
-    if (runner != nullptr) {
-      runner(t);
-    }
-  }
-
-  // TODO[1]: remove
-  void
-  Scenario::delta_ext(Time e, std::vector<PortValue>& xs)
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Scenario::delta_ext("
-                << "{" << e.real << "," << e.logical << "}, ";
-      auto first{true};
-      for (const auto x: xs) {
-        if (first) {
-          std::cout << "{";
-        }
-        else {
-          std::cout << ", ";
-        }
-        std::cout << "{port=" << x.port << ", value=" << x.value << "}";
-      }
-      std::cout << "});name=" << name << "\n";
-    }
-    // Nothing to do here. Should be no external transitions at this time.
-  }
-
-  // TODO[1]: remove
-  void
-  Scenario::delta_conf(std::vector<PortValue>& xs)
-  {
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Scenario::delta_conf();name=" << name << "\n";
-    }
-    auto e = Time{0,0};
-    delta_int();
-    delta_ext(e, xs);
-  }
-
-  // TODO[1]: remove
-  Time
-  Scenario::ta()
-  {
-    if (calc_time_to_next == nullptr) {
-      return inf;
-    }
-    if ((max_occurrences >= 0) && (num_occurrences >= max_occurrences)) {
-      return inf;
-    }
-    auto dt = calc_time_to_next();
-    t += dt;
-    return Time{dt, 0};
-  }
-
-  // TODO[1]: remove
-  void
-  Scenario::output_func(std::vector<PortValue>&)
-  {
-    // nothing to do here as well. Scenarios are autonomous and don't interact
-    // with each other. Although we *could* have scenarios send their results
-    // out to an aggregator on each transition, probably best just for each
-    // scenario to track its local state and report back after simulation
-    // finishes.
   }
 
   std::ostream&
@@ -3081,16 +2896,31 @@ namespace ERIN
        << "duration=" << s.duration << ", "
        << "max_occurrences=" << s.max_occurrences << ", "
        << "occurrence_distribution_id=" << s.occurrence_distribution_id << ", "
-       << "calc_time_next=..., "
        << "intensities=..., "
-       << "t=" << s.t << ", "
        << "num_occurrences=" << s.num_occurrences << ", "
-       << "results=..., "
-       << "runner=..., "
        << "calc_reliability=" << (s.calc_reliability ? "true" : "false")
        << ")";
     return os;
   }
+
+  bool
+  operator==(const Scenario& a, const Scenario& b)
+  {
+    return (a.name == b.name) &&
+           (a.network_id == b.network_id) &&
+           (a.duration == b.duration) &&
+           (a.max_occurrences == b.max_occurrences) &&
+           (a.occurrence_distribution_id == b.occurrence_distribution_id) &&
+           (a.intensities == b.intensities) &&
+           (a.calc_reliability == b.calc_reliability);
+  }
+
+  bool
+  operator!=(const Scenario& a, const Scenario& b)
+  {
+    return !(a == b);
+  }
+
 
   ////////////////////////////////////////////////////////////
   // Helper Functions
@@ -3333,5 +3163,41 @@ namespace ERIN
     std::istringstream iss{substr};
     iss >> port_num;
     return port_num;
+  }
+
+  std::unordered_map<std::string, std::vector<RealTimeType>>
+  calc_scenario_schedule(
+      const RealTimeType max_time_s, 
+      const std::unordered_map<std::string, Scenario>& scenarios,
+      const erin::distribution::CumulativeDistributionSystem& cds,
+      const std::function<double()>& rand_fn)
+  {
+    std::unordered_map<std::string, std::vector<RealTimeType>> scenario_sch{};
+    if (scenarios.size() == 0) {
+      return scenario_sch;
+    }
+    for (const auto& s : scenarios) {
+      const auto& scenario_id = s.first;
+      const auto& scenario = s.second;
+      const auto cdf_id = scenario.get_occurrence_distribution_id();
+      const auto max_occurrences = scenario.get_max_occurrences();
+      RealTimeType t{0};
+      int num_occurrences{0};
+      std::vector<RealTimeType> start_times{};
+      while (true) {
+        t += cds.next_time_advance(cdf_id, rand_fn());
+        if (t <= max_time_s) {
+          num_occurrences += 1;
+          if ((max_occurrences != -1) && (num_occurrences > max_occurrences)) {
+            break;
+          }
+          start_times.emplace_back(t);
+        } else {
+          break;
+        }
+      }
+      scenario_sch.emplace(scenario_id, std::move(start_times));
+    }
+    return scenario_sch;
   }
 }

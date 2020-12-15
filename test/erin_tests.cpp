@@ -6465,25 +6465,45 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
     E::PortValue{ED::inport_outflow_request, 100.0}};
   s = ED::on_off_switch_external_transition(s, 1, xs);
   EXPECT_NE(s, expected_s);
+  EXPECT_EQ(s.time, 1);
   dt = ED::on_off_switch_time_advance(data, s);
   EXPECT_EQ(dt, 0);
   std::vector<ED::PortValue> expected_ys{
     E::PortValue{ED::outport_inflow_request, 100.0}
   };
-  auto ys = ED::on_off_switch_output_function(s);
+  auto ys = ED::on_off_switch_output_function(data, s);
   ASSERT_EQ(expected_ys.size(), ys.size());
   EXPECT_EQ(expected_ys[0].port, ys[0].port);
   EXPECT_EQ(expected_ys[0].value, ys[0].value);
   s = ED::on_off_switch_internal_transition(data, s);
   dt = ED::on_off_switch_time_advance(data, s);
   EXPECT_EQ(dt, 4);
-  ys = ED::on_off_switch_output_function(s);
-  expected_ys = std::vector<ED::PortValue>{};
-  EXPECT_EQ(expected_ys.size(), ys.size());
+  ys = ED::on_off_switch_output_function(data, s);
+  expected_ys = std::vector<ED::PortValue>{
+    ED::PortValue{ED::outport_inflow_request, 0.0},
+    ED::PortValue{ED::outport_outflow_achieved, 0.0}
+  };
+  ASSERT_EQ(expected_ys.size(), ys.size());
+  EXPECT_TRUE(
+      erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys, expected_ys, compare_ports));
   s = ED::on_off_switch_internal_transition(data, s);
+  EXPECT_EQ(s.time, 5);
   dt = ED::on_off_switch_time_advance(data, s);
-  EXPECT_EQ(dt, 0);
-  ys = ED::on_off_switch_output_function(s);
+  EXPECT_EQ(dt, 2);
+  ys = ED::on_off_switch_output_function(data, s);
+  expected_ys = std::vector<ED::PortValue>{
+    ED::PortValue{ED::outport_inflow_request, 100.0},
+    ED::PortValue{ED::outport_outflow_achieved, 100.0},
+  };
+  EXPECT_TRUE(
+      erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys, expected_ys, compare_ports));
+  s = ED::on_off_switch_internal_transition(data, s);
+  EXPECT_EQ(s.time, 7);
+  dt = ED::on_off_switch_time_advance(data, s);
+  EXPECT_EQ(dt, 5);
+  ys = ED::on_off_switch_output_function(data, s);
   expected_ys = std::vector<ED::PortValue>{
     ED::PortValue{ED::outport_inflow_request, 0.0},
     ED::PortValue{ED::outport_outflow_achieved, 0.0},
@@ -6492,37 +6512,21 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
       erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys, expected_ys, compare_ports));
   s = ED::on_off_switch_internal_transition(data, s);
+  EXPECT_EQ(s.time, 12);
   dt = ED::on_off_switch_time_advance(data, s);
   EXPECT_EQ(dt, 2);
-  ys = ED::on_off_switch_output_function(s);
-  EXPECT_EQ(ys.size(), 0);
-  s = ED::on_off_switch_internal_transition(data, s);
-  dt = ED::on_off_switch_time_advance(data, s);
-  EXPECT_EQ(dt, 0);
-  ys = ED::on_off_switch_output_function(s);
+  ys = ED::on_off_switch_output_function(data, s);
   expected_ys = std::vector<ED::PortValue>{
     ED::PortValue{ED::outport_inflow_request, 100.0},
-    ED::PortValue{ED::outport_outflow_achieved, 100.0}};
+    ED::PortValue{ED::outport_outflow_achieved, 100.0},
+  };
   EXPECT_TRUE(
       erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys, expected_ys, compare_ports));
   s = ED::on_off_switch_internal_transition(data, s);
+  EXPECT_EQ(s.time, 14);
   dt = ED::on_off_switch_time_advance(data, s);
-  EXPECT_EQ(dt, 5);
-  xs = std::vector<E::PortValue>{
-    E::PortValue{ED::inport_outflow_request, 50.0}};
-  s = ED::on_off_switch_confluent_transition(data, s, xs);
-  dt = ED::on_off_switch_time_advance(data, s);
-  EXPECT_EQ(dt, 0);
-  EXPECT_EQ(s.time, 12);
-  EXPECT_FALSE(s.state);
-  ys = ED::on_off_switch_output_function(s);
-  expected_ys = std::vector<ED::PortValue>{
-    ED::PortValue{ED::outport_inflow_request, 0.0},
-    ED::PortValue{ED::outport_outflow_achieved, 0.0}};
-  EXPECT_TRUE(
-      erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
-        ys, expected_ys, compare_ports));
+  EXPECT_EQ(dt, ED::infinity);
 }
 
 TEST(ErinBasicsTest, Test_uncontrolled_source)
@@ -6874,6 +6878,39 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
   EXPECT_EQ(inports_returned[0].get_achieved(), 5.0);
   EXPECT_EQ(inports_returned[1].get_achieved(), 5.0);
   EXPECT_EQ(inports_returned[2].get_achieved(), 10.0);
+}
+
+TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) {
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  const std::vector<E::TimeState> time_states{{0, true}, {100, false}, {103, true}};
+  // 1. request powerflow through at time 0 of 1 kW
+  // 2. at time equals 100, the request from upstream should be 0 kW and downstream should be notified of 0 kW achieved
+  // 3. at time equals 103, the request should return to 1 kW upstream and downstream should be notified of 1 kW achieved
+  auto d = ED::make_on_off_switch_data(time_states);
+  auto s0 = ED::make_on_off_switch_state(d);
+  EXPECT_EQ(s0.time, 0);
+  EXPECT_EQ(s0.state, true);
+  auto dt0 = ED::on_off_switch_time_advance(d, s0);
+  EXPECT_EQ(dt0, 100);
+  auto s1 = ED::on_off_switch_external_transition(s0, 0, std::vector<E::PortValue>{{ED::inport_outflow_request, 1.0}});
+  EXPECT_EQ(s1.time, 0);
+  EXPECT_EQ(s1.state, true);
+  auto dt1 = ED::on_off_switch_time_advance(d, s1);
+  EXPECT_EQ(dt1, 0);
+  auto ys0 = ED::on_off_switch_output_function(d, s1);
+  ASSERT_EQ(ys0.size(), 1);
+  EXPECT_EQ(ys0[0].port, ED::outport_inflow_request);
+  EXPECT_EQ(ys0[0].value, 1.0);
+  auto s2 = ED::on_off_switch_internal_transition(d, s1);
+  EXPECT_EQ(s2.time, 0);
+  EXPECT_EQ(s2.state, true);
+  auto dt2 = ED::on_off_switch_time_advance(d, s2);
+  EXPECT_EQ(dt2, 100);
+  auto ys2 = ED::on_off_switch_output_function(d, s2);
+  ASSERT_EQ(ys2.size(), 2);
+  //EXPECT_EQ(ys0[0].port, ED::outport_inflow_request);
+  //EXPECT_EQ(ys0[0].value, 1.0);
 }
 
 int

@@ -29,15 +29,19 @@ namespace erin::devs
       const std::vector<Port>& inflow_ports,
       const std::vector<Port>& outflow_ports)
   {
+    auto ip_begin = inflow_ports.begin();
+    auto ip_end = inflow_ports.end();
     if (std::any_of(
-          inflow_ports.begin(), inflow_ports.end(),
+          ip_begin, ip_end,
           [time](const Port& p) {
             return p.should_propagate_request_at(time);
           })) {
       return true;
     }
+    auto op_begin = outflow_ports.begin();
+    auto op_end = outflow_ports.end();
     if (std::any_of(
-          outflow_ports.begin(), outflow_ports.end(),
+          op_begin, op_end,
           [time](const Port& p) {
             return p.should_propagate_achieved_at(time);
           })) {

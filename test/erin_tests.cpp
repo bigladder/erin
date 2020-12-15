@@ -1122,9 +1122,9 @@ TEST(ErinBasicsTest, TestScenarioResultsMetrics)
 
 TEST(ErinBasicsTest, Test_calc_scenario_stats)
 {
-  std::vector<::ERIN::Datum> ds{
-    { ::ERIN::Datum{0,1.0,1.0},
-      ::ERIN::Datum{4,0.0,0.0}}
+  std::vector<ERIN::Datum> ds{
+    { ERIN::Datum{0,1.0,1.0},
+      ERIN::Datum{4,0.0,0.0}}
   };
   // RealTimeType uptime;
   // RealTimeType downtime;
@@ -1136,7 +1136,7 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
     0,    // RealTimeType max_downtime
     0.0,  // FlowValueType load_not_served
     4.0}; // FlowValueType total_energy
-  auto actual = ::ERIN::calc_scenario_stats(ds);
+  auto actual = ERIN::calc_scenario_stats(ds);
   EXPECT_EQ(expected.uptime, actual.uptime);
   EXPECT_EQ(expected.downtime, actual.downtime);
   EXPECT_EQ(expected.max_downtime, actual.max_downtime);

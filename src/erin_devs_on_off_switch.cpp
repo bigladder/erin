@@ -270,8 +270,8 @@ namespace erin::devs
       const OnOffSwitchState& state,
       const std::vector<PortValue>& xs)
   {
-    auto s = on_off_switch_internal_transition(data, state);
-    return on_off_switch_external_transition(s, 0, xs);
+    return on_off_switch_external_transition(
+        on_off_switch_internal_transition(data, state), 0, xs);
   }
 
   ////////////////////////////////////////////////////////////

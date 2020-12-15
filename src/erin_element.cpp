@@ -1791,7 +1791,7 @@ namespace ERIN
       std::cout << "OnOffSwitch[" << get_id() << "] output_func\n";
       std::cout << "state = " << state << "\n";
     }
-    erin::devs::on_off_switch_output_function_mutable(state, ys);
+    erin::devs::on_off_switch_output_function_mutable(data, state, ys);
   }
 
   void

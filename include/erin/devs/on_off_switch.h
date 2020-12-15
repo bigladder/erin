@@ -79,10 +79,13 @@ namespace erin::devs
   ////////////////////////////////////////////////////////////
   // output function
   std::vector<PortValue>
-  on_off_switch_output_function(const OnOffSwitchState& state);
+  on_off_switch_output_function(
+      const OnOffSwitchData& data,
+      const OnOffSwitchState& state);
 
   void 
   on_off_switch_output_function_mutable(
+      const OnOffSwitchData& data,
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys);
 }

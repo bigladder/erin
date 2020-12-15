@@ -242,7 +242,7 @@ namespace ERIN
           const int num_inflows,
           const int num_outflows,
           const MuxerDispatchStrategy output_strategy
-            = MuxerDispatchStrategy::Distribute);
+            = MuxerDispatchStrategy::InOrder);
       MuxerComponent(
           const std::string& id,
           const std::string& stream,

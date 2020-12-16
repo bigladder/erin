@@ -109,8 +109,6 @@ namespace erin::devs
                 << "new_achieved=" << new_achieved << ", "
                 << "time=" << time << ")\n";
     }
-    // when we set a new request, we assume achieved is met until we hear
-    // otherwise
     if (time < time_of_last_change) {
       std::ostringstream oss;
       oss << "invalid time argument: time flowing backwards...\n"

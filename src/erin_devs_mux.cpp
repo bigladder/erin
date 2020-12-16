@@ -243,7 +243,9 @@ namespace erin::devs
     for (size_type idx{0}; idx < new_inflows.size(); ++idx) {
       auto achieved = new_inflows[idx].get_achieved();
       auto requested = new_inflows[idx].get_requested();
-      if ((achieved < remaining_request) && (achieved < requested)) {
+      if ((achieved < (remaining_request - ERIN::flow_value_tolerance))
+          && (achieved < (requested - ERIN::flow_value_tolerance))
+          && (time == new_inflows[idx].get_time_of_last_change())) {
         new_inflows[idx] = new_inflows[idx].with_requested_and_achieved(
             remaining_request, achieved, time);
       }
@@ -434,35 +436,14 @@ namespace erin::devs
         throw std::runtime_error(oss.str());
       }
     }
-    FlowValueType total_inflow_achieved = std::accumulate(
-        inflow_ports.begin(), inflow_ports.end(), 0.0,
-        [](const auto& s, const auto& p) { return s + p.get_achieved(); });
     FlowValueType total_outflow_request = std::accumulate(
         outflow_ports.begin(), outflow_ports.end(), 0.0,
         [](const auto& s, const auto& p) { return s + p.get_requested(); });
-    auto diff{total_inflow_achieved - total_outflow_request};
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "... total_inflow_achieved: "
-                << total_inflow_achieved << "\n"
-                << "... total_outflow_request: "
-                << total_outflow_request << "\n"
-                << "... diff                 : " << diff << "\n";
-    }
-    if (std::abs(diff) > ERIN::flow_value_tolerance) {
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        if (diff > 0.0) {
-          std::cout << "...oversupplying\n";
-        }
-        else {
-          std::cout << "...undersupplying\n";
-        }
-      }
-      inflow_ports = request_inflows_intelligently(
-          inflow_ports, total_outflow_request, time);
-      total_inflow_achieved = std::accumulate(
-          inflow_ports.begin(), inflow_ports.end(), 0.0,
-          [](const auto& s, const auto& p) { return s + p.get_achieved(); });
-    }
+    inflow_ports = request_inflows_intelligently(
+        inflow_ports, total_outflow_request, time);
+    FlowValueType total_inflow_achieved = std::accumulate(
+        inflow_ports.begin(), inflow_ports.end(), 0.0,
+        [](const auto& s, const auto& p) { return s + p.get_achieved(); });
     outflow_ports = distribute_inflow_to_outflow(
         state.outflow_strategy, outflow_ports,
         total_inflow_achieved, time);
@@ -482,18 +463,8 @@ namespace erin::devs
       const MuxState& state,
       const std::vector<PortValue>& xs)
   {
-    auto dt = mux_time_advance(state);
-    auto s0 = mux_external_transition(state, dt, xs);
-    auto s1 = mux_internal_transition(s0);
-    bool do_report = mux_should_report(s1.time, s1.inflow_ports, s1.outflow_ports);
-    return MuxState{
-      s1.time,
-      s1.num_inflows,
-      s1.num_outflows,
-      std::move(s1.inflow_ports),
-      std::move(s1.outflow_ports),
-      do_report,
-      state.outflow_strategy};
+    return mux_external_transition(
+        mux_internal_transition(state), 0, xs);
   }
 
   std::vector<PortValue>

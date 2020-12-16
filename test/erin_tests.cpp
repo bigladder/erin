@@ -4708,8 +4708,10 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_EQ(dt8, 0);
   auto ys8 = ED::mux_output_function(s8);
   std::vector<ED::PortValue> expected_ys8{
-    ED::PortValue{ED::outport_outflow_achieved + 0, 45.0},
-    ED::PortValue{ED::outport_outflow_achieved + 1, 45.0},
+    ED::PortValue{ED::outport_outflow_achieved + 0, 100.0},
+    ED::PortValue{ED::outport_inflow_request + 0, 200.0},
+    ED::PortValue{ED::outport_inflow_request + 1, 0.0},
+    ED::PortValue{ED::outport_inflow_request + 2, 0.0},
   };
   if (false) {
     std::cout << "expected_ys8 = " << ERIN::vec_to_string<ED::PortValue>(expected_ys8) << "\n";
@@ -4717,10 +4719,35 @@ TEST(ErinDevs, Test_function_based_mux)
     std::cout << "s8.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.inflow_ports) << "\n";
     std::cout << "s8.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.outflow_ports) << "\n";
   }
-  EXPECT_EQ(ys8.size(), expected_ys8.size());
+  ASSERT_EQ(ys8.size(), expected_ys8.size());
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys8, expected_ys8, compare_ports));
+  auto s9 = ED::mux_internal_transition(s8);
+  std::vector<ED::PortValue> xs9{
+    ED::PortValue{ED::inport_inflow_achieved + 0, 100.0}};
+  auto s10 = ED::mux_external_transition(s9, 0, xs9);
+  EXPECT_EQ(ED::mux_current_time(s10), 22);
+  auto ys10 = ED::mux_output_function(s10);
+  std::vector<ED::PortValue> expected_ys10{
+    ED::PortValue{ED::outport_inflow_request + 1, 100.0},
+  };
+  if (true) {
+    std::cout << "expected_ys10 = " << ERIN::vec_to_string<ED::PortValue>(expected_ys10) << "\n";
+    std::cout << "ys10          = " << ERIN::vec_to_string<ED::PortValue>(ys10) << "\n";
+    std::cout << "s10.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s10.inflow_ports) << "\n";
+    std::cout << "s10.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s10.outflow_ports) << "\n";
+  }
+  /*
+  ASSERT_EQ(ys10.size(), expected_ys10.size());
+  EXPECT_TRUE(
+      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
+        ys10, expected_ys10, compare_ports));
+  std::vector<ED::PortValue> expected_ys8{
+    ED::PortValue{ED::outport_outflow_achieved + 0, 45.0},
+    ED::PortValue{ED::outport_outflow_achieved + 1, 45.0},
+  };
+  */
 }
 
 TEST(ErinDevs, Test_function_based_storage_element)
@@ -6873,11 +6900,11 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
       inports, remaining_request, 1);
   ASSERT_EQ(inports_returned.size(), 3);
   EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
-  EXPECT_EQ(inports_returned[1].get_requested(), 20.0);
-  EXPECT_EQ(inports_returned[2].get_requested(), 15.0);
-  EXPECT_EQ(inports_returned[0].get_achieved(), 5.0);
-  EXPECT_EQ(inports_returned[1].get_achieved(), 5.0);
-  EXPECT_EQ(inports_returned[2].get_achieved(), 10.0);
+  EXPECT_EQ(inports_returned[1].get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[2].get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[0].get_achieved(), 25.0);
+  EXPECT_EQ(inports_returned[1].get_achieved(), 0.0);
+  EXPECT_EQ(inports_returned[2].get_achieved(), 0.0);
 }
 
 TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) {

@@ -12,6 +12,38 @@
 namespace erin::devs
 {
   void
+  print_flows(
+      const std::string& tag,
+      const RealTimeType time,
+      const std::vector<Port>& flows,
+      const std::vector<Port>& new_flows)
+  {
+    if (flows.size() != new_flows.size()) {
+      std::cout << "FLOW SIZES DON'T MATCH!!!\n"
+                << "flows.size() = " << flows.size() << "\n"
+                << "new_flows.size() = " << new_flows.size() << "\n";
+      return;
+    }
+    using st = std::vector<Port>::size_type;
+    for (st idx{0}; idx < flows.size(); ++idx) {
+      const auto& f = flows.at(idx);
+      const auto& nf = new_flows.at(idx);
+      std::cout << tag << "(" << idx << ") @ t = " << time
+                << " (" << f.get_requested()
+                << ", " << f.get_achieved()
+                << ", " << f.get_time_of_last_change()
+                << ") -->"
+                << " (" << nf.get_requested()
+                << ", " << nf.get_achieved()
+                << ", " << nf.get_time_of_last_change()
+                << ")"
+                << (nf.should_propagate_request_at(time) ? "R" : ".")
+                << (nf.should_propagate_achieved_at(time) ? "A" : ".")
+                << "\n";
+    }
+  }
+
+  void
   mux_check_num_flows(const std::string& tag, int n)
   {
     if ((n < minimum_number_of_ports) || (n > maximum_number_of_ports)) {
@@ -89,6 +121,9 @@ namespace erin::devs
           << "remaining supply: " << remaining_supply << "\n";
       throw std::runtime_error(oss.str());
     }
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      print_flows("OUT", time, outflows, new_outflows);
+    }
     return new_outflows;
   }
 
@@ -161,6 +196,9 @@ namespace erin::devs
     for (size_type idx{0}; idx < num_outflows; ++idx) {
       const auto& of = outflows[idx];
       new_outflows.emplace_back(of.with_achieved(outflow_supplies[idx], time));
+    }
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      print_flows("OUT", time, outflows, new_outflows);
     }
     return new_outflows;
   }
@@ -257,6 +295,9 @@ namespace erin::devs
       if (remaining_request < 0.0) {
         remaining_request = 0.0;
       }
+    }
+    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+      print_flows("IN", time, inflows, new_inflows);
     }
     return new_inflows;
   }

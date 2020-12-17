@@ -118,7 +118,7 @@ namespace erin::devs
     }
     bool is_same{
       (std::abs(new_request - requested) < ERIN::flow_value_tolerance)
-      && (std::abs(new_request - new_achieved) < ERIN::flow_value_tolerance)};
+      && (std::abs(new_achieved - achieved) < ERIN::flow_value_tolerance)};
     return Port{
       is_same ? time_of_last_change : time,
       new_request,

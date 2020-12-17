@@ -1342,9 +1342,11 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] delta_int\n";
-      std::cout << "before:\n";
-      print_ports(state.inflow_ports, "IN");
-      print_ports(state.outflow_ports, "OUT");
+      if (false) {
+        std::cout << "before:\n";
+        print_ports(state.inflow_ports, "IN");
+        print_ports(state.outflow_ports, "OUT");
+      }
     }
     state = erin::devs::mux_internal_transition(state);
     if constexpr (debug_level >= debug_level_high) {
@@ -1361,13 +1363,15 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] delta_ext\n";
-      std::cout << "xs:\n";
-      for (const auto& x : xs) {
-        std::cout << "- (inport = " << x.port << ", value = " << x.value << ")\n";
+      if (false) {
+        std::cout << "xs:\n";
+        for (const auto& x : xs) {
+          std::cout << "- (inport = " << x.port << ", value = " << x.value << ")\n";
+        }
+        std::cout << "before:\n";
+        print_ports(state.inflow_ports, "IN");
+        print_ports(state.outflow_ports, "OUT");
       }
-      std::cout << "before:\n";
-      print_ports(state.inflow_ports, "IN");
-      print_ports(state.outflow_ports, "OUT");
     }
     state = erin::devs::mux_external_transition(state, e.real, xs);
     if constexpr (debug_level >= debug_level_high) {
@@ -1384,13 +1388,15 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "MUX[" << get_id() << "] delta_conf\n";
-      std::cout << "xs:\n";
-      for (const auto& x : xs) {
-        std::cout << "- (" << x.port << ", " << x.value << ")\n";
+      if (false) {
+        std::cout << "xs:\n";
+        for (const auto& x : xs) {
+          std::cout << "- (" << x.port << ", " << x.value << ")\n";
+        }
+        std::cout << "before:\n";
+        print_ports(state.inflow_ports, "IN");
+        print_ports(state.outflow_ports, "OUT");
       }
-      std::cout << "before:\n";
-      print_ports(state.inflow_ports, "IN");
-      print_ports(state.outflow_ports, "OUT");
     }
     state = erin::devs::mux_confluent_transition(state, xs);
     if constexpr (debug_level >= debug_level_high) {

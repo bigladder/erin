@@ -142,7 +142,7 @@ namespace ERIN
         cdf_subtype_id = cdfs.subtype_id.at(cdf_id);
       }
       else { // is_repair
-        cdf_id = fms.repair_cdf.at(i);
+        cdf_id = fms.repair_cdf.at(fm_id);
         cdf_type = cdfs.cdf_type.at(cdf_id);
         cdf_subtype_id = cdfs.subtype_id.at(cdf_id);
       }

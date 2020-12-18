@@ -1127,7 +1127,7 @@ namespace ERIN
         std::string, std::unique_ptr<Component>>& components,
       fragility_map&& frags) const
   {
-    std::string field_read;
+    std::string field_read{};
     auto const_eff_val = toml_helper::read_required_table_field<toml::value>(
         tt, {"constant_efficiency"}, field_read);
     auto const_eff = read_number(const_eff_val);

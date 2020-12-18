@@ -983,7 +983,7 @@ namespace ERIN
     const_eff{const_eff_}
   {
     if ((const_eff > 1.0) || (const_eff <= 0.0)) {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "const_eff not in the proper range (0 < const_eff <= 1.0)\n"
           << "const_eff = " << const_eff << "\n";
       throw std::invalid_argument(oss.str());

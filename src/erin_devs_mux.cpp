@@ -12,6 +12,28 @@
 namespace erin::devs
 {
   void
+  print_ports(
+      const std::vector<Port>::size_type idx,
+      const std::string& tag,
+      const RealTimeType time,
+      const Port& flow,
+      const Port& new_flow)
+  {
+    std::cout << tag << "(" << idx << ") @ t = " << time
+              << " (" << flow.get_requested()
+              << ", " << flow.get_achieved()
+              << ", " << flow.get_time_of_last_change()
+              << ") -->"
+              << " (" << new_flow.get_requested()
+              << ", " << new_flow.get_achieved()
+              << ", " << new_flow.get_time_of_last_change()
+              << ")"
+              << (new_flow.should_propagate_request_at(time) ? "R" : ".")
+              << (new_flow.should_propagate_achieved_at(time) ? "A" : ".")
+              << "\n";
+  }
+
+  void
   print_flows(
       const std::string& tag,
       const RealTimeType time,
@@ -26,20 +48,7 @@ namespace erin::devs
     }
     using st = std::vector<Port>::size_type;
     for (st idx{0}; idx < flows.size(); ++idx) {
-      const auto& f = flows.at(idx);
-      const auto& nf = new_flows.at(idx);
-      std::cout << tag << "(" << idx << ") @ t = " << time
-                << " (" << f.get_requested()
-                << ", " << f.get_achieved()
-                << ", " << f.get_time_of_last_change()
-                << ") -->"
-                << " (" << nf.get_requested()
-                << ", " << nf.get_achieved()
-                << ", " << nf.get_time_of_last_change()
-                << ")"
-                << (nf.should_propagate_request_at(time) ? "R" : ".")
-                << (nf.should_propagate_achieved_at(time) ? "A" : ".")
-                << "\n";
+      print_ports(idx, tag, time, flows.at(idx), new_flows.at(idx));
     }
   }
 

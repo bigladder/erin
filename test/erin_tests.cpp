@@ -1144,6 +1144,38 @@ TEST(ErinBasicsTest, Test_calc_scenario_stats)
   EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
 }
 
+TEST(ErinBasicsTest, Test_calc_scenario_stats_for_max_single_event_downtime)
+{
+  std::vector<ERIN::Datum> ds{
+    {
+      // time, requested, achieved
+      ERIN::Datum{0,1.0,1.0},
+      ERIN::Datum{4,1.0,0.0},
+      ERIN::Datum{6,1.0,1.0},
+      ERIN::Datum{20,1.0,0.0},
+      ERIN::Datum{28,1.0,1.0},
+      ERIN::Datum{30,0.0,0.0}
+    }
+  };
+  // RealTimeType uptime;
+  // RealTimeType downtime;
+  // FlowValueType load_not_served;
+  // FlowValueType total_energy;
+  ERIN::ScenarioStats expected{
+    20,    // RealTimeType uptime
+    10,    // RealTimeType downtime
+    8,    // RealTimeType max_downtime
+    10.0,  // FlowValueType load_not_served
+    20.0}; // FlowValueType total_energy
+  auto actual = ERIN::calc_scenario_stats(ds);
+  EXPECT_EQ(expected.uptime, actual.uptime);
+  EXPECT_EQ(expected.downtime, actual.downtime);
+  EXPECT_EQ(expected.max_downtime, actual.max_downtime);
+  EXPECT_NEAR(expected.load_not_served, actual.load_not_served, tolerance);
+  EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
+}
+
+
 TEST(ErinBasicsTest, BasicScenarioTest)
 {
   // We want to create one or more scenarios and simulate them in DEVS

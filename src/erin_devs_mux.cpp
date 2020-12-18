@@ -19,6 +19,14 @@ namespace erin::devs
       const Port& flow,
       const Port& new_flow)
   {
+    std::string prop_R{"."};
+    std::string prop_A{"."};
+    if (new_flow.should_propagate_request_at(time)) {
+      prop_R = "R";
+    }
+    if (new_flow.should_propagate_achieved_at(time)) {
+      prop_A = "A";
+    }
     std::cout << tag << "(" << idx << ") @ t = " << time
               << " (" << flow.get_requested()
               << ", " << flow.get_achieved()
@@ -27,10 +35,7 @@ namespace erin::devs
               << " (" << new_flow.get_requested()
               << ", " << new_flow.get_achieved()
               << ", " << new_flow.get_time_of_last_change()
-              << ")"
-              << (new_flow.should_propagate_request_at(time) ? "R" : ".")
-              << (new_flow.should_propagate_achieved_at(time) ? "A" : ".")
-              << "\n";
+              << ")" << prop_R << prop_A << "\n";
   }
 
   void

@@ -1011,12 +1011,13 @@ namespace ERIN
       bool is_failed,
       const std::vector<TimeState>& reliability_schedule) const
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "ConverterComponent::add_to_network(...)\n"
+                << "is_failed = " << is_failed << "\n";
+    }
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "ConverterComponent::add_to_network(...)\n";
-    }
     auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto the_type = ComponentType::Converter;

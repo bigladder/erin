@@ -121,10 +121,15 @@ connections = [
   ["gen_a:OUT(0)", "xfer_a:IN(1)", "electricity"],
   ["gen_b:OUT(0)", "xfer_b:IN(1)", "electricity"]
 ]
+############## CDFs ######################
+[cdf.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
 ############## Scenarios #################
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 5
 max_occurrences = 1
 network = "nw_electric"

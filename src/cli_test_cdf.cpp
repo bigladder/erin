@@ -35,6 +35,10 @@ print_usage(const int argc, const gsl::span<const char*>& args)
                "SETS Exit Code 1 if issues encountered, else sets 0\n";
 }
 
+constexpr int num_args_for_fixed{4};
+constexpr int num_args_for_uniform{5};
+constexpr int num_args_for_normal{5};
+
 int
 main(const int argc, const char* argv[])
 {
@@ -50,7 +54,7 @@ main(const int argc, const char* argv[])
   switch (cdf_type) {
     case ed::CdfType::Fixed:
       {
-        if (argc != 4) {
+        if (argc != num_args_for_fixed) {
           std::cout << "Missing arguments for fixed distribution\n";
           print_usage(argc, args);
           return 1;
@@ -62,7 +66,7 @@ main(const int argc, const char* argv[])
       }
     case ed::CdfType::Uniform:
       {
-        if (argc != 5) {
+        if (argc != num_args_for_uniform) {
           std::cout << "Missing arguments for uniform distribution\n";
           print_usage(argc, args);
           return 1;
@@ -75,7 +79,7 @@ main(const int argc, const char* argv[])
       }
     case ed::CdfType::Normal:
       {
-        if (argc != 5) {
+        if (argc != num_args_for_normal) {
           std::cout << "Missing arguments for uniform distribution\n";
           print_usage(argc, args);
           return 1;

@@ -88,7 +88,7 @@ namespace ERIN
         cdf_id = fms.failure_cdf.at(fm_id);
       }
       else { // is_repair
-        cdf_id = fms.repair_cdf.at(i);
+        cdf_id = fms.repair_cdf.at(fm_id);
       }
       auto dt = cds.next_time_advance(cdf_id, rand_fn());
       auto& dt_fm = comp_id_to_dt[comp_id]; 

@@ -2,7 +2,7 @@
 # See the LICENSE.txt file for additional terms and conditions.
 cmake_minimum_required(VERSION 3.15) # required for gtest_discover_tests
 
-project(ERIN VERSION 0.0.38 LANGUAGES CXX)
+project(ERIN VERSION 0.0.40 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
@@ -207,3 +207,15 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex14.toml"
   "ex14.toml"
   COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex15.toml"
+  "ex15.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex16.toml"
+  "ex16.toml"
+  COPYONLY)
+  configure_file(
+    "${PROJECT_SOURCE_DIR}/docs/examples/ex17.toml"
+    "ex17.toml"
+    COPYONLY)

@@ -188,8 +188,8 @@ namespace erin::devs
         state.next_index + 1,
         ip,
         op,
-        ip.should_propagate_request_at(next_time),
-        op.should_propagate_achieved_at(next_time)
+        false,
+        false
       };
     }
     throw std::runtime_error("invalid internal transition");
@@ -270,42 +270,71 @@ namespace erin::devs
       const OnOffSwitchState& state,
       const std::vector<PortValue>& xs)
   {
-    auto s = on_off_switch_internal_transition(data, state);
-    return on_off_switch_external_transition(s, 0, xs);
+    return on_off_switch_external_transition(
+        on_off_switch_internal_transition(data, state), 0, xs);
   }
 
   ////////////////////////////////////////////////////////////
   // output function
   std::vector<PortValue>
-  on_off_switch_output_function(const OnOffSwitchState& state)
+  on_off_switch_output_function(
+      const OnOffSwitchData& data,
+      const OnOffSwitchState& state)
   {
     std::vector<PortValue> ys{};
-    on_off_switch_output_function_mutable(state, ys);
+    on_off_switch_output_function_mutable(data, state, ys);
     return ys;
   }
 
   void 
   on_off_switch_output_function_mutable(
+      const OnOffSwitchData& data,
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys)
   {
-    if (state.report_inflow_request) {
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "switch:I(0) <- " << state.inflow_port.get_requested() << "\n";
+    if (state.report_inflow_request || state.report_outflow_achieved) {
+      if (state.report_inflow_request) {
+        // This would only happen after an external transition
+        // We need to pass the request/achieved value through to outport
+        if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+          std::cout << "switch:I(0) <- " << state.inflow_port.get_requested() << "\n";
+        }
+        ys.emplace_back(
+            PortValue{
+              outport_inflow_request,
+              state.inflow_port.get_requested()});
       }
-      ys.emplace_back(
-          PortValue{
-            outport_inflow_request,
-            state.inflow_port.get_requested()});
+      if (state.report_outflow_achieved) {
+        if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+          std::cout << "switch:O(0) -> " << state.outflow_port.get_achieved() << "\n";
+        }
+        ys.emplace_back(
+            PortValue{
+              outport_outflow_achieved,
+              state.outflow_port.get_achieved()});
+      }
     }
-    if (state.report_outflow_achieved) {
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "switch:O(0) -> " << state.outflow_port.get_achieved() << "\n";
+    else {
+      auto dt = on_off_switch_time_advance(data, state);
+      auto next_time = state.time + dt;
+      // outputs fire BEFORE internal transition
+      // if state is currently true, then next state will be false
+      // therefore, we need to turn off any flows
+      ERIN::FlowValueType flow{state.state ? 0.0 : state.outflow_port.get_requested()};
+      auto ip = state.inflow_port.with_requested(flow, next_time);
+      auto op = state.outflow_port.with_achieved(flow, next_time);
+      if (ip.should_propagate_request_at(next_time)) {
+        ys.emplace_back(
+            PortValue{
+            outport_inflow_request,
+            flow});
       }
-      ys.emplace_back(
-          PortValue{
+      if (op.should_propagate_achieved_at(next_time)) {
+        ys.emplace_back(
+            PortValue{
             outport_outflow_achieved,
-            state.outflow_port.get_achieved()});
+            flow});
+      }
     }
   }
 }

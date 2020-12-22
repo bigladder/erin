@@ -6814,6 +6814,47 @@ TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_4), 0);
 }
 
+TEST(ErinBasicsTest, Test_table_cumulative_distribution_system_usage)
+{
+  namespace E = ERIN;
+  namespace ED = erin::distribution;
+  ED::CumulativeDistributionSystem cds{};
+  // ys are times; always increasing
+  // xs are "dice roll" values [0.0, 1.0]; always increasing
+  std::vector<double> dts{0.0, 100.0};
+  std::vector<double> xs{0.0, 1.0};
+  auto cdf_id = cds.add_table_cdf("a_table_cdf_1", xs, dts);
+  constexpr double dice_roll_1{0.5};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 50);
+  constexpr double dice_roll_2{0.0};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 0);
+  constexpr double dice_roll_3{1.0};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 100);
+  dts = std::vector{5.0, 6.0};
+  cdf_id = cds.add_table_cdf("a_table_cdf_2", xs, dts);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 6);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 5);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 6);
+  dts = std::vector{0.0, 400.0, 600.0, 1000.0};
+  xs = std::vector{0.0, 0.4, 0.6, 1.0};
+  cdf_id = cds.add_table_cdf("a_table_cdf_3", xs, dts);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 500);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 0);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 1000);
+  constexpr double dice_roll_4{0.25};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_4), 250);
+  constexpr double dice_roll_5{0.75};
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_5), 750);
+  xs = std::vector{-20.0, -15.0, -10.0, -5.0, 0.0};
+  dts = std::vector{1.0, 2.0, 3.0, 4.0, 5.0};
+  cdf_id = cds.add_table_cdf("a_table_cdf_4", xs, dts);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 3);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 1);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 5);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_4), 2);
+  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_5), 4);
+}
+
 TEST(ErinBasicsTest, Test_uncontrolled_source)
 {
   namespace E = ERIN;

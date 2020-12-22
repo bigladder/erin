@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin/distribution.h"
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <random>
@@ -73,6 +74,8 @@ namespace erin::distribution
         return std::string{"uniform"};
       case CdfType::Normal:
         return std::string{"normal"};
+      case CdfType::Table:
+        return std::string{"table"};
     }
     std::ostringstream oss{};
     oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
@@ -91,6 +94,9 @@ namespace erin::distribution
     if (tag == "normal") {
       return CdfType::Normal;
     }
+    if (tag == "table") {
+      return CdfType::Table;
+    }
     std::ostringstream oss{};
     oss << "unhandled tag `" << tag << "` in tag_to_cdf_type";
     throw std::invalid_argument(oss.str());
@@ -101,6 +107,7 @@ namespace erin::distribution
     fixed_cdf{},
     uniform_cdf{},
     normal_cdf{},
+    table_cdf{},
     g{},
     dist{0.0, 1.0}
   {
@@ -156,6 +163,117 @@ namespace erin::distribution
     cdf.tag.emplace_back(tag);
     cdf.subtype_id.emplace_back(subtype_id);
     cdf.cdf_type.emplace_back(CdfType::Normal);
+    return id;
+  }
+
+  void
+  ensure_sizes_equal(
+      const std::string& tag, const size_type& a, const size_type& b)
+  {
+    if (a != b) {
+      std::ostringstream oss{};
+      oss << "tag `" << tag << "` not a valid tabular distribution.\n"
+          << "xs.size() (" << a << ") must equal ("
+          << "dtimes_s.size() (" << b << ")\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  void
+  ensure_size_greater_than_or_equal_to(
+      const std::string& tag,
+      const size_type& a,
+      const size_type& n)
+  {
+    if (a < n) {
+      std::ostringstream oss{};
+      oss << "tag `" << tag << "` not a valid tabular distribution.\n"
+          << "xs.size() (" << a << ") must be greater than 1\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  void
+  ensure_always_increasing(
+      const std::string& tag,
+      const std::vector<double>& xs)
+  {
+    bool first{true};
+    double last{0.0};
+    for (size_type idx{0}; idx < xs.size(); ++idx) {
+      const auto& x{xs[idx]};
+      if (first) {
+        first = false;
+        last = x;
+      }
+      else {
+        if (x <= last) {
+          std::ostringstream oss{};
+          oss << "tag `" << tag << "` not a valid tabular distribution.\n"
+              << "values must be always increasing\n";
+          throw std::invalid_argument(oss.str());
+
+        }
+      }
+    }
+  }
+
+  void
+  ensure_greater_than_zero(const double x)
+  {
+    if (x <= 0.0) {
+      std::ostringstream oss{};
+      oss << "expected max to be greater than 0.0\n"
+          << "got max(xs) == " << x << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  std::vector<double>
+  normalize_xs(
+      const std::vector<double>& xs)
+  {
+    const size_type count(xs.size());
+    ensure_size_greater_than_or_equal_to("xs", count, 1);
+    std::vector<double> new_xs(count, 0.0);
+    double offset{xs[0]};
+    double max{xs[count-1] - offset};
+    ensure_greater_than_zero(max);
+    for (size_type idx{0}; idx < count; ++idx) {
+      const auto& x{xs[idx]};
+      new_xs[idx] = (x - offset) / max;
+    }
+    return new_xs;
+  }
+
+  size_type
+  CumulativeDistributionSystem::add_table_cdf(
+      const std::string& tag,
+      const std::vector<double>& xs,
+      const std::vector<double>& dtimes_s)
+  {
+    const size_type count{xs.size()};
+    ensure_sizes_equal(tag, count, dtimes_s.size());
+    ensure_size_greater_than_or_equal_to(tag, count, 2);
+    ensure_always_increasing(tag, xs);
+    ensure_always_increasing(tag, dtimes_s);
+    const auto nxs{normalize_xs(xs)};
+    auto id{cdf.tag.size()};
+    auto subtype_id{table_cdf.start_idx.size()};
+    size_type start_idx{
+      subtype_id == 0
+      ? 0
+      : (table_cdf.end_idx[subtype_id - 1] + 1)};
+    size_type end_idx{start_idx + count - 1};
+    table_cdf.start_idx.emplace_back(start_idx);
+    table_cdf.end_idx.emplace_back(end_idx);
+    for (size_type i{0}; i < count; ++i) {
+      table_cdf.variates.emplace_back(nxs[i]);
+      table_cdf.times.emplace_back(dtimes_s[i]);
+    }
+    cdf.tag.emplace_back(tag);
+    cdf.subtype_id.emplace_back(subtype_id);
+    cdf.cdf_type.emplace_back(CdfType::Table);
     return id;
   }
 
@@ -218,6 +336,38 @@ namespace erin::distribution
           dt = static_cast<RealTimeType>(
               std::round(
                 avg + sd * sqrt2 * erfinv(twice * fraction - 1.0)));
+          break;
+        }
+      case CdfType::Table:
+        {
+          const auto& start_idx = table_cdf.start_idx[subtype_id];
+          const auto& end_idx = table_cdf.end_idx[subtype_id];
+          if (fraction >= 1.0) {
+            dt = static_cast<RealTimeType>(
+                std::round(table_cdf.times[end_idx]));
+          }
+          else {
+            for (size_type idx{start_idx}; idx < end_idx; ++idx) {
+              const auto& v0 = table_cdf.variates[idx];
+              const auto& v1 = table_cdf.variates[idx + 1];
+              if ((fraction >= v0) && (fraction < v1)) {
+                if (fraction == v0) {
+                  dt = static_cast<RealTimeType>(
+                      std::round(table_cdf.times[idx]));
+                  break;
+                }
+                else {
+                  const auto df{fraction - v0};
+                  const auto dv{v1 - v0};
+                  const auto time0{table_cdf.times[idx]};
+                  const auto time1{table_cdf.times[idx+1]};
+                  const auto dtimes{time1 - time0};
+                  dt = static_cast<RealTimeType>(
+                      std::round(time0 + (df/dv) * dtimes));
+                }
+              }
+            }
+          }
           break;
         }
       default:

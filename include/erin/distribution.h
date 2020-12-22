@@ -50,7 +50,7 @@ namespace erin::distribution
   {
     Fixed = 0,
     Uniform,
-    Normal,
+    Normal
     //Weibull,
     //Table // from times and variate: variate is from (0,1) time must be always increasing
   };

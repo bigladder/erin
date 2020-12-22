@@ -212,11 +212,12 @@ namespace erin::distribution
       case CdfType::Normal:
         {
           constexpr double sqrt2{1.4142'1356'2373'0951};
+          constexpr double twice{2.0};
           auto avg = static_cast<double>(normal_cdf.average.at(subtype_id));
           auto sd  = static_cast<double>(normal_cdf.stddev.at(subtype_id));
           dt = static_cast<RealTimeType>(
               std::round(
-                avg + sd * sqrt2 * erfinv(2.0 * fraction - 1.0)));
+                avg + sd * sqrt2 * erfinv(twice * fraction - 1.0)));
           break;
         }
       default:

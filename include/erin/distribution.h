@@ -23,6 +23,11 @@ namespace erin::distribution
   // - virtual void set_random_generator(const std::default_random_engine& g);
   // - virtual T next_value();
   // - virtual std::string get_type();
+  // * As an alternative, consider an interface that takes a randomly
+  // generated number and samples the distribution. That might be even more
+  // elegant.
+  // - virtual T sample(const double d); // i.e., sample the distribution at d; d must be in (0, 1]
+  //   possibly, we could create a new type that would express that d is a fraction
   template <class T>
   std::function<T(void)>
   make_fixed(const T& value) 
@@ -81,13 +86,15 @@ namespace erin::distribution
     std::vector<RealTimeType> stddev{};
   };
 
-  //struct Table_CDF
-  //{
-  //  std::vector<double> variates{};
-  //  std::vector<double> times{};
-  //  std::vector<size_type> start_idx{};
-  //  std::vector<size_type> end_idx{};
-  //};
+  /*
+  struct Table_CDF
+  {
+    std::vector<double> variates{};
+    std::vector<double> times{};
+    std::vector<size_type> start_idx{};
+    std::vector<size_type> end_idx{};
+  };
+  */
 
   class CumulativeDistributionSystem
   {

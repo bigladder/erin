@@ -20,10 +20,10 @@ main(const int argc, const char* argv[])
   try {
     std::ifstream ifs{csv_path};
     if (!ifs.is_open()) {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "input file stream on \"" << csv_path
           << "\" failed to open for reading\n";
-      std::cout << oss.str() << "\n";
+      std::cerr << oss.str() << "\n";
       return 1;
     }
     std::cout << "Contents of " << csv_path << ":\n";

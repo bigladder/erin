@@ -219,31 +219,45 @@ namespace erin::distribution
   }
 
   void
-  ensure_greater_than_zero(const double x)
+  ensure_equals(
+      const std::string& tag,
+      const double x,
+      const double val)
   {
-    if (x <= 0.0) {
+    if (x != val) {
       std::ostringstream oss{};
-      oss << "expected max to be greater than 0.0\n"
-          << "got max(xs) == " << x << "\n";
+      oss << tag << ": expected x to be equal to " << val << "\n"
+          << ", but got x == " << x << "\n";
       throw std::invalid_argument(oss.str());
     }
   }
 
-  std::vector<double>
-  normalize_xs(
-      const std::vector<double>& xs)
+  void
+  ensure_greater_than_or_equal_to(const double x, const double val)
   {
-    const size_type count(xs.size());
-    ensure_size_greater_than_or_equal_to("xs", count, 1);
-    std::vector<double> new_xs(count, 0.0);
-    double offset{xs[0]};
-    double max{xs[count-1] - offset};
-    ensure_greater_than_zero(max);
-    for (size_type idx{0}; idx < count; ++idx) {
-      const auto& x{xs[idx]};
-      new_xs[idx] = (x - offset) / max;
+    if (x < val) {
+      std::ostringstream oss{};
+      oss << "expected x to be greater than or equal to " << val << "\n"
+          << ", but got x == " << x << "\n";
+      throw std::invalid_argument(oss.str());
     }
-    return new_xs;
+  }
+
+  void
+  ensure_greater_than(const double x, const double val)
+  {
+    if (x <= val) {
+      std::ostringstream oss{};
+      oss << "expected x to be greater than " << val << "\n"
+          << ", but got x == " << x << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
+  void
+  ensure_greater_than_zero(const double x)
+  {
+    ensure_greater_than(x, 0.0);
   }
 
   size_type
@@ -253,11 +267,14 @@ namespace erin::distribution
       const std::vector<double>& dtimes_s)
   {
     const size_type count{xs.size()};
+    const size_type last_idx{(count == 0) ? 0 : (count - 1)};
     ensure_sizes_equal(tag, count, dtimes_s.size());
     ensure_size_greater_than_or_equal_to(tag, count, 2);
     ensure_always_increasing(tag, xs);
     ensure_always_increasing(tag, dtimes_s);
-    const auto nxs{normalize_xs(xs)};
+    ensure_equals(tag + "[0]", xs[0], 0.0);
+    ensure_equals(tag + "[" + std::to_string(last_idx) + "]",
+        xs[last_idx], 1.0);
     auto id{cdf.tag.size()};
     auto subtype_id{table_cdf.start_idx.size()};
     size_type start_idx{
@@ -268,7 +285,7 @@ namespace erin::distribution
     table_cdf.start_idx.emplace_back(start_idx);
     table_cdf.end_idx.emplace_back(end_idx);
     for (size_type i{0}; i < count; ++i) {
-      table_cdf.variates.emplace_back(nxs[i]);
+      table_cdf.variates.emplace_back(xs[i]);
       table_cdf.times.emplace_back(dtimes_s[i]);
     }
     cdf.tag.emplace_back(tag);

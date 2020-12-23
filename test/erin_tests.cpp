@@ -6847,12 +6847,10 @@ TEST(ErinBasicsTest, Test_table_cumulative_distribution_system_usage)
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_5), 750);
   xs = std::vector{-20.0, -15.0, -10.0, -5.0, 0.0};
   dts = std::vector{1.0, 2.0, 3.0, 4.0, 5.0};
-  cdf_id = cds.add_table_cdf("a_table_cdf_4", xs, dts);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 3);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 1);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 5);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_4), 2);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_5), 4);
+  ASSERT_THROW(cds.add_table_cdf("a_table_cdf_4", xs, dts), std::invalid_argument);
+  xs = std::vector{0.0, 0.5, 0.8};
+  dts = std::vector{100.0, 200.0, 300.0};
+  ASSERT_THROW(cds.add_table_cdf("a_table_cdf_5", xs, dts), std::invalid_argument);
 }
 
 TEST(ErinBasicsTest, Test_uncontrolled_source)

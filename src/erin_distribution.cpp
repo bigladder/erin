@@ -4,11 +4,37 @@
 #include "erin/distribution.h"
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <stdexcept>
 #include <random>
 
 namespace erin::distribution
 {
+  /*
+  // k = shape parameter, k > 0
+  // a = scale parameter, a > 0, also called 'lambda'
+  // b = location parameter, also called 'gamma'
+  // 0 <= p < 1
+  // reference: https://www.real-statistics.com/other-key-distributions/
+  //    weibull-distribution/three-parameter-weibull-distribution/
+  double
+  weibull_quantile(const double& p, const double& k, const double& a, const double& b)
+  {
+    double ans{0.0};
+    if (p <= 0.0) {
+      ans = b;
+    }
+    else {
+      auto q{p};
+      if (p >= 1.0) {
+        q = 0.9999;
+      }
+      ans = b + a * std::pow(-1.0 * std::log(1.0 - q), 1.0 / k);
+    }
+    return (ans < 0.0) ? 0.0 : ans;
+  }
+  */
+
   double
   erfinv(double x)
   {
@@ -76,6 +102,10 @@ namespace erin::distribution
         return std::string{"normal"};
       case CdfType::Table:
         return std::string{"table"};
+      /*
+      case CdfType::Weibull:
+        return std::string{"weibull"};
+      */
     }
     std::ostringstream oss{};
     oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
@@ -97,6 +127,11 @@ namespace erin::distribution
     if (tag == "table") {
       return CdfType::Table;
     }
+    /*
+    if (tag == "weibull") {
+      return CdfType::Weibull;
+    }
+    */
     std::ostringstream oss{};
     oss << "unhandled tag `" << tag << "` in tag_to_cdf_type";
     throw std::invalid_argument(oss.str());
@@ -108,6 +143,7 @@ namespace erin::distribution
     uniform_cdf{},
     normal_cdf{},
     table_cdf{},
+    //weibull_cdf{},
     g{},
     dist{0.0, 1.0}
   {
@@ -212,8 +248,23 @@ namespace erin::distribution
           oss << "tag `" << tag << "` not a valid tabular distribution.\n"
               << "values must be always increasing\n";
           throw std::invalid_argument(oss.str());
-
         }
+      }
+    }
+  }
+
+  void
+  ensure_for_all(
+      const std::string& tag,
+      const std::vector<double>& xs,
+      const std::function<bool(double)>& f)
+  {
+    for (const auto& x : xs) {
+      if (!f(x)) {
+        std::ostringstream oss{};
+        oss << "tag `" << tag << "` not valid.\n"
+            << "issue for x == " << x << "\n";
+        throw std::invalid_argument(oss.str());
       }
     }
   }
@@ -293,6 +344,59 @@ namespace erin::distribution
     cdf.cdf_type.emplace_back(CdfType::Table);
     return id;
   }
+
+  /*
+  size_type CumulativeDistributionSystem::add_pdf_table(
+    const std::string& tag,
+    const std::vector<double>& dtimes_s,
+    const std::vector<double>& occurrences)
+  {
+    const size_type count{dtimes_s.size()};
+    const size_type last_idx{(count == 0) ? 0 : (count - 1)};
+    ensure_sizes_equal(tag, count, occurrences.size());
+    ensure_size_greater_than_or_equal_to(tag, count, 2);
+    ensure_always_increasing(tag, dtimes_s);
+    ensure_for_all(tag, occurrences, [](double x)->bool {
+      return x >= 0.0;
+    });
+    ensure_equals(tag + "[0]", occurrences[0], 0.0);
+    const double total{std::accumulate(
+      occurrences.begin(), occurrences.end(), 0.0)};
+    ensure_greater_than_zero(total);
+    std::vector<double> cdf_xs{};
+    std::vector<double> cdf_ys{};
+    double running_sum{0.0};
+    for (std::vector<double>::size_type idx{0}; idx < count; ++idx) {
+      const double& x = occurrences[idx];
+      running_sum += x;
+      cdf_xs.emplace_back(dtimes_s[idx]);
+      cdf_ys.emplace_back(running_sum / total);
+    }
+    return add_quantile_table(tag, cdf_ys, cdf_xs);
+  }
+
+  size_type
+  CumulativeDistributionSystem::add_weibull_dist(
+    const std::string& tag,
+    const double shape_parameter,   // k
+    const double scale_parameter,   // lambda
+    const double location_parameter // gamma
+  )
+  {
+    ensure_greater_than_zero(shape_parameter);
+    ensure_greater_than_zero(scale_parameter);
+    ensure_greater_than_or_equal_to(location_parameter, 0.0);
+    auto id{cdf.tag.size()};
+    auto subtype_id{weibull_cdf.shape_params.size()};
+    weibull_cdf.shape_params.emplace_back(shape_parameter);
+    weibull_cdf.scale_params.emplace_back(scale_parameter);
+    weibull_cdf.location_params.emplace_back(location_parameter);
+    cdf.tag.emplace_back(tag);
+    cdf.subtype_id.emplace_back(subtype_id);
+    cdf.cdf_type.emplace_back(CdfType::Weibull);
+    return id;
+  }
+  */
 
   size_type
   CumulativeDistributionSystem::lookup_cdf_by_tag(
@@ -387,6 +491,17 @@ namespace erin::distribution
           }
           break;
         }
+        /*
+      case CdfType::Weibull:
+        {
+          const auto& k = weibull_cdf.shape_params[subtype_id];
+          const auto& a = weibull_cdf.scale_params[subtype_id];
+          const auto& b = weibull_cdf.location_parameter[subtype_id];
+          dt = static_cast<RealTimeType>(
+              std::round(weibull_quartile(fraction, k, a, b)));
+          break;
+        }
+        */
       default:
         {
           throw std::runtime_error("unhandled Cumulative Density Function");

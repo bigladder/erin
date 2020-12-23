@@ -95,6 +95,15 @@ namespace erin::distribution
     std::vector<size_type> end_idx{};
   };
 
+  /*
+  struct Weibull_CDF
+  {
+    std::vector<double> shape_params{}; // k
+    std::vector<double> scale_params{}; // lambda
+    std::vector<double> location_params{}; // gamma
+  };
+  */
+
   class CumulativeDistributionSystem
   {
     public:
@@ -118,6 +127,20 @@ namespace erin::distribution
           const std::string& tag,
           const std::vector<double>& xs,
           const std::vector<double>& dtimes_s);
+
+      /*
+      size_type add_pdf_table(
+        const std::string& tag,
+        const std::vector<double>& dtimes_s,
+        const std::vector<double>& occurrences
+        );
+
+      size_type add_weibull_cdf(
+          const std::string& tag,
+          const double shape_parameter,    // k
+          const double scale_parameter,    // lambda
+          const double location_parameter=0.0); // gamma
+      */
 
       [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
 

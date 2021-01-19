@@ -215,7 +215,7 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex16.toml"
   "ex16.toml"
   COPYONLY)
-  configure_file(
-    "${PROJECT_SOURCE_DIR}/docs/examples/ex17.toml"
-    "ex17.toml"
-    COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex17.toml"
+  "ex17.toml"
+  COPYONLY)

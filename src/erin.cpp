@@ -1423,6 +1423,63 @@ namespace ERIN
             out[cdf_string_id] = cdf_id;
             break;
           }
+        case erin::distribution::CdfType::Table:
+          {
+            /* [dist.my-table]
+             * type = "quantile_table"
+             * variate_time_pairs = [[0.0, 1500.0], [1.0, 2000.0]]
+             * time_unit = "hours"
+             * # OR
+             * [dist.my-table]
+             * type = "quantile_table"
+             * csv_file = "my-data.csv"
+             */
+            std::string field_read{""};
+            std::vector<double> xs{};
+            std::vector<double> dtimes{};
+            std::string time_tag =
+              toml_helper::read_optional_table_field<std::string>(
+                  tt, {"time_unit"}, std::string{"hours"},
+                  field_read);
+            auto tu = tag_to_time_units(time_tag);
+            auto it = tt.find("variate_time_pairs");
+            const auto tt_end = tt.end();
+            if (it == tt_end) {
+              auto it2 = tt.find("csv_file");
+              if (it2 == tt_end) {
+                std::ostringstream oss{};
+                oss << "cdf '" << cdf_string_id
+                    << "' must define 'variate_time_pairs' or "
+                    << "'csv_file' but has neither\n";
+                throw std::invalid_argument(oss.str());
+              }
+              // READ CSV
+              // TODO: replace this stub code
+              std::cout << "WARNING! IGNORTING CSV_FILE!\n";
+              xs = std::vector<double>{0.0,0.5,1.0};
+              dtimes = std::vector<double>{100.0,150.0,200.0};
+            }
+            else {
+              const auto& xdts = toml::get<std::vector<toml::value>>(
+                  it->second);
+              for (const auto& item : xdts) {
+                const auto& xdt = toml::get<std::vector<toml::value>>(item);
+                const auto size = xdt.size();
+                if (size != 2) {
+                  std::ostringstream oss{};
+                  oss << "cdf '" << cdf_string_id
+                      << "': error reading 'variate_time_pairs'; "
+                      << "not all elements have length of 2\n";
+                  throw std::invalid_argument(oss.str());
+                }
+                xs.emplace_back(read_number(xdt[0]));
+                dtimes.emplace_back(time_to_seconds(read_number(xdt[1]), tu));
+              }
+            }
+            auto cdf_id = cds.add_table_cdf(cdf_string_id, xs, dtimes);
+            out[cdf_string_id] = cdf_id;
+            break;
+          }
         default:
           {
             std::ostringstream oss{};

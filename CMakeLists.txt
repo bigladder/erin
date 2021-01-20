@@ -223,3 +223,15 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex18.toml"
   "ex18.toml"
   COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex19-grid-failure.csv"
+  "ex19-grid-failure.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex19-grid-repair.csv"
+  "ex19-grid-repair.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex19.toml"
+  "ex19.toml"
+  COPYONLY)

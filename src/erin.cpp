@@ -1441,7 +1441,7 @@ namespace ERIN
               toml_helper::read_optional_table_field<std::string>(
                   tt, {"time_unit"}, std::string{"hours"},
                   field_read);
-            auto tu = tag_to_time_units(time_tag);
+            auto time_units = tag_to_time_units(time_tag);
             auto it = tt.find("variate_time_pairs");
             const auto tt_end = tt.end();
             if (it == tt_end) {
@@ -1453,11 +1453,92 @@ namespace ERIN
                     << "'csv_file' but has neither\n";
                 throw std::invalid_argument(oss.str());
               }
-              // READ CSV
-              // TODO: replace this stub code
-              std::cout << "WARNING! IGNORTING CSV_FILE!\n";
-              xs = std::vector<double>{0.0,0.5,1.0};
-              dtimes = std::vector<double>{100.0,150.0,200.0};
+              auto csv_path = toml::get<std::string>(it2->second);
+              std::ifstream ifs{csv_path};
+              xs = std::vector<double>{};
+              dtimes = std::vector<double>{};
+              if (!ifs.is_open()) {
+                std::ostringstream oss;
+                oss << "input file stream on \"" << csv_path
+                  << "\" failed to open for reading\n";
+                throw std::runtime_error(oss.str());
+              }
+              bool in_header{true};
+              for (int row{0}; ifs.good(); ++row) {
+                auto cells = erin_csv::read_row(ifs);
+                if (cells.size() == 0) {
+                  break;
+                }
+                if (in_header) {
+                  in_header = false;
+                  if (cells.size() < 2) {
+                    std::ostringstream oss;
+                    oss << "badly formatted file \"" << csv_path << "\"\n";
+                    oss << "row: " << row << "\n";
+                    erin_csv::stream_out(oss, cells);
+                    ifs.close();
+                    throw std::runtime_error(oss.str());
+                  }
+                  try {
+                    time_units = tag_to_time_units(cells[1]);
+                  }
+                  catch (std::invalid_argument& e) {
+                    std::ostringstream oss;
+                    oss << "in file '" << csv_path
+                      << "', second column should be a time unit tag but is '"
+                      << cells[1] << "'";
+                    oss << "row: " << row << "\n";
+                    erin_csv::stream_out(oss, cells);
+                    oss << "original error: " << e.what() << "\n";
+                    ifs.close();
+                    throw std::runtime_error(oss.str());
+                  }
+                  continue;
+                }
+                try {
+                  xs.emplace_back(read_number(cells[0]));
+                  //t = time_to_seconds(read_number(cells[0]), time_units);
+                }
+                catch (const std::invalid_argument&) {
+                  std::ostringstream oss;
+                  oss << "failed to convert string to number on row " << row << ".\n";
+                  oss << "t = " << cells[0] << ";\n";
+                  oss << "row: " << row << "\n";
+                  erin_csv::stream_out(oss, cells);
+                  std::cerr << oss.str();
+                  ifs.close();
+                  throw std::runtime_error(oss.str());
+                }
+                try {
+                  dtimes.emplace_back(
+                      time_to_seconds(read_number(cells[1]), time_units));
+                }
+                catch (const std::invalid_argument&) {
+                  std::ostringstream oss;
+                  oss << "failed to convert string to double on row " << row << ".\n";
+                  oss << "dtime = " << cells[1] << ";\n";
+                  oss << "row: " << row << "\n";
+                  erin_csv::stream_out(oss, cells);
+                  std::cerr << oss.str();
+                  ifs.close();
+                  throw std::runtime_error(oss.str());
+                }
+              }
+              if (dtimes.empty()) {
+                std::ostringstream oss{};
+                oss << "CSV data in " << csv_path << " cannot be empty!\n";
+                ifs.close();
+                throw std::runtime_error(oss.str());
+              }
+              if (dtimes.size() != xs.size()) {
+                std::ostringstream oss;
+                oss << "xs and dtimes must have the same size but"
+                    << " xs.size() = " << xs.size()
+                    << " dtimes.size() = " << dtimes.size() << "!\n";
+                ifs.close();
+                throw std::runtime_error(oss.str());
+              }
+              ifs.close();
             }
             else {
               const auto& xdts = toml::get<std::vector<toml::value>>(
@@ -1473,7 +1554,8 @@ namespace ERIN
                   throw std::invalid_argument(oss.str());
                 }
                 xs.emplace_back(read_number(xdt[0]));
-                dtimes.emplace_back(time_to_seconds(read_number(xdt[1]), tu));
+                dtimes.emplace_back(
+                    time_to_seconds(read_number(xdt[1]), time_units));
               }
             }
             auto cdf_id = cds.add_table_cdf(cdf_string_id, xs, dtimes);

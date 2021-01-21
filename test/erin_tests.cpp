@@ -563,9 +563,9 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
       {},
       false}}};
   ERIN::size_type occurrence_distribution_id{0};
-  std::unordered_map<std::string,ERIN::size_type> cdfs{
+  std::unordered_map<std::string,ERIN::size_type> dists{
     {"immediately", occurrence_distribution_id}};
-  auto actual = t.read_scenarios(cdfs);
+  auto actual = t.read_scenarios(dists);
   EXPECT_EQ(expected.size(), actual.size());
   for (auto const& e: expected) {
     const auto a = actual.find(e.first);
@@ -600,8 +600,8 @@ TEST(ErinBasicsTest, CanReadScenariosFromTomlForRandIntDist)
         "max_occurrences = 1\n"
         "network = \"normal_operations\"\n";
   ERIN::TomlInputReader t{ss};
-  std::unordered_map<std::string, ERIN::size_type> cdfs{{"1_to_10", 0}};
-  auto actual = t.read_scenarios(cdfs);
+  std::unordered_map<std::string, ERIN::size_type> dists{{"1_to_10", 0}};
+  auto actual = t.read_scenarios(dists);
   auto scenario = actual.at(scenario_id);
   EXPECT_EQ(scenario.get_duration(), 8760*3600);
 }
@@ -1249,7 +1249,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
                            { load_id, ep::Type::Inflow, 0},
                            stream_id}}}};
   erin::distribution::DistributionSystem cds{};
-  auto cdf_id = cds.add_fixed("every_100_seconds", 100);
+  auto dist_id = cds.add_fixed("every_100_seconds", 100);
   std::unordered_map<std::string, ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -1258,7 +1258,7 @@ TEST(ErinBasicsTest, BasicScenarioTest)
         net_id,
         scenario_duration_s,
         1,
-        cdf_id,
+        dist_id,
         {},
         false
       }}};
@@ -1983,10 +1983,10 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   const auto& actual_eo = networks["emergency_operations"];
   ASSERT_EQ(expected_eo.size(), actual_eo.size());
   ASSERT_EQ(expected_eo, actual_eo);
-  std::unordered_map<std::string, ERIN::size_type> cdfs{
+  std::unordered_map<std::string, ERIN::size_type> dists{
     {"immediately", 0},
     {"every_10_years", 1}};
-  auto scenarios = r.read_scenarios(cdfs);
+  auto scenarios = r.read_scenarios(dists);
   constexpr ERIN::RealTimeType blue_sky_duration
     = 8760 * ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
@@ -2180,8 +2180,8 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   ASSERT_EQ(expected_eo.size(), actual_eo.size());
   ASSERT_EQ(expected_eo, actual_eo);
   std::unordered_map<std::string, ERIN::size_type>
-    cdfs{{"immediately",0}, {"every_10_years", 1}};
-  auto scenarios = r.read_scenarios(cdfs);
+    dists{{"immediately",0}, {"every_10_years", 1}};
+  auto scenarios = r.read_scenarios(dists);
   constexpr ::ERIN::RealTimeType blue_sky_duration
     = 8760 * ::ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
@@ -3322,8 +3322,8 @@ TEST(ErinBasicsTest, TestWeCanReadDistributionWithOptionalTimeUnits)
         "network = \"nw_B\"\n";
   E::TomlInputReader t{ss};
   std::unordered_map<std::string, E::size_type>
-    cdfs{{"every_10_years", 0}, {"every_10_hours", 1}};
-  auto scenario_map = t.read_scenarios(cdfs);
+    dists{{"every_10_years", 0}, {"every_10_hours", 1}};
+  auto scenario_map = t.read_scenarios(dists);
   auto a_it = scenario_map.find("a");
   ASSERT_TRUE(a_it != scenario_map.end());
   auto b_it = scenario_map.find("b");
@@ -6621,10 +6621,10 @@ TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
   auto rand_fn = []()->double { return 0.5; };
   erin::distribution::DistributionSystem cds{};
   E::ReliabilityCoordinator rc{};
-  auto cdf_break_id = cds.add_fixed("break", 10);
-  auto cdf_repair_id = cds.add_fixed("repair", 5);
+  auto dist_break_id = cds.add_fixed("break", 10);
+  auto dist_repair_id = cds.add_fixed("repair", 5);
   auto fm_standard_id = rc.add_failure_mode(
-      "standard", cdf_break_id, cdf_repair_id);
+      "standard", dist_break_id, dist_repair_id);
   std::string comp_string_id{"S"};
   auto comp_id = rc.register_component(comp_string_id);
   rc.link_component_with_failure_mode(comp_id, fm_standard_id);
@@ -6769,8 +6769,8 @@ TEST(ErinBasicsTest, Test_fixed_cumulative_distribution_system_usage)
   namespace ED = erin::distribution;
   ED::DistributionSystem cds{};
   E::RealTimeType fixed_dt{10};
-  auto cdf_id = cds.add_fixed("some_cdf", fixed_dt);
-  EXPECT_EQ(cds.next_time_advance(cdf_id), fixed_dt);
+  auto dist_id = cds.add_fixed("some_dist", fixed_dt);
+  EXPECT_EQ(cds.next_time_advance(dist_id), fixed_dt);
 }
 
 TEST(ErinBasicsTest, Test_uniform_cumulative_distribution_system_usage)
@@ -6780,13 +6780,13 @@ TEST(ErinBasicsTest, Test_uniform_cumulative_distribution_system_usage)
   ED::DistributionSystem cds{};
   E::RealTimeType lower_dt{10};
   E::RealTimeType upper_dt{50};
-  auto cdf_id = cds.add_uniform("a_uniform_cdf", lower_dt, upper_dt);
+  auto dist_id = cds.add_uniform("a_uniform_dist", lower_dt, upper_dt);
   double dice_roll_1{1.0};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), upper_dt);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), upper_dt);
   double dice_roll_2{0.0};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), lower_dt);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_2), lower_dt);
   double dice_roll_3{0.5};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), (lower_dt + upper_dt) / 2);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), (lower_dt + upper_dt) / 2);
 }
 
 TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
@@ -6796,22 +6796,22 @@ TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
   ED::DistributionSystem cds{};
   E::RealTimeType mean{1000};
   E::RealTimeType stddev{50};
-  auto cdf_id = cds.add_normal("a_normal_cdf", mean, stddev);
+  auto dist_id = cds.add_normal("a_normal_dist", mean, stddev);
   double dice_roll_1{0.5};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), mean);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), mean);
   double dice_roll_2{0.0};
   constexpr double sqrt2{1.4142'1356'2373'0951};
   EXPECT_EQ(
-      cds.next_time_advance(cdf_id, dice_roll_2),
+      cds.next_time_advance(dist_id, dice_roll_2),
       mean - static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
   double dice_roll_3{1.0};
   EXPECT_EQ(
-      cds.next_time_advance(cdf_id, dice_roll_3),
+      cds.next_time_advance(dist_id, dice_roll_3),
       mean + static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
   double dice_roll_4{0.0};
   mean = 10;
-  cdf_id = cds.add_normal("a_normal_cdf_v2", mean, stddev);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_4), 0);
+  dist_id = cds.add_normal("a_normal_dist_v2", mean, stddev);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_4), 0);
 }
 
 TEST(ErinBasicsTest, Test_table_cumulative_distribution_system_usage)
@@ -6823,34 +6823,34 @@ TEST(ErinBasicsTest, Test_table_cumulative_distribution_system_usage)
   // xs are "dice roll" values [0.0, 1.0]; always increasing
   std::vector<double> dts{0.0, 100.0};
   std::vector<double> xs{0.0, 1.0};
-  auto cdf_id = cds.add_quantile_table("a_table_cdf_1", xs, dts);
+  auto dist_id = cds.add_quantile_table("a_table_dist_1", xs, dts);
   constexpr double dice_roll_1{0.5};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 50);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), 50);
   constexpr double dice_roll_2{0.0};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 0);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_2), 0);
   constexpr double dice_roll_3{1.0};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 100);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), 100);
   dts = std::vector{5.0, 6.0};
-  cdf_id = cds.add_quantile_table("a_table_cdf_2", xs, dts);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 6);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 5);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 6);
+  dist_id = cds.add_quantile_table("a_table_dist_2", xs, dts);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), 6);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_2), 5);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), 6);
   dts = std::vector{0.0, 400.0, 600.0, 1000.0};
   xs = std::vector{0.0, 0.4, 0.6, 1.0};
-  cdf_id = cds.add_quantile_table("a_table_cdf_3", xs, dts);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 500);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 0);
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 1000);
+  dist_id = cds.add_quantile_table("a_table_dist_3", xs, dts);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), 500);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_2), 0);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), 1000);
   constexpr double dice_roll_4{0.25};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_4), 250);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_4), 250);
   constexpr double dice_roll_5{0.75};
-  EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_5), 750);
+  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_5), 750);
   xs = std::vector{-20.0, -15.0, -10.0, -5.0, 0.0};
   dts = std::vector{1.0, 2.0, 3.0, 4.0, 5.0};
-  ASSERT_THROW(cds.add_quantile_table("a_table_cdf_4", xs, dts), std::invalid_argument);
+  ASSERT_THROW(cds.add_quantile_table("a_table_dist_4", xs, dts), std::invalid_argument);
   xs = std::vector{0.0, 0.5, 0.8};
   dts = std::vector{100.0, 200.0, 300.0};
-  ASSERT_THROW(cds.add_quantile_table("a_table_cdf_5", xs, dts), std::invalid_argument);
+  ASSERT_THROW(cds.add_quantile_table("a_table_dist_5", xs, dts), std::invalid_argument);
 }
 
 TEST(ErinBasicsTest, Test_uncontrolled_source)

@@ -61,33 +61,33 @@ namespace erin::distribution
     //Weibull,
   };
 
-  std::string cdf_type_to_tag(DistType cdf_type);
-  DistType tag_to_cdf_type(const std::string& tag);
+  std::string dist_type_to_tag(DistType dist_type);
+  DistType tag_to_dist_type(const std::string& tag);
 
-  struct Cdf {
+  struct Dist {
     std::vector<std::string> tag{};
     std::vector<size_type> subtype_id{};
-    std::vector<DistType> cdf_type{};
+    std::vector<DistType> dist_type{};
   };
 
-  struct Fixed_CDF
+  struct FixedDist
   {
     std::vector<RealTimeType> value{};
   };
 
-  struct Uniform_CDF
+  struct UniformDist
   {
     std::vector<RealTimeType> lower_bound{};
     std::vector<RealTimeType> upper_bound{};
   };
 
-  struct Normal_CDF
+  struct NormalDist
   {
     std::vector<RealTimeType> average{};
     std::vector<RealTimeType> stddev{};
   };
 
-  struct QuantileTable_CDF
+  struct QuantileTableDist
   {
     std::vector<double> variates{};
     std::vector<double> times{};
@@ -135,7 +135,7 @@ namespace erin::distribution
         const std::vector<double>& occurrences
         );
 
-      size_type add_weibull_cdf(
+      size_type add_weibull_dist(
           const std::string& tag,
           const double shape_parameter,    // k
           const double scale_parameter,    // lambda
@@ -144,21 +144,21 @@ namespace erin::distribution
 
       [[nodiscard]] size_type lookup_dist_by_tag(const std::string& tag) const;
 
-      RealTimeType next_time_advance(size_type cdf_id);
+      RealTimeType next_time_advance(size_type dist_id);
 
-      RealTimeType next_time_advance(size_type cdf_id, double fraction) const;
+      RealTimeType next_time_advance(size_type dist_id, double fraction) const;
 
       //[[nodiscard]] std::vector<RealTimeType>
       //  sample_upto_including(const RealTimeType max_time_s);
 
     private:
-      Cdf cdf;
-      Fixed_CDF fixed_cdf;
-      Uniform_CDF uniform_cdf;
-      Normal_CDF normal_cdf;
-      QuantileTable_CDF quantile_table_cdf;
+      Dist dist;
+      FixedDist fixed_dist;
+      UniformDist uniform_dist;
+      NormalDist normal_dist;
+      QuantileTableDist quantile_table_dist;
       std::default_random_engine g;
-      std::uniform_real_distribution<double> dist;
+      std::uniform_real_distribution<double> roll;
   };
 }
 #endif // ERIN_DISTRIBUTION_H

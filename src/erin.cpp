@@ -707,7 +707,7 @@ namespace ERIN
     }
     erin::distribution::DistType cdf_type{};
     try {
-      cdf_type = erin::distribution::tag_to_cdf_type(cdf_type_tag);
+      cdf_type = erin::distribution::tag_to_dist_type(cdf_type_tag);
     }
     catch (std::invalid_argument& e) {
       std::ostringstream oss{};

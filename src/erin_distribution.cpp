@@ -91,9 +91,9 @@ namespace erin::distribution
   }
 
   std::string
-  cdf_type_to_tag(DistType cdf_type)
+  dist_type_to_tag(DistType dist_type)
   {
-    switch (cdf_type) {
+    switch (dist_type) {
       case DistType::Fixed:
         return std::string{"fixed"};
       case DistType::Uniform:
@@ -108,12 +108,12 @@ namespace erin::distribution
       */
     }
     std::ostringstream oss{};
-    oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
+    oss << "unhandled dist_type `" << static_cast<int>(dist_type) << "`";
     throw std::invalid_argument(oss.str());
   }
 
   DistType
-  tag_to_cdf_type(const std::string& tag)
+  tag_to_dist_type(const std::string& tag)
   {
     if (tag == "fixed") {
       return DistType::Fixed;
@@ -133,19 +133,19 @@ namespace erin::distribution
     }
     */
     std::ostringstream oss{};
-    oss << "unhandled tag `" << tag << "` in tag_to_cdf_type";
+    oss << "unhandled tag `" << tag << "` in tag_to_dist_type";
     throw std::invalid_argument(oss.str());
   }
 
   DistributionSystem::DistributionSystem():
-    cdf{},
-    fixed_cdf{},
-    uniform_cdf{},
-    normal_cdf{},
-    quantile_table_cdf{},
-    //weibull_cdf{},
+    dist{},
+    fixed_dist{},
+    uniform_dist{},
+    normal_dist{},
+    quantile_table_dist{},
+    //weibull_dist{},
     g{},
-    dist{0.0, 1.0}
+    roll{0.0, 1.0}
   {
   }
 
@@ -154,12 +154,12 @@ namespace erin::distribution
       const std::string& tag,
       RealTimeType value_in_seconds)
   {
-    auto id{cdf.tag.size()};
-    auto subtype_id{fixed_cdf.value.size()};
-    fixed_cdf.value.emplace_back(value_in_seconds);
-    cdf.tag.emplace_back(tag);
-    cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(DistType::Fixed);
+    auto id{dist.tag.size()};
+    auto subtype_id{fixed_dist.value.size()};
+    fixed_dist.value.emplace_back(value_in_seconds);
+    dist.tag.emplace_back(tag);
+    dist.subtype_id.emplace_back(subtype_id);
+    dist.dist_type.emplace_back(DistType::Fixed);
     return id;
   }
 
@@ -176,13 +176,13 @@ namespace erin::distribution
           << "upper_bound_s: " << upper_bound_s << "\n";
       throw std::invalid_argument(oss.str());
     }
-    auto id{cdf.tag.size()};
-    auto subtype_id{uniform_cdf.lower_bound.size()};
-    uniform_cdf.lower_bound.emplace_back(lower_bound_s);
-    uniform_cdf.upper_bound.emplace_back(upper_bound_s);
-    cdf.tag.emplace_back(tag);
-    cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(DistType::Uniform);
+    auto id{dist.tag.size()};
+    auto subtype_id{uniform_dist.lower_bound.size()};
+    uniform_dist.lower_bound.emplace_back(lower_bound_s);
+    uniform_dist.upper_bound.emplace_back(upper_bound_s);
+    dist.tag.emplace_back(tag);
+    dist.subtype_id.emplace_back(subtype_id);
+    dist.dist_type.emplace_back(DistType::Uniform);
     return id;
   }
 
@@ -192,13 +192,13 @@ namespace erin::distribution
       RealTimeType mean_s,
       RealTimeType stddev_s)
   {
-    auto id{cdf.tag.size()};
-    auto subtype_id{normal_cdf.average.size()};
-    normal_cdf.average.emplace_back(mean_s);
-    normal_cdf.stddev.emplace_back(stddev_s);
-    cdf.tag.emplace_back(tag);
-    cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(DistType::Normal);
+    auto id{dist.tag.size()};
+    auto subtype_id{normal_dist.average.size()};
+    normal_dist.average.emplace_back(mean_s);
+    normal_dist.stddev.emplace_back(stddev_s);
+    dist.tag.emplace_back(tag);
+    dist.subtype_id.emplace_back(subtype_id);
+    dist.dist_type.emplace_back(DistType::Normal);
     return id;
   }
 
@@ -326,22 +326,22 @@ namespace erin::distribution
     ensure_equals(tag + "[0]", xs[0], 0.0);
     ensure_equals(tag + "[" + std::to_string(last_idx) + "]",
         xs[last_idx], 1.0);
-    auto id{cdf.tag.size()};
-    auto subtype_id{quantile_table_cdf.start_idx.size()};
+    auto id{dist.tag.size()};
+    auto subtype_id{quantile_table_dist.start_idx.size()};
     size_type start_idx{
       subtype_id == 0
       ? 0
-      : (quantile_table_cdf.end_idx[subtype_id - 1] + 1)};
+      : (quantile_table_dist.end_idx[subtype_id - 1] + 1)};
     size_type end_idx{start_idx + count - 1};
-    quantile_table_cdf.start_idx.emplace_back(start_idx);
-    quantile_table_cdf.end_idx.emplace_back(end_idx);
+    quantile_table_dist.start_idx.emplace_back(start_idx);
+    quantile_table_dist.end_idx.emplace_back(end_idx);
     for (size_type i{0}; i < count; ++i) {
-      quantile_table_cdf.variates.emplace_back(xs[i]);
-      quantile_table_cdf.times.emplace_back(dtimes_s[i]);
+      quantile_table_dist.variates.emplace_back(xs[i]);
+      quantile_table_dist.times.emplace_back(dtimes_s[i]);
     }
-    cdf.tag.emplace_back(tag);
-    cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(DistType::QuantileTable);
+    dist.tag.emplace_back(tag);
+    dist.subtype_id.emplace_back(subtype_id);
+    dist.dist_type.emplace_back(DistType::QuantileTable);
     return id;
   }
 
@@ -363,16 +363,16 @@ namespace erin::distribution
     const double total{std::accumulate(
       occurrences.begin(), occurrences.end(), 0.0)};
     ensure_greater_than_zero(total);
-    std::vector<double> cdf_xs{};
-    std::vector<double> cdf_ys{};
+    std::vector<double> dist_xs{};
+    std::vector<double> dist_ys{};
     double running_sum{0.0};
     for (std::vector<double>::size_type idx{0}; idx < count; ++idx) {
       const double& x = occurrences[idx];
       running_sum += x;
-      cdf_xs.emplace_back(dtimes_s[idx]);
-      cdf_ys.emplace_back(running_sum / total);
+      dist_xs.emplace_back(dtimes_s[idx]);
+      dist_ys.emplace_back(running_sum / total);
     }
-    return add_quantile_table(tag, cdf_ys, cdf_xs);
+    return add_quantile_table(tag, dist_ys, dist_xs);
   }
 
   size_type
@@ -386,14 +386,14 @@ namespace erin::distribution
     ensure_greater_than_zero(shape_parameter);
     ensure_greater_than_zero(scale_parameter);
     ensure_greater_than_or_equal_to(location_parameter, 0.0);
-    auto id{cdf.tag.size()};
-    auto subtype_id{weibull_cdf.shape_params.size()};
-    weibull_cdf.shape_params.emplace_back(shape_parameter);
-    weibull_cdf.scale_params.emplace_back(scale_parameter);
-    weibull_cdf.location_params.emplace_back(location_parameter);
-    cdf.tag.emplace_back(tag);
-    cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(DistType::Weibull);
+    auto id{dist.tag.size()};
+    auto subtype_id{weibull_dist.shape_params.size()};
+    weibull_dist.shape_params.emplace_back(shape_parameter);
+    weibull_dist.scale_params.emplace_back(scale_parameter);
+    weibull_dist.location_params.emplace_back(location_parameter);
+    dist.tag.emplace_back(tag);
+    dist.subtype_id.emplace_back(subtype_id);
+    dist.dist_type.emplace_back(DistType::Weibull);
     return id;
   }
   */
@@ -402,8 +402,8 @@ namespace erin::distribution
   DistributionSystem::lookup_dist_by_tag(
       const std::string& tag) const
   {
-    for (size_type i{0}; i < cdf.tag.size(); ++i) {
-      if (cdf.tag[i] == tag) {
+    for (size_type i{0}; i < dist.tag.size(); ++i) {
+      if (dist.tag[i] == tag) {
         return i;
       }
     }
@@ -413,37 +413,37 @@ namespace erin::distribution
   }
 
   RealTimeType
-  DistributionSystem::next_time_advance(size_type cdf_id)
+  DistributionSystem::next_time_advance(size_type dist_id)
   {
-    auto fraction = dist(g);
-    return next_time_advance(cdf_id, fraction);
+    auto fraction = roll(g);
+    return next_time_advance(dist_id, fraction);
   }
 
   RealTimeType
   DistributionSystem::next_time_advance(
-      size_type cdf_id,
+      size_type dist_id,
       double fraction) const
   {
-    if (cdf_id >= cdf.tag.size()) {
+    if (dist_id >= dist.tag.size()) {
       std::ostringstream oss{};
-      oss << "cdf_id '" << cdf_id << "' is out of range\n"
-          << "- id     : " << cdf_id << "\n"
-          << "- max(id): " << (cdf.tag.size() - 1) << "\n";
+      oss << "dist_id '" << dist_id << "' is out of range\n"
+          << "- id     : " << dist_id << "\n"
+          << "- max(id): " << (dist.tag.size() - 1) << "\n";
       throw std::out_of_range(oss.str());
     }
-    const auto& subtype_id = cdf.subtype_id.at(cdf_id);
-    const auto& cdf_type = cdf.cdf_type.at(cdf_id);
+    const auto& subtype_id = dist.subtype_id.at(dist_id);
+    const auto& dist_type = dist.dist_type.at(dist_id);
     RealTimeType dt{0};
-    switch (cdf_type) {
+    switch (dist_type) {
       case DistType::Fixed:
         {
-          dt = fixed_cdf.value.at(subtype_id);
+          dt = fixed_dist.value.at(subtype_id);
           break;
         }
       case DistType::Uniform:
         {
-          auto lb = uniform_cdf.lower_bound.at(subtype_id);
-          auto ub = uniform_cdf.upper_bound.at(subtype_id);
+          auto lb = uniform_dist.lower_bound.at(subtype_id);
+          auto ub = uniform_dist.upper_bound.at(subtype_id);
           auto delta = ub - lb;
           dt = static_cast<RealTimeType>(fraction * delta + lb);
           break;
@@ -452,8 +452,8 @@ namespace erin::distribution
         {
           constexpr double sqrt2{1.4142'1356'2373'0951};
           constexpr double twice{2.0};
-          auto avg = static_cast<double>(normal_cdf.average.at(subtype_id));
-          auto sd  = static_cast<double>(normal_cdf.stddev.at(subtype_id));
+          auto avg = static_cast<double>(normal_dist.average.at(subtype_id));
+          auto sd  = static_cast<double>(normal_dist.stddev.at(subtype_id));
           dt = static_cast<RealTimeType>(
               std::round(
                 avg + sd * sqrt2 * erfinv(twice * fraction - 1.0)));
@@ -461,27 +461,27 @@ namespace erin::distribution
         }
       case DistType::QuantileTable:
         {
-          const auto& start_idx = quantile_table_cdf.start_idx[subtype_id];
-          const auto& end_idx = quantile_table_cdf.end_idx[subtype_id];
+          const auto& start_idx = quantile_table_dist.start_idx[subtype_id];
+          const auto& end_idx = quantile_table_dist.end_idx[subtype_id];
           if (fraction >= 1.0) {
             dt = static_cast<RealTimeType>(
-                std::round(quantile_table_cdf.times[end_idx]));
+                std::round(quantile_table_dist.times[end_idx]));
           }
           else {
             for (size_type idx{start_idx}; idx < end_idx; ++idx) {
-              const auto& v0 = quantile_table_cdf.variates[idx];
-              const auto& v1 = quantile_table_cdf.variates[idx + 1];
+              const auto& v0 = quantile_table_dist.variates[idx];
+              const auto& v1 = quantile_table_dist.variates[idx + 1];
               if ((fraction >= v0) && (fraction < v1)) {
                 if (fraction == v0) {
                   dt = static_cast<RealTimeType>(
-                      std::round(quantile_table_cdf.times[idx]));
+                      std::round(quantile_table_dist.times[idx]));
                   break;
                 }
                 else {
                   const auto df{fraction - v0};
                   const auto dv{v1 - v0};
-                  const auto time0{quantile_table_cdf.times[idx]};
-                  const auto time1{quantile_table_cdf.times[idx+1]};
+                  const auto time0{quantile_table_dist.times[idx]};
+                  const auto time1{quantile_table_dist.times[idx+1]};
                   const auto dtimes{time1 - time0};
                   dt = static_cast<RealTimeType>(
                       std::round(time0 + (df/dv) * dtimes));
@@ -494,9 +494,9 @@ namespace erin::distribution
         /*
       case DistType::Weibull:
         {
-          const auto& k = weibull_cdf.shape_params[subtype_id];
-          const auto& a = weibull_cdf.scale_params[subtype_id];
-          const auto& b = weibull_cdf.location_parameter[subtype_id];
+          const auto& k = weibull_dist.shape_params[subtype_id];
+          const auto& a = weibull_dist.scale_params[subtype_id];
+          const auto& b = weibull_dist.location_parameter[subtype_id];
           dt = static_cast<RealTimeType>(
               std::round(weibull_quartile(fraction, k, a, b)));
           break;

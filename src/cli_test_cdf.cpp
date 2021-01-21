@@ -56,7 +56,7 @@ run_it(const gsl::span<const char*>& args)
   auto cds = ed::DistributionSystem{};
   ed::DistType cdf_type{ed::DistType::Fixed};
   try {
-    cdf_type = ed::tag_to_cdf_type(args[1]);
+    cdf_type = ed::tag_to_dist_type(args[1]);
   }
   catch (const std::exception&) {
     std::ostringstream oss{};

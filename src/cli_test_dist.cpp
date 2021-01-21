@@ -54,20 +54,20 @@ run_it(const gsl::span<const char*>& args)
   namespace eu = erin::utils;
   namespace ed = erin::distribution;
   auto cds = ed::DistributionSystem{};
-  ed::DistType cdf_type{ed::DistType::Fixed};
+  ed::DistType dist_type{ed::DistType::Fixed};
   try {
-    cdf_type = ed::tag_to_dist_type(args[1]);
+    dist_type = ed::tag_to_dist_type(args[1]);
   }
   catch (const std::exception&) {
     std::ostringstream oss{};
-    oss << "issue parsng cdf_type \"" << args[1] << "\"\n";
+    oss << "issue parsng dist_type \"" << args[1] << "\"\n";
     std::cerr << oss.str();
     return 1;
   }
-  const std::string tag{"cdf"};
+  const std::string tag{"distribution"};
   ed::size_type id{};
   ed::size_type num_samples{};
-  switch (cdf_type) {
+  switch (dist_type) {
     case ed::DistType::Fixed:
       {
         if (argc != num_args_for_fixed) {

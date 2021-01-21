@@ -6763,7 +6763,7 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
   EXPECT_EQ(dt, ED::infinity);
 }
 
-TEST(ErinBasicsTest, Test_fixed_cumulative_distribution_system_usage)
+TEST(ErinBasicsTest, Test_fixed_distribution)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
@@ -6773,7 +6773,7 @@ TEST(ErinBasicsTest, Test_fixed_cumulative_distribution_system_usage)
   EXPECT_EQ(cds.next_time_advance(dist_id), fixed_dt);
 }
 
-TEST(ErinBasicsTest, Test_uniform_cumulative_distribution_system_usage)
+TEST(ErinBasicsTest, Test_uniform_distribution)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
@@ -6789,7 +6789,7 @@ TEST(ErinBasicsTest, Test_uniform_cumulative_distribution_system_usage)
   EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), (lower_dt + upper_dt) / 2);
 }
 
-TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
+TEST(ErinBasicsTest, Test_normal_distribution)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
@@ -6814,7 +6814,7 @@ TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
   EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_4), 0);
 }
 
-TEST(ErinBasicsTest, Test_table_cumulative_distribution_system_usage)
+TEST(ErinBasicsTest, Test_quantile_table_distribution)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;

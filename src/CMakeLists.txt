@@ -122,7 +122,7 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
   add_coverage(${CMAKE_PROJECT_NAME})
 endif()
 
-add_executable(erin_cdf_test
+add_executable(erin_distribution_test
   cli_test_dist.cpp
   "${PROJECT_SOURCE_DIR}/src/erin_type.cpp"
   "${PROJECT_SOURCE_DIR}/src/erin_utils.cpp"
@@ -134,7 +134,7 @@ add_executable(erin_cdf_test
   debug_utils.h
   erin_csv.h
   )
-target_include_directories(erin_cdf_test
+target_include_directories(erin_distribution_test
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 add_executable(erin_csv_test erin_csv.cpp erin_csv.h)

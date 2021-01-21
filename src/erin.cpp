@@ -691,33 +691,33 @@ namespace ERIN
   erin::distribution::DistType
   TomlInputReader::read_dist_type(
       const toml::table& tt,
-      const std::string& cdf_id) const
+      const std::string& dist_id) const
   {
     std::string field_read{};
-    std::string cdf_type_tag{};
+    std::string dist_type_tag{};
     try {
-      cdf_type_tag = toml_helper::read_required_table_field<std::string>(
+      dist_type_tag = toml_helper::read_required_table_field<std::string>(
           tt, {"type"}, field_read);
     }
     catch (std::out_of_range& e) {
       std::ostringstream oss{};
       oss << "original error: " << e.what() << "\n";
-      oss << "failed to find 'type' for cdf " << cdf_id << "\n";
+      oss << "failed to find 'type' for dist " << dist_id << "\n";
       throw std::runtime_error(oss.str());
     }
-    erin::distribution::DistType cdf_type{};
+    erin::distribution::DistType dist_type{};
     try {
-      cdf_type = erin::distribution::tag_to_dist_type(cdf_type_tag);
+      dist_type = erin::distribution::tag_to_dist_type(dist_type_tag);
     }
     catch (std::invalid_argument& e) {
       std::ostringstream oss{};
       oss << "original error: " << e.what() << "\n";
       oss << "could not understand 'type' \""
-        << cdf_type_tag << "\" for component "
-        << cdf_id << "\n";
+        << dist_type_tag << "\" for component "
+        << dist_id << "\n";
       throw std::runtime_error(oss.str());
     }
-    return cdf_type;
+    return dist_type;
   }
 
 
@@ -1215,7 +1215,7 @@ namespace ERIN
 
   std::unordered_map<std::string, Scenario>
   TomlInputReader::read_scenarios(
-      const std::unordered_map<std::string, ERIN::size_type>& cdfs
+      const std::unordered_map<std::string, ERIN::size_type>& dists
       )
   {
     namespace eg = erin_generics;
@@ -1230,11 +1230,12 @@ namespace ERIN
       const auto& tt = toml::get<toml::table>(s.second);
       const auto next_occurrence_dist = toml::find<std::string>(
           s.second, occur_dist_tag);
-      auto it = cdfs.find(next_occurrence_dist);
-      if (it == cdfs.end()) {
+      auto it = dists.find(next_occurrence_dist);
+      if (it == dists.end()) {
         std::ostringstream oss{};
-        oss << occur_dist_tag << " '" << next_occurrence_dist << "' does not appear"
-            << " in the list of available cdf declarations. A typo?\n";
+        oss << occur_dist_tag << " '" << next_occurrence_dist
+            << "' does not appear in the list of available dist "
+            << "declarations. A typo?\n";
         throw std::runtime_error(oss.str());
       }
       const auto occurrence_dist_id = it->second;
@@ -1330,11 +1331,11 @@ namespace ERIN
       return out;
     }
     for (const auto& toml_dist : toml_dists) {
-      const auto& cdf_string_id = toml_dist.first;
+      const auto& dist_string_id = toml_dist.first;
       const auto& t = toml_dist.second;
       const auto& tt = toml::get<toml::table>(t);
-      const auto& cdf_type = read_dist_type(tt, cdf_string_id);
-      switch (cdf_type) {
+      const auto& dist_type = read_dist_type(tt, dist_string_id);
+      switch (dist_type) {
         case erin::distribution::DistType::Fixed:
           {
             std::string field_read{""};
@@ -1342,7 +1343,7 @@ namespace ERIN
               toml_helper::read_number_from_table_as_double(tt, "value", -1.0);
             if (value < 0) {
               std::ostringstream oss{};
-              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'value' field\n"
+              oss << "dist '" << dist_string_id << "' doesn't have a valid 'value' field\n"
                   << "field 'value' must be present and >= 0\n"
                   << "value = " << value << "\n";
               throw std::invalid_argument(oss.str());
@@ -1352,9 +1353,9 @@ namespace ERIN
                   tt, {"time_unit", "time_units"}, std::string{"hours"},
                   field_read);
             auto tu = tag_to_time_units(time_tag);
-            auto cdf_id = cds.add_fixed(
-                cdf_string_id, time_to_seconds(value, tu));
-            out[cdf_string_id] = cdf_id;
+            auto dist_id = cds.add_fixed(
+                dist_string_id, time_to_seconds(value, tu));
+            out[dist_string_id] = dist_id;
             break;
           }
         case erin::distribution::DistType::Uniform:
@@ -1364,7 +1365,7 @@ namespace ERIN
               toml_helper::read_number_from_table_as_double(tt, "lower_bound", -1);
             if (lower_bound < 0) {
               std::ostringstream oss{};
-              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'lower_bound' field\n"
+              oss << "dist '" << dist_string_id << "' doesn't have a valid 'lower_bound' field\n"
                   << "field 'lower_bound' must be present and >= 0\n"
                   << "lower_bound = " << lower_bound << "\n";
               throw std::invalid_argument(oss.str());
@@ -1373,7 +1374,7 @@ namespace ERIN
               toml_helper::read_number_from_table_as_double(tt, "upper_bound", -1);
             if (upper_bound < 0) {
               std::ostringstream oss{};
-              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'upper_bound' field\n"
+              oss << "dist '" << dist_string_id << "' doesn't have a valid 'upper_bound' field\n"
                   << "field 'upper_bound' must be present and >= 0\n"
                   << "upper_bound = " << upper_bound << "\n";
               throw std::invalid_argument(oss.str());
@@ -1383,11 +1384,11 @@ namespace ERIN
                   tt, {"time_unit", "time_units"}, std::string{"hours"},
                   field_read);
             auto tu = tag_to_time_units(time_tag);
-            auto cdf_id = cds.add_uniform(
-                cdf_string_id,
+            auto dist_id = cds.add_uniform(
+                dist_string_id,
                 time_to_seconds(lower_bound, tu),
                 time_to_seconds(upper_bound, tu));
-            out[cdf_string_id] = cdf_id;
+            out[dist_string_id] = dist_id;
             break;
           }
         case erin::distribution::DistType::Normal:
@@ -1397,7 +1398,7 @@ namespace ERIN
               toml_helper::read_number_from_table_as_double(tt, "mean", -1);
             if (mean < 0) {
               std::ostringstream oss{};
-              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'mean' field\n"
+              oss << "dist '" << dist_string_id << "' doesn't have a valid 'mean' field\n"
                   << "field 'mean' must be present and >= 0\n"
                   << "mean = " << mean << "\n";
               throw std::invalid_argument(oss.str());
@@ -1406,7 +1407,7 @@ namespace ERIN
               toml_helper::read_number_from_table_as_double(tt, "standard_deviation", -1);
             if (std_dev < 0) {
               std::ostringstream oss{};
-              oss << "cdf '" << cdf_string_id << "' doesn't have a valid 'standard_deviation' field\n"
+              oss << "dist '" << dist_string_id << "' doesn't have a valid 'standard_deviation' field\n"
                   << "field 'standard_deviation' must be present and >= 0\n"
                   << "standard_deviation = " << std_dev << "\n";
               throw std::invalid_argument(oss.str());
@@ -1416,11 +1417,11 @@ namespace ERIN
                   tt, {"time_unit", "time_units"}, std::string{"hours"},
                   field_read);
             auto tu = tag_to_time_units(time_tag);
-            auto cdf_id = cds.add_normal(
-                cdf_string_id,
+            auto dist_id = cds.add_normal(
+                dist_string_id,
                 time_to_seconds(mean, tu),
                 time_to_seconds(std_dev, tu));
-            out[cdf_string_id] = cdf_id;
+            out[dist_string_id] = dist_id;
             break;
           }
         case erin::distribution::DistType::QuantileTable:
@@ -1448,7 +1449,7 @@ namespace ERIN
               auto it2 = tt.find("csv_file");
               if (it2 == tt_end) {
                 std::ostringstream oss{};
-                oss << "cdf '" << cdf_string_id
+                oss << "dist '" << dist_string_id
                     << "' must define 'variate_time_pairs' or "
                     << "'csv_file' but has neither\n";
                 throw std::invalid_argument(oss.str());
@@ -1548,7 +1549,7 @@ namespace ERIN
                 const auto size = xdt.size();
                 if (size != 2) {
                   std::ostringstream oss{};
-                  oss << "cdf '" << cdf_string_id
+                  oss << "dist '" << dist_string_id
                       << "': error reading 'variate_time_pairs'; "
                       << "not all elements have length of 2\n";
                   throw std::invalid_argument(oss.str());
@@ -1558,14 +1559,14 @@ namespace ERIN
                     time_to_seconds(read_number(xdt[1]), time_units));
               }
             }
-            auto cdf_id = cds.add_quantile_table(cdf_string_id, xs, dtimes);
-            out[cdf_string_id] = cdf_id;
+            auto dist_id = cds.add_quantile_table(dist_string_id, xs, dtimes);
+            out[dist_string_id] = dist_id;
             break;
           }
         default:
           {
             std::ostringstream oss{};
-            oss << "unhandled cdf_type `" << static_cast<int>(cdf_type) << "`";
+            oss << "unhandled dist_type `" << static_cast<int>(dist_type) << "`";
             throw std::invalid_argument(oss.str());
           }
       }

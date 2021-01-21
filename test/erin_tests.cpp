@@ -6863,19 +6863,19 @@ TEST(ErinBasicsTest, Test_weibull_distribution)
   double gamma{0.0};    // location parameter
   auto dist_id = dist_sys.add_weibull("a_weibull_dist", k, lambda, gamma);
   double dice_roll_1{0.5};
-  double ans1{186.0};
+  E::RealTimeType ans1{186};
   EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_1), ans1);
   double dice_roll_2{0.0};
-  double ans2{0.0};
+  E::RealTimeType ans2{0};
   EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_2), ans2);
-  // double dice_roll_3{1.0};
-  // EXPECT_EQ(
-  //     dist_sys.next_time_advance(dist_id, dice_roll_3),
-  //     mean + static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
-  // double dice_roll_4{0.0};
-  // mean = 10;
-  // dist_id = dist_sys.add_normal("a_normal_dist_v2", mean, stddev);
-  // EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_4), 0);
+  double dice_roll_3{1.0};
+  E::RealTimeType ans3{312};
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_3), ans3);
+  double dice_roll_4{0.0};
+  gamma = 10.0;
+  E::RealTimeType ans4{static_cast<E::RealTimeType>(gamma)};
+  dist_id = dist_sys.add_weibull("a_normal_dist_v2", k, lambda, gamma);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_4), ans4);
 }
 
 TEST(ErinBasicsTest, Test_uncontrolled_source)

@@ -9,11 +9,11 @@ time_unit = "seconds"
 rate_unit = "kW"
 time_rate_pairs = [[0.0,100.0],[10.0,0.0]]
 ############################################################
-[dist.cdf_break]
+[dist.break]
 type = "fixed"
 value = 5
 time_unit = "seconds"
-[dist.cdf_repair]
+[dist.repair]
 type = "fixed"
 value = 2
 time_unit = "seconds"
@@ -23,8 +23,8 @@ value = 0
 time_unit = "hours"
 ############################################################
 [failure_mode.fm]
-failure_dist = "cdf_break"
-repair_dist = "cdf_repair"
+failure_dist = "break"
+repair_dist = "repair"
 ############################################################
 [components.S1]
 type = "source"

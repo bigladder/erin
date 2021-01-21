@@ -2706,22 +2706,22 @@ namespace ERIN
     auto loads_by_id = reader.read_loads();
     // TODO: add a repair CDF to the fragility datatype
     auto fragilities = reader.read_fragility_data();
-    erin::distribution::DistributionSystem cds{};
-    // cdfs is map<string, size_type>
-    auto cdfs = reader.read_distributions(cds);
+    erin::distribution::DistributionSystem ds{};
+    // dists is map<string, size_type>
+    auto dists = reader.read_distributions(ds);
     ReliabilityCoordinator rc{};
     // fms is map<string, size_type>
-    auto fms = reader.read_failure_modes(cdfs, rc);
+    auto fms = reader.read_failure_modes(dists, rc);
     // components needs to be modified to add component_id as size_type?
     components = reader.read_components(loads_by_id, fragilities, fms, rc);
     networks = reader.read_networks();
-    scenarios = reader.read_scenarios(cdfs);
+    scenarios = reader.read_scenarios(dists);
     const auto max_time_s{sim_info.get_max_time_in_seconds()};
     rand_fn = sim_info.make_random_function();
     reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
-        rand_fn, cds, max_time_s);
+        rand_fn, ds, max_time_s);
     scenario_schedules = calc_scenario_schedule(
-        max_time_s, scenarios, cds, rand_fn);
+        max_time_s, scenarios, ds, rand_fn);
     check_data();
     generate_failure_fragilities();
     if constexpr (debug_level >= debug_level_high) {

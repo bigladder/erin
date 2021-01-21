@@ -20,14 +20,14 @@ type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "electric_load"
 ############## Distributions ###########
-[cdf.immediately]
+[dist.immediately]
 type = "fixed"
 value = 0
 time_unit = "hours"
-[cdf.grid_failure]
+[dist.grid_failure]
 type = "quantile_table"
 csv_file = "ex19-grid-failure.csv"
-[cdf.grid_repair]
+[dist.grid_repair]
 type = "quantile_table"
 csv_file = "ex19-grid-repair.csv"
 ############# Failure Modes ############

@@ -64,7 +64,7 @@ connections = [
   ["load_mux_2:OUT(1)", "load_combiner_1:IN(1)", "electricity"],
   ["load_combiner_1:OUT(0)", "L1:IN(0)", "electricity"],
   ["load_combiner_2:OUT(0)", "L2:IN(0)", "electricity"]]
-[cdf.immediately]
+[dist.immediately]
 type = "fixed"
 value = 0.0
 time_unit = "hours"

@@ -34,7 +34,7 @@ connections = [
     ["utility_electricity:OUT(0)",  "chiller:IN(1)", "electricity"],
     ["chiller:OUT(0)", "environment_sink:IN(0)", "heat_removed"],
     ]
-[cdf.immediately]
+[dist.immediately]
 type = "fixed"
 value = 0
 time_unit = "hours"

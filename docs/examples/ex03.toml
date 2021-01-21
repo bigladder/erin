@@ -66,11 +66,11 @@ connections = [
   ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 ############################################################
 # CDFs
-[cdf.immediately]
+[dist.immediately]
 type = "fixed"
 value = 0
 time_units = "hours"
-[cdf.every_10_years]
+[dist.every_10_years]
 type = "fixed"
 value = 87600
 time_units = "hours"

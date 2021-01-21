@@ -19,7 +19,7 @@ loads_by_scenario.blue_sky = "building_electrical"
 [networks.normal_operations]
 connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 ############################################################
-[cdf.immediately]
+[dist.immediately]
 type = "fixed"
 value = 0
 time_unit = "hours"

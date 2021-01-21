@@ -1324,14 +1324,14 @@ namespace ERIN
   TomlInputReader::read_distributions(
       erin::distribution::DistributionSystem& cds)
   {
-    const auto& toml_cdfs = toml::find_or(data, "cdf", toml::table{});
+    const auto& toml_dists = toml::find_or(data, "dist", toml::table{});
     std::unordered_map<std::string, size_type> out{};
-    if (toml_cdfs.size() == 0) {
+    if (toml_dists.size() == 0) {
       return out;
     }
-    for (const auto& toml_cdf : toml_cdfs) {
-      const auto& cdf_string_id = toml_cdf.first;
-      const auto& t = toml_cdf.second;
+    for (const auto& toml_dist : toml_dists) {
+      const auto& cdf_string_id = toml_dist.first;
+      const auto& t = toml_dist.second;
       const auto& tt = toml::get<toml::table>(t);
       const auto& cdf_type = read_cdf_type(tt, cdf_string_id);
       switch (cdf_type) {

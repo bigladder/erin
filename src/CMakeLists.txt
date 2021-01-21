@@ -123,7 +123,7 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
 endif()
 
 add_executable(erin_cdf_test
-  cli_test_cdf.cpp
+  cli_test_dist.cpp
   "${PROJECT_SOURCE_DIR}/src/erin_type.cpp"
   "${PROJECT_SOURCE_DIR}/src/erin_utils.cpp"
   "${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp"

@@ -212,7 +212,7 @@ namespace ERIN
         std::string,
         std::vector<::erin::network::Connection>> read_networks() = 0;
       virtual std::unordered_map<std::string, Scenario> read_scenarios(
-          const std::unordered_map<std::string, size_type>& cdfs
+          const std::unordered_map<std::string, size_type>& dists
           ) = 0;
       virtual std::unordered_map<std::string,erin::fragility::FragilityCurve>
         read_fragility_data() = 0;
@@ -220,7 +220,7 @@ namespace ERIN
         read_distributions(erin::distribution::DistributionSystem& cds) = 0;
       virtual std::unordered_map<std::string, size_type>
         read_failure_modes(
-            const std::unordered_map<std::string, size_type>& cdf_ids,
+            const std::unordered_map<std::string, size_type>& dist_ids,
             ReliabilityCoordinator& rc) = 0;
   };
 
@@ -262,7 +262,7 @@ namespace ERIN
         std::string, std::vector<::erin::network::Connection>>
         read_networks() override;
       std::unordered_map<std::string, Scenario> read_scenarios(
-          const std::unordered_map<std::string, ERIN::size_type>& cdfs
+          const std::unordered_map<std::string, ERIN::size_type>& dists
           ) override;
       std::unordered_map<std::string,::erin::fragility::FragilityCurve>
         read_fragility_data() override;
@@ -362,9 +362,9 @@ namespace ERIN
             const toml::table& tt,
             const std::string& comp_id) const;
       [[nodiscard]] erin::distribution::DistType
-        read_cdf_type(
+        read_dist_type(
             const toml::table& tt,
-            const std::string& cdf_id) const;
+            const std::string& dist_id) const;
       [[nodiscard]] StreamIDs read_stream_ids(
           const toml::table& tt,
           const std::string& comp_id) const;

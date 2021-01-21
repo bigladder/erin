@@ -689,7 +689,7 @@ namespace ERIN
   }
 
   erin::distribution::DistType
-  TomlInputReader::read_cdf_type(
+  TomlInputReader::read_dist_type(
       const toml::table& tt,
       const std::string& cdf_id) const
   {
@@ -1333,7 +1333,7 @@ namespace ERIN
       const auto& cdf_string_id = toml_dist.first;
       const auto& t = toml_dist.second;
       const auto& tt = toml::get<toml::table>(t);
-      const auto& cdf_type = read_cdf_type(tt, cdf_string_id);
+      const auto& cdf_type = read_dist_type(tt, cdf_string_id);
       switch (cdf_type) {
         case erin::distribution::DistType::Fixed:
           {

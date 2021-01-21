@@ -23,8 +23,8 @@ value = 0
 time_unit = "hours"
 ############################################################
 [failure_mode.fm]
-failure_cdf = "cdf_break"
-repair_cdf = "cdf_repair"
+failure_dist = "cdf_break"
+repair_dist = "cdf_repair"
 ############################################################
 [components.S1]
 type = "source"

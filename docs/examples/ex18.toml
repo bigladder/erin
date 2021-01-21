@@ -34,8 +34,8 @@ variate_time_pairs = [[0.0, 10.0], [1.0, 30.0]]
 time_unit = "minutes"
 ############# Failure Modes ############
 [failure_mode.grid_outage]
-failure_cdf = "grid_failure"
-repair_cdf = "grid_repair"
+failure_dist = "grid_failure"
+repair_dist = "grid_repair"
 ############## Networks ################
 [networks.nw_electric]
 connections = [

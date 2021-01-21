@@ -39,13 +39,13 @@ namespace ERIN
   size_type
   ReliabilityCoordinator::add_failure_mode(
       const std::string& tag,
-      const size_type& failure_cdf_id,
-      const size_type& repair_cdf_id)
+      const size_type& failure_dist_id,
+      const size_type& repair_dist_id)
   {
     auto id{fms.tag.size()};
     fms.tag.emplace_back(tag);
-    fms.failure_cdf.emplace_back(failure_cdf_id);
-    fms.repair_cdf.emplace_back(repair_cdf_id);
+    fms.failure_dist.emplace_back(failure_dist_id);
+    fms.repair_dist.emplace_back(repair_dist_id);
     return id;
   }
 
@@ -83,14 +83,14 @@ namespace ERIN
     for (size_type i{0}; i < num_fm_comp_links; ++i) {
       const auto& comp_id = fm_comp_links.component_id.at(i);
       const auto& fm_id = fm_comp_links.failure_mode_id.at(i);
-      size_type cdf_id{0};
+      size_type dist_id{0};
       if (is_failure) {
-        cdf_id = fms.failure_cdf.at(fm_id);
+        dist_id = fms.failure_dist.at(fm_id);
       }
       else { // is_repair
-        cdf_id = fms.repair_cdf.at(fm_id);
+        dist_id = fms.repair_dist.at(fm_id);
       }
-      auto dt = cds.next_time_advance(cdf_id, rand_fn());
+      auto dt = cds.next_time_advance(dist_id, rand_fn());
       auto& dt_fm = comp_id_to_dt[comp_id]; 
       if ((dt_fm == -1) || (dt < dt_fm)) {
         dt_fm = dt;

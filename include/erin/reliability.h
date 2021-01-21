@@ -28,8 +28,8 @@ namespace ERIN
   struct FailureMode
   {
     std::vector<std::string> tag{};
-    std::vector<size_type> failure_cdf{};
-    std::vector<size_type> repair_cdf{};
+    std::vector<size_type> failure_dist{};
+    std::vector<size_type> repair_dist{};
   };
 
   struct FailureMode_Component_Link {
@@ -50,8 +50,8 @@ namespace ERIN
 
       size_type add_failure_mode(
           const std::string& tag,
-          const size_type& failure_cdf_id,
-          const size_type& repair_cdf_id
+          const size_type& failure_dist_id,
+          const size_type& repair_dist_id
           );
 
       void link_component_with_failure_mode(

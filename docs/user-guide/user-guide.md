@@ -279,12 +279,12 @@ The file consists of the following sections that describe the various concepts d
 - `loads`: load profiles (includes supply profiles for uncontrolled sources)
 - `components`: all components in the network are described here
 - `fragility`: all fragility curves are described here
-- `cdf`: cumulative distribution functions
+- `dist`: statistical distributions
 - `failure_mode`: failure modes are described here
 - `networks`: networks are described here
 - `scenarios`: scenarios are described here
 
-Valid entries for each of the sections are described in [@tbl:sim-info; @tbl:loads; @tbl:comps-common; @tbl:source; @tbl:load; @tbl:converter; @tbl:pass-through; @tbl:uncontrolled-src; @tbl:mover; @tbl:frags; @tbl:cdf; @tbl:fm; @tbl:nw; @tbl:scenarios].
+Valid entries for each of the sections are described in [@tbl:sim-info; @tbl:loads; @tbl:comps-common; @tbl:source; @tbl:load; @tbl:converter; @tbl:pass-through; @tbl:uncontrolled-src; @tbl:mover; @tbl:frags; @tbl:dist; @tbl:fm; @tbl:nw; @tbl:scenarios].
 
 The types given are one of:
 
@@ -321,7 +321,7 @@ This looks as follows:
 ...
 [fragility.fragility_id_1]
 ...
-[cdf.cdf_id_1]
+[dist.dist_id_1]
 ...
 [failure_mode.fm_id_1]
 ...
@@ -524,22 +524,22 @@ Currently, the only available fragility curve type is linear.
 For the linear curve, we specify the `lower_bound`, the bound below which we are impervious to destruction.
 We also specify the `upper_bound`, the bound above which we face certain destruction.
 
-| key         | type | required? | notes                                         |
-| ----        | --   | --        | --------                                      |
-| `type`      | str  | yes       | must be "fixed"                               |
-| `value`     | real | yes       | the value of the fixed CDF                    |
-| `time_unit` | time | yes       | the time unit used to specify the fixed value |
+| key         | type | required? | notes                                                            |
+| ----        | --   | --        | --------                                                         |
+| `type`      | str  | yes       | one of `fixed`, `uniform`, `normal`, `quantile_table`, `weibull` |
+| `value`     | real | yes       | the value of the fixed CDF                                       |
+| `time_unit` | time | yes       | the time unit used to specify the fixed value                    |
 
-: `cdf` specification {#tbl:cdf}
+: `dist` specification {#tbl:dist}
 
-[@tbl:cdf] specifies a cumulative distribution function.
+[@tbl:dist] specifies a cumulative distribution function.
 At this time, the only distribution type available is "fixed".
 A fixed distribution is a degenerate distribution that always samples a single point -- the `value`.
 
-| key           | type | required? | notes              |
-| ----          | --   | --        | --------           |
-| `failure_cdf` | str  | yes       | the failure CDF id |
-| `repair_cdf`  | str  | yes       | the repair CDF id  |
+| key            | type | required? | notes              |
+| ----           | --   | --        | --------           |
+| `failure_dist` | str  | yes       | the failure CDF id |
+| `repair_dist`  | str  | yes       | the repair CDF id  |
 
 : `failure_mode` specification {#tbl:fm}
 
@@ -591,7 +591,7 @@ In [@tbl:scenarios], the `occurrence_distribution` is currently implemented as a
   occurrence_distribution = { type = "linear", value = 8, time_unit = "hours" }
 ```
 
-The possible values for the `occurrence_distribution` table are given in [@tbl:cdf].
+The possible values for the `occurrence_distribution` table are given in [@tbl:dist].
 
 # Output Metrics
 

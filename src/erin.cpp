@@ -1575,7 +1575,7 @@ namespace ERIN
 
   std::unordered_map<std::string, size_type>
   TomlInputReader::read_failure_modes(
-      const std::unordered_map<std::string, size_type>& cdf_ids,
+      const std::unordered_map<std::string, size_type>& dist_ids,
       ReliabilityCoordinator& rc)
   {
     const auto& toml_fms = toml::find_or(
@@ -1589,30 +1589,32 @@ namespace ERIN
       toml::value t = toml_fm.second;
       const toml::table& tt = toml::get<toml::table>(t);
       std::string field_read{};
-      const auto& failure_cdf_tag =
+      const auto& failure_dist_tag =
         toml_helper::read_required_table_field<std::string>(
-            tt, {"failure_cdf"}, field_read);
-      const auto& repair_cdf_tag =
+            tt, {"failure_dist"}, field_read);
+      const auto& repair_dist_tag =
         toml_helper::read_required_table_field<std::string>(
-            tt, {"repair_cdf"}, field_read);
-      auto it = cdf_ids.find(failure_cdf_tag);
-      if (it == cdf_ids.end()) {
+            tt, {"repair_dist"}, field_read);
+      auto it = dist_ids.find(failure_dist_tag);
+      if (it == dist_ids.end()) {
         std::ostringstream oss{};
-        oss << "could not find CDF corresponding to tag `" << failure_cdf_tag << "`";
+        oss << "could not find distribution (dist) corresponding to tag `"
+            << failure_dist_tag << "`";
         throw std::runtime_error(oss.str());
       }
-      const auto& failure_cdf_id = it->second;
-      it = cdf_ids.find(repair_cdf_tag);
-      if (it == cdf_ids.end()) {
+      const auto& failure_dist_id = it->second;
+      it = dist_ids.find(repair_dist_tag);
+      if (it == dist_ids.end()) {
         std::ostringstream oss{};
-        oss << "could not find CDF corresponding to tag `" << repair_cdf_tag << "`";
+        oss << "could not find distribution (dist) corresponding to tag `"
+            << repair_dist_tag << "`";
         throw std::runtime_error(oss.str());
       }
-      const auto& repair_cdf_id = it->second;
+      const auto& repair_dist_id = it->second;
       auto fm_id = rc.add_failure_mode(
           fm_string_id,
-          failure_cdf_id,
-          repair_cdf_id);
+          failure_dist_id,
+          repair_dist_id);
       out[fm_string_id] = fm_id;
     }
     return out;

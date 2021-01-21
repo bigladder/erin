@@ -270,7 +270,7 @@ namespace ERIN
         read_distributions(erin::distribution::DistributionSystem& cds) override;
       std::unordered_map<std::string, size_type>
         read_failure_modes(
-            const std::unordered_map<std::string, size_type>& cdf_ids,
+            const std::unordered_map<std::string, size_type>& dist_ids,
             ReliabilityCoordinator& rc) override;
 
     private:

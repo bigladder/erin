@@ -103,8 +103,8 @@ value = 3
 time_unit = "hours"
 ############# Failure Modes #####################
 [failure_mode.grid_outage]
-failure_cdf = "every_1"
-repair_cdf = "every_3"
+failure_dist = "every_1"
+repair_dist = "every_3"
 ############## Networks #################
 [networks.nw_electric]
 connections = [

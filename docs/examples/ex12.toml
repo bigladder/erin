@@ -28,8 +28,8 @@ value = 5
 time_unit = "hours"
 ############################################################
 [failure_mode.fm]
-failure_cdf = "every_10"
-repair_cdf = "every_5"
+failure_dist = "every_10"
+repair_dist = "every_5"
 ############################################################
 [networks.nw]
 connections = [["S:OUT(0)", "L:IN(0)", "electricity"]]

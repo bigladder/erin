@@ -1321,7 +1321,7 @@ namespace ERIN
   }
 
   std::unordered_map<std::string, size_type>
-  TomlInputReader::read_cumulative_distributions(
+  TomlInputReader::read_distributions(
       erin::distribution::DistributionSystem& cds)
   {
     const auto& toml_cdfs = toml::find_or(data, "cdf", toml::table{});
@@ -2705,7 +2705,7 @@ namespace ERIN
     auto fragilities = reader.read_fragility_data();
     erin::distribution::DistributionSystem cds{};
     // cdfs is map<string, size_type>
-    auto cdfs = reader.read_cumulative_distributions(cds);
+    auto cdfs = reader.read_distributions(cds);
     ReliabilityCoordinator rc{};
     // fms is map<string, size_type>
     auto fms = reader.read_failure_modes(cdfs, rc);

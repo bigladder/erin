@@ -688,7 +688,7 @@ namespace ERIN
     return component_type;
   }
 
-  erin::distribution::CdfType
+  erin::distribution::DistType
   TomlInputReader::read_cdf_type(
       const toml::table& tt,
       const std::string& cdf_id) const
@@ -705,7 +705,7 @@ namespace ERIN
       oss << "failed to find 'type' for cdf " << cdf_id << "\n";
       throw std::runtime_error(oss.str());
     }
-    erin::distribution::CdfType cdf_type{};
+    erin::distribution::DistType cdf_type{};
     try {
       cdf_type = erin::distribution::tag_to_cdf_type(cdf_type_tag);
     }
@@ -1335,7 +1335,7 @@ namespace ERIN
       const auto& tt = toml::get<toml::table>(t);
       const auto& cdf_type = read_cdf_type(tt, cdf_string_id);
       switch (cdf_type) {
-        case erin::distribution::CdfType::Fixed:
+        case erin::distribution::DistType::Fixed:
           {
             std::string field_read{""};
             auto value =
@@ -1357,7 +1357,7 @@ namespace ERIN
             out[cdf_string_id] = cdf_id;
             break;
           }
-        case erin::distribution::CdfType::Uniform:
+        case erin::distribution::DistType::Uniform:
           {
             std::string field_read{""};
             auto lower_bound =
@@ -1390,7 +1390,7 @@ namespace ERIN
             out[cdf_string_id] = cdf_id;
             break;
           }
-        case erin::distribution::CdfType::Normal:
+        case erin::distribution::DistType::Normal:
           {
             std::string field_read{""};
             auto mean =
@@ -1423,7 +1423,7 @@ namespace ERIN
             out[cdf_string_id] = cdf_id;
             break;
           }
-        case erin::distribution::CdfType::QuantileTable:
+        case erin::distribution::DistType::QuantileTable:
           {
             /* [dist.my-table]
              * type = "quantile_table"

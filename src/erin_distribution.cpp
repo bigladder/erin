@@ -91,19 +91,19 @@ namespace erin::distribution
   }
 
   std::string
-  cdf_type_to_tag(CdfType cdf_type)
+  cdf_type_to_tag(DistType cdf_type)
   {
     switch (cdf_type) {
-      case CdfType::Fixed:
+      case DistType::Fixed:
         return std::string{"fixed"};
-      case CdfType::Uniform:
+      case DistType::Uniform:
         return std::string{"uniform"};
-      case CdfType::Normal:
+      case DistType::Normal:
         return std::string{"normal"};
-      case CdfType::QuantileTable:
+      case DistType::QuantileTable:
         return std::string{"table"};
       /*
-      case CdfType::Weibull:
+      case DistType::Weibull:
         return std::string{"weibull"};
       */
     }
@@ -112,24 +112,24 @@ namespace erin::distribution
     throw std::invalid_argument(oss.str());
   }
 
-  CdfType
+  DistType
   tag_to_cdf_type(const std::string& tag)
   {
     if (tag == "fixed") {
-      return CdfType::Fixed;
+      return DistType::Fixed;
     }
     if (tag == "uniform") {
-      return CdfType::Uniform;
+      return DistType::Uniform;
     }
     if (tag == "normal") {
-      return CdfType::Normal;
+      return DistType::Normal;
     }
     if (tag == "quantile_table") {
-      return CdfType::QuantileTable;
+      return DistType::QuantileTable;
     }
     /*
     if (tag == "weibull") {
-      return CdfType::Weibull;
+      return DistType::Weibull;
     }
     */
     std::ostringstream oss{};
@@ -159,7 +159,7 @@ namespace erin::distribution
     fixed_cdf.value.emplace_back(value_in_seconds);
     cdf.tag.emplace_back(tag);
     cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(CdfType::Fixed);
+    cdf.cdf_type.emplace_back(DistType::Fixed);
     return id;
   }
 
@@ -182,7 +182,7 @@ namespace erin::distribution
     uniform_cdf.upper_bound.emplace_back(upper_bound_s);
     cdf.tag.emplace_back(tag);
     cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(CdfType::Uniform);
+    cdf.cdf_type.emplace_back(DistType::Uniform);
     return id;
   }
 
@@ -198,7 +198,7 @@ namespace erin::distribution
     normal_cdf.stddev.emplace_back(stddev_s);
     cdf.tag.emplace_back(tag);
     cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(CdfType::Normal);
+    cdf.cdf_type.emplace_back(DistType::Normal);
     return id;
   }
 
@@ -341,7 +341,7 @@ namespace erin::distribution
     }
     cdf.tag.emplace_back(tag);
     cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(CdfType::QuantileTable);
+    cdf.cdf_type.emplace_back(DistType::QuantileTable);
     return id;
   }
 
@@ -393,7 +393,7 @@ namespace erin::distribution
     weibull_cdf.location_params.emplace_back(location_parameter);
     cdf.tag.emplace_back(tag);
     cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(CdfType::Weibull);
+    cdf.cdf_type.emplace_back(DistType::Weibull);
     return id;
   }
   */
@@ -435,12 +435,12 @@ namespace erin::distribution
     const auto& cdf_type = cdf.cdf_type.at(cdf_id);
     RealTimeType dt{0};
     switch (cdf_type) {
-      case CdfType::Fixed:
+      case DistType::Fixed:
         {
           dt = fixed_cdf.value.at(subtype_id);
           break;
         }
-      case CdfType::Uniform:
+      case DistType::Uniform:
         {
           auto lb = uniform_cdf.lower_bound.at(subtype_id);
           auto ub = uniform_cdf.upper_bound.at(subtype_id);
@@ -448,7 +448,7 @@ namespace erin::distribution
           dt = static_cast<RealTimeType>(fraction * delta + lb);
           break;
         }
-      case CdfType::Normal:
+      case DistType::Normal:
         {
           constexpr double sqrt2{1.4142'1356'2373'0951};
           constexpr double twice{2.0};
@@ -459,7 +459,7 @@ namespace erin::distribution
                 avg + sd * sqrt2 * erfinv(twice * fraction - 1.0)));
           break;
         }
-      case CdfType::QuantileTable:
+      case DistType::QuantileTable:
         {
           const auto& start_idx = quantile_table_cdf.start_idx[subtype_id];
           const auto& end_idx = quantile_table_cdf.end_idx[subtype_id];
@@ -492,7 +492,7 @@ namespace erin::distribution
           break;
         }
         /*
-      case CdfType::Weibull:
+      case DistType::Weibull:
         {
           const auto& k = weibull_cdf.shape_params[subtype_id];
           const auto& a = weibull_cdf.scale_params[subtype_id];

@@ -51,7 +51,7 @@ namespace erin::distribution
     return [d, g]() mutable -> T { return d(g); };
   }
 
-  enum class CdfType
+  enum class DistType
   {
     Fixed = 0,
     Uniform,
@@ -61,13 +61,13 @@ namespace erin::distribution
     //Weibull,
   };
 
-  std::string cdf_type_to_tag(CdfType cdf_type);
-  CdfType tag_to_cdf_type(const std::string& tag);
+  std::string cdf_type_to_tag(DistType cdf_type);
+  DistType tag_to_cdf_type(const std::string& tag);
 
   struct Cdf {
     std::vector<std::string> tag{};
     std::vector<size_type> subtype_id{};
-    std::vector<CdfType> cdf_type{};
+    std::vector<DistType> cdf_type{};
   };
 
   struct Fixed_CDF

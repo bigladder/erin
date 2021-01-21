@@ -54,7 +54,7 @@ run_it(const gsl::span<const char*>& args)
   namespace eu = erin::utils;
   namespace ed = erin::distribution;
   auto cds = ed::DistributionSystem{};
-  ed::CdfType cdf_type{ed::CdfType::Fixed};
+  ed::DistType cdf_type{ed::DistType::Fixed};
   try {
     cdf_type = ed::tag_to_cdf_type(args[1]);
   }
@@ -68,7 +68,7 @@ run_it(const gsl::span<const char*>& args)
   ed::size_type id{};
   ed::size_type num_samples{};
   switch (cdf_type) {
-    case ed::CdfType::Fixed:
+    case ed::DistType::Fixed:
       {
         if (argc != num_args_for_fixed) {
           std::cout << "Missing arguments for fixed distribution\n";
@@ -102,7 +102,7 @@ run_it(const gsl::span<const char*>& args)
         }
         break;
       }
-    case ed::CdfType::Uniform:
+    case ed::DistType::Uniform:
       {
         if (argc != num_args_for_uniform) {
           std::cout << "Missing arguments for uniform distribution\n";
@@ -145,7 +145,7 @@ run_it(const gsl::span<const char*>& args)
         }
         break;
       }
-    case ed::CdfType::Normal:
+    case ed::DistType::Normal:
       {
         if (argc != num_args_for_normal) {
           std::cout << "Missing arguments for normal distribution\n";
@@ -188,7 +188,7 @@ run_it(const gsl::span<const char*>& args)
         }
         break;
       }
-    case ed::CdfType::QuantileTable:
+    case ed::DistType::QuantileTable:
       {
         if (argc != num_args_for_table) {
           std::cout << "Missing arguments for table distribution\n";

@@ -19,32 +19,34 @@ Practically, data is arranged much like tables in a relational database manageme
 
 The concepts covered are as follows:
 
-## CDF - Cumulative Distribution Function
+## Dist - Distribution
 
 Functions used to determine the time-advance for a given "dice roll" (value from the random number generator).
+A distribution corresponds to either a fixed kind of statistical distribution or tabular data corresponding to a quantile or probability density function.
 
-| `cdf_id` (primary key) | `cdf_type` | `cdf_subtype_id` |
-| ---------------------- | ---------- | ---------------- |
-| `size_type`            | `CdfType`  | `size_type`      |
+| `dist_id` (primary key) | `dist_type` | `dist_subtype_id` |
+| ----------------------- | ----------- | ----------------- |
+| `size_type`             | `DistType`  | `size_type`       |
 
 
-### CDF Type: Fixed
+### Dist Type: Fixed
 
-A cumulative distribution function with a set/fixed value.
-This is essentially a step-function where the value of the step is always fixed.
+A distribution function with a set/fixed value.
+This is essentially a Dirac delta function as a PDF.
+As a quantile, this is essentially a step-function where the value of the step is always fixed.
 
-| `fixed_cdf_id` (primary key) | `value` (in seconds) |
-| ---------------------------- | -------------------- |
-| `size_type`                  | `int64_t`            |
+| `fixed_dist_id` (primary key) | `value` (in seconds) |
+| ----------------------------- | -------------------- |
+| `size_type`                   | `int64_t`            |
 
 
 ## Failure Mode
 
-A single failure mode ties together a failure CDF and a corresponding repair CDF.
+A single failure mode ties together a failure distribution and a corresponding repair distribution.
 
-| `fm_id` (primary key) | `name`        | `failure_cdf_id` | `repair_cdf_id` |
-| --------------------- | ------------- | ---------------- | --------------- |
-| `size_type`           | `std::string` | `size_type`      | `size_type`     |
+| `fm_id` (primary key) | `name`        | `failure_dist_id` | `repair_dist_id` |
+| --------------------- | ------------- | ----------------- | ---------------- |
+| `size_type`           | `std::string` | `size_type`       | `size_type`      |
 
 
 ## Component to Failure Mode

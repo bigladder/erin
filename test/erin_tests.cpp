@@ -6767,90 +6767,90 @@ TEST(ErinBasicsTest, Test_fixed_distribution)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
-  ED::DistributionSystem cds{};
+  ED::DistributionSystem dist_sys{};
   E::RealTimeType fixed_dt{10};
-  auto dist_id = cds.add_fixed("some_dist", fixed_dt);
-  EXPECT_EQ(cds.next_time_advance(dist_id), fixed_dt);
+  auto dist_id = dist_sys.add_fixed("some_dist", fixed_dt);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id), fixed_dt);
 }
 
 TEST(ErinBasicsTest, Test_uniform_distribution)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
-  ED::DistributionSystem cds{};
+  ED::DistributionSystem dist_sys{};
   E::RealTimeType lower_dt{10};
   E::RealTimeType upper_dt{50};
-  auto dist_id = cds.add_uniform("a_uniform_dist", lower_dt, upper_dt);
+  auto dist_id = dist_sys.add_uniform("a_uniform_dist", lower_dt, upper_dt);
   double dice_roll_1{1.0};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), upper_dt);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_1), upper_dt);
   double dice_roll_2{0.0};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_2), lower_dt);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_2), lower_dt);
   double dice_roll_3{0.5};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), (lower_dt + upper_dt) / 2);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_3), (lower_dt + upper_dt) / 2);
 }
 
 TEST(ErinBasicsTest, Test_normal_distribution)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
-  ED::DistributionSystem cds{};
+  ED::DistributionSystem dist_sys{};
   E::RealTimeType mean{1000};
   E::RealTimeType stddev{50};
-  auto dist_id = cds.add_normal("a_normal_dist", mean, stddev);
+  auto dist_id = dist_sys.add_normal("a_normal_dist", mean, stddev);
   double dice_roll_1{0.5};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), mean);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_1), mean);
   double dice_roll_2{0.0};
   constexpr double sqrt2{1.4142'1356'2373'0951};
   EXPECT_EQ(
-      cds.next_time_advance(dist_id, dice_roll_2),
+      dist_sys.next_time_advance(dist_id, dice_roll_2),
       mean - static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
   double dice_roll_3{1.0};
   EXPECT_EQ(
-      cds.next_time_advance(dist_id, dice_roll_3),
+      dist_sys.next_time_advance(dist_id, dice_roll_3),
       mean + static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
   double dice_roll_4{0.0};
   mean = 10;
-  dist_id = cds.add_normal("a_normal_dist_v2", mean, stddev);
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_4), 0);
+  dist_id = dist_sys.add_normal("a_normal_dist_v2", mean, stddev);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_4), 0);
 }
 
 TEST(ErinBasicsTest, Test_quantile_table_distribution)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
-  ED::DistributionSystem cds{};
+  ED::DistributionSystem dist_sys{};
   // ys are times; always increasing
   // xs are "dice roll" values [0.0, 1.0]; always increasing
   std::vector<double> dts{0.0, 100.0};
   std::vector<double> xs{0.0, 1.0};
-  auto dist_id = cds.add_quantile_table("a_table_dist_1", xs, dts);
+  auto dist_id = dist_sys.add_quantile_table("a_table_dist_1", xs, dts);
   constexpr double dice_roll_1{0.5};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), 50);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_1), 50);
   constexpr double dice_roll_2{0.0};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_2), 0);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_2), 0);
   constexpr double dice_roll_3{1.0};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), 100);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_3), 100);
   dts = std::vector{5.0, 6.0};
-  dist_id = cds.add_quantile_table("a_table_dist_2", xs, dts);
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), 6);
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_2), 5);
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), 6);
+  dist_id = dist_sys.add_quantile_table("a_table_dist_2", xs, dts);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_1), 6);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_2), 5);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_3), 6);
   dts = std::vector{0.0, 400.0, 600.0, 1000.0};
   xs = std::vector{0.0, 0.4, 0.6, 1.0};
-  dist_id = cds.add_quantile_table("a_table_dist_3", xs, dts);
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_1), 500);
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_2), 0);
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_3), 1000);
+  dist_id = dist_sys.add_quantile_table("a_table_dist_3", xs, dts);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_1), 500);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_2), 0);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_3), 1000);
   constexpr double dice_roll_4{0.25};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_4), 250);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_4), 250);
   constexpr double dice_roll_5{0.75};
-  EXPECT_EQ(cds.next_time_advance(dist_id, dice_roll_5), 750);
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_5), 750);
   xs = std::vector{-20.0, -15.0, -10.0, -5.0, 0.0};
   dts = std::vector{1.0, 2.0, 3.0, 4.0, 5.0};
-  ASSERT_THROW(cds.add_quantile_table("a_table_dist_4", xs, dts), std::invalid_argument);
+  ASSERT_THROW(dist_sys.add_quantile_table("a_table_dist_4", xs, dts), std::invalid_argument);
   xs = std::vector{0.0, 0.5, 0.8};
   dts = std::vector{100.0, 200.0, 300.0};
-  ASSERT_THROW(cds.add_quantile_table("a_table_dist_5", xs, dts), std::invalid_argument);
+  ASSERT_THROW(dist_sys.add_quantile_table("a_table_dist_5", xs, dts), std::invalid_argument);
 }
 
 TEST(ErinBasicsTest, Test_uncontrolled_source)

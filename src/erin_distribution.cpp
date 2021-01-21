@@ -10,7 +10,6 @@
 
 namespace erin::distribution
 {
-  /*
   // k = shape parameter, k > 0
   // a = scale parameter, a > 0, also called 'lambda'
   // b = location parameter, also called 'gamma'
@@ -33,7 +32,6 @@ namespace erin::distribution
     }
     return (ans < 0.0) ? 0.0 : ans;
   }
-  */
 
   double
   erfinv(double x)
@@ -100,12 +98,10 @@ namespace erin::distribution
         return std::string{"uniform"};
       case DistType::Normal:
         return std::string{"normal"};
-      case DistType::QuantileTable:
-        return std::string{"table"};
-      /*
       case DistType::Weibull:
         return std::string{"weibull"};
-      */
+      case DistType::QuantileTable:
+        return std::string{"table"};
     }
     std::ostringstream oss{};
     oss << "unhandled dist_type `" << static_cast<int>(dist_type) << "`";
@@ -124,14 +120,12 @@ namespace erin::distribution
     if (tag == "normal") {
       return DistType::Normal;
     }
-    if (tag == "quantile_table") {
-      return DistType::QuantileTable;
-    }
-    /*
     if (tag == "weibull") {
       return DistType::Weibull;
     }
-    */
+    if (tag == "quantile_table") {
+      return DistType::QuantileTable;
+    }
     std::ostringstream oss{};
     oss << "unhandled tag `" << tag << "` in tag_to_dist_type";
     throw std::invalid_argument(oss.str());
@@ -143,7 +137,7 @@ namespace erin::distribution
     uniform_dist{},
     normal_dist{},
     quantile_table_dist{},
-    //weibull_dist{},
+    weibull_dist{},
     g{},
     roll{0.0, 1.0}
   {
@@ -374,6 +368,7 @@ namespace erin::distribution
     }
     return add_quantile_table(tag, dist_ys, dist_xs);
   }
+  */
 
   size_type
   DistributionSystem::add_weibull(
@@ -396,7 +391,6 @@ namespace erin::distribution
     dist.dist_type.emplace_back(DistType::Weibull);
     return id;
   }
-  */
 
   size_type
   DistributionSystem::lookup_dist_by_tag(
@@ -491,17 +485,15 @@ namespace erin::distribution
           }
           break;
         }
-        /*
       case DistType::Weibull:
         {
           const auto& k = weibull_dist.shape_params[subtype_id];
           const auto& a = weibull_dist.scale_params[subtype_id];
-          const auto& b = weibull_dist.location_parameter[subtype_id];
+          const auto& b = weibull_dist.location_params[subtype_id];
           dt = static_cast<RealTimeType>(
-              std::round(weibull_quartile(fraction, k, a, b)));
+              std::round(weibull_quantile(fraction, k, a, b)));
           break;
         }
-        */
       default:
         {
           throw std::runtime_error("unhandled Cumulative Density Function");

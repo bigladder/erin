@@ -6853,6 +6853,31 @@ TEST(ErinBasicsTest, Test_quantile_table_distribution)
   ASSERT_THROW(dist_sys.add_quantile_table("a_table_dist_5", xs, dts), std::invalid_argument);
 }
 
+TEST(ErinBasicsTest, Test_weibull_distribution)
+{
+  namespace E = ERIN;
+  namespace ED = erin::distribution;
+  ED::DistributionSystem dist_sys{};
+  double k{5.0};        // shape parameter
+  double lambda{200.0}; // scale parameter
+  double gamma{0.0};    // location parameter
+  auto dist_id = dist_sys.add_weibull("a_weibull_dist", k, lambda, gamma);
+  double dice_roll_1{0.5};
+  double ans1{186.0};
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_1), ans1);
+  double dice_roll_2{0.0};
+  double ans2{0.0};
+  EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_2), ans2);
+  // double dice_roll_3{1.0};
+  // EXPECT_EQ(
+  //     dist_sys.next_time_advance(dist_id, dice_roll_3),
+  //     mean + static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
+  // double dice_roll_4{0.0};
+  // mean = 10;
+  // dist_id = dist_sys.add_normal("a_normal_dist_v2", mean, stddev);
+  // EXPECT_EQ(dist_sys.next_time_advance(dist_id, dice_roll_4), 0);
+}
+
 TEST(ErinBasicsTest, Test_uncontrolled_source)
 {
   namespace E = ERIN;

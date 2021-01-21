@@ -56,9 +56,9 @@ namespace erin::distribution
     Fixed = 0,
     Uniform,
     Normal,
+    Weibull,
     QuantileTable // from times and variate: variate is from (0,1) time and variate
                   // must be always increasing
-    //Weibull,
   };
 
   std::string dist_type_to_tag(DistType dist_type);
@@ -95,14 +95,12 @@ namespace erin::distribution
     std::vector<size_type> end_idx{};
   };
 
-  /*
-  struct Weibull_CDF
+  struct WeibullDist
   {
     std::vector<double> shape_params{}; // k
     std::vector<double> scale_params{}; // lambda
     std::vector<double> location_params{}; // gamma
   };
-  */
 
   class DistributionSystem
   {
@@ -134,13 +132,13 @@ namespace erin::distribution
         const std::vector<double>& dtimes_s,
         const std::vector<double>& occurrences
         );
+      */
 
-      size_type add_weibull_dist(
+      size_type add_weibull(
           const std::string& tag,
           const double shape_parameter,    // k
           const double scale_parameter,    // lambda
           const double location_parameter=0.0); // gamma
-      */
 
       [[nodiscard]] size_type lookup_dist_by_tag(const std::string& tag) const;
 
@@ -157,6 +155,7 @@ namespace erin::distribution
       UniformDist uniform_dist;
       NormalDist normal_dist;
       QuantileTableDist quantile_table_dist;
+      WeibullDist weibull_dist;
       std::default_random_engine g;
       std::uniform_real_distribution<double> roll;
   };

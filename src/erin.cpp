@@ -3311,7 +3311,7 @@ namespace ERIN
   calc_scenario_schedule(
       const RealTimeType max_time_s, 
       const std::unordered_map<std::string, Scenario>& scenarios,
-      const erin::distribution::DistributionSystem& cds,
+      const erin::distribution::DistributionSystem& ds,
       const std::function<double()>& rand_fn)
   {
     std::unordered_map<std::string, std::vector<RealTimeType>> scenario_sch{};
@@ -3321,13 +3321,13 @@ namespace ERIN
     for (const auto& s : scenarios) {
       const auto& scenario_id = s.first;
       const auto& scenario = s.second;
-      const auto cdf_id = scenario.get_occurrence_distribution_id();
+      const auto dist_id = scenario.get_occurrence_distribution_id();
       const auto max_occurrences = scenario.get_max_occurrences();
       RealTimeType t{0};
       int num_occurrences{0};
       std::vector<RealTimeType> start_times{};
       while (true) {
-        t += cds.next_time_advance(cdf_id, rand_fn());
+        t += ds.next_time_advance(dist_id, rand_fn());
         if (t <= max_time_s) {
           num_occurrences += 1;
           if ((max_occurrences != -1) && (num_occurrences > max_occurrences)) {

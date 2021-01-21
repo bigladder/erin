@@ -602,7 +602,7 @@ namespace ERIN
   calc_scenario_schedule(
       const RealTimeType max_time_s,
       const std::unordered_map<std::string, Scenario>& scenarios,
-      const erin::distribution::DistributionSystem& cds,
+      const erin::distribution::DistributionSystem& ds,
       const std::function<double()>& rand_fn);
 }
 

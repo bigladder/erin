@@ -53,7 +53,7 @@ run_it(const gsl::span<const char*>& args)
   namespace ev = erin::version;
   namespace eu = erin::utils;
   namespace ed = erin::distribution;
-  auto cds = ed::CumulativeDistributionSystem{};
+  auto cds = ed::DistributionSystem{};
   ed::CdfType cdf_type{ed::CdfType::Fixed};
   try {
     cdf_type = ed::tag_to_cdf_type(args[1]);
@@ -93,7 +93,7 @@ run_it(const gsl::span<const char*>& args)
           return 1;
         }
         try {
-          id = cds.add_fixed_cdf(tag, value_in_seconds);
+          id = cds.add_fixed(tag, value_in_seconds);
         }
         catch (const std::exception&) {
           std::cout << "Error creating a fixed distribution\n";
@@ -136,7 +136,7 @@ run_it(const gsl::span<const char*>& args)
           return 1;
         }
         try {
-          id = cds.add_uniform_cdf(tag, lower_bound, upper_bound);
+          id = cds.add_uniform(tag, lower_bound, upper_bound);
         }
         catch (const std::exception&) {
           std::cout << "Error creating a uniform distribution\n";
@@ -179,7 +179,7 @@ run_it(const gsl::span<const char*>& args)
           return 1;
         }
         try {
-          id = cds.add_normal_cdf(tag, mean, stdev);
+          id = cds.add_normal(tag, mean, stdev);
         }
         catch (const std::exception&) {
           std::cout << "Error creating a normal distribution\n";
@@ -188,7 +188,7 @@ run_it(const gsl::span<const char*>& args)
         }
         break;
       }
-    case ed::CdfType::Table:
+    case ed::CdfType::QuantileTable:
       {
         if (argc != num_args_for_table) {
           std::cout << "Missing arguments for table distribution\n";
@@ -245,7 +245,7 @@ run_it(const gsl::span<const char*>& args)
         }
         ifs.close();
         try {
-          id = cds.add_table_cdf(tag, xs, dtimes_s);
+          id = cds.add_quantile_table(tag, xs, dtimes_s);
         }
         catch (const std::exception&) {
           std::cout << "Error creating a tabular distribution\n";

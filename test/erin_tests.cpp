@@ -1248,8 +1248,8 @@ TEST(ErinBasicsTest, BasicScenarioTest)
                            { source_id, ep::Type::Outflow, 0},
                            { load_id, ep::Type::Inflow, 0},
                            stream_id}}}};
-  erin::distribution::CumulativeDistributionSystem cds{};
-  auto cdf_id = cds.add_fixed_cdf("every_100_seconds", 100);
+  erin::distribution::DistributionSystem cds{};
+  auto cdf_id = cds.add_fixed("every_100_seconds", 100);
   std::unordered_map<std::string, ERIN::Scenario> scenarios{
     {
       scenario_id,
@@ -5875,12 +5875,12 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
 {
   auto f = []()->double { return 0.5; };
   ERIN::ReliabilityCoordinator rc{};
-  auto cds = erin::distribution::CumulativeDistributionSystem{};
+  auto cds = erin::distribution::DistributionSystem{};
   std::int64_t final_time{10};
   auto reliability_schedule_1 = rc.calc_reliability_schedule(f, cds, final_time);
   EXPECT_EQ(reliability_schedule_1.size(), 0);
-  auto failure_id = cds.add_fixed_cdf("f", 5);
-  auto repair_id = cds.add_fixed_cdf("r", 1);
+  auto failure_id = cds.add_fixed("f", 5);
+  auto repair_id = cds.add_fixed("r", 1);
   auto fm_id = rc.add_failure_mode(
       "standard failure",
       failure_id,
@@ -5945,10 +5945,10 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
     "network = \"normal_operations\"\n"
     "calculate_reliability = true\n";
   auto f = []()->double { return 0.5; };
-  erin::distribution::CumulativeDistributionSystem cds{};
+  erin::distribution::DistributionSystem cds{};
   E::ReliabilityCoordinator rc{};
-  auto id_break = cds.add_fixed_cdf("break", 5);
-  auto id_repair = cds.add_fixed_cdf("repair", 2);
+  auto id_break = cds.add_fixed("break", 5);
+  auto id_repair = cds.add_fixed("repair", 2);
   auto id_fm = rc.add_failure_mode(
           "standard",
           id_break,
@@ -6038,10 +6038,10 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
     "network = \"normal_operations\"\n"
     "calculate_reliability = true\n";
   auto rand_fn = []()->double { return 0.5; };
-  erin::distribution::CumulativeDistributionSystem cds{};
+  erin::distribution::DistributionSystem cds{};
   E::ReliabilityCoordinator rc{};
-  auto id_break = cds.add_fixed_cdf("break", 5);
-  auto id_repair = cds.add_fixed_cdf("repair", 2);
+  auto id_break = cds.add_fixed("break", 5);
+  auto id_repair = cds.add_fixed("repair", 2);
   auto id_fm = rc.add_failure_mode(
           "standard",
           id_break,
@@ -6619,10 +6619,10 @@ TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
 {
   namespace E = ERIN;
   auto rand_fn = []()->double { return 0.5; };
-  erin::distribution::CumulativeDistributionSystem cds{};
+  erin::distribution::DistributionSystem cds{};
   E::ReliabilityCoordinator rc{};
-  auto cdf_break_id = cds.add_fixed_cdf("break", 10);
-  auto cdf_repair_id = cds.add_fixed_cdf("repair", 5);
+  auto cdf_break_id = cds.add_fixed("break", 10);
+  auto cdf_repair_id = cds.add_fixed("repair", 5);
   auto fm_standard_id = rc.add_failure_mode(
       "standard", cdf_break_id, cdf_repair_id);
   std::string comp_string_id{"S"};
@@ -6767,9 +6767,9 @@ TEST(ErinBasicsTest, Test_fixed_cumulative_distribution_system_usage)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
-  ED::CumulativeDistributionSystem cds{};
+  ED::DistributionSystem cds{};
   E::RealTimeType fixed_dt{10};
-  auto cdf_id = cds.add_fixed_cdf("some_cdf", fixed_dt);
+  auto cdf_id = cds.add_fixed("some_cdf", fixed_dt);
   EXPECT_EQ(cds.next_time_advance(cdf_id), fixed_dt);
 }
 
@@ -6777,10 +6777,10 @@ TEST(ErinBasicsTest, Test_uniform_cumulative_distribution_system_usage)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
-  ED::CumulativeDistributionSystem cds{};
+  ED::DistributionSystem cds{};
   E::RealTimeType lower_dt{10};
   E::RealTimeType upper_dt{50};
-  auto cdf_id = cds.add_uniform_cdf("a_uniform_cdf", lower_dt, upper_dt);
+  auto cdf_id = cds.add_uniform("a_uniform_cdf", lower_dt, upper_dt);
   double dice_roll_1{1.0};
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), upper_dt);
   double dice_roll_2{0.0};
@@ -6793,10 +6793,10 @@ TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
-  ED::CumulativeDistributionSystem cds{};
+  ED::DistributionSystem cds{};
   E::RealTimeType mean{1000};
   E::RealTimeType stddev{50};
-  auto cdf_id = cds.add_normal_cdf("a_normal_cdf", mean, stddev);
+  auto cdf_id = cds.add_normal("a_normal_cdf", mean, stddev);
   double dice_roll_1{0.5};
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), mean);
   double dice_roll_2{0.0};
@@ -6810,7 +6810,7 @@ TEST(ErinBasicsTest, Test_normal_cumulative_distribution_system_usage)
       mean + static_cast<E::RealTimeType>(std::round(3.0 * sqrt2 * stddev)));
   double dice_roll_4{0.0};
   mean = 10;
-  cdf_id = cds.add_normal_cdf("a_normal_cdf_v2", mean, stddev);
+  cdf_id = cds.add_normal("a_normal_cdf_v2", mean, stddev);
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_4), 0);
 }
 
@@ -6818,12 +6818,12 @@ TEST(ErinBasicsTest, Test_table_cumulative_distribution_system_usage)
 {
   namespace E = ERIN;
   namespace ED = erin::distribution;
-  ED::CumulativeDistributionSystem cds{};
+  ED::DistributionSystem cds{};
   // ys are times; always increasing
   // xs are "dice roll" values [0.0, 1.0]; always increasing
   std::vector<double> dts{0.0, 100.0};
   std::vector<double> xs{0.0, 1.0};
-  auto cdf_id = cds.add_table_cdf("a_table_cdf_1", xs, dts);
+  auto cdf_id = cds.add_quantile_table("a_table_cdf_1", xs, dts);
   constexpr double dice_roll_1{0.5};
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 50);
   constexpr double dice_roll_2{0.0};
@@ -6831,13 +6831,13 @@ TEST(ErinBasicsTest, Test_table_cumulative_distribution_system_usage)
   constexpr double dice_roll_3{1.0};
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 100);
   dts = std::vector{5.0, 6.0};
-  cdf_id = cds.add_table_cdf("a_table_cdf_2", xs, dts);
+  cdf_id = cds.add_quantile_table("a_table_cdf_2", xs, dts);
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 6);
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 5);
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 6);
   dts = std::vector{0.0, 400.0, 600.0, 1000.0};
   xs = std::vector{0.0, 0.4, 0.6, 1.0};
-  cdf_id = cds.add_table_cdf("a_table_cdf_3", xs, dts);
+  cdf_id = cds.add_quantile_table("a_table_cdf_3", xs, dts);
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_1), 500);
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_2), 0);
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_3), 1000);
@@ -6847,10 +6847,10 @@ TEST(ErinBasicsTest, Test_table_cumulative_distribution_system_usage)
   EXPECT_EQ(cds.next_time_advance(cdf_id, dice_roll_5), 750);
   xs = std::vector{-20.0, -15.0, -10.0, -5.0, 0.0};
   dts = std::vector{1.0, 2.0, 3.0, 4.0, 5.0};
-  ASSERT_THROW(cds.add_table_cdf("a_table_cdf_4", xs, dts), std::invalid_argument);
+  ASSERT_THROW(cds.add_quantile_table("a_table_cdf_4", xs, dts), std::invalid_argument);
   xs = std::vector{0.0, 0.5, 0.8};
   dts = std::vector{100.0, 200.0, 300.0};
-  ASSERT_THROW(cds.add_table_cdf("a_table_cdf_5", xs, dts), std::invalid_argument);
+  ASSERT_THROW(cds.add_quantile_table("a_table_cdf_5", xs, dts), std::invalid_argument);
 }
 
 TEST(ErinBasicsTest, Test_uncontrolled_source)

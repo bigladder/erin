@@ -63,13 +63,13 @@ namespace ERIN
       std::unordered_map<size_type, std::vector<TimeState>>
       calc_reliability_schedule(
           const std::function<double()>& rand_fn,
-          const erin::distribution::CumulativeDistributionSystem& cds,
+          const erin::distribution::DistributionSystem& cds,
           RealTimeType final_time) const;
 
       std::unordered_map<std::string, std::vector<TimeState>>
       calc_reliability_schedule_by_component_tag(
           const std::function<double()>& rand_fn,
-          const erin::distribution::CumulativeDistributionSystem& cds,
+          const erin::distribution::DistributionSystem& cds,
           RealTimeType final_time) const;
 
     private:
@@ -79,7 +79,7 @@ namespace ERIN
 
       void calc_next_events(
           const std::function<double()>& rand_fn,
-          const erin::distribution::CumulativeDistributionSystem& cds,
+          const erin::distribution::DistributionSystem& cds,
           std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
           bool is_failure) const;
 

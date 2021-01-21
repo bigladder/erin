@@ -1322,7 +1322,7 @@ namespace ERIN
 
   std::unordered_map<std::string, size_type>
   TomlInputReader::read_cumulative_distributions(
-      erin::distribution::CumulativeDistributionSystem& cds)
+      erin::distribution::DistributionSystem& cds)
   {
     const auto& toml_cdfs = toml::find_or(data, "cdf", toml::table{});
     std::unordered_map<std::string, size_type> out{};
@@ -1352,7 +1352,7 @@ namespace ERIN
                   tt, {"time_unit", "time_units"}, std::string{"hours"},
                   field_read);
             auto tu = tag_to_time_units(time_tag);
-            auto cdf_id = cds.add_fixed_cdf(
+            auto cdf_id = cds.add_fixed(
                 cdf_string_id, time_to_seconds(value, tu));
             out[cdf_string_id] = cdf_id;
             break;
@@ -1383,7 +1383,7 @@ namespace ERIN
                   tt, {"time_unit", "time_units"}, std::string{"hours"},
                   field_read);
             auto tu = tag_to_time_units(time_tag);
-            auto cdf_id = cds.add_uniform_cdf(
+            auto cdf_id = cds.add_uniform(
                 cdf_string_id,
                 time_to_seconds(lower_bound, tu),
                 time_to_seconds(upper_bound, tu));
@@ -1416,14 +1416,14 @@ namespace ERIN
                   tt, {"time_unit", "time_units"}, std::string{"hours"},
                   field_read);
             auto tu = tag_to_time_units(time_tag);
-            auto cdf_id = cds.add_normal_cdf(
+            auto cdf_id = cds.add_normal(
                 cdf_string_id,
                 time_to_seconds(mean, tu),
                 time_to_seconds(std_dev, tu));
             out[cdf_string_id] = cdf_id;
             break;
           }
-        case erin::distribution::CdfType::Table:
+        case erin::distribution::CdfType::QuantileTable:
           {
             /* [dist.my-table]
              * type = "quantile_table"
@@ -1558,7 +1558,7 @@ namespace ERIN
                     time_to_seconds(read_number(xdt[1]), time_units));
               }
             }
-            auto cdf_id = cds.add_table_cdf(cdf_string_id, xs, dtimes);
+            auto cdf_id = cds.add_quantile_table(cdf_string_id, xs, dtimes);
             out[cdf_string_id] = cdf_id;
             break;
           }
@@ -2703,7 +2703,7 @@ namespace ERIN
     auto loads_by_id = reader.read_loads();
     // TODO: add a repair CDF to the fragility datatype
     auto fragilities = reader.read_fragility_data();
-    erin::distribution::CumulativeDistributionSystem cds{};
+    erin::distribution::DistributionSystem cds{};
     // cdfs is map<string, size_type>
     auto cdfs = reader.read_cumulative_distributions(cds);
     ReliabilityCoordinator rc{};
@@ -3308,7 +3308,7 @@ namespace ERIN
   calc_scenario_schedule(
       const RealTimeType max_time_s, 
       const std::unordered_map<std::string, Scenario>& scenarios,
-      const erin::distribution::CumulativeDistributionSystem& cds,
+      const erin::distribution::DistributionSystem& cds,
       const std::function<double()>& rand_fn)
   {
     std::unordered_map<std::string, std::vector<RealTimeType>> scenario_sch{};

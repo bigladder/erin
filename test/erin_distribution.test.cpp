@@ -7,8 +7,8 @@
 int
 main() {
   namespace ED = erin::distribution;
-  auto cds = ED::CumulativeDistributionSystem();
-  auto id = cds.add_normal_cdf("normal", 0.0, 1'000.0);
+  auto cds = ED::DistributionSystem();
+  auto id = cds.add_normal("normal", 0.0, 1'000.0);
   int y_{0};
   int dy_{1};
   double x{0.0};

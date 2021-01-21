@@ -100,7 +100,7 @@ namespace erin::distribution
         return std::string{"uniform"};
       case CdfType::Normal:
         return std::string{"normal"};
-      case CdfType::Table:
+      case CdfType::QuantileTable:
         return std::string{"table"};
       /*
       case CdfType::Weibull:
@@ -124,8 +124,8 @@ namespace erin::distribution
     if (tag == "normal") {
       return CdfType::Normal;
     }
-    if (tag == "table") {
-      return CdfType::Table;
+    if (tag == "quantile_table") {
+      return CdfType::QuantileTable;
     }
     /*
     if (tag == "weibull") {
@@ -137,12 +137,12 @@ namespace erin::distribution
     throw std::invalid_argument(oss.str());
   }
 
-  CumulativeDistributionSystem::CumulativeDistributionSystem():
+  DistributionSystem::DistributionSystem():
     cdf{},
     fixed_cdf{},
     uniform_cdf{},
     normal_cdf{},
-    table_cdf{},
+    quantile_table_cdf{},
     //weibull_cdf{},
     g{},
     dist{0.0, 1.0}
@@ -150,7 +150,7 @@ namespace erin::distribution
   }
 
   size_type
-  CumulativeDistributionSystem::add_fixed_cdf(
+  DistributionSystem::add_fixed(
       const std::string& tag,
       RealTimeType value_in_seconds)
   {
@@ -164,7 +164,7 @@ namespace erin::distribution
   }
 
   size_type
-  CumulativeDistributionSystem::add_uniform_cdf(
+  DistributionSystem::add_uniform(
       const std::string& tag,
       RealTimeType lower_bound_s,
       RealTimeType upper_bound_s)
@@ -187,7 +187,7 @@ namespace erin::distribution
   }
 
   size_type
-  CumulativeDistributionSystem::add_normal_cdf(
+  DistributionSystem::add_normal(
       const std::string& tag,
       RealTimeType mean_s,
       RealTimeType stddev_s)
@@ -312,7 +312,7 @@ namespace erin::distribution
   }
 
   size_type
-  CumulativeDistributionSystem::add_table_cdf(
+  DistributionSystem::add_quantile_table(
       const std::string& tag,
       const std::vector<double>& xs,
       const std::vector<double>& dtimes_s)
@@ -327,26 +327,26 @@ namespace erin::distribution
     ensure_equals(tag + "[" + std::to_string(last_idx) + "]",
         xs[last_idx], 1.0);
     auto id{cdf.tag.size()};
-    auto subtype_id{table_cdf.start_idx.size()};
+    auto subtype_id{quantile_table_cdf.start_idx.size()};
     size_type start_idx{
       subtype_id == 0
       ? 0
-      : (table_cdf.end_idx[subtype_id - 1] + 1)};
+      : (quantile_table_cdf.end_idx[subtype_id - 1] + 1)};
     size_type end_idx{start_idx + count - 1};
-    table_cdf.start_idx.emplace_back(start_idx);
-    table_cdf.end_idx.emplace_back(end_idx);
+    quantile_table_cdf.start_idx.emplace_back(start_idx);
+    quantile_table_cdf.end_idx.emplace_back(end_idx);
     for (size_type i{0}; i < count; ++i) {
-      table_cdf.variates.emplace_back(xs[i]);
-      table_cdf.times.emplace_back(dtimes_s[i]);
+      quantile_table_cdf.variates.emplace_back(xs[i]);
+      quantile_table_cdf.times.emplace_back(dtimes_s[i]);
     }
     cdf.tag.emplace_back(tag);
     cdf.subtype_id.emplace_back(subtype_id);
-    cdf.cdf_type.emplace_back(CdfType::Table);
+    cdf.cdf_type.emplace_back(CdfType::QuantileTable);
     return id;
   }
 
   /*
-  size_type CumulativeDistributionSystem::add_pdf_table(
+  size_type DistributionSystem::add_pdf_table(
     const std::string& tag,
     const std::vector<double>& dtimes_s,
     const std::vector<double>& occurrences)
@@ -376,7 +376,7 @@ namespace erin::distribution
   }
 
   size_type
-  CumulativeDistributionSystem::add_weibull_dist(
+  DistributionSystem::add_weibull(
     const std::string& tag,
     const double shape_parameter,   // k
     const double scale_parameter,   // lambda
@@ -399,7 +399,7 @@ namespace erin::distribution
   */
 
   size_type
-  CumulativeDistributionSystem::lookup_cdf_by_tag(
+  DistributionSystem::lookup_dist_by_tag(
       const std::string& tag) const
   {
     for (size_type i{0}; i < cdf.tag.size(); ++i) {
@@ -413,14 +413,14 @@ namespace erin::distribution
   }
 
   RealTimeType
-  CumulativeDistributionSystem::next_time_advance(size_type cdf_id)
+  DistributionSystem::next_time_advance(size_type cdf_id)
   {
     auto fraction = dist(g);
     return next_time_advance(cdf_id, fraction);
   }
 
   RealTimeType
-  CumulativeDistributionSystem::next_time_advance(
+  DistributionSystem::next_time_advance(
       size_type cdf_id,
       double fraction) const
   {
@@ -459,29 +459,29 @@ namespace erin::distribution
                 avg + sd * sqrt2 * erfinv(twice * fraction - 1.0)));
           break;
         }
-      case CdfType::Table:
+      case CdfType::QuantileTable:
         {
-          const auto& start_idx = table_cdf.start_idx[subtype_id];
-          const auto& end_idx = table_cdf.end_idx[subtype_id];
+          const auto& start_idx = quantile_table_cdf.start_idx[subtype_id];
+          const auto& end_idx = quantile_table_cdf.end_idx[subtype_id];
           if (fraction >= 1.0) {
             dt = static_cast<RealTimeType>(
-                std::round(table_cdf.times[end_idx]));
+                std::round(quantile_table_cdf.times[end_idx]));
           }
           else {
             for (size_type idx{start_idx}; idx < end_idx; ++idx) {
-              const auto& v0 = table_cdf.variates[idx];
-              const auto& v1 = table_cdf.variates[idx + 1];
+              const auto& v0 = quantile_table_cdf.variates[idx];
+              const auto& v1 = quantile_table_cdf.variates[idx + 1];
               if ((fraction >= v0) && (fraction < v1)) {
                 if (fraction == v0) {
                   dt = static_cast<RealTimeType>(
-                      std::round(table_cdf.times[idx]));
+                      std::round(quantile_table_cdf.times[idx]));
                   break;
                 }
                 else {
                   const auto df{fraction - v0};
                   const auto dv{v1 - v0};
-                  const auto time0{table_cdf.times[idx]};
-                  const auto time1{table_cdf.times[idx+1]};
+                  const auto time0{quantile_table_cdf.times[idx]};
+                  const auto time1{quantile_table_cdf.times[idx+1]};
                   const auto dtimes{time1 - time0};
                   dt = static_cast<RealTimeType>(
                       std::round(time0 + (df/dv) * dtimes));
@@ -514,7 +514,7 @@ namespace erin::distribution
   }
 
   //std::vector<RealTimeType>
-  //CumulativeDistributionSystem::sample_upto_including(
+  //DistributionSystem::sample_upto_including(
   //    const RealTimeType max_time_s)
   //{
   //  std::vector<RealTimeType> samples{};

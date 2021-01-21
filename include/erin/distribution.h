@@ -56,8 +56,8 @@ namespace erin::distribution
     Fixed = 0,
     Uniform,
     Normal,
-    Table // from times and variate: variate is from (0,1) time and variate
-          // must be always increasing
+    QuantileTable // from times and variate: variate is from (0,1) time and variate
+                  // must be always increasing
     //Weibull,
   };
 
@@ -87,7 +87,7 @@ namespace erin::distribution
     std::vector<RealTimeType> stddev{};
   };
 
-  struct Table_CDF
+  struct QuantileTable_CDF
   {
     std::vector<double> variates{};
     std::vector<double> times{};
@@ -104,26 +104,26 @@ namespace erin::distribution
   };
   */
 
-  class CumulativeDistributionSystem
+  class DistributionSystem
   {
     public:
-      CumulativeDistributionSystem();
+      DistributionSystem();
 
-      size_type add_fixed_cdf(
+      size_type add_fixed(
           const std::string& tag,
           RealTimeType value_in_seconds);
 
-      size_type add_uniform_cdf(
+      size_type add_uniform(
           const std::string& tag,
           RealTimeType lower_bound_s,
           RealTimeType upper_bound_s);
 
-      size_type add_normal_cdf(
+      size_type add_normal(
           const std::string& tag,
           RealTimeType mean_s,
           RealTimeType stddev_s);
 
-      size_type add_table_cdf(
+      size_type add_quantile_table(
           const std::string& tag,
           const std::vector<double>& xs,
           const std::vector<double>& dtimes_s);
@@ -142,7 +142,7 @@ namespace erin::distribution
           const double location_parameter=0.0); // gamma
       */
 
-      [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
+      [[nodiscard]] size_type lookup_dist_by_tag(const std::string& tag) const;
 
       RealTimeType next_time_advance(size_type cdf_id);
 
@@ -156,7 +156,7 @@ namespace erin::distribution
       Fixed_CDF fixed_cdf;
       Uniform_CDF uniform_cdf;
       Normal_CDF normal_cdf;
-      Table_CDF table_cdf;
+      QuantileTable_CDF quantile_table_cdf;
       std::default_random_engine g;
       std::uniform_real_distribution<double> dist;
   };

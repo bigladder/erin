@@ -75,7 +75,7 @@ namespace ERIN
   void
   ReliabilityCoordinator::calc_next_events(
       const std::function<double()>& rand_fn,
-      const erin::distribution::CumulativeDistributionSystem& cds,
+      const erin::distribution::DistributionSystem& cds,
       std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
       bool is_failure) const
   {
@@ -131,7 +131,7 @@ namespace ERIN
   std::unordered_map<size_type, std::vector<TimeState>>
   ReliabilityCoordinator::calc_reliability_schedule(
       const std::function<double()>& rand_fn,
-      const erin::distribution::CumulativeDistributionSystem& cds,
+      const erin::distribution::DistributionSystem& cds,
       RealTimeType final_time) const
   {
     const auto num_components{comp_meta.tag.size()};
@@ -174,7 +174,7 @@ namespace ERIN
   std::unordered_map<std::string, std::vector<TimeState>>
   ReliabilityCoordinator::calc_reliability_schedule_by_component_tag(
       const std::function<double()>& rand_fn,
-      const erin::distribution::CumulativeDistributionSystem& cds,
+      const erin::distribution::DistributionSystem& cds,
       RealTimeType final_time) const
   {
     auto sch = calc_reliability_schedule(rand_fn, cds, final_time);

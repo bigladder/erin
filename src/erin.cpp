@@ -1424,6 +1424,52 @@ namespace ERIN
             out[dist_string_id] = dist_id;
             break;
           }
+        case erin::distribution::DistType::Weibull:
+          {
+            std::string field_read{""};
+            auto shape =
+              toml_helper::read_number_from_table_as_double(tt, "shape", -1.0);
+            if (shape <= 0) {
+              std::ostringstream oss{};
+              oss << "dist '" << dist_string_id << "' doesn't have a valid 'shape' field\n"
+                  << "field 'shape' must be present and > 0\n"
+                  << "shape = " << shape << "\n";
+              throw std::invalid_argument(oss.str());
+            }
+            auto scale =
+              toml_helper::read_number_from_table_as_double(tt, "scale", -1.0);
+            if (scale < 0) {
+              std::ostringstream oss{};
+              oss << "dist '" << dist_string_id << "' doesn't have a valid "
+                  << "'scale' field\n"
+                  << "field 'scale' must be present and >= 0\n"
+                  << "scale = " << scale << "\n";
+              throw std::invalid_argument(oss.str());
+            }
+            auto location =
+              toml_helper::read_number_from_table_as_double(tt, "location", 0.0);
+            if (location < 0) {
+              std::ostringstream oss{};
+              oss << "dist '" << dist_string_id << "' doesn't have a "
+                  << "valid 'location' field\n"
+                  << "field 'location' is optional and defaults to 0. If "
+                  << "present it must be >= 0\n"
+                  << "location = " << location << "\n";
+              throw std::invalid_argument(oss.str());
+            }
+            std::string time_tag =
+              toml_helper::read_optional_table_field<std::string>(
+                  tt, {"time_unit", "time_units"}, std::string{"hours"},
+                  field_read);
+            auto tu = tag_to_time_units(time_tag);
+            auto dist_id = cds.add_weibull(
+                dist_string_id,
+                shape,
+                time_to_seconds(scale, tu),
+                time_to_seconds(location, tu));
+            out[dist_string_id] = dist_id;
+            break;
+          }
         case erin::distribution::DistType::QuantileTable:
           {
             /* [dist.my-table]

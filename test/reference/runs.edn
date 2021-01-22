@@ -118,4 +118,9 @@
   :args "ex19.toml out.csv stats.csv"
   :compare-generated-to-ref
   {"out.csv" "ex19-out.csv"
-   "stats.csv" "ex19-stats.csv"}}]
+   "stats.csv" "ex19-stats.csv"}}
+ {:engine :erin_multi
+   :args "ex20.toml out.csv stats.csv"
+   :compare-generated-to-ref
+   {"out.csv" "ex20-out.csv"
+    "stats.csv" "ex20-stats.csv"}}]

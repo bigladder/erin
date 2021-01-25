@@ -1465,8 +1465,8 @@ namespace ERIN
             auto dist_id = cds.add_weibull(
                 dist_string_id,
                 shape,
-                time_to_seconds(scale, tu),
-                time_to_seconds(location, tu));
+                static_cast<double>(time_to_seconds(scale, tu)),
+                static_cast<double>(time_to_seconds(location, tu)));
             out[dist_string_id] = dist_id;
             break;
           }

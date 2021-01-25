@@ -2,7 +2,7 @@
 title: "User's Guide"
 subtitle: "Reliability Calculation Tool and Excel User Interface"
 author: "Big Ladder Software"
-date: "October 8, 2020"
+date: "January 25, 2021"
 documentclass: scrartcl
 number-sections: true
 figureTitle: "Figure"
@@ -527,14 +527,64 @@ We also specify the `upper_bound`, the bound above which we face certain destruc
 | key         | type | required? | notes                                                            |
 | ----        | --   | --        | --------                                                         |
 | `type`      | str  | yes       | one of `fixed`, `uniform`, `normal`, `quantile_table`, `weibull` |
-| `value`     | real | yes       | the value of the fixed CDF                                       |
-| `time_unit` | time | yes       | the time unit used to specify the fixed value                    |
+| `time_unit` | time | no        | the time unit used to specify the fixed value; defaults to hours |
 
-: `dist` specification {#tbl:dist}
+: general `dist` specification {#tbl:dist}
 
-[@tbl:dist] specifies a cumulative distribution function.
-At this time, the only distribution type available is "fixed".
+[@tbl:dist] specifies parameters common to all types of distribution.
+Depending on the value of `type`, the remaining parameters to a distribution can vary.
+The parameters for the various distribution types are shown in [@tbl:fixed], [@tbl:uniform], [@tbl:normal], [@tbl:quantile], and [@tbl:weibull].
+
+[@tbl:fixed] gives the parameters for a fixed distribution.
 A fixed distribution is a degenerate distribution that always samples a single point -- the `value`.
+
+| key         | type | required? | notes                               |
+| ----        | --   | --        | --------                            |
+| `value`     | real | yes       | the value of the fixed distribution |
+
+: `dist` with `type=fixed` {#tbl:fixed}
+
+[@tbl:uniform] gives the parameters for a uniform distribution.
+A uniform distribution is a distribution with equal frequency for any point between the `lower_bound` and `upper_bound`.
+
+| key           | type | required? | notes                                       |
+| ----          | --   | --        | --------                                    |
+| `lower_bound` | real | yes       | the lower bound of the uniform distribution |
+| `upper_bound` | real | yes       | the upper bound of the uniform distribution |
+
+: `dist` with `type=uniform` {#tbl:uniform}
+
+[@tbl:normal] gives the parameters for a normal distribution.
+A normal distribution is a distribution with a `mean` and a `standard_deviation`.
+
+| key                  | type | required? | notes                                             |
+| ----                 | --   | --        | --------                                          |
+| `mean`               | real | yes       | the mean of the normal distribution               |
+| `standard_deviation` | real | yes       | the standard deviation of the normal distribution |
+
+: `dist` with `type=normal` {#tbl:normal}
+
+[@tbl:quantile] allows a user to specify the quantile of their own custom distribution.
+The "quantile" is also sometimes called the "percent point funciton" and "inverse cumulative distribution function".
+A great way to get the quantile is to tabulate the cumulative distribution function of time from 0 (no failures) to 1 (all failed) and switch the columns.
+
+| key                  | type         | required? | notes                                                                 |
+| ----                 | --           | --        | --------                                                              |
+| `csv_file`           | str          | no        | name of CSV file with columns headers of `ANY,<time_unit>`            |
+| `variate_time_pairs` | \[\[real\]\] | no        | an array of two-tuples of variate [0.0, 1.0] to time (in `time_unit`) |
+
+: `dist` with `type=quantile_table` {#tbl:quantile}
+
+[@tbl:weibull] allows a user to specify a 3-parameter Weibull distribution.
+
+| key        | type | required? | notes                                    |
+| ----       | --   | --        | --------                                 |
+| `shape`    | real | yes       | the "shape" parameter                    |
+| `scale`    | real | yes       | the "scale" parameter in `time_units`    |
+| `location` | real | no        | the "location" parameter in `time_units` |
+
+: `dist` with `type=weibull` {#tbl:weibull}
+
 
 | key            | type | required? | notes              |
 | ----           | --   | --        | --------           |
@@ -576,7 +626,7 @@ You are requested to write the flow id as a check that ports are not being wired
 | key                          | type                   | required? | notes                                                 |
 | ----                         | --                     | --        | --------                                              |
 | `time_unit`                  | time                   | no        | time units for scenario. Default: "hours"             |
-| `occurrence_` `distribution` | table                  | yes       | see notes in text                                     |
+| `occurrence_` `distribution` | str                    | yes       | the id of a distribution                              |
 | `duration`                   | int>0                  | yes       | the duration of the scenario                          |
 | `max_occurrences`            | int                    | yes       | the maximum number of occurrences. -1 means unlimited |
 | `calculate_` `reliability`   | bool                   | no        | whether to calculate reliability. Default: false      |
@@ -585,13 +635,7 @@ You are requested to write the flow id as a check that ports are not being wired
 
 : `scenarios` specification {#tbl:scenarios}
 
-In [@tbl:scenarios], the `occurrence_distribution` is currently implemented as a literal table:
-
-```toml
-  occurrence_distribution = { type = "linear", value = 8, time_unit = "hours" }
-```
-
-The possible values for the `occurrence_distribution` table are given in [@tbl:dist].
+The `occurrence_distribution` must point to the name of a distribution (distributions are given in [@tbl:dist]).
 
 # Output Metrics
 

@@ -65,7 +65,7 @@ namespace ERIN
   }
 
   RealTimeType
-  time_to_seconds(RealTimeType t, TimeUnits u)
+  time_to_seconds(const RealTimeType t, TimeUnits u)
   {
     switch (u) {
       case TimeUnits::Seconds:
@@ -86,7 +86,7 @@ namespace ERIN
   }
 
   RealTimeType
-  time_to_seconds(double t, TimeUnits u)
+  time_to_seconds(const double t, TimeUnits u)
   {
     switch (u) {
       case TimeUnits::Seconds:

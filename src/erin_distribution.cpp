@@ -19,6 +19,7 @@ namespace erin::distribution
   double
   weibull_quantile(const double& p, const double& k, const double& a, const double& b)
   {
+    constexpr double highest_q{0.9999};
     double ans{0.0};
     if (p <= 0.0) {
       ans = b;
@@ -26,7 +27,7 @@ namespace erin::distribution
     else {
       auto q{p};
       if (p >= 1.0) {
-        q = 0.9999;
+        q = highest_q;
       }
       ans = b + a * std::pow(-1.0 * std::log(1.0 - q), 1.0 / k);
     }

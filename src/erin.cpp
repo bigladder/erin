@@ -1500,7 +1500,7 @@ namespace ERIN
                     << "'csv_file' but has neither\n";
                 throw std::invalid_argument(oss.str());
               }
-              auto csv_path = toml::get<std::string>(it2->second);
+              const auto& csv_path = toml::get<std::string>(it2->second);
               std::ifstream ifs{csv_path};
               xs = std::vector<double>{};
               dtimes = std::vector<double>{};

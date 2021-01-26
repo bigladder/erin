@@ -139,8 +139,8 @@ dispatch_strategy = "in_order"
 ############################################################
 # Fragility Curves
 ############################################################
-# Cumulative Distribution Functions
-[cdf.always]
+# Distributions
+[dist.always]
 type = "fixed"
 value = 0 # ...
 time_unit = "hours"
@@ -178,7 +178,7 @@ connections = [
 # Scenarios
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
+occurrence_distribution = "always"
 duration = 8760 # ...
 max_occurrences = 1 # ...
 calculate_reliability = false

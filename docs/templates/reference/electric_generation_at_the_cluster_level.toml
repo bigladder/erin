@@ -37,7 +37,10 @@ loads_by_scenario.blue_sky = "mc_electricity_blue_sky"
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "other_electricity_blue_sky"
-
+[dist.always]
+type = "fixed"
+value = 0 # ...
+time_units = "hours"
 ############################################################
 [networks.nw]
 connections = [
@@ -49,7 +52,7 @@ connections = [
 ############################################################
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
+occurrence_distribution = "always"
 duration = 8760
 max_occurrences = 1
 network = "nw"

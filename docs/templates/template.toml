@@ -207,9 +207,9 @@ lower_bound = <%= fc[:lower_bound].to_f %> # ...
 upper_bound = <%= fc[:upper_bound].to_f %> # ...
 <% end %>
 ############################################################
-# Cumulative Distribution Functions
+# Distributions
 <% s.fixed_cdf.each do |cdf| %>
-[cdf.<%= cdf[:id] %>]
+[dist.<%= cdf[:id] %>]
 type = "fixed"
 value = <%= cdf[:value_in_hours].to_f.round %> # ...
 time_unit = "hours"
@@ -218,8 +218,8 @@ time_unit = "hours"
 # Failure Modes
 <% s.failure_mode.each do |fm| %>
 [failure_mode.<%= fm.fetch(:id) %>]
-failure_cdf = "<%= fm.fetch(:failure_cdf) %>"
-repair_cdf = "<%= fm.fetch(:repair_cdf) %>"
+failure_dist = "<%= fm.fetch(:failure_cdf) %>"
+repair_dist = "<%= fm.fetch(:repair_cdf) %>"
 <% end %>
 ############################################################
 # Networks
@@ -234,8 +234,7 @@ connections = [
 <% s.scenario.each do |scen| %>
 [scenarios.<%= scen[:id] %>]
 time_unit = "hours"
-<%   cdf = s.cdf_for_id(scen[:occurrence_distribution]) %>
-occurrence_distribution = {type = "<%= cdf[:type] %>", value = <%= cdf[:value_in_hours].to_f.round %>, time_unit="hours"}
+occurrence_distribution = "<%= scen[:occurrence_distribution] %>"
 duration = <%= scen[:duration_in_hours].to_i %> # ...
 max_occurrences = <%= scen[:max_occurrence].to_i %> # ...
 <%   if scen[:calc_reliability].strip.downcase == "true" %>

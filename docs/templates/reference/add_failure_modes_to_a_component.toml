@@ -24,24 +24,24 @@ loads_by_scenario.s1 = "b1_electricity_s1"
 ############################################################
 # Fragility Curves
 ############################################################
-# Cumulative Distribution Functions
-[cdf.every_30_years]
+# Distributions
+[dist.every_30_years]
 type = "fixed"
 value = 262800 # ...
 time_unit = "hours"
-[cdf.every_10_hours]
+[dist.every_10_hours]
 type = "fixed"
 value = 10 # ...
 time_unit = "hours"
-[cdf.every_4_years]
+[dist.every_4_years]
 type = "fixed"
 value = 35040 # ...
 time_unit = "hours"
 ############################################################
 # Failure Modes
 [failure_mode.typical_utility_failures]
-failure_cdf = "every_10_hours"
-repair_cdf = "every_4_years"
+failure_dist = "every_10_hours"
+repair_dist = "every_4_years"
 ############################################################
 # Networks
 [networks.nw]
@@ -52,7 +52,7 @@ connections = [
 # Scenarios
 [scenarios.s1]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 262800, time_unit="hours"}
+occurrence_distribution = "every_30_years"
 duration = 336 # ...
 max_occurrences = -1 # ...
 calculate_reliability = false

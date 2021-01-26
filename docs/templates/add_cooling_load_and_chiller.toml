@@ -35,8 +35,8 @@ COP = 5.0 # ...
 ############################################################
 # Fragility Curves
 ############################################################
-# Cumulative Distribution Functions
-[cdf.every_30_years]
+# Distributions
+[dist.every_30_years]
 type = "fixed"
 value = 262800 # ...
 time_unit = "hours"
@@ -54,7 +54,7 @@ connections = [
 # Scenarios
 [scenarios.s1]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 262800, time_unit="hours"}
+occurrence_distribution = "every_30_years"
 duration = 336 # ...
 max_occurrences = -1 # ...
 calculate_reliability = false

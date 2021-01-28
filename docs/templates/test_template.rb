@@ -25,6 +25,12 @@ class TestTemplate < Minitest::Test
       :damage_intensity => [],
       :dual_outflow_converter_comp => [],
       :failure_mode => [],
+      :dist_type => [
+        {
+          :id => "every_30_years",
+          :dist_type => "fixed",
+        },
+      ],
       :fixed_dist => [
         {
           :id => "every_30_years",
@@ -92,6 +98,12 @@ class TestTemplate < Minitest::Test
       :damage_intensity => [],
       :dual_outflow_converter_comp => [],
       :failure_mode => [],
+      :dist_type => [
+        {
+          :id => "always",
+          :dist_type => "fixed",
+        },
+      ],
       :fixed_dist => [
         {
           :id => "always",
@@ -169,6 +181,12 @@ class TestTemplate < Minitest::Test
   # RETURN: (Hash symbol any), the default parameters for the template
   def multiple_scenarios_params
     ps = default_params
+    ps[:dist_type] += [
+      {
+        :id => "fixed_10yrs",
+        :dist_type => "fixed",
+      },
+    ]
     ps[:fixed_dist] += [
       {
         :id => "fixed_10yrs",
@@ -502,6 +520,7 @@ class TestTemplate < Minitest::Test
     @damage_intensity_csv = "damage-intensity.csv"
     @dual_outflow_converter_comp_csv = "dual-outflow-converter-comp.csv"
     @failure_mode_csv = "failure-mode.csv"
+    @dist_type_csv = "dist-type.csv"
     @fixed_dist_csv = "fixed-dist.csv"
     @fragility_curve_csv = "fragility-curve.csv"
     @general_csv = "general.csv"
@@ -521,6 +540,7 @@ class TestTemplate < Minitest::Test
       @damage_intensity_csv,
       @dual_outflow_converter_comp_csv,
       @failure_mode_csv,
+      @dist_type_csv,
       @fixed_dist_csv,
       @fragility_curve_csv,
       @general_csv,
@@ -586,6 +606,12 @@ class TestTemplate < Minitest::Test
         @failure_mode_csv,
         [:id, :failure_dist, :repair_dist],
         :failure_mode,
+        :normal_table,
+      ],
+      [
+        @dist_type_csv,
+        [:id, :dist_type],
+        :dist_type,
         :normal_table,
       ],
       [
@@ -837,6 +863,12 @@ class TestTemplate < Minitest::Test
       :damage_intensity => [],
       :dual_outflow_converter_comp => [],
       :failure_mode => [],
+      :dist_type => [
+        {
+          :id => "always",
+          :dist_type => "fixed",
+        },
+      ],
       :fixed_dist => [
         {
           :id => "always",

@@ -138,6 +138,7 @@ class Support
     @storage_component = data.fetch(:storage_component, [])
     @uncontrolled_src = data.fetch(:uncontrolled_src, [])
     process_distributions
+    check_distributions
     expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids
     @connections = []
@@ -286,10 +287,16 @@ class Support
     end
   end
 
-  def process_distributions
+  def check_distributions
+    ids = @dist_type.inject(Set.new) {|theSet, dt| theSet.add(dt[:id])}
+    raise "duplicate distribution found!" if ids.length != @dist_type.length
     @fixed_dist.each do |dist|
-      dist[:type] = "fixed"
+      if !ids.include?(dist[:id])
+        raise "Fixed distribution #{dist[:id]} not declared in dist_type"
+      end
+      ids = ids.delete(dist[:id])
     end
+    raise "#{ids.length} unmatched distributions" unless ids.length == 0
   end
 
   def expand_load_profile_paths(root_path)

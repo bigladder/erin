@@ -781,6 +781,16 @@ class TestTemplate < Minitest::Test
           repair_dist: "every_4_years"
         }
       ],
+      dist_type: [
+        {
+          id: "every_10_hours",
+          dist_type: "fixed",
+        },
+        {
+          id: "every_4_years",
+          dist_type: "fixed",
+        },
+      ],
       fixed_dist: [
         {
           id: "every_10_hours",

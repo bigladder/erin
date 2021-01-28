@@ -584,7 +584,7 @@ class TestTemplate < Minitest::Test
       ],
       [
         @failure_mode_csv,
-        [:id, :failure_cdf, :repair_cdf],
+        [:id, :failure_dist, :repair_dist],
         :failure_mode,
         :normal_table,
       ],
@@ -1074,8 +1074,8 @@ class TestTemplate < Minitest::Test
     ps[:failure_mode] += [
       {
         id: "typical_utility_failures",
-        failure_cdf: "every_10_hours",
-        repair_cdf: "every_4_years",
+        failure_dist: "every_10_hours",
+        repair_dist: "every_4_years",
       },
     ]
     ps[:fixed_dist] += [

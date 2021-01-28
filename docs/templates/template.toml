@@ -218,8 +218,8 @@ time_unit = "hours"
 # Failure Modes
 <% s.failure_mode.each do |fm| %>
 [failure_mode.<%= fm.fetch(:id) %>]
-failure_dist = "<%= fm.fetch(:failure_cdf) %>"
-repair_dist = "<%= fm.fetch(:repair_cdf) %>"
+failure_dist = "<%= fm.fetch(:failure_dist) %>"
+repair_dist = "<%= fm.fetch(:repair_dist) %>"
 <% end %>
 ############################################################
 # Networks

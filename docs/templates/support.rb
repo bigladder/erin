@@ -31,9 +31,9 @@ class Support
   #     - :secondary_efficiency, number, 0.0 < efficiency <= 1.0
   #   - :failure_mode, (Array Hash) with keys for Hash as follows:
   #     - :id, string, the id of the failure mode
-  #     - :failure_cdf, string, the id of the failure CDF
-  #     - :repair_cdf, string, the id of the repair CDF
-  #   - :fixed_cdf, (Array (Hash symbol value)) with these symbols
+  #     - :failure_dist, string, the id of the failure CDF
+  #     - :repair_dist, string, the id of the repair CDF
+  #   - :fixed_dist, (Array (Hash symbol value)) with these symbols
   #     - :id, string, the id of the fixed cdf
   #     - :value_in_hours, number, the fixed value in hours
   #   - :fragility_curve, (Array (Hash symbol value)) with these symbols
@@ -102,7 +102,8 @@ class Support
     :converter_component,
     :damage_intensity,
     :failure_mode,
-    :fixed_cdf,
+    :dist_type,
+    :fixed_dist,
     :fragility_curve,
     :load_component,
     :load_profile,
@@ -123,7 +124,8 @@ class Support
     @converter_component = data.fetch(:converter_component, [])
     @damage_intensity = data.fetch(:damage_intensity, [])
     @failure_mode = data.fetch(:failure_mode, [])
-    @fixed_cdf = data.fetch(:fixed_cdf, [])
+    @dist_type = data.fetch(:dist_type, [])
+    @fixed_dist = data.fetch(:fixed_dist, [])
     @fragility_curve = data.fetch(:fragility_curve, [])
     @load_component = data.fetch(:load_component, [])
     @load_profile = data.fetch(:load_profile, [])
@@ -154,7 +156,7 @@ class Support
 
   def cdf_for_id(id)
     item = nil
-    @fixed_cdf.each do |cdf|
+    @fixed_dist.each do |cdf|
       if id == cdf[:id]
         item = cdf 
         break
@@ -284,8 +286,9 @@ class Support
     end
   end
 
+  # TODO: rename to process_distributions; but do we even need this anymore?
   def process_cdfs
-    @fixed_cdf.each do |cdf|
+    @fixed_dist.each do |cdf|
       cdf[:type] = "fixed"
     end
   end

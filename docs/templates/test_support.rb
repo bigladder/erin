@@ -641,6 +641,16 @@ class TestTemplate < Minitest::Test
           repair_dist: "uniform_range_4_to_36_hours",
         },
       ],
+      dist_type: [
+        {
+          id: "fixed_10_years",
+          dist_type: "fixed",
+        },
+        {
+          id: "fixed_4_hours",
+          dist_type: "fixed",
+        },
+      ],
       fixed_dist: [
         {
           id: "fixed_10_years",
@@ -653,6 +663,8 @@ class TestTemplate < Minitest::Test
       ],
     }
     s = Support.new(data)
+    assert(s.dist_type.map {|d| d[:id]}.include? "fixed_10_years")
+    assert(s.dist_type.map {|d| d[:id]}.include? "fixed_4_hours")
     assert_equal(3, s.failure_mode.length)
     assert_equal(
       Set.new(["typical_utility_reliability"]),

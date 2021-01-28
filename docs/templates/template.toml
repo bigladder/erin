@@ -32,7 +32,7 @@ parameter "expand_load_paths", :default=>true
      data[:damage_intensity] = Support.load_csv(damage_intensity_csv_path)
      data[:dual_outflow_converter_comp] = Support.load_csv(dual_outflow_converter_comp_csv)
      data[:failure_mode] = Support.load_csv(failure_mode_csv_path)
-     data[:fixed_cdf] = Support.load_csv(fixed_dist_csv_path)
+     data[:fixed_dist] = Support.load_csv(fixed_dist_csv_path)
      data[:fragility_curve] = Support.load_csv(fragility_curve_csv_path)
      data[:general] = Support.load_key_value_csv(general_csv_path)
      data[:load_component] = Support.load_csv(load_component_csv_path)
@@ -208,10 +208,10 @@ upper_bound = <%= fc[:upper_bound].to_f %> # ...
 <% end %>
 ############################################################
 # Distributions
-<% s.fixed_cdf.each do |cdf| %>
-[dist.<%= cdf[:id] %>]
+<% s.fixed_dist.each do |dist| %>
+[dist.<%= dist[:id] %>]
 type = "fixed"
-value = <%= cdf[:value_in_hours].to_f.round %> # ...
+value = <%= dist[:value_in_hours].to_f.round %> # ...
 time_unit = "hours"
 <% end %>
 ############################################################

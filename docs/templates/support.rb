@@ -137,7 +137,7 @@ class Support
     @source_component = data.fetch(:source_component, [])
     @storage_component = data.fetch(:storage_component, [])
     @uncontrolled_src = data.fetch(:uncontrolled_src, [])
-    process_cdfs
+    process_distributions
     expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids
     @connections = []
@@ -286,10 +286,9 @@ class Support
     end
   end
 
-  # TODO: rename to process_distributions; but do we even need this anymore?
-  def process_cdfs
-    @fixed_dist.each do |cdf|
-      cdf[:type] = "fixed"
+  def process_distributions
+    @fixed_dist.each do |dist|
+      dist[:type] = "fixed"
     end
   end
 

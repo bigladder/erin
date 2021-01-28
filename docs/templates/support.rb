@@ -137,7 +137,6 @@ class Support
     @source_component = data.fetch(:source_component, [])
     @storage_component = data.fetch(:storage_component, [])
     @uncontrolled_src = data.fetch(:uncontrolled_src, [])
-    process_distributions
     check_distributions
     expand_load_profile_paths(root_path) unless root_path.nil?
     ensure_components_have_ids

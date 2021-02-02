@@ -25,7 +25,13 @@ class TestTemplate < Minitest::Test
       :damage_intensity => [],
       :dual_outflow_converter_comp => [],
       :failure_mode => [],
-      :fixed_cdf => [
+      :dist_type => [
+        {
+          :id => "every_30_years",
+          :dist_type => "fixed",
+        },
+      ],
+      :fixed_dist => [
         {
           :id => "every_30_years",
           :value_in_hours => 8760*30,
@@ -92,7 +98,13 @@ class TestTemplate < Minitest::Test
       :damage_intensity => [],
       :dual_outflow_converter_comp => [],
       :failure_mode => [],
-      :fixed_cdf => [
+      :dist_type => [
+        {
+          :id => "always",
+          :dist_type => "fixed",
+        },
+      ],
+      :fixed_dist => [
         {
           :id => "always",
           :value_in_hours => 0,
@@ -169,7 +181,13 @@ class TestTemplate < Minitest::Test
   # RETURN: (Hash symbol any), the default parameters for the template
   def multiple_scenarios_params
     ps = default_params
-    ps[:fixed_cdf] += [
+    ps[:dist_type] += [
+      {
+        :id => "fixed_10yrs",
+        :dist_type => "fixed",
+      },
+    ]
+    ps[:fixed_dist] += [
       {
         :id => "fixed_10yrs",
         :value_in_hours => 8760 * 10,
@@ -502,7 +520,8 @@ class TestTemplate < Minitest::Test
     @damage_intensity_csv = "damage-intensity.csv"
     @dual_outflow_converter_comp_csv = "dual-outflow-converter-comp.csv"
     @failure_mode_csv = "failure-mode.csv"
-    @fixed_cdf_csv = "fixed-cdf.csv"
+    @dist_type_csv = "dist-type.csv"
+    @fixed_dist_csv = "fixed-dist.csv"
     @fragility_curve_csv = "fragility-curve.csv"
     @general_csv = "general.csv"
     @load_component_csv = "load-component.csv"
@@ -521,7 +540,8 @@ class TestTemplate < Minitest::Test
       @damage_intensity_csv,
       @dual_outflow_converter_comp_csv,
       @failure_mode_csv,
-      @fixed_cdf_csv,
+      @dist_type_csv,
+      @fixed_dist_csv,
       @fragility_curve_csv,
       @general_csv,
       @load_component_csv,
@@ -584,14 +604,20 @@ class TestTemplate < Minitest::Test
       ],
       [
         @failure_mode_csv,
-        [:id, :failure_cdf, :repair_cdf],
+        [:id, :failure_dist, :repair_dist],
         :failure_mode,
         :normal_table,
       ],
       [
-        @fixed_cdf_csv,
+        @dist_type_csv,
+        [:id, :dist_type],
+        :dist_type,
+        :normal_table,
+      ],
+      [
+        @fixed_dist_csv,
         [:id, :value_in_hours],
-        :fixed_cdf,
+        :fixed_dist,
         :normal_table,
       ],
       [
@@ -837,7 +863,13 @@ class TestTemplate < Minitest::Test
       :damage_intensity => [],
       :dual_outflow_converter_comp => [],
       :failure_mode => [],
-      :fixed_cdf => [
+      :dist_type => [
+        {
+          :id => "always",
+          :dist_type => "fixed",
+        },
+      ],
+      :fixed_dist => [
         {
           :id => "always",
           :value_in_hours => 0,
@@ -1074,11 +1106,11 @@ class TestTemplate < Minitest::Test
     ps[:failure_mode] += [
       {
         id: "typical_utility_failures",
-        failure_cdf: "every_10_hours",
-        repair_cdf: "every_4_years",
+        failure_dist: "every_10_hours",
+        repair_dist: "every_4_years",
       },
     ]
-    ps[:fixed_cdf] += [
+    ps[:fixed_dist] += [
       {
         id: "every_10_hours",
         value_in_hours: 10,

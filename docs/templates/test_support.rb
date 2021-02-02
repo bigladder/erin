@@ -627,21 +627,31 @@ class TestTemplate < Minitest::Test
       failure_mode: [
         {
           id: "typical_utility_reliability",
-          failure_cdf: "fixed_10_years",
-          repair_cdf: "fixed_4_hours",
+          failure_dist: "fixed_10_years",
+          repair_dist: "fixed_4_hours",
         },
         {
           id: "boiler_reliability",
-          failure_cdf: "fixed_10_years",
-          repair_cdf: "uniform_range_4_to_36_hours",
+          failure_dist: "fixed_10_years",
+          repair_dist: "uniform_range_4_to_36_hours",
         },
         {
           id: "electric_generator_starter",
-          failure_cdf: "fixed_10_years",
-          repair_cdf: "uniform_range_4_to_36_hours",
+          failure_dist: "fixed_10_years",
+          repair_dist: "uniform_range_4_to_36_hours",
         },
       ],
-      fixed_cdf: [
+      dist_type: [
+        {
+          id: "fixed_10_years",
+          dist_type: "fixed",
+        },
+        {
+          id: "fixed_4_hours",
+          dist_type: "fixed",
+        },
+      ],
+      fixed_dist: [
         {
           id: "fixed_10_years",
           value_in_hours: 8760 * 10,
@@ -653,6 +663,8 @@ class TestTemplate < Minitest::Test
       ],
     }
     s = Support.new(data)
+    assert(s.dist_type.map {|d| d[:id]}.include? "fixed_10_years")
+    assert(s.dist_type.map {|d| d[:id]}.include? "fixed_4_hours")
     assert_equal(3, s.failure_mode.length)
     assert_equal(
       Set.new(["typical_utility_reliability"]),
@@ -765,11 +777,21 @@ class TestTemplate < Minitest::Test
       failure_mode: [
         {
           id: "typical_utility_failures",
-          failure_cdf: "every_10_hours",
-          repair_cdf: "every_4_years"
+          failure_dist: "every_10_hours",
+          repair_dist: "every_4_years"
         }
       ],
-      fixed_cdf: [
+      dist_type: [
+        {
+          id: "every_10_hours",
+          dist_type: "fixed",
+        },
+        {
+          id: "every_4_years",
+          dist_type: "fixed",
+        },
+      ],
+      fixed_dist: [
         {
           id: "every_10_hours",
           value_in_hours: "10"

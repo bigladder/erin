@@ -170,7 +170,7 @@ End Sub
 
 Private Sub UserForm_Initialize()
     Dim oDictionary As Object
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
@@ -178,8 +178,8 @@ Private Sub UserForm_Initialize()
     Set oDictionary = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("Components")
     ws.Activate
-    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("C4:C" & lRowow)
+    lRow = Cells(Rows.Count, 3).End(xlUp).Row
+    Set rngItems = Range("C4:C" & lRow)
     For Each cLoc In rngItems
         With Me.LocationIDInput
             If oDictionary.exists(cLoc.Value) Then
@@ -214,16 +214,16 @@ Private Sub UserForm_Initialize()
         End With
     Next cLoc
     
-    If AddComponentForm.AddComponentInput.text = "chp - electric primary (dual converter)" Then
+    If AddComponentForm.AddComponentInput.Text = "chp - electric primary (dual converter)" Then
         Me.Caption = "Add CHP - Electric Primary"
-        PrimaryOutflowInput.text = "electricity"
-        SecondaryOutflowInput.text = "heating"
+        PrimaryOutflowInput.Text = "electricity"
+        SecondaryOutflowInput.Text = "heating"
         PrimaryOutflowInput.Enabled = False
         SecondaryOutflowInput.Enabled = False
-    ElseIf AddComponentForm.AddComponentInput.text = "chp - heating primary (dual converter)" Then
+    ElseIf AddComponentForm.AddComponentInput.Text = "chp - heating primary (dual converter)" Then
         Me.Caption = "Add CHP - Heating Primary"
-        PrimaryOutflowInput.text = "heating"
-        SecondaryOutflowInput.text = "electricity"
+        PrimaryOutflowInput.Text = "heating"
+        SecondaryOutflowInput.Text = "electricity"
         PrimaryOutflowInput.Enabled = False
         SecondaryOutflowInput.Enabled = False
     Else
@@ -232,8 +232,8 @@ Private Sub UserForm_Initialize()
 
     Set ws = Worksheets("failure-mode")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
         With Me.ModesListBox
             .AddItem cLoc.Value
@@ -245,8 +245,8 @@ Private Sub UserForm_Initialize()
 
     Set ws = Worksheets("fragility-curve")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
         With Me.CurvesListBox
             .AddItem cLoc.Value
@@ -281,7 +281,7 @@ Private Sub SaveButton_Click()
     '    Exit Sub
     'End If
         
-    idName = IDInput.text
+    idName = IDInput.Text
     IsExit = False
     
     Set ParentSheet = Sheets("Components")
@@ -290,8 +290,8 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("Components")
     ParentSheet.Activate
-    ParentSheet.Range("B" & (componentRow)).Value = IDInput.text
-    ParentSheet.Range("C" & (componentRow)).Value = LocationIDInput.text
+    ParentSheet.Range("B" & (componentRow)).Value = IDInput.Text
+    ParentSheet.Range("C" & (componentRow)).Value = LocationIDInput.Text
     
     Set ParentSheet = Sheets("dual-outflow-converter-comp")
     ParentSheet.Activate
@@ -305,14 +305,14 @@ Private Sub SaveButton_Click()
         End If
     Next rowCntr
     
-    ParentSheet.Range("A" & (componentRow)).Value = IDInput.text
-    ParentSheet.Range("B" & (componentRow)).Value = LocationIDInput.text
-    ParentSheet.Range("C" & (componentRow)).Value = InflowInput.text
-    ParentSheet.Range("D" & (componentRow)).Value = PrimaryOutflowInput.text
-    ParentSheet.Range("E" & (componentRow)).Value = SecondaryOutflowInput.text
-    ParentSheet.Range("F" & (componentRow)).Value = LossflowInput.text
-    ParentSheet.Range("G" & (componentRow)).Value = PrimaryEfficiencyInput.text
-    ParentSheet.Range("H" & (componentRow)).Value = SecondaryEfficiencyInput.text
+    ParentSheet.Range("A" & (componentRow)).Value = IDInput.Text
+    ParentSheet.Range("B" & (componentRow)).Value = LocationIDInput.Text
+    ParentSheet.Range("C" & (componentRow)).Value = InflowInput.Text
+    ParentSheet.Range("D" & (componentRow)).Value = PrimaryOutflowInput.Text
+    ParentSheet.Range("E" & (componentRow)).Value = SecondaryOutflowInput.Text
+    ParentSheet.Range("F" & (componentRow)).Value = LossflowInput.Text
+    ParentSheet.Range("G" & (componentRow)).Value = PrimaryEfficiencyInput.Text
+    ParentSheet.Range("H" & (componentRow)).Value = SecondaryEfficiencyInput.Text
 
     AddComponentSubs AddDualConverterForm, idName
     

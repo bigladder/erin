@@ -17,7 +17,7 @@ Attribute VB_Exposed = False
 ' See the LICENSE.txt file for additional terms and conditions.
 
 Private Sub UserForm_Initialize()
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim cLoc As Range
     Dim ws As Worksheet
     Set ws = Worksheets("menus")
@@ -40,33 +40,33 @@ End Sub
 
 Private Sub AddComponentButton_Click()
     
-    If AddComponentInput.text = "batteries (storage)" Then
+    If AddComponentInput.Text = "batteries (storage)" Then
         AddStorageForm.Show
-    ElseIf AddComponentInput.text = "boiler (converter)" Then
+    ElseIf AddComponentInput.Text = "boiler (converter)" Then
         AddConverterForm.Show
-    ElseIf AddComponentInput.text = "chp - electric primary (dual converter)" Then
+    ElseIf AddComponentInput.Text = "chp - electric primary (dual converter)" Then
         AddDualConverterForm.Show
-    ElseIf AddComponentInput.text = "chp - heating primary (dual converter)" Then
+    ElseIf AddComponentInput.Text = "chp - heating primary (dual converter)" Then
         AddDualConverterForm.Show
-    ElseIf AddComponentInput.text = "electric generator (converter)" Then
+    ElseIf AddComponentInput.Text = "electric generator (converter)" Then
         AddConverterForm.Show
-    ElseIf AddComponentInput.text = "generic converter" Then
+    ElseIf AddComponentInput.Text = "generic converter" Then
         AddConverterForm.Show
-    ElseIf AddComponentInput.text = "generic storage" Then
+    ElseIf AddComponentInput.Text = "generic storage" Then
         AddStorageForm.Show
-    ElseIf AddComponentInput.text = "generic dual converter" Then
+    ElseIf AddComponentInput.Text = "generic dual converter" Then
         AddDualConverterForm.Show
-    ElseIf AddComponentInput.text = "load" Then
+    ElseIf AddComponentInput.Text = "load" Then
         AddLoadForm.Show
-    ElseIf AddComponentInput.text = "line (pass-through)" Then
+    ElseIf AddComponentInput.Text = "line (pass-through)" Then
         AddLineForm.Show
-    ElseIf AddComponentInput.text = "mover" Then
+    ElseIf AddComponentInput.Text = "mover" Then
         AddMoverForm.Show
-    ElseIf AddComponentInput.text = "source" Then
+    ElseIf AddComponentInput.Text = "source" Then
         AddSourceForm.Show
-    ElseIf AddComponentInput.text = "thermal energy storage (storage)" Then
+    ElseIf AddComponentInput.Text = "thermal energy storage (storage)" Then
         AddStorageForm.Show
-    ElseIf AddComponentInput.text = "uncontrolled source" Then
+    ElseIf AddComponentInput.Text = "uncontrolled source" Then
         AddUncontrolledSourceForm.Show
     Else
         MsgBox "Invalid Entry"

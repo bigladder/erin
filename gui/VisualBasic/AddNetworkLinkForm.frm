@@ -20,7 +20,7 @@ Private Sub UserForm_Initialize()
     Dim oDictionary1 As Object
     Dim oDictionary2 As Object
     Dim oItem As Object
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
@@ -28,8 +28,8 @@ Private Sub UserForm_Initialize()
     Set oDictionary1 = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("Components")
     ws.Activate
-    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("C4:C" & lRowow)
+    lRow = Cells(Rows.Count, 3).End(xlUp).Row
+    Set rngItems = Range("C4:C" & lRow)
     For Each cLoc In rngItems
         With Me.SourceLocationIDInput
             If oDictionary1.exists(cLoc.Value) Then
@@ -43,8 +43,8 @@ Private Sub UserForm_Initialize()
     Set oDictionary2 = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("Components")
     ws.Activate
-    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("C4:C" & lRowow)
+    lRow = Cells(Rows.Count, 3).End(xlUp).Row
+    Set rngItems = Range("C4:C" & lRow)
     For Each cLoc In rngItems
         With Me.DestinationLocationIDInput
             If oDictionary2.exists(cLoc.Value) Then
@@ -80,7 +80,7 @@ Private Sub SaveButton_Click()
     Dim rowCntr As Long
     Dim componentRow As Long
     
-    idName = IDInput.text
+    idName = IDInput.Text
     IsExit = False
     
     Set ParentSheet = Sheets("Network")
@@ -89,10 +89,10 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("Network")
     ParentSheet.Activate
-    ParentSheet.Range("B" & (componentRow)).Value = IDInput.text
-    ParentSheet.Range("C" & (componentRow)).Value = SourceLocationIDInput.text
-    ParentSheet.Range("D" & (componentRow)).Value = DestinationLocationIDInput.text
-    ParentSheet.Range("E" & (componentRow)).Value = FlowInput.text
+    ParentSheet.Range("B" & (componentRow)).Value = IDInput.Text
+    ParentSheet.Range("C" & (componentRow)).Value = SourceLocationIDInput.Text
+    ParentSheet.Range("D" & (componentRow)).Value = DestinationLocationIDInput.Text
+    ParentSheet.Range("E" & (componentRow)).Value = FlowInput.Text
     
     Set ParentSheet = Sheets("network-link")
     ParentSheet.Activate
@@ -106,10 +106,10 @@ Private Sub SaveButton_Click()
         End If
     Next rowCntr
     
-    ParentSheet.Range("A" & (componentRow)).Value = IDInput.text
-    ParentSheet.Range("B" & (componentRow)).Value = SourceLocationIDInput.text
-    ParentSheet.Range("C" & (componentRow)).Value = DestinationLocationIDInput.text
-    ParentSheet.Range("D" & (componentRow)).Value = FlowInput.text
+    ParentSheet.Range("A" & (componentRow)).Value = IDInput.Text
+    ParentSheet.Range("B" & (componentRow)).Value = SourceLocationIDInput.Text
+    ParentSheet.Range("C" & (componentRow)).Value = DestinationLocationIDInput.Text
+    ParentSheet.Range("D" & (componentRow)).Value = FlowInput.Text
 
     Unload Me
     Sheets("Network").Activate

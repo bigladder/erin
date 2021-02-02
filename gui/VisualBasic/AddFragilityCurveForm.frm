@@ -29,10 +29,10 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("fragility-curve")
     lRow = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.text
-    ParentSheet.Range("B" & (lRow + 1)).Value = VulnerableToInput.text
-    ParentSheet.Range("C" & (lRow + 1)).Value = LowerBoundInput.text
-    ParentSheet.Range("D" & (lRow + 1)).Value = UpperBoundInput.text
+    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.Text
+    ParentSheet.Range("B" & (lRow + 1)).Value = VulnerableToInput.Text
+    ParentSheet.Range("C" & (lRow + 1)).Value = LowerBoundInput.Text
+    ParentSheet.Range("D" & (lRow + 1)).Value = UpperBoundInput.Text
     Unload Me
     Sheets("Settings").Activate
 

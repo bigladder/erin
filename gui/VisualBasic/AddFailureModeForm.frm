@@ -18,18 +18,18 @@ Attribute VB_Exposed = False
 
 Private Sub UserForm_Initialize()
     Dim oDictionary As Object
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
     
     Set oDictionary = CreateObject("Scripting.Dictionary")
-    Set ws = Worksheets("fixed-cdf")
+    Set ws = Worksheets("dist-type")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
-        With Me.FailureCDFInput
+        With Me.FailureDistInput
             If oDictionary.exists(cLoc.Value) Then
                 'Do Nothing
             Else
@@ -39,12 +39,12 @@ Private Sub UserForm_Initialize()
         End With
     Next cLoc
     Set oDictionary = CreateObject("Scripting.Dictionary")
-    Set ws = Worksheets("fixed-cdf")
+    Set ws = Worksheets("dist-type")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
-        With Me.RepairCDFInput
+        With Me.RepairDistInput
             If oDictionary.exists(cLoc.Value) Then
                 'Do Nothing
             Else
@@ -68,9 +68,9 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("failure-mode")
     lRow = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.text
-    ParentSheet.Range("B" & (lRow + 1)).Value = FailureCDFInput.text
-    ParentSheet.Range("C" & (lRow + 1)).Value = RepairCDFInput.text
+    ParentSheet.Range("A" & (lRow + 1)).Value = IDInput.Text
+    ParentSheet.Range("B" & (lRow + 1)).Value = FailureDistInput.Text
+    ParentSheet.Range("C" & (lRow + 1)).Value = RepairDistInput.Text
     Unload Me
     Sheets("Settings").Activate
 

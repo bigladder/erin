@@ -170,7 +170,7 @@ End Sub
 
 Private Sub UserForm_Initialize()
     Dim oDictionary As Object
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
@@ -178,8 +178,8 @@ Private Sub UserForm_Initialize()
     Set oDictionary = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("Components")
     ws.Activate
-    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("C4:C" & lRowow)
+    lRow = Cells(Rows.Count, 3).End(xlUp).Row
+    Set rngItems = Range("C4:C" & lRow)
     For Each cLoc In rngItems
         With Me.LocationIDInput
             If oDictionary.exists(cLoc.Value) Then
@@ -201,8 +201,8 @@ Private Sub UserForm_Initialize()
 
     Set ws = Worksheets("failure-mode")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
         With Me.ModesListBox
             .AddItem cLoc.Value
@@ -214,8 +214,8 @@ Private Sub UserForm_Initialize()
 
     Set ws = Worksheets("fragility-curve")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
         With Me.CurvesListBox
             .AddItem cLoc.Value
@@ -241,7 +241,7 @@ Private Sub SaveButton_Click()
     Dim rowCntr As Long
     Dim componentRow As Long
     
-    idName = IDInput.text
+    idName = IDInput.Text
     IsExit = False
     
     Set ParentSheet = Sheets("Components")
@@ -250,8 +250,8 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("Components")
     ParentSheet.Activate
-    ParentSheet.Range("B" & (componentRow)).Value = IDInput.text
-    ParentSheet.Range("C" & (componentRow)).Value = LocationIDInput.text
+    ParentSheet.Range("B" & (componentRow)).Value = IDInput.Text
+    ParentSheet.Range("C" & (componentRow)).Value = LocationIDInput.Text
     
     Set ParentSheet = Sheets("load-component")
     ParentSheet.Activate
@@ -265,9 +265,9 @@ Private Sub SaveButton_Click()
         End If
     Next rowCntr
     
-    ParentSheet.Range("A" & (componentRow)).Value = IDInput.text
-    ParentSheet.Range("B" & (componentRow)).Value = LocationIDInput.text
-    ParentSheet.Range("C" & (componentRow)).Value = InflowInput.text
+    ParentSheet.Range("A" & (componentRow)).Value = IDInput.Text
+    ParentSheet.Range("B" & (componentRow)).Value = LocationIDInput.Text
+    ParentSheet.Range("C" & (componentRow)).Value = InflowInput.Text
 
     AddComponentSubs AddLoadForm, idName
     

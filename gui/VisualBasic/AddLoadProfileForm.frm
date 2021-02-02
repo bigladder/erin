@@ -18,7 +18,7 @@ Attribute VB_Exposed = False
 
 Private Sub UserForm_Initialize()
     Dim oDictionary As Object
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
@@ -26,33 +26,37 @@ Private Sub UserForm_Initialize()
     Set oDictionary = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("load-component")
     ws.Activate
-    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
-    For Each cLoc In rngItems
-        With Me.LocationIDInput
-            If oDictionary.exists(cLoc.Value) Then
-                'Do Nothing
-            Else
-                oDictionary.Add cLoc.Value, 0
-                .AddItem cLoc.Value
-            End If
-        End With
-    Next cLoc
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    If Not lRow = 1 Then
+        Set rngItems = Range("A2:A" & lRow)
+        For Each cLoc In rngItems
+            With Me.LocationIDInput
+                If oDictionary.exists(cLoc.Value) Then
+                    'Do Nothing
+                Else
+                    oDictionary.Add cLoc.Value, 0
+                    .AddItem cLoc.Value
+                End If
+            End With
+        Next cLoc
+    End If
     Set oDictionary = CreateObject("Scripting.Dictionary")
     Set ws = Worksheets("uncontrolled-src")
     ws.Activate
-    lRowow = Cells(Rows.Count, 3).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
-    For Each cLoc In rngItems
-        With Me.LocationIDInput
-            If oDictionary.exists(cLoc.Value) Then
-                'Do Nothing
-            Else
-                oDictionary.Add cLoc.Value, 0
-                .AddItem cLoc.Value
-            End If
-        End With
-    Next cLoc
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    If Not lRow = 1 Then
+        Set rngItems = Range("A2:A" & lRow)
+        For Each cLoc In rngItems
+            With Me.LocationIDInput
+                If oDictionary.exists(cLoc.Value) Then
+                    'Do Nothing
+                Else
+                    oDictionary.Add cLoc.Value, 0
+                    .AddItem cLoc.Value
+                End If
+            End With
+        Next cLoc
+    End If
 
     Set ws = Worksheets("menus")
     ws.Activate
@@ -77,14 +81,14 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("load-profile")
     lRow = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (lRow + 1)).Value = AddScenarioForm.IDInput.text
-    ParentSheet.Range("B" & (lRow + 1)).Value = NameInput.text
-    ParentSheet.Range("C" & (lRow + 1)).Value = LocationIDInput.text
-    ParentSheet.Range("D" & (lRow + 1)).Value = FlowInput.text
-    ParentSheet.Range("E" & (lRow + 1)).Value = FileNameInput.text
+    ParentSheet.Range("A" & (lRow + 1)).Value = AddScenarioForm.IDInput.Text
+    ParentSheet.Range("B" & (lRow + 1)).Value = NameInput.Text
+    ParentSheet.Range("C" & (lRow + 1)).Value = LocationIDInput.Text
+    ParentSheet.Range("D" & (lRow + 1)).Value = FlowInput.Text
+    ParentSheet.Range("E" & (lRow + 1)).Value = FileNameInput.Text
     
     With AddScenarioForm.LoadProfilesList
-        .AddItem NameInput.text
+        .AddItem NameInput.Text
     End With
         
     Unload Me

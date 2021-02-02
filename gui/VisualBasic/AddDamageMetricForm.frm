@@ -33,12 +33,12 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("damage-intensity")
     lRow = LastRow(ParentSheet)
-    ParentSheet.Range("A" & (lRow + 1)).Value = AddScenarioForm.IDInput.text
-    ParentSheet.Range("B" & (lRow + 1)).Value = NameInput.text
-    ParentSheet.Range("C" & (lRow + 1)).Value = ValueInput.text
+    ParentSheet.Range("A" & (lRow + 1)).Value = AddScenarioForm.IDInput.Text
+    ParentSheet.Range("B" & (lRow + 1)).Value = NameInput.Text
+    ParentSheet.Range("C" & (lRow + 1)).Value = ValueInput.Text
     
     With AddScenarioForm.DamageMetricsList
-        .AddItem NameInput.text
+        .AddItem NameInput.Text
     End With
         
     Unload Me

@@ -59,7 +59,7 @@ Sub AddComponentSubs(userFormName As UserForm, idName As String)
     Next rowCntr
     lRow = LastRow(ParentSheet)
     For i = 0 To userFormName.ModesIncludeListBox.ListCount - 1
-        ParentSheet.Range("A" & (lRow + i + 1)).Value = userFormName.IDInput.text
+        ParentSheet.Range("A" & (lRow + i + 1)).Value = userFormName.IDInput.Text
         ParentSheet.Range("B" & (lRow + i + 1)).Value = userFormName.ModesIncludeListBox.List(i)
     Next i
     
@@ -73,7 +73,7 @@ Sub AddComponentSubs(userFormName As UserForm, idName As String)
     Next rowCntr
     lRow = LastRow(ParentSheet)
     For i = 0 To userFormName.CurvesIncludeListBox.ListCount - 1
-        ParentSheet.Range("A" & (lRow + i + 1)).Value = userFormName.IDInput.text
+        ParentSheet.Range("A" & (lRow + i + 1)).Value = userFormName.IDInput.Text
         ParentSheet.Range("B" & (lRow + i + 1)).Value = userFormName.CurvesIncludeListBox.List(i)
     Next i
 
@@ -175,15 +175,15 @@ Sub DeleteRows(idName As String)
     Dim MyArray As Variant
     Dim vName As Variant
     Dim ws As Worksheet
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim rowCntr As Long
     
     MyArray = Array("component-failure-mode", "component-fragility", "converter-component", "damage-intensity", "dual-outflow-converter-comp", "failure-mode", "fixed-cdf", "fragility-curve", "load-component", "load-profile", "mover-component", "muxer-component", "network-link", "pass-through-component", "scenario", "source-component", "storage-component", "uncontrolled-src")
     
     For Each vName In MyArray
         Set ws = ThisWorkbook.Sheets(vName)
-        lRowow = LastRow(ws)
-        For rowCntr = lRowow To 1 Step -1
+        lRow = LastRow(ws)
+        For rowCntr = lRow To 1 Step -1
             If ws.Cells(rowCntr, 1) = idName Or ws.Cells(rowCntr, 2) = idName Then
                 ws.Rows(rowCntr).Delete
             End If
@@ -195,7 +195,7 @@ Sub FindItem(idName As String)
     Dim WorksheetArray As Variant
     Dim vName As Variant
     Dim ws As Worksheet
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim rowCntr As Long
     Dim TabName As String
     Dim ComponentSubs As SubComponent
@@ -203,8 +203,8 @@ Sub FindItem(idName As String)
     WorksheetArray = Array("converter-component", "dual-outflow-converter-comp", "load-component", "load-profile", "mover-component", "muxer-component", "network-link", "pass-through-component", "scenario", "source-component", "storage-component", "uncontrolled-src")
     For Each vName In WorksheetArray
         Set ws = ThisWorkbook.Sheets(vName)
-        lRowow = LastRow(ws)
-        For rowCntr = lRowow To 1 Step -1
+        lRow = LastRow(ws)
+        For rowCntr = lRow To 1 Step -1
             If ws.Cells(rowCntr, 1) = idName Then
                 If ws.Name = "converter-component" Then
                     With AddConverterForm
@@ -413,7 +413,7 @@ Function getComponentSubs(idName As String) As SubComponent
     Dim j As Long
     Dim k As Long
     Dim ws As Worksheet
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim iSubCntr As Long
     Dim ComponentSubs As SubComponent
     Dim ModesListBox() As Variant
@@ -445,10 +445,10 @@ Function getComponentSubs(idName As String) As SubComponent
     ComponentSubArray = Array("component-failure-mode", "component-fragility", "failure-mode", "fragility-curve", "load-profile", "damage-intensity")
     For Each vSubName In ComponentSubArray
         Set ws = ThisWorkbook.Sheets(vSubName)
-        lRowow = LastRow(ws)
+        lRow = LastRow(ws)
         i = 0
         If ws.Name = "component-failure-mode" Then
-            For iSubCntr = 2 To lRowow Step 1
+            For iSubCntr = 2 To lRow Step 1
                 If ws.Cells(iSubCntr, 1) = idName Then
                     ReDim Preserve ModesIncludeListBox(i)
                     ModesIncludeListBox(i) = ws.Range("B" & iSubCntr).Value
@@ -456,7 +456,7 @@ Function getComponentSubs(idName As String) As SubComponent
                 End If
             Next iSubCntr
         ElseIf ws.Name = "component-fragility" Then
-            For iSubCntr = 2 To lRowow Step 1
+            For iSubCntr = 2 To lRow Step 1
                 If ws.Cells(iSubCntr, 1) = idName Then
                     ReDim Preserve CurvesIncludeListBox(i)
                     CurvesIncludeListBox(i) = ws.Range("B" & iSubCntr).Value
@@ -464,19 +464,19 @@ Function getComponentSubs(idName As String) As SubComponent
                 End If
             Next iSubCntr
         ElseIf ws.Name = "failure-mode" Then
-            For iSubCntr = 2 To lRowow Step 1
+            For iSubCntr = 2 To lRow Step 1
                 ReDim Preserve ModesListBox_orig(i)
                 ModesListBox_orig(i) = ws.Range("A" & iSubCntr).Value
                 i = i + 1
             Next iSubCntr
         ElseIf ws.Name = "fragility-curve" Then
-            For iSubCntr = 2 To lRowow Step 1
+            For iSubCntr = 2 To lRow Step 1
                 ReDim Preserve CurvesListBox_orig(i)
                 CurvesListBox_orig(i) = ws.Range("A" & iSubCntr).Value
                 i = i + 1
             Next iSubCntr
         ElseIf ws.Name = "load-profile" Then
-            For iSubCntr = 2 To lRowow Step 1
+            For iSubCntr = 2 To lRow Step 1
                 If ws.Cells(iSubCntr, 1) = idName Then
                     ReDim Preserve ProfileListBox(i)
                     ProfileListBox(i) = ws.Range("B" & iSubCntr).Value
@@ -484,7 +484,7 @@ Function getComponentSubs(idName As String) As SubComponent
                 End If
             Next iSubCntr
         ElseIf ws.Name = "damage-intensity" Then
-            For iSubCntr = 2 To lRowow Step 1
+            For iSubCntr = 2 To lRow Step 1
                 If ws.Cells(iSubCntr, 1) = idName Then
                     ReDim Preserve DamageListBox(i)
                     DamageListBox(i) = ws.Range("B" & iSubCntr).Value
@@ -730,9 +730,10 @@ Sub Run()
     ExportAsCSV Sheets("component-fragility")
     ExportAsCSV Sheets("converter-component")
     ExportAsCSV Sheets("damage-intensity")
+    ExportAsCSV Sheets("dist-type")
     ExportAsCSV Sheets("dual-outflow-converter-comp")
     ExportAsCSV Sheets("failure-mode")
-    ExportAsCSV Sheets("fixed-cdf")
+    ExportAsCSV Sheets("fixed-dist")
     ExportAsCSV Sheets("fragility-curve")
     ExportAsCSV Sheets("general")
     ExportAsCSV Sheets("load-component")
@@ -740,11 +741,15 @@ Sub Run()
     ExportAsCSV Sheets("mover-component")
     ExportAsCSV Sheets("muxer-component")
     ExportAsCSV Sheets("network-link")
+    ExportAsCSV Sheets("normal-dist")
     ExportAsCSV Sheets("pass-through-component")
+    ExportAsCSV Sheets("quantile-dist")
     ExportAsCSV Sheets("scenario")
     ExportAsCSV Sheets("source-component")
     ExportAsCSV Sheets("storage-component")
     ExportAsCSV Sheets("uncontrolled-src")
+    ExportAsCSV Sheets("uniform-dist")
+    ExportAsCSV Sheets("weibull-dist")
     
     Path = ThisWorkbook.Path & Sep & "in.toml"
     Set folder = CreateObject("scripting.filesystemobject")

@@ -48,16 +48,16 @@ End Sub
 
 Private Sub UserForm_Initialize()
     Dim oDictionary As Object
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim rngItems As Range
     Dim cLoc As Range
     Dim ws As Worksheet
     
     Set oDictionary = CreateObject("Scripting.Dictionary")
-    Set ws = Worksheets("fixed-cdf")
+    Set ws = Worksheets("dist-type")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
         With Me.OccDistributionInput
             If oDictionary.exists(cLoc.Value) Then
@@ -93,7 +93,7 @@ Private Sub SaveButton_Click()
     Dim rowCntr As Long
     Dim componentRow As Long
     
-    idName = IDInput.text
+    idName = IDInput.Text
     IsExit = False
     
     Set ParentSheet = Sheets("Scenarios")
@@ -102,7 +102,7 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("Scenarios")
     ParentSheet.Activate
-    ParentSheet.Range("B" & (componentRow)).Value = IDInput.text
+    ParentSheet.Range("B" & (componentRow)).Value = IDInput.Text
     
     Set ParentSheet = Sheets("scenario")
     ParentSheet.Activate
@@ -116,11 +116,11 @@ Private Sub SaveButton_Click()
         End If
     Next rowCntr
     
-    ParentSheet.Range("A" & (componentRow)).Value = IDInput.text
-    ParentSheet.Range("B" & (componentRow)).Value = DurationInput.text
-    ParentSheet.Range("C" & (componentRow)).Value = OccDistributionInput.text
-    ParentSheet.Range("D" & (componentRow)).Value = CalcReliabilityInput.text
-    ParentSheet.Range("E" & (componentRow)).Value = MaxOccurancesInput.text
+    ParentSheet.Range("A" & (componentRow)).Value = IDInput.Text
+    ParentSheet.Range("B" & (componentRow)).Value = DurationInput.Text
+    ParentSheet.Range("C" & (componentRow)).Value = OccDistributionInput.Text
+    ParentSheet.Range("D" & (componentRow)).Value = CalcReliabilityInput.Text
+    ParentSheet.Range("E" & (componentRow)).Value = MaxOccurancesInput.Text
 
     Unload Me
     Sheets("Scenarios").Activate

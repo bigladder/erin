@@ -169,15 +169,15 @@ Private Sub CurvesRemoveCheckBox_Click()
 End Sub
 
 Private Sub UserForm_Initialize()
-    Dim lRowow As Long
+    Dim lRow As Long
     Dim cLoc As Range
     Dim ws As Worksheet
     
     'initializes list of network links
     Set ws = Worksheets("network-link")
     ws.Activate
-    lRowow = ws.Cells(Rows.Count, 1).End(xlUp).Row
-    For Each cLoc In ws.Range(Cells(2, 1), Cells(lRowow, 1))
+    lRow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+    For Each cLoc In ws.Range(Cells(2, 1), Cells(lRow, 1))
         With Me.NetworkLinkIDInput
             .AddItem cLoc.Value
         End With
@@ -195,8 +195,8 @@ Private Sub UserForm_Initialize()
     'initializes list of failure modes
     Set ws = Worksheets("failure-mode")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
         With Me.ModesListBox
             .AddItem cLoc.Value
@@ -209,8 +209,8 @@ Private Sub UserForm_Initialize()
     'initializes list of fragility curves
     Set ws = Worksheets("fragility-curve")
     ws.Activate
-    lRowow = Cells(Rows.Count, 1).End(xlUp).Row
-    Set rngItems = Range("A2:A" & lRowow)
+    lRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Set rngItems = Range("A2:A" & lRow)
     For Each cLoc In rngItems
         With Me.CurvesListBox
             .AddItem cLoc.Value
@@ -236,7 +236,7 @@ Private Sub SaveButton_Click()
     Dim rowCntr As Long
     Dim componentRow As Long
     
-    idName = IDInput.text
+    idName = IDInput.Text
     IsExit = False
     
     Set ParentSheet = Sheets("Components")
@@ -245,7 +245,7 @@ Private Sub SaveButton_Click()
     
     Set ParentSheet = Sheets("Components")
     ParentSheet.Activate
-    ParentSheet.Range("B" & (componentRow)).Value = IDInput.text
+    ParentSheet.Range("B" & (componentRow)).Value = IDInput.Text
     
     Set ParentSheet = Sheets("pass-through-component")
     ParentSheet.Activate
@@ -259,9 +259,9 @@ Private Sub SaveButton_Click()
         End If
     Next rowCntr
     
-    ParentSheet.Range("A" & (componentRow)).Value = IDInput.text
-    ParentSheet.Range("B" & (componentRow)).Value = NetworkLinkIDInput.text
-    ParentSheet.Range("C" & (componentRow)).Value = FlowInput.text
+    ParentSheet.Range("A" & (componentRow)).Value = IDInput.Text
+    ParentSheet.Range("B" & (componentRow)).Value = NetworkLinkIDInput.Text
+    ParentSheet.Range("C" & (componentRow)).Value = FlowInput.Text
 
     AddComponentSubs AddLineForm, idName
     

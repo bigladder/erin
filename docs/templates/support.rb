@@ -336,16 +336,32 @@ class Support
     end
   end
 
-  def check_distributions
-    ids = @dist_type.inject(Set.new) {|theSet, dt| theSet.add(dt[:id])}
-    raise "duplicate distribution found!" if ids.length != @dist_type.length
-    @fixed_dist.each do |dist|
-      if !ids.include?(dist[:id])
-        raise "Fixed distribution #{dist[:id]} not declared in dist_type"
+  def pop_matching_ids(items, id_set, msg)
+    if items.nil?
+      id_set
+    else
+      items.each do |dist|
+        raise "#{msg} for #{dist.fetch(:id)}" if !id_set.include?(dist.fetch(:id))
+        id_set = id_set.delete(dist.fetch(:id))
       end
-      ids = ids.delete(dist[:id])
+      id_set
     end
-    raise "#{ids.length} unmatched distributions" unless ids.length == 0
+  end
+
+  def check_distributions
+    ids = @dist_type.inject(Set.new) {|theSet, dt| theSet.add(dt.fetch(:id))}
+    raise "duplicate distribution found!" if ids.length != @dist_type.length
+    [
+      {items: @fixed_dist, name: "Fixed"},
+      {items: @uniform_dist, name: "Uniform"},
+      {items: @normal_dist, name: "Normal"},
+      {items: @weibull_dist, name: "Weibull"},
+      {items: @quantile_dist, name: "Quantile"}
+    ].each do |x|
+      ids = pop_matching_ids(
+        x[:items], ids, "#{x[:name]} distribution not declared in dist_type")
+    end
+    raise "#{ids.length} unmatched distributions: #{ids}" unless ids.length == 0
   end
 
   def expand_load_profile_paths(root_path)

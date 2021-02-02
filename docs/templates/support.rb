@@ -365,7 +365,7 @@ class Support
       ids = pop_matching_ids(
         x[:items], ids, "#{x[:name]} distribution not declared in dist_type")
     end
-    raise "#{ids.length} unmatched distributions: #{ids}" unless ids.length == 0
+    raise "#{ids.length} unmatched distributions: #{ids.to_s}" unless ids.length == 0
   end
 
   def expand_load_profile_paths(root_path)

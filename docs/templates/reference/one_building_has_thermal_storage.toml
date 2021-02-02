@@ -54,7 +54,7 @@ dispatch_strategy = "in_order"
 # Distributions
 [dist.always]
 type = "fixed"
-value = 0 # ...
+value = 0.0 # ...
 time_unit = "hours"
 ############################################################
 # Failure Modes

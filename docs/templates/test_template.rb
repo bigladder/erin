@@ -37,6 +37,10 @@ class TestTemplate < Minitest::Test
           :value_in_hours => 8760*30,
         },
       ],
+      :uniform_dist => [],
+      :normal_dist => [],
+      :weibull_dist => [],
+      :quantile_dist => [],
       :fragility_curve => [],
       :general => {
         :simulation_duration_in_years => 100,
@@ -110,6 +114,10 @@ class TestTemplate < Minitest::Test
           :value_in_hours => 0,
         },
       ],
+      :uniform_dist => [],
+      :normal_dist => [],
+      :weibull_dist => [],
+      :quantile_dist => [],
       :fragility_curve => [],
       :general => {
         :simulation_duration_in_years => 100,
@@ -485,6 +493,11 @@ class TestTemplate < Minitest::Test
         val[:csv_files] += "doesn't exist..."
       end
     end
+    val[:params] = if File.exist?(@params_file) then
+                     File.read(@params_file)
+                   else
+                     ""
+                   end
     return val
   end
 
@@ -522,6 +535,10 @@ class TestTemplate < Minitest::Test
     @failure_mode_csv = "failure-mode.csv"
     @dist_type_csv = "dist-type.csv"
     @fixed_dist_csv = "fixed-dist.csv"
+    @uniform_dist_csv = "uniform-dist.csv"
+    @normal_dist_csv = "normal-dist.csv"
+    @weibull_dist_csv = "weibull-dist.csv"
+    @quantile_dist_csv = "quantile-dist.csv"
     @fragility_curve_csv = "fragility-curve.csv"
     @general_csv = "general.csv"
     @load_component_csv = "load-component.csv"
@@ -542,6 +559,10 @@ class TestTemplate < Minitest::Test
       @failure_mode_csv,
       @dist_type_csv,
       @fixed_dist_csv,
+      @uniform_dist_csv,
+      @normal_dist_csv,
+      @weibull_dist_csv,
+      @quantile_dist_csv,
       @fragility_curve_csv,
       @general_csv,
       @load_component_csv,
@@ -618,6 +639,30 @@ class TestTemplate < Minitest::Test
         @fixed_dist_csv,
         [:id, :value_in_hours],
         :fixed_dist,
+        :normal_table,
+      ],
+      [
+        @uniform_dist_csv,
+        [:id, :lower_bound_in_hours, :upper_bound_in_hours],
+        :uniform_dist,
+        :normal_table,
+      ],
+      [
+        @normal_dist_csv,
+        [:id, :mean_in_hours, :standard_deviation_in_hours],
+        :normal_dist,
+        :normal_table,
+      ],
+      [
+        @weibull_dist_csv,
+        [:id, :shape, :scale_in_hours, :location_in_hours],
+        :weibull_dist,
+        :normal_table,
+      ],
+      [
+        @quantile_dist_csv,
+        [:id, :csv_file],
+        :quantile_dist,
         :normal_table,
       ],
       [
@@ -875,6 +920,10 @@ class TestTemplate < Minitest::Test
           :value_in_hours => 0,
         },
       ],
+      :uniform_dist => [],
+      :normal_dist => [],
+      :weibull_dist => [],
+      :quantile_dist => [],
       :fragility_curve => [],
       :general => {
         :simulation_duration_in_years => 100,
@@ -1108,6 +1157,16 @@ class TestTemplate < Minitest::Test
         id: "typical_utility_failures",
         failure_dist: "every_10_hours",
         repair_dist: "every_4_years",
+      },
+    ]
+    ps[:dist_type] += [
+      {
+        id: "every_10_hours",
+        dist_type: "fixed",
+      },
+      {
+        id: "every_4_years",
+        dist_type: "fixed",
       },
     ]
     ps[:fixed_dist] += [

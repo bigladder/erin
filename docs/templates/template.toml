@@ -185,19 +185,19 @@ stream = "<%= c[:flow] %>"
 num_inflows = <%= c[:num_inflows] %> # ...
 num_outflows = <%= c[:num_outflows] %> # ...
 dispatch_strategy = "in_order"
-<%   fms = s.failure_modes_for_component(c[:id]) %>
+<%   fms = s.failure_modes_for_component(c.fetch(:id)) %>
 <%   if fms.length > 0 %>
-failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
+failure_modes = [<%= fms.map {|fm| "\"#{fm.fetch(:id)}\""}.join(", ") %>]
 <%   end %>
 <%   fs = s.fragilities_for_component(c[:id]) %>
 <%   if fs.length > 0 %>
-fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
+fragilities = [<%= fs.map {|f| "\"#{f.fetch(:id)}\""}.join(", ") %>]
 <%   end %>
 <% end %>
 <% s.pass_through_component.each do |c| %>
-[components.<%= c[:id] %>]
+[components.<%= c.fetch(:id) %>]
 type = "pass_through"
-stream = "<%= c[:flow] %>"
+stream = "<%= c.fetch(:flow) %>"
 <%   fms = s.failure_modes_for_component(c[:id]) %>
 <%   if fms.length > 0 %>
 failure_modes = [<%= fms.map {|fm| "\"#{fm[:id]}\""}.join(", ") %>]
@@ -210,19 +210,43 @@ fragilities = [<%= fs.map {|f| "\"#{f[:id]}\""}.join(", ") %>]
 ############################################################
 # Fragility Curves
 <% s.fragility_curve.each do |fc| %>
-[fragility.<%= fc[:id] %>]
-vulnerable_to = "<%= fc[:vulnerable_to] %>"
+[fragility.<%= fc.fetch(:id) %>]
+vulnerable_to = "<%= fc.fetch(:vulnerable_to) %>"
 type = "linear"
-lower_bound = <%= fc[:lower_bound].to_f %> # ...
-upper_bound = <%= fc[:upper_bound].to_f %> # ...
+lower_bound = <%= fc.fetch(:lower_bound).to_f %> # ...
+upper_bound = <%= fc.fetch(:upper_bound).to_f %> # ...
 <% end %>
 ############################################################
 # Distributions
-<% s.fixed_dist.each do |dist| %>
-[dist.<%= dist[:id] %>]
+<% s.dist_type.each do |dist_type| %>
+[dist.<%= dist_type.fetch(:id) %>]
+<% dist = s.dist_for_id(dist_type.fetch(:id)) %>
+<% if dist_type.fetch(:dist_type) == "fixed" %>
 type = "fixed"
-value = <%= dist[:value_in_hours].to_f.round %> # ...
+value = <%= dist.fetch(:value_in_hours).to_f %> # ...
 time_unit = "hours"
+<% elsif dist_type.fetch(:dist_type) == "uniform" %>
+type = "uniform"
+lower_bound = <%= dist.fetch(:lower_bound_in_hours).to_f %> # ...
+upper_bound = <%= dist.fetch(:upper_bound_in_hours).to_f %> # ...
+time_unit = "hours"
+<% elsif dist_type.fetch(:dist_type) == "normal" %>
+type = "normal"
+mean = <% dist.fetch(:mean_in_hours).to_f %> # ...
+standard_deviation = <% dist[:standard_deviation_in_hours].to_f %> # ...
+time_unit = "hours"
+<% elsif dist_type.fetch(:dist_type) == "weibull" %>
+type = "weibull"
+shape = <% dist.fetch(:shape).to_f %> # ...
+scale =  <% dist.fetch(:scale_in_hours).to_f %> # ...
+location = <% dist.fetch(:location_in_hours).to_f %> # ...
+time_unit = "hours"
+<% elsif dist_type[:dist_type] == "quantile" %>
+type = "quantile_table"
+csv_file = "<% dist.fetch(:csv_file) %>"
+<% else %>
+<% raise "Unhandled distribution type #{dist_type[:dist_type]}" %>
+<% end %>
 <% end %>
 ############################################################
 # Failure Modes

@@ -33,9 +33,28 @@ class Support
   #     - :id, string, the id of the failure mode
   #     - :failure_dist, string, the id of the failure CDF
   #     - :repair_dist, string, the id of the repair CDF
+  #   - :dist_type, (Array Hash) with keys for Hash as follows:
+  #     - :id, string, the id of the distribution
+  #     - :dist_type, string, the type of distribution: "fixed", "uniform", "normal", "weibull", or "quantile"
   #   - :fixed_dist, (Array (Hash symbol value)) with these symbols
-  #     - :id, string, the id of the fixed cdf
+  #     - :id, string, the id of the fixed dist
   #     - :value_in_hours, number, the fixed value in hours
+  #   - :uniform_dist, (Array (Hash symbol value)) with these symbols
+  #     - :id, string, the id of the uniform dist
+  #     - :lower_bound_in_hours, number, the lower bound in hours
+  #     - :upper_bound_in_hours, number, the upper bound in hours
+  #   - :normal_dist, (Array (Hash symbol value)) with these symbols
+  #     - :id, string, the id of the normal distribution
+  #     - :mean_in_hours, number, the mean of the distribution in hours
+  #     - :standard_deviation_in_hours, number, the standard deviation in hours
+  #   - :weibull_dist, (Array (Hash symbol value)) with these symbols
+  #     - :id, string, the id of the weibull distribution
+  #     - :shape, number, the shape parameter
+  #     - :scale_in_hours, number, the scale parameter in hours
+  #     - :location_in_hours, number, the location parameter in hours
+  #   - :quantile_dist, (Array (Hash symbol value)) with these symbols
+  #     - :id, string, the id of the distribution
+  #     - :csv_file, string, the string to a path to a csv file with header of "<any>,<time-unit>"
   #   - :fragility_curve, (Array (Hash symbol value)) with these symbols
   #     - :id, string, the id of the fragility curve
   #     - :vulnerable_to, string, the damage intensity vulnerable to
@@ -104,6 +123,10 @@ class Support
     :failure_mode,
     :dist_type,
     :fixed_dist,
+    :uniform_dist,
+    :normal_dist,
+    :weibull_dist,
+    :quantile_dist,
     :fragility_curve,
     :load_component,
     :load_profile,
@@ -154,15 +177,28 @@ class Support
     @connections.sort
   end
 
-  def cdf_for_id(id)
-    item = nil
-    @fixed_dist.each do |cdf|
-      if id == cdf[:id]
-        item = cdf 
+  def dist_type_for_id(id)
+    dist_type = nil
+    @dist_type.each do |item|
+      if id == item[:id]
+        dist_type = item[:dist_type]
         break
       end
     end
-    item
+    dist_type
+  end
+
+  def dist_for_id(id)
+    dist_type = dist_type_for_id(id)
+    dist_type_to_items = {
+      "fixed" => @fixed_dist,
+      "uniform" => @uniform_dist,
+      "normal" => @normal_dist,
+      "weibull" => @weibull_dist,
+      "quantile" => @quantile_dist,
+      nil => [],
+    }
+    get_by_id(dist_type_to_items[dist_type], id)
   end
 
   def damage_intensities_for_scenario(scenario_id)
@@ -249,6 +285,20 @@ class Support
   end
 
   private
+
+  # - items: collection responding to each and having items that respond to [:id]
+  # - id: string, the id to target
+  # RETURN: nil or the item for the id
+  def get_by_id(items, id)
+    target = nil
+    items.each do |item|
+      if item[:id] == id
+        target = item
+        break
+      end
+    end
+    target
+  end
 
   def add_converter_component(eff, loc, inflow, outflow, lossflow="waste_heat", id=nil)
     id ||= make_id_unique("#{loc}_#{outflow}_generator")

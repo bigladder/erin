@@ -39,7 +39,7 @@ inflow = "electricity"
 loads_by_scenario.blue_sky = "other_electricity_blue_sky"
 [dist.always]
 type = "fixed"
-value = 0 # ...
+value = 0.0 # ...
 time_units = "hours"
 ############################################################
 [networks.nw]

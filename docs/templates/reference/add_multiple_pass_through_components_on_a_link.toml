@@ -44,7 +44,7 @@ stream = "electricity"
 # Distributions
 [dist.every_30_years]
 type = "fixed"
-value = 262800 # ...
+value = 262800.0 # ...
 time_unit = "hours"
 ############################################################
 # Failure Modes

@@ -793,6 +793,56 @@ Similarly, you can render your Graphviz dot file into a PDF as follows:
 
 ![Topology Example of a Network Rendered with Graphviz and `erin_graph`](images/topology-example.png){#fig:topology-example width=75%}
 
+## Other Programs
+
+There are a few other test programs that come with the *ERIN* distribution.
+One we will metion is `erin_distribution_test`.
+This is a convenient program used to exercise the statistical distributions that ship with *ERIN*.
+
+```
+USAGE: erin_distribution_test <distribution_name> <dist_param_1> <dist_param_2> <dist_param_3>
+  - distribution_name: one of 'fixed', 'uniform', 'normal', 'weibull', 'table'
+  - dist_param_1     :
+    - fixed          => the fixed value
+    - uniform        => the lower bound
+    - normal         => the mean of the distribution
+    - weibull        => the shape parameter of the Weibull distribution
+    - table          => name of a CSV file with the CDF defined in two columns variate and dtime (no header)
+  - dist_param_2     :
+    - fixed          => the number of samples
+    - uniform        => the upper bound
+    - normal         => the standard deviation of the distribution
+    - weibull        => the scale parameter of the Weibull distribution
+    - table          => the number of samples
+  - dist_param_3     :
+    - fixed          => unused
+    - uniform        => the number of samples
+    - normal         => the number of samples
+    - weibull        => the location parameter of the Weibull distribution
+    - table          => unused
+  - dist_param_4     :
+    - fixed          => unused
+    - uniform        => unused
+    - normal         => unused
+    - weibull        => the number of samples
+    - table          => unused
+SETS Exit Code 1 if issues encountered, else sets 0
+```
+
+An example of using the program to sample a normal distribution with mean of 31,536,000 (1 year in seconds) and standard deviation of 3,600,000 (1000 hours) is as follows:
+
+    > erin_distribution_test normal 31536000 3600000 10000 > data.csv
+
+This creates a CSV datafile in the current directory with 10,000 sample points from the normal distribution.
+That file can then be plotted using Microsoft Excel or the Python script in the scripts directory:
+
+    > python scripts/plot_distribution_data.py data.csv hours
+
+This produces, for example, the plot shown in [@fig:erin-dist-test].
+
+![Example PDF of Normal Distribution Produced by  `erin_distribution_test`](images/erin_distribution_test.png){#fig:erin-dist-test width=75%}
+
+
 # Microsoft Excel User Interface
 
 A simple interface using Microsoft Excel has been created to ease the creation of an input data file for `erin`.

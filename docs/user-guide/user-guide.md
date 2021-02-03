@@ -799,35 +799,35 @@ There are a few other test programs that come with the *ERIN* distribution.
 One we will metion is `erin_distribution_test`.
 This is a convenient program used to exercise the statistical distributions that ship with *ERIN*.
 
-```
-USAGE: erin_distribution_test <distribution_name> <dist_param_1> <dist_param_2> <dist_param_3>
-  - distribution_name: one of 'fixed', 'uniform', 'normal', 'weibull', 'table'
-  - dist_param_1     :
-    - fixed          => the fixed value
-    - uniform        => the lower bound
-    - normal         => the mean of the distribution
-    - weibull        => the shape parameter of the Weibull distribution
-    - table          => name of a CSV file with the CDF defined in two columns variate and dtime (no header)
-  - dist_param_2     :
-    - fixed          => the number of samples
-    - uniform        => the upper bound
-    - normal         => the standard deviation of the distribution
-    - weibull        => the scale parameter of the Weibull distribution
-    - table          => the number of samples
-  - dist_param_3     :
-    - fixed          => unused
-    - uniform        => the number of samples
-    - normal         => the number of samples
-    - weibull        => the location parameter of the Weibull distribution
-    - table          => unused
-  - dist_param_4     :
-    - fixed          => unused
-    - uniform        => unused
-    - normal         => unused
-    - weibull        => the number of samples
-    - table          => unused
-SETS Exit Code 1 if issues encountered, else sets 0
-```
+**USAGE**
+
+`erin_distribution_test` `<distribution_name>` `<param_1>` `<param_2>` `<param_3>` `<param_4>`
+
+- `distribution_name`: one of 'fixed', 'uniform', 'normal', 'weibull', 'table'
+- `param_1`
+    - fixed: the fixed value
+    - uniform: the lower bound
+    - normal: the mean of the distribution
+    - weibull: the shape parameter of the Weibull distribution
+    - table: name of a CSV file with the CDF defined in two columns variate and dtime (no header)
+- `param_2`
+    - fixed: the number of samples
+    - uniform: the upper bound
+    - normal: the standard deviation of the distribution
+    - weibull: the scale parameter of the Weibull distribution
+    - table: the number of samples
+- `param_3`
+    - fixed: unused, don't write anything (i.e., leave blank)
+    - uniform: the number of samples
+    - normal: the number of samples
+    - weibull: the location parameter of the Weibull distribution
+    - table: unused, don't write anything (i.e., leave blank)
+- `param_4`
+    - fixed: unused, don't write anything (i.e., leave blank)
+    - uniform: unused, don't write anything (i.e., leave blank)
+    - normal: unused, don't write anything (i.e., leave blank)
+    - weibull: the number of samples
+    - table: unused, don't write anything (i.e., leave blank)
 
 An example of using the program to sample a normal distribution with mean of 31,536,000 (1 year in seconds) and standard deviation of 3,600,000 (1000 hours) is as follows:
 

@@ -217,6 +217,10 @@ run_it(const gsl::span<const char*>& args)
       }
     case ed::DistType::Weibull:
       {
+        const int idx_size{2};
+        const int idx_scale{3};
+        const int idx_location{4};
+        const int idx_num_samples{5};
         if (argc != num_args_for_weibull) {
           std::cout << "Missing arguments for Weibull distribution\n";
           print_usage(args);
@@ -226,7 +230,7 @@ run_it(const gsl::span<const char*>& args)
         double scale{0};
         double location{0};
         try {
-          shape = std::stod(args[2]);
+          shape = std::stod(args[idx_size]);
         }
         catch (const std::exception&) {
           std::cout << "Shape must be convertable to a double for Weibull\n";
@@ -234,7 +238,7 @@ run_it(const gsl::span<const char*>& args)
           return 1;
         }
         try {
-          scale = std::stod(args[3]);
+          scale = std::stod(args[idx_scale]);
         }
         catch (const std::exception&) {
           std::cout << "Scale must be convertable to a double for Weibull\n";
@@ -242,7 +246,7 @@ run_it(const gsl::span<const char*>& args)
           return 1;
         }
         try {
-          location = std::stod(args[4]);
+          location = std::stod(args[idx_location]);
         }
         catch (const std::exception&) {
           std::cout << "Location must be convertable to a double for Weibull\n";
@@ -250,7 +254,7 @@ run_it(const gsl::span<const char*>& args)
           return 1;
         }
         try {
-          num_samples = static_cast<ed::size_type>(std::stol(args[5]));
+          num_samples = static_cast<ed::size_type>(std::stol(args[idx_num_samples]));
         }
         catch (const std::exception&) {
           std::cout << "Number of samples must be convertable to an int64\n";

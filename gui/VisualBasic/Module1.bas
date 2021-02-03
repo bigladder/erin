@@ -178,7 +178,7 @@ Sub DeleteRows(idName As String)
     Dim lRow As Long
     Dim rowCntr As Long
     
-    MyArray = Array("component-failure-mode", "component-fragility", "converter-component", "damage-intensity", "dual-outflow-converter-comp", "failure-mode", "fixed-cdf", "fragility-curve", "load-component", "load-profile", "mover-component", "muxer-component", "network-link", "pass-through-component", "scenario", "source-component", "storage-component", "uncontrolled-src")
+    MyArray = Array("component-failure-mode", "component-fragility", "converter-component", "damage-intensity", "dual-outflow-converter-comp", "failure-mode", "dist-type", "fixed-dist", "uniform-dist", "normal-dist", "weibull-dist", "quantile-dist", "fragility-curve", "load-component", "load-profile", "mover-component", "muxer-component", "network-link", "pass-through-component", "scenario", "source-component", "storage-component", "uncontrolled-src")
     
     For Each vName In MyArray
         Set ws = ThisWorkbook.Sheets(vName)

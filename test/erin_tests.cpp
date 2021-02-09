@@ -7275,6 +7275,15 @@ TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) 
   //EXPECT_EQ(ys0[0].value, 1.0);
 }
 
+
+TEST(ErinBasicsTest, Test_that_we_can_modify_schedule_for_reliability)
+{
+  auto sch = std::vector<ERIN::TimeState>{{0,1},{100,0},{200,1},{1000,0},{1100,1}};
+  ASSERT_EQ(sch.size(), 5);
+  auto new_sch = erin::fragility::modify_schedule_for_fragility(sch, false, 0);
+  ASSERT_EQ(sch, new_sch);
+}
+
 int
 main(int argc, char **argv)
 {

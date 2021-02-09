@@ -97,6 +97,15 @@ namespace erin::fragility
     std::string vulnerable_to;
     std::unique_ptr<Curve> curve;
   };
+
+  /**
+   * modify a reliability schedule with a fragility
+   */
+  std::vector<ERIN::TimeState>
+  modify_schedule_for_fragility(
+      const std::vector<ERIN::TimeState>& schedule,
+      bool is_failed,
+      ERIN::RealTimeType repair_time_s);
 }
 
 #endif // ERIN_FRAGILITY_H

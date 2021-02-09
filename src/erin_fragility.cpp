@@ -110,4 +110,15 @@ namespace erin::fragility
     }
     return false;
   }
+
+  std::vector<ERIN::TimeState>
+  modify_schedule_for_fragility(
+      const std::vector<ERIN::TimeState>& schedule,
+      bool is_failed,
+      ERIN::RealTimeType repair_time_s)
+  {
+    if (is_failed) {
+    }
+    return schedule;
+  }
 }

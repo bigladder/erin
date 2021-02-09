@@ -99,6 +99,7 @@ namespace erin::fragility
   {
     std::string vulnerable_to;
     std::unique_ptr<Curve> curve;
+    std::string repair_dist_id; // blank indicates no repair distribution (i.e., not repaired)
   };
 
   /**

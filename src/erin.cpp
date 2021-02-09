@@ -867,6 +867,9 @@ namespace ERIN
             << vulnerable_to << "' missing";
         throw std::runtime_error(oss.str());
       }
+      std::string repair_dist;
+      repair_dist = toml_helper::read_optional_table_field<std::string>(
+          data_table, {"repair_dist"}, std::string{}, field_read);
       switch (curve_type) {
         case ef::CurveType::Linear:
           {
@@ -874,7 +877,8 @@ namespace ERIN
             auto upper_bound = read_number_at(data_table, "upper_bound");
             std::unique_ptr<ef::Curve> the_curve = std::make_unique<ef::Linear>(
                 lower_bound, upper_bound);
-            ef::FragilityCurve fc{vulnerable_to, std::move(the_curve)};
+            ef::FragilityCurve fc{
+              vulnerable_to, std::move(the_curve), std::move(repair_dist)};
             out.insert(std::make_pair(curve_id, std::move(fc)));
             break;
           }

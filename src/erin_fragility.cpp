@@ -115,9 +115,24 @@ namespace erin::fragility
   modify_schedule_for_fragility(
       const std::vector<ERIN::TimeState>& schedule,
       bool is_failed,
-      ERIN::RealTimeType repair_time_s)
+      bool can_repair,
+      ERIN::RealTimeType repair_time_s,
+      ERIN::RealTimeType max_time_s)
   {
     if (is_failed) {
+      auto new_sch = std::vector<ERIN::TimeState>{{0,0}};
+      if (can_repair && (repair_time_s <= max_time_s)) {
+        new_sch.emplace_back(ERIN::TimeState{repair_time_s, 1});
+        bool start_appending{false};
+        for (const auto& item : schedule) {
+          start_appending = start_appending ||
+            ((item.time > repair_time_s) && (item.time <= max_time_s) && !item.state);
+          if (start_appending) {
+            new_sch.emplace_back(item);
+          }
+        }
+      }
+      return new_sch;
     }
     return schedule;
   }

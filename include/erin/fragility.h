@@ -3,9 +3,12 @@
 
 #ifndef ERIN_FRAGILITY_H
 #define ERIN_FRAGILITY_H
+#include "erin/reliability.h"
+#include "erin/type.h"
 #include <memory>
 #include <random>
 #include <string>
+#include <vector>
 
 namespace erin::fragility
 {
@@ -100,12 +103,15 @@ namespace erin::fragility
 
   /**
    * modify a reliability schedule with a fragility
+   * NOTE: a repair_time_s of 0 indicates no repair (NOT an instant repair)
    */
   std::vector<ERIN::TimeState>
   modify_schedule_for_fragility(
       const std::vector<ERIN::TimeState>& schedule,
       bool is_failed,
-      ERIN::RealTimeType repair_time_s);
+      bool can_repair,
+      ERIN::RealTimeType repair_time_s,
+      ERIN::RealTimeType max_time_s);
 }
 
 #endif // ERIN_FRAGILITY_H

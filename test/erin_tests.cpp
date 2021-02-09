@@ -7278,10 +7278,35 @@ TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) 
 
 TEST(ErinBasicsTest, Test_that_we_can_modify_schedule_for_reliability)
 {
+  ERIN::RealTimeType max_time{2000};
   auto sch = std::vector<ERIN::TimeState>{{0,1},{100,0},{200,1},{1000,0},{1100,1}};
   ASSERT_EQ(sch.size(), 5);
-  auto new_sch = erin::fragility::modify_schedule_for_fragility(sch, false, 0);
+  auto new_sch = erin::fragility::modify_schedule_for_fragility(sch, false, false, 0, max_time);
   ASSERT_EQ(sch, new_sch);
+  auto actual_1 = erin::fragility::modify_schedule_for_fragility(sch, true, false, 0, max_time);
+  auto expected_1 = std::vector<ERIN::TimeState>{{0,0}};
+  ASSERT_EQ(actual_1, expected_1);
+  auto actual_2 = erin::fragility::modify_schedule_for_fragility(sch, true, true, 1500, max_time);
+  auto expected_2 = std::vector<ERIN::TimeState>{{0,0},{1500,1}};
+  ASSERT_EQ(actual_2, expected_2);
+  auto actual_3 = erin::fragility::modify_schedule_for_fragility(sch, true, true, 800, max_time);
+  auto expected_3 = std::vector<ERIN::TimeState>{{0,0},{800,1},{1000,0},{1100,1}};
+  ASSERT_EQ(actual_3, expected_3);
+  auto actual_4 = erin::fragility::modify_schedule_for_fragility(sch, true, true, 1050, max_time);
+  auto expected_4 = std::vector<ERIN::TimeState>{{0,0},{1050,1}};
+  ASSERT_EQ(actual_4, expected_4);
+  auto actual_5 = erin::fragility::modify_schedule_for_fragility(sch, true, true, 1000, max_time);
+  auto expected_5 = std::vector<ERIN::TimeState>{{0,0},{1000,1}};
+  ASSERT_EQ(actual_5, expected_5);
+  auto actual_6 = erin::fragility::modify_schedule_for_fragility(sch, true, true, 150, max_time);
+  auto expected_6 = std::vector<ERIN::TimeState>{{0,0},{150,1},{1000,0},{1100,1}};
+  ASSERT_EQ(actual_6, expected_6);
+  auto actual_7 = erin::fragility::modify_schedule_for_fragility(sch, true, true, 3000, max_time);
+  auto expected_7 = std::vector<ERIN::TimeState>{{0,0}};
+  ASSERT_EQ(actual_7, expected_7);
+  auto actual_8 = erin::fragility::modify_schedule_for_fragility(sch, true, true, max_time, max_time);
+  auto expected_8 = std::vector<ERIN::TimeState>{{0,0},{max_time,1}};
+  ASSERT_EQ(actual_8, expected_8);
 }
 
 int

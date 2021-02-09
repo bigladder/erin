@@ -31,8 +31,8 @@ class Support
   #     - :secondary_efficiency, number, 0.0 < efficiency <= 1.0
   #   - :failure_mode, (Array Hash) with keys for Hash as follows:
   #     - :id, string, the id of the failure mode
-  #     - :failure_dist, string, the id of the failure CDF
-  #     - :repair_dist, string, the id of the repair CDF
+  #     - :failure_dist, string, the id of the failure distribution
+  #     - :repair_dist, string, the id of the repair distribution
   #   - :dist_type, (Array Hash) with keys for Hash as follows:
   #     - :id, string, the id of the distribution
   #     - :dist_type, string, the type of distribution: "fixed", "uniform", "normal", "weibull", or "quantile"

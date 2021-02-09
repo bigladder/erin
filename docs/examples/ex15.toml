@@ -3,7 +3,8 @@ rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
 max_time = 20
-############## Loads ######################
+########################################
+# Loads
 [loads.normal_electric_bldg_a]
 time_unit = "hours"
 rate_unit = "kW"
@@ -16,8 +17,9 @@ time_rate_pairs = [[0.0,10.0],[20.0,0.0]]
 time_unit = "hours"
 rate_unit = "kW"
 time_rate_pairs = [[0.0,10.0],[20.0,0.0]]
-############## Components #################
-#### Sources ####
+########################################
+# Components
+# sources
 [components.utility_electrical]
 type = "source"
 outflow = "electricity"
@@ -25,7 +27,7 @@ max_outflow = 30.0
 [components.diesel_resupply]
 type = "source"
 outflow = "fuel"
-#### Buildings ####
+# buildings
 [components.bldg_a_electric]
 type = "load"
 inflow = "electricity"
@@ -38,7 +40,7 @@ loads_by_scenario.blue_sky = "normal_electric_bldg_b"
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "normal_electric_bldg_c"
-#### Electrical Components ###
+# electrical components
 [components.sub_sta_1]
 type = "muxer"
 stream = "electricity"
@@ -65,13 +67,14 @@ type = "converter"
 inflow = "fuel"
 outflow = "electricity"
 constant_efficiency = 0.2
-#### Fuel System Components ####
+# fuel system components
 [components.fuel_truck]
 type="muxer"
 stream="fuel"
 num_inflows = 1
 num_outflows = 2
-############## CDF ###########################
+########################################
+# Distributions
 [dist.every_10]
 type = "fixed"
 value = 10
@@ -80,11 +83,17 @@ time_unit = "hours"
 type = "fixed"
 value = 3
 time_unit = "hours"
-############# Failure Modes #####################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+########################################
+# Failure Modes
 [failure_mode.grid_outage]
 failure_dist = "every_10"
 repair_dist = "every_3"
-############## Networks #################
+########################################
+# Networks
 [networks.nw_electric]
 connections = [
   # Electric Network
@@ -100,12 +109,8 @@ connections = [
   ["gen_a:OUT(0)", "xfer_a:IN(1)", "electricity"],
   ["gen_b:OUT(0)", "xfer_b:IN(1)", "electricity"]
 ]
-############## CDFs ######################
-[dist.immediately]
-type = "fixed"
-value = 0
-time_unit = "hours"
-############## Scenarios #################
+########################################
+# Scenarios
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = "immediately"

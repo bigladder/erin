@@ -586,10 +586,10 @@ A great way to get the quantile is to tabulate the cumulative distribution funct
 : `dist` with `type=weibull` {#tbl:weibull}
 
 
-| key            | type | required? | notes              |
-| ----           | --   | --        | --------           |
-| `failure_dist` | str  | yes       | the failure CDF id |
-| `repair_dist`  | str  | yes       | the repair CDF id  |
+| key            | type | required? | notes                       |
+| ----           | --   | --        | --------                    |
+| `failure_dist` | str  | yes       | the failure distribution id |
+| `repair_dist`  | str  | yes       | the repair distribution id  |
 
 : `failure_mode` specification {#tbl:fm}
 
@@ -809,7 +809,9 @@ This is a convenient program used to exercise the statistical distributions that
     - uniform: the lower bound
     - normal: the mean of the distribution
     - weibull: the shape parameter of the Weibull distribution
-    - table: name of a CSV file with the CDF defined in two columns variate and dtime (no header)
+    - table: name of a CSV file with the quantile (i.e., inverse
+      cumulative distribution function) defined in two columns:
+      variate and dtime (no header)
 - `param_2`
     - fixed: the number of samples
     - uniform: the upper bound

@@ -403,7 +403,7 @@ namespace erin::distribution
       }
     }
     std::ostringstream oss{};
-    oss << "tag `" << tag << "` not found in CDF list";
+    oss << "tag `" << tag << "` not found in distribution list";
     throw std::invalid_argument(oss.str());
   }
 

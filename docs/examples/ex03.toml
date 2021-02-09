@@ -65,7 +65,7 @@ connections = [
   ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity"],
   ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 ############################################################
-# CDFs
+# Distributions
 [dist.immediately]
 type = "fixed"
 value = 0

@@ -2750,7 +2750,6 @@ namespace ERIN
   {
     // Read data into private class fields
     auto loads_by_id = reader.read_loads();
-    // TODO: add a repair CDF to the fragility datatype
     auto fragilities = reader.read_fragility_data();
     erin::distribution::DistributionSystem ds{};
     // dists is map<string, size_type>

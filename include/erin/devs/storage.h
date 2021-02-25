@@ -63,7 +63,7 @@ namespace erin::devs
       FlowValueType capacity);
 
   ////////////////////////////////////////////////////////////
-  // state
+  // state and data
   /**
    * StorageData: immutable (constant) reference data that doesn't change
    * over a simulation

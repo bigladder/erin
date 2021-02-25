@@ -1,9 +1,11 @@
 # Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
 # See the LICENSE.txt file for additional terms and conditions.
-include_directories("${PROJECT_SOURCE_DIR}/src"
+include_directories(
+  "${PROJECT_SOURCE_DIR}/src"
   "${PROJECT_SOURCE_DIR}/include"
   "${gtest_SOURCE_DIR}/include"
-  "checkout_line")
+  "checkout_line"
+  )
 
 set(test_sources
   erin_tests.cpp
@@ -36,6 +38,17 @@ target_include_directories(${CMAKE_PROJECT_NAME}_tests PRIVATE "${PROJECT_SOURCE
 add_executable(test_erin_distribution
   ${PROJECT_SOURCE_DIR}/test/erin_distribution.test.cpp)
 target_include_directories(test_erin_distribution
+  PRIVATE
+  ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/src
+  ${PROJECT_SOURCE_DIR}/vendor/bdevs/include
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include
+  ${PROJECT_SOURCE_DIR}/vendor/toml11
+  )
+
+add_executable(test_erin_devs_storage
+  ${PROJECT_SOURCE_DIR}/test/erin_devs_storage.test.cpp)
+target_include_directories(test_erin_devs_storage
   PRIVATE
   ${PROJECT_SOURCE_DIR}/include
   ${PROJECT_SOURCE_DIR}/src

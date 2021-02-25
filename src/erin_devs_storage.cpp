@@ -150,19 +150,23 @@ namespace erin::devs
         state.outflow_port.get_achieved(),
         dt,
         data.capacity);
-    if (soc == 1.0)
+    if (soc == 1.0) {
+
       ip = ip.with_requested(
           std::clamp(outflow_request, 0.0, data.max_charge_rate),
           time);
-    else
+    }
+    else {
       ip = ip.with_requested(data.max_charge_rate, time);
-    if (soc == 0.0)
+    }
+    if (soc == 0.0) {
       op = op.with_achieved(
           std::clamp(
             outflow_request,
             0.0,
             data.max_charge_rate),
           time);
+    }
     return StorageState{
       time,
       soc,
@@ -483,15 +487,18 @@ namespace erin::devs
       }
     }
     auto time{state.time + elapsed_time};
-    if (got_outflow_request && (!got_inflow_achieved))
+    if (got_outflow_request && (!got_inflow_achieved)) {
       return storage_external_transition_on_outflow_request(
           data, state, outflow_request, elapsed_time, time);
-    if (got_inflow_achieved && (!got_outflow_request))
+    }
+    if (got_inflow_achieved && (!got_outflow_request)) {
       return storage_external_transition_on_inflow_achieved(
           data, state, inflow_achieved, elapsed_time, time);
-    if (got_inflow_achieved && got_outflow_request)
+    }
+    if (got_inflow_achieved && got_outflow_request) {
       return storage_external_transition_on_in_out_flow(
           data, state, outflow_request, inflow_achieved, elapsed_time, time);
+    }
     std::ostringstream oss{};
     oss << "unhandled situation: external transition with neither inflow or outflow\n"
         << "got_inflow_achieved = " << got_inflow_achieved << "\n"
@@ -505,12 +512,12 @@ namespace erin::devs
       const StorageState& state,
       const std::vector<PortValue>& xs)
   {
+    auto next_state = storage_internal_transition(data, state);
     if (state.report_inflow_request && got_inflow_achieved(xs) &&
         (total_inflow_achieved(xs) > state.inflow_port.get_requested())) {
       // signals are out of order; need to send the inflow request before processing an inflow achieved
-      return state;
+      return next_state;
     }
-    auto next_state = storage_internal_transition(data, state);
     return storage_external_transition(data, next_state, 0, xs);
   }
 
@@ -534,71 +541,28 @@ namespace erin::devs
       std::cout << "storage_output_function_mutable(...)\n";
     }
     auto dt{storage_time_advance(data, state)};
+    if ((dt == infinity) || (dt < 0)) {
+      throw std::runtime_error(
+        "time-advance within the storage component is infinity!");
+    }
     auto time{state.time + dt};
     if constexpr (E::debug_level >= E::debug_level_high) {
       std::cout << "dt = " << dt << "\n";
       std::cout << "time = " << time << "\n";
     }
-    if (dt == 0) {
-      if (state.inflow_port.should_propagate_request_at(time)) {
-        ys.emplace_back(
-            PortValue{
-              outport_inflow_request,
-              state.inflow_port.get_requested()});
-      }
-      if (state.outflow_port.should_propagate_achieved_at(time)) {
-        ys.emplace_back(
-            PortValue{
-              outport_outflow_achieved,
-              state.outflow_port.get_achieved()});
-      }
-      return;
+    auto next_state = storage_internal_transition(data, state);
+    if (next_state.inflow_port.should_propagate_request_at(time)) {
+      ys.emplace_back(
+          PortValue{
+            outport_inflow_request,
+            next_state.inflow_port.get_requested()});
     }
-    if (dt > 0) {
-      Port ip{state.inflow_port};
-      Port op{state.outflow_port};
-      auto inflow_achieved = state.inflow_port.get_achieved();
-      auto net_inflow{
-        inflow_achieved
-        - state.outflow_port.get_achieved()};
-      if constexpr (E::debug_level >= E::debug_level_high) {
-        std::cout << "net_inflow = " << net_inflow << "\n";
-      }
-      if (net_inflow > 0.0) {
-        ip = ip.with_requested(0.0, time);
-      } else if (net_inflow < 0.0) {
-        op = op.with_achieved(
-            std::clamp(
-              op.get_requested(),
-              0.0,
-              inflow_achieved),
-            time);
-      }
-      if (ip.should_propagate_request_at(time)) {
-        if constexpr (E::debug_level >= E::debug_level_high) {
-          std::cout << "emplacing outport_inflow_request = "
-                    << ip.get_requested() << "\n";
-        }
-        ys.emplace_back(
-            PortValue{
-              outport_inflow_request,
-              ip.get_requested()});
-      }
-      if (op.should_propagate_achieved_at(time)) {
-        if constexpr (E::debug_level >= E::debug_level_high) {
-          std::cout << "emplacing outport_outflow_achieved = "
-                    << op.get_achieved() << "\n";
-        }
-        ys.emplace_back(
-            PortValue{
-              outport_outflow_achieved,
-              op.get_achieved()});
-      }
-      return;
+    if (next_state.outflow_port.should_propagate_achieved_at(time)) {
+      ys.emplace_back(
+          PortValue{
+            outport_outflow_achieved,
+            next_state.outflow_port.get_achieved()});
     }
-    std::ostringstream oss{};
-    oss << "dt < 0\n"
-        << "dt = " << dt << "\n";
-    throw std::runtime_error(oss.str());
+    return;
   }
 }

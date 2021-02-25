@@ -13,6 +13,29 @@
 namespace erin::devs
 {
   bool
+  got_inflow_achieved(const std::vector<PortValue>& xs)
+  {
+    for (const auto& x: xs) {
+      if (x.port == inport_inflow_achieved) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  FlowValueType
+  total_inflow_achieved(const std::vector<PortValue>& xs)
+  {
+    FlowValueType inflow_achieved{0.0};
+    for (const auto& x: xs) {
+      if (x.port == inport_inflow_achieved) {
+        inflow_achieved += x.value;
+      }
+    }
+    return inflow_achieved;
+  }
+
+  bool
   storage_is_full(double soc)
   {
     return (std::abs(1.0 - soc) <= ERIN::flow_value_tolerance);
@@ -100,10 +123,12 @@ namespace erin::devs
     auto cap_change{net_inflow * dt};
     auto soc_change{cap_change / capacity};
     auto next_soc{soc + soc_change};
-    if (storage_is_full(next_soc) || (next_soc > 1.0))
+    if (storage_is_full(next_soc) || (next_soc > 1.0)) {
       return 1.0;
-    if (storage_is_empty(next_soc) || (next_soc < 0.0))
+    }
+    if (storage_is_empty(next_soc) || (next_soc < 0.0)) {
       return 0.0;
+    }
     return next_soc;
   }
 
@@ -480,6 +505,11 @@ namespace erin::devs
       const StorageState& state,
       const std::vector<PortValue>& xs)
   {
+    if (state.report_inflow_request && got_inflow_achieved(xs) &&
+        (total_inflow_achieved(xs) > state.inflow_port.get_requested())) {
+      // signals are out of order; need to send the inflow request before processing an inflow achieved
+      return state;
+    }
     auto next_state = storage_internal_transition(data, state);
     return storage_external_transition(data, next_state, 0, xs);
   }

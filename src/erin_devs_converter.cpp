@@ -405,6 +405,12 @@ namespace erin::devs
     else {
       new_ip = state.inflow_port.with_achieved(inflow_achieved, new_time);
     }
+    auto r_out{state.outflow_port.get_requested()};
+    if (outflow_achieved > r_out) {
+      const auto original_outflow = outflow_achieved + lossflow_achieved;
+      outflow_achieved = r_out;
+      lossflow_achieved = original_outflow - outflow_achieved;
+    }
     auto new_op{state.outflow_port.with_achieved(outflow_achieved, new_time)};
     auto loss_ports = update_lossflow_ports(
         new_time,

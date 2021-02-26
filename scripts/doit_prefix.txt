@@ -17,5 +17,13 @@ if ! bundle exec ruby ../scripts/regression_test.rb; then
   echo REGRESSIONS FOUND!
   exit 1
 fi
+echo Running custom tests...
+if ! ./bin/test_erin_devs_storage; then
+  echo Failed test_erin_devs_storage!
+  exit 1
+fi
+if ! ./bin/test_erin_devs_flow_limits; then
+  echo Failed test_erin_devs_flow_limits!
+fi
 time ./bin/str8760
 mkdir -p tidy

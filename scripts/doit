@@ -17,6 +17,14 @@ if ! bundle exec ruby ../scripts/regression_test.rb; then
   echo REGRESSIONS FOUND!
   exit 1
 fi
+echo Running custom tests...
+if ! ./bin/test_erin_devs_storage; then
+  echo Failed test_erin_devs_storage!
+  exit 1
+fi
+if ! ./bin/test_erin_devs_flow_limits; then
+  echo Failed test_erin_devs_flow_limits!
+fi
 time ./bin/str8760
 mkdir -p tidy
 rm -f cppcheck_report.txt
@@ -34,6 +42,7 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/converter.h > tidy/converter.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/on_off_switch.h > tidy/on_off_switch.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/storage.h > tidy/storage.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/runner.h > tidy/runner.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/flow_limits.h > tidy/flow_limits.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/uncontrolled_source.h > tidy/uncontrolled_source.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/stream.h > tidy/stream.h.txt

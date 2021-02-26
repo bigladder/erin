@@ -13,29 +13,6 @@
 namespace erin::devs
 {
   bool
-  got_inflow_achieved(const std::vector<PortValue>& xs)
-  {
-    for (const auto& x: xs) {
-      if (x.port == inport_inflow_achieved) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  FlowValueType
-  total_inflow_achieved(const std::vector<PortValue>& xs)
-  {
-    FlowValueType inflow_achieved{0.0};
-    for (const auto& x: xs) {
-      if (x.port == inport_inflow_achieved) {
-        inflow_achieved += x.value;
-      }
-    }
-    return inflow_achieved;
-  }
-
-  bool
   storage_is_full(double soc)
   {
     return (std::abs(1.0 - soc) <= ERIN::flow_value_tolerance);

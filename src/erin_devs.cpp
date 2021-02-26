@@ -173,4 +173,27 @@ namespace erin::devs
        << (p.propagate_achieved ? "true" : "false") << ")";
     return os;
   }
+
+  bool
+  got_inflow_achieved(const std::vector<PortValue>& xs)
+  {
+    for (const auto& x: xs) {
+      if (x.port == inport_inflow_achieved) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  FlowValueType
+  total_inflow_achieved(const std::vector<PortValue>& xs)
+  {
+    FlowValueType inflow_achieved{0.0};
+    for (const auto& x: xs) {
+      if (x.port == inport_inflow_achieved) {
+        inflow_achieved += x.value;
+      }
+    }
+    return inflow_achieved;
+  }
 }

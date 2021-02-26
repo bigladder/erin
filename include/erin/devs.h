@@ -63,6 +63,10 @@ namespace erin::devs
   bool operator==(const Port& a, const Port& b);
   bool operator!=(const Port& a, const Port& b);
   std::ostream& operator<<(std::ostream& os, const Port& p);
+  
+  // Helper Functions
+  bool got_inflow_achieved(const std::vector<PortValue>& xs);
+  FlowValueType total_inflow_achieved(const std::vector<PortValue>& xs);
 }
 
 #endif // ERIN_DEVS_H

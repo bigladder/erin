@@ -244,8 +244,13 @@ namespace erin::devs
       const FlowLimitsState& state,
       const std::vector<PortValue>& xs)
   {
-    return flow_limits_external_transition(
-        flow_limits_internal_transition(state), 0, xs);
+    auto next_state = flow_limits_internal_transition(state);
+    if (state.report_inflow_request && got_inflow_achieved(xs) &&
+        (total_inflow_achieved(xs) > state.inflow_port.get_requested()))
+    {
+      return next_state;
+    }
+    return flow_limits_external_transition(next_state, 0, xs);
   }
 
   std::vector<PortValue>

@@ -2,6 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin/devs.h"
 #include "erin/devs/storage.h"
+#include "erin/devs/runner.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -9,165 +10,6 @@
 #include <string>
 
 namespace ED = erin::devs;
-
-enum class TransitionType {
-  InitialState = 0,
-  InternalTransition,
-  ExternalTransition,
-  ConfluentTransition
-};
-
-struct TimeStateOutputs
-{
-  TransitionType transition_type{TransitionType::InternalTransition};
-  ED::RealTimeType time_s{0};
-  ED::StorageState state = ED::storage_make_state(ED::storage_make_data(100.0, 10.0), 1.0);
-  std::vector<ED::PortValue> outputs{};
-};
-
-std::string
-port_to_tag(int port)
-{
-  switch (port)
-  {
-    case ED::inport_inflow_achieved:
-      return "inport_inflow_achieved";
-    case ED::inport_outflow_request:
-      return "inport_outflow_request";
-    case ED::outport_inflow_request:
-      return "outport_inflow_request";
-    case ED::outport_outflow_achieved:
-      return "outflow_outflow_achieved";
-    default:
-      return "unknown_port_" + std::to_string(port);
-  }
-}
-
-std::string
-port_values_to_string(const std::vector<ED::PortValue>& port_values)
-{
-  std::ostringstream oss{};
-  bool first{true};
-  for (const auto& pv : port_values) {
-    oss << (first ? "" : ",")
-        << "PortValue{" << port_to_tag(pv.port)
-        << ", " << pv.value << "}";
-    first = false;
-  }
-  return oss.str();
-}
-
-std::string
-transition_type_to_tag(const TransitionType& tt)
-{
-  switch (tt)
-  {
-    case TransitionType::InitialState:
-      return "init";
-    case TransitionType::InternalTransition:
-      return "int";
-    case TransitionType::ExternalTransition:
-      return "ext";
-    case TransitionType::ConfluentTransition:
-      return "conf";
-    default:
-      return "?";
-  }
-}
-
-std::vector<TimeStateOutputs>
-run_devs(
-    const ED::StorageData& data,
-    const ED::StorageState& state,
-    const std::vector<ED::RealTimeType> times_s,
-    const std::vector<std::vector<ED::PortValue>>& xss,
-    const ED::RealTimeType& max_time_s)
-{
-  using size_type = std::vector<ED::RealTimeType>::size_type;
-  std::vector<TimeStateOutputs> log{};
-  /*
-    time←0
-    current state ← initial state
-    last time ← −initial elapsed
-    while not termination condition(current state, time) do
-      next time ← last time+ta(current state)
-      if time next event ≤ next time then
-        elapsed←time next event−last time
-        current state ← δext((current state,elapsed),next event) time ← time next event
-      else
-        time ← next time output(λ(current state))
-        current state←δint(current state)
-      end if
-      last time ← time
-    end while
-   */
-  ED::StorageState s{state};
-  ED::RealTimeType t_last{0};
-  ED::RealTimeType t_next{0};
-  size_type ext_idx{0};
-  ED::RealTimeType t_next_ext{ED::infinity};
-  std::vector<ED::PortValue> ys{};
-  log.emplace_back(
-      TimeStateOutputs{TransitionType::InitialState, t_next, s, ys});
-  while ((t_next != ED::infinity) || (t_next_ext != ED::infinity)) {
-    auto dt = ED::storage_time_advance(data, s);
-    if (dt == ED::infinity) {
-      t_next = ED::infinity;
-    }
-    else {
-      t_next = t_last + dt;
-    }
-    if (ext_idx < times_s.size()) {
-      t_next_ext = times_s[ext_idx];
-    }
-    else {
-      t_next_ext = ED::infinity;
-    }
-    if (((t_next == ED::infinity) || (t_next > max_time_s)) &&
-        ((t_next_ext == ED::infinity) || (t_next_ext > max_time_s))) {
-      break;
-    }
-    if ((t_next_ext == ED::infinity) || ((t_next != ED::infinity) && (t_next < t_next_ext))) {
-      // internal transition
-      ys = ED::storage_output_function(data, s);
-      s = ED::storage_internal_transition(data, s);
-      log.emplace_back(
-          TimeStateOutputs{TransitionType::InternalTransition, t_next, s, ys});
-    }
-    else {
-      const auto& xs = xss[ext_idx];
-      ext_idx++;
-      if (t_next == t_next_ext) {
-        ys = ED::storage_output_function(data, s);
-        s = ED::storage_confluent_transition(data, s, xs);
-        log.emplace_back(
-            TimeStateOutputs{TransitionType::ConfluentTransition, t_next, s, ys});
-      }
-      else {
-        auto e{t_next_ext - t_last};
-        t_next = t_last + e;
-        s = ED::storage_external_transition(data, s, e, xs);
-        ys.clear();
-        log.emplace_back(
-            TimeStateOutputs{TransitionType::ExternalTransition, t_next, s, ys});
-      }
-    }
-    t_last = t_next;
-  }
-  return log;
-}
-
-void
-write_details(const TimeStateOutputs& out)
-{
-  std::cout << "------------------------\n"
-            << " transition type: "
-            << transition_type_to_tag(out.transition_type) << "\n"
-            << " time (seconds) : " << out.time_s << "\n"
-            << " state          : " << out.state << "\n"
-            << " outputs        : "
-            << port_values_to_string(out.outputs) << "\n";
-}
 
 bool
 test_undisturbed_discharge(bool show_details)
@@ -190,7 +32,17 @@ test_undisturbed_discharge(bool show_details)
     {ED::PortValue{ED::inport_outflow_request, 5.0}},
     {ED::PortValue{ED::inport_inflow_achieved, 0.0}},
   };
-  auto outputs = run_devs(data, s0, times_s, xss, 100);
+  auto outputs = ED::run_devs<ED::StorageState>(
+      [&](const ED::StorageState &s) { return ED::storage_time_advance(data, s); },
+      [&](const ED::StorageState &s) { return ED::storage_internal_transition(data, s); },
+      [&](const ED::StorageState &s, ED::RealTimeType e, const std::vector<ED::PortValue> &xs) {
+        return ED::storage_external_transition(data, s, e, xs);
+      },
+      [&](const ED::StorageState &s, const std::vector<ED::PortValue> &xs) {
+        return ED::storage_confluent_transition(data, s, xs);
+      },
+      [&](const ED::StorageState &s) { return ED::storage_output_function(data, s); },
+      s0, times_s, xss, 100);
   if (outputs.size() != expected_times_s.size()) {
     std::cout << "Expected outputs.size() == expected_times_s.size()\n"
               << "outputs.size() = " << outputs.size() << "\n"
@@ -255,7 +107,7 @@ test_undisturbed_discharge(bool show_details)
       return false;
     }
     if (show_details) {
-      write_details(out);
+      ED::write_details<ED::StorageState>(out);
     }
   }
   return true;

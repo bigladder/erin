@@ -68,14 +68,17 @@ namespace erin::devs
       bool report_inflow_request,
       bool report_outflow_achieved)
   {
-    if (time < 0)
+    if (time < 0) {
       throw std::invalid_argument("time must be >= 0");
-    if (time < inflow_port.get_time_of_last_change())
+    }
+    if (time < inflow_port.get_time_of_last_change()) {
       throw std::invalid_argument(
           "time cannot be less than time of last change of inflow_port");
-    if (time < outflow_port.get_time_of_last_change())
+    }
+    if (time < outflow_port.get_time_of_last_change()) {
       throw std::invalid_argument(
           "time cannot be less than time of last change of outflow_port");
+    }
     return FlowLimitsState{
       time,
       inflow_port,
@@ -258,9 +261,11 @@ namespace erin::devs
   {
     const auto& ip = state.inflow_port;
     const auto& op = state.outflow_port;
-    if (state.report_inflow_request)
+    if (state.report_inflow_request) {
       ys.emplace_back(PortValue{outport_inflow_request, ip.get_requested()});
-    if (state.report_outflow_achieved)
+    }
+    if (state.report_outflow_achieved) {
       ys.emplace_back(PortValue{outport_outflow_achieved, op.get_achieved()});
+    }
   }
 }

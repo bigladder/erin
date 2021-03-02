@@ -13,8 +13,12 @@ SUPPORT_FILE = File.join(TEMPLATE_DIR, 'support.rb')
 TEMPLATE_FILE = File.join(TEMPLATE_DIR, 'template.toml')
 USER_GUIDE_FILE = File.join(
   __dir__, '..', 'docs', 'user-guide', 'user-guide.md.pdf')
-EXE_FILE = File.join(
-  __dir__, '..', 'out', 'build', 'x64-Release', 'bin', 'erin_multi.exe')
+EXE_DIR = File.join(
+  __dir__, '..', 'out', 'build', 'x64-Release', 'bin')
+ERIN_MULTI = File.join(EXE_DIR, 'erin_multi.exe')
+ERIN = File.join(EXE_DIR, 'erin.exe')
+ERIN_GRAPH = File.join(EXE_DIR, 'erin_graph.exe')
+ERIN_DIST_TEST = File.join(EXE_DIR, 'erin_distribution_test.exe')
 EXAMPLE_LOAD_CSV = File.join(
   __dir__, '..', 'docs', 'examples', 'ex02.csv')
 LICENSE = File.join(__dir__, '..', 'LICENSE.txt')
@@ -35,7 +39,10 @@ MANIFEST = {
   SUPPORT_FILE => to_package(SUPPORT_FILE),
   TEMPLATE_FILE => to_package(TEMPLATE_FILE),
   USER_GUIDE_FILE => to_package_as('user-guide.pdf'),
-  EXE_FILE => to_package(EXE_FILE),
+  ERIN => to_package(ERIN),
+  ERIN_MULTI => to_package(ERIN_MULTI),
+  ERIN_GRAPH => to_package(ERIN_GRAPH),
+  ERIN_DIST_TEST => to_package(ERIN_DIST_TEST),
   LICENSE => to_package(LICENSE),
   EXAMPLE_LOAD_CSV => to_package_as('example-load.csv'),
 }

@@ -266,10 +266,14 @@ namespace erin::devs
   {
     const auto& ip = state.inflow_port;
     const auto& op = state.outflow_port;
-    if (state.report_inflow_request) {
+    if (state.report_inflow_request &&
+        state.inflow_port.should_propagate_request_at(state.time))
+    {
       ys.emplace_back(PortValue{outport_inflow_request, ip.get_requested()});
     }
-    if (state.report_outflow_achieved) {
+    if (state.report_outflow_achieved &&
+        state.outflow_port.should_propagate_achieved_at(state.time))
+    {
       ys.emplace_back(PortValue{outport_outflow_achieved, op.get_achieved()});
     }
   }

@@ -85,7 +85,7 @@ namespace erin::devs
       const std::function<S(const S&, const std::vector<PortValue>&)>& delta_conf,
       const std::function<std::vector<PortValue>(const S&)>& outfn,
       const S& s0,
-      const std::vector<RealTimeType> times_s,
+      const std::vector<RealTimeType>& times_s,
       const std::vector<std::vector<PortValue>>& xss,
       const RealTimeType& max_time_s)
   {

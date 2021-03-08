@@ -91,6 +91,8 @@ namespace erin::devs
   FlowValueType mux_get_inflow_achieved(const MuxState& state);
 
   FlowValueType mux_get_outflow_achieved(const MuxState& state);
+  
+  std::ostream& operator<<(std::ostream& os, const MuxState& s);
 
   ////////////////////////////////////////////////////////////
   // time advance

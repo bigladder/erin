@@ -94,6 +94,14 @@ namespace erin::devs
   {
     return state.inflow_port.get_achieved();
   }
+  
+  std::ostream&
+  operator<<(std::ostream& os, const LoadState& s)
+  {
+    return os << "{:t " << s.time
+              << " :idx " << s.current_index
+              << " :inflow-port " << s.inflow_port << "}";
+  }
 
   RealTimeType
   load_time_advance(const LoadData& data, const LoadState& state)

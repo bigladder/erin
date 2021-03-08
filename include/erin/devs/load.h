@@ -42,6 +42,8 @@ namespace erin::devs
   FlowValueType load_current_request(const LoadState& state);
 
   FlowValueType load_current_achieved(const LoadState& state);
+  
+  std::ostream& operator<<(std::ostream& os, const LoadState& s);
 
   ////////////////////////////////////////////////////////////
   // time advance

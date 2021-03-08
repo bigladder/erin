@@ -477,6 +477,17 @@ namespace erin::devs
         state.outflow_ports.begin(), state.outflow_ports.end(), 0.0,
         [](const auto& s, const auto& p) { return s + p.get_achieved(); });
   }
+  
+  std::ostream&
+  operator<<(std::ostream& os, const MuxState& s)
+  {
+    return os << "{:t " << s.time << " :report? " << s.do_report
+              << " :num-inflows " << s.num_inflows
+              << " :num-outflows " << s.num_outflows 
+              << " :strategy " << muxer_dispatch_strategy_to_string(s.outflow_strategy)
+              << " :inflow_ports " << ERIN::vec_to_string<Port>(s.inflow_ports)
+              << " :outflow_ports " << ERIN::vec_to_string<Port>(s.outflow_ports) << "}";
+  }
 
   RealTimeType
   mux_time_advance(const MuxState& state)
@@ -561,7 +572,13 @@ namespace erin::devs
     }
     FlowValueType total_outflow_request = std::accumulate(
         outflow_ports.begin(), outflow_ports.end(), 0.0,
-        [](const auto& s, const auto& p) { return s + p.get_requested(); });
+        [](const auto& s, const auto& p) { return s + p.get_requested(); }
+    );
+    //auto previous_total_outflow_request = std::accumulate(
+    //  state.outflow_ports.begin(), state.outflow_ports.end(), 0.0,
+    //  [](const auto& s, const auto& p) { return s + p.get_requested(); }
+    //);
+    //bool outflow_changed{total_outflow_request != previous_total_outflow_request};
     inflow_ports = request_inflows_intelligently(
         inflow_ports, total_outflow_request, time);
     FlowValueType total_inflow_achieved = std::accumulate(

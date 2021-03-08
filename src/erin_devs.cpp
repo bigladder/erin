@@ -164,16 +164,15 @@ namespace erin::devs
   operator<<(std::ostream& os, const Port& p)
   {
     os << "Port("
-       << "time_of_last_change=" << p.time_of_last_change << ", "
-       << "requested=" << p.requested << ", "
-       << "achieved=" << p.achieved << ", "
-       << "propagate_request="
-       << (p.propagate_request ? "true" : "false") << ", "
-       << "propagate_achieved="
-       << (p.propagate_achieved ? "true" : "false") << ")";
+       << "tL=" << p.time_of_last_change << ", "
+       << "r=" << p.requested << ", "
+       << "a=" << p.achieved << ", "
+       << "prop-r?=" << p.propagate_request << ", "
+       << "prop-a?=" << p.propagate_achieved << ")";
     return os;
   }
 
+  // Helper Functions
   bool
   got_inflow_achieved(const std::vector<PortValue>& xs)
   {

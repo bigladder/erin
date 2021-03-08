@@ -109,10 +109,10 @@ namespace erin::devs
   struct ConverterState
   {
     RealTimeType time{0};
-    Port inflow_port{0, 0.0, 0.0};
-    Port outflow_port{0, 0.0, 0.0};
-    Port lossflow_port{0, 0.0, 0.0};
-    Port wasteflow_port{0, 0.0, 0.0};
+    Port2 inflow_port{};
+    Port2 outflow_port{};
+    Port2 lossflow_port{};
+    Port2 wasteflow_port{};
     std::unique_ptr<ConversionFun> conversion_fun{};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
@@ -133,8 +133,9 @@ namespace erin::devs
 
   struct LossflowPorts
   {
-    Port lossflow_port{0, 0.0, 0.0};
-    Port wasteflow_port{0, 0.0, 0.0};
+    bool report_lossflow_achieved{false};
+    Port2 lossflow_port{};
+    Port2 wasteflow_port{};
   };
 
   ////////////////////////////////////////////////////////////
@@ -168,6 +169,13 @@ namespace erin::devs
       FlowValueType inflow_achieved);
 
   ConverterState
+  converter_external_transition_on_inflow_and_outflow_achieved(
+      const ConverterState &state,
+      RealTimeType new_time,
+      FlowValueType inflow_achieved,
+      FlowValueType outflow_request);
+
+  ConverterState
   converter_external_transition_on_lossflow_request(
       const ConverterState& state,
       RealTimeType new_time,
@@ -175,10 +183,8 @@ namespace erin::devs
 
   LossflowPorts
   update_lossflow_ports(
-      RealTimeType time,
       FlowValueType lossflow_achieved,
-      const Port& lossflow_port,
-      const Port& wasteflow_port);
+      const Port2& lossflow_port);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

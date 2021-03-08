@@ -64,6 +64,42 @@ namespace erin::devs
   bool operator!=(const Port& a, const Port& b);
   std::ostream& operator<<(std::ostream& os, const Port& p);
   
+  struct PortUpdate;
+
+  class Port2
+  {
+    public:
+      Port2();
+      explicit Port2(FlowValueType requested);
+      Port2(FlowValueType requested, FlowValueType achieved);
+
+      [[nodiscard]] FlowValueType get_requested() const { return requested; }
+      [[nodiscard]] FlowValueType get_achieved() const { return achieved; }
+      [[nodiscard]] PortUpdate with_requested(FlowValueType r) const;
+      [[nodiscard]] PortUpdate with_achieved(FlowValueType a) const;
+
+      friend bool operator==(const Port2& a, const Port2& b);
+      friend std::ostream& operator<<(std::ostream& os, const Port2& p);
+
+    private:
+      FlowValueType requested;
+      FlowValueType achieved;
+      
+      bool achieved_is_limited() const {
+        return achieved < requested;
+      };
+  };
+
+  bool operator==(const Port2& a, const Port2& b);
+  bool operator!=(const Port2& a, const Port2& b);
+  std::ostream& operator<<(std::ostream& os, const Port2& p);
+  
+  struct PortUpdate
+  {
+    bool send_update{false};
+    Port2 port{};
+  };
+
   // Helper Functions
   bool got_inflow_achieved(const std::vector<PortValue>& xs);
   FlowValueType total_inflow_achieved(const std::vector<PortValue>& xs);

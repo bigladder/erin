@@ -4,6 +4,7 @@
 #include "erin/devs.h"
 #include "debug_utils.h"
 #include <algorithm>
+#include <cstdlib>
 #include <sstream>
 #include <stdexcept>
 
@@ -170,6 +171,93 @@ namespace erin::devs
        << "prop-r?=" << p.propagate_request << ", "
        << "prop-a?=" << p.propagate_achieved << ")";
     return os;
+  }
+  
+  // Port2
+  Port2::Port2():
+    Port2(0.0, 0.0)
+  {
+  }
+  
+  Port2::Port2(FlowValueType r):
+    Port2(r, r)
+  {
+  }
+  
+  Port2::Port2(
+    FlowValueType r,
+    FlowValueType a
+  ):
+    requested{r},
+    achieved{a}
+  {
+    if (requested < 0.0) {
+      std::ostringstream oss{};
+      oss << "requested flow is negative! Negative flows are not allowed\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if (achieved < 0.0) {
+      std::ostringstream oss{};
+      oss << "achieved flow is negative! Negative flows are not allowed\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if (achieved > requested) {
+      if (std::abs(achieved - requested) < ERIN::flow_value_tolerance) {
+        // precision issue; reset the achieved value
+        achieved = requested;
+      }
+      else {
+        std::ostringstream oss{};
+        oss << "achieved more than requested error!\n"
+            << "requested: " << requested << "\n"
+            << "achieved : " << achieved << "\n";
+        throw std::invalid_argument(oss.str());
+      }
+    }
+  }
+
+  PortUpdate
+  Port2::with_requested(FlowValueType r) const
+  {
+    FlowValueType new_achieved = (achieved_is_limited() && (r > achieved))
+        ? achieved
+        : r;
+    return {(r != requested), Port2{r, new_achieved}};
+  }
+
+  PortUpdate
+  Port2::with_achieved(FlowValueType a) const
+  {
+    if (a > requested) {
+      std::ostringstream oss{};
+      oss << "achieved more than requested error!\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n"
+          << "new ach  : " << a << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    return {(a != achieved), Port2{requested, a}};
+  }
+  
+  bool
+  operator==(const Port2& a, const Port2& b)
+  {
+    return ((a.achieved == b.achieved) && (a.requested == b.requested));
+  }
+
+  bool operator!=(const Port2& a, const Port2& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const Port2& p)
+  {
+    return os << "Port2{r=" << p.requested << ",a=" << p.achieved << "}";
   }
 
   // Helper Functions

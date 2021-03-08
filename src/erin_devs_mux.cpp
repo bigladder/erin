@@ -340,6 +340,54 @@ namespace erin::devs
     }
     return new_inflows;
   }
+  
+  //std::vector<Port>
+  //request_inflows_intelligently_v2(
+  //  const std::vector<Port>& inflows,
+  //  FlowValueType remaining_request,
+  //  RealTimeType time)
+  //{
+  //  using size_type = std::vector<Port>::size_type;
+  //  auto new_inflows{inflows};
+  //  for (size_type idx{0}; idx < new_inflows.size(); ++idx) {
+  //    auto achieved = new_inflows[idx].get_achieved();
+  //    auto requested = new_inflows[idx].get_requested();
+  //    if ((achieved < (remaining_request - ERIN::flow_value_tolerance))
+  //        && (achieved < (requested - ERIN::flow_value_tolerance))
+  //        && (std::abs(requested - remaining_request) < ERIN::flow_value_tolerance)) {
+  //      new_inflows[idx] = new_inflows[idx].with_requested_and_achieved(
+  //          remaining_request, achieved, time);
+  //    }
+  //    else if ((achieved == remaining_request) && (requested == achieved)) {
+  //      new_inflows[idx] = Port{
+  //        new_inflows[idx].get_time_of_last_change(),
+  //        remaining_request, achieved, false, false};
+  //    }
+  //    else {
+  //      new_inflows[idx] = new_inflows[idx].with_requested(
+  //          remaining_request, time);
+  //    }
+  //    remaining_request -= new_inflows[idx].get_achieved();
+  //    if (remaining_request < ERIN::flow_value_tolerance) {
+  //      remaining_request = 0.0;
+  //    }
+  //    if (new_inflows[idx].get_requested() > new_inflows[idx].get_achieved()) {
+  //      new_inflows[idx] = new_inflows[idx].with_requested_and_achieved(
+  //        new_inflows[idx].get_achieved(),
+  //        new_inflows[idx].get_achieved(),
+  //        new_inflows[idx].get_time_of_last_change() 
+  //      );
+  //    }
+  //  }
+  //  if (remaining_request > 0) {
+  //    new_inflows[0] = new_inflows[0].with_requested_and_achieved(
+  //      new_inflows[0].get_requested() + remaining_request,
+  //      new_inflows[0].get_achieved(),
+  //      new_inflows[0].get_time_of_last_change()
+  //    );
+  //  }
+  //  return new_inflows;
+  //}
 
   std::vector<Port>
   request_inflows_intelligently(
@@ -508,6 +556,28 @@ namespace erin::devs
                 << "  state.outflow_ports = "
                 << ERIN::vec_to_string<Port>(state.outflow_ports) << ")\n";
     }
+    // // the below to copies clear the port propagation state since we should
+    // // have already propagated outputs before the internal transition
+    // std::vector<Port> ips{};
+    // for (const auto& ip : state.inflow_ports) {
+    //   ips.emplace_back(
+    //     Port{
+    //       ip.get_time_of_last_change(),
+    //       ip.get_requested(),
+    //       ip.get_achieved(),
+    //       false, false}
+    //   );
+    // }
+    // std::vector<Port> ops{};
+    // for (const auto& op : state.outflow_ports) {
+    //   ops.emplace_back(
+    //     Port{
+    //       op.get_time_of_last_change(),
+    //       op.get_requested(),
+    //       op.get_achieved(),
+    //       false, false}
+    //   );
+    // }
     return MuxState{
       state.time,
       state.num_inflows,

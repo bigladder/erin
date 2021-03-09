@@ -37,19 +37,16 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // state
-  const RealTimeType default_start_time{0};
   const FlowValueType default_upper_flow_limit{1e12};
   const FlowValueType default_lower_flow_limit{0.0};
 
   struct FlowLimitsState
   {
-    RealTimeType time{default_start_time};
-    Port inflow_port{
-      default_start_time,
+    RealTimeType time{0};
+    Port2 inflow_port{
       default_lower_flow_limit,
       default_lower_flow_limit};
-    Port outflow_port{
-      default_start_time,
+    Port2 outflow_port{
       default_lower_flow_limit,
       default_lower_flow_limit};
     FlowLimits limits{
@@ -69,8 +66,8 @@ namespace erin::devs
 
   FlowLimitsState make_flow_limits_state(
       RealTimeType time,
-      Port inflow_port,
-      Port outflow_port,
+      Port2 inflow_port,
+      Port2 outflow_port,
       FlowValueType lower_limit,
       FlowValueType upper_limit,
       bool report_inflow_request,

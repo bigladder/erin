@@ -50,8 +50,8 @@ namespace erin::devs
   {
     return make_flow_limits_state(
         0,
-        Port{0, lower_limit, lower_limit},
-        Port{0, lower_limit, lower_limit},
+        Port2{lower_limit, lower_limit},
+        Port2{lower_limit, lower_limit},
         lower_limit,
         upper_limit,
         false,
@@ -61,8 +61,8 @@ namespace erin::devs
   FlowLimitsState
   make_flow_limits_state(
       RealTimeType time,
-      Port inflow_port,
-      Port outflow_port,
+      Port2 inflow_port,
+      Port2 outflow_port,
       FlowValueType lower_limit,
       FlowValueType upper_limit,
       bool report_inflow_request,
@@ -70,14 +70,6 @@ namespace erin::devs
   {
     if (time < 0) {
       throw std::invalid_argument("time must be >= 0");
-    }
-    if (time < inflow_port.get_time_of_last_change()) {
-      throw std::invalid_argument(
-          "time cannot be less than time of last change of inflow_port");
-    }
-    if (time < outflow_port.get_time_of_last_change()) {
-      throw std::invalid_argument(
-          "time cannot be less than time of last change of outflow_port");
     }
     return FlowLimitsState{
       time,
@@ -166,25 +158,23 @@ namespace erin::devs
           }
         default:
           {
-            std::ostringstream oss;
+            std::ostringstream oss{};
             oss << "unhandled port " << x.port
                 << " in flow_limits_external_transition(...)";
             throw std::invalid_argument(oss.str());
           }
       }
     }
-    if (got_outflow_request) {
-      // if we get an outflow request, even if we get a simultaneous inflow
-      // achieved, we should just process the outflow request as the request takes
-      // precedence.
-      return flow_limits_external_transition_on_outflow_request(
-          state, elapsed_time, outflow_request);
-    }
+    auto new_state{state};
     if (got_inflow_achieved) {
-      return flow_limits_external_transition_on_inflow_achieved(
-          state, elapsed_time, inflow_achieved);
+      new_state = flow_limits_external_transition_on_inflow_achieved(
+          new_state, elapsed_time, inflow_achieved);
     }
-    return state;
+    if (got_outflow_request) {
+      new_state = flow_limits_external_transition_on_outflow_request(
+          new_state, elapsed_time, outflow_request);
+    }
+    return new_state;
   }
 
   FlowLimitsState
@@ -193,28 +183,20 @@ namespace erin::devs
       RealTimeType elapsed_time,
       FlowValueType outflow_request)
   {
-    const auto& ip = state.inflow_port;
-    const auto& op = state.outflow_port;
-    auto t = state.time + elapsed_time;
     auto inflow_request = std::clamp(
         outflow_request,
         state.limits.get_lower_limit(),
         state.limits.get_upper_limit());
-    auto new_ip = ip.with_requested_and_achieved(
-        inflow_request,
-        inflow_request,
-        t);
-    auto new_op = op.with_requested_and_achieved(
-        outflow_request,
-        inflow_request,
-        t);
+    auto ip_update = state.inflow_port.with_requested(inflow_request);
+    auto op_update_r = state.outflow_port.with_requested(outflow_request);
+    auto op_update_a = op_update_r.port.with_achieved(ip_update.port.get_achieved());
     return FlowLimitsState{
-      t,
-      new_ip,
-      new_op,
+      state.time + elapsed_time,
+      ip_update.port,
+      op_update_a.port,
       state.limits,
-      new_ip.should_propagate_request_at(t),
-      new_op.should_propagate_achieved_at(t)
+      ip_update.send_update,
+      op_update_a.send_update,
     };
   }
 
@@ -224,18 +206,15 @@ namespace erin::devs
       RealTimeType elapsed_time,
       FlowValueType inflow_achieved)
   {
-    const auto& ip = state.inflow_port;
-    const auto& op = state.outflow_port;
-    auto t = state.time + elapsed_time;
-    auto new_ip = ip.with_achieved(inflow_achieved, t);
-    auto new_op = op.with_achieved(inflow_achieved, t);
+    auto ip_update = state.inflow_port.with_achieved(inflow_achieved);
+    auto op_update = state.outflow_port.with_achieved(inflow_achieved);
     return FlowLimitsState{
-      t,
-      new_ip,
-      new_op,
+      state.time + elapsed_time,
+      ip_update.port,
+      op_update.port,
       state.limits,
       false,
-      new_op.should_propagate_achieved_at(t)
+      op_update.send_update,
     };
   }
 
@@ -264,17 +243,18 @@ namespace erin::devs
   void
   flow_limits_output_function_mutable(const FlowLimitsState& state, std::vector<PortValue>& ys)
   {
-    const auto& ip = state.inflow_port;
-    const auto& op = state.outflow_port;
-    if (state.report_inflow_request &&
-        state.inflow_port.should_propagate_request_at(state.time))
-    {
-      ys.emplace_back(PortValue{outport_inflow_request, ip.get_requested()});
+    if (state.report_inflow_request) {
+      ys.emplace_back(
+          PortValue{
+              outport_inflow_request,
+              state.inflow_port.get_requested(),
+          });
     }
-    if (state.report_outflow_achieved &&
-        state.outflow_port.should_propagate_achieved_at(state.time))
-    {
-      ys.emplace_back(PortValue{outport_outflow_achieved, op.get_achieved()});
+    if (state.report_outflow_achieved) {
+      ys.emplace_back(
+        PortValue{
+          outport_outflow_achieved,
+          state.outflow_port.get_achieved()});
     }
   }
 }

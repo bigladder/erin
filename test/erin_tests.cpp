@@ -62,13 +62,15 @@ check_times_and_loads(
         expected_times,
         actual_times);
   std::vector<E::FlowValueType> actual_loads{};
-  if (use_requested)
+  if (use_requested) {
     actual_loads = E::get_requested_flows_from_results_for_component(results, id);
-  else
+  }
+  else {
     actual_loads = E::get_actual_flows_from_results_for_component(results, id);
+  }
   flag = flag && erin_test_utils::compare_vectors_functional<E::FlowValueType>(
       expected_loads, actual_loads);
-  if (!flag)
+  if (!flag) {
     std::cout << "key: " << id << "\n"
               << "expected_times = "
               << E::vec_to_string<E::RealTimeType>(expected_times) << "\n"
@@ -78,6 +80,7 @@ check_times_and_loads(
               << E::vec_to_string<E::RealTimeType>(actual_times) << "\n"
               << (use_requested ? "requested_loads=" : "actual_loads   = ")
               << E::vec_to_string<E::FlowValueType>(actual_loads) << "\n";
+  }
   return flag;
 }
 
@@ -188,7 +191,7 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
       sink_id,
       E::ComponentType::Load,
       elec,
-      { E::LoadItem{0, 160},
+      { E::LoadItem{0,160},
         E::LoadItem{1,80},
         E::LoadItem{2,40},
         E::LoadItem{3,0},
@@ -4294,7 +4297,7 @@ TEST(ErinDevs, Test_flow_limits_functions)
   ED::FlowLimits limits{0.0, 100.0};
   ED::FlowLimitsState s0{
     // time, inflow_port, outflow_port
-    0, ED::Port{}, ED::Port{},
+    0, ED::Port2{}, ED::Port2{},
     // FlowLimits, report_inflow_request, report_outflow_achieved
     limits, false, false};
   auto dt0 = ED::flow_limits_time_advance(s0);
@@ -4302,8 +4305,8 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s1 = ED::flow_limits_external_transition_on_outflow_request(s0, 2, 10.0);
   ED::FlowLimitsState expected_s1{
     2,
-    ED::Port{2, 10.0, 10.0, true, false},
-    ED::Port{2, 10.0, 10.0, true, false},
+    ED::Port2{10.0},
+    ED::Port2{10.0},
     limits, true, false};
   EXPECT_EQ(s1, expected_s1);
   auto dt1 = ED::flow_limits_time_advance(s1);
@@ -4321,15 +4324,15 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s2 = ED::flow_limits_internal_transition(s1);
   ED::FlowLimitsState expected_s2{
     2,
-    ED::Port{2, 10.0, 10.0},
-    ED::Port{2, 10.0, 10.0},
+    ED::Port2{10.0},
+    ED::Port2{10.0},
     limits, false, false};
   EXPECT_EQ(s2, expected_s2);
   auto s3 = ED::flow_limits_external_transition_on_inflow_achieved(s2, 0, 8.0);
   ED::FlowLimitsState expected_s3{
     2,
-    ED::Port{2,10.0,8.0},
-    ED::Port{2,10.0,8.0},
+    ED::Port2{10.0,8.0},
+    ED::Port2{10.0,8.0},
     limits, false, true};
   EXPECT_EQ(s3, expected_s3);
   auto dt3 = ED::flow_limits_time_advance(s3);
@@ -4343,8 +4346,8 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s4 = ED::flow_limits_internal_transition(s3);
   ED::FlowLimitsState expected_s4{
     2,
-    ED::Port{2,10.0,8.0},
-    ED::Port{2,10.0,8.0},
+    ED::Port2{10.0,8.0},
+    ED::Port2{10.0,8.0},
     limits, false, false};
   EXPECT_EQ(s4, expected_s4);
   auto dt4 = ED::flow_limits_time_advance(s4);
@@ -4354,13 +4357,12 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s5 = ED::flow_limits_external_transition(s4, 2, xs);
   ED::FlowLimitsState expected_s5{
     4,
-    ED::Port{4, 100.0, 100.0},
-    ED::Port{4, 200.0, 100.0},
-    limits, true, true};
+    ED::Port2{100.0, 8.0},
+    ED::Port2{200.0, 8.0},
+    limits, true, false};
   EXPECT_EQ(s5, expected_s5);
   auto ys5 = ED::flow_limits_output_function(s5);
   std::vector<ED::PortValue> expected_ys5 = {
-    ED::PortValue{ED::outport_outflow_achieved, 100.0},
     ED::PortValue{ED::outport_inflow_request, 100.0}};
   ASSERT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
@@ -4373,8 +4375,8 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s7 = ED::flow_limits_external_transition(s6, 0, xs6);
   ED::FlowLimitsState expected_s7{
     4,
-    ED::Port{4, 100.0, 55.0},
-    ED::Port{4, 200.0, 55.0},
+    ED::Port2{100.0, 55.0},
+    ED::Port2{200.0, 55.0},
     limits, false, true};
   EXPECT_EQ(s7, expected_s7);
   auto ys7 = ED::flow_limits_output_function(s7);
@@ -4659,7 +4661,6 @@ TEST(ErinDevs, Test_function_based_load)
         ED::LoadItem{100, 10.0}, // should NOT cause a new event -- same load request.
         ED::LoadItem{200, 0.0}});
   auto s0 = ED::make_load_state();
-  EXPECT_FALSE(s0.inflow_port.should_propagate_request_at(0));
   EXPECT_EQ(s0.current_index, -1);
   EXPECT_EQ(ED::load_current_time(s0), 0);
   EXPECT_EQ(ED::load_next_time(d, s0), 0);

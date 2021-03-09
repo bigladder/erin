@@ -61,10 +61,7 @@ namespace erin::devs
   LoadState
   make_load_state()
   {
-    return LoadState{
-      0,
-      -1,
-      Port{-1, 0.0}};
+    return LoadState{0, -1, Port2{}};
   }
 
   RealTimeType
@@ -123,10 +120,11 @@ namespace erin::devs
     auto next_idx = state.current_index + 1;
     auto next_time = data.times[next_idx];
     auto next_load = data.load_values[next_idx];
+    auto update = state.inflow_port.with_requested(next_load);
     return LoadState{
       next_time,
       next_idx,
-      state.inflow_port.with_requested(next_load, next_time)};
+      update.port};
   }
 
   LoadState
@@ -152,10 +150,11 @@ namespace erin::devs
       }
     }
     auto new_time = state.time + dt;
+    auto update = state.inflow_port.with_achieved(inflow_achieved);
     return LoadState{
       new_time,
       state.current_index,
-      state.inflow_port.with_achieved(inflow_achieved, new_time)};
+      update.port};
   }
 
   LoadState
@@ -187,7 +186,7 @@ namespace erin::devs
     auto next_state = load_internal_transition(data, state);
     auto max_idx{data.number_of_loads - 1};
     if (next_state.current_index <= max_idx) {
-      if (next_state.inflow_port.should_propagate_request_at(next_state.time)) {
+      if (next_state.inflow_port.should_send_request(state.inflow_port)) {
         ys.emplace_back(
             PortValue{
               outport_inflow_request,

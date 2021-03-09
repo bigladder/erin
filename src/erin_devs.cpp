@@ -244,6 +244,12 @@ namespace erin::devs
   }
   
   bool
+  Port2::should_send_request(const Port2& previous) const
+  {
+    return (previous.requested != requested);
+  }
+  
+  bool
   operator==(const Port2& a, const Port2& b)
   {
     return ((a.achieved == b.achieved) && (a.requested == b.requested));

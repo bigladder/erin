@@ -28,7 +28,7 @@ namespace erin::devs
   {
     RealTimeType time{0};
     int current_index{0};
-    Port inflow_port{};
+    Port2 inflow_port{};
   };
 
   LoadData make_load_data(const std::vector<LoadItem>& loads);

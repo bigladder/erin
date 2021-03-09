@@ -77,6 +77,7 @@ namespace erin::devs
       [[nodiscard]] FlowValueType get_achieved() const { return achieved; }
       [[nodiscard]] PortUpdate with_requested(FlowValueType r) const;
       [[nodiscard]] PortUpdate with_achieved(FlowValueType a) const;
+      [[nodiscard]] bool should_send_request(const Port2& previous) const;
 
       friend bool operator==(const Port2& a, const Port2& b);
       friend std::ostream& operator<<(std::ostream& os, const Port2& p);

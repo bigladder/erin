@@ -4783,11 +4783,7 @@ TEST(ErinDevs, Test_function_based_mux)
               << ERIN::vec_to_string<ED::PortValue>(xs0) << "\n";
   }
   EXPECT_TRUE(
-      ED::mux_should_report(
-        s1.time,
-        s1.inflow_ports,
-        s1.outflow_ports));
-  EXPECT_TRUE(s1.do_report);
+      ED::mux_should_report(s1.report_irs, s1.report_oas));
   EXPECT_EQ(ED::mux_current_time(s1), 10);
   auto dt1 = ED::mux_time_advance(s1);
   EXPECT_EQ(dt1, 0);
@@ -4844,8 +4840,8 @@ TEST(ErinDevs, Test_function_based_mux)
     ED::PortValue{ED::inport_inflow_achieved + 2, 20.0}};
   auto s6 = ED::mux_confluent_transition(s5, xs5);
   if (false) {
-    std::cout << "s6.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s6.inflow_ports) << "\n";
-    std::cout << "s6.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s6.outflow_ports) << "\n";
+    std::cout << "s6.inflow_ports = " << ERIN::vec_to_string<ED::Port2>(s6.inflow_ports) << "\n";
+    std::cout << "s6.outflow_ports = " << ERIN::vec_to_string<ED::Port2>(s6.outflow_ports) << "\n";
   }
   auto dt6 = ED::mux_time_advance(s6);
   EXPECT_EQ(dt6, 0);
@@ -4857,8 +4853,8 @@ TEST(ErinDevs, Test_function_based_mux)
         ys6, expected_ys6, compare_ports));
   auto s7 = ED::mux_internal_transition(s6);
   if (false) {
-    std::cout << "s7.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s7.inflow_ports) << "\n";
-    std::cout << "s7.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s7.outflow_ports) << "\n";
+    std::cout << "s7.inflow_ports = " << ERIN::vec_to_string<ED::Port2>(s7.inflow_ports) << "\n";
+    std::cout << "s7.outflow_ports = " << ERIN::vec_to_string<ED::Port2>(s7.outflow_ports) << "\n";
   }
   auto dt7 = ED::mux_time_advance(s7);
   EXPECT_EQ(dt7, ED::infinity);
@@ -4874,16 +4870,17 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_EQ(dt8, 0);
   auto ys8 = ED::mux_output_function(s8);
   std::vector<ED::PortValue> expected_ys8{
-    ED::PortValue{ED::outport_outflow_achieved + 0, 100.0},
     ED::PortValue{ED::outport_inflow_request + 0, 200.0},
-    ED::PortValue{ED::outport_inflow_request + 1, 0.0},
-    ED::PortValue{ED::outport_inflow_request + 2, 0.0},
+    ED::PortValue{ED::outport_inflow_request + 1, 150.0},
+    ED::PortValue{ED::outport_inflow_request + 2, 130.0},
+    ED::PortValue{ED::outport_outflow_achieved + 0, 45.0},
+    ED::PortValue{ED::outport_outflow_achieved + 1, 45.0},
   };
   if (false) {
     std::cout << "expected_ys8 = " << ERIN::vec_to_string<ED::PortValue>(expected_ys8) << "\n";
     std::cout << "ys8          = " << ERIN::vec_to_string<ED::PortValue>(ys8) << "\n";
-    std::cout << "s8.inflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.inflow_ports) << "\n";
-    std::cout << "s8.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s8.outflow_ports) << "\n";
+    std::cout << "s8.inflow_ports = " << ERIN::vec_to_string<ED::Port2>(s8.inflow_ports) << "\n";
+    std::cout << "s8.outflow_ports = " << ERIN::vec_to_string<ED::Port2>(s8.outflow_ports) << "\n";
   }
   ASSERT_EQ(ys8.size(), expected_ys8.size());
   EXPECT_TRUE(
@@ -4903,17 +4900,20 @@ TEST(ErinDevs, Test_function_based_mux)
   auto ys10 = ED::mux_output_function(s10);
   std::vector<ED::PortValue> expected_ys10{
     ED::PortValue{ED::outport_inflow_request + 1, 100.0},
+    ED::PortValue{ED::outport_inflow_request + 2, 80.0},
+    ED::PortValue{ED::outport_outflow_achieved + 0, 70.0},
+    ED::PortValue{ED::outport_outflow_achieved + 1, 70.0},
   };
   if (false) {
-    std::cout << "s8.inflow_ports   = " << ERIN::vec_to_string<ED::Port>(s8.inflow_ports) << "\n";
-    std::cout << "s8.outflow_ports  = " << ERIN::vec_to_string<ED::Port>(s8.outflow_ports) << "\n";
-    std::cout << "s9.inflow_ports   = " << ERIN::vec_to_string<ED::Port>(s9.inflow_ports) << "\n";
-    std::cout << "s9.outflow_ports  = " << ERIN::vec_to_string<ED::Port>(s9.outflow_ports) << "\n";
+    std::cout << "s8.inflow_ports   = " << ERIN::vec_to_string<ED::Port2>(s8.inflow_ports) << "\n";
+    std::cout << "s8.outflow_ports  = " << ERIN::vec_to_string<ED::Port2>(s8.outflow_ports) << "\n";
+    std::cout << "s9.inflow_ports   = " << ERIN::vec_to_string<ED::Port2>(s9.inflow_ports) << "\n";
+    std::cout << "s9.outflow_ports  = " << ERIN::vec_to_string<ED::Port2>(s9.outflow_ports) << "\n";
     std::cout << "expected_ys10     = " << ERIN::vec_to_string<ED::PortValue>(expected_ys10) << "\n";
     std::cout << "ys10              = " << ERIN::vec_to_string<ED::PortValue>(ys10) << "\n";
     std::cout << "s10.time          = " << s10.time << "\n";
-    std::cout << "s10.inflow_ports  = " << ERIN::vec_to_string<ED::Port>(s10.inflow_ports) << "\n";
-    std::cout << "s10.outflow_ports = " << ERIN::vec_to_string<ED::Port>(s10.outflow_ports) << "\n";
+    std::cout << "s10.inflow_ports  = " << ERIN::vec_to_string<ED::Port2>(s10.inflow_ports) << "\n";
+    std::cout << "s10.outflow_ports = " << ERIN::vec_to_string<ED::Port2>(s10.outflow_ports) << "\n";
   }
   ASSERT_EQ(ys10.size(), expected_ys10.size());
   EXPECT_TRUE(
@@ -7054,69 +7054,69 @@ TEST(ErinBasicsTest, Test_muxer_dispatch_strategy)
   namespace E = ERIN;
   E::RealTimeType time{0};
   E::FlowValueType outflow_achieved{100.0};
-  std::vector<ED::Port> outflow_ports{
-    ED::Port{time, 50.0},
-    ED::Port{time, 50.0},
-    ED::Port{time, 50.0},
-    ED::Port{time, 50.0},
+  std::vector<ED::Port2> outflow_ports{
+    ED::Port2{50.0},
+    ED::Port2{50.0},
+    ED::Port2{50.0},
+    ED::Port2{50.0},
   };
-  std::vector<ED::Port> expected_outflows{
-    ED::Port{time, 50.0, 50.0},
-    ED::Port{time, 50.0, 50.0},
-    ED::Port{time, 50.0, 0.0},
-    ED::Port{time, 50.0, 0.0},
+  std::vector<ED::PortUpdate> expected_outflows{
+    ED::PortUpdate{false, ED::Port2{50.0, 50.0}},
+    ED::PortUpdate{false, ED::Port2{50.0, 50.0}},
+    ED::PortUpdate{true, ED::Port2{50.0, 0.0}},
+    ED::PortUpdate{true, ED::Port2{50.0, 0.0}},
   };
   auto outflows = ED::distribute_inflow_to_outflow_in_order(
-      outflow_ports, outflow_achieved, time);
+      outflow_ports, outflow_achieved);
   ASSERT_EQ(expected_outflows.size(), outflows.size());
   for (std::vector<ED::Port>::size_type idx{0}; idx < outflows.size(); ++idx) {
     EXPECT_EQ(expected_outflows[idx], outflows[idx])
       << "idx = " << idx << "\n";
   }
-  std::vector<ED::Port> outflow_ports_irregular{
-    ED::Port{time, 50.0},
-    ED::Port{time, 10.0},
-    ED::Port{time, 90.0},
-    ED::Port{time, 50.0},
+  std::vector<ED::Port2> outflow_ports_irregular{
+    ED::Port2{50.0},
+    ED::Port2{10.0},
+    ED::Port2{90.0},
+    ED::Port2{50.0},
   };
   auto outflows_irregular = ED::distribute_inflow_to_outflow_in_order(
-      outflow_ports_irregular, outflow_achieved, time);
-  std::vector<ED::Port> expected_outflows_irregular{
-    ED::Port{time, 50.0, 50.0},
-    ED::Port{time, 10.0, 10.0},
-    ED::Port{time, 90.0, 40.0},
-    ED::Port{time, 50.0, 0.0},
+      outflow_ports_irregular, outflow_achieved);
+  std::vector<ED::PortUpdate> expected_outflows_irregular{
+    ED::PortUpdate{false, ED::Port2{50.0, 50.0}},
+    ED::PortUpdate{false, ED::Port2{10.0, 10.0}},
+    ED::PortUpdate{true, ED::Port2{90.0, 40.0}},
+    ED::PortUpdate{true, ED::Port2{50.0, 0.0}},
   };
   ASSERT_EQ(expected_outflows_irregular.size(), outflows_irregular.size());
-  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_irregular.size(); ++idx) {
+  for (std::vector<ED::Port2>::size_type idx{0}; idx < outflows_irregular.size(); ++idx) {
     EXPECT_EQ(expected_outflows_irregular[idx], outflows_irregular[idx])
       << "idx = " << idx << "\n";
   }
 
-  std::vector<ED::Port> expected_outflows_dist{
-    ED::Port{time, 50.0, 25.0},
-    ED::Port{time, 50.0, 25.0},
-    ED::Port{time, 50.0, 25.0},
-    ED::Port{time, 50.0, 25.0},
+  std::vector<ED::Port2> expected_outflows_dist{
+    ED::Port2{50.0, 25.0},
+    ED::Port2{50.0, 25.0},
+    ED::Port2{50.0, 25.0},
+    ED::Port2{50.0, 25.0},
   };
   auto outflows_dist = ED::distribute_inflow_to_outflow_evenly(
-      outflow_ports, outflow_achieved, time);
+      outflow_ports, outflow_achieved);
   ASSERT_EQ(expected_outflows_dist.size(), outflows_dist.size());
   for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_dist.size(); ++idx) {
-    EXPECT_EQ(expected_outflows_dist[idx], outflows_dist[idx])
+    EXPECT_EQ(expected_outflows_dist[idx], outflows_dist[idx].port)
       << "idx = " << idx << "\n";
   }
   auto outflows_dist_irregular = ED::distribute_inflow_to_outflow_evenly(
-      outflow_ports_irregular, outflow_achieved, time);
-  std::vector<ED::Port> expected_outflows_dist_irregular{
-    ED::Port{time, 50.0, 30.0},
-    ED::Port{time, 10.0, 10.0},
-    ED::Port{time, 90.0, 30.0},
-    ED::Port{time, 50.0, 30.0},
+      outflow_ports_irregular, outflow_achieved);
+  std::vector<ED::Port2> expected_outflows_dist_irregular{
+    ED::Port2{50.0, 30.0},
+    ED::Port2{10.0, 10.0},
+    ED::Port2{90.0, 30.0},
+    ED::Port2{50.0, 30.0},
   };
   ASSERT_EQ(expected_outflows_dist_irregular.size(), outflows_dist_irregular.size());
-  for (std::vector<ED::Port>::size_type idx{0}; idx < outflows_dist_irregular.size(); ++idx) {
-    EXPECT_EQ(expected_outflows_dist_irregular[idx], outflows_dist_irregular[idx])
+  for (std::vector<ED::Port2>::size_type idx{0}; idx < outflows_dist_irregular.size(); ++idx) {
+    EXPECT_EQ(expected_outflows_dist_irregular[idx], outflows_dist_irregular[idx].port)
       << "idx = " << idx << "\n";
   }
 }
@@ -7205,45 +7205,36 @@ TEST(ErinBasicsTest, Test_reliability_schedule)
 TEST(ErinBasicsTest, Test_request_ports_intelligently) {
   namespace E = ERIN;
   namespace ED = erin::devs;
-  auto inports = std::vector<ED::Port>{
-    ED::Port{0, 0.0}, ED::Port{0, 0.0}, ED::Port{0, 0.0}
+  auto inports = std::vector<ED::Port2>{
+    ED::Port2{0.0}, ED::Port2{0.0}, ED::Port2{0.0}
   };
   E::FlowValueType total_request{30.0};
   E::FlowValueType remaining_request{total_request};
   auto inports_returned = ED::request_inflows_intelligently(
-      inports, remaining_request, 0);
+      inports, remaining_request);
   ASSERT_EQ(inports_returned.size(), 3);
-  EXPECT_EQ(inports_returned[0].get_requested(), 30.0);
-  EXPECT_EQ(inports_returned[1].get_requested(), 0.0);
-  EXPECT_EQ(inports_returned[2].get_requested(), 0.0);
-  EXPECT_EQ(inports_returned[0].get_achieved(), 30.0);
-  EXPECT_EQ(inports_returned[1].get_achieved(), 0.0);
-  EXPECT_EQ(inports_returned[2].get_achieved(), 0.0);
-  inports = std::vector<ED::Port>{
-    ED::Port{0, 30.0, 5.0},
-    ED::Port{0, 25.0, 5.0},
-    ED::Port{0, 20.0, 10.0}
+  EXPECT_EQ(inports_returned[0].port.get_requested(), 30.0);
+  EXPECT_EQ(inports_returned[1].port.get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[2].port.get_requested(), 0.0);
+  EXPECT_EQ(inports_returned[0].port.get_achieved(), 30.0);
+  EXPECT_EQ(inports_returned[1].port.get_achieved(), 0.0);
+  EXPECT_EQ(inports_returned[2].port.get_achieved(), 0.0);
+  inports = std::vector<ED::Port2>{
+    ED::Port2{30.0, 5.0},
+    ED::Port2{25.0, 5.0},
+    ED::Port2{20.0, 10.0}
   };
   remaining_request = 25.0;
   inports_returned = ED::request_inflows_intelligently(
-      inports, remaining_request, 0);
+      inports, remaining_request);
   ASSERT_EQ(inports_returned.size(), 3);
-  EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
-  EXPECT_EQ(inports_returned[1].get_requested(), 0.0);
-  EXPECT_EQ(inports_returned[2].get_requested(), 0.0);
-  EXPECT_EQ(inports_returned[0].get_achieved(), 25.0);
-  EXPECT_EQ(inports_returned[1].get_achieved(), 0.0);
-  EXPECT_EQ(inports_returned[2].get_achieved(), 0.0);
+  EXPECT_EQ(inports_returned[0].port.get_requested(), 25.0);
+  EXPECT_EQ(inports_returned[1].port.get_requested(), 20.0);
+  EXPECT_EQ(inports_returned[2].port.get_requested(), 15.0);
+  EXPECT_EQ(inports_returned[0].port.get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[1].port.get_achieved(), 5.0);
+  EXPECT_EQ(inports_returned[2].port.get_achieved(), 10.0);
   remaining_request = 25.0;
-  inports_returned = ED::request_inflows_intelligently(
-      inports, remaining_request, 1);
-  ASSERT_EQ(inports_returned.size(), 3);
-  EXPECT_EQ(inports_returned[0].get_requested(), 25.0);
-  EXPECT_EQ(inports_returned[1].get_requested(), 0.0);
-  EXPECT_EQ(inports_returned[2].get_requested(), 0.0);
-  EXPECT_EQ(inports_returned[0].get_achieved(), 25.0);
-  EXPECT_EQ(inports_returned[1].get_achieved(), 0.0);
-  EXPECT_EQ(inports_returned[2].get_achieved(), 0.0);
 }
 
 TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) {

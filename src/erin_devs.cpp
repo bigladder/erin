@@ -259,6 +259,24 @@ namespace erin::devs
   {
     return os << "Port2{r=" << p.requested << ",a=" << p.achieved << "}";
   }
+  
+  bool
+  operator==(const PortUpdate& a, const PortUpdate& b)
+  {
+    return (a.send_update == b.send_update) && (a.port == b.port);
+  }
+
+  bool
+  operator!=(const PortUpdate& a, const PortUpdate& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream& operator<<(std::ostream& os, const PortUpdate& p)
+  {
+    return os << "PortUpdate{update?=" << p.send_update
+              << ", port=" << p.port << "}";
+  }
 
   // Helper Functions
   bool

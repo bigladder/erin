@@ -99,6 +99,10 @@ namespace erin::devs
     bool send_update{false};
     Port2 port{};
   };
+  
+  bool operator==(const PortUpdate& a, const PortUpdate& b);
+  bool operator!=(const PortUpdate& a, const PortUpdate& b);
+  std::ostream& operator<<(std::ostream& os, const PortUpdate& p);
 
   // Helper Functions
   bool got_inflow_achieved(const std::vector<PortValue>& xs);

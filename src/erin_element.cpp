@@ -1223,12 +1223,13 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "- s* " << state << "\n";
     }
-    if (flow_writer && record_history && (element_id != -1))
+    if (flow_writer && record_history && (element_id != -1)) {
       flow_writer->write_data(
           element_id,
           state.time,
           state.inflow_port.get_requested(),
           state.inflow_port.get_achieved());
+    }
   }
 
   void
@@ -1243,12 +1244,13 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "- s* = " << state << "\n"; 
     }
-    if (flow_writer && record_history && (element_id != -1))
+    if (flow_writer && record_history && (element_id != -1)) {
       flow_writer->write_data(
           element_id,
           state.time,
           state.inflow_port.get_requested(),
           state.inflow_port.get_achieved());
+    }
   }
 
   void

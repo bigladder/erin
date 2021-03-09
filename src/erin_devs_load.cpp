@@ -14,7 +14,7 @@ namespace erin::devs
     using size_type = std::vector<LoadItem>::size_type;
     auto N{loads.size()};
     if (N < 1) {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "loads must have at least one LoadItems but "
              "only " << N << " provided\n";
       throw std::invalid_argument(oss.str());
@@ -25,12 +25,12 @@ namespace erin::devs
       auto t = x.time;
       auto v = x.value;
       if (v < 0.0) {
-        std::ostringstream oss;
+        std::ostringstream oss{};
         oss << "LoadItem[" << idx << "] has a negative load value. Negative flows are not allowed.\n";
         throw std::invalid_argument(oss.str());
       }
       if ((t < 0) || (t <= t_last)) {
-        std::ostringstream oss;
+        std::ostringstream oss{};
         oss << "LoadItems must have time points that are everywhere "
             << "increasing and positive but it doesn't...\n"
             << "t[" << idx << "] = " << t << "\n"

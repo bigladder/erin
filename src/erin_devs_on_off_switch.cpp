@@ -129,10 +129,10 @@ namespace erin::devs
       0,            // time
       init_state,   // state
       next_index,   // next_index
-      Port{0, 0.0}, // inflow_port
-      Port{0, 0.0}, // outflow_port
+      Port2{0.0},   // inflow_port
+      Port2{0.0},   // outflow_port
       false,
-      false
+      false,
     };
   }
 
@@ -172,15 +172,15 @@ namespace erin::devs
     if (state.next_index < data.num_items) {
       auto next_time = data.times[state.next_index];
       auto next_state = data.states[state.next_index];
-      auto ip = state.inflow_port;
-      auto op = state.outflow_port;
+      auto ip{state.inflow_port};
+      auto op{state.outflow_port};
       if (next_state) {
-        ip = ip.with_requested(op.get_requested(), next_time);
-        op = op.with_achieved(op.get_requested(), next_time);
+        ip = ip.with_requested(op.get_requested()).port;
+        op = op.with_achieved(ip.get_achieved()).port;
       }
       else {
-        ip = ip.with_requested(0.0, next_time);
-        op = op.with_achieved(0.0, next_time);
+        ip = ip.with_requested(0.0).port;
+        op = op.with_achieved(0.0).port;
       }
       return OnOffSwitchState{
         next_time,
@@ -232,24 +232,45 @@ namespace erin::devs
     }
     const auto& t = state.time;
     auto new_time = t + elapsed_time;
-    auto ip = state.inflow_port;
-    auto op = state.outflow_port;
+    auto ip{state.inflow_port};
+    auto op{state.outflow_port};
+    bool report_ir{false};
+    bool report_oa{false};
     if (state.state) {
       if (got_inflow_achieved) {
-        ip = ip.with_achieved(inflow_achieved, new_time);
-        op = op.with_achieved(inflow_achieved, new_time);
+        auto update_ip = ip.with_achieved(inflow_achieved);
+        auto update_op = op.with_achieved(update_ip.port.get_achieved());
+        ip = update_ip.port;
+        op = update_op.port;
+        report_ir = false;
+        report_oa = update_op.send_update;
       }
       if (got_outflow_request) {
-        op = op.with_requested(outflow_request, new_time);
-        ip = ip.with_requested(outflow_request, new_time);
+        auto update_op = op.with_requested(outflow_request);
+        auto update_ip = ip.with_requested(outflow_request);
+        op = update_op.port;
+        ip = update_ip.port;
+        report_ir = update_ip.send_update;
+        report_oa =
+            (state.outflow_port.get_achieved() != op.get_achieved())
+            && (op.get_requested() != op.get_achieved());
       }
     }
     else {
-      ip = ip.with_requested(0.0, new_time);
+      auto update_ip = ip.with_requested(0.0);
+      ip = update_ip.port;
+      report_ir = update_ip.send_update;  
       if (got_outflow_request) {
-        op = op.with_requested(outflow_request, new_time);
+        auto update_op_r = op.with_requested(outflow_request);
+        auto update_op_a = update_op_r.port.with_achieved(0.0);
+        op = update_op_a.port;
+        report_oa = update_op_a.send_update;
       }
-      op = op.with_achieved(0.0, new_time);
+      else {
+        auto update_op = op.with_achieved(0.0);
+        op = update_op.port;
+        report_oa = update_op.send_update;
+      }
     }
     return OnOffSwitchState{
       new_time,
@@ -257,8 +278,8 @@ namespace erin::devs
       state.next_index,
       ip,
       op,
-      ip.should_propagate_request_at(new_time),
-      op.should_propagate_achieved_at(new_time)
+      report_ir,
+      report_oa,
     };
   }
 
@@ -321,15 +342,15 @@ namespace erin::devs
       // if state is currently true, then next state will be false
       // therefore, we need to turn off any flows
       ERIN::FlowValueType flow{state.state ? 0.0 : state.outflow_port.get_requested()};
-      auto ip = state.inflow_port.with_requested(flow, next_time);
-      auto op = state.outflow_port.with_achieved(flow, next_time);
-      if (ip.should_propagate_request_at(next_time)) {
+      auto ip = state.inflow_port.with_requested(flow).port;
+      auto op = state.outflow_port.with_achieved(flow).port;
+      if (ip.should_send_request(state.inflow_port)) {
         ys.emplace_back(
             PortValue{
             outport_inflow_request,
             flow});
       }
-      if (op.should_propagate_achieved_at(next_time)) {
+      if (op.should_send_achieved(state.outflow_port)) {
         ys.emplace_back(
             PortValue{
             outport_outflow_achieved,

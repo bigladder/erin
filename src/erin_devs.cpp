@@ -250,6 +250,67 @@ namespace erin::devs
   }
   
   bool
+  Port2::should_send_achieved(const Port2& previous) const
+  {
+    /*
+     * We send the achieved information if it hasn't previously been sent.
+     * That will happen when
+     * - the achieved value is different from previous
+     * - AND request hasn't changed
+     * 
+     * If request has changed, we would only propagate achieved if it's changed
+     * 
+     * action     | c1-outflow | send achieved? 
+     * ===========+============+===============
+     * init       | R=0; A=0   | NA
+     * IR=10      | R=10; A=10 | NA
+     * OA=5       | R=10; A=5  | true1
+     * IR=5+OA=6  | R=5; A=5   | false
+     * IR=6+OA=4  | R=6; A=4   | true1
+     * IR=4       | R=4; A=4   | NA
+     * IR=4+OA=2  | R=4; A=2   | true1
+     * IR=3+OA=2  | R=3; A=2   | false
+     * IR=2+OA=2  | R=2; A=2   | false
+     * IR=9+OA=2  | R=9; A=2   | true2 *
+     * IR=7       | R=7; A=7   | NA
+     * IR=6+OA=4  | R=6; A=4   | true1
+     * IR=4       | R=4; A=4   | NA
+     * IR=8+OA=4  | R=8; A=4   | true
+     * IR=9       | R=9; A=4   | NA
+     * IR=7       | R=7; A=4   | NA
+     * OA=6       | R=7; A=6   | true1
+     * OA=7       | R=7; A=7   | true1
+     * IR=6       | R=6; A=6   | NA
+     * OA=4       | R=6; A=4   | true1
+     * IR=4       | R=4; A=4   | NA
+     * OA=3       | R=4; A=3   | true1
+     * IR=8+OA=4  | R=8; A=4   | true1
+     * IR=5+OA=5  | R=5; A=5   | true1
+     * IR=8       | R=8; A=8   | NA
+     * OA=4       | R=8; A=4   | true1
+     * OA=6       | R=8; A=6   | true1
+     * IR=7+OA=7  | R=7; A=7   | true1 *
+     * OA=6       | R=7; A=6   | true1
+     * IR=6       | R=6; A=6   | NA
+     * IR=3+OA=3  | R=3; A=3   | false
+     * IR=8       | R=8; A=3   | NA
+     * OA=6       | R=8; A=6   | true1
+     * IR=5+OA=5  | R=5; A=5   | false
+     * IR=8+OA=6  | R=8; A=6   | true
+     * OA=8       | R=8; A=8   | true
+     * IR=7+OA=7  | R=7; A=7   | false
+     * IR=4+OA=4  | R=4; A=4   | false
+    
+    Propagate when achieved changed but requested didn't
+    OR
+    request changed but we now have a limit where we did not before
+    */
+    return ((previous.achieved != achieved) && (previous.requested == requested))
+      || ((previous.requested != requested) && (requested != achieved) && (previous.requested == previous.achieved))
+      || ((previous.requested != requested) && (requested == achieved) && (achieved > previous.achieved));
+  }
+  
+  bool
   operator==(const Port2& a, const Port2& b)
   {
     return ((a.achieved == b.achieved) && (a.requested == b.requested));

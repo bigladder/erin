@@ -6691,8 +6691,8 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
     0,
     true,
     1,
-    ED::Port{0, 0.0},
-    ED::Port{0, 0.0},
+    ED::Port2{},
+    ED::Port2{},
     false,
     false
   };
@@ -7269,6 +7269,74 @@ TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) 
   ASSERT_EQ(ys2.size(), 2);
   //EXPECT_EQ(ys0[0].port, ED::outport_inflow_request);
   //EXPECT_EQ(ys0[0].value, 1.0);
+}
+
+TEST(ErinBasicsTest, Test_that_port2_works) {
+  namespace ED = erin::devs;
+  auto p = ED::Port2{};
+  // R=10,A=5
+  auto update = p.with_requested(10);
+  update = update.port.with_achieved(5);
+  EXPECT_TRUE(update.send_update);
+  EXPECT_EQ(update.send_update, update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // R=5,A=6
+  p = update.port;
+  update = p.with_achieved(6).port.with_requested(5);
+  EXPECT_FALSE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // R=6,A=4
+  p = update.port;
+  update = p.with_achieved(4).port.with_requested(6);
+  EXPECT_TRUE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // R=4;R=4,A=2
+  p = update.port.with_requested(4).port;
+  update = p.with_achieved(2).port.with_requested(4);
+  EXPECT_TRUE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // R=3,A=2
+  p = update.port;
+  update = p.with_achieved(2).port.with_requested(3);
+  EXPECT_FALSE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // R=7,A=7
+  p = ED::Port2{8,6};
+  update = p.with_achieved(7).port.with_requested(7);
+  EXPECT_TRUE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // R=9,A=2
+  p = ED::Port2{2,2};
+  update = p.with_achieved(2).port.with_requested(9);
+  EXPECT_TRUE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // R=2,A=2
+  p = ED::Port2{3,2};
+  update = p.with_achieved(2).port.with_requested(3);
+  EXPECT_FALSE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // {5,5} => A=2 => send A
+  p = ED::Port2{5,5};
+  update = p.with_achieved(2);
+  EXPECT_TRUE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  EXPECT_TRUE(update.send_update);
+  // {5,4} => A=5 => send A
+  p = ED::Port2{5,4};
+  update = p.with_achieved(5);
+  EXPECT_TRUE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  EXPECT_TRUE(update.send_update);
+  // {5,4} => R=4,A=5 => don't send A
+  p = ED::Port2{5,4};
+  update = p.with_achieved(5).port.with_requested(4);
+  EXPECT_FALSE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
+  // {5,4} => R=8,A=5 => send A
+  p = ED::Port2{5,4};
+  update = p.with_achieved(5).port.with_requested(8);
+  EXPECT_TRUE(update.port.should_send_achieved(p))
+      << "p: " << update.port << "pL: " << p;
 }
 
 int

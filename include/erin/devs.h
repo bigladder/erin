@@ -90,6 +90,11 @@ namespace erin::devs
       bool achieved_is_limited() const {
         return achieved < requested;
       };
+      bool should_send_achieved_internal(
+          FlowValueType r, FlowValueType a,
+          FlowValueType prev_r, FlowValueType prev_a) const;
+      bool should_send_request_internal(
+          FlowValueType r, FlowValueType prev_r) const;
   };
 
   bool operator==(const Port2& a, const Port2& b);

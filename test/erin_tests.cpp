@@ -7337,6 +7337,11 @@ TEST(ErinBasicsTest, Test_that_port2_works) {
   update = p.with_achieved(5).port.with_requested(8);
   EXPECT_TRUE(update.port.should_send_achieved(p))
       << "p: " << update.port << "pL: " << p;
+  // R=4252.38,A=0
+  p = ED::Port2{2952.38,855.556};
+  update = p.with_achieved(0).port.with_requested(4252.38);
+  EXPECT_TRUE(update.port.should_send_achieved(p))
+    << "p: " << update.port << "pL: " << p;
 }
 
 int

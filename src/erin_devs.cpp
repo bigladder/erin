@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <stdexcept>
+#include <numeric>
 
 namespace erin::devs
 {
@@ -226,7 +227,10 @@ namespace erin::devs
     FlowValueType new_achieved = (achieved_is_limited() && (r > achieved))
         ? achieved
         : r;
-    return {(r != requested), Port2{r, new_achieved}};
+    return {
+      should_send_request_internal(r, requested),
+      Port2{r, new_achieved},
+    };
   }
 
   PortUpdate
@@ -240,13 +244,16 @@ namespace erin::devs
           << "new ach  : " << a << "\n";
       throw std::invalid_argument(oss.str());
     }
-    return {(a != achieved), Port2{requested, a}};
+    return {
+      should_send_achieved_internal(requested, a, requested, achieved),
+      Port2{requested, a}
+    };
   }
   
   bool
   Port2::should_send_request(const Port2& previous) const
   {
-    return (previous.requested != requested);
+    return should_send_request_internal(requested, previous.requested);
   }
   
   bool
@@ -305,9 +312,27 @@ namespace erin::devs
     OR
     request changed but we now have a limit where we did not before
     */
-    return ((previous.achieved != achieved) && (previous.requested == requested))
-      || ((previous.requested != requested) && (requested != achieved) && (previous.requested == previous.achieved))
-      || ((previous.requested != requested) && (requested == achieved) && (achieved > previous.achieved));
+    return should_send_achieved_internal(
+        requested, achieved,
+        previous.requested, previous.achieved);
+  }
+
+  bool
+  Port2::should_send_achieved_internal(
+          FlowValueType r, FlowValueType a,
+          FlowValueType prev_r, FlowValueType prev_a) const
+  {
+    return ((prev_r == r) && (prev_a != a))
+      || ((prev_r != r) && (r != a) && (prev_r == prev_a))
+      || ((prev_r != r) && (r == a) && (a > prev_a))
+      || ((prev_r != r) && (prev_r != prev_a) && (a < prev_a));
+  }
+
+  bool
+  Port2::should_send_request_internal(
+      FlowValueType r, FlowValueType prev_r) const
+  {
+    return (prev_r != r);
   }
   
   bool
@@ -346,26 +371,21 @@ namespace erin::devs
   }
 
   // Helper Functions
+  // TODO: rename got_inflow_achieved as it shadows many local variables in external_transitions
   bool
   got_inflow_achieved(const std::vector<PortValue>& xs)
   {
-    for (const auto& x: xs) {
-      if (x.port == inport_inflow_achieved) {
-        return true;
-      }
-    }
-    return false;
+    return std::any_of(xs.begin(), xs.end(),
+        [](const auto& x) { return x.port == inport_inflow_achieved; });
   }
 
   FlowValueType
   total_inflow_achieved(const std::vector<PortValue>& xs)
   {
-    FlowValueType inflow_achieved{0.0};
-    for (const auto& x: xs) {
-      if (x.port == inport_inflow_achieved) {
-        inflow_achieved += x.value;
-      }
-    }
-    return inflow_achieved;
+    return std::accumulate(xs.begin(), xs.end(), 0.0,
+        [](const FlowValueType& sum, const auto& x) { 
+          return sum + x.value;
+        }
+    );
   }
 }

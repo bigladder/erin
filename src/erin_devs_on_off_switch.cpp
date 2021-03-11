@@ -29,11 +29,11 @@ namespace erin::devs
   operator<<(std::ostream& os, const OnOffSwitchData& a)
   {
     namespace E = ERIN;
-    return os << "OnOffSwitchData("
-              << "times="
-              << E::vec_to_string<RealTimeType>(a.times) << ", "
-              << "states="
-              << E::vec_to_string<bool>(a.states) << ")";
+    return os << "{"
+              << ":times "
+              << E::vec_to_string<RealTimeType>(a.times) << " "
+              << ":states "
+              << E::vec_to_string<bool>(a.states) << "}";
   }
 
   bool
@@ -59,14 +59,14 @@ namespace erin::devs
   operator<<(std::ostream& os, const OnOffSwitchState& a)
   {
     namespace E = ERIN;
-    return os << "OnOffSwitchState("
-              << "time=" << a.time << ", "
-              << "state=" << a.state << ", "
-              << "next_index=" << a.next_index << ", "
-              << "inflow_port=" << a.inflow_port << ", "
-              << "outflow_port=" << a.outflow_port << ", " 
-              << "report_inflow_request=" << a.report_inflow_request << ", "
-              << "report_outflow_achieved=" << a.report_outflow_achieved << ")";
+    return os << "{"
+              << ":t " << a.time << " "
+              << ":state " << a.state << " "
+              << ":next-idx " << a.next_index << " "
+              << ":inflow " << a.inflow_port << " "
+              << ":outflow " << a.outflow_port << " " 
+              << ":report-ir? " << a.report_inflow_request << " "
+              << ":report-oa? " << a.report_outflow_achieved << "}";
   }
 
   OnOffSwitchData
@@ -309,7 +309,7 @@ namespace erin::devs
 
   void 
   on_off_switch_output_function_mutable(
-      const OnOffSwitchData& data,
+      const OnOffSwitchData& /* data */,
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys)
   {
@@ -336,8 +336,6 @@ namespace erin::devs
       }
     }
     else {
-      auto dt = on_off_switch_time_advance(data, state);
-      auto next_time = state.time + dt;
       // outputs fire BEFORE internal transition
       // if state is currently true, then next state will be false
       // therefore, we need to turn off any flows

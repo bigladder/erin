@@ -194,16 +194,15 @@ namespace erin::devs
   std::ostream&
   operator<<(std::ostream& os, const ConverterState& a)
   {
-    return os << "ConverterState("
-              << "time=" << a.time << ", "
-              << "inflow_port=" << a.inflow_port << ", "
-              << "outflow_port=" << a.outflow_port << ", "
-              << "lossflow_port=" << a.lossflow_port << ", "
-              << "wasteflow_port=" << a.wasteflow_port << ", "
-              << "conversion_fun=" << (*a.conversion_fun) << ", "
-              << "report_inflow_request=" << a.report_inflow_request << ", "
-              << "report_outflow_achieved=" << a.report_outflow_achieved << ", "
-              << "report_lossflow_achieved=" << a.report_lossflow_achieved << ")";
+    return os << "{"
+              << ":t " << a.time << ", "
+              << ":inflow " << a.inflow_port << ", "
+              << ":outflow " << a.outflow_port << ", "
+              << ":lossflow " << a.lossflow_port << ", "
+              << ":wasteflow " << a.wasteflow_port << ", "
+              << ":report-ir? " << a.report_inflow_request << ", "
+              << "report-oa? " << a.report_outflow_achieved << ", "
+              << "report-la? " << a.report_lossflow_achieved << "}";
   }
 
   ConverterState
@@ -275,7 +274,7 @@ namespace erin::devs
       const std::vector<PortValue>& xs)
   {
     bool got_outflow_request{false};
-    bool got_inflow_achieved{false};
+    bool got_inflow_achieved_flag{false};
     bool got_lossflow_request{false};
     FlowValueType outflow_request{0.0};
     FlowValueType inflow_achieved{0.0};
@@ -291,7 +290,7 @@ namespace erin::devs
           }
         case inport_inflow_achieved:
           {
-            got_inflow_achieved = true;
+            got_inflow_achieved_flag = true;
             inflow_achieved += x.value;
             break;
           }
@@ -323,11 +322,11 @@ namespace erin::devs
       state.report_outflow_achieved,
       state.report_lossflow_achieved,
     };
-    if (got_inflow_achieved && got_outflow_request) {
+    if (got_inflow_achieved_flag && got_outflow_request) {
       new_state = converter_external_transition_on_inflow_and_outflow_achieved(
           new_state, new_time, inflow_achieved, outflow_request);
     }
-    else if (got_inflow_achieved) {
+    else if (got_inflow_achieved_flag) {
       new_state = converter_external_transition_on_inflow_achieved(
           new_state, new_time, inflow_achieved);
     }
@@ -335,16 +334,12 @@ namespace erin::devs
       new_state = converter_external_transition_on_outflow_request(
           new_state, new_time, outflow_request);
     }
-    if (got_lossflow_request)
+    if (got_lossflow_request) {
       new_state = converter_external_transition_on_lossflow_request(
           new_state, new_time, lossflow_request);
-    // prevent reporting already known information
-    //if ((got_inflow_achieved) && (new_state.inflow_port.get_achieved() == inflow_achieved))
-    //  new_state.report_inflow_request = false;
-    //if ((got_outflow_request) && (new_state.outflow_port.get_achieved() == outflow_request))
-    //  new_state.report_outflow_achieved = false;
-    //if ((got_lossflow_request) && (new_state.lossflow_port.get_achieved() == lossflow_request))
-    //  new_state.report_lossflow_achieved = false;
+      auto la{new_state.lossflow_port.get_achieved()};
+      new_state.report_lossflow_achieved = (la != lossflow_request);
+    }
     return new_state;
   }
 

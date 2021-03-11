@@ -326,6 +326,12 @@ namespace ERIN
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
 
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
       [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
         return get_inflow_type();
       };
@@ -341,6 +347,10 @@ namespace ERIN
       int element_id;
       bool record_history;
       PortRole port_role;
+      erin::devs::Port2 port;
+      bool report_ir;
+      bool report_oa;
+      RealTimeType the_time;
   };
 
   ////////////////////////////////////////////////////////////

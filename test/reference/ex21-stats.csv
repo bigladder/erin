@@ -1,0 +1,33 @@
+scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),coal energy used (kJ),electricity energy used (kJ),steam energy used (kJ),waste_heat energy used (kJ)
+blue_sky,1,2,boiler-inflow,converter,coal,0,2,4.158e+06,108000,0.0,0.0,0.0
+blue_sky,1,2,boiler-lossflow,converter,coal,1,0,0,0,0.0,0.0,0.0
+blue_sky,1,2,boiler-outflow,converter,steam,0,2,2.079e+06,0.0,0.0,54000,0.0
+blue_sky,1,2,boiler-wasteflow,converter,coal,1,0,0,54000,0.0,0.0,0.0
+blue_sky,1,2,coal_pile,pass_through,coal,0,2,4.158e+06,108000,0.0,0.0,0.0
+blue_sky,1,2,coal_utility,source,coal,0,2,36000,108000,0.0,0.0,0.0
+blue_sky,1,2,elec_load,load,electricity,0,2,549000,0.0,171000,0.0,0.0
+blue_sky,1,2,electric_utility,source,electricity,0,2,549000,0.0,144000,0.0,0.0
+blue_sky,1,2,steam_load,load,steam,0,2,693000,0.0,0.0,27000,0.0
+blue_sky,1,2,steam_loop-inflow(0),muxer,steam,0,2,693000,0.0,0.0,27000,0.0
+blue_sky,1,2,steam_loop-inflow(1),muxer,steam,0,2,693000,0.0,0.0,0,0.0
+blue_sky,1,2,steam_loop-outflow(0),muxer,steam,0,2,693000,0.0,0.0,27000,0.0
+blue_sky,1,2,steam_split-inflow(0),muxer,steam,0,2,2.079e+06,0.0,0.0,54000,0.0
+blue_sky,1,2,steam_split-outflow(0),muxer,steam,0,2,1.386e+06,0.0,0.0,54000,0.0
+blue_sky,1,2,steam_split-outflow(1),muxer,steam,0,2,693000,0.0,0.0,0,0.0
+blue_sky,1,2,substation-inflow(0),muxer,electricity,0,2,693000,0.0,27000,0.0,0.0
+blue_sky,1,2,substation-inflow(1),muxer,electricity,0,2,549000,0.0,144000,0.0,0.0
+blue_sky,1,2,substation-outflow(0),muxer,electricity,0,2,549000,0.0,171000,0.0,0.0
+blue_sky,1,2,transmission,pass_through,electricity,0,2,549000,0.0,144000,0.0,0.0
+blue_sky,1,2,turbine-inflow,converter,steam,0,2,1.386e+06,0.0,0.0,54000,0.0
+blue_sky,1,2,turbine-lossflow,converter,waste_heat,0,2,693000,0.0,0.0,0.0,27000
+blue_sky,1,2,turbine-outflow,converter,electricity,0,2,693000,0.0,27000,0.0,0.0
+blue_sky,1,2,turbine-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
+blue_sky,1,2,waste_to_steam-inflow,converter,waste_heat,0,2,693000,0.0,0.0,0.0,27000
+blue_sky,1,2,waste_to_steam-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
+blue_sky,1,2,waste_to_steam-outflow,converter,steam,0,2,693000,0.0,0.0,27000,0.0
+blue_sky,1,2,waste_to_steam-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
+blue_sky,1,2,TOTAL (source),,,,,,108000,144000,0.0,0.0
+blue_sky,1,2,TOTAL (load),,,,,,0.0,171000,27000,0.0
+blue_sky,1,2,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0
+blue_sky,1,2,TOTAL (waste),,,,,,54000,0.0,0.0,0.0
+blue_sky,1,2,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,,

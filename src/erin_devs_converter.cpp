@@ -351,10 +351,9 @@ namespace erin::devs
   {
     auto inflow_request =
       state.conversion_fun->inflow_given_outflow(outflow_request);
-    auto lossflow_achieved =
-      state.conversion_fun->lossflow_given_outflow(outflow_request);
     auto op_update = state.outflow_port.with_requested(outflow_request);
     auto ip_update = state.inflow_port.with_requested(inflow_request);
+    auto lossflow_achieved = ip_update.port.get_achieved() - op_update.port.get_achieved();
     auto loss_ports = update_lossflow_ports(
       lossflow_achieved, state.lossflow_port);
     return ConverterState{
@@ -389,12 +388,8 @@ namespace erin::devs
       sr.wasteflow_port,
       sr.conversion_fun->clone(),
       sr.report_inflow_request,
-      sa.report_outflow_achieved
-       && (sa.outflow_port.get_achieved() == sr.outflow_port.get_achieved())
-       && (sr.outflow_port.get_requested() != sr.outflow_port.get_achieved()),
-      sa.report_lossflow_achieved
-       && (sa.lossflow_port.get_achieved() == sr.lossflow_port.get_achieved())
-       && (sr.lossflow_port.get_requested() != sr.lossflow_port.get_achieved()),
+      sr.outflow_port.should_send_achieved(state.outflow_port),
+      sr.lossflow_port.should_send_achieved(state.lossflow_port),
     };
   }
 
@@ -406,10 +401,10 @@ namespace erin::devs
   {
     auto outflow_achieved =
       state.conversion_fun->outflow_given_inflow(inflow_achieved);
-    auto lossflow_achieved =
-      state.conversion_fun->lossflow_given_inflow(inflow_achieved);
     auto ip_update = state.inflow_port.with_achieved(inflow_achieved);
     auto op_update = state.outflow_port.with_achieved(outflow_achieved);
+    auto lossflow_achieved =
+      ip_update.port.get_achieved() - op_update.port.get_achieved();
     auto loss_ports = update_lossflow_ports(
       lossflow_achieved, state.lossflow_port);
     return ConverterState{
@@ -433,7 +428,7 @@ namespace erin::devs
   {
     auto loss_update = state.lossflow_port.with_requested(lossflow_request);
     auto loss_ports = update_lossflow_ports(
-        state.lossflow_port.get_achieved() + state.wasteflow_port.get_achieved(),
+        state.inflow_port.get_achieved() - state.outflow_port.get_achieved(),
         loss_update.port);
     return ConverterState{
       new_time,
@@ -454,16 +449,13 @@ namespace erin::devs
       const Port2& lossflow_port)
   {
     const auto& requested = lossflow_port.get_requested();
-    if (requested >= achieved) {
-      auto lossflow_update = lossflow_port.with_achieved(achieved);
-      return LossflowPorts{
-          lossflow_update.send_update,
-          lossflow_update.port,
-          Port2{},
-      };
-    }
     auto waste = achieved - requested;
-    auto lossflow_update = lossflow_port.with_achieved(requested);
+    auto achieved_lossflow{requested};
+    if (requested >= achieved) {
+      waste = 0.0;
+      achieved_lossflow = achieved;
+    }
+    auto lossflow_update = lossflow_port.with_achieved(achieved_lossflow);
     return LossflowPorts{
       lossflow_update.send_update,
       lossflow_update.port,

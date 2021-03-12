@@ -96,7 +96,6 @@ namespace erin::devs
     using size_type = std::vector<Port>::size_type;
     assert_gte_zero(amount);
     std::vector<PortUpdate> updates{};
-    auto new_outflows{outflows};
     FlowValueType total_requested{0.0};
     FlowValueType remaining_supply{amount};
     for (size_type idx{0}; idx < outflows.size(); ++idx) {
@@ -256,7 +255,7 @@ namespace erin::devs
     for (size_type idx{0}; idx < inflows.size(); ++idx) {
       auto update = inflows[idx].with_requested(remaining_request);
       remaining_request -= update.port.get_achieved();
-      updates.emplace_back(std::move(update));
+      updates.emplace_back(update);
       if (remaining_request < ERIN::flow_value_tolerance) {
         remaining_request = 0.0;
       }

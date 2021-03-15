@@ -206,6 +206,12 @@ namespace erin::devs
       RealTimeType elapsed_time,
       FlowValueType inflow_achieved)
   {
+    auto inflow_request{state.inflow_port.get_requested()};
+    bool report_ir{false};
+    if (inflow_achieved > inflow_request) {
+      report_ir = true;
+      inflow_achieved = inflow_request;
+    }
     auto ip_update = state.inflow_port.with_achieved(inflow_achieved);
     auto op_update = state.outflow_port.with_achieved(inflow_achieved);
     return FlowLimitsState{
@@ -213,7 +219,7 @@ namespace erin::devs
       ip_update.port,
       op_update.port,
       state.limits,
-      false,
+      report_ir,
       op_update.send_update,
     };
   }

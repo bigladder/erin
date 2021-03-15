@@ -427,9 +427,16 @@ namespace erin::devs
         throw std::runtime_error(oss.str());
       }
     }
+    std::vector<bool> report_irs(state.num_inflows, false);
+    std::vector<bool> report_oas(state.num_outflows, false);
     auto new_ips{state.inflow_ports};
     for (st idx{0}; idx < inflows.size(); idx++) {
       if (inflows[idx] != none_value) {
+        auto this_ir{state.inflow_ports[idx].get_requested()};
+        if (inflows[idx] > this_ir) {
+          report_irs[idx] = true;          
+          inflows[idx] = this_ir;
+        }
         auto update = state.inflow_ports[idx].with_achieved(inflows[idx]);
         new_ips[idx] = update.port;
       }
@@ -445,13 +452,11 @@ namespace erin::devs
         new_ops.begin(), new_ops.end(), 0.0,
         [](const auto& s, const auto& p) { return s + p.get_requested(); }
     );
-    std::vector<bool> report_irs(state.num_inflows, false);
-    std::vector<bool> report_oas(state.num_outflows, false);
     auto ip_updates = request_inflows_intelligently(
         new_ips, total_outflow_request);
     for (st idx{0}; idx < static_cast<st>(state.num_inflows); idx++) {
       new_ips[idx] = ip_updates[idx].port;
-      report_irs[idx] = ip_updates[idx].send_update;
+      report_irs[idx] = report_irs[idx] || ip_updates[idx].send_update;
     }
     FlowValueType total_inflow_achieved = std::accumulate(
         new_ips.begin(), new_ips.end(), 0.0,

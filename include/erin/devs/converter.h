@@ -5,6 +5,7 @@
 #define ERIN_DEVS_CONVERTER_H
 #include "erin/devs.h"
 #include "erin/type.h"
+#include <cmath>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -42,6 +43,10 @@ namespace erin::devs
   bool operator==(const ConversionFun& a, const ConversionFun& b);
   bool operator!=(const ConversionFun& a, const ConversionFun& b);
   std::ostream& operator<<(std::ostream& os, const ConversionFun& a);
+  
+  constexpr FlowValueType constant_efficiency_fun_precision_exp{6};
+  const FlowValueType constant_efficiency_fun_precision_factor{
+    std::pow(10.0, constant_efficiency_fun_precision_exp)};
 
   class ConstantEfficiencyFun : public ConversionFun
   {

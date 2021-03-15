@@ -92,13 +92,17 @@ namespace erin::devs
   FlowValueType
   ConstantEfficiencyFun::outflow_given_inflow(FlowValueType inflow) const
   {
-    return inflow * constant_efficiency;
+    return std::round(
+      inflow * constant_efficiency * constant_efficiency_fun_precision_factor)
+      / constant_efficiency_fun_precision_factor;
   }
 
   FlowValueType
   ConstantEfficiencyFun::inflow_given_outflow(FlowValueType outflow) const
   {
-    return outflow / constant_efficiency;
+    return std::round(
+      (outflow / constant_efficiency) * constant_efficiency_fun_precision_factor)
+      / constant_efficiency_fun_precision_factor;
   }
 
   bool
@@ -407,6 +411,11 @@ namespace erin::devs
     }
     auto outflow_achieved =
       state.conversion_fun->outflow_given_inflow(inflow_achieved);
+    auto outflow_requested{state.outflow_port.get_requested()};
+    if (outflow_achieved > outflow_requested) {
+      // this can happen due to error in the outflow_given_inflow / inflow_given_outflow pairs
+      outflow_achieved = outflow_requested;
+    }
     auto ip_update = state.inflow_port.with_achieved(inflow_achieved);
     auto op_update = state.outflow_port.with_achieved(outflow_achieved);
     auto lossflow_achieved =

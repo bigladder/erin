@@ -387,7 +387,7 @@ namespace erin::devs
       sr.lossflow_port,
       sr.wasteflow_port,
       sr.conversion_fun->clone(),
-      sr.report_inflow_request,
+      sr.report_inflow_request || sa.report_inflow_request,
       sr.outflow_port.should_send_achieved(state.outflow_port),
       sr.lossflow_port.should_send_achieved(state.lossflow_port),
     };
@@ -399,6 +399,12 @@ namespace erin::devs
       RealTimeType new_time,
       FlowValueType inflow_achieved)
   {
+    bool report_ir{false};
+    auto inflow_requested{state.inflow_port.get_requested()};
+    if (inflow_achieved > inflow_requested) {
+      report_ir = true;
+      inflow_achieved = inflow_requested;
+    }
     auto outflow_achieved =
       state.conversion_fun->outflow_given_inflow(inflow_achieved);
     auto ip_update = state.inflow_port.with_achieved(inflow_achieved);
@@ -414,7 +420,7 @@ namespace erin::devs
       loss_ports.lossflow_port,
       loss_ports.wasteflow_port,
       state.conversion_fun->clone(),
-      false, // we should never need to propagate an inflow request on inflow achieved
+      report_ir,
       op_update.send_update,
       loss_ports.report_lossflow_achieved,
     };

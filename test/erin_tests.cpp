@@ -7344,6 +7344,114 @@ TEST(ErinBasicsTest, Test_that_port2_works) {
     << "p: " << update.port << "pL: " << p;
 }
 
+TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  auto s = ED::make_converter_state(0.5);
+  std::default_random_engine generator{};
+  std::uniform_int_distribution<int> request_dist(0, 100);
+  std::uniform_int_distribution<int> achieved_diff_dist(1, 99);
+  std::size_t num_times{1000};
+  double tol{1e-6};
+  for (std::size_t idx{0}; idx < num_times; idx++) {
+    E::RealTimeType e{0};
+    auto out_req = static_cast<E::FlowValueType>(request_dist(generator));
+    auto in_req = out_req * 2.0;
+    auto waste_req = in_req - out_req;
+    decltype(waste_req) loss_req = 0.0;
+    auto diff = static_cast<E::FlowValueType>(achieved_diff_dist(generator));
+    auto in_ach = (out_req * 2.0) - (diff - 50.0);
+    if (in_ach < 0.0) {
+      in_ach = 0.0;
+    }
+    auto out_ach = in_ach * 0.5;
+    auto waste_ach = in_ach - out_ach;
+    decltype(waste_ach) loss_ach = 0.0;
+    // ... quiescent ...
+    // xs -> ext transition, outflow request
+    std::vector<ED::PortValue> xs{{ED::inport_outflow_request, out_req}};
+    auto s1 = ED::converter_external_transition(s, e, xs);
+    EXPECT_NEAR(s1.inflow_port.get_requested(), in_req, tol);
+    EXPECT_NEAR(s1.outflow_port.get_requested(), out_req, tol);
+    EXPECT_NEAR(s1.lossflow_port.get_requested(), 0.0, tol);
+    EXPECT_NEAR(s1.wasteflow_port.get_requested(), waste_req, tol);
+    // ta -> dt == 0
+    auto dt = ED::converter_time_advance(s1);
+    EXPECT_EQ(dt, (out_req > 0.0) ? 0 : ED::infinity)
+      << "idx      = " << idx << "\n"
+      << "out_req  = " << out_req << "\n"
+      << "in_req   = " << in_req << "\n"
+      << "in_ach   = " << in_ach << "\n"
+      << "out_ach  = " << out_ach << "\n"
+      << "loss_req = " << loss_req << "\n"
+      << "loss_ach = " << loss_ach << "\n";
+    if (dt == ED::infinity) {
+      continue;
+    }
+    // output -> ys, inflow_request
+    std::vector<ED::PortValue> expected_ys{{ED::outport_inflow_request, in_req}};
+    auto ys = ED::converter_output_function(s1);
+    ASSERT_EQ(ys.size(), 1)
+      << "idx         = " << idx << "\n"
+      << "ys          = " << E::vec_to_string<E::PortValue>(ys) << "\n"
+      << "expected_ys = " << E::vec_to_string<E::PortValue>(expected_ys) << "\n"
+      << "out_req     = " << out_req << "\n"
+      << "in_req      = " << in_req << "\n"
+      << "in_ach      = " << in_ach << "\n"
+      << "out_ach     = " << out_ach << "\n"
+      << "loss_req    = " << loss_req << "\n"
+      << "loss_ach    = " << loss_ach << "\n";
+    EXPECT_EQ(ys[0].port, expected_ys[0].port);
+    EXPECT_NEAR(ys[0].value, expected_ys[0].value, tol);
+    // internal transition
+    auto s2 = ED::converter_internal_transition(s1);
+    // ta -> dt == infinity
+    auto dt2 = ED::converter_time_advance(s2);
+    EXPECT_EQ(dt2, ED::infinity);
+    // xs -> ext transition, inflow achieved
+    std::vector<ED::PortValue> xs2{{ED::inport_inflow_achieved, in_ach}};
+    auto s3 = ED::converter_external_transition(s2, e, xs2);
+    // ta -> dt == 0
+    auto dt3 = ED::converter_time_advance(s3);
+    EXPECT_EQ(dt3, (in_req == in_ach) ? ED::infinity : 0);
+    if (dt3 == ED::infinity) {
+      continue;
+    }
+    // output -> ys, outflow_achieved
+    auto ys3 = ED::converter_output_function(s3);
+    ASSERT_EQ(ys3.size(), (in_ach == in_req) ? 0 : 1)
+      << "idx         = " << idx << "\n"
+      << "ys          = " << E::vec_to_string<E::PortValue>(ys3) << "\n"
+      << "out_req     = " << out_req << "\n"
+      << "in_req      = " << in_req << "\n"
+      << "in_ach      = " << in_ach << "\n"
+      << "out_ach     = " << out_ach << "\n"
+      << "loss_req    = " << loss_req << "\n"
+      << "loss_ach    = " << loss_ach << "\n";
+    if (in_ach > in_req) {
+      EXPECT_EQ(ys3[0].port, ED::outport_inflow_request);
+      EXPECT_NEAR(ys3[0].value, in_req, tol);
+    }
+    else if (in_ach < in_req) {
+      EXPECT_EQ(ys3[0].port, ED::outport_outflow_achieved);
+      EXPECT_NEAR(ys3[0].value, out_ach, tol);
+    }
+    // internal transition
+    auto s4 = ED::converter_internal_transition(s3);
+    ASSERT_NEAR(s4.inflow_port.get_requested(), in_req, tol);
+    ASSERT_NEAR(s4.outflow_port.get_requested(), out_req, tol);
+    ASSERT_NEAR(s4.lossflow_port.get_requested(), 0.0, tol);
+    ASSERT_NEAR(s4.wasteflow_port.get_requested(), (waste_ach > waste_req) ? waste_req : waste_ach, tol);
+    ASSERT_NEAR(s4.inflow_port.get_achieved(), (in_ach > in_req) ? in_req : in_ach, tol);
+    ASSERT_NEAR(s4.outflow_port.get_achieved(), (out_ach > out_req) ? out_req : out_ach, tol);
+    ASSERT_NEAR(s4.lossflow_port.get_achieved(), 0.0, tol);
+    ASSERT_NEAR(s4.wasteflow_port.get_achieved(), (waste_ach > waste_req) ? waste_req : waste_ach, tol);
+    // ta -> dt == infinity
+    auto dt4 = ED::converter_time_advance(s4);
+    EXPECT_EQ(dt4, ED::infinity);
+  }
+}
+
 int
 main(int argc, char **argv)
 {

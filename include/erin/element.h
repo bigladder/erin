@@ -120,6 +120,7 @@ namespace ERIN
       void record_history_and_update_current_time(RealTimeType time);
       void ensure_not_final() const;
       void ensure_not_recording() const;
+      void check_energy_balance() const;
   };
 
   /**

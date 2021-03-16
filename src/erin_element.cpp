@@ -172,6 +172,51 @@ namespace ERIN
   }
 
   void
+  DefaultFlowWriter::check_energy_balance() const
+  {
+    namespace E = ERIN;
+    E::FlowValueType source{0.0};
+    E::FlowValueType load{0.0};
+    E::FlowValueType storage{0.0};
+    E::FlowValueType waste{0.0};
+    std::size_t num_achieved{achieved_history.size()};
+    for (std::size_t id{0}; id < static_cast<std::size_t>(num_elements()); ++id) {
+      auto idx{num_achieved - static_cast<std::size_t>(num_elements()) + id};
+      const auto& role = element_id_to_port_role.at(id);
+      const auto& value = achieved_history.at(idx);
+      switch (role) {
+        case PortRole::LoadInflow:
+          load += value;
+          break;
+        case PortRole::SourceOutflow:
+          source += value;
+          break;
+        case PortRole::StorageInflow:
+          storage += value;
+          break;
+        case PortRole::StorageOutflow:
+          storage -= value;
+          break;
+        case PortRole::WasteInflow:
+          waste += value;
+          break;
+        default:
+          break;
+      }
+    }
+    auto diff{source - load - storage - waste};
+    if (std::abs(diff) > 1e-6) {
+      std::ostringstream oss{};
+      oss << "Energy Unbalanced at " << current_time << "\n"
+          << "Source : " << source << "\n"
+          << "Load   : " << load << "\n"
+          << "Storage: " << storage << "\n"
+          << "Waste  : " << waste << "\n";
+      std::cout << oss.str();
+    }
+  }
+
+  void
   DefaultFlowWriter::record_history_and_update_current_time(RealTimeType time)
   {
     namespace E = ERIN;
@@ -194,9 +239,15 @@ namespace ERIN
     }
     if constexpr (E::debug_level >= E::debug_level_high) {
       for (size_type_D i{0}; i < request_history.size(); ++i) {
-        std::cout << "r[" << i << "] = " << request_history[i] << "\n";
-        std::cout << "a[" << i << "] = " << achieved_history[i] << "\n";
+        auto id{static_cast<const int>(i%num_elements())};
+        std::cout << "r[" << i << "]    = " << request_history[i] << "\n"
+                  << "a[" << i << "]    = " << achieved_history[i] << "\n"
+                  << "tag[" << i << "]  = " << element_id_to_tag[id] << "\n"
+                  << "role[" << i << "] = " << port_role_to_tag(element_id_to_port_role[id]) << "\n";
       }
+    }
+    if constexpr (E::debug_level >= E::debug_level_low) {
+      check_energy_balance();
     }
     current_time = time;
   }

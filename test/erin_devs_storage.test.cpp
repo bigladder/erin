@@ -15,12 +15,12 @@ bool
 test_undisturbed_discharge(bool show_details)
 {
   using size_type = std::vector<double>::size_type;
-  const std::vector<ED::RealTimeType> expected_times_s{0, 0, 0, 20, 40};
-  const std::vector<ED::FlowValueType> expected_socs{1.0, 1.0, 1.0, 0.0, 1.0};
-  const std::vector<ED::FlowValueType> expected_inflows_requested{0.0, 5.0, 5.0, 10.0, 5.0};
-  const std::vector<ED::FlowValueType> expected_inflows_achieved{0.0, 5.0, 0.0, 10.0, 5.0};
-  const std::vector<ED::FlowValueType> expected_outflows_requested{0.0, 5.0, 5.0, 5.0, 5.0};
-  const std::vector<ED::FlowValueType> expected_outflows_achieved{0.0, 5.0, 5.0, 5.0, 5.0};
+  const std::vector<ED::RealTimeType> expected_times_s{0, 0, 0, 20};
+  const std::vector<ED::FlowValueType> expected_socs{1.0, 1.0, 1.0, 0.0};
+  const std::vector<ED::FlowValueType> expected_inflows_requested{0.0, 5.0, 5.0, 10.0};
+  const std::vector<ED::FlowValueType> expected_inflows_achieved{0.0, 5.0, 0.0, 0.0};
+  const std::vector<ED::FlowValueType> expected_outflows_requested{0.0, 5.0, 5.0, 5.0};
+  const std::vector<ED::FlowValueType> expected_outflows_achieved{0.0, 5.0, 5.0, 0.0};
   const ED::FlowValueType tol{1e-6};
   auto data = ED::storage_make_data(100.0, 10.0);
   auto s0 = ED::storage_make_state(data, 1.0);
@@ -67,9 +67,9 @@ test_undisturbed_discharge(bool show_details)
     }
     if (std::abs(out.state.soc - soc_expected) > tol) {
       std::cout << "event SOCs do not meet expectation\n"
-                << "idx        : " << idx << "\n"
-                << "out.time_s : " << out.state.soc << "\n"
-                << "t_expected : " << soc_expected << "\n";
+                << "idx           : " << idx << "\n"
+                << "out.state.soc : " << out.state.soc << "\n"
+                << "soc_expected  : " << soc_expected << "\n";
       return false;
     }
     if (std::abs(out.state.inflow_port.get_achieved() - ia_expected) > tol) {
@@ -126,7 +126,6 @@ main() {
     num_passed++;
   }
   std::cout << "=> " << (current_test ? "PASSED" : "FAILED!!!!!") << "\n";
-  ////
   std::cout << "Summary: " << num_passed << " / " << num_tests << " passed.\n";
   if (num_passed == num_tests) {
     return 0;

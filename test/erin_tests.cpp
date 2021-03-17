@@ -7669,9 +7669,81 @@ TEST(ErinBasicsTest, Test_driver_element_for_external_transitions) {
   EXPECT_EQ(flows[4], 20.0);
 }
 
-TEST(ErinBasicsTest, Test_store_element_comprehensive) {
-  bool do_simple{true};
+TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
+  namespace E = ERIN;
+  std::default_random_engine generator{};
+  std::uniform_int_distribution<int> dt_dist(0, 10);
+  std::uniform_int_distribution<int> flow_dist(0, 100);
 
+  // inflow and outflow from viewpoint of the drivers
+  std::vector<E::RealTimeType> inflow_times{};
+  std::vector<E::FlowValueType> inflow_requests{};
+  std::vector<E::RealTimeType> outflow_times{};
+  std::vector<E::FlowValueType> outflow_achieveds{};
+  std::size_t num_events{100};
+  E::RealTimeType t{0};
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+    inflow_times.emplace_back(t);
+    inflow_requests.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+    outflow_times.emplace_back(t);
+    outflow_achieveds.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+  }
+  auto t_max{t};
+  auto inflow_driver = new E::Driver{
+    E::Driver::outport_inflow_request,
+    E::Driver::inport_inflow_achieved,
+    inflow_times,
+    inflow_requests};
+  auto outflow_driver = new E::Driver{
+    E::Driver::outport_outflow_achieved,
+    E::Driver::inport_outflow_request,
+    outflow_times,
+    outflow_achieveds};
+  adevs::Digraph<E::FlowValueType, E::Time> network;
+    network.couple(
+        inflow_driver, E::Driver::outport_inflow_request,
+        outflow_driver, E::Driver::inport_outflow_request);
+    network.couple(
+        outflow_driver, E::Driver::outport_outflow_achieved,
+        inflow_driver, E::Driver::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  const std::size_t max_no_advance{num_events * 4};
+  std::size_t non_advance_count{0};
+  for (
+      auto time = sim.now(), t_next = sim.next_event_time();
+      ((t_next < E::inf) && (t_next.real <= t_max));
+      sim.exec_next_event(), time = t_next, t_next = sim.next_event_time()) {
+    if (t_next.real == time.real) {
+      ++non_advance_count;
+    }
+    else {
+      non_advance_count = 0;
+    }
+    if (non_advance_count >= max_no_advance) {
+      std::ostringstream oss{};
+      oss << "ERROR: non_advance_count > max_no_advance:\n"
+          << "non_advance_count: " << non_advance_count << "\n"
+          << "max_no_advance   : " << max_no_advance << "\n"
+          << "time.real        : " << time.real << " seconds\n"
+          << "time.logical     : " << time.logical << "\n";
+      ASSERT_TRUE(false) << oss.str();
+      break;
+    }
+  }
+  auto inflow_ts = inflow_driver->get_times();
+  auto inflow_fs = inflow_driver->get_flows();
+  auto outflow_ts = outflow_driver->get_times();
+  auto outflow_fs = outflow_driver->get_flows();
+  EXPECT_EQ(inflow_ts.size(), inflow_fs.size());
+  EXPECT_EQ(outflow_ts.size(), outflow_fs.size());
+  EXPECT_EQ(inflow_ts.size(), outflow_ts.size());
+}
+
+
+TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   namespace E = ERIN;
   E::FlowValueType capacity{100.0};
   E::FlowValueType max_charge_rate{10.0};
@@ -7717,28 +7789,18 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
     outflow_times,
     outflow_achieveds};
   adevs::Digraph<E::FlowValueType, E::Time> network;
-  if (do_simple) {
-    network.couple(
-        inflow_driver, E::Driver::outport_inflow_request,
-        outflow_driver, E::Driver::inport_outflow_request);
-    network.couple(
-        outflow_driver, E::Driver::outport_outflow_achieved,
-        inflow_driver, E::Driver::inport_inflow_achieved);
-  }
-  else {
-    network.couple(
-        inflow_driver, E::Driver::outport_inflow_request,
-        store, E::Storage::inport_outflow_request);
-    network.couple(
-        store, E::Storage::outport_inflow_request,
-        outflow_driver, E::Driver::inport_outflow_request);
-    network.couple(
-        outflow_driver, E::Driver::outport_outflow_achieved,
-        store, E::Storage::inport_inflow_achieved);
-    network.couple(
-        store, E::Storage::outport_outflow_achieved,
-        inflow_driver, E::Driver::inport_inflow_achieved);
-  }
+  network.couple(
+      inflow_driver, E::Driver::outport_inflow_request,
+      store, E::Storage::inport_outflow_request);
+  network.couple(
+      store, E::Storage::outport_inflow_request,
+      outflow_driver, E::Driver::inport_outflow_request);
+  network.couple(
+      outflow_driver, E::Driver::outport_outflow_achieved,
+      store, E::Storage::inport_inflow_achieved);
+  network.couple(
+      store, E::Storage::outport_outflow_achieved,
+      inflow_driver, E::Driver::inport_inflow_achieved);
   adevs::Simulator<E::PortValue, E::Time> sim{};
   network.add(&sim);
   const std::size_t max_no_advance{num_events * 4};
@@ -7765,63 +7827,52 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
     }
   }
   fw->finalize_at_time(t_max);
-  if (do_simple) {
-    auto inflow_ts = inflow_driver->get_times();
-    auto inflow_fs = inflow_driver->get_flows();
-    auto outflow_ts = outflow_driver->get_times();
-    auto outflow_fs = outflow_driver->get_flows();
-    EXPECT_EQ(inflow_ts.size(), inflow_fs.size());
-    EXPECT_EQ(outflow_ts.size(), outflow_fs.size());
-    EXPECT_EQ(inflow_ts.size(), outflow_ts.size());
-  }
-  else {
-    auto results = fw->get_results();
-    fw->clear();
-    auto inflow_results = results[id + "-inflow"];
-    auto outflow_results = results[id + "-outflow"];
-    auto storeflow_results = results[id + "-storeflow"];
-    auto discharge_results = results[id + "-discharge"];
-    auto inflow_ts = inflow_driver->get_times();
-    auto inflow_fs = inflow_driver->get_flows();
-    auto outflow_ts = outflow_driver->get_times();
-    auto outflow_fs = outflow_driver->get_flows();
-    for (std::size_t idx{0}; idx < inflow_results.size(); ++idx) {
-      std::ostringstream oss{};
-      oss << "idx            : " << idx << "\n";
-      const auto& inf_res = inflow_results[idx];
-      oss << "inflow_results : " << inf_res << "\n";
-      if (idx >= inflow_ts.size())
-        break;
-      oss << "inflow_ts      : " << inflow_ts[idx] << "\n";
-      EXPECT_EQ(inf_res.time, inflow_ts[idx]) << oss.str();
-      if (idx >= inflow_fs.size())
-        break;
-      oss << "inflow_fs      : " << inflow_fs[idx] << "\n";
-      EXPECT_EQ(inf_res.achieved_value, inflow_fs[idx]) << oss.str();
-      if (idx >= outflow_results.size())
-        break;
-      const auto& out_res = outflow_results[idx]; 
-      oss << "outflow_results: " << out_res << "\n";
-      if (idx >= outflow_ts.size())
-        break;
-      oss << "outflow_ts     : " << outflow_ts[idx] << "\n";
-      EXPECT_EQ(out_res.time, outflow_ts[idx]) << oss.str();
-      if (idx >= outflow_fs.size())
-        break;
-      oss << "outflow_fs     : " << outflow_fs[idx] << "\n";
-      EXPECT_EQ(out_res.achieved_value, outflow_fs[idx]);
-      if (idx >= storeflow_results.size())
-        break;
-      const auto& str_res = storeflow_results[idx];
-      if (idx >= discharge_results.size())
-        break;
-      const auto& dis_res = discharge_results[idx];
-      auto error{inf_res.achieved_value + dis_res.achieved_value - (str_res.achieved_value + out_res.achieved_value)};
-      oss << "storeflow      : " << str_res << "\n"
-          << "discharge      : " << dis_res << "\n"
-          << "Energy Balance : " << error << "\n";
-      EXPECT_NEAR(error, 0.0, 1e-6) << oss.str();
-    }
+  auto results = fw->get_results();
+  fw->clear();
+  auto inflow_results = results[id + "-inflow"];
+  auto outflow_results = results[id + "-outflow"];
+  auto storeflow_results = results[id + "-storeflow"];
+  auto discharge_results = results[id + "-discharge"];
+  auto inflow_ts = inflow_driver->get_times();
+  auto inflow_fs = inflow_driver->get_flows();
+  auto outflow_ts = outflow_driver->get_times();
+  auto outflow_fs = outflow_driver->get_flows();
+  for (std::size_t idx{0}; idx < inflow_results.size(); ++idx) {
+    std::ostringstream oss{};
+    oss << "idx            : " << idx << "\n";
+    const auto& inf_res = inflow_results[idx];
+    oss << "inflow_results : " << inf_res << "\n";
+    if (idx >= inflow_ts.size())
+      break;
+    oss << "inflow_ts      : " << inflow_ts[idx] << "\n";
+    EXPECT_EQ(inf_res.time, inflow_ts[idx]) << oss.str();
+    if (idx >= inflow_fs.size())
+      break;
+    oss << "inflow_fs      : " << inflow_fs[idx] << "\n";
+    EXPECT_EQ(inf_res.achieved_value, inflow_fs[idx]) << oss.str();
+    if (idx >= outflow_results.size())
+      break;
+    const auto& out_res = outflow_results[idx]; 
+    oss << "outflow_results: " << out_res << "\n";
+    if (idx >= outflow_ts.size())
+      break;
+    oss << "outflow_ts     : " << outflow_ts[idx] << "\n";
+    EXPECT_EQ(out_res.time, outflow_ts[idx]) << oss.str();
+    if (idx >= outflow_fs.size())
+      break;
+    oss << "outflow_fs     : " << outflow_fs[idx] << "\n";
+    EXPECT_EQ(out_res.achieved_value, outflow_fs[idx]);
+    if (idx >= storeflow_results.size())
+      break;
+    const auto& str_res = storeflow_results[idx];
+    if (idx >= discharge_results.size())
+      break;
+    const auto& dis_res = discharge_results[idx];
+    auto error{inf_res.achieved_value + dis_res.achieved_value - (str_res.achieved_value + out_res.achieved_value)};
+    oss << "storeflow      : " << str_res << "\n"
+      << "discharge      : " << dis_res << "\n"
+      << "Energy Balance : " << error << "\n";
+    EXPECT_NEAR(error, 0.0, 1e-6) << oss.str();
   }
 }
 

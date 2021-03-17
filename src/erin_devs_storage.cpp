@@ -361,7 +361,16 @@ namespace erin::devs
       return 0;
     }
     storage_check_soc(state.soc);
-    if ((state.soc < 1.0) && (state.inflow_port.get_requested() != data.max_charge_rate)) {
+    auto max_inflow{
+      std::clamp(
+          data.max_charge_rate,
+          0.0,
+          // net-inflow = inflow - outflow; inflow|max = net-inflow|max + outflow
+          max_single_step_net_inflow(
+            state.soc,
+            data.capacity) + state.outflow_port.get_achieved())};
+    if ((state.soc < (1.0 - ERIN::flow_value_tolerance))
+        && (state.inflow_port.get_requested() < max_inflow)) {
       return 0;
     }
     return time_to_next_soc_event(
@@ -402,36 +411,36 @@ namespace erin::devs
     }
     auto ip{state.inflow_port};
     auto op{state.outflow_port};
-    if (soc == 1.0) {
+    auto full{1.0 - ERIN::flow_value_tolerance};
+    auto empty{ERIN::flow_value_tolerance};
+    if (soc >= full) {
       ip = ip.with_requested(
           std::clamp(op.get_requested(), 0.0, data.max_charge_rate)).port;
     }
     else {
       ip = ip.with_requested(data.max_charge_rate).port;
     }
-    if (soc == 0.0) {
+    if (soc <= empty) {
       op = op.with_achieved(
           std::clamp(op.get_requested(), 0.0, ip.get_achieved())).port;
     }
-    if ((soc > 0.0) && (soc < 1.0)) {
-      auto inflow_achieved{ip.get_achieved()};
-      auto outflow_achieved{op.get_achieved()};
-      auto net_inflow{inflow_achieved - outflow_achieved};
-      if (net_inflow > ERIN::flow_value_tolerance) {
-        auto max_net_inflow{max_single_step_net_inflow(soc, data.capacity)};
-        // net-inflow = inflow - outflow; inflow|max = net-inflow|max + outflow
-        auto max_inflow{max_net_inflow + outflow_achieved};
-        if (inflow_achieved > max_inflow) {
-          ip = ip.with_requested(max_inflow).port;
-        }
+    auto inflow_achieved{ip.get_achieved()};
+    auto outflow_achieved{op.get_achieved()};
+    auto net_inflow{inflow_achieved - outflow_achieved};
+    if (net_inflow > ERIN::flow_value_tolerance) {
+      auto max_net_inflow{max_single_step_net_inflow(soc, data.capacity)};
+      // net-inflow = inflow - outflow; inflow|max = net-inflow|max + outflow
+      auto max_inflow{max_net_inflow + outflow_achieved};
+      if (inflow_achieved > max_inflow) {
+        ip = ip.with_requested(max_inflow).port;
       }
-      else if (net_inflow < ERIN::neg_flow_value_tol) {
-        auto max_net_outflow{max_single_step_net_outflow(soc, data.capacity)};
-        // net-outflow = outflow - inflow; outflow|max = net-outflow|max + inflow
-        auto max_outflow{max_net_outflow + inflow_achieved};
-        if (outflow_achieved > max_outflow) {
-          op = op.with_achieved(max_outflow).port;
-        }
+    }
+    else if (net_inflow < ERIN::neg_flow_value_tol) {
+      auto max_net_outflow{max_single_step_net_outflow(soc, data.capacity)};
+      // net-outflow = outflow - inflow; outflow|max = net-outflow|max + inflow
+      auto max_outflow{max_net_outflow + inflow_achieved};
+      if (outflow_achieved > max_outflow) {
+        op = op.with_achieved(max_outflow).port;
       }
     }
     if constexpr (E::debug_level >= E::debug_level_high) {

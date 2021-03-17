@@ -2405,6 +2405,87 @@ namespace ERIN
   }
 
   ////////////////////////////////////////////////////////////
+  // Driver
+  Driver::Driver(
+      int outport_,
+      int inport_,
+      const std::vector<RealTimeType>& output_times_,
+      const std::vector<FlowValueType>& output_flows_):
+    adevs::Atomic<PortValue, Time>(),
+    outport{outport_},
+    inport{inport_},
+    output_times{output_times_},
+    output_flows{output_flows_},
+    times{},
+    flows{},
+    t{0},
+    idx{0}
+  {
+  }
+  
+  void
+  Driver::delta_int()
+  {
+    t += ta().real;
+    ++idx;
+  }
+
+  void
+  Driver::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    t += e.real;
+    bool got_input{false};
+    FlowValueType flow{0.0};
+    for (const auto& x : xs) {
+      if (x.port == inport) {
+        got_input = true;
+        flow += x.value;
+      }
+    }
+    if (got_input) {
+      log_flow(t, flow);
+    }
+  }
+
+  void
+  Driver::delta_conf(std::vector<PortValue>& xs)
+  {
+    delta_int();
+    delta_ext(Time{0,0}, xs);
+  }
+
+  Time
+  Driver::ta()
+  {
+    if (idx < output_times.size()) {
+      return Time{output_times[idx] - t, 1};
+    }
+    return inf;
+  }
+
+  void
+  Driver::output_func(std::vector<PortValue>& ys)
+  {
+    log_flow(t + ta().real, output_flows[idx]);
+    ys.emplace_back(PortValue{outport, output_flows[idx]});
+  }
+
+  void
+  Driver::log_flow(const RealTimeType& new_t, const FlowValueType& flow)
+  {
+    if ((times.size() == 0) || (new_t > times.back())) {
+      times.emplace_back(new_t);
+      flows.emplace_back(flow);
+    }
+    else {
+      // t == times.back(), therefore overwrite with new info
+      times.back() = new_t;
+      flows.back() = flow;
+    }
+  }
+
+
+  ////////////////////////////////////////////////////////////
   // Helper
   void
   print_ports(

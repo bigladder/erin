@@ -1731,6 +1731,7 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "delta_int::" << get_id() << "::Storage\n"
+                << "- d  = " << data << "\n"
                 << "- s  = {:t " << state.time
                 << " :soc " << state.soc
                 << " :report-inflow-request? " << state.report_inflow_request
@@ -1755,6 +1756,8 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "delta_ext::" << get_id() << "::Storage\n"
+                << "- dt = " << e.real << "\n"
+                << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::storage_external_transition(data, state, e.real, xs);

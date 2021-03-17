@@ -7876,6 +7876,175 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   }
 }
 
+TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
+  namespace E = ERIN;
+  E::FlowValueType constant_efficiency{0.4};
+  auto calc_output_from_input = [constant_efficiency](E::FlowValueType inflow) -> E::FlowValueType {
+    return std::round((inflow * constant_efficiency) * 1e6) / 1e6;
+  };
+  auto calc_input_from_output = [constant_efficiency](E::FlowValueType outflow) -> E::FlowValueType {
+    return std::round((outflow / constant_efficiency) * 1e6) / 1e6;
+  };
+  std::string id{"conv"};
+  std::string outflow_stream{"electricity"};
+  std::string inflow_stream{"diesel_fuel"};
+  std::string lossflow_stream{"waste_heat"};
+  auto conv = new E::Converter(
+          id,
+          E::ComponentType::Converter,
+          inflow_stream,
+          outflow_stream,
+          calc_output_from_input,
+          calc_input_from_output,
+          lossflow_stream);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  conv->set_flow_writer(fw);
+
+  std::default_random_engine generator{};
+  std::uniform_int_distribution<int> dt_dist(0, 10);
+  std::uniform_int_distribution<int> flow_dist(0, 100);
+
+  // inflow and outflow from viewpoint of the drivers
+  std::vector<E::RealTimeType> inflow_times{};
+  std::vector<E::FlowValueType> inflow_requests{};
+  std::vector<E::RealTimeType> lossflow_times{};
+  std::vector<E::FlowValueType> lossflow_requests{};
+  std::vector<E::RealTimeType> outflow_times{};
+  std::vector<E::FlowValueType> outflow_achieveds{};
+  std::size_t num_events{100};
+  E::RealTimeType t{0};
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+    inflow_times.emplace_back(t);
+    inflow_requests.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+    lossflow_times.emplace_back(t);
+    lossflow_requests.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+    outflow_times.emplace_back(t);
+    outflow_achieveds.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+  }
+  auto t_max{t};
+  auto inflow_driver = new E::Driver{
+    E::Driver::outport_inflow_request,
+    E::Driver::inport_inflow_achieved,
+    inflow_times,
+    inflow_requests};
+  auto lossflow_driver = new E::Driver{
+    E::Driver::outport_inflow_request,
+    E::Driver::inport_inflow_achieved,
+    lossflow_times,
+    lossflow_requests};
+  auto outflow_driver = new E::Driver{
+    E::Driver::outport_outflow_achieved,
+    E::Driver::inport_outflow_request,
+    outflow_times,
+    outflow_achieveds};
+  adevs::Digraph<E::FlowValueType, E::Time> network;
+  network.couple(
+      inflow_driver, E::Driver::outport_inflow_request,
+      conv, E::Storage::inport_outflow_request);
+  network.couple(
+      lossflow_driver, E::Driver::outport_inflow_request,
+      conv, E::Storage::inport_outflow_request + 1);
+  network.couple(
+      conv, E::Storage::outport_inflow_request,
+      outflow_driver, E::Driver::inport_outflow_request);
+  network.couple(
+      outflow_driver, E::Driver::outport_outflow_achieved,
+      conv, E::Storage::inport_inflow_achieved);
+  network.couple(
+      conv, E::Storage::outport_outflow_achieved,
+      inflow_driver, E::Driver::inport_inflow_achieved);
+  network.couple(
+      conv, E::Storage::outport_outflow_achieved + 1,
+      lossflow_driver, E::Driver::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  const std::size_t max_no_advance{num_events * 4};
+  std::size_t non_advance_count{0};
+  for (
+      auto time = sim.now(), t_next = sim.next_event_time();
+      ((t_next < E::inf) && (t_next.real <= t_max));
+      sim.exec_next_event(), time = t_next, t_next = sim.next_event_time()) {
+    if (t_next.real == time.real) {
+      ++non_advance_count;
+    }
+    else {
+      non_advance_count = 0;
+    }
+    if (non_advance_count >= max_no_advance) {
+      std::ostringstream oss{};
+      oss << "ERROR: non_advance_count > max_no_advance:\n"
+          << "non_advance_count: " << non_advance_count << "\n"
+          << "max_no_advance   : " << max_no_advance << "\n"
+          << "time.real        : " << time.real << " seconds\n"
+          << "time.logical     : " << time.logical << "\n";
+      ASSERT_TRUE(false) << oss.str();
+      break;
+    }
+  }
+  fw->finalize_at_time(t_max);
+  auto results = fw->get_results();
+  fw->clear();
+  auto inflow_results = results[id + "-inflow"];
+  auto outflow_results = results[id + "-outflow"];
+  auto lossflow_results = results[id + "-lossflow"];
+  auto wasteflow_results = results[id + "-wasteflow"];
+  auto inflow_ts = inflow_driver->get_times();
+  auto inflow_fs = inflow_driver->get_flows();
+  auto lossflow_ts = lossflow_driver->get_times();
+  auto lossflow_fs = lossflow_driver->get_flows();
+  auto outflow_ts = outflow_driver->get_times();
+  auto outflow_fs = outflow_driver->get_flows();
+  for (std::size_t idx{0}; idx < inflow_results.size(); ++idx) {
+    std::ostringstream oss{};
+    oss << "idx            : " << idx << "\n";
+    const auto& inf_res = inflow_results[idx];
+    oss << "inflow_results : " << inf_res << "\n";
+    if (idx >= inflow_ts.size())
+      break;
+    oss << "inflow_ts      : " << inflow_ts[idx] << "\n";
+    EXPECT_EQ(inf_res.time, inflow_ts[idx]) << oss.str();
+    if (idx >= inflow_fs.size())
+      break;
+    oss << "inflow_fs      : " << inflow_fs[idx] << "\n";
+    EXPECT_EQ(inf_res.achieved_value, inflow_fs[idx]) << oss.str();
+    if (idx >= outflow_results.size())
+      break;
+    const auto& out_res = outflow_results[idx]; 
+    oss << "outflow_results: " << out_res << "\n";
+    if (idx >= outflow_ts.size())
+      break;
+    oss << "outflow_ts     : " << outflow_ts[idx] << "\n";
+    EXPECT_EQ(out_res.time, outflow_ts[idx]) << oss.str();
+    if (idx >= outflow_fs.size())
+      break;
+    oss << "outflow_fs     : " << outflow_fs[idx] << "\n";
+    EXPECT_EQ(out_res.achieved_value, outflow_fs[idx]);
+    if (idx >= lossflow_results.size())
+      break;
+    const auto& loss_res = lossflow_results[idx];
+    oss << "lossflow_result: " << loss_res << "\n";
+    if (idx >= lossflow_ts.size())
+      break;
+    oss << "lossflow_ts    : " << lossflow_ts[idx] << "\n";
+    EXPECT_EQ(loss_res.time, lossflow_ts[idx]) << oss.str();
+    if (idx >= lossflow_fs.size())
+      break;
+    oss << "lossflow_fs    : " << lossflow_fs[idx] << "\n";
+    EXPECT_EQ(loss_res.achieved_value, lossflow_fs[idx]) << oss.str();
+    if (idx >= wasteflow_results.size())
+      break;
+    const auto& wst_res = wasteflow_results[idx];
+    oss << "wasteflow_resul: " << wst_res << "\n";
+    auto error{inf_res.achieved_value - (out_res.achieved_value + loss_res.achieved_value + wst_res.achieved_value)};
+    oss << "Energy Balance : " << error << "\n";
+    EXPECT_NEAR(error, 0.0, 1e-6) << oss.str();
+  }
+}
+
+
 int
 main(int argc, char **argv)
 {

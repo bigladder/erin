@@ -1733,8 +1733,8 @@ namespace ERIN
       std::cout << "delta_int::" << get_id() << "::Storage\n"
                 << "- s  = {:t " << state.time
                 << " :soc " << state.soc
-                << " :report-inflow-request? " << (state.report_inflow_request ? "true" : "false")
-                << " :report-outflow-achieved? " << (state.report_outflow_achieved ? "true" : "false") << "\n"
+                << " :report-inflow-request? " << state.report_inflow_request
+                << " :report-outflow-achieved? " << state.report_outflow_achieved << "\n"
                 << "        :inflow-port" << state.inflow_port << "\n"
                 << "        :outflow-port" << state.outflow_port << "}\n";
     }
@@ -1742,8 +1742,8 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "- s* = {:t " << state.time
                 << " :soc " << state.soc
-                << " :report-inflow-request? " << (state.report_inflow_request ? "true" : "false")
-                << " :report-outflow-achieved? " << (state.report_outflow_achieved ? "true" : "false") << "\n"
+                << " :report-inflow-request? " << state.report_inflow_request
+                << " :report-outflow-achieved? " << state.report_outflow_achieved << "\n"
                 << "        :inflow-port" << state.inflow_port << "\n"
                 << "        :outflow-port" << state.outflow_port << "}\n";
     }

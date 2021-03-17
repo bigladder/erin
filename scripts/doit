@@ -25,6 +25,10 @@ fi
 if ! ./bin/test_erin_devs_flow_limits; then
   echo Failed test_erin_devs_flow_limits!
 fi
+if ! ./bin/test_erin_devs_storage_v2; then
+  echo Failed test_erin_devs_storage_v2!
+  exit 1
+fi
 time ./bin/str8760
 mkdir -p tidy
 rm -f cppcheck_report.txt

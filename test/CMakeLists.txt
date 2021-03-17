@@ -59,6 +59,18 @@ target_include_directories(test_erin_devs_storage
   ${PROJECT_SOURCE_DIR}/vendor/toml11
   )
 
+add_executable(test_erin_devs_storage_v2
+  ${PROJECT_SOURCE_DIR}/test/erin_devs_storage_v2.test.cpp
+  )
+target_include_directories(test_erin_devs_storage_v2
+  PRIVATE
+  ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/src
+  ${PROJECT_SOURCE_DIR}/vendor/bdevs/include
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include
+  ${PROJECT_SOURCE_DIR}/vendor/toml11
+  )
+
 add_executable(test_erin_devs_flow_limits
   ${PROJECT_SOURCE_DIR}/test/erin_devs_flow_limits.test.cpp
   )

@@ -7877,13 +7877,20 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
 }
 
 TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
+  bool do_rounding{false};
   namespace E = ERIN;
   E::FlowValueType constant_efficiency{0.4};
-  auto calc_output_from_input = [constant_efficiency](E::FlowValueType inflow) -> E::FlowValueType {
-    return std::round((inflow * constant_efficiency) * 1e6) / 1e6;
+  auto calc_output_from_input = [constant_efficiency, do_rounding](E::FlowValueType inflow) -> E::FlowValueType {
+    auto out{inflow * constant_efficiency};
+    if (do_rounding)
+      return std::round(out * 1e6) / 1e6;
+    return out;
   };
-  auto calc_input_from_output = [constant_efficiency](E::FlowValueType outflow) -> E::FlowValueType {
-    return std::round((outflow / constant_efficiency) * 1e6) / 1e6;
+  auto calc_input_from_output = [constant_efficiency, do_rounding](E::FlowValueType outflow) -> E::FlowValueType {
+    auto out{outflow / constant_efficiency};
+    if (do_rounding)
+      return std::round(out * 1e6) / 1e6;
+    return out;
   };
   std::string id{"conv"};
   std::string outflow_stream{"electricity"};

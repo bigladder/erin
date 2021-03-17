@@ -201,4 +201,43 @@ namespace erin::utils
     }
     return oss.str();
   }
+
+  FlowValueType
+  interpolate_value(
+      RealTimeType t,
+      const std::vector<RealTimeType>& ts,
+      const std::vector<FlowValueType>& fs)
+  {
+    FlowValueType f{0.0};
+    for (std::size_t idx{0}; idx < ts.size(); ++idx) {
+      if (ts[idx] <= t) {
+        f = fs[idx];
+        continue;
+      }
+      break;
+    }
+    return f;
+  }
+
+  FlowValueType
+  integrate_value(
+      RealTimeType t,
+      const std::vector<RealTimeType>& ts,
+      const std::vector<FlowValueType>& fs)
+  {
+    RealTimeType tL{0};
+    FlowValueType f{0.0};
+    FlowValueType amount{0.0};
+    for (std::size_t idx{0}; idx < ts.size(); ++idx) {
+      if (ts[idx] <= t) {
+        amount += f * static_cast<FlowValueType>(ts[idx] - tL);
+        tL = ts[idx];
+        f = fs[idx];
+        continue;
+      }
+      break;
+    }
+    amount += f * static_cast<FlowValueType>(t - tL);
+    return amount;
+  }
 }

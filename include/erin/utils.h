@@ -11,6 +11,7 @@
 namespace erin::utils
 {
   using RealTimeType = ERIN::RealTimeType;
+  using FlowValueType = ERIN::FlowValueType;
   /**
    * Months_days_elapsed is a duration of time in months and days.
    * Months_days_elapsed should only take on values from {0,0} (no time forward
@@ -113,6 +114,18 @@ namespace erin::utils
     }
     return true;
   }
+
+  FlowValueType
+  interpolate_value(
+      RealTimeType t,
+      const std::vector<RealTimeType>& ts,
+      const std::vector<FlowValueType>& fs);
+
+  FlowValueType
+  integrate_value(
+      RealTimeType t,
+      const std::vector<RealTimeType>& ts,
+      const std::vector<FlowValueType>& fs);
 }
 
 #endif // ERIN_UTILS_H

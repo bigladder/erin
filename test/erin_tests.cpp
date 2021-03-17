@@ -7742,6 +7742,73 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
   EXPECT_EQ(inflow_ts.size(), outflow_ts.size());
 }
 
+TEST(ErinBasicsTest, Test_interpolate_value) {
+  namespace E = ERIN;
+  namespace EU = erin::utils;
+  // #1
+  std::vector<E::RealTimeType> ts{0, 5, 10, 15};
+  std::vector<E::FlowValueType> fs{10.0, 20.0, 30.0, 40.0};
+  E::RealTimeType t{2};
+  auto f = EU::interpolate_value(t, ts, fs);
+  E::FlowValueType expected_f{10.0};
+  EXPECT_EQ(f, expected_f);
+  // #2
+  t = 0;
+  f = EU::interpolate_value(t, ts, fs);
+  expected_f = 10.0;
+  EXPECT_EQ(f, expected_f);
+  // #3
+  t = 5;
+  f = EU::interpolate_value(t, ts, fs);
+  expected_f = 20.0;
+  EXPECT_EQ(f, expected_f);
+  // #4
+  t = 20;
+  f = EU::interpolate_value(t, ts, fs);
+  expected_f = 40.0;
+  EXPECT_EQ(f, expected_f);
+  // #5
+  ts = std::vector<E::RealTimeType>{5, 10, 15};
+  fs = std::vector<E::FlowValueType>{20.0, 30.0, 40.0};
+  t = 2;
+  f = EU::interpolate_value(t, ts, fs);
+  expected_f = 0.0;
+  EXPECT_EQ(f, expected_f);
+}
+
+TEST(ErinBasicsTest, Test_integrate_value) {
+  namespace E = ERIN;
+  namespace EU = erin::utils;
+  // #1
+  std::vector<E::RealTimeType> ts{0, 5, 10, 15};
+  std::vector<E::FlowValueType> fs{10.0, 20.0, 30.0, 40.0};
+  E::RealTimeType t{2};
+  auto g = EU::integrate_value(t, ts, fs);
+  E::FlowValueType expected_g{20.0};
+  EXPECT_EQ(g, expected_g);
+  // #2
+  t = 0;
+  g = EU::integrate_value(t, ts, fs);
+  expected_g = 0.0;
+  EXPECT_EQ(g, expected_g);
+  // #3
+  t = 5;
+  g = EU::integrate_value(t, ts, fs);
+  expected_g = 50.0;
+  EXPECT_EQ(g, expected_g);
+  // #4
+  t = 20;
+  g = EU::integrate_value(t, ts, fs);
+  expected_g = 500.0; // 50.0 + 100.0 + 150.0 + 200.0
+  EXPECT_EQ(g, expected_g);
+  // #5
+  ts = std::vector<E::RealTimeType>{5, 10, 15};
+  fs = std::vector<E::FlowValueType>{20.0, 30.0, 40.0};
+  t = 2;
+  g = EU::integrate_value(t, ts, fs);
+  expected_g = 0.0;
+  EXPECT_EQ(g, expected_g);
+}
 
 TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   namespace E = ERIN;

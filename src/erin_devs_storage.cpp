@@ -18,18 +18,26 @@ namespace erin::devs
       FlowValueType capacity,
       FlowValueType current_soc)
   {
-    if (std::abs(net_inflow) < ERIN::flow_value_tolerance) {
+    auto tol{ERIN::flow_value_tolerance};
+    if (std::abs(net_inflow) < tol) {
       return infinity;
     }
-    if (net_inflow > ERIN::flow_value_tolerance) {
-      return static_cast<RealTimeType>(
-          std::floor(calc_time_to_fill(current_soc, capacity, net_inflow)));
+    double dt{0.0};
+    if (net_inflow > tol) {
+      dt = calc_time_to_fill(current_soc, capacity, net_inflow);
     }
-    // net_inflow < (-ERIN::flow_value_tolerance)
-    return static_cast<RealTimeType>(
-        std::floor(
-          calc_time_to_drain(
-            current_soc, capacity, -1.0 * net_inflow)));
+    else {
+      // net_inflow < (-tol)
+      dt = calc_time_to_drain(
+          current_soc, capacity, -1.0 * net_inflow);
+    }
+    if (dt <= tol) {
+      return 0;
+    }
+    if ((dt > tol) && (dt < 1.0)) {
+      return 1;
+    }
+    return static_cast<RealTimeType>(std::floor(dt));
   }
 
   FlowValueType

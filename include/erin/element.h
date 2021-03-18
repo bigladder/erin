@@ -672,7 +672,8 @@ namespace ERIN
           int outport,
           int inport,
           const std::vector<RealTimeType>& output_times,
-          const std::vector<FlowValueType>& output_flows);
+          const std::vector<FlowValueType>& output_flows,
+          bool is_requesting);
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
@@ -699,6 +700,8 @@ namespace ERIN
       std::vector<FlowValueType> flows;
       RealTimeType t;
       std::size_t idx;
+      erin::devs::Port2 port;
+      bool is_requesting;
 
       void log_flow(const RealTimeType& new_t, const FlowValueType& flow);
   };

@@ -202,12 +202,25 @@ namespace erin::utils
     return oss.str();
   }
 
+  void check_sizes(std::size_t a, std::size_t b, const std::string& fn)
+  {
+    if (a != b) {
+      std::ostringstream oss{};
+      oss << "ts and fs must be the same size\n"
+          << "ts.size() = " << a << "\n"
+          << "fs.size() = " << b << "\n"
+          << "error in erin::utils::" << fn << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+  }
+
   FlowValueType
   interpolate_value(
       RealTimeType t,
       const std::vector<RealTimeType>& ts,
       const std::vector<FlowValueType>& fs)
   {
+    check_sizes(ts.size(), fs.size(), "interpolate_value");
     FlowValueType f{0.0};
     for (std::size_t idx{0}; idx < ts.size(); ++idx) {
       if (ts[idx] <= t) {
@@ -225,6 +238,7 @@ namespace erin::utils
       const std::vector<RealTimeType>& ts,
       const std::vector<FlowValueType>& fs)
   {
+    check_sizes(ts.size(), fs.size(), "integrate_value");
     RealTimeType tL{0};
     FlowValueType f{0.0};
     FlowValueType amount{0.0};
@@ -239,5 +253,18 @@ namespace erin::utils
     }
     amount += f * static_cast<FlowValueType>(t - tL);
     return amount;
+  }
+
+  FlowValueType
+  integrate_value(RealTimeType t, const std::vector<Datum>& ds)
+  {
+    std::vector<RealTimeType> ts(ds.size());
+    std::vector<FlowValueType> fs(ds.size());
+    for (std::size_t idx{0}; idx < ds.size(); ++idx) {
+      const auto& d = ds[idx];
+      ts[idx] = d.time;
+      fs[idx] = d.achieved_value;
+    }
+    return integrate_value(t, ts, fs);
   }
 }

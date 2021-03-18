@@ -2413,7 +2413,8 @@ namespace ERIN
       int outport_,
       int inport_,
       const std::vector<RealTimeType>& output_times_,
-      const std::vector<FlowValueType>& output_flows_):
+      const std::vector<FlowValueType>& output_flows_,
+      bool is_requesting_):
     adevs::Atomic<PortValue, Time>(),
     outport{outport_},
     inport{inport_},
@@ -2422,7 +2423,9 @@ namespace ERIN
     times{},
     flows{},
     t{0},
-    idx{0}
+    idx{0},
+    port{(output_flows.size() > 0) ? output_flows[0] : 0.0},
+    is_requesting{is_requesting_}
   {
   }
   
@@ -2430,6 +2433,14 @@ namespace ERIN
   Driver::delta_int()
   {
     t += ta().real;
+    if (idx < output_flows.size()) {
+      if (is_requesting) {
+        port = port.with_requested(output_flows[idx]).port;
+      }
+      else {
+        port = erin::devs::Port2{output_flows[idx]};
+      }
+    }
     ++idx;
   }
 
@@ -2437,17 +2448,28 @@ namespace ERIN
   Driver::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     t += e.real;
-    bool got_input{false};
     FlowValueType flow{0.0};
     for (const auto& x : xs) {
       if (x.port == inport) {
-        got_input = true;
         flow += x.value;
       }
+      else {
+        std::ostringstream oss{};
+        oss << "Driver got bad port: " << x.port << "\n"
+            << "expected " << inport << "\n";
+        throw std::runtime_error(oss.str());
+      }
     }
-    if (got_input) {
-      log_flow(t, flow);
+    if (is_requesting) {
+      if (flow > port.get_requested()) {
+        flow = port.get_requested();
+      }
+      port = port.with_achieved(flow).port;
     }
+    else {
+      port = port.with_requested(flow).port;
+    }
+    log_flow(t, port.get_achieved());
   }
 
   void
@@ -2469,8 +2491,12 @@ namespace ERIN
   void
   Driver::output_func(std::vector<PortValue>& ys)
   {
-    log_flow(t + ta().real, output_flows[idx]);
-    ys.emplace_back(PortValue{outport, output_flows[idx]});
+    auto update = port.with_requested(output_flows[idx]);
+    if (!is_requesting) {
+      update = erin::devs::PortUpdate{false, erin::devs::Port2{output_flows[idx]}};
+    }
+    log_flow(output_times[idx], update.port.get_achieved());
+    ys.emplace_back(PortValue{outport, update.port.get_achieved()});
   }
 
   void
@@ -2479,6 +2505,9 @@ namespace ERIN
     if ((times.size() == 0) || (new_t > times.back())) {
       times.emplace_back(new_t);
       flows.emplace_back(flow);
+    }
+    else if (new_t < times.back()) {
+      throw std::runtime_error("new time less than previously logged");
     }
     else {
       // t == times.back(), therefore overwrite with new info

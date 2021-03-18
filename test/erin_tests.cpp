@@ -7915,7 +7915,11 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   auto inflow_fs = inflow_driver->get_flows();
   auto outflow_ts = outflow_driver->get_times();
   auto outflow_fs = outflow_driver->get_flows();
-  for (std::size_t idx{0}; idx < inflow_results.size(); ++idx) {
+  std::size_t last_idx{inflow_results.size() - 1};
+  // Note: on the last index, the finalize_at_time(.) method of FlowWriter sets
+  // the flows to 0 which causes a discrepancy with the drivers that need not
+  // be tested. Therefore, we only go until prior to the last index.
+  for (std::size_t idx{0}; idx < last_idx; ++idx) {
     std::ostringstream oss{};
     oss << "idx            : " << idx << "\n";
     const auto& inf_res = inflow_results[idx];

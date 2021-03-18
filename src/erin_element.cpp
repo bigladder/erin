@@ -246,7 +246,7 @@ namespace ERIN
                   << "role[" << i << "] = " << port_role_to_tag(element_id_to_port_role[id]) << "\n";
       }
     }
-    if constexpr (E::debug_level >= E::debug_level_low) {
+    if constexpr (E::debug_level >= E::debug_level_medium) {
       check_energy_balance();
     }
     current_time = time;

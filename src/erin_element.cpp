@@ -2434,6 +2434,15 @@ namespace ERIN
   void
   Driver::delta_int()
   {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "delta_int::" << is_requesting << "::Driver\n"
+                << "- s  = {:idx " << idx
+                << " :report? " << do_report
+                << " :output_times " << vec_to_string<RealTimeType>(output_times)
+                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+                << " :t " << t
+                << " :p " << port << "}\n";
+    }
     t += ta().real;
     if (idx < output_flows.size()) {
       if (is_requesting) {
@@ -2448,11 +2457,30 @@ namespace ERIN
     }
     do_report = false;
     ++idx;
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "- s* = {:idx " << idx
+                << " :report? " << do_report
+                << " :output_times " << vec_to_string<RealTimeType>(output_times)
+                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+                << " :t " << t
+                << " :p " << port << "}\n";
+    }
   }
 
   void
   Driver::delta_ext(Time e, std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "delta_ext::" << is_requesting << "::Driver\n"
+                << "- e  = " << e.real << "\n"
+                << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
+                << "- s  = {:idx " << idx
+                << " :report? " << do_report
+                << " :output_times " << vec_to_string<RealTimeType>(output_times)
+                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+                << " :t " << t
+                << " :p " << port << "}\n";
+    }
     t += e.real;
     FlowValueType flow{0.0};
     for (const auto& x : xs) {
@@ -2468,41 +2496,94 @@ namespace ERIN
     }
     if (is_requesting) {
       if (flow > port.get_requested()) {
-        std::cout << "WARNING! Got More Than Requested at " << t << "\n";
-        flow= port.get_requested();
+        std::cout << "WARNING! Got More Than Requested at time = " << t << "\n";
+        flow = port.get_requested();
+        do_report = true;
       }
       port = port.with_achieved(flow).port;
     }
     else {
-      auto update = port.with_requested(flow);
+      port = port.with_requested(flow).port;
+      auto update = port.with_achieved(
+          std::min(
+            port.get_requested(),
+            (idx == 0) ? 0.0 : output_flows[idx - 1]));
       port = update.port;
       do_report = update.send_update;
     }
     log_flow(t, port.get_achieved());
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "- s* = {:idx " << idx
+                << " :report? " << do_report
+                << " :output_times " << vec_to_string<RealTimeType>(output_times)
+                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+                << " :t " << t
+                << " :p " << port << "}\n";
+    }
   }
 
   void
   Driver::delta_conf(std::vector<PortValue>& xs)
   {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "delta_conf::" << is_requesting << "::Driver\n"
+                << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
+                << "- s  = {:idx " << idx
+                << " :report? " << do_report
+                << " :output_times " << vec_to_string<RealTimeType>(output_times)
+                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+                << " :t " << t
+                << " :p " << port << "}\n";
+    }
     delta_int();
     delta_ext(Time{0,0}, xs);
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "- s* = {:idx " << idx
+                << " :report? " << do_report
+                << " :output_times " << vec_to_string<RealTimeType>(output_times)
+                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+                << " :t " << t
+                << " :p " << port << "}\n";
+    }
   }
 
   Time
   Driver::ta()
   {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "ta::" << is_requesting << "::Driver\n"
+                << "- s  = {:idx " << idx
+                << " :report? " << do_report
+                << " :output_times " << vec_to_string<RealTimeType>(output_times)
+                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+                << " :t " << t
+                << " :p " << port << "}\n";
+    }
+    auto dt = inf;
     if (do_report) {
-      return Time{0, 1};
+      dt = Time{0, 1};
     }
-    if (idx < output_times.size()) {
-      return Time{output_times[idx] - t, 1};
+    else if (idx < output_times.size()) {
+      dt = Time{output_times[idx] - t, 1};
     }
-    return inf;
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "- dt = " << ((dt == inf) ? "inf" : std::to_string(dt.real)) << "\n";
+    }
+    return dt;
   }
 
   void
   Driver::output_func(std::vector<PortValue>& ys)
   {
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "output_func::" << is_requesting << "::Driver\n"
+                << "- s  = {:idx " << idx
+                << " :report? " << do_report
+                << " :output_times " << vec_to_string<RealTimeType>(output_times)
+                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+                << " :t " << t
+                << " :p " << port << "}\n";
+    }
     if (do_report) {
       ys.emplace_back(
           erin::devs::PortValue{
@@ -2529,6 +2610,9 @@ namespace ERIN
               outport, update.port.get_achieved()});
         log_flow(output_times[idx], update.port.get_achieved());
       }
+    }
+    if constexpr (debug_level >= debug_level_low) {
+      std::cout << "- ys = " << vec_to_string<PortValue>(ys) << "\n";
     }
   }
 

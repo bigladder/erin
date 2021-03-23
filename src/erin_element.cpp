@@ -1242,6 +1242,7 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "delta_ext::" << get_id() << "::Converter\n"
+                << "- e  = " << e.real << "\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
@@ -1736,8 +1737,8 @@ namespace ERIN
                 << " :soc " << state.soc
                 << " :report-inflow-request? " << state.report_inflow_request
                 << " :report-outflow-achieved? " << state.report_outflow_achieved << "\n"
-                << "        :inflow-port" << state.inflow_port << "\n"
-                << "        :outflow-port" << state.outflow_port << "}\n";
+                << "        :inflow-port " << state.inflow_port << "\n"
+                << "        :outflow-port " << state.outflow_port << "}\n";
     }
     state = erin::devs::storage_internal_transition(data, state);
     if constexpr (debug_level >= debug_level_medium) {
@@ -1745,8 +1746,8 @@ namespace ERIN
                 << " :soc " << state.soc
                 << " :report-inflow-request? " << state.report_inflow_request
                 << " :report-outflow-achieved? " << state.report_outflow_achieved << "\n"
-                << "        :inflow-port" << state.inflow_port << "\n"
-                << "        :outflow-port" << state.outflow_port << "}\n";
+                << "        :inflow-port " << state.inflow_port << "\n"
+                << "        :outflow-port " << state.outflow_port << "}\n";
     }
     log_ports();
   }
@@ -2424,8 +2425,9 @@ namespace ERIN
     flows{},
     t{0},
     idx{0},
-    port{(output_flows.size() > 0) ? output_flows[0] : 0.0},
-    is_requesting{is_requesting_}
+    port{0.0},
+    is_requesting{is_requesting_},
+    do_report{false}
   {
   }
   
@@ -2438,9 +2440,13 @@ namespace ERIN
         port = port.with_requested(output_flows[idx]).port;
       }
       else {
-        port = erin::devs::Port2{output_flows[idx]};
+        port = port.with_achieved(
+            std::min(
+              port.get_requested(), 
+              output_flows[idx])).port;
       }
     }
+    do_report = false;
     ++idx;
   }
 
@@ -2462,12 +2468,15 @@ namespace ERIN
     }
     if (is_requesting) {
       if (flow > port.get_requested()) {
-        flow = port.get_requested();
+        std::cout << "WARNING! Got More Than Requested at " << t << "\n";
+        flow= port.get_requested();
       }
       port = port.with_achieved(flow).port;
     }
     else {
-      port = port.with_requested(flow).port;
+      auto update = port.with_requested(flow);
+      port = update.port;
+      do_report = update.send_update;
     }
     log_flow(t, port.get_achieved());
   }
@@ -2482,6 +2491,9 @@ namespace ERIN
   Time
   Driver::ta()
   {
+    if (do_report) {
+      return Time{0, 1};
+    }
     if (idx < output_times.size()) {
       return Time{output_times[idx] - t, 1};
     }
@@ -2491,12 +2503,33 @@ namespace ERIN
   void
   Driver::output_func(std::vector<PortValue>& ys)
   {
-    auto update = port.with_requested(output_flows[idx]);
-    if (!is_requesting) {
-      update = erin::devs::PortUpdate{false, erin::devs::Port2{output_flows[idx]}};
+    if (do_report) {
+      ys.emplace_back(
+          erin::devs::PortValue{
+            outport, port.get_achieved()});
+      log_flow(t, port.get_achieved());
     }
-    log_flow(output_times[idx], update.port.get_achieved());
-    ys.emplace_back(PortValue{outport, update.port.get_achieved()});
+    else if (is_requesting) {
+      auto update = port.with_requested(output_flows[idx]);
+      if (update.send_update) {
+        ys.emplace_back(
+            erin::devs::PortValue{
+              outport, update.port.get_achieved()});
+        log_flow(output_times[idx], update.port.get_achieved());
+      }
+    }
+    else {
+      auto update = port.with_achieved(
+          std::min(
+            output_flows[idx],
+            port.get_requested()));
+      if (update.send_update) {
+        ys.emplace_back(
+            erin::devs::PortValue{
+              outport, update.port.get_achieved()});
+        log_flow(output_times[idx], update.port.get_achieved());
+      }
+    }
   }
 
   void

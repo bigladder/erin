@@ -702,6 +702,7 @@ namespace ERIN
       std::size_t idx;
       erin::devs::Port2 port;
       bool is_requesting;
+      bool do_report;
 
       void log_flow(const RealTimeType& new_t, const FlowValueType& flow);
   };

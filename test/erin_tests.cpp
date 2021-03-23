@@ -7647,6 +7647,16 @@ TEST(ErinBasicsTest, Test_driver_element_for_external_transitions) {
   d.delta_ext(E::Time{25, 1}, xs);
 
   dt = d.ta().real;
+  EXPECT_EQ(dt, 0);
+  ys.clear();
+  expected_ys = std::vector<E::PortValue>{E::PortValue{outport, 0.0}};
+  d.output_func(ys);
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<E::PortValue>(
+        ys, expected_ys, compare_ports));
+  d.delta_int();
+
+  dt = d.ta().real;
   EXPECT_EQ(dt, 165);
   ys.clear();
   expected_ys = std::vector<E::PortValue>{E::PortValue{outport, 20.0}};
@@ -7675,6 +7685,7 @@ TEST(ErinBasicsTest, Test_driver_element_for_external_transitions) {
 
 TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
   namespace E = ERIN;
+  namespace EU = erin::utils;
   std::default_random_engine generator{};
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);
@@ -7683,7 +7694,7 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
   std::vector<E::RealTimeType> inflow_times{};
   std::vector<E::FlowValueType> inflow_requests{};
   std::vector<E::RealTimeType> outflow_times{};
-  std::vector<E::FlowValueType> outflow_achieveds{};
+  std::vector<E::FlowValueType> outflow_availables{};
   std::size_t num_events{100};
   E::RealTimeType t{0};
   for (std::size_t idx{0}; idx < num_events; ++idx) {
@@ -7692,7 +7703,7 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
     inflow_requests.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
     t += static_cast<E::RealTimeType>(dt_dist(generator));
     outflow_times.emplace_back(t);
-    outflow_achieveds.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+    outflow_availables.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
   }
   auto t_max{t};
   auto inflow_driver = new E::Driver{
@@ -7700,13 +7711,13 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
     E::Driver::inport_inflow_achieved,
     inflow_times,
     inflow_requests,
-    false};
+    true};
   auto outflow_driver = new E::Driver{
     E::Driver::outport_outflow_achieved,
     E::Driver::inport_outflow_request,
     outflow_times,
-    outflow_achieveds,
-    true};
+    outflow_availables,
+    false};
   adevs::Digraph<E::FlowValueType, E::Time> network;
     network.couple(
         inflow_driver, E::Driver::outport_inflow_request,
@@ -7746,6 +7757,16 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
   EXPECT_EQ(inflow_ts.size(), inflow_fs.size());
   EXPECT_EQ(outflow_ts.size(), outflow_fs.size());
   EXPECT_EQ(inflow_ts.size(), outflow_ts.size());
+  for (std::size_t idx{0}; idx < inflow_ts.size(); ++idx) {
+    const auto& t = inflow_ts[idx];
+    const auto& f = inflow_fs[idx];
+    auto outflow = EU::interpolate_value(t, outflow_ts, outflow_fs);
+    ASSERT_EQ(f, outflow)
+      << "idx    = " << idx << "\n"
+      << "t      = " << t << "\n"
+      << "inflow = " << f << "\n"
+      << "outflow= " << outflow << "\n";
+  }
 }
 
 TEST(ErinBasicsTest, Test_interpolate_value) {

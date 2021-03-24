@@ -2437,7 +2437,7 @@ namespace ERIN
   void
   Driver::delta_int()
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       if (do_debug_print) {
         std::cout << "delta_int::" << ident << "[" << is_requesting << "]::Driver\n"
                   << state_to_string(false);
@@ -2470,7 +2470,7 @@ namespace ERIN
       do_report = false;
       ++idx;
     }
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       if (do_debug_print) {
         std::cout << state_to_string(true);
       }
@@ -2480,7 +2480,7 @@ namespace ERIN
   void
   Driver::delta_ext(Time e, std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       if (do_debug_print) {
         std::cout << "delta_ext::" << ident << "[" << is_requesting << "]::Driver\n"
                   << "- e  = " << e.real << "\n"
@@ -2519,7 +2519,7 @@ namespace ERIN
       do_report = update.send_update;
     }
     log_flow(t, port.get_achieved());
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       if (do_debug_print) {
         std::cout << state_to_string(true);
       }
@@ -2529,7 +2529,7 @@ namespace ERIN
   void
   Driver::delta_conf(std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       std::cout << "delta_conf::" << ident << "[" << is_requesting << "]::Driver\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << state_to_string(false);
@@ -2537,7 +2537,7 @@ namespace ERIN
     }
     delta_int();
     delta_ext(Time{0,0}, xs);
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       std::cout << state_to_string(true);
       do_debug_print = true;
     }
@@ -2546,7 +2546,7 @@ namespace ERIN
   Time
   Driver::ta()
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       if (do_debug_print) {
         std::cout << "ta::" << ident << "[" << is_requesting << "]::Driver\n";
       }
@@ -2558,7 +2558,7 @@ namespace ERIN
     else if (idx < output_times.size()) {
       dt = Time{output_times[idx] - t, 1};
     }
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       if (do_debug_print) {
         std::cout << "- dt = " << ((dt == inf) ? "inf" : std::to_string(dt.real)) << "\n";
       }
@@ -2569,7 +2569,7 @@ namespace ERIN
   void
   Driver::output_func(std::vector<PortValue>& ys)
   {
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       std::cout << "output_func::" << ident << "[" << is_requesting << "]::Driver\n";
     }
     if (do_report) {
@@ -2599,7 +2599,7 @@ namespace ERIN
         log_flow(output_times[idx], update.port.get_achieved());
       }
     }
-    if constexpr (debug_level >= debug_level_low) {
+    if constexpr (debug_level >= debug_level_medium) {
       std::cout << "- ys = " << vec_to_string<PortValue>(ys) << "\n";
     }
   }

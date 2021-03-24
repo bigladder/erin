@@ -7756,9 +7756,9 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
   auto inflow_fs = inflow_driver->get_flows();
   auto outflow_ts = outflow_driver->get_times();
   auto outflow_fs = outflow_driver->get_flows();
-  EXPECT_EQ(inflow_ts.size(), inflow_fs.size());
-  EXPECT_EQ(outflow_ts.size(), outflow_fs.size());
-  EXPECT_EQ(inflow_ts.size(), outflow_ts.size());
+  ASSERT_EQ(inflow_ts.size(), inflow_fs.size());
+  ASSERT_EQ(outflow_ts.size(), outflow_fs.size());
+  ASSERT_EQ(inflow_ts.size(), outflow_ts.size());
   for (std::size_t idx{0}; idx < inflow_ts.size(); ++idx) {
     const auto& t = inflow_ts[idx];
     const auto& f = inflow_fs[idx];

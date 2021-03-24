@@ -7878,14 +7878,14 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   }
   auto t_max{t};
   auto inflow_driver = new E::Driver{
-    "inflow-driver",
+    "inflow-to-store",
     E::Driver::outport_outflow_achieved,
     E::Driver::inport_outflow_request,
     inflow_times,
     inflow_achieveds,
     false};
   auto outflow_driver = new E::Driver{
-    "outflow-driver",
+    "outflow-from-store",
     E::Driver::outport_inflow_request,
     E::Driver::inport_inflow_achieved,
     outflow_times,
@@ -7942,28 +7942,31 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   auto inflow_fs = inflow_driver->get_flows();
   auto outflow_ts = outflow_driver->get_times();
   auto outflow_fs = outflow_driver->get_flows();
-  std::size_t last_idx{inflow_results.size() - 1};
+  std::size_t last_idx{outflow_results.size() - 1};
   // Note: on the last index, the finalize_at_time(.) method of FlowWriter sets
   // the flows to 0 which causes a discrepancy with the drivers that need not
   // be tested. Therefore, we only go until prior to the last index.
   for (std::size_t idx{0}; idx < last_idx; ++idx) {
     std::ostringstream oss{};
     oss << "idx            : " << idx << "\n";
-    const auto& inf_res = inflow_results[idx];
-    const auto& time = inf_res.time;
+    const auto& outf_res = outflow_results[idx];
+    const auto& time = outf_res.time;
     oss << "time           : " << time << "\n";
-    const auto inflow_d{EU::interpolate_value(time, inflow_ts, inflow_fs)};
-    oss << "inflow_results : " << inf_res << "\n";
-    oss << "inflow_driver  : " << inflow_d << "\n";
-    ASSERT_EQ(inf_res.achieved_value, inflow_d) << oss.str();
-    const auto& out_res = outflow_results[idx]; 
     const auto outflow_d{EU::interpolate_value(time, outflow_ts, outflow_fs)};
-    oss << "outflow_results: " << out_res << "\n";
-    oss << "outflow_driver : " << outflow_d << "\n";
-    ASSERT_EQ(out_res.achieved_value, outflow_d) << oss.str();
+    oss << "outflow_results : " << outf_res << "\n";
+    oss << "outflow_driver  : " << outflow_d << "\n";
+    ASSERT_EQ(outf_res.achieved_value, outflow_d) << oss.str();
+    const auto& inf_res = inflow_results[idx]; 
+    const auto inflow_d{EU::interpolate_value(time, inflow_ts, inflow_fs)};
+    oss << "inflow_results: " << inf_res << "\n";
+    oss << "inflow_driver : " << inflow_d << "\n";
+    ASSERT_EQ(inf_res.achieved_value, inflow_d) << oss.str();
     const auto& str_res = storeflow_results[idx];
     const auto& dis_res = discharge_results[idx];
-    auto error{inf_res.achieved_value + dis_res.achieved_value - (str_res.achieved_value + out_res.achieved_value)};
+    auto error{
+      inf_res.achieved_value +
+      dis_res.achieved_value -
+      (str_res.achieved_value + outf_res.achieved_value)};
     oss << "storeflow      : " << str_res << "\n"
         << "discharge      : " << dis_res << "\n"
         << "Energy Balance : " << error << "\n";

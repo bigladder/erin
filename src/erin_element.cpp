@@ -2632,8 +2632,8 @@ namespace ERIN
         << " :report? " << do_report
         << " :output-time " << ((idx < output_times.size()) ? output_times[idx] : -1)
         << " :output-flow " << ((idx < output_flows.size()) ? output_flows[idx] : -1.0)
-        << " :output_times " << vec_to_string<RealTimeType>(output_times)
-        << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+        << " :output_times " << vec_to_string<RealTimeType>(output_times, 6)
+        << " :output_flows " << vec_to_string<FlowValueType>(output_flows, 6)
         << "}\n";
     return oss.str();
   }

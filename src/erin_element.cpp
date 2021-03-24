@@ -2440,49 +2440,39 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_low) {
       if (do_debug_print) {
         std::cout << "delta_int::" << ident << "[" << is_requesting << "]::Driver\n"
-                  << "- s  = {:idx " << idx
-                  << " :report? " << do_report
-                  << " :output_times " << vec_to_string<RealTimeType>(output_times)
-                  << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                  << " :t " << t
-                  << " :p " << port << "}\n";
+                  << state_to_string(false);
       }
     }
     if (do_report) {
       do_report = false;
-      return;
     }
-    bool restore{false};
-    if (do_debug_print) {
-      restore = true;
-      do_debug_print = false;
-    }
-    t += ta().real;
-    if (restore) {
-      do_debug_print = true;
-    }
-    if (idx < output_flows.size()) {
-      if (is_requesting) {
-        port = port.with_requested(output_flows[idx]).port;
+    else {
+      bool restore{false};
+      if (do_debug_print) {
+        restore = true;
+        do_debug_print = false;
       }
-      else {
-        port = port.with_achieved(
-            std::min(
-              port.get_requested(), 
-              output_flows[idx])).port;
+      t += ta().real;
+      if (restore) {
+        do_debug_print = true;
       }
+      if (idx < output_flows.size()) {
+        if (is_requesting) {
+          port = port.with_requested(output_flows[idx]).port;
+        }
+        else {
+          port = port.with_achieved(
+              std::min(
+                port.get_requested(), 
+                output_flows[idx])).port;
+        }
+      }
+      do_report = false;
+      ++idx;
     }
-    do_report = false;
-    ++idx;
     if constexpr (debug_level >= debug_level_low) {
       if (do_debug_print) {
-        std::cout << "- s* = {"
-                  << " :t " << t
-                  << " :idx " << idx
-                  << " :report? " << do_report
-                  << " :output_times " << vec_to_string<RealTimeType>(output_times)
-                  << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                  << " :p " << port << "}\n";
+        std::cout << state_to_string(true);
       }
     }
   }
@@ -2495,13 +2485,7 @@ namespace ERIN
         std::cout << "delta_ext::" << ident << "[" << is_requesting << "]::Driver\n"
                   << "- e  = " << e.real << "\n"
                   << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
-                  << "- s  = {"
-                  << " :t " << t
-                  << " :idx " << idx
-                  << " :report? " << do_report
-                  << " :output_times " << vec_to_string<RealTimeType>(output_times)
-                  << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                  << " :p " << port << "}\n";
+                  << state_to_string(false);
       }
     }
     t += e.real;
@@ -2537,13 +2521,7 @@ namespace ERIN
     log_flow(t, port.get_achieved());
     if constexpr (debug_level >= debug_level_low) {
       if (do_debug_print) {
-        std::cout << "- s* = {"
-                  << " :t " << t
-                  << " :idx " << idx
-                  << " :report? " << do_report
-                  << " :output_times " << vec_to_string<RealTimeType>(output_times)
-                  << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                  << " :p " << port << "}\n";
+        std::cout << state_to_string(true);
       }
     }
   }
@@ -2554,24 +2532,13 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_low) {
       std::cout << "delta_conf::" << ident << "[" << is_requesting << "]::Driver\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
-                << "- s  = {"
-                << " :t " << t
-                << " :idx " << idx
-                << " :report? " << do_report
-                << " :output_times " << vec_to_string<RealTimeType>(output_times)
-                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                << " :p " << port << "}\n";
+                << state_to_string(false);
       do_debug_print = false;
     }
     delta_int();
     delta_ext(Time{0,0}, xs);
     if constexpr (debug_level >= debug_level_low) {
-      std::cout << "- s* = {:idx " << idx
-                << " :report? " << do_report
-                << " :output_times " << vec_to_string<RealTimeType>(output_times)
-                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                << " :t " << t
-                << " :p " << port << "}\n";
+      std::cout << state_to_string(true);
       do_debug_print = true;
     }
   }
@@ -2580,14 +2547,9 @@ namespace ERIN
   Driver::ta()
   {
     if constexpr (debug_level >= debug_level_low) {
-      std::cout << "ta::" << ident << "[" << is_requesting << "]::Driver\n"
-                << "- s  = {"
-                << " :t " << t
-                << " :idx " << idx
-                << " :report? " << do_report
-                << " :output_times " << vec_to_string<RealTimeType>(output_times)
-                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                << " :p " << port << "}\n";
+      if (do_debug_print) {
+        std::cout << "ta::" << ident << "[" << is_requesting << "]::Driver\n";
+      }
     }
     auto dt = inf;
     if (do_report) {
@@ -2597,7 +2559,9 @@ namespace ERIN
       dt = Time{output_times[idx] - t, 1};
     }
     if constexpr (debug_level >= debug_level_low) {
-      std::cout << "- dt = " << ((dt == inf) ? "inf" : std::to_string(dt.real)) << "\n";
+      if (do_debug_print) {
+        std::cout << "- dt = " << ((dt == inf) ? "inf" : std::to_string(dt.real)) << "\n";
+      }
     }
     return dt;
   }
@@ -2606,14 +2570,7 @@ namespace ERIN
   Driver::output_func(std::vector<PortValue>& ys)
   {
     if constexpr (debug_level >= debug_level_low) {
-      std::cout << "output_func::" << ident << "[" << is_requesting << "]::Driver\n"
-                << "- s  = {"
-                << " :t " << t
-                << " :idx " << idx
-                << " :report? " << do_report
-                << " :output_times " << vec_to_string<RealTimeType>(output_times)
-                << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                << " :p " << port << "}\n";
+      std::cout << "output_func::" << ident << "[" << is_requesting << "]::Driver\n";
     }
     if (do_report) {
       ys.emplace_back(
@@ -2626,7 +2583,7 @@ namespace ERIN
       if (update.send_update) {
         ys.emplace_back(
             erin::devs::PortValue{
-              outport, update.port.get_achieved()});
+              outport, update.port.get_requested()});
         log_flow(output_times[idx], update.port.get_achieved());
       }
     }
@@ -2662,6 +2619,23 @@ namespace ERIN
       times.back() = new_t;
       flows.back() = flow;
     }
+  }
+
+  std::string
+  Driver::state_to_string(bool is_updated) const
+  {
+    std::ostringstream oss{};
+    oss << "- s" << (is_updated ? "*" : " ") << " = {"
+        << ":t " << t
+        << " :idx " << idx
+        << " :p " << port
+        << " :report? " << do_report
+        << " :output-time " << ((idx < output_times.size()) ? output_times[idx] : -1)
+        << " :output-flow " << ((idx < output_flows.size()) ? output_flows[idx] : -1.0)
+        << " :output_times " << vec_to_string<RealTimeType>(output_times)
+        << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
+        << "}\n";
+    return oss.str();
   }
 
 

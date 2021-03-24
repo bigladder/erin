@@ -708,6 +708,7 @@ namespace ERIN
       bool do_debug_print;
 
       void log_flow(const RealTimeType& new_t, const FlowValueType& flow);
+      std::string state_to_string(bool is_updated) const;
   };
 
   ////////////////////////////////////////////////////////////

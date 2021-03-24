@@ -2458,11 +2458,12 @@ namespace ERIN
     do_report = false;
     ++idx;
     if constexpr (debug_level >= debug_level_low) {
-      std::cout << "- s* = {:idx " << idx
+      std::cout << "- s* = {"
+                << " :t " << t
+                << " :idx " << idx
                 << " :report? " << do_report
                 << " :output_times " << vec_to_string<RealTimeType>(output_times)
                 << " :output_flows " << vec_to_string<FlowValueType>(output_flows)
-                << " :t " << t
                 << " :p " << port << "}\n";
     }
   }

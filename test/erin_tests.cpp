@@ -7565,7 +7565,7 @@ TEST(ErinBasicsTest, Test_driver_element_for_internal_transitions) {
   namespace EU = erin::utils;
   int outport{2000};
   int inport{0};
-  auto d = E::Driver(outport, inport, {0, 10, 200}, {10.0, 0.0, 20.0}, true);
+  auto d = E::Driver("driver", outport, inport, {0, 10, 200}, {10.0, 0.0, 20.0}, true);
   auto dt = d.ta().real;
   EXPECT_EQ(dt, 0);
   std::vector<E::PortValue> ys{};
@@ -7615,7 +7615,7 @@ TEST(ErinBasicsTest, Test_driver_element_for_external_transitions) {
   namespace EU = erin::utils;
   int outport{0};
   int inport{1};
-  auto d = E::Driver(outport, inport, {0, 10, 200}, {10.0, 0.0, 20.0}, true);
+  auto d = E::Driver("driver", outport, inport, {0, 10, 200}, {10.0, 0.0, 20.0}, true);
   auto dt = d.ta().real;
   EXPECT_EQ(dt, 0);
   std::vector<E::PortValue> ys{};
@@ -7707,12 +7707,14 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
   }
   auto t_max{t};
   auto inflow_driver = new E::Driver{
+    "inflow-driver",
     E::Driver::outport_inflow_request,
     E::Driver::inport_inflow_achieved,
     inflow_times,
     inflow_requests,
     true};
   auto outflow_driver = new E::Driver{
+    "outflow-driver",
     E::Driver::outport_outflow_achieved,
     E::Driver::inport_outflow_request,
     outflow_times,
@@ -7876,12 +7878,14 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   }
   auto t_max{t};
   auto inflow_driver = new E::Driver{
+    "inflow-driver",
     E::Driver::outport_outflow_achieved,
     E::Driver::inport_outflow_request,
     inflow_times,
     inflow_achieveds,
     false};
   auto outflow_driver = new E::Driver{
+    "outflow-driver",
     E::Driver::outport_inflow_request,
     E::Driver::inport_inflow_achieved,
     outflow_times,
@@ -8038,18 +8042,21 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   }
   auto t_max{t};
   auto inflow_driver = new E::Driver{
+    "inflow-driver",
     E::Driver::outport_outflow_achieved,
     E::Driver::inport_outflow_request,
     inflow_times,
     inflow_achieveds,
     false};
   auto lossflow_driver = new E::Driver{
+    "lossflow-driver",
     E::Driver::outport_inflow_request,
     E::Driver::inport_inflow_achieved,
     lossflow_times,
     lossflow_requests,
     true};
   auto outflow_driver = new E::Driver{
+    "outflow-driver",
     E::Driver::outport_inflow_request,
     E::Driver::inport_inflow_achieved,
     outflow_times,
@@ -8197,6 +8204,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   std::vector<E::Driver*> inflow_drivers{};
   for (std::size_t outport_id{0}; outport_id < num_outflows; ++outport_id) {
     auto d = new E::Driver{
+      "outport-driver(" + std::to_string(outport_id) + ")",
       E::Driver::outport_inflow_request,
       E::Driver::inport_inflow_achieved,
       inflow_times[outport_id],
@@ -8213,6 +8221,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   std::vector<E::Driver*> outflow_drivers{};
   for (std::size_t inport_id{0}; inport_id < num_inflows; ++inport_id) {
     auto d = new E::Driver{
+      "inport-driver(" + std::to_string(inport_id) + ")",
       E::Driver::outport_outflow_achieved,
       E::Driver::inport_outflow_request,
       outflow_times[inport_id],

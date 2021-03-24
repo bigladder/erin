@@ -669,6 +669,7 @@ namespace ERIN
       static constexpr int outport_outflow_achieved{3*max_port_numbers};
 
       Driver(
+          const std::string& ident,
           int outport,
           int inport,
           const std::vector<RealTimeType>& output_times,
@@ -692,6 +693,7 @@ namespace ERIN
       }
 
     private:
+      std::string ident;
       int outport;
       int inport;
       std::vector<RealTimeType> output_times;
@@ -703,6 +705,7 @@ namespace ERIN
       erin::devs::Port2 port;
       bool is_requesting;
       bool do_report;
+      bool do_debug_print;
 
       void log_flow(const RealTimeType& new_t, const FlowValueType& flow);
   };

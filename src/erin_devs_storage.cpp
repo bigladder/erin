@@ -534,14 +534,15 @@ namespace erin::devs
     ip = update_ip.port;
     report_ir = update_ip.send_update;
     if (got_the_inflow_achieved) {
-      auto inflow_request{ip.get_requested()};
-      if (inflow_achieved > std::min(inflow_request, data.max_charge_rate)) {
+      if (inflow_achieved > std::min(ip.get_requested(), data.max_charge_rate)) {
         report_ir = true;
-        inflow_achieved = std::min(inflow_request, data.max_charge_rate);
+        ip = ip.with_achieved(std::min(ip.get_requested(), data.max_charge_rate)).port;
       }
-      ip = ip.with_achieved(inflow_achieved).port;
+      else {
+        ip = ip.with_achieved(inflow_achieved).port;
+      }
     }
-    auto net_inflow{inflow_achieved - outflow_request};
+    auto net_inflow{ip.get_achieved() - outflow_request};
     auto max_net_inflow{max_single_step_net_inflow(soc, data.capacity)};
     // net-inflow = inflow - outflow; inflow|max = net-inflow|max + outflow
     auto max_inflow{max_net_inflow + op.get_achieved()};

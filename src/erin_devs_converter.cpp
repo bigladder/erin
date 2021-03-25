@@ -343,6 +343,14 @@ namespace erin::devs
           (inflow_achieved > state.inflow_port.get_requested())
           ? state.inflow_port.get_requested()
           : inflow_achieved).port;
+      if (ip_for_comp.get_requested() == ip_for_comp.get_achieved()) {
+        if ((ip.get_requested() > ip.get_achieved()) && (ip.get_requested() > ip_for_comp.get_requested())) {
+          // This is a special-case for when we get both an outflow request and inflow achieved
+          // at the same time; we're trying to detect if the ip_for_comp got what it requested which
+          // would indicate there's no need to keep a flow limit on the port.
+          ip = ip.with_achieved(ip.get_requested()).port;
+        }
+      }
       auto outflow_achieved{
         state.conversion_fun->outflow_given_inflow(
             ip.get_achieved())};

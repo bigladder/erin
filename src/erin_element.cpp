@@ -205,7 +205,7 @@ namespace ERIN
       }
     }
     auto diff{source - load - storage - waste};
-    if (std::abs(diff) > 1e-6) {
+    if (std::abs(diff) > flow_value_tolerance) {
       std::ostringstream oss{};
       oss << "Energy Unbalanced at " << current_time << "\n"
           << "Source : " << source << "\n"
@@ -2624,16 +2624,17 @@ namespace ERIN
   std::string
   Driver::state_to_string(bool is_updated) const
   {
+    const int max_outputs{6};
     std::ostringstream oss{};
-    oss << "- s" << (is_updated ? "*" : " ") << " = {"
+    oss << "- s" << (is_updated ? std::string{"*"} : std::string{" "}) << " = {"
         << ":t " << t
         << " :idx " << idx
         << " :p " << port
         << " :report? " << do_report
         << " :output-time " << ((idx < output_times.size()) ? output_times[idx] : -1)
         << " :output-flow " << ((idx < output_flows.size()) ? output_flows[idx] : -1.0)
-        << " :output_times " << vec_to_string<RealTimeType>(output_times, 6)
-        << " :output_flows " << vec_to_string<FlowValueType>(output_flows, 6)
+        << " :output_times " << vec_to_string<RealTimeType>(output_times, max_outputs)
+        << " :output_flows " << vec_to_string<FlowValueType>(output_flows, max_outputs)
         << "}\n";
     return oss.str();
   }

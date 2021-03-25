@@ -233,7 +233,7 @@ namespace erin::devs
     log.emplace_back(
         TimeStateOutputsV2<S>{TransitionType::InitialState, t_next, s, ys, {}, energy});
     int counter{0};
-    int max_count{1000};
+    const int max_count{1000};
     while ((t_next != infinity) || (t_next_ext != infinity)) {
       ++counter;
       if (counter > max_count) {

@@ -8045,21 +8045,21 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   }
   auto t_max{t};
   auto inflow_driver = new E::Driver{
-    "inflow-driver",
+    "inflow-to-conv",
     E::Driver::outport_outflow_achieved,
     E::Driver::inport_outflow_request,
     inflow_times,
     inflow_achieveds,
     false};
   auto lossflow_driver = new E::Driver{
-    "lossflow-driver",
+    "lossflow-from-conv",
     E::Driver::outport_inflow_request,
     E::Driver::inport_inflow_achieved,
     lossflow_times,
     lossflow_requests,
     true};
   auto outflow_driver = new E::Driver{
-    "outflow-driver",
+    "outflow-from-conv",
     E::Driver::outport_inflow_request,
     E::Driver::inport_inflow_achieved,
     outflow_times,

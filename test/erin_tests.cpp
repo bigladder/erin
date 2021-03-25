@@ -8158,6 +8158,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
 
 TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   namespace E = ERIN;
+  namespace EU = erin::utils;
 
   const int num_inflows{3};
   const int num_outflows{3};
@@ -8265,6 +8266,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   }
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
+  fw->clear();
   ASSERT_EQ(results.size(), static_cast<std::size_t>(num_inflows + num_outflows));
   std::vector<std::vector<E::Datum>> inflow_results(num_inflows);
   std::vector<std::vector<E::Datum>> outflow_results(num_outflows);
@@ -8282,7 +8284,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
     outflow_tss[inport_id] = outflow_drivers[inport_id]->get_times();
     outflow_fss[inport_id] = outflow_drivers[inport_id]->get_flows();
   }
-  fw->clear();
+  E::RealTimeType time{0};
   for (std::size_t idx{0}; idx < inflow_results[0].size(); ++idx) {
     std::ostringstream oss{};
     oss << "idx            : " << idx << "\n";
@@ -8290,14 +8292,44 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
     E::FlowValueType driver_reported_inflow{0.0};
     E::FlowValueType mux_reported_outflow{0.0};
     E::FlowValueType driver_reported_outflow{0.0};
+    time = outflow_results[0][idx].time;
+    oss << "time           : " << time << "\n";
     for (std::size_t outport_id{0}; outport_id < num_outflows; ++outport_id) {
-      mux_reported_outflow += outflow_results[outport_id][idx].achieved_value;
+      ASSERT_EQ(time, outflow_results[outport_id][idx].time) << oss.str();
+      auto mux_outflow{outflow_results[outport_id][idx].achieved_value};
+      mux_reported_outflow += mux_outflow;
+      auto driver_outflow{
+        EU::interpolate_value(
+            time,
+            outflow_tss[outport_id],
+            outflow_fss[outport_id])};
+      driver_reported_outflow += driver_outflow;
+      ASSERT_EQ(mux_reported_outflow, driver_reported_outflow)
+        << oss.str()
+        << "outport_id = " << outport_id << "\n";
     }
+    oss << "mux_reported_outflow = " << mux_reported_outflow << "\n"
+        << "driver_reported_outflow = " << driver_reported_outflow << "\n";
+    ASSERT_EQ(mux_reported_outflow, driver_reported_outflow) << oss.str();
     for (std::size_t inport_id{0}; inport_id < num_inflows; ++inport_id) {
-      mux_reported_inflow += inflow_results[inport_id][idx].achieved_value + 1.5;
+      ASSERT_EQ(time, inflow_results[inport_id][idx].time) << oss.str();
+      auto mux_inflow{inflow_results[inport_id][idx].achieved_value};
+      mux_reported_inflow += mux_inflow;
+      auto driver_inflow{
+        EU::interpolate_value(
+            time,
+            inflow_tss[inport_id],
+            inflow_fss[inport_id])};
+      driver_reported_inflow += driver_inflow;
+      ASSERT_EQ(mux_reported_inflow, driver_reported_inflow)
+        << oss.str()
+        << "inport_id = " << inport_id << "\n";
     }
+    oss << "mux_reported_inflow = " << mux_reported_inflow << "\n"
+        << "driver_reported_inflow = " << driver_reported_inflow << "\n";
+    ASSERT_EQ(mux_reported_inflow, driver_reported_inflow) << oss.str();
     auto error{mux_reported_inflow - mux_reported_outflow};
-    EXPECT_NEAR(error, 0.0, 1e-6) << oss.str();
+    ASSERT_NEAR(error, 0.0, 1e-6) << oss.str();
   }
 }
 

@@ -161,36 +161,6 @@ namespace erin::devs
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs); 
 
-  ConverterState
-  converter_external_transition_on_outflow_request(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType outflow_request);
-
-  ConverterState
-  converter_external_transition_on_inflow_achieved(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType inflow_achieved);
-
-  ConverterState
-  converter_external_transition_on_inflow_and_outflow_achieved(
-      const ConverterState &state,
-      RealTimeType new_time,
-      FlowValueType inflow_achieved,
-      FlowValueType outflow_request);
-
-  ConverterState
-  converter_external_transition_on_lossflow_request(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType lossflow_request);
-
-  LossflowPorts
-  update_lossflow_ports(
-      FlowValueType lossflow_achieved,
-      const Port2& lossflow_port);
-
   ////////////////////////////////////////////////////////////
   // confluent transition
   ConverterState

@@ -313,169 +313,65 @@ namespace erin::devs
           }
       }
     }
-    const auto& t = state.time;
-    auto new_time = t + elapsed_time;
-    ConverterState new_state{
-      new_time,
-      state.inflow_port,
-      state.outflow_port,
-      state.lossflow_port,
-      state.wasteflow_port,
-      state.conversion_fun->clone(),
-      state.report_inflow_request,
-      state.report_outflow_achieved,
-      state.report_lossflow_achieved,
-    };
-    if (got_inflow_achieved_flag && got_outflow_request) {
-      new_state = converter_external_transition_on_inflow_and_outflow_achieved(
-          new_state, new_time, inflow_achieved, outflow_request);
-    }
-    else if (got_inflow_achieved_flag) {
-      new_state = converter_external_transition_on_inflow_achieved(
-          new_state, new_time, inflow_achieved);
-    }
-    else if (got_outflow_request) {
-      new_state = converter_external_transition_on_outflow_request(
-          new_state, new_time, outflow_request);
+    auto new_time = state.time + elapsed_time;
+    bool report_ir{false};
+    auto ip{state.inflow_port};
+    auto op{state.outflow_port};
+    auto lp{state.lossflow_port};
+    auto ip_for_comp{state.inflow_port};
+    auto op_for_comp{state.outflow_port};
+    auto lp_for_comp{state.lossflow_port};
+    auto wp{state.wasteflow_port};
+    if (got_outflow_request) {
+      op_for_comp = state.outflow_port.with_requested(outflow_request).port;
+      op = op.with_requested(outflow_request).port;
+      auto inflow_request{
+        state.conversion_fun->inflow_given_outflow(outflow_request)};
+      ip = ip.with_requested(inflow_request).port;
     }
     if (got_lossflow_request) {
-      new_state = converter_external_transition_on_lossflow_request(
-          new_state, new_time, lossflow_request);
-      auto la{new_state.lossflow_port.get_achieved()};
-      new_state.report_lossflow_achieved = (la != lossflow_request);
+      lp_for_comp = state.lossflow_port.with_requested(lossflow_request).port;
+      lp = lp.with_requested(lossflow_request).port;
     }
-    return new_state;
-  }
-
-  ConverterState
-  converter_external_transition_on_outflow_request(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType outflow_request)
-  {
-    auto inflow_request =
-      state.conversion_fun->inflow_given_outflow(outflow_request);
-    auto op_update = state.outflow_port.with_requested(outflow_request);
-    auto ip_update = state.inflow_port.with_requested(inflow_request);
-    auto lossflow_achieved = ip_update.port.get_achieved() - op_update.port.get_achieved();
-    auto loss_ports = update_lossflow_ports(
-      lossflow_achieved, state.lossflow_port);
+    if (got_inflow_achieved_flag) {
+      report_ir = inflow_achieved > ip.get_requested();
+      ip = ip.with_achieved(
+          report_ir
+          ? ip.get_requested()
+          : inflow_achieved).port;
+      ip_for_comp = state.inflow_port.with_achieved(
+          (inflow_achieved > state.inflow_port.get_requested())
+          ? state.inflow_port.get_requested()
+          : inflow_achieved).port;
+      auto outflow_achieved{
+        state.conversion_fun->outflow_given_inflow(
+            ip.get_achieved())};
+      if (outflow_achieved > op.get_requested()) {
+        op = op.with_achieved(op.get_requested()).port;
+        ip = ip.with_requested(
+            state.conversion_fun->inflow_given_outflow(
+              op.get_requested())).port;
+      }
+      else {
+        op = op.with_achieved(outflow_achieved).port;
+      }
+    }
+    auto lossflow_achieved{ip.get_achieved() - op.get_achieved()};
+    lp = lp.with_achieved(
+        (lossflow_achieved > lp.get_requested())
+        ? lp.get_requested()
+        : lossflow_achieved).port;
+    wp = Port2{lossflow_achieved - lp.get_achieved()};
     return ConverterState{
       new_time,
-      ip_update.port,
-      op_update.port,
-      loss_ports.lossflow_port,
-      loss_ports.wasteflow_port,
+      ip,
+      op,
+      lp,
+      wp,
       state.conversion_fun->clone(),
-      ip_update.send_update,
-      false, // we should never need to update outflow achieved on an outflow request transition
-      loss_ports.report_lossflow_achieved,
-    };
-  }
-  
-  ConverterState
-  converter_external_transition_on_inflow_and_outflow_achieved(
-    const ConverterState& state,
-    RealTimeType new_time,
-    FlowValueType inflow_achieved,
-    FlowValueType outflow_request)
-  {
-    auto sa = converter_external_transition_on_inflow_achieved(
-      state, new_time, inflow_achieved);
-    auto sr = converter_external_transition_on_outflow_request(
-      sa, new_time, outflow_request);
-    return ConverterState{
-      new_time,
-      sr.inflow_port,
-      sr.outflow_port,
-      sr.lossflow_port,
-      sr.wasteflow_port,
-      sr.conversion_fun->clone(),
-      sr.report_inflow_request || sa.report_inflow_request,
-      sr.outflow_port.should_send_achieved(state.outflow_port),
-      sr.lossflow_port.should_send_achieved(state.lossflow_port),
-    };
-  }
-
-  ConverterState
-  converter_external_transition_on_inflow_achieved(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType inflow_achieved)
-  {
-    bool report_ir{false};
-    auto inflow_requested{state.inflow_port.get_requested()};
-    if (inflow_achieved > inflow_requested) {
-      report_ir = true;
-      inflow_achieved = inflow_requested;
-    }
-    auto outflow_achieved =
-      state.conversion_fun->outflow_given_inflow(inflow_achieved);
-    auto outflow_requested{state.outflow_port.get_requested()};
-    if (outflow_achieved > outflow_requested) {
-      // this can happen due to error in the outflow_given_inflow / inflow_given_outflow pairs
-      outflow_achieved = outflow_requested;
-    }
-    auto ip_update = state.inflow_port.with_achieved(inflow_achieved);
-    auto op_update = state.outflow_port.with_achieved(outflow_achieved);
-    auto lossflow_achieved =
-      ip_update.port.get_achieved() - op_update.port.get_achieved();
-    auto loss_ports = update_lossflow_ports(
-      lossflow_achieved, state.lossflow_port);
-    return ConverterState{
-      new_time,
-      ip_update.port,
-      op_update.port,
-      loss_ports.lossflow_port,
-      loss_ports.wasteflow_port,
-      state.conversion_fun->clone(),
-      report_ir,
-      op_update.send_update,
-      loss_ports.report_lossflow_achieved,
-    };
-  }
-
-  ConverterState
-  converter_external_transition_on_lossflow_request(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType lossflow_request)
-  {
-    auto loss_update = state.lossflow_port.with_requested(lossflow_request);
-    auto loss_ports = update_lossflow_ports(
-        state.inflow_port.get_achieved() - state.outflow_port.get_achieved(),
-        loss_update.port);
-    return ConverterState{
-      new_time,
-      state.inflow_port,
-      state.outflow_port,
-      loss_ports.lossflow_port,
-      loss_ports.wasteflow_port,
-      state.conversion_fun->clone(),
-      state.report_inflow_request,
-      state.report_outflow_achieved,
-      loss_ports.report_lossflow_achieved,
-    };
-  }
-
-  LossflowPorts
-  update_lossflow_ports(
-      FlowValueType achieved,
-      const Port2& lossflow_port)
-  {
-    const auto& requested = lossflow_port.get_requested();
-    auto waste = achieved - requested;
-    auto achieved_lossflow{requested};
-    if (requested >= achieved) {
-      waste = 0.0;
-      achieved_lossflow = achieved;
-    }
-    auto lossflow_update = lossflow_port.with_achieved(achieved_lossflow);
-    return LossflowPorts{
-      lossflow_update.send_update,
-      lossflow_update.port,
-      Port2{waste},
-    };
+      report_ir || ip.should_send_request(ip_for_comp),
+      op.should_send_achieved(op_for_comp),
+      lp.should_send_achieved(lp_for_comp)};
   }
 
   ConverterState

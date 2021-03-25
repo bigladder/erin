@@ -8181,40 +8181,42 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);
 
-  // inflow and outflow from viewpoint of the drivers
-  std::vector<std::vector<E::RealTimeType>> inflow_times(num_inflows);
-  std::vector<std::vector<E::FlowValueType>> inflow_requests(num_inflows);
+  // inflow and outflow from viewpoint of the mux component
   std::vector<std::vector<E::RealTimeType>> outflow_times(num_outflows);
-  std::vector<std::vector<E::FlowValueType>> outflow_achieveds(num_outflows);
+  std::vector<std::vector<E::FlowValueType>> outflow_requests(num_outflows);
+  std::vector<std::vector<E::RealTimeType>> inflow_times(num_inflows);
+  std::vector<std::vector<E::FlowValueType>> inflow_achieveds(num_inflows);
   std::size_t num_events{100};
   E::RealTimeType t{0};
   for (std::size_t outport_id{0}; outport_id < static_cast<std::size_t>(num_outflows); ++outport_id) {
     for (std::size_t idx{0}; idx < num_events; ++idx) {
       t += static_cast<E::RealTimeType>(dt_dist(generator));
-      inflow_times[outport_id].emplace_back(t);
-      inflow_requests[outport_id].emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+      outflow_times[outport_id].emplace_back(t);
+      outflow_requests[outport_id].emplace_back(
+          static_cast<E::FlowValueType>(flow_dist(generator)));
     }
   }
   E::RealTimeType t1{0};
   for (std::size_t inport_id{0}; inport_id < static_cast<std::size_t>(num_inflows); ++inport_id) {
     for (std::size_t idx{0}; idx < num_events; ++idx) {
       t1 += static_cast<E::RealTimeType>(dt_dist(generator));
-      outflow_times[inport_id].emplace_back(t1);
-      outflow_achieveds[inport_id].emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+      inflow_times[inport_id].emplace_back(t1);
+      inflow_achieveds[inport_id].emplace_back(
+          static_cast<E::FlowValueType>(flow_dist(generator)));
     }
   }
   auto t_max{std::max(t, t1)};
   adevs::Digraph<E::FlowValueType, E::Time> network;
-  std::vector<E::Driver*> inflow_drivers{};
+  std::vector<E::Driver*> outflow_drivers{};
   for (std::size_t outport_id{0}; outport_id < num_outflows; ++outport_id) {
     auto d = new E::Driver{
-      "outport-driver(" + std::to_string(outport_id) + ")",
+      "outflow-from-mux(" + std::to_string(outport_id) + ")",
       E::Driver::outport_inflow_request,
       E::Driver::inport_inflow_achieved,
-      inflow_times[outport_id],
-      inflow_requests[outport_id],
+      outflow_times[outport_id],
+      outflow_requests[outport_id],
       true};
-    inflow_drivers.emplace_back(d);
+    outflow_drivers.emplace_back(d);
     network.couple(
         d, E::Driver::outport_inflow_request,
         c, E::Driver::inport_outflow_request + outport_id);
@@ -8222,16 +8224,16 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
         c, E::Driver::outport_outflow_achieved + outport_id,
         d, E::Driver::inport_inflow_achieved);
   }
-  std::vector<E::Driver*> outflow_drivers{};
+  std::vector<E::Driver*> inflow_drivers{};
   for (std::size_t inport_id{0}; inport_id < num_inflows; ++inport_id) {
     auto d = new E::Driver{
-      "inport-driver(" + std::to_string(inport_id) + ")",
+      "inflow-to-mux(" + std::to_string(inport_id) + ")",
       E::Driver::outport_outflow_achieved,
       E::Driver::inport_outflow_request,
-      outflow_times[inport_id],
-      outflow_achieveds[inport_id],
-      true};
-    outflow_drivers.emplace_back(d);
+      inflow_times[inport_id],
+      inflow_achieveds[inport_id],
+      false};
+    inflow_drivers.emplace_back(d);
     network.couple(
         c, E::Driver::outport_inflow_request + inport_id,
         d, E::Driver::inport_outflow_request);
@@ -8270,22 +8272,22 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   ASSERT_EQ(results.size(), static_cast<std::size_t>(num_inflows + num_outflows));
   std::vector<std::vector<E::Datum>> inflow_results(num_inflows);
   std::vector<std::vector<E::Datum>> outflow_results(num_outflows);
-  std::vector<std::vector<E::RealTimeType>> inflow_tss(num_outflows);
-  std::vector<std::vector<E::FlowValueType>> inflow_fss(num_outflows);
-  std::vector<std::vector<E::RealTimeType>> outflow_tss(num_inflows);
-  std::vector<std::vector<E::FlowValueType>> outflow_fss(num_inflows);
+  std::vector<std::vector<E::RealTimeType>> inflow_tss(num_inflows);
+  std::vector<std::vector<E::FlowValueType>> inflow_fss(num_inflows);
+  std::vector<std::vector<E::RealTimeType>> outflow_tss(num_outflows);
+  std::vector<std::vector<E::FlowValueType>> outflow_fss(num_outflows);
   for (std::size_t outport_id{0}; outport_id < num_outflows; ++outport_id) {
     outflow_results[outport_id] = results[id + "-outflow(" + std::to_string(outport_id) + ")"];
-    inflow_tss[outport_id] = inflow_drivers[outport_id]->get_times();
-    inflow_fss[outport_id] = inflow_drivers[outport_id]->get_flows();
+    outflow_tss[outport_id] = outflow_drivers[outport_id]->get_times();
+    outflow_fss[outport_id] = outflow_drivers[outport_id]->get_flows();
   }
   for (std::size_t inport_id{0}; inport_id < num_inflows; ++inport_id) {
     inflow_results[inport_id] = results[id + "-inflow(" + std::to_string(inport_id) + ")"];
-    outflow_tss[inport_id] = outflow_drivers[inport_id]->get_times();
-    outflow_fss[inport_id] = outflow_drivers[inport_id]->get_flows();
+    inflow_tss[inport_id] = inflow_drivers[inport_id]->get_times();
+    inflow_fss[inport_id] = inflow_drivers[inport_id]->get_flows();
   }
   E::RealTimeType time{0};
-  for (std::size_t idx{0}; idx < inflow_results[0].size(); ++idx) {
+  for (std::size_t idx{0}; idx < (inflow_results[0].size() - 1); ++idx) {
     std::ostringstream oss{};
     oss << "idx            : " << idx << "\n";
     E::FlowValueType mux_reported_inflow{0.0};
@@ -8304,9 +8306,11 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
             outflow_tss[outport_id],
             outflow_fss[outport_id])};
       driver_reported_outflow += driver_outflow;
-      ASSERT_EQ(mux_reported_outflow, driver_reported_outflow)
+      ASSERT_EQ(mux_outflow, driver_outflow)
         << oss.str()
-        << "outport_id = " << outport_id << "\n";
+        << "outport_id = " << outport_id << "\n"
+        << "mux_outflow = " << mux_outflow << "\n"
+        << "driver_outflow = " << driver_outflow << "\n";
     }
     oss << "mux_reported_outflow = " << mux_reported_outflow << "\n"
         << "driver_reported_outflow = " << driver_reported_outflow << "\n";
@@ -8321,9 +8325,11 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
             inflow_tss[inport_id],
             inflow_fss[inport_id])};
       driver_reported_inflow += driver_inflow;
-      ASSERT_EQ(mux_reported_inflow, driver_reported_inflow)
+      ASSERT_EQ(mux_inflow, driver_inflow)
         << oss.str()
-        << "inport_id = " << inport_id << "\n";
+        << "inport_id = " << inport_id << "\n"
+        << "mux_inflow = " << mux_inflow << "\n"
+        << "driver_inflow = " << driver_inflow << "\n";
     }
     oss << "mux_reported_inflow = " << mux_reported_inflow << "\n"
         << "driver_reported_inflow = " << driver_reported_inflow << "\n";

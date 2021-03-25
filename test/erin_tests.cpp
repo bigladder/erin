@@ -8163,6 +8163,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   const int num_inflows{3};
   const int num_outflows{3};
   const auto output_dispatch_strategy = E::MuxerDispatchStrategy::InOrder;
+  const std::size_t num_events{100};
 
   std::string id{"mux"};
   std::string stream{"electricity"};
@@ -8186,9 +8187,9 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   std::vector<std::vector<E::FlowValueType>> outflow_requests(num_outflows);
   std::vector<std::vector<E::RealTimeType>> inflow_times(num_inflows);
   std::vector<std::vector<E::FlowValueType>> inflow_achieveds(num_inflows);
-  std::size_t num_events{100};
   E::RealTimeType t{0};
   for (std::size_t outport_id{0}; outport_id < static_cast<std::size_t>(num_outflows); ++outport_id) {
+    t = 0;
     for (std::size_t idx{0}; idx < num_events; ++idx) {
       t += static_cast<E::RealTimeType>(dt_dist(generator));
       outflow_times[outport_id].emplace_back(t);
@@ -8198,6 +8199,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   }
   E::RealTimeType t1{0};
   for (std::size_t inport_id{0}; inport_id < static_cast<std::size_t>(num_inflows); ++inport_id) {
+    t1 = 0;
     for (std::size_t idx{0}; idx < num_events; ++idx) {
       t1 += static_cast<E::RealTimeType>(dt_dist(generator));
       inflow_times[inport_id].emplace_back(t1);

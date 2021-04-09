@@ -2535,9 +2535,11 @@ namespace ERIN
                 << state_to_string(false);
       do_debug_print = false;
     }
+    auto prior_port = port;
     delta_int();
     delta_ext(Time{0,0}, xs);
-    if constexpr (debug_level >= debug_level_medium) {
+    do_report = do_report || (!is_requesting && port.should_send_achieved(prior_port));
+    if constexpr (debug_level >= debug_level_low) {
       std::cout << state_to_string(true);
       do_debug_print = true;
     }

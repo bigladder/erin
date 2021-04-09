@@ -8341,6 +8341,189 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   }
 }
 
+TEST(ErinBasicsTest, Test_new_port_scheme) {
+  /* TODO:
+   * STRATEGY:
+   * 1. demonstrate there is a problem using Port2.
+   * 2. create a Port3 that demonstrates a fix.
+   * 3. move all objects from Port2 to Port3 and reasses.
+   */
+  namespace ED = erin::devs;
+
+  constexpr std::size_t num_events{10'000};
+  constexpr double efficiency{0.5};
+  constexpr int flow_max{100};
+
+  std::default_random_engine generator{};
+  std::uniform_int_distribution<int> flow_dist(0, flow_max);
+
+  auto pout = ED::Port2{};
+  auto ploss = ED::Port2{};
+  auto pwaste = ED::Port2{};
+  auto pin = ED::Port2{};
+  auto outflow = ED::Port2{};
+  auto inflow = ED::Port2{};
+  auto lossflow = ED::Port2{};
+
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    double max_inflow{static_cast<ED::FlowValueType>(flow_dist(generator))};
+    double outflow_req{static_cast<ED::FlowValueType>(flow_dist(generator))};
+    double lossflow_req{static_cast<ED::FlowValueType>(flow_dist(generator))};
+    auto outflow_update = outflow.with_requested(outflow_req);
+    outflow = outflow_update.port;
+    auto lossflow_update = lossflow.with_requested(lossflow_req);
+    lossflow = lossflow_update.port;
+    auto inflow_update = inflow.with_achieved(std::min(max_inflow, inflow.get_requested()));
+    inflow = inflow_update.port;
+    while (outflow_update.send_update || lossflow_update.send_update || inflow_update.send_update) {
+      bool resend_inflow_request{false};
+      if (lossflow_update.send_update) {
+        ploss = ploss.with_requested(lossflow.get_requested()).port;
+      }
+      if (inflow_update.send_update) {
+        pin = pin.with_achieved(std::min(inflow.get_achieved(), pin.get_requested())).port;
+        resend_inflow_request = false; // pin.get_achieved() != inflow.get_achieved();
+      }
+      if (outflow_update.send_update) {
+        pout = pout.with_requested(outflow.get_requested()).port;
+      }
+      auto pin_update = pin.with_requested(pout.get_requested() / efficiency);
+      pin = pin_update.port;
+      auto pout_update = pout.with_achieved(std::min(pout.get_requested(), pin.get_achieved() * efficiency));
+      pout = pout_update.port;
+      auto total_lossflow{pin.get_achieved() - pout.get_achieved()};
+      auto ploss_update = ploss.with_achieved(std::min(ploss.get_requested(), total_lossflow));
+      ploss = ploss_update.port;
+      pwaste = ED::Port2{ total_lossflow - ploss.get_achieved(), total_lossflow - ploss.get_achieved() };
+      if (pin_update.send_update || resend_inflow_request) {
+        inflow = inflow.with_requested(pin.get_requested()).port;
+        inflow_update = inflow.with_achieved(std::min(max_inflow, inflow.get_requested()));
+      }
+      else {
+        inflow_update.port = inflow;
+        inflow_update.send_update = false;
+      }
+      if (ploss_update.send_update) {
+        lossflow = lossflow.with_achieved(std::min(ploss.get_achieved(), lossflow.get_requested())).port;
+        lossflow_update.port = lossflow;
+        lossflow_update.send_update = lossflow.get_requested() != lossflow_req;
+      }
+      else {
+        lossflow_update.port = lossflow;
+        lossflow_update.send_update = false;
+      }
+      if (pout_update.send_update) {
+        outflow = outflow.with_achieved(std::min(pout.get_achieved(), outflow.get_requested())).port;
+        outflow_update.port = outflow;
+        outflow_update.send_update = outflow.get_requested() != outflow_req;
+      }
+      else {
+        outflow_update.port = outflow;
+        outflow_update.send_update = false;
+      }
+      auto energy_balance{
+        pin.get_achieved()
+        - (pout.get_achieved() + ploss.get_achieved() + pwaste.get_achieved())};
+      ASSERT_NEAR(energy_balance, 0.0, 1e-6)
+        << "energy_balance: " << energy_balance << "\n"
+        << "pin: " << pin << "\n"
+        << "pout: " << pout << "\n"
+        << "ploss: " << ploss << "\n"
+        << "pwaste: " << pwaste << "\n";
+    }
+    ASSERT_EQ(outflow.get_requested(), pout.get_requested());
+    ASSERT_EQ(inflow.get_requested(), pin.get_requested());
+    ASSERT_EQ(lossflow.get_requested(), ploss.get_requested());
+    ASSERT_EQ(outflow.get_achieved(), pout.get_achieved());
+    ASSERT_EQ(inflow.get_achieved(), pin.get_achieved());
+    ASSERT_EQ(lossflow.get_achieved(), ploss.get_achieved());
+    auto energy_balance_v2{
+      inflow.get_achieved()
+      - (outflow.get_achieved() + lossflow.get_achieved() + pwaste.get_achieved())};
+    ASSERT_NEAR(energy_balance_v2, 0.0, 1e-6)
+      << "energy_balance_v2: " << energy_balance_v2 << "\n"
+      << "inflow: " << inflow << "\n"
+      << "outflow: " << outflow << "\n"
+      << "lossflow: " << lossflow << "\n"
+      << "pwaste: " << pwaste << "\n";
+  }
+}
+
+TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
+  /* TODO:
+   * STRATEGY:
+   * 1. demonstrate there is a problem using Port2.
+   * 2. create a Port3 that demonstrates a fix.
+   * 3. move all objects from Port2 to Port3 and reasses.
+   */
+  namespace ED = erin::devs;
+
+  constexpr std::size_t num_events{10'000};
+  constexpr int flow_max{100};
+
+  std::default_random_engine generator{};
+  std::uniform_int_distribution<int> flow_dist(0, flow_max);
+
+  auto pout = ED::Port2{};
+  auto pin = ED::Port2{};
+  auto outflow = ED::Port2{};
+  auto inflow = ED::Port2{};
+
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    double max_inflow{static_cast<ED::FlowValueType>(flow_dist(generator))};
+    double outflow_req{static_cast<ED::FlowValueType>(flow_dist(generator))};
+    auto outflow_update = outflow.with_requested(outflow_req);
+    outflow = outflow_update.port;
+    auto inflow_update = inflow.with_achieved(std::min(max_inflow, inflow.get_requested()));
+    inflow = inflow_update.port;
+    while (outflow_update.send_update || inflow_update.send_update) {
+      bool resend_inflow_request{false};
+      if (inflow_update.send_update) {
+        pin = pin.with_achieved(std::min(inflow.get_achieved(), pin.get_requested())).port;
+        resend_inflow_request = false; // pin.get_achieved() != inflow.get_achieved();
+      }
+      if (outflow_update.send_update) {
+        pout = pout.with_requested(outflow.get_requested()).port;
+      }
+      auto pin_update = pin.with_requested(pout.get_requested());
+      pin = pin_update.port;
+      auto pout_update = pout.with_achieved(std::min(pout.get_requested(), pin.get_achieved()));
+      pout = pout_update.port;
+      if (pin_update.send_update || resend_inflow_request) {
+        inflow = inflow.with_requested(pin.get_requested()).port;
+        inflow_update = inflow.with_achieved(std::min(max_inflow, inflow.get_requested()));
+      }
+      else {
+        inflow_update.port = inflow;
+        inflow_update.send_update = false;
+      }
+      if (pout_update.send_update) {
+        outflow = outflow.with_achieved(std::min(pout.get_achieved(), outflow.get_requested())).port;
+        outflow_update.port = outflow;
+        outflow_update.send_update = outflow.get_requested() != outflow_req;
+      }
+      else {
+        outflow_update.port = outflow;
+        outflow_update.send_update = false;
+      }
+      auto energy_balance{pin.get_achieved() - pout.get_achieved()};
+      ASSERT_NEAR(energy_balance, 0.0, 1e-6)
+        << "energy_balance: " << energy_balance << "\n"
+        << "pin: " << pin << "\n"
+        << "pout: " << pout << "\n";
+    }
+    ASSERT_EQ(outflow.get_requested(), pout.get_requested());
+    ASSERT_EQ(inflow.get_requested(), pin.get_requested());
+    ASSERT_EQ(outflow.get_achieved(), pout.get_achieved());
+    ASSERT_EQ(inflow.get_achieved(), pin.get_achieved());
+    auto energy_balance_v2{inflow.get_achieved() - outflow.get_achieved()};
+    ASSERT_NEAR(energy_balance_v2, 0.0, 1e-6)
+      << "energy_balance_v2: " << energy_balance_v2 << "\n"
+      << "inflow: " << inflow << "\n"
+      << "outflow: " << outflow << "\n";
+  }
+}
+
 int
 main(int argc, char **argv)
 {

@@ -314,6 +314,108 @@ namespace erin::devs
               << ", port=" << p.port << "}";
   }
 
+  ////////////////////////////////////////////////////////////
+  // Port3
+  Port3::Port3():
+    Port3(0.0, 0.0)
+  {
+  }
+
+  Port3::Port3(FlowValueType r):
+    Port3(r, 0.0)
+  {
+  }
+
+  Port3::Port3(
+      FlowValueType r,
+      FlowValueType a
+  ):
+    requested{r},
+    achieved{a}
+  {
+    if (requested < 0.0) {
+      std::ostringstream oss{};
+      oss << "requested flow is negative! Negative flows are not allowed\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if (achieved < 0.0) {
+      std::ostringstream oss{};
+      oss << "achieved flow is negative! Negative flows are not allowed\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if (achieved > requested) {
+      achieved = requested;
+    }
+  }
+
+  PortUpdate3
+  Port3::with_requested(FlowValueType r) const
+  {
+    return PortUpdate3{
+      Port3{r, achieved},
+      r != requested,
+      false
+    };
+  }
+
+  PortUpdate3
+  Port3::with_achieved(FlowValueType a) const
+  {
+    return PortUpdate3{
+      Port3{requested, a},
+      std::min(a, requested) != achieved,
+      a > requested
+    };
+  }
+
+  bool
+  operator==(const Port3& a, const Port3& b)
+  {
+    return (a.achieved == b.achieved) && (a.requested == b.requested);
+  }
+
+  bool
+  operator!=(const Port3& a, const Port3& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const Port3& p)
+  {
+    return os << "{:r " << p.requested << ", :a " << p.achieved << "}";
+  }
+
+  bool
+  operator==(const PortUpdate3& a, const PortUpdate3& b)
+  {
+    return (a.port == b.port)
+      && (a.send_update == b.send_update)
+      && (a.rerequest == b.rerequest);
+  }
+
+  bool
+  operator!=(const PortUpdate3& a, const PortUpdate3& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const PortUpdate3& p)
+  {
+    return os << "{"
+              << ":send-update? " << p.send_update
+              << " "
+              << ":re-request? " << p.rerequest
+              << " "
+              << ":p " << p.port
+              << "}";
+  }
+
   // Helper Functions
   // TODO: rename got_inflow_achieved as it shadows many local variables in external_transitions
   bool

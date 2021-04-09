@@ -467,9 +467,11 @@ namespace erin::devs
         the_total_inflow_achieved);
     for (st idx{0}; idx < static_cast<st>(state.num_outflows); idx++) {
       new_ops[idx] = op_updates[idx].port;
+      auto achieved_changed{
+        state.outflow_ports[idx].get_achieved() != new_ops[idx].get_achieved()};
       report_oas[idx] =
         op_updates[idx].send_update
-        || new_ops[idx].should_send_achieved(state.outflow_ports[idx]);
+        || achieved_changed;
     }
     return MuxState{
       time,

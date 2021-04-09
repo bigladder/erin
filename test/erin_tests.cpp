@@ -4790,10 +4790,17 @@ TEST(ErinDevs, Test_function_based_mux)
   EXPECT_EQ(dt1, 0);
   auto ys1 = ED::mux_output_function(s1);
   std::vector<ED::PortValue> expected_ys1{
-    ED::PortValue{ED::outport_inflow_request + 0, 100.0}};
+    ED::PortValue{ED::outport_inflow_request + 0, 100.0},
+    ED::PortValue{ED::outport_outflow_achieved + 0, 100.0}
+  };
   EXPECT_TRUE(
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
-        ys1, expected_ys1, compare_ports));
+        ys1, expected_ys1, compare_ports))
+    << "s0: " << s0 << "\n"
+    << "xs0: " << ERIN::vec_to_string<ED::PortValue>(xs0) << "\n"
+    << "s1: " << s1 << "\n"
+    << "ys1: " << ERIN::vec_to_string<ED::PortValue>(ys1) << "\n"
+    << "expected_ys1: " << ERIN::vec_to_string<ED::PortValue>(expected_ys1) << "\n";
   auto s2 = ED::mux_internal_transition(s1);
   EXPECT_EQ(ED::mux_current_time(s2), 10);
   auto dt2 = ED::mux_time_advance(s2);

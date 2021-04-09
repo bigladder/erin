@@ -238,11 +238,14 @@ namespace erin::devs
     bool report_oa{false};
     if (state.state) {
       if (got_inflow_achieved) {
+        if (inflow_achieved > ip.get_requested()) {
+          report_ir = true;
+          inflow_achieved = ip.get_requested();
+        }
         auto update_ip = ip.with_achieved(inflow_achieved);
         auto update_op = op.with_achieved(update_ip.port.get_achieved());
         ip = update_ip.port;
         op = update_op.port;
-        report_ir = false;
         report_oa = update_op.send_update;
       }
       if (got_outflow_request) {
@@ -250,7 +253,7 @@ namespace erin::devs
         auto update_ip = ip.with_requested(outflow_request);
         op = update_op.port;
         ip = update_ip.port;
-        report_ir = update_ip.send_update;
+        report_ir = report_ir || update_ip.send_update;
         report_oa =
             (state.outflow_port.get_achieved() != op.get_achieved())
             && (op.get_requested() != op.get_achieved());

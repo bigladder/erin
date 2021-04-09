@@ -458,13 +458,13 @@ namespace erin::devs
       new_ips[idx] = ip_updates[idx].port;
       report_irs[idx] = report_irs[idx] || ip_updates[idx].send_update;
     }
-    FlowValueType total_inflow_achieved = std::accumulate(
+    FlowValueType the_total_inflow_achieved = std::accumulate(
         new_ips.begin(), new_ips.end(), 0.0,
         [](const auto& s, const auto& p) { return s + p.get_achieved(); });
     auto op_updates = distribute_inflow_to_outflow(
         state.outflow_strategy,
         new_ops,
-        total_inflow_achieved);
+        the_total_inflow_achieved);
     for (st idx{0}; idx < static_cast<st>(state.num_outflows); idx++) {
       new_ops[idx] = op_updates[idx].port;
       report_oas[idx] = op_updates[idx].send_update;

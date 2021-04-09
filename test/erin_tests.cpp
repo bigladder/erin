@@ -5628,6 +5628,7 @@ TEST(ErinBasicsTest, Test_port_role_to_and_from_string_roundtrip)
   }
 }
 
+/*
 TEST(ErinBasicsTest, Test_energy_balance_on_devs_mux)
 {
   namespace ED = erin::devs;
@@ -5882,6 +5883,7 @@ TEST(ErinBasicsTest, Test_energy_balance_on_mux_with_replay)
   auto dt4 = ED::mux_time_advance(s4);
   ASSERT_EQ(dt4, 0);
 }
+*/
 
 TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
 {
@@ -7997,7 +7999,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
 
   bool do_rounding{false};
   E::FlowValueType constant_efficiency{0.4};
-  std::size_t num_events{1000};
+  std::size_t num_events{10000};
 
   auto calc_output_from_input = [constant_efficiency, do_rounding](E::FlowValueType inflow) -> E::FlowValueType {
     auto out{inflow * constant_efficiency};
@@ -8170,7 +8172,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   const int num_inflows{3};
   const int num_outflows{3};
   const auto output_dispatch_strategy = E::MuxerDispatchStrategy::InOrder;
-  const std::size_t num_events{100};
+  const std::size_t num_events{1000};
 
   std::string id{"mux"};
   std::string stream{"electricity"};

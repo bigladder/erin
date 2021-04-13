@@ -61,7 +61,7 @@ namespace erin::devs
   LoadState
   make_load_state()
   {
-    return LoadState{0, -1, Port2{}};
+    return LoadState{0, -1, Port3{}, false};
   }
 
   RealTimeType
@@ -95,14 +95,23 @@ namespace erin::devs
   std::ostream&
   operator<<(std::ostream& os, const LoadState& s)
   {
-    return os << "{:t " << s.time
-              << " :idx " << s.current_index
-              << " :inflow-port " << s.inflow_port << "}";
+    return os << "{"
+              << ":t " << s.time
+              << " "
+              << ":idx " << s.current_index
+              << " "
+              << ":inflow-port " << s.inflow_port
+              << " "
+              << ":resend-request? " << s.resend_request
+              << "}";
   }
 
   RealTimeType
   load_time_advance(const LoadData& data, const LoadState& state)
   {
+    if (state.resend_request) {
+      return 0;
+    }
     auto next_time = load_next_time(data, state);
     if (next_time == infinity) {
       return infinity;
@@ -113,6 +122,14 @@ namespace erin::devs
   LoadState
   load_internal_transition(const LoadData& data, const LoadState& state)
   {
+    if (state.resend_request) {
+      return LoadState{
+        state.time,
+        state.current_index,
+        state.inflow_port,
+        false,
+      };
+    }
     auto max_idx = data.number_of_loads - 1;
     if (state.current_index >= max_idx) {
       return state;
@@ -124,7 +141,9 @@ namespace erin::devs
     return LoadState{
       next_time,
       next_idx,
-      update.port};
+      update.port,
+      false,
+    };
   }
 
   LoadState
@@ -154,7 +173,9 @@ namespace erin::devs
     return LoadState{
       new_time,
       state.current_index,
-      update.port};
+      update.port,
+      update.send_request,
+    };
   }
 
   LoadState
@@ -183,14 +204,22 @@ namespace erin::devs
       const LoadState& state,
       std::vector<PortValue>& ys)
   {
-    auto next_state = load_internal_transition(data, state);
-    auto max_idx{data.number_of_loads - 1};
-    if (next_state.current_index <= max_idx) {
-      if (next_state.inflow_port.should_send_request(state.inflow_port)) {
-        ys.emplace_back(
-            PortValue{
-              outport_inflow_request,
-              next_state.inflow_port.get_requested()});
+    if (state.resend_request) {
+      ys.emplace_back(
+          PortValue{
+            outport_inflow_request,
+            state.inflow_port.get_requested()});
+    }
+    else {
+      auto next_state = load_internal_transition(data, state);
+      auto max_idx{data.number_of_loads - 1};
+      if (next_state.current_index <= max_idx) {
+        if (next_state.inflow_port.should_send_request(state.inflow_port)) {
+          ys.emplace_back(
+              PortValue{
+                outport_inflow_request,
+                next_state.inflow_port.get_requested()});
+        }
       }
     }
   }

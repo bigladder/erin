@@ -130,6 +130,8 @@ namespace erin::devs
       [[nodiscard]] PortUpdate3 with_requested_and_achieved(
           FlowValueType r,
           FlowValueType a) const;
+      [[nodiscard]] bool should_send_request(const Port3& previous) const;
+      [[nodiscard]] bool should_send_achieved(const Port3& previous) const;
 
       friend bool operator==(const Port3& a, const Port3& b);
       friend std::ostream& operator<<(std::ostream& os, const Port3& p);

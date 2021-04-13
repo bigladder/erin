@@ -392,6 +392,18 @@ namespace erin::devs
   }
 
   bool
+  Port3::should_send_request(const Port3& previous) const
+  {
+    return previous.with_requested(requested).send_request;
+  }
+
+  bool
+  Port3::should_send_achieved(const Port3& previous) const
+  {
+    return previous.with_requested_and_achieved(requested, achieved).send_achieved;
+  }
+
+  bool
   operator==(const Port3& a, const Port3& b)
   {
     return (a.achieved == b.achieved) && (a.requested == b.requested);

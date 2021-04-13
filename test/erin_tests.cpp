@@ -219,7 +219,7 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
   ASSERT_TRUE(
       check_times_and_loads(results, expected_time, expected_flow, sink_id));
   ASSERT_TRUE(
-      check_times_and_loads(results, expected_time, expected_flow, limit_id + "-outflow"));
+      check_times_and_loads(results, expected_time, expected_flow, limit_id));
 }
 
 TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)

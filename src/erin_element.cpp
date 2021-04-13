@@ -2762,7 +2762,7 @@ namespace ERIN
     if (flow_writer && record_history) {
       if (outflow_element_id == -1) {
         outflow_element_id = flow_writer->register_id(
-            get_id() + "-outflow",
+            get_id(),
             get_outflow_type(),
             get_component_type(),
             PortRole::SourceOutflow,

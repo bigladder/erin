@@ -386,8 +386,8 @@ namespace erin::devs
     auto update_a = update_r.port.with_achieved(a);
     return PortUpdate3{
       update_a.port,
-      update_r.send_request || update_a.send_request,
-      update_a.send_achieved,
+      update_r.send_request || update_a.send_request, // send_request
+      update_a.send_achieved,                         // send_achieved
     };
   }
 

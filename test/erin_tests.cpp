@@ -177,7 +177,6 @@ TEST(ErinBasicsTest, FlowState)
   EXPECT_EQ(fs.get_lossflow(), 10.0);
 }
 
-/*
 TEST(ErinBasicsTest, CanRunPowerLimitedSink)
 {
   namespace E = ERIN;
@@ -186,7 +185,7 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
   std::vector<E::FlowValueType> expected_flow = {50, 50, 40, 0, 0};
   std::string elec{"electrical"};
   std::string limit_id{"lim"};
-  auto lim = new E::FlowLimits(limit_id, E::ComponentType::Source, elec, 0, 50);
+  auto lim = new E::Source(limit_id, E::ComponentType::Source, elec, 50);
   std::string sink_id{"load"};
   auto sink = new E::Sink(
       sink_id,
@@ -211,17 +210,17 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
       sink, E::Sink::inport_inflow_achieved);
   adevs::Simulator<E::PortValue, E::Time> sim;
   network.add(&sim);
-  while (sim.next_event_time() < E::inf)
+  while (sim.next_event_time() < E::inf) {
     sim.exec_next_event();
+  }
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
   fw->clear();
   ASSERT_TRUE(
       check_times_and_loads(results, expected_time, expected_flow, sink_id));
   ASSERT_TRUE(
-      check_times_and_loads(results, expected_time, expected_flow, limit_id));
+      check_times_and_loads(results, expected_time, expected_flow, limit_id + "-outflow"));
 }
-*/
 
 TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
 {

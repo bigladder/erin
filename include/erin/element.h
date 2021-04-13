@@ -733,6 +733,9 @@ namespace ERIN
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
 
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
       [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
         return get_outflow_type();
       };

@@ -67,9 +67,8 @@ namespace erin::devs
   SupplyState
   supply_internal_transition(const SupplyState& state)
   {
-    auto dt = supply_time_advance(state);
     return SupplyState{
-      state.time + dt,
+      state.time,
       state.outflow_port,
       false,
     };

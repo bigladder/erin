@@ -354,8 +354,8 @@ namespace erin::devs
   {
     return PortUpdate3{
       Port3{r, achieved},
-      r != requested,
-      false,
+      r != requested,       // send_request
+      false,                // send_achieved
     };
   }
 
@@ -364,8 +364,8 @@ namespace erin::devs
   {
     return PortUpdate3{
       Port3{requested, a},
-      (a <= requested) && (a != achieved),
-      a > requested,
+      a > requested,        // send_request
+      a != achieved,        // send_achieved
     };
   }
 
@@ -376,6 +376,20 @@ namespace erin::devs
   {
     auto p = with_requested(r).port;
     return p.with_achieved(std::min(r, available));
+  }
+
+  PortUpdate3
+  Port3::with_requested_and_achieved(
+          FlowValueType r,
+          FlowValueType a) const
+  {
+    auto update_r = with_requested(r);
+    auto update_a = update_r.port.with_achieved(a);
+    return PortUpdate3{
+      update_a.port,
+      update_r.send_request || update_a.send_request,
+      update_a.send_achieved,
+    };
   }
 
   bool
@@ -400,8 +414,8 @@ namespace erin::devs
   operator==(const PortUpdate3& a, const PortUpdate3& b)
   {
     return (a.port == b.port)
-      && (a.propagate == b.propagate)
-      && (a.back_propagate == b.back_propagate);
+      && (a.send_request == b.send_request)
+      && (a.send_achieved == b.send_achieved);
   }
 
   bool
@@ -416,9 +430,9 @@ namespace erin::devs
     return os << "{"
               << ":p " << p.port
               << " "
-              << ":propagate? " << p.propagate
+              << ":send-request? " << p.send_request
               << " "
-              << ":back-propagate? " << p.back_propagate
+              << ":send-achieved? " << p.send_achieved
               << "}";
   }
 

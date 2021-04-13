@@ -8368,8 +8368,8 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_achieved(a);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
-    true,
     false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   r = 20.0;
@@ -8402,7 +8402,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_achieved(a);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
-    false,
+    true,
     true,
   };
   ASSERT_EQ(update, expected_update);
@@ -8411,8 +8411,8 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_achieved(a);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
-    true,
     false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   r = 20.0;
@@ -8429,8 +8429,8 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_achieved(a);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
-    true,
     false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   a = 20.0;
@@ -8438,8 +8438,8 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_achieved(a);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
-    true,
     false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   r = 8.0;
@@ -8456,7 +8456,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_achieved(a);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
-    false,
+    true,
     true,
   };
   ASSERT_EQ(update, expected_update);
@@ -8465,8 +8465,8 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_achieved(a);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
-    true,
     false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   r = 10.0;
@@ -8474,8 +8474,8 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_requested_and_available(r, available);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, r},
-    true,
     false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   r = 50.0;
@@ -8483,8 +8483,8 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_requested_and_available(r, available);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, available},
-    true,
     false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   r = 40.0;
@@ -8493,6 +8493,25 @@ TEST(ErinBasicsTest, Test_Port3) {
   expected_update = ED::PortUpdate3{
     ED::Port3{r, r},
     false,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  r = 30.0;
+  a = 35.0;
+  p = update.port;
+  update = p.with_requested_and_achieved(r, a);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, a},
+    true,
+    true,
+  };
+  ASSERT_EQ(update, expected_update);
+  r = 35.0;
+  p = update.port;
+  update = p.with_requested(r);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, a},
+    true,
     false,
   };
   ASSERT_EQ(update, expected_update);
@@ -8620,11 +8639,11 @@ TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
     double outflow_req{static_cast<ED::FlowValueType>(flow_dist(generator))};
     auto outflow_update = outflow.with_requested(outflow_req);
     outflow = outflow_update.port;
-    auto inflow_update = inflow.with_achieved(std::min(max_inflow, inflow.get_requested()));
+    auto inflow_update = inflow.with_requested_and_achieved(inflow.get_requested(), max_inflow);
     inflow = inflow_update.port;
     std::size_t no_advance{0};
     std::size_t max_no_advance{1000};
-    while (outflow_update.send_update || inflow_update.send_update || outflow_update.rerequest) {
+    while (outflow_update.send_request || inflow_update.send_achieved) {
       ++no_advance;
       if (no_advance > max_no_advance) {
         ASSERT_TRUE(false)
@@ -8638,13 +8657,13 @@ TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
           << "outflow_req: " << outflow_req << "\n"
           ;
       }
-      if (outflow_update.send_update || outflow_update.rerequest) {
+      if (outflow_update.propagate || outflow_update.back_propagate) {
         pout = pout.with_requested(outflow.get_requested()).port;
       }
       auto pin_update = pin.with_requested(pout.get_requested());
-      if (inflow_update.send_update) {
+      if (inflow_update.propagate) {
         auto pin_update_v2 = pin_update.port.with_achieved(inflow.get_achieved());
-        pin_update.rerequest = pin_update_v2.rerequest;
+        pin_update.back_propagate = pin_update_v2.back_propagate;
       }
       pin = pin_update.port;
       auto pout_update = pout.with_achieved(pin.get_achieved());

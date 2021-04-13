@@ -127,6 +127,9 @@ namespace erin::devs
       [[nodiscard]] PortUpdate3 with_requested_and_available(
           FlowValueType r,
           FlowValueType available) const;
+      [[nodiscard]] PortUpdate3 with_requested_and_achieved(
+          FlowValueType r,
+          FlowValueType a) const;
 
       friend bool operator==(const Port3& a, const Port3& b);
       friend std::ostream& operator<<(std::ostream& os, const Port3& p);
@@ -143,8 +146,8 @@ namespace erin::devs
   struct PortUpdate3
   {
     Port3 port{};
-    bool propagate{false};
-    bool back_propagate{false};
+    bool send_request{false};
+    bool send_achieved{false};
   };
 
   bool operator==(const PortUpdate3& a, const PortUpdate3& b);

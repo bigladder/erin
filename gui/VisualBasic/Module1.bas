@@ -552,7 +552,7 @@ Sub ExportAsCSV(ParentSheet As Worksheet)
     MyFileName = ThisWorkbook.Path & Sep & ParentSheet.Name & ".csv"
 
     Application.DisplayAlerts = False
-    TempWB.SaveAs Filename:=MyFileName, FileFormat:=xlCSV, CreateBackup:=False, Local:=True
+    TempWB.SaveAs Filename:=MyFileName, FileFormat:=xlCSV, CreateBackup:=False, Local:=False
     TempWB.Close SaveChanges:=False
     Application.DisplayAlerts = True
 End Sub

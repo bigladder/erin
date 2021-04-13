@@ -369,6 +369,15 @@ namespace erin::devs
     };
   }
 
+  PortUpdate3
+  Port3::with_requested_and_available(
+      FlowValueType r,
+      FlowValueType available) const
+  {
+    auto p = with_requested(r).port;
+    return p.with_achieved(std::min(r, available));
+  }
+
   bool
   operator==(const Port3& a, const Port3& b)
   {

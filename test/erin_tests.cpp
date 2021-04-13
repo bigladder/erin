@@ -8356,6 +8356,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   auto p = ED::Port3{};
   ED::FlowValueType r{10.0};
   ED::FlowValueType a{10.0};
+  ED::FlowValueType available{40.0};
   auto update = p.with_requested(r);
   auto expected_update = ED::PortUpdate3{
     ED::Port3{r,0.0},
@@ -8411,6 +8412,87 @@ TEST(ErinBasicsTest, Test_Port3) {
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
     true,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  r = 20.0;
+  p = update.port; 
+  update = p.with_requested(r);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, a},
+    true,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  a = 10.0;
+  p = update.port; 
+  update = p.with_achieved(a);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, a},
+    true,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  a = 20.0;
+  p = update.port; 
+  update = p.with_achieved(a);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, a},
+    true,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  r = 8.0;
+  p = update.port;
+  update = p.with_requested(r);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, a},
+    true,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  a = 15.0;
+  p = update.port; 
+  update = p.with_achieved(a);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, a},
+    false,
+    true,
+  };
+  ASSERT_EQ(update, expected_update);
+  a = 8.0;
+  p = update.port; 
+  update = p.with_achieved(a);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, a},
+    true,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  r = 10.0;
+  p = update.port;
+  update = p.with_requested_and_available(r, available);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, r},
+    true,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  r = 50.0;
+  p = update.port;
+  update = p.with_requested_and_available(r, available);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, available},
+    true,
+    false,
+  };
+  ASSERT_EQ(update, expected_update);
+  r = 40.0;
+  p = update.port;
+  update = p.with_requested_and_available(r, available);
+  expected_update = ED::PortUpdate3{
+    ED::Port3{r, r},
+    false,
     false,
   };
   ASSERT_EQ(update, expected_update);

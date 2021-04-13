@@ -124,6 +124,9 @@ namespace erin::devs
       [[nodiscard]] FlowValueType get_achieved() const { return achieved; }
       [[nodiscard]] PortUpdate3 with_requested(FlowValueType r) const;
       [[nodiscard]] PortUpdate3 with_achieved(FlowValueType a) const;
+      [[nodiscard]] PortUpdate3 with_requested_and_available(
+          FlowValueType r,
+          FlowValueType available) const;
 
       friend bool operator==(const Port3& a, const Port3& b);
       friend std::ostream& operator<<(std::ostream& os, const Port3& p);

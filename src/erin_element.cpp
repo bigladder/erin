@@ -37,6 +37,9 @@ namespace ERIN
     else if (tag == "mover") {
       return ElementType::Mover;
     }
+    else if (tag == "source") {
+      return ElementType::Source;
+    }
     else {
       std::ostringstream oss{};
       oss << "unhandled tag '" << tag << "' for element_type\n";
@@ -64,6 +67,8 @@ namespace ERIN
         return std::string{"uncontrolled_source"};
       case ElementType::Mover:
         return std::string{"mover"};
+      case ElementType::Source:
+        return std::string{"source"};
       default:
         {
           std::ostringstream oss{};
@@ -2639,6 +2644,136 @@ namespace ERIN
         << " :output_flows " << vec_to_string<FlowValueType>(output_flows, max_outputs)
         << "}\n";
     return oss.str();
+  }
+
+
+  ////////////////////////////////////////////////////////////
+  // Source
+  Source::Source(
+      std::string id,
+      ComponentType component_type,
+      const std::string& outflow,
+      FlowValueType max_outflow):
+    FlowElement(
+        std::move(id),
+        component_type,
+        ElementType::Source,
+        outflow,
+        outflow),
+    data{erin::devs::make_supply_data(max_outflow)},
+    state{erin::devs::make_supply_state()},
+    flow_writer{nullptr},
+    outflow_element_id{-1},
+    record_history{false}
+  {
+  }
+
+  void
+  Source::delta_int()
+  {
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "Source::delta_int::" << get_id() << "\n"
+                << "- s  = " << state << "\n";
+    }
+    state = erin::devs::supply_internal_transition(state);
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "- s* = " << state << "\n";
+    }
+    log_ports();
+  }
+
+  void
+  Source::delta_ext(Time e, std::vector<PortValue>& xs)
+  {
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "delta_ext::" << get_id() << "::Source\n"
+                << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
+                << "- s  = " << state << "\n";
+    }
+    state = erin::devs::supply_external_transition(data, state, e.real, xs);
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "- s* = " << state << "\n";
+    }
+    log_ports();
+  }
+
+  void
+  Source::delta_conf(std::vector<PortValue>& xs)
+  {
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "delta_conf::" << get_id() << "::Source\n"
+                << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
+                << "- s  = " << state << "\n";
+    }
+    state = erin::devs::supply_confluent_transition(data, state, xs);
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "- s* = " << state << "\n";
+    }
+    log_ports();
+  }
+
+  Time
+  Source::ta()
+  {
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "ta::" << get_id() << "::Source\n"
+                << "- dt = ";
+    }
+    auto dt = erin::devs::supply_time_advance(state);
+    if (dt == erin::devs::infinity) {
+      if constexpr (debug_level >= debug_level_medium) {
+        std::cout << "infinity\n";
+      }
+      return inf;
+    }
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << dt << "\n";
+    }
+    return Time{dt, 1};
+  }
+
+  void
+  Source::output_func(std::vector<PortValue>& ys)
+  {
+    erin::devs::supply_output_function_mutable(state, ys);
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "output_func::" << get_id() << "::Source\n"
+                << "- ys = " << vec_to_string<PortValue>(ys) << "\n";
+    }
+  }
+
+  void
+  Source::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
+  {
+    flow_writer = writer;
+    log_ports();
+  }
+
+  void
+  Source::set_recording_on()
+  {
+    record_history = true;
+    log_ports();
+  }
+
+  void
+  Source::log_ports()
+  {
+    if (flow_writer && record_history) {
+      if (outflow_element_id == -1) {
+        outflow_element_id = flow_writer->register_id(
+            get_id() + "-outflow",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::SourceOutflow,
+            record_history);
+      }
+      flow_writer->write_data(
+          outflow_element_id,
+          state.time,
+          state.outflow_port.get_requested(),
+          state.outflow_port.get_achieved());
+    }
   }
 
 

@@ -13,6 +13,7 @@
 #include "erin/devs/mux.h"
 #include "erin/devs/on_off_switch.h"
 #include "erin/devs/storage.h"
+#include "erin/devs/supply.h"
 #include "erin/devs/uncontrolled_source.h"
 #include "erin/reliability.h"
 #include "adevs.h"
@@ -136,7 +137,8 @@ namespace ERIN
     Store,
     OnOffSwitch,
     UncontrolledSource,
-    Mover
+    Mover,
+    Source
   };
 
   ElementType tag_to_element_type(const std::string& tag);
@@ -709,6 +711,40 @@ namespace ERIN
 
       void log_flow(const RealTimeType& new_t, const FlowValueType& flow);
       std::string state_to_string(bool is_updated) const;
+  };
+
+  //////////////////////////////////////////////////////////// 
+  // Source
+  class Source : public FlowElement
+  {
+    public:
+      Source(
+          std::string id,
+          ComponentType component_type,
+          const std::string& outflow,
+          FlowValueType max_outflow = erin::devs::supply_unlimited_value);
+
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
+
+    private:
+      erin::devs::SupplyData data;
+      erin::devs::SupplyState state;
+      std::shared_ptr<FlowWriter> flow_writer;
+      int outflow_element_id;
+      bool record_history;
+
+      void log_ports();
   };
 
   ////////////////////////////////////////////////////////////

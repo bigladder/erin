@@ -28,6 +28,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_devs_mux.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_on_off_switch.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_storage.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_devs_supply.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_uncontrolled_source.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
@@ -52,6 +53,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/devs/mux.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/on_off_switch.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/storage.h
+  ${PROJECT_SOURCE_DIR}/include/erin/devs/supply.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/uncontrolled_source.h
   ${PROJECT_SOURCE_DIR}/include/erin/distribution.h
   ${PROJECT_SOURCE_DIR}/include/erin/element.h

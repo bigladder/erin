@@ -140,8 +140,8 @@ namespace erin::devs
   struct PortUpdate3
   {
     Port3 port{};
-    bool send_update{false};
-    bool rerequest{false};
+    bool propagate{false};
+    bool back_propagate{false};
   };
 
   bool operator==(const PortUpdate3& a, const PortUpdate3& b);
@@ -149,6 +149,7 @@ namespace erin::devs
   std::ostream& operator<<(std::ostream& os, const PortUpdate3& p);
 
   // Helper Functions
+  // TODO: rename got_inflow_achieved as it shadows many local variables in external_transitions
   bool got_inflow_achieved(const std::vector<PortValue>& xs);
   FlowValueType total_inflow_achieved(const std::vector<PortValue>& xs);
 }

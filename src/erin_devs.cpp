@@ -347,9 +347,6 @@ namespace erin::devs
           << "achieved : " << achieved << "\n";
       throw std::invalid_argument(oss.str());
     }
-    if (achieved > requested) {
-      achieved = requested;
-    }
   }
 
   PortUpdate3
@@ -358,7 +355,7 @@ namespace erin::devs
     return PortUpdate3{
       Port3{r, achieved},
       r != requested,
-      false
+      false,
     };
   }
 
@@ -367,8 +364,8 @@ namespace erin::devs
   {
     return PortUpdate3{
       Port3{requested, a},
-      std::min(a, requested) != achieved,
-      a > requested
+      (a <= requested) && (a != achieved),
+      a > requested,
     };
   }
 
@@ -394,8 +391,8 @@ namespace erin::devs
   operator==(const PortUpdate3& a, const PortUpdate3& b)
   {
     return (a.port == b.port)
-      && (a.send_update == b.send_update)
-      && (a.rerequest == b.rerequest);
+      && (a.propagate == b.propagate)
+      && (a.back_propagate == b.back_propagate);
   }
 
   bool
@@ -408,11 +405,11 @@ namespace erin::devs
   operator<<(std::ostream& os, const PortUpdate3& p)
   {
     return os << "{"
-              << ":send-update? " << p.send_update
-              << " "
-              << ":re-request? " << p.rerequest
-              << " "
               << ":p " << p.port
+              << " "
+              << ":propagate? " << p.propagate
+              << " "
+              << ":back-propagate? " << p.back_propagate
               << "}";
   }
 

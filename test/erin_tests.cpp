@@ -8474,7 +8474,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_requested_and_available(r, available);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, r},
-    false,
+    true,
     true,
   };
   ASSERT_EQ(update, expected_update);
@@ -8483,7 +8483,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_requested_and_available(r, available);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, available},
-    false,
+    true,
     true,
   };
   ASSERT_EQ(update, expected_update);
@@ -8492,7 +8492,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   update = p.with_requested_and_available(r, available);
   expected_update = ED::PortUpdate3{
     ED::Port3{r, r},
-    false,
+    true,
     false,
   };
   ASSERT_EQ(update, expected_update);
@@ -8619,6 +8619,7 @@ TEST(ErinBasicsTest, Test_new_port_scheme) {
       << "pwaste: " << pwaste << "\n";
   }
 }
+*/
 
 TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
   namespace ED = erin::devs;
@@ -8639,7 +8640,7 @@ TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
     double outflow_req{static_cast<ED::FlowValueType>(flow_dist(generator))};
     auto outflow_update = outflow.with_requested(outflow_req);
     outflow = outflow_update.port;
-    auto inflow_update = inflow.with_requested_and_achieved(inflow.get_requested(), max_inflow);
+    auto inflow_update = inflow.with_requested_and_available(inflow.get_requested(), max_inflow);
     inflow = inflow_update.port;
     std::size_t no_advance{0};
     std::size_t max_no_advance{1000};
@@ -8657,34 +8658,33 @@ TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
           << "outflow_req: " << outflow_req << "\n"
           ;
       }
-      if (outflow_update.propagate || outflow_update.back_propagate) {
+      if (outflow_update.send_request) {
         pout = pout.with_requested(outflow.get_requested()).port;
       }
       auto pin_update = pin.with_requested(pout.get_requested());
-      if (inflow_update.propagate) {
-        auto pin_update_v2 = pin_update.port.with_achieved(inflow.get_achieved());
-        pin_update.back_propagate = pin_update_v2.back_propagate;
+      if (inflow_update.send_achieved) {
+        pin_update = pin.with_requested_and_achieved(pout.get_requested(), inflow.get_achieved());
       }
       pin = pin_update.port;
       auto pout_update = pout.with_achieved(pin.get_achieved());
       pout = pout_update.port;
-      if (pin_update.send_update || pin_update.rerequest) {
-        inflow = inflow.with_requested(pin.get_requested()).port;
-        inflow_update = inflow.with_achieved(std::min(max_inflow, inflow.get_requested()));
+      if (pin_update.send_request) {
+        inflow_update = inflow.with_requested_and_available(pin.get_requested(), max_inflow);
+        inflow = inflow_update.port;
       }
       else {
         inflow_update.port = inflow;
-        inflow_update.send_update = false;
-        inflow_update.rerequest = false;
+        inflow_update.send_request = false;
+        inflow_update.send_achieved = false;
       }
-      if (pout_update.send_update) {
+      if (pout_update.send_achieved) {
         outflow_update = outflow.with_achieved(pout.get_achieved());
         outflow = outflow_update.port;
       }
       else {
         outflow_update.port = outflow;
-        outflow_update.send_update = false;
-        outflow_update.rerequest = false;
+        outflow_update.send_request = false;
+        outflow_update.send_achieved = false;
       }
       auto energy_balance{pin.get_achieved() - pout.get_achieved()};
       ASSERT_NEAR(energy_balance, 0.0, 1e-6)
@@ -8699,12 +8699,12 @@ TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
     ASSERT_EQ(inflow.get_achieved(), pin.get_achieved());
     auto energy_balance_v2{inflow.get_achieved() - outflow.get_achieved()};
     ASSERT_NEAR(energy_balance_v2, 0.0, 1e-6)
+      << "idx: " << idx << "\n"
       << "energy_balance_v2: " << energy_balance_v2 << "\n"
       << "inflow: " << inflow << "\n"
       << "outflow: " << outflow << "\n";
   }
 }
-*/
 
 int
 main(int argc, char **argv)

@@ -374,8 +374,7 @@ namespace erin::devs
       FlowValueType r,
       FlowValueType available) const
   {
-    auto p = with_requested(r).port;
-    return p.with_achieved(std::min(r, available));
+    return with_requested_and_achieved(r, std::min(r, available));
   }
 
   PortUpdate3

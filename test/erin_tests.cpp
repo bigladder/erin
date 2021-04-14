@@ -708,7 +708,6 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
   }
 }
 
-/*
 TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
 {
   std::stringstream ss;
@@ -778,7 +777,6 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
   }
 }
-*/
 
 TEST(ErinBasicsTest, CanRun10ForSourceSink)
 {

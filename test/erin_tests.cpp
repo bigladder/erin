@@ -5942,7 +5942,6 @@ TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
   EXPECT_EQ(reliability_schedule.at(0), expected);
 }
 
-/*
 TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
 {
   namespace E = ERIN;
@@ -6035,7 +6034,6 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
   ASSERT_EQ(expected_results.size(), bs_data.size());
   EXPECT_EQ(expected_results, bs_data);
 }
-*/
 
 /*
 TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
@@ -6742,8 +6740,8 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
     0,
     true,
     1,
-    ED::Port2{},
-    ED::Port2{},
+    ED::Port3{},
+    ED::Port3{},
     false,
     false
   };
@@ -6771,9 +6769,11 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
   ys = ED::on_off_switch_output_function(data, s);
   expected_ys = std::vector<ED::PortValue>{
     ED::PortValue{ED::outport_inflow_request, 0.0},
-    ED::PortValue{ED::outport_outflow_achieved, 0.0}
   };
-  ASSERT_EQ(expected_ys.size(), ys.size());
+  ASSERT_EQ(expected_ys.size(), ys.size())
+    << "s: " << s << "\n"
+    << "expected_ys: " << E::vec_to_string<E::PortValue>(expected_ys) << "\n"
+    << "ys: " << E::vec_to_string<E::PortValue>(ys) << "\n";
   EXPECT_TRUE(
       erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys, expected_ys, compare_ports));
@@ -6796,7 +6796,6 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
   ys = ED::on_off_switch_output_function(data, s);
   expected_ys = std::vector<ED::PortValue>{
     ED::PortValue{ED::outport_inflow_request, 0.0},
-    ED::PortValue{ED::outport_outflow_achieved, 0.0},
   };
   EXPECT_TRUE(
       erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
@@ -7319,9 +7318,9 @@ TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) 
   auto dt2 = ED::on_off_switch_time_advance(d, s2);
   EXPECT_EQ(dt2, 100);
   auto ys2 = ED::on_off_switch_output_function(d, s2);
-  ASSERT_EQ(ys2.size(), 2);
-  //EXPECT_EQ(ys0[0].port, ED::outport_inflow_request);
-  //EXPECT_EQ(ys0[0].value, 1.0);
+  ASSERT_EQ(ys2.size(), 1);
+  EXPECT_EQ(ys0[0].port, ED::outport_inflow_request);
+  EXPECT_EQ(ys0[0].value, 1.0);
 }
 
 TEST(ErinBasicsTest, Test_that_port2_works) {

@@ -129,8 +129,8 @@ namespace erin::devs
       0,            // time
       init_state,   // state
       next_index,   // next_index
-      Port2{0.0},   // inflow_port
-      Port2{0.0},   // outflow_port
+      Port3{0.0},   // inflow_port
+      Port3{0.0},   // outflow_port
       false,
       false,
     };
@@ -204,7 +204,7 @@ namespace erin::devs
       const std::vector<PortValue>& xs)
   {
     bool got_outflow_request{false};
-    bool got_inflow_achieved{false};
+    bool got_the_inflow_achieved{false};
     FlowValueType outflow_request{0.0};
     FlowValueType inflow_achieved{0.0};
     for (const auto& x : xs) {
@@ -217,7 +217,7 @@ namespace erin::devs
           }
         case inport_inflow_achieved:
           {
-            got_inflow_achieved = true;
+            got_the_inflow_achieved = true;
             inflow_achieved += x.value;
             break;
           }
@@ -237,42 +237,36 @@ namespace erin::devs
     bool report_ir{false};
     bool report_oa{false};
     if (state.state) {
-      if (got_inflow_achieved) {
-        if (inflow_achieved > ip.get_requested()) {
-          report_ir = true;
-          inflow_achieved = ip.get_requested();
-        }
+      if (got_the_inflow_achieved) {
         auto update_ip = ip.with_achieved(inflow_achieved);
-        auto update_op = op.with_achieved(update_ip.port.get_achieved());
         ip = update_ip.port;
+        auto update_op = op.with_achieved(ip.get_achieved());
         op = update_op.port;
-        report_oa = update_op.send_update;
+        report_oa = report_oa || update_op.send_achieved;
+        report_ir = report_ir || update_ip.send_request;
       }
       if (got_outflow_request) {
         auto update_op = op.with_requested(outflow_request);
-        auto update_ip = ip.with_requested(outflow_request);
         op = update_op.port;
+        auto update_ip = ip.with_requested(op.get_requested());
         ip = update_ip.port;
-        report_ir = report_ir || update_ip.send_update;
-        report_oa =
-            (state.outflow_port.get_achieved() != op.get_achieved())
-            && (op.get_requested() != op.get_achieved());
+        report_oa = report_oa || update_op.send_achieved;
+        report_ir = report_ir || update_ip.send_request;
       }
     }
     else {
       auto update_ip = ip.with_requested(0.0);
       ip = update_ip.port;
-      report_ir = update_ip.send_update;  
+      report_ir = report_ir || update_ip.send_request;  
       if (got_outflow_request) {
-        auto update_op_r = op.with_requested(outflow_request);
-        auto update_op_a = update_op_r.port.with_achieved(0.0);
-        op = update_op_a.port;
-        report_oa = update_op_a.send_update;
+        auto update_op = op.with_requested_and_achieved(outflow_request, 0.0);
+        op = update_op.port;
+        report_oa = report_oa || update_op.send_achieved;
       }
       else {
         auto update_op = op.with_achieved(0.0);
         op = update_op.port;
-        report_oa = update_op.send_update;
+        report_oa = report_oa || update_op.send_achieved;
       }
     }
     return OnOffSwitchState{

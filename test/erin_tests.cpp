@@ -1355,7 +1355,6 @@ TEST(ErinBasicsTest, TestFailureChecker)
   EXPECT_TRUE(at_least_one_false && at_least_one_true);
 }
 
-/*
 TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
 {
   namespace E = ERIN;
@@ -1486,7 +1485,6 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
       0.0,
       tolerance);
 }
-*/
 
 TEST(ErinBasicsTest, TestTimeUnits)
 {

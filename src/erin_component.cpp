@@ -4,6 +4,7 @@
 #include "erin/component.h"
 #include "erin/network.h"
 #include "erin/port.h"
+#include "erin/devs.h"
 #include "debug_utils.h"
 #include <sstream>
 #include <stdexcept>
@@ -632,72 +633,45 @@ namespace ERIN
     }
     bool has_reliability{reliability_schedule.size() > 0};
     auto stream = get_output_stream();
-    if (is_failed || limits.get_is_limited()) {
+    auto max_output = erin::devs::supply_unlimited_value;
+    if (is_failed) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "is_failed || is_limited; id = " << the_id << "\n";
+        std::cout << "is_failed = true; setting max output to 0.0; id = " << the_id << "\n";
       }
-      auto min_output = limits.get_min();
-      auto max_output = limits.get_max();
-      if (is_failed) {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "is_failed = true; setting min/max output to 0.0; id = " << the_id << "\n";
-        }
-        min_output = 0.0;
-        max_output = 0.0;
+      max_output = 0.0;
+    }
+    else if (limits.get_is_limited()) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "is_limited = true; setting max output to "
+                  << limits.get_max() << "; id = " << the_id << "\n";
       }
-      if (has_reliability) {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = true; id = " << the_id << "\n";
-        }
-        auto lim = new FlowLimits(
-            the_id, ComponentType::Source, stream, min_output, max_output,
-            PortRole::Outflow);
-        elements.emplace(lim);
-        auto on_off = new OnOffSwitch(
-            the_id, ComponentType::Source, stream, reliability_schedule,
-            PortRole::SourceOutflow);
-        on_off->set_recording_on();
-        elements.emplace(on_off);
-        connect_source_to_sink(network, lim, on_off, true, stream);
-        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
-      }
-      else {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = false; id = " << the_id << "\n";
-        }
-        auto lim = new FlowLimits(
-            the_id, ComponentType::Source, stream, min_output, max_output,
-            PortRole::SourceOutflow);
-        elements.emplace(lim);
-        lim->set_recording_on();
-        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
-      }
+      max_output = limits.get_max();
     }
     else {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "!is_failed; id = " << the_id << "\n";
+        std::cout << "is_failed = false; unlimited supply; id = " << the_id << "\n";
       }
-      if (has_reliability) {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = true; id = " << the_id << "\n";
-        }
-        auto on_off = new OnOffSwitch(
-            the_id, ComponentType::Source, stream, reliability_schedule,
-            PortRole::SourceOutflow);
-        elements.emplace(on_off);
-        on_off->set_recording_on();
-        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
+    }
+    auto src = new Source(the_id, ComponentType::Source, stream, max_output);
+    elements.emplace(src);
+    if (has_reliability) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "has_reliability = true; id = " << the_id << "\n";
       }
-      else {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = false; id = " << the_id << "\n";
-        }
-        auto meter = new FlowMeter(the_id, ComponentType::Source, stream,
-            PortRole::SourceOutflow);
-        elements.emplace(meter);
-        meter->set_recording_on();
-        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};
+      auto on_off = new OnOffSwitch(
+          the_id, ComponentType::Source, stream, reliability_schedule,
+          PortRole::SourceOutflow);
+      elements.emplace(on_off);
+      on_off->set_recording_on();
+      connect_source_to_sink(network, src, on_off, true, stream);
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
+    }
+    else {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "has_reliability = false; id = " << the_id << "\n";
       }
+      src->set_recording_on();
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{src, 0}};
     }
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network(...) exit; id = " << the_id << "\n";

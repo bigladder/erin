@@ -633,7 +633,6 @@ TEST(ErinBasicsTest, CanReadScenariosIntensities)
   EXPECT_EQ(expected.size(), actual.size());
 }
 
-/*
 TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
 {
   std::stringstream ss;
@@ -708,7 +707,6 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
     EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
   }
 }
-*/
 
 /*
 TEST(ErinBasicsTest, CanRunEx02FromTomlInput)

@@ -3437,7 +3437,6 @@ TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
   EXPECT_EQ(bad_stats.size(), 0);
 }
 
-/*
 TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
 {
   namespace E = ::ERIN;
@@ -3469,7 +3468,6 @@ TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
   EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("A"), 0.5);
   EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("B"), 0.5);
 }
-*/
 
 TEST(ErinBasicsTest, TestRandomProcesses)
 {

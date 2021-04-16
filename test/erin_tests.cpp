@@ -3683,7 +3683,6 @@ load_combined_heat_and_power_example()
   return ERIN::make_main_from_string(input);
 }
 
-/*
 TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
 {
   using size_type =
@@ -3717,7 +3716,6 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
       thermal_load_stats.total_energy,
       expected_thermal_load_energy_kJ);
 }
-*/
 
 TEST(ErinDevs, Test_smart_port_object)
 {

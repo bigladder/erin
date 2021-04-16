@@ -334,18 +334,24 @@ namespace erin::devs
     achieved{a}
   {
     if (requested < 0.0) {
+      requested = 0.0;
+      /*
       std::ostringstream oss{};
       oss << "requested flow is negative! Negative flows are not allowed\n"
           << "requested: " << requested << "\n"
           << "achieved : " << achieved << "\n";
       throw std::invalid_argument(oss.str());
+      */
     }
     if (achieved < 0.0) {
+      achieved = 0.0;
+      /*
       std::ostringstream oss{};
       oss << "achieved flow is negative! Negative flows are not allowed\n"
           << "requested: " << requested << "\n"
           << "achieved : " << achieved << "\n";
       throw std::invalid_argument(oss.str());
+      */
     }
   }
 
@@ -354,8 +360,8 @@ namespace erin::devs
   {
     return PortUpdate3{
       Port3{r, achieved},
-      r != requested,       // send_request
-      false,                // send_achieved
+      r != requested,
+      false,
     };
   }
 
@@ -364,8 +370,8 @@ namespace erin::devs
   {
     return PortUpdate3{
       Port3{requested, a},
-      a > requested,        // send_request
-      a != achieved,        // send_achieved
+      a > requested,
+      (a <= requested) && ((a != achieved) || (achieved > requested)),
     };
   }
 

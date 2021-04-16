@@ -40,6 +40,11 @@
 
 const double tolerance{1e-6};
 
+bool compare_ports(const erin::devs::PortValue& a, const erin::devs::PortValue& b)
+{
+  return (a.port == b.port) && (a.value == b.value);
+};
+
 bool check_times_and_loads(
     const std::unordered_map<std::string, std::vector<ERIN::Datum>>& results,
     const std::vector<ERIN::RealTimeType>& expected_times,
@@ -222,6 +227,7 @@ TEST(ErinBasicsTest, CanRunPowerLimitedSink)
       check_times_and_loads(results, expected_time, expected_flow, limit_id));
 }
 
+/*
 TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
 {
   namespace E = ERIN;
@@ -249,7 +255,7 @@ TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
   std::string diesel{"diesel"};
   std::string elec{"electrical"};
   std::string converter_id{"converter"};
-  auto genset_tx = new ::ERIN::Converter(
+  auto genset_tx = new E::Converter(
       converter_id,
       E::ComponentType::Converter,
       diesel,
@@ -309,6 +315,7 @@ TEST(ErinBasicsTest, CanRunBasicDieselGensetExample)
       check_times_and_loads(
         results, expected_genset_output_times, expected_fuel_output, converter_id + "-inflow"));
 }
+*/
 
 TEST(ErinBasicsTest, CanRunUsingComponents)
 {
@@ -3569,7 +3576,6 @@ load_converter_example()
   return ERIN::make_main_from_string(input);
 }
 
-/*
 TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
 {
   auto m = load_converter_example();
@@ -3613,7 +3619,6 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
                        "const_eff=0.5)"};
   EXPECT_EQ(oss.str(), expected_str);
 }
-*/
 
 ERIN::Main
 load_combined_heat_and_power_example()
@@ -4063,75 +4068,73 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
 
 TEST(ErinElements, Test_that_converter_yields_lossflow)
 {
+  namespace E = ERIN;
+  namespace EU = erin::utils;
   std::unique_ptr<ERIN::FlowElement> c = std::make_unique<ERIN::Converter>(
       "conv",
-      ERIN::ComponentType::Converter,
+      E::ComponentType::Converter,
       std::string{"coal"},
       std::string{"electricity"},
-      [](ERIN::FlowValueType input) -> ERIN::FlowValueType { return input * 0.5; },
-      [](ERIN::FlowValueType output) -> ERIN::FlowValueType { return output * 2.0; });
-  // 1. lossflow request of 100,000 comes in at (0,0)
-  // 2. inflow request of 10 comes in at (0,1)
-  // 3. call delta_int()
-  // 4. call output_func() and check values of ys ; do we report the right lossflow?
-  ERIN::Time t0{0,0};
-  ERIN::Time dt{0,1};
-  int inport_lossflow_request{ERIN::FlowElement::inport_outflow_request + 1};
-  int outport_lossflow_achieved{ERIN::FlowElement::outport_outflow_achieved + 1};
-  auto lossflow_request = ERIN::PortValue{
+      [](E::FlowValueType input) -> E::FlowValueType { return input * 0.5; },
+      [](E::FlowValueType output) -> E::FlowValueType { return output * 2.0; });
+  // * external: lossflow request of 100,000 comes in at (0,0)
+  // * ta() should be 0
+  // * external: outflow request of 10 comes in at (0,1)
+  // * ta() should be 0
+  // * ys = output(); ys = [{:port :outport_inflow_request :value 20}]
+  // * external: inflow achieved of 20 comes in at (0,3)
+  // * call output_func() and check values of ys; do we report the right lossflow?
+  // * call delta_int()
+  E::Time t0{0,0};
+  E::Time dt{0,1};
+  int inport_lossflow_request{
+    E::FlowElement::inport_outflow_request + 1};
+  int outport_lossflow_achieved{
+    E::FlowElement::outport_outflow_achieved + 1};
+  auto lossflow_request = E::PortValue{
     inport_lossflow_request,
-    100000.0
+    100'000.0,
   }; 
-  auto outflow_request = ERIN::PortValue{
-    ERIN::FlowElement::inport_outflow_request,
-    10.0
+  auto outflow_request = E::PortValue{
+    E::FlowElement::inport_outflow_request,
+    10.0,
   };
-  std::vector<ERIN::PortValue> v1 = {lossflow_request};
-  std::vector<ERIN::PortValue> v2 = {outflow_request};
+  auto inflow_achieved = E::PortValue{
+    E::FlowElement::inport_inflow_achieved,
+    20.0,
+  };
+  std::vector<E::PortValue> v1 = {lossflow_request};
+  std::vector<E::PortValue> v2 = {outflow_request};
+  std::vector<E::PortValue> v3 = {inflow_achieved};
   auto dt_next = c->ta();
-  EXPECT_EQ(dt_next, ERIN::inf);
+  EXPECT_EQ(dt_next, E::inf);
   c->delta_ext(t0+dt, v1);
   dt_next = c->ta();
+  EXPECT_EQ(dt_next, E::inf);
+  c->delta_ext(dt, v2);
+  dt_next = c->ta();
   EXPECT_EQ(dt_next, dt);
-  std::vector<ERIN::PortValue> outputs1;
+  std::vector<E::PortValue> outputs1{};
   c->output_func(outputs1);
   c->delta_int();
   dt_next = c->ta();
   // lossflow_achieved
   ASSERT_EQ(1, outputs1.size());
-  EXPECT_EQ(outport_lossflow_achieved, outputs1[0].port);
-  EXPECT_EQ(0.0, outputs1[0].value);
-  EXPECT_EQ(dt_next, ERIN::inf);
-  c->delta_ext(dt, v2);
+  EXPECT_EQ(E::FlowElement::outport_inflow_request, outputs1[0].port);
+  EXPECT_EQ(20.0, outputs1[0].value);
+  EXPECT_EQ(dt_next, E::inf);
+  c->delta_ext(dt, v3);
   dt_next = c->ta();
   EXPECT_EQ(dt_next, dt);
-  std::vector<ERIN::PortValue> outputs2;
+  std::vector<E::PortValue> outputs2{};
+  std::vector<E::PortValue> expected_outputs2{
+    E::PortValue{E::FlowElement::outport_outflow_achieved, 10.0},
+    E::PortValue{outport_lossflow_achieved, 10.0}};
   c->output_func(outputs2);
-  // inflow_request + lossflow_achieved needs to be reported again
-  bool found_inflow_request{false};
-  bool found_lossflow_achieved{false};
-  for (const auto& p: outputs2) {
-    if (p.port == ERIN::FlowElement::outport_inflow_request) {
-      if (found_inflow_request) {
-        ASSERT_TRUE(false) << "multiple inflow requests found!";
-      }
-      found_inflow_request = true;
-      EXPECT_EQ(20.0, p.value);
-    } else if (p.port == outport_lossflow_achieved) {
-      if (found_lossflow_achieved) {
-        ASSERT_TRUE(false) << "multiple lossflow achieved values found!";
-      }
-      found_lossflow_achieved = true;
-      EXPECT_EQ(10.0, p.value);
-    } else {
-      ASSERT_TRUE(false)
-        << "unexpected port found in outputs2: "
-        << p.port << " with value: " << p.value;
-    }
-  }
-  ASSERT_TRUE(found_inflow_request) << "no inflow request found";
-  ASSERT_TRUE(found_lossflow_achieved) << "no lossflow achieved found";
   ASSERT_EQ(2, outputs2.size());
+  ASSERT_TRUE(
+      EU::compare_vectors_unordered_with_fn<E::PortValue>(
+        outputs2, expected_outputs2, compare_ports));
 }
 
 TEST(ErinGraphviz, Test_that_we_can_generate_graphviz)
@@ -4297,11 +4300,6 @@ TEST(ErinElements, Test_flow_writer)
   EXPECT_EQ(expected_requested_flows1, actual_requested_flows1);
 }
 
-bool compare_ports(const erin::devs::PortValue& a, const erin::devs::PortValue& b)
-{
-  return (a.port == b.port) && (a.value == b.value);
-};
-
 TEST(ErinDevs, Test_flow_limits_functions)
 {
   namespace ED = erin::devs;
@@ -4424,7 +4422,7 @@ TEST(ErinDevs, Test_converter_functions)
     std::make_unique<ED::ConstantEfficiencyFun>(constant_efficiency);
   ED::ConverterState expected_s0{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    0, ED::Port2{}, ED::Port2{}, ED::Port2{}, ED::Port2{},
+    0, ED::Port3{}, ED::Port3{}, ED::Port3{}, ED::Port3{},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, false, false};
   EXPECT_EQ(s0, expected_s0);
@@ -4434,12 +4432,12 @@ TEST(ErinDevs, Test_converter_functions)
   auto s1 = ED::converter_external_transition(s0, 2, xs0);
   ED::ConverterState expected_s1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{0.0}, ED::Port2{30.0},
+    2, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{0.0}, ED::Port3{30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), true, false, false};
-  EXPECT_EQ(expected_s1, s1);
+  ASSERT_EQ(expected_s1, s1);
   auto dt1 = ED::converter_time_advance(s1);
-  EXPECT_EQ(dt1, 0);
+  ASSERT_EQ(dt1, 0);
   auto ys1 = ED::converter_output_function(s1);
   std::vector<ED::PortValue> expected_ys1{
     ED::PortValue{ED::outport_inflow_request, 40.0}};
@@ -4449,23 +4447,23 @@ TEST(ErinDevs, Test_converter_functions)
   auto s2 = ED::converter_internal_transition(s1);
   ED::ConverterState expected_s2{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{0.0}, ED::Port2{30.0},
+    2, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{0.0}, ED::Port3{30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, false, false};
-  EXPECT_EQ(expected_s2, s2);
+  ASSERT_EQ(expected_s2, s2);
   auto dt2 = ED::converter_time_advance(s2);
-  EXPECT_EQ(dt2, ED::infinity);
+  ASSERT_EQ(dt2, ED::infinity);
   std::vector<ED::PortValue> xs2{
     ED::PortValue{ED::inport_inflow_achieved, 20.0}};
   auto s3 = ED::converter_external_transition(s2, 1, xs2);
   ED::ConverterState expected_s3{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    3, ED::Port2{40.0, 20.0}, ED::Port2{10.0, 5.0}, ED::Port2{0.0}, ED::Port2{15.0},
+    3, ED::Port3{40.0, 20.0}, ED::Port3{10.0, 5.0}, ED::Port3{0.0}, ED::Port3{30.0, 15.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, true, false};
-  EXPECT_EQ(expected_s3, s3);
+  ASSERT_EQ(expected_s3, s3);
   auto dt3 = ED::converter_time_advance(s3);
-  EXPECT_EQ(dt3, 0);
+  ASSERT_EQ(dt3, 0);
   auto ys3 = ED::converter_output_function(s3);
   std::vector<ED::PortValue> expected_ys3{
     ED::PortValue{ED::outport_outflow_achieved, 5.0}};
@@ -4475,12 +4473,12 @@ TEST(ErinDevs, Test_converter_functions)
   auto s4 = ED::converter_internal_transition(s3);
   ED::ConverterState expected_s4{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    3, ED::Port2{40.0, 20.0}, ED::Port2{10.0, 5.0}, ED::Port2{0.0}, ED::Port2{15.0},
+    3, ED::Port3{40.0, 20.0}, ED::Port3{10.0, 5.0}, ED::Port3{0.0}, ED::Port3{30.0, 15.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, false, false};
-  EXPECT_EQ(s4, expected_s4);
+  ASSERT_EQ(s4, expected_s4);
   auto dt4 = ED::converter_time_advance(s4);
-  EXPECT_EQ(dt4, ED::infinity);
+  ASSERT_EQ(dt4, ED::infinity);
   // Test Confluent Transitions
   const int inport_lossflow_request{ED::inport_outflow_request + 1};
   std::vector<ED::PortValue> xs1a{
@@ -4488,9 +4486,10 @@ TEST(ErinDevs, Test_converter_functions)
   auto s2a = ED::converter_confluent_transition(s1, xs1a);
   ED::ConverterState expected_s2a{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{2.0}, ED::Port2{28.0},
+    2, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{2.0}, ED::Port3{28.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, false, false};
+  ASSERT_EQ(s2a, expected_s2a);
 
   // Test Multiple Events for a Single External Transition
   // Starting from a "Zero" State
@@ -4499,26 +4498,27 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_a = ED::converter_external_transition(s0, 10, xs_a);
   ED::ConverterState expected_s_a{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    10, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{0.0}, ED::Port2{30.0},
+    10, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{0.0}, ED::Port3{30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), true, false, false};
-  EXPECT_EQ(s_a, expected_s_a);
+  ASSERT_EQ(s_a, expected_s_a);
 
   std::vector<ED::PortValue> xs_b{
     ED::PortValue{inport_lossflow_request, 30.0}};
   auto s_b = ED::converter_external_transition(s0, 10, xs_b);
   ED::ConverterState expected_s_b{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    10, ED::Port2{0.0}, ED::Port2{0.0}, ED::Port2{30.0, 0.0}, ED::Port2{0.0, 0.0},
+    10, ED::Port3{0.0}, ED::Port3{0.0}, ED::Port3{30.0, 0.0}, ED::Port3{0.0, 0.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, true};
-  EXPECT_EQ(s_b, expected_s_b);
+    cf->clone(), false, false, false};
+  ASSERT_EQ(s_b, expected_s_b);
 
   // setting up an achieved more than requested situation
+  std::cout << "1\n";
   std::vector<ED::PortValue> xs_c{
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
   auto some_s = ED::converter_external_transition(s_a, 10, xs_c);
-  EXPECT_FALSE(some_s.report_inflow_request);
+  ASSERT_FALSE(some_s.report_inflow_request);
 
   std::vector<ED::PortValue> xs_d{
     ED::PortValue{ED::inport_outflow_request, 10.0},
@@ -4526,7 +4526,7 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_d = ED::converter_external_transition(s_a, 10, xs_d);
   ED::ConverterState expected_s_d{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    20, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{30.0}, ED::Port2{0.0},
+    20, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{30.0}, ED::Port3{0.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, false, false};
   EXPECT_EQ(s_d, expected_s_d);
@@ -4546,8 +4546,8 @@ TEST(ErinDevs, Test_converter_functions)
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
   some_s = ED::converter_external_transition(s_a, 10, xs_f);
   EXPECT_FALSE(some_s.report_inflow_request);
-  EXPECT_FALSE(some_s.report_outflow_achieved);
-  EXPECT_FALSE(some_s.report_lossflow_achieved);
+  EXPECT_TRUE(some_s.report_outflow_achieved);
+  EXPECT_TRUE(some_s.report_lossflow_achieved);
   EXPECT_EQ(some_s.inflow_port.get_requested(), 40.0);
   EXPECT_EQ(some_s.lossflow_port.get_achieved(), 30.0);
 
@@ -4558,8 +4558,8 @@ TEST(ErinDevs, Test_converter_functions)
     ED::PortValue{ED::inport_inflow_achieved, 40.0}};
   some_s = ED::converter_external_transition(s_a, 10, xs_g);
   EXPECT_FALSE(some_s.report_inflow_request);
-  EXPECT_FALSE(some_s.report_outflow_achieved);
-  EXPECT_FALSE(some_s.report_lossflow_achieved);
+  EXPECT_TRUE(some_s.report_outflow_achieved);
+  EXPECT_TRUE(some_s.report_lossflow_achieved);
   EXPECT_EQ(some_s.inflow_port.get_requested(), 40.0);
   EXPECT_EQ(some_s.lossflow_port.get_achieved(), 30.0);
   EXPECT_EQ(some_s.outflow_port.get_achieved(), 10.0);
@@ -4567,7 +4567,7 @@ TEST(ErinDevs, Test_converter_functions)
   // Test Multiple Events for a Single External Transition
   ED::ConverterState s_m{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port2{80.0}, ED::Port2{20.0}, ED::Port2{0.0}, ED::Port2{60.0},
+    2, ED::Port3{80.0}, ED::Port3{20.0}, ED::Port3{0.0}, ED::Port3{60.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, false, false};
   //std::vector<ED::PortValue> xs_a{
@@ -4575,7 +4575,7 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_a1 = ED::converter_external_transition(s_m, 10, xs_a);
   ED::ConverterState expected_s_a1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{0.0}, ED::Port2{30.0},
+    12, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{0.0}, ED::Port3{30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), true, false, false};
   EXPECT_EQ(s_a1, expected_s_a1);
@@ -4585,7 +4585,7 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_b1 = ED::converter_external_transition(s_m, 10, xs_b);
   ED::ConverterState expected_s_b1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port2{80.0}, ED::Port2{20.0}, ED::Port2{30.0}, ED::Port2{30.0},
+    12, ED::Port3{80.0}, ED::Port3{20.0}, ED::Port3{30.0}, ED::Port3{30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, false, false};
   EXPECT_EQ(s_b1, expected_s_b1);
@@ -4595,7 +4595,7 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_c1 = ED::converter_external_transition(s_m, 10, xs_c);
   ED::ConverterState expected_s_c1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port2{80.0, 40.0}, ED::Port2{20.0, 10.0}, ED::Port2{0.0}, ED::Port2{30.0},
+    12, ED::Port3{80.0, 40.0}, ED::Port3{20.0, 10.0}, ED::Port3{0.0, 0.0}, ED::Port3{60.0, 30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), false, true, false};
   EXPECT_EQ(s_c1, expected_s_c1);
@@ -4606,7 +4606,7 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_d1 = ED::converter_external_transition(s_m, 10, xs_d);
   ED::ConverterState expected_s_d1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{30.0}, ED::Port2{0.0},
+    12, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{30.0}, ED::Port3{0.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
     cf->clone(), true, false, false};
   EXPECT_EQ(s_d1, expected_s_d1);
@@ -4617,9 +4617,9 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_e1 = ED::converter_external_transition(s_m, 10, xs_e);
   ED::ConverterState expected_s_e1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{0.0}, ED::Port2{30.0},
+    12, ED::Port3{40.0, 40.0}, ED::Port3{10.0, 10.0}, ED::Port3{0.0}, ED::Port3{30.0, 30.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), true, false, false};
+    cf->clone(), true, true, false};
   EXPECT_EQ(s_e1, expected_s_e1);
 
   //std::vector<ED::PortValue> xs_f{
@@ -4628,9 +4628,9 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_f1 = ED::converter_external_transition(s_m, 10, xs_f);
   ED::ConverterState expected_s_f1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port2{80.0, 40.0}, ED::Port2{20.0, 10.0}, ED::Port2{30.0}, ED::Port2{0.0},
+    12, ED::Port3{80.0, 40.0}, ED::Port3{20.0, 10.0}, ED::Port3{30.0, 30.0}, ED::Port3{30.0, 0.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, true, false};
+    cf->clone(), false, true, true};
   EXPECT_EQ(s_f1, expected_s_f1);
 
   //std::vector<ED::PortValue> xs_g{
@@ -4640,9 +4640,9 @@ TEST(ErinDevs, Test_converter_functions)
   auto s_g1 = ED::converter_external_transition(s_m, 10, xs_g);
   ED::ConverterState expected_s_g1{
     // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port2{40.0}, ED::Port2{10.0}, ED::Port2{30.0}, ED::Port2{0.0},
+    12, ED::Port3{40.0, 40.0}, ED::Port3{10.0, 10.0}, ED::Port3{30.0, 30.0}, ED::Port3{0.0},
     // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), true, false, false};
+    cf->clone(), true, true, true};
   EXPECT_EQ(s_g1, expected_s_g1);
 }
 
@@ -7403,7 +7403,7 @@ TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
   std::default_random_engine generator{};
   std::uniform_int_distribution<int> request_dist(0, 100);
   std::uniform_int_distribution<int> achieved_diff_dist(1, 99);
-  std::size_t num_times{1000};
+  std::size_t num_times{1'000};
   double tol{1e-6};
   for (std::size_t idx{0}; idx < num_times; idx++) {
     E::RealTimeType e{0};
@@ -7423,13 +7423,37 @@ TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
     // xs -> ext transition, outflow request
     std::vector<ED::PortValue> xs{{ED::inport_outflow_request, out_req}};
     auto s1 = ED::converter_external_transition(s, e, xs);
-    EXPECT_NEAR(s1.inflow_port.get_requested(), in_req, tol);
-    EXPECT_NEAR(s1.outflow_port.get_requested(), out_req, tol);
-    EXPECT_NEAR(s1.lossflow_port.get_requested(), 0.0, tol);
-    EXPECT_NEAR(s1.wasteflow_port.get_requested(), waste_req, tol);
+    ASSERT_NEAR(s1.inflow_port.get_requested(), in_req, tol)
+      << "idx: " << idx << "\n"
+      << "s: " << s << "\n"
+      << "s1: " << s1 << "\n"
+      << "e: " << e << "\n"
+      << "xs: " << E::vec_to_string<E::PortValue>(xs) << "\n"
+      << "in_req: " << in_req << "\n";
+    ASSERT_NEAR(s1.outflow_port.get_requested(), out_req, tol)
+      << "idx: " << idx << "\n"
+      << "s: " << s << "\n"
+      << "s1: " << s1 << "\n"
+      << "e: " << e << "\n"
+      << "xs: " << E::vec_to_string<E::PortValue>(xs) << "\n"
+      << "in_req: " << in_req << "\n";
+    ASSERT_NEAR(s1.lossflow_port.get_requested(), 0.0, tol)
+      << "idx: " << idx << "\n"
+      << "s: " << s << "\n"
+      << "s1: " << s1 << "\n"
+      << "e: " << e << "\n"
+      << "xs: " << E::vec_to_string<E::PortValue>(xs) << "\n"
+      << "in_req: " << in_req << "\n";
+    ASSERT_NEAR(s1.wasteflow_port.get_requested(), waste_req, tol)
+      << "idx: " << idx << "\n"
+      << "s: " << s << "\n"
+      << "s1: " << s1 << "\n"
+      << "e: " << e << "\n"
+      << "xs: " << E::vec_to_string<E::PortValue>(xs) << "\n"
+      << "in_req: " << in_req << "\n";
     // ta -> dt == 0
     auto dt = ED::converter_time_advance(s1);
-    EXPECT_EQ(dt, (out_req > 0.0) ? 0 : ED::infinity)
+    ASSERT_EQ(dt, (out_req > 0.0) ? 0 : ED::infinity)
       << "idx      = " << idx << "\n"
       << "out_req  = " << out_req << "\n"
       << "in_req   = " << in_req << "\n"
@@ -7465,42 +7489,56 @@ TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
     auto s3 = ED::converter_external_transition(s2, e, xs2);
     // ta -> dt == 0
     auto dt3 = ED::converter_time_advance(s3);
-    EXPECT_EQ(dt3, (in_req == in_ach) ? ED::infinity : 0);
     if (dt3 == ED::infinity) {
       continue;
     }
     // output -> ys, outflow_achieved
     auto ys3 = ED::converter_output_function(s3);
-    ASSERT_EQ(ys3.size(), (in_ach == in_req) ? 0 : 1)
+    ASSERT_EQ(ys3.size(), 1)
       << "idx         = " << idx << "\n"
-      << "ys          = " << E::vec_to_string<E::PortValue>(ys3) << "\n"
-      << "out_req     = " << out_req << "\n"
+      << "s3          = " << s3 << "\n"
+      << "ys3         = " << E::vec_to_string<E::PortValue>(ys3) << "\n"
       << "in_req      = " << in_req << "\n"
       << "in_ach      = " << in_ach << "\n"
+      << "out_req     = " << out_req << "\n"
       << "out_ach     = " << out_ach << "\n"
       << "loss_req    = " << loss_req << "\n"
-      << "loss_ach    = " << loss_ach << "\n";
+      << "loss_ach    = " << loss_ach << "\n"
+      << "waste_req   = " << waste_req << "\n"
+      << "waste_ach   = " << waste_ach << "\n";
     if (in_ach > in_req) {
-      EXPECT_EQ(ys3[0].port, ED::outport_inflow_request);
-      EXPECT_NEAR(ys3[0].value, in_req, tol);
+      ASSERT_EQ(ys3[0].port, ED::outport_inflow_request);
+      ASSERT_NEAR(ys3[0].value, in_req, tol);
     }
-    else if (in_ach < in_req) {
-      EXPECT_EQ(ys3[0].port, ED::outport_outflow_achieved);
-      EXPECT_NEAR(ys3[0].value, out_ach, tol);
+    else if (in_ach <= in_req) {
+      ASSERT_EQ(ys3[0].port, ED::outport_outflow_achieved);
+      ASSERT_NEAR(ys3[0].value, out_ach, tol);
     }
     // internal transition
     auto s4 = ED::converter_internal_transition(s3);
-    ASSERT_NEAR(s4.inflow_port.get_requested(), in_req, tol);
-    ASSERT_NEAR(s4.outflow_port.get_requested(), out_req, tol);
-    ASSERT_NEAR(s4.lossflow_port.get_requested(), 0.0, tol);
-    ASSERT_NEAR(s4.wasteflow_port.get_requested(), (waste_ach > waste_req) ? waste_req : waste_ach, tol);
-    ASSERT_NEAR(s4.inflow_port.get_achieved(), (in_ach > in_req) ? in_req : in_ach, tol);
-    ASSERT_NEAR(s4.outflow_port.get_achieved(), (out_ach > out_req) ? out_req : out_ach, tol);
-    ASSERT_NEAR(s4.lossflow_port.get_achieved(), 0.0, tol);
-    ASSERT_NEAR(s4.wasteflow_port.get_achieved(), (waste_ach > waste_req) ? waste_req : waste_ach, tol);
+    std::ostringstream oss{};
+    oss << "idx: " << idx << "\n"
+        << "s2: " << s2 << "\n"
+        << "s3: " << s3 << "\n"
+        << "in_req: " << in_req << "\n"
+        << "in_ach: " << in_ach << "\n"
+        << "out_req: " << out_req << "\n"
+        << "out_ach: " << out_ach << "\n"
+        << "loss_req: " << loss_req << "\n"
+        << "loss_ach: " << loss_ach << "\n"
+        << "waste_req: " << waste_req << "\n"
+        << "waste_ach: " << waste_ach << "\n";
+    ASSERT_NEAR(s4.inflow_port.get_requested(), in_req, tol) << oss.str();
+    ASSERT_NEAR(s4.outflow_port.get_requested(), out_req, tol) << oss.str();
+    ASSERT_NEAR(s4.lossflow_port.get_requested(), 0.0, tol) << oss.str();
+    ASSERT_NEAR(s4.wasteflow_port.get_requested(), waste_req, tol) << oss.str();
+    ASSERT_NEAR(s4.inflow_port.get_achieved(), in_ach, tol) << oss.str();
+    ASSERT_NEAR(s4.outflow_port.get_achieved(), (in_ach > in_req) ? 0.0 : out_ach, tol) << oss.str();
+    ASSERT_NEAR(s4.lossflow_port.get_achieved(), 0.0, tol) << oss.str();
+    ASSERT_NEAR(s4.wasteflow_port.get_achieved(), (in_ach > in_req) ? in_ach : waste_ach, tol) << oss.str();
     // ta -> dt == infinity
     auto dt4 = ED::converter_time_advance(s4);
-    EXPECT_EQ(dt4, ED::infinity);
+    ASSERT_EQ(dt4, ED::infinity);
   }
 }
 
@@ -8036,13 +8074,15 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   }
 }
 
+/*
+ * TODO: convert driver class to function style and to use the Port3 scheme before re-enabling this
 TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   namespace E = ERIN;
   namespace EU = erin::utils;
 
   bool do_rounding{false};
   E::FlowValueType constant_efficiency{0.4};
-  std::size_t num_events{10000};
+  std::size_t num_events{10'000};
 
   auto calc_output_from_input = [constant_efficiency, do_rounding](E::FlowValueType inflow) -> E::FlowValueType {
     auto out{inflow * constant_efficiency};
@@ -8117,7 +8157,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
     outflow_times,
     outflow_requests,
     true};
-  adevs::Digraph<E::FlowValueType, E::Time> network;
+  adevs::Digraph<E::FlowValueType, E::Time> network{};
   network.couple(
       outflow_driver, E::Driver::outport_inflow_request,
       c, E::Storage::inport_outflow_request);
@@ -8207,6 +8247,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
     ASSERT_NEAR(error, 0.0, 1e-6) << oss.str();
   }
 }
+*/
 
 TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   namespace E = ERIN;
@@ -8446,7 +8487,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
     true,
-    true,
+    false,
   };
   ASSERT_EQ(update, expected_update);
   a = 5.0;
@@ -8500,7 +8541,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
     true,
-    true,
+    false,
   };
   ASSERT_EQ(update, expected_update);
   a = 8.0;
@@ -8546,7 +8587,7 @@ TEST(ErinBasicsTest, Test_Port3) {
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
     true,
-    true,
+    false,
   };
   ASSERT_EQ(update, expected_update);
   r = 35.0;

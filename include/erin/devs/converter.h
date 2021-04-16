@@ -114,10 +114,10 @@ namespace erin::devs
   struct ConverterState
   {
     RealTimeType time{0};
-    Port2 inflow_port{};
-    Port2 outflow_port{};
-    Port2 lossflow_port{};
-    Port2 wasteflow_port{};
+    Port3 inflow_port{};
+    Port3 outflow_port{};
+    Port3 lossflow_port{};
+    Port3 wasteflow_port{};
     std::unique_ptr<ConversionFun> conversion_fun{};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
@@ -139,8 +139,8 @@ namespace erin::devs
   struct LossflowPorts
   {
     bool report_lossflow_achieved{false};
-    Port2 lossflow_port{};
-    Port2 wasteflow_port{};
+    Port3 lossflow_port{};
+    Port3 wasteflow_port{};
   };
 
   ////////////////////////////////////////////////////////////

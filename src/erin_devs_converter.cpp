@@ -200,13 +200,13 @@ namespace erin::devs
   {
     return os << "{"
               << ":t " << a.time << ", "
-              << ":inflow " << a.inflow_port << ", "
-              << ":outflow " << a.outflow_port << ", "
-              << ":lossflow " << a.lossflow_port << ", "
-              << ":wasteflow " << a.wasteflow_port << ", "
-              << ":report-ir? " << a.report_inflow_request << ", "
-              << "report-oa? " << a.report_outflow_achieved << ", "
-              << "report-la? " << a.report_lossflow_achieved << "}";
+              << ":inflow " << a.inflow_port << " "
+              << ":outflow " << a.outflow_port << " "
+              << ":lossflow " << a.lossflow_port << " "
+              << ":wasteflow " << a.wasteflow_port << " "
+              << ":report-ir? " << a.report_inflow_request << " "
+              << ":report-oa? " << a.report_outflow_achieved << " "
+              << ":report-la? " << a.report_lossflow_achieved << "}";
   }
 
   ConverterState
@@ -216,10 +216,10 @@ namespace erin::devs
       std::make_unique<ConstantEfficiencyFun>(constant_efficiency);
     return ConverterState{
       0,            // time
-      Port2{},      // inflow_port
-      Port2{},      // outflow_port
-      Port2{},      // lossflow_port
-      Port2{},      // wasteflow_port
+      Port3{},      // inflow_port
+      Port3{},      // outflow_port
+      Port3{},      // lossflow_port
+      Port3{},      // wasteflow_port
       std::move(p), // conversion_fun
       false,        // report_inflow_request
       false,        // report_outflow_achieved
@@ -236,10 +236,10 @@ namespace erin::devs
           calc_output_from_input, calc_input_from_output);
     return ConverterState{
       0,            // time
-      Port2{},      // inflow_port
-      Port2{},      // outflow_port
-      Port2{},      // lossflow_port
-      Port2{},      // wasteflow_port
+      Port3{},      // inflow_port
+      Port3{},      // outflow_port
+      Port3{},      // lossflow_port
+      Port3{},      // wasteflow_port
       std::move(p), // conversion_fun
       false,        // report_inflow_request
       false,        // report_outflow_achieved
@@ -259,7 +259,7 @@ namespace erin::devs
   converter_internal_transition(const ConverterState& state)
   {
     return ConverterState{
-      state.time, // internal transitions alsways take 0 time
+      state.time, // internal transitions always take 0 time
       state.inflow_port,
       state.outflow_port,
       state.lossflow_port,
@@ -314,62 +314,52 @@ namespace erin::devs
       }
     }
     auto new_time = state.time + elapsed_time;
-    bool report_ir{false};
     auto ip{state.inflow_port};
     auto op{state.outflow_port};
     auto lp{state.lossflow_port};
-    auto ip_for_comp{state.inflow_port};
-    auto op_for_comp{state.outflow_port};
-    auto lp_for_comp{state.lossflow_port};
     auto wp{state.wasteflow_port};
+    bool report_ir{false};
+    bool report_oa{false};
+    bool report_la{false};
     if (got_outflow_request) {
-      op_for_comp = state.outflow_port.with_requested(outflow_request).port;
-      op = op.with_requested(outflow_request).port;
-      auto inflow_request{
-        state.conversion_fun->inflow_given_outflow(outflow_request)};
-      ip = ip.with_requested(inflow_request).port;
+      auto op_update = op.with_requested(outflow_request);
+      if (op_update.send_request) {
+        auto ip_update = ip.with_requested(
+            state.conversion_fun->inflow_given_outflow(outflow_request));
+        ip = ip_update.port;
+        report_ir = report_ir || ip_update.send_request;
+      }
+      op = op_update.port;
+      report_oa = report_oa || op_update.send_achieved;
     }
     if (got_lossflow_request) {
-      lp_for_comp = state.lossflow_port.with_requested(lossflow_request).port;
-      lp = lp.with_requested(lossflow_request).port;
+      auto lp_update = lp.with_requested(lossflow_request);
+      lp = lp_update.port;
+      report_la = report_la || lp_update.send_achieved;
     }
     if (got_inflow_achieved_flag) {
-      report_ir = inflow_achieved > ip.get_requested();
-      ip = ip.with_achieved(
-          report_ir
-          ? ip.get_requested()
-          : inflow_achieved).port;
-      ip_for_comp = state.inflow_port.with_achieved(
-          (inflow_achieved > state.inflow_port.get_requested())
-          ? state.inflow_port.get_requested()
-          : inflow_achieved).port;
-      if (ip_for_comp.get_requested() == ip_for_comp.get_achieved()) {
-        if ((ip.get_requested() > ip.get_achieved()) && (ip.get_requested() > ip_for_comp.get_requested())) {
-          // This is a special-case for when we get both an outflow request and inflow achieved
-          // at the same time; we're trying to detect if the ip_for_comp got what it requested which
-          // would indicate there's no need to keep a flow limit on the port.
-          ip = ip.with_achieved(ip.get_requested()).port;
-        }
-      }
-      auto outflow_achieved{
-        state.conversion_fun->outflow_given_inflow(
-            ip.get_achieved())};
-      if (outflow_achieved > op.get_requested()) {
-        op = op.with_achieved(op.get_requested()).port;
-        ip = ip.with_requested(
-            state.conversion_fun->inflow_given_outflow(
-              op.get_requested())).port;
-      }
-      else {
-        op = op.with_achieved(outflow_achieved).port;
+      auto ip_update = ip.with_achieved(inflow_achieved);
+      ip = ip_update.port;
+      report_ir = report_ir || ip_update.send_request;
+      if (ip_update.send_achieved) {
+        auto op_update = op.with_achieved(
+            state.conversion_fun->outflow_given_inflow(ip.get_achieved()));
+        op = op_update.port;
+        report_oa = report_oa || op_update.send_achieved;
       }
     }
     auto lossflow_achieved{ip.get_achieved() - op.get_achieved()};
-    lp = lp.with_achieved(
+    auto lp_update = lp.with_achieved(
         (lossflow_achieved > lp.get_requested())
         ? lp.get_requested()
-        : lossflow_achieved).port;
-    wp = Port2{lossflow_achieved - lp.get_achieved()};
+        : lossflow_achieved);
+    lp = lp_update.port;
+    auto wasteflow_request{
+      ip.get_requested() - (op.get_requested() + lp.get_requested())};
+    auto wasteflow_achieved{
+      ip.get_achieved() - (op.get_achieved() + lp.get_achieved())};
+    wp = Port3{wasteflow_request, wasteflow_achieved};
+    report_la = report_la || lp_update.send_achieved;
     return ConverterState{
       new_time,
       ip,
@@ -377,9 +367,9 @@ namespace erin::devs
       lp,
       wp,
       state.conversion_fun->clone(),
-      report_ir || ip.should_send_request(ip_for_comp),
-      op.should_send_achieved(op_for_comp),
-      lp.should_send_achieved(lp_for_comp)};
+      report_ir,
+      report_oa,
+      report_la};
   }
 
   ConverterState

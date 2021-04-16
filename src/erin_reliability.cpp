@@ -185,4 +185,24 @@ namespace ERIN
     }
     return out;
   }
+
+  bool
+  schedule_state_at_time(
+      const std::vector<TimeState>& schedule,
+      RealTimeType time,
+      bool initial_value)
+  {
+    bool flag{initial_value};
+    if (schedule.size() > 0) {
+      for (const auto& ts : schedule) {
+        if (time >= ts.time) {
+          flag = ts.state;
+        }
+        if (time < ts.time) {
+          break;
+        }
+      }
+    }
+    return flag;
+  }
 }

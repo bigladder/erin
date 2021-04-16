@@ -5580,7 +5580,6 @@ TEST(ErinBasicsTest, Test_example_8)
 }
 */
 
-/*
 TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
 {
   namespace E = ERIN;
@@ -5647,7 +5646,6 @@ TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
   };
   EXPECT_EQ(stats, expected);
 }
-*/
 
 TEST(ErinBasicsTest, Test_port_role_to_and_from_string_roundtrip)
 {

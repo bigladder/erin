@@ -6041,7 +6041,6 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
   EXPECT_EQ(expected_results, bs_data);
 }
 
-/*
 TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
 {
   namespace E = ERIN;
@@ -6134,7 +6133,6 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
   ASSERT_EQ(expected_results.size(), bs_data.size());
   EXPECT_EQ(expected_results, bs_data);
 }
-*/
 
 /*
 TEST(ErinBasicsTest, Test_that_reliability_works_on_mux_component)

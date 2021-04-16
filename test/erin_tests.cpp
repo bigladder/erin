@@ -5238,7 +5238,6 @@ TEST(ErinBasicsTest, Test_sink_and_flow_limits_with_port_logging)
 }
 */
 
-/*
 TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
 {
   namespace E = ERIN;
@@ -5271,6 +5270,11 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
       st_out,
       outflow_given_inflow,
       inflow_given_outflow);
+  std::string src_id{"natural_gas_tank"};
+  auto src = new E::Source(
+      src_id,
+      E::ComponentType::Source,
+      st_in);
   std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
   sink->set_flow_writer(fw);
   sink->set_recording_on();
@@ -5281,12 +5285,19 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
       sink, E::Sink::outport_inflow_request,
       converter, E::Converter::inport_outflow_request);
   network.couple(
+      converter, E::Source::outport_inflow_request,
+      src, E::Source::inport_outflow_request);
+  network.couple(
+      src, E::Source::outport_outflow_achieved,
+      converter, E::Converter::inport_inflow_achieved);
+  network.couple(
       converter, E::Converter::outport_outflow_achieved,
       sink, E::Sink::inport_inflow_achieved);
   adevs::Simulator<E::PortValue, E::Time> sim{};
   network.add(&sim);
-  while (sim.next_event_time() < E::inf)
+  while (sim.next_event_time() < E::inf) {
     sim.exec_next_event();
+  }
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
   fw->clear();
@@ -5324,7 +5335,6 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
         converter_id + "-lossflow")
       ) << "key: " << converter_id << "-lossflow";
 }
-*/
 
 TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
 {

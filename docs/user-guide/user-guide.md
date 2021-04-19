@@ -1030,7 +1030,7 @@ This specifies the types of distributions that will be used later in the tool.
 We have specified two fixed distributions: one that occurrs continuously and one that occurs every 30 years.
 
 
-7. Specify the scenarios.
+8. Specify the scenarios.
 
 ```toml
 [scenarios.blue_sky]

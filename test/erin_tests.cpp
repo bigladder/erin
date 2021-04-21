@@ -8159,7 +8159,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
 
   const bool do_rounding{false};
   const E::FlowValueType constant_efficiency{0.4};
-  const std::size_t num_events{10}; //{10'000};
+  const std::size_t num_events{10'000};
   const bool has_flow_limit{true};
   const E::FlowValueType flow_limit{60.0};
 
@@ -8343,15 +8343,50 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   //auto outflow_results = results[id + "-outflow"];
   //auto lossflow_results = results[id + "-lossflow"];
   //auto wasteflow_results = results[id + "-wasteflow"];
-  //std::cout << "outflow_load_profile[0]: " << outflow_load_profile[0] << "\n";
-  //std::cout << "outflow_load_profile[1]: " << outflow_load_profile[1] << "\n";
-  //std::cout << "outflow_load_profile[2]: " << outflow_load_profile[2] << "\n";
-  ASSERT_TRUE(
-      check_times_and_loads(results, times, flows_conv_to_out_req, sink_out_id, true));
+  // REQUESTED FLOWS
+  // sinks/sources
   ASSERT_TRUE(
       check_times_and_loads(results, times, flows_src_to_conv_req, src_id, true));
   ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_out_req, sink_out_id, true));
+  ASSERT_TRUE(
       check_times_and_loads(results, times, flows_conv_to_loss_req, sink_loss_id, true));
+  // converter
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_src_to_conv_req, id + "-inflow", true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_out_req, id + "-outflow", true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_loss_req, id + "-lossflow", true));
+  // ACHIEVED FLOWS
+  // sinks/sources
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_src_to_conv_ach, src_id, false));
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_out_ach, sink_out_id, false));
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_loss_ach, sink_loss_id, false));
+  // converter
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_src_to_conv_ach, id + "-inflow", false));
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_out_ach, id + "-outflow", false));
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_loss_ach, id + "-lossflow", false));
+  for (std::size_t idx{0}; idx < results[id + "-inflow"].size(); ++idx) {
+    const auto& inflow = results[id + "-inflow"][idx].achieved_value;
+    const auto& outflow = results[id + "-outflow"][idx].achieved_value;
+    const auto& lossflow = results[id + "-lossflow"][idx].achieved_value;
+    const auto& wasteflow = results[id + "-wasteflow"][idx].achieved_value;
+    auto error{inflow - (outflow + lossflow + wasteflow)};
+    EXPECT_TRUE(std::abs(error) < 1e-6)
+      << "idx:       " << idx << "\n"
+      << "inflow:    " << inflow << "\n"
+      << "outflow:   " << outflow << "\n"
+      << "lossflow:  " << lossflow << "\n"
+      << "wasteflow: " << wasteflow << "\n"
+      << "error:     " << error << "\n";
+  }
 }
 
 TEST(ErinBasicsTest, Test_mux_element_comprehensive) {

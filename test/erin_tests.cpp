@@ -8990,13 +8990,12 @@ TEST(ErinBasicsTest, Test_load_and_source_comprehensive) {
   }
 }
 
-/*
 TEST(ErinBasicsTest, Test_on_off_switch_comprehensive) {
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
   const std::size_t num_events{10'000};
-  const std::size_t num_time_state_transitions{1000};
+  const std::size_t num_time_state_transitions{1'000};
   const auto t_end{static_cast<E::RealTimeType>(num_events * 5)};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
@@ -9119,7 +9118,6 @@ TEST(ErinBasicsTest, Test_on_off_switch_comprehensive) {
   ASSERT_TRUE(
       check_times_and_loads(results, expected_times, expected_flows_ach, source_id, false));
 }
-*/
 
 int
 main(int argc, char **argv)

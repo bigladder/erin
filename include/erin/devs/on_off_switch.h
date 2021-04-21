@@ -58,7 +58,8 @@ namespace erin::devs
   OnOffSwitchState
   on_off_switch_internal_transition(
       const OnOffSwitchData& data,
-      const OnOffSwitchState& state);
+      const OnOffSwitchState& state,
+      bool verbose = true);
 
   ////////////////////////////////////////////////////////////
   // external transition
@@ -66,7 +67,8 @@ namespace erin::devs
   on_off_switch_external_transition(
       const OnOffSwitchState& state,
       RealTimeType elapsed_time,
-      const std::vector<PortValue>& xs); 
+      const std::vector<PortValue>& xs,
+      bool verbose = true); 
 
   ////////////////////////////////////////////////////////////
   // confluent transition

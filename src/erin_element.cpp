@@ -1413,13 +1413,14 @@ namespace ERIN
       std::string id,
       ComponentType component_type,
       const std::string& st,
-      const std::vector<LoadItem>& loads_):
+      const std::vector<LoadItem>& loads_,
+      bool do_checks):
     FlowElement(
         std::move(id),
         component_type,
         ElementType::Sink,
         st),
-    data{erin::devs::make_load_data(loads_)},
+    data{erin::devs::make_load_data(loads_, do_checks)},
     state{erin::devs::make_load_state()},
     flow_writer{nullptr},
     element_id{-1},

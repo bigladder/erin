@@ -32,7 +32,7 @@ namespace erin::devs
     bool resend_request{false};
   };
 
-  LoadData make_load_data(const std::vector<LoadItem>& loads);
+  LoadData make_load_data(const std::vector<LoadItem>& loads, bool do_checks = true);
 
   LoadState make_load_state();
 

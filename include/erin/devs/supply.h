@@ -20,6 +20,8 @@ namespace erin::devs
     FlowValueType maximum_outflow{supply_unlimited_value};
   };
 
+  std::ostream& operator<<(std::ostream& os, const SupplyData& d);
+
   struct SupplyState
   {
     RealTimeType time{0};
@@ -45,7 +47,9 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // internal transition
-  SupplyState supply_internal_transition(const SupplyState& state);
+  SupplyState supply_internal_transition(
+    const SupplyState& state,
+    bool verbose = true);
 
   ////////////////////////////////////////////////////////////
   // external transition
@@ -53,7 +57,8 @@ namespace erin::devs
       const SupplyData& data,
       const SupplyState& state,
       RealTimeType dt,
-      const std::vector<PortValue>& xs);
+      const std::vector<PortValue>& xs,
+      bool verbose = true);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

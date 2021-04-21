@@ -27,6 +27,8 @@
 #include "erin/version.h"
 #include "erin_test_utils.h"
 #include "gtest/gtest.h"
+#include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <functional>
 #include <iomanip>
@@ -76,15 +78,83 @@ check_times_and_loads(
   flag = flag && erin_test_utils::compare_vectors_functional<E::FlowValueType>(
       expected_loads, actual_loads);
   if (!flag) {
-    std::cout << "key: " << id << "\n"
-              << "expected_times = "
-              << E::vec_to_string<E::RealTimeType>(expected_times) << "\n"
-              << "expected_loads = "
-              << E::vec_to_string<E::FlowValueType>(expected_loads) << "\n"
-              << "actual_times   = "
-              << E::vec_to_string<E::RealTimeType>(actual_times) << "\n"
-              << (use_requested ? "requested_loads=" : "actual_loads   = ")
-              << E::vec_to_string<E::FlowValueType>(actual_loads) << "\n";
+    if (expected_times.size() < 40) {
+      std::cout << "key: " << id
+                << " " << (use_requested ? "requested" : "achieved")
+                << "\n"
+                << "expected_times = "
+                << E::vec_to_string<E::RealTimeType>(expected_times) << "\n"
+                << "expected_loads = "
+                << E::vec_to_string<E::FlowValueType>(expected_loads) << "\n"
+                << "actual_times   = "
+                << E::vec_to_string<E::RealTimeType>(actual_times) << "\n"
+                << (use_requested ? "requested_loads=" : "actual_loads   = ")
+                << E::vec_to_string<E::FlowValueType>(actual_loads) << "\n";
+    }
+    else {
+      auto exp_num_times{expected_times.size()};
+      auto exp_num_loads{expected_loads.size()};
+      auto act_num_times{actual_times.size()};
+      auto act_num_loads{actual_loads.size()};
+      std::cout << "key: " << id
+                << " " << (use_requested ? "requested" : "achieved")
+                << "\n"
+                << "- expected_times.size(): " << exp_num_times << "\n"
+                << "- expected_loads.size(): " << exp_num_loads << "\n"
+                << "- actual_times.size(): " << act_num_times << "\n"
+                << "- actual_loads.size(): " << act_num_loads << "\n";
+      auto sizes = std::vector<decltype(exp_num_times)>{
+        exp_num_times, exp_num_loads, act_num_times, act_num_loads};
+      auto num{*std::min_element(sizes.begin(), sizes.end())};
+      int num_discrepancies{0};
+      const int max_reporting{10};
+      for (std::size_t idx{0}; idx < num; ++idx) {
+        auto t_exp{expected_times[idx]};
+        auto t_act{actual_times[idx]};
+        auto flow_exp{expected_loads[idx]};
+        auto flow_act{actual_loads[idx]};
+        if ((t_exp != t_act) || (flow_exp != flow_act)) {
+          std::cout << "idx: " << idx
+                    << " (t: " << t_act << ")\n";
+          ++num_discrepancies;
+        }
+        if (t_exp != t_act) {
+          std::cout << "- time discrepancy\n"
+                    << "-- expected-time: " << t_exp << "\n"
+                    << "-- actual-time: " << t_act << "\n"
+                    ;
+          if ((idx > 0) && (idx < (num - 1))) {
+            std::cout << "-- expected-times: ["
+                      << expected_times[idx-1]
+                      << ", <<" << expected_times[idx] << ">>, "
+                      << expected_times[idx+1] << "]\n"
+                      << "-- actual-times: ["
+                      << actual_times[idx-1]
+                      << ", <<" << actual_times[idx] << ">>, "
+                      << actual_times[idx+1] << "]\n";
+          }
+        }
+        if (flow_exp != flow_act) {
+          std::cout << "- flow discrepancy\n"
+                    << "-- expected-flow: " << flow_exp << "\n"
+                    << "-- actual-flow: " << flow_act << "\n"
+                    ;
+          if ((idx > 0) && (idx < (num - 1))) {
+            std::cout << "-- expected-flows: ["
+                      << expected_loads[idx-1]
+                      << ", <<" << expected_loads[idx] << ">>, "
+                      << expected_loads[idx+1] << "]\n"
+                      << "-- actual-flows: ["
+                      << actual_loads[idx-1]
+                      << ", <<" << actual_loads[idx] << ">>, "
+                      << actual_loads[idx+1] << "]\n";
+          }
+        }
+        if (num_discrepancies > max_reporting) {
+          break;
+        }
+      }
+    }
   }
   return flag;
 }
@@ -6723,6 +6793,7 @@ TEST(ErinBasicsTest, Test_adjusting_reliability_schedule)
   ASSERT_EQ(clipped_sch, expected_clipped_sch);
 }
 
+/*
 TEST(ErinBasicsTest, Test_that_switch_element_works)
 {
   namespace ED = erin::devs;
@@ -6771,56 +6842,54 @@ TEST(ErinBasicsTest, Test_that_switch_element_works)
   dt = ED::on_off_switch_time_advance(data, s);
   EXPECT_EQ(dt, 4);
   ys = ED::on_off_switch_output_function(data, s);
-  expected_ys = std::vector<ED::PortValue>{
-    ED::PortValue{ED::outport_inflow_request, 0.0},
-  };
+  expected_ys = std::vector<ED::PortValue>{};
   ASSERT_EQ(expected_ys.size(), ys.size())
     << "s: " << s << "\n"
     << "expected_ys: " << E::vec_to_string<E::PortValue>(expected_ys) << "\n"
     << "ys: " << E::vec_to_string<E::PortValue>(ys) << "\n";
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys, expected_ys, compare_ports));
   s = ED::on_off_switch_internal_transition(data, s);
-  EXPECT_EQ(s.time, 5);
+  ASSERT_EQ(s.time, 5);
   dt = ED::on_off_switch_time_advance(data, s);
-  EXPECT_EQ(dt, 2);
+  ASSERT_EQ(dt, 0);
   ys = ED::on_off_switch_output_function(data, s);
   expected_ys = std::vector<ED::PortValue>{
     ED::PortValue{ED::outport_inflow_request, 100.0},
-    ED::PortValue{ED::outport_outflow_achieved, 100.0},
   };
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys, expected_ys, compare_ports));
   s = ED::on_off_switch_internal_transition(data, s);
-  EXPECT_EQ(s.time, 7);
+  ASSERT_EQ(s.time, 7);
   dt = ED::on_off_switch_time_advance(data, s);
-  EXPECT_EQ(dt, 5);
+  ASSERT_EQ(dt, 5);
   ys = ED::on_off_switch_output_function(data, s);
   expected_ys = std::vector<ED::PortValue>{
     ED::PortValue{ED::outport_inflow_request, 0.0},
   };
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys, expected_ys, compare_ports));
   s = ED::on_off_switch_internal_transition(data, s);
-  EXPECT_EQ(s.time, 12);
+  ASSERT_EQ(s.time, 12);
   dt = ED::on_off_switch_time_advance(data, s);
-  EXPECT_EQ(dt, 2);
+  ASSERT_EQ(dt, 2);
   ys = ED::on_off_switch_output_function(data, s);
   expected_ys = std::vector<ED::PortValue>{
     ED::PortValue{ED::outport_inflow_request, 100.0},
     ED::PortValue{ED::outport_outflow_achieved, 100.0},
   };
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       erin::utils::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys, expected_ys, compare_ports));
   s = ED::on_off_switch_internal_transition(data, s);
   EXPECT_EQ(s.time, 14);
   dt = ED::on_off_switch_time_advance(data, s);
-  EXPECT_EQ(dt, ED::infinity);
+  ASSERT_EQ(dt, ED::infinity);
 }
+*/
 
 TEST(ErinBasicsTest, Test_fixed_distribution)
 {
@@ -7291,9 +7360,9 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
   EXPECT_EQ(inports_returned[0].port.get_achieved(), 5.0);
   EXPECT_EQ(inports_returned[1].port.get_achieved(), 5.0);
   EXPECT_EQ(inports_returned[2].port.get_achieved(), 10.0);
-  remaining_request = 25.0;
 }
 
+/*
 TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) {
   namespace E = ERIN;
   namespace ED = erin::devs;
@@ -7326,6 +7395,7 @@ TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) 
   EXPECT_EQ(ys0[0].port, ED::outport_inflow_request);
   EXPECT_EQ(ys0[0].value, 1.0);
 }
+*/
 
 TEST(ErinBasicsTest, Test_that_port2_works) {
   namespace ED = erin::devs;
@@ -7400,6 +7470,7 @@ TEST(ErinBasicsTest, Test_that_port2_works) {
     << "p: " << update.port << "pL: " << p;
 }
 
+/*
 TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
   namespace E = ERIN;
   namespace ED = erin::devs;
@@ -7545,6 +7616,7 @@ TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
     ASSERT_EQ(dt4, ED::infinity);
   }
 }
+*/
 
 TEST(ErinBasicsTest, Test_energy_balance_on_flow_limits) {
   namespace E = ERIN;
@@ -8793,6 +8865,261 @@ TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
       << "outflow: " << outflow << "\n";
   }
 }
+
+TEST(ErinBasicsTest, Test_schedule_state_at_time) {
+  namespace E = ERIN;
+  std::vector<E::TimeState> schedule{
+    E::TimeState{0, true},
+    E::TimeState{10, false},
+    E::TimeState{40, true},
+    E::TimeState{50, false}};
+  ASSERT_TRUE(E::schedule_state_at_time(schedule, -100));
+  ASSERT_TRUE(E::schedule_state_at_time(schedule, 0));
+  ASSERT_TRUE(E::schedule_state_at_time(schedule, 40));
+  ASSERT_TRUE(E::schedule_state_at_time(schedule, 42));
+  ASSERT_FALSE(E::schedule_state_at_time(schedule, 10));
+  ASSERT_FALSE(E::schedule_state_at_time(schedule, 12));
+  ASSERT_FALSE(E::schedule_state_at_time(schedule, 60));
+  ASSERT_FALSE(E::schedule_state_at_time(schedule, 600));
+}
+
+ERIN::RealTimeType
+time_to_next_schedule_change(
+    const std::vector<ERIN::TimeState>& schedule,
+    ERIN::RealTimeType current_time)
+{
+  ERIN::RealTimeType dt{-1};
+  for (const auto& ts : schedule) {
+    if (ts.time >= current_time) {
+      dt = ts.time - current_time;
+      break;
+    }
+  }
+  return dt;
+}
+
+TEST(ErinBasicsTest, Test_load_and_source_comprehensive) {
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  const std::size_t num_events{10'000};
+  const std::vector<bool> has_flow_limit_options{true, false};
+  const E::FlowValueType max_source_outflow{50.0};
+  const unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
+  
+  std::cout << "seed: " << seed << "\n";
+  std::default_random_engine generator(seed);
+  std::uniform_int_distribution<int> dt_dist(0, 10);
+  std::uniform_int_distribution<int> flow_dist(0, 100);
+
+  std::string stream{"stream"};
+  std::string source_id{"source"};
+  std::string sink_id{"sink"};
+
+  for (const auto& has_flow_limit : has_flow_limit_options) {
+    std::vector<E::RealTimeType> expected_times{};
+    std::vector<E::FlowValueType> expected_flows_req{};
+    std::vector<E::FlowValueType> expected_flows_ach{};
+    std::vector<E::LoadItem> load_profile{};
+
+    E::RealTimeType t{0};
+    for (std::size_t idx{0}; idx < num_events; ++idx) {
+      auto new_load{static_cast<E::FlowValueType>(flow_dist(generator))};
+      load_profile.emplace_back(E::LoadItem{t, new_load});
+      auto dt = static_cast<E::RealTimeType>(dt_dist(generator));
+      if (dt > 0) {
+        expected_times.emplace_back(t);
+        expected_flows_req.emplace_back(new_load);
+      }
+      t += dt;
+    }
+    expected_flows_req.back() = 0.0;
+    auto t_max = expected_times.back();
+    ASSERT_EQ(expected_times.size(), expected_flows_req.size());
+    for (std::size_t idx{0}; idx < expected_times.size(); ++idx) {
+      auto flow_r{expected_flows_req[idx]};
+      if (has_flow_limit && (flow_r > max_source_outflow)) {
+        expected_flows_ach.emplace_back(max_source_outflow);
+      }
+      else {
+        expected_flows_ach.emplace_back(flow_r);
+      }
+    }
+    ASSERT_EQ(expected_times.size(), expected_flows_ach.size());
+    auto sink = new E::Sink(
+        sink_id,
+        E::ComponentType::Load,
+        stream,
+        load_profile,
+        false);
+    auto source = new E::Source(
+        source_id,
+        E::ComponentType::Source,
+        stream,
+        has_flow_limit ? max_source_outflow : ED::supply_unlimited_value);
+    std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+    source->set_flow_writer(fw);
+    source->set_recording_on();
+    sink->set_flow_writer(fw);
+    sink->set_recording_on();
+
+    adevs::Digraph<E::FlowValueType, E::Time> network{};
+    network.couple(
+        sink, E::Sink::outport_inflow_request,
+        source, E::Source::inport_outflow_request);
+    network.couple(
+        source, E::Source::outport_outflow_achieved,
+        sink, E::Sink::inport_inflow_achieved);
+    adevs::Simulator<E::PortValue, E::Time> sim{};
+    network.add(&sim);
+    while (sim.next_event_time() < E::inf) {
+      sim.exec_next_event();
+    }
+    fw->finalize_at_time(t_max);
+    auto results = fw->get_results();
+    fw->clear();
+
+    ASSERT_TRUE(
+        check_times_and_loads(results, expected_times, expected_flows_req, sink_id, true));
+    ASSERT_TRUE(
+        check_times_and_loads(results, expected_times, expected_flows_req, source_id, true));
+    ASSERT_TRUE(
+        check_times_and_loads(results, expected_times, expected_flows_ach, sink_id, false));
+    ASSERT_TRUE(
+        check_times_and_loads(results, expected_times, expected_flows_ach, source_id, false));
+  }
+}
+
+/*
+TEST(ErinBasicsTest, Test_on_off_switch_comprehensive) {
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  const std::size_t num_events{10'000};
+  const std::size_t num_time_state_transitions{1000};
+  const auto t_end{static_cast<E::RealTimeType>(num_events * 5)};
+
+  unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
+  std::cout << "seed: " << seed << "\n";
+  std::default_random_engine generator(seed);
+  std::uniform_int_distribution<int> dt_dist(0, 10);
+  std::uniform_int_distribution<int> flow_dist(0, 100);
+
+  std::string stream{"stream"};
+  std::string source_id{"source"};
+  std::string sink_id{"sink"};
+  std::string switch_id{"switch"};
+
+  std::vector<E::RealTimeType> expected_times{};
+  std::vector<E::FlowValueType> expected_flows_req{};
+  std::vector<E::FlowValueType> expected_flows_ach{};
+  std::vector<E::LoadItem> load_profile{};
+  std::vector<E::TimeState> schedule{};
+
+  E::RealTimeType t{0};
+  bool flag{true};
+  for (std::size_t idx{0}; idx < num_time_state_transitions; ++idx) {
+    schedule.emplace_back(
+        E::TimeState{t, flag});
+    flag = !flag;
+    t += (static_cast<E::RealTimeType>(dt_dist(generator)) + 1) * 100;
+    if (t > t_end) {
+      break;
+    }
+  }
+  t = 0;
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    auto new_load{static_cast<E::FlowValueType>(flow_dist(generator))};
+    load_profile.emplace_back(E::LoadItem{t, new_load});
+    auto dt = static_cast<E::RealTimeType>(dt_dist(generator));
+    auto dt_sch = time_to_next_schedule_change(schedule, t);
+    if (dt > 0) {
+      expected_times.emplace_back(t);
+      expected_flows_req.emplace_back(new_load);
+      if ((dt_sch > 0) && (dt_sch < dt) && (dt_sch < (t_end - t))) {
+        expected_times.emplace_back(t + dt_sch);
+        expected_flows_req.emplace_back(new_load);
+        t += dt_sch;
+        dt -= dt_sch;
+      }
+    }
+    t += dt;
+    if (t > t_end) {
+      break;
+    }
+  }
+  expected_flows_req.back() = 0.0;
+  auto t_max = expected_times.back();
+  ASSERT_EQ(expected_times.size(), expected_flows_req.size());
+  for (std::size_t idx{0}; idx < expected_times.size(); ++idx) {
+    auto time{expected_times[idx]};
+    auto flow_r{expected_flows_req[idx]};
+    auto flag{E::schedule_state_at_time(schedule, time)};
+    if (flag) {
+      expected_flows_ach.emplace_back(flow_r);
+    }
+    else {
+      expected_flows_ach.emplace_back(0.0);
+    }
+  }
+  ASSERT_EQ(expected_times.size(), expected_flows_ach.size());
+  auto sink = new E::Sink(
+      sink_id,
+      E::ComponentType::Load,
+      stream,
+      load_profile,
+      false);
+  auto on_off_switch = new E::OnOffSwitch(
+      switch_id,
+      E::ComponentType::PassThrough,
+      stream,
+      schedule);
+  auto source = new E::Source(
+      source_id, E::ComponentType::Source, stream);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  source->set_flow_writer(fw);
+  source->set_recording_on();
+  sink->set_flow_writer(fw);
+  sink->set_recording_on();
+  on_off_switch->set_flow_writer(fw);
+  on_off_switch->set_recording_on();
+
+  adevs::Digraph<E::FlowValueType, E::Time> network{};
+  network.couple(
+      sink, E::Sink::outport_inflow_request,
+      on_off_switch, E::OnOffSwitch::inport_outflow_request);
+  network.couple(
+      on_off_switch, E::OnOffSwitch::outport_inflow_request,
+      source, E::Source::inport_outflow_request);
+  network.couple(
+      source, E::Source::outport_outflow_achieved,
+      on_off_switch, E::OnOffSwitch::inport_inflow_achieved);
+  network.couple(
+      on_off_switch, E::OnOffSwitch::outport_outflow_achieved,
+      sink, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  while (sim.next_event_time() < E::inf) {
+    sim.exec_next_event();
+  }
+  fw->finalize_at_time(t_max);
+  auto results = fw->get_results();
+  fw->clear();
+
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_req, sink_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_req, switch_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_ach, source_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_ach, sink_id, false));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_ach, switch_id, false));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_ach, source_id, false));
+}
+*/
 
 int
 main(int argc, char **argv)

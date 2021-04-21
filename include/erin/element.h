@@ -418,7 +418,8 @@ namespace ERIN
           std::string id,
           ComponentType component_type,
           const std::string& stream_type,
-          const std::vector<LoadItem>& loads);
+          const std::vector<LoadItem>& loads,
+          bool do_checks = true);
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;

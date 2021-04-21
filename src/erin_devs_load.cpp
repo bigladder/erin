@@ -42,9 +42,11 @@ namespace erin::devs
   }
 
   LoadData
-  make_load_data(const std::vector<LoadItem>& loads)
+  make_load_data(const std::vector<LoadItem>& loads, bool do_checks)
   {
-    check_loads(loads);
+    if (do_checks) {
+      check_loads(loads);
+    }
     auto num_loads = loads.size();
     std::vector<RealTimeType> times(num_loads, 0);
     std::vector<FlowValueType> load_values(num_loads, 0.0);

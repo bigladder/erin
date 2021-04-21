@@ -8,7 +8,7 @@
 
 namespace erin::devs
 {
-  const bool supply_debug{true};
+  const bool supply_debug{false};
 
   std::ostream&
   operator<<(std::ostream& os, const SupplyData& d)

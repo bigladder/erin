@@ -151,7 +151,9 @@ namespace erin::devs
   ////////////////////////////////////////////////////////////
   // internal transition
   ConverterState
-  converter_internal_transition(const ConverterState& state);
+  converter_internal_transition(
+    const ConverterState& state,
+    bool verbose = true);
 
   ////////////////////////////////////////////////////////////
   // external transition
@@ -159,7 +161,8 @@ namespace erin::devs
   converter_external_transition(
       const ConverterState& state,
       RealTimeType elapsed_time,
-      const std::vector<PortValue>& xs); 
+      const std::vector<PortValue>& xs,
+      bool verbose = true); 
 
   ////////////////////////////////////////////////////////////
   // confluent transition

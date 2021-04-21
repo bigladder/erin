@@ -8152,15 +8152,16 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   }
 }
 
-/*
- * TODO: convert driver class to function style and to use the Port3 scheme before re-enabling this
 TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   namespace E = ERIN;
   namespace EU = erin::utils;
+  namespace ED = erin::devs;
 
-  bool do_rounding{false};
-  E::FlowValueType constant_efficiency{0.4};
-  std::size_t num_events{10'000};
+  const bool do_rounding{false};
+  const E::FlowValueType constant_efficiency{0.4};
+  const std::size_t num_events{10'000};
+  const bool has_flow_limit{true};
+  const E::FlowValueType flow_limit{60.0};
 
   auto calc_output_from_input = [constant_efficiency, do_rounding](E::FlowValueType inflow) -> E::FlowValueType {
     auto out{inflow * constant_efficiency};
@@ -8170,11 +8171,15 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   };
   auto calc_input_from_output = [constant_efficiency, do_rounding](E::FlowValueType outflow) -> E::FlowValueType {
     auto out{outflow / constant_efficiency};
-    if (do_rounding)
+    if (do_rounding) {
       return std::round(out * 1e6) / 1e6;
+    }
     return out;
   };
   std::string id{"conv"};
+  std::string src_id{"inflow_at_source"};
+  std::string sink_out_id{"outflow_at_load"};
+  std::string sink_loss_id{"lossflow_at_load"};
   std::string outflow_stream{"electricity"};
   std::string inflow_stream{"diesel_fuel"};
   std::string lossflow_stream{"waste_heat"};
@@ -8195,65 +8200,120 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   std::uniform_int_distribution<int> flow_dist(0, 100);
 
   // inflow and outflow from viewpoint of the component
-  std::vector<E::RealTimeType> inflow_times{};
-  std::vector<E::FlowValueType> inflow_achieveds{};
-  std::vector<E::RealTimeType> lossflow_times{};
-  std::vector<E::FlowValueType> lossflow_requests{};
-  std::vector<E::RealTimeType> outflow_times{};
-  std::vector<E::FlowValueType> outflow_requests{};
+  std::vector<E::RealTimeType> times{};
+  std::vector<E::FlowValueType> flows_src_to_conv_req{};
+  std::vector<E::FlowValueType> flows_src_to_conv_ach{};
+  std::vector<E::FlowValueType> flows_conv_to_out_req{};
+  std::vector<E::FlowValueType> flows_conv_to_out_ach{};
+  std::vector<E::FlowValueType> flows_conv_to_loss_req{};
+  std::vector<E::FlowValueType> flows_conv_to_loss_ach{};
+  std::vector<E::LoadItem> lossflow_load_profile{};
+  std::vector<E::LoadItem> outflow_load_profile{};
+
   E::RealTimeType t{0};
   for (std::size_t idx{0}; idx < num_events; ++idx) {
-    t += static_cast<E::RealTimeType>(dt_dist(generator));
-    outflow_times.emplace_back(t);
-    outflow_requests.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
-    t += static_cast<E::RealTimeType>(dt_dist(generator));
-    lossflow_times.emplace_back(t);
-    lossflow_requests.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
-    t += static_cast<E::RealTimeType>(dt_dist(generator));
-    inflow_times.emplace_back(t);
-    inflow_achieveds.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+    auto dt{static_cast<E::RealTimeType>(dt_dist(generator))};
+    auto dt2{static_cast<E::RealTimeType>(dt_dist(generator))};
+    auto outflow_r{static_cast<E::FlowValueType>(flow_dist(generator))};
+    outflow_load_profile.emplace_back(E::LoadItem{t, outflow_r});
+    auto inflow_r{calc_input_from_output(outflow_r)};
+    auto inflow_a{inflow_r};
+    auto outflow_a{calc_output_from_input(inflow_a)};
+    decltype(inflow_r) lossflow_r{0.0};
+    decltype(lossflow_r) lossflow_a{0.0};
+    if (flows_conv_to_loss_req.size() > 0) {
+      lossflow_r = flows_conv_to_loss_req.back();
+      lossflow_a = flows_conv_to_loss_ach.back();
+    }
+    if (dt > 0) {
+      times.emplace_back(t);
+      flows_conv_to_out_req.emplace_back(outflow_r);
+      flows_src_to_conv_req.emplace_back(inflow_r);
+      if (has_flow_limit) {
+        inflow_a = std::min(flow_limit, inflow_r);
+        outflow_a = calc_output_from_input(inflow_a);
+      }
+      flows_src_to_conv_ach.emplace_back(inflow_a);
+      flows_conv_to_out_ach.emplace_back(outflow_a);
+      if (dt2 > 0) {
+        flows_conv_to_loss_req.emplace_back(
+            std::min(lossflow_r, inflow_r - outflow_r));
+        flows_conv_to_loss_ach.emplace_back(
+            std::min(lossflow_a, inflow_a - outflow_a));
+      }
+    }
+    t += dt;
+    lossflow_r = static_cast<E::FlowValueType>(flow_dist(generator));
+    lossflow_load_profile.emplace_back(
+      E::LoadItem{t, lossflow_r});
+    if (dt2 > 0) {
+      times.emplace_back(t);
+      flows_conv_to_out_req.emplace_back(outflow_r);
+      auto inflow_r{calc_input_from_output(outflow_r)};
+      flows_src_to_conv_req.emplace_back(inflow_r);
+      auto inflow_a{inflow_r};
+      if (has_flow_limit) {
+        inflow_a = std::min(flow_limit, inflow_r);
+        outflow_a = calc_output_from_input(inflow_a);
+      }
+      flows_src_to_conv_ach.emplace_back(inflow_a);
+      flows_conv_to_out_ach.emplace_back(outflow_a);
+      flows_conv_to_loss_req.emplace_back(
+          std::min(lossflow_r, inflow_r - outflow_r));
+      flows_conv_to_loss_ach.emplace_back(
+          std::min(lossflow_r, inflow_a - outflow_a));
+    }
+    t += dt2;
   }
-  auto t_max{t};
-  auto inflow_driver = new E::Driver{
-    "inflow-to-conv",
-    E::Driver::outport_outflow_achieved,
-    E::Driver::inport_outflow_request,
-    inflow_times,
-    inflow_achieveds,
-    false};
-  auto lossflow_driver = new E::Driver{
-    "lossflow-from-conv",
-    E::Driver::outport_inflow_request,
-    E::Driver::inport_inflow_achieved,
-    lossflow_times,
-    lossflow_requests,
-    true};
-  auto outflow_driver = new E::Driver{
-    "outflow-from-conv",
-    E::Driver::outport_inflow_request,
-    E::Driver::inport_inflow_achieved,
-    outflow_times,
-    outflow_requests,
-    true};
+  auto t_max{times.back()};
+  flows_src_to_conv_req.back() = 0.0;
+  flows_src_to_conv_ach.back() = 0.0;
+  flows_conv_to_out_req.back() = 0.0;
+  flows_conv_to_out_ach.back() = 0.0;
+  flows_conv_to_loss_req.back() = 0.0;
+  flows_conv_to_loss_ach.back() = 0.0;
+  auto inflow_driver = new E::Source(
+      src_id,
+      E::ComponentType::Source,
+      inflow_stream,
+      has_flow_limit ? flow_limit : ED::supply_unlimited_value);
+  inflow_driver->set_flow_writer(fw);
+  inflow_driver->set_recording_on();
+  auto lossflow_driver = new E::Sink(
+      sink_loss_id,
+      E::ComponentType::Load,
+      lossflow_stream,
+      lossflow_load_profile,
+      false);
+  lossflow_driver->set_flow_writer(fw);
+  lossflow_driver->set_recording_on();
+  auto outflow_driver = new E::Sink{
+      sink_out_id,
+      E::ComponentType::Load,
+      outflow_stream,
+      outflow_load_profile,
+      false};
+  outflow_driver->set_flow_writer(fw);
+  outflow_driver->set_recording_on();
   adevs::Digraph<E::FlowValueType, E::Time> network{};
   network.couple(
-      outflow_driver, E::Driver::outport_inflow_request,
-      c, E::Storage::inport_outflow_request);
+      outflow_driver, E::Sink::outport_inflow_request,
+      c, E::Converter::inport_outflow_request);
   network.couple(
-      lossflow_driver, E::Driver::outport_inflow_request,
-      c, E::Storage::inport_outflow_request + 1);
+      lossflow_driver, E::Sink::outport_inflow_request,
+      c, E::Converter::inport_outflow_request + 1);
   network.couple(
-      c, E::Storage::outport_inflow_request,
-      inflow_driver, E::Driver::inport_outflow_request);
+      c, E::Converter::outport_inflow_request,
+      inflow_driver, E::Source::inport_outflow_request);
   network.couple(
-      inflow_driver, E::Driver::outport_outflow_achieved,
-      c, E::Storage::inport_inflow_achieved);
+      inflow_driver, E::Source::outport_outflow_achieved,
+      c, E::Converter::inport_inflow_achieved);
   network.couple(
-      c, E::Storage::outport_outflow_achieved,
+      c, E::Converter::outport_outflow_achieved,
       outflow_driver, E::Driver::inport_inflow_achieved);
   network.couple(
-      c, E::Storage::outport_outflow_achieved + 1,
-      lossflow_driver, E::Driver::inport_inflow_achieved);
+      c, E::Converter::outport_outflow_achieved + 1,
+      lossflow_driver, E::Converter::inport_inflow_achieved);
   adevs::Simulator<E::PortValue, E::Time> sim{};
   network.add(&sim);
   const std::size_t max_no_advance{num_events * 4};
@@ -8282,50 +8342,16 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
   fw->clear();
-  auto inflow_results = results[id + "-inflow"];
-  auto outflow_results = results[id + "-outflow"];
-  auto lossflow_results = results[id + "-lossflow"];
-  auto wasteflow_results = results[id + "-wasteflow"];
-  auto inflow_ts = inflow_driver->get_times();
-  auto inflow_fs = inflow_driver->get_flows();
-  auto lossflow_ts = lossflow_driver->get_times();
-  auto lossflow_fs = lossflow_driver->get_flows();
-  auto outflow_ts = outflow_driver->get_times();
-  auto outflow_fs = outflow_driver->get_flows();
-  const std::size_t last_idx{inflow_results.size() - 1};
-  // Note: on the last index, the finalize_at_time(.) method of FlowWriter sets
-  // the flows to 0 which causes a discrepancy with the drivers that need not
-  // be tested. Therefore, we only go until prior to the last index.
-  for (std::size_t idx{0}; idx < last_idx; ++idx) {
-    std::ostringstream oss{};
-    oss << "idx            : " << idx << "\n";
-    const auto& inf_res = inflow_results[idx];
-    const auto& time = inf_res.time;
-    oss << "time           : " << time << "\n";
-    const auto inflow_d{EU::interpolate_value(time, inflow_ts, inflow_fs)};
-    oss << "inflow_results : " << inf_res << "\n";
-    oss << "inflow_driver  : " << inflow_d << "\n";
-    ASSERT_EQ(inf_res.achieved_value, inflow_d) << oss.str();
-    const auto& out_res = outflow_results[idx]; 
-    const auto outflow_d{EU::interpolate_value(time, outflow_ts, outflow_fs)};
-    oss << "outflow_results: " << out_res << "\n";
-    oss << "outflow_driver : " << outflow_d << "\n";
-    ASSERT_EQ(out_res.achieved_value, outflow_d) << oss.str();
-    const auto& loss_res = lossflow_results[idx];
-    const auto lossflow_d{EU::interpolate_value(time, lossflow_ts, lossflow_fs)};
-    oss << "lossflow_result: " << loss_res << "\n";
-    oss << "lossflow_driver: " << lossflow_d << "\n";
-    const auto& wst_res = wasteflow_results[idx];
-    oss << "wasteflow_resul: " << wst_res << "\n";
-    auto error{
-      inf_res.achieved_value - (
-          out_res.achieved_value + loss_res.achieved_value +
-          wst_res.achieved_value)};
-    oss << "Energy Balance : " << error << "\n";
-    ASSERT_NEAR(error, 0.0, 1e-6) << oss.str();
-  }
+  //auto inflow_results = results[id + "-inflow"];
+  //auto outflow_results = results[id + "-outflow"];
+  //auto lossflow_results = results[id + "-lossflow"];
+  //auto wasteflow_results = results[id + "-wasteflow"];
+  std::cout << "outflow_load_profile[0]: " << outflow_load_profile[0] << "\n";
+  std::cout << "outflow_load_profile[1]: " << outflow_load_profile[1] << "\n";
+  std::cout << "outflow_load_profile[2]: " << outflow_load_profile[2] << "\n";
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_out_req, sink_out_id, true));
 }
-*/
 
 TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   namespace E = ERIN;

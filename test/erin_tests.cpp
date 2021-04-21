@@ -9183,6 +9183,122 @@ TEST(ErinBasicsTest, Test_on_off_switch_comprehensive) {
       check_times_and_loads(results, expected_times, expected_flows_ach, source_id, false));
 }
 
+TEST(ErinBasicsTest, Test_flow_limits_comprehensive) {
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  namespace EU = erin::utils;
+  const std::size_t num_events{10}; // {10'000};
+  const E::FlowValueType max_lim_flow{75.0};
+  const E::FlowValueType max_src_flow{50.0};
+  const bool source_is_limited{false};
+
+  unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
+  std::cout << "seed: " << seed << "\n";
+  std::default_random_engine generator(seed);
+  std::uniform_int_distribution<int> dt_dist(0, 10);
+  std::uniform_int_distribution<int> flow_dist(0, 100);
+
+  std::string stream{"stream"};
+  std::string source_id{"source"};
+  std::string sink_id{"sink"};
+  std::string lim_id{"switch"};
+
+  std::vector<E::RealTimeType> expected_times{};
+  std::vector<E::FlowValueType> expected_outflows_req{};
+  std::vector<E::FlowValueType> expected_outflows_ach{};
+  std::vector<E::FlowValueType> expected_inflows_req{};
+  std::vector<E::FlowValueType> expected_inflows_ach{};
+  std::vector<E::LoadItem> load_profile{};
+
+  E::RealTimeType t{0};
+  t = 0;
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    auto new_load{static_cast<E::FlowValueType>(flow_dist(generator))};
+    load_profile.emplace_back(E::LoadItem{t, new_load});
+    auto dt = static_cast<E::RealTimeType>(dt_dist(generator));
+    if (dt > 0) {
+      expected_times.emplace_back(t);
+      expected_outflows_req.emplace_back(new_load);
+      expected_inflows_req.emplace_back(std::min(new_load, max_lim_flow));
+      auto flow_a{std::min(
+        new_load,
+        source_is_limited
+        ? std::min(max_src_flow, max_lim_flow)
+        : max_lim_flow)};
+      expected_inflows_ach.emplace_back(flow_a);
+      expected_outflows_ach.emplace_back(flow_a);
+    }
+    t += dt;
+  }
+  expected_outflows_req.back() = 0.0;
+  expected_outflows_ach.back() = 0.0;
+  expected_inflows_req.back() = 0.0;
+  expected_inflows_ach.back() = 0.0;
+  auto t_max = expected_times.back();
+  ASSERT_EQ(expected_times.size(), expected_outflows_req.size());
+  ASSERT_EQ(expected_times.size(), expected_flows_ach.size());
+  auto sink = new E::Sink(
+      sink_id,
+      E::ComponentType::Load,
+      stream,
+      load_profile,
+      false);
+  auto lim = new E::FlowLimits(
+      lim_id,
+      E::ComponentType::FlowLimits,
+      stream,
+      0.0,
+      max_lim_flow);
+  auto source = new E::Source(
+      source_id,
+      E::ComponentType::Source,
+      stream,
+      source_is_limited ? max_src_flow : ED::supply_unlimited_value);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  source->set_flow_writer(fw);
+  source->set_recording_on();
+  sink->set_flow_writer(fw);
+  sink->set_recording_on();
+  lim->set_flow_writer(fw);
+  lim->set_recording_on();
+
+  adevs::Digraph<E::FlowValueType, E::Time> network{};
+  network.couple(
+      sink, E::Sink::outport_inflow_request,
+      lim, E::FlowLimits::inport_outflow_request);
+  network.couple(
+      lim, E::FlowLimits::outport_inflow_request,
+      source, E::Source::inport_outflow_request);
+  network.couple(
+      source, E::Source::outport_outflow_achieved,
+      lim, E::FlowLimits::inport_inflow_achieved);
+  network.couple(
+      lim, E::FlowLimits::outport_outflow_achieved,
+      sink, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  while (sim.next_event_time() < E::inf) {
+    sim.exec_next_event();
+  }
+  fw->finalize_at_time(t_max);
+  auto results = fw->get_results();
+  fw->clear();
+
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_outflows_req, sink_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_outflows_req, lim_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_ach, source_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_ach, sink_id, false));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_ach, switch_id, false));
+  ASSERT_TRUE(
+      check_times_and_loads(results, expected_times, expected_flows_ach, source_id, false));
+  
+}
+
 int
 main(int argc, char **argv)
 {

@@ -8159,7 +8159,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
 
   const bool do_rounding{false};
   const E::FlowValueType constant_efficiency{0.4};
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{10}; //{10'000};
   const bool has_flow_limit{true};
   const E::FlowValueType flow_limit{60.0};
 
@@ -8211,6 +8211,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   std::vector<E::LoadItem> outflow_load_profile{};
 
   E::RealTimeType t{0};
+  E::FlowValueType lossflow_r{0.0};
   for (std::size_t idx{0}; idx < num_events; ++idx) {
     auto dt{static_cast<E::RealTimeType>(dt_dist(generator))};
     auto dt2{static_cast<E::RealTimeType>(dt_dist(generator))};
@@ -8219,12 +8220,6 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
     auto inflow_r{calc_input_from_output(outflow_r)};
     auto inflow_a{inflow_r};
     auto outflow_a{calc_output_from_input(inflow_a)};
-    decltype(inflow_r) lossflow_r{0.0};
-    decltype(lossflow_r) lossflow_a{0.0};
-    if (flows_conv_to_loss_req.size() > 0) {
-      lossflow_r = flows_conv_to_loss_req.back();
-      lossflow_a = flows_conv_to_loss_ach.back();
-    }
     if (dt > 0) {
       times.emplace_back(t);
       flows_conv_to_out_req.emplace_back(outflow_r);
@@ -8235,12 +8230,9 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
       }
       flows_src_to_conv_ach.emplace_back(inflow_a);
       flows_conv_to_out_ach.emplace_back(outflow_a);
-      if (dt2 > 0) {
-        flows_conv_to_loss_req.emplace_back(
-            std::min(lossflow_r, inflow_r - outflow_r));
-        flows_conv_to_loss_ach.emplace_back(
-            std::min(lossflow_a, inflow_a - outflow_a));
-      }
+      flows_conv_to_loss_req.emplace_back(lossflow_r);
+      flows_conv_to_loss_ach.emplace_back(
+          std::min(lossflow_r, inflow_a - outflow_a));
     }
     t += dt;
     lossflow_r = static_cast<E::FlowValueType>(flow_dist(generator));
@@ -8258,8 +8250,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
       }
       flows_src_to_conv_ach.emplace_back(inflow_a);
       flows_conv_to_out_ach.emplace_back(outflow_a);
-      flows_conv_to_loss_req.emplace_back(
-          std::min(lossflow_r, inflow_r - outflow_r));
+      flows_conv_to_loss_req.emplace_back(lossflow_r);
       flows_conv_to_loss_ach.emplace_back(
           std::min(lossflow_r, inflow_a - outflow_a));
     }
@@ -8272,6 +8263,12 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   flows_conv_to_out_ach.back() = 0.0;
   flows_conv_to_loss_req.back() = 0.0;
   flows_conv_to_loss_ach.back() = 0.0;
+  ASSERT_EQ(flows_src_to_conv_req.size(), times.size());
+  ASSERT_EQ(flows_src_to_conv_ach.size(), times.size());
+  ASSERT_EQ(flows_conv_to_out_req.size(), times.size());
+  ASSERT_EQ(flows_conv_to_out_ach.size(), times.size());
+  ASSERT_EQ(flows_conv_to_loss_req.size(), times.size());
+  ASSERT_EQ(flows_conv_to_loss_ach.size(), times.size());
   auto inflow_driver = new E::Source(
       src_id,
       E::ComponentType::Source,
@@ -8346,11 +8343,15 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   //auto outflow_results = results[id + "-outflow"];
   //auto lossflow_results = results[id + "-lossflow"];
   //auto wasteflow_results = results[id + "-wasteflow"];
-  std::cout << "outflow_load_profile[0]: " << outflow_load_profile[0] << "\n";
-  std::cout << "outflow_load_profile[1]: " << outflow_load_profile[1] << "\n";
-  std::cout << "outflow_load_profile[2]: " << outflow_load_profile[2] << "\n";
+  //std::cout << "outflow_load_profile[0]: " << outflow_load_profile[0] << "\n";
+  //std::cout << "outflow_load_profile[1]: " << outflow_load_profile[1] << "\n";
+  //std::cout << "outflow_load_profile[2]: " << outflow_load_profile[2] << "\n";
   ASSERT_TRUE(
       check_times_and_loads(results, times, flows_conv_to_out_req, sink_out_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_src_to_conv_req, src_id, true));
+  ASSERT_TRUE(
+      check_times_and_loads(results, times, flows_conv_to_loss_req, sink_loss_id, true));
 }
 
 TEST(ErinBasicsTest, Test_mux_element_comprehensive) {

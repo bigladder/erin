@@ -354,6 +354,15 @@ namespace erin::devs
       */
     }
   }
+  
+  FlowValueType
+  Port3::get_achieved() const
+  {
+    if (achieved > requested) {
+      return requested;
+    }
+    return achieved;
+  }
 
   PortUpdate3
   Port3::with_requested(FlowValueType r) const

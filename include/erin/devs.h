@@ -121,7 +121,8 @@ namespace erin::devs
       Port3(FlowValueType requested, FlowValueType achieved);
 
       [[nodiscard]] FlowValueType get_requested() const { return requested; }
-      [[nodiscard]] FlowValueType get_achieved() const { return achieved; }
+      [[nodiscard]] FlowValueType get_achieved() const;
+      [[nodiscard]] FlowValueType get_actual_achieved() const { return achieved; }
       [[nodiscard]] PortUpdate3 with_requested(FlowValueType r) const;
       [[nodiscard]] PortUpdate3 with_achieved(FlowValueType a) const;
       [[nodiscard]] PortUpdate3 with_requested_and_available(

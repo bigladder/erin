@@ -4826,7 +4826,8 @@ TEST(ErinDevs, Test_function_based_load)
   EXPECT_EQ(ED::load_current_time(s6), 200);
   EXPECT_EQ(ED::load_next_time(d, s6), ED::infinity);
   EXPECT_EQ(ED::load_current_request(s6), 0.0);
-  EXPECT_EQ(ED::load_current_achieved(s6), 10.0);
+  EXPECT_EQ(ED::load_current_achieved(s6), 0.0);
+  EXPECT_EQ(s6.inflow_port.get_actual_achieved(), 10.0);
   auto dt6 = ED::load_time_advance(d, s6);
   EXPECT_EQ(dt6, ED::infinity);
 
@@ -4838,7 +4839,8 @@ TEST(ErinDevs, Test_function_based_load)
   EXPECT_EQ(ED::load_current_time(s6a), 200);
   EXPECT_EQ(ED::load_next_time(d, s6a), ED::infinity);
   EXPECT_EQ(ED::load_current_request(s6a), 0.0);
-  EXPECT_EQ(ED::load_current_achieved(s6a), 8.0);
+  EXPECT_EQ(ED::load_current_achieved(s6a), 0.0);
+  EXPECT_EQ(s6a.inflow_port.get_actual_achieved(), 8.0);
 
   ASSERT_THROW(
       ED::check_loads(std::vector<ED::LoadItem>{}),

@@ -8411,6 +8411,8 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   const int num_outflows{3};
   const auto output_dispatch_strategy = E::MuxerDispatchStrategy::InOrder;
   const std::size_t num_events{1'000};
+  const bool use_limited_source{true};
+  const E::FlowValueType source_limit{20.0};
 
   std::string id{"mux"};
   std::string stream{"electricity"};
@@ -8473,7 +8475,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
       "inflow-to-mux(" + std::to_string(inport_id) + ")",
       E::ComponentType::Source,
       stream,
-      ED::supply_unlimited_value};
+      use_limited_source ? source_limit : ED::supply_unlimited_value};
     d->set_flow_writer(fw);
     d->set_recording_on();
     inflow_drivers.emplace_back(d);

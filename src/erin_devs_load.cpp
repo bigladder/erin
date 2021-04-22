@@ -41,6 +41,18 @@ namespace erin::devs
     }
   }
 
+  std::ostream&
+  operator<<(std::ostream& os, const LoadData& d)
+  {
+    return os << "{"
+              << ":times " << ERIN::vec_to_string<RealTimeType>(d.times, 10)
+              << " "
+              << ":loads " << ERIN::vec_to_string<FlowValueType>(d.load_values, 10)
+              << " "
+              << ":count " << d.number_of_loads
+              << "}";
+  }
+
   LoadData
   make_load_data(const std::vector<LoadItem>& loads, bool do_checks)
   {

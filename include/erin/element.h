@@ -117,7 +117,7 @@ namespace ERIN
       }
       void ensure_element_tag_is_unique(const std::string& element_tag) const;
       void ensure_element_id_is_valid(int element_id) const;
-      void ensure_time_is_valid(RealTimeType time) const;
+      void ensure_time_is_valid(RealTimeType time, int element_id) const;
       void record_history_and_update_current_time(RealTimeType time);
       void ensure_not_final() const;
       void ensure_not_recording() const;
@@ -443,6 +443,8 @@ namespace ERIN
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
       bool record_history;
+
+      void log_ports();
   };
 
   ////////////////////////////////////////////////////////////

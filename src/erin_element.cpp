@@ -164,14 +164,17 @@ namespace ERIN
   }
 
   void
-  DefaultFlowWriter::ensure_time_is_valid(RealTimeType time) const
+  DefaultFlowWriter::ensure_time_is_valid(RealTimeType time, int element_id) const
   {
     if (time < current_time) {
       std::ostringstream oss{};
       oss << "time is invalid. "
           << "This value indicates time is flowing backward!\n"
           << "time: " << time << "\n"
-          << "current_time: " << current_time << "\n";
+          << "current_time: " << current_time << "\n"
+          << "element: " << element_id << "\n"
+          << "tag: " << element_id_to_tag.at(element_id) << "\n"
+          ;
       throw std::invalid_argument(oss.str());
     }
   }
@@ -274,7 +277,7 @@ namespace ERIN
     }
     ensure_not_final();
     ensure_element_id_is_valid(element_id);
-    ensure_time_is_valid(time);
+    ensure_time_is_valid(time, element_id);
     if (time > current_time) {
       record_history_and_update_current_time(time);
     }
@@ -1433,19 +1436,46 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "delta_int::" << get_id() << "::Sink\n"
-                << "- s  = " << state << "\n";
+                << "- s  " << state << "\n"
+                << "- d  " << data << "\n";
+      std::size_t time_idx{0};
+      for (std::size_t idx{0}; idx < data.times.size(); ++idx) {
+        if (data.times[idx] > state.time) {
+          break;
+        }
+        time_idx = idx;
+      }
+      std::cout << "- time_idx: " << time_idx << "\n";
+      if ((time_idx > 0) && (static_cast<int>(time_idx) < (data.number_of_loads - 1))) {
+        std::cout << "- ts: ["
+                  << data.times[time_idx - 1] << ", <<"
+                  << data.times[time_idx] << ">>, "
+                  << data.times[time_idx + 1] << "]\n"
+                  << "- ls: ["
+                  << data.load_values[time_idx - 1] << ", <<"
+                  << data.load_values[time_idx] << ">>, "
+                  << data.load_values[time_idx + 1] << "]\n";
+      }
+      else if ((time_idx > 0)) {
+        std::cout << "- ts: ["
+                  << data.times[time_idx - 1] << ", <<"
+                  << data.times[time_idx] << ">>]\n"
+                  << "- ls: ["
+                  << data.load_values[time_idx - 1] << ", <<"
+                  << data.load_values[time_idx] << ">>]\n";
+      }
+      else if (static_cast<int>(time_idx) < (data.number_of_loads - 1)) {
+        std::cout << "- ts: [<<" << data.times[time_idx] << ">>, "
+                  << data.times[time_idx + 1] << "]\n"
+                  << "- ls: [<<" << data.load_values[time_idx] << ">>, "
+                  << data.load_values[time_idx + 1] << "]\n";
+      }
     }
     state = erin::devs::load_internal_transition(data, state);
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "- s* " << state << "\n";
     }
-    if (flow_writer && record_history && (element_id != -1)) {
-      flow_writer->write_data(
-          element_id,
-          state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
-    }
+    log_ports();
   }
 
   void
@@ -1460,13 +1490,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "- s* = " << state << "\n"; 
     }
-    if (flow_writer && record_history && (element_id != -1)) {
-      flow_writer->write_data(
-          element_id,
-          state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
-    }
+    log_ports();
   }
 
   void
@@ -1481,12 +1505,7 @@ namespace ERIN
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "- s* = " << state << "\n"; 
     }
-    if (flow_writer && record_history && (element_id != -1))
-      flow_writer->write_data(
-          element_id,
-          state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
+    log_ports();
   }
 
   Time
@@ -1530,12 +1549,8 @@ namespace ERIN
           get_component_type(),
           PortRole::LoadInflow,
           record_history);
-      flow_writer->write_data(
-          element_id,
-          state.time,
-          state.inflow_port.get_requested(),
-          state.inflow_port.get_achieved());
     }
+    log_ports();
   }
 
   void
@@ -1543,6 +1558,18 @@ namespace ERIN
   {
     record_history = true;
     set_flow_writer(flow_writer);
+  }
+
+  void
+  Sink::log_ports()
+  {
+    if (flow_writer && record_history && (element_id != -1)) {
+      flow_writer->write_data(
+          element_id,
+          state.time,
+          state.inflow_port.get_requested(),
+          state.inflow_port.get_achieved());
+    }
   }
 
   ////////////////////////////////////////////////////////////
@@ -1825,7 +1852,7 @@ namespace ERIN
     flow_writer = writer;
     log_ports();
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Storage::set_flow_writer();id = " << get_id() << "\n";
+      std::cout << "set_flow_writer()::" << get_id() << "::Storage\n";
       std::cout << "record_history = " << record_history << "\n";
       std::cout << "flow_writer == nullptr: " << (flow_writer == nullptr) << "\n";
       std::cout << "inflow_element_id = " << inflow_element_id << "\n";
@@ -1840,7 +1867,7 @@ namespace ERIN
     record_history = true;
     log_ports();
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Storage::set_recording_on();id = " << get_id() << "\n";
+      std::cout << "set_recording_on()::" << get_id() << "::Storage\n";
       std::cout << "data = " << data << "\n";
       std::cout << "state = " << state << "\n";
       std::cout << "flow_writer == nullptr: " << (flow_writer == nullptr) << "\n";
@@ -1863,7 +1890,7 @@ namespace ERIN
   Storage::log_ports()
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "Storage::log_ports();id = " << get_id() << "\n";
+      std::cout << "log_ports()::" << get_id() << "::Storage\n";
       std::cout << "data = " << data << "\n";
       std::cout << "state = " << state << "\n";
       std::cout << "record_history = " << record_history << "\n";
@@ -2052,7 +2079,7 @@ namespace ERIN
   OnOffSwitch::log_ports()
   {
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "OnOffSwitch::log_ports(...); id = " << get_id() << "\n";
+      std::cout << "log_ports::" << get_id() << "::OnOffSwitch\n";
       std::cout << "flow_writer == nullptr = " << (flow_writer == nullptr) << "\n";
       std::cout << "record_history = " << record_history << "\n";
     }
@@ -2105,7 +2132,7 @@ namespace ERIN
   UncontrolledSource::delta_int()
   {
     if constexpr (debug_level >= debug_level_medium) {
-      std::cout << "UncontrolledSource::delta_int::" << get_id() << "\n"
+      std::cout << "delta_int::" << get_id() << "::UncontrolledSource\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::uncontrolled_src_internal_transition(data, state);
@@ -2119,7 +2146,7 @@ namespace ERIN
   UncontrolledSource::delta_ext(Time e, std::vector<PortValue>& xs)
   {
     if constexpr (debug_level >= debug_level_medium) {
-      std::cout << "UncontrolledSource::delta_ext::" << get_id() << "\n"
+      std::cout << "delta_ext::" << get_id() << "::UncontrolledSource\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
@@ -2151,7 +2178,7 @@ namespace ERIN
   UncontrolledSource::ta()
   {
     if constexpr (debug_level >= debug_level_medium) {
-      std::cout << "UncontrolledSource::ta::" << get_id() << "\n"
+      std::cout << "ta::" << get_id() << "::UncontrolledSource\n"
                 << "- dt = ";
     }
     auto dt = erin::devs::uncontrolled_src_time_advance(data, state);
@@ -2175,7 +2202,9 @@ namespace ERIN
       std::cout << "output_func::" << get_id() << "::UncontrolledSource\n"
                 << "- ys = " << vec_to_string<PortValue>(ys) << "\n";
     }
-    log_ports();
+    if (ys.size() > 0) {
+      log_ports();
+    }
   }
 
   void

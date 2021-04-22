@@ -9396,7 +9396,7 @@ TEST(ErinBasicsTest, Test_uncontrolled_source_with_sink_comprehensive)
   namespace EU = erin::utils;
   namespace ED = erin::devs;
 
-  const std::size_t num_events{10}; // {10'000};
+  const std::size_t num_events{10'000};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
   std::cout << "seed: " << seed << "\n";

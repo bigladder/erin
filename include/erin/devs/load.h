@@ -24,6 +24,8 @@ namespace erin::devs
     std::vector<FlowValueType> load_values{};
   };
 
+  std::ostream& operator<<(std::ostream& os, const LoadData& d);
+
   struct LoadState
   {
     RealTimeType time{0};

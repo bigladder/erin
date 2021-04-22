@@ -109,35 +109,42 @@ namespace erin::devs
       const UncontrolledSourceData& data,
       const UncontrolledSourceState& state)
   {
-    UncontrolledSourceState uss{state};
+    if (state.report_outflow_at_current_index) {
+      return UncontrolledSourceState{
+        state.time,
+        state.index,
+        state.inflow_port,
+        state.outflow_port,
+        state.spill_port,
+        false};
+    }
     auto next_index = static_cast<size_type>(state.index) + 1;
-    if (uss.report_outflow_at_current_index) {
-      uss.report_outflow_at_current_index = false;
+    if (next_index < data.num_items) {
+      auto supply = data.supply[next_index];
+      auto ip{state.inflow_port};
+      auto op{state.outflow_port};
+      auto sp{state.spill_port};
+      ip = ip.with_requested_and_achieved(supply, supply).port;
+      auto oversupply{supply > op.get_requested()};
+      auto update_op =
+        op.with_achieved(oversupply ? op.get_requested() : supply);
+      op = update_op.port;
+      auto spilled{oversupply ? (supply - op.get_requested()) : 0.0};
+      sp = sp.with_requested_and_achieved(spilled, spilled).port;
+      return UncontrolledSourceState{
+        data.times[next_index],
+        static_cast<int>(next_index),
+        ip,
+        op,
+        sp,
+        update_op.send_achieved};
     }
-    else if (next_index < data.num_items) {
-      auto next_time = data.times[next_index];
-      auto next_supply = data.supply[next_index];
-      auto inflow = state.inflow_port.with_requested(next_supply, next_time);
-      auto out = state.outflow_port;
-      auto spill = state.spill_port.with_requested(next_supply, next_time);
-      auto out_req = out.get_requested();
-      if (next_supply >= out_req) {
-        out = out.with_achieved(out_req, next_time);
-        spill = spill.with_achieved(next_supply - out_req, next_time);
-      }
-      else {
-        out = out.with_achieved(next_supply, next_time);
-        spill = spill.with_achieved(0.0, next_time);
-      }
-      uss.time = next_time;
-      uss.index = static_cast<int>(next_index);
-      uss.report_outflow_at_current_index =
-        out.should_propagate_achieved_at(next_time);
-      uss.inflow_port = inflow;
-      uss.outflow_port = out;
-      uss.spill_port = spill;
-    }
-    return uss;
+    std::ostringstream oss{};
+    oss << "invalid sequencing\n"
+        << "in an uncontrolled source internal transition"
+        << " but no more transition indices...\n"
+        << "state: " << state << "\n";
+    throw std::runtime_error(oss.str());
   }
 
   ////////////////////////////////////////////////////////////
@@ -165,34 +172,26 @@ namespace erin::devs
           }
       }
     }
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "- outflow_request = " << outflow_request << "\n";
-    }
     auto next_time = state.time + dt;
-    auto index = static_cast<size_type>(state.index);
-    auto supply = (index < data.num_items) ?  data.supply[index] : 0.0;
-    auto out = state.outflow_port.with_requested(outflow_request, next_time);
-    auto spill = state.spill_port.with_requested(supply, next_time);
-    if (supply >= outflow_request) {
-      out = out.with_achieved(outflow_request, next_time);
-      spill = spill.with_achieved(supply - outflow_request, next_time);
-    }
-    else {
-      out = out.with_achieved(supply, next_time);
-      spill = spill.with_achieved(0.0, next_time);
-    }
-    bool report{out.should_propagate_achieved_at(next_time)};
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "- new value of report* = " << report << "\n";
-    }
+    auto idx = static_cast<size_type>(state.index);
+    auto supply = (idx < data.num_items) ?  data.supply[idx] : 0.0;
+    auto ip{state.inflow_port};
+    auto update_op = state.outflow_port.with_requested(outflow_request);
+    auto op{update_op.port};
+    auto sp{state.spill_port};
+    ip = ip.with_requested_and_achieved(supply, supply).port;
+    auto oversupply{supply > op.get_requested()};
+    update_op = op.with_achieved(oversupply ? op.get_requested() : supply);
+    op = update_op.port;
+    auto spilled{oversupply ? (supply - op.get_requested()) : 0.0};
+    sp = sp.with_requested_and_achieved(spilled, spilled).port;
     return UncontrolledSourceState{
       next_time,
       state.index,
-      state.inflow_port,
-      out,
-      spill,
-      report
-    };
+      ip,
+      op,
+      sp,
+      update_op.send_achieved};
   }
 
   ////////////////////////////////////////////////////////////
@@ -203,11 +202,15 @@ namespace erin::devs
       const UncontrolledSourceState& state,
       const std::vector<PortValue>& xs)
   {
-    return uncontrolled_src_external_transition(
+    auto next_state = uncontrolled_src_external_transition(
         data,
         uncontrolled_src_internal_transition(data, state),
         0,
         xs);
+    next_state.report_outflow_at_current_index =
+        next_state.report_outflow_at_current_index
+        || next_state.outflow_port.should_send_achieved(state.outflow_port);
+    return next_state;
   }
 
   ////////////////////////////////////////////////////////////
@@ -230,8 +233,9 @@ namespace erin::devs
   {
     if (state.report_outflow_at_current_index) {
       ys.emplace_back(
-          PortValue{outport_outflow_achieved,
-                    state.outflow_port.get_achieved()});
+          PortValue{
+            outport_outflow_achieved,
+            state.outflow_port.get_achieved()});
     }
   }
 }

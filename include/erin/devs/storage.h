@@ -92,8 +92,8 @@ namespace erin::devs
   {
     RealTimeType time{0};
     double soc{0.0}; // soc = state of charge (0 <= soc <= 1)
-    Port2 inflow_port{0.0};
-    Port2 outflow_port{0.0};
+    Port3 inflow_port{0.0};
+    Port3 outflow_port{0.0};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
   };
@@ -129,28 +129,6 @@ namespace erin::devs
       const StorageState& state,
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs);
-
-  StorageState storage_external_transition_on_outflow_request(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType outflow_request,
-      RealTimeType dt,
-      RealTimeType time);
-
-  StorageState storage_external_transition_on_inflow_achieved(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType inflow_achieved,
-      RealTimeType dt,
-      RealTimeType time);
-
-  StorageState storage_external_transition_on_in_out_flow(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType outflow_request,
-      FlowValueType inflow_achieved,
-      RealTimeType dt,
-      RealTimeType time);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

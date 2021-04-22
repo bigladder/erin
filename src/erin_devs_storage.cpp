@@ -149,161 +149,6 @@ namespace erin::devs
     return next_soc;
   }
 
-  StorageState
-  storage_external_transition_on_outflow_request(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType outflow_request,
-      RealTimeType dt,
-      RealTimeType time)
-  {
-    storage_check_flow(outflow_request);
-    storage_check_elapsed_time(dt);
-    bool report_ir{false};
-    bool report_oa{false};
-    auto ip{state.inflow_port};
-    auto op = state.outflow_port.with_requested(outflow_request).port;
-    auto soc = update_soc(
-        state.soc,
-        state.inflow_port.get_achieved(),
-        state.outflow_port.get_achieved(),
-        dt,
-        data.capacity);
-    if (soc == 1.0) {
-      auto update_ip = ip.with_requested(
-          std::clamp(outflow_request, 0.0, data.max_charge_rate));
-      report_ir = update_ip.send_update;
-      ip = update_ip.port;
-    }
-    else {
-      auto update_ip = ip.with_requested(data.max_charge_rate);
-      report_ir = update_ip.send_update;
-      ip = update_ip.port;
-    }
-    if (soc == 0.0) {
-      auto update_op = op.with_achieved(
-          std::clamp(
-            outflow_request,
-            0.0,
-            ip.get_achieved()));
-      report_oa = update_op.send_update;
-      op = update_op.port;
-    }
-    return StorageState{
-      time,
-      soc,
-      ip,
-      op,
-      report_ir,
-      report_oa};
-  }
-
-  StorageState
-  storage_external_transition_on_inflow_achieved(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType inflow_achieved,
-      RealTimeType dt,
-      RealTimeType time)
-  {
-    storage_check_flow(inflow_achieved);
-    storage_check_elapsed_time(dt);
-    auto ip{state.inflow_port};
-    auto op{state.outflow_port};
-    bool report_ir{false};
-    auto inflow_requested{state.inflow_port.get_requested()};
-    if (inflow_achieved > inflow_requested) {
-      inflow_achieved = inflow_requested;
-      report_ir = true;
-    }
-    ip = ip.with_achieved(inflow_achieved).port;
-    auto soc = update_soc(
-        state.soc,
-        state.inflow_port.get_achieved(),
-        state.outflow_port.get_achieved(),
-        dt,
-        data.capacity);
-    auto ip_ach{ip.get_achieved()};
-    auto op_ach{op.get_achieved()};
-    if ((soc == 1.0) && (ip_ach > op_ach)) {
-      ip = ip.with_requested(op_ach).port;
-    }
-    if ((soc == 0.0) && (op_ach > ip_ach)) {
-      op = op.with_achieved(
-          std::clamp(ip_ach, 0.0, op.get_requested())).port;
-    }
-    return StorageState{
-      time,
-      soc,
-      ip,
-      op,
-      report_ir || ip.should_send_request(state.inflow_port),
-      op.should_send_achieved(state.outflow_port)};
-  }
-
-  StorageState
-  storage_external_transition_on_in_out_flow(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType outflow_request,
-      FlowValueType inflow_achieved,
-      RealTimeType dt,
-      RealTimeType time)
-  {
-    auto ip{state.inflow_port};
-    auto op{state.outflow_port};
-    bool report_ir{false};
-    bool report_oa{false};
-    auto inflow_request{state.inflow_port.get_requested()};
-    if (inflow_achieved > inflow_request) {
-      report_ir = true;
-      inflow_achieved = inflow_request;
-    }
-    op = op.with_requested(outflow_request).port;
-    ip = ip.with_achieved(inflow_achieved).port;
-    auto net_inflow{inflow_achieved - outflow_request};
-    auto soc = update_soc(
-        state.soc,
-        state.inflow_port.get_achieved(),
-        state.outflow_port.get_achieved(),
-        dt,
-        data.capacity);
-    auto max_net_inflow{max_single_step_net_inflow(soc, data.capacity)};
-    // net-inflow = inflow - outflow; inflow|max = net-inflow|max + outflow
-    auto max_inflow{max_net_inflow + op.get_achieved()};
-    if (net_inflow > 0.0) {
-      auto ip_update = ip.with_requested(
-          std::clamp(
-            ip.get_achieved(),
-            0.0,
-            std::min(max_inflow, data.max_charge_rate)));
-      report_ir = report_ir || ip_update.send_update;
-      ip = ip_update.port;
-    }
-    auto max_net_outflow{max_single_step_net_outflow(soc, data.capacity)};
-    // net-outflow = outflow - inflow; outflow|max = net-outflow|max + inflow
-    auto max_outflow{max_net_outflow + ip.get_achieved()};
-    if (net_inflow < 0.0) {
-      auto flow = std::clamp(
-          outflow_request,
-          0.0,
-          std::min(max_outflow, data.max_charge_rate));
-      auto op_update = op.with_achieved(flow);
-      op = op_update.port;
-      report_oa = op_update.send_update;
-      auto ip_update = ip.with_requested(flow);
-      ip = ip_update.port;
-      report_ir = ip_update.send_update || report_ir;
-    }
-    return StorageState{
-      time,
-      soc,
-      ip,
-      op,
-      report_ir,
-      report_oa};
-  }
-
   std::ostream&
   operator<<(std::ostream& os, const StorageData& data)
   {
@@ -354,8 +199,8 @@ namespace erin::devs
     return StorageState{
       0,
       soc,
-      Port2{0.0},
-      Port2{0.0},
+      Port3{0.0},
+      Port3{0.0},
       false,
       false};
   }
@@ -508,14 +353,14 @@ namespace erin::devs
           0.0,
           max_single_step_net_inflow(soc, data.capacity) + op.get_requested()));
     ip = update_ip.port;
-    report_ir = report_ir || update_ip.send_update;
+    report_ir = report_ir || update_ip.send_request;
     auto op_update = op.with_achieved(
         std::clamp(
           op.get_requested(),
           0.0,
           max_single_step_net_outflow(soc, data.capacity) + ip.get_achieved()));
     op = op_update.port;
-    report_oa = op_update.send_update;
+    report_oa = op_update.send_achieved;
     return StorageState{
       time,
       soc,

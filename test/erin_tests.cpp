@@ -5017,6 +5017,8 @@ TEST(ErinDevs, Test_function_based_mux)
 }
 */
 
+/*
+//TODO: delete this test
 TEST(ErinDevs, Test_function_based_storage_element)
 {
   namespace E = ERIN;
@@ -5218,6 +5220,7 @@ TEST(ErinDevs, Test_function_based_storage_element)
     std::cout << "s13 = " << s13 << "\n";
   }
 }
+*/
 
 TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
 {
@@ -7340,7 +7343,8 @@ TEST(ErinBasicsTest, Test_reliability_schedule)
 
 /*
 // TODO: re-enable after we determine mux works right
-TEST(ErinBasicsTest, Test_request_ports_intelligently) {
+TEST(ErinBasicsTest, Test_request_ports_intelligently)
+{
   namespace E = ERIN;
   namespace ED = erin::devs;
   auto inports = std::vector<ED::Port3>{
@@ -7376,7 +7380,8 @@ TEST(ErinBasicsTest, Test_request_ports_intelligently) {
 */
 
 /*
-TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) {
+TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair)
+{
   namespace E = ERIN;
   namespace ED = erin::devs;
   const std::vector<E::TimeState> time_states{{0, true}, {100, false}, {103, true}};
@@ -7410,7 +7415,8 @@ TEST(ErinBasicsTest, Test_that_on_off_switch_carries_request_through_on_repair) 
 }
 */
 
-TEST(ErinBasicsTest, Test_that_port2_works) {
+TEST(ErinBasicsTest, Test_that_port2_works)
+{
   namespace ED = erin::devs;
   auto p = ED::Port2{};
   // R=10,A=5
@@ -7484,7 +7490,8 @@ TEST(ErinBasicsTest, Test_that_port2_works) {
 }
 
 /*
-TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
+TEST(ErinBasicsTest, Test_energy_balance_on_converter)
+{
   namespace E = ERIN;
   namespace ED = erin::devs;
   auto s = ED::make_converter_state(0.5);
@@ -7632,7 +7639,8 @@ TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
 */
 
 /*
-TEST(ErinBasicsTest, Test_energy_balance_on_flow_limits) {
+TEST(ErinBasicsTest, Test_energy_balance_on_flow_limits)
+{
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
@@ -7741,7 +7749,8 @@ TEST(ErinBasicsTest, Test_energy_balance_on_flow_limits) {
 }
 */
 
-TEST(ErinBasicsTest, Test_driver_element_for_internal_transitions) {
+TEST(ErinBasicsTest, Test_driver_element_for_internal_transitions)
+{
   namespace E = ERIN;
   namespace EU = erin::utils;
   int outport{2000};
@@ -7791,7 +7800,8 @@ TEST(ErinBasicsTest, Test_driver_element_for_internal_transitions) {
   EXPECT_EQ(flows[2], 20.0);
 }
 
-TEST(ErinBasicsTest, Test_driver_element_for_external_transitions) {
+TEST(ErinBasicsTest, Test_driver_element_for_external_transitions)
+{
   namespace E = ERIN;
   namespace EU = erin::utils;
   int outport{0};
@@ -7864,7 +7874,8 @@ TEST(ErinBasicsTest, Test_driver_element_for_external_transitions) {
   EXPECT_EQ(flows[4], 20.0);
 }
 
-TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
+TEST(ErinBasicsTest, Test_driver_element_comprehensive)
+{
   namespace E = ERIN;
   namespace EU = erin::utils;
   std::default_random_engine generator{};
@@ -7952,7 +7963,8 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive) {
   }
 }
 
-TEST(ErinBasicsTest, Test_interpolate_value) {
+TEST(ErinBasicsTest, Test_interpolate_value)
+{
   namespace E = ERIN;
   namespace EU = erin::utils;
   // #1
@@ -7986,7 +7998,8 @@ TEST(ErinBasicsTest, Test_interpolate_value) {
   EXPECT_EQ(f, expected_f);
 }
 
-TEST(ErinBasicsTest, Test_integrate_value) {
+TEST(ErinBasicsTest, Test_integrate_value)
+{
   namespace E = ERIN;
   namespace EU = erin::utils;
   // #1
@@ -8020,13 +8033,17 @@ TEST(ErinBasicsTest, Test_integrate_value) {
   EXPECT_EQ(g, expected_g);
 }
 
-TEST(ErinBasicsTest, Test_store_element_comprehensive) {
+TEST(ErinBasicsTest, Test_store_element_comprehensive)
+{
   namespace E = ERIN;
   namespace EU = erin::utils;
+  namespace ED = erin::devs;
 
-  E::FlowValueType capacity{100.0};
-  E::FlowValueType max_charge_rate{10.0};
-  std::size_t num_events{1000};
+  const E::FlowValueType capacity{100.0};
+  const E::FlowValueType max_charge_rate{10.0};
+  const std::size_t num_events{1000};
+  const bool source_is_limited{false};
+  const E::FlowValueType source_limit{20.0};
 
   std::string id{"store"};
   std::string stream_type{"electricity"};
@@ -8038,54 +8055,53 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
       max_charge_rate);
   std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
   c->set_flow_writer(fw);
+  c->set_recording_on();
 
   std::default_random_engine generator{};
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);
 
   // inflow and outflow from viewpoint of the component
-  std::vector<E::RealTimeType> inflow_times{};
-  std::vector<E::FlowValueType> inflow_achieveds{};
   std::vector<E::RealTimeType> outflow_times{};
   std::vector<E::FlowValueType> outflow_requests{};
+  std::vector<E::LoadItem> outflow_profile{};
   E::RealTimeType t{0};
   for (std::size_t idx{0}; idx < num_events; ++idx) {
+    auto flow{static_cast<E::FlowValueType>(flow_dist(generator))};
     t += static_cast<E::RealTimeType>(dt_dist(generator));
     outflow_times.emplace_back(t);
-    outflow_requests.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
-    t += static_cast<E::RealTimeType>(dt_dist(generator));
-    inflow_times.emplace_back(t);
-    inflow_achieveds.emplace_back(static_cast<E::FlowValueType>(flow_dist(generator)));
+    outflow_requests.emplace_back(flow);
+    outflow_profile.emplace_back(E::LoadItem{t, flow});
   }
   auto t_max{t};
-  auto inflow_driver = new E::Driver{
+  auto inflow_driver = new E::Source{
     "inflow-to-store",
-    E::Driver::outport_outflow_achieved,
-    E::Driver::inport_outflow_request,
-    inflow_times,
-    inflow_achieveds,
-    false};
-  auto outflow_driver = new E::Driver{
+    E::ComponentType::Source,
+    stream_type,
+    source_is_limited ? source_limit : ED::supply_unlimited_value};
+  inflow_driver->set_flow_writer(fw);
+  inflow_driver->set_recording_on();
+  auto outflow_driver = new E::Sink{
     "outflow-from-store",
-    E::Driver::outport_inflow_request,
-    E::Driver::inport_inflow_achieved,
-    outflow_times,
-    outflow_requests,
-    true};
+    E::ComponentType::Load,
+    stream_type,
+    outflow_profile,
+    false};
+  outflow_driver->set_flow_writer(fw);
+  outflow_driver->set_recording_on();
   adevs::Digraph<E::FlowValueType, E::Time> network;
   network.couple(
-      outflow_driver, E::Driver::outport_inflow_request,
-      c, E::Driver::inport_outflow_request);
+      outflow_driver, E::Sink::outport_inflow_request,
+      c, E::Storage::inport_outflow_request);
   network.couple(
-      c, E::Driver::outport_inflow_request,
-      inflow_driver, E::Driver::inport_outflow_request);
+      c, E::Storage::outport_inflow_request,
+      inflow_driver, E::Source::inport_outflow_request);
   network.couple(
-      inflow_driver, E::Driver::outport_outflow_achieved,
-      c, E::Driver::inport_inflow_achieved);
+      inflow_driver, E::Source::outport_outflow_achieved,
+      c, E::Storage::inport_inflow_achieved);
   network.couple(
-      c, E::Driver::outport_outflow_achieved,
-      outflow_driver, E::Driver::inport_inflow_achieved);
-  c->set_recording_on();
+      c, E::Storage::outport_outflow_achieved,
+      outflow_driver, E::Sink::inport_inflow_achieved);
   adevs::Simulator<E::PortValue, E::Time> sim{};
   network.add(&sim);
   const std::size_t max_no_advance{num_events * 4};
@@ -8114,15 +8130,27 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   fw->finalize_at_time(t_max);
   auto results = fw->get_results();
   fw->clear();
-  EXPECT_EQ(results.size(), 4);
+  ASSERT_EQ(results.size(), 6);
   auto inflow_results = results[id + "-inflow"];
   auto outflow_results = results[id + "-outflow"];
   auto storeflow_results = results[id + "-storeflow"];
   auto discharge_results = results[id + "-discharge"];
-  auto inflow_ts = inflow_driver->get_times();
-  auto inflow_fs = inflow_driver->get_flows();
-  auto outflow_ts = outflow_driver->get_times();
-  auto outflow_fs = outflow_driver->get_flows();
+  std::vector<E::RealTimeType> inflow_ts{};
+  std::vector<E::FlowValueType> inflow_fs{};
+  std::vector<E::FlowValueType> inflow_fs_req{};
+  std::vector<E::RealTimeType> outflow_ts{};
+  std::vector<E::FlowValueType> outflow_fs{};
+  std::vector<E::FlowValueType> outflow_fs_req{};
+  for (const auto& data : results["inflow-to-store"]) {
+    inflow_ts.emplace_back(data.time);
+    inflow_fs.emplace_back(data.achieved_value);
+    inflow_fs_req.emplace_back(data.requested_value);
+  }
+  for (const auto& data : results["outflow-from-store"]) {
+    outflow_ts.emplace_back(data.time);
+    outflow_fs.emplace_back(data.achieved_value);
+    outflow_fs_req.emplace_back(data.requested_value);
+  }
   std::size_t last_idx{outflow_results.size() - 1};
   // Note: on the last index, the finalize_at_time(.) method of FlowWriter sets
   // the flows to 0 which causes a discrepancy with the drivers that need not
@@ -8165,7 +8193,8 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive) {
   }
 }
 
-TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
+TEST(ErinBasicsTest, Test_converter_element_comprehensive)
+{
   namespace E = ERIN;
   namespace EU = erin::utils;
   namespace ED = erin::devs;
@@ -8402,7 +8431,8 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive) {
   }
 }
 
-TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
+TEST(ErinBasicsTest, Test_mux_element_comprehensive)
+{
   namespace E = ERIN;
   namespace EU = erin::utils;
   namespace ED = erin::devs;
@@ -8594,7 +8624,8 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive) {
   }
 }
 
-TEST(ErinBasicsTest, Test_Port3) {
+TEST(ErinBasicsTest, Test_Port3)
+{
   namespace ED = erin::devs;
 
   auto p = ED::Port3{};
@@ -8761,7 +8792,8 @@ TEST(ErinBasicsTest, Test_Port3) {
   ASSERT_EQ(update, expected_update);
 }
 
-TEST(ErinBasicsTest, Test_new_port_scheme) {
+TEST(ErinBasicsTest, Test_new_port_scheme)
+{
   namespace ED = erin::devs;
 
   constexpr std::size_t num_events{10'000};
@@ -8865,7 +8897,8 @@ TEST(ErinBasicsTest, Test_new_port_scheme) {
   }
 }
 
-TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
+TEST(ErinBasicsTest, Test_new_port_scheme_v2)
+{
   namespace ED = erin::devs;
 
   constexpr std::size_t num_events{10'000};
@@ -8950,7 +8983,8 @@ TEST(ErinBasicsTest, Test_new_port_scheme_v2) {
   }
 }
 
-TEST(ErinBasicsTest, Test_schedule_state_at_time) {
+TEST(ErinBasicsTest, Test_schedule_state_at_time)
+{
   namespace E = ERIN;
   std::vector<E::TimeState> schedule{
     E::TimeState{0, true},
@@ -8982,7 +9016,8 @@ time_to_next_schedule_change(
   return dt;
 }
 
-TEST(ErinBasicsTest, Test_load_and_source_comprehensive) {
+TEST(ErinBasicsTest, Test_load_and_source_comprehensive)
+{
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
@@ -9074,7 +9109,8 @@ TEST(ErinBasicsTest, Test_load_and_source_comprehensive) {
   }
 }
 
-TEST(ErinBasicsTest, Test_on_off_switch_comprehensive) {
+TEST(ErinBasicsTest, Test_on_off_switch_comprehensive)
+{
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
@@ -9203,7 +9239,8 @@ TEST(ErinBasicsTest, Test_on_off_switch_comprehensive) {
       check_times_and_loads(results, expected_times, expected_flows_ach, source_id, false));
 }
 
-TEST(ErinBasicsTest, Test_flow_limits_comprehensive) {
+TEST(ErinBasicsTest, Test_flow_limits_comprehensive)
+{
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
@@ -9320,7 +9357,8 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive) {
       check_times_and_loads(results, expected_times, expected_inflows_ach, source_id, false));
 }
 
-TEST(ErinBasicsTest, Test_flow_limits_function_cases) {
+TEST(ErinBasicsTest, Test_flow_limits_function_cases)
+{
   namespace E = ERIN;
   namespace ED = erin::devs;
 

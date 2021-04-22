@@ -42,9 +42,9 @@ namespace erin::devs
   {
     RealTimeType time{0};
     int index{-1};
-    Port3 inflow_port{};  // inflow supply
-    Port3 outflow_port{}; // normal supply outflow
-    Port3 spill_port{};   // unused supply goes out here
+    Port inflow_port{};  // inflow supply
+    Port outflow_port{}; // normal supply outflow
+    Port spill_port{};   // unused supply goes out here
     bool report_outflow_at_current_index{false};
   };
 

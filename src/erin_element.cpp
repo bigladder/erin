@@ -2199,6 +2199,7 @@ namespace ERIN
             record_history);
       }
       if (lossflow_element_id == -1) {
+        // TODO: this should be -wasteflow
         lossflow_element_id = flow_writer->register_id(
             get_id() + "-lossflow",
             get_outflow_type(),

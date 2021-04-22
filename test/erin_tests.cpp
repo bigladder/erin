@@ -38,6 +38,7 @@
 #include <set>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 const double tolerance{1e-6};
@@ -9244,6 +9245,7 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive)
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
+
   const std::size_t num_events{10'000};
   const E::FlowValueType max_lim_flow{75.0};
   const E::FlowValueType max_src_flow{50.0};
@@ -9386,6 +9388,110 @@ TEST(ErinBasicsTest, Test_flow_limits_function_cases)
     true,   // report IR
     true};  // report OA
   ASSERT_EQ(expected_next_s, next_s);
+}
+
+TEST(ErinBasicsTest, Test_uncontrolled_source_with_sink_comprehensive)
+{
+  namespace E = ERIN;
+  namespace EU = erin::utils;
+  namespace ED = erin::devs;
+
+  const std::size_t num_events{10}; // {10'000};
+
+  unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
+  std::cout << "seed: " << seed << "\n";
+  std::default_random_engine generator(seed);
+  std::uniform_int_distribution<int> dt_dist(0, 10);
+  std::uniform_int_distribution<int> flow_dist(0, 100);
+
+  std::string stream{"stream"};
+  std::string source_id{"source"};
+  std::string sink_id{"sink"};
+
+  std::vector<E::LoadItem> load_profile{};
+  std::vector<E::LoadItem> source_profile{};
+
+  E::RealTimeType t{0};
+  E::RealTimeType t_max{0};
+  std::unordered_set<E::RealTimeType> time_set{};
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    load_profile.emplace_back(
+      E::LoadItem{
+        t,
+        static_cast<E::FlowValueType>(flow_dist(generator))});
+    time_set.emplace(t);
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+  }
+  t_max = t;
+  t = 0;
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    source_profile.emplace_back(
+      E::LoadItem{
+        t,
+        static_cast<E::FlowValueType>(flow_dist(generator))});
+    time_set.emplace(t);
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+  }
+  t_max = std::max(t_max, t);
+  time_set.emplace(t_max);
+  auto sink = new E::Sink(
+      sink_id,
+      E::ComponentType::Load,
+      stream,
+      load_profile,
+      false);
+  auto source = new E::UncontrolledSource(
+      source_id,
+      E::ComponentType::Source,
+      stream,
+      source_profile);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  source->set_flow_writer(fw);
+  source->set_recording_on();
+  sink->set_flow_writer(fw);
+  sink->set_recording_on();
+
+  adevs::Digraph<E::FlowValueType, E::Time> network{};
+  network.couple(
+      sink, E::Sink::outport_inflow_request,
+      source, E::Source::inport_outflow_request);
+  network.couple(
+      source, E::Source::outport_outflow_achieved,
+      sink, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  while (sim.next_event_time() < E::inf) {
+    sim.exec_next_event();
+  }
+  fw->finalize_at_time(t_max);
+  auto results = fw->get_results();
+  fw->clear();
+
+  ASSERT_EQ(results.size(), 4);
+  ASSERT_EQ(time_set.size(), results[source_id + "-outflow"].size());
+  ASSERT_EQ(time_set.size(), results[sink_id].size());
+
+  for (std::size_t idx{0}; idx < results[sink_id].size(); ++idx) {
+    std::ostringstream oss{};
+    oss << "idx: " << idx << "\n";
+    const auto& src = results[source_id + "-outflow"][idx];
+    oss << "src: " << src << "\n";
+    const auto& src_in = results[source_id + "-inflow"][idx];
+    oss << "src_in: " << src_in << "\n";
+    const auto& src_loss = results[source_id + "-lossflow"][idx];
+    oss << "src_loss: " << src_loss << "\n";
+    const auto& snk = results[sink_id][idx];
+    oss << "snk: " << snk << "\n";
+    ASSERT_EQ(src.time, snk.time) << oss.str();
+    ASSERT_EQ(src.requested_value, snk.requested_value) << oss.str();
+    ASSERT_EQ(src.achieved_value, snk.achieved_value) << oss.str();
+    ASSERT_TRUE(src.requested_value >= src.achieved_value) << oss.str();
+    auto error{
+      src_in.achieved_value
+      - (src.achieved_value + src_loss.achieved_value)};
+    oss << "error: " << error << "\n";
+    ASSERT_NEAR(error, 0.0, 1e-6) << oss.str();
+  }
 }
 
 int

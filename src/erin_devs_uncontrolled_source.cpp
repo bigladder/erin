@@ -23,10 +23,10 @@ namespace erin::devs
 
   std::ostream& operator<<(std::ostream& os, const UncontrolledSourceData& a)
   {
-    return os << "UncontrolledSourceData("
-              << "times = " << ERIN::vec_to_string<RealTimeType>(a.times)
-              << ", supply = " << ERIN::vec_to_string<FlowValueType>(a.supply)
-              << ", num_items = " << a.num_items << ")";
+    return os << "{"
+              << ":ts " << ERIN::vec_to_string<RealTimeType>(a.times)
+              << " :supply " << ERIN::vec_to_string<FlowValueType>(a.supply)
+              << " :count = " << a.num_items << "}";
   }
 
   UncontrolledSourceData
@@ -65,14 +65,14 @@ namespace erin::devs
 
   std::ostream& operator<<(std::ostream& os, const UncontrolledSourceState& a)
   {
-    return os << "UncontrolledSourceState("
-              << "time = " << a.time << ", "
-              << "index = " << a.index << ", "
-              << "inflow_port = " << a.inflow_port << ", "
-              << "outflow_port = " << a.outflow_port << ", "
-              << "spill_port = " << a.spill_port << ", "
-              << "report_outflow_at_current_index = "
-              << a.report_outflow_at_current_index << ")";
+    return os << "{"
+              << ":t " << a.time << " "
+              << " :idx " << a.index << " "
+              << " :ip " << a.inflow_port << " "
+              << " :op " << a.outflow_port << ", "
+              << " :spill " << a.spill_port << " "
+              << ":report_oa? "
+              << a.report_outflow_at_current_index << "}";
   }
 
   UncontrolledSourceState
@@ -88,10 +88,6 @@ namespace erin::devs
       const UncontrolledSourceData& data,
       const UncontrolledSourceState& state)
   {
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "uncontrolled_src_time_advance(...)\n"
-                << "- state = " << state << "\n";
-    }
     auto next_index = static_cast<size_type>(state.index) + 1;
     RealTimeType ta{0};
     if (state.report_outflow_at_current_index) {
@@ -103,9 +99,6 @@ namespace erin::devs
     else {
       ta = infinity;
     }
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "- ta = " << ta << "\n";
-    }
     return ta;
   }
 
@@ -116,10 +109,6 @@ namespace erin::devs
       const UncontrolledSourceData& data,
       const UncontrolledSourceState& state)
   {
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "uncontrolled_src_internal_transition(...)\n"
-                << "- state = " << state << "\n";
-    }
     UncontrolledSourceState uss{state};
     auto next_index = static_cast<size_type>(state.index) + 1;
     if (uss.report_outflow_at_current_index) {
@@ -160,11 +149,6 @@ namespace erin::devs
       RealTimeType dt,
       const std::vector<PortValue>& xs)
   {
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "uncontrolled_src_external_transition(...)\n"
-                << "- state = " << state << "\n"
-                << "- xs = " << ERIN::vec_to_string<PortValue>(xs) << "\n";
-    }
     FlowValueType outflow_request{0.0};
     for (const auto& x : xs) {
       switch (x.port) {
@@ -244,19 +228,7 @@ namespace erin::devs
       const UncontrolledSourceState& state,
       std::vector<PortValue>& ys)
   {
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "uncontrolled_src_output_function_mutable(...)\n"
-                << "- state = " << state << "\n";
-    }
     if (state.report_outflow_at_current_index) {
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "- time = " << state.time << "\n"
-                  << "- adding to outport_outflow_achieved\n"
-                  << "- out_req = "
-                  << state.outflow_port.get_requested() << "\n"
-                  << "- out_ach = "
-                  << state.outflow_port.get_achieved() << "\n";
-      }
       ys.emplace_back(
           PortValue{outport_outflow_achieved,
                     state.outflow_port.get_achieved()});

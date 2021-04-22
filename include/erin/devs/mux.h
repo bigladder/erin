@@ -28,21 +28,21 @@ namespace erin::devs
       const std::vector<bool>& report_irs,
       const std::vector<bool>& report_oas);
 
-  std::vector<PortUpdate> distribute_inflow_to_outflow_in_order(
-      const std::vector<Port2>& outflows,
+  std::vector<PortUpdate3> distribute_inflow_to_outflow_in_order(
+      const std::vector<Port3>& outflows,
       FlowValueType amount);
 
-  std::vector<PortUpdate> distribute_inflow_to_outflow_evenly(
-      const std::vector<Port2>& outflows,
+  std::vector<PortUpdate3> distribute_inflow_to_outflow_evenly(
+      const std::vector<Port3>& outflows,
       FlowValueType amount);
 
-  std::vector<PortUpdate> distribute_inflow_to_outflow(
+  std::vector<PortUpdate3> distribute_inflow_to_outflow(
       MuxerDispatchStrategy outflow_strategy,
-      const std::vector<Port2>& outflows,
+      const std::vector<Port3>& outflows,
       FlowValueType amount);
 
-  std::vector<PortUpdate> request_inflows_intelligently(
-      const std::vector<Port2>& inflow_ports,
+  std::vector<PortUpdate3> request_inflows_intelligently(
+      const std::vector<Port3>& inflow_ports,
       FlowValueType remaining_request);
 
   ////////////////////////////////////////////////////////////
@@ -55,8 +55,8 @@ namespace erin::devs
     RealTimeType time{0};
     int num_inflows{0};
     int num_outflows{0};
-    std::vector<Port2> inflow_ports{};
-    std::vector<Port2> outflow_ports{};
+    std::vector<Port3> inflow_ports{};
+    std::vector<Port3> outflow_ports{};
     std::vector<bool> report_irs{};
     std::vector<bool> report_oas{};
     MuxerDispatchStrategy outflow_strategy{MuxerDispatchStrategy::Distribute};

@@ -4368,6 +4368,7 @@ TEST(ErinElements, Test_flow_writer)
   EXPECT_EQ(expected_requested_flows1, actual_requested_flows1);
 }
 
+/*
 TEST(ErinDevs, Test_flow_limits_functions)
 {
   namespace ED = erin::devs;
@@ -4376,7 +4377,7 @@ TEST(ErinDevs, Test_flow_limits_functions)
   ED::FlowLimits limits{0.0, 100.0};
   ED::FlowLimitsState s0{
     // time, inflow_port, outflow_port
-    0, ED::Port2{}, ED::Port2{},
+    0, ED::Port3{}, ED::Port3{},
     // FlowLimits, report_inflow_request, report_outflow_achieved
     limits, false, false};
   auto dt0 = ED::flow_limits_time_advance(s0);
@@ -4384,8 +4385,8 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s1 = ED::flow_limits_external_transition_on_outflow_request(s0, 2, 10.0);
   ED::FlowLimitsState expected_s1{
     2,
-    ED::Port2{10.0},
-    ED::Port2{10.0},
+    ED::Port3{10.0},
+    ED::Port3{10.0},
     limits, true, false};
   EXPECT_EQ(s1, expected_s1);
   auto dt1 = ED::flow_limits_time_advance(s1);
@@ -4403,15 +4404,15 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s2 = ED::flow_limits_internal_transition(s1);
   ED::FlowLimitsState expected_s2{
     2,
-    ED::Port2{10.0},
-    ED::Port2{10.0},
+    ED::Port3{10.0},
+    ED::Port3{10.0},
     limits, false, false};
   EXPECT_EQ(s2, expected_s2);
   auto s3 = ED::flow_limits_external_transition_on_inflow_achieved(s2, 0, 8.0);
   ED::FlowLimitsState expected_s3{
     2,
-    ED::Port2{10.0,8.0},
-    ED::Port2{10.0,8.0},
+    ED::Port3{10.0,8.0},
+    ED::Port3{10.0,8.0},
     limits, false, true};
   EXPECT_EQ(s3, expected_s3);
   auto dt3 = ED::flow_limits_time_advance(s3);
@@ -4425,8 +4426,8 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s4 = ED::flow_limits_internal_transition(s3);
   ED::FlowLimitsState expected_s4{
     2,
-    ED::Port2{10.0,8.0},
-    ED::Port2{10.0,8.0},
+    ED::Port3{10.0,8.0},
+    ED::Port3{10.0,8.0},
     limits, false, false};
   EXPECT_EQ(s4, expected_s4);
   auto dt4 = ED::flow_limits_time_advance(s4);
@@ -4436,8 +4437,8 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s5 = ED::flow_limits_external_transition(s4, 2, xs);
   ED::FlowLimitsState expected_s5{
     4,
-    ED::Port2{100.0, 8.0},
-    ED::Port2{200.0, 8.0},
+    ED::Port3{100.0, 8.0},
+    ED::Port3{200.0, 8.0},
     limits, true, false};
   EXPECT_EQ(s5, expected_s5);
   auto ys5 = ED::flow_limits_output_function(s5);
@@ -4454,8 +4455,8 @@ TEST(ErinDevs, Test_flow_limits_functions)
   auto s7 = ED::flow_limits_external_transition(s6, 0, xs6);
   ED::FlowLimitsState expected_s7{
     4,
-    ED::Port2{100.0, 55.0},
-    ED::Port2{200.0, 55.0},
+    ED::Port3{100.0, 55.0},
+    ED::Port3{200.0, 55.0},
     limits, false, true};
   EXPECT_EQ(s7, expected_s7);
   auto ys7 = ED::flow_limits_output_function(s7);
@@ -4465,6 +4466,7 @@ TEST(ErinDevs, Test_flow_limits_functions)
       EU::compare_vectors_unordered_with_fn<ED::PortValue>(
         ys7, expected_ys7, compare_ports));
 }
+*/
 
 TEST(ErinBasicsTest, Test_that_compare_vectors_unordered_works)
 {
@@ -5408,6 +5410,8 @@ TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
       ) << "key: " << converter_id << "-lossflow";
 }
 
+/*
+//TODO: re-enable this after mux has been translated to Port3
 TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
 {
   namespace E = ERIN;
@@ -5534,6 +5538,7 @@ TEST(ErinBasicsTest, Test_sink_and_mux_and_limits_with_port_logging)
       check_times_and_loads(
         results, expected_times, expected_inflows1, limit1_id));
 }
+*/
 
 /*
 TEST(ErinBasicsTest, Test_example_8)
@@ -7620,6 +7625,7 @@ TEST(ErinBasicsTest, Test_energy_balance_on_converter) {
 }
 */
 
+/*
 TEST(ErinBasicsTest, Test_energy_balance_on_flow_limits) {
   namespace E = ERIN;
   namespace ED = erin::devs;
@@ -7727,6 +7733,7 @@ TEST(ErinBasicsTest, Test_energy_balance_on_flow_limits) {
     EXPECT_EQ(dt4, ED::infinity);
   }
 }
+*/
 
 TEST(ErinBasicsTest, Test_driver_element_for_internal_transitions) {
   namespace E = ERIN;
@@ -9187,7 +9194,7 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive) {
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
-  const std::size_t num_events{10}; // {10'000};
+  const std::size_t num_events{10'000};
   const E::FlowValueType max_lim_flow{75.0};
   const E::FlowValueType max_src_flow{50.0};
   const bool source_is_limited{false};
@@ -9201,7 +9208,7 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive) {
   std::string stream{"stream"};
   std::string source_id{"source"};
   std::string sink_id{"sink"};
-  std::string lim_id{"switch"};
+  std::string lim_id{"flow_limits"};
 
   std::vector<E::RealTimeType> expected_times{};
   std::vector<E::FlowValueType> expected_outflows_req{};
@@ -9236,7 +9243,9 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive) {
   expected_inflows_ach.back() = 0.0;
   auto t_max = expected_times.back();
   ASSERT_EQ(expected_times.size(), expected_outflows_req.size());
-  ASSERT_EQ(expected_times.size(), expected_flows_ach.size());
+  ASSERT_EQ(expected_times.size(), expected_outflows_ach.size());
+  ASSERT_EQ(expected_times.size(), expected_inflows_req.size());
+  ASSERT_EQ(expected_times.size(), expected_inflows_ach.size());
   auto sink = new E::Sink(
       sink_id,
       E::ComponentType::Load,
@@ -9245,7 +9254,7 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive) {
       false);
   auto lim = new E::FlowLimits(
       lim_id,
-      E::ComponentType::FlowLimits,
+      E::ComponentType::PassThrough,
       stream,
       0.0,
       max_lim_flow);
@@ -9289,14 +9298,43 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive) {
   ASSERT_TRUE(
       check_times_and_loads(results, expected_times, expected_outflows_req, lim_id, true));
   ASSERT_TRUE(
-      check_times_and_loads(results, expected_times, expected_flows_ach, source_id, true));
+      check_times_and_loads(results, expected_times, expected_inflows_ach, source_id, true));
   ASSERT_TRUE(
-      check_times_and_loads(results, expected_times, expected_flows_ach, sink_id, false));
+      check_times_and_loads(results, expected_times, expected_outflows_ach, sink_id, false));
   ASSERT_TRUE(
-      check_times_and_loads(results, expected_times, expected_flows_ach, switch_id, false));
+      check_times_and_loads(results, expected_times, expected_outflows_ach, lim_id, false));
   ASSERT_TRUE(
-      check_times_and_loads(results, expected_times, expected_flows_ach, source_id, false));
+      check_times_and_loads(results, expected_times, expected_inflows_ach, source_id, false));
+}
+
+TEST(ErinBasicsTest, Test_flow_limits_function_cases) {
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+
+  const E::FlowValueType upper_limit{75.0};
+  const E::FlowValueType lower_limit{0.0};
+  const E::RealTimeType t{1013};
   
+  auto xs = std::vector<ED::PortValue>{
+    ED::PortValue{ED::inport_inflow_achieved, 30.0},
+    ED::PortValue{ED::inport_outflow_request, 26.0}};
+  auto lim = ED::FlowLimits{lower_limit, upper_limit};
+  auto s = ED::FlowLimitsState{
+    t,
+    ED::Port3{50.0, 75.0}, // inflow
+    ED::Port3{50.0, 50.0}, // outflow
+    lim,
+    true,   // report IR
+    true};  // report OA
+  auto next_s = ED::flow_limits_confluent_transition(s, xs);
+  auto expected_next_s = ED::FlowLimitsState{
+    t,
+    ED::Port3{26.0, 30.0}, // inflow
+    ED::Port3{26.0, 26.0}, // outflow
+    lim,
+    true,   // report IR
+    true};  // report OA
+  ASSERT_EQ(expected_next_s, next_s);
 }
 
 int

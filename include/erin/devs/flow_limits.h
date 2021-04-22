@@ -43,10 +43,10 @@ namespace erin::devs
   struct FlowLimitsState
   {
     RealTimeType time{0};
-    Port2 inflow_port{
+    Port3 inflow_port{
       default_lower_flow_limit,
       default_lower_flow_limit};
-    Port2 outflow_port{
+    Port3 outflow_port{
       default_lower_flow_limit,
       default_lower_flow_limit};
     FlowLimits limits{
@@ -66,8 +66,8 @@ namespace erin::devs
 
   FlowLimitsState make_flow_limits_state(
       RealTimeType time,
-      Port2 inflow_port,
-      Port2 outflow_port,
+      Port3 inflow_port,
+      Port3 outflow_port,
       FlowValueType lower_limit,
       FlowValueType upper_limit,
       bool report_inflow_request,
@@ -90,18 +90,6 @@ namespace erin::devs
       const FlowLimitsState& state,
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs);
-
-  FlowLimitsState
-  flow_limits_external_transition_on_outflow_request(
-      const FlowLimitsState& state,
-      RealTimeType elapsed_time,
-      FlowValueType outflow_request);
-
-  FlowLimitsState
-  flow_limits_external_transition_on_inflow_achieved(
-      const FlowLimitsState& state,
-      RealTimeType elapsed_time,
-      FlowValueType inflow_achieved);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

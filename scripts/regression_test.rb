@@ -9,6 +9,7 @@ require 'edn'
 require 'rubygems'
 
 IS_WIN = Gem.win_platform?
+BUILD_DIR = "build_vim"
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REFERENCE_PATH = File.expand_path(File.join(THIS_DIR, '..', 'test', 'reference'))
@@ -16,18 +17,18 @@ REGRESSION_RUNS_PATH = File.join(REFERENCE_PATH, 'runs.edn')
 EXECUTABLES = {}
 if IS_WIN
   EXECUTABLES[:erin_single] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "erin.exe"))
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "Debug", "erin.exe"))
   EXECUTABLES[:erin_multi] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "erin_multi.exe"))
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "Debug", "erin_multi.exe"))
   EXECUTABLES[:erin_graph] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "erin_graph.exe"))
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "Debug", "erin_graph.exe"))
 else
   EXECUTABLES[:erin_single] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "erin"))
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "erin"))
   EXECUTABLES[:erin_multi] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "erin_multi"))
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "erin_multi"))
   EXECUTABLES[:erin_graph] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "erin_graph"))
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "erin_graph"))
 end
 DIFF_PROGRAM = if IS_WIN then "FC" else "diff" end
 
@@ -78,11 +79,11 @@ def run_diff(diff_target, expected_path, diff_path=nil)
       File.open(diff_path, 'a') do |f|
         f.write("== EXPECTED ==" + ("="*40) + "\n")
         f.write(File.read(expected_path))
-        f.write("== ACTUAL ==" + ("="*40) + "\n")
+        f.write("==  ACTUAL  ==" + ("="*40) + "\n")
         f.write(File.read(diff_target))
       end
     end
-    issue = "regression in #{diff_target}:\n#{the_diff}"
+    issue = "REGRESSION in #{diff_target}:\n#{the_diff}"
   else
     File.delete(diff_path) if File.exist?(diff_path)
   end
@@ -106,7 +107,7 @@ def run_regression(id, info)
     cmd = "#{exe_path} #{args}"
     status = system(cmd)
     if status.nil? or !status
-      $issues[id] = "issue running #{exe_path}\n\t"\
+      $issues[id] = "ISSUE running #{exe_path}\n\t"\
         "status: #{status}\n\t"\
         "id: #{id}\n\t"\
         "args: #{args}\n\t"\
@@ -137,7 +138,9 @@ end
 
 puts("-"*60)
 if $num_issues > 0
+  puts ("-" * 40)
   puts "#{$num_issues} regressions found"
+  puts ("-" * 40)
   $issues.keys.sort.each do |k|
     next if $issues[k].nil?
     puts "#{k}:"
@@ -145,6 +148,8 @@ if $num_issues > 0
   end
   exit(1)
 else
+  puts ("-" * 40)
   puts "no regressions found"
+  puts ("-" * 40)
   exit(0)
 end

@@ -33,7 +33,7 @@ time ./bin/str8760
 mkdir -p tidy
 rm -f cppcheck_report.txt
 echo Running cppcheck...
-cppcheck -i/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/vendor --project=/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/build/compile_commands.json > cppcheck_report.txt 2>&1
+cppcheck -i/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/vendor --project=/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/build_vim/compile_commands.json > cppcheck_report.txt 2>&1
 echo Running Clang Tidy...
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/type.h > tidy/type.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/utils.h > tidy/utils.h.txt
@@ -45,6 +45,7 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/load.h > tidy/load.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/converter.h > tidy/converter.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/on_off_switch.h > tidy/on_off_switch.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/flow_meter.h > tidy/flow_meter.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/storage.h > tidy/storage.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/runner.h > tidy/runner.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/devs/flow_limits.h > tidy/flow_limits.h.txt
@@ -81,6 +82,7 @@ clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,cla
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_csv.cpp > tidy/erin_csv.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_utils.cpp > tidy/erin_utils.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/toml_helper.h > tidy/toml_helper.h.txt
+clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_devs_flow_meter.cpp > tidy/erin_devs_flow_meter.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_devs_load.cpp > tidy/erin_devs_load.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/cli.cpp > tidy/cli.cpp.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../src/erin_devs_flow_limits.cpp > tidy/erin_devs_flow_limits.cpp.txt

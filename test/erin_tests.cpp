@@ -8043,7 +8043,7 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive)
 
   const E::FlowValueType capacity{100.0};
   const E::FlowValueType max_charge_rate{10.0};
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{1'000};
   const bool source_is_limited{false};
   const E::FlowValueType source_limit{20.0};
 

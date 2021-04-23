@@ -8680,7 +8680,7 @@ TEST(ErinBasicsTest, Test_Port3)
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
     true,
-    false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   a = 5.0;
@@ -8734,7 +8734,7 @@ TEST(ErinBasicsTest, Test_Port3)
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
     true,
-    false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   a = 8.0;
@@ -8780,7 +8780,7 @@ TEST(ErinBasicsTest, Test_Port3)
   expected_update = ED::PortUpdate3{
     ED::Port3{r, a},
     true,
-    false,
+    true,
   };
   ASSERT_EQ(update, expected_update);
   r = 35.0;
@@ -9675,6 +9675,52 @@ TEST(ErinBasicsTest, Test_flow_meter_element_comprehensive)
   }
 }
 
+TEST(DevsModelTest, Test_bad_behavior_for_converter)
+{
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+  /*
+delta_ext::turbine::Converter
+- e  = 0
+- xs = [PortValue{port=0, value=294.118}]
+- s  = {:t 0, :inflow {:r 294.118, :a 0} :outflow {:r 100, :a 0} :lossflow {:r 100, :a 0} :wasteflow {:r 94.1176, :a 0} :report-ir? 0 :report-oa? 0 :report-la? 0}
+- s* = {:t 0, :inflow {:r 294.118, :a 294.118} :outflow {:r 100, :a 100} :lossflow {:r 100, :a 100} :wasteflow {:r 94.1176, :a 94.1176} :report-ir? 0 :report-oa? 0 :report-la? 1}
+  */
+  
+  const double efficiency{0.34};
+  auto s = ED::make_converter_state(efficiency);
+  const ED::FlowValueType outflow{100.0};
+  const ED::FlowValueType lossflow{100.0};
+  const ED::FlowValueType inflow{outflow / efficiency};
+  const ED::FlowValueType wasteflow{inflow - (outflow + lossflow)};
+  s.inflow_port = ED::Port3{inflow, 0.0};
+  s.outflow_port = ED::Port3{outflow, 0.0};
+  s.lossflow_port = ED::Port3{lossflow, 0.0};
+  s.wasteflow_port = ED::Port3{wasteflow, 0.0};
+  s.report_inflow_request = false;
+  s.report_lossflow_achieved = false;
+  s.report_outflow_achieved = false;
+  std::vector<ED::PortValue> xs{
+    ED::PortValue{ED::inport_inflow_achieved, inflow}};
+  auto s2 = ED::converter_external_transition(s, 0, xs);
+  auto expected_s2 = ED::make_converter_state(efficiency);
+  expected_s2.time = 0;
+  expected_s2.inflow_port = ED::Port3{inflow, inflow};
+  expected_s2.outflow_port = ED::Port3{outflow, outflow};
+  expected_s2.lossflow_port = ED::Port3{lossflow, lossflow};
+  expected_s2.wasteflow_port = ED::Port3{wasteflow, wasteflow};
+  expected_s2.report_inflow_request = false;
+  expected_s2.report_outflow_achieved = true;
+  expected_s2.report_lossflow_achieved = true;
+  ASSERT_EQ(s2.time, expected_s2.time);
+  ASSERT_EQ(s2.inflow_port, expected_s2.inflow_port);
+  ASSERT_EQ(s2.outflow_port, expected_s2.outflow_port);
+  ASSERT_EQ(s2.lossflow_port, expected_s2.lossflow_port);
+  ASSERT_EQ(s2.wasteflow_port, expected_s2.wasteflow_port);
+  ASSERT_TRUE(s2.report_lossflow_achieved);
+  ASSERT_TRUE(s2.report_outflow_achieved);
+  ASSERT_FALSE(s2.report_inflow_request);
+}
 
 int
 main(int argc, char **argv)

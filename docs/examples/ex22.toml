@@ -1,0 +1,90 @@
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "hours"
+max_time = 8760
+
+############## Loads ######################
+[loads.electric]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,100.0],[8760.0,0.0]]
+
+[loads.steam]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,100.0],[8760.0,0.0]]
+
+############## Components #################
+[components.elec_load]
+type="load"
+inflow="electricity"
+loads_by_scenario.blue_sky = "electric"
+
+[components.steam_load]
+type="load"
+inflow="steam"
+loads_by_scenario.blue_sky = "steam"
+
+[components.steam_source]
+type="source"
+outflow="steam"
+max_outflow=15000.0
+
+[components.steam_split]
+type="muxer"
+flow="steam"
+num_inflows = 1
+num_outflows = 2
+dispatch_strategy = "in_order"
+
+[components.steam_loop]
+type = "muxer"
+flow = "steam"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
+
+[components.turbine]
+type="converter"
+inflow="steam"
+outflow="electricity"
+lossflow = "waste_heat"
+constant_efficiency = 0.34
+
+[components.waste_to_steam]
+type="converter"
+inflow="waste_heat"
+outflow="steam"
+constant_efficiency=1
+
+############## dist ###########################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+
+############## Networks #################
+[networks.nw_electric]
+connections = [
+  ["steam_source:OUT(0)","steam_split:IN(0)","steam"], #boiler to steam muxer
+  ["steam_split:OUT(1)","steam_loop:IN(1)","steam"],
+  ["turbine:OUT(1)","waste_to_steam:IN(0)","waste_heat"],
+  ["waste_to_steam:OUT(0)","steam_loop:IN(0)", "steam"],
+  ["steam_loop:OUT(0)","steam_load:IN(0)","steam"], #loop to pass
+
+  #Thermal to Electric
+  ["steam_split:OUT(0)","turbine:IN(0)","steam"],
+  ["turbine:OUT(0)","elec_load:IN(0)","electricity"],
+
+]
+
+############## Scenarios #################
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 8760
+max_occurrences = 1
+network = "nw_electric"
+calculate_reliability = false
+

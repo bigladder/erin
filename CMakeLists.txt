@@ -243,3 +243,7 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex21.toml"
   "ex21.toml"
   COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex22.toml"
+  "ex22.toml"
+  COPYONLY)

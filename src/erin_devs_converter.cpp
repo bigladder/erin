@@ -10,8 +10,6 @@
 
 namespace erin::devs
 {
-  const bool converter_debug{false};
-
   bool
   operator==(const ConversionFun& a, const ConversionFun& b)
   {
@@ -255,19 +253,11 @@ namespace erin::devs
     if (state.report_inflow_request || state.report_outflow_achieved || state.report_lossflow_achieved) {
       dt = 0;
     }
-    if (converter_debug) {
-      std::cout << "converter_time_advance"
-                << "\n"
-                << "- s:  " << state
-                << "\n"
-                << "- dt: " << ((dt == infinity) ? "infinity" : std::to_string(dt))
-                << "\n";
-    }
     return dt;
   }
 
   ConverterState
-  converter_internal_transition(const ConverterState& state, bool verbose)
+  converter_internal_transition(const ConverterState& state)
   {
     auto next_state = ConverterState{
       state.time, // internal transitions always take 0 time
@@ -280,14 +270,6 @@ namespace erin::devs
       false,
       false,
     };
-    if (converter_debug && verbose) {
-      std::cout << "converter_internal_transition"
-                << "\n"
-                << "-s:  " << state
-                << "\n"
-                << "-s*: " << next_state
-                << "\n";
-    }
     return next_state;
   }
 
@@ -295,12 +277,11 @@ namespace erin::devs
   converter_external_transition(
       const ConverterState& state,
       RealTimeType elapsed_time,
-      const std::vector<PortValue>& xs,
-      bool verbose)
+      const std::vector<PortValue>& xs)
   {
-    bool got_outflow_request{false};
-    bool got_inflow_achieved_flag{false};
-    bool got_lossflow_request{false};
+    bool got_or{false};
+    bool got_ia{false};
+    bool got_lr{false};
     FlowValueType outflow_request{0.0};
     FlowValueType inflow_achieved{0.0};
     FlowValueType lossflow_request{0.0};
@@ -309,19 +290,19 @@ namespace erin::devs
       switch (x.port) {
         case inport_outflow_request:
           {
-            got_outflow_request = true;
+            got_or = true;
             outflow_request += x.value;
             break;
           }
         case inport_inflow_achieved:
           {
-            got_inflow_achieved_flag = true;
+            got_ia = true;
             inflow_achieved += x.value;
             break;
           }
         case inport_lossflow_request:
           {
-            got_lossflow_request = true;
+            got_lr = true;
             lossflow_request += x.value;
             break;
           }
@@ -342,32 +323,28 @@ namespace erin::devs
     bool report_ir{false};
     bool report_oa{false};
     bool report_la{false};
-    if (got_lossflow_request) {
+    if (got_lr) {
       auto lp_update = lp.with_requested(lossflow_request);
       lp = lp_update.port;
       report_la = report_la || lp_update.send_achieved;
     }
-    if (got_outflow_request) {
+    if (got_or) {
       auto op_update = op.with_requested(outflow_request);
-      //if (op_update.send_request) {
-        auto ip_update = ip.with_requested(
-            state.conversion_fun->inflow_given_outflow(outflow_request));
-        ip = ip_update.port;
-        report_ir = report_ir || ip_update.send_request;
-      //}
       op = op_update.port;
       report_oa = report_oa || op_update.send_achieved;
+      auto ip_update = ip.with_requested(
+          state.conversion_fun->inflow_given_outflow(outflow_request));
+      ip = ip_update.port;
+      report_ir = report_ir || ip_update.send_request;
     }
-    if (got_inflow_achieved_flag) {
+    if (got_ia) {
       auto ip_update = ip.with_achieved(inflow_achieved);
       ip = ip_update.port;
       report_ir = report_ir || ip_update.send_request;
-      //if (ip_update.send_achieved) {
-        auto op_update = op.with_achieved(
-            state.conversion_fun->outflow_given_inflow(ip.get_achieved()));
-        op = op_update.port;
-        report_oa = report_oa || op_update.send_achieved;
-      //}
+      auto op_update = op.with_achieved(
+          state.conversion_fun->outflow_given_inflow(ip.get_achieved()));
+      op = op_update.port;
+      report_oa = report_oa || op_update.send_achieved;
     }
     auto lossflow_achieved{ip.get_achieved() - op.get_achieved()};
     auto lp_update = lp.with_achieved(
@@ -381,29 +358,16 @@ namespace erin::devs
       ip.get_achieved() - (op.get_achieved() + lp.get_achieved())};
     wp = Port3{wasteflow_request, wasteflow_achieved};
     report_la = report_la || lp_update.send_achieved;
-    auto next_state = ConverterState{
+    return ConverterState{
       new_time,
       ip,
       op,
       lp,
       wp,
       state.conversion_fun->clone(),
-      report_ir,
-      report_oa,
-      report_la}; 
-    if (converter_debug && verbose) {
-      std::cout << "converter_external_transition"
-                << "\n"
-                << "- s:  " << state 
-                << "\n"
-                << "- e:  " << elapsed_time
-                << "\n"
-                << "- xs: " << ERIN::vec_to_string<PortValue>(xs)
-                << "\n"
-                << "- s*: " << next_state
-                << "\n";
-    }
-    return next_state; 
+      report_ir || ip.should_send_request(state.inflow_port),
+      report_oa || op.should_send_achieved(state.outflow_port),
+      report_la || lp.should_send_achieved(state.lossflow_port)}; 
   }
 
   ConverterState
@@ -412,20 +376,9 @@ namespace erin::devs
       const std::vector<PortValue>& xs)
   {
     auto next_state = converter_external_transition(
-        converter_internal_transition(state, false),
+        converter_internal_transition(state),
         0,
-        xs,
-        false);
-    if (converter_debug) {
-      std::cout << "converter_confluent_transition"
-                << "\n"
-                << "- s: " << state
-                << "\n"
-                << "- xs: " << ERIN::vec_to_string<PortValue>(xs)
-                << "\n"
-                << "- s*: " << next_state
-                << "\n";
-    }
+        xs);
     return next_state;
   }
 
@@ -459,13 +412,6 @@ namespace erin::devs
           PortValue{
             outport_outflow_achieved + 1,
             state.lossflow_port.get_achieved()});
-    }
-    if (converter_debug) {
-      std::cout << "converter_output_function_mutable"
-                << "- s:  " << state
-                << "\n"
-                << "- ys: " << ERIN::vec_to_string<PortValue>(ys)
-                << "\n";
     }
   }
 }

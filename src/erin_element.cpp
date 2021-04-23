@@ -1127,6 +1127,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Converter
+  constexpr bool converter_element_debug{false};
+
   Converter::Converter(
       std::string id,
       ComponentType component_type,
@@ -1160,12 +1162,12 @@ namespace ERIN
   void
   Converter::delta_int()
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "delta_int::" << get_id() << "::Converter\n";
       std::cout << "- s = " << state << "\n";
     }
     state = erin::devs::converter_internal_transition(state);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "- s*= " << state << "\n";
     }
     log_ports();
@@ -1174,14 +1176,14 @@ namespace ERIN
   void
   Converter::delta_ext(Time e, std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "delta_ext::" << get_id() << "::Converter\n"
                 << "- e  = " << e.real << "\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::converter_external_transition(state, e.real, xs);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "- s* = " << state << "\n";
     }
     log_ports();
@@ -1190,13 +1192,13 @@ namespace ERIN
   void
   Converter::delta_conf(std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "delta_conf::" << get_id() << "::Converter\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::converter_confluent_transition(state, xs);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "- s* = " << state << "\n";
     }
     log_ports();
@@ -1205,17 +1207,17 @@ namespace ERIN
   Time
   Converter::ta()
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "ta::" << get_id() << "::Converter\n";
     }
     auto dt = erin::devs::converter_time_advance(state);
     if (dt == erin::devs::infinity) {
-      if constexpr (debug_level >= debug_level_medium) {
+      if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
         std::cout << "- dt = infinity\n";
       }
       return inf;
     }
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "- dt = " << dt << "\n";
     }
     return Time{dt, 1};
@@ -1225,7 +1227,7 @@ namespace ERIN
   Converter::output_func(std::vector<PortValue>& ys)
   {
     erin::devs::converter_output_function_mutable(state, ys);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (converter_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "output_func::" << get_id() << "::Converter\n"
                 << "- ys = " << vec_to_string<PortValue>(ys) << "\n";
     }

@@ -380,7 +380,7 @@ namespace erin::devs
     return PortUpdate3{
       Port3{requested, a},
       a > requested,
-      (a <= requested) && ((a != achieved) || (achieved > requested)),
+      (a != achieved) || (achieved > requested),
     };
   }
 

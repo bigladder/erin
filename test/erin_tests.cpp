@@ -9679,14 +9679,13 @@ TEST(DevsModelTest, Test_bad_behavior_for_converter)
 {
   namespace E = ERIN;
   namespace ED = erin::devs;
-  /*
-delta_ext::turbine::Converter
-- e  = 0
-- xs = [PortValue{port=0, value=294.118}]
-- s  = {:t 0, :inflow {:r 294.118, :a 0} :outflow {:r 100, :a 0} :lossflow {:r 100, :a 0} :wasteflow {:r 94.1176, :a 0} :report-ir? 0 :report-oa? 0 :report-la? 0}
-- s* = {:t 0, :inflow {:r 294.118, :a 294.118} :outflow {:r 100, :a 100} :lossflow {:r 100, :a 100} :wasteflow {:r 94.1176, :a 94.1176} :report-ir? 0 :report-oa? 0 :report-la? 1}
-  */
-  
+  // Motivating Example:
+  // delta_ext::turbine::Converter
+  // - e  = 0
+  // - xs = [PortValue{port=0, value=294.118}]
+  // - s  = {:t 0, :inflow {:r 294.118, :a 0} :outflow {:r 100, :a 0} :lossflow {:r 100, :a 0} :wasteflow {:r 94.1176, :a 0} :report-ir? 0 :report-oa? 0 :report-la? 0}
+  // - s* = {:t 0, :inflow {:r 294.118, :a 294.118} :outflow {:r 100, :a 100} :lossflow {:r 100, :a 100} :wasteflow {:r 94.1176, :a 94.1176} :report-ir? 0 :report-oa? 0 :report-la? 1}
+  //
   const double efficiency{0.34};
   auto s = ED::make_converter_state(efficiency);
   const ED::FlowValueType outflow{100.0};

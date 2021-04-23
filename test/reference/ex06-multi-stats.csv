@@ -38,7 +38,7 @@ blue_sky,1,8760,steam_loop-outflow(1),muxer,steam,1,0,0,0.0,0.0,6.3072e+11,0.0
 blue_sky,1,8760,waste_heat_to_electricity-inflow,converter,waste_heat,0,8760,3.942e+11,0.0,0.0,0.0,2.3652e+11
 blue_sky,1,8760,waste_heat_to_electricity-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
 blue_sky,1,8760,waste_heat_to_electricity-outflow,converter,electricity,0,8760,1.1826e+11,0.0,7.0956e+10,0.0,0.0
-blue_sky,1,8760,waste_heat_to_electricity-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,1.65564e+11
+blue_sky,1,8760,waste_heat_to_electricity-wasteflow,converter,waste_heat,0,8760,2.7594e+11,0.0,0.0,0.0,1.65564e+11
 blue_sky,1,8760,TOTAL (source),,,,,,1.1826e+12,1.1826e+11,0.0,0.0
 blue_sky,1,8760,TOTAL (load),,,,,,0.0,1.89216e+11,9.4608e+11,0.0
 blue_sky,1,8760,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0
@@ -83,7 +83,7 @@ ice_jam_flood,10,3360,steam_loop-outflow(1),muxer,steam,1,0,0,0.0,0.0,2.4192e+11
 ice_jam_flood,10,3360,waste_heat_to_electricity-inflow,converter,waste_heat,0,336,3.024e+10,0.0,0.0,0.0,9.072e+10
 ice_jam_flood,10,3360,waste_heat_to_electricity-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,0
 ice_jam_flood,10,3360,waste_heat_to_electricity-outflow,converter,electricity,0,336,9.072e+09,0.0,2.7216e+10,0.0,0.0
-ice_jam_flood,10,3360,waste_heat_to_electricity-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,0.0,6.3504e+10
+ice_jam_flood,10,3360,waste_heat_to_electricity-wasteflow,converter,waste_heat,0,336,2.1168e+10,0.0,0.0,0.0,6.3504e+10
 ice_jam_flood,10,3360,TOTAL (source),,,,,,4.536e+11,9.072e+09,0.0,0.0
 ice_jam_flood,10,3360,TOTAL (load),,,,,,0.0,3.6288e+10,3.6288e+11,0.0
 ice_jam_flood,10,3360,TOTAL (storage),,,,,,0.0,0.0,0.0,0.0

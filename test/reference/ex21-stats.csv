@@ -2,7 +2,7 @@ scenario id,number of occurrences,total time in scenario (hours),component id,ty
 blue_sky,1,2,boiler-inflow,converter,coal,0,2,4.158e+06,108000,0.0,0.0,0.0
 blue_sky,1,2,boiler-lossflow,converter,coal,1,0,0,0,0.0,0.0,0.0
 blue_sky,1,2,boiler-outflow,converter,steam,0,2,2.079e+06,0.0,0.0,54000,0.0
-blue_sky,1,2,boiler-wasteflow,converter,coal,1,0,0,54000,0.0,0.0,0.0
+blue_sky,1,2,boiler-wasteflow,converter,coal,0,2,2.079e+06,54000,0.0,0.0,0.0
 blue_sky,1,2,coal_pile,pass_through,coal,0,2,4.158e+06,108000,0.0,0.0,0.0
 blue_sky,1,2,coal_utility,source,coal,0,2,36000,108000,0.0,0.0,0.0
 blue_sky,1,2,elec_load,load,electricity,0,2,549000,0.0,171000,0.0,0.0

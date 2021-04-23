@@ -1,5 +1,5 @@
 scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),L:achieved (kW),L:requested (kW),US-inflow:achieved (kW),US-inflow:requested (kW),US-lossflow:achieved (kW),US-lossflow:requested (kW),US-outflow:achieved (kW),US-outflow:requested (kW)
-blue_sky,P0000-00-00T00:00:00,0,50,100,50,50,0,50,50,100
-blue_sky,P0000-00-00T00:00:00,0.001388888888888889,100,100,120,120,20,120,100,100
-blue_sky,P0000-00-00T00:00:00,0.002222222222222222,100,100,100,100,0,100,100,100
+blue_sky,P0000-00-00T00:00:00,0,50,100,50,50,0,0,50,100
+blue_sky,P0000-00-00T00:00:00,0.001388888888888889,100,100,120,120,20,20,100,100
+blue_sky,P0000-00-00T00:00:00,0.002222222222222222,100,100,100,100,0,0,100,100
 blue_sky,P0000-00-00T00:00:00,0.002777777777777778,0,0,0,0,0,0,0,0

@@ -8,6 +8,7 @@
 #include "erin/devs.h"
 #include "erin/devs/converter.h"
 #include "erin/devs/flow_limits.h"
+#include "erin/devs/flow_meter.h"
 #include "erin/devs/load.h"
 #include "erin/devs/mover.h"
 #include "erin/devs/mux.h"
@@ -117,7 +118,7 @@ namespace ERIN
       }
       void ensure_element_tag_is_unique(const std::string& element_tag) const;
       void ensure_element_id_is_valid(int element_id) const;
-      void ensure_time_is_valid(RealTimeType time, int element_id) const;
+      RealTimeType ensure_time_is_valid(RealTimeType time, int element_id) const;
       void record_history_and_update_current_time(RealTimeType time);
       void ensure_not_final() const;
       void ensure_not_recording() const;
@@ -342,18 +343,14 @@ namespace ERIN
         return get_outflow_type();
       };
 
-    protected:
-      void update_on_external_transition() override;
-
     private:
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
       bool record_history;
       PortRole port_role;
-      erin::devs::Port2 port;
-      bool report_ir;
-      bool report_oa;
-      RealTimeType the_time;
+      erin::devs::FlowMeterState state;
+
+      void log_ports();
   };
 
   ////////////////////////////////////////////////////////////

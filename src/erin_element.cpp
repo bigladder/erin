@@ -163,20 +163,21 @@ namespace ERIN
     }
   }
 
-  void
+  RealTimeType
   DefaultFlowWriter::ensure_time_is_valid(RealTimeType time, int element_id) const
   {
     if (time < current_time) {
       std::ostringstream oss{};
-      oss << "time is invalid. "
-          << "This value indicates time is flowing backward!\n"
-          << "time: " << time << "\n"
-          << "current_time: " << current_time << "\n"
+      oss << "WARNING!!! unexpected time in flow writer. "
+          << "An element's local time may not be in sync with simulation!\n"
+          << "element's time: " << time << "\n"
+          << "current simulation time: " << current_time << "\n"
           << "element: " << element_id << "\n"
           << "tag: " << element_id_to_tag.at(element_id) << "\n"
-          ;
-      throw std::invalid_argument(oss.str());
+          << "Going to update data to be at current time to move forward.";
+      return current_time;
     }
+    return time;
   }
 
   void
@@ -277,7 +278,7 @@ namespace ERIN
     }
     ensure_not_final();
     ensure_element_id_is_valid(element_id);
-    ensure_time_is_valid(time, element_id);
+    time = ensure_time_is_valid(time, element_id);
     if (time > current_time) {
       record_history_and_update_current_time(time);
     }
@@ -1004,10 +1005,7 @@ namespace ERIN
     element_id{-1},
     record_history{true},
     port_role{port_role_},
-    port{},
-    report_ir{false},
-    report_oa{false},
-    the_time{0}
+    state{erin::devs::flow_meter_make_state()}
   {
   }
 
@@ -1015,18 +1013,18 @@ namespace ERIN
   FlowMeter::set_flow_writer(const std::shared_ptr<FlowWriter>& writer)
   {
     flow_writer = writer;
-    update_on_external_transition();
+    log_ports();
   }
 
   void
   FlowMeter::set_recording_on()
   {
     record_history = true;
-    update_on_external_transition();
+    log_ports();
   }
 
   void
-  FlowMeter::update_on_external_transition()
+  FlowMeter::log_ports()
   {
     if ((element_id == -1) && flow_writer && record_history) {
       element_id = flow_writer->register_id(
@@ -1039,9 +1037,9 @@ namespace ERIN
     if ((element_id != -1) && flow_writer) {
       flow_writer->write_data(
           element_id,
-          get_real_time(),
-          get_outflow_request(),
-          get_outflow());
+          state.time,
+          state.port.get_requested(),
+          state.port.get_achieved());
     }
   }
 
@@ -1050,26 +1048,13 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "delta_int::" << get_id() << "::FlowMeter\n"
-                << "- s = {:port " << port
-                << " :report-ir? " << report_ir
-                << " :report-oa? " << report_oa
-                << "}\n";
+                << "- s  " << state << "\n";
     }
-    report_ir = false;
-    report_oa = false;
+    state = erin::devs::flow_meter_internal_transition(state);
     if constexpr (debug_level >= debug_level_medium) {
-      std::cout << "- s*= {:port " << port
-                << " :report-ir? " << report_ir
-                << " :report-oa? " << report_oa
-                << "}\n";
+      std::cout << "- s* " << state << "\n";
     }
-    if (flow_writer && record_history && (element_id != -1)) {
-      flow_writer->write_data(
-          element_id,
-          the_time,
-          port.get_requested(),
-          port.get_achieved());
-    }
+    log_ports();
   }
 
   void
@@ -1077,70 +1062,15 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "delta_ext::" << get_id() << "::FlowMeter\n"
-                << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
-                << "- s  = {:t " << the_time
-                << " :port " << port
-                << " :report-ir? " << report_ir
-                << " :report-oa? " << report_oa
-                << "}\n";
+                << "- xs " << vec_to_string<PortValue>(xs) << "\n"
+                << "- e  " << e.real << "\n"
+                << "- s  " << state << "\n";
     }
-    the_time += e.real;
-    bool got_ia_flag{false};
-    bool got_or_flag{false};
-    FlowValueType outflow_req{0.0};
-    FlowValueType inflow_ach{0.0};
-    for (const auto& x : xs) {
-      switch (x.port) {
-        case erin::devs::inport_inflow_achieved:
-          got_ia_flag = true;
-          inflow_ach += x.value;
-          break;
-        case erin::devs::inport_outflow_request:
-          got_or_flag = true;
-          outflow_req += x.value;
-          break;
-        default:
-          std::ostringstream oss{};
-          oss << "unhandled port ;" << x.port << "'";
-          throw std::invalid_argument(oss.str());
-      }
-    }
-    if (got_ia_flag && got_or_flag) {
-      auto update_a = port.with_achieved(inflow_ach);
-      auto update_r = update_a.port.with_requested(outflow_req);
-      report_ir = update_r.send_update;
-      report_oa = update_r.port.should_send_achieved(port);
-      port = update_r.port;
-    }
-    else if (got_ia_flag) {
-      auto update = port.with_achieved(inflow_ach);
-      report_oa = update.send_update;
-      port = update.port;
-    }
-    else if (got_or_flag) {
-      auto update = port.with_requested(outflow_req);
-      report_ir = update.send_update;
-      port = update.port;
-    }
-    else {
-      std::ostringstream oss{};
-      oss << "didn't get any inflows!";
-      throw std::runtime_error(oss.str());
-    }
+    state = erin::devs::flow_meter_external_transition(state, e.real, xs);
     if constexpr (debug_level >= debug_level_medium) {
-      std::cout << "- s* = {:t " << the_time
-                << " :port " << port
-                << " :report-ir? " << report_ir
-                << " :report-oa? " << report_oa
-                << "}\n";
+      std::cout << "- s* " << state << "\n";
     }
-    if (flow_writer && record_history && (element_id != -1)) {
-      flow_writer->write_data(
-          element_id,
-          the_time,
-          port.get_requested(),
-          port.get_achieved());
-    }
+    log_ports();
   }
 
   void
@@ -1148,54 +1078,50 @@ namespace ERIN
   {
     if constexpr (debug_level >= debug_level_medium) {
       std::cout << "delta_conf::" << get_id() << "::FlowMeter\n"
-                << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
-                << "- s  = {:t " << the_time
-                << " :port " << port
-                << " :report-ir? " << report_ir
-                << " :report-oa? " << report_oa
-                << "}\n";
+                << "- xs " << vec_to_string<PortValue>(xs) << "\n"
+                << "- s  " << state << "\n";
     }
-    delta_int();
-    delta_ext(Time{0, 1}, xs);
+    state = erin::devs::flow_meter_confluent_transition(state, xs);
     if constexpr (debug_level >= debug_level_medium) {
-      std::cout << "- s* = {:t " << the_time
-                << " :port " << port
-                << " :report-ir? " << report_ir
-                << " :report-oa? " << report_oa
-                << "}\n";
+      std::cout << "- s* " << state << "\n";
     }
-    if (flow_writer && record_history && (element_id != -1)) {
-      flow_writer->write_data(
-          element_id,
-          the_time,
-          port.get_requested(),
-          port.get_achieved());
-    }
+    log_ports();
   }
 
   Time
   FlowMeter::ta()
   {
-    if (report_ir || report_oa) {
-      return Time{0, 1};
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "ta::" << get_id() << "::FlowMeter\n"
+                << "- s  " << state << "\n"
+                << "- dt ";
     }
-    return inf;
+    auto dt = erin::devs::flow_meter_time_advance(state);
+    if (dt == erin::devs::infinity) {
+      if constexpr (debug_level >= debug_level_medium) {
+        std::cout << "infinity\n";
+      }
+      return inf;
+    }
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << dt << "\n";
+    }
+    return Time{dt, 1};
   }
 
   void
   FlowMeter::output_func(std::vector<PortValue>& ys)
   {
-    if (report_ir) {
-      ys.emplace_back(
-          PortValue{
-            erin::devs::outport_inflow_request,
-            port.get_requested()});
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "output_func::" << get_id() << "::FlowMeter\n"
+                << "- s  " << state << "\n";
     }
-    if (report_oa) {
-      ys.emplace_back(
-          PortValue{
-            erin::devs::outport_outflow_achieved,
-            port.get_achieved()});
+    erin::devs::flow_meter_output_function_mutable(state, ys);
+    if constexpr (debug_level >= debug_level_medium) {
+      std::cout << "ys   " << vec_to_string<PortValue>(ys) << "\n";
+    }
+    if (ys.size() > 0) {
+      log_ports();
     }
   }
 

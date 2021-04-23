@@ -7,9 +7,11 @@
 require 'tmpdir'
 require 'edn'
 require 'rubygems'
+require 'pathname'
 
 IS_WIN = Gem.win_platform?
-BUILD_DIR = "build_vim"
+BUILD_DIR = Pathname.new(ENV.fetch("ERIN_BUILD_DIR", "build")).basename.to_s
+puts "BUILD_DIR = #{BUILD_DIR}"
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REFERENCE_PATH = File.expand_path(File.join(THIS_DIR, '..', 'test', 'reference'))

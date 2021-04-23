@@ -4,6 +4,7 @@
 require 'set'
 require 'pathname'
 
+BUILD_DIR = Pathname.new(ENV.fetch("ERIN_BUILD_DIR", "build")).basename.to_s
 CHECKS = "-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*"
 USE_BG = false
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
@@ -42,7 +43,7 @@ File.open(File.join(THIS_DIR, "doit"), 'w') do |f|
   end
   f.write("rm -f cppcheck_report.txt\n")
   full_path_to_vendor = File.expand_path(File.join(THIS_DIR, "..", "vendor"))
-  full_path_to_compile_commands = File.expand_path(File.join(THIS_DIR, "..", "build_vim", "compile_commands.json"))
+  full_path_to_compile_commands = File.expand_path(File.join(THIS_DIR, "..", BUILD_DIR, "compile_commands.json"))
   f.write("echo Running cppcheck...\n")
   f.write("cppcheck -i#{full_path_to_vendor} --project=#{full_path_to_compile_commands} > cppcheck_report.txt 2>&1\n")
   f.write("echo Running Clang Tidy...\n")

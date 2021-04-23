@@ -13,7 +13,7 @@ if ! ctest --output-on-failure; then
   exit 1
 fi
 echo Running Regressions Suite...
-if ! bundle exec ruby ../scripts/regression_test.rb; then
+if ! ERIN_BUILD_DIR=$PWD bundle exec ruby ../scripts/regression_test.rb; then
   echo REGRESSIONS FOUND!
   exit 1
 fi
@@ -33,7 +33,7 @@ time ./bin/str8760
 mkdir -p tidy
 rm -f cppcheck_report.txt
 echo Running cppcheck...
-cppcheck -i/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/vendor --project=/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/build_vim/compile_commands.json > cppcheck_report.txt 2>&1
+cppcheck -i/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/vendor --project=/Users/michael-okeefe/projects/active/cerl-estcp/code/e2rin/build/compile_commands.json > cppcheck_report.txt 2>&1
 echo Running Clang Tidy...
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/type.h > tidy/type.h.txt
 clang-tidy -p compile_commands.json --quiet --checks='-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*' ../include/erin/utils.h > tidy/utils.h.txt

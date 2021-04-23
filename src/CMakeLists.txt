@@ -23,6 +23,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_devs.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_converter.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_flow_limits.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_devs_flow_meter.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_load.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_mover.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_mux.cpp
@@ -48,6 +49,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/devs.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/converter.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/flow_limits.h
+  ${PROJECT_SOURCE_DIR}/include/erin/devs/flow_meter.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/load.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/mover.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/mux.h

@@ -10,6 +10,7 @@
 #include "erin/devs.h"
 #include "erin/devs/flow_limits.h"
 #include "erin/devs/converter.h"
+#include "erin/devs/flow_meter.h"
 #include "erin/devs/load.h"
 #include "erin/devs/mux.h"
 #include "erin/devs/on_off_switch.h"
@@ -9492,6 +9493,60 @@ TEST(ErinBasicsTest, Test_uncontrolled_source_with_sink_comprehensive)
     oss << "error: " << error << "\n";
     ASSERT_NEAR(error, 0.0, 1e-6) << oss.str();
   }
+}
+
+TEST(DevsModelTest, Test_flow_meter_functions)
+{
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+
+  auto s = ED::flow_meter_make_state();
+  auto other = ED::FlowMeterState{};
+  ASSERT_EQ(s, other);
+  other.report_outflow_achieved = true;
+  const ED::FlowValueType inflow_request{100.0};
+  const ED::FlowValueType outflow_achieved{20.0};
+  other.port = ED::Port3{inflow_request, outflow_achieved};
+  ASSERT_NE(s, other);
+  std::ostringstream oss{};
+  oss << s;
+  ASSERT_EQ(ED::flow_meter_time_advance(s), ED::infinity);
+  ASSERT_EQ(ED::flow_meter_time_advance(other), 0);
+  auto ys = ED::flow_meter_output_function(other);
+  std::vector<ED::PortValue> expected_ys{
+    ED::PortValue{ED::outport_outflow_achieved, outflow_achieved}};
+  ASSERT_EQ(ys.size(), expected_ys.size());
+  ASSERT_EQ(ys[0].port, expected_ys[0].port);
+  ASSERT_EQ(ys[0].value, expected_ys[0].value);
+  other.report_inflow_request = true;
+  other.report_outflow_achieved = false;
+  ys = ED::flow_meter_output_function(other);
+  expected_ys = std::vector<ED::PortValue>{
+    ED::PortValue{ED::outport_inflow_request, inflow_request}};
+  ASSERT_EQ(ys.size(), expected_ys.size());
+  ASSERT_EQ(ys[0].port, expected_ys[0].port);
+  ASSERT_EQ(ys[0].value, expected_ys[0].value);
+  expected_ys = std::vector<ED::PortValue>{};
+  ys = ED::flow_meter_output_function(s);
+  ASSERT_EQ(ys.size(), expected_ys.size());
+  auto s1 = ED::flow_meter_internal_transition(other);
+  other.report_outflow_achieved = false;
+  other.report_inflow_request = false;
+  ASSERT_EQ(s1, other);
+  const E::FlowValueType outflow_request_2{30.0};
+  std::vector<ED::PortValue> xs{
+    ED::PortValue{ED::inport_outflow_request, outflow_request_2}};
+  E::RealTimeType elapsed{5};
+  auto s2 = ED::flow_meter_external_transition(s, elapsed, xs);
+  ED::FlowMeterState expected_s2{
+    elapsed, ED::Port3{outflow_request_2, 0.0}, true, false};
+  ASSERT_EQ(s2, expected_s2);
+  xs = std::vector<ED::PortValue>{
+    ED::PortValue{ED::inport_inflow_achieved, outflow_request_2}};
+  auto s3 = ED::flow_meter_confluent_transition(s2, xs);
+  ED::FlowMeterState expected_s3{
+    elapsed, ED::Port3{outflow_request_2, outflow_request_2}, false, true};
+  ASSERT_EQ(s3, expected_s3);
 }
 
 int

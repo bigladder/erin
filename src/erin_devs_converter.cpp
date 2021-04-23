@@ -365,9 +365,9 @@ namespace erin::devs
       lp,
       wp,
       state.conversion_fun->clone(),
-      report_ir || ip.should_send_request(state.inflow_port),
-      report_oa || op.should_send_achieved(state.outflow_port),
-      report_la || lp.should_send_achieved(state.lossflow_port)}; 
+      report_ir,
+      report_oa,
+      report_la};
   }
 
   ConverterState

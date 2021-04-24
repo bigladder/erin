@@ -2198,6 +2198,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Mover
+  constexpr bool mover_element_debug{false};
+
   Mover::Mover(
       std::string id,
       ComponentType component_type,
@@ -2226,12 +2228,12 @@ namespace ERIN
   void
   Mover::delta_int()
   {
-    if constexpr (debug_level >= debug_level_medium) {
-      std::cout << "Mover::delta_int::" << get_id() << "\n"
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
+      std::cout << "delta_int::" << get_id() << "::Mover\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::mover_internal_transition(data, state);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "- s* = " << state << "\n";
     }
     log_ports();
@@ -2240,13 +2242,14 @@ namespace ERIN
   void
   Mover::delta_ext(Time e, std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "delta_ext::" << get_id() << "::Mover\n"
+                << "- e  = " << e.real << "\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::mover_external_transition(data, state, e.real, xs);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "- s* = " << state << "\n";
     }
     log_ports();
@@ -2255,13 +2258,13 @@ namespace ERIN
   void
   Mover::delta_conf(std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "delta_conf::" << get_id() << "::Mover\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::mover_confluent_transition(data, state, xs);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "- s* = " << state << "\n";
     }
     log_ports();
@@ -2270,18 +2273,18 @@ namespace ERIN
   Time
   Mover::ta()
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "ta::" << get_id() << "::Mover\n"
                 << "- dt = ";
     }
     auto dt = erin::devs::mover_time_advance(data, state);
     if (dt == erin::devs::infinity) {
-      if constexpr (debug_level >= debug_level_medium) {
+      if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
         std::cout << "infinity\n";
       }
       return inf;
     }
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << dt << "\n";
     }
     return Time{dt, 1};
@@ -2291,7 +2294,7 @@ namespace ERIN
   Mover::output_func(std::vector<PortValue>& ys)
   {
     erin::devs::mover_output_function_mutable(data, state, ys);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (mover_element_debug || (debug_level >= debug_level_medium)) {
       std::cout << "output_func::" << get_id() << "::Mover\n"
                 << "- ys = " << vec_to_string<PortValue>(ys) << "\n";
     }

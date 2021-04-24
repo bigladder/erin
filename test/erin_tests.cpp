@@ -7108,25 +7108,20 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
     "quantity_unit = \"kJ\"\n"
     "time_unit = \"seconds\"\n"
     "max_time = 10\n"
-    "[loads.environment]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1000.0],[10.0,0.0]]\n"
     "[loads.cooling]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0,0.0]]\n"
+    "time_rate_pairs = [[0.0,60.0],[5.0,144.0],[8.0,120.0],[10.0,0.0]]\n"
     "[components.S]\n"
     "type = \"source\"\n"
     "outflow = \"electricity\"\n"
     "[components.US]\n"
-    "type = \"uncontrolled_source\"\n"
+    "type = \"source\"\n"
     "output_stream = \"heat\"\n"
-    "supply_by_scenario.blue_sky = \"cooling\"\n"
     "[components.L]\n"
     "type = \"load\"\n"
     "input_stream = \"heat\"\n"
-    "loads_by_scenario.blue_sky = \"environment\"\n"
+    "loads_by_scenario.blue_sky = \"cooling\"\n"
     "[components.M]\n"
     "type = \"mover\"\n"
     "inflow0 = \"heat\"\n"
@@ -7159,8 +7154,7 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
   const auto& bs_res0 = bs_res[0];
   const auto& rez = bs_res0.get_results();
   std::set<std::string> expected_comp_ids{
-    "US-inflow", "US-outflow", "US-lossflow",
-    "L", "S", "M-inflow(0)", "M-inflow(1)", "M-outflow"};
+    "US", "L", "S", "M-inflow(0)", "M-inflow(1)", "M-outflow"};
   ASSERT_EQ(expected_comp_ids.size(), rez.size());
   if (false) {
     for (const auto& item : rez) {
@@ -7178,9 +7172,9 @@ TEST(ErinBasicsTest, Test_mover_element_addition)
   ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
   EXPECT_EQ(actual_comp_ids, expected_comp_ids);
   auto ss_map = bs_res0.get_statistics();
-  ERIN::RealTimeType L_max_downtime{10};
+  ERIN::RealTimeType L_max_downtime{0};
   ERIN::FlowValueType L_total_energy{(5*50.0 + 3*120.0 + 2*100.0)*(1.0 + (1.0 / 5.0))};
-  ERIN::FlowValueType L_load_not_served{10*1000.0 - L_total_energy};
+  ERIN::FlowValueType L_load_not_served{0.0};
   auto L_ss = ss_map["L"];
   EXPECT_EQ(L_ss.max_downtime, L_max_downtime);
   EXPECT_EQ(L_ss.load_not_served, L_load_not_served);
@@ -9719,6 +9713,173 @@ TEST(DevsModelTest, Test_bad_behavior_for_converter)
   ASSERT_TRUE(s2.report_lossflow_achieved);
   ASSERT_TRUE(s2.report_outflow_achieved);
   ASSERT_FALSE(s2.report_inflow_request);
+}
+
+TEST(DevsModelTest, Test_mover_element_comprehensive)
+{
+  namespace E = ERIN;
+  namespace EU = erin::utils;
+  namespace ED = erin::devs;
+
+  const std::size_t num_events{10'000};
+  const E::FlowValueType mover_cop{5.0};
+
+  unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
+  std::cout << "seed: " << seed << "\n";
+  std::default_random_engine generator(seed);
+  std::uniform_int_distribution<int> dt_dist(0, 10);
+  std::uniform_int_distribution<int> flow_dist(0, 100);
+
+  std::string moved_stream{"heat"};
+  std::string power_stream{"electricity"};
+  const std::string heat_source_id{"moved_source"};
+  const std::string power_source_id{"power_source"};
+  const std::string heat_sink_id{"heat_sink"};
+  const std::string mover_id{"mover"};
+
+  std::vector<E::LoadItem> load_profile{};
+  std::vector<E::LoadItem> heat_source_profile{};
+  std::vector<E::LoadItem> power_source_profile{};
+
+  E::RealTimeType t{0};
+  E::RealTimeType t_max{0};
+  std::unordered_set<E::RealTimeType> time_set{};
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    power_source_profile.emplace_back(
+      E::LoadItem{
+        t,
+        static_cast<E::FlowValueType>(flow_dist(generator))});
+    time_set.emplace(t);
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+  }
+  t_max = t;
+  t = 0;
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    heat_source_profile.emplace_back(
+      E::LoadItem{
+        t,
+        static_cast<E::FlowValueType>(flow_dist(generator))});
+    time_set.emplace(t);
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+  }
+  t_max = std::max(t_max, t);
+  t = 0;
+  for (std::size_t idx{0}; idx < num_events; ++idx) {
+    load_profile.emplace_back(
+      E::LoadItem{
+        t,
+        static_cast<E::FlowValueType>(flow_dist(generator))});
+    time_set.emplace(t);
+    t += static_cast<E::RealTimeType>(dt_dist(generator));
+  }
+  t_max = std::max(t_max, t);
+  time_set.emplace(t_max);
+  auto heat_sink = new E::Sink(
+      heat_sink_id,
+      E::ComponentType::Load,
+      moved_stream,
+      load_profile,
+      false);
+  auto heat_source = new E::UncontrolledSource(
+      heat_source_id,
+      E::ComponentType::Source,
+      moved_stream,
+      heat_source_profile);
+  auto power_source = new E::UncontrolledSource(
+      power_source_id,
+      E::ComponentType::Source,
+      power_stream,
+      power_source_profile);
+  auto mover = new E::Mover(
+      mover_id,
+      E::ComponentType::Mover,
+      moved_stream,
+      power_stream,
+      moved_stream,
+      mover_cop);
+  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
+  heat_sink->set_flow_writer(fw);
+  heat_sink->set_recording_on();
+  heat_source->set_flow_writer(fw);
+  heat_source->set_recording_on();
+  power_source->set_flow_writer(fw);
+  power_source->set_recording_on();
+  mover->set_flow_writer(fw);
+  mover->set_recording_on();
+
+  adevs::Digraph<E::FlowValueType, E::Time> network{};
+  network.couple(
+      heat_sink, E::Sink::outport_inflow_request,
+      mover, E::Mover::inport_outflow_request);
+  network.couple(
+      mover, E::Mover::outport_inflow_request,
+      heat_source, E::UncontrolledSource::inport_outflow_request);
+  network.couple(
+      mover, E::Mover::outport_inflow_request + 1,
+      power_source, E::UncontrolledSource::inport_outflow_request);
+  network.couple(
+      heat_source, E::UncontrolledSource::outport_outflow_achieved,
+      mover, E::Mover::inport_inflow_achieved);
+  network.couple(
+      power_source, E::UncontrolledSource::outport_outflow_achieved,
+      mover, E::Mover::inport_inflow_achieved + 1);
+  network.couple(
+      mover, E::Mover::outport_outflow_achieved,
+      heat_sink, E::Sink::inport_inflow_achieved);
+  adevs::Simulator<E::PortValue, E::Time> sim{};
+  network.add(&sim);
+  while (sim.next_event_time() < E::inf) {
+    sim.exec_next_event();
+  }
+  fw->finalize_at_time(t_max);
+  auto results = fw->get_results();
+  fw->clear();
+
+  ASSERT_EQ(results.size(), 10);
+  ASSERT_EQ(time_set.size(), results[heat_source_id + "-outflow"].size());
+  ASSERT_EQ(time_set.size(), results[power_source_id + "-outflow"].size());
+  ASSERT_EQ(time_set.size(), results[heat_sink_id].size());
+  ASSERT_EQ(time_set.size(), results[mover_id + "-inflow(0)"].size());
+
+  for (std::size_t idx{0}; idx < results[heat_sink_id].size(); ++idx) {
+    std::ostringstream oss{};
+    oss << "idx: " << idx << "\n";
+    const auto& ht_src = results[heat_source_id + "-outflow"][idx];
+    oss << "time: " << ht_src.time << "\n";
+    oss << "ht_src: " << ht_src << "\n";
+    const auto& ht_src_in = results[heat_source_id + "-inflow"][idx];
+    oss << "ht_src_in: " << ht_src_in << "\n";
+    const auto& ht_src_loss = results[heat_source_id + "-lossflow"][idx];
+    oss << "src_loss: " << ht_src_loss << "\n";
+    const auto& pw_src = results[power_source_id + "-outflow"][idx];
+    oss << "pw_src: " << pw_src << "\n";
+    const auto& pw_src_in = results[power_source_id + "-inflow"][idx];
+    oss << "pw_src_in: " << pw_src_in << "\n";
+    const auto& pw_src_loss = results[power_source_id + "-lossflow"][idx];
+    oss << "src_loss: " << pw_src_loss << "\n";
+    const auto& ht_snk = results[heat_sink_id][idx];
+    oss << "ht_snk: " << ht_snk << "\n";
+    const auto& mvr_in0 = results[mover_id + "-inflow(0)"][idx];
+    oss << "mvr_in(0): " << mvr_in0 << "\n";
+    const auto& mvr_in1 = results[mover_id + "-inflow(1)"][idx];
+    oss << "mvr_in(1): " << mvr_in1 << "\n";
+    const auto& mvr_out = results[mover_id + "-outflow"][idx];
+    oss << "mvr_out: " << mvr_out << "\n";
+    ASSERT_EQ(ht_src.time, ht_snk.time) << oss.str();
+    ASSERT_EQ(mvr_in0.time, ht_src.time) << oss.str();
+    ASSERT_EQ(ht_src.time, pw_src.time) << oss.str();
+    ASSERT_EQ(ht_src.requested_value, mvr_in0.requested_value) << oss.str();
+    ASSERT_EQ(pw_src.requested_value, mvr_in1.requested_value) << oss.str();
+    ASSERT_EQ(ht_snk.requested_value, mvr_out.requested_value) << oss.str();
+    ASSERT_EQ(ht_src.achieved_value, mvr_in0.achieved_value) << oss.str();
+    ASSERT_EQ(pw_src.achieved_value, mvr_in1.achieved_value) << oss.str();
+    ASSERT_EQ(ht_snk.achieved_value, mvr_out.achieved_value) << oss.str();
+    auto error{
+      mvr_in0.achieved_value + mvr_in1.achieved_value
+      - mvr_out.achieved_value};
+    oss << "energy balance error on mover: " << error << "\n";
+    ASSERT_NEAR(error, 0.0, 1e-6) << oss.str();
+  }
 }
 
 int

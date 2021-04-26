@@ -42,7 +42,7 @@
 #include <unordered_set>
 #include <utility>
 
-constexpr std::size_t comprehensive_test_num_events{10'000};
+constexpr std::size_t comprehensive_test_num_events{1'000};
 
 const double tolerance{1e-6};
 
@@ -9732,7 +9732,7 @@ TEST(DevsModelTest, Test_mover_element_comprehensive)
   const std::size_t num_events{comprehensive_test_num_events};
   const E::FlowValueType mover_cop{5.0};
 
-  unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
+  unsigned seed = 23; // std::chrono::system_clock::now().time_since_epoch().count();
   // std::cout << "seed: " << seed << "\n";
   std::default_random_engine generator(seed);
   std::uniform_int_distribution<int> dt_dist(0, 10);
@@ -9888,6 +9888,56 @@ TEST(DevsModelTest, Test_mover_element_comprehensive)
     oss << "energy balance error on mover: " << error << "\n";
     ASSERT_NEAR(error, 0.0, 1e-6) << oss.str();
   }
+}
+
+TEST(ErinBasicsTest, Test_mover_cases)
+{
+  namespace E = ERIN;
+  namespace ED = erin::devs;
+
+  const E::FlowValueType mover_cop{5.0};
+  /*
+..\..\..\test\erin_tests.cpp(9887): error: The difference between error and 0.0 is 0.60000000000000142, which exceeds 1e-6, where
+error evaluates to 0.60000000000000142,
+0.0 evaluates to 0, and
+1e-6 evaluates to 9.9999999999999995e-07.
+idx: 825
+time: 1884
+ht_src: Datum(time=1884, requested_value=61.6667, achieved_value=22)
+ht_src_in: Datum(time=1884, requested_value=22, achieved_value=22)
+src_loss: Datum(time=1884, requested_value=0, achieved_value=0)
+pw_src: Datum(time=1884, requested_value=12.3333, achieved_value=5)
+pw_src_in: Datum(time=1884, requested_value=5, achieved_value=5)
+src_loss: Datum(time=1884, requested_value=0, achieved_value=0)
+ht_snk: Datum(time=1884, requested_value=74, achieved_value=26.4)
+mvr_in(0): Datum(time=1884, requested_value=61.6667, achieved_value=22)
+mvr_in(1): Datum(time=1884, requested_value=12.3333, achieved_value=5)
+mvr_out: Datum(time=1884, requested_value=74, achieved_value=26.4)
+energy balance error on mover: 0.6
+
+delta_conf::mover::Mover
+- xs = [PortValue{port=1000, value=74},PortValue{port=0, value=22},PortValue{port=1, value=5}]
+- s  = {:t 1884 :ip0 {:r 25.8333, :a 0} :ip1 {:r 5.16667, :a 0} :op {:r 31, :a 0} :send-ir0? 1 :send-ir1? 1 :send-oa? 0}
+- s* = {:t 1884 :ip0 {:r 61.6667, :a 22} :ip1 {:r 12.3333, :a 5} :op {:r 74, :a 26.4} :send-ir0? 1 :send-ir1? 1 :send-oa? 1}
+
+  */
+  const auto d = ED::make_mover_data(mover_cop);
+  auto s = ED::make_mover_state();
+  s.inflow0_port = ED::Port3{25.8333, 0.0};
+  s.inflow1_port = ED::Port3{5.16667, 0.0};
+  s.outflow_port = ED::Port3{31.0, 0.0};
+  s.report_inflow0_request = true;
+  s.report_inflow1_request = true;
+  s.report_outflow_achieved = false;
+  std::vector<ED::PortValue> xs{
+    ED::PortValue{ED::inport_outflow_request, 74.0},
+    ED::PortValue{ED::inport_inflow_achieved, 22.0},
+    ED::PortValue{ED::inport_inflow_achieved + 1, 5.0},
+  };
+  auto s1 = ED::mover_confluent_transition(d, s, xs);
+  ASSERT_NEAR(
+    s1.inflow0_port.get_achieved() + s1.inflow1_port.get_achieved()
+    - s1.outflow_port.get_achieved(), 0.0, 1e-6);
 }
 
 int

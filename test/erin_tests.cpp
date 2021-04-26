@@ -6526,19 +6526,19 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive)
   namespace EU = erin::utils;
   namespace ED = erin::devs;
 
-  const bool do_rounding{false};
+  constexpr bool do_rounding{false};
   const E::FlowValueType constant_efficiency{0.4};
   const std::size_t num_events{comprehensive_test_num_events};
   const bool has_flow_limit{true};
   const E::FlowValueType flow_limit{60.0};
 
-  auto calc_output_from_input = [constant_efficiency](E::FlowValueType inflow) -> E::FlowValueType {
+  auto calc_output_from_input = [constant_efficiency, do_rounding](E::FlowValueType inflow) -> E::FlowValueType {
     auto out{inflow * constant_efficiency};
     if (do_rounding)
       return std::round(out * 1e6) / 1e6;
     return out;
   };
-  auto calc_input_from_output = [constant_efficiency](E::FlowValueType outflow) -> E::FlowValueType {
+  auto calc_input_from_output = [constant_efficiency, do_rounding](E::FlowValueType outflow) -> E::FlowValueType {
     auto out{outflow / constant_efficiency};
     if (do_rounding) {
       return std::round(out * 1e6) / 1e6;

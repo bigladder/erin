@@ -173,6 +173,19 @@ namespace erin::devs
       ip1 = update_ip1.port;
       send_ir1 = send_ir1 || update_ip1.send_request;
     }
+    if (got_or) {
+      auto update_op = op.with_requested(outflow_request);
+      op = update_op.port;
+      send_oa = send_oa || update_op.send_achieved;
+      auto inflow0 = outflow_request / (1.0 + (1.0 / data.COP));
+      auto inflow1 = outflow_request / (1.0 + data.COP);
+      auto update_ip0 = ip0.with_requested(inflow0);
+      ip0 = update_ip0.port;
+      send_ir0 = send_ir0 || update_ip0.send_request;
+      auto update_ip1 = ip1.with_requested(inflow1);
+      ip1 = update_ip1.port;
+      send_ir1 = send_ir1 || update_ip1.send_request;
+    }
     if (got_ia0 || got_ia1) {
       auto inflow1_by_ip0{ip0.get_achieved() * (1.0 / data.COP)};
       auto outflow_by_ip0{(1.0 + (1.0 / data.COP)) * ip0.get_achieved()};
@@ -194,19 +207,6 @@ namespace erin::devs
       auto update_op = op.with_achieved(dominant_outflow);
       op = update_op.port;
       send_oa = send_oa || update_op.send_achieved;
-    }
-    if (got_or) {
-      auto update_op = op.with_requested(outflow_request);
-      op = update_op.port;
-      send_oa = send_oa || update_op.send_achieved;
-      auto inflow0 = outflow_request / (1.0 + (1.0 / data.COP));
-      auto inflow1 = outflow_request / (1.0 + data.COP);
-      auto update_ip0 = ip0.with_requested(inflow0);
-      ip0 = update_ip0.port;
-      send_ir0 = send_ir0 || update_ip0.send_request;
-      auto update_ip1 = ip1.with_requested(inflow1);
-      ip1 = update_ip1.port;
-      send_ir1 = send_ir1 || update_ip1.send_request;
     }
     return MoverState{
       new_time,

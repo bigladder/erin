@@ -9022,7 +9022,7 @@ TEST(ErinBasicsTest, Test_load_and_source_comprehensive)
   const E::FlowValueType max_source_outflow{50.0};
   const unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
   
-  std::cout << "seed: " << seed << "\n";
+  // std::cout << "seed: " << seed << "\n";
   std::default_random_engine generator(seed);
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);
@@ -9115,7 +9115,7 @@ TEST(ErinBasicsTest, Test_on_off_switch_comprehensive)
   const auto t_end{static_cast<E::RealTimeType>(num_events * 5)};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
-  std::cout << "seed: " << seed << "\n";
+  // std::cout << "seed: " << seed << "\n";
   std::default_random_engine generator(seed);
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);
@@ -9247,7 +9247,7 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive)
   const bool source_is_limited{false};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
-  std::cout << "seed: " << seed << "\n";
+  // std::cout << "seed: " << seed << "\n";
   std::default_random_engine generator(seed);
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);
@@ -9394,7 +9394,7 @@ TEST(ErinBasicsTest, Test_uncontrolled_source_with_sink_comprehensive)
   const std::size_t num_events{10'000};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
-  std::cout << "seed: " << seed << "\n";
+  // std::cout << "seed: " << seed << "\n";
   std::default_random_engine generator(seed);
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);
@@ -9552,7 +9552,7 @@ TEST(ErinBasicsTest, Test_flow_meter_element_comprehensive)
   const std::size_t num_events{10'000};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
-  std::cout << "seed: " << seed << "\n";
+  // std::cout << "seed: " << seed << "\n";
   std::default_random_engine generator(seed);
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);
@@ -9725,7 +9725,7 @@ TEST(DevsModelTest, Test_mover_element_comprehensive)
   const E::FlowValueType mover_cop{5.0};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
-  std::cout << "seed: " << seed << "\n";
+  // std::cout << "seed: " << seed << "\n";
   std::default_random_engine generator(seed);
   std::uniform_int_distribution<int> dt_dist(0, 10);
   std::uniform_int_distribution<int> flow_dist(0, 100);

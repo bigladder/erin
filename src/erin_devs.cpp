@@ -461,23 +461,4 @@ namespace erin::devs
               << ":send-achieved? " << p.send_achieved
               << "}";
   }
-
-  // Helper Functions
-  // TODO: rename got_inflow_achieved as it shadows many local variables in external_transitions
-  bool
-  got_inflow_achieved(const std::vector<PortValue>& xs)
-  {
-    return std::any_of(xs.begin(), xs.end(),
-        [](const auto& x) { return x.port == inport_inflow_achieved; });
-  }
-
-  FlowValueType
-  total_inflow_achieved(const std::vector<PortValue>& xs)
-  {
-    return std::accumulate(xs.begin(), xs.end(), 0.0,
-        [](const FlowValueType& sum, const auto& x) { 
-          return sum + x.value;
-        }
-    );
-  }
 }

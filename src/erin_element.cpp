@@ -191,7 +191,7 @@ namespace ERIN
     std::size_t num_achieved{achieved_history.size()};
     for (std::size_t id{0}; id < static_cast<std::size_t>(num_elements()); ++id) {
       auto idx{num_achieved - static_cast<std::size_t>(num_elements()) + id};
-      const auto& role = element_id_to_port_role.at(id);
+      const auto& role = element_id_to_port_role.at(static_cast<int>(id));
       const auto& value = achieved_history.at(idx);
       switch (role) {
         case PortRole::LoadInflow:

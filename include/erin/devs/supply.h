@@ -47,9 +47,7 @@ namespace erin::devs
 
   ////////////////////////////////////////////////////////////
   // internal transition
-  SupplyState supply_internal_transition(
-    const SupplyState& state,
-    bool verbose = true);
+  SupplyState supply_internal_transition(const SupplyState& state);
 
   ////////////////////////////////////////////////////////////
   // external transition
@@ -57,8 +55,7 @@ namespace erin::devs
       const SupplyData& data,
       const SupplyState& state,
       RealTimeType dt,
-      const std::vector<PortValue>& xs,
-      bool verbose = true);
+      const std::vector<PortValue>& xs);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

@@ -7745,6 +7745,7 @@ TEST(ErinBasicsTest, Test_energy_balance_on_flow_limits)
 }
 */
 
+/*
 TEST(ErinBasicsTest, Test_driver_element_for_internal_transitions)
 {
   namespace E = ERIN;
@@ -7795,7 +7796,9 @@ TEST(ErinBasicsTest, Test_driver_element_for_internal_transitions)
   EXPECT_EQ(flows[1], 0.0);
   EXPECT_EQ(flows[2], 20.0);
 }
+*/
 
+/*
 TEST(ErinBasicsTest, Test_driver_element_for_external_transitions)
 {
   namespace E = ERIN;
@@ -7869,7 +7872,9 @@ TEST(ErinBasicsTest, Test_driver_element_for_external_transitions)
   EXPECT_EQ(flows[3], 0.0);
   EXPECT_EQ(flows[4], 20.0);
 }
+*/
 
+/*
 TEST(ErinBasicsTest, Test_driver_element_comprehensive)
 {
   namespace E = ERIN;
@@ -7958,6 +7963,7 @@ TEST(ErinBasicsTest, Test_driver_element_comprehensive)
       << "outflow= " << outflow << "\n";
   }
 }
+*/
 
 TEST(ErinBasicsTest, Test_interpolate_value)
 {

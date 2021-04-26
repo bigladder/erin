@@ -11,8 +11,6 @@
 
 namespace erin::devs
 {
-  const bool on_off_switch_debug{false};
-
   bool
   operator==(const OnOffSwitchData& a, const OnOffSwitchData& b)
   {
@@ -97,12 +95,6 @@ namespace erin::devs
       last_state = item.state;
       last_time = item.time;
     }
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "Making on/off switch. Processed schedule is:\n";
-      for (std::vector<RealTimeType>::size_type i{0}; i < times.size(); ++i) {
-        std::cout << "(time=" << times[i] << ", state=" << states.at(i) << ")\n";
-      }
-    }
     return OnOffSwitchData{
       times,        // schedule_times
       states,       // schedule_values
@@ -145,15 +137,6 @@ namespace erin::devs
       const OnOffSwitchData& data,
       const OnOffSwitchState& state)
   {
-    if (on_off_switch_debug) {
-      std::cout << "on_off_switch_time_advance"
-                << "\n"
-                << "- data: " << data
-                << "\n"
-                << "- state: " << state
-                << "\n"
-                ;
-    }
     RealTimeType dt{0};
     if (state.report_inflow_request || state.report_outflow_achieved) {
       dt = 0;
@@ -164,11 +147,6 @@ namespace erin::devs
     else {
       dt = infinity;
     }
-    if (on_off_switch_debug) {
-      std::cout << "- dt: "
-                << ((dt == infinity) ? "infinity" : std::to_string(dt))
-                << "\n";
-    }
     return dt;
   }
 
@@ -177,8 +155,7 @@ namespace erin::devs
   OnOffSwitchState
   on_off_switch_internal_transition(
       const OnOffSwitchData& data,
-      const OnOffSwitchState& state,
-      bool verbose)
+      const OnOffSwitchState& state)
   {
     OnOffSwitchState next_state{};
     if (state.report_inflow_request || state.report_outflow_achieved) {
@@ -219,17 +196,6 @@ namespace erin::devs
     else {
       throw std::runtime_error("invalid internal transition");
     }
-    if (on_off_switch_debug && verbose) {
-      std::cout << "on_off_switch_internal_transition"
-                << "\n"
-                << "- d:  " << data
-                << "\n"
-                << "- s:  " << state
-                << "\n"
-                << "- s*: " << next_state
-                << "\n"
-                ;
-    }
     return next_state;
   }
 
@@ -239,8 +205,7 @@ namespace erin::devs
   on_off_switch_external_transition(
       const OnOffSwitchState& state,
       RealTimeType elapsed_time,
-      const std::vector<PortValue>& xs,
-      bool verbose)
+      const std::vector<PortValue>& xs)
   {
     bool got_outflow_request{false};
     bool got_the_inflow_achieved{false};
@@ -308,7 +273,7 @@ namespace erin::devs
         report_oa = report_oa || update_op.send_achieved;
       }
     }
-    auto next_state = OnOffSwitchState{
+    return OnOffSwitchState{
       new_time,
       state.state,
       state.next_index,
@@ -317,19 +282,6 @@ namespace erin::devs
       report_ir,
       report_oa,
     };
-    if (on_off_switch_debug && verbose) {
-      std::cout << "on_off_switch_external_transition"
-                << "\n"
-                << "- s:  " << state
-                << "\n"
-                << "- dt: " << elapsed_time
-                << "\n"
-                << "- xs: " << ERIN::vec_to_string<PortValue>(xs)
-                << "\n"
-                << "- s*: " << next_state
-                << "\n";
-    }
-    return next_state;
   }
 
   ////////////////////////////////////////////////////////////
@@ -341,29 +293,15 @@ namespace erin::devs
       const std::vector<PortValue>& xs)
   {
     auto next_state = on_off_switch_external_transition(
-        on_off_switch_internal_transition(data, state, false),
+        on_off_switch_internal_transition(data, state),
         0,
-        xs,
-        false);
+        xs);
     next_state.report_inflow_request =
       next_state.report_inflow_request
       || next_state.inflow_port.should_send_request(state.inflow_port);
     next_state.report_outflow_achieved =
       next_state.report_outflow_achieved
       || next_state.outflow_port.should_send_achieved(state.outflow_port);
-    if (on_off_switch_debug) {
-      std::cout << "on_off_switch_confluent_transition"
-                << "\n"
-                << "- d: " << data
-                << "\n"
-                << "- s: " << state
-                << "\n"
-                << "- xs: " << ERIN::vec_to_string<PortValue>(xs)
-                << "\n"
-                << "- s*: " << next_state
-                << "\n"
-                ;
-    }
     return next_state;
   }
 
@@ -385,13 +323,6 @@ namespace erin::devs
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys)
   {
-    if (on_off_switch_debug) {
-      std::cout << "on_off_switch_output_function_mutable"
-                << "\n"
-                << "- state: " << state
-                << "\n"
-                ;
-    }
     if (state.report_inflow_request || state.report_outflow_achieved) {
       if (state.report_inflow_request) {
         // This would only happen after an external transition
@@ -413,31 +344,6 @@ namespace erin::devs
               outport_outflow_achieved,
               state.outflow_port.get_achieved()});
       }
-    }
-    //else {
-    //  // outputs fire BEFORE internal transition
-    //  // if state is currently true, then next state will be false
-    //  // therefore, we need to turn off any flows
-    //  ERIN::FlowValueType flow{state.state ? 0.0 : state.outflow_port.get_requested()};
-    //  auto ip = state.inflow_port.with_requested(flow).port;
-    //  auto op = state.outflow_port.with_achieved(flow).port;
-    //  if (ip.should_send_request(state.inflow_port)) {
-    //    ys.emplace_back(
-    //        PortValue{
-    //        outport_inflow_request,
-    //        flow});
-    //  }
-    //  if (op.should_send_achieved(state.outflow_port)) {
-    //    ys.emplace_back(
-    //        PortValue{
-    //        outport_outflow_achieved,
-    //        flow});
-    //  }
-    //}
-    if (on_off_switch_debug) {
-      std::cout << "- ys: " << ERIN::vec_to_string<PortValue>(ys)
-                << "\n"
-                ;
     }
   }
 }

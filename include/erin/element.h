@@ -123,6 +123,7 @@ namespace ERIN
       void ensure_not_final() const;
       void ensure_not_recording() const;
       void check_energy_balance() const;
+      void clear_data_on_and_after_time(RealTimeType time);
   };
 
   /**

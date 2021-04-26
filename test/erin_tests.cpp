@@ -42,6 +42,8 @@
 #include <unordered_set>
 #include <utility>
 
+constexpr std::size_t comprehensive_test_num_events{10'000};
+
 const double tolerance{1e-6};
 
 bool compare_ports(const erin::devs::PortValue& a, const erin::devs::PortValue& b)
@@ -8043,7 +8045,7 @@ TEST(ErinBasicsTest, Test_store_element_comprehensive)
 
   const E::FlowValueType capacity{100.0};
   const E::FlowValueType max_charge_rate{10.0};
-  const std::size_t num_events{1'000};
+  const std::size_t num_events{comprehensive_test_num_events};
   const bool source_is_limited{false};
   const E::FlowValueType source_limit{20.0};
 
@@ -8203,7 +8205,7 @@ TEST(ErinBasicsTest, Test_converter_element_comprehensive)
 
   const bool do_rounding{false};
   const E::FlowValueType constant_efficiency{0.4};
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{comprehensive_test_num_events};
   const bool has_flow_limit{true};
   const E::FlowValueType flow_limit{60.0};
 
@@ -8442,7 +8444,7 @@ TEST(ErinBasicsTest, Test_mux_element_comprehensive)
   const int num_inflows{3};
   const int num_outflows{3};
   const auto output_dispatch_strategy = E::MuxerDispatchStrategy::InOrder;
-  const std::size_t num_events{1'000};
+  const std::size_t num_events{comprehensive_test_num_events};
   const bool use_limited_source{true};
   const E::FlowValueType source_limit{20.0};
 
@@ -8922,7 +8924,7 @@ TEST(ErinBasicsTest, Test_new_port_scheme_v2)
     auto inflow_update = inflow.with_requested_and_available(inflow.get_requested(), max_inflow);
     inflow = inflow_update.port;
     std::size_t no_advance{0};
-    std::size_t max_no_advance{1000};
+    std::size_t max_no_advance{1'000};
     while (outflow_update.send_request || inflow_update.send_achieved) {
       ++no_advance;
       if (no_advance > max_no_advance) {
@@ -9023,7 +9025,7 @@ TEST(ErinBasicsTest, Test_load_and_source_comprehensive)
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{comprehensive_test_num_events};
   const std::vector<bool> has_flow_limit_options{true, false};
   const E::FlowValueType max_source_outflow{50.0};
   const unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
@@ -9116,7 +9118,7 @@ TEST(ErinBasicsTest, Test_on_off_switch_comprehensive)
   namespace E = ERIN;
   namespace ED = erin::devs;
   namespace EU = erin::utils;
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{comprehensive_test_num_events};
   const std::size_t num_time_state_transitions{1'000};
   const auto t_end{static_cast<E::RealTimeType>(num_events * 5)};
 
@@ -9247,7 +9249,7 @@ TEST(ErinBasicsTest, Test_flow_limits_comprehensive)
   namespace ED = erin::devs;
   namespace EU = erin::utils;
 
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{comprehensive_test_num_events};
   const E::FlowValueType max_lim_flow{75.0};
   const E::FlowValueType max_src_flow{50.0};
   const bool source_is_limited{false};
@@ -9397,7 +9399,7 @@ TEST(ErinBasicsTest, Test_uncontrolled_source_with_sink_comprehensive)
   namespace EU = erin::utils;
   namespace ED = erin::devs;
 
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{comprehensive_test_num_events};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
   // std::cout << "seed: " << seed << "\n";
@@ -9555,7 +9557,7 @@ TEST(ErinBasicsTest, Test_flow_meter_element_comprehensive)
   namespace EU = erin::utils;
   namespace ED = erin::devs;
 
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{comprehensive_test_num_events};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();
   // std::cout << "seed: " << seed << "\n";
@@ -9727,7 +9729,7 @@ TEST(DevsModelTest, Test_mover_element_comprehensive)
   namespace EU = erin::utils;
   namespace ED = erin::devs;
 
-  const std::size_t num_events{10'000};
+  const std::size_t num_events{comprehensive_test_num_events};
   const E::FlowValueType mover_cop{5.0};
 
   unsigned seed = 17; // std::chrono::system_clock::now().time_since_epoch().count();

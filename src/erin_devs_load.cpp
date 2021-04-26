@@ -44,10 +44,11 @@ namespace erin::devs
   std::ostream&
   operator<<(std::ostream& os, const LoadData& d)
   {
+    const int max_items{10};
     return os << "{"
-              << ":times " << ERIN::vec_to_string<RealTimeType>(d.times, 10)
+              << ":times " << ERIN::vec_to_string<RealTimeType>(d.times, max_items)
               << " "
-              << ":loads " << ERIN::vec_to_string<FlowValueType>(d.load_values, 10)
+              << ":loads " << ERIN::vec_to_string<FlowValueType>(d.load_values, max_items)
               << " "
               << ":count " << d.number_of_loads
               << "}";

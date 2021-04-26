@@ -313,7 +313,9 @@ namespace ERIN
     }
     if (adjust_size) {
       decltype(time_history) new_time_history(end_idx);
-      std::copy(time_history.begin(), time_history.begin() + end_idx, new_time_history.begin());
+      auto th_begin{*time_history.begin()};
+      auto offset{static_cast<decltype(th_begin)>(end_idx)};
+      std::copy(time_history.begin(), time_history.begin() + offset, new_time_history.begin());
       time_history = new_time_history;
       int num_recorded{ 0 };
       for (const auto& flag : recording_flags) {
@@ -323,8 +325,8 @@ namespace ERIN
       }
       decltype(request_history) new_request_history(end_idx * num_recorded);
       decltype(achieved_history) new_achieved_history(end_idx * num_recorded);
-      std::copy(request_history.begin(), request_history.begin() + end_idx * num_recorded, new_request_history.begin());
-      std::copy(achieved_history.begin(), achieved_history.begin() + end_idx * num_recorded, new_achieved_history.begin());
+      std::copy(request_history.begin(), request_history.begin() + offset * num_recorded, new_request_history.begin());
+      std::copy(achieved_history.begin(), achieved_history.begin() + offset * num_recorded, new_achieved_history.begin());
       request_history = new_request_history;
       achieved_history = new_achieved_history;
     }

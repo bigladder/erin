@@ -137,7 +137,7 @@ namespace erin::devs
     assert_positive<FlowValueType>(
         capacity, "capacity in update_soc");
     auto net_inflow{inflow_achieved - outflow_achieved};
-    auto cap_change{net_inflow * dt};
+    auto cap_change{net_inflow * static_cast<FlowValueType>(dt)};
     auto soc_change{cap_change / capacity};
     auto next_soc{soc + soc_change};
     if (storage_is_full(next_soc) || (next_soc > 1.0)) {

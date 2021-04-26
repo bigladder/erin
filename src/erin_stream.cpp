@@ -111,7 +111,7 @@ namespace ERIN
     max_time{max_time_},
     random_process{std::move(random_process_)}
   {
-    if (max_time <= 0.0) {
+    if (max_time <= 0) {
       std::ostringstream oss;
       oss << "max_time must be greater than 0.0";
       throw std::invalid_argument(oss.str());

@@ -300,6 +300,37 @@ namespace ERIN
   }
 
   void
+  DefaultFlowWriter::clear_data_on_and_after_time(RealTimeType time)
+  {
+    std::size_t end_idx{0};
+    bool adjust_size{ false };
+    for (std::size_t idx{ 0 }; idx < time_history.size(); ++idx) {
+      if (time_history[idx] >= time) {
+        end_idx = idx;
+        adjust_size = true;
+        break;
+      }
+    }
+    if (adjust_size) {
+      decltype(time_history) new_time_history(end_idx);
+      std::copy(time_history.begin(), time_history.begin() + end_idx, new_time_history.begin());
+      time_history = new_time_history;
+      int num_recorded{ 0 };
+      for (const auto& flag : recording_flags) {
+        if (flag) {
+          ++num_recorded;
+        }
+      }
+      decltype(request_history) new_request_history(end_idx * num_recorded);
+      decltype(achieved_history) new_achieved_history(end_idx * num_recorded);
+      std::copy(request_history.begin(), request_history.begin() + end_idx * num_recorded, new_request_history.begin());
+      std::copy(achieved_history.begin(), achieved_history.begin() + end_idx * num_recorded, new_achieved_history.begin());
+      request_history = new_request_history;
+      achieved_history = new_achieved_history;
+    }
+  }
+
+  void
   DefaultFlowWriter::finalize_at_time(RealTimeType time)
   {
     if constexpr (debug_level >= debug_level_high) {
@@ -311,6 +342,7 @@ namespace ERIN
     if (time > current_time) {
       record_history_and_update_current_time(time);
     }
+    clear_data_on_and_after_time(time);
     time_history.emplace_back(time);
     for (size_type_D i{0}; i < num_st; ++i) {
       if (recording_flags[i]) {

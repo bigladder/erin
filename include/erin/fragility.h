@@ -5,6 +5,7 @@
 #define ERIN_FRAGILITY_H
 #include "erin/reliability.h"
 #include "erin/type.h"
+#include <cstddef>
 #include <memory>
 #include <random>
 #include <string>
@@ -99,7 +100,12 @@ namespace erin::fragility
   {
     std::string vulnerable_to;
     std::unique_ptr<Curve> curve;
-    std::string repair_dist_id; // blank indicates no repair distribution (i.e., not repaired)
+  };
+
+  struct FragilityMode
+  {
+    std::string fragility_curve_tag{};
+    std::size_t repair_dist_id{};
   };
 
   /**

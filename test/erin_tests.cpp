@@ -399,7 +399,7 @@ TEST(ErinBasicsTest, CanReadFragilityCurvesFromToml)
   expected.insert(
       std::move(
         std::make_pair("highly_vulnerable_to_wind", std::move(c2))));
-  auto actual = tir.read_fragility_data();
+  auto actual = tir.read_fragility_curve_data();
   ASSERT_EQ(expected.size(), actual.size());
   for (auto& e_pair: expected) {
     auto a_it = actual.find(e_pair.first);
@@ -1941,7 +1941,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   ERIN::TomlInputReader r{ss};
   auto si = r.read_simulation_info();
   auto loads = r.read_loads();
-  auto fragilities = r.read_fragility_data();
+  auto fragilities = r.read_fragility_curve_data();
   ERIN::ReliabilityCoordinator rc{};
   auto components = r.read_components(loads, fragilities, {}, rc);
   EXPECT_EQ(num_comps, components.size());
@@ -2137,7 +2137,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   ERIN::TomlInputReader r{ss};
   auto si = r.read_simulation_info();
   auto loads = r.read_loads();
-  auto fragilities = r.read_fragility_data();
+  auto fragilities = r.read_fragility_curve_data();
   ERIN::ReliabilityCoordinator rc{};
   auto components = r.read_components(loads, fragilities, {}, rc);
   EXPECT_EQ(num_comps, components.size());
@@ -8273,7 +8273,7 @@ TEST(ErinBasicsTest, Test_that_we_can_modify_schedule_for_reliability)
   ASSERT_EQ(actual_8, expected_8);
 }
 
-/*
+
 TEST(ErinBasicsTest, Test_that_we_can_run_fragility_with_repair)
 {
   namespace E = ERIN;
@@ -8356,12 +8356,11 @@ TEST(ErinBasicsTest, Test_that_we_can_run_fragility_with_repair)
   const E::FlowValueType downtime_s{total_time_s - uptime_s};
   const E::FlowValueType total_energy_delivered_kJ{uptime_s * flow_request_kW};
   const E::FlowValueType load_not_served_kJ{downtime_s * flow_request_kW};
-  EXPECT_EQ(b1_stats.load_not_served, load_not_served_kJ);
-  EXPECT_EQ(b1_stats.downtime, downtime_s);
-  EXPECT_EQ(b1_stats.max_downtime, downtime_s);
-  EXPECT_EQ(b1_stats.total_energy, total_energy_delivered_kJ);
+  //EXPECT_EQ(b1_stats.load_not_served, load_not_served_kJ);
+  //EXPECT_EQ(b1_stats.downtime, downtime_s);
+  //EXPECT_EQ(b1_stats.max_downtime, downtime_s);
+  //EXPECT_EQ(b1_stats.total_energy, total_energy_delivered_kJ);
 }
-*/
 
 
 int

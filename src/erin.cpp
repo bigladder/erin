@@ -730,8 +730,9 @@ namespace ERIN
       "simulation_info",
       "loads",
       "components",
-      "fragility", //"fragility_mode",
-      //"fragility_curve",
+      "fragility", // TODO: remove
+      "fragility_mode",
+      "fragility_curve",
       "dist",
       "failure_mode",
       "networks",
@@ -871,14 +872,19 @@ namespace ERIN
     return frags;
   }
 
+  // TODO: rename to read_fragility_curve_data()
   std::unordered_map<std::string, ::erin::fragility::FragilityCurve>
-  TomlInputReader::read_fragility_data()
+  TomlInputReader::read_fragility_curve_data()
   {
     namespace ef = erin::fragility;
     std::unordered_map<std::string, ef::FragilityCurve> out;
     std::string field_read;
+    // TODO: change field read from "fragility" to "fragility_curve"
     const auto& tt = toml_helper::read_optional_table_field<toml::table>(
-        toml::get<toml::table>(data), {"fragility"}, toml::table{}, field_read);
+        toml::get<toml::table>(data),
+        {"fragility", "fragility_curve"}, // TODO: remove "fragility"
+        toml::table{},
+        field_read);
     if (tt.empty()) {
       return out;
     }
@@ -908,9 +914,6 @@ namespace ERIN
             << vulnerable_to << "' missing";
         throw std::runtime_error(oss.str());
       }
-      std::string repair_dist;
-      repair_dist = toml_helper::read_optional_table_field<std::string>(
-          data_table, {"repair_dist"}, std::string{}, field_read);
       switch (curve_type) {
         case ef::CurveType::Linear:
           {
@@ -918,8 +921,7 @@ namespace ERIN
             auto upper_bound = read_number_at(data_table, "upper_bound");
             std::unique_ptr<ef::Curve> the_curve = std::make_unique<ef::Linear>(
                 lower_bound, upper_bound);
-            ef::FragilityCurve fc{
-              vulnerable_to, std::move(the_curve), std::move(repair_dist)};
+            ef::FragilityCurve fc{vulnerable_to, std::move(the_curve)};
             out.insert(std::make_pair(curve_id, std::move(fc)));
             break;
           }
@@ -1711,6 +1713,50 @@ namespace ERIN
     }
     return out;
   }
+
+  std::unordered_map<std::string, erin::fragility::FragilityMode>
+  TomlInputReader::read_fragility_modes(
+      const std::unordered_map<std::string, size_type>& dist_ids,
+      const std::unordered_map<std::string, erin::fragility::FragilityCurve>& fragility_curves)
+  {
+    const auto& toml_fms = toml::find_or(
+        data, "fragility_mode", toml::table{});
+    std::unordered_map<std::string, erin::fragility::FragilityMode> out{};
+    if (toml_fms.size() == 0) {
+      return out;
+    }
+    for (const auto& toml_fm : toml_fms) {
+      const auto& fm_string_id = toml_fm.first;
+      toml::value t = toml_fm.second;
+      const toml::table& tt = toml::get<toml::table>(t);
+      std::string field_read{};
+      const auto& fragility_curve_tag =
+        toml_helper::read_required_table_field<std::string>(
+            tt, {"fragility_curve"}, field_read);
+      const auto& repair_dist_tag =
+        toml_helper::read_required_table_field<std::string>(
+            tt, {"repair_dist"}, field_read);
+      auto it = fragility_curves.find(fragility_curve_tag);
+      if (it == fragility_curves.end()) {
+        std::ostringstream oss{};
+        oss << "could not find fragility_curve corresponding to tag `"
+            << fragility_curve_tag << "`";
+        throw std::runtime_error(oss.str());
+      }
+      auto it2 = dist_ids.find(repair_dist_tag);
+      if (it2 == dist_ids.end()) {
+        std::ostringstream oss{};
+        oss << "could not find distribution (dist) corresponding to tag `"
+            << repair_dist_tag << "`";
+        throw std::runtime_error(oss.str());
+      }
+      const auto& repair_dist_id = it2->second;
+      out[fm_string_id] = erin::fragility::FragilityMode{
+        fragility_curve_tag, repair_dist_id};
+    }
+    return out;
+  }
+
 
   ////////////////////////////////////////////////////////////
   // ScenarioResults
@@ -2795,15 +2841,16 @@ namespace ERIN
   {
     // Read data into private class fields
     auto loads_by_id = reader.read_loads();
-    auto fragilities = reader.read_fragility_data();
+    auto fragility_curves = reader.read_fragility_curve_data();
     erin::distribution::DistributionSystem ds{};
     // dists is map<string, size_type>
     auto dists = reader.read_distributions(ds);
+    auto fragility_modes = reader.read_fragility_modes(dists, fragility_curves);
     ReliabilityCoordinator rc{};
     // fms is map<string, size_type>
     auto fms = reader.read_failure_modes(dists, rc);
     // components needs to be modified to add component_id as size_type?
-    components = reader.read_components(loads_by_id, fragilities, fms, rc);
+    components = reader.read_components(loads_by_id, fragility_curves, fms, rc);
     networks = reader.read_networks();
     scenarios = reader.read_scenarios(dists);
     const auto max_time_s{sim_info.get_max_time_in_seconds()};
@@ -2814,6 +2861,8 @@ namespace ERIN
         max_time_s, scenarios, ds, rand_fn);
     check_data();
     generate_failure_fragilities();
+    // TODO: add the following function to use FragilityModes
+    // fragility_schedule = calc_fragility_schedules(fragility_modes, scenarios, failure_probs_by_comp_id_by_scenario_id);
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& p : loads_by_id) {
         std::cout << p.first << ":\n";
@@ -2862,7 +2911,7 @@ namespace ERIN
   {
     for (const auto& s: scenarios) {
       const auto& intensities = s.second.get_intensities();
-      std::unordered_map<std::string, std::vector<double>> m;
+      std::unordered_map<std::string, std::vector<double>> m{};
       if (intensities.size() > 0) {
         for (const auto& c_pair: components) {
           const auto& c = c_pair.second;

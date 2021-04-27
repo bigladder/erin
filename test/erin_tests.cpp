@@ -8363,6 +8363,26 @@ TEST(ErinBasicsTest, Test_that_we_can_run_fragility_with_repair)
 }
 
 
+TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
+{
+  namespace E = ERIN;
+  namespace EF = erin::fragility;
+  std::unordered_map<std::string, EF::FragilityMode> fragility_modes{};
+  std::unordered_map<std::string, std::vector<std::int64_t>> scenario_schedules{
+    {std::string{"blue_sky"}, {0}}};
+  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>
+    failure_probs_by_comp_id_by_scenario_id{};
+  std::function<double()> rand_fn;
+  E::ReliabilityCoordinator rc{};
+  auto fs = EF::calc_fragility_schedules(
+    fragility_modes,
+    scenario_schedules,
+    failure_probs_by_comp_id_by_scenario_id,
+    rand_fn,
+    rc);
+}
+
+
 int
 main(int argc, char **argv)
 {

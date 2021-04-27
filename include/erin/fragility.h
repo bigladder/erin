@@ -6,9 +6,11 @@
 #include "erin/reliability.h"
 #include "erin/type.h"
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace erin::fragility
@@ -119,6 +121,19 @@ namespace erin::fragility
       bool can_repair,
       ERIN::RealTimeType repair_time_s,
       ERIN::RealTimeType max_time_s);
+
+  struct FragilityInfo
+  {
+
+  };
+
+  std::unordered_map<std::string, std::vector<FragilityInfo>>
+  calc_fragility_schedules(
+    const std::unordered_map<std::string, FragilityMode> fragility_modes,
+    const std::unordered_map<std::string, std::vector<std::int64_t>>& scenario_schedules,
+    const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>& failure_probs_by_comp_id_by_scenario_id,
+    const std::function<double()>& rand_fn,
+    const ERIN::ReliabilityCoordinator& rc);
 }
 
 #endif // ERIN_FRAGILITY_H

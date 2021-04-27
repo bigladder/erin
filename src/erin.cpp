@@ -2862,7 +2862,7 @@ namespace ERIN
     check_data();
     generate_failure_fragilities();
     // TODO: add the following function to use FragilityModes
-    // fragility_schedule = calc_fragility_schedules(fragility_modes, scenarios, failure_probs_by_comp_id_by_scenario_id);
+    // fragility_schedule = calc_fragility_schedules(fragility_modes, scenario_schedules, failure_probs_by_comp_id_by_scenario_id);
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& p : loads_by_id) {
         std::cout << p.first << ":\n";

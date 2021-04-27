@@ -8367,20 +8367,25 @@ TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
 {
   namespace E = ERIN;
   namespace EF = erin::fragility;
-  std::unordered_map<std::string, EF::FragilityMode> fragility_modes{};
-  std::unordered_map<std::string, std::vector<std::int64_t>> scenario_schedules{
-    {std::string{"blue_sky"}, {0}}};
-  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>
+  const std::string blue_sky_id{"blue_sky"};
+  const std::unordered_map<std::string, EF::FragilityMode> fragility_modes{};
+  const std::unordered_map<std::string, std::vector<std::int64_t>> scenario_schedules{
+    {blue_sky_id, {0}}};
+  const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>
     failure_probs_by_comp_id_by_scenario_id{};
   std::function<double()> rand_fn;
   E::ReliabilityCoordinator rc{};
-  auto fs = EF::calc_fragility_schedules(
+  const auto fs = EF::calc_fragility_schedules(
     fragility_modes,
     scenario_schedules,
     failure_probs_by_comp_id_by_scenario_id,
     rand_fn,
     rc);
   ASSERT_EQ(fs.size(), scenario_schedules.size());
+  const auto& blue_sky_instances = fs.at(blue_sky_id);
+  ASSERT_EQ(
+    blue_sky_instances.size(),
+    scenario_schedules.at(blue_sky_id).size());
 }
 
 

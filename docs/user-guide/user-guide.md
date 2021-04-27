@@ -245,12 +245,12 @@ Scenarios with no damage intensities are completely fine -- these would represen
 ## Reliability: Failure Modes and Statistical Distributions
 
 Reliability is handled strictly as a statistical matter using failure modes.
-A failure mode is an associate between a failure cumulative distribution function and the corresponding repair cumulative distribution function.
+A failure mode is an association between a failure distribution and the corresponding repair distribution.
 Multiple failure modes can be specified for a single component.
 For example, a diesel back-up generator may have one failure mode associated with its starter battery and another to represent more serious issues with the generator itself.
 
 Every failure mode in the simulation is turned into an "availability schedule".
-That is, for each failure mode, the dual cumulative distribution functions are alternatively sampled from time 0 to the end of the overall simulation time to derive a schedule of "available" and "failed".
+That is, for each failure mode, the dual distributions are alternatively sampled from time 0 to the end of the overall simulation time to derive a schedule of "available" and "failed".
 When a scenario where reliability is calculated is scheduled to occur, the relevant portion of the availability schedules for components with failure modes are used to "schedule" the component as available and failed to simulate routine reliability events during that scenario's simulation.
 
 ## Resilience: Intensities (Damage Metrics) and Fragility Curves
@@ -261,7 +261,8 @@ Any component having a fragility curve that responds to one or more of the scena
 
 For example, above-ground power lines may have a fragility to wind speed.
 If a scenario specifies a wind speed of 150 mph, the above-ground power line component will use its fragility curve to look up its chance of failure.
-For fragility, a component is evaluated for failure at scenario start and either passes (staying up during the scenario) or fails (going down for the entire scenario).
+For fragility, a component is evaluated for failure at scenario start and either passes (staying up during the scenario) or fails (going down until repaired).
+Repairs for fragility failures are specified by declariing explicit "fragility modes" which associate a fragility curve with a repair distribution.
 
 # Input File Format {#sec:input-file-format}
 
@@ -278,7 +279,7 @@ The file consists of the following sections that describe the various concepts d
 - `simulation_info`: general simulation information
 - `loads`: load profiles (includes supply profiles for uncontrolled sources)
 - `components`: all components in the network are described here
-- `fragility`: all fragility curves are described here
+- `fragility_mode`: all fragility curves and (optional) repair distributions are described here
 - `dist`: statistical distributions
 - `failure_mode`: failure modes are described here
 - `networks`: networks are described here
@@ -311,23 +312,23 @@ The id is used when one construct references another.
 This looks as follows:
 
 ```toml
-[loads.load_id_1]
+[loads.load_profile_id_1]
 ...
-[loads.load_id_2]
+[loads.load_profile_id_2]
 ...
-[components.comp_id_1]
+[components.component_id_1]
 ...
-[components.comp_id_2]
+[components.component_id_2]
 ...
-[fragility.fragility_id_1]
+[fragility_mode.fragility_mode_id_1]
 ...
-[dist.dist_id_1]
+[dist.statistical_distribution_id_1]
 ...
-[failure_mode.fm_id_1]
+[failure_mode.failure_mode_id_1]
 ...
-[networks.nw_id_1]
+[networks.network_id_1]
 ...
-[scenarios.scen_id_1]
+[scenarios.scenario_id_1]
 ...
 ```
 
@@ -368,10 +369,10 @@ The "kW" column is the flow in kW.
 The first column header can be set to values beside "hours"; any time unit is valid.
 However, the rate unit is currently locked in as "kW".
 
-| key             | type    | required? | notes                             |
-| ----            | --      | --        | --------                          |
-| `failure_modes` | \[str\] | no        | failure mode ids for component    |
-| `fragilities`   | \[str\] | no        | fragility curve ids for component |
+| key               | type    | required? | notes                            |
+| ----              | --      | --        | --------                         |
+| `failure_modes`   | \[str\] | no        | failure mode ids for component   |
+| `fragility_modes` | \[str\] | no        | fragility mode ids for component |
 
 : `components`: common attributes {#tbl:comps-common}
 
@@ -504,14 +505,15 @@ $$inflow_1 = inflow_0 \times \frac{1}{cop}$$
 
 $$outflow = (1 + cop) \times inflow_1 = (1 + \frac{1}{cop}) \times inflow_0 = inflow_0 + inflow_1$$
 
+
 | key             | type | required? | notes                                                      |
 | ----            | --   | --        | --------                                                   |
 | `vulnerable_to` | str  | yes       | the scenario intensity (i.e., damage metric) vulnerable to |
-| `type`          | str  | yes       | must be "linear"                                           |
+| `type`          | str  | yes       | currently, only "linear" is available                      |
 | `lower_bound`   | real | yes       | the value below which we are impervious to damage          |
 | `upper_bound`   | real | yes       | the value above which we face certain destruction          |
 
-: `fragility` specification {#tbl:frags}
+: `fragility_curve` specification {#tbl:frags}
 
 Fragility curves are specified using the attributes listed in [@tbl:frags].
 [@fig:fragility-curve] shows a graphical representation of the data specification.
@@ -523,6 +525,21 @@ We must specify which damage metric is of interest and also the curve relationsh
 Currently, the only available fragility curve type is linear.
 For the linear curve, we specify the `lower_bound`, the bound below which we are impervious to destruction.
 We also specify the `upper_bound`, the bound above which we face certain destruction.
+
+In order to be able to associate a given failure mode due to a fragility with a repair curve, we specify a `fragility_mode`.
+A `fragility_mode` associates a `fragility_curve` id with a repair `dist` id.
+Multiple `fragility_modes` can be specified for a given component.
+Each fragility mode represents a fragility-induced failure due to a scenario's damage intensity and optional repair distribution.
+The attributes of a `fragility_mode` declaration are given in [@tbl:fragility-mode].
+
+
+| key               | type | required? | notes                                                                       |
+| ----              | --   | --        | --------                                                                    |
+| `fragility_curve` | str  | yes       | id of a fragility curve                                                     |
+| `repair_dist`     | str  | no        | id of a repair distribution; if not specified, not repaired during scenario |
+
+: `fragility_mode` specification {#tbl:fragility-mode}
+
 
 | key         | type | required? | notes                                                            |
 | ----        | --   | --        | --------                                                         |
@@ -538,14 +555,17 @@ The parameters for the various distribution types are shown in [@tbl:fixed], [@t
 [@tbl:fixed] gives the parameters for a fixed distribution.
 A fixed distribution is a degenerate distribution that always samples a single point -- the `value`.
 
+
 | key         | type | required? | notes                               |
 | ----        | --   | --        | --------                            |
 | `value`     | real | yes       | the value of the fixed distribution |
 
 : `dist` with `type=fixed` {#tbl:fixed}
 
+
 [@tbl:uniform] gives the parameters for a uniform distribution.
 A uniform distribution is a distribution with equal frequency for any point between the `lower_bound` and `upper_bound`.
+
 
 | key           | type | required? | notes                                       |
 | ----          | --   | --        | --------                                    |
@@ -556,6 +576,7 @@ A uniform distribution is a distribution with equal frequency for any point betw
 
 [@tbl:normal] gives the parameters for a normal distribution.
 A normal distribution is a distribution with a `mean` and a `standard_deviation`.
+
 
 | key                  | type | required? | notes                                             |
 | ----                 | --   | --        | --------                                          |
@@ -568,6 +589,7 @@ A normal distribution is a distribution with a `mean` and a `standard_deviation`
 The "quantile" is also sometimes called the "percent point funciton" and "inverse cumulative distribution function".
 A great way to get the quantile is to tabulate the cumulative distribution function of time from 0 (no failures) to 1 (all failed) and switch the columns.
 
+
 | key                  | type         | required? | notes                                                                 |
 | ----                 | --           | --        | --------                                                              |
 | `csv_file`           | str          | no        | name of CSV file with columns headers of `ANY,<time_unit>`            |
@@ -576,6 +598,7 @@ A great way to get the quantile is to tabulate the cumulative distribution funct
 : `dist` with `type=quantile_table` {#tbl:quantile}
 
 [@tbl:weibull] allows a user to specify a 3-parameter Weibull distribution.
+
 
 | key        | type | required? | notes                                    |
 | ----       | --   | --        | --------                                 |
@@ -592,6 +615,7 @@ A great way to get the quantile is to tabulate the cumulative distribution funct
 | `repair_dist`  | str  | yes       | the repair distribution id  |
 
 : `failure_mode` specification {#tbl:fm}
+
 
 | key           | type        | required? | notes           |
 | ----          | --          | --        | --------        |
@@ -622,6 +646,7 @@ Numbering of inflow ports starts from 0.
 
 The final element of the 3-tuple is the flow id.
 You are requested to write the flow id as a check that ports are not being wired incorrectly.
+
 
 | key                          | type                   | required? | notes                                                 |
 | ----                         | --                     | --        | --------                                              |
@@ -705,17 +730,17 @@ The output file has the column headers shown in [@tbl:erin-out].
 
 The statistics file has the column headers shown in [@tbl:erin-stats].
 
-| Column               | Description                                                    |
-| --                   | --------                                                       |
-| component id         | the id of the component                                        |
-| type                 | the type of the component (e.g., load, source, etc.)           |
-| stream               | the stream flowing through the given component / port          |
-| energy availability  | the energy availability for the given component                |
-| max downtime (hours) | the maximum number of contiguous hours when load not fully met |
-| load not served (kJ) | the load not served in kJ                                      |
-| $X$ energy used (kJ) | for each flow, report out the energy used in kJ                |
-| TOTAL ($X$)          | the total energy used by flow by component type                |
-| ENERGY BALANCE       | a sum of the energy balance. Should be 0                       |
+| Column               | Description                                                            |
+| --                   | --------                                                               |
+| component id         | the id of the component                                                |
+| type                 | the type of the component (e.g., load, source, etc.)                   |
+| stream               | the stream flowing through the given component / port                  |
+| energy availability  | the energy availability for the given component                        |
+| max downtime (hours) | the maximum number of contiguous hours when load not fully met         |
+| load not served (kJ) | the load not served in kJ                                              |
+| $X$ energy used (kJ) | for each flow, report out the energy used in kJ                        |
+| TOTAL ($X$)          | the total energy used by flow by component type                        |
+| ENERGY BALANCE       | a sum of the energy balance. Should be small compared to source inflow |
 
 : `erin` Statistics {#tbl:erin-stats}
 
@@ -747,20 +772,20 @@ The column headers used in the event output file for `erin_multi` are shown in [
 
 The statistics file for `erin_multi` has the column headers as shown in [@tbl:erin-multi-stats].
 
-| Column               | Description                                                    |
-| --                   | --------                                                       |
-| scenario id | scenario id for the scenario reported out |
-| number of occurrences | number of times the scenario occurred during simulation |
-| total time in scenario (hours) | total time spent in the scenario during simulation |
-| component id         | the id of the component                                        |
-| type                 | the type of the component (e.g., load, source, etc.)           |
-| stream               | the stream flowing through the given component / port          |
-| energy availability  | the energy availability for the given component                |
-| max downtime (hours) | the maximum number of contiguous hours when load not fully met |
-| load not served (kJ) | the load not served in kJ                                      |
-| $X$ energy used (kJ) | for each flow, report out the energy used in kJ                |
-| TOTAL ($X$)          | the total energy used by flow by component type                |
-| ENERGY BALANCE       | a sum of the energy balance. Should be 0                       |
+| Column               | Description                                                            |
+| --                   | --------                                                               |
+| scenario id | scenario id for the scenario reported out                                       |
+| number of occurrences | number of times the scenario occurred during simulation               |
+| total time in scenario (hours) | total time spent in the scenario during simulation           |
+| component id         | the id of the component                                                |
+| type                 | the type of the component (e.g., load, source, etc.)                   |
+| stream               | the stream flowing through the given component / port                  |
+| energy availability  | the energy availability for the given component                        |
+| max downtime (hours) | the maximum number of contiguous hours when load not fully met         |
+| load not served (kJ) | the load not served in kJ                                              |
+| $X$ energy used (kJ) | for each flow, report out the energy used in kJ                        |
+| TOTAL ($X$)          | the total energy used by flow by component type                        |
+| ENERGY BALANCE       | a sum of the energy balance. Should be small compared to source inflow |
 
 : `erin_multi` Statistics {#tbl:erin-multi-stats}
 
@@ -981,30 +1006,41 @@ inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
 constant_efficiency = 0.42
-fragilities = ["flooding", "wind"]
+fragility_modes = ["flooding", "wind"]
 ```
 
 In the table above, we have added a natural gas source (`utility_ng_source`), an electrical load at building 1 (`b1_electricity`), and an electrical generator at building 1 (`b1_electric_generator`).
-The electric generator has an efficiency of 42% and has two fragilities: "`flooding`" and "`wind`".
-Neither of the fragilities have been specified yet, so we'll tackle them next.
+The electric generator has an efficiency of 42% and has two fragility modes: "`flooding`" and "`wind`".
+Neither of the fragility modes have been specified yet, so we'll tackle them next.
 
 5. Within `input.toml`, specify the fragility curves.
 
 ```toml
-[fragility.flooding]
+[fragility_curve.flooding_curve]
 vulnerable_to = "inundation_depth_ft"
 type = "linear"
 lower_bound = 4.0
 upper_bound = 8.0
 
-[fragility.wind]
+[fragility_curve.wind_curve]
 vulnerable_to = "wind_speed_mph"
 type = "linear"
 lower_bound = 150.0
 upper_bound = 220.0
+
+[fragility_mode.flooding]
+fragility_curve = "flooding_curve"
+
+[fragility_mode.wind]
+fragility_curve = "wind_curve"
+repair_dist = "repair_in_72_hours"
 ```
 
-These fragility curves reflect the specific situation of the equipment versus the threat. 
+These fragility curves and fragility modes reflect how we will model the equipment's resilience versus the threat. 
+For the flooding fragility mode, we don't expect to be able to repair within the scenario's duration.
+Therefore, we do not specify a `repair_dist` entry.
+However, for the `wind` fragility mode, we will specify a repair distribution of `repair_in_72_hours`.
+This will be specified later in the file when we come to distributions (i.e., `dist` entries).
 
 6. Specify the network connections.
 
@@ -1026,10 +1062,15 @@ value = 0.0
 type = "fixed"
 value = 30.0
 time_unit = "years"
+[dist.repair_in_72_hours]
+type = "fixed"
+value = 72.0
+time_unit = "hours"
 ```
 
 This specifies the types of distributions that will be used later in the tool.
-We have specified two fixed distributions: one that occurrs continuously and one that occurs every 30 years.
+We have specified three fixed distributions: one that occurrs continuously and one that occurs every 30 years.
+The third is one that occurs every 72 hours and is used as the repair for wind-based fragility failures.
 
 
 8. Specify the scenarios.
@@ -1081,19 +1122,26 @@ inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "waste_heat"
 constant_efficiency = 0.42
-fragilities = ["flooding", "wind"]
+fragility_modes = ["flooding", "wind"]
 
-[fragility.flooding]
+[fragility_curve.flooding_curve]
 vulnerable_to = "inundation_depth_ft"
 type = "linear"
 lower_bound = 4.0
 upper_bound = 8.0
 
-[fragility.wind]
+[fragility_curve.wind_curve]
 vulnerable_to = "wind_speed_mph"
 type = "linear"
 lower_bound = 150.0
 upper_bound = 220.0
+
+[fragility_mode.flooding]
+fragility_curve = "flooding_curve"
+
+[fragility_mode.wind]
+fragility_curve = "wind_curve"
+repair_dist = "repair_in_72_hours"
 
 [networks.nw]
 connections = [
@@ -1109,6 +1157,11 @@ value = 0.0
 type = "fixed"
 value = 30.0
 time_unit = "years"
+
+[dist.repair_in_72_hours]
+type = "fixed"
+value = 72.0
+time_unit = "hours"
 
 [scenarios.blue_sky]
 time_unit = "hours"
@@ -1133,6 +1186,8 @@ This assumes that `erin_multi.exe` is on your path.
 ## Excel User Interface
 
 Using the Excel Interface, we will create the same problem specified in [@fig:example-network].
+
+TODO: update this section to describe how to handle fragility-modes (i.e., fragility curve with repair).
 
 1. Open the workbook and ensure the path to `erin_multi.exe` is set.
    See [@fig:excel-settings].

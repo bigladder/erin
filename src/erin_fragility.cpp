@@ -137,7 +137,7 @@ namespace erin::fragility
     return schedule;
   }
 
-  std::unordered_map<std::string, std::vector<FragilityInfo>>
+  std::unordered_map<std::string, std::vector<std::unordered_map<std::string, FragilityInfo>>>
   calc_fragility_schedules(
     const std::unordered_map<std::string, FragilityMode> fragility_modes,
     const std::unordered_map<std::string, std::vector<std::int64_t>>& scenario_schedules,
@@ -145,7 +145,11 @@ namespace erin::fragility
     const std::function<double()>& rand_fn,
     const ERIN::ReliabilityCoordinator& rc)
   {
-    std::unordered_map<std::string, std::vector<FragilityInfo>> out{};
+    std::unordered_map<std::string,std::vector<std::unordered_map<std::string,FragilityInfo>>> out{};
+    for (const auto& ss : scenario_schedules) {
+      std::vector<std::unordered_map<std::string, FragilityInfo>> info{};
+      out[ss.first] = info;
+    }
     return out;
   }
 }

@@ -127,7 +127,7 @@ namespace erin::fragility
 
   };
 
-  std::unordered_map<std::string, std::vector<FragilityInfo>>
+  std::unordered_map<std::string, std::vector<std::unordered_map<std::string, FragilityInfo>>>
   calc_fragility_schedules(
     const std::unordered_map<std::string, FragilityMode> fragility_modes,
     const std::unordered_map<std::string, std::vector<std::int64_t>>& scenario_schedules,

@@ -8380,6 +8380,7 @@ TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
     failure_probs_by_comp_id_by_scenario_id,
     rand_fn,
     rc);
+  ASSERT_EQ(fs.size(), scenario_schedules.size());
 }
 
 

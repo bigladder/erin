@@ -653,7 +653,7 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
         "[networks.normal_operations]\n"
         "connections=[[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
         "############################################################\n"
-        "[cds.every_hour]\n"
+        "[dist.every_hour]\n"
         "type = \"fixed\"\n"
         "value = 1\n"
         "time_unit = \"hours\"\n"
@@ -723,7 +723,7 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
         "[networks.normal_operations]\n"
         "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
         "############################################################\n"
-        "[cds.every_hour]\n"
+        "[dist.every_hour]\n"
         "type = \"fixed\"\n"
         "value = 1\n"
         "time_unit = \"hours\"\n"
@@ -1914,11 +1914,11 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
         "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
         "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-        "[cds.immediately]\n"
+        "[dist.immediately]\n"
         "type = \"fixed\"\n"
         "value = 0\n"
         "time_unit = \"hours\"\n"
-        "[cds.every_10_years]\n"
+        "[dist.every_10_years]\n"
         "type = \"fixed\"\n"
         "value = 87600\n"
         "time_unit = \"hours\"\n"
@@ -8273,7 +8273,7 @@ TEST(ErinBasicsTest, Test_that_we_can_modify_schedule_for_reliability)
   ASSERT_EQ(actual_8, expected_8);
 }
 
-
+/*
 TEST(ErinBasicsTest, Test_that_we_can_run_fragility_with_repair)
 {
   namespace E = ERIN;
@@ -8292,11 +8292,11 @@ TEST(ErinBasicsTest, Test_that_we_can_run_fragility_with_repair)
     "[components.electric_utility]\n"
     "type = \"source\"\n"
     "outflow = \"electricity\"\n"
+    "fragility_modes = [\"power_line_down_and_repair\"]\n"
     "[components.b1_electric]\n"
     "type = \"load\"\n"
     "inflow = \"electricity\"\n"
     "loads_by_scenario.c4_hurricane = \"b1_electric_load\"\n"
-    "fragility_modes = [\"power_line_down_and_repair\"]\n"
     "############################################################\n"
     "[fragility_mode.power_line_down_and_repair]\n"
     "fragility_curve = \"power_line_down_by_high_wind\"\n"
@@ -8332,9 +8332,36 @@ TEST(ErinBasicsTest, Test_that_we_can_run_fragility_with_repair)
     "network = \"nw\"\n"
     "intensity.wind_speed_mph = 180\n";
   auto m = E::make_main_from_string(input);
-  auto results = m.run_all();
-  ASSERT_TRUE(true);
+  auto run_all_results = m.run_all();
+  const auto& scenario_results = run_all_results.get_results();
+  ASSERT_TRUE(run_all_results.get_is_good());
+  const std::size_t num_scenarios{1};
+  ASSERT_EQ(scenario_results.size(), num_scenarios);
+  const std::string scenario_name{"c4_hurricane"};
+  const auto& scenario_instance_results = scenario_results.at(scenario_name);
+  const std::size_t num_scenario_instances{1};
+  ASSERT_EQ(scenario_instance_results.size(), num_scenario_instances);
+  const auto& inst_results = scenario_instance_results[0];
+  const std::size_t num_comps{2};
+  const auto& comp_results = inst_results.get_results();
+  ASSERT_EQ(comp_results.size(), num_comps);
+  const auto& stats = inst_results.get_statistics();
+  ASSERT_EQ(stats.size(), num_comps);
+  const std::string b1_id{"b1_electric"};
+  const std::string utility_id{"utility_electric"};
+  const auto& b1_stats = stats.at(b1_id);
+  const E::FlowValueType flow_request_kW{10.0};
+  const E::FlowValueType total_time_s{300.0 * 3600.0};
+  const E::FlowValueType uptime_s{200.0 * 3600.0};
+  const E::FlowValueType downtime_s{total_time_s - uptime_s};
+  const E::FlowValueType total_energy_delivered_kJ{uptime_s * flow_request_kW};
+  const E::FlowValueType load_not_served_kJ{downtime_s * flow_request_kW};
+  EXPECT_EQ(b1_stats.load_not_served, load_not_served_kJ);
+  EXPECT_EQ(b1_stats.downtime, downtime_s);
+  EXPECT_EQ(b1_stats.max_downtime, downtime_s);
+  EXPECT_EQ(b1_stats.total_energy, total_energy_delivered_kJ);
 }
+*/
 
 
 int

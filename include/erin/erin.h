@@ -374,6 +374,7 @@ namespace ERIN
           const std::unordered_map<
             std::string,
             ::erin::fragility::FragilityCurve>& fragilities) const;
+      void check_top_level_entries() const;
   };
 
   ////////////////////////////////////////////////////////////

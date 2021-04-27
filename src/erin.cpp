@@ -84,6 +84,7 @@ namespace ERIN
     InputReader(),
     data{std::move(data_)}
   {
+    check_top_level_entries();
   }
 
   TomlInputReader::TomlInputReader(const std::string& path):
@@ -91,6 +92,7 @@ namespace ERIN
     data{}
   {
     data = toml::parse(path);
+    check_top_level_entries();
   }
 
   TomlInputReader::TomlInputReader(std::istream& in):
@@ -98,6 +100,7 @@ namespace ERIN
     data{}
   {
     data = toml::parse(in, "<input from istream>");
+    check_top_level_entries();
   }
 
   SimulationInfo
@@ -718,6 +721,44 @@ namespace ERIN
       throw std::runtime_error(oss.str());
     }
     return dist_type;
+  }
+
+  void
+  TomlInputReader::check_top_level_entries() const
+  {
+    const std::unordered_set<std::string> valid_entries{
+      "simulation_info",
+      "loads",
+      "components",
+      "fragility", //"fragility_mode",
+      //"fragility_curve",
+      "dist",
+      "failure_mode",
+      "networks",
+      "scenarios",
+    };
+    const auto& tt = toml::get<toml::table>(data);
+    for (const auto& entry : tt) {
+      const auto& tag = entry.first;
+      if (valid_entries.find(tag) == valid_entries.end()) {
+        std::vector<std::string> valid_entries_vec{};
+        for (const auto& entry : valid_entries) {
+          valid_entries_vec.emplace_back(entry);
+        }
+        std::sort(valid_entries_vec.begin(), valid_entries_vec.end());
+        std::ostringstream oss{};
+        oss << "the top-level entry `" << tag << "` is invalid\n"
+            << "valid top-level entries are:\n"
+            << "  "
+            << vec_to_string<std::string>(valid_entries_vec)
+            << "\n";
+        oss << "The current top level entries in your input are:\n";
+        for (const auto& e : tt) {
+          oss << "- " << e.first << "\n";
+        }
+        throw std::invalid_argument(oss.str());
+      }
+    }
   }
 
 

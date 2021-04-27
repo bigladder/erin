@@ -21,7 +21,7 @@ doit(const std::string& input_toml, const std::string& timeseries_csv, const std
   auto m = ERIN::Main{input_toml};
   auto out = m.run_all();
   std::cout << "result of m.run_all() = "
-    << (out.get_is_good() ? "good" : "failed") << "\n";
+            << (out.get_is_good() ? "good" : "failed") << "\n";
   if (!out.get_is_good()) {
     return 1;
   }

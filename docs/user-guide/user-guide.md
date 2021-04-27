@@ -1058,10 +1058,12 @@ connections = [
 [dist.always]
 type = "fixed"
 value = 0.0
+
 [dist.every_30_years]
 type = "fixed"
 value = 30.0
 time_unit = "years"
+
 [dist.repair_in_72_hours]
 type = "fixed"
 value = 72.0
@@ -1083,6 +1085,7 @@ duration = 8760
 max_occurrences = 1
 calculate_reliability = true
 network = "nw"
+
 [scenarios.c4_hurricane]
 time_unit = "days"
 occurrence_distribution = "every_30_years"

@@ -12,6 +12,15 @@ namespace erin::devs
 {
   ////////////////////////////////////////////////////////////
   // helper classes and functions
+  RealTimeType time_to_next_soc_event(
+      FlowValueType net_inflow,
+      FlowValueType capacity,
+      FlowValueType current_soc);
+
+  FlowValueType max_single_step_net_inflow(double soc, double capacity);
+
+  FlowValueType max_single_step_net_outflow(double soc, double capacity);
+
   bool storage_is_full(double soc);
 
   bool storage_is_empty(double soc);
@@ -63,7 +72,7 @@ namespace erin::devs
       FlowValueType capacity);
 
   ////////////////////////////////////////////////////////////
-  // state
+  // state and data
   /**
    * StorageData: immutable (constant) reference data that doesn't change
    * over a simulation
@@ -83,8 +92,8 @@ namespace erin::devs
   {
     RealTimeType time{0};
     double soc{0.0}; // soc = state of charge (0 <= soc <= 1)
-    Port inflow_port{0, 0.0, 0.0};
-    Port outflow_port{0, 0.0, 0.0};
+    Port3 inflow_port{0.0};
+    Port3 outflow_port{0.0};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
   };
@@ -121,28 +130,6 @@ namespace erin::devs
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs);
 
-  StorageState storage_external_transition_on_outflow_request(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType outflow_request,
-      RealTimeType dt,
-      RealTimeType time);
-
-  StorageState storage_external_transition_on_inflow_achieved(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType inflow_achieved,
-      RealTimeType dt,
-      RealTimeType time);
-
-  StorageState storage_external_transition_on_in_out_flow(
-      const StorageData& data,
-      const StorageState& state,
-      FlowValueType outflow_request,
-      FlowValueType inflow_achieved,
-      RealTimeType dt,
-      RealTimeType time);
-
   ////////////////////////////////////////////////////////////
   // confluent transition
   StorageState storage_confluent_transition(
@@ -160,6 +147,10 @@ namespace erin::devs
       const StorageData& data,
       const StorageState& state,
       std::vector<PortValue>& ys);
+
+  ////////////////////////////////////////////////////////////
+  // helper functions
+  FlowValueType storage_storeflow_achieved(const StorageState& s); 
 }
 
 

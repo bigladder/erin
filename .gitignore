@@ -2,11 +2,11 @@
 .idea/
 .vs/
 .vscode/
-build/
-builds/
+build*/
 cmake-build-debug/
 todo.txt
 *.xlsx
 *.trace
 header.txt
 .vimrc
+Testing/

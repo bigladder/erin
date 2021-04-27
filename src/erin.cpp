@@ -2199,9 +2199,9 @@ namespace ERIN
         was_down = false;
         contiguous_downtime = 0;
       }
-      load_not_served += dt * gap;
+      load_not_served += static_cast<FlowValueType>(dt) * gap;
       req = d.requested_value;
-      ach_energy += ach * dt;
+      ach_energy += ach * static_cast<FlowValueType>(dt);
       ach = d.achieved_value;
     }
     if (was_down) {

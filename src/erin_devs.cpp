@@ -4,8 +4,10 @@
 #include "erin/devs.h"
 #include "debug_utils.h"
 #include <algorithm>
+#include <cstdlib>
 #include <sstream>
 #include <stdexcept>
+#include <numeric>
 
 namespace erin::devs
 {
@@ -164,13 +166,299 @@ namespace erin::devs
   operator<<(std::ostream& os, const Port& p)
   {
     os << "Port("
-       << "time_of_last_change=" << p.time_of_last_change << ", "
-       << "requested=" << p.requested << ", "
-       << "achieved=" << p.achieved << ", "
-       << "propagate_request="
-       << (p.propagate_request ? "true" : "false") << ", "
-       << "propagate_achieved="
-       << (p.propagate_achieved ? "true" : "false") << ")";
+       << "tL=" << p.time_of_last_change << ", "
+       << "r=" << p.requested << ", "
+       << "a=" << p.achieved << ", "
+       << "prop-r?=" << p.propagate_request << ", "
+       << "prop-a?=" << p.propagate_achieved << ")";
     return os;
+  }
+  
+  // Port2
+  Port2::Port2():
+    Port2(0.0, 0.0)
+  {
+  }
+  
+  Port2::Port2(FlowValueType r):
+    Port2(r, r)
+  {
+  }
+  
+  Port2::Port2(
+    FlowValueType r,
+    FlowValueType a
+  ):
+    requested{r},
+    achieved{a}
+  {
+    if (requested < 0.0) {
+      std::ostringstream oss{};
+      oss << "requested flow is negative! Negative flows are not allowed\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if (achieved < 0.0) {
+      std::ostringstream oss{};
+      oss << "achieved flow is negative! Negative flows are not allowed\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    if (achieved > requested) {
+      if (std::abs(achieved - requested) < ERIN::flow_value_tolerance) {
+        // precision issue; reset the achieved value
+        achieved = requested;
+      }
+      else {
+        std::ostringstream oss{};
+        oss << "achieved more than requested error!\n"
+            << "requested: " << requested << "\n"
+            << "achieved : " << achieved << "\n";
+        throw std::invalid_argument(oss.str());
+      }
+    }
+  }
+
+  PortUpdate
+  Port2::with_requested(FlowValueType r) const
+  {
+    FlowValueType new_achieved = (achieved_is_limited() && (r > achieved))
+        ? achieved
+        : r;
+    return {
+      should_send_request_internal(r, requested),
+      Port2{r, new_achieved},
+    };
+  }
+
+  PortUpdate
+  Port2::with_achieved(FlowValueType a) const
+  {
+    if (a > requested) {
+      std::ostringstream oss{};
+      oss << "achieved more than requested error!\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n"
+          << "new ach  : " << a << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    return {
+      should_send_achieved_internal(requested, a, requested, achieved),
+      Port2{requested, a}
+    };
+  }
+  
+  bool
+  Port2::should_send_request(const Port2& previous) const
+  {
+    return should_send_request_internal(requested, previous.requested);
+  }
+  
+  bool
+  Port2::should_send_achieved(const Port2& previous) const
+  {
+    return should_send_achieved_internal(
+        requested, achieved,
+        previous.requested, previous.achieved);
+  }
+
+  bool
+  Port2::should_send_achieved_internal(
+          FlowValueType /* r */, FlowValueType a,
+          FlowValueType /* prev_r */, FlowValueType prev_a) const
+  {
+    return (prev_a != a);
+  }
+
+  bool
+  Port2::should_send_request_internal(
+      FlowValueType r, FlowValueType prev_r) const
+  {
+    return (prev_r != r);
+  }
+  
+  bool
+  operator==(const Port2& a, const Port2& b)
+  {
+    return ((a.achieved == b.achieved) && (a.requested == b.requested));
+  }
+
+  bool operator!=(const Port2& a, const Port2& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const Port2& p)
+  {
+    return os << "Port2{r=" << p.requested << ",a=" << p.achieved << "}";
+  }
+  
+  bool
+  operator==(const PortUpdate& a, const PortUpdate& b)
+  {
+    return (a.send_update == b.send_update) && (a.port == b.port);
+  }
+
+  bool
+  operator!=(const PortUpdate& a, const PortUpdate& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream& operator<<(std::ostream& os, const PortUpdate& p)
+  {
+    return os << "PortUpdate{update?=" << p.send_update
+              << ", port=" << p.port << "}";
+  }
+
+  ////////////////////////////////////////////////////////////
+  // Port3
+  Port3::Port3():
+    Port3(0.0, 0.0)
+  {
+  }
+
+  Port3::Port3(FlowValueType r):
+    Port3(r, 0.0)
+  {
+  }
+
+  Port3::Port3(
+      FlowValueType r,
+      FlowValueType a
+  ):
+    requested{r},
+    achieved{a}
+  {
+    if (requested < 0.0) {
+      requested = 0.0;
+      /*
+      std::ostringstream oss{};
+      oss << "requested flow is negative! Negative flows are not allowed\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+      */
+    }
+    if (achieved < 0.0) {
+      achieved = 0.0;
+      /*
+      std::ostringstream oss{};
+      oss << "achieved flow is negative! Negative flows are not allowed\n"
+          << "requested: " << requested << "\n"
+          << "achieved : " << achieved << "\n";
+      throw std::invalid_argument(oss.str());
+      */
+    }
+  }
+  
+  FlowValueType
+  Port3::get_achieved() const
+  {
+    if (achieved > requested) {
+      return requested;
+    }
+    return achieved;
+  }
+
+  PortUpdate3
+  Port3::with_requested(FlowValueType r) const
+  {
+    return PortUpdate3{
+      Port3{r, achieved},
+      r != requested,
+      false,
+    };
+  }
+
+  PortUpdate3
+  Port3::with_achieved(FlowValueType a) const
+  {
+    return PortUpdate3{
+      Port3{requested, a},
+      a > requested,
+      (a != achieved) || (achieved > requested),
+    };
+  }
+
+  PortUpdate3
+  Port3::with_requested_and_available(
+      FlowValueType r,
+      FlowValueType available) const
+  {
+    return with_requested_and_achieved(r, std::min(r, available));
+  }
+
+  PortUpdate3
+  Port3::with_requested_and_achieved(
+          FlowValueType r,
+          FlowValueType a) const
+  {
+    auto update_r = with_requested(r);
+    auto update_a = update_r.port.with_achieved(a);
+    return PortUpdate3{
+      update_a.port,
+      update_r.send_request || update_a.send_request, // send_request
+      update_a.send_achieved,                         // send_achieved
+    };
+  }
+
+  bool
+  Port3::should_send_request(const Port3& previous) const
+  {
+    return previous.with_requested(requested).send_request;
+  }
+
+  bool
+  Port3::should_send_achieved(const Port3& previous) const
+  {
+    return previous.with_requested_and_achieved(requested, achieved).send_achieved;
+  }
+
+  bool
+  operator==(const Port3& a, const Port3& b)
+  {
+    return (a.achieved == b.achieved) && (a.requested == b.requested);
+  }
+
+  bool
+  operator!=(const Port3& a, const Port3& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const Port3& p)
+  {
+    return os << "{:r " << p.requested << ", :a " << p.achieved << "}";
+  }
+
+  bool
+  operator==(const PortUpdate3& a, const PortUpdate3& b)
+  {
+    return (a.port == b.port)
+      && (a.send_request == b.send_request)
+      && (a.send_achieved == b.send_achieved);
+  }
+
+  bool
+  operator!=(const PortUpdate3& a, const PortUpdate3& b)
+  {
+    return !(a == b);
+  }
+
+  std::ostream&
+  operator<<(std::ostream& os, const PortUpdate3& p)
+  {
+    return os << "{"
+              << ":p " << p.port
+              << " "
+              << ":send-request? " << p.send_request
+              << " "
+              << ":send-achieved? " << p.send_achieved
+              << "}";
   }
 }

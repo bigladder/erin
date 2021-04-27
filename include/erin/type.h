@@ -168,6 +168,31 @@ namespace ERIN
   }
 
   template<class T>
+  std::string
+  vec_to_string(const std::vector<T>& vs, std::size_t max_num)
+  {
+    std::ostringstream oss;
+    oss << '[';
+    bool first{true};
+    for (std::size_t idx{0}; idx < vs.size(); ++idx) {
+      const auto& v = vs[idx];
+      if (first) {
+        first = false;
+      }
+      else {
+        oss << ',';
+      }
+      if (idx >= max_num) {
+        oss << "...";
+        break;
+      }
+      oss << v;
+    }
+    oss << ']';
+    return oss.str();
+  }
+
+  template<class T>
   void
   print_vec(const std::string& tag, const std::vector<T>& vs)
   {

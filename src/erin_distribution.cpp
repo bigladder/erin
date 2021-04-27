@@ -440,7 +440,9 @@ namespace erin::distribution
           auto lb = uniform_dist.lower_bound.at(subtype_id);
           auto ub = uniform_dist.upper_bound.at(subtype_id);
           auto delta = ub - lb;
-          dt = static_cast<RealTimeType>(fraction * delta + lb);
+          dt = static_cast<RealTimeType>(
+              fraction * static_cast<FlowValueType>(delta)
+              + static_cast<FlowValueType>(lb));
           break;
         }
       case DistType::Normal:

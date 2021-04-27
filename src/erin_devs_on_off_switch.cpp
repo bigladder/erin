@@ -29,11 +29,11 @@ namespace erin::devs
   operator<<(std::ostream& os, const OnOffSwitchData& a)
   {
     namespace E = ERIN;
-    return os << "OnOffSwitchData("
-              << "times="
-              << E::vec_to_string<RealTimeType>(a.times) << ", "
-              << "states="
-              << E::vec_to_string<bool>(a.states) << ")";
+    return os << "{"
+              << ":times "
+              << E::vec_to_string<RealTimeType>(a.times) << " "
+              << ":states "
+              << E::vec_to_string<bool>(a.states) << "}";
   }
 
   bool
@@ -59,14 +59,14 @@ namespace erin::devs
   operator<<(std::ostream& os, const OnOffSwitchState& a)
   {
     namespace E = ERIN;
-    return os << "OnOffSwitchState("
-              << "time=" << a.time << ", "
-              << "state=" << a.state << ", "
-              << "next_index=" << a.next_index << ", "
-              << "inflow_port=" << a.inflow_port << ", "
-              << "outflow_port=" << a.outflow_port << ", " 
-              << "report_inflow_request=" << a.report_inflow_request << ", "
-              << "report_outflow_achieved=" << a.report_outflow_achieved << ")";
+    return os << "{"
+              << ":t " << a.time << " "
+              << ":state " << a.state << " "
+              << ":next-idx " << a.next_index << " "
+              << ":inflow " << a.inflow_port << " "
+              << ":outflow " << a.outflow_port << " " 
+              << ":report-ir? " << a.report_inflow_request << " "
+              << ":report-oa? " << a.report_outflow_achieved << "}";
   }
 
   OnOffSwitchData
@@ -94,12 +94,6 @@ namespace erin::devs
       }
       last_state = item.state;
       last_time = item.time;
-    }
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "Making on/off switch. Processed schedule is:\n";
-      for (std::vector<RealTimeType>::size_type i{0}; i < times.size(); ++i) {
-        std::cout << "(time=" << times[i] << ", state=" << states.at(i) << ")\n";
-      }
     }
     return OnOffSwitchData{
       times,        // schedule_times
@@ -129,10 +123,10 @@ namespace erin::devs
       0,            // time
       init_state,   // state
       next_index,   // next_index
-      Port{0, 0.0}, // inflow_port
-      Port{0, 0.0}, // outflow_port
+      Port3{},      // inflow_port
+      Port3{},      // outflow_port
       false,
-      false
+      false,
     };
   }
 
@@ -143,13 +137,17 @@ namespace erin::devs
       const OnOffSwitchData& data,
       const OnOffSwitchState& state)
   {
+    RealTimeType dt{0};
     if (state.report_inflow_request || state.report_outflow_achieved) {
-      return 0;
+      dt = 0;
     }
-    if (state.next_index < data.num_items) {
-      return data.times[state.next_index] - state.time;
+    else if (state.next_index < data.num_items) {
+      dt = data.times[state.next_index] - state.time;
     }
-    return infinity;
+    else {
+      dt = infinity;
+    }
+    return dt;
   }
 
   ////////////////////////////////////////////////////////////
@@ -159,8 +157,9 @@ namespace erin::devs
       const OnOffSwitchData& data,
       const OnOffSwitchState& state)
   {
+    OnOffSwitchState next_state{};
     if (state.report_inflow_request || state.report_outflow_achieved) {
-      return OnOffSwitchState{
+      next_state = OnOffSwitchState{
         state.time,
         state.state,
         state.next_index,
@@ -169,30 +168,35 @@ namespace erin::devs
         false,
         false};
     }
-    if (state.next_index < data.num_items) {
+    else if (state.next_index < data.num_items) {
       auto next_time = data.times[state.next_index];
-      auto next_state = data.states[state.next_index];
-      auto ip = state.inflow_port;
-      auto op = state.outflow_port;
-      if (next_state) {
-        ip = ip.with_requested(op.get_requested(), next_time);
-        op = op.with_achieved(op.get_requested(), next_time);
+      auto next_flag = data.states[state.next_index];
+      PortUpdate3 ip_update{};
+      PortUpdate3 op_update{};
+      if (next_flag) {
+        ip_update = state.inflow_port.with_requested(
+            state.outflow_port.get_requested());
+        op_update = state.outflow_port.with_achieved(
+            state.inflow_port.get_achieved());
       }
       else {
-        ip = ip.with_requested(0.0, next_time);
-        op = op.with_achieved(0.0, next_time);
+        ip_update = state.inflow_port.with_requested(0.0);
+        op_update = state.outflow_port.with_achieved(0.0);
       }
-      return OnOffSwitchState{
+      next_state = OnOffSwitchState{
         next_time,
-        next_state,
+        next_flag,
         state.next_index + 1,
-        ip,
-        op,
-        false,
-        false
+        ip_update.port,
+        op_update.port,
+        ip_update.send_request,
+        op_update.send_achieved
       };
     }
-    throw std::runtime_error("invalid internal transition");
+    else {
+      throw std::runtime_error("invalid internal transition");
+    }
+    return next_state;
   }
 
   ////////////////////////////////////////////////////////////
@@ -204,7 +208,7 @@ namespace erin::devs
       const std::vector<PortValue>& xs)
   {
     bool got_outflow_request{false};
-    bool got_inflow_achieved{false};
+    bool got_the_inflow_achieved{false};
     FlowValueType outflow_request{0.0};
     FlowValueType inflow_achieved{0.0};
     for (const auto& x : xs) {
@@ -217,7 +221,7 @@ namespace erin::devs
           }
         case inport_inflow_achieved:
           {
-            got_inflow_achieved = true;
+            got_the_inflow_achieved = true;
             inflow_achieved += x.value;
             break;
           }
@@ -232,24 +236,42 @@ namespace erin::devs
     }
     const auto& t = state.time;
     auto new_time = t + elapsed_time;
-    auto ip = state.inflow_port;
-    auto op = state.outflow_port;
+    auto ip{state.inflow_port};
+    auto op{state.outflow_port};
+    bool report_ir{false};
+    bool report_oa{false};
     if (state.state) {
-      if (got_inflow_achieved) {
-        ip = ip.with_achieved(inflow_achieved, new_time);
-        op = op.with_achieved(inflow_achieved, new_time);
+      if (got_the_inflow_achieved) {
+        auto update_ip = ip.with_achieved(inflow_achieved);
+        ip = update_ip.port;
+        auto update_op = op.with_achieved(ip.get_achieved());
+        op = update_op.port;
+        report_oa = report_oa || update_op.send_achieved;
+        report_ir = report_ir || update_ip.send_request;
       }
       if (got_outflow_request) {
-        op = op.with_requested(outflow_request, new_time);
-        ip = ip.with_requested(outflow_request, new_time);
+        auto update_op = op.with_requested(outflow_request);
+        op = update_op.port;
+        auto update_ip = ip.with_requested(op.get_requested());
+        ip = update_ip.port;
+        report_oa = report_oa || update_op.send_achieved;
+        report_ir = report_ir || update_ip.send_request;
       }
     }
     else {
-      ip = ip.with_requested(0.0, new_time);
+      auto update_ip = ip.with_requested(0.0);
+      ip = update_ip.port;
+      report_ir = report_ir || update_ip.send_request;  
       if (got_outflow_request) {
-        op = op.with_requested(outflow_request, new_time);
+        auto update_op = op.with_requested_and_achieved(outflow_request, 0.0);
+        op = update_op.port;
+        report_oa = report_oa || update_op.send_achieved;
       }
-      op = op.with_achieved(0.0, new_time);
+      else {
+        auto update_op = op.with_achieved(0.0);
+        op = update_op.port;
+        report_oa = report_oa || update_op.send_achieved;
+      }
     }
     return OnOffSwitchState{
       new_time,
@@ -257,8 +279,8 @@ namespace erin::devs
       state.next_index,
       ip,
       op,
-      ip.should_propagate_request_at(new_time),
-      op.should_propagate_achieved_at(new_time)
+      report_ir,
+      report_oa,
     };
   }
 
@@ -270,8 +292,17 @@ namespace erin::devs
       const OnOffSwitchState& state,
       const std::vector<PortValue>& xs)
   {
-    return on_off_switch_external_transition(
-        on_off_switch_internal_transition(data, state), 0, xs);
+    auto next_state = on_off_switch_external_transition(
+        on_off_switch_internal_transition(data, state),
+        0,
+        xs);
+    next_state.report_inflow_request =
+      next_state.report_inflow_request
+      || next_state.inflow_port.should_send_request(state.inflow_port);
+    next_state.report_outflow_achieved =
+      next_state.report_outflow_achieved
+      || next_state.outflow_port.should_send_achieved(state.outflow_port);
+    return next_state;
   }
 
   ////////////////////////////////////////////////////////////
@@ -288,7 +319,7 @@ namespace erin::devs
 
   void 
   on_off_switch_output_function_mutable(
-      const OnOffSwitchData& data,
+      const OnOffSwitchData& /* data */,
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys)
   {
@@ -312,28 +343,6 @@ namespace erin::devs
             PortValue{
               outport_outflow_achieved,
               state.outflow_port.get_achieved()});
-      }
-    }
-    else {
-      auto dt = on_off_switch_time_advance(data, state);
-      auto next_time = state.time + dt;
-      // outputs fire BEFORE internal transition
-      // if state is currently true, then next state will be false
-      // therefore, we need to turn off any flows
-      ERIN::FlowValueType flow{state.state ? 0.0 : state.outflow_port.get_requested()};
-      auto ip = state.inflow_port.with_requested(flow, next_time);
-      auto op = state.outflow_port.with_achieved(flow, next_time);
-      if (ip.should_propagate_request_at(next_time)) {
-        ys.emplace_back(
-            PortValue{
-            outport_inflow_request,
-            flow});
-      }
-      if (op.should_propagate_achieved_at(next_time)) {
-        ys.emplace_back(
-            PortValue{
-            outport_outflow_achieved,
-            flow});
       }
     }
   }

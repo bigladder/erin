@@ -1016,19 +1016,35 @@ connections = [
   ]
 ```
 
-7. Specify the scenarios.
+7. Specify the different types of distributions.
+
+```toml
+[dist.always]
+type = "fixed"
+value = 0.0
+[dist.every_30_years]
+type = "fixed"
+value = 30.0
+time_unit = "years"
+```
+
+This specifies the types of distributions that will be used later in the tool.
+We have specified two fixed distributions: one that occurrs continuously and one that occurs every 30 years.
+
+
+8. Specify the scenarios.
 
 ```toml
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "linear", value = 0, time_unit="hours"}
+occurrence_distribution = "always"
 duration = 8760
 max_occurrences = 1
 calculate_reliability = true
 network = "nw"
 [scenarios.c4_hurricane]
 time_unit = "days"
-occurrence_distribution = {type = "linear", value = 30, time_unit="years"}
+occurrence_distribution = "every_30_years"
 duration = 14
 max_occurrences = -1
 calculate_reliability = true
@@ -1085,16 +1101,25 @@ connections = [
   ["b1_electric_generator:OUT(0)", "b1_electricity:IN(0)", "electricity"],
   ]
 
+[dist.always]
+type = "fixed"
+value = 0.0
+
+[dist.every_30_years]
+type = "fixed"
+value = 30.0
+time_unit = "years"
+
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0, time_unit="hours"}
+occurrence_distribution = "always"
 duration = 8760
 max_occurrences = 1
 network = "nw"
 
 [scenarios.c4_hurricane]
 time_unit = "days"
-occurrence_distribution = {type = "fixed", value = 30, time_unit="years"}
+occurrence_distribution = "every_30_years"
 duration = 14
 max_occurrences = -1
 network = "nw"

@@ -3,25 +3,20 @@ rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "seconds"
 max_time = 10
-[loads.environment]
-time_unit = "seconds"
-rate_unit = "kW"
-time_rate_pairs = [[0.0,1000.0],[10.0,0.0]]
 [loads.cooling]
 time_unit = "seconds"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,50.0],[5.0,120.0],[8.0,100.0],[10.0,0.0]]
+time_rate_pairs = [[0.0,60.0],[5.0,144.0],[8.0,120.0],[10.0,0.0]]
 [components.utility_electricity]
 type = "source"
 outflow = "electricity"
 [components.cooling_load]
-type = "uncontrolled_source"
+type = "source"
 outflow = "heat_removed"
-supply_by_scenario.blue_sky = "cooling"
 [components.environment_sink]
 type = "load"
 inflow = "heat_removed"
-loads_by_scenario.blue_sky = "environment"
+loads_by_scenario.blue_sky = "cooling"
 [components.chiller]
 type = "mover"
 inflow0 = "heat_removed"

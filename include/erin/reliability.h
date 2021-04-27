@@ -126,6 +126,11 @@ namespace ERIN
     }
     return new_sch;
   }
+
+  bool schedule_state_at_time(
+      const std::vector<TimeState>& schedule,
+      RealTimeType time,
+      bool initial_value = true);
 }
 
 #endif // ERIN_RELIABILITY_H

@@ -25,41 +25,25 @@ namespace erin::devs
   void mux_check_num_flows(const std::string& tag, int n);
 
   bool mux_should_report(
-      RealTimeType time,
-      const std::vector<Port>& inflow_ports,
-      const std::vector<Port>& outflow_ports);
+      const std::vector<bool>& report_irs,
+      const std::vector<bool>& report_oas);
 
-  std::vector<Port> distribute_inflow_to_outflow_in_order(
-      const std::vector<Port>& outflows,
-      FlowValueType amount,
-      RealTimeType time);
+  std::vector<PortUpdate3> distribute_inflow_to_outflow_in_order(
+      const std::vector<Port3>& outflows,
+      FlowValueType amount);
 
-  std::vector<Port> distribute_inflow_to_outflow_evenly(
-      const std::vector<Port>& outflows,
-      FlowValueType amount,
-      RealTimeType time);
+  std::vector<PortUpdate3> distribute_inflow_to_outflow_evenly(
+      const std::vector<Port3>& outflows,
+      FlowValueType amount);
 
-  std::vector<Port> distribute_inflow_to_outflow(
+  std::vector<PortUpdate3> distribute_inflow_to_outflow(
       MuxerDispatchStrategy outflow_strategy,
-      const std::vector<Port>& outflows,
-      FlowValueType amount,
-      RealTimeType time);
+      const std::vector<Port3>& outflows,
+      FlowValueType amount);
 
-  std::vector<Port> request_difference_from_next_highest_inflow_port(
-      const std::vector<Port>& inflow_ports,
-      int idx_of_request,
-      FlowValueType request,
-      RealTimeType time);
-
-  std::vector<Port> rerequest_inflows_in_order(
-      const std::vector<Port>& inflow_ports,
-      FlowValueType total_outflow_request,
-      RealTimeType time);
-
-  std::vector<Port> request_inflows_intelligently(
-      const std::vector<Port>& inflow_ports,
-      FlowValueType remaining_request,
-      RealTimeType time);
+  std::vector<PortUpdate3> request_inflows_intelligently(
+      const std::vector<Port3>& inflow_ports,
+      FlowValueType remaining_request);
 
   ////////////////////////////////////////////////////////////
   // state
@@ -71,9 +55,10 @@ namespace erin::devs
     RealTimeType time{0};
     int num_inflows{0};
     int num_outflows{0};
-    std::vector<Port> inflow_ports{};
-    std::vector<Port> outflow_ports{};
-    bool do_report{false};
+    std::vector<Port3> inflow_ports{};
+    std::vector<Port3> outflow_ports{};
+    std::vector<bool> report_irs{};
+    std::vector<bool> report_oas{};
     MuxerDispatchStrategy outflow_strategy{MuxerDispatchStrategy::Distribute};
   };
 
@@ -91,6 +76,8 @@ namespace erin::devs
   FlowValueType mux_get_inflow_achieved(const MuxState& state);
 
   FlowValueType mux_get_outflow_achieved(const MuxState& state);
+  
+  std::ostream& operator<<(std::ostream& os, const MuxState& s);
 
   ////////////////////////////////////////////////////////////
   // time advance

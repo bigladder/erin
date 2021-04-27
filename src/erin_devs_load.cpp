@@ -14,7 +14,7 @@ namespace erin::devs
     using size_type = std::vector<LoadItem>::size_type;
     auto N{loads.size()};
     if (N < 1) {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "loads must have at least one LoadItems but "
              "only " << N << " provided\n";
       throw std::invalid_argument(oss.str());
@@ -25,12 +25,12 @@ namespace erin::devs
       auto t = x.time;
       auto v = x.value;
       if (v < 0.0) {
-        std::ostringstream oss;
+        std::ostringstream oss{};
         oss << "LoadItem[" << idx << "] has a negative load value. Negative flows are not allowed.\n";
         throw std::invalid_argument(oss.str());
       }
       if ((t < 0) || (t <= t_last)) {
-        std::ostringstream oss;
+        std::ostringstream oss{};
         oss << "LoadItems must have time points that are everywhere "
             << "increasing and positive but it doesn't...\n"
             << "t[" << idx << "] = " << t << "\n"
@@ -41,10 +41,25 @@ namespace erin::devs
     }
   }
 
-  LoadData
-  make_load_data(const std::vector<LoadItem>& loads)
+  std::ostream&
+  operator<<(std::ostream& os, const LoadData& d)
   {
-    check_loads(loads);
+    const int max_items{10};
+    return os << "{"
+              << ":times " << ERIN::vec_to_string<RealTimeType>(d.times, max_items)
+              << " "
+              << ":loads " << ERIN::vec_to_string<FlowValueType>(d.load_values, max_items)
+              << " "
+              << ":count " << d.number_of_loads
+              << "}";
+  }
+
+  LoadData
+  make_load_data(const std::vector<LoadItem>& loads, bool do_checks)
+  {
+    if (do_checks) {
+      check_loads(loads);
+    }
     auto num_loads = loads.size();
     std::vector<RealTimeType> times(num_loads, 0);
     std::vector<FlowValueType> load_values(num_loads, 0.0);
@@ -61,10 +76,7 @@ namespace erin::devs
   LoadState
   make_load_state()
   {
-    return LoadState{
-      0,
-      -1,
-      Port{-1, 0.0}};
+    return LoadState{0, -1, Port3{}, false};
   }
 
   RealTimeType
@@ -94,10 +106,27 @@ namespace erin::devs
   {
     return state.inflow_port.get_achieved();
   }
+  
+  std::ostream&
+  operator<<(std::ostream& os, const LoadState& s)
+  {
+    return os << "{"
+              << ":t " << s.time
+              << " "
+              << ":idx " << s.current_index
+              << " "
+              << ":inflow-port " << s.inflow_port
+              << " "
+              << ":resend-request? " << s.resend_request
+              << "}";
+  }
 
   RealTimeType
   load_time_advance(const LoadData& data, const LoadState& state)
   {
+    if (state.resend_request) {
+      return 0;
+    }
     auto next_time = load_next_time(data, state);
     if (next_time == infinity) {
       return infinity;
@@ -108,6 +137,14 @@ namespace erin::devs
   LoadState
   load_internal_transition(const LoadData& data, const LoadState& state)
   {
+    if (state.resend_request) {
+      return LoadState{
+        state.time,
+        state.current_index,
+        state.inflow_port,
+        false,
+      };
+    }
     auto max_idx = data.number_of_loads - 1;
     if (state.current_index >= max_idx) {
       return state;
@@ -115,10 +152,13 @@ namespace erin::devs
     auto next_idx = state.current_index + 1;
     auto next_time = data.times[next_idx];
     auto next_load = data.load_values[next_idx];
+    auto update = state.inflow_port.with_requested(next_load);
     return LoadState{
       next_time,
       next_idx,
-      state.inflow_port.with_requested(next_load, next_time)};
+      update.port,
+      false,
+    };
   }
 
   LoadState
@@ -144,10 +184,13 @@ namespace erin::devs
       }
     }
     auto new_time = state.time + dt;
+    auto update = state.inflow_port.with_achieved(inflow_achieved);
     return LoadState{
       new_time,
       state.current_index,
-      state.inflow_port.with_achieved(inflow_achieved, new_time)};
+      update.port,
+      update.send_request,
+    };
   }
 
   LoadState
@@ -176,14 +219,22 @@ namespace erin::devs
       const LoadState& state,
       std::vector<PortValue>& ys)
   {
-    auto next_state = load_internal_transition(data, state);
-    auto max_idx{data.number_of_loads - 1};
-    if (next_state.current_index <= max_idx) {
-      if (next_state.inflow_port.should_propagate_request_at(next_state.time)) {
-        ys.emplace_back(
-            PortValue{
-              outport_inflow_request,
-              next_state.inflow_port.get_requested()});
+    if (state.resend_request) {
+      ys.emplace_back(
+          PortValue{
+            outport_inflow_request,
+            state.inflow_port.get_requested()});
+    }
+    else {
+      auto next_state = load_internal_transition(data, state);
+      auto max_idx{data.number_of_loads - 1};
+      if (next_state.current_index <= max_idx) {
+        if (next_state.inflow_port.should_send_request(state.inflow_port)) {
+          ys.emplace_back(
+              PortValue{
+                outport_inflow_request,
+                next_state.inflow_port.get_requested()});
+        }
       }
     }
   }

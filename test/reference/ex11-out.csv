@@ -1,5 +1,5 @@
-scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),chiller-inflow(0):achieved (kW),chiller-inflow(0):requested (kW),chiller-inflow(1):achieved (kW),chiller-inflow(1):requested (kW),chiller-outflow:achieved (kW),chiller-outflow:requested (kW),cooling_load-inflow:achieved (kW),cooling_load-inflow:requested (kW),cooling_load-lossflow:achieved (kW),cooling_load-lossflow:requested (kW),cooling_load-outflow:achieved (kW),cooling_load-outflow:requested (kW),environment_sink:achieved (kW),environment_sink:requested (kW),utility_electricity:achieved (kW),utility_electricity:requested (kW)
-blue_sky,P0000-00-00T00:00:00,0,50,833.3333333333334,10,10,60,1000,50,50,0,50,50,833.3333333333334,60,1000,10,10
-blue_sky,P0000-00-00T00:00:00,0.001388888888888889,120,833.3333333333334,24,24,144,1000,120,120,0,120,120,833.3333333333334,144,1000,24,24
-blue_sky,P0000-00-00T00:00:00,0.002222222222222222,100,833.3333333333334,20,20,120,1000,100,100,0,100,100,833.3333333333334,120,1000,20,20
-blue_sky,P0000-00-00T00:00:00,0.002777777777777778,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),chiller-inflow(0):achieved (kW),chiller-inflow(0):requested (kW),chiller-inflow(1):achieved (kW),chiller-inflow(1):requested (kW),chiller-outflow:achieved (kW),chiller-outflow:requested (kW),cooling_load:achieved (kW),cooling_load:requested (kW),environment_sink:achieved (kW),environment_sink:requested (kW),utility_electricity:achieved (kW),utility_electricity:requested (kW)
+blue_sky,P0000-00-00T00:00:00,0,50,50,10,10,60,60,50,50,60,60,10,10
+blue_sky,P0000-00-00T00:00:00,0.001388888888888889,120,120,24,24,144,144,120,120,144,144,24,24
+blue_sky,P0000-00-00T00:00:00,0.002222222222222222,100,100,20,20,120,120,100,100,120,120,20,20
+blue_sky,P0000-00-00T00:00:00,0.002777777777777778,0,0,0,0,0,0,0,0,0,0,0,0

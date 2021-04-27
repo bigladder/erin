@@ -13,7 +13,7 @@ if ! ctest --output-on-failure; then
   exit 1
 fi
 echo Running Regressions Suite...
-if ! bundle exec ruby ../scripts/regression_test.rb; then
+if ! ERIN_BUILD_DIR=$PWD bundle exec ruby ../scripts/regression_test.rb; then
   echo REGRESSIONS FOUND!
   exit 1
 fi

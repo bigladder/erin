@@ -15,6 +15,7 @@ namespace erin::distribution
 {
   using size_type = std::vector<std::int64_t>::size_type;
   using RealTimeType = ERIN::RealTimeType;
+  using FlowValueType = ERIN::FlowValueType;
 
   // TODO: consider going back to classes with simple data that can take a
   // generator at a later point. Ideally, we'd like the distribution objects to

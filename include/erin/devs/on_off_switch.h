@@ -30,8 +30,8 @@ namespace erin::devs
     RealTimeType time{0};
     bool state{true};
     std::vector<RealTimeType>::size_type next_index{0};
-    Port inflow_port{0, 0.0, 0.0};
-    Port outflow_port{0, 0.0, 0.0};
+    Port3 inflow_port{};
+    Port3 outflow_port{};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
   };

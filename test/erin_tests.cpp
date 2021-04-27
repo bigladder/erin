@@ -8273,6 +8273,70 @@ TEST(ErinBasicsTest, Test_that_we_can_modify_schedule_for_reliability)
   ASSERT_EQ(actual_8, expected_8);
 }
 
+
+TEST(ErinBasicsTest, Test_that_we_can_run_fragility_with_repair)
+{
+  namespace E = ERIN;
+  std::string input =
+    "[simulation_info]\n"
+    "rate_unit = \"kW\"\n"
+    "quantity_unit = \"kJ\"\n"
+    "time_unit = \"hours\"\n"
+    "max_time = 300\n"
+    "############################################################\n"
+    "[loads.b1_electric_load]\n"
+    "time_unit = \"hours\"\n"
+    "rate_unit = \"kW\"\n"
+    "time_rate_pairs = [[0.0,10.0],[300.0,0.0]]\n"
+    "############################################################\n"
+    "[components.electric_utility]\n"
+    "type = \"source\"\n"
+    "outflow = \"electricity\"\n"
+    "[components.b1_electric]\n"
+    "type = \"load\"\n"
+    "inflow = \"electricity\"\n"
+    "loads_by_scenario.c4_hurricane = \"b1_electric_load\"\n"
+    "fragility_modes = [\"power_line_down_and_repair\"]\n"
+    "############################################################\n"
+    "[fragility_mode.power_line_down_and_repair]\n"
+    "fragility_curve = \"power_line_down_by_high_wind\"\n"
+    "# the repair_dist is optional; if not specified, there is no\n"
+    "# repair for the component experiencing a fragility failure\n"
+    "repair_dist = \"power_line_repair\"\n"
+    "############################################################\n"
+    "[fragility_curve.power_line_down_by_high_wind]\n"
+    "vulnerable_to = \"wind_speed_mph\"\n"
+    "type = \"linear\"\n"
+    "lower_bound = 80.0\n"
+    "upper_bound = 160.0\n"
+    "############################################################\n"
+    "[networks.nw]\n"
+    "connections = [\n"
+    "  [\"electric_utility:OUT(0)\", \"b1_electric:IN(0)\", \"electricity\"]\n"
+    "]\n"
+    "############################################################\n"
+    "[dist.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
+    "[dist.power_line_repair]\n"
+    "type = \"fixed\"\n"
+    "value = 100\n"
+    "time_units = \"hours\"\n"
+    "############################################################\n"
+    "[scenarios.c4_hurricane]\n"
+    "time_unit = \"hours\"\n"
+    "occurrence_distribution = \"immediately\"\n"
+    "duration = 300\n"
+    "max_occurrences = 1\n"
+    "network = \"nw\"\n"
+    "intensity.wind_speed_mph = 180\n";
+  auto m = E::make_main_from_string(input);
+  auto results = m.run_all();
+  ASSERT_TRUE(true);
+}
+
+
 int
 main(int argc, char **argv)
 {

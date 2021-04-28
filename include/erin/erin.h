@@ -539,6 +539,10 @@ namespace ERIN
         reliability_schedule;
       std::unordered_map<std::string, std::vector<RealTimeType>>
         scenario_schedules;
+      std::unordered_map<std::string,
+        std::vector<
+          std::unordered_map<std::string, erin::fragility::FragilityInfo>>>
+        fragility_info_by_comp_tag_by_instance_by_scenario_tag;
 
       void check_data() const;
       void generate_failure_fragilities();

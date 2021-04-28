@@ -148,9 +148,15 @@ namespace erin::fragility
     std::unordered_map<std::string,std::vector<std::unordered_map<std::string,FragilityInfo>>> out{};
     for (const auto& ss : scenario_schedules) {
       const auto& scenario_id{ss.first};
+      const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
       std::vector<std::unordered_map<std::string, FragilityInfo>> info{};
       for (const auto& start_time : ss.second) {
         std::unordered_map<std::string, FragilityInfo> comp_frag_info{};
+        for (const auto& comp_probs : fpbc) {
+          const auto& comp_id = comp_probs.first;
+          const auto& failure_probs = comp_probs.second;
+          comp_frag_info[comp_id] = FragilityInfo{};
+        }
         info.emplace_back(comp_frag_info);
       }
       out[scenario_id] = info;

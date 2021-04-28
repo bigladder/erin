@@ -2837,7 +2837,8 @@ namespace ERIN
 
   Main::Main(TomlInputReader reader):
     sim_info{reader.read_simulation_info()},
-    failure_probs_by_comp_id_by_scenario_id{}
+    failure_probs_by_comp_id_by_scenario_id{},
+    fragility_info_by_comp_tag_by_instance_by_scenario_tag{}
   {
     // Read data into private class fields
     auto loads_by_id = reader.read_loads();
@@ -2862,7 +2863,7 @@ namespace ERIN
     check_data();
     generate_failure_fragilities();
     // TODO: add the following function to use FragilityModes
-    // fragility_schedule = calc_fragility_schedules(fragility_modes, scenario_schedules, failure_probs_by_comp_id_by_scenario_id);
+    // fragility_info_by_comp_tag_by_instance_by_scenario_tag = calc_fragility_schedules(fragility_modes, scenario_schedules, failure_probs_by_comp_id_by_scenario_id);
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& p : loads_by_id) {
         std::cout << p.first << ":\n";
@@ -2893,7 +2894,8 @@ namespace ERIN
     scenarios{scenarios_},
     failure_probs_by_comp_id_by_scenario_id{},
     reliability_schedule{reliability_schedule_},
-    scenario_schedules{scenario_schedules_}
+    scenario_schedules{scenario_schedules_},
+    fragility_info_by_comp_tag_by_instance_by_scenario_tag{}
   {
     for (const auto& pair: components_) {
       components.insert(
@@ -3003,7 +3005,7 @@ namespace ERIN
     }
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
-    const int max_no_advance_factor{10000};
+    const int max_no_advance_factor{10'000};
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;
     auto sim_good = run_devs(
@@ -3105,8 +3107,11 @@ namespace ERIN
     for (const auto& s: scenarios) {
       const auto& scenario_id = s.first;
       std::vector<ScenarioResults> results{};
+      std::size_t instance_num{0};
       for (const auto& start_time : scenario_schedules[scenario_id]) {
+        // TODO: add instance_num to run(..., instance_num)
         auto result = run(scenario_id, start_time);
+        ++instance_num;
         if (result.get_is_good()) {
           results.emplace_back(result);
         } else {

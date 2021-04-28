@@ -19,7 +19,7 @@ doit(const std::string& input_toml, const std::string& timeseries_csv, const std
   std::cout << "timeseries_csv  : " << timeseries_csv << "\n";
   std::cout << "stats_csv       : " << stats_csv << "\n";
   std::cout << "scenario_id     : \"" << scenario_id << "\"" << "\n";
-  auto m = ::ERIN::Main{input_toml};
+  auto m = ERIN::Main{input_toml};
   ERIN::ScenarioResults out{};
   ERIN::RealTimeType max_time{0};
   try {

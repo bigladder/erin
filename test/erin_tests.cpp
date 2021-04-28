@@ -8377,8 +8377,8 @@ TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
     failure_probs_by_comp_id_by_scenario_id{
       {blue_sky_tag, {
         {src_comp_tag, {0.5, 0.2}},
-        {snk_comp_tag, {}}}}};
-  std::function<double()> rand_fn = []() { return 0.8; };
+        {snk_comp_tag, {0.1}}}}};
+  std::function<double()> rand_fn = []() { return 0.4; };
   erin::distribution::DistributionSystem ds{};
   ds.add_fixed("repair_in_24_hours", 24 * 3600);
   const auto fs = EF::calc_fragility_schedules(
@@ -8401,6 +8401,8 @@ TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
   ASSERT_EQ(blue_sky_0_snk.scenario_tag, blue_sky_tag);
   ASSERT_EQ(blue_sky_0_src.start_time_s, 0);
   ASSERT_EQ(blue_sky_0_snk.start_time_s, 0);
+  ASSERT_EQ(blue_sky_0_src.is_failed, true);
+  ASSERT_EQ(blue_sky_0_snk.is_failed, false);
 }
 
 

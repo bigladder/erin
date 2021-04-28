@@ -155,38 +155,26 @@ namespace erin::fragility
         for (const auto& comp_probs : fpbc) {
           const auto& comp_id = comp_probs.first;
           const auto& failure_probs = comp_probs.second;
-          //bool is_failed{false};
-          /*
-        if (p >= 1.0) {
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-            std::cout << "... (p >= 1.0) => is_failed = true\n";
-          }
-          is_failed = true;
-          break;
-        }
-        else if (p <= 0.0) {
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-            std::cout << "... (p <= 0.0) => is_failed = false; checking next p...\n";
-          }
-          continue;
-        }
-        else {
-          random_fraction = rand_fn();
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-            std::cout << "... random_fraction = " << random_fraction << "\n";
-          }
-          if (random_fraction <= p) {
-            if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-              std::cout << "... (random_fraction <= p) => is_failed = true\n";
+          bool is_failed{false};
+          for (const auto& p : failure_probs) {
+            if (p >= 1.0) {
+              is_failed = true;
+              break;
             }
-            is_failed = true;
-            break;
+            else if (p <= 0.0) {
+              continue;
+            }
+            else {
+              if (rand_fn() <= p) {
+                is_failed = true;
+                break;
+              }
+            }
           }
-        }
-          */
           comp_frag_info[comp_id] = FragilityInfo{
             scenario_tag,
-            start_time_s};
+            start_time_s,
+            is_failed};
         }
         info.emplace_back(comp_frag_info);
       }

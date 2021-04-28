@@ -129,7 +129,7 @@ namespace erin::fragility
   {
     std::string scenario_tag{};
     ERIN::RealTimeType start_time_s{0};
-    // bool is_failed{false};
+    bool is_failed{false};
     // ERIN::RealTimeType repair_time_s{-1}; // values less than 0 indicate cannot repair
   };
 

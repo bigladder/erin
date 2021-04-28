@@ -24,6 +24,7 @@ option(BUILD_DOC "Build documentation" OFF)
 
 # Set up testing/coverage
 if (${CMAKE_PROJECT_NAME}_TESTING)
+  include( CTest )
   enable_testing()
   if (${CMAKE_PROJECT_NAME}_COVERAGE)
     set(ENABLE_COVERAGE ON CACHE BOOL "" FORCE)

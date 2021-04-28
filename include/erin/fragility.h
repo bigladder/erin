@@ -4,6 +4,7 @@
 #ifndef ERIN_FRAGILITY_H
 #define ERIN_FRAGILITY_H
 #include "erin/reliability.h"
+#include "erin/distribution.h"
 #include "erin/type.h"
 #include <cstddef>
 #include <functional>
@@ -104,10 +105,12 @@ namespace erin::fragility
     std::unique_ptr<Curve> curve;
   };
 
+  constexpr std::int64_t no_repair_distribution{-1};
+
   struct FragilityMode
   {
     std::string fragility_curve_tag{};
-    std::size_t repair_dist_id{};
+    std::int64_t repair_dist_id{no_repair_distribution};
   };
 
   /**
@@ -124,7 +127,7 @@ namespace erin::fragility
 
   struct FragilityInfo
   {
-    // std::string scenario_tag{};
+    std::string scenario_tag{};
     // ERIN::RealTimeType start_time_s{0};
     // bool is_failed{false};
     // ERIN::RealTimeType repair_time_s{-1}; // values less than 0 indicate cannot repair
@@ -136,7 +139,7 @@ namespace erin::fragility
     const std::unordered_map<std::string, std::vector<std::int64_t>>& scenario_schedules,
     const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>& failure_probs_by_comp_id_by_scenario_id,
     const std::function<double()>& rand_fn,
-    const ERIN::ReliabilityCoordinator& rc);
+    const erin::distribution::DistributionSystem& ds);
 }
 
 #endif // ERIN_FRAGILITY_H

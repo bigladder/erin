@@ -1733,24 +1733,37 @@ namespace ERIN
       const auto& fragility_curve_tag =
         toml_helper::read_required_table_field<std::string>(
             tt, {"fragility_curve"}, field_read);
+      const std::string empty_tag{""};
       const auto& repair_dist_tag =
-        toml_helper::read_required_table_field<std::string>(
-            tt, {"repair_dist"}, field_read);
+        toml_helper::read_optional_table_field<std::string>(
+            tt, {"repair_dist"}, empty_tag, field_read);
       auto it = fragility_curves.find(fragility_curve_tag);
       if (it == fragility_curves.end()) {
         std::ostringstream oss{};
-        oss << "could not find fragility_curve corresponding to tag `"
+        oss << "For fragility_mode `"
+            << fm_string_id << "`"
+            << ", could not find fragility_curve corresponding to tag `"
             << fragility_curve_tag << "`";
         throw std::runtime_error(oss.str());
       }
-      auto it2 = dist_ids.find(repair_dist_tag);
-      if (it2 == dist_ids.end()) {
-        std::ostringstream oss{};
-        oss << "could not find distribution (dist) corresponding to tag `"
-            << repair_dist_tag << "`";
-        throw std::runtime_error(oss.str());
+      std::int64_t repair_dist_id{erin::fragility::no_repair_distribution};
+      if (repair_dist_tag != empty_tag) {
+        auto it2 = dist_ids.find(repair_dist_tag);
+        if (it2 == dist_ids.end()) {
+          std::ostringstream oss{};
+          oss << "For fragility_mode `"
+              << fm_string_id << "`"
+              << ", could not find distribution (dist) corresponding to tag `"
+              << repair_dist_tag << "`\n"
+              << "Specifying a repair distribution for a fragility mode is optional\n"
+              << "However, if you specify one, its tag must correspond to a declared "
+              << "distribution (dist)";
+          throw std::runtime_error(oss.str());
+        }
+        else {
+          repair_dist_id = static_cast<std::int64_t>(it2->second);
+        }
       }
-      const auto& repair_dist_id = it2->second;
       out[fm_string_id] = erin::fragility::FragilityMode{
         fragility_curve_tag, repair_dist_id};
     }

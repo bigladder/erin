@@ -8378,14 +8378,15 @@ TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
       {blue_sky_tag, {
         {src_comp_tag, {0.5, 0.2}},
         {snk_comp_tag, {}}}}};
-  std::function<double()> rand_fn;
-  E::ReliabilityCoordinator rc{};
+  std::function<double()> rand_fn = []() { return 0.8; };
+  erin::distribution::DistributionSystem ds{};
+  ds.add_fixed("repair_in_24_hours", 24 * 3600);
   const auto fs = EF::calc_fragility_schedules(
     fragility_modes,
     scenario_schedules,
     failure_probs_by_comp_id_by_scenario_id,
     rand_fn,
-    rc);
+    ds);
   ASSERT_EQ(fs.size(), scenario_schedules.size());
   const auto& blue_sky_instances = fs.at(blue_sky_tag);
   ASSERT_EQ(
@@ -8393,9 +8394,11 @@ TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
     scenario_schedules.at(blue_sky_tag).size());
   const auto& blue_sky_0 = blue_sky_instances[0];
   const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(blue_sky_tag);
-  ASSERT_EQ(
-    blue_sky_0.size(),
-    fpbc.size());
+  ASSERT_EQ(blue_sky_0.size(), fpbc.size());
+  const auto& blue_sky_0_src = blue_sky_0.at(src_comp_tag);
+  const auto& blue_sky_0_snk = blue_sky_0.at(snk_comp_tag);
+  ASSERT_EQ(blue_sky_0_src.scenario_tag, blue_sky_tag);
+  ASSERT_EQ(blue_sky_0_snk.scenario_tag, blue_sky_tag);
 }
 
 

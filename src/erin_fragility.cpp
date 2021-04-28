@@ -143,23 +143,52 @@ namespace erin::fragility
     const std::unordered_map<std::string, std::vector<std::int64_t>>& scenario_schedules,
     const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>& failure_probs_by_comp_id_by_scenario_id,
     const std::function<double()>& rand_fn,
-    const ERIN::ReliabilityCoordinator& rc)
+    const erin::distribution::DistributionSystem& ds)
   {
     std::unordered_map<std::string,std::vector<std::unordered_map<std::string,FragilityInfo>>> out{};
     for (const auto& ss : scenario_schedules) {
-      const auto& scenario_id{ss.first};
-      const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
+      const auto& scenario_tag{ss.first};
+      const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_tag);
       std::vector<std::unordered_map<std::string, FragilityInfo>> info{};
       for (const auto& start_time : ss.second) {
         std::unordered_map<std::string, FragilityInfo> comp_frag_info{};
         for (const auto& comp_probs : fpbc) {
           const auto& comp_id = comp_probs.first;
           const auto& failure_probs = comp_probs.second;
-          comp_frag_info[comp_id] = FragilityInfo{};
+          //bool is_failed{false};
+          /*
+        if (p >= 1.0) {
+          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+            std::cout << "... (p >= 1.0) => is_failed = true\n";
+          }
+          is_failed = true;
+          break;
+        }
+        else if (p <= 0.0) {
+          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+            std::cout << "... (p <= 0.0) => is_failed = false; checking next p...\n";
+          }
+          continue;
+        }
+        else {
+          random_fraction = rand_fn();
+          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+            std::cout << "... random_fraction = " << random_fraction << "\n";
+          }
+          if (random_fraction <= p) {
+            if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
+              std::cout << "... (random_fraction <= p) => is_failed = true\n";
+            }
+            is_failed = true;
+            break;
+          }
+        }
+          */
+          comp_frag_info[comp_id] = FragilityInfo{scenario_tag};
         }
         info.emplace_back(comp_frag_info);
       }
-      out[scenario_id] = info;
+      out[scenario_tag] = info;
     }
     return out;
   }

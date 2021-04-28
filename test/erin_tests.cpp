@@ -8399,6 +8399,8 @@ TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
   const auto& blue_sky_0_snk = blue_sky_0.at(snk_comp_tag);
   ASSERT_EQ(blue_sky_0_src.scenario_tag, blue_sky_tag);
   ASSERT_EQ(blue_sky_0_snk.scenario_tag, blue_sky_tag);
+  ASSERT_EQ(blue_sky_0_src.start_time_s, 0);
+  ASSERT_EQ(blue_sky_0_snk.start_time_s, 0);
 }
 
 

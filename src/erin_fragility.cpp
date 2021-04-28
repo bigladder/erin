@@ -150,7 +150,7 @@ namespace erin::fragility
       const auto& scenario_tag{ss.first};
       const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_tag);
       std::vector<std::unordered_map<std::string, FragilityInfo>> info{};
-      for (const auto& start_time : ss.second) {
+      for (const auto& start_time_s : ss.second) {
         std::unordered_map<std::string, FragilityInfo> comp_frag_info{};
         for (const auto& comp_probs : fpbc) {
           const auto& comp_id = comp_probs.first;
@@ -184,7 +184,9 @@ namespace erin::fragility
           }
         }
           */
-          comp_frag_info[comp_id] = FragilityInfo{scenario_tag};
+          comp_frag_info[comp_id] = FragilityInfo{
+            scenario_tag,
+            start_time_s};
         }
         info.emplace_back(comp_frag_info);
       }

@@ -2875,8 +2875,13 @@ namespace ERIN
         max_time_s, scenarios, ds, rand_fn);
     check_data();
     generate_failure_fragilities();
-    // TODO: add the following function to use FragilityModes
-    // fragility_info_by_comp_tag_by_instance_by_scenario_tag = calc_fragility_schedules(fragility_modes, scenario_schedules, failure_probs_by_comp_id_by_scenario_id);
+    fragility_info_by_comp_tag_by_instance_by_scenario_tag =
+      erin::fragility::calc_fragility_schedules(
+        fragility_modes,
+        scenario_schedules,
+        failure_probs_by_comp_id_by_scenario_id,
+        rand_fn,
+        ds);
     if constexpr (debug_level >= debug_level_high) {
       for (const auto& p : loads_by_id) {
         std::cout << p.first << ":\n";

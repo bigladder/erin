@@ -3098,7 +3098,7 @@ namespace ERIN
     }
     const auto& connections = networks[network_id];
     auto elements = erin::network::build_v2(
-        scenario_id, network, connections, components, fibc, true,
+        scenario_id, network, connections, components, fibc, duration, true,
         clipped_reliability_schedule);
     std::shared_ptr<FlowWriter> fw = std::make_shared<DefaultFlowWriter>();
     for (auto e_ptr: elements) {

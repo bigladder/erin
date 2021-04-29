@@ -72,7 +72,8 @@ namespace erin::network
       const std::unordered_map<std::string, erin::fragility::FragilityInfo>&
         fragility_info_by_comp_tag,
       const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
-        reliability_schedule);
+        reliability_schedule,
+      const ERIN::RealTimeType duration_s);
 
   void couple_source_to_sink(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -138,6 +139,7 @@ namespace erin::network
         std::string, std::unique_ptr<ERIN::Component>>& components,
       const std::unordered_map<
         std::string, erin::fragility::FragilityInfo>& failure_info_by_comp_tag,
+      const ERIN::RealTimeType duration_s,
       bool two_way = false,
       const std::unordered_map<
         std::string, std::vector<ERIN::TimeState>>& reliability_schedule = {}

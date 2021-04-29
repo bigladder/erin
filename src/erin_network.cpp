@@ -147,8 +147,10 @@ namespace erin::network
       const std::unordered_map<std::string, erin::fragility::FragilityInfo>&
         fragility_info_by_comp_tag,
       const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
-        reliability_schedule)
+        reliability_schedule,
+      const ERIN::RealTimeType duration_s)
   {
+    namespace EF = erin::fragility;
     auto comp_it = comps_added.find(comp_tag);
     if (comp_it != comps_added.end()) {
       return;
@@ -161,19 +163,20 @@ namespace erin::network
       throw std::runtime_error(oss.str());
     }
     const auto& comp = it->second;
-    bool is_failed{false};
+    EF::FragilityInfo fi{};
     auto fi_it = fragility_info_by_comp_tag.find(comp_tag);
     if (fi_it != fragility_info_by_comp_tag.end()) {
-      is_failed = fi_it->second.is_failed;
+      fi = fi_it->second;
     }
     std::vector<ERIN::TimeState> rel_sch{};
     auto reliability_it = reliability_schedule.find(comp_tag);
     if (reliability_it != reliability_schedule.end()) {
       rel_sch = reliability_it->second;
     }
-    // TODO: augment rel_sch with is_failed status
+    rel_sch = EF::modify_schedule_for_fragility(
+      rel_sch, fi.is_failed, false, 0, duration_s);
     // TODO: augment rel_sch with fragility repair curve
-    auto pe = comp->add_to_network(network, scenario_tag, is_failed, rel_sch);
+    auto pe = comp->add_to_network(network, scenario_tag, fi.is_failed, rel_sch);
     ports_and_elements[comp_tag] = pe;
     comps_added.emplace(comp_tag);
   }
@@ -382,6 +385,7 @@ namespace erin::network
         std::string, std::unique_ptr<ERIN::Component>>& components,
       const std::unordered_map<
         std::string, erin::fragility::FragilityInfo>& failure_info_by_comp_tag,
+      const ERIN::RealTimeType duration_s,
       bool two_way,
       const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
         reliability_schedule)
@@ -413,10 +417,10 @@ namespace erin::network
       }
       add_if_not_added_v2(
           comp1_id, scenario_tag, components, network, comps_added, pes,
-          failure_info_by_comp_tag, reliability_schedule);
+          failure_info_by_comp_tag, reliability_schedule, duration_s);
       add_if_not_added_v2(
           comp2_id, scenario_tag, components, network, comps_added, pes,
-          failure_info_by_comp_tag, reliability_schedule);
+          failure_info_by_comp_tag, reliability_schedule, duration_s);
       connect(
           network,
           pes.at(comp1_id).port_map,

@@ -358,7 +358,7 @@ namespace ERIN
     if (is_failed) {
       auto lim = new FlowLimits(
           the_id + "-limits",
-          ComponentType::Source,
+          ComponentType::Load,
           stream,
           0.0,
           0.0);
@@ -369,7 +369,7 @@ namespace ERIN
     else if (has_reliability) {
       auto on_off = new OnOffSwitch(
           the_id + "-limits",
-          ComponentType::Source,
+          ComponentType::Load,
           stream,
           reliability_schedule);
       elements.emplace(on_off);

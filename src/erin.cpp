@@ -2890,6 +2890,33 @@ namespace ERIN
         }
       }
     }
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "failure_probs_by_comp_id_by_scenario_id\n";
+      for (const auto& fpbc_scenario : failure_probs_by_comp_id_by_scenario_id) {
+        const auto& scenario_tag = fpbc_scenario.first;
+        std::cout << "- " << scenario_tag << "\n";
+        for (const auto& fpbc : fpbc_scenario.second) {
+          const auto& comp_tag = fpbc.first;
+          std::cout
+            << "  - " << comp_tag << ": "
+            << vec_to_string<double>(fpbc.second) << "\n";
+        }
+      }
+      std::cout << "fragility_info_by_comp_tag_by_instance_by_scenario_tag:\n";
+      for (const auto& fibcs : fragility_info_by_comp_tag_by_instance_by_scenario_tag) {
+        const auto& scenario_tag = fibcs.first;
+        std::cout << "- " << scenario_tag << ":\n";
+        for (std::size_t idx{0}; idx < fibcs.second.size(); ++idx) {
+          std::cout << "  - [" << idx << "]:\n";
+          const auto& fibc = fibcs.second[idx];
+          for (const auto& fic : fibc) {
+            const auto& comp_tag = fic.first;
+            const auto& fi = fic.second;
+            std::cout << "    - " << comp_tag << " " << fi << "\n";
+          }
+        }
+      }
+    }
   }
 
   Main::Main(
@@ -2924,6 +2951,51 @@ namespace ERIN
     rand_fn = sim_info.make_random_function();
     check_data();
     generate_failure_fragilities();
+    erin::distribution::DistributionSystem ds{};
+    std::unordered_map<std::string, erin::fragility::FragilityMode> fragility_modes{};
+    fragility_info_by_comp_tag_by_instance_by_scenario_tag =
+      erin::fragility::calc_fragility_schedules(
+        fragility_modes,
+        scenario_schedules,
+        failure_probs_by_comp_id_by_scenario_id,
+        rand_fn,
+        ds);
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "scenario_schedules:\n";
+      for (const auto& ss : scenario_schedules) {
+        const auto& scenario_tag = ss.first;
+        std::vector<double> years{};
+        for (const auto& t : ss.second) {
+          years.emplace_back(static_cast<double>(t) / (8760.0 * 3600.0));
+        }
+        std::cout << "- " << scenario_tag << ": " << vec_to_string<double>(years) << "\n";
+      }
+      std::cout << "failure_probs_by_comp_id_by_scenario_id\n";
+      for (const auto& fpbc_scenario : failure_probs_by_comp_id_by_scenario_id) {
+        const auto& scenario_tag = fpbc_scenario.first;
+        std::cout << "- " << scenario_tag << "\n";
+        for (const auto& fpbc : fpbc_scenario.second) {
+          const auto& comp_tag = fpbc.first;
+          std::cout
+            << "  - " << comp_tag << ": "
+            << vec_to_string<double>(fpbc.second) << "\n";
+        }
+      }
+      std::cout << "fragility_info_by_comp_tag_by_instance_by_scenario_tag:\n";
+      for (const auto& fibcs : fragility_info_by_comp_tag_by_instance_by_scenario_tag) {
+        const auto& scenario_tag = fibcs.first;
+        std::cout << "- " << scenario_tag << ":\n";
+        for (std::size_t idx{0}; idx < fibcs.second.size(); ++idx) {
+          std::cout << "  - [" << idx << "]:\n";
+          const auto& fibc = fibcs.second[idx];
+          for (const auto& fic : fibc) {
+            const auto& comp_tag = fic.first;
+            const auto& fi = fic.second;
+            std::cout << "    - " << comp_tag << " " << fi << "\n";
+          }
+        }
+      }
+    }
   }
 
   void
@@ -2958,11 +3030,42 @@ namespace ERIN
   }
 
   ScenarioResults
-  Main::run(const std::string& scenario_id, RealTimeType scenario_start_s)
+  Main::run(
+    const std::string& scenario_id,
+    RealTimeType scenario_start_s,
+    int instance_num)
   {
     // TODO: check input structure to ensure that keys are available in maps that
     //       should be there. If not, provide a good error message about what's
     //       wrong.
+    std::unordered_map<std::string, std::vector<double>> fpbc{};
+    const auto it_frag = fragility_info_by_comp_tag_by_instance_by_scenario_tag.find(scenario_id);
+    if (it_frag != fragility_info_by_comp_tag_by_instance_by_scenario_tag.end()) {
+      std::size_t inst_num = static_cast<std::size_t>(instance_num);
+      const auto& fibc_by_inst = it_frag->second;
+      if (inst_num < fibc_by_inst.size()) {
+        const auto& fibc_inst = fibc_by_inst[inst_num];
+        for (const auto& fic : fibc_inst) {
+          const auto& fi = fic.second;
+          const auto& comp_tag = fic.first;
+          const double val{fi.is_failed ? 1.0 : 0.0};
+          fpbc[comp_tag] = std::vector<double>{val};
+          if (true) {
+            std::cout
+              << "INFO: "
+              << comp_tag
+              << ((val == 1.0) ? " is failed for " : " is operational for ")
+              << scenario_id
+              << " (instance "
+              << inst_num
+              << ") at "
+              << (scenario_start_s / (8760LL * 3600LL))
+              << " years\n"
+              ;
+          }
+        }
+      }
+    }
     // The Run Algorithm
     // 0. Check if we have a valid scenario_id
     if constexpr (debug_level >= debug_level_high) {
@@ -3013,7 +3116,7 @@ namespace ERIN
       std::cout << "... network_id = " << network_id << "\n";
     }
     const auto& connections = networks[network_id];
-    const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
+    //const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = erin::network::build(
         scenario_id, network, connections, components, fpbc, rand_fn, true,
         clipped_reliability_schedule);
@@ -3125,10 +3228,9 @@ namespace ERIN
     for (const auto& s: scenarios) {
       const auto& scenario_id = s.first;
       std::vector<ScenarioResults> results{};
-      std::size_t instance_num{0};
+      int instance_num{0};
       for (const auto& start_time : scenario_schedules[scenario_id]) {
-        // TODO: add instance_num to run(..., instance_num)
-        auto result = run(scenario_id, start_time);
+        auto result = run(scenario_id, start_time, instance_num);
         ++instance_num;
         if (result.get_is_good()) {
           results.emplace_back(result);

@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <random>
 #include <string>
 #include <unordered_map>
@@ -132,6 +133,8 @@ namespace erin::fragility
     bool is_failed{false};
     // ERIN::RealTimeType repair_time_s{-1}; // values less than 0 indicate cannot repair
   };
+
+  std::ostream& operator<<(std::ostream& os, const FragilityInfo& fi);
 
   std::unordered_map<std::string, std::vector<std::unordered_map<std::string, FragilityInfo>>>
   calc_fragility_schedules(

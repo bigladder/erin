@@ -137,6 +137,24 @@ namespace erin::fragility
     return schedule;
   }
 
+  std::ostream&
+  operator<<(std::ostream& os, const FragilityInfo& fi)
+  {
+    return os << "{"
+              << ":scenario-tag " << fi.scenario_tag
+              << " "
+              << ":start-time-s " << fi.start_time_s
+              << " "
+              << ":start-time-h " << (fi.start_time_s / 3600LL)
+              << " "
+              << ":start-time-d " << (fi.start_time_s / (3600LL * 24LL))
+              << " "
+              << ":start-time-y " << (fi.start_time_s / (3600LL * 8760LL))
+              << " "
+              << ":is-failed? " << fi.is_failed
+              << "}";
+  }
+
   std::unordered_map<std::string, std::vector<std::unordered_map<std::string, FragilityInfo>>>
   calc_fragility_schedules(
     const std::unordered_map<std::string, FragilityMode> fragility_modes,
@@ -151,6 +169,14 @@ namespace erin::fragility
       const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_tag);
       std::vector<std::unordered_map<std::string, FragilityInfo>> info{};
       for (const auto& start_time_s : ss.second) {
+        if (start_time_s < 0) {
+          std::ostringstream oss{};
+          oss << "WARNING: calc_fragility_schedules(..., ...)\n"
+              << "start_time_s is negative: "
+              << start_time_s
+              << "\n";
+          throw std::runtime_error(oss.str());
+        }
         std::unordered_map<std::string, FragilityInfo> comp_frag_info{};
         for (const auto& comp_probs : fpbc) {
           const auto& comp_id = comp_probs.first;

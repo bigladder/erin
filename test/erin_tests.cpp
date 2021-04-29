@@ -1406,10 +1406,10 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
       { enw::Connection{ { pcc_id, ep::Type::Outflow, 0},
                          { load_id, ep::Type::Inflow, 0},
                          elec_id}}},
-      { emergency,
-        { enw::Connection{ { gen_id, ep::Type::Outflow, 0},
-                           { load_id, ep::Type::Inflow, 0},
-                           elec_id}}}};
+    { emergency,
+      { enw::Connection{ { gen_id, ep::Type::Outflow, 0},
+                         { load_id, ep::Type::Inflow, 0},
+                         elec_id}}}};
   // test 1: simulate with a fragility curve that never fails
   // - confirm the statistics show load always met
   std::unordered_map<std::string, double> intensities_low{
@@ -1425,16 +1425,25 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
   std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
     scenario_schedules{
       {blue_sky, {0}},
-      {class_4_hurricane, { 100*8760*3600,
-                            200*8760*3600,
-                            300*8760*3600,
-                            400*8760*3600,
-                            500*8760*3600,
-                            600*8760*3600,
-                            700*8760*3600,
-                            800*8760*3600,
-                            900*8760*3600,
-                            1000*8760*3600}}};
+      {class_4_hurricane, { 100LL  * 8760LL * 3600LL,
+                            200LL  * 8760LL * 3600LL,
+                            300LL  * 8760LL * 3600LL,
+                            400LL  * 8760LL * 3600LL,
+                            500LL  * 8760LL * 3600LL,
+                            600LL  * 8760LL * 3600LL,
+                            700LL  * 8760LL * 3600LL,
+                            800LL  * 8760LL * 3600LL,
+                            900LL  * 8760LL * 3600LL,
+                            1000LL * 8760LL * 3600LL}}};
+  if (false) {
+    std::cout << "scenario_schedules before m_low constructor\n";
+    for (const auto& ss : scenario_schedules) {
+      std::cout << "- " << ss.first << "\n";
+      for (const auto& start_time_s : ss.second) {
+        std::cout << "  - " << (start_time_s / (3600LL * 8760LL)) << " years\n";
+      }
+    }
+  }
   E::Main m_low{
     si, comps, networks, scenarios_low, {}, scenario_schedules};
   auto results_low = m_low.run(class_4_hurricane);
@@ -1444,7 +1453,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
       std::cout << "... " << pair.first << ": "
                 << E::vec_to_string<E::Datum>(pair.second) << "\n";
   }
-  EXPECT_NEAR(
+  ASSERT_NEAR(
       results_low.calc_energy_availability().at(load_id),
       1.0,
       tolerance);
@@ -1462,16 +1471,25 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
       E::Scenario{
         class_4_hurricane,
         emergency, 10, -1, 0, intensities_high, false}}};
+  if (false) {
+    std::cout << "scenario_schedules before m_high constructor\n";
+    for (const auto& ss : scenario_schedules) {
+      std::cout << "- " << ss.first << "\n";
+      for (const auto& start_time_s : ss.second) {
+        std::cout << "  - " << (start_time_s / (3600LL * 8760LL)) << " years\n";
+      }
+    }
+  }
   E::Main m_high{
     si, comps, networks, scenarios_high, {}, scenario_schedules};
   auto results_high = m_high.run(class_4_hurricane);
-  if (false) {
+  if (true) {
     std::cout << "results_high:\n";
     for (const auto& pair : results_high.get_results())
       std::cout << "... " << pair.first << ": "
                 << E::vec_to_string<E::Datum>(pair.second) << "\n";
   }
-  EXPECT_NEAR(
+  ASSERT_NEAR(
       results_high.calc_energy_availability().at(load_id),
       0.0,
       tolerance);
@@ -2177,11 +2195,11 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   std::unordered_map<std::string, ERIN::size_type>
     dists{{"immediately",0}, {"every_10_years", 1}};
   auto scenarios = r.read_scenarios(dists);
-  constexpr ::ERIN::RealTimeType blue_sky_duration
-    = 8760 * ::ERIN::rtt_seconds_per_hour;
+  constexpr ERIN::RealTimeType blue_sky_duration
+    = 8760LL * ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
-  constexpr ::ERIN::RealTimeType hurricane_duration
-    = 336 * ::ERIN::rtt_seconds_per_hour;
+  constexpr ERIN::RealTimeType hurricane_duration
+    = 336LL * ERIN::rtt_seconds_per_hour;
   constexpr int hurricane_max_occurrence = -1;
   const std::unordered_map<std::string, ::ERIN::Scenario> expected_scenarios{
     { "blue_sky",
@@ -2217,7 +2235,18 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   EXPECT_EQ(expected_scenarios, scenarios);
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
+    scenario_schedules{
+      {"blue_sky", {0LL}},
+      {"class_4_hurricane",
+       {
+         1LL * 10LL * 8760LL * 3600LL,
+       },
+      }
+    };
+  ERIN::Main m{
+    si, components, networks, scenarios,
+    reliability_schedule, scenario_schedules};
   auto out = m.run("class_4_hurricane");
   EXPECT_EQ(out.get_is_good(), true);
   std::unordered_set<std::string> expected_keys{
@@ -2229,44 +2258,44 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
       std::make_pair(
         std::string{"cluster_01_electric"},
         std::vector<::ERIN::Datum>{
-          ::ERIN::Datum{0          , 1.0, 0.0},
-          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
-          ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
+          ERIN::Datum{0LL            , 1.0, 0.0},
+          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
+          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(
         std::string{"electric_utility"},
         std::vector<::ERIN::Datum>{
-          ::ERIN::Datum{0          , 0.0, 0.0},
-          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
-          ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
+          ERIN::Datum{0LL            , 0.0, 0.0},
+          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
+          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(
         std::string{"emergency_generator"},
         std::vector<::ERIN::Datum>{
-          ::ERIN::Datum{0          , 0.0, 0.0},
-          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
-          ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
+          ERIN::Datum{0LL            , 0.0, 0.0},
+          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
+          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(
         std::string{"bus-inflow(0)"},
         std::vector<::ERIN::Datum>{
-          ::ERIN::Datum{0          , 0.0, 0.0},
-          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
-          ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
+          ERIN::Datum{0          , 0.0, 0.0},
+          ERIN::Datum{4   * 3'600, 0.0, 0.0},
+          ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(
         std::string{"bus-inflow(1)"},
         std::vector<::ERIN::Datum>{
-          ::ERIN::Datum{0          , 0.0, 0.0},
-          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
-          ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
+          ERIN::Datum{0LL            , 0.0, 0.0},
+          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
+          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
   expected_results.emplace(
       std::make_pair(
         std::string{"bus-outflow(0)"},
         std::vector<::ERIN::Datum>{
-          ::ERIN::Datum{0          , 0.0, 0.0},
-          ::ERIN::Datum{4   * 3'600, 0.0, 0.0},
-          ::ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
+          ERIN::Datum{0LL            , 0.0, 0.0},
+          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
+          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
   EXPECT_EQ(out.get_results().size(), expected_results.size());
   // out.get_results() : Map String (Vector Datum)
   for (const auto& item: out.get_results()) {
@@ -2275,18 +2304,16 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
     ASSERT_TRUE(it != expected_results.end());
     const auto& a_results = item.second;
     const auto& e_results = it->second;
-    const auto a_size = a_results.size();
-    const auto e_size = e_results.size();
-    ASSERT_EQ(a_size, e_size)
+    ASSERT_EQ(a_results.size(), e_results.size())
       << "tag = " << tag << "\n"
       << "a_results = " << ::ERIN::vec_to_string<::ERIN::Datum>(a_results)
       << "\n"
       << "e_results = " << ::ERIN::vec_to_string<::ERIN::Datum>(e_results)
       << "\n";
-    for (std::vector<::ERIN::Datum>::size_type i{0}; i < a_size; ++i) {
+    for (std::size_t i{0}; i < a_results.size(); ++i) {
       const auto& a = a_results.at(i);
       const auto& e = e_results.at(i);
-      EXPECT_EQ(a, e)
+      ASSERT_EQ(a, e)
         << "tag = " << tag << "\n"
         << "i = " << i << "\n"
         << "a = " << a << "\n"

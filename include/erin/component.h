@@ -11,6 +11,7 @@
 #include "erin/stream.h"
 #include "adevs.h"
 #include <memory>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>

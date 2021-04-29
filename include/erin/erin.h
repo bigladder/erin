@@ -503,7 +503,9 @@ namespace ERIN
             scenario_schedules = {}
           );
       ScenarioResults run(
-          const std::string& scenario_id, RealTimeType scenario_start_s = 0);
+          const std::string& scenario_id,
+          RealTimeType scenario_start_s = 0,
+          int instance_num = 0);
       AllResults run_all();
       RealTimeType max_time_for_scenario(const std::string& scenario_id);
       [[nodiscard]] const SimulationInfo& get_sim_info() const {
@@ -521,6 +523,8 @@ namespace ERIN
         get_reliability_schedule() const {
           return reliability_schedule;
         }
+      [[nodiscard]] RealTimeType time_of_first_occurrence_of_scenario(
+        const std::string& scenario_tag);
 
     private:
       SimulationInfo sim_info;

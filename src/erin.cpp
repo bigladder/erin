@@ -3039,34 +3039,12 @@ namespace ERIN
     //       should be there. If not, provide a good error message about what's
     //       wrong.
     namespace EF = erin::fragility;
-    std::unordered_map<std::string, std::vector<double>> fpbc{};
     std::unordered_map<std::string, EF::FragilityInfo> fibc{};
     const auto it_frag = fragility_info_by_comp_tag_by_instance_by_scenario_tag.find(scenario_id);
     if (it_frag != fragility_info_by_comp_tag_by_instance_by_scenario_tag.end()) {
-      std::size_t inst_num = static_cast<std::size_t>(instance_num);
-      const auto& fibc_by_inst = it_frag->second;
-      if (inst_num < fibc_by_inst.size()) {
-        const auto& fibc_inst = fibc_by_inst[inst_num];
-        fibc = fibc_by_inst[inst_num];
-        for (const auto& fic : fibc_inst) {
-          const auto& fi = fic.second;
-          const auto& comp_tag = fic.first;
-          const double val{fi.is_failed ? 1.0 : 0.0};
-          fpbc[comp_tag] = std::vector<double>{val};
-          if (true) {
-            std::cout
-              << "INFO: "
-              << comp_tag
-              << ((val == 1.0) ? " is failed for " : " is operational for ")
-              << scenario_id
-              << " (instance "
-              << inst_num
-              << ") at "
-              << (scenario_start_s / (8760LL * 3600LL))
-              << " years\n"
-              ;
-          }
-        }
+      auto inst_num = static_cast<std::size_t>(instance_num);
+      if (inst_num < it_frag->second.size()) {
+        fibc = it_frag->second[inst_num];
       }
     }
     // The Run Algorithm
@@ -3119,7 +3097,6 @@ namespace ERIN
       std::cout << "... network_id = " << network_id << "\n";
     }
     const auto& connections = networks[network_id];
-    //const auto& fpbc = failure_probs_by_comp_id_by_scenario_id.at(scenario_id);
     auto elements = erin::network::build_v2(
         scenario_id, network, connections, components, fibc, true,
         clipped_reliability_schedule);

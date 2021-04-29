@@ -133,6 +133,51 @@ namespace erin::network
     comps_added.emplace(comp_id);
   }
 
+  void add_if_not_added_v2(
+      const std::string& comp_tag,
+      const std::string& scenario_tag,
+      const std::unordered_map<
+        std::string,
+        std::unique_ptr<ERIN::Component>>& components,
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
+      std::unordered_set<std::string>& comps_added,
+      std::unordered_map<
+        std::string,
+        ERIN::PortsAndElements>& ports_and_elements,
+      const std::unordered_map<std::string, erin::fragility::FragilityInfo>&
+        fragility_info_by_comp_tag,
+      const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
+        reliability_schedule)
+  {
+    auto comp_it = comps_added.find(comp_tag);
+    if (comp_it != comps_added.end()) {
+      return;
+    }
+    auto it = components.find(comp_tag);
+    if (it == components.end()) {
+      std::ostringstream oss;
+      oss << "component tag \"" << comp_tag
+          << "\" not found in components map";
+      throw std::runtime_error(oss.str());
+    }
+    const auto& comp = it->second;
+    bool is_failed{false};
+    auto fi_it = fragility_info_by_comp_tag.find(comp_tag);
+    if (fi_it != fragility_info_by_comp_tag.end()) {
+      is_failed = fi_it->second.is_failed;
+    }
+    std::vector<ERIN::TimeState> rel_sch{};
+    auto reliability_it = reliability_schedule.find(comp_tag);
+    if (reliability_it != reliability_schedule.end()) {
+      rel_sch = reliability_it->second;
+    }
+    // TODO: augment rel_sch with is_failed status
+    // TODO: augment rel_sch with fragility repair curve
+    auto pe = comp->add_to_network(network, scenario_tag, is_failed, rel_sch);
+    ports_and_elements[comp_tag] = pe;
+    comps_added.emplace(comp_tag);
+  }
+
   void
   couple_source_to_sink(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -308,6 +353,70 @@ namespace erin::network
       add_if_not_added(
           comp2_id, scenario_id, components, network, comps_added, pes,
           failure_probs_by_comp_id, rand_fn, reliability_schedule);
+      connect(
+          network,
+          pes.at(comp1_id).port_map,
+          port1_type,
+          port1_num,
+          pes.at(comp2_id).port_map,
+          port2_type,
+          port2_num,
+          two_way,
+          stream);
+    }
+    for (const auto& pair: pes) {
+      auto& es = pair.second.elements_added;
+      for (auto e: es) {
+        elements.emplace(e);
+      }
+    }
+    return std::vector<::ERIN::FlowElement*>(elements.begin(), elements.end());
+  }
+
+  std::vector<ERIN::FlowElement*>
+  build_v2(
+      const std::string& scenario_tag,
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
+      const std::vector<Connection>& connections,
+      const std::unordered_map<
+        std::string, std::unique_ptr<ERIN::Component>>& components,
+      const std::unordered_map<
+        std::string, erin::fragility::FragilityInfo>& failure_info_by_comp_tag,
+      bool two_way,
+      const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
+        reliability_schedule)
+  {
+    namespace E = ERIN;
+    namespace EF = erin::fragility;
+    if constexpr (E::debug_level >= E::debug_level_high) {
+      std::cout << "entering build(...)\n";
+      std::cout << "... failure_info_by_comp_tag = "
+                << E::map_to_string<EF::FragilityInfo>(failure_info_by_comp_tag)
+                << "\n";
+    }
+    std::unordered_set<E::FlowElement*> elements{};
+    std::unordered_set<std::string> comps_added{};
+    std::unordered_map<std::string, E::PortsAndElements> pes{};
+    for (const auto& connection: connections) {
+      if constexpr (E::debug_level >= E::debug_level_high) {
+        std::cout << "... processing connection: " << connection << "\n";
+      }
+      const auto& comp1_id = connection.first.component_id;
+      const auto& port1_type = connection.first.port_type;
+      const auto& port1_num = connection.first.port_number;
+      const auto& comp2_id = connection.second.component_id;
+      const auto& port2_type = connection.second.port_type;
+      const auto& port2_num = connection.second.port_number;
+      const auto& stream = connection.stream;
+      if constexpr (E::debug_level >= E::debug_level_high) {
+        std::cout << "... connection: " << connection << "\n";
+      }
+      add_if_not_added_v2(
+          comp1_id, scenario_tag, components, network, comps_added, pes,
+          failure_info_by_comp_tag, reliability_schedule);
+      add_if_not_added_v2(
+          comp2_id, scenario_tag, components, network, comps_added, pes,
+          failure_info_by_comp_tag, reliability_schedule);
       connect(
           network,
           pes.at(comp1_id).port_map,

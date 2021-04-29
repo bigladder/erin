@@ -15,6 +15,7 @@
 #include "erin/network.h"
 #include "erin/port.h"
 #include "erin/reliability.h"
+#include "erin/scenario_stats.h"
 #include "erin/stream.h"
 #include "erin/type.h"
 #include <exception>
@@ -31,24 +32,6 @@
 
 namespace ERIN
 {
-  ////////////////////////////////////////////////////////////
-  // ScenarioStats
-  struct ScenarioStats
-  {
-    RealTimeType uptime;
-    RealTimeType downtime;
-    RealTimeType max_downtime;
-    FlowValueType load_not_served;
-    FlowValueType total_energy;
-
-    ScenarioStats& operator+=(const ScenarioStats& other);
-  };
-
-  ScenarioStats operator+(const ScenarioStats& a, const ScenarioStats& b);
-  bool operator==(const ScenarioStats& a, const ScenarioStats& b);
-  bool operator!=(const ScenarioStats& a, const ScenarioStats& b);
-  std::ostream& operator<<(std::ostream& os, const ScenarioStats& s);
-
   ////////////////////////////////////////////////////////////
   // ScenarioResults
   class ScenarioResults

@@ -20,6 +20,7 @@ configure_file(
 set(sources
   ${PROJECT_SOURCE_DIR}/src/erin.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_csv.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_converter.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_flow_limits.cpp
@@ -36,6 +37,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_generics.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_graphviz.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_input_reader.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_network.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_port.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_random.cpp
@@ -67,6 +69,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
   ${PROJECT_SOURCE_DIR}/include/erin/fragility.h
   ${PROJECT_SOURCE_DIR}/include/erin/graphviz.h
+  ${PROJECT_SOURCE_DIR}/include/erin/input_reader.h
   ${PROJECT_SOURCE_DIR}/include/erin/network.h
   ${PROJECT_SOURCE_DIR}/include/erin/port.h
   ${PROJECT_SOURCE_DIR}/include/erin/random.h
@@ -135,21 +138,22 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
 endif()
 
 add_executable(erin_distribution_test
-  cli_test_dist.cpp
+  "${PROJECT_SOURCE_DIR}/src/cli_test_dist.cpp"
+  "${PROJECT_SOURCE_DIR}/src/erin_csv.cpp"
+  "${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp"
   "${PROJECT_SOURCE_DIR}/src/erin_type.cpp"
   "${PROJECT_SOURCE_DIR}/src/erin_utils.cpp"
-  "${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp"
+  "${PROJECT_SOURCE_DIR}/src/debug_utils.h"
+  "${PROJECT_SOURCE_DIR}/src/erin_csv.h"
+  "${PROJECT_SOURCE_DIR}/include/erin/distribution.h"
   "${PROJECT_SOURCE_DIR}/include/erin/type.h"
   "${PROJECT_SOURCE_DIR}/include/erin/utils.h"
-  "${PROJECT_SOURCE_DIR}/include/erin/distribution.h"
   "${PROJECT_SOURCE_DIR}/include/erin/version.h"
-  debug_utils.h
-  erin_csv.h
   )
 target_include_directories(erin_distribution_test
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
-add_executable(erin_csv_test erin_csv.cpp erin_csv.h)
+add_executable(erin_csv_test erin_csv_tester.cpp erin_csv.cpp erin_csv.h)
 target_include_directories(erin_csv_test
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
 add_executable(erin_single cli.cpp ${sources} ${public_headers} ${private_headers})

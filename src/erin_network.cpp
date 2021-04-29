@@ -176,7 +176,7 @@ namespace erin::network
     rel_sch = EF::modify_schedule_for_fragility(
       rel_sch, fi.is_failed, false, 0, duration_s);
     // TODO: augment rel_sch with fragility repair curve
-    auto pe = comp->add_to_network(network, scenario_tag, fi.is_failed, rel_sch);
+    auto pe = comp->add_to_network(network, scenario_tag, false, rel_sch);
     ports_and_elements[comp_tag] = pe;
     comps_added.emplace(comp_tag);
   }

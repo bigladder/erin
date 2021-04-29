@@ -9,6 +9,142 @@
 
 namespace ERIN
 {
+  std::unordered_map<std::string, std::vector<RealTimeType>>
+  calc_scenario_schedule(
+      const RealTimeType max_time_s, 
+      const std::unordered_map<std::string, Scenario>& scenarios,
+      const erin::distribution::DistributionSystem& ds,
+      const std::function<double()>& rand_fn)
+  {
+    std::unordered_map<std::string, std::vector<RealTimeType>> scenario_sch{};
+    if (scenarios.size() == 0) {
+      return scenario_sch;
+    }
+    for (const auto& s : scenarios) {
+      const auto& scenario_id = s.first;
+      const auto& scenario = s.second;
+      const auto dist_id = scenario.get_occurrence_distribution_id();
+      const auto max_occurrences = scenario.get_max_occurrences();
+      RealTimeType t{0};
+      int num_occurrences{0};
+      std::vector<RealTimeType> start_times{};
+      while (true) {
+        t += ds.next_time_advance(dist_id, rand_fn());
+        if (t <= max_time_s) {
+          num_occurrences += 1;
+          if ((max_occurrences != -1) && (num_occurrences > max_occurrences)) {
+            break;
+          }
+          start_times.emplace_back(t);
+        } else {
+          break;
+        }
+      }
+      scenario_sch.emplace(scenario_id, std::move(start_times));
+    }
+    return scenario_sch;
+  }
+
+  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>
+  generate_failure_fragilities(
+    const std::unordered_map<std::string, Scenario>& scenarios,
+    const std::unordered_map<std::string, std::unique_ptr<Component>>& components)
+  {
+    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>> out{};
+    for (const auto& s: scenarios) {
+      const auto& intensities = s.second.get_intensities();
+      std::unordered_map<std::string, std::vector<double>> m{};
+      if (intensities.size() > 0) {
+        for (const auto& c_pair: components) {
+          const auto& c = c_pair.second;
+          if (!(c->is_fragile())) {
+            continue;
+          }
+          auto probs = c->apply_intensities(intensities);
+          // Sort with the highest probability first; that way if a 1.0 is
+          // present, we can end early...
+          std::sort(
+              probs.begin(), probs.end(),
+              [](double a, double b){ return a > b; });
+          if (probs.size() == 0) {
+            // no need to add an empty vector of probabilities
+            // note: probabilitie of 0.0 (i.e., never fail) are not added in
+            // apply_intensities
+            continue;
+          }
+          m[c_pair.first] = probs;
+        }
+      }
+      out[s.first] = m;
+    }
+    return out;
+  }
+
+  InputReader::InputReader(toml::value v):
+      sim_info{},
+      components{},
+      networks{},
+      scenarios{},
+      reliability_schedule{},
+      scenario_schedules{},
+      fragility_info_by_comp_tag_by_instance_by_scenario_tag{}
+  {
+    namespace EF = erin::fragility;
+    TomlInputReader reader{v};
+    sim_info = reader.read_simulation_info();
+    std::unordered_map<std::string, std::vector<std::unordered_map<std::string, EF::FragilityInfo>>>
+      fragility_info_by_comp_tag_by_instance_by_scenario_tag{};
+    // Read data into private class fields
+    const auto loads_by_id = reader.read_loads();
+    const auto fragility_curves = reader.read_fragility_curve_data();
+    erin::distribution::DistributionSystem ds{};
+    // dists is map<string, size_type>
+    auto dists = reader.read_distributions(ds);
+    auto fragility_modes = reader.read_fragility_modes(dists, fragility_curves);
+    ReliabilityCoordinator rc{};
+    // fms is map<string, size_type>
+    auto fms = reader.read_failure_modes(dists, rc);
+    // components needs to be modified to add component_id as size_type?
+    components = reader.read_components(loads_by_id, fragility_curves, fms, rc);
+    networks = reader.read_networks();
+    scenarios = reader.read_scenarios(dists);
+    const auto max_time_s{sim_info.get_max_time_in_seconds()};
+    auto rand_fn = sim_info.make_random_function();
+    reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
+        rand_fn, ds, max_time_s);
+    scenario_schedules = calc_scenario_schedule(
+        max_time_s, scenarios, ds, rand_fn);
+    const auto failure_probs_by_comp_id_by_scenario_id = generate_failure_fragilities(
+      scenarios, components);
+    fragility_info_by_comp_tag_by_instance_by_scenario_tag =
+      erin::fragility::calc_fragility_schedules(
+        fragility_modes,
+        scenario_schedules,
+        failure_probs_by_comp_id_by_scenario_id,
+        rand_fn,
+        ds);
+  }
+
+  InputReader::InputReader(const std::string& path):
+    InputReader(toml::parse(path))
+  {
+  }
+
+  InputReader::InputReader(std::istream& in):
+    InputReader(toml::parse(in, "<input from istream>"))
+  {
+  }
+
+  std::unordered_map<std::string, std::unique_ptr<Component>>
+  InputReader::get_components() const
+  {
+    std::unordered_map<std::string, std::unique_ptr<Component>> out{};
+    for (const auto& tag_comp : components) {
+      out[tag_comp.first] = tag_comp.second->clone();
+    }
+    return out;
+  }
+
   ////////////////////////////////////////////////////////////
   // TomlInputReader
   TomlInputReader::TomlInputReader(toml::value data_):

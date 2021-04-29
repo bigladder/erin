@@ -242,13 +242,6 @@ namespace ERIN
     get_requested_flows_from_results_for_component(
         const std::unordered_map<std::string, std::vector<Datum>>& results,
         const std::string& comp_id);
-
-  std::unordered_map<std::string, std::vector<RealTimeType>>
-  calc_scenario_schedule(
-      const RealTimeType max_time_s,
-      const std::unordered_map<std::string, Scenario>& scenarios,
-      const erin::distribution::DistributionSystem& ds,
-      const std::function<double()>& rand_fn);
 }
 
 #endif // ERIN_ERIN_H

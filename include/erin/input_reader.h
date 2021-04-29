@@ -19,6 +19,70 @@
 
 namespace ERIN
 {
+  std::unordered_map<std::string, std::vector<RealTimeType>>
+  calc_scenario_schedule(
+      const RealTimeType max_time_s,
+      const std::unordered_map<std::string, Scenario>& scenarios,
+      const erin::distribution::DistributionSystem& ds,
+      const std::function<double()>& rand_fn);
+
+  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>
+  generate_failure_fragilities(
+    const std::unordered_map<std::string, Scenario>& scenarios,
+    const std::unordered_map<std::string, std::unique_ptr<Component>>& components);
+
+  class InputReader
+  {
+    public:
+      explicit InputReader(toml::value v);
+      explicit InputReader(const std::string& path);
+      explicit InputReader(std::istream& in);
+
+      [[nodiscard]]
+      SimulationInfo
+      get_simulation_info() const {
+        return sim_info;
+      };
+      [[nodiscard]]
+      std::unordered_map<std::string, std::unique_ptr<Component>>
+      get_components() const;
+      [[nodiscard]]
+      std::unordered_map<std::string, std::vector<erin::network::Connection>> 
+      get_networks() const {
+        return networks;
+      };
+      [[nodiscard]]
+      std::unordered_map<std::string, Scenario>
+      get_scenarios() const {
+        return scenarios;
+      };
+      [[nodiscard]]
+      std::unordered_map<std::string, std::vector<TimeState>>
+      get_reliability_schedule() const {
+        return reliability_schedule;
+      };
+      [[nodiscard]]
+      std::unordered_map<std::string, std::vector<RealTimeType>>
+      get_scenario_schedules() const {
+        return scenario_schedules;
+      };
+      [[nodiscard]]
+      std::unordered_map<std::string, std::vector<std::unordered_map<std::string, erin::fragility::FragilityInfo>>>
+      get_fragility_info_by_comp_by_inst_by_scenario() const {
+        return fragility_info_by_comp_tag_by_instance_by_scenario_tag;
+      };
+    
+    private:
+      SimulationInfo sim_info;
+      std::unordered_map<std::string, std::unique_ptr<Component>> components;
+      std::unordered_map<std::string, std::vector<erin::network::Connection>> networks;
+      std::unordered_map<std::string, Scenario> scenarios;
+      std::unordered_map<std::string, std::vector<TimeState>> reliability_schedule;
+      std::unordered_map<std::string, std::vector<RealTimeType>> scenario_schedules;
+      std::unordered_map<std::string, std::vector<std::unordered_map<std::string, erin::fragility::FragilityInfo>>>
+        fragility_info_by_comp_tag_by_instance_by_scenario_tag;
+  };
+
   struct StreamIDs
   {
     std::string input_stream_id;

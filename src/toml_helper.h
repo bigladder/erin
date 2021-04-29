@@ -16,26 +16,9 @@
 
 namespace toml_helper
 {
-  std::optional<std::string>
-  confirm_key_present(const toml::table& tt, const std::vector<std::string>& keys)
-  {
-    std::string field_read{};
-    auto tt_end = tt.end();
-    for (const auto& k: keys) {
-      auto it = tt.find(k);
-      if (it != tt_end) {
-        return std::optional<std::string>(k);
-      }
-    }
-    return std::nullopt;
-  }
+  std::optional<std::string> confirm_key_present(const toml::table& tt, const std::vector<std::string>& keys);
 
-  bool
-  confirm_key_is_present(const toml::table& tt, const std::string& key)
-  {
-    return (tt.find(key) != tt.end());
-  }
-
+  bool confirm_key_is_present(const toml::table& tt, const std::string& key);
 
   template <class T>
   std::optional<T>
@@ -86,64 +69,21 @@ namespace toml_helper
     return out.value_or(default_value);
   }
 
-  std::optional<toml::value>
-  read_if_present(const toml::table& tt, const std::string& key)
-  {
-    const auto it = tt.find(key);
-    if (it == tt.end()) {
-      return std::nullopt;
-    }
-    return std::optional<toml::value>(it->second);
-  }
+  std::optional<toml::value> read_if_present(const toml::table& tt, const std::string& key);
 
-  double
-  read_number_from_table_as_double(
+  double read_number_from_table_as_double(
       const toml::table& tt,
       const std::string& key,
-      double default_value)
-  {
-    const auto optval = read_if_present(tt, key);
-    if (!optval.has_value()) {
-      return default_value;
-    }
-    const auto vx = *optval;
-    double val = vx.is_floating() ?
-      vx.as_floating(std::nothrow) :
-      static_cast<double>(vx.as_integer());
-    return val;
-  }
+      double default_value);
 
-  ERIN::RealTimeType
-  read_value_as_int(const toml::value& v)
-  {
-    return v.is_integer() ?
-      static_cast<ERIN::RealTimeType>(v.as_integer(std::nothrow)) :
-      static_cast<ERIN::RealTimeType>(v.as_floating());
-  }
+  ERIN::RealTimeType read_value_as_int(const toml::value& v);
 
-  double
-  read_value_as_double(const toml::value& v)
-  {
-    return v.is_floating() ?
-      v.as_floating(std::nothrow) : static_cast<double>(v.as_integer());
-  }
+  double read_value_as_double(const toml::value& v);
 
-  ERIN::RealTimeType
-  read_number_from_table_as_int(
+  ERIN::RealTimeType read_number_from_table_as_int(
       const toml::table& tt,
       const std::string& key,
-      ERIN::RealTimeType default_value)
-  {
-    namespace e = ERIN;
-    const auto optval = read_if_present(tt, key);
-    if (!optval.has_value()) {
-      return default_value;
-    }
-    const auto vx = *optval;
-    return vx.is_integer() ?
-      static_cast<e::RealTimeType>(vx.as_integer(std::nothrow)) :
-      static_cast<e::RealTimeType>(vx.as_floating());
-  }
+      ERIN::RealTimeType default_value);
 }
 
 #endif // TOML_HELPER_H

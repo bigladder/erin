@@ -81,14 +81,12 @@ namespace ERIN
   ////////////////////////////////////////////////////////////
   // TomlInputReader
   TomlInputReader::TomlInputReader(toml::value data_):
-    InputReader(),
     data{std::move(data_)}
   {
     check_top_level_entries();
   }
 
   TomlInputReader::TomlInputReader(const std::string& path):
-    InputReader(),
     data{}
   {
     data = toml::parse(path);
@@ -96,7 +94,6 @@ namespace ERIN
   }
 
   TomlInputReader::TomlInputReader(std::istream& in):
-    InputReader(),
     data{}
   {
     data = toml::parse(in, "<input from istream>");

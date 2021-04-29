@@ -40,6 +40,7 @@ set(sources
   ${PROJECT_SOURCE_DIR}/src/erin_port.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_random.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_reliability.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_scenario.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_scenario_stats.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_scenario_results.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_stream.cpp
@@ -70,6 +71,7 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/port.h
   ${PROJECT_SOURCE_DIR}/include/erin/random.h
   ${PROJECT_SOURCE_DIR}/include/erin/reliability.h
+  ${PROJECT_SOURCE_DIR}/include/erin/scenario.h
   ${PROJECT_SOURCE_DIR}/include/erin/scenario_stats.h
   ${PROJECT_SOURCE_DIR}/include/erin/scenario_results.h
   ${PROJECT_SOURCE_DIR}/include/erin/stream.h

@@ -562,7 +562,7 @@ namespace ERIN
   {
   }
 
-  Main::Main(InputReader reader):
+  Main::Main(const InputReader& reader):
     Main(
       reader.get_simulation_info(),
       reader.get_components(),

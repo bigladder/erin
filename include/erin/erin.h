@@ -137,7 +137,7 @@ namespace ERIN
   {
     public:
       explicit Main(const std::string& input_toml);
-      explicit Main(InputReader reader);
+      explicit Main(const InputReader& reader);
       Main(
           const SimulationInfo& si,
           const std::unordered_map<

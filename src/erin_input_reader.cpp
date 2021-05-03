@@ -812,8 +812,8 @@ namespace ERIN
       const auto& tag = entry.first;
       if (valid_entries.find(tag) == valid_entries.end()) {
         std::vector<std::string> valid_entries_vec{};
-        for (const auto& entry : valid_entries) {
-          valid_entries_vec.emplace_back(entry);
+        for (const auto& an_entry : valid_entries) {
+          valid_entries_vec.emplace_back(an_entry);
         }
         std::sort(valid_entries_vec.begin(), valid_entries_vec.end());
         std::ostringstream oss{};

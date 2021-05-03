@@ -21,6 +21,8 @@ type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "b1_electricity_blue_sky"
 ############################################################
+# Fragility Modes
+############################################################
 # Fragility Curves
 ############################################################
 # Distributions

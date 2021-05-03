@@ -98,12 +98,14 @@ namespace ERIN
     erin::distribution::DistributionSystem ds{};
     // dists is map<string, size_type>
     auto dists = reader.read_distributions(ds);
+    // TODO: ensure that fragility modes reference correct fragility curves and distributions
     auto fragility_modes = reader.read_fragility_modes(dists, fragility_curves);
     ReliabilityCoordinator rc{};
     // fms is map<string, size_type>
     auto fms = reader.read_failure_modes(dists, rc);
     // components needs to be modified to add component_id as size_type?
-    components = reader.read_components(loads_by_id, fragility_curves, fms, rc);
+    components = reader.read_components(
+      loads_by_id, fragility_curves, fragility_modes, fms, rc);
     networks = reader.read_networks();
     scenarios = reader.read_scenarios(dists);
     const auto max_time_s{sim_info.get_max_time_in_seconds()};
@@ -571,8 +573,10 @@ namespace ERIN
   TomlInputReader::read_components(
       const std::unordered_map<std::string, std::vector<LoadItem>>& loads_by_id,
       const std::unordered_map<std::string, erin::fragility::FragilityCurve>&
-        fragilities,
-      const std::unordered_map<std::string, size_type>& fms,
+        fragility_curves,
+      const std::unordered_map<std::string, erin::fragility::FragilityMode>&
+        fragility_modes,
+      const std::unordered_map<std::string, size_type>& failure_modes,
       ReliabilityCoordinator& rc)
   {
     namespace ef = erin::fragility;
@@ -591,7 +595,8 @@ namespace ERIN
       const auto& input_stream_id = stream_ids.input_stream_id;
       const auto& output_stream_id = stream_ids.output_stream_id;
       const auto& lossflow_stream_id = stream_ids.lossflow_stream_id;
-      auto frags = read_component_fragilities(tt, comp_id, fragilities);
+      auto frags = read_component_fragilities(
+        tt, comp_id, fragility_curves, fragility_modes);
       const auto& failure_mode_tags = toml::find_or<std::vector<std::string>>(
           t, "failure_modes", std::vector<std::string>{});
       size_type comp_numeric_id{0};
@@ -599,8 +604,8 @@ namespace ERIN
         comp_numeric_id = rc.register_component(comp_id);
       }
       for (const auto& fm_tag : failure_mode_tags) {
-        auto fm_it = fms.find(fm_tag);
-        if (fm_it == fms.end()) {
+        auto fm_it = failure_modes.find(fm_tag);
+        if (fm_it == failure_modes.end()) {
           std::ostringstream oss{};
           oss << "unable to find failure mode with tag `"
               << fm_tag << "`. Is it defined in the input file?";
@@ -718,6 +723,7 @@ namespace ERIN
         loads_by_id,
         {},
         {},
+        {},
         rc);
   }
 
@@ -792,7 +798,6 @@ namespace ERIN
       "simulation_info",
       "loads",
       "components",
-      "fragility", // TODO: remove
       "fragility_mode",
       "fragility_curve",
       "dist",
@@ -882,30 +887,46 @@ namespace ERIN
     return StreamIDs{input_stream_id, output_stream_id, lossflow_stream_id};
   }
 
+  // TODO: change to read_component_fragility_modes
+  // TODO: change return value to be erin::fragility::FragilityMode
   fragility_map
   TomlInputReader::read_component_fragilities(
       const toml::table& tt,
       const std::string& comp_id,
       const std::unordered_map<
         std::string,
-        erin::fragility::FragilityCurve>& fragilities) const
+        erin::fragility::FragilityCurve>& fragility_curves,
+      const std::unordered_map<
+        std::string,
+        erin::fragility::FragilityMode>& fragility_modes) const
   {
     namespace ef = erin::fragility;
     std::string field_read{};
-    std::vector<std::string> fragility_ids =
+    std::vector<std::string> fragility_mode_ids =
       toml_helper::read_optional_table_field<std::vector<std::string>>(
-          tt, {"fragilities"}, std::vector<std::string>(0), field_read);
-    fragility_map frags;
-    for (const auto& fid : fragility_ids) {
-      auto f_it = fragilities.find(fid);
-      if (f_it == fragilities.end()) {
-        std::ostringstream oss;
-        oss << "component '" << comp_id << "' specified fragility '"
-          << fid << "' but that fragility doesn't appear in the"
-          << "fragility curve map.";
+          tt, {"fragility_modes"}, std::vector<std::string>(0), field_read);
+    fragility_map frags{};
+    for (const auto& fm_id : fragility_mode_ids) {
+      auto fm_it = fragility_modes.find(fm_id);
+      if (fm_it == fragility_modes.end()) {
+        std::ostringstream oss{};
+        oss << "component '" << comp_id << "' specified fragility mode '"
+          << fm_id << "' but that fragility mode isn't declared "
+          << "in the input file. Please check your input file.";
         throw std::runtime_error(oss.str());
       }
-      const auto& fc = (*f_it).second;
+      const auto& fm = (*fm_it).second;
+      auto fc_it = fragility_curves.find(fm.fragility_curve_tag);
+      if (fc_it == fragility_curves.end()) {
+        std::ostringstream oss{};
+        oss << "fragility mode '" << fm_id
+          << "' specified fragility_curve '"
+          << fm.fragility_curve_tag
+          << "' but that fragility curve isn't declared in the input file. "
+          << "Please check your input file.";
+        throw std::runtime_error(oss.str());
+      }
+      const auto& fc = (*fc_it).second;
       auto it = frags.find(fc.vulnerable_to);
       if (it == frags.end()) {
         std::vector<std::unique_ptr<ef::Curve>> cs;
@@ -917,9 +938,9 @@ namespace ERIN
       }
     }
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "comp: " << comp_id << ".fragilities = [";
+      std::cout << "comp: " << comp_id << ".fragility_modes = [";
       bool first{true};
-      for (const auto& f: fragility_ids) {
+      for (const auto& fm_id: fragility_mode_ids) {
         if (first) {
           std::cout << "[";
           first = false;
@@ -927,7 +948,7 @@ namespace ERIN
         else {
           std::cout << ", ";
         }
-        std::cout << f;
+        std::cout << fm_id;
       }
       std::cout << "]\n";
     }
@@ -944,7 +965,7 @@ namespace ERIN
     // TODO: change field read from "fragility" to "fragility_curve"
     const auto& tt = toml_helper::read_optional_table_field<toml::table>(
         toml::get<toml::table>(data),
-        {"fragility", "fragility_curve"}, // TODO: remove "fragility"
+        {"fragility_curve"},
         toml::table{},
         field_read);
     if (tt.empty()) {
@@ -959,7 +980,7 @@ namespace ERIN
           data_table, {"type"}, field_read);
       }
       catch (std::out_of_range&) {
-        std::ostringstream oss;
+        std::ostringstream oss{};
         oss << "fragility curve '" << curve_id << "' does not "
             << "declare its 'type'\n";
         throw std::runtime_error(oss.str());

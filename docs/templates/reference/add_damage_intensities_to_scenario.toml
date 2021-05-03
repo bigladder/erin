@@ -21,6 +21,8 @@ type = "load"
 inflow = "electricity"
 loads_by_scenario.s1 = "b1_electricity_s1"
 ############################################################
+# Fragility Modes
+############################################################
 # Fragility Curves
 ############################################################
 # Distributions

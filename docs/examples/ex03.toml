@@ -14,7 +14,7 @@ csv_file = "ex03.csv"
 [components.electric_utility]
 type = "source"
 outflow = "electricity"
-fragilities = ["highly_vulnerable_to_wind"]
+fragility_modes = ["highly_vulnerable_to_wind"]
 max_outflow = 10.0
 [components.cluster_01_electric]
 type = "load"
@@ -23,11 +23,11 @@ loads_by_scenario.blue_sky = "building_electrical"
 loads_by_scenario.class_1_hurricane = "building_electrical"
 loads_by_scenario.class_4_hurricane = "building_electrical"
 loads_by_scenario.class_5_hurricane = "building_electrical"
-fragilities = ["somewhat_vulnerable_to_flooding"]
+fragility_modes = ["somewhat_vulnerable_to_flooding"]
 [components.emergency_generator]
 type = "source"
 outflow = "electricity"
-fragilities = ["somewhat_vulnerable_to_flooding"]
+fragility_modes = ["somewhat_vulnerable_to_flooding"]
 [components.bus]
 type = "muxer"
 flow = "electricity"
@@ -42,15 +42,21 @@ num_outflows = 1
 # switches or changes in load requests are used to drop loads (or simulate
 # their dropping).
 dispatch_strategy = "in_order"
-fragilities = ["highly_vulnerable_to_wind", "somewhat_vulnerable_to_flooding"]
+fragility_modes = ["highly_vulnerable_to_wind", "somewhat_vulnerable_to_flooding"]
+############################################################
+# Fragility Modes
+[fragility_mode.somewhat_vulnerable_to_flooding]
+fragility_curve = "somewhat_vulnerable_to_flooding_curve"
+[fragility_mode.highly_vulnerable_to_wind]
+fragility_curve = "highly_vulnerable_to_wind_curve"
 ############################################################
 # Fragility Curves
-[fragility.somewhat_vulnerable_to_flooding]
+[fragility_curve.somewhat_vulnerable_to_flooding_curve]
 vulnerable_to = "inundation_depth_ft"
 type = "linear"
 lower_bound = 6.0
 upper_bound = 14.0
-[fragility.highly_vulnerable_to_wind]
+[fragility_curve.highly_vulnerable_to_wind_curve]
 vulnerable_to = "wind_speed_mph"
 type = "linear"
 lower_bound = 80.0

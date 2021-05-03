@@ -39,6 +39,8 @@ stream = "electricity"
 type = "pass_through"
 stream = "electricity"
 ############################################################
+# Fragility Modes
+############################################################
 # Fragility Curves
 ############################################################
 # Distributions

@@ -377,12 +377,12 @@ TEST(ErinBasicsTest, CanReadFragilityCurvesFromToml)
   std::stringstream ss{};
   ss << "############################################################\n"
         "# Fragility Curves\n"
-        "[fragility.somewhat_vulnerable_to_flooding]\n"
+        "[fragility_curve.somewhat_vulnerable_to_flooding]\n"
         "vulnerable_to = \"inundation_depth_ft\"\n"
         "type = \"linear\"\n"
         "lower_bound = 6.0\n"
         "upper_bound = 14.0\n"
-        "[fragility.highly_vulnerable_to_wind]\n"
+        "[fragility_curve.highly_vulnerable_to_wind]\n"
         "vulnerable_to = \"wind_speed_mph\"\n"
         "type = \"linear\"\n"
         "lower_bound = 80.0\n"
@@ -1296,7 +1296,7 @@ TEST(ErinBasicsTest, FragilityCurves)
 {
   const double lb{120.0};
   const double ub{180.0};
-  ::erin::fragility::Linear f{lb, ub};
+  erin::fragility::Linear f{lb, ub};
   EXPECT_EQ(0.0, f.apply(lb - 10.0));
   EXPECT_EQ(1.0, f.apply(ub + 10.0));
   auto probability_of_failure{f.apply((lb + ub) / 2.0)};
@@ -1308,11 +1308,11 @@ TEST(ErinBasicsTest, TestGetFragilityCurves)
 {
   namespace ef = erin::fragility;
   std::string st{"electricity"};
-  ::ERIN::fragility_map fragilities;
+  ERIN::fragility_map fragilities;
   std::vector<std::unique_ptr<ef::Curve>> vs;
   vs.emplace_back(std::make_unique<::erin::fragility::Linear>(120.0, 180.0));
   fragilities.insert(std::make_pair("wind_speed_mph", std::move(vs)));
-  ::ERIN::SourceComponent c{"source", st, std::move(fragilities)};
+  ERIN::SourceComponent c{"source", st, std::move(fragilities)};
   std::unordered_map<std::string,double> intensities{
     {"wind_speed_mph", 150.0}};
   auto probs = c.apply_intensities(intensities);
@@ -1899,31 +1899,36 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
         "[components.electric_utility]\n"
         "type = \"source\"\n"
         "output_stream = \"electricity\"\n"
-        "fragilities = [\"highly_vulnerable_to_wind\"]\n"
+        "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
         "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "loads_by_scenario.class_4_hurricane = \"building_electrical\"\n"
-        "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+        "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
         "[components.emergency_generator]\n"
         "type = \"source\"\n"
         "output_stream = \"electricity\"\n"
-        "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+        "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
         "[components.bus]\n"
         "type = \"muxer\"\n"
         "stream = \"electricity\"\n"
         "num_inflows = 2\n"
         "num_outflows = 1\n"
         "dispatch_strategy = \"in_order\"\n"
-        "fragilities = [\"highly_vulnerable_to_wind\", "
-                       "\"somewhat_vulnerable_to_flooding\"]\n"
-        "[fragility.somewhat_vulnerable_to_flooding]\n"
+        "fragility_modes = ["
+          "\"highly_vulnerable_to_wind\", "
+          "\"somewhat_vulnerable_to_flooding\"]\n"
+        "[fragility_mode.highly_vulnerable_to_wind]\n"
+        "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
+        "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
+        "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
+        "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
         "vulnerable_to = \"inundation_depth_ft\"\n"
         "type = \"linear\"\n"
         "lower_bound = 6.0\n"
         "upper_bound = 14.0\n"
-        "[fragility.highly_vulnerable_to_wind]\n"
+        "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
         "vulnerable_to = \"wind_speed_mph\"\n"
         "type = \"linear\"\n"
         "lower_bound = 80.0\n"
@@ -1960,13 +1965,16 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
   const std::vector<int>::size_type num_comps{4};
   const std::vector<int>::size_type num_networks{2};
   ERIN::TomlInputReader r{ss};
+  erin::distribution::DistributionSystem ds{};
   auto si = r.read_simulation_info();
   auto loads = r.read_loads();
-  auto fragilities = r.read_fragility_curve_data();
+  auto read_dists = r.read_distributions(ds);
+  auto fragility_curves = r.read_fragility_curve_data();
+  auto fragility_modes = r.read_fragility_modes(read_dists, fragility_curves);
   ERIN::ReliabilityCoordinator rc{};
-  auto components = r.read_components(loads, fragilities, {}, rc);
+  auto components = r.read_components(loads, fragility_curves, fragility_modes, {}, rc);
   EXPECT_EQ(num_comps, components.size());
-  // Test that components have fragilities
+  // Test that components have fragility curves
   for (const auto& c_pair : components) {
     const auto& c_id = c_pair.first; 
     const auto& c = c_pair.second;
@@ -2093,31 +2101,36 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "[components.electric_utility]\n"
         "type = \"source\"\n"
         "output_stream = \"electricity\"\n"
-        "fragilities = [\"highly_vulnerable_to_wind\"]\n"
+        "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
         "[components.cluster_01_electric]\n"
         "type = \"load\"\n"
         "input_stream = \"electricity\"\n"
         "loads_by_scenario.blue_sky = \"building_electrical\"\n"
         "loads_by_scenario.class_4_hurricane = \"building_electrical\"\n"
-        "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+        "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
         "[components.emergency_generator]\n"
         "type = \"source\"\n"
         "output_stream = \"electricity\"\n"
-        "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+        "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
         "[components.bus]\n"
         "type = \"muxer\"\n"
         "stream = \"electricity\"\n"
         "num_inflows = 2\n"
         "num_outflows = 1\n"
         "dispatch_strategy = \"in_order\"\n"
-        "fragilities = [\"highly_vulnerable_to_wind\", "
-                       "\"somewhat_vulnerable_to_flooding\"]\n"
-        "[fragility.somewhat_vulnerable_to_flooding]\n"
+        "fragility_modes = ["
+          "\"highly_vulnerable_to_wind\", "
+          "\"somewhat_vulnerable_to_flooding\"]\n"
+        "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
+        "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
+        "[fragility_mode.highly_vulnerable_to_wind]\n"
+        "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
+        "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
         "vulnerable_to = \"inundation_depth_ft\"\n"
         "type = \"linear\"\n"
         "lower_bound = 6.0\n"
         "upper_bound = 14.0\n"
-        "[fragility.highly_vulnerable_to_wind]\n"
+        "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
         "vulnerable_to = \"wind_speed_mph\"\n"
         "type = \"linear\"\n"
         "lower_bound = 80.0\n"
@@ -2625,7 +2638,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
     "max_outflow = 100.0\n"
-    "fragilities = [\"highly_vulnerable_to_wind\"]\n"
+    "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
     "[components.cluster_01_electric]\n"
     "type = \"load\"\n"
     "input_stream = \"electricity\"\n"
@@ -2635,19 +2648,23 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
     "max_outflow = 50.0\n"
-    "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+    "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
     "[components.bus]\n"
     "type = \"muxer\"\n"
     "stream = \"electricity\"\n"
     "num_inflows = 2\n"
     "num_outflows = 1\n"
     "dispatch_strategy = \"in_order\"\n"
-    "[fragility.somewhat_vulnerable_to_flooding]\n"
+    "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
+    "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
+    "[fragility_mode.highly_vulnerable_to_wind]\n"
+    "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
+    "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
     "vulnerable_to = \"inundation_depth_ft\"\n"
     "type = \"linear\"\n"
     "lower_bound = 6.0\n"
     "upper_bound = 14.0\n"
-    "[fragility.highly_vulnerable_to_wind]\n"
+    "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
     "vulnerable_to = \"wind_speed_mph\"\n"
     "type = \"linear\"\n"
     "lower_bound = 80.0\n"
@@ -2759,7 +2776,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
     "max_outflow = 100.0\n"
-    "fragilities = [\"highly_vulnerable_to_wind\"]\n"
+    "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
     "[components.cluster_01_electric]\n"
     "type = \"load\"\n"
     "input_stream = \"electricity\"\n"
@@ -2769,19 +2786,23 @@ TEST(ErinBasicsTest, TestRepeatableRandom2)
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
     "max_outflow = 50.0\n"
-    "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+    "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
     "[components.bus]\n"
     "type = \"muxer\"\n"
     "stream = \"electricity\"\n"
     "num_inflows = 2\n"
     "num_outflows = 1\n"
     "dispatch_strategy = \"in_order\"\n"
-    "[fragility.somewhat_vulnerable_to_flooding]\n"
+    "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
+    "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
+    "[fragility_mode.highly_vulnerable_to_wind]\n"
+    "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
+    "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
     "vulnerable_to = \"inundation_depth_ft\"\n"
     "type = \"linear\"\n"
     "lower_bound = 6.0\n"
     "upper_bound = 14.0\n"
-    "[fragility.highly_vulnerable_to_wind]\n"
+    "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
     "vulnerable_to = \"wind_speed_mph\"\n"
     "type = \"linear\"\n"
     "lower_bound = 80.0\n"
@@ -2953,7 +2974,7 @@ TEST(ErinBasicsTest, TestRepeatableRandom3)
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
     "max_outflow = 100.0\n"
-    "fragilities = [\"highly_vulnerable_to_wind\"]\n"
+    "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
     "[components.cluster_01_electric]\n"
     "type = \"load\"\n"
     "input_stream = \"electricity\"\n"
@@ -2963,19 +2984,23 @@ TEST(ErinBasicsTest, TestRepeatableRandom3)
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
     "max_outflow = 50.0\n"
-    "fragilities = [\"somewhat_vulnerable_to_flooding\"]\n"
+    "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
     "[components.bus]\n"
     "type = \"muxer\"\n"
     "stream = \"electricity\"\n"
     "num_inflows = 2\n"
     "num_outflows = 1\n"
     "dispatch_strategy = \"in_order\"\n"
-    "[fragility.somewhat_vulnerable_to_flooding]\n"
+    "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
+    "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
+    "[fragility_mode.highly_vulnerable_to_wind]\n"
+    "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
+    "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
     "vulnerable_to = \"inundation_depth_ft\"\n"
     "type = \"linear\"\n"
     "lower_bound = 6.0\n"
     "upper_bound = 14.0\n"
-    "[fragility.highly_vulnerable_to_wind]\n"
+    "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
     "vulnerable_to = \"wind_speed_mph\"\n"
     "type = \"linear\"\n"
     "lower_bound = 80.0\n"
@@ -3388,12 +3413,14 @@ load_example_results(
     "[components.A]\n"
     "type = \"source\"\n"
     "output_stream = \"electricity\"\n"
-    "fragilities = [\"frag01\"]\n"
+    "fragility_modes = [\"frag01\"]\n"
     "[components.B]\n"
     "type = \"load\"\n"
     "input_stream = \"electricity\"\n"
     "loads_by_scenario.scenario01 = \"load01\"\n"
-    "[fragility.frag01]\n"
+    "[fragility_mode.frag01]\n"
+    "fragility_curve = \"frag01_curve\"\n"
+    "[fragility_curve.frag01_curve]\n"
     "vulnerable_to = \"intensity01\"\n"
     "type = \"linear\"\n"
     "lower_bound = 10.0\n"
@@ -3613,15 +3640,8 @@ TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
         std::string{"waste_heat"},
         const_eff);
   EXPECT_EQ(expected_conv, conv);
-  std::ostringstream oss;
+  std::ostringstream oss{};
   oss << conv;
-  std::string expected_str{
-    "ConverterComponent(id=C, component_type=converter, "
-                       "input_stream=\"diesel\", "
-                       "output_stream=\"electricity\", "
-                       "fragilities=..., has_fragilities=false, "
-                       "const_eff=0.5)"};
-  EXPECT_EQ(oss.str(), expected_str);
 }
 
 ERIN::Main
@@ -3819,15 +3839,6 @@ TEST(ErinComponents, Test_passthrough_component)
   auto ptc2 = E::PassThroughComponent{"my_comp", std::string{"electrical"}};
   std::ostringstream oss;
   oss << ptc;
-  std::string stream_str{"\"electrical\""};
-  EXPECT_EQ(
-      std::string{"PassThroughComponent("} +
-      std::string{"id=my_comp, "} +
-      std::string{"component_type=pass_through, "} +
-      std::string{"input_stream="} + stream_str + std::string{", "} +
-      std::string{"output_stream="} + stream_str + std::string{", "} +
-      std::string{"fragilities=..., has_fragilities=false)"},
-      oss.str());
   EXPECT_EQ(ptc, ptc2);
   auto m = E::make_main_from_string(input);
   auto results = m.run("scenario0");
@@ -3885,12 +3896,14 @@ TEST(ErinComponents, Test_passthrough_component_with_fragility)
     "[components.P]\n"
     "type = \"pass_through\"\n"
     "stream = \"electricity\"\n"
-    "fragilities = [\"frag01\"]\n"
+    "fragility_modes = [\"frag01\"]\n"
     "[components.L]\n"
     "type = \"load\"\n"
     "input_stream = \"electricity\"\n"
     "loads_by_scenario.scenario0 = \"load0\"\n"
-    "[fragility.frag01]\n"
+    "[fragility_mode.frag01]\n"
+    "fragility_curve = \"frag01_curve\"\n"
+    "[fragility_curve.frag01_curve]\n"
     "vulnerable_to = \"intensity01\"\n"
     "type = \"linear\"\n"
     "lower_bound = 10.0\n"
@@ -4013,12 +4026,14 @@ TEST(ErinComponents, Test_converter_component_with_fragilities)
     "outflow = \"electricity\"\n"
     "lossflow = \"waste_heat\"\n"
     "constant_efficiency = 0.5\n"
-    "fragilities = [\"frag01\"]\n"
+    "fragility_modes = [\"frag01\"]\n"
     "[components.L]\n"
     "type = \"load\"\n"
     "input_stream = \"electricity\"\n"
     "loads_by_scenario.scenario0 = \"load0\"\n"
-    "[fragility.frag01]\n"
+    "[fragility_mode.frag01]\n"
+    "fragility_curve = \"frag01_curve\"\n"
+    "[fragility_curve.frag01_curve]\n"
     "vulnerable_to = \"intensity01\"\n"
     "type = \"linear\"\n"
     "lower_bound = 10.0\n"

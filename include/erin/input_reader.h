@@ -109,9 +109,11 @@ namespace ERIN
             const std::unordered_map<
               std::string, std::vector<LoadItem>>& loads_by_id,
             const std::unordered_map<
-              std::string, erin::fragility::FragilityCurve>& fragilities,
+              std::string, erin::fragility::FragilityCurve>& fragility_curves,
             const std::unordered_map<
-              std::string, size_type>& fms,
+              std::string, erin::fragility::FragilityMode>& fragility_modes,
+            const std::unordered_map<
+              std::string, size_type>& failure_modes,
             ReliabilityCoordinator& rc);
       std::unordered_map<std::string, std::unique_ptr<Component>>
         read_components(
@@ -236,7 +238,10 @@ namespace ERIN
           const std::string& comp_id,
           const std::unordered_map<
             std::string,
-            ::erin::fragility::FragilityCurve>& fragilities) const;
+            erin::fragility::FragilityCurve>& fragility_curves,
+          const std::unordered_map<
+            std::string,
+            erin::fragility::FragilityMode>& fragility_modes) const;
       void check_top_level_entries() const;
   };
 

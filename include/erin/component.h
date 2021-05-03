@@ -19,11 +19,19 @@
 
 namespace ERIN
 {
+  struct FragilityCurveAndRepair
+  {
+    std::unique_ptr<erin::fragility::Curve> curve{};
+    std::int64_t repair_dist_id{erin::fragility::no_repair_distribution};
+  };
+
+  std::ostream& operator<<(std::ostream& os, const FragilityCurveAndRepair& fcar);
+
   using fragility_map = std::unordered_map<
     std::string, // <-- the vulnerable_to identifier. E.g., wind_speed_mph,
                  //     inundation_depth_ft, etc.
     // vector of fragility curves that apply
-    std::vector<std::unique_ptr<::erin::fragility::Curve>>>;
+    std::vector<FragilityCurveAndRepair>>;
 
   /**
    * Holds a FlowElement and the Port it should be connected on
@@ -77,7 +85,7 @@ namespace ERIN
       [[nodiscard]] fragility_map clone_fragility_curves() const;
       [[nodiscard]] bool is_fragile() const { return has_fragilities; }
       // TODO: consider moving this elsewhere
-      std::vector<double> apply_intensities(
+      std::vector<erin::fragility::FailureProbAndRepair> apply_intensities(
           const std::unordered_map<std::string, double>& intensities);
 
       virtual PortsAndElements add_to_network(

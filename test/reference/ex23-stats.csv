@@ -1,0 +1,8 @@
+scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ)
+c4_hurricane,1,300,b1_electric,load,electricity,0.666667,100,3.6e+06,7.2e+06
+c4_hurricane,1,300,electric_utility,source,electricity,1,0,0,7.2e+06
+c4_hurricane,1,300,TOTAL (source),,,,,,7.2e+06
+c4_hurricane,1,300,TOTAL (load),,,,,,7.2e+06
+c4_hurricane,1,300,TOTAL (storage),,,,,,0.0
+c4_hurricane,1,300,TOTAL (waste),,,,,,0.0
+c4_hurricane,1,300,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,

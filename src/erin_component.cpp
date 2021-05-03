@@ -12,6 +12,17 @@
 
 namespace ERIN
 {
+  std::ostream&
+  operator<<(std::ostream& os, const FragilityCurveAndRepair& fcar)
+  {
+    return os
+      << "{"
+      << ":curve " << fcar.curve
+      << " "
+      << ":repair-dist-id " << fcar.repair_dist_id
+      << "}";
+  }
+
   ////////////////////////////////////////////////////////////
   // Component
   Component::Component(
@@ -51,25 +62,26 @@ namespace ERIN
   Component::clone_fragility_curves() const
   {
     namespace ef = erin::fragility;
-    fragility_map frags;
+    fragility_map frags{};
     for (const auto& pair : fragilities) {
       const auto& curves = pair.second;
       auto num_curves = curves.size();
-      std::vector<std::unique_ptr<ef::Curve>> vs(num_curves);
+      std::vector<FragilityCurveAndRepair> vs(num_curves);
       for (decltype(num_curves) i{0}; i < num_curves; ++i) {
         const auto& c = curves[i];
-        vs[i] = c->clone();
+        vs[i] = FragilityCurveAndRepair{c.curve->clone(), c.repair_dist_id};
       }
       frags.insert(std::make_pair(pair.first, std::move(vs)));
     }
     return frags;
   }
 
-  std::vector<double>
+  std::vector<erin::fragility::FailureProbAndRepair>
   Component::apply_intensities(
       const std::unordered_map<std::string, double>& intensities)
   {
-    std::vector<double> failure_probabilities{};
+    namespace EF = erin::fragility;
+    std::vector<EF::FailureProbAndRepair> failure_probabilities{};
     if (!has_fragilities) {
       return failure_probabilities;
     }
@@ -79,11 +91,13 @@ namespace ERIN
       if (it == fragilities.end()) {
         continue;
       }
-      auto intensity = intensity_pair.second;
+      const auto& intensity = intensity_pair.second;
       for (const auto& c : it->second) {
-        auto probability = c->apply(intensity);
+        auto probability = c.curve->apply(intensity);
         if (probability > 0.0) {
-          failure_probabilities.emplace_back(probability);
+          failure_probabilities.emplace_back(EF::FailureProbAndRepair{
+            probability,
+            c.repair_dist_id});
         }
       }
     }
@@ -125,7 +139,6 @@ namespace ERIN
   bool
   Component::base_is_equal(const Component& other) const
   {
-    // TODO: add comparison of fragilities
     return (id == other.id)
       && (component_type == other.component_type)
       && (input_stream == other.input_stream)

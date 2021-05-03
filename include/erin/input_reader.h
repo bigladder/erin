@@ -26,7 +26,7 @@ namespace ERIN
       const erin::distribution::DistributionSystem& ds,
       const std::function<double()>& rand_fn);
 
-  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>
+  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<erin::fragility::FailureProbAndRepair>>>
   generate_failure_fragilities(
     const std::unordered_map<std::string, Scenario>& scenarios,
     const std::unordered_map<std::string, std::unique_ptr<Component>>& components);

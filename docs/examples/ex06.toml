@@ -49,7 +49,6 @@ outflow = "steam"
 lossflow = "waste_heat"
 constant_efficiency = 0.8
 [components.coal_pile]
-# TODO: model this as a storage unit with possible periodic resupply
 type = "source"
 outflow = "coal"
 [components.steam_loop]
@@ -157,12 +156,6 @@ max_occurrences = 1
 network = "nw_1"
 [scenarios.ice_jam_flood]
 time_unit = "hours"
-# TODO: come up with better occurrence_distribution options
-# TODO: add a normal distribution; use a cumulative density function:
-# - https://en.wikipedia.org/wiki/Normal_distribution
-# - https://www.johndcook.com/blog/cpp_phi/
-# - see http://www.cplusplus.com/reference/cmath/erf/
-# occurrence_distribution = {type = "normal", time_unit="years", mean = 30, standard_deviation = 4}
 occurrence_distribution = "every_100_years"
 duration = 336
 max_occurrences = -1

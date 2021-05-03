@@ -17,18 +17,6 @@ namespace erin::distribution
   using RealTimeType = ERIN::RealTimeType;
   using FlowValueType = ERIN::FlowValueType;
 
-  // TODO: consider going back to classes with simple data that can take a
-  // generator at a later point. Ideally, we'd like the distribution objects to
-  // all reference a single default_random_engine that is held by Main.
-  // Interface:
-  // - virtual void set_random_generator(const std::default_random_engine& g);
-  // - virtual T next_value();
-  // - virtual std::string get_type();
-  // * As an alternative, consider an interface that takes a randomly
-  // generated number and samples the distribution. That might be even more
-  // elegant.
-  // - virtual T sample(const double d); // i.e., sample the distribution at d; d must be in (0, 1]
-  //   possibly, we could create a new type that would express that d is a fraction
   template <class T>
   std::function<T(void)>
   make_fixed(const T& value) 

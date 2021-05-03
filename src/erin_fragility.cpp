@@ -155,11 +155,21 @@ namespace erin::fragility
               << "}";
   }
 
+  std::ostream&
+  operator<<(std::ostream& os, const FailureProbAndRepair& fbar)
+  {
+    return os
+      << "{"
+      << ":failure-probability " << fbar.failure_probability
+      << " "
+      << ":repair-dist-id " << fbar.repair_distribution_id
+      << "}";
+  }
+
   std::unordered_map<std::string, std::vector<std::unordered_map<std::string, FragilityInfo>>>
   calc_fragility_schedules(
-    const std::unordered_map<std::string, FragilityMode> fragility_modes,
     const std::unordered_map<std::string, std::vector<std::int64_t>>& scenario_schedules,
-    const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>& failure_probs_by_comp_id_by_scenario_id,
+    const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<FailureProbAndRepair>>>& failure_probs_by_comp_id_by_scenario_id,
     const std::function<double()>& rand_fn,
     const erin::distribution::DistributionSystem& ds)
   {
@@ -182,25 +192,24 @@ namespace erin::fragility
           const auto& comp_id = comp_probs.first;
           const auto& failure_probs = comp_probs.second;
           bool is_failed{false};
+          ERIN::RealTimeType repair_time_s{-1};
           for (const auto& p : failure_probs) {
-            if (p >= 1.0) {
-              is_failed = true;
-              break;
-            }
-            else if (p <= 0.0) {
+            if (p.failure_probability <= 0.0) {
               continue;
             }
-            else {
-              if (rand_fn() <= p) {
-                is_failed = true;
-                break;
+            else if ((p.failure_probability >= 1.0) || (rand_fn() <= p.failure_probability)) {
+              is_failed = true;
+              if (p.repair_distribution_id != no_repair_distribution) {
+                repair_time_s = ds.next_time_advance(p.repair_distribution_id, rand_fn());
               }
+              break;
             }
           }
           comp_frag_info[comp_id] = FragilityInfo{
             scenario_tag,
             start_time_s,
-            is_failed};
+            is_failed,
+            repair_time_s};
         }
         info.emplace_back(comp_frag_info);
       }

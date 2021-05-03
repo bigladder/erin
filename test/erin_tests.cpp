@@ -1306,18 +1306,22 @@ TEST(ErinBasicsTest, FragilityCurves)
 
 TEST(ErinBasicsTest, TestGetFragilityCurves)
 {
+  namespace E = ERIN;
   namespace ef = erin::fragility;
   std::string st{"electricity"};
   ERIN::fragility_map fragilities;
-  std::vector<std::unique_ptr<ef::Curve>> vs;
-  vs.emplace_back(std::make_unique<::erin::fragility::Linear>(120.0, 180.0));
+  std::vector<E::FragilityCurveAndRepair> vs;
+  vs.emplace_back(
+    E::FragilityCurveAndRepair{
+      std::make_unique<::erin::fragility::Linear>(120.0, 180.0),
+      ef::no_repair_distribution});
   fragilities.insert(std::make_pair("wind_speed_mph", std::move(vs)));
   ERIN::SourceComponent c{"source", st, std::move(fragilities)};
   std::unordered_map<std::string,double> intensities{
     {"wind_speed_mph", 150.0}};
   auto probs = c.apply_intensities(intensities);
   EXPECT_EQ(probs.size(), 1);
-  EXPECT_NEAR(probs.at(0), 0.5, 1e-6);
+  EXPECT_NEAR(probs.at(0).failure_probability, 0.5, 1e-6);
 }
 
 TEST(ErinBasicsTest, TestFailureChecker)
@@ -1375,9 +1379,11 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
     std::make_unique<ef::Linear>(
         wind_speed_mph_lower_bound, wind_speed_mph_upper_bound);
   E::fragility_map fs_pcc, fs_load, fs_gen;
-  std::vector<std::unique_ptr<ef::Curve>> vs_pcc, vs_gen;
-  vs_pcc.emplace_back(fc_wind->clone());
-  vs_gen.emplace_back(fc_inundation->clone());
+  std::vector<E::FragilityCurveAndRepair> vs_pcc, vs_gen;
+  vs_pcc.emplace_back(
+    E::FragilityCurveAndRepair{fc_wind->clone(), ef::no_repair_distribution});
+  vs_gen.emplace_back(
+    E::FragilityCurveAndRepair{fc_inundation->clone(), ef::no_repair_distribution});
   fs_pcc.emplace(std::make_pair(intensity_wind_speed, std::move(vs_pcc)));
   fs_gen.emplace(std::make_pair(intensity_flood, std::move(vs_gen)));
   std::vector<E::LoadItem>
@@ -1871,16 +1877,23 @@ TEST(ErinBasicsTest, TestAddMultipleFragilitiesToAComponent)
   namespace ef = erin::fragility;
   std::string id{"source"};
   const std::string stream{"electricity"};
-  std::unordered_map<
-    std::string,
-    std::vector<std::unique_ptr<ef::Curve>>> frags;
-  std::vector<std::unique_ptr<ef::Curve>> v1, v2;
-  v1.emplace_back(std::make_unique<ef::Linear>(80, 160.0));
-  v1.emplace_back(std::make_unique<ef::Linear>(40.0, 220.0));
-  v2.emplace_back(std::make_unique<ef::Linear>(4.0, 12.0));
+  E::fragility_map frags;
+  std::vector<E::FragilityCurveAndRepair> v1, v2;
+  v1.emplace_back(
+    E::FragilityCurveAndRepair{
+      std::make_unique<ef::Linear>(80, 160.0),
+      ef::no_repair_distribution});
+  v1.emplace_back(
+    E::FragilityCurveAndRepair{
+      std::make_unique<ef::Linear>(40.0, 220.0),
+      ef::no_repair_distribution});
+  v2.emplace_back(
+    E::FragilityCurveAndRepair{
+      std::make_unique<ef::Linear>(4.0, 12.0),
+      ef::no_repair_distribution});
   frags.emplace(std::make_pair("wind_speed_mph", std::move(v1)));
   frags.emplace(std::make_pair("flood_depth_ft", std::move(v2)));
-  auto comp = ::ERIN::SourceComponent(id, stream, std::move(frags));
+  auto comp = ERIN::SourceComponent(id, stream, std::move(frags));
 }
 
 TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
@@ -8397,10 +8410,10 @@ TEST(ErinBasicsTest, Test_that_we_can_run_fragility_with_repair)
   const E::FlowValueType downtime_s{total_time_s - uptime_s};
   const E::FlowValueType total_energy_delivered_kJ{uptime_s * flow_request_kW};
   const E::FlowValueType load_not_served_kJ{downtime_s * flow_request_kW};
-  //EXPECT_EQ(b1_stats.load_not_served, load_not_served_kJ);
-  //EXPECT_EQ(b1_stats.downtime, downtime_s);
-  //EXPECT_EQ(b1_stats.max_downtime, downtime_s);
-  //EXPECT_EQ(b1_stats.total_energy, total_energy_delivered_kJ);
+  EXPECT_EQ(b1_stats.load_not_served, load_not_served_kJ);
+  EXPECT_EQ(b1_stats.downtime, downtime_s);
+  EXPECT_EQ(b1_stats.max_downtime, downtime_s);
+  EXPECT_EQ(b1_stats.total_energy, total_energy_delivered_kJ);
 }
 
 
@@ -8414,16 +8427,25 @@ TEST(ErinBasicsTest, Test_calculation_of_fragility_schedules)
   const std::unordered_map<std::string, EF::FragilityMode> fragility_modes{};
   const std::unordered_map<std::string, std::vector<std::int64_t>> scenario_schedules{
     {blue_sky_tag, {0}}};
-  const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>
-    failure_probs_by_comp_id_by_scenario_id{
-      {blue_sky_tag, {
-        {src_comp_tag, {0.5, 0.2}},
-        {snk_comp_tag, {0.1}}}}};
+  const std::unordered_map<
+    std::string,
+    std::unordered_map<
+      std::string,
+      std::vector<EF::FailureProbAndRepair>>> failure_probs_by_comp_id_by_scenario_id{
+      {blue_sky_tag,
+        {
+          { src_comp_tag, {
+            EF::FailureProbAndRepair{0.5, EF::no_repair_distribution},
+            EF::FailureProbAndRepair{0.2, EF::no_repair_distribution}}},
+          { snk_comp_tag, {
+            EF::FailureProbAndRepair{0.1, EF::no_repair_distribution}}}
+        }
+      }
+    };
   std::function<double()> rand_fn = []() { return 0.4; };
   erin::distribution::DistributionSystem ds{};
   ds.add_fixed("repair_in_24_hours", 24 * 3600);
   const auto fs = EF::calc_fragility_schedules(
-    fragility_modes,
     scenario_schedules,
     failure_probs_by_comp_id_by_scenario_id,
     rand_fn,

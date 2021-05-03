@@ -45,15 +45,16 @@ namespace ERIN
     return scenario_sch;
   }
 
-  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>
+  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<erin::fragility::FailureProbAndRepair>>>
   generate_failure_fragilities(
     const std::unordered_map<std::string, Scenario>& scenarios,
     const std::unordered_map<std::string, std::unique_ptr<Component>>& components)
   {
-    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>> out{};
+    namespace EF = erin::fragility;
+    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<erin::fragility::FailureProbAndRepair>>> out{};
     for (const auto& s: scenarios) {
       const auto& intensities = s.second.get_intensities();
-      std::unordered_map<std::string, std::vector<double>> m{};
+      std::unordered_map<std::string, std::vector<EF::FailureProbAndRepair>> m{};
       if (intensities.size() > 0) {
         for (const auto& c_pair: components) {
           const auto& c = c_pair.second;
@@ -65,7 +66,9 @@ namespace ERIN
           // present, we can end early...
           std::sort(
               probs.begin(), probs.end(),
-              [](double a, double b){ return a > b; });
+              [](const EF::FailureProbAndRepair& a, const EF::FailureProbAndRepair& b){
+                return a.failure_probability > b.failure_probability;
+              });
           if (probs.size() == 0) {
             // no need to add an empty vector of probabilities
             // note: probabilitie of 0.0 (i.e., never fail) are not added in
@@ -118,7 +121,6 @@ namespace ERIN
       scenarios, components);
     fragility_info_by_comp_tag_by_instance_by_scenario_tag =
       erin::fragility::calc_fragility_schedules(
-        fragility_modes,
         scenario_schedules,
         failure_probs_by_comp_id_by_scenario_id,
         rand_fn,
@@ -887,8 +889,6 @@ namespace ERIN
     return StreamIDs{input_stream_id, output_stream_id, lossflow_stream_id};
   }
 
-  // TODO: change to read_component_fragility_modes
-  // TODO: change return value to be erin::fragility::FragilityMode
   fragility_map
   TomlInputReader::read_component_fragilities(
       const toml::table& tt,
@@ -929,12 +929,13 @@ namespace ERIN
       const auto& fc = (*fc_it).second;
       auto it = frags.find(fc.vulnerable_to);
       if (it == frags.end()) {
-        std::vector<std::unique_ptr<ef::Curve>> cs;
-        cs.emplace_back(fc.curve->clone());
+        std::vector<FragilityCurveAndRepair> cs;
+        cs.emplace_back(FragilityCurveAndRepair{fc.curve->clone(), fm.repair_dist_id});
         frags.emplace(std::make_pair(fc.vulnerable_to, std::move(cs)));
       }
       else {
-        (*it).second.emplace_back(fc.curve->clone());
+        (*it).second.emplace_back(
+          FragilityCurveAndRepair{fc.curve->clone(), fm.repair_dist_id});
       }
     }
     if constexpr (debug_level >= debug_level_high) {
@@ -955,14 +956,12 @@ namespace ERIN
     return frags;
   }
 
-  // TODO: rename to read_fragility_curve_data()
   std::unordered_map<std::string, ::erin::fragility::FragilityCurve>
   TomlInputReader::read_fragility_curve_data()
   {
     namespace ef = erin::fragility;
     std::unordered_map<std::string, ef::FragilityCurve> out;
     std::string field_read;
-    // TODO: change field read from "fragility" to "fragility_curve"
     const auto& tt = toml_helper::read_optional_table_field<toml::table>(
         toml::get<toml::table>(data),
         {"fragility_curve"},

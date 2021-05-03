@@ -131,16 +131,23 @@ namespace erin::fragility
     std::string scenario_tag{};
     ERIN::RealTimeType start_time_s{0};
     bool is_failed{false};
-    // ERIN::RealTimeType repair_time_s{-1}; // values less than 0 indicate cannot repair
+    ERIN::RealTimeType repair_time_s{-1}; // values less than 0 indicate cannot repair
   };
 
   std::ostream& operator<<(std::ostream& os, const FragilityInfo& fi);
 
+  struct FailureProbAndRepair
+  {
+    double failure_probability{0.0};
+    std::int64_t repair_distribution_id{no_repair_distribution};
+  };
+
+  std::ostream& operator<<(std::ostream& os, const FailureProbAndRepair& fbar);
+
   std::unordered_map<std::string, std::vector<std::unordered_map<std::string, FragilityInfo>>>
   calc_fragility_schedules(
-    const std::unordered_map<std::string, FragilityMode> fragility_modes,
     const std::unordered_map<std::string, std::vector<std::int64_t>>& scenario_schedules,
-    const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<double>>>& failure_probs_by_comp_id_by_scenario_id,
+    const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<FailureProbAndRepair>>>& failure_probs_by_comp_id_by_scenario_id,
     const std::function<double()>& rand_fn,
     const erin::distribution::DistributionSystem& ds);
 }

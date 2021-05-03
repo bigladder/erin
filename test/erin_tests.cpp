@@ -387,7 +387,7 @@ TEST(ErinBasicsTest, CanReadFragilityCurvesFromToml)
         "type = \"linear\"\n"
         "lower_bound = 80.0\n"
         "upper_bound = 160.0\n";
-  ::ERIN::TomlInputReader tir{ss};
+  ERIN::TomlInputReader tir{ss};
   std::unordered_map<std::string, ef::FragilityCurve> expected{};
   ef::FragilityCurve c1{
     "inundation_depth_ft", std::make_unique<ef::Linear>(6.0, 14.0)};
@@ -431,7 +431,7 @@ TEST(ErinBasicsTest, CanReadComponentsFromToml)
         "num_inflows = 2\n"
         "num_outflows = 1\n"
         "dispatch_strategy = \"in_order\"\n";
-  ::ERIN::TomlInputReader t{ss};
+  ERIN::TomlInputReader t{ss};
   std::string stream_id{"electricity"};
   std::string scenario_id{"blue_sky"};
   std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
@@ -678,8 +678,8 @@ TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
     scenario_schedules{
       {"blue_sky", {3600}}};
   ERIN::Main m{
-    si, components, networks, scenarios, reliability_schedule,
-    scenario_schedules};
+    si, components, networks, scenarios,
+    scenario_schedules, reliability_schedule};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -746,8 +746,8 @@ TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
   std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
     scenario_schedules{{"blue_sky", {3600}}};
   ERIN::Main m{
-    si, components, networks, scenarios, reliability_schedule,
-    scenario_schedules};
+    si, components, networks, scenarios,
+    scenario_schedules, reliability_schedule};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -829,8 +829,8 @@ TEST(ErinBasicsTest, CanRun10ForSourceSink)
   std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
     scenario_schedules{{scenario_id, {0}}};
   ERIN::Main m{
-    si, components, networks, scenarios, reliability_schedule,
-    scenario_schedules};
+    si, components, networks, scenarios,
+    scenario_schedules, reliability_schedule};
   auto out = m.run(scenario_id);
   EXPECT_EQ(out.get_is_good(), true);
 }
@@ -1047,7 +1047,7 @@ TEST(ErinBasicsTest, TestMaxTimeByScenario)
       }}};
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  ERIN::Main m{si, components, networks, scenarios, {}, {}};
   auto actual = m.max_time_for_scenario(scenario_id);
   ERIN::RealTimeType expected = max_time;
   EXPECT_EQ(expected, actual);
@@ -1263,8 +1263,8 @@ TEST(ErinBasicsTest, BasicScenarioTest)
   auto scenario_schedules = ERIN::calc_scenario_schedule(
       max_simulation_time_s, scenarios, cds, rand_fn);
   ERIN::Main m{
-    si, components, networks, scenarios, reliability_schedule,
-    scenario_schedules};
+    si, components, networks, scenarios,
+    scenario_schedules, reliability_schedule};
   auto actual = m.run_all();
   EXPECT_TRUE(actual.get_is_good());
   EXPECT_TRUE(actual.get_results().size() > 0);
@@ -1445,7 +1445,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
     }
   }
   E::Main m_low{
-    si, comps, networks, scenarios_low, {}, scenario_schedules};
+    si, comps, networks, scenarios_low, scenario_schedules};
   auto results_low = m_low.run(class_4_hurricane);
   if (false) {
     std::cout << "results_low:\n";
@@ -1471,17 +1471,20 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
       E::Scenario{
         class_4_hurricane,
         emergency, 10, -1, 0, intensities_high, false}}};
-  if (false) {
-    std::cout << "scenario_schedules before m_high constructor\n";
-    for (const auto& ss : scenario_schedules) {
-      std::cout << "- " << ss.first << "\n";
-      for (const auto& start_time_s : ss.second) {
-        std::cout << "  - " << (start_time_s / (3600LL * 8760LL)) << " years\n";
-      }
-    }
-  }
+  
+  std::unordered_map<std::string, std::vector<std::unordered_map<std::string, erin::fragility::FragilityInfo>>>
+    fi{
+      {blue_sky, {}},
+      {class_4_hurricane, {
+        {
+          { pcc_id, ef::FragilityInfo{class_4_hurricane, 100LL  * 8760LL * 3600LL, true} },
+          { load_id, ef::FragilityInfo{class_4_hurricane, 100LL  * 8760LL * 3600LL, true} },
+          { gen_id, ef::FragilityInfo{class_4_hurricane, 100LL  * 8760LL * 3600LL, true} }
+        }
+      }},
+    };
   E::Main m_high{
-    si, comps, networks, scenarios_high, {}, scenario_schedules};
+    si, comps, networks, scenarios_high, scenario_schedules, {}, fi};
   auto results_high = m_high.run(class_4_hurricane);
   if (true) {
     std::cout << "results_high:\n";
@@ -2038,9 +2041,7 @@ TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
     EXPECT_EQ(es.get_intensities(), as.get_intensities());
   }
   EXPECT_EQ(expected_scenarios, scenarios);
-  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
-    reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, reliability_schedule};
+  ERIN::Main m{si, components, networks, scenarios, {}};
   auto out = m.run("blue_sky");
   EXPECT_EQ(out.get_is_good(), true);
   EXPECT_EQ(out.get_results().size(), 2);
@@ -2152,12 +2153,9 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "intensity.inundation_depth_ft = 20.0\n";
   const std::vector<int>::size_type num_comps{4};
   const std::vector<int>::size_type num_networks{2};
-  ERIN::TomlInputReader r{ss};
-  auto si = r.read_simulation_info();
-  auto loads = r.read_loads();
-  auto fragilities = r.read_fragility_curve_data();
-  ERIN::ReliabilityCoordinator rc{};
-  auto components = r.read_components(loads, fragilities, {}, rc);
+  ERIN::InputReader r{ss};
+  auto si = r.get_simulation_info();
+  auto components = r.get_components();
   EXPECT_EQ(num_comps, components.size());
   // Test that components have fragilities
   for (const auto& c_pair : components) {
@@ -2166,7 +2164,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
     EXPECT_TRUE(c->is_fragile())
       << "component '" << c_id << "' should be fragile but is not";
   }
-  auto networks = r.read_networks();
+  auto networks = r.get_networks();
   ASSERT_EQ(num_networks, networks.size());
   const auto& normal_nw = networks["normal_operations"];
   const std::vector<enw::Connection> expected_normal_nw{
@@ -2194,7 +2192,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   ASSERT_EQ(expected_eo, actual_eo);
   std::unordered_map<std::string, ERIN::size_type>
     dists{{"immediately",0}, {"every_10_years", 1}};
-  auto scenarios = r.read_scenarios(dists);
+  auto scenarios = r.get_scenarios();
   constexpr ERIN::RealTimeType blue_sky_duration
     = 8760LL * ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
@@ -2244,9 +2242,10 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
        },
       }
     };
+  const auto& fi_data = r.get_fragility_info_by_comp_by_inst_by_scenario();
   ERIN::Main m{
     si, components, networks, scenarios,
-    reliability_schedule, scenario_schedules};
+    scenario_schedules, reliability_schedule, fi_data};
   auto out = m.run("class_4_hurricane");
   EXPECT_EQ(out.get_is_good(), true);
   std::unordered_set<std::string> expected_keys{

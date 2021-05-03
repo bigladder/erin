@@ -558,79 +558,21 @@ namespace ERIN
   // Main
   // main class that runs the simulation from file
   Main::Main(const std::string& input_file_path):
-    Main(TomlInputReader{input_file_path})
+    Main(InputReader{input_file_path})
   {
   }
 
-  Main::Main(TomlInputReader reader):
-    sim_info{reader.read_simulation_info()},
-    failure_probs_by_comp_id_by_scenario_id{},
-    fragility_info_by_comp_tag_by_instance_by_scenario_tag{}
+  Main::Main(InputReader reader):
+    Main(
+      reader.get_simulation_info(),
+      reader.get_components(),
+      reader.get_networks(),
+      reader.get_scenarios(),
+      reader.get_scenario_schedules(),
+      reader.get_reliability_schedule(),
+      reader.get_fragility_info_by_comp_by_inst_by_scenario()
+    )
   {
-    // Read data into private class fields
-    auto loads_by_id = reader.read_loads();
-    auto fragility_curves = reader.read_fragility_curve_data();
-    erin::distribution::DistributionSystem ds{};
-    // dists is map<string, size_type>
-    auto dists = reader.read_distributions(ds);
-    auto fragility_modes = reader.read_fragility_modes(dists, fragility_curves);
-    ReliabilityCoordinator rc{};
-    // fms is map<string, size_type>
-    auto fms = reader.read_failure_modes(dists, rc);
-    // components needs to be modified to add component_id as size_type?
-    components = reader.read_components(loads_by_id, fragility_curves, fms, rc);
-    networks = reader.read_networks();
-    scenarios = reader.read_scenarios(dists);
-    const auto max_time_s{sim_info.get_max_time_in_seconds()};
-    rand_fn = sim_info.make_random_function();
-    reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
-        rand_fn, ds, max_time_s);
-    scenario_schedules = calc_scenario_schedule(
-        max_time_s, scenarios, ds, rand_fn);
-    check_data();
-    generate_failure_fragilities();
-    fragility_info_by_comp_tag_by_instance_by_scenario_tag =
-      erin::fragility::calc_fragility_schedules(
-        fragility_modes,
-        scenario_schedules,
-        failure_probs_by_comp_id_by_scenario_id,
-        rand_fn,
-        ds);
-    if constexpr (debug_level >= debug_level_high) {
-      for (const auto& p : loads_by_id) {
-        std::cout << p.first << ":\n";
-        for (const auto& d : p.second) {
-          std::cout << "- " << d << "\n";
-        }
-      }
-    }
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "failure_probs_by_comp_id_by_scenario_id\n";
-      for (const auto& fpbc_scenario : failure_probs_by_comp_id_by_scenario_id) {
-        const auto& scenario_tag = fpbc_scenario.first;
-        std::cout << "- " << scenario_tag << "\n";
-        for (const auto& fpbc : fpbc_scenario.second) {
-          const auto& comp_tag = fpbc.first;
-          std::cout
-            << "  - " << comp_tag << ": "
-            << vec_to_string<double>(fpbc.second) << "\n";
-        }
-      }
-      std::cout << "fragility_info_by_comp_tag_by_instance_by_scenario_tag:\n";
-      for (const auto& fibcs : fragility_info_by_comp_tag_by_instance_by_scenario_tag) {
-        const auto& scenario_tag = fibcs.first;
-        std::cout << "- " << scenario_tag << ":\n";
-        for (std::size_t idx{0}; idx < fibcs.second.size(); ++idx) {
-          std::cout << "  - [" << idx << "]:\n";
-          const auto& fibc = fibcs.second[idx];
-          for (const auto& fic : fibc) {
-            const auto& comp_tag = fic.first;
-            const auto& fi = fic.second;
-            std::cout << "    - " << comp_tag << " " << fi << "\n";
-          }
-        }
-      }
-    }
   }
 
   Main::Main(
@@ -642,19 +584,20 @@ namespace ERIN
         std::string,
         std::vector<::erin::network::Connection>>& networks_,
       const std::unordered_map<std::string, Scenario>& scenarios_,
+      const std::unordered_map<std::string, std::vector<RealTimeType>>&
+        scenario_schedules_,
       const std::unordered_map<std::string, std::vector<TimeState>>&
         reliability_schedule_,
-      const std::unordered_map<std::string, std::vector<RealTimeType>>&
-        scenario_schedules_
+      const std::unordered_map<std::string, std::vector<std::unordered_map<std::string, erin::fragility::FragilityInfo>>>&
+        fi_by_comp_by_inst_by_scenario_
       ):
     sim_info{sim_info_},
     components{},
     networks{networks_},
     scenarios{scenarios_},
-    failure_probs_by_comp_id_by_scenario_id{},
     reliability_schedule{reliability_schedule_},
     scenario_schedules{scenario_schedules_},
-    fragility_info_by_comp_tag_by_instance_by_scenario_tag{}
+    fragility_info_by_comp_tag_by_instance_by_scenario_tag{fi_by_comp_by_inst_by_scenario_}
   {
     for (const auto& pair: components_) {
       components.insert(
@@ -662,85 +605,7 @@ namespace ERIN
             pair.first,
             pair.second->clone()));
     }
-    rand_fn = sim_info.make_random_function();
     check_data();
-    generate_failure_fragilities();
-    erin::distribution::DistributionSystem ds{};
-    std::unordered_map<std::string, erin::fragility::FragilityMode> fragility_modes{};
-    fragility_info_by_comp_tag_by_instance_by_scenario_tag =
-      erin::fragility::calc_fragility_schedules(
-        fragility_modes,
-        scenario_schedules,
-        failure_probs_by_comp_id_by_scenario_id,
-        rand_fn,
-        ds);
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "scenario_schedules:\n";
-      for (const auto& ss : scenario_schedules) {
-        const auto& scenario_tag = ss.first;
-        std::vector<double> years{};
-        for (const auto& t : ss.second) {
-          years.emplace_back(static_cast<double>(t) / (8760.0 * 3600.0));
-        }
-        std::cout << "- " << scenario_tag << ": " << vec_to_string<double>(years) << "\n";
-      }
-      std::cout << "failure_probs_by_comp_id_by_scenario_id\n";
-      for (const auto& fpbc_scenario : failure_probs_by_comp_id_by_scenario_id) {
-        const auto& scenario_tag = fpbc_scenario.first;
-        std::cout << "- " << scenario_tag << "\n";
-        for (const auto& fpbc : fpbc_scenario.second) {
-          const auto& comp_tag = fpbc.first;
-          std::cout
-            << "  - " << comp_tag << ": "
-            << vec_to_string<double>(fpbc.second) << "\n";
-        }
-      }
-      std::cout << "fragility_info_by_comp_tag_by_instance_by_scenario_tag:\n";
-      for (const auto& fibcs : fragility_info_by_comp_tag_by_instance_by_scenario_tag) {
-        const auto& scenario_tag = fibcs.first;
-        std::cout << "- " << scenario_tag << ":\n";
-        for (std::size_t idx{0}; idx < fibcs.second.size(); ++idx) {
-          std::cout << "  - [" << idx << "]:\n";
-          const auto& fibc = fibcs.second[idx];
-          for (const auto& fic : fibc) {
-            const auto& comp_tag = fic.first;
-            const auto& fi = fic.second;
-            std::cout << "    - " << comp_tag << " " << fi << "\n";
-          }
-        }
-      }
-    }
-  }
-
-  void
-  Main::generate_failure_fragilities()
-  {
-    for (const auto& s: scenarios) {
-      const auto& intensities = s.second.get_intensities();
-      std::unordered_map<std::string, std::vector<double>> m{};
-      if (intensities.size() > 0) {
-        for (const auto& c_pair: components) {
-          const auto& c = c_pair.second;
-          if (!(c->is_fragile())) {
-            continue;
-          }
-          auto probs = c->apply_intensities(intensities);
-          // Sort with the highest probability first; that way if a 1.0 is
-          // present, we can end early...
-          std::sort(
-              probs.begin(), probs.end(),
-              [](double a, double b){ return a > b; });
-          if (probs.size() == 0) {
-            // no need to add an empty vector of probabilities
-            // note: probabilitie of 0.0 (i.e., never fail) are not added in
-            // apply_intensities
-            continue;
-          }
-          m[c_pair.first] = probs;
-        }
-      }
-      failure_probs_by_comp_id_by_scenario_id[s.first] = m;
-    }
   }
 
   ScenarioResults
@@ -962,7 +827,7 @@ namespace ERIN
   {
     std::stringstream ss{};
     ss << raw_toml;
-    return Main{TomlInputReader{ss}};
+    return Main{InputReader{ss}};
   }
 
   ////////////////////////////////////////////////////////////

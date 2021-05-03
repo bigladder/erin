@@ -260,8 +260,9 @@ namespace ERIN
   FixedSeries::increment_idx()
   {
     ++idx;
-    if (idx > max_idx)
+    if (idx > max_idx) {
       idx = 0;
+    }
   }
 
   bool

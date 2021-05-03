@@ -92,8 +92,6 @@ namespace ERIN
     namespace EF = erin::fragility;
     TomlInputReader reader{v};
     sim_info = reader.read_simulation_info();
-    std::unordered_map<std::string, std::vector<std::unordered_map<std::string, EF::FragilityInfo>>>
-      fragility_info_by_comp_tag_by_instance_by_scenario_tag{};
     // Read data into private class fields
     const auto loads_by_id = reader.read_loads();
     const auto fragility_curves = reader.read_fragility_curve_data();

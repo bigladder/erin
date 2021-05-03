@@ -137,7 +137,7 @@ namespace ERIN
   {
     public:
       explicit Main(const std::string& input_toml);
-      explicit Main(TomlInputReader reader);
+      explicit Main(InputReader reader);
       Main(
           const SimulationInfo& si,
           const std::unordered_map<
@@ -147,10 +147,12 @@ namespace ERIN
             std::string,
             std::vector<::erin::network::Connection>>& networks,
           const std::unordered_map<std::string, Scenario>& scenarios,
+          const std::unordered_map<std::string, std::vector<RealTimeType>>&
+            scenario_schedules,
           const std::unordered_map<std::string, std::vector<TimeState>>&
             reliability_schedule = {},
-          const std::unordered_map<std::string, std::vector<RealTimeType>>&
-            scenario_schedules = {}
+          const std::unordered_map<std::string, std::vector<std::unordered_map<std::string, erin::fragility::FragilityInfo>>>&
+            fi_by_comp_by_inst_by_scenario = {}
           );
       ScenarioResults run(
           const std::string& scenario_id,
@@ -183,12 +185,6 @@ namespace ERIN
         std::string,
         std::vector<::erin::network::Connection>> networks;
       std::unordered_map<std::string, Scenario> scenarios;
-      std::unordered_map<
-        std::string,
-        std::unordered_map<
-          std::string,
-          std::vector<double>>> failure_probs_by_comp_id_by_scenario_id;
-      std::function<double()> rand_fn;
       std::unordered_map<std::string, std::vector<TimeState>>
         reliability_schedule;
       std::unordered_map<std::string, std::vector<RealTimeType>>
@@ -199,7 +195,6 @@ namespace ERIN
         fragility_info_by_comp_tag_by_instance_by_scenario_tag;
 
       void check_data() const;
-      void generate_failure_fragilities();
   };
 
   Main make_main_from_string(const std::string& raw_toml);

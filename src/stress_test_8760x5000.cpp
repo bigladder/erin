@@ -63,8 +63,8 @@ main()
   std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
     scenario_schedules{{scenario_id, {0}}};
   ERIN::Main m{
-    si, components, networks, scenarios, reliability_schedule,
-    scenario_schedules};
+    si, components, networks, scenarios,
+    scenario_schedules, reliability_schedule};
   std::cout << "running!\n";
   auto out = m.run(scenario_id);
   std::cout << "done!\n";

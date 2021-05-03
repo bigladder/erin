@@ -13,6 +13,7 @@
 #pragma clang diagnostic ignored "-Wunused-variable"
 #include "../../vendor/toml11/toml.hpp"
 #pragma clang diagnostic pop
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <iostream>

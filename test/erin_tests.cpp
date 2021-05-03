@@ -1492,7 +1492,7 @@ TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
   E::Main m_high{
     si, comps, networks, scenarios_high, scenario_schedules, {}, fi};
   auto results_high = m_high.run(class_4_hurricane);
-  if (true) {
+  if (false) {
     std::cout << "results_high:\n";
     for (const auto& pair : results_high.get_results())
       std::cout << "... " << pair.first << ": "
@@ -2103,7 +2103,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   namespace enw = ::erin::network;
   namespace ef = ::erin::fragility;
   namespace ep = ::erin::port;
-  std::stringstream ss;
+  std::stringstream ss{};
   ss << "[simulation_info]\n"
         "rate_unit = \"kW\"\n"
         "quantity_unit = \"kJ\"\n"
@@ -2179,9 +2179,9 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
         "intensity.inundation_depth_ft = 20.0\n";
   const std::vector<int>::size_type num_comps{4};
   const std::vector<int>::size_type num_networks{2};
-  ERIN::InputReader r{ss};
-  auto si = r.get_simulation_info();
-  auto components = r.get_components();
+  ERIN::InputReader reader{toml::parse(ss)};
+  auto si = reader.get_simulation_info();
+  auto components = reader.get_components();
   EXPECT_EQ(num_comps, components.size());
   // Test that components have fragilities
   for (const auto& c_pair : components) {
@@ -2190,7 +2190,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
     EXPECT_TRUE(c->is_fragile())
       << "component '" << c_id << "' should be fragile but is not";
   }
-  auto networks = r.get_networks();
+  auto networks = reader.get_networks();
   ASSERT_EQ(num_networks, networks.size());
   const auto& normal_nw = networks["normal_operations"];
   const std::vector<enw::Connection> expected_normal_nw{
@@ -2218,7 +2218,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
   ASSERT_EQ(expected_eo, actual_eo);
   std::unordered_map<std::string, ERIN::size_type>
     dists{{"immediately",0}, {"every_10_years", 1}};
-  auto scenarios = r.get_scenarios();
+  auto scenarios = reader.get_scenarios();
   constexpr ERIN::RealTimeType blue_sky_duration
     = 8760LL * ERIN::rtt_seconds_per_hour;
   constexpr int blue_sky_max_occurrence = 1;
@@ -2268,7 +2268,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
        },
       }
     };
-  const auto& fi_data = r.get_fragility_info_by_comp_by_inst_by_scenario();
+  const auto& fi_data = reader.get_fragility_info_by_comp_by_inst_by_scenario();
   ERIN::Main m{
     si, components, networks, scenarios,
     scenario_schedules, reliability_schedule, fi_data};

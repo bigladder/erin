@@ -140,16 +140,19 @@ namespace erin::fragility
   std::ostream&
   operator<<(std::ostream& os, const FragilityInfo& fi)
   {
+    constexpr ERIN::RealTimeType seconds_per_hour{3600LL};
+    constexpr ERIN::RealTimeType hours_per_day{24LL};
+    constexpr ERIN::RealTimeType hours_per_year{8760LL};
     return os << "{"
               << ":scenario-tag " << fi.scenario_tag
               << " "
               << ":start-time-s " << fi.start_time_s
               << " "
-              << ":start-time-h " << (fi.start_time_s / 3600LL)
+              << ":start-time-h " << (fi.start_time_s / seconds_per_hour)
               << " "
-              << ":start-time-d " << (fi.start_time_s / (3600LL * 24LL))
+              << ":start-time-d " << (fi.start_time_s / (seconds_per_hour * hours_per_day))
               << " "
-              << ":start-time-y " << (fi.start_time_s / (3600LL * 8760LL))
+              << ":start-time-y " << (fi.start_time_s / (seconds_per_hour * hours_per_year))
               << " "
               << ":is-failed? " << fi.is_failed
               << "}";

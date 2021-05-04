@@ -826,6 +826,7 @@ namespace ERIN
       const auto& tag = entry.first;
       if (valid_entries.find(tag) == valid_entries.end()) {
         std::vector<std::string> valid_entries_vec{};
+        valid_entries_vec.reserve(valid_entries.size());
         for (const auto& an_entry : valid_entries) {
           valid_entries_vec.emplace_back(an_entry);
         }

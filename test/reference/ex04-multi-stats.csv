@@ -6,14 +6,14 @@ blue_sky,1,8760,TOTAL (load),,,,,,5.184e+07
 blue_sky,1,8760,TOTAL (storage),,,,,,0.0
 blue_sky,1,8760,TOTAL (waste),,,,,,0.0
 blue_sky,1,8760,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,
-class_4_hurricane,10,3360,bus-inflow(0),muxer,electricity,0.7,336,3.6288e+06,2.4192e+06
-class_4_hurricane,10,3360,bus-inflow(1),muxer,electricity,0.9,336,1.2096e+06,2.4192e+06
-class_4_hurricane,10,3360,bus-outflow(0),muxer,electricity,0.4,336,7.2576e+06,4.8384e+06
-class_4_hurricane,10,3360,cluster_01_electric,load,electricity,0.4,336,7.2576e+06,4.8384e+06
-class_4_hurricane,10,3360,electric_utility,source,electricity,0.7,336,3.6288e+06,2.4192e+06
-class_4_hurricane,10,3360,emergency_generator,source,electricity,0.9,336,1.2096e+06,2.4192e+06
-class_4_hurricane,10,3360,TOTAL (source),,,,,,4.8384e+06
-class_4_hurricane,10,3360,TOTAL (load),,,,,,4.8384e+06
+class_4_hurricane,10,3360,bus-inflow(0),muxer,electricity,0.8,336,2.4192e+06,3.6288e+06
+class_4_hurricane,10,3360,bus-inflow(1),muxer,electricity,1,0,0,2.4192e+06
+class_4_hurricane,10,3360,bus-outflow(0),muxer,electricity,0.5,336,6.048e+06,6.048e+06
+class_4_hurricane,10,3360,cluster_01_electric,load,electricity,0.5,336,6.048e+06,6.048e+06
+class_4_hurricane,10,3360,electric_utility,source,electricity,0.8,336,2.4192e+06,3.6288e+06
+class_4_hurricane,10,3360,emergency_generator,source,electricity,1,0,0,2.4192e+06
+class_4_hurricane,10,3360,TOTAL (source),,,,,,6.048e+06
+class_4_hurricane,10,3360,TOTAL (load),,,,,,6.048e+06
 class_4_hurricane,10,3360,TOTAL (storage),,,,,,0.0
 class_4_hurricane,10,3360,TOTAL (waste),,,,,,0.0
 class_4_hurricane,10,3360,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,

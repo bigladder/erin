@@ -817,8 +817,9 @@ namespace ERIN
       "scenarios",
     };
     if (!data.is_table()) {
-      const auto the_type = data.type();
-      return;
+      std::ostringstream oss{};
+      oss << "the TOML parsed does not seem to be a table...\n";
+      throw std::invalid_argument(oss.str());
     }
     const auto& tt = toml::get<toml::table>(data);
     for (const auto& entry : tt) {

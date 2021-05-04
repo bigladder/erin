@@ -2258,7 +2258,7 @@ TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
     EXPECT_EQ(es.get_max_occurrences(), as.get_max_occurrences());
     EXPECT_EQ(es.get_intensities(), as.get_intensities());
   }
-  EXPECT_EQ(expected_scenarios, scenarios);
+ 
   std::unordered_map<std::string, std::vector<ERIN::TimeState>>
     reliability_schedule{};
   std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>

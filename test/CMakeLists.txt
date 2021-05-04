@@ -56,3 +56,4 @@ target_include_directories(test_erin_distribution
 
 include(GoogleTest)
 gtest_discover_tests(${CMAKE_PROJECT_NAME}_tests)
+gtest_discover_tests(${CMAKE_PROJECT_NAME}_tests_2)

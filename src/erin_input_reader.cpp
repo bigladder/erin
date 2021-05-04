@@ -83,17 +83,36 @@ namespace ERIN
     return out;
   }
 
-  InputReader::InputReader(toml::value v):
-      sim_info{},
-      components{},
-      networks{},
-      scenarios{},
-      reliability_schedule{},
-      scenario_schedules{},
-      fragility_info_by_comp_tag_by_instance_by_scenario_tag{}
+  InputReader::InputReader(const std::string& path) :
+    sim_info{},
+    components{},
+    networks{},
+    scenarios{},
+    reliability_schedule{},
+    scenario_schedules{},
+    fragility_info_by_comp_tag_by_instance_by_scenario_tag{}
+  {
+    TomlInputReader reader{path};
+    initialize(reader);
+  }
+
+  InputReader::InputReader(std::istream& in):
+    sim_info{},
+    components{},
+    networks{},
+    scenarios{},
+    reliability_schedule{},
+    scenario_schedules{},
+    fragility_info_by_comp_tag_by_instance_by_scenario_tag{}
+  {
+    TomlInputReader reader{in};
+    initialize(reader);
+  }
+
+  void
+  InputReader::initialize(TomlInputReader& reader)
   {
     namespace EF = erin::fragility;
-    TomlInputReader reader{v};
     sim_info = reader.read_simulation_info();
     // Read data into private class fields
     const auto loads_by_id = reader.read_loads();
@@ -111,12 +130,12 @@ namespace ERIN
       loads_by_id, fragility_curves, fragility_modes, fms, rc);
     networks = reader.read_networks();
     scenarios = reader.read_scenarios(dists);
-    const auto max_time_s{sim_info.get_max_time_in_seconds()};
+    const auto max_time_s{ sim_info.get_max_time_in_seconds() };
     auto rand_fn = sim_info.make_random_function();
     reliability_schedule = rc.calc_reliability_schedule_by_component_tag(
-        rand_fn, ds, max_time_s);
+      rand_fn, ds, max_time_s);
     scenario_schedules = calc_scenario_schedule(
-        max_time_s, scenarios, ds, rand_fn);
+      max_time_s, scenarios, ds, rand_fn);
     const auto failure_probs_by_comp_id_by_scenario_id = generate_failure_fragilities(
       scenarios, components);
     fragility_info_by_comp_tag_by_instance_by_scenario_tag =
@@ -125,16 +144,6 @@ namespace ERIN
         failure_probs_by_comp_id_by_scenario_id,
         rand_fn,
         ds);
-  }
-
-  InputReader::InputReader(const std::string& path):
-    InputReader(toml::parse(path))
-  {
-  }
-
-  InputReader::InputReader(std::istream& in):
-    InputReader(toml::parse(in, "<input from istream>"))
-  {
   }
 
   std::unordered_map<std::string, std::unique_ptr<Component>>
@@ -165,7 +174,7 @@ namespace ERIN
   TomlInputReader::TomlInputReader(std::istream& in):
     data{}
   {
-    data = toml::parse(in, "<input from istream>");
+    data = toml::parse(in, std::string{"<input from istream>"});
     check_top_level_entries();
   }
 
@@ -262,7 +271,7 @@ namespace ERIN
         std::unordered_map<std::string,FlowValueType>();
       auto it1 = tt.find("other_rate_units");
       if (it1 != tt.end()) {
-        const auto oru = toml::get<toml::table>(it1->second);
+        const auto& oru = toml::get<toml::table>(it1->second);
         for (const auto& p: oru) {
           other_rate_units.insert(
               std::pair<std::string, FlowValueType>(
@@ -807,6 +816,10 @@ namespace ERIN
       "networks",
       "scenarios",
     };
+    if (!data.is_table()) {
+      const auto the_type = data.type();
+      return;
+    }
     const auto& tt = toml::get<toml::table>(data);
     for (const auto& entry : tt) {
       const auto& tag = entry.first;

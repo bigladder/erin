@@ -18,6 +18,11 @@ set(test_sources
   checkout_line/observer.cpp
   checkout_line/observer.h)
 
+set(test_sources_2
+  erin_tests_2.cpp
+  erin_test_utils.h
+)
+
 link_libraries(${CMAKE_PROJECT_NAME} gtest)
 
 # Copy required ex02.csv to the build/test directory
@@ -35,9 +40,11 @@ configure_file(
 add_executable(${CMAKE_PROJECT_NAME}_tests ${test_sources})
 target_include_directories(${CMAKE_PROJECT_NAME}_tests PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 
+add_executable(${CMAKE_PROJECT_NAME}_tests_2 ${test_sources_2})
+target_include_directories(${CMAKE_PROJECT_NAME}_tests_2 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+
 add_executable(test_erin_distribution
-  ${PROJECT_SOURCE_DIR}/test/erin_distribution.test.cpp
-  )
+  ${PROJECT_SOURCE_DIR}/test/erin_distribution.test.cpp)
 target_include_directories(test_erin_distribution
   PRIVATE
   ${PROJECT_SOURCE_DIR}/include

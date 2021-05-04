@@ -32,10 +32,11 @@ namespace ERIN
     const std::unordered_map<std::string, Scenario>& scenarios,
     const std::unordered_map<std::string, std::unique_ptr<Component>>& components);
 
+  class TomlInputReader;
+
   class InputReader
   {
     public:
-      explicit InputReader(toml::value v);
       explicit InputReader(const std::string& path);
       explicit InputReader(std::istream& in);
 
@@ -82,6 +83,7 @@ namespace ERIN
       std::unordered_map<std::string, std::vector<RealTimeType>> scenario_schedules;
       std::unordered_map<std::string, std::vector<std::unordered_map<std::string, erin::fragility::FragilityInfo>>>
         fragility_info_by_comp_tag_by_instance_by_scenario_tag;
+      void initialize(TomlInputReader& reader);
   };
 
   struct StreamIDs

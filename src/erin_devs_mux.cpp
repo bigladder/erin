@@ -244,7 +244,7 @@ namespace erin::devs
         << static_cast<int>(outflow_strategy) << "\n";
     throw std::invalid_argument(oss.str());
   }
-  
+
   std::vector<PortUpdate3>
   request_inflows_intelligently(
       const std::vector<Port3>& inflows,

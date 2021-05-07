@@ -8279,30 +8279,84 @@ TEST(ErinBasicsTest, Test_source_store_load)
       "occurrence_distribution = \"immediately\"\n"
       "duration = 8760\n"
       "max_occurrences = 1\n"
-      "network = \"nw_electric\"\n"
+      "network = \"nw\"\n"
   };
   namespace E = ERIN;
   auto m = E::make_main_from_string(input);
   const auto results = m.run_all();
   ASSERT_TRUE(results.get_is_good());
   const auto& r = results.get_results();
-  if (true) {
+  if (false) {
     std::cout << "iterating r\n";
     for (const auto& item : r) {
       std::cout << item.first << "\n";
     }
   }
-  const auto& blue_sky_results = results.get_results().at("blue_sky")[0];
+  const auto blue_sky_results = results.get_results().at("blue_sky")[0];
   ASSERT_TRUE(blue_sky_results.get_is_good());
-  const auto& bs0 = blue_sky_results.get_results();
-  if (true) {
+  const auto bs0 = blue_sky_results.get_results();
+  if (false) {
     std::cout << "iterating bs0\n";
     for (const auto& item : bs0) {
       std::cout << item.first << "\n";
     }
   }
-  ASSERT_TRUE(false);
-  //ASSERT_EQ(bs0.at("boiler")[0].time, 0LL);
+  constexpr double tol{ 1e-6 };
+  ASSERT_EQ(bs0.at("boiler")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_utility")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_pile-inflow")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_pile-outflow")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_pile-storeflow")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_pile-discharge")[0].time, 0LL);
+  ASSERT_NEAR(bs0.at("boiler")[0].requested_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[0].requested_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[0].requested_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[0].requested_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[0].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[0].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("boiler")[0].achieved_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[0].achieved_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[0].achieved_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[0].achieved_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[0].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[0].achieved_value, 0.0, tol);
+
+  ASSERT_EQ(bs0.at("boiler")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_utility")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_pile-inflow")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_pile-outflow")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_pile-storeflow")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_pile-discharge")[1].time, 3600LL);
+  ASSERT_NEAR(bs0.at("boiler")[1].requested_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[1].requested_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[1].requested_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[1].requested_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[1].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[1].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("boiler")[1].achieved_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[1].achieved_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[1].achieved_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[1].achieved_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[1].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[1].achieved_value, 0.0, tol);
+
+  ASSERT_EQ(bs0.at("coal_utility")[2].time, 3600LL * 8760LL);
+  ASSERT_EQ(bs0.at("coal_pile-inflow")[2].time, 3600LL * 8760LL);
+  ASSERT_EQ(bs0.at("coal_pile-outflow")[2].time, 3600LL * 8760LL);
+  ASSERT_EQ(bs0.at("coal_pile-storeflow")[2].time, 3600LL * 8760LL);
+  ASSERT_EQ(bs0.at("coal_pile-discharge")[2].time, 3600LL * 8760LL);
+  ASSERT_NEAR(bs0.at("boiler")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("boiler")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[2].achieved_value, 0.0, tol);
 }
 
 int

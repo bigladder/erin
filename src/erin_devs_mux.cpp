@@ -434,7 +434,6 @@ namespace erin::devs
         auto update = new_ips[idx].with_achieved(inflows[idx]);
         report_irs[idx] = report_irs[idx] || update.send_request;
         new_ips[idx] = update.port;
-        inflows[idx] = update.port.get_achieved();
       }
     }
     auto new_ops{state.outflow_ports};

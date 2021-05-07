@@ -8239,6 +8239,72 @@ TEST(ErinBasicsTest, Test_mover_cases)
     - s1.outflow_port.get_achieved(), 0.0, 1e-6);
 }
 
+TEST(ErinBasicsTest, Test_source_store_load)
+{
+  const std::string input{
+      "[simulation_info]\n"
+      "rate_unit = \"kW\"\n"
+      "quantity_unit = \"kJ\"\n"
+      "time_unit = \"hours\"\n"
+      "max_time = 8760\n"
+      "[loads.coal_load]\n"
+      "time_unit = \"hours\"\n"
+      "rate_unit = \"kW\"\n"
+      "time_rate_pairs = [[0.0,143562.0],[1.0,92624.7],[8760.0,0.0]]\n"
+      "[components.coal_utility]\n"
+      "type=\"source\"\n"
+      "outflow=\"coal\"\n"
+      "max_outflow=879213000.0\n"
+      "[components.coal_pile]\n"
+      "type=\"store\"\n"
+      "inflow=\"coal\"\n"
+      "outflow=\"coal\"\n"
+      "capacity=1200000000.0\n"
+      "max_inflow=87921300.0\n"
+      "[components.boiler]\n"
+      "type=\"load\"\n"
+      "inflow=\"coal\"\n"
+      "loads_by_scenario.blue_sky = \"coal_load\"\n"
+      "[networks.nw]\n"
+      "connections = [\n"
+      "  [\"coal_utility:OUT(0)\", \"coal_pile:IN(0)\",\"coal\"],\n"
+      "  [\"coal_pile:OUT(0)\",\"boiler:IN(0)\",\"coal\"],\n"
+      "]\n"
+      "[dist.immediately]\n"
+      "type = \"fixed\"\n"
+      "value = 0\n"
+      "time_unit = \"hours\"\n"
+      "[scenarios.blue_sky]\n"
+      "time_unit = \"hours\"\n"
+      "occurrence_distribution = \"immediately\"\n"
+      "duration = 8760\n"
+      "max_occurrences = 1\n"
+      "network = \"nw_electric\"\n"
+  };
+  namespace E = ERIN;
+  auto m = E::make_main_from_string(input);
+  const auto results = m.run_all();
+  ASSERT_TRUE(results.get_is_good());
+  const auto& r = results.get_results();
+  if (true) {
+    std::cout << "iterating r\n";
+    for (const auto& item : r) {
+      std::cout << item.first << "\n";
+    }
+  }
+  const auto& blue_sky_results = results.get_results().at("blue_sky")[0];
+  ASSERT_TRUE(blue_sky_results.get_is_good());
+  const auto& bs0 = blue_sky_results.get_results();
+  if (true) {
+    std::cout << "iterating bs0\n";
+    for (const auto& item : bs0) {
+      std::cout << item.first << "\n";
+    }
+  }
+  ASSERT_TRUE(false);
+  //ASSERT_EQ(bs0.at("boiler")[0].time, 0LL);
+}
+
 int
 main(int argc, char **argv)
 {

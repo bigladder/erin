@@ -280,7 +280,8 @@ namespace ERIN
         get_loads_from_array(
             const std::vector<toml::value>& load_array,
             TimeUnits time_units,
-            RateUnits rate_units) const;
+            RateUnits rate_units,
+            const std::string& load_id) const;
       [[nodiscard]] std::vector<LoadItem>
         load_loads_from_csv(const std::string& file_path) const;
       void read_source_component(

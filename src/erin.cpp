@@ -300,15 +300,7 @@ namespace ERIN
           oss << "supported rate units: 'kW'\n";
           throw std::runtime_error(oss.str());
         }
-        try {
-          the_loads = get_loads_from_array(load_array, time_unit, rate_unit);
-        }
-        catch (std::runtime_error& e) {
-          std::ostringstream oss;
-          oss << "could not read loads array for load '" << load_id << "'\n";
-          oss << "orignal error: " << e.what() << "\n";
-          throw std::runtime_error(e.what());
-        }
+        the_loads = get_loads_from_array(load_array, time_unit, rate_unit, load_id);
       }
       loads_by_id.insert(std::make_pair(load_item.first, the_loads));
     }
@@ -364,7 +356,8 @@ namespace ERIN
   TomlInputReader::get_loads_from_array(
       const std::vector<toml::value>& load_array,
       TimeUnits time_units,
-      RateUnits rate_units) const
+      RateUnits rate_units,
+      const std::string& load_id) const
   {
     if (rate_units != RateUnits::KiloWatts) {
       std::ostringstream oss;
@@ -372,20 +365,26 @@ namespace ERIN
       throw std::runtime_error(oss.str());
     }
     std::vector<LoadItem> the_loads{};
+    int idx{0};
     for (const auto& item: load_array) {
       const auto& xs = toml::get<std::vector<toml::value>>(item);
       const auto size = xs.size();
       RealTimeType the_time{};
       FlowValueType the_value{};
       if (size != 2) {
-        std::ostringstream oss;
-        oss << "time_rate_pairs must be 2 elements in length;"
-            << "size = " << size << "\n";
+        std::ostringstream oss{};
+        oss
+          << "time_rate_pairs must be an array of arrays that "
+          << "are 2 elements in length: [[<time1>, <rate1>], [<time2>, <rate2>], ...]\n"
+          << "However, the size of element " << idx << " = " << size << "\n"
+          << "I could not interpret the loads array for load '" << load_id << "'\n"
+          << "Please double-check your input file\n";
         throw std::runtime_error(oss.str());
       }
       the_time = time_to_seconds(read_number(xs[0]), time_units);
       the_value = static_cast<FlowValueType>(read_number(xs[1]));
       the_loads.emplace_back(LoadItem{the_time, the_value});
+      ++idx;
     }
     return the_loads;
   }
@@ -3132,12 +3131,14 @@ namespace ERIN
         non_advance_count = 0;
       }
       if (non_advance_count >= max_no_advance) {
+        constexpr RealTimeType seconds_per_hour{3600LL};
         sim_good = false;
         std::cout << "ERROR: non_advance_count > max_no_advance:\n";
         std::cout << "run_id           : " << run_id << "\n";
         std::cout << "non_advance_count: " << non_advance_count << "\n";
         std::cout << "max_no_advance   : " << max_no_advance << "\n";
-        std::cout << "time.real        : " << t.real << " seconds\n";
+        std::cout << "time.real        : " << t.real << " seconds (";
+        std::cout << (static_cast<double>(t.real) / static_cast<double>(seconds_per_hour)) << " hours)\n";
         std::cout << "time.logical     : " << t.logical << "\n";
         break;
       }

@@ -2708,8 +2708,8 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
         auto actual_val = actual_teas.at(i);
         EXPECT_NEAR(expected_teas[i], actual_val, tolerance)
           << scenario_id << ":" << stream_name << "[" << i << "]"
-          << " expected_teas=" << expected_teas[i]
-          << " actual_teas  =" << actual_val << "\n";
+          << " expected_teas = " << expected_teas[i]
+          << " actual_teas = " << actual_val << "\n";
       }
     }
   }
@@ -8357,6 +8357,125 @@ TEST(ErinBasicsTest, Test_source_store_load)
   ASSERT_NEAR(bs0.at("coal_pile-outflow")[2].achieved_value, 0.0, tol);
   ASSERT_NEAR(bs0.at("coal_pile-storeflow")[2].achieved_value, 0.0, tol);
   ASSERT_NEAR(bs0.at("coal_pile-discharge")[2].achieved_value, 0.0, tol);
+}
+
+TEST(ErinBasicsTest, Test_mux_inflows_intelligently_v2)
+{
+  namespace ED = erin::devs;
+  //
+  std::vector<ED::Port3> ips{
+    ED::Port3{},
+    ED::Port3{},
+    ED::Port3{}
+  };
+  auto ups = ED::request_inflows_intelligently_v2(ips, 5.0);
+  std::vector<ED::PortUpdate3> expected_ups{
+    ED::PortUpdate3{ED::Port3{5.0,0.0}, true, false},
+    ED::PortUpdate3{ED::Port3{}, false, false},
+    ED::PortUpdate3{ED::Port3{}, false, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{5.0, 3.0},
+    ED::Port3{},
+    ED::Port3{},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
+    ED::PortUpdate3{ED::Port3{2.0,0.0}, true, false},
+    ED::PortUpdate3{ED::Port3{}, false, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{5.0, 3.0},
+    ED::Port3{2.0, 1.0},
+    ED::Port3{},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
+    ED::PortUpdate3{ED::Port3{2.0,1.0}, false, false},
+    ED::PortUpdate3{ED::Port3{1.0,0.0}, true, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{5.0, 3.0},
+    ED::Port3{2.0, 1.0},
+    ED::Port3{1.0, 0.0},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
+    ED::PortUpdate3{ED::Port3{2.0,1.0}, false, false},
+    ED::PortUpdate3{ED::Port3{1.0,0.0}, false, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{5.0, 3.0},
+    ED::Port3{2.0, 1.0},
+    ED::Port3{1.0, 0.0},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 10.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{10.0,3.0}, true, false},
+    ED::PortUpdate3{ED::Port3{0.0,1.0}, true, false},
+    ED::PortUpdate3{ED::Port3{0.0,0.0}, true, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{10.0, 5.0},
+    ED::Port3{5.0, 2.0},
+    ED::Port3{0.0, 0.0},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 4.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{4.0,5.0}, true, false},
+    ED::PortUpdate3{ED::Port3{0.0,2.0}, true, false},
+    ED::PortUpdate3{ED::Port3{0.0,0.0}, false, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
 }
 
 int

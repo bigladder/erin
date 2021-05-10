@@ -10,6 +10,8 @@
 
 namespace ERIN
 {
+  constexpr bool all_element_debug{false};
+
   ElementType
   tag_to_element_type(const std::string& tag)
   {
@@ -518,7 +520,7 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // FlowElement
-  constexpr bool flow_element_debug{true};
+  constexpr bool flow_element_debug{all_element_debug || false};
 
   FlowElement::FlowElement(
       std::string id_,
@@ -886,7 +888,8 @@ namespace ERIN
 
   ///////////////////////////////////////////////////////////////////
   // FlowLimits
-  constexpr bool flow_limits_element_debug{true};
+  constexpr bool flow_limits_element_debug{all_element_debug || false};
+  constexpr int flow_limits_logical_ta{1};
 
   FlowLimits::FlowLimits(
       std::string id_,
@@ -988,7 +991,7 @@ namespace ERIN
     if constexpr (flow_limits_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, flow_limits_logical_ta};
   }
 
   void
@@ -1029,7 +1032,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // FlowMeter
-  constexpr bool flow_meter_element_debug{true};
+  constexpr bool flow_meter_element_debug{all_element_debug || false};
+  constexpr int flow_meter_logical_ta{1};
 
   FlowMeter::FlowMeter(
       std::string id,
@@ -1146,7 +1150,7 @@ namespace ERIN
     if constexpr (flow_meter_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, flow_meter_logical_ta};
   }
 
   void
@@ -1167,7 +1171,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Converter
-  constexpr bool converter_element_debug{true};
+  constexpr bool converter_element_debug{all_element_debug || false};
+  constexpr int converter_logical_ta{1};
 
   Converter::Converter(
       std::string id,
@@ -1260,7 +1265,7 @@ namespace ERIN
     if constexpr (converter_element_debug) {
       std::cout << "- dt = " << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, converter_logical_ta};
   }
 
   void
@@ -1380,7 +1385,8 @@ namespace ERIN
 
   ///////////////////////////////////////////////////////////////////
   // Sink
-  constexpr bool sink_element_debug{true};
+  constexpr bool sink_element_debug{all_element_debug || false};
+  constexpr int sink_logical_ta{1};
 
   Sink::Sink(
       std::string id,
@@ -1495,7 +1501,7 @@ namespace ERIN
     if constexpr (sink_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, sink_logical_ta};
   }
 
   void
@@ -1544,7 +1550,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Mux
-  constexpr bool mux_element_debug{true};
+  constexpr bool mux_element_debug{all_element_debug || false};
+  constexpr int mux_logical_ta{1};
 
   Mux::Mux(
       std::string id,
@@ -1630,7 +1637,7 @@ namespace ERIN
     if constexpr (mux_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, mux_logical_ta};
   }
 
   void
@@ -1709,7 +1716,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Storage
-  constexpr bool storage_element_debug{true};
+  constexpr bool storage_element_debug{all_element_debug || false};
+  constexpr int storage_logical_ta{1};
 
   Storage::Storage(
       std::string id,
@@ -1807,7 +1815,7 @@ namespace ERIN
     if constexpr (storage_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, storage_logical_ta};
   }
 
   void
@@ -1941,7 +1949,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // OnOffSwitch
-  constexpr bool on_off_switch_element_debug{true};
+  constexpr bool on_off_switch_element_debug{all_element_debug || false};
+  constexpr int on_off_switch_logical_ta{1};
 
   OnOffSwitch::OnOffSwitch(
       std::string id,
@@ -2024,7 +2033,7 @@ namespace ERIN
     if constexpr (on_off_switch_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, on_off_switch_logical_ta};
   }
 
   void
@@ -2084,6 +2093,9 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // UncontrolledSource
+  constexpr bool uncontrolled_source_element_debug{all_element_debug || false};
+  constexpr int uncontrolled_source_logical_ta{1};
+
   UncontrolledSource::UncontrolledSource(
       std::string id,
       ComponentType component_type,
@@ -2107,12 +2119,12 @@ namespace ERIN
   void
   UncontrolledSource::delta_int()
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << "delta_int::" << get_id() << "::UncontrolledSource\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::uncontrolled_src_internal_transition(data, state);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << "- s* = " << state << "\n";
     }
     log_ports();
@@ -2121,14 +2133,14 @@ namespace ERIN
   void
   UncontrolledSource::delta_ext(Time e, std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << "delta_ext::" << get_id() << "::UncontrolledSource\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::uncontrolled_src_external_transition(
         data, state, e.real, xs);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << "- s* = " << state << "\n";
     }
     log_ports();
@@ -2137,14 +2149,14 @@ namespace ERIN
   void
   UncontrolledSource::delta_conf(std::vector<PortValue>& xs)
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << "delta_conf::" << get_id() << "::UncontrolledSource\n"
                 << "- xs = " << vec_to_string<PortValue>(xs) << "\n"
                 << "- s  = " << state << "\n";
     }
     state = erin::devs::uncontrolled_src_confluent_transition(
         data, state, xs);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << "- s* = " << state << "\n";
     }
     log_ports();
@@ -2153,28 +2165,28 @@ namespace ERIN
   Time
   UncontrolledSource::ta()
   {
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << "ta::" << get_id() << "::UncontrolledSource\n"
                 << "- dt = ";
     }
     auto dt = erin::devs::uncontrolled_src_time_advance(data, state);
     if (dt == erin::devs::infinity) {
-      if constexpr (debug_level >= debug_level_medium) {
+      if constexpr (uncontrolled_source_element_debug) {
         std::cout << "infinity\n";
       }
       return inf;
     }
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, uncontrolled_source_logical_ta};
   }
 
   void
   UncontrolledSource::output_func(std::vector<PortValue>& ys)
   {
     erin::devs::uncontrolled_src_output_function_mutable(data, state, ys);
-    if constexpr (debug_level >= debug_level_medium) {
+    if constexpr (uncontrolled_source_element_debug) {
       std::cout << "output_func::" << get_id() << "::UncontrolledSource\n"
                 << "- ys = " << vec_to_string<PortValue>(ys) << "\n";
     }
@@ -2246,7 +2258,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Mover
-  constexpr bool mover_element_debug{true};
+  constexpr bool mover_element_debug{all_element_debug || false};
+  constexpr int mover_logical_ta{1};
 
   Mover::Mover(
       std::string id,
@@ -2335,7 +2348,7 @@ namespace ERIN
     if constexpr (mover_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, mover_logical_ta};
   }
 
   void
@@ -2426,7 +2439,8 @@ namespace ERIN
 
   ////////////////////////////////////////////////////////////
   // Source
-  constexpr bool source_element_debug{true};
+  constexpr bool source_element_debug{all_element_debug || false};
+  constexpr int source_logical_ta{1};
 
   Source::Source(
       std::string id,
@@ -2508,7 +2522,7 @@ namespace ERIN
     if constexpr (source_element_debug) {
       std::cout << dt << "\n";
     }
-    return Time{dt, 1};
+    return Time{dt, source_logical_ta};
   }
 
   void

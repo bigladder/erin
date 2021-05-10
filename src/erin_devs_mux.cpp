@@ -262,6 +262,42 @@ namespace erin::devs
     return updates;
   }
 
+  void
+  zero_out_remaining_requests(
+    const std::size_t& start_idx,
+    const std::vector<Port3>& inflows,
+    std::vector<PortUpdate3>& updates)
+  {
+    for (std::size_t idx{start_idx}; idx < inflows.size(); ++idx) {
+      updates.emplace_back(inflows[idx].with_requested(0.0));
+    }
+  }
+
+  std::vector<PortUpdate3>
+  request_inflows_intelligently_v2(
+      const std::vector<Port3>& inflows,
+      FlowValueType total_outflow_request)
+  {
+    std::vector<PortUpdate3> updates{};
+    auto req{total_outflow_request};
+    for (std::size_t idx{0}; idx < inflows.size(); ++idx) {
+      auto update = inflows[idx].with_requested(req);
+      updates.emplace_back(update);
+      if (inflows[idx].get_requested() != req) {
+        zero_out_remaining_requests(idx + 1, inflows, updates);
+        break;
+      }
+      else {
+        req -= update.port.get_achieved();
+        if (req < ERIN::flow_value_tolerance) {
+          req = 0.0;
+        }
+      }
+    }
+    return updates;
+  }
+
+
   MuxerDispatchStrategy
   tag_to_muxer_dispatch_strategy(const std::string& tag)
   {
@@ -397,6 +433,7 @@ namespace erin::devs
     const FlowValueType none_value{-1.0};
     std::vector<FlowValueType> inflows(state.num_inflows, none_value);
     std::vector<FlowValueType> outflows(state.num_outflows, none_value);
+    bool got_inflow_achieved{false};
     for (const auto& x : xs) {
       int port = x.port;
       int port_n_ia = port - inport_inflow_achieved;
@@ -410,6 +447,7 @@ namespace erin::devs
         else {
           inflows[port_n] += x.value;
         }
+        got_inflow_achieved = true;
       }
       else if ((port_n_or >= 0) && (port_n_or < state.num_outflows)) {
         port_n = port_n_or;
@@ -440,7 +478,7 @@ namespace erin::devs
     for (st idx{0}; idx < outflows.size(); idx++) {
       if (outflows[idx] != none_value) {
         auto update = new_ops[idx].with_requested(outflows[idx]);
-        report_oas[idx] = report_oas[idx] || update.send_achieved;
+        report_oas[idx] = report_oas[idx] || update.send_achieved || update.send_request || got_inflow_achieved;
         new_ops[idx] = update.port;
       }
     }
@@ -467,6 +505,7 @@ namespace erin::devs
         state.outflow_ports[idx].get_achieved() != new_ops[idx].get_achieved()};
       report_oas[idx] =
         op_updates[idx].send_achieved
+        || op_updates[idx].send_request
         || achieved_changed;
     }
     return MuxState{

@@ -279,6 +279,18 @@ namespace erin::devs
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs)
   {
+    if (has_reset_token(xs)) {
+      return ConverterState{
+        state.time + elapsed_time,
+        Port3{},
+        Port3{},
+        Port3{},
+        Port3{},
+        state.conversion_fun->clone(),
+        false,
+        false,
+        false};
+    }
     bool got_or{false};
     bool got_ia{false};
     bool got_lr{false};

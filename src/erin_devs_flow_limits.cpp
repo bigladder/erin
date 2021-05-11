@@ -138,6 +138,16 @@ namespace erin::devs
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs)
   {
+    if (has_reset_token(xs)) {
+      return FlowLimitsState{
+        state.time + elapsed_time,
+        Port3{},
+        Port3{},
+        state.limits,
+        false,
+        false,
+      };
+    }
     bool got_outflow_request{false};
     bool got_inflow_achieved{false};
     FlowValueType outflow_request{0.0};

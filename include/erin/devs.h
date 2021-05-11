@@ -19,6 +19,7 @@ namespace erin::devs
   constexpr int inport_outflow_request{1*max_port_numbers};
   constexpr int outport_inflow_request{2*max_port_numbers};
   constexpr int outport_outflow_achieved{3*max_port_numbers};
+  constexpr int inport_reset_at_current_time{4*max_port_numbers};
 
   class Port
   {
@@ -156,6 +157,9 @@ namespace erin::devs
   bool operator==(const PortUpdate3& a, const PortUpdate3& b);
   bool operator!=(const PortUpdate3& a, const PortUpdate3& b);
   std::ostream& operator<<(std::ostream& os, const PortUpdate3& p);
+
+  bool
+  has_reset_token(const std::vector<PortValue>& xs);
 }
 
 #endif // ERIN_DEVS_H

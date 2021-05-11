@@ -207,6 +207,13 @@ namespace ERIN
       const int max_no_advance,
       const std::string& run_id);
 
+  bool run_devs_v2(
+      adevs::Simulator<PortValue, Time>& sim,
+      const RealTimeType max_time,
+      const int max_no_advance,
+      const std::string& run_id,
+      std::vector<FlowElement*>& elements);
+
   ScenarioResults process_single_scenario_results(
       bool sim_good,
       RealTimeType duration,

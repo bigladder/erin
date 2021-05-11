@@ -89,6 +89,13 @@ namespace erin::devs
       RealTimeType dt,
       const std::vector<PortValue>& xs)
   {
+    if (has_reset_token(xs)) {
+      return SupplyState{
+        state.time + dt,
+        Port3{},
+        false,
+      };
+    }
     auto inflow_request{0.0};
     for (const auto& x : xs) {
       switch (x.port)
@@ -107,11 +114,11 @@ namespace erin::devs
         (data.maximum_outflow == supply_unlimited_value)
         ? inflow_request
         : data.maximum_outflow);
-    auto next_state = SupplyState{
+    return SupplyState{
       state.time + dt,
       update.port,
-      update.send_achieved};
-    return next_state;
+      update.send_achieved,
+    };
   }
 
   ////////////////////////////////////////////////////////////

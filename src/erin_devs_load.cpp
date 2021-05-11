@@ -167,6 +167,14 @@ namespace erin::devs
       RealTimeType dt,
       const std::vector<PortValue>& xs)
   {
+    if (has_reset_token(xs)) {
+      return LoadState{
+        state.time + dt,
+        state.current_index,
+        Port3{state.inflow_port.get_requested(), 0.0},
+        true,
+      };
+    }
     FlowValueType inflow_achieved{0.0};
     for (const auto& x : xs) {
       switch (x.port) {

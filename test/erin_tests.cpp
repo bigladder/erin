@@ -2766,8 +2766,8 @@ TEST(ErinBasicsTest, TestRepeatableRandom)
         auto actual_val = actual_teas.at(i);
         EXPECT_NEAR(expected_teas[i], actual_val, tolerance)
           << scenario_id << ":" << stream_name << "[" << i << "]"
-          << " expected_teas=" << expected_teas[i]
-          << " actual_teas  =" << actual_val << "\n";
+          << " expected_teas = " << expected_teas[i]
+          << " actual_teas = " << actual_val << "\n";
       }
     }
   }
@@ -5791,6 +5791,245 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_storage_component)
     }
   }
   EXPECT_EQ(expected_results, bs_data);
+}
+
+TEST(ErinBasicsTest, Test_source_store_load)
+{
+  const std::string input{
+      "[simulation_info]\n"
+      "rate_unit = \"kW\"\n"
+      "quantity_unit = \"kJ\"\n"
+      "time_unit = \"hours\"\n"
+      "max_time = 8760\n"
+      "[loads.coal_load]\n"
+      "time_unit = \"hours\"\n"
+      "rate_unit = \"kW\"\n"
+      "time_rate_pairs = [[0.0,143562.0],[1.0,92624.7],[8760.0,0.0]]\n"
+      "[components.coal_utility]\n"
+      "type=\"source\"\n"
+      "outflow=\"coal\"\n"
+      "max_outflow=879213000.0\n"
+      "[components.coal_pile]\n"
+      "type=\"store\"\n"
+      "inflow=\"coal\"\n"
+      "outflow=\"coal\"\n"
+      "capacity=1200000000.0\n"
+      "max_inflow=87921300.0\n"
+      "[components.boiler]\n"
+      "type=\"load\"\n"
+      "inflow=\"coal\"\n"
+      "loads_by_scenario.blue_sky = \"coal_load\"\n"
+      "[networks.nw]\n"
+      "connections = [\n"
+      "  [\"coal_utility:OUT(0)\", \"coal_pile:IN(0)\",\"coal\"],\n"
+      "  [\"coal_pile:OUT(0)\",\"boiler:IN(0)\",\"coal\"],\n"
+      "]\n"
+      "[dist.immediately]\n"
+      "type = \"fixed\"\n"
+      "value = 0\n"
+      "time_unit = \"hours\"\n"
+      "[scenarios.blue_sky]\n"
+      "time_unit = \"hours\"\n"
+      "occurrence_distribution = \"immediately\"\n"
+      "duration = 8760\n"
+      "max_occurrences = 1\n"
+      "network = \"nw\"\n"
+  };
+  namespace E = ERIN;
+  auto m = E::make_main_from_string(input);
+  const auto results = m.run_all();
+  ASSERT_TRUE(results.get_is_good());
+  const auto& r = results.get_results();
+  if (false) {
+    std::cout << "iterating r\n";
+    for (const auto& item : r) {
+      std::cout << item.first << "\n";
+    }
+  }
+  const auto blue_sky_results = results.get_results().at("blue_sky")[0];
+  ASSERT_TRUE(blue_sky_results.get_is_good());
+  const auto bs0 = blue_sky_results.get_results();
+  if (false) {
+    std::cout << "iterating bs0\n";
+    for (const auto& item : bs0) {
+      std::cout << item.first << "\n";
+    }
+  }
+  constexpr double tol{ 1e-6 };
+  ASSERT_EQ(bs0.at("boiler")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_utility")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_pile-inflow")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_pile-outflow")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_pile-storeflow")[0].time, 0LL);
+  ASSERT_EQ(bs0.at("coal_pile-discharge")[0].time, 0LL);
+  ASSERT_NEAR(bs0.at("boiler")[0].requested_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[0].requested_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[0].requested_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[0].requested_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[0].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[0].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("boiler")[0].achieved_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[0].achieved_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[0].achieved_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[0].achieved_value, 143562.00, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[0].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[0].achieved_value, 0.0, tol);
+
+  ASSERT_EQ(bs0.at("boiler")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_utility")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_pile-inflow")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_pile-outflow")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_pile-storeflow")[1].time, 3600LL);
+  ASSERT_EQ(bs0.at("coal_pile-discharge")[1].time, 3600LL);
+  ASSERT_NEAR(bs0.at("boiler")[1].requested_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[1].requested_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[1].requested_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[1].requested_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[1].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[1].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("boiler")[1].achieved_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[1].achieved_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[1].achieved_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[1].achieved_value, 92624.70, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[1].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[1].achieved_value, 0.0, tol);
+
+  ASSERT_EQ(bs0.at("coal_utility")[2].time, 3600LL * 8760LL);
+  ASSERT_EQ(bs0.at("coal_pile-inflow")[2].time, 3600LL * 8760LL);
+  ASSERT_EQ(bs0.at("coal_pile-outflow")[2].time, 3600LL * 8760LL);
+  ASSERT_EQ(bs0.at("coal_pile-storeflow")[2].time, 3600LL * 8760LL);
+  ASSERT_EQ(bs0.at("coal_pile-discharge")[2].time, 3600LL * 8760LL);
+  ASSERT_NEAR(bs0.at("boiler")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[2].requested_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("boiler")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_utility")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-inflow")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-outflow")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[2].achieved_value, 0.0, tol);
+  ASSERT_NEAR(bs0.at("coal_pile-discharge")[2].achieved_value, 0.0, tol);
+}
+
+TEST(ErinBasicsTest, Test_mux_inflows_intelligently_v2)
+{
+  namespace ED = erin::devs;
+  //
+  std::vector<ED::Port3> ips{
+    ED::Port3{},
+    ED::Port3{},
+    ED::Port3{}
+  };
+  auto ups = ED::request_inflows_intelligently_v2(ips, 5.0);
+  std::vector<ED::PortUpdate3> expected_ups{
+    ED::PortUpdate3{ED::Port3{5.0,0.0}, true, false},
+    ED::PortUpdate3{ED::Port3{}, false, false},
+    ED::PortUpdate3{ED::Port3{}, false, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{5.0, 3.0},
+    ED::Port3{},
+    ED::Port3{},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
+    ED::PortUpdate3{ED::Port3{2.0,0.0}, true, false},
+    ED::PortUpdate3{ED::Port3{}, false, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{5.0, 3.0},
+    ED::Port3{2.0, 1.0},
+    ED::Port3{},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
+    ED::PortUpdate3{ED::Port3{2.0,1.0}, false, false},
+    ED::PortUpdate3{ED::Port3{1.0,0.0}, true, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{5.0, 3.0},
+    ED::Port3{2.0, 1.0},
+    ED::Port3{1.0, 0.0},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
+    ED::PortUpdate3{ED::Port3{2.0,1.0}, false, false},
+    ED::PortUpdate3{ED::Port3{1.0,0.0}, false, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{5.0, 3.0},
+    ED::Port3{2.0, 1.0},
+    ED::Port3{1.0, 0.0},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 10.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{10.0,3.0}, true, false},
+    ED::PortUpdate3{ED::Port3{0.0,1.0}, true, false},
+    ED::PortUpdate3{ED::Port3{0.0,0.0}, true, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
+  //
+  ips = std::vector<ED::Port3>{
+    ED::Port3{10.0, 5.0},
+    ED::Port3{5.0, 2.0},
+    ED::Port3{0.0, 0.0},
+  };
+  ups = ED::request_inflows_intelligently_v2(ips, 4.0);
+  expected_ups = std::vector<ED::PortUpdate3>{
+    ED::PortUpdate3{ED::Port3{4.0,5.0}, true, false},
+    ED::PortUpdate3{ED::Port3{0.0,2.0}, true, false},
+    ED::PortUpdate3{ED::Port3{0.0,0.0}, false, false},
+  };
+  ASSERT_EQ(ups.size(), expected_ups.size());
+  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
+    ASSERT_EQ(ups[idx], expected_ups[idx])
+      << "idx: " << idx << "\n"
+      << "ups[idx]: " << ups[idx] << "\n"
+      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
+  }
 }
 
 int

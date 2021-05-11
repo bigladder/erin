@@ -45,6 +45,10 @@ namespace erin::devs
       const std::vector<Port3>& inflow_ports,
       FlowValueType remaining_request);
 
+  std::vector<PortUpdate3> request_inflows_intelligently_v2(
+      const std::vector<Port3>& inflow_ports,
+      FlowValueType total_outflow_request);
+
   ////////////////////////////////////////////////////////////
   // state
   const int minimum_number_of_ports{1};

@@ -244,7 +244,7 @@ namespace erin::devs
         << static_cast<int>(outflow_strategy) << "\n";
     throw std::invalid_argument(oss.str());
   }
-  
+
   std::vector<PortUpdate3>
   request_inflows_intelligently(
       const std::vector<Port3>& inflows,
@@ -261,6 +261,42 @@ namespace erin::devs
     }
     return updates;
   }
+
+  void
+  zero_out_remaining_requests(
+    const std::size_t& start_idx,
+    const std::vector<Port3>& inflows,
+    std::vector<PortUpdate3>& updates)
+  {
+    for (std::size_t idx{start_idx}; idx < inflows.size(); ++idx) {
+      updates.emplace_back(inflows[idx].with_requested(0.0));
+    }
+  }
+
+  std::vector<PortUpdate3>
+  request_inflows_intelligently_v2(
+      const std::vector<Port3>& inflows,
+      FlowValueType total_outflow_request)
+  {
+    std::vector<PortUpdate3> updates{};
+    auto req{total_outflow_request};
+    for (std::size_t idx{0}; idx < inflows.size(); ++idx) {
+      auto update = inflows[idx].with_requested(req);
+      updates.emplace_back(update);
+      if (inflows[idx].get_requested() != req) {
+        zero_out_remaining_requests(idx + 1, inflows, updates);
+        break;
+      }
+      else {
+        req -= update.port.get_achieved();
+        if (req < ERIN::flow_value_tolerance) {
+          req = 0.0;
+        }
+      }
+    }
+    return updates;
+  }
+
 
   MuxerDispatchStrategy
   tag_to_muxer_dispatch_strategy(const std::string& tag)
@@ -432,9 +468,7 @@ namespace erin::devs
     for (st idx{0}; idx < inflows.size(); idx++) {
       if (inflows[idx] != none_value) {
         auto update = new_ips[idx].with_achieved(inflows[idx]);
-        report_irs[idx] = report_irs[idx] || update.send_request;
         new_ips[idx] = update.port;
-        inflows[idx] = update.port.get_achieved();
       }
     }
     auto new_ops{state.outflow_ports};

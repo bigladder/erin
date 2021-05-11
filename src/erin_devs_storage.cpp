@@ -269,25 +269,27 @@ namespace erin::devs
         data.capacity);
     auto ip{state.inflow_port};
     auto op{state.outflow_port};
-    ip = ip.with_requested(
+    auto update_ip = ip.with_requested(
         std::clamp(
           data.max_charge_rate,
           0.0,
           // net-inflow = inflow - outflow; inflow|max = net-inflow|max + outflow
-          max_single_step_net_inflow(soc, data.capacity) + op.get_requested())).port;
-    op = op.with_achieved(
+          max_single_step_net_inflow(soc, data.capacity) + op.get_requested()));
+    ip = update_ip.port;
+    auto update_op = op.with_achieved(
         std::clamp(
           op.get_requested(),
           0.0,
           // net-outflow = outflow - inflow; outflow|max = net-outflow|max + inflow
-          max_single_step_net_outflow(soc, data.capacity) + ip.get_achieved())).port;
+          max_single_step_net_outflow(soc, data.capacity) + ip.get_achieved()));
+    op = update_op.port;
     return StorageState{
       time,
       soc,
       ip,
       op,
-      false,
-      false};
+      update_ip.send_request,
+      update_op.send_achieved};
   }
 
   StorageState
@@ -339,13 +341,7 @@ namespace erin::devs
       op = op.with_requested(outflow_request).port;
     }
     if (got_the_inflow_achieved) {
-      if (inflow_achieved > std::min(ip.get_requested(), data.max_charge_rate)) {
-        report_ir = true;
-        ip = ip.with_achieved(std::min(ip.get_requested(), data.max_charge_rate)).port;
-      }
-      else {
-        ip = ip.with_achieved(inflow_achieved).port;
-      }
+      ip = ip.with_achieved(inflow_achieved).port;
     }
     auto update_ip = ip.with_requested(
         std::clamp(

@@ -857,7 +857,8 @@ namespace ERIN
         std::cout << "run_id           : " << run_id << "\n";
         std::cout << "non_advance_count: " << non_advance_count << "\n";
         std::cout << "max_no_advance   : " << max_no_advance << "\n";
-        std::cout << "time.real        : " << t.real << " seconds\n";
+        std::cout << "time.real        : " << t.real << " seconds (";
+        std::cout << (static_cast<double>(t.real) / seconds_per_hour) << " hours)\n";
         std::cout << "time.logical     : " << t.logical << "\n";
         break;
       }

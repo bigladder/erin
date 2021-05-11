@@ -341,11 +341,11 @@ namespace erin::devs
       auto ip_update = ip.with_achieved(inflow_achieved);
       ip = ip_update.port;
       report_ir = report_ir || ip_update.send_request;
-      auto op_update = op.with_achieved(
-          state.conversion_fun->outflow_given_inflow(ip.get_achieved()));
-      op = op_update.port;
-      report_oa = report_oa || op_update.send_achieved;
     }
+    auto op_update = op.with_achieved(
+        state.conversion_fun->outflow_given_inflow(ip.get_achieved()));
+    op = op_update.port;
+    report_oa = report_oa || op_update.send_achieved;
     auto lossflow_achieved{ip.get_achieved() - op.get_achieved()};
     auto lp_update = lp.with_achieved(
         (lossflow_achieved > lp.get_requested())

@@ -470,7 +470,6 @@ namespace erin::devs
     for (st idx{0}; idx < inflows.size(); idx++) {
       if (inflows[idx] != none_value) {
         auto update = new_ips[idx].with_achieved(inflows[idx]);
-        report_irs[idx] = report_irs[idx] || update.send_request;
         new_ips[idx] = update.port;
       }
     }
@@ -478,7 +477,7 @@ namespace erin::devs
     for (st idx{0}; idx < outflows.size(); idx++) {
       if (outflows[idx] != none_value) {
         auto update = new_ops[idx].with_requested(outflows[idx]);
-        report_oas[idx] = report_oas[idx] || update.send_achieved || update.send_request || got_inflow_achieved;
+        report_oas[idx] = report_oas[idx] || update.send_achieved;
         new_ops[idx] = update.port;
       }
     }
@@ -505,7 +504,6 @@ namespace erin::devs
         state.outflow_ports[idx].get_achieved() != new_ops[idx].get_achieved()};
       report_oas[idx] =
         op_updates[idx].send_achieved
-        || op_updates[idx].send_request
         || achieved_changed;
     }
     return MuxState{

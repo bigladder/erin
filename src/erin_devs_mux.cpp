@@ -428,6 +428,18 @@ namespace erin::devs
       RealTimeType dt,
       const std::vector<PortValue>& xs)
   {
+    if (has_reset_token(xs)) {
+      return MuxState{
+        state.time + dt,
+        state.num_inflows,
+        state.num_outflows,
+        std::vector<Port3>(state.num_inflows, Port3{}),
+        std::vector<Port3>(state.num_outflows, Port3{}),
+        std::vector<bool>(state.num_inflows, false),
+        std::vector<bool>(state.num_outflows, false),
+        state.outflow_strategy,
+      };
+    }
     using st = std::vector<bool>::size_type;
     auto time{state.time + dt};
     const FlowValueType none_value{-1.0};

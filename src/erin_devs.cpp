@@ -461,4 +461,15 @@ namespace erin::devs
               << ":send-achieved? " << p.send_achieved
               << "}";
   }
+
+  bool
+  has_reset_token(const std::vector<PortValue>& xs)
+  {
+    for (const auto& x : xs) {
+      if (x.port == inport_reset_at_current_time) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

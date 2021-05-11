@@ -2909,13 +2909,14 @@ namespace ERIN
     }
     adevs::Simulator<PortValue, Time> sim;
     network.add(&sim);
-    const int max_no_advance_factor{10000};
+    const int max_no_advance_factor{100};
     int max_no_advance =
       static_cast<int>(elements.size()) * max_no_advance_factor;
-    auto sim_good = run_devs(
+    auto sim_good = run_devs_v2(
         sim, duration, max_no_advance,
         "scenario_run:" + scenario_id +
-        "(" + std::to_string(scenario_start_s) + ")");
+        "(" + std::to_string(scenario_start_s) + ")",
+        elements);
     fw->finalize_at_time(duration);
     // 4. create a SimulationResults object from a FlowWriter
     // - stream-line the SimulationResults object to do less and be leaner
@@ -3140,6 +3141,64 @@ namespace ERIN
         std::cout << (static_cast<double>(t.real) / seconds_per_hour) << " hours)\n";
         std::cout << "time.logical     : " << t.logical << "\n";
         break;
+      }
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "The current time is:\n";
+        std::cout << "... real   : " << t.real << "\n";
+        std::cout << "... logical: " << t.logical << "\n";
+      }
+    }
+    return sim_good;
+  }
+
+  bool
+  run_devs_v2(
+      adevs::Simulator<PortValue, Time>& sim,
+      const RealTimeType max_time,
+      const int max_no_advance,
+      const std::string& run_id,
+      std::vector<FlowElement*>& elements)
+  {
+    bool sim_good{true};
+    int non_advance_count{0};
+    bool reset{false};
+    for (
+        auto t = sim.now(), t_next = sim.next_event_time();
+        ((t_next < inf) && (t_next.real <= max_time));
+        sim.exec_next_event(), t = t_next, t_next = sim.next_event_time()) {
+      if (t_next.real == t.real) {
+        ++non_advance_count;
+      }
+      else {
+        non_advance_count = 0;
+        reset = false;
+      }
+      if (non_advance_count >= max_no_advance) {
+        if (!reset) {
+          reset = true;
+          non_advance_count = 0;
+          std::cout
+            << "WARNING: network did not reach quiescence on its own at time "
+            << (static_cast<double>(t.real) / seconds_per_hour) << " hours\n"
+            << "... resetting flows and restarting flow negotiation from loads\n";
+          for (auto e_ptr : elements) {
+            sim.send(
+              nullptr,
+              e_ptr,
+              PortValue{erin::devs::inport_reset_at_current_time, 0.0});
+          }
+        }
+        else {
+          sim_good = false;
+          std::cout << "ERROR: non_advance_count > max_no_advance:\n";
+          std::cout << "run_id           : " << run_id << "\n";
+          std::cout << "non_advance_count: " << non_advance_count << "\n";
+          std::cout << "max_no_advance   : " << max_no_advance << "\n";
+          std::cout << "time.real        : " << t.real << " seconds (";
+          std::cout << (static_cast<double>(t.real) / seconds_per_hour) << " hours)\n";
+          std::cout << "time.logical     : " << t.logical << "\n";
+          break;
+        }
       }
       if constexpr (debug_level >= debug_level_high) {
         std::cout << "The current time is:\n";

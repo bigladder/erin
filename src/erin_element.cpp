@@ -315,16 +315,13 @@ namespace ERIN
     }
     if (adjust_size) {
       decltype(time_history) new_time_history(end_idx);
-      auto th_begin{*time_history.begin()};
-      auto offset{static_cast<decltype(th_begin)>(end_idx)};
+      auto offset{static_cast<RealTimeType>(end_idx)};
       std::copy(time_history.begin(), time_history.begin() + offset, new_time_history.begin());
       time_history = new_time_history;
-      int num_recorded{ 0 };
-      for (const auto& flag : recording_flags) {
-        if (flag) {
-          ++num_recorded;
-        }
-      }
+      auto num_recorded{ count_if(
+          recording_flags.begin(),
+          recording_flags.end(),
+          [](const bool& flag){return flag;}) };
       decltype(request_history) new_request_history(end_idx * num_recorded);
       decltype(achieved_history) new_achieved_history(end_idx * num_recorded);
       std::copy(request_history.begin(), request_history.begin() + offset * num_recorded, new_request_history.begin());

@@ -433,7 +433,6 @@ namespace erin::devs
     const FlowValueType none_value{-1.0};
     std::vector<FlowValueType> inflows(state.num_inflows, none_value);
     std::vector<FlowValueType> outflows(state.num_outflows, none_value);
-    bool got_inflow_achieved{false};
     for (const auto& x : xs) {
       int port = x.port;
       int port_n_ia = port - inport_inflow_achieved;
@@ -447,7 +446,6 @@ namespace erin::devs
         else {
           inflows[port_n] += x.value;
         }
-        got_inflow_achieved = true;
       }
       else if ((port_n_or >= 0) && (port_n_or < state.num_outflows)) {
         port_n = port_n_or;

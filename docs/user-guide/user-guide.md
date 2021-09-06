@@ -830,24 +830,24 @@ This is a convenient program used to exercise the statistical distributions that
 
 - `distribution_name`: one of 'fixed', 'uniform', 'normal', 'weibull', 'table'
 - `param_1`
-    - fixed: the fixed value
-    - uniform: the lower bound
-    - normal: the mean of the distribution
-    - weibull: the shape parameter of the Weibull distribution
+    - fixed: the fixed value (units: seconds)
+    - uniform: the lower bound (units: seconds)
+    - normal: the mean of the distribution (units: seconds)
+    - weibull: the shape parameter of the Weibull distribution (unitless)
     - table: name of a CSV file with the quantile (i.e., inverse
       cumulative distribution function) defined in two columns:
-      variate and dtime (no header)
+      variate and dtime (no header) (units: seconds)
 - `param_2`
     - fixed: the number of samples
-    - uniform: the upper bound
-    - normal: the standard deviation of the distribution
-    - weibull: the scale parameter of the Weibull distribution
+    - uniform: the upper bound (units: seconds)
+    - normal: the standard deviation of the distribution (units: seconds)
+    - weibull: the scale parameter of the Weibull distribution (units: seconds)
     - table: the number of samples
 - `param_3`
     - fixed: unused, don't write anything (i.e., leave blank)
     - uniform: the number of samples
     - normal: the number of samples
-    - weibull: the location parameter of the Weibull distribution
+    - weibull: the location parameter of the Weibull distribution (units: seconds)
     - table: unused, don't write anything (i.e., leave blank)
 - `param_4`
     - fixed: unused, don't write anything (i.e., leave blank)
@@ -855,6 +855,9 @@ This is a convenient program used to exercise the statistical distributions that
     - normal: unused, don't write anything (i.e., leave blank)
     - weibull: the number of samples
     - table: unused, don't write anything (i.e., leave blank)
+
+Please note that this program provides a direct access to the statistical distribution system.
+As such, all parameters must be specified in the units of the statistical distribution system which are seconds.
 
 An example of using the program to sample a normal distribution with mean of 31,536,000 (1 year in seconds) and standard deviation of 3,600,000 (1000 hours) is as follows:
 

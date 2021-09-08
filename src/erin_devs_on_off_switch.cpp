@@ -79,13 +79,42 @@ namespace erin::devs
     std::vector<RealTimeType> times{};
     std::vector<bool> states{};
     for (const auto& item : schedule) {
-      if (item.time <= last_time) {
+      if (item.time < last_time) {
         std::ostringstream oss{};
         oss << "times are not increasing for schedule:\n"
             << "item.time = " << item.time << "\n"
             << "last_time = " << last_time << "\n"
             << ERIN::vec_to_string<ERIN::TimeState>(schedule) << "\n";
         throw std::invalid_argument(oss.str());
+      }
+      else if (item.time == last_time) {
+        if (item.state == !last_state) {
+          // two switching events at the exact same time with opposite states
+          // ... these cancel each other out; remove the previous one and
+          // ... ignore the current. Set last_state and last_time correctly
+          if (times.size() > 0)
+          {
+            times.pop_back();
+            states.pop_back();
+          }
+          if (times.size() > 0)
+          {
+            last_time = times.back();
+            last_state = states.back();
+          }
+          else
+          {
+            last_time = -1;
+            last_state = false;
+            first_item = true;
+          }
+          continue;
+        }
+        else {
+          // two switching events at the exact same time with same state
+          // just ignore the current event and move on
+          continue;
+        }
       }
       if (first_item || (item.state != last_state)) {
         times.emplace_back(item.time);

@@ -1591,15 +1591,6 @@ namespace ERIN
             }
             auto location =
               toml_helper::read_number_from_table_as_double(tt, "location", 0.0);
-            if (location < 0) {
-              std::ostringstream oss{};
-              oss << "dist '" << dist_string_id << "' doesn't have a "
-                  << "valid 'location' field\n"
-                  << "field 'location' is optional and defaults to 0. If "
-                  << "present it must be >= 0\n"
-                  << "location = " << location << "\n";
-              throw std::invalid_argument(oss.str());
-            }
             std::string time_tag =
               toml_helper::read_optional_table_field<std::string>(
                   tt, {"time_unit", "time_units"}, std::string{"hours"},

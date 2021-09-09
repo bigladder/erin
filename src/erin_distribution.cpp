@@ -381,7 +381,6 @@ namespace erin::distribution
   {
     ensure_greater_than_zero(shape_parameter);
     ensure_greater_than_zero(scale_parameter);
-    ensure_greater_than_or_equal_to(location_parameter, 0.0);
     auto id{dist.tag.size()};
     auto subtype_id{weibull_dist.shape_params.size()};
     weibull_dist.shape_params.emplace_back(shape_parameter);

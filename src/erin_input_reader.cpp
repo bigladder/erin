@@ -505,7 +505,7 @@ namespace ERIN
           std::ostringstream oss;
           oss << "in file '" << csv_path
             << "', first column should be a time unit tag but is '"
-            << cells[0] << "'";
+            << cells[0] << "'\n";
           oss << "row: " << row << "\n";
           erin_csv::stream_out(oss, cells);
           oss << "original error: " << e.what() << "\n";

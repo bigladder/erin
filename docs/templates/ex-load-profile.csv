@@ -1,3 +1,0 @@
-scenario_id,component_id,flow,file
-blue_sky,mc_electricity,electricity,blue_sky_mc_electricity.csv
-blue_sky,other_electricity,electricity,blue_sky_other_electricity.csv

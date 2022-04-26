@@ -6032,7 +6032,7 @@ TEST(ErinBasicsTest, Test_mux_inflows_intelligently_v2)
   }
 }
 
-TEST(ErinBasicsTest, Test_adding_an_efficiency_option_to_storage)
+TEST(ErinBasicsTest, Test_add_initial_soc_option_for_storage)
 {
   namespace E = ERIN;
   std::string input =
@@ -6044,7 +6044,7 @@ TEST(ErinBasicsTest, Test_adding_an_efficiency_option_to_storage)
     "[loads.default]\n"
     "time_unit = \"seconds\"\n"
     "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,25.0],[10.0]]\n"
+    "time_rate_pairs = [[0.0,25.0],[10.0,0.0]]\n"
     "[components.supply]\n"
     "type = \"source\"\n"
     "outflow = \"electricity\"\n"
@@ -6087,9 +6087,13 @@ TEST(ErinBasicsTest, Test_adding_an_efficiency_option_to_storage)
     "    [\"store_1:OUT(0)\",  \"store_0:IN(0)\", \"electricity\"],\n"
     "    [\"store_0:OUT(0)\",  \"load:IN(0)\", \"electricity\"],\n"
     "    ]\n"
+    "[dist.immediately]\n"
+    "type = \"fixed\"\n"
+    "value = 0\n"
+    "time_unit = \"hours\"\n"
     "[scenarios.blue_sky]\n"
     "time_unit = \"seconds\"\n"
-    "occurrence_distribution = {type = \"fixed\", value = 0}\n"
+    "occurrence_distribution = \"immediately\"\n"
     "duration = 10\n"
     "max_occurrences = 1\n"
     "network = \"nw\"\n";

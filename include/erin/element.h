@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_ELEMENT_H
 #define ERIN_ELEMENT_H
@@ -8,11 +8,13 @@
 #include "erin/devs.h"
 #include "erin/devs/converter.h"
 #include "erin/devs/flow_limits.h"
+#include "erin/devs/flow_meter.h"
 #include "erin/devs/load.h"
 #include "erin/devs/mover.h"
 #include "erin/devs/mux.h"
 #include "erin/devs/on_off_switch.h"
 #include "erin/devs/storage.h"
+#include "erin/devs/supply.h"
 #include "erin/devs/uncontrolled_source.h"
 #include "erin/reliability.h"
 #include "adevs.h"
@@ -116,10 +118,12 @@ namespace ERIN
       }
       void ensure_element_tag_is_unique(const std::string& element_tag) const;
       void ensure_element_id_is_valid(int element_id) const;
-      void ensure_time_is_valid(RealTimeType time) const;
+      RealTimeType ensure_time_is_valid(RealTimeType time, int element_id) const;
       void record_history_and_update_current_time(RealTimeType time);
       void ensure_not_final() const;
       void ensure_not_recording() const;
+      void check_energy_balance() const;
+      void clear_data_on_and_after_time(RealTimeType time);
   };
 
   /**
@@ -135,7 +139,8 @@ namespace ERIN
     Store,
     OnOffSwitch,
     UncontrolledSource,
-    Mover
+    Mover,
+    Source
   };
 
   ElementType tag_to_element_type(const std::string& tag);
@@ -326,6 +331,12 @@ namespace ERIN
       void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
       void set_recording_on() override;
 
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
       [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
         return get_inflow_type();
       };
@@ -333,14 +344,14 @@ namespace ERIN
         return get_outflow_type();
       };
 
-    protected:
-      void update_on_external_transition() override;
-
     private:
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
       bool record_history;
       PortRole port_role;
+      erin::devs::FlowMeterState state;
+
+      void log_ports();
   };
 
   ////////////////////////////////////////////////////////////
@@ -405,7 +416,8 @@ namespace ERIN
           std::string id,
           ComponentType component_type,
           const std::string& stream_type,
-          const std::vector<LoadItem>& loads);
+          const std::vector<LoadItem>& loads,
+          bool do_checks = true);
 
       void delta_int() override;
       void delta_ext(Time e, std::vector<PortValue>& xs) override;
@@ -429,6 +441,8 @@ namespace ERIN
       std::shared_ptr<FlowWriter> flow_writer;
       int element_id;
       bool record_history;
+
+      void log_ports();
   };
 
   ////////////////////////////////////////////////////////////
@@ -647,6 +661,46 @@ namespace ERIN
       void log_ports();
   };
 
+  //////////////////////////////////////////////////////////// 
+  // Source
+  class Source : public FlowElement
+  {
+    public:
+      Source(
+          std::string id,
+          ComponentType component_type,
+          const std::string& outflow,
+          FlowValueType max_outflow = erin::devs::supply_unlimited_value);
+
+      void delta_int() override;
+      void delta_ext(Time e, std::vector<PortValue>& xs) override;
+      void delta_conf(std::vector<PortValue>& xs) override;
+      Time ta() override;
+      void output_func(std::vector<PortValue>& ys) override;
+
+      void set_flow_writer(const std::shared_ptr<FlowWriter>& writer) override;
+      void set_recording_on() override;
+
+      [[nodiscard]] std::string get_inflow_type_by_port(int /* inflow_port */) const override {
+        return get_inflow_type();
+      };
+      [[nodiscard]] std::string get_outflow_type_by_port(int /* outflow_port */) const override {
+        return get_outflow_type();
+      };
+
+    private:
+      erin::devs::SupplyData data;
+      erin::devs::SupplyState state;
+      std::shared_ptr<FlowWriter> flow_writer;
+      int outflow_element_id;
+      bool record_history;
+
+      void log_ports();
+  };
+
+  ////////////////////////////////////////////////////////////
+  // Helper
+  void print_ports(const std::vector<erin::devs::Port>& ports, const std::string& tag);
 }
 
 #endif // ERIN_ELEMENT_H

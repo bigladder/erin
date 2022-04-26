@@ -49,15 +49,14 @@ outflow = "steam"
 lossflow = "waste_heat"
 constant_efficiency = 0.8
 [components.coal_pile]
-# TODO: model this as a storage unit with possible periodic resupply
 type = "source"
 outflow = "coal"
 [components.steam_loop]
 type = "muxer"
-stream = "steam"
+flow = "steam"
 num_inflows = 1
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.waste_heat_to_electricity]
 type = "converter"
 inflow = "waste_heat"
@@ -66,49 +65,61 @@ lossflow = "waste_heat"
 constant_efficiency = 0.3
 [components.electric_bus]
 type = "muxer"
-stream = "electricity"
+flow = "electricity"
 num_inflows = 2
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.elec_line_from_utility]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.elec_line_to_c1]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.elec_line_to_c2]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 [components.steam_line_to_c1]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.steam_line_to_c2]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.c1_steam_mux]
 type = "muxer"
-stream = "steam"
-num_inflows = 2
+flow = "steam"
+num_inflows = 1
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
 [components.c2_steam_mux]
 type = "muxer"
-stream = "steam"
-num_inflows = 2
+flow = "steam"
+num_inflows = 1
 num_outflows = 2
-outflow_dispatch_strategy = "in_order"
+dispatch_strategy = "in_order"
+[components.c1_steam_combiner]
+type = "muxer"
+flow = "steam"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
+[components.c2_steam_combiner]
+type = "muxer"
+flow = "steam"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
 [components.steam_c1_to_c2]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [components.steam_c2_to_c1]
 type = "pass_through"
-stream = "steam"
+flow = "steam"
 [networks.nw_1]
 connections = [
   # Electric Network
   ["electric_utility:OUT(0)", "elec_line_from_utility:IN(0)", "electricity"],
-  ["elec_line_from_utility:OUT(0)", "electric_bus:IN(0)", "electricity"],
-  ["waste_heat_to_electricity:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["elec_line_from_utility:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["waste_heat_to_electricity:OUT(0)", "electric_bus:IN(0)", "electricity"],
   ["electric_bus:OUT(0)", "elec_line_to_c1:IN(0)", "electricity"],
   ["electric_bus:OUT(1)", "elec_line_to_c2:IN(0)", "electricity"],
   ["elec_line_to_c1:OUT(0)", "cluster_1_electric:IN(0)", "electricity"],
@@ -118,30 +129,34 @@ connections = [
   ["coal_to_steam:OUT(0)", "steam_loop:IN(0)", "steam"],
   ["steam_loop:OUT(0)", "steam_line_to_c1:IN(0)", "steam"],
   ["steam_line_to_c1:OUT(0)", "c1_steam_mux:IN(0)", "steam"],
-  ["c1_steam_mux:OUT(0)", "cluster_1_thermal:IN(0)", "steam"],
+  ["c1_steam_mux:OUT(0)", "c1_steam_combiner:IN(0)", "steam"],
   ["c1_steam_mux:OUT(1)", "steam_c1_to_c2:IN(0)", "steam"],
-  ["steam_c1_to_c2:OUT(0)", "c2_steam_mux:IN(1)", "steam"],
+  ["steam_c1_to_c2:OUT(0)", "c2_steam_combiner:IN(1)", "steam"],
   ["steam_loop:OUT(1)", "steam_line_to_c2:IN(0)", "steam"],
   ["steam_line_to_c2:OUT(0)", "c2_steam_mux:IN(0)", "steam"],
-  ["c2_steam_mux:OUT(0)", "cluster_2_thermal:IN(0)", "steam"],
+  ["c2_steam_mux:OUT(0)", "c2_steam_combiner:IN(0)", "steam"],
   ["c2_steam_mux:OUT(1)", "steam_c2_to_c1:IN(0)", "steam"],
-  ["steam_c2_to_c1:OUT(0)", "c1_steam_mux:IN(1)", "steam"],
+  ["steam_c2_to_c1:OUT(0)", "c1_steam_combiner:IN(1)", "steam"],
+  ["c1_steam_combiner:OUT(0)", "cluster_1_thermal:IN(0)", "steam"],
+  ["c2_steam_combiner:OUT(0)", "cluster_2_thermal:IN(0)", "steam"],
   ["coal_to_steam:OUT(1)", "waste_heat_to_electricity:IN(0)", "waste_heat"]]
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+[dist.every_100_years]
+type = "fixed"
+value = 100
+time_unit = "years"
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 8760
 max_occurrences = 1
 network = "nw_1"
 [scenarios.ice_jam_flood]
 time_unit = "hours"
-# TODO: come up with better occurrence_distribution options
-# TODO: add a normal distribution; use a cumulative density function:
-# - https://en.wikipedia.org/wiki/Normal_distribution
-# - https://www.johndcook.com/blog/cpp_phi/
-# - see http://www.cplusplus.com/reference/cmath/erf/
-# occurrence_distribution = {type = "normal", time_unit="years", mean = 30, standard_deviation = 4}
-occurrence_distribution = {type = "fixed", time_unit="years", value = 100}
+occurrence_distribution = "every_100_years"
 duration = 336
 max_occurrences = -1
 network = "nw_1"

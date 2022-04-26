@@ -6,11 +6,11 @@ max_time = 10
 [loads.electric_load]
 time_unit = "seconds"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,10.0],[10.0]]
+time_rate_pairs = [[0.0,10.0],[10.0,0.0]]
 [loads.heating_load]
 time_unit = "seconds"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,1.0],[10.0]]
+time_rate_pairs = [[0.0,1.0],[10.0,0.0]]
 [components.S]
 # S = source of natural 
 type = "source"
@@ -39,15 +39,18 @@ inflow = "waste_heat"
 outflow = "district_hot_water"
 lossflow = "waste_heat"
 constant_efficiency = 0.5
-dispatch_strategy = "dump_load"
 [networks.nw01]
 connections = [["S:OUT(0)", "C0:IN(0)", "natural_gas"],
                ["C0:OUT(0)", "LE:IN(0)", "electricity"],
                ["C0:OUT(1)", "C1:IN(0)", "waste_heat"],
                ["C1:OUT(0)", "LT:IN(0)", "district_hot_water"]]
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
 [scenarios.scenario01]
 time_unit = "seconds"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 10
 max_occurrences = 1
 network = "nw01"

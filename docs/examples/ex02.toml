@@ -10,18 +10,23 @@ csv_file = "ex02.csv"
 [components.electric_utility]
 type = "source"
 # Point of Common Coupling for Electric Utility
-output_stream = "electricity"
+outflow = "electricity"
 [components.cluster_01_electric]
 type = "load"
-input_stream = "electricity"
+inflow = "electricity"
 loads_by_scenario.blue_sky = "building_electrical"
 ############################################################
 [networks.normal_operations]
 connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
 ############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
 [scenarios.blue_sky]
 time_unit = "hours"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 4
 max_occurrences = 1
 network = "normal_operations"

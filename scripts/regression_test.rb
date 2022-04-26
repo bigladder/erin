@@ -1,32 +1,36 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 # Run regression tests for the project.
 # Assumes that `diff` is available from the command line.
-# Author: Michael O'Keefe (2019-11-13)
 # To install dependencies, call `bundle install` from this project's top-level
 # folder.
 require 'tmpdir'
 require 'edn'
 require 'rubygems'
+require 'pathname'
 
 IS_WIN = Gem.win_platform?
+BUILD_DIR = Pathname.new(ENV.fetch("ERIN_BUILD_DIR", "build")).basename.to_s
+puts "BUILD_DIR = #{BUILD_DIR}"
 
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 REFERENCE_PATH = File.expand_path(File.join(THIS_DIR, '..', 'test', 'reference'))
 REGRESSION_RUNS_PATH = File.join(REFERENCE_PATH, 'runs.edn')
 EXECUTABLES = {}
 if IS_WIN
-  EXECUTABLES[:e2rin_single] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin.exe"))
-  EXECUTABLES[:e2rin_multi] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin_multi.exe"))
-  EXECUTABLES[:e2rin_graph] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "Debug", "e2rin_graph.exe"))
+  EXECUTABLES[:erin_single] = File.expand_path(
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "Debug", "erin.exe"))
+  EXECUTABLES[:erin_multi] = File.expand_path(
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "Debug", "erin_multi.exe"))
+  EXECUTABLES[:erin_graph] = File.expand_path(
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "Debug", "erin_graph.exe"))
 else
-  EXECUTABLES[:e2rin_single] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "e2rin"))
-  EXECUTABLES[:e2rin_multi] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "e2rin_multi"))
-  EXECUTABLES[:e2rin_graph] = File.expand_path(
-    File.join(THIS_DIR, "..", "build", "bin", "e2rin_graph"))
+  EXECUTABLES[:erin_single] = File.expand_path(
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "erin"))
+  EXECUTABLES[:erin_multi] = File.expand_path(
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "erin_multi"))
+  EXECUTABLES[:erin_graph] = File.expand_path(
+    File.join(THIS_DIR, "..", BUILD_DIR, "bin", "erin_graph"))
 end
 DIFF_PROGRAM = if IS_WIN then "FC" else "diff" end
 
@@ -77,11 +81,11 @@ def run_diff(diff_target, expected_path, diff_path=nil)
       File.open(diff_path, 'a') do |f|
         f.write("== EXPECTED ==" + ("="*40) + "\n")
         f.write(File.read(expected_path))
-        f.write("== ACTUAL ==" + ("="*40) + "\n")
+        f.write("==  ACTUAL  ==" + ("="*40) + "\n")
         f.write(File.read(diff_target))
       end
     end
-    issue = "regression in #{diff_target}:\n#{the_diff}"
+    issue = "REGRESSION in #{diff_target}:\n#{the_diff}"
   else
     File.delete(diff_path) if File.exist?(diff_path)
   end
@@ -105,7 +109,7 @@ def run_regression(id, info)
     cmd = "#{exe_path} #{args}"
     status = system(cmd)
     if status.nil? or !status
-      $issues[id] = "issue running #{exe_path}\n\t"\
+      $issues[id] = "ISSUE running #{exe_path}\n\t"\
         "status: #{status}\n\t"\
         "id: #{id}\n\t"\
         "args: #{args}\n\t"\
@@ -136,7 +140,9 @@ end
 
 puts("-"*60)
 if $num_issues > 0
+  puts ("-" * 40)
   puts "#{$num_issues} regressions found"
+  puts ("-" * 40)
   $issues.keys.sort.each do |k|
     next if $issues[k].nil?
     puts "#{k}:"
@@ -144,6 +150,8 @@ if $num_issues > 0
   end
   exit(1)
 else
+  puts ("-" * 40)
   puts "no regressions found"
+  puts ("-" * 40)
   exit(0)
 end

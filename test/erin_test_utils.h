@@ -1,5 +1,5 @@
-/* Copyright (c) 2019 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+/* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_TEST_UTILS_H
 #define ERIN_TEST_UTILS_H

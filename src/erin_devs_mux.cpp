@@ -1,14 +1,52 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #include "erin/devs/mux.h"
 #include "debug_utils.h"
+#include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <sstream>
 #include <stdexcept>
 
 namespace erin::devs
 {
+  void
+  print_ports(
+      const std::vector<Port3>::size_type idx,
+      const std::string& tag,
+      const RealTimeType time,
+      const Port3& flow,
+      const Port3& new_flow)
+  {
+    std::cout << tag << "(" << idx << ") @ t = " << time
+              << " (" << flow.get_requested()
+              << ", " << flow.get_achieved()
+              << ") -->"
+              << " (" << new_flow.get_requested()
+              << ", " << new_flow.get_achieved()
+              << ")\n";
+  }
+
+  void
+  print_flows(
+      const std::string& tag,
+      const RealTimeType time,
+      const std::vector<Port3>& flows,
+      const std::vector<Port3>& new_flows)
+  {
+    if (flows.size() != new_flows.size()) {
+      std::cout << "FLOW SIZES DON'T MATCH!!!\n"
+                << "flows.size() = " << flows.size() << "\n"
+                << "new_flows.size() = " << new_flows.size() << "\n";
+      return;
+    }
+    using st = std::vector<Port3>::size_type;
+    for (st idx{0}; idx < flows.size(); ++idx) {
+      print_ports(idx, tag, time, flows.at(idx), new_flows.at(idx));
+    }
+  }
+
   void
   mux_check_num_flows(const std::string& tag, int n)
   {
@@ -23,50 +61,56 @@ namespace erin::devs
 
   bool
   mux_should_report(
-      RealTimeType time,
-      const std::vector<Port>& inflow_ports,
-      const std::vector<Port>& outflow_ports)
+      const std::vector<bool>& report_irs,
+      const std::vector<bool>& report_oas)
   {
-    for (const auto& ip : inflow_ports) {
-      if (ip.should_propagate_request_at(time)) {
+    for (const auto& flag : report_irs) {
+      if (flag) {
         return true;
       }
     }
-    for (const auto& op : outflow_ports) {
-      if (op.should_propagate_achieved_at(time)) {
+    for (const auto& flag : report_oas) {
+      if (flag) {
         return true;
       }
     }
     return false;
   }
-
-  std::vector<Port>
-  distribute_inflow_to_outflow_in_order(
-      const std::vector<Port>& outflows,
-      FlowValueType amount,
-      RealTimeType time)
+  
+  void
+  assert_gte_zero(FlowValueType amount)
   {
-    using size_type = std::vector<Port>::size_type;
     if (amount < 0.0) {
       std::ostringstream oss{};
       oss << "amount must be >= 0.0\n"
           << "amount = " << amount << "\n";
       throw std::invalid_argument(oss.str());
     }
-    auto new_outflows{outflows};
+  }
+
+  std::vector<PortUpdate3>
+  distribute_inflow_to_outflow_in_order(
+      const std::vector<Port3>& outflows,
+      FlowValueType amount)
+  {
+    using size_type = std::vector<Port>::size_type;
+    assert_gte_zero(amount);
+    std::vector<PortUpdate3> updates{};
     FlowValueType total_requested{0.0};
     FlowValueType remaining_supply{amount};
     for (size_type idx{0}; idx < outflows.size(); ++idx) {
       const auto& op = outflows[idx];
       auto request{op.get_requested()};
       total_requested += request;
+      decltype(request) this_request{0.0};
       if (request >= remaining_supply) {
-        new_outflows[idx] = op.with_achieved(remaining_supply, time);
+        this_request = remaining_supply;
         remaining_supply = 0.0;
-      } else if (request < remaining_supply) {
-        new_outflows[idx] = op.with_achieved(request, time);
+      } else {
+        this_request = request;
         remaining_supply -= request;
       }
+      updates.emplace_back(op.with_achieved(this_request));
     }
     if (remaining_supply < 0.0) {
       remaining_supply = 0.0;
@@ -79,52 +123,121 @@ namespace erin::devs
           << "remaining supply: " << remaining_supply << "\n";
       throw std::runtime_error(oss.str());
     }
-    return new_outflows;
+    return updates;
   }
 
-  std::vector<Port>
+  std::vector<PortUpdate3>
   distribute_inflow_to_outflow_evenly(
-      const std::vector<Port>& outflows,
-      FlowValueType amount,
-      RealTimeType time)
+      const std::vector<Port3>& outflows,
+      FlowValueType amount)
   {
     using size_type = std::vector<Port>::size_type;
-    if (amount < 0.0) {
-      std::ostringstream oss{};
-      oss << "amount must be >= 0.0\n"
-          << "amount = " << amount << "\n";
-      throw std::invalid_argument(oss.str());
-    }
+    assert_gte_zero(amount);
+    auto num_outflows{outflows.size()};
+    auto num_live{num_outflows};
+    FlowValueType even_flow{0.0};
+    std::vector<FlowValueType> outflow_supplies(num_live, 0.0);
+    std::vector<FlowValueType> outflow_requests(num_live, 0.0);
     std::vector<Port> new_outflows{};
     FlowValueType total_requested{0.0};
-    for (size_type idx{0}; idx < outflows.size(); ++idx)
-      total_requested += outflows[idx].get_requested();
-    auto reduction_factor{0.0};
-    if (total_requested > 0.0)
-      reduction_factor = amount / total_requested;
-    for (size_type idx{0}; idx < outflows.size(); ++idx) {
-      const auto& of = outflows[idx];
-      auto achieved{of.get_requested() * reduction_factor};
-      new_outflows.emplace_back(of.with_achieved(achieved, time));
+    for (size_type idx{0}; idx < num_outflows; ++idx) {
+      auto req = outflows[idx].get_requested();
+      total_requested += req;
+      outflow_requests[idx] = req;
     }
-    return new_outflows;
+    if (amount > total_requested) {
+      std::ostringstream oss{};
+      oss << "amount delivered is greater than total requested outflow!\n"
+          << "amount delivered: " << amount << "\n"
+          << "total_requested : " << total_requested << "\n";
+      throw std::invalid_argument(oss.str());
+    }
+    FlowValueType amount_remaining{amount};
+    int n{0};
+    constexpr int max_iter{1000};
+    while ((num_live > 0) && (amount_remaining > ERIN::flow_value_tolerance)) {
+      n += 1;
+      if (n > max_iter) {
+        std::ostringstream oss{};
+        oss << "breaking out of infinite loop in "
+            << "distribute_inflow_to_outflow_evenly!\n"
+            << "n = " << n << "\n"
+            << "num_live = " << num_live << "\n"
+            << "amount_remaining = " << amount_remaining << "\n";
+        throw std::invalid_argument(oss.str());
+      }
+      even_flow = amount_remaining / static_cast<FlowValueType>(num_live);
+      num_live = 0;
+      for (size_type i{0}; i < num_outflows; ++i) {
+        auto s = outflow_supplies[i] + even_flow;
+        auto r = outflow_requests[i];
+        if (s > r) {
+          outflow_supplies[i] = r;
+          amount_remaining += ((s - r) - even_flow);
+        }
+        else if (s == r) {
+          outflow_supplies[i] = s;
+          amount_remaining -= even_flow;
+        }
+        else if (s < r) {
+          outflow_supplies[i] = s;
+          amount_remaining -= even_flow;
+          num_live += 1;
+        }
+      }
+    }
+    std::vector<PortUpdate3> updates{};
+    for (size_type idx{0}; idx < num_outflows; ++idx) {
+      const auto& of = outflows[idx];
+      auto supply{outflow_supplies[idx]};
+      updates.emplace_back(of.with_achieved(supply));
+    }
+    return updates;
   }
 
-  std::vector<Port>
-  distribute_inflow_to_outflow(
-      MuxerDispatchStrategy outflow_strategy,
+  bool
+  achieved_values_changed(const Port& outflow, const Port& new_outflow)
+  {
+    const auto diff{
+      std::abs(outflow.get_achieved() - new_outflow.get_achieved())};
+    return diff > ERIN::flow_value_tolerance;
+  }
+
+  bool
+  iteration_detected(
       const std::vector<Port>& outflows,
+      const std::vector<Port>& new_outflows,
       FlowValueType amount,
       RealTimeType time)
   {
-    const auto& outflow_ports{outflows};
+    using st = std::vector<Port>::size_type;
+    bool any_changed_again_this_time{false};
+    FlowValueType total_outflow_request{0.0};
+    for (st idx{0}; idx < outflows.size(); ++idx) {
+      const auto& of = outflows[idx];
+      if (achieved_values_changed(of, new_outflows[idx])) {
+        any_changed_again_this_time = any_changed_again_this_time
+          || (time == of.get_time_of_last_change());
+      }
+      total_outflow_request += of.get_requested();
+    }
+    bool same_total_request{
+      std::abs(amount - total_outflow_request) < ERIN::flow_value_tolerance};
+    return any_changed_again_this_time && same_total_request;
+  }
+
+  std::vector<PortUpdate3>
+  distribute_inflow_to_outflow(
+      MuxerDispatchStrategy outflow_strategy,
+      const std::vector<Port3>& outflows,
+      FlowValueType amount)
+  {
+    std::vector<Port> new_outflows{};
     if (outflow_strategy == MuxerDispatchStrategy::InOrder) {
-      return distribute_inflow_to_outflow_in_order(
-          outflow_ports, amount, time);
+      return distribute_inflow_to_outflow_in_order(outflows, amount);
     }
     else if (outflow_strategy == MuxerDispatchStrategy::Distribute) {
-      return distribute_inflow_to_outflow_evenly(
-          outflow_ports, amount, time);
+      return distribute_inflow_to_outflow_evenly(outflows, amount);
     }
     std::ostringstream oss{};
     oss << "unhandled muxer dispatch strategy "
@@ -132,65 +245,58 @@ namespace erin::devs
     throw std::invalid_argument(oss.str());
   }
 
-  std::vector<Port>
-  request_difference_from_next_highest_inflow_port(
-      const std::vector<Port>& inflow_ports,
-      int idx_of_request,
-      FlowValueType request,
-      RealTimeType time)
+  std::vector<PortUpdate3>
+  request_inflows_intelligently(
+      const std::vector<Port3>& inflows,
+      FlowValueType remaining_request)
   {
-    auto num_inflows = static_cast<int>(inflow_ports.size());
-    if ((idx_of_request < 0) || (idx_of_request >= num_inflows)) {
-      std::ostringstream oss{};
-      oss << "index of request must be >= 0 or < inflow_ports.size()\n"
-          << "idx_of_request: " << idx_of_request << "\n"
-          << "inflow_ports.size(): " << num_inflows << "\n";
-      throw std::invalid_argument(oss.str());
-    }
-    auto new_inflows{inflow_ports};
-    int tgt_idx = idx_of_request;
-    FlowValueType remaining_request{request};
-    for (int idx{idx_of_request}; idx < num_inflows; ++idx) {
-      if (idx == tgt_idx) {
-        new_inflows[idx] = new_inflows[idx].with_requested(
-            remaining_request, time);
-        auto achieved{new_inflows[idx].get_achieved()};
-        auto diff{std::abs(achieved - remaining_request)};
-        if (diff > ERIN::flow_value_tolerance) {
-          // This can happen if we're re-requesting the same amount we already
-          // asked for previously. In that case, the achieved value is already
-          // known without asking upstream again and the new achieved is
-          // already set. We must check if we're deficient and propagate the
-          // remaining request upstream until we find a port that will satisfy
-          // it.
-          ++tgt_idx;
-        }
-        remaining_request -= achieved;
-        if (remaining_request <= ERIN::flow_value_tolerance) {
-          remaining_request = 0.0;
-        }
-      }
-      else {
-        new_inflows[idx] = new_inflows[idx].with_requested(0.0, time);
+    std::vector<PortUpdate3> updates{};
+    for (std::size_t idx{0}; idx < inflows.size(); ++idx) {
+      auto update = inflows[idx].with_requested(remaining_request);
+      remaining_request -= update.port.get_achieved();
+      updates.emplace_back(update);
+      if (remaining_request < ERIN::flow_value_tolerance) {
+        remaining_request = 0.0;
       }
     }
-    return new_inflows;
+    return updates;
   }
 
-  std::vector<Port>
-  rerequest_inflows_in_order(
-      const std::vector<Port>& inflow_ports,
-      FlowValueType total_outflow_request,
-      RealTimeType time)
+  void
+  zero_out_remaining_requests(
+    const std::size_t& start_idx,
+    const std::vector<Port3>& inflows,
+    std::vector<PortUpdate3>& updates)
   {
-    using size_type = std::vector<Port>::size_type;
-    auto new_inflows{inflow_ports};
-    new_inflows[0] = inflow_ports[0].with_requested(total_outflow_request, time);
-    for (size_type idx{1}; idx < inflow_ports.size(); ++idx) {
-      new_inflows[idx] = inflow_ports[idx].with_requested(0.0, time);
+    for (std::size_t idx{start_idx}; idx < inflows.size(); ++idx) {
+      updates.emplace_back(inflows[idx].with_requested(0.0));
     }
-    return new_inflows;
   }
+
+  std::vector<PortUpdate3>
+  request_inflows_intelligently_v2(
+      const std::vector<Port3>& inflows,
+      FlowValueType total_outflow_request)
+  {
+    std::vector<PortUpdate3> updates{};
+    auto req{total_outflow_request};
+    for (std::size_t idx{0}; idx < inflows.size(); ++idx) {
+      auto update = inflows[idx].with_requested(req);
+      updates.emplace_back(update);
+      if (inflows[idx].get_requested() != req) {
+        zero_out_remaining_requests(idx + 1, inflows, updates);
+        break;
+      }
+      else {
+        req -= update.port.get_achieved();
+        if (req < ERIN::flow_value_tolerance) {
+          req = 0.0;
+        }
+      }
+    }
+    return updates;
+  }
+
 
   MuxerDispatchStrategy
   tag_to_muxer_dispatch_strategy(const std::string& tag)
@@ -206,6 +312,7 @@ namespace erin::devs
     throw std::runtime_error(oss.str());
   }
 
+  // TODO: change name to muxer_dispatch_strategy_to_tag
   std::string
   muxer_dispatch_strategy_to_string(MuxerDispatchStrategy mds)
   {
@@ -233,9 +340,10 @@ namespace erin::devs
       0,
       num_inflows,
       num_outflows,
-      std::vector<Port>(num_inflows),
-      std::vector<Port>(num_outflows),
-      false,
+      std::vector<Port3>(num_inflows),
+      std::vector<Port3>(num_outflows),
+      std::vector<bool>(num_inflows, false),
+      std::vector<bool>(num_outflows, false),
       strategy};
   }
 
@@ -248,49 +356,55 @@ namespace erin::devs
   FlowValueType
   mux_get_inflow_request(const MuxState& state)
   {
-    FlowValueType sum{0.0};
-    for (const auto& p : state.inflow_ports) {
-      sum += p.get_requested();
-    }
-    return sum;
+    return std::accumulate(
+        state.inflow_ports.begin(), state.inflow_ports.end(), 0.0,
+        [](const auto& s, const auto& p) { return s + p.get_requested(); });
   }
 
   FlowValueType
   mux_get_outflow_request(const MuxState& state)
   {
-    FlowValueType sum{0.0};
-    for (const auto& p : state.outflow_ports) {
-      sum += p.get_requested();
-    }
-    return sum;
+    return std::accumulate(
+        state.outflow_ports.begin(), state.outflow_ports.end(), 0.0,
+        [](const auto& s, const auto& p) { return s + p.get_requested(); });
   }
 
   FlowValueType
   mux_get_inflow_achieved(const MuxState& state)
   {
-    FlowValueType sum{0.0};
-    for (const auto& p : state.inflow_ports) {
-      sum += p.get_achieved();
-    }
-    return sum;
+    return std::accumulate(
+        state.inflow_ports.begin(), state.inflow_ports.end(), 0.0,
+        [](const auto& s, const auto& p) { return s + p.get_achieved(); });
   }
 
   FlowValueType
   mux_get_outflow_achieved(const MuxState& state)
   {
-    FlowValueType sum{0.0};
-    for (const auto& p : state.outflow_ports) {
-      sum += p.get_achieved();
-    }
-    return sum;
+    return std::accumulate(
+        state.outflow_ports.begin(), state.outflow_ports.end(), 0.0,
+        [](const auto& s, const auto& p) { return s + p.get_achieved(); });
   }
-
+  
+  std::ostream&
+  operator<<(std::ostream& os, const MuxState& s)
+  {
+    return os << "{:t " << s.time
+              << " :num-inflows " << s.num_inflows
+              << " :num-outflows " << s.num_outflows 
+              << " :inflow_ports " << ERIN::vec_to_string<Port3>(s.inflow_ports)
+              << " :outflow_ports " << ERIN::vec_to_string<Port3>(s.outflow_ports)
+              << " :report_irs " << ERIN::vec_to_string<bool>(s.report_irs)
+              << " :report_oas " << ERIN::vec_to_string<bool>(s.report_oas)
+              << " :strategy " << muxer_dispatch_strategy_to_string(s.outflow_strategy)
+              << "}";
+  }
 
   RealTimeType
   mux_time_advance(const MuxState& state)
   {
-    if (state.do_report)
+    if (mux_should_report(state.report_irs, state.report_oas)) {
       return 0;
+    }
     return infinity;
   }
 
@@ -303,7 +417,8 @@ namespace erin::devs
       state.num_outflows,
       state.inflow_ports,
       state.outflow_ports,
-      false,
+      std::vector<bool>(state.num_inflows, false),
+      std::vector<bool>(state.num_outflows, false),
       state.outflow_strategy};
   }
 
@@ -313,17 +428,23 @@ namespace erin::devs
       RealTimeType dt,
       const std::vector<PortValue>& xs)
   {
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "mux_external_transition(\n"
-                << "  state=...,\n"
-                << "  dt=" << dt << ",\n"
-                << "  xs=" << ERIN::vec_to_string<PortValue>(xs) << ")\n";
+    if (has_reset_token(xs)) {
+      return MuxState{
+        state.time + dt,
+        state.num_inflows,
+        state.num_outflows,
+        std::vector<Port3>(state.num_inflows, Port3{}),
+        std::vector<Port3>(state.num_outflows, Port3{}),
+        std::vector<bool>(state.num_inflows, false),
+        std::vector<bool>(state.num_outflows, false),
+        state.outflow_strategy,
+      };
     }
+    using st = std::vector<bool>::size_type;
     auto time{state.time + dt};
-    auto inflow_ports{state.inflow_ports};
-    auto outflow_ports{state.outflow_ports};
-    bool got_outflow{false};
-    int highest_inflow_port_received{-1};
+    const FlowValueType none_value{-1.0};
+    std::vector<FlowValueType> inflows(state.num_inflows, none_value);
+    std::vector<FlowValueType> outflows(state.num_outflows, none_value);
     for (const auto& x : xs) {
       int port = x.port;
       int port_n_ia = port - inport_inflow_achieved;
@@ -331,15 +452,21 @@ namespace erin::devs
       int port_n{-1};
       if ((port_n_ia >= 0) && (port_n_ia < state.num_inflows)) {
         port_n = port_n_ia;
-        if (port_n > highest_inflow_port_received) {
-          highest_inflow_port_received = port_n;
+        if (inflows[port_n] == none_value) {
+          inflows[port_n] = x.value;
         }
-        inflow_ports[port_n] = inflow_ports[port_n].with_achieved(x.value, time);
+        else {
+          inflows[port_n] += x.value;
+        }
       }
       else if ((port_n_or >= 0) && (port_n_or < state.num_outflows)) {
         port_n = port_n_or;
-        outflow_ports[port_n] = outflow_ports[port_n].with_requested(x.value, time);
-        got_outflow = true;
+        if (outflows[port_n] == none_value) {
+          outflows[port_n] = x.value;
+        }
+        else {
+          outflows[port_n] += x.value;
+        }
       }
       else {
         std::ostringstream oss{};
@@ -347,96 +474,56 @@ namespace erin::devs
         throw std::runtime_error(oss.str());
       }
     }
-    FlowValueType total_inflow_achieved{0.0};
-    for (const auto& ip : inflow_ports) {
-      total_inflow_achieved += ip.get_achieved();
-    }
-    FlowValueType total_outflow_request{0.0};
-    for (const auto& op : outflow_ports) {
-      total_outflow_request += op.get_requested();
-    }
-    auto diff{total_inflow_achieved - total_outflow_request};
-    if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-      std::cout << "... total_inflow_achieved: "
-                << total_inflow_achieved << "\n"
-                << "... total_outflow_request: "
-                << total_outflow_request << "\n"
-                << "... diff                 : " << diff << "\n"
-                << "... got_outflow          : "
-                << (got_outflow ? "true" : "false") << "\n"
-                << "... highest_inflow_port_received: "
-                << highest_inflow_port_received << "\n";
-    }
-    if (diff > ERIN::flow_value_tolerance) {
-      // oversupplying... need to re-request to inflows so they give
-      // less. Restart requests from port zero.
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "...oversupplying\n";
+    std::vector<bool> report_irs(state.num_inflows, false);
+    std::vector<bool> report_oas(state.num_outflows, false);
+    auto new_ips{state.inflow_ports};
+    for (st idx{0}; idx < inflows.size(); idx++) {
+      if (inflows[idx] != none_value) {
+        auto update = new_ips[idx].with_achieved(inflows[idx]);
+        new_ips[idx] = update.port;
       }
-      inflow_ports = rerequest_inflows_in_order(
-          inflow_ports, total_outflow_request, time);
-      outflow_ports = distribute_inflow_to_outflow(
-          state.outflow_strategy, outflow_ports, total_outflow_request, time);
-    } else if (diff < ERIN::neg_flow_value_tol) {
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "...undersupplying\n";
-      }
-      if (got_outflow) {
-        // undersupplying... got a new requested outflow, rerequest inflows
-        inflow_ports = rerequest_inflows_in_order(
-            inflow_ports, total_outflow_request, time);
-        outflow_ports = distribute_inflow_to_outflow(
-            state.outflow_strategy, outflow_ports, total_outflow_request, time);
-      } else {
-        // undersupplying... need to re-request to inflows for more unless
-        // we've already heard from the highest port
-        if (highest_inflow_port_received >= (state.num_inflows - 1)) {
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-            std::cout << "...distributing inflow to outflow\n";
-          }
-          outflow_ports = distribute_inflow_to_outflow(
-              state.outflow_strategy, outflow_ports, total_inflow_achieved, time);
-        } else {
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-            std::cout << "...requesting difference from "
-                      << "... next highest inflow port\n"
-                      << "... next highest inflow port: "
-                      << (highest_inflow_port_received + 1) << "\n"
-                      << "... requested amount: " << (-1 * diff) << "\n";
-          }
-          inflow_ports = request_difference_from_next_highest_inflow_port(
-              inflow_ports,
-              highest_inflow_port_received + 1,
-              (-1 * diff),
-              time);
-          total_inflow_achieved = 0.0;
-          for (const auto& ip : inflow_ports) {
-            total_inflow_achieved += ip.get_achieved();
-          }
-          if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-            std::cout << "... updated total_inflow_achieved: "
-                      << total_inflow_achieved << "\n";
-          }
-          outflow_ports = distribute_inflow_to_outflow(
-              state.outflow_strategy, outflow_ports, total_inflow_achieved, time);
-        }
-      }
-    } else {
-      if constexpr (ERIN::debug_level >= ERIN::debug_level_high) {
-        std::cout << "...inflows equal outflows\n";
-      }
-      // diff ~= 0.0, redistribute outflows just in case
-      outflow_ports = distribute_inflow_to_outflow(
-          state.outflow_strategy, outflow_ports, total_outflow_request, time);
     }
-    bool do_report = mux_should_report(time, inflow_ports, outflow_ports);
+    auto new_ops{state.outflow_ports};
+    for (st idx{0}; idx < outflows.size(); idx++) {
+      if (outflows[idx] != none_value) {
+        auto update = new_ops[idx].with_requested(outflows[idx]);
+        report_oas[idx] = report_oas[idx] || update.send_achieved;
+        new_ops[idx] = update.port;
+      }
+    }
+    FlowValueType total_outflow_request = std::accumulate(
+        new_ops.begin(), new_ops.end(), 0.0,
+        [](const auto& s, const auto& p) { return s + p.get_requested(); }
+    );
+    auto ip_updates = request_inflows_intelligently(
+        new_ips, total_outflow_request);
+    for (st idx{0}; idx < static_cast<st>(state.num_inflows); idx++) {
+      new_ips[idx] = ip_updates[idx].port;
+      report_irs[idx] = report_irs[idx] || ip_updates[idx].send_request;
+    }
+    FlowValueType the_total_inflow_achieved = std::accumulate(
+        new_ips.begin(), new_ips.end(), 0.0,
+        [](const auto& s, const auto& p) { return s + p.get_achieved(); });
+    auto op_updates = distribute_inflow_to_outflow(
+        state.outflow_strategy,
+        new_ops,
+        the_total_inflow_achieved);
+    for (st idx{0}; idx < static_cast<st>(state.num_outflows); idx++) {
+      new_ops[idx] = op_updates[idx].port;
+      auto achieved_changed{
+        state.outflow_ports[idx].get_achieved() != new_ops[idx].get_achieved()};
+      report_oas[idx] =
+        op_updates[idx].send_achieved
+        || achieved_changed;
+    }
     return MuxState{
       time,
       state.num_inflows,
       state.num_outflows,
-      std::move(inflow_ports),
-      std::move(outflow_ports),
-      do_report,
+      std::move(new_ips),
+      std::move(new_ops),
+      std::move(report_irs),
+      std::move(report_oas),
       state.outflow_strategy};
   }
 
@@ -445,18 +532,8 @@ namespace erin::devs
       const MuxState& state,
       const std::vector<PortValue>& xs)
   {
-    auto dt = mux_time_advance(state);
-    auto s0 = mux_external_transition(state, dt, xs);
-    auto s1 = mux_internal_transition(s0);
-    bool do_report = mux_should_report(s1.time, s1.inflow_ports, s1.outflow_ports);
-    return MuxState{
-      s1.time,
-      s1.num_inflows,
-      s1.num_outflows,
-      std::move(s1.inflow_ports),
-      std::move(s1.outflow_ports),
-      do_report,
-      state.outflow_strategy};
+    return mux_external_transition(
+        mux_internal_transition(state), 0, xs);
   }
 
   std::vector<PortValue>
@@ -475,7 +552,8 @@ namespace erin::devs
     using size_type = std::vector<PortValue>::size_type;
     for (size_type idx{0}; idx < state.inflow_ports.size(); ++idx) {
       const auto& ip = state.inflow_ports[idx];
-      if (ip.should_propagate_request_at(state.time)) {
+      const auto& flag = state.report_irs[idx];
+      if (flag) {
         ys.emplace_back(
             PortValue{
               outport_inflow_request + static_cast<int>(idx), 
@@ -484,7 +562,8 @@ namespace erin::devs
     }
     for (size_type idx{0}; idx < state.outflow_ports.size(); ++idx) {
       const auto& op = state.outflow_ports[idx];
-      if (op.should_propagate_achieved_at(state.time)) {
+      const auto& flag = state.report_oas[idx];
+      if (flag) {
         ys.emplace_back(
             PortValue{
               outport_outflow_achieved + static_cast<int>(idx),

@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_DEVS_MOVER_H
 #define ERIN_DEVS_MOVER_H
@@ -30,9 +30,9 @@ namespace erin::devs
   struct MoverState
   {
     RealTimeType time{0};
-    Port inflow0_port{0, 0.0, 0.0};
-    Port inflow1_port{0, 0.0, 0.0};
-    Port outflow_port{0, 0.0, 0.0};
+    Port3 inflow0_port{};
+    Port3 inflow1_port{};
+    Port3 outflow_port{};
     bool report_inflow0_request{false};
     bool report_inflow1_request{false};
     bool report_outflow_achieved{false};

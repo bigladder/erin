@@ -1,3 +1,0 @@
-scenario_id,building_id,enduse,file
-blue_sky,mc,electricity,blue_sky_mc_electricity.csv
-blue_sky,other,electricity,blue_sky_other_electricity.csv

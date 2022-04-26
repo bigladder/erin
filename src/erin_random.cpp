@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #include "erin/random.h"
 #include "debug_utils.h"
@@ -260,8 +260,9 @@ namespace ERIN
   FixedSeries::increment_idx()
   {
     ++idx;
-    if (idx > max_idx)
+    if (idx > max_idx) {
       idx = 0;
+    }
   }
 
   bool

@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #include "erin/stream.h"
 #include "debug_utils.h"
@@ -111,7 +111,7 @@ namespace ERIN
     max_time{max_time_},
     random_process{std::move(random_process_)}
   {
-    if (max_time <= 0.0) {
+    if (max_time <= 0) {
       std::ostringstream oss;
       oss << "max_time must be greater than 0.0";
       throw std::invalid_argument(oss.str());

@@ -1,9 +1,10 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #include "erin/component.h"
 #include "erin/network.h"
 #include "erin/port.h"
+#include "erin/devs.h"
 #include "debug_utils.h"
 #include <sstream>
 #include <stdexcept>
@@ -11,6 +12,17 @@
 
 namespace ERIN
 {
+  std::ostream&
+  operator<<(std::ostream& os, const FragilityCurveAndRepair& fcar)
+  {
+    return os
+      << "{"
+      << ":curve " << fcar.curve
+      << " "
+      << ":repair-dist-id " << fcar.repair_dist_id
+      << "}";
+  }
+
   ////////////////////////////////////////////////////////////
   // Component
   Component::Component(
@@ -50,25 +62,26 @@ namespace ERIN
   Component::clone_fragility_curves() const
   {
     namespace ef = erin::fragility;
-    fragility_map frags;
+    fragility_map frags{};
     for (const auto& pair : fragilities) {
       const auto& curves = pair.second;
       auto num_curves = curves.size();
-      std::vector<std::unique_ptr<ef::Curve>> vs(num_curves);
+      std::vector<FragilityCurveAndRepair> vs(num_curves);
       for (decltype(num_curves) i{0}; i < num_curves; ++i) {
         const auto& c = curves[i];
-        vs[i] = c->clone();
+        vs[i] = FragilityCurveAndRepair{c.curve->clone(), c.repair_dist_id};
       }
       frags.insert(std::make_pair(pair.first, std::move(vs)));
     }
     return frags;
   }
 
-  std::vector<double>
+  std::vector<erin::fragility::FailureProbAndRepair>
   Component::apply_intensities(
       const std::unordered_map<std::string, double>& intensities)
   {
-    std::vector<double> failure_probabilities{};
+    namespace EF = erin::fragility;
+    std::vector<EF::FailureProbAndRepair> failure_probabilities{};
     if (!has_fragilities) {
       return failure_probabilities;
     }
@@ -78,11 +91,13 @@ namespace ERIN
       if (it == fragilities.end()) {
         continue;
       }
-      auto intensity = intensity_pair.second;
+      const auto& intensity = intensity_pair.second;
       for (const auto& c : it->second) {
-        auto probability = c->apply(intensity);
+        auto probability = c.curve->apply(intensity);
         if (probability > 0.0) {
-          failure_probabilities.emplace_back(probability);
+          failure_probabilities.emplace_back(EF::FailureProbAndRepair{
+            probability,
+            c.repair_dist_id});
         }
       }
     }
@@ -124,7 +139,6 @@ namespace ERIN
   bool
   Component::base_is_equal(const Component& other) const
   {
-    // TODO: add comparison of fragilities
     return (id == other.id)
       && (component_type == other.component_type)
       && (input_stream == other.input_stream)
@@ -357,7 +371,7 @@ namespace ERIN
     if (is_failed) {
       auto lim = new FlowLimits(
           the_id + "-limits",
-          ComponentType::Source,
+          ComponentType::Load,
           stream,
           0.0,
           0.0);
@@ -368,7 +382,7 @@ namespace ERIN
     else if (has_reliability) {
       auto on_off = new OnOffSwitch(
           the_id + "-limits",
-          ComponentType::Source,
+          ComponentType::Load,
           stream,
           reliability_schedule);
       elements.emplace(on_off);
@@ -624,78 +638,56 @@ namespace ERIN
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
+    auto the_id = get_id();
     if constexpr (debug_level >= debug_level_high) {
       std::cout << "SourceComponent::add_to_network("
-                << "adevs::Digraph<FlowValueType>& network)\n";
+                << "adevs::Digraph<FlowValueType>& network); id = "
+                << the_id << "\n";
     }
     bool has_reliability{reliability_schedule.size() > 0};
-    auto the_id = get_id();
     auto stream = get_output_stream();
-    if (is_failed || limits.get_is_limited()) {
+    auto max_output = erin::devs::supply_unlimited_value;
+    if (is_failed) {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "is_failed || is_limited\n";
+        std::cout << "is_failed = true; setting max output to 0.0; id = " << the_id << "\n";
       }
-      auto min_output = limits.get_min();
-      auto max_output = limits.get_max();
-      if (is_failed) {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "is_failed = true; setting min/max output to 0.0\n";
-        }
-        min_output = 0.0;
-        max_output = 0.0;
+      max_output = 0.0;
+    }
+    else if (limits.get_is_limited()) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "is_limited = true; setting max output to "
+                  << limits.get_max() << "; id = " << the_id << "\n";
       }
-      auto lim = new FlowLimits(
-          the_id, ComponentType::Source, stream, min_output, max_output,
-          PortRole::SourceOutflow);
-      elements.emplace(lim);
-      if (has_reliability) {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = true\n";
-        }
-        auto on_off = new OnOffSwitch(
-            the_id, ComponentType::Source, stream, reliability_schedule,
-            PortRole::SourceOutflow);
-        on_off->set_recording_on();
-        elements.emplace(on_off);
-        connect_source_to_sink(network, lim, on_off, true, stream);
-        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
-      }
-      else {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = false\n";
-        }
-        lim->set_recording_on();
-        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{lim, 0}};
-      }
+      max_output = limits.get_max();
     }
     else {
       if constexpr (debug_level >= debug_level_high) {
-        std::cout << "!is_failed\n";
-      }
-      if (has_reliability) {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = true\n";
-        }
-        auto on_off = new OnOffSwitch(
-            the_id, ComponentType::Source, stream, reliability_schedule,
-            PortRole::SourceOutflow);
-        elements.emplace(on_off);
-        on_off->set_recording_on();
-        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
-      }
-      else {
-        if constexpr (debug_level >= debug_level_high) {
-          std::cout << "has_reliability = false\n";
-        }
-        auto meter = new FlowMeter(the_id, ComponentType::Source, stream,
-            PortRole::SourceOutflow);
-        elements.emplace(meter);
-        meter->set_recording_on();
-        ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{meter, 0}};
+        std::cout << "is_failed = false; unlimited supply; id = " << the_id << "\n";
       }
     }
+    auto src = new Source(the_id, ComponentType::Source, stream, max_output);
+    elements.emplace(src);
+    if (has_reliability) {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "has_reliability = true; id = " << the_id << "\n";
+      }
+      auto on_off = new OnOffSwitch(
+          the_id, ComponentType::Source, stream, reliability_schedule,
+          PortRole::SourceOutflow);
+      elements.emplace(on_off);
+      on_off->set_recording_on();
+      connect_source_to_sink(network, src, on_off, true, stream);
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{on_off, 0}};
+    }
+    else {
+      if constexpr (debug_level >= debug_level_high) {
+        std::cout << "has_reliability = false; id = " << the_id << "\n";
+      }
+      src->set_recording_on();
+      ports[ep::Type::Outflow] = std::vector<ElementPort>{ElementPort{src, 0}};
+    }
     if constexpr (debug_level >= debug_level_high) {
-      std::cout << "SourceComponent::add_to_network(...) exit\n";
+      std::cout << "SourceComponent::add_to_network(...) exit; id = " << the_id << "\n";
     }
     return PortsAndElements{ports, elements};
   }
@@ -978,7 +970,7 @@ namespace ERIN
     const_eff{const_eff_}
   {
     if ((const_eff > 1.0) || (const_eff <= 0.0)) {
-      std::ostringstream oss;
+      std::ostringstream oss{};
       oss << "const_eff not in the proper range (0 < const_eff <= 1.0)\n"
           << "const_eff = " << const_eff << "\n";
       throw std::invalid_argument(oss.str());
@@ -1006,12 +998,13 @@ namespace ERIN
       bool is_failed,
       const std::vector<TimeState>& reliability_schedule) const
   {
+    if constexpr (debug_level >= debug_level_high) {
+      std::cout << "ConverterComponent::add_to_network(...)\n"
+                << "is_failed = " << is_failed << "\n";
+    }
     namespace ep = erin::port;
     std::unordered_map<ep::Type, std::vector<ElementPort>> ports{};
     std::unordered_set<FlowElement*> elements{};
-    if constexpr (debug_level >= debug_level_high) {
-      std::cout << "ConverterComponent::add_to_network(...)\n";
-    }
     auto has_reliability{reliability_schedule.size() > 0};
     auto the_id = get_id();
     auto the_type = ComponentType::Converter;

@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_TYPE_H
 #define ERIN_TYPE_H
@@ -124,26 +124,19 @@ namespace ERIN
 
   //////////////////////////////////////////////////////////// 
   // LoadItem
-  class LoadItem
+  struct LoadItem
   {
-    public:
-      explicit LoadItem(RealTimeType t);
-      LoadItem(RealTimeType t, FlowValueType v);
-      [[nodiscard]] RealTimeType get_time() const { return time; }
-      [[nodiscard]] FlowValueType get_value() const { return value; }
-      [[nodiscard]] bool get_is_end() const { return is_end; }
-      [[nodiscard]] RealTimeType get_time_advance(const LoadItem& next) const;
+    const RealTimeType time;
+    const FlowValueType value;
 
-      friend bool operator==(const LoadItem& a, const LoadItem& b);
-      friend bool operator!=(const LoadItem& a, const LoadItem& b);
-      friend std::ostream& operator<<(std::ostream& os, const LoadItem& n);
+    LoadItem(RealTimeType t, FlowValueType v): time{t}, value{v} {
+      if (!is_good()) {
+        throw std::invalid_argument("time or value less than zero");
+      }
+    };
 
-    private:
-      RealTimeType time;
-      FlowValueType value;
-      bool is_end;
-
-      [[nodiscard]] bool is_good() const { return (time >= 0); }
+    [[nodiscard]] RealTimeType get_time_advance(const LoadItem& next) const;
+    [[nodiscard]] bool is_good() const { return (time >= 0) && (value >= 0.0); }
   };
 
   bool operator==(const LoadItem& a, const LoadItem& b);
@@ -167,6 +160,31 @@ namespace ERIN
       }
       else {
         oss << ',';
+      }
+      oss << v;
+    }
+    oss << ']';
+    return oss.str();
+  }
+
+  template<class T>
+  std::string
+  vec_to_string(const std::vector<T>& vs, std::size_t max_num)
+  {
+    std::ostringstream oss;
+    oss << '[';
+    bool first{true};
+    for (std::size_t idx{0}; idx < vs.size(); ++idx) {
+      const auto& v = vs[idx];
+      if (first) {
+        first = false;
+      }
+      else {
+        oss << ',';
+      }
+      if (idx >= max_num) {
+        oss << "...";
+        break;
       }
       oss << v;
     }

@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_COMPONENT_H
 #define ERIN_COMPONENT_H
@@ -11,6 +11,7 @@
 #include "erin/stream.h"
 #include "adevs.h"
 #include <memory>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -18,11 +19,19 @@
 
 namespace ERIN
 {
+  struct FragilityCurveAndRepair
+  {
+    std::unique_ptr<erin::fragility::Curve> curve{};
+    std::int64_t repair_dist_id{erin::fragility::no_repair_distribution};
+  };
+
+  std::ostream& operator<<(std::ostream& os, const FragilityCurveAndRepair& fcar);
+
   using fragility_map = std::unordered_map<
     std::string, // <-- the vulnerable_to identifier. E.g., wind_speed_mph,
                  //     inundation_depth_ft, etc.
     // vector of fragility curves that apply
-    std::vector<std::unique_ptr<::erin::fragility::Curve>>>;
+    std::vector<FragilityCurveAndRepair>>;
 
   /**
    * Holds a FlowElement and the Port it should be connected on
@@ -76,7 +85,7 @@ namespace ERIN
       [[nodiscard]] fragility_map clone_fragility_curves() const;
       [[nodiscard]] bool is_fragile() const { return has_fragilities; }
       // TODO: consider moving this elsewhere
-      std::vector<double> apply_intensities(
+      std::vector<erin::fragility::FailureProbAndRepair> apply_intensities(
           const std::unordered_map<std::string, double>& intensities);
 
       virtual PortsAndElements add_to_network(
@@ -158,7 +167,7 @@ namespace ERIN
   {
     public:
       Limits();
-      Limits(FlowValueType max);
+      explicit Limits(FlowValueType max);
       Limits(FlowValueType min, FlowValueType max);
 
       [[nodiscard]] bool get_is_limited() const { return is_limited; }
@@ -242,7 +251,7 @@ namespace ERIN
           const int num_inflows,
           const int num_outflows,
           const MuxerDispatchStrategy output_strategy
-            = MuxerDispatchStrategy::Distribute);
+            = MuxerDispatchStrategy::InOrder);
       MuxerComponent(
           const std::string& id,
           const std::string& stream,

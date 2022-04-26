@@ -1,6 +1,5 @@
-
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #include "erin/devs/mover.h"
 #include <sstream>
@@ -34,7 +33,7 @@ namespace erin::devs
   std::ostream&
   operator<<(std::ostream& os, const MoverData& a)
   {
-    return os << "MoverData(COP = " << a.COP << ")";
+    return os << "{:cop " << a.COP << "}";
   }
 
   MoverState
@@ -64,15 +63,14 @@ namespace erin::devs
   std::ostream&
   operator<<(std::ostream& os, const MoverState& a)
   {
-    return os << "MoverState("
-              << "time = " << a.time << ", "
-              << "inflow0_port = " << a.inflow0_port << ", "
-              << "inflow1_port = " << a.inflow1_port << ", "
-              << "outflow_port = " << a.outflow_port << ", "
-              << "report_inflow0_request = " << a.report_inflow0_request << ", "
-              << "report_inflow1_request = " << a.report_inflow1_request << ", "
-              << "report_outflow_achieved = "
-              << a.report_outflow_achieved << ")";
+    return os << "{"
+              << ":t " << a.time << " "
+              << ":ip0 " << a.inflow0_port << " "
+              << ":ip1 " << a.inflow1_port << " "
+              << ":op " << a.outflow_port << " "
+              << ":send-ir0? " << a.report_inflow0_request << " "
+              << ":send-ir1? " << a.report_inflow1_request << " "
+              << ":send-oa? " << a.report_outflow_achieved << "}";
   }
 
   ////////////////////////////////////////////////////////////
@@ -121,9 +119,20 @@ namespace erin::devs
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs)
   {
-    bool got_outflow_request{false};
-    bool got_inflow0_achieved{false};
-    bool got_inflow1_achieved{false};
+    if (has_reset_token(xs)) {
+      return MoverState{
+        state.time + elapsed_time,
+        Port3{},
+        Port3{},
+        Port3{},
+        false,
+        false,
+        false,
+      };
+    }
+    bool got_or{false};
+    bool got_ia0{false};
+    bool got_ia1{false};
     FlowValueType outflow_request{0.0};
     FlowValueType inflow0_achieved{0.0};
     FlowValueType inflow1_achieved{0.0};
@@ -133,19 +142,19 @@ namespace erin::devs
       switch (x.port) {
         case inport_outflow_request:
           {
-            got_outflow_request = true;
+            got_or = true;
             outflow_request += x.value;
             break;
           }
         case inport0_inflow_achieved:
           {
-            got_inflow0_achieved = true;
+            got_ia0 = true;
             inflow0_achieved += x.value;
             break;
           }
         case inport1_inflow_achieved:
           {
-            got_inflow1_achieved = true;
+            got_ia1 = true;
             inflow1_achieved += x.value;
             break;
           }
@@ -159,52 +168,65 @@ namespace erin::devs
       }
     }
     auto new_time = state.time + elapsed_time;
-    auto p_in0 = state.inflow0_port;
-    auto p_in1 = state.inflow1_port;
-    auto p_out = state.outflow_port;
-    if (got_outflow_request) {
-      p_out = p_out.with_requested(outflow_request, new_time);
+    auto ip0{state.inflow0_port};
+    auto ip1{state.inflow1_port};
+    auto op{state.outflow_port};
+    bool send_ir0{false};
+    bool send_ir1{false};
+    bool send_oa{false};
+    if (got_ia0) {
+      auto update_ip0 = ip0.with_achieved(inflow0_achieved);
+      ip0 = update_ip0.port;
+      send_ir0 = send_ir0 || update_ip0.send_request;
+    }
+    if (got_ia1) {
+      auto update_ip1 = ip1.with_achieved(inflow1_achieved);
+      ip1 = update_ip1.port;
+      send_ir1 = send_ir1 || update_ip1.send_request;
+    }
+    if (got_or) {
+      auto update_op = op.with_requested(outflow_request);
+      op = update_op.port;
+      send_oa = send_oa || update_op.send_achieved;
       auto inflow0 = outflow_request / (1.0 + (1.0 / data.COP));
       auto inflow1 = outflow_request / (1.0 + data.COP);
-      p_in0 = p_in0.with_requested(inflow0, new_time);
-      p_in1 = p_in1.with_requested(inflow1, new_time);
+      auto update_ip0 = ip0.with_requested(inflow0);
+      ip0 = update_ip0.port;
+      send_ir0 = send_ir0 || update_ip0.send_request;
+      auto update_ip1 = ip1.with_requested(inflow1);
+      ip1 = update_ip1.port;
+      send_ir1 = send_ir1 || update_ip1.send_request;
     }
-    else if (got_inflow0_achieved && got_inflow1_achieved) {
-      p_in0 = p_in0.with_achieved(inflow0_achieved, new_time);
-      p_in1 = p_in1.with_achieved(inflow1_achieved, new_time);
-      auto calc_of_inflow0 = inflow1_achieved * data.COP;
-      if (calc_of_inflow0 > inflow0_achieved) {
-        p_in1 = p_in1.with_achieved(
-            inflow0_achieved * (1.0 / data.COP), new_time);
+    if (got_ia0 || got_ia1) {
+      auto inflow1_by_ip0{ip0.get_achieved() * (1.0 / data.COP)};
+      auto outflow_by_ip0{(1.0 + (1.0 / data.COP)) * ip0.get_achieved()};
+      auto inflow0_by_ip1{ip1.get_achieved() * data.COP};
+      auto outflow_by_ip1{(1.0 + data.COP) * ip1.get_achieved()};
+      auto dominant_outflow{0.0};
+      if (outflow_by_ip0 < outflow_by_ip1) {
+        dominant_outflow = outflow_by_ip0;
+        auto update_ip1 = ip1.with_requested(inflow1_by_ip0);
+        ip1 = update_ip1.port;
+        send_ir1 = send_ir1 || update_ip1.send_request;
       }
-      else if (calc_of_inflow0 < inflow0_achieved) {
-        p_in0 = p_in0.with_achieved(calc_of_inflow0, new_time);
+      else {
+        dominant_outflow = outflow_by_ip1;
+        auto update_ip0 = ip0.with_requested(inflow0_by_ip1);
+        ip0 = update_ip0.port;
+        send_ir0 = send_ir0 || update_ip0.send_request;
       }
-      p_out = p_out.with_achieved(
-          p_in1.get_achieved() * (1.0 + data.COP), new_time);
-    }
-    else if (got_inflow0_achieved) {
-      p_in0 = p_in0.with_achieved(inflow0_achieved, new_time);
-      p_in1 = p_in1.with_requested(
-          inflow0_achieved * (1.0 / data.COP), new_time);
-      p_out = p_out.with_achieved(
-          inflow0_achieved * (1.0 + (1.0 / data.COP)), new_time);
-    }
-    else if (got_inflow1_achieved) {
-      p_in0 = p_in0.with_achieved(inflow1_achieved * data.COP, new_time);
-      p_in1 = p_in1.with_requested(inflow1_achieved, new_time);
-      p_out = p_out.with_achieved(
-          inflow1_achieved * (1.0 + data.COP), new_time);
+      auto update_op = op.with_achieved(dominant_outflow);
+      op = update_op.port;
+      send_oa = send_oa || update_op.send_achieved;
     }
     return MoverState{
       new_time,
-      p_in0,
-      p_in1,
-      p_out,
-      p_in0.should_propagate_request_at(new_time),
-      p_in1.should_propagate_request_at(new_time),
-      p_out.should_propagate_achieved_at(new_time)
-    };
+      ip0,
+      ip1,
+      op,
+      send_ir0 || ip0.should_send_request(state.inflow0_port),
+      send_ir1 || ip1.should_send_request(state.inflow1_port),
+      send_oa || op.should_send_achieved(state.outflow_port)};
   }
 
   ////////////////////////////////////////////////////////////

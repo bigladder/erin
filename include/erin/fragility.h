@@ -1,11 +1,19 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_FRAGILITY_H
 #define ERIN_FRAGILITY_H
+#include "erin/reliability.h"
+#include "erin/distribution.h"
+#include "erin/type.h"
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <ostream>
 #include <random>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace erin::fragility
 {
@@ -97,6 +105,51 @@ namespace erin::fragility
     std::string vulnerable_to;
     std::unique_ptr<Curve> curve;
   };
+
+  constexpr std::int64_t no_repair_distribution{-1};
+
+  struct FragilityMode
+  {
+    std::string fragility_curve_tag{};
+    std::int64_t repair_dist_id{no_repair_distribution};
+  };
+
+  /**
+   * modify a reliability schedule with a fragility
+   * NOTE: a repair_time_s of 0 indicates no repair (NOT an instant repair)
+   */
+  std::vector<ERIN::TimeState>
+  modify_schedule_for_fragility(
+      const std::vector<ERIN::TimeState>& schedule,
+      bool is_failed,
+      bool can_repair,
+      ERIN::RealTimeType repair_time_s,
+      ERIN::RealTimeType max_time_s);
+
+  struct FragilityInfo
+  {
+    std::string scenario_tag{};
+    ERIN::RealTimeType start_time_s{0};
+    bool is_failed{false};
+    ERIN::RealTimeType repair_time_s{-1}; // values less than 0 indicate cannot repair
+  };
+
+  std::ostream& operator<<(std::ostream& os, const FragilityInfo& fi);
+
+  struct FailureProbAndRepair
+  {
+    double failure_probability{0.0};
+    std::int64_t repair_distribution_id{no_repair_distribution};
+  };
+
+  std::ostream& operator<<(std::ostream& os, const FailureProbAndRepair& fbar);
+
+  std::unordered_map<std::string, std::vector<std::unordered_map<std::string, FragilityInfo>>>
+  calc_fragility_schedules(
+    const std::unordered_map<std::string, std::vector<std::int64_t>>& scenario_schedules,
+    const std::unordered_map<std::string, std::unordered_map<std::string, std::vector<FailureProbAndRepair>>>& failure_probs_by_comp_id_by_scenario_id,
+    const std::function<double()>& rand_fn,
+    const erin::distribution::DistributionSystem& ds);
 }
 
 #endif // ERIN_FRAGILITY_H

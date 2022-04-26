@@ -1,11 +1,9 @@
 scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ),heat_removed energy used (kJ)
-blue_sky,1,0.00277778,chiller-inflow(0),mover,heat_removed,0,0.00277778,7523.33,0.0,810
+blue_sky,1,0.00277778,chiller-inflow(0),mover,heat_removed,1,0,0,0.0,810
 blue_sky,1,0.00277778,chiller-inflow(1),mover,electricity,1,0,0,162,0.0
-blue_sky,1,0.00277778,chiller-outflow,mover,heat_removed,0,0.00277778,9028,0.0,972
-blue_sky,1,0.00277778,cooling_load-inflow,uncontrolled_source,heat_removed,1,0,0,0.0,810
-blue_sky,1,0.00277778,cooling_load-lossflow,uncontrolled_source,heat_removed,0,0.00277778,810,0.0,0
-blue_sky,1,0.00277778,cooling_load-outflow,uncontrolled_source,heat_removed,0,0.00277778,7523.33,0.0,810
-blue_sky,1,0.00277778,environment_sink,load,heat_removed,0,0.00277778,9028,0.0,972
+blue_sky,1,0.00277778,chiller-outflow,mover,heat_removed,1,0,0,0.0,972
+blue_sky,1,0.00277778,cooling_load,source,heat_removed,1,0,0,0.0,810
+blue_sky,1,0.00277778,environment_sink,load,heat_removed,1,0,0,0.0,972
 blue_sky,1,0.00277778,utility_electricity,source,electricity,1,0,0,162,0.0
 blue_sky,1,0.00277778,TOTAL (source),,,,,,162,810
 blue_sky,1,0.00277778,TOTAL (load),,,,,,0.0,972

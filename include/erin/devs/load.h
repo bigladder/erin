@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_DEVS_LOAD_H
 #define ERIN_DEVS_LOAD_H
@@ -24,14 +24,17 @@ namespace erin::devs
     std::vector<FlowValueType> load_values{};
   };
 
+  std::ostream& operator<<(std::ostream& os, const LoadData& d);
+
   struct LoadState
   {
     RealTimeType time{0};
     int current_index{0};
-    Port inflow_port{};
+    Port3 inflow_port{};
+    bool resend_request{false};
   };
 
-  LoadData make_load_data(const std::vector<LoadItem>& loads);
+  LoadData make_load_data(const std::vector<LoadItem>& loads, bool do_checks = true);
 
   LoadState make_load_state();
 
@@ -42,6 +45,8 @@ namespace erin::devs
   FlowValueType load_current_request(const LoadState& state);
 
   FlowValueType load_current_achieved(const LoadState& state);
+  
+  std::ostream& operator<<(std::ostream& os, const LoadState& s);
 
   ////////////////////////////////////////////////////////////
   // time advance

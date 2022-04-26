@@ -1,11 +1,12 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_NETWORK_H
 #define ERIN_NETWORK_H
 #include "adevs.h"
 #include "erin/component.h"
 #include "erin/element.h"
+#include "erin/fragility.h"
 #include "erin/port.h"
 #include "erin/reliability.h"
 #include "erin/type.h"
@@ -56,6 +57,23 @@ namespace erin::network
       const std::function<double()>& rand_fn,
       const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
         reliability_schedule);
+
+  void add_if_not_added_v2(
+      const std::string& comp_id,
+      const std::string& scenario_id,
+      const std::unordered_map<
+        std::string,
+        std::unique_ptr<ERIN::Component>>& components,
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
+      std::unordered_set<std::string>& comps_added,
+      std::unordered_map<
+        std::string,
+        ERIN::PortsAndElements>& ports_and_elements,
+      const std::unordered_map<std::string, erin::fragility::FragilityInfo>&
+        fragility_info_by_comp_tag,
+      const std::unordered_map<std::string, std::vector<ERIN::TimeState>>&
+        reliability_schedule,
+      const ERIN::RealTimeType duration_s);
 
   void couple_source_to_sink(
       adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
@@ -108,6 +126,20 @@ namespace erin::network
       const std::unordered_map<
         std::string, std::vector<double>>& failure_probs_by_comp_id,
       const std::function<double()>& rand_fn,
+      bool two_way = false,
+      const std::unordered_map<
+        std::string, std::vector<ERIN::TimeState>>& reliability_schedule = {}
+      );
+
+  std::vector<ERIN::FlowElement*> build_v2(
+      const std::string& scenario_tag,
+      adevs::Digraph<ERIN::FlowValueType, ERIN::Time>& network,
+      const std::vector<Connection>& connections,
+      const std::unordered_map<
+        std::string, std::unique_ptr<ERIN::Component>>& components,
+      const std::unordered_map<
+        std::string, erin::fragility::FragilityInfo>& failure_info_by_comp_tag,
+      const ERIN::RealTimeType duration_s,
       bool two_way = false,
       const std::unordered_map<
         std::string, std::vector<ERIN::TimeState>>& reliability_schedule = {}

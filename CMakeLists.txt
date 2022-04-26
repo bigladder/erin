@@ -1,6 +1,8 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 cmake_minimum_required(VERSION 3.15) # required for gtest_discover_tests
 
-project(ERIN VERSION 0.0.17 LANGUAGES CXX)
+project(ERIN VERSION 0.0.52 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
@@ -22,6 +24,7 @@ option(BUILD_DOC "Build documentation" OFF)
 
 # Set up testing/coverage
 if (${CMAKE_PROJECT_NAME}_TESTING)
+  include( CTest )
   enable_testing()
   if (${CMAKE_PROJECT_NAME}_COVERAGE)
     set(ENABLE_COVERAGE ON CACHE BOOL "" FORCE)
@@ -192,4 +195,60 @@ configure_file(
 configure_file(
   "${PROJECT_SOURCE_DIR}/docs/examples/ex11.toml"
   "ex11.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex12.toml"
+  "ex12.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex13.toml"
+  "ex13.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex14.toml"
+  "ex14.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex15.toml"
+  "ex15.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex16.toml"
+  "ex16.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex17.toml"
+  "ex17.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex18.toml"
+  "ex18.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex19-grid-failure.csv"
+  "ex19-grid-failure.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex19-grid-repair.csv"
+  "ex19-grid-repair.csv"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex19.toml"
+  "ex19.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex20.toml"
+  "ex20.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex21.toml"
+  "ex21.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex22.toml"
+  "ex22.toml"
+  COPYONLY)
+configure_file(
+  "${PROJECT_SOURCE_DIR}/docs/examples/ex23.toml"
+  "ex23.toml"
   COPYONLY)

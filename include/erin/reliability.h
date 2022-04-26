@@ -1,9 +1,11 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_RELIABILITY_H
 #define ERIN_RELIABILITY_H
 #include "erin/type.h"
+#include "erin/distribution.h"
+#include <functional>
 #include <iostream>
 #include <set>
 #include <string>
@@ -23,37 +25,16 @@ namespace ERIN
   bool operator!=(const TimeState& a, const TimeState& b);
   std::ostream& operator<<(std::ostream& os, const TimeState& ts);
 
-  enum class CdfType
-  {
-    Fixed = 0//,
-    //Normal,
-    //Weibull
-  };
-
-  std::string cdf_type_to_tag(CdfType cdf_type);
-  CdfType tag_to_cdf_type(const std::string& tag);
-
   struct FailureMode
   {
     std::vector<std::string> tag{};
-    std::vector<size_type> failure_cdf{};
-    std::vector<size_type> repair_cdf{};
-  };
-
-  struct Cdf {
-    std::vector<std::string> tag{};
-    std::vector<size_type> subtype_id{};
-    std::vector<CdfType> cdf_type{};
+    std::vector<size_type> failure_dist{};
+    std::vector<size_type> repair_dist{};
   };
 
   struct FailureMode_Component_Link {
     std::vector<size_type> failure_mode_id{};
     std::vector<size_type> component_id{};
-  };
-
-  struct Fixed_CDF
-  {
-    std::vector<RealTimeType> value{};
   };
 
   struct Component_meta
@@ -67,14 +48,10 @@ namespace ERIN
     public:
       ReliabilityCoordinator();
 
-      size_type add_fixed_cdf(
-          const std::string& tag,
-          RealTimeType value_in_seconds);
-
       size_type add_failure_mode(
           const std::string& tag,
-          const size_type& failure_cdf_id,
-          const size_type& repair_cdf_id
+          const size_type& failure_dist_id,
+          const size_type& repair_dist_id
           );
 
       void link_component_with_failure_mode(
@@ -83,22 +60,26 @@ namespace ERIN
 
       size_type register_component(const std::string& tag);
 
-      [[nodiscard]] size_type lookup_cdf_by_tag(const std::string& tag) const;
-
       std::unordered_map<size_type, std::vector<TimeState>>
-      calc_reliability_schedule(RealTimeType final_time) const;
+      calc_reliability_schedule(
+          const std::function<double()>& rand_fn,
+          const erin::distribution::DistributionSystem& cds,
+          RealTimeType final_time) const;
 
       std::unordered_map<std::string, std::vector<TimeState>>
-      calc_reliability_schedule_by_component_tag(RealTimeType final_time) const;
+      calc_reliability_schedule_by_component_tag(
+          const std::function<double()>& rand_fn,
+          const erin::distribution::DistributionSystem& cds,
+          RealTimeType final_time) const;
 
     private:
-      Fixed_CDF fixed_cdf;
-      Cdf cdfs;
       FailureMode fms;
       FailureMode_Component_Link fm_comp_links;
       Component_meta comp_meta;
 
       void calc_next_events(
+          const std::function<double()>& rand_fn,
+          const erin::distribution::DistributionSystem& cds,
           std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
           bool is_failure) const;
 
@@ -129,7 +110,7 @@ namespace ERIN
           continue;
         }
         else if (ts.time == start_time) {
-            tss.emplace_back(ts);
+            tss.emplace_back(TimeState{0, ts.state});
         }
         else if ((ts.time > start_time) && (ts.time <= end_time)) {
           if (tss.size() == 0) {
@@ -146,22 +127,10 @@ namespace ERIN
     return new_sch;
   }
 
-  template <class T>
-  std::unordered_map<T, std::vector<TimeState>>
-  rezero_times(
-      const std::unordered_map<T, std::vector<TimeState>>& schedule,
-      RealTimeType start_time)
-  {
-    std::unordered_map<T, std::vector<TimeState>> new_sch{};
-    for (const auto& item : schedule) {
-      std::vector<TimeState> tss{};
-      for (const auto& ts : item.second) {
-        tss.emplace_back(TimeState{ts.time - start_time, ts.state});
-      }
-      new_sch[item.first] = std::move(tss);
-    }
-    return new_sch;
-  }
+  bool schedule_state_at_time(
+      const std::vector<TimeState>& schedule,
+      RealTimeType time,
+      bool initial_value = true);
 }
 
 #endif // ERIN_RELIABILITY_H

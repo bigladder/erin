@@ -1,0 +1,75 @@
+[simulation_info]
+time_unit = "years"
+max_time = 1000
+[loads.load_1]
+time_unit = "seconds"
+rate_unit = "kW"
+time_rate_pairs = [[0.0, 10.0], [1.0, 0.0]]
+[loads.load_2]
+time_unit = "seconds"
+rate_unit = "kW"
+time_rate_pairs = [[0.0, 10.0], [1.0, 0.0]]
+[components.S]
+type = "source"
+outflow = "electricity"
+max_outflow = 5.0
+[components.L1]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "load_1"
+[components.L2]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "load_2"
+[components.loop]
+type = "muxer"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 2
+dispatch_strategy = "in_order"
+[components.load_mux_1]
+type = "muxer"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 2
+dispatch_strategy = "in_order"
+[components.load_combiner_1]
+type = "muxer"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
+[components.load_mux_2]
+type = "muxer"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 2
+dispatch_strategy = "in_order"
+[components.load_combiner_2]
+type = "muxer"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
+[networks.nw_1]
+connections = [
+  ["S:OUT(0)", "loop:IN(0)", "electricity"],
+  ["loop:OUT(0)", "load_mux_1:IN(0)", "electricity"],
+  ["loop:OUT(1)", "load_mux_2:IN(0)", "electricity"],
+  ["load_mux_1:OUT(0)", "load_combiner_1:IN(0)", "electricity"],
+  ["load_mux_1:OUT(1)", "load_combiner_2:IN(1)", "electricity"],
+  ["load_mux_2:OUT(0)", "load_combiner_2:IN(0)", "electricity"],
+  ["load_mux_2:OUT(1)", "load_combiner_1:IN(1)", "electricity"],
+  ["load_combiner_1:OUT(0)", "L1:IN(0)", "electricity"],
+  ["load_combiner_2:OUT(0)", "L2:IN(0)", "electricity"]]
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+[scenarios.blue_sky]
+time_unit = "seconds"
+occurrence_distribution = "immediately"
+duration = 1
+max_occurrences = 1
+network = "nw_1"
+

@@ -1,0 +1,32 @@
+scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ),fuel energy used (kJ)
+blue_sky,1,5,bldg_a_electric,load,electricity,1,0,0,139680,0.0
+blue_sky,1,5,bldg_b_electric,load,electricity,1,0,0,127800,0.0
+blue_sky,1,5,bldg_c_electric,load,electricity,0,5,1.91376e+06,132480,0.0
+blue_sky,1,5,diesel_resupply,source,fuel,1,0,0,0.0,919800
+blue_sky,1,5,fuel_truck-inflow(0),muxer,fuel,1,0,0,0.0,919800
+blue_sky,1,5,fuel_truck-outflow(0),muxer,fuel,1,0,0,0.0,541800
+blue_sky,1,5,fuel_truck-outflow(1),muxer,fuel,1,0,0,0.0,378000
+blue_sky,1,5,gen_a-inflow,converter,fuel,1,0,0,0.0,541800
+blue_sky,1,5,gen_a-lossflow,converter,fuel,1,0,0,0.0,0
+blue_sky,1,5,gen_a-outflow,converter,electricity,1,0,0,108360,0.0
+blue_sky,1,5,gen_a-wasteflow,converter,fuel,1,0,0,0.0,433440
+blue_sky,1,5,gen_b-inflow,converter,fuel,1,0,0,0.0,378000
+blue_sky,1,5,gen_b-lossflow,converter,fuel,1,0,0,0.0,0
+blue_sky,1,5,gen_b-outflow,converter,electricity,1,0,0,75600,0.0
+blue_sky,1,5,gen_b-wasteflow,converter,fuel,1,0,0,0.0,302400
+blue_sky,1,5,sub_sta_1-inflow(0),muxer,electricity,0.6,1,793080,216000,0.0
+blue_sky,1,5,sub_sta_1-outflow(0),muxer,electricity,0.4,3,108360,31320,0.0
+blue_sky,1,5,sub_sta_1-outflow(1),muxer,electricity,0.4,3,75600,52200,0.0
+blue_sky,1,5,sub_sta_1-outflow(2),muxer,electricity,0,5,1.91376e+06,132480,0.0
+blue_sky,1,5,utility_electrical,source,electricity,0.6,1,793080,216000,0.0
+blue_sky,1,5,xfer_a-inflow(0),muxer,electricity,0.4,3,108360,31320,0.0
+blue_sky,1,5,xfer_a-inflow(1),muxer,electricity,1,0,0,108360,0.0
+blue_sky,1,5,xfer_a-outflow(0),muxer,electricity,1,0,0,139680,0.0
+blue_sky,1,5,xfer_b-inflow(0),muxer,electricity,0.4,3,75600,52200,0.0
+blue_sky,1,5,xfer_b-inflow(1),muxer,electricity,1,0,0,75600,0.0
+blue_sky,1,5,xfer_b-outflow(0),muxer,electricity,1,0,0,127800,0.0
+blue_sky,1,5,TOTAL (source),,,,,,216000,919800
+blue_sky,1,5,TOTAL (load),,,,,,399960,0.0
+blue_sky,1,5,TOTAL (storage),,,,,,0.0,0.0
+blue_sky,1,5,TOTAL (waste),,,,,,0.0,735840
+blue_sky,1,5,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,

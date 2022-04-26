@@ -1,5 +1,6 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
+
 #include "debug_utils.h"
 #include "erin/erin.h"
 #include "erin/utils.h"
@@ -18,9 +19,9 @@ doit(const std::string& input_toml, const std::string& timeseries_csv, const std
   std::cout << "timeseries_csv  : " << timeseries_csv << "\n";
   std::cout << "stats_csv       : " << stats_csv << "\n";
   std::cout << "scenario_id     : \"" << scenario_id << "\"" << "\n";
-  auto m = ::ERIN::Main{input_toml};
-  ::ERIN::ScenarioResults out{};
-  ::ERIN::RealTimeType max_time{0};
+  auto m = ERIN::Main{input_toml};
+  ERIN::ScenarioResults out{};
+  ERIN::RealTimeType max_time{0};
   try {
     out = m.run(scenario_id);
     max_time = m.max_time_for_scenario(scenario_id);

@@ -1,8 +1,10 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 # Build the doit script such that it is up to date for all files in the repository.
-# Author: Michael O'Keefe (2019-11-20)
 require 'set'
 require 'pathname'
 
+BUILD_DIR = Pathname.new(ENV.fetch("ERIN_BUILD_DIR", "build")).basename.to_s
 CHECKS = "-*,cppcoreguidelines-*,clang-analyzer-*,bugprone-*,performance-*"
 USE_BG = false
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
@@ -39,6 +41,12 @@ File.open(File.join(THIS_DIR, "doit"), 'w') do |f|
   if USE_BG
     f.write("echo Waiting for clang-tidy background jobs to complete...\n")
   end
+  f.write("rm -f cppcheck_report.txt\n")
+  full_path_to_vendor = File.expand_path(File.join(THIS_DIR, "..", "vendor"))
+  full_path_to_compile_commands = File.expand_path(File.join(THIS_DIR, "..", BUILD_DIR, "compile_commands.json"))
+  f.write("echo Running cppcheck...\n")
+  f.write("cppcheck -i#{full_path_to_vendor} --project=#{full_path_to_compile_commands} > cppcheck_report.txt 2>&1\n")
+  f.write("echo Running Clang Tidy...\n")
   lines.each do |line|
     f.write(line + "\n")
   end

@@ -1,0 +1,4 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),b1_electric:achieved (kW),b1_electric:requested (kW),electric_utility:achieved (kW),electric_utility:requested (kW)
+c4_hurricane,P0000-00-00T00:00:00,0,0,10,0,0
+c4_hurricane,P0000-00-00T00:00:00,100,10,10,10,10
+c4_hurricane,P0000-00-00T00:00:00,300,0,0,0,0

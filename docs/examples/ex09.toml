@@ -7,20 +7,24 @@ max_time = 10
 [loads.profile1]
 time_unit = "seconds"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,100.0],[10.0]]
+time_rate_pairs = [[0.0,100.0],[10.0,0.0]]
 ############################################################
-[cdf.cdf_break]
+[dist.break]
 type = "fixed"
 value = 5
 time_unit = "seconds"
-[cdf.cdf_repair]
+[dist.repair]
 type = "fixed"
 value = 2
 time_unit = "seconds"
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
 ############################################################
 [failure_mode.fm]
-failure_cdf = "cdf_break"
-repair_cdf = "cdf_repair"
+failure_dist = "break"
+repair_dist = "repair"
 ############################################################
 [components.S1]
 type = "source"
@@ -38,7 +42,7 @@ connections = [
 ############################################################
 [scenarios.blue_sky]
 time_unit = "seconds"
-occurrence_distribution = {type = "fixed", value = 0}
+occurrence_distribution = "immediately"
 duration = 10
 max_occurrences = 1
 network = "normal_operations"

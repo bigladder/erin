@@ -1,7 +1,11 @@
-include_directories("${PROJECT_SOURCE_DIR}/src"
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
+include_directories(
+  "${PROJECT_SOURCE_DIR}/src"
   "${PROJECT_SOURCE_DIR}/include"
   "${gtest_SOURCE_DIR}/include"
-  "checkout_line")
+  "checkout_line"
+  )
 
 set(test_sources
   erin_tests.cpp
@@ -13,6 +17,11 @@ set(test_sources
   checkout_line/generator.h
   checkout_line/observer.cpp
   checkout_line/observer.h)
+
+set(test_sources_2
+  erin_tests_2.cpp
+  erin_test_utils.h
+)
 
 link_libraries(${CMAKE_PROJECT_NAME} gtest)
 
@@ -31,5 +40,20 @@ configure_file(
 add_executable(${CMAKE_PROJECT_NAME}_tests ${test_sources})
 target_include_directories(${CMAKE_PROJECT_NAME}_tests PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
 
+add_executable(${CMAKE_PROJECT_NAME}_tests_2 ${test_sources_2})
+target_include_directories(${CMAKE_PROJECT_NAME}_tests_2 PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+
+add_executable(test_erin_distribution
+  ${PROJECT_SOURCE_DIR}/test/erin_distribution.test.cpp)
+target_include_directories(test_erin_distribution
+  PRIVATE
+  ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/src
+  ${PROJECT_SOURCE_DIR}/vendor/bdevs/include
+  ${PROJECT_SOURCE_DIR}/vendor/gsl/include
+  ${PROJECT_SOURCE_DIR}/vendor/toml11
+  )
+
 include(GoogleTest)
 gtest_discover_tests(${CMAKE_PROJECT_NAME}_tests)
+gtest_discover_tests(${CMAKE_PROJECT_NAME}_tests_2)

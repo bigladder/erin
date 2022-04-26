@@ -1,3 +1,5 @@
+# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# See the LICENSE.txt file for additional terms and conditions.
 # Main library
 # Note from https://cmake.org/cmake/help/latest/command/file.html
 # Note: We do not recommend using GLOB to collect a list of source files from
@@ -18,25 +20,35 @@ configure_file(
 set(sources
   ${PROJECT_SOURCE_DIR}/src/erin.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_csv.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_converter.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_flow_limits.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_devs_flow_meter.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_load.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_mover.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_mux.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_on_off_switch.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_storage.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_devs_supply.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_devs_uncontrolled_source.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_element.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_fragility.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_generics.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_graphviz.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_input_reader.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_network.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_port.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_random.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_reliability.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_scenario.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_scenario_stats.cpp
+  ${PROJECT_SOURCE_DIR}/src/erin_scenario_results.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_stream.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_type.cpp
   ${PROJECT_SOURCE_DIR}/src/erin_utils.cpp
+  ${PROJECT_SOURCE_DIR}/src/toml_helper.cpp
 )
 
 set(public_headers
@@ -44,21 +56,27 @@ set(public_headers
   ${PROJECT_SOURCE_DIR}/include/erin/devs.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/converter.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/flow_limits.h
+  ${PROJECT_SOURCE_DIR}/include/erin/devs/flow_meter.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/load.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/mover.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/mux.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/on_off_switch.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/storage.h
+  ${PROJECT_SOURCE_DIR}/include/erin/devs/supply.h
   ${PROJECT_SOURCE_DIR}/include/erin/devs/uncontrolled_source.h
   ${PROJECT_SOURCE_DIR}/include/erin/distribution.h
   ${PROJECT_SOURCE_DIR}/include/erin/element.h
   ${PROJECT_SOURCE_DIR}/include/erin/erin.h
   ${PROJECT_SOURCE_DIR}/include/erin/fragility.h
   ${PROJECT_SOURCE_DIR}/include/erin/graphviz.h
+  ${PROJECT_SOURCE_DIR}/include/erin/input_reader.h
   ${PROJECT_SOURCE_DIR}/include/erin/network.h
   ${PROJECT_SOURCE_DIR}/include/erin/port.h
   ${PROJECT_SOURCE_DIR}/include/erin/random.h
   ${PROJECT_SOURCE_DIR}/include/erin/reliability.h
+  ${PROJECT_SOURCE_DIR}/include/erin/scenario.h
+  ${PROJECT_SOURCE_DIR}/include/erin/scenario_stats.h
+  ${PROJECT_SOURCE_DIR}/include/erin/scenario_results.h
   ${PROJECT_SOURCE_DIR}/include/erin/stream.h
   ${PROJECT_SOURCE_DIR}/include/erin/type.h
   ${PROJECT_SOURCE_DIR}/include/erin/utils.h
@@ -119,18 +137,39 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
   add_coverage(${CMAKE_PROJECT_NAME})
 endif()
 
-add_executable(e2rin cli.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin
+add_executable(erin_distribution_test
+  "${PROJECT_SOURCE_DIR}/src/cli_test_dist.cpp"
+  "${PROJECT_SOURCE_DIR}/src/erin_csv.cpp"
+  "${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp"
+  "${PROJECT_SOURCE_DIR}/src/erin_type.cpp"
+  "${PROJECT_SOURCE_DIR}/src/erin_utils.cpp"
+  "${PROJECT_SOURCE_DIR}/src/debug_utils.h"
+  "${PROJECT_SOURCE_DIR}/src/erin_csv.h"
+  "${PROJECT_SOURCE_DIR}/include/erin/distribution.h"
+  "${PROJECT_SOURCE_DIR}/include/erin/type.h"
+  "${PROJECT_SOURCE_DIR}/include/erin/utils.h"
+  "${PROJECT_SOURCE_DIR}/include/erin/version.h"
+  )
+target_include_directories(erin_distribution_test
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include")
+add_executable(erin_csv_test erin_csv_tester.cpp erin_csv.cpp erin_csv.h)
+target_include_directories(erin_csv_test
+  PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include")
+add_executable(erin_single cli.cpp ${sources} ${public_headers} ${private_headers})
+set_target_properties(erin_single
+  PROPERTIES OUTPUT_NAME "erin") 
+target_include_directories(erin_single
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
-add_executable(e2rin_multi cli_multi.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin_multi
+add_executable(erin_multi cli_multi.cpp ${sources} ${public_headers} ${private_headers})
+target_include_directories(erin_multi
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
-add_executable(e2rin_graph cli_graph.cpp ${sources} ${public_headers} ${private_headers})
-target_include_directories(e2rin_graph
+add_executable(erin_graph cli_graph.cpp ${sources} ${public_headers} ${private_headers})
+target_include_directories(erin_graph
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/gsl/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/bdevs/include"
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
@@ -148,17 +187,17 @@ add_executable(limits limits.cpp)
 
 # Add Warnings
 if(MSVC)
-  target_compile_options(e2rin PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
-  target_compile_options(e2rin_multi PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
-  target_compile_options(e2rin_graph PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
+  target_compile_options(erin_single PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
+  target_compile_options(erin_multi PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
+  target_compile_options(erin_graph PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(str8760 PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(str8760x5000 PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(limits PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
 else()
-  target_compile_options(e2rin PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
-  target_compile_options(e2rin_multi PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
-  target_compile_options(e2rin_graph PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
+  target_compile_options(erin_single PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
+  target_compile_options(erin_multi PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
+  target_compile_options(erin_graph PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(str8760 PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(str8760x5000 PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(limits PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")

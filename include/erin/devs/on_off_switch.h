@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_DEVS_ON_OFF_SWITCH_H
 #define ERIN_DEVS_ON_OFF_SWITCH_H
@@ -30,8 +30,8 @@ namespace erin::devs
     RealTimeType time{0};
     bool state{true};
     std::vector<RealTimeType>::size_type next_index{0};
-    Port inflow_port{0, 0.0, 0.0};
-    Port outflow_port{0, 0.0, 0.0};
+    Port3 inflow_port{};
+    Port3 outflow_port{};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
   };
@@ -79,10 +79,13 @@ namespace erin::devs
   ////////////////////////////////////////////////////////////
   // output function
   std::vector<PortValue>
-  on_off_switch_output_function(const OnOffSwitchState& state);
+  on_off_switch_output_function(
+      const OnOffSwitchData& data,
+      const OnOffSwitchState& state);
 
   void 
   on_off_switch_output_function_mutable(
+      const OnOffSwitchData& data,
       const OnOffSwitchState& state,
       std::vector<PortValue>& ys);
 }

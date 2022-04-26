@@ -1,10 +1,11 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_DEVS_CONVERTER_H
 #define ERIN_DEVS_CONVERTER_H
 #include "erin/devs.h"
 #include "erin/type.h"
+#include <cmath>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -42,6 +43,10 @@ namespace erin::devs
   bool operator==(const ConversionFun& a, const ConversionFun& b);
   bool operator!=(const ConversionFun& a, const ConversionFun& b);
   std::ostream& operator<<(std::ostream& os, const ConversionFun& a);
+  
+  constexpr FlowValueType constant_efficiency_fun_precision_exp{6};
+  const FlowValueType constant_efficiency_fun_precision_factor{
+    std::pow(10.0, constant_efficiency_fun_precision_exp)};
 
   class ConstantEfficiencyFun : public ConversionFun
   {
@@ -109,10 +114,10 @@ namespace erin::devs
   struct ConverterState
   {
     RealTimeType time{0};
-    Port inflow_port{0, 0.0, 0.0};
-    Port outflow_port{0, 0.0, 0.0};
-    Port lossflow_port{0, 0.0, 0.0};
-    Port wasteflow_port{0, 0.0, 0.0};
+    Port3 inflow_port{};
+    Port3 outflow_port{};
+    Port3 lossflow_port{};
+    Port3 wasteflow_port{};
     std::unique_ptr<ConversionFun> conversion_fun{};
     bool report_inflow_request{false};
     bool report_outflow_achieved{false};
@@ -133,8 +138,9 @@ namespace erin::devs
 
   struct LossflowPorts
   {
-    Port lossflow_port{0, 0.0, 0.0};
-    Port wasteflow_port{0, 0.0, 0.0};
+    bool report_lossflow_achieved{false};
+    Port3 lossflow_port{};
+    Port3 wasteflow_port{};
   };
 
   ////////////////////////////////////////////////////////////
@@ -145,7 +151,8 @@ namespace erin::devs
   ////////////////////////////////////////////////////////////
   // internal transition
   ConverterState
-  converter_internal_transition(const ConverterState& state);
+  converter_internal_transition(
+    const ConverterState& state);
 
   ////////////////////////////////////////////////////////////
   // external transition
@@ -154,31 +161,6 @@ namespace erin::devs
       const ConverterState& state,
       RealTimeType elapsed_time,
       const std::vector<PortValue>& xs); 
-
-  ConverterState
-  converter_external_transition_on_outflow_request(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType outflow_request);
-
-  ConverterState
-  converter_external_transition_on_inflow_achieved(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType inflow_achieved);
-
-  ConverterState
-  converter_external_transition_on_lossflow_request(
-      const ConverterState& state,
-      RealTimeType new_time,
-      FlowValueType lossflow_request);
-
-  LossflowPorts
-  update_lossflow_ports(
-      RealTimeType time,
-      FlowValueType lossflow_achieved,
-      const Port& lossflow_port,
-      const Port& wasteflow_port);
 
   ////////////////////////////////////////////////////////////
   // confluent transition

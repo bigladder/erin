@@ -1,5 +1,5 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE.txt file for additional terms and conditions. */
 // reference: https://stackoverflow.com/a/1120224
 
 #ifndef ERIN_CSV_H
@@ -9,65 +9,19 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 namespace erin_csv
 {
-  std::vector<std::string>
-  read_row(std::istream& stream)
-  {
-    std::vector<std::string> data;
-    std::string line;
-    std::getline(stream, line);
-    if (line.empty()) {
-      return data;
-    }
-    std::stringstream line_stream(line);
-    std::string cell;
-    while(std::getline(line_stream, cell, ',')) {
-      data.emplace_back(cell);
-    }
-    if (!line_stream && cell.empty()) {
-      data.emplace_back("");
-    }
-    return data;
-  }
+  std::vector<std::string> read_row(std::istream& stream);
 
-  void
-  stream_out(std::ostream& stream, const std::vector<std::string>& xs)
-  {
-    for (std::vector<std::string>::size_type i{0}; i < xs.size(); ++i) {
-      if (i == 0) {
-        stream << "[";
-      }
-      else {
-        stream << ", ";
-      }
-      stream << xs[i];
-    }
-    stream << "]";
-  }
+  void stream_out(std::ostream& stream, const std::vector<std::string>& xs);
 
-  void
-  write_csv(
+  void write_csv(
       std::ostream& os,
       const std::vector<std::string>& items,
       bool start=true,
-      bool end_with_lf=true)
-  {
-    bool first{true};
-    std::string delim = start ? "" : ",";
-    for (const auto& item: items) {
-      os << delim << item;
-      if (first) {
-        delim = ",";
-        first = false;
-      }
-    }
-    if (end_with_lf) {
-      os << "\n";
-    }
-    return;
-  }
+      bool end_with_lf=true);
 
   template <class T>
   void

@@ -138,7 +138,12 @@ namespace ERIN
       std::ostringstream oss;
       oss << "time (" << time_units_to_tag(time_units) << ")";
       for (const auto& k: comp_ids) {
-        oss << "," << k << ":achieved (kW)," << k << ":requested (kW)";
+        if (port_roles_by_port_id.at(k) == PortRole::Stored) {
+          oss << "," << k << ":stored (kJ)";
+        }
+        else {
+          oss << "," << k << ":achieved (kW)," << k << ":requested (kW)";
+        }
       }
       lines.emplace_back(oss.str());
     }
@@ -153,7 +158,12 @@ namespace ERIN
           oss << ",,";
           continue;
         }
-        oss << ',' << values[k][i] << ',' << requested_values[k][i];
+        if (port_roles_by_port_id.at(k) == PortRole::Stored) {
+          oss << ',' << values[k][i];
+        }
+        else {
+          oss << ',' << values[k][i] << ',' << requested_values[k][i];
+        }
       }
       lines.emplace_back(oss.str());
     }

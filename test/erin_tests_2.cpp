@@ -883,7 +883,7 @@ check_times_and_loads(
     fw->finalize_at_time(t_max);
     auto results = fw->get_results();
     fw->clear();
-    ASSERT_EQ(results.size(), 6);
+    ASSERT_EQ(results.size(), 7);
     auto inflow_results = results[id + "-inflow"];
     auto outflow_results = results[id + "-outflow"];
     auto storeflow_results = results[id + "-storeflow"];

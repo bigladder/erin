@@ -538,6 +538,7 @@ namespace ERIN
       int outflow_element_id;
       int storeflow_element_id;
       int discharge_element_id;
+      int stored_element_id;
 
       void log_ports();
   };

@@ -90,12 +90,28 @@ namespace ERIN
   {
     if (is_good) {
       std::ostringstream oss;
+      std::unordered_set<std::string> non_flow_types{};
+      for (const auto& op_pair: outputs) {
+        const ScenarioResults& scenario_results = op_pair.second;
+        for (const auto& pr_pair: scenario_results.get_port_roles_by_port_id()) {
+          const auto& comp_id = pr_pair.first;
+          const auto& pr = pr_pair.second;
+          if (pr == PortRole::Stored) {
+            non_flow_types.emplace(comp_id);
+          }
+        }
+      }
       oss << "scenario id,"
              "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
              "elapsed (hours)";
       for (const auto& comp_id: comp_ids) {
-        oss << "," << comp_id << ":achieved (kW)"
-            << "," << comp_id << ":requested (kW)";
+        if (non_flow_types.find(comp_id) == non_flow_types.end()) {
+          oss << "," << comp_id << ":achieved (kW)"
+              << "," << comp_id << ":requested (kW)";
+        }
+        else {
+          oss << "," << comp_id << ":stored (kJ)";
+        }
       }
       oss << '\n';
       for (const auto& op_pair: outputs) {
@@ -201,6 +217,9 @@ namespace ERIN
       const std::string& comp_id,
       const std::string& scenario_id) const
   {
+    if (all_ss.port_roles_by_port_id.at(comp_id) == PortRole::Stored) {
+      return;
+    }
     namespace EG = erin_generics;
     const auto& stream_types = all_ss.stream_types_by_comp_id;
     const auto& comp_types = all_ss.component_types_by_comp_id;

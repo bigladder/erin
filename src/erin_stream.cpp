@@ -227,6 +227,9 @@ namespace ERIN
     else if (tag == "storage-outflow") {
       return PortRole::StorageOutflow;
     }
+    else if (tag == "stored") {
+      return PortRole::Stored;
+    }
     std::ostringstream oss{};
     oss << "tag_to_port_role: unhandled tag '" << tag << "'";
     throw std::invalid_argument(oss.str());
@@ -250,6 +253,8 @@ namespace ERIN
         return std::string{"source-outflow"};
       case PortRole::StorageOutflow:
         return std::string{"storage-outflow"};
+      case PortRole::Stored:
+        return std::string{"stored"};
     }
     std::ostringstream oss{};
     oss << "unhandled PortRole '" << static_cast<int>(role) << "'\n";

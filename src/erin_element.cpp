@@ -1736,7 +1736,8 @@ namespace ERIN
     inflow_element_id{-1},
     outflow_element_id{-1},
     storeflow_element_id{-1},
-    discharge_element_id{-1}
+    discharge_element_id{-1},
+    stored_element_id{-1}
   {
   }
 
@@ -1914,6 +1915,14 @@ namespace ERIN
             PortRole::StorageOutflow,
             true);
       }
+      if (stored_element_id == -1) {
+        stored_element_id = flow_writer->register_id(
+            get_id() + "-stored",
+            get_outflow_type(),
+            get_component_type(),
+            PortRole::Stored,
+            true);
+      }
       if (record_history) {
         flow_writer->write_data(
             inflow_element_id,
@@ -1942,6 +1951,12 @@ namespace ERIN
           state.time,
           storeflow_requested < 0.0 ? (-1.0 * storeflow_requested) : 0.0,
           storeflow_achieved < 0.0 ? (-1.0 * storeflow_achieved) : 0.0);
+      auto const current_capacity = state.soc * data.capacity;
+      flow_writer->write_data(
+          stored_element_id,
+          state.time,
+          current_capacity,
+          current_capacity);
     }
   }
 

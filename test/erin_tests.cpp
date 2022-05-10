@@ -5753,6 +5753,13 @@ TEST(ErinBasicsTest, Test_that_reliability_works_on_storage_component)
           ERIN::Datum{7, 50.0, 50.0},
           ERIN::Datum{8, 50.0, 0.0},
           ERIN::Datum{10, 0.0, 0.0}}},
+      { std::string{"BATTERY-stored"},
+        std::vector<ERIN::Datum>{
+          ERIN::Datum{0, 300.0, 300.0},
+          ERIN::Datum{5, 50.0, 50.0},
+          ERIN::Datum{7, 50.0, 50.0},
+          ERIN::Datum{8, 0.0, 0.0},
+          ERIN::Datum{10, 0.0, 0.0}}},
       { std::string{"L"},
         std::vector<ERIN::Datum>{
           ERIN::Datum{0, 100.0, 100.0},
@@ -6110,7 +6117,7 @@ TEST(ErinBasicsTest, Test_add_initial_soc_option_for_storage)
     "store_0-inflow", "store_0-outflow", "store_0-storeflow", "store_0-discharge",
     "store_1-inflow", "store_1-outflow", "store_1-storeflow", "store_1-discharge",
     "store_2-inflow", "store_2-outflow", "store_2-storeflow", "store_2-discharge",
-    "supply", "load"};
+    "supply", "load", "store_0-stored", "store_1-stored", "store_2-stored"};
   ASSERT_EQ(expected_comp_ids.size(), rez.size());
   if (true) {
     for (const auto& item : rez) {

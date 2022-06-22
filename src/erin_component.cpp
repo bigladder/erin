@@ -969,11 +969,19 @@ namespace ERIN
         std::move(fragilities_)),
     const_eff{const_eff_}
   {
-    if ((const_eff > 1.0) || (const_eff <= 0.0)) {
+    /*if ((const_eff > 1.0) || (const_eff <= 0.0)) {
       std::ostringstream oss{};
       oss << "const_eff not in the proper range (0 < const_eff <= 1.0)\n"
           << "const_eff = " << const_eff << "\n";
       throw std::invalid_argument(oss.str());
+    }*/
+    //Changed to allow for converters to be used as heat pumps, where const_eff can be used to 
+    //represent Coefficient Of Performance (COP) > 1.0
+    if (const_eff <= 0.0) {
+        std::ostringstream oss{};
+        oss << "const_eff not in the proper range (0 < const_eff)\n"
+            << "const_eff = " << const_eff << "\n";
+        throw std::invalid_argument(oss.str());
     }
   }
 

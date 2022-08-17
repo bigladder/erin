@@ -1,5 +1,6 @@
 /* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
+#include <iostream>
 
 #include "erin/input_reader.h"
 #include "erin_csv.h"
@@ -429,6 +430,18 @@ namespace ERIN
     return read_number(it->second);
   }
 
+  FlowValueType 
+  correct_for_negative_load(RealTimeType time, FlowValueType value, const std::string& load_id, bool is_path)
+  {
+    if (value < 0.0) {
+      std::cerr
+        << "WARNING! Value for load '" << (is_path ? "CSV file:" : "") << load_id
+        << "' at time = " << time << " is " << value << " which is less than 0.0; setting to 0.0"
+        << std::endl;
+      return 0.0;
+    }
+    return value;
+  }
 
   std::vector<LoadItem>
   TomlInputReader::get_loads_from_array(
@@ -460,7 +473,7 @@ namespace ERIN
         throw std::runtime_error(oss.str());
       }
       the_time = time_to_seconds(read_number(xs[0]), time_units);
-      the_value = static_cast<FlowValueType>(read_number(xs[1]));
+      the_value = correct_for_negative_load(the_time, static_cast<FlowValueType>(read_number(xs[1])), load_id, false);
       the_loads.emplace_back(LoadItem{the_time, the_value});
       ++idx;
     }
@@ -560,6 +573,7 @@ namespace ERIN
         ifs.close();
         throw;
       }
+      v = correct_for_negative_load(t, v, csv_path, true);
       the_loads.emplace_back(LoadItem{t, v});
     }
     if (the_loads.empty()) {

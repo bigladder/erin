@@ -2840,9 +2840,8 @@ check_times_and_loads(
     ASSERT_EQ(blue_sky_0_snk.is_failed, false);
   }
 
-
 int
-  main(int argc, char** argv)
+main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

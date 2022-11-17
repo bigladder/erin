@@ -1410,7 +1410,7 @@ namespace ERIN
   bool
   operator==(const StorageComponent& a, const StorageComponent& b)
   {
-    return a.base_is_equal(b) && (a.capacity == b.capacity);
+    return a.base_is_equal(b) && (a.capacity == b.capacity) && (a.max_charge_rate == b.max_charge_rate) && (a.init_soc == b.init_soc);
   }
 
   bool

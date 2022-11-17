@@ -1267,8 +1267,10 @@ namespace ERIN
     capacity = work_to_kJ(capacity, capacity_units);
     auto max_charge_rate = toml_helper::read_required_table_field<FlowValueType>(
         tt, {"max_inflow", "max_charge", "max_charge_rate"}, field_read);
+    auto init_soc = toml_helper::read_optional_table_field<FlowValueType>(
+      tt, {"init_soc"}, 1.0, field_read);
     std::unique_ptr<Component> store = std::make_unique<StorageComponent>(
-        id, std::string(stream), capacity, max_charge_rate, std::move(frags));
+        id, std::string(stream), capacity, max_charge_rate, std::move(frags), init_soc);
     components.insert(
         std::make_pair(id, std::move(store)));
   }

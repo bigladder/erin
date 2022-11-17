@@ -1262,7 +1262,8 @@ namespace ERIN
         stream_,
         capacity_,
         max_charge_rate_,
-        {})
+        {},
+        1.0)
   {
   }
 
@@ -1272,6 +1273,23 @@ namespace ERIN
       FlowValueType capacity_,
       FlowValueType max_charge_rate_,
       fragility_map fragilities):
+    StorageComponent(
+        id_,
+        stream_,
+        capacity_,
+        max_charge_rate_,
+        std::move(fragilities),
+        1.0)
+  {
+  }
+
+  StorageComponent::StorageComponent(
+      const std::string& id_,
+      const std::string& stream_,
+      FlowValueType capacity_,
+      FlowValueType max_charge_rate_,
+      fragility_map fragilities,
+      FlowValueType init_soc_):
     Component(
         id_,
         ComponentType::Storage,
@@ -1280,7 +1298,8 @@ namespace ERIN
         stream_,
         std::move(fragilities)),
     capacity{capacity_},
-    max_charge_rate{max_charge_rate_}
+    max_charge_rate{max_charge_rate_},
+    init_soc{init_soc_}
   {
     if (capacity <= 0.0)
       throw std::invalid_argument(
@@ -1290,6 +1309,10 @@ namespace ERIN
       throw std::invalid_argument(
           "max_charge_rate cannot be less than 0.0: max_charge_rate = "
           + std::to_string(max_charge_rate));
+    if (init_soc < 0.0 || init_soc > 1.0)
+      throw std::invalid_argument(
+        "initial SOC must be in range [0.0, 1.0]; init_soc = "
+        + std::to_string(init_soc));
   }
 
   std::unique_ptr<Component>
@@ -1301,7 +1324,8 @@ namespace ERIN
         get_input_stream(),
         capacity,
         max_charge_rate,
-        std::move(fcs));
+        std::move(fcs),
+        init_soc);
     return p;
   }
 
@@ -1347,7 +1371,7 @@ namespace ERIN
     }
     else {
       auto store = new Storage(
-          the_id, the_type, stream, capacity, max_charge_rate);
+          the_id, the_type, stream, capacity, max_charge_rate, init_soc);
       elements.emplace(store);
       if (has_reliability) {
         store->set_storeflow_discharge_recording_on();

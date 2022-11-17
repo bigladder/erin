@@ -379,6 +379,13 @@ namespace ERIN
           FlowValueType capacity,
           FlowValueType max_charge_rate,
           fragility_map fragilities);
+      StorageComponent(
+          const std::string& id,
+          const std::string& stream,
+          FlowValueType capacity,
+          FlowValueType max_charge_rate,
+          fragility_map fragilities,
+          FlowValueType init_soc);
 
       [[nodiscard]] std::unique_ptr<Component> clone() const override;
       PortsAndElements add_to_network(
@@ -393,6 +400,7 @@ namespace ERIN
     private:
       FlowValueType capacity;
       FlowValueType max_charge_rate;
+      FlowValueType init_soc;
   };
 
   bool operator==(const StorageComponent& a, const StorageComponent& b);

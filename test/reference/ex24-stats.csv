@@ -1,0 +1,20 @@
+component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ)
+electric_battery_A-discharge,storage,electricity,0.5,10,36000,36000
+electric_battery_A-inflow,storage,electricity,0,20,72000,0
+electric_battery_A-outflow,storage,electricity,0.5,10,36000,36000
+electric_battery_A-stored,storage,electricity,1,0,0,1.296e+09
+electric_battery_A-storeflow,storage,electricity,1,0,0,0
+electric_battery_B-discharge,storage,electricity,0.75,5,18000,18000
+electric_battery_B-inflow,storage,electricity,0,20,72000,0
+electric_battery_B-outflow,storage,electricity,0.25,15,54000,18000
+electric_battery_B-stored,storage,electricity,1,0,0,3.24e+08
+electric_battery_B-storeflow,storage,electricity,1,0,0,0
+electric_load_A,load,electricity,0.5,10,36000,36000
+electric_load_B,load,electricity,0.25,15,54000,18000
+electric_source_A,source,electricity,0,20,72000,0
+electric_source_B,source,electricity,0,20,72000,0
+TOTAL (source),,,,,,0
+TOTAL (load),,,,,,54000
+TOTAL (storage),,,,,,-54000
+TOTAL (waste),,,,,,0.0
+ENERGY BALANCE (source-(load+storage+waste)),0,,,,,

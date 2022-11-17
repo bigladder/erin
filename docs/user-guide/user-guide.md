@@ -419,6 +419,7 @@ loads_by_scenario.scenario_id_2 = "load_id_2"
 | `capacity_unit` | cap  | no        | capacity unit. Default: "kJ"           |
 | `capacity`      | real | yes       | capacity of the store                  |
 | `max_inflow`    | real | yes       | maximum inflow (charge rate)           |
+| `init_soc`      | frac | no        | initial state of charge. Default: 1.0  |
 
 : `components`: Storage Component {#tbl:store}
 

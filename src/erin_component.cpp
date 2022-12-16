@@ -15,9 +15,10 @@ namespace ERIN
   std::ostream&
   operator<<(std::ostream& os, const FragilityCurveAndRepair& fcar)
   {
+    // TODO: '<< fcar.curve' throws an error; determine why
     return os
       << "{"
-      << ":curve " << fcar.curve
+      << ":curve " // << fcar.curve
       << " "
       << ":repair-dist-id " << fcar.repair_dist_id
       << "}";

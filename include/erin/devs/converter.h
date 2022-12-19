@@ -11,6 +11,7 @@
 #include <string>
 #include <typeinfo>
 #include <vector>
+#include <memory>
 
 namespace erin::devs
 {

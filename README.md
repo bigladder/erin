@@ -8,10 +8,8 @@ Disruptions can be due to threat events and/or reliability-based failures.
 
 ```
 mkdir build
-cd build
-cmake ..
+cmake -S . -B build -DERIN_TESTING=ON
 cmake --build . --config Release
-ctest -C Release
 ```
 
 ## Command-line Setup

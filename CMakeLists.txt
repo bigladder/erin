@@ -1,8 +1,11 @@
 # Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
 # See the LICENSE.txt file for additional terms and conditions.
-cmake_minimum_required(VERSION 3.15) # required for gtest_discover_tests
+cmake_minimum_required(VERSION 3.15..3.28) # required for gtest_discover_tests
 
-project(ERIN VERSION 0.0.55 LANGUAGES CXX)
+project(ERIN
+    VERSION 0.0.55
+    DESCRIPTION "Energy Resilience of Interacting Networks"
+    LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 

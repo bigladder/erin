@@ -1,6 +1,8 @@
 # ERIN (Energy Resilience of Interacting Networks)
 
-ERIN is a district system energy-flow simulator that takes into account toplogy and disruption due to threat events and/or reliability-based failures.
+ERIN is a district system energy-flow simulator.
+It accounts for toplogy (what is connected to what) and disruptions.
+Disruptions can be due to threat events and/or reliability-based failures.
 
 ## Running Google Test
 

@@ -14,7 +14,8 @@ cmake --build . --config Release
 
 ## Command-line Setup
 
-If you'd like to develop or kick-off the compiler and tests from the command prompt (Mac OS X or Linux), then after you create your build directory, you can simlink a shell script to facilitate quick testing of commands:
+A script is available to run the compiler and tests from the command prompt (Mac OS X or Linux).
+To use it, you can simlink a shell script after creating your build directory:
 
 ```
 mkdir build
@@ -88,7 +89,7 @@ The `erin_graph` program provides usage help including how to call Graphviz to g
 
 # Copyright and License
 
-Copyright (c) 2020 Big Ladder Software, LLC. All Rights Reserved.
+Copyright (c) 2020-2024 Big Ladder Software, LLC. All Rights Reserved.
 
 See the LICENSE.txt file for the license for this project.
 

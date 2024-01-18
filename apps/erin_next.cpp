@@ -75,13 +75,12 @@ struct TimeAndFlows {
 
 // Model
 struct Model {
-	size_t NumConstLoads;
 	size_t NumScheduleLoads;
 	size_t NumConnectionsAndFlows;
 	size_t NumConstantEfficiencyConverters;
 	size_t NumWasteSinks;
 	std::vector<ConstantSource> ConstSources;
-	ConstantLoad* ConstLoads;
+	std::vector<ConstantLoad> ConstLoads;
 	ScheduleBasedLoad* ScheduledLoads;
 	ConstantEfficiencyConverter* ConstEffConvs;
 	Connection* Connections;
@@ -134,7 +133,7 @@ CountActiveConnections(Model& m) {
 
 static void
 ActivateConnectionsForConstantLoads(Model& model) {
-	for (size_t loadIdx = 0; loadIdx < model.NumConstLoads; ++loadIdx) {
+	for (size_t loadIdx = 0; loadIdx < model.ConstLoads.size(); ++loadIdx) {
 		for (size_t connIdx = 0; connIdx < model.NumConnectionsAndFlows; ++connIdx) {
 			if (model.Connections[connIdx].To == ComponentType::ConstantLoadType
 				&& model.Connections[connIdx].ToIdx == loadIdx)
@@ -468,10 +467,13 @@ Simulate(Model& model, bool print=true) {
 	return timeAndFlows;
 }
 
-//static ComponentId
-//Model_AddConstantLoad(Model& m, uint32_t load) {
-//
-//}
+static ComponentId
+Model_AddConstantLoad(Model& m, uint32_t load) {
+	size_t id = m.ConstLoads.size();
+	m.ConstLoads.push_back({ load });
+	return { id, ComponentType::ConstantLoadType };
+}
+
 static ComponentId
 Model_AddConstantSource(Model& m, uint32_t available) {
 	size_t id = m.ConstSources.size();
@@ -484,18 +486,16 @@ Example1(bool print) {
 	if (print) {
 		std::cout << "Example  1:" << std::endl;
 	}
-	ConstantLoad loads[] = { { 10 } };
 	Connection conns[] = {
 		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ConstantLoadType, 0, 0 },
 	};
 	Flow flows[] = { { 0, 0, 0 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
-	m.NumConstLoads = 1;
+	auto loadId = Model_AddConstantLoad(m, 10);
 	m.NumConnectionsAndFlows = 1;
 	m.NumWasteSinks = 0;
 	m.Connections = conns;
-	m.ConstLoads = loads;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
@@ -512,7 +512,6 @@ Example2(bool print) {
 	if (print) {
 		std::cout << "Example  2:" << std::endl;
 	}
-	ConstantLoad loads[] = { { 10 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
 	Connection conns[] = {
 		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ConstantEfficiencyConverterType, 0, 0 },
@@ -522,12 +521,11 @@ Example2(bool print) {
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
-	m.NumConstLoads = 1;
+	auto loadId = Model_AddConstantLoad(m, 10);
 	m.NumConnectionsAndFlows = 3;
 	m.NumConstantEfficiencyConverters = 1;
 	m.NumWasteSinks = 1;
 	m.Connections = conns;
-	m.ConstLoads = loads;
 	m.ConstEffConvs = convs;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
@@ -562,12 +560,12 @@ Example3(bool print) {
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
-	m.NumConstLoads = 2;
+	auto load1Id = Model_AddConstantLoad(m, 10);
+	auto load2Id = Model_AddConstantLoad(m, 2);
 	m.NumConnectionsAndFlows = 4;
 	m.NumConstantEfficiencyConverters = 1;
 	m.NumWasteSinks = 1;
 	m.Connections = conns;
-	m.ConstLoads = loads;
 	m.ConstEffConvs = convs;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
@@ -594,7 +592,6 @@ Example3A(bool print) {
 	if (print) {
 		std::cout << "Example 3A:" << std::endl;
 	}
-	ConstantLoad loads[] = { { 10 }, { 2 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
 	Connection conns[] = {
 		{ ComponentType::ConstantEfficiencyConverterType, 0, 2, ComponentType::WasteSinkType, 0, 0 },
@@ -605,12 +602,12 @@ Example3A(bool print) {
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
-	m.NumConstLoads = 2;
+	auto load1Id = Model_AddConstantLoad(m, 10);
+	auto load2Id = Model_AddConstantLoad(m, 2);
 	m.NumConnectionsAndFlows = 4;
 	m.NumConstantEfficiencyConverters = 1;
 	m.NumWasteSinks = 1;
 	m.Connections = conns;
-	m.ConstLoads = loads;
 	m.ConstEffConvs = convs;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
@@ -647,13 +644,11 @@ Example4(bool print) {
 	Flow flows[] = { { 0, 0, 0 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
-	m.NumConstLoads = 0;
 	m.NumScheduleLoads = 1;
 	m.NumConnectionsAndFlows = 1;
 	m.NumConstantEfficiencyConverters = 0;
 	m.NumWasteSinks = 0;
 	m.Connections = conns;
-	m.ConstLoads = nullptr;
 	m.ScheduledLoads = schLoads;
 	m.ConstEffConvs = nullptr;
 	m.Flows = flows;

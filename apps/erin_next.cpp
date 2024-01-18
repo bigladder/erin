@@ -75,18 +75,22 @@ struct TimeAndFlows {
 
 // Model
 struct Model {
-	size_t NumConstSources;
 	size_t NumConstLoads;
 	size_t NumScheduleLoads;
 	size_t NumConnectionsAndFlows;
 	size_t NumConstantEfficiencyConverters;
 	size_t NumWasteSinks;
-	ConstantSource* ConstSources;
+	std::vector<ConstantSource> ConstSources;
 	ConstantLoad* ConstLoads;
 	ScheduleBasedLoad* ScheduledLoads;
 	ConstantEfficiencyConverter* ConstEffConvs;
 	Connection* Connections;
 	Flow* Flows;
+};
+
+struct ComponentId {
+	size_t Id;
+	ComponentType Type;
 };
 
 // HEADER
@@ -105,6 +109,10 @@ static void PrintFlows(Model& m, double t);
 static FlowSummary SummarizeFlows(Model& m, double t);
 static void PrintFlowSummary(FlowSummary s);
 static std::vector<TimeAndFlows> Simulate(Model& m, bool print);
+// static ComponentId Model_AddConstantLoad(Model& m, uint32_t load);
+// static ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
+static ComponentId Model_AddConstantSource(Model& m, uint32_t available);
+// static ComponentId Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator);
 static void Example1(bool doPrint);
 static void Example2(bool doPrint);
 static void Example3(bool doPrint);
@@ -141,7 +149,7 @@ ActivateConnectionsForConstantLoads(Model& model) {
 
 static void
 ActivateConnectionsForConstantSources(Model& model) {
-	for (size_t srcIdx = 0; srcIdx < model.NumConstSources; ++srcIdx) {
+	for (size_t srcIdx = 0; srcIdx < model.ConstSources.size(); ++srcIdx) {
 		for (size_t connIdx = 0; connIdx < model.NumConnectionsAndFlows; ++connIdx) {
 			if (model.Connections[connIdx].From == ComponentType::ConstantSourceType
 				&& model.Connections[connIdx].FromIdx == srcIdx) {
@@ -460,25 +468,34 @@ Simulate(Model& model, bool print=true) {
 	return timeAndFlows;
 }
 
+//static ComponentId
+//Model_AddConstantLoad(Model& m, uint32_t load) {
+//
+//}
+static ComponentId
+Model_AddConstantSource(Model* m, uint32_t available) {
+	size_t id = m->ConstSources.size();
+	m->ConstSources.push_back({ available });
+	return { id, ComponentType::ConstantSourceType };
+}
+
 static void
 Example1(bool print) {
 	if (print) {
 		std::cout << "Example  1:" << std::endl;
 	}
-	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 } };
 	Connection conns[] = {
 		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ConstantLoadType, 0, 0 },
 	};
 	Flow flows[] = { { 0, 0, 0 } };
 	Model m = {};
-	m.NumConstSources = 1;
+	auto srcId = Model_AddConstantSource(&m, 100);
 	m.NumConstLoads = 1;
 	m.NumConnectionsAndFlows = 1;
 	m.NumWasteSinks = 0;
 	m.Connections = conns;
 	m.ConstLoads = loads;
-	m.ConstSources = sources;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
@@ -495,7 +512,6 @@ Example2(bool print) {
 	if (print) {
 		std::cout << "Example  2:" << std::endl;
 	}
-	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
 	Connection conns[] = {
@@ -505,7 +521,7 @@ Example2(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
-	m.NumConstSources = 1;
+	auto srcId = Model_AddConstantSource(&m, 100);
 	m.NumConstLoads = 1;
 	m.NumConnectionsAndFlows = 3;
 	m.NumConstantEfficiencyConverters = 1;
@@ -513,7 +529,6 @@ Example2(bool print) {
 	m.Connections = conns;
 	m.ConstLoads = loads;
 	m.ConstEffConvs = convs;
-	m.ConstSources = sources;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
@@ -536,7 +551,6 @@ Example3(bool print) {
 	if (print) {
 		std::cout << "Example  3:" << std::endl;
 	}
-	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 }, { 2 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
 	Connection conns[] = {
@@ -547,7 +561,7 @@ Example3(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
-	m.NumConstSources = 1;
+	auto srcId = Model_AddConstantSource(&m, 100);
 	m.NumConstLoads = 2;
 	m.NumConnectionsAndFlows = 4;
 	m.NumConstantEfficiencyConverters = 1;
@@ -555,7 +569,6 @@ Example3(bool print) {
 	m.Connections = conns;
 	m.ConstLoads = loads;
 	m.ConstEffConvs = convs;
-	m.ConstSources = sources;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
@@ -581,7 +594,6 @@ Example3A(bool print) {
 	if (print) {
 		std::cout << "Example 3A:" << std::endl;
 	}
-	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 }, { 2 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
 	Connection conns[] = {
@@ -592,7 +604,7 @@ Example3A(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
-	m.NumConstSources = 1;
+	auto srcId = Model_AddConstantSource(&m, 100);
 	m.NumConstLoads = 2;
 	m.NumConnectionsAndFlows = 4;
 	m.NumConstantEfficiencyConverters = 1;
@@ -600,7 +612,6 @@ Example3A(bool print) {
 	m.Connections = conns;
 	m.ConstLoads = loads;
 	m.ConstEffConvs = convs;
-	m.ConstSources = sources;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
@@ -628,7 +639,6 @@ Example4(bool print) {
 	}
 	double scheduleTimes[] = { 0.0, 3600.0 };
 	uint32_t scheduleLoads[] = { 10, 200 };
-	ConstantSource sources[] = { { 100 } };
 	ScheduleBasedLoad schLoads[] = { { 2, scheduleTimes, scheduleLoads } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
 	Connection conns[] = {
@@ -636,7 +646,7 @@ Example4(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 } };
 	Model m = {};
-	m.NumConstSources = 1;
+	auto srcId = Model_AddConstantSource(&m, 100);
 	m.NumConstLoads = 0;
 	m.NumScheduleLoads = 1;
 	m.NumConnectionsAndFlows = 1;
@@ -646,7 +656,6 @@ Example4(bool print) {
 	m.ConstLoads = nullptr;
 	m.ScheduledLoads = schLoads;
 	m.ConstEffConvs = nullptr;
-	m.ConstSources = sources;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
 	assert((results.size() == 2 && "output must have a size of 2"));
@@ -669,6 +678,6 @@ main(int argc, char** argv) {
 	Example2(false);
 	Example3(false);
 	Example3A(false);
-	Example4(true);
+	Example4(false);
 	return EXIT_SUCCESS;
 }

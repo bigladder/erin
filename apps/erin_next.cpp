@@ -473,9 +473,9 @@ Simulate(Model& model, bool print=true) {
 //
 //}
 static ComponentId
-Model_AddConstantSource(Model* m, uint32_t available) {
-	size_t id = m->ConstSources.size();
-	m->ConstSources.push_back({ available });
+Model_AddConstantSource(Model& m, uint32_t available) {
+	size_t id = m.ConstSources.size();
+	m.ConstSources.push_back({ available });
 	return { id, ComponentType::ConstantSourceType };
 }
 
@@ -490,7 +490,7 @@ Example1(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 } };
 	Model m = {};
-	auto srcId = Model_AddConstantSource(&m, 100);
+	auto srcId = Model_AddConstantSource(m, 100);
 	m.NumConstLoads = 1;
 	m.NumConnectionsAndFlows = 1;
 	m.NumWasteSinks = 0;
@@ -521,7 +521,7 @@ Example2(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
-	auto srcId = Model_AddConstantSource(&m, 100);
+	auto srcId = Model_AddConstantSource(m, 100);
 	m.NumConstLoads = 1;
 	m.NumConnectionsAndFlows = 3;
 	m.NumConstantEfficiencyConverters = 1;
@@ -561,7 +561,7 @@ Example3(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
-	auto srcId = Model_AddConstantSource(&m, 100);
+	auto srcId = Model_AddConstantSource(m, 100);
 	m.NumConstLoads = 2;
 	m.NumConnectionsAndFlows = 4;
 	m.NumConstantEfficiencyConverters = 1;
@@ -604,7 +604,7 @@ Example3A(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
-	auto srcId = Model_AddConstantSource(&m, 100);
+	auto srcId = Model_AddConstantSource(m, 100);
 	m.NumConstLoads = 2;
 	m.NumConnectionsAndFlows = 4;
 	m.NumConstantEfficiencyConverters = 1;
@@ -646,7 +646,7 @@ Example4(bool print) {
 	};
 	Flow flows[] = { { 0, 0, 0 } };
 	Model m = {};
-	auto srcId = Model_AddConstantSource(&m, 100);
+	auto srcId = Model_AddConstantSource(m, 100);
 	m.NumConstLoads = 0;
 	m.NumScheduleLoads = 1;
 	m.NumConnectionsAndFlows = 1;

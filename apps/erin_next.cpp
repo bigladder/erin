@@ -20,6 +20,7 @@ struct FlowSummary {
 enum class ComponentType
 {
 	ConstantLoadType,
+	ScheduleBasedLoadType,
 	ConstantSourceType,
 	ConstantEfficiencyConverterType,
 	WasteSinkType,
@@ -76,11 +77,13 @@ struct TimeAndFlows {
 struct Model {
 	size_t NumConstSources;
 	size_t NumConstLoads;
+	size_t NumScheduleLoads;
 	size_t NumConnectionsAndFlows;
 	size_t NumConstantEfficiencyConverters;
 	size_t NumWasteSinks;
 	ConstantSource* ConstSources;
 	ConstantLoad* ConstLoads;
+	ScheduleBasedLoad* ScheduledLoads;
 	ConstantEfficiencyConverter* ConstEffConvs;
 	Connection* Connections;
 	Flow* Flows;
@@ -90,19 +93,23 @@ struct Model {
 static size_t CountActiveConnections(Model& m);
 static void ActivateConnectionsForConstantLoads(Model& m);
 static void ActivateConnectionsForConstantSources(Model& m);
+static void ActivateConnectionsForScheduleBasedLoads(Model& m, double t);
+static double EarliestNextEvent(Model& m, double t);
 static int FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort);
 static int FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort);
 static void RunActiveConnections(Model& m);
 static void FinalizeFlows(Model& m);
+static double NextEvent(ScheduleBasedLoad sb, double t);
 static std::string ToString(ComponentType ct);
 static void PrintFlows(Model& m, double t);
 static FlowSummary SummarizeFlows(Model& m, double t);
 static void PrintFlowSummary(FlowSummary s);
 static std::vector<TimeAndFlows> Simulate(Model& m, bool print);
-static void ExampleOne(bool doPrint);
-static void ExampleTwo(bool doPrint);
-static void ExampleThree(bool doPrint);
-static void ExampleThreeA(bool doPrint);
+static void Example1(bool doPrint);
+static void Example2(bool doPrint);
+static void Example3(bool doPrint);
+static void Example3A(bool doPrint);
+static void Example4(bool doPrint);
 
 // IMPLEMENTATION
 static size_t
@@ -144,6 +151,39 @@ ActivateConnectionsForConstantSources(Model& model) {
 			}
 		}
 	}
+}
+
+static void
+ActivateConnectionsForScheduleBasedLoads(Model& m, double t) {
+	for (size_t schIdx = 0; schIdx < m.NumScheduleLoads; ++schIdx) {
+		for (size_t connIdx = 0; connIdx < m.NumConnectionsAndFlows; ++connIdx) {
+			if (m.Connections[connIdx].To == ComponentType::ScheduleBasedLoadType
+				&& m.Connections[connIdx].ToIdx == schIdx) {
+				for (size_t itemIdx = 0; itemIdx < m.ScheduledLoads[schIdx].NumEntries; ++itemIdx) {
+					if (m.ScheduledLoads[schIdx].Times[itemIdx] == t) {
+						m.Connections[connIdx].IsActiveBack =
+							m.Flows[connIdx].Requested != m.ScheduledLoads[schIdx].Loads[itemIdx];
+						m.Flows[connIdx].Requested = m.ScheduledLoads[schIdx].Loads[itemIdx];
+					}
+				}
+			}
+		}
+	}
+}
+
+static double
+EarliestNextEvent(Model& m, double t) {
+	double nextTime = -1.0;
+	bool nextTimeFound = false;
+	// go through all the components that are potential event generators
+	for (size_t schIdx = 0; schIdx < m.NumScheduleLoads; ++schIdx) {
+		double nextTimeForComponent = NextEvent(m.ScheduledLoads[schIdx], t);
+		if (!nextTimeFound || (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime)) {
+			nextTime = nextTimeForComponent;
+			nextTimeFound = true;
+		}
+	}
+	return nextTime;
 }
 
 static int
@@ -228,6 +268,7 @@ RunActiveConnections(Model& model) {
 			switch (model.Connections[connIdx].To) {
 			case (ComponentType::ConstantLoadType):
 			case (ComponentType::WasteSinkType):
+			case (ComponentType::ScheduleBasedLoadType):
 			{
 				// Nothing to do
 			} break;
@@ -282,12 +323,27 @@ FinalizeFlows(Model& model) {
 	}
 }
 
+static double
+NextEvent(ScheduleBasedLoad sb, double t) {
+	for (size_t i = 0; i < sb.NumEntries; ++i) {
+		if (sb.Times[i] > t)
+		{
+			return sb.Times[i];
+		}
+	}
+	return -1.0;
+}
+
 static std::string
 ToString(ComponentType compType) {
 	switch (compType) {
 	case (ComponentType::ConstantLoadType):
 	{
 		return std::string{ "ConstantLoad" };
+	} break;
+	case (ComponentType::ScheduleBasedLoadType):
+	{
+		return std::string{ "ScheduleBasedLoad" };
 	} break;
 	case (ComponentType::ConstantSourceType):
 	{
@@ -337,6 +393,7 @@ SummarizeFlows(Model& m, double t) {
 
 		switch (m.Connections[flowIdx].To) {
 		case (ComponentType::ConstantLoadType):
+		case (ComponentType::ScheduleBasedLoadType):
 		{
 			summary.Outflow += m.Flows[flowIdx].Actual;
 		} break;
@@ -378,24 +435,35 @@ static std::vector<TimeAndFlows>
 Simulate(Model& model, bool print=true) {
 	double t = 0.0;
 	std::vector<TimeAndFlows> timeAndFlows = {};
-	ActivateConnectionsForConstantLoads(model);
-	ActivateConnectionsForConstantSources(model);
-	while (CountActiveConnections(model) > 0) {
-		RunActiveConnections(model);
+	size_t const maxLoopIter = 100;
+	for (size_t loopIdx = 0; loopIdx < maxLoopIter; ++loopIdx) {
+		ActivateConnectionsForScheduleBasedLoads(model, t);
+		if (loopIdx == 0) {
+			ActivateConnectionsForConstantLoads(model);
+			ActivateConnectionsForConstantSources(model);
+		}
+		while (CountActiveConnections(model) > 0) {
+			RunActiveConnections(model);
+		}
+		FinalizeFlows(model);
+		if (print) {
+			PrintFlows(model, t);
+			PrintFlowSummary(SummarizeFlows(model, t));
+		}
+		timeAndFlows.push_back({ t, CopyFlows(model.Flows, model.NumConnectionsAndFlows) });
+		double nextTime = EarliestNextEvent(model, t);
+		if (nextTime < 0.0) {
+			break;
+		}
+		t = nextTime;
 	}
-	FinalizeFlows(model);
-	if (print) {
-		PrintFlows(model, t);
-		PrintFlowSummary(SummarizeFlows(model, t));
-	}
-	timeAndFlows.push_back({ t, CopyFlows(model.Flows, model.NumConnectionsAndFlows) });
 	return timeAndFlows;
 }
 
 static void
-ExampleOne(bool print) {
+Example1(bool print) {
 	if (print) {
-		std::cout << "Example 1:" << std::endl;
+		std::cout << "Example  1:" << std::endl;
 	}
 	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 } };
@@ -419,13 +487,13 @@ ExampleOne(bool print) {
 	assert((results[0].Flows[0].Actual == 10 && "actual value must equal 10"));
 	assert((results[0].Flows[0].Available == 100 && "available must equal 100"));
 	assert((results[0].Flows[0].Requested == 10 && "requested must equal 10"));
-	std::cout << "[ExampleOne] :: PASSED" << std::endl;
+	std::cout << "[Example  1] :: PASSED" << std::endl;
 }
 
 static void
-ExampleTwo(bool print) {
+Example2(bool print) {
 	if (print) {
-		std::cout << "Example 2:" << std::endl;
+		std::cout << "Example  2:" << std::endl;
 	}
 	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 } };
@@ -460,13 +528,13 @@ ExampleTwo(bool print) {
 	assert((results[0].Flows[2].Requested == 10 && "requested must equal 10"));
 	assert((results[0].Flows[2].Actual == 10 && "actual value must equal 10"));
 	assert((results[0].Flows[2].Available == 50 && "available must equal 50"));
-	std::cout << "[ExampleTwo] :: PASSED" << std::endl;
+	std::cout << "[Example  2] :: PASSED" << std::endl;
 }
 
 static void
-ExampleThree(bool print) {
+Example3(bool print) {
 	if (print) {
-		std::cout << "Example 3:" << std::endl;
+		std::cout << "Example  3:" << std::endl;
 	}
 	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 }, { 2 } };
@@ -505,11 +573,11 @@ ExampleThree(bool print) {
 	assert((results[0].Flows[3].Requested == 8 && "requested must equal 8"));
 	assert((results[0].Flows[3].Actual == 8 && "actual value must equal 8"));
 	assert((results[0].Flows[3].Available == 48 && "available must equal 48"));
-	std::cout << "[ExampleThree] :: PASSED" << std::endl;
+	std::cout << "[Example  3] :: PASSED" << std::endl;
 }
 
 static void
-ExampleThreeA(bool print) {
+Example3A(bool print) {
 	if (print) {
 		std::cout << "Example 3A:" << std::endl;
 	}
@@ -550,15 +618,61 @@ ExampleThreeA(bool print) {
 	assert((results[0].Flows[3].Requested == 20 && "requested must equal 20"));
 	assert((results[0].Flows[3].Actual == 20 && "actual value must equal 20"));
 	assert((results[0].Flows[3].Available == 100 && "available must equal 100"));
-	std::cout << "[ExampleThreeA] :: PASSED" << std::endl;
+	std::cout << "[Example 3A] :: PASSED" << std::endl;
+}
+
+static void
+Example4(bool print) {
+	if (print) {
+		std::cout << "Example  4:" << std::endl;
+	}
+	double scheduleTimes[] = { 0.0, 3600.0 };
+	uint32_t scheduleLoads[] = { 10, 200 };
+	ConstantSource sources[] = { { 100 } };
+	ScheduleBasedLoad schLoads[] = { { 2, scheduleTimes, scheduleLoads } };
+	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
+	Connection conns[] = {
+		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ScheduleBasedLoadType, 0, 0 },
+	};
+	Flow flows[] = { { 0, 0, 0 } };
+	Model m = {};
+	m.NumConstSources = 1;
+	m.NumConstLoads = 0;
+	m.NumScheduleLoads = 1;
+	m.NumConnectionsAndFlows = 1;
+	m.NumConstantEfficiencyConverters = 0;
+	m.NumWasteSinks = 0;
+	m.Connections = conns;
+	m.ConstLoads = nullptr;
+	m.ScheduledLoads = schLoads;
+	m.ConstEffConvs = nullptr;
+	m.ConstSources = sources;
+	m.Flows = flows;
+	auto results = Simulate(m, print);
+	// assert((results.size() == 1 && "output must have a size of 1"));
+	// assert((results[0].Time == 0.0 && "time must equal 0.0"));
+	// assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
+	// assert((results[0].Flows[0].Requested == 8 && "requested must equal 8"));
+	// assert((results[0].Flows[0].Actual == 8 && "actual value must equal 8"));
+	// assert((results[0].Flows[0].Available == 48 && "available must equal 48"));
+	// assert((results[0].Flows[1].Requested == 2 && "requested must equal 2"));
+	// assert((results[0].Flows[1].Actual == 2 && "actual value must equal 2"));
+	// assert((results[0].Flows[1].Available == 50 && "available must equal 50"));
+	// assert((results[0].Flows[2].Requested == 10 && "requested must equal 10"));
+	// assert((results[0].Flows[2].Actual == 10 && "actual value must equal 10"));
+	// assert((results[0].Flows[2].Available == 50 && "available must equal 50"));
+	// assert((results[0].Flows[3].Requested == 20 && "requested must equal 20"));
+	// assert((results[0].Flows[3].Actual == 20 && "actual value must equal 20"));
+	// assert((results[0].Flows[3].Available == 100 && "available must equal 100"));
+	std::cout << "[Example  4] :: PASSED" << std::endl;
 }
 
 int
 main(int argc, char** argv) {
-	
-	ExampleOne(false);
-	ExampleTwo(false);
-	ExampleThree(false);
-	ExampleThreeA(false);
+	Example1(false);
+	Example2(false);
+	Example3(false);
+	Example3A(false);
+	Example4(true);
 	return EXIT_SUCCESS;
 }

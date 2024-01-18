@@ -1,0 +1,1 @@
+add_executable(erin_next erin_next.cpp)

@@ -38,6 +38,7 @@ endif()
 # Add subdirectories
 add_subdirectory(vendor)
 add_subdirectory(src)
+add_subdirectory(apps)
 
 if (${CMAKE_PROJECT_NAME}_TESTING)
   add_subdirectory(test)

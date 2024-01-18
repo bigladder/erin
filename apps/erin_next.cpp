@@ -6,9 +6,11 @@
 #include <string>
 #include <cassert>
 #include <stdexcept>
+#include <vector>
 
 // FlowSummary
 struct FlowSummary {
+	double Time;
 	uint32_t Inflow;
 	uint32_t Outflow;
 	uint32_t Wasteflow;
@@ -26,6 +28,13 @@ enum class ComponentType
 // ConstantLoad
 struct ConstantLoad {
 	uint32_t Load;
+};
+
+// ScheduleBasedLoad
+struct ScheduleBasedLoad {
+	size_t NumEntries;
+	double* Times;
+	uint32_t* Loads;
 };
 
 // ConstantSource
@@ -58,6 +67,11 @@ struct Flow {
 	uint32_t Actual;
 };
 
+struct TimeAndFlows {
+	double Time;
+	std::vector<Flow> Flows;
+};
+
 // Model
 struct Model {
 	size_t NumConstSources;
@@ -82,13 +96,13 @@ static void RunActiveConnections(Model& m);
 static void FinalizeFlows(Model& m);
 static std::string ToString(ComponentType ct);
 static void PrintFlows(Model& m, double t);
-static FlowSummary SummarizeFlows(Model& m);
+static FlowSummary SummarizeFlows(Model& m, double t);
 static void PrintFlowSummary(FlowSummary s);
-static void Simulate(Model& m);
-static void ExampleOne(void);
-static void ExampleTwo(void);
-static void ExampleThree(void);
-static void ExampleThreeA(void);
+static std::vector<TimeAndFlows> Simulate(Model& m, bool print);
+static void ExampleOne(bool doPrint);
+static void ExampleTwo(bool doPrint);
+static void ExampleThree(bool doPrint);
+static void ExampleThreeA(bool doPrint);
 
 // IMPLEMENTATION
 static size_t
@@ -311,7 +325,7 @@ PrintFlows(Model& m, double t) {
 }
 
 static FlowSummary
-SummarizeFlows(Model& m) {
+SummarizeFlows(Model& m, double t) {
 	FlowSummary summary = {};
 	for (size_t flowIdx = 0; flowIdx < m.NumConnectionsAndFlows; ++flowIdx) {
 		switch (m.Connections[flowIdx].From) {
@@ -332,6 +346,7 @@ SummarizeFlows(Model& m) {
 		} break;
 		}
 	}
+	summary.Time = t;
 	return summary;
 }
 
@@ -339,7 +354,7 @@ static void
 PrintFlowSummary(FlowSummary s) {
 	uint32_t sum = s.Inflow - (s.Outflow + s.Wasteflow);
 	double eff = 100.0 * ((double)s.Outflow) / ((double)s.Inflow);
-	std::cout << "Flow Summary:" << std::endl;
+	std::cout << "Flow Summary @ " << s.Time << ":" << std::endl;
 	std::cout << "- Inflow   : " << s.Inflow << std::endl;
 	std::cout << "- Outflow  : " << s.Outflow << std::endl;
 	std::cout << "- Wasteflow: " << s.Wasteflow << std::endl;
@@ -348,21 +363,40 @@ PrintFlowSummary(FlowSummary s) {
 	std::cout << "  Eff      : " << eff << "%" << std::endl;
 }
 
-static void
-Simulate(Model& model) {
+static std::vector<Flow>
+CopyFlows(Flow* flows, size_t numFlows) {
+	std::vector<Flow> newFlows = {};
+	newFlows.reserve(numFlows);
+	for (int i = 0; i < numFlows; ++i) {
+		Flow f(flows[i]);
+		newFlows.push_back(f);
+	}
+	return newFlows;
+}
+
+static std::vector<TimeAndFlows>
+Simulate(Model& model, bool print=true) {
 	double t = 0.0;
+	std::vector<TimeAndFlows> timeAndFlows = {};
 	ActivateConnectionsForConstantLoads(model);
 	ActivateConnectionsForConstantSources(model);
 	while (CountActiveConnections(model) > 0) {
 		RunActiveConnections(model);
 	}
 	FinalizeFlows(model);
-	PrintFlows(model, t);
-	PrintFlowSummary(SummarizeFlows(model));
+	if (print) {
+		PrintFlows(model, t);
+		PrintFlowSummary(SummarizeFlows(model, t));
+	}
+	timeAndFlows.push_back({ t, CopyFlows(model.Flows, model.NumConnectionsAndFlows) });
+	return timeAndFlows;
 }
 
 static void
-ExampleOne() {
+ExampleOne(bool print) {
+	if (print) {
+		std::cout << "Example 1:" << std::endl;
+	}
 	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 } };
 	Connection conns[] = {
@@ -378,11 +412,21 @@ ExampleOne() {
 	m.ConstLoads = loads;
 	m.ConstSources = sources;
 	m.Flows = flows;
-	Simulate(m);
+	auto results = Simulate(m, print);
+	assert((results.size() == 1 && "output must have a size of 1"));
+	assert((results[0].Time == 0.0 && "time must equal 0.0"));
+	assert((results[0].Flows.size() == 1 && "size of flows must equal 1"));
+	assert((results[0].Flows[0].Actual == 10 && "actual value must equal 10"));
+	assert((results[0].Flows[0].Available == 100 && "available must equal 100"));
+	assert((results[0].Flows[0].Requested == 10 && "requested must equal 10"));
+	std::cout << "[ExampleOne] :: PASSED" << std::endl;
 }
 
 static void
-ExampleTwo() {
+ExampleTwo(bool print) {
+	if (print) {
+		std::cout << "Example 2:" << std::endl;
+	}
 	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
@@ -403,11 +447,27 @@ ExampleTwo() {
 	m.ConstEffConvs = convs;
 	m.ConstSources = sources;
 	m.Flows = flows;
-	Simulate(m);
+	auto results = Simulate(m, print);
+	assert((results.size() == 1 && "output must have a size of 1"));
+	assert((results[0].Time == 0.0 && "time must equal 0.0"));
+	assert((results[0].Flows.size() == 3 && "size of flows must equal 3"));
+	assert((results[0].Flows[0].Requested == 20 && "requested must equal 20"));
+	assert((results[0].Flows[0].Actual == 20 && "actual value must equal 20"));
+	assert((results[0].Flows[0].Available == 100 && "available must equal 100"));
+	assert((results[0].Flows[1].Requested == 10 && "requested must equal 10"));
+	assert((results[0].Flows[1].Actual == 10 && "actual value must equal 10"));
+	assert((results[0].Flows[1].Available == 50 && "available must equal 50"));
+	assert((results[0].Flows[2].Requested == 10 && "requested must equal 10"));
+	assert((results[0].Flows[2].Actual == 10 && "actual value must equal 10"));
+	assert((results[0].Flows[2].Available == 50 && "available must equal 50"));
+	std::cout << "[ExampleTwo] :: PASSED" << std::endl;
 }
 
 static void
-ExampleThree() {
+ExampleThree(bool print) {
+	if (print) {
+		std::cout << "Example 3:" << std::endl;
+	}
 	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 }, { 2 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
@@ -429,11 +489,30 @@ ExampleThree() {
 	m.ConstEffConvs = convs;
 	m.ConstSources = sources;
 	m.Flows = flows;
-	Simulate(m);
+	auto results = Simulate(m, print);
+	assert((results.size() == 1 && "output must have a size of 1"));
+	assert((results[0].Time == 0.0 && "time must equal 0.0"));
+	assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
+	assert((results[0].Flows[0].Requested == 20 && "requested must equal 20"));
+	assert((results[0].Flows[0].Actual == 20 && "actual value must equal 20"));
+	assert((results[0].Flows[0].Available == 100 && "available must equal 100"));
+	assert((results[0].Flows[1].Requested == 10 && "requested must equal 10"));
+	assert((results[0].Flows[1].Actual == 10 && "actual value must equal 10"));
+	assert((results[0].Flows[1].Available == 50 && "available must equal 50"));
+	assert((results[0].Flows[2].Requested == 2 && "requested must equal 2"));
+	assert((results[0].Flows[2].Actual == 2 && "actual value must equal 2"));
+	assert((results[0].Flows[2].Available == 50 && "available must equal 50"));
+	assert((results[0].Flows[3].Requested == 8 && "requested must equal 8"));
+	assert((results[0].Flows[3].Actual == 8 && "actual value must equal 8"));
+	assert((results[0].Flows[3].Available == 48 && "available must equal 48"));
+	std::cout << "[ExampleThree] :: PASSED" << std::endl;
 }
 
 static void
-ExampleThreeA() {
+ExampleThreeA(bool print) {
+	if (print) {
+		std::cout << "Example 3A:" << std::endl;
+	}
 	ConstantSource sources[] = { { 100 } };
 	ConstantLoad loads[] = { { 10 }, { 2 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
@@ -455,18 +534,31 @@ ExampleThreeA() {
 	m.ConstEffConvs = convs;
 	m.ConstSources = sources;
 	m.Flows = flows;
-	Simulate(m);
+	auto results = Simulate(m, print);
+	assert((results.size() == 1 && "output must have a size of 1"));
+	assert((results[0].Time == 0.0 && "time must equal 0.0"));
+	assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
+	assert((results[0].Flows[0].Requested == 8 && "requested must equal 8"));
+	assert((results[0].Flows[0].Actual == 8 && "actual value must equal 8"));
+	assert((results[0].Flows[0].Available == 48 && "available must equal 48"));
+	assert((results[0].Flows[1].Requested == 2 && "requested must equal 2"));
+	assert((results[0].Flows[1].Actual == 2 && "actual value must equal 2"));
+	assert((results[0].Flows[1].Available == 50 && "available must equal 50"));
+	assert((results[0].Flows[2].Requested == 10 && "requested must equal 10"));
+	assert((results[0].Flows[2].Actual == 10 && "actual value must equal 10"));
+	assert((results[0].Flows[2].Available == 50 && "available must equal 50"));
+	assert((results[0].Flows[3].Requested == 20 && "requested must equal 20"));
+	assert((results[0].Flows[3].Actual == 20 && "actual value must equal 20"));
+	assert((results[0].Flows[3].Available == 100 && "available must equal 100"));
+	std::cout << "[ExampleThreeA] :: PASSED" << std::endl;
 }
 
 int
 main(int argc, char** argv) {
-	std::cout << "Example 1:" << std::endl;
-	ExampleOne();
-	std::cout << "Example 2:" << std::endl;
-	ExampleTwo();
-	std::cout << "Example 3:" << std::endl;
-	ExampleThree();
-	std::cout << "Example 3A:" << std::endl;
-	ExampleThreeA();
+	
+	ExampleOne(false);
+	ExampleTwo(false);
+	ExampleThree(false);
+	ExampleThreeA(false);
 	return EXIT_SUCCESS;
 }

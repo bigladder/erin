@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string>
 #include <cassert>
+#include <stdexcept>
 
 // ComponentType
 enum class ComponentType
@@ -10,6 +11,7 @@ enum class ComponentType
 	ConstantLoadType,
 	ConstantSourceType,
 	ConstantEfficiencyConverterType,
+	WasteSinkType,
 };
 
 // ConstantLoad
@@ -53,6 +55,7 @@ struct Model {
 	size_t NumConstLoads;
 	size_t NumConnectionsAndFlows;
 	size_t NumConstantEfficiencyConverters;
+	size_t NumWasteSinks;
 	ConstantSource* ConstSources;
 	ConstantLoad* ConstLoads;
 	ConstantEfficiencyConverter* ConstEffConvs;
@@ -95,7 +98,7 @@ ActivateConnectionsForConstantLoads(Model& model) {
 				model.Connections[connIdx].To == ComponentType::ConstantLoadType
 				&& model.Connections[connIdx].ToIdx == loadIdx
 				&& model.Flows[connIdx].Requested != model.ConstLoads[loadIdx].Load
-			);
+				);
 			model.Flows[connIdx].Requested = model.ConstLoads[loadIdx].Load;
 		}
 	}
@@ -109,7 +112,7 @@ ActivateConnectionsForConstantSources(Model& model) {
 				model.Connections[connIdx].From == ComponentType::ConstantSourceType
 				&& model.Connections[connIdx].FromIdx == srcIdx
 				&& model.Flows[connIdx].Available != model.ConstSources[srcIdx].Available
-			);
+				);
 			model.Flows[connIdx].Available = model.ConstSources[srcIdx].Available;
 		}
 	}
@@ -140,32 +143,45 @@ RunActiveConnections(Model& model) {
 	for (size_t connIdx = 0; connIdx < model.NumConnectionsAndFlows; ++connIdx) {
 		if (model.Connections[connIdx].IsActiveBack) {
 			switch (model.Connections[connIdx].From) {
-				case (ComponentType::ConstantSourceType):
-				{
-					// nothing to update
-				} break;
-				case (ComponentType::ConstantEfficiencyConverterType):
+			case (ComponentType::ConstantSourceType):
+			{
+				// nothing to update
+			} break;
+			case (ComponentType::ConstantEfficiencyConverterType):
+			{
+				switch (model.Connections[connIdx].FromPort) {
+				case 0:
 				{
 					int inflowConn = FindInflowConnection(model, model.Connections[connIdx].From, model.Connections[connIdx].FromIdx, 0);
-					uint32_t outflowRequest = model.Flows[connIdx].Requested;
-					uint32_t inflowRequest = 0;
 					assert((inflowConn >= 0) && "should find an inflow connection; model is incorrectly connected");
-					inflowRequest =
+					uint32_t outflowRequest = model.Flows[connIdx].Requested;
+					uint32_t inflowRequest =
 						(model.ConstEffConvs[model.Connections[connIdx].FromIdx].EfficiencyDenominator * outflowRequest)
 						/ model.ConstEffConvs[model.Connections[connIdx].FromIdx].EfficiencyNumerator;
 					model.Connections[(size_t)inflowConn].IsActiveBack = inflowRequest != model.Flows[(size_t)inflowConn].Requested;
 					model.Flows[(size_t)inflowConn].Requested = inflowRequest;
-					// TODO: rethink wasteflow connection as we ALWAYS need some wasteflow to have energy balance
-					// int wasteFlowConn = FindOutflowConnection(model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 1);
-					// if (wasteFlowConn >= 0) {
-					// 	model.Flows[(size_t)wasteFlowConn].Available = inflowRequest - outflowRequest;
-					// }
+					// For now, let's explicity set wasteflow as if there is no lossflow
+					int wasteflowConn = FindOutflowConnection(model, model.Connections[connIdx].From, model.Connections[connIdx].FromIdx, 2);
+					assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
+					uint32_t wasteflowRequest = inflowRequest - outflowRequest;
+					model.Flows[(size_t)wasteflowConn].Requested = wasteflowRequest;
+				} break;
+				case 1: // lossflow
+				case 2: // wasteflow
+				{
+					// ignore on backward-facing pass as these are forward-facing streams (i.e., flow direction)
 				} break;
 				default:
 				{
-					std::cout << "Unhandled component type on backward pass: "
-						<< ToString(model.Connections[connIdx].From) << std::endl;
+					throw std::runtime_error{ "Uhandled port number" };
 				}
+				}
+			} break;
+			default:
+			{
+				std::cout << "Unhandled component type on backward pass: "
+					<< ToString(model.Connections[connIdx].From) << std::endl;
+			}
 			}
 			model.Connections[connIdx].IsActiveBack = false;
 		}
@@ -173,27 +189,30 @@ RunActiveConnections(Model& model) {
 	for (size_t connIdx = 0; connIdx < model.NumConnectionsAndFlows; ++connIdx) {
 		if (model.Connections[connIdx].IsActiveForward) {
 			switch (model.Connections[connIdx].To) {
-				case (ComponentType::ConstantLoadType):
-				{
-					// Nothing to do
-				} break;
-				case (ComponentType::ConstantEfficiencyConverterType):
-				{
-					int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 0);
-					uint32_t inflowAvailable = model.Flows[connIdx].Available;
-					uint32_t outflowAvailable = 0;
-					assert((outflowConn >= 0) && "should find an outflow connection; model is incorrectly connected");
-					outflowAvailable =
-						(model.ConstEffConvs[model.Connections[connIdx].ToIdx].EfficiencyNumerator * inflowAvailable)
-						/ model.ConstEffConvs[model.Connections[connIdx].ToIdx].EfficiencyDenominator;
-					model.Connections[(size_t)outflowConn].IsActiveForward = outflowAvailable != model.Flows[(size_t)outflowConn].Available;
-					model.Flows[(size_t)outflowConn].Available = outflowAvailable;
-				} break;
-				default:
-				{
-					std::cout << "Unhandled component type on forward pass: "
-						<< ToString(model.Connections[connIdx].To) << std::endl;
-				}
+			case (ComponentType::ConstantLoadType):
+			case (ComponentType::WasteSinkType):
+			{
+				// Nothing to do
+			} break;
+			case (ComponentType::ConstantEfficiencyConverterType):
+			{
+				int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 0);
+				uint32_t inflowAvailable = model.Flows[connIdx].Available;
+				uint32_t outflowAvailable = 0;
+				assert((outflowConn >= 0) && "should find an outflow connection; model is incorrectly connected");
+				outflowAvailable =
+					(model.ConstEffConvs[model.Connections[connIdx].ToIdx].EfficiencyNumerator * inflowAvailable)
+					/ model.ConstEffConvs[model.Connections[connIdx].ToIdx].EfficiencyDenominator;
+				model.Connections[(size_t)outflowConn].IsActiveForward = outflowAvailable != model.Flows[(size_t)outflowConn].Available;
+				model.Flows[(size_t)outflowConn].Available = outflowAvailable;
+				int wasteflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 2);
+				assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
+				model.Flows[(size_t)wasteflowConn].Available = inflowAvailable - outflowAvailable;
+			} break;
+			default:
+			{
+				throw std::runtime_error{ "Unhandled component type on forward pass: " + ToString(model.Connections[connIdx].To) };
+			}
 			}
 			model.Connections[connIdx].IsActiveForward = false;
 		}
@@ -213,18 +232,26 @@ FinalizeFlows(Model& model) {
 static std::string
 ToString(ComponentType compType) {
 	switch (compType) {
-		case (ComponentType::ConstantLoadType):
-		{
-			return std::string{ "ConstantLoad" };
-		} break;
-		case (ComponentType::ConstantSourceType):
-		{
-			return std::string{ "ConstantSource" };
-		} break;
-		case (ComponentType::ConstantEfficiencyConverterType):
-		{
-			return std::string{ "ConstantEfficiencyConverter" };
-		} break;
+	case (ComponentType::ConstantLoadType):
+	{
+		return std::string{ "ConstantLoad" };
+	} break;
+	case (ComponentType::ConstantSourceType):
+	{
+		return std::string{ "ConstantSource" };
+	} break;
+	case (ComponentType::ConstantEfficiencyConverterType):
+	{
+		return std::string{ "ConstantEfficiencyConverter" };
+	} break;
+	case (ComponentType::WasteSinkType):
+	{
+		return std::string{ "WasteSink" };
+	} break;
+	default:
+	{
+		throw std::runtime_error{ "Unhandled component type" };
+	}
 	}
 	return std::string{ "?" };
 }
@@ -245,7 +272,7 @@ PrintFlows(Model& m, double t) {
 }
 
 static void
-Simulate(Model &model) {
+Simulate(Model& model) {
 	double t = 0.0;
 	ActivateConnectionsForConstantLoads(model);
 	ActivateConnectionsForConstantSources(model);
@@ -268,6 +295,7 @@ ExampleOne() {
 	m.NumConstSources = 1;
 	m.NumConstLoads = 1;
 	m.NumConnectionsAndFlows = 1;
+	m.NumWasteSinks = 0;
 	m.Connections = conns;
 	m.ConstLoads = loads;
 	m.ConstSources = sources;
@@ -283,13 +311,15 @@ ExampleTwo() {
 	Connection conns[] = {
 		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ConstantEfficiencyConverterType, 0, 0 },
 		{ ComponentType::ConstantEfficiencyConverterType, 0, 0, ComponentType::ConstantLoadType, 0, 0 },
+		{ ComponentType::ConstantEfficiencyConverterType, 0, 2, ComponentType::WasteSinkType, 0, 0 },
 	};
-	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 } };
+	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
 	m.NumConstSources = 1;
 	m.NumConstLoads = 1;
-	m.NumConnectionsAndFlows = 2;
+	m.NumConnectionsAndFlows = 3;
 	m.NumConstantEfficiencyConverters = 1;
+	m.NumWasteSinks = 1;
 	m.Connections = conns;
 	m.ConstLoads = loads;
 	m.ConstEffConvs = convs;

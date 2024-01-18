@@ -5,6 +5,13 @@
 #include <cassert>
 #include <stdexcept>
 
+// FlowSummary
+struct FlowSummary {
+	uint32_t Inflow;
+	uint32_t Outflow;
+	uint32_t Wasteflow;
+};
+
 // ComponentType
 enum class ComponentType
 {
@@ -73,6 +80,8 @@ static void RunActiveConnections(Model& m);
 static void FinalizeFlows(Model& m);
 static std::string ToString(ComponentType ct);
 static void PrintFlows(Model& m, double t);
+static FlowSummary SummarizeFlows(Model& m);
+static void PrintFlowSummary(FlowSummary s);
 static void Simulate(Model& m);
 static void ExampleOne(void);
 static void ExampleTwo(void);
@@ -271,6 +280,44 @@ PrintFlows(Model& m, double t) {
 	}
 }
 
+static FlowSummary
+SummarizeFlows(Model& m) {
+	FlowSummary summary = {};
+	for (size_t flowIdx = 0; flowIdx < m.NumConnectionsAndFlows; ++flowIdx) {
+		switch (m.Connections[flowIdx].From) {
+		case (ComponentType::ConstantSourceType):
+		{
+			summary.Inflow += m.Flows[flowIdx].Actual;
+		} break;
+		}
+
+		switch (m.Connections[flowIdx].To) {
+		case (ComponentType::ConstantLoadType):
+		{
+			summary.Outflow += m.Flows[flowIdx].Actual;
+		} break;
+		case (ComponentType::WasteSinkType):
+		{
+			summary.Wasteflow += m.Flows[flowIdx].Actual;
+		} break;
+		}
+	}
+	return summary;
+}
+
+static void
+PrintFlowSummary(FlowSummary s) {
+	uint32_t sum = s.Inflow - (s.Outflow + s.Wasteflow);
+	double eff = 100.0 * ((double)s.Outflow) / ((double)s.Inflow);
+	std::cout << "Flow Summary:" << std::endl;
+	std::cout << "- Inflow   : " << s.Inflow << std::endl;
+	std::cout << "- Outflow  : " << s.Outflow << std::endl;
+	std::cout << "- Wasteflow: " << s.Wasteflow << std::endl;
+	std::cout << "------------------------" << std::endl;
+	std::cout << "  Sum      : " << sum << std::endl;
+	std::cout << "  Eff      : " << eff << "%" << std::endl;
+}
+
 static void
 Simulate(Model& model) {
 	double t = 0.0;
@@ -281,6 +328,7 @@ Simulate(Model& model) {
 	}
 	FinalizeFlows(model);
 	PrintFlows(model, t);
+	PrintFlowSummary(SummarizeFlows(model));
 }
 
 static void

@@ -234,9 +234,9 @@ PrintFlows(Model& m, double t) {
 	std::cout << "time: " << t << std::endl;
 	for (size_t flowIdx = 0; flowIdx < m.NumConnectionsAndFlows; ++flowIdx) {
 		std::cout << ToString(m.Connections[flowIdx].From)
-			<< "[" << m.Connections[flowIdx].FromIdx << "] => "
+			<< "[" << m.Connections[flowIdx].FromIdx << ":" << m.Connections[flowIdx].FromPort << "] => "
 			<< ToString(m.Connections[flowIdx].To)
-			<< "[" << m.Connections[flowIdx].ToIdx << "]: "
+			<< "[" << m.Connections[flowIdx].ToIdx << ":" << m.Connections[flowIdx].ToPort << "]: "
 			<< m.Flows[flowIdx].Actual
 			<< " (R: " << m.Flows[flowIdx].Requested
 			<< "; A: " << m.Flows[flowIdx].Available << ")"

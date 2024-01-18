@@ -88,6 +88,7 @@ static void Simulate(Model& m);
 static void ExampleOne(void);
 static void ExampleTwo(void);
 static void ExampleThree(void);
+static void ExampleThreeA(void);
 
 // IMPLEMENTATION
 static size_t
@@ -431,6 +432,32 @@ ExampleThree() {
 	Simulate(m);
 }
 
+static void
+ExampleThreeA() {
+	ConstantSource sources[] = { { 100 } };
+	ConstantLoad loads[] = { { 10 }, { 2 } };
+	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
+	Connection conns[] = {
+		{ ComponentType::ConstantEfficiencyConverterType, 0, 2, ComponentType::WasteSinkType, 0, 0 },
+		{ ComponentType::ConstantEfficiencyConverterType, 0, 1, ComponentType::ConstantLoadType, 1, 0 },
+		{ ComponentType::ConstantEfficiencyConverterType, 0, 0, ComponentType::ConstantLoadType, 0, 0 },
+		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ConstantEfficiencyConverterType, 0, 0 },
+	};
+	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
+	Model m = {};
+	m.NumConstSources = 1;
+	m.NumConstLoads = 2;
+	m.NumConnectionsAndFlows = 4;
+	m.NumConstantEfficiencyConverters = 1;
+	m.NumWasteSinks = 1;
+	m.Connections = conns;
+	m.ConstLoads = loads;
+	m.ConstEffConvs = convs;
+	m.ConstSources = sources;
+	m.Flows = flows;
+	Simulate(m);
+}
+
 int
 main(int argc, char** argv) {
 	std::cout << "Example 1:" << std::endl;
@@ -439,5 +466,7 @@ main(int argc, char** argv) {
 	ExampleTwo();
 	std::cout << "Example 3:" << std::endl;
 	ExampleThree();
+	std::cout << "Example 3A:" << std::endl;
+	ExampleThreeA();
 	return EXIT_SUCCESS;
 }

@@ -649,21 +649,17 @@ Example4(bool print) {
 	m.ConstSources = sources;
 	m.Flows = flows;
 	auto results = Simulate(m, print);
-	// assert((results.size() == 1 && "output must have a size of 1"));
-	// assert((results[0].Time == 0.0 && "time must equal 0.0"));
-	// assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
-	// assert((results[0].Flows[0].Requested == 8 && "requested must equal 8"));
-	// assert((results[0].Flows[0].Actual == 8 && "actual value must equal 8"));
-	// assert((results[0].Flows[0].Available == 48 && "available must equal 48"));
-	// assert((results[0].Flows[1].Requested == 2 && "requested must equal 2"));
-	// assert((results[0].Flows[1].Actual == 2 && "actual value must equal 2"));
-	// assert((results[0].Flows[1].Available == 50 && "available must equal 50"));
-	// assert((results[0].Flows[2].Requested == 10 && "requested must equal 10"));
-	// assert((results[0].Flows[2].Actual == 10 && "actual value must equal 10"));
-	// assert((results[0].Flows[2].Available == 50 && "available must equal 50"));
-	// assert((results[0].Flows[3].Requested == 20 && "requested must equal 20"));
-	// assert((results[0].Flows[3].Actual == 20 && "actual value must equal 20"));
-	// assert((results[0].Flows[3].Available == 100 && "available must equal 100"));
+	assert((results.size() == 2 && "output must have a size of 2"));
+	assert((results[0].Time == 0.0 && "time must equal 0.0"));
+	assert((results[0].Flows.size() == 1 && "size of flows[0] must equal 1"));
+	assert((results[0].Flows[0].Requested == 10 && "requested must equal 10"));
+	assert((results[0].Flows[0].Actual == 10 && "actual value must equal 10"));
+	assert((results[0].Flows[0].Available == 100 && "available must equal 100"));
+	assert((results[1].Time == 3600.0 && "time must equal 3600.0"));
+	assert((results[1].Flows.size() == 1 && "size of flows[1] must equal 1"));
+	assert((results[1].Flows[0].Requested == 200 && "requested must equal 200"));
+	assert((results[1].Flows[0].Actual == 100 && "actual value must equal 100"));
+	assert((results[1].Flows[0].Available == 100 && "available must equal 100"));
 	std::cout << "[Example  4] :: PASSED" << std::endl;
 }
 

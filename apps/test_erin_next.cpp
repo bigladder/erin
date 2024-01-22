@@ -1,6 +1,6 @@
 #include "erin_next/erin_next.h"
 
-static size_t
+size_t
 CountActiveConnections(Model& m) {
 	size_t count = 0;
 	for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
@@ -12,7 +12,7 @@ CountActiveConnections(Model& m) {
 	return count;
 }
 
-static void
+void
 ActivateConnectionsForConstantLoads(Model& model) {
 	for (size_t loadIdx = 0; loadIdx < model.ConstLoads.size(); ++loadIdx) {
 		for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
@@ -27,7 +27,7 @@ ActivateConnectionsForConstantLoads(Model& model) {
 	}
 }
 
-static void
+void
 ActivateConnectionsForConstantSources(Model& model) {
 	for (size_t srcIdx = 0; srcIdx < model.ConstSources.size(); ++srcIdx) {
 		for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
@@ -41,7 +41,7 @@ ActivateConnectionsForConstantSources(Model& model) {
 	}
 }
 
-static void
+void
 ActivateConnectionsForScheduleBasedLoads(Model& m, double t) {
 	for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx) {
 		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
@@ -59,7 +59,7 @@ ActivateConnectionsForScheduleBasedLoads(Model& m, double t) {
 	}
 }
 
-static double
+double
 EarliestNextEvent(Model& m, double t) {
 	double nextTime = -1.0;
 	bool nextTimeFound = false;
@@ -74,7 +74,7 @@ EarliestNextEvent(Model& m, double t) {
 	return nextTime;
 }
 
-static int
+int
 FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort) {
 	for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
 		if (m.Connections[connIdx].To == ct && m.Connections[connIdx].ToIdx == compId && m.Connections[connIdx].ToPort == inflowPort) {
@@ -84,7 +84,7 @@ FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPor
 	return -1;
 }
 
-static int
+int
 FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort) {
 	for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
 		if (m.Connections[connIdx].From == ct && m.Connections[connIdx].FromIdx == compId && m.Connections[connIdx].FromPort == outflowPort) {
@@ -94,7 +94,7 @@ FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowP
 	return -1;
 }
 
-static void
+void
 RunActiveConnections(Model& model) {
 	for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
 		if (model.Connections[connIdx].IsActiveBack) {
@@ -195,18 +195,18 @@ RunActiveConnections(Model& model) {
 	}
 }
 
-static uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available) {
+uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available) {
 	return available >= requested ? requested : available;
 }
 
-static void
+void
 FinalizeFlows(Model& model) {
 	for (size_t flowIdx = 0; flowIdx < model.Flows.size(); ++flowIdx) {
 		model.Flows[flowIdx].Actual = FinalizeFlowValue(model.Flows[flowIdx].Requested, model.Flows[flowIdx].Available);
 	}
 }
 
-static double
+double
 NextEvent(ScheduleBasedLoad sb, double t) {
 	for (size_t i = 0; i < sb.TimesAndLoads.size(); ++i) {
 		if (sb.TimesAndLoads[i].Time > t)
@@ -217,7 +217,7 @@ NextEvent(ScheduleBasedLoad sb, double t) {
 	return -1.0;
 }
 
-static std::string
+std::string
 ToString(ComponentType compType) {
 	switch (compType) {
 	case (ComponentType::ConstantLoadType):
@@ -248,7 +248,7 @@ ToString(ComponentType compType) {
 	return std::string{ "?" };
 }
 
-static void
+void
 PrintFlows(Model& m, double t) {
 	std::cout << "time: " << t << std::endl;
 	for (size_t flowIdx = 0; flowIdx < m.Flows.size(); ++flowIdx) {
@@ -263,7 +263,7 @@ PrintFlows(Model& m, double t) {
 	}
 }
 
-static FlowSummary
+FlowSummary
 SummarizeFlows(Model& m, double t) {
 	FlowSummary summary = {};
 	for (size_t flowIdx = 0; flowIdx < m.Flows.size(); ++flowIdx) {
@@ -291,7 +291,7 @@ SummarizeFlows(Model& m, double t) {
 	return summary;
 }
 
-static void
+void
 PrintFlowSummary(FlowSummary s) {
 	uint32_t sum = s.Inflow - (s.OutflowRequest + s.Wasteflow);
 	double eff = 100.0 * ((double)s.OutflowRequest) / ((double)s.Inflow);
@@ -307,7 +307,7 @@ PrintFlowSummary(FlowSummary s) {
 	std::cout << "  Delivery Effectiveness : " << effectiveness << "%" << std::endl;
 }
 
-static std::vector<Flow>
+std::vector<Flow>
 CopyFlows(std::vector<Flow> flows) {
 	std::vector<Flow> newFlows = {};
 	newFlows.reserve(flows.size());
@@ -318,7 +318,7 @@ CopyFlows(std::vector<Flow> flows) {
 	return newFlows;
 }
 
-static std::vector<TimeAndFlows>
+std::vector<TimeAndFlows>
 Simulate(Model& model, bool print=true) {
 	double t = 0.0;
 	std::vector<TimeAndFlows> timeAndFlows = {};
@@ -347,14 +347,14 @@ Simulate(Model& model, bool print=true) {
 	return timeAndFlows;
 }
 
-static ComponentId
+ComponentId
 Model_AddConstantLoad(Model& m, uint32_t load) {
 	size_t id = m.ConstLoads.size();
 	m.ConstLoads.push_back({ load });
 	return { id, ComponentType::ConstantLoadType };
 }
 
-static ComponentId
+ComponentId
 Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems) {
 	size_t id = m.ScheduledLoads.size();
 	std::vector<TimeAndLoad> timesAndLoads = {};
@@ -366,21 +366,21 @@ Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numI
 	return { id, ComponentType::ScheduleBasedLoadType };
 }
 
-static ComponentId
+ComponentId
 Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads) {
 	size_t id = m.ScheduledLoads.size();
 	m.ScheduledLoads.push_back({ std::vector<TimeAndLoad>(timesAndLoads) });
 	return { id, ComponentType::ScheduleBasedLoadType };
 }
 
-static ComponentId
+ComponentId
 Model_AddConstantSource(Model& m, uint32_t available) {
 	size_t id = m.ConstSources.size();
 	m.ConstSources.push_back({ available });
 	return { id, ComponentType::ConstantSourceType };
 }
 
-static ComponentIdAndWasteConnection
+ComponentIdAndWasteConnection
 Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator) {
 	size_t id = m.ConstEffConvs.size();
 	m.ConstEffConvs.push_back({ eff_numerator, eff_denominator });
@@ -390,7 +390,7 @@ Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t 
 	return { thisId, wasteConn };
 }
 
-static Connection
+Connection
 Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
 	Connection c = { from.Type, from.Id, fromPort, to.Type, to.Id, toPort };
 	m.Connections.push_back(c);
@@ -398,13 +398,13 @@ Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& t
 	return c;
 }
 
-static bool
+bool
 SameConnection(Connection a, Connection b) {
 	return a.From == b.From && a.FromIdx == b.FromIdx && a.FromPort == b.FromPort
 		&& a.To == b.To && a.ToIdx == b.ToIdx && a.ToPort == b.ToPort;
 }
 
-static std::optional<Flow>
+std::optional<Flow>
 ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows) {
 	for (size_t connId = 0; connId < m.Connections.size(); ++connId) {
 		if (SameConnection(m.Connections[connId], conn)) {
@@ -423,7 +423,7 @@ ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::v
 	return {};
 }
 
-static void
+void
 Example1(bool print) {
 	if (print) {
 		std::cout << "Example  1:" << std::endl;
@@ -444,7 +444,7 @@ Example1(bool print) {
 	std::cout << "[Example  1] :: PASSED" << std::endl;
 }
 
-static void
+void
 Example2(bool print) {
 	if (print) {
 		std::cout << "Example  2:" << std::endl;
@@ -477,7 +477,7 @@ Example2(bool print) {
 	std::cout << "[Example  2] :: PASSED" << std::endl;
 }
 
-static void
+void
 Example3(bool print) {
 	if (print) {
 		std::cout << "Example  3:" << std::endl;
@@ -517,7 +517,7 @@ Example3(bool print) {
 	std::cout << "[Example  3] :: PASSED" << std::endl;
 }
 
-static void
+void
 Example3A(bool print) {
 	if (print) {
 		std::cout << "Example 3A:" << std::endl;
@@ -557,7 +557,7 @@ Example3A(bool print) {
 	std::cout << "[Example 3A] :: PASSED" << std::endl;
 }
 
-static void
+void
 Example4(bool print) {
 	if (print) {
 		std::cout << "Example  4:" << std::endl;
@@ -588,7 +588,7 @@ Example4(bool print) {
 	std::cout << "[Example  4] :: PASSED" << std::endl;
 }
 
-static void
+void
 Example5(bool print) {
 	if (print) {
 		std::cout << "Example  5:" << std::endl;

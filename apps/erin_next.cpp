@@ -746,7 +746,12 @@ Example5(bool print) {
 	auto conv2ToLoad2Results = ModelResults_GetFlowForConnection(m, conv2ToLoad2Conn, 0.0, results);
 	auto conv2ToConv3Results = ModelResults_GetFlowForConnection(m, conv2ToConv3Conn, 0.0, results);
 	auto conv3ToLoad3Results = ModelResults_GetFlowForConnection(m, conv3ToLoad3Conn, 0.0, results);
-	
+	assert((srcToConv1Results.value().Actual == 40 && "src to conv1 should flow 40"));
+	assert((conv1ToLoad1Results.value().Actual == 10 && "conv1 to load1 should flow 10"));
+	assert((conv1ToConv2Results.value().Actual == 28 && "conv1 to conv2 should flow 28"));
+	assert((conv2ToLoad2Results.value().Actual == 7 && "conv1 to conv2 should flow 7"));
+	assert((conv2ToConv3Results.value().Actual == 20 && "conv2 to conv3 should flow 21"));
+	assert((conv3ToLoad3Results.value().Actual == 5 && "conv3 to load3 should flow 5"));
 	std::cout << "[Example  5] :: PASSED" << std::endl;
 }
 
@@ -757,6 +762,6 @@ main(int argc, char** argv) {
 	Example3(false);
 	Example3A(false);
 	Example4(false);
-	Example5(true);
+	Example5(false);
 	return EXIT_SUCCESS;
 }

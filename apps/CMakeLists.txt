@@ -3,3 +3,4 @@ add_executable(test_erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h"
 )
 target_include_directories(test_erin_next PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(test_erin_next erin_next)

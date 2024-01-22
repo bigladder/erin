@@ -185,6 +185,8 @@ target_include_directories(str8760x5000
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(limits limits.cpp)
 
+add_library(erin_next erin_next.cpp ${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h)
+
 # Add Warnings
 if(MSVC)
   target_compile_options(erin_single PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
@@ -193,6 +195,7 @@ if(MSVC)
   target_compile_options(str8760 PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(str8760x5000 PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(limits PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
+  target_compile_options(erin_next PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
   target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
 else()
   target_compile_options(erin_single PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
@@ -201,5 +204,6 @@ else()
   target_compile_options(str8760 PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(str8760x5000 PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(limits PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
+  target_compile_options(erin_next PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
   target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
 endif()

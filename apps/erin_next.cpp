@@ -75,11 +75,9 @@ struct TimeAndFlows {
 
 // Model
 struct Model {
-	size_t NumScheduleLoads;
-	size_t NumWasteSinks;
 	std::vector<ConstantSource> ConstSources;
 	std::vector<ConstantLoad> ConstLoads;
-	ScheduleBasedLoad* ScheduledLoads;
+	std::vector<ScheduleBasedLoad> ScheduledLoads;
 	std::vector < ConstantEfficiencyConverter> ConstEffConvs;
 	std::vector<Connection> Connections;
 	std::vector<Flow> Flows;
@@ -108,7 +106,7 @@ static void PrintFlowSummary(FlowSummary s);
 static std::vector<Flow> CopyFlows(std::vector<Flow> flows);
 static std::vector<TimeAndFlows> Simulate(Model& m, bool print);
 static ComponentId Model_AddConstantLoad(Model& m, uint32_t load);
-// static ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
+static ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
 static ComponentId Model_AddConstantSource(Model& m, uint32_t available);
 static ComponentId Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator);
 static void Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort);
@@ -162,7 +160,7 @@ ActivateConnectionsForConstantSources(Model& model) {
 
 static void
 ActivateConnectionsForScheduleBasedLoads(Model& m, double t) {
-	for (size_t schIdx = 0; schIdx < m.NumScheduleLoads; ++schIdx) {
+	for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx) {
 		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
 			if (m.Connections[connIdx].To == ComponentType::ScheduleBasedLoadType
 				&& m.Connections[connIdx].ToIdx == schIdx) {
@@ -183,7 +181,7 @@ EarliestNextEvent(Model& m, double t) {
 	double nextTime = -1.0;
 	bool nextTimeFound = false;
 	// go through all the components that are potential event generators
-	for (size_t schIdx = 0; schIdx < m.NumScheduleLoads; ++schIdx) {
+	for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx) {
 		double nextTimeForComponent = NextEvent(m.ScheduledLoads[schIdx], t);
 		if (!nextTimeFound || (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime)) {
 			nextTime = nextTimeForComponent;
@@ -475,6 +473,13 @@ Model_AddConstantLoad(Model& m, uint32_t load) {
 }
 
 static ComponentId
+Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems) {
+	size_t id = m.ScheduledLoads.size();
+	m.ScheduledLoads.push_back({ numItems, times, loads });
+	return { id, ComponentType::ScheduleBasedLoadType };
+}
+
+static ComponentId
 Model_AddConstantSource(Model& m, uint32_t available) {
 	size_t id = m.ConstSources.size();
 	m.ConstSources.push_back({ available });
@@ -505,7 +510,6 @@ Example1(bool print) {
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	Model_AddConnection(m, srcId, 0, loadId, 0);
-	m.NumWasteSinks = 0;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -521,7 +525,6 @@ Example2(bool print) {
 	if (print) {
 		std::cout << "Example  2:" << std::endl;
 	}
-	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
@@ -530,7 +533,6 @@ Example2(bool print) {
 	Model_AddConnection(m, srcId, 0, convId, 0);
 	Model_AddConnection(m, convId, 0, loadId, 0);
 	Model_AddConnection(m, convId, 2, wasteId, 0);
-	m.NumWasteSinks = 1;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -564,7 +566,6 @@ Example3(bool print) {
 	Model_AddConnection(m, convId, 0, load1Id, 0);
 	Model_AddConnection(m, convId, 1, load2Id, 0);
 	Model_AddConnection(m, convId, 2, wasteId, 0);
-	m.NumWasteSinks = 1;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -599,7 +600,6 @@ Example3A(bool print) {
 	Model_AddConnection(m, convId, 1, load2Id, 0);
 	Model_AddConnection(m, convId, 0, load1Id, 0);
 	Model_AddConnection(m, srcId, 0, convId, 0);
-	m.NumWasteSinks = 1;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -626,19 +626,10 @@ Example4(bool print) {
 	}
 	double scheduleTimes[] = { 0.0, 3600.0 };
 	uint32_t scheduleLoads[] = { 10, 200 };
-	ScheduleBasedLoad schLoads[] = { { 2, scheduleTimes, scheduleLoads } };
-	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
-	Connection conns[] = {
-		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ScheduleBasedLoadType, 0, 0 },
-	};
-	Flow flows[] = { { 0, 0, 0 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
-	ComponentId loadId = { 0, ComponentType::ScheduleBasedLoadType };
+	auto loadId = Model_AddScheduleBasedLoad(m, scheduleTimes, scheduleLoads, (sizeof scheduleTimes) / (sizeof scheduleTimes[0]));
 	Model_AddConnection(m, srcId, 0, loadId, 0);
-	m.NumScheduleLoads = 1;
-	m.NumWasteSinks = 0;
-	m.ScheduledLoads = schLoads;
 	auto results = Simulate(m, print);
 	assert((results.size() == 2 && "output must have a size of 2"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));

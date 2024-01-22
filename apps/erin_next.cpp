@@ -76,12 +76,11 @@ struct TimeAndFlows {
 // Model
 struct Model {
 	size_t NumScheduleLoads;
-	size_t NumConstantEfficiencyConverters;
 	size_t NumWasteSinks;
 	std::vector<ConstantSource> ConstSources;
 	std::vector<ConstantLoad> ConstLoads;
 	ScheduleBasedLoad* ScheduledLoads;
-	ConstantEfficiencyConverter* ConstEffConvs;
+	std::vector < ConstantEfficiencyConverter> ConstEffConvs;
 	std::vector<Connection> Connections;
 	std::vector<Flow> Flows;
 };
@@ -108,10 +107,10 @@ static FlowSummary SummarizeFlows(Model& m, double t);
 static void PrintFlowSummary(FlowSummary s);
 static std::vector<Flow> CopyFlows(std::vector<Flow> flows);
 static std::vector<TimeAndFlows> Simulate(Model& m, bool print);
-// static ComponentId Model_AddConstantLoad(Model& m, uint32_t load);
+static ComponentId Model_AddConstantLoad(Model& m, uint32_t load);
 // static ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
 static ComponentId Model_AddConstantSource(Model& m, uint32_t available);
-// static ComponentId Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator);
+static ComponentId Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator);
 static void Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort);
 static void Example1(bool doPrint);
 static void Example2(bool doPrint);
@@ -482,6 +481,13 @@ Model_AddConstantSource(Model& m, uint32_t available) {
 	return { id, ComponentType::ConstantSourceType };
 }
 
+static ComponentId
+Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator) {
+	size_t id = m.ConstEffConvs.size();
+	m.ConstEffConvs.push_back({ eff_numerator, eff_denominator });
+	return { id, ComponentType::ConstantEfficiencyConverterType };
+}
+
 static void
 Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
 	m.Connections.push_back(
@@ -519,14 +525,12 @@ Example2(bool print) {
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
-	ComponentId convId = { 0, ComponentType::ConstantEfficiencyConverterType };
+	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
 	ComponentId wasteId = { 0, ComponentType::WasteSinkType };
 	Model_AddConnection(m, srcId, 0, convId, 0);
 	Model_AddConnection(m, convId, 0, loadId, 0);
 	Model_AddConnection(m, convId, 2, wasteId, 0);
-	m.NumConstantEfficiencyConverters = 1;
 	m.NumWasteSinks = 1;
-	m.ConstEffConvs = convs;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -550,26 +554,17 @@ Example3(bool print) {
 	}
 	ConstantLoad loads[] = { { 10 }, { 2 } };
 	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
-	Connection conns[] = {
-		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ConstantEfficiencyConverterType, 0, 0 },
-		{ ComponentType::ConstantEfficiencyConverterType, 0, 0, ComponentType::ConstantLoadType, 0, 0 },
-		{ ComponentType::ConstantEfficiencyConverterType, 0, 1, ComponentType::ConstantLoadType, 1, 0 },
-		{ ComponentType::ConstantEfficiencyConverterType, 0, 2, ComponentType::WasteSinkType, 0, 0 },
-	};
-	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
-	ComponentId convId = { 0, ComponentType::ConstantEfficiencyConverterType };
+	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
 	ComponentId wasteId = { 0, ComponentType::WasteSinkType };
 	Model_AddConnection(m, srcId, 0, convId, 0);
 	Model_AddConnection(m, convId, 0, load1Id, 0);
 	Model_AddConnection(m, convId, 1, load2Id, 0);
 	Model_AddConnection(m, convId, 2, wasteId, 0);
-	m.NumConstantEfficiencyConverters = 1;
 	m.NumWasteSinks = 1;
-	m.ConstEffConvs = convs;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -594,27 +589,17 @@ Example3A(bool print) {
 	if (print) {
 		std::cout << "Example 3A:" << std::endl;
 	}
-	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
-	Connection conns[] = {
-		{ ComponentType::ConstantEfficiencyConverterType, 0, 2, ComponentType::WasteSinkType, 0, 0 },
-		{ ComponentType::ConstantEfficiencyConverterType, 0, 1, ComponentType::ConstantLoadType, 1, 0 },
-		{ ComponentType::ConstantEfficiencyConverterType, 0, 0, ComponentType::ConstantLoadType, 0, 0 },
-		{ ComponentType::ConstantSourceType, 0, 0, ComponentType::ConstantEfficiencyConverterType, 0, 0 },
-	};
-	Flow flows[] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
-	ComponentId convId = { 0, ComponentType::ConstantEfficiencyConverterType };
+	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
 	ComponentId wasteId = { 0, ComponentType::WasteSinkType };
 	Model_AddConnection(m, convId, 2, wasteId, 0);
 	Model_AddConnection(m, convId, 1, load2Id, 0);
 	Model_AddConnection(m, convId, 0, load1Id, 0);
 	Model_AddConnection(m, srcId, 0, convId, 0);
-	m.NumConstantEfficiencyConverters = 1;
 	m.NumWasteSinks = 1;
-	m.ConstEffConvs = convs;
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -652,10 +637,8 @@ Example4(bool print) {
 	ComponentId loadId = { 0, ComponentType::ScheduleBasedLoadType };
 	Model_AddConnection(m, srcId, 0, loadId, 0);
 	m.NumScheduleLoads = 1;
-	m.NumConstantEfficiencyConverters = 0;
 	m.NumWasteSinks = 0;
 	m.ScheduledLoads = schLoads;
-	m.ConstEffConvs = nullptr;
 	auto results = Simulate(m, print);
 	assert((results.size() == 2 && "output must have a size of 2"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));

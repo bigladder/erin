@@ -93,7 +93,7 @@ struct ComponentId {
 
 struct ComponentIdAndWasteConnection {
 	ComponentId Id;
-	Connection Conn;
+	Connection WasteConnection;
 };
 
 // HEADER
@@ -105,6 +105,7 @@ static double EarliestNextEvent(Model& m, double t);
 static int FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort);
 static int FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort);
 static void RunActiveConnections(Model& m);
+static uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available);
 static void FinalizeFlows(Model& m);
 static double NextEvent(ScheduleBasedLoad sb, double t);
 static std::string ToString(ComponentType ct);
@@ -245,18 +246,14 @@ RunActiveConnections(Model& model) {
 					assert((inflowRequest >= outflowRequest) && "inflow must be >= outflow in converter");
 					model.Connections[(size_t)inflowConn].IsActiveBack = inflowRequest != model.Flows[(size_t)inflowConn].Requested;
 					model.Flows[(size_t)inflowConn].Requested = inflowRequest;
-					uint32_t lossflowRequest = 0;
+					uint32_t attenuatedLossflowRequest = 0;
 					int lossflowConn = FindOutflowConnection(model, model.Connections[connIdx].From, model.Connections[connIdx].FromIdx, 1);
 					if (lossflowConn >= 0) {
-						lossflowRequest = (inflowRequest - outflowRequest) >= model.Flows[(size_t)lossflowConn].Requested
-							? model.Flows[(size_t)lossflowConn].Requested
-							: (inflowRequest - outflowRequest);
+						attenuatedLossflowRequest = FinalizeFlowValue(inflowRequest - outflowRequest, model.Flows[(size_t)lossflowConn].Requested);
 					}
 					int wasteflowConn = FindOutflowConnection(model, model.Connections[connIdx].From, model.Connections[connIdx].FromIdx, 2);
 					assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
-					uint32_t wasteflowRequest = inflowRequest >= (outflowRequest + lossflowRequest)
-						? inflowRequest - (outflowRequest + lossflowRequest)
-						: 0;
+					uint32_t wasteflowRequest = inflowRequest - outflowRequest - attenuatedLossflowRequest;
 					model.Flows[(size_t)wasteflowConn].Requested = wasteflowRequest;
 				} break;
 				case 1: // lossflow
@@ -302,22 +299,20 @@ RunActiveConnections(Model& model) {
 				model.Connections[(size_t)outflowConn].IsActiveForward = outflowAvailable != model.Flows[(size_t)outflowConn].Available;
 				model.Flows[(size_t)outflowConn].Available = outflowAvailable;
 				int lossflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 1);
+				uint32_t nonOutflowAvailable = FinalizeFlowValue(inflowAvailable, inflowRequest) - FinalizeFlowValue(outflowAvailable, outflowRequest);
 				uint32_t lossflowAvailable = 0;
 				uint32_t lossflowRequest = 0;
 				if (lossflowConn >= 0) {
 					lossflowRequest = model.Flows[(size_t)lossflowConn].Requested;
-					lossflowAvailable = inflowAvailable - outflowAvailable;
+					lossflowAvailable = FinalizeFlowValue(nonOutflowAvailable, lossflowRequest);
+					nonOutflowAvailable -= lossflowAvailable;
 					model.Connections[(size_t)lossflowConn].IsActiveForward = lossflowAvailable != model.Flows[(size_t)lossflowConn].Available;
 					model.Flows[(size_t)lossflowConn].Available = lossflowAvailable;
 				}
 				int wasteflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 2);
 				assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
-				model.Flows[(size_t)wasteflowConn].Requested = inflowRequest >= (lossflowRequest + outflowRequest)
-					? inflowRequest - (lossflowRequest + outflowRequest)
-					: 0;
-				model.Flows[(size_t)wasteflowConn].Available = inflowAvailable >= (lossflowRequest + outflowAvailable)
-					? inflowAvailable - (lossflowRequest + outflowAvailable)
-					: 0;
+				model.Flows[(size_t)wasteflowConn].Requested = nonOutflowAvailable;
+				model.Flows[(size_t)wasteflowConn].Available = nonOutflowAvailable;
 			} break;
 			default:
 			{
@@ -329,13 +324,14 @@ RunActiveConnections(Model& model) {
 	}
 }
 
+static uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available) {
+	return available >= requested ? requested : available;
+}
+
 static void
 FinalizeFlows(Model& model) {
 	for (size_t flowIdx = 0; flowIdx < model.Flows.size(); ++flowIdx) {
-		model.Flows[flowIdx].Actual =
-			model.Flows[flowIdx].Available >= model.Flows[flowIdx].Requested
-			? model.Flows[flowIdx].Requested
-			: model.Flows[flowIdx].Available;
+		model.Flows[flowIdx].Actual = FinalizeFlowValue(model.Flows[flowIdx].Requested, model.Flows[flowIdx].Available);
 	}
 }
 
@@ -560,16 +556,16 @@ Example1(bool print) {
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
-	auto srcToLoad = Model_AddConnection(m, srcId, 0, loadId, 0);
+	auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 1 && "size of flows must equal 1"));
-	auto connResult = ModelResults_GetFlowForConnection(m, srcToLoad, 0.0, results);
-	assert((connResult.has_value() && "connection result should have a value"));
-	assert((connResult.value().Actual == 10 && "actual value must equal 10"));
-	assert((connResult.value().Available == 100 && "available must equal 100"));
-	assert((connResult.value().Requested == 10 && "requested must equal 10"));
+	auto srcToLoadResult = ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
+	assert((srcToLoadResult.has_value() && "connection result should have a value"));
+	assert((srcToLoadResult.value().Actual == 10 && "actual value must equal 10"));
+	assert((srcToLoadResult.value().Available == 100 && "available must equal 100"));
+	assert((srcToLoadResult.value().Requested == 10 && "requested must equal 10"));
 	std::cout << "[Example  1] :: PASSED" << std::endl;
 }
 
@@ -598,11 +594,11 @@ Example2(bool print) {
 	assert((convToLoadResults.value().Requested == 10 && "requested must equal 10"));
 	assert((convToLoadResults.value().Actual == 10 && "actual value must equal 10"));
 	assert((convToLoadResults.value().Available == 50 && "available must equal 50"));
-	auto convToWasteResults = ModelResults_GetFlowForConnection(m, convId.Conn, 0.0, results);
+	auto convToWasteResults = ModelResults_GetFlowForConnection(m, convId.WasteConnection, 0.0, results);
 	assert((convToWasteResults.has_value() && "converter to waste must have results"));
 	assert((convToWasteResults.value().Requested == 10 && "requested must equal 10"));
 	assert((convToWasteResults.value().Actual == 10 && "actual value must equal 10"));
-	assert((convToWasteResults.value().Available == 50 && "available must equal 50"));
+	assert((convToWasteResults.value().Available == 10 && "available must equal 10"));
 	std::cout << "[Example  2] :: PASSED" << std::endl;
 }
 
@@ -611,8 +607,6 @@ Example3(bool print) {
 	if (print) {
 		std::cout << "Example  3:" << std::endl;
 	}
-	ConstantLoad loads[] = { { 10 }, { 2 } };
-	ConstantEfficiencyConverter convs[] = { { 1, 2 } };
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
@@ -639,12 +633,12 @@ Example3(bool print) {
 	assert((convToLoad2Results.has_value() && "conv to load2 must have results"));
 	assert((convToLoad2Results.value().Requested == 2 && "requested must equal 2"));
 	assert((convToLoad2Results.value().Actual == 2 && "actual value must equal 2"));
-	assert((convToLoad2Results.value().Available == 50 && "available must equal 50"));
-	auto convToWasteResults = ModelResults_GetFlowForConnection(m, convId.Conn, 0.0, results);
+	assert((convToLoad2Results.value().Available == 2 && "available must equal 50"));
+	auto convToWasteResults = ModelResults_GetFlowForConnection(m, convId.WasteConnection, 0.0, results);
 	assert((convToWasteResults.has_value() && "conv to waste must have results"));
 	assert((convToWasteResults.value().Requested == 8 && "requested must equal 8"));
 	assert((convToWasteResults.value().Actual == 8 && "actual value must equal 8"));
-	assert((convToWasteResults.value().Available == 48 && "available must equal 48"));
+	assert((convToWasteResults.value().Available == 8 && "available must equal 48"));
 	std::cout << "[Example  3] :: PASSED" << std::endl;
 }
 
@@ -658,25 +652,33 @@ Example3A(bool print) {
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
 	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
-	Model_AddConnection(m, convId.Id, 1, load2Id, 0);
-	Model_AddConnection(m, convId.Id, 0, load1Id, 0);
-	Model_AddConnection(m, srcId, 0, convId.Id, 0);
+	auto convToLoad2Conn = Model_AddConnection(m, convId.Id, 1, load2Id, 0);
+	auto convToLoad1Conn = Model_AddConnection(m, convId.Id, 0, load1Id, 0);
+	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
 	auto results = Simulate(m, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
-	assert((results[0].Flows[0].Requested == 8 && "requested must equal 8"));
-	assert((results[0].Flows[0].Actual == 8 && "actual value must equal 8"));
-	assert((results[0].Flows[0].Available == 48 && "available must equal 48"));
-	assert((results[0].Flows[1].Requested == 2 && "requested must equal 2"));
-	assert((results[0].Flows[1].Actual == 2 && "actual value must equal 2"));
-	assert((results[0].Flows[1].Available == 50 && "available must equal 50"));
-	assert((results[0].Flows[2].Requested == 10 && "requested must equal 10"));
-	assert((results[0].Flows[2].Actual == 10 && "actual value must equal 10"));
-	assert((results[0].Flows[2].Available == 50 && "available must equal 50"));
-	assert((results[0].Flows[3].Requested == 20 && "requested must equal 20"));
-	assert((results[0].Flows[3].Actual == 20 && "actual value must equal 20"));
-	assert((results[0].Flows[3].Available == 100 && "available must equal 100"));
+	auto srcToConvResults = ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
+	assert((srcToConvResults.has_value() && "source to converter must have results"));
+	assert((srcToConvResults.value().Requested == 20 && "requested must equal 20"));
+	assert((srcToConvResults.value().Actual == 20 && "actual value must equal 20"));
+	assert((srcToConvResults.value().Available == 100 && "available must equal 100"));
+	auto convToLoad1Results = ModelResults_GetFlowForConnection(m, convToLoad1Conn, 0.0, results);
+	assert((convToLoad1Results.has_value() && "converter to load1 must have results"));
+	assert((convToLoad1Results.value().Requested == 10 && "requested must equal 10"));
+	assert((convToLoad1Results.value().Actual == 10 && "actual value must equal 10"));
+	assert((convToLoad1Results.value().Available == 50 && "available must equal 50"));
+	auto convToLoad2Results = ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
+	assert((convToLoad2Results.has_value() && "conv to load2 must have results"));
+	assert((convToLoad2Results.value().Requested == 2 && "requested must equal 2"));
+	assert((convToLoad2Results.value().Actual == 2 && "actual value must equal 2"));
+	assert((convToLoad2Results.value().Available == 2 && "available must equal 50"));
+	auto convToWasteResults = ModelResults_GetFlowForConnection(m, convId.WasteConnection, 0.0, results);
+	assert((convToWasteResults.has_value() && "conv to waste must have results"));
+	assert((convToWasteResults.value().Requested == 8 && "requested must equal 8"));
+	assert((convToWasteResults.value().Actual == 8 && "actual value must equal 8"));
+	assert((convToWasteResults.value().Available == 8 && "available must equal 48"));
 	std::cout << "[Example 3A] :: PASSED" << std::endl;
 }
 
@@ -691,19 +693,23 @@ Example4(bool print) {
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
-	Model_AddConnection(m, srcId, 0, loadId, 0);
+	auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
 	auto results = Simulate(m, print);
 	assert((results.size() == 2 && "output must have a size of 2"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 1 && "size of flows[0] must equal 1"));
-	assert((results[0].Flows[0].Requested == 10 && "requested must equal 10"));
-	assert((results[0].Flows[0].Actual == 10 && "actual value must equal 10"));
-	assert((results[0].Flows[0].Available == 100 && "available must equal 100"));
+	auto srcToLoadResults_0 = ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
+	assert((srcToLoadResults_0.has_value() && "source to load must have results at time=0.0"));
+	assert((srcToLoadResults_0.value().Requested == 10 && "requested must equal 10"));
+	assert((srcToLoadResults_0.value().Actual == 10 && "actual value must equal 10"));
+	assert((srcToLoadResults_0.value().Available == 100 && "available must equal 100"));
 	assert((results[1].Time == 3600.0 && "time must equal 3600.0"));
 	assert((results[1].Flows.size() == 1 && "size of flows[1] must equal 1"));
-	assert((results[1].Flows[0].Requested == 200 && "requested must equal 200"));
-	assert((results[1].Flows[0].Actual == 100 && "actual value must equal 100"));
-	assert((results[1].Flows[0].Available == 100 && "available must equal 100"));
+	auto srcToLoadResults_3600 = ModelResults_GetFlowForConnection(m, srcToLoadConn, 3600.0, results);
+	assert((srcToLoadResults_3600.has_value() && "source to load must have results at time=3600.0"));
+	assert((srcToLoadResults_3600.value().Requested == 200 && "requested must equal 200"));
+	assert((srcToLoadResults_3600.value().Actual == 100 && "actual value must equal 100"));
+	assert((srcToLoadResults_3600.value().Available == 100 && "available must equal 100"));
 	std::cout << "[Example  4] :: PASSED" << std::endl;
 }
 

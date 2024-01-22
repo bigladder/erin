@@ -117,11 +117,5 @@ ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m, uin
 Connection Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort);
 bool SameConnection(Connection a, Connection b);
 std::optional<Flow> ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows);
-void Example1(bool doPrint);
-void Example2(bool doPrint);
-void Example3(bool doPrint);
-void Example3A(bool doPrint);
-void Example4(bool doPrint);
-void Example5(bool doPrint);
 
 #endif // ERIN_NEXT_H

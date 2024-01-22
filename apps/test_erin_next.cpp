@@ -1,5 +1,7 @@
 #include "erin_next/erin_next.h"
 
+using namespace erin_next;
+
 static void
 Example1(bool print) {
 	if (print) {
@@ -201,6 +203,16 @@ Example5(bool print) {
 	std::cout << "[Example  5] :: PASSED" << std::endl;
 }
 
+static void
+Example6(bool doPrint) {
+	if (doPrint) {
+		std::cout << "[Example  6:" << std::endl;
+	}
+	// Example with a Mux
+	Model m = {};
+	std::cout << (doPrint ? "           ]" : "[ Example  6]") << " :: PASSED" << std::endl;
+}
+
 int
 main(int argc, char** argv) {
 	Example1(false);
@@ -209,5 +221,6 @@ main(int argc, char** argv) {
 	Example3A(false);
 	Example4(false);
 	Example5(false);
+	Example6(true);
 	return EXIT_SUCCESS;
 }

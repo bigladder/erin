@@ -13,7 +13,8 @@
 struct FlowSummary {
 	double Time;
 	uint32_t Inflow;
-	uint32_t Outflow;
+	uint32_t OutflowRequest;
+	uint32_t OutflowAchieved;
 	uint32_t Wasteflow;
 };
 
@@ -127,6 +128,7 @@ static void Example2(bool doPrint);
 static void Example3(bool doPrint);
 static void Example3A(bool doPrint);
 static void Example4(bool doPrint);
+static void Example5(bool doPrint);
 
 // IMPLEMENTATION
 static size_t
@@ -407,7 +409,8 @@ SummarizeFlows(Model& m, double t) {
 		case (ComponentType::ConstantLoadType):
 		case (ComponentType::ScheduleBasedLoadType):
 		{
-			summary.Outflow += m.Flows[flowIdx].Actual;
+			summary.OutflowRequest += m.Flows[flowIdx].Requested;
+			summary.OutflowAchieved += m.Flows[flowIdx].Actual;
 		} break;
 		case (ComponentType::WasteSinkType):
 		{
@@ -421,15 +424,18 @@ SummarizeFlows(Model& m, double t) {
 
 static void
 PrintFlowSummary(FlowSummary s) {
-	uint32_t sum = s.Inflow - (s.Outflow + s.Wasteflow);
-	double eff = 100.0 * ((double)s.Outflow) / ((double)s.Inflow);
+	uint32_t sum = s.Inflow - (s.OutflowRequest + s.Wasteflow);
+	double eff = 100.0 * ((double)s.OutflowRequest) / ((double)s.Inflow);
+	double effectiveness = 100.0 * ((double)s.OutflowAchieved) / ((double)s.OutflowRequest);
 	std::cout << "Flow Summary @ " << s.Time << ":" << std::endl;
-	std::cout << "- Inflow   : " << s.Inflow << std::endl;
-	std::cout << "- Outflow  : " << s.Outflow << std::endl;
-	std::cout << "- Wasteflow: " << s.Wasteflow << std::endl;
-	std::cout << "------------------------" << std::endl;
-	std::cout << "  Sum      : " << sum << std::endl;
-	std::cout << "  Eff      : " << eff << "%" << std::endl;
+	std::cout << "  Inflow                 : " << s.Inflow << std::endl;
+	std::cout << "- Outflow (achieved)     : " << s.OutflowAchieved << std::endl;
+	std::cout << "- Wasteflow              : " << s.Wasteflow << std::endl;
+	std::cout << "-----------------------------------" << std::endl;
+	std::cout << "= Sum                    : " << sum << std::endl;
+	std::cout << "  Efficiency             : " << eff << "%"
+		<< " (= " << s.OutflowRequest << "/" << s.Inflow << ")" << std::endl;
+	std::cout << "  Delivery Effectiveness : " << effectiveness << "%" << std::endl;
 }
 
 static std::vector<Flow>
@@ -713,6 +719,37 @@ Example4(bool print) {
 	std::cout << "[Example  4] :: PASSED" << std::endl;
 }
 
+static void
+Example5(bool print) {
+	if (print) {
+		std::cout << "Example  5:" << std::endl;
+	}
+	std::vector<TimeAndLoad> timesAndLoads = {};
+	Model m = {};
+	auto srcId = Model_AddConstantSource(m, 100);
+	auto load1Id = Model_AddConstantLoad(m, 10);
+	auto load2Id = Model_AddConstantLoad(m, 7);
+	auto load3Id = Model_AddConstantLoad(m, 5);
+	auto conv1 = Model_AddConstantEfficiencyConverter(m, 1, 4);
+	auto conv2 = Model_AddConstantEfficiencyConverter(m, 1, 4);
+	auto conv3 = Model_AddConstantEfficiencyConverter(m, 1, 4);
+	auto srcToConv1Conn = Model_AddConnection(m, srcId, 0, conv1.Id, 0);
+	auto conv1ToLoad1Conn = Model_AddConnection(m, conv1.Id, 0, load1Id, 0);
+	auto conv1ToConv2Conn = Model_AddConnection(m, conv1.Id, 1, conv2.Id, 0);
+	auto conv2ToLoad2Conn = Model_AddConnection(m, conv2.Id, 0, load2Id, 0);
+	auto conv2ToConv3Conn = Model_AddConnection(m, conv2.Id, 1, conv3.Id, 0);
+	auto conv3ToLoad3Conn = Model_AddConnection(m, conv3.Id, 0, load3Id, 0);
+	auto results = Simulate(m, print);
+	auto srcToConv1Results = ModelResults_GetFlowForConnection(m, srcToConv1Conn, 0.0, results);
+	auto conv1ToLoad1Results = ModelResults_GetFlowForConnection(m, conv1ToLoad1Conn, 0.0, results);
+	auto conv1ToConv2Results = ModelResults_GetFlowForConnection(m, conv1ToConv2Conn, 0.0, results);
+	auto conv2ToLoad2Results = ModelResults_GetFlowForConnection(m, conv2ToLoad2Conn, 0.0, results);
+	auto conv2ToConv3Results = ModelResults_GetFlowForConnection(m, conv2ToConv3Conn, 0.0, results);
+	auto conv3ToLoad3Results = ModelResults_GetFlowForConnection(m, conv3ToLoad3Conn, 0.0, results);
+	
+	std::cout << "[Example  5] :: PASSED" << std::endl;
+}
+
 int
 main(int argc, char** argv) {
 	Example1(false);
@@ -720,5 +757,6 @@ main(int argc, char** argv) {
 	Example3(false);
 	Example3A(false);
 	Example4(false);
+	Example5(true);
 	return EXIT_SUCCESS;
 }

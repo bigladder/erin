@@ -14,21 +14,22 @@
 
 namespace erin_next {
 
-	struct FlowSummary {
-		double Time;
-		uint32_t Inflow;
-		uint32_t OutflowRequest;
-		uint32_t OutflowAchieved;
-		uint32_t Wasteflow;
-	};
-
 	enum class ComponentType
 	{
 		ConstantLoadType,
 		ScheduleBasedLoadType,
 		ConstantSourceType,
 		ConstantEfficiencyConverterType,
+		MuxType,
 		WasteSinkType,
+	};
+
+	struct FlowSummary {
+		double Time;
+		uint32_t Inflow;
+		uint32_t OutflowRequest;
+		uint32_t OutflowAchieved;
+		uint32_t Wasteflow;
 	};
 
 	struct ConstantLoad {
@@ -64,6 +65,11 @@ namespace erin_next {
 		bool IsActiveBack;
 	};
 
+	struct Mux {
+		size_t NumInports;
+		size_t NumOutports;
+	};
+
 	struct Flow {
 		uint32_t Requested;
 		uint32_t Available;
@@ -79,7 +85,8 @@ namespace erin_next {
 		std::vector<ConstantSource> ConstSources;
 		std::vector<ConstantLoad> ConstLoads;
 		std::vector<ScheduleBasedLoad> ScheduledLoads;
-		std::vector < ConstantEfficiencyConverter> ConstEffConvs;
+		std::vector<ConstantEfficiencyConverter> ConstEffConvs;
+		std::vector<Mux> Muxes;
 		std::vector<Connection> Connections;
 		std::vector<Flow> Flows;
 	};
@@ -115,6 +122,7 @@ namespace erin_next {
 	ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
 	ComponentId Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads);
 	ComponentId Model_AddConstantSource(Model& m, uint32_t available);
+	ComponentId Model_AddMux(Model& m, size_t numInports, size_t numOutports);
 	ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator);
 	Connection Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort);
 	bool SameConnection(Connection a, Connection b);

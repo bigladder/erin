@@ -210,6 +210,24 @@ Example6(bool doPrint) {
 	}
 	// Example with a Mux
 	Model m = {};
+	auto src1Id = Model_AddConstantSource(m, 10);
+	auto src2Id = Model_AddConstantSource(m, 50);
+	auto load1Id = Model_AddConstantLoad(m, 10);
+	auto load2Id = Model_AddConstantLoad(m, 80);
+	auto muxId = Model_AddMux(m, 2, 2);
+	auto src1ToMuxConn = Model_AddConnection(m, src1Id, 0, muxId, 0);
+	auto src2ToMuxConn = Model_AddConnection(m, src2Id, 0, muxId, 1);
+	auto muxToLoad1Conn = Model_AddConnection(m, muxId, 0, load1Id, 0);
+	auto muxToLoad2Conn = Model_AddConnection(m, muxId, 1, load2Id, 0);
+	auto results = Simulate(m, doPrint);
+	auto src1ToMuxResults = ModelResults_GetFlowForConnection(m, src1ToMuxConn, 0.0, results);
+	assert((src1ToMuxResults.value().Actual == 10 && "src1 -> mux expected actual flow of 10"));
+	auto src2ToMuxResults = ModelResults_GetFlowForConnection(m, src2ToMuxConn, 0.0, results);
+	assert((src2ToMuxResults.value().Actual == 50 && "src2 -> mux expected actual flow of 50"));
+	auto muxToLoad1Results = ModelResults_GetFlowForConnection(m, muxToLoad1Conn, 0.0, results);
+	assert((muxToLoad1Results.value().Actual == 10 && "mux -> load1 expected actual flow of 10"));
+	auto muxToLoad2Results = ModelResults_GetFlowForConnection(m, muxToLoad2Conn, 0.0, results);
+	assert((muxToLoad2Results.value().Actual == 50 && "mux -> load2 expected actual flow of 50"));
 	std::cout << (doPrint ? "           ]" : "[ Example  6]") << " :: PASSED" << std::endl;
 }
 

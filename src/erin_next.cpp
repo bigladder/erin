@@ -3,7 +3,7 @@
 namespace erin_next {
 
 	size_t
-		CountActiveConnections(Model& m) {
+	CountActiveConnections(Model& m) {
 		size_t count = 0;
 		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
 			if (m.Connections[connIdx].IsActiveBack || m.Connections[connIdx].IsActiveForward)
@@ -15,7 +15,7 @@ namespace erin_next {
 	}
 
 	void
-		ActivateConnectionsForConstantLoads(Model& model) {
+	ActivateConnectionsForConstantLoads(Model& model) {
 		for (size_t loadIdx = 0; loadIdx < model.ConstLoads.size(); ++loadIdx) {
 			for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
 				if (model.Connections[connIdx].To == ComponentType::ConstantLoadType
@@ -30,7 +30,7 @@ namespace erin_next {
 	}
 
 	void
-		ActivateConnectionsForConstantSources(Model& model) {
+	ActivateConnectionsForConstantSources(Model& model) {
 		for (size_t srcIdx = 0; srcIdx < model.ConstSources.size(); ++srcIdx) {
 			for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
 				if (model.Connections[connIdx].From == ComponentType::ConstantSourceType
@@ -44,7 +44,7 @@ namespace erin_next {
 	}
 
 	void
-		ActivateConnectionsForScheduleBasedLoads(Model& m, double t) {
+	ActivateConnectionsForScheduleBasedLoads(Model& m, double t) {
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx) {
 			for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
 				if (m.Connections[connIdx].To == ComponentType::ScheduleBasedLoadType
@@ -62,7 +62,7 @@ namespace erin_next {
 	}
 
 	double
-		EarliestNextEvent(Model& m, double t) {
+	EarliestNextEvent(Model& m, double t) {
 		double nextTime = -1.0;
 		bool nextTimeFound = false;
 		// go through all the components that are potential event generators
@@ -77,7 +77,7 @@ namespace erin_next {
 	}
 
 	int
-		FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort) {
+	FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort) {
 		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
 			if (m.Connections[connIdx].To == ct && m.Connections[connIdx].ToIdx == compId && m.Connections[connIdx].ToPort == inflowPort) {
 				return (int)connIdx;
@@ -87,7 +87,7 @@ namespace erin_next {
 	}
 
 	int
-		FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort) {
+	FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort) {
 		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
 			if (m.Connections[connIdx].From == ct && m.Connections[connIdx].FromIdx == compId && m.Connections[connIdx].FromPort == outflowPort) {
 				return (int)connIdx;
@@ -97,7 +97,7 @@ namespace erin_next {
 	}
 
 	void
-		RunActiveConnections(Model& model) {
+	RunActiveConnections(Model& model) {
 		for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
 			if (model.Connections[connIdx].IsActiveBack) {
 				switch (model.Connections[connIdx].From) {
@@ -138,6 +138,36 @@ namespace erin_next {
 					{
 						throw std::runtime_error{ "Uhandled port number" };
 					}
+					}
+				} break;
+				case (ComponentType::MuxType):
+				{
+					uint32_t totalRequest = 0;
+					std::vector<uint32_t> outflowRequests = {};
+					outflowRequests.reserve(model.Muxes[model.Connections[connIdx].FromIdx].NumOutports);
+					for (size_t muxOutPort = 0; muxOutPort < model.Muxes[model.Connections[connIdx].FromIdx].NumOutports; ++muxOutPort) {
+						size_t outflowConnIdx = FindOutflowConnection(model, ComponentType::MuxType, model.Connections[connIdx].FromIdx, muxOutPort);
+						outflowRequests.push_back(model.Flows[outflowConnIdx].Requested);
+						totalRequest += model.Flows[outflowConnIdx].Requested;
+					}
+					std::vector<uint32_t> inflowRequests = {};
+					inflowRequests.reserve(model.Muxes[model.Connections[connIdx].FromIdx].NumInports);
+					for (size_t muxInPort = 0; muxInPort < model.Muxes[model.Connections[connIdx].FromIdx].NumInports; ++muxInPort) {
+						size_t inflowConnIdx = FindInflowConnection(model, ComponentType::MuxType, model.Connections[connIdx].FromIdx, muxInPort);
+						uint32_t request = model.Flows[inflowConnIdx].Available >= totalRequest
+							? totalRequest
+							: model.Flows[inflowConnIdx].Available;
+						inflowRequests.push_back(request);
+						totalRequest -= request;
+					}
+					if (totalRequest > 0) {
+						inflowRequests[0] += totalRequest;
+						totalRequest = 0;
+					}
+					for (size_t muxInPort = 0; muxInPort < model.Muxes[model.Connections[connIdx].FromIdx].NumInports; ++muxInPort) {
+						size_t inflowConnIdx = FindInflowConnection(model, ComponentType::MuxType, model.Connections[connIdx].FromIdx, muxInPort);
+						model.Connections[inflowConnIdx].IsActiveBack = model.Flows[inflowConnIdx].Requested != inflowRequests[muxInPort];
+						model.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
 					}
 				} break;
 				default:
@@ -187,6 +217,23 @@ namespace erin_next {
 					model.Flows[(size_t)wasteflowConn].Requested = nonOutflowAvailable;
 					model.Flows[(size_t)wasteflowConn].Available = nonOutflowAvailable;
 				} break;
+				case (ComponentType::MuxType):
+				{
+					uint32_t totalAvailable = 0;
+					for (size_t muxInport = 0; muxInport < model.Muxes[model.Connections[connIdx].ToIdx].NumInports; ++muxInport) {
+						size_t inflowConnIdx = FindInflowConnection(model, ComponentType::MuxType, model.Connections[connIdx].ToIdx, muxInport);
+						totalAvailable += model.Flows[inflowConnIdx].Available;
+					}
+					for (size_t muxOutport = 0; muxOutport < model.Muxes[model.Connections[connIdx].ToIdx].NumOutports; ++muxOutport) {
+						size_t outflowConnIdx = FindOutflowConnection(model, ComponentType::MuxType, model.Connections[connIdx].ToIdx, muxOutport);
+						uint32_t available = model.Flows[outflowConnIdx].Requested >= totalAvailable
+							? totalAvailable
+							: model.Flows[outflowConnIdx].Requested;
+						totalAvailable -= available;
+						model.Connections[outflowConnIdx].IsActiveForward = model.Flows[outflowConnIdx].Available != available;
+						model.Flows[outflowConnIdx].Available = available;
+					}
+				} break;
 				default:
 				{
 					throw std::runtime_error{ "Unhandled component type on forward pass: " + ToString(model.Connections[connIdx].To) };
@@ -197,19 +244,20 @@ namespace erin_next {
 		}
 	}
 
-	uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available) {
+	uint32_t
+	FinalizeFlowValue(uint32_t requested, uint32_t available) {
 		return available >= requested ? requested : available;
 	}
 
 	void
-		FinalizeFlows(Model& model) {
+	FinalizeFlows(Model& model) {
 		for (size_t flowIdx = 0; flowIdx < model.Flows.size(); ++flowIdx) {
 			model.Flows[flowIdx].Actual = FinalizeFlowValue(model.Flows[flowIdx].Requested, model.Flows[flowIdx].Available);
 		}
 	}
 
 	double
-		NextEvent(ScheduleBasedLoad sb, double t) {
+	NextEvent(ScheduleBasedLoad sb, double t) {
 		for (size_t i = 0; i < sb.TimesAndLoads.size(); ++i) {
 			if (sb.TimesAndLoads[i].Time > t)
 			{
@@ -220,7 +268,7 @@ namespace erin_next {
 	}
 
 	std::string
-		ToString(ComponentType compType) {
+	ToString(ComponentType compType) {
 		switch (compType) {
 		case (ComponentType::ConstantLoadType):
 		{
@@ -242,6 +290,10 @@ namespace erin_next {
 		{
 			return std::string{ "WasteSink" };
 		} break;
+		case (ComponentType::MuxType):
+		{
+			return std::string{ "Mux" };
+		} break;
 		default:
 		{
 			throw std::runtime_error{ "Unhandled component type" };
@@ -251,7 +303,7 @@ namespace erin_next {
 	}
 
 	void
-		PrintFlows(Model& m, double t) {
+	PrintFlows(Model& m, double t) {
 		std::cout << "time: " << t << std::endl;
 		for (size_t flowIdx = 0; flowIdx < m.Flows.size(); ++flowIdx) {
 			std::cout << ToString(m.Connections[flowIdx].From)
@@ -266,8 +318,13 @@ namespace erin_next {
 	}
 
 	FlowSummary
-		SummarizeFlows(Model& m, double t) {
+	SummarizeFlows(Model& m, double t) {
 		FlowSummary summary = {};
+		summary.Time = t;
+		summary.Inflow = 0;
+		summary.OutflowAchieved = 0;
+		summary.OutflowRequest = 0;
+		summary.Wasteflow = 0;
 		for (size_t flowIdx = 0; flowIdx < m.Flows.size(); ++flowIdx) {
 			switch (m.Connections[flowIdx].From) {
 			case (ComponentType::ConstantSourceType):
@@ -289,14 +346,13 @@ namespace erin_next {
 			} break;
 			}
 		}
-		summary.Time = t;
 		return summary;
 	}
 
 	void
-		PrintFlowSummary(FlowSummary s) {
-		uint32_t sum = s.Inflow - (s.OutflowRequest + s.Wasteflow);
-		double eff = 100.0 * ((double)s.OutflowRequest) / ((double)s.Inflow);
+	PrintFlowSummary(FlowSummary s) {
+		uint32_t sum = s.Inflow - (s.OutflowAchieved + s.Wasteflow);
+		double eff = 100.0 * ((double)s.OutflowAchieved) / ((double)s.Inflow);
 		double effectiveness = 100.0 * ((double)s.OutflowAchieved) / ((double)s.OutflowRequest);
 		std::cout << "Flow Summary @ " << s.Time << ":" << std::endl;
 		std::cout << "  Inflow                 : " << s.Inflow << std::endl;
@@ -305,12 +361,13 @@ namespace erin_next {
 		std::cout << "-----------------------------------" << std::endl;
 		std::cout << "= Sum                    : " << sum << std::endl;
 		std::cout << "  Efficiency             : " << eff << "%"
-			<< " (= " << s.OutflowRequest << "/" << s.Inflow << ")" << std::endl;
-		std::cout << "  Delivery Effectiveness : " << effectiveness << "%" << std::endl;
+			<< " (= " << s.OutflowAchieved << "/" << s.Inflow << ")" << std::endl;
+		std::cout << "  Delivery Effectiveness : " << effectiveness << "%"
+			<< " (= " << s.OutflowAchieved << "/" << s.OutflowRequest << ")" << std::endl;
 	}
 
 	std::vector<Flow>
-		CopyFlows(std::vector<Flow> flows) {
+	CopyFlows(std::vector<Flow> flows) {
 		std::vector<Flow> newFlows = {};
 		newFlows.reserve(flows.size());
 		for (int i = 0; i < flows.size(); ++i) {
@@ -321,7 +378,7 @@ namespace erin_next {
 	}
 
 	std::vector<TimeAndFlows>
-		Simulate(Model& model, bool print = true) {
+	Simulate(Model& model, bool print = true) {
 		double t = 0.0;
 		std::vector<TimeAndFlows> timeAndFlows = {};
 		size_t const maxLoopIter = 100;
@@ -350,14 +407,14 @@ namespace erin_next {
 	}
 
 	ComponentId
-		Model_AddConstantLoad(Model& m, uint32_t load) {
+	Model_AddConstantLoad(Model& m, uint32_t load) {
 		size_t id = m.ConstLoads.size();
 		m.ConstLoads.push_back({ load });
 		return { id, ComponentType::ConstantLoadType };
 	}
 
 	ComponentId
-		Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems) {
+	Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems) {
 		size_t id = m.ScheduledLoads.size();
 		std::vector<TimeAndLoad> timesAndLoads = {};
 		timesAndLoads.reserve(numItems);
@@ -369,21 +426,28 @@ namespace erin_next {
 	}
 
 	ComponentId
-		Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads) {
+	Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads) {
 		size_t id = m.ScheduledLoads.size();
 		m.ScheduledLoads.push_back({ std::vector<TimeAndLoad>(timesAndLoads) });
 		return { id, ComponentType::ScheduleBasedLoadType };
 	}
 
 	ComponentId
-		Model_AddConstantSource(Model& m, uint32_t available) {
+	Model_AddConstantSource(Model& m, uint32_t available) {
 		size_t id = m.ConstSources.size();
 		m.ConstSources.push_back({ available });
 		return { id, ComponentType::ConstantSourceType };
 	}
 
+	ComponentId
+	Model_AddMux(Model& m, size_t numInports, size_t numOutports) {
+		size_t id = m.Muxes.size();
+		m.Muxes.push_back({ numInports, numOutports });
+		return { id, ComponentType::MuxType };
+	}
+
 	ComponentIdAndWasteConnection
-		Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator) {
+	Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator) {
 		size_t id = m.ConstEffConvs.size();
 		m.ConstEffConvs.push_back({ eff_numerator, eff_denominator });
 		ComponentId wasteId = { 0, ComponentType::WasteSinkType };
@@ -393,7 +457,7 @@ namespace erin_next {
 	}
 
 	Connection
-		Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
+	Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
 		Connection c = { from.Type, from.Id, fromPort, to.Type, to.Id, toPort };
 		m.Connections.push_back(c);
 		m.Flows.push_back({ 0, 0, 0 });
@@ -401,13 +465,13 @@ namespace erin_next {
 	}
 
 	bool
-		SameConnection(Connection a, Connection b) {
+	SameConnection(Connection a, Connection b) {
 		return a.From == b.From && a.FromIdx == b.FromIdx && a.FromPort == b.FromPort
 			&& a.To == b.To && a.ToIdx == b.ToIdx && a.ToPort == b.ToPort;
 	}
 
 	std::optional<Flow>
-		ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows) {
+	ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows) {
 		for (size_t connId = 0; connId < m.Connections.size(); ++connId) {
 			if (SameConnection(m.Connections[connId], conn)) {
 				Flow f = {};

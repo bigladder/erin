@@ -251,6 +251,16 @@ Example7(bool doPrint) {
 	assert(storeToLoadResults.value().Actual == 10 && "store to load should be providing 10");
 	assert(storeToLoadResults.value().Requested == 10 && "store to load should be requesting 10");
 	assert(storeToLoadResults.value().Available == 10 && "store to load available should be 10");
+	assert(results.size() == 2 && "there should be two time events in results");
+	auto srcToStoreResultsAt10 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
+	assert(srcToStoreResultsAt10.value().Actual == 0 && "src to store should be providing 0");
+	assert(srcToStoreResultsAt10.value().Requested == 10 && "src to store request is 10");
+	assert(srcToStoreResultsAt10.value().Available == 0 && "src to store available is 0");
+	auto storeToLoadResultsAt10 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
+	assert(storeToLoadResultsAt10.has_value() && "should have results for store to load connection");
+	assert(storeToLoadResultsAt10.value().Actual == 0 && "store to load should be providing 0");
+	assert(storeToLoadResultsAt10.value().Requested == 10 && "store to load should be requesting 10");
+	assert(storeToLoadResultsAt10.value().Available == 0 && "store to load available should be 0");
 	PrintPass(doPrint, "7");
 }
 
@@ -263,6 +273,6 @@ main(int argc, char** argv) {
 	Example4(false);
 	Example5(false);
 	Example6(false);
-	Example7(true);
+	Example7(false);
 	return EXIT_SUCCESS;
 }

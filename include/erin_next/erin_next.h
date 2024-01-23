@@ -122,19 +122,22 @@ namespace erin_next {
 	void ActivateConnectionsForConstantLoads(Model& m);
 	void ActivateConnectionsForConstantSources(Model& m);
 	void ActivateConnectionsForScheduleBasedLoads(Model& m, double t);
+	void ActivateConnectionsForStores(Model& m, double t);
 	double EarliestNextEvent(Model& m, double t);
 	int FindInflowConnection(
 		Model& m, ComponentType ct, size_t compId, size_t inflowPort);
 	int FindOutflowConnection(
 		Model& m, ComponentType ct, size_t compId, size_t outflowPort);
-	void RunActiveConnections(Model& m);
+	void RunActiveConnections(Model& m, double t);
 	uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available);
 	void FinalizeFlows(Model& m);
 	double NextEvent(ScheduleBasedLoad sb, double t);
+	double NextEvent(Store s, double t);
 	std::string ToString(ComponentType ct);
 	void PrintFlows(Model& m, double t);
 	FlowSummary SummarizeFlows(Model& m, double t);
 	void PrintFlowSummary(FlowSummary s);
+	void PrintModelState(Model& model);
 	std::vector<Flow> CopyFlows(std::vector<Flow> flows);
 	std::vector<TimeAndFlows> Simulate(Model& m, bool print);
 	ComponentId Model_AddConstantLoad(Model& m, uint32_t load);

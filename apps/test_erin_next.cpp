@@ -1,12 +1,26 @@
 #include "erin_next/erin_next.h"
+#include <iomanip>
 
 using namespace erin_next;
 
 static void
-Example1(bool print) {
-	if (print) {
-		std::cout << "Example  1:" << std::endl;
+PrintBanner(bool doPrint, std::string name) {
+	if (doPrint) {
+		std::cout << "[Example " << std::right << std::setw(3) << (name + ":") << std::endl;
 	}
+}
+
+static void
+PrintPass(bool doPrint, std::string name) {
+	std::string preamble = doPrint
+		? "         "
+		: "[Example ";
+	std::cout << preamble << std::right << std::setw(3) << (name + "]") << " :: PASSED" << std::endl;
+}
+
+static void
+Example1(bool print) {
+	PrintBanner(print, "1");
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
@@ -20,14 +34,12 @@ Example1(bool print) {
 	assert((srcToLoadResult.value().Actual == 10 && "actual value must equal 10"));
 	assert((srcToLoadResult.value().Available == 100 && "available must equal 100"));
 	assert((srcToLoadResult.value().Requested == 10 && "requested must equal 10"));
-	std::cout << "[Example  1] :: PASSED" << std::endl;
+	PrintPass(print, "1");
 }
 
 static void
 Example2(bool print) {
-	if (print) {
-		std::cout << "Example  2:" << std::endl;
-	}
+	PrintBanner(print, "2");
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
@@ -53,14 +65,12 @@ Example2(bool print) {
 	assert((convToWasteResults.value().Requested == 10 && "requested must equal 10"));
 	assert((convToWasteResults.value().Actual == 10 && "actual value must equal 10"));
 	assert((convToWasteResults.value().Available == 10 && "available must equal 10"));
-	std::cout << "[Example  2] :: PASSED" << std::endl;
+	PrintPass(print, "2");
 }
 
 static void
 Example3(bool print) {
-	if (print) {
-		std::cout << "Example  3:" << std::endl;
-	}
+	PrintBanner(print, "3");
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
@@ -93,14 +103,12 @@ Example3(bool print) {
 	assert((convToWasteResults.value().Requested == 8 && "requested must equal 8"));
 	assert((convToWasteResults.value().Actual == 8 && "actual value must equal 8"));
 	assert((convToWasteResults.value().Available == 8 && "available must equal 48"));
-	std::cout << "[Example  3] :: PASSED" << std::endl;
+	PrintPass(print, "3");
 }
 
 static void
 Example3A(bool print) {
-	if (print) {
-		std::cout << "Example 3A:" << std::endl;
-	}
+	PrintBanner(print, "3a");
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
@@ -133,14 +141,12 @@ Example3A(bool print) {
 	assert((convToWasteResults.value().Requested == 8 && "requested must equal 8"));
 	assert((convToWasteResults.value().Actual == 8 && "actual value must equal 8"));
 	assert((convToWasteResults.value().Available == 8 && "available must equal 48"));
-	std::cout << "[Example 3A] :: PASSED" << std::endl;
+	PrintPass(print, "3a");
 }
 
 static void
 Example4(bool print) {
-	if (print) {
-		std::cout << "Example  4:" << std::endl;
-	}
+	PrintBanner(print, "4");
 	std::vector<TimeAndLoad> timesAndLoads = {};
 	timesAndLoads.push_back({ 0.0, 10 });
 	timesAndLoads.push_back({ 3600.0, 200 });
@@ -164,14 +170,12 @@ Example4(bool print) {
 	assert((srcToLoadResults_3600.value().Requested == 200 && "requested must equal 200"));
 	assert((srcToLoadResults_3600.value().Actual == 100 && "actual value must equal 100"));
 	assert((srcToLoadResults_3600.value().Available == 100 && "available must equal 100"));
-	std::cout << "[Example  4] :: PASSED" << std::endl;
+	PrintPass(print, "4");
 }
 
 static void
 Example5(bool print) {
-	if (print) {
-		std::cout << "Example  5:" << std::endl;
-	}
+	PrintBanner(print, "5");
 	std::vector<TimeAndLoad> timesAndLoads = {};
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 100);
@@ -200,15 +204,12 @@ Example5(bool print) {
 	assert((conv2ToLoad2Results.value().Actual == 7 && "conv1 to conv2 should flow 7"));
 	assert((conv2ToConv3Results.value().Actual == 20 && "conv2 to conv3 should flow 21"));
 	assert((conv3ToLoad3Results.value().Actual == 5 && "conv3 to load3 should flow 5"));
-	std::cout << "[Example  5] :: PASSED" << std::endl;
+	PrintPass(print, "5");
 }
 
 static void
 Example6(bool doPrint) {
-	if (doPrint) {
-		std::cout << "[Example  6:" << std::endl;
-	}
-	// Example with a Mux
+	PrintBanner(doPrint, "6");
 	Model m = {};
 	auto src1Id = Model_AddConstantSource(m, 10);
 	auto src2Id = Model_AddConstantSource(m, 50);
@@ -228,7 +229,13 @@ Example6(bool doPrint) {
 	assert((muxToLoad1Results.value().Actual == 10 && "mux -> load1 expected actual flow of 10"));
 	auto muxToLoad2Results = ModelResults_GetFlowForConnection(m, muxToLoad2Conn, 0.0, results);
 	assert((muxToLoad2Results.value().Actual == 50 && "mux -> load2 expected actual flow of 50"));
-	std::cout << (doPrint ? "           ]" : "[Example  6]") << " :: PASSED" << std::endl;
+	PrintPass(doPrint, "6");
+}
+
+static void
+Example7(bool doPrint) {
+	PrintBanner(doPrint, "7");
+	PrintPass(doPrint, "7");
 }
 
 int
@@ -240,5 +247,6 @@ main(int argc, char** argv) {
 	Example4(false);
 	Example5(false);
 	Example6(false);
+	Example7(true);
 	return EXIT_SUCCESS;
 }

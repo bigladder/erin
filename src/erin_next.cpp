@@ -98,6 +98,12 @@ namespace erin_next {
 					m.Connections[(size_t)outflowConn].IsActiveForward =
 						m.Flows[(size_t)outflowConn].Available != m.Flows[(size_t)inflowConn].Available;
 					m.Flows[(size_t)outflowConn].Available = m.Flows[(size_t)inflowConn].Available;
+					// NOTE: the request should include a charge request
+					m.Connections[(size_t)inflowConn].IsActiveBack =
+						m.Flows[(size_t)inflowConn].Requested !=
+						(m.Flows[(size_t)outflowConn].Requested + m.Stores[storeIdx].MaxChargeRate);
+					m.Flows[(size_t)inflowConn].Requested =
+						m.Flows[(size_t)outflowConn].Requested + m.Stores[storeIdx].MaxChargeRate;
 					m.Stores[storeIdx].Stored = 0;
 				}
 			}

@@ -235,6 +235,22 @@ Example6(bool doPrint) {
 static void
 Example7(bool doPrint) {
 	PrintBanner(doPrint, "7");
+	Model m = {};
+	auto srcId = Model_AddConstantSource(m, 0);
+	auto storeId = Model_AddStore(m, 100, 10, 10, 100);
+	auto loadId = Model_AddConstantLoad(m, 10);
+	auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
+	auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
+	auto results = Simulate(m, doPrint);
+	auto srcToStoreResults = ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
+	assert(srcToStoreResults.value().Actual == 0 && "src to store should be providing 0");
+	assert(srcToStoreResults.value().Requested == 10 && "src to store request is 10");
+	assert(srcToStoreResults.value().Available == 0 && "src to store available is 0");
+	auto storeToLoadResults = ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
+	assert(storeToLoadResults.has_value() && "should have results for store to load connection");
+	assert(storeToLoadResults.value().Actual == 10 && "store to load should be providing 10");
+	assert(storeToLoadResults.value().Requested == 10 && "store to load should be requesting 10");
+	assert(storeToLoadResults.value().Available == 10 && "store to load available should be 10");
 	PrintPass(doPrint, "7");
 }
 

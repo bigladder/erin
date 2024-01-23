@@ -63,7 +63,7 @@ namespace erin_next {
 
 	double
 	EarliestNextEvent(Model& m, double t) {
-		double nextTime = -1.0;
+		double nextTime = infinity;
 		bool nextTimeFound = false;
 		// go through all the components that are potential event generators
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx) {
@@ -73,9 +73,11 @@ namespace erin_next {
 				nextTimeFound = true;
 			}
 		}
+		// TODO[mok]: add storage components here
 		return nextTime;
 	}
 
+	// TODO[mok]: consider changing this into a std::optional<size_t> as that would better express intent
 	int
 	FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort) {
 		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
@@ -86,6 +88,7 @@ namespace erin_next {
 		return -1;
 	}
 
+	// TODO[mok]: consider changing this into a std::optional<size_t> as that would better express intent
 	int
 	FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort) {
 		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
@@ -170,6 +173,33 @@ namespace erin_next {
 						model.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
 					}
 				} break;
+				case (ComponentType::StoreType):
+				{
+					int inflowConnIdx =
+						FindInflowConnection(model, ComponentType::StoreType, model.Connections[connIdx].FromIdx, 0);
+					assert(inflowConnIdx >= 0 && "must have an inflow connection to a store");
+					uint32_t chargeRate = (
+						model.Stores[model.Connections[connIdx].FromIdx].Capacity
+						- model.Stores[model.Connections[connIdx].FromIdx].Stored);
+					if (chargeRate > model.Stores[model.Connections[connIdx].FromIdx].MaxChargeRate) {
+						chargeRate =
+							model.Stores[model.Connections[connIdx].FromIdx].MaxChargeRate;
+					}
+					model.Connections[(size_t)inflowConnIdx].IsActiveBack =
+						model.Flows[(size_t)inflowConnIdx].Requested
+						!= (model.Flows[connIdx].Requested + chargeRate);
+					model.Flows[(size_t)inflowConnIdx].Requested =
+						(model.Flows[connIdx].Requested + chargeRate);
+					uint32_t dischargeAvailable =
+						model.Stores[model.Connections[connIdx].FromIdx].Stored > model.Stores[model.Connections[connIdx].FromIdx].MaxDischargeRate
+						? model.Stores[model.Connections[connIdx].FromIdx].MaxDischargeRate
+						: model.Stores[model.Connections[connIdx].FromIdx].Stored;
+					model.Connections[connIdx].IsActiveForward =
+						model.Flows[connIdx].Available
+						!= (dischargeAvailable + model.Flows[(size_t)inflowConnIdx].Available);
+					model.Flows[connIdx].Available
+						= dischargeAvailable + model.Flows[(size_t)inflowConnIdx].Available;
+				} break;
 				default:
 				{
 					std::cout << "Unhandled component type on backward pass: "
@@ -234,6 +264,22 @@ namespace erin_next {
 						model.Flows[outflowConnIdx].Available = available;
 					}
 				} break;
+				case (ComponentType::StoreType):
+				{
+					int outflowConn =
+						FindOutflowConnection(
+							model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 0);
+					assert(outflowConn >= 0 && "store must have an outflow connection");
+					uint32_t available = model.Flows[connIdx].Available;
+					uint32_t dischargeAvailable =
+						model.Stores[model.Connections[connIdx].ToIdx].Stored > model.Stores[model.Connections[connIdx].ToIdx].MaxDischargeRate
+						? model.Stores[model.Connections[connIdx].ToIdx].MaxDischargeRate
+						: model.Stores[model.Connections[connIdx].ToIdx].Stored;
+					available += dischargeAvailable;
+					model.Connections[(size_t)outflowConn].IsActiveForward =
+						model.Flows[(size_t)outflowConn].Available != available;
+					model.Flows[(size_t)outflowConn].Available = available;
+				} break;
 				default:
 				{
 					throw std::runtime_error{ "Unhandled component type on forward pass: " + ToString(model.Connections[connIdx].To) };
@@ -264,42 +310,47 @@ namespace erin_next {
 				return sb.TimesAndLoads[i].Time;
 			}
 		}
-		return -1.0;
+		return infinity;
 	}
 
 	std::string
 	ToString(ComponentType compType) {
+		std::string result = "?";
 		switch (compType) {
 		case (ComponentType::ConstantLoadType):
 		{
-			return std::string{ "ConstantLoad" };
+			result = "ConstantLoad";
 		} break;
 		case (ComponentType::ScheduleBasedLoadType):
 		{
-			return std::string{ "ScheduleBasedLoad" };
+			result = "ScheduleBasedLoad";
 		} break;
 		case (ComponentType::ConstantSourceType):
 		{
-			return std::string{ "ConstantSource" };
+			result = "ConstantSource";
 		} break;
 		case (ComponentType::ConstantEfficiencyConverterType):
 		{
-			return std::string{ "ConstantEfficiencyConverter" };
+			result = "ConstantEfficiencyConverter";
 		} break;
 		case (ComponentType::WasteSinkType):
 		{
-			return std::string{ "WasteSink" };
+			result = "WasteSink";
 		} break;
 		case (ComponentType::MuxType):
 		{
-			return std::string{ "Mux" };
+			result = "Mux";
+		} break;
+		case (ComponentType::StoreType):
+		{
+			result = "Store";
 		} break;
 		default:
 		{
 			throw std::runtime_error{ "Unhandled component type" };
 		}
 		}
-		return std::string{ "?" };
+		return result;
 	}
 
 	void
@@ -324,12 +375,18 @@ namespace erin_next {
 		summary.Inflow = 0;
 		summary.OutflowAchieved = 0;
 		summary.OutflowRequest = 0;
+		summary.StorageCharge = 0;
+		summary.StorageDischarge = 0;
 		summary.Wasteflow = 0;
 		for (size_t flowIdx = 0; flowIdx < m.Flows.size(); ++flowIdx) {
 			switch (m.Connections[flowIdx].From) {
 			case (ComponentType::ConstantSourceType):
 			{
 				summary.Inflow += m.Flows[flowIdx].Actual;
+			} break;
+			case (ComponentType::StoreType):
+			{
+				summary.StorageDischarge += m.Flows[flowIdx].Actual;
 			} break;
 			}
 
@@ -339,6 +396,10 @@ namespace erin_next {
 			{
 				summary.OutflowRequest += m.Flows[flowIdx].Requested;
 				summary.OutflowAchieved += m.Flows[flowIdx].Actual;
+			} break;
+			case (ComponentType::StoreType):
+			{
+				summary.StorageCharge += m.Flows[flowIdx].Actual;
 			} break;
 			case (ComponentType::WasteSinkType):
 			{
@@ -351,17 +412,20 @@ namespace erin_next {
 
 	void
 	PrintFlowSummary(FlowSummary s) {
-		uint32_t sum = s.Inflow - (s.OutflowAchieved + s.Wasteflow);
-		double eff = 100.0 * ((double)s.OutflowAchieved) / ((double)s.Inflow);
+		int netDischarge = (int)s.StorageDischarge - (int)s.StorageCharge;
+		int sum =
+			(int)s.Inflow + netDischarge - ((int)s.OutflowAchieved + (int)s.Wasteflow);
+		double eff = 100.0 * ((double)s.OutflowAchieved) / ((double)s.Inflow + (double)netDischarge);
 		double effectiveness = 100.0 * ((double)s.OutflowAchieved) / ((double)s.OutflowRequest);
 		std::cout << "Flow Summary @ " << s.Time << ":" << std::endl;
 		std::cout << "  Inflow                 : " << s.Inflow << std::endl;
+		std::cout << "+ Storage Net Discharge  : " << netDischarge << std::endl;
 		std::cout << "- Outflow (achieved)     : " << s.OutflowAchieved << std::endl;
 		std::cout << "- Wasteflow              : " << s.Wasteflow << std::endl;
 		std::cout << "-----------------------------------" << std::endl;
 		std::cout << "= Sum                    : " << sum << std::endl;
 		std::cout << "  Efficiency             : " << eff << "%"
-			<< " (= " << s.OutflowAchieved << "/" << s.Inflow << ")" << std::endl;
+			<< " (= " << s.OutflowAchieved << "/" << ((int)s.Inflow + netDischarge) << ")" << std::endl;
 		std::cout << "  Delivery Effectiveness : " << effectiveness << "%"
 			<< " (= " << s.OutflowAchieved << "/" << s.OutflowRequest << ")" << std::endl;
 	}
@@ -377,6 +441,7 @@ namespace erin_next {
 		return newFlows;
 	}
 
+	// TODO[mok]: add a maximum time as well
 	std::vector<TimeAndFlows>
 	Simulate(Model& model, bool print = true) {
 		double t = 0.0;
@@ -446,6 +511,19 @@ namespace erin_next {
 		return { id, ComponentType::MuxType };
 	}
 
+	ComponentId
+	Model_AddStore(
+		Model& m,
+		uint32_t capacity,
+		uint32_t maxCharge,
+		uint32_t maxDischarge,
+		uint32_t initialStorage)
+	{
+		size_t id = m.Stores.size();
+		m.Stores.push_back({ capacity, maxCharge, maxDischarge, initialStorage, infinity });
+		return { id, ComponentType::StoreType };
+	}
+
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator) {
 		size_t id = m.ConstEffConvs.size();
@@ -457,7 +535,7 @@ namespace erin_next {
 	}
 
 	Connection
-	Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
+		Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
 		Connection c = { from.Type, from.Id, fromPort, to.Type, to.Id, toPort };
 		m.Connections.push_back(c);
 		m.Flows.push_back({ 0, 0, 0 });
@@ -465,13 +543,13 @@ namespace erin_next {
 	}
 
 	bool
-	SameConnection(Connection a, Connection b) {
+		SameConnection(Connection a, Connection b) {
 		return a.From == b.From && a.FromIdx == b.FromIdx && a.FromPort == b.FromPort
 			&& a.To == b.To && a.ToIdx == b.ToIdx && a.ToPort == b.ToPort;
 	}
 
 	std::optional<Flow>
-	ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows) {
+		ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows) {
 		for (size_t connId = 0; connId < m.Connections.size(); ++connId) {
 			if (SameConnection(m.Connections[connId], conn)) {
 				Flow f = {};

@@ -653,7 +653,7 @@ namespace erin_next {
 	}
 
 	Connection
-		Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
+	Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
 		Connection c = { from.Type, from.Id, fromPort, to.Type, to.Id, toPort };
 		m.Connections.push_back(c);
 		m.Flows.push_back({ 0, 0, 0 });
@@ -661,13 +661,13 @@ namespace erin_next {
 	}
 
 	bool
-		SameConnection(Connection a, Connection b) {
+	SameConnection(Connection a, Connection b) {
 		return a.From == b.From && a.FromIdx == b.FromIdx && a.FromPort == b.FromPort
 			&& a.To == b.To && a.ToIdx == b.ToIdx && a.ToPort == b.ToPort;
 	}
 
 	std::optional<Flow>
-		ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows) {
+	ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows) {
 		for (size_t connId = 0; connId < m.Connections.size(); ++connId) {
 			if (SameConnection(m.Connections[connId], conn)) {
 				Flow f = {};

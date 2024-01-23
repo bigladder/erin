@@ -228,7 +228,7 @@ Example6(bool doPrint) {
 	assert((muxToLoad1Results.value().Actual == 10 && "mux -> load1 expected actual flow of 10"));
 	auto muxToLoad2Results = ModelResults_GetFlowForConnection(m, muxToLoad2Conn, 0.0, results);
 	assert((muxToLoad2Results.value().Actual == 50 && "mux -> load2 expected actual flow of 50"));
-	std::cout << (doPrint ? "           ]" : "[ Example  6]") << " :: PASSED" << std::endl;
+	std::cout << (doPrint ? "           ]" : "[Example  6]") << " :: PASSED" << std::endl;
 }
 
 int
@@ -239,6 +239,6 @@ main(int argc, char** argv) {
 	Example3A(false);
 	Example4(false);
 	Example5(false);
-	Example6(true);
+	Example6(false);
 	return EXIT_SUCCESS;
 }

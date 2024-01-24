@@ -1,4 +1,5 @@
 #include "erin_next/erin_next.h"
+#include <cmath>
 
 namespace erin_next {
 
@@ -66,46 +67,25 @@ namespace erin_next {
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx) {
 			if (m.Stores[storeIdx].TimeOfNextEvent == t)
 			{
-				int netCharge = 0;
-				int inflowConn = -1;
-				int outflowConn = -1;
-				for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
-					if (m.Connections[connIdx].To == ComponentType::StoreType
-						&& m.Connections[connIdx].ToIdx == storeIdx)
-					{
-						inflowConn = (int)connIdx;
-						netCharge += (int)m.Flows[connIdx].Actual;
-					}
-					else if (m.Connections[connIdx].From == ComponentType::StoreType
-						&& m.Connections[connIdx].FromIdx == storeIdx)
-					{
-						outflowConn = (int)connIdx;
-						netCharge -= (int)m.Flows[connIdx].Actual;
-					}
-				}
-				assert(netCharge != 0 && "we should not have a netCharge of 0 for a storage event");
+				int inflowConn = FindInflowConnection(m, ComponentType::StoreType, storeIdx, 0);
+				int outflowConn = FindOutflowConnection(m, ComponentType::StoreType, storeIdx, 0);
 				assert(inflowConn >= 0 && "we should have an inflow connection");
 				assert(outflowConn >= 0 && "we should have an outflow connection");
-				if (netCharge > 0) {
-					// NOTE: we should be fully charged so the only inflow request is the outflow request
-					m.Connections[(size_t)inflowConn].IsActiveBack =
-						m.Flows[(size_t)inflowConn].Requested != m.Flows[(size_t)outflowConn].Requested;
-					m.Flows[(size_t)inflowConn].Requested = m.Flows[(size_t)outflowConn].Requested;
-					m.Stores[storeIdx].Stored = m.Stores[storeIdx].Capacity;
-				}
-				else if (netCharge < 0) {
-					// NOTE: we should be fully discharged so the only available is the available from inflow
-					m.Connections[(size_t)outflowConn].IsActiveForward =
-						m.Flows[(size_t)outflowConn].Available != m.Flows[(size_t)inflowConn].Available;
-					m.Flows[(size_t)outflowConn].Available = m.Flows[(size_t)inflowConn].Available;
-					// NOTE: the request should include a charge request
-					m.Connections[(size_t)inflowConn].IsActiveBack =
-						m.Flows[(size_t)inflowConn].Requested !=
-						(m.Flows[(size_t)outflowConn].Requested + m.Stores[storeIdx].MaxChargeRate);
-					m.Flows[(size_t)inflowConn].Requested =
-						m.Flows[(size_t)outflowConn].Requested + m.Stores[storeIdx].MaxChargeRate;
-					m.Stores[storeIdx].Stored = 0;
-				}
+				uint32_t available = m.Flows[(size_t)inflowConn].Available + (
+					m.Stores[storeIdx].Stored > 0 ? m.Stores[storeIdx].MaxDischargeRate : 0
+					);
+				m.Connections[(size_t)outflowConn].IsActiveForward =
+					m.Connections[(size_t)outflowConn].IsActiveForward ||
+					(m.Flows[(size_t)outflowConn].Available != available);
+				m.Flows[(size_t)outflowConn].Available = available;
+				uint32_t request = m.Flows[(size_t)outflowConn].Requested + (
+					m.Stores[storeIdx].Stored <= m.Stores[storeIdx].ChargeAmount
+					? m.Stores[storeIdx].MaxChargeRate
+					: 0);
+				m.Connections[(size_t)inflowConn].IsActiveBack =
+					m.Connections[(size_t)inflowConn].IsActiveBack ||
+					(m.Flows[(size_t)inflowConn].Requested != request);
+				m.Flows[(size_t)inflowConn].Requested = request;
 			}
 		}
 	}
@@ -113,20 +93,17 @@ namespace erin_next {
 	double
 	EarliestNextEvent(Model& m, double t) {
 		double nextTime = infinity;
-		bool nextTimeFound = false;
 		// TODO[mok]: eliminate duplicate code here
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx) {
 			double nextTimeForComponent = NextEvent(m.ScheduledLoads[schIdx], t);
-			if (!nextTimeFound || (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime)) {
+			if (nextTime == infinity || (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime)) {
 				nextTime = nextTimeForComponent;
-				nextTimeFound = true;
 			}
 		}
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx) {
 			double nextTimeForComponent = NextEvent(m.Stores[storeIdx], t);
-			if (!nextTimeFound || (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime)) {
+			if (nextTime == infinity || (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime)) {
 				nextTime = nextTimeForComponent;
-				nextTimeFound = true;
 			}
 		}
 		return nextTime;
@@ -155,9 +132,11 @@ namespace erin_next {
 	}
 
 	void
-	RunActiveConnections(Model& model, double t) {
+	RunConnectionsBackward(Model& model, double t)
+	{
 		for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
 			if (model.Connections[connIdx].IsActiveBack) {
+				size_t compIdx = model.Connections[connIdx].FromIdx;
 				switch (model.Connections[connIdx].From) {
 				case (ComponentType::ConstantSourceType):
 				{
@@ -233,48 +212,16 @@ namespace erin_next {
 					int inflowConnIdx =
 						FindInflowConnection(model, ComponentType::StoreType, model.Connections[connIdx].FromIdx, 0);
 					assert(inflowConnIdx >= 0 && "must have an inflow connection to a store");
-					uint32_t chargeRate = (
-						model.Stores[model.Connections[connIdx].FromIdx].Capacity
-						- model.Stores[model.Connections[connIdx].FromIdx].Stored);
-					if (chargeRate > model.Stores[model.Connections[connIdx].FromIdx].MaxChargeRate) {
-						chargeRate =
-							model.Stores[model.Connections[connIdx].FromIdx].MaxChargeRate;
-					}
+					uint32_t chargeRate =
+						model.Stores[compIdx].Stored <= model.Stores[compIdx].ChargeAmount
+						? model.Stores[compIdx].MaxChargeRate
+						: 0;
 					model.Connections[(size_t)inflowConnIdx].IsActiveBack =
 						model.Flows[(size_t)inflowConnIdx].Requested
 						!= (model.Flows[connIdx].Requested + chargeRate);
 					model.Flows[(size_t)inflowConnIdx].Requested =
-						(model.Flows[connIdx].Requested + chargeRate);
-					uint32_t dischargeAvailable =
-						model.Stores[model.Connections[connIdx].FromIdx].Stored > model.Stores[model.Connections[connIdx].FromIdx].MaxDischargeRate
-						? model.Stores[model.Connections[connIdx].FromIdx].MaxDischargeRate
-						: model.Stores[model.Connections[connIdx].FromIdx].Stored;
-					model.Connections[connIdx].IsActiveForward =
-						model.Flows[connIdx].Available
-						!= (dischargeAvailable + model.Flows[(size_t)inflowConnIdx].Available);
-					model.Flows[connIdx].Available
-						= dischargeAvailable + model.Flows[(size_t)inflowConnIdx].Available;
-					int netCharge =
-						(int)FinalizeFlowValue(
-							model.Flows[(size_t)inflowConnIdx].Available,
-							model.Flows[(size_t)inflowConnIdx].Requested)
-						- (int)FinalizeFlowValue(
-							model.Flows[connIdx].Available,
-							model.Flows[connIdx].Requested);
-					if (netCharge > 0) {
-						model.Stores[model.Connections[connIdx].FromIdx].TimeOfNextEvent =
-							t + ((double)(model.Stores[model.Connections[connIdx].FromIdx].Capacity
-									- model.Stores[model.Connections[connIdx].FromIdx].Stored)
-								/ (double)netCharge);
-					}
-					else if (netCharge < 0) {
-						model.Stores[model.Connections[connIdx].FromIdx].TimeOfNextEvent =
-							t + ((double)(model.Stores[model.Connections[connIdx].FromIdx].Stored)
-								/ (-1.0 * (double)netCharge));
-					}
-					else {
-						model.Stores[model.Connections[connIdx].FromIdx].TimeOfNextEvent = infinity;
-					}
+						model.Flows[connIdx].Requested + chargeRate;
+					
 				} break;
 				default:
 				{
@@ -285,8 +232,14 @@ namespace erin_next {
 				model.Connections[connIdx].IsActiveBack = false;
 			}
 		}
+	}
+
+	void
+	RunConnectionsForward(Model& model, double t)
+	{
 		for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
 			if (model.Connections[connIdx].IsActiveForward) {
+				size_t compIdx = model.Connections[connIdx].ToIdx;
 				switch (model.Connections[connIdx].To) {
 				case (ComponentType::ConstantLoadType):
 				case (ComponentType::WasteSinkType):
@@ -298,16 +251,16 @@ namespace erin_next {
 				{
 					uint32_t inflowAvailable = model.Flows[connIdx].Available;
 					uint32_t inflowRequest = model.Flows[connIdx].Requested;
-					int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 0);
+					int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, compIdx, 0);
 					assert((outflowConn >= 0) && "should find an outflow connection; model is incorrectly connected");
 					uint32_t outflowAvailable =
-						(model.ConstEffConvs[model.Connections[connIdx].ToIdx].EfficiencyNumerator * inflowAvailable)
-						/ model.ConstEffConvs[model.Connections[connIdx].ToIdx].EfficiencyDenominator;
+						(model.ConstEffConvs[compIdx].EfficiencyNumerator * inflowAvailable)
+						/ model.ConstEffConvs[compIdx].EfficiencyDenominator;
 					uint32_t outflowRequest = model.Flows[(size_t)outflowConn].Requested;
 					assert((inflowAvailable >= outflowAvailable) && "converter forward flow; inflow must be >= outflow");
 					model.Connections[(size_t)outflowConn].IsActiveForward = outflowAvailable != model.Flows[(size_t)outflowConn].Available;
 					model.Flows[(size_t)outflowConn].Available = outflowAvailable;
-					int lossflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 1);
+					int lossflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, compIdx, 1);
 					uint32_t nonOutflowAvailable = FinalizeFlowValue(inflowAvailable, inflowRequest) - FinalizeFlowValue(outflowAvailable, outflowRequest);
 					uint32_t lossflowAvailable = 0;
 					uint32_t lossflowRequest = 0;
@@ -344,40 +297,16 @@ namespace erin_next {
 				{
 					int outflowConn =
 						FindOutflowConnection(
-							model, model.Connections[connIdx].To, model.Connections[connIdx].ToIdx, 0);
+							model, model.Connections[connIdx].To, compIdx, 0);
 					assert(outflowConn >= 0 && "store must have an outflow connection");
 					uint32_t available = model.Flows[connIdx].Available;
-					uint32_t dischargeAvailable =
-						model.Stores[model.Connections[connIdx].ToIdx].Stored > model.Stores[model.Connections[connIdx].ToIdx].MaxDischargeRate
-						? model.Stores[model.Connections[connIdx].ToIdx].MaxDischargeRate
-						: model.Stores[model.Connections[connIdx].ToIdx].Stored;
+					uint32_t dischargeAvailable = model.Stores[compIdx].Stored > 0
+						? model.Stores[compIdx].MaxDischargeRate
+						: 0;
 					available += dischargeAvailable;
 					model.Connections[(size_t)outflowConn].IsActiveForward =
 						model.Flows[(size_t)outflowConn].Available != available;
 					model.Flows[(size_t)outflowConn].Available = available;
-					// TODO[mok]: pull the code below and the corresponding block above in the
-					// ... backwards block into a function
-					int netCharge =
-						(int)FinalizeFlowValue(
-							model.Flows[connIdx].Available,
-							model.Flows[connIdx].Requested)
-						- (int)FinalizeFlowValue(
-							model.Flows[(size_t)outflowConn].Available,
-							model.Flows[(size_t)outflowConn].Requested);
-					if (netCharge > 0) {
-						model.Stores[model.Connections[connIdx].FromIdx].TimeOfNextEvent =
-							t + ((double)(model.Stores[model.Connections[connIdx].FromIdx].Capacity
-								- model.Stores[model.Connections[connIdx].FromIdx].Stored)
-								/ (double)netCharge);
-					}
-					else if (netCharge < 0) {
-						model.Stores[model.Connections[connIdx].FromIdx].TimeOfNextEvent =
-							t + ((double)(model.Stores[model.Connections[connIdx].FromIdx].Stored)
-								/ (-1.0 * (double)netCharge));
-					}
-					else {
-						model.Stores[model.Connections[connIdx].FromIdx].TimeOfNextEvent = infinity;
-					}
 				} break;
 				default:
 				{
@@ -387,6 +316,59 @@ namespace erin_next {
 				model.Connections[connIdx].IsActiveForward = false;
 			}
 		}
+	}
+
+	void
+	RunConnectionsPostFinalization(Model& model, double t)
+	{
+		for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
+			size_t compIdx = model.Connections[connIdx].ToIdx;
+			switch (model.Connections[connIdx].To) {
+			case (ComponentType::ConstantEfficiencyConverterType):
+			{
+				// calculate lossflow and wasteflow
+			} break;
+			case (ComponentType::StoreType):
+			{
+				// TODO: need to also add consideration for discharging TO or BELOW chargeAmount (i.e., when you cross chargeAmount from above)
+				// NOTE: we assume that the charge request never resets once at or below chargeAmount UNTIL you hit 100% SOC again...
+				int outflowConn =
+					FindOutflowConnection(
+						model, model.Connections[connIdx].To, compIdx, 0);
+				assert(outflowConn >= 0 && "store must have an outflow connection");
+				int netCharge =
+					(int)model.Flows[connIdx].Actual - (int)model.Flows[(size_t)outflowConn].Actual;
+				if (netCharge > 0) {
+					model.Stores[compIdx].TimeOfNextEvent =
+						t + ((double)(model.Stores[compIdx].Capacity - model.Stores[compIdx].Stored)
+							/ (double)netCharge);
+				}
+				else if (netCharge < 0
+					&& (model.Stores[compIdx].Stored
+						> model.Stores[compIdx].ChargeAmount))
+				{
+					model.Stores[compIdx].TimeOfNextEvent =
+						t + ((double)(model.Stores[compIdx].Stored - model.Stores[compIdx].ChargeAmount)
+							/ (-1.0 * (double)netCharge));
+				}
+				else if (netCharge < 0) {
+					model.Stores[compIdx].TimeOfNextEvent =
+						t + ((double)(model.Stores[compIdx].Stored) / (-1.0 * (double)netCharge));
+				}
+				else {
+					model.Stores[compIdx].TimeOfNextEvent = infinity;
+				}
+			} break;
+			}
+		}
+	}
+
+	void
+	RunActiveConnections(Model& model, double t) {
+		RunConnectionsBackward(model, t);
+		RunConnectionsForward(model, t);
+		FinalizeFlows(model);
+		RunConnectionsPostFinalization(model, t);
 	}
 
 	uint32_t
@@ -418,6 +400,30 @@ namespace erin_next {
 			return s.TimeOfNextEvent;
 		}
 		return infinity;
+	}
+
+	void
+	UpdateStoresPerElapsedTime(Model& m, double elapsedTime) {
+		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx) {
+			long netEnergyAdded = 0;
+			for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx) {
+				if (m.Connections[connIdx].To == ComponentType::StoreType
+					&& m.Connections[connIdx].ToIdx == storeIdx)
+				{
+					netEnergyAdded += std::lround(elapsedTime * (double)m.Flows[connIdx].Actual);
+				}
+				else if (m.Connections[connIdx].From == ComponentType::StoreType
+					&& m.Connections[connIdx].FromIdx == storeIdx)
+				{
+					netEnergyAdded -= std::lround(elapsedTime * (double)m.Flows[connIdx].Actual);
+				}
+			}
+			assert(static_cast<long>(m.Stores[storeIdx].Capacity - m.Stores[storeIdx].Stored) >= netEnergyAdded
+				&& "netEnergyAdded cannot put storage over capacity");
+			assert(netEnergyAdded >= static_cast<long>(- 1 * (int)m.Stores[storeIdx].Stored)
+				&& "netEnergyAdded cannot use more energy than available");
+			m.Stores[storeIdx].Stored += netEnergyAdded;
+		}
 	}
 
 	std::string
@@ -550,6 +556,16 @@ namespace erin_next {
 		return newFlows;
 	}
 
+	std::vector<uint32_t>
+	CopyStorageStates(Model& m) {
+		std::vector<uint32_t> storageAmounts = {};
+		storageAmounts.reserve(m.Stores.size());
+		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx) {
+			storageAmounts.push_back(m.Stores[storeIdx].Stored);
+		}
+		return storageAmounts;
+	}
+
 	void
 	PrintModelState(Model& m) {
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx) {
@@ -569,6 +585,7 @@ namespace erin_next {
 		double t = 0.0;
 		std::vector<TimeAndFlows> timeAndFlows = {};
 		size_t const maxLoopIter = 100;
+		// TODO: max loop should be in the while loop; however, we do want to check for max time
 		for (size_t loopIdx = 0; loopIdx < maxLoopIter; ++loopIdx) {
 			ActivateConnectionsForScheduleBasedLoads(model, t);
 			ActivateConnectionsForStores(model, t);
@@ -585,11 +602,16 @@ namespace erin_next {
 				PrintFlowSummary(SummarizeFlows(model, t));
 				PrintModelState(model);
 			}
-			timeAndFlows.push_back({ t, CopyFlows(model.Flows) });
+			TimeAndFlows taf = {};
+			taf.Time = t;
+			taf.Flows = CopyFlows(model.Flows);
+			taf.StorageAmounts = CopyStorageStates(model);
+			timeAndFlows.push_back(std::move(taf));
 			double nextTime = EarliestNextEvent(model, t);
 			if (nextTime < 0.0) {
 				break;
 			}
+			UpdateStoresPerElapsedTime(model, nextTime - t);
 			t = nextTime;
 		}
 		return timeAndFlows;
@@ -641,10 +663,21 @@ namespace erin_next {
 		uint32_t capacity,
 		uint32_t maxCharge,
 		uint32_t maxDischarge,
+		uint32_t chargeAmount,
 		uint32_t initialStorage)
 	{
+		assert(chargeAmount < capacity && "chargeAmount must be less than capacity");
+		assert(initialStorage <= capacity && "initialStorage must be less than or equal to capacity");
 		size_t id = m.Stores.size();
-		m.Stores.push_back({ capacity, maxCharge, maxDischarge, initialStorage, infinity });
+		Store s = {};
+		s.Capacity = capacity;
+		s.MaxChargeRate = maxCharge;
+		s.MaxDischargeRate = maxDischarge;
+		s.ChargeAmount = chargeAmount;
+		s.Stored = initialStorage;
+		// NOTE: we schedule an event right away to register available discharging/requested charging
+		s.TimeOfNextEvent = 0.0;
+		m.Stores.push_back(s);
 		return { id, ComponentType::StoreType };
 	}
 
@@ -686,6 +719,19 @@ namespace erin_next {
 					}
 				}
 				return f;
+			}
+		}
+		return {};
+	}
+
+	std::optional<uint32_t>
+	ModelResults_GetStoreState(size_t storeId, double time, std::vector<TimeAndFlows> timeAndFlows)
+	{
+		// TODO: update to also be able to give storage amounts between events by looking at the
+		// inflow and outflows to storage and doing the math...
+		for (size_t i = 0; i < timeAndFlows.size(); ++i) {
+			if (time == timeAndFlows[i].Time && storeId < timeAndFlows[i].StorageAmounts.size()) {
+				return timeAndFlows[i].StorageAmounts[storeId];
 			}
 		}
 		return {};

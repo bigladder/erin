@@ -18,6 +18,12 @@ PrintPass(bool doPrint, std::string name) {
 	std::cout << preamble << std::right << std::setw(3) << (name + "]") << " :: PASSED" << std::endl;
 }
 
+static double
+Round(double n, unsigned int places=2) {
+	double mult = std::pow(10.0, (double)places);
+	return std::round(n * mult) / mult;
+}
+
 static void
 Test1(bool print) {
 	PrintBanner(print, "1");
@@ -237,7 +243,7 @@ Test7(bool doPrint) {
 	PrintBanner(doPrint, "7");
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 0);
-	auto storeId = Model_AddStore(m, 100, 10, 10, 100);
+	auto storeId = Model_AddStore(m, 100, 10, 10, 0, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
 	auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
@@ -270,7 +276,7 @@ Test8(bool doPrint) {
 	PrintBanner(doPrint, "8");
 	Model m = {};
 	auto srcId = Model_AddConstantSource(m, 5);
-	auto storeId = Model_AddStore(m, 100, 10, 10, 100);
+	auto storeId = Model_AddStore(m, 100, 10, 10, 0, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
 	auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
@@ -298,6 +304,80 @@ Test8(bool doPrint) {
 	PrintPass(doPrint, "8");
 }
 
+static void
+Test9(bool doPrint) {
+	PrintBanner(doPrint, "9");
+	std::vector<TimeAndLoad> timesAndLoads = {};
+	timesAndLoads.push_back({  0.0, 20 });
+	timesAndLoads.push_back({  5.0,  5 });
+	timesAndLoads.push_back({ 10.0, 15 });
+	Model m = {};
+	auto srcId = Model_AddConstantSource(m, 10);
+	auto storeId = Model_AddStore(m, 100, 10, 10, 80, 100);
+	auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
+	auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
+	auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
+	auto results = Simulate(m, doPrint);
+	assert(results.size() == 5 && "expected 5 time steps");
+	assert(Round(results[0].Time) == 0.0 && "expect first time is 0.0");
+	assert(Round(results[1].Time) == 2.0 && "expect second time is 2.0");
+	assert(Round(results[2].Time) == 5.0 && "expect third time is 5.0");
+	assert(Round(results[3].Time) == 10.0 && "expect fourth time is 10.0");
+	assert(Round(results[4].Time) == 25.0 && "expect fifth time is 25.0");
+	auto srcToStoreResultsAt0 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
+	auto storeToLoadResultsAt0 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
+	auto storeAmount0 = ModelResults_GetStoreState(storeId.Id, 0.0, results);
+	assert(srcToStoreResultsAt0.value().Actual == 10);
+	assert(srcToStoreResultsAt0.value().Requested == 20);
+	assert(srcToStoreResultsAt0.value().Available == 10);
+	assert(storeToLoadResultsAt0.value().Actual == 20);
+	assert(storeToLoadResultsAt0.value().Requested == 20);
+	assert(storeToLoadResultsAt0.value().Available == 20);
+	assert(storeAmount0.value() == 100);
+	auto srcToStoreResultsAt2 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 2.0, results);
+	auto storeToLoadResultsAt2 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 2.0, results);
+	auto storeAmount2 = ModelResults_GetStoreState(storeId.Id, 2.0, results);
+	assert(srcToStoreResultsAt2.value().Actual == 10);
+	assert(srcToStoreResultsAt2.value().Requested == 30);
+	assert(srcToStoreResultsAt2.value().Available == 10);
+	assert(storeToLoadResultsAt2.value().Actual == 20);
+	assert(storeToLoadResultsAt2.value().Requested == 20);
+	assert(storeToLoadResultsAt2.value().Available == 20);
+	assert(storeAmount2.value() == 80);
+	auto srcToStoreResultsAt5 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 5.0, results);
+	auto storeToLoadResultsAt5 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 5.0, results);
+	auto storeAmount5 = ModelResults_GetStoreState(storeId.Id, 5.0, results);
+	assert(srcToStoreResultsAt5.value().Actual == 10);
+	assert(srcToStoreResultsAt5.value().Requested == 15);
+	assert(srcToStoreResultsAt5.value().Available == 10);
+	assert(storeToLoadResultsAt5.value().Actual == 5);
+	assert(storeToLoadResultsAt5.value().Requested == 5);
+	assert(storeToLoadResultsAt5.value().Available == 20);
+	assert(storeAmount5.value() == 50);
+	auto srcToStoreResultsAt10 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
+	auto storeToLoadResultsAt10 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
+	auto storeAmount10 = ModelResults_GetStoreState(storeId.Id, 10.0, results);
+	assert(srcToStoreResultsAt10.value().Actual == 10);
+	assert(srcToStoreResultsAt10.value().Requested == 25);
+	assert(srcToStoreResultsAt10.value().Available == 10);
+	assert(storeToLoadResultsAt10.value().Actual == 15);
+	assert(storeToLoadResultsAt10.value().Requested == 15);
+	assert(storeToLoadResultsAt10.value().Available == 20);
+	assert(storeAmount10.value() == 75);
+	auto srcToStoreResultsAt25 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 25.0, results);
+	auto storeToLoadResultsAt25 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 25.0, results);
+	auto storeAmount25 = ModelResults_GetStoreState(storeId.Id, 25.0, results);
+	assert(srcToStoreResultsAt25.value().Actual == 10);
+	assert(srcToStoreResultsAt25.value().Requested == 25);
+	assert(srcToStoreResultsAt25.value().Available == 10);
+	assert(storeToLoadResultsAt25.value().Actual == 10);
+	assert(storeToLoadResultsAt25.value().Requested == 15);
+	assert(storeToLoadResultsAt25.value().Available == 10);
+	assert(storeAmount25.value() == 0);
+	assert(m.Stores[0].TimeOfNextEvent == infinity && "last event of store is at infinity");
+	PrintPass(doPrint, "9");
+}
+
 int
 main(int argc, char** argv) {
 	Test1(false);
@@ -309,5 +389,6 @@ main(int argc, char** argv) {
 	Test6(false);
 	Test7(false);
 	Test8(false);
+	Test9(false);
 	return EXIT_SUCCESS;
 }

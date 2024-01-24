@@ -79,6 +79,7 @@ namespace erin_next {
 		uint32_t Capacity;
 		uint32_t MaxChargeRate; // energy per time unit
 		uint32_t MaxDischargeRate; // energy per time unit
+		uint32_t ChargeAmount; // storage level at or below which we request charge
 		uint32_t Stored;
 		double TimeOfNextEvent;
 	};
@@ -92,6 +93,7 @@ namespace erin_next {
 	struct TimeAndFlows {
 		double Time;
 		std::vector<Flow> Flows;
+		std::vector<uint32_t> StorageAmounts;
 	};
 
 	// TODO[mok]: consider separating model into const values (that don't change per simulation)
@@ -124,41 +126,36 @@ namespace erin_next {
 	void ActivateConnectionsForScheduleBasedLoads(Model& m, double t);
 	void ActivateConnectionsForStores(Model& m, double t);
 	double EarliestNextEvent(Model& m, double t);
-	int FindInflowConnection(
-		Model& m, ComponentType ct, size_t compId, size_t inflowPort);
-	int FindOutflowConnection(
-		Model& m, ComponentType ct, size_t compId, size_t outflowPort);
+	int FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort);
+	int FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort);
 	void RunActiveConnections(Model& m, double t);
+	void RunConnectionsPostFinalization(Model& model, double t);
+	void RunConnectionsBackward(Model& model, double t);
+	void RunConnectionsForward(Model& model, double t);
 	uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available);
 	void FinalizeFlows(Model& m);
 	double NextEvent(ScheduleBasedLoad sb, double t);
 	double NextEvent(Store s, double t);
+	void UpdateStoresPerElapsedTime(Model& m, double elapsedTime);
 	std::string ToString(ComponentType ct);
 	void PrintFlows(Model& m, double t);
 	FlowSummary SummarizeFlows(Model& m, double t);
 	void PrintFlowSummary(FlowSummary s);
 	void PrintModelState(Model& model);
 	std::vector<Flow> CopyFlows(std::vector<Flow> flows);
+	std::vector<uint32_t> CopyStorageStates(Model& m);
 	std::vector<TimeAndFlows> Simulate(Model& m, bool print);
 	ComponentId Model_AddConstantLoad(Model& m, uint32_t load);
-	ComponentId Model_AddScheduleBasedLoad(
-		Model& m, double* times, uint32_t* loads, size_t numItems);
-	ComponentId Model_AddScheduleBasedLoad(
-		Model& m, std::vector<TimeAndLoad> timesAndLoads);
+	ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
+	ComponentId Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads);
 	ComponentId Model_AddConstantSource(Model& m, uint32_t available);
 	ComponentId Model_AddMux(Model& m, size_t numInports, size_t numOutports);
-	ComponentId Model_AddStore(
-		Model& m, uint32_t capacity, uint32_t maxCharge, uint32_t maxDischarge,
-		uint32_t initialStorage);
-	ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(
-		Model& m, uint32_t eff_numerator, uint32_t eff_denominator);
-	Connection Model_AddConnection(
-		Model& m, ComponentId& from, size_t fromPort,
-		ComponentId& to, size_t toPort);
+	ComponentId Model_AddStore(Model& m, uint32_t capacity, uint32_t maxCharge, uint32_t maxDischarge,uint32_t nochargeAmount, uint32_t initialStorage);
+	ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator);
+	Connection Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort);
 	bool SameConnection(Connection a, Connection b);
-	std::optional<Flow> ModelResults_GetFlowForConnection(
-		Model& m, Connection conn, double time,
-		std::vector<TimeAndFlows> timeAndFlows);
+	std::optional<Flow> ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows);
+	std::optional<uint32_t> ModelResults_GetStoreState(size_t storeId, double time, std::vector<TimeAndFlows> timeAndFlows);
 
 }
 

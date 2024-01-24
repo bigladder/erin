@@ -2,6 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 
 #include <iostream>
+#include <stdint.h>
 #include <limits>
 
 int
@@ -12,12 +13,16 @@ main()
   std::cout << "sizeof(long long)               : " << sizeof(long long) << "\n";
   std::cout << "sizeof(double)                  : " << sizeof(double) << "\n";
   std::cout << "std::numeric_limits<int>::max() : "
-            << std::numeric_limits<int>::max() << "\n";
+      << std::numeric_limits<int>::max() << "\n";
   std::cout << "std::numeric_limits<long>::max(): "
-            << std::numeric_limits<long>::max() << "\n";
+      << std::numeric_limits<long>::max() << "\n";
   std::cout << "std::numeric_limits<long long>::max(): "
-            << std::numeric_limits<long long>::max() << "\n";
+      << std::numeric_limits<long long>::max() << "\n";
   std::cout << "std::numeric_limits<double>::max(): "
-            << std::numeric_limits<double>::max() << "\n";
+      << std::numeric_limits<double>::max() << "\n";
+  std::cout << "std::numeric_limits<uint32_t>::max(): "
+      << std::numeric_limits<uint32_t>::max() << std::endl;
+  std::cout << "std::numeric_limits<uint64_t>::max(): "
+      << std::numeric_limits<uint64_t>::max() << std::endl;
   return 0;
 }

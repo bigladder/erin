@@ -39,7 +39,7 @@ namespace erin_next {
 	}
 
 	size_t
-	CountActiveConnections(SimulationState& ss)
+	CountActiveConnections(SimulationState const& ss)
 	{
 		return (
 			ss.ActiveConnectionsBack.size()
@@ -150,7 +150,7 @@ namespace erin_next {
 	{
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
 		{
-			if (m.Stores[storeIdx].TimeOfNextEvent == t)
+			if (ss.StorageNextEventTimes[storeIdx] == t)
 			{
 				int inflowConn = FindInflowConnection(m, ComponentType::StoreType, storeIdx, 0);
 				int outflowConn = FindOutflowConnection(m, ComponentType::StoreType, storeIdx, 0);
@@ -177,7 +177,7 @@ namespace erin_next {
 	}
 
 	double
-	EarliestNextEvent(Model& m, double t)
+	EarliestNextEvent(Model const& m, SimulationState const& ss, double t)
 	{
 		double nextTime = infinity;
 		// TODO[mok]: eliminate duplicate code here
@@ -191,7 +191,7 @@ namespace erin_next {
 		}
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
 		{
-			double nextTimeForComponent = NextEvent(m.Stores[storeIdx], t);
+			double nextTimeForComponent = NextStorageEvent(ss, storeIdx, t);
 			if (nextTime == infinity || (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime))
 			{
 				nextTime = nextTimeForComponent;
@@ -520,22 +520,22 @@ namespace erin_next {
 			(int)model.Flows[connIdx].Actual - (int)model.Flows[(size_t)outflowConn].Actual;
 		if (netCharge > 0)
 		{
-			model.Stores[compIdx].TimeOfNextEvent =
+			ss.StorageNextEventTimes[compIdx] =
 				t + ((double)(model.Stores[compIdx].Capacity - ss.StorageAmounts[compIdx])
 					/ (double)netCharge);
 		}
 		else if (netCharge < 0 && (ss.StorageAmounts[compIdx] > model.Stores[compIdx].ChargeAmount))
 		{
-			model.Stores[compIdx].TimeOfNextEvent =
+			ss.StorageNextEventTimes[compIdx] =
 				t + ((double)(ss.StorageAmounts[compIdx] - model.Stores[compIdx].ChargeAmount)
 					/ (-1.0 * (double)netCharge));
 		}
 		else if (netCharge < 0) {
-			model.Stores[compIdx].TimeOfNextEvent =
+			ss.StorageNextEventTimes[compIdx] =
 				t + ((double)(ss.StorageAmounts[compIdx]) / (-1.0 * (double)netCharge));
 		}
 		else {
-			model.Stores[compIdx].TimeOfNextEvent = infinity;
+			ss.StorageNextEventTimes[compIdx] = infinity;
 		}
 	}
 
@@ -656,7 +656,7 @@ namespace erin_next {
 	}
 
 	double
-	NextEvent(ScheduleBasedLoad sb, double t)
+	NextEvent(ScheduleBasedLoad const& sb, double t)
 	{
 		for (size_t i = 0; i < sb.TimesAndLoads.size(); ++i)
 		{
@@ -669,11 +669,12 @@ namespace erin_next {
 	}
 
 	double
-	NextEvent(Store s, double t)
+	NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t)
 	{
-		if (s.TimeOfNextEvent >= 0.0 && s.TimeOfNextEvent > t)
+		double storeTime = ss.StorageNextEventTimes[storeIdx];
+		if (storeTime >= 0.0 && storeTime > t)
 		{
-			return s.TimeOfNextEvent;
+			return storeTime;
 		}
 		return infinity;
 	}
@@ -895,9 +896,11 @@ namespace erin_next {
 		ss.ActiveConnectionsFront.reserve(model.Connections.size());
 		ss.ActiveConnectionsPost.reserve(model.Connections.size());
 		ss.StorageAmounts.reserve(model.Stores.size());
+		ss.StorageNextEventTimes.reserve(model.Stores.size());
 		for (size_t i = 0; i < model.Stores.size(); ++i)
 		{
 			ss.StorageAmounts.push_back(model.Stores[i].InitialStorage);
+			ss.StorageNextEventTimes.push_back(0.0);
 		}
 		return ss;
 	}
@@ -937,7 +940,7 @@ namespace erin_next {
 			taf.Flows = CopyFlows(model.Flows);
 			taf.StorageAmounts = CopyStorageStates(ss);
 			timeAndFlows.push_back(std::move(taf));
-			double nextTime = EarliestNextEvent(model, t);
+			double nextTime = EarliestNextEvent(model, ss, t);
 			if (nextTime < 0.0)
 			{
 				break;
@@ -1014,8 +1017,6 @@ namespace erin_next {
 		s.MaxDischargeRate = maxDischarge;
 		s.ChargeAmount = chargeAmount;
 		s.InitialStorage = initialStorage;
-		// NOTE: we schedule an event right away to register available discharging/requested charging
-		s.TimeOfNextEvent = 0.0;
 		m.Stores.push_back(s);
 		return { id, ComponentType::StoreType };
 	}

@@ -79,7 +79,6 @@ namespace erin_next {
 		uint32_t MaxDischargeRate; // energy per time unit
 		uint32_t ChargeAmount; // storage level at or below which we request charge
 		uint32_t InitialStorage;
-		double TimeOfNextEvent;
 	};
 
 	struct Flow {
@@ -123,18 +122,19 @@ namespace erin_next {
 		std::vector<size_t> ActiveConnectionsFront;
 		std::vector<size_t> ActiveConnectionsPost;
 		std::vector<uint32_t> StorageAmounts;
+		std::vector<double> StorageNextEventTimes;
 	};
 
 	void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
 	void SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx);
 	void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx);
 	void SimulationState_AddActiveConnectionPost(SimulationState& ss, size_t connIdx);
-	size_t CountActiveConnections(SimulationState& ss);
+	size_t CountActiveConnections(SimulationState const& ss);
 	void ActivateConnectionsForConstantLoads(Model& m, SimulationState& ss);
 	void ActivateConnectionsForConstantSources(Model& m, SimulationState& ss);
 	void ActivateConnectionsForScheduleBasedLoads(Model& m, SimulationState& ss, double t);
 	void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
-	double EarliestNextEvent(Model& m, double t);
+	double EarliestNextEvent(Model const& m, SimulationState const& ss, double t);
 	int FindInflowConnection(Model const& m, ComponentType ct, size_t compId, size_t inflowPort);
 	int FindOutflowConnection(Model const& m, ComponentType ct, size_t compId, size_t outflowPort);
 	void RunActiveConnections(Model& m, SimulationState& ss, double t);
@@ -143,8 +143,8 @@ namespace erin_next {
 	void RunConnectionsForward(Model& model, SimulationState& ss);
 	uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available);
 	void FinalizeFlows(Model& m);
-	double NextEvent(ScheduleBasedLoad sb, double t);
-	double NextEvent(Store s, double t);
+	double NextEvent(ScheduleBasedLoad const& sb, double t);
+	double NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t);
 	void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elapsedTime);
 	std::string ToString(ComponentType ct);
 	void PrintFlows(Model& m, double t);

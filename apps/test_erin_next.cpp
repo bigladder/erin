@@ -375,7 +375,6 @@ Test9(bool doPrint) {
 	assert(storeToLoadResultsAt25.value().Requested == 15);
 	assert(storeToLoadResultsAt25.value().Available == 10);
 	assert(storeAmount25.value() == 0);
-	assert(m.Stores[0].TimeOfNextEvent == infinity && "last event of store is at infinity");
 	PrintPass(doPrint, "9");
 }
 

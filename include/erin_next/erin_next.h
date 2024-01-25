@@ -130,8 +130,8 @@ namespace erin_next {
 	int FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort);
 	void RunActiveConnections(Model& m, double t);
 	void RunConnectionsPostFinalization(Model& model, double t);
-	void RunConnectionsBackward(Model& model, double t);
-	void RunConnectionsForward(Model& model, double t);
+	void RunConnectionsBackward(Model& model);
+	void RunConnectionsForward(Model& model);
 	uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available);
 	void FinalizeFlows(Model& m);
 	double NextEvent(ScheduleBasedLoad sb, double t);

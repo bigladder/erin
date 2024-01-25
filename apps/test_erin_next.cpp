@@ -378,6 +378,184 @@ Test9(bool doPrint) {
 	PrintPass(doPrint, "9");
 }
 
+static void
+Test10(bool doPrint) {
+	PrintBanner(doPrint, "10");
+	std::vector<TimeAndLoad> timesAndLoads = {};
+	timesAndLoads.push_back({ 0.0, 20 });
+	timesAndLoads.push_back({ 5.0,  5 });
+	timesAndLoads.push_back({ 10.0, 15 });
+	Model m = {};
+	auto src1Id = Model_AddConstantSource(m, 20);
+	auto src2Id = Model_AddConstantSource(m, 5);
+	auto storeId = Model_AddStore(m, 100, 10, 10, 80, 100);
+	auto muxId = Model_AddMux(m, 2, 2);
+	auto conv = Model_AddConstantEfficiencyConverter(m, 1, 2);
+	auto load1Id = Model_AddConstantLoad(m, 20);
+	auto load2Id = Model_AddScheduleBasedLoad(m, timesAndLoads);
+	auto load3Id = Model_AddConstantLoad(m, 5);
+	auto src1ToMux0Port0Conn = Model_AddConnection(m, src1Id, 0, muxId, 0);
+	auto src2ToStoreConn = Model_AddConnection(m, src2Id, 0, storeId, 0);
+	auto storeToMux0Port1Conn = Model_AddConnection(m, storeId, 0, muxId, 1);
+	auto mux0Port0ToLoad1Conn = Model_AddConnection(m, muxId, 0, load1Id, 0);
+	auto mux0Port1ToConvConn = Model_AddConnection(m, muxId, 1, conv.Id, 0);
+	auto convToLoad2Conn = Model_AddConnection(m, conv.Id, 0, load2Id, 0);
+	auto convToLoad3Conn = Model_AddConnection(m, conv.Id, 1, load3Id, 0);
+	auto results = Simulate(m, doPrint);
+	assert(results.size() == 5 && "expect 5 events");
+	/*
+	TODO: wire up asserts for this case as it is working correctly
+
+	time: 0
+ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 3 (R: 3; A: 3)
+ConstantSource[0:0] => Mux[0:0]: 20 (R: 45; A: 20)
+ConstantSource[1:0] => Store[0:0]: 5 (R: 15; A: 5)
+Store[0:0] => Mux[0:1]: 15 (R: 15; A: 15)
+Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 20)
+Mux[0:1] => ConstantEfficiencyConverter[0:0]: 15 (R: 40; A: 15)
+ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 7 (R: 20; A: 7)
+ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 5 (R: 5; A: 5)
+Flow Summary @ 0:
+  Inflow                 : 25
++ Storage Net Discharge  : 10
+- Outflow (achieved)     : 32
+- Wasteflow              : 3
+-----------------------------------
+= Sum                    : 0
+  Efficiency             : 91.4286% (= 32/35)
+  Delivery Effectiveness : 71.1111% (= 32/45)
+Store[0].Storage : 100
+Store[0].Capacity: 100
+Store[0].SOC     : 100 %
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+time: 2
+ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 3 (R: 3; A: 3)
+ConstantSource[0:0] => Mux[0:0]: 20 (R: 45; A: 20)
+ConstantSource[1:0] => Store[0:0]: 5 (R: 25; A: 5)
+Store[0:0] => Mux[0:1]: 15 (R: 15; A: 15)
+Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 20)
+Mux[0:1] => ConstantEfficiencyConverter[0:0]: 15 (R: 40; A: 15)
+ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 7 (R: 20; A: 7)
+ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 5 (R: 5; A: 5)
+Flow Summary @ 2:
+  Inflow                 : 25
++ Storage Net Discharge  : 10
+- Outflow (achieved)     : 32
+- Wasteflow              : 3
+-----------------------------------
+= Sum                    : 0
+  Efficiency             : 91.4286% (= 32/35)
+  Delivery Effectiveness : 71.1111% (= 32/45)
+Store[0].Storage : 80
+Store[0].Capacity: 100
+Store[0].SOC     : 80 %
+... Conv[0][OUT:0] -> *
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+... Store[0][OUT:0] -> *
+... Mux[0][OUT:*] -> *
+... * -> Conv[0][IN:0]
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+time: 5
+ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 0 (R: 0; A: 0)
+ConstantSource[0:0] => Mux[0:0]: 20 (R: 20; A: 20)
+ConstantSource[1:0] => Store[0:0]: 5 (R: 20; A: 5)
+Store[0:0] => Mux[0:1]: 10 (R: 10; A: 15)
+Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 25)
+Mux[0:1] => ConstantEfficiencyConverter[0:0]: 10 (R: 10; A: 10)
+ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 5 (R: 5; A: 5)
+ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 5 (R: 5; A: 5)
+Flow Summary @ 5:
+  Inflow                 : 25
++ Storage Net Discharge  : 5
+- Outflow (achieved)     : 30
+- Wasteflow              : 0
+-----------------------------------
+= Sum                    : 0
+  Efficiency             : 100% (= 30/30)
+  Delivery Effectiveness : 100% (= 30/30)
+Store[0].Storage : 50
+Store[0].Capacity: 100
+Store[0].SOC     : 50 %
+... Conv[0][OUT:0] -> *
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+... Store[0][OUT:0] -> *
+... Mux[0][OUT:*] -> *
+... * -> Conv[0][IN:0]
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+time: 10
+ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 3 (R: 3; A: 3)
+ConstantSource[0:0] => Mux[0:0]: 20 (R: 35; A: 20)
+ConstantSource[1:0] => Store[0:0]: 5 (R: 25; A: 5)
+Store[0:0] => Mux[0:1]: 15 (R: 15; A: 15)
+Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 20)
+Mux[0:1] => ConstantEfficiencyConverter[0:0]: 15 (R: 30; A: 15)
+ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 7 (R: 15; A: 7)
+ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 5 (R: 5; A: 5)
+Flow Summary @ 10:
+  Inflow                 : 25
++ Storage Net Discharge  : 10
+- Outflow (achieved)     : 32
+- Wasteflow              : 3
+-----------------------------------
+= Sum                    : 0
+  Efficiency             : 91.4286% (= 32/35)
+  Delivery Effectiveness : 80% (= 32/40)
+Store[0].Storage : 25
+Store[0].Capacity: 100
+Store[0].SOC     : 25 %
+... * -> Mux[0][IN:0]
+... * -> Conv[0][IN:0]
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+... Store[0][OUT:0] -> *
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+... *Mux[0]*
+... *Store[0]*
+... *Mux[0]*
+time: 12.5
+ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 0 (R: 0; A: 0)
+ConstantSource[0:0] => Mux[0:0]: 20 (R: 45; A: 20)
+ConstantSource[1:0] => Store[0:0]: 5 (R: 15; A: 5)
+Store[0:0] => Mux[0:1]: 5 (R: 5; A: 5)
+Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 20)
+Mux[0:1] => ConstantEfficiencyConverter[0:0]: 5 (R: 30; A: 5)
+ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 2 (R: 15; A: 2)
+ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 3 (R: 5; A: 3)
+Flow Summary @ 12.5:
+  Inflow                 : 25
++ Storage Net Discharge  : 0
+- Outflow (achieved)     : 25
+- Wasteflow              : 0
+-----------------------------------
+= Sum                    : 0
+  Efficiency             : 100% (= 25/25)
+  Delivery Effectiveness : 62.5% (= 25/40)
+Store[0].Storage : 0
+Store[0].Capacity: 100
+Store[0].SOC     : 0 %
+	*/
+	PrintPass(doPrint, "10");
+}
+
 int
 main(int argc, char** argv) {
 	Test1(false);
@@ -390,5 +568,6 @@ main(int argc, char** argv) {
 	Test7(false);
 	Test8(false);
 	Test9(false);
+	Test10(true);
 	return EXIT_SUCCESS;
 }

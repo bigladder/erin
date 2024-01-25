@@ -3,6 +3,38 @@
 
 namespace erin_next {
 
+	static unsigned int numBackwardPasses = 0;
+	static unsigned int numForwardPasses = 0;
+	static unsigned int numPostPasses = 0;
+	static unsigned int grandTotalPasses = 0;
+
+	void Debug_PrintNumberOfPasses(bool onlyGrandTotal)
+	{
+		if (onlyGrandTotal) {
+			std::cout << "Grand total        : " << grandTotalPasses << std::endl;
+		}
+		else {
+			std::cout << "Number of:" << std::endl;
+			std::cout << "... backward passes: " << numBackwardPasses << std::endl;
+			std::cout << "... forward passes : " << numForwardPasses << std::endl;
+			std::cout << "... post passes    : " << numPostPasses << std::endl;
+			std::cout << "... total passes   : "
+				<< (numBackwardPasses + numForwardPasses + numPostPasses)
+				<< std::endl;
+		}
+	}
+
+	void Debug_ResetNumberOfPasses(bool resetAll)
+	{
+		grandTotalPasses += numBackwardPasses + numForwardPasses + numPostPasses;
+		numBackwardPasses = 0;
+		numForwardPasses = 0;
+		numPostPasses = 0;
+		if (resetAll) {
+			grandTotalPasses = 0;
+		}
+	}
+
 	size_t
 	CountActiveConnections(Model& m) {
 		size_t count = 0;
@@ -36,7 +68,8 @@ namespace erin_next {
 		for (size_t srcIdx = 0; srcIdx < model.ConstSources.size(); ++srcIdx) {
 			for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx) {
 				if (model.Connections[connIdx].From == ComponentType::ConstantSourceType
-					&& model.Connections[connIdx].FromIdx == srcIdx) {
+					&& model.Connections[connIdx].FromIdx == srcIdx)
+				{
 					model.Connections[connIdx].IsActiveForward =
 						model.Connections[connIdx].IsActiveForward ||
 						(model.Flows[connIdx].Available != model.ConstSources[srcIdx].Available);
@@ -150,6 +183,7 @@ namespace erin_next {
 					switch (model.Connections[connIdx].FromPort) {
 					case 0:
 					{
+						++numBackwardPasses;
 						int inflowConn = FindInflowConnection(
 							model, model.Connections[connIdx].From, compIdx, 0);
 						assert((inflowConn >= 0) && "should find an inflow connection; model is incorrectly connected");
@@ -188,6 +222,7 @@ namespace erin_next {
 				} break;
 				case (ComponentType::MuxType):
 				{
+					++numBackwardPasses;
 					uint32_t totalRequest = 0;
 					std::vector<uint32_t> outflowRequests = {};
 					outflowRequests.reserve(model.Muxes[compIdx].NumOutports);
@@ -220,6 +255,7 @@ namespace erin_next {
 				} break;
 				case (ComponentType::StoreType):
 				{
+					++numBackwardPasses;
 					int inflowConnIdx =
 						FindInflowConnection(model, ComponentType::StoreType, model.Connections[connIdx].FromIdx, 0);
 					assert(inflowConnIdx >= 0 && "must have an inflow connection to a store");
@@ -260,6 +296,7 @@ namespace erin_next {
 				} break;
 				case (ComponentType::ConstantEfficiencyConverterType):
 				{
+					++numForwardPasses;
 					uint32_t inflowAvailable = model.Flows[connIdx].Available;
 					uint32_t inflowRequest = model.Flows[connIdx].Requested;
 					int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, compIdx, 0);
@@ -297,6 +334,7 @@ namespace erin_next {
 				} break;
 				case (ComponentType::MuxType):
 				{
+					++numForwardPasses;
 					uint32_t totalAvailable = 0;
 					for (size_t muxInport = 0; muxInport < model.Muxes[compIdx].NumInports; ++muxInport) {
 						size_t inflowConnIdx = FindInflowConnection(
@@ -327,6 +365,7 @@ namespace erin_next {
 				} break;
 				case (ComponentType::StoreType):
 				{
+					++numForwardPasses;
 					int outflowConn =
 						FindOutflowConnection(
 							model, model.Connections[connIdx].To, compIdx, 0);
@@ -363,6 +402,7 @@ namespace erin_next {
 			} break;
 			case (ComponentType::StoreType):
 			{
+				++numPostPasses;
 				// TODO: need to also add consideration for discharging TO or BELOW chargeAmount (i.e., when you cross chargeAmount from above)
 				// NOTE: we assume that the charge request never resets once at or below chargeAmount UNTIL you hit 100% SOC again...
 				int outflowConn =
@@ -394,6 +434,7 @@ namespace erin_next {
 			} break;
 			case (ComponentType::MuxType):
 			{
+				++numPostPasses;
 				// REQUESTS
 				uint32_t totalRequest = 0;
 				for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumOutports; ++muxOutPort) {
@@ -687,7 +728,8 @@ namespace erin_next {
 			while (CountActiveConnections(model) > 0) {
 				RunActiveConnections(model, t);
 			}
-			FinalizeFlows(model);
+			Debug_PrintNumberOfPasses();
+			Debug_ResetNumberOfPasses();
 			if (print) {
 				PrintFlows(model, t);
 				PrintFlowSummary(SummarizeFlows(model, t));
@@ -705,6 +747,8 @@ namespace erin_next {
 			UpdateStoresPerElapsedTime(model, nextTime - t);
 			t = nextTime;
 		}
+		Debug_PrintNumberOfPasses(true);
+		Debug_ResetNumberOfPasses(true);
 		return timeAndFlows;
 	}
 
@@ -827,5 +871,7 @@ namespace erin_next {
 		}
 		return {};
 	}
+
+	
 
 }

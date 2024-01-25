@@ -156,6 +156,8 @@ namespace erin_next {
 	bool SameConnection(Connection a, Connection b);
 	std::optional<Flow> ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows);
 	std::optional<uint32_t> ModelResults_GetStoreState(size_t storeId, double time, std::vector<TimeAndFlows> timeAndFlows);
+	void Debug_PrintNumberOfPasses(bool onlyGrandTotal = false);
+	void Debug_ResetNumberOfPasses(bool resetAll = false);
 
 }
 

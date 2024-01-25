@@ -1,5 +1,6 @@
 #include "erin_next/erin_next.h"
 #include <iomanip>
+#include <chrono>
 
 using namespace erin_next;
 
@@ -638,6 +639,7 @@ Test10(bool doPrint) {
 
 int
 main(int argc, char** argv) {
+	auto start = std::chrono::high_resolution_clock::now();
 	Test1(false);
 	Test2(false);
 	Test3(false);
@@ -649,5 +651,8 @@ main(int argc, char** argv) {
 	Test8(false);
 	Test9(false);
 	Test10(false);
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "Duration " << ((double)duration.count() / 1000.0) << " ms" << std::endl;
 	return EXIT_SUCCESS;
 }

@@ -150,7 +150,6 @@ namespace erin_next {
 					switch (model.Connections[connIdx].FromPort) {
 					case 0:
 					{
-						std::cout << "... Conv[" << compIdx << "][OUT:0] -> *" << std::endl;
 						int inflowConn = FindInflowConnection(
 							model, model.Connections[connIdx].From, compIdx, 0);
 						assert((inflowConn >= 0) && "should find an inflow connection; model is incorrectly connected");
@@ -189,7 +188,6 @@ namespace erin_next {
 				} break;
 				case (ComponentType::MuxType):
 				{
-					std::cout << "... Mux[" << compIdx << "][OUT:*] -> *" << std::endl;
 					uint32_t totalRequest = 0;
 					std::vector<uint32_t> outflowRequests = {};
 					outflowRequests.reserve(model.Muxes[compIdx].NumOutports);
@@ -222,7 +220,6 @@ namespace erin_next {
 				} break;
 				case (ComponentType::StoreType):
 				{
-					std::cout << "... Store[" << compIdx << "][OUT:0] -> *" << std::endl;
 					int inflowConnIdx =
 						FindInflowConnection(model, ComponentType::StoreType, model.Connections[connIdx].FromIdx, 0);
 					assert(inflowConnIdx >= 0 && "must have an inflow connection to a store");
@@ -263,7 +260,6 @@ namespace erin_next {
 				} break;
 				case (ComponentType::ConstantEfficiencyConverterType):
 				{
-					std::cout << "... * -> Conv[" << compIdx << "][IN:0]" << std::endl;
 					uint32_t inflowAvailable = model.Flows[connIdx].Available;
 					uint32_t inflowRequest = model.Flows[connIdx].Requested;
 					int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, compIdx, 0);
@@ -301,7 +297,6 @@ namespace erin_next {
 				} break;
 				case (ComponentType::MuxType):
 				{
-					std::cout << "... * -> Mux[" << compIdx << "][IN:0]" << std::endl;
 					uint32_t totalAvailable = 0;
 					for (size_t muxInport = 0; muxInport < model.Muxes[compIdx].NumInports; ++muxInport) {
 						size_t inflowConnIdx = FindInflowConnection(
@@ -332,7 +327,6 @@ namespace erin_next {
 				} break;
 				case (ComponentType::StoreType):
 				{
-					std::cout << "... * -> Store[" << compIdx << "][IN:0]" << std::endl;
 					int outflowConn =
 						FindOutflowConnection(
 							model, model.Connections[connIdx].To, compIdx, 0);
@@ -369,7 +363,6 @@ namespace erin_next {
 			} break;
 			case (ComponentType::StoreType):
 			{
-				std::cout << "... *Store[" << compIdx << "]*" << std::endl;
 				// TODO: need to also add consideration for discharging TO or BELOW chargeAmount (i.e., when you cross chargeAmount from above)
 				// NOTE: we assume that the charge request never resets once at or below chargeAmount UNTIL you hit 100% SOC again...
 				int outflowConn =
@@ -401,7 +394,6 @@ namespace erin_next {
 			} break;
 			case (ComponentType::MuxType):
 			{
-				std::cout << "... *Mux[" << compIdx << "]*" << std::endl;
 				// REQUESTS
 				uint32_t totalRequest = 0;
 				for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumOutports; ++muxOutPort) {

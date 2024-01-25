@@ -403,156 +403,236 @@ Test10(bool doPrint) {
 	auto convToLoad3Conn = Model_AddConnection(m, conv.Id, 1, load3Id, 0);
 	auto results = Simulate(m, doPrint);
 	assert(results.size() == 5 && "expect 5 events");
-	/*
-	TODO: wire up asserts for this case as it is working correctly
-
-	time: 0
-ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 3 (R: 3; A: 3)
-ConstantSource[0:0] => Mux[0:0]: 20 (R: 45; A: 20)
-ConstantSource[1:0] => Store[0:0]: 5 (R: 15; A: 5)
-Store[0:0] => Mux[0:1]: 15 (R: 15; A: 15)
-Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 20)
-Mux[0:1] => ConstantEfficiencyConverter[0:0]: 15 (R: 40; A: 15)
-ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 7 (R: 20; A: 7)
-ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 5 (R: 5; A: 5)
-Flow Summary @ 0:
-  Inflow                 : 25
-+ Storage Net Discharge  : 10
-- Outflow (achieved)     : 32
-- Wasteflow              : 3
------------------------------------
-= Sum                    : 0
-  Efficiency             : 91.4286% (= 32/35)
-  Delivery Effectiveness : 71.1111% (= 32/45)
-Store[0].Storage : 100
-Store[0].Capacity: 100
-Store[0].SOC     : 100 %
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-time: 2
-ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 3 (R: 3; A: 3)
-ConstantSource[0:0] => Mux[0:0]: 20 (R: 45; A: 20)
-ConstantSource[1:0] => Store[0:0]: 5 (R: 25; A: 5)
-Store[0:0] => Mux[0:1]: 15 (R: 15; A: 15)
-Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 20)
-Mux[0:1] => ConstantEfficiencyConverter[0:0]: 15 (R: 40; A: 15)
-ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 7 (R: 20; A: 7)
-ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 5 (R: 5; A: 5)
-Flow Summary @ 2:
-  Inflow                 : 25
-+ Storage Net Discharge  : 10
-- Outflow (achieved)     : 32
-- Wasteflow              : 3
------------------------------------
-= Sum                    : 0
-  Efficiency             : 91.4286% (= 32/35)
-  Delivery Effectiveness : 71.1111% (= 32/45)
-Store[0].Storage : 80
-Store[0].Capacity: 100
-Store[0].SOC     : 80 %
-... Conv[0][OUT:0] -> *
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-... Store[0][OUT:0] -> *
-... Mux[0][OUT:*] -> *
-... * -> Conv[0][IN:0]
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-time: 5
-ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 0 (R: 0; A: 0)
-ConstantSource[0:0] => Mux[0:0]: 20 (R: 20; A: 20)
-ConstantSource[1:0] => Store[0:0]: 5 (R: 20; A: 5)
-Store[0:0] => Mux[0:1]: 10 (R: 10; A: 15)
-Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 25)
-Mux[0:1] => ConstantEfficiencyConverter[0:0]: 10 (R: 10; A: 10)
-ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 5 (R: 5; A: 5)
-ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 5 (R: 5; A: 5)
-Flow Summary @ 5:
-  Inflow                 : 25
-+ Storage Net Discharge  : 5
-- Outflow (achieved)     : 30
-- Wasteflow              : 0
------------------------------------
-= Sum                    : 0
-  Efficiency             : 100% (= 30/30)
-  Delivery Effectiveness : 100% (= 30/30)
-Store[0].Storage : 50
-Store[0].Capacity: 100
-Store[0].SOC     : 50 %
-... Conv[0][OUT:0] -> *
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-... Store[0][OUT:0] -> *
-... Mux[0][OUT:*] -> *
-... * -> Conv[0][IN:0]
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-time: 10
-ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 3 (R: 3; A: 3)
-ConstantSource[0:0] => Mux[0:0]: 20 (R: 35; A: 20)
-ConstantSource[1:0] => Store[0:0]: 5 (R: 25; A: 5)
-Store[0:0] => Mux[0:1]: 15 (R: 15; A: 15)
-Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 20)
-Mux[0:1] => ConstantEfficiencyConverter[0:0]: 15 (R: 30; A: 15)
-ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 7 (R: 15; A: 7)
-ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 5 (R: 5; A: 5)
-Flow Summary @ 10:
-  Inflow                 : 25
-+ Storage Net Discharge  : 10
-- Outflow (achieved)     : 32
-- Wasteflow              : 3
------------------------------------
-= Sum                    : 0
-  Efficiency             : 91.4286% (= 32/35)
-  Delivery Effectiveness : 80% (= 32/40)
-Store[0].Storage : 25
-Store[0].Capacity: 100
-Store[0].SOC     : 25 %
-... * -> Mux[0][IN:0]
-... * -> Conv[0][IN:0]
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-... Store[0][OUT:0] -> *
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-... *Mux[0]*
-... *Store[0]*
-... *Mux[0]*
-time: 12.5
-ConstantEfficiencyConverter[0:2] => WasteSink[0:0]: 0 (R: 0; A: 0)
-ConstantSource[0:0] => Mux[0:0]: 20 (R: 45; A: 20)
-ConstantSource[1:0] => Store[0:0]: 5 (R: 15; A: 5)
-Store[0:0] => Mux[0:1]: 5 (R: 5; A: 5)
-Mux[0:0] => ConstantLoad[0:0]: 20 (R: 20; A: 20)
-Mux[0:1] => ConstantEfficiencyConverter[0:0]: 5 (R: 30; A: 5)
-ConstantEfficiencyConverter[0:0] => ScheduleBasedLoad[0:0]: 2 (R: 15; A: 2)
-ConstantEfficiencyConverter[0:1] => ConstantLoad[1:0]: 3 (R: 5; A: 3)
-Flow Summary @ 12.5:
-  Inflow                 : 25
-+ Storage Net Discharge  : 0
-- Outflow (achieved)     : 25
-- Wasteflow              : 0
------------------------------------
-= Sum                    : 0
-  Efficiency             : 100% (= 25/25)
-  Delivery Effectiveness : 62.5% (= 25/40)
-Store[0].Storage : 0
-Store[0].Capacity: 100
-Store[0].SOC     : 0 %
-	*/
+	// time = 0.0
+	double t = 0.0;
+	size_t resultsIdx = 0;
+	assert(results[resultsIdx].Time == t);
+	auto convToWasteResults = ModelResults_GetFlowForConnection(
+		m, conv.WasteConnection, t, results);
+	assert(convToWasteResults.value().Actual == 3);
+	assert(convToWasteResults.value().Requested == 3);
+	assert(convToWasteResults.value().Available == 3);
+	auto src1ToMuxResults = ModelResults_GetFlowForConnection(
+		m, src1ToMux0Port0Conn, 0.0, results);
+	assert(src1ToMuxResults.value().Actual == 20);
+	assert(src1ToMuxResults.value().Available == 20);
+	assert(src1ToMuxResults.value().Requested == 45);
+	auto src2ToStoreResults = ModelResults_GetFlowForConnection(
+		m, src2ToStoreConn, 0.0, results);
+	assert(src2ToStoreResults.value().Actual == 5);
+	assert(src2ToStoreResults.value().Available == 5);
+	assert(src2ToStoreResults.value().Requested == 15);
+	auto storeToMuxResults = ModelResults_GetFlowForConnection(
+		m, storeToMux0Port1Conn, 0.0, results);
+	assert(storeToMuxResults.value().Actual == 15);
+	assert(storeToMuxResults.value().Available == 15);
+	assert(storeToMuxResults.value().Requested == 15);
+	auto muxToLoad1Results = ModelResults_GetFlowForConnection(
+		m, mux0Port0ToLoad1Conn, 0.0, results);
+	assert(muxToLoad1Results.value().Actual == 20);
+	assert(muxToLoad1Results.value().Available == 20);
+	assert(muxToLoad1Results.value().Requested == 20);
+	auto muxToConvResults = ModelResults_GetFlowForConnection(
+		m, mux0Port1ToConvConn, 0.0, results);
+	assert(muxToConvResults.value().Actual == 15);
+	assert(muxToConvResults.value().Available == 15);
+	assert(muxToConvResults.value().Requested == 40);
+	auto convToLoad2Results = ModelResults_GetFlowForConnection(
+		m, convToLoad2Conn, 0.0, results);
+	assert(convToLoad2Results.value().Actual == 7);
+	assert(convToLoad2Results.value().Available == 7);
+	assert(convToLoad2Results.value().Requested == 20);
+	auto convToLoad3Results = ModelResults_GetFlowForConnection(
+		m, convToLoad3Conn, 0.0, results);
+	assert(convToLoad3Results.value().Actual == 5);
+	assert(convToLoad3Results.value().Available == 5);
+	assert(convToLoad3Results.value().Requested == 5);
+	auto storeAmount = ModelResults_GetStoreState(storeId.Id, 0.0, results);
+	assert(storeAmount.value() == 100);
+	// time = 2.0
+	t = 2.0;
+	resultsIdx = 1;
+	assert(results[resultsIdx].Time == t);;
+	convToWasteResults = ModelResults_GetFlowForConnection(
+		m, conv.WasteConnection, t, results);
+	assert(convToWasteResults.value().Actual == 3);
+	assert(convToWasteResults.value().Requested == 3);
+	assert(convToWasteResults.value().Available == 3);
+	src1ToMuxResults = ModelResults_GetFlowForConnection(
+		m, src1ToMux0Port0Conn, t, results);
+	assert(src1ToMuxResults.value().Actual == 20);
+	assert(src1ToMuxResults.value().Available == 20);
+	assert(src1ToMuxResults.value().Requested == 45);
+	src2ToStoreResults = ModelResults_GetFlowForConnection(
+		m, src2ToStoreConn, t, results);
+	assert(src2ToStoreResults.value().Actual == 5);
+	assert(src2ToStoreResults.value().Available == 5);
+	assert(src2ToStoreResults.value().Requested == 25);
+	storeToMuxResults = ModelResults_GetFlowForConnection(
+		m, storeToMux0Port1Conn, t, results);
+	assert(storeToMuxResults.value().Actual == 15);
+	assert(storeToMuxResults.value().Available == 15);
+	assert(storeToMuxResults.value().Requested == 15);
+	muxToLoad1Results = ModelResults_GetFlowForConnection(
+		m, mux0Port0ToLoad1Conn, t, results);
+	assert(muxToLoad1Results.value().Actual == 20);
+	assert(muxToLoad1Results.value().Available == 20);
+	assert(muxToLoad1Results.value().Requested == 20);
+	muxToConvResults = ModelResults_GetFlowForConnection(
+		m, mux0Port1ToConvConn, t, results);
+	assert(muxToConvResults.value().Actual == 15);
+	assert(muxToConvResults.value().Available == 15);
+	assert(muxToConvResults.value().Requested == 40);
+	convToLoad2Results = ModelResults_GetFlowForConnection(
+		m, convToLoad2Conn, t, results);
+	assert(convToLoad2Results.value().Actual == 7);
+	assert(convToLoad2Results.value().Available == 7);
+	assert(convToLoad2Results.value().Requested == 20);
+	convToLoad3Results = ModelResults_GetFlowForConnection(
+		m, convToLoad3Conn, t, results);
+	assert(convToLoad3Results.value().Actual == 5);
+	assert(convToLoad3Results.value().Available == 5);
+	assert(convToLoad3Results.value().Requested == 5);
+	storeAmount = ModelResults_GetStoreState(storeId.Id, t, results);
+	assert(storeAmount.value() == 80);
+	// time = 5.0
+	t = 5.0;
+	resultsIdx = 2;
+	assert(results[resultsIdx].Time == t);
+	convToWasteResults = ModelResults_GetFlowForConnection(
+		m, conv.WasteConnection, t, results);
+	assert(convToWasteResults.value().Actual == 0);
+	assert(convToWasteResults.value().Requested == 0);
+	assert(convToWasteResults.value().Available == 0);
+	src1ToMuxResults = ModelResults_GetFlowForConnection(
+		m, src1ToMux0Port0Conn, t, results);
+	assert(src1ToMuxResults.value().Actual == 20);
+	assert(src1ToMuxResults.value().Available == 20);
+	assert(src1ToMuxResults.value().Requested == 20);
+	src2ToStoreResults = ModelResults_GetFlowForConnection(
+		m, src2ToStoreConn, t, results);
+	assert(src2ToStoreResults.value().Actual == 5);
+	assert(src2ToStoreResults.value().Available == 5);
+	assert(src2ToStoreResults.value().Requested == 20);
+	storeToMuxResults = ModelResults_GetFlowForConnection(
+		m, storeToMux0Port1Conn, t, results);
+	assert(storeToMuxResults.value().Actual == 10);
+	assert(storeToMuxResults.value().Available == 15);
+	assert(storeToMuxResults.value().Requested == 10);
+	muxToLoad1Results = ModelResults_GetFlowForConnection(
+		m, mux0Port0ToLoad1Conn, t, results);
+	assert(muxToLoad1Results.value().Actual == 20);
+	assert(muxToLoad1Results.value().Available == 25);
+	assert(muxToLoad1Results.value().Requested == 20);
+	muxToConvResults = ModelResults_GetFlowForConnection(
+		m, mux0Port1ToConvConn, t, results);
+	assert(muxToConvResults.value().Actual == 10);
+	assert(muxToConvResults.value().Available == 10);
+	assert(muxToConvResults.value().Requested == 10);
+	convToLoad2Results = ModelResults_GetFlowForConnection(
+		m, convToLoad2Conn, t, results);
+	assert(convToLoad2Results.value().Actual == 5);
+	assert(convToLoad2Results.value().Available == 5);
+	assert(convToLoad2Results.value().Requested == 5);
+	convToLoad3Results = ModelResults_GetFlowForConnection(
+		m, convToLoad3Conn, t, results);
+	assert(convToLoad3Results.value().Actual == 5);
+	assert(convToLoad3Results.value().Available == 5);
+	assert(convToLoad3Results.value().Requested == 5);
+	storeAmount = ModelResults_GetStoreState(storeId.Id, t, results);
+	assert(storeAmount.value() == 50);
+	// time = 10.0
+	t = 10.0;
+	resultsIdx = 3;
+	assert(results[resultsIdx].Time == t);
+	convToWasteResults = ModelResults_GetFlowForConnection(
+		m, conv.WasteConnection, t, results);
+	assert(convToWasteResults.value().Actual == 3);
+	assert(convToWasteResults.value().Requested == 3);
+	assert(convToWasteResults.value().Available == 3);
+	src1ToMuxResults = ModelResults_GetFlowForConnection(
+		m, src1ToMux0Port0Conn, t, results);
+	assert(src1ToMuxResults.value().Actual == 20);
+	assert(src1ToMuxResults.value().Available == 20);
+	assert(src1ToMuxResults.value().Requested == 35);
+	src2ToStoreResults = ModelResults_GetFlowForConnection(
+		m, src2ToStoreConn, t, results);
+	assert(src2ToStoreResults.value().Actual == 5);
+	assert(src2ToStoreResults.value().Available == 5);
+	assert(src2ToStoreResults.value().Requested == 25);
+	storeToMuxResults = ModelResults_GetFlowForConnection(
+		m, storeToMux0Port1Conn, t, results);
+	assert(storeToMuxResults.value().Actual == 15);
+	assert(storeToMuxResults.value().Available == 15);
+	assert(storeToMuxResults.value().Requested == 15);
+	muxToLoad1Results = ModelResults_GetFlowForConnection(
+		m, mux0Port0ToLoad1Conn, t, results);
+	assert(muxToLoad1Results.value().Actual == 20);
+	assert(muxToLoad1Results.value().Available == 20);
+	assert(muxToLoad1Results.value().Requested == 20);
+	muxToConvResults = ModelResults_GetFlowForConnection(
+		m, mux0Port1ToConvConn, t, results);
+	assert(muxToConvResults.value().Actual == 15);
+	assert(muxToConvResults.value().Available == 15);
+	assert(muxToConvResults.value().Requested == 30);
+	convToLoad2Results = ModelResults_GetFlowForConnection(
+		m, convToLoad2Conn, t, results);
+	assert(convToLoad2Results.value().Actual == 7);
+	assert(convToLoad2Results.value().Available == 7);
+	assert(convToLoad2Results.value().Requested == 15);
+	convToLoad3Results = ModelResults_GetFlowForConnection(
+		m, convToLoad3Conn, t, results);
+	assert(convToLoad3Results.value().Actual == 5);
+	assert(convToLoad3Results.value().Available == 5);
+	assert(convToLoad3Results.value().Requested == 5);
+	storeAmount = ModelResults_GetStoreState(storeId.Id, t, results);
+	assert(storeAmount.value() == 25);
+	// time = 12.5
+	t = 12.5;
+	resultsIdx = 4;
+	assert(results[resultsIdx].Time == t);
+	convToWasteResults = ModelResults_GetFlowForConnection(
+		m, conv.WasteConnection, t, results);
+	assert(convToWasteResults.value().Actual == 0);
+	assert(convToWasteResults.value().Requested == 0);
+	assert(convToWasteResults.value().Available == 0);
+	src1ToMuxResults = ModelResults_GetFlowForConnection(
+		m, src1ToMux0Port0Conn, t, results);
+	assert(src1ToMuxResults.value().Actual == 20);
+	assert(src1ToMuxResults.value().Available == 20);
+	assert(src1ToMuxResults.value().Requested == 45);
+	src2ToStoreResults = ModelResults_GetFlowForConnection(
+		m, src2ToStoreConn, t, results);
+	assert(src2ToStoreResults.value().Actual == 5);
+	assert(src2ToStoreResults.value().Available == 5);
+	assert(src2ToStoreResults.value().Requested == 15);
+	storeToMuxResults = ModelResults_GetFlowForConnection(
+		m, storeToMux0Port1Conn, t, results);
+	assert(storeToMuxResults.value().Actual == 5);
+	assert(storeToMuxResults.value().Available == 5);
+	assert(storeToMuxResults.value().Requested == 5);
+	muxToLoad1Results = ModelResults_GetFlowForConnection(
+		m, mux0Port0ToLoad1Conn, t, results);
+	assert(muxToLoad1Results.value().Actual == 20);
+	assert(muxToLoad1Results.value().Available == 20);
+	assert(muxToLoad1Results.value().Requested == 20);
+	muxToConvResults = ModelResults_GetFlowForConnection(
+		m, mux0Port1ToConvConn, t, results);
+	assert(muxToConvResults.value().Actual == 5);
+	assert(muxToConvResults.value().Available == 5);
+	assert(muxToConvResults.value().Requested == 30);
+	convToLoad2Results = ModelResults_GetFlowForConnection(
+		m, convToLoad2Conn, t, results);
+	assert(convToLoad2Results.value().Actual == 2);
+	assert(convToLoad2Results.value().Available == 2);
+	assert(convToLoad2Results.value().Requested == 15);
+	convToLoad3Results = ModelResults_GetFlowForConnection(
+		m, convToLoad3Conn, t, results);
+	assert(convToLoad3Results.value().Actual == 3);
+	assert(convToLoad3Results.value().Available == 3);
+	assert(convToLoad3Results.value().Requested == 5);
+	storeAmount = ModelResults_GetStoreState(storeId.Id, t, results);
+	assert(storeAmount.value() == 0);
 	PrintPass(doPrint, "10");
 }
 
@@ -568,6 +648,6 @@ main(int argc, char** argv) {
 	Test7(false);
 	Test8(false);
 	Test9(false);
-	Test10(true);
+	Test10(false);
 	return EXIT_SUCCESS;
 }

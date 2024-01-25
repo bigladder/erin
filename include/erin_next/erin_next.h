@@ -78,7 +78,7 @@ namespace erin_next {
 		uint32_t MaxChargeRate; // energy per time unit
 		uint32_t MaxDischargeRate; // energy per time unit
 		uint32_t ChargeAmount; // storage level at or below which we request charge
-		uint32_t Stored;
+		uint32_t InitialStorage;
 		double TimeOfNextEvent;
 	};
 
@@ -122,6 +122,7 @@ namespace erin_next {
 		std::vector<size_t> ActiveConnectionsBack;
 		std::vector<size_t> ActiveConnectionsFront;
 		std::vector<size_t> ActiveConnectionsPost;
+		std::vector<uint32_t> StorageAmounts;
 	};
 
 	void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
@@ -134,8 +135,8 @@ namespace erin_next {
 	void ActivateConnectionsForScheduleBasedLoads(Model& m, SimulationState& ss, double t);
 	void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
 	double EarliestNextEvent(Model& m, double t);
-	int FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort);
-	int FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort);
+	int FindInflowConnection(Model const& m, ComponentType ct, size_t compId, size_t inflowPort);
+	int FindOutflowConnection(Model const& m, ComponentType ct, size_t compId, size_t outflowPort);
 	void RunActiveConnections(Model& m, SimulationState& ss, double t);
 	void RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t);
 	void RunConnectionsBackward(Model& model, SimulationState& ss);
@@ -144,14 +145,14 @@ namespace erin_next {
 	void FinalizeFlows(Model& m);
 	double NextEvent(ScheduleBasedLoad sb, double t);
 	double NextEvent(Store s, double t);
-	void UpdateStoresPerElapsedTime(Model& m, double elapsedTime);
+	void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elapsedTime);
 	std::string ToString(ComponentType ct);
 	void PrintFlows(Model& m, double t);
 	FlowSummary SummarizeFlows(Model& m, double t);
 	void PrintFlowSummary(FlowSummary s);
-	void PrintModelState(Model& model);
+	void PrintModelState(Model& model, SimulationState& ss);
 	std::vector<Flow> CopyFlows(std::vector<Flow> flows);
-	std::vector<uint32_t> CopyStorageStates(Model& m);
+	std::vector<uint32_t> CopyStorageStates(SimulationState& ss);
 	std::vector<TimeAndFlows> Simulate(Model& m, bool print);
 	ComponentId Model_AddConstantLoad(Model& m, uint32_t load);
 	ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
@@ -168,11 +169,13 @@ namespace erin_next {
 	void Debug_ResetNumberOfPasses(bool resetAll = false);
 	SimulationState Model_SetupSimulationState(Model& m);
 	void RunConstantEfficiencyConverterBackward(Model& m, SimulationState& ss, size_t connIdx, size_t compIdx);
-	void RunMuxBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+	void RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx);
 	void RunStoreBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 	void RunConstantEfficiencyConverterForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 	void RunMuxForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 	void RunStoreForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+	void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_t connIdx, size_t compIdx);
+
 }
 
 #endif // ERIN_NEXT_H

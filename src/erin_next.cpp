@@ -10,10 +10,12 @@ namespace erin_next {
 
 	void Debug_PrintNumberOfPasses(bool onlyGrandTotal)
 	{
-		if (onlyGrandTotal) {
+		if (onlyGrandTotal)
+		{
 			std::cout << "Grand total        : " << grandTotalPasses << std::endl;
 		}
-		else {
+		else
+		{
 			std::cout << "Number of:" << std::endl;
 			std::cout << "... backward passes: " << numBackwardPasses << std::endl;
 			std::cout << "... forward passes : " << numForwardPasses << std::endl;
@@ -30,7 +32,8 @@ namespace erin_next {
 		numBackwardPasses = 0;
 		numForwardPasses = 0;
 		numPostPasses = 0;
-		if (resetAll) {
+		if (resetAll)
+		{
 			grandTotalPasses = 0;
 		}
 	}
@@ -77,7 +80,8 @@ namespace erin_next {
 	}
 
 	void
-	ActivateConnectionsForConstantLoads(Model& model, SimulationState& ss) {
+	ActivateConnectionsForConstantLoads(Model& model, SimulationState& ss)
+	{
 		for (size_t loadIdx = 0; loadIdx < model.ConstLoads.size(); ++loadIdx)
 		{
 			for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
@@ -856,16 +860,19 @@ namespace erin_next {
 		{
 			ActivateConnectionsForScheduleBasedLoads(model, ss, t);
 			ActivateConnectionsForStores(model, ss, t);
-			if (loopIdx == 0) {
+			if (loopIdx == 0)
+			{
 				ActivateConnectionsForConstantLoads(model, ss);
 				ActivateConnectionsForConstantSources(model, ss);
 			}
-			while (CountActiveConnections(ss) > 0) {
+			while (CountActiveConnections(ss) > 0)
+			{
 				RunActiveConnections(model, ss, t);
 			}
 			Debug_PrintNumberOfPasses();
 			Debug_ResetNumberOfPasses();
-			if (print) {
+			if (print)
+			{
 				PrintFlows(model, t);
 				PrintFlowSummary(SummarizeFlows(model, t));
 				PrintModelState(model);
@@ -876,7 +883,8 @@ namespace erin_next {
 			taf.StorageAmounts = CopyStorageStates(model);
 			timeAndFlows.push_back(std::move(taf));
 			double nextTime = EarliestNextEvent(model, t);
-			if (nextTime < 0.0) {
+			if (nextTime < 0.0)
+			{
 				break;
 			}
 			UpdateStoresPerElapsedTime(model, nextTime - t);
@@ -888,18 +896,21 @@ namespace erin_next {
 	}
 
 	ComponentId
-	Model_AddConstantLoad(Model& m, uint32_t load) {
+	Model_AddConstantLoad(Model& m, uint32_t load)
+	{
 		size_t id = m.ConstLoads.size();
 		m.ConstLoads.push_back({ load });
 		return { id, ComponentType::ConstantLoadType };
 	}
 
 	ComponentId
-	Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems) {
+	Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems)
+	{
 		size_t id = m.ScheduledLoads.size();
 		std::vector<TimeAndLoad> timesAndLoads = {};
 		timesAndLoads.reserve(numItems);
-		for (size_t i = 0; i < numItems; ++i) {
+		for (size_t i = 0; i < numItems; ++i)
+		{
 			timesAndLoads.push_back({ times[i], loads[i] });
 		}
 		m.ScheduledLoads.push_back({ std::move(timesAndLoads) });
@@ -907,21 +918,24 @@ namespace erin_next {
 	}
 
 	ComponentId
-	Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads) {
+	Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads)
+	{
 		size_t id = m.ScheduledLoads.size();
 		m.ScheduledLoads.push_back({ std::vector<TimeAndLoad>(timesAndLoads) });
 		return { id, ComponentType::ScheduleBasedLoadType };
 	}
 
 	ComponentId
-	Model_AddConstantSource(Model& m, uint32_t available) {
+	Model_AddConstantSource(Model& m, uint32_t available)
+	{
 		size_t id = m.ConstSources.size();
 		m.ConstSources.push_back({ available });
 		return { id, ComponentType::ConstantSourceType };
 	}
 
 	ComponentId
-	Model_AddMux(Model& m, size_t numInports, size_t numOutports) {
+	Model_AddMux(Model& m, size_t numInports, size_t numOutports)
+	{
 		size_t id = m.Muxes.size();
 		m.Muxes.push_back({ numInports, numOutports });
 		return { id, ComponentType::MuxType };
@@ -952,7 +966,8 @@ namespace erin_next {
 	}
 
 	ComponentIdAndWasteConnection
-	Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator) {
+	Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator)
+	{
 		size_t id = m.ConstEffConvs.size();
 		m.ConstEffConvs.push_back({ eff_numerator, eff_denominator });
 		ComponentId wasteId = { 0, ComponentType::WasteSinkType };
@@ -962,7 +977,8 @@ namespace erin_next {
 	}
 
 	Connection
-	Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort) {
+	Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort)
+	{
 		Connection c = { from.Type, from.Id, fromPort, to.Type, to.Id, toPort };
 		m.Connections.push_back(c);
 		m.Flows.push_back({ 0, 0, 0 });
@@ -970,21 +986,28 @@ namespace erin_next {
 	}
 
 	bool
-	SameConnection(Connection a, Connection b) {
+	SameConnection(Connection a, Connection b)
+	{
 		return a.From == b.From && a.FromIdx == b.FromIdx && a.FromPort == b.FromPort
 			&& a.To == b.To && a.ToIdx == b.ToIdx && a.ToPort == b.ToPort;
 	}
 
 	std::optional<Flow>
-	ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows) {
-		for (size_t connId = 0; connId < m.Connections.size(); ++connId) {
-			if (SameConnection(m.Connections[connId], conn)) {
+	ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows)
+	{
+		for (size_t connId = 0; connId < m.Connections.size(); ++connId)
+		{
+			if (SameConnection(m.Connections[connId], conn))
+			{
 				Flow f = {};
-				for (size_t timeAndFlowIdx = 0; timeAndFlowIdx < timeAndFlows.size(); ++timeAndFlowIdx) {
-					if (time >= timeAndFlows[timeAndFlowIdx].Time) {
+				for (size_t timeAndFlowIdx = 0; timeAndFlowIdx < timeAndFlows.size(); ++timeAndFlowIdx)
+				{
+					if (time >= timeAndFlows[timeAndFlowIdx].Time)
+					{
 						f = timeAndFlows[timeAndFlowIdx].Flows[connId];
 					}
-					else {
+					else
+					{
 						break;
 					}
 				}
@@ -999,14 +1022,14 @@ namespace erin_next {
 	{
 		// TODO: update to also be able to give storage amounts between events by looking at the
 		// inflow and outflows to storage and doing the math...
-		for (size_t i = 0; i < timeAndFlows.size(); ++i) {
-			if (time == timeAndFlows[i].Time && storeId < timeAndFlows[i].StorageAmounts.size()) {
+		for (size_t i = 0; i < timeAndFlows.size(); ++i)
+		{
+			if (time == timeAndFlows[i].Time && storeId < timeAndFlows[i].StorageAmounts.size())
+			{
 				return timeAndFlows[i].StorageAmounts[storeId];
 			}
 		}
 		return {};
 	}
-
-	
 
 }

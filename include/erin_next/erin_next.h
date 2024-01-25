@@ -104,7 +104,6 @@ namespace erin_next {
 		std::vector<Mux> Muxes;
 		std::vector<Store> Stores;
 		std::vector<Connection> Connections;
-		std::vector<Flow> Flows;
 	};
 
 	struct ComponentId {
@@ -123,6 +122,7 @@ namespace erin_next {
 		std::vector<size_t> ActiveConnectionsPost;
 		std::vector<uint32_t> StorageAmounts;
 		std::vector<double> StorageNextEventTimes;
+		std::vector<Flow> Flows;
 	};
 
 	void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
@@ -142,12 +142,12 @@ namespace erin_next {
 	void RunConnectionsBackward(Model& model, SimulationState& ss);
 	void RunConnectionsForward(Model& model, SimulationState& ss);
 	uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available);
-	void FinalizeFlows(Model& m);
+	void FinalizeFlows(SimulationState& ss);
 	double NextEvent(ScheduleBasedLoad const& sb, double t);
 	double NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t);
 	void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elapsedTime);
 	std::string ToString(ComponentType ct);
-	void PrintFlows(Model& m, double t);
+	void PrintFlows(Model const& m, SimulationState const&, double t);
 	FlowSummary SummarizeFlows(Model& m, double t);
 	void PrintFlowSummary(FlowSummary s);
 	void PrintModelState(Model& model, SimulationState& ss);
@@ -160,8 +160,8 @@ namespace erin_next {
 	ComponentId Model_AddConstantSource(Model& m, uint32_t available);
 	ComponentId Model_AddMux(Model& m, size_t numInports, size_t numOutports);
 	ComponentId Model_AddStore(Model& m, uint32_t capacity, uint32_t maxCharge, uint32_t maxDischarge,uint32_t nochargeAmount, uint32_t initialStorage);
-	ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m, uint32_t eff_numerator, uint32_t eff_denominator);
-	Connection Model_AddConnection(Model& m, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort);
+	ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m, SimulationState& ss, uint32_t eff_numerator, uint32_t eff_denominator);
+	Connection Model_AddConnection(Model& m, SimulationState& ss, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort);
 	bool SameConnection(Connection a, Connection b);
 	std::optional<Flow> ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows);
 	std::optional<uint32_t> ModelResults_GetStoreState(size_t storeId, double time, std::vector<TimeAndFlows> timeAndFlows);

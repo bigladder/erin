@@ -167,7 +167,12 @@ namespace erin_next {
 	void Debug_PrintNumberOfPasses(bool onlyGrandTotal = false);
 	void Debug_ResetNumberOfPasses(bool resetAll = false);
 	SimulationState Model_SetupSimulationState(Model& m);
-
+	void RunConstantEfficiencyConverterBackward(Model& m, SimulationState& ss, size_t connIdx, size_t compIdx);
+	void RunMuxBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+	void RunStoreBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+	void RunConstantEfficiencyConverterForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+	void RunMuxForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+	void RunStoreForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 }
 
 #endif // ERIN_NEXT_H

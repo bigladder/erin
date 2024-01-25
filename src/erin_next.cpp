@@ -234,6 +234,97 @@ namespace erin_next {
 	}
 
 	void
+	RunConstantEfficiencyConverterBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	{
+		++numBackwardPasses;
+		ComponentType const ct = ComponentType::ConstantEfficiencyConverterType;
+		size_t const lossflowPort = 1;
+		size_t const wasteflowPort = 2;
+		int inflowConn = FindInflowConnection(model, ct, compIdx, 0);
+		assert((inflowConn >= 0) && "should find an inflow connection; model is incorrectly connected");
+		uint32_t outflowRequest = model.Flows[connIdx].Requested;
+		uint32_t inflowRequest =
+			(model.ConstEffConvs[compIdx].EfficiencyDenominator * outflowRequest)
+			/ model.ConstEffConvs[compIdx].EfficiencyNumerator;
+		assert((inflowRequest >= outflowRequest) && "inflow must be >= outflow in converter");
+		if (inflowRequest != model.Flows[(size_t)inflowConn].Requested)
+		{
+			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConn);
+		}
+		model.Flows[(size_t)inflowConn].Requested = inflowRequest;
+		uint32_t attenuatedLossflowRequest = 0;
+		int lossflowConn = FindOutflowConnection(model, ct, compIdx, lossflowPort);
+		if (lossflowConn >= 0) {
+			attenuatedLossflowRequest = FinalizeFlowValue(
+				inflowRequest - outflowRequest, model.Flows[(size_t)lossflowConn].Requested);
+		}
+		int wasteflowConn = FindOutflowConnection(model, ct, compIdx, wasteflowPort);
+		assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
+		uint32_t wasteflowRequest = inflowRequest - outflowRequest - attenuatedLossflowRequest;
+		model.Flows[(size_t)wasteflowConn].Requested = wasteflowRequest;
+	}
+
+	void
+	RunMuxBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	{
+		ComponentType const ct = ComponentType::MuxType;
+		++numBackwardPasses;
+		uint32_t totalRequest = 0;
+		std::vector<uint32_t> outflowRequests = {};
+		outflowRequests.reserve(model.Muxes[compIdx].NumOutports);
+		for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumOutports; ++muxOutPort)
+		{
+			size_t outflowConnIdx = FindOutflowConnection(model, ct, compIdx, muxOutPort);
+			outflowRequests.push_back(model.Flows[outflowConnIdx].Requested);
+			totalRequest += model.Flows[outflowConnIdx].Requested;
+		}
+		std::vector<uint32_t> inflowRequests = {};
+		inflowRequests.reserve(model.Muxes[compIdx].NumInports);
+		for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort)
+		{
+			size_t inflowConnIdx = FindInflowConnection(model, ct, compIdx, muxInPort);
+			uint32_t request = model.Flows[inflowConnIdx].Available >= totalRequest
+				? totalRequest
+				: model.Flows[inflowConnIdx].Available;
+			inflowRequests.push_back(request);
+			totalRequest -= request;
+		}
+		if (totalRequest > 0)
+		{
+			inflowRequests[0] += totalRequest;
+			totalRequest = 0;
+		}
+		for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort)
+		{
+			int inflowConnIdx = FindInflowConnection(model, ct, compIdx, muxInPort);
+			assert(inflowConnIdx >= 0 && "mux must have at one inflow per inflow port");
+			if (model.Flows[inflowConnIdx].Requested != inflowRequests[muxInPort])
+			{
+				Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConnIdx);
+			}
+			model.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
+		}
+	}
+
+	void
+	RunStoreBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	{
+		++numBackwardPasses;
+		int inflowConnIdx =
+			FindInflowConnection(model, ComponentType::StoreType, model.Connections[connIdx].FromIdx, 0);
+		assert(inflowConnIdx >= 0 && "must have an inflow connection to a store");
+		uint32_t chargeRate =
+			model.Stores[compIdx].Stored <= model.Stores[compIdx].ChargeAmount
+			? model.Stores[compIdx].MaxChargeRate
+			: 0;
+		if (model.Flows[(size_t)inflowConnIdx].Requested != (model.Flows[connIdx].Requested + chargeRate))
+		{
+			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConnIdx);
+		}
+		model.Flows[(size_t)inflowConnIdx].Requested = model.Flows[connIdx].Requested + chargeRate;
+	}
+
+	void
 	RunConnectionsBackward(Model& model, SimulationState& ss)
 	{
 		while (ss.ActiveConnectionsBack.size() > 0)
@@ -252,37 +343,11 @@ namespace erin_next {
 					{
 						case 0:
 						{
-							++numBackwardPasses;
-							int inflowConn = FindInflowConnection(
-								model, model.Connections[connIdx].From, compIdx, 0);
-							assert((inflowConn >= 0) && "should find an inflow connection; model is incorrectly connected");
-							uint32_t outflowRequest = model.Flows[connIdx].Requested;
-							uint32_t inflowRequest =
-								(model.ConstEffConvs[compIdx].EfficiencyDenominator * outflowRequest)
-								/ model.ConstEffConvs[compIdx].EfficiencyNumerator;
-							assert((inflowRequest >= outflowRequest) && "inflow must be >= outflow in converter");
-							if (inflowRequest != model.Flows[(size_t)inflowConn].Requested)
-							{
-								Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConn);
-							}
-							model.Flows[(size_t)inflowConn].Requested = inflowRequest;
-							uint32_t attenuatedLossflowRequest = 0;
-							int lossflowConn = FindOutflowConnection(
-								model, model.Connections[connIdx].From, compIdx, 1);
-							if (lossflowConn >= 0) {
-								attenuatedLossflowRequest = FinalizeFlowValue(
-									inflowRequest - outflowRequest, model.Flows[(size_t)lossflowConn].Requested);
-							}
-							int wasteflowConn = FindOutflowConnection(
-								model, model.Connections[connIdx].From, compIdx, 2);
-							assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
-							uint32_t wasteflowRequest = inflowRequest - outflowRequest - attenuatedLossflowRequest;
-							model.Flows[(size_t)wasteflowConn].Requested = wasteflowRequest;
+							RunConstantEfficiencyConverterBackward(model, ss, connIdx, compIdx);
 						} break;
 						case 1: // lossflow
 						case 2: // wasteflow
 						{
-							// do nothing
 						} break;
 						default:
 						{
@@ -292,58 +357,11 @@ namespace erin_next {
 				} break;
 				case (ComponentType::MuxType):
 				{
-					++numBackwardPasses;
-					uint32_t totalRequest = 0;
-					std::vector<uint32_t> outflowRequests = {};
-					outflowRequests.reserve(model.Muxes[compIdx].NumOutports);
-					for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumOutports; ++muxOutPort)
-					{
-						size_t outflowConnIdx = FindOutflowConnection(model, ComponentType::MuxType, compIdx, muxOutPort);
-						outflowRequests.push_back(model.Flows[outflowConnIdx].Requested);
-						totalRequest += model.Flows[outflowConnIdx].Requested;
-					}
-					std::vector<uint32_t> inflowRequests = {};
-					inflowRequests.reserve(model.Muxes[compIdx].NumInports);
-					for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort)
-					{
-						size_t inflowConnIdx = FindInflowConnection(model, ComponentType::MuxType, compIdx, muxInPort);
-						uint32_t request = model.Flows[inflowConnIdx].Available >= totalRequest
-							? totalRequest
-							: model.Flows[inflowConnIdx].Available;
-						inflowRequests.push_back(request);
-						totalRequest -= request;
-					}
-					if (totalRequest > 0)
-					{
-						inflowRequests[0] += totalRequest;
-						totalRequest = 0;
-					}
-					for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort)
-					{
-						int inflowConnIdx = FindInflowConnection(model, ComponentType::MuxType, compIdx, muxInPort);
-						assert(inflowConnIdx >= 0 && "mux must have at one inflow per inflow port");
-						if (model.Flows[inflowConnIdx].Requested != inflowRequests[muxInPort])
-						{
-							Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConnIdx);
-						}
-						model.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
-					}
+					RunMuxBackward(model, ss, connIdx, compIdx);
 				} break;
 				case (ComponentType::StoreType):
 				{
-					++numBackwardPasses;
-					int inflowConnIdx =
-						FindInflowConnection(model, ComponentType::StoreType, model.Connections[connIdx].FromIdx, 0);
-					assert(inflowConnIdx >= 0 && "must have an inflow connection to a store");
-					uint32_t chargeRate =
-						model.Stores[compIdx].Stored <= model.Stores[compIdx].ChargeAmount
-						? model.Stores[compIdx].MaxChargeRate
-						: 0;
-					if (model.Flows[(size_t)inflowConnIdx].Requested != (model.Flows[connIdx].Requested + chargeRate))
-					{
-						Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConnIdx);
-					}
-					model.Flows[(size_t)inflowConnIdx].Requested = model.Flows[connIdx].Requested + chargeRate;
+					RunStoreBackward(model, ss, connIdx, compIdx);
 				} break;
 				default:
 				{
@@ -352,6 +370,105 @@ namespace erin_next {
 				}
 			}
 		}
+	}
+
+	void
+	RunConstantEfficiencyConverterForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	{
+		++numForwardPasses;
+		uint32_t inflowAvailable = model.Flows[connIdx].Available;
+		uint32_t inflowRequest = model.Flows[connIdx].Requested;
+		int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, compIdx, 0);
+		assert((outflowConn >= 0) && "should find an outflow connection; model is incorrectly connected");
+		uint32_t outflowAvailable =
+			(model.ConstEffConvs[compIdx].EfficiencyNumerator * inflowAvailable)
+			/ model.ConstEffConvs[compIdx].EfficiencyDenominator;
+		uint32_t outflowRequest = model.Flows[(size_t)outflowConn].Requested;
+		assert((inflowAvailable >= outflowAvailable) && "converter forward flow; inflow must be >= outflow");
+		if (outflowAvailable != model.Flows[(size_t)outflowConn].Available)
+		{
+			Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConn);
+		}
+		model.Flows[(size_t)outflowConn].Available = outflowAvailable;
+		int lossflowConn = FindOutflowConnection(
+			model, model.Connections[connIdx].To, compIdx, 1);
+		uint32_t nonOutflowAvailable =
+			FinalizeFlowValue(inflowAvailable, inflowRequest)
+			- FinalizeFlowValue(outflowAvailable, outflowRequest);
+		uint32_t lossflowAvailable = 0;
+		uint32_t lossflowRequest = 0;
+		if (lossflowConn >= 0) {
+			lossflowRequest = model.Flows[(size_t)lossflowConn].Requested;
+			lossflowAvailable = FinalizeFlowValue(nonOutflowAvailable, lossflowRequest);
+			nonOutflowAvailable -= lossflowAvailable;
+			if (lossflowAvailable != model.Flows[(size_t)lossflowConn].Available)
+			{
+				Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)lossflowConn);
+			}
+			model.Flows[(size_t)lossflowConn].Available = lossflowAvailable;
+		}
+		int wasteflowConn = FindOutflowConnection(
+			model, model.Connections[connIdx].To, compIdx, 2);
+		assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
+		model.Flows[(size_t)wasteflowConn].Requested = nonOutflowAvailable;
+		model.Flows[(size_t)wasteflowConn].Available = nonOutflowAvailable;
+	}
+
+	void
+	RunMuxForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	{
+		++numForwardPasses;
+		uint32_t totalAvailable = 0;
+		for (size_t muxInport = 0; muxInport < model.Muxes[compIdx].NumInports; ++muxInport) {
+			int inflowConnIdx = FindInflowConnection(
+				model, ComponentType::MuxType, compIdx, muxInport);
+			assert(inflowConnIdx >= 0 && "must have an inflow connection for each mux inport");
+			totalAvailable += model.Flows[inflowConnIdx].Available;
+		}
+		uint32_t totalRequest = 0;
+		for (size_t muxOutport = 0; muxOutport < model.Muxes[compIdx].NumOutports; ++muxOutport) {
+			int outflowConnIdx = FindOutflowConnection(
+				model, ComponentType::MuxType, compIdx, muxOutport);
+			assert(outflowConnIdx >= 0 && "must have an outflow connection for each mux outport");
+			totalRequest += model.Flows[(size_t)outflowConnIdx].Requested;
+		}
+		for (size_t muxOutport = 0; muxOutport < model.Muxes[compIdx].NumOutports; ++muxOutport) {
+			int outflowConnIdx = FindOutflowConnection(
+				model, ComponentType::MuxType, compIdx, muxOutport);
+			assert(outflowConnIdx >= 0 && "must have an outflow connection for each mux outport");
+			uint32_t available = model.Flows[(size_t)outflowConnIdx].Requested >= totalAvailable
+				? totalAvailable
+				: model.Flows[(size_t)outflowConnIdx].Requested;
+			if (muxOutport == 0 && totalRequest < totalAvailable) {
+				available += totalAvailable - totalRequest;
+			}
+			totalAvailable -= available;
+			if (model.Flows[(size_t)outflowConnIdx].Available != available)
+			{
+				Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConnIdx);
+			}
+			model.Flows[(size_t)outflowConnIdx].Available = available;
+		}
+	}
+
+	void
+	RunStoreForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	{
+		++numForwardPasses;
+		int outflowConn =
+			FindOutflowConnection(
+				model, model.Connections[connIdx].To, compIdx, 0);
+		assert(outflowConn >= 0 && "store must have an outflow connection");
+		uint32_t available = model.Flows[connIdx].Available;
+		uint32_t dischargeAvailable = model.Stores[compIdx].Stored > 0
+			? model.Stores[compIdx].MaxDischargeRate
+			: 0;
+		available += dischargeAvailable;
+		if (model.Flows[(size_t)outflowConn].Available != available)
+		{
+			Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConn);
+		}
+		model.Flows[(size_t)outflowConn].Available = available;
 	}
 
 	void
@@ -371,96 +488,15 @@ namespace erin_next {
 				} break;
 				case (ComponentType::ConstantEfficiencyConverterType):
 				{
-					++numForwardPasses;
-					uint32_t inflowAvailable = model.Flows[connIdx].Available;
-					uint32_t inflowRequest = model.Flows[connIdx].Requested;
-					int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, compIdx, 0);
-					assert((outflowConn >= 0) && "should find an outflow connection; model is incorrectly connected");
-					uint32_t outflowAvailable =
-						(model.ConstEffConvs[compIdx].EfficiencyNumerator * inflowAvailable)
-						/ model.ConstEffConvs[compIdx].EfficiencyDenominator;
-					uint32_t outflowRequest = model.Flows[(size_t)outflowConn].Requested;
-					assert((inflowAvailable >= outflowAvailable) && "converter forward flow; inflow must be >= outflow");
-					if (outflowAvailable != model.Flows[(size_t)outflowConn].Available)
-					{
-						Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConn);
-					}
-					model.Flows[(size_t)outflowConn].Available = outflowAvailable;
-					int lossflowConn = FindOutflowConnection(
-						model, model.Connections[connIdx].To, compIdx, 1);
-					uint32_t nonOutflowAvailable =
-						FinalizeFlowValue(inflowAvailable, inflowRequest)
-						- FinalizeFlowValue(outflowAvailable, outflowRequest);
-					uint32_t lossflowAvailable = 0;
-					uint32_t lossflowRequest = 0;
-					if (lossflowConn >= 0) {
-						lossflowRequest = model.Flows[(size_t)lossflowConn].Requested;
-						lossflowAvailable = FinalizeFlowValue(nonOutflowAvailable, lossflowRequest);
-						nonOutflowAvailable -= lossflowAvailable;
-						if (lossflowAvailable != model.Flows[(size_t)lossflowConn].Available)
-						{
-							Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)lossflowConn);
-						}
-						model.Flows[(size_t)lossflowConn].Available = lossflowAvailable;
-					}
-					int wasteflowConn = FindOutflowConnection(
-						model, model.Connections[connIdx].To, compIdx, 2);
-					assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
-					model.Flows[(size_t)wasteflowConn].Requested = nonOutflowAvailable;
-					model.Flows[(size_t)wasteflowConn].Available = nonOutflowAvailable;
+					RunConstantEfficiencyConverterForward(model, ss, connIdx, compIdx);
 				} break;
 				case (ComponentType::MuxType):
 				{
-					++numForwardPasses;
-					uint32_t totalAvailable = 0;
-					for (size_t muxInport = 0; muxInport < model.Muxes[compIdx].NumInports; ++muxInport) {
-						int inflowConnIdx = FindInflowConnection(
-							model, ComponentType::MuxType, compIdx, muxInport);
-						assert(inflowConnIdx >= 0 && "must have an inflow connection for each mux inport");
-						totalAvailable += model.Flows[inflowConnIdx].Available;
-					}
-					uint32_t totalRequest = 0;
-					for (size_t muxOutport = 0; muxOutport < model.Muxes[compIdx].NumOutports; ++muxOutport) {
-						int outflowConnIdx = FindOutflowConnection(
-							model, ComponentType::MuxType, compIdx, muxOutport);
-						assert(outflowConnIdx >= 0 && "must have an outflow connection for each mux outport");
-						totalRequest += model.Flows[(size_t)outflowConnIdx].Requested;
-					}
-					for (size_t muxOutport = 0; muxOutport < model.Muxes[compIdx].NumOutports; ++muxOutport) {
-						int outflowConnIdx = FindOutflowConnection(
-							model, ComponentType::MuxType, compIdx, muxOutport);
-						assert(outflowConnIdx >= 0 && "must have an outflow connection for each mux outport");
-						uint32_t available = model.Flows[(size_t)outflowConnIdx].Requested >= totalAvailable
-							? totalAvailable
-							: model.Flows[(size_t)outflowConnIdx].Requested;
-						if (muxOutport == 0 && totalRequest < totalAvailable) {
-							available += totalAvailable - totalRequest;
-						}
-						totalAvailable -= available;
-						if (model.Flows[(size_t)outflowConnIdx].Available != available)
-						{
-							Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConnIdx);
-						}
-						model.Flows[(size_t)outflowConnIdx].Available = available;
-					}
+					RunMuxForward(model, ss, connIdx, compIdx);
 				} break;
 				case (ComponentType::StoreType):
 				{
-					++numForwardPasses;
-					int outflowConn =
-						FindOutflowConnection(
-							model, model.Connections[connIdx].To, compIdx, 0);
-					assert(outflowConn >= 0 && "store must have an outflow connection");
-					uint32_t available = model.Flows[connIdx].Available;
-					uint32_t dischargeAvailable = model.Stores[compIdx].Stored > 0
-						? model.Stores[compIdx].MaxDischargeRate
-						: 0;
-					available += dischargeAvailable;
-					if (model.Flows[(size_t)outflowConn].Available != available)
-					{
-						Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConn);
-					}
-					model.Flows[(size_t)outflowConn].Available = available;
+					RunStoreForward(model, ss, connIdx, compIdx);
 				} break;
 				default:
 				{

@@ -130,9 +130,9 @@ namespace erin_next {
 	void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx);
 	void SimulationState_AddActiveConnectionPost(SimulationState& ss, size_t connIdx);
 	size_t CountActiveConnections(SimulationState const& ss);
-	void ActivateConnectionsForConstantLoads(Model& m, SimulationState& ss);
-	void ActivateConnectionsForConstantSources(Model& m, SimulationState& ss);
-	void ActivateConnectionsForScheduleBasedLoads(Model& m, SimulationState& ss, double t);
+	void ActivateConnectionsForConstantLoads(Model const& m, SimulationState& ss);
+	void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss);
+	void ActivateConnectionsForScheduleBasedLoads(Model const& m, SimulationState& ss, double t);
 	void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
 	double EarliestNextEvent(Model const& m, SimulationState const& ss, double t);
 	int FindInflowConnection(Model const& m, ComponentType ct, size_t compId, size_t inflowPort);
@@ -148,7 +148,7 @@ namespace erin_next {
 	void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elapsedTime);
 	std::string ToString(ComponentType ct);
 	void PrintFlows(Model const& m, SimulationState const&, double t);
-	FlowSummary SummarizeFlows(Model& m, double t);
+	FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t);
 	void PrintFlowSummary(FlowSummary s);
 	void PrintModelState(Model& model, SimulationState& ss);
 	std::vector<Flow> CopyFlows(std::vector<Flow> flows);
@@ -172,7 +172,7 @@ namespace erin_next {
 	void RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx);
 	void RunStoreBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 	void RunConstantEfficiencyConverterForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
-	void RunMuxForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+	void RunMuxForward(Model& model, SimulationState& ss, size_t compIdx);
 	void RunStoreForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 	void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_t connIdx, size_t compIdx);
 

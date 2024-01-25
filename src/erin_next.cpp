@@ -80,7 +80,7 @@ namespace erin_next {
 	}
 
 	void
-	ActivateConnectionsForConstantLoads(Model& model, SimulationState& ss)
+	ActivateConnectionsForConstantLoads(Model const& model, SimulationState& ss)
 	{
 		for (size_t loadIdx = 0; loadIdx < model.ConstLoads.size(); ++loadIdx)
 		{
@@ -100,7 +100,7 @@ namespace erin_next {
 	}
 
 	void
-	ActivateConnectionsForConstantSources(Model& model, SimulationState& ss)
+	ActivateConnectionsForConstantSources(Model const& model, SimulationState& ss)
 	{
 		for (size_t srcIdx = 0; srcIdx < model.ConstSources.size(); ++srcIdx)
 		{
@@ -120,7 +120,7 @@ namespace erin_next {
 	}
 
 	void
-	ActivateConnectionsForScheduleBasedLoads(Model& m, SimulationState& ss, double t)
+	ActivateConnectionsForScheduleBasedLoads(Model const& m, SimulationState& ss, double t)
 	{
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx)
 		{

@@ -66,8 +66,6 @@ namespace erin_next {
 		ComponentType To;
 		size_t ToIdx;
 		size_t ToPort;
-		bool IsActiveForward;
-		bool IsActiveBack;
 	};
 
 	struct Mux {
@@ -120,18 +118,28 @@ namespace erin_next {
 		Connection WasteConnection;
 	};
 
-	size_t CountActiveConnections(Model& m);
-	void ActivateConnectionsForConstantLoads(Model& m);
-	void ActivateConnectionsForConstantSources(Model& m);
-	void ActivateConnectionsForScheduleBasedLoads(Model& m, double t);
-	void ActivateConnectionsForStores(Model& m, double t);
+	struct SimulationState {
+		std::vector<size_t> ActiveConnectionsBack;
+		std::vector<size_t> ActiveConnectionsFront;
+		std::vector<size_t> ActiveConnectionsPost;
+	};
+
+	void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
+	void SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx);
+	void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx);
+	void SimulationState_AddActiveConnectionPost(SimulationState& ss, size_t connIdx);
+	size_t CountActiveConnections(SimulationState& ss);
+	void ActivateConnectionsForConstantLoads(Model& m, SimulationState& ss);
+	void ActivateConnectionsForConstantSources(Model& m, SimulationState& ss);
+	void ActivateConnectionsForScheduleBasedLoads(Model& m, SimulationState& ss, double t);
+	void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
 	double EarliestNextEvent(Model& m, double t);
 	int FindInflowConnection(Model& m, ComponentType ct, size_t compId, size_t inflowPort);
 	int FindOutflowConnection(Model& m, ComponentType ct, size_t compId, size_t outflowPort);
-	void RunActiveConnections(Model& m, double t);
-	void RunConnectionsPostFinalization(Model& model, double t);
-	void RunConnectionsBackward(Model& model);
-	void RunConnectionsForward(Model& model);
+	void RunActiveConnections(Model& m, SimulationState& ss, double t);
+	void RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t);
+	void RunConnectionsBackward(Model& model, SimulationState& ss);
+	void RunConnectionsForward(Model& model, SimulationState& ss);
 	uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available);
 	void FinalizeFlows(Model& m);
 	double NextEvent(ScheduleBasedLoad sb, double t);
@@ -158,6 +166,7 @@ namespace erin_next {
 	std::optional<uint32_t> ModelResults_GetStoreState(size_t storeId, double time, std::vector<TimeAndFlows> timeAndFlows);
 	void Debug_PrintNumberOfPasses(bool onlyGrandTotal = false);
 	void Debug_ResetNumberOfPasses(bool resetAll = false);
+	SimulationState Model_SetupSimulationState(Model& m);
 
 }
 

@@ -227,20 +227,24 @@ namespace erin_next {
 		uint32_t inflowRequest =
 			(m.ConstEffConvs[compIdx].EfficiencyDenominator * outflowRequest)
 			/ m.ConstEffConvs[compIdx].EfficiencyNumerator;
-		assert((inflowRequest >= outflowRequest) && "inflow must be >= outflow in converter");
+		assert((inflowRequest >= outflowRequest)
+			&& "inflow must be >= outflow in converter");
 		if (inflowRequest != ss.Flows[inflowConn].Requested)
 		{
 			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, inflowConn);
 		}
 		ss.Flows[inflowConn].Requested = inflowRequest;
 		uint32_t attenuatedLossflowRequest = 0;
-		std::optional<size_t> lossflowConn = m.ConstEffConvs[compIdx].LossflowConn; // FindOutflowConnection(m, ct, compIdx, lossflowPort);
+		std::optional<size_t> lossflowConn =
+			m.ConstEffConvs[compIdx].LossflowConn;
 		if (lossflowConn.has_value()) {
 			attenuatedLossflowRequest = FinalizeFlowValue(
-				inflowRequest - outflowRequest, ss.Flows[lossflowConn.value()].Requested);
+				inflowRequest - outflowRequest,
+				ss.Flows[lossflowConn.value()].Requested);
 		}
-		size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn; // FindOutflowConnection(m, ct, compIdx, wasteflowPort);
-		uint32_t wasteflowRequest = inflowRequest - outflowRequest - attenuatedLossflowRequest;
+		size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn;
+		uint32_t wasteflowRequest =
+			inflowRequest - outflowRequest - attenuatedLossflowRequest;
 		ss.Flows[wasteflowConn].Requested = wasteflowRequest;
 	}
 

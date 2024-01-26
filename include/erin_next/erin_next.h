@@ -16,6 +16,10 @@ namespace erin_next {
 
 	double const infinity = -1.0;
 
+	size_t const constEffConvOutflowPort = 0;
+	size_t const constEffConvLossflowPort = 1;
+	size_t const constEffConvWasteflowPort = 2;
+
 	enum class ComponentType
 	{
 		ConstantLoadType,
@@ -59,6 +63,10 @@ namespace erin_next {
 	struct ConstantEfficiencyConverter {
 		uint32_t EfficiencyNumerator;
 		uint32_t EfficiencyDenominator;
+		size_t InflowConn;
+		size_t OutflowConn;
+		std::optional<size_t> LossflowConn;
+		size_t WasteflowConn;
 	};
 
 	struct Connection {

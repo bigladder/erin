@@ -215,34 +215,33 @@ namespace erin_next {
 	}
 
 	void
-	RunConstantEfficiencyConverterBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	RunConstantEfficiencyConverterBackward(
+		Model& m,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx)
 	{
 		++numBackwardPasses;
-		ComponentType const ct = ComponentType::ConstantEfficiencyConverterType;
-		size_t const lossflowPort = 1;
-		size_t const wasteflowPort = 2;
-		int inflowConn = FindInflowConnection(model, ct, compIdx, 0);
-		assert((inflowConn >= 0) && "should find an inflow connection; model is incorrectly connected");
+		size_t inflowConn = m.ConstEffConvs[compIdx].InflowConn;
 		uint32_t outflowRequest = ss.Flows[connIdx].Requested;
 		uint32_t inflowRequest =
-			(model.ConstEffConvs[compIdx].EfficiencyDenominator * outflowRequest)
-			/ model.ConstEffConvs[compIdx].EfficiencyNumerator;
+			(m.ConstEffConvs[compIdx].EfficiencyDenominator * outflowRequest)
+			/ m.ConstEffConvs[compIdx].EfficiencyNumerator;
 		assert((inflowRequest >= outflowRequest) && "inflow must be >= outflow in converter");
-		if (inflowRequest != ss.Flows[(size_t)inflowConn].Requested)
+		if (inflowRequest != ss.Flows[inflowConn].Requested)
 		{
-			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConn);
+			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, inflowConn);
 		}
-		ss.Flows[(size_t)inflowConn].Requested = inflowRequest;
+		ss.Flows[inflowConn].Requested = inflowRequest;
 		uint32_t attenuatedLossflowRequest = 0;
-		int lossflowConn = FindOutflowConnection(model, ct, compIdx, lossflowPort);
-		if (lossflowConn >= 0) {
+		std::optional<size_t> lossflowConn = m.ConstEffConvs[compIdx].LossflowConn; // FindOutflowConnection(m, ct, compIdx, lossflowPort);
+		if (lossflowConn.has_value()) {
 			attenuatedLossflowRequest = FinalizeFlowValue(
-				inflowRequest - outflowRequest, ss.Flows[(size_t)lossflowConn].Requested);
+				inflowRequest - outflowRequest, ss.Flows[lossflowConn.value()].Requested);
 		}
-		int wasteflowConn = FindOutflowConnection(model, ct, compIdx, wasteflowPort);
-		assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
+		size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn; // FindOutflowConnection(m, ct, compIdx, wasteflowPort);
 		uint32_t wasteflowRequest = inflowRequest - outflowRequest - attenuatedLossflowRequest;
-		ss.Flows[(size_t)wasteflowConn].Requested = wasteflowRequest;
+		ss.Flows[wasteflowConn].Requested = wasteflowRequest;
 	}
 
 	void
@@ -1028,7 +1027,11 @@ namespace erin_next {
 	}
 
 	ComponentIdAndWasteConnection
-	Model_AddConstantEfficiencyConverter(Model& m, SimulationState& ss, uint32_t eff_numerator, uint32_t eff_denominator)
+	Model_AddConstantEfficiencyConverter(
+		Model& m,
+		SimulationState& ss,
+		uint32_t eff_numerator,
+		uint32_t eff_denominator)
 	{
 		size_t id = m.ConstEffConvs.size();
 		m.ConstEffConvs.push_back({ eff_numerator, eff_denominator });
@@ -1057,12 +1060,39 @@ namespace erin_next {
 			{
 				m.ConstSources[from.Id].OutflowConn = connId;
 			} break;
+			case (ComponentType::ConstantEfficiencyConverterType):
+			{
+				switch (fromPort)
+				{
+					case (0):
+					{
+						m.ConstEffConvs[from.Id].OutflowConn = connId;
+					} break;
+					case (1):
+					{
+						m.ConstEffConvs[from.Id].LossflowConn = connId;
+					} break;
+					case (2):
+					{
+						m.ConstEffConvs[from.Id].WasteflowConn = connId;
+					} break;
+					default:
+					{
+						throw std::invalid_argument(
+							"Unhandled port id for outport of constant efficiency converter");
+					}
+				}
+			} break;
 		}
 		switch (to.Type)
 		{
 			case (ComponentType::ConstantLoadType):
 			{
 				m.ConstLoads[to.Id].InflowConn = connId;
+			} break;
+			case (ComponentType::ConstantEfficiencyConverterType):
+			{
+				m.ConstEffConvs[to.Id].InflowConn = connId;
 			} break;
 		}
 		return c;

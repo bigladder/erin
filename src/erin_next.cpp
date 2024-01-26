@@ -903,20 +903,29 @@ namespace erin_next {
 	{
 		double t = 0.0;
 		std::vector<TimeAndFlows> timeAndFlows = {};
-		size_t const maxLoopIter = 100;
 		SimulationState ss = Model_SetupSimulationState(model);
 		// TODO: max loop should be in the while loop; however, we do want to check for max time
-		for (size_t loopIdx = 0; loopIdx < maxLoopIter; ++loopIdx)
+		while (t != infinity)
 		{
 			ActivateConnectionsForScheduleBasedLoads(model, ss, t);
 			ActivateConnectionsForStores(model, ss, t);
-			if (loopIdx == 0)
+			if (t == 0)
 			{
 				ActivateConnectionsForConstantLoads(model, ss);
 				ActivateConnectionsForConstantSources(model, ss);
 			}
-			while (CountActiveConnections(ss) > 0)
+			// TODO: add a for-loop for max iter? check both count of active connections and max loop?
+			size_t const maxLoop = 10;
+			for (size_t loopIter = 0; loopIter <= maxLoop; ++loopIter)
 			{
+				if (CountActiveConnections(ss) == 0)
+				{
+					break;
+				}
+				if (loopIter == maxLoop)
+				{
+					// throw an error?
+				}
 				RunActiveConnections(model, ss, t);
 			}
 			Debug_PrintNumberOfPasses();
@@ -933,7 +942,7 @@ namespace erin_next {
 			taf.StorageAmounts = CopyStorageStates(ss);
 			timeAndFlows.push_back(std::move(taf));
 			double nextTime = EarliestNextEvent(model, ss, t);
-			if (nextTime < 0.0)
+			if (nextTime == infinity)
 			{
 				break;
 			}

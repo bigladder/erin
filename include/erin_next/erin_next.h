@@ -119,6 +119,8 @@ namespace erin_next {
 	struct SimulationState {
 		std::vector<size_t> ActiveConnectionsBack;
 		std::vector<size_t> ActiveConnectionsFront;
+		std::vector<ComponentId> ActiveComponentsBack;
+		std::vector<ComponentId> ActiveComponentFront;
 		std::vector<uint32_t> StorageAmounts;
 		std::vector<double> StorageNextEventTimes;
 		std::vector<Flow> Flows;

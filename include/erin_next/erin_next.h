@@ -57,6 +57,7 @@ namespace erin_next {
 	struct ScheduleBasedLoad
 	{
 		std::vector<TimeAndLoad> TimesAndLoads;
+		size_t InflowConn;
 	};
 
 	struct ConstantSource
@@ -100,6 +101,8 @@ namespace erin_next {
 		uint32_t MaxDischargeRate; // energy per time unit
 		uint32_t ChargeAmount; // storage level at or below which we request charge
 		uint32_t InitialStorage;
+		size_t InflowConn;
+		size_t OutflowConn;
 	};
 
 	struct Flow

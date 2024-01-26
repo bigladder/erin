@@ -105,22 +105,17 @@ namespace erin_next {
 	{
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx)
 		{
-			for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx)
+			size_t connIdx = m.ScheduledLoads[schIdx].InflowConn;
+			for (TimeAndLoad const& tal : m.ScheduledLoads[schIdx].TimesAndLoads)
 			{
-				if (m.Connections[connIdx].To == ComponentType::ScheduleBasedLoadType
-					&& m.Connections[connIdx].ToIdx == schIdx)
+				if (tal.Time == t)
 				{
-					for (size_t itemIdx = 0; itemIdx < m.ScheduledLoads[schIdx].TimesAndLoads.size(); ++itemIdx)
+					if (ss.Flows[connIdx].Requested != tal.Load)
 					{
-						if (m.ScheduledLoads[schIdx].TimesAndLoads[itemIdx].Time == t)
-						{
-							if (ss.Flows[connIdx].Requested != m.ScheduledLoads[schIdx].TimesAndLoads[itemIdx].Load)
-							{
-								SimulationState_AddActiveConnectionBack(ss, connIdx);
-							}
-							ss.Flows[connIdx].Requested = m.ScheduledLoads[schIdx].TimesAndLoads[itemIdx].Load;
-						}
+						SimulationState_AddActiveConnectionBack(ss, connIdx);
 					}
+					ss.Flows[connIdx].Requested = tal.Load;
+					break;
 				}
 			}
 		}
@@ -133,26 +128,24 @@ namespace erin_next {
 		{
 			if (ss.StorageNextEventTimes[storeIdx] == t)
 			{
-				int inflowConn = FindInflowConnection(m, ComponentType::StoreType, storeIdx, 0);
-				int outflowConn = FindOutflowConnection(m, ComponentType::StoreType, storeIdx, 0);
-				assert(inflowConn >= 0 && "we should have an inflow connection");
-				assert(outflowConn >= 0 && "we should have an outflow connection");
-				uint32_t available = ss.Flows[(size_t)inflowConn].Available + (
+				size_t inflowConn = m.Stores[storeIdx].InflowConn;
+				size_t outflowConn = m.Stores[storeIdx].OutflowConn;
+				uint32_t available = ss.Flows[inflowConn].Available + (
 					ss.StorageAmounts[storeIdx] > 0 ? m.Stores[storeIdx].MaxDischargeRate : 0);
-				if (ss.Flows[(size_t)outflowConn].Available != available)
+				if (ss.Flows[outflowConn].Available != available)
 				{
-					SimulationState_AddActiveConnectionForward(ss, (size_t)outflowConn);
+					SimulationState_AddActiveConnectionForward(ss, outflowConn);
 				}
-				ss.Flows[(size_t)outflowConn].Available = available;
-				uint32_t request = ss.Flows[(size_t)outflowConn].Requested + (
+				ss.Flows[outflowConn].Available = available;
+				uint32_t request = ss.Flows[outflowConn].Requested + (
 					ss.StorageAmounts[storeIdx] <= m.Stores[storeIdx].ChargeAmount
 					? m.Stores[storeIdx].MaxChargeRate
 					: 0);
-				if (ss.Flows[(size_t)inflowConn].Requested != request)
+				if (ss.Flows[inflowConn].Requested != request)
 				{
-					SimulationState_AddActiveConnectionForward(ss, (size_t)inflowConn);
+					SimulationState_AddActiveConnectionForward(ss, inflowConn);
 				}
-				ss.Flows[(size_t)inflowConn].Requested = request;
+				ss.Flows[inflowConn].Requested = request;
 			}
 		}
 	}
@@ -286,18 +279,16 @@ namespace erin_next {
 	RunStoreBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
 	{
 		++numBackwardPasses;
-		int inflowConnIdx =
-			FindInflowConnection(model, ComponentType::StoreType, model.Connections[connIdx].FromIdx, 0);
-		assert(inflowConnIdx >= 0 && "must have an inflow connection to a store");
+		size_t inflowConnIdx = model.Stores[compIdx].InflowConn;
 		uint32_t chargeRate =
 			ss.StorageAmounts[compIdx] <= model.Stores[compIdx].ChargeAmount
 			? model.Stores[compIdx].MaxChargeRate
 			: 0;
-		if (ss.Flows[(size_t)inflowConnIdx].Requested != (ss.Flows[connIdx].Requested + chargeRate))
+		if (ss.Flows[inflowConnIdx].Requested != (ss.Flows[connIdx].Requested + chargeRate))
 		{
-			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConnIdx);
+			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, inflowConnIdx);
 		}
-		ss.Flows[(size_t)inflowConnIdx].Requested = ss.Flows[connIdx].Requested + chargeRate;
+		ss.Flows[inflowConnIdx].Requested = ss.Flows[connIdx].Requested + chargeRate;
 	}
 
 	void
@@ -427,20 +418,17 @@ namespace erin_next {
 	RunStoreForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
 	{
 		++numForwardPasses;
-		int outflowConn =
-			FindOutflowConnection(
-				model, model.Connections[connIdx].To, compIdx, 0);
-		assert(outflowConn >= 0 && "store must have an outflow connection");
+		size_t outflowConn = model.Stores[compIdx].OutflowConn;
 		uint32_t available = ss.Flows[connIdx].Available;
 		uint32_t dischargeAvailable = ss.StorageAmounts[compIdx] > 0
 			? model.Stores[compIdx].MaxDischargeRate
 			: 0;
 		available += dischargeAvailable;
-		if (ss.Flows[(size_t)outflowConn].Available != available)
+		if (ss.Flows[outflowConn].Available != available)
 		{
-			Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConn);
+			Helper_AddIfNotAdded(ss.ActiveConnectionsFront, outflowConn);
 		}
-		ss.Flows[(size_t)outflowConn].Available = available;
+		ss.Flows[outflowConn].Available = available;
 	}
 
 	void
@@ -1025,6 +1013,10 @@ namespace erin_next {
 			{
 				m.Muxes[from.Id].OutflowConns[fromPort] = connId;
 			} break;
+			case (ComponentType::StoreType):
+			{
+				m.Stores[from.Id].OutflowConn = connId;
+			} break;
 		}
 		switch (to.Type)
 		{
@@ -1039,6 +1031,14 @@ namespace erin_next {
 			case (ComponentType::MuxType):
 			{
 				m.Muxes[to.Id].InflowConns[toPort] = connId;
+			} break;
+			case (ComponentType::StoreType):
+			{
+				m.Stores[to.Id].InflowConn = connId;
+			} break;
+			case (ComponentType::ScheduleBasedLoadType):
+			{
+				m.ScheduledLoads[to.Id].InflowConn = connId;
 			} break;
 		}
 		return c;

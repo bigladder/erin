@@ -251,40 +251,32 @@ namespace erin_next {
 	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		ComponentType const ct = ComponentType::MuxType;
 		++numBackwardPasses;
 		uint32_t totalRequest = 0;
-		std::vector<uint32_t> outflowRequests = {};
-		outflowRequests.reserve(model.Muxes[compIdx].NumOutports);
-		for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumOutports; ++muxOutPort)
+		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
 		{
-			size_t outflowConnIdx = FindOutflowConnection(model, ct, compIdx, muxOutPort);
-			outflowRequests.push_back(ss.Flows[outflowConnIdx].Requested);
 			totalRequest += ss.Flows[outflowConnIdx].Requested;
 		}
 		std::vector<uint32_t> inflowRequests = {};
 		inflowRequests.reserve(model.Muxes[compIdx].NumInports);
-		for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort)
+		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
 		{
-			size_t inflowConnIdx = FindInflowConnection(model, ct, compIdx, muxInPort);
 			uint32_t request = ss.Flows[inflowConnIdx].Available >= totalRequest
 				? totalRequest
 				: ss.Flows[inflowConnIdx].Available;
 			inflowRequests.push_back(request);
 			totalRequest -= request;
 		}
-		if (totalRequest > 0)
-		{
+		if (totalRequest > 0) {
 			inflowRequests[0] += totalRequest;
 			totalRequest = 0;
 		}
 		for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort)
 		{
-			int inflowConnIdx = FindInflowConnection(model, ct, compIdx, muxInPort);
-			assert(inflowConnIdx >= 0 && "mux must have at one inflow per inflow port");
+			size_t inflowConnIdx = model.Muxes[compIdx].InflowConns[muxInPort];
 			if (ss.Flows[inflowConnIdx].Requested != inflowRequests[muxInPort])
 			{
-				Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConnIdx);
+				Helper_AddIfNotAdded(ss.ActiveConnectionsBack, inflowConnIdx);
 			}
 			ss.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
 		}
@@ -403,35 +395,31 @@ namespace erin_next {
 	{
 		++numForwardPasses;
 		uint32_t totalAvailable = 0;
-		for (size_t muxInport = 0; muxInport < model.Muxes[compIdx].NumInports; ++muxInport) {
-			int inflowConnIdx = FindInflowConnection(
-				model, ComponentType::MuxType, compIdx, muxInport);
-			assert(inflowConnIdx >= 0 && "must have an inflow connection for each mux inport");
+		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
+		{
 			totalAvailable += ss.Flows[inflowConnIdx].Available;
 		}
-		uint32_t totalRequest = 0;
-		for (size_t muxOutport = 0; muxOutport < model.Muxes[compIdx].NumOutports; ++muxOutport) {
-			int outflowConnIdx = FindOutflowConnection(
-				model, ComponentType::MuxType, compIdx, muxOutport);
-			assert(outflowConnIdx >= 0 && "must have an outflow connection for each mux outport");
-			totalRequest += ss.Flows[(size_t)outflowConnIdx].Requested;
-		}
-		for (size_t muxOutport = 0; muxOutport < model.Muxes[compIdx].NumOutports; ++muxOutport) {
-			int outflowConnIdx = FindOutflowConnection(
-				model, ComponentType::MuxType, compIdx, muxOutport);
-			assert(outflowConnIdx >= 0 && "must have an outflow connection for each mux outport");
-			uint32_t available = ss.Flows[(size_t)outflowConnIdx].Requested >= totalAvailable
+		std::vector<uint32_t> outflowAvailables = {};
+		outflowAvailables.reserve(model.Muxes[compIdx].NumOutports);
+		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
+		{
+			uint32_t available = ss.Flows[outflowConnIdx].Requested >= totalAvailable
 				? totalAvailable
-				: ss.Flows[(size_t)outflowConnIdx].Requested;
-			if (muxOutport == 0 && totalRequest < totalAvailable) {
-				available += totalAvailable - totalRequest;
-			}
+				: ss.Flows[outflowConnIdx].Requested;
+			outflowAvailables.push_back(available);
 			totalAvailable -= available;
-			if (ss.Flows[(size_t)outflowConnIdx].Available != available)
+		}
+		if (totalAvailable > 0) {
+			outflowAvailables[0] += totalAvailable;
+			totalAvailable = 0;
+		}
+		for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumOutports; ++muxOutPort) {
+			size_t outflowConnIdx = model.Muxes[compIdx].OutflowConns[muxOutPort];
+			if (ss.Flows[outflowConnIdx].Available != outflowAvailables[muxOutPort])
 			{
-				Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConnIdx);
+				Helper_AddIfNotAdded(ss.ActiveConnectionsFront, outflowConnIdx);
 			}
-			ss.Flows[(size_t)outflowConnIdx].Available = available;
+			ss.Flows[outflowConnIdx].Available = outflowAvailables[muxOutPort];
 		}
 	}
 
@@ -526,67 +514,8 @@ namespace erin_next {
 	void
 	RunMuxPostFinalization(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		++numPostPasses;
-		// REQUESTS
-		uint32_t totalRequest = 0;
-		for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumOutports; ++muxOutPort) {
-			size_t outflowConnIdx = FindOutflowConnection(model, ComponentType::MuxType, compIdx, muxOutPort);
-			totalRequest += ss.Flows[outflowConnIdx].Requested;
-		}
-		std::vector<uint32_t> inflowRequests = {};
-		inflowRequests.reserve(model.Muxes[compIdx].NumInports);
-		for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort) {
-			size_t inflowConnIdx = FindInflowConnection(model, ComponentType::MuxType, compIdx, muxInPort);
-			uint32_t request = ss.Flows[inflowConnIdx].Available >= totalRequest
-				? totalRequest
-				: ss.Flows[inflowConnIdx].Available;
-			inflowRequests.push_back(request);
-			totalRequest -= request;
-		}
-		if (totalRequest > 0) {
-			inflowRequests[0] += totalRequest;
-			totalRequest = 0;
-		}
-		for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort) {
-			int inflowConnIdx = FindInflowConnection(model, ComponentType::MuxType, compIdx, muxInPort);
-			assert(inflowConnIdx >= 0 && "mux must have 1 inflow connection per inport");
-			if (ss.Flows[(size_t)inflowConnIdx].Requested != inflowRequests[muxInPort])
-			{
-				Helper_AddIfNotAdded(ss.ActiveConnectionsBack, (size_t)inflowConnIdx);
-			}
-			ss.Flows[(size_t)inflowConnIdx].Requested = inflowRequests[muxInPort];
-		}
-		// AVAILABLE
-		uint32_t totalAvailable = 0;
-		for (size_t muxInPort = 0; muxInPort < model.Muxes[compIdx].NumInports; ++muxInPort) {
-			int inflowConnIdx = FindInflowConnection(model, ComponentType::MuxType, compIdx, muxInPort);
-			assert(inflowConnIdx >= 0 && "mux must have 1 inflow connection per inport");
-			totalAvailable += ss.Flows[(size_t)inflowConnIdx].Available;
-		}
-		std::vector<uint32_t> outflowAvailables = {};
-		outflowAvailables.reserve(model.Muxes[compIdx].NumOutports);
-		for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumInports; ++muxOutPort) {
-			size_t outflowConnIdx = FindOutflowConnection(model, ComponentType::MuxType, compIdx, muxOutPort);
-			uint32_t available = ss.Flows[outflowConnIdx].Requested >= totalAvailable
-				? totalAvailable
-				: ss.Flows[outflowConnIdx].Requested;
-			outflowAvailables.push_back(available);
-			totalAvailable -= available;
-		}
-		if (totalAvailable > 0) {
-			outflowAvailables[0] += totalAvailable;
-			totalAvailable = 0;
-		}
-		for (size_t muxOutPort = 0; muxOutPort < model.Muxes[compIdx].NumOutports; ++muxOutPort) {
-			int outflowConnIdx = FindOutflowConnection(
-				model, ComponentType::MuxType, compIdx, muxOutPort);
-			assert(outflowConnIdx >= 0 && "outflow connection index");
-			if (ss.Flows[outflowConnIdx].Available != outflowAvailables[muxOutPort])
-			{
-				Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConnIdx);
-			}
-			ss.Flows[outflowConnIdx].Available = outflowAvailables[muxOutPort];
-		}
+		RunMuxBackward(model, ss, compIdx);
+		RunMuxForward(model, ss, compIdx);
 	}
 
 	void
@@ -1004,7 +933,12 @@ namespace erin_next {
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports)
 	{
 		size_t id = m.Muxes.size();
-		m.Muxes.push_back({ numInports, numOutports });
+		Mux mux = {};
+		mux.NumInports = numInports;
+		mux.NumOutports = numOutports;
+		mux.InflowConns = std::vector<size_t>(numInports, 0);
+		mux.OutflowConns = std::vector<size_t>(numOutports, 0);
+		m.Muxes.push_back( std::move(mux) );
 		return { id, ComponentType::MuxType };
 	}
 
@@ -1087,6 +1021,10 @@ namespace erin_next {
 					}
 				}
 			} break;
+			case (ComponentType::MuxType):
+			{
+				m.Muxes[from.Id].OutflowConns[fromPort] = connId;
+			} break;
 		}
 		switch (to.Type)
 		{
@@ -1097,6 +1035,10 @@ namespace erin_next {
 			case (ComponentType::ConstantEfficiencyConverterType):
 			{
 				m.ConstEffConvs[to.Id].InflowConn = connId;
+			} break;
+			case (ComponentType::MuxType):
+			{
+				m.Muxes[to.Id].InflowConns[toPort] = connId;
 			} break;
 		}
 		return c;

@@ -31,7 +31,8 @@ namespace erin_next {
 		WasteSinkType,
 	};
 
-	struct FlowSummary {
+	struct FlowSummary
+	{
 		double Time;
 		uint32_t Inflow;
 		uint32_t OutflowRequest;
@@ -41,26 +42,31 @@ namespace erin_next {
 		uint32_t Wasteflow;
 	};
 
-	struct ConstantLoad {
+	struct ConstantLoad
+	{
 		uint32_t Load;
 		size_t InflowConn;
 	};
 
-	struct TimeAndLoad {
+	struct TimeAndLoad
+	{
 		double Time;
 		uint32_t Load;
 	};
 
-	struct ScheduleBasedLoad {
+	struct ScheduleBasedLoad
+	{
 		std::vector<TimeAndLoad> TimesAndLoads;
 	};
 
-	struct ConstantSource {
+	struct ConstantSource
+	{
 		uint32_t Available;
 		size_t OutflowConn;
 	};
 
-	struct ConstantEfficiencyConverter {
+	struct ConstantEfficiencyConverter
+	{
 		uint32_t EfficiencyNumerator;
 		uint32_t EfficiencyDenominator;
 		size_t InflowConn;
@@ -69,7 +75,8 @@ namespace erin_next {
 		size_t WasteflowConn;
 	};
 
-	struct Connection {
+	struct Connection
+	{
 		ComponentType From;
 		size_t FromIdx;
 		size_t FromPort;
@@ -78,12 +85,16 @@ namespace erin_next {
 		size_t ToPort;
 	};
 
-	struct Mux {
+	struct Mux
+	{
 		size_t NumInports;
 		size_t NumOutports;
+		std::vector<size_t> InflowConns;
+		std::vector<size_t> OutflowConns;
 	};
 
-	struct Store {
+	struct Store
+	{
 		uint32_t Capacity;
 		uint32_t MaxChargeRate; // energy per time unit
 		uint32_t MaxDischargeRate; // energy per time unit
@@ -91,13 +102,15 @@ namespace erin_next {
 		uint32_t InitialStorage;
 	};
 
-	struct Flow {
+	struct Flow
+	{
 		uint32_t Requested;
 		uint32_t Available;
 		uint32_t Actual;
 	};
 
-	struct TimeAndFlows {
+	struct TimeAndFlows
+	{
 		double Time;
 		std::vector<Flow> Flows;
 		std::vector<uint32_t> StorageAmounts;
@@ -106,7 +119,8 @@ namespace erin_next {
 	// TODO[mok]: consider separating model into const values (that don't change per simulation)
 	// ... and state (which does change during the simulation). This might make it easier to log
 	// ... state such as storage SOC.
-	struct Model {
+	struct Model
+	{
 		std::vector<ConstantSource> ConstSources;
 		std::vector<ConstantLoad> ConstLoads;
 		std::vector<ScheduleBasedLoad> ScheduledLoads;
@@ -116,17 +130,20 @@ namespace erin_next {
 		std::vector<Connection> Connections;
 	};
 
-	struct ComponentId {
+	struct ComponentId
+	{
 		size_t Id;
 		ComponentType Type;
 	};
 
-	struct ComponentIdAndWasteConnection {
+	struct ComponentIdAndWasteConnection
+	{
 		ComponentId Id;
 		Connection WasteConnection;
 	};
 
-	struct SimulationState {
+	struct SimulationState
+	{
 		std::vector<size_t> ActiveConnectionsBack;
 		std::vector<size_t> ActiveConnectionsFront;
 		std::vector<ComponentId> ActiveComponentsBack;

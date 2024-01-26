@@ -176,7 +176,7 @@ namespace erin_next {
 	void RunMuxForward(Model& model, SimulationState& ss, size_t compIdx);
 	void RunStoreForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 	void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_t connIdx, size_t compIdx);
-
+	size_t Model_NumberOfComponents(Model const& m);
 }
 
 #endif // ERIN_NEXT_H

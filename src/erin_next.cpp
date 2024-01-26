@@ -881,12 +881,25 @@ namespace erin_next {
 		}
 	}
 
+	size_t
+	Model_NumberOfComponents(Model const& m)
+	{
+		return m.ConstEffConvs.size()
+			+ m.ConstLoads.size()
+			+ m.ConstSources.size()
+			+ m.Muxes.size()
+			+ m.ScheduledLoads.size()
+			+ m.Stores.size();
+	}
+
 	SimulationState
 	Model_SetupSimulationState(Model& model)
 	{
 		SimulationState ss = {};
 		ss.ActiveConnectionsBack.reserve(model.Connections.size());
 		ss.ActiveConnectionsFront.reserve(model.Connections.size());
+		ss.ActiveComponentFront.reserve(Model_NumberOfComponents(model));
+		ss.ActiveComponentsBack.reserve(Model_NumberOfComponents(model));
 		ss.StorageAmounts.reserve(model.Stores.size());
 		for (size_t i = 0; i < model.Stores.size(); ++i)
 		{

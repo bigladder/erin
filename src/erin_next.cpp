@@ -937,7 +937,7 @@ namespace erin_next {
 				}
 				if (loopIter == maxLoop)
 				{
-					// throw an error?
+					// TODO: throw an error? exit with error code?
 				}
 				RunActiveConnections(model, ss, t);
 			}

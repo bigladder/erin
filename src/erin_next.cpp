@@ -43,8 +43,7 @@ namespace erin_next {
 	{
 		return (
 			ss.ActiveConnectionsBack.size()
-			+ ss.ActiveConnectionsFront.size()
-			+ ss.ActiveConnectionsPost.size());
+			+ ss.ActiveConnectionsFront.size());
 	}
 
 	void
@@ -71,12 +70,6 @@ namespace erin_next {
 	SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx)
 	{
 		Helper_AddIfNotAdded(ss.ActiveConnectionsFront, connIdx);
-	}
-
-	void
-	SimulationState_AddActiveConnectionPost(SimulationState& ss, size_t connIdx)
-	{
-		Helper_AddIfNotAdded(ss.ActiveConnectionsPost, connIdx);
 	}
 
 	void
@@ -540,7 +533,7 @@ namespace erin_next {
 	}
 
 	void
-	RunMuxPostFinalization(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	RunMuxPostFinalization(Model& model, SimulationState& ss, size_t compIdx)
 	{
 		++numPostPasses;
 		// REQUESTS
@@ -622,7 +615,7 @@ namespace erin_next {
 				} break;
 				case (ComponentType::MuxType):
 				{
-					RunMuxPostFinalization(model, ss, connIdx, compIdx);
+					RunMuxPostFinalization(model, ss, compIdx);
 				} break;
 			}
 		}
@@ -894,7 +887,6 @@ namespace erin_next {
 		SimulationState ss = {};
 		ss.ActiveConnectionsBack.reserve(model.Connections.size());
 		ss.ActiveConnectionsFront.reserve(model.Connections.size());
-		ss.ActiveConnectionsPost.reserve(model.Connections.size());
 		ss.StorageAmounts.reserve(model.Stores.size());
 		for (size_t i = 0; i < model.Stores.size(); ++i)
 		{

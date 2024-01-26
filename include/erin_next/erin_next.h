@@ -119,7 +119,6 @@ namespace erin_next {
 	struct SimulationState {
 		std::vector<size_t> ActiveConnectionsBack;
 		std::vector<size_t> ActiveConnectionsFront;
-		std::vector<size_t> ActiveConnectionsPost;
 		std::vector<uint32_t> StorageAmounts;
 		std::vector<double> StorageNextEventTimes;
 		std::vector<Flow> Flows;
@@ -128,7 +127,6 @@ namespace erin_next {
 	void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
 	void SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx);
 	void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx);
-	void SimulationState_AddActiveConnectionPost(SimulationState& ss, size_t connIdx);
 	size_t CountActiveConnections(SimulationState const& ss);
 	void ActivateConnectionsForConstantLoads(Model const& m, SimulationState& ss);
 	void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss);
@@ -137,6 +135,7 @@ namespace erin_next {
 	double EarliestNextEvent(Model const& m, SimulationState const& ss, double t);
 	int FindInflowConnection(Model const& m, ComponentType ct, size_t compId, size_t inflowPort);
 	int FindOutflowConnection(Model const& m, ComponentType ct, size_t compId, size_t outflowPort);
+	void RunMuxPostFinalization(Model const& m, SimulationState& ss, size_t compIdx);
 	void RunActiveConnections(Model& m, SimulationState& ss, double t);
 	void RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t);
 	void RunConnectionsBackward(Model& model, SimulationState& ss);

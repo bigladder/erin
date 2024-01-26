@@ -77,18 +77,12 @@ namespace erin_next {
 	{
 		for (size_t loadIdx = 0; loadIdx < model.ConstLoads.size(); ++loadIdx)
 		{
-			for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
+			size_t connIdx = model.ConstLoads[loadIdx].InflowConn;
+			if (ss.Flows[connIdx].Requested != model.ConstLoads[loadIdx].Load)
 			{
-				if (model.Connections[connIdx].To == ComponentType::ConstantLoadType
-					&& model.Connections[connIdx].ToIdx == loadIdx)
-				{
-					if (ss.Flows[connIdx].Requested != model.ConstLoads[loadIdx].Load)
-					{
-						SimulationState_AddActiveConnectionBack(ss, connIdx);
-					}
-					ss.Flows[connIdx].Requested = model.ConstLoads[loadIdx].Load;
-				}
+				SimulationState_AddActiveConnectionBack(ss, connIdx);
 			}
+			ss.Flows[connIdx].Requested = model.ConstLoads[loadIdx].Load;
 		}
 	}
 
@@ -1062,6 +1056,13 @@ namespace erin_next {
 			case (ComponentType::ConstantSourceType):
 			{
 				m.ConstSources[from.Id].OutflowConn = connId;
+			} break;
+		}
+		switch (to.Type)
+		{
+			case (ComponentType::ConstantLoadType):
+			{
+				m.ConstLoads[to.Id].InflowConn = connId;
 			} break;
 		}
 		return c;

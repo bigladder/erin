@@ -39,6 +39,7 @@ namespace erin_next {
 
 	struct ConstantLoad {
 		uint32_t Load;
+		size_t InflowConn;
 	};
 
 	struct TimeAndLoad {

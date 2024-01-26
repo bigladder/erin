@@ -357,45 +357,45 @@ namespace erin_next {
 	}
 
 	void
-	RunConstantEfficiencyConverterForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
+	RunConstantEfficiencyConverterForward(
+		Model& m,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx)
 	{
 		++numForwardPasses;
 		uint32_t inflowAvailable = ss.Flows[connIdx].Available;
 		uint32_t inflowRequest = ss.Flows[connIdx].Requested;
-		int outflowConn = FindOutflowConnection(model, model.Connections[connIdx].To, compIdx, 0);
-		assert((outflowConn >= 0) && "should find an outflow connection; model is incorrectly connected");
+		size_t outflowConn = m.ConstEffConvs[compIdx].OutflowConn;
 		uint32_t outflowAvailable =
-			(model.ConstEffConvs[compIdx].EfficiencyNumerator * inflowAvailable)
-			/ model.ConstEffConvs[compIdx].EfficiencyDenominator;
-		uint32_t outflowRequest = ss.Flows[(size_t)outflowConn].Requested;
+			(m.ConstEffConvs[compIdx].EfficiencyNumerator * inflowAvailable)
+			/ m.ConstEffConvs[compIdx].EfficiencyDenominator;
+		uint32_t outflowRequest = ss.Flows[outflowConn].Requested;
 		assert((inflowAvailable >= outflowAvailable) && "converter forward flow; inflow must be >= outflow");
-		if (outflowAvailable != ss.Flows[(size_t)outflowConn].Available)
+		if (outflowAvailable != ss.Flows[outflowConn].Available)
 		{
-			Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)outflowConn);
+			Helper_AddIfNotAdded(ss.ActiveConnectionsFront, outflowConn);
 		}
-		ss.Flows[(size_t)outflowConn].Available = outflowAvailable;
-		int lossflowConn = FindOutflowConnection(
-			model, model.Connections[connIdx].To, compIdx, 1);
+		ss.Flows[outflowConn].Available = outflowAvailable;
+		std::optional<size_t> lossflowConn = m.ConstEffConvs[compIdx].LossflowConn;
 		uint32_t nonOutflowAvailable =
 			FinalizeFlowValue(inflowAvailable, inflowRequest)
 			- FinalizeFlowValue(outflowAvailable, outflowRequest);
 		uint32_t lossflowAvailable = 0;
 		uint32_t lossflowRequest = 0;
-		if (lossflowConn >= 0) {
-			lossflowRequest = ss.Flows[(size_t)lossflowConn].Requested;
+		if (lossflowConn.has_value()) {
+			lossflowRequest = ss.Flows[lossflowConn.value()].Requested;
 			lossflowAvailable = FinalizeFlowValue(nonOutflowAvailable, lossflowRequest);
 			nonOutflowAvailable -= lossflowAvailable;
-			if (lossflowAvailable != ss.Flows[(size_t)lossflowConn].Available)
+			if (lossflowAvailable != ss.Flows[lossflowConn.value()].Available)
 			{
-				Helper_AddIfNotAdded(ss.ActiveConnectionsFront, (size_t)lossflowConn);
+				Helper_AddIfNotAdded(ss.ActiveConnectionsFront, lossflowConn.value());
 			}
-			ss.Flows[(size_t)lossflowConn].Available = lossflowAvailable;
+			ss.Flows[lossflowConn.value()].Available = lossflowAvailable;
 		}
-		int wasteflowConn = FindOutflowConnection(
-			model, model.Connections[connIdx].To, compIdx, 2);
-		assert((wasteflowConn >= 0) && "should find a wasteflow connection; model is incorrectly connected");
-		ss.Flows[(size_t)wasteflowConn].Requested = nonOutflowAvailable;
-		ss.Flows[(size_t)wasteflowConn].Available = nonOutflowAvailable;
+		size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn;
+		ss.Flows[wasteflowConn].Requested = nonOutflowAvailable;
+		ss.Flows[wasteflowConn].Available = nonOutflowAvailable;
 	}
 
 	void

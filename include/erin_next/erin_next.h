@@ -52,6 +52,7 @@ namespace erin_next {
 
 	struct ConstantSource {
 		uint32_t Available;
+		size_t OutflowConn;
 	};
 
 	struct ConstantEfficiencyConverter {

@@ -93,22 +93,16 @@ namespace erin_next {
 	}
 
 	void
-	ActivateConnectionsForConstantSources(Model const& model, SimulationState& ss)
+	ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss)
 	{
-		for (size_t srcIdx = 0; srcIdx < model.ConstSources.size(); ++srcIdx)
+		for (size_t srcIdx = 0; srcIdx < m.ConstSources.size(); ++srcIdx)
 		{
-			for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
+			size_t connIdx = m.ConstSources[srcIdx].OutflowConn;
+			if (ss.Flows[connIdx].Available != m.ConstSources[srcIdx].Available)
 			{
-				if (model.Connections[connIdx].From == ComponentType::ConstantSourceType
-					&& model.Connections[connIdx].FromIdx == srcIdx)
-				{
-					if (ss.Flows[connIdx].Available != model.ConstSources[srcIdx].Available)
-					{
-						SimulationState_AddActiveConnectionForward(ss, connIdx);
-					}
-					ss.Flows[connIdx].Available = model.ConstSources[srcIdx].Available;
-				}
+				SimulationState_AddActiveConnectionForward(ss, connIdx);
 			}
+			ss.Flows[connIdx].Available = m.ConstSources[srcIdx].Available;
 		}
 	}
 
@@ -920,6 +914,10 @@ namespace erin_next {
 		// TODO: max loop should be in the while loop; however, we do want to check for max time
 		while (t != infinity)
 		{
+			// schedule each event-generating component for next event
+			// by adding to the ActiveComponentBack or ActiveComponentFront arrays
+			// note: these two arrays could be sorted by component type for faster
+			// running over loops...
 			ActivateConnectionsForScheduleBasedLoads(model, ss, t);
 			ActivateConnectionsForStores(model, ss, t);
 			if (t == 0)
@@ -1056,8 +1054,16 @@ namespace erin_next {
 		size_t toPort)
 	{
 		Connection c = { from.Type, from.Id, fromPort, to.Type, to.Id, toPort };
+		size_t connId = m.Connections.size();
 		m.Connections.push_back(c);
 		ss.Flows.push_back({ 0, 0, 0 });
+		switch (from.Type)
+		{
+			case (ComponentType::ConstantSourceType):
+			{
+				m.ConstSources[from.Id].OutflowConn = connId;
+			} break;
+		}
 		return c;
 	}
 

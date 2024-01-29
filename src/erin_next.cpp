@@ -3,38 +3,48 @@
 
 namespace erin_next {
 
+	constexpr bool do_debug = false;
+
 	static unsigned int numBackwardPasses = 0;
 	static unsigned int numForwardPasses = 0;
 	static unsigned int numPostPasses = 0;
 	static unsigned int grandTotalPasses = 0;
 
-	void Debug_PrintNumberOfPasses(bool onlyGrandTotal)
+	void
+	Debug_PrintNumberOfPasses(bool onlyGrandTotal)
 	{
-		if (onlyGrandTotal)
+		if constexpr (do_debug)
 		{
-			std::cout << "Grand total        : " << grandTotalPasses << std::endl;
-		}
-		else
-		{
-			std::cout << "Number of:" << std::endl;
-			std::cout << "... backward passes: " << numBackwardPasses << std::endl;
-			std::cout << "... forward passes : " << numForwardPasses << std::endl;
-			std::cout << "... post passes    : " << numPostPasses << std::endl;
-			std::cout << "... total passes   : "
-				<< (numBackwardPasses + numForwardPasses + numPostPasses)
-				<< std::endl;
+			if (onlyGrandTotal)
+			{
+				std::cout << "Grand total        : " << grandTotalPasses << std::endl;
+			}
+			else
+			{
+				std::cout << "Number of:" << std::endl;
+				std::cout << "... backward passes: " << numBackwardPasses << std::endl;
+				std::cout << "... forward passes : " << numForwardPasses << std::endl;
+				std::cout << "... post passes    : " << numPostPasses << std::endl;
+				std::cout << "... total passes   : "
+					<< (numBackwardPasses + numForwardPasses + numPostPasses)
+					<< std::endl;
+			}
 		}
 	}
 
-	void Debug_ResetNumberOfPasses(bool resetAll)
+	void
+	Debug_ResetNumberOfPasses(bool resetAll)
 	{
-		grandTotalPasses += numBackwardPasses + numForwardPasses + numPostPasses;
-		numBackwardPasses = 0;
-		numForwardPasses = 0;
-		numPostPasses = 0;
-		if (resetAll)
+		if constexpr (do_debug)
 		{
-			grandTotalPasses = 0;
+			grandTotalPasses += numBackwardPasses + numForwardPasses + numPostPasses;
+			numBackwardPasses = 0;
+			numForwardPasses = 0;
+			numPostPasses = 0;
+			if (resetAll)
+			{
+				grandTotalPasses = 0;
+			}
 		}
 	}
 
@@ -214,7 +224,10 @@ namespace erin_next {
 		size_t connIdx,
 		size_t compIdx)
 	{
-		++numBackwardPasses;
+		if constexpr (do_debug)
+		{
+			++numBackwardPasses;
+		}
 		size_t inflowConn = m.ConstEffConvs[compIdx].InflowConn;
 		uint32_t outflowRequest = ss.Flows[connIdx].Requested;
 		uint32_t inflowRequest =
@@ -244,7 +257,10 @@ namespace erin_next {
 	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		++numBackwardPasses;
+		if constexpr (do_debug)
+		{
+			++numBackwardPasses;
+		}
 		uint32_t totalRequest = 0;
 		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
 		{
@@ -278,7 +294,10 @@ namespace erin_next {
 	void
 	RunStoreBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
 	{
-		++numBackwardPasses;
+		if constexpr (do_debug)
+		{
+			++numBackwardPasses;
+		}
 		size_t inflowConnIdx = model.Stores[compIdx].InflowConn;
 		uint32_t chargeRate =
 			ss.StorageAmounts[compIdx] <= model.Stores[compIdx].ChargeAmount
@@ -346,7 +365,10 @@ namespace erin_next {
 		size_t connIdx,
 		size_t compIdx)
 	{
-		++numForwardPasses;
+		if constexpr (do_debug)
+		{
+			++numForwardPasses;
+		}
 		uint32_t inflowAvailable = ss.Flows[connIdx].Available;
 		uint32_t inflowRequest = ss.Flows[connIdx].Requested;
 		size_t outflowConn = m.ConstEffConvs[compIdx].OutflowConn;
@@ -384,7 +406,10 @@ namespace erin_next {
 	void
 	RunMuxForward(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		++numForwardPasses;
+		if constexpr (do_debug)
+		{
+			++numForwardPasses;
+		}
 		uint32_t totalAvailable = 0;
 		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
 		{
@@ -417,7 +442,10 @@ namespace erin_next {
 	void
 	RunStoreForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx)
 	{
-		++numForwardPasses;
+		if constexpr (do_debug)
+		{
+			++numForwardPasses;
+		}
 		size_t outflowConn = model.Stores[compIdx].OutflowConn;
 		uint32_t available = ss.Flows[connIdx].Available;
 		uint32_t dischargeAvailable = ss.StorageAmounts[compIdx] > 0
@@ -469,7 +497,10 @@ namespace erin_next {
 	void
 	RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_t connIdx, size_t compIdx)
 	{
-		++numPostPasses;
+		if constexpr (do_debug)
+		{
+			++numPostPasses;
+		}
 		// TODO: need to also add consideration for discharging TO or BELOW chargeAmount (i.e., when you cross chargeAmount from above)
 		// NOTE: we assume that the charge request never resets once at or below chargeAmount UNTIL you hit 100% SOC again...
 		int outflowConn =
@@ -800,31 +831,24 @@ namespace erin_next {
 			+ m.Stores.size();
 	}
 
-	SimulationState
-	Model_SetupSimulationState(Model& model)
+	void
+	Model_SetupSimulationState(Model& model, SimulationState& ss)
 	{
-		SimulationState ss = {};
-		ss.ActiveConnectionsBack.reserve(model.Connections.size());
-		ss.ActiveConnectionsFront.reserve(model.Connections.size());
-		ss.ActiveComponentFront.reserve(Model_NumberOfComponents(model));
-		ss.ActiveComponentsBack.reserve(Model_NumberOfComponents(model));
-		ss.StorageAmounts.reserve(model.Stores.size());
 		for (size_t i = 0; i < model.Stores.size(); ++i)
 		{
 			ss.StorageAmounts.push_back(model.Stores[i].InitialStorage);
 		}
 		ss.StorageNextEventTimes = std::vector<double>(model.Stores.size(), 0.0);
 		ss.Flows = std::vector<Flow>(model.Connections.size(), { 0, 0, 0 });
-		return ss;
 	}
 
 	// TODO[mok]: add a maximum time as well
 	std::vector<TimeAndFlows>
-	Simulate(Model& model, bool print = true)
+	Simulate(Model& model, SimulationState& ss, bool print = true)
 	{
 		double t = 0.0;
 		std::vector<TimeAndFlows> timeAndFlows = {};
-		SimulationState ss = Model_SetupSimulationState(model);
+		Model_SetupSimulationState(model, ss);
 		// TODO: max loop should be in the while loop; however, we do want to check for max time
 		while (t != infinity)
 		{
@@ -853,8 +877,11 @@ namespace erin_next {
 				}
 				RunActiveConnections(model, ss, t);
 			}
-			Debug_PrintNumberOfPasses();
-			Debug_ResetNumberOfPasses();
+			if constexpr (do_debug)
+			{
+				Debug_PrintNumberOfPasses();
+				Debug_ResetNumberOfPasses();
+			}
 			if (print)
 			{
 				PrintFlows(model, ss, t);
@@ -874,8 +901,11 @@ namespace erin_next {
 			UpdateStoresPerElapsedTime(model, ss, nextTime - t);
 			t = nextTime;
 		}
-		Debug_PrintNumberOfPasses(true);
-		Debug_ResetNumberOfPasses(true);
+		if constexpr (do_debug)
+		{
+			Debug_PrintNumberOfPasses(true);
+			Debug_ResetNumberOfPasses(true);
+		}
 		return timeAndFlows;
 	}
 

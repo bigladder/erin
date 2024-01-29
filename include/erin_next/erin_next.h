@@ -3,6 +3,7 @@
 #ifndef ERIN_NEXT_H
 #define ERIN_NEXT_H
 
+#include "erin_next/distribution.h"
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>
@@ -131,6 +132,7 @@ namespace erin_next {
 		std::vector<Mux> Muxes;
 		std::vector<Store> Stores;
 		std::vector<Connection> Connections;
+		DistributionSystem DistSys;
 	};
 
 	struct ComponentId
@@ -184,7 +186,7 @@ namespace erin_next {
 	void PrintModelState(Model& model, SimulationState& ss);
 	std::vector<Flow> CopyFlows(std::vector<Flow> flows);
 	std::vector<uint32_t> CopyStorageStates(SimulationState& ss);
-	std::vector<TimeAndFlows> Simulate(Model& m, bool print);
+	std::vector<TimeAndFlows> Simulate(Model& m, SimulationState& ss, bool print);
 	ComponentId Model_AddConstantLoad(Model& m, uint32_t load);
 	ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
 	ComponentId Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads);
@@ -198,7 +200,7 @@ namespace erin_next {
 	std::optional<uint32_t> ModelResults_GetStoreState(size_t storeId, double time, std::vector<TimeAndFlows> timeAndFlows);
 	void Debug_PrintNumberOfPasses(bool onlyGrandTotal = false);
 	void Debug_ResetNumberOfPasses(bool resetAll = false);
-	SimulationState Model_SetupSimulationState(Model& m);
+	void Model_SetupSimulationState(Model& m, SimulationState& ss);
 	void RunConstantEfficiencyConverterBackward(Model& m, SimulationState& ss, size_t connIdx, size_t compIdx);
 	void RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx);
 	void RunStoreBackward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);

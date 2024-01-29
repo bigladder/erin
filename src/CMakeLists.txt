@@ -185,7 +185,14 @@ target_include_directories(str8760x5000
   PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
 add_executable(limits limits.cpp)
 
-add_library(erin_next erin_next.cpp ${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h)
+add_library(erin_next
+	erin_next.cpp
+	erin_next_distribution.cpp
+#	erin_next_reliability.cpp
+	${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h
+	${PROJECT_SOURCE_DIR}/include/erin_next/distribution.h
+#	${PROJECT_SOURCE_DIR}/include/erin_next/reliability.h
+)
 
 # Add Warnings
 if(MSVC)

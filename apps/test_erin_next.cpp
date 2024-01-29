@@ -14,7 +14,7 @@ PrintBanner(bool doPrint, std::string name) {
 static void
 PrintPass(bool doPrint, std::string name) {
 	std::string preamble = doPrint
-		? "         "
+		? "  ... "
 		: "[Test ";
 	std::cout << preamble << std::right << std::setw(3) << (name + "]") << " :: PASSED" << std::endl;
 }
@@ -29,11 +29,11 @@ static void
 Test1(bool print) {
 	PrintBanner(print, "1");
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto srcToLoadConn = Model_AddConnection(m, ss, srcId, 0, loadId, 0);
-	auto results = Simulate(m, print);
+	auto results = Simulate(m, ss, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 1 && "size of flows must equal 1"));
@@ -49,13 +49,13 @@ static void
 Test2(bool print) {
 	PrintBanner(print, "2");
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
 	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
 	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
-	auto results = Simulate(m, print);
+	auto results = Simulate(m, ss, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 3 && "size of flows must equal 3"));
@@ -81,7 +81,7 @@ static void
 Test3(bool print) {
 	PrintBanner(print, "3");
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
@@ -89,7 +89,7 @@ Test3(bool print) {
 	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
 	auto convToLoad1Conn = Model_AddConnection(m, ss, convId.Id, 0, load1Id, 0);
 	auto convToLoad2Conn = Model_AddConnection(m, ss, convId.Id, 1, load2Id, 0);
-	auto results = Simulate(m, print);
+	auto results = Simulate(m, ss, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
@@ -120,7 +120,7 @@ static void
 Test3A(bool print) {
 	PrintBanner(print, "3a");
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
@@ -128,7 +128,7 @@ Test3A(bool print) {
 	auto convToLoad2Conn = Model_AddConnection(m, ss, convId.Id, 1, load2Id, 0);
 	auto convToLoad1Conn = Model_AddConnection(m, ss, convId.Id, 0, load1Id, 0);
 	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
-	auto results = Simulate(m, print);
+	auto results = Simulate(m, ss, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
@@ -162,11 +162,11 @@ Test4(bool print) {
 	timesAndLoads.push_back({ 0.0, 10 });
 	timesAndLoads.push_back({ 3600.0, 200 });
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
 	auto srcToLoadConn = Model_AddConnection(m, ss, srcId, 0, loadId, 0);
-	auto results = Simulate(m, print);
+	auto results = Simulate(m, ss, print);
 	assert((results.size() == 2 && "output must have a size of 2"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 1 && "size of flows[0] must equal 1"));
@@ -190,7 +190,7 @@ Test5(bool print) {
 	PrintBanner(print, "5");
 	std::vector<TimeAndLoad> timesAndLoads = {};
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 7);
@@ -204,7 +204,7 @@ Test5(bool print) {
 	auto conv2ToLoad2Conn = Model_AddConnection(m, ss, conv2.Id, 0, load2Id, 0);
 	auto conv2ToConv3Conn = Model_AddConnection(m, ss, conv2.Id, 1, conv3.Id, 0);
 	auto conv3ToLoad3Conn = Model_AddConnection(m, ss, conv3.Id, 0, load3Id, 0);
-	auto results = Simulate(m, print);
+	auto results = Simulate(m, ss, print);
 	auto srcToConv1Results = ModelResults_GetFlowForConnection(m, srcToConv1Conn, 0.0, results);
 	auto conv1ToLoad1Results = ModelResults_GetFlowForConnection(m, conv1ToLoad1Conn, 0.0, results);
 	auto conv1ToConv2Results = ModelResults_GetFlowForConnection(m, conv1ToConv2Conn, 0.0, results);
@@ -224,7 +224,7 @@ static void
 Test6(bool doPrint) {
 	PrintBanner(doPrint, "6");
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto src1Id = Model_AddConstantSource(m, 10);
 	auto src2Id = Model_AddConstantSource(m, 50);
 	auto load1Id = Model_AddConstantLoad(m, 10);
@@ -234,7 +234,7 @@ Test6(bool doPrint) {
 	auto src2ToMuxConn = Model_AddConnection(m, ss, src2Id, 0, muxId, 1);
 	auto muxToLoad1Conn = Model_AddConnection(m, ss, muxId, 0, load1Id, 0);
 	auto muxToLoad2Conn = Model_AddConnection(m, ss, muxId, 1, load2Id, 0);
-	auto results = Simulate(m, doPrint);
+	auto results = Simulate(m, ss, doPrint);
 	auto src1ToMuxResults = ModelResults_GetFlowForConnection(m, src1ToMuxConn, 0.0, results);
 	assert((src1ToMuxResults.value().Actual == 10 && "src1 -> mux expected actual flow of 10"));
 	auto src2ToMuxResults = ModelResults_GetFlowForConnection(m, src2ToMuxConn, 0.0, results);
@@ -250,13 +250,13 @@ static void
 Test7(bool doPrint) {
 	PrintBanner(doPrint, "7");
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 0);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 0, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto srcToStoreConn = Model_AddConnection(m, ss, srcId, 0, storeId, 0);
 	auto storeToLoadConn = Model_AddConnection(m, ss, storeId, 0, loadId, 0);
-	auto results = Simulate(m, doPrint);
+	auto results = Simulate(m, ss, doPrint);
 	auto srcToStoreResults = ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
 	assert(srcToStoreResults.value().Actual == 0 && "src to store should be providing 0");
 	assert(srcToStoreResults.value().Requested == 10 && "src to store request is 10");
@@ -284,13 +284,13 @@ static void
 Test8(bool doPrint) {
 	PrintBanner(doPrint, "8");
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 5);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 0, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto srcToStoreConn = Model_AddConnection(m, ss, srcId, 0, storeId, 0);
 	auto storeToLoadConn = Model_AddConnection(m, ss, storeId, 0, loadId, 0);
-	auto results = Simulate(m, doPrint);
+	auto results = Simulate(m, ss, doPrint);
 	auto srcToStoreResults = ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
 	assert(srcToStoreResults.value().Actual == 5 && "src to store should be providing 5");
 	assert(srcToStoreResults.value().Requested == 10 && "src to store request is 10");
@@ -322,13 +322,13 @@ Test9(bool doPrint) {
 	timesAndLoads.push_back({  5.0,  5 });
 	timesAndLoads.push_back({ 10.0, 15 });
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 10);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 80, 100);
 	auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
 	auto srcToStoreConn = Model_AddConnection(m, ss, srcId, 0, storeId, 0);
 	auto storeToLoadConn = Model_AddConnection(m, ss, storeId, 0, loadId, 0);
-	auto results = Simulate(m, doPrint);
+	auto results = Simulate(m, ss, doPrint);
 	assert(results.size() == 5 && "expected 5 time steps");
 	assert(Round(results[0].Time) == 0.0 && "expect first time is 0.0");
 	assert(Round(results[1].Time) == 2.0 && "expect second time is 2.0");
@@ -396,7 +396,7 @@ Test10(bool doPrint) {
 	timesAndLoads.push_back({ 5.0,  5 });
 	timesAndLoads.push_back({ 10.0, 15 });
 	Model m = {};
-	SimulationState ss = Model_SetupSimulationState(m);
+	SimulationState ss{};
 	auto src1Id = Model_AddConstantSource(m, 20);
 	auto src2Id = Model_AddConstantSource(m, 5);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 80, 100);
@@ -412,7 +412,7 @@ Test10(bool doPrint) {
 	auto mux0Port1ToConvConn = Model_AddConnection(m, ss, muxId, 1, conv.Id, 0);
 	auto convToLoad2Conn = Model_AddConnection(m, ss, conv.Id, 0, load2Id, 0);
 	auto convToLoad3Conn = Model_AddConnection(m, ss, conv.Id, 1, load3Id, 0);
-	auto results = Simulate(m, doPrint);
+	auto results = Simulate(m, ss, doPrint);
 	assert(results.size() == 5 && "expect 5 events");
 	// time = 0.0
 	double t = 0.0;
@@ -647,6 +647,26 @@ Test10(bool doPrint) {
 	PrintPass(doPrint, "10");
 }
 
+void
+Test11(bool doPrint)
+{
+	PrintBanner(doPrint, "11");
+	// create a model of src->conv->load and place a reliability dist on conv
+	// ensure the component goes down and comes back up (i.e., is repaired)
+	Model m = {};
+	SimulationState ss{};
+	auto srcId = Model_AddConstantSource(m, 100);
+	auto loadId = Model_AddConstantLoad(m, 10);
+	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
+	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
+	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
+	// auto failureDistId = Model_AddFixedReliabilityDistribution(10.0);
+	// auto repairDistId = Model_AddFixedReliabilityDistribution(20.0);
+	// auto fmId = Model_AddFailureModeToComponent(convId, failureDistId, repairDistId);
+	auto results = Simulate(m, ss, doPrint);
+	PrintPass(doPrint, "11");
+}
+
 int
 main(int argc, char** argv) {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -661,6 +681,7 @@ main(int argc, char** argv) {
 	Test8(false);
 	Test9(false);
 	Test10(false);
+	Test11(true);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 	std::cout << "Duration " << ((double)duration.count() / 1000.0) << " ms" << std::endl;

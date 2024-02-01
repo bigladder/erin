@@ -666,8 +666,7 @@ Test11(bool doPrint)
 	Model_AddFailureModeToComponent(m, convId.Id, fixedDistId, fixedDistId);
 	double maxTime = 100.0;
 	auto results = Simulate(m, ss, doPrint);
-	// expected times: 0.0, 10.0, 20.0, 30.0, ..., 100.0;
-	assert(results.size() == 11 && "Expected four times: 0.0, 10.0, 20.0, and 100.0");
+	assert(results.size() == 11 && "Expect 11 times: 0.0, 10.0, 20.0, ..., 100.0");
 	PrintPass(doPrint, "11");
 }
 

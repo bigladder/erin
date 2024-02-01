@@ -28,7 +28,6 @@ namespace erin_next
 		std::vector<std::vector<TimeState>> schedules{};
 	};
 
-	// Main Class to do Reliability Schedule Creation
 	class ReliabilityCoordinator
 	{
 		public:
@@ -73,46 +72,11 @@ namespace erin_next
 			bool next_state) const;
 	};
 
-	template <class T>
-	std::unordered_map<T, std::vector<TimeState>>
+	std::vector<TimeState>
 	clip_schedule_to(
-		const std::unordered_map<T, std::vector<TimeState>>& schedule,
+		std::vector<TimeState>& schedule,
 		double start_time,
-		double end_time)
-	{
-		std::unordered_map<T, std::vector<TimeState>> new_sch{};
-		for (const auto& item : schedule)
-		{
-			std::vector<TimeState> tss{};
-			bool state{true};
-			for (const auto& ts : item.second)
-			{
-				if (ts.time < start_time)
-				{
-					state = ts.state;
-					continue;
-				}
-				else if (ts.time == start_time)
-				{
-					tss.emplace_back(TimeState{0, ts.state});
-				}
-				else if ((ts.time > start_time) && (ts.time <= end_time))
-				{
-					if (tss.size() == 0)
-					{
-						tss.emplace_back(TimeState{0, state});
-					}
-					tss.emplace_back(TimeState{ts.time - start_time, ts.state});
-				}
-				else if (ts.time > end_time)
-				{
-					break;
-				}
-			}
-			new_sch[item.first] = std::move(tss);
-		}
-		return new_sch;
-	}
+		double end_time);
 
 	bool schedule_state_at_time(
 		const std::vector<TimeState>& schedule,

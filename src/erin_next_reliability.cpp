@@ -139,6 +139,41 @@ namespace erin_next
 	//	return nextEventTime;
 	//}
 
+	std::vector<TimeState>
+	clip_schedule_to(
+		std::vector<TimeState>& schedule,
+		double start_time,
+		double end_time)
+	{
+		std::vector<TimeState> new_schedule{};
+		bool state{ true };
+		for (const auto& ts : schedule)
+		{
+			if (ts.time < start_time)
+			{
+				state = ts.state;
+				continue;
+			}
+			else if (ts.time == start_time)
+			{
+				new_schedule.emplace_back(TimeState{ 0, ts.state });
+			}
+			else if ((ts.time > start_time) && (ts.time <= end_time))
+			{
+				if (new_schedule.size() == 0)
+				{
+					new_schedule.emplace_back(TimeState{ 0, state });
+				}
+				new_schedule.emplace_back(TimeState{ ts.time - start_time, ts.state });
+			}
+			else if (ts.time > end_time)
+			{
+				break;
+			}
+		}
+		return new_schedule;
+	}
+
 	bool
 	schedule_state_at_time(
 		const std::vector<TimeState>& schedule,

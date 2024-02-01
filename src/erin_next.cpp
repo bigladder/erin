@@ -170,7 +170,7 @@ namespace erin_next {
 	}
 
 	void
-	ActivateConnectionsForReliabilityIssues(
+	ActivateConnectionsForReliability(
 		Model& m,
 		SimulationState& ss,
 		double time)
@@ -186,7 +186,7 @@ namespace erin_next {
 					if (ts.state)
 					{
 						// restore the component to active state
-						// Model_SetComponentToRepaired();
+						Model_SetComponentToRepaired(m, ss, rel.ComponentId);
 					}
 					else
 					{
@@ -269,7 +269,7 @@ namespace erin_next {
 
 	void
 	RunConstantEfficiencyConverterBackward(
-		Model& m,
+		Model const& m,
 		SimulationState& ss,
 		size_t connIdx,
 		size_t compIdx)
@@ -410,7 +410,7 @@ namespace erin_next {
 
 	void
 	RunConstantEfficiencyConverterForward(
-		Model& m,
+		Model const& m,
 		SimulationState& ss,
 		size_t connIdx,
 		size_t compIdx)
@@ -991,7 +991,7 @@ namespace erin_next {
 				ActivateConnectionsForConstantLoads(model, ss);
 				ActivateConnectionsForConstantSources(model, ss);
 			}
-			ActivateConnectionsForReliabilityIssues(model, ss, t);
+			ActivateConnectionsForReliability(model, ss, t);
 			// TODO: add a for-loop for max iter? check both count of active connections and max loop?
 			size_t const maxLoop = 10;
 			for (size_t loopIter = 0; loopIter <= maxLoop; ++loopIter)
@@ -1036,6 +1036,51 @@ namespace erin_next {
 			Debug_ResetNumberOfPasses(true);
 		}
 		return timeAndFlows;
+	}
+
+	void
+	Model_SetComponentToRepaired(
+		Model const& m,
+		SimulationState& ss,
+		size_t compId)
+	{
+		if (compId >= m.ComponentMap.CompType.size())
+		{
+			throw std::runtime_error("invalid component id");
+		}
+		auto idx = m.ComponentMap.Idx[compId];
+		switch (m.ComponentMap.CompType[compId])
+		{
+			case (ComponentType::ConstantLoadType):
+			{
+			} break;
+			case (ComponentType::ScheduleBasedLoadType):
+			{
+			} break;
+			case (ComponentType::ConstantSourceType):
+			{
+			} break;
+			case (ComponentType::ConstantEfficiencyConverterType):
+			{
+				auto outflowConn = m.ConstEffConvs[idx].OutflowConn;
+				RunConstantEfficiencyConverterBackward(m, ss, outflowConn, idx);
+				auto inflowConn = m.ConstEffConvs[idx].InflowConn;
+				RunConstantEfficiencyConverterForward(m, ss, inflowConn, idx);
+			} break;
+			case (ComponentType::MuxType):
+			{
+			} break;
+			case (ComponentType::StoreType):
+			{
+			} break;
+			case (ComponentType::WasteSinkType):
+			{
+			} break;
+			default:
+			{
+				throw std::runtime_error("unhandled component type");
+			}
+		}
 	}
 
 	void

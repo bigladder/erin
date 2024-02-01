@@ -222,7 +222,7 @@ namespace erin_next
 	ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
 
 	void
-	ActivateConnectionsForReliabilityIssues(
+	ActivateConnectionsForReliability(
 		Model& m, SimulationState& ss, double time);
 
 	double
@@ -294,6 +294,10 @@ namespace erin_next
 
 	std::vector<TimeAndFlows>
 	Simulate(Model& m, SimulationState& ss, bool print);
+
+	void
+	Model_SetComponentToRepaired(
+		Model const& m, SimulationState& ss, size_t compId);
 
 	void
 	Model_SetComponentToFailed(
@@ -369,7 +373,7 @@ namespace erin_next
 
 	void
 	RunConstantEfficiencyConverterBackward(
-		Model& m, SimulationState& ss, size_t connIdx, size_t compIdx);
+		Model const& m, SimulationState& ss, size_t connIdx, size_t compIdx);
 
 	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx);
@@ -380,7 +384,7 @@ namespace erin_next
 
 	void
 	RunConstantEfficiencyConverterForward(
-		Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+		Model const& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 
 	void
 	RunMuxForward(Model& model, SimulationState& ss, size_t compIdx);

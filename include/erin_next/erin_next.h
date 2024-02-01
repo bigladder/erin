@@ -3,7 +3,9 @@
 #ifndef ERIN_NEXT_H
 #define ERIN_NEXT_H
 
-#include "erin_next/distribution.h"
+#include "erin_next/erin_next_timestate.h"
+#include "erin_next/erin_next_distribution.h"
+#include "erin_next/erin_next_reliability.h"
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>
@@ -13,7 +15,8 @@
 #include <vector>
 #include <optional>
 
-namespace erin_next {
+namespace erin_next
+{
 
 	double const infinity = -1.0;
 
@@ -30,6 +33,22 @@ namespace erin_next {
 		MuxType,
 		StoreType,
 		WasteSinkType,
+	};
+
+	// TODO: Remove component id and use size_t for an id instead;
+	// Possibly repurpose this so we have a type `struct ComponentId { size_t Id; };`...
+	// That would prevent us mixing up component ids with distribution ids and the like
+	struct ComponentId
+	{
+		size_t Id;
+		ComponentType Type;
+	};
+
+	// NOTE: the struct below is indexed by a size_t which is the id for a component
+	struct Component {
+		// std::vector<std::string> tag{}; // to lookup a component by tag
+		std::vector<size_t> Idx; // the index into the component vector for the given component type
+		std::vector<ComponentType> CompType;
 	};
 
 	struct FlowSummary
@@ -59,6 +78,12 @@ namespace erin_next {
 	{
 		std::vector<TimeAndLoad> TimesAndLoads;
 		size_t InflowConn;
+	};
+
+	struct ScheduleBasedReliability
+	{
+		std::vector<TimeState> TimeStates;
+		size_t ComponentId;
 	};
 
 	struct ConstantSource
@@ -125,6 +150,7 @@ namespace erin_next {
 	// ... state such as storage SOC.
 	struct Model
 	{
+		Component ComponentMap;
 		std::vector<ConstantSource> ConstSources;
 		std::vector<ConstantLoad> ConstLoads;
 		std::vector<ScheduleBasedLoad> ScheduledLoads;
@@ -132,18 +158,16 @@ namespace erin_next {
 		std::vector<Mux> Muxes;
 		std::vector<Store> Stores;
 		std::vector<Connection> Connections;
-		DistributionSystem DistSys;
-	};
-
-	struct ComponentId
-	{
-		size_t Id;
-		ComponentType Type;
+		std::vector<ScheduleBasedReliability> Reliabilities;
+		DistributionSystem DistSys{};
+		ReliabilityCoordinator Rel{};
+		std::function<double()> RandFn;
+		double FinalTime{};
 	};
 
 	struct ComponentIdAndWasteConnection
 	{
-		ComponentId Id;
+		size_t Id;
 		Connection WasteConnection;
 	};
 
@@ -158,6 +182,7 @@ namespace erin_next {
 		std::vector<Flow> Flows;
 	};
 
+	size_t Component_AddComponentReturningId(Component& c, ComponentType ct, size_t idx);
 	void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
 	void SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx);
 	void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx);
@@ -177,6 +202,7 @@ namespace erin_next {
 	uint32_t FinalizeFlowValue(uint32_t requested, uint32_t available);
 	void FinalizeFlows(SimulationState& ss);
 	double NextEvent(ScheduleBasedLoad const& sb, double t);
+	double NextEvent(ScheduleBasedReliability const& sbr, double t);
 	double NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t);
 	void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elapsedTime);
 	std::string ToString(ComponentType ct);
@@ -187,17 +213,17 @@ namespace erin_next {
 	std::vector<Flow> CopyFlows(std::vector<Flow> flows);
 	std::vector<uint32_t> CopyStorageStates(SimulationState& ss);
 	std::vector<TimeAndFlows> Simulate(Model& m, SimulationState& ss, bool print);
-	ComponentId Model_AddConstantLoad(Model& m, uint32_t load);
-	ComponentId Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
-	ComponentId Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads);
-	ComponentId Model_AddConstantSource(Model& m, uint32_t available);
-	ComponentId Model_AddMux(Model& m, size_t numInports, size_t numOutports);
-	ComponentId Model_AddStore(Model& m, uint32_t capacity, uint32_t maxCharge, uint32_t maxDischarge,uint32_t nochargeAmount, uint32_t initialStorage);
+	size_t Model_AddConstantLoad(Model& m, uint32_t load);
+	size_t Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems);
+	size_t Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads);
+	size_t Model_AddConstantSource(Model& m, uint32_t available);
+	size_t Model_AddMux(Model& m, size_t numInports, size_t numOutports);
+	size_t Model_AddStore(Model& m, uint32_t capacity, uint32_t maxCharge, uint32_t maxDischarge,uint32_t nochargeAmount, uint32_t initialStorage);
 	ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m, SimulationState& ss, uint32_t eff_numerator, uint32_t eff_denominator);
-	Connection Model_AddConnection(Model& m, SimulationState& ss, ComponentId& from, size_t fromPort, ComponentId& to, size_t toPort);
+	Connection Model_AddConnection(Model& m, SimulationState& ss, size_t from, size_t fromPort, size_t to, size_t toPort);
 	bool SameConnection(Connection a, Connection b);
-	std::optional<Flow> ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows);
-	std::optional<uint32_t> ModelResults_GetStoreState(size_t storeId, double time, std::vector<TimeAndFlows> timeAndFlows);
+	std::optional<Flow> ModelResults_GetFlowForConnection(Model const& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows);
+	std::optional<uint32_t> ModelResults_GetStoreState(Model const& m, size_t compId, double time, std::vector<TimeAndFlows> timeAndFlows);
 	void Debug_PrintNumberOfPasses(bool onlyGrandTotal = false);
 	void Debug_ResetNumberOfPasses(bool resetAll = false);
 	void Model_SetupSimulationState(Model& m, SimulationState& ss);
@@ -209,6 +235,8 @@ namespace erin_next {
 	void RunStoreForward(Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
 	void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_t connIdx, size_t compIdx);
 	size_t Model_NumberOfComponents(Model const& m);
+	size_t Model_AddFixedReliabilityDistribution(Model& m, double dt);
+	size_t Model_AddFailureModeToComponent(Model& m, size_t compId, size_t failureDistId, size_t repairDistId);
 }
 
 #endif // ERIN_NEXT_H

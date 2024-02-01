@@ -337,7 +337,7 @@ Test9(bool doPrint) {
 	assert(Round(results[4].Time) == 25.0 && "expect fifth time is 25.0");
 	auto srcToStoreResultsAt0 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
 	auto storeToLoadResultsAt0 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
-	auto storeAmount0 = ModelResults_GetStoreState(storeId.Id, 0.0, results);
+	auto storeAmount0 = ModelResults_GetStoreState(m, storeId, 0.0, results);
 	assert(srcToStoreResultsAt0.value().Actual == 10);
 	assert(srcToStoreResultsAt0.value().Requested == 20);
 	assert(srcToStoreResultsAt0.value().Available == 10);
@@ -347,7 +347,7 @@ Test9(bool doPrint) {
 	assert(storeAmount0.value() == 100);
 	auto srcToStoreResultsAt2 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 2.0, results);
 	auto storeToLoadResultsAt2 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 2.0, results);
-	auto storeAmount2 = ModelResults_GetStoreState(storeId.Id, 2.0, results);
+	auto storeAmount2 = ModelResults_GetStoreState(m, storeId, 2.0, results);
 	assert(srcToStoreResultsAt2.value().Actual == 10);
 	assert(srcToStoreResultsAt2.value().Requested == 30);
 	assert(srcToStoreResultsAt2.value().Available == 10);
@@ -357,7 +357,7 @@ Test9(bool doPrint) {
 	assert(storeAmount2.value() == 80);
 	auto srcToStoreResultsAt5 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 5.0, results);
 	auto storeToLoadResultsAt5 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 5.0, results);
-	auto storeAmount5 = ModelResults_GetStoreState(storeId.Id, 5.0, results);
+	auto storeAmount5 = ModelResults_GetStoreState(m, storeId, 5.0, results);
 	assert(srcToStoreResultsAt5.value().Actual == 10);
 	assert(srcToStoreResultsAt5.value().Requested == 15);
 	assert(srcToStoreResultsAt5.value().Available == 10);
@@ -367,7 +367,7 @@ Test9(bool doPrint) {
 	assert(storeAmount5.value() == 50);
 	auto srcToStoreResultsAt10 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
 	auto storeToLoadResultsAt10 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
-	auto storeAmount10 = ModelResults_GetStoreState(storeId.Id, 10.0, results);
+	auto storeAmount10 = ModelResults_GetStoreState(m, storeId, 10.0, results);
 	assert(srcToStoreResultsAt10.value().Actual == 10);
 	assert(srcToStoreResultsAt10.value().Requested == 25);
 	assert(srcToStoreResultsAt10.value().Available == 10);
@@ -377,7 +377,7 @@ Test9(bool doPrint) {
 	assert(storeAmount10.value() == 75);
 	auto srcToStoreResultsAt25 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 25.0, results);
 	auto storeToLoadResultsAt25 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 25.0, results);
-	auto storeAmount25 = ModelResults_GetStoreState(storeId.Id, 25.0, results);
+	auto storeAmount25 = ModelResults_GetStoreState(m, storeId, 25.0, results);
 	assert(srcToStoreResultsAt25.value().Actual == 10);
 	assert(srcToStoreResultsAt25.value().Requested == 25);
 	assert(srcToStoreResultsAt25.value().Available == 10);
@@ -458,7 +458,7 @@ Test10(bool doPrint) {
 	assert(convToLoad3Results.value().Actual == 5);
 	assert(convToLoad3Results.value().Available == 5);
 	assert(convToLoad3Results.value().Requested == 5);
-	auto storeAmount = ModelResults_GetStoreState(storeId.Id, 0.0, results);
+	auto storeAmount = ModelResults_GetStoreState(m, storeId, 0.0, results);
 	assert(storeAmount.value() == 100);
 	// time = 2.0
 	t = 2.0;
@@ -504,7 +504,7 @@ Test10(bool doPrint) {
 	assert(convToLoad3Results.value().Actual == 5);
 	assert(convToLoad3Results.value().Available == 5);
 	assert(convToLoad3Results.value().Requested == 5);
-	storeAmount = ModelResults_GetStoreState(storeId.Id, t, results);
+	storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
 	assert(storeAmount.value() == 80);
 	// time = 5.0
 	t = 5.0;
@@ -550,7 +550,7 @@ Test10(bool doPrint) {
 	assert(convToLoad3Results.value().Actual == 5);
 	assert(convToLoad3Results.value().Available == 5);
 	assert(convToLoad3Results.value().Requested == 5);
-	storeAmount = ModelResults_GetStoreState(storeId.Id, t, results);
+	storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
 	assert(storeAmount.value() == 50);
 	// time = 10.0
 	t = 10.0;
@@ -596,7 +596,7 @@ Test10(bool doPrint) {
 	assert(convToLoad3Results.value().Actual == 5);
 	assert(convToLoad3Results.value().Available == 5);
 	assert(convToLoad3Results.value().Requested == 5);
-	storeAmount = ModelResults_GetStoreState(storeId.Id, t, results);
+	storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
 	assert(storeAmount.value() == 25);
 	// time = 12.5
 	t = 12.5;
@@ -642,7 +642,7 @@ Test10(bool doPrint) {
 	assert(convToLoad3Results.value().Actual == 3);
 	assert(convToLoad3Results.value().Available == 3);
 	assert(convToLoad3Results.value().Requested == 5);
-	storeAmount = ModelResults_GetStoreState(storeId.Id, t, results);
+	storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
 	assert(storeAmount.value() == 0);
 	PrintPass(doPrint, "10");
 }
@@ -654,16 +654,20 @@ Test11(bool doPrint)
 	// create a model of src->conv->load and place a reliability dist on conv
 	// ensure the component goes down and comes back up (i.e., is repaired)
 	Model m = {};
+	m.RandFn = []() { return 0.4; };
+	m.FinalTime = 100.0;
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
 	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
 	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
-	// auto failureDistId = Model_AddFixedReliabilityDistribution(10.0);
-	// auto repairDistId = Model_AddFixedReliabilityDistribution(20.0);
-	// auto fmId = Model_AddFailureModeToComponent(convId, failureDistId, repairDistId);
+	auto fixedDistId = Model_AddFixedReliabilityDistribution(m, 10.0);
+	Model_AddFailureModeToComponent(m, convId.Id, fixedDistId, fixedDistId);
+	double maxTime = 100.0;
 	auto results = Simulate(m, ss, doPrint);
+	// expected times: 0.0, 10.0, 20.0, 30.0, ..., 100.0;
+	assert(results.size() == 11 && "Expected four times: 0.0, 10.0, 20.0, and 100.0");
 	PrintPass(doPrint, "11");
 }
 

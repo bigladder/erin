@@ -34,7 +34,7 @@ namespace erin_next
 			throw std::invalid_argument(oss.str());
 		}
 		std::uniform_int_distribution<T> d{lb, ub};
-		auto g = generator; // copy-assignment constructor
+		std::default_random_engine g = generator; // copy-assignment constructor
 		return [d, g]() mutable -> T { return d(g); };
 	}
 

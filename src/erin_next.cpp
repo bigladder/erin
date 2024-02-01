@@ -49,6 +49,15 @@ namespace erin_next {
 	}
 
 	size_t
+	Component_AddComponentReturningId(Component& c, ComponentType ct, size_t idx)
+	{
+		auto id{ c.CompType.size() };
+		c.CompType.push_back(ct);
+		c.Idx.push_back(idx);
+		return id;
+	}
+
+	size_t
 	CountActiveConnections(SimulationState const& ss)
 	{
 		return (
@@ -179,6 +188,14 @@ namespace erin_next {
 			if (nextTime == infinity || (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime))
 			{
 				nextTime = nextTimeForComponent;
+			}
+		}
+		for (size_t reliabilityIdx = 0; reliabilityIdx < m.Reliabilities.size(); ++reliabilityIdx)
+		{
+			double nextReliabilityEvent = NextEvent(m.Reliabilities[reliabilityIdx], t);
+			if (nextTime == infinity || (nextReliabilityEvent >= 0.0 && nextReliabilityEvent < nextTime))
+			{
+				nextTime = nextReliabilityEvent;
 			}
 		}
 		return nextTime;
@@ -601,6 +618,19 @@ namespace erin_next {
 	}
 
 	double
+	NextEvent(ScheduleBasedReliability const& sbr, double t)
+	{
+		for (size_t i = 0; i < sbr.TimeStates.size(); ++i)
+		{
+			if (sbr.TimeStates[i].time > t)
+			{
+				return sbr.TimeStates[i].time;
+			}
+		}
+		return infinity;
+	}
+
+	double
 	NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t)
 	{
 		double storeTime = ss.StorageNextEventTimes[storeIdx];
@@ -842,6 +872,26 @@ namespace erin_next {
 		ss.Flows = std::vector<Flow>(model.Connections.size(), { 0, 0, 0 });
 	}
 
+	size_t
+	Model_AddFixedReliabilityDistribution(Model& m, double dt)
+	{
+		std::cout << "0" << std::endl;
+		return m.DistSys.add_fixed("", dt);
+	}
+
+	size_t
+	Model_AddFailureModeToComponent(Model& m, size_t compId, size_t failureDistId, size_t repairDistId)
+	{
+		auto fmId = m.Rel.add_failure_mode("", failureDistId, repairDistId);
+		auto linkId = m.Rel.link_component_with_failure_mode(compId, fmId);
+		auto schedule = m.Rel.make_schedule_for_link(linkId, m.RandFn, m.DistSys, m.FinalTime);
+		ScheduleBasedReliability sbr = {};
+		sbr.ComponentId = compId;
+		sbr.TimeStates = std::move(schedule);
+		m.Reliabilities.push_back(std::move(sbr));
+		return linkId;
+	}
+
 	// TODO[mok]: add a maximum time as well
 	std::vector<TimeAndFlows>
 	Simulate(Model& model, SimulationState& ss, bool print = true)
@@ -909,18 +959,18 @@ namespace erin_next {
 		return timeAndFlows;
 	}
 
-	ComponentId
+	size_t
 	Model_AddConstantLoad(Model& m, uint32_t load)
 	{
-		size_t id = m.ConstLoads.size();
+		size_t idx = m.ConstLoads.size();
 		m.ConstLoads.push_back({ load });
-		return { id, ComponentType::ConstantLoadType };
+		return Component_AddComponentReturningId(m.ComponentMap, ComponentType::ConstantLoadType, idx);
 	}
 
-	ComponentId
+	size_t
 	Model_AddScheduleBasedLoad(Model& m, double* times, uint32_t* loads, size_t numItems)
 	{
-		size_t id = m.ScheduledLoads.size();
+		size_t idx = m.ScheduledLoads.size();
 		std::vector<TimeAndLoad> timesAndLoads = {};
 		timesAndLoads.reserve(numItems);
 		for (size_t i = 0; i < numItems; ++i)
@@ -928,39 +978,39 @@ namespace erin_next {
 			timesAndLoads.push_back({ times[i], loads[i] });
 		}
 		m.ScheduledLoads.push_back({ std::move(timesAndLoads) });
-		return { id, ComponentType::ScheduleBasedLoadType };
+		return Component_AddComponentReturningId(m.ComponentMap, ComponentType::ScheduleBasedLoadType, idx);
 	}
 
-	ComponentId
+	size_t
 	Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads)
 	{
-		size_t id = m.ScheduledLoads.size();
+		size_t idx = m.ScheduledLoads.size();
 		m.ScheduledLoads.push_back({ std::vector<TimeAndLoad>(timesAndLoads) });
-		return { id, ComponentType::ScheduleBasedLoadType };
+		return Component_AddComponentReturningId(m.ComponentMap, ComponentType::ScheduleBasedLoadType, idx);
 	}
 
-	ComponentId
+	size_t
 	Model_AddConstantSource(Model& m, uint32_t available)
 	{
-		size_t id = m.ConstSources.size();
+		size_t idx = m.ConstSources.size();
 		m.ConstSources.push_back({ available });
-		return { id, ComponentType::ConstantSourceType };
+		return Component_AddComponentReturningId(m.ComponentMap, ComponentType::ConstantSourceType, idx);
 	}
 
-	ComponentId
+	size_t
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports)
 	{
-		size_t id = m.Muxes.size();
+		size_t idx = m.Muxes.size();
 		Mux mux = {};
 		mux.NumInports = numInports;
 		mux.NumOutports = numOutports;
 		mux.InflowConns = std::vector<size_t>(numInports, 0);
 		mux.OutflowConns = std::vector<size_t>(numOutports, 0);
 		m.Muxes.push_back( std::move(mux) );
-		return { id, ComponentType::MuxType };
+		return Component_AddComponentReturningId(m.ComponentMap, ComponentType::MuxType, idx);
 	}
 
-	ComponentId
+	size_t
 	Model_AddStore(
 		Model& m,
 		uint32_t capacity,
@@ -971,7 +1021,7 @@ namespace erin_next {
 	{
 		assert(chargeAmount < capacity && "chargeAmount must be less than capacity");
 		assert(initialStorage <= capacity && "initialStorage must be less than or equal to capacity");
-		size_t id = m.Stores.size();
+		size_t idx = m.Stores.size();
 		Store s = {};
 		s.Capacity = capacity;
 		s.MaxChargeRate = maxCharge;
@@ -979,7 +1029,7 @@ namespace erin_next {
 		s.ChargeAmount = chargeAmount;
 		s.InitialStorage = initialStorage;
 		m.Stores.push_back(s);
-		return { id, ComponentType::StoreType };
+		return Component_AddComponentReturningId(m.ComponentMap, ComponentType::StoreType, idx);
 	}
 
 	ComponentIdAndWasteConnection
@@ -989,10 +1039,10 @@ namespace erin_next {
 		uint32_t eff_numerator,
 		uint32_t eff_denominator)
 	{
-		size_t id = m.ConstEffConvs.size();
+		size_t idx = m.ConstEffConvs.size();
 		m.ConstEffConvs.push_back({ eff_numerator, eff_denominator });
-		ComponentId wasteId = { 0, ComponentType::WasteSinkType };
-		ComponentId thisId = { id, ComponentType::ConstantEfficiencyConverterType };
+		size_t wasteId = Component_AddComponentReturningId(m.ComponentMap, ComponentType::WasteSinkType, 0);
+		size_t thisId = Component_AddComponentReturningId(m.ComponentMap, ComponentType::ConstantEfficiencyConverterType, idx);
 		auto wasteConn = Model_AddConnection(m, ss, thisId, 2, wasteId, 0);
 		return { thisId, wasteConn };
 	}
@@ -1001,20 +1051,27 @@ namespace erin_next {
 	Model_AddConnection(
 		Model& m,
 		SimulationState& ss,
-		ComponentId& from,
+		size_t from,
 		size_t fromPort,
-		ComponentId& to,
+		size_t to,
 		size_t toPort)
 	{
-		Connection c = { from.Type, from.Id, fromPort, to.Type, to.Id, toPort };
+		ComponentType fromType = m.ComponentMap.CompType[from];
+		size_t fromIdx = m.ComponentMap.Idx[from];
+		ComponentType toType = m.ComponentMap.CompType[to];
+		size_t toIdx = m.ComponentMap.Idx[to];
+		Connection c = {
+			fromType, fromIdx, fromPort,
+			toType, toIdx, toPort
+		};
 		size_t connId = m.Connections.size();
 		m.Connections.push_back(c);
 		ss.Flows.push_back({ 0, 0, 0 });
-		switch (from.Type)
+		switch (fromType)
 		{
 			case (ComponentType::ConstantSourceType):
 			{
-				m.ConstSources[from.Id].OutflowConn = connId;
+				m.ConstSources[fromIdx].OutflowConn = connId;
 			} break;
 			case (ComponentType::ConstantEfficiencyConverterType):
 			{
@@ -1022,15 +1079,15 @@ namespace erin_next {
 				{
 					case (0):
 					{
-						m.ConstEffConvs[from.Id].OutflowConn = connId;
+						m.ConstEffConvs[fromIdx].OutflowConn = connId;
 					} break;
 					case (1):
 					{
-						m.ConstEffConvs[from.Id].LossflowConn = connId;
+						m.ConstEffConvs[fromIdx].LossflowConn = connId;
 					} break;
 					case (2):
 					{
-						m.ConstEffConvs[from.Id].WasteflowConn = connId;
+						m.ConstEffConvs[fromIdx].WasteflowConn = connId;
 					} break;
 					default:
 					{
@@ -1041,34 +1098,34 @@ namespace erin_next {
 			} break;
 			case (ComponentType::MuxType):
 			{
-				m.Muxes[from.Id].OutflowConns[fromPort] = connId;
+				m.Muxes[fromIdx].OutflowConns[fromPort] = connId;
 			} break;
 			case (ComponentType::StoreType):
 			{
-				m.Stores[from.Id].OutflowConn = connId;
+				m.Stores[fromIdx].OutflowConn = connId;
 			} break;
 		}
-		switch (to.Type)
+		switch (toType)
 		{
 			case (ComponentType::ConstantLoadType):
 			{
-				m.ConstLoads[to.Id].InflowConn = connId;
+				m.ConstLoads[toIdx].InflowConn = connId;
 			} break;
 			case (ComponentType::ConstantEfficiencyConverterType):
 			{
-				m.ConstEffConvs[to.Id].InflowConn = connId;
+				m.ConstEffConvs[toIdx].InflowConn = connId;
 			} break;
 			case (ComponentType::MuxType):
 			{
-				m.Muxes[to.Id].InflowConns[toPort] = connId;
+				m.Muxes[toIdx].InflowConns[toPort] = connId;
 			} break;
 			case (ComponentType::StoreType):
 			{
-				m.Stores[to.Id].InflowConn = connId;
+				m.Stores[toIdx].InflowConn = connId;
 			} break;
 			case (ComponentType::ScheduleBasedLoadType):
 			{
-				m.ScheduledLoads[to.Id].InflowConn = connId;
+				m.ScheduledLoads[toIdx].InflowConn = connId;
 			} break;
 		}
 		return c;
@@ -1082,7 +1139,7 @@ namespace erin_next {
 	}
 
 	std::optional<Flow>
-	ModelResults_GetFlowForConnection(Model& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows)
+	ModelResults_GetFlowForConnection(Model const& m, Connection conn, double time, std::vector<TimeAndFlows> timeAndFlows)
 	{
 		for (size_t connId = 0; connId < m.Connections.size(); ++connId)
 		{
@@ -1107,15 +1164,20 @@ namespace erin_next {
 	}
 
 	std::optional<uint32_t>
-	ModelResults_GetStoreState(size_t storeId, double time, std::vector<TimeAndFlows> timeAndFlows)
+	ModelResults_GetStoreState(Model const& m, size_t compId, double time, std::vector<TimeAndFlows> timeAndFlows)
 	{
+		if (compId >= m.ComponentMap.CompType.size() || m.ComponentMap.CompType[compId] != ComponentType::StoreType)
+		{
+			return {};
+		}
+		size_t storeIdx = m.ComponentMap.Idx[compId];
 		// TODO: update to also be able to give storage amounts between events by looking at the
 		// inflow and outflows to storage and doing the math...
 		for (size_t i = 0; i < timeAndFlows.size(); ++i)
 		{
-			if (time == timeAndFlows[i].Time && storeId < timeAndFlows[i].StorageAmounts.size())
+			if (time == timeAndFlows[i].Time && storeIdx < timeAndFlows[i].StorageAmounts.size())
 			{
-				return timeAndFlows[i].StorageAmounts[storeId];
+				return timeAndFlows[i].StorageAmounts[storeIdx];
 			}
 		}
 		return {};

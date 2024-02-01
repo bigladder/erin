@@ -1,7 +1,7 @@
 /* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include "erin_next/distribution.h"
+#include "erin_next/erin_next_distribution.h"
 #include <algorithm>
 #include <cmath>
 #include <functional>

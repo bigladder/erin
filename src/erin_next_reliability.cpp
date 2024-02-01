@@ -1,42 +1,21 @@
 /* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 
-#include "erin_next/reliability.h"
+#include "erin_next/erin_next_reliability.h"
 #include <iostream>
 #include <utility>
 #include <stdexcept>
 
 namespace erin_next
 {
-	bool
-	operator==(const TimeState& a, const TimeState& b)
-	{
-		return (a.time == b.time)
-			&& (a.state == b.state);
-	}
-
-	bool
-	operator!=(const TimeState& a, const TimeState& b)
-	{
-		return !(a == b);
-	}
-
-	std::ostream&
-	operator<<(std::ostream& os, const TimeState& ts)
-	{
-		return os << "TimeState("
-				<< "time=" << ts.time << ", "
-				<< "state=" << ts.state << ")";
-	}
 
 	ReliabilityCoordinator::ReliabilityCoordinator():
 		fms{},
-		fm_comp_links{},
-		comp_meta{}
+		fm_comp_links{}
 	{
 	}
 
-	size_type
+	size_t
 	ReliabilityCoordinator::add_failure_mode(
 		const std::string& tag,
 		const size_t& failure_dist_id,
@@ -49,164 +28,134 @@ namespace erin_next
 		return id;
 	}
 
-	void
+	size_t
 	ReliabilityCoordinator::link_component_with_failure_mode(
-		const size_type& component_id,
-		const size_type& failure_mode_id)
+		const size_t& component_id,
+		const size_t& failure_mode_id)
 	{
+		size_t idx = fm_comp_links.component_id.size();
 		fm_comp_links.component_id.emplace_back(component_id);
 		fm_comp_links.failure_mode_id.emplace_back(failure_mode_id);
-		if (component_id >= comp_meta.tag.size()) {
-			std::ostringstream oss{};
-			oss << "Attempt to add unregistered component_id `"
-				<< component_id << "`";
-			throw std::invalid_argument(oss.str());
-		}
+		fm_comp_links.schedules.emplace_back(std::vector<TimeState>{});
+		return idx;
 	}
 
-	size_type
-	ReliabilityCoordinator::register_component(const std::string& tag)
-	{
-		auto id{comp_meta.tag.size()};
-		comp_meta.tag.emplace_back(tag);
-		return id;
-	}
-
-	void
-	ReliabilityCoordinator::calc_next_events(
+	double
+	ReliabilityCoordinator::calc_next_event(
+		size_t link_id,
+		double dt_fm,
 		const std::function<double()>& rand_fn,
-		const erin::distribution::DistributionSystem& cds,
-		std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
+		const DistributionSystem& cds,
 		bool is_failure) const
 	{
-		const auto num_fm_comp_links{fm_comp_links.failure_mode_id.size()};
-		for (size_type i{0}; i < num_fm_comp_links; ++i) {
-			const auto& comp_id = fm_comp_links.component_id.at(i);
-			const auto& fm_id = fm_comp_links.failure_mode_id.at(i);
-			size_type dist_id{0};
-			if (is_failure)
-			{
-				dist_id = fms.failure_dist.at(fm_id);
-			}
-			else
-			{ // is_repair
-				dist_id = fms.repair_dist.at(fm_id);
-			}
-			auto dt = cds.next_time_advance(dist_id, rand_fn());
-			auto& dt_fm = comp_id_to_dt[comp_id]; 
-			if ((dt_fm == -1) || (dt < dt_fm)) {
-				dt_fm = dt;
-			}
+		const auto& fm_id = fm_comp_links.failure_mode_id.at(link_id);
+		size_t dist_id = is_failure
+			? fms.failure_dist.at(fm_id)
+			: fms.repair_dist.at(fm_id);
+		auto dt = cds.next_time_advance(dist_id, rand_fn());
+		if ((dt_fm == -1.0) || (dt >= 0.0 && dt < dt_fm))
+		{
+			dt_fm = dt;
 		}
+		return dt_fm;
 	}
 
-	size_type
-	ReliabilityCoordinator::update_schedule(
-		std::unordered_map<size_type, RealTimeType>& comp_id_to_time,
-		std::unordered_map<size_type, RealTimeType>& comp_id_to_dt,
-		std::unordered_map<size_type, std::vector<TimeState>>&
-			comp_id_to_reliability_schedule,
-		RealTimeType final_time,
+	bool
+	ReliabilityCoordinator::update_single_schedule(
+		double& time,
+		double& dt,
+		std::vector<TimeState>& schedule,
+		double final_time,
 		bool next_state) const
 	{
-		size_type num_past_final_time{0};
-		auto num_components{comp_meta.tag.size()};
-		for (size_type comp_id{0}; comp_id < num_components; ++comp_id) {
-			auto& t = comp_id_to_time[comp_id];
-			if (t > final_time)
-			{
-				++num_past_final_time;
-				continue;
-			}
-			auto& dt = comp_id_to_dt[comp_id];
-			t = t + dt;
-			dt = -1;
-			comp_id_to_reliability_schedule[comp_id].emplace_back(
-				TimeState{t, next_state});
-			if (t > final_time) {
-				++num_past_final_time;
-				continue;
-			}
+		bool is_finished{ false };
+		if (time > final_time)
+		{
+			is_finished = true;
+			return is_finished;
 		}
-		return num_past_final_time;
+		time += dt;
+		dt = -1.0; // TODO: rename as infinity
+		schedule.emplace_back(TimeState{ time, next_state });
+		is_finished = time >= final_time;
+		return is_finished;
 	}
 
-	std::unordered_map<size_type, std::vector<TimeState>>
-	ReliabilityCoordinator::calc_reliability_schedule(
+	std::vector<TimeState>
+	ReliabilityCoordinator::make_schedule_for_link(
+		size_t link_id,
 		const std::function<double()>& rand_fn,
-		const erin::distribution::DistributionSystem& cds,
-		RealTimeType final_time) const
+		const DistributionSystem& cds,
+		double final_time)
 	{
-		const auto num_components{comp_meta.tag.size()};
-		std::unordered_map<size_type, RealTimeType> comp_id_to_time{};
-		std::unordered_map<size_type, RealTimeType> comp_id_to_dt{};
-		std::unordered_map<size_type, std::vector<TimeState>>
-			comp_id_to_reliability_schedule{};
-		for (size_type comp_id{0}; comp_id < num_components; ++comp_id)
-		{
-			comp_id_to_time[comp_id] = 0;
-			comp_id_to_dt[comp_id] = -1;
-			comp_id_to_reliability_schedule[comp_id] =
-				std::vector<TimeState>{TimeState{0, true}};
-		}
-		size_type count{0};
+		double time = 0.0;
+		double dt = -1.0;
+		std::vector<TimeState> reliability_schedule{};
 		while (true)
 		{
-			calc_next_events(rand_fn, cds, comp_id_to_dt, true);
-			count = update_schedule(
-				comp_id_to_time,
-				comp_id_to_dt,
-				comp_id_to_reliability_schedule,
+			dt = calc_next_event(link_id, dt, rand_fn, cds, true);
+			bool gteq_final_time = update_single_schedule(
+				time,
+				dt,
+				reliability_schedule,
 				final_time,
 				false);
-			if (count == num_components) {
+			if (gteq_final_time)
+			{
 				break;
 			}
-			calc_next_events(rand_fn, cds, comp_id_to_dt, false);
-			count = update_schedule(
-				comp_id_to_time,
-				comp_id_to_dt,
-				comp_id_to_reliability_schedule,
+			dt = calc_next_event(link_id, dt, rand_fn, cds, false);
+			gteq_final_time = update_single_schedule(
+				time,
+				dt,
+				reliability_schedule,
 				final_time,
 				true);
-			if (count == num_components)
+			if (gteq_final_time)
 			{
 				break;
 			}
 		}
-		return comp_id_to_reliability_schedule;
+		return reliability_schedule;
 	}
 
-	std::unordered_map<std::string, std::vector<TimeState>>
-	ReliabilityCoordinator::calc_reliability_schedule_by_component_tag(
-		const std::function<double()>& rand_fn,
-		const erin::distribution::DistributionSystem& cds,
-		RealTimeType final_time) const
-	{
-		auto sch = calc_reliability_schedule(rand_fn, cds, final_time);
-		std::unordered_map<std::string, std::vector<TimeState>> out{};
-		for (size_type comp_id{0}; comp_id < comp_meta.tag.size(); ++comp_id)
-		{
-			const auto& tag = comp_meta.tag[comp_id];
-			out[tag] = std::move(sch[comp_id]);
-		}
-		return out;
-	}
+	// TODO: move into component in Model
+	//double
+	//ReliabilityCoordinator::next_event_time(double t) const
+	//{
+	//	double nextEventTime = -1.0;
+	//	for (size_t i = 0; i < fm_comp_links.component_id.size(); ++i)
+	//	{
+	//		const auto& schedule = fm_comp_links.schedules[i];
+	//		for (auto const& item : schedule)
+	//		{
+	//			if (nextEventTime == -1.0 || (item.time > t && item.time < nextEventTime))
+	//			{
+	//				nextEventTime = item.time;
+	//				break;
+	//			}
+	//		}
+	//	}
+	//	return nextEventTime;
+	//}
 
 	bool
 	schedule_state_at_time(
 		const std::vector<TimeState>& schedule,
-		RealTimeType time,
+		double time,
 		bool initial_value)
 	{
-		bool flag{initial_value};
-		if (schedule.size() > 0) {
-			for (const auto& ts : schedule) {
+		bool flag{ initial_value };
+		if (schedule.size() > 0)
+		{
+			for (const auto& ts : schedule)
+			{
 				if (time >= ts.time)
 				{
 					flag = ts.state;
 				}
-				if (time < ts.time) {
+				if (time < ts.time)
+				{
 					break;
 				}
 			}

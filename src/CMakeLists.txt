@@ -188,10 +188,12 @@ add_executable(limits limits.cpp)
 add_library(erin_next
 	erin_next.cpp
 	erin_next_distribution.cpp
-#	erin_next_reliability.cpp
+	erin_next_reliability.cpp
+	erin_next_timestate.cpp
 	${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h
-	${PROJECT_SOURCE_DIR}/include/erin_next/distribution.h
-#	${PROJECT_SOURCE_DIR}/include/erin_next/reliability.h
+	${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_distribution.h
+	${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_reliability.h
+	${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_timestate.h
 )
 
 # Add Warnings

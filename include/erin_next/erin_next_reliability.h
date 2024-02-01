@@ -3,7 +3,8 @@
 
 #ifndef ERIN_NEXT_RELIABILITY_H
 #define ERIN_NEXT_RELIABILITY_H
-#include "erin_next/distribution.h"
+#include "erin_next/erin_next_distribution.h"
+#include "erin_next/erin_next_timestate.h"
 #include <functional>
 #include <iostream>
 #include <set>
@@ -13,16 +14,6 @@
 
 namespace erin_next
 {
-	// Data Structs
-	struct TimeState
-	{
-		double time{0};
-		bool state{true};
-	};
-
-	bool operator==(const TimeState& a, const TimeState& b);
-	bool operator!=(const TimeState& a, const TimeState& b);
-	std::ostream& operator<<(std::ostream& os, const TimeState& ts);
 
 	struct FailureMode
 	{
@@ -34,11 +25,7 @@ namespace erin_next
 	struct FailureMode_Component_Link {
 		std::vector<size_t> failure_mode_id{};
 		std::vector<size_t> component_id{};
-	};
-
-	struct Component_meta
-	{
-		std::vector<std::string> tag{};
+		std::vector<std::vector<TimeState>> schedules{};
 	};
 
 	// Main Class to do Reliability Schedule Creation
@@ -49,49 +36,39 @@ namespace erin_next
 
 		size_t
 		add_failure_mode(
-			const std::string& tag,
-			const size_t& failure_dist_id,
-			const size_t& repair_dist_id
-			);
-
-		void
-		link_component_with_failure_mode(
-			const size_t& comp_id,
-			const size_t& fm_id);
+			std::string const& tag,
+			size_t const& failure_dist_id,
+			size_t const& repair_dist_id);
 
 		size_t
-		register_component(const std::string& tag);
+		link_component_with_failure_mode(
+			size_t const& comp_id,
+			size_t const& fm_id);
 
-		std::unordered_map<size_t, std::vector<TimeState>>
-		calc_reliability_schedule(
+		std::vector<TimeState>
+		make_schedule_for_link(
+			size_t linkId,
 			const std::function<double()>& rand_fn,
 			const DistributionSystem& cds,
-			double final_time) const;
-
-		std::unordered_map<std::string, std::vector<TimeState>>
-		calc_reliability_schedule_by_component_tag(
-			const std::function<double()>& rand_fn,
-			const DistributionSystem& cds,
-			double final_time) const;
+			double final_time);
 
 		private:
 		FailureMode fms;
 		FailureMode_Component_Link fm_comp_links;
-		Component_meta comp_meta;
 
-		void
-		calc_next_events(
+		double
+		calc_next_event(
+			size_t link_id,
+			double dt_fm,
 			const std::function<double()>& rand_fn,
 			const DistributionSystem& cds,
-			std::unordered_map<size_t, double>& comp_id_to_dt,
 			bool is_failure) const;
 
-		size_t
-		update_schedule(
-			std::unordered_map<size_t, double>& comp_id_to_time,
-			std::unordered_map<size_t, double>& comp_id_to_dt,
-			std::unordered_map<size_t, std::vector<TimeState>>&
-				comp_id_to_reliability_schedule,
+		bool
+		update_single_schedule(
+			double& time,
+			double& dt,
+			std::vector<TimeState>& schedule,
 			double final_time,
 			bool next_state) const;
 	};

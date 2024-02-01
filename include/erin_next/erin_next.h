@@ -221,6 +221,10 @@ namespace erin_next
 	void
 	ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
 
+	void
+	ActivateConnectionsForReliabilityIssues(
+		Model& m, SimulationState& ss, double time);
+
 	double
 	EarliestNextEvent(Model const& m, SimulationState const& ss, double t);
 
@@ -290,6 +294,10 @@ namespace erin_next
 
 	std::vector<TimeAndFlows>
 	Simulate(Model& m, SimulationState& ss, bool print);
+
+	void
+	Model_SetComponentToFailed(
+		Model const& m, SimulationState& ss, size_t compId);
 
 	size_t
 	Model_AddConstantLoad(Model& m, uint32_t load);

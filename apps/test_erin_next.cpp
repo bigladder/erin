@@ -664,9 +664,72 @@ Test11(bool doPrint)
 	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
 	auto fixedDistId = Model_AddFixedReliabilityDistribution(m, 10.0);
 	Model_AddFailureModeToComponent(m, convId.Id, fixedDistId, fixedDistId);
-	double maxTime = 100.0;
 	auto results = Simulate(m, ss, doPrint);
-	assert(results.size() == 11 && "Expect 11 times: 0.0, 10.0, 20.0, ..., 100.0");
+	assert(results.size() == 11
+		&& "Expect 11 times: 0.0, 10.0, 20.0, ..., 100.0");
+	double t = 0.0;
+	auto srcToConvResults =
+		ModelResults_GetFlowForConnection(m, srcToConvConn, t, results);
+	assert(srcToConvResults.value().Actual == 20
+		&& "src -> conv actual should be 20");
+	assert(srcToConvResults.value().Requested == 20
+		&& "src -> conv requested should be 20");
+	assert(srcToConvResults.value().Available == 100
+		&& "src -> conv available should be 100");
+	auto convToLoadResults =
+		ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
+	assert(convToLoadResults.value().Actual == 10
+		&& "conv -> load actual should be 10");
+	assert(convToLoadResults.value().Requested == 10
+		&& "conv -> load requested should be 10");
+	assert(convToLoadResults.value().Available == 50
+		&& "conv -> load available should be 50");
+	auto convToWasteResults =
+		ModelResults_GetFlowForConnection(
+			m, convId.WasteConnection, t, results);
+	assert(convToWasteResults.value().Actual == 10
+		&& "conv -> waste actual should be 10");
+	assert(convToWasteResults.value().Requested == 10
+		&& "conv -> waste requested should be 10");
+	assert(convToWasteResults.value().Available == 10
+		&& "conv -> waste available should be 10");
+	// time = 10.0
+	t = 10.0;
+	srcToConvResults =
+		ModelResults_GetFlowForConnection(m, srcToConvConn, t, results);
+	assert(srcToConvResults.value().Actual == 0
+		&& "src -> conv actual should be 0");
+	assert(srcToConvResults.value().Requested == 0
+		&& "src -> conv requested should be 0");
+	assert(srcToConvResults.value().Available == 100
+		&& "src -> conv available should be 100");
+	convToLoadResults =
+		ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
+	assert(convToLoadResults.value().Actual == 0
+		&& "conv -> load actual should be 0");
+	assert(convToLoadResults.value().Requested == 10
+		&& "conv -> load requested should be 10");
+	assert(convToLoadResults.value().Available == 0
+		&& "conv -> load available should be 0");
+	convToWasteResults =
+		ModelResults_GetFlowForConnection(
+			m, convId.WasteConnection, t, results);
+	assert(convToWasteResults.value().Actual == 0
+		&& "conv -> waste actual should be 0");
+	assert(convToWasteResults.value().Requested == 0
+		&& "conv -> waste requested should be 0");
+	assert(convToWasteResults.value().Available == 0
+		&& "conv -> waste available should be 0");
+	// check the results:
+	// When conv is active
+	// src -> conv 20, R: 20, A: 100
+	// conv -> waste 10, R: 10, A: 10
+	// conv -> load 10, R: 10, A: 50
+	//
+	// When conv is failed
+	// src -> conv 0, R: 0, A: 100
+	// conv -> waste 0, R: 0, A: 0
+	// conv -> load 0, R: 10, A: 0
 	PrintPass(doPrint, "11");
 }
 

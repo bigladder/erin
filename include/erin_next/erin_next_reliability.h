@@ -15,6 +15,7 @@
 namespace erin_next
 {
 
+	// TODO: move to separate file
 	struct FailureMode
 	{
 		std::vector<std::string> tag{};
@@ -22,6 +23,7 @@ namespace erin_next
 		std::vector<size_t> repair_dist{};
 	};
 
+	// TODO: move to separate file
 	struct FailureMode_Component_Link {
 		std::vector<size_t> failure_mode_id{};
 		std::vector<size_t> component_id{};
@@ -30,7 +32,7 @@ namespace erin_next
 
 	class ReliabilityCoordinator
 	{
-		public:
+	public:
 		ReliabilityCoordinator();
 
 		size_t
@@ -51,7 +53,7 @@ namespace erin_next
 			const DistributionSystem& cds,
 			double final_time);
 
-		private:
+	private:
 		FailureMode fms;
 		FailureMode_Component_Link fm_comp_links;
 
@@ -72,6 +74,7 @@ namespace erin_next
 			bool next_state) const;
 	};
 
+	// Helper Functions -- move to separate file: reliability_schedule.h?
 	std::vector<TimeState>
 	clip_schedule_to(
 		std::vector<TimeState>& schedule,

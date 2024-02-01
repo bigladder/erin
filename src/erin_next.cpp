@@ -899,8 +899,8 @@ namespace erin_next {
 		double t = 0.0;
 		std::vector<TimeAndFlows> timeAndFlows = {};
 		Model_SetupSimulationState(model, ss);
-		// TODO: max loop should be in the while loop; however, we do want to check for max time
-		while (t != infinity)
+		// TODO: add the check for max time; update unit tests to work with that
+		while (t != infinity) // && t <= model.FinalTime)
 		{
 			// schedule each event-generating component for next event
 			// by adding to the ActiveComponentBack or ActiveComponentFront arrays
@@ -908,11 +908,13 @@ namespace erin_next {
 			// running over loops...
 			ActivateConnectionsForScheduleBasedLoads(model, ss, t);
 			ActivateConnectionsForStores(model, ss, t);
+			// TODO: remove this if loop after we add a delay capability to constant loads and constant sources
 			if (t == 0)
 			{
 				ActivateConnectionsForConstantLoads(model, ss);
 				ActivateConnectionsForConstantSources(model, ss);
 			}
+			ActivateConnectionsForReliabilityIssues(model, ss);
 			// TODO: add a for-loop for max iter? check both count of active connections and max loop?
 			size_t const maxLoop = 10;
 			for (size_t loopIter = 0; loopIter <= maxLoop; ++loopIter)

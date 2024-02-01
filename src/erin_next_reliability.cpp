@@ -119,26 +119,6 @@ namespace erin_next
 		return reliability_schedule;
 	}
 
-	// TODO: move into component in Model
-	//double
-	//ReliabilityCoordinator::next_event_time(double t) const
-	//{
-	//	double nextEventTime = -1.0;
-	//	for (size_t i = 0; i < fm_comp_links.component_id.size(); ++i)
-	//	{
-	//		const auto& schedule = fm_comp_links.schedules[i];
-	//		for (auto const& item : schedule)
-	//		{
-	//			if (nextEventTime == -1.0 || (item.time > t && item.time < nextEventTime))
-	//			{
-	//				nextEventTime = item.time;
-	//				break;
-	//			}
-	//		}
-	//	}
-	//	return nextEventTime;
-	//}
-
 	std::vector<TimeState>
 	clip_schedule_to(
 		std::vector<TimeState>& schedule,

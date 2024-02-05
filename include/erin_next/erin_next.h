@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <vector>
 #include <optional>
+#include <set>
 
 namespace erin_next
 {
@@ -183,10 +184,11 @@ namespace erin_next
 
 	struct SimulationState
 	{
-		std::vector<size_t> ActiveConnectionsBack;
-		std::vector<size_t> ActiveConnectionsFront;
-		std::vector<ComponentId> ActiveComponentsBack;
-		std::vector<ComponentId> ActiveComponentFront;
+		std::set<size_t> ActiveConnectionsBack;
+		std::set<size_t> ActiveConnectionsFront;
+		// TODO: track active components?
+		//std::unordered_set<ComponentId> ActiveComponentsBack;
+		//std::unordered_set<ComponentId> ActiveComponentFront;
 		std::vector<uint32_t> StorageAmounts;
 		std::vector<double> StorageNextEventTimes;
 		std::vector<Flow> Flows;

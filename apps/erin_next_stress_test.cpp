@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <stdint.h>
+#include <assert.h>
+
 using namespace erin_next;
 
 int
@@ -25,8 +27,7 @@ main(int argc, char** argv)
 	timesAndLoads.reserve(numHours + 1);
 	for (size_t i = 0; i <= numHours; ++i)
 	{
-		timesAndLoads.emplace_back(
-			((double)i) * 3600.0, ((uint32_t)i) * 10);
+		timesAndLoads.emplace_back(((double)i) * 3600.0, 1);
 	}
 	for (size_t i = 0; i < numComponents; ++i)
 	{
@@ -42,6 +43,8 @@ main(int argc, char** argv)
 		<< ((double)durationConstr.count() / 1000.0)
 		<< " ms" << std::endl;
 	auto results = Simulate(m, ss, false);
+	assert(results.size() == numHours + 1
+		&& "Results is not of expected length");
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto durationSim =
 		std::chrono::duration_cast<std::chrono::microseconds>(

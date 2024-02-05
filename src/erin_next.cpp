@@ -91,7 +91,7 @@ namespace erin_next {
 	void
 	SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx)
 	{
-		Helper_AddIfNotAdded(ss.ActiveConnectionsBack, connIdx);
+		ss.ActiveConnectionsBack.insert(connIdx);
 	}
 
 	void
@@ -99,7 +99,7 @@ namespace erin_next {
 		SimulationState& ss,
 		size_t connIdx)
 	{
-		Helper_AddIfNotAdded(ss.ActiveConnectionsFront, connIdx);
+		ss.ActiveConnectionsFront.insert(connIdx);
 	}
 
 	void
@@ -110,7 +110,7 @@ namespace erin_next {
 			size_t connIdx = model.ConstLoads[loadIdx].InflowConn;
 			if (ss.Flows[connIdx].Requested != model.ConstLoads[loadIdx].Load)
 			{
-				SimulationState_AddActiveConnectionBack(ss, connIdx);
+				ss.ActiveConnectionsBack.insert(connIdx);
 			}
 			ss.Flows[connIdx].Requested = model.ConstLoads[loadIdx].Load;
 		}
@@ -124,7 +124,7 @@ namespace erin_next {
 			size_t connIdx = m.ConstSources[srcIdx].OutflowConn;
 			if (ss.Flows[connIdx].Available != m.ConstSources[srcIdx].Available)
 			{
-				SimulationState_AddActiveConnectionForward(ss, connIdx);
+				ss.ActiveConnectionsFront.insert(connIdx);
 			}
 			ss.Flows[connIdx].Available = m.ConstSources[srcIdx].Available;
 		}
@@ -139,19 +139,15 @@ namespace erin_next {
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx)
 		{
 			size_t connIdx = m.ScheduledLoads[schIdx].InflowConn;
-			for (TimeAndLoad const& tal :
-				m.ScheduledLoads[schIdx].TimesAndLoads)
+			size_t nextEventIdx = ss.ScheduleBasedLoadNextEventIdx[schIdx];
+			auto const& tal =
+				m.ScheduledLoads[schIdx].TimesAndLoads[nextEventIdx];
+			assert(tal.Time == t);
+			if (ss.Flows[connIdx].Requested != tal.Load)
 			{
-				if (tal.Time == t)
-				{
-					if (ss.Flows[connIdx].Requested != tal.Load)
-					{
-						SimulationState_AddActiveConnectionBack(ss, connIdx);
-					}
-					ss.Flows[connIdx].Requested = tal.Load;
-					break;
-				}
+				ss.ActiveConnectionsBack.insert(connIdx);
 			}
+			ss.Flows[connIdx].Requested = tal.Load;
 		}
 	}
 
@@ -170,7 +166,7 @@ namespace erin_next {
 					: 0);
 				if (ss.Flows[outflowConn].Available != available)
 				{
-					SimulationState_AddActiveConnectionForward(ss, outflowConn);
+					ss.ActiveConnectionsFront.insert(outflowConn);
 				}
 				ss.Flows[outflowConn].Available = available;
 				uint32_t request = ss.Flows[outflowConn].Requested + (
@@ -180,7 +176,7 @@ namespace erin_next {
 					: 0);
 				if (ss.Flows[inflowConn].Requested != request)
 				{
-					SimulationState_AddActiveConnectionForward(ss, inflowConn);
+					ss.ActiveConnectionsFront.insert(inflowConn);
 				}
 				ss.Flows[inflowConn].Requested = request;
 			}
@@ -267,7 +263,11 @@ namespace erin_next {
 	// TODO: consider reworking this to be an O(1) operation. Should components
 	// store connection indices?
 	int
-	FindInflowConnection(Model const& m, ComponentType ct, size_t compId, size_t inflowPort)
+	FindInflowConnection(
+		Model const& m,
+		ComponentType ct,
+		size_t compId,
+		size_t inflowPort)
 	{
 		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx)
 		{
@@ -322,7 +322,7 @@ namespace erin_next {
 			&& "inflow must be >= outflow in converter");
 		if (inflowRequest != ss.Flows[inflowConn].Requested)
 		{
-			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, inflowConn);
+			ss.ActiveConnectionsBack.insert(inflowConn);
 		}
 		ss.Flows[inflowConn].Requested = inflowRequest;
 		uint32_t attenuatedLossflowRequest = 0;
@@ -372,7 +372,7 @@ namespace erin_next {
 			size_t inflowConnIdx = model.Muxes[compIdx].InflowConns[muxInPort];
 			if (ss.Flows[inflowConnIdx].Requested != inflowRequests[muxInPort])
 			{
-				Helper_AddIfNotAdded(ss.ActiveConnectionsBack, inflowConnIdx);
+				ss.ActiveConnectionsBack.insert(inflowConnIdx);
 			}
 			ss.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
 		}
@@ -397,7 +397,7 @@ namespace erin_next {
 		if (ss.Flows[inflowConnIdx].Requested !=
 			(ss.Flows[connIdx].Requested + chargeRate))
 		{
-			Helper_AddIfNotAdded(ss.ActiveConnectionsBack, inflowConnIdx);
+			ss.ActiveConnectionsBack.insert(inflowConnIdx);
 		}
 		ss.Flows[inflowConnIdx].Requested =
 			ss.Flows[connIdx].Requested + chargeRate;
@@ -406,48 +406,56 @@ namespace erin_next {
 	void
 	RunConnectionsBackward(Model& model, SimulationState& ss)
 	{
-		while (ss.ActiveConnectionsBack.size() > 0)
+		while (!ss.ActiveConnectionsBack.empty())
 		{
-			size_t connIdx = ss.ActiveConnectionsBack.back();
-			ss.ActiveConnectionsBack.pop_back();
-			size_t compIdx = model.Connections[connIdx].FromIdx;
-			switch (model.Connections[connIdx].From)
+			auto temp = std::vector<size_t>(
+				ss.ActiveConnectionsBack.begin(),
+				ss.ActiveConnectionsBack.end());
+			ss.ActiveConnectionsBack.clear();
+			for (auto it = temp.cbegin(); it != temp.cend(); ++it)
 			{
-				case (ComponentType::ConstantSourceType):
+				size_t connIdx = *it;
+				size_t compIdx = model.Connections[connIdx].FromIdx;
+				switch (model.Connections[connIdx].From)
 				{
-				} break;
-				case (ComponentType::ConstantEfficiencyConverterType):
-				{
-					switch (model.Connections[connIdx].FromPort)
+					case (ComponentType::ConstantSourceType):
 					{
-						case 0:
+					} break;
+					case (ComponentType::ConstantEfficiencyConverterType):
+					{
+						switch (model.Connections[connIdx].FromPort)
 						{
-							RunConstantEfficiencyConverterBackward(
-								model, ss, connIdx, compIdx);
-						} break;
-						case 1: // lossflow
-						case 2: // wasteflow
-						{
-						} break;
-						default:
-						{
-							throw std::runtime_error{ "Uhandled port number" };
+							case 0:
+							{
+								RunConstantEfficiencyConverterBackward(
+									model, ss, connIdx, compIdx);
+							} break;
+							case 1: // lossflow
+							case 2: // wasteflow
+							{
+							} break;
+							default:
+							{
+								throw std::runtime_error{
+									"Uhandled port number" };
+							}
 						}
+					} break;
+					case (ComponentType::MuxType):
+					{
+						RunMuxBackward(model, ss, compIdx);
+					} break;
+					case (ComponentType::StoreType):
+					{
+						RunStoreBackward(model, ss, connIdx, compIdx);
+					} break;
+					default:
+					{
+						std::cout
+							<< "Unhandled component type on backward pass: "
+							<< ToString(model.Connections[connIdx].From)
+							<< std::endl;
 					}
-				} break;
-				case (ComponentType::MuxType):
-				{
-					RunMuxBackward(model, ss, compIdx);
-				} break;
-				case (ComponentType::StoreType):
-				{
-					RunStoreBackward(model, ss, connIdx, compIdx);
-				} break;
-				default:
-				{
-					std::cout << "Unhandled component type on backward pass: "
-						<< ToString(model.Connections[connIdx].From)
-						<< std::endl;
 				}
 			}
 		}
@@ -476,7 +484,7 @@ namespace erin_next {
 			&& "converter forward flow; inflow must be >= outflow");
 		if (outflowAvailable != ss.Flows[outflowConn].Available)
 		{
-			Helper_AddIfNotAdded(ss.ActiveConnectionsFront, outflowConn);
+			ss.ActiveConnectionsFront.insert(outflowConn);
 		}
 		ss.Flows[outflowConn].Available = outflowAvailable;
 		std::optional<size_t> lossflowConn =
@@ -493,8 +501,7 @@ namespace erin_next {
 			nonOutflowAvailable -= lossflowAvailable;
 			if (lossflowAvailable != ss.Flows[lossflowConn.value()].Available)
 			{
-				Helper_AddIfNotAdded(
-					ss.ActiveConnectionsFront, lossflowConn.value());
+				ss.ActiveConnectionsFront.insert(lossflowConn.value());
 			}
 			ss.Flows[lossflowConn.value()].Available = lossflowAvailable;
 		}
@@ -539,7 +546,7 @@ namespace erin_next {
 			if (ss.Flows[outflowConnIdx].Available
 				!= outflowAvailables[muxOutPort])
 			{
-				Helper_AddIfNotAdded(ss.ActiveConnectionsFront, outflowConnIdx);
+				ss.ActiveConnectionsFront.insert(outflowConnIdx);
 			}
 			ss.Flows[outflowConnIdx].Available = outflowAvailables[muxOutPort];
 		}
@@ -564,7 +571,7 @@ namespace erin_next {
 		available += dischargeAvailable;
 		if (ss.Flows[outflowConn].Available != available)
 		{
-			Helper_AddIfNotAdded(ss.ActiveConnectionsFront, outflowConn);
+			ss.ActiveConnectionsFront.insert(outflowConn);
 		}
 		ss.Flows[outflowConn].Available = available;
 	}
@@ -572,36 +579,42 @@ namespace erin_next {
 	void
 	RunConnectionsForward(Model& model, SimulationState& ss)
 	{
-		while (ss.ActiveConnectionsFront.size() > 0)
+		while (!ss.ActiveConnectionsFront.empty())
 		{
-			size_t connIdx = ss.ActiveConnectionsFront.back();
-			ss.ActiveConnectionsFront.pop_back();
-			size_t compIdx = model.Connections[connIdx].ToIdx;
-			switch (model.Connections[connIdx].To)
+			auto temp = std::vector<size_t>(
+				ss.ActiveConnectionsFront.begin(),
+				ss.ActiveConnectionsFront.end());
+			ss.ActiveConnectionsFront.clear();
+			for (auto it = temp.cbegin(); it != temp.cend(); ++it)
 			{
-				case (ComponentType::ConstantLoadType):
-				case (ComponentType::WasteSinkType):
-				case (ComponentType::ScheduleBasedLoadType):
+				size_t connIdx = *it;
+				size_t compIdx = model.Connections[connIdx].ToIdx;
+				switch (model.Connections[connIdx].To)
 				{
-				} break;
-				case (ComponentType::ConstantEfficiencyConverterType):
-				{
-					RunConstantEfficiencyConverterForward(
-						model, ss, connIdx, compIdx);
-				} break;
-				case (ComponentType::MuxType):
-				{
-					RunMuxForward(model, ss, compIdx);
-				} break;
-				case (ComponentType::StoreType):
-				{
-					RunStoreForward(model, ss, connIdx, compIdx);
-				} break;
-				default:
-				{
-					throw std::runtime_error{
-						"Unhandled component type on forward pass: "
-						+ ToString(model.Connections[connIdx].To) };
+					case (ComponentType::ConstantLoadType):
+					case (ComponentType::WasteSinkType):
+					case (ComponentType::ScheduleBasedLoadType):
+					{
+					} break;
+					case (ComponentType::ConstantEfficiencyConverterType):
+					{
+						RunConstantEfficiencyConverterForward(
+							model, ss, connIdx, compIdx);
+					} break;
+					case (ComponentType::MuxType):
+					{
+						RunMuxForward(model, ss, compIdx);
+					} break;
+					case (ComponentType::StoreType):
+					{
+						RunStoreForward(model, ss, connIdx, compIdx);
+					} break;
+					default:
+					{
+						throw std::runtime_error{
+							"Unhandled component type on forward pass: "
+							+ ToString(model.Connections[connIdx].To) };
+					}
 				}
 			}
 		}
@@ -1186,15 +1199,13 @@ namespace erin_next {
 				auto inflowConn = m.ConstEffConvs[idx].InflowConn;
 				if (ss.Flows[inflowConn].Requested != 0)
 				{
-					Helper_AddIfNotAdded(
-						ss.ActiveConnectionsBack, inflowConn);
+					ss.ActiveConnectionsBack.insert(inflowConn);
 				}
 				ss.Flows[inflowConn].Requested = 0;
 				auto outflowConn = m.ConstEffConvs[idx].OutflowConn;
 				if (ss.Flows[outflowConn].Available != 0)
 				{
-					Helper_AddIfNotAdded(
-						ss.ActiveConnectionsFront, outflowConn);
+					ss.ActiveConnectionsFront.insert(outflowConn);
 				}
 				ss.Flows[outflowConn].Available = 0;
 				auto lossflowConn = m.ConstEffConvs[idx].LossflowConn;
@@ -1203,8 +1214,7 @@ namespace erin_next {
 					auto lossConn = lossflowConn.value();
 					if (ss.Flows[lossConn].Available != 0)
 					{
-						Helper_AddIfNotAdded(
-							ss.ActiveConnectionsFront, lossConn);
+						ss.ActiveConnectionsFront.insert(lossConn);
 					}
 					ss.Flows[lossConn].Available = 0;
 				}

@@ -77,6 +77,8 @@ namespace erin_next
 	{
 		double Time;
 		uint32_t Load;
+
+		TimeAndLoad(double t, uint32_t load):Time{t}, Load{load} {}
 	};
 
 	struct ScheduleBasedLoad
@@ -188,6 +190,7 @@ namespace erin_next
 		std::vector<uint32_t> StorageAmounts;
 		std::vector<double> StorageNextEventTimes;
 		std::vector<Flow> Flows;
+		std::vector<size_t> ScheduleBasedLoadNextEventIdx;
 	};
 
 	size_t
@@ -259,7 +262,11 @@ namespace erin_next
 	FinalizeFlows(SimulationState& ss);
 
 	double
-	NextEvent(ScheduleBasedLoad const& sb, double t);
+	NextEvent(
+		ScheduleBasedLoad const& sb,
+		size_t sbIdx,
+		SimulationState const& ss,
+		double t);
 
 	double
 	NextEvent(ScheduleBasedReliability const& sbr, double t);
@@ -410,6 +417,12 @@ namespace erin_next
 	size_t
 	Model_AddFailureModeToComponent(
 		Model& m, size_t compId, size_t failureDistId, size_t repairDistId);
+
+	void
+	UpdateScheduleBasedLoadNextEvent(
+		Model const& m,
+		SimulationState& ss,
+		double time);
 
 }
 

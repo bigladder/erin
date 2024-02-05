@@ -228,7 +228,7 @@ namespace erin_next {
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx)
 		{
 			double nextTimeForComponent =
-				NextEvent(m.ScheduledLoads[schIdx], t);
+				NextEvent(m.ScheduledLoads[schIdx], schIdx, ss, t);
 			if (nextTime == infinity
 				|| (nextTimeForComponent >= 0.0
 					&& nextTimeForComponent < nextTime))
@@ -715,16 +715,18 @@ namespace erin_next {
 	}
 
 	double
-	NextEvent(ScheduleBasedLoad const& sb, double t)
+	NextEvent(
+		ScheduleBasedLoad const& sb,
+		size_t sbIdx,
+		SimulationState const& ss,
+		double t)
 	{
-		for (size_t i = 0; i < sb.TimesAndLoads.size(); ++i)
+		auto loadIdx = ss.ScheduleBasedLoadNextEventIdx[sbIdx];
+		if (loadIdx >= sb.TimesAndLoads.size())
 		{
-			if (sb.TimesAndLoads[i].Time > t)
-			{
-				return sb.TimesAndLoads[i].Time;
-			}
+			return infinity;
 		}
-		return infinity;
+		return sb.TimesAndLoads[loadIdx].Time;
 	}
 
 	double
@@ -786,6 +788,23 @@ namespace erin_next {
 				>= static_cast<long>(- 1 * (int)ss.StorageAmounts[storeIdx])
 				&& "netEnergyAdded cannot use more energy than available");
 			ss.StorageAmounts[storeIdx] += netEnergyAdded;
+		}
+	}
+
+	void
+	UpdateScheduleBasedLoadNextEvent(
+		Model const& m,
+		SimulationState& ss,
+		double time)
+	{
+		for (size_t i = 0; i < m.ScheduledLoads.size(); ++i)
+		{
+			auto& nextIdx = ss.ScheduleBasedLoadNextEventIdx[i];
+			if (nextIdx < m.ScheduledLoads[i].TimesAndLoads.size()
+				&& m.ScheduledLoads[i].TimesAndLoads[nextIdx].Time <= time)
+			{
+				++nextIdx;
+			}
 		}
 	}
 
@@ -993,6 +1012,8 @@ namespace erin_next {
 		ss.StorageNextEventTimes =
 			std::vector<double>(model.Stores.size(), 0.0);
 		ss.Flows = std::vector<Flow>(model.Connections.size(), { 0, 0, 0 });
+		ss.ScheduleBasedLoadNextEventIdx =
+			std::vector<size_t>(model.ScheduledLoads.size(), 1);
 	}
 
 	size_t
@@ -1082,6 +1103,7 @@ namespace erin_next {
 				break;
 			}
 			UpdateStoresPerElapsedTime(model, ss, nextTime - t);
+			UpdateScheduleBasedLoadNextEvent(model, ss, nextTime);
 			t = nextTime;
 		}
 		if constexpr (do_debug)

@@ -952,7 +952,6 @@ namespace erin_next {
 	size_t
 	Model_AddFixedReliabilityDistribution(Model& m, double dt)
 	{
-		std::cout << "0" << std::endl;
 		return m.DistSys.add_fixed("", dt);
 	}
 

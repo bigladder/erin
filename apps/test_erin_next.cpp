@@ -7,7 +7,8 @@ using namespace erin_next;
 static void
 PrintBanner(bool doPrint, std::string name) {
 	if (doPrint) {
-		std::cout << "[Test " << std::right << std::setw(3) << (name + ":") << std::endl;
+		std::cout << "[Test " << std::right << std::setw(3)
+			<< (name + ":") << std::endl;
 	}
 }
 
@@ -16,7 +17,8 @@ PrintPass(bool doPrint, std::string name) {
 	std::string preamble = doPrint
 		? "  ... "
 		: "[Test ";
-	std::cout << preamble << std::right << std::setw(3) << (name + "]") << " :: PASSED" << std::endl;
+	std::cout << preamble << std::right << std::setw(3)
+		<< (name + "]") << " :: PASSED" << std::endl;
 }
 
 static double
@@ -34,14 +36,22 @@ Test1(bool print) {
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto srcToLoadConn = Model_AddConnection(m, ss, srcId, 0, loadId, 0);
 	auto results = Simulate(m, ss, print);
-	assert((results.size() == 1 && "output must have a size of 1"));
-	assert((results[0].Time == 0.0 && "time must equal 0.0"));
-	assert((results[0].Flows.size() == 1 && "size of flows must equal 1"));
-	auto srcToLoadResult = ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
-	assert((srcToLoadResult.has_value() && "connection result should have a value"));
-	assert((srcToLoadResult.value().Actual == 10 && "actual value must equal 10"));
-	assert((srcToLoadResult.value().Available == 100 && "available must equal 100"));
-	assert((srcToLoadResult.value().Requested == 10 && "requested must equal 10"));
+	assert((results.size() == 1
+		&& "output must have a size of 1"));
+	assert((results[0].Time == 0.0
+		&& "time must equal 0.0"));
+	assert((results[0].Flows.size() == 1
+		&& "size of flows must equal 1"));
+	auto srcToLoadResult =
+		ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
+	assert((srcToLoadResult.has_value()
+		&& "connection result should have a value"));
+	assert((srcToLoadResult.value().Actual == 10
+		&& "actual value must equal 10"));
+	assert((srcToLoadResult.value().Available == 100
+		&& "available must equal 100"));
+	assert((srcToLoadResult.value().Requested == 10
+		&& "requested must equal 10"));
 	PrintPass(print, "1");
 }
 
@@ -56,24 +66,43 @@ Test2(bool print) {
 	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
 	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
 	auto results = Simulate(m, ss, print);
-	assert((results.size() == 1 && "output must have a size of 1"));
-	assert((results[0].Time == 0.0 && "time must equal 0.0"));
-	assert((results[0].Flows.size() == 3 && "size of flows must equal 3"));
-	auto srcToConvResults = ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
-	assert((srcToConvResults.has_value() && "source to converter must have results"));
-	assert((srcToConvResults.value().Requested == 20 && "requested must equal 20"));
-	assert((srcToConvResults.value().Actual == 20 && "actual value must equal 20"));
-	assert((srcToConvResults.value().Available == 100 && "available must equal 100"));
-	auto convToLoadResults = ModelResults_GetFlowForConnection(m, convToLoadConn, 0.0, results);
-	assert((convToLoadResults.has_value() && "converter to load must have results"));
-	assert((convToLoadResults.value().Requested == 10 && "requested must equal 10"));
-	assert((convToLoadResults.value().Actual == 10 && "actual value must equal 10"));
-	assert((convToLoadResults.value().Available == 50 && "available must equal 50"));
-	auto convToWasteResults = ModelResults_GetFlowForConnection(m, convId.WasteConnection, 0.0, results);
-	assert((convToWasteResults.has_value() && "converter to waste must have results"));
-	assert((convToWasteResults.value().Requested == 10 && "requested must equal 10"));
-	assert((convToWasteResults.value().Actual == 10 && "actual value must equal 10"));
-	assert((convToWasteResults.value().Available == 10 && "available must equal 10"));
+	assert((results.size() == 1
+		&& "output must have a size of 1"));
+	assert((results[0].Time == 0.0
+		&& "time must equal 0.0"));
+	assert((results[0].Flows.size() == 3
+		&& "size of flows must equal 3"));
+	auto srcToConvResults =
+		ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
+	assert((srcToConvResults.has_value()
+		&& "source to converter must have results"));
+	assert((srcToConvResults.value().Requested == 20
+		&& "requested must equal 20"));
+	assert((srcToConvResults.value().Actual == 20
+		&& "actual value must equal 20"));
+	assert((srcToConvResults.value().Available == 100
+		&& "available must equal 100"));
+	auto convToLoadResults =
+		ModelResults_GetFlowForConnection(m, convToLoadConn, 0.0, results);
+	assert((convToLoadResults.has_value()
+		&& "converter to load must have results"));
+	assert((convToLoadResults.value().Requested == 10
+		&& "requested must equal 10"));
+	assert((convToLoadResults.value().Actual == 10
+		&& "actual value must equal 10"));
+	assert((convToLoadResults.value().Available == 50
+		&& "available must equal 50"));
+	auto convToWasteResults =
+		ModelResults_GetFlowForConnection(
+			m, convId.WasteConnection, 0.0, results);
+	assert((convToWasteResults.has_value()
+		&& "converter to waste must have results"));
+	assert((convToWasteResults.value().Requested == 10
+		&& "requested must equal 10"));
+	assert((convToWasteResults.value().Actual == 10
+		&& "actual value must equal 10"));
+	assert((convToWasteResults.value().Available == 10
+		&& "available must equal 10"));
 	PrintPass(print, "2");
 }
 
@@ -93,26 +122,47 @@ Test3(bool print) {
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
-	auto srcToConvResults = ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
-	assert((srcToConvResults.has_value() && "source to converter must have results"));
-	assert((srcToConvResults.value().Requested == 20 && "requested must equal 20"));
-	assert((srcToConvResults.value().Actual == 20 && "actual value must equal 20"));
-	assert((srcToConvResults.value().Available == 100 && "available must equal 100"));
-	auto convToLoad1Results = ModelResults_GetFlowForConnection(m, convToLoad1Conn, 0.0, results);
-	assert((convToLoad1Results.has_value() && "converter to load1 must have results"));
-	assert((convToLoad1Results.value().Requested == 10 && "requested must equal 10"));
-	assert((convToLoad1Results.value().Actual == 10 && "actual value must equal 10"));
-	assert((convToLoad1Results.value().Available == 50 && "available must equal 50"));
-	auto convToLoad2Results = ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
-	assert((convToLoad2Results.has_value() && "conv to load2 must have results"));
-	assert((convToLoad2Results.value().Requested == 2 && "requested must equal 2"));
-	assert((convToLoad2Results.value().Actual == 2 && "actual value must equal 2"));
-	assert((convToLoad2Results.value().Available == 2 && "available must equal 50"));
-	auto convToWasteResults = ModelResults_GetFlowForConnection(m, convId.WasteConnection, 0.0, results);
-	assert((convToWasteResults.has_value() && "conv to waste must have results"));
-	assert((convToWasteResults.value().Requested == 8 && "requested must equal 8"));
-	assert((convToWasteResults.value().Actual == 8 && "actual value must equal 8"));
-	assert((convToWasteResults.value().Available == 8 && "available must equal 48"));
+	auto srcToConvResults =
+		ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
+	assert((srcToConvResults.has_value()
+		&& "source to converter must have results"));
+	assert((srcToConvResults.value().Requested == 20
+		&& "requested must equal 20"));
+	assert((srcToConvResults.value().Actual == 20
+		&& "actual value must equal 20"));
+	assert((srcToConvResults.value().Available == 100
+		&& "available must equal 100"));
+	auto convToLoad1Results =
+		ModelResults_GetFlowForConnection(m, convToLoad1Conn, 0.0, results);
+	assert((convToLoad1Results.has_value()
+		&& "converter to load1 must have results"));
+	assert((convToLoad1Results.value().Requested == 10
+		&& "requested must equal 10"));
+	assert((convToLoad1Results.value().Actual == 10
+		&& "actual value must equal 10"));
+	assert((convToLoad1Results.value().Available == 50
+		&& "available must equal 50"));
+	auto convToLoad2Results =
+		ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
+	assert((convToLoad2Results.has_value()
+		&& "conv to load2 must have results"));
+	assert((convToLoad2Results.value().Requested == 2
+		&& "requested must equal 2"));
+	assert((convToLoad2Results.value().Actual == 2
+		&& "actual value must equal 2"));
+	assert((convToLoad2Results.value().Available == 2
+		&& "available must equal 50"));
+	auto convToWasteResults =
+		ModelResults_GetFlowForConnection(
+			m, convId.WasteConnection, 0.0, results);
+	assert((convToWasteResults.has_value()
+		&& "conv to waste must have results"));
+	assert((convToWasteResults.value().Requested == 8
+		&& "requested must equal 8"));
+	assert((convToWasteResults.value().Actual == 8
+		&& "actual value must equal 8"));
+	assert((convToWasteResults.value().Available == 8
+		&& "available must equal 48"));
 	PrintPass(print, "3");
 }
 
@@ -132,26 +182,47 @@ Test3A(bool print) {
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
-	auto srcToConvResults = ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
-	assert((srcToConvResults.has_value() && "source to converter must have results"));
-	assert((srcToConvResults.value().Requested == 20 && "requested must equal 20"));
-	assert((srcToConvResults.value().Actual == 20 && "actual value must equal 20"));
-	assert((srcToConvResults.value().Available == 100 && "available must equal 100"));
-	auto convToLoad1Results = ModelResults_GetFlowForConnection(m, convToLoad1Conn, 0.0, results);
-	assert((convToLoad1Results.has_value() && "converter to load1 must have results"));
-	assert((convToLoad1Results.value().Requested == 10 && "requested must equal 10"));
-	assert((convToLoad1Results.value().Actual == 10 && "actual value must equal 10"));
-	assert((convToLoad1Results.value().Available == 50 && "available must equal 50"));
-	auto convToLoad2Results = ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
-	assert((convToLoad2Results.has_value() && "conv to load2 must have results"));
-	assert((convToLoad2Results.value().Requested == 2 && "requested must equal 2"));
-	assert((convToLoad2Results.value().Actual == 2 && "actual value must equal 2"));
-	assert((convToLoad2Results.value().Available == 2 && "available must equal 50"));
-	auto convToWasteResults = ModelResults_GetFlowForConnection(m, convId.WasteConnection, 0.0, results);
-	assert((convToWasteResults.has_value() && "conv to waste must have results"));
-	assert((convToWasteResults.value().Requested == 8 && "requested must equal 8"));
-	assert((convToWasteResults.value().Actual == 8 && "actual value must equal 8"));
-	assert((convToWasteResults.value().Available == 8 && "available must equal 48"));
+	auto srcToConvResults =
+		ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
+	assert((srcToConvResults.has_value()
+		&& "source to converter must have results"));
+	assert((srcToConvResults.value().Requested == 20
+		&& "requested must equal 20"));
+	assert((srcToConvResults.value().Actual == 20
+		&& "actual value must equal 20"));
+	assert((srcToConvResults.value().Available == 100
+		&& "available must equal 100"));
+	auto convToLoad1Results =
+		ModelResults_GetFlowForConnection(m, convToLoad1Conn, 0.0, results);
+	assert((convToLoad1Results.has_value()
+		&& "converter to load1 must have results"));
+	assert((convToLoad1Results.value().Requested == 10
+		&& "requested must equal 10"));
+	assert((convToLoad1Results.value().Actual == 10
+		&& "actual value must equal 10"));
+	assert((convToLoad1Results.value().Available == 50
+		&& "available must equal 50"));
+	auto convToLoad2Results =
+		ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
+	assert((convToLoad2Results.has_value()
+		&& "conv to load2 must have results"));
+	assert((convToLoad2Results.value().Requested == 2
+		&& "requested must equal 2"));
+	assert((convToLoad2Results.value().Actual == 2
+		&& "actual value must equal 2"));
+	assert((convToLoad2Results.value().Available == 2
+		&& "available must equal 50"));
+	auto convToWasteResults =
+		ModelResults_GetFlowForConnection(
+			m, convId.WasteConnection, 0.0, results);
+	assert((convToWasteResults.has_value()
+		&& "conv to waste must have results"));
+	assert((convToWasteResults.value().Requested == 8
+		&& "requested must equal 8"));
+	assert((convToWasteResults.value().Actual == 8
+		&& "actual value must equal 8"));
+	assert((convToWasteResults.value().Available == 8
+		&& "available must equal 48"));
 	PrintPass(print, "3a");
 }
 
@@ -170,18 +241,30 @@ Test4(bool print) {
 	assert((results.size() == 2 && "output must have a size of 2"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
 	assert((results[0].Flows.size() == 1 && "size of flows[0] must equal 1"));
-	auto srcToLoadResults_0 = ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
-	assert((srcToLoadResults_0.has_value() && "source to load must have results at time=0.0"));
-	assert((srcToLoadResults_0.value().Requested == 10 && "requested must equal 10"));
-	assert((srcToLoadResults_0.value().Actual == 10 && "actual value must equal 10"));
-	assert((srcToLoadResults_0.value().Available == 100 && "available must equal 100"));
-	assert((results[1].Time == 3600.0 && "time must equal 3600.0"));
-	assert((results[1].Flows.size() == 1 && "size of flows[1] must equal 1"));
-	auto srcToLoadResults_3600 = ModelResults_GetFlowForConnection(m, srcToLoadConn, 3600.0, results);
-	assert((srcToLoadResults_3600.has_value() && "source to load must have results at time=3600.0"));
-	assert((srcToLoadResults_3600.value().Requested == 200 && "requested must equal 200"));
-	assert((srcToLoadResults_3600.value().Actual == 100 && "actual value must equal 100"));
-	assert((srcToLoadResults_3600.value().Available == 100 && "available must equal 100"));
+	auto srcToLoadResults_0 =
+		ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
+	assert((srcToLoadResults_0.has_value()
+		&& "source to load must have results at time=0.0"));
+	assert((srcToLoadResults_0.value().Requested == 10
+		&& "requested must equal 10"));
+	assert((srcToLoadResults_0.value().Actual == 10
+		&& "actual value must equal 10"));
+	assert((srcToLoadResults_0.value().Available == 100
+		&& "available must equal 100"));
+	assert((results[1].Time == 3600.0
+		&& "time must equal 3600.0"));
+	assert((results[1].Flows.size() == 1
+		&& "size of flows[1] must equal 1"));
+	auto srcToLoadResults_3600 =
+		ModelResults_GetFlowForConnection(m, srcToLoadConn, 3600.0, results);
+	assert((srcToLoadResults_3600.has_value()
+		&& "source to load must have results at time=3600.0"));
+	assert((srcToLoadResults_3600.value().Requested == 200
+		&& "requested must equal 200"));
+	assert((srcToLoadResults_3600.value().Actual == 100
+		&& "actual value must equal 100"));
+	assert((srcToLoadResults_3600.value().Available == 100
+		&& "available must equal 100"));
 	PrintPass(print, "4");
 }
 
@@ -199,24 +282,41 @@ Test5(bool print) {
 	auto conv2 = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
 	auto conv3 = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
 	auto srcToConv1Conn = Model_AddConnection(m, ss, srcId, 0, conv1.Id, 0);
-	auto conv1ToLoad1Conn = Model_AddConnection(m, ss, conv1.Id, 0, load1Id, 0);
-	auto conv1ToConv2Conn = Model_AddConnection(m, ss, conv1.Id, 1, conv2.Id, 0);
-	auto conv2ToLoad2Conn = Model_AddConnection(m, ss, conv2.Id, 0, load2Id, 0);
-	auto conv2ToConv3Conn = Model_AddConnection(m, ss, conv2.Id, 1, conv3.Id, 0);
-	auto conv3ToLoad3Conn = Model_AddConnection(m, ss, conv3.Id, 0, load3Id, 0);
+	auto conv1ToLoad1Conn =
+		Model_AddConnection(m, ss, conv1.Id, 0, load1Id, 0);
+	auto conv1ToConv2Conn =
+		Model_AddConnection(m, ss, conv1.Id, 1, conv2.Id, 0);
+	auto conv2ToLoad2Conn =
+		Model_AddConnection(m, ss, conv2.Id, 0, load2Id, 0);
+	auto conv2ToConv3Conn =
+		Model_AddConnection(m, ss, conv2.Id, 1, conv3.Id, 0);
+	auto conv3ToLoad3Conn =
+		Model_AddConnection(m, ss, conv3.Id, 0, load3Id, 0);
 	auto results = Simulate(m, ss, print);
-	auto srcToConv1Results = ModelResults_GetFlowForConnection(m, srcToConv1Conn, 0.0, results);
-	auto conv1ToLoad1Results = ModelResults_GetFlowForConnection(m, conv1ToLoad1Conn, 0.0, results);
-	auto conv1ToConv2Results = ModelResults_GetFlowForConnection(m, conv1ToConv2Conn, 0.0, results);
-	auto conv2ToLoad2Results = ModelResults_GetFlowForConnection(m, conv2ToLoad2Conn, 0.0, results);
-	auto conv2ToConv3Results = ModelResults_GetFlowForConnection(m, conv2ToConv3Conn, 0.0, results);
-	auto conv3ToLoad3Results = ModelResults_GetFlowForConnection(m, conv3ToLoad3Conn, 0.0, results);
-	assert((srcToConv1Results.value().Actual == 40 && "src to conv1 should flow 40"));
-	assert((conv1ToLoad1Results.value().Actual == 10 && "conv1 to load1 should flow 10"));
-	assert((conv1ToConv2Results.value().Actual == 28 && "conv1 to conv2 should flow 28"));
-	assert((conv2ToLoad2Results.value().Actual == 7 && "conv1 to conv2 should flow 7"));
-	assert((conv2ToConv3Results.value().Actual == 20 && "conv2 to conv3 should flow 21"));
-	assert((conv3ToLoad3Results.value().Actual == 5 && "conv3 to load3 should flow 5"));
+	auto srcToConv1Results =
+		ModelResults_GetFlowForConnection(m, srcToConv1Conn, 0.0, results);
+	auto conv1ToLoad1Results =
+		ModelResults_GetFlowForConnection(m, conv1ToLoad1Conn, 0.0, results);
+	auto conv1ToConv2Results =
+		ModelResults_GetFlowForConnection(m, conv1ToConv2Conn, 0.0, results);
+	auto conv2ToLoad2Results =
+		ModelResults_GetFlowForConnection(m, conv2ToLoad2Conn, 0.0, results);
+	auto conv2ToConv3Results =
+		ModelResults_GetFlowForConnection(m, conv2ToConv3Conn, 0.0, results);
+	auto conv3ToLoad3Results =
+		ModelResults_GetFlowForConnection(m, conv3ToLoad3Conn, 0.0, results);
+	assert((srcToConv1Results.value().Actual == 40
+		&& "src to conv1 should flow 40"));
+	assert((conv1ToLoad1Results.value().Actual == 10
+		&& "conv1 to load1 should flow 10"));
+	assert((conv1ToConv2Results.value().Actual == 28
+		&& "conv1 to conv2 should flow 28"));
+	assert((conv2ToLoad2Results.value().Actual == 7
+		&& "conv1 to conv2 should flow 7"));
+	assert((conv2ToConv3Results.value().Actual == 20
+		&& "conv2 to conv3 should flow 21"));
+	assert((conv3ToLoad3Results.value().Actual == 5
+		&& "conv3 to load3 should flow 5"));
 	PrintPass(print, "5");
 }
 
@@ -235,14 +335,22 @@ Test6(bool doPrint) {
 	auto muxToLoad1Conn = Model_AddConnection(m, ss, muxId, 0, load1Id, 0);
 	auto muxToLoad2Conn = Model_AddConnection(m, ss, muxId, 1, load2Id, 0);
 	auto results = Simulate(m, ss, doPrint);
-	auto src1ToMuxResults = ModelResults_GetFlowForConnection(m, src1ToMuxConn, 0.0, results);
-	assert((src1ToMuxResults.value().Actual == 10 && "src1 -> mux expected actual flow of 10"));
-	auto src2ToMuxResults = ModelResults_GetFlowForConnection(m, src2ToMuxConn, 0.0, results);
-	assert((src2ToMuxResults.value().Actual == 50 && "src2 -> mux expected actual flow of 50"));
-	auto muxToLoad1Results = ModelResults_GetFlowForConnection(m, muxToLoad1Conn, 0.0, results);
-	assert((muxToLoad1Results.value().Actual == 10 && "mux -> load1 expected actual flow of 10"));
-	auto muxToLoad2Results = ModelResults_GetFlowForConnection(m, muxToLoad2Conn, 0.0, results);
-	assert((muxToLoad2Results.value().Actual == 50 && "mux -> load2 expected actual flow of 50"));
+	auto src1ToMuxResults =
+		ModelResults_GetFlowForConnection(m, src1ToMuxConn, 0.0, results);
+	assert((src1ToMuxResults.value().Actual == 10
+		&& "src1 -> mux expected actual flow of 10"));
+	auto src2ToMuxResults =
+		ModelResults_GetFlowForConnection(m, src2ToMuxConn, 0.0, results);
+	assert((src2ToMuxResults.value().Actual == 50
+		&& "src2 -> mux expected actual flow of 50"));
+	auto muxToLoad1Results =
+		ModelResults_GetFlowForConnection(m, muxToLoad1Conn, 0.0, results);
+	assert((muxToLoad1Results.value().Actual == 10
+		&& "mux -> load1 expected actual flow of 10"));
+	auto muxToLoad2Results =
+		ModelResults_GetFlowForConnection(m, muxToLoad2Conn, 0.0, results);
+	assert((muxToLoad2Results.value().Actual == 50
+		&& "mux -> load2 expected actual flow of 50"));
 	PrintPass(doPrint, "6");
 }
 
@@ -257,26 +365,46 @@ Test7(bool doPrint) {
 	auto srcToStoreConn = Model_AddConnection(m, ss, srcId, 0, storeId, 0);
 	auto storeToLoadConn = Model_AddConnection(m, ss, storeId, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
-	auto srcToStoreResults = ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
-	assert(srcToStoreResults.value().Actual == 0 && "src to store should be providing 0");
-	assert(srcToStoreResults.value().Requested == 10 && "src to store request is 10");
-	assert(srcToStoreResults.value().Available == 0 && "src to store available is 0");
-	auto storeToLoadResults = ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
-	assert(storeToLoadResults.has_value() && "should have results for store to load connection");
-	assert(storeToLoadResults.value().Actual == 10 && "store to load should be providing 10");
-	assert(storeToLoadResults.value().Requested == 10 && "store to load should be requesting 10");
-	assert(storeToLoadResults.value().Available == 10 && "store to load available should be 10");
-	assert(results.size() == 2 && "there should be two time events in results");
-	assert(results[1].Time > 10.0 - 1e-6 && results[1].Time < 10.0 + 1e-6 && "time should be 10");
-	auto srcToStoreResultsAt10 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
-	assert(srcToStoreResultsAt10.value().Actual == 0 && "src to store should be providing 0");
-	assert(srcToStoreResultsAt10.value().Requested == 20 && "src to store request is 20");
-	assert(srcToStoreResultsAt10.value().Available == 0 && "src to store available is 0");
-	auto storeToLoadResultsAt10 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
-	assert(storeToLoadResultsAt10.has_value() && "should have results for store to load connection");
-	assert(storeToLoadResultsAt10.value().Actual == 0 && "store to load should be providing 0");
-	assert(storeToLoadResultsAt10.value().Requested == 10 && "store to load should be requesting 10");
-	assert(storeToLoadResultsAt10.value().Available == 0 && "store to load available should be 0");
+	auto srcToStoreResults =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
+	assert(srcToStoreResults.value().Actual == 0
+		&& "src to store should be providing 0");
+	assert(srcToStoreResults.value().Requested == 10
+		&& "src to store request is 10");
+	assert(srcToStoreResults.value().Available == 0
+		&& "src to store available is 0");
+	auto storeToLoadResults =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
+	assert(storeToLoadResults.has_value()
+		&& "should have results for store to load connection");
+	assert(storeToLoadResults.value().Actual == 10
+		&& "store to load should be providing 10");
+	assert(storeToLoadResults.value().Requested == 10
+		&& "store to load should be requesting 10");
+	assert(storeToLoadResults.value().Available == 10
+		&& "store to load available should be 10");
+	assert(results.size() == 2
+		&& "there should be two time events in results");
+	assert(results[1].Time > 10.0 - 1e-6
+		&& results[1].Time < 10.0 + 1e-6 && "time should be 10");
+	auto srcToStoreResultsAt10 =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
+	assert(srcToStoreResultsAt10.value().Actual == 0
+		&& "src to store should be providing 0");
+	assert(srcToStoreResultsAt10.value().Requested == 20
+		&& "src to store request is 20");
+	assert(srcToStoreResultsAt10.value().Available == 0
+		&& "src to store available is 0");
+	auto storeToLoadResultsAt10 =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
+	assert(storeToLoadResultsAt10.has_value()
+		&& "should have results for store to load connection");
+	assert(storeToLoadResultsAt10.value().Actual == 0
+		&& "store to load should be providing 0");
+	assert(storeToLoadResultsAt10.value().Requested == 10
+		&& "store to load should be requesting 10");
+	assert(storeToLoadResultsAt10.value().Available == 0
+		&& "store to load available should be 0");
 	PrintPass(doPrint, "7");
 }
 
@@ -291,26 +419,46 @@ Test8(bool doPrint) {
 	auto srcToStoreConn = Model_AddConnection(m, ss, srcId, 0, storeId, 0);
 	auto storeToLoadConn = Model_AddConnection(m, ss, storeId, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
-	auto srcToStoreResults = ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
-	assert(srcToStoreResults.value().Actual == 5 && "src to store should be providing 5");
-	assert(srcToStoreResults.value().Requested == 10 && "src to store request is 10");
-	assert(srcToStoreResults.value().Available == 5 && "src to store available is 5");
-	auto storeToLoadResults = ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
-	assert(storeToLoadResults.has_value() && "should have results for store to load connection");
-	assert(storeToLoadResults.value().Actual == 10 && "store to load should be providing 10");
-	assert(storeToLoadResults.value().Requested == 10 && "store to load should be requesting 10");
-	assert(storeToLoadResults.value().Available == 15 && "store to load available should be 15");
-	assert(results.size() == 2 && "there should be two time events in results");
-	assert(results[1].Time > 20.0 - 1e-6 && results[1].Time < 20.0 + 1e-6 && "time should be 20");
-	auto srcToStoreResultsAt20 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 20.0, results);
-	assert(srcToStoreResultsAt20.value().Actual == 5 && "src to store should be providing 5");
-	assert(srcToStoreResultsAt20.value().Requested == 20 && "src to store request is 20");
-	assert(srcToStoreResultsAt20.value().Available == 5 && "src to store available is 5");
-	auto storeToLoadResultsAt20 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 20.0, results);
-	assert(storeToLoadResultsAt20.has_value() && "should have results for store to load connection");
-	assert(storeToLoadResultsAt20.value().Actual == 5 && "store to load should be providing 5");
-	assert(storeToLoadResultsAt20.value().Requested == 10 && "store to load should be requesting 10");
-	assert(storeToLoadResultsAt20.value().Available == 5 && "store to load available should be 5");
+	auto srcToStoreResults =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
+	assert(srcToStoreResults.value().Actual == 5
+		&& "src to store should be providing 5");
+	assert(srcToStoreResults.value().Requested == 10
+		&& "src to store request is 10");
+	assert(srcToStoreResults.value().Available == 5
+		&& "src to store available is 5");
+	auto storeToLoadResults =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
+	assert(storeToLoadResults.has_value()
+		&& "should have results for store to load connection");
+	assert(storeToLoadResults.value().Actual == 10
+		&& "store to load should be providing 10");
+	assert(storeToLoadResults.value().Requested == 10
+		&& "store to load should be requesting 10");
+	assert(storeToLoadResults.value().Available == 15
+		&& "store to load available should be 15");
+	assert(results.size() == 2
+		&& "there should be two time events in results");
+	assert(results[1].Time > 20.0 - 1e-6
+		&& results[1].Time < 20.0 + 1e-6 && "time should be 20");
+	auto srcToStoreResultsAt20 =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 20.0, results);
+	assert(srcToStoreResultsAt20.value().Actual == 5
+		&& "src to store should be providing 5");
+	assert(srcToStoreResultsAt20.value().Requested == 20
+		&& "src to store request is 20");
+	assert(srcToStoreResultsAt20.value().Available == 5
+		&& "src to store available is 5");
+	auto storeToLoadResultsAt20 =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 20.0, results);
+	assert(storeToLoadResultsAt20.has_value()
+		&& "should have results for store to load connection");
+	assert(storeToLoadResultsAt20.value().Actual == 5
+		&& "store to load should be providing 5");
+	assert(storeToLoadResultsAt20.value().Requested == 10
+		&& "store to load should be requesting 10");
+	assert(storeToLoadResultsAt20.value().Available == 5
+		&& "store to load available should be 5");
 	PrintPass(doPrint, "8");
 }
 
@@ -335,8 +483,10 @@ Test9(bool doPrint) {
 	assert(Round(results[2].Time) == 5.0 && "expect third time is 5.0");
 	assert(Round(results[3].Time) == 10.0 && "expect fourth time is 10.0");
 	assert(Round(results[4].Time) == 25.0 && "expect fifth time is 25.0");
-	auto srcToStoreResultsAt0 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
-	auto storeToLoadResultsAt0 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
+	auto srcToStoreResultsAt0 =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
+	auto storeToLoadResultsAt0 =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
 	auto storeAmount0 = ModelResults_GetStoreState(m, storeId, 0.0, results);
 	assert(srcToStoreResultsAt0.value().Actual == 10);
 	assert(srcToStoreResultsAt0.value().Requested == 20);
@@ -345,9 +495,12 @@ Test9(bool doPrint) {
 	assert(storeToLoadResultsAt0.value().Requested == 20);
 	assert(storeToLoadResultsAt0.value().Available == 20);
 	assert(storeAmount0.value() == 100);
-	auto srcToStoreResultsAt2 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 2.0, results);
-	auto storeToLoadResultsAt2 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 2.0, results);
-	auto storeAmount2 = ModelResults_GetStoreState(m, storeId, 2.0, results);
+	auto srcToStoreResultsAt2 =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 2.0, results);
+	auto storeToLoadResultsAt2 =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 2.0, results);
+	auto storeAmount2 =
+		ModelResults_GetStoreState(m, storeId, 2.0, results);
 	assert(srcToStoreResultsAt2.value().Actual == 10);
 	assert(srcToStoreResultsAt2.value().Requested == 30);
 	assert(srcToStoreResultsAt2.value().Available == 10);
@@ -355,8 +508,10 @@ Test9(bool doPrint) {
 	assert(storeToLoadResultsAt2.value().Requested == 20);
 	assert(storeToLoadResultsAt2.value().Available == 20);
 	assert(storeAmount2.value() == 80);
-	auto srcToStoreResultsAt5 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 5.0, results);
-	auto storeToLoadResultsAt5 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 5.0, results);
+	auto srcToStoreResultsAt5 =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 5.0, results);
+	auto storeToLoadResultsAt5 =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 5.0, results);
 	auto storeAmount5 = ModelResults_GetStoreState(m, storeId, 5.0, results);
 	assert(srcToStoreResultsAt5.value().Actual == 10);
 	assert(srcToStoreResultsAt5.value().Requested == 15);
@@ -365,9 +520,12 @@ Test9(bool doPrint) {
 	assert(storeToLoadResultsAt5.value().Requested == 5);
 	assert(storeToLoadResultsAt5.value().Available == 20);
 	assert(storeAmount5.value() == 50);
-	auto srcToStoreResultsAt10 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
-	auto storeToLoadResultsAt10 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
-	auto storeAmount10 = ModelResults_GetStoreState(m, storeId, 10.0, results);
+	auto srcToStoreResultsAt10 =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
+	auto storeToLoadResultsAt10 =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
+	auto storeAmount10 =
+		ModelResults_GetStoreState(m, storeId, 10.0, results);
 	assert(srcToStoreResultsAt10.value().Actual == 10);
 	assert(srcToStoreResultsAt10.value().Requested == 25);
 	assert(srcToStoreResultsAt10.value().Available == 10);
@@ -375,9 +533,12 @@ Test9(bool doPrint) {
 	assert(storeToLoadResultsAt10.value().Requested == 15);
 	assert(storeToLoadResultsAt10.value().Available == 20);
 	assert(storeAmount10.value() == 75);
-	auto srcToStoreResultsAt25 = ModelResults_GetFlowForConnection(m, srcToStoreConn, 25.0, results);
-	auto storeToLoadResultsAt25 = ModelResults_GetFlowForConnection(m, storeToLoadConn, 25.0, results);
-	auto storeAmount25 = ModelResults_GetStoreState(m, storeId, 25.0, results);
+	auto srcToStoreResultsAt25 =
+		ModelResults_GetFlowForConnection(m, srcToStoreConn, 25.0, results);
+	auto storeToLoadResultsAt25 =
+		ModelResults_GetFlowForConnection(m, storeToLoadConn, 25.0, results);
+	auto storeAmount25 =
+		ModelResults_GetStoreState(m, storeId, 25.0, results);
 	assert(srcToStoreResultsAt25.value().Actual == 10);
 	assert(srcToStoreResultsAt25.value().Requested == 25);
 	assert(srcToStoreResultsAt25.value().Available == 10);

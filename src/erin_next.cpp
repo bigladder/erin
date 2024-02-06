@@ -136,14 +136,14 @@ namespace erin_next {
 		SimulationState& ss,
 		double t)
 	{
-		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx)
+		for (size_t i = 0; i < m.ScheduledLoads.size(); ++i)
 		{
-			size_t connIdx = m.ScheduledLoads[schIdx].InflowConn;
-			size_t idx = ss.ScheduleBasedLoadIdx[schIdx];
-			if (idx < m.ScheduledLoads[schIdx].TimesAndLoads.size())
+			size_t connIdx = m.ScheduledLoads[i].InflowConn;
+			size_t idx = ss.ScheduleBasedLoadIdx[i];
+			if (idx < m.ScheduledLoads[i].TimesAndLoads.size())
 			{
 				auto const& tal =
-					m.ScheduledLoads[schIdx].TimesAndLoads[idx];
+					m.ScheduledLoads[i].TimesAndLoads[idx];
 				if (tal.Time == t)
 				{
 
@@ -152,6 +152,41 @@ namespace erin_next {
 						ss.ActiveConnectionsBack.insert(connIdx);
 					}
 					ss.Flows[connIdx].Requested = tal.Load;
+				}
+			}
+		}
+	}
+
+	void
+	ActivateConnectionsForScheduleBasedSources(
+		Model const& m,
+		SimulationState& ss,
+		double t)
+	{
+		for (size_t i = 0; i < m.ScheduledSrcs.size(); ++i)
+		{
+			auto idx = ss.ScheduleBasedSourceIdx[i];
+			if (idx < m.ScheduledSrcs[i].TimeAndAvails.size())
+			{
+				auto const& taa =
+					m.ScheduledSrcs[i].TimeAndAvails[idx];
+				if (taa.Time == t)
+				{
+					auto outIdx = m.ScheduledSrcs[i].OutflowConn;
+					if (ss.Flows[outIdx].Available != taa.Available)
+					{
+						ss.ActiveConnectionsFront.insert(outIdx);
+					}
+					ss.Flows[outIdx].Available = taa.Available;
+					auto spillage =
+						ss.Flows[outIdx].Available > ss.Flows[outIdx].Requested
+						? (
+							ss.Flows[outIdx].Available
+							- ss.Flows[outIdx].Requested)
+						: 0;
+					auto wasteIdx = m.ScheduledSrcs[i].WasteflowConn;
+					ss.Flows[wasteIdx].Requested = spillage;
+					ss.Flows[wasteIdx].Available = spillage;
 				}
 			}
 		}
@@ -230,7 +265,18 @@ namespace erin_next {
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx)
 		{
 			double nextTimeForComponent =
-				NextEvent(m.ScheduledLoads[schIdx], schIdx, ss, t);
+				NextEvent(m.ScheduledLoads[schIdx], schIdx, ss);
+			if (nextTime == infinity
+				|| (nextTimeForComponent >= 0.0
+					&& nextTimeForComponent < nextTime))
+			{
+				nextTime = nextTimeForComponent;
+			}
+		}
+		for (size_t srcIdx = 0; srcIdx < m.ScheduledSrcs.size(); ++srcIdx)
+		{
+			double nextTimeForComponent =
+				NextEvent(m.ScheduledSrcs[srcIdx], srcIdx, ss);
 			if (nextTime == infinity
 				|| (nextTimeForComponent >= 0.0
 					&& nextTimeForComponent < nextTime))
@@ -410,6 +456,32 @@ namespace erin_next {
 	}
 
 	void
+	RunScheduleBasedSourceBackward(
+		Model& model,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx)
+	{
+		auto outConn = model.ScheduledSrcs[compIdx].OutflowConn;
+		assert(outConn == connIdx);
+		auto wasteConn = model.ScheduledSrcs[compIdx].WasteflowConn;
+		auto schIdx = ss.ScheduleBasedSourceIdx[compIdx];
+		auto available =
+			model.ScheduledSrcs[compIdx].TimeAndAvails[schIdx].Available;
+		auto spillage =
+			available > ss.Flows[outConn].Requested
+			? available - ss.Flows[outConn].Requested
+			: 0;
+		if (ss.Flows[outConn].Available != available)
+		{
+			ss.ActiveConnectionsFront.insert(outConn);
+		}
+		ss.Flows[outConn].Available = available;
+		ss.Flows[wasteConn].Available = spillage;
+		ss.Flows[wasteConn].Requested = spillage;
+	}
+
+	void
 	RunConnectionsBackward(Model& model, SimulationState& ss)
 	{
 		while (!ss.ActiveConnectionsBack.empty())
@@ -426,6 +498,11 @@ namespace erin_next {
 				{
 					case (ComponentType::ConstantSourceType):
 					{
+					} break;
+					case (ComponentType::ScheduleBasedSourceType):
+					{
+						RunScheduleBasedSourceBackward(
+							model, ss, connIdx, compIdx);
 					} break;
 					case (ComponentType::ConstantEfficiencyConverterType):
 					{
@@ -737,8 +814,7 @@ namespace erin_next {
 	NextEvent(
 		ScheduleBasedLoad const& sb,
 		size_t sbIdx,
-		SimulationState const& ss,
-		double t)
+		SimulationState const& ss)
 	{
 		auto nextIdx = ss.ScheduleBasedLoadIdx[sbIdx] + 1;
 		if (nextIdx >= sb.TimesAndLoads.size())
@@ -746,6 +822,20 @@ namespace erin_next {
 			return infinity;
 		}
 		return sb.TimesAndLoads[nextIdx].Time;
+	}
+
+	double
+	NextEvent(
+		ScheduleBasedSource const& sb,
+		size_t sbIdx,
+		SimulationState const& ss)
+	{
+		auto nextIdx = ss.ScheduleBasedSourceIdx[sbIdx] + 1;
+		if (nextIdx >= sb.TimeAndAvails.size())
+		{
+			return infinity;
+		}
+		return sb.TimeAndAvails[nextIdx].Time;
 	}
 
 	double
@@ -827,6 +917,23 @@ namespace erin_next {
 		}
 	}
 
+	void
+	UpdateScheduleBasedSourceNextEvent(
+		Model const& m,
+		SimulationState& ss,
+		double time)
+	{
+		for (size_t i = 0; i < m.ScheduledSrcs.size(); ++i)
+		{
+			size_t nextIdx = ss.ScheduleBasedSourceIdx[i] + 1;
+			if (nextIdx < m.ScheduledSrcs[i].TimeAndAvails.size()
+				&& m.ScheduledSrcs[i].TimeAndAvails[nextIdx].Time == time)
+			{
+				ss.ScheduleBasedSourceIdx[i] = nextIdx;
+			}
+		}
+	}
+
 	std::string
 	ToString(ComponentType compType)
 	{
@@ -844,6 +951,10 @@ namespace erin_next {
 			case (ComponentType::ConstantSourceType):
 			{
 				result = "ConstantSource";
+			} break;
+			case (ComponentType::ScheduleBasedSourceType):
+			{
+				result = "ScheduleBasedSource";
 			} break;
 			case (ComponentType::ConstantEfficiencyConverterType):
 			{
@@ -906,6 +1017,16 @@ namespace erin_next {
 				case (ComponentType::ConstantSourceType):
 				{
 					summary.Inflow += ss.Flows[flowIdx].Actual;
+				} break;
+				case (ComponentType::ScheduleBasedSourceType):
+				{
+					// NOTE: for schedule-based sources, the thinking is that
+					// the "available" is actually flowing into the system and,
+					// if not used (i.e., ullage/spillage), it goes to wasteflow
+					if (m.Connections[flowIdx].FromPort == 0)
+					{
+						summary.Inflow += ss.Flows[flowIdx].Available;
+					}
 				} break;
 				case (ComponentType::StoreType):
 				{
@@ -1033,6 +1154,8 @@ namespace erin_next {
 		ss.Flows = std::vector<Flow>(model.Connections.size(), { 0, 0, 0 });
 		ss.ScheduleBasedLoadIdx =
 			std::vector<size_t>(model.ScheduledLoads.size(), 0);
+		ss.ScheduleBasedSourceIdx =
+			std::vector<size_t>(model.ScheduledSrcs.size(), 0);
 	}
 
 	size_t
@@ -1076,6 +1199,7 @@ namespace erin_next {
 			// note: these two arrays could be sorted by component type for
 			// faster running over loops...
 			ActivateConnectionsForScheduleBasedLoads(model, ss, t);
+			ActivateConnectionsForScheduleBasedSources(model, ss, t);
 			ActivateConnectionsForStores(model, ss, t);
 			// TODO: remove this if statement after we add a delay capability to
 			// constant loads and constant sources
@@ -1123,6 +1247,7 @@ namespace erin_next {
 			}
 			UpdateStoresPerElapsedTime(model, ss, nextTime - t);
 			UpdateScheduleBasedLoadNextEvent(model, ss, nextTime);
+			UpdateScheduleBasedSourceNextEvent(model, ss, nextTime);UpdateScheduleBasedSourceNextEvent(model, ss, nextTime);
 			t = nextTime;
 		}
 		if constexpr (do_debug)
@@ -1290,6 +1415,26 @@ namespace erin_next {
 			m.ComponentMap, ComponentType::ConstantSourceType, idx);
 	}
 
+	ComponentIdAndWasteConnection
+	Model_AddScheduleBasedSource(
+		Model& m,
+		SimulationState& ss,
+		std::vector<TimeAndAvailability> xs)
+	{
+		auto idx = m.ScheduledSrcs.size();
+		ScheduleBasedSource sbs = {};
+		sbs.TimeAndAvails = xs;
+		m.ScheduledSrcs.push_back(sbs);
+		size_t wasteId = Component_AddComponentReturningId(
+			m.ComponentMap, ComponentType::WasteSinkType, 0);
+		size_t thisId = Component_AddComponentReturningId(
+			m.ComponentMap,
+			ComponentType::ScheduleBasedSourceType,
+			idx);
+		auto wasteConn = Model_AddConnection(m, ss, thisId, 1, wasteId, 0);
+		return { thisId, wasteConn };
+	}
+
 	size_t
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports)
 	{
@@ -1374,6 +1519,26 @@ namespace erin_next {
 			{
 				m.ConstSources[fromIdx].OutflowConn = connId;
 			} break;
+			case (ComponentType::ScheduleBasedSourceType):
+			{
+				switch (fromPort)
+				{
+					case (0):
+					{
+						m.ScheduledSrcs[fromIdx].OutflowConn = connId;
+					} break;
+					case (1):
+					{
+						m.ScheduledSrcs[fromIdx].WasteflowConn = connId;
+					} break;
+					default:
+					{
+						throw std::invalid_argument{
+							"invalid outport for schedule-based source"
+						};
+					} break;
+				}
+			} break;
 			case (ComponentType::ConstantEfficiencyConverterType):
 			{
 				switch (fromPort)
@@ -1405,6 +1570,10 @@ namespace erin_next {
 			{
 				m.Stores[fromIdx].OutflowConn = connId;
 			} break;
+			default:
+			{
+				throw new std::runtime_error{ "unhandled component type" };
+			}
 		}
 		switch (toType)
 		{

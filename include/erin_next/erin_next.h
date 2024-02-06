@@ -30,6 +30,7 @@ namespace erin_next
 		ConstantLoadType,
 		ScheduleBasedLoadType,
 		ConstantSourceType,
+		ScheduleBasedSourceType,
 		ConstantEfficiencyConverterType,
 		MuxType,
 		StoreType,
@@ -82,6 +83,14 @@ namespace erin_next
 		TimeAndLoad(double t, uint32_t load):Time{t}, Load{load} {}
 	};
 
+	struct TimeAndAvailability
+	{
+		double Time;
+		uint32_t Available;
+
+		TimeAndAvailability(double t, uint32_t a): Time{t}, Available{a} {}
+	};
+
 	struct ScheduleBasedLoad
 	{
 		std::vector<TimeAndLoad> TimesAndLoads;
@@ -98,6 +107,13 @@ namespace erin_next
 	{
 		uint32_t Available;
 		size_t OutflowConn;
+	};
+
+	struct ScheduleBasedSource
+	{
+		std::vector<TimeAndAvailability> TimeAndAvails;
+		size_t OutflowConn;
+		size_t WasteflowConn;
 	};
 
 	struct ConstantEfficiencyConverter
@@ -163,6 +179,7 @@ namespace erin_next
 	{
 		Component ComponentMap;
 		std::vector<ConstantSource> ConstSources;
+		std::vector<ScheduleBasedSource> ScheduledSrcs;
 		std::vector<ConstantLoad> ConstLoads;
 		std::vector<ScheduleBasedLoad> ScheduledLoads;
 		std::vector<ConstantEfficiencyConverter> ConstEffConvs;
@@ -190,6 +207,7 @@ namespace erin_next
 		std::vector<double> StorageNextEventTimes;
 		std::vector<Flow> Flows;
 		std::vector<size_t> ScheduleBasedLoadIdx;
+		std::vector<size_t> ScheduleBasedSourceIdx;
 	};
 
 	size_t
@@ -219,6 +237,12 @@ namespace erin_next
 	void
 	ActivateConnectionsForScheduleBasedLoads(
 		Model const& m, SimulationState& ss, double t);
+
+	void
+	ActivateConnectionsForScheduleBasedSources(
+		Model const& m,
+		SimulationState& ss,
+		double t);
 
 	void
 	ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
@@ -264,8 +288,13 @@ namespace erin_next
 	NextEvent(
 		ScheduleBasedLoad const& sb,
 		size_t sbIdx,
-		SimulationState const& ss,
-		double t);
+		SimulationState const& ss);
+
+	double
+	NextEvent(
+		ScheduleBasedSource const& sb,
+		size_t sbIdx,
+		SimulationState const& ss);
 
 	double
 	NextEvent(ScheduleBasedReliability const& sbr, double t);
@@ -322,6 +351,12 @@ namespace erin_next
 
 	size_t
 	Model_AddConstantSource(Model& m, uint32_t available);
+	
+	ComponentIdAndWasteConnection
+	Model_AddScheduleBasedSource(
+		Model& m,
+		SimulationState& ss,
+		std::vector<TimeAndAvailability> xs);
 
 	size_t
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports);
@@ -407,6 +442,13 @@ namespace erin_next
 		size_t connIdx,
 		size_t compIdx);
 
+	void
+	RunScheduleBasedSourceBackward(
+		Model& model,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx);
+
 	size_t
 	Model_NumberOfComponents(Model const& m);
 
@@ -420,6 +462,12 @@ namespace erin_next
 	void
 	UpdateScheduleBasedLoadNextEvent(
 		Model const& m,
+		SimulationState& ss,
+		double time);
+
+	void
+	UpdateScheduleBasedSourceNextEvent(
+		Model const& model,
 		SimulationState& ss,
 		double time);
 

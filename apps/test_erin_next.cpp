@@ -992,6 +992,118 @@ Test11(bool doPrint)
 	PrintPass(doPrint, "11");
 }
 
+void
+Test12(bool doPrint)
+{
+	PrintBanner(doPrint, "12");
+	// Add a schedule-based source (availability, uncontrolled source)
+	// NOTE: it would be good to have a waste connection so that the component
+	// always "spills" (ullage) when not all available is used.
+	Model m = {};
+	m.RandFn = []() { return 0.4; };
+	m.FinalTime = 50.0;
+	std::vector<TimeAndAvailability> sourceAvailability{};
+	sourceAvailability.reserve(5);
+	sourceAvailability.emplace_back(0, 10);
+	sourceAvailability.emplace_back(10, 8);
+	sourceAvailability.emplace_back(20, 12);
+	SimulationState ss{};
+	auto srcId = Model_AddScheduleBasedSource(m, ss, sourceAvailability);
+	auto loadId = Model_AddConstantLoad(m, 10);
+	auto srcToLoadConn = Model_AddConnection(m, ss, srcId.Id, 0, loadId, 0);
+	auto results = Simulate(m, ss, doPrint);
+	assert(results.size() == 3 && "should have 3 time results");
+	assert(results[0].Time == 0.0);
+	assert(results[1].Time == 10.0);
+	assert(results[2].Time == 20.0);
+	double t = 0.0;
+	auto srcToLoadResults =
+		ModelResults_GetFlowForConnection(m, srcToLoadConn, t, results);
+	assert(srcToLoadResults.value().Actual == 10);
+	assert(srcToLoadResults.value().Available == 10);
+	assert(srcToLoadResults.value().Requested == 10);
+	auto srcToWasteResults =
+		ModelResults_GetFlowForConnection(m, srcId.WasteConnection, t, results);
+	assert(srcToWasteResults.value().Actual == 0);
+	assert(srcToWasteResults.value().Available == 0);
+	assert(srcToWasteResults.value().Requested == 0);
+	t = 10.0;
+	srcToLoadResults =
+		ModelResults_GetFlowForConnection(m, srcToLoadConn, t, results);
+	assert(srcToLoadResults.value().Actual == 8);
+	assert(srcToLoadResults.value().Available == 8);
+	assert(srcToLoadResults.value().Requested == 10);
+	srcToWasteResults =
+		ModelResults_GetFlowForConnection(m, srcId.WasteConnection, t, results);
+	assert(srcToWasteResults.value().Actual == 0);
+	assert(srcToWasteResults.value().Available == 0);
+	assert(srcToWasteResults.value().Requested == 0);
+	t = 20.0;
+	srcToLoadResults =
+		ModelResults_GetFlowForConnection(m, srcToLoadConn, t, results);
+	assert(srcToLoadResults.value().Actual == 10);
+	assert(srcToLoadResults.value().Available == 12);
+	assert(srcToLoadResults.value().Requested == 10);
+	srcToWasteResults =
+		ModelResults_GetFlowForConnection(m, srcId.WasteConnection, t, results);
+	assert(srcToWasteResults.value().Actual == 2);
+	assert(srcToWasteResults.value().Available == 2);
+	assert(srcToWasteResults.value().Requested == 2);
+	PrintPass(doPrint, "12");
+}
+
+/*
+void
+Test13(bool doPrint)
+{
+	PrintBanner(doPrint, "13");
+	// Add a schedule-based source (availability, uncontrolled source)
+	// NOTE: it would be good to have a waste connection so that the component
+	// always "spills" (ullage) when not all available is used.
+	Model m = {};
+	m.RandFn = []() { return 0.4; };
+	m.FinalTime = 50.0;
+	std::vector<TimeAndAvailability> sourceAvailability{};
+	sourceAvailability.reserve(5);
+	sourceAvailability.emplace_back(0, 10);
+	sourceAvailability.emplace_back(10, 8);
+	sourceAvailability.emplace_back(20, 6);
+	sourceAvailability.emplace_back(30, 12);
+	sourceAvailability.emplace_back(40, 16);
+	std::vector<TimeAndLoad> loadRequest{};
+	loadRequest.reserve(5);
+	loadRequest.emplace_back(0, 20);
+	loadRequest.emplace_back(10, 18);
+	loadRequest.emplace_back(20, 16);
+	loadRequest.emplace_back(30, 12);
+	loadRequest.emplace_back(40, 8);
+	loadRequest.emplace_back(40, 4);
+	SimulationState ss{};
+	auto src1Id = Model_AddScheduleBasedSource(m, sourceAvailability);
+	auto src2Id = Model_AddConstantSource(m, 10);
+	auto loadId = Model_AddScheduleBasedLoad(m, loadRequest);
+	auto storeId = Model_AddStore(m, 50, 5, 10, 15, 40);
+	auto mux1Id = Model_AddMux(m, 2, 2);
+	auto mux2Id = Model_AddMux(m, 2, 1);
+	auto src1ToMux1Conn = Model_AddConnection(m, ss, src1Id, 0, mux1Id, 0);
+	auto src2ToMux1Conn = Model_AddConnection(m, ss, src2Id, 0, mux1Id, 1);
+	// HERE: finish wiring this up and implementing
+	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
+	auto fixedDistId = Model_AddFixedReliabilityDistribution(m, 10.0);
+	Model_AddFailureModeToComponent(m, convId.Id, fixedDistId, fixedDistId);
+	auto results = Simulate(m, ss, doPrint);
+	PrintPass(doPrint, "13");
+}
+
+void
+Test13(bool doPrint)
+{
+	PrintBanner(doPrint, "14");
+	// 13 with reliability
+	PrintPass(doPrint, "14");
+}
+*/
+
 int
 main(int argc, char** argv) {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -1007,6 +1119,7 @@ main(int argc, char** argv) {
 	Test9(false);
 	Test10(false);
 	Test11(false);
+	Test12(true);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 	std::cout << "Duration " << ((double)duration.count() / 1000.0) << " ms" << std::endl;

@@ -186,13 +186,10 @@ namespace erin_next
 	{
 		std::set<size_t> ActiveConnectionsBack;
 		std::set<size_t> ActiveConnectionsFront;
-		// TODO: track active components?
-		//std::unordered_set<ComponentId> ActiveComponentsBack;
-		//std::unordered_set<ComponentId> ActiveComponentFront;
 		std::vector<uint32_t> StorageAmounts;
 		std::vector<double> StorageNextEventTimes;
 		std::vector<Flow> Flows;
-		std::vector<size_t> ScheduleBasedLoadNextEventIdx;
+		std::vector<size_t> ScheduleBasedLoadIdx;
 	};
 
 	size_t

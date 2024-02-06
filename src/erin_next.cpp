@@ -139,15 +139,21 @@ namespace erin_next {
 		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx)
 		{
 			size_t connIdx = m.ScheduledLoads[schIdx].InflowConn;
-			size_t nextEventIdx = ss.ScheduleBasedLoadNextEventIdx[schIdx];
-			auto const& tal =
-				m.ScheduledLoads[schIdx].TimesAndLoads[nextEventIdx];
-			assert(tal.Time == t);
-			if (ss.Flows[connIdx].Requested != tal.Load)
+			size_t idx = ss.ScheduleBasedLoadIdx[schIdx];
+			if (idx < m.ScheduledLoads[schIdx].TimesAndLoads.size())
 			{
-				ss.ActiveConnectionsBack.insert(connIdx);
+				auto const& tal =
+					m.ScheduledLoads[schIdx].TimesAndLoads[idx];
+				if (tal.Time == t)
+				{
+
+					if (ss.Flows[connIdx].Requested != tal.Load)
+					{
+						ss.ActiveConnectionsBack.insert(connIdx);
+					}
+					ss.Flows[connIdx].Requested = tal.Load;
+				}
 			}
-			ss.Flows[connIdx].Requested = tal.Load;
 		}
 	}
 
@@ -734,12 +740,12 @@ namespace erin_next {
 		SimulationState const& ss,
 		double t)
 	{
-		auto loadIdx = ss.ScheduleBasedLoadNextEventIdx[sbIdx];
-		if (loadIdx >= sb.TimesAndLoads.size())
+		auto nextIdx = ss.ScheduleBasedLoadIdx[sbIdx] + 1;
+		if (nextIdx >= sb.TimesAndLoads.size())
 		{
 			return infinity;
 		}
-		return sb.TimesAndLoads[loadIdx].Time;
+		return sb.TimesAndLoads[nextIdx].Time;
 	}
 
 	double
@@ -812,11 +818,11 @@ namespace erin_next {
 	{
 		for (size_t i = 0; i < m.ScheduledLoads.size(); ++i)
 		{
-			auto& nextIdx = ss.ScheduleBasedLoadNextEventIdx[i];
+			size_t nextIdx = ss.ScheduleBasedLoadIdx[i] + 1;
 			if (nextIdx < m.ScheduledLoads[i].TimesAndLoads.size()
-				&& m.ScheduledLoads[i].TimesAndLoads[nextIdx].Time <= time)
+				&& m.ScheduledLoads[i].TimesAndLoads[nextIdx].Time == time)
 			{
-				++nextIdx;
+				ss.ScheduleBasedLoadIdx[i] = nextIdx;
 			}
 		}
 	}
@@ -1025,8 +1031,8 @@ namespace erin_next {
 		ss.StorageNextEventTimes =
 			std::vector<double>(model.Stores.size(), 0.0);
 		ss.Flows = std::vector<Flow>(model.Connections.size(), { 0, 0, 0 });
-		ss.ScheduleBasedLoadNextEventIdx =
-			std::vector<size_t>(model.ScheduledLoads.size(), 1);
+		ss.ScheduleBasedLoadIdx =
+			std::vector<size_t>(model.ScheduledLoads.size(), 0);
 	}
 
 	size_t

@@ -1,7 +1,8 @@
 #include "erin_next/erin_next.h"
 #include <cmath>
 
-namespace erin_next {
+namespace erin_next
+{
 
 	constexpr bool do_debug = false;
 
@@ -230,9 +231,9 @@ namespace erin_next {
 		SimulationState& ss,
 		double time)
 	{
-		for each (auto const& rel in m.Reliabilities)
+		for (auto const& rel : m.Reliabilities)
 		{
-			for each (auto const& ts in rel.TimeStates)
+			for (auto const& ts : rel.TimeStates)
 			{
 				if (ts.time == time)
 				{

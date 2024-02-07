@@ -83,6 +83,34 @@ namespace erin_next
 	}
 
 	std::optional<double>
+	TOML_ParseNumericValueAsDouble(toml::value const& v)
+	{
+		if (v.is_integer())
+		{
+			return (double)v.as_integer();
+		}
+		else if (v.is_floating())
+		{
+			return (double)v.as_floating();
+		}
+		return {};
+	}
+
+	std::optional<int>
+	TOML_ParseNumericValueAsInteger(toml::value const& v)
+	{
+		if (v.is_integer())
+		{
+			return (int)v.as_integer();
+		}
+		else if (v.is_floating())
+		{
+			return (int)v.as_floating();
+		}
+		return {};
+	}
+
+	std::optional<double>
 	TOMLTable_ParseDouble(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
@@ -90,13 +118,10 @@ namespace erin_next
 	{
 		if (table.contains(fieldName))
 		{
-			if (table.at(fieldName).is_integer())
+			auto v = TOML_ParseNumericValueAsDouble(table.at(fieldName));
+			if (v.has_value())
 			{
-				return (double)table.at(fieldName).as_integer();
-			}
-			else if (table.at(fieldName).is_floating())
-			{
-				return (double)table.at(fieldName).as_floating();
+				return v.value();
 			}
 			else
 			{
@@ -107,6 +132,62 @@ namespace erin_next
 			}
 		}
 		return {};
+	}
+
+	std::optional<std::vector<TimeAndLoad>>
+	TOMLTable_ParseVectorOfTimeRatePairs(
+		std::unordered_map<toml::key, toml::value> const& table,
+		std::string const& fieldName,
+		std::string const& tableName)
+	{
+		std::vector<TimeAndLoad> timeAndLoads{};
+		if (!table.contains(fieldName) || !table.at(fieldName).is_array())
+		{
+			std::cout << "[" << tableName << "] "
+				<< fieldName << " not present or not an array"
+				<< std::endl;
+			return {};
+		}
+		std::vector<toml::value> const& trs = table.at(fieldName).as_array();
+		timeAndLoads.reserve(trs.size());
+		for (size_t i = 0; i < trs.size(); ++i)
+		{
+			toml::value const& tr = trs.at(i);
+			if (tr.is_array())
+			{
+				std::vector<toml::value> const& t_and_r = tr.as_array();
+				if (t_and_r.size() == 2)
+				{
+					std::optional<double> t =
+						TOML_ParseNumericValueAsDouble(t_and_r.at(0));
+					// TODO: need to convert rate to a base unit before
+					// conversion to integer in case we have decimal values
+					std::optional<int> r =
+						TOML_ParseNumericValueAsInteger(t_and_r.at(1));
+					if (t.has_value() && r.has_value() && r.value() >= 0)
+					{
+						timeAndLoads.emplace_back(
+							t.value(), (uint32_t)r.value());
+					}
+					else
+					{
+						return {};
+					}
+				}
+				else
+				{
+					std::cout << "[" << tableName << "] "
+						<< "time/rate pair was not of length 2"
+						<< std::endl;
+					return {};
+				}
+			}
+			else
+			{
+				return {};
+			}
+		}
+		return timeAndLoads;
 	}
 
 }

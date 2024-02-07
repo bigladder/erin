@@ -6,6 +6,7 @@
 #include "erin_next/erin_next_timestate.h"
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_reliability.h"
+#include "erin_next/erin_next_time_and_load.h"
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>
@@ -73,14 +74,6 @@ namespace erin_next
 	{
 		uint32_t Load;
 		size_t InflowConn;
-	};
-
-	struct TimeAndLoad
-	{
-		double Time;
-		uint32_t Load;
-
-		TimeAndLoad(double t, uint32_t load):Time{t}, Load{load} {}
 	};
 
 	struct TimeAndAvailability

@@ -2,21 +2,10 @@
 #include <unordered_set>
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_toml.h"
+#include "erin_next/erin_next_validation.h"
 
 namespace erin_next
 {
-	std::unordered_set<std::string> const ValidTimeUnits{
-		"hours", "minutes", "seconds",
-	};
-
-	std::unordered_set<std::string> const ValidRateUnits{
-		"W", "kW", "MW",
-	};
-
-	std::unordered_set<std::string> const ValidQuantityUnits{
-		"J", "kJ", "MJ",
-	};
-
 	std::unordered_set<std::string> const RequiredSimulationInfoFields{
 		"time_unit", "max_time",
 	};

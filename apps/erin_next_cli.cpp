@@ -1,6 +1,7 @@
 #include "../vendor/toml11/toml.hpp"
 #include "erin/version.h"
 #include "erin_next/erin_next_simulation_info.h"
+#include "erin_next/erin_next_load.h"
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -33,8 +34,6 @@ main(int argc, char** argv)
 		auto data = toml::parse(ifs, nameOnly.string());
 		ifs.close();
 		std::cout << data << std::endl;
-		// HERE: begin pulling apart the input file and
-		// creating a model to simulate
 		if (!data.contains("simulation_info"))
 		{
 			std::cout << "Required section [simulation_info] not found"
@@ -47,6 +46,19 @@ main(int argc, char** argv)
 		if (simInfo.has_value())
 		{
 			std::cout << simInfo.value() << std::endl;
+		}
+		toml::value const& loadTables = data.at("loads");
+		auto loads = erin_next::ParseLoads(loadTables.as_table());
+		if (loads.has_value())
+		{
+			std::cout << "Loads:" << std::endl;
+			for (
+				auto it = loads.value().cbegin();
+				it != loads.value().cend();
+				++it)
+			{
+				std::cout << *it << std::endl;
+			}
 		}
 	}
 	else

@@ -3,10 +3,12 @@
 #ifndef ERIN_NEXT_TOML_H
 #define ERIN_NEXT_TOML_H
 #include "../vendor/toml11/toml.hpp"
+#include "erin_next/erin_next_time_and_load.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
 #include <optional>
+#include <stdint.h>
 
 namespace erin_next
 {
@@ -32,7 +34,19 @@ namespace erin_next
 		std::string const& tableName);
 
 	std::optional<double>
+	TOML_ParseNumericValueAsDouble(toml::value const& v);
+
+	std::optional<int>
+	TOML_ParseNumericValueAsInteger(toml::value const& v);
+
+	std::optional<double>
 	TOMLTable_ParseDouble(
+		std::unordered_map<toml::key, toml::value> const& table,
+		std::string const& fieldName,
+		std::string const& tableName);
+
+	std::optional<std::vector<TimeAndLoad>>
+	TOMLTable_ParseVectorOfTimeRatePairs(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
 		std::string const& tableName);

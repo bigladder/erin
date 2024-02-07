@@ -12,6 +12,8 @@ main()
   std::cout << "sizeof(long)                    : " << sizeof(long) << "\n";
   std::cout << "sizeof(long long)               : " << sizeof(long long) << "\n";
   std::cout << "sizeof(double)                  : " << sizeof(double) << "\n";
+  std::cout << "sizeof(uint32_t)                : " << sizeof(uint32_t) << "\n";
+  std::cout << "sizeof(uint64_t)                : " << sizeof(uint64_t) << "\n";
   std::cout << "std::numeric_limits<int>::max() : "
       << std::numeric_limits<int>::max() << "\n";
   std::cout << "std::numeric_limits<long>::max(): "

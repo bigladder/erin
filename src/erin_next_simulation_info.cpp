@@ -1,6 +1,7 @@
-#include "erin_next/erin_next_simulation_info.h"
 #include <iostream>
 #include <unordered_set>
+#include "erin_next/erin_next_simulation_info.h"
+#include "erin_next/erin_next_toml.h"
 
 namespace erin_next
 {
@@ -26,131 +27,54 @@ namespace erin_next
 		{ "quantity_unit", "kJ" },
 	};
 
+	std::unordered_set<std::string> const OptionalSimulationInfoFields{};
+
 	std::optional<SimulationInfo>
 	ParseSimulationInfo(std::unordered_map<toml::key,toml::value> const& table)
 	{
 		SimulationInfo si{};
-		for (auto it = table.cbegin(); it != table.cend(); ++it)
-		{
-			if (!RequiredSimulationInfoFields.contains(it->first)
-				&& !DefaultSimulationInfoFields.contains(it->first))
-			{
-				std::cout << "[simulation_info] Unrecognized key '" << it->first
-					<< "'" << std::endl;
-				return {};
-			}
-		}
-		for (auto it = RequiredSimulationInfoFields.cbegin();
-			it != RequiredSimulationInfoFields.cend();
-			++it)
-		{
-			if (!table.contains(*it))
-			{
-				std::cout << "[simulation_info] Missing required key '"
-					<< *it << "'" << std::endl;
-			}
-		}
-		if (table.contains("time_unit"))
-		{
-			std::string rawTimeUnit = table.at("time_unit").as_string();
-			if (ValidTimeUnits.contains(rawTimeUnit))
-			{
-				si.TimeUnit = table.at("time_unit").as_string();
-			}
-			else
-			{
-				std::cout << "[simulation_info]: Invalid time_unit '"
-					<< rawTimeUnit << "'" << std::endl;
-				std::cout << "Valid units are: ";
-				bool first = true;
-				for (auto it = ValidTimeUnits.cbegin(); it != ValidTimeUnits.cend(); ++it)
-				{
-					std::cout << (first ? "" : ", ") << *it;
-					first = false;
-				}
-				std::cout << std::endl;
-				return {};
-			}
-		}
-		else
+		if (!TOMLTable_IsValid(
+			table,
+			RequiredSimulationInfoFields,
+			OptionalSimulationInfoFields,
+			DefaultSimulationInfoFields,
+			"simulation_info"))
 		{
 			return {};
 		}
-		if (table.contains("max_time"))
-		{
-			if (table.at("max_time").is_integer())
-			{
-				si.MaxTime = (double)table.at("max_time").as_integer();
-			}
-			else if (table.at("max_time").is_floating())
-			{
-				si.MaxTime = (double)table.at("max_time").as_floating();
-			}
-			else
-			{
-				std::cout << "[simulation_info] max_time value is not a number "
-					<< "'" << table.at("max_time").as_string()
-					<< "'" << std::endl;
-				return {};
-			}
-		}
-		else
+		auto rawTimeUnit = TOMLTable_ParseStringWithSetResponses(
+			table, ValidTimeUnits, "time_unit", "simulation_info");
+		if (!rawTimeUnit.has_value())
 		{
 			return {};
 		}
-		std::string rawRateUnit;
-		if (table.contains("rate_unit"))
+		si.TimeUnit = rawTimeUnit.value();
+		auto rawMaxTime = TOMLTable_ParseDouble(
+			table, "max_time", "simulation_info");
+		if (!rawMaxTime.has_value())
 		{
-			rawRateUnit = table.at("rate_unit").as_string();
-		}
-		else
-		{
-			rawRateUnit = DefaultSimulationInfoFields.at("rate_unit");
-		}
-		if (ValidRateUnits.contains(rawRateUnit))
-		{
-			si.RateUnit = rawRateUnit;
-		}
-		else
-		{
-			std::cout << "[simulation_info] rate_unit value not valid, '"
-				<< rawRateUnit << "'; valid options are ";
-			bool first = true;
-			for (auto it = ValidRateUnits.cbegin();
-				it != ValidRateUnits.cend();
-				++it)
-			{
-				std::cout << (first ? "" : ", ") << *it;
-			}
-			std::cout << std::endl;
 			return {};
 		}
-		std::string rawQuantityUnit;
-		if (table.contains("quantity_unit"))
+		si.MaxTime = rawMaxTime.value();
+		auto rawRateUnit = TOMLTable_ParseStringWithSetResponses(
+			table, ValidRateUnits, "rate_unit", "simulation_info");
+		if (rawRateUnit.has_value())
 		{
-			rawQuantityUnit = table.at("quantity_unit").as_string();
+			si.RateUnit = rawRateUnit.value();
 		}
 		else
 		{
-			rawQuantityUnit = DefaultSimulationInfoFields.at("quantity_unit");
+			si.RateUnit = DefaultSimulationInfoFields.at("rate_unit");
 		}
-		if (ValidQuantityUnits.contains(rawQuantityUnit))
+		auto rawQuantityUnit = TOMLTable_ParseStringWithSetResponses(
+			table, ValidQuantityUnits, "quantity_unit", "simulation_info");
+		if (rawQuantityUnit.has_value())
 		{
-			si.QuantityUnit = rawQuantityUnit;
+			si.QuantityUnit = rawQuantityUnit.value();
 		}
 		else
 		{
-			std::cout << "[simulation_info] quantity_unit value not valid, '"
-				<< rawQuantityUnit << "'; valid options are ";
-			bool first = true;
-			for (auto it = ValidQuantityUnits.cbegin();
-				it != ValidQuantityUnits.cend();
-				++it)
-			{
-				std::cout << (first ? "" : ", ") << *it;
-			}
-			std::cout << std::endl;
-			return {};
+			si.QuantityUnit = DefaultSimulationInfoFields.at("quantity_unit");
 		}
 		return si;
 	}

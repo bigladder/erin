@@ -191,11 +191,13 @@ add_library(erin_next
 	erin_next_reliability.cpp
 	erin_next_timestate.cpp
 	erin_next_simulation_info.cpp
+	erin_next_toml.cpp
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_distribution.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_reliability.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_timestate.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_simulation_info.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_toml.h"
 )
 
 # Add Warnings

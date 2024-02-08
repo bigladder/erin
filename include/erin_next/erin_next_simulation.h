@@ -35,6 +35,9 @@ namespace erin_next
 	void
 	Simulation_PrintComponents(
 		Simulation const& s, Model const& m);
+
+	void
+	Simulation_PrintScenarios(Simulation const& s);
 }
 
 #endif

@@ -81,6 +81,8 @@ main(int argc, char** argv)
 		}
 		std::cout << "Components:" << std::endl;
 		Simulation_PrintComponents(s, m);
+		std::cout << "Scenarios:" << std::endl;
+		Simulation_PrintScenarios(s);
 	}
 	else
 	{

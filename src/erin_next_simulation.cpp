@@ -101,4 +101,13 @@ namespace erin_next
 		}
 	}
 
+	void
+	Simulation_PrintScenarios(Simulation const& s)
+	{
+		for (size_t i = 0; i < s.ScenarioMap.Tags.size(); ++i)
+		{
+			std::cout << i << ": " << s.ScenarioMap.Tags[i] << std::endl;
+		}
+	}
+
 }

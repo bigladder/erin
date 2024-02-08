@@ -57,6 +57,19 @@ namespace erin_next
 		return id;
 	}
 
+	std::optional<size_t>
+	Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag)
+	{
+		for (size_t i = 0; i < s.LoadMap.Tags.size(); ++i)
+		{
+			if (s.LoadMap.Tags[i] == tag)
+			{
+				return i;
+			}
+		}
+		return {};
+	}
+
 	void
 	Simulation_PrintComponents(Simulation const& s, Model const& m)
 	{
@@ -64,8 +77,15 @@ namespace erin_next
 		{
 			size_t outflowTypeIdx = m.ComponentMap.OutflowType[i];
 			size_t inflowTypeIdx = m.ComponentMap.InflowType[i];
-			std::cout << ToString(m.ComponentMap.CompType[i])
-				<< "[" << i << "]" << std::endl;
+			std::cout << i << ": " << ToString(m.ComponentMap.CompType[i]);
+			if (!m.ComponentMap.Tag[i].empty())
+			{
+				std::cout << " -- " << m.ComponentMap.Tag[i] << std::endl;
+			}
+			else
+			{
+				std::cout << std::endl;
+			}
 			if (inflowTypeIdx < s.FlowTypeMap.Type.size()
 				&& !s.FlowTypeMap.Type[inflowTypeIdx].empty())
 			{
@@ -80,4 +100,5 @@ namespace erin_next
 			}
 		}
 	}
+
 }

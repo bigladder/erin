@@ -384,7 +384,22 @@ namespace erin_next
 		std::map<size_t, size_t> scenarioIdToLoadId);
 
 	size_t
+	Model_AddScheduleBasedLoad(
+		Model& m,
+		std::vector<TimeAndLoad> timesAndLoads,
+		std::map<size_t, size_t> scenarioIdToLoadId,
+		size_t inflowTypeId,
+		std::string const& tag);
+
+	size_t
 	Model_AddConstantSource(Model& m, uint32_t available);
+
+	size_t
+	Model_AddConstantSource(
+		Model& m,
+		uint32_t available,
+		size_t outflowTypeId,
+		std::string const& tag);
 	
 	ComponentIdAndWasteConnection
 	Model_AddScheduleBasedSource(

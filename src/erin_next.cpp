@@ -1455,6 +1455,18 @@ namespace erin_next
 		std::vector<TimeAndLoad> timesAndLoads,
 		std::map<size_t, size_t> scenarioIdToLoadId)
 	{
+		return Model_AddScheduleBasedLoad(
+			m, timesAndLoads, scenarioIdToLoadId, 0, "");
+	}
+
+	size_t
+	Model_AddScheduleBasedLoad(
+		Model& m,
+		std::vector<TimeAndLoad> timesAndLoads,
+		std::map<size_t, size_t> scenarioIdToLoadId,
+		size_t inflowTypeId,
+		std::string const& tag)
+	{
 		size_t idx = m.ScheduledLoads.size();
 		ScheduleBasedLoad sbl = {};
 		sbl.TimesAndLoads = timesAndLoads;
@@ -1462,16 +1474,28 @@ namespace erin_next
 		sbl.ScenarioIdToLoadId = scenarioIdToLoadId;
 		m.ScheduledLoads.push_back(std::move(sbl));
 		return Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::ScheduleBasedLoadType, idx);
+			m.ComponentMap, ComponentType::ScheduleBasedLoadType, idx,
+			inflowTypeId, 0, tag);
 	}
 
 	size_t
 	Model_AddConstantSource(Model& m, uint32_t available)
 	{
+		return Model_AddConstantSource(m, available, 0, "");
+	}
+
+	size_t
+	Model_AddConstantSource(
+		Model& m,
+		uint32_t available,
+		size_t outflowTypeId,
+		std::string const& tag)
+	{
 		size_t idx = m.ConstSources.size();
 		m.ConstSources.push_back({ available });
 		return Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::ConstantSourceType, idx);
+			m.ComponentMap, ComponentType::ConstantSourceType, idx,
+			0, outflowTypeId, tag);
 	}
 
 	ComponentIdAndWasteConnection

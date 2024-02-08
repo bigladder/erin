@@ -1,5 +1,7 @@
 #include "erin_next/erin_next_component.h"
 #include "erin_next/erin_next_toml.h"
+#include <map>
+#include <optional>
 
 namespace erin_next
 {
@@ -57,13 +59,50 @@ namespace erin_next
 				// TODO: need to get the max available from constant source
 				// for now, we can use uint32_t max?
 				id = Model_AddConstantSource(
-					m, std::numeric_limits<uint32_t>::max());
+					m, std::numeric_limits<uint32_t>::max(),
+					outflowId, tag);
 			} break;
 			case (ComponentType::ScheduleBasedLoadType):
 			{
 				// TODO: how do we handle that loads are by scenario?
-				// A model, however, **is** the run for a single scenario...
-				// id = Model_AddScheduleBasedLoad(...);
+				// Need to pull in the loads_by_scenario data and register it
+				if (!table.contains("loads_by_scenario"))
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "missing required field 'loads_by_scenario'"
+						<< std::endl;
+					return false;
+				}
+				if (!table.at("loads_by_scenario").is_table())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "'loads_by_scenario' exists but is not a table"
+						<< std::endl;
+					return false;
+				}
+				toml::table const& lbs =
+					table.at("loads_by_scenario").as_table();
+				std::map<size_t, size_t> scenarioIdToLoadId = {};
+				for (auto it = lbs.cbegin(); it != lbs.cend(); ++it)
+				{
+					std::string const& scenarioTag = it->first;
+					size_t scenarioId =
+						Simulation_RegisterScenario(s, scenarioTag);
+					if (it->second.is_string())
+					{
+						std::string const& loadTag = it->second.as_string();
+						std::optional<size_t> loadId =
+							Simulation_GetLoadIdByTag(s, loadTag);
+						if (loadId.has_value())
+						{
+							scenarioIdToLoadId.insert(
+								{ scenarioId, loadId.value() });
+						}
+					}
+				}
+				std::vector<TimeAndLoad> emptyLoads = {};
+				id = Model_AddScheduleBasedLoad(
+					m, emptyLoads, scenarioIdToLoadId, inflowId, tag);
 			} break;
 			default:
 			{

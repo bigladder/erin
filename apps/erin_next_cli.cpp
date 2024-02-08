@@ -62,9 +62,9 @@ main(int argc, char** argv)
 		}
 		std::vector<erin_next::Load> loads = std::move(maybeLoads.value());
 		std::cout << "Loads:" << std::endl;
-		for (auto it = loads.cbegin(); it != loads.cend(); ++it)
+		for (size_t i = 0; i < loads.size(); ++i)
 		{
-			std::cout << *it << std::endl;
+			std::cout << i << ": " << loads[i] << std::endl;
 		}
 		// Components
 		toml::value const& compTable = data.at("components");

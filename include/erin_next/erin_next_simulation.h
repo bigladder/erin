@@ -4,6 +4,9 @@
 #define ERIN_NEXT_SIMULATION_H
 #include "erin_next/erin_next.h"
 #include <string>
+#include <vector>
+#include <optional>
+#include <cstdlib>
 
 namespace erin_next
 {
@@ -25,6 +28,9 @@ namespace erin_next
 		Simulation& s,
 		std::string const& tag,
 		std::vector<TimeAndLoad> const& loadSchedule);
+
+	std::optional<size_t>
+	Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag);
 
 	void
 	Simulation_PrintComponents(

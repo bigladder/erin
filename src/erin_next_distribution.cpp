@@ -2,11 +2,14 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin_next/erin_next_distribution.h"
+#include "erin_next/erin_next_validation.h"
+#include "erin_next/erin_next_toml.h"
 #include <algorithm>
 #include <cmath>
 #include <functional>
 #include <stdexcept>
 #include <random>
+#include <iostream>
 
 namespace erin_next
 {
@@ -539,14 +542,83 @@ namespace erin_next
 		return dt;
 	}
 
-	//std::vector<RealTimeType>
-	//DistributionSystem::sample_upto_including(
-	//    const RealTimeType max_time_s)
-	//{
-	//  std::vector<RealTimeType> samples{};
-	//  RealTimeType t{0};
-	//  while (true) {
-	
-	//  }
-	//}
+	void
+	DistributionSystem::print_distributions() const
+	{
+		for (size_t i = 0; i < dist.dist_type.size(); ++i)
+		{
+			std::cout << i << ": " << dist_type_to_tag(dist.dist_type[i])
+				<< " -- " << dist.tag[i] << std::endl;
+		}
+	}
+
+	void
+	ParseDistributions(DistributionSystem& ds, toml::table const& table)
+	{
+		for (auto it = table.cbegin(); it != table.cend(); ++it)
+		{
+			std::string distTag = it->first;
+			std::string fullTableName = "dist." + distTag;
+			if (it->second.is_table())
+			{
+				toml::table distTable = it->second.as_table();
+				if (distTable.contains("type"))
+				{
+					std::string distTypeTag = distTable.at("type").as_string();
+					// TODO: change to return a std::optional<DistType>
+					DistType distType = tag_to_dist_type(distTypeTag);
+					switch (distType)
+					{
+						case (DistType::Fixed):
+						{
+							if (!distTable.contains("value"))
+							{
+								std::cout << "[" << fullTableName << "] "
+									<< "missing required field 'value'"
+									<< std::endl;
+								return;
+							}
+							auto maybeValue =
+								TOMLTable_ParseDouble(
+									distTable, "value", fullTableName);
+							if (!maybeValue.has_value())
+							{
+								std::cout << "[" << fullTableName << "] "
+									<< "unable to parse 'value' as number"
+									<< std::endl;
+								return;
+							}
+							auto v = maybeValue.value();
+							auto maybeUnit =
+								TOMLTable_ParseStringWithSetResponses(
+									distTable, ValidTimeUnits,
+									"time_unit", fullTableName);
+							if (!maybeUnit.has_value())
+							{
+								std::cout << "[" << fullTableName << "] "
+									<< "unable to parse valid time unit"
+									<< std::endl;
+								return;
+							}
+							auto unit = maybeUnit.value();
+							if (unit == "hour")
+							{
+								v *= 3600.0;
+							}
+							else if (unit == "minute")
+							{
+								v *= 60.0;
+							}
+							ds.add_fixed(distTag, v);
+						} break;
+						default:
+						{
+							throw new std::runtime_error{
+								"Unhandled distribution type" };
+						} break;
+					}
+				}
+			}
+		}
+	}
 }

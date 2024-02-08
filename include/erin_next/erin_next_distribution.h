@@ -3,6 +3,7 @@
 
 #ifndef ERIN_NEXT_DISTRIBUTION_H
 #define ERIN_NEXT_DISTRIBUTION_H
+#include "../vendor/toml11/toml.hpp"
 #include <chrono>
 #include <exception>
 #include <functional>
@@ -137,6 +138,7 @@ namespace erin_next
 
 		//[[nodiscard]] std::vector<double>
 		//  sample_upto_including(const double max_time_s);
+		void print_distributions() const;
 
 		private:
 		Dist dist;
@@ -148,6 +150,9 @@ namespace erin_next
 		std::default_random_engine g;
 		std::uniform_real_distribution<double> roll;
 	};
+
+	void
+	ParseDistributions(DistributionSystem& ds, toml::table const& table);
 
 }
 #endif // ERIN_NEXT_DISTRIBUTION_H

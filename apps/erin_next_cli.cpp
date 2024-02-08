@@ -5,6 +5,7 @@
 #include "erin_next/erin_next_component.h"
 #include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next.h"
+#include "erin_next/erin_next_distribution.h"
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -80,15 +81,20 @@ main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 		// Distributions
-
+		if (data.contains("dist") && data.at("dist").is_table())
+		{
+			ParseDistributions(m.DistSys, data.at("dist").as_table());
+		}
 
 		// PRINT OUT
-		std::cout << "Loads:" << std::endl;
+		std::cout << "\nLoads:" << std::endl;
 		Simulation_PrintLoads(s);
-		std::cout << "Components:" << std::endl;
+		std::cout << "\nComponents:" << std::endl;
 		Simulation_PrintComponents(s, m);
-		std::cout << "Scenarios:" << std::endl;
+		std::cout << "\nScenarios:" << std::endl;
 		Simulation_PrintScenarios(s);
+		std::cout << "\nDistributions:" << std::endl;
+		m.DistSys.print_distributions();
 	}
 	else
 	{

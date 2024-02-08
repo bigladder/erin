@@ -1430,23 +1430,37 @@ namespace erin_next
 		uint32_t* loads,
 		size_t numItems)
 	{
-		size_t idx = m.ScheduledLoads.size();
 		std::vector<TimeAndLoad> timesAndLoads = {};
 		timesAndLoads.reserve(numItems);
 		for (size_t i = 0; i < numItems; ++i)
 		{
-			timesAndLoads.push_back({ times[i], loads[i] });
+			TimeAndLoad tal{times[i], loads[i]};
+			timesAndLoads.push_back(std::move(tal));
 		}
-		m.ScheduledLoads.push_back({ std::move(timesAndLoads) });
-		return Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::ScheduleBasedLoadType, idx);
+		return Model_AddScheduleBasedLoad(m, timesAndLoads);
 	}
 
 	size_t
-	Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndLoad> timesAndLoads)
+	Model_AddScheduleBasedLoad(
+		Model& m,
+		std::vector<TimeAndLoad> timesAndLoads)
+	{
+		return Model_AddScheduleBasedLoad(
+			m, timesAndLoads, std::map<size_t, size_t>{});
+	}
+
+	size_t
+	Model_AddScheduleBasedLoad(
+		Model& m,
+		std::vector<TimeAndLoad> timesAndLoads,
+		std::map<size_t, size_t> scenarioIdToLoadId)
 	{
 		size_t idx = m.ScheduledLoads.size();
-		m.ScheduledLoads.push_back({ std::vector<TimeAndLoad>(timesAndLoads) });
+		ScheduleBasedLoad sbl = {};
+		sbl.TimesAndLoads = timesAndLoads;
+		sbl.InflowConn = 0;
+		sbl.ScenarioIdToLoadId = scenarioIdToLoadId;
+		m.ScheduledLoads.push_back(std::move(sbl));
 		return Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::ScheduleBasedLoadType, idx);
 	}

@@ -111,7 +111,7 @@ namespace erin_next
 	{
 		std::vector<TimeAndLoad> TimesAndLoads;
 		size_t InflowConn;
-		std::vector<std::map<size_t, size_t>> ScenarioIdToLoadId;
+		std::map<size_t, size_t> ScenarioIdToLoadId;
 	};
 
 	struct ScheduleBasedReliability
@@ -374,7 +374,14 @@ namespace erin_next
 
 	size_t
 	Model_AddScheduleBasedLoad(
-		Model& m, std::vector<TimeAndLoad> timesAndLoads);
+		Model& m,
+		std::vector<TimeAndLoad> timesAndLoads);
+
+	size_t
+	Model_AddScheduleBasedLoad(
+		Model& m,
+		std::vector<TimeAndLoad> timesAndLoads,
+		std::map<size_t, size_t> scenarioIdToLoadId);
 
 	size_t
 	Model_AddConstantSource(Model& m, uint32_t available);

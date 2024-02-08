@@ -5,6 +5,7 @@ namespace erin_next
 {
 	bool
 	ParseSingleComponent(
+		Simulation& s,
 		Model& m,
 		toml::table const& table,
 		std::string const& tag)
@@ -26,15 +27,18 @@ namespace erin_next
 			return false;
 		}
 		ComponentType ct = maybeCompType.value();
-		size_t id{ 0 };
+		size_t id = {};
 		std::string inflow{};
+		size_t inflowId = {};
 		std::string outflow{};
+		size_t outflowId = {};
 		if (table.contains("outflow"))
 		{
 			auto maybe = TOMLTable_ParseString(table, "outflow", fullTableName);
 			if (maybe.has_value())
 			{
 				outflow = maybe.value();
+				outflowId = Simulation_RegisterFlow(s, outflow);
 			}
 		}
 		if (table.contains("inflow"))
@@ -43,6 +47,7 @@ namespace erin_next
 			if (maybe.has_value())
 			{
 				inflow = maybe.value();
+				inflowId = Simulation_RegisterFlow(s, inflow);
 			}
 		}
 		switch (ct)
@@ -69,12 +74,12 @@ namespace erin_next
 	}
 
 	bool
-	ParseComponents(Model& m, toml::table const& table)
+	ParseComponents(Simulation& s, Model& m, toml::table const& table)
 	{
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
 			auto wasSuccessful =
-				ParseSingleComponent(m, it->second.as_table(), it->first);
+				ParseSingleComponent(s, m, it->second.as_table(), it->first);
 			if (!wasSuccessful)
 			{
 				return false;

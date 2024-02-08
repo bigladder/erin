@@ -195,6 +195,7 @@ add_library(erin_next
 	erin_next_load.cpp
 	erin_next_time_and_load.cpp
 	erin_next_component.cpp
+	erin_next_simulation.cpp
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_distribution.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_reliability.h"
@@ -205,6 +206,7 @@ add_library(erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_load.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_validation.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_component.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_simulation.h"
 )
 
 # Add Warnings

@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
 #include "erin_next/erin_next_component.h"
+#include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next.h"
 #include <iostream>
 #include <string>
@@ -67,16 +68,19 @@ main(int argc, char** argv)
 		}
 		// Components
 		toml::value const& compTable = data.at("components");
-		erin_next::Model m{};
+		erin_next::Simulation s = {};
+		Simulation_RegisterFlow(s, "");
+		erin_next::Model m = {};
 		m.FinalTime = simInfo.MaxTime;
 		m.RandFn = []() { return 0.4; };
-		bool parseSuccess = erin_next::ParseComponents(m, compTable.as_table());
+		bool parseSuccess =
+			erin_next::ParseComponents(s, m, compTable.as_table());
 		if (!parseSuccess)
 		{
 			return EXIT_FAILURE;
 		}
 		std::cout << "Components:" << std::endl;
-		Model_PrintComponents(m);
+		Simulation_PrintComponents(s, m);
 	}
 	else
 	{

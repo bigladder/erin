@@ -56,7 +56,7 @@ namespace erin_next
 
 	size_t
 	Component_AddComponentReturningId(
-		Component& c,
+		ComponentDict& c,
 		ComponentType ct,
 		size_t idx,
 		size_t inflowType,
@@ -1708,28 +1708,6 @@ namespace erin_next
 			}
 		}
 		return {};
-	}
-
-	void
-	Model_PrintComponents(Model const& m)
-	{
-		for (size_t i = 0; i < m.ComponentMap.CompType.size(); ++i)
-		{
-			size_t outflowTypeIdx = m.ComponentMap.OutflowType[i];
-			size_t inflowTypeIdx = m.ComponentMap.InflowType[i];
-			std::cout << ToString(m.ComponentMap.CompType[i])
-				<< "[" << i << "]" << std::endl;
-			if (inflowTypeIdx < m.FlowTypeMap.Type.size())
-			{
-				std::cout << "- inflow: "
-					<< m.FlowTypeMap.Type[inflowTypeIdx] << std::endl;
-			}
-			if (outflowTypeIdx < m.FlowTypeMap.Type.size())
-			{
-				std::cout << "- outflow: "
-					<< m.FlowTypeMap.Type[outflowTypeIdx] << std::endl;
-			}
-		}
 	}
 
 }

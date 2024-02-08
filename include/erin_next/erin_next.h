@@ -16,6 +16,7 @@
 #include <vector>
 #include <optional>
 #include <set>
+#include <map>
 
 namespace erin_next
 {
@@ -56,9 +57,19 @@ namespace erin_next
 		std::vector<std::string> Type;
 	};
 
+	// Information about a scenario
+	struct ScenarioType {
+		std::vector<std::string> Tags;
+	};
+
+	struct LoadType {
+		std::vector<std::string> Tags;
+		std::vector<std::vector<TimeAndLoad>> Loads;
+	};
+
 	// NOTE: the struct below is indexed by a size_t which is the id for a
 	// component
-	struct Component {
+	struct ComponentDict {
 		// to lookup a component by tag
 		// std::vector<std::string> tag{};
 		// the index into the component vector for the given component type
@@ -100,6 +111,7 @@ namespace erin_next
 	{
 		std::vector<TimeAndLoad> TimesAndLoads;
 		size_t InflowConn;
+		std::vector<std::map<size_t, size_t>> ScenarioIdToLoadId;
 	};
 
 	struct ScheduleBasedReliability
@@ -177,13 +189,14 @@ namespace erin_next
 		std::vector<uint32_t> StorageAmounts;
 	};
 
-	// TODO[mok]: consider separating model into const values (that don't change
-	// per simulation) and state (which does change during the simulation). This
-	// might make it easier to log state such as storage SOC.
 	struct Model
 	{
-		Component ComponentMap;
-		FlowType FlowTypeMap;
+		// TODO: rename type from Component to ComponentType for consistency;
+		// alternate names ComponentDict? FlowDict? Implies lookup...
+		// NOTE: should we have another struct called Simulation which
+		// holds the ComponentDict, FlowDict, ScenarioDict, LoadDict, etc.
+		// and then creates and runs models as the scenario is run???
+		ComponentDict ComponentMap;
 		std::vector<ConstantSource> ConstSources;
 		std::vector<ScheduleBasedSource> ScheduledSrcs;
 		std::vector<ConstantLoad> ConstLoads;
@@ -218,7 +231,7 @@ namespace erin_next
 
 	size_t
 	Component_AddComponentReturningId(
-		Component& c,
+		ComponentDict& c,
 		ComponentType ct,
 		size_t idx,
 		size_t inflowType = 0,
@@ -484,9 +497,6 @@ namespace erin_next
 		Model const& model,
 		SimulationState& ss,
 		double time);
-
-	void
-	Model_PrintComponents(Model const& m);
 
 }
 

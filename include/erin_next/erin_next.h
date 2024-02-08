@@ -151,6 +151,7 @@ namespace erin_next
 		ComponentType To;
 		size_t ToIdx;
 		size_t ToPort;
+		size_t FlowTypeId;
 	};
 
 	struct Mux
@@ -227,6 +228,12 @@ namespace erin_next
 		std::vector<Flow> Flows;
 		std::vector<size_t> ScheduleBasedLoadIdx;
 		std::vector<size_t> ScheduleBasedSourceIdx;
+	};
+
+	struct TagAndPort
+	{
+		std::string Tag;
+		size_t Port;
 	};
 
 	size_t
@@ -520,6 +527,20 @@ namespace erin_next
 		SimulationState& ss,
 		double time);
 
+	std::optional<TagAndPort>
+	ParseTagAndPort(std::string const& s, std::string const& tableName);
+
+	void
+	ParseNetworks(FlowType const& ft, Model& model, toml::table const& table);
+
+	std::optional<size_t>
+	Model_FindCompIdByTag(Model const& m, std::string const& tag);
+
+	std::optional<size_t>
+	FlowType_GetIdByTag(FlowType const& ft, std::string const& tag);
+
+	void
+	Model_PrintConnections(Model const& m, FlowType const& ft);
 }
 
 #endif // ERIN_NEXT_H

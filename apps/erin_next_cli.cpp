@@ -85,7 +85,11 @@ main(int argc, char** argv)
 		{
 			ParseDistributions(m.DistSys, data.at("dist").as_table());
 		}
-
+		// Networks
+		if (data.contains("networks") && data.at("networks").is_table())
+		{
+			ParseNetworks(s.FlowTypeMap, m, data.at("networks").as_table());
+		}
 		// PRINT OUT
 		std::cout << "\nLoads:" << std::endl;
 		Simulation_PrintLoads(s);
@@ -95,6 +99,8 @@ main(int argc, char** argv)
 		Simulation_PrintScenarios(s);
 		std::cout << "\nDistributions:" << std::endl;
 		m.DistSys.print_distributions();
+		std::cout << "\nConnections:" << std::endl;
+		Model_PrintConnections(m, s.FlowTypeMap);
 	}
 	else
 	{

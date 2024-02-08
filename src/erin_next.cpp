@@ -1,5 +1,6 @@
 #include "erin_next/erin_next.h"
 #include <cmath>
+#include <cstdlib>
 
 namespace erin_next
 {
@@ -1746,6 +1747,225 @@ namespace erin_next
 			}
 		}
 		return {};
+	}
+
+	std::optional<TagAndPort>
+	ParseTagAndPort(std::string const& s, std::string const& tableName)
+	{
+		std::string tag = s.substr(0, s.find(":"));
+		size_t opening = s.find("(");
+		size_t closing = s.find(")");
+		if (opening == std::string::npos
+			|| closing == std::string::npos)
+		{
+			std::cout << "[" << tableName << "] "
+				<< "unable to parse connection string '"
+				<< s << "'" << std::endl;
+			return {};
+		}
+		size_t count = closing - (opening + 1);
+		std::string port = s.substr(opening + 1, count);
+		TagAndPort tap = {};
+		tap.Tag = tag;
+		tap.Port = std::atoi(port.c_str());
+		return tap;
+	}
+
+	void
+	ParseNetworks(FlowType const& ft, Model& m, toml::table const& table)
+	{
+		for (auto it = table.cbegin(); it != table.cend(); ++it)
+		{
+			std::string networkTag = it->first;
+			std::string fullTableName = "networks." + networkTag;
+			if (!it->second.is_table())
+			{
+				std::cout << "[" << fullTableName << "] "
+					<< "network value is not a table" << std::endl;
+				return;
+			}
+			toml::table networkTable = it->second.as_table();
+			if (!networkTable.contains("connections"))
+			{
+				std::cout << "[" << fullTableName << "] "
+					<< "network doesn't contain required key 'connections'"
+					<< std::endl;
+				return;
+			}
+			if (!networkTable.at("connections").is_array())
+			{
+				std::cout << "[" << fullTableName << "] "
+					<< "'connections' is not an array"
+					<< std::endl;
+				return;
+			}
+			toml::array connArray = networkTable.at("connections").as_array();
+			for (size_t i = 0; i < connArray.size(); ++i)
+			{
+				toml::value const& item = connArray[i];
+				if (!item.is_array())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "'connections' at index " << i
+						<< " must be an array" << std::endl;
+					return;
+				}
+				if (item.as_array().size() < 3)
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "'connections' at index " << i
+						<< " must be an array of length >= 3" << std::endl;
+					return;
+				}
+				for (int idx=0; idx < 3; ++idx)
+				{
+					if (!item.as_array()[idx].is_string())
+					{
+						std::cout << "[" << fullTableName << "] "
+							<< "'connections' at index " << i
+							<< " and subindex " << idx
+							<< " must be a string" << std::endl;
+						return;
+					}
+				}
+				std::string from = item.as_array()[0].as_string();
+				std::optional<TagAndPort> maybeFromTap =
+					ParseTagAndPort(from, fullTableName);
+				if (!maybeFromTap.has_value())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "unable to parse connection string at ["
+						<< i << "][0]" << std::endl;
+					return;
+				}
+				TagAndPort fromTap = maybeFromTap.value();
+				std::cout << "from    : " << from << std::endl;
+				std::cout << "fromTag : " << fromTap.Tag << std::endl;
+				std::cout << "fromPort: " << fromTap.Port << std::endl;
+				std::string to = item.as_array()[1].as_string();
+				std::optional<TagAndPort> maybeToTap =
+					ParseTagAndPort(to, fullTableName);
+				if (!maybeToTap.has_value())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "unable to parse connection string at ["
+						<< i << "][1]" << std::endl;
+					return;
+				}
+				TagAndPort toTap = maybeToTap.value();
+				std::cout << "to      : " << to << std::endl;
+				std::cout << "toTag   : " << toTap.Tag << std::endl;
+				std::cout << "toPort  : " << toTap.Port << std::endl;
+				std::string flow = item.as_array()[2].as_string();
+				std::optional<size_t> maybeFlowTypeId =
+					FlowType_GetIdByTag(ft, flow);
+				if (!maybeFlowTypeId.has_value())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "could not identify flow type '"
+						<< flow << "'" << std::endl;
+					return;
+				}
+				size_t flowTypeId = maybeFlowTypeId.value();
+				// TODO: get the flowId for the above flow string?
+				// TODO: query the from component by tag to get the rest of the
+				// meta data
+				std::optional<size_t> maybeFromCompId =
+					Model_FindCompIdByTag(m, fromTap.Tag);
+				if (!maybeFromCompId.has_value())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "could not find component id for tag '"
+						<< from << "'" << std::endl;
+					return;
+				}
+				std::optional<size_t> maybeToCompId =
+					Model_FindCompIdByTag(m, toTap.Tag);
+				if (!maybeToCompId.has_value())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "could not find component id for tag '"
+						<< to << "'" << std::endl;
+					return;
+				}
+				size_t fromCompId = maybeFromCompId.value();
+				size_t toCompId = maybeToCompId.value();
+				// TODO: flow types probably need to be by port
+				// std::vector<size_t> for outports and for inports
+				if (m.ComponentMap.OutflowType[fromCompId] != flowTypeId)
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "mismatch of flow types: "
+						<< fromTap.Tag << ":outflow="
+						<< ft.Type[m.ComponentMap.OutflowType[fromCompId]]
+						<< "; connection: "
+						<< flow << std::endl;
+					return;
+				}
+				if (m.ComponentMap.InflowType[toCompId] != flowTypeId)
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "mismatch of flow types: "
+						<< toTap.Tag << ":inflow="
+						<< ft.Type[m.ComponentMap.OutflowType[toCompId]]
+						<< "; connection: "
+						<< flow << std::endl;
+					return;
+				}
+				Connection c = {};
+				c.From = m.ComponentMap.CompType[fromCompId];
+				c.FromIdx = m.ComponentMap.Idx[fromCompId];
+				c.FromPort = fromTap.Port;
+				c.To = m.ComponentMap.CompType[toCompId];
+				c.ToIdx = m.ComponentMap.Idx[toCompId];
+				c.ToPort = toTap.Port;
+				c.FlowTypeId = flowTypeId;
+				m.Connections.push_back(c);
+			}
+		}
+	}
+
+	std::optional<size_t>
+	Model_FindCompIdByTag(Model const& m, std::string const& tag)
+	{
+		for (size_t i=0; i < m.ComponentMap.Tag.size(); ++i)
+		{
+			if (m.ComponentMap.Tag[i] == tag)
+			{
+				return i;
+			}
+		}
+		return {};
+	}
+
+	std::optional<size_t>
+	FlowType_GetIdByTag(FlowType const& ft, std::string const& tag)
+	{
+		for (int idx=0; idx < ft.Type.size(); ++idx)
+		{
+			if (ft.Type[idx] == tag)
+			{
+				return idx;
+			}
+		}
+		return {};
+	}
+
+	void
+	Model_PrintConnections(Model const& m, FlowType const& ft)
+	{
+		for (int i=0; i < m.Connections.size(); ++i)
+		{
+			std::cout << i << ": "
+				<< ToString(m.Connections[i].From)
+				<< "[" << m.Connections[i].FromIdx << "]:OUT("
+				<< m.Connections[i].FromPort << ") => "
+				<< ToString(m.Connections[i].To)
+				<< "[" << m.Connections[i].ToIdx << "]:IN("
+				<< m.Connections[i].ToPort << "), flow: "
+				<< ft.Type[m.Connections[i].FlowTypeId]
+				<< std::endl;
+		}
 	}
 
 }

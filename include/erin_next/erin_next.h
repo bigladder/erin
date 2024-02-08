@@ -148,9 +148,11 @@ namespace erin_next
 		ComponentType From;
 		size_t FromIdx;
 		size_t FromPort;
+		size_t FromId; // ComponentId, index into ComponentDict
 		ComponentType To;
 		size_t ToIdx;
 		size_t ToPort;
+		size_t ToId; // ComponentId, index into ComponentDict
 		size_t FlowTypeId;
 	};
 

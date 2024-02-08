@@ -1586,13 +1586,15 @@ namespace erin_next
 		size_t to,
 		size_t toPort)
 	{
+		// TODO: add flow type to add connection and check
+		size_t flowTypeId = 0;
 		ComponentType fromType = m.ComponentMap.CompType[from];
 		size_t fromIdx = m.ComponentMap.Idx[from];
 		ComponentType toType = m.ComponentMap.CompType[to];
 		size_t toIdx = m.ComponentMap.Idx[to];
 		Connection c = {
-			fromType, fromIdx, fromPort,
-			toType, toIdx, toPort
+			fromType, fromIdx, fromPort, from,
+			toType, toIdx, toPort, to, flowTypeId
 		};
 		size_t connId = m.Connections.size();
 		m.Connections.push_back(c);
@@ -1839,9 +1841,6 @@ namespace erin_next
 					return;
 				}
 				TagAndPort fromTap = maybeFromTap.value();
-				std::cout << "from    : " << from << std::endl;
-				std::cout << "fromTag : " << fromTap.Tag << std::endl;
-				std::cout << "fromPort: " << fromTap.Port << std::endl;
 				std::string to = item.as_array()[1].as_string();
 				std::optional<TagAndPort> maybeToTap =
 					ParseTagAndPort(to, fullTableName);
@@ -1853,9 +1852,6 @@ namespace erin_next
 					return;
 				}
 				TagAndPort toTap = maybeToTap.value();
-				std::cout << "to      : " << to << std::endl;
-				std::cout << "toTag   : " << toTap.Tag << std::endl;
-				std::cout << "toPort  : " << toTap.Port << std::endl;
 				std::string flow = item.as_array()[2].as_string();
 				std::optional<size_t> maybeFlowTypeId =
 					FlowType_GetIdByTag(ft, flow);
@@ -1867,9 +1863,6 @@ namespace erin_next
 					return;
 				}
 				size_t flowTypeId = maybeFlowTypeId.value();
-				// TODO: get the flowId for the above flow string?
-				// TODO: query the from component by tag to get the rest of the
-				// meta data
 				std::optional<size_t> maybeFromCompId =
 					Model_FindCompIdByTag(m, fromTap.Tag);
 				if (!maybeFromCompId.has_value())
@@ -1916,9 +1909,11 @@ namespace erin_next
 				c.From = m.ComponentMap.CompType[fromCompId];
 				c.FromIdx = m.ComponentMap.Idx[fromCompId];
 				c.FromPort = fromTap.Port;
+				c.FromId = fromCompId;
 				c.To = m.ComponentMap.CompType[toCompId];
 				c.ToIdx = m.ComponentMap.Idx[toCompId];
 				c.ToPort = toTap.Port;
+				c.ToId = toCompId;
 				c.FlowTypeId = flowTypeId;
 				m.Connections.push_back(c);
 			}
@@ -1958,11 +1953,15 @@ namespace erin_next
 		{
 			std::cout << i << ": "
 				<< ToString(m.Connections[i].From)
-				<< "[" << m.Connections[i].FromIdx << "]:OUT("
-				<< m.Connections[i].FromPort << ") => "
+				<< "[" << m.Connections[i].FromId << "]:OUT("
+				<< m.Connections[i].FromPort << ") -- "
+				<< m.ComponentMap.Tag[m.Connections[i].FromId]
+				<< " => "
 				<< ToString(m.Connections[i].To)
-				<< "[" << m.Connections[i].ToIdx << "]:IN("
-				<< m.Connections[i].ToPort << "), flow: "
+				<< "[" << m.Connections[i].ToId << "]:IN("
+				<< m.Connections[i].ToPort << ") -- "
+				<< m.ComponentMap.Tag[m.Connections[i].ToId]
+				<< ", flow: "
 				<< ft.Type[m.Connections[i].FlowTypeId]
 				<< std::endl;
 		}

@@ -2,6 +2,8 @@
 #include "erin/version.h"
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
+#include "erin_next/erin_next_component.h"
+#include "erin_next/erin_next.h"
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -41,25 +43,40 @@ main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 		toml::value const& simInfoTable = data.at("simulation_info");
-		auto simInfo = erin_next::ParseSimulationInfo(simInfoTable.as_table());
+		auto maybeSimInfo = erin_next::ParseSimulationInfo(simInfoTable.as_table());
 		std::cout << "-----------------" << std::endl;
-		if (simInfo.has_value())
+		// Simulation Info
+		if (!maybeSimInfo.has_value())
 		{
-			std::cout << simInfo.value() << std::endl;
+			return EXIT_FAILURE;
 		}
-		toml::value const& loadTables = data.at("loads");
-		auto loads = erin_next::ParseLoads(loadTables.as_table());
-		if (loads.has_value())
+		erin_next::SimulationInfo simInfo = std::move(maybeSimInfo.value());
+		std::cout << simInfo << std::endl;
+		// Loads
+		toml::value const& loadTable = data.at("loads");
+		auto maybeLoads = erin_next::ParseLoads(loadTable.as_table());
+		if (!maybeLoads.has_value())
 		{
-			std::cout << "Loads:" << std::endl;
-			for (
-				auto it = loads.value().cbegin();
-				it != loads.value().cend();
-				++it)
-			{
-				std::cout << *it << std::endl;
-			}
+			return EXIT_FAILURE;
 		}
+		std::vector<erin_next::Load> loads = std::move(maybeLoads.value());
+		std::cout << "Loads:" << std::endl;
+		for (auto it = loads.cbegin(); it != loads.cend(); ++it)
+		{
+			std::cout << *it << std::endl;
+		}
+		// Components
+		toml::value const& compTable = data.at("components");
+		erin_next::Model m{};
+		m.FinalTime = simInfo.MaxTime;
+		m.RandFn = []() { return 0.4; };
+		bool parseSuccess = erin_next::ParseComponents(m, compTable.as_table());
+		if (!parseSuccess)
+		{
+			return EXIT_FAILURE;
+		}
+		std::cout << "Components:" << std::endl;
+		Model_PrintComponents(m);
 	}
 	else
 	{

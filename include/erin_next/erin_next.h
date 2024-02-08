@@ -49,6 +49,13 @@ namespace erin_next
 		ComponentType Type;
 	};
 
+	// Holds the various flow types encountered
+	// Note: each entry added must be unique and the index into this
+	// vector is the flow type used through the rest of the simulation
+	struct FlowType {
+		std::vector<std::string> Type;
+	};
+
 	// NOTE: the struct below is indexed by a size_t which is the id for a
 	// component
 	struct Component {
@@ -57,6 +64,11 @@ namespace erin_next
 		// the index into the component vector for the given component type
 		std::vector<size_t> Idx;
 		std::vector<ComponentType> CompType;
+		std::vector<std::string> Tag;
+		// The below gives each component's inflow type and outflow type
+		// there are indices into FlowType
+		std::vector<size_t> InflowType;
+		std::vector<size_t> OutflowType;
 	};
 
 	struct FlowSummary
@@ -171,6 +183,7 @@ namespace erin_next
 	struct Model
 	{
 		Component ComponentMap;
+		FlowType FlowTypeMap;
 		std::vector<ConstantSource> ConstSources;
 		std::vector<ScheduleBasedSource> ScheduledSrcs;
 		std::vector<ConstantLoad> ConstLoads;
@@ -205,7 +218,12 @@ namespace erin_next
 
 	size_t
 	Component_AddComponentReturningId(
-		Component& c, ComponentType ct, size_t idx);
+		Component& c,
+		ComponentType ct,
+		size_t idx,
+		size_t inflowType = 0,
+		size_t outflowType = 0,
+		std::string const& tag = "");
 
 	void
 	Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
@@ -301,6 +319,9 @@ namespace erin_next
 
 	std::string
 	ToString(ComponentType ct);
+
+	std::optional<ComponentType>
+	TagToComponentType(std::string const& tag);
 
 	void
 	PrintFlows(Model const& m, SimulationState const&, double t);
@@ -463,6 +484,9 @@ namespace erin_next
 		Model const& model,
 		SimulationState& ss,
 		double time);
+
+	void
+	Model_PrintComponents(Model const& m);
 
 }
 

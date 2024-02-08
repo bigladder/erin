@@ -58,11 +58,17 @@ namespace erin_next
 	Component_AddComponentReturningId(
 		Component& c,
 		ComponentType ct,
-		size_t idx)
+		size_t idx,
+		size_t inflowType,
+		size_t outflowType,
+		std::string const& tag)
 	{
 		auto id{ c.CompType.size() };
 		c.CompType.push_back(ct);
 		c.Idx.push_back(idx);
+		c.Tag.push_back(tag);
+		c.InflowType.push_back(inflowType);
+		c.OutflowType.push_back(outflowType);
 		return id;
 	}
 
@@ -981,6 +987,44 @@ namespace erin_next
 		return result;
 	}
 
+	std::optional<ComponentType>
+	TagToComponentType(std::string const& tag)
+	{
+		if (tag == "ConstantLoad")
+		{
+			return ComponentType::ConstantLoadType;
+		}
+		if (tag == "ScheduleBasedLoad" || tag == "load")
+		{
+			return ComponentType::ScheduleBasedLoadType;
+		}
+		if (tag == "ConstantSource" || tag == "source")
+		{
+			return ComponentType::ConstantSourceType;
+		}
+		if (tag == "ScheduleBasedSource")
+		{
+			return ComponentType::ScheduleBasedSourceType;
+		}
+		if (tag == "ConstantEfficiencyConverter")
+		{
+			return ComponentType::ConstantEfficiencyConverterType;
+		}
+		if (tag == "WasteSink")
+		{
+			return ComponentType::WasteSinkType;
+		}
+		if (tag == "Mux")
+		{
+			return ComponentType::MuxType;
+		}
+		if (tag == "Store")
+		{
+			return ComponentType::StoreType;
+		}
+		return {};
+	}
+
 	void
 	PrintFlows(Model const& m, SimulationState const& ss, double t)
 	{
@@ -1664,6 +1708,28 @@ namespace erin_next
 			}
 		}
 		return {};
+	}
+
+	void
+	Model_PrintComponents(Model const& m)
+	{
+		for (size_t i = 0; i < m.ComponentMap.CompType.size(); ++i)
+		{
+			size_t outflowTypeIdx = m.ComponentMap.OutflowType[i];
+			size_t inflowTypeIdx = m.ComponentMap.InflowType[i];
+			std::cout << ToString(m.ComponentMap.CompType[i])
+				<< "[" << i << "]" << std::endl;
+			if (inflowTypeIdx < m.FlowTypeMap.Type.size())
+			{
+				std::cout << "- inflow: "
+					<< m.FlowTypeMap.Type[inflowTypeIdx] << std::endl;
+			}
+			if (outflowTypeIdx < m.FlowTypeMap.Type.size())
+			{
+				std::cout << "- outflow: "
+					<< m.FlowTypeMap.Type[outflowTypeIdx] << std::endl;
+			}
+		}
 	}
 
 }

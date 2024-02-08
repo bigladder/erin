@@ -46,6 +46,7 @@ main(int argc, char** argv)
 		toml::value const& simInfoTable = data.at("simulation_info");
 		auto maybeSimInfo = erin_next::ParseSimulationInfo(simInfoTable.as_table());
 		std::cout << "-----------------" << std::endl;
+		erin_next::Simulation s = {};
 		// Simulation Info
 		if (!maybeSimInfo.has_value())
 		{
@@ -53,6 +54,7 @@ main(int argc, char** argv)
 		}
 		erin_next::SimulationInfo simInfo = std::move(maybeSimInfo.value());
 		std::cout << simInfo << std::endl;
+		s.Info = simInfo;
 		// Loads
 		toml::value const& loadTable = data.at("loads");
 		auto maybeLoads = erin_next::ParseLoads(loadTable.as_table());
@@ -61,14 +63,12 @@ main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 		std::vector<erin_next::Load> loads = std::move(maybeLoads.value());
-		std::cout << "Loads:" << std::endl;
-		for (size_t i = 0; i < loads.size(); ++i)
-		{
-			std::cout << i << ": " << loads[i] << std::endl;
-		}
+		Simulation_RegisterAllLoads(s, loads);
 		// Components
 		toml::value const& compTable = data.at("components");
-		erin_next::Simulation s = {};
+		// TODO: below code needs to get wrapped into a
+		// `Simulation_Init(Simulation)` function; this gives the "0 value"
+		// flow which allows one to "opt out" of the flow declaration stuff.
 		Simulation_RegisterFlow(s, "");
 		erin_next::Model m = {};
 		m.FinalTime = simInfo.MaxTime;
@@ -79,6 +79,12 @@ main(int argc, char** argv)
 		{
 			return EXIT_FAILURE;
 		}
+		// Distributions
+
+
+		// PRINT OUT
+		std::cout << "Loads:" << std::endl;
+		Simulation_PrintLoads(s);
 		std::cout << "Components:" << std::endl;
 		Simulation_PrintComponents(s, m);
 		std::cout << "Scenarios:" << std::endl;

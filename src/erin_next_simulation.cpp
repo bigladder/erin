@@ -71,6 +71,22 @@ namespace erin_next
 	}
 
 	void
+	Simulation_RegisterAllLoads(
+		Simulation& s,
+		std::vector<Load> const& loads)
+	{
+		for (size_t i = 0; i < loads.size(); ++i)
+		{
+			// TODO: change to just push the loads themselves as they
+			// already have all of the LoadType metadata and more.
+			// The current Load vs LoadType is AoS vs SoA, absent a few missing
+			// fields. We might want both?
+			s.LoadMap.Tags.push_back(loads[i].Tag);
+			s.LoadMap.Loads.push_back(loads[i].TimeAndLoads);
+		}
+	}
+
+	void
 	Simulation_PrintComponents(Simulation const& s, Model const& m)
 	{
 		for (size_t i = 0; i < m.ComponentMap.CompType.size(); ++i)
@@ -108,6 +124,37 @@ namespace erin_next
 		{
 			std::cout << i << ": " << s.ScenarioMap.Tags[i] << std::endl;
 		}
+	}
+
+	void
+	Simulation_PrintLoads(Simulation const& s)
+	{
+		for (size_t i = 0; i < s.LoadMap.Tags.size(); ++i)
+		{
+			std::cout << i << ": " << s.LoadMap.Tags[i] << std::endl;
+			std::cout << "- load entries: "
+				<< s.LoadMap.Loads[i].size() << std::endl;
+			if (s.LoadMap.Loads[i].size() > 0)
+			{
+				// TODO: add time units
+				std::cout << "- initial time: "
+					<< s.LoadMap.Loads[i][0].Time << std::endl;
+				// TODO: add time units
+				std::cout << "- final time  : "
+					<< s.LoadMap.Loads[i][s.LoadMap.Loads[i].size() - 1].Time
+					<< std::endl;
+				// TODO: add max rate
+				// TODO: add min rate
+				// TODO: add average rate
+			}
+		}
+		/*
+		std::cout << "Loads:" << std::endl;
+		for (size_t i = 0; i < loads.size(); ++i)
+		{
+			std::cout << i << ": " << loads[i] << std::endl;
+		}
+		*/
 	}
 
 }

@@ -3,6 +3,8 @@
 #ifndef ERIN_NEXT_SIMULATION_H
 #define ERIN_NEXT_SIMULATION_H
 #include "erin_next/erin_next.h"
+#include "erin_next/erin_next_simulation_info.h"
+#include "erin_next/erin_next_load.h"
 #include <string>
 #include <vector>
 #include <optional>
@@ -15,6 +17,7 @@ namespace erin_next
 		FlowType FlowTypeMap;
 		ScenarioType ScenarioMap;
 		LoadType LoadMap;
+		SimulationInfo Info;
 	};
 
 	size_t
@@ -33,11 +36,19 @@ namespace erin_next
 	Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag);
 
 	void
+	Simulation_RegisterAllLoads(
+		Simulation& s,
+		std::vector<Load> const& loads);
+
+	void
 	Simulation_PrintComponents(
 		Simulation const& s, Model const& m);
 
 	void
 	Simulation_PrintScenarios(Simulation const& s);
+
+	void
+	Simulation_PrintLoads(Simulation const& s);
 }
 
 #endif

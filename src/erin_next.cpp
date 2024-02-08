@@ -1773,6 +1773,11 @@ namespace erin_next
 		return tap;
 	}
 
+	// TODO: note, we are currently storing each network in model.Connections
+	// as opposed to storing it externally. This will work if we only have 1
+	// network but not if we have more than 1. Need to decide if we'll go to
+	// only having 1 network per file which would be my preference. If that's
+	// the case, we'll need to rework the input files a bit...
 	void
 	ParseNetworks(FlowType const& ft, Model& m, toml::table const& table)
 	{

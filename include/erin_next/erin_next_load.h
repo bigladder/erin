@@ -2,7 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_NEXT_LOAD_H
 #define ERIN_NEXT_LOAD_H
-#include "erin_next/erin_next_time_and_load.h"
+#include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
 #include "../vendor/toml11/toml.hpp"
 #include <string>
@@ -16,7 +16,7 @@ namespace erin_next
 		std::string Tag;
 		TimeUnit TimeUnit;
 		std::string RateUnit;
-		std::vector<TimeAndLoad> TimeAndLoads;
+		std::vector<TimeAndAmount> TimeAndLoads;
 	};
 
 	std::optional<Load>

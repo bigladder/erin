@@ -158,13 +158,13 @@ namespace erin_next
 		return {};
 	}
 
-	std::optional<std::vector<TimeAndLoad>>
+	std::optional<std::vector<TimeAndAmount>>
 	TOMLTable_ParseVectorOfTimeRatePairs(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
 		std::string const& tableName)
 	{
-		std::vector<TimeAndLoad> timeAndLoads{};
+		std::vector<TimeAndAmount> timeAndLoads{};
 		if (!table.contains(fieldName) || !table.at(fieldName).is_array())
 		{
 			std::cout << "[" << tableName << "] "

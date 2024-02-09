@@ -100,7 +100,7 @@ namespace erin_next
 						}
 					}
 				}
-				std::vector<TimeAndLoad> emptyLoads = {};
+				std::vector<TimeAndAmount> emptyLoads = {};
 				id = Model_AddScheduleBasedLoad(
 					m, emptyLoads, scenarioIdToLoadId, inflowId, tag);
 			} break;

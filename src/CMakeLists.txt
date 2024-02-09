@@ -193,7 +193,7 @@ add_library(erin_next
 	erin_next_simulation_info.cpp
 	erin_next_toml.cpp
 	erin_next_load.cpp
-	erin_next_time_and_load.cpp
+	erin_next_time_and_amount.cpp
 	erin_next_component.cpp
 	erin_next_simulation.cpp
 	erin_next_scenario.cpp
@@ -204,7 +204,7 @@ add_library(erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_timestate.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_simulation_info.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_toml.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_time_and_load.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_time_and_amount.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_load.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_validation.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_component.h"

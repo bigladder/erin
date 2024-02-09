@@ -165,11 +165,11 @@ namespace erin_next
 				if (tal.Time == t)
 				{
 
-					if (ss.Flows[connIdx].Requested != tal.Load)
+					if (ss.Flows[connIdx].Requested != tal.Amount)
 					{
 						ss.ActiveConnectionsBack.insert(connIdx);
 					}
-					ss.Flows[connIdx].Requested = tal.Load;
+					ss.Flows[connIdx].Requested = tal.Amount;
 				}
 			}
 		}
@@ -1444,11 +1444,11 @@ namespace erin_next
 		uint32_t* loads,
 		size_t numItems)
 	{
-		std::vector<TimeAndLoad> timesAndLoads = {};
+		std::vector<TimeAndAmount> timesAndLoads = {};
 		timesAndLoads.reserve(numItems);
 		for (size_t i = 0; i < numItems; ++i)
 		{
-			TimeAndLoad tal{times[i], loads[i]};
+			TimeAndAmount tal{times[i], loads[i]};
 			timesAndLoads.push_back(std::move(tal));
 		}
 		return Model_AddScheduleBasedLoad(m, timesAndLoads);
@@ -1457,7 +1457,7 @@ namespace erin_next
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndLoad> timesAndLoads)
+		std::vector<TimeAndAmount> timesAndLoads)
 	{
 		return Model_AddScheduleBasedLoad(
 			m, timesAndLoads, std::map<size_t, size_t>{});
@@ -1466,7 +1466,7 @@ namespace erin_next
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndLoad> timesAndLoads,
+		std::vector<TimeAndAmount> timesAndLoads,
 		std::map<size_t, size_t> scenarioIdToLoadId)
 	{
 		return Model_AddScheduleBasedLoad(
@@ -1476,7 +1476,7 @@ namespace erin_next
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndLoad> timesAndLoads,
+		std::vector<TimeAndAmount> timesAndLoads,
 		std::map<size_t, size_t> scenarioIdToLoadId,
 		size_t inflowTypeId,
 		std::string const& tag)

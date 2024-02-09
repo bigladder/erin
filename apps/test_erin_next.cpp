@@ -229,7 +229,7 @@ Test3A(bool print) {
 static void
 Test4(bool print) {
 	PrintBanner(print, "4");
-	std::vector<TimeAndLoad> timesAndLoads = {};
+	std::vector<TimeAndAmount> timesAndLoads = {};
 	timesAndLoads.push_back({ 0.0, 10 });
 	timesAndLoads.push_back({ 3600.0, 200 });
 	Model m = {};
@@ -271,7 +271,7 @@ Test4(bool print) {
 static void
 Test5(bool print) {
 	PrintBanner(print, "5");
-	std::vector<TimeAndLoad> timesAndLoads = {};
+	std::vector<TimeAndAmount> timesAndLoads = {};
 	Model m = {};
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
@@ -465,7 +465,7 @@ Test8(bool doPrint) {
 static void
 Test9(bool doPrint) {
 	PrintBanner(doPrint, "9");
-	std::vector<TimeAndLoad> timesAndLoads = {};
+	std::vector<TimeAndAmount> timesAndLoads = {};
 	timesAndLoads.push_back({  0.0, 20 });
 	timesAndLoads.push_back({  5.0,  5 });
 	timesAndLoads.push_back({ 10.0, 15 });
@@ -552,7 +552,7 @@ Test9(bool doPrint) {
 static void
 Test10(bool doPrint) {
 	PrintBanner(doPrint, "10");
-	std::vector<TimeAndLoad> timesAndLoads = {};
+	std::vector<TimeAndAmount> timesAndLoads = {};
 	timesAndLoads.push_back({ 0.0, 20 });
 	timesAndLoads.push_back({ 5.0,  5 });
 	timesAndLoads.push_back({ 10.0, 15 });
@@ -1070,7 +1070,7 @@ Test13(bool doPrint)
 	sourceAvailability.emplace_back(20, 6);
 	sourceAvailability.emplace_back(30, 12);
 	sourceAvailability.emplace_back(40, 16);
-	std::vector<TimeAndLoad> loadRequest{};
+	std::vector<TimeAndAmount> loadRequest{};
 	loadRequest.reserve(5);
 	loadRequest.emplace_back(0, 20);
 	loadRequest.emplace_back(10, 18);

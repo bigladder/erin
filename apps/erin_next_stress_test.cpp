@@ -23,7 +23,7 @@ main(int argc, char** argv)
 	m.RandFn = []() { return 0.4; };
 	m.FinalTime = 8760.0 * 3600.0;
 	SimulationState ss{};
-	std::vector<TimeAndLoad> timesAndLoads = {};
+	std::vector<TimeAndAmount> timesAndLoads = {};
 	timesAndLoads.reserve(numHours + 1);
 	for (size_t i = 0; i <= numHours; ++i)
 	{

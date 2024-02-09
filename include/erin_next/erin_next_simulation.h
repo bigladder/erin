@@ -37,7 +37,7 @@ namespace erin_next
 	Simulation_RegisterLoadSchedule(
 		Simulation& s,
 		std::string const& tag,
-		std::vector<TimeAndLoad> const& loadSchedule);
+		std::vector<TimeAndAmount> const& loadSchedule);
 
 	std::optional<size_t>
 	Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag);

@@ -50,7 +50,7 @@ namespace erin_next
 	Simulation_RegisterLoadSchedule(
 		Simulation& s,
 		std::string const& tag,
-		std::vector<TimeAndLoad> const& loadSchedule)
+		std::vector<TimeAndAmount> const& loadSchedule)
 	{
 		size_t id = s.LoadMap.Tags.size();
 		assert(s.LoadMap.Tags.size() == s.LoadMap.Loads.size());
@@ -367,17 +367,16 @@ namespace erin_next
 					auto loadId =
 						s.Model.ScheduledLoads[sblIdx]
 						.ScenarioIdToLoadId.at(scenIdx);
-					// TODO: set to correct time units of seconds
-					std::vector<TimeAndLoad> schedule{};
+					std::vector<TimeAndAmount> schedule{};
 					size_t numEntries = s.LoadMap.Loads[loadId].size();
 					schedule.reserve(numEntries);
 					for (size_t i = 0; i < numEntries; ++i)
 					{
-						TimeAndLoad tal{};
+						TimeAndAmount tal{};
 						tal.Time = Time_ToSeconds(
 							s.LoadMap.Loads[loadId][i].Time,
 							s.LoadMap.TimeUnits[loadId]);
-						tal.Load = s.LoadMap.Loads[loadId][i].Load;
+						tal.Amount = s.LoadMap.Loads[loadId][i].Amount;
 						schedule.push_back(std::move(tal));
 					}
 					s.Model.ScheduledLoads[sblIdx].TimesAndLoads = schedule;

@@ -6,7 +6,7 @@
 #include "erin_next/erin_next_timestate.h"
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_reliability.h"
-#include "erin_next/erin_next_time_and_load.h"
+#include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_result.h"
 #include <iostream>
@@ -52,7 +52,7 @@ namespace erin_next
 		std::vector<std::string> Tags;
 		std::vector<TimeUnit> TimeUnits;
 		std::vector<std::string> RateUnits;
-		std::vector<std::vector<TimeAndLoad>> Loads;
+		std::vector<std::vector<TimeAndAmount>> Loads;
 	};
 
 	// NOTE: arrays in struct below indexed by size_t which we call ComponentId
@@ -84,6 +84,7 @@ namespace erin_next
 		size_t InflowConn;
 	};
 
+	// TODO: remove and use TimeAndAmount (rename of TimeAndLoad) instead
 	struct TimeAndAvailability
 	{
 		double Time = 0.0;
@@ -92,7 +93,7 @@ namespace erin_next
 
 	struct ScheduleBasedLoad
 	{
-		std::vector<TimeAndLoad> TimesAndLoads;
+		std::vector<TimeAndAmount> TimesAndLoads;
 		size_t InflowConn;
 		std::map<size_t, size_t> ScenarioIdToLoadId;
 	};
@@ -373,18 +374,18 @@ namespace erin_next
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndLoad> timesAndLoads);
+		std::vector<TimeAndAmount> timesAndLoads);
 
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndLoad> timesAndLoads,
+		std::vector<TimeAndAmount> timesAndLoads,
 		std::map<size_t, size_t> scenarioIdToLoadId);
 
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndLoad> timesAndLoads,
+		std::vector<TimeAndAmount> timesAndLoads,
 		std::map<size_t, size_t> scenarioIdToLoadId,
 		size_t inflowTypeId,
 		std::string const& tag);

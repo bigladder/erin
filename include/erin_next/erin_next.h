@@ -55,7 +55,7 @@ namespace erin_next
 		std::vector<std::vector<TimeAndLoad>> Loads;
 	};
 
-	// NOTE: arrays in struct below indexed by size_t which is the component id
+	// NOTE: arrays in struct below indexed by size_t which we call ComponentId
 	struct ComponentDict {
 		// The index into the component vector for the given component type
 		std::vector<size_t> Idx;
@@ -86,10 +86,8 @@ namespace erin_next
 
 	struct TimeAndAvailability
 	{
-		double Time;
-		uint32_t Available;
-
-		TimeAndAvailability(double t, uint32_t a): Time{t}, Available{a} {}
+		double Time = 0.0;
+		uint32_t Available = 0;
 	};
 
 	struct ScheduleBasedLoad

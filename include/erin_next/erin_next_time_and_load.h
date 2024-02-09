@@ -9,10 +9,8 @@ namespace erin_next
 {
 	struct TimeAndLoad
 	{
-		double Time;
-		uint32_t Load;
-
-		TimeAndLoad(double t, uint32_t load) :Time{ t }, Load{ load } {}
+		double Time = 0.0;
+		uint32_t Load = 0;
 	};
 
 	std::ostream&

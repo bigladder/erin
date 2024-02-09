@@ -1113,7 +1113,9 @@ namespace erin_next
 				/ ((double)s.Inflow + (double)netDischarge)
 			: 0.0;
 		double effectiveness =
-			100.0 * ((double)s.OutflowAchieved) / ((double)s.OutflowRequest);
+			s.OutflowRequest > 0
+			? 100.0 * ((double)s.OutflowAchieved) / ((double)s.OutflowRequest)
+			: 0.0;
 		std::cout << "Flow Summary @ " << s.Time << ":" << std::endl;
 		std::cout << "  Inflow                 : " << s.Inflow << std::endl;
 		std::cout << "+ Storage Net Discharge  : " << netDischarge << std::endl;

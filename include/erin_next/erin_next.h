@@ -48,11 +48,6 @@ namespace erin_next
 		std::vector<std::string> Type;
 	};
 
-	// Information about a scenario
-	struct ScenarioType {
-		std::vector<std::string> Tags;
-	};
-
 	struct LoadDict {
 		std::vector<std::string> Tags;
 		std::vector<TimeUnit> TimeUnits;

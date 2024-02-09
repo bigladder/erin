@@ -44,7 +44,15 @@ namespace erin_next
 		Load load{};
 		load.RateUnit = rateUnit.value();
 		load.Tag = tag;
-		load.TimeUnit = timeUnit.value();
+		auto maybeTimeUnit = TagToTimeUnit(timeUnit.value());
+		if (!maybeTimeUnit.has_value())
+		{
+			std::cout << "[" << tableFullName << "] "
+				<< "could not interpret time unit tag '"
+				<< timeUnit.value() << std::endl;
+			return {};
+		}
+		load.TimeUnit = maybeTimeUnit.value();
 		load.TimeAndLoads = std::move(timeRatePairs.value());
 		return load;
 	}

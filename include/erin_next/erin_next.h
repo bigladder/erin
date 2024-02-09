@@ -7,6 +7,7 @@
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_reliability.h"
 #include "erin_next/erin_next_time_and_load.h"
+#include "erin_next/erin_next_units.h"
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>
@@ -62,8 +63,10 @@ namespace erin_next
 		std::vector<std::string> Tags;
 	};
 
-	struct LoadType {
+	struct LoadDict {
 		std::vector<std::string> Tags;
+		std::vector<TimeUnit> TimeUnits;
+		std::vector<std::string> RateUnits;
 		std::vector<std::vector<TimeAndLoad>> Loads;
 	};
 

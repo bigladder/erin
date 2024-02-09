@@ -57,7 +57,6 @@ main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 		SimulationInfo simInfo = std::move(maybeSimInfo.value());
-		std::cout << simInfo << std::endl;
 		s.Info = simInfo;
 		// Loads
 		toml::value const& loadTable = data.at("loads");
@@ -124,6 +123,7 @@ main(int argc, char** argv)
 		if (true)
 		{
 			std::cout << "-----------------" << std::endl;
+			std::cout << simInfo << std::endl;
 			std::cout << "\nLoads:" << std::endl;
 			Simulation_PrintLoads(s);
 			std::cout << "\nComponents:" << std::endl;
@@ -169,13 +169,9 @@ main(int argc, char** argv)
 					for (size_t i=0; i < numEntries; ++i)
 					{
 						TimeAndLoad tal{};
-						// TODO: need to merge Load and LoadType as we're
-						// missing critical fields. Suggest:
-						// LoadType => LoadDict (SOA) and keep
-						// vector<Load> as AOS. See second arg below.
 						tal.Time = Time_ToSeconds(
 							s.LoadMap.Loads[loadId][i].Time,
-							loads[loadId].TimeUnit);
+							s.LoadMap.TimeUnits[loadId]);
 						tal.Load = s.LoadMap.Loads[loadId][i].Load;
 						schedule.push_back(std::move(tal));
 					}

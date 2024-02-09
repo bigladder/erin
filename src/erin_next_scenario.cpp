@@ -18,9 +18,9 @@ namespace erin_next
 		auto maybeOccurrenceDist =
 			TOMLTable_ParseString(table, "occurrence_distribution", tag);
 		if (!maybeOccurrenceDist.has_value()) return {};
-		auto maybeTimeUnit = TOMLTable_ParseStringWithSetResponses(
+		auto maybeTimeUnitStr = TOMLTable_ParseStringWithSetResponses(
 			table, ValidTimeUnits, "time_unit", tag);
-		if (!maybeTimeUnit.has_value()) return {};
+		if (!maybeTimeUnitStr.has_value()) return {};
 		auto maybeNetworkTag = TOMLTable_ParseString(
 			table, "network", tag);
 		if (!maybeNetworkTag.has_value()) return {};
@@ -37,7 +37,9 @@ namespace erin_next
 		size_t id = sd.TimeUnits.size();
 		sd.OccurrenceDistributionIds.push_back(
 			ds.lookup_dist_by_tag(maybeOccurrenceDist.value()));
-		sd.TimeUnits.push_back(std::move(maybeTimeUnit.value()));
+		auto maybeTimeUnit = TagToTimeUnit(maybeTimeUnitStr.value());
+		if (!maybeTimeUnit.has_value()) return {};
+		sd.TimeUnits.push_back(maybeTimeUnit.value());
 		// TODO: decide whether we're going to keep handling multiple networks.
 		// If yes, this is a bug and this procedure will need to take in
 		// a reference object to look up the network id by tag. If no, we can
@@ -85,7 +87,7 @@ namespace erin_next
 		{
 			std::cout << i << ": " << sd.Tags[i] << std::endl;
 			std::cout << "- duration: " << sd.Durations[i]
-				<< " " << sd.TimeUnits[i] << std::endl;
+				<< " " << TimeUnitToTag(sd.TimeUnits[i]) << std::endl;
 			auto maybeDist = ds.get_dist_by_id(sd.OccurrenceDistributionIds[i]);
 			if (maybeDist.has_value())
 			{

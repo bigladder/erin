@@ -33,11 +33,10 @@ namespace erin_next
 		}
 		auto rawTimeUnit = TOMLTable_ParseStringWithSetResponses(
 			table, ValidTimeUnits, "time_unit", "simulation_info");
-		if (!rawTimeUnit.has_value())
-		{
-			return {};
-		}
-		si.TimeUnit = rawTimeUnit.value();
+		if (!rawTimeUnit.has_value()) return {};
+		auto maybeTimeUnit = TagToTimeUnit(rawTimeUnit.value());
+		if (!maybeTimeUnit.has_value()) return {};
+		si.TimeUnit = maybeTimeUnit.value();
 		auto rawMaxTime = TOMLTable_ParseDouble(
 			table, "max_time", "simulation_info");
 		if (!rawMaxTime.has_value())
@@ -88,7 +87,7 @@ namespace erin_next
 	{
 		os << "SimulationInfo{"
 			<< "MaxTime = " << s.MaxTime << "; "
-			<< "TimeUnit = \"" << s.TimeUnit << "\"; "
+			<< "TimeUnit = " << TimeUnitToTag(s.TimeUnit) << "; "
 			<< "QuantityUnit=\"" << s.QuantityUnit << "\"; "
 			<< "RateUnit=\"" << s.RateUnit << "\";}";
 		return os;

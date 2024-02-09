@@ -3,6 +3,7 @@
 #ifndef ERIN_NEXT_LOAD_H
 #define ERIN_NEXT_LOAD_H
 #include "erin_next/erin_next_time_and_load.h"
+#include "erin_next/erin_next_units.h"
 #include "../vendor/toml11/toml.hpp"
 #include <string>
 #include <vector>
@@ -13,8 +14,7 @@ namespace erin_next
 {
 	struct Load {
 		std::string Tag;
-		// TODO: update TimeUnit to be an Enum
-		std::string TimeUnit;
+		TimeUnit TimeUnit;
 		std::string RateUnit;
 		std::vector<TimeAndLoad> TimeAndLoads;
 	};

@@ -5,6 +5,7 @@
 
 #include "../vendor/toml11/toml.hpp"
 #include "erin_next/erin_next_distribution.h"
+#include "erin_next/erin_next_units.h"
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -17,7 +18,7 @@ namespace erin_next
 		std::vector<std::string> Tags;
 		std::vector<size_t> OccurrenceDistributionIds;
 		// TODO: we can probably make time into an enum
-		std::vector<std::string> TimeUnits;
+		std::vector<TimeUnit> TimeUnits;
 		// TODO: if we stay with multiple networks... which I don't recommend.
 		std::vector<size_t> NetworkIds;
 		std::vector<double> Durations;

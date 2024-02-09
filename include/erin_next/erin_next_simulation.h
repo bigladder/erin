@@ -17,7 +17,7 @@ namespace erin_next
 	{
 		FlowType FlowTypeMap;
 		ScenarioDict ScenarioMap;
-		LoadType LoadMap;
+		LoadDict LoadMap;
 		SimulationInfo Info;
 	};
 

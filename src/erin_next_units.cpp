@@ -3,27 +3,81 @@
 #include "erin_next/erin_next_units.h"
 #include <exception>
 #include <sstream>
+#include <exception>
 
 namespace erin_next
 {
-	// TODO: make units into an enum
-	double
-	Time_ToSeconds(double t, std::string const& unit)
+	std::optional<TimeUnit>
+	TagToTimeUnit(std::string const& tag)
 	{
-		if (unit == "seconds")
+		
+		if (tag == "s" || tag == "sec" || tag == "secs"
+			|| tag == "second" || tag == "seconds")
 		{
-			return t;
+			return TimeUnit::Second;
 		}
-		if (unit == "minutes")
+		if (tag == "min" || tag == "mins"
+			|| tag == "minute" || tag == "minutes")
 		{
-			return t * 60.0;
+			return TimeUnit::Minute;
 		}
-		if (unit == "hours")
+		if (tag == "h" || tag == "hr" || tag == "hrs"
+			|| tag == "hour" || tag == "hours")
 		{
-			return t * 3600.0;
+			return TimeUnit::Hour;
+		}
+		return {};
+	}
+
+	std::string
+	TimeUnitToTag(TimeUnit unit)
+	{
+		std::string result;
+		switch (unit)
+		{
+			case (TimeUnit::Second):
+			{
+				result = "s";
+			} break;
+			case (TimeUnit::Minute):
+			{
+				result = "min";
+			} break;
+			case (TimeUnit::Hour):
+			{
+				result = "h";
+			} break;
+			default:
+			{
+				std::ostringstream oss{};
+				oss << "unhandled TimeType '" << unit << "'" << std::endl;
+				throw new std::runtime_error{ oss.str() };
+			} break;
+		}
+		return result;
+	}
+
+	double
+	Time_ToSeconds(double t, TimeUnit unit)
+	{
+		switch (unit)
+		{
+			case (TimeUnit::Second):
+			{
+				return t;
+			} break;
+			case (TimeUnit::Minute):
+			{
+				return t * 60.0;
+			} break;
+			case (TimeUnit::Hour):
+			{
+				return t * 3600.0;
+			}
 		}
 		std::ostringstream oss{};
-		oss << "unhandled time unit '" << unit << "'" << std::endl;
+		oss << "unhandled time unit '" << TimeUnitToTag(unit)
+			<< "'" << std::endl;
 		throw new std::invalid_argument{ oss.str() };
 	}
 }

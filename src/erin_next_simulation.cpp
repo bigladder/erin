@@ -84,14 +84,21 @@ namespace erin_next
 		Simulation& s,
 		std::vector<Load> const& loads)
 	{
-		for (size_t i = 0; i < loads.size(); ++i)
+		s.LoadMap.Tags.clear();
+		s.LoadMap.RateUnits.clear();
+		s.LoadMap.Loads.clear();
+		s.LoadMap.TimeUnits.clear();
+		auto numLoads = loads.size();
+		s.LoadMap.Tags.reserve(numLoads);
+		s.LoadMap.RateUnits.reserve(numLoads);
+		s.LoadMap.Loads.reserve(numLoads);
+		s.LoadMap.TimeUnits.reserve(numLoads);
+		for (size_t i = 0; i < numLoads; ++i)
 		{
-			// TODO: change to just push the loads themselves as they
-			// already have all of the LoadType metadata and more.
-			// The current Load vs LoadType is AoS vs SoA, absent a few missing
-			// fields. We might want both?
 			s.LoadMap.Tags.push_back(loads[i].Tag);
+			s.LoadMap.RateUnits.push_back(loads[i].RateUnit);
 			s.LoadMap.Loads.push_back(loads[i].TimeAndLoads);
+			s.LoadMap.TimeUnits.push_back(loads[i].TimeUnit);
 		}
 	}
 

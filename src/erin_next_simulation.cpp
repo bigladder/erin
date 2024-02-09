@@ -225,4 +225,17 @@ namespace erin_next
 		return Result::Failure;
 	}
 
+	Result
+	Simulation_ParseDistributions(Simulation& s, toml::value const& v)
+	{
+		if (v.contains("dist") && v.at("dist").is_table())
+		{
+			// TODO: have ParseDistributions return a Result
+			ParseDistributions(s.Model.DistSys, v.at("dist").as_table());
+			return Result::Success;
+		}
+		std::cout << "required field 'dist' not found" << std::endl;
+		return Result::Failure;
+	}
+
 }

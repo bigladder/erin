@@ -1775,6 +1775,140 @@ namespace erin_next
 		return tap;
 	}
 
+	Result
+	ParseNetwork(FlowType const& ft, Model& m, toml::table const& table)
+	{
+		if (!table.contains("connections"))
+		{
+			std::cout << "[network] "
+				<< "required key 'connections' missing"
+				<< std::endl;
+			return Result::Failure;
+		}
+		if (!table.at("connections").is_array())
+		{
+			std::cout << "[network] 'connections' is not an array" << std::endl;
+			return Result::Failure;
+		}
+		toml::array connArray = table.at("connections").as_array();
+		for (size_t i = 0; i < connArray.size(); ++i)
+		{
+			toml::value const& item = connArray[i];
+			if (!item.is_array())
+			{
+				std::cout << "[network] "
+					<< "'connections' at index " << i
+					<< " must be an array" << std::endl;
+				return Result::Failure;
+			}
+			if (item.as_array().size() < 3)
+			{
+				std::cout << "[network] "
+					<< "'connections' at index " << i
+					<< " must be an array of length >= 3" << std::endl;
+				return Result::Failure;
+			}
+			for (int idx = 0; idx < 3; ++idx)
+			{
+				if (!item.as_array()[idx].is_string())
+				{
+					std::cout << "[network] "
+						<< "'connections' at index " << i
+						<< " and subindex " << idx
+						<< " must be a string" << std::endl;
+					return Result::Failure;
+				}
+			}
+			std::string from = item.as_array()[0].as_string();
+			std::optional<TagAndPort> maybeFromTap =
+				ParseTagAndPort(from, "network");
+			if (!maybeFromTap.has_value())
+			{
+				std::cout << "[network] "
+					<< "unable to parse connection string at ["
+					<< i << "][0]" << std::endl;
+				return Result::Failure;
+			}
+			TagAndPort fromTap = maybeFromTap.value();
+			std::string to = item.as_array()[1].as_string();
+			std::optional<TagAndPort> maybeToTap =
+				ParseTagAndPort(to, "network");
+			if (!maybeToTap.has_value())
+			{
+				std::cout << "[network] "
+					<< "unable to parse connection string at ["
+					<< i << "][1]" << std::endl;
+				return Result::Failure;
+			}
+			TagAndPort toTap = maybeToTap.value();
+			std::string flow = item.as_array()[2].as_string();
+			std::optional<size_t> maybeFlowTypeId =
+				FlowType_GetIdByTag(ft, flow);
+			if (!maybeFlowTypeId.has_value())
+			{
+				std::cout << "[network] "
+					<< "could not identify flow type '"
+					<< flow << "'" << std::endl;
+				return Result::Failure;
+			}
+			size_t flowTypeId = maybeFlowTypeId.value();
+			std::optional<size_t> maybeFromCompId =
+				Model_FindCompIdByTag(m, fromTap.Tag);
+			if (!maybeFromCompId.has_value())
+			{
+				std::cout << "[network] "
+					<< "could not find component id for tag '"
+					<< from << "'" << std::endl;
+				return Result::Failure;
+			}
+			std::optional<size_t> maybeToCompId =
+				Model_FindCompIdByTag(m, toTap.Tag);
+			if (!maybeToCompId.has_value())
+			{
+				std::cout << "[network] "
+					<< "could not find component id for tag '"
+					<< to << "'" << std::endl;
+				return Result::Failure;
+			}
+			size_t fromCompId = maybeFromCompId.value();
+			size_t toCompId = maybeToCompId.value();
+			// TODO: flow types probably need to be by port
+			// std::vector<size_t> for outports and for inports
+			if (m.ComponentMap.OutflowType[fromCompId] != flowTypeId)
+			{
+				std::cout << "[network] "
+					<< "mismatch of flow types: "
+					<< fromTap.Tag << ":outflow="
+					<< ft.Type[m.ComponentMap.OutflowType[fromCompId]]
+					<< "; connection: "
+					<< flow << std::endl;
+				return Result::Failure;
+			}
+			if (m.ComponentMap.InflowType[toCompId] != flowTypeId)
+			{
+				std::cout << "[network] "
+					<< "mismatch of flow types: "
+					<< toTap.Tag << ":inflow="
+					<< ft.Type[m.ComponentMap.OutflowType[toCompId]]
+					<< "; connection: "
+					<< flow << std::endl;
+				return Result::Failure;
+			}
+			Connection c = {};
+			c.From = m.ComponentMap.CompType[fromCompId];
+			c.FromIdx = m.ComponentMap.Idx[fromCompId];
+			c.FromPort = fromTap.Port;
+			c.FromId = fromCompId;
+			c.To = m.ComponentMap.CompType[toCompId];
+			c.ToIdx = m.ComponentMap.Idx[toCompId];
+			c.ToPort = toTap.Port;
+			c.ToId = toCompId;
+			c.FlowTypeId = flowTypeId;
+			m.Connections.push_back(c);
+		}
+		return Result::Success;
+	}
+
 	// TODO: note, we are currently storing each network in model.Connections
 	// as opposed to storing it externally. This will work if we only have 1
 	// network but not if we have more than 1. Need to decide if we'll go to

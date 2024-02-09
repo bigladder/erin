@@ -68,6 +68,9 @@ namespace erin_next
 
 	Result
 	Simulation_ParseComponents(Simulation& s, toml::value const& v);
+
+	Result
+	Simulation_ParseDistributions(Simulation& s, toml::value const& v);
 }
 
 #endif

@@ -8,6 +8,7 @@
 #include "erin_next/erin_next_reliability.h"
 #include "erin_next/erin_next_time_and_load.h"
 #include "erin_next/erin_next_units.h"
+#include "erin_next/erin_next_result.h"
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>
@@ -534,6 +535,9 @@ namespace erin_next
 
 	std::optional<TagAndPort>
 	ParseTagAndPort(std::string const& s, std::string const& tableName);
+
+	Result
+	ParseNetwork(FlowType const& ft, Model& model, toml::table const& table);
 
 	void
 	ParseNetworks(FlowType const& ft, Model& model, toml::table const& table);

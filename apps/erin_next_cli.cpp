@@ -60,24 +60,19 @@ main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 		// Distributions
-		if (data.contains("dist") && data.at("dist").is_table())
+		if (Simulation_ParseDistributions(s, data) == Result::Failure)
 		{
-			ParseDistributions(s.Model.DistSys, data.at("dist").as_table());
-		}
-		else
-		{
-			std::cout << "required field 'dist' not found" << std::endl;
 			return EXIT_FAILURE;
 		}
 		// Networks
-		if (data.contains("networks") && data.at("networks").is_table())
+		if (data.contains("network") && data.at("network").is_table())
 		{
-			ParseNetworks(
-				s.FlowTypeMap, s.Model, data.at("networks").as_table());
+			ParseNetwork(
+				s.FlowTypeMap, s.Model, data.at("network").as_table());
 		}
 		else
 		{
-			std::cout << "required field 'networks' not found" << std::endl;
+			std::cout << "required field 'network' not found" << std::endl;
 			return EXIT_FAILURE;
 		}
 		// Scenarios

@@ -13,6 +13,7 @@ namespace erin_next
 {
 	struct Load {
 		std::string Tag;
+		// TODO: update TimeUnit to be an Enum
 		std::string TimeUnit;
 		std::string RateUnit;
 		std::vector<TimeAndLoad> TimeAndLoads;

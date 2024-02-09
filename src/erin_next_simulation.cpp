@@ -198,4 +198,18 @@ namespace erin_next
 		return Result::Success;
 	}
 
+	Result
+	Simulation_ParseLoads(Simulation& s, toml::value const& v)
+	{
+		toml::value const& loadTable = v.at("loads");
+		auto maybeLoads = ParseLoads(loadTable.as_table());
+		if (!maybeLoads.has_value())
+		{
+			return Result::Failure;
+		}
+		std::vector<Load> loads = std::move(maybeLoads.value());
+		Simulation_RegisterAllLoads(s, loads);
+		return Result::Success;
+	}
+
 }

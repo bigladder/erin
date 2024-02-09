@@ -44,23 +44,20 @@ main(int argc, char** argv)
 		std::cout << data << std::endl;
 		Simulation s = {};
 		Simulation_Init(s);
+		Model m = {};
+		// TODO: the below should be wrapped into a Model_InitFromSimInfo(.)
+		m.FinalTime = s.Info.MaxTime;
+		m.RandFn = []() { return 0.4; };
 		// Simulation Info
 		if (Simulation_ParseSimulationInfo(s, data) == Result::Failure)
 		{
 			return EXIT_FAILURE;
 		}
 		// Loads
-		toml::value const& loadTable = data.at("loads");
-		auto maybeLoads = ParseLoads(loadTable.as_table());
-		if (!maybeLoads.has_value())
+		if (Simulation_ParseLoads(s, data) == Result::Failure)
 		{
 			return EXIT_FAILURE;
 		}
-		std::vector<Load> loads = std::move(maybeLoads.value());
-		Simulation_RegisterAllLoads(s, loads);
-		Model m = {};
-		m.FinalTime = s.Info.MaxTime;
-		m.RandFn = []() { return 0.4; };
 		// Components
 		if (data.contains("components") && data.at("components").is_table())
 		{
@@ -74,6 +71,7 @@ main(int argc, char** argv)
 		{
 			std::cout << "required field 'components' not found"
 				<< std::endl;
+			return EXIT_FAILURE;
 		}
 		// Distributions
 		if (data.contains("dist") && data.at("dist").is_table())

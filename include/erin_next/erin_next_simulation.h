@@ -61,6 +61,9 @@ namespace erin_next
 
 	Result
 	Simulation_ParseSimulationInfo(Simulation& s, toml::value const& v);
+
+	Result
+	Simulation_ParseLoads(Simulation& s, toml::value const& v);
 }
 
 #endif

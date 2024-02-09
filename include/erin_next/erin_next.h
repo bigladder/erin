@@ -41,17 +41,6 @@ namespace erin_next
 		WasteSinkType,
 	};
 
-	// TODO: Remove component id and use size_t for an id instead;
-	// Possibly repurpose this so we have a type:
-	// `struct ComponentId { size_t Id; };`
-	// That would prevent us mixing up component ids with distribution ids and
-	// the like
-	struct ComponentId
-	{
-		size_t Id;
-		ComponentType Type;
-	};
-
 	// Holds the various flow types encountered
 	// Note: each entry added must be unique and the index into this
 	// vector is the flow type used through the rest of the simulation
@@ -152,11 +141,11 @@ namespace erin_next
 		ComponentType From;
 		size_t FromIdx;
 		size_t FromPort;
-		size_t FromId; // ComponentId, index into ComponentDict
+		size_t FromId; // index into ComponentDict
 		ComponentType To;
 		size_t ToIdx;
 		size_t ToPort;
-		size_t ToId; // ComponentId, index into ComponentDict
+		size_t ToId; // index into ComponentDict
 		size_t FlowTypeId;
 	};
 
@@ -552,4 +541,4 @@ namespace erin_next
 	Model_PrintConnections(Model const& m, FlowType const& ft);
 }
 
-#endif // ERIN_NEXT_H
+#endif

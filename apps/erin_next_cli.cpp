@@ -153,7 +153,9 @@ main(int argc, char** argv)
 		// ... each scenario's instance.
 		// TODO: generate a data structure to hold all results.
 		// TODO: set random function for Model based on SimInfo
-		for (size_t scenIdx = 0; scenIdx < s.ScenarioMap.Tags.size(); ++scenIdx)
+		for (size_t scenIdx = 0;
+			scenIdx < Simulation_ScenarioCount(s);
+			++scenIdx)
 		{
 			// for this scenario, ensure all schedule-based components
 			// have the right schedule set for this scenario

@@ -50,6 +50,9 @@ namespace erin_next
 
 	void
 	Simulation_PrintLoads(Simulation const& s);
+
+	size_t
+	Simulation_ScenarioCount(Simulation const& s);
 }
 
 #endif

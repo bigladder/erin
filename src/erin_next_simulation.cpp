@@ -157,4 +157,10 @@ namespace erin_next
 		*/
 	}
 
+	size_t
+	Simulation_ScenarioCount(Simulation const& s)
+	{
+		return s.ScenarioMap.Tags.size();
+	}
+
 }

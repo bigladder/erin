@@ -17,7 +17,7 @@ namespace erin_next
 {
 	struct Simulation
 	{
-		FlowType FlowTypeMap;
+		FlowDict FlowTypeMap;
 		ScenarioDict ScenarioMap;
 		LoadDict LoadMap;
 		SimulationInfo Info;

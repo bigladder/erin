@@ -1776,7 +1776,7 @@ namespace erin_next
 	}
 
 	Result
-	ParseNetwork(FlowType const& ft, Model& m, toml::table const& table)
+	ParseNetwork(FlowDict const& ft, Model& m, toml::table const& table)
 	{
 		if (!table.contains("connections"))
 		{
@@ -1915,7 +1915,7 @@ namespace erin_next
 	// only having 1 network per file which would be my preference. If that's
 	// the case, we'll need to rework the input files a bit...
 	void
-	ParseNetworks(FlowType const& ft, Model& m, toml::table const& table)
+	ParseNetworks(FlowDict const& ft, Model& m, toml::table const& table)
 	{
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
@@ -2075,7 +2075,7 @@ namespace erin_next
 	}
 
 	std::optional<size_t>
-	FlowType_GetIdByTag(FlowType const& ft, std::string const& tag)
+	FlowType_GetIdByTag(FlowDict const& ft, std::string const& tag)
 	{
 		for (int idx=0; idx < ft.Type.size(); ++idx)
 		{
@@ -2088,7 +2088,7 @@ namespace erin_next
 	}
 
 	void
-	Model_PrintConnections(Model const& m, FlowType const& ft)
+	Model_PrintConnections(Model const& m, FlowDict const& ft)
 	{
 		for (int i=0; i < m.Connections.size(); ++i)
 		{

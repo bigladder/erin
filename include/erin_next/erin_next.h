@@ -44,7 +44,7 @@ namespace erin_next
 	// Holds the various flow types encountered
 	// Note: each entry added must be unique and the index into this
 	// vector is the flow type used through the rest of the simulation
-	struct FlowType {
+	struct FlowDict {
 		std::vector<std::string> Type;
 	};
 
@@ -70,7 +70,7 @@ namespace erin_next
 		std::vector<ComponentType> CompType;
 		std::vector<std::string> Tag;
 		// The below gives each component's inflow type and outflow type
-		// there are indices into FlowType
+		// there are indices into FlowDict
 		std::vector<size_t> InflowType;
 		std::vector<size_t> OutflowType;
 	};
@@ -526,19 +526,20 @@ namespace erin_next
 	ParseTagAndPort(std::string const& s, std::string const& tableName);
 
 	Result
-	ParseNetwork(FlowType const& ft, Model& model, toml::table const& table);
+	ParseNetwork(FlowDict const& ft, Model& model, toml::table const& table);
 
 	void
-	ParseNetworks(FlowType const& ft, Model& model, toml::table const& table);
+	ParseNetworks(FlowDict const& ft, Model& model, toml::table const& table);
 
 	std::optional<size_t>
 	Model_FindCompIdByTag(Model const& m, std::string const& tag);
 
+	// TODO: rename to FlowDict_GetIdByTag
 	std::optional<size_t>
-	FlowType_GetIdByTag(FlowType const& ft, std::string const& tag);
+	FlowType_GetIdByTag(FlowDict const& ft, std::string const& tag);
 
 	void
-	Model_PrintConnections(Model const& m, FlowType const& ft);
+	Model_PrintConnections(Model const& m, FlowDict const& ft);
 }
 
 #endif

@@ -302,4 +302,96 @@ namespace erin_next
 		}
 		return s;
 	}
+
+	void
+	Simulation_Print(Simulation const& s)
+	{
+		std::cout << "-----------------" << std::endl;
+		std::cout << s.Info << std::endl;
+		std::cout << "\nLoads:" << std::endl;
+		Simulation_PrintLoads(s);
+		std::cout << "\nComponents:" << std::endl;
+		Simulation_PrintComponents(s, s.Model);
+		std::cout << "\nDistributions:" << std::endl;
+		s.Model.DistSys.print_distributions();
+		std::cout << "\nConnections:" << std::endl;
+		Model_PrintConnections(s.Model, s.FlowTypeMap);
+		std::cout << "\nScenarios:" << std::endl;
+		Scenario_Print(s.ScenarioMap, s.Model.DistSys);
+	}
+
+	void
+	Simulation_Run(Simulation& s)
+	{
+		// TODO: expose proper options
+		bool option_verbose = true;
+		// TODO: check the components and network:
+		// -- that all components are hooked up to something
+		// -- that no port is double linked
+		// -- that all connections have the correct flows
+		// -- that required ports are linked
+		// -- check that we have a proper acyclic graph?
+		// NOW, we want to do a simulation for each scenario
+		// TODO: generate reliability information from time = 0 to final time
+		// ... from sim info. Those schedules will be clipped to the times of
+		// ... each scenario's instance.
+		// TODO: generate a data structure to hold all results.
+		// TODO: set random function for Model based on SimInfo
+		for (size_t scenIdx = 0;
+			scenIdx < Simulation_ScenarioCount(s);
+			++scenIdx)
+		{
+			// for this scenario, ensure all schedule-based components
+			// have the right schedule set for this scenario
+			for (size_t sblIdx = 0;
+				sblIdx < s.Model.ScheduledLoads.size();
+				++sblIdx)
+			{
+				if (s.Model.ScheduledLoads[sblIdx]
+					.ScenarioIdToLoadId.contains(scenIdx))
+				{
+					auto loadId =
+						s.Model.ScheduledLoads[sblIdx]
+						.ScenarioIdToLoadId.at(scenIdx);
+					// TODO: set to correct time units of seconds
+					std::vector<TimeAndLoad> schedule{};
+					size_t numEntries = s.LoadMap.Loads[loadId].size();
+					schedule.reserve(numEntries);
+					for (size_t i = 0; i < numEntries; ++i)
+					{
+						TimeAndLoad tal{};
+						tal.Time = Time_ToSeconds(
+							s.LoadMap.Loads[loadId][i].Time,
+							s.LoadMap.TimeUnits[loadId]);
+						tal.Load = s.LoadMap.Loads[loadId][i].Load;
+						schedule.push_back(std::move(tal));
+					}
+					s.Model.ScheduledLoads[sblIdx].TimesAndLoads = schedule;
+				}
+			}
+			// TODO: implement occurrences of the scenario in time.
+			// for now, we know a priori that we have a max occurrence of 1
+			std::vector<double> occurrenceTimes_s = { 0.0 };
+			for (double t : occurrenceTimes_s)
+			{
+				double duration_s = Time_ToSeconds(
+					s.ScenarioMap.Durations[scenIdx],
+					s.ScenarioMap.TimeUnits[scenIdx]);
+				// TODO: compute end time for clipping
+				double tEnd = t + duration_s;
+				if (option_verbose)
+				{
+					std::cout << "Running " << s.ScenarioMap.Tags[scenIdx]
+						<< " from " << t << " to " << tEnd << " s"
+						<< std::endl;
+				}
+				// TODO: clip reliability schedules here
+				s.Model.FinalTime = duration_s;
+				SimulationState ss{};
+				// TODO: add an optional verbosity flag to SimInfo
+				// -- use that to set things like the print flag below
+				auto results = Simulate(s.Model, ss, option_verbose);
+			}
+		}
+	}
 }

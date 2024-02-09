@@ -80,6 +80,12 @@ namespace erin_next
 
 	std::optional<Simulation>
 	Simulation_ReadFromToml(toml::value const& v);
+
+	void
+	Simulation_Print(Simulation const& s);
+
+	void
+	Simulation_Run(Simulation& s);
 }
 
 #endif

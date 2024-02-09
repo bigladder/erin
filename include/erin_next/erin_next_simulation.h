@@ -71,6 +71,9 @@ namespace erin_next
 
 	Result
 	Simulation_ParseDistributions(Simulation& s, toml::value const& v);
+
+	Result
+	Simulation_ParseNetwork(Simulation& s, toml::value const& v);
 }
 
 #endif

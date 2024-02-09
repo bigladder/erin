@@ -64,15 +64,9 @@ main(int argc, char** argv)
 		{
 			return EXIT_FAILURE;
 		}
-		// Networks
-		if (data.contains("network") && data.at("network").is_table())
+		// Network
+		if (Simulation_ParseNetwork(s, data) == Result::Failure)
 		{
-			ParseNetwork(
-				s.FlowTypeMap, s.Model, data.at("network").as_table());
-		}
-		else
-		{
-			std::cout << "required field 'network' not found" << std::endl;
 			return EXIT_FAILURE;
 		}
 		// Scenarios

@@ -238,4 +238,20 @@ namespace erin_next
 		return Result::Failure;
 	}
 
+	Result
+	Simulation_ParseNetwork(Simulation& s, toml::value const& v)
+	{
+		std::string const n = "network";
+		if (v.contains(n) && v.at(n).is_table())
+		{
+			return ParseNetwork(
+				s.FlowTypeMap, s.Model, v.at(n).as_table());
+		}
+		else
+		{
+			std::cout << "required field '" << n << "' not found" << std::endl;
+			return Result::Failure;
+		}
+	}
+
 }

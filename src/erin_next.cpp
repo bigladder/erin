@@ -59,9 +59,19 @@ namespace erin_next
 	Component_AddComponentReturningId(
 		ComponentDict& c,
 		ComponentType ct,
+		size_t idx)
+	{
+		return Component_AddComponentReturningId(
+			c, ct, idx, std::vector<size_t>(), std::vector<size_t>(), "");
+	}
+
+	size_t
+	Component_AddComponentReturningId(
+		ComponentDict& c,
+		ComponentType ct,
 		size_t idx,
-		size_t inflowType,
-		size_t outflowType,
+		std::vector<size_t> inflowType,
+		std::vector<size_t> outflowType,
 		std::string const& tag)
 	{
 		auto id{ c.CompType.size() };
@@ -1423,7 +1433,8 @@ namespace erin_next
 		size_t idx = m.ConstLoads.size();
 		m.ConstLoads.push_back({ load });
 		return Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::ConstantLoadType, idx);
+			m.ComponentMap, ComponentType::ConstantLoadType, idx,
+			std::vector<size_t>{ 0 }, std::vector<size_t>{}, "");
 	}
 
 	size_t
@@ -1478,7 +1489,9 @@ namespace erin_next
 		m.ScheduledLoads.push_back(std::move(sbl));
 		return Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::ScheduleBasedLoadType, idx,
-			inflowTypeId, 0, tag);
+			std::vector<size_t>{ inflowTypeId },
+			std::vector<size_t>{},
+			tag);
 	}
 
 	size_t
@@ -1498,7 +1511,9 @@ namespace erin_next
 		m.ConstSources.push_back({ available });
 		return Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::ConstantSourceType, idx,
-			0, outflowTypeId, tag);
+			std::vector<size_t>{},
+			std::vector<size_t>{ outflowTypeId },
+			tag);
 	}
 
 	ComponentIdAndWasteConnection
@@ -1872,24 +1887,46 @@ namespace erin_next
 			}
 			size_t fromCompId = maybeFromCompId.value();
 			size_t toCompId = maybeToCompId.value();
-			// TODO: flow types probably need to be by port
-			// std::vector<size_t> for outports and for inports
-			if (m.ComponentMap.OutflowType[fromCompId] != flowTypeId)
+			if (fromTap.Port >= m.ComponentMap.OutflowType[fromCompId].size())
+			{
+				std::cout << "[network] "
+					<< "port is unaddressable for "
+					<< ToString(m.ComponentMap.CompType[fromCompId])
+					<< ": trying to address " << fromTap.Port
+					<< " but only "
+					<< m.ComponentMap.OutflowType[fromCompId].size()
+					<< " ports available" << std::endl;
+				return Result::Failure;
+			}
+			if (m.ComponentMap.OutflowType[fromCompId][fromTap.Port]
+				!= flowTypeId)
 			{
 				std::cout << "[network] "
 					<< "mismatch of flow types: "
 					<< fromTap.Tag << ":outflow="
-					<< ft.Type[m.ComponentMap.OutflowType[fromCompId]]
+					<< ft.Type[m.ComponentMap.OutflowType[fromCompId][fromTap.Port]]
 					<< "; connection: "
 					<< flow << std::endl;
 				return Result::Failure;
 			}
-			if (m.ComponentMap.InflowType[toCompId] != flowTypeId)
+			if (toTap.Port >= m.ComponentMap.InflowType[toCompId].size())
+			{
+				std::cout << "[network] "
+					<< "port is unaddressable for "
+					<< ToString(m.ComponentMap.CompType[toCompId])
+					<< ": trying to address " << toTap.Port
+					<< " but only "
+					<< m.ComponentMap.InflowType[toCompId].size()
+					<< " ports available" << std::endl;
+				return Result::Failure;
+			}
+			if (m.ComponentMap.InflowType[toCompId][toTap.Port]
+				!= flowTypeId)
 			{
 				std::cout << "[network] "
 					<< "mismatch of flow types: "
 					<< toTap.Tag << ":inflow="
-					<< ft.Type[m.ComponentMap.OutflowType[toCompId]]
+					<< ft.Type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
 					<< "; connection: "
 					<< flow << std::endl;
 				return Result::Failure;
@@ -1907,158 +1944,6 @@ namespace erin_next
 			m.Connections.push_back(c);
 		}
 		return Result::Success;
-	}
-
-	// TODO: note, we are currently storing each network in model.Connections
-	// as opposed to storing it externally. This will work if we only have 1
-	// network but not if we have more than 1. Need to decide if we'll go to
-	// only having 1 network per file which would be my preference. If that's
-	// the case, we'll need to rework the input files a bit...
-	void
-	ParseNetworks(FlowDict const& ft, Model& m, toml::table const& table)
-	{
-		for (auto it = table.cbegin(); it != table.cend(); ++it)
-		{
-			std::string networkTag = it->first;
-			std::string fullTableName = "networks." + networkTag;
-			if (!it->second.is_table())
-			{
-				std::cout << "[" << fullTableName << "] "
-					<< "network value is not a table" << std::endl;
-				return;
-			}
-			toml::table networkTable = it->second.as_table();
-			if (!networkTable.contains("connections"))
-			{
-				std::cout << "[" << fullTableName << "] "
-					<< "network doesn't contain required key 'connections'"
-					<< std::endl;
-				return;
-			}
-			if (!networkTable.at("connections").is_array())
-			{
-				std::cout << "[" << fullTableName << "] "
-					<< "'connections' is not an array"
-					<< std::endl;
-				return;
-			}
-			toml::array connArray = networkTable.at("connections").as_array();
-			for (size_t i = 0; i < connArray.size(); ++i)
-			{
-				toml::value const& item = connArray[i];
-				if (!item.is_array())
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "'connections' at index " << i
-						<< " must be an array" << std::endl;
-					return;
-				}
-				if (item.as_array().size() < 3)
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "'connections' at index " << i
-						<< " must be an array of length >= 3" << std::endl;
-					return;
-				}
-				for (int idx=0; idx < 3; ++idx)
-				{
-					if (!item.as_array()[idx].is_string())
-					{
-						std::cout << "[" << fullTableName << "] "
-							<< "'connections' at index " << i
-							<< " and subindex " << idx
-							<< " must be a string" << std::endl;
-						return;
-					}
-				}
-				std::string from = item.as_array()[0].as_string();
-				std::optional<TagAndPort> maybeFromTap =
-					ParseTagAndPort(from, fullTableName);
-				if (!maybeFromTap.has_value())
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "unable to parse connection string at ["
-						<< i << "][0]" << std::endl;
-					return;
-				}
-				TagAndPort fromTap = maybeFromTap.value();
-				std::string to = item.as_array()[1].as_string();
-				std::optional<TagAndPort> maybeToTap =
-					ParseTagAndPort(to, fullTableName);
-				if (!maybeToTap.has_value())
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "unable to parse connection string at ["
-						<< i << "][1]" << std::endl;
-					return;
-				}
-				TagAndPort toTap = maybeToTap.value();
-				std::string flow = item.as_array()[2].as_string();
-				std::optional<size_t> maybeFlowTypeId =
-					FlowType_GetIdByTag(ft, flow);
-				if (!maybeFlowTypeId.has_value())
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "could not identify flow type '"
-						<< flow << "'" << std::endl;
-					return;
-				}
-				size_t flowTypeId = maybeFlowTypeId.value();
-				std::optional<size_t> maybeFromCompId =
-					Model_FindCompIdByTag(m, fromTap.Tag);
-				if (!maybeFromCompId.has_value())
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "could not find component id for tag '"
-						<< from << "'" << std::endl;
-					return;
-				}
-				std::optional<size_t> maybeToCompId =
-					Model_FindCompIdByTag(m, toTap.Tag);
-				if (!maybeToCompId.has_value())
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "could not find component id for tag '"
-						<< to << "'" << std::endl;
-					return;
-				}
-				size_t fromCompId = maybeFromCompId.value();
-				size_t toCompId = maybeToCompId.value();
-				// TODO: flow types probably need to be by port
-				// std::vector<size_t> for outports and for inports
-				if (m.ComponentMap.OutflowType[fromCompId] != flowTypeId)
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "mismatch of flow types: "
-						<< fromTap.Tag << ":outflow="
-						<< ft.Type[m.ComponentMap.OutflowType[fromCompId]]
-						<< "; connection: "
-						<< flow << std::endl;
-					return;
-				}
-				if (m.ComponentMap.InflowType[toCompId] != flowTypeId)
-				{
-					std::cout << "[" << fullTableName << "] "
-						<< "mismatch of flow types: "
-						<< toTap.Tag << ":inflow="
-						<< ft.Type[m.ComponentMap.OutflowType[toCompId]]
-						<< "; connection: "
-						<< flow << std::endl;
-					return;
-				}
-				Connection c = {};
-				c.From = m.ComponentMap.CompType[fromCompId];
-				c.FromIdx = m.ComponentMap.Idx[fromCompId];
-				c.FromPort = fromTap.Port;
-				c.FromId = fromCompId;
-				c.To = m.ComponentMap.CompType[toCompId];
-				c.ToIdx = m.ComponentMap.Idx[toCompId];
-				c.ToPort = toTap.Port;
-				c.ToId = toCompId;
-				c.FlowTypeId = flowTypeId;
-				m.Connections.push_back(c);
-			}
-		}
 	}
 
 	std::optional<size_t>

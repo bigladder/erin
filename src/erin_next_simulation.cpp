@@ -109,8 +109,10 @@ namespace erin_next
 	{
 		for (size_t i = 0; i < m.ComponentMap.CompType.size(); ++i)
 		{
-			size_t outflowTypeIdx = m.ComponentMap.OutflowType[i];
-			size_t inflowTypeIdx = m.ComponentMap.InflowType[i];
+			std::vector<size_t> const& outflowTypes =
+				m.ComponentMap.OutflowType[i];
+			std::vector<size_t> inflowTypes =
+				m.ComponentMap.InflowType[i];
 			std::cout << i << ": " << ToString(m.ComponentMap.CompType[i]);
 			if (!m.ComponentMap.Tag[i].empty())
 			{
@@ -120,17 +122,29 @@ namespace erin_next
 			{
 				std::cout << std::endl;
 			}
-			if (inflowTypeIdx < s.FlowTypeMap.Type.size()
-				&& !s.FlowTypeMap.Type[inflowTypeIdx].empty())
+			for (size_t inport = 0;
+				inport < inflowTypes.size();
+				++inport)
 			{
-				std::cout << "- inflow: "
-					<< s.FlowTypeMap.Type[inflowTypeIdx] << std::endl;
+				size_t inflowType = inflowTypes[inport];
+				if (inflowType < s.FlowTypeMap.Type.size()
+					&& !s.FlowTypeMap.Type[inflowType].empty())
+				{
+					std::cout << "- inport " << inport << ": "
+						<< s.FlowTypeMap.Type[inflowType] << std::endl;
+				}
 			}
-			if (outflowTypeIdx < s.FlowTypeMap.Type.size()
-				&& !s.FlowTypeMap.Type[outflowTypeIdx].empty())
+			for (size_t outport = 0;
+				outport < outflowTypes.size();
+				++outport)
 			{
-				std::cout << "- outflow: "
-					<< s.FlowTypeMap.Type[outflowTypeIdx] << std::endl;
+				size_t outflowType = outflowTypes[outport];
+				if (outflowType < s.FlowTypeMap.Type.size()
+					&& !s.FlowTypeMap.Type[outflowType].empty())
+				{
+					std::cout << "- outport " << outport << ": "
+						<< s.FlowTypeMap.Type[outflowType] << std::endl;
+				}
 			}
 		}
 	}

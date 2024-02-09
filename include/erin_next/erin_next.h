@@ -55,19 +55,16 @@ namespace erin_next
 		std::vector<std::vector<TimeAndLoad>> Loads;
 	};
 
-	// NOTE: the struct below is indexed by a size_t which is the id for a
-	// component
+	// NOTE: arrays in struct below indexed by size_t which is the component id
 	struct ComponentDict {
-		// to lookup a component by tag
-		// std::vector<std::string> tag{};
-		// the index into the component vector for the given component type
+		// The index into the component vector for the given component type
 		std::vector<size_t> Idx;
 		std::vector<ComponentType> CompType;
 		std::vector<std::string> Tag;
-		// The below gives each component's inflow type and outflow type
-		// there are indices into FlowDict
-		std::vector<size_t> InflowType;
-		std::vector<size_t> OutflowType;
+		// Component's inflow type by inport; result indexes FlowDict
+		std::vector<std::vector<size_t>> InflowType;
+		// Component's outflow type by outport; result indexes FlowDict
+		std::vector<std::vector<size_t>> OutflowType;
 	};
 
 	struct FlowSummary
@@ -230,10 +227,16 @@ namespace erin_next
 	Component_AddComponentReturningId(
 		ComponentDict& c,
 		ComponentType ct,
+		size_t idx);
+
+	size_t
+	Component_AddComponentReturningId(
+		ComponentDict& c,
+		ComponentType ct,
 		size_t idx,
-		size_t inflowType = 0,
-		size_t outflowType = 0,
-		std::string const& tag = "");
+		std::vector<size_t> inflowType,
+		std::vector<size_t> outflowType,
+		std::string const& tag);
 
 	void
 	Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
@@ -522,9 +525,6 @@ namespace erin_next
 
 	Result
 	ParseNetwork(FlowDict const& ft, Model& model, toml::table const& table);
-
-	void
-	ParseNetworks(FlowDict const& ft, Model& model, toml::table const& table);
 
 	std::optional<size_t>
 	Model_FindCompIdByTag(Model const& m, std::string const& tag);

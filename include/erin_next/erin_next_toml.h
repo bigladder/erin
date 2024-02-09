@@ -44,6 +44,12 @@ namespace erin_next
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
 		std::string const& tableName);
+	
+	std::optional<int>
+	TOMLTable_ParseInteger(
+		std::unordered_map<toml::key, toml::value> const& table,
+		std::string const& fieldName,
+		std::string const& tableName);
 
 	std::optional<std::vector<TimeAndLoad>>
 	TOMLTable_ParseVectorOfTimeRatePairs(

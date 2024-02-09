@@ -436,6 +436,20 @@ namespace erin_next
 		throw std::invalid_argument(oss.str());
 	}
 
+	std::optional<Distribution>
+	DistributionSystem::get_dist_by_id(size_t id) const
+	{
+		if (id >= dist.dist_type.size())
+		{
+			return {};
+		}
+		Distribution d = {};
+		d.SubtypeIdx = dist.subtype_id[id];
+		d.Tag = dist.tag[id];
+		d.Type = dist.dist_type[id];
+		return d;
+	}
+
 	double
 	DistributionSystem::next_time_advance(size_t dist_id)
 	{

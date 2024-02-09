@@ -121,7 +121,31 @@ namespace erin_next
 			auto v = TOML_ParseNumericValueAsDouble(table.at(fieldName));
 			if (v.has_value())
 			{
-				return v.value();
+				return v;
+			}
+			else
+			{
+				std::cout << "[" << tableName << "] "
+					<< fieldName << " value is not a number "
+					<< "'" << table.at(fieldName).as_string()
+					<< "'" << std::endl;
+			}
+		}
+		return {};
+	}
+
+	std::optional<int>
+	TOMLTable_ParseInteger(
+		std::unordered_map<toml::key, toml::value> const& table,
+		std::string const& fieldName,
+		std::string const& tableName)
+	{
+		if (table.contains(fieldName))
+		{
+			auto v = TOML_ParseNumericValueAsInteger(table.at(fieldName));
+			if (v.has_value())
+			{
+				return v;
 			}
 			else
 			{

@@ -5,6 +5,7 @@
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
+#include "erin_next/erin_next_scenario.h"
 #include <string>
 #include <vector>
 #include <optional>
@@ -15,7 +16,7 @@ namespace erin_next
 	struct Simulation
 	{
 		FlowType FlowTypeMap;
-		ScenarioType ScenarioMap;
+		ScenarioDict ScenarioMap;
 		LoadType LoadMap;
 		SimulationInfo Info;
 	};

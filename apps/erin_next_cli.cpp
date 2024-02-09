@@ -6,6 +6,7 @@
 #include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_distribution.h"
+#include "erin_next/erin_next_scenario.h"
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -65,8 +66,6 @@ main(int argc, char** argv)
 		}
 		std::vector<erin_next::Load> loads = std::move(maybeLoads.value());
 		Simulation_RegisterAllLoads(s, loads);
-		// Components
-		toml::value const& compTable = data.at("components");
 		// TODO: below code needs to get wrapped into a
 		// `Simulation_Init(Simulation)` function; this gives the "0 value"
 		// flow which allows one to "opt out" of the flow declaration stuff.
@@ -74,21 +73,54 @@ main(int argc, char** argv)
 		erin_next::Model m = {};
 		m.FinalTime = simInfo.MaxTime;
 		m.RandFn = []() { return 0.4; };
-		bool parseSuccess =
-			erin_next::ParseComponents(s, m, compTable.as_table());
-		if (!parseSuccess)
+		// Components
+		if (data.contains("components") && data.at("components").is_table())
 		{
-			return EXIT_FAILURE;
+			if (!erin_next::ParseComponents(
+					s, m, data.at("components").as_table()))
+			{
+				return EXIT_FAILURE;
+			}
+		}
+		else
+		{
+			std::cout << "required field 'components' not found"
+				<< std::endl;
 		}
 		// Distributions
 		if (data.contains("dist") && data.at("dist").is_table())
 		{
 			ParseDistributions(m.DistSys, data.at("dist").as_table());
 		}
+		else
+		{
+			std::cout << "required field 'dist' not found" << std::endl;
+			return EXIT_FAILURE;
+		}
 		// Networks
 		if (data.contains("networks") && data.at("networks").is_table())
 		{
 			ParseNetworks(s.FlowTypeMap, m, data.at("networks").as_table());
+		}
+		else
+		{
+			std::cout << "required field 'networks' not found" << std::endl;
+			return EXIT_FAILURE;
+		}
+		// Scenarios
+		if (data.contains("scenarios") && data.at("scenarios").is_table())
+		{
+			std::vector<size_t> scenarioIds =
+				ParseScenarios(
+					s.ScenarioMap,
+					m.DistSys,
+					data.at("scenarios").as_table());
+		}
+		else
+		{
+			std::cout << "required field 'scenarios' not found or not a table"
+				<< std::endl;
+			return EXIT_FAILURE;
 		}
 		// PRINT OUT
 		std::cout << "\nLoads:" << std::endl;
@@ -101,6 +133,8 @@ main(int argc, char** argv)
 		m.DistSys.print_distributions();
 		std::cout << "\nConnections:" << std::endl;
 		Model_PrintConnections(m, s.FlowTypeMap);
+		std::cout << "\nScenarios:" << std::endl;
+		Scenario_Print(s.ScenarioMap, m.DistSys);
 	}
 	else
 	{

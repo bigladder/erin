@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <stdint.h>
+#include <optional>
 
 namespace erin_next
 {
@@ -52,10 +53,19 @@ namespace erin_next
 	std::string dist_type_to_tag(DistType dist_type);
 	DistType tag_to_dist_type(const std::string& tag);
 
-	struct Dist {
+	// SOA version of AOS, std::vector<Distribution>
+	struct Dist
+	{
 		std::vector<std::string> tag{};
 		std::vector<size_t> subtype_id{};
 		std::vector<DistType> dist_type{};
+	};
+
+	struct Distribution
+	{
+		std::string Tag;
+		size_t SubtypeIdx;
+		DistType Type;
 	};
 
 	struct FixedDist
@@ -130,7 +140,10 @@ namespace erin_next
 			const double scale_parameter,    // lambda
 			const double location_parameter=0.0); // gamma
 
-		[[nodiscard]] size_t lookup_dist_by_tag(const std::string& tag) const;
+		[[nodiscard]] size_t lookup_dist_by_tag(std::string const& tag) const;
+
+		std::optional<Distribution>
+		get_dist_by_id(size_t id) const;
 
 		double next_time_advance(size_t dist_id);
 

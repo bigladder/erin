@@ -41,6 +41,9 @@ main(int argc, char** argv)
 		auto data = toml::parse(ifs, nameOnly.string());
 		ifs.close();
 		std::cout << data << std::endl;
+		Simulation s = {};
+		Simulation_Init(s);
+		// Simulation Info
 		if (!data.contains("simulation_info"))
 		{
 			std::cout << "Required section [simulation_info] not found"
@@ -49,9 +52,6 @@ main(int argc, char** argv)
 		}
 		toml::value const& simInfoTable = data.at("simulation_info");
 		auto maybeSimInfo = ParseSimulationInfo(simInfoTable.as_table());
-		std::cout << "-----------------" << std::endl;
-		Simulation s = {};
-		// Simulation Info
 		if (!maybeSimInfo.has_value())
 		{
 			return EXIT_FAILURE;
@@ -68,10 +68,6 @@ main(int argc, char** argv)
 		}
 		std::vector<Load> loads = std::move(maybeLoads.value());
 		Simulation_RegisterAllLoads(s, loads);
-		// TODO: below code needs to get wrapped into a
-		// `Simulation_Init(Simulation)` function; this gives the "0 value"
-		// flow which allows one to "opt out" of the flow declaration stuff.
-		Simulation_RegisterFlow(s, "");
 		Model m = {};
 		m.FinalTime = simInfo.MaxTime;
 		m.RandFn = []() { return 0.4; };
@@ -127,6 +123,7 @@ main(int argc, char** argv)
 		// PRINT OUT
 		if (true)
 		{
+			std::cout << "-----------------" << std::endl;
 			std::cout << "\nLoads:" << std::endl;
 			Simulation_PrintLoads(s);
 			std::cout << "\nComponents:" << std::endl;

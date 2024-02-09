@@ -5,6 +5,15 @@
 
 namespace erin_next
 {
+	void
+	Simulation_Init(Simulation& s)
+	{
+		// NOTE: we register a 'null' flow. This allows users to 'opt-out'
+		// of flow specification by passing empty strings. Effectively, this
+		// allows any connections to occur which is nice for simple examples.
+		Simulation_RegisterFlow(s, "");
+	}
+
 	size_t
 	Simulation_RegisterFlow(Simulation& s, std::string const& flowTag)
 	{

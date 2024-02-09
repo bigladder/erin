@@ -21,6 +21,9 @@ namespace erin_next
 		SimulationInfo Info;
 	};
 
+	void
+	Simulation_Init(Simulation& s);
+
 	size_t
 	Simulation_RegisterFlow(Simulation& s, std::string const& flowTag);
 

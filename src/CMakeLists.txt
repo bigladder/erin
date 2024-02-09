@@ -211,6 +211,7 @@ add_library(erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_simulation.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_scenario.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_units.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_result.h"
 )
 
 # Add Warnings

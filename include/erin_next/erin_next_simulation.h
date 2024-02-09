@@ -6,6 +6,8 @@
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
 #include "erin_next/erin_next_scenario.h"
+#include "erin_next/erin_next_result.h"
+#include "../vendor/toml11/toml.hpp"
 #include <string>
 #include <vector>
 #include <optional>
@@ -56,6 +58,9 @@ namespace erin_next
 
 	size_t
 	Simulation_ScenarioCount(Simulation const& s);
+
+	Result
+	Simulation_ParseSimulationInfo(Simulation& s, toml::value const& v);
 }
 
 #endif

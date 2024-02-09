@@ -179,4 +179,23 @@ namespace erin_next
 		return s.ScenarioMap.Tags.size();
 	}
 
+	Result
+	Simulation_ParseSimulationInfo(Simulation& s, toml::value const& v)
+	{
+		if (!v.contains("simulation_info"))
+		{
+			std::cout << "Required section [simulation_info] not found"
+				<< std::endl;
+			return Result::Failure;
+		}
+		toml::value const& simInfoTable = v.at("simulation_info");
+		auto maybeSimInfo = ParseSimulationInfo(simInfoTable.as_table());
+		if (!maybeSimInfo.has_value())
+		{
+			return Result::Failure;
+		}
+		s.Info = std::move(maybeSimInfo.value());
+		return Result::Success;
+	}
+
 }

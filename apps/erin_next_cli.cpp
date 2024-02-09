@@ -8,6 +8,7 @@
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_scenario.h"
 #include "erin_next/erin_next_units.h"
+#include "erin_next/erin_next_result.h"
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -44,20 +45,10 @@ main(int argc, char** argv)
 		Simulation s = {};
 		Simulation_Init(s);
 		// Simulation Info
-		if (!data.contains("simulation_info"))
-		{
-			std::cout << "Required section [simulation_info] not found"
-				<< std::endl;
-			return EXIT_FAILURE;
-		}
-		toml::value const& simInfoTable = data.at("simulation_info");
-		auto maybeSimInfo = ParseSimulationInfo(simInfoTable.as_table());
-		if (!maybeSimInfo.has_value())
+		if (Simulation_ParseSimulationInfo(s, data) == Result::Failure)
 		{
 			return EXIT_FAILURE;
 		}
-		SimulationInfo simInfo = std::move(maybeSimInfo.value());
-		s.Info = simInfo;
 		// Loads
 		toml::value const& loadTable = data.at("loads");
 		auto maybeLoads = ParseLoads(loadTable.as_table());
@@ -68,7 +59,7 @@ main(int argc, char** argv)
 		std::vector<Load> loads = std::move(maybeLoads.value());
 		Simulation_RegisterAllLoads(s, loads);
 		Model m = {};
-		m.FinalTime = simInfo.MaxTime;
+		m.FinalTime = s.Info.MaxTime;
 		m.RandFn = []() { return 0.4; };
 		// Components
 		if (data.contains("components") && data.at("components").is_table())
@@ -123,7 +114,7 @@ main(int argc, char** argv)
 		if (true)
 		{
 			std::cout << "-----------------" << std::endl;
-			std::cout << simInfo << std::endl;
+			std::cout << s.Info << std::endl;
 			std::cout << "\nLoads:" << std::endl;
 			Simulation_PrintLoads(s);
 			std::cout << "\nComponents:" << std::endl;

@@ -1,6 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_simulation.h"
+#include "erin_next/erin_next_component.h"
 #include <assert.h>
 
 namespace erin_next
@@ -12,6 +13,7 @@ namespace erin_next
 		// of flow specification by passing empty strings. Effectively, this
 		// allows any connections to occur which is nice for simple examples.
 		Simulation_RegisterFlow(s, "");
+		s.Model.RandFn = []() { return 0.4; };
 	}
 
 	size_t
@@ -210,6 +212,17 @@ namespace erin_next
 		std::vector<Load> loads = std::move(maybeLoads.value());
 		Simulation_RegisterAllLoads(s, loads);
 		return Result::Success;
+	}
+
+	Result
+	Simulation_ParseComponents(Simulation& s, toml::value const& v)
+	{
+		if (v.contains("components") && v.at("components").is_table())
+		{
+			return ParseComponents(s, s.Model, v.at("components").as_table());
+		}
+		std::cout << "required field 'components' not found" << std::endl;
+		return Result::Failure;
 	}
 
 }

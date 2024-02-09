@@ -5,7 +5,7 @@
 
 namespace erin_next
 {
-	bool
+	Result
 	ParseSingleComponent(
 		Simulation& s,
 		Model& m,
@@ -17,7 +17,7 @@ namespace erin_next
 		{
 			std::cout << "[" << fullTableName << "] "
 				<< "required field 'type' not present" << std::endl;
-			return false;
+			return Result::Failure;
 		}
 		std::optional<ComponentType> maybeCompType =
 			TagToComponentType(table.at("type").as_string());
@@ -26,7 +26,7 @@ namespace erin_next
 			std::cout << "[" << fullTableName << "] "
 				<< "unable to parse table type from '"
 				<< table.at("type").as_string() << "'" << std::endl;
-			return false;
+			return Result::Failure;
 		}
 		ComponentType ct = maybeCompType.value();
 		size_t id = {};
@@ -71,14 +71,14 @@ namespace erin_next
 					std::cout << "[" << fullTableName << "] "
 						<< "missing required field 'loads_by_scenario'"
 						<< std::endl;
-					return false;
+					return Result::Failure;
 				}
 				if (!table.at("loads_by_scenario").is_table())
 				{
 					std::cout << "[" << fullTableName << "] "
 						<< "'loads_by_scenario' exists but is not a table"
 						<< std::endl;
-					return false;
+					return Result::Failure;
 				}
 				toml::table const& lbs =
 					table.at("loads_by_scenario").as_table();
@@ -109,21 +109,21 @@ namespace erin_next
 				throw new std::runtime_error{ "Unhandled component type" };
 			}
 		}
-		return true;
+		return Result::Success;
 	}
 
-	bool
+	Result
 	ParseComponents(Simulation& s, Model& m, toml::table const& table)
 	{
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
-			auto wasSuccessful =
+			auto result =
 				ParseSingleComponent(s, m, it->second.as_table(), it->first);
-			if (!wasSuccessful)
+			if (result == Result::Failure)
 			{
-				return false;
+				return Result::Failure;
 			}
 		}
-		return true;
+		return Result::Success;
 	}
 }

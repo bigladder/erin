@@ -215,7 +215,7 @@ namespace erin_next
 		DistributionSystem DistSys{};
 		ReliabilityCoordinator Rel{};
 		std::function<double()> RandFn;
-		double FinalTime{};
+		double FinalTime = 0.0;
 	};
 
 	struct ComponentIdAndWasteConnection

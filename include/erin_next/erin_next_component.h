@@ -4,18 +4,19 @@
 #define ERIN_NEXT_COMPONENT_H
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_simulation.h"
+#include "erin_next/erin_next_result.h"
 #include "../vendor/toml11/toml.hpp"
 
 namespace erin_next
 {
-	bool
+	Result
 	ParseSingleComponent(
 		Simulation& s,
 		Model& m,
 		toml::table const& table,
 		std::string const& tag);
 
-	bool
+	Result
 	ParseComponents(Simulation& s, Model& m, toml::table const& table);
 }
 

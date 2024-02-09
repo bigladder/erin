@@ -86,10 +86,10 @@ namespace erin_next
 	operator<<(std::ostream& os, SimulationInfo const& s)
 	{
 		os << "SimulationInfo{"
-			<< "MaxTime = " << s.MaxTime << "; "
-			<< "TimeUnit = " << TimeUnitToTag(s.TimeUnit) << "; "
+			<< "MaxTime=" << s.MaxTime << "; "
+			<< "TimeUnit=" << TimeUnitToTag(s.TimeUnit) << "; "
 			<< "QuantityUnit=\"" << s.QuantityUnit << "\"; "
-			<< "RateUnit=\"" << s.RateUnit << "\";}";
+			<< "RateUnit=\"" << s.RateUnit << "\"}";
 		return os;
 	}
 }

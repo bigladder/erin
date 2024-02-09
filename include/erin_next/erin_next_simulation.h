@@ -21,6 +21,7 @@ namespace erin_next
 		ScenarioDict ScenarioMap;
 		LoadDict LoadMap;
 		SimulationInfo Info;
+		Model Model;
 	};
 
 	void
@@ -64,6 +65,9 @@ namespace erin_next
 
 	Result
 	Simulation_ParseLoads(Simulation& s, toml::value const& v);
+
+	Result
+	Simulation_ParseComponents(Simulation& s, toml::value const& v);
 }
 
 #endif

@@ -44,10 +44,6 @@ main(int argc, char** argv)
 		std::cout << data << std::endl;
 		Simulation s = {};
 		Simulation_Init(s);
-		Model m = {};
-		// TODO: the below should be wrapped into a Model_InitFromSimInfo(.)
-		m.FinalTime = s.Info.MaxTime;
-		m.RandFn = []() { return 0.4; };
 		// Simulation Info
 		if (Simulation_ParseSimulationInfo(s, data) == Result::Failure)
 		{
@@ -59,24 +55,14 @@ main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 		// Components
-		if (data.contains("components") && data.at("components").is_table())
+		if (Simulation_ParseComponents(s, data) == Result::Failure)
 		{
-			if (!ParseComponents(
-					s, m, data.at("components").as_table()))
-			{
-				return EXIT_FAILURE;
-			}
-		}
-		else
-		{
-			std::cout << "required field 'components' not found"
-				<< std::endl;
 			return EXIT_FAILURE;
 		}
 		// Distributions
 		if (data.contains("dist") && data.at("dist").is_table())
 		{
-			ParseDistributions(m.DistSys, data.at("dist").as_table());
+			ParseDistributions(s.Model.DistSys, data.at("dist").as_table());
 		}
 		else
 		{
@@ -86,7 +72,8 @@ main(int argc, char** argv)
 		// Networks
 		if (data.contains("networks") && data.at("networks").is_table())
 		{
-			ParseNetworks(s.FlowTypeMap, m, data.at("networks").as_table());
+			ParseNetworks(
+				s.FlowTypeMap, s.Model, data.at("networks").as_table());
 		}
 		else
 		{
@@ -99,7 +86,7 @@ main(int argc, char** argv)
 			std::vector<size_t> scenarioIds =
 				ParseScenarios(
 					s.ScenarioMap,
-					m.DistSys,
+					s.Model.DistSys,
 					data.at("scenarios").as_table());
 		}
 		else
@@ -116,15 +103,15 @@ main(int argc, char** argv)
 			std::cout << "\nLoads:" << std::endl;
 			Simulation_PrintLoads(s);
 			std::cout << "\nComponents:" << std::endl;
-			Simulation_PrintComponents(s, m);
+			Simulation_PrintComponents(s, s.Model);
 			std::cout << "\nScenarios:" << std::endl;
 			Simulation_PrintScenarios(s);
 			std::cout << "\nDistributions:" << std::endl;
-			m.DistSys.print_distributions();
+			s.Model.DistSys.print_distributions();
 			std::cout << "\nConnections:" << std::endl;
-			Model_PrintConnections(m, s.FlowTypeMap);
+			Model_PrintConnections(s.Model, s.FlowTypeMap);
 			std::cout << "\nScenarios:" << std::endl;
-			Scenario_Print(s.ScenarioMap, m.DistSys);
+			Scenario_Print(s.ScenarioMap, s.Model.DistSys);
 		}
 		std::cout << "-----------------" << std::endl;
 		// TODO: check the components and network:
@@ -145,12 +132,14 @@ main(int argc, char** argv)
 		{
 			// for this scenario, ensure all schedule-based components
 			// have the right schedule set for this scenario
-			for (size_t sblIdx=0; sblIdx < m.ScheduledLoads.size(); ++sblIdx)
+			for (size_t sblIdx=0;
+				sblIdx < s.Model.ScheduledLoads.size();
+				++sblIdx)
 			{
-				if (m.ScheduledLoads[sblIdx].ScenarioIdToLoadId.contains(scenIdx))
+				if (s.Model.ScheduledLoads[sblIdx].ScenarioIdToLoadId.contains(scenIdx))
 				{
 					auto loadId =
-						m.ScheduledLoads[sblIdx].ScenarioIdToLoadId.at(scenIdx);
+						s.Model.ScheduledLoads[sblIdx].ScenarioIdToLoadId.at(scenIdx);
 					// TODO: set to correct time units of seconds
 					std::vector<TimeAndLoad> schedule{};
 					size_t numEntries = s.LoadMap.Loads[loadId].size();
@@ -164,7 +153,7 @@ main(int argc, char** argv)
 						tal.Load = s.LoadMap.Loads[loadId][i].Load;
 						schedule.push_back(std::move(tal));
 					}
-					m.ScheduledLoads[sblIdx].TimesAndLoads = schedule;
+					s.Model.ScheduledLoads[sblIdx].TimesAndLoads = schedule;
 				}
 			}
 			// TODO: implement occurrences of the scenario in time.
@@ -177,11 +166,11 @@ main(int argc, char** argv)
 					s.ScenarioMap.TimeUnits[scenIdx]);
 				double tEnd = t + duration_s;
 				// TODO: clip reliability schedules here
-				m.FinalTime = duration_s;
+				s.Model.FinalTime = duration_s;
 				SimulationState ss{};
 				// TODO: add an optional verbosity flag to SimInfo
 				// -- use that to set things like the print flag below
-				auto results = Simulate(m, ss, true);
+				auto results = Simulate(s.Model, ss, true);
 			}
 		}
 	}

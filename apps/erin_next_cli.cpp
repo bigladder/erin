@@ -42,38 +42,12 @@ main(int argc, char** argv)
 		auto data = toml::parse(ifs, nameOnly.string());
 		ifs.close();
 		std::cout << data << std::endl;
-		Simulation s = {};
-		Simulation_Init(s);
-		// Simulation Info
-		if (Simulation_ParseSimulationInfo(s, data) == Result::Failure)
+		auto maybeSim = Simulation_ReadFromToml(data);
+		if (!maybeSim.has_value())
 		{
 			return EXIT_FAILURE;
 		}
-		// Loads
-		if (Simulation_ParseLoads(s, data) == Result::Failure)
-		{
-			return EXIT_FAILURE;
-		}
-		// Components
-		if (Simulation_ParseComponents(s, data) == Result::Failure)
-		{
-			return EXIT_FAILURE;
-		}
-		// Distributions
-		if (Simulation_ParseDistributions(s, data) == Result::Failure)
-		{
-			return EXIT_FAILURE;
-		}
-		// Network
-		if (Simulation_ParseNetwork(s, data) == Result::Failure)
-		{
-			return EXIT_FAILURE;
-		}
-		// Scenarios
-		if (Simulation_ParseScenarios(s, data) == Result::Failure)
-		{
-			return EXIT_FAILURE;
-		}
+		Simulation s = std::move(maybeSim.value());
 		// PRINT OUT
 		if (true)
 		{
@@ -83,8 +57,6 @@ main(int argc, char** argv)
 			Simulation_PrintLoads(s);
 			std::cout << "\nComponents:" << std::endl;
 			Simulation_PrintComponents(s, s.Model);
-			std::cout << "\nScenarios:" << std::endl;
-			Simulation_PrintScenarios(s);
 			std::cout << "\nDistributions:" << std::endl;
 			s.Model.DistSys.print_distributions();
 			std::cout << "\nConnections:" << std::endl;

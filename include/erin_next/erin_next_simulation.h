@@ -77,6 +77,9 @@ namespace erin_next
 
 	Result
 	Simulation_ParseScenarios(Simulation& s, toml::value const& v);
+
+	std::optional<Simulation>
+	Simulation_ReadFromToml(toml::value const& v);
 }
 
 #endif

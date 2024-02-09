@@ -266,5 +266,40 @@ namespace erin_next
 			<< std::endl;
 		return Result::Failure;
 	}
-
+	
+	std::optional<Simulation>
+	Simulation_ReadFromToml(toml::value const& v)
+	{
+		Simulation s = {};
+		Simulation_Init(s);
+		if (Simulation_ParseSimulationInfo(s, v) == Result::Failure)
+		{
+			return {};
+		}
+		if (Simulation_ParseLoads(s, v) == Result::Failure)
+		{
+			return {};
+		}
+		// Components
+		if (Simulation_ParseComponents(s, v) == Result::Failure)
+		{
+			return {};
+		}
+		// Distributions
+		if (Simulation_ParseDistributions(s, v) == Result::Failure)
+		{
+			return {};
+		}
+		// Network
+		if (Simulation_ParseNetwork(s, v) == Result::Failure)
+		{
+			return {};
+		}
+		// Scenarios
+		if (Simulation_ParseScenarios(s, v) == Result::Failure)
+		{
+			return {};
+		}
+		return s;
+	}
 }

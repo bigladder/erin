@@ -6,6 +6,7 @@
 #include "../vendor/toml11/toml.hpp"
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_units.h"
+#include "erin_next/erin_next_result.h"
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -34,7 +35,7 @@ namespace erin_next
 		toml::table const& table,
 		std::string const& tag);
 
-	std::vector<size_t>
+	Result
 	ParseScenarios(
 		ScenarioDict& sd,
 		DistributionSystem const& ds,

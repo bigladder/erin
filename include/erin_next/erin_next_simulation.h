@@ -74,6 +74,9 @@ namespace erin_next
 
 	Result
 	Simulation_ParseNetwork(Simulation& s, toml::value const& v);
+
+	Result
+	Simulation_ParseScenarios(Simulation& s, toml::value const& v);
 }
 
 #endif

@@ -70,18 +70,8 @@ main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 		// Scenarios
-		if (data.contains("scenarios") && data.at("scenarios").is_table())
+		if (Simulation_ParseScenarios(s, data) == Result::Failure)
 		{
-			std::vector<size_t> scenarioIds =
-				ParseScenarios(
-					s.ScenarioMap,
-					s.Model.DistSys,
-					data.at("scenarios").as_table());
-		}
-		else
-		{
-			std::cout << "required field 'scenarios' not found or not a table"
-				<< std::endl;
 			return EXIT_FAILURE;
 		}
 		// PRINT OUT

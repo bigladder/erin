@@ -50,14 +50,13 @@ namespace erin_next
 		return id;
 	}
 
-	std::vector<size_t>
+	Result
 	ParseScenarios(
 		ScenarioDict& sd,
 		DistributionSystem const& ds,
 		toml::table const& table)
 	{
-		std::vector<size_t> scenarioIds = {};
-		scenarioIds.reserve(table.size());
+		bool ranAtLeastOnce = false;
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
 			std::string const& tag = it->first;
@@ -67,17 +66,20 @@ namespace erin_next
 				auto maybeScenarioId =
 					ParseSingleScenario(
 						sd, ds, it->second.as_table(), fullName);
-				if (!maybeScenarioId.has_value()) break;
-				scenarioIds.push_back(maybeScenarioId.value());
+				if (!maybeScenarioId.has_value())
+				{
+					return Result::Failure;
+				}
+				ranAtLeastOnce = true;
 			}
 			else
 			{
 				std::cout << "[" << fullName << "] "
 					<< "not a table" << std::endl;
-				break;
+				return Result::Failure;
 			}
 		}
-		return scenarioIds;
+		return ranAtLeastOnce ? Result::Success : Result::Failure;
 	}
 
 	void

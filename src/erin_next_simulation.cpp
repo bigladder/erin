@@ -254,4 +254,17 @@ namespace erin_next
 		}
 	}
 
+	Result
+	Simulation_ParseScenarios(Simulation& s, toml::value const& v)
+	{
+		if (v.contains("scenarios") && v.at("scenarios").is_table())
+		{
+			return ParseScenarios(
+				s.ScenarioMap, s.Model.DistSys, v.at("scenarios").as_table());
+		}
+		std::cout << "required field 'scenarios' not found or not a table"
+			<< std::endl;
+		return Result::Failure;
+	}
+
 }

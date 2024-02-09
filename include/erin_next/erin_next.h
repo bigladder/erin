@@ -84,13 +84,6 @@ namespace erin_next
 		size_t InflowConn;
 	};
 
-	// TODO: remove and use TimeAndAmount (rename of TimeAndLoad) instead
-	struct TimeAndAvailability
-	{
-		double Time = 0.0;
-		uint32_t Available = 0;
-	};
-
 	struct ScheduleBasedLoad
 	{
 		std::vector<TimeAndAmount> TimesAndLoads;
@@ -112,7 +105,7 @@ namespace erin_next
 
 	struct ScheduleBasedSource
 	{
-		std::vector<TimeAndAvailability> TimeAndAvails;
+		std::vector<TimeAndAmount> TimeAndAvails;
 		size_t OutflowConn;
 		size_t WasteflowConn;
 	};
@@ -404,7 +397,7 @@ namespace erin_next
 	Model_AddScheduleBasedSource(
 		Model& m,
 		SimulationState& ss,
-		std::vector<TimeAndAvailability> xs);
+		std::vector<TimeAndAmount> xs);
 
 	size_t
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports);

@@ -1002,7 +1002,7 @@ Test12(bool doPrint)
 	Model m = {};
 	m.RandFn = []() { return 0.4; };
 	m.FinalTime = 50.0;
-	std::vector<TimeAndAvailability> sourceAvailability{};
+	std::vector<TimeAndAmount> sourceAvailability{};
 	sourceAvailability.reserve(5);
 	sourceAvailability.emplace_back(0, 10);
 	sourceAvailability.emplace_back(10, 8);
@@ -1063,7 +1063,7 @@ Test13(bool doPrint)
 	Model m = {};
 	m.RandFn = []() { return 0.4; };
 	m.FinalTime = 50.0;
-	std::vector<TimeAndAvailability> sourceAvailability{};
+	std::vector<TimeAndAmount> sourceAvailability{};
 	sourceAvailability.reserve(5);
 	sourceAvailability.emplace_back(0, 10);
 	sourceAvailability.emplace_back(10, 8);

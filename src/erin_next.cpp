@@ -191,11 +191,11 @@ namespace erin_next
 				if (taa.Time == t)
 				{
 					auto outIdx = m.ScheduledSrcs[i].OutflowConn;
-					if (ss.Flows[outIdx].Available != taa.Available)
+					if (ss.Flows[outIdx].Available != taa.Amount)
 					{
 						ss.ActiveConnectionsFront.insert(outIdx);
 					}
-					ss.Flows[outIdx].Available = taa.Available;
+					ss.Flows[outIdx].Available = taa.Amount;
 					auto spillage =
 						ss.Flows[outIdx].Available > ss.Flows[outIdx].Requested
 						? (
@@ -485,7 +485,7 @@ namespace erin_next
 		auto wasteConn = model.ScheduledSrcs[compIdx].WasteflowConn;
 		auto schIdx = ss.ScheduleBasedSourceIdx[compIdx];
 		auto available =
-			model.ScheduledSrcs[compIdx].TimeAndAvails[schIdx].Available;
+			model.ScheduledSrcs[compIdx].TimeAndAvails[schIdx].Amount;
 		auto spillage =
 			available > ss.Flows[outConn].Requested
 			? available - ss.Flows[outConn].Requested
@@ -1520,7 +1520,7 @@ namespace erin_next
 	Model_AddScheduleBasedSource(
 		Model& m,
 		SimulationState& ss,
-		std::vector<TimeAndAvailability> xs)
+		std::vector<TimeAndAmount> xs)
 	{
 		auto idx = m.ScheduledSrcs.size();
 		ScheduleBasedSource sbs = {};

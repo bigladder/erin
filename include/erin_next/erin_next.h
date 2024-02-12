@@ -171,11 +171,6 @@ namespace erin_next
 
 	struct Model
 	{
-		// TODO: rename type from Component to ComponentType for consistency;
-		// alternate names ComponentDict? FlowDict? Implies lookup...
-		// NOTE: should we have another struct called Simulation which
-		// holds the ComponentDict, FlowDict, ScenarioDict, LoadDict, etc.
-		// and then creates and runs models as the scenario is run???
 		ComponentDict ComponentMap;
 		std::vector<ConstantSource> ConstSources;
 		std::vector<ScheduleBasedSource> ScheduledSrcs;

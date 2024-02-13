@@ -375,32 +375,6 @@ namespace erin_next
 		}
 		Mux_RequestInflowsIntelligently(
 			ss, model.Muxes[compIdx].InflowConns, totalRequest);
-		//std::vector<uint32_t> inflowRequests = {};
-		//inflowRequests.reserve(model.Muxes[compIdx].NumInports);
-		//for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
-		//{
-		//	uint32_t request =
-		//		ss.Flows[inflowConnIdx].Available >= totalRequest
-		//		? totalRequest
-		//		: ss.Flows[inflowConnIdx].Available;
-		//	inflowRequests.push_back(request);
-		//	totalRequest -= request;
-		//}
-		//if (totalRequest > 0) {
-		//	inflowRequests[0] += totalRequest;
-		//	totalRequest = 0;
-		//}
-		//for (size_t muxInPort = 0;
-		//	muxInPort < model.Muxes[compIdx].NumInports;
-		//	++muxInPort)
-		//{
-		//	size_t inflowConnIdx = model.Muxes[compIdx].InflowConns[muxInPort];
-		//	if (ss.Flows[inflowConnIdx].Requested != inflowRequests[muxInPort])
-		//	{
-		//		ss.ActiveConnectionsBack.insert(inflowConnIdx);
-		//	}
-		//	ss.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
-		//}
 	}
 
 	void
@@ -518,12 +492,6 @@ namespace erin_next
 			}
 		}
 	}
-
-	// TODO: extract common function to update wasteflow/lossflow for
-	// constant-efficiency converter
-
-	// TODO: handle update to wasteflow/lossflow when lossport is hit on
-	// backward pass...
 
 	void
 	RunConstantEfficiencyConverterForward(
@@ -1173,14 +1141,12 @@ namespace erin_next
 		return linkId;
 	}
 
-	// TODO[mok]: add a maximum time as well; NOTE: model has max time now...
 	std::vector<TimeAndFlows>
 	Simulate(Model& model, SimulationState& ss, bool print = true)
 	{
 		double t = 0.0;
 		std::vector<TimeAndFlows> timeAndFlows = {};
 		Model_SetupSimulationState(model, ss);
-		// TODO: add the check for max time; update unit tests to work with that
 		while (t != infinity && t <= model.FinalTime)
 		{
 			// schedule each event-generating component for next event
@@ -1199,8 +1165,6 @@ namespace erin_next
 				ActivateConnectionsForConstantSources(model, ss);
 			}
 			ActivateConnectionsForReliability(model, ss, t);
-			// TODO: add a for-loop for max iter? check both count of active
-			// connections and max loop?
 			size_t const maxLoop = 10;
 			for (size_t loopIter = 0; loopIter <= maxLoop; ++loopIter)
 			{
@@ -1232,7 +1196,7 @@ namespace erin_next
 			}
 			UpdateStoresPerElapsedTime(model, ss, nextTime - t);
 			UpdateScheduleBasedLoadNextEvent(model, ss, nextTime);
-			UpdateScheduleBasedSourceNextEvent(model, ss, nextTime);UpdateScheduleBasedSourceNextEvent(model, ss, nextTime);
+			UpdateScheduleBasedSourceNextEvent(model, ss, nextTime);
 			t = nextTime;
 		}
 		return timeAndFlows;

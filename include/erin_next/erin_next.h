@@ -43,8 +43,12 @@ namespace erin_next
 	};
 
 	// Holds the various flow types encountered
-	// Note: each entry added must be unique and the index into this
+	// NOTE: each entry added must be unique and the index into this
 	// vector is the flow type used through the rest of the simulation
+	// NOTE: if we end up wanting to have mass-flow and volumetric-flow,
+	// we may want to have an enum for FlowCategory or FundamentalFlowType
+	// with items of Power, Mass, and/or Volume. Each of those would have
+	// a base unit associated with them.
 	struct FlowDict {
 		std::vector<std::string> Type;
 	};
@@ -123,13 +127,17 @@ namespace erin_next
 	struct Connection
 	{
 		ComponentType From;
+		// index into the specific component type's array
 		size_t FromIdx;
 		size_t FromPort;
-		size_t FromId; // index into ComponentDict
+		// index into ComponentDict
+		size_t FromId;
 		ComponentType To;
+		// index into the specific component type's array
 		size_t ToIdx;
 		size_t ToPort;
-		size_t ToId; // index into ComponentDict
+		// index into ComponentDict
+		size_t ToId;
 		size_t FlowTypeId;
 	};
 
@@ -534,9 +542,8 @@ namespace erin_next
 	std::optional<size_t>
 	Model_FindCompIdByTag(Model const& m, std::string const& tag);
 
-	// TODO: rename to FlowDict_GetIdByTag
 	std::optional<size_t>
-	FlowType_GetIdByTag(FlowDict const& ft, std::string const& tag);
+	FlowDict_GetIdByTag(FlowDict const& ft, std::string const& tag);
 
 	void
 	Model_PrintConnections(Model const& m, FlowDict const& ft);

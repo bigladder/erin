@@ -1770,7 +1770,7 @@ namespace erin_next
 	}
 
 	Result
-	ParseNetwork(FlowDict const& ft, Model& m, toml::table const& table)
+	ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
 	{
 		if (!table.contains("connections"))
 		{
@@ -1837,7 +1837,7 @@ namespace erin_next
 			TagAndPort toTap = maybeToTap.value();
 			std::string flow = item.as_array()[2].as_string();
 			std::optional<size_t> maybeFlowTypeId =
-				FlowType_GetIdByTag(ft, flow);
+				FlowDict_GetIdByTag(fd, flow);
 			if (!maybeFlowTypeId.has_value())
 			{
 				std::cout << "[network] "
@@ -1883,7 +1883,7 @@ namespace erin_next
 				std::cout << "[network] "
 					<< "mismatch of flow types: "
 					<< fromTap.Tag << ":outflow="
-					<< ft.Type[m.ComponentMap.OutflowType[fromCompId][fromTap.Port]]
+					<< fd.Type[m.ComponentMap.OutflowType[fromCompId][fromTap.Port]]
 					<< "; connection: "
 					<< flow << std::endl;
 				return Result::Failure;
@@ -1905,7 +1905,7 @@ namespace erin_next
 				std::cout << "[network] "
 					<< "mismatch of flow types: "
 					<< toTap.Tag << ":inflow="
-					<< ft.Type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
+					<< fd.Type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
 					<< "; connection: "
 					<< flow << std::endl;
 				return Result::Failure;
@@ -1939,11 +1939,11 @@ namespace erin_next
 	}
 
 	std::optional<size_t>
-	FlowType_GetIdByTag(FlowDict const& ft, std::string const& tag)
+	FlowDict_GetIdByTag(FlowDict const& fd, std::string const& tag)
 	{
-		for (int idx=0; idx < ft.Type.size(); ++idx)
+		for (int idx=0; idx < fd.Type.size(); ++idx)
 		{
-			if (ft.Type[idx] == tag)
+			if (fd.Type[idx] == tag)
 			{
 				return idx;
 			}

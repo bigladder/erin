@@ -224,56 +224,38 @@ namespace erin_next
 	}
 
 	double
-	EarliestNextEvent(Model const& m, SimulationState const& ss, double t)
+	GetNextTime(double nextTime, size_t count, std::function<double(size_t)> f)
 	{
-		double nextTime = infinity;
-		// TODO[mok]: eliminate duplicate code here
-		for (size_t schIdx = 0; schIdx < m.ScheduledLoads.size(); ++schIdx)
+		for (size_t i = 0; i < count; ++i)
 		{
-			double nextTimeForComponent =
-				NextEvent(m.ScheduledLoads[schIdx], schIdx, ss);
+			double nextTimeForComponent = f(i);
 			if (nextTime == infinity
 				|| (nextTimeForComponent >= 0.0
 					&& nextTimeForComponent < nextTime))
 			{
 				nextTime = nextTimeForComponent;
-			}
-		}
-		for (size_t srcIdx = 0; srcIdx < m.ScheduledSrcs.size(); ++srcIdx)
-		{
-			double nextTimeForComponent =
-				NextEvent(m.ScheduledSrcs[srcIdx], srcIdx, ss);
-			if (nextTime == infinity
-				|| (nextTimeForComponent >= 0.0
-					&& nextTimeForComponent < nextTime))
-			{
-				nextTime = nextTimeForComponent;
-			}
-		}
-		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
-		{
-			double nextTimeForComponent = NextStorageEvent(ss, storeIdx, t);
-			if (nextTime == infinity
-				|| (nextTimeForComponent >= 0.0
-					&& nextTimeForComponent < nextTime))
-			{
-				nextTime = nextTimeForComponent;
-			}
-		}
-		for (size_t reliabilityIdx = 0;
-			reliabilityIdx < m.Reliabilities.size();
-			++reliabilityIdx)
-		{
-			double nextReliabilityEvent =
-				NextEvent(m.Reliabilities[reliabilityIdx], t);
-			if (nextTime == infinity
-				|| (nextReliabilityEvent >= 0.0
-					&& nextReliabilityEvent < nextTime))
-			{
-				nextTime = nextReliabilityEvent;
 			}
 		}
 		return nextTime;
+	}
+
+	double
+	EarliestNextEvent(Model const& m, SimulationState const& ss, double t)
+	{
+		double next = infinity;
+		next = GetNextTime(next, m.ScheduledLoads.size(),
+			[m, ss](size_t idx) -> double {
+				return NextEvent(m.ScheduledLoads[idx], idx, ss);});
+		next = GetNextTime(next, m.ScheduledSrcs.size(),
+			[m, ss](size_t idx) -> double {
+				return NextEvent(m.ScheduledSrcs[idx], idx, ss);});
+		next = GetNextTime(next, m.Stores.size(),
+			[ss, t](size_t idx) -> double {
+				return NextStorageEvent(ss, idx, t);});
+		next = GetNextTime(next, m.Reliabilities.size(),
+			[m, t](size_t idx) -> double {
+				return NextEvent(m.Reliabilities[idx], t);});
+		return next;
 	}
 
 	// TODO[mok]: consider changing return to std::optional<size_t> as that

@@ -20,6 +20,7 @@
 #include <set>
 #include <map>
 #include <ostream>
+#include <functional>
 
 namespace erin_next
 {
@@ -269,6 +270,9 @@ namespace erin_next
 	void
 	ActivateConnectionsForReliability(
 		Model& m, SimulationState& ss, double time);
+
+	double
+	GetNextTime(double nextTime, size_t count, std::function<double(size_t)> f);
 
 	double
 	EarliestNextEvent(Model const& m, SimulationState const& ss, double t);

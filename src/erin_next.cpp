@@ -54,8 +54,6 @@ namespace erin_next
 		items.push_back(item);
 	}
 
-	// TODO: consider switching to a Set<size_t> for the below to eliminate
-	// looping over the active indices
 	void
 	SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx)
 	{

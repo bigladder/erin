@@ -1314,7 +1314,7 @@ Test14(bool doPrint)
 	auto src2ToMuxConn = Model_AddConnection(m, ss, src02Id.Id, 0, muxId, 1);
 	auto muxToLoadConn = Model_AddConnection(m, ss, muxId, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
-	// TODO: add tests
+	// TODO: add tests/checks
 	PrintPass(doPrint, "14");
 }
 

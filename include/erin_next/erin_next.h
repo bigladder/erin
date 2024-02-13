@@ -277,11 +277,7 @@ namespace erin_next
 	double
 	EarliestNextEvent(Model const& m, SimulationState const& ss, double t);
 
-	int
-	FindInflowConnection(
-		Model const& m, ComponentType ct, size_t compId, size_t inflowPort);
-
-	int
+	std::optional<size_t>
 	FindOutflowConnection(
 		Model const& m, ComponentType ct, size_t compId, size_t outflowPort);
 

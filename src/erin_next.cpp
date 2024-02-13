@@ -243,47 +243,52 @@ namespace erin_next
 	EarliestNextEvent(Model const& m, SimulationState const& ss, double t)
 	{
 		double next = infinity;
-		next = GetNextTime(next, m.ScheduledLoads.size(),
-			[m, ss](size_t idx) -> double {
-				return NextEvent(m.ScheduledLoads[idx], idx, ss);});
-		next = GetNextTime(next, m.ScheduledSrcs.size(),
-			[m, ss](size_t idx) -> double {
-				return NextEvent(m.ScheduledSrcs[idx], idx, ss);});
-		next = GetNextTime(next, m.Stores.size(),
-			[ss, t](size_t idx) -> double {
-				return NextStorageEvent(ss, idx, t);});
-		next = GetNextTime(next, m.Reliabilities.size(),
-			[m, t](size_t idx) -> double {
-				return NextEvent(m.Reliabilities[idx], t);});
+		for (size_t i = 0; i < m.ScheduledLoads.size(); ++i)
+		{
+			double nextTimeForComponent =
+				NextEvent(m.ScheduledLoads[i], i, ss);
+			if (next == infinity
+				|| (nextTimeForComponent >= 0.0
+					&& nextTimeForComponent < next))
+			{
+				next = nextTimeForComponent;
+			}
+		}
+		for (size_t i = 0; i < m.ScheduledSrcs.size(); ++i)
+		{
+			double nextTimeForComponent =
+				NextEvent(m.ScheduledSrcs[i], i, ss);
+			if (next == infinity
+				|| (nextTimeForComponent >= 0.0
+					&& nextTimeForComponent < next))
+			{
+				next = nextTimeForComponent;
+			}
+		}
+		for (size_t i = 0; i < m.Stores.size(); ++i)
+		{
+			double nextTimeForComponent = NextStorageEvent(ss, i, t);
+			if (next == infinity
+				|| (nextTimeForComponent >= 0.0
+					&& nextTimeForComponent < next))
+			{
+				next = nextTimeForComponent;
+			}
+		}
+		for (size_t i = 0; i < m.Reliabilities.size(); ++i)
+		{
+			double nextTimeForComponent = NextEvent(m.Reliabilities[i], t);
+			if (next == infinity
+				|| (nextTimeForComponent >= 0.0
+					&& nextTimeForComponent < next))
+			{
+				next = nextTimeForComponent;
+			}
+		}
 		return next;
 	}
 
-	// TODO[mok]: consider changing return to std::optional<size_t> as that
-	// would better express intent
-	// TODO: consider reworking this to be an O(1) operation. Should components
-	// store connection indices?
-	int
-	FindInflowConnection(
-		Model const& m,
-		ComponentType ct,
-		size_t compId,
-		size_t inflowPort)
-	{
-		for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx)
-		{
-			if (m.Connections[connIdx].To == ct
-				&& m.Connections[connIdx].ToIdx == compId
-				&& m.Connections[connIdx].ToPort == inflowPort)
-			{
-				return (int)connIdx;
-			}
-		}
-		return -1;
-	}
-
-	// TODO[mok]: consider changing return to std::optional<size_t> as that
-	// would better express intent
-	int
+	std::optional<size_t>
 	FindOutflowConnection(
 		Model const& m,
 		ComponentType ct,
@@ -296,10 +301,10 @@ namespace erin_next
 				&& m.Connections[connIdx].FromIdx == compId
 				&& m.Connections[connIdx].FromPort == outflowPort)
 			{
-				return (int)connIdx;
+				return connIdx;
 			}
 		}
-		return -1;
+		return {};
 	}
 
 	void
@@ -692,17 +697,15 @@ namespace erin_next
 		size_t connIdx,
 		size_t compIdx)
 	{
-		// TODO: need to also add consideration for discharging TO or BELOW
-		// chargeAmount (i.e., when you cross chargeAmount from above)
 		// NOTE: we assume that the charge request never resets once at or
 		// below chargeAmount UNTIL you hit 100% SOC again...
-		int outflowConn =
+		std::optional<size_t> outflowConn =
 			FindOutflowConnection(
 				model, model.Connections[connIdx].To, compIdx, 0);
-		assert(outflowConn >= 0 && "store must have an outflow connection");
+		assert(outflowConn.has_value() && "store must have an outflow connection");
 		int netCharge =
 			(int)ss.Flows[connIdx].Actual
-			- (int)ss.Flows[(size_t)outflowConn].Actual;
+			- (int)ss.Flows[outflowConn.value()].Actual;
 		if (netCharge > 0)
 		{
 			ss.StorageNextEventTimes[compIdx] =

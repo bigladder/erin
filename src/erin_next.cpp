@@ -245,7 +245,7 @@ namespace erin_next
 		double next = infinity;
 		next = GetNextTime(next, m.ScheduledLoads.size(),
 			[&](size_t i) -> double {
-				return NextEvent(m.ScheduledLoads[i],i,ss);});
+				return NextEvent(m.ScheduledLoads[i], i, ss); });
 		next = GetNextTime(next, m.ScheduledSrcs.size(),
 			[&](size_t i) -> double {
 				return NextEvent(m.ScheduledSrcs[i], i, ss); });

@@ -113,8 +113,7 @@ namespace erin_next
 
 	struct ConstantEfficiencyConverter
 	{
-		uint32_t EfficiencyNumerator;
-		uint32_t EfficiencyDenominator;
+		double Efficiency;
 		size_t InflowConn;
 		size_t OutflowConn;
 		std::optional<size_t> LossflowConn;
@@ -419,6 +418,12 @@ namespace erin_next
 		SimulationState& ss,
 		uint32_t eff_numerator,
 		uint32_t eff_denominator);
+
+	ComponentIdAndWasteConnection
+	Model_AddConstantEfficiencyConverter(
+		Model& m,
+		SimulationState& ss,
+		double efficiency);
 
 	Connection
 	Model_AddConnection(

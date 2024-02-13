@@ -378,8 +378,9 @@ namespace erin_next
 		size_t inflowConn = m.ConstEffConvs[compIdx].InflowConn;
 		uint32_t outflowRequest = ss.Flows[connIdx].Requested;
 		uint32_t inflowRequest =
-			(m.ConstEffConvs[compIdx].EfficiencyDenominator * outflowRequest)
-			/ m.ConstEffConvs[compIdx].EfficiencyNumerator;
+			static_cast<uint32_t>(
+				std::ceil(
+					outflowRequest / m.ConstEffConvs[compIdx].Efficiency));
 		// NOTE: for COP, we can have inflow < outflow
 		if (inflowRequest != ss.Flows[inflowConn].Requested)
 		{
@@ -579,8 +580,9 @@ namespace erin_next
 		uint32_t inflowAvailable = ss.Flows[connIdx].Available;
 		size_t outflowConn = m.ConstEffConvs[compIdx].OutflowConn;
 		uint32_t outflowAvailable =
-			(m.ConstEffConvs[compIdx].EfficiencyNumerator * inflowAvailable)
-			/ m.ConstEffConvs[compIdx].EfficiencyDenominator;
+			static_cast<uint32_t>(
+				std::floor(
+					m.ConstEffConvs[compIdx].Efficiency * inflowAvailable));
 		// NOTE: disabling to accommodate COP components for now
 		// TODO: create a separate COP component (like converter but no lossport
 		// or wasteport)
@@ -1549,8 +1551,18 @@ namespace erin_next
 		uint32_t eff_numerator,
 		uint32_t eff_denominator)
 	{
+		return Model_AddConstantEfficiencyConverter(
+			m, ss, (double)eff_numerator / (double)eff_denominator);
+	}
+
+	ComponentIdAndWasteConnection
+	Model_AddConstantEfficiencyConverter(
+		Model& m,
+		SimulationState& ss,
+		double efficiency)
+	{
 		size_t idx = m.ConstEffConvs.size();
-		m.ConstEffConvs.push_back({ eff_numerator, eff_denominator });
+		m.ConstEffConvs.push_back({ efficiency });
 		size_t wasteId = Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::WasteSinkType, 0);
 		size_t thisId = Component_AddComponentReturningId(

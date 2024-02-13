@@ -1233,7 +1233,7 @@ Test13(bool doPrint)
 	// COMPONENTS
 	auto pvArrayId = Model_AddScheduleBasedSource(m, ss, pvAvail);
 	auto elecUtilId = Model_AddConstantSource(
-		m, std::numeric_limits<uint32_t>::max());
+		m, kW_as_W(10.0));
 	auto batteryId = Model_AddStore(
 		m,
 		kWh_as_J(100.0),
@@ -1424,7 +1424,7 @@ main(int argc, char** argv) {
 	Test10(false);
 	Test11(false);
 	Test12(false);
-	Test13(true);
+	Test13(false);
 	Test14(false);
 	Test15(false);
 	auto stop = std::chrono::high_resolution_clock::now();

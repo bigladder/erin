@@ -243,48 +243,18 @@ namespace erin_next
 	EarliestNextEvent(Model const& m, SimulationState const& ss, double t)
 	{
 		double next = infinity;
-		for (size_t i = 0; i < m.ScheduledLoads.size(); ++i)
-		{
-			double nextTimeForComponent =
-				NextEvent(m.ScheduledLoads[i], i, ss);
-			if (next == infinity
-				|| (nextTimeForComponent >= 0.0
-					&& nextTimeForComponent < next))
-			{
-				next = nextTimeForComponent;
-			}
-		}
-		for (size_t i = 0; i < m.ScheduledSrcs.size(); ++i)
-		{
-			double nextTimeForComponent =
-				NextEvent(m.ScheduledSrcs[i], i, ss);
-			if (next == infinity
-				|| (nextTimeForComponent >= 0.0
-					&& nextTimeForComponent < next))
-			{
-				next = nextTimeForComponent;
-			}
-		}
-		for (size_t i = 0; i < m.Stores.size(); ++i)
-		{
-			double nextTimeForComponent = NextStorageEvent(ss, i, t);
-			if (next == infinity
-				|| (nextTimeForComponent >= 0.0
-					&& nextTimeForComponent < next))
-			{
-				next = nextTimeForComponent;
-			}
-		}
-		for (size_t i = 0; i < m.Reliabilities.size(); ++i)
-		{
-			double nextTimeForComponent = NextEvent(m.Reliabilities[i], t);
-			if (next == infinity
-				|| (nextTimeForComponent >= 0.0
-					&& nextTimeForComponent < next))
-			{
-				next = nextTimeForComponent;
-			}
-		}
+		next = GetNextTime(next, m.ScheduledLoads.size(),
+			[&](size_t i) -> double {
+				return NextEvent(m.ScheduledLoads[i],i,ss);});
+		next = GetNextTime(next, m.ScheduledSrcs.size(),
+			[&](size_t i) -> double {
+				return NextEvent(m.ScheduledSrcs[i], i, ss); });
+		next = GetNextTime(next, m.Stores.size(),
+			[&](size_t i) -> double {
+				return NextStorageEvent(ss, i, t); });
+		next = GetNextTime(next, m.Reliabilities.size(),
+			[&](size_t i) -> double {
+				return NextEvent(m.Reliabilities[i], t); });
 		return next;
 	}
 

@@ -1,6 +1,7 @@
 #include "erin_next/erin_next.h"
 #include <iomanip>
 #include <chrono>
+#include <limits>
 
 using namespace erin_next;
 
@@ -150,8 +151,8 @@ Test3(bool print) {
 		&& "requested must equal 2"));
 	assert((convToLoad2Results.value().Actual == 2
 		&& "actual value must equal 2"));
-	assert((convToLoad2Results.value().Available == 2
-		&& "available must equal 50"));
+	assert((convToLoad2Results.value().Available == 10
+		&& "available must equal 10"));
 	auto convToWasteResults =
 		ModelResults_GetFlowForConnection(
 			m, convId.WasteConnection, 0.0, results);
@@ -162,7 +163,7 @@ Test3(bool print) {
 	assert((convToWasteResults.value().Actual == 8
 		&& "actual value must equal 8"));
 	assert((convToWasteResults.value().Available == 8
-		&& "available must equal 48"));
+		&& "available must equal 8"));
 	PrintPass(print, "3");
 }
 
@@ -210,8 +211,8 @@ Test3A(bool print) {
 		&& "requested must equal 2"));
 	assert((convToLoad2Results.value().Actual == 2
 		&& "actual value must equal 2"));
-	assert((convToLoad2Results.value().Available == 2
-		&& "available must equal 50"));
+	assert((convToLoad2Results.value().Available == 10
+		&& "available must equal 10"));
 	auto convToWasteResults =
 		ModelResults_GetFlowForConnection(
 			m, convId.WasteConnection, 0.0, results);
@@ -222,7 +223,7 @@ Test3A(bool print) {
 	assert((convToWasteResults.value().Actual == 8
 		&& "actual value must equal 8"));
 	assert((convToWasteResults.value().Available == 8
-		&& "available must equal 48"));
+		&& "available must equal 8"));
 	PrintPass(print, "3a");
 }
 
@@ -233,6 +234,7 @@ Test4(bool print) {
 	timesAndLoads.push_back({ 0.0, 10 });
 	timesAndLoads.push_back({ 3600.0, 200 });
 	Model m = {};
+	m.FinalTime = 3600.0;
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
@@ -358,6 +360,7 @@ static void
 Test7(bool doPrint) {
 	PrintBanner(doPrint, "7");
 	Model m = {};
+	m.FinalTime = 10.0;
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 0);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 0, 100);
@@ -412,6 +415,7 @@ static void
 Test8(bool doPrint) {
 	PrintBanner(doPrint, "8");
 	Model m = {};
+	m.FinalTime = 20.0;
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 5);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 0, 100);
@@ -470,6 +474,7 @@ Test9(bool doPrint) {
 	timesAndLoads.push_back({  5.0,  5 });
 	timesAndLoads.push_back({ 10.0, 15 });
 	Model m = {};
+	m.FinalTime = 50.0;
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 10);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 80, 100);
@@ -557,6 +562,7 @@ Test10(bool doPrint) {
 	timesAndLoads.push_back({ 5.0,  5 });
 	timesAndLoads.push_back({ 10.0, 15 });
 	Model m = {};
+	m.FinalTime = 100.0;
 	SimulationState ss{};
 	auto src1Id = Model_AddConstantSource(m, 20);
 	auto src2Id = Model_AddConstantSource(m, 5);
@@ -588,17 +594,17 @@ Test10(bool doPrint) {
 		m, src1ToMux0Port0Conn, 0.0, results);
 	assert(src1ToMuxResults.value().Actual == 20);
 	assert(src1ToMuxResults.value().Available == 20);
-	assert(src1ToMuxResults.value().Requested == 45);
+	assert(src1ToMuxResults.value().Requested == 60);
 	auto src2ToStoreResults = ModelResults_GetFlowForConnection(
 		m, src2ToStoreConn, 0.0, results);
 	assert(src2ToStoreResults.value().Actual == 5);
 	assert(src2ToStoreResults.value().Available == 5);
-	assert(src2ToStoreResults.value().Requested == 15);
+	assert(src2ToStoreResults.value().Requested == 40);
 	auto storeToMuxResults = ModelResults_GetFlowForConnection(
 		m, storeToMux0Port1Conn, 0.0, results);
 	assert(storeToMuxResults.value().Actual == 15);
 	assert(storeToMuxResults.value().Available == 15);
-	assert(storeToMuxResults.value().Requested == 15);
+	assert(storeToMuxResults.value().Requested == 40);
 	auto muxToLoad1Results = ModelResults_GetFlowForConnection(
 		m, mux0Port0ToLoad1Conn, 0.0, results);
 	assert(muxToLoad1Results.value().Actual == 20);
@@ -617,7 +623,7 @@ Test10(bool doPrint) {
 	auto convToLoad3Results = ModelResults_GetFlowForConnection(
 		m, convToLoad3Conn, 0.0, results);
 	assert(convToLoad3Results.value().Actual == 5);
-	assert(convToLoad3Results.value().Available == 5);
+	assert(convToLoad3Results.value().Available == 8);
 	assert(convToLoad3Results.value().Requested == 5);
 	auto storeAmount = ModelResults_GetStoreState(m, storeId, 0.0, results);
 	assert(storeAmount.value() == 100);
@@ -634,17 +640,17 @@ Test10(bool doPrint) {
 		m, src1ToMux0Port0Conn, t, results);
 	assert(src1ToMuxResults.value().Actual == 20);
 	assert(src1ToMuxResults.value().Available == 20);
-	assert(src1ToMuxResults.value().Requested == 45);
+	assert(src1ToMuxResults.value().Requested == 60);
 	src2ToStoreResults = ModelResults_GetFlowForConnection(
 		m, src2ToStoreConn, t, results);
 	assert(src2ToStoreResults.value().Actual == 5);
 	assert(src2ToStoreResults.value().Available == 5);
-	assert(src2ToStoreResults.value().Requested == 25);
+	assert(src2ToStoreResults.value().Requested == 50);
 	storeToMuxResults = ModelResults_GetFlowForConnection(
 		m, storeToMux0Port1Conn, t, results);
 	assert(storeToMuxResults.value().Actual == 15);
 	assert(storeToMuxResults.value().Available == 15);
-	assert(storeToMuxResults.value().Requested == 15);
+	assert(storeToMuxResults.value().Requested == 40);
 	muxToLoad1Results = ModelResults_GetFlowForConnection(
 		m, mux0Port0ToLoad1Conn, t, results);
 	assert(muxToLoad1Results.value().Actual == 20);
@@ -663,7 +669,7 @@ Test10(bool doPrint) {
 	convToLoad3Results = ModelResults_GetFlowForConnection(
 		m, convToLoad3Conn, t, results);
 	assert(convToLoad3Results.value().Actual == 5);
-	assert(convToLoad3Results.value().Available == 5);
+	assert(convToLoad3Results.value().Available == 8);
 	assert(convToLoad3Results.value().Requested == 5);
 	storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
 	assert(storeAmount.value() == 80);
@@ -680,7 +686,7 @@ Test10(bool doPrint) {
 		m, src1ToMux0Port0Conn, t, results);
 	assert(src1ToMuxResults.value().Actual == 20);
 	assert(src1ToMuxResults.value().Available == 20);
-	assert(src1ToMuxResults.value().Requested == 20);
+	assert(src1ToMuxResults.value().Requested == 30);
 	src2ToStoreResults = ModelResults_GetFlowForConnection(
 		m, src2ToStoreConn, t, results);
 	assert(src2ToStoreResults.value().Actual == 5);
@@ -726,17 +732,17 @@ Test10(bool doPrint) {
 		m, src1ToMux0Port0Conn, t, results);
 	assert(src1ToMuxResults.value().Actual == 20);
 	assert(src1ToMuxResults.value().Available == 20);
-	assert(src1ToMuxResults.value().Requested == 35);
+	assert(src1ToMuxResults.value().Requested == 50);
 	src2ToStoreResults = ModelResults_GetFlowForConnection(
 		m, src2ToStoreConn, t, results);
 	assert(src2ToStoreResults.value().Actual == 5);
 	assert(src2ToStoreResults.value().Available == 5);
-	assert(src2ToStoreResults.value().Requested == 25);
+	assert(src2ToStoreResults.value().Requested == 40);
 	storeToMuxResults = ModelResults_GetFlowForConnection(
 		m, storeToMux0Port1Conn, t, results);
 	assert(storeToMuxResults.value().Actual == 15);
 	assert(storeToMuxResults.value().Available == 15);
-	assert(storeToMuxResults.value().Requested == 15);
+	assert(storeToMuxResults.value().Requested == 30);
 	muxToLoad1Results = ModelResults_GetFlowForConnection(
 		m, mux0Port0ToLoad1Conn, t, results);
 	assert(muxToLoad1Results.value().Actual == 20);
@@ -755,7 +761,7 @@ Test10(bool doPrint) {
 	convToLoad3Results = ModelResults_GetFlowForConnection(
 		m, convToLoad3Conn, t, results);
 	assert(convToLoad3Results.value().Actual == 5);
-	assert(convToLoad3Results.value().Available == 5);
+	assert(convToLoad3Results.value().Available == 8);
 	assert(convToLoad3Results.value().Requested == 5);
 	storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
 	assert(storeAmount.value() == 25);
@@ -772,17 +778,17 @@ Test10(bool doPrint) {
 		m, src1ToMux0Port0Conn, t, results);
 	assert(src1ToMuxResults.value().Actual == 20);
 	assert(src1ToMuxResults.value().Available == 20);
-	assert(src1ToMuxResults.value().Requested == 45);
+	assert(src1ToMuxResults.value().Requested == 50);
 	src2ToStoreResults = ModelResults_GetFlowForConnection(
 		m, src2ToStoreConn, t, results);
 	assert(src2ToStoreResults.value().Actual == 5);
 	assert(src2ToStoreResults.value().Available == 5);
-	assert(src2ToStoreResults.value().Requested == 15);
+	assert(src2ToStoreResults.value().Requested == 40);
 	storeToMuxResults = ModelResults_GetFlowForConnection(
 		m, storeToMux0Port1Conn, t, results);
 	assert(storeToMuxResults.value().Actual == 5);
 	assert(storeToMuxResults.value().Available == 5);
-	assert(storeToMuxResults.value().Requested == 5);
+	assert(storeToMuxResults.value().Requested == 30);
 	muxToLoad1Results = ModelResults_GetFlowForConnection(
 		m, mux0Port0ToLoad1Conn, t, results);
 	assert(muxToLoad1Results.value().Actual == 20);
@@ -1052,57 +1058,355 @@ Test12(bool doPrint)
 	PrintPass(doPrint, "12");
 }
 
-/*
 void
 Test13(bool doPrint)
 {
+	auto kW_as_W = [](double p_kW) -> uint32_t {
+		return static_cast<uint32_t>(std::round(p_kW * 1000.0));
+	};
+	auto hours_as_seconds = [](double h) -> double {
+		return h * 3600.0;
+	};
+	auto kWh_as_J = [](double kWh) -> double {
+		return kWh * 3'600'000.0;
+	};
 	PrintBanner(doPrint, "13");
-	// Add a schedule-based source (availability, uncontrolled source)
-	// NOTE: it would be good to have a waste connection so that the component
-	// always "spills" (ullage) when not all available is used.
+	// SIMULATION INFO and INITIALIZATION
 	Model m = {};
 	m.RandFn = []() { return 0.4; };
-	m.FinalTime = 50.0;
-	std::vector<TimeAndAmount> sourceAvailability{};
-	sourceAvailability.reserve(5);
-	sourceAvailability.emplace_back(0, 10);
-	sourceAvailability.emplace_back(10, 8);
-	sourceAvailability.emplace_back(20, 6);
-	sourceAvailability.emplace_back(30, 12);
-	sourceAvailability.emplace_back(40, 16);
-	std::vector<TimeAndAmount> loadRequest{};
-	loadRequest.reserve(5);
-	loadRequest.emplace_back(0, 20);
-	loadRequest.emplace_back(10, 18);
-	loadRequest.emplace_back(20, 16);
-	loadRequest.emplace_back(30, 12);
-	loadRequest.emplace_back(40, 8);
-	loadRequest.emplace_back(40, 4);
+	m.FinalTime = hours_as_seconds(48.0);
 	SimulationState ss{};
-	auto src1Id = Model_AddScheduleBasedSource(m, sourceAvailability);
-	auto src2Id = Model_AddConstantSource(m, 10);
-	auto loadId = Model_AddScheduleBasedLoad(m, loadRequest);
-	auto storeId = Model_AddStore(m, 50, 5, 10, 15, 40);
-	auto mux1Id = Model_AddMux(m, 2, 2);
-	auto mux2Id = Model_AddMux(m, 2, 1);
-	auto src1ToMux1Conn = Model_AddConnection(m, ss, src1Id, 0, mux1Id, 0);
-	auto src2ToMux1Conn = Model_AddConnection(m, ss, src2Id, 0, mux1Id, 1);
-	// HERE: finish wiring this up and implementing
-	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
-	auto fixedDistId = Model_AddFixedReliabilityDistribution(m, 10.0);
-	Model_AddFailureModeToComponent(m, convId.Id, fixedDistId, fixedDistId);
+	// LOADS
+	std::vector<TimeAndAmount> elecLoad{};
+	elecLoad.reserve(49);
+	elecLoad.emplace_back(hours_as_seconds(0.0), kW_as_W(187.47));
+	elecLoad.emplace_back(hours_as_seconds(1.0), kW_as_W(146.271));
+	elecLoad.emplace_back(hours_as_seconds(2.0), kW_as_W(137.308));
+	elecLoad.emplace_back(hours_as_seconds(3.0), kW_as_W(170.276));
+	elecLoad.emplace_back(hours_as_seconds(4.0), kW_as_W(139.068));
+	elecLoad.emplace_back(hours_as_seconds(5.0), kW_as_W(171.944));
+	elecLoad.emplace_back(hours_as_seconds(6.0), kW_as_W(140.051));
+	elecLoad.emplace_back(hours_as_seconds(7.0), kW_as_W(173.406));
+	elecLoad.emplace_back(hours_as_seconds(8.0), kW_as_W(127.54));
+	elecLoad.emplace_back(hours_as_seconds(9.0), kW_as_W(135.751));
+	elecLoad.emplace_back(hours_as_seconds(10.0), kW_as_W(95.195));
+	elecLoad.emplace_back(hours_as_seconds(11.0), kW_as_W(107.644));
+	elecLoad.emplace_back(hours_as_seconds(12.0), kW_as_W(81.227));
+	elecLoad.emplace_back(hours_as_seconds(13.0), kW_as_W(98.928));
+	elecLoad.emplace_back(hours_as_seconds(14.0), kW_as_W(80.134));
+	elecLoad.emplace_back(hours_as_seconds(15.0), kW_as_W(97.222));
+	elecLoad.emplace_back(hours_as_seconds(16.0), kW_as_W(81.049));
+	elecLoad.emplace_back(hours_as_seconds(17.0), kW_as_W(114.29));
+	elecLoad.emplace_back(hours_as_seconds(18.0), kW_as_W(102.652));
+	elecLoad.emplace_back(hours_as_seconds(19.0), kW_as_W(125.672));
+	elecLoad.emplace_back(hours_as_seconds(20.0), kW_as_W(105.254));
+	elecLoad.emplace_back(hours_as_seconds(21.0), kW_as_W(125.047));
+	elecLoad.emplace_back(hours_as_seconds(22.0), kW_as_W(104.824));
+	elecLoad.emplace_back(hours_as_seconds(23.0), kW_as_W(126.488));
+	elecLoad.emplace_back(hours_as_seconds(24.0), kW_as_W(107.094));
+	elecLoad.emplace_back(hours_as_seconds(25.0), kW_as_W(135.559));
+	elecLoad.emplace_back(hours_as_seconds(26.0), kW_as_W(115.588));
+	elecLoad.emplace_back(hours_as_seconds(27.0), kW_as_W(137.494));
+	elecLoad.emplace_back(hours_as_seconds(28.0), kW_as_W(115.386));
+	elecLoad.emplace_back(hours_as_seconds(29.0), kW_as_W(133.837));
+	elecLoad.emplace_back(hours_as_seconds(30.0), kW_as_W(113.812));
+	elecLoad.emplace_back(hours_as_seconds(31.0), kW_as_W(343.795));
+	elecLoad.emplace_back(hours_as_seconds(32.0), kW_as_W(284.121));
+	elecLoad.emplace_back(hours_as_seconds(33.0), kW_as_W(295.434));
+	elecLoad.emplace_back(hours_as_seconds(34.0), kW_as_W(264.364));
+	elecLoad.emplace_back(hours_as_seconds(35.0), kW_as_W(247.33));
+	elecLoad.emplace_back(hours_as_seconds(36.0), kW_as_W(235.89));
+	elecLoad.emplace_back(hours_as_seconds(37.0), kW_as_W(233.43));
+	elecLoad.emplace_back(hours_as_seconds(38.0), kW_as_W(220.77));
+	elecLoad.emplace_back(hours_as_seconds(39.0), kW_as_W(213.825));
+	elecLoad.emplace_back(hours_as_seconds(40.0), kW_as_W(210.726));
+	elecLoad.emplace_back(hours_as_seconds(41.0), kW_as_W(223.706));
+	elecLoad.emplace_back(hours_as_seconds(42.0), kW_as_W(219.193));
+	elecLoad.emplace_back(hours_as_seconds(43.0), kW_as_W(186.31));
+	elecLoad.emplace_back(hours_as_seconds(44.0), kW_as_W(185.658));
+	elecLoad.emplace_back(hours_as_seconds(45.0), kW_as_W(173.137));
+	elecLoad.emplace_back(hours_as_seconds(46.0), kW_as_W(172.236));
+	elecLoad.emplace_back(hours_as_seconds(47.0), kW_as_W(47.676));
+	elecLoad.emplace_back(hours_as_seconds(48.0), kW_as_W(48.952));
+	std::vector<TimeAndAmount> heatLoad{};
+	heatLoad.reserve(49);
+	heatLoad.emplace_back(hours_as_seconds(0.0), kW_as_W(29.60017807));
+	heatLoad.emplace_back(hours_as_seconds(1.0), kW_as_W(16.70505099));
+	heatLoad.emplace_back(hours_as_seconds(2.0), kW_as_W(16.99812206));
+	heatLoad.emplace_back(hours_as_seconds(3.0), kW_as_W(23.4456856));
+	heatLoad.emplace_back(hours_as_seconds(4.0), kW_as_W(17.5842642));
+	heatLoad.emplace_back(hours_as_seconds(5.0), kW_as_W(23.73875667));
+	heatLoad.emplace_back(hours_as_seconds(6.0), kW_as_W(17.87733527));
+	heatLoad.emplace_back(hours_as_seconds(7.0), kW_as_W(24.03182774));
+	heatLoad.emplace_back(hours_as_seconds(8.0), kW_as_W(17.87733527));
+	heatLoad.emplace_back(hours_as_seconds(9.0), kW_as_W(23.4456856));
+	heatLoad.emplace_back(hours_as_seconds(10.0), kW_as_W(16.41197992));
+	heatLoad.emplace_back(hours_as_seconds(11.0), kW_as_W(18.75654848));
+	heatLoad.emplace_back(hours_as_seconds(12.0), kW_as_W(14.36048243));
+	heatLoad.emplace_back(hours_as_seconds(13.0), kW_as_W(16.11890885));
+	heatLoad.emplace_back(hours_as_seconds(14.0), kW_as_W(10.55055852));
+	heatLoad.emplace_back(hours_as_seconds(15.0), kW_as_W(13.77434029));
+	heatLoad.emplace_back(hours_as_seconds(16.0), kW_as_W(9.37827424));
+	heatLoad.emplace_back(hours_as_seconds(17.0), kW_as_W(13.18819815));
+	heatLoad.emplace_back(hours_as_seconds(18.0), kW_as_W(9.37827424));
+	heatLoad.emplace_back(hours_as_seconds(19.0), kW_as_W(13.48126922));
+	heatLoad.emplace_back(hours_as_seconds(20.0), kW_as_W(9.67134531));
+	heatLoad.emplace_back(hours_as_seconds(21.0), kW_as_W(12.30898494));
+	heatLoad.emplace_back(hours_as_seconds(22.0), kW_as_W(10.55055852));
+	heatLoad.emplace_back(hours_as_seconds(23.0), kW_as_W(13.48126922));
+	heatLoad.emplace_back(hours_as_seconds(24.0), kW_as_W(9.67134531));
+	heatLoad.emplace_back(hours_as_seconds(25.0), kW_as_W(13.48126922));
+	heatLoad.emplace_back(hours_as_seconds(26.0), kW_as_W(12.30898494));
+	heatLoad.emplace_back(hours_as_seconds(27.0), kW_as_W(14.06741136));
+	heatLoad.emplace_back(hours_as_seconds(28.0), kW_as_W(12.30898494));
+	heatLoad.emplace_back(hours_as_seconds(29.0), kW_as_W(13.48126922));
+	heatLoad.emplace_back(hours_as_seconds(30.0), kW_as_W(10.84362959));
+	heatLoad.emplace_back(hours_as_seconds(31.0), kW_as_W(4.10299498));
+	heatLoad.emplace_back(hours_as_seconds(32.0), kW_as_W(45.71908692));
+	heatLoad.emplace_back(hours_as_seconds(33.0), kW_as_W(38.97845231));
+	heatLoad.emplace_back(hours_as_seconds(34.0), kW_as_W(33.11703091));
+	heatLoad.emplace_back(hours_as_seconds(35.0), kW_as_W(26.96253844));
+	heatLoad.emplace_back(hours_as_seconds(36.0), kW_as_W(24.32489881));
+	heatLoad.emplace_back(hours_as_seconds(37.0), kW_as_W(22.85954346));
+	heatLoad.emplace_back(hours_as_seconds(38.0), kW_as_W(26.66946737));
+	heatLoad.emplace_back(hours_as_seconds(39.0), kW_as_W(29.89324914));
+	heatLoad.emplace_back(hours_as_seconds(40.0), kW_as_W(26.66946737));
+	heatLoad.emplace_back(hours_as_seconds(41.0), kW_as_W(24.32489881));
+	heatLoad.emplace_back(hours_as_seconds(42.0), kW_as_W(27.25560951));
+	heatLoad.emplace_back(hours_as_seconds(43.0), kW_as_W(26.66946737));
+	heatLoad.emplace_back(hours_as_seconds(44.0), kW_as_W(22.85954346));
+	heatLoad.emplace_back(hours_as_seconds(45.0), kW_as_W(21.10111704));
+	heatLoad.emplace_back(hours_as_seconds(46.0), kW_as_W(18.46347741));
+	heatLoad.emplace_back(hours_as_seconds(47.0), kW_as_W(0.0));
+	heatLoad.emplace_back(hours_as_seconds(48.0), kW_as_W(3.22378177));
+	std::vector<TimeAndAmount> pvAvail{};
+	pvAvail.reserve(49);
+	pvAvail.emplace_back(hours_as_seconds(0.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(1.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(2.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(3.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(4.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(5.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(6.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(7.0), kW_as_W(14.36));
+	pvAvail.emplace_back(hours_as_seconds(8.0), kW_as_W(671.759));
+	pvAvail.emplace_back(hours_as_seconds(9.0), kW_as_W(1265.933));
+	pvAvail.emplace_back(hours_as_seconds(10.0), kW_as_W(1583.21));
+	pvAvail.emplace_back(hours_as_seconds(11.0), kW_as_W(1833.686));
+	pvAvail.emplace_back(hours_as_seconds(12.0), kW_as_W(1922.872));
+	pvAvail.emplace_back(hours_as_seconds(13.0), kW_as_W(1749.437));
+	pvAvail.emplace_back(hours_as_seconds(14.0), kW_as_W(994.715));
+	pvAvail.emplace_back(hours_as_seconds(15.0), kW_as_W(468.411));
+	pvAvail.emplace_back(hours_as_seconds(16.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(17.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(18.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(19.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(20.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(21.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(22.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(23.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(24.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(25.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(26.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(27.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(28.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(29.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(30.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(31.0), kW_as_W(10.591));
+	pvAvail.emplace_back(hours_as_seconds(32.0), kW_as_W(693.539));
+	pvAvail.emplace_back(hours_as_seconds(33.0), kW_as_W(1191.017));
+	pvAvail.emplace_back(hours_as_seconds(34.0), kW_as_W(1584.868));
+	pvAvail.emplace_back(hours_as_seconds(35.0), kW_as_W(1820.692));
+	pvAvail.emplace_back(hours_as_seconds(36.0), kW_as_W(1952.869));
+	pvAvail.emplace_back(hours_as_seconds(37.0), kW_as_W(1799.1));
+	pvAvail.emplace_back(hours_as_seconds(38.0), kW_as_W(1067.225));
+	pvAvail.emplace_back(hours_as_seconds(39.0), kW_as_W(396.023));
+	pvAvail.emplace_back(hours_as_seconds(40.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(41.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(42.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(43.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(44.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(45.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(46.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(47.0), kW_as_W(0.0));
+	pvAvail.emplace_back(hours_as_seconds(48.0), kW_as_W(0.0));
+	// COMPONENTS
+	auto pvArrayId = Model_AddScheduleBasedSource(m, ss, pvAvail);
+	auto elecUtilId = Model_AddConstantSource(
+		m, std::numeric_limits<uint32_t>::max());
+	auto batteryId = Model_AddStore(
+		m,
+		kWh_as_J(100.0),
+		kW_as_W(10.0),
+		kW_as_W(1'000.0),
+		kWh_as_J(80.0),
+		kWh_as_J(100.0));
+	auto elecSourceMuxId = Model_AddMux(m, 2, 1);
+	auto elecSupplyMuxId = Model_AddMux(m, 2, 2);
+	auto ngUtilId = Model_AddConstantSource(
+		m, std::numeric_limits<uint32_t>::max());
+	auto ngSourceMuxId = Model_AddMux(m, 1, 2);
+	auto ngToElecConvId = Model_AddConstantEfficiencyConverter(
+		m, ss, 42, 100);
+	auto elecHeatPumpConvId = Model_AddConstantEfficiencyConverter(
+		m, ss, 35, 10);
+	auto ngHeaterConvId = Model_AddConstantEfficiencyConverter(
+		m, ss, 98, 100);
+	auto heatingSupplyMuxId = Model_AddMux(m, 3, 1);
+	auto elecLoadId = Model_AddScheduleBasedLoad(m, elecLoad);
+	auto heatLoadId = Model_AddScheduleBasedLoad(m, heatLoad);
+	// NETWORK / CONNECTIONS
+	// - electricity
+	auto pvToEmuxConn =
+		Model_AddConnection(m, ss, pvArrayId.Id, 0, elecSourceMuxId, 0);
+	auto eutilToEmuxConn =
+		Model_AddConnection(m, ss, elecUtilId, 0, elecSourceMuxId, 1);
+	auto emuxToBatteryConn =
+		Model_AddConnection(m, ss, elecSourceMuxId, 0, batteryId, 0);
+	auto batteryToEsupplyConn =
+		Model_AddConnection(m, ss, batteryId, 0, elecSupplyMuxId, 0);
+	auto ngGenToEsupplyConn =
+		Model_AddConnection(m, ss, ngToElecConvId.Id, 0, elecSupplyMuxId, 1);
+	auto esupplyToLoadConn =
+		Model_AddConnection(m, ss, elecSupplyMuxId, 0, elecLoadId, 0);
+	auto esupplyToHeatPumpConn =
+		Model_AddConnection(m, ss,
+			elecSupplyMuxId, 1, elecHeatPumpConvId.Id, 0);
+	// - natural gas
+	auto ngGridToNgMuxConn =
+		Model_AddConnection(m, ss, ngUtilId, 0, ngSourceMuxId, 0);
+	auto ngMuxToNgGenConn =
+		Model_AddConnection(m, ss, ngSourceMuxId, 0, ngToElecConvId.Id, 0);
+	auto ngMuxToNgHeaterConn =
+		Model_AddConnection(m, ss, ngSourceMuxId, 1, ngHeaterConvId.Id, 0);
+	// - heating
+	auto ngGenLossToHeatMuxConn =
+		Model_AddConnection(m, ss, ngToElecConvId.Id, 1, heatingSupplyMuxId, 0);
+	auto ngHeaterToHeatMuxConn =
+		Model_AddConnection(m, ss, ngHeaterConvId.Id, 0, heatingSupplyMuxId, 1);
+	auto heatPumpToHeatMuxConn =
+		Model_AddConnection(m, ss,
+			elecHeatPumpConvId.Id, 0, heatingSupplyMuxId, 2);
+	auto heatMuxToLoadConn =
+		Model_AddConnection(m, ss, heatingSupplyMuxId, 0, heatLoadId, 0);
+	// SIMULATE
 	auto results = Simulate(m, ss, doPrint);
 	PrintPass(doPrint, "13");
 }
 
 void
-Test13(bool doPrint)
+Test14(bool doPrint)
 {
 	PrintBanner(doPrint, "14");
-	// 13 with reliability
+	Model m = {};
+	m.RandFn = []() { return 0.4; };
+	m.FinalTime = 4.0;
+	SimulationState ss{};
+	std::vector<TimeAndAmount> availablePower{
+		{ 0.0, 50 },
+		{ 2.0, 10 },
+	};
+	auto src01Id = Model_AddConstantSource(m, 50);
+	auto src02Id = Model_AddScheduleBasedSource(m, ss, availablePower);
+	auto muxId = Model_AddMux(m, 2, 1);
+	auto loadId = Model_AddConstantLoad(m, 100);
+	auto src1ToMuxConn = Model_AddConnection(m, ss, src01Id, 0, muxId, 0);
+	auto src2ToMuxConn = Model_AddConnection(m, ss, src02Id.Id, 0, muxId, 1);
+	auto muxToLoadConn = Model_AddConnection(m, ss, muxId, 0, loadId, 0);
+	auto results = Simulate(m, ss, doPrint);
+	// TODO: add tests
 	PrintPass(doPrint, "14");
 }
-*/
+
+void
+Test15(bool doPrint)
+{
+	PrintBanner(doPrint, "15");
+	Model m = {};
+	m.RandFn = []() { return 0.4; };
+	m.FinalTime = 4.0;
+	SimulationState ss{};
+	std::vector<TimeAndAmount> loadOne{
+		{ 0.0, 50 },
+		{ 2.0, 10 },
+	};
+	auto src01Id = Model_AddConstantSource(m, 1'000);
+	auto src02Id = Model_AddConstantSource(m, 1'000);
+	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
+	auto muxId = Model_AddMux(m, 2, 1);
+	auto load01Id = Model_AddScheduleBasedLoad(m, loadOne);
+	auto load02Id = Model_AddConstantLoad(m, 100);
+	auto src1ToConvConn = Model_AddConnection(m, ss, src01Id, 0, convId.Id, 0);
+	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, load01Id, 0);
+	auto convLossToMuxConn = Model_AddConnection(m, ss, convId.Id, 1, muxId, 0);
+	auto src2ToMuxConn = Model_AddConnection(m, ss, src02Id, 0, muxId, 1);
+	auto muxToLoadConn = Model_AddConnection(m, ss, muxId, 0, load02Id, 0);
+	auto results = Simulate(m, ss, doPrint);
+	assert(results.size() == 2);
+	double t = 0.0;
+	auto src1ToConvResults =
+		ModelResults_GetFlowForConnection(m, src1ToConvConn, t, results);
+	assert(src1ToConvResults.has_value());
+	assert(src1ToConvResults.value().Actual == 200);
+	assert(src1ToConvResults.value().Requested == 200);
+	assert(src1ToConvResults.value().Available == 1'000);
+	auto convToLoadResults =
+		ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
+	assert(convToLoadResults.has_value());
+	assert(convToLoadResults.value().Actual == 50);
+	assert(convToLoadResults.value().Requested == 50);
+	assert(convToLoadResults.value().Available == 250);
+	auto convLossToMuxResults =
+		ModelResults_GetFlowForConnection(m, convLossToMuxConn, t, results);
+	assert(convLossToMuxResults.has_value());
+	assert(convLossToMuxResults.value().Actual == 100);
+	assert(convLossToMuxResults.value().Requested == 100);
+	assert(convLossToMuxResults.value().Available == 150);
+	auto src2ToMuxResults =
+		ModelResults_GetFlowForConnection(m, src2ToMuxConn, t, results);
+	assert(src2ToMuxResults.has_value());
+	assert(src2ToMuxResults.value().Actual == 0);
+	assert(src2ToMuxResults.value().Requested == 0);
+	assert(src2ToMuxResults.value().Available == 1'000);
+	auto muxToLoadResults =
+		ModelResults_GetFlowForConnection(m, muxToLoadConn, t, results);
+	assert(muxToLoadResults.has_value());
+	assert(muxToLoadResults.value().Actual == 100);
+	assert(muxToLoadResults.value().Requested == 100);
+	assert(muxToLoadResults.value().Available == 1'150);
+	t = 2.0;
+	src1ToConvResults =
+		ModelResults_GetFlowForConnection(m, src1ToConvConn, t, results);
+	assert(src1ToConvResults.has_value());
+	assert(src1ToConvResults.value().Actual == 40);
+	assert(src1ToConvResults.value().Requested == 40);
+	assert(src1ToConvResults.value().Available == 1'000);
+	convToLoadResults =
+		ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
+	assert(convToLoadResults.has_value());
+	assert(convToLoadResults.value().Actual == 10);
+	assert(convToLoadResults.value().Requested == 10);
+	assert(convToLoadResults.value().Available == 250);
+	convLossToMuxResults =
+		ModelResults_GetFlowForConnection(m, convLossToMuxConn, t, results);
+	assert(convLossToMuxResults.has_value());
+	assert(convLossToMuxResults.value().Actual == 30);
+	assert(convLossToMuxResults.value().Requested == 100);
+	assert(convLossToMuxResults.value().Available == 30);
+	muxToLoadResults =
+		ModelResults_GetFlowForConnection(m, muxToLoadConn, t, results);
+	assert(muxToLoadResults.has_value());
+	assert(muxToLoadResults.value().Actual == 100);
+	assert(muxToLoadResults.value().Requested == 100);
+	assert(muxToLoadResults.value().Available == 1'030);
+	src2ToMuxResults =
+		ModelResults_GetFlowForConnection(m, src2ToMuxConn, t, results);
+	assert(src2ToMuxResults.has_value());
+	assert(src2ToMuxResults.value().Actual == 70);
+	assert(src2ToMuxResults.value().Requested == 70);
+	assert(src2ToMuxResults.value().Available == 1'000);
+	PrintPass(doPrint, "15");
+}
 
 int
 main(int argc, char** argv) {
@@ -1120,6 +1424,9 @@ main(int argc, char** argv) {
 	Test10(false);
 	Test11(false);
 	Test12(false);
+	Test13(true);
+	Test14(false);
+	Test15(false);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 	std::cout << "Duration " << ((double)duration.count() / 1000.0) << " ms" << std::endl;

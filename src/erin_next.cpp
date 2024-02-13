@@ -5,56 +5,6 @@
 namespace erin_next
 {
 
-	constexpr bool do_debug = false;
-
-	static unsigned int numBackwardPasses = 0;
-	static unsigned int numForwardPasses = 0;
-	static unsigned int numPostPasses = 0;
-	static unsigned int grandTotalPasses = 0;
-
-	void
-	Debug_PrintNumberOfPasses(bool onlyGrandTotal)
-	{
-		if constexpr (do_debug)
-		{
-			if (onlyGrandTotal)
-			{
-				std::cout << "Grand total        : "
-					<< grandTotalPasses << std::endl;
-			}
-			else
-			{
-				std::cout << "Number of:" << std::endl;
-				std::cout << "... backward passes: " <<
-					numBackwardPasses << std::endl;
-				std::cout << "... forward passes : "
-					<< numForwardPasses << std::endl;
-				std::cout << "... post passes    : "
-					<< numPostPasses << std::endl;
-				std::cout << "... total passes   : "
-					<< (numBackwardPasses + numForwardPasses + numPostPasses)
-					<< std::endl;
-			}
-		}
-	}
-
-	void
-	Debug_ResetNumberOfPasses(bool resetAll)
-	{
-		if constexpr (do_debug)
-		{
-			grandTotalPasses +=
-				numBackwardPasses + numForwardPasses + numPostPasses;
-			numBackwardPasses = 0;
-			numForwardPasses = 0;
-			numPostPasses = 0;
-			if (resetAll)
-			{
-				grandTotalPasses = 0;
-			}
-		}
-	}
-
 	size_t
 	Component_AddComponentReturningId(
 		ComponentDict& c,
@@ -373,79 +323,128 @@ namespace erin_next
 	}
 
 	void
+	UpdateConstantEfficiencyLossflowAndWasteflow(
+		Model const& m,
+		SimulationState& ss,
+		size_t compIdx)
+	{
+		uint32_t inflowRequest =
+			ss.Flows[m.ConstEffConvs[compIdx].InflowConn].Requested;
+		uint32_t inflowAvailable =
+			ss.Flows[m.ConstEffConvs[compIdx].InflowConn].Available;
+		uint32_t outflowRequest =
+			ss.Flows[m.ConstEffConvs[compIdx].OutflowConn].Requested;
+		uint32_t outflowAvailable =
+			ss.Flows[m.ConstEffConvs[compIdx].OutflowConn].Available;
+		std::optional<size_t> lossflowConn =
+			m.ConstEffConvs[compIdx].LossflowConn;
+		uint32_t inflow = FinalizeFlowValue(inflowRequest, inflowAvailable);
+		uint32_t outflow = FinalizeFlowValue(outflowRequest, outflowAvailable);
+		// NOTE: for COP, we can have outflow > inflow, but we assume no
+		// lossflow in that scenario
+		// TODO: should COP components be separate components? A COP component
+		// with a lossflow hookup would be odd... wasteflow doesn't make sense
+		// either... I think the answer is "yes"; we can re-add the check for
+		// inflow >= outflow...
+		uint32_t nonOutflowAvailable =
+			inflow > outflow
+			? inflow - outflow
+			: 0;
+		uint32_t lossflowRequest = 0;
+		if (lossflowConn.has_value()) {
+			lossflowRequest = ss.Flows[lossflowConn.value()].Requested;
+			if (nonOutflowAvailable != ss.Flows[lossflowConn.value()].Available)
+			{
+				ss.ActiveConnectionsFront.insert(lossflowConn.value());
+			}
+			ss.Flows[lossflowConn.value()].Available = nonOutflowAvailable;
+		}
+		size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn;
+		uint32_t wasteflow =
+			nonOutflowAvailable > lossflowRequest
+			? nonOutflowAvailable - lossflowRequest
+			: 0;
+		ss.Flows[wasteflowConn].Requested = wasteflow;
+		ss.Flows[wasteflowConn].Available = wasteflow;
+	}
+
+	void
 	RunConstantEfficiencyConverterBackward(
 		Model const& m,
 		SimulationState& ss,
 		size_t connIdx,
 		size_t compIdx)
 	{
-		if constexpr (do_debug)
-		{
-			++numBackwardPasses;
-		}
 		size_t inflowConn = m.ConstEffConvs[compIdx].InflowConn;
 		uint32_t outflowRequest = ss.Flows[connIdx].Requested;
 		uint32_t inflowRequest =
 			(m.ConstEffConvs[compIdx].EfficiencyDenominator * outflowRequest)
 			/ m.ConstEffConvs[compIdx].EfficiencyNumerator;
-		assert((inflowRequest >= outflowRequest)
-			&& "inflow must be >= outflow in converter");
+		// NOTE: for COP, we can have inflow < outflow
 		if (inflowRequest != ss.Flows[inflowConn].Requested)
 		{
 			ss.ActiveConnectionsBack.insert(inflowConn);
 		}
 		ss.Flows[inflowConn].Requested = inflowRequest;
-		uint32_t attenuatedLossflowRequest = 0;
-		std::optional<size_t> lossflowConn =
-			m.ConstEffConvs[compIdx].LossflowConn;
-		if (lossflowConn.has_value()) {
-			attenuatedLossflowRequest = FinalizeFlowValue(
-				inflowRequest - outflowRequest,
-				ss.Flows[lossflowConn.value()].Requested);
+		UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
+	}
+
+	void
+	Mux_RequestInflowsIntelligently(
+		SimulationState& ss,
+		std::vector<size_t> const& inflowConns,
+		uint32_t remainingRequest)
+	{
+		for (size_t inflowConn : inflowConns)
+		{
+			if (ss.Flows[inflowConn].Requested != remainingRequest)
+			{
+				ss.ActiveConnectionsBack.insert(inflowConn);
+			}
+			ss.Flows[inflowConn].Requested = remainingRequest;
+			remainingRequest =
+				remainingRequest > ss.Flows[inflowConn].Available
+				? remainingRequest - ss.Flows[inflowConn].Available
+				: 0;
 		}
-		size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn;
-		uint32_t wasteflowRequest =
-			inflowRequest - outflowRequest - attenuatedLossflowRequest;
-		ss.Flows[wasteflowConn].Requested = wasteflowRequest;
 	}
 
 	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		if constexpr (do_debug)
-		{
-			++numBackwardPasses;
-		}
 		uint32_t totalRequest = 0;
 		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
 		{
 			totalRequest += ss.Flows[outflowConnIdx].Requested;
 		}
-		std::vector<uint32_t> inflowRequests = {};
-		inflowRequests.reserve(model.Muxes[compIdx].NumInports);
-		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
-		{
-			uint32_t request = ss.Flows[inflowConnIdx].Available >= totalRequest
-				? totalRequest
-				: ss.Flows[inflowConnIdx].Available;
-			inflowRequests.push_back(request);
-			totalRequest -= request;
-		}
-		if (totalRequest > 0) {
-			inflowRequests[0] += totalRequest;
-			totalRequest = 0;
-		}
-		for (size_t muxInPort = 0;
-			muxInPort < model.Muxes[compIdx].NumInports;
-			++muxInPort)
-		{
-			size_t inflowConnIdx = model.Muxes[compIdx].InflowConns[muxInPort];
-			if (ss.Flows[inflowConnIdx].Requested != inflowRequests[muxInPort])
-			{
-				ss.ActiveConnectionsBack.insert(inflowConnIdx);
-			}
-			ss.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
-		}
+		Mux_RequestInflowsIntelligently(
+			ss, model.Muxes[compIdx].InflowConns, totalRequest);
+		//std::vector<uint32_t> inflowRequests = {};
+		//inflowRequests.reserve(model.Muxes[compIdx].NumInports);
+		//for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
+		//{
+		//	uint32_t request =
+		//		ss.Flows[inflowConnIdx].Available >= totalRequest
+		//		? totalRequest
+		//		: ss.Flows[inflowConnIdx].Available;
+		//	inflowRequests.push_back(request);
+		//	totalRequest -= request;
+		//}
+		//if (totalRequest > 0) {
+		//	inflowRequests[0] += totalRequest;
+		//	totalRequest = 0;
+		//}
+		//for (size_t muxInPort = 0;
+		//	muxInPort < model.Muxes[compIdx].NumInports;
+		//	++muxInPort)
+		//{
+		//	size_t inflowConnIdx = model.Muxes[compIdx].InflowConns[muxInPort];
+		//	if (ss.Flows[inflowConnIdx].Requested != inflowRequests[muxInPort])
+		//	{
+		//		ss.ActiveConnectionsBack.insert(inflowConnIdx);
+		//	}
+		//	ss.Flows[inflowConnIdx].Requested = inflowRequests[muxInPort];
+		//}
 	}
 
 	void
@@ -455,10 +454,6 @@ namespace erin_next
 		size_t connIdx,
 		size_t compIdx)
 	{
-		if constexpr (do_debug)
-		{
-			++numBackwardPasses;
-		}
 		size_t inflowConnIdx = model.Stores[compIdx].InflowConn;
 		uint32_t chargeRate =
 			ss.StorageAmounts[compIdx] <= model.Stores[compIdx].ChargeAmount
@@ -534,17 +529,23 @@ namespace erin_next
 							case 1: // lossflow
 							case 2: // wasteflow
 							{
+								UpdateConstantEfficiencyLossflowAndWasteflow(
+									model, ss, compIdx);
 							} break;
 							default:
 							{
-								throw std::runtime_error{
-									"Uhandled port number" };
+								throw std::runtime_error{ "Uhandled port" };
 							}
 						}
 					} break;
 					case (ComponentType::MuxType):
 					{
 						RunMuxBackward(model, ss, compIdx);
+						if (model.Muxes[compIdx].NumOutports > 1)
+						{
+							// NOTE: possibly re-allocate downstream available
+							RunMuxForward(model, ss, compIdx);
+						}
 					} break;
 					case (ComponentType::StoreType):
 					{
@@ -562,6 +563,12 @@ namespace erin_next
 		}
 	}
 
+	// TODO: extract common function to update wasteflow/lossflow for
+	// constant-efficiency converter
+
+	// TODO: handle update to wasteflow/lossflow when lossport is hit on
+	// backward pass...
+
 	void
 	RunConstantEfficiencyConverterForward(
 		Model const& m,
@@ -569,55 +576,28 @@ namespace erin_next
 		size_t connIdx,
 		size_t compIdx)
 	{
-		if constexpr (do_debug)
-		{
-			++numForwardPasses;
-		}
 		uint32_t inflowAvailable = ss.Flows[connIdx].Available;
-		uint32_t inflowRequest = ss.Flows[connIdx].Requested;
 		size_t outflowConn = m.ConstEffConvs[compIdx].OutflowConn;
 		uint32_t outflowAvailable =
 			(m.ConstEffConvs[compIdx].EfficiencyNumerator * inflowAvailable)
 			/ m.ConstEffConvs[compIdx].EfficiencyDenominator;
-		uint32_t outflowRequest = ss.Flows[outflowConn].Requested;
-		assert(
-			(inflowAvailable >= outflowAvailable)
-			&& "converter forward flow; inflow must be >= outflow");
+		// NOTE: disabling to accommodate COP components for now
+		// TODO: create a separate COP component (like converter but no lossport
+		// or wasteport)
+		//assert(
+		//	(inflowAvailable >= outflowAvailable)
+		//	&& "converter forward flow; inflow must be >= outflow");
 		if (outflowAvailable != ss.Flows[outflowConn].Available)
 		{
 			ss.ActiveConnectionsFront.insert(outflowConn);
 		}
 		ss.Flows[outflowConn].Available = outflowAvailable;
-		std::optional<size_t> lossflowConn =
-			m.ConstEffConvs[compIdx].LossflowConn;
-		uint32_t nonOutflowAvailable =
-			FinalizeFlowValue(inflowAvailable, inflowRequest)
-			- FinalizeFlowValue(outflowAvailable, outflowRequest);
-		uint32_t lossflowAvailable = 0;
-		uint32_t lossflowRequest = 0;
-		if (lossflowConn.has_value()) {
-			lossflowRequest = ss.Flows[lossflowConn.value()].Requested;
-			lossflowAvailable =
-				FinalizeFlowValue(nonOutflowAvailable, lossflowRequest);
-			nonOutflowAvailable -= lossflowAvailable;
-			if (lossflowAvailable != ss.Flows[lossflowConn.value()].Available)
-			{
-				ss.ActiveConnectionsFront.insert(lossflowConn.value());
-			}
-			ss.Flows[lossflowConn.value()].Available = lossflowAvailable;
-		}
-		size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn;
-		ss.Flows[wasteflowConn].Requested = nonOutflowAvailable;
-		ss.Flows[wasteflowConn].Available = nonOutflowAvailable;
+		UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
 	}
 
 	void
 	RunMuxForward(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		if constexpr (do_debug)
-		{
-			++numForwardPasses;
-		}
 		uint32_t totalAvailable = 0;
 		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
 		{
@@ -660,10 +640,6 @@ namespace erin_next
 		size_t connIdx,
 		size_t compIdx)
 	{
-		if constexpr (do_debug)
-		{
-			++numForwardPasses;
-		}
 		size_t outflowConn = model.Stores[compIdx].OutflowConn;
 		uint32_t available = ss.Flows[connIdx].Available;
 		uint32_t dischargeAvailable = ss.StorageAmounts[compIdx] > 0
@@ -705,6 +681,11 @@ namespace erin_next
 					case (ComponentType::MuxType):
 					{
 						RunMuxForward(model, ss, compIdx);
+						if (model.Muxes[compIdx].NumInports > 1)
+						{
+							// NOTE: possibly re-allocate upstream requests
+							RunMuxBackward(model, ss, compIdx);
+						}
 					} break;
 					case (ComponentType::StoreType):
 					{
@@ -729,10 +710,6 @@ namespace erin_next
 		size_t connIdx,
 		size_t compIdx)
 	{
-		if constexpr (do_debug)
-		{
-			++numPostPasses;
-		}
 		// TODO: need to also add consideration for discharging TO or BELOW
 		// chargeAmount (i.e., when you cross chargeAmount from above)
 		// NOTE: we assume that the charge request never resets once at or
@@ -1249,7 +1226,7 @@ namespace erin_next
 		std::vector<TimeAndFlows> timeAndFlows = {};
 		Model_SetupSimulationState(model, ss);
 		// TODO: add the check for max time; update unit tests to work with that
-		while (t != infinity) // && t <= model.FinalTime)
+		while (t != infinity && t <= model.FinalTime)
 		{
 			// schedule each event-generating component for next event
 			// by adding to the ActiveComponentBack or ActiveComponentFront
@@ -1282,11 +1259,6 @@ namespace erin_next
 				}
 				RunActiveConnections(model, ss, t);
 			}
-			if constexpr (do_debug)
-			{
-				Debug_PrintNumberOfPasses();
-				Debug_ResetNumberOfPasses();
-			}
 			if (print)
 			{
 				PrintFlows(model, ss, t);
@@ -1307,11 +1279,6 @@ namespace erin_next
 			UpdateScheduleBasedLoadNextEvent(model, ss, nextTime);
 			UpdateScheduleBasedSourceNextEvent(model, ss, nextTime);UpdateScheduleBasedSourceNextEvent(model, ss, nextTime);
 			t = nextTime;
-		}
-		if constexpr (do_debug)
-		{
-			Debug_PrintNumberOfPasses(true);
-			Debug_ResetNumberOfPasses(true);
 		}
 		return timeAndFlows;
 	}
@@ -1991,6 +1958,15 @@ namespace erin_next
 				<< ft.Type[m.Connections[i].FlowTypeId]
 				<< std::endl;
 		}
+	}
+
+	std::ostream&
+	operator<<(std::ostream& os, Flow const& flow)
+	{
+		os << "Flow{Requested=" << flow.Requested << ", "
+			<< "Available=" << flow.Available << ", "
+			<< "Actual=" << flow.Actual << "}";
+		return os;
 	}
 
 }

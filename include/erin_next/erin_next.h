@@ -19,6 +19,7 @@
 #include <optional>
 #include <set>
 #include <map>
+#include <ostream>
 
 namespace erin_next
 {
@@ -274,6 +275,12 @@ namespace erin_next
 		Model const& m, ComponentType ct, size_t compId, size_t outflowPort);
 
 	void
+	UpdateConstantEfficiencyLossflowAndWasteflow(
+		Model const& m,
+		SimulationState& ss,
+		size_t compIdx);
+
+	void
 	RunMuxPostFinalization(
 		Model const& m, SimulationState& ss, size_t compIdx);
 
@@ -453,6 +460,12 @@ namespace erin_next
 		Model const& m, SimulationState& ss, size_t connIdx, size_t compIdx);
 
 	void
+	Mux_RequestInflowsIntelligently(
+		SimulationState& ss,
+		std::vector<size_t> const& inflowConns,
+		uint32_t remainingRequest);
+
+	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx);
 
 	void
@@ -522,6 +535,9 @@ namespace erin_next
 
 	void
 	Model_PrintConnections(Model const& m, FlowDict const& ft);
+
+	std::ostream&
+	operator<<(std::ostream& os, Flow const& flow);
 }
 
 #endif

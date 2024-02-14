@@ -365,7 +365,16 @@ namespace erin_next
 		}
 		out << "scenario id,"
 			<< "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
-			<< "elapsed (hours)\n";
+			<< "elapsed (hours)";
+		for (auto const& conn : s.Model.Connections)
+		{
+			std::string const& fromTag = s.Model.ComponentMap.Tag[conn.FromId];
+			std::string const& toTag = s.Model.ComponentMap.Tag[conn.ToId];
+			out << ","
+				<< fromTag << ":OUT(" << conn.FromPort << ") => "
+				<< toTag << ":IN(" << conn.ToPort << ")";
+		}
+		out << "\n";
 		for (size_t scenIdx = 0;
 			scenIdx < Simulation_ScenarioCount(s);
 			++scenIdx)
@@ -430,7 +439,14 @@ namespace erin_next
 				{
 					out << scenarioTag << ","
 						<< scenarioStartTime << ","
-						<< (r.Time / seconds_per_hour) << "\n";
+						<< (r.Time / seconds_per_hour);
+					for (size_t connIdx = 0;
+						connIdx < r.Flows.size();
+						++connIdx)
+					{
+						out << "," << r.Flows[connIdx].Actual;
+					}
+					out << "\n";
 				}
 			}
 		}

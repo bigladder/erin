@@ -2,7 +2,9 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next_component.h"
+#include "erin_next/erin_next_utils.h"
 #include <assert.h>
+#include <fstream>
 
 namespace erin_next
 {
@@ -339,6 +341,7 @@ namespace erin_next
 	{
 		// TODO: expose proper options
 		bool option_verbose = true;
+		std::string eventFilePath{ "out.csv" };
 		// TODO: check the components and network:
 		// -- that all components are hooked up to something
 		// -- that no port is double linked
@@ -351,10 +354,23 @@ namespace erin_next
 		// ... each scenario's instance.
 		// TODO: generate a data structure to hold all results.
 		// TODO: set random function for Model based on SimInfo
+		std::ofstream out;
+		out.open(eventFilePath);
+		if (!out.good())
+		{
+			std::cout << "Could not open '"
+				<< eventFilePath << "' for writing."
+				<< std::endl;
+			return;
+		}
+		out << "scenario id,"
+			<< "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
+			<< "elapsed (hours)\n";
 		for (size_t scenIdx = 0;
 			scenIdx < Simulation_ScenarioCount(s);
 			++scenIdx)
 		{
+			std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
 			// for this scenario, ensure all schedule-based components
 			// have the right schedule set for this scenario
 			for (size_t sblIdx = 0;
@@ -382,6 +398,8 @@ namespace erin_next
 					s.Model.ScheduledLoads[sblIdx].TimesAndLoads = schedule;
 				}
 			}
+			// TODO: implement load substitution for schedule-based sources
+			// for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size(); ++sbsIdx) {/* ... */}
 			// TODO: implement occurrences of the scenario in time.
 			// for now, we know a priori that we have a max occurrence of 1
 			std::vector<double> occurrenceTimes_s = { 0.0 };
@@ -390,6 +408,9 @@ namespace erin_next
 				double duration_s = Time_ToSeconds(
 					s.ScenarioMap.Durations[scenIdx],
 					s.ScenarioMap.TimeUnits[scenIdx]);
+				std::string scenarioStartTime =
+					TimeToISO8601Period(
+						static_cast<uint64_t>(std::llround(t)));
 				// TODO: compute end time for clipping
 				double tEnd = t + duration_s;
 				if (option_verbose)
@@ -404,7 +425,14 @@ namespace erin_next
 				// TODO: add an optional verbosity flag to SimInfo
 				// -- use that to set things like the print flag below
 				auto results = Simulate(s.Model, ss, option_verbose);
+				for (auto const& r : results)
+				{
+					out << scenarioTag << ","
+						<< scenarioStartTime << ","
+						<< (r.Time / seconds_per_hour) << "\n";
+				}
 			}
 		}
+		out.close();
 	}
 }

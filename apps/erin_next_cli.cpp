@@ -16,7 +16,12 @@
 void
 PrintUsage(std::string const& progName)
 {
-	std::cout << "USAGE: " << progName << " <toml-input-file>" << std::endl;
+	std::cout << "USAGE: " << progName << " "
+		<< "<toml-input-file> "
+		<< "<optional:output csv; default:out.csv> "
+		<< "<optional:statistics.csv; default:stats.csv> "
+		<< "<optional:scenario; default: run all>"
+		<< std::endl;
 }
 
 int
@@ -27,7 +32,7 @@ main(int argc, char** argv)
 	std::cout
 		<< "Copyright (C) 2020-2024 Big Ladder Software LLC." << std::endl;
 	std::cout << "See LICENSE.txt file for license information." << std::endl;
-	if (argc == 2)
+	if (argc >= 2)
 	{
 		std::string fname{ argv[1] };
 		std::cout << "input file: " << fname << std::endl;

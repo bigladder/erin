@@ -198,6 +198,7 @@ add_library(erin_next
 	erin_next_simulation.cpp
 	erin_next_scenario.cpp
 	erin_next_units.cpp
+	erin_next_utils.cpp
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_distribution.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_reliability.h"
@@ -212,6 +213,7 @@ add_library(erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_scenario.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_units.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_result.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_utils.h"
 )
 
 # Add Warnings

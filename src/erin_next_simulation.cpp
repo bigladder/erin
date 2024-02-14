@@ -425,6 +425,7 @@ namespace erin_next
 				// TODO: add an optional verbosity flag to SimInfo
 				// -- use that to set things like the print flag below
 				auto results = Simulate(s.Model, ss, option_verbose);
+				// TODO: investigate putting output on another thread
 				for (auto const& r : results)
 				{
 					out << scenarioTag << ","

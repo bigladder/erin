@@ -1710,7 +1710,11 @@ namespace erin_next
 						sos.OutflowRequest_kJ += flow.Requested * dt;
 						allLoadsMet =
 							allLoadsMet && (flow.Actual == flow.Requested);
-						
+						if (flow.Actual != flow.Requested)
+						{
+							sos.LoadNotServed_kJ +=
+								(flow.Requested - flow.Actual) * dt;
+						}
 					} break;
 					case (ComponentType::WasteSinkType):
 					{

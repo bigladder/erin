@@ -97,6 +97,7 @@ namespace erin_next
 		double StorageDischarge_kJ = 0.0;
 		double StorageCharge_kJ = 0.0;
 		double Wasteflow_kJ = 0.0;
+		double LoadNotServed_kJ = 0.0;
 		double Uptime_s = 0.0;
 		double Downtime_s = 0.0;
 	};

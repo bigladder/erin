@@ -488,8 +488,8 @@ namespace erin_next
 			<< "efficiency (%),"
 			<< "uptime (h),"
 			<< "downtime (h),"
-			// << "load not served (kJ),"
-			// << "energy robustness [ER] (%),"
+			<< "load not served (kJ),"
+			<< "energy robustness [ER] (%),"
 			// << "max single event downtime [MaxSEDT] (hour),"
 			// << "energy availability [EA] (%)"
 			<< std::endl;
@@ -503,6 +503,10 @@ namespace erin_next
 				os.Inflow_kJ > 0.0
 				? os.OutflowAchieved_kJ * 100.0 / os.Inflow_kJ
 				: 0.0;
+			double ER =
+				os.OutflowRequest_kJ > 0.0
+				? (os.OutflowAchieved_kJ * 100.0 / os.OutflowRequest_kJ)
+				: 0.0;
 			stats << s.ScenarioMap.Tags[os.Id]
 				<< "," << os.OccurrenceNumber
 				<< "," << (os.Duration_s / seconds_per_hour)
@@ -514,6 +518,8 @@ namespace erin_next
 				<< "," << efficiency
 				<< "," << (os.Uptime_s / seconds_per_hour)
 				<< "," << (os.Downtime_s / seconds_per_hour)
+				<< "," << os.LoadNotServed_kJ
+				<< "," << ER
 				<< std::endl;
 		}
 		

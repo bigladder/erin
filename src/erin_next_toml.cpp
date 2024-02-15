@@ -3,13 +3,16 @@
 
 namespace erin_next
 {
+	// TODO: pass in a mutable vector of error strings we can push to
+	// in order to decouple printing from here.
 	bool
 	TOMLTable_IsValid(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::unordered_set<std::string> const& requiredFields,
 		std::unordered_set<std::string> const& optionalFields,
 		std::unordered_map<std::string, std::string> const& defaults,
-		std::string const& tableName)
+		std::string const& tableName,
+		bool doPrint)
 	{
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
@@ -17,8 +20,12 @@ namespace erin_next
 				&& !optionalFields.contains(it->first)
 				&& !defaults.contains(it->first))
 			{
-				std::cout << "[" << tableName << "] "
-					<< "Unrecognized key '" << it->first << "'" << std::endl;
+				if (doPrint)
+				{
+					std::cout << "[" << tableName << "] "
+						<< "Unrecognized key '" << it->first
+						<< "'" << std::endl;
+				}
 				return false;
 			}
 		}
@@ -26,8 +33,11 @@ namespace erin_next
 		{
 			if (!table.contains(*it))
 			{
-				std::cout << "[" << tableName << "] "
-					<< "Missing required key '" << *it << "'" << std::endl;
+				if (doPrint)
+				{
+					std::cout << "[" << tableName << "] "
+						<< "Missing required key '" << *it << "'" << std::endl;
+				}
 				return false;
 			}
 		}

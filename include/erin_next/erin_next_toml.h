@@ -18,7 +18,8 @@ namespace erin_next
 		std::unordered_set<std::string> const& requiredFields,
 		std::unordered_set<std::string> const& optionalFields,
 		std::unordered_map<std::string, std::string> const& defaults,
-		std::string const& tableName);
+		std::string const& tableName,
+		bool doPrint = false);
 
 	std::optional<std::string>
 	TOMLTable_ParseString(

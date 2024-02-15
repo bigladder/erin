@@ -1672,12 +1672,18 @@ namespace erin_next
 		std::vector<TimeAndFlows> const& timeAndFlows)
 	{
 		ScenarioOccurrenceStats sos{};
+		sos.Id = scenarioId;
+		sos.OccurrenceNumber = occurrenceNumber;
 		double lastTime = timeAndFlows.size() > 0 ? timeAndFlows[0].Time : 0.0;
 		for (size_t eventIdx = 1; eventIdx < timeAndFlows.size(); ++eventIdx)
 		{
 			double dt = timeAndFlows[eventIdx].Time - lastTime;
+			// TODO: in Simulation, ensure we ALWAYS have an event at final time
+			// in order that scenario duration equals what we have here; this
+			// is a good check.
 			sos.Duration_s += dt;
 			lastTime = timeAndFlows[eventIdx].Time;
+			bool allLoadsMet = true;
 			for (size_t connId = 0;
 				connId < timeAndFlows[eventIdx-1].Flows.size();
 				++connId)
@@ -1702,12 +1708,9 @@ namespace erin_next
 					{
 						sos.OutflowAchieved_kJ += flow.Actual * dt;
 						sos.OutflowRequest_kJ += flow.Requested * dt;
-						if (flow.Actual == flow.Requested)
-						{
-							sos.Uptime_s += dt;
-						}
-						// TODO: add downtime
-						// else { tif.Downtime_s += dt; }
+						allLoadsMet =
+							allLoadsMet && (flow.Actual == flow.Requested);
+						
 					} break;
 					case (ComponentType::WasteSinkType):
 					{
@@ -1716,6 +1719,14 @@ namespace erin_next
 							* dt;
 					} break;
 				}
+			}
+			if (allLoadsMet)
+			{
+				sos.Uptime_s += dt;
+			}
+			else
+			{
+				sos.Downtime_s += dt;
 			}
 			for (size_t storeIdx = 0;
 				storeIdx < timeAndFlows[eventIdx].StorageAmounts.size();

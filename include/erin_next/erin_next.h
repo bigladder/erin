@@ -98,6 +98,7 @@ namespace erin_next
 		double StorageCharge_kJ = 0.0;
 		double Wasteflow_kJ = 0.0;
 		double Uptime_s = 0.0;
+		double Downtime_s = 0.0;
 	};
 
 	struct ConstantLoad

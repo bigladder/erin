@@ -487,7 +487,7 @@ namespace erin_next
 			<< "energy balance (source-(load+storage+waste)) (kJ),"
 			<< "efficiency (%),"
 			<< "uptime (h),"
-			// << "downtime (hour),"
+			<< "downtime (h),"
 			// << "load not served (kJ),"
 			// << "energy robustness [ER] (%),"
 			// << "max single event downtime [MaxSEDT] (hour),"
@@ -513,6 +513,7 @@ namespace erin_next
 				<< "," << balance
 				<< "," << efficiency
 				<< "," << (os.Uptime_s / seconds_per_hour)
+				<< "," << (os.Downtime_s / seconds_per_hour)
 				<< std::endl;
 		}
 		

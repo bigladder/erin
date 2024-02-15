@@ -100,6 +100,7 @@ namespace erin_next
 		double LoadNotServed_kJ = 0.0;
 		double Uptime_s = 0.0;
 		double Downtime_s = 0.0;
+		double MaxSEDT_s = 0.0;
 	};
 
 	struct ConstantLoad

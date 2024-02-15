@@ -485,13 +485,13 @@ namespace erin_next
 			<< "total storage (kJ),"
 			<< "total waste (kJ),"
 			<< "energy balance (source-(load+storage+waste)) (kJ),"
-			<< "efficiency (%),"
+			<< "site efficiency (%),"
 			<< "uptime (h),"
 			<< "downtime (h),"
 			<< "load not served (kJ),"
 			<< "energy robustness [ER] (%),"
-			// << "max single event downtime [MaxSEDT] (hour),"
-			// << "energy availability [EA] (%)"
+			<< "energy availability [EA] (%),"
+			<< "max single event downtime [MaxSEDT] (h)"
 			<< std::endl;
 		for (auto const& os : occurrenceStats)
 		{
@@ -507,6 +507,10 @@ namespace erin_next
 				os.OutflowRequest_kJ > 0.0
 				? (os.OutflowAchieved_kJ * 100.0 / os.OutflowRequest_kJ)
 				: 0.0;
+			double EA =
+				os.Duration_s > 0.0
+				? (os.Uptime_s * 100.0 / (os.Duration_s))
+				: 0.0;
 			stats << s.ScenarioMap.Tags[os.Id]
 				<< "," << os.OccurrenceNumber
 				<< "," << (os.Duration_s / seconds_per_hour)
@@ -520,6 +524,8 @@ namespace erin_next
 				<< "," << (os.Downtime_s / seconds_per_hour)
 				<< "," << os.LoadNotServed_kJ
 				<< "," << ER
+				<< "," << EA
+				<< "," << (os.MaxSEDT_s / seconds_per_hour)
 				<< std::endl;
 		}
 		

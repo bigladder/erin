@@ -1675,6 +1675,8 @@ namespace erin_next
 		sos.Id = scenarioId;
 		sos.OccurrenceNumber = occurrenceNumber;
 		double lastTime = timeAndFlows.size() > 0 ? timeAndFlows[0].Time : 0.0;
+		bool wasDown = false;
+		double sedt = 0.0;
 		for (size_t eventIdx = 1; eventIdx < timeAndFlows.size(); ++eventIdx)
 		{
 			double dt = timeAndFlows[eventIdx].Time - lastTime;
@@ -1727,10 +1729,25 @@ namespace erin_next
 			if (allLoadsMet)
 			{
 				sos.Uptime_s += dt;
+				if (wasDown && sedt > sos.MaxSEDT_s)
+				{
+					sos.MaxSEDT_s = sedt;
+				}
+				sedt = 0.0;
+				wasDown = false;
 			}
 			else
 			{
 				sos.Downtime_s += dt;
+				if (wasDown)
+				{
+					sedt += dt;
+				}
+				else
+				{
+					sedt = dt;
+				}
+				wasDown = true;
 			}
 			for (size_t storeIdx = 0;
 				storeIdx < timeAndFlows[eventIdx].StorageAmounts.size();
@@ -1750,6 +1767,10 @@ namespace erin_next
 					sos.StorageDischarge_kJ += -1.0 * stored;
 				}
 			}
+		}
+		if (sedt > sos.MaxSEDT_s)
+		{
+			sos.MaxSEDT_s = sedt;
 		}
 		return sos;
 	}

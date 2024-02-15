@@ -98,6 +98,7 @@ namespace erin_next
 		}
 	}
 
+	// TODO: remove m as a parameter; model is in simulation now
 	void
 	Simulation_PrintComponents(Simulation const& s, Model const& m)
 	{
@@ -139,6 +140,22 @@ namespace erin_next
 					std::cout << "- outport " << outport << ": "
 						<< s.FlowTypeMap.Type[outflowType] << std::endl;
 				}
+			}
+			switch (m.ComponentMap.CompType[i])
+			{
+				case (ComponentType::ScheduleBasedLoadType):
+				{
+					ScheduleBasedLoad const& sbl =
+						m.ScheduledLoads[m.ComponentMap.Idx[i]];
+					for (auto const& keyValue : sbl.ScenarioIdToLoadId)
+					{
+						std::cout << "-- for scenario: "
+							<< s.ScenarioMap.Tags[keyValue.first]
+							<< ", use load: "
+							<< s.LoadMap.Tags[keyValue.second]
+							<< std::endl;
+					}
+				} break;
 			}
 		}
 	}

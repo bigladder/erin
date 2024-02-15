@@ -431,6 +431,14 @@ namespace erin_next
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports);
 
 	size_t
+	Model_AddMux(
+		Model& m,
+		size_t numInports,
+		size_t numOutports,
+		size_t flowId,
+		std::string const& tag);
+
+	size_t
 	Model_AddStore(
 		Model& m,
 		uint32_t capacity,

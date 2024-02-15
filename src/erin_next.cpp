@@ -925,7 +925,7 @@ namespace erin_next
 		{
 			return ComponentType::WasteSinkType;
 		}
-		if (tag == "Mux")
+		if (tag == "Mux" || tag == "mux" || tag == "muxer")
 		{
 			return ComponentType::MuxType;
 		}
@@ -1425,15 +1425,29 @@ namespace erin_next
 	size_t
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports)
 	{
+		return Model_AddMux(m, numInports, numOutports, 0, "");
+	}
+
+	size_t
+	Model_AddMux(
+		Model& m,
+		size_t numInports,
+		size_t numOutports,
+		size_t flowId,
+		std::string const& tag)
+	{
 		size_t idx = m.Muxes.size();
 		Mux mux = {};
 		mux.NumInports = numInports;
 		mux.NumOutports = numOutports;
 		mux.InflowConns = std::vector<size_t>(numInports, 0);
 		mux.OutflowConns = std::vector<size_t>(numOutports, 0);
-		m.Muxes.push_back( std::move(mux) );
+		m.Muxes.push_back(std::move(mux));
+		std::vector<size_t> inflowTypes(numInports, flowId);
+		std::vector<size_t> outflowTypes(numOutports, flowId);
 		return Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::MuxType, idx);
+			m.ComponentMap, ComponentType::MuxType, idx,
+			inflowTypes, outflowTypes, tag);
 	}
 
 	size_t

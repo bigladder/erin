@@ -18,21 +18,31 @@ namespace erin_next
 	{
 		std::vector<std::string> Tags;
 		std::vector<size_t> OccurrenceDistributionIds;
-		// TODO: we can probably make time into an enum
 		std::vector<TimeUnit> TimeUnits;
-		// TODO: if we stay with multiple networks... which I don't recommend.
-		std::vector<size_t> NetworkIds;
 		std::vector<double> Durations;
 		// NOTE: an entry of none means "no max occurrences"; will take as
 		// many as fit in the max time of the simulation (see SimulationInfo)
 		std::vector<std::optional<size_t>> MaxOccurrences;
 	};
 
+	size_t
+	ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag);
+
+	size_t
+	ScenarioDict_RegisterScenario(
+		ScenarioDict& sd,
+		std::string const& tag,
+		size_t occurrenceDistId,
+		double duration,
+		TimeUnit timeUnit,
+		std::optional<size_t> maxOccurrences);
+
 	std::optional<size_t>
 	ParseSingleScenario(
 		ScenarioDict& sd,
 		DistributionSystem const& ds,
 		toml::table const& table,
+		std::string const& fullName,
 		std::string const& tag);
 
 	Result

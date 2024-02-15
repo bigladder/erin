@@ -37,16 +37,7 @@ namespace erin_next
 	size_t
 	Simulation_RegisterScenario(Simulation& s, std::string const& scenarioTag)
 	{
-		size_t id = s.ScenarioMap.Tags.size();
-		for (size_t i = 0; i < id; ++i)
-		{
-			if (s.ScenarioMap.Tags[i] == scenarioTag)
-			{
-				return i;
-			}
-		}
-		s.ScenarioMap.Tags.push_back(scenarioTag);
-		return id;
+		return ScenarioDict_RegisterScenario(s.ScenarioMap, scenarioTag);
 	}
 
 	size_t

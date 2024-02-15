@@ -5,48 +5,130 @@
 #include "erin_next/erin_next_toml.h"
 #include <iostream>
 #include <optional>
+#include <assert.h>
 
 namespace erin_next
 {
+	size_t
+	ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag)
+	{
+		size_t id = sd.Tags.size();
+		for (size_t i = 0; i < id; ++i)
+		{
+			if (sd.Tags[i] == tag)
+			{
+				assert(sd.Durations.size() == sd.MaxOccurrences.size());
+				assert(sd.Durations.size()
+					== sd.OccurrenceDistributionIds.size());
+				assert(sd.Durations.size() == sd.Tags.size());
+				assert(sd.Durations.size() == sd.TimeUnits.size());
+				return i;
+			}
+		}
+		sd.Tags.push_back(tag);
+		sd.OccurrenceDistributionIds.push_back(0);
+		sd.Durations.push_back(0.0);
+		sd.TimeUnits.push_back(TimeUnit::Hour);
+		sd.MaxOccurrences.push_back(0);
+		assert(sd.Durations.size() == sd.MaxOccurrences.size());
+		assert(sd.Durations.size()
+			== sd.OccurrenceDistributionIds.size());
+		assert(sd.Durations.size() == sd.Tags.size());
+		assert(sd.Durations.size() == sd.TimeUnits.size());
+		return id;
+	}
+
+	size_t
+	ScenarioDict_RegisterScenario(
+		ScenarioDict& sd,
+		std::string const& tag,
+		size_t occurrenceDistId,
+		double duration,
+		TimeUnit timeUnit,
+		std::optional<size_t> maxOccurrences)
+	{
+		size_t id = sd.Tags.size();
+		for (size_t i = 0; i < id; ++i)
+		{
+			if (sd.Tags[i] == tag)
+			{
+				sd.OccurrenceDistributionIds[i] = occurrenceDistId;
+				sd.Durations[i] = duration;
+				sd.TimeUnits[i] = timeUnit;
+				sd.MaxOccurrences[i] = maxOccurrences;
+				assert(sd.Durations.size() == sd.MaxOccurrences.size());
+				assert(sd.Durations.size()
+					== sd.OccurrenceDistributionIds.size());
+				assert(sd.Durations.size() == sd.Tags.size());
+				assert(sd.Durations.size() == sd.TimeUnits.size());
+				return i;
+			}
+		}
+		sd.Tags.push_back(tag);
+		sd.OccurrenceDistributionIds.push_back(occurrenceDistId);
+		sd.Durations.push_back(duration);
+		sd.TimeUnits.push_back(timeUnit);
+		sd.MaxOccurrences.push_back(maxOccurrences);
+		assert(sd.Durations.size() == sd.MaxOccurrences.size());
+		assert(sd.Durations.size() == sd.OccurrenceDistributionIds.size());
+		assert(sd.Durations.size() == sd.Tags.size());
+		assert(sd.Durations.size() == sd.TimeUnits.size());
+		return id;
+	}
+
 	std::optional<size_t>
 	ParseSingleScenario(
 		ScenarioDict& sd,
 		DistributionSystem const& ds,
 		toml::table const& table,
+		std::string const& fullName,
 		std::string const& tag)
 	{
 		auto maybeOccurrenceDist =
-			TOMLTable_ParseString(table, "occurrence_distribution", tag);
+			TOMLTable_ParseString(table, "occurrence_distribution", fullName);
 		if (!maybeOccurrenceDist.has_value()) return {};
 		auto maybeTimeUnitStr = TOMLTable_ParseStringWithSetResponses(
-			table, ValidTimeUnits, "time_unit", tag);
+			table, ValidTimeUnits, "time_unit", fullName);
 		if (!maybeTimeUnitStr.has_value()) return {};
 		auto maybeNetworkTag = TOMLTable_ParseString(
-			table, "network", tag);
+			table, "network", fullName);
 		if (!maybeNetworkTag.has_value()) return {};
 		auto maybeDuration = TOMLTable_ParseDouble(
-			table, "duration", tag);
+			table, "duration", fullName);
 		if (!maybeDuration.has_value()) return {};
 		std::optional<size_t> maxOccurrences = {};
 		if (table.contains("max_occurrences"))
 		{
-			maxOccurrences =
-				TOMLTable_ParseInteger(table, "max_occurrences", tag);
-			if (!maxOccurrences.has_value()) return {};
+			if (table.at("max_occurrences").is_string())
+			{
+				auto maxOccurrencesString =
+					TOMLTable_ParseString(table, "max_occurrences", fullName);
+				if (!maxOccurrencesString.has_value()) return {};
+				if (maxOccurrencesString.value() != "unlimited")
+				{
+					std::cout << "[" << fullName << "] max_occurrences must "
+						<< "be a non-zero positive number or the string "
+						<< "'unlimited'; got '" << maxOccurrencesString.value()
+						<< "'" << std::endl;
+					return {};
+				}
+			}
+			else
+			{
+				maxOccurrences =
+					TOMLTable_ParseInteger(table, "max_occurrences", fullName);
+				if (!maxOccurrences.has_value()) return {};
+			}
 		}
-		size_t id = sd.TimeUnits.size();
-		sd.OccurrenceDistributionIds.push_back(
-			ds.lookup_dist_by_tag(maybeOccurrenceDist.value()));
 		auto maybeTimeUnit = TagToTimeUnit(maybeTimeUnitStr.value());
 		if (!maybeTimeUnit.has_value()) return {};
-		sd.TimeUnits.push_back(maybeTimeUnit.value());
-		// TODO: decide whether we're going to keep handling multiple networks.
-		// If yes, this is a bug and this procedure will need to take in
-		// a reference object to look up the network id by tag. If no, we can
-		// eliminate this line and this field from the data structure.
-		sd.NetworkIds.push_back(0);
-		sd.Durations.push_back(maybeDuration.value());
-		sd.MaxOccurrences.push_back(maxOccurrences);
+		size_t id = ScenarioDict_RegisterScenario(
+			sd,
+			tag,
+			ds.lookup_dist_by_tag(maybeOccurrenceDist.value()),
+			maybeDuration.value(),
+			maybeTimeUnit.value(),
+			maxOccurrences);
 		return id;
 	}
 
@@ -65,7 +147,7 @@ namespace erin_next
 			{
 				auto maybeScenarioId =
 					ParseSingleScenario(
-						sd, ds, it->second.as_table(), fullName);
+						sd, ds, it->second.as_table(), fullName, tag);
 				if (!maybeScenarioId.has_value())
 				{
 					return Result::Failure;

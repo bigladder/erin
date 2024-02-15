@@ -52,6 +52,19 @@ namespace erin_next
 				inflowId = Simulation_RegisterFlow(s, inflow);
 			}
 		}
+		if (table.contains("flow"))
+		{
+			auto maybe = TOMLTable_ParseString(table, "flow", fullTableName);
+			if (maybe.has_value())
+			{
+				inflow = maybe.value();
+				inflowId = Simulation_RegisterFlow(s, inflow);
+				outflow = maybe.value();
+				outflowId = Simulation_RegisterFlow(s, outflow);
+			}
+		}
+		// TODO: parse failure modes
+		// TODO: parse fragility modes
 		switch (ct)
 		{
 			case (ComponentType::ConstantSourceType):
@@ -104,9 +117,47 @@ namespace erin_next
 				id = Model_AddScheduleBasedLoad(
 					m, emptyLoads, scenarioIdToLoadId, inflowId, tag);
 			} break;
+			case (ComponentType::MuxType):
+			{
+				auto numInflows =
+					TOMLTable_ParseInteger(
+						table, "num_inflows", fullTableName);
+				auto numOutflows =
+					TOMLTable_ParseInteger(
+						table, "num_outflows", fullTableName);
+				if (!numInflows.has_value())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "num_inflows doesn't appear or is not an integer"
+						<< std::endl;
+					return Result::Failure;
+				}
+				if (!numOutflows.has_value())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "num_outflows doesn't appear or is not an integer"
+						<< std::endl;
+					return Result::Failure;
+				}
+				// TODO: add flowId -- check inflowId == outflowId
+				if (inflowId != outflowId)
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "a mux component must have the same inflow type "
+						<< "as outflow type; we have inflow = '"
+						<< s.FlowTypeMap.Type[inflowId] << "'; outflow = '"
+						<< s.FlowTypeMap.Type[outflowId] << "'"
+						<< std::endl;
+					return Result::Failure;
+				}
+				id = Model_AddMux(
+					m, numInflows.value(), numOutflows.value(), outflowId, tag);
+			} break;
 			default:
 			{
-				throw new std::runtime_error{ "Unhandled component type" };
+				std::cout << "Unhandled component type: "
+					<< ToString(ct) << std::endl;
+				throw std::runtime_error{ "Unhandled component type" };
 			}
 		}
 		return Result::Success;

@@ -12,6 +12,9 @@ namespace erin_next
 		Second,
 		Minute,
 		Hour,
+		Day,
+		Week,
+		Year,
 	};
 
 	std::optional<TimeUnit>

@@ -26,6 +26,19 @@ namespace erin_next
 		{
 			return TimeUnit::Hour;
 		}
+		if (tag == "d" || tag == "ds" || tag == "day" || tag == "days")
+		{
+			return TimeUnit::Day;
+		}
+		if (tag == "week" || tag == "weeks")
+		{
+			return TimeUnit::Week;
+		}
+		if (tag == "yr" || tag == "y" || tag == "yrs" || tag == "ys"
+			|| tag == "year" || tag == "years")
+		{
+			return TimeUnit::Year;
+		}
 		return {};
 	}
 
@@ -46,6 +59,18 @@ namespace erin_next
 			case (TimeUnit::Hour):
 			{
 				result = "h";
+			} break;
+			case (TimeUnit::Day):
+			{
+				result = "d";
+			} break;
+			case (TimeUnit::Week):
+			{
+				result = "week";
+			} break;
+			case (TimeUnit::Year):
+			{
+				result = "yr";
 			} break;
 			default:
 			{
@@ -73,7 +98,19 @@ namespace erin_next
 			case (TimeUnit::Hour):
 			{
 				return t * 3600.0;
-			}
+			} break;
+			case (TimeUnit::Day):
+			{
+				return t * 24.0 * 3600.0;
+			} break;
+			case (TimeUnit::Week):
+			{
+				return t * 7.0 * 24.0 * 3600.0;
+			} break;
+			case (TimeUnit::Year):
+			{
+				return t * 365.25 * 24.0 * 3600.0;
+			} break;
 		}
 		std::ostringstream oss{};
 		oss << "unhandled time unit '" << TimeUnitToTag(unit)

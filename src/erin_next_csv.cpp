@@ -48,6 +48,9 @@ namespace erin_next
 		stream << "]";
 	}
 
+	// TODO: consider returning the ostream so we don't have to pass end_with_lf
+	// e.g., std::cout << write_csv(std::cout, ...) << std::endl;
+	// Not sure we need start either...
 	void
 	write_csv(
 		std::ostream& os,

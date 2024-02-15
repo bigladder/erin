@@ -73,11 +73,11 @@ connections = [
 [dist.immediately]
 type = "fixed"
 value = 0
-time_units = "hours"
+time_unit = "hours"
 [dist.every_10_years]
 type = "fixed"
 value = 87600
-time_units = "hours"
+time_unit = "hours"
 ############################################################
 # Scenarios
 [scenarios.blue_sky]
@@ -90,7 +90,7 @@ network = "normal_operations"
 time_unit = "hours"
 occurrence_distribution = "every_10_years"
 duration = 336
-max_occurrences = -1
+max_occurrences = "unlimited"
 network = "emergency_operations"
 intensity.wind_speed_mph = 156
 intensity.inundation_depth_ft = 8
@@ -98,7 +98,7 @@ intensity.inundation_depth_ft = 8
 time_unit = "hours"
 occurrence_distribution = "every_10_years"
 duration = 336
-max_occurrences = -1
+max_occurrences = "unlimited"
 network = "emergency_operations"
 intensity.wind_speed_mph = 200 # force failure deterministically
 intensity.inundation_depth_ft = 20 # force failure deterministically
@@ -106,7 +106,7 @@ intensity.inundation_depth_ft = 20 # force failure deterministically
 time_unit = "hours"
 occurrence_distribution = "every_10_years"
 duration = 336
-max_occurrences = -1
+max_occurrences = "unlimited"
 network = "emergency_operations"
 intensity.wind_speed_mph = 74 # force survival deterministically
 intensity.inundation_depth_ft = 2 # force survival deterministically

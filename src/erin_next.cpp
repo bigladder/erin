@@ -1664,6 +1664,81 @@ namespace erin_next
 		return {};
 	}
 
+	ScenarioOccurrenceStats
+	ModelResults_CalculateScenarioOccurrenceStats(
+		size_t scenarioId,
+		size_t occurrenceNumber,
+		Model const& m,
+		std::vector<TimeAndFlows> const& timeAndFlows)
+	{
+		ScenarioOccurrenceStats sos{};
+		double lastTime = timeAndFlows.size() > 0 ? timeAndFlows[0].Time : 0.0;
+		for (size_t eventIdx = 1; eventIdx < timeAndFlows.size(); ++eventIdx)
+		{
+			double dt = timeAndFlows[eventIdx].Time - lastTime;
+			sos.Duration_s += dt;
+			lastTime = timeAndFlows[eventIdx].Time;
+			for (size_t connId = 0;
+				connId < timeAndFlows[eventIdx-1].Flows.size();
+				++connId)
+			{
+				auto fromType =
+					m.ComponentMap.CompType[m.Connections[connId].FromId];
+				auto toType =
+					m.ComponentMap.CompType[m.Connections[connId].ToId];
+				auto const& flow = timeAndFlows[eventIdx - 1].Flows[connId];
+				switch (fromType)
+				{
+					case (ComponentType::ConstantSourceType):
+					case (ComponentType::ScheduleBasedSourceType):
+					{
+						sos.Inflow_kJ += flow.Actual * dt;
+					} break;
+				}
+				switch (toType)
+				{
+					case (ComponentType::ConstantLoadType):
+					case (ComponentType::ScheduleBasedLoadType):
+					{
+						sos.OutflowAchieved_kJ += flow.Actual * dt;
+						sos.OutflowRequest_kJ += flow.Requested * dt;
+						if (flow.Actual == flow.Requested)
+						{
+							sos.Uptime_s += dt;
+						}
+						// TODO: add downtime
+						// else { tif.Downtime_s += dt; }
+					} break;
+					case (ComponentType::WasteSinkType):
+					{
+						sos.Wasteflow_kJ +=
+							timeAndFlows[eventIdx-1].Flows[connId].Actual
+							* dt;
+					} break;
+				}
+			}
+			for (size_t storeIdx = 0;
+				storeIdx < timeAndFlows[eventIdx].StorageAmounts.size();
+				++storeIdx)
+			{
+				double stored =
+					static_cast<double>(timeAndFlows[eventIdx]
+						.StorageAmounts[storeIdx])
+					- static_cast<double>(timeAndFlows[eventIdx]
+						.StorageAmounts[storeIdx - 1]);
+				if (stored > 0)
+				{
+					sos.StorageCharge_kJ += stored;
+				}
+				else
+				{
+					sos.StorageDischarge_kJ += -1.0 * stored;
+				}
+			}
+		}
+		return sos;
+	}
+
 	std::optional<TagAndPort>
 	ParseTagAndPort(std::string const& s, std::string const& tableName)
 	{

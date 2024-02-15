@@ -75,13 +75,29 @@ namespace erin_next
 
 	struct FlowSummary
 	{
-		double Time;
-		uint32_t Inflow;
-		uint32_t OutflowRequest;
-		uint32_t OutflowAchieved;
-		uint32_t StorageDischarge;
-		uint32_t StorageCharge;
-		uint32_t Wasteflow;
+		double Time = 0.0;
+		uint32_t Inflow = 0;
+		uint32_t OutflowRequest = 0;
+		uint32_t OutflowAchieved = 0;
+		uint32_t StorageDischarge = 0;
+		uint32_t StorageCharge = 0;
+		uint32_t Wasteflow = 0;
+	};
+
+	struct ScenarioOccurrenceStats
+	{
+		// Id of the scenario; indexes into Simulation.ScenarioMap
+		size_t Id = 0;
+		// The occurrence of this scenario; 1st occurrence is 1, 2nd is 2, etc.
+		size_t OccurrenceNumber;
+		double Duration_s = 0.0;
+		double Inflow_kJ = 0.0;
+		double OutflowRequest_kJ = 0.0;
+		double OutflowAchieved_kJ = 0.0;
+		double StorageDischarge_kJ = 0.0;
+		double StorageCharge_kJ = 0.0;
+		double Wasteflow_kJ = 0.0;
+		double Uptime_s = 0.0;
 	};
 
 	struct ConstantLoad
@@ -458,6 +474,13 @@ namespace erin_next
 		size_t compId,
 		double time,
 		std::vector<TimeAndFlows> timeAndFlows);
+
+	ScenarioOccurrenceStats
+	ModelResults_CalculateScenarioOccurrenceStats(
+		size_t scenarioId,
+		size_t occurrenceNumber,
+		Model const& m,
+		std::vector<TimeAndFlows> const& timeAndFlows);
 
 	void
 	Debug_PrintNumberOfPasses(bool onlyGrandTotal = false);

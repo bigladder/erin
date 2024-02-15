@@ -5,6 +5,7 @@
 #include "erin_next/erin_next_utils.h"
 #include <assert.h>
 #include <fstream>
+#include <vector>
 
 namespace erin_next
 {
@@ -342,6 +343,7 @@ namespace erin_next
 		// TODO: expose proper options
 		bool option_verbose = true;
 		std::string eventFilePath{ "out.csv" };
+		std::string statsFilePath{ "stats.csv" };
 		// TODO: check the components and network:
 		// -- that all components are hooked up to something
 		// -- that no port is double linked
@@ -354,6 +356,8 @@ namespace erin_next
 		// ... each scenario's instance.
 		// TODO: generate a data structure to hold all results.
 		// TODO: set random function for Model based on SimInfo
+		// TODO: split out file writing into separate thread? See
+		// https://codetrips.com/2020/07/26/modern-c-writing-a-thread-safe-queue/comment-page-1/
 		std::ofstream out;
 		out.open(eventFilePath);
 		if (!out.good())
@@ -372,9 +376,10 @@ namespace erin_next
 			std::string const& toTag = s.Model.ComponentMap.Tag[conn.ToId];
 			out << ","
 				<< fromTag << ":OUT(" << conn.FromPort << ") => "
-				<< toTag << ":IN(" << conn.ToPort << ")";
+				<< toTag << ":IN(" << conn.ToPort << ") (kW)";
 		}
 		out << "\n";
+		std::vector<ScenarioOccurrenceStats> occurrenceStats{};
 		for (size_t scenIdx = 0;
 			scenIdx < Simulation_ScenarioCount(s);
 			++scenIdx)
@@ -412,8 +417,12 @@ namespace erin_next
 			// TODO: implement occurrences of the scenario in time.
 			// for now, we know a priori that we have a max occurrence of 1
 			std::vector<double> occurrenceTimes_s = { 0.0 };
-			for (double t : occurrenceTimes_s)
+			// TODO: initialize total scenario stats (i.e., over all occurrences)
+			
+			for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
 			{
+				double t = occurrenceTimes_s[occIdx];
+				// TODO: initialize per-occurrence stats
 				double duration_s = Time_ToSeconds(
 					s.ScenarioMap.Durations[scenIdx],
 					s.ScenarioMap.TimeUnits[scenIdx]);
@@ -448,8 +457,64 @@ namespace erin_next
 					}
 					out << "\n";
 				}
+				ScenarioOccurrenceStats sos =
+					ModelResults_CalculateScenarioOccurrenceStats(
+						scenIdx, occIdx + 1, s.Model, results);
+				occurrenceStats.push_back(std::move(sos));
 			}
+			// TODO: merge per-occurrence stats with global for the current
+			// scenario
 		}
 		out.close();
+		// TODO: write out stats file
+		std::ofstream stats;
+		stats.open(statsFilePath);
+		if (!stats.good())
+		{
+			std::cout << "Could not open '"
+				<< statsFilePath << "' for writing."
+				<< std::endl;
+			return;
+		}
+		stats
+			<< "scenario id,"
+			<< "occurrence number,"
+			<< "duration (h),"
+			<< "total source (kJ),"
+			<< "total load (kJ),"
+			<< "total storage (kJ),"
+			<< "total waste (kJ),"
+			<< "energy balance (source-(load+storage+waste)) (kJ),"
+			<< "efficiency (%),"
+			<< "uptime (h),"
+			// << "downtime (hour),"
+			// << "load not served (kJ),"
+			// << "energy robustness [ER] (%),"
+			// << "max single event downtime [MaxSEDT] (hour),"
+			// << "energy availability [EA] (%)"
+			<< std::endl;
+		for (auto const& os : occurrenceStats)
+		{
+			double stored = os.StorageCharge_kJ - os.StorageDischarge_kJ;
+			double balance =
+				os.Inflow_kJ
+				- (os.OutflowAchieved_kJ + stored + os.Wasteflow_kJ);
+			double efficiency =
+				os.Inflow_kJ > 0.0
+				? os.OutflowAchieved_kJ * 100.0 / os.Inflow_kJ
+				: 0.0;
+			stats << s.ScenarioMap.Tags[os.Id]
+				<< "," << os.OccurrenceNumber
+				<< "," << (os.Duration_s / seconds_per_hour)
+				<< "," << os.Inflow_kJ
+				<< "," << os.OutflowAchieved_kJ
+				<< "," << stored
+				<< "," << os.Wasteflow_kJ
+				<< "," << balance
+				<< "," << efficiency
+				<< "," << (os.Uptime_s / seconds_per_hour)
+				<< std::endl;
+		}
+		
 	}
 }

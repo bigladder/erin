@@ -22,7 +22,6 @@ main(int argc, char** argv)
 	Model m = {};
 	m.RandFn = []() { return 0.4; };
 	m.FinalTime = 8760.0 * 3600.0;
-	SimulationState ss{};
 	std::vector<TimeAndAmount> timesAndLoads = {};
 	timesAndLoads.reserve(numHours + 1);
 	for (size_t i = 0; i <= numHours; ++i)
@@ -42,7 +41,7 @@ main(int argc, char** argv)
 	std::cout << "Construction time: "
 		<< ((double)durationConstr.count() / 1000.0)
 		<< " ms" << std::endl;
-	auto results = Simulate(m, ss, false);
+	auto results = Simulate(m, false);
 	assert(results.size() == numHours + 1
 		&& "Results is not of expected length");
 	auto stop = std::chrono::high_resolution_clock::now();

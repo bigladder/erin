@@ -1148,10 +1148,11 @@ namespace erin_next
 	}
 
 	std::vector<TimeAndFlows>
-	Simulate(Model& model, SimulationState& ss, bool print = true)
+	Simulate(Model& model, bool print = true)
 	{
 		double t = 0.0;
-		std::vector<TimeAndFlows> timeAndFlows = {};
+		std::vector<TimeAndFlows> timeAndFlows{};
+		SimulationState ss{};
 		Model_SetupSimulationState(model, ss);
 		while (t != infinity && t <= model.FinalTime)
 		{

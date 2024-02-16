@@ -1488,19 +1488,16 @@ namespace erin_next
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
 		Model& m,
-		SimulationState& ss,
 		uint32_t eff_numerator,
 		uint32_t eff_denominator)
 	{
 		return Model_AddConstantEfficiencyConverter(
-			m, ss, (double)eff_numerator / (double)eff_denominator);
+			m, (double)eff_numerator / (double)eff_denominator);
 	}
 
-	// TODO: remove simulation state from this call
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
 		Model& m,
-		SimulationState& ss,
 		double efficiency)
 	{
 		size_t idx = m.ConstEffConvs.size();

@@ -449,14 +449,12 @@ namespace erin_next
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
 		Model& m,
-		SimulationState& ss,
 		uint32_t eff_numerator,
 		uint32_t eff_denominator);
 
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
 		Model& m,
-		SimulationState& ss,
 		double efficiency);
 
 	Connection

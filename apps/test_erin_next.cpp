@@ -63,7 +63,7 @@ Test2(bool print) {
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
-	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
+	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
 	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
 	auto convToLoadConn = Model_AddConnection(m, convId.Id, 0, loadId, 0);
 	auto results = Simulate(m, ss, print);
@@ -115,7 +115,7 @@ Test3(bool print) {
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
-	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
+	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
 	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
 	auto convToLoad1Conn = Model_AddConnection(m, convId.Id, 0, load1Id, 0);
 	auto convToLoad2Conn = Model_AddConnection(m, convId.Id, 1, load2Id, 0);
@@ -175,7 +175,7 @@ Test3A(bool print) {
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
-	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
+	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
 	auto convToLoad2Conn = Model_AddConnection(m, convId.Id, 1, load2Id, 0);
 	auto convToLoad1Conn = Model_AddConnection(m, convId.Id, 0, load1Id, 0);
 	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
@@ -280,9 +280,9 @@ Test5(bool print) {
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 7);
 	auto load3Id = Model_AddConstantLoad(m, 5);
-	auto conv1 = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
-	auto conv2 = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
-	auto conv3 = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
+	auto conv1 = Model_AddConstantEfficiencyConverter(m, 1, 4);
+	auto conv2 = Model_AddConstantEfficiencyConverter(m, 1, 4);
+	auto conv3 = Model_AddConstantEfficiencyConverter(m, 1, 4);
 	auto srcToConv1Conn = Model_AddConnection(m, srcId, 0, conv1.Id, 0);
 	auto conv1ToLoad1Conn =
 		Model_AddConnection(m, conv1.Id, 0, load1Id, 0);
@@ -568,7 +568,7 @@ Test10(bool doPrint) {
 	auto src2Id = Model_AddConstantSource(m, 5);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 80, 100);
 	auto muxId = Model_AddMux(m, 2, 2);
-	auto conv = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
+	auto conv = Model_AddConstantEfficiencyConverter(m, 1, 2);
 	auto load1Id = Model_AddConstantLoad(m, 20);
 	auto load2Id = Model_AddScheduleBasedLoad(m, timesAndLoads);
 	auto load3Id = Model_AddConstantLoad(m, 5);
@@ -826,7 +826,7 @@ Test11(bool doPrint)
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
-	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
+	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
 	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
 	auto convToLoadConn = Model_AddConnection(m, convId.Id, 0, loadId, 0);
 	auto fixedDistId = Model_AddFixedReliabilityDistribution(m, 10.0);
@@ -1247,11 +1247,11 @@ Test13(bool doPrint)
 		m, std::numeric_limits<uint32_t>::max());
 	auto ngSourceMuxId = Model_AddMux(m, 1, 2);
 	auto ngToElecConvId = Model_AddConstantEfficiencyConverter(
-		m, ss, 42, 100);
+		m, 42, 100);
 	auto elecHeatPumpConvId = Model_AddConstantEfficiencyConverter(
-		m, ss, 35, 10);
+		m, 35, 10);
 	auto ngHeaterConvId = Model_AddConstantEfficiencyConverter(
-		m, ss, 98, 100);
+		m, 98, 100);
 	auto heatingSupplyMuxId = Model_AddMux(m, 3, 1);
 	auto elecLoadId = Model_AddScheduleBasedLoad(m, elecLoad);
 	auto heatLoadId = Model_AddScheduleBasedLoad(m, heatLoad);
@@ -1330,7 +1330,7 @@ Test15(bool doPrint)
 	};
 	auto src01Id = Model_AddConstantSource(m, 1'000);
 	auto src02Id = Model_AddConstantSource(m, 1'000);
-	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
+	auto convId = Model_AddConstantEfficiencyConverter(m, 1, 4);
 	auto muxId = Model_AddMux(m, 2, 1);
 	auto load01Id = Model_AddScheduleBasedLoad(m, loadOne);
 	auto load02Id = Model_AddConstantLoad(m, 100);

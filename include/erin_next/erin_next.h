@@ -146,19 +146,19 @@ namespace erin_next
 
 	struct Connection
 	{
-		ComponentType From;
+		ComponentType From = ComponentType::ConstantSourceType;
 		// index into the specific component type's array
-		size_t FromIdx;
-		size_t FromPort;
+		size_t FromIdx = 0;
+		size_t FromPort = 0;
 		// index into ComponentDict
-		size_t FromId;
-		ComponentType To;
+		size_t FromId = 0;
+		ComponentType To = ComponentType::ConstantLoadType;
 		// index into the specific component type's array
-		size_t ToIdx;
-		size_t ToPort;
+		size_t ToIdx = 0;
+		size_t ToPort = 0;
 		// index into ComponentDict
-		size_t ToId;
-		size_t FlowTypeId;
+		size_t ToId = 0;
+		size_t FlowTypeId = 0;
 	};
 
 	struct Mux
@@ -464,6 +464,15 @@ namespace erin_next
 		size_t fromPort,
 		size_t to,
 		size_t toPort);
+
+	Connection
+	Model_AddConnection(
+		Model& m,
+		size_t fromId,
+		size_t fromPort,
+		size_t toId,
+		size_t toPort,
+		size_t flowId);
 
 	bool
 	SameConnection(Connection a, Connection b);

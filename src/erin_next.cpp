@@ -1516,21 +1516,37 @@ namespace erin_next
 	Connection
 	Model_AddConnection(
 		Model& m,
-		size_t from,
+		size_t fromId,
 		size_t fromPort,
-		size_t to,
+		size_t toId,
 		size_t toPort)
 	{
-		// TODO: add flow type to add connection and check
-		size_t flowTypeId = 0;
-		ComponentType fromType = m.ComponentMap.CompType[from];
-		size_t fromIdx = m.ComponentMap.Idx[from];
-		ComponentType toType = m.ComponentMap.CompType[to];
-		size_t toIdx = m.ComponentMap.Idx[to];
-		Connection c = {
-			fromType, fromIdx, fromPort, from,
-			toType, toIdx, toPort, to, flowTypeId
-		};
+		return Model_AddConnection(m, fromId, fromPort, toId, toPort, 0);
+	}
+
+	Connection
+	Model_AddConnection(
+		Model& m,
+		size_t fromId,
+		size_t fromPort,
+		size_t toId,
+		size_t toPort,
+		size_t flowId)
+	{
+		ComponentType fromType = m.ComponentMap.CompType[fromId];
+		size_t fromIdx = m.ComponentMap.Idx[fromId];
+		ComponentType toType = m.ComponentMap.CompType[toId];
+		size_t toIdx = m.ComponentMap.Idx[toId];
+		Connection c{};
+		c.From = fromType;
+		c.FromId = fromId;
+		c.FromIdx = fromIdx;
+		c.FromPort = fromPort;
+		c.To = toType;
+		c.ToId = toId;
+		c.ToIdx = toIdx;
+		c.ToPort = toPort;
+		c.FlowTypeId = flowId;
 		size_t connId = m.Connections.size();
 		m.Connections.push_back(c);
 		switch (fromType)
@@ -1959,18 +1975,8 @@ namespace erin_next
 					<< flow << std::endl;
 				return Result::Failure;
 			}
-			// TODO: use Model_AddConnection(m,);
-			Connection c = {};
-			c.From = m.ComponentMap.CompType[fromCompId];
-			c.FromIdx = m.ComponentMap.Idx[fromCompId];
-			c.FromPort = fromTap.Port;
-			c.FromId = fromCompId;
-			c.To = m.ComponentMap.CompType[toCompId];
-			c.ToIdx = m.ComponentMap.Idx[toCompId];
-			c.ToPort = toTap.Port;
-			c.ToId = toCompId;
-			c.FlowTypeId = flowTypeId;
-			m.Connections.push_back(c);
+			Model_AddConnection(
+				m, fromCompId, fromTap.Port, toCompId, toTap.Port, flowTypeId);
 		}
 		return Result::Success;
 	}

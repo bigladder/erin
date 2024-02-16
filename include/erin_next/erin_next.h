@@ -424,7 +424,6 @@ namespace erin_next
 	ComponentIdAndWasteConnection
 	Model_AddScheduleBasedSource(
 		Model& m,
-		SimulationState& ss,
 		std::vector<TimeAndAmount> xs);
 
 	size_t

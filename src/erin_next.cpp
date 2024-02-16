@@ -1413,11 +1413,9 @@ namespace erin_next
 			tag);
 	}
 
-	// TODO: Remove SimulationState from this call
 	ComponentIdAndWasteConnection
 	Model_AddScheduleBasedSource(
 		Model& m,
-		SimulationState& ss,
 		std::vector<TimeAndAmount> xs)
 	{
 		auto idx = m.ScheduledSrcs.size();

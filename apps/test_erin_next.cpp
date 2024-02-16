@@ -1014,7 +1014,7 @@ Test12(bool doPrint)
 	sourceAvailability.emplace_back(10, 8);
 	sourceAvailability.emplace_back(20, 12);
 	SimulationState ss{};
-	auto srcId = Model_AddScheduleBasedSource(m, ss, sourceAvailability);
+	auto srcId = Model_AddScheduleBasedSource(m, sourceAvailability);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto srcToLoadConn = Model_AddConnection(m, srcId.Id, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
@@ -1231,7 +1231,7 @@ Test13(bool doPrint)
 	pvAvail.emplace_back(hours_as_seconds(47.0), kW_as_W(0.0));
 	pvAvail.emplace_back(hours_as_seconds(48.0), kW_as_W(0.0));
 	// COMPONENTS
-	auto pvArrayId = Model_AddScheduleBasedSource(m, ss, pvAvail);
+	auto pvArrayId = Model_AddScheduleBasedSource(m, pvAvail);
 	auto elecUtilId = Model_AddConstantSource(
 		m, kW_as_W(10.0));
 	auto batteryId = Model_AddStore(
@@ -1305,7 +1305,7 @@ Test14(bool doPrint)
 		{ 2.0, 10 },
 	};
 	auto src01Id = Model_AddConstantSource(m, 50);
-	auto src02Id = Model_AddScheduleBasedSource(m, ss, availablePower);
+	auto src02Id = Model_AddScheduleBasedSource(m, availablePower);
 	auto muxId = Model_AddMux(m, 2, 1);
 	auto loadId = Model_AddConstantLoad(m, 100);
 	auto src1ToMuxConn = Model_AddConnection(m, src01Id, 0, muxId, 0);

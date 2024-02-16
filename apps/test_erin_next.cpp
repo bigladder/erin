@@ -474,7 +474,7 @@ Test9(bool doPrint) {
 	timesAndLoads.push_back({  5.0,  5 });
 	timesAndLoads.push_back({ 10.0, 15 });
 	Model m = {};
-	m.FinalTime = 50.0;
+	m.FinalTime = 25.0;
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 10);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 80, 100);
@@ -562,7 +562,7 @@ Test10(bool doPrint) {
 	timesAndLoads.push_back({ 5.0,  5 });
 	timesAndLoads.push_back({ 10.0, 15 });
 	Model m = {};
-	m.FinalTime = 100.0;
+	m.FinalTime = 12.5;
 	SimulationState ss{};
 	auto src1Id = Model_AddConstantSource(m, 20);
 	auto src2Id = Model_AddConstantSource(m, 5);
@@ -1007,7 +1007,7 @@ Test12(bool doPrint)
 	// always "spills" (ullage) when not all available is used.
 	Model m = {};
 	m.RandFn = []() { return 0.4; };
-	m.FinalTime = 50.0;
+	m.FinalTime = 20.0;
 	std::vector<TimeAndAmount> sourceAvailability{};
 	sourceAvailability.reserve(5);
 	sourceAvailability.emplace_back(0, 10);
@@ -1324,7 +1324,7 @@ Test15(bool doPrint)
 	PrintBanner(doPrint, "15");
 	Model m = {};
 	m.RandFn = []() { return 0.4; };
-	m.FinalTime = 4.0;
+	m.FinalTime = 2.0;
 	SimulationState ss{};
 	std::vector<TimeAndAmount> loadOne{
 		{ 0.0, 50 },

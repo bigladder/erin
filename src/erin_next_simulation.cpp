@@ -419,6 +419,13 @@ namespace erin_next
 					}
 					s.Model.ScheduledLoads[sblIdx].TimesAndLoads = schedule;
 				}
+				else
+				{
+					std::cout << "ERROR:"
+						<< "Unhandled scenario id in ScenarioIdToLoadId"
+						<< std::endl;
+					return;
+				}
 			}
 			// TODO: implement load substitution for schedule-based sources
 			// for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size(); ++sbsIdx) {/* ... */}

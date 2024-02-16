@@ -1189,10 +1189,15 @@ namespace erin_next
 			taf.Flows = CopyFlows(ss.Flows);
 			taf.StorageAmounts = CopyStorageStates(ss);
 			timeAndFlows.push_back(std::move(taf));
-			double nextTime = EarliestNextEvent(model, ss, t);
-			if (nextTime == infinity)
+			if (t == model.FinalTime)
 			{
 				break;
+			}
+			double nextTime = EarliestNextEvent(model, ss, t);
+			if ((nextTime == infinity && t < model.FinalTime)
+				|| (nextTime > model.FinalTime))
+			{
+				nextTime = model.FinalTime;
 			}
 			UpdateStoresPerElapsedTime(model, ss, nextTime - t);
 			UpdateScheduleBasedLoadNextEvent(model, ss, nextTime);

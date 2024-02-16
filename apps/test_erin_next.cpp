@@ -35,7 +35,7 @@ Test1(bool print) {
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
-	auto srcToLoadConn = Model_AddConnection(m, ss, srcId, 0, loadId, 0);
+	auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
 	auto results = Simulate(m, ss, print);
 	assert((results.size() == 1
 		&& "output must have a size of 1"));
@@ -64,8 +64,8 @@ Test2(bool print) {
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
-	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
-	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
+	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
+	auto convToLoadConn = Model_AddConnection(m, convId.Id, 0, loadId, 0);
 	auto results = Simulate(m, ss, print);
 	assert((results.size() == 1
 		&& "output must have a size of 1"));
@@ -116,9 +116,9 @@ Test3(bool print) {
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
 	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
-	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
-	auto convToLoad1Conn = Model_AddConnection(m, ss, convId.Id, 0, load1Id, 0);
-	auto convToLoad2Conn = Model_AddConnection(m, ss, convId.Id, 1, load2Id, 0);
+	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
+	auto convToLoad1Conn = Model_AddConnection(m, convId.Id, 0, load1Id, 0);
+	auto convToLoad2Conn = Model_AddConnection(m, convId.Id, 1, load2Id, 0);
 	auto results = Simulate(m, ss, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -176,9 +176,9 @@ Test3A(bool print) {
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 2);
 	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
-	auto convToLoad2Conn = Model_AddConnection(m, ss, convId.Id, 1, load2Id, 0);
-	auto convToLoad1Conn = Model_AddConnection(m, ss, convId.Id, 0, load1Id, 0);
-	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
+	auto convToLoad2Conn = Model_AddConnection(m, convId.Id, 1, load2Id, 0);
+	auto convToLoad1Conn = Model_AddConnection(m, convId.Id, 0, load1Id, 0);
+	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
 	auto results = Simulate(m, ss, print);
 	assert((results.size() == 1 && "output must have a size of 1"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -238,7 +238,7 @@ Test4(bool print) {
 	SimulationState ss{};
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
-	auto srcToLoadConn = Model_AddConnection(m, ss, srcId, 0, loadId, 0);
+	auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
 	auto results = Simulate(m, ss, print);
 	assert((results.size() == 2 && "output must have a size of 2"));
 	assert((results[0].Time == 0.0 && "time must equal 0.0"));
@@ -283,17 +283,17 @@ Test5(bool print) {
 	auto conv1 = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
 	auto conv2 = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
 	auto conv3 = Model_AddConstantEfficiencyConverter(m, ss, 1, 4);
-	auto srcToConv1Conn = Model_AddConnection(m, ss, srcId, 0, conv1.Id, 0);
+	auto srcToConv1Conn = Model_AddConnection(m, srcId, 0, conv1.Id, 0);
 	auto conv1ToLoad1Conn =
-		Model_AddConnection(m, ss, conv1.Id, 0, load1Id, 0);
+		Model_AddConnection(m, conv1.Id, 0, load1Id, 0);
 	auto conv1ToConv2Conn =
-		Model_AddConnection(m, ss, conv1.Id, 1, conv2.Id, 0);
+		Model_AddConnection(m, conv1.Id, 1, conv2.Id, 0);
 	auto conv2ToLoad2Conn =
-		Model_AddConnection(m, ss, conv2.Id, 0, load2Id, 0);
+		Model_AddConnection(m, conv2.Id, 0, load2Id, 0);
 	auto conv2ToConv3Conn =
-		Model_AddConnection(m, ss, conv2.Id, 1, conv3.Id, 0);
+		Model_AddConnection(m, conv2.Id, 1, conv3.Id, 0);
 	auto conv3ToLoad3Conn =
-		Model_AddConnection(m, ss, conv3.Id, 0, load3Id, 0);
+		Model_AddConnection(m, conv3.Id, 0, load3Id, 0);
 	auto results = Simulate(m, ss, print);
 	auto srcToConv1Results =
 		ModelResults_GetFlowForConnection(m, srcToConv1Conn, 0.0, results);
@@ -332,10 +332,10 @@ Test6(bool doPrint) {
 	auto load1Id = Model_AddConstantLoad(m, 10);
 	auto load2Id = Model_AddConstantLoad(m, 80);
 	auto muxId = Model_AddMux(m, 2, 2);
-	auto src1ToMuxConn = Model_AddConnection(m, ss, src1Id, 0, muxId, 0);
-	auto src2ToMuxConn = Model_AddConnection(m, ss, src2Id, 0, muxId, 1);
-	auto muxToLoad1Conn = Model_AddConnection(m, ss, muxId, 0, load1Id, 0);
-	auto muxToLoad2Conn = Model_AddConnection(m, ss, muxId, 1, load2Id, 0);
+	auto src1ToMuxConn = Model_AddConnection(m, src1Id, 0, muxId, 0);
+	auto src2ToMuxConn = Model_AddConnection(m, src2Id, 0, muxId, 1);
+	auto muxToLoad1Conn = Model_AddConnection(m, muxId, 0, load1Id, 0);
+	auto muxToLoad2Conn = Model_AddConnection(m, muxId, 1, load2Id, 0);
 	auto results = Simulate(m, ss, doPrint);
 	auto src1ToMuxResults =
 		ModelResults_GetFlowForConnection(m, src1ToMuxConn, 0.0, results);
@@ -365,8 +365,8 @@ Test7(bool doPrint) {
 	auto srcId = Model_AddConstantSource(m, 0);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 0, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
-	auto srcToStoreConn = Model_AddConnection(m, ss, srcId, 0, storeId, 0);
-	auto storeToLoadConn = Model_AddConnection(m, ss, storeId, 0, loadId, 0);
+	auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
+	auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
 	auto srcToStoreResults =
 		ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
@@ -420,8 +420,8 @@ Test8(bool doPrint) {
 	auto srcId = Model_AddConstantSource(m, 5);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 0, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
-	auto srcToStoreConn = Model_AddConnection(m, ss, srcId, 0, storeId, 0);
-	auto storeToLoadConn = Model_AddConnection(m, ss, storeId, 0, loadId, 0);
+	auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
+	auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
 	auto srcToStoreResults =
 		ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
@@ -479,8 +479,8 @@ Test9(bool doPrint) {
 	auto srcId = Model_AddConstantSource(m, 10);
 	auto storeId = Model_AddStore(m, 100, 10, 10, 80, 100);
 	auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
-	auto srcToStoreConn = Model_AddConnection(m, ss, srcId, 0, storeId, 0);
-	auto storeToLoadConn = Model_AddConnection(m, ss, storeId, 0, loadId, 0);
+	auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
+	auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
 	assert(results.size() == 5 && "expected 5 time steps");
 	assert(Round(results[0].Time) == 0.0 && "expect first time is 0.0");
@@ -572,13 +572,13 @@ Test10(bool doPrint) {
 	auto load1Id = Model_AddConstantLoad(m, 20);
 	auto load2Id = Model_AddScheduleBasedLoad(m, timesAndLoads);
 	auto load3Id = Model_AddConstantLoad(m, 5);
-	auto src1ToMux0Port0Conn = Model_AddConnection(m, ss, src1Id, 0, muxId, 0);
-	auto src2ToStoreConn = Model_AddConnection(m, ss, src2Id, 0, storeId, 0);
-	auto storeToMux0Port1Conn = Model_AddConnection(m, ss, storeId, 0, muxId, 1);
-	auto mux0Port0ToLoad1Conn = Model_AddConnection(m, ss, muxId, 0, load1Id, 0);
-	auto mux0Port1ToConvConn = Model_AddConnection(m, ss, muxId, 1, conv.Id, 0);
-	auto convToLoad2Conn = Model_AddConnection(m, ss, conv.Id, 0, load2Id, 0);
-	auto convToLoad3Conn = Model_AddConnection(m, ss, conv.Id, 1, load3Id, 0);
+	auto src1ToMux0Port0Conn = Model_AddConnection(m, src1Id, 0, muxId, 0);
+	auto src2ToStoreConn = Model_AddConnection(m, src2Id, 0, storeId, 0);
+	auto storeToMux0Port1Conn = Model_AddConnection(m, storeId, 0, muxId, 1);
+	auto mux0Port0ToLoad1Conn = Model_AddConnection(m, muxId, 0, load1Id, 0);
+	auto mux0Port1ToConvConn = Model_AddConnection(m, muxId, 1, conv.Id, 0);
+	auto convToLoad2Conn = Model_AddConnection(m, conv.Id, 0, load2Id, 0);
+	auto convToLoad3Conn = Model_AddConnection(m, conv.Id, 1, load3Id, 0);
 	auto results = Simulate(m, ss, doPrint);
 	assert(results.size() == 5 && "expect 5 events");
 	// time = 0.0
@@ -827,8 +827,8 @@ Test11(bool doPrint)
 	auto srcId = Model_AddConstantSource(m, 100);
 	auto loadId = Model_AddConstantLoad(m, 10);
 	auto convId = Model_AddConstantEfficiencyConverter(m, ss, 1, 2);
-	auto srcToConvConn = Model_AddConnection(m, ss, srcId, 0, convId.Id, 0);
-	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, loadId, 0);
+	auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
+	auto convToLoadConn = Model_AddConnection(m, convId.Id, 0, loadId, 0);
 	auto fixedDistId = Model_AddFixedReliabilityDistribution(m, 10.0);
 	Model_AddFailureModeToComponent(m, convId.Id, fixedDistId, fixedDistId);
 	auto results = Simulate(m, ss, doPrint);
@@ -1016,7 +1016,7 @@ Test12(bool doPrint)
 	SimulationState ss{};
 	auto srcId = Model_AddScheduleBasedSource(m, ss, sourceAvailability);
 	auto loadId = Model_AddConstantLoad(m, 10);
-	auto srcToLoadConn = Model_AddConnection(m, ss, srcId.Id, 0, loadId, 0);
+	auto srcToLoadConn = Model_AddConnection(m, srcId.Id, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
 	assert(results.size() == 3 && "should have 3 time results");
 	assert(results[0].Time == 0.0);
@@ -1258,37 +1258,35 @@ Test13(bool doPrint)
 	// NETWORK / CONNECTIONS
 	// - electricity
 	auto pvToEmuxConn =
-		Model_AddConnection(m, ss, pvArrayId.Id, 0, elecSourceMuxId, 0);
+		Model_AddConnection(m, pvArrayId.Id, 0, elecSourceMuxId, 0);
 	auto eutilToEmuxConn =
-		Model_AddConnection(m, ss, elecUtilId, 0, elecSourceMuxId, 1);
+		Model_AddConnection(m, elecUtilId, 0, elecSourceMuxId, 1);
 	auto emuxToBatteryConn =
-		Model_AddConnection(m, ss, elecSourceMuxId, 0, batteryId, 0);
+		Model_AddConnection(m, elecSourceMuxId, 0, batteryId, 0);
 	auto batteryToEsupplyConn =
-		Model_AddConnection(m, ss, batteryId, 0, elecSupplyMuxId, 0);
+		Model_AddConnection(m, batteryId, 0, elecSupplyMuxId, 0);
 	auto ngGenToEsupplyConn =
-		Model_AddConnection(m, ss, ngToElecConvId.Id, 0, elecSupplyMuxId, 1);
+		Model_AddConnection(m, ngToElecConvId.Id, 0, elecSupplyMuxId, 1);
 	auto esupplyToLoadConn =
-		Model_AddConnection(m, ss, elecSupplyMuxId, 0, elecLoadId, 0);
+		Model_AddConnection(m, elecSupplyMuxId, 0, elecLoadId, 0);
 	auto esupplyToHeatPumpConn =
-		Model_AddConnection(m, ss,
-			elecSupplyMuxId, 1, elecHeatPumpConvId.Id, 0);
+		Model_AddConnection(m, elecSupplyMuxId, 1, elecHeatPumpConvId.Id, 0);
 	// - natural gas
 	auto ngGridToNgMuxConn =
-		Model_AddConnection(m, ss, ngUtilId, 0, ngSourceMuxId, 0);
+		Model_AddConnection(m, ngUtilId, 0, ngSourceMuxId, 0);
 	auto ngMuxToNgGenConn =
-		Model_AddConnection(m, ss, ngSourceMuxId, 0, ngToElecConvId.Id, 0);
+		Model_AddConnection(m, ngSourceMuxId, 0, ngToElecConvId.Id, 0);
 	auto ngMuxToNgHeaterConn =
-		Model_AddConnection(m, ss, ngSourceMuxId, 1, ngHeaterConvId.Id, 0);
+		Model_AddConnection(m, ngSourceMuxId, 1, ngHeaterConvId.Id, 0);
 	// - heating
 	auto ngGenLossToHeatMuxConn =
-		Model_AddConnection(m, ss, ngToElecConvId.Id, 1, heatingSupplyMuxId, 0);
+		Model_AddConnection(m, ngToElecConvId.Id, 1, heatingSupplyMuxId, 0);
 	auto ngHeaterToHeatMuxConn =
-		Model_AddConnection(m, ss, ngHeaterConvId.Id, 0, heatingSupplyMuxId, 1);
+		Model_AddConnection(m, ngHeaterConvId.Id, 0, heatingSupplyMuxId, 1);
 	auto heatPumpToHeatMuxConn =
-		Model_AddConnection(m, ss,
-			elecHeatPumpConvId.Id, 0, heatingSupplyMuxId, 2);
+		Model_AddConnection(m, elecHeatPumpConvId.Id, 0, heatingSupplyMuxId, 2);
 	auto heatMuxToLoadConn =
-		Model_AddConnection(m, ss, heatingSupplyMuxId, 0, heatLoadId, 0);
+		Model_AddConnection(m, heatingSupplyMuxId, 0, heatLoadId, 0);
 	// SIMULATE
 	auto results = Simulate(m, ss, doPrint);
 	PrintPass(doPrint, "13");
@@ -1310,9 +1308,9 @@ Test14(bool doPrint)
 	auto src02Id = Model_AddScheduleBasedSource(m, ss, availablePower);
 	auto muxId = Model_AddMux(m, 2, 1);
 	auto loadId = Model_AddConstantLoad(m, 100);
-	auto src1ToMuxConn = Model_AddConnection(m, ss, src01Id, 0, muxId, 0);
-	auto src2ToMuxConn = Model_AddConnection(m, ss, src02Id.Id, 0, muxId, 1);
-	auto muxToLoadConn = Model_AddConnection(m, ss, muxId, 0, loadId, 0);
+	auto src1ToMuxConn = Model_AddConnection(m, src01Id, 0, muxId, 0);
+	auto src2ToMuxConn = Model_AddConnection(m, src02Id.Id, 0, muxId, 1);
+	auto muxToLoadConn = Model_AddConnection(m, muxId, 0, loadId, 0);
 	auto results = Simulate(m, ss, doPrint);
 	// TODO: add tests/checks
 	PrintPass(doPrint, "14");
@@ -1336,11 +1334,11 @@ Test15(bool doPrint)
 	auto muxId = Model_AddMux(m, 2, 1);
 	auto load01Id = Model_AddScheduleBasedLoad(m, loadOne);
 	auto load02Id = Model_AddConstantLoad(m, 100);
-	auto src1ToConvConn = Model_AddConnection(m, ss, src01Id, 0, convId.Id, 0);
-	auto convToLoadConn = Model_AddConnection(m, ss, convId.Id, 0, load01Id, 0);
-	auto convLossToMuxConn = Model_AddConnection(m, ss, convId.Id, 1, muxId, 0);
-	auto src2ToMuxConn = Model_AddConnection(m, ss, src02Id, 0, muxId, 1);
-	auto muxToLoadConn = Model_AddConnection(m, ss, muxId, 0, load02Id, 0);
+	auto src1ToConvConn = Model_AddConnection(m, src01Id, 0, convId.Id, 0);
+	auto convToLoadConn = Model_AddConnection(m, convId.Id, 0, load01Id, 0);
+	auto convLossToMuxConn = Model_AddConnection(m, convId.Id, 1, muxId, 0);
+	auto src2ToMuxConn = Model_AddConnection(m, src02Id, 0, muxId, 1);
+	auto muxToLoadConn = Model_AddConnection(m, muxId, 0, load02Id, 0);
 	auto results = Simulate(m, ss, doPrint);
 	assert(results.size() == 2);
 	double t = 0.0;

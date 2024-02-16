@@ -1114,6 +1114,12 @@ namespace erin_next
 			std::vector<size_t>(model.ScheduledLoads.size(), 0);
 		ss.ScheduleBasedSourceIdx =
 			std::vector<size_t>(model.ScheduledSrcs.size(), 0);
+		ss.Flows.clear();
+		ss.Flows.reserve(model.Connections.size());
+		for (size_t i = 0; i < model.Connections.size(); ++i)
+		{
+			ss.Flows.push_back(Flow{});
+		}
 	}
 
 	size_t
@@ -1407,6 +1413,7 @@ namespace erin_next
 			tag);
 	}
 
+	// TODO: Remove SimulationState from this call
 	ComponentIdAndWasteConnection
 	Model_AddScheduleBasedSource(
 		Model& m,
@@ -1423,7 +1430,7 @@ namespace erin_next
 			m.ComponentMap,
 			ComponentType::ScheduleBasedSourceType,
 			idx);
-		auto wasteConn = Model_AddConnection(m, ss, thisId, 1, wasteId, 0);
+		auto wasteConn = Model_AddConnection(m, thisId, 1, wasteId, 0);
 		return { thisId, wasteConn };
 	}
 
@@ -1491,6 +1498,7 @@ namespace erin_next
 			m, ss, (double)eff_numerator / (double)eff_denominator);
 	}
 
+	// TODO: remove simulation state from this call
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
 		Model& m,
@@ -1505,14 +1513,13 @@ namespace erin_next
 			m.ComponentMap,
 			ComponentType::ConstantEfficiencyConverterType,
 			idx);
-		auto wasteConn = Model_AddConnection(m, ss, thisId, 2, wasteId, 0);
+		auto wasteConn = Model_AddConnection(m, thisId, 2, wasteId, 0);
 		return { thisId, wasteConn };
 	}
 
 	Connection
 	Model_AddConnection(
 		Model& m,
-		SimulationState& ss,
 		size_t from,
 		size_t fromPort,
 		size_t to,
@@ -1530,7 +1537,6 @@ namespace erin_next
 		};
 		size_t connId = m.Connections.size();
 		m.Connections.push_back(c);
-		ss.Flows.push_back({ 0, 0, 0 });
 		switch (fromType)
 		{
 			case (ComponentType::ConstantSourceType):
@@ -1957,6 +1963,7 @@ namespace erin_next
 					<< flow << std::endl;
 				return Result::Failure;
 			}
+			// TODO: use Model_AddConnection(m,);
 			Connection c = {};
 			c.From = m.ComponentMap.CompType[fromCompId];
 			c.FromIdx = m.ComponentMap.Idx[fromCompId];

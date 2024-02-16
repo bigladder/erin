@@ -455,6 +455,8 @@ namespace erin_next
 				// TODO: clip reliability schedules here
 				s.Model.FinalTime = duration_s;
 				SimulationState ss{};
+				std::cout << "num connections: " << s.Model.Connections.size()
+					<< std::endl;
 				// TODO: add an optional verbosity flag to SimInfo
 				// -- use that to set things like the print flag below
 				auto results = Simulate(s.Model, ss, option_verbose);

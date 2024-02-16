@@ -185,9 +185,9 @@ namespace erin_next
 
 	struct Flow
 	{
-		uint32_t Requested;
-		uint32_t Available;
-		uint32_t Actual;
+		uint32_t Requested = 0;
+		uint32_t Available = 0;
+		uint32_t Actual = 0;
 	};
 
 	struct TimeAndFlows
@@ -223,13 +223,13 @@ namespace erin_next
 
 	struct SimulationState
 	{
-		std::set<size_t> ActiveConnectionsBack;
-		std::set<size_t> ActiveConnectionsFront;
-		std::vector<uint32_t> StorageAmounts;
-		std::vector<double> StorageNextEventTimes;
-		std::vector<Flow> Flows;
-		std::vector<size_t> ScheduleBasedLoadIdx;
-		std::vector<size_t> ScheduleBasedSourceIdx;
+		std::set<size_t> ActiveConnectionsBack{};
+		std::set<size_t> ActiveConnectionsFront{};
+		std::vector<uint32_t> StorageAmounts{};
+		std::vector<double> StorageNextEventTimes{};
+		std::vector<Flow> Flows{};
+		std::vector<size_t> ScheduleBasedLoadIdx{};
+		std::vector<size_t> ScheduleBasedSourceIdx{};
 	};
 
 	struct TagAndPort
@@ -463,7 +463,6 @@ namespace erin_next
 	Connection
 	Model_AddConnection(
 		Model& m,
-		SimulationState& ss,
 		size_t from,
 		size_t fromPort,
 		size_t to,

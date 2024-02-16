@@ -77,8 +77,6 @@ namespace erin_next
 			} break;
 			case (ComponentType::ScheduleBasedLoadType):
 			{
-				// TODO: how do we handle that loads are by scenario?
-				// Need to pull in the loads_by_scenario data and register it
 				if (!table.contains("loads_by_scenario"))
 				{
 					std::cout << "[" << fullTableName << "] "

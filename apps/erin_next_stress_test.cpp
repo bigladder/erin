@@ -33,7 +33,7 @@ main(int argc, char** argv)
 	{
 		auto srcId = Model_AddConstantSource(m, 100);
 		auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
-		auto srcToLoadConn = Model_AddConnection(m, ss, srcId, 0, loadId, 0);
+		auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
 	}
 	auto stopConstr = std::chrono::high_resolution_clock::now();
 	auto durationConstr =

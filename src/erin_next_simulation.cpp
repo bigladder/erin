@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next_component.h"
 #include "erin_next/erin_next_utils.h"
+#include "erin_next/erin_next_toml.h"
 #include <assert.h>
 #include <fstream>
 #include <vector>
@@ -39,6 +40,44 @@ namespace erin_next
 	Simulation_RegisterScenario(Simulation& s, std::string const& scenarioTag)
 	{
 		return ScenarioDict_RegisterScenario(s.ScenarioMap, scenarioTag);
+	}
+
+	size_t
+	Simulation_RegisterIntensity(Simulation& s, std::string const& tag)
+	{
+		for (size_t i=0; i<s.Intensities.Tags.size(); ++i)
+		{
+			if (s.Intensities.Tags[i] == tag)
+			{
+				return i;
+			}
+		}
+		size_t id = s.Intensities.Tags.size();
+		s.Intensities.Tags.push_back(tag);
+		return id;
+	}
+
+	size_t
+	Simulation_RegisterIntensityLevelForScenario(
+		Simulation& s,
+		size_t scenarioId,
+		size_t intensityId,
+		double intensityLevel)
+	{
+		for (size_t i = 0; i < s.ScenarioIntensities.IntensityIds.size(); ++i)
+		{
+			if (s.ScenarioIntensities.IntensityIds[i] == intensityId
+				&& s.ScenarioIntensities.ScenarioIds[i] == scenarioId)
+			{
+				s.ScenarioIntensities.IntensityLevels[i] = intensityLevel;
+				return i;
+			}
+		}
+		size_t id = s.ScenarioIntensities.IntensityIds.size();
+		s.ScenarioIntensities.ScenarioIds.push_back(scenarioId);
+		s.ScenarioIntensities.IntensityIds.push_back(intensityId);
+		s.ScenarioIntensities.IntensityLevels.push_back(intensityLevel);
+		return id;
 	}
 
 	size_t
@@ -99,10 +138,10 @@ namespace erin_next
 		}
 	}
 
-	// TODO: remove m as a parameter; model is in simulation now
 	void
-	Simulation_PrintComponents(Simulation const& s, Model const& m)
+	Simulation_PrintComponents(Simulation const& s)
 	{
+		Model const& m = s.Model;
 		for (size_t i = 0; i < m.ComponentMap.CompType.size(); ++i)
 		{
 			std::vector<size_t> const& outflowTypes =
@@ -156,6 +195,39 @@ namespace erin_next
 							<< s.LoadMap.Tags[keyValue.second]
 							<< std::endl;
 					}
+				} break;
+			}
+		}
+	}
+
+	void
+	Simulation_PrintFragilityCurves(Simulation const& s)
+	{
+		assert(s.FragilityCurves.CurveId.size() ==
+			s.FragilityCurves.CurveTypes.size());
+		assert(s.FragilityCurves.CurveId.size() ==
+			s.FragilityCurves.Tags.size());
+		for (size_t i=0; i<s.FragilityCurves.CurveId.size(); ++i)
+		{
+			std::cout << i << ": "
+				<< FragilityCurveTypeToTag(s.FragilityCurves.CurveTypes[i])
+				<< " -- " << s.FragilityCurves.Tags[i] << std::endl;
+			size_t idx = s.FragilityCurves.CurveId[i];
+			switch (s.FragilityCurves.CurveTypes[i])
+			{
+				case (FragilityCurveType::Linear):
+				{
+					std::cout << "-- lower bound: "
+						<< s.LinearFragilityCurves[idx].LowerBound
+						<< std::endl;
+					std::cout << "-- upper bound: "
+						<< s.LinearFragilityCurves[idx].UpperBound
+						<< std::endl;
+					size_t intensityId =
+						s.LinearFragilityCurves[idx].VulnerabilityId;
+					std::cout << "-- vulnerable to: "
+						<< s.Intensities.Tags[intensityId]
+						<< "[" << intensityId << "]" << std::endl;
 				} break;
 			}
 		}
@@ -240,6 +312,260 @@ namespace erin_next
 		return Result::Success;
 	}
 
+	// TODO: change this to a std::optional<size_t> GetFragilityCurveByTag()
+	// if it returns !*.has_value(), register with the bogus data explicitly.
+	size_t
+	Simulation_RegisterFragilityCurve(Simulation& s, std::string const& tag)
+	{
+		return Simulation_RegisterFragilityCurve(
+			s, tag, FragilityCurveType::Linear, 0);
+	}
+
+	size_t
+	Simulation_RegisterFragilityCurve(
+		Simulation& s,
+		std::string const& tag,
+		FragilityCurveType curveType,
+		size_t curveIdx)
+	{
+		for (size_t i = 0; i < s.FragilityCurves.Tags.size(); ++i)
+		{
+			if (s.FragilityCurves.Tags[i] == tag)
+			{
+				s.FragilityCurves.CurveId[i] = curveIdx;
+				s.FragilityCurves.CurveTypes[i] = curveType;
+				return i;
+			}
+		}
+		size_t id = s.FragilityCurves.Tags.size();
+		s.FragilityCurves.Tags.push_back(tag);
+		s.FragilityCurves.CurveId.push_back(curveIdx);
+		s.FragilityCurves.CurveTypes.push_back(curveType);
+		return id;
+	}
+
+	size_t
+	Simulation_RegisterFragilityMode(
+		Simulation& s,
+		std::string const& tag,
+		size_t fragilityCurveId,
+		std::optional<size_t> maybeRepairDistId)
+	{
+		for (size_t i=0; i<s.FragilityModes.Tags.size(); ++i)
+		{
+			if (s.FragilityModes.Tags[i] == tag)
+			{
+				s.FragilityModes.FragilityCurveId[i] = fragilityCurveId;
+				s.FragilityModes.RepairDistIds[i] = maybeRepairDistId;
+				return i;
+			}
+		}
+		size_t id = s.FragilityModes.Tags.size();
+		s.FragilityModes.Tags.push_back(tag);
+		s.FragilityModes.FragilityCurveId.push_back(fragilityCurveId);
+		s.FragilityModes.RepairDistIds.push_back(maybeRepairDistId);
+		return id;
+	}
+
+	Result
+	Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v)
+	{
+		if (v.contains("fragility_curve"))
+		{
+			if (!v.at("fragility_curve").is_table())
+			{
+				std::cout << "[fragility_curve] not a table" << std::endl;
+				return Result::Failure;
+			}
+			for (auto const& pair : v.at("fragility_curve").as_table())
+			{
+				std::string const& fcName = pair.first;
+				std::string tableFullName =
+					"fragility_curve." + fcName;
+				if (!pair.second.is_table())
+				{
+					std::cout << "[" << tableFullName << "] not a table"
+						<< std::endl;
+					return Result::Failure;
+				}
+				toml::table const& fcData = pair.second.as_table();
+				if (!fcData.contains("type"))
+				{
+					std::cout << "[" << tableFullName << "] "
+						<< "does not contain required value 'type'"
+						<< std::endl;
+					return Result::Failure;
+				}
+				std::string const& typeStr = fcData.at("type").as_string();
+				std::optional<FragilityCurveType> maybeFct =
+					TagToFragilityCurveType(typeStr);
+				if (!maybeFct.has_value())
+				{
+					std::cout << "[" << tableFullName << "] "
+						<< "could not interpret type as string"
+						<< std::endl;
+					return Result::Failure;
+				}
+				FragilityCurveType fct = maybeFct.value();
+				switch (fct)
+				{
+					case (FragilityCurveType::Linear):
+					{
+						if (!fcData.contains("lower_bound"))
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "missing required field 'lower_bound'"
+								<< std::endl;
+							return Result::Failure;
+						}
+						if (!(fcData.at("lower_bound").is_floating()
+							|| fcData.at("lower_bound").is_integer()))
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "field 'lower_bound' not a number"
+								<< std::endl;
+							return Result::Failure;
+						}
+						std::optional<double> maybeLowerBound =
+							TOMLTable_ParseDouble(
+								fcData,
+								"lower_bound",
+								tableFullName);
+						if (!maybeLowerBound.has_value())
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "field 'lower_bound' has no value"
+								<< std::endl;
+							return Result::Failure;
+						}
+						double lowerBound = maybeLowerBound.value();
+						if (!fcData.contains("upper_bound"))
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "missing required field 'upper_bound'"
+								<< std::endl;
+							return Result::Failure;
+						}
+						if (!(fcData.at("upper_bound").is_floating()
+							|| fcData.at("upper_bound").is_integer()))
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "field 'upper_bound' not a number"
+								<< std::endl;
+							return Result::Failure;
+						}
+						std::optional<double> maybeUpperBound =
+							TOMLTable_ParseDouble(
+								fcData,
+								"upper_bound",
+								tableFullName);
+						if (!maybeUpperBound.has_value())
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "field 'upper_bound' has no value"
+								<< std::endl;
+							return Result::Failure;
+						}
+						double upperBound = maybeUpperBound.value();
+						if (!fcData.contains("vulnerable_to"))
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "missing required field 'vulnerable_to'"
+								<< std::endl;
+							return Result::Failure;
+						}
+						if (!fcData.at("vulnerable_to").is_string())
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "field 'vulnerable_to' not a string"
+								<< std::endl;
+							return Result::Failure;
+						}
+						std::string const& vulnerStr =
+							fcData.at("vulnerable_to").as_string();
+						std::optional<size_t> maybeIntId =
+							GetIntensityIdByTag(s.Intensities, vulnerStr);
+						if (!maybeIntId.has_value())
+						{
+							std::cout << "[" << tableFullName << "] "
+								<< "could not find referenced intensity '"
+								<< vulnerStr << "' for 'vulnerable_to'"
+								<< std::endl;
+							return Result::Failure;
+						}
+						size_t intensityId = maybeIntId.value();
+						LinearFragilityCurve lfc{};
+						lfc.LowerBound = lowerBound;
+						lfc.UpperBound = upperBound;
+						lfc.VulnerabilityId = intensityId;
+						size_t idx = s.LinearFragilityCurves.size();
+						s.LinearFragilityCurves.push_back(std::move(lfc));
+						Simulation_RegisterFragilityCurve(s, fcName, fct, idx);
+					} break;
+					default:
+					{
+						throw std::runtime_error{
+							"unhandled fragility curve type"};
+					} break;
+				}
+			}
+		}
+		return Result::Success;
+	}
+
+	Result
+	Simulation_ParseFragilityModes(Simulation& s, toml::value const& v)
+	{
+		if (v.contains("fragility_mode"))
+		{
+			if (!v.at("fragility_mode").is_table())
+			{
+				return Result::Failure;
+			}
+			toml::table const& fmTable = v.at("fragility_mode").as_table();
+			for (auto const& pair : fmTable)
+			{
+				std::string const& fmName = pair.first;
+				if (!pair.second.is_table())
+				{
+					// TODO: add error message
+					return Result::Failure;
+				}
+				toml::table const& fmValueTable = pair.second.as_table();
+				if (!fmValueTable.contains("fragility_curve"))
+				{
+					// TODO: add error message
+					return Result::Failure;
+				}
+				if (!fmValueTable.at("fragility_curve").is_string())
+				{
+					// TODO: add error message
+					return Result::Failure;
+				}
+				std::string const& fcTag =
+					fmValueTable.at("fragility_curve").as_string();
+				size_t fcId =
+					Simulation_RegisterFragilityCurve(s, fcTag);
+				std::optional<size_t> maybeRepairDistId = {};
+				if (fmValueTable.contains("repair_dist"))
+				{
+					if (!fmValueTable.at("repair_dist").is_string())
+					{
+						// TODO: add error message
+						return Result::Failure;
+					}
+					std::string const& repairDistTag =
+						fmValueTable.at("repair_dist").as_string();
+					maybeRepairDistId =
+						s.Model.DistSys.lookup_dist_by_tag(repairDistTag);
+				}
+				Simulation_RegisterFragilityMode(
+					s, fmName, fcId, maybeRepairDistId);
+			}
+		}
+		return Result::Success;
+	}
+
 	Result
 	Simulation_ParseComponents(Simulation& s, toml::value const& v)
 	{
@@ -285,8 +611,69 @@ namespace erin_next
 	{
 		if (v.contains("scenarios") && v.at("scenarios").is_table())
 		{
-			return ParseScenarios(
+			auto result = ParseScenarios(
 				s.ScenarioMap, s.Model.DistSys, v.at("scenarios").as_table());
+			if (result == Result::Success)
+			{
+				for (auto const& pair : v.at("scenarios").as_table())
+				{
+					std::string const& scenarioName = pair.first;
+					std::optional<size_t> maybeScenarioId =
+						ScenarioDict_GetScenarioByTag(
+							s.ScenarioMap, scenarioName);
+					if (!maybeScenarioId.has_value())
+					{
+						std::cout << "[scenarios] "
+							<< "could not find scenario id for '"
+							<< scenarioName << "'" << std::endl;
+						return Result::Failure;
+					}
+					size_t scenarioId = maybeScenarioId.value();
+					std::string fullName = "scenarios." + scenarioName;
+					if (!pair.second.is_table())
+					{
+						std::cout << "[" << fullName << "] "
+							<< "must be a table" << std::endl;
+					}
+					toml::table const& data = pair.second.as_table();
+					if (data.contains("intensity"))
+					{
+						if (!data.at("intensity").is_table())
+						{
+							std::cout << "[" << fullName << ".intensity] "
+								<< "must be a table" << std::endl;
+							return Result::Failure;
+						}
+						for (auto const& p : data.at("intensity").as_table())
+						{
+							std::string const& intensityTag = p.first;
+							if (!(p.second.is_integer()
+								|| p.second.is_floating()))
+							{
+								std::cout << "[" << fullName
+									<< ".intensity." << intensityTag << "] "
+									<< "must be a number" << std::endl;
+								return Result::Failure;
+							}
+							std::optional<double> maybeValue =
+								TOML_ParseNumericValueAsDouble(p.second);
+							if (!maybeValue.has_value())
+							{
+								std::cout << "[" << fullName
+									<< ".intensity." << intensityTag << "] "
+									<< "must be a number" << std::endl;
+								return Result::Failure;
+							}
+							double value = maybeValue.value();
+							size_t intensityId =
+								Simulation_RegisterIntensity(s, intensityTag);
+							Simulation_RegisterIntensityLevelForScenario(
+								s, scenarioId, intensityId, value);
+						}
+					}
+				}
+			}
+			return result;
 		}
 		std::cout << "required field 'scenarios' not found or not a table"
 			<< std::endl;
@@ -306,24 +693,30 @@ namespace erin_next
 		{
 			return {};
 		}
-		// Components
 		if (Simulation_ParseComponents(s, v) == Result::Failure)
 		{
 			return {};
 		}
-		// Distributions
 		if (Simulation_ParseDistributions(s, v) == Result::Failure)
 		{
 			return {};
 		}
-		// Network
+		if (Simulation_ParseFragilityModes(s, v) == Result::Failure)
+		{
+			std::cout << "Problem parsing fragility modes..." << std::endl;
+			return {};
+		}
 		if (Simulation_ParseNetwork(s, v) == Result::Failure)
 		{
 			return {};
 		}
-		// Scenarios
 		if (Simulation_ParseScenarios(s, v) == Result::Failure)
 		{
+			return {};
+		}
+		if (Simulation_ParseFragilityCurves(s, v) == Result::Failure)
+		{
+			std::cout << "Problem parsing fragility curves..." << std::endl;
 			return {};
 		}
 		return s;
@@ -337,13 +730,26 @@ namespace erin_next
 		std::cout << "\nLoads:" << std::endl;
 		Simulation_PrintLoads(s);
 		std::cout << "\nComponents:" << std::endl;
-		Simulation_PrintComponents(s, s.Model);
+		Simulation_PrintComponents(s);
 		std::cout << "\nDistributions:" << std::endl;
 		s.Model.DistSys.print_distributions();
+		std::cout << "\nFragility Curves:" << std::endl;
+		Simulation_PrintFragilityCurves(s);
 		std::cout << "\nConnections:" << std::endl;
 		Model_PrintConnections(s.Model, s.FlowTypeMap);
 		std::cout << "\nScenarios:" << std::endl;
 		Scenario_Print(s.ScenarioMap, s.Model.DistSys);
+		std::cout << "\nIntensities:" << std::endl;
+		Simulation_PrintIntensities(s);
+	}
+
+	void
+	Simulation_PrintIntensities(Simulation const& s)
+	{
+		for (size_t i=0; i < s.Intensities.Tags.size(); ++i)
+		{
+			std::cout << i << ": " << s.Intensities.Tags[i] << std::endl;
+		}
 	}
 
 	void

@@ -285,6 +285,15 @@ namespace erin_next
 		std::vector<std::optional<size_t>> RepairDistIds{};
 	};
 
+	std::optional<FragilityCurveType>
+	TagToFragilityCurveType(std::string const& tag);
+
+	std::string
+	FragilityCurveTypeToTag(FragilityCurveType fctype);
+
+	std::optional<size_t>
+	GetIntensityIdByTag(IntensityDict intenseDict, std::string const& tag);
+
 	size_t
 	Component_AddComponentReturningId(
 		ComponentDict& c,

@@ -5,6 +5,47 @@
 namespace erin_next
 {
 
+	std::optional<FragilityCurveType>
+	TagToFragilityCurveType(std::string const& tag)
+	{
+		if (tag == "linear")
+		{
+			return FragilityCurveType::Linear;
+		}
+		return {};
+	}
+
+	std::string
+	FragilityCurveTypeToTag(FragilityCurveType fctype)
+	{
+		std::string tag;
+		switch (fctype)
+		{
+			case (FragilityCurveType::Linear):
+			{
+				tag = "linear";
+			} break;
+			default:
+			{
+				throw std::runtime_error{"Unhandled fragility curve type"};
+			} break;
+		}
+		return tag;
+	}
+
+	std::optional<size_t>
+	GetIntensityIdByTag(IntensityDict intenseDict, std::string const& tag)
+	{
+		for (size_t i=0; i<intenseDict.Tags.size(); ++i)
+		{
+			if (intenseDict.Tags[i] == tag)
+			{
+				return i;
+			}
+		}
+		return {};
+	}
+
 	size_t
 	Component_AddComponentReturningId(
 		ComponentDict& c,

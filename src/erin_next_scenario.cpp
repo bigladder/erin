@@ -9,6 +9,19 @@
 
 namespace erin_next
 {
+	std::optional<size_t>
+	ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::string const& tag)
+	{
+		for (size_t i=0; i < sd.Tags.size(); ++i)
+		{
+			if (sd.Tags[i] == tag)
+			{
+				return i;
+			}
+		}
+		return {};
+	}
+
 	size_t
 	ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag)
 	{
@@ -160,6 +173,12 @@ namespace erin_next
 					<< "not a table" << std::endl;
 				return Result::Failure;
 			}
+		}
+		if (!ranAtLeastOnce)
+		{
+			std::cout << "[scenarios] "
+				<< "must define at least one scenario" << std::endl;
+			return Result::Failure;
 		}
 		return ranAtLeastOnce ? Result::Success : Result::Failure;
 	}

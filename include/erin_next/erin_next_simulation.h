@@ -40,6 +40,16 @@ namespace erin_next
 	Simulation_RegisterScenario(Simulation& s, std::string const& scenarioTag);
 
 	size_t
+	Simulation_RegisterIntensity(Simulation& s, std::string const& tag);
+
+	size_t
+	Simulation_RegisterIntensityLevelForScenario(
+		Simulation& s,
+		size_t scenarioId,
+		size_t intensityId,
+		double intensityLevel);
+
+	size_t
 	Simulation_RegisterLoadSchedule(
 		Simulation& s,
 		std::string const& tag,
@@ -54,8 +64,10 @@ namespace erin_next
 		std::vector<Load> const& loads);
 
 	void
-	Simulation_PrintComponents(
-		Simulation const& s, Model const& m);
+	Simulation_PrintComponents(Simulation const& s);
+
+	void
+	Simulation_PrintFragilityCurves(Simulation const& s);
 
 	void
 	Simulation_PrintScenarios(Simulation const& s);
@@ -71,6 +83,29 @@ namespace erin_next
 
 	Result
 	Simulation_ParseLoads(Simulation& s, toml::value const& v);
+	
+	size_t
+	Simulation_RegisterFragilityCurve(Simulation& s, std::string const& tag);
+
+	size_t
+	Simulation_RegisterFragilityCurve(
+		Simulation& s,
+		std::string const& tag,
+		FragilityCurveType curveType,
+		size_t curveIdx);
+
+	size_t
+	Simulation_RegisterFragilityMode(
+		Simulation& s,
+		std::string const& tag,
+		size_t fragilityCurveId,
+		std::optional<size_t> maybeRepairDistId);
+
+	Result
+	Simulation_ParseFragilityCurves(Simulation& s, std::string const& v);
+
+	Result
+	Simulation_ParseFragilityModes(Simulation& s, toml::value const& v);
 
 	Result
 	Simulation_ParseComponents(Simulation& s, toml::value const& v);
@@ -91,7 +126,11 @@ namespace erin_next
 	Simulation_Print(Simulation const& s);
 
 	void
+	Simulation_PrintIntensities(Simulation const& s);
+
+	void
 	Simulation_Run(Simulation& s);
+
 }
 
 #endif

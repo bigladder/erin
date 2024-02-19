@@ -25,6 +25,9 @@ namespace erin_next
 		std::vector<std::optional<size_t>> MaxOccurrences;
 	};
 
+	std::optional<size_t>
+	ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::string const& tag);
+
 	size_t
 	ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag);
 

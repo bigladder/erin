@@ -266,6 +266,50 @@ namespace erin_next
 		for (size_t i = 0; i < s.ScenarioMap.Tags.size(); ++i)
 		{
 			std::cout << i << ": " << s.ScenarioMap.Tags[i] << std::endl;
+			std::cout << "- duration: " << s.ScenarioMap.Durations[i]
+				<< " " << TimeUnitToTag(s.ScenarioMap.TimeUnits[i])
+				<< std::endl;
+			auto maybeDist =
+				s.Model.DistSys.get_dist_by_id(
+					s.ScenarioMap.OccurrenceDistributionIds[i]);
+			if (maybeDist.has_value())
+			{
+				Distribution d = maybeDist.value();
+				std::cout << "- occurrence distribution: "
+					<< dist_type_to_tag(d.Type)
+					<< "[" << 
+						s.ScenarioMap.OccurrenceDistributionIds[i] << "] -- "
+					<< d.Tag << std::endl;
+			}
+			std::cout << "- max occurrences: ";
+			if (s.ScenarioMap.MaxOccurrences[i].has_value())
+			{
+				std::cout << s.ScenarioMap.MaxOccurrences[i].value()
+					<< std::endl;
+			}
+			else
+			{
+				std::cout << "no limit" << std::endl;
+			}
+			bool printedHeader = false;
+			for (size_t siIdx=0;
+				siIdx < s.ScenarioIntensities.IntensityIds.size();
+				++siIdx)
+			{
+				if (s.ScenarioIntensities.ScenarioIds[siIdx] == i)
+				{
+					if (!printedHeader)
+					{
+						std::cout << "- intensities:" << std::endl;
+						printedHeader = true;
+					}
+					auto intId = s.ScenarioIntensities.IntensityIds[siIdx];
+					auto const& intTag = s.Intensities.Tags[intId];
+					std::cout << "-- " << intTag << "[" << intId << "]: "
+						<< s.ScenarioIntensities.IntensityLevels[siIdx]
+						<< std::endl;
+				}
+			}
 		}
 	}
 
@@ -767,7 +811,7 @@ namespace erin_next
 		std::cout << "\nConnections:" << std::endl;
 		Model_PrintConnections(s.Model, s.FlowTypeMap);
 		std::cout << "\nScenarios:" << std::endl;
-		Scenario_Print(s.ScenarioMap, s.Model.DistSys);
+		Simulation_PrintScenarios(s);
 		std::cout << "\nIntensities:" << std::endl;
 		Simulation_PrintIntensities(s);
 	}

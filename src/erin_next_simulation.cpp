@@ -234,6 +234,33 @@ namespace erin_next
 	}
 
 	void
+	Simulation_PrintFragilityModes(Simulation const& s)
+	{
+		for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+		{
+			std::cout << i << ": " << s.FragilityModes.Tags[i] << std::endl;
+			std::cout << "-- fragility curve: "
+				<< s.FragilityCurves.Tags[s.FragilityModes.FragilityCurveId[i]]
+				<< "[" << s.FragilityModes.FragilityCurveId[i] << "]"
+				<< std::endl;
+			if (s.FragilityModes.RepairDistIds[i].has_value())
+			{
+				std::optional<Distribution> maybeDist =
+					s.Model.DistSys.get_dist_by_id(
+						s.FragilityModes.RepairDistIds[i].value());
+				if (maybeDist.has_value())
+				{
+					Distribution d = maybeDist.value();
+					std::cout << "-- repair dist: "
+						<< d.Tag
+						<< "[" << s.FragilityModes.RepairDistIds[i].value()
+						<< "]" << std::endl;
+				}
+			}
+		}
+	}
+
+	void
 	Simulation_PrintScenarios(Simulation const& s)
 	{
 		for (size_t i = 0; i < s.ScenarioMap.Tags.size(); ++i)
@@ -735,6 +762,8 @@ namespace erin_next
 		s.Model.DistSys.print_distributions();
 		std::cout << "\nFragility Curves:" << std::endl;
 		Simulation_PrintFragilityCurves(s);
+		std::cout << "\nFragility Modes:" << std::endl;
+		Simulation_PrintFragilityModes(s);
 		std::cout << "\nConnections:" << std::endl;
 		Model_PrintConnections(s.Model, s.FlowTypeMap);
 		std::cout << "\nScenarios:" << std::endl;

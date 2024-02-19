@@ -70,6 +70,9 @@ namespace erin_next
 	Simulation_PrintFragilityCurves(Simulation const& s);
 
 	void
+	Simulation_PrintFragilityModes(Simulation const& s);
+
+	void
 	Simulation_PrintScenarios(Simulation const& s);
 
 	void

@@ -238,6 +238,53 @@ namespace erin_next
 		size_t Port;
 	};
 
+	enum class FragilityCurveType
+	{
+		Linear,
+	};
+
+	struct LinearFragilityCurve
+	{
+		// indexes IntensityDict
+		size_t VulnerabilityId = 0;
+		double LowerBound = 0.0;
+		double UpperBound = 1.0;
+	};
+
+	struct IntensityDict
+	{
+		std::vector<std::string> Tags{};
+	};
+
+	struct ScenarioIntensityDict
+	{
+		std::vector<size_t> ScenarioIds;
+		std::vector<size_t> IntensityIds;
+		std::vector<double> IntensityLevels;
+	};
+
+	struct FragilityCurveDict
+	{
+		std::vector<std::string> Tags{};
+		std::vector<FragilityCurveType> CurveTypes{};
+		std::vector<size_t> CurveId{};
+	};
+
+	// TODO: should we call these "tables" instead of dict?
+	// more remeniscent of databases...
+	struct ComponentFragilityModeDict
+	{
+		std::vector<size_t> ComponentIds;
+		std::vector<size_t> FragilityModeIds;
+	};
+
+	struct FragilityModeDict
+	{
+		std::vector<std::string> Tags{};
+		std::vector<size_t> FragilityCurveId{};
+		std::vector<std::optional<size_t>> RepairDistIds{};
+	};
+
 	size_t
 	Component_AddComponentReturningId(
 		ComponentDict& c,

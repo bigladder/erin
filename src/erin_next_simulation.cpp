@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <fstream>
 #include <vector>
+#include <map>
 
 namespace erin_next
 {
@@ -358,14 +359,19 @@ namespace erin_next
 		// -- that all connections have the correct flows
 		// -- that required ports are linked
 		// -- check that we have a proper acyclic graph?
-		// NOW, we want to do a simulation for each scenario
 		// TODO: generate reliability information from time = 0 to final time
 		// ... from sim info. Those schedules will be clipped to the times of
-		// ... each scenario's instance.
+		// ... each scenario's instance. We will also need to merge it with
+		// ... fragility failure curves. We may want to consolidate to, at most
+		// ... one curve per component but also track the (possibly multiple)
+		// ... failure modes and fragility modes causing the failure
+		// ... (provenance). Note: the fragility part will need to be moved
+		// ... as fragility is "by scenario".
 		// TODO: generate a data structure to hold all results.
 		// TODO: set random function for Model based on SimInfo
 		// TODO: split out file writing into separate thread? See
 		// https://codetrips.com/2020/07/26/modern-c-writing-a-thread-safe-queue/comment-page-1/
+		// NOW, we want to do a simulation for each scenario
 		std::ofstream out;
 		out.open(eventFilePath);
 		if (!out.good())
@@ -433,14 +439,141 @@ namespace erin_next
 			// for now, we know a priori that we have a max occurrence of 1
 			std::vector<double> occurrenceTimes_s = { 0.0 };
 			// TODO: initialize total scenario stats (i.e., over all occurrences)
-			
+			std::map<size_t, double> intensityIdToAmount{};
+			for (size_t siIdx=0;
+				siIdx<s.ScenarioIntensities.ScenarioIds.size();
+				++siIdx)
+			{
+				if (s.ScenarioIntensities.ScenarioIds[siIdx] == scenIdx)
+				{
+					auto intensityId =
+						s.ScenarioIntensities.IntensityIds[siIdx];
+					intensityIdToAmount[intensityId]
+						= s.ScenarioIntensities.IntensityLevels[siIdx];
+				}
+			}
 			for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
 			{
 				double t = occurrenceTimes_s[occIdx];
-				// TODO: initialize per-occurrence stats
 				double duration_s = Time_ToSeconds(
 					s.ScenarioMap.Durations[scenIdx],
 					s.ScenarioMap.TimeUnits[scenIdx]);
+				// NOTE: if there are no intensities in this scenario, there
+				// are no fragilities to apply/check.
+				if (intensityIdToAmount.size() > 0)
+				{
+					// NOTE: if there are no components having fragility modes,
+					// there is nothing to do.
+					for (size_t cfmIdx=0;
+						cfmIdx<s.ComponentFragilities.ComponentIds.size();
+						++cfmIdx)
+					{
+						size_t fmId =
+							s.ComponentFragilities.FragilityModeIds[cfmIdx];
+						size_t fcId =
+							s.FragilityModes.FragilityCurveId[fmId];
+						std::optional<size_t> repairId =
+							s.FragilityModes.RepairDistIds[fmId];
+						FragilityCurveType curveType =
+							s.FragilityCurves.CurveTypes[fcId];
+						size_t fcIdx =
+							s.FragilityCurves.CurveId[fcId];
+						bool isFailed = false;
+						switch (curveType)
+						{
+							case (FragilityCurveType::Linear):
+							{
+								LinearFragilityCurve lfc =
+									s.LinearFragilityCurves[fcIdx];
+								size_t vulnerId = lfc.VulnerabilityId;
+								if (intensityIdToAmount.contains(vulnerId))
+								{
+									double level =
+										intensityIdToAmount[vulnerId];
+									if (level > lfc.UpperBound)
+									{
+										isFailed = true;
+									}
+									else if (level < lfc.LowerBound)
+									{
+										isFailed = false;
+									}
+									else
+									{
+										double x = s.Model.RandFn();
+										double range =
+											lfc.UpperBound - lfc.LowerBound;
+										double failureFrac =
+											(level - lfc.LowerBound)
+											/ range;
+										isFailed = x <= failureFrac;
+									}
+								}
+							} break;
+							default:
+							{
+								throw std::runtime_error{
+									"Unhandled FragilityCurveType"
+								};
+							} break;
+						}
+						// NOTE: if we are not failed, there is nothing to do
+						if (isFailed)
+						{
+							// now we have to find the affected component
+							// and assign/update a reliability schedule for it
+							// including any repair distribution if we have
+							// one.
+							size_t compId =
+								s.ComponentFragilities.ComponentIds[cfmIdx];
+							// does the component have a reliability signal?
+							bool hasReliabilityAlready = false;
+							size_t reliabilityId = 0;
+							for (size_t rIdx=0;
+								rIdx<s.Model.Reliabilities.size();
+								++rIdx)
+							{
+								if (s.Model.Reliabilities[rIdx].ComponentId
+									== compId)
+								{
+									hasReliabilityAlready = true;
+									reliabilityId = rIdx;
+									break;
+								}
+							}
+							if (repairId.has_value())
+							{
+								throw std::runtime_error{
+									"not implemented yet"
+								};
+							}
+							else
+							{
+								// failed for the duration of the scenario
+								std::vector<TimeState> newTimeStates{};
+								TimeState ts{};
+								ts.state = false;
+								ts.time = 0.0;
+								newTimeStates.push_back(std::move(ts));
+								if (hasReliabilityAlready)
+								{
+									s.Model.Reliabilities[reliabilityId]
+										.TimeStates = newTimeStates;
+								}
+								else
+								{
+									ScheduleBasedReliability sbr{};
+									sbr.ComponentId = compId;
+									sbr.TimeStates = newTimeStates;
+									s.Model.Reliabilities.push_back(
+										std::move(sbr));
+								}
+							}
+						}
+					}
+				}
+				// END handle impacts due to fragility
+
 				std::string scenarioStartTime =
 					TimeToISO8601Period(
 						static_cast<uint64_t>(std::llround(t)));

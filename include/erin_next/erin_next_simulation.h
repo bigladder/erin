@@ -22,6 +22,12 @@ namespace erin_next
 		LoadDict LoadMap;
 		SimulationInfo Info;
 		Model Model;
+		std::vector<LinearFragilityCurve> LinearFragilityCurves;
+		IntensityDict Intensities;
+		ScenarioIntensityDict ScenarioIntensities;
+		FragilityCurveDict FragilityCurves;
+		ComponentFragilityModeDict ComponentFragilities;
+		FragilityModeDict FragilityModes;
 	};
 
 	void

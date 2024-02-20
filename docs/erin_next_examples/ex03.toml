@@ -4,7 +4,7 @@
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
-max_time = 1000
+max_time = 100
 ############################################################
 # Loads
 [loads.building_electrical]

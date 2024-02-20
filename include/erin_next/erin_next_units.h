@@ -25,6 +25,9 @@ namespace erin_next
 
 	double
 	Time_ToSeconds(double t, TimeUnit unit);
+
+	std::string
+	SecondsToPrettyString(double time_s);
 }
 
 #endif

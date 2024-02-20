@@ -1,6 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_units.h"
+#include "erin_next/erin_next_utils.h"
 #include <exception>
 #include <sstream>
 #include <exception>
@@ -116,5 +117,28 @@ namespace erin_next
 		oss << "unhandled time unit '" << TimeUnitToTag(unit)
 			<< "'" << std::endl;
 		throw new std::invalid_argument{ oss.str() };
+	}
+
+	std::string
+	SecondsToPrettyString(double time_s)
+	{
+		size_t years = static_cast<size_t>(time_s) % seconds_per_year;
+		size_t hours =
+			static_cast<size_t>(time_s - seconds_per_year * years)
+			% seconds_per_hour;
+		size_t minutes =
+			static_cast<size_t>(time_s - seconds_per_year * years
+				- seconds_per_hour * hours)
+			% seconds_per_minute;
+		size_t seconds =
+			static_cast<size_t>(time_s - seconds_per_year * years
+				- seconds_per_hour * hours
+				- seconds_per_minute * minutes);
+		std::ostringstream oss{};
+		oss << years << " yr "
+			<< hours << " h "
+			<< minutes << " min "
+			<< seconds << " s";
+		return oss.str();
 	}
 }

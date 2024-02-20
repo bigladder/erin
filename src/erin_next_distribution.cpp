@@ -4,6 +4,7 @@
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_toml.h"
+#include "erin_next/erin_next_units.h"
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -614,16 +615,19 @@ namespace erin_next
 									<< std::endl;
 								return;
 							}
-							auto unit = maybeUnit.value();
-							if (unit == "hour")
+							auto unitStr = maybeUnit.value();
+							std::optional<TimeUnit> maybeTimeUnit =
+								TagToTimeUnit(unitStr);
+							if (!maybeTimeUnit.has_value())
 							{
-								v *= 3600.0;
+								std::cout << "[" << fullTableName << "] "
+									<< "unhandled time unit '"
+									<< unitStr << "'" << std::endl;
+								return;
 							}
-							else if (unit == "minute")
-							{
-								v *= 60.0;
-							}
-							ds.add_fixed(distTag, v);
+							ds.add_fixed(
+								distTag,
+								Time_ToSeconds(v, maybeTimeUnit.value()));
 						} break;
 						default:
 						{

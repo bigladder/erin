@@ -878,6 +878,7 @@ namespace erin_next
 			++scenIdx)
 		{
 			std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
+			std::cout << "Scenario: " << scenarioTag << std::endl;
 			// for this scenario, ensure all schedule-based components
 			// have the right schedule set for this scenario
 			for (size_t sblIdx = 0;
@@ -916,8 +917,36 @@ namespace erin_next
 			// for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size(); ++sbsIdx) {/* ... */}
 			// TODO: implement occurrences of the scenario in time.
 			// for now, we know a priori that we have a max occurrence of 1
-			std::vector<double> occurrenceTimes_s = { 0.0 };
-			// TODO: initialize total scenario stats (i.e., over all occurrences)
+			std::vector<double> occurrenceTimes_s{};
+			auto const& maybeMaxOccurrences =
+				s.ScenarioMap.MaxOccurrences[scenIdx];
+			size_t maxOccurrence =
+				maybeMaxOccurrences.has_value()
+				? maybeMaxOccurrences.value()
+				: 10'000;
+			auto const distId =
+				s.ScenarioMap.OccurrenceDistributionIds[scenIdx];
+			double scenarioStartTime_s = 0.0;
+			for (size_t numOccurrences = 0;
+				(numOccurrences < maxOccurrence)
+				&& (scenarioStartTime_s <
+					Time_ToSeconds(s.Info.MaxTime, s.Info.TimeUnit));
+				++numOccurrences)
+			{
+				scenarioStartTime_s +=
+					s.Model.DistSys.next_time_advance(distId);
+				occurrenceTimes_s.push_back(scenarioStartTime_s);
+			}
+			std::cout << "Occurrences: " << occurrenceTimes_s.size()
+				<< std::endl;
+			for (size_t occIdx=0; occIdx < occurrenceTimes_s.size(); ++occIdx)
+			{
+				std::cout << "-- "
+					<< SecondsToPrettyString(occurrenceTimes_s[occIdx])
+					<< std::endl;
+			}
+			// TODO: initialize total scenario stats (i.e.,
+			// over all occurrences)
 			std::map<size_t, double> intensityIdToAmount{};
 			for (size_t siIdx=0;
 				siIdx<s.ScenarioIntensities.ScenarioIds.size();
@@ -937,10 +966,13 @@ namespace erin_next
 				double duration_s = Time_ToSeconds(
 					s.ScenarioMap.Durations[scenIdx],
 					s.ScenarioMap.TimeUnits[scenIdx]);
+				std::cout << "Occurrence #" << (occIdx + 1) << " at "
+					<< t << std::endl;
 				// NOTE: if there are no intensities in this scenario, there
 				// are no fragilities to apply/check.
 				if (intensityIdToAmount.size() > 0)
 				{
+					std::cout << "... Applying fragilities" << std::endl;
 					// NOTE: if there are no components having fragility modes,
 					// there is nothing to do.
 					for (size_t cfmIdx=0;
@@ -1052,8 +1084,7 @@ namespace erin_next
 					}
 				}
 				// END handle impacts due to fragility
-
-				std::string scenarioStartTime =
+				std::string scenarioStartTimeTag =
 					TimeToISO8601Period(
 						static_cast<uint64_t>(std::llround(t)));
 				// TODO: compute end time for clipping
@@ -1061,7 +1092,10 @@ namespace erin_next
 				if (option_verbose)
 				{
 					std::cout << "Running " << s.ScenarioMap.Tags[scenIdx]
-						<< " from " << t << " to " << tEnd << " s"
+						<< " from " << scenarioStartTimeTag << " for "
+						<< s.ScenarioMap.Durations[scenIdx] << " "
+						<< TimeUnitToTag(s.ScenarioMap.TimeUnits[scenIdx])
+						<< " (" << t << " to " << tEnd << " seconds)"
 						<< std::endl;
 				}
 				// TODO: clip reliability schedules here
@@ -1073,7 +1107,7 @@ namespace erin_next
 				for (auto const& r : results)
 				{
 					out << scenarioTag << ","
-						<< scenarioStartTime << ","
+						<< scenarioStartTimeTag << ","
 						<< (r.Time / seconds_per_hour);
 					for (size_t connIdx = 0;
 						connIdx < r.Flows.size();
@@ -1088,6 +1122,7 @@ namespace erin_next
 						scenIdx, occIdx + 1, s.Model, results);
 				occurrenceStats.push_back(std::move(sos));
 			}
+			std::cout << "Scenario " << scenarioTag << " finished" << std::endl;
 			// TODO: merge per-occurrence stats with global for the current
 			// scenario
 		}

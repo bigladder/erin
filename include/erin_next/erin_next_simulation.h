@@ -131,6 +131,18 @@ namespace erin_next
 	void
 	Simulation_PrintIntensities(Simulation const& s);
 
+	Result
+	SetLoadsForScenario(
+		std::vector<ScheduleBasedLoad>& loads,
+		LoadDict loadMap,
+		size_t scenarioIdx);
+
+	std::vector<double>
+	DetermineScenarioOccurrenceTimes(
+		Simulation& s,
+		size_t scenIdx,
+		bool isVerbose);
+
 	void
 	Simulation_Run(Simulation& s);
 

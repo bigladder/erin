@@ -854,6 +854,85 @@ namespace erin_next
 		out << "\n";
 	}
 
+	Result
+	SetLoadsForScenario(
+		std::vector<ScheduleBasedLoad>& loads,
+		LoadDict loadMap,
+		size_t scenarioIdx)
+	{
+		for (size_t sblIdx = 0; sblIdx < loads.size(); ++sblIdx)
+		{
+			if (loads[sblIdx].ScenarioIdToLoadId.contains(scenarioIdx))
+			{
+				auto loadId =
+					loads[sblIdx].ScenarioIdToLoadId.at(scenarioIdx);
+				std::vector<TimeAndAmount> schedule{};
+				size_t numEntries = loadMap.Loads[loadId].size();
+				schedule.reserve(numEntries);
+				for (size_t i = 0; i < numEntries; ++i)
+				{
+					TimeAndAmount tal{};
+					tal.Time = Time_ToSeconds(
+						loadMap.Loads[loadId][i].Time,
+						loadMap.TimeUnits[loadId]);
+					tal.Amount = loadMap.Loads[loadId][i].Amount;
+					schedule.push_back(std::move(tal));
+				}
+				loads[sblIdx].TimesAndLoads = std::move(schedule);
+			}
+			else
+			{
+				std::cout << "ERROR:"
+					<< "Unhandled scenario id in ScenarioIdToLoadId"
+					<< std::endl;
+				return Result::Failure;
+			}
+		}
+		return Result::Success;
+	}
+
+	std::vector<double>
+	DetermineScenarioOccurrenceTimes(
+		Simulation& s,
+		size_t scenIdx,
+		bool isVerbose)
+	{
+		std::vector<double> occurrenceTimes_s;
+		auto const& maybeMaxOccurrences =
+			s.ScenarioMap.MaxOccurrences[scenIdx];
+		size_t maxOccurrence =
+			maybeMaxOccurrences.has_value()
+			? maybeMaxOccurrences.value()
+			: 1'000;
+		auto const distId =
+			s.ScenarioMap.OccurrenceDistributionIds[scenIdx];
+		double scenarioStartTime_s = 0.0;
+		double maxTime_s =
+			Time_ToSeconds(s.Info.MaxTime, s.Info.TheTimeUnit);
+		for (size_t i = 0; i < maxOccurrence; ++i)
+		{
+			scenarioStartTime_s +=
+				s.TheModel.DistSys.next_time_advance(distId);
+			if (scenarioStartTime_s >= maxTime_s)
+			{
+				break;
+			}
+			occurrenceTimes_s.push_back(scenarioStartTime_s);
+		}
+		if (isVerbose)
+		{
+			std::cout << "Occurrences: " << occurrenceTimes_s.size()
+				<< std::endl;
+			for (size_t i=0; i < occurrenceTimes_s.size(); ++i)
+			{
+				std::cout << "-- "
+					<< SecondsToPrettyString(occurrenceTimes_s[i])
+					<< std::endl;
+			}
+		}
+		return occurrenceTimes_s;
+	}
+
 	void
 	Simulation_Run(Simulation& s)
 	{
@@ -900,74 +979,17 @@ namespace erin_next
 			std::cout << "Scenario: " << scenarioTag << std::endl;
 			// for this scenario, ensure all schedule-based components
 			// have the right schedule set for this scenario
-			for (size_t sblIdx = 0;
-				sblIdx < s.TheModel.ScheduledLoads.size();
-				++sblIdx)
+			if (SetLoadsForScenario(
+				s.TheModel.ScheduledLoads,s.LoadMap,scenIdx) == Result::Failure)
 			{
-				if (s.TheModel.ScheduledLoads[sblIdx]
-					.ScenarioIdToLoadId.contains(scenIdx))
-				{
-					auto loadId =
-						s.TheModel.ScheduledLoads[sblIdx]
-						.ScenarioIdToLoadId.at(scenIdx);
-					std::vector<TimeAndAmount> schedule{};
-					size_t numEntries = s.LoadMap.Loads[loadId].size();
-					schedule.reserve(numEntries);
-					for (size_t i = 0; i < numEntries; ++i)
-					{
-						TimeAndAmount tal{};
-						tal.Time = Time_ToSeconds(
-							s.LoadMap.Loads[loadId][i].Time,
-							s.LoadMap.TimeUnits[loadId]);
-						tal.Amount = s.LoadMap.Loads[loadId][i].Amount;
-						schedule.push_back(std::move(tal));
-					}
-					s.TheModel.ScheduledLoads[sblIdx].TimesAndLoads = schedule;
-				}
-				else
-				{
-					std::cout << "ERROR:"
-						<< "Unhandled scenario id in ScenarioIdToLoadId"
-						<< std::endl;
-					return;
-				}
+				// TODO: create error message
+				std::cout << "Issue setting schedule loads" << std::endl;
+				return;
 			}
 			// TODO: implement load substitution for schedule-based sources
 			// for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size(); ++sbsIdx) {/* ... */}
-			// TODO: implement occurrences of the scenario in time.
-			// for now, we know a priori that we have a max occurrence of 1
-			std::vector<double> occurrenceTimes_s{};
-			auto const& maybeMaxOccurrences =
-				s.ScenarioMap.MaxOccurrences[scenIdx];
-			size_t maxOccurrence =
-				maybeMaxOccurrences.has_value()
-				? maybeMaxOccurrences.value()
-				: 1'000;
-			auto const distId =
-				s.ScenarioMap.OccurrenceDistributionIds[scenIdx];
-			double scenarioStartTime_s = 0.0;
-			double maxTime_s =
-				Time_ToSeconds(s.Info.MaxTime, s.Info.TheTimeUnit);
-			for (size_t numOccurrences = 0;
-				numOccurrences < maxOccurrence;
-				++numOccurrences)
-			{
-				scenarioStartTime_s +=
-					s.TheModel.DistSys.next_time_advance(distId);
-				if (scenarioStartTime_s >= maxTime_s)
-				{
-					break;
-				}
-				occurrenceTimes_s.push_back(scenarioStartTime_s);
-			}
-			std::cout << "Occurrences: " << occurrenceTimes_s.size()
-				<< std::endl;
-			for (size_t occIdx=0; occIdx < occurrenceTimes_s.size(); ++occIdx)
-			{
-				std::cout << "-- "
-					<< SecondsToPrettyString(occurrenceTimes_s[occIdx])
-					<< std::endl;
-			}
+			std::vector<double> occurrenceTimes_s =
+				DetermineScenarioOccurrenceTimes(s, scenIdx, true);
 			// TODO: initialize total scenario stats (i.e.,
 			// over all occurrences)
 			std::map<size_t, double> intensityIdToAmount{};

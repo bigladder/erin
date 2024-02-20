@@ -1,13 +1,9 @@
-############################################################
-# Simulation Information
 [simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
 max_time = 100
-fixed_random = 0.4
-############################################################
-# Loads
+fixed_random_series = [0.9,0.1,0.1,0.1,0.1,0.9,0.9,0.9]
 [loads.building_electrical]
 #csv_file = "ex03.csv"
 time_unit = "hours"
@@ -18,8 +14,6 @@ time_rate_pairs = [
   [2400.0, 1.0],
   [3600.0, 0.0],
 ]
-############################################################
-# Components
 [components.electric_utility]
 type = "source"
 outflow = "electricity"
@@ -41,24 +35,12 @@ type = "muxer"
 flow = "electricity"
 num_inflows = 2
 num_outflows = 1
-# An "in_order" dispatch strategy means that power requests are routed in order
-# upstream through the input ports in the order they are specified. That is,
-# "inflow_grid" would be asked to provide power first. If there is any lack of
-# power, "inflow_genset" would be asked to make up the difference. Note: on
-# the output side, if more than one output, outputs are handled differently in
-# that power shortages are always spread evenly across all outputs. Explicit
-# switches or changes in load requests are used to drop loads (or simulate
-# their dropping).
 dispatch_strategy = "in_order"
 fragility_modes = ["highly_vulnerable_to_wind", "somewhat_vulnerable_to_flooding"]
-############################################################
-# Fragility Modes
 [fragility_mode.somewhat_vulnerable_to_flooding]
 fragility_curve = "somewhat_vulnerable_to_flooding_curve"
 [fragility_mode.highly_vulnerable_to_wind]
 fragility_curve = "highly_vulnerable_to_wind_curve"
-############################################################
-# Fragility Curves
 [fragility_curve.somewhat_vulnerable_to_flooding_curve]
 vulnerable_to = "inundation_depth_ft"
 type = "linear"
@@ -68,26 +50,22 @@ upper_bound = 14.0
 vulnerable_to = "wind_speed_mph"
 type = "linear"
 lower_bound = 80.0
-upper_bound = 160.0
-############################################################
-# Networks
-[network]
+upper_bound = 180.0
+[networks.normal_operations]
+connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
+[networks.emergency_operations]
 connections = [
   ["electric_utility:OUT(0)", "bus:IN(0)", "electricity"],
   ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity"],
   ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
-############################################################
-# Distributions
 [dist.immediately]
 type = "fixed"
 value = 0
 time_unit = "hours"
 [dist.every_10_years]
 type = "fixed"
-value = 87600
-time_unit = "hours"
-############################################################
-# Scenarios
+value = 10
+time_unit = "years"
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = "immediately"
@@ -98,23 +76,7 @@ network = "normal_operations"
 time_unit = "hours"
 occurrence_distribution = "every_10_years"
 duration = 336
-max_occurrences = "unlimited"
+max_occurrences = -1
 network = "emergency_operations"
 intensity.wind_speed_mph = 156
 intensity.inundation_depth_ft = 8
-[scenarios.class_5_hurricane]
-time_unit = "hours"
-occurrence_distribution = "every_10_years"
-duration = 336
-max_occurrences = "unlimited"
-network = "emergency_operations"
-intensity.wind_speed_mph = 200 # force failure deterministically
-intensity.inundation_depth_ft = 20 # force failure deterministically
-[scenarios.class_1_hurricane]
-time_unit = "hours"
-occurrence_distribution = "every_10_years"
-duration = 336
-max_occurrences = "unlimited"
-network = "emergency_operations"
-intensity.wind_speed_mph = 74 # force survival deterministically
-intensity.inundation_depth_ft = 2 # force survival deterministically

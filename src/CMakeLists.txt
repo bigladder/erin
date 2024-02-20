@@ -200,6 +200,7 @@ add_library(erin_next
 	erin_next_units.cpp
 	erin_next_utils.cpp
 	erin_next_csv.cpp
+	erin_next_random.cpp
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_distribution.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_reliability.h"
@@ -216,6 +217,7 @@ add_library(erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_result.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_utils.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_csv.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_random.h"
 )
 
 # Add Warnings

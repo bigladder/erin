@@ -10,13 +10,16 @@ namespace erin_next
 		"time_unit", "max_time",
 	};
 
+	// TODO: remove rate_unit and quantity_unit; match the user guide first
 	std::unordered_map<std::string, std::string> const
 	DefaultSimulationInfoFields{
 		{ "rate_unit", "kW" },
 		{ "quantity_unit", "kJ" },
 	};
 
-	std::unordered_set<std::string> const OptionalSimulationInfoFields{};
+	std::unordered_set<std::string> const OptionalSimulationInfoFields{
+		"fixed_random", "fixed_random_series", "random_seed"
+	};
 
 	std::optional<SimulationInfo>
 	ParseSimulationInfo(std::unordered_map<toml::key,toml::value> const& table)

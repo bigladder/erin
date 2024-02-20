@@ -16,7 +16,8 @@ namespace erin_next
 	// > (def days-per-month [31 28 31 30 31 30 31 31 30 31 30 31])
 	// > (count days-per-month) ;=> 12
 	// > (reduce + days-per-month) ;=> 365
-	// > (reductions + days-per-month) ;=> [31 59 90 120 151 181 212 243 273 304 334 365]
+	// > (reductions + days-per-month) ;=>
+	// ;;  [31 59 90 120 151 181 212 243 273 304 334 365]
 	std::vector<uint32_t> const days_per_month{
 		// January
 		31,

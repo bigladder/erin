@@ -29,4 +29,4 @@ namespace erin_next
 	operator<<(std::ostream& os, Load const& load);
 }
 
-#endif // ERIN_NEXT_LOAD_H
+#endif

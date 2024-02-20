@@ -87,4 +87,4 @@ namespace erin_next
 		bool initial_value = true);
 }
 
-#endif // ERIN_NEXT_RELIABILITY_H
+#endif

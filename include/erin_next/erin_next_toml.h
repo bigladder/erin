@@ -59,4 +59,4 @@ namespace erin_next
 		std::string const& tableName);
 }
 
-#endif // ERIN_NEXT_TOML_H
+#endif

@@ -12,8 +12,10 @@ namespace erin_next
 		double time = 0.0;
 		bool state = true;
 		// TODO: add container to track failure modes and fragility modes
-		// that caused the failure when state=false. Either a std::vector<std::string> with tags for failure modes/fragility modes
-		// OR a std::set<size_t> failureModeCauses{}; AND std::set<size_t> fragilityModeCauses{};
+		// that caused the failure when state=false. Either a
+		// std::vector<std::string> with tags for failure modes/fragility modes
+		// OR a std::set<size_t> failureModeCauses{};
+		// AND std::set<size_t> fragilityModeCauses{};
 	};
 
 	bool operator==(const TimeState& a, const TimeState& b);
@@ -22,4 +24,4 @@ namespace erin_next
 
 }
 
-#endif // ERIN_NEXT_TIMESTATE_H
+#endif

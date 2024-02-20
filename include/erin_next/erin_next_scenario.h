@@ -58,4 +58,4 @@ namespace erin_next
 	Scenario_Print(ScenarioDict const& sd, DistributionSystem const& ds);
 }
 
-#endif // ERIN_NEXT_SCENARIO_H
+#endif

@@ -42,4 +42,4 @@ namespace erin_next
 	operator<<(std::ostream& os, SimulationInfo const& s);
 }
 
-#endif // ERIN_NEXT_SIMULATION_INFO_H
+#endif

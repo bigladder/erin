@@ -5,6 +5,7 @@ from pathlib import Path
 
 BIN_DIR = Path('.') / '..' / '..' / 'out' / 'build' / 'x64-Debug' / 'bin'
 TEST_EXE = BIN_DIR / 'test_erin_next.exe'
+RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test.exe'
 CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
 
 if not TEST_EXE.exists():
@@ -27,6 +28,12 @@ def run_tests():
         print(f"stdout:\n{result.stdout}")
         print(f"stderr:\n{result.stderr}")
         sys.exit(1)
+    result = subprocess.run([RAND_TEST_EXE], capture_output=True)
+    if result.returncode != 0:
+        print("Random tests did not pass!")
+        print(f"stdout:\n{result.stdout}")
+        print(f"stderr:\n{result.stderr}")
+        sys.exit(1)
 
 
 def run_cli(example_name):
@@ -34,6 +41,8 @@ def run_cli(example_name):
     Run the CLI for example name and check output diffs
     - example_name: string, "01" or "25" to call ex01.toml or ex25.toml
     """
+    Path("out.csv").unlink(missing_ok=True)
+    Path("stats.csv").unlink(missing_ok=True)
     toml_input = f"ex{example_name}.toml"
     result = subprocess.run([CLI_EXE, toml_input], capture_output=True)
     if result.returncode != 0:

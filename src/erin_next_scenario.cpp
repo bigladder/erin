@@ -103,9 +103,6 @@ namespace erin_next
 		auto maybeTimeUnitStr = TOMLTable_ParseStringWithSetResponses(
 			table, ValidTimeUnits, "time_unit", fullName);
 		if (!maybeTimeUnitStr.has_value()) return {};
-		auto maybeNetworkTag = TOMLTable_ParseString(
-			table, "network", fullName);
-		if (!maybeNetworkTag.has_value()) return {};
 		auto maybeDuration = TOMLTable_ParseDouble(
 			table, "duration", fullName);
 		if (!maybeDuration.has_value()) return {};

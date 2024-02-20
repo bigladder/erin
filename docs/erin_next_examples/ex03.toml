@@ -70,7 +70,7 @@ type = "linear"
 lower_bound = 80.0
 upper_bound = 160.0
 ############################################################
-# Networks
+# Network
 [network]
 connections = [
   ["electric_utility:OUT(0)", "bus:IN(0)", "electricity"],
@@ -93,13 +93,11 @@ time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 8760
 max_occurrences = 1
-network = "normal_operations"
 [scenarios.class_4_hurricane]
 time_unit = "hours"
 occurrence_distribution = "every_10_years"
 duration = 336
 max_occurrences = "unlimited"
-network = "emergency_operations"
 intensity.wind_speed_mph = 156
 intensity.inundation_depth_ft = 8
 [scenarios.class_5_hurricane]
@@ -107,7 +105,6 @@ time_unit = "hours"
 occurrence_distribution = "every_10_years"
 duration = 336
 max_occurrences = "unlimited"
-network = "emergency_operations"
 intensity.wind_speed_mph = 200 # force failure deterministically
 intensity.inundation_depth_ft = 20 # force failure deterministically
 [scenarios.class_1_hurricane]
@@ -115,6 +112,5 @@ time_unit = "hours"
 occurrence_distribution = "every_10_years"
 duration = 336
 max_occurrences = "unlimited"
-network = "emergency_operations"
 intensity.wind_speed_mph = 74 # force survival deterministically
 intensity.inundation_depth_ft = 2 # force survival deterministically

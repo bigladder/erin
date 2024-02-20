@@ -47,6 +47,7 @@ namespace erin_next
 			return {};
 		}
 		si.MaxTime = rawMaxTime.value();
+		// TODO: remove rate unit
 		auto rawRateUnit = TOMLTable_ParseStringWithSetResponses(
 			table, ValidRateUnits, "rate_unit", "simulation_info");
 		if (rawRateUnit.has_value())
@@ -57,6 +58,7 @@ namespace erin_next
 		{
 			si.RateUnit = DefaultSimulationInfoFields.at("rate_unit");
 		}
+		// TODO: remove quantity unit
 		auto rawQuantityUnit = TOMLTable_ParseStringWithSetResponses(
 			table, ValidQuantityUnits, "quantity_unit", "simulation_info");
 		if (rawQuantityUnit.has_value())
@@ -67,6 +69,44 @@ namespace erin_next
 		{
 			si.QuantityUnit = DefaultSimulationInfoFields.at("quantity_unit");
 		}
+		RandomType rtype = RandomType::RandomFromClock;
+		if (table.contains("fixed_random"))
+		{
+			std::optional<double> maybeFixed = TOMLTable_ParseDouble(
+				table, "fixed_random", "simulation_info");
+			if (!maybeFixed.has_value())
+			{
+				return {};
+			}
+			rtype = RandomType::FixedRandom;
+			si.FixedValue = maybeFixed.value();
+		}
+		else if (table.contains("fixed_random_series"))
+		{
+			std::optional<std::vector<double>> maybeSeries =
+				TOMLTable_ParseArrayOfDouble(
+					table, "fixed_random_series", "simulation_info");
+			if (!maybeSeries)
+			{
+				return {};
+			}
+			rtype = RandomType::FixedSeries;
+			si.Series = std::move(maybeSeries.value());
+		}
+		else if (table.contains("random_seed"))
+		{
+			std::optional<int> maybeSeed =
+				TOMLTable_ParseInteger(table, "random_seed", "simulation_info");
+			if (!maybeSeed)
+			{
+				return {};
+			}
+			rtype = RandomType::RandomFromSeed;
+			si.Seed = maybeSeed.value() < 0
+				? (-1 * maybeSeed.value())
+				: maybeSeed.value();
+		}
+		si.TypeOfRandom = rtype;
 		return si;
 	}
 

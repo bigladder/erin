@@ -3,11 +3,13 @@
 #ifndef ERIN_NEXT_SIMULATION_INFO_H
 #define ERIN_NEXT_SIMULATION_INFO_H
 #include "erin_next/erin_next_units.h"
+#include "erin_next/erin_next_random.h"
 #include "../vendor/toml11/toml.hpp"
 #include <ostream>
 #include <string>
 #include <optional>
 #include <unordered_map>
+#include <vector>
 
 namespace erin_next
 {
@@ -22,10 +24,16 @@ namespace erin_next
 	// uint32_t...
 	struct SimulationInfo
 	{
+		// TODO: remove RateUnit; not in user guide
 		std::string RateUnit;
+		// TODO: remove QuantityUnit; not in user guide
 		std::string QuantityUnit;
 		TimeUnit TheTimeUnit;
 		double MaxTime;
+		RandomType TypeOfRandom;
+		int unsigned Seed = 0;
+		std::vector<double> Series;
+		double FixedValue = 0.0;
 	};
 
 	std::optional<SimulationInfo>

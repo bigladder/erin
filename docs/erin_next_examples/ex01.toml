@@ -38,4 +38,3 @@ time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 4
 max_occurrences = 1
-network = "normal_operations"

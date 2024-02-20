@@ -224,4 +224,48 @@ namespace erin_next
 		return timeAndLoads;
 	}
 
+	std::optional<std::vector<double>>
+	TOMLTable_ParseArrayOfDouble(
+		std::unordered_map<toml::key, toml::value> const& table,
+		std::string const& fieldName,
+		std::string const& tableName)
+	{
+		std::vector<double> result;
+		if (!table.contains(fieldName))
+		{
+			std::cout << "[" << tableName << "] "
+				<< "missing field '" << fieldName << "'" << std::endl;
+			return {};
+		}
+		if (!table.at(fieldName).is_array())
+		{
+			std::cout << "[" << tableName << "] "
+				<< "must be an array" << std::endl;
+			return {};
+		}
+		std::vector<toml::value> xs = table.at(fieldName).as_array();
+		for (size_t i=0; i < xs.size(); ++i)
+		{
+			toml::value v = xs[i];
+			if (!(v.is_integer() || v.is_floating()))
+			{
+				std::cout << "[" << tableName << "] "
+					<< "array value at " << i
+					<< " must be numeric" << std::endl;
+				return {};
+			}
+			std::optional<double> maybeNumber =
+				TOML_ParseNumericValueAsDouble(v);
+			if (!maybeNumber.has_value())
+			{
+				std::cout << "[" << tableName << "] "
+					<< "array value at " << i
+					<< " could not be parsed as number" << std::endl;
+				return {};
+			}
+			result.push_back(maybeNumber.value());
+		}
+		return result;
+	}
+
 }

@@ -4,6 +4,7 @@
 #include "erin_next/erin_next_component.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_toml.h"
+#include "erin_next/erin_next_random.h"
 #include <assert.h>
 #include <fstream>
 #include <vector>
@@ -18,11 +19,6 @@ namespace erin_next
 		// of flow specification by passing empty strings. Effectively, this
 		// allows any connections to occur which is nice for simple examples.
 		Simulation_RegisterFlow(s, "");
-		// TODO: need to do something better than below; ERIN 0.55 had the
-		// ability to set the fixed result, a schedule of fixed results,
-		// or the random seed to a proper random number generator. As such,
-		// this should be moved out of here and into the TOML Reader/Parser.
-		s.TheModel.RandFn = []() { return 0.4; };
 	}
 
 	size_t
@@ -941,7 +937,7 @@ namespace erin_next
 		{
 			scenarioStartTime_s +=
 				s.TheModel.DistSys.next_time_advance(distId);
-			if (scenarioStartTime_s >= maxTime_s)
+			if (scenarioStartTime_s > maxTime_s)
 			{
 				break;
 			}
@@ -1202,6 +1198,37 @@ namespace erin_next
 	void
 	Simulation_Run(Simulation& s)
 	{
+		FixedRandom fixedRandom;
+		FixedSeries fixedSeries;
+		Random fullRandom;
+		switch (s.Info.TypeOfRandom)
+		{
+			case (RandomType::FixedRandom):
+			{
+				fixedRandom.FixedValue = s.Info.FixedValue;
+				s.TheModel.RandFn = fixedRandom;
+			} break;
+			case (RandomType::FixedSeries):
+			{
+				fixedSeries.Idx = 0;
+				fixedSeries.Series = s.Info.Series;
+				s.TheModel.RandFn = fixedSeries;
+			} break;
+			case (RandomType::RandomFromSeed):
+			{
+				fullRandom = CreateRandomWithSeed(s.Info.Seed);
+				s.TheModel.RandFn = fullRandom;
+			} break;
+			case (RandomType::RandomFromClock):
+			{
+				fullRandom = CreateRandom();
+				s.TheModel.RandFn = fullRandom;
+			} break;
+			default:
+			{
+				throw std::runtime_error{"Unhandled random type"};
+			} break;
+		}
 		// TODO: expose proper options
 		bool option_verbose = true;
 		std::string eventFilePath{ "out.csv" };

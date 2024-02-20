@@ -51,9 +51,7 @@ vulnerable_to = "wind_speed_mph"
 type = "linear"
 lower_bound = 80.0
 upper_bound = 180.0
-[networks.normal_operations]
-connections = [["electric_utility:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
-[networks.emergency_operations]
+[network]
 connections = [
   ["electric_utility:OUT(0)", "bus:IN(0)", "electricity"],
   ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity"],
@@ -71,12 +69,10 @@ time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 8760
 max_occurrences = 1
-network = "normal_operations"
 [scenarios.class_4_hurricane]
 time_unit = "hours"
 occurrence_distribution = "every_10_years"
 duration = 336
 max_occurrences = -1
-network = "emergency_operations"
 intensity.wind_speed_mph = 156
 intensity.inundation_depth_ft = 8

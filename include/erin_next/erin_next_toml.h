@@ -57,6 +57,12 @@ namespace erin_next
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
 		std::string const& tableName);
+
+	std::optional<std::vector<double>>
+	TOMLTable_ParseArrayOfDouble(
+		std::unordered_map<toml::key, toml::value> const& table,
+		std::string const& fieldName,
+		std::string const& tableName);
 }
 
 #endif

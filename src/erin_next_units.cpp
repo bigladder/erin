@@ -110,7 +110,9 @@ namespace erin_next
 			} break;
 			case (TimeUnit::Year):
 			{
-				return t * 365.25 * 24.0 * 3600.0;
+				// NOTE: see note in erin_next_utils.h about year; we are
+				// assuming 1 year is exactly 365 days vs 365.25.
+				return t * 365.0 * 24.0 * 3600.0;
 			} break;
 		}
 		std::ostringstream oss{};

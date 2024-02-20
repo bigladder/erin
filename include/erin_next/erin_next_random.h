@@ -11,7 +11,8 @@ namespace erin_next
 	{
 		FixedRandom,
 		FixedSeries,
-		Random,
+		RandomFromSeed,
+		RandomFromClock,
 	};
 
 	struct FixedRandom

@@ -5,6 +5,8 @@
 
 namespace erin_next
 {
+	// TODO: remove Model& m as a separate parameter; it is now part of
+	// Simulation& s (i.e., s.TheModel)
 	Result
 	ParseSingleComponent(
 		Simulation& s,
@@ -64,7 +66,7 @@ namespace erin_next
 			}
 		}
 		// TODO: parse failure modes
-		// TODO: parse fragility modes
+
 		switch (ct)
 		{
 			case (ComponentType::ConstantSourceType):
@@ -158,9 +160,53 @@ namespace erin_next
 				throw std::runtime_error{ "Unhandled component type" };
 			}
 		}
+		if (table.contains("fragility_modes"))
+		{
+			if (!table.at("fragility_modes").is_array())
+			{
+				std::cout << "[" << fullTableName << "] "
+					<< "fragility_modes must be an array of string"
+					<< std::endl;
+				return Result::Failure;
+			}
+			std::vector<toml::value> const& fms =
+				table.at("fragility_modes").as_array();
+			for (size_t fmIdx = 0; fmIdx < fms.size(); ++fmIdx)
+			{
+				if (!fms[fmIdx].is_string())
+				{
+					std::cout << "[" << fullTableName << "] "
+						<< "fragility_modes[" << fmIdx << "] must be string"
+						<< std::endl;
+					return Result::Failure;
+				}
+				std::string const& fmTag = fms[fmIdx].as_string();
+				bool existingFragilityMode = false;
+				size_t fmId;
+				for (fmId = 0; fmId < s.FragilityModes.Tags.size(); ++fmId)
+				{
+					if (s.FragilityModes.Tags[fmId] == fmTag)
+					{
+						existingFragilityMode = true;
+						break;
+					}
+				}
+				if (!existingFragilityMode)
+				{
+					fmId = s.FragilityModes.Tags.size();
+					s.FragilityModes.Tags.push_back(fmTag);
+					// NOTE: add placeholder default data
+					s.FragilityModes.FragilityCurveId.push_back(0);
+					s.FragilityModes.RepairDistIds.push_back({});
+				}
+				s.ComponentFragilities.ComponentIds.push_back(id);
+				s.ComponentFragilities.FragilityModeIds.push_back(fmId);
+			}
+		}
 		return Result::Success;
 	}
 
+	// TODO: remove model as a parameter -- it is part of Simulation
 	Result
 	ParseComponents(Simulation& s, Model& m, toml::table const& table)
 	{

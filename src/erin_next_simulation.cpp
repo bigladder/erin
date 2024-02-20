@@ -18,6 +18,10 @@ namespace erin_next
 		// of flow specification by passing empty strings. Effectively, this
 		// allows any connections to occur which is nice for simple examples.
 		Simulation_RegisterFlow(s, "");
+		// TODO: need to do something better than below; ERIN 0.55 had the
+		// ability to set the fixed result, a schedule of fixed results,
+		// or the random seed to a proper random number generator. As such,
+		// this should be moved out of here and into the TOML Reader/Parser.
 		s.TheModel.RandFn = []() { return 0.4; };
 	}
 
@@ -863,13 +867,18 @@ namespace erin_next
 		out << "scenario id,"
 			<< "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
 			<< "elapsed (hours)";
-		for (auto const& conn : s.TheModel.Connections)
+		for (std::string const& prefix :
+			std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
 		{
-			std::string const& fromTag = s.TheModel.ComponentMap.Tag[conn.FromId];
-			std::string const& toTag = s.TheModel.ComponentMap.Tag[conn.ToId];
-			out << ","
-				<< fromTag << ":OUT(" << conn.FromPort << ") => "
-				<< toTag << ":IN(" << conn.ToPort << ") (kW)";
+			for (auto const& conn : s.TheModel.Connections)
+			{
+				std::string const& fromTag = s.TheModel.ComponentMap.Tag[conn.FromId];
+				std::string const& toTag = s.TheModel.ComponentMap.Tag[conn.ToId];
+				out << ","
+					<< prefix
+					<< fromTag << ":OUT(" << conn.FromPort << ") => "
+					<< toTag << ":IN(" << conn.ToPort << ") (kW)";
+			}
 		}
 		out << "\n";
 		std::vector<ScenarioOccurrenceStats> occurrenceStats{};
@@ -964,6 +973,31 @@ namespace erin_next
 						= s.ScenarioIntensities.IntensityLevels[siIdx];
 				}
 			}
+			// NOTE: we need to keep a pristine copy of reliabilities as we
+			// may modify reliabilities over each occurrence
+			std::vector<ScheduleBasedReliability> originalReliabilities;
+			originalReliabilities.reserve(s.TheModel.Reliabilities.size());
+			for (size_t sbrIdx=0;
+				sbrIdx < s.TheModel.Reliabilities.size();
+				++sbrIdx)
+			{
+				ScheduleBasedReliability const& sbrSrc =
+					s.TheModel.Reliabilities[sbrIdx];
+				ScheduleBasedReliability sbrCopy{};
+				sbrCopy.ComponentId = sbrSrc.ComponentId;
+				sbrCopy.TimeStates.reserve(sbrSrc.TimeStates.size());
+				for (size_t tsIdx=0;
+					tsIdx < sbrSrc.TimeStates.size();
+					++tsIdx)
+				{
+					TimeState const& tsSrc = sbrSrc.TimeStates[tsIdx];
+					TimeState tsCopy{};
+					tsCopy.time = tsSrc.time;
+					tsCopy.state = tsSrc.state;
+					sbrCopy.TimeStates.push_back(std::move(tsCopy));
+				}
+				originalReliabilities.push_back(std::move(sbrCopy));
+			}
 			for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
 			{
 				double t = occurrenceTimes_s[occIdx];
@@ -980,7 +1014,7 @@ namespace erin_next
 					// NOTE: if there are no components having fragility modes,
 					// there is nothing to do.
 					for (size_t cfmIdx=0;
-						cfmIdx<s.ComponentFragilities.ComponentIds.size();
+						cfmIdx < s.ComponentFragilities.ComponentIds.size();
 						++cfmIdx)
 					{
 						size_t fmId =
@@ -1119,12 +1153,27 @@ namespace erin_next
 					{
 						out << "," << r.Flows[connIdx].Actual;
 					}
+					for (size_t connIdx = 0;
+						connIdx < r.Flows.size();
+						++connIdx)
+					{
+						out << "," << r.Flows[connIdx].Requested;
+					}
+					for (size_t connIdx = 0;
+						connIdx < r.Flows.size();
+						++connIdx)
+					{
+						out << "," << r.Flows[connIdx].Available;
+					}
 					out << "\n";
 				}
 				ScenarioOccurrenceStats sos =
 					ModelResults_CalculateScenarioOccurrenceStats(
 						scenIdx, occIdx + 1, s.TheModel, results);
 				occurrenceStats.push_back(std::move(sos));
+				// NOTE: restore original reliabilities as they may have been
+				// modified.
+				s.TheModel.Reliabilities = originalReliabilities;
 			}
 			std::cout << "Scenario " << scenarioTag << " finished" << std::endl;
 			// TODO: merge per-occurrence stats with global for the current

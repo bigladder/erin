@@ -225,6 +225,8 @@ namespace erin_next
 	{
 		std::set<size_t> ActiveConnectionsBack{};
 		std::set<size_t> ActiveConnectionsFront{};
+		// a set of component id that are unavailable
+		std::set<size_t> UnavailableComponents{};
 		std::vector<uint32_t> StorageAmounts{};
 		std::vector<double> StorageNextEventTimes{};
 		std::vector<Flow> Flows{};

@@ -21,7 +21,7 @@ namespace erin_next
 		ScenarioDict ScenarioMap;
 		LoadDict LoadMap;
 		SimulationInfo Info;
-		Model Model;
+		Model TheModel;
 		std::vector<LinearFragilityCurve> LinearFragilityCurves;
 		IntensityDict Intensities;
 		ScenarioIntensityDict ScenarioIntensities;

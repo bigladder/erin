@@ -18,7 +18,7 @@ namespace erin_next
 		// of flow specification by passing empty strings. Effectively, this
 		// allows any connections to occur which is nice for simple examples.
 		Simulation_RegisterFlow(s, "");
-		s.Model.RandFn = []() { return 0.4; };
+		s.TheModel.RandFn = []() { return 0.4; };
 	}
 
 	size_t
@@ -141,7 +141,7 @@ namespace erin_next
 	void
 	Simulation_PrintComponents(Simulation const& s)
 	{
-		Model const& m = s.Model;
+		Model const& m = s.TheModel;
 		for (size_t i = 0; i < m.ComponentMap.CompType.size(); ++i)
 		{
 			std::vector<size_t> const& outflowTypes =
@@ -246,7 +246,7 @@ namespace erin_next
 			if (s.FragilityModes.RepairDistIds[i].has_value())
 			{
 				std::optional<Distribution> maybeDist =
-					s.Model.DistSys.get_dist_by_id(
+					s.TheModel.DistSys.get_dist_by_id(
 						s.FragilityModes.RepairDistIds[i].value());
 				if (maybeDist.has_value())
 				{
@@ -270,7 +270,7 @@ namespace erin_next
 				<< " " << TimeUnitToTag(s.ScenarioMap.TimeUnits[i])
 				<< std::endl;
 			auto maybeDist =
-				s.Model.DistSys.get_dist_by_id(
+				s.TheModel.DistSys.get_dist_by_id(
 					s.ScenarioMap.OccurrenceDistributionIds[i]);
 			if (maybeDist.has_value())
 			{
@@ -628,7 +628,7 @@ namespace erin_next
 					std::string const& repairDistTag =
 						fmValueTable.at("repair_dist").as_string();
 					maybeRepairDistId =
-						s.Model.DistSys.lookup_dist_by_tag(repairDistTag);
+						s.TheModel.DistSys.lookup_dist_by_tag(repairDistTag);
 				}
 				Simulation_RegisterFragilityMode(
 					s, fmName, fcId, maybeRepairDistId);
@@ -642,7 +642,7 @@ namespace erin_next
 	{
 		if (v.contains("components") && v.at("components").is_table())
 		{
-			return ParseComponents(s, s.Model, v.at("components").as_table());
+			return ParseComponents(s, s.TheModel, v.at("components").as_table());
 		}
 		std::cout << "required field 'components' not found" << std::endl;
 		return Result::Failure;
@@ -654,7 +654,7 @@ namespace erin_next
 		if (v.contains("dist") && v.at("dist").is_table())
 		{
 			// TODO: have ParseDistributions return a Result
-			ParseDistributions(s.Model.DistSys, v.at("dist").as_table());
+			ParseDistributions(s.TheModel.DistSys, v.at("dist").as_table());
 			return Result::Success;
 		}
 		std::cout << "required field 'dist' not found" << std::endl;
@@ -668,7 +668,7 @@ namespace erin_next
 		if (v.contains(n) && v.at(n).is_table())
 		{
 			return ParseNetwork(
-				s.FlowTypeMap, s.Model, v.at(n).as_table());
+				s.FlowTypeMap, s.TheModel, v.at(n).as_table());
 		}
 		else
 		{
@@ -683,7 +683,7 @@ namespace erin_next
 		if (v.contains("scenarios") && v.at("scenarios").is_table())
 		{
 			auto result = ParseScenarios(
-				s.ScenarioMap, s.Model.DistSys, v.at("scenarios").as_table());
+				s.ScenarioMap, s.TheModel.DistSys, v.at("scenarios").as_table());
 			if (result == Result::Success)
 			{
 				for (auto const& pair : v.at("scenarios").as_table())
@@ -803,13 +803,13 @@ namespace erin_next
 		std::cout << "\nComponents:" << std::endl;
 		Simulation_PrintComponents(s);
 		std::cout << "\nDistributions:" << std::endl;
-		s.Model.DistSys.print_distributions();
+		s.TheModel.DistSys.print_distributions();
 		std::cout << "\nFragility Curves:" << std::endl;
 		Simulation_PrintFragilityCurves(s);
 		std::cout << "\nFragility Modes:" << std::endl;
 		Simulation_PrintFragilityModes(s);
 		std::cout << "\nConnections:" << std::endl;
-		Model_PrintConnections(s.Model, s.FlowTypeMap);
+		Model_PrintConnections(s.TheModel, s.FlowTypeMap);
 		std::cout << "\nScenarios:" << std::endl;
 		Simulation_PrintScenarios(s);
 		std::cout << "\nIntensities:" << std::endl;
@@ -863,10 +863,10 @@ namespace erin_next
 		out << "scenario id,"
 			<< "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
 			<< "elapsed (hours)";
-		for (auto const& conn : s.Model.Connections)
+		for (auto const& conn : s.TheModel.Connections)
 		{
-			std::string const& fromTag = s.Model.ComponentMap.Tag[conn.FromId];
-			std::string const& toTag = s.Model.ComponentMap.Tag[conn.ToId];
+			std::string const& fromTag = s.TheModel.ComponentMap.Tag[conn.FromId];
+			std::string const& toTag = s.TheModel.ComponentMap.Tag[conn.ToId];
 			out << ","
 				<< fromTag << ":OUT(" << conn.FromPort << ") => "
 				<< toTag << ":IN(" << conn.ToPort << ") (kW)";
@@ -882,14 +882,14 @@ namespace erin_next
 			// for this scenario, ensure all schedule-based components
 			// have the right schedule set for this scenario
 			for (size_t sblIdx = 0;
-				sblIdx < s.Model.ScheduledLoads.size();
+				sblIdx < s.TheModel.ScheduledLoads.size();
 				++sblIdx)
 			{
-				if (s.Model.ScheduledLoads[sblIdx]
+				if (s.TheModel.ScheduledLoads[sblIdx]
 					.ScenarioIdToLoadId.contains(scenIdx))
 				{
 					auto loadId =
-						s.Model.ScheduledLoads[sblIdx]
+						s.TheModel.ScheduledLoads[sblIdx]
 						.ScenarioIdToLoadId.at(scenIdx);
 					std::vector<TimeAndAmount> schedule{};
 					size_t numEntries = s.LoadMap.Loads[loadId].size();
@@ -903,7 +903,7 @@ namespace erin_next
 						tal.Amount = s.LoadMap.Loads[loadId][i].Amount;
 						schedule.push_back(std::move(tal));
 					}
-					s.Model.ScheduledLoads[sblIdx].TimesAndLoads = schedule;
+					s.TheModel.ScheduledLoads[sblIdx].TimesAndLoads = schedule;
 				}
 				else
 				{
@@ -934,7 +934,7 @@ namespace erin_next
 				++numOccurrences)
 			{
 				scenarioStartTime_s +=
-					s.Model.DistSys.next_time_advance(distId);
+					s.TheModel.DistSys.next_time_advance(distId);
 				if (scenarioStartTime_s >= maxTime_s)
 				{
 					break;
@@ -1015,7 +1015,7 @@ namespace erin_next
 									}
 									else
 									{
-										double x = s.Model.RandFn();
+										double x = s.TheModel.RandFn();
 										double range =
 											lfc.UpperBound - lfc.LowerBound;
 										double failureFrac =
@@ -1045,10 +1045,10 @@ namespace erin_next
 							bool hasReliabilityAlready = false;
 							size_t reliabilityId = 0;
 							for (size_t rIdx=0;
-								rIdx<s.Model.Reliabilities.size();
+								rIdx<s.TheModel.Reliabilities.size();
 								++rIdx)
 							{
-								if (s.Model.Reliabilities[rIdx].ComponentId
+								if (s.TheModel.Reliabilities[rIdx].ComponentId
 									== compId)
 								{
 									hasReliabilityAlready = true;
@@ -1072,7 +1072,7 @@ namespace erin_next
 								newTimeStates.push_back(std::move(ts));
 								if (hasReliabilityAlready)
 								{
-									s.Model.Reliabilities[reliabilityId]
+									s.TheModel.Reliabilities[reliabilityId]
 										.TimeStates = newTimeStates;
 								}
 								else
@@ -1080,7 +1080,7 @@ namespace erin_next
 									ScheduleBasedReliability sbr{};
 									sbr.ComponentId = compId;
 									sbr.TimeStates = newTimeStates;
-									s.Model.Reliabilities.push_back(
+									s.TheModel.Reliabilities.push_back(
 										std::move(sbr));
 								}
 							}
@@ -1103,10 +1103,10 @@ namespace erin_next
 						<< std::endl;
 				}
 				// TODO: clip reliability schedules here
-				s.Model.FinalTime = duration_s;
+				s.TheModel.FinalTime = duration_s;
 				// TODO: add an optional verbosity flag to SimInfo
 				// -- use that to set things like the print flag below
-				auto results = Simulate(s.Model, option_verbose);
+				auto results = Simulate(s.TheModel, option_verbose);
 				// TODO: investigate putting output on another thread
 				for (auto const& r : results)
 				{
@@ -1123,7 +1123,7 @@ namespace erin_next
 				}
 				ScenarioOccurrenceStats sos =
 					ModelResults_CalculateScenarioOccurrenceStats(
-						scenIdx, occIdx + 1, s.Model, results);
+						scenIdx, occIdx + 1, s.TheModel, results);
 				occurrenceStats.push_back(std::move(sos));
 			}
 			std::cout << "Scenario " << scenarioTag << " finished" << std::endl;

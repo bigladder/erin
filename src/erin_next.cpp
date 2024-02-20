@@ -1390,9 +1390,6 @@ namespace erin_next
 		}
 	}
 
-	// TODO: we need to keep track of a "failed list"; maybe a set of component
-	// id? That will need to be checked to prevent typical component operation
-	// over the network.
 	void
 	Model_SetComponentToFailed(
 		Model const& m,

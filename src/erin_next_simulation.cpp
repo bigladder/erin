@@ -1130,6 +1130,76 @@ namespace erin_next
 	}
 
 	void
+	WriteStatisticsToFile(
+		Simulation const& s,
+		std::string const& statsFilePath,
+		std::vector<ScenarioOccurrenceStats> occurrenceStats)
+	{
+		std::ofstream stats;
+		stats.open(statsFilePath);
+		if (!stats.good())
+		{
+			std::cout << "Could not open '"
+				<< statsFilePath << "' for writing."
+				<< std::endl;
+			return;
+		}
+		stats
+			<< "scenario id,"
+			<< "occurrence number,"
+			<< "duration (h),"
+			<< "total source (kJ),"
+			<< "total load (kJ),"
+			<< "total storage (kJ),"
+			<< "total waste (kJ),"
+			<< "energy balance (source-(load+storage+waste)) (kJ),"
+			<< "site efficiency (%),"
+			<< "uptime (h),"
+			<< "downtime (h),"
+			<< "load not served (kJ),"
+			<< "energy robustness [ER] (%),"
+			<< "energy availability [EA] (%),"
+			<< "max single event downtime [MaxSEDT] (h)"
+			<< std::endl;
+		for (auto const& os : occurrenceStats)
+		{
+			double stored = os.StorageCharge_kJ - os.StorageDischarge_kJ;
+			double balance =
+				os.Inflow_kJ
+				- (os.OutflowAchieved_kJ + stored + os.Wasteflow_kJ);
+			double efficiency =
+				os.Inflow_kJ > 0.0
+				? os.OutflowAchieved_kJ * 100.0 / os.Inflow_kJ
+				: 0.0;
+			double ER =
+				os.OutflowRequest_kJ > 0.0
+				? (os.OutflowAchieved_kJ * 100.0 / os.OutflowRequest_kJ)
+				: 0.0;
+			double EA =
+				os.Duration_s > 0.0
+				? (os.Uptime_s * 100.0 / (os.Duration_s))
+				: 0.0;
+			stats << s.ScenarioMap.Tags[os.Id]
+				<< "," << os.OccurrenceNumber
+				<< "," << (os.Duration_s / seconds_per_hour)
+				<< "," << os.Inflow_kJ
+				<< "," << os.OutflowAchieved_kJ
+				<< "," << stored
+				<< "," << os.Wasteflow_kJ
+				<< "," << balance
+				<< "," << efficiency
+				<< "," << (os.Uptime_s / seconds_per_hour)
+				<< "," << (os.Downtime_s / seconds_per_hour)
+				<< "," << os.LoadNotServed_kJ
+				<< "," << ER
+				<< "," << EA
+				<< "," << (os.MaxSEDT_s / seconds_per_hour)
+				<< std::endl;
+		}
+		stats.close();
+	}
+
+	void
 	Simulation_Run(Simulation& s)
 	{
 		// TODO: expose proper options
@@ -1226,8 +1296,6 @@ namespace erin_next
 					ModelResults_CalculateScenarioOccurrenceStats(
 						scenIdx, occIdx + 1, s.TheModel, results);
 				occurrenceStats.push_back(std::move(sos));
-				// NOTE: restore original reliabilities as they may have been
-				// modified.
 				s.TheModel.Reliabilities = originalReliabilities;
 			}
 			std::cout << "Scenario " << scenarioTag << " finished" << std::endl;
@@ -1235,67 +1303,6 @@ namespace erin_next
 			// scenario
 		}
 		out.close();
-		std::ofstream stats;
-		stats.open(statsFilePath);
-		if (!stats.good())
-		{
-			std::cout << "Could not open '"
-				<< statsFilePath << "' for writing."
-				<< std::endl;
-			return;
-		}
-		stats
-			<< "scenario id,"
-			<< "occurrence number,"
-			<< "duration (h),"
-			<< "total source (kJ),"
-			<< "total load (kJ),"
-			<< "total storage (kJ),"
-			<< "total waste (kJ),"
-			<< "energy balance (source-(load+storage+waste)) (kJ),"
-			<< "site efficiency (%),"
-			<< "uptime (h),"
-			<< "downtime (h),"
-			<< "load not served (kJ),"
-			<< "energy robustness [ER] (%),"
-			<< "energy availability [EA] (%),"
-			<< "max single event downtime [MaxSEDT] (h)"
-			<< std::endl;
-		for (auto const& os : occurrenceStats)
-		{
-			double stored = os.StorageCharge_kJ - os.StorageDischarge_kJ;
-			double balance =
-				os.Inflow_kJ
-				- (os.OutflowAchieved_kJ + stored + os.Wasteflow_kJ);
-			double efficiency =
-				os.Inflow_kJ > 0.0
-				? os.OutflowAchieved_kJ * 100.0 / os.Inflow_kJ
-				: 0.0;
-			double ER =
-				os.OutflowRequest_kJ > 0.0
-				? (os.OutflowAchieved_kJ * 100.0 / os.OutflowRequest_kJ)
-				: 0.0;
-			double EA =
-				os.Duration_s > 0.0
-				? (os.Uptime_s * 100.0 / (os.Duration_s))
-				: 0.0;
-			stats << s.ScenarioMap.Tags[os.Id]
-				<< "," << os.OccurrenceNumber
-				<< "," << (os.Duration_s / seconds_per_hour)
-				<< "," << os.Inflow_kJ
-				<< "," << os.OutflowAchieved_kJ
-				<< "," << stored
-				<< "," << os.Wasteflow_kJ
-				<< "," << balance
-				<< "," << efficiency
-				<< "," << (os.Uptime_s / seconds_per_hour)
-				<< "," << (os.Downtime_s / seconds_per_hour)
-				<< "," << os.LoadNotServed_kJ
-				<< "," << ER
-				<< "," << EA
-				<< "," << (os.MaxSEDT_s / seconds_per_hour)
-				<< std::endl;
-		}
-		
+		WriteStatisticsToFile(s, statsFilePath, occurrenceStats);
 	}
 }

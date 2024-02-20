@@ -1180,7 +1180,6 @@ namespace erin_next
 			// scenario
 		}
 		out.close();
-		// TODO: write out stats file
 		std::ofstream stats;
 		stats.open(statsFilePath);
 		if (!stats.good())

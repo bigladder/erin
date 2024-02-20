@@ -923,18 +923,21 @@ namespace erin_next
 			size_t maxOccurrence =
 				maybeMaxOccurrences.has_value()
 				? maybeMaxOccurrences.value()
-				: 10'000;
+				: 1'000;
 			auto const distId =
 				s.ScenarioMap.OccurrenceDistributionIds[scenIdx];
 			double scenarioStartTime_s = 0.0;
+			double maxTime_s = Time_ToSeconds(s.Info.MaxTime, s.Info.TimeUnit);
 			for (size_t numOccurrences = 0;
-				(numOccurrences < maxOccurrence)
-				&& (scenarioStartTime_s <
-					Time_ToSeconds(s.Info.MaxTime, s.Info.TimeUnit));
+				numOccurrences < maxOccurrence;
 				++numOccurrences)
 			{
 				scenarioStartTime_s +=
 					s.Model.DistSys.next_time_advance(distId);
+				if (scenarioStartTime_s >= maxTime_s)
+				{
+					break;
+				}
 				occurrenceTimes_s.push_back(scenarioStartTime_s);
 			}
 			std::cout << "Occurrences: " << occurrenceTimes_s.size()

@@ -854,6 +854,34 @@ namespace erin_next
 		out << "\n";
 	}
 
+	void
+	WriteResultsToEventFile(
+		std::ofstream& out,
+		std::vector<TimeAndFlows> results,
+		std::string const& scenarioTag,
+		std::string const& scenarioStartTimeTag)
+	{
+		for (auto const& r : results)
+		{
+			out << scenarioTag << ","
+				<< scenarioStartTimeTag << ","
+				<< (r.Time / seconds_per_hour);
+			for (size_t i = 0; i < r.Flows.size(); ++i)
+			{
+				out << "," << r.Flows[i].Actual;
+			}
+			for (size_t i = 0; i < r.Flows.size(); ++i)
+			{
+				out << "," << r.Flows[i].Requested;
+			}
+			for (size_t i = 0; i < r.Flows.size(); ++i)
+			{
+				out << "," << r.Flows[i].Available;
+			}
+			out << "\n";
+		}
+	}
+
 	Result
 	SetLoadsForScenario(
 		std::vector<ScheduleBasedLoad>& loads,
@@ -1156,13 +1184,11 @@ namespace erin_next
 			// TODO: implement load substitution for schedule-based sources
 			// for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size(); ++sbsIdx) {/* ... */}
 			std::vector<double> occurrenceTimes_s =
-				DetermineScenarioOccurrenceTimes(s, scenIdx, true);
+				DetermineScenarioOccurrenceTimes(s, scenIdx, option_verbose);
 			// TODO: initialize total scenario stats (i.e.,
 			// over all occurrences)
 			std::map<size_t, double> intensityIdToAmount =
 				GetIntensitiesForScenario(s, scenIdx);
-			// NOTE: we need to keep a pristine copy of reliabilities as we
-			// may modify reliabilities over each occurrence
 			for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
 			{
 				double t = occurrenceTimes_s[occIdx];
@@ -1170,7 +1196,7 @@ namespace erin_next
 					s.ScenarioMap.Durations[scenIdx],
 					s.ScenarioMap.TimeUnits[scenIdx]);
 				std::cout << "Occurrence #" << (occIdx + 1) << " at "
-					<< t << std::endl;
+					<< SecondsToPrettyString(t) << std::endl;
 				std::vector<ScheduleBasedReliability> originalReliabilities =
 					ApplyFragilities(s, intensityIdToAmount);
 				std::string scenarioStartTimeTag =
@@ -1184,8 +1210,9 @@ namespace erin_next
 						<< " from " << scenarioStartTimeTag << " for "
 						<< s.ScenarioMap.Durations[scenIdx] << " "
 						<< TimeUnitToTag(s.ScenarioMap.TimeUnits[scenIdx])
-						<< " (" << t << " to " << tEnd << " seconds)"
-						<< std::endl;
+						<< " (" << SecondsToPrettyString(t)
+						<< " to " << SecondsToPrettyString(tEnd)
+						<< ")" << std::endl;
 				}
 				// TODO: clip reliability schedules here
 				s.TheModel.FinalTime = duration_s;
@@ -1193,31 +1220,8 @@ namespace erin_next
 				// -- use that to set things like the print flag below
 				auto results = Simulate(s.TheModel, option_verbose);
 				// TODO: investigate putting output on another thread
-				for (auto const& r : results)
-				{
-					out << scenarioTag << ","
-						<< scenarioStartTimeTag << ","
-						<< (r.Time / seconds_per_hour);
-					for (size_t connIdx = 0;
-						connIdx < r.Flows.size();
-						++connIdx)
-					{
-						out << "," << r.Flows[connIdx].Actual;
-					}
-					for (size_t connIdx = 0;
-						connIdx < r.Flows.size();
-						++connIdx)
-					{
-						out << "," << r.Flows[connIdx].Requested;
-					}
-					for (size_t connIdx = 0;
-						connIdx < r.Flows.size();
-						++connIdx)
-					{
-						out << "," << r.Flows[connIdx].Available;
-					}
-					out << "\n";
-				}
+				WriteResultsToEventFile(
+					out, results, scenarioTag, scenarioStartTimeTag);
 				ScenarioOccurrenceStats sos =
 					ModelResults_CalculateScenarioOccurrenceStats(
 						scenIdx, occIdx + 1, s.TheModel, results);

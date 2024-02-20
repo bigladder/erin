@@ -36,7 +36,7 @@ namespace erin_next
 		if (!rawTimeUnit.has_value()) return {};
 		auto maybeTimeUnit = TagToTimeUnit(rawTimeUnit.value());
 		if (!maybeTimeUnit.has_value()) return {};
-		si.TimeUnit = maybeTimeUnit.value();
+		si.TheTimeUnit = maybeTimeUnit.value();
 		auto rawMaxTime = TOMLTable_ParseDouble(
 			table, "max_time", "simulation_info");
 		if (!rawMaxTime.has_value())
@@ -73,7 +73,7 @@ namespace erin_next
 		return a.MaxTime == b.MaxTime
 			&& a.QuantityUnit == b.QuantityUnit
 			&& a.RateUnit == b.RateUnit
-			&& a.TimeUnit == b.TimeUnit;
+			&& a.TheTimeUnit == b.TheTimeUnit;
 	}
 
 	bool
@@ -87,7 +87,7 @@ namespace erin_next
 	{
 		os << "SimulationInfo{"
 			<< "MaxTime=" << s.MaxTime << "; "
-			<< "TimeUnit=" << TimeUnitToTag(s.TimeUnit) << "; "
+			<< "TimeUnit=" << TimeUnitToTag(s.TheTimeUnit) << "; "
 			<< "QuantityUnit=\"" << s.QuantityUnit << "\"; "
 			<< "RateUnit=\"" << s.RateUnit << "\"}";
 		return os;

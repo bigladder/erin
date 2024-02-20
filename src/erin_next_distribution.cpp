@@ -615,7 +615,7 @@ namespace erin_next
 									<< std::endl;
 								return;
 							}
-							auto unitStr = maybeUnit.value();
+							std::string const& unitStr = maybeUnit.value();
 							std::optional<TimeUnit> maybeTimeUnit =
 								TagToTimeUnit(unitStr);
 							if (!maybeTimeUnit.has_value())

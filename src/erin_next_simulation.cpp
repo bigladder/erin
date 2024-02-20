@@ -134,7 +134,7 @@ namespace erin_next
 			s.LoadMap.Tags.push_back(loads[i].Tag);
 			s.LoadMap.RateUnits.push_back(loads[i].RateUnit);
 			s.LoadMap.Loads.push_back(loads[i].TimeAndLoads);
-			s.LoadMap.TimeUnits.push_back(loads[i].TimeUnit);
+			s.LoadMap.TimeUnits.push_back(loads[i].TheTimeUnit);
 		}
 	}
 
@@ -927,7 +927,8 @@ namespace erin_next
 			auto const distId =
 				s.ScenarioMap.OccurrenceDistributionIds[scenIdx];
 			double scenarioStartTime_s = 0.0;
-			double maxTime_s = Time_ToSeconds(s.Info.MaxTime, s.Info.TimeUnit);
+			double maxTime_s =
+				Time_ToSeconds(s.Info.MaxTime, s.Info.TheTimeUnit);
 			for (size_t numOccurrences = 0;
 				numOccurrences < maxOccurrence;
 				++numOccurrences)

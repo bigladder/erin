@@ -24,7 +24,7 @@ namespace erin_next
 	{
 		std::string RateUnit;
 		std::string QuantityUnit;
-		TimeUnit TimeUnit;
+		TimeUnit TheTimeUnit;
 		double MaxTime;
 	};
 

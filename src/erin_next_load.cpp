@@ -48,6 +48,7 @@ namespace erin_next
 			{
 				std::cout << "[" << tableFullName << "] "
 					<< "csv_file is not a valid string" << std::endl;
+				return {};
 			}
 			std::string csvFileName{maybeCsvFileName.value()};
 			std::ifstream inputDataFile{};
@@ -132,7 +133,7 @@ namespace erin_next
 				<< timeUnit.value() << std::endl;
 			return {};
 		}
-		load.TimeUnit = maybeTimeUnit.value();
+		load.TheTimeUnit = maybeTimeUnit.value();
 		load.TimeAndLoads = std::move(timeRatePairs.value());
 		return load;
 	}
@@ -173,7 +174,7 @@ namespace erin_next
 	{
 		os << "Load{"
 			<< "Tag=\"" << load.Tag << "\"; "
-			<< "TimeUnit=\"" << load.TimeUnit << "\"; "
+			<< "TimeUnit=\"" << load.TheTimeUnit << "\"; "
 			<< "RateUnit=\"" << load.RateUnit << "\"; "
 			<< "TimeAndLoads=[";
 		for (auto it = load.TimeAndLoads.cbegin();

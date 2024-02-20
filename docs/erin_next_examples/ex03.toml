@@ -8,7 +8,15 @@ max_time = 100
 ############################################################
 # Loads
 [loads.building_electrical]
-csv_file = "ex03.csv"
+#csv_file = "ex03.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0.0, 1.0],
+  [1200.0, 10.0],
+  [2400.0, 1.0],
+  [3600.0, 0.0],
+]
 ############################################################
 # Components
 [components.electric_utility]
@@ -23,7 +31,6 @@ loads_by_scenario.blue_sky = "building_electrical"
 loads_by_scenario.class_1_hurricane = "building_electrical"
 loads_by_scenario.class_4_hurricane = "building_electrical"
 loads_by_scenario.class_5_hurricane = "building_electrical"
-fragility_modes = ["somewhat_vulnerable_to_flooding"]
 [components.emergency_generator]
 type = "source"
 outflow = "electricity"

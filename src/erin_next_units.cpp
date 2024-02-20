@@ -94,25 +94,23 @@ namespace erin_next
 			} break;
 			case (TimeUnit::Minute):
 			{
-				return t * 60.0;
+				return t * static_cast<double>(seconds_per_minute);
 			} break;
 			case (TimeUnit::Hour):
 			{
-				return t * 3600.0;
+				return t * static_cast<double>(seconds_per_hour);
 			} break;
 			case (TimeUnit::Day):
 			{
-				return t * 24.0 * 3600.0;
+				return t * static_cast<double>(seconds_per_day);
 			} break;
 			case (TimeUnit::Week):
 			{
-				return t * 7.0 * 24.0 * 3600.0;
+				return t * static_cast<double>(seconds_per_week);
 			} break;
 			case (TimeUnit::Year):
 			{
-				// NOTE: see note in erin_next_utils.h about year; we are
-				// assuming 1 year is exactly 365 days vs 365.25.
-				return t * 365.0 * 24.0 * 3600.0;
+				return t * static_cast<double>(seconds_per_year);
 			} break;
 		}
 		std::ostringstream oss{};

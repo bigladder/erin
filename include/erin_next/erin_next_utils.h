@@ -78,6 +78,7 @@ namespace erin_next
 	int constexpr seconds_per_hour{ seconds_per_minute * minutes_per_hour };
 	int constexpr hours_per_day{ 24 };
 	int constexpr seconds_per_day{ seconds_per_hour * hours_per_day };
+	int constexpr seconds_per_week{ seconds_per_day * 7 };
 	// NOTE: there are actually 365.25 days per year but our time clock
 	// doesn't acknowledge leap years so we use a slightly lower factor.
 	// Hopefully, this won't bite us... For this simulation, one year is

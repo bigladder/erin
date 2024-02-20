@@ -933,6 +933,174 @@ namespace erin_next
 		return occurrenceTimes_s;
 	}
 
+	std::map<size_t, double>
+	GetIntensitiesForScenario(Simulation& s, size_t scenIdx)
+	{
+		std::map<size_t, double> intensityIdToAmount;
+		for (size_t i=0; i < s.ScenarioIntensities.ScenarioIds.size(); ++i)
+		{
+			if (s.ScenarioIntensities.ScenarioIds[i] == scenIdx)
+			{
+				auto intensityId =
+					s.ScenarioIntensities.IntensityIds[i];
+				intensityIdToAmount[intensityId]
+					= s.ScenarioIntensities.IntensityLevels[i];
+			}
+		}
+		return intensityIdToAmount;
+	}
+
+	std::vector<ScheduleBasedReliability>
+	CopyReliabilities(Simulation const& s)
+	{
+		std::vector<ScheduleBasedReliability> originalReliabilities;
+		originalReliabilities.reserve(s.TheModel.Reliabilities.size());
+		for (size_t sbrIdx = 0;
+			sbrIdx < s.TheModel.Reliabilities.size();
+			++sbrIdx)
+		{
+			ScheduleBasedReliability const& sbrSrc =
+				s.TheModel.Reliabilities[sbrIdx];
+			ScheduleBasedReliability sbrCopy{};
+			sbrCopy.ComponentId = sbrSrc.ComponentId;
+			sbrCopy.TimeStates.reserve(sbrSrc.TimeStates.size());
+			for (size_t tsIdx = 0;
+				tsIdx < sbrSrc.TimeStates.size();
+				++tsIdx)
+			{
+				TimeState const& tsSrc = sbrSrc.TimeStates[tsIdx];
+				TimeState tsCopy{};
+				tsCopy.time = tsSrc.time;
+				tsCopy.state = tsSrc.state;
+				sbrCopy.TimeStates.push_back(std::move(tsCopy));
+			}
+			originalReliabilities.push_back(std::move(sbrCopy));
+		}
+		return originalReliabilities;
+	}
+
+	std::vector<ScheduleBasedReliability>
+	ApplyFragilities(
+		Simulation& s,
+		std::map<size_t, double> const& intensityIdToAmount)
+	{
+		std::vector<ScheduleBasedReliability> orig = CopyReliabilities(s);
+		if (intensityIdToAmount.size() > 0)
+		{
+			std::cout << "... Applying fragilities" << std::endl;
+			// NOTE: if there are no components having fragility modes,
+			// there is nothing to do.
+			for (size_t cfmIdx = 0;
+				cfmIdx < s.ComponentFragilities.ComponentIds.size();
+				++cfmIdx)
+			{
+				size_t fmId =
+					s.ComponentFragilities.FragilityModeIds[cfmIdx];
+				size_t fcId =
+					s.FragilityModes.FragilityCurveId[fmId];
+				std::optional<size_t> repairId =
+					s.FragilityModes.RepairDistIds[fmId];
+				FragilityCurveType curveType =
+					s.FragilityCurves.CurveTypes[fcId];
+				size_t fcIdx =
+					s.FragilityCurves.CurveId[fcId];
+				bool isFailed = false;
+				switch (curveType)
+				{
+				case (FragilityCurveType::Linear):
+				{
+					LinearFragilityCurve lfc =
+						s.LinearFragilityCurves[fcIdx];
+					size_t vulnerId = lfc.VulnerabilityId;
+					if (intensityIdToAmount.contains(vulnerId))
+					{
+						double level =
+							intensityIdToAmount.at(vulnerId);
+						if (level > lfc.UpperBound)
+						{
+							isFailed = true;
+						}
+						else if (level < lfc.LowerBound)
+						{
+							isFailed = false;
+						}
+						else
+						{
+							double x = s.TheModel.RandFn();
+							double range =
+								lfc.UpperBound - lfc.LowerBound;
+							double failureFrac =
+								(level - lfc.LowerBound)
+								/ range;
+							isFailed = x <= failureFrac;
+						}
+					}
+				} break;
+				default:
+				{
+					throw std::runtime_error{
+						"Unhandled FragilityCurveType"
+					};
+				} break;
+				}
+				// NOTE: if we are not failed, there is nothing to do
+				if (isFailed)
+				{
+					// now we have to find the affected component
+					// and assign/update a reliability schedule for it
+					// including any repair distribution if we have
+					// one.
+					size_t compId =
+						s.ComponentFragilities.ComponentIds[cfmIdx];
+					// does the component have a reliability signal?
+					bool hasReliabilityAlready = false;
+					size_t reliabilityId = 0;
+					for (size_t rIdx = 0;
+						rIdx < s.TheModel.Reliabilities.size();
+						++rIdx)
+					{
+						if (s.TheModel.Reliabilities[rIdx].ComponentId
+							== compId)
+						{
+							hasReliabilityAlready = true;
+							reliabilityId = rIdx;
+							break;
+						}
+					}
+					if (repairId.has_value())
+					{
+						throw std::runtime_error{
+							"not implemented yet"
+						};
+					}
+					else
+					{
+						// failed for the duration of the scenario
+						std::vector<TimeState> newTimeStates{};
+						TimeState ts{};
+						ts.state = false;
+						ts.time = 0.0;
+						newTimeStates.push_back(std::move(ts));
+						if (hasReliabilityAlready)
+						{
+							s.TheModel.Reliabilities[reliabilityId]
+								.TimeStates = newTimeStates;
+						}
+						else
+						{
+							ScheduleBasedReliability sbr{};
+							sbr.ComponentId = compId;
+							sbr.TimeStates = newTimeStates;
+							s.TheModel.Reliabilities.push_back(
+								std::move(sbr));
+						}
+					}
+				}
+			}
+		}
+		return orig;
+	}
+
 	void
 	Simulation_Run(Simulation& s)
 	{
@@ -982,7 +1150,6 @@ namespace erin_next
 			if (SetLoadsForScenario(
 				s.TheModel.ScheduledLoads,s.LoadMap,scenIdx) == Result::Failure)
 			{
-				// TODO: create error message
 				std::cout << "Issue setting schedule loads" << std::endl;
 				return;
 			}
@@ -992,44 +1159,10 @@ namespace erin_next
 				DetermineScenarioOccurrenceTimes(s, scenIdx, true);
 			// TODO: initialize total scenario stats (i.e.,
 			// over all occurrences)
-			std::map<size_t, double> intensityIdToAmount{};
-			for (size_t siIdx=0;
-				siIdx<s.ScenarioIntensities.ScenarioIds.size();
-				++siIdx)
-			{
-				if (s.ScenarioIntensities.ScenarioIds[siIdx] == scenIdx)
-				{
-					auto intensityId =
-						s.ScenarioIntensities.IntensityIds[siIdx];
-					intensityIdToAmount[intensityId]
-						= s.ScenarioIntensities.IntensityLevels[siIdx];
-				}
-			}
+			std::map<size_t, double> intensityIdToAmount =
+				GetIntensitiesForScenario(s, scenIdx);
 			// NOTE: we need to keep a pristine copy of reliabilities as we
 			// may modify reliabilities over each occurrence
-			std::vector<ScheduleBasedReliability> originalReliabilities;
-			originalReliabilities.reserve(s.TheModel.Reliabilities.size());
-			for (size_t sbrIdx=0;
-				sbrIdx < s.TheModel.Reliabilities.size();
-				++sbrIdx)
-			{
-				ScheduleBasedReliability const& sbrSrc =
-					s.TheModel.Reliabilities[sbrIdx];
-				ScheduleBasedReliability sbrCopy{};
-				sbrCopy.ComponentId = sbrSrc.ComponentId;
-				sbrCopy.TimeStates.reserve(sbrSrc.TimeStates.size());
-				for (size_t tsIdx=0;
-					tsIdx < sbrSrc.TimeStates.size();
-					++tsIdx)
-				{
-					TimeState const& tsSrc = sbrSrc.TimeStates[tsIdx];
-					TimeState tsCopy{};
-					tsCopy.time = tsSrc.time;
-					tsCopy.state = tsSrc.state;
-					sbrCopy.TimeStates.push_back(std::move(tsCopy));
-				}
-				originalReliabilities.push_back(std::move(sbrCopy));
-			}
 			for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
 			{
 				double t = occurrenceTimes_s[occIdx];
@@ -1038,122 +1171,8 @@ namespace erin_next
 					s.ScenarioMap.TimeUnits[scenIdx]);
 				std::cout << "Occurrence #" << (occIdx + 1) << " at "
 					<< t << std::endl;
-				// NOTE: if there are no intensities in this scenario, there
-				// are no fragilities to apply/check.
-				if (intensityIdToAmount.size() > 0)
-				{
-					std::cout << "... Applying fragilities" << std::endl;
-					// NOTE: if there are no components having fragility modes,
-					// there is nothing to do.
-					for (size_t cfmIdx=0;
-						cfmIdx < s.ComponentFragilities.ComponentIds.size();
-						++cfmIdx)
-					{
-						size_t fmId =
-							s.ComponentFragilities.FragilityModeIds[cfmIdx];
-						size_t fcId =
-							s.FragilityModes.FragilityCurveId[fmId];
-						std::optional<size_t> repairId =
-							s.FragilityModes.RepairDistIds[fmId];
-						FragilityCurveType curveType =
-							s.FragilityCurves.CurveTypes[fcId];
-						size_t fcIdx =
-							s.FragilityCurves.CurveId[fcId];
-						bool isFailed = false;
-						switch (curveType)
-						{
-							case (FragilityCurveType::Linear):
-							{
-								LinearFragilityCurve lfc =
-									s.LinearFragilityCurves[fcIdx];
-								size_t vulnerId = lfc.VulnerabilityId;
-								if (intensityIdToAmount.contains(vulnerId))
-								{
-									double level =
-										intensityIdToAmount[vulnerId];
-									if (level > lfc.UpperBound)
-									{
-										isFailed = true;
-									}
-									else if (level < lfc.LowerBound)
-									{
-										isFailed = false;
-									}
-									else
-									{
-										double x = s.TheModel.RandFn();
-										double range =
-											lfc.UpperBound - lfc.LowerBound;
-										double failureFrac =
-											(level - lfc.LowerBound)
-											/ range;
-										isFailed = x <= failureFrac;
-									}
-								}
-							} break;
-							default:
-							{
-								throw std::runtime_error{
-									"Unhandled FragilityCurveType"
-								};
-							} break;
-						}
-						// NOTE: if we are not failed, there is nothing to do
-						if (isFailed)
-						{
-							// now we have to find the affected component
-							// and assign/update a reliability schedule for it
-							// including any repair distribution if we have
-							// one.
-							size_t compId =
-								s.ComponentFragilities.ComponentIds[cfmIdx];
-							// does the component have a reliability signal?
-							bool hasReliabilityAlready = false;
-							size_t reliabilityId = 0;
-							for (size_t rIdx=0;
-								rIdx<s.TheModel.Reliabilities.size();
-								++rIdx)
-							{
-								if (s.TheModel.Reliabilities[rIdx].ComponentId
-									== compId)
-								{
-									hasReliabilityAlready = true;
-									reliabilityId = rIdx;
-									break;
-								}
-							}
-							if (repairId.has_value())
-							{
-								throw std::runtime_error{
-									"not implemented yet"
-								};
-							}
-							else
-							{
-								// failed for the duration of the scenario
-								std::vector<TimeState> newTimeStates{};
-								TimeState ts{};
-								ts.state = false;
-								ts.time = 0.0;
-								newTimeStates.push_back(std::move(ts));
-								if (hasReliabilityAlready)
-								{
-									s.TheModel.Reliabilities[reliabilityId]
-										.TimeStates = newTimeStates;
-								}
-								else
-								{
-									ScheduleBasedReliability sbr{};
-									sbr.ComponentId = compId;
-									sbr.TimeStates = newTimeStates;
-									s.TheModel.Reliabilities.push_back(
-										std::move(sbr));
-								}
-							}
-						}
-					}
-				}
-				// END handle impacts due to fragility
+				std::vector<ScheduleBasedReliability> originalReliabilities =
+					ApplyFragilities(s, intensityIdToAmount);
 				std::string scenarioStartTimeTag =
 					TimeToISO8601Period(
 						static_cast<uint64_t>(std::llround(t)));

@@ -143,6 +143,17 @@ namespace erin_next
 		size_t scenIdx,
 		bool isVerbose);
 
+	std::map<size_t, double>
+	GetIntensitiesForScenario(Simulation& s, size_t scenIdx);
+
+	std::vector<ScheduleBasedReliability>
+	CopyReliabilities(Simulation const& s);
+
+	std::vector<ScheduleBasedReliability>
+	ApplyFragilities(
+		Simulation& s,
+		std::map<size_t, double> const& intensityIdToAmount);
+
 	void
 	Simulation_Run(Simulation& s);
 

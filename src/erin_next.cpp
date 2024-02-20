@@ -1165,6 +1165,7 @@ namespace erin_next
 			+ m.ScheduledLoads.size()
 			+ m.Stores.size();
 	}
+
 	// TODO: add schedule-based reliability index?
 	void
 	Model_SetupSimulationState(Model& model, SimulationState& ss)

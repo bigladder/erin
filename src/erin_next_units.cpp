@@ -122,14 +122,14 @@ namespace erin_next
 	std::string
 	SecondsToPrettyString(double time_s)
 	{
-		size_t years = static_cast<size_t>(time_s) % seconds_per_year;
+		size_t years = static_cast<size_t>(time_s) / seconds_per_year;
 		size_t hours =
 			static_cast<size_t>(time_s - seconds_per_year * years)
-			% seconds_per_hour;
+			/ seconds_per_hour;
 		size_t minutes =
 			static_cast<size_t>(time_s - seconds_per_year * years
 				- seconds_per_hour * hours)
-			% seconds_per_minute;
+			/ seconds_per_minute;
 		size_t seconds =
 			static_cast<size_t>(time_s - seconds_per_year * years
 				- seconds_per_hour * hours

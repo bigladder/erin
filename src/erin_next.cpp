@@ -851,7 +851,6 @@ namespace erin_next
 		return infinity;
 	}
 
-	// TODO: need to account for whether this component is up/down
 	void
 	UpdateStoresPerElapsedTime(
 		Model const& m,
@@ -861,22 +860,18 @@ namespace erin_next
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
 		{
 			long netEnergyAdded = 0;
-			for (size_t connIdx = 0; connIdx < m.Connections.size(); ++connIdx)
+			size_t inConn = m.Stores[storeIdx].InflowConn;
+			size_t outConn = m.Stores[storeIdx].OutflowConn;
+			size_t compId = m.Connections[outConn].FromId;
+			if (ss.UnavailableComponents.contains(compId))
 			{
-				if (m.Connections[connIdx].To == ComponentType::StoreType
-					&& m.Connections[connIdx].ToIdx == storeIdx)
-				{
-					netEnergyAdded += std::lround(
-						elapsedTime * (double)ss.Flows[connIdx].Actual);
-				}
-				else if (m.Connections[connIdx].From == ComponentType::StoreType
-					&& m.Connections[connIdx].FromIdx == storeIdx)
-				{
-					netEnergyAdded -=
-						std::lround(
-							elapsedTime * (double)ss.Flows[connIdx].Actual);
-				}
+				continue;
 			}
+			netEnergyAdded += std::lround(
+				elapsedTime * (double)ss.Flows[inConn].Actual);
+			netEnergyAdded -=
+				std::lround(
+					elapsedTime * (double)ss.Flows[outConn].Actual);
 			assert(
 				static_cast<long>(
 					m.Stores[storeIdx].Capacity - ss.StorageAmounts[storeIdx])

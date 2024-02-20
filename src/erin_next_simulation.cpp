@@ -830,6 +830,31 @@ namespace erin_next
 	}
 
 	void
+	WriteEventFileHeader(
+		std::ofstream& out,
+		ComponentDict compMap,
+		std::vector<Connection> const& conns)
+	{
+		out << "scenario id,"
+			<< "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
+			<< "elapsed (hours)";
+		for (std::string const& prefix :
+			std::vector<std::string>{ "", "REQUEST:", "AVAILABLE:" })
+		{
+			for (auto const& conn : conns)
+			{
+				std::string const& fromTag = compMap.Tag[conn.FromId];
+				std::string const& toTag = compMap.Tag[conn.ToId];
+				out << ","
+					<< prefix
+					<< fromTag << ":OUT(" << conn.FromPort << ") => "
+					<< toTag << ":IN(" << conn.ToPort << ") (kW)";
+			}
+		}
+		out << "\n";
+	}
+
+	void
 	Simulation_Run(Simulation& s)
 	{
 		// TODO: expose proper options
@@ -864,24 +889,9 @@ namespace erin_next
 				<< std::endl;
 			return;
 		}
-		out << "scenario id,"
-			<< "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
-			<< "elapsed (hours)";
-		for (std::string const& prefix :
-			std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
-		{
-			for (auto const& conn : s.TheModel.Connections)
-			{
-				std::string const& fromTag = s.TheModel.ComponentMap.Tag[conn.FromId];
-				std::string const& toTag = s.TheModel.ComponentMap.Tag[conn.ToId];
-				out << ","
-					<< prefix
-					<< fromTag << ":OUT(" << conn.FromPort << ") => "
-					<< toTag << ":IN(" << conn.ToPort << ") (kW)";
-			}
-		}
-		out << "\n";
-		std::vector<ScenarioOccurrenceStats> occurrenceStats{};
+		WriteEventFileHeader(
+			out, s.TheModel.ComponentMap, s.TheModel.Connections);
+		std::vector<ScenarioOccurrenceStats> occurrenceStats;
 		for (size_t scenIdx = 0;
 			scenIdx < Simulation_ScenarioCount(s);
 			++scenIdx)

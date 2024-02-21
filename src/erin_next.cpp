@@ -983,7 +983,7 @@ namespace erin_next
 		{
 			return ComponentType::ScheduleBasedSourceType;
 		}
-		if (tag == "ConstantEfficiencyConverter")
+		if (tag == "ConstantEfficiencyConverter" || tag == "converter")
 		{
 			return ComponentType::ConstantEfficiencyConverterType;
 		}
@@ -1682,15 +1682,34 @@ namespace erin_next
 		Model& m,
 		double efficiency)
 	{
+		return Model_AddConstantEfficiencyConverter(
+			m, efficiency, 0, 0, 0, "");
+	}
+
+	ComponentIdAndWasteConnection
+	Model_AddConstantEfficiencyConverter(
+		Model& m,
+		double efficiency,
+		size_t inflowId,
+		size_t outflowId,
+		size_t lossflowId,
+		std::string const& tag)
+	{
+		// NOTE: the 0th flowId is ""; the non-described flow
+		size_t constexpr wasteflowId = 0;
+		std::vector<size_t> inflowIds{inflowId};
+		std::vector<size_t> outflowIds{outflowId, lossflowId, wasteflowId};
 		size_t idx = m.ConstEffConvs.size();
 		m.ConstEffConvs.push_back({ efficiency });
 		size_t wasteId = Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::WasteSinkType, 0);
+			m.ComponentMap, ComponentType::WasteSinkType, 0,
+			std::vector<size_t>{wasteflowId}, std::vector<size_t>{}, "");
 		size_t thisId = Component_AddComponentReturningId(
 			m.ComponentMap,
 			ComponentType::ConstantEfficiencyConverterType,
-			idx);
-		auto wasteConn = Model_AddConnection(m, thisId, 2, wasteId, 0);
+			idx, inflowIds, outflowIds, tag);
+		auto wasteConn =
+			Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflowId);
 		return { thisId, wasteConn };
 	}
 

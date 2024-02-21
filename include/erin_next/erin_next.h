@@ -515,6 +515,15 @@ namespace erin_next
 		Model& m,
 		double efficiency);
 
+	ComponentIdAndWasteConnection
+	Model_AddConstantEfficiencyConverter(
+		Model& m,
+		double efficiency,
+		size_t inflowId,
+		size_t outflowId,
+		size_t lossflowId,
+		std::string const& tag);
+
 	Connection
 	Model_AddConnection(
 		Model& m,

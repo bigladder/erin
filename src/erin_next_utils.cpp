@@ -74,4 +74,14 @@ namespace erin_next
 		return oss.str();
 	}
 
+	void
+	WriteErrorMessage(std::string const& tag, std::string const& message)
+	{
+		if (!tag.empty())
+		{
+			std::cerr << "[" << tag << "] ";
+		}
+		std::cerr << message << std::endl;
+	}
+
 }

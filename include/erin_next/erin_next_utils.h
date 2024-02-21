@@ -100,6 +100,8 @@ namespace erin_next
 	std::string
 	TimeToISO8601Period(uint64_t time_seconds);
 
+	void
+	WriteErrorMessage(std::string const& tag, std::string const& message);
 }
 
 #endif

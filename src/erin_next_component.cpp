@@ -1,5 +1,6 @@
 #include "erin_next/erin_next_component.h"
 #include "erin_next/erin_next_toml.h"
+#include "erin_next/erin_next_utils.h"
 #include <map>
 #include <optional>
 
@@ -26,7 +27,7 @@ namespace erin_next
 		if (!maybeCompType.has_value())
 		{
 			std::cout << "[" << fullTableName << "] "
-				<< "unable to parse table type from '"
+				<< "unable to parse component type from '"
 				<< table.at("type").as_string() << "'" << std::endl;
 			return Result::Failure;
 		}
@@ -35,35 +36,59 @@ namespace erin_next
 		std::string inflow{};
 		size_t inflowId = {};
 		std::string outflow{};
-		size_t outflowId = {};
+		size_t outflowId = 0;
+		std::string lossflow{};
+		size_t lossflowId = 0;
 		if (table.contains("outflow"))
 		{
 			auto maybe = TOMLTable_ParseString(table, "outflow", fullTableName);
-			if (maybe.has_value())
+			if (!maybe.has_value())
 			{
-				outflow = maybe.value();
-				outflowId = Simulation_RegisterFlow(s, outflow);
+				std::cout << "Unable to parse 'outflow' as string"
+					<< std::endl;
+				return Result::Failure;
 			}
+			outflow = maybe.value();
+			outflowId = Simulation_RegisterFlow(s, outflow);
 		}
 		if (table.contains("inflow"))
 		{
 			auto maybe = TOMLTable_ParseString(table, "inflow", fullTableName);
-			if (maybe.has_value())
+			if (!maybe.has_value())
 			{
-				inflow = maybe.value();
-				inflowId = Simulation_RegisterFlow(s, inflow);
+				std::cout << "Unable to parse 'inflow' as string"
+					<< std::endl;
+				return Result::Failure;
 			}
+			inflow = maybe.value();
+			inflowId = Simulation_RegisterFlow(s, inflow);
 		}
 		if (table.contains("flow"))
 		{
 			auto maybe = TOMLTable_ParseString(table, "flow", fullTableName);
-			if (maybe.has_value())
+			if (!maybe.has_value())
 			{
-				inflow = maybe.value();
-				inflowId = Simulation_RegisterFlow(s, inflow);
-				outflow = maybe.value();
-				outflowId = Simulation_RegisterFlow(s, outflow);
+				std::cout << "Unable to parse 'lossflow' as string"
+					<< std::endl;
+				return Result::Failure;
 			}
+			inflow = maybe.value();
+			inflowId = Simulation_RegisterFlow(s, inflow);
+			outflow = maybe.value();
+			outflowId = Simulation_RegisterFlow(s, outflow);
+		}
+		if (table.contains("lossflow"))
+		{
+			auto maybe =
+				TOMLTable_ParseString(table, "lossflow", fullTableName);
+			if (!maybe.has_value())
+			{
+				std::cout << "Unable to parse 'lossflow' as string"
+					<< std::endl;
+				return Result::Failure;
+			}
+			lossflow = maybe.value();
+			lossflowId = Simulation_RegisterFlow(s, lossflow);
 		}
 		// TODO: parse failure modes
 
@@ -127,31 +152,58 @@ namespace erin_next
 						table, "num_outflows", fullTableName);
 				if (!numInflows.has_value())
 				{
-					std::cout << "[" << fullTableName << "] "
-						<< "num_inflows doesn't appear or is not an integer"
-						<< std::endl;
+					WriteErrorMessage(fullTableName,
+						"num_inflows doesn't appear or is not an integer");
 					return Result::Failure;
 				}
 				if (!numOutflows.has_value())
 				{
-					std::cout << "[" << fullTableName << "] "
-						<< "num_outflows doesn't appear or is not an integer"
-						<< std::endl;
+					WriteErrorMessage(fullTableName,
+						"num_outflows doesn't appear or is not an integer");
 					return Result::Failure;
 				}
-				// TODO: add flowId -- check inflowId == outflowId
 				if (inflowId != outflowId)
 				{
-					std::cout << "[" << fullTableName << "] "
-						<< "a mux component must have the same inflow type "
-						<< "as outflow type; we have inflow = '"
-						<< s.FlowTypeMap.Type[inflowId] << "'; outflow = '"
-						<< s.FlowTypeMap.Type[outflowId] << "'"
-						<< std::endl;
+					WriteErrorMessage(fullTableName,
+						"a mux component must have the same inflow type "
+						"as outflow type; we have inflow = '"
+						+ s.FlowTypeMap.Type[inflowId]
+						+ "'; outflow = '"
+						+ s.FlowTypeMap.Type[outflowId]
+						+ "'");
 					return Result::Failure;
 				}
 				id = Model_AddMux(
 					m, numInflows.value(), numOutflows.value(), outflowId, tag);
+			} break;
+			case (ComponentType::ConstantEfficiencyConverterType):
+			{
+				auto maybeEfficiency = TOMLTable_ParseDouble(
+					table, "constant_efficiency", fullTableName);
+				if (!maybeEfficiency.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"required field 'constant_efficiency' not found");
+					return Result::Failure;
+				}
+				double efficiency = maybeEfficiency.value();
+				if (efficiency <= 0.0)
+				{
+					WriteErrorMessage(
+						fullTableName, "efficiency must be > 0.0");
+					return Result::Failure;
+				}
+				// TODO: re-enable this after we have dedicated COP components
+				// if (efficiency > 1.0)
+				// {
+				// 	WriteErrorMessage(
+				// 		fullTableName, "efficiency must be <= 1.0");
+				// 	return Result::Failure;
+				// }
+				auto const compIdAndWasteConn =
+					Model_AddConstantEfficiencyConverter(m, efficiency,
+						inflowId, outflowId, lossflowId, tag);
+				id = compIdAndWasteConn.Id;
 			} break;
 			default:
 			{

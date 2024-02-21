@@ -12,12 +12,11 @@ namespace erin_next
 	Result
 	ParseSingleComponent(
 		Simulation& s,
-		Model& m,
 		toml::table const& table,
 		std::string const& tag);
 
 	Result
-	ParseComponents(Simulation& s, Model& m, toml::table const& table);
+	ParseComponents(Simulation& s, toml::table const& table);
 }
 
 #endif

@@ -6,29 +6,27 @@
 
 namespace erin_next
 {
-	// TODO: remove Model& m as a separate parameter; it is now part of
-	// Simulation& s (i.e., s.TheModel)
+
 	Result
 	ParseSingleComponent(
 		Simulation& s,
-		Model& m,
 		toml::table const& table,
 		std::string const& tag)
 	{
 		std::string fullTableName = "components." + tag;
 		if (!table.contains("type"))
 		{
-			std::cout << "[" << fullTableName << "] "
-				<< "required field 'type' not present" << std::endl;
+			WriteErrorMessage(fullTableName,
+				"required field 'type' not present");
 			return Result::Failure;
 		}
 		std::optional<ComponentType> maybeCompType =
 			TagToComponentType(table.at("type").as_string());
 		if (!maybeCompType.has_value())
 		{
-			std::cout << "[" << fullTableName << "] "
-				<< "unable to parse component type from '"
-				<< table.at("type").as_string() << "'" << std::endl;
+			WriteErrorMessage(fullTableName,
+				"unable to parse component type from '"
+				+ std::string{table.at("type").as_string()} + "'");
 			return Result::Failure;
 		}
 		ComponentType ct = maybeCompType.value();
@@ -44,8 +42,8 @@ namespace erin_next
 			auto maybe = TOMLTable_ParseString(table, "outflow", fullTableName);
 			if (!maybe.has_value())
 			{
-				std::cout << "Unable to parse 'outflow' as string"
-					<< std::endl;
+				WriteErrorMessage(fullTableName,
+					"unable to parse 'outflow' as string");
 				return Result::Failure;
 			}
 			outflow = maybe.value();
@@ -56,8 +54,8 @@ namespace erin_next
 			auto maybe = TOMLTable_ParseString(table, "inflow", fullTableName);
 			if (!maybe.has_value())
 			{
-				std::cout << "Unable to parse 'inflow' as string"
-					<< std::endl;
+				WriteErrorMessage(fullTableName,
+					"unable to parse 'inflow' as string");
 				return Result::Failure;
 			}
 			inflow = maybe.value();
@@ -68,8 +66,8 @@ namespace erin_next
 			auto maybe = TOMLTable_ParseString(table, "flow", fullTableName);
 			if (!maybe.has_value())
 			{
-				std::cout << "Unable to parse 'lossflow' as string"
-					<< std::endl;
+				WriteErrorMessage(fullTableName,
+					"unable to parse 'lossflow' as string");
 				return Result::Failure;
 			}
 			inflow = maybe.value();
@@ -83,15 +81,14 @@ namespace erin_next
 				TOMLTable_ParseString(table, "lossflow", fullTableName);
 			if (!maybe.has_value())
 			{
-				std::cout << "Unable to parse 'lossflow' as string"
-					<< std::endl;
+				WriteErrorMessage(fullTableName,
+					"unable to parse 'lossflow' as string");
 				return Result::Failure;
 			}
 			lossflow = maybe.value();
 			lossflowId = Simulation_RegisterFlow(s, lossflow);
 		}
 		// TODO: parse failure modes
-
 		switch (ct)
 		{
 			case (ComponentType::ConstantSourceType):
@@ -99,23 +96,21 @@ namespace erin_next
 				// TODO: need to get the max available from constant source
 				// for now, we can use uint32_t max?
 				id = Model_AddConstantSource(
-					m, std::numeric_limits<uint32_t>::max(),
+					s.TheModel, std::numeric_limits<uint32_t>::max(),
 					outflowId, tag);
 			} break;
 			case (ComponentType::ScheduleBasedLoadType):
 			{
 				if (!table.contains("loads_by_scenario"))
 				{
-					std::cout << "[" << fullTableName << "] "
-						<< "missing required field 'loads_by_scenario'"
-						<< std::endl;
+					WriteErrorMessage(fullTableName,
+						"missing required field 'loads_by_scenario'");
 					return Result::Failure;
 				}
 				if (!table.at("loads_by_scenario").is_table())
 				{
-					std::cout << "[" << fullTableName << "] "
-						<< "'loads_by_scenario' exists but is not a table"
-						<< std::endl;
+					WriteErrorMessage(fullTableName,
+						"'loads_by_scenario' must be a table");
 					return Result::Failure;
 				}
 				toml::table const& lbs =
@@ -140,7 +135,7 @@ namespace erin_next
 				}
 				std::vector<TimeAndAmount> emptyLoads = {};
 				id = Model_AddScheduleBasedLoad(
-					m, emptyLoads, scenarioIdToLoadId, inflowId, tag);
+					s.TheModel, emptyLoads, scenarioIdToLoadId, inflowId, tag);
 			} break;
 			case (ComponentType::MuxType):
 			{
@@ -174,7 +169,7 @@ namespace erin_next
 					return Result::Failure;
 				}
 				id = Model_AddMux(
-					m, numInflows.value(), numOutflows.value(), outflowId, tag);
+					s.TheModel, numInflows.value(), numOutflows.value(), outflowId, tag);
 			} break;
 			case (ComponentType::ConstantEfficiencyConverterType):
 			{
@@ -201,14 +196,15 @@ namespace erin_next
 				// 	return Result::Failure;
 				// }
 				auto const compIdAndWasteConn =
-					Model_AddConstantEfficiencyConverter(m, efficiency,
+					Model_AddConstantEfficiencyConverter(
+						s.TheModel, efficiency,
 						inflowId, outflowId, lossflowId, tag);
 				id = compIdAndWasteConn.Id;
 			} break;
 			default:
 			{
-				std::cout << "Unhandled component type: "
-					<< ToString(ct) << std::endl;
+				WriteErrorMessage(fullTableName,
+					"unhandled component type: " + ToString(ct));
 				throw std::runtime_error{ "Unhandled component type" };
 			}
 		}
@@ -216,9 +212,9 @@ namespace erin_next
 		{
 			if (!table.at("fragility_modes").is_array())
 			{
-				std::cout << "[" << fullTableName << "] "
-					<< "fragility_modes must be an array of string"
-					<< std::endl;
+				WriteErrorMessage(
+					fullTableName,
+					"fragility_modes must be an array of string");
 				return Result::Failure;
 			}
 			std::vector<toml::value> const& fms =
@@ -227,9 +223,9 @@ namespace erin_next
 			{
 				if (!fms[fmIdx].is_string())
 				{
-					std::cout << "[" << fullTableName << "] "
-						<< "fragility_modes[" << fmIdx << "] must be string"
-						<< std::endl;
+					WriteErrorMessage(fullTableName,
+						"fragility_modes[" + std::to_string(fmIdx)
+						+ "] must be string");
 					return Result::Failure;
 				}
 				std::string const& fmTag = fms[fmIdx].as_string();
@@ -260,12 +256,12 @@ namespace erin_next
 
 	// TODO: remove model as a parameter -- it is part of Simulation
 	Result
-	ParseComponents(Simulation& s, Model& m, toml::table const& table)
+	ParseComponents(Simulation& s, toml::table const& table)
 	{
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
 			auto result =
-				ParseSingleComponent(s, m, it->second.as_table(), it->first);
+				ParseSingleComponent(s, it->second.as_table(), it->first);
 			if (result == Result::Failure)
 			{
 				return Result::Failure;

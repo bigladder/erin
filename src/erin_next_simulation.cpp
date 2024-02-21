@@ -642,9 +642,9 @@ namespace erin_next
 	{
 		if (v.contains("components") && v.at("components").is_table())
 		{
-			return ParseComponents(s, s.TheModel, v.at("components").as_table());
+			return ParseComponents(s, v.at("components").as_table());
 		}
-		std::cout << "required field 'components' not found" << std::endl;
+		WriteErrorMessage("<top>", "required field 'components' not found");
 		return Result::Failure;
 	}
 

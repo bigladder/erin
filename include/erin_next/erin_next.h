@@ -40,6 +40,7 @@ namespace erin_next
 		ConstantEfficiencyConverterType,
 		MuxType,
 		StoreType,
+		PassThroughType,
 		WasteSinkType,
 	};
 
@@ -183,6 +184,12 @@ namespace erin_next
 		size_t OutflowConn;
 	};
 
+	struct PassThrough
+	{
+		size_t InflowConn = 0;
+		size_t OutflowConn = 0;
+	};
+
 	struct Flow
 	{
 		uint32_t Requested = 0;
@@ -197,6 +204,7 @@ namespace erin_next
 		std::vector<uint32_t> StorageAmounts;
 	};
 
+
 	struct Model
 	{
 		ComponentDict ComponentMap;
@@ -207,6 +215,7 @@ namespace erin_next
 		std::vector<ConstantEfficiencyConverter> ConstEffConvs;
 		std::vector<Mux> Muxes;
 		std::vector<Store> Stores;
+		std::vector<PassThrough> PassThroughs;
 		std::vector<Connection> Connections;
 		std::vector<ScheduleBasedReliability> Reliabilities;
 		DistributionSystem DistSys{};
@@ -375,7 +384,18 @@ namespace erin_next
 	RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t);
 
 	void
+	RunPassthroughBackward(
+		Model& m, SimulationState& ss, size_t connIdx, size_t compIdx);
+
+	void
 	RunConnectionsBackward(Model& model, SimulationState& ss);
+
+	void
+	RunPassthroughForward(
+		Model& m,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx);
 
 	void
 	RunConnectionsForward(Model& model, SimulationState& ss);
@@ -408,6 +428,7 @@ namespace erin_next
 	UpdateStoresPerElapsedTime(
 		Model const& m, SimulationState& ss, double elapsedTime);
 
+	// TODO: change name to `std::string ComponentTypeToString(ComponentType);`
 	std::string
 	ToString(ComponentType ct);
 
@@ -523,6 +544,9 @@ namespace erin_next
 		size_t outflowId,
 		size_t lossflowId,
 		std::string const& tag);
+
+	size_t
+	Model_AddPassThrough(Model& m);
 
 	Connection
 	Model_AddConnection(

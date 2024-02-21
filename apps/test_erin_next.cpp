@@ -1390,6 +1390,36 @@ Test15(bool doPrint)
 	PrintPass(doPrint, "15");
 }
 
+void
+Test16(bool doPrint)
+{
+	PrintBanner(doPrint, "16");
+	Model m = {};
+	m.RandFn = []() { return 0.4; };
+	m.FinalTime = 2.0;
+	size_t srcId = Model_AddConstantSource(m, 100);
+	size_t loadId = Model_AddConstantLoad(m, 50);
+	size_t passId = Model_AddPassThrough(m);
+	auto srcToPassConn = Model_AddConnection(m, srcId, 0, passId, 0);
+	auto passToLoadConn = Model_AddConnection(m, passId, 0, loadId, 0);
+	auto results = Simulate(m, doPrint);
+	assert(results.size() == 2);
+	double t = 0.0;
+	auto srcToPassResults =
+		ModelResults_GetFlowForConnection(m, srcToPassConn, t, results);
+	assert(srcToPassResults.has_value());
+	assert(srcToPassResults.value().Actual == 50);
+	assert(srcToPassResults.value().Requested == 50);
+	assert(srcToPassResults.value().Available == 100);
+	auto passToLoadResults =
+		ModelResults_GetFlowForConnection(m, passToLoadConn, t, results);
+	assert(passToLoadResults.has_value());
+	assert(passToLoadResults.value().Actual == 50);
+	assert(passToLoadResults.value().Requested == 50);
+	assert(passToLoadResults.value().Available == 100);
+	PrintPass(doPrint, "16");
+}
+
 int
 main(int argc, char** argv) {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -1409,6 +1439,7 @@ main(int argc, char** argv) {
 	Test13(false);
 	Test14(false);
 	Test15(false);
+	Test16(false);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration =
 		std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

@@ -496,6 +496,31 @@ namespace erin_next
 	}
 
 	void
+	RunPassthroughBackward(
+		Model& m, SimulationState& ss, size_t connIdx, size_t compIdx)
+	{
+		PassThrough const& pt = m.PassThroughs[compIdx];
+		size_t compId = m.Connections[connIdx].FromId;
+		if (ss.UnavailableComponents.contains(compId))
+		{
+			if (ss.Flows[pt.InflowConn].Requested != 0)
+			{
+				ss.ActiveConnectionsBack.insert(pt.InflowConn);
+			}
+			ss.Flows[pt.InflowConn].Requested = 0;
+		}
+		else
+		{
+			if (ss.Flows[pt.InflowConn].Requested
+				!= ss.Flows[connIdx].Requested)
+			{
+				ss.ActiveConnectionsBack.insert(pt.InflowConn);
+			}
+			ss.Flows[pt.InflowConn].Requested = ss.Flows[connIdx].Requested;
+		}
+	}
+
+	void
 	RunConnectionsBackward(Model& model, SimulationState& ss)
 	{
 		while (!ss.ActiveConnectionsBack.empty())
@@ -512,6 +537,10 @@ namespace erin_next
 				{
 					case (ComponentType::ConstantSourceType):
 					{
+					} break;
+					case (ComponentType::PassThroughType):
+					{
+						RunPassthroughBackward(model, ss, connIdx, compIdx);
 					} break;
 					case (ComponentType::ScheduleBasedSourceType):
 					{
@@ -650,6 +679,34 @@ namespace erin_next
 	}
 
 	void
+	RunPassthroughForward(
+		Model& m,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx)
+	{
+		auto const& pt = m.PassThroughs[compIdx];
+		size_t compId = m.Connections[connIdx].ToId;
+		if (ss.UnavailableComponents.contains(compId))
+		{
+			if (ss.Flows[pt.OutflowConn].Available != 0)
+			{
+				ss.ActiveConnectionsFront.insert(pt.OutflowConn);
+			}
+			ss.Flows[pt.OutflowConn].Available = 0;
+		}
+		else
+		{
+			if (ss.Flows[pt.OutflowConn].Available
+				!= ss.Flows[connIdx].Available)
+			{
+				ss.ActiveConnectionsFront.insert(pt.OutflowConn);
+			}
+			ss.Flows[pt.OutflowConn].Available = ss.Flows[connIdx].Available;
+		}
+	}
+
+	void
 	RunConnectionsForward(Model& model, SimulationState& ss)
 	{
 		while (!ss.ActiveConnectionsFront.empty())
@@ -668,6 +725,10 @@ namespace erin_next
 					case (ComponentType::WasteSinkType):
 					case (ComponentType::ScheduleBasedLoadType):
 					{
+					} break;
+					case (ComponentType::PassThroughType):
+					{
+						RunPassthroughForward(model, ss, connIdx, compIdx);
 					} break;
 					case (ComponentType::ConstantEfficiencyConverterType):
 					{
@@ -956,6 +1017,10 @@ namespace erin_next
 			{
 				result = "Store";
 			} break;
+			case (ComponentType::PassThroughType):
+			{
+				result = "PassThrough";
+			} break;
 			default:
 			{
 				throw std::runtime_error{ "Unhandled component type" };
@@ -998,6 +1063,10 @@ namespace erin_next
 		if (tag == "Store")
 		{
 			return ComponentType::StoreType;
+		}
+		if (tag == "PassThrough" || tag == "pass_through")
+		{
+			return ComponentType::PassThroughType;
 		}
 		return {};
 	}
@@ -1713,6 +1782,15 @@ namespace erin_next
 		return { thisId, wasteConn };
 	}
 
+	size_t
+	Model_AddPassThrough(Model& m)
+	{
+		size_t idx = m.PassThroughs.size();
+		m.PassThroughs.push_back({});
+		return Component_AddComponentReturningId(
+			m.ComponentMap, ComponentType::PassThroughType, idx);
+	}
+
 	Connection
 	Model_AddConnection(
 		Model& m,
@@ -1751,6 +1829,10 @@ namespace erin_next
 		m.Connections.push_back(c);
 		switch (fromType)
 		{
+			case (ComponentType::PassThroughType):
+			{
+				m.PassThroughs[fromIdx].OutflowConn = connId;
+			} break;
 			case (ComponentType::ConstantSourceType):
 			{
 				m.ConstSources[fromIdx].OutflowConn = connId;
@@ -1813,6 +1895,10 @@ namespace erin_next
 		}
 		switch (toType)
 		{
+			case (ComponentType::PassThroughType):
+			{
+				m.PassThroughs[toIdx].InflowConn = connId;
+			} break;
 			case (ComponentType::ConstantLoadType):
 			{
 				m.ConstLoads[toIdx].InflowConn = connId;

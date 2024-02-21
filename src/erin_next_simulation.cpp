@@ -839,12 +839,10 @@ namespace erin_next
 		{
 			for (auto const& conn : conns)
 			{
-				std::string const& fromTag = compMap.Tag[conn.FromId];
-				std::string const& toTag = compMap.Tag[conn.ToId];
 				out << ","
 					<< prefix
-					<< fromTag << ":OUT(" << conn.FromPort << ") => "
-					<< toTag << ":IN(" << conn.ToPort << ") (kW)";
+					<< ConnectionToString(compMap, conn, true)
+					<< " (kW)";
 			}
 		}
 		out << "\n";

@@ -1077,12 +1077,9 @@ namespace erin_next
 		std::cout << "time: " << t << std::endl;
 		for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
 		{
-			std::cout << ToString(m.Connections[flowIdx].From)
-				<< "[" << m.Connections[flowIdx].FromIdx << ":"
-				<< m.Connections[flowIdx].FromPort << "] => "
-				<< ToString(m.Connections[flowIdx].To)
-				<< "[" << m.Connections[flowIdx].ToIdx << ":"
-				<< m.Connections[flowIdx].ToPort << "]: "
+			std::cout
+				<< ConnectionToString(m.ComponentMap, m.Connections[flowIdx])
+				<< ": "
 				<< ss.Flows[flowIdx].Actual
 				<< " (R: " << ss.Flows[flowIdx].Requested
 				<< "; A: " << ss.Flows[flowIdx].Available << ")"
@@ -1785,10 +1782,20 @@ namespace erin_next
 	size_t
 	Model_AddPassThrough(Model& m)
 	{
+		return Model_AddPassThrough(m, 0, "");
+	}
+
+	size_t
+	Model_AddPassThrough(Model& m, size_t flowId, std::string const& tag)
+	{
 		size_t idx = m.PassThroughs.size();
 		m.PassThroughs.push_back({});
 		return Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::PassThroughType, idx);
+			m.ComponentMap,
+			ComponentType::PassThroughType, idx,
+			std::vector<size_t>{flowId},
+			std::vector<size_t>{flowId},
+			tag);
 	}
 
 	Connection
@@ -2293,23 +2300,58 @@ namespace erin_next
 		return {};
 	}
 
+	std::string
+	ConnectionToString(
+		ComponentDict const& cd,
+		Connection const& c,
+		bool compact)
+	{
+		std::string fromTag =
+			cd.Tag[c.FromId];
+		if (fromTag.empty() && c.From == ComponentType::WasteSinkType)
+		{
+			fromTag = "WASTE";
+		}
+		std::string toTag = cd.Tag[c.ToId];
+		if (toTag.empty() && c.To == ComponentType::WasteSinkType)
+		{
+			toTag = "WASTE";
+		}
+		std::ostringstream oss{};
+		oss << fromTag
+			<< (compact ? "": ("[" + std::to_string(c.FromId) + "]"))
+			<< ":OUT(" << c.FromPort << ")"
+			<< (compact ? "": (": " + ToString(c.From)))
+			<< " => "
+			<< toTag
+			<< (compact ? "": ("[" + std::to_string(c.ToId) + "]"))
+			<< ":IN(" << c.ToPort << ")"
+			<< (compact ? "" : (": " + ToString(c.To)));
+		return oss.str();
+	}
+
+	std::string
+	ConnectionToString(
+		ComponentDict const& cd,
+		FlowDict const& fd,
+		Connection const& c,
+		bool compact)
+	{
+		std::ostringstream oss{};
+		oss << ConnectionToString(cd, c, compact)
+			<< "; flow: "
+			<< fd.Type[c.FlowTypeId];
+		return oss.str();
+	}
+
+	// TODO: extract connection printing
 	void
 	Model_PrintConnections(Model const& m, FlowDict const& ft)
 	{
 		for (int i=0; i < m.Connections.size(); ++i)
 		{
 			std::cout << i << ": "
-				<< ToString(m.Connections[i].From)
-				<< "[" << m.Connections[i].FromId << "]:OUT("
-				<< m.Connections[i].FromPort << ") -- "
-				<< m.ComponentMap.Tag[m.Connections[i].FromId]
-				<< " => "
-				<< ToString(m.Connections[i].To)
-				<< "[" << m.Connections[i].ToId << "]:IN("
-				<< m.Connections[i].ToPort << ") -- "
-				<< m.ComponentMap.Tag[m.Connections[i].ToId]
-				<< ", flow: "
-				<< ft.Type[m.Connections[i].FlowTypeId]
+				<< ConnectionToString(m.ComponentMap, ft, m.Connections[i])
 				<< std::endl;
 		}
 	}

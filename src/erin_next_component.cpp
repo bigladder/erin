@@ -201,6 +201,16 @@ namespace erin_next
 						inflowId, outflowId, lossflowId, tag);
 				id = compIdAndWasteConn.Id;
 			} break;
+			case (ComponentType::PassThroughType):
+			{
+				if (inflowId != outflowId)
+				{
+					WriteErrorMessage(fullTableName,
+						"inflow type must equal outflow type");
+					return Result::Failure;
+				}
+				id = Model_AddPassThrough(s.TheModel, inflowId, tag);
+			} break;
 			default:
 			{
 				WriteErrorMessage(fullTableName,

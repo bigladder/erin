@@ -548,6 +548,9 @@ namespace erin_next
 	size_t
 	Model_AddPassThrough(Model& m);
 
+	size_t
+	Model_AddPassThrough(Model& m, size_t flowId, std::string const& tag);
+
 	Connection
 	Model_AddConnection(
 		Model& m,
@@ -680,6 +683,19 @@ namespace erin_next
 
 	std::ostream&
 	operator<<(std::ostream& os, Flow const& flow);
+
+	std::string
+	ConnectionToString(
+		ComponentDict const& cd,
+		Connection const& c,
+		bool compact=false);
+
+	std::string
+	ConnectionToString(
+		ComponentDict const& cd,
+		FlowDict const& fd,
+		Connection const& c,
+		bool compact=false);
 }
 
 #endif

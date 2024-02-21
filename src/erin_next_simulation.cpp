@@ -845,7 +845,7 @@ namespace erin_next
 					<< " (kW)";
 			}
 		}
-		out << "\n";
+		out << std::endl;
 	}
 
 	void

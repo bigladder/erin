@@ -1,6 +1,7 @@
 #include "erin_next/erin_next.h"
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 
 namespace erin_next
 {
@@ -439,10 +440,25 @@ namespace erin_next
 	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx)
 	{
+		constexpr uint32_t maxNumeric = std::numeric_limits<uint32_t>::max();
 		uint32_t totalRequest = 0;
 		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
 		{
-			totalRequest += ss.Flows[outflowConnIdx].Requested;
+			if (totalRequest == maxNumeric)
+			{
+				// TODO: issue a warning
+				continue;
+			}
+			uint32_t maxGrowth = maxNumeric - totalRequest;
+			if (ss.Flows[outflowConnIdx].Requested >= maxGrowth)
+			{
+				// TODO: issue a warning
+				totalRequest = maxNumeric;
+			}
+			else
+			{
+				totalRequest += ss.Flows[outflowConnIdx].Requested;
+			}
 		}
 		Mux_RequestInflowsIntelligently(
 			ss, model.Muxes[compIdx].InflowConns, totalRequest);
@@ -623,12 +639,25 @@ namespace erin_next
 	void
 	RunMuxForward(Model& model, SimulationState& ss, size_t compIdx)
 	{
+		constexpr uint32_t maxNumeric = std::numeric_limits<uint32_t>::max();
 		uint32_t totalAvailable = 0;
 		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
 		{
-			totalAvailable += ss.Flows[inflowConnIdx].Available;
+			if (totalAvailable == maxNumeric)
+			{
+				continue;
+			}
+			uint32_t maxGrowth = maxNumeric - totalAvailable;
+			if (ss.Flows[inflowConnIdx].Available >= maxGrowth)
+			{
+				totalAvailable = maxNumeric;
+			}
+			else
+			{
+				totalAvailable += ss.Flows[inflowConnIdx].Available;
+			}
 		}
-		std::vector<uint32_t> outflowAvailables = {};
+		std::vector<uint32_t> outflowAvailables{};
 		outflowAvailables.reserve(model.Muxes[compIdx].NumOutports);
 		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
 		{
@@ -1441,6 +1470,24 @@ namespace erin_next
 				// TODO: need to call routines to do charge request
 				throw std::runtime_error{ "not implemented" };
 			} break;
+			case (ComponentType::PassThroughType):
+			{
+				PassThrough const& pt = m.PassThroughs[idx];
+				if (ss.Flows[pt.OutflowConn].Requested !=
+					ss.Flows[pt.InflowConn].Requested)
+				{
+					ss.ActiveConnectionsBack.insert(pt.OutflowConn);
+				}
+				ss.Flows[pt.InflowConn].Requested =
+					ss.Flows[pt.OutflowConn].Requested;
+				if (ss.Flows[pt.InflowConn].Available !=
+					ss.Flows[pt.OutflowConn].Available)
+				{
+					ss.ActiveConnectionsFront.insert(pt.InflowConn);
+				}
+				ss.Flows[pt.OutflowConn].Available =
+					ss.Flows[pt.InflowConn].Available;
+			} break;
 			case (ComponentType::WasteSinkType):
 			{
 				throw std::runtime_error{"should not be repairing waste"};
@@ -1560,6 +1607,20 @@ namespace erin_next
 					ss.ActiveConnectionsFront.insert(outflowConn);
 				}
 				ss.Flows[outflowConn].Available = 0;
+			} break;
+			case (ComponentType::PassThroughType):
+			{
+				auto const& pt = m.PassThroughs[idx];
+				if (ss.Flows[pt.InflowConn].Requested != 0)
+				{
+					ss.ActiveConnectionsBack.insert(pt.InflowConn);
+				}
+				ss.Flows[pt.InflowConn].Requested = 0;
+				if (ss.Flows[pt.OutflowConn].Available != 0)
+				{
+					ss.ActiveConnectionsFront.insert(pt.OutflowConn);
+				}
+				ss.Flows[pt.OutflowConn].Available = 0;
 			} break;
 			case (ComponentType::WasteSinkType):
 			{

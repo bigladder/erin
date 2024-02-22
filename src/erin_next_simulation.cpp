@@ -1171,7 +1171,7 @@ namespace erin_next
 				: 0.0;
 			double EA =
 				os.Duration_s > 0.0
-				? (os.Uptime_s / (os.Duration_s))
+				? (os.Uptime_s / os.Duration_s)
 				: 0.0;
 			stats << s.ScenarioMap.Tags[os.Id]
 				<< "," << os.OccurrenceNumber

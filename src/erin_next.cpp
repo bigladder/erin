@@ -1085,7 +1085,7 @@ namespace erin_next
 		{
 			return ComponentType::MuxType;
 		}
-		if (tag == "Store")
+		if (tag == "Store" || tag == "store")
 		{
 			return ComponentType::StoreType;
 		}
@@ -1774,6 +1774,22 @@ namespace erin_next
 		uint32_t chargeAmount,
 		uint32_t initialStorage)
 	{
+		return Model_AddStore(
+			m, capacity, maxCharge, maxDischarge, chargeAmount, initialStorage,
+			0, "");
+	}
+
+	size_t
+	Model_AddStore(
+		Model& m,
+		uint32_t capacity,
+		uint32_t maxCharge,
+		uint32_t maxDischarge,
+		uint32_t chargeAmount,
+		uint32_t initialStorage,
+		size_t flowId,
+		std::string const& tag)
+	{
 		assert(chargeAmount < capacity
 			&& "chargeAmount must be less than capacity");
 		assert(initialStorage <= capacity
@@ -1787,7 +1803,12 @@ namespace erin_next
 		s.InitialStorage = initialStorage;
 		m.Stores.push_back(s);
 		return Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::StoreType, idx);
+			m.ComponentMap,
+			ComponentType::StoreType,
+			idx,
+			std::vector<size_t>{flowId},
+			std::vector<size_t>{flowId},
+			tag);
 	}
 
 	ComponentIdAndWasteConnection
@@ -2143,8 +2164,8 @@ namespace erin_next
 				double stored =
 					static_cast<double>(timeAndFlows[eventIdx]
 						.StorageAmounts[storeIdx])
-					- static_cast<double>(timeAndFlows[eventIdx]
-						.StorageAmounts[storeIdx - 1]);
+					- static_cast<double>(timeAndFlows[eventIdx - 1]
+						.StorageAmounts[storeIdx]);
 				if (stored > 0)
 				{
 					sos.StorageCharge_kJ += stored;

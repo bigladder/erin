@@ -525,6 +525,17 @@ namespace erin_next
 		uint32_t nochargeAmount,
 		uint32_t initialStorage);
 
+	size_t
+	Model_AddStore(
+		Model& m,
+		uint32_t capacity,
+		uint32_t maxCharge,
+		uint32_t maxDischarge,
+		uint32_t chargeAmount,
+		uint32_t initialStorage,
+		size_t flowId,
+		std::string const& tag);
+
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
 		Model& m,

@@ -3,6 +3,8 @@
 #include "erin_next/erin_next_utils.h"
 #include <map>
 #include <optional>
+#include <unordered_set>
+#include <unordered_map>
 
 namespace erin_next
 {
@@ -25,7 +27,7 @@ namespace erin_next
 		if (!maybeCompType.has_value())
 		{
 			WriteErrorMessage(fullTableName,
-				"unable to parse component type from '"
+				"unable to parse component type '"
 				+ std::string{table.at("type").as_string()} + "'");
 			return Result::Failure;
 		}
@@ -206,10 +208,175 @@ namespace erin_next
 				if (inflowId != outflowId)
 				{
 					WriteErrorMessage(fullTableName,
-						"inflow type must equal outflow type");
+						"inflow type must equal outflow type for pass-through");
 					return Result::Failure;
 				}
 				id = Model_AddPassThrough(s.TheModel, inflowId, tag);
+			} break;
+			case (ComponentType::StoreType):
+			{
+				std::unordered_set<std::string> requiredStoreFields{
+					"capacity", "capacity_unit", "rate_unit",
+					"max_charge", "max_discharge", "type",
+				};
+				std::unordered_set<std::string> optionalStoreFields{};
+				std::unordered_map<std::string, std::string> defaultStoreFields{
+					{ "charge_at_soc", "0.8" },
+					{ "flow", "" },
+					{ "init_soc", "1.0" },
+				};
+				if (!TOMLTable_IsValid(
+						table,
+						requiredStoreFields,
+						optionalStoreFields,
+						defaultStoreFields,
+						fullTableName,
+						true))
+				{
+					return Result::Failure;
+				}
+				if (inflowId != outflowId)
+				{
+					WriteErrorMessage(fullTableName,
+						"inflow type must equal outflow type for store");
+					return Result::Failure;
+				}
+				auto maybeCapacity =
+					TOMLTable_ParseDouble(table, "capacity", fullTableName);
+				if (!maybeCapacity.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"unable to parse 'capacity' as double");
+					return Result::Failure;
+				}
+				double capacityReal = maybeCapacity.value();
+				if (capacityReal <= 0.0)
+				{
+					WriteErrorMessage(fullTableName,
+						"capacity must be greater than 0");
+					return Result::Failure;
+				}
+				auto maybeCapacityUnitStr =
+					TOMLTable_ParseString(
+						table, "capacity_unit", fullTableName);
+				if (!maybeCapacityUnitStr.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"unable to parse 'capacity_unit' as string");
+					return Result::Failure;
+				}
+				std::string capacityUnitStr = maybeCapacityUnitStr.value();
+				auto maybeCapacityUnit = TagToEnergyUnit(capacityUnitStr);
+				if (!maybeCapacityUnit.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"unable to understand capacity_unit of '"
+						+ capacityUnitStr + "'");
+					// TODO: list available capacity units
+					return Result::Failure;
+				}
+				EnergyUnit capacityUnit = maybeCapacityUnit.value();
+				uint32_t capacity = static_cast<uint32_t>(
+					Energy_ToJoules(capacityReal, capacityUnit));
+				if (capacity == 0)
+				{
+					WriteErrorMessage(fullTableName,
+						"capacity must be greater than 0");
+					return Result::Failure;
+				}
+				auto maybeRateUnitStr = TOMLTable_ParseString(
+					table, "rate_unit", fullTableName);
+				if (!maybeRateUnitStr.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"unable to parse field 'rate_unit' as string");
+					return Result::Failure;
+				}
+				std::string rateUnitStr = maybeRateUnitStr.value();
+				auto maybeRateUnit =
+					TagToPowerUnit(rateUnitStr);
+				if (!maybeRateUnit.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"unable to understand rate_unit '" + rateUnitStr + "'");
+					return Result::Failure;
+				}
+				PowerUnit rateUnit = maybeRateUnit.value();
+				auto maybeMaxCharge =
+					TOMLTable_ParseDouble(table, "max_charge", fullTableName);
+				if (!maybeMaxCharge.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"unable to parse 'max_charge' as double");
+					return Result::Failure;
+				}
+				double maxChargeReal = maybeMaxCharge.value();
+				uint32_t maxCharge = static_cast<uint32_t>(
+					Power_ToWatt(maxChargeReal, rateUnit));
+				auto maybeMaxDischarge =
+					TOMLTable_ParseDouble(
+						table, "max_discharge", fullTableName);
+				if (!maybeMaxDischarge.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"unable to parse 'max_discharge' as double");
+					return Result::Failure;
+				}
+				double maxDischargeReal = maybeMaxDischarge.value();
+				uint32_t maxDischarge = static_cast<uint32_t>(
+					Power_ToWatt(maxDischargeReal, rateUnit));
+				double chargeAtSoc =
+					std::stod(defaultStoreFields.at("charge_at_soc"));
+				if (table.contains("charge_at_soc"))
+				{
+					auto maybe = TOMLTable_ParseDouble(
+						table, "charge_at_soc", fullTableName);
+					if (!maybe.has_value())
+					{
+						WriteErrorMessage(fullTableName,
+							"unable to parse 'charge_at_soc' as double");
+						return Result::Failure;
+					}
+					chargeAtSoc = maybe.value();
+				}
+				if (chargeAtSoc < 0.0 || chargeAtSoc > 1.0)
+				{
+					WriteErrorMessage(fullTableName,
+						"charge_at_soc must be in range [0.0, 1.0]");
+					return Result::Failure;
+				}
+				uint32_t noChargeAmount = static_cast<uint32_t>(
+					chargeAtSoc * capacity);
+				if (noChargeAmount == capacity)
+				{
+					// NOTE: noChargeAmount must be at
+					// least 1 unit less than capacity
+					noChargeAmount = capacity - 1;
+				}
+				double initSoc = std::stod(defaultStoreFields.at("init_soc"));
+				if (table.contains("init_soc"))
+				{
+					auto maybe = TOMLTable_ParseDouble(
+						table, "init_soc", fullTableName);
+					if (!maybe.has_value())
+					{
+						WriteErrorMessage(fullTableName,
+							"unable to parse 'init_soc' as double");
+						return Result::Failure;
+					}
+					initSoc = maybe.value();
+				}
+				if (initSoc < 0.0 || initSoc > 1.0)
+				{
+					WriteErrorMessage(fullTableName,
+						"init_soc must be in range [0.0, 1.0]");
+					return Result::Failure;
+				}
+				uint32_t initialStorage = static_cast<uint32_t>(
+					capacity * initSoc);
+				id = Model_AddStore(
+					s.TheModel, capacity, maxCharge, maxDischarge,
+					noChargeAmount, initialStorage, inflowId, tag);
 			} break;
 			default:
 			{

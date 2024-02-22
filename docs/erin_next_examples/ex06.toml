@@ -1,0 +1,208 @@
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+max_time = 1_000
+[loads.normal_electric_cluster_1]
+#csv_file = "ex06-normal-electric-1.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,2_000],
+  [8_760,0],
+]
+[loads.normal_electric_cluster_2]
+#csv_file = "ex06-normal-electric-2.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,4_000],
+  [8_760,0],
+]
+[loads.normal_steam_cluster_1]
+#csv_file = "ex06-normal-heating-1.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,10_000],
+  [8_760,0],
+]
+[loads.normal_steam_cluster_2]
+#csv_file = "ex06-normal-heating-2.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,20_000],
+  [8_760,0],
+]
+[loads.emergency_electric_cluster_1]
+#csv_file = "ex06-emergency-electric-1.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,1_000],
+  [336,0],
+]
+[loads.emergency_electric_cluster_2]
+#csv_file = "ex06-emergency-electric-2.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,2_000],
+  [336,0],
+]
+[loads.emergency_steam_cluster_1]
+#csv_file = "ex06-emergency-heating-1.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,10_000],
+  [336,0],
+]
+[loads.emergency_steam_cluster_2]
+#csv_file = "ex06-emergency-heating-2.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,20_000],
+  [336,0],
+]
+[components.electric_utility]
+type = "source"
+outflow = "electricity"
+[components.cluster_1_electric]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "normal_electric_cluster_1"
+loads_by_scenario.ice_jam_flood = "emergency_electric_cluster_1"
+[components.cluster_2_electric]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "normal_electric_cluster_2"
+loads_by_scenario.ice_jam_flood = "emergency_electric_cluster_2"
+[components.cluster_1_thermal]
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "normal_steam_cluster_1"
+loads_by_scenario.ice_jam_flood = "emergency_steam_cluster_1"
+[components.cluster_2_thermal]
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "normal_steam_cluster_2"
+loads_by_scenario.ice_jam_flood = "emergency_steam_cluster_2"
+[components.coal_to_steam]
+type = "converter"
+inflow = "coal"
+outflow = "steam"
+lossflow = "waste_heat"
+constant_efficiency = 0.8
+[components.coal_pile]
+type = "source"
+outflow = "coal"
+[components.steam_loop]
+type = "muxer"
+flow = "steam"
+num_inflows = 1
+num_outflows = 2
+dispatch_strategy = "in_order"
+[components.waste_heat_to_electricity]
+type = "converter"
+inflow = "waste_heat"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency = 0.3
+[components.electric_bus]
+type = "muxer"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 2
+dispatch_strategy = "in_order"
+[components.elec_line_from_utility]
+type = "pass_through"
+flow = "electricity"
+[components.elec_line_to_c1]
+type = "pass_through"
+flow = "electricity"
+[components.elec_line_to_c2]
+type = "pass_through"
+flow = "electricity"
+[components.steam_line_to_c1]
+type = "pass_through"
+flow = "steam"
+[components.steam_line_to_c2]
+type = "pass_through"
+flow = "steam"
+[components.c1_steam_mux]
+type = "muxer"
+flow = "steam"
+num_inflows = 1
+num_outflows = 2
+dispatch_strategy = "in_order"
+[components.c2_steam_mux]
+type = "muxer"
+flow = "steam"
+num_inflows = 1
+num_outflows = 2
+dispatch_strategy = "in_order"
+[components.c1_steam_combiner]
+type = "muxer"
+flow = "steam"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
+[components.c2_steam_combiner]
+type = "muxer"
+flow = "steam"
+num_inflows = 2
+num_outflows = 1
+dispatch_strategy = "in_order"
+[components.steam_c1_to_c2]
+type = "pass_through"
+flow = "steam"
+[components.steam_c2_to_c1]
+type = "pass_through"
+flow = "steam"
+[network]
+connections = [
+  # Electric Network
+  ["electric_utility:OUT(0)", "elec_line_from_utility:IN(0)", "electricity"],
+  ["elec_line_from_utility:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["waste_heat_to_electricity:OUT(0)", "electric_bus:IN(0)", "electricity"],
+  ["electric_bus:OUT(0)", "elec_line_to_c1:IN(0)", "electricity"],
+  ["electric_bus:OUT(1)", "elec_line_to_c2:IN(0)", "electricity"],
+  ["elec_line_to_c1:OUT(0)", "cluster_1_electric:IN(0)", "electricity"],
+  ["elec_line_to_c2:OUT(0)", "cluster_2_electric:IN(0)", "electricity"],
+  # Thermal Network
+  ["coal_pile:OUT(0)", "coal_to_steam:IN(0)", "coal"],
+  ["coal_to_steam:OUT(0)", "steam_loop:IN(0)", "steam"],
+  ["steam_loop:OUT(0)", "steam_line_to_c1:IN(0)", "steam"],
+  ["steam_line_to_c1:OUT(0)", "c1_steam_mux:IN(0)", "steam"],
+  ["c1_steam_mux:OUT(0)", "c1_steam_combiner:IN(0)", "steam"],
+  ["c1_steam_mux:OUT(1)", "steam_c1_to_c2:IN(0)", "steam"],
+  ["steam_c1_to_c2:OUT(0)", "c2_steam_combiner:IN(1)", "steam"],
+  ["steam_loop:OUT(1)", "steam_line_to_c2:IN(0)", "steam"],
+  ["steam_line_to_c2:OUT(0)", "c2_steam_mux:IN(0)", "steam"],
+  ["c2_steam_mux:OUT(0)", "c2_steam_combiner:IN(0)", "steam"],
+  ["c2_steam_mux:OUT(1)", "steam_c2_to_c1:IN(0)", "steam"],
+  ["steam_c2_to_c1:OUT(0)", "c1_steam_combiner:IN(1)", "steam"],
+  ["c1_steam_combiner:OUT(0)", "cluster_1_thermal:IN(0)", "steam"],
+  ["c2_steam_combiner:OUT(0)", "cluster_2_thermal:IN(0)", "steam"],
+  ["coal_to_steam:OUT(1)", "waste_heat_to_electricity:IN(0)", "waste_heat"]]
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+[dist.every_100_years]
+type = "fixed"
+value = 100
+time_unit = "years"
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 8760
+max_occurrences = 1
+[scenarios.ice_jam_flood]
+time_unit = "hours"
+occurrence_distribution = "every_100_years"
+duration = 336
+max_occurrences = -1

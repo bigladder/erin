@@ -8,6 +8,182 @@
 
 namespace erin_next
 {
+	std::optional<PowerUnit>
+	TagToPowerUnit(std::string const& tag)
+	{
+		if (tag == "W")
+		{
+			return PowerUnit::Watt;
+		}
+		if (tag == "kW")
+		{
+			return PowerUnit::KiloWatt;
+		}
+		if (tag == "MW")
+		{
+			return PowerUnit::MegaWatt;
+		}
+		return {};
+	}
+
+	std::string
+	PowerUnitToString(PowerUnit unit)
+	{
+		std::string result;
+		switch (unit)
+		{
+			case (PowerUnit::Watt):
+			{
+				result = "W";
+			} break;
+			case (PowerUnit::KiloWatt):
+			{
+				result = "kW";
+			} break;
+			case (PowerUnit::MegaWatt):
+			{
+				result = "MW";
+			} break;
+			default:
+			{
+				throw std::runtime_error{"unhandled power unit"};
+			} break;
+		}
+		return result;
+	}
+
+	double
+	Power_ToWatt(double value, PowerUnit unit)
+	{
+		double result = 0.0;
+		switch (unit)
+		{
+			case (PowerUnit::Watt):
+			{
+				result = value;
+			} break;
+			case (PowerUnit::KiloWatt):
+			{
+				result = value * 1'000.0;
+			} break;
+			case (PowerUnit::MegaWatt):
+			{
+				result = value * 1'000'000.0;
+			} break;
+			default:
+			{
+				throw std::runtime_error{ "unhandled power unit" };
+			} break;
+		}
+		return result;
+	}
+
+	std::optional<EnergyUnit>
+	TagToEnergyUnit(std::string const& tag)
+	{
+		if (tag == "J")
+		{
+			return EnergyUnit::Joule;
+		}
+		if (tag == "kJ")
+		{
+			return EnergyUnit::KiloJoule;
+		}
+		if (tag == "MJ")
+		{
+			return EnergyUnit::MegaJoule;
+		}
+		if (tag == "Wh")
+		{
+			return EnergyUnit::WattHour;
+		}
+		if (tag == "kWh")
+		{
+			return EnergyUnit::KiloWattHour;
+		}
+		if (tag == "MWh")
+		{
+			return EnergyUnit::MegaWattHour;
+		}
+		return {};
+	}
+
+	std::string
+	EnergyUnitToString(EnergyUnit unit)
+	{
+		std::string result;
+		switch (unit)
+		{
+			case (EnergyUnit::Joule):
+			{
+				result = "J";
+			} break;
+			case (EnergyUnit::KiloJoule):
+			{
+				result = "kJ";
+			} break;
+			case (EnergyUnit::MegaJoule):
+			{
+				result = "MJ";
+			} break;
+			case (EnergyUnit::WattHour):
+			{
+				result = "Wh";
+			} break;
+			case (EnergyUnit::KiloWattHour):
+			{
+				result = "kWh";
+			} break;
+			case (EnergyUnit::MegaWattHour):
+			{
+				result = "MWh";
+			} break;
+			default:
+			{
+				throw std::runtime_error{"unhandled energy unit"};
+			} break;
+		}
+		return result;
+	}
+
+	double
+	Energy_ToJoules(double value, EnergyUnit unit)
+	{
+		double result = 0.0;
+		switch (unit)
+		{
+			case (EnergyUnit::Joule):
+			{
+				result = value;
+			} break;
+			case (EnergyUnit::KiloJoule):
+			{
+				result = value * 1'000.0;
+			} break;
+			case (EnergyUnit::MegaJoule):
+			{
+				result = value * 1'000'000.0;
+			} break;
+			case (EnergyUnit::WattHour):
+			{
+				result = value * 3'600.0;
+			} break;
+			case (EnergyUnit::KiloWattHour):
+			{
+				result = value * 3'600'000.0;
+			} break;
+			case (EnergyUnit::MegaWattHour):
+			{
+				result = value * 3'600'000'000.0;
+			} break;
+			default:
+			{
+				throw std::runtime_error{"unhandled energy unit"};
+			} break;
+		}
+		return result;
+	}
+
 	std::optional<TimeUnit>
 	TagToTimeUnit(std::string const& tag)
 	{

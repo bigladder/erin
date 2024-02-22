@@ -7,6 +7,41 @@
 
 namespace erin_next
 {
+	enum PowerUnit
+	{
+		Watt,
+		KiloWatt,
+		MegaWatt,
+	};
+
+	std::optional<PowerUnit>
+	TagToPowerUnit(std::string const& tag);
+
+	std::string
+	PowerUnitToString(PowerUnit unit);
+
+	double
+	Power_ToWatt(double value, PowerUnit unit);
+
+	enum EnergyUnit
+	{
+		Joule,
+		KiloJoule,
+		MegaJoule,
+		WattHour,
+		KiloWattHour,
+		MegaWattHour,
+	};
+
+	std::optional<EnergyUnit>
+	TagToEnergyUnit(std::string const& tag);
+
+	std::string
+	EnergyUnitToString(EnergyUnit unit);
+
+	double
+	Energy_ToJoules(double value, EnergyUnit unit);
+
 	enum TimeUnit
 	{
 		Second,

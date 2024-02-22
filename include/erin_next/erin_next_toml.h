@@ -56,7 +56,9 @@ namespace erin_next
 	TOMLTable_ParseVectorOfTimeRatePairs(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName);
+		std::string const& tableName,
+		double timeMult,
+		double rateMult);
 
 	std::optional<std::vector<double>>
 	TOMLTable_ParseArrayOfDouble(

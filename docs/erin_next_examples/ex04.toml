@@ -18,6 +18,7 @@ time_rate_pairs = [
 type = "source"
 outflow = "electricity"
 fragility_modes = ["highly_vulnerable_to_wind"]
+rate_unit = "kW"
 max_outflow = 10.0
 [components.cluster_01_electric]
 type = "load"

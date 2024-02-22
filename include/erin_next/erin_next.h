@@ -55,10 +55,9 @@ namespace erin_next
 		std::vector<std::string> Type;
 	};
 
-	struct LoadDict {
+	struct LoadDict
+	{
 		std::vector<std::string> Tags;
-		std::vector<TimeUnit> TimeUnits;
-		std::vector<std::string> RateUnits;
 		std::vector<std::vector<TimeAndAmount>> Loads;
 	};
 
@@ -190,6 +189,9 @@ namespace erin_next
 		size_t OutflowConn = 0;
 	};
 
+	// TODO: change these to be Requested_W, Available_W, Actual_W; show the
+	// base unit explicitly; if we end up doing mass flow, we'll have another
+	// struct with explicit units...
 	struct Flow
 	{
 		uint32_t Requested = 0;

@@ -9,6 +9,7 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <iomanip>
 
 namespace erin_next
 {
@@ -121,20 +122,14 @@ namespace erin_next
 		std::vector<Load> const& loads)
 	{
 		s.LoadMap.Tags.clear();
-		s.LoadMap.RateUnits.clear();
 		s.LoadMap.Loads.clear();
-		s.LoadMap.TimeUnits.clear();
 		auto numLoads = loads.size();
 		s.LoadMap.Tags.reserve(numLoads);
-		s.LoadMap.RateUnits.reserve(numLoads);
 		s.LoadMap.Loads.reserve(numLoads);
-		s.LoadMap.TimeUnits.reserve(numLoads);
 		for (size_t i = 0; i < numLoads; ++i)
 		{
 			s.LoadMap.Tags.push_back(loads[i].Tag);
-			s.LoadMap.RateUnits.push_back(loads[i].RateUnit);
 			s.LoadMap.Loads.push_back(loads[i].TimeAndLoads);
-			s.LoadMap.TimeUnits.push_back(loads[i].TheTimeUnit);
 		}
 	}
 
@@ -325,10 +320,10 @@ namespace erin_next
 			{
 				// TODO: add time units
 				std::cout << "- initial time: "
-					<< s.LoadMap.Loads[i][0].Time << std::endl;
+					<< s.LoadMap.Loads[i][0].Time_s << std::endl;
 				// TODO: add time units
 				std::cout << "- final time  : "
-					<< s.LoadMap.Loads[i][s.LoadMap.Loads[i].size() - 1].Time
+					<< s.LoadMap.Loads[i][s.LoadMap.Loads[i].size() - 1].Time_s
 					<< std::endl;
 				// TODO: add max rate
 				// TODO: add min rate
@@ -862,17 +857,23 @@ namespace erin_next
 				<< (r.Time / seconds_per_hour);
 			for (size_t i = 0; i < r.Flows.size(); ++i)
 			{
-				out << "," << r.Flows[i].Actual;
+				double actual_kW =
+					static_cast<double>(r.Flows[i].Actual) / W_per_kW;
+				out << "," << static_cast<uint32_t>(std::round(actual_kW));
 			}
 			for (size_t i = 0; i < r.Flows.size(); ++i)
 			{
-				out << "," << r.Flows[i].Requested;
+				double req_kW =
+					static_cast<double>(r.Flows[i].Requested) / W_per_kW;
+				out << "," << static_cast<uint32_t>(std::round(req_kW));
 			}
 			for (size_t i = 0; i < r.Flows.size(); ++i)
 			{
-				out << "," << r.Flows[i].Available;
+				double avail_kW =
+					static_cast<double>(r.Flows[i].Available) / W_per_kW;
+				out << "," << static_cast<uint32_t>(std::round(avail_kW));
 			}
-			out << "\n";
+			out << std::endl;
 		}
 	}
 
@@ -894,10 +895,8 @@ namespace erin_next
 				for (size_t i = 0; i < numEntries; ++i)
 				{
 					TimeAndAmount tal{};
-					tal.Time = Time_ToSeconds(
-						loadMap.Loads[loadId][i].Time,
-						loadMap.TimeUnits[loadId]);
-					tal.Amount = loadMap.Loads[loadId][i].Amount;
+					tal.Time_s = loadMap.Loads[loadId][i].Time_s;
+					tal.Amount_W = loadMap.Loads[loadId][i].Amount_W;
 					schedule.push_back(std::move(tal));
 				}
 				loads[sblIdx].TimesAndLoads = std::move(schedule);

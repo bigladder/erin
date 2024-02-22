@@ -9,8 +9,8 @@ namespace erin_next
 {
 	struct TimeAndAmount
 	{
-		double Time = 0.0;
-		uint32_t Amount = 0;
+		double Time_s = 0.0;
+		uint32_t Amount_W = 0;
 	};
 
 	std::ostream&

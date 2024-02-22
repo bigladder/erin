@@ -90,16 +90,52 @@ namespace erin_next
 			lossflow = maybe.value();
 			lossflowId = Simulation_RegisterFlow(s, lossflow);
 		}
+		// TODO: parse optional rate_unit up here; default to W?
+		PowerUnit rateUnit = PowerUnit::Watt;
+		if (table.contains("rate_unit"))
+		{
+			auto maybeRateUnitStr = TOMLTable_ParseString(
+				table, "rate_unit", fullTableName);
+			if (!maybeRateUnitStr.has_value())
+			{
+				WriteErrorMessage(fullTableName,
+					"unable to parse field 'rate_unit' as string");
+				return Result::Failure;
+			}
+			std::string rateUnitStr = maybeRateUnitStr.value();
+			auto maybeRateUnit =
+				TagToPowerUnit(rateUnitStr);
+			if (!maybeRateUnit.has_value())
+			{
+				WriteErrorMessage(fullTableName,
+					"unable to understand rate_unit '" + rateUnitStr + "'");
+				return Result::Failure;
+			}
+			rateUnit = maybeRateUnit.value();
+		}
 		// TODO: parse failure modes
 		switch (ct)
 		{
 			case (ComponentType::ConstantSourceType):
 			{
-				// TODO: need to get the max available from constant source
-				// for now, we can use uint32_t max?
+				uint32_t maxAvailable =
+					std::numeric_limits<uint32_t>::max();
+				if (table.contains("max_outflow"))
+				{
+					auto maybe = TOMLTable_ParseDouble(
+						table, "max_outflow", fullTableName);
+					if (!maybe.has_value())
+					{
+						WriteErrorMessage(fullTableName,
+							"unable to parse 'max_outflow' as number");
+						return Result::Failure;
+					}
+					double maxAvailableReal = maybe.value();
+					maxAvailable = static_cast<uint32_t>(
+						Power_ToWatt(maxAvailableReal, rateUnit));
+				}
 				id = Model_AddConstantSource(
-					s.TheModel, std::numeric_limits<uint32_t>::max(),
-					outflowId, tag);
+					s.TheModel, maxAvailable, outflowId, tag);
 			} break;
 			case (ComponentType::ScheduleBasedLoadType):
 			{
@@ -284,24 +320,6 @@ namespace erin_next
 						"capacity must be greater than 0");
 					return Result::Failure;
 				}
-				auto maybeRateUnitStr = TOMLTable_ParseString(
-					table, "rate_unit", fullTableName);
-				if (!maybeRateUnitStr.has_value())
-				{
-					WriteErrorMessage(fullTableName,
-						"unable to parse field 'rate_unit' as string");
-					return Result::Failure;
-				}
-				std::string rateUnitStr = maybeRateUnitStr.value();
-				auto maybeRateUnit =
-					TagToPowerUnit(rateUnitStr);
-				if (!maybeRateUnit.has_value())
-				{
-					WriteErrorMessage(fullTableName,
-						"unable to understand rate_unit '" + rateUnitStr + "'");
-					return Result::Failure;
-				}
-				PowerUnit rateUnit = maybeRateUnit.value();
 				auto maybeMaxCharge =
 					TOMLTable_ParseDouble(table, "max_charge", fullTableName);
 				if (!maybeMaxCharge.has_value())

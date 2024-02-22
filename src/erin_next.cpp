@@ -170,14 +170,14 @@ namespace erin_next
 			{
 				auto const& tal =
 					m.ScheduledLoads[i].TimesAndLoads[idx];
-				if (tal.Time == t)
+				if (tal.Time_s == t)
 				{
 
-					if (ss.Flows[connIdx].Requested != tal.Amount)
+					if (ss.Flows[connIdx].Requested != tal.Amount_W)
 					{
 						ss.ActiveConnectionsBack.insert(connIdx);
 					}
-					ss.Flows[connIdx].Requested = tal.Amount;
+					ss.Flows[connIdx].Requested = tal.Amount_W;
 				}
 			}
 		}
@@ -203,13 +203,13 @@ namespace erin_next
 			{
 				auto const& taa =
 					m.ScheduledSrcs[i].TimeAndAvails[idx];
-				if (taa.Time == t)
+				if (taa.Time_s == t)
 				{
-					if (ss.Flows[outIdx].Available != taa.Amount)
+					if (ss.Flows[outIdx].Available != taa.Amount_W)
 					{
 						ss.ActiveConnectionsFront.insert(outIdx);
 					}
-					ss.Flows[outIdx].Available = taa.Amount;
+					ss.Flows[outIdx].Available = taa.Amount_W;
 					auto spillage =
 						ss.Flows[outIdx].Available > ss.Flows[outIdx].Requested
 						? (
@@ -493,7 +493,7 @@ namespace erin_next
 		auto wasteConn = model.ScheduledSrcs[compIdx].WasteflowConn;
 		auto schIdx = ss.ScheduleBasedSourceIdx[compIdx];
 		auto available =
-			model.ScheduledSrcs[compIdx].TimeAndAvails[schIdx].Amount;
+			model.ScheduledSrcs[compIdx].TimeAndAvails[schIdx].Amount_W;
 		auto spillage =
 			available > ss.Flows[outConn].Requested
 			? available - ss.Flows[outConn].Requested
@@ -896,7 +896,7 @@ namespace erin_next
 		{
 			return infinity;
 		}
-		return sb.TimesAndLoads[nextIdx].Time;
+		return sb.TimesAndLoads[nextIdx].Time_s;
 	}
 
 	double
@@ -910,7 +910,7 @@ namespace erin_next
 		{
 			return infinity;
 		}
-		return sb.TimeAndAvails[nextIdx].Time;
+		return sb.TimeAndAvails[nextIdx].Time_s;
 	}
 
 	double
@@ -980,7 +980,7 @@ namespace erin_next
 		{
 			size_t nextIdx = ss.ScheduleBasedLoadIdx[i] + 1;
 			if (nextIdx < m.ScheduledLoads[i].TimesAndLoads.size()
-				&& m.ScheduledLoads[i].TimesAndLoads[nextIdx].Time == time)
+				&& m.ScheduledLoads[i].TimesAndLoads[nextIdx].Time_s == time)
 			{
 				ss.ScheduleBasedLoadIdx[i] = nextIdx;
 			}
@@ -997,7 +997,7 @@ namespace erin_next
 		{
 			size_t nextIdx = ss.ScheduleBasedSourceIdx[i] + 1;
 			if (nextIdx < m.ScheduledSrcs[i].TimeAndAvails.size()
-				&& m.ScheduledSrcs[i].TimeAndAvails[nextIdx].Time == time)
+				&& m.ScheduledSrcs[i].TimeAndAvails[nextIdx].Time_s == time)
 			{
 				ss.ScheduleBasedSourceIdx[i] = nextIdx;
 			}
@@ -1403,7 +1403,7 @@ namespace erin_next
 				auto const inflowConn = m.ConstLoads[idx].InflowConn;
 				auto const loadIdx = ss.ScheduleBasedLoadIdx[idx];
 				auto const amount =
-					m.ScheduledLoads[idx].TimesAndLoads[loadIdx].Amount;
+					m.ScheduledLoads[idx].TimesAndLoads[loadIdx].Amount_W;
 				if (ss.Flows[inflowConn].Requested != amount)
 				{
 					ss.ActiveConnectionsBack.insert(inflowConn);
@@ -1427,7 +1427,7 @@ namespace erin_next
 				auto const outflowConn = m.ScheduledSrcs[idx].OutflowConn;
 				auto const availIdx = ss.ScheduleBasedSourceIdx[idx];
 				auto const available =
-					m.ScheduledSrcs[idx].TimeAndAvails[availIdx].Amount;
+					m.ScheduledSrcs[idx].TimeAndAvails[availIdx].Amount_W;
 				if (ss.Flows[outflowConn].Available != available)
 				{
 					ss.ActiveConnectionsFront.insert(outflowConn);
@@ -2108,7 +2108,7 @@ namespace erin_next
 					case (ComponentType::ConstantSourceType):
 					case (ComponentType::ScheduleBasedSourceType):
 					{
-						sos.Inflow_kJ += flow.Actual * dt;
+						sos.Inflow_kJ += (flow.Actual / W_per_kW) * dt;
 					} break;
 				}
 				switch (toType)
@@ -2116,21 +2116,21 @@ namespace erin_next
 					case (ComponentType::ConstantLoadType):
 					case (ComponentType::ScheduleBasedLoadType):
 					{
-						sos.OutflowAchieved_kJ += flow.Actual * dt;
-						sos.OutflowRequest_kJ += flow.Requested * dt;
+						sos.OutflowAchieved_kJ += (flow.Actual / W_per_kW) * dt;
+						sos.OutflowRequest_kJ +=
+							(flow.Requested / W_per_kW) * dt;
 						allLoadsMet =
 							allLoadsMet && (flow.Actual == flow.Requested);
 						if (flow.Actual != flow.Requested)
 						{
 							sos.LoadNotServed_kJ +=
-								(flow.Requested - flow.Actual) * dt;
+								((flow.Requested - flow.Actual) / W_per_kW)
+								* dt;
 						}
 					} break;
 					case (ComponentType::WasteSinkType):
 					{
-						sos.Wasteflow_kJ +=
-							timeAndFlows[eventIdx-1].Flows[connId].Actual
-							* dt;
+						sos.Wasteflow_kJ += (flow.Actual / W_per_kW) * dt;
 					} break;
 				}
 			}
@@ -2161,18 +2161,19 @@ namespace erin_next
 				storeIdx < timeAndFlows[eventIdx].StorageAmounts.size();
 				++storeIdx)
 			{
-				double stored =
+				// TODO: confirm that stored_J is, in fact, in J
+				double stored_J =
 					static_cast<double>(timeAndFlows[eventIdx]
 						.StorageAmounts[storeIdx])
 					- static_cast<double>(timeAndFlows[eventIdx - 1]
 						.StorageAmounts[storeIdx]);
-				if (stored > 0)
+				if (stored_J > 0.0)
 				{
-					sos.StorageCharge_kJ += stored;
+					sos.StorageCharge_kJ += stored_J / J_per_kJ;
 				}
 				else
 				{
-					sos.StorageDischarge_kJ += -1.0 * stored;
+					sos.StorageDischarge_kJ += -1.0 * (stored_J / J_per_kJ);
 				}
 			}
 		}

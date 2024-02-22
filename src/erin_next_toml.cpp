@@ -1,5 +1,6 @@
 #include <iostream>
 #include "erin_next/erin_next_toml.h"
+#include "erin_next/erin_next_utils.h"
 
 namespace erin_next
 {
@@ -172,14 +173,15 @@ namespace erin_next
 	TOMLTable_ParseVectorOfTimeRatePairs(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName)
+		std::string const& tableName,
+		double timeMult,
+		double rateMult)
 	{
 		std::vector<TimeAndAmount> timeAndLoads{};
 		if (!table.contains(fieldName) || !table.at(fieldName).is_array())
 		{
-			std::cout << "[" << tableName << "] "
-				<< fieldName << " not present or not an array"
-				<< std::endl;
+			WriteErrorMessage(tableName,
+				fieldName + " not present or not an array");
 			return {};
 		}
 		std::vector<toml::value> const& trs = table.at(fieldName).as_array();
@@ -194,14 +196,14 @@ namespace erin_next
 				{
 					std::optional<double> t =
 						TOML_ParseNumericValueAsDouble(t_and_r.at(0));
-					// TODO: need to convert rate to a base unit before
-					// conversion to integer in case we have decimal values
-					std::optional<int> r =
-						TOML_ParseNumericValueAsInteger(t_and_r.at(1));
+					std::optional<double> r =
+						TOML_ParseNumericValueAsDouble(t_and_r.at(1));
 					if (t.has_value() && r.has_value() && r.value() >= 0)
 					{
 						timeAndLoads.emplace_back(
-							t.value(), (uint32_t)r.value());
+							t.value() * timeMult,
+							static_cast<uint32_t>(
+								r.value() * rateMult));
 					}
 					else
 					{
@@ -210,9 +212,8 @@ namespace erin_next
 				}
 				else
 				{
-					std::cout << "[" << tableName << "] "
-						<< "time/rate pair was not of length 2"
-						<< std::endl;
+					WriteErrorMessage(tableName,
+						"time/rate pair was not of length 2");
 					return {};
 				}
 			}

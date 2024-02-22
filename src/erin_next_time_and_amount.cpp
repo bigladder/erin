@@ -8,8 +8,8 @@ namespace erin_next
 	operator<<(std::ostream& os, TimeAndAmount const& timeAndLoad)
 	{
 		os << "TimeAndAmount{"
-			<< "Time=" << timeAndLoad.Time << "; "
-			<< "Amount=" << timeAndLoad.Amount << "}";
+			<< "Time_s=" << timeAndLoad.Time_s << "; "
+			<< "Amount_W=" << timeAndLoad.Amount_W << "}";
 		return os;
 	}
 }

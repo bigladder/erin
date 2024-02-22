@@ -23,6 +23,9 @@ namespace erin_next
 	double
 	Power_ToWatt(double value, PowerUnit unit);
 
+	constexpr double W_per_kW = 1'000.0;
+	constexpr double J_per_kJ = 1'000.0;
+
 	enum EnergyUnit
 	{
 		Joule,

@@ -1,5 +1,5 @@
 scenario id,occurrence number,duration (h),total source (kJ),total load (kJ),total storage (kJ),total waste (kJ),energy balance (source-(load+storage+waste)) (kJ),site efficiency (%),uptime (h),downtime (h),load not served (kJ),energy robustness [ER],energy availability [EA],max single event downtime [MaxSEDT] (h)
-blue_sky,1,8760,6.01486e+11,3.78432e+11,0,2.23054e+11,0,62.9162,8760,0,0,1,1,0
-category_4_hurricane,1,336,1.03433e+10,6.41088e+09,0,3.93241e+09,0,61.9811,0,336,8.4672e+08,0.883333,0,336
-category_4_hurricane,2,336,1.03433e+10,6.41088e+09,0,3.93241e+09,0,61.9811,0,336,8.4672e+08,0.883333,0,336
-category_4_hurricane,3,336,1.03433e+10,6.41088e+09,0,3.93241e+09,0,61.9811,0,336,8.4672e+08,0.883333,0,336
+blue_sky,1,8760,6.01353e+11,3.78432e+11,0,2.22921e+11,0,62.9301,8760,0,0,1,1,0
+category_4_hurricane,1,336,1.03411e+10,6.41088e+09,0,3.93024e+09,0,61.994,0,336,8.4672e+08,0.883333,0,336
+category_4_hurricane,2,336,1.03411e+10,6.41088e+09,0,3.93024e+09,0,61.994,0,336,8.4672e+08,0.883333,0,336
+category_4_hurricane,3,336,1.03411e+10,6.41088e+09,0,3.93024e+09,0,61.994,0,336,8.4672e+08,0.883333,0,336

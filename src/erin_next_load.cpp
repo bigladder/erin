@@ -4,6 +4,7 @@
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_csv.h"
+#include "erin_next/erin_next_utils.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -24,19 +25,62 @@ namespace erin_next
 	ParseSingleLoad(toml::table const& table, std::string const& tag)
 	{
 		std::string tableFullName = "loads." + tag;
-		std::optional<std::string> timeUnit{};
-		std::optional<std::string> rateUnit{};
-		std::optional<std::vector<TimeAndAmount>> timeRatePairs{};
+		TimeUnit timeUnit = TimeUnit::Second;
+		PowerUnit rateUnit = PowerUnit::Watt;
+		std::vector<TimeAndAmount> timeRatePairs;
 		if (TOMLTable_IsValid(
 			table, RequiredLoadFields, OptionalLoadFields, DefaultLoadFields,
 			tableFullName, false))
 		{
-			timeUnit = TOMLTable_ParseStringWithSetResponses(
+			auto maybeTimeUnitStr = TOMLTable_ParseStringWithSetResponses(
 				table, ValidTimeUnits, "time_unit", tableFullName);
-			rateUnit = TOMLTable_ParseStringWithSetResponses(
+			if (!maybeTimeUnitStr.has_value())
+			{
+				WriteErrorMessage(tableFullName,
+					"missing required field 'time_unit'");
+				return {};
+			}
+			else
+			{
+				auto maybe = TagToTimeUnit(maybeTimeUnitStr.value());
+				if (!maybe.has_value())
+				{
+					WriteErrorMessage(tableFullName,
+						"Unhandled 'time_unit': " + maybeTimeUnitStr.value());
+					return {};
+				}
+				timeUnit = maybe.value();
+			}
+			auto maybeRateUnitStr = TOMLTable_ParseStringWithSetResponses(
 				table, ValidRateUnits, "rate_unit", tableFullName);
-			timeRatePairs = TOMLTable_ParseVectorOfTimeRatePairs(
-				table, "time_rate_pairs", tableFullName);
+			if (!maybeRateUnitStr.has_value())
+			{
+				WriteErrorMessage(tableFullName,
+					"missing required field 'rate_unit'");
+				return {};
+			}
+			else
+			{
+				auto maybe = TagToPowerUnit(maybeRateUnitStr.value());
+				if (!maybe.has_value())
+				{
+					WriteErrorMessage(tableFullName,
+						"Unhandled 'rate_unit': " + maybeRateUnitStr.value());
+					return {};
+				}
+				rateUnit = maybe.value();
+			}
+			auto maybeTimeRatePairs = TOMLTable_ParseVectorOfTimeRatePairs(
+				table, "time_rate_pairs", tableFullName,
+				Time_ToSeconds(1.0, timeUnit),
+				Power_ToWatt(1.0, rateUnit));
+			if (!maybeTimeRatePairs.has_value())
+			{
+				WriteErrorMessage(tableFullName,
+					"unable to parse time/rate pairs");
+				return {};
+			}
+			timeRatePairs = std::move(maybeTimeRatePairs.value());
 		}
 		else if (TOMLTable_IsValid(
 			table, RequiredLoadFieldsCsv, OptionalLoadFields,
@@ -46,8 +90,8 @@ namespace erin_next
 				table, "csv_file", tableFullName);
 			if (!maybeCsvFileName.has_value())
 			{
-				std::cout << "[" << tableFullName << "] "
-					<< "csv_file is not a valid string" << std::endl;
+				WriteErrorMessage(tableFullName,
+					"csv_file is not a valid string");
 				return {};
 			}
 			std::string csvFileName{maybeCsvFileName.value()};
@@ -55,25 +99,38 @@ namespace erin_next
 			inputDataFile.open(csvFileName);
 			if (!inputDataFile.good())
 			{
-				std::cout << "[" << tableFullName << "] "
-					<< "unable to load input csv file '"
-					<< csvFileName << "'"
-					<< std::endl;
+				WriteErrorMessage(tableFullName,
+					"unable to load input csv file '" + csvFileName + "'");
 				return {};
 			}
 			auto header = read_row(inputDataFile);
 			if (header.size() == 2)
 			{
-				timeUnit = header[0];
-				rateUnit = header[1];
+				std::string const& timeUnitStr = header[0];
+				std::string const& rateUnitStr = header[1];
+				auto maybeTimeUnit = TagToTimeUnit(timeUnitStr);
+				if (!maybeTimeUnit.has_value())
+				{
+					WriteErrorMessage(tableFullName,
+						"unhandled time unit: " + timeUnitStr);
+					return {};
+				}
+				timeUnit = maybeTimeUnit.value();
+				auto maybeRateUnit = TagToPowerUnit(rateUnitStr);
+				if (!maybeRateUnit.has_value())
+				{
+					WriteErrorMessage(tableFullName,
+						"unhandled rate unit: " + rateUnitStr);
+					return {};
+				}
+				rateUnit = maybeRateUnit.value();
 			}
 			else
 			{
-				std::cout << "[" << tableFullName << "] "
-					<< "csv file '"
-					<< csvFileName << "'"
-					<< " -- header must have 2 columns: time unit "
-					<< "and rate unit" << std::endl;
+				WriteErrorMessage(tableFullName,
+					"csv file '" + csvFileName + "'"
+					" -- header must have 2 columns: time unit "
+					"and rate unit");
 				return {};
 			}
 			uint32_t rowIdx = 1;
@@ -88,17 +145,17 @@ namespace erin_next
 				++rowIdx;
 				if (pair.size() != 2)
 				{
-					std::cout << "[" << tableFullName << "] "
-						<< "csv file '"
-						<< csvFileName << "'"
-						<< " row: " << rowIdx << "; must have 2 columns; "
-						<< "found: " << pair.size() << std::endl;
+					WriteErrorMessage(tableFullName,
+						"csv file '" + csvFileName + "'"
+						" row: " + std::to_string(rowIdx)
+						+ "; must have 2 columns; "
+						"found: " + std::to_string(pair.size()));
 					return {};
 				}
 				TimeAndAmount ta{};
-				ta.Time = std::strtod(pair[0].c_str(), nullptr);
-				ta.Amount = static_cast<uint32_t>(
-					std::strtod(pair[1].c_str(), nullptr));
+				ta.Time_s = Time_ToSeconds(std::stod(pair[0]), timeUnit);
+				ta.Amount_W = static_cast<uint32_t>(
+					Power_ToWatt(std::stod(pair[1]), rateUnit));
 				trps.push_back(ta);
 			}
 			inputDataFile.close();
@@ -106,8 +163,7 @@ namespace erin_next
 		}
 		else
 		{
-			std::cout << "[" << tableFullName << "] "
-				<< "is not valid" << std::endl;
+			WriteErrorMessage(tableFullName, "is not valid");
 			TOMLTable_IsValid(
 				table, RequiredLoadFields, OptionalLoadFields,
 				DefaultLoadFields, tableFullName, true);
@@ -116,25 +172,9 @@ namespace erin_next
 				DefaultLoadFields, tableFullName, true);
 			return {};
 		}
-		if (!timeUnit.has_value()
-			|| !rateUnit.has_value()
-			|| !timeRatePairs.has_value())
-		{
-			return {};
-		}
 		Load load{};
-		load.RateUnit = rateUnit.value();
 		load.Tag = tag;
-		auto maybeTimeUnit = TagToTimeUnit(timeUnit.value());
-		if (!maybeTimeUnit.has_value())
-		{
-			std::cout << "[" << tableFullName << "] "
-				<< "could not interpret time unit tag '"
-				<< timeUnit.value() << std::endl;
-			return {};
-		}
-		load.TheTimeUnit = maybeTimeUnit.value();
-		load.TimeAndLoads = std::move(timeRatePairs.value());
+		load.TimeAndLoads = std::move(timeRatePairs);
 		return load;
 	}
 
@@ -145,6 +185,7 @@ namespace erin_next
 		loads.reserve(table.size());
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
+			std::string tableName = "loads." + it->first;
 			if (it->second.is_table())
 			{
 				toml::table const& singleLoad = it->second.as_table();
@@ -155,14 +196,14 @@ namespace erin_next
 				}
 				else
 				{
-					// TODO: report error?
+					WriteErrorMessage(tableName,
+						"load did not have value");
 					return {};
 				}
 			}
 			else
 			{
-				std::cout << "[loads." << it->first << "] "
-					<< "is not a table" << std::endl;
+				WriteErrorMessage(tableName, "is not a table");
 				return {};
 			}
 		}
@@ -174,8 +215,6 @@ namespace erin_next
 	{
 		os << "Load{"
 			<< "Tag=\"" << load.Tag << "\"; "
-			<< "TimeUnit=\"" << load.TheTimeUnit << "\"; "
-			<< "RateUnit=\"" << load.RateUnit << "\"; "
 			<< "TimeAndLoads=[";
 		for (auto it = load.TimeAndLoads.cbegin();
 			it != load.TimeAndLoads.cend();

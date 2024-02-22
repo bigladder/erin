@@ -274,16 +274,12 @@ namespace erin_next
 			{
 				if (ts.time == time)
 				{
-					// reset the associated component's flows depending on
-					// the component's reliability state
 					if (ts.state)
 					{
-						// restore the component to active state
 						Model_SetComponentToRepaired(m, ss, rel.ComponentId);
 					}
 					else
 					{
-						// set component as down for repairs
 						Model_SetComponentToFailed(m, ss, rel.ComponentId);
 					}
 				}

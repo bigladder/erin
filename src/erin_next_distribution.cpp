@@ -421,6 +421,7 @@ namespace erin_next
 		return id;
 	}
 
+	// TODO: update to return std::optional<size_t>
 	size_t
 	DistributionSystem::lookup_dist_by_tag(
 		const std::string& tag) const

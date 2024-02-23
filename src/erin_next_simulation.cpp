@@ -229,6 +229,49 @@ namespace erin_next
 	}
 
 	void
+	Simulation_PrintFailureModes(Simulation const& s)
+	{
+		for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+		{
+			auto maybeFailureDist =
+				s.TheModel.DistSys.get_dist_by_id(
+					s.FailureModes.FailureDistIds[i]);
+			auto maybeRepairDist =
+				s.TheModel.DistSys.get_dist_by_id(
+					s.FailureModes.RepairDistIds[i]);
+			std::cout << i << ": " << s.FailureModes.Tags[i] << std::endl;
+			if (maybeFailureDist.has_value())
+			{
+				Distribution failureDist = maybeFailureDist.value();
+				std::cout << "-- failure distribution: "
+					<< failureDist.Tag << ", "
+					<< dist_type_to_tag(failureDist.Type) << "["
+					<< s.FailureModes.FailureDistIds[i] << "]" << std::endl;
+			}
+			else
+			{
+				std::cout << "-- ERROR! Problem finding failure distribution "
+					<< " with id = " << s.FailureModes.FailureDistIds[i]
+					<< std::endl;
+			}
+			if (maybeRepairDist.has_value())
+			{
+				Distribution repairDist = maybeRepairDist.value();
+				std::cout << "-- repair distribution: "
+					<< repairDist.Tag << ", "
+					<< dist_type_to_tag(repairDist.Type) << "["
+					<< s.FailureModes.RepairDistIds[i] << "]" << std::endl;
+			}
+			else
+			{
+				std::cout << "-- ERROR! Problem finding repair distribution "
+					<< " with id = " << s.FailureModes.RepairDistIds[i]
+					<< std::endl;
+			}
+		}
+	}
+
+	void
 	Simulation_PrintFragilityModes(Simulation const& s)
 	{
 		for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
@@ -411,13 +454,38 @@ namespace erin_next
 	}
 
 	size_t
+	Simulation_RegisterFailureMode(
+		Simulation& s,
+		std::string const& tag,
+		size_t failureId,
+		size_t repairId)
+	{
+		size_t size = s.FailureModes.Tags.size();
+		for (size_t i = 0; i < size; ++i)
+		{
+			if (s.FailureModes.Tags[i] == tag)
+			{
+				s.FailureModes.FailureDistIds[i] = failureId;
+				s.FailureModes.RepairDistIds[i] = repairId;
+				return i;
+			}
+		}
+		size_t result = size;
+		s.FailureModes.Tags.push_back(tag);
+		s.FailureModes.FailureDistIds.push_back(failureId);
+		s.FailureModes.RepairDistIds.push_back(repairId);
+		return result;
+	}
+
+	size_t
 	Simulation_RegisterFragilityMode(
 		Simulation& s,
 		std::string const& tag,
 		size_t fragilityCurveId,
 		std::optional<size_t> maybeRepairDistId)
 	{
-		for (size_t i=0; i<s.FragilityModes.Tags.size(); ++i)
+		size_t size = s.FragilityModes.Tags.size();
+		for (size_t i = 0; i < size; ++i)
 		{
 			if (s.FragilityModes.Tags[i] == tag)
 			{
@@ -426,11 +494,11 @@ namespace erin_next
 				return i;
 			}
 		}
-		size_t id = s.FragilityModes.Tags.size();
+		size_t result = size;
 		s.FragilityModes.Tags.push_back(tag);
 		s.FragilityModes.FragilityCurveId.push_back(fragilityCurveId);
 		s.FragilityModes.RepairDistIds.push_back(maybeRepairDistId);
-		return id;
+		return result;
 	}
 
 	Result
@@ -579,6 +647,108 @@ namespace erin_next
 		return Result::Success;
 	}
 
+	bool
+	Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name)
+	{
+		for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+		{
+			if (s.FailureModes.Tags[i] == name)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool
+	Simulation_IsFragilityModeNameUnique(Simulation& s, std::string const& name)
+	{
+		for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+		{
+			if (s.FragilityModes.Tags[i] == name)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool
+	Simulation_IsFailureNameUnique(Simulation& s, std::string const& name)
+	{
+		return Simulation_IsFailureModeNameUnique(s, name)
+			&& Simulation_IsFragilityModeNameUnique(s, name);
+	}
+
+	Result
+	Simulation_ParseFailureModes(Simulation& s, toml::value const& v)
+	{
+		if (v.contains("failure_mode"))
+		{
+			if (!v.at("failure_mode").is_table())
+			{
+				WriteErrorMessage("failure_mode",
+					"failure_mode section must be a table");
+				return Result::Failure;
+			}
+			toml::table const& fmTable = v.at("failure_mode").as_table();
+			for (auto const& pair : fmTable)
+			{
+				std::string const& fmName = pair.first;
+				std::string const fullName = "failue_mode." + fmName;
+				if (!Simulation_IsFragilityModeNameUnique(s, fmName))
+				{
+					WriteErrorMessage(fmName,
+						"failure mode name must be unique within both "
+						"failure_mode and fragility_mode names");
+					return Result::Failure;
+				}
+				if (!pair.second.is_table())
+				{
+					WriteErrorMessage(fullName, "value must be a table");
+					return Result::Failure;
+				}
+				toml::table const& fmValueTable = pair.second.as_table();
+				if (!fmValueTable.contains("failure_dist"))
+				{
+					WriteErrorMessage(fullName,
+						"missing required field 'failure_dist'");
+					return Result::Failure;
+				}
+				auto maybeFailureDistTag = TOMLTable_ParseString(
+					fmValueTable, "failure_dist", fullName);
+				if (!maybeFailureDistTag.has_value())
+				{
+					WriteErrorMessage(fullName,
+						"could not parse 'failure_dist' as string");
+					return Result::Failure;
+				}
+				std::string const& failureDistTag = maybeFailureDistTag.value();
+				if (!fmValueTable.contains("repair_dist"))
+				{
+					WriteErrorMessage(fullName,
+						"missing required field 'repair_dist'");
+					return Result::Failure;
+				}
+				auto maybeRepairDistTag = TOMLTable_ParseString(
+					fmValueTable, "repair_dist", fullName);
+				if (!maybeRepairDistTag.has_value())
+				{
+					WriteErrorMessage(fullName,
+						"could not parse 'repair_dist' as string");
+					return Result::Failure;
+				}
+				std::string const& repairDistTag = maybeRepairDistTag.value();
+				size_t failureId =
+					s.TheModel.DistSys.lookup_dist_by_tag(failureDistTag);
+				size_t repairId =
+					s.TheModel.DistSys.lookup_dist_by_tag(repairDistTag);
+				Simulation_RegisterFailureMode(s, fmName, failureId, repairId);
+			}
+		}
+		return Result::Success;
+	}
+
 	Result
 	Simulation_ParseFragilityModes(Simulation& s, toml::value const& v)
 	{
@@ -592,20 +762,31 @@ namespace erin_next
 			for (auto const& pair : fmTable)
 			{
 				std::string const& fmName = pair.first;
+				std::string const fullName = "fragility_mode." + fmName;
+				if (!Simulation_IsFailureModeNameUnique(s, fmName))
+				{
+					WriteErrorMessage(fullName,
+						"fragility mode name must be unique within both "
+						"failure_mode and fragility_mode names");
+					return Result::Failure;
+				}
 				if (!pair.second.is_table())
 				{
-					// TODO: add error message
+					WriteErrorMessage(fullName,
+						"fragility_mode section must be a table");
 					return Result::Failure;
 				}
 				toml::table const& fmValueTable = pair.second.as_table();
 				if (!fmValueTable.contains("fragility_curve"))
 				{
-					// TODO: add error message
+					WriteErrorMessage(fullName,
+						"missing required field 'fragility_curve'");
 					return Result::Failure;
 				}
 				if (!fmValueTable.at("fragility_curve").is_string())
 				{
-					// TODO: add error message
+					WriteErrorMessage(fullName,
+						"'fragility_curve' field must be a string");
 					return Result::Failure;
 				}
 				std::string const& fcTag =
@@ -617,7 +798,8 @@ namespace erin_next
 				{
 					if (!fmValueTable.at("repair_dist").is_string())
 					{
-						// TODO: add error message
+						WriteErrorMessage(fullName,
+							"field 'repair_dist' must be a string");
 						return Result::Failure;
 					}
 					std::string const& repairDistTag =
@@ -753,36 +935,47 @@ namespace erin_next
 		Simulation_Init(s);
 		if (Simulation_ParseSimulationInfo(s, v) == Result::Failure)
 		{
+			WriteErrorMessage("simulation_info", "problem parsing...");
 			return {};
 		}
 		if (Simulation_ParseLoads(s, v) == Result::Failure)
 		{
+			WriteErrorMessage("loads", "problem parsing...");
 			return {};
 		}
 		if (Simulation_ParseComponents(s, v) == Result::Failure)
 		{
+			WriteErrorMessage("components", "problem parsing...");
 			return {};
 		}
 		if (Simulation_ParseDistributions(s, v) == Result::Failure)
 		{
+			WriteErrorMessage("dist", "problem parsing...");
+			return {};
+		}
+		if (Simulation_ParseFailureModes(s, v) == Result::Failure)
+		{
+			WriteErrorMessage("failure_mode", "problem parsing...");
 			return {};
 		}
 		if (Simulation_ParseFragilityModes(s, v) == Result::Failure)
 		{
-			std::cout << "Problem parsing fragility modes..." << std::endl;
+			WriteErrorMessage("fragility_mode", "problem parsing...");
 			return {};
 		}
 		if (Simulation_ParseNetwork(s, v) == Result::Failure)
 		{
+			WriteErrorMessage("network", "problem parsing...");
 			return {};
 		}
 		if (Simulation_ParseScenarios(s, v) == Result::Failure)
 		{
+			WriteErrorMessage("scenarios", "problem parsing...");
 			return {};
 		}
 		if (Simulation_ParseFragilityCurves(s, v) == Result::Failure)
 		{
-			std::cout << "Problem parsing fragility curves..." << std::endl;
+			WriteErrorMessage("fragility_curve", "problem parsing...");
 			return {};
 		}
 		return s;
@@ -799,6 +992,8 @@ namespace erin_next
 		Simulation_PrintComponents(s);
 		std::cout << "\nDistributions:" << std::endl;
 		s.TheModel.DistSys.print_distributions();
+		std::cout << "\nFailure Modes:" << std::endl;
+		Simulation_PrintFailureModes(s);
 		std::cout << "\nFragility Curves:" << std::endl;
 		Simulation_PrintFragilityCurves(s);
 		std::cout << "\nFragility Modes:" << std::endl;

@@ -66,7 +66,7 @@ namespace erin_next
 	// NOTE: arrays in struct below indexed by size_t which we call ComponentId
 	struct ComponentDict
 	{
-		// The index into the component vector for the given component type
+		// The index into the component vector for the given component subtype
 		std::vector<size_t> Idx;
 		std::vector<ComponentType> CompType;
 		std::vector<std::string> Tag;
@@ -295,6 +295,21 @@ namespace erin_next
 		std::vector<std::string> Tags{};
 		std::vector<size_t> FragilityCurveId{};
 		std::vector<std::optional<size_t>> RepairDistIds{};
+	};
+
+	struct ComponentFailureModeDict
+	{
+		// index into ComponentDict
+		std::vector<size_t> ComponentIds;
+		// index into FailureModeDict
+		std::vector<size_t> FailureModeIds;
+	};
+
+	struct FailureModeDict
+	{
+		std::vector<std::string> Tags;
+		std::vector<size_t> FailureDistIds;
+		std::vector<size_t> RepairDistIds;
 	};
 
 	std::optional<FragilityCurveType>

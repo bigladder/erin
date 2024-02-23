@@ -28,6 +28,8 @@ namespace erin_next
 		FragilityCurveDict FragilityCurves;
 		ComponentFragilityModeDict ComponentFragilities;
 		FragilityModeDict FragilityModes;
+		ComponentFailureModeDict ComponentFailureModes;
+		FailureModeDict FailureModes;
 	};
 
 	void
@@ -70,6 +72,9 @@ namespace erin_next
 	Simulation_PrintFragilityCurves(Simulation const& s);
 
 	void
+	Simulation_PrintFailureModes(Simulation const& s);
+
+	void
 	Simulation_PrintFragilityModes(Simulation const& s);
 
 	void
@@ -96,6 +101,13 @@ namespace erin_next
 		std::string const& tag,
 		FragilityCurveType curveType,
 		size_t curveIdx);
+
+	size_t
+	Simulation_RegisterFailureMode(
+		Simulation& s,
+		std::string const& tag,
+		size_t failureId,
+		size_t repairId);
 
 	size_t
 	Simulation_RegisterFragilityMode(
@@ -157,6 +169,19 @@ namespace erin_next
 	void
 	Simulation_Run(Simulation& s);
 
+	bool
+	Simulation_IsFailureNameUnique(Simulation& s, std::string const& name);
+
+	bool
+	Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name);
+
+	bool
+	Simulation_IsFragilityModeNameUnique(
+		Simulation& s,
+		std::string const& name);
+
+	Result
+	Simulation_ParseFailureModes(Simulation& s, toml::value const& v);
 }
 
 #endif

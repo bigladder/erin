@@ -876,19 +876,19 @@ namespace erin_next
 			for (size_t i = 0; i < r.Flows.size(); ++i)
 			{
 				double actual_kW =
-					static_cast<double>(r.Flows[i].Actual) / W_per_kW;
+					static_cast<double>(r.Flows[i].Actual_W) / W_per_kW;
 				out << "," << static_cast<uint32_t>(std::round(actual_kW));
 			}
 			for (size_t i = 0; i < r.Flows.size(); ++i)
 			{
 				double req_kW =
-					static_cast<double>(r.Flows[i].Requested) / W_per_kW;
+					static_cast<double>(r.Flows[i].Requested_W) / W_per_kW;
 				out << "," << static_cast<uint32_t>(std::round(req_kW));
 			}
 			for (size_t i = 0; i < r.Flows.size(); ++i)
 			{
 				double avail_kW =
-					static_cast<double>(r.Flows[i].Available) / W_per_kW;
+					static_cast<double>(r.Flows[i].Available_W) / W_per_kW;
 				out << "," << static_cast<uint32_t>(std::round(avail_kW));
 			}
 			// TODO: check StorageAmounts and m.Stores[i].Capacity; should be J

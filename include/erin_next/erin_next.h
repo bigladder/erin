@@ -201,9 +201,9 @@ namespace erin_next
 	// struct with explicit units...
 	struct Flow
 	{
-		uint32_t Requested = 0;
-		uint32_t Available = 0;
-		uint32_t Actual = 0;
+		uint32_t Requested_W = 0;
+		uint32_t Available_W = 0;
+		uint32_t Actual_W = 0;
 	};
 
 	struct TimeAndFlows

@@ -1234,18 +1234,18 @@ namespace erin_next
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
 		{
 			std::cout << ToString(ComponentType::StoreType)
-				<< "[" << storeIdx << "].InitialStorage : "
-				<< m.Stores[storeIdx].InitialStorage << std::endl;
+				<< "[" << storeIdx << "].InitialStorage (J): "
+				<< m.Stores[storeIdx].InitialStorage_J << std::endl;
 			std::cout << ToString(ComponentType::StoreType)
-				<< "[" << storeIdx << "].StorageAmount: "
+				<< "[" << storeIdx << "].StorageAmount (J) : "
 				<< ss.StorageAmounts_J[storeIdx] << std::endl;
 			std::cout << ToString(ComponentType::StoreType)
-				<< "[" << storeIdx << "].Capacity_J: "
+				<< "[" << storeIdx << "].Capacity (J)      : "
 				<< m.Stores[storeIdx].Capacity_J << std::endl;
 			double soc = (double)ss.StorageAmounts_J[storeIdx] * 100.0
 				/ (double)m.Stores[storeIdx].Capacity_J;
 			std::cout << ToString(ComponentType::StoreType)
-				<< "[" << storeIdx << "].SOC     : "
+				<< "[" << storeIdx << "].SOC               : "
 				<< soc << " %" << std::endl;
 		}
 	}
@@ -1267,7 +1267,7 @@ namespace erin_next
 	{
 		for (size_t i = 0; i < model.Stores.size(); ++i)
 		{
-			ss.StorageAmounts_J.push_back(model.Stores[i].InitialStorage);
+			ss.StorageAmounts_J.push_back(model.Stores[i].InitialStorage_J);
 		}
 		ss.StorageNextEventTimes =
 			std::vector<double>(model.Stores.size(), 0.0);
@@ -1804,7 +1804,7 @@ namespace erin_next
 		s.MaxChargeRate_W = maxCharge;
 		s.MaxDischargeRate_W = maxDischarge;
 		s.ChargeAmount_J = chargeAmount;
-		s.InitialStorage = initialStorage;
+		s.InitialStorage_J = initialStorage;
 		m.Stores.push_back(s);
 		return Component_AddComponentReturningId(
 			m.ComponentMap,

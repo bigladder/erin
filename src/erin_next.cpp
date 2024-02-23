@@ -143,11 +143,11 @@ namespace erin_next
 				continue;
 			}
 			if (ss.Flows[connIdx].Available_W
-				!= m.ConstSources[srcIdx].Available)
+				!= m.ConstSources[srcIdx].Available_W)
 			{
 				ss.ActiveConnectionsFront.insert(connIdx);
 			}
-			ss.Flows[connIdx].Available_W = m.ConstSources[srcIdx].Available;
+			ss.Flows[connIdx].Available_W = m.ConstSources[srcIdx].Available_W;
 		}
 	}
 
@@ -1412,7 +1412,7 @@ namespace erin_next
 			case (ComponentType::ConstantSourceType):
 			{
 				auto const outflowConn = m.ConstSources[idx].OutflowConn;
-				auto const available = m.ConstSources[idx].Available;
+				auto const available = m.ConstSources[idx].Available_W;
 				if (ss.Flows[outflowConn].Available_W != available)
 				{
 					ss.ActiveConnectionsFront.insert(outflowConn);

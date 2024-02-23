@@ -126,7 +126,7 @@ namespace erin_next
 
 	struct ConstantSource
 	{
-		uint32_t Available;
+		uint32_t Available_W;
 		size_t OutflowConn;
 	};
 
@@ -139,6 +139,7 @@ namespace erin_next
 
 	struct ConstantEfficiencyConverter
 	{
+		// NOTE: efficiency is a fraction in range (0.0, 1.0]
 		double Efficiency;
 		size_t InflowConn;
 		size_t OutflowConn;

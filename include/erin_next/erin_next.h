@@ -107,7 +107,7 @@ namespace erin_next
 
 	struct ConstantLoad
 	{
-		uint32_t Load;
+		uint32_t Load_W;
 		size_t InflowConn;
 	};
 

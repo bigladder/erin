@@ -122,11 +122,11 @@ namespace erin_next
 				// TODO: should we set flows here to zero?
 				continue;
 			}
-			if (ss.Flows[connIdx].Requested_W != model.ConstLoads[loadIdx].Load)
+			if (ss.Flows[connIdx].Requested_W != model.ConstLoads[loadIdx].Load_W)
 			{
 				ss.ActiveConnectionsBack.insert(connIdx);
 			}
-			ss.Flows[connIdx].Requested_W = model.ConstLoads[loadIdx].Load;
+			ss.Flows[connIdx].Requested_W = model.ConstLoads[loadIdx].Load_W;
 		}
 	}
 
@@ -1391,11 +1391,11 @@ namespace erin_next
 			case (ComponentType::ConstantLoadType):
 			{
 				auto inflowConn = m.ConstLoads[idx].InflowConn;
-				if (ss.Flows[inflowConn].Requested_W != m.ConstLoads[idx].Load)
+				if (ss.Flows[inflowConn].Requested_W != m.ConstLoads[idx].Load_W)
 				{
 					ss.ActiveConnectionsBack.insert(inflowConn);
 				}
-				ss.Flows[inflowConn].Requested_W = m.ConstLoads[idx].Load;
+				ss.Flows[inflowConn].Requested_W = m.ConstLoads[idx].Load_W;
 			} break;
 			case (ComponentType::ScheduleBasedLoadType):
 			{

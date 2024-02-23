@@ -196,9 +196,6 @@ namespace erin_next
 		size_t OutflowConn = 0;
 	};
 
-	// TODO: change these to be Requested_W, Available_W, Actual_W; show the
-	// base unit explicitly; if we end up doing mass flow, we'll have another
-	// struct with explicit units...
 	struct Flow
 	{
 		uint32_t Requested_W = 0;

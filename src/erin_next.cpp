@@ -242,7 +242,7 @@ namespace erin_next
 			{
 				uint32_t available = ss.Flows[inflowConn].Available_W + (
 					ss.StorageAmounts_J[storeIdx] > 0
-					? m.Stores[storeIdx].MaxDischargeRate
+					? m.Stores[storeIdx].MaxDischargeRate_W
 					: 0);
 				if (ss.Flows[outflowConn].Available_W != available)
 				{
@@ -694,7 +694,7 @@ namespace erin_next
 		size_t outflowConn = model.Stores[compIdx].OutflowConn;
 		uint32_t available = ss.Flows[connIdx].Available_W;
 		uint32_t dischargeAvailable = ss.StorageAmounts_J[compIdx] > 0
-			? model.Stores[compIdx].MaxDischargeRate
+			? model.Stores[compIdx].MaxDischargeRate_W
 			: 0;
 		available += dischargeAvailable;
 		if (ss.Flows[outflowConn].Available_W != available)
@@ -1802,7 +1802,7 @@ namespace erin_next
 		Store s = {};
 		s.Capacity_J = capacity;
 		s.MaxChargeRate_W = maxCharge;
-		s.MaxDischargeRate = maxDischarge;
+		s.MaxDischargeRate_W = maxDischarge;
 		s.ChargeAmount = chargeAmount;
 		s.InitialStorage = initialStorage;
 		m.Stores.push_back(s);

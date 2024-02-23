@@ -175,9 +175,7 @@ namespace erin_next
 	{
 		uint32_t Capacity_J;
 		uint32_t MaxChargeRate_W;
-		// energy per time unit
-		// TODO: change to MaxDischargeRate_W
-		uint32_t MaxDischargeRate;
+		uint32_t MaxDischargeRate_W;
 		// amount at or below which we request charge
 		// TODO: change to ChargeAmount_J
 		uint32_t ChargeAmount;

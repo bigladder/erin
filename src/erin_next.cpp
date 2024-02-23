@@ -806,7 +806,7 @@ namespace erin_next
 		{
 			ss.StorageNextEventTimes[compIdx] =
 				t + ((double)(
-					model.Stores[compIdx].Capacity
+					model.Stores[compIdx].Capacity_J
 					- ss.StorageAmounts_J[compIdx]
 				) / (double)netCharge);
 		}
@@ -962,7 +962,7 @@ namespace erin_next
 					elapsedTime * (double)ss.Flows[outConn].Actual_W);
 			assert(
 				static_cast<long>(
-					m.Stores[storeIdx].Capacity
+					m.Stores[storeIdx].Capacity_J
 					- ss.StorageAmounts_J[storeIdx])
 				>= netEnergyAdded
 				&& "netEnergyAdded cannot put storage over capacity");
@@ -1240,10 +1240,10 @@ namespace erin_next
 				<< "[" << storeIdx << "].StorageAmount: "
 				<< ss.StorageAmounts_J[storeIdx] << std::endl;
 			std::cout << ToString(ComponentType::StoreType)
-				<< "[" << storeIdx << "].Capacity: "
-				<< m.Stores[storeIdx].Capacity << std::endl;
+				<< "[" << storeIdx << "].Capacity_J: "
+				<< m.Stores[storeIdx].Capacity_J << std::endl;
 			double soc = (double)ss.StorageAmounts_J[storeIdx] * 100.0
-				/ (double)m.Stores[storeIdx].Capacity;
+				/ (double)m.Stores[storeIdx].Capacity_J;
 			std::cout << ToString(ComponentType::StoreType)
 				<< "[" << storeIdx << "].SOC     : "
 				<< soc << " %" << std::endl;
@@ -1800,7 +1800,7 @@ namespace erin_next
 			&& "initialStorage must be less than or equal to capacity");
 		size_t idx = m.Stores.size();
 		Store s = {};
-		s.Capacity = capacity;
+		s.Capacity_J = capacity;
 		s.MaxChargeRate = maxCharge;
 		s.MaxDischargeRate = maxDischarge;
 		s.ChargeAmount = chargeAmount;

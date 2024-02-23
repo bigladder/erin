@@ -904,10 +904,10 @@ namespace erin_next
 			for (size_t i = 0; i < r.StorageAmounts_J.size(); ++i)
 			{
 				double soc = 0.0;
-				if (m.Stores[i].Capacity > 0)
+				if (m.Stores[i].Capacity_J > 0)
 				{
 					soc = static_cast<double>(r.StorageAmounts_J[i])
-						/ static_cast<double>(m.Stores[i].Capacity);
+						/ static_cast<double>(m.Stores[i].Capacity_J);
 				}
 				out << "," << std::fixed << std::setprecision(3) << soc;
 			}

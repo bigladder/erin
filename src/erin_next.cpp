@@ -1253,12 +1253,7 @@ namespace erin_next
 	size_t
 	Model_NumberOfComponents(Model const& m)
 	{
-		return m.ConstEffConvs.size()
-			+ m.ConstLoads.size()
-			+ m.ConstSources.size()
-			+ m.Muxes.size()
-			+ m.ScheduledLoads.size()
-			+ m.Stores.size();
+		return m.ComponentMap.Tag.size();
 	}
 
 	// TODO: add schedule-based reliability index?

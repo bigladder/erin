@@ -1,0 +1,5 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),electric_source:OUT(0) => electric_battery:IN(0) (kW),electric_battery:OUT(0) => electric_load:IN(0) (kW),REQUEST:electric_source:OUT(0) => electric_battery:IN(0) (kW),REQUEST:electric_battery:OUT(0) => electric_load:IN(0) (kW),AVAILABLE:electric_source:OUT(0) => electric_battery:IN(0) (kW),AVAILABLE:electric_battery:OUT(0) => electric_load:IN(0) (kW),Stored: electric_battery (kJ),SOC: electric_battery
+blue_sky,P0000-00-00T00:00:00,0,5,10,10,10,5,25,72000.000,1.000
+blue_sky,P0000-00-00T00:00:00,0.800,5,10,15,10,5,25,57600.000,0.800
+blue_sky,P0000-00-00T00:00:00,4.000,5,5,15,10,5,5,0.000,0.000
+blue_sky,P0000-00-00T00:00:00,10.000,5,0,5,0,5,5,0.000,0.000

@@ -77,4 +77,5 @@ if __name__ == "__main__":
     run_cli("05")
     run_cli("06")
     run_cli("07")
+    run_cli("08")
     print("Passed all regression tests!")

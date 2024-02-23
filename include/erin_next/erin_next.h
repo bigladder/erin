@@ -51,7 +51,8 @@ namespace erin_next
 	// we may want to have an enum for FlowCategory or FundamentalFlowType
 	// with items of Power, Mass, and/or Volume. Each of those would have
 	// a base unit associated with them.
-	struct FlowDict {
+	struct FlowDict
+	{
 		std::vector<std::string> Type;
 	};
 
@@ -62,7 +63,8 @@ namespace erin_next
 	};
 
 	// NOTE: arrays in struct below indexed by size_t which we call ComponentId
-	struct ComponentDict {
+	struct ComponentDict
+	{
 		// The index into the component vector for the given component type
 		std::vector<size_t> Idx;
 		std::vector<ComponentType> CompType;
@@ -171,13 +173,18 @@ namespace erin_next
 
 	struct Store
 	{
+		// TODO: change to Capacity_J
 		uint32_t Capacity;
 		// energy per time unit
+		// TODO: change to MaxChargeRate_W
 		uint32_t MaxChargeRate;
 		// energy per time unit
+		// TODO: change to MaxDischargeRate_W
 		uint32_t MaxDischargeRate;
 		// amount at or below which we request charge
+		// TODO: change to ChargeAmount_J
 		uint32_t ChargeAmount;
+		// TODO: change to InitialStorage_J
 		uint32_t InitialStorage;
 		size_t InflowConn;
 		size_t OutflowConn;
@@ -203,6 +210,7 @@ namespace erin_next
 	{
 		double Time;
 		std::vector<Flow> Flows;
+		// TODO: Change to StorageAmounts_J
 		std::vector<uint32_t> StorageAmounts;
 	};
 

@@ -1,0 +1,2 @@
+scenario id,occurrence number,duration (h),total source (kJ),total load (kJ),total storage (kJ),total waste (kJ),energy balance (source-(load+storage+waste)) (kJ),site efficiency (%),uptime (h),downtime (h),load not served (kJ),energy robustness [ER],energy availability [EA],max single event downtime [MaxSEDT] (h)
+blue_sky,1,10,180000,252000,-72000,0,0,100,4,6,108000,0.7,0.4,6

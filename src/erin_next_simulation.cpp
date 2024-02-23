@@ -821,11 +821,10 @@ namespace erin_next
 	}
 
 	void
-	WriteEventFileHeader(
-		std::ofstream& out,
-		ComponentDict compMap,
-		std::vector<Connection> const& conns)
+	WriteEventFileHeader(std::ofstream& out, Model const& m)
 	{
+		ComponentDict const& compMap = m.ComponentMap;
+		std::vector<Connection> const& conns = m.Connections;
 		out << "scenario id,"
 			<< "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
 			<< "elapsed (hours)";
@@ -840,6 +839,24 @@ namespace erin_next
 					<< " (kW)";
 			}
 		}
+		for (std::pair<std::string, std::string> const& prePostFix :
+			std::vector<std::pair<std::string, std::string>>{
+				{"Stored: ", " (kJ)"},
+				{"SOC: ", ""}})
+		{
+			for (size_t storeIdx=0; storeIdx < m.Stores.size(); ++storeIdx)
+			{
+				for (size_t compId=0; compId < compMap.Tag.size(); ++compId)
+				{
+					if (compMap.CompType[compId] == ComponentType::StoreType
+						&& compMap.Idx[compId] == storeIdx)
+					{
+						out << "," << prePostFix.first
+							<< compMap.Tag[compId] << prePostFix.second;
+					}
+				}
+			}
+		}
 		out << std::endl;
 	}
 
@@ -847,6 +864,7 @@ namespace erin_next
 	WriteResultsToEventFile(
 		std::ofstream& out,
 		std::vector<TimeAndFlows> results,
+		Model const& m,
 		std::string const& scenarioTag,
 		std::string const& scenarioStartTimeTag)
 	{
@@ -872,6 +890,26 @@ namespace erin_next
 				double avail_kW =
 					static_cast<double>(r.Flows[i].Available) / W_per_kW;
 				out << "," << static_cast<uint32_t>(std::round(avail_kW));
+			}
+			// TODO: check StorageAmounts and m.Stores[i].Capacity; should be J
+			// TODO: append units to these variables for clarity
+			// NOTE: Amounts in kJ
+			for (size_t i = 0; i < r.StorageAmounts.size(); ++i)
+			{
+				double store_kJ =
+					static_cast<double>(r.StorageAmounts[i]) / J_per_kJ;
+				out << "," << std::fixed << std::setprecision(3) << store_kJ;
+			}
+			// NOTE: Store state in SOC
+			for (size_t i = 0; i < r.StorageAmounts.size(); ++i)
+			{
+				double soc = 0.0;
+				if (m.Stores[i].Capacity > 0)
+				{
+					soc = static_cast<double>(r.StorageAmounts[i])
+						/ static_cast<double>(m.Stores[i].Capacity);
+				}
+				out << "," << std::fixed << std::setprecision(3) << soc;
 			}
 			out << std::endl;
 		}
@@ -1161,8 +1199,9 @@ namespace erin_next
 				os.Inflow_kJ
 				- (os.OutflowAchieved_kJ + stored + os.Wasteflow_kJ);
 			double efficiency =
-				os.Inflow_kJ > 0.0
-				? os.OutflowAchieved_kJ * 100.0 / os.Inflow_kJ
+				(os.Inflow_kJ + os.StorageDischarge_kJ) > 0.0
+				? ((os.OutflowAchieved_kJ + os.StorageCharge_kJ) * 100.0
+					/ (os.Inflow_kJ + os.StorageDischarge_kJ))
 				: 0.0;
 			double ER =
 				os.OutflowRequest_kJ > 0.0
@@ -1258,8 +1297,7 @@ namespace erin_next
 				<< std::endl;
 			return;
 		}
-		WriteEventFileHeader(
-			out, s.TheModel.ComponentMap, s.TheModel.Connections);
+		WriteEventFileHeader(out, s.TheModel);
 		std::vector<ScenarioOccurrenceStats> occurrenceStats;
 		for (size_t scenIdx = 0;
 			scenIdx < Simulation_ScenarioCount(s);
@@ -1315,7 +1353,8 @@ namespace erin_next
 				auto results = Simulate(s.TheModel, option_verbose);
 				// TODO: investigate putting output on another thread
 				WriteResultsToEventFile(
-					out, results, scenarioTag, scenarioStartTimeTag);
+					out, results, s.TheModel,
+					scenarioTag, scenarioStartTimeTag);
 				ScenarioOccurrenceStats sos =
 					ModelResults_CalculateScenarioOccurrenceStats(
 						scenIdx, occIdx + 1, s.TheModel, results);

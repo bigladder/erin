@@ -210,8 +210,7 @@ namespace erin_next
 	{
 		double Time;
 		std::vector<Flow> Flows;
-		// TODO: Change to StorageAmounts_J
-		std::vector<uint32_t> StorageAmounts;
+		std::vector<uint32_t> StorageAmounts_J;
 	};
 
 
@@ -246,7 +245,7 @@ namespace erin_next
 		std::set<size_t> ActiveConnectionsFront{};
 		// a set of component id that are unavailable
 		std::set<size_t> UnavailableComponents{};
-		std::vector<uint32_t> StorageAmounts{};
+		std::vector<uint32_t> StorageAmounts_J{};
 		std::vector<double> StorageNextEventTimes{};
 		std::vector<Flow> Flows{};
 		std::vector<size_t> ScheduleBasedLoadIdx{};

@@ -894,19 +894,19 @@ namespace erin_next
 			// TODO: check StorageAmounts and m.Stores[i].Capacity; should be J
 			// TODO: append units to these variables for clarity
 			// NOTE: Amounts in kJ
-			for (size_t i = 0; i < r.StorageAmounts.size(); ++i)
+			for (size_t i = 0; i < r.StorageAmounts_J.size(); ++i)
 			{
 				double store_kJ =
-					static_cast<double>(r.StorageAmounts[i]) / J_per_kJ;
+					static_cast<double>(r.StorageAmounts_J[i]) / J_per_kJ;
 				out << "," << std::fixed << std::setprecision(3) << store_kJ;
 			}
 			// NOTE: Store state in SOC
-			for (size_t i = 0; i < r.StorageAmounts.size(); ++i)
+			for (size_t i = 0; i < r.StorageAmounts_J.size(); ++i)
 			{
 				double soc = 0.0;
 				if (m.Stores[i].Capacity > 0)
 				{
-					soc = static_cast<double>(r.StorageAmounts[i])
+					soc = static_cast<double>(r.StorageAmounts_J[i])
 						/ static_cast<double>(m.Stores[i].Capacity);
 				}
 				out << "," << std::fixed << std::setprecision(3) << soc;

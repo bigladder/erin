@@ -240,7 +240,7 @@ namespace erin_next
 			if (ss.StorageNextEventTimes[storeIdx] == t)
 			{
 				uint32_t available = ss.Flows[inflowConn].Available + (
-					ss.StorageAmounts[storeIdx] > 0
+					ss.StorageAmounts_J[storeIdx] > 0
 					? m.Stores[storeIdx].MaxDischargeRate
 					: 0);
 				if (ss.Flows[outflowConn].Available != available)
@@ -249,7 +249,7 @@ namespace erin_next
 				}
 				ss.Flows[outflowConn].Available = available;
 				uint32_t request = ss.Flows[outflowConn].Requested + (
-					ss.StorageAmounts[storeIdx]
+					ss.StorageAmounts_J[storeIdx]
 						<= m.Stores[storeIdx].ChargeAmount
 					? m.Stores[storeIdx].MaxChargeRate
 					: 0);
@@ -469,7 +469,7 @@ namespace erin_next
 	{
 		size_t inflowConnIdx = model.Stores[compIdx].InflowConn;
 		uint32_t chargeRate =
-			ss.StorageAmounts[compIdx] <= model.Stores[compIdx].ChargeAmount
+			ss.StorageAmounts_J[compIdx] <= model.Stores[compIdx].ChargeAmount
 			? model.Stores[compIdx].MaxChargeRate
 			: 0;
 		if (ss.Flows[inflowConnIdx].Requested !=
@@ -692,7 +692,7 @@ namespace erin_next
 	{
 		size_t outflowConn = model.Stores[compIdx].OutflowConn;
 		uint32_t available = ss.Flows[connIdx].Available;
-		uint32_t dischargeAvailable = ss.StorageAmounts[compIdx] > 0
+		uint32_t dischargeAvailable = ss.StorageAmounts_J[compIdx] > 0
 			? model.Stores[compIdx].MaxDischargeRate
 			: 0;
 		available += dischargeAvailable;
@@ -805,22 +805,23 @@ namespace erin_next
 		{
 			ss.StorageNextEventTimes[compIdx] =
 				t + ((double)(
-					model.Stores[compIdx].Capacity - ss.StorageAmounts[compIdx]
+					model.Stores[compIdx].Capacity
+					- ss.StorageAmounts_J[compIdx]
 				) / (double)netCharge);
 		}
 		else if (netCharge < 0
-			&& (ss.StorageAmounts[compIdx]
+			&& (ss.StorageAmounts_J[compIdx]
 				> model.Stores[compIdx].ChargeAmount))
 		{
 			ss.StorageNextEventTimes[compIdx] =
 				t + ((double)(
-					ss.StorageAmounts[compIdx]
+					ss.StorageAmounts_J[compIdx]
 					- model.Stores[compIdx].ChargeAmount
 				) / (-1.0 * (double)netCharge));
 		}
 		else if (netCharge < 0) {
 			ss.StorageNextEventTimes[compIdx] =
-				t + ((double)(ss.StorageAmounts[compIdx])
+				t + ((double)(ss.StorageAmounts_J[compIdx])
 					/ (-1.0 * (double)netCharge));
 		}
 		else {
@@ -960,13 +961,15 @@ namespace erin_next
 					elapsedTime * (double)ss.Flows[outConn].Actual);
 			assert(
 				static_cast<long>(
-					m.Stores[storeIdx].Capacity - ss.StorageAmounts[storeIdx])
+					m.Stores[storeIdx].Capacity
+					- ss.StorageAmounts_J[storeIdx])
 				>= netEnergyAdded
 				&& "netEnergyAdded cannot put storage over capacity");
 			assert(netEnergyAdded
-				>= static_cast<long>(- 1 * (int)ss.StorageAmounts[storeIdx])
+				>= static_cast<long>(
+					- 1 * (int)ss.StorageAmounts_J[storeIdx])
 				&& "netEnergyAdded cannot use more energy than available");
-			ss.StorageAmounts[storeIdx] += netEnergyAdded;
+			ss.StorageAmounts_J[storeIdx] += netEnergyAdded;
 		}
 	}
 
@@ -1216,10 +1219,10 @@ namespace erin_next
 	CopyStorageStates(SimulationState& ss)
 	{
 		std::vector<uint32_t> newAmounts = {};
-		newAmounts.reserve(ss.StorageAmounts.size());
-		for (size_t i = 0; i < ss.StorageAmounts.size(); ++i)
+		newAmounts.reserve(ss.StorageAmounts_J.size());
+		for (size_t i = 0; i < ss.StorageAmounts_J.size(); ++i)
 		{
-			newAmounts.push_back(ss.StorageAmounts[i]);
+			newAmounts.push_back(ss.StorageAmounts_J[i]);
 		}
 		return newAmounts;
 	}
@@ -1234,11 +1237,11 @@ namespace erin_next
 				<< m.Stores[storeIdx].InitialStorage << std::endl;
 			std::cout << ToString(ComponentType::StoreType)
 				<< "[" << storeIdx << "].StorageAmount: "
-				<< ss.StorageAmounts[storeIdx] << std::endl;
+				<< ss.StorageAmounts_J[storeIdx] << std::endl;
 			std::cout << ToString(ComponentType::StoreType)
 				<< "[" << storeIdx << "].Capacity: "
 				<< m.Stores[storeIdx].Capacity << std::endl;
-			double soc = (double)ss.StorageAmounts[storeIdx] * 100.0
+			double soc = (double)ss.StorageAmounts_J[storeIdx] * 100.0
 				/ (double)m.Stores[storeIdx].Capacity;
 			std::cout << ToString(ComponentType::StoreType)
 				<< "[" << storeIdx << "].SOC     : "
@@ -1263,7 +1266,7 @@ namespace erin_next
 	{
 		for (size_t i = 0; i < model.Stores.size(); ++i)
 		{
-			ss.StorageAmounts.push_back(model.Stores[i].InitialStorage);
+			ss.StorageAmounts_J.push_back(model.Stores[i].InitialStorage);
 		}
 		ss.StorageNextEventTimes =
 			std::vector<double>(model.Stores.size(), 0.0);
@@ -1352,7 +1355,7 @@ namespace erin_next
 			TimeAndFlows taf = {};
 			taf.Time = t;
 			taf.Flows = CopyFlows(ss.Flows);
-			taf.StorageAmounts = CopyStorageStates(ss);
+			taf.StorageAmounts_J = CopyStorageStates(ss);
 			timeAndFlows.push_back(std::move(taf));
 			if (t == model.FinalTime)
 			{
@@ -2064,9 +2067,9 @@ namespace erin_next
 		for (size_t i = 0; i < timeAndFlows.size(); ++i)
 		{
 			if (time == timeAndFlows[i].Time
-				&& storeIdx < timeAndFlows[i].StorageAmounts.size())
+				&& storeIdx < timeAndFlows[i].StorageAmounts_J.size())
 			{
-				return timeAndFlows[i].StorageAmounts[storeIdx];
+				return timeAndFlows[i].StorageAmounts_J[storeIdx];
 			}
 		}
 		return {};
@@ -2158,15 +2161,15 @@ namespace erin_next
 				wasDown = true;
 			}
 			for (size_t storeIdx = 0;
-				storeIdx < timeAndFlows[eventIdx].StorageAmounts.size();
+				storeIdx < timeAndFlows[eventIdx].StorageAmounts_J.size();
 				++storeIdx)
 			{
 				// TODO: confirm that stored_J is, in fact, in J
 				double stored_J =
 					static_cast<double>(timeAndFlows[eventIdx]
-						.StorageAmounts[storeIdx])
+						.StorageAmounts_J[storeIdx])
 					- static_cast<double>(timeAndFlows[eventIdx - 1]
-						.StorageAmounts[storeIdx]);
+						.StorageAmounts_J[storeIdx]);
 				if (stored_J > 0.0)
 				{
 					sos.StorageCharge_kJ += stored_J / J_per_kJ;

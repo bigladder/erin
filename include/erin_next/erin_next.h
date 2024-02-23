@@ -174,9 +174,7 @@ namespace erin_next
 	struct Store
 	{
 		uint32_t Capacity_J;
-		// energy per time unit
-		// TODO: change to MaxChargeRate_W
-		uint32_t MaxChargeRate;
+		uint32_t MaxChargeRate_W;
 		// energy per time unit
 		// TODO: change to MaxDischargeRate_W
 		uint32_t MaxDischargeRate;

@@ -177,8 +177,7 @@ namespace erin_next
 		uint32_t MaxChargeRate_W;
 		uint32_t MaxDischargeRate_W;
 		// amount at or below which we request charge
-		// TODO: change to ChargeAmount_J
-		uint32_t ChargeAmount;
+		uint32_t ChargeAmount_J;
 		// TODO: change to InitialStorage_J
 		uint32_t InitialStorage;
 		size_t InflowConn;

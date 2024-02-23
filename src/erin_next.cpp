@@ -251,7 +251,7 @@ namespace erin_next
 				ss.Flows[outflowConn].Available_W = available;
 				uint32_t request = ss.Flows[outflowConn].Requested_W + (
 					ss.StorageAmounts_J[storeIdx]
-						<= m.Stores[storeIdx].ChargeAmount
+						<= m.Stores[storeIdx].ChargeAmount_J
 					? m.Stores[storeIdx].MaxChargeRate_W
 					: 0);
 				if (ss.Flows[inflowConn].Requested_W != request)
@@ -470,7 +470,7 @@ namespace erin_next
 	{
 		size_t inflowConnIdx = model.Stores[compIdx].InflowConn;
 		uint32_t chargeRate =
-			ss.StorageAmounts_J[compIdx] <= model.Stores[compIdx].ChargeAmount
+			ss.StorageAmounts_J[compIdx] <= model.Stores[compIdx].ChargeAmount_J
 			? model.Stores[compIdx].MaxChargeRate_W
 			: 0;
 		if (ss.Flows[inflowConnIdx].Requested_W !=
@@ -812,12 +812,12 @@ namespace erin_next
 		}
 		else if (netCharge < 0
 			&& (ss.StorageAmounts_J[compIdx]
-				> model.Stores[compIdx].ChargeAmount))
+				> model.Stores[compIdx].ChargeAmount_J))
 		{
 			ss.StorageNextEventTimes[compIdx] =
 				t + ((double)(
 					ss.StorageAmounts_J[compIdx]
-					- model.Stores[compIdx].ChargeAmount
+					- model.Stores[compIdx].ChargeAmount_J
 				) / (-1.0 * (double)netCharge));
 		}
 		else if (netCharge < 0) {
@@ -1803,7 +1803,7 @@ namespace erin_next
 		s.Capacity_J = capacity;
 		s.MaxChargeRate_W = maxCharge;
 		s.MaxDischargeRate_W = maxDischarge;
-		s.ChargeAmount = chargeAmount;
+		s.ChargeAmount_J = chargeAmount;
 		s.InitialStorage = initialStorage;
 		m.Stores.push_back(s);
 		return Component_AddComponentReturningId(

@@ -90,7 +90,6 @@ namespace erin_next
 			lossflow = maybe.value();
 			lossflowId = Simulation_RegisterFlow(s, lossflow);
 		}
-		// TODO: parse optional rate_unit up here; default to W?
 		PowerUnit rateUnit = PowerUnit::Watt;
 		if (table.contains("rate_unit"))
 		{
@@ -113,7 +112,6 @@ namespace erin_next
 			}
 			rateUnit = maybeRateUnit.value();
 		}
-		// TODO: parse failure modes
 		switch (ct)
 		{
 			case (ComponentType::ConstantSourceType):
@@ -401,6 +399,49 @@ namespace erin_next
 				WriteErrorMessage(fullTableName,
 					"unhandled component type: " + ToString(ct));
 				throw std::runtime_error{ "Unhandled component type" };
+			}
+		}
+		if (table.contains("failure_modes"))
+		{
+			if (!table.at("failure_modes").is_array())
+			{
+				WriteErrorMessage(
+					fullTableName,
+					"failure_modes must be an array of string");
+				return Result::Failure;
+			}
+			std::vector<toml::value> const& fms =
+				table.at("failure_modes").as_array();
+			for (size_t fmIdx = 0; fmIdx < fms.size(); ++fmIdx)
+			{
+				if (!fms[fmIdx].is_string())
+				{
+					WriteErrorMessage(fullTableName,
+						"failure_modes[" + std::to_string(fmIdx)
+						+ "] must be string");
+					return Result::Failure;
+				}
+				std::string const& fmTag = fms[fmIdx].as_string();
+				bool existingFailureMode = false;
+				size_t fmId;
+				for (fmId = 0; fmId < s.FailureModes.Tags.size(); ++fmId)
+				{
+					if (s.FailureModes.Tags[fmId] == fmTag)
+					{
+						existingFailureMode = true;
+						break;
+					}
+				}
+				if (!existingFailureMode)
+				{
+					fmId = s.FailureModes.Tags.size();
+					s.FailureModes.Tags.push_back(fmTag);
+					// NOTE: add placeholder default data
+					s.FailureModes.FailureDistIds.push_back(0);
+					s.FailureModes.RepairDistIds.push_back(0);
+				}
+				s.ComponentFailureModes.ComponentIds.push_back(id);
+				s.ComponentFailureModes.FailureModeIds.push_back(fmId);
 			}
 		}
 		if (table.contains("fragility_modes"))

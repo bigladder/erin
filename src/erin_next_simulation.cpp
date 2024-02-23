@@ -192,6 +192,32 @@ namespace erin_next
 					}
 				} break;
 			}
+			for (size_t compFailModeIdx = 0;
+				compFailModeIdx < s.ComponentFailureModes.ComponentIds.size();
+				++compFailModeIdx)
+			{
+				if (s.ComponentFailureModes.ComponentIds[compFailModeIdx] == i)
+				{
+					size_t fmId =
+						s.ComponentFailureModes.FailureModeIds[compFailModeIdx];
+					std::cout << "-- failure-mode: "
+						<< s.FailureModes.Tags[fmId] << "[" << fmId << "]"
+						<< std::endl;
+				}
+			}
+			for (size_t compFragIdx = 0;
+				compFragIdx < s.ComponentFragilities.ComponentIds.size();
+				++compFragIdx)
+			{
+				if (s.ComponentFragilities.ComponentIds[compFragIdx] == i)
+				{
+					size_t fmId =
+						s.ComponentFragilities.FragilityModeIds[compFragIdx];
+					std::cout << "-- fragility mode: "
+						<< s.FragilityModes.Tags[fmId] << "[" << fmId << "]"
+						<< std::endl;
+				}
+			}
 		}
 	}
 

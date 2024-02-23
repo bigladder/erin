@@ -50,7 +50,8 @@ namespace erin_next
 	// NOTE: if we end up wanting to have mass-flow and volumetric-flow,
 	// we may want to have an enum for FlowCategory or FundamentalFlowType
 	// with items of Power, Mass, and/or Volume. Each of those would have
-	// a base unit associated with them.
+	// a base unit associated with them. The base unit for flow for Power is
+	// Watt, for example. For Mass, it might be kg/s (or g/s?).
 	struct FlowDict
 	{
 		std::vector<std::string> Type;

@@ -1440,7 +1440,7 @@ namespace erin_next
 			<< "total storage (kJ),"
 			<< "total waste (kJ),"
 			<< "energy balance (source-(load+storage+waste)) (kJ),"
-			<< "site efficiency (%),"
+			<< "site efficiency,"
 			<< "uptime (h),"
 			<< "downtime (h),"
 			<< "load not served (kJ),"
@@ -1457,7 +1457,7 @@ namespace erin_next
 				- (os.OutflowAchieved_kJ + stored + os.Wasteflow_kJ);
 			double efficiency =
 				(os.Inflow_kJ + os.StorageDischarge_kJ) > 0.0
-				? ((os.OutflowAchieved_kJ + os.StorageCharge_kJ) * 100.0
+				? ((os.OutflowAchieved_kJ + os.StorageCharge_kJ)
 					/ (os.Inflow_kJ + os.StorageDischarge_kJ))
 				: 0.0;
 			double ER =

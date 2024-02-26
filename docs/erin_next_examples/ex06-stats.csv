@@ -1,12 +1,12 @@
-scenario id,occurrence number,duration (h),total source (kJ),total load (kJ),total storage (kJ),total waste (kJ),energy balance (source-(load+storage+waste)) (kJ),site efficiency (%),uptime (h),downtime (h),load not served (kJ),energy robustness [ER],energy availability [EA],max single event downtime [MaxSEDT] (h),global availability
-blue_sky,1,8760,1.30086e+12,1.1353e+12,0,1.65564e+11,0,87.2727,8760,0,0,1,1,0,1
-ice_jam_flood,1,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,2,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,3,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,4,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,5,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,6,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,7,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,8,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,9,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
-ice_jam_flood,10,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,86.2745,336,0,0,1,1,0,1
+scenario id,occurrence number,duration (h),total source (kJ),total load (kJ),total storage (kJ),total waste (kJ),energy balance (source-(load+storage+waste)) (kJ),site efficiency,uptime (h),downtime (h),load not served (kJ),energy robustness [ER],energy availability [EA],max single event downtime [MaxSEDT] (h),global availability
+blue_sky,1,8760,1.30086e+12,1.1353e+12,0,1.65564e+11,0,0.872727,8760,0,0,1,1,0,1
+ice_jam_flood,1,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,2,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,3,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,4,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,5,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,6,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,7,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,8,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,9,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1
+ice_jam_flood,10,336,4.62672e+10,3.99168e+10,0,6.3504e+09,0,0.862745,336,0,0,1,1,0,1

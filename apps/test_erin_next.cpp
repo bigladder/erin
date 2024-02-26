@@ -1519,6 +1519,27 @@ Test19(bool doPrint)
 	PrintPass(doPrint, "19");
 }
 
+void
+Test20(bool doPrint)
+{
+	PrintBanner(doPrint, "20");
+	std::vector<TimeState> input{
+		{5.0, false},
+		{7.0, true},
+		{12.0, false},
+		{14.0, true},
+		{19.0, false},
+		{21.0, true},
+	};
+	std::vector<TimeState> expected{
+		{5.0, false},
+		{7.0, true},
+	};
+	std::vector<TimeState> actual = TimeState_Clip(input, 0.0, 10.0, true);
+	assert(expected.size() == actual.size());
+	PrintPass(doPrint, "20");
+}
+
 int
 main(int argc, char** argv) {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -1542,6 +1563,7 @@ main(int argc, char** argv) {
 	Test17(false);
 	Test18(false);
 	Test19(false);
+	Test20(false);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration =
 		std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

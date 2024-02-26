@@ -1557,11 +1557,25 @@ namespace erin_next
 			}
 		}
 		std::map<size_t, std::vector<TimeState>> relSchByCompFailId;
-		for (size_t compFailId=0;
+		// NOTE: set up reliability manager
+		// TODO: remove duplication of data here
+		for (size_t fmIdx = 0;
+			fmIdx < s.FailureModes.FailureDistIds.size();
+			++fmIdx)
+		{
+			s.TheModel.Rel.add_failure_mode(
+				s.FailureModes.Tags[fmIdx],
+				s.FailureModes.FailureDistIds[fmIdx],
+				s.FailureModes.RepairDistIds[fmIdx]);
+		}
+		for (size_t compFailId = 0;
 			compFailId < s.ComponentFailureModes.ComponentIds.size();
 			++compFailId)
 		{
 			size_t fmId = s.ComponentFailureModes.FailureModeIds[compFailId];
+			s.TheModel.Rel.link_component_with_failure_mode(
+				s.ComponentFailureModes.ComponentIds[compFailId],
+				s.ComponentFailureModes.FailureModeIds[compFailId]);
 			double maxTime_s =
 				Time_ToSeconds(s.Info.MaxTime, s.Info.TheTimeUnit)
 				+ maxDuration_s;

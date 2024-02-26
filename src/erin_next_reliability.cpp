@@ -76,7 +76,7 @@ namespace erin_next
 		}
 		time += dt;
 		dt = -1.0; // TODO: rename as infinity
-		schedule.emplace_back(TimeState{ time, next_state });
+		schedule.push_back(std::move(TimeState{ time, next_state }));
 		is_finished = time >= final_time;
 		return is_finished;
 	}
@@ -90,7 +90,7 @@ namespace erin_next
 	{
 		double time = 0.0;
 		double dt = -1.0;
-		std::vector<TimeState> reliability_schedule{};
+		std::vector<TimeState> reliability_schedule;
 		while (true)
 		{
 			dt = calc_next_event(link_id, dt, rand_fn, cds, true);

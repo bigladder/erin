@@ -193,11 +193,13 @@ namespace erin_next
 		assert(startTime_s <= endTime_s);
 		std::vector<TimeState> result;
 		size_t firstIdx = 0;
+		bool foundFirst = false;
 		for (size_t i = 0; i < input.size(); ++i)
 		{
 			TimeState const& ts = input[i];
 			if (ts.time < startTime_s)
 			{
+				foundFirst = true;
 				firstIdx = i;
 			}
 			else if (ts.time > endTime_s)
@@ -206,7 +208,7 @@ namespace erin_next
 			}
 			else
 			{
-				if (result.size() == 0 && ts.time > startTime_s)
+				if (result.size() == 0 && ts.time > startTime_s && foundFirst)
 				{
 					TimeState firstTs = TimeState_Copy(input[firstIdx]);
 					firstTs.time = rezeroTime ? 0.0 : startTime_s;

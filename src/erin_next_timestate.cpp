@@ -76,6 +76,28 @@ namespace erin_next
 		std::vector<TimeState> const& b)
 	{
 		std::vector<TimeState> result;
+		if (a.size() == 0 && b.size() > 0)
+		{
+			result.reserve(b.size());
+			for (size_t i = 0; i < b.size(); ++i)
+			{
+				result.push_back(std::move(TimeState_Copy(b[i])));
+			}
+			return result;
+		}
+		else if (a.size() > 0 && b.size() == 0)
+		{
+			result.reserve(a.size());
+			for (size_t i = 0; i < a.size(); ++i)
+			{
+				result.push_back(std::move(TimeState_Copy(a[i])));
+			}
+			return result;
+		}
+		else if (a.size() == 0 && b.size() == 0)
+		{
+			return result;
+		}
 		size_t aIdx = 0;
 		size_t bIdx = 0;
 		TimeState next{0.0, true};

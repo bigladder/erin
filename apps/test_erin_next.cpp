@@ -1481,6 +1481,44 @@ Test18(bool doPrint)
 	PrintPass(doPrint, "18");
 }
 
+void
+Test19(bool doPrint)
+{
+	PrintBanner(doPrint, "19");
+	std::vector<TimeState> A{
+		{0.0, false, {}, {0}},
+		{100.0, true},
+	};
+	std::vector<TimeState> B{
+		{0.0, true},
+		{120.0, false, {0}},
+		{180.0, true},
+	};
+	std::vector<TimeState> C{
+		{0.0, true},
+		{60.0, false, {1}},
+		{140.0, true},
+	};
+	std::vector<TimeState> expected{
+		{0.0, false, {}, {0}},
+		{60.0, false, {1}, {0}},
+		{100.0, false, {1}},
+		{120.0, false, {0, 1}},
+		{140.0, false, {0}},
+		{180.0, true},
+	};
+	std::vector<TimeState> relSch;
+	relSch = TimeState_Combine(relSch, A);
+	relSch = TimeState_Combine(relSch, B);
+	std::vector<TimeState> actual = TimeState_Combine(relSch, C);
+	assert(expected.size() == actual.size());
+	for (size_t i = 0; i < expected.size(); ++i)
+	{
+		assert(expected[i] == actual[i]);
+	}
+	PrintPass(doPrint, "19");
+}
+
 int
 main(int argc, char** argv) {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -1503,6 +1541,7 @@ main(int argc, char** argv) {
 	Test16(false);
 	Test17(false);
 	Test18(false);
+	Test19(false);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration =
 		std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

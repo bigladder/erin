@@ -2180,6 +2180,23 @@ namespace erin_next
 		{
 			sos.MaxSEDT_s = sedt;
 		}
+		// calculate availability using reliability schedules
+		std::vector<TimeState> relSch;
+		for (size_t i = 0; i < m.Reliabilities.size(); ++i)
+		{
+			relSch = TimeState_Combine(relSch, m.Reliabilities[i].TimeStates);
+		}
+		sos.Availability_s = m.FinalTime;
+		for (size_t i = 0; i < relSch.size(); ++i)
+		{
+			double dt = (i + 1) < relSch.size()
+				? relSch[i+1].time - relSch[i].time
+				: m.FinalTime - relSch[i].time;
+			if (!relSch[i].state)
+			{
+				sos.Availability_s -= dt;
+			}
+		}
 		return sos;
 	}
 

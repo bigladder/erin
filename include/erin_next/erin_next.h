@@ -104,6 +104,8 @@ namespace erin_next
 		double Uptime_s = 0.0;
 		double Downtime_s = 0.0;
 		double MaxSEDT_s = 0.0;
+		double Availability_s = 0.0;
+		std::map<size_t, double> AvailabilityByCompId_s;
 	};
 
 	struct ConstantLoad

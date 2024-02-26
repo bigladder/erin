@@ -1377,33 +1377,38 @@ namespace erin_next
 							break;
 						}
 					}
+					std::vector<TimeState> newTimeStates;
+					TimeState ts{};
+					ts.state = false;
+					ts.time = 0.0;
+					ts.fragilityModeCauses.insert(fmId);
+					newTimeStates.push_back(std::move(ts));
 					if (repairId.has_value())
 					{
-						throw std::runtime_error{
-							"not implemented yet"
-						};
+						size_t repId = repairId.value();
+						double repairTime_s =
+							s.TheModel.DistSys.next_time_advance(repId);
+						TimeState repairTime{};
+						repairTime.time = repairTime_s;
+						repairTime.state = true;
+						newTimeStates.push_back(std::move(repairTime));
+					}
+					if (hasReliabilityAlready)
+					{
+						auto const& currentSch =
+							s.TheModel.Reliabilities[reliabilityId].TimeStates;
+						std::vector<TimeState> combined =
+							TimeState_Combine(currentSch, newTimeStates);
+						s.TheModel.Reliabilities[reliabilityId]
+							.TimeStates = std::move(combined);
 					}
 					else
 					{
-						// failed for the duration of the scenario
-						std::vector<TimeState> newTimeStates{};
-						TimeState ts{};
-						ts.state = false;
-						ts.time = 0.0;
-						newTimeStates.push_back(std::move(ts));
-						if (hasReliabilityAlready)
-						{
-							s.TheModel.Reliabilities[reliabilityId]
-								.TimeStates = newTimeStates;
-						}
-						else
-						{
-							ScheduleBasedReliability sbr{};
-							sbr.ComponentId = compId;
-							sbr.TimeStates = newTimeStates;
-							s.TheModel.Reliabilities.push_back(
-								std::move(sbr));
-						}
+						ScheduleBasedReliability sbr{};
+						sbr.ComponentId = compId;
+						sbr.TimeStates = newTimeStates;
+						s.TheModel.Reliabilities.push_back(
+							std::move(sbr));
 					}
 				}
 			}
@@ -1441,7 +1446,8 @@ namespace erin_next
 			<< "load not served (kJ),"
 			<< "energy robustness [ER],"
 			<< "energy availability [EA],"
-			<< "max single event downtime [MaxSEDT] (h)"
+			<< "max single event downtime [MaxSEDT] (h),"
+			<< "global availability"
 			<< std::endl;
 		for (auto const& os : occurrenceStats)
 		{
@@ -1477,6 +1483,9 @@ namespace erin_next
 				<< "," << ER
 				<< "," << EA
 				<< "," << (os.MaxSEDT_s / seconds_per_hour)
+				<< "," << ((os.Duration_s > 0.0)
+					? (os.Availability_s / os.Duration_s)
+					: 0.0)
 				<< std::endl;
 		}
 		stats.close();
@@ -1625,18 +1634,16 @@ namespace erin_next
 				double duration_s = Time_ToSeconds(
 					s.ScenarioMap.Durations[scenIdx],
 					s.ScenarioMap.TimeUnits[scenIdx]);
+				double tEnd = t + duration_s;
 				std::cout << "Occurrence #" << (occIdx + 1) << " at "
 					<< SecondsToPrettyString(t) << std::endl;
 				// TODO: make initial age part of the ComponentMap
 				std::vector<ScheduleBasedReliability> originalReliabilities =
 					ApplyReliabilitiesAndFragilities(
-						s, t, t + duration_s,
-						intensityIdToAmount, relSchByCompId);
+						s, t, tEnd, intensityIdToAmount, relSchByCompId);
 				std::string scenarioStartTimeTag =
 					TimeToISO8601Period(
 						static_cast<uint64_t>(std::llround(t)));
-				// TODO: compute end time for clipping
-				double tEnd = t + duration_s;
 				if (option_verbose)
 				{
 					std::cout << "Running " << s.ScenarioMap.Tags[scenIdx]
@@ -1647,7 +1654,6 @@ namespace erin_next
 						<< " to " << SecondsToPrettyString(tEnd)
 						<< ")" << std::endl;
 				}
-				// TODO: clip reliability schedules here
 				s.TheModel.FinalTime = duration_s;
 				// TODO: add an optional verbosity flag to SimInfo
 				// -- use that to set things like the print flag below

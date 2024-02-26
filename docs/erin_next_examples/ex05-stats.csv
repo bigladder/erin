@@ -1,2 +1,2 @@
-scenario id,occurrence number,duration (h),total source (kJ),total load (kJ),total storage (kJ),total waste (kJ),energy balance (source-(load+storage+waste)) (kJ),site efficiency (%),uptime (h),downtime (h),load not served (kJ),energy robustness [ER],energy availability [EA],max single event downtime [MaxSEDT] (h)
-scenario01,1,0.00277778,200,110,0,90,0,55,0.00277778,0,0,1,1,0
+scenario id,occurrence number,duration (h),total source (kJ),total load (kJ),total storage (kJ),total waste (kJ),energy balance (source-(load+storage+waste)) (kJ),site efficiency (%),uptime (h),downtime (h),load not served (kJ),energy robustness [ER],energy availability [EA],max single event downtime [MaxSEDT] (h),global availability
+scenario01,1,0.00277778,200,110,0,90,0,55,0.00277778,0,0,1,1,0,1

@@ -17,19 +17,29 @@ namespace erin_next
 		std::set<size_t> fragilityModeCauses;
 	};
 
-	bool
-	operator==(const TimeState& a, const TimeState& b);
+	std::ostream&
+	operator<<(std::ostream& os, TimeState const& ts);
 
 	bool
-	operator!=(const TimeState& a, const TimeState& b);
+	operator==(TimeState const& a, TimeState const& b);
 	
-	std::ostream&
-	operator<<(std::ostream& os, const TimeState& ts);
+	bool
+	operator!=(TimeState const& a, TimeState const& b);
 
 	std::vector<TimeState>
 	TimeState_Combine(
 		std::vector<TimeState> const& a,
 		std::vector<TimeState> const& b);
+
+	std::vector<TimeState>
+	TimeState_Clip(
+		std::vector<TimeState> const& input,
+		double startTime_s,
+		double endTime_s,
+		bool rezeroTime);
+
+	TimeState
+	TimeState_Copy(TimeState const& ts);
 
 }
 

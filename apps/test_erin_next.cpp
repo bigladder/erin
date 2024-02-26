@@ -1440,16 +1440,45 @@ Test17(bool doPrint)
 	assert(expected.size() == actual.size());
 	for (size_t i = 0; i < expected.size(); ++i)
 	{
-		assert(expected[i].time == actual[i].time);
-		assert(expected[i].state == actual[i].state);
-		assert(expected[i].failureModeCauses.size()
-			== actual[i].failureModeCauses.size());
-		for (auto const& fmId : expected[i].failureModeCauses)
-		{
-			assert(actual[i].failureModeCauses.contains(fmId));
-		}
+		assert(expected[i] == actual[i]);
 	}
 	PrintPass(doPrint, "17");
+}
+
+void
+Test18(bool doPrint)
+{
+	PrintBanner(doPrint, "18");
+	std::vector<TimeState> input{
+		{0.0, true},
+		{10.0, false, {1}},
+		{40.0, false, {1, 2}},
+		{90.0, false, {1}},
+		{100.0, true},
+		{150.0, false, {2}} };
+	std::vector<TimeState> expected{
+		{50.0, false, {1, 2}},
+		{90.0, false, {1}},
+		{100.0, true},
+	};
+	std::vector<TimeState> actual = TimeState_Clip(input, 50.0, 120.0, false);
+	assert(expected.size() == actual.size());
+	for (size_t i = 0; i < expected.size(); ++i)
+	{
+		assert(expected[i] == actual[i]);
+	}
+	std::vector<TimeState> expected2{
+		{0.0, false, {1, 2}},
+		{40.0, false, {1}},
+		{50.0, true},
+	};
+	std::vector<TimeState> actual2 = TimeState_Clip(input, 50.0, 120.0, true);
+	assert(expected2.size() == actual2.size());
+	for (size_t i = 0; i < expected2.size(); ++i)
+	{
+		assert(expected2[i] == actual2[i]);
+	}
+	PrintPass(doPrint, "18");
 }
 
 int
@@ -1473,6 +1502,7 @@ main(int argc, char** argv) {
 	Test15(false);
 	Test16(false);
 	Test17(false);
+	Test18(false);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration =
 		std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

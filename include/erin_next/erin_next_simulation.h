@@ -162,9 +162,12 @@ namespace erin_next
 	CopyReliabilities(Simulation const& s);
 
 	std::vector<ScheduleBasedReliability>
-	ApplyFragilities(
+	ApplyReliabilitiesAndFragilities(
 		Simulation& s,
-		std::map<size_t, double> const& intensityIdToAmount);
+		double startTime_s,
+		double endTime_s,
+		std::map<size_t, double> const& intensityIdToAmount,
+		std::map<size_t, std::vector<TimeState>> const& relSchByCompId);
 
 	void
 	Simulation_Run(Simulation& s);

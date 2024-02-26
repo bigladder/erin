@@ -1,22 +1,10 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_timestate.h"
+#include <assert.h>
 
 namespace erin_next
 {
-
-	bool
-		operator==(const TimeState& a, const TimeState& b)
-	{
-		return (a.time == b.time)
-			&& (a.state == b.state);
-	}
-
-	bool
-		operator!=(const TimeState& a, const TimeState& b)
-	{
-		return !(a == b);
-	}
 
 	std::ostream&
 		operator<<(std::ostream& os, const TimeState& ts)
@@ -39,6 +27,47 @@ namespace erin_next
 		}
 		os << "})";
 		return os;
+	}
+
+	bool
+	operator==(TimeState const& a, TimeState const& b)
+	{
+		bool result = true;
+		result = result && a.time == b.time;
+		result = result && a.state == b.state;
+		result = result
+			&& a.failureModeCauses.size() == b.failureModeCauses.size();
+		result = result
+			&& a.fragilityModeCauses.size() == b.fragilityModeCauses.size();
+		if (result)
+		{
+			for (auto const& aFm : a.failureModeCauses)
+			{
+				result = result && b.failureModeCauses.contains(aFm);
+				if (!result)
+				{
+					break;
+				}
+			}
+		}
+		if (result)
+		{
+			for (auto const& aFm : a.fragilityModeCauses)
+			{
+				result = result && b.fragilityModeCauses.contains(aFm);
+				if (!result)
+				{
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	bool
+	operator!=(TimeState const& a, TimeState const& b)
+	{
+		return !(a == b);
 	}
 
 	std::vector<TimeState>
@@ -128,6 +157,65 @@ namespace erin_next
 			{
 				break;
 			}
+		}
+		return result;
+	}
+
+	std::vector<TimeState>
+	TimeState_Clip(
+		std::vector<TimeState> const& input,
+		double startTime_s,
+		double endTime_s,
+		bool rezeroTime)
+	{
+		assert(startTime_s <= endTime_s);
+		std::vector<TimeState> result;
+		size_t firstIdx = 0;
+		for (size_t i = 0; i < input.size(); ++i)
+		{
+			TimeState const& ts = input[i];
+			if (ts.time < startTime_s)
+			{
+				firstIdx = i;
+			}
+			else if (ts.time > endTime_s)
+			{
+				break;
+			}
+			else
+			{
+				if (result.size() == 0 && ts.time > startTime_s)
+				{
+					TimeState firstTs = TimeState_Copy(input[firstIdx]);
+					firstTs.time = rezeroTime ? 0.0 : startTime_s;
+					result.push_back(std::move(firstTs));
+				}
+				TimeState newTs = TimeState_Copy(input[i]);
+				if (rezeroTime)
+				{
+					newTs.time = newTs.time - startTime_s;
+				}
+				result.push_back(std::move(newTs));
+			}
+		}
+		return result;
+	}
+
+	TimeState
+	TimeState_Copy(TimeState const& ts)
+	{
+		TimeState result;
+		result.time = ts.time;
+		result.state = ts.state;
+		std::set<size_t> failureModes;
+		std::set<size_t> fragilityModes;
+		for (auto x : ts.failureModeCauses)
+		{
+			result.failureModeCauses.insert(x);
+		}
+		for (auto x : ts.fragilityModeCauses)
+		{
+			result.fragilityModeCauses.insert(x);
 		}
 		return result;
 	}

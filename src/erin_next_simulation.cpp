@@ -1259,12 +1259,43 @@ namespace erin_next
 		return originalReliabilities;
 	}
 
+	// TODO: rename to ApplyReliabilitiesAndFragilities
 	std::vector<ScheduleBasedReliability>
-	ApplyFragilities(
+	ApplyReliabilitiesAndFragilities(
 		Simulation& s,
-		std::map<size_t, double> const& intensityIdToAmount)
+		double startTime_s,
+		double endTime_s,
+		std::map<size_t, double> const& intensityIdToAmount,
+		std::map<size_t, std::vector<TimeState>> const& relSchByCompId)
 	{
 		std::vector<ScheduleBasedReliability> orig = CopyReliabilities(s);
+		std::set<size_t> reliabilitiesAdded;
+		for (size_t cfmIdx = 0;
+			cfmIdx < s.ComponentFailureModes.ComponentIds.size();
+			++cfmIdx)
+		{
+			auto const& compId = s.ComponentFailureModes.ComponentIds[cfmIdx];
+			// NOTE: there should be a reliability schedule for each entry in
+			// ComponentFailureModes. However, since it is possible to have
+			// more than one failure mode on one component (and those have
+			// already been combined by this point), we need to check if we've
+			// already added this reliability schedule
+			if (reliabilitiesAdded.contains(compId))
+			{
+				continue;
+			}
+			std::vector<TimeState> const& sch = relSchByCompId.at(compId);
+			// TODO: add in component age here by adjusting start/end time
+			std::vector<TimeState> clip =
+				TimeState_Clip(sch, startTime_s, endTime_s, true);
+			// NOTE: Reliabilities have not yet been assigned so we can
+			// just push_back()
+			ScheduleBasedReliability sbr{};
+			sbr.ComponentId = compId;
+			sbr.TimeStates = std::move(clip);
+			s.TheModel.Reliabilities.push_back(std::move(sbr));
+			reliabilitiesAdded.insert(compId);
+		}
 		if (intensityIdToAmount.size() > 0)
 		{
 			std::cout << "... Applying fragilities" << std::endl;
@@ -1287,41 +1318,41 @@ namespace erin_next
 				bool isFailed = false;
 				switch (curveType)
 				{
-				case (FragilityCurveType::Linear):
-				{
-					LinearFragilityCurve lfc =
-						s.LinearFragilityCurves[fcIdx];
-					size_t vulnerId = lfc.VulnerabilityId;
-					if (intensityIdToAmount.contains(vulnerId))
+					case (FragilityCurveType::Linear):
 					{
-						double level =
-							intensityIdToAmount.at(vulnerId);
-						if (level > lfc.UpperBound)
+						LinearFragilityCurve lfc =
+							s.LinearFragilityCurves[fcIdx];
+						size_t vulnerId = lfc.VulnerabilityId;
+						if (intensityIdToAmount.contains(vulnerId))
 						{
-							isFailed = true;
+							double level =
+								intensityIdToAmount.at(vulnerId);
+							if (level > lfc.UpperBound)
+							{
+								isFailed = true;
+							}
+							else if (level < lfc.LowerBound)
+							{
+								isFailed = false;
+							}
+							else
+							{
+								double x = s.TheModel.RandFn();
+								double range =
+									lfc.UpperBound - lfc.LowerBound;
+								double failureFrac =
+									(level - lfc.LowerBound)
+									/ range;
+								isFailed = x <= failureFrac;
+							}
 						}
-						else if (level < lfc.LowerBound)
-						{
-							isFailed = false;
-						}
-						else
-						{
-							double x = s.TheModel.RandFn();
-							double range =
-								lfc.UpperBound - lfc.LowerBound;
-							double failureFrac =
-								(level - lfc.LowerBound)
-								/ range;
-							isFailed = x <= failureFrac;
-						}
-					}
-				} break;
-				default:
-				{
-					throw std::runtime_error{
-						"Unhandled FragilityCurveType"
-					};
-				} break;
+					} break;
+					default:
+					{
+						throw std::runtime_error{
+							"Unhandled FragilityCurveType"
+						};
+					} break;
 				}
 				// NOTE: if we are not failed, there is nothing to do
 				if (isFailed)
@@ -1539,10 +1570,10 @@ namespace erin_next
 			size_t compId = s.ComponentFailureModes.ComponentIds[pair.first];
 			if (relSchByCompId.contains(compId))
 			{
-				// TODO: combine the two curves
 				std::vector<TimeState> combined =
 					TimeState_Combine(
 						pair.second, relSchByCompId.at(pair.first));
+				relSchByCompId.insert({compId, std::move(combined)});
 			}
 			else
 			{
@@ -1597,8 +1628,11 @@ namespace erin_next
 					s.ScenarioMap.TimeUnits[scenIdx]);
 				std::cout << "Occurrence #" << (occIdx + 1) << " at "
 					<< SecondsToPrettyString(t) << std::endl;
+				// TODO: make initial age part of the ComponentMap
 				std::vector<ScheduleBasedReliability> originalReliabilities =
-					ApplyFragilities(s, intensityIdToAmount);
+					ApplyReliabilitiesAndFragilities(
+						s, t, t + duration_s,
+						intensityIdToAmount, relSchByCompId);
 				std::string scenarioStartTimeTag =
 					TimeToISO8601Period(
 						static_cast<uint64_t>(std::llround(t)));

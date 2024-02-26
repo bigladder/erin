@@ -231,8 +231,6 @@ namespace erin_next
 		TimeState result;
 		result.time = ts.time;
 		result.state = ts.state;
-		std::set<size_t> failureModes;
-		std::set<size_t> fragilityModes;
 		for (auto x : ts.failureModeCauses)
 		{
 			result.failureModeCauses.insert(x);
@@ -258,6 +256,30 @@ namespace erin_next
 			if (!sch[i].state)
 			{
 				result -= dt;
+			}
+		}
+		return result;
+	}
+
+	TimeState
+	TimeState_GetActiveTimeState(
+		std::vector<TimeState> const& tss,
+		double time_s)
+	{
+		TimeState result{time_s, true};
+		for (auto const& ts : tss)
+		{
+			if (ts.time < time_s)
+			{
+				result = ts;
+			}
+			else if (ts.time == time_s)
+			{
+				return ts;
+			}
+			else
+			{
+				break;
 			}
 		}
 		return result;

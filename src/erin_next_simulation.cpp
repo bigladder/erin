@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 #include <iomanip>
+#include <algorithm>
+#include <sstream>
 
 namespace erin_next
 {
@@ -1078,6 +1080,14 @@ namespace erin_next
 				}
 			}
 		}
+		// op-state: <component-name>
+		for (size_t compId = 0; compId < m.ComponentMap.Tag.size(); ++compId)
+		{
+			if (!m.ComponentMap.Tag[compId].empty())
+			{
+				out << ",op-state: " << m.ComponentMap.Tag[compId];
+			}
+		}
 		out << std::endl;
 	}
 
@@ -1085,10 +1095,17 @@ namespace erin_next
 	WriteResultsToEventFile(
 		std::ofstream& out,
 		std::vector<TimeAndFlows> results,
-		Model const& m,
+		Simulation const& s,
 		std::string const& scenarioTag,
 		std::string const& scenarioStartTimeTag)
 	{
+		Model const& m = s.TheModel;
+		std::map<size_t, std::vector<TimeState>> relSchByCompId;
+		for (size_t i = 0; i < m.Reliabilities.size(); ++i)
+		{
+			size_t compId = m.Reliabilities[i].ComponentId;
+			relSchByCompId[compId] = m.Reliabilities[i].TimeStates;
+		}
 		for (auto const& r : results)
 		{
 			out << scenarioTag << ","
@@ -1131,6 +1148,65 @@ namespace erin_next
 						/ static_cast<double>(m.Stores[i].Capacity_J);
 				}
 				out << "," << std::fixed << std::setprecision(3) << soc;
+			}
+			for (size_t i = 0; i < m.ComponentMap.Tag.size(); ++i)
+			{
+				if (!m.ComponentMap.Tag[i].empty())
+				{
+					if (relSchByCompId.contains(i))
+					{
+						TimeState ts = TimeState_GetActiveTimeState(
+							relSchByCompId[i], r.Time);
+						if (ts.state)
+						{
+							out << ",available";
+						}
+						else
+						{
+							// lookup the failure and fragility modes
+							std::vector<size_t> failModes;
+							failModes.reserve(ts.failureModeCauses.size());
+							std::vector<size_t> fragModes;
+							fragModes.reserve(ts.fragilityModeCauses.size());
+							for (size_t fm : ts.failureModeCauses)
+							{
+								failModes.push_back(fm);
+							}
+							for (size_t fm : ts.fragilityModeCauses)
+							{
+								fragModes.push_back(fm);
+							}
+							std::sort(failModes.begin(), failModes.end());
+							std::sort(fragModes.begin(), fragModes.end());
+							std::vector<std::string> fmTags;
+							fmTags.reserve(
+								ts.failureModeCauses.size()
+								+ ts.fragilityModeCauses.size());
+							for (auto const& failModeId : failModes)
+							{
+								fmTags.push_back(
+									s.FailureModes.Tags[failModeId]);
+							}
+							for (auto const& fragModeId : fragModes)
+							{
+								fmTags.push_back(
+									s.FragilityModes.Tags[fragModeId]);
+							}
+							bool first = true;
+							std::ostringstream oss{};
+							for (std::string const& tag : fmTags)
+							{
+								oss << (first ? "" : " | ") << tag;
+								first = false;
+							}
+							out << "," << oss.str();
+						}
+					}
+					else
+					{
+						out << ",available";
+					}
+				}
 			}
 			out << std::endl;
 		}
@@ -1606,6 +1682,13 @@ namespace erin_next
 				s.TheModel.Rel.make_schedule_for_link(
 					fmId, s.TheModel.RandFn, s.TheModel.DistSys,
 					maxTime_s);
+			for (auto& ts : relSch)
+			{
+				if (!ts.state)
+				{
+					ts.failureModeCauses.insert(fmId);
+				}
+			}
 			relSchByCompFailId.insert({compFailId, std::move(relSch)});
 		}
 		// NOTE: combine reliability curves so they are per component
@@ -1697,7 +1780,7 @@ namespace erin_next
 				auto results = Simulate(s.TheModel, option_verbose);
 				// TODO: investigate putting output on another thread
 				WriteResultsToEventFile(
-					out, results, s.TheModel,
+					out, results, s,
 					scenarioTag, scenarioStartTimeTag);
 				ScenarioOccurrenceStats sos =
 					ModelResults_CalculateScenarioOccurrenceStats(

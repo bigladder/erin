@@ -46,6 +46,11 @@ namespace erin_next
 		std::vector<TimeState> const& tss,
 		double endTime_s);
 
+	TimeState
+	TimeState_GetActiveTimeState(
+		std::vector<TimeState> const& tss,
+		double time_s);
+
 }
 
 #endif

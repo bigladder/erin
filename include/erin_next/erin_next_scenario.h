@@ -18,6 +18,7 @@ namespace erin_next
 	{
 		std::vector<std::string> Tags;
 		std::vector<size_t> OccurrenceDistributionIds;
+		// TODO: remove TimeUnits and pre-convert to make Durations in seconds
 		std::vector<TimeUnit> TimeUnits;
 		std::vector<double> Durations;
 		// NOTE: an entry of none means "no max occurrences"; will take as

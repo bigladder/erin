@@ -1,4 +1,5 @@
 #include "erin_next/erin_next.h"
+#include "erin_next/erin_next_timestate.h"
 #include <iomanip>
 #include <chrono>
 #include <limits>
@@ -1420,6 +1421,37 @@ Test16(bool doPrint)
 	PrintPass(doPrint, "16");
 }
 
+void
+Test17(bool doPrint)
+{
+	PrintBanner(doPrint, "17");
+	std::vector<TimeState> a{
+		{0.0, true}, {10.0, false, {1}}, {100.0, true}};
+	std::vector<TimeState> b{
+		{0.0, true}, {40.0, false, {2}}, {90.0, true}, {150.0, false, {2}}};
+	std::vector<TimeState> expected{
+		{0.0, true},
+		{10.0, false, {1}},
+		{40.0, false, {1, 2}},
+		{90.0, false, {1}},
+		{100.0, true},
+		{150.0, false, {2}}};
+	std::vector<TimeState> actual = TimeState_Combine(a, b);
+	assert(expected.size() == actual.size());
+	for (size_t i = 0; i < expected.size(); ++i)
+	{
+		assert(expected[i].time == actual[i].time);
+		assert(expected[i].state == actual[i].state);
+		assert(expected[i].failureModeCauses.size()
+			== actual[i].failureModeCauses.size());
+		for (auto const& fmId : expected[i].failureModeCauses)
+		{
+			assert(actual[i].failureModeCauses.contains(fmId));
+		}
+	}
+	PrintPass(doPrint, "17");
+}
+
 int
 main(int argc, char** argv) {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -1440,6 +1472,7 @@ main(int argc, char** argv) {
 	Test14(false);
 	Test15(false);
 	Test16(false);
+	Test17(false);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration =
 		std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

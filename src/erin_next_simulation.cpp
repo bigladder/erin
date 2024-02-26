@@ -1504,10 +1504,57 @@ namespace erin_next
 		// ... failure modes and fragility modes causing the failure
 		// ... (provenance). Note: the fragility part will need to be moved
 		// ... as fragility is "by scenario".
+		double maxDuration_s = 0.0;
+		for (size_t scenId = 0;
+			scenId < s.ScenarioMap.Durations.size();
+			++scenId)
+		{
+			double duration_s = Time_ToSeconds(
+				s.ScenarioMap.Durations[scenId],
+				s.ScenarioMap.TimeUnits[scenId]);
+			if (duration_s > maxDuration_s)
+			{
+				maxDuration_s = duration_s;
+			}
+		}
+		std::map<size_t, std::vector<TimeState>> relSchByCompFailId;
+		for (size_t compFailId=0;
+			compFailId < s.ComponentFailureModes.ComponentIds.size();
+			++compFailId)
+		{
+			size_t fmId = s.ComponentFailureModes.FailureModeIds[compFailId];
+			double maxTime_s =
+				Time_ToSeconds(s.Info.MaxTime, s.Info.TheTimeUnit)
+				+ maxDuration_s;
+			std::vector<TimeState> relSch =
+				s.TheModel.Rel.make_schedule_for_link(
+					fmId, s.TheModel.RandFn, s.TheModel.DistSys,
+					maxTime_s);
+			relSchByCompFailId.insert({compFailId, std::move(relSch)});
+		}
+		// NOTE: combine reliability curves so they are per component
+		std::map<size_t, std::vector<TimeState>> relSchByCompId;
+		for (auto const& pair : relSchByCompFailId)
+		{
+			size_t compId = s.ComponentFailureModes.ComponentIds[pair.first];
+			if (relSchByCompId.contains(compId))
+			{
+				// TODO: combine the two curves
+				std::vector<TimeState> combined =
+					TimeState_Combine(
+						pair.second, relSchByCompId.at(pair.first));
+			}
+			else
+			{
+				relSchByCompId.insert({compId, pair.second});
+			}
+		}
 		// TODO: generate a data structure to hold all results.
 		// TODO: set random function for Model based on SimInfo
-		// TODO: split out file writing into separate thread? See
+		// IDEA: split out file writing into separate thread? See
 		// https://codetrips.com/2020/07/26/modern-c-writing-a-thread-safe-queue/comment-page-1/
+		// IDEA: use Apache Arrow for memory tables? Output parquet as primary
+		// output format (instead of CSV)?
 		// NOW, we want to do a simulation for each scenario
 		std::ofstream out;
 		out.open(eventFilePath);

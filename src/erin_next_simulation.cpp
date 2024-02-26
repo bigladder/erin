@@ -1259,7 +1259,6 @@ namespace erin_next
 		return originalReliabilities;
 	}
 
-	// TODO: rename to ApplyReliabilitiesAndFragilities
 	std::vector<ScheduleBasedReliability>
 	ApplyReliabilitiesAndFragilities(
 		Simulation& s,

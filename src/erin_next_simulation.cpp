@@ -1447,8 +1447,20 @@ namespace erin_next
 			<< "energy robustness [ER],"
 			<< "energy availability [EA],"
 			<< "max single event downtime [MaxSEDT] (h),"
-			<< "global availability"
-			<< std::endl;
+			<< "global availability";
+		std::set<size_t> componentsToSkip;
+		for (size_t i = 0; i < s.TheModel.ComponentMap.Tag.size(); ++i)
+		{
+			if (s.TheModel.ComponentMap.Tag[i].empty())
+			{
+				componentsToSkip.insert(i);
+			}
+			else
+			{
+				stats << ",availability: " << s.TheModel.ComponentMap.Tag[i];
+			}
+		}
+		stats << std::endl;
 		for (auto const& os : occurrenceStats)
 		{
 			double stored = os.StorageCharge_kJ - os.StorageDischarge_kJ;
@@ -1485,8 +1497,19 @@ namespace erin_next
 				<< "," << (os.MaxSEDT_s / seconds_per_hour)
 				<< "," << ((os.Duration_s > 0.0)
 					? (os.Availability_s / os.Duration_s)
-					: 0.0)
-				<< std::endl;
+					: 0.0);
+			for (size_t i = 0; i < s.TheModel.ComponentMap.Tag.size(); ++i)
+			{
+				if (!componentsToSkip.contains(i))
+				{
+					double availability =
+						os.Duration_s > 0.0
+						? os.AvailabilityByCompId_s.at(i) / os.Duration_s
+						: 1.0;
+					stats << "," << availability;
+				}
+			}
+			stats << std::endl;
 		}
 		stats.close();
 	}

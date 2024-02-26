@@ -2186,15 +2186,25 @@ namespace erin_next
 		{
 			relSch = TimeState_Combine(relSch, m.Reliabilities[i].TimeStates);
 		}
-		sos.Availability_s = m.FinalTime;
-		for (size_t i = 0; i < relSch.size(); ++i)
+		sos.Availability_s = TimeState_CalcAvailability_s(relSch, m.FinalTime);
+		std::map<size_t, std::vector<TimeState>> relSchByCompId;
+		for (size_t i = 0; i < m.Reliabilities.size(); ++i)
 		{
-			double dt = (i + 1) < relSch.size()
-				? relSch[i+1].time - relSch[i].time
-				: m.FinalTime - relSch[i].time;
-			if (!relSch[i].state)
+			ScheduleBasedReliability const& sbr = m.Reliabilities[i];
+			relSchByCompId[sbr.ComponentId] = sbr.TimeStates;
+		}
+		for (size_t compId = 0; compId < m.ComponentMap.Tag.size(); ++compId)
+		{
+			if (relSchByCompId.contains(compId))
 			{
-				sos.Availability_s -= dt;
+				sos.AvailabilityByCompId_s[compId] =
+					TimeState_CalcAvailability_s(
+						relSchByCompId[compId], m.FinalTime);
+			}
+			else
+			{
+				// if there is no reliability schedule, availability is 100%
+				sos.AvailabilityByCompId_s[compId] = m.FinalTime;
 			}
 		}
 		return sos;

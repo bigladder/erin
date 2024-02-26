@@ -41,6 +41,11 @@ namespace erin_next
 	TimeState
 	TimeState_Copy(TimeState const& ts);
 
+	double
+	TimeState_CalcAvailability_s(
+		std::vector<TimeState> const& tss,
+		double endTime_s);
+
 }
 
 #endif

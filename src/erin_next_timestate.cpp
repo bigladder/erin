@@ -244,4 +244,23 @@ namespace erin_next
 		return result;
 	}
 
+	double
+	TimeState_CalcAvailability_s(
+		std::vector<TimeState> const& sch,
+		double endTime_s)
+	{
+		double result = endTime_s;
+		for (size_t i = 0; i < sch.size(); ++i)
+		{
+			double dt = (i + 1) < sch.size()
+				? sch[i + 1].time - sch[i].time
+				: endTime_s - sch[i].time;
+			if (!sch[i].state)
+			{
+				result -= dt;
+			}
+		}
+		return result;
+	}
+
 }

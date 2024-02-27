@@ -234,14 +234,13 @@ namespace erin_next
 		std::vector<double> result;
 		if (!table.contains(fieldName))
 		{
-			std::cout << "[" << tableName << "] "
-				<< "missing field '" << fieldName << "'" << std::endl;
+			WriteErrorMessage(tableName,
+				"missing field '" + fieldName + "'");
 			return {};
 		}
 		if (!table.at(fieldName).is_array())
 		{
-			std::cout << "[" << tableName << "] "
-				<< "must be an array" << std::endl;
+			WriteErrorMessage(tableName, "must be an array");
 			return {};
 		}
 		std::vector<toml::value> xs = table.at(fieldName).as_array();
@@ -250,21 +249,77 @@ namespace erin_next
 			toml::value v = xs[i];
 			if (!(v.is_integer() || v.is_floating()))
 			{
-				std::cout << "[" << tableName << "] "
-					<< "array value at " << i
-					<< " must be numeric" << std::endl;
+				WriteErrorMessage(tableName,
+					"array value at " + std::to_string(i)
+					+ " must be numeric");
 				return {};
 			}
 			std::optional<double> maybeNumber =
 				TOML_ParseNumericValueAsDouble(v);
 			if (!maybeNumber.has_value())
 			{
-				std::cout << "[" << tableName << "] "
-					<< "array value at " << i
-					<< " could not be parsed as number" << std::endl;
+				WriteErrorMessage(tableName,
+					"array value at " + std::to_string(i) +
+					" could not be parsed as number");
 				return {};
 			}
 			result.push_back(maybeNumber.value());
+		}
+		return result;
+	}
+
+	std::optional<PairsVector>
+	TOMLTable_ParseArrayOfPairsOfDouble(
+		std::unordered_map<toml::key, toml::value> const& table,
+		std::string const& fieldName,
+		std::string const& tableName)
+	{
+		PairsVector result;
+		if (!table.contains(fieldName))
+		{
+			WriteErrorMessage(tableName,
+				"does not contain required field '" + fieldName + "'");
+			return {};
+		}
+		toml::value fieldData = table.at(fieldName);
+		if (!fieldData.is_array())
+		{
+			WriteErrorMessage(tableName,
+				fieldName + " must be an array of 2-element array of numbers");
+			return {};
+		}
+		toml::array const& pairs = fieldData.as_array();
+		for (size_t i = 0; i < pairs.size(); ++i)
+		{
+			toml::value const& pair = pairs.at(i);
+			if (!pair.is_array())
+			{
+				WriteErrorMessage(tableName,
+					"array entry at index " + std::to_string(i)
+					+ " must be an array of two numbers");
+				return {};
+			}
+			toml::array xy = pair.as_array();
+			if (xy.size() != 2)
+			{
+				WriteErrorMessage(tableName,
+					"array entry at index " + std::to_string(i)
+					+ " must be an array of two numbers");
+				return {};
+			}
+			std::optional<double> maybeFirst =
+				TOML_ParseNumericValueAsDouble(xy[0]);
+			std::optional<double> maybeSecond =
+				TOML_ParseNumericValueAsDouble(xy[1]);
+			if (!maybeFirst.has_value() || !maybeSecond.has_value())
+			{
+				WriteErrorMessage(tableName,
+					"array entry at index " + std::to_string(i)
+					+ " must be an array of two numbers");
+				return {};
+			}
+			result.Firsts.push_back(maybeFirst.value());
+			result.Seconds.push_back(maybeSecond.value());
 		}
 		return result;
 	}

@@ -23,6 +23,7 @@ namespace erin_next
 		SimulationInfo Info;
 		Model TheModel;
 		std::vector<LinearFragilityCurve> LinearFragilityCurves;
+		std::vector<TabularFragilityCurve> TabularFragilityCurves;
 		IntensityDict Intensities;
 		ScenarioIntensityDict ScenarioIntensities;
 		FragilityCurveDict FragilityCurves;
@@ -185,6 +186,19 @@ namespace erin_next
 
 	Result
 	Simulation_ParseFailureModes(Simulation& s, toml::value const& v);
+
+	Result
+	Simulation_ParseLinearFragilityCurve(
+		Simulation& s,
+		std::string const& fcName,
+		std::string const& tableFullName,
+		toml::table const& fcData);
+
+	std::optional<size_t>
+	Parse_VulnerableTo(
+		Simulation const& s,
+		toml::table const& fcData,
+		std::string const& tableFullName);
 }
 
 #endif

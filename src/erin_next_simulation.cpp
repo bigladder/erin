@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
+#include <cstdlib>
 
 namespace erin_next
 {
@@ -251,6 +252,30 @@ namespace erin_next
 					std::cout << "-- vulnerable to: "
 						<< s.Intensities.Tags[intensityId]
 						<< "[" << intensityId << "]" << std::endl;
+				} break;
+				case (FragilityCurveType::Tabular):
+				{
+					size_t size =
+						s.TabularFragilityCurves[idx].Intensities.size();
+					size_t intensityId =
+						s.TabularFragilityCurves[idx].VulnerabilityId;
+					if (size > 0)
+					{
+						std::cout << "-- intensity from "
+							<< s.TabularFragilityCurves[idx].Intensities[0]
+							<< " to "
+							<< s.TabularFragilityCurves[idx]
+							.Intensities[size - 1]
+							<< std::endl;
+						std::cout << "-- vulnerable to: "
+							<< s.Intensities.Tags[intensityId]
+							<< "[" << intensityId << "]" << std::endl;
+					}
+				} break;
+				default:
+				{
+					std::cout << "unhandled fragility curve type" << std::endl;
+					std::exit(1);
 				} break;
 			}
 		}
@@ -529,6 +554,119 @@ namespace erin_next
 		return result;
 	}
 
+	std::optional<size_t>
+	Parse_VulnerableTo(
+		Simulation const& s,
+		toml::table const& fcData,
+		std::string const& tableFullName)
+	{
+		if (!fcData.contains("vulnerable_to"))
+		{
+			WriteErrorMessage(tableFullName,
+				"missing required field 'vulnerable_to'");
+			return {};
+		}
+		if (!fcData.at("vulnerable_to").is_string())
+		{
+			WriteErrorMessage(tableFullName,
+				"field 'vulnerable_to' not a string");
+			return {};
+		}
+		std::string const& vulnerStr =
+			fcData.at("vulnerable_to").as_string();
+		std::optional<size_t> maybeIntId =
+			GetIntensityIdByTag(s.Intensities, vulnerStr);
+		if (!maybeIntId.has_value())
+		{
+			WriteErrorMessage(tableFullName,
+				"could not find referenced intensity '"
+				+ vulnerStr + "' for 'vulnerable_to'");
+			return {};
+		}
+		return maybeIntId;
+	}
+
+	Result
+	Simulation_ParseLinearFragilityCurve(
+		Simulation& s,
+		std::string const& fcName,
+		std::string const& tableFullName,
+		toml::table const& fcData)
+	{
+		if (!fcData.contains("lower_bound"))
+		{
+			std::cout << "[" << tableFullName << "] "
+				<< "missing required field 'lower_bound'"
+				<< std::endl;
+			return Result::Failure;
+		}
+		if (!(fcData.at("lower_bound").is_floating()
+			|| fcData.at("lower_bound").is_integer()))
+		{
+			std::cout << "[" << tableFullName << "] "
+				<< "field 'lower_bound' not a number"
+				<< std::endl;
+			return Result::Failure;
+		}
+		std::optional<double> maybeLowerBound =
+			TOMLTable_ParseDouble(
+				fcData,
+				"lower_bound",
+				tableFullName);
+		if (!maybeLowerBound.has_value())
+		{
+			std::cout << "[" << tableFullName << "] "
+				<< "field 'lower_bound' has no value"
+				<< std::endl;
+			return Result::Failure;
+		}
+		double lowerBound = maybeLowerBound.value();
+		if (!fcData.contains("upper_bound"))
+		{
+			std::cout << "[" << tableFullName << "] "
+				<< "missing required field 'upper_bound'"
+				<< std::endl;
+			return Result::Failure;
+		}
+		if (!(fcData.at("upper_bound").is_floating()
+			|| fcData.at("upper_bound").is_integer()))
+		{
+			std::cout << "[" << tableFullName << "] "
+				<< "field 'upper_bound' not a number"
+				<< std::endl;
+			return Result::Failure;
+		}
+		std::optional<double> maybeUpperBound =
+			TOMLTable_ParseDouble(
+				fcData,
+				"upper_bound",
+				tableFullName);
+		if (!maybeUpperBound.has_value())
+		{
+			std::cout << "[" << tableFullName << "] "
+				<< "field 'upper_bound' has no value"
+				<< std::endl;
+			return Result::Failure;
+		}
+		double upperBound = maybeUpperBound.value();
+		std::optional<size_t> maybeIntId = Parse_VulnerableTo(
+			s, fcData, tableFullName);
+		if (!maybeIntId.has_value())
+		{
+			return Result::Failure;
+		}
+		size_t intensityId = maybeIntId.value();
+		LinearFragilityCurve lfc{};
+		lfc.LowerBound = lowerBound;
+		lfc.UpperBound = upperBound;
+		lfc.VulnerabilityId = intensityId;
+		size_t idx = s.LinearFragilityCurves.size();
+		s.LinearFragilityCurves.push_back(std::move(lfc));
+		Simulation_RegisterFragilityCurve(
+			s, fcName, FragilityCurveType::Linear, idx);
+		return Result::Success;
+	}
+
 	Result
 	Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v)
 	{
@@ -573,101 +711,45 @@ namespace erin_next
 				{
 					case (FragilityCurveType::Linear):
 					{
-						if (!fcData.contains("lower_bound"))
+						if (Simulation_ParseLinearFragilityCurve(
+								s,
+								fcName,
+								tableFullName,
+								fcData) == Result::Failure)
 						{
-							std::cout << "[" << tableFullName << "] "
-								<< "missing required field 'lower_bound'"
-								<< std::endl;
 							return Result::Failure;
 						}
-						if (!(fcData.at("lower_bound").is_floating()
-							|| fcData.at("lower_bound").is_integer()))
-						{
-							std::cout << "[" << tableFullName << "] "
-								<< "field 'lower_bound' not a number"
-								<< std::endl;
-							return Result::Failure;
-						}
-						std::optional<double> maybeLowerBound =
-							TOMLTable_ParseDouble(
-								fcData,
-								"lower_bound",
-								tableFullName);
-						if (!maybeLowerBound.has_value())
-						{
-							std::cout << "[" << tableFullName << "] "
-								<< "field 'lower_bound' has no value"
-								<< std::endl;
-							return Result::Failure;
-						}
-						double lowerBound = maybeLowerBound.value();
-						if (!fcData.contains("upper_bound"))
-						{
-							std::cout << "[" << tableFullName << "] "
-								<< "missing required field 'upper_bound'"
-								<< std::endl;
-							return Result::Failure;
-						}
-						if (!(fcData.at("upper_bound").is_floating()
-							|| fcData.at("upper_bound").is_integer()))
-						{
-							std::cout << "[" << tableFullName << "] "
-								<< "field 'upper_bound' not a number"
-								<< std::endl;
-							return Result::Failure;
-						}
-						std::optional<double> maybeUpperBound =
-							TOMLTable_ParseDouble(
-								fcData,
-								"upper_bound",
-								tableFullName);
-						if (!maybeUpperBound.has_value())
-						{
-							std::cout << "[" << tableFullName << "] "
-								<< "field 'upper_bound' has no value"
-								<< std::endl;
-							return Result::Failure;
-						}
-						double upperBound = maybeUpperBound.value();
-						if (!fcData.contains("vulnerable_to"))
-						{
-							std::cout << "[" << tableFullName << "] "
-								<< "missing required field 'vulnerable_to'"
-								<< std::endl;
-							return Result::Failure;
-						}
-						if (!fcData.at("vulnerable_to").is_string())
-						{
-							std::cout << "[" << tableFullName << "] "
-								<< "field 'vulnerable_to' not a string"
-								<< std::endl;
-							return Result::Failure;
-						}
-						std::string const& vulnerStr =
-							fcData.at("vulnerable_to").as_string();
-						std::optional<size_t> maybeIntId =
-							GetIntensityIdByTag(s.Intensities, vulnerStr);
+					} break;
+					case (FragilityCurveType::Tabular):
+					{
+						std::optional<size_t> maybeIntId = Parse_VulnerableTo(
+							s, fcData, tableFullName);
 						if (!maybeIntId.has_value())
 						{
-							std::cout << "[" << tableFullName << "] "
-								<< "could not find referenced intensity '"
-								<< vulnerStr << "' for 'vulnerable_to'"
-								<< std::endl;
 							return Result::Failure;
 						}
 						size_t intensityId = maybeIntId.value();
-						LinearFragilityCurve lfc{};
-						lfc.LowerBound = lowerBound;
-						lfc.UpperBound = upperBound;
-						lfc.VulnerabilityId = intensityId;
-						size_t idx = s.LinearFragilityCurves.size();
-						s.LinearFragilityCurves.push_back(std::move(lfc));
-						Simulation_RegisterFragilityCurve(s, fcName, fct, idx);
+						auto maybePairs = TOMLTable_ParseArrayOfPairsOfDouble(
+							fcData, "intensity_failure_pairs", tableFullName);
+						if (!maybePairs.has_value())
+						{
+							return Result::Failure;
+						}
+						PairsVector pv = maybePairs.value();
+						TabularFragilityCurve tfc{};
+						tfc.VulnerabilityId = intensityId;
+						tfc.Intensities = std::move(pv.Firsts);
+						tfc.FailureFractions = std::move(pv.Seconds);
+						size_t subtypeIdx = s.TabularFragilityCurves.size();
+						s.TabularFragilityCurves.push_back(std::move(tfc));
+						Simulation_RegisterFragilityCurve(
+							s, fcName, FragilityCurveType::Tabular, subtypeIdx);
 					} break;
 					default:
 					{
-						throw std::runtime_error{
-							"unhandled fragility curve type"};
+						WriteErrorMessage(tableFullName,
+							"unhandled fragility curve type '" + typeStr + "'");
+						std::exit(1);
 					} break;
 				}
 			}
@@ -1391,6 +1473,7 @@ namespace erin_next
 				size_t fcIdx =
 					s.FragilityCurves.CurveId[fcId];
 				bool isFailed = false;
+				double failureFrac = 0.0;
 				switch (curveType)
 				{
 					case (FragilityCurveType::Linear):
@@ -1402,21 +1485,23 @@ namespace erin_next
 						{
 							double level =
 								intensityIdToAmount.at(vulnerId);
-							double failureFrac =
+							failureFrac =
 								LinearFragilityCurve_GetFailureFraction(
 									lfc, level);
-							if (failureFrac == 1.0)
-							{
-								isFailed = true;
-							}
-							else if (failureFrac == 0.0)
-							{
-								isFailed = false;
-							}
-							else
-							{
-								isFailed = s.TheModel.RandFn() <= failureFrac;
-							}
+						}
+					} break;
+					case (FragilityCurveType::Tabular):
+					{
+						TabularFragilityCurve tfc =
+							s.TabularFragilityCurves[fcIdx];
+						size_t vulnerId = tfc.VulnerabilityId;
+						if (intensityIdToAmount.contains(vulnerId))
+						{
+							double level =
+								intensityIdToAmount.at(vulnerId);
+							failureFrac =
+								TabularFragilityCurve_GetFailureFraction(
+									tfc, level);
 						}
 					} break;
 					default:
@@ -1425,6 +1510,18 @@ namespace erin_next
 							"Unhandled FragilityCurveType"
 						};
 					} break;
+				}
+				if (failureFrac == 1.0)
+				{
+					isFailed = true;
+				}
+				else if (failureFrac == 0.0)
+				{
+					isFailed = false;
+				}
+				else
+				{
+					isFailed = s.TheModel.RandFn() <= failureFrac;
 				}
 				// NOTE: if we are not failed, there is nothing to do
 				if (isFailed)

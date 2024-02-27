@@ -13,6 +13,10 @@ namespace erin_next
 		{
 			return FragilityCurveType::Linear;
 		}
+		if (tag == "tabular")
+		{
+			return FragilityCurveType::Tabular;
+		}
 		return {};
 	}
 
@@ -25,6 +29,10 @@ namespace erin_next
 			case (FragilityCurveType::Linear):
 			{
 				tag = "linear";
+			} break;
+			case (FragilityCurveType::Tabular):
+			{
+				tag = "tabular";
 			} break;
 			default:
 			{

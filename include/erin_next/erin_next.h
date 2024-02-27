@@ -106,6 +106,20 @@ namespace erin_next
 		double MaxSEDT_s = 0.0;
 		double Availability_s = 0.0;
 		std::map<size_t, double> AvailabilityByCompId_s;
+		// Event Counts
+		std::map<size_t, size_t> EventCountByFailureModeId;
+		std::map<size_t, std::map<size_t, size_t>>
+			EventCountByCompIdByFailureModeId;
+		std::map<size_t, size_t> EventCountByFragilityModeId;
+		std::map<size_t, std::map<size_t, size_t>>
+			EventCountByCompIdByFragilityModeId;
+		// Failure/Fragility Times
+		std::map<size_t, double> TimeByFailureModeId_s;
+		std::map<size_t, std::map<size_t, double>>
+			TimeByCompIdByFailureModeId_s;
+		std::map<size_t, double> TimeByFragilityModeId_s;
+		std::map<size_t, std::map<size_t, double>>
+			TimeByCompIdByFragilityModeId_s;
 	};
 
 	struct ConstantLoad

@@ -1536,6 +1536,103 @@ namespace erin_next
 				stats << ",availability: " << s.TheModel.ComponentMap.Tag[i];
 			}
 		}
+		for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+		{
+			stats << ",global count: " << s.FailureModes.Tags[i];
+		}
+		for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+		{
+			stats << ",global count: " << s.FragilityModes.Tags[i];
+		}
+		for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+		{
+			stats << ",global time fraction: " << s.FailureModes.Tags[i];
+		}
+		for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+		{
+			stats << ",global time fraction: " << s.FragilityModes.Tags[i];
+		}
+		std::map<size_t, std::set<size_t>> failModeIdsByCompId;
+		std::map<size_t, std::set<size_t>> fragModeIdsByCompId;
+		for (size_t compId = 0;
+			compId < s.TheModel.ComponentMap.Tag.size();
+			++compId)
+		{
+			failModeIdsByCompId[compId] = std::set<size_t>{};
+			fragModeIdsByCompId[compId] = std::set<size_t>{};
+			for (auto const& occ : occurrenceStats)
+			{
+				if (occ.EventCountByCompIdByFailureModeId.contains(compId))
+				{
+					for (auto const& p :
+						occ.EventCountByCompIdByFailureModeId.at(compId))
+					{
+						failModeIdsByCompId[compId].insert(p.first);
+					}
+				}
+				if (occ.EventCountByCompIdByFragilityModeId.contains(compId))
+				{
+					for (auto const& p :
+						occ.EventCountByCompIdByFragilityModeId.at(compId))
+					{
+						fragModeIdsByCompId[compId].insert(p.first);
+					}
+				}
+			}
+			for (size_t failModeId = 0;
+				failModeId < s.FailureModes.Tags.size();
+				++failModeId)
+			{
+				if (failModeIdsByCompId[compId].contains(failModeId))
+				{
+					stats << ",count: "
+						<< s.TheModel.ComponentMap.Tag[compId]
+						<< " / "
+						<< s.FailureModes.Tags[failModeId];
+				}
+			}
+			for (size_t fragModeId = 0;
+				fragModeId < s.FragilityModes.Tags.size();
+				++fragModeId)
+			{
+				if (fragModeIdsByCompId[compId].contains(fragModeId))
+				{
+					stats << ",count: "
+						<< s.TheModel.ComponentMap.Tag[compId]
+						<< " / "
+						<< s.FragilityModes.Tags[fragModeId];
+				}
+			}
+		}
+		for (size_t compId = 0;
+			compId < s.TheModel.ComponentMap.Tag.size();
+			++compId)
+		{
+			for (size_t failModeId = 0;
+				failModeId < s.FailureModes.Tags.size();
+				++failModeId)
+			{
+				if (failModeIdsByCompId[compId].contains(failModeId))
+				{
+					stats << ",time fraction: "
+						<< s.TheModel.ComponentMap.Tag[compId]
+						<< " / "
+						<< s.FailureModes.Tags[failModeId];
+				}
+			}
+			for (size_t fragModeId = 0;
+				fragModeId < s.FragilityModes.Tags.size();
+				++fragModeId)
+			{
+				if (fragModeIdsByCompId[compId].contains(fragModeId))
+				{
+					stats << ",time fraction: "
+						<< s.TheModel.ComponentMap.Tag[compId]
+						<< " / "
+						<< s.FragilityModes.Tags[fragModeId];
+				}
+			}
+		}
 		stats << std::endl;
 		for (auto const& os : occurrenceStats)
 		{
@@ -1583,6 +1680,128 @@ namespace erin_next
 						? os.AvailabilityByCompId_s.at(i) / os.Duration_s
 						: 1.0;
 					stats << "," << availability;
+				}
+			}
+			for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+			{
+				size_t eventCount = os.EventCountByFailureModeId.contains(i)
+					? os.EventCountByFailureModeId.at(i)
+					: 0;
+				stats << "," << eventCount;
+			}
+			for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+			{
+				size_t eventCount = os.EventCountByFragilityModeId.contains(i)
+					? os.EventCountByFragilityModeId.at(i)
+					: 0;
+				stats << "," << eventCount;
+			}
+			for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+			{
+				double time_s = os.TimeByFailureModeId_s.contains(i)
+					? os.TimeByFailureModeId_s.at(i)
+					: 0.0;
+				stats << ","
+					<< (os.Duration_s > 0.0 ? time_s / os.Duration_s : 0.0);
+			}
+			for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+			{
+				double time_s = os.TimeByFragilityModeId_s.contains(i)
+					? os.TimeByFragilityModeId_s.at(i)
+					: 0.0;
+				stats << ","
+					<< (os.Duration_s > 0.0 ? time_s / os.Duration_s : 0.0);
+			}
+			for (size_t compId = 0;
+				compId < s.TheModel.ComponentMap.Tag.size();
+				++compId)
+			{
+				for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+				{
+					if (failModeIdsByCompId[compId].contains(i))
+					{
+						if (os.EventCountByCompIdByFailureModeId
+							.contains(compId)
+							&& os.EventCountByCompIdByFailureModeId
+							.at(compId).contains(i))
+						{
+							stats << ","
+								<< os.EventCountByCompIdByFailureModeId
+								.at(compId).at(i);
+						}
+						else
+						{
+							stats << ",0";
+						}
+					}
+				}
+				for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+				{
+					if (fragModeIdsByCompId[compId].contains(i))
+					{
+						if (os.EventCountByCompIdByFragilityModeId
+							.contains(compId)
+							&& os.EventCountByCompIdByFragilityModeId
+							.at(compId).contains(i))
+						{
+							stats << ","
+								<< os.EventCountByCompIdByFragilityModeId
+								.at(compId).at(i);
+						}
+						else
+						{
+							stats << ",0";
+						}
+					}
+				}
+			}
+			for (size_t compId = 0;
+				compId < s.TheModel.ComponentMap.Tag.size();
+				++compId)
+			{
+				for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+				{
+					if (failModeIdsByCompId[compId].contains(i))
+					{
+						if (os.TimeByCompIdByFailureModeId_s.contains(compId)
+							&& os.TimeByCompIdByFailureModeId_s
+							.at(compId).contains(i))
+						{
+							double t =
+								os.TimeByCompIdByFailureModeId_s
+								.at(compId).at(i);
+							stats << ","
+								<< (os.Duration_s > 0.0
+									? t / os.Duration_s
+									: 0.0);
+						}
+						else
+						{
+							stats << ",0";
+						}
+					}
+				}
+				for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+				{
+					if (fragModeIdsByCompId[compId].contains(i))
+					{
+						if (os.TimeByCompIdByFragilityModeId_s.contains(compId)
+							&& os.TimeByCompIdByFragilityModeId_s
+							.at(compId).contains(i))
+						{
+							double t =
+								os.TimeByCompIdByFragilityModeId_s
+								.at(compId).at(i);
+							stats << ","
+								<< (os.Duration_s > 0.0
+									? t / os.Duration_s
+									: 0.0);
+						}
+						else
+						{
+							stats << ",0";
+						}
+					}
 				}
 			}
 			stats << std::endl;

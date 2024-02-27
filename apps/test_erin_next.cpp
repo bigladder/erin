@@ -1540,6 +1540,93 @@ Test20(bool doPrint)
 	PrintPass(doPrint, "20");
 }
 
+void
+Test21(bool doPrint)
+{
+	PrintBanner(doPrint, "21");
+	std::vector<TimeState> input{
+		{0.0, true},
+		{10.0, false, {1}},
+		{20.0, true},
+		{100.0, false,{},{1}},
+		{180.0, true},
+	};
+	std::map<size_t, size_t> countByFailModeId;
+	std::map<size_t, size_t> countByFragModeId;
+	std::map<size_t, double> timeByFailModeId;
+	std::map<size_t, double> timeByFragModeId;
+	TimeState_CountAndTimeFailureEvents(input,
+		200.0,
+		countByFailModeId, countByFragModeId,
+		timeByFailModeId, timeByFragModeId);
+	std::map<size_t, size_t> expectedCountByFailModeId{{1, 1}};
+	std::map<size_t, size_t> expectedCountByFragModeId{{1, 1}};
+	std::map<size_t, double> expectedTimeByFailModeId{{1,10.0}};
+	std::map<size_t, double> expectedTimeByFragModeId{{1,80.0}};
+	assert(expectedCountByFailModeId.size() == countByFailModeId.size());
+	assert(expectedCountByFragModeId.size() == countByFragModeId.size());
+	assert(expectedTimeByFailModeId.size() == timeByFailModeId.size());
+	assert(expectedTimeByFragModeId.size() == timeByFragModeId.size());
+	for (auto const& p : expectedCountByFailModeId)
+	{
+		assert(countByFailModeId.contains(p.first));
+		assert(p.second == countByFailModeId[p.first]);
+	}
+	for (auto const& p : expectedCountByFragModeId)
+	{
+		assert(countByFragModeId.contains(p.first));
+		assert(p.second == countByFragModeId[p.first]);
+	}
+	for (auto const& p : expectedTimeByFailModeId)
+	{
+		assert(timeByFailModeId.contains(p.first));
+		assert(p.second == timeByFailModeId[p.first]);
+	}
+	for (auto const& p : expectedTimeByFragModeId)
+	{
+		assert(timeByFragModeId.contains(p.first));
+		assert(p.second == timeByFragModeId[p.first]);
+	}
+	countByFailModeId.clear();
+	countByFragModeId.clear();
+	timeByFailModeId.clear();
+	timeByFragModeId.clear();
+	input = {
+		{10.0, false, {1}},
+		{20.0, true},
+		{100.0, false,{},{1}},
+	};
+	TimeState_CountAndTimeFailureEvents(input,
+		180.0,
+		countByFailModeId, countByFragModeId,
+		timeByFailModeId, timeByFragModeId);
+	assert(expectedCountByFailModeId.size() == countByFailModeId.size());
+	assert(expectedCountByFragModeId.size() == countByFragModeId.size());
+	assert(expectedTimeByFailModeId.size() == timeByFailModeId.size());
+	assert(expectedTimeByFragModeId.size() == timeByFragModeId.size());
+	for (auto const& p : expectedCountByFailModeId)
+	{
+		assert(countByFailModeId.contains(p.first));
+		assert(p.second == countByFailModeId[p.first]);
+	}
+	for (auto const& p : expectedCountByFragModeId)
+	{
+		assert(countByFragModeId.contains(p.first));
+		assert(p.second == countByFragModeId[p.first]);
+	}
+	for (auto const& p : expectedTimeByFailModeId)
+	{
+		assert(timeByFailModeId.contains(p.first));
+		assert(p.second == timeByFailModeId[p.first]);
+	}
+	for (auto const& p : expectedTimeByFragModeId)
+	{
+		assert(timeByFragModeId.contains(p.first));
+		assert(p.second == timeByFragModeId[p.first]);
+	}
+	PrintPass(doPrint, "21");
+}
+
 int
 main(int argc, char** argv) {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -1564,6 +1651,7 @@ main(int argc, char** argv) {
 	Test18(false);
 	Test19(false);
 	Test20(false);
+	Test21(false);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration =
 		std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <map>
 
 namespace erin_next
 {
@@ -50,6 +51,15 @@ namespace erin_next
 	TimeState_GetActiveTimeState(
 		std::vector<TimeState> const& tss,
 		double time_s);
+
+	void
+	TimeState_CountAndTimeFailureEvents(
+		std::vector<TimeState> const& tss,
+		double finalTime_s,
+		std::map<size_t, size_t>& eventCountsByFailureModeId,
+		std::map<size_t, size_t>& eventCountsByFragilityModeId,
+		std::map<size_t, double>& timeByFailureModeId_s,
+		std::map<size_t, double>& timeByFragilityModeId_s);
 
 }
 

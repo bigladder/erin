@@ -2115,7 +2115,8 @@ namespace erin_next
 					case (ComponentType::ConstantLoadType):
 					case (ComponentType::ScheduleBasedLoadType):
 					{
-						sos.OutflowAchieved_kJ += (flow.Actual_W / W_per_kW) * dt;
+						sos.OutflowAchieved_kJ +=
+							(flow.Actual_W / W_per_kW) * dt;
 						sos.OutflowRequest_kJ +=
 							(flow.Requested_W / W_per_kW) * dt;
 						allLoadsMet =
@@ -2186,6 +2187,9 @@ namespace erin_next
 		{
 			relSch = TimeState_Combine(relSch, m.Reliabilities[i].TimeStates);
 		}
+		TimeState_CountAndTimeFailureEvents(relSch, m.FinalTime,
+			sos.EventCountByFailureModeId, sos.EventCountByFragilityModeId,
+			sos.TimeByFailureModeId_s, sos.TimeByFragilityModeId_s);
 		sos.Availability_s = TimeState_CalcAvailability_s(relSch, m.FinalTime);
 		std::map<size_t, std::vector<TimeState>> relSchByCompId;
 		for (size_t i = 0; i < m.Reliabilities.size(); ++i)
@@ -2195,15 +2199,44 @@ namespace erin_next
 		}
 		for (size_t compId = 0; compId < m.ComponentMap.Tag.size(); ++compId)
 		{
+			if (!sos.EventCountByCompIdByFailureModeId.contains(compId))
+			{
+				sos.EventCountByCompIdByFailureModeId[compId] =
+					std::map<size_t, size_t>{};
+			}
+			if (!sos.EventCountByCompIdByFragilityModeId.contains(compId))
+			{
+				sos.EventCountByCompIdByFragilityModeId[compId] =
+					std::map<size_t, size_t>{};
+			}
+			if (!sos.TimeByCompIdByFailureModeId_s.contains(compId))
+			{
+				sos.TimeByCompIdByFailureModeId_s[compId] =
+					std::map<size_t, double>{};
+			}
+			if (!sos.TimeByCompIdByFragilityModeId_s.contains(compId))
+			{
+				sos.TimeByCompIdByFragilityModeId_s[compId] =
+					std::map<size_t, double>{};
+			}
 			if (relSchByCompId.contains(compId))
 			{
+				TimeState_CountAndTimeFailureEvents(
+					relSchByCompId[compId],
+					m.FinalTime,
+					sos.EventCountByCompIdByFailureModeId[compId],
+					sos.EventCountByCompIdByFragilityModeId[compId],
+					sos.TimeByCompIdByFailureModeId_s[compId],
+					sos.TimeByCompIdByFragilityModeId_s[compId]);
 				sos.AvailabilityByCompId_s[compId] =
 					TimeState_CalcAvailability_s(
 						relSchByCompId[compId], m.FinalTime);
 			}
 			else
 			{
-				// if there is no reliability schedule, availability is 100%
+				// NOTE: if there is no reliability schedule,
+				// availability is 100% and there are no failure times or events
+				// to count/sum.
 				sos.AvailabilityByCompId_s[compId] = m.FinalTime;
 			}
 		}

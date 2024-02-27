@@ -285,4 +285,103 @@ namespace erin_next
 		return result;
 	}
 
+	void
+	TimeState_CountAndTimeFailureEvents(
+		std::vector<TimeState> const& tss,
+		double finalTime_s,
+		std::map<size_t, size_t>& eventCountsByFailureModeId,
+		std::map<size_t, size_t>& eventCountsByFragilityModeId,
+		std::map<size_t, double>& timeByFailureModeId_s,
+		std::map<size_t, double>& timeByFragilityModeId_s)
+	{
+		for (size_t i = 0; i < tss.size(); ++i)
+		{
+			TimeState const& ts = tss[i];
+			if (i == 0 && !ts.state)
+			{
+				// count initial failures
+				for (auto failModeId : ts.failureModeCauses)
+				{
+					if (eventCountsByFailureModeId.contains(failModeId))
+					{
+						eventCountsByFailureModeId[failModeId] += 1;
+					}
+					else
+					{
+						eventCountsByFailureModeId[failModeId] = 1;
+					}
+				}
+				for (auto fragModeId : ts.fragilityModeCauses)
+				{
+					if (eventCountsByFragilityModeId.contains(fragModeId))
+					{
+						eventCountsByFragilityModeId[fragModeId] += 1;
+					}
+					else
+					{
+						eventCountsByFragilityModeId[fragModeId] = 1;
+					}
+				}
+			}
+			TimeState const nextTs = (i + 1) < tss.size()
+				? tss[i+1]
+				: TimeState{finalTime_s, ts.state};
+			double dt = nextTs.time - ts.time;
+			if (dt <= 0.0)
+			{
+				break;
+			}
+			if (!ts.state)
+			{
+				for (auto failModeId : ts.failureModeCauses)
+				{
+					if (timeByFailureModeId_s.contains(failModeId))
+					{
+						timeByFailureModeId_s[failModeId] += dt;
+					}
+					else
+					{
+						timeByFailureModeId_s[failModeId] = dt;
+					}
+				}
+				for (auto fragModeId : ts.fragilityModeCauses)
+				{
+					if (timeByFragilityModeId_s.contains(fragModeId))
+					{
+						timeByFragilityModeId_s[fragModeId] += dt;
+					}
+					else
+					{
+						timeByFragilityModeId_s[fragModeId] = dt;
+					}
+				}
+			}
+			if (ts.state && !nextTs.state)
+			{
+				for (auto failModeId : nextTs.failureModeCauses)
+				{
+					if (eventCountsByFailureModeId.contains(failModeId))
+					{
+						eventCountsByFailureModeId[failModeId] += 1;
+					}
+					else
+					{
+						eventCountsByFailureModeId[failModeId] = 1;
+					}
+				}
+				for (auto fragModeId : nextTs.fragilityModeCauses)
+				{
+					if (eventCountsByFragilityModeId.contains(fragModeId))
+					{
+						eventCountsByFragilityModeId[fragModeId] += 1;
+					}
+					else
+					{
+						eventCountsByFragilityModeId[fragModeId] = 1;
+					}
+				}
+			}
+		}
+	}
+
 }

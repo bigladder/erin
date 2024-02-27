@@ -9,7 +9,6 @@ fixed_random = 0.4
 ############################################################
 # Loads
 [loads.building_electrical]
-#csv_file = "ex03.csv"
 time_unit = "hours"
 rate_unit = "kW"
 time_rate_pairs = [

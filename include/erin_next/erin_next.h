@@ -266,9 +266,16 @@ namespace erin_next
 		size_t Port;
 	};
 
+	enum class FragilityResult
+	{
+		IsFailed,
+		HasSurvived,
+	};
+
 	enum class FragilityCurveType
 	{
 		Linear,
+		Tabular,
 	};
 
 	struct LinearFragilityCurve
@@ -277,6 +284,13 @@ namespace erin_next
 		size_t VulnerabilityId = 0;
 		double LowerBound = 0.0;
 		double UpperBound = 1.0;
+	};
+
+	struct TabularFragilityCurve
+	{
+		size_t VulnerabilityId = 0;
+		std::vector<double> Intensities;
+		std::vector<double> FailureFractions;
 	};
 
 	struct IntensityDict
@@ -739,6 +753,20 @@ namespace erin_next
 		FlowDict const& fd,
 		Connection const& c,
 		bool compact=false);
+
+	double
+	Interpolate1d(double x, double x0, double y0, double x1, double y1);
+
+	double
+	LinearFragilityCurve_GetFailureFraction(
+		LinearFragilityCurve lfc,
+		double intensityLevel);
+
+	double
+	TabularFragilityCurve_GetFailureFraction(
+		TabularFragilityCurve tfc,
+		double intensityLevel);
+
 }
 
 #endif

@@ -2503,4 +2503,68 @@ namespace erin_next
 		return os;
 	}
 
+	double
+	Interpolate1d(double x, double x0, double y0, double x1, double y1)
+	{
+		if (x < x0)
+		{
+			return y0;
+		}
+		if (x > x1)
+		{
+			return y1;
+		}
+		double dx = x1 - x0;
+		double dy = y1 - y0;
+		double x_ = x - x0;
+		if (dx > 0.0)
+		{
+			return y0 + (x_ * (dy / dx));
+		}
+		return 0.0;
+	}
+
+	double
+	LinearFragilityCurve_GetFailureFraction(
+		LinearFragilityCurve lfc,
+		double intensityLevel)
+	{
+		return Interpolate1d(
+			intensityLevel, lfc.LowerBound, 0.0, lfc.UpperBound, 1.0);
+	}
+
+	double
+	TabularFragilityCurve_GetFailureFraction(
+		TabularFragilityCurve tfc,
+		double intensityLevel)
+	{
+		size_t size = tfc.Intensities.size();
+		assert(size == tfc.FailureFractions.size());
+		assert(size > 0);
+		if (intensityLevel <= tfc.Intensities[0])
+		{
+			return tfc.FailureFractions[0];
+		}
+		if (intensityLevel >= tfc.Intensities[size - 1])
+		{
+			return tfc.FailureFractions[size - 1];
+		}
+		for (size_t i = 0; i < size; ++i)
+		{
+			if (intensityLevel == tfc.Intensities[i])
+			{
+				return tfc.FailureFractions[i];
+			}
+			if ((i + 1) < size
+				&& intensityLevel > tfc.Intensities[i]
+				&& intensityLevel <= tfc.Intensities[i + 1])
+			{
+				return Interpolate1d(intensityLevel,
+					tfc.Intensities[i], tfc.FailureFractions[i],
+					tfc.Intensities[i+1], tfc.FailureFractions[i+1]);
+			}
+		}
+		return 0.0;
+	}
+
 }

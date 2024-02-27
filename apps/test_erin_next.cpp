@@ -1627,6 +1627,20 @@ Test21(bool doPrint)
 	PrintPass(doPrint, "21");
 }
 
+void
+Test22(bool doPrint)
+{
+	PrintBanner(doPrint, "22");
+	TabularFragilityCurve tfc{};
+	tfc.VulnerabilityId = 0;
+	tfc.Intensities = std::vector<double>{0.0, 1.0, 4.0, 6.0, 9.0, 10.0};
+	tfc.FailureFractions = std::vector<double>{0.0, 0.3, 0.7, 0.8, 0.95, 1.0};
+	double level = 7.0;
+	double result = TabularFragilityCurve_GetFailureFraction(tfc, level);
+	assert(result == 0.85);
+	PrintPass(doPrint, "22");
+}
+
 int
 main(int argc, char** argv) {
 	auto start = std::chrono::high_resolution_clock::now();
@@ -1652,6 +1666,7 @@ main(int argc, char** argv) {
 	Test19(false);
 	Test20(false);
 	Test21(false);
+	Test22(false);
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto duration =
 		std::chrono::duration_cast<std::chrono::microseconds>(stop - start);

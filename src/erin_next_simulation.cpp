@@ -1402,23 +1402,20 @@ namespace erin_next
 						{
 							double level =
 								intensityIdToAmount.at(vulnerId);
-							if (level > lfc.UpperBound)
+							double failureFrac =
+								LinearFragilityCurve_GetFailureFraction(
+									lfc, level);
+							if (failureFrac == 1.0)
 							{
 								isFailed = true;
 							}
-							else if (level < lfc.LowerBound)
+							else if (failureFrac == 0.0)
 							{
 								isFailed = false;
 							}
 							else
 							{
-								double x = s.TheModel.RandFn();
-								double range =
-									lfc.UpperBound - lfc.LowerBound;
-								double failureFrac =
-									(level - lfc.LowerBound)
-									/ range;
-								isFailed = x <= failureFrac;
+								isFailed = s.TheModel.RandFn() <= failureFrac;
 							}
 						}
 					} break;

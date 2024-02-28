@@ -500,7 +500,11 @@ namespace erin_next
 		size_t compIdx)
 	{
 		auto outConn = model.ScheduledSrcs[compIdx].OutflowConn;
-		assert(outConn == connIdx);
+		if (outConn != connIdx)
+		{
+			std::cerr << "outConn must equal connIdx" << std::endl;
+			std::exit(1);
+		}
 		auto wasteConn = model.ScheduledSrcs[compIdx].WasteflowConn;
 		auto schIdx = ss.ScheduleBasedSourceIdx[compIdx];
 		auto available =
@@ -1218,7 +1222,7 @@ namespace erin_next
 	{
 		std::vector<Flow> newFlows = {};
 		newFlows.reserve(flows.size());
-		for (int i = 0; i < flows.size(); ++i)
+		for (size_t i = 0; i < flows.size(); ++i)
 		{
 			Flow f(flows[i]);
 			newFlows.push_back(f);

@@ -2,13 +2,14 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_NEXT_TOML_H
 #define ERIN_NEXT_TOML_H
-#include "../vendor/toml11/toml.hpp"
-#include "erin_next/erin_next_time_and_amount.h"
+#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
-#include <optional>
 #include <stdint.h>
+#include <optional>
+#include "../vendor/toml11/toml.hpp"
+#include "erin_next/erin_next_time_and_amount.h"
 
 namespace erin_next
 {

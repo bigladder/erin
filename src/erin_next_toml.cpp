@@ -1,6 +1,6 @@
-#include <iostream>
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_utils.h"
+#include <iostream>
 
 namespace erin_next
 {
@@ -200,10 +200,10 @@ namespace erin_next
 						TOML_ParseNumericValueAsDouble(t_and_r.at(1));
 					if (t.has_value() && r.has_value() && r.value() >= 0)
 					{
-						timeAndLoads.emplace_back(
-							t.value() * timeMult,
-							static_cast<uint32_t>(
-								r.value() * rateMult));
+						TimeAndAmount taa{};
+						taa.Time_s = t.value() * timeMult;
+						taa.Amount_W = static_cast<uint32_t>(r.value() * rateMult);
+						timeAndLoads.push_back(std::move(taa));
 					}
 					else
 					{

@@ -1,12 +1,20 @@
 import sys
 import subprocess
 from pathlib import Path
+import platform
 
 
-BIN_DIR = Path('.') / '..' / '..' / 'out' / 'build' / 'x64-Debug' / 'bin'
-TEST_EXE = BIN_DIR / 'test_erin_next.exe'
-RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test.exe'
-CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
+if platform.system() == 'Windows':
+    BIN_DIR = Path('.') / '..' / '..' / 'out' / 'build' / 'x64-Debug' / 'bin'
+    TEST_EXE = BIN_DIR / 'test_erin_next.exe'
+    RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test.exe'
+    CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
+elif platform.system() == 'Darwin':
+    BIN_DIR = Path('.') / '..' / '..' / 'build' / 'bin'
+    TEST_EXE = BIN_DIR / 'test_erin_next'
+    RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test'
+    CLI_EXE = BIN_DIR / 'erin_next_cli'
+
 
 if not TEST_EXE.exists():
     print("Cannot find test executable...")

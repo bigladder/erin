@@ -26,7 +26,7 @@ main(int argc, char** argv)
 	timesAndLoads.reserve(numHours + 1);
 	for (size_t i = 0; i <= numHours; ++i)
 	{
-		timesAndLoads.emplace_back(((double)i) * 3600.0, 1);
+		timesAndLoads.push_back(TimeAndAmount{((double)i) * 3600.0, 1});
 	}
 	for (size_t i = 0; i < numComponents; ++i)
 	{

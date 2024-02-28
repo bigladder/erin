@@ -1,0 +1,6 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),S1:OUT(0) => L1:IN(0) (kW),REQUEST:S1:OUT(0) => L1:IN(0) (kW),AVAILABLE:S1:OUT(0) => L1:IN(0) (kW),op-state: S1,op-state: L1
+blue_sky,P0000-00-00T00:00:00,0,100,100,4294967,available,available
+blue_sky,P0000-00-00T00:00:00,2,0,100,0,fm,available
+blue_sky,P0000-00-00T00:00:00,4,100,100,4294967,available,available
+blue_sky,P0000-00-00T00:00:00,9,0,100,0,fm,available
+blue_sky,P0000-00-00T00:00:00,10,0,0,0,fm,available

@@ -39,6 +39,11 @@ namespace erin_next
 		double endTime_s,
 		bool rezeroTime);
 
+	std::vector<TimeState>
+	TimeState_Translate(
+		std::vector<TimeState> const& input,
+		double dt_s);
+
 	TimeState
 	TimeState_Copy(TimeState const& ts);
 

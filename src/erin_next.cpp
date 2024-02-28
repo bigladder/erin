@@ -62,7 +62,7 @@ namespace erin_next
 		size_t idx)
 	{
 		return Component_AddComponentReturningId(
-			c, ct, idx, std::vector<size_t>(), std::vector<size_t>(), "");
+			c, ct, idx, std::vector<size_t>(), std::vector<size_t>(), "", 0.0);
 	}
 
 	size_t
@@ -72,12 +72,14 @@ namespace erin_next
 		size_t idx,
 		std::vector<size_t> inflowType,
 		std::vector<size_t> outflowType,
-		std::string const& tag)
+		std::string const& tag,
+		double initialAge_s)
 	{
-		auto id{ c.CompType.size() };
+		size_t id = c.CompType.size();
 		c.CompType.push_back(ct);
 		c.Idx.push_back(idx);
 		c.Tag.push_back(tag);
+		c.InitialAges_s.push_back(initialAge_s);
 		c.InflowType.push_back(inflowType);
 		c.OutflowType.push_back(outflowType);
 		return id;
@@ -1643,7 +1645,7 @@ namespace erin_next
 		m.ConstLoads.push_back({ load });
 		return Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::ConstantLoadType, idx,
-			std::vector<size_t>{ 0 }, std::vector<size_t>{}, "");
+			std::vector<size_t>{ 0 }, std::vector<size_t>{}, "", 0.0);
 	}
 
 	size_t
@@ -1700,7 +1702,8 @@ namespace erin_next
 			m.ComponentMap, ComponentType::ScheduleBasedLoadType, idx,
 			std::vector<size_t>{ inflowTypeId },
 			std::vector<size_t>{},
-			tag);
+			tag,
+			0.0);
 	}
 
 	size_t
@@ -1722,7 +1725,8 @@ namespace erin_next
 			m.ComponentMap, ComponentType::ConstantSourceType, idx,
 			std::vector<size_t>{},
 			std::vector<size_t>{ outflowTypeId },
-			tag);
+			tag,
+			0.0);
 	}
 
 	ComponentIdAndWasteConnection
@@ -1769,7 +1773,7 @@ namespace erin_next
 		std::vector<size_t> outflowTypes(numOutports, flowId);
 		return Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::MuxType, idx,
-			inflowTypes, outflowTypes, tag);
+			inflowTypes, outflowTypes, tag, 0.0);
 	}
 
 	size_t
@@ -1815,7 +1819,8 @@ namespace erin_next
 			idx,
 			std::vector<size_t>{flowId},
 			std::vector<size_t>{flowId},
-			tag);
+			tag,
+			0.0);
 	}
 
 	ComponentIdAndWasteConnection
@@ -1854,11 +1859,11 @@ namespace erin_next
 		m.ConstEffConvs.push_back({ efficiency });
 		size_t wasteId = Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::WasteSinkType, 0,
-			std::vector<size_t>{wasteflowId}, std::vector<size_t>{}, "");
+			std::vector<size_t>{wasteflowId}, std::vector<size_t>{}, "", 0.0);
 		size_t thisId = Component_AddComponentReturningId(
 			m.ComponentMap,
 			ComponentType::ConstantEfficiencyConverterType,
-			idx, inflowIds, outflowIds, tag);
+			idx, inflowIds, outflowIds, tag, 0.0);
 		auto wasteConn =
 			Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflowId);
 		return { thisId, wasteConn };
@@ -1880,7 +1885,8 @@ namespace erin_next
 			ComponentType::PassThroughType, idx,
 			std::vector<size_t>{flowId},
 			std::vector<size_t>{flowId},
-			tag);
+			tag,
+			0.0);
 	}
 
 	Connection
@@ -2573,6 +2579,13 @@ namespace erin_next
 			}
 		}
 		return 0.0;
+	}
+
+	void
+	ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s)
+	{
+		assert(id < cd.CompType.size());
+		cd.InitialAges_s[id] = age_s;
 	}
 
 }

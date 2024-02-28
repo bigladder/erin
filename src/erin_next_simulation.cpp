@@ -1442,9 +1442,17 @@ namespace erin_next
 				continue;
 			}
 			std::vector<TimeState> const& sch = relSchByCompId.at(compId);
-			// TODO: add in component age here by adjusting start/end time
+			double initialAge_s = s.TheModel.ComponentMap.InitialAges_s[compId];
+			std::cout << "component: " << s.TheModel.ComponentMap.Tag[compId]
+				<< std::endl;
+			std::cout << "initial age (h): "
+				<< (initialAge_s / seconds_per_hour) << std::endl;
 			std::vector<TimeState> clip =
-				TimeState_Clip(sch, startTime_s, endTime_s, true);
+				TimeState_Clip(
+					TimeState_Translate(sch, initialAge_s),
+					startTime_s,
+					endTime_s,
+					true);
 			// NOTE: Reliabilities have not yet been assigned so we can
 			// just push_back()
 			ScheduleBasedReliability sbr{};

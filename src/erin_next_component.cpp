@@ -487,6 +487,42 @@ namespace erin_next
 				s.ComponentFragilities.FragilityModeIds.push_back(fmId);
 			}
 		}
+		if (table.contains("initial_age"))
+		{
+			TimeUnit timeUnit = TimeUnit::Second;
+			if (table.contains("time_unit"))
+			{
+				auto maybeTimeUnitStr =
+					TOMLTable_ParseString(table, "time_unit", fullTableName);
+				if (!maybeTimeUnitStr.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"unable to parse 'time_unit' as string");
+					return Result::Failure;
+				}
+				auto maybeTimeUnit = TagToTimeUnit(maybeTimeUnitStr.value());
+				if (!maybeTimeUnit.has_value())
+				{
+					WriteErrorMessage(fullTableName,
+						"could not interpret '" + maybeTimeUnitStr.value()
+						+ "' as time unit");
+					return Result::Failure;
+				}
+				timeUnit = maybeTimeUnit.value();
+			}
+			auto maybeInitialAge =
+				TOMLTable_ParseDouble(table, "initial_age", fullTableName);
+			if (!maybeInitialAge.has_value())
+			{
+				WriteErrorMessage(fullTableName,
+					"unable to parse initial age as a number");
+				return Result::Failure;
+			}
+			double initialAge_s =
+				Time_ToSeconds(maybeInitialAge.value(), timeUnit);
+			ComponentDict_SetInitialAge(
+				s.TheModel.ComponentMap, id, initialAge_s);
+		}
 		return Result::Success;
 	}
 

@@ -70,6 +70,7 @@ namespace erin_next
 		std::vector<size_t> Idx;
 		std::vector<ComponentType> CompType;
 		std::vector<std::string> Tag;
+		std::vector<double> InitialAges_s;
 		// Component's inflow type by inport; result indexes FlowDict
 		std::vector<std::vector<size_t>> InflowType;
 		// Component's outflow type by outport; result indexes FlowDict
@@ -364,7 +365,8 @@ namespace erin_next
 		size_t idx,
 		std::vector<size_t> inflowType,
 		std::vector<size_t> outflowType,
-		std::string const& tag);
+		std::string const& tag,
+		double initialAge_s);
 
 	void
 	Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
@@ -766,6 +768,9 @@ namespace erin_next
 	TabularFragilityCurve_GetFailureFraction(
 		TabularFragilityCurve tfc,
 		double intensityLevel);
+
+	void
+	ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s);
 
 }
 

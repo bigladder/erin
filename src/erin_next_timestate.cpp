@@ -225,6 +225,26 @@ namespace erin_next
 		return result;
 	}
 
+	std::vector<TimeState>
+	TimeState_Translate(
+		std::vector<TimeState> const& input,
+		double dt_s)
+	{
+		if (dt_s == 0.0)
+		{
+			return input;
+		}
+		std::vector<TimeState> result;
+		result.reserve(input.size());
+		for (auto const& ts : input)
+		{
+			TimeState newTs = TimeState_Copy(ts);
+			newTs.time -= dt_s;
+			result.push_back(std::move(newTs));
+		}
+		return result;
+	}
+
 	TimeState
 	TimeState_Copy(TimeState const& ts)
 	{

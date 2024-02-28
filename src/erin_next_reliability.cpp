@@ -76,7 +76,7 @@ namespace erin_next
 		}
 		time += dt;
 		dt = -1.0; // TODO: rename as infinity
-		schedule.push_back(std::move(TimeState{ time, next_state }));
+		schedule.push_back(TimeState{time, next_state, {}, {}});
 		is_finished = time >= final_time;
 		return is_finished;
 	}
@@ -136,15 +136,15 @@ namespace erin_next
 			}
 			else if (ts.time == start_time)
 			{
-				new_schedule.emplace_back(TimeState{ 0, ts.state });
+				new_schedule.emplace_back(TimeState{0.0, ts.state, {}, {}});
 			}
 			else if ((ts.time > start_time) && (ts.time <= end_time))
 			{
 				if (new_schedule.size() == 0)
 				{
-					new_schedule.emplace_back(TimeState{ 0, state });
+					new_schedule.emplace_back(TimeState{0.0, state, {}, {}});
 				}
-				new_schedule.emplace_back(TimeState{ ts.time - start_time, ts.state });
+				new_schedule.emplace_back(TimeState{ts.time - start_time, ts.state, {}, {}});
 			}
 			else if (ts.time > end_time)
 			{

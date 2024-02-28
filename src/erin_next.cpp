@@ -870,6 +870,9 @@ namespace erin_next
 				{
 					RunMuxPostFinalization(model, ss, compIdx);
 				} break;
+				default:
+				{
+				} break;
 			}
 		}
 	}
@@ -1163,6 +1166,9 @@ namespace erin_next
 				{
 					summary.StorageDischarge += ss.Flows[flowIdx].Actual_W;
 				} break;
+				default:
+				{
+				} break;
 			}
 
 			switch (m.Connections[flowIdx].To)
@@ -1180,6 +1186,9 @@ namespace erin_next
 				case (ComponentType::WasteSinkType):
 				{
 					summary.Wasteflow += ss.Flows[flowIdx].Actual_W;
+				} break;
+				default:
+				{
 				} break;
 			}
 		}
@@ -1646,7 +1655,9 @@ namespace erin_next
 	Model_AddConstantLoad(Model& m, uint32_t load)
 	{
 		size_t idx = m.ConstLoads.size();
-		m.ConstLoads.push_back({ load });
+		ConstantLoad cl{};
+		cl.Load_W = load;
+		m.ConstLoads.push_back(std::move(cl));
 		return Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::ConstantLoadType, idx,
 			std::vector<size_t>{ 0 }, std::vector<size_t>{}, "", 0.0);
@@ -1724,7 +1735,9 @@ namespace erin_next
 		std::string const& tag)
 	{
 		size_t idx = m.ConstSources.size();
-		m.ConstSources.push_back({ available });
+		ConstantSource cs{};
+		cs.Available_W = available;
+		m.ConstSources.push_back(std::move(cs));
 		return Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::ConstantSourceType, idx,
 			std::vector<size_t>{},
@@ -1860,7 +1873,9 @@ namespace erin_next
 		std::vector<size_t> inflowIds{inflowId};
 		std::vector<size_t> outflowIds{outflowId, lossflowId, wasteflowId};
 		size_t idx = m.ConstEffConvs.size();
-		m.ConstEffConvs.push_back({ efficiency });
+		ConstantEfficiencyConverter cec{};
+		cec.Efficiency = efficiency;
+		m.ConstEffConvs.push_back(std::move(cec));
 		size_t wasteId = Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::WasteSinkType, 0,
 			std::vector<size_t>{wasteflowId}, std::vector<size_t>{}, "", 0.0);
@@ -2021,6 +2036,9 @@ namespace erin_next
 			{
 				m.ScheduledLoads[toIdx].InflowConn = connId;
 			} break;
+			default:
+			{
+			} break;
 		}
 		return c;
 	}
@@ -2127,6 +2145,9 @@ namespace erin_next
 					{
 						sos.Inflow_kJ += (flow.Actual_W / W_per_kW) * dt;
 					} break;
+					default:
+					{
+					} break;
 				}
 				switch (toType)
 				{
@@ -2149,6 +2170,9 @@ namespace erin_next
 					case (ComponentType::WasteSinkType):
 					{
 						sos.Wasteflow_kJ += (flow.Actual_W / W_per_kW) * dt;
+					} break;
+					default:
+					{
 					} break;
 				}
 			}
@@ -2446,7 +2470,7 @@ namespace erin_next
 	std::optional<size_t>
 	FlowDict_GetIdByTag(FlowDict const& fd, std::string const& tag)
 	{
-		for (int idx=0; idx < fd.Type.size(); ++idx)
+		for (size_t idx = 0; idx < fd.Type.size(); ++idx)
 		{
 			if (fd.Type[idx] == tag)
 			{
@@ -2504,7 +2528,7 @@ namespace erin_next
 	void
 	Model_PrintConnections(Model const& m, FlowDict const& ft)
 	{
-		for (int i=0; i < m.Connections.size(); ++i)
+		for (size_t i = 0; i < m.Connections.size(); ++i)
 		{
 			std::cout << i << ": "
 				<< ConnectionToString(m.ComponentMap, ft, m.Connections[i])

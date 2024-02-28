@@ -81,7 +81,7 @@ namespace erin_next
 			result.reserve(b.size());
 			for (size_t i = 0; i < b.size(); ++i)
 			{
-				result.push_back(std::move(TimeState_Copy(b[i])));
+				result.push_back(TimeState_Copy(b[i]));
 			}
 			return result;
 		}
@@ -90,7 +90,7 @@ namespace erin_next
 			result.reserve(a.size());
 			for (size_t i = 0; i < a.size(); ++i)
 			{
-				result.push_back(std::move(TimeState_Copy(a[i])));
+				result.push_back(TimeState_Copy(a[i]));
 			}
 			return result;
 		}
@@ -100,7 +100,7 @@ namespace erin_next
 		}
 		size_t aIdx = 0;
 		size_t bIdx = 0;
-		TimeState next{0.0, true};
+		TimeState next{0.0, true, {}, {}};
 		bool aState = true;
 		bool bState = true;
 		while (aIdx < a.size() && bIdx < b.size())
@@ -286,7 +286,7 @@ namespace erin_next
 		std::vector<TimeState> const& tss,
 		double time_s)
 	{
-		TimeState result{time_s, true};
+		TimeState result{time_s, true, {}, {}};
 		for (auto const& ts : tss)
 		{
 			if (ts.time < time_s)
@@ -345,7 +345,7 @@ namespace erin_next
 			}
 			TimeState const nextTs = (i + 1) < tss.size()
 				? tss[i+1]
-				: TimeState{finalTime_s, ts.state};
+				: TimeState{finalTime_s, ts.state, {}, {}};
 			double dt = nextTs.time - ts.time;
 			if (dt <= 0.0)
 			{

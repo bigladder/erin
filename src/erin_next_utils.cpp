@@ -29,7 +29,7 @@ namespace erin_next
 		oss << "impossible condition error: should not get here\n"
 			<< "doy: " << doy << "\n"
 			<< "day_of_year: " << day_of_year << "\n"
-			<< "days_per_year: " << days_per_year << "\n";
+			<< "days_per_year: " << days_per_year << std::endl;
 		throw std::runtime_error(oss.str());
 	}
 

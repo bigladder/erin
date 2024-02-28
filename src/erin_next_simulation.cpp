@@ -194,6 +194,9 @@ namespace erin_next
 							<< std::endl;
 					}
 				} break;
+				default:
+				{
+				} break;
 			}
 			for (size_t compFailModeIdx = 0;
 				compFailModeIdx < s.ComponentFailureModes.ComponentIds.size();

@@ -8,7 +8,7 @@ Disruptions can be due to threat events and/or reliability-based failures.
 
 ```
 mkdir build
-cmake -S . -B build -DERIN_TESTING=ON
+cmake -S . -B build -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 cmake --build build --config Release
 ```
 

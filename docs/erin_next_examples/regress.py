@@ -5,7 +5,17 @@ import platform
 
 
 if platform.system() == 'Windows':
-    BIN_DIR = Path('.') / '..' / '..' / 'out' / 'build' / 'x64-Debug' / 'bin'
+    ROOT_DIR = Path('.') / '..' / '..'
+    BIN_DIR = ROOT_DIR / 'build' / 'bin' / 'Release'
+    if not BIN_DIR.exists():
+        BIN_DIR = ROOT_DIR / 'build' / 'bin' / 'Debug'
+    if not BIN_DIR.exists():
+        BIN_DIR = ROOT_DIR / 'out' / 'build' / 'x64-Debug' / 'bin'
+    if not BIN_DIR.exists():
+        BIN_DIR = ROOT_DIR / 'out' / 'build' / 'x64-Release' / 'bin'
+    if not BIN_DIR.exists():
+        print("Could not find build directory!")
+        sys.exit(1)
     TEST_EXE = BIN_DIR / 'test_erin_next.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test.exe'
     CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
@@ -14,6 +24,11 @@ elif platform.system() == 'Darwin':
     TEST_EXE = BIN_DIR / 'test_erin_next'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test'
     CLI_EXE = BIN_DIR / 'erin_next_cli'
+else:
+    print(f"Unhandled platform, '{platform.system()}'")
+    sys.exit(1)
+print("Platform: " + platform.system())
+print(f"BINARY DIR: {BIN_DIR}")
 
 
 if not TEST_EXE.exists():

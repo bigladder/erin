@@ -1,6 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_simulation.h"
+#include "erin_next/erin_next.h"
 #include "erin_next/erin_next_component.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_toml.h"
@@ -1155,7 +1156,13 @@ namespace erin_next
 	}
 
 	void
-	WriteEventFileHeader(std::ofstream& out, Model const& m)
+	WriteEventFileHeader(
+		std::ofstream& out,
+		Model const& m,
+		std::vector<size_t> const& connOrder,
+		std::vector<size_t> const& storeOrder,
+		std::vector<size_t> const& compOrder
+	)
 	{
 		ComponentDict const& compMap = m.ComponentMap;
 		std::vector<Connection> const& conns = m.Connections;
@@ -1165,8 +1172,9 @@ namespace erin_next
 		for (std::string const& prefix :
 			 std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
 		{
-			for (auto const& conn : conns)
+			for (auto const& connId : connOrder)
 			{
+				auto const& conn = conns[connId];
 				out << "," << prefix << ConnectionToString(compMap, conn, true)
 					<< " (kW)";
 			}
@@ -1176,7 +1184,7 @@ namespace erin_next
 				 {"Stored: ", " (kJ)"}, {"SOC: ", ""}
 			 })
 		{
-			for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
+			for (size_t storeIdx : storeOrder)
 			{
 				for (size_t compId = 0; compId < compMap.Tag.size(); ++compId)
 				{
@@ -1190,7 +1198,7 @@ namespace erin_next
 			}
 		}
 		// op-state: <component-name>
-		for (size_t compId = 0; compId < m.ComponentMap.Tag.size(); ++compId)
+		for (size_t compId : compOrder)
 		{
 			if (!m.ComponentMap.Tag[compId].empty())
 			{
@@ -1200,13 +1208,179 @@ namespace erin_next
 		out << std::endl;
 	}
 
+	std::vector<size_t>
+	CalculateConnectionOrder(Simulation const& s)
+	{
+		// TODO: need to enforce connections are unique
+		size_t const numConns = s.TheModel.Connections.size();
+		std::vector<size_t> result;
+		std::vector<std::string> originalConnTags;
+		std::vector<std::string> connTags;
+		result.reserve(numConns);
+		originalConnTags.reserve(numConns);
+		connTags.reserve(numConns);
+		for (auto const& conn : s.TheModel.Connections)
+		{
+			std::string connTag =
+				ConnectionToString(s.TheModel.ComponentMap, conn, true);
+			originalConnTags.push_back(connTag);
+			connTags.push_back(connTag);
+		}
+		std::sort(connTags.begin(), connTags.end());
+		for (auto const& connTag : connTags)
+		{
+			for (size_t connId = 0; connId < s.TheModel.Connections.size(); ++connId)
+			{
+				if (connTag == originalConnTags[connId])
+				{
+					result.push_back(connId);
+					break;
+				}
+			}
+		}
+		assert(result.size() == numConns);
+		return result;
+	}
+
+	std::vector<size_t>
+	CalculateScenarioOrder(Simulation const& s)
+	{
+		std::vector<size_t> result;
+		std::vector<std::string> scenarioTags(s.ScenarioMap.Tags);
+		size_t numScenarios = s.ScenarioMap.Tags.size();
+		std::sort(scenarioTags.begin(), scenarioTags.end());
+		result.reserve(numScenarios);
+		for (std::string const& tag : scenarioTags)
+		{
+			for (size_t scenarioId = 0; scenarioId < s.ScenarioMap.Tags.size(); ++scenarioId)
+			{
+				if (tag == s.ScenarioMap.Tags[scenarioId])
+				{
+					result.push_back(scenarioId);
+					break;
+				}
+			}
+		}
+		assert(result.size() == numScenarios);
+		return result;
+	}
+
+	std::vector<size_t>
+	CalculateComponentOrder(Simulation const& s)
+	{
+		size_t const numComps = s.TheModel.ComponentMap.Tag.size();
+		std::vector<size_t> result;
+		result.reserve(numComps);
+		std::vector<std::string> compTags(s.TheModel.ComponentMap.Tag);
+		std::sort(compTags.begin(), compTags.end());
+		for (auto const& t : compTags)
+		{
+			for (size_t compId = 0; compId < numComps; ++compId)
+			{
+				if (s.TheModel.ComponentMap.Tag[compId] == t)
+				{
+					result.push_back(compId);
+					break;
+				}
+			}
+		}
+		assert(result.size() == numComps);
+		return result;
+	}
+
+	std::vector<size_t>
+	CalculateStoreOrder(Simulation const& s)
+	{
+		std::vector<size_t> result;
+		std::vector<std::string> storeTags;
+		storeTags.reserve(s.TheModel.Stores.size());
+		size_t const numComps = s.TheModel.ComponentMap.CompType.size();
+		size_t const numStores = s.TheModel.Stores.size();
+		for (size_t storeId = 0; storeId < numStores; ++storeId)
+		{
+			for (size_t compId = 0; compId < numComps; ++compId)
+			{
+				ComponentType type =
+					s.TheModel.ComponentMap.CompType[compId];
+				size_t idx = s.TheModel.ComponentMap.Idx[compId];
+				if (type == ComponentType::StoreType && idx == storeId)
+				{
+					storeTags.push_back(s.TheModel.ComponentMap.Tag[compId]);
+					break;
+				}
+			}
+		}
+		assert(storeTags.size() == numStores);
+		std::vector<std::string> originalStoreTags(storeTags);
+		std::sort(storeTags.begin(), storeTags.end());
+		for (auto const& tag : storeTags)
+		{
+			for (size_t storeId = 0; storeId < numStores; ++storeId)
+			{
+				if (tag == originalStoreTags[storeId])
+				{
+					result.push_back(storeId);
+				}
+			}
+		}
+		assert(result.size() == numStores);
+		return result;
+	}
+
+	std::vector<size_t>
+	CalculateFailModeOrder(Simulation const& s)
+	{
+		size_t const numFailModes = s.FailureModes.Tags.size();
+		std::vector<size_t> result;
+		std::vector<std::string> failTags(s.FailureModes.Tags);
+		std::sort(failTags.begin(), failTags.end());
+		for (auto const& t : failTags)
+		{
+			for (size_t i = 0; i < numFailModes; ++i)
+			{
+				if (s.FailureModes.Tags[i] == t)
+				{
+					result.push_back(i);
+					break;
+				}
+			}
+		}
+		assert(result.size() == numFailModes);
+		return result;
+	}
+
+	std::vector<size_t>
+	CalculateFragilModeOrder(Simulation const& s)
+	{
+		size_t const numFragModes = s.FragilityModes.Tags.size();
+		std::vector<size_t> result;
+		std::vector<std::string> fragTags(s.FragilityModes.Tags);
+		std::sort(fragTags.begin(), fragTags.end());
+		for (auto const& t : fragTags)
+		{
+			for (size_t i = 0; i < numFragModes; ++i)
+			{
+				if (s.FragilityModes.Tags[i] == t)
+				{
+					result.push_back(i);
+					break;
+				}
+			}
+		}
+		assert(result.size() == numFragModes);
+		return result;
+	}
+
 	void
 	WriteResultsToEventFile(
 		std::ofstream& out,
 		std::vector<TimeAndFlows> results,
 		Simulation const& s,
 		std::string const& scenarioTag,
-		std::string const& scenarioStartTimeTag
+		std::string const& scenarioStartTimeTag,
+		std::vector<size_t> const& connOrder,
+		std::vector<size_t> const& storeOrder,
+		std::vector<size_t> const& compOrder
 	)
 	{
 		Model const& m = s.TheModel;
@@ -1218,21 +1392,22 @@ namespace erin_next
 		}
 		for (auto const& r : results)
 		{
+			assert(r.Flows.size() == connOrder.size());
 			out << scenarioTag << "," << scenarioStartTimeTag << ","
 				<< (r.Time / seconds_per_hour);
-			for (size_t i = 0; i < r.Flows.size(); ++i)
+			for (size_t const& i : connOrder)
 			{
 				double actual_kW =
 					static_cast<double>(r.Flows[i].Actual_W) / W_per_kW;
 				out << "," << static_cast<uint32_t>(std::round(actual_kW));
 			}
-			for (size_t i = 0; i < r.Flows.size(); ++i)
+			for (size_t const& i : connOrder)
 			{
 				double req_kW =
 					static_cast<double>(r.Flows[i].Requested_W) / W_per_kW;
 				out << "," << static_cast<uint32_t>(std::round(req_kW));
 			}
-			for (size_t i = 0; i < r.Flows.size(); ++i)
+			for (size_t const& i : connOrder)
 			{
 				double avail_kW =
 					static_cast<double>(r.Flows[i].Available_W) / W_per_kW;
@@ -1241,14 +1416,14 @@ namespace erin_next
 			// TODO: check StorageAmounts and m.Stores[i].Capacity; should be J
 			// TODO: append units to these variables for clarity
 			// NOTE: Amounts in kJ
-			for (size_t i = 0; i < r.StorageAmounts_J.size(); ++i)
+			for (size_t i : storeOrder)
 			{
 				double store_kJ =
 					static_cast<double>(r.StorageAmounts_J[i]) / J_per_kJ;
 				out << "," << std::fixed << std::setprecision(3) << store_kJ;
 			}
 			// NOTE: Store state in SOC
-			for (size_t i = 0; i < r.StorageAmounts_J.size(); ++i)
+			for (size_t i : storeOrder)
 			{
 				double soc = 0.0;
 				if (m.Stores[i].Capacity_J > 0)
@@ -1258,7 +1433,7 @@ namespace erin_next
 				}
 				out << "," << std::fixed << std::setprecision(3) << soc;
 			}
-			for (size_t i = 0; i < m.ComponentMap.Tag.size(); ++i)
+			for (size_t i : compOrder)
 			{
 				if (!m.ComponentMap.Tag[i].empty())
 				{
@@ -1618,7 +1793,10 @@ namespace erin_next
 	WriteStatisticsToFile(
 		Simulation const& s,
 		std::string const& statsFilePath,
-		std::vector<ScenarioOccurrenceStats> occurrenceStats
+		std::vector<ScenarioOccurrenceStats> const& occurrenceStats,
+		std::vector<size_t> const& compOrder,
+		std::vector<size_t> const& failOrder,
+		std::vector<size_t> const& fragOrder
 	)
 	{
 		std::ofstream stats;
@@ -1646,7 +1824,7 @@ namespace erin_next
 			  << "max single event downtime [MaxSEDT] (h),"
 			  << "global availability";
 		std::set<size_t> componentsToSkip;
-		for (size_t i = 0; i < s.TheModel.ComponentMap.Tag.size(); ++i)
+		for (size_t i : compOrder)
 		{
 			if (s.TheModel.ComponentMap.Tag[i].empty())
 			{
@@ -1657,26 +1835,25 @@ namespace erin_next
 				stats << ",availability: " << s.TheModel.ComponentMap.Tag[i];
 			}
 		}
-		for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+		for (size_t i : failOrder)
 		{
 			stats << ",global count: " << s.FailureModes.Tags[i];
 		}
-		for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+		for (size_t i : fragOrder)
 		{
 			stats << ",global count: " << s.FragilityModes.Tags[i];
 		}
-		for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+		for (size_t i : failOrder)
 		{
 			stats << ",global time fraction: " << s.FailureModes.Tags[i];
 		}
-		for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+		for (size_t i : fragOrder)
 		{
 			stats << ",global time fraction: " << s.FragilityModes.Tags[i];
 		}
 		std::map<size_t, std::set<size_t>> failModeIdsByCompId;
 		std::map<size_t, std::set<size_t>> fragModeIdsByCompId;
-		for (size_t compId = 0; compId < s.TheModel.ComponentMap.Tag.size();
-			 ++compId)
+		for (size_t compId : compOrder)
 		{
 			failModeIdsByCompId[compId] = std::set<size_t>{};
 			fragModeIdsByCompId[compId] = std::set<size_t>{};
@@ -1699,8 +1876,7 @@ namespace erin_next
 					}
 				}
 			}
-			for (size_t failModeId = 0; failModeId < s.FailureModes.Tags.size();
-				 ++failModeId)
+			for (size_t failModeId : failOrder)
 			{
 				if (failModeIdsByCompId[compId].contains(failModeId))
 				{
@@ -1708,9 +1884,7 @@ namespace erin_next
 						  << " / " << s.FailureModes.Tags[failModeId];
 				}
 			}
-			for (size_t fragModeId = 0;
-				 fragModeId < s.FragilityModes.Tags.size();
-				 ++fragModeId)
+			for (size_t fragModeId : fragOrder)
 			{
 				if (fragModeIdsByCompId[compId].contains(fragModeId))
 				{
@@ -1719,11 +1893,9 @@ namespace erin_next
 				}
 			}
 		}
-		for (size_t compId = 0; compId < s.TheModel.ComponentMap.Tag.size();
-			 ++compId)
+		for (size_t compId : compOrder)
 		{
-			for (size_t failModeId = 0; failModeId < s.FailureModes.Tags.size();
-				 ++failModeId)
+			for (size_t failModeId : failOrder)
 			{
 				if (failModeIdsByCompId[compId].contains(failModeId))
 				{
@@ -1732,9 +1904,7 @@ namespace erin_next
 						  << s.FailureModes.Tags[failModeId];
 				}
 			}
-			for (size_t fragModeId = 0;
-				 fragModeId < s.FragilityModes.Tags.size();
-				 ++fragModeId)
+			for (size_t fragModeId : fragOrder)
 			{
 				if (fragModeIdsByCompId[compId].contains(fragModeId))
 				{
@@ -1759,18 +1929,26 @@ namespace erin_next
 				: 0.0;
 			double EA =
 				os.Duration_s > 0.0 ? (os.Uptime_s / os.Duration_s) : 0.0;
-			stats << s.ScenarioMap.Tags[os.Id] << "," << os.OccurrenceNumber
-				  << "," << (os.Duration_s / seconds_per_hour) << ","
-				  << os.Inflow_kJ << "," << os.OutflowAchieved_kJ << ","
-				  << stored << "," << os.Wasteflow_kJ << "," << balance << ","
-				  << efficiency << "," << (os.Uptime_s / seconds_per_hour)
-				  << "," << (os.Downtime_s / seconds_per_hour) << ","
-				  << os.LoadNotServed_kJ << "," << ER << "," << EA << ","
-				  << (os.MaxSEDT_s / seconds_per_hour) << ","
+			stats << s.ScenarioMap.Tags[os.Id];
+			stats << "," << os.OccurrenceNumber;
+			stats << "," << (os.Duration_s / seconds_per_hour);
+			stats << "," << os.Inflow_kJ;
+			stats << "," << os.OutflowAchieved_kJ;
+			stats << "," << stored;
+			stats << "," << os.Wasteflow_kJ;
+			stats << "," << balance;
+			stats << "," << efficiency;
+			stats << "," << (os.Uptime_s / seconds_per_hour);
+			stats << "," << (os.Downtime_s / seconds_per_hour);
+			stats << "," << os.LoadNotServed_kJ;
+			stats << "," << ER;
+			stats << "," << EA;
+			stats << "," << (os.MaxSEDT_s / seconds_per_hour);
+			stats << ","
 				  << ((os.Duration_s > 0.0)
 						  ? (os.Availability_s / os.Duration_s)
 						  : 0.0);
-			for (size_t i = 0; i < s.TheModel.ComponentMap.Tag.size(); ++i)
+			for (size_t i : compOrder)
 			{
 				if (!componentsToSkip.contains(i))
 				{
@@ -1780,21 +1958,21 @@ namespace erin_next
 					stats << "," << availability;
 				}
 			}
-			for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+			for (size_t i : failOrder)
 			{
 				size_t eventCount = os.EventCountByFailureModeId.contains(i)
 					? os.EventCountByFailureModeId.at(i)
 					: 0;
 				stats << "," << eventCount;
 			}
-			for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+			for (size_t i : fragOrder)
 			{
 				size_t eventCount = os.EventCountByFragilityModeId.contains(i)
 					? os.EventCountByFragilityModeId.at(i)
 					: 0;
 				stats << "," << eventCount;
 			}
-			for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+			for (size_t i : failOrder)
 			{
 				double time_s = os.TimeByFailureModeId_s.contains(i)
 					? os.TimeByFailureModeId_s.at(i)
@@ -1802,7 +1980,7 @@ namespace erin_next
 				stats << ","
 					  << (os.Duration_s > 0.0 ? time_s / os.Duration_s : 0.0);
 			}
-			for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+			for (size_t i : fragOrder)
 			{
 				double time_s = os.TimeByFragilityModeId_s.contains(i)
 					? os.TimeByFragilityModeId_s.at(i)
@@ -1810,10 +1988,9 @@ namespace erin_next
 				stats << ","
 					  << (os.Duration_s > 0.0 ? time_s / os.Duration_s : 0.0);
 			}
-			for (size_t compId = 0; compId < s.TheModel.ComponentMap.Tag.size();
-				 ++compId)
+			for (size_t compId : compOrder)
 			{
-				for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+				for (size_t i : failOrder)
 				{
 					if (failModeIdsByCompId[compId].contains(i))
 					{
@@ -1833,7 +2010,7 @@ namespace erin_next
 						}
 					}
 				}
-				for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+				for (size_t i : fragOrder)
 				{
 					if (fragModeIdsByCompId[compId].contains(i))
 					{
@@ -1855,10 +2032,9 @@ namespace erin_next
 					}
 				}
 			}
-			for (size_t compId = 0; compId < s.TheModel.ComponentMap.Tag.size();
-				 ++compId)
+			for (size_t compId : compOrder)
 			{
-				for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+				for (size_t i : failOrder)
 				{
 					if (failModeIdsByCompId[compId].contains(i))
 					{
@@ -1879,7 +2055,7 @@ namespace erin_next
 						}
 					}
 				}
-				for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+				for (size_t i : fragOrder)
 				{
 					if (fragModeIdsByCompId[compId].contains(i))
 					{
@@ -1975,6 +2151,12 @@ namespace erin_next
 				maxDuration_s = duration_s;
 			}
 		}
+		std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
+		std::vector<size_t> connOrder = CalculateConnectionOrder(s);
+		std::vector<size_t> storeOrder = CalculateStoreOrder(s);
+		std::vector<size_t> compOrder = CalculateComponentOrder(s);
+		std::vector<size_t> failOrder = CalculateFailModeOrder(s);
+		std::vector<size_t> fragOrder = CalculateFragilModeOrder(s);
 		std::map<size_t, std::vector<TimeState>> relSchByCompFailId;
 		// NOTE: set up reliability manager
 		// TODO: remove duplication of data here
@@ -2044,10 +2226,11 @@ namespace erin_next
 					  << std::endl;
 			return;
 		}
-		WriteEventFileHeader(out, s.TheModel);
+		WriteEventFileHeader(
+			out, s.TheModel, connOrder, storeOrder, compOrder
+		);
 		std::vector<ScenarioOccurrenceStats> occurrenceStats;
-		for (size_t scenIdx = 0; scenIdx < Simulation_ScenarioCount(s);
-			 ++scenIdx)
+		for (size_t scenIdx : scenarioOrder)
 		{
 			std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
 			std::cout << "Scenario: " << scenarioTag << std::endl;
@@ -2103,7 +2286,14 @@ namespace erin_next
 				auto results = Simulate(s.TheModel, option_verbose);
 				// TODO: investigate putting output on another thread
 				WriteResultsToEventFile(
-					out, results, s, scenarioTag, scenarioStartTimeTag
+					out,
+					results,
+					s,
+					scenarioTag,
+					scenarioStartTimeTag,
+					connOrder,
+					storeOrder,
+					compOrder
 				);
 				ScenarioOccurrenceStats sos =
 					ModelResults_CalculateScenarioOccurrenceStats(
@@ -2117,6 +2307,8 @@ namespace erin_next
 			// scenario
 		}
 		out.close();
-		WriteStatisticsToFile(s, statsFilePath, occurrenceStats);
+		WriteStatisticsToFile(
+			s, statsFilePath, occurrenceStats, compOrder, failOrder, fragOrder
+		);
 	}
 }

@@ -208,6 +208,52 @@ namespace erin_next
 		toml::table const& fcData,
 		std::string const& tableFullName
 	);
+
+	std::vector<size_t>
+	CalculateConnectionOrder(Simulation const& s);
+
+	std::vector<size_t>
+	CalculateScenarioOrder(Simulation const& s);
+
+	std::vector<size_t>
+	CalculateComponentOrder(Simulation const& s);
+
+	std::vector<size_t>
+	CalculateStoreOrder(Simulation const& s);
+
+	std::vector<size_t>
+	CalculateFailModeOrder(Simulation const& s);
+
+	std::vector<size_t>
+	CalculateFragilModeOrder(Simulation const& s);
+
+	void
+	WriteEventFileHeader(
+		std::ofstream& out,
+		Model const& m,
+		std::vector<size_t> const& connOrder,
+		std::vector<size_t> const& storeOrder,
+		std::vector<size_t> const& compOrder
+	);
+
+	void
+	WriteResultsToEventFile(
+		std::ofstream& out,
+		std::vector<TimeAndFlows> results,
+		Simulation const& s,
+		std::string const& scenarioTag,
+		std::string const& scenarioStartTimeTag,
+		std::vector<size_t> const& connOrder
+	);
+
+	void
+	WriteStatisticsToFile(
+		Simulation const& s,
+		std::string const& statsFilePath,
+		std::vector<ScenarioOccurrenceStats> const& occurrenceStats,
+		std::vector<size_t> const& compOrder
+	);
+
 }
 
 #endif

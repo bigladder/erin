@@ -12,6 +12,21 @@ cmake -S . -B build -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 cmake --build build --config Release
 ```
 
+## Using Task
+
+[Task](https://taskfile.dev/) is a cross-platform task runner and build tool.
+It can be used to assist with varius development tasks.
+
+You can install the tool from the website above.
+Once installed, call `task --list` to list available tasks. 
+
+## Clang Format
+
+This project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html).
+Once installed, formatting is facilitated by using task: `task format`.
+This makes the formatting step explicit.
+
+
 ## Command-line Setup
 
 A script is available to run the compiler and tests from the command prompt (Mac OS X or Linux).

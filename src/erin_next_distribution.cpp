@@ -21,7 +21,12 @@ namespace erin_next
 	// reference: https://www.real-statistics.com/other-key-distributions/
 	//    weibull-distribution/three-parameter-weibull-distribution/
 	double
-	weibull_quantile(const double& p, const double& k, const double& a, const double& b)
+	weibull_quantile(
+		const double& p,
+		const double& k,
+		const double& a,
+		const double& b
+	)
 	{
 		constexpr double highest_q{0.9999};
 		double ans{0.0};
@@ -32,8 +37,9 @@ namespace erin_next
 		else
 		{
 			auto q{p};
-			if (p >= 1.0) {
-			q = highest_q;
+			if (p >= 1.0)
+			{
+				q = highest_q;
 			}
 			ans = b + a * std::pow(-1.0 * std::log(1.0 - q), 1.0 / k);
 		}
@@ -75,16 +81,16 @@ namespace erin_next
 			return extent;
 		}
 		constexpr double pi{3.1415'9265'3589'7932'3846'26433};
-		constexpr double a{8'887.0/63'473.0};
+		constexpr double a{8'887.0 / 63'473.0};
 		constexpr double C{1.0 / a};
-		constexpr double two{2.0}; 
+		constexpr double two{2.0};
 		constexpr double C_times_2{C * two};
 		constexpr double A{C_times_2 / pi};
 		double B = std::log(1.0 - (x * x));
 		double D{B / two};
 		double sum_A_D{A + D};
 		double sum_A_D2{sum_A_D * sum_A_D};
-		auto answer = std::sqrt((-A) + (-D) + std::sqrt(sum_A_D2 - (C*B)));
+		auto answer = std::sqrt((-A) + (-D) + std::sqrt(sum_A_D2 - (C * B)));
 		if (x < 0.0)
 		{
 			answer = (-1.0) * answer;
@@ -105,16 +111,16 @@ namespace erin_next
 	{
 		switch (dist_type)
 		{
-		case DistType::Fixed:
-			return std::string{"fixed"};
-		case DistType::Uniform:
-			return std::string{"uniform"};
-		case DistType::Normal:
-			return std::string{"normal"};
-		case DistType::Weibull:
-			return std::string{"weibull"};
-		case DistType::QuantileTable:
-			return std::string{"table"};
+			case DistType::Fixed:
+				return std::string{"fixed"};
+			case DistType::Uniform:
+				return std::string{"uniform"};
+			case DistType::Normal:
+				return std::string{"normal"};
+			case DistType::Weibull:
+				return std::string{"weibull"};
+			case DistType::QuantileTable:
+				return std::string{"table"};
 		}
 		std::ostringstream oss{};
 		oss << "unhandled dist_type `" << static_cast<int>(dist_type) << "`";
@@ -149,22 +155,23 @@ namespace erin_next
 		throw std::invalid_argument(oss.str());
 	}
 
-	DistributionSystem::DistributionSystem():
-		dist{},
-		fixed_dist{},
-		uniform_dist{},
-		normal_dist{},
-		quantile_table_dist{},
-		weibull_dist{},
-		g{},
-		roll{0.0, 1.0}
+	DistributionSystem::DistributionSystem()
+		: dist{}
+		, fixed_dist{}
+		, uniform_dist{}
+		, normal_dist{}
+		, quantile_table_dist{}
+		, weibull_dist{}
+		, g{}
+		, roll{0.0, 1.0}
 	{
 	}
 
 	size_t
 	DistributionSystem::add_fixed(
 		const std::string& tag,
-		double value_in_seconds)
+		double value_in_seconds
+	)
 	{
 		auto id{dist.tag.size()};
 		auto subtype_id{fixed_dist.value.size()};
@@ -179,7 +186,8 @@ namespace erin_next
 	DistributionSystem::add_uniform(
 		const std::string& tag,
 		double lower_bound_s,
-		double upper_bound_s)
+		double upper_bound_s
+	)
 	{
 		if (lower_bound_s > upper_bound_s)
 		{
@@ -203,7 +211,8 @@ namespace erin_next
 	DistributionSystem::add_normal(
 		const std::string& tag,
 		double mean_s,
-		double stddev_s)
+		double stddev_s
+	)
 	{
 		auto id{dist.tag.size()};
 		auto subtype_id{normal_dist.average.size()};
@@ -216,8 +225,7 @@ namespace erin_next
 	}
 
 	void
-	ensure_sizes_equal(
-		const std::string& tag, const size_t& a, const size_t& b)
+	ensure_sizes_equal(const std::string& tag, const size_t& a, const size_t& b)
 	{
 		if (a != b)
 		{
@@ -233,7 +241,8 @@ namespace erin_next
 	ensure_size_greater_than_or_equal_to(
 		const std::string& tag,
 		const size_t& a,
-		const size_t& n)
+		const size_t& n
+	)
 	{
 		if (a < n)
 		{
@@ -247,7 +256,8 @@ namespace erin_next
 	void
 	ensure_always_increasing(
 		const std::string& tag,
-		const std::vector<double>& xs)
+		const std::vector<double>& xs
+	)
 	{
 		bool first{true};
 		double last{0.0};
@@ -264,7 +274,8 @@ namespace erin_next
 				if (x <= last)
 				{
 					std::ostringstream oss{};
-					oss << "tag `" << tag << "` not a valid tabular distribution.\n"
+					oss << "tag `" << tag
+						<< "` not a valid tabular distribution.\n"
 						<< "values must be always increasing\n";
 					throw std::invalid_argument(oss.str());
 				}
@@ -276,7 +287,8 @@ namespace erin_next
 	ensure_for_all(
 		const std::string& tag,
 		const std::vector<double>& xs,
-		const std::function<bool(double)>& f)
+		const std::function<bool(double)>& f
+	)
 	{
 		for (const auto& x : xs)
 		{
@@ -291,10 +303,7 @@ namespace erin_next
 	}
 
 	void
-	ensure_equals(
-		const std::string& tag,
-		const double x,
-		const double val)
+	ensure_equals(const std::string& tag, const double x, const double val)
 	{
 		if (x != val)
 		{
@@ -339,7 +348,8 @@ namespace erin_next
 	DistributionSystem::add_quantile_table(
 		const std::string& tag,
 		const std::vector<double>& xs,
-		const std::vector<double>& dtimes_s)
+		const std::vector<double>& dtimes_s
+	)
 	{
 		const size_t count{xs.size()};
 		const size_t last_idx{(count == 0) ? 0 : (count - 1)};
@@ -348,20 +358,22 @@ namespace erin_next
 		ensure_always_increasing(tag, xs);
 		ensure_always_increasing(tag, dtimes_s);
 		ensure_equals(tag + "[0]", xs[0], 0.0);
-		ensure_equals(tag + "[" + std::to_string(last_idx) + "]",
-			xs[last_idx], 1.0);
+		ensure_equals(
+			tag + "[" + std::to_string(last_idx) + "]", xs[last_idx], 1.0
+		);
 		auto id{dist.tag.size()};
 		auto subtype_id{quantile_table_dist.start_idx.size()};
 		size_t start_idx{
-		  subtype_id == 0
-		  ? 0
-		  : (quantile_table_dist.end_idx[subtype_id - 1] + 1)};
+			subtype_id == 0 ? 0
+							: (quantile_table_dist.end_idx[subtype_id - 1] + 1)
+		};
 		size_t end_idx{start_idx + count - 1};
 		quantile_table_dist.start_idx.emplace_back(start_idx);
 		quantile_table_dist.end_idx.emplace_back(end_idx);
-		for (size_t i{0}; i < count; ++i) {
-		  quantile_table_dist.variates.emplace_back(xs[i]);
-		  quantile_table_dist.times.emplace_back(dtimes_s[i]);
+		for (size_t i{0}; i < count; ++i)
+		{
+			quantile_table_dist.variates.emplace_back(xs[i]);
+			quantile_table_dist.times.emplace_back(dtimes_s[i]);
 		}
 		dist.tag.emplace_back(tag);
 		dist.subtype_id.emplace_back(subtype_id);
@@ -403,8 +415,8 @@ namespace erin_next
 	size_t
 	DistributionSystem::add_weibull(
 		const std::string& tag,
-		const double shape_parameter,   // k
-		const double scale_parameter,   // lambda
+		const double shape_parameter, // k
+		const double scale_parameter, // lambda
 		const double location_parameter // gamma
 	)
 	{
@@ -423,8 +435,7 @@ namespace erin_next
 
 	// TODO: update to return std::optional<size_t>
 	size_t
-	DistributionSystem::lookup_dist_by_tag(
-		const std::string& tag) const
+	DistributionSystem::lookup_dist_by_tag(const std::string& tag) const
 	{
 		for (size_t i{0}; i < dist.tag.size(); ++i)
 		{
@@ -460,9 +471,7 @@ namespace erin_next
 	}
 
 	double
-	DistributionSystem::next_time_advance(
-		size_t dist_id,
-		double fraction) const
+	DistributionSystem::next_time_advance(size_t dist_id, double fraction) const
 	{
 		if (dist_id >= dist.tag.size())
 		{
@@ -480,7 +489,8 @@ namespace erin_next
 			case DistType::Fixed:
 			{
 				dt = fixed_dist.value.at(subtype_id);
-			} break;
+			}
+			break;
 			case DistType::Uniform:
 			{
 				auto lb = uniform_dist.lower_bound.at(subtype_id);
@@ -488,30 +498,37 @@ namespace erin_next
 				auto delta = ub - lb;
 				dt = static_cast<double>(
 					fraction * static_cast<double>(delta)
-					+ static_cast<uint32_t>(lb));
-			} break;
+					+ static_cast<uint32_t>(lb)
+				);
+			}
+			break;
 			case DistType::Normal:
 			{
-				constexpr double sqrt2{ 1.4142'1356'2373'0951 };
-				constexpr double twice{ 2.0 };
-				auto avg = static_cast<double>(normal_dist.average.at(subtype_id));
-				auto sd = static_cast<double>(normal_dist.stddev.at(subtype_id));
-				dt = static_cast<double>(
-					std::round(
-						avg + sd * sqrt2 * erfinv(twice * fraction - 1.0)));
-			} break;
+				constexpr double sqrt2{1.4142'1356'2373'0951};
+				constexpr double twice{2.0};
+				auto avg =
+					static_cast<double>(normal_dist.average.at(subtype_id));
+				auto sd =
+					static_cast<double>(normal_dist.stddev.at(subtype_id));
+				dt = static_cast<double>(std::round(
+					avg + sd * sqrt2 * erfinv(twice * fraction - 1.0)
+				));
+			}
+			break;
 			case DistType::QuantileTable:
 			{
-				const auto& start_idx = quantile_table_dist.start_idx[subtype_id];
+				const auto& start_idx =
+					quantile_table_dist.start_idx[subtype_id];
 				const auto& end_idx = quantile_table_dist.end_idx[subtype_id];
 				if (fraction >= 1.0)
 				{
 					dt = static_cast<double>(
-						std::round(quantile_table_dist.times[end_idx]));
+						std::round(quantile_table_dist.times[end_idx])
+					);
 				}
 				else
 				{
-					for (size_t idx{ start_idx }; idx < end_idx; ++idx)
+					for (size_t idx{start_idx}; idx < end_idx; ++idx)
 					{
 						const auto& v0 = quantile_table_dist.variates[idx];
 						const auto& v1 = quantile_table_dist.variates[idx + 1];
@@ -520,35 +537,43 @@ namespace erin_next
 							if (fraction == v0)
 							{
 								dt = static_cast<double>(
-									std::round(quantile_table_dist.times[idx]));
+									std::round(quantile_table_dist.times[idx])
+								);
 								break;
 							}
 							else
 							{
-								const auto df{ fraction - v0 };
-								const auto dv{ v1 - v0 };
-								const auto time0{ quantile_table_dist.times[idx] };
-								const auto time1{ quantile_table_dist.times[idx + 1] };
-								const auto dtimes{ time1 - time0 };
+								const auto df{fraction - v0};
+								const auto dv{v1 - v0};
+								const auto time0{quantile_table_dist.times[idx]
+								};
+								const auto time1{
+									quantile_table_dist.times[idx + 1]
+								};
+								const auto dtimes{time1 - time0};
 								dt = static_cast<double>(
-									std::round(time0 + (df / dv) * dtimes));
+									std::round(time0 + (df / dv) * dtimes)
+								);
 							}
 						}
 					}
 				}
-			} break;
+			}
+			break;
 			case DistType::Weibull:
 			{
 				const auto& k = weibull_dist.shape_params[subtype_id];
 				const auto& a = weibull_dist.scale_params[subtype_id];
 				const auto& b = weibull_dist.location_params[subtype_id];
 				dt = static_cast<double>(
-					std::round(weibull_quantile(fraction, k, a, b)));
-				
-			} break;
+					std::round(weibull_quantile(fraction, k, a, b))
+				);
+			}
+			break;
 			default:
 			{
-				throw std::runtime_error("unhandled Cumulative Density Function");
+				throw std::runtime_error("unhandled Cumulative Density Function"
+				);
 			}
 		}
 		if (dt < 0)
@@ -564,7 +589,7 @@ namespace erin_next
 		for (size_t i = 0; i < dist.dist_type.size(); ++i)
 		{
 			std::cout << i << ": " << dist_type_to_tag(dist.dist_type[i])
-				<< " -- " << dist.tag[i] << std::endl;
+					  << " -- " << dist.tag[i] << std::endl;
 		}
 	}
 
@@ -590,30 +615,33 @@ namespace erin_next
 							if (!distTable.contains("value"))
 							{
 								std::cout << "[" << fullTableName << "] "
-									<< "missing required field 'value'"
-									<< std::endl;
+										  << "missing required field 'value'"
+										  << std::endl;
 								return;
 							}
-							auto maybeValue =
-								TOMLTable_ParseDouble(
-									distTable, "value", fullTableName);
+							auto maybeValue = TOMLTable_ParseDouble(
+								distTable, "value", fullTableName
+							);
 							if (!maybeValue.has_value())
 							{
 								std::cout << "[" << fullTableName << "] "
-									<< "unable to parse 'value' as number"
-									<< std::endl;
+										  << "unable to parse 'value' as number"
+										  << std::endl;
 								return;
 							}
 							auto v = maybeValue.value();
 							auto maybeUnit =
 								TOMLTable_ParseStringWithSetResponses(
-									distTable, ValidTimeUnits,
-									"time_unit", fullTableName);
+									distTable,
+									ValidTimeUnits,
+									"time_unit",
+									fullTableName
+								);
 							if (!maybeUnit.has_value())
 							{
 								std::cout << "[" << fullTableName << "] "
-									<< "unable to parse valid time unit"
-									<< std::endl;
+										  << "unable to parse valid time unit"
+										  << std::endl;
 								return;
 							}
 							std::string const& unitStr = maybeUnit.value();
@@ -622,19 +650,23 @@ namespace erin_next
 							if (!maybeTimeUnit.has_value())
 							{
 								std::cout << "[" << fullTableName << "] "
-									<< "unhandled time unit '"
-									<< unitStr << "'" << std::endl;
+										  << "unhandled time unit '" << unitStr
+										  << "'" << std::endl;
 								return;
 							}
 							ds.add_fixed(
 								distTag,
-								Time_ToSeconds(v, maybeTimeUnit.value()));
-						} break;
+								Time_ToSeconds(v, maybeTimeUnit.value())
+							);
+						}
+						break;
 						default:
 						{
 							throw new std::runtime_error{
-								"Unhandled distribution type" };
-						} break;
+								"Unhandled distribution type"
+							};
+						}
+						break;
 					}
 				}
 			}

@@ -50,21 +50,21 @@ namespace erin_next
 		Simulation& s,
 		size_t scenarioId,
 		size_t intensityId,
-		double intensityLevel);
+		double intensityLevel
+	);
 
 	size_t
 	Simulation_RegisterLoadSchedule(
 		Simulation& s,
 		std::string const& tag,
-		std::vector<TimeAndAmount> const& loadSchedule);
+		std::vector<TimeAndAmount> const& loadSchedule
+	);
 
 	std::optional<size_t>
 	Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag);
 
 	void
-	Simulation_RegisterAllLoads(
-		Simulation& s,
-		std::vector<Load> const& loads);
+	Simulation_RegisterAllLoads(Simulation& s, std::vector<Load> const& loads);
 
 	void
 	Simulation_PrintComponents(Simulation const& s);
@@ -92,7 +92,7 @@ namespace erin_next
 
 	Result
 	Simulation_ParseLoads(Simulation& s, toml::value const& v);
-	
+
 	size_t
 	Simulation_RegisterFragilityCurve(Simulation& s, std::string const& tag);
 
@@ -101,21 +101,24 @@ namespace erin_next
 		Simulation& s,
 		std::string const& tag,
 		FragilityCurveType curveType,
-		size_t curveIdx);
+		size_t curveIdx
+	);
 
 	size_t
 	Simulation_RegisterFailureMode(
 		Simulation& s,
 		std::string const& tag,
 		size_t failureId,
-		size_t repairId);
+		size_t repairId
+	);
 
 	size_t
 	Simulation_RegisterFragilityMode(
 		Simulation& s,
 		std::string const& tag,
 		size_t fragilityCurveId,
-		std::optional<size_t> maybeRepairDistId);
+		std::optional<size_t> maybeRepairDistId
+	);
 
 	Result
 	Simulation_ParseFragilityCurves(Simulation& s, std::string const& v);
@@ -148,13 +151,15 @@ namespace erin_next
 	SetLoadsForScenario(
 		std::vector<ScheduleBasedLoad>& loads,
 		LoadDict loadMap,
-		size_t scenarioIdx);
+		size_t scenarioIdx
+	);
 
 	std::vector<double>
 	DetermineScenarioOccurrenceTimes(
 		Simulation& s,
 		size_t scenIdx,
-		bool isVerbose);
+		bool isVerbose
+	);
 
 	std::map<size_t, double>
 	GetIntensitiesForScenario(Simulation& s, size_t scenIdx);
@@ -168,7 +173,8 @@ namespace erin_next
 		double startTime_s,
 		double endTime_s,
 		std::map<size_t, double> const& intensityIdToAmount,
-		std::map<size_t, std::vector<TimeState>> const& relSchByCompId);
+		std::map<size_t, std::vector<TimeState>> const& relSchByCompId
+	);
 
 	void
 	Simulation_Run(Simulation& s);
@@ -182,7 +188,8 @@ namespace erin_next
 	bool
 	Simulation_IsFragilityModeNameUnique(
 		Simulation& s,
-		std::string const& name);
+		std::string const& name
+	);
 
 	Result
 	Simulation_ParseFailureModes(Simulation& s, toml::value const& v);
@@ -192,13 +199,15 @@ namespace erin_next
 		Simulation& s,
 		std::string const& fcName,
 		std::string const& tableFullName,
-		toml::table const& fcData);
+		toml::table const& fcData
+	);
 
 	std::optional<size_t>
 	Parse_VulnerableTo(
 		Simulation const& s,
 		toml::table const& fcData,
-		std::string const& tableFullName);
+		std::string const& tableFullName
+	);
 }
 
 #endif

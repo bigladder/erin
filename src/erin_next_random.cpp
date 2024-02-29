@@ -4,12 +4,14 @@
 
 namespace erin_next
 {
-	double FixedRandom::operator()() const
+	double
+	FixedRandom::operator()() const
 	{
 		return FixedValue;
 	}
 
-	double FixedSeries::operator()()
+	double
+	FixedSeries::operator()()
 	{
 		if (Series.size() == 0)
 		{
@@ -21,7 +23,8 @@ namespace erin_next
 		return result;
 	}
 
-	double Random::operator()()
+	double
+	Random::operator()()
 	{
 		return Distribution(Generator);
 	}
@@ -32,8 +35,7 @@ namespace erin_next
 		Random r{};
 		auto now = std::chrono::high_resolution_clock::now();
 		auto d = now.time_since_epoch();
-		constexpr unsigned int range =
-			std::numeric_limits<unsigned int>::max()
+		constexpr unsigned int range = std::numeric_limits<unsigned int>::max()
 			- std::numeric_limits<unsigned int>::min();
 		r.Seed = d.count() % range;
 		r.Generator.seed(r.Seed);

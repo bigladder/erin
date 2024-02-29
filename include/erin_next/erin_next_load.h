@@ -12,7 +12,8 @@
 
 namespace erin_next
 {
-	struct Load {
+	struct Load
+	{
 		std::string Tag;
 		std::vector<TimeAndAmount> TimeAndLoads;
 	};

@@ -222,7 +222,6 @@ namespace erin_next
 		std::vector<uint32_t> StorageAmounts_J;
 	};
 
-
 	struct Model
 	{
 		ComponentDict ComponentMap;
@@ -356,7 +355,8 @@ namespace erin_next
 	Component_AddComponentReturningId(
 		ComponentDict& c,
 		ComponentType ct,
-		size_t idx);
+		size_t idx
+	);
 
 	size_t
 	Component_AddComponentReturningId(
@@ -366,18 +366,23 @@ namespace erin_next
 		std::vector<size_t> inflowType,
 		std::vector<size_t> outflowType,
 		std::string const& tag,
-		double initialAge_s);
+		double initialAge_s
+	);
 
 	void
 	Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
 
 	void
 	SimulationState_AddActiveConnectionBack(
-		SimulationState& ss, size_t connIdx);
+		SimulationState& ss,
+		size_t connIdx
+	);
 
 	void
 	SimulationState_AddActiveConnectionForward(
-		SimulationState& ss, size_t connIdx);
+		SimulationState& ss,
+		size_t connIdx
+	);
 
 	size_t
 	CountActiveConnections(SimulationState const& ss);
@@ -390,20 +395,27 @@ namespace erin_next
 
 	void
 	ActivateConnectionsForScheduleBasedLoads(
-		Model const& m, SimulationState& ss, double t);
+		Model const& m,
+		SimulationState& ss,
+		double t
+	);
 
 	void
 	ActivateConnectionsForScheduleBasedSources(
 		Model const& m,
 		SimulationState& ss,
-		double t);
+		double t
+	);
 
 	void
 	ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
 
 	void
 	ActivateConnectionsForReliability(
-		Model& m, SimulationState& ss, double time);
+		Model& m,
+		SimulationState& ss,
+		double time
+	);
 
 	double
 	GetNextTime(double nextTime, size_t count, std::function<double(size_t)> f);
@@ -413,17 +425,21 @@ namespace erin_next
 
 	std::optional<size_t>
 	FindOutflowConnection(
-		Model const& m, ComponentType ct, size_t compId, size_t outflowPort);
+		Model const& m,
+		ComponentType ct,
+		size_t compId,
+		size_t outflowPort
+	);
 
 	void
 	UpdateConstantEfficiencyLossflowAndWasteflow(
 		Model const& m,
 		SimulationState& ss,
-		size_t compIdx);
+		size_t compIdx
+	);
 
 	void
-	RunMuxPostFinalization(
-		Model const& m, SimulationState& ss, size_t compIdx);
+	RunMuxPostFinalization(Model const& m, SimulationState& ss, size_t compIdx);
 
 	void
 	RunActiveConnections(Model& m, SimulationState& ss, double t);
@@ -433,7 +449,11 @@ namespace erin_next
 
 	void
 	RunPassthroughBackward(
-		Model& m, SimulationState& ss, size_t connIdx, size_t compIdx);
+		Model& m,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx
+	);
 
 	void
 	RunConnectionsBackward(Model& model, SimulationState& ss);
@@ -443,7 +463,8 @@ namespace erin_next
 		Model& m,
 		SimulationState& ss,
 		size_t connIdx,
-		size_t compIdx);
+		size_t compIdx
+	);
 
 	void
 	RunConnectionsForward(Model& model, SimulationState& ss);
@@ -458,13 +479,15 @@ namespace erin_next
 	NextEvent(
 		ScheduleBasedLoad const& sb,
 		size_t sbIdx,
-		SimulationState const& ss);
+		SimulationState const& ss
+	);
 
 	double
 	NextEvent(
 		ScheduleBasedSource const& sb,
 		size_t sbIdx,
-		SimulationState const& ss);
+		SimulationState const& ss
+	);
 
 	double
 	NextEvent(ScheduleBasedReliability const& sbr, double t);
@@ -474,7 +497,10 @@ namespace erin_next
 
 	void
 	UpdateStoresPerElapsedTime(
-		Model const& m, SimulationState& ss, double elapsedTime);
+		Model const& m,
+		SimulationState& ss,
+		double elapsedTime
+	);
 
 	// TODO: change name to `std::string ComponentTypeToString(ComponentType);`
 	std::string
@@ -506,29 +532,41 @@ namespace erin_next
 
 	void
 	Model_SetComponentToRepaired(
-		Model const& m, SimulationState& ss, size_t compId);
+		Model const& m,
+		SimulationState& ss,
+		size_t compId
+	);
 
 	void
 	Model_SetComponentToFailed(
-		Model const& m, SimulationState& ss, size_t compId);
+		Model const& m,
+		SimulationState& ss,
+		size_t compId
+	);
 
 	size_t
 	Model_AddConstantLoad(Model& m, uint32_t load);
 
 	size_t
 	Model_AddScheduleBasedLoad(
-		Model& m, double* times, uint32_t* loads, size_t numItems);
+		Model& m,
+		double* times,
+		uint32_t* loads,
+		size_t numItems
+	);
 
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndAmount> timesAndLoads);
+		std::vector<TimeAndAmount> timesAndLoads
+	);
 
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
 		std::vector<TimeAndAmount> timesAndLoads,
-		std::map<size_t, size_t> scenarioIdToLoadId);
+		std::map<size_t, size_t> scenarioIdToLoadId
+	);
 
 	size_t
 	Model_AddScheduleBasedLoad(
@@ -536,7 +574,8 @@ namespace erin_next
 		std::vector<TimeAndAmount> timesAndLoads,
 		std::map<size_t, size_t> scenarioIdToLoadId,
 		size_t inflowTypeId,
-		std::string const& tag);
+		std::string const& tag
+	);
 
 	size_t
 	Model_AddConstantSource(Model& m, uint32_t available);
@@ -546,12 +585,11 @@ namespace erin_next
 		Model& m,
 		uint32_t available,
 		size_t outflowTypeId,
-		std::string const& tag);
-	
+		std::string const& tag
+	);
+
 	ComponentIdAndWasteConnection
-	Model_AddScheduleBasedSource(
-		Model& m,
-		std::vector<TimeAndAmount> xs);
+	Model_AddScheduleBasedSource(Model& m, std::vector<TimeAndAmount> xs);
 
 	size_t
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports);
@@ -562,7 +600,8 @@ namespace erin_next
 		size_t numInports,
 		size_t numOutports,
 		size_t flowId,
-		std::string const& tag);
+		std::string const& tag
+	);
 
 	size_t
 	Model_AddStore(
@@ -571,7 +610,8 @@ namespace erin_next
 		uint32_t maxCharge,
 		uint32_t maxDischarge,
 		uint32_t nochargeAmount,
-		uint32_t initialStorage);
+		uint32_t initialStorage
+	);
 
 	size_t
 	Model_AddStore(
@@ -582,18 +622,18 @@ namespace erin_next
 		uint32_t chargeAmount,
 		uint32_t initialStorage,
 		size_t flowId,
-		std::string const& tag);
+		std::string const& tag
+	);
 
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
 		Model& m,
 		uint32_t eff_numerator,
-		uint32_t eff_denominator);
+		uint32_t eff_denominator
+	);
 
 	ComponentIdAndWasteConnection
-	Model_AddConstantEfficiencyConverter(
-		Model& m,
-		double efficiency);
+	Model_AddConstantEfficiencyConverter(Model& m, double efficiency);
 
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
@@ -602,7 +642,8 @@ namespace erin_next
 		size_t inflowId,
 		size_t outflowId,
 		size_t lossflowId,
-		std::string const& tag);
+		std::string const& tag
+	);
 
 	size_t
 	Model_AddPassThrough(Model& m);
@@ -616,7 +657,8 @@ namespace erin_next
 		size_t from,
 		size_t fromPort,
 		size_t to,
-		size_t toPort);
+		size_t toPort
+	);
 
 	Connection
 	Model_AddConnection(
@@ -625,7 +667,8 @@ namespace erin_next
 		size_t fromPort,
 		size_t toId,
 		size_t toPort,
-		size_t flowId);
+		size_t flowId
+	);
 
 	bool
 	SameConnection(Connection a, Connection b);
@@ -635,21 +678,24 @@ namespace erin_next
 		Model const& m,
 		Connection conn,
 		double time,
-		std::vector<TimeAndFlows> timeAndFlows);
+		std::vector<TimeAndFlows> timeAndFlows
+	);
 
 	std::optional<uint32_t>
 	ModelResults_GetStoreState(
 		Model const& m,
 		size_t compId,
 		double time,
-		std::vector<TimeAndFlows> timeAndFlows);
+		std::vector<TimeAndFlows> timeAndFlows
+	);
 
 	ScenarioOccurrenceStats
 	ModelResults_CalculateScenarioOccurrenceStats(
 		size_t scenarioId,
 		size_t occurrenceNumber,
 		Model const& m,
-		std::vector<TimeAndFlows> const& timeAndFlows);
+		std::vector<TimeAndFlows> const& timeAndFlows
+	);
 
 	void
 	Debug_PrintNumberOfPasses(bool onlyGrandTotal = false);
@@ -662,31 +708,48 @@ namespace erin_next
 
 	void
 	RunConstantEfficiencyConverterBackward(
-		Model const& m, SimulationState& ss, size_t connIdx, size_t compIdx);
+		Model const& m,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx
+	);
 
 	void
 	Mux_RequestInflowsIntelligently(
 		SimulationState& ss,
 		std::vector<size_t> const& inflowConns,
-		uint32_t remainingRequest);
+		uint32_t remainingRequest
+	);
 
 	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx);
 
 	void
 	RunStoreBackward(
-		Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+		Model& model,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx
+	);
 
 	void
 	RunConstantEfficiencyConverterForward(
-		Model const& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+		Model const& model,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx
+	);
 
 	void
 	RunMuxForward(Model& model, SimulationState& ss, size_t compIdx);
 
 	void
 	RunStoreForward(
-		Model& model, SimulationState& ss, size_t connIdx, size_t compIdx);
+		Model& model,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx
+	);
 
 	void
 	RunStorePostFinalization(
@@ -694,14 +757,16 @@ namespace erin_next
 		SimulationState& ss,
 		double t,
 		size_t connIdx,
-		size_t compIdx);
+		size_t compIdx
+	);
 
 	void
 	RunScheduleBasedSourceBackward(
 		Model& model,
 		SimulationState& ss,
 		size_t connIdx,
-		size_t compIdx);
+		size_t compIdx
+	);
 
 	size_t
 	Model_NumberOfComponents(Model const& m);
@@ -711,19 +776,25 @@ namespace erin_next
 
 	size_t
 	Model_AddFailureModeToComponent(
-		Model& m, size_t compId, size_t failureDistId, size_t repairDistId);
+		Model& m,
+		size_t compId,
+		size_t failureDistId,
+		size_t repairDistId
+	);
 
 	void
 	UpdateScheduleBasedLoadNextEvent(
 		Model const& m,
 		SimulationState& ss,
-		double time);
+		double time
+	);
 
 	void
 	UpdateScheduleBasedSourceNextEvent(
 		Model const& model,
 		SimulationState& ss,
-		double time);
+		double time
+	);
 
 	std::optional<TagAndPort>
 	ParseTagAndPort(std::string const& s, std::string const& tableName);
@@ -747,14 +818,16 @@ namespace erin_next
 	ConnectionToString(
 		ComponentDict const& cd,
 		Connection const& c,
-		bool compact=false);
+		bool compact = false
+	);
 
 	std::string
 	ConnectionToString(
 		ComponentDict const& cd,
 		FlowDict const& fd,
 		Connection const& c,
-		bool compact=false);
+		bool compact = false
+	);
 
 	double
 	Interpolate1d(double x, double x0, double y0, double x1, double y1);
@@ -762,12 +835,14 @@ namespace erin_next
 	double
 	LinearFragilityCurve_GetFailureFraction(
 		LinearFragilityCurve lfc,
-		double intensityLevel);
+		double intensityLevel
+	);
 
 	double
 	TabularFragilityCurve_GetFailureFraction(
 		TabularFragilityCurve tfc,
-		double intensityLevel);
+		double intensityLevel
+	);
 
 	void
 	ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s);

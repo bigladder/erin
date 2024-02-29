@@ -39,7 +39,8 @@ namespace erin_next
 		size_t occurrenceDistId,
 		double duration,
 		TimeUnit timeUnit,
-		std::optional<size_t> maxOccurrences);
+		std::optional<size_t> maxOccurrences
+	);
 
 	std::optional<size_t>
 	ParseSingleScenario(
@@ -47,13 +48,15 @@ namespace erin_next
 		DistributionSystem const& ds,
 		toml::table const& table,
 		std::string const& fullName,
-		std::string const& tag);
+		std::string const& tag
+	);
 
 	Result
 	ParseScenarios(
 		ScenarioDict& sd,
 		DistributionSystem const& ds,
-		toml::table const& table);
+		toml::table const& table
+	);
 
 	void
 	Scenario_Print(ScenarioDict const& sd, DistributionSystem const& ds);

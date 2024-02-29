@@ -35,19 +35,23 @@ namespace erin_next
 			case (PowerUnit::Watt):
 			{
 				result = "W";
-			} break;
+			}
+			break;
 			case (PowerUnit::KiloWatt):
 			{
 				result = "kW";
-			} break;
+			}
+			break;
 			case (PowerUnit::MegaWatt):
 			{
 				result = "MW";
-			} break;
+			}
+			break;
 			default:
 			{
 				throw std::runtime_error{"unhandled power unit"};
-			} break;
+			}
+			break;
 		}
 		return result;
 	}
@@ -61,19 +65,23 @@ namespace erin_next
 			case (PowerUnit::Watt):
 			{
 				result = value;
-			} break;
+			}
+			break;
 			case (PowerUnit::KiloWatt):
 			{
 				result = value * 1'000.0;
-			} break;
+			}
+			break;
 			case (PowerUnit::MegaWatt):
 			{
 				result = value * 1'000'000.0;
-			} break;
+			}
+			break;
 			default:
 			{
-				throw std::runtime_error{ "unhandled power unit" };
-			} break;
+				throw std::runtime_error{"unhandled power unit"};
+			}
+			break;
 		}
 		return result;
 	}
@@ -117,31 +125,38 @@ namespace erin_next
 			case (EnergyUnit::Joule):
 			{
 				result = "J";
-			} break;
+			}
+			break;
 			case (EnergyUnit::KiloJoule):
 			{
 				result = "kJ";
-			} break;
+			}
+			break;
 			case (EnergyUnit::MegaJoule):
 			{
 				result = "MJ";
-			} break;
+			}
+			break;
 			case (EnergyUnit::WattHour):
 			{
 				result = "Wh";
-			} break;
+			}
+			break;
 			case (EnergyUnit::KiloWattHour):
 			{
 				result = "kWh";
-			} break;
+			}
+			break;
 			case (EnergyUnit::MegaWattHour):
 			{
 				result = "MWh";
-			} break;
+			}
+			break;
 			default:
 			{
 				throw std::runtime_error{"unhandled energy unit"};
-			} break;
+			}
+			break;
 		}
 		return result;
 	}
@@ -155,31 +170,38 @@ namespace erin_next
 			case (EnergyUnit::Joule):
 			{
 				result = value;
-			} break;
+			}
+			break;
 			case (EnergyUnit::KiloJoule):
 			{
 				result = value * 1'000.0;
-			} break;
+			}
+			break;
 			case (EnergyUnit::MegaJoule):
 			{
 				result = value * 1'000'000.0;
-			} break;
+			}
+			break;
 			case (EnergyUnit::WattHour):
 			{
 				result = value * 3'600.0;
-			} break;
+			}
+			break;
 			case (EnergyUnit::KiloWattHour):
 			{
 				result = value * 3'600'000.0;
-			} break;
+			}
+			break;
 			case (EnergyUnit::MegaWattHour):
 			{
 				result = value * 3'600'000'000.0;
-			} break;
+			}
+			break;
 			default:
 			{
 				throw std::runtime_error{"unhandled energy unit"};
-			} break;
+			}
+			break;
 		}
 		return result;
 	}
@@ -187,19 +209,19 @@ namespace erin_next
 	std::optional<TimeUnit>
 	TagToTimeUnit(std::string const& tag)
 	{
-		
-		if (tag == "s" || tag == "sec" || tag == "secs"
-			|| tag == "second" || tag == "seconds")
+
+		if (tag == "s" || tag == "sec" || tag == "secs" || tag == "second"
+			|| tag == "seconds")
 		{
 			return TimeUnit::Second;
 		}
-		if (tag == "min" || tag == "mins"
-			|| tag == "minute" || tag == "minutes")
+		if (tag == "min" || tag == "mins" || tag == "minute"
+			|| tag == "minutes")
 		{
 			return TimeUnit::Minute;
 		}
-		if (tag == "h" || tag == "hr" || tag == "hrs"
-			|| tag == "hour" || tag == "hours")
+		if (tag == "h" || tag == "hr" || tag == "hrs" || tag == "hour"
+			|| tag == "hours")
 		{
 			return TimeUnit::Hour;
 		}
@@ -228,33 +250,40 @@ namespace erin_next
 			case (TimeUnit::Second):
 			{
 				result = "s";
-			} break;
+			}
+			break;
 			case (TimeUnit::Minute):
 			{
 				result = "min";
-			} break;
+			}
+			break;
 			case (TimeUnit::Hour):
 			{
 				result = "h";
-			} break;
+			}
+			break;
 			case (TimeUnit::Day):
 			{
 				result = "d";
-			} break;
+			}
+			break;
 			case (TimeUnit::Week):
 			{
 				result = "week";
-			} break;
+			}
+			break;
 			case (TimeUnit::Year):
 			{
 				result = "yr";
-			} break;
+			}
+			break;
 			default:
 			{
 				std::ostringstream oss{};
 				oss << "unhandled TimeType '" << unit << "'" << std::endl;
-				throw new std::runtime_error{ oss.str() };
-			} break;
+				throw new std::runtime_error{oss.str()};
+			}
+			break;
 		}
 		return result;
 	}
@@ -267,53 +296,57 @@ namespace erin_next
 			case (TimeUnit::Second):
 			{
 				return t;
-			} break;
+			}
+			break;
 			case (TimeUnit::Minute):
 			{
 				return t * static_cast<double>(seconds_per_minute);
-			} break;
+			}
+			break;
 			case (TimeUnit::Hour):
 			{
 				return t * static_cast<double>(seconds_per_hour);
-			} break;
+			}
+			break;
 			case (TimeUnit::Day):
 			{
 				return t * static_cast<double>(seconds_per_day);
-			} break;
+			}
+			break;
 			case (TimeUnit::Week):
 			{
 				return t * static_cast<double>(seconds_per_week);
-			} break;
+			}
+			break;
 			case (TimeUnit::Year):
 			{
 				return t * static_cast<double>(seconds_per_year);
-			} break;
+			}
+			break;
 		}
 		std::ostringstream oss{};
-		oss << "unhandled time unit '" << TimeUnitToTag(unit)
-			<< "'" << std::endl;
-		throw new std::invalid_argument{ oss.str() };
+		oss << "unhandled time unit '" << TimeUnitToTag(unit) << "'"
+			<< std::endl;
+		throw new std::invalid_argument{oss.str()};
 	}
 
 	std::string
 	SecondsToPrettyString(double time_s)
 	{
 		size_t years = static_cast<size_t>(time_s) / seconds_per_year;
-		size_t hours =
-			static_cast<size_t>(time_s - seconds_per_year * years)
+		size_t hours = static_cast<size_t>(time_s - seconds_per_year * years)
 			/ seconds_per_hour;
 		size_t minutes =
-			static_cast<size_t>(time_s - seconds_per_year * years
-				- seconds_per_hour * hours)
+			static_cast<size_t>(
+				time_s - seconds_per_year * years - seconds_per_hour * hours
+			)
 			/ seconds_per_minute;
-		size_t seconds =
-			static_cast<size_t>(time_s - seconds_per_year * years
-				- seconds_per_hour * hours
-				- seconds_per_minute * minutes);
+		size_t seconds = static_cast<size_t>(
+			time_s - seconds_per_year * years - seconds_per_hour * hours
+			- seconds_per_minute * minutes
+		);
 		std::ostringstream oss{};
-		oss << years << " yr "
-			<< hours << " h "
-			<< minutes << " min "
+		oss << years << " yr " << hours << " h " << minutes << " min "
 			<< seconds << " s";
 		return oss.str();
 	}

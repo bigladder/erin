@@ -23,26 +23,26 @@ namespace erin_next
 
 	bool
 	operator==(TimeState const& a, TimeState const& b);
-	
+
 	bool
 	operator!=(TimeState const& a, TimeState const& b);
 
 	std::vector<TimeState>
 	TimeState_Combine(
 		std::vector<TimeState> const& a,
-		std::vector<TimeState> const& b);
+		std::vector<TimeState> const& b
+	);
 
 	std::vector<TimeState>
 	TimeState_Clip(
 		std::vector<TimeState> const& input,
 		double startTime_s,
 		double endTime_s,
-		bool rezeroTime);
+		bool rezeroTime
+	);
 
 	std::vector<TimeState>
-	TimeState_Translate(
-		std::vector<TimeState> const& input,
-		double dt_s);
+	TimeState_Translate(std::vector<TimeState> const& input, double dt_s);
 
 	TimeState
 	TimeState_Copy(TimeState const& ts);
@@ -50,12 +50,14 @@ namespace erin_next
 	double
 	TimeState_CalcAvailability_s(
 		std::vector<TimeState> const& tss,
-		double endTime_s);
+		double endTime_s
+	);
 
 	TimeState
 	TimeState_GetActiveTimeState(
 		std::vector<TimeState> const& tss,
-		double time_s);
+		double time_s
+	);
 
 	void
 	TimeState_CountAndTimeFailureEvents(
@@ -64,7 +66,8 @@ namespace erin_next
 		std::map<size_t, size_t>& eventCountsByFailureModeId,
 		std::map<size_t, size_t>& eventCountsByFragilityModeId,
 		std::map<size_t, double>& timeByFailureModeId_s,
-		std::map<size_t, double>& timeByFragilityModeId_s);
+		std::map<size_t, double>& timeByFragilityModeId_s
+	);
 
 }
 

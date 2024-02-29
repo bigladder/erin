@@ -19,7 +19,7 @@ namespace erin_next
 		}
 		std::stringstream line_stream(line);
 		std::string cell;
-		while(std::getline(line_stream, cell, ','))
+		while (std::getline(line_stream, cell, ','))
 		{
 			data.emplace_back(cell);
 		}
@@ -56,11 +56,12 @@ namespace erin_next
 		std::ostream& os,
 		const std::vector<std::string>& items,
 		bool start,
-		bool end_with_lf)
+		bool end_with_lf
+	)
 	{
 		bool first{true};
 		std::string delim = start ? "" : ",";
-		for (const auto& item: items)
+		for (const auto& item : items)
 		{
 			os << delim << item;
 			if (first)

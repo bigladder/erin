@@ -10,15 +10,27 @@ namespace erin_next
 {
 	std::unordered_set<std::string> const ValidTimeUnits{
 		// TODO: rework these to be singular; use abbreviations? h, min, s?
-		"years", "weeks", "days", "hours", "minutes", "seconds",
+		"years",
+		"weeks",
+		"days",
+		"hours",
+		"minutes",
+		"seconds",
 	};
 
 	std::unordered_set<std::string> const ValidRateUnits{
-		"W", "kW", "MW",
+		"W",
+		"kW",
+		"MW",
 	};
 
 	std::unordered_set<std::string> const ValidQuantityUnits{
-		"J", "kJ", "MJ", "Wh", "kWh", "MWh",
+		"J",
+		"kJ",
+		"MJ",
+		"Wh",
+		"kWh",
+		"MWh",
 	};
 }
 

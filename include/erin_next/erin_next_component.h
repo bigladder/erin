@@ -13,7 +13,8 @@ namespace erin_next
 	ParseSingleComponent(
 		Simulation& s,
 		toml::table const& table,
-		std::string const& tag);
+		std::string const& tag
+	);
 
 	Result
 	ParseComponents(Simulation& s, toml::table const& table);

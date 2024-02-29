@@ -24,7 +24,8 @@ namespace erin_next
 	};
 
 	// TODO: move to separate file
-	struct FailureMode_Component_Link {
+	struct FailureMode_Component_Link
+	{
 		std::vector<size_t> failure_mode_id{};
 		std::vector<size_t> component_id{};
 		std::vector<std::vector<TimeState>> schedules{};
@@ -32,28 +33,31 @@ namespace erin_next
 
 	class ReliabilityCoordinator
 	{
-	public:
+	  public:
 		ReliabilityCoordinator();
 
 		size_t
 		add_failure_mode(
 			std::string const& tag,
 			size_t const& failure_dist_id,
-			size_t const& repair_dist_id);
+			size_t const& repair_dist_id
+		);
 
 		size_t
 		link_component_with_failure_mode(
 			size_t const& comp_id,
-			size_t const& fm_id);
+			size_t const& fm_id
+		);
 
 		std::vector<TimeState>
 		make_schedule_for_link(
 			size_t linkId,
 			const std::function<double()>& rand_fn,
 			const DistributionSystem& cds,
-			double final_time);
+			double final_time
+		);
 
-	private:
+	  private:
 		FailureMode fms;
 		FailureMode_Component_Link fm_comp_links;
 
@@ -63,7 +67,8 @@ namespace erin_next
 			double dt_fm,
 			const std::function<double()>& rand_fn,
 			const DistributionSystem& cds,
-			bool is_failure) const;
+			bool is_failure
+		) const;
 
 		bool
 		update_single_schedule(
@@ -71,7 +76,8 @@ namespace erin_next
 			double& dt,
 			std::vector<TimeState>& schedule,
 			double final_time,
-			bool next_state) const;
+			bool next_state
+		) const;
 	};
 
 	// Helper Functions -- move to separate file: reliability_schedule.h?
@@ -79,12 +85,15 @@ namespace erin_next
 	clip_schedule_to(
 		std::vector<TimeState>& schedule,
 		double start_time,
-		double end_time);
+		double end_time
+	);
 
-	bool schedule_state_at_time(
+	bool
+	schedule_state_at_time(
 		const std::vector<TimeState>& schedule,
 		double time,
-		bool initial_value = true);
+		bool initial_value = true
+	);
 }
 
 #endif

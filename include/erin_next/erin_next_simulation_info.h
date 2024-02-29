@@ -27,8 +27,8 @@ namespace erin_next
 		// TODO: remove RateUnit; not in user guide; or does this set defaults?
 		// if we keep, use PowerUnit
 		std::string RateUnit;
-		// TODO: remove QuantityUnit; not in user guide; or does this set defaults?
-		// if keep, use EnergyUnit
+		// TODO: remove QuantityUnit; not in user guide; or does this set
+		// defaults? if keep, use EnergyUnit
 		std::string QuantityUnit;
 		TimeUnit TheTimeUnit;
 		double MaxTime;
@@ -39,8 +39,8 @@ namespace erin_next
 	};
 
 	std::optional<SimulationInfo>
-	ParseSimulationInfo(
-		std::unordered_map<toml::key, toml::value> const& table);
+	ParseSimulationInfo(std::unordered_map<toml::key, toml::value> const& table
+	);
 
 	bool
 	operator==(SimulationInfo const& a, SimulationInfo const& b);

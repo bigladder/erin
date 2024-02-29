@@ -7,11 +7,11 @@ namespace erin_next
 {
 
 	std::ostream&
-		operator<<(std::ostream& os, const TimeState& ts)
+	operator<<(std::ostream& os, const TimeState& ts)
 	{
 		os << "TimeState("
-			<< "time=" << ts.time << ", "
-			<< "state=" << ts.state << ", failureModeCauses={";
+		   << "time=" << ts.time << ", "
+		   << "state=" << ts.state << ", failureModeCauses={";
 		bool first = true;
 		for (auto const& x : ts.failureModeCauses)
 		{
@@ -35,8 +35,8 @@ namespace erin_next
 		bool result = true;
 		result = result && a.time == b.time;
 		result = result && a.state == b.state;
-		result = result
-			&& a.failureModeCauses.size() == b.failureModeCauses.size();
+		result =
+			result && a.failureModeCauses.size() == b.failureModeCauses.size();
 		result = result
 			&& a.fragilityModeCauses.size() == b.fragilityModeCauses.size();
 		if (result)
@@ -73,7 +73,8 @@ namespace erin_next
 	std::vector<TimeState>
 	TimeState_Combine(
 		std::vector<TimeState> const& a,
-		std::vector<TimeState> const& b)
+		std::vector<TimeState> const& b
+	)
 	{
 		std::vector<TimeState> result;
 		if (a.size() == 0 && b.size() > 0)
@@ -188,7 +189,8 @@ namespace erin_next
 		std::vector<TimeState> const& input,
 		double startTime_s,
 		double endTime_s,
-		bool rezeroTime)
+		bool rezeroTime
+	)
 	{
 		assert(startTime_s <= endTime_s);
 		std::vector<TimeState> result;
@@ -226,9 +228,7 @@ namespace erin_next
 	}
 
 	std::vector<TimeState>
-	TimeState_Translate(
-		std::vector<TimeState> const& input,
-		double dt_s)
+	TimeState_Translate(std::vector<TimeState> const& input, double dt_s)
 	{
 		if (dt_s == 0.0)
 		{
@@ -265,14 +265,14 @@ namespace erin_next
 	double
 	TimeState_CalcAvailability_s(
 		std::vector<TimeState> const& sch,
-		double endTime_s)
+		double endTime_s
+	)
 	{
 		double result = endTime_s;
 		for (size_t i = 0; i < sch.size(); ++i)
 		{
-			double dt = (i + 1) < sch.size()
-				? sch[i + 1].time - sch[i].time
-				: endTime_s - sch[i].time;
+			double dt = (i + 1) < sch.size() ? sch[i + 1].time - sch[i].time
+											 : endTime_s - sch[i].time;
 			if (!sch[i].state)
 			{
 				result -= dt;
@@ -284,7 +284,8 @@ namespace erin_next
 	TimeState
 	TimeState_GetActiveTimeState(
 		std::vector<TimeState> const& tss,
-		double time_s)
+		double time_s
+	)
 	{
 		TimeState result{time_s, true, {}, {}};
 		for (auto const& ts : tss)
@@ -312,7 +313,8 @@ namespace erin_next
 		std::map<size_t, size_t>& eventCountsByFailureModeId,
 		std::map<size_t, size_t>& eventCountsByFragilityModeId,
 		std::map<size_t, double>& timeByFailureModeId_s,
-		std::map<size_t, double>& timeByFragilityModeId_s)
+		std::map<size_t, double>& timeByFragilityModeId_s
+	)
 	{
 		for (size_t i = 0; i < tss.size(); ++i)
 		{
@@ -344,7 +346,7 @@ namespace erin_next
 				}
 			}
 			TimeState const nextTs = (i + 1) < tss.size()
-				? tss[i+1]
+				? tss[i + 1]
 				: TimeState{finalTime_s, ts.state, {}, {}};
 			double dt = nextTs.time - ts.time;
 			if (dt <= 0.0)

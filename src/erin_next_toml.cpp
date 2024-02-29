@@ -13,7 +13,8 @@ namespace erin_next
 		std::unordered_set<std::string> const& optionalFields,
 		std::unordered_map<std::string, std::string> const& defaults,
 		std::string const& tableName,
-		bool doPrint)
+		bool doPrint
+	)
 	{
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
@@ -24,20 +25,22 @@ namespace erin_next
 				if (doPrint)
 				{
 					std::cout << "[" << tableName << "] "
-						<< "Unrecognized key '" << it->first
-						<< "'" << std::endl;
+							  << "Unrecognized key '" << it->first << "'"
+							  << std::endl;
 				}
 				return false;
 			}
 		}
-		for (auto it=requiredFields.cbegin(); it != requiredFields.cend(); ++it)
+		for (auto it = requiredFields.cbegin(); it != requiredFields.cend();
+			 ++it)
 		{
 			if (!table.contains(*it))
 			{
 				if (doPrint)
 				{
 					std::cout << "[" << tableName << "] "
-						<< "Missing required key '" << *it << "'" << std::endl;
+							  << "Missing required key '" << *it << "'"
+							  << std::endl;
 				}
 				return false;
 			}
@@ -49,7 +52,8 @@ namespace erin_next
 	TOMLTable_ParseString(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName)
+		std::string const& tableName
+	)
 	{
 		if (table.contains(fieldName))
 		{
@@ -57,7 +61,7 @@ namespace erin_next
 			return rawField;
 		}
 		std::cout << "[" << tableName << "] does not contain expected field '"
-			<< fieldName << "'" << std::endl;
+				  << fieldName << "'" << std::endl;
 		return {};
 	}
 
@@ -66,7 +70,8 @@ namespace erin_next
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::unordered_set<std::string> const& allowedResponses,
 		std::string const& fieldName,
-		std::string const& tableName)
+		std::string const& tableName
+	)
 	{
 		auto field = TOMLTable_ParseString(table, fieldName, tableName);
 		if (field.has_value())
@@ -78,11 +83,13 @@ namespace erin_next
 			else
 			{
 				std::cout << "[" << tableName << "] Invalid value for field '"
-					<< fieldName << "' = '" << field.value() << "'"
-					<< std::endl;
+						  << fieldName << "' = '" << field.value() << "'"
+						  << std::endl;
 				std::cout << "Valid values: ";
 				bool first = true;
-				for (auto it = allowedResponses.cbegin(); it != allowedResponses.cend(); ++it)
+				for (auto it = allowedResponses.cbegin();
+					 it != allowedResponses.cend();
+					 ++it)
 				{
 					std::cout << (first ? "" : ", ") << *it;
 					first = false;
@@ -125,7 +132,8 @@ namespace erin_next
 	TOMLTable_ParseDouble(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName)
+		std::string const& tableName
+	)
 	{
 		if (table.contains(fieldName))
 		{
@@ -136,10 +144,10 @@ namespace erin_next
 			}
 			else
 			{
-				std::cout << "[" << tableName << "] "
-					<< fieldName << " value is not a number "
-					<< "'" << table.at(fieldName).as_string()
-					<< "'" << std::endl;
+				std::cout << "[" << tableName << "] " << fieldName
+						  << " value is not a number "
+						  << "'" << table.at(fieldName).as_string() << "'"
+						  << std::endl;
 			}
 		}
 		return {};
@@ -149,7 +157,8 @@ namespace erin_next
 	TOMLTable_ParseInteger(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName)
+		std::string const& tableName
+	)
 	{
 		if (table.contains(fieldName))
 		{
@@ -160,10 +169,10 @@ namespace erin_next
 			}
 			else
 			{
-				std::cout << "[" << tableName << "] "
-					<< fieldName << " value is not a number "
-					<< "'" << table.at(fieldName).as_string()
-					<< "'" << std::endl;
+				std::cout << "[" << tableName << "] " << fieldName
+						  << " value is not a number "
+						  << "'" << table.at(fieldName).as_string() << "'"
+						  << std::endl;
 			}
 		}
 		return {};
@@ -175,13 +184,15 @@ namespace erin_next
 		std::string const& fieldName,
 		std::string const& tableName,
 		double timeMult,
-		double rateMult)
+		double rateMult
+	)
 	{
 		std::vector<TimeAndAmount> timeAndLoads{};
 		if (!table.contains(fieldName) || !table.at(fieldName).is_array())
 		{
-			WriteErrorMessage(tableName,
-				fieldName + " not present or not an array");
+			WriteErrorMessage(
+				tableName, fieldName + " not present or not an array"
+			);
 			return {};
 		}
 		std::vector<toml::value> const& trs = table.at(fieldName).as_array();
@@ -202,7 +213,8 @@ namespace erin_next
 					{
 						TimeAndAmount taa{};
 						taa.Time_s = t.value() * timeMult;
-						taa.Amount_W = static_cast<uint32_t>(r.value() * rateMult);
+						taa.Amount_W =
+							static_cast<uint32_t>(r.value() * rateMult);
 						timeAndLoads.push_back(std::move(taa));
 					}
 					else
@@ -212,8 +224,9 @@ namespace erin_next
 				}
 				else
 				{
-					WriteErrorMessage(tableName,
-						"time/rate pair was not of length 2");
+					WriteErrorMessage(
+						tableName, "time/rate pair was not of length 2"
+					);
 					return {};
 				}
 			}
@@ -229,13 +242,13 @@ namespace erin_next
 	TOMLTable_ParseArrayOfDouble(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName)
+		std::string const& tableName
+	)
 	{
 		std::vector<double> result;
 		if (!table.contains(fieldName))
 		{
-			WriteErrorMessage(tableName,
-				"missing field '" + fieldName + "'");
+			WriteErrorMessage(tableName, "missing field '" + fieldName + "'");
 			return {};
 		}
 		if (!table.at(fieldName).is_array())
@@ -244,23 +257,26 @@ namespace erin_next
 			return {};
 		}
 		std::vector<toml::value> xs = table.at(fieldName).as_array();
-		for (size_t i=0; i < xs.size(); ++i)
+		for (size_t i = 0; i < xs.size(); ++i)
 		{
 			toml::value v = xs[i];
 			if (!(v.is_integer() || v.is_floating()))
 			{
-				WriteErrorMessage(tableName,
-					"array value at " + std::to_string(i)
-					+ " must be numeric");
+				WriteErrorMessage(
+					tableName,
+					"array value at " + std::to_string(i) + " must be numeric"
+				);
 				return {};
 			}
 			std::optional<double> maybeNumber =
 				TOML_ParseNumericValueAsDouble(v);
 			if (!maybeNumber.has_value())
 			{
-				WriteErrorMessage(tableName,
-					"array value at " + std::to_string(i) +
-					" could not be parsed as number");
+				WriteErrorMessage(
+					tableName,
+					"array value at " + std::to_string(i)
+						+ " could not be parsed as number"
+				);
 				return {};
 			}
 			result.push_back(maybeNumber.value());
@@ -272,20 +288,24 @@ namespace erin_next
 	TOMLTable_ParseArrayOfPairsOfDouble(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName)
+		std::string const& tableName
+	)
 	{
 		PairsVector result;
 		if (!table.contains(fieldName))
 		{
-			WriteErrorMessage(tableName,
-				"does not contain required field '" + fieldName + "'");
+			WriteErrorMessage(
+				tableName, "does not contain required field '" + fieldName + "'"
+			);
 			return {};
 		}
 		toml::value fieldData = table.at(fieldName);
 		if (!fieldData.is_array())
 		{
-			WriteErrorMessage(tableName,
-				fieldName + " must be an array of 2-element array of numbers");
+			WriteErrorMessage(
+				tableName,
+				fieldName + " must be an array of 2-element array of numbers"
+			);
 			return {};
 		}
 		toml::array const& pairs = fieldData.as_array();
@@ -294,17 +314,21 @@ namespace erin_next
 			toml::value const& pair = pairs.at(i);
 			if (!pair.is_array())
 			{
-				WriteErrorMessage(tableName,
+				WriteErrorMessage(
+					tableName,
 					"array entry at index " + std::to_string(i)
-					+ " must be an array of two numbers");
+						+ " must be an array of two numbers"
+				);
 				return {};
 			}
 			toml::array xy = pair.as_array();
 			if (xy.size() != 2)
 			{
-				WriteErrorMessage(tableName,
+				WriteErrorMessage(
+					tableName,
 					"array entry at index " + std::to_string(i)
-					+ " must be an array of two numbers");
+						+ " must be an array of two numbers"
+				);
 				return {};
 			}
 			std::optional<double> maybeFirst =
@@ -313,9 +337,11 @@ namespace erin_next
 				TOML_ParseNumericValueAsDouble(xy[1]);
 			if (!maybeFirst.has_value() || !maybeSecond.has_value())
 			{
-				WriteErrorMessage(tableName,
+				WriteErrorMessage(
+					tableName,
 					"array entry at index " + std::to_string(i)
-					+ " must be an array of two numbers");
+						+ " must be an array of two numbers"
+				);
 				return {};
 			}
 			result.Firsts.push_back(maybeFirst.value());

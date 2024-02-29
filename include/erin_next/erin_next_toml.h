@@ -26,20 +26,23 @@ namespace erin_next
 		std::unordered_set<std::string> const& optionalFields,
 		std::unordered_map<std::string, std::string> const& defaults,
 		std::string const& tableName,
-		bool doPrint = false);
+		bool doPrint = false
+	);
 
 	std::optional<std::string>
 	TOMLTable_ParseString(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName);
+		std::string const& tableName
+	);
 
 	std::optional<std::string>
 	TOMLTable_ParseStringWithSetResponses(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::unordered_set<std::string> const& allowedResponses,
 		std::string const& fieldName,
-		std::string const& tableName);
+		std::string const& tableName
+	);
 
 	std::optional<double>
 	TOML_ParseNumericValueAsDouble(toml::value const& v);
@@ -51,13 +54,15 @@ namespace erin_next
 	TOMLTable_ParseDouble(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName);
-	
+		std::string const& tableName
+	);
+
 	std::optional<int>
 	TOMLTable_ParseInteger(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName);
+		std::string const& tableName
+	);
 
 	std::optional<std::vector<TimeAndAmount>>
 	TOMLTable_ParseVectorOfTimeRatePairs(
@@ -65,19 +70,22 @@ namespace erin_next
 		std::string const& fieldName,
 		std::string const& tableName,
 		double timeMult,
-		double rateMult);
+		double rateMult
+	);
 
 	std::optional<std::vector<double>>
 	TOMLTable_ParseArrayOfDouble(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName);
+		std::string const& tableName
+	);
 
 	std::optional<PairsVector>
 	TOMLTable_ParseArrayOfPairsOfDouble(
 		std::unordered_map<toml::key, toml::value> const& table,
 		std::string const& fieldName,
-		std::string const& tableName);
+		std::string const& tableName
+	);
 }
 
 #endif

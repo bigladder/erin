@@ -12,9 +12,9 @@ namespace erin_next
 		{
 			if (doy < day_of_year_to_month[i])
 			{
-				// elapsed_months_of_days = the number of days (since year start)
-				// represented by the elapsed months
-				uint64_t elapsed_months_of_days{ 0 };
+				// elapsed_months_of_days = the number of days (since year
+				// start) represented by the elapsed months
+				uint64_t elapsed_months_of_days{0};
 				if (i > 0)
 				{
 					elapsed_months_of_days = day_of_year_to_month[i - 1];
@@ -53,23 +53,12 @@ namespace erin_next
 			std::lldiv(time_seconds, seconds_per_year);
 		uint64_t const years = year_div.quot;
 		std::ostringstream oss;
-		oss << "P"
-			<< std::right << std::setfill('0') << std::setw(4)
-			<< years
-			<< "-"
-			<< std::right << std::setfill('0') << std::setw(2)
-			<< months
-			<< "-"
-			<< std::right << std::setfill('0') << std::setw(2)
-			<< days
-			<< "T"
-			<< std::right << std::setfill('0') << std::setw(2)
-			<< hours
-			<< ":"
-			<< std::right << std::setfill('0') << std::setw(2)
-			<< minutes
-			<< ":"
-			<< std::right << std::setfill('0') << std::setw(2)
+		oss << "P" << std::right << std::setfill('0') << std::setw(4) << years
+			<< "-" << std::right << std::setfill('0') << std::setw(2) << months
+			<< "-" << std::right << std::setfill('0') << std::setw(2) << days
+			<< "T" << std::right << std::setfill('0') << std::setw(2) << hours
+			<< ":" << std::right << std::setfill('0') << std::setw(2) << minutes
+			<< ":" << std::right << std::setfill('0') << std::setw(2)
 			<< seconds;
 		return oss.str();
 	}

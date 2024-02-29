@@ -18,31 +18,31 @@ namespace erin_next
 	// > (reduce + days-per-month) ;=> 365
 	// > (reductions + days-per-month) ;=>
 	// ;;  [31 59 90 120 151 181 212 243 273 304 334 365]
-	std::vector<uint32_t> const days_per_month{
-		// January
-		31,
-		// February (non-leap year)
-		28,
-		// March
-		31,
-		// April
-		30,
-		// May
-		31,
-		// June
-		30,
-		// July
-		31,
-		// August
-		31,
-		// September
-		30,
-		// October
-		31,
-		// November
-		30,
-		// December
-		31};
+	std::vector<uint32_t> const days_per_month{// January
+											   31,
+											   // February (non-leap year)
+											   28,
+											   // March
+											   31,
+											   // April
+											   30,
+											   // May
+											   31,
+											   // June
+											   30,
+											   // July
+											   31,
+											   // August
+											   31,
+											   // September
+											   30,
+											   // October
+											   31,
+											   // November
+											   30,
+											   // December
+											   31
+	};
 	std::vector<uint32_t> const day_of_year_to_month{
 		// January is doy <= 31 days
 		31,
@@ -67,24 +67,25 @@ namespace erin_next
 		// November
 		334,
 		// December
-		365};
-	uint32_t const num_months{ 12 };
+		365
+	};
+	uint32_t const num_months{12};
 	int const max_month_idx = 11;
 	int const min_month_idx = 0;
 
 	// Time Conversion Factors
-	int constexpr seconds_per_minute{ 60 };
-	int constexpr minutes_per_hour{ 60 };
-	int constexpr seconds_per_hour{ seconds_per_minute * minutes_per_hour };
-	int constexpr hours_per_day{ 24 };
-	int constexpr seconds_per_day{ seconds_per_hour * hours_per_day };
-	int constexpr seconds_per_week{ seconds_per_day * 7 };
+	int constexpr seconds_per_minute{60};
+	int constexpr minutes_per_hour{60};
+	int constexpr seconds_per_hour{seconds_per_minute * minutes_per_hour};
+	int constexpr hours_per_day{24};
+	int constexpr seconds_per_day{seconds_per_hour * hours_per_day};
+	int constexpr seconds_per_week{seconds_per_day * 7};
 	// NOTE: there are actually 365.25 days per year but our time clock
 	// doesn't acknowledge leap years so we use a slightly lower factor.
 	// Hopefully, this won't bite us... For this simulation, one year is
 	// always 365 days
-	int constexpr days_per_year{ 365 };
-	int constexpr seconds_per_year{ seconds_per_day * days_per_year };
+	int constexpr days_per_year{365};
+	int constexpr seconds_per_year{seconds_per_day * days_per_year};
 
 	struct Months_days_elapsed
 	{

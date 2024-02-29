@@ -18,10 +18,12 @@ namespace erin_next
 	void
 	stream_out(std::ostream& stream, const std::vector<std::string>& xs);
 
-	void write_csv(
+	void
+	write_csv(
 		std::ostream& os,
 		const std::vector<std::string>& items,
-		bool start=true,
-		bool end_with_lf=true);
+		bool start = true,
+		bool end_with_lf = true
+	);
 }
 #endif

@@ -18,14 +18,16 @@ namespace erin_next
 	struct FixedRandom
 	{
 		double FixedValue = 0.0;
-		double operator()() const;
+		double
+		operator()() const;
 	};
 
 	struct FixedSeries
 	{
 		size_t Idx = 0;
 		std::vector<double> Series;
-		double operator()();
+		double
+		operator()();
 	};
 
 	struct Random
@@ -33,7 +35,8 @@ namespace erin_next
 		unsigned int Seed = 0;
 		std::mt19937 Generator;
 		std::uniform_real_distribution<double> Distribution{0.0, 1.0};
-		double operator()();
+		double
+		operator()();
 	};
 
 	Random

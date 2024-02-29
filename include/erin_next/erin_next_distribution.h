@@ -16,23 +16,26 @@
 namespace erin_next
 {
 
-	template <class T>
+	template<class T>
 	std::function<T(void)>
 	make_fixed(const T& value)
 	{
 		return [value]() -> T { return value; };
 	};
 
-	template <class T>
+	template<class T>
 	std::function<T(void)>
 	make_random_integer(
-		const std::default_random_engine& generator, const T& lb, const T& ub)
+		const std::default_random_engine& generator,
+		const T& lb,
+		const T& ub
+	)
 	{
 		if (lb >= ub)
 		{
 			std::ostringstream oss{};
-			oss << "expected lower_bound < upper_bound but lower_bound = "
-				<< lb << " and upper_bound = " << ub;
+			oss << "expected lower_bound < upper_bound but lower_bound = " << lb
+				<< " and upper_bound = " << ub;
 			throw std::invalid_argument(oss.str());
 		}
 		std::uniform_int_distribution<T> d{lb, ub};
@@ -46,12 +49,14 @@ namespace erin_next
 		Uniform,
 		Normal,
 		Weibull,
-		QuantileTable	// from times and variate: variate is from (0,1) time and variate
-						// must be always increasing
+		QuantileTable // from times and variate: variate is from (0,1) time and
+					  // variate must be always increasing
 	};
 
-	std::string dist_type_to_tag(DistType dist_type);
-	DistType tag_to_dist_type(const std::string& tag);
+	std::string
+	dist_type_to_tag(DistType dist_type);
+	DistType
+	tag_to_dist_type(const std::string& tag);
 
 	// SOA version of AOS, std::vector<Distribution>
 	struct Dist
@@ -102,29 +107,28 @@ namespace erin_next
 
 	class DistributionSystem
 	{
-		public:
+	  public:
 		DistributionSystem();
 
 		size_t
-		add_fixed(
-			const std::string& tag,
-			double value_in_seconds);
+		add_fixed(const std::string& tag, double value_in_seconds);
 
 		size_t
 		add_uniform(
 			const std::string& tag,
 			double lower_bound_s,
-			double upper_bound_s);
+			double upper_bound_s
+		);
 
-		size_t add_normal(
-			const std::string& tag,
-			double mean_s,
-			double stddev_s);
+		size_t
+		add_normal(const std::string& tag, double mean_s, double stddev_s);
 
-		size_t add_quantile_table(
+		size_t
+		add_quantile_table(
 			const std::string& tag,
 			const std::vector<double>& xs,
-			const std::vector<double>& dtimes_s);
+			const std::vector<double>& dtimes_s
+		);
 
 		/*
 		size_t add_pdf_table(
@@ -134,26 +138,32 @@ namespace erin_next
 			);
 		*/
 
-		size_t add_weibull(
+		size_t
+		add_weibull(
 			const std::string& tag,
-			const double shape_parameter,    // k
-			const double scale_parameter,    // lambda
-			const double location_parameter=0.0); // gamma
+			const double shape_parameter, // k
+			const double scale_parameter, // lambda
+			const double location_parameter = 0.0
+		); // gamma
 
-		[[nodiscard]] size_t lookup_dist_by_tag(std::string const& tag) const;
+		[[nodiscard]] size_t
+		lookup_dist_by_tag(std::string const& tag) const;
 
 		std::optional<Distribution>
 		get_dist_by_id(size_t id) const;
 
-		double next_time_advance(size_t dist_id);
+		double
+		next_time_advance(size_t dist_id);
 
-		double next_time_advance(size_t dist_id, double fraction) const;
+		double
+		next_time_advance(size_t dist_id, double fraction) const;
 
 		//[[nodiscard]] std::vector<double>
 		//  sample_upto_including(const double max_time_s);
-		void print_distributions() const;
+		void
+		print_distributions() const;
 
-		private:
+	  private:
 		Dist dist;
 		FixedDist fixed_dist;
 		UniformDist uniform_dist;

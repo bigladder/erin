@@ -26,6 +26,19 @@ This project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html).
 Once installed, formatting is facilitated by using task: `task format`.
 This makes the formatting step explicit.
 
+## Architectural Design Strategy
+
+This C++ project uses a programming style inspired by:
+
+- [Data-oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design)
+- [Entity-component System](https://en.wikipedia.org/wiki/Entity_component_system)
+
+The above links will give a quick overview of the concepts.
+However, they are not the end of the story.
+A fairly comprehensive treatment of data-oriented design can be found here:
+
+[Data-Oriented Design by Richard Fabien](https://www.amazon.com/dp/1916478700)
+
 
 ## Command-line Setup
 

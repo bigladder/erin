@@ -78,7 +78,7 @@ BraceWrapping: # relevant only if BreakBeforeBraces==Custom
   SplitEmptyNamespace: true
 BreakAfterAttributes: Never
 BreakAfterJavaFieldAnnotations: false
-BreakArrays: true
+BreakArrays: false
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeConceptDeclarations: Always
 BreakBeforeBraces: Allman
@@ -201,7 +201,7 @@ SpaceBeforeParensOptions: # to be tested
   AfterRequiresInExpression: false
   BeforeNonEmptyParentheses: false
 SpaceBeforeRangeBasedForLoopColon: true
-SpaceBeforeSquareBrackets: true
+SpaceBeforeSquareBrackets: false
 SpaceInEmptyBlock: false
 SpacesBeforeTrailingComments: 1
 SpacesInAngles: Never

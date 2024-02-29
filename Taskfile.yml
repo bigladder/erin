@@ -4,4 +4,4 @@ tasks:
   format:
     desc: Run clang-format over all project files
     cmds:
-      - clang-format -i src/erin_next*.cpp include/erin_next/*.h
+      - clang-format -i -style=file src/erin_next*.cpp include/erin_next/*.h

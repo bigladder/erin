@@ -39,6 +39,12 @@ A fairly comprehensive treatment of data-oriented design can be found here:
 
 [Data-Oriented Design by Richard Fabien](https://www.amazon.com/dp/1916478700)
 
+A good quote that summarizes the "spin" of data-oriented design is:
+
+> If you don’t understand the data, you don’t understand the problem.
+> Understand the problem by understanding the data.
+>
+> -- Mike Acton, Data Oriented Design and C++, CppCon 2014
 
 ## Command-line Setup
 
@@ -100,6 +106,11 @@ Where possible, dependencies are added using git submodules. In a few exceptiona
 ## Error handling (TODO)
 
 Consistent approach to handling error callbacks.
+
+## Debug Environment: Visual Studio Code
+
+- install CodeLLDB
+- TODO: copy debug configuration here
 
 ## Testing: CTest and Googletest
 

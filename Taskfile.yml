@@ -13,4 +13,13 @@ tasks:
   rebuild:
     desc: Rebuild the application
     cmds:
-      - cmake --build build --config Release
+      - cmake --build build --config Release -j 4
+  dbg-init:
+    desc: Make a debug build
+    cmds:
+      - mkdir build-db
+      - cmake -S . -B build-db -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+  dbg-build:
+    desc: Build in debug mode
+    cmds:
+      - cmake --build build-db --config Debug -j 4

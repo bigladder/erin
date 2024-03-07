@@ -26,6 +26,19 @@ This project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html).
 Once installed, formatting is facilitated by using task: `task format`.
 This makes the formatting step explicit.
 
+## Running Tests
+
+Task contains a convenient test task.
+However, running this task requires you to have a working version of Python installed.
+If you would prefer to run the tests manually, the procedure is:
+
+- `build/bin/test_erin_next` -- call this to run the unit test suite
+- regression tests:
+    - run each example file in `docs/erin_next_examples` using `build/bin/erin_next_cli`
+    - diff each `out.csv` and `stats.csv` against that example's expected output
+
+The python file `docs/erin_next_examples/regress.py` does all of the above for you.
+
 ## Architectural Design Strategy
 
 This C++ project uses a programming style inspired by:

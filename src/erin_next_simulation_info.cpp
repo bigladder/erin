@@ -33,7 +33,8 @@ namespace erin_next
 				RequiredSimulationInfoFields,
 				OptionalSimulationInfoFields,
 				DefaultSimulationInfoFields,
-				"simulation_info"
+				"simulation_info",
+				true
 			))
 		{
 			return {};

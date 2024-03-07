@@ -103,6 +103,10 @@ namespace erin_next
 
 	void
 	WriteErrorMessage(std::string const& tag, std::string const& message);
+
+	std::string
+	WriteErrorToString(std::string const& tag, std::string const& msg);
+
 }
 
 #endif

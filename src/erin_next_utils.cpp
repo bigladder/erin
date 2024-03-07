@@ -1,5 +1,6 @@
 #include "erin_next/erin_next_utils.h"
 #include <cmath>
+#include <sstream>
 
 namespace erin_next
 {
@@ -71,6 +72,18 @@ namespace erin_next
 			std::cerr << "[" << tag << "] ";
 		}
 		std::cerr << message << std::endl;
+	}
+
+	std::string
+	WriteErrorToString(std::string const& tag, std::string const& message)
+	{
+		std::ostringstream oss;
+		if (!tag.empty())
+		{
+			oss << "[" << tag << "] ";
+		}
+		oss << message << std::endl;
+		return oss.str();
 	}
 
 }

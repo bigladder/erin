@@ -6,8 +6,11 @@
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_random.h"
+#include "erin_next/erin_next_validation.h"
+#include "erin_next/erin_next_toml.h"
 #include <assert.h>
 #include <fstream>
+#include <unordered_map>
 #include <vector>
 #include <map>
 #include <iomanip>
@@ -452,16 +455,54 @@ namespace erin_next
 	}
 
 	Result
-	Simulation_ParseSimulationInfo(Simulation& s, toml::value const& v)
+	Simulation_ParseSimulationInfo(
+		Simulation& s,
+		toml::value const& v,
+		ValidationInfo const& validationInfo)
 	{
 		if (!v.contains("simulation_info"))
 		{
-			std::cout << "Required section [simulation_info] not found"
-					  << std::endl;
+			WriteErrorMessage(
+				"simulation_info",
+				"Required section [simulation_info] not found");
 			return Result::Failure;
 		}
-		toml::value const& simInfoTable = v.at("simulation_info");
-		auto maybeSimInfo = ParseSimulationInfo(simInfoTable.as_table());
+		toml::value const& simInfoValue = v.at("simulation_info");
+		if (!simInfoValue.is_table())
+		{
+			WriteErrorMessage(
+				"simulation_info",
+				"Required section [simulation_info] is not a table");
+			return Result::Failure;
+		}
+		toml::table const& simInfoTable = simInfoValue.as_table();
+		std::vector<std::string> errors;
+		std::vector<std::string> warnings;
+		std::unordered_map<std::string, toml::value> inputs =
+			TOMLTable_ParseWithValidation(
+				simInfoTable,
+				validationInfo,
+				"simulation_info",
+				errors,
+				warnings);
+		if (warnings.size() > 0)
+		{
+			std::cout << "WARNINGS:" << std::endl;
+			for (auto const& w : warnings)
+			{
+				WriteErrorMessage("simulation_info", w);
+			}
+		}
+		if (errors.size() > 0)
+		{
+			std::cout << "ERRORS:"  << std::endl;
+			for (auto const& err : errors)
+			{
+				WriteErrorMessage("simulation_info", err);
+			}
+			return Result::Failure;
+		}
+		auto maybeSimInfo = ParseSimulationInfo(simInfoTable);
 		if (!maybeSimInfo.has_value())
 		{
 			return Result::Failure;
@@ -1069,11 +1110,14 @@ namespace erin_next
 	}
 
 	std::optional<Simulation>
-	Simulation_ReadFromToml(toml::value const& v)
+	Simulation_ReadFromToml(
+		toml::value const& v,
+		InputValidationMap const& validationInfo)
 	{
 		Simulation s = {};
 		Simulation_Init(s);
-		if (Simulation_ParseSimulationInfo(s, v) == Result::Failure)
+		if (Simulation_ParseSimulationInfo(s, v, validationInfo.SimulationInfo)
+			== Result::Failure)
 		{
 			WriteErrorMessage("simulation_info", "problem parsing...");
 			return {};

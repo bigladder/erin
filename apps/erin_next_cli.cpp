@@ -9,6 +9,7 @@
 #include "erin_next/erin_next_scenario.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_result.h"
+#include "erin_next/erin_next_validation.h"
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -47,7 +48,8 @@ main(int argc, char** argv)
 		auto data = toml::parse(ifs, nameOnly.string());
 		ifs.close();
 		std::cout << data << std::endl;
-		auto maybeSim = Simulation_ReadFromToml(data);
+		auto validationInfo = SetupGlobalValidationInfo();
+		auto maybeSim = Simulation_ReadFromToml(data, validationInfo);
 		if (!maybeSim.has_value())
 		{
 			return EXIT_FAILURE;

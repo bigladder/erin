@@ -1,11 +1,383 @@
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_utils.h"
+#include "erin_next/erin_next_validation.h"
 #include <iostream>
+#include <sstream>
+#include <unordered_map>
+#include <cmath>
 
 namespace erin_next
 {
+	// TODO: change to return the unordered map? if empty
+	// or vector of errors is non-zero, we know we had an issue
+	std::unordered_map<std::string, toml::value>
+	TOMLTable_ParseWithValidation(
+		std::unordered_map<toml::key, toml::value> const& table,
+		ValidationInfo const& validationInfo,
+		std::string const& tableName,
+		std::vector<std::string>& errors,
+		std::vector<std::string>& warnings)
+	{
+		std::unordered_map<std::string, toml::value> out{};
+		std::unordered_set<std::string> fieldsFound{};
+		for (auto it = table.cbegin(); it != table.cend(); ++it)
+		{
+			std::string key = it->first;
+			toml::value value = it->second;
+			if (validationInfo.RequiredFields.contains(key)
+				|| validationInfo.OptionalFields.contains(key))
+			{
+				if (fieldsFound.contains(key))
+				{
+					std::ostringstream oss;
+					oss << "Duplicate field found '"
+						<< it->first << "' (for " << key << ")";
+					errors.push_back(
+						WriteErrorToString(tableName, oss.str())
+					);
+					return out;
+				}
+				fieldsFound.insert(key);
+			}
+			else
+			{
+				// check all aliases
+				bool found = false;
+				for (auto const& alias : validationInfo.Aliases)
+				{
+					assert(key != alias.first);
+					for (auto const& aliasValue : alias.second)
+					{
+						if (aliasValue.Tag == key)
+						{
+							found = true;
+							key = alias.first;
+							if (fieldsFound.contains(key))
+							{
+								std::ostringstream oss;
+								oss << "Duplicate field found '"
+									<< it->first << "' (for " << key << ")";
+								errors.push_back(
+									WriteErrorToString(tableName, oss.str())
+								);
+								return out;
+							}
+							fieldsFound.insert(key);
+							if (aliasValue.IsDeprecated)
+							{
+								std::ostringstream oss{};
+								oss << "WARNING! field '" << aliasValue.Tag
+									<< "' is deprecated and will be removed "
+								  << "in a future version";
+								warnings.push_back(
+									WriteErrorToString(tableName, oss.str())
+								);
+							}
+							break;
+						}
+					}
+					if (found)
+					{
+						break;
+					}
+				}
+				if (!found)
+				{
+					std::ostringstream oss{};
+					oss << "WARNING! unhandled field '"
+						<< key << "' will be ignored";
+					warnings.push_back(
+						WriteErrorToString(tableName, oss.str())
+					);
+					continue;
+				}
+			}
+			assert(validationInfo.TypeMap.contains(key));
+			// check types
+			switch (validationInfo.TypeMap.at(key))
+			{
+				case InputType::Any:
+				{
+					// NOTE: nothing to do
+				} break;
+				case InputType::AnyString:
+				case InputType::EnumString:
+				{
+					if (!value.is_string())
+					{
+						std::ostringstream oss;
+						oss << "Expected type string for field '"
+							<< it->first << "'";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+					if (validationInfo.TypeMap.at(key) == InputType::EnumString)
+					{
+						std::string const& valAsStr = value.as_string();
+						if (!validationInfo.EnumMap.contains(key))
+						{
+							std::ostringstream oss;
+							oss << "Could not find enumerations for field '"
+								<< it->first << "'";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+						auto const& enumSet = validationInfo.EnumMap.at(key);
+						if (!enumSet.contains(valAsStr))
+						{
+							std::ostringstream oss;
+							oss << "value for field '"
+								<< it->first << "' "
+								<< "is not a valid option. Valid options are:"
+								<< std::endl;
+							for (auto const& item : enumSet)
+							{
+								oss << "- " << item << std::endl;
+							}
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+					}
+				} break;
+				case InputType::ArrayOfDouble:
+				{
+					if (!value.is_array())
+					{
+						std::ostringstream oss;
+						oss << "Expected type array for field '"
+							<< it->first << "'";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+					auto const& xs = value.as_array();
+					for (size_t i=0; i < xs.size(); ++i)
+					{
+						auto const& x = xs.at(i);
+						if (!x.is_integer() && !x.is_floating())
+						{
+							std::ostringstream oss;
+							oss << "Expected type array for field '"
+								<< it->first << "' to be a number at "
+								<< "index " << i;
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+					}
+				} break;
+				case InputType::ArrayOfTuple2OfNumber:
+				{
+					if (!value.is_array())
+					{
+						std::ostringstream oss;
+						oss << "Expected type array for field '"
+							<< it->first << "'";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+					auto const& xs = value.as_array();
+					for (size_t i=0; i < xs.size(); ++i)
+					{
+						auto const& x = xs.at(i);
+						if (!x.is_array())
+						{
+							std::ostringstream oss;
+							oss << "Expected array item at " << i
+								<< " for field '" << it->first
+								<< "' to be an array of number of length 2";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+						auto const& ys = x.as_array();
+						if (ys.size() != 2)
+						{
+							std::ostringstream oss;
+							oss << "Expected array item at " << i
+								<< " for field '" << it->first
+								<< "' to be an array of number of length 2";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+						for (auto const& y : ys)
+						{
+							if (!y.is_integer() || !y.is_floating())
+							{
+								std::ostringstream oss;
+								oss << "Expected array item at " << i
+									<< " for field '" << it->first
+									<< "' to be an array of number of length 2";
+								errors.push_back(
+									WriteErrorToString(tableName, oss.str())
+								);
+								return out;
+							}
+						}
+					}
+				} break;
+				case InputType::ArrayOfTuple3OfString:
+				{
+					if (!value.is_array())
+					{
+						std::ostringstream oss;
+						oss << "Expected type array for field '"
+							<< it->first << "'";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+					auto const& xs = value.as_array();
+					for (size_t i=0; i < xs.size(); ++i)
+					{
+						auto const& x = xs.at(i);
+						if (!x.is_array())
+						{
+							std::ostringstream oss;
+							oss << "Expected array item at " << i
+								<< " for field '" << it->first
+								<< "' to be an array of string of length >= 3";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+						auto const& ys = x.as_array();
+						if (ys.size() < 3)
+						{
+							std::ostringstream oss;
+							oss << "Expected array item at " << i
+								<< " for field '" << it->first
+								<< "' to be an array of string of length >= 3";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+						for (auto const& y : ys)
+						{
+							if (!y.is_string())
+							{
+								std::ostringstream oss;
+								oss << "Expected array item at " << i
+									<< " for field '" << it->first
+									<< "' to be an array of string of length >= 3";
+								errors.push_back(
+									WriteErrorToString(tableName, oss.str())
+								);
+								return out;
+							}
+						}
+					}
+				} break;
+				case InputType::Integer:
+				{
+					if (!value.is_integer())
+					{
+						double fracPart = 0.0;
+						double floatValue = value.as_floating();
+						std::modf(floatValue, &fracPart);
+						if (!value.is_floating() || fracPart != 0.0)
+						{
+							std::ostringstream oss;
+							oss << "Expected field '" << it->first
+								<< "' to be convertable to an integer";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+					}
+				} break;
+				case InputType::Number:
+				{
+					if (!value.is_integer() && !value.is_floating())
+					{
+						std::ostringstream oss;
+						oss << "Expected field '" << it->first
+							<< "' to be convertable to a real number";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+				} break;
+				default:
+				{
+					std::ostringstream oss;
+					oss << "Unhandled type conversion for '"
+						<< it->first << "'";
+					WriteErrorMessage(tableName, oss.str());
+					std::exit(1);
+				} break;
+			}
+			out[key] = value;
+		}
+		// insert defaults if not defined
+		for (auto const& defkv : validationInfo.Defaults)
+		{
+			if (out.contains(defkv.first))
+			{
+				continue;
+			}
+			toml::value v;
+			switch (validationInfo.TypeMap.at(defkv.first))
+			{
+				case InputType::AnyString:
+				case InputType::EnumString:
+				{
+					v = toml::string{defkv.second};
+				} break;
+				case InputType::Integer:
+				{
+					v = toml::integer{std::stoll(defkv.second)};
+				} break;
+				case InputType::Number:
+				{
+					v = toml::floating{std::stod(defkv.second)};
+				} break;
+				default:
+				{
+					WriteErrorMessage(
+						tableName, "Parse error: unhandled datatype for default");
+					std::exit(1);
+				}
+			}
+			out.insert({defkv.first, std::move(v)});
+		}
+		// check that all required fields are present
+		for (auto const& field : validationInfo.RequiredFields)
+		{
+			if (!out.contains(field))
+			{
+				std::ostringstream oss;
+				oss << "missing required field '" << field << "'";
+				errors.push_back(
+					WriteErrorToString(tableName, oss.str())
+				);
+			}
+		}
+		return out;
+	}
+
+
 	// TODO: pass in a mutable vector of error strings we can push to
 	// in order to decouple printing from here.
+	// TODO: see header; also pass in list of aliases for keys
 	bool
 	TOMLTable_IsValid(
 		std::unordered_map<toml::key, toml::value> const& table,

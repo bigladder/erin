@@ -43,10 +43,14 @@ namespace erin_next
 			table, ValidTimeUnits, "time_unit", "simulation_info"
 		);
 		if (!rawTimeUnit.has_value())
+		{
 			return {};
+		}
 		auto maybeTimeUnit = TagToTimeUnit(rawTimeUnit.value());
 		if (!maybeTimeUnit.has_value())
+		{
 			return {};
+		}
 		si.TheTimeUnit = maybeTimeUnit.value();
 		auto rawMaxTime =
 			TOMLTable_ParseDouble(table, "max_time", "simulation_info");

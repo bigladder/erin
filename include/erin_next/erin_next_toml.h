@@ -2,14 +2,15 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_NEXT_TOML_H
 #define ERIN_NEXT_TOML_H
+#include "erin_next/erin_next_time_and_amount.h"
+#include "erin_next/erin_next_validation.h"
+#include "../vendor/toml11/toml.hpp"
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
 #include <stdint.h>
 #include <optional>
-#include "../vendor/toml11/toml.hpp"
-#include "erin_next/erin_next_time_and_amount.h"
 
 namespace erin_next
 {
@@ -19,6 +20,21 @@ namespace erin_next
 		std::vector<double> Seconds;
 	};
 
+	std::unordered_map<std::string, toml::value>
+	TOMLTable_ParseWithValidation(
+		std::unordered_map<toml::key, toml::value> const& table,
+		ValidationInfo const& validationInfo,
+		std::string const& tableName,
+		std::vector<std::string>& errors,
+		std::vector<std::string>& warnings
+	);
+
+	// TODO: create struct to hold if tag/name is deprecated
+	// struct TagWithDeprecation {string Name; bool IsDeprecated;}
+	// TODO: add aliases std::unordered_map<std::string, std::vector<TagWithDeprecation>>
+	// TODO: add in std::unordered_map<std::string, TomlType> to check types
+	//       are correct
+	// TODO: take in std::vector<std::string> to hold error messages
 	bool
 	TOMLTable_IsValid(
 		std::unordered_map<toml::key, toml::value> const& table,

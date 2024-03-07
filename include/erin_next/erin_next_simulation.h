@@ -8,6 +8,7 @@
 #include "erin_next/erin_next_scenario.h"
 #include "erin_next/erin_next_result.h"
 #include "../vendor/toml11/toml.hpp"
+#include "erin_next/erin_next_validation.h"
 #include <string>
 #include <vector>
 #include <optional>
@@ -88,7 +89,10 @@ namespace erin_next
 	Simulation_ScenarioCount(Simulation const& s);
 
 	Result
-	Simulation_ParseSimulationInfo(Simulation& s, toml::value const& v);
+	Simulation_ParseSimulationInfo(
+		Simulation& s,
+		toml::value const& v,
+		ValidationInfo const& validationInfo);
 
 	Result
 	Simulation_ParseLoads(Simulation& s, toml::value const& v);
@@ -139,7 +143,9 @@ namespace erin_next
 	Simulation_ParseScenarios(Simulation& s, toml::value const& v);
 
 	std::optional<Simulation>
-	Simulation_ReadFromToml(toml::value const& v);
+	Simulation_ReadFromToml(
+	  toml::value const& v,
+	  InputValidationMap const& validationInfo);
 
 	void
 	Simulation_Print(Simulation const& s);

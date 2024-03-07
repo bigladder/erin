@@ -9,6 +9,7 @@
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_result.h"
+#include "../vendor/toml11/toml.hpp"
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>

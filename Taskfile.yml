@@ -10,10 +10,15 @@ tasks:
     cmds:
       - mkdir build
       - cmake -S . -B build -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-  rebuild:
-    desc: Rebuild the application
+  build:
+    desc: (Re)build the application
     cmds:
       - cmake --build build --config Release -j 4
+  test:
+    desc: Run the test suite
+    dir: 'docs/erin_next_examples'
+    cmds:
+      - python regress.py
   dbg-init:
     desc: Make a debug build
     cmds:

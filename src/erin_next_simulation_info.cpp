@@ -24,74 +24,32 @@ namespace erin_next
 		"random_seed"
 	};
 
+	// NOTE: pre-requisite, table already validated
 	std::optional<SimulationInfo>
 	ParseSimulationInfo(std::unordered_map<toml::key, toml::value> const& table)
 	{
 		SimulationInfo si{};
-		if (!TOMLTable_IsValid(
-				table,
-				RequiredSimulationInfoFields,
-				OptionalSimulationInfoFields,
-				DefaultSimulationInfoFields,
-				"simulation_info",
-				true
-			))
-		{
-			return {};
-		}
 		auto rawTimeUnit = TOMLTable_ParseStringWithSetResponses(
 			table, ValidTimeUnits, "time_unit", "simulation_info"
 		);
-		if (!rawTimeUnit.has_value())
-		{
-			return {};
-		}
 		auto maybeTimeUnit = TagToTimeUnit(rawTimeUnit.value());
-		if (!maybeTimeUnit.has_value())
-		{
-			return {};
-		}
 		si.TheTimeUnit = maybeTimeUnit.value();
 		auto rawMaxTime =
 			TOMLTable_ParseDouble(table, "max_time", "simulation_info");
-		if (!rawMaxTime.has_value())
-		{
-			return {};
-		}
 		si.MaxTime = rawMaxTime.value();
-		// TODO: remove rate unit
 		auto rawRateUnit = TOMLTable_ParseStringWithSetResponses(
 			table, ValidRateUnits, "rate_unit", "simulation_info"
 		);
-		if (rawRateUnit.has_value())
-		{
-			si.RateUnit = rawRateUnit.value();
-		}
-		else
-		{
-			si.RateUnit = DefaultSimulationInfoFields.at("rate_unit");
-		}
-		// TODO: remove quantity unit
+		si.RateUnit = rawRateUnit.value();
 		auto rawQuantityUnit = TOMLTable_ParseStringWithSetResponses(
 			table, ValidQuantityUnits, "quantity_unit", "simulation_info"
 		);
-		if (rawQuantityUnit.has_value())
-		{
-			si.QuantityUnit = rawQuantityUnit.value();
-		}
-		else
-		{
-			si.QuantityUnit = DefaultSimulationInfoFields.at("quantity_unit");
-		}
+		si.QuantityUnit = rawQuantityUnit.value();
 		RandomType rtype = RandomType::RandomFromClock;
 		if (table.contains("fixed_random"))
 		{
 			std::optional<double> maybeFixed =
 				TOMLTable_ParseDouble(table, "fixed_random", "simulation_info");
-			if (!maybeFixed.has_value())
-			{
-				return {};
-			}
 			rtype = RandomType::FixedRandom;
 			si.FixedValue = maybeFixed.value();
 		}
@@ -101,10 +59,6 @@ namespace erin_next
 				TOMLTable_ParseArrayOfDouble(
 					table, "fixed_random_series", "simulation_info"
 				);
-			if (!maybeSeries)
-			{
-				return {};
-			}
 			rtype = RandomType::FixedSeries;
 			si.Series = std::move(maybeSeries.value());
 		}
@@ -112,10 +66,6 @@ namespace erin_next
 		{
 			std::optional<int> maybeSeed =
 				TOMLTable_ParseInteger(table, "random_seed", "simulation_info");
-			if (!maybeSeed)
-			{
-				return {};
-			}
 			rtype = RandomType::RandomFromSeed;
 			si.Seed = maybeSeed.value() < 0 ? (-1 * maybeSeed.value())
 											: maybeSeed.value();

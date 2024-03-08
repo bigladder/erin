@@ -6,18 +6,26 @@
 #include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next_result.h"
 #include "../vendor/toml11/toml.hpp"
+#include "erin_next/erin_next_validation.h"
 
 namespace erin_next
 {
+
 	Result
 	ParseSingleComponent(
 		Simulation& s,
 		toml::table const& table,
-		std::string const& tag
+		std::string const& tag,
+		ComponentValidationMap const& compValids
 	);
 
 	Result
-	ParseComponents(Simulation& s, toml::table const& table);
+	ParseComponents(
+		Simulation& s,
+		toml::table const& table,
+		ComponentValidationMap const& compValids
+	);
+
 }
 
 #endif

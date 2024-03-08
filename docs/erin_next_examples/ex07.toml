@@ -143,7 +143,6 @@ type = "muxer"
 flow = "natural_gas"
 num_inflows = 2
 num_outflows = 1
-dispatch_strategy = "in_order"
 fragility_modes = ["somewhat_vulnerable_to_flooding"]
 [components.chp_electricity]
 type = "converter"
@@ -218,25 +217,21 @@ type = "muxer"
 flow = "natural_gas"
 num_inflows = 1
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.electric_bus]
 type = "muxer"
 flow = "electricity"
 num_inflows = 2
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.steam_manifold]
 type = "muxer"
 flow = "steam"
 num_inflows = 2
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.heating_manifold]
 type = "muxer"
 flow = "heating"
 num_inflows = 3
 num_outflows = 2
-dispatch_strategy = "in_order"
 [network]
 connections = [
   # Natural Gas and Biomethane Network

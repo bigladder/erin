@@ -1001,11 +1001,14 @@ namespace erin_next
 	}
 
 	Result
-	Simulation_ParseComponents(Simulation& s, toml::value const& v)
+	Simulation_ParseComponents(
+		Simulation& s,
+		toml::value const& v,
+		ComponentValidationMap const& compValidations)
 	{
 		if (v.contains("components") && v.at("components").is_table())
 		{
-			return ParseComponents(s, v.at("components").as_table());
+			return ParseComponents(s, v.at("components").as_table(), compValidations);
 		}
 		WriteErrorMessage("<top>", "required field 'components' not found");
 		return Result::Failure;
@@ -1138,7 +1141,9 @@ namespace erin_next
 			WriteErrorMessage("loads", "problem parsing...");
 			return {};
 		}
-		if (Simulation_ParseComponents(s, v) == Result::Failure)
+		auto compResult =
+			Simulation_ParseComponents(s, v, validationInfo.Comp);
+		if (compResult == Result::Failure)
 		{
 			WriteErrorMessage("components", "problem parsing...");
 			return {};

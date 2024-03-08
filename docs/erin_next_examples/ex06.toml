@@ -104,7 +104,6 @@ type = "muxer"
 flow = "steam"
 num_inflows = 1
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.waste_heat_to_electricity]
 type = "converter"
 inflow = "waste_heat"
@@ -116,7 +115,6 @@ type = "muxer"
 flow = "electricity"
 num_inflows = 2
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.elec_line_from_utility]
 type = "pass_through"
 flow = "electricity"
@@ -137,25 +135,21 @@ type = "muxer"
 flow = "steam"
 num_inflows = 1
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.c2_steam_mux]
 type = "muxer"
 flow = "steam"
 num_inflows = 1
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.c1_steam_combiner]
 type = "muxer"
 flow = "steam"
 num_inflows = 2
 num_outflows = 1
-dispatch_strategy = "in_order"
 [components.c2_steam_combiner]
 type = "muxer"
 flow = "steam"
 num_inflows = 2
 num_outflows = 1
-dispatch_strategy = "in_order"
 [components.steam_c1_to_c2]
 type = "pass_through"
 flow = "steam"

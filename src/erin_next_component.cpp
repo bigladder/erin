@@ -1,6 +1,8 @@
 #include "erin_next/erin_next_component.h"
+#include "erin_next/erin_next.h"
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_utils.h"
+#include "erin_next/erin_next_validation.h"
 #include <map>
 #include <optional>
 #include <unordered_set>
@@ -13,7 +15,8 @@ namespace erin_next
 	ParseSingleComponent(
 		Simulation& s,
 		toml::table const& table,
-		std::string const& tag
+		std::string const& tag,
+		ComponentValidationMap const& compValids
 	)
 	{
 		std::string fullTableName = "components." + tag;
@@ -36,6 +39,116 @@ namespace erin_next
 			return Result::Failure;
 		}
 		ComponentType ct = maybeCompType.value();
+		std::vector<std::string> errors;
+		std::vector<std::string> warnings;
+		std::unordered_map<std::string, toml::value> input;
+		switch (ct)
+		{
+			case ComponentType::ConstantEfficiencyConverterType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.ConstantEfficiencyConverter,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			case ComponentType::ConstantLoadType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.ConstantLoad,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			case ComponentType::ConstantSourceType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.ConstantSource,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			case ComponentType::MuxType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.Mux,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			case ComponentType::PassThroughType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.PassThrough,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			case ComponentType::ScheduleBasedLoadType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.ScheduleBasedLoad,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			case ComponentType::ScheduleBasedSourceType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.ScheduleBasedSource,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			case ComponentType::StoreType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.Store,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			default:
+			{
+				WriteErrorMessage(
+					fullTableName,
+					"Unhandled component type");
+				std::exit(1);
+			} break;
+		}
+		if (errors.size() > 0)
+		{
+			std::cout << "ERRORS Parsing Component:" << std::endl;
+			for (auto const& err : errors)
+			{
+				std::cout << "- " << err << std::endl;
+			}
+			return Result::Failure;
+		}
+		if (warnings.size() > 0)
+		{
+			std::cout << "WARNINGS:" << std::endl;
+			for (auto const& w : warnings)
+			{
+				std::cout << "- " << w << std::endl;
+			}
+		}
 		size_t id = {};
 		std::string inflow{};
 		size_t inflowId = {};
@@ -615,14 +728,16 @@ namespace erin_next
 		return Result::Success;
 	}
 
-	// TODO: remove model as a parameter -- it is part of Simulation
 	Result
-	ParseComponents(Simulation& s, toml::table const& table)
+	ParseComponents(
+		Simulation& s,
+		toml::table const& table,
+		ComponentValidationMap const& compValids)
 	{
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
 			auto result =
-				ParseSingleComponent(s, it->second.as_table(), it->first);
+				ParseSingleComponent(s, it->second.as_table(), it->first, compValids);
 			if (result == Result::Failure)
 			{
 				return Result::Failure;

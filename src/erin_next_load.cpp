@@ -368,12 +368,10 @@ namespace erin_next
 		ValidationInfo const& explicitValidation,
 		ValidationInfo const& fileValidation)
 	{
-		std::cout << "1" << std::endl;
 		std::vector<Load> loads{};
 		loads.reserve(table.size());
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
-			std::cout << "2" << std::endl;
 			std::string tag = it->first;
 			std::string tableName = "loads." + tag;
 			if (it->second.is_table())
@@ -387,7 +385,6 @@ namespace erin_next
 				std::optional<Load> maybeLoad = {};
 				if (errors01.size() == 0)
 				{
-					std::cout << "3" << std::endl;
 					maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag); 
 					if (!maybeLoad.has_value())
 					{
@@ -401,7 +398,6 @@ namespace erin_next
 							WriteErrorMessage(tableName, w);
 						}
 					}
-					std::cout << "4" << std::endl;
 				}
 				else
 				{

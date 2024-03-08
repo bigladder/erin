@@ -36,7 +36,6 @@ type = "muxer"
 flow = "electricity"
 num_inflows = 2
 num_outflows = 1
-dispatch_strategy = "in_order"
 fragility_modes = ["highly_vulnerable_to_wind", "somewhat_vulnerable_to_flooding"]
 [fragility_mode.somewhat_vulnerable_to_flooding]
 fragility_curve = "somewhat_vulnerable_to_flooding_curve"

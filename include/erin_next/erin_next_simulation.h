@@ -135,7 +135,11 @@ namespace erin_next
 	Simulation_ParseFragilityModes(Simulation& s, toml::value const& v);
 
 	Result
-	Simulation_ParseComponents(Simulation& s, toml::value const& v);
+	Simulation_ParseComponents(
+		Simulation& s,
+		toml::value const& v,
+		ComponentValidationMap const& compValidations
+	);
 
 	Result
 	Simulation_ParseDistributions(Simulation& s, toml::value const& v);

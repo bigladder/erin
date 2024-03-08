@@ -316,10 +316,67 @@ namespace erin_next
 						return out;
 					}
 				} break;
+				case InputType::ArrayOfString:
+				{
+					if (!value.is_array())
+					{
+						std::ostringstream oss;
+						oss << "Expected field '" << it->first
+							<< "' to be an array of string";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+					auto const& xs = value.as_array();
+					for (size_t i = 0; i < xs.size(); ++i)
+					{
+						auto const& x = xs[i];
+						if (!x.is_string())
+						{
+							std::ostringstream oss;
+							oss << "Expected field '" << it->first
+								<< "' at " << i << " to be a string";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+					}
+				} break;
+				case InputType::MapFromStringToString:
+				{
+					if (!value.is_table())
+					{
+						std::ostringstream oss;
+						oss << "expected field '" << it->first
+							<< "' to be a map from string to string";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+					for (auto const& item : value.as_table())
+					{
+						if (!item.second.is_string())
+						{
+							std::ostringstream oss;
+							oss << "expected field '"
+								<< it->first
+								<< "' at key '"
+								<< item.first
+								<< "' to be a string";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+					}
+				} break;
 				default:
 				{
 					std::ostringstream oss;
-					oss << "Unhandled type conversion for '"
+					oss << "unhandled type conversion for '"
 						<< it->first << "'";
 					WriteErrorMessage(tableName, oss.str());
 					std::exit(1);

@@ -17,7 +17,6 @@ namespace erin_next
   		case InputSection::SimulationInfo:
       {
         return "simulation_info";
-        
       } break;
   		case InputSection::Loads_01Explicit:
       {
@@ -27,18 +26,37 @@ namespace erin_next
       {
         return "loads (file-based)";
       } break;
+      case InputSection::Components_ConstantLoad:
+      {
+        return "components (constant_load)";
+      } break;
+      case InputSection::Components_Load:
+      {
+        return "components (load)";
+      } break;
   		case InputSection::Components_Source:
       {
         return "components (source)";
-        
       } break;
-  		case InputSection::Components_ConstantLoad:
+		  case InputSection::Components_UncontrolledSource:
       {
-        return "components (constant-load)";
+        return "components (uncontrolled_source)";
       } break;
-  		case InputSection::Components_Load:
+		  case InputSection::Components_ConstEffConverter:
       {
-        return "components (load)";
+        return "components (converter)";
+      } break;
+		  case InputSection::Components_Mux:
+      {
+        return "components (mux)";
+      } break;
+		  case InputSection::Components_Store:
+      {
+        return "components (store)";
+      } break;
+		  case InputSection::Components_PassThrough:
+      {
+        return "components (pass_through)";
       } break;
   		case InputSection::Dist_Fixed:
       {
@@ -86,6 +104,22 @@ namespace erin_next
     if (tag == "components (load)")
     {
       return InputSection::Components_Load;
+    }
+		if (tag == "")
+    {
+      return InputSection::Components_ConstEffConverter;
+    }
+		if (tag == "")
+    {
+      return InputSection::Components_Mux;
+    }
+		if (tag == "")
+    {
+      return InputSection::Components_Store;
+    }
+		if (tag == "")
+    {
+      return InputSection::Components_PassThrough;
     }
     if (tag == "dist (fixed)")
     {
@@ -137,27 +171,46 @@ namespace erin_next
   		InputSection::SimulationInfo,
   		InputSection::Loads_01Explicit,
   		InputSection::Loads_02FileBased,
-  		InputSection::Components_Source,
   		InputSection::Components_ConstantLoad,
   		InputSection::Components_Load,
+  		InputSection::Components_Source,
+      InputSection::Components_UncontrolledSource,
+		  InputSection::Components_ConstEffConverter,
+		  InputSection::Components_Mux,
+		  InputSection::Components_Store,
+		  InputSection::Components_PassThrough,
   		InputSection::Dist_Fixed,
   		InputSection::Network,
   		InputSection::Scenarios,
     };
     std::unordered_set<InputSection> allCompSections{
-  		InputSection::Components_Source,
-  		InputSection::Components_ConstantLoad,
-  		InputSection::Components_Load,
+		  InputSection::Components_ConstantLoad,
+		  InputSection::Components_Load,
+		  InputSection::Components_Source,
+		  InputSection::Components_UncontrolledSource,
+		  InputSection::Components_ConstEffConverter,
+		  InputSection::Components_Mux,
+		  InputSection::Components_Store,
+		  InputSection::Components_PassThrough,
     };
-    std::unordered_set<InputSection> compSections{
-  		InputSection::Components_Source,
-  		InputSection::Components_ConstantLoad,
-  		InputSection::Components_Load,
+    std::unordered_set<InputSection> nonLoadCompSections{
+		  InputSection::Components_Source,
+		  InputSection::Components_UncontrolledSource,
+		  InputSection::Components_ConstEffConverter,
+		  InputSection::Components_Mux,
+		  InputSection::Components_Store,
+		  InputSection::Components_PassThrough,
     };
     std::unordered_set<std::string> compTypeEnums{
-      "source",
+      "constant_load",
+      "converter",
       "load",
+      "mover",
+      "muxer", "mux",
+      "pass_through",
+      "source",
       "store",
+      "uncontrolled_source",
     };
     std::vector<FieldInfo> fields{
       // GLOBAL
@@ -302,7 +355,217 @@ namespace erin_next
         .Default = "",
         .EnumValues = compTypeEnums,
         .Aliases = {},
-        .Sections = compSections,
+        .Sections = allCompSections,
+      },
+      // Components -- All Except Loads
+      FieldInfo{
+        .FieldName = "failure_modes",
+        .Type = InputType::ArrayOfString,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = nonLoadCompSections,
+      },
+      FieldInfo{
+        .FieldName = "fragility_modes",
+        .Type = InputType::ArrayOfString,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = nonLoadCompSections,
+      },
+      // Constant and Schedule-Based Load Component
+      FieldInfo{
+        .FieldName = "inflow",
+        .Type = InputType::AnyString,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_ConstantLoad,
+          InputSection::Components_Load,
+          InputSection::Components_ConstEffConverter,
+        },
+      },
+      FieldInfo{
+        .FieldName = "loads_by_scenario",
+        .Type = InputType::MapFromStringToString,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Load,
+        },
+      },
+      // Constant Source and Uncontrolled Source
+      FieldInfo{
+        .FieldName = "outflow",
+        .Type = InputType::AnyString,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Source,
+          InputSection::Components_UncontrolledSource,
+          InputSection::Components_ConstEffConverter,
+        },
+      },
+      FieldInfo{
+        .FieldName = "max_outflow",
+        .Type = InputType::Number,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Source,
+          InputSection::Components_UncontrolledSource,
+          InputSection::Components_PassThrough,
+        },
+      },
+      FieldInfo{
+        .FieldName = "rate_unit",
+        .Type = InputType::AnyString,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Source,
+          InputSection::Components_UncontrolledSource,
+          InputSection::Components_Store,
+        },
+      },
+      // Mux
+      FieldInfo{
+        .FieldName = "flow",
+        .Type = InputType::AnyString,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Mux,
+          InputSection::Components_PassThrough,
+          InputSection::Components_Store,
+        },
+      },
+      FieldInfo{
+        .FieldName = "num_outflows",
+        .Type = InputType::Integer,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Mux,
+        },
+      },
+      FieldInfo{
+        .FieldName = "num_inflows",
+        .Type = InputType::Integer,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Mux,
+        },
+      },
+      // Constant Efficiency Converter
+      FieldInfo{
+        .FieldName = "constant_efficiency",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_ConstEffConverter,
+        },
+      },
+      FieldInfo{
+        .FieldName = "lossflow",
+        .Type = InputType::AnyString,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_ConstEffConverter,
+        },
+      },
+      // Store
+      FieldInfo{
+        .FieldName = "init_soc",
+        .Type = InputType::Number,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Store,
+        },
+      },
+      FieldInfo{
+        .FieldName = "capacity_unit",
+        .Type = InputType::EnumString,
+        .IsRequired = true,
+        .Default = "J",
+        .EnumValues = ValidQuantityUnits,
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Store,
+        },
+      },
+      FieldInfo{
+        .FieldName = "capacity",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Store,
+        },
+      },
+      FieldInfo{
+        .FieldName = "max_charge",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {{"max_inflow", true}},
+        .Sections = {
+          InputSection::Components_Store,
+        },
+      },
+      FieldInfo{
+        .FieldName = "max_discharge",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Store,
+        },
+      },
+      FieldInfo{
+        .FieldName = "charge_at_soc",
+        .Type = InputType::Number,
+        .IsRequired = false,
+        .Default = "0.8",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Store,
+        },
       },
     };
     InputValidationMap v{};
@@ -333,19 +596,35 @@ namespace erin_next
           } break;
           case InputSection::Components_ConstantLoad:
           {
-            UpdateValidationInfoByField(v.Comp_ConstantLoad, f);
+            UpdateValidationInfoByField(v.Comp.ConstantLoad, f);
           } break;
           case InputSection::Components_Load:
           {
-            UpdateValidationInfoByField(v.Comp_ScheduleBasedLoad, f);
+            UpdateValidationInfoByField(v.Comp.ScheduleBasedLoad, f);
           } break;
           case InputSection::Components_Source:
           {
-            UpdateValidationInfoByField(v.Comp_ConstantSource, f);
+            UpdateValidationInfoByField(v.Comp.ConstantSource, f);
           } break;
-          case InputSection::Components_ScheduleBasedSource:
+          case InputSection::Components_UncontrolledSource:
           {
-            UpdateValidationInfoByField(v.Comp_ScheduleBasedSource, f);
+            UpdateValidationInfoByField(v.Comp.ScheduleBasedSource, f);
+          } break;
+		      case InputSection::Components_ConstEffConverter:
+          {
+            UpdateValidationInfoByField(v.Comp.ConstantEfficiencyConverter, f);
+          } break;
+		      case InputSection::Components_Mux:
+          {
+            UpdateValidationInfoByField(v.Comp.Mux, f);
+          } break;
+		      case InputSection::Components_Store:
+          {
+            UpdateValidationInfoByField(v.Comp.Store, f);
+          } break;
+		      case InputSection::Components_PassThrough:
+          {
+            UpdateValidationInfoByField(v.Comp.PassThrough, f);
           } break;
           case InputSection::Dist_Fixed:
           {

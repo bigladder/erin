@@ -41,15 +41,6 @@ type = "muxer"
 flow = "electricity"
 num_inflows = 2
 num_outflows = 1
-# An "in_order" dispatch strategy means that power requests are routed in order
-# upstream through the input ports in the order they are specified. That is,
-# "inflow_grid" would be asked to provide power first. If there is any lack of
-# power, "inflow_genset" would be asked to make up the difference. Note: on
-# the output side, if more than one output, outputs are handled differently in
-# that power shortages are always spread evenly across all outputs. Explicit
-# switches or changes in load requests are used to drop loads (or simulate
-# their dropping).
-dispatch_strategy = "in_order"
 fragility_modes = ["highly_vulnerable_to_wind", "somewhat_vulnerable_to_flooding"]
 ############################################################
 # Fragility Modes

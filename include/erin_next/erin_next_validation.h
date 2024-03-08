@@ -50,6 +50,14 @@ namespace erin_next
 		bool IsDeprecated = false;
 	};
 
+	// TODO: add "types" from the user-manual:
+	// - real>0
+	// - frac
+	// - frac>0
+	// - str
+	// - [str]
+	// - [real]
+	// - etc.
 	enum class InputType
 	{
 		Any,
@@ -58,8 +66,10 @@ namespace erin_next
 		Number, // float or integer
 		Integer, // only integer; will also parse 3.0 as 3, though
 		ArrayOfDouble,
+		ArrayOfString,
 		ArrayOfTuple3OfString,
 		ArrayOfTuple2OfNumber,
+		MapFromStringToString,
 	};
 
 	enum class InputSection
@@ -70,7 +80,11 @@ namespace erin_next
 		Components_ConstantLoad,
 		Components_Load,
 		Components_Source,
-		Components_ScheduleBasedSource,
+		Components_UncontrolledSource,
+		Components_ConstEffConverter,
+		Components_Mux,
+		Components_Store,
+		Components_PassThrough,
 		Dist_Fixed,
 		Network,
 		Scenarios,
@@ -100,16 +114,21 @@ namespace erin_next
 		std::unordered_map<std::string, std::vector<TagWithDeprication>> Aliases;
 	};
 
+	struct ComponentValidationMap
+	{
+		ValidationInfo ConstantLoad;
+		ValidationInfo ScheduleBasedLoad;
+		ValidationInfo ConstantSource;
+		ValidationInfo ScheduleBasedSource;
+		ValidationInfo ConstantEfficiencyConverter;
+		ValidationInfo Mux;
+		ValidationInfo Store;
+		ValidationInfo PassThrough;
+	};
+
 	struct InputValidationMap
 	{
-		ValidationInfo Comp_ConstantLoad;
-		ValidationInfo Comp_ScheduleBasedLoad;
-		ValidationInfo Comp_ConstantSource;
-		ValidationInfo Comp_ScheduleBasedSource;
-		ValidationInfo Comp_ConstantEfficiencyConverter;
-		ValidationInfo Comp_Mux;
-		ValidationInfo Comp_Store;
-		ValidationInfo Comp_PassThrough;
+		ComponentValidationMap Comp;
 		ValidationInfo Load_01Explicit;
 		ValidationInfo Load_02FileBased;
 		ValidationInfo Dist_Fixed;

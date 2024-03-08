@@ -512,10 +512,17 @@ namespace erin_next
 	}
 
 	Result
-	Simulation_ParseLoads(Simulation& s, toml::value const& v)
+	Simulation_ParseLoads(
+		Simulation& s,
+		toml::value const& v,
+		ValidationInfo const& explicitValidation,
+		ValidationInfo const& fileValidation)
 	{
 		toml::value const& loadTable = v.at("loads");
-		auto maybeLoads = ParseLoads(loadTable.as_table());
+		auto maybeLoads = ParseLoads(
+			loadTable.as_table(),
+			explicitValidation,
+			fileValidation);
 		if (!maybeLoads.has_value())
 		{
 			return Result::Failure;
@@ -1116,13 +1123,17 @@ namespace erin_next
 	{
 		Simulation s = {};
 		Simulation_Init(s);
-		if (Simulation_ParseSimulationInfo(s, v, validationInfo.SimulationInfo)
-			== Result::Failure)
+		auto simInfoResult =
+			Simulation_ParseSimulationInfo(s, v, validationInfo.SimulationInfo);
+		if (simInfoResult == Result::Failure)
 		{
 			WriteErrorMessage("simulation_info", "problem parsing...");
 			return {};
 		}
-		if (Simulation_ParseLoads(s, v) == Result::Failure)
+		auto loadsResult =
+			Simulation_ParseLoads(s, v,
+				validationInfo.Load_01Explicit, validationInfo.Load_02FileBased);
+		if (loadsResult == Result::Failure)
 		{
 			WriteErrorMessage("loads", "problem parsing...");
 			return {};

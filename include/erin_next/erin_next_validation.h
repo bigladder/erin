@@ -65,8 +65,8 @@ namespace erin_next
 	enum class InputSection
 	{
 		SimulationInfo,
-		Loads_Explicit,
-		Loads_FileBased,
+		Loads_01Explicit,
+		Loads_02FileBased,
 		Components_ConstantLoad,
 		Components_Load,
 		Components_Source,
@@ -110,8 +110,8 @@ namespace erin_next
 		ValidationInfo Comp_Mux;
 		ValidationInfo Comp_Store;
 		ValidationInfo Comp_PassThrough;
-		ValidationInfo Load01_FromFile;
-		ValidationInfo Load02_Explicit;
+		ValidationInfo Load_01Explicit;
+		ValidationInfo Load_02FileBased;
 		ValidationInfo Dist_Fixed;
 		ValidationInfo SimulationInfo;
 		ValidationInfo Network;

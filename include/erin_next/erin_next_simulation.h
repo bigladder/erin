@@ -95,7 +95,11 @@ namespace erin_next
 		ValidationInfo const& validationInfo);
 
 	Result
-	Simulation_ParseLoads(Simulation& s, toml::value const& v);
+	Simulation_ParseLoads(
+		Simulation& s,
+		toml::value const& v,
+		ValidationInfo const& explicitValidation,
+		ValidationInfo const& fileBasedValidation);
 
 	size_t
 	Simulation_RegisterFragilityCurve(Simulation& s, std::string const& tag);

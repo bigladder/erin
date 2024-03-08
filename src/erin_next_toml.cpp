@@ -189,13 +189,13 @@ namespace erin_next
 					auto const& xs = value.as_array();
 					for (size_t i=0; i < xs.size(); ++i)
 					{
-						auto const& x = xs.at(i);
+						auto const& x = xs[i];
 						if (!x.is_array())
 						{
 							std::ostringstream oss;
 							oss << "Expected array item at " << i
 								<< " for field '" << it->first
-								<< "' to be an array of number of length 2";
+								<< "' to be an array of number of length 2 (a)";
 							errors.push_back(
 								WriteErrorToString(tableName, oss.str())
 							);
@@ -207,7 +207,7 @@ namespace erin_next
 							std::ostringstream oss;
 							oss << "Expected array item at " << i
 								<< " for field '" << it->first
-								<< "' to be an array of number of length 2";
+								<< "' to be an array of number of length 2 (b)";
 							errors.push_back(
 								WriteErrorToString(tableName, oss.str())
 							);
@@ -215,12 +215,12 @@ namespace erin_next
 						}
 						for (auto const& y : ys)
 						{
-							if (!y.is_integer() || !y.is_floating())
+							if (!y.is_integer() && !y.is_floating())
 							{
 								std::ostringstream oss;
 								oss << "Expected array item at " << i
 									<< " for field '" << it->first
-									<< "' to be an array of number of length 2";
+									<< "' to be an array of number of length 2 (c)";
 								errors.push_back(
 									WriteErrorToString(tableName, oss.str())
 								);

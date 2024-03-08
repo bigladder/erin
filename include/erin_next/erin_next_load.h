@@ -5,6 +5,7 @@
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
 #include "../vendor/toml11/toml.hpp"
+#include "erin_next/erin_next_validation.h"
 #include <string>
 #include <vector>
 #include <optional>
@@ -21,8 +22,17 @@ namespace erin_next
 	std::optional<Load>
 	ParseSingleLoad(toml::table const& table, std::string const& tag);
 
+	std::optional<Load>
+	ParseSingleLoadExplicit(toml::table const& table, std::string const& tag);
+
+	std::optional<Load>
+	ParseSingleLoadFileLoad(toml::table const& table, std::string const& tag);
+
 	std::optional<std::vector<Load>>
-	ParseLoads(toml::table const& table);
+	ParseLoads(
+		toml::table const& table,
+		ValidationInfo const& explicitValidation,
+		ValidationInfo const& fileValidation);
 
 	std::ostream&
 	operator<<(std::ostream& os, Load const& load);

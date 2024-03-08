@@ -19,11 +19,11 @@ namespace erin_next
         return "simulation_info";
         
       } break;
-  		case InputSection::Loads_Explicit:
+  		case InputSection::Loads_01Explicit:
       {
         return "loads";
       } break;
-  		case InputSection::Loads_FileBased:
+  		case InputSection::Loads_02FileBased:
       {
         return "loads (file-based)";
       } break;
@@ -69,11 +69,11 @@ namespace erin_next
     }
     if (tag == "loads")
     {
-      return InputSection::Loads_Explicit;
+      return InputSection::Loads_01Explicit;
     }
     if (tag == "loads (file-based)")
     {
-      return InputSection::Loads_FileBased;
+      return InputSection::Loads_02FileBased;
     }
     if (tag == "components (source)")
     {
@@ -135,8 +135,8 @@ namespace erin_next
   {
     std::unordered_set<InputSection> allSections{
   		InputSection::SimulationInfo,
-  		InputSection::Loads_Explicit,
-  		InputSection::Loads_FileBased,
+  		InputSection::Loads_01Explicit,
+  		InputSection::Loads_02FileBased,
   		InputSection::Components_Source,
   		InputSection::Components_ConstantLoad,
   		InputSection::Components_Load,
@@ -248,6 +248,52 @@ namespace erin_next
           InputSection::SimulationInfo,
         },
       },
+      // Loads -- File-Based
+      FieldInfo{
+        .FieldName = "csv_file",
+        .Type = InputType::AnyString,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Loads_02FileBased,
+        },
+      },
+      // Loads -- Explicit
+      FieldInfo{
+        .FieldName = "time_rate_pairs",
+        .Type = InputType::ArrayOfTuple2OfNumber,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Loads_01Explicit,
+        },
+      },
+      FieldInfo{
+        .FieldName = "time_unit",
+        .Type = InputType::EnumString,
+        .IsRequired = false,
+        .Default = "s",
+        .EnumValues = ValidTimeUnits,
+        .Aliases = {},
+        .Sections = {
+          InputSection::Loads_01Explicit,
+        },
+      },
+      FieldInfo{
+        .FieldName = "rate_unit",
+        .Type = InputType::EnumString,
+        .IsRequired = false,
+        .Default = "W",
+        .EnumValues = ValidRateUnits,
+        .Aliases = {},
+        .Sections = {
+          InputSection::Loads_01Explicit,
+        },
+      },
       // Components -- Global
       FieldInfo{
         .FieldName = "type",
@@ -277,13 +323,13 @@ namespace erin_next
           {
             UpdateValidationInfoByField(v.SimulationInfo, f);
           } break;
-          case InputSection::Loads_Explicit:
+          case InputSection::Loads_01Explicit:
           {
-            UpdateValidationInfoByField(v.Load02_Explicit, f);
+            UpdateValidationInfoByField(v.Load_01Explicit, f);
           } break;
-          case InputSection::Loads_FileBased:
+          case InputSection::Loads_02FileBased:
           {
-            UpdateValidationInfoByField(v.Load01_FromFile, f);
+            UpdateValidationInfoByField(v.Load_02FileBased, f);
           } break;
           case InputSection::Components_ConstantLoad:
           {

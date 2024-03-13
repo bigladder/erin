@@ -267,11 +267,7 @@ namespace erin_next
 						pv.Firsts.push_back(maybeNum0.value());
 						pv.Seconds.push_back(maybeNum1.value());
 					}
-					InputValue v{
-						.Type = InputType::ArrayOfTuple2OfNumber,
-						.Value = std::move(pv),
-					};
-					out2[key] = std::move(v);
+					v.Value = std::move(pv);
 				} break;
 				case InputType::ArrayOfTuple3OfString:
 				{
@@ -285,6 +281,7 @@ namespace erin_next
 						);
 						return out;
 					}
+					std::vector<std::vector<std::string>> aos;
 					auto const& xs = value.as_array();
 					for (size_t i=0; i < xs.size(); ++i)
 					{
@@ -312,8 +309,11 @@ namespace erin_next
 							);
 							return out;
 						}
-						for (auto const& y : ys)
+						aos[i] = std::vector<std::string>();
+						aos[i].reserve(3);
+						for (size_t j=0; j < ys.size(); ++j)
 						{
+							auto const& y = ys[j];
 							if (!y.is_string())
 							{
 								std::ostringstream oss;
@@ -325,8 +325,13 @@ namespace erin_next
 								);
 								return out;
 							}
+							if (j < 3)
+							{
+								aos[i].push_back(y.as_string());
+							}
 						}
 					}
+					v.Value = std::move(aos);
 				} break;
 				case InputType::Integer:
 				{
@@ -357,10 +362,7 @@ namespace erin_next
 						);
 						return out;
 					}
-					InputValue v;
-					v.Type = InputType::Integer;
 					v.Value = maybeInt.value();
-					out2[key] = std::move(v);
 				} break;
 				case InputType::Number:
 				{
@@ -385,10 +387,7 @@ namespace erin_next
 						);
 						return out;
 					}
-					InputValue v;
-					v.Type = InputType::Number;
 					v.Value = maybeDouble.value();
-					out2[key] = std::move(v);
 				} break;
 				case InputType::ArrayOfString:
 				{
@@ -419,10 +418,7 @@ namespace erin_next
 						}
 						aos.push_back(x.as_string());
 					}
-					InputValue v;
-					v.Type = InputType::ArrayOfString;
 					v.Value = std::move(aos);
-					out2[key] = std::move(v);
 				} break;
 				case InputType::MapFromStringToString:
 				{
@@ -454,10 +450,7 @@ namespace erin_next
 						}
 						map[item.first] = item.second.as_string();
 					}
-					InputValue v{};
-					v.Type = InputType::MapFromStringToString;
 					v.Value = std::move(map);
-					out2[key] = std::move(v);
 				} break;
 				default:
 				{

@@ -156,6 +156,7 @@ namespace erin_next
 		std::vector<TimeAndAmount> TimeAndAvails;
 		size_t OutflowConn;
 		size_t WasteflowConn;
+		std::map<size_t, size_t> ScenarioIdToSourceId;
 	};
 
 	struct ConstantEfficiencyConverter
@@ -561,21 +562,21 @@ namespace erin_next
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndAmount> timesAndLoads
+		std::vector<TimeAndAmount> const& timesAndLoads
 	);
 
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndAmount> timesAndLoads,
-		std::map<size_t, size_t> scenarioIdToLoadId
+		std::vector<TimeAndAmount> const& timesAndLoads,
+		std::map<size_t, size_t> const& scenarioIdToLoadId
 	);
 
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndAmount> timesAndLoads,
-		std::map<size_t, size_t> scenarioIdToLoadId,
+		std::vector<TimeAndAmount> const& timesAndLoads,
+		std::map<size_t, size_t> const& scenarioIdToLoadId,
 		size_t inflowTypeId,
 		std::string const& tag
 	);
@@ -592,7 +593,17 @@ namespace erin_next
 	);
 
 	ComponentIdAndWasteConnection
-	Model_AddScheduleBasedSource(Model& m, std::vector<TimeAndAmount> xs);
+	Model_AddScheduleBasedSource(Model& m, std::vector<TimeAndAmount> const& xs);
+
+	ComponentIdAndWasteConnection
+	Model_AddScheduleBasedSource(
+		Model& m,
+		std::vector<TimeAndAmount> const& xs,
+		std::map<size_t, size_t> const& scenarioIdToSourceId,
+		size_t outflowId,
+		std::string const& tag,
+		double initialAge_s
+	);
 
 	size_t
 	Model_AddMux(Model& m, size_t numInports, size_t numOutports);

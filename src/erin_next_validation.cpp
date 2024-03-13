@@ -674,6 +674,7 @@ namespace erin_next
           {
             UpdateValidationInfoByField(v.Dist_Fixed, f);
           } break;
+          // TODO: add in all the other distributions
           case InputSection::Network:
           {
             UpdateValidationInfoByField(v.Network, f);

@@ -1,5 +1,6 @@
 #include "erin_next/erin_next_component.h"
 #include "erin_next/erin_next.h"
+#include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
@@ -134,7 +135,7 @@ namespace erin_next
 		}
 		if (errors.size() > 0)
 		{
-			std::cout << "ERRORS Parsing Component:" << std::endl;
+			std::cout << "ERRORS Parsing Component " << tag << ":" << std::endl;
 			for (auto const& err : errors)
 			{
 				std::cout << "- " << err << std::endl;
@@ -237,7 +238,7 @@ namespace erin_next
 		}
 		switch (ct)
 		{
-			case (ComponentType::ConstantSourceType):
+			case ComponentType::ConstantSourceType:
 			{
 				uint32_t maxAvailable = std::numeric_limits<uint32_t>::max();
 				if (table.contains("max_outflow"))
@@ -261,9 +262,8 @@ namespace erin_next
 				id = Model_AddConstantSource(
 					s.TheModel, maxAvailable, outflowId, tag
 				);
-			}
-			break;
-			case (ComponentType::ScheduleBasedLoadType):
+			} break;
+			case ComponentType::ScheduleBasedLoadType:
 			{
 				if (!table.contains("loads_by_scenario"))
 				{
@@ -305,9 +305,24 @@ namespace erin_next
 				id = Model_AddScheduleBasedLoad(
 					s.TheModel, emptyLoads, scenarioIdToLoadId, inflowId, tag
 				);
-			}
-			break;
-			case (ComponentType::MuxType):
+			} break;
+			case ComponentType::ScheduleBasedSourceType:
+			{
+				// TODO: read other items
+				std::map<size_t, size_t> scenarioIdToSupplyId;
+				std::vector<TimeAndAmount> timesAndAmounts;
+				double initialAge_s = 0.0;
+				auto const compIdAndWasteConn = Model_AddScheduleBasedSource(
+					s.TheModel,
+					timesAndAmounts,
+					scenarioIdToSupplyId,
+					inflowId,
+					tag,
+					initialAge_s
+				);
+				id = compIdAndWasteConn.Id;
+			} break;
+			case ComponentType::MuxType:
 			{
 				auto numInflows =
 					TOMLTable_ParseInteger(table, "num_inflows", fullTableName);
@@ -348,9 +363,8 @@ namespace erin_next
 					outflowId,
 					tag
 				);
-			}
-			break;
-			case (ComponentType::ConstantEfficiencyConverterType):
+			} break;
+			case ComponentType::ConstantEfficiencyConverterType:
 			{
 				auto maybeEfficiency = TOMLTable_ParseDouble(
 					table, "constant_efficiency", fullTableName
@@ -388,9 +402,8 @@ namespace erin_next
 						tag
 					);
 				id = compIdAndWasteConn.Id;
-			}
-			break;
-			case (ComponentType::PassThroughType):
+			} break;
+			case ComponentType::PassThroughType:
 			{
 				if (inflowId != outflowId)
 				{
@@ -401,35 +414,14 @@ namespace erin_next
 					return Result::Failure;
 				}
 				id = Model_AddPassThrough(s.TheModel, inflowId, tag);
-			}
-			break;
-			case (ComponentType::StoreType):
+			} break;
+			case ComponentType::StoreType:
 			{
-				std::unordered_set<std::string> requiredStoreFields{
-					"capacity",
-					"capacity_unit",
-					"rate_unit",
-					"max_charge",
-					"max_discharge",
-					"type",
-				};
-				std::unordered_set<std::string> optionalStoreFields{};
 				std::unordered_map<std::string, std::string> defaultStoreFields{
 					{"charge_at_soc", "0.8"},
 					{"flow", ""},
 					{"init_soc", "1.0"},
 				};
-				if (!TOMLTable_IsValid(
-						table,
-						requiredStoreFields,
-						optionalStoreFields,
-						defaultStoreFields,
-						fullTableName,
-						true
-					))
-				{
-					return Result::Failure;
-				}
 				if (inflowId != outflowId)
 				{
 					WriteErrorMessage(
@@ -584,8 +576,7 @@ namespace erin_next
 					inflowId,
 					tag
 				);
-			}
-			break;
+			} break;
 			default:
 			{
 				WriteErrorMessage(
@@ -740,6 +731,8 @@ namespace erin_next
 				ParseSingleComponent(s, it->second.as_table(), it->first, compValids);
 			if (result == Result::Failure)
 			{
+				std::string tag = "components." + it->first;
+				WriteErrorMessage(tag, "could not parse component");
 				return Result::Failure;
 			}
 		}

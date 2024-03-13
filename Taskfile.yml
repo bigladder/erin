@@ -28,3 +28,8 @@ tasks:
     desc: Build in debug mode
     cmds:
       - cmake --build build-db --config Debug -j 4
+  exercise:
+    desc: Runs the current exercise
+    dir: 'docs/erin_next_examples'
+    cmds:
+      - ../../build/bin/erin_next_cli ex29.toml

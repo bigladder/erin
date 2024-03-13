@@ -1,4 +1,5 @@
 #include "erin_next/erin_next.h"
+#include "erin_next/erin_next_time_and_amount.h"
 #include <cmath>
 #include <cstdlib>
 #include <limits>
@@ -1160,7 +1161,7 @@ namespace erin_next
 		{
 			return ComponentType::ConstantSourceType;
 		}
-		if (tag == "ScheduleBasedSource")
+		if (tag == "ScheduleBasedSource" || tag == "uncontrolled_source")
 		{
 			return ComponentType::ScheduleBasedSourceType;
 		}
@@ -1782,7 +1783,7 @@ namespace erin_next
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndAmount> timesAndLoads
+		std::vector<TimeAndAmount> const& timesAndLoads
 	)
 	{
 		return Model_AddScheduleBasedLoad(
@@ -1793,8 +1794,8 @@ namespace erin_next
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndAmount> timesAndLoads,
-		std::map<size_t, size_t> scenarioIdToLoadId
+		std::vector<TimeAndAmount> const& timesAndLoads,
+		std::map<size_t, size_t> const& scenarioIdToLoadId
 	)
 	{
 		return Model_AddScheduleBasedLoad(
@@ -1805,8 +1806,8 @@ namespace erin_next
 	size_t
 	Model_AddScheduleBasedLoad(
 		Model& m,
-		std::vector<TimeAndAmount> timesAndLoads,
-		std::map<size_t, size_t> scenarioIdToLoadId,
+		std::vector<TimeAndAmount> const& timesAndLoads,
+		std::map<size_t, size_t> const& scenarioIdToLoadId,
 		size_t inflowTypeId,
 		std::string const& tag
 	)
@@ -1858,17 +1859,39 @@ namespace erin_next
 	}
 
 	ComponentIdAndWasteConnection
-	Model_AddScheduleBasedSource(Model& m, std::vector<TimeAndAmount> xs)
+	Model_AddScheduleBasedSource(Model& m, std::vector<TimeAndAmount> const& xs)
+	{
+		return Model_AddScheduleBasedSource(
+			m,
+			xs,
+			std::map<size_t, size_t>{},
+			0,
+			"",
+			0.0
+		);
+	}
+
+	ComponentIdAndWasteConnection
+	Model_AddScheduleBasedSource(
+		Model& m,
+		std::vector<TimeAndAmount> const& xs,
+		std::map<size_t, size_t> const& scenarioIdToSourceId,
+		size_t outflowId,
+		std::string const& tag,
+		double initialAge_s)
 	{
 		auto idx = m.ScheduledSrcs.size();
 		ScheduleBasedSource sbs = {};
 		sbs.TimeAndAvails = xs;
+		sbs.ScenarioIdToSourceId = scenarioIdToSourceId;
 		m.ScheduledSrcs.push_back(sbs);
 		size_t wasteId = Component_AddComponentReturningId(
 			m.ComponentMap, ComponentType::WasteSinkType, 0
 		);
 		size_t thisId = Component_AddComponentReturningId(
-			m.ComponentMap, ComponentType::ScheduleBasedSourceType, idx
+			m.ComponentMap, ComponentType::ScheduleBasedSourceType, idx,
+			std::vector<size_t>{}, std::vector<size_t>{outflowId}, tag,
+			initialAge_s
 		);
 		auto wasteConn = Model_AddConnection(m, thisId, 1, wasteId, 0);
 		return {thisId, wasteConn};

@@ -8,8 +8,9 @@
 
 namespace erin_next
 {
-	// TODO: change to return the unordered map? if empty
-	// or vector of errors is non-zero, we know we had an issue
+	// TODO: change to return
+	// std::unordered_map<std::string, InputValue>
+	// InputValue will be loaded with exactly what we need
 	std::unordered_map<std::string, toml::value>
 	TOMLTable_ParseWithValidation(
 		std::unordered_map<toml::key, toml::value> const& table,
@@ -19,6 +20,7 @@ namespace erin_next
 		std::vector<std::string>& warnings)
 	{
 		std::unordered_map<std::string, toml::value> out{};
+		std::unordered_map<std::string, InputValue> out2{};
 		std::unordered_set<std::string> fieldsFound{};
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
@@ -94,7 +96,11 @@ namespace erin_next
 			}
 			assert(validationInfo.TypeMap.contains(key));
 			// check types
-			switch (validationInfo.TypeMap.at(key))
+			InputType expectedType =
+				validationInfo.TypeMap.at(key);
+			InputValue v;
+			v.Type = expectedType;
+			switch (expectedType)
 			{
 				case InputType::Any:
 				{
@@ -144,6 +150,7 @@ namespace erin_next
 							return out;
 						}
 					}
+					v.Value = value.as_string();
 				} break;
 				case InputType::ArrayOfDouble:
 				{
@@ -158,6 +165,8 @@ namespace erin_next
 						return out;
 					}
 					auto const& xs = value.as_array();
+					std::vector<double> aod;
+					aod.reserve(xs.size());
 					for (size_t i=0; i < xs.size(); ++i)
 					{
 						auto const& x = xs.at(i);
@@ -172,7 +181,21 @@ namespace erin_next
 							);
 							return out;
 						}
+						auto maybeDouble = TOML_ParseNumericValueAsDouble(x);
+						if (!maybeDouble.has_value())
+						{
+							std::ostringstream oss;
+							oss << "Expected type array for field '"
+								<< it->first << "' to be a number at "
+								<< "index " << i;
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+						aod.push_back(maybeDouble.value());
 					}
+					v.Value = std::move(aod);
 				} break;
 				case InputType::ArrayOfTuple2OfNumber:
 				{
@@ -213,6 +236,8 @@ namespace erin_next
 							);
 							return out;
 						}
+						double n0 = 0.0;
+						double n1 = 0.0;
 						for (auto const& y : ys)
 						{
 							if (!y.is_integer() && !y.is_floating())
@@ -225,6 +250,11 @@ namespace erin_next
 									WriteErrorToString(tableName, oss.str())
 								);
 								return out;
+							}
+							auto maybeDouble = TOML_ParseNumericValueAsDouble(y);
+							if (!maybeDouble.has_value())
+							{
+								// HERE
 							}
 						}
 					}
@@ -302,6 +332,21 @@ namespace erin_next
 							return out;
 						}
 					}
+					auto maybeInt = TOML_ParseNumericValueAsInteger(value);
+					if (!maybeInt.has_value())
+					{
+						std::ostringstream oss;
+						oss << "Expected field '" << it->first
+							<< "' to be convertable to an integer";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+					InputValue v;
+					v.Type = InputType::Integer;
+					v.Value = maybeInt.value();
+					out2[key] = std::move(v);
 				} break;
 				case InputType::Number:
 				{
@@ -315,9 +360,25 @@ namespace erin_next
 						);
 						return out;
 					}
+					auto maybeDouble = TOML_ParseNumericValueAsDouble(value);
+					if (!maybeDouble.has_value())
+					{
+						std::ostringstream oss;
+						oss << "Expected field '" << it->first
+							<< "' to be convertable to a real number";
+						errors.push_back(
+							WriteErrorToString(tableName, oss.str())
+						);
+						return out;
+					}
+					InputValue v;
+					v.Type = InputType::Number;
+					v.Value = maybeDouble.value();
+					out2[key] = std::move(v);
 				} break;
 				case InputType::ArrayOfString:
 				{
+					std::vector<std::string> aos;
 					if (!value.is_array())
 					{
 						std::ostringstream oss;
@@ -342,10 +403,16 @@ namespace erin_next
 							);
 							return out;
 						}
+						aos.push_back(x.as_string());
 					}
+					InputValue v;
+					v.Type = InputType::ArrayOfString;
+					v.Value = std::move(aos);
+					out2[key] = std::move(v);
 				} break;
 				case InputType::MapFromStringToString:
 				{
+					std::unordered_map<std::string, std::string> map;
 					if (!value.is_table())
 					{
 						std::ostringstream oss;
@@ -371,7 +438,12 @@ namespace erin_next
 							);
 							return out;
 						}
+						map[item.first] = item.second.as_string();
 					}
+					InputValue v{};
+					v.Type = InputType::MapFromStringToString;
+					v.Value = std::move(map);
+					out2[key] = std::move(v);
 				} break;
 				default:
 				{
@@ -382,6 +454,7 @@ namespace erin_next
 					std::exit(1);
 				} break;
 			}
+			out2[key] = std::move(v);
 			out[key] = value;
 		}
 		// insert defaults if not defined

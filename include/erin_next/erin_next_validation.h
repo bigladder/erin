@@ -7,6 +7,7 @@
 #include <optional>
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
 
 namespace erin_next
 {
@@ -61,6 +62,7 @@ namespace erin_next
 	enum class InputType
 	{
 		Any,
+		// TODO: rename below to String
 		AnyString,
 		EnumString,
 		Number, // float or integer
@@ -70,6 +72,20 @@ namespace erin_next
 		ArrayOfTuple3OfString,
 		ArrayOfTuple2OfNumber,
 		MapFromStringToString,
+	};
+
+	struct InputValue
+	{
+		InputType Type;
+		std::variant<
+			std::string,
+			double,
+			int64_t,
+			std::vector<double>,
+			std::vector<std::string>,
+			std::vector<std::vector<std::string>>,
+			std::vector<std::vector<double>>,
+			std::unordered_map<std::string, std::string>> Value;
 	};
 
 	enum class InputSection

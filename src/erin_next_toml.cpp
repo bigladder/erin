@@ -209,6 +209,7 @@ namespace erin_next
 						);
 						return out;
 					}
+					PairsVector pv;
 					auto const& xs = value.as_array();
 					for (size_t i=0; i < xs.size(); ++i)
 					{
@@ -236,28 +237,41 @@ namespace erin_next
 							);
 							return out;
 						}
-						double n0 = 0.0;
-						double n1 = 0.0;
-						for (auto const& y : ys)
+						auto const& y0 = ys.at(0);
+						auto const& y1 = ys.at(1);
+						if (!(y0.is_integer() || y0.is_floating())
+							|| !(y1.is_integer() || y1.is_floating()))
 						{
-							if (!y.is_integer() && !y.is_floating())
-							{
-								std::ostringstream oss;
-								oss << "Expected array item at " << i
-									<< " for field '" << it->first
-									<< "' to be an array of number of length 2 (c)";
-								errors.push_back(
-									WriteErrorToString(tableName, oss.str())
-								);
-								return out;
-							}
-							auto maybeDouble = TOML_ParseNumericValueAsDouble(y);
-							if (!maybeDouble.has_value())
-							{
-								// HERE
-							}
+							std::ostringstream oss;
+							oss << "Expected array item at " << i
+								<< " for field '" << it->first
+								<< "' to be an array of number of length 2 (c)";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
 						}
+						auto maybeNum0 = TOML_ParseNumericValueAsDouble(y0);
+						auto maybeNum1 = TOML_ParseNumericValueAsDouble(y1);
+						if (!maybeNum0.has_value() || !maybeNum1.has_value())
+						{
+							std::ostringstream oss;
+							oss << "Expected array item at " << i
+								<< " for field '" << it->first
+								<< "' to be an array of number of length 2 (c)";
+							errors.push_back(
+								WriteErrorToString(tableName, oss.str())
+							);
+							return out;
+						}
+						pv.Firsts.push_back(maybeNum0.value());
+						pv.Seconds.push_back(maybeNum1.value());
 					}
+					InputValue v{
+						.Type = InputType::ArrayOfTuple2OfNumber,
+						.Value = std::move(pv),
+					};
+					out2[key] = std::move(v);
 				} break;
 				case InputType::ArrayOfTuple3OfString:
 				{

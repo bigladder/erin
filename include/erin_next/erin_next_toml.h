@@ -2,8 +2,8 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_NEXT_TOML_H
 #define ERIN_NEXT_TOML_H
+#include "erin_next/erin_next_valdata.h"
 #include "erin_next/erin_next_time_and_amount.h"
-#include "erin_next/erin_next_validation.h"
 #include "../vendor/toml11/toml.hpp"
 #include <vector>
 #include <unordered_map>
@@ -14,11 +14,6 @@
 
 namespace erin_next
 {
-	struct PairsVector
-	{
-		std::vector<double> Firsts;
-		std::vector<double> Seconds;
-	};
 
 	std::unordered_map<std::string, toml::value>
 	TOMLTable_ParseWithValidation(

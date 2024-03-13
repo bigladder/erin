@@ -477,6 +477,17 @@ namespace erin_next
           InputSection::Components_Mux,
         },
       },
+      FieldInfo{
+        .FieldName = "max_outflows",
+        .Type = InputType::ArrayOfDouble,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Mux,
+        },
+      },
       // Constant Efficiency Converter
       FieldInfo{
         .FieldName = "constant_efficiency",
@@ -492,6 +503,28 @@ namespace erin_next
       FieldInfo{
         .FieldName = "lossflow",
         .Type = InputType::AnyString,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_ConstEffConverter,
+        },
+      },
+      FieldInfo{
+        .FieldName = "max_outflow",
+        .Type = InputType::Number,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_ConstEffConverter,
+        },
+      },
+      FieldInfo{
+        .FieldName = "max_lossflow",
+        .Type = InputType::Number,
         .IsRequired = false,
         .Default = "",
         .EnumValues = {},
@@ -549,6 +582,17 @@ namespace erin_next
         .FieldName = "max_discharge",
         .Type = InputType::Number,
         .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Store,
+        },
+      },
+      FieldInfo{
+        .FieldName = "max_outflow",
+        .Type = InputType::Number,
+        .IsRequired = false,
         .Default = "",
         .EnumValues = {},
         .Aliases = {},

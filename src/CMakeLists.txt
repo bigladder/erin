@@ -203,6 +203,7 @@ add_library(erin_next
 	erin_next_random.cpp
   erin_next_validation.cpp
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_valdata.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_distribution.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_reliability.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_timestate.h"

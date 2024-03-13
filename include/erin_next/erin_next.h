@@ -22,6 +22,8 @@
 #include <map>
 #include <ostream>
 #include <functional>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace erin_next
 {

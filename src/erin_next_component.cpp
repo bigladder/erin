@@ -316,7 +316,7 @@ namespace erin_next
 					s.TheModel,
 					timesAndAmounts,
 					scenarioIdToSupplyId,
-					inflowId,
+					outflowId,
 					tag,
 					initialAge_s
 				);

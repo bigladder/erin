@@ -59,6 +59,15 @@ A good quote that summarizes the "spin" of data-oriented design is:
 >
 > -- Mike Acton, Data Oriented Design and C++, CppCon 2014
 
+## Developer Notes
+
+This section is for developers of the code.
+A couple of things to note:
+
+- ERIN uses unsigned integers for flows
+    - this makes determining when the network has reached quiescence easy
+    - HOWEVER, care is needed in adding uint\* types to avoid wrap-around
+
 ## Command-line Setup
 
 A script is available to run the compiler and tests from the command prompt (Mac OS X or Linux).

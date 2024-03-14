@@ -682,23 +682,11 @@ namespace erin_next
 	void
 	RunMuxForward(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		constexpr uint32_t maxNumeric = std::numeric_limits<uint32_t>::max();
 		uint32_t totalAvailable = 0;
 		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
 		{
-			if (totalAvailable == maxNumeric)
-			{
-				continue;
-			}
-			uint32_t maxGrowth = maxNumeric - totalAvailable;
-			if (ss.Flows[inflowConnIdx].Available_W >= maxGrowth)
-			{
-				totalAvailable = maxNumeric;
-			}
-			else
-			{
-				totalAvailable += ss.Flows[inflowConnIdx].Available_W;
-			}
+			totalAvailable = UtilSafeAdd(
+				totalAvailable, ss.Flows[inflowConnIdx].Available_W);
 		}
 		std::vector<uint32_t> outflowAvailables{};
 		outflowAvailables.reserve(model.Muxes[compIdx].NumOutports);

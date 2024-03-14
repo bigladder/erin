@@ -7,6 +7,7 @@
 #include "../vendor/toml11/toml.hpp"
 #include "erin_next/erin_next_validation.h"
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <optional>
 #include <ostream>
@@ -20,13 +21,22 @@ namespace erin_next
 	};
 
 	std::optional<Load>
-	ParseSingleLoad(toml::table const& table, std::string const& tag);
+	ParseSingleLoad(
+		std::unordered_map<std::string, InputValue> const& table,
+		std::string const& tag
+	);
 
 	std::optional<Load>
-	ParseSingleLoadExplicit(toml::table const& table, std::string const& tag);
+	ParseSingleLoadExplicit(
+		std::unordered_map<std::string, InputValue> const& table,
+		std::string const& tag
+	);
 
 	std::optional<Load>
-	ParseSingleLoadFileLoad(toml::table const& table, std::string const& tag);
+	ParseSingleLoadFileLoad(
+		std::unordered_map<std::string, InputValue> const& table,
+		std::string const& tag
+	);
 
 	std::optional<std::vector<Load>>
 	ParseLoads(

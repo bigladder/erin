@@ -67,6 +67,9 @@ A couple of things to note:
 - ERIN uses unsigned integers for flows
     - this makes determining when the network has reached quiescence easy
     - HOWEVER, care is needed in adding uint\* types to avoid wrap-around
+- when developing:
+    - ALWAYS run tests before committing (it is very easy to introduce a defect)
+    - do write tests that exercise all new features
 
 ## Command-line Setup
 

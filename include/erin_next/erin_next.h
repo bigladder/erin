@@ -180,6 +180,8 @@ namespace erin_next
 		size_t OutflowConn;
 		std::optional<size_t> LossflowConn;
 		size_t WasteflowConn;
+		flow_t MaxOutflow_W = max_flow_W;
+		flow_t MaxLossflow_W = max_flow_W;
 	};
 
 	struct Connection
@@ -364,6 +366,13 @@ namespace erin_next
 	inline
 	flow_t
 	UtilSafeAdd(flow_t a, flow_t b);
+
+	std::vector<TimeAndAmount>
+	ConvertToTimeAndAmounts(
+		std::vector<std::vector<double>> const& input,
+		double timeToSeconds = 1.0,
+		double rateToWatts = 1.0
+	);
 
 	std::optional<FragilityCurveType>
 	TagToFragilityCurveType(std::string const& tag);

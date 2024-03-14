@@ -54,8 +54,7 @@ namespace erin_next
 			std::vector<std::string>,
 			std::vector<std::vector<std::string>>,
 			std::vector<std::vector<double>>,
-			std::unordered_map<std::string, std::string>,
-      PairsVector> Value;
+			std::unordered_map<std::string, std::string>> Value;
 	};
 
 	enum class InputSection

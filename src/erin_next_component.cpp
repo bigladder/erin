@@ -2,6 +2,7 @@
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_toml.h"
+#include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
 #include <map>
@@ -13,6 +14,8 @@
 namespace erin_next
 {
 
+	// TODO: pass in default rate_unit and quantity_unit from
+	// simulation_info
 	Result
 	ParseSingleComponent(
 		Simulation& s,
@@ -43,7 +46,7 @@ namespace erin_next
 		ComponentType ct = maybeCompType.value();
 		std::vector<std::string> errors;
 		std::vector<std::string> warnings;
-		std::unordered_map<std::string, toml::value> input;
+		std::unordered_map<std::string, InputValue> input;
 		switch (ct)
 		{
 			case ComponentType::ConstantEfficiencyConverterType:
@@ -158,74 +161,33 @@ namespace erin_next
 		size_t outflowId = 0;
 		std::string lossflow{};
 		size_t lossflowId = 0;
-		if (table.contains("outflow"))
+		if (input.contains("outflow"))
 		{
-			auto maybe = TOMLTable_ParseString(table, "outflow", fullTableName);
-			if (!maybe.has_value())
-			{
-				WriteErrorMessage(
-					fullTableName, "unable to parse 'outflow' as string"
-				);
-				return Result::Failure;
-			}
-			outflow = maybe.value();
+			outflow = std::get<std::string>(input.at("outflow").Value);
 			outflowId = Simulation_RegisterFlow(s, outflow);
 		}
-		if (table.contains("inflow"))
+		if (input.contains("inflow"))
 		{
-			auto maybe = TOMLTable_ParseString(table, "inflow", fullTableName);
-			if (!maybe.has_value())
-			{
-				WriteErrorMessage(
-					fullTableName, "unable to parse 'inflow' as string"
-				);
-				return Result::Failure;
-			}
-			inflow = maybe.value();
+			inflow = std::get<std::string>(input.at("inflow").Value);
 			inflowId = Simulation_RegisterFlow(s, inflow);
 		}
 		if (table.contains("flow"))
 		{
-			auto maybe = TOMLTable_ParseString(table, "flow", fullTableName);
-			if (!maybe.has_value())
-			{
-				WriteErrorMessage(
-					fullTableName, "unable to parse 'lossflow' as string"
-				);
-				return Result::Failure;
-			}
-			inflow = maybe.value();
+			inflow = std::get<std::string>(input.at("flow").Value);
 			inflowId = Simulation_RegisterFlow(s, inflow);
-			outflow = maybe.value();
-			outflowId = Simulation_RegisterFlow(s, outflow);
+			outflow = inflow;
+			outflowId = inflowId;
 		}
 		if (table.contains("lossflow"))
 		{
-			auto maybe =
-				TOMLTable_ParseString(table, "lossflow", fullTableName);
-			if (!maybe.has_value())
-			{
-				WriteErrorMessage(
-					fullTableName, "unable to parse 'lossflow' as string"
-				);
-				return Result::Failure;
-			}
-			lossflow = maybe.value();
+			lossflow = std::get<std::string>(input.at("lossflow").Value);
 			lossflowId = Simulation_RegisterFlow(s, lossflow);
 		}
 		PowerUnit rateUnit = PowerUnit::Watt;
-		if (table.contains("rate_unit"))
+		if (input.contains("rate_unit"))
 		{
-			auto maybeRateUnitStr =
-				TOMLTable_ParseString(table, "rate_unit", fullTableName);
-			if (!maybeRateUnitStr.has_value())
-			{
-				WriteErrorMessage(
-					fullTableName, "unable to parse field 'rate_unit' as string"
-				);
-				return Result::Failure;
-			}
-			std::string rateUnitStr = maybeRateUnitStr.value();
+			auto const& rateUnitStr =
+				std::get<std::string>(input.at("rate_unit").Value);
 			auto maybeRateUnit = TagToPowerUnit(rateUnitStr);
 			if (!maybeRateUnit.has_value())
 			{
@@ -241,7 +203,7 @@ namespace erin_next
 		{
 			case ComponentType::ConstantSourceType:
 			{
-				uint32_t maxAvailable = std::numeric_limits<uint32_t>::max();
+				flow_t maxAvailable = max_flow_W;
 				if (table.contains("max_outflow"))
 				{
 					auto maybe = TOMLTable_ParseDouble(
@@ -418,18 +380,10 @@ namespace erin_next
 			} break;
 			case ComponentType::ConstantEfficiencyConverterType:
 			{
-				auto maybeEfficiency = TOMLTable_ParseDouble(
-					table, "constant_efficiency", fullTableName
+				PowerUnit localRateUnit = rateUnit;
+				double efficiency = std::get<double>(
+					input.at("constant_efficiency").Value
 				);
-				if (!maybeEfficiency.has_value())
-				{
-					WriteErrorMessage(
-						fullTableName,
-						"required field 'constant_efficiency' not found"
-					);
-					return Result::Failure;
-				}
-				double efficiency = maybeEfficiency.value();
 				if (efficiency <= 0.0)
 				{
 					WriteErrorMessage(
@@ -454,6 +408,44 @@ namespace erin_next
 						tag
 					);
 				id = compIdAndWasteConn.Id;
+				if (input.contains("rate_unit"))
+				{
+					std::string localRateUnitStr =
+						std::get<std::string>(input.at("rate_unit").Value);
+					auto maybeRateUnit =
+						TagToPowerUnit(localRateUnitStr);
+					if (!maybeRateUnit.has_value())
+					{
+						WriteErrorMessage(
+							fullTableName,
+							"unhandled rate unit '" + localRateUnitStr + "'"
+						);
+						return Result::Failure;
+					}
+					localRateUnit = maybeRateUnit.value();
+				}
+				if (input.contains("max_outflow"))
+				{
+					double maxOutflow_W = Power_ToWatt(
+						std::get<double>(input.at("max_outflow").Value),
+						localRateUnit
+					);
+					size_t constEffIdx =
+						s.TheModel.ComponentMap.Idx[id];
+					s.TheModel.ConstEffConvs[constEffIdx].MaxOutflow_W =
+						maxOutflow_W;
+				}
+				if (input.contains("max_lossflow"))
+				{
+					double maxLossflow_W = Power_ToWatt(
+						std::get<double>(input.at("max_lossflow").Value),
+						localRateUnit
+					);
+					size_t constEffIdx =
+						s.TheModel.ComponentMap.Idx[id];
+					s.TheModel.ConstEffConvs[constEffIdx].MaxLossflow_W =
+						maxLossflow_W;
+				}
 			} break;
 			case ComponentType::PassThroughType:
 			{

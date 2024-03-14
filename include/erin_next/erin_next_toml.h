@@ -15,7 +15,7 @@
 namespace erin_next
 {
 
-	std::unordered_map<std::string, toml::value>
+	std::unordered_map<std::string, InputValue>
 	TOMLTable_ParseWithValidation(
 		std::unordered_map<toml::key, toml::value> const& table,
 		ValidationInfo const& validationInfo,

@@ -15,6 +15,27 @@ namespace erin_next
 			: a + b;
 	}
 
+	std::vector<TimeAndAmount>
+	ConvertToTimeAndAmounts(
+		std::vector<std::vector<double>> const& input,
+		double timeToSeconds,
+		double rateToWatts
+	)
+	{
+		std::vector<TimeAndAmount> result;
+		result.reserve(input.size());
+		for (auto const& xs : input)
+		{
+			assert(xs.size() >= 2);
+			TimeAndAmount taa{
+				.Time_s = xs[0] * timeToSeconds,
+				.Amount_W = static_cast<flow_t>(xs[1] * rateToWatts),
+			};
+			result.push_back(std::move(taa));
+		}
+		return result;
+	}
+
 	std::optional<FragilityCurveType>
 	TagToFragilityCurveType(std::string const& tag)
 	{
@@ -391,35 +412,46 @@ namespace erin_next
 		size_t compIdx
 	)
 	{
-		uint32_t inflowRequest =
-			ss.Flows[m.ConstEffConvs[compIdx].InflowConn].Requested_W;
-		uint32_t inflowAvailable =
-			ss.Flows[m.ConstEffConvs[compIdx].InflowConn].Available_W;
-		uint32_t outflowRequest =
-			ss.Flows[m.ConstEffConvs[compIdx].OutflowConn].Requested_W;
-		uint32_t outflowAvailable =
-			ss.Flows[m.ConstEffConvs[compIdx].OutflowConn].Available_W;
-		std::optional<size_t> lossflowConn =
-			m.ConstEffConvs[compIdx].LossflowConn;
-		uint32_t inflow = FinalizeFlowValue(inflowRequest, inflowAvailable);
-		uint32_t outflow = FinalizeFlowValue(outflowRequest, outflowAvailable);
+		ConstantEfficiencyConverter const& cec =
+			m.ConstEffConvs[compIdx];
+		flow_t inflowRequest =
+			ss.Flows[cec.InflowConn].Requested_W;
+		flow_t inflowAvailable =
+			ss.Flows[cec.InflowConn].Available_W;
+		flow_t outflowRequest =
+			ss.Flows[cec.OutflowConn].Requested_W;
+		flow_t outflowAvailable =
+			ss.Flows[cec.OutflowConn].Available_W > cec.MaxOutflow_W
+			? cec.MaxOutflow_W
+			: ss.Flows[cec.OutflowConn].Available_W;
+		std::optional<size_t> lossflowConn = cec.LossflowConn;
+		flow_t inflow = FinalizeFlowValue(inflowRequest, inflowAvailable);
+		flow_t outflow = FinalizeFlowValue(outflowRequest, outflowAvailable);
 		// NOTE: for COP, we can have outflow > inflow, but we assume no
 		// lossflow in that scenario
 		// TODO: should COP components be separate components? A COP component
 		// with a lossflow hookup would be odd... wasteflow doesn't make sense
 		// either... I think the answer is "yes"; we can re-add the check for
 		// inflow >= outflow...
-		uint32_t nonOutflowAvailable = inflow > outflow ? inflow - outflow : 0;
-		uint32_t lossflowRequest = 0;
+		flow_t nonOutflowAvailable = inflow > outflow ? inflow - outflow : 0;
+		flow_t lossflowRequest = 0;
 		if (lossflowConn.has_value())
 		{
 			lossflowRequest = ss.Flows[lossflowConn.value()].Requested_W;
-			if (nonOutflowAvailable
+			if (lossflowRequest > cec.MaxLossflow_W)
+			{
+				lossflowRequest = cec.MaxLossflow_W;
+			}
+			flow_t nonOutflowAvailableLimited =
+				nonOutflowAvailable > cec.MaxLossflow_W
+				? cec.MaxLossflow_W
+				: nonOutflowAvailable;
+			if (nonOutflowAvailableLimited
 				!= ss.Flows[lossflowConn.value()].Available_W)
 			{
 				ss.ActiveConnectionsFront.insert(lossflowConn.value());
 			}
-			ss.Flows[lossflowConn.value()].Available_W = nonOutflowAvailable;
+			ss.Flows[lossflowConn.value()].Available_W = nonOutflowAvailableLimited;
 		}
 		size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn;
 		uint32_t wasteflow = nonOutflowAvailable > lossflowRequest
@@ -437,11 +469,16 @@ namespace erin_next
 		size_t compIdx
 	)
 	{
-		size_t inflowConn = m.ConstEffConvs[compIdx].InflowConn;
-		uint32_t outflowRequest = ss.Flows[connIdx].Requested_W;
-		uint32_t inflowRequest = static_cast<uint32_t>(
+		ConstantEfficiencyConverter const& cec = m.ConstEffConvs[compIdx];
+		size_t inflowConn = cec.InflowConn;
+		flow_t outflowRequest =
+			ss.Flows[connIdx].Requested_W > cec.MaxOutflow_W
+			? cec.MaxOutflow_W
+			: ss.Flows[connIdx].Requested_W;
+		flow_t inflowRequest = static_cast<flow_t>(
 			std::ceil(outflowRequest / m.ConstEffConvs[compIdx].Efficiency)
 		);
+		// TODO: re-enable a check for outflow <= inflow after adding COP components
 		// NOTE: for COP, we can have inflow < outflow
 		if (inflowRequest != ss.Flows[inflowConn].Requested_W)
 		{
@@ -660,11 +697,17 @@ namespace erin_next
 		size_t compIdx
 	)
 	{
-		uint32_t inflowAvailable = ss.Flows[connIdx].Available_W;
-		size_t outflowConn = m.ConstEffConvs[compIdx].OutflowConn;
-		uint32_t outflowAvailable = static_cast<uint32_t>(
-			std::floor(m.ConstEffConvs[compIdx].Efficiency * inflowAvailable)
+		ConstantEfficiencyConverter const& cec =
+			m.ConstEffConvs[compIdx];
+		flow_t inflowAvailable = ss.Flows[connIdx].Available_W;
+		size_t outflowConn = cec.OutflowConn;
+		flow_t outflowAvailable = static_cast<flow_t>(
+			std::floor(cec.Efficiency * inflowAvailable)
 		);
+		if (outflowAvailable > cec.MaxOutflow_W)
+		{
+			outflowAvailable = cec.MaxOutflow_W;
+		}
 		// NOTE: disabling to accommodate COP components for now
 		// TODO: create a separate COP component (like converter but no lossport
 		// or wasteport)
@@ -682,17 +725,17 @@ namespace erin_next
 	void
 	RunMuxForward(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		uint32_t totalAvailable = 0;
+		flow_t totalAvailable = 0;
 		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
 		{
 			totalAvailable = UtilSafeAdd(
 				totalAvailable, ss.Flows[inflowConnIdx].Available_W);
 		}
-		std::vector<uint32_t> outflowAvailables{};
+		std::vector<flow_t> outflowAvailables{};
 		outflowAvailables.reserve(model.Muxes[compIdx].NumOutports);
 		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
 		{
-			uint32_t available =
+			flow_t available =
 				ss.Flows[outflowConnIdx].Requested_W >= totalAvailable
 				? totalAvailable
 				: ss.Flows[outflowConnIdx].Requested_W;

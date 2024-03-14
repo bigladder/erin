@@ -11,7 +11,7 @@ namespace erin_next
 	// TODO: change to return
 	// std::unordered_map<std::string, InputValue>
 	// InputValue will be loaded with exactly what we need
-	std::unordered_map<std::string, toml::value>
+	std::unordered_map<std::string, InputValue>
 	TOMLTable_ParseWithValidation(
 		std::unordered_map<toml::key, toml::value> const& table,
 		ValidationInfo const& validationInfo,
@@ -19,8 +19,7 @@ namespace erin_next
 		std::vector<std::string>& errors,
 		std::vector<std::string>& warnings)
 	{
-		std::unordered_map<std::string, toml::value> out{};
-		std::unordered_map<std::string, InputValue> out2{};
+		std::unordered_map<std::string, InputValue> out;
 		std::unordered_set<std::string> fieldsFound{};
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
@@ -209,7 +208,7 @@ namespace erin_next
 						);
 						return out;
 					}
-					PairsVector pv;
+					std::vector<std::vector<double>> parentVec;
 					auto const& xs = value.as_array();
 					for (size_t i=0; i < xs.size(); ++i)
 					{
@@ -264,10 +263,13 @@ namespace erin_next
 							);
 							return out;
 						}
-						pv.Firsts.push_back(maybeNum0.value());
-						pv.Seconds.push_back(maybeNum1.value());
+						std::vector<double> subvec{
+							maybeNum0.value(),
+							maybeNum1.value(),
+						};
+						parentVec.push_back(std::move(subvec));
 					}
-					v.Value = std::move(pv);
+					v.Value = std::move(parentVec);
 				} break;
 				case InputType::ArrayOfTuple3OfString:
 				{
@@ -461,8 +463,7 @@ namespace erin_next
 					std::exit(1);
 				} break;
 			}
-			out2[key] = std::move(v);
-			out[key] = value;
+			out[key] = std::move(v);
 		}
 		// insert defaults if not defined
 		for (auto const& defkv : validationInfo.Defaults)
@@ -471,21 +472,23 @@ namespace erin_next
 			{
 				continue;
 			}
-			toml::value v;
-			switch (validationInfo.TypeMap.at(defkv.first))
+			InputValue iv;
+			InputType itype = validationInfo.TypeMap.at(defkv.first);
+			iv.Type = itype;
+			switch (itype)
 			{
 				case InputType::AnyString:
 				case InputType::EnumString:
 				{
-					v = toml::string{defkv.second};
+					iv.Value = defkv.second;
 				} break;
 				case InputType::Integer:
 				{
-					v = toml::integer{std::stoll(defkv.second)};
+					iv.Value = std::stoll(defkv.second);
 				} break;
 				case InputType::Number:
 				{
-					v = toml::floating{std::stod(defkv.second)};
+					iv.Value = std::stod(defkv.second);
 				} break;
 				default:
 				{
@@ -494,7 +497,7 @@ namespace erin_next
 					std::exit(1);
 				}
 			}
-			out.insert({defkv.first, std::move(v)});
+			out.insert({defkv.first, std::move(iv)});
 		}
 		// check that all required fields are present
 		for (auto const& field : validationInfo.RequiredFields)

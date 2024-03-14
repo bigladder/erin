@@ -10,6 +10,7 @@
 #include "erin_next/erin_next_toml.h"
 #include <assert.h>
 #include <fstream>
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include <map>
@@ -205,6 +206,23 @@ namespace erin_next
 							<< ", use supply: " << s.LoadMap.Tags[keyValue.second]
 							<< std::endl;
 					}
+				} break;
+				case ComponentType::ConstantEfficiencyConverterType:
+				{
+					ConstantEfficiencyConverter const& cec =
+						m.ConstEffConvs[m.ComponentMap.Idx[i]];
+					std::cout << "-- efficiency: "
+						<< cec.Efficiency * 100.0 << "%" << std::endl;
+					std::cout << "-- max outflow (W): "
+						<< (cec.MaxOutflow_W == max_flow_W
+							? "unlimited"
+							: std::to_string(cec.MaxOutflow_W))
+						<< std::endl;
+					std::cout << "-- max lossflow (W): "
+						<< (cec.MaxLossflow_W == max_flow_W
+							? "unlimited"
+							: std::to_string(cec.MaxLossflow_W))
+						<< std::endl;
 				} break;
 				default:
 				{
@@ -489,7 +507,7 @@ namespace erin_next
 		toml::table const& simInfoTable = simInfoValue.as_table();
 		std::vector<std::string> errors;
 		std::vector<std::string> warnings;
-		std::unordered_map<std::string, toml::value> inputs =
+		auto inputs =
 			TOMLTable_ParseWithValidation(
 				simInfoTable,
 				validationInfo,

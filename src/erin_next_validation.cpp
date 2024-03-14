@@ -439,6 +439,7 @@ namespace erin_next
           InputSection::Components_Source,
           InputSection::Components_UncontrolledSource,
           InputSection::Components_Store,
+          InputSection::Components_ConstEffConverter,
         },
       },
       FieldInfo{

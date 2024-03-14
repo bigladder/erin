@@ -25,6 +25,7 @@ namespace erin_next
 	};
 
 	// NOTE: pre-requisite, table already validated
+	// TODO: change this to use unordered_map<string, InputValue>
 	std::optional<SimulationInfo>
 	ParseSimulationInfo(std::unordered_map<toml::key, toml::value> const& table)
 	{

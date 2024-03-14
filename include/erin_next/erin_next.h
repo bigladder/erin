@@ -27,11 +27,17 @@
 #include <unordered_set>
 
 // define flow type to switch easily
+// TODO: things to try
+// - unsigned has module wrap around which is NOT what we want
+// - to prevent that, we have to compare to max which causes if statements
+//   to get interwoven with addition. We might want to try using signed
+//   with -1 meaning infinity or no limit? Need to do some timings...
 #define flow_t uint32_t
 
 namespace erin_next
 {
 
+	// DATA
 	double const infinity = -1.0;
 
 	size_t const constEffConvOutflowPort = 0;
@@ -89,12 +95,12 @@ namespace erin_next
 	struct FlowSummary
 	{
 		double Time = 0.0;
-		uint32_t Inflow = 0;
-		uint32_t OutflowRequest = 0;
-		uint32_t OutflowAchieved = 0;
-		uint32_t StorageDischarge = 0;
-		uint32_t StorageCharge = 0;
-		uint32_t Wasteflow = 0;
+		flow_t Inflow = 0;
+		flow_t OutflowRequest = 0;
+		flow_t OutflowAchieved = 0;
+		flow_t StorageDischarge = 0;
+		flow_t StorageCharge = 0;
+		flow_t Wasteflow = 0;
 	};
 
 	struct ScenarioOccurrenceStats
@@ -134,7 +140,7 @@ namespace erin_next
 
 	struct ConstantLoad
 	{
-		uint32_t Load_W;
+		flow_t Load_W;
 		size_t InflowConn;
 	};
 
@@ -153,7 +159,7 @@ namespace erin_next
 
 	struct ConstantSource
 	{
-		uint32_t Available_W;
+		flow_t Available_W;
 		size_t OutflowConn;
 	};
 
@@ -202,12 +208,12 @@ namespace erin_next
 
 	struct Store
 	{
-		uint32_t Capacity_J;
-		uint32_t MaxChargeRate_W;
-		uint32_t MaxDischargeRate_W;
+		flow_t Capacity_J;
+		flow_t MaxChargeRate_W;
+		flow_t MaxDischargeRate_W;
 		// amount at or below which we request charge
-		uint32_t ChargeAmount_J;
-		uint32_t InitialStorage_J;
+		flow_t ChargeAmount_J;
+		flow_t InitialStorage_J;
 		size_t InflowConn;
 		size_t OutflowConn;
 	};
@@ -351,6 +357,12 @@ namespace erin_next
 		std::vector<size_t> FailureDistIds;
 		std::vector<size_t> RepairDistIds;
 	};
+
+	// FUNCTIONS
+
+	inline
+	flow_t
+	UtilSafeAdd(flow_t a, flow_t b);
 
 	std::optional<FragilityCurveType>
 	TagToFragilityCurveType(std::string const& tag);

@@ -6,6 +6,14 @@
 
 namespace erin_next
 {
+	inline
+	flow_t
+	UtilSafeAdd(flow_t a, flow_t b)
+	{
+		return (b > (max_flow_W - a))
+			? max_flow_W
+			: a + b;
+	}
 
 	std::optional<FragilityCurveType>
 	TagToFragilityCurveType(std::string const& tag)
@@ -752,14 +760,7 @@ namespace erin_next
 		uint32_t dischargeAvailable = ss.StorageAmounts_J[storeIdx] > 0
 			? model.Stores[storeIdx].MaxDischargeRate_W
 			: 0;
-		if (available != max_flow_W && (max_flow_W - available) >= dischargeAvailable)
-		{
-			available += dischargeAvailable;
-		}
-		else
-		{
-			available = max_flow_W;
-		}
+		available = UtilSafeAdd(available, dischargeAvailable);
 		if (ss.Flows[outflowConn].Available_W != available)
 		{
 			ss.ActiveConnectionsFront.insert(outflowConn);

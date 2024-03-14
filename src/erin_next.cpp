@@ -475,25 +475,11 @@ namespace erin_next
 	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx)
 	{
-		constexpr uint32_t maxNumeric = std::numeric_limits<uint32_t>::max();
 		uint32_t totalRequest = 0;
 		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
 		{
-			if (totalRequest == maxNumeric)
-			{
-				// TODO: issue a warning
-				continue;
-			}
-			uint32_t maxGrowth = maxNumeric - totalRequest;
-			if (ss.Flows[outflowConnIdx].Requested_W >= maxGrowth)
-			{
-				// TODO: issue a warning
-				totalRequest = maxNumeric;
-			}
-			else
-			{
-				totalRequest += ss.Flows[outflowConnIdx].Requested_W;
-			}
+			totalRequest = UtilSafeAdd(
+				totalRequest, ss.Flows[outflowConnIdx].Requested_W);
 		}
 		Mux_RequestInflowsIntelligently(
 			ss, model.Muxes[compIdx].InflowConns, totalRequest

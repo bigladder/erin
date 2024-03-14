@@ -44,7 +44,8 @@ namespace erin_next
 	size_t const constEffConvLossflowPort = 1;
 	size_t const constEffConvWasteflowPort = 2;
 
-	flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
+	// NOTE: the maximum allowed flow
+	constexpr flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 
 	enum class ComponentType
 	{

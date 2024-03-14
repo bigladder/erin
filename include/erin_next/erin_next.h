@@ -11,6 +11,7 @@
 #include "erin_next/erin_next_result.h"
 #include "../vendor/toml11/toml.hpp"
 #include <iostream>
+#include <limits>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string>
@@ -25,6 +26,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
+// define flow type to switch easily
+#define flow_t uint32_t
+
 namespace erin_next
 {
 
@@ -33,6 +37,8 @@ namespace erin_next
 	size_t const constEffConvOutflowPort = 0;
 	size_t const constEffConvLossflowPort = 1;
 	size_t const constEffConvWasteflowPort = 2;
+
+	flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 
 	enum class ComponentType
 	{

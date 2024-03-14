@@ -168,6 +168,13 @@ namespace erin_next
 		size_t scenarioIdx
 	);
 
+	Result
+	SetSupplyForScenario(
+		std::vector<ScheduleBasedSource>& loads,
+		LoadDict loadMap,
+		size_t scenarioIdx
+	);
+
 	std::vector<double>
 	DetermineScenarioOccurrenceTimes(
 		Simulation& s,

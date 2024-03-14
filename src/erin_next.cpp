@@ -496,22 +496,23 @@ namespace erin_next
 	RunStoreBackward(
 		Model& model,
 		SimulationState& ss,
-		size_t connIdx,
-		size_t compIdx
+		size_t outflowConnIdx,
+		size_t storeIdx
 	)
 	{
-		size_t inflowConnIdx = model.Stores[compIdx].InflowConn;
+		size_t inflowConnIdx = model.Stores[storeIdx].InflowConn;
+		assert(outflowConnIdx == model.Stores[storeIdx].OutflowConn);
 		uint32_t chargeRate =
-			ss.StorageAmounts_J[compIdx] <= model.Stores[compIdx].ChargeAmount_J
-			? model.Stores[compIdx].MaxChargeRate_W
+			ss.StorageAmounts_J[storeIdx] <= model.Stores[storeIdx].ChargeAmount_J
+			? model.Stores[storeIdx].MaxChargeRate_W
 			: 0;
 		if (ss.Flows[inflowConnIdx].Requested_W
-			!= (ss.Flows[connIdx].Requested_W + chargeRate))
+			!= (ss.Flows[outflowConnIdx].Requested_W + chargeRate))
 		{
 			ss.ActiveConnectionsBack.insert(inflowConnIdx);
 		}
 		ss.Flows[inflowConnIdx].Requested_W =
-			ss.Flows[connIdx].Requested_W + chargeRate;
+			ss.Flows[outflowConnIdx].Requested_W + chargeRate;
 	}
 
 	void
@@ -741,16 +742,24 @@ namespace erin_next
 	RunStoreForward(
 		Model& model,
 		SimulationState& ss,
-		size_t connIdx,
-		size_t compIdx
+		size_t inflowConnIdx,
+		size_t storeIdx
 	)
 	{
-		size_t outflowConn = model.Stores[compIdx].OutflowConn;
-		uint32_t available = ss.Flows[connIdx].Available_W;
-		uint32_t dischargeAvailable = ss.StorageAmounts_J[compIdx] > 0
-			? model.Stores[compIdx].MaxDischargeRate_W
+		size_t outflowConn = model.Stores[storeIdx].OutflowConn;
+		assert(inflowConnIdx == model.Stores[storeIdx].InflowConn);
+		uint32_t available = ss.Flows[inflowConnIdx].Available_W;
+		uint32_t dischargeAvailable = ss.StorageAmounts_J[storeIdx] > 0
+			? model.Stores[storeIdx].MaxDischargeRate_W
 			: 0;
-		available += dischargeAvailable;
+		if (available != max_flow_W && (max_flow_W - available) >= dischargeAvailable)
+		{
+			available += dischargeAvailable;
+		}
+		else
+		{
+			available = max_flow_W;
+		}
 		if (ss.Flows[outflowConn].Available_W != available)
 		{
 			ss.ActiveConnectionsFront.insert(outflowConn);
@@ -866,6 +875,7 @@ namespace erin_next
 		assert(
 			outflowConn.has_value() && "store must have an outflow connection"
 		);
+		// TODO: consider using int64_t here
 		int netCharge = (int)ss.Flows[connIdx].Actual_W
 			- (int)ss.Flows[outflowConn.value()].Actual_W;
 		if (netCharge > 0)
@@ -1031,9 +1041,11 @@ namespace erin_next
 				continue;
 			}
 			netEnergyAdded +=
-				std::lround(elapsedTime * (double)ss.Flows[inConn].Actual_W);
+				std::lround(
+					elapsedTime * static_cast<double>(ss.Flows[inConn].Actual_W));
 			netEnergyAdded -=
-				std::lround(elapsedTime * (double)ss.Flows[outConn].Actual_W);
+				std::lround(
+					elapsedTime * static_cast<double>(ss.Flows[outConn].Actual_W));
 			assert(
 				static_cast<long>(
 					m.Stores[storeIdx].Capacity_J

@@ -441,6 +441,17 @@ namespace erin_next
           InputSection::Components_Store,
         },
       },
+      FieldInfo{
+        .FieldName = "supply_by_scenario",
+        .Type = InputType::MapFromStringToString,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_UncontrolledSource,
+        },
+      },
       // Mux
       FieldInfo{
         .FieldName = "flow",

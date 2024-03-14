@@ -192,12 +192,23 @@ namespace erin_next
 							<< ", use load: " << s.LoadMap.Tags[keyValue.second]
 							<< std::endl;
 					}
-				}
-				break;
+				} break;
+				case ComponentType::ScheduleBasedSourceType:
+				{
+					ScheduleBasedSource const& sbs =
+						m.ScheduledSrcs[m.ComponentMap.Idx[i]];
+					for (auto const& keyValue : sbs.ScenarioIdToSourceId)
+					{
+						std::cout
+							<< "-- for scenario: "
+							<< s.ScenarioMap.Tags[keyValue.first]
+							<< ", use supply: " << s.LoadMap.Tags[keyValue.second]
+							<< std::endl;
+					}
+				} break;
 				default:
 				{
-				}
-				break;
+				} break;
 			}
 			for (size_t compFailModeIdx = 0;
 				 compFailModeIdx < s.ComponentFailureModes.ComponentIds.size();
@@ -1594,6 +1605,41 @@ namespace erin_next
 		return Result::Success;
 	}
 
+	Result
+	SetSupplyForScenario(
+		std::vector<ScheduleBasedSource>& loads,
+		LoadDict loadMap,
+		size_t scenarioIdx
+	)
+	{
+		for (size_t sblIdx = 0; sblIdx < loads.size(); ++sblIdx)
+		{
+			if (loads[sblIdx].ScenarioIdToSourceId.contains(scenarioIdx))
+			{
+				auto loadId = loads[sblIdx].ScenarioIdToSourceId.at(scenarioIdx);
+				std::vector<TimeAndAmount> schedule{};
+				size_t numEntries = loadMap.Loads[loadId].size();
+				schedule.reserve(numEntries);
+				for (size_t i = 0; i < numEntries; ++i)
+				{
+					TimeAndAmount tal{};
+					tal.Time_s = loadMap.Loads[loadId][i].Time_s;
+					tal.Amount_W = loadMap.Loads[loadId][i].Amount_W;
+					schedule.push_back(std::move(tal));
+				}
+				loads[sblIdx].TimeAndAvails = std::move(schedule);
+			}
+			else
+			{
+				std::cout << "ERROR:"
+						  << "Unhandled scenario id in ScenarioIdToSourceId"
+						  << std::endl;
+				return Result::Failure;
+			}
+		}
+		return Result::Success;
+	}
+
 	std::vector<double>
 	DetermineScenarioOccurrenceTimes(
 		Simulation& s,
@@ -2302,6 +2348,14 @@ namespace erin_next
 				== Result::Failure)
 			{
 				std::cout << "Issue setting schedule loads" << std::endl;
+				return;
+			}
+			if (SetSupplyForScenario(
+					s.TheModel.ScheduledSrcs, s.LoadMap, scenIdx
+				)
+				== Result::Failure)
+			{
+				std::cout << "Issue setting schedule sources" << std::endl;
 				return;
 			}
 			// TODO: implement load substitution for schedule-based sources

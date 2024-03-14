@@ -19,17 +19,22 @@ tasks:
     dir: 'docs/erin_next_examples'
     cmds:
       - python regress.py
-  dbg-init:
-    desc: Make a debug build
-    cmds:
-      - mkdir build-db
-      - cmake -S . -B build-db -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-  dbg-build:
-    desc: Build in debug mode
-    cmds:
-      - cmake --build build-db --config Debug -j 4
-  exercise:
-    desc: Runs the current exercise
+  ex:
+    desc: Run the given exercise
     dir: 'docs/erin_next_examples'
     cmds:
       - ../../build/bin/erin_next_cli ex29.toml
+  db-init:
+    desc: Make a debug build
+    cmds:
+      - mkdir build-db
+      - cmake -S . -B build-db -DCMAKE_BUILD_TYPE=Debug -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+  db-build:
+    desc: Build in debug mode
+    cmds:
+      - cmake --build build-db --config Debug -j 4
+  db:
+    desc: Runs the current exercise
+    dir: 'docs/erin_next_examples'
+    cmds:
+      - lldb ../../build-db/bin/erin_next_cli -- ex29.toml

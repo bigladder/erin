@@ -6,6 +6,7 @@
 #include "erin_next/erin_next_validation.h"
 #include <map>
 #include <optional>
+#include <sstream>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -299,6 +300,14 @@ namespace erin_next
 								{scenarioId, loadId.value()}
 							);
 						}
+						else
+						{
+							// TODO: pass in warnings and error std::vector<std::string>
+							std::ostringstream oss;
+							oss << "missing supply for tag '" << loadTag << "'";
+							std::cout << WriteErrorToString(tag, oss.str()) << std::endl;
+							return Result::Failure;
+						}
 					}
 				}
 				std::vector<TimeAndAmount> emptyLoads = {};
@@ -309,7 +318,50 @@ namespace erin_next
 			case ComponentType::ScheduleBasedSourceType:
 			{
 				// TODO: read other items
-				std::map<size_t, size_t> scenarioIdToSupplyId;
+				if (!table.contains("supply_by_scenario"))
+				{
+					WriteErrorMessage(
+						fullTableName,
+						"missing required field 'supply_by_scenario'"
+					);
+					return Result::Failure;
+				}
+				if (!table.at("supply_by_scenario").is_table())
+				{
+					WriteErrorMessage(
+						fullTableName, "'supply_by_scenario' must be a table"
+					);
+					return Result::Failure;
+				}
+				toml::table const& sbs =
+					table.at("supply_by_scenario").as_table();
+				std::map<size_t, size_t> scenarioIdToSupplyId = {};
+				for (auto it = sbs.cbegin(); it != sbs.cend(); ++it)
+				{
+					std::string const& scenarioTag = it->first;
+					size_t scenarioId =
+						Simulation_RegisterScenario(s, scenarioTag);
+					if (it->second.is_string())
+					{
+						std::string const& loadTag = it->second.as_string();
+						std::optional<size_t> loadId =
+							Simulation_GetLoadIdByTag(s, loadTag);
+						if (loadId.has_value())
+						{
+							scenarioIdToSupplyId.insert(
+								{scenarioId, loadId.value()}
+							);
+						}
+						else
+						{
+							// TODO: pass in warnings and error std::vector<std::string>
+							std::ostringstream oss;
+							oss << "missing supply for tag '" << loadTag << "'";
+							std::cout << WriteErrorToString(tag, oss.str()) << std::endl;
+							return Result::Failure;
+						}
+					}
+				}
 				std::vector<TimeAndAmount> timesAndAmounts;
 				double initialAge_s = 0.0;
 				auto const compIdAndWasteConn = Model_AddScheduleBasedSource(

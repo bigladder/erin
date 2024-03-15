@@ -1,0 +1,134 @@
+[meta]
+description = """
+This example file demonstrates setting capacity limits on all components.
+The file is set up with loads, sources, and components with capacity limits.
+"""
+demonstrates = [
+    "use of this meta table to hold metadata about an example",
+    "max_outflow attribute on all components (save loads)",
+    "max_lossflow for components that have lossflow",
+    "max_outflows for mux",
+    "setting default rate_unit and quantity_unit in simulation_info",
+]
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "hours"
+max_time = 10
+############################################################
+[loads.load_profile]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,100.0],[10.0,0.0]]
+############################################################
+[components.S1]
+type = "source"
+outflow = "electricity"
+max_outflow = 10.0
+[components.L1]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "load_profile"
+[components.S2]
+type = "source"
+outflow = "natural gas"
+[components.Conv2]
+type = "converter"
+inflow = "natural gas"
+outflow = "electricity"
+lossflow = "hot air"
+constant_efficiency = 0.4
+max_outflow = 10.0
+max_lossflow = 10.0
+[components.L2a]
+type = "load"
+inflow = "electricity"
+loads_by_scenario = { blue_sky = "load_profile" }
+[components.L2b]
+type = "load"
+inflow = "hot air"
+loads_by_scenario = { blue_sky = "load_profile" }
+[components.S3]
+type = "source"
+outflow = "electricity"
+[components.Store3]
+type = "store"
+flow = "electricity"
+rate_unit = "kW"
+max_outflow = 10.0
+capacity_unit = "kJ"
+capacity = 100.0
+max_charge = 5.0
+max_discharge = 5.0
+[components.L3]
+type = "load"
+inflow = "electricity"
+loads_by_scenario = { blue_sky = "load_profile" }
+[components.S4a]
+type = "source"
+outflow = "electricity"
+[components.S4b]
+type = "source"
+outflow = "electricity"
+[components.Mux4]
+type = "mux"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 2
+max_outflows = [10.0, 10.0]
+[components.L4a]
+type = "load"
+inflow = "electricity"
+loads_by_scenario = { blue_sky = "load_profile" }
+[components.L4b]
+type = "load"
+inflow = "electricity"
+loads_by_scenario = { blue_sky = "load_profile" }
+[components.S5]
+type = "source"
+outflow = "electricity"
+[components.PT5]
+type = "pass_through"
+flow = "electricity"
+max_outflow = 10.0
+[components.L5]
+type = "load"
+inflow = "electricity"
+loads_by_scenario = { blue_sky = "load_profile" }
+[components.US6]
+type = "uncontrolled_source"
+outflow = "electricity"
+max_outflow = 10.0
+supply_by_scenario = { blue_sky = "load_profile" }
+[components.L6]
+type = "load"
+inflow = "electricity"
+loads_by_scenario = { blue_sky = "load_profile" }
+############################################################
+[network]
+connections = [
+  ["S1:OUT(0)", "L1:IN(0)", "electricity"],
+  ["S2:OUT(0)", "Conv2:IN(0)", "natural gas"],
+  ["Conv2:OUT(0)", "L2a:IN(0)", "electricity"],
+  ["Conv2:OUT(1)", "L2b:IN(0)", "hot air"],
+  ["S3:OUT(0)", "Store3:IN(0)", "electricity"],
+  ["Store3:OUT(0)", "L3:IN(0)", "electricity"],
+  ["S4a:OUT(0)", "Mux4:IN(0)", "electricity"],
+  ["S4b:OUT(0)", "Mux4:IN(1)", "electricity"],
+  ["Mux4:OUT(0)", "L4a:IN(0)", "electricity"],
+  ["Mux4:OUT(1)", "L4b:IN(0)", "electricity"],
+  ["S5:OUT(0)", "PT5:IN(0)", "electricity"],
+  ["PT5:OUT(0)", "L5:IN(0)", "electricity"],
+  ["US6:OUT(0)", "L6:IN(0)", "electricity"],
+]
+############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 10
+max_occurrences = 1

@@ -241,7 +241,8 @@ namespace erin_next
 	{
 		for (size_t i = 0; i < m.ScheduledSrcs.size(); ++i)
 		{
-			auto outIdx = m.ScheduledSrcs[i].OutflowConn;
+			ScheduleBasedSource const& sbs = m.ScheduledSrcs[i];
+			auto outIdx = sbs.OutflowConn;
 			size_t compId = m.Connections[outIdx].FromId;
 			if (ss.UnavailableComponents.contains(compId))
 			{
@@ -249,20 +250,23 @@ namespace erin_next
 				continue;
 			}
 			auto idx = ss.ScheduleBasedSourceIdx[i];
-			if (idx < m.ScheduledSrcs[i].TimeAndAvails.size())
+			if (idx < sbs.TimeAndAvails.size())
 			{
-				auto const& taa = m.ScheduledSrcs[i].TimeAndAvails[idx];
+				auto const& taa = sbs.TimeAndAvails[idx];
 				if (taa.Time_s == t)
 				{
-					if (ss.Flows[outIdx].Available_W != taa.Amount_W)
+					flow_t outAvail_W =
+						taa.Amount_W > sbs.MaxOutflow_W
+						? sbs.MaxOutflow_W
+						: taa.Amount_W;
+					if (ss.Flows[outIdx].Available_W != outAvail_W)
 					{
 						ss.ActiveConnectionsFront.insert(outIdx);
 					}
-					ss.Flows[outIdx].Available_W = taa.Amount_W;
-					auto spillage = ss.Flows[outIdx].Available_W
+					ss.Flows[outIdx].Available_W = outAvail_W;
+					auto spillage = outAvail_W
 							> ss.Flows[outIdx].Requested_W
-						? (ss.Flows[outIdx].Available_W
-						   - ss.Flows[outIdx].Requested_W)
+						? (outAvail_W - ss.Flows[outIdx].Requested_W)
 						: 0;
 					auto wasteIdx = m.ScheduledSrcs[i].WasteflowConn;
 					ss.Flows[wasteIdx].Requested_W = spillage;
@@ -560,28 +564,27 @@ namespace erin_next
 	RunScheduleBasedSourceBackward(
 		Model& model,
 		SimulationState& ss,
-		size_t connIdx,
-		size_t compIdx
+		size_t outConnIdx,
+		size_t sbsIdx
 	)
 	{
-		auto outConn = model.ScheduledSrcs[compIdx].OutflowConn;
-		if (outConn != connIdx)
-		{
-			std::cerr << "outConn must equal connIdx" << std::endl;
-			std::exit(1);
-		}
-		auto wasteConn = model.ScheduledSrcs[compIdx].WasteflowConn;
-		auto schIdx = ss.ScheduleBasedSourceIdx[compIdx];
+		ScheduleBasedSource const& sbs =
+			model.ScheduledSrcs[sbsIdx];
+		assert(outConnIdx == sbs.OutflowConn);
+		auto wasteConn = model.ScheduledSrcs[sbsIdx].WasteflowConn;
+		auto schIdx = ss.ScheduleBasedSourceIdx[sbsIdx];
 		auto available =
-			model.ScheduledSrcs[compIdx].TimeAndAvails[schIdx].Amount_W;
-		auto spillage = available > ss.Flows[outConn].Requested_W
-			? available - ss.Flows[outConn].Requested_W
+			sbs.TimeAndAvails[schIdx].Amount_W > sbs.MaxOutflow_W
+			? sbs.MaxOutflow_W
+			: sbs.TimeAndAvails[schIdx].Amount_W;
+		auto spillage = available > ss.Flows[outConnIdx].Requested_W
+			? available - ss.Flows[outConnIdx].Requested_W
 			: 0;
-		if (ss.Flows[outConn].Available_W != available)
+		if (ss.Flows[outConnIdx].Available_W != available)
 		{
-			ss.ActiveConnectionsFront.insert(outConn);
+			ss.ActiveConnectionsFront.insert(outConnIdx);
 		}
-		ss.Flows[outConn].Available_W = available;
+		ss.Flows[outConnIdx].Available_W = available;
 		ss.Flows[wasteConn].Available_W = spillage;
 		ss.Flows[wasteConn].Requested_W = spillage;
 	}

@@ -24,9 +24,7 @@ namespace erin_next
 	// uint32_t...
 	struct SimulationInfo
 	{
-		// TODO: remove RateUnit; not in user guide; or does this set defaults?
-		// if we keep, use PowerUnit
-		std::string RateUnit;
+		PowerUnit RateUnit;
 		// TODO: remove QuantityUnit; not in user guide; or does this set
 		// defaults? if keep, use EnergyUnit
 		std::string QuantityUnit;

@@ -2,6 +2,8 @@
 #include <unordered_set>
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_toml.h"
+#include "erin_next/erin_next_units.h"
+#include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
 
 namespace erin_next
@@ -41,7 +43,24 @@ namespace erin_next
 		auto rawRateUnit = TOMLTable_ParseStringWithSetResponses(
 			table, ValidRateUnits, "rate_unit", "simulation_info"
 		);
-		si.RateUnit = rawRateUnit.value();
+		if (!rawRateUnit.has_value())
+		{
+			WriteErrorMessage(
+				"simulation_info",
+				"rate_unit must be a string"
+			);
+			return {};
+		}
+		auto maybeRateUnit = TagToPowerUnit(rawRateUnit.value());
+		if (!maybeRateUnit.has_value())
+		{
+			WriteErrorMessage(
+				"simulation_info",
+				"unhandled rate unit '" + rawRateUnit.value() + "'"
+			);
+			return {};
+		}
+		si.RateUnit = maybeRateUnit.value();
 		auto rawQuantityUnit = TOMLTable_ParseStringWithSetResponses(
 			table, ValidQuantityUnits, "quantity_unit", "simulation_info"
 		);

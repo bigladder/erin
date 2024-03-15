@@ -206,6 +206,11 @@ namespace erin_next
 							<< ", use supply: " << s.LoadMap.Tags[keyValue.second]
 							<< std::endl;
 					}
+					std::cout << "-- max outflow (W): "
+						<< (sbs.MaxOutflow_W == max_flow_W
+							? "unlimited"
+							: std::to_string(sbs.MaxOutflow_W))
+						<< std::endl;
 				} break;
 				case ComponentType::ConstantEfficiencyConverterType:
 				{

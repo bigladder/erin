@@ -183,7 +183,7 @@ namespace erin_next
 			lossflow = std::get<std::string>(input.at("lossflow").Value);
 			lossflowId = Simulation_RegisterFlow(s, lossflow);
 		}
-		PowerUnit rateUnit = PowerUnit::Watt;
+		PowerUnit rateUnit = s.Info.RateUnit;
 		if (input.contains("rate_unit"))
 		{
 			auto const& rateUnitStr =
@@ -279,49 +279,32 @@ namespace erin_next
 			} break;
 			case ComponentType::ScheduleBasedSourceType:
 			{
-				// TODO: read other items
-				if (!table.contains("supply_by_scenario"))
-				{
-					WriteErrorMessage(
-						fullTableName,
-						"missing required field 'supply_by_scenario'"
+				std::unordered_map<std::string, std::string> const& sbs =
+					std::get<std::unordered_map<std::string, std::string>>(
+						input.at("supply_by_scenario").Value
 					);
-					return Result::Failure;
-				}
-				if (!table.at("supply_by_scenario").is_table())
-				{
-					WriteErrorMessage(
-						fullTableName, "'supply_by_scenario' must be a table"
-					);
-					return Result::Failure;
-				}
-				toml::table const& sbs =
-					table.at("supply_by_scenario").as_table();
 				std::map<size_t, size_t> scenarioIdToSupplyId = {};
 				for (auto it = sbs.cbegin(); it != sbs.cend(); ++it)
 				{
 					std::string const& scenarioTag = it->first;
 					size_t scenarioId =
-						Simulation_RegisterScenario(s, scenarioTag);
-					if (it->second.is_string())
+					Simulation_RegisterScenario(s, scenarioTag);
+					std::string const& loadTag = it->second;
+					std::optional<size_t> loadId =
+						Simulation_GetLoadIdByTag(s, loadTag);
+					if (loadId.has_value())
 					{
-						std::string const& loadTag = it->second.as_string();
-						std::optional<size_t> loadId =
-							Simulation_GetLoadIdByTag(s, loadTag);
-						if (loadId.has_value())
-						{
-							scenarioIdToSupplyId.insert(
-								{scenarioId, loadId.value()}
-							);
-						}
-						else
-						{
-							// TODO: pass in warnings and error std::vector<std::string>
-							std::ostringstream oss;
-							oss << "missing supply for tag '" << loadTag << "'";
-							std::cout << WriteErrorToString(tag, oss.str()) << std::endl;
-							return Result::Failure;
-						}
+						scenarioIdToSupplyId.insert(
+							{scenarioId, loadId.value()}
+						);
+					}
+					else
+					{
+						// TODO: pass in warnings and error std::vector<std::string>
+						std::ostringstream oss;
+						oss << "missing supply for tag '" << loadTag << "'";
+						std::cout << WriteErrorToString(tag, oss.str()) << std::endl;
+						return Result::Failure;
 					}
 				}
 				std::vector<TimeAndAmount> timesAndAmounts;
@@ -335,6 +318,20 @@ namespace erin_next
 					initialAge_s
 				);
 				id = compIdAndWasteConn.Id;
+				if (input.contains("max_outflow"))
+				{
+					double rawMaxOutflow =
+						std::get<double>(input.at("max_outflow").Value);
+					flow_t maxOutflow_W =
+						static_cast<flow_t>(
+							Power_ToWatt(
+								rawMaxOutflow,
+								rateUnit
+							)
+						);
+					s.TheModel.ScheduledSrcs[s.TheModel.ComponentMap.Idx[id]].MaxOutflow_W =
+						maxOutflow_W;
+				}
 			} break;
 			case ComponentType::MuxType:
 			{

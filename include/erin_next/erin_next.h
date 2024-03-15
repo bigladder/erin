@@ -170,6 +170,7 @@ namespace erin_next
 		size_t OutflowConn;
 		size_t WasteflowConn;
 		std::map<size_t, size_t> ScenarioIdToSourceId;
+		flow_t MaxOutflow_W = max_flow_W;
 	};
 
 	struct ConstantEfficiencyConverter

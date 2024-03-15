@@ -27,8 +27,8 @@
 #include <unordered_set>
 
 // define flow type to switch easily
-// TODO: things to try
-// - unsigned has module wrap around which is NOT what we want
+// TODO[mok]: things to try
+// - unsigned has modulo wrap around which is NOT what we want
 // - to prevent that, we have to compare to max which causes if statements
 //   to get interwoven with addition. We might want to try using signed
 //   with -1 meaning infinity or no limit? Need to do some timings...
@@ -228,6 +228,7 @@ namespace erin_next
 	{
 		size_t InflowConn = 0;
 		size_t OutflowConn = 0;
+		flow_t MaxOutflow_W = max_flow_W;
 	};
 
 	struct Flow

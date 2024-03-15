@@ -250,7 +250,21 @@ namespace erin_next
 							: std::to_string(store.MaxOutflow_W))
 						<< std::endl;
 					// TODO: add roundtrip efficiency
-				}
+				} break;
+				case ComponentType::PassThroughType:
+				{
+					size_t idx = m.ComponentMap.Idx[i];
+					size_t num_passthroughs = m.PassThroughs.size();
+					std::cout << "passthrough idx: " << idx << std::endl;
+					std::cout << "#passthroughs  : " << num_passthroughs << std::endl;
+					PassThrough const& pt =
+						m.PassThroughs[idx];
+					std::cout << "-- max outflow (W): "
+						<< (pt.MaxOutflow_W == max_flow_W
+							? "unlimited"
+							: std::to_string(pt.MaxOutflow_W))
+						<< std::endl;
+				} break;
 				default:
 				{
 				} break;

@@ -473,6 +473,17 @@ namespace erin_next
 					return Result::Failure;
 				}
 				id = Model_AddPassThrough(s.TheModel, inflowId, tag);
+				if (input.contains("max_outflow"))
+				{
+					double rawMaxOutflow =
+						std::get<double>(input.at("max_outflow").Value);
+					flow_t maxOutflow_W =
+						static_cast<flow_t>(
+							Power_ToWatt(rawMaxOutflow, rateUnit)
+						);
+					s.TheModel.PassThroughs[s.TheModel.ComponentMap.Idx[id]].MaxOutflow_W =
+						maxOutflow_W;
+				}
 			} break;
 			case ComponentType::StoreType:
 			{

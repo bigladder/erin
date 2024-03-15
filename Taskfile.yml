@@ -20,10 +20,10 @@ tasks:
     cmds:
       - python regress.py
   ex:
-    desc: Run the given exercise
+    desc: Run the given exercise. Pass '-- ex29.toml' to run example 29
     dir: 'docs/erin_next_examples'
     cmds:
-      - ../../build/bin/erin_next_cli ex29.toml
+      - ../../build/bin/erin_next_cli {{.CLI_ARGS}}
   db-init:
     desc: Make a debug build
     cmds:

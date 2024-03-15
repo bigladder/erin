@@ -590,12 +590,12 @@ namespace erin_next
 	RunPassthroughBackward(
 		Model& m,
 		SimulationState& ss,
-		size_t connIdx,
-		size_t compIdx
+		size_t outConnIdx,
+		size_t ptIdx
 	)
 	{
-		PassThrough const& pt = m.PassThroughs[compIdx];
-		size_t compId = m.Connections[connIdx].FromId;
+		PassThrough const& pt = m.PassThroughs[ptIdx];
+		size_t compId = m.Connections[outConnIdx].FromId;
 		if (ss.UnavailableComponents.contains(compId))
 		{
 			if (ss.Flows[pt.InflowConn].Requested_W != 0)
@@ -606,12 +606,15 @@ namespace erin_next
 		}
 		else
 		{
-			if (ss.Flows[pt.InflowConn].Requested_W
-				!= ss.Flows[connIdx].Requested_W)
+			flow_t req_W =
+				ss.Flows[outConnIdx].Requested_W > pt.MaxOutflow_W
+				? pt.MaxOutflow_W
+				: ss.Flows[outConnIdx].Requested_W;
+			if (ss.Flows[pt.InflowConn].Requested_W != req_W)
 			{
 				ss.ActiveConnectionsBack.insert(pt.InflowConn);
 			}
-			ss.Flows[pt.InflowConn].Requested_W = ss.Flows[connIdx].Requested_W;
+			ss.Flows[pt.InflowConn].Requested_W = req_W;
 		}
 	}
 
@@ -826,12 +829,12 @@ namespace erin_next
 	RunPassthroughForward(
 		Model& m,
 		SimulationState& ss,
-		size_t connIdx,
-		size_t compIdx
+		size_t inflowConnIdx,
+		size_t ptIdx
 	)
 	{
-		auto const& pt = m.PassThroughs[compIdx];
-		size_t compId = m.Connections[connIdx].ToId;
+		auto const& pt = m.PassThroughs[ptIdx];
+		size_t compId = m.Connections[inflowConnIdx].ToId;
 		if (ss.UnavailableComponents.contains(compId))
 		{
 			if (ss.Flows[pt.OutflowConn].Available_W != 0)
@@ -842,13 +845,15 @@ namespace erin_next
 		}
 		else
 		{
-			if (ss.Flows[pt.OutflowConn].Available_W
-				!= ss.Flows[connIdx].Available_W)
+			flow_t avail_W =
+				ss.Flows[inflowConnIdx].Available_W > pt.MaxOutflow_W
+				? pt.MaxOutflow_W
+				: ss.Flows[inflowConnIdx].Available_W;
+			if (ss.Flows[pt.OutflowConn].Available_W != avail_W)
 			{
 				ss.ActiveConnectionsFront.insert(pt.OutflowConn);
 			}
-			ss.Flows[pt.OutflowConn].Available_W =
-				ss.Flows[connIdx].Available_W;
+			ss.Flows[pt.OutflowConn].Available_W = avail_W;
 		}
 	}
 
@@ -2129,7 +2134,11 @@ namespace erin_next
 	Model_AddPassThrough(Model& m, size_t flowId, std::string const& tag)
 	{
 		size_t idx = m.PassThroughs.size();
-		m.PassThroughs.push_back({});
+		m.PassThroughs.push_back({
+			.InflowConn = 0,
+			.OutflowConn = 0,
+			.MaxOutflow_W = max_flow_W,
+		});
 		return Component_AddComponentReturningId(
 			m.ComponentMap,
 			ComponentType::PassThroughType,

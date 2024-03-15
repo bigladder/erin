@@ -221,7 +221,6 @@ namespace erin_next
 		flow_t InitialStorage_J;
 		size_t InflowConn;
 		size_t OutflowConn;
-		double RoundtripEfficiency = 1.0;
 		flow_t MaxOutflow_W = max_flow_W;
 	};
 

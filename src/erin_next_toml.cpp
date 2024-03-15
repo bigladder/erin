@@ -364,7 +364,7 @@ namespace erin_next
 						);
 						return out;
 					}
-					v.Value = maybeInt.value();
+					v.Value = static_cast<int64_t>(maybeInt.value());
 				} break;
 				case InputType::Number:
 				{

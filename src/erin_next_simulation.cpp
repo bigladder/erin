@@ -224,6 +224,33 @@ namespace erin_next
 							: std::to_string(cec.MaxLossflow_W))
 						<< std::endl;
 				} break;
+				case ComponentType::StoreType:
+				{
+					Store const& store =
+						m.Stores[m.ComponentMap.Idx[i]];
+					std::cout << "-- capacity (J): "
+						<< store.Capacity_J << std::endl;
+					std::cout << "-- initial SOC: "
+						<< (static_cast<double>(store.InitialStorage_J)
+							/ static_cast<double>(store.Capacity_J))
+						<< std::endl;
+					std::cout << "-- initial capacity (J): "
+						<< store.Capacity_J << std::endl;
+					std::cout << "-- SOC to start charging: "
+						<< (static_cast<double>(store.ChargeAmount_J)
+							/ static_cast<double>(store.Capacity_J))
+						<< std::endl;
+					std::cout << "-- max charge rate (W): "
+						<< store.MaxChargeRate_W << std::endl;
+					std::cout << "-- max discharge rate (W): "
+						<< store.MaxDischargeRate_W << std::endl;
+					std::cout << "-- max outflow (W): "
+						<< (store.MaxOutflow_W == max_flow_W
+							? "unlimited"
+							: std::to_string(store.MaxOutflow_W))
+						<< std::endl;
+					// TODO: add roundtrip efficiency
+				}
 				default:
 				{
 				} break;

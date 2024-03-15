@@ -550,7 +550,7 @@ namespace erin_next
         .FieldName = "init_soc",
         .Type = InputType::Number,
         .IsRequired = false,
-        .Default = "",
+        .Default = "1.0",
         .EnumValues = {},
         .Aliases = {},
         .Sections = {

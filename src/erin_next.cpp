@@ -510,16 +510,21 @@ namespace erin_next
 	}
 
 	void
-	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx)
+	RunMuxBackward(Model& model, SimulationState& ss, size_t muxIdx)
 	{
-		uint32_t totalRequest = 0;
-		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
+		Mux const& mux = model.Muxes[muxIdx];
+		flow_t totalRequest = 0;
+		for (size_t i = 0; i < mux.NumOutports; ++i)
 		{
-			totalRequest = UtilSafeAdd(
-				totalRequest, ss.Flows[outflowConnIdx].Requested_W);
+			auto outflowConnIdx = mux.OutflowConns[i];
+			auto outflowRequest_W =
+				ss.Flows[outflowConnIdx].Requested_W > mux.MaxOutflows_W[i]
+				? mux.MaxOutflows_W[i]
+				: ss.Flows[outflowConnIdx].Requested_W;
+			totalRequest = UtilSafeAdd(totalRequest, outflowRequest_W);
 		}
 		Mux_RequestInflowsIntelligently(
-			ss, model.Muxes[compIdx].InflowConns, totalRequest
+			ss, model.Muxes[muxIdx].InflowConns, totalRequest
 		);
 	}
 
@@ -531,19 +536,24 @@ namespace erin_next
 		size_t storeIdx
 	)
 	{
-		size_t inflowConnIdx = model.Stores[storeIdx].InflowConn;
-		assert(outflowConnIdx == model.Stores[storeIdx].OutflowConn);
-		uint32_t chargeRate =
-			ss.StorageAmounts_J[storeIdx] <= model.Stores[storeIdx].ChargeAmount_J
-			? model.Stores[storeIdx].MaxChargeRate_W
+		Store const& store = model.Stores[storeIdx];
+		size_t inflowConnIdx = store.InflowConn;
+		assert(outflowConnIdx == store.OutflowConn);
+		flow_t chargeRate =
+			ss.StorageAmounts_J[storeIdx] <= store.ChargeAmount_J
+			? store.MaxChargeRate_W
 			: 0;
+		flow_t outRequest_W =
+			ss.Flows[outflowConnIdx].Requested_W > store.MaxOutflow_W
+			? store.MaxOutflow_W
+			: ss.Flows[outflowConnIdx].Requested_W;
 		if (ss.Flows[inflowConnIdx].Requested_W
-			!= (ss.Flows[outflowConnIdx].Requested_W + chargeRate))
+			!= (outRequest_W + chargeRate))
 		{
 			ss.ActiveConnectionsBack.insert(inflowConnIdx);
 		}
 		ss.Flows[inflowConnIdx].Requested_W =
-			ss.Flows[outflowConnIdx].Requested_W + chargeRate;
+			outRequest_W + chargeRate;
 	}
 
 	void
@@ -723,43 +733,65 @@ namespace erin_next
 	}
 
 	void
-	RunMuxForward(Model& model, SimulationState& ss, size_t compIdx)
+	RunMuxForward(Model& model, SimulationState& ss, size_t muxIdx)
 	{
+		Mux const& mux = model.Muxes[muxIdx];
 		flow_t totalAvailable = 0;
-		for (size_t inflowConnIdx : model.Muxes[compIdx].InflowConns)
+		for (size_t inflowConnIdx : mux.InflowConns)
 		{
 			totalAvailable = UtilSafeAdd(
 				totalAvailable, ss.Flows[inflowConnIdx].Available_W);
 		}
 		std::vector<flow_t> outflowAvailables{};
-		outflowAvailables.reserve(model.Muxes[compIdx].NumOutports);
-		for (size_t outflowConnIdx : model.Muxes[compIdx].OutflowConns)
+		outflowAvailables.reserve(mux.NumOutports);
+		for (size_t i = 0; i < mux.NumOutports; ++i)
 		{
-			flow_t available =
-				ss.Flows[outflowConnIdx].Requested_W >= totalAvailable
-				? totalAvailable
+			size_t outflowConnIdx = mux.OutflowConns[i];
+			flow_t req_W =
+				ss.Flows[outflowConnIdx].Requested_W > mux.MaxOutflows_W[i]
+				? mux.MaxOutflows_W[i]
 				: ss.Flows[outflowConnIdx].Requested_W;
+			flow_t available =
+				req_W >= totalAvailable
+				? totalAvailable
+				: req_W;
 			outflowAvailables.push_back(available);
 			totalAvailable -= available;
 		}
 		if (totalAvailable > 0)
 		{
-			outflowAvailables[0] += totalAvailable;
+			for (size_t i = 0; i < mux.NumOutports; ++i)
+			{
+				if (mux.MaxOutflows_W[i] > outflowAvailables[i])
+				{
+					flow_t maxAdd = mux.MaxOutflows_W[i] - outflowAvailables[i];
+					flow_t toAdd =
+						maxAdd > totalAvailable
+						? totalAvailable
+						: maxAdd;
+					flow_t actuallyAdded = outflowAvailables[i];
+					outflowAvailables[i] =
+						UtilSafeAdd(outflowAvailables[i], toAdd);
+					actuallyAdded = outflowAvailables[i] - actuallyAdded;
+					totalAvailable -= actuallyAdded;
+					if (totalAvailable == 0)
+					{
+						break;
+					}
+				}
+			}
 			totalAvailable = 0;
 		}
-		for (size_t muxOutPort = 0;
-			 muxOutPort < model.Muxes[compIdx].NumOutports;
-			 ++muxOutPort)
+		for (size_t i = 0; i < mux.NumOutports; ++i)
 		{
-			size_t outflowConnIdx =
-				model.Muxes[compIdx].OutflowConns[muxOutPort];
+			size_t outflowConnIdx = mux.OutflowConns[i];
 			if (ss.Flows[outflowConnIdx].Available_W
-				!= outflowAvailables[muxOutPort])
+				!= outflowAvailables[i])
 			{
 				ss.ActiveConnectionsFront.insert(outflowConnIdx);
 			}
 			ss.Flows[outflowConnIdx].Available_W =
-				outflowAvailables[muxOutPort];
+				outflowAvailables[i];
 		}
 	}
 
@@ -771,13 +803,18 @@ namespace erin_next
 		size_t storeIdx
 	)
 	{
-		size_t outflowConn = model.Stores[storeIdx].OutflowConn;
-		assert(inflowConnIdx == model.Stores[storeIdx].InflowConn);
-		uint32_t available = ss.Flows[inflowConnIdx].Available_W;
-		uint32_t dischargeAvailable = ss.StorageAmounts_J[storeIdx] > 0
-			? model.Stores[storeIdx].MaxDischargeRate_W
+		Store const& store = model.Stores[storeIdx];
+		size_t outflowConn = store.OutflowConn;
+		assert(inflowConnIdx == store.InflowConn);
+		flow_t available = ss.Flows[inflowConnIdx].Available_W;
+		flow_t dischargeAvailable = ss.StorageAmounts_J[storeIdx] > 0
+			? store.MaxDischargeRate_W
 			: 0;
 		available = UtilSafeAdd(available, dischargeAvailable);
+		if (available > store.MaxOutflow_W)
+		{
+			available = store.MaxOutflow_W;
+		}
 		if (ss.Flows[outflowConn].Available_W != available)
 		{
 			ss.ActiveConnectionsFront.insert(outflowConn);
@@ -1948,6 +1985,7 @@ namespace erin_next
 		mux.NumOutports = numOutports;
 		mux.InflowConns = std::vector<size_t>(numInports, 0);
 		mux.OutflowConns = std::vector<size_t>(numOutports, 0);
+		mux.MaxOutflows_W = std::vector<flow_t>(numOutports, max_flow_W);
 		m.Muxes.push_back(std::move(mux));
 		std::vector<size_t> inflowTypes(numInports, flowId);
 		std::vector<size_t> outflowTypes(numOutports, flowId);

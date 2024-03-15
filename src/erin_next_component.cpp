@@ -338,27 +338,28 @@ namespace erin_next
 			} break;
 			case ComponentType::MuxType:
 			{
-				auto numInflows =
-					TOMLTable_ParseInteger(table, "num_inflows", fullTableName);
-				auto numOutflows = TOMLTable_ParseInteger(
-					table, "num_outflows", fullTableName
-				);
-				if (!numInflows.has_value())
+				auto numInflowsTemp =
+					std::get<int64_t>(input.at("num_inflows").Value);
+				auto numOutflowsTemp =
+					std::get<int64_t>(input.at("num_outflows").Value);
+				if (numInflowsTemp <= 0)
 				{
 					WriteErrorMessage(
 						fullTableName,
-						"num_inflows doesn't appear or is not an integer"
+						"num_inflows must be a positive integer"
 					);
 					return Result::Failure;
 				}
-				if (!numOutflows.has_value())
+				if (numOutflowsTemp <= 0)
 				{
 					WriteErrorMessage(
 						fullTableName,
-						"num_outflows doesn't appear or is not an integer"
+						"num_outflows must be a positive integer"
 					);
 					return Result::Failure;
 				}
+				size_t numInflows = static_cast<size_t>(numInflowsTemp);
+				size_t numOutflows = static_cast<size_t>(numOutflowsTemp);
 				if (inflowId != outflowId)
 				{
 					WriteErrorMessage(
@@ -372,11 +373,25 @@ namespace erin_next
 				}
 				id = Model_AddMux(
 					s.TheModel,
-					numInflows.value(),
-					numOutflows.value(),
+					numInflows,
+					numOutflows,
 					outflowId,
 					tag
 				);
+				if (input.contains("max_outflows"))
+				{
+					std::vector<flow_t> maxOutflows_W(numOutflows, 0);
+					std::vector<double> maxOutflowsRaw =
+						std::get<std::vector<double>>(
+							input.at("max_outflows").Value
+						);
+					for (size_t i = 0; i < numOutflows; ++i)
+					{
+						maxOutflows_W[i] = Power_ToWatt(maxOutflowsRaw[i], rateUnit);
+					}
+					s.TheModel.Muxes[s.TheModel.ComponentMap.Idx[id]].MaxOutflows_W =
+						std::move(maxOutflows_W);
+				}
 			} break;
 			case ComponentType::ConstantEfficiencyConverterType:
 			{
@@ -461,11 +476,6 @@ namespace erin_next
 			} break;
 			case ComponentType::StoreType:
 			{
-				std::unordered_map<std::string, std::string> defaultStoreFields{
-					{"charge_at_soc", "0.8"},
-					{"flow", ""},
-					{"init_soc", "1.0"},
-				};
 				if (inflowId != outflowId)
 				{
 					WriteErrorMessage(
@@ -474,102 +484,53 @@ namespace erin_next
 					);
 					return Result::Failure;
 				}
-				auto maybeCapacity =
-					TOMLTable_ParseDouble(table, "capacity", fullTableName);
-				if (!maybeCapacity.has_value())
+				EnergyUnit capacityUnit = EnergyUnit::Joule;
+				if (input.contains("capacity_unit"))
 				{
-					WriteErrorMessage(
-						fullTableName, "unable to parse 'capacity' as double"
-					);
-					return Result::Failure;
-				}
-				double capacityReal = maybeCapacity.value();
-				if (capacityReal <= 0.0)
-				{
-					WriteErrorMessage(
-						fullTableName, "capacity must be greater than 0"
-					);
-					return Result::Failure;
-				}
-				auto maybeCapacityUnitStr = TOMLTable_ParseString(
-					table, "capacity_unit", fullTableName
-				);
-				if (!maybeCapacityUnitStr.has_value())
-				{
-					WriteErrorMessage(
-						fullTableName,
-						"unable to parse 'capacity_unit' as string"
-					);
-					return Result::Failure;
-				}
-				std::string capacityUnitStr = maybeCapacityUnitStr.value();
-				auto maybeCapacityUnit = TagToEnergyUnit(capacityUnitStr);
-				if (!maybeCapacityUnit.has_value())
-				{
-					WriteErrorMessage(
-						fullTableName,
-						"unable to understand capacity_unit of '"
-							+ capacityUnitStr + "'"
-					);
-					// TODO: list available capacity units
-					return Result::Failure;
-				}
-				EnergyUnit capacityUnit = maybeCapacityUnit.value();
-				uint32_t capacity = static_cast<uint32_t>(
-					Energy_ToJoules(capacityReal, capacityUnit)
-				);
-				if (capacity == 0)
-				{
-					WriteErrorMessage(
-						fullTableName, "capacity must be greater than 0"
-					);
-					return Result::Failure;
-				}
-				auto maybeMaxCharge =
-					TOMLTable_ParseDouble(table, "max_charge", fullTableName);
-				if (!maybeMaxCharge.has_value())
-				{
-					WriteErrorMessage(
-						fullTableName, "unable to parse 'max_charge' as double"
-					);
-					return Result::Failure;
-				}
-				double maxChargeReal = maybeMaxCharge.value();
-				uint32_t maxCharge =
-					static_cast<uint32_t>(Power_ToWatt(maxChargeReal, rateUnit)
-					);
-				auto maybeMaxDischarge = TOMLTable_ParseDouble(
-					table, "max_discharge", fullTableName
-				);
-				if (!maybeMaxDischarge.has_value())
-				{
-					WriteErrorMessage(
-						fullTableName,
-						"unable to parse 'max_discharge' as double"
-					);
-					return Result::Failure;
-				}
-				double maxDischargeReal = maybeMaxDischarge.value();
-				uint32_t maxDischarge = static_cast<uint32_t>(
-					Power_ToWatt(maxDischargeReal, rateUnit)
-				);
-				double chargeAtSoc =
-					std::stod(defaultStoreFields.at("charge_at_soc"));
-				if (table.contains("charge_at_soc"))
-				{
-					auto maybe = TOMLTable_ParseDouble(
-						table, "charge_at_soc", fullTableName
-					);
-					if (!maybe.has_value())
+					std::string capacityUnitStr =
+						std::get<std::string>(input.at("capacity_unit").Value);
+					auto maybeCapacityUnit =
+						TagToEnergyUnit(capacityUnitStr);
+					if (!maybeCapacityUnit.has_value())
 					{
 						WriteErrorMessage(
 							fullTableName,
-							"unable to parse 'charge_at_soc' as double"
+							"unhandled capacity unit '" + capacityUnitStr + "'"
 						);
 						return Result::Failure;
 					}
-					chargeAtSoc = maybe.value();
+					capacityUnit = maybeCapacityUnit.value();
 				}
+				flow_t capacity_J =
+					static_cast<flow_t>(
+						Energy_ToJoules(
+							std::get<double>(input.at("capacity").Value),
+							capacityUnit
+						)
+					);
+				if (capacity_J == 0)
+				{
+					WriteErrorMessage(
+						fullTableName, "capacity must be greater than 0"
+					);
+					return Result::Failure;
+				}
+				flow_t maxCharge_W =
+					static_cast<flow_t>(
+						Power_ToWatt(
+							std::get<double>(input.at("max_charge").Value),
+							rateUnit
+						)
+					);
+				flow_t maxDischarge_W =
+					static_cast<flow_t>(
+						Power_ToWatt(
+							std::get<double>(input.at("max_discharge").Value),
+							rateUnit
+						)
+					);
+				double chargeAtSoc =
+					std::get<double>(input.at("charge_at_soc").Value);
 				if (chargeAtSoc < 0.0 || chargeAtSoc > 1.0)
 				{
 					WriteErrorMessage(
@@ -578,29 +539,16 @@ namespace erin_next
 					);
 					return Result::Failure;
 				}
-				uint32_t noChargeAmount =
-					static_cast<uint32_t>(chargeAtSoc * capacity);
-				if (noChargeAmount == capacity)
+				uint32_t noChargeAmount_J =
+					static_cast<uint32_t>(chargeAtSoc * capacity_J);
+				if (noChargeAmount_J == capacity_J)
 				{
 					// NOTE: noChargeAmount must be at
 					// least 1 unit less than capacity
-					noChargeAmount = capacity - 1;
+					noChargeAmount_J = capacity_J - 1;
 				}
-				double initSoc = std::stod(defaultStoreFields.at("init_soc"));
-				if (table.contains("init_soc"))
-				{
-					auto maybe =
-						TOMLTable_ParseDouble(table, "init_soc", fullTableName);
-					if (!maybe.has_value())
-					{
-						WriteErrorMessage(
-							fullTableName,
-							"unable to parse 'init_soc' as double"
-						);
-						return Result::Failure;
-					}
-					initSoc = maybe.value();
-				}
+				double initSoc =
+					std::get<double>(input.at("init_soc").Value);
 				if (initSoc < 0.0 || initSoc > 1.0)
 				{
 					WriteErrorMessage(
@@ -608,18 +556,32 @@ namespace erin_next
 					);
 					return Result::Failure;
 				}
-				uint32_t initialStorage =
-					static_cast<uint32_t>(capacity * initSoc);
+				flow_t initialStorage_J =
+					static_cast<flow_t>(capacity_J * initSoc);
 				id = Model_AddStore(
 					s.TheModel,
-					capacity,
-					maxCharge,
-					maxDischarge,
-					noChargeAmount,
-					initialStorage,
+					capacity_J,
+					maxCharge_W,
+					maxDischarge_W,
+					noChargeAmount_J,
+					initialStorage_J,
 					inflowId,
 					tag
 				);
+				if (input.contains("max_outflow"))
+				{
+					flow_t maxOutflow_W =
+						static_cast<flow_t>(
+							Power_ToWatt(
+								std::get<double>(
+									input.at("max_outflow").Value
+								),
+								rateUnit
+							)
+						);
+					s.TheModel.Stores[s.TheModel.ComponentMap.Idx[id]].MaxOutflow_W =
+						maxOutflow_W;
+				}
 			} break;
 			default:
 			{

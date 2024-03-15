@@ -207,6 +207,7 @@ namespace erin_next
 		size_t NumOutports;
 		std::vector<size_t> InflowConns;
 		std::vector<size_t> OutflowConns;
+		std::vector<flow_t> MaxOutflows_W;
 	};
 
 	struct Store
@@ -219,6 +220,8 @@ namespace erin_next
 		flow_t InitialStorage_J;
 		size_t InflowConn;
 		size_t OutflowConn;
+		// TODO: add double RoundtripEfficiency = 1.0;
+		flow_t MaxOutflow_W = max_flow_W;
 	};
 
 	struct PassThrough

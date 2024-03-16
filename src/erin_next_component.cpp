@@ -566,16 +566,48 @@ namespace erin_next
 				}
 				flow_t initialStorage_J =
 					static_cast<flow_t>(capacity_J * initSoc);
-				id = Model_AddStore(
-					s.TheModel,
-					capacity_J,
-					maxCharge_W,
-					maxDischarge_W,
-					noChargeAmount_J,
-					initialStorage_J,
-					inflowId,
-					tag
-				);
+				double rtEff = 1.0;
+				if (input.contains("roundtrip_efficiency"))
+				{
+					rtEff = std::get<double>(
+						input.at("roundtrip_efficiency").Value
+					);
+					if (rtEff <= 0.0 || rtEff > 1.0)
+					{
+						WriteErrorMessage(
+							fullTableName, "roundtrip efficiency must be (0.0, 1.0]"
+						);
+						return Result::Failure;
+					}
+				}
+				if (rtEff == 1.0)
+				{
+					id = Model_AddStore(
+						s.TheModel,
+						capacity_J,
+						maxCharge_W,
+						maxDischarge_W,
+						noChargeAmount_J,
+						initialStorage_J,
+						inflowId,
+						tag
+					);
+				}
+				else
+				{
+					auto compIdAndWasteConn = Model_AddStoreWithWasteflow(
+						s.TheModel,
+						capacity_J,
+						maxCharge_W,
+						maxDischarge_W,
+						noChargeAmount_J,
+						initialStorage_J,
+						inflowId,
+						rtEff,
+						tag
+					);
+					id = compIdAndWasteConn.Id;
+				}
 				if (input.contains("max_outflow"))
 				{
 					flow_t maxOutflow_W =

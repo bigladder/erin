@@ -623,6 +623,17 @@ namespace erin_next
           InputSection::Components_Store,
         },
       },
+      FieldInfo{
+        .FieldName = "roundtrip_efficiency",
+        .Type = InputType::Number,
+        .IsRequired = false,
+        .Default = "1.0",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Store,
+        },
+      },
     };
     InputValidationMap v{};
     for (auto const& f : fields)

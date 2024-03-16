@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <stdexcept>
 
 namespace erin_next
 {
@@ -281,29 +282,33 @@ namespace erin_next
 	{
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
 		{
-			size_t inflowConn = m.Stores[storeIdx].InflowConn;
+			Store const& store = m.Stores[storeIdx];
+			size_t inflowConn = store.InflowConn;
 			size_t compId = m.Connections[inflowConn].ToId;
 			if (ss.UnavailableComponents.contains(compId))
 			{
 				// TODO: should we zero flows here?
 				continue;
 			}
-			size_t outflowConn = m.Stores[storeIdx].OutflowConn;
+			size_t outflowConn = store.OutflowConn;
 			if (ss.StorageNextEventTimes[storeIdx] == t)
 			{
-				uint32_t available = ss.Flows[inflowConn].Available_W
+				flow_t available = ss.Flows[inflowConn].Available_W
 					+ (ss.StorageAmounts_J[storeIdx] > 0
-						   ? m.Stores[storeIdx].MaxDischargeRate_W
+						   ? store.MaxDischargeRate_W
 						   : 0);
 				if (ss.Flows[outflowConn].Available_W != available)
 				{
 					ss.ActiveConnectionsFront.insert(outflowConn);
 				}
 				ss.Flows[outflowConn].Available_W = available;
-				uint32_t request = ss.Flows[outflowConn].Requested_W
+				flow_t request =
+					(ss.Flows[outflowConn].Requested_W > store.MaxOutflow_W
+						? store.MaxOutflow_W
+						: ss.Flows[outflowConn].Requested_W)
 					+ (ss.StorageAmounts_J[storeIdx]
-							   <= m.Stores[storeIdx].ChargeAmount_J
-						   ? m.Stores[storeIdx].MaxChargeRate_W
+							   <= store.ChargeAmount_J
+						   ? store.MaxChargeRate_W
 						   : 0);
 				if (ss.Flows[inflowConn].Requested_W != request)
 				{
@@ -932,39 +937,77 @@ namespace erin_next
 	{
 		// NOTE: we assume that the charge request never resets once at or
 		// below chargeAmount UNTIL you hit 100% SOC again...
-		std::optional<size_t> outflowConn = FindOutflowConnection(
+		Store const& store = model.Stores[compIdx];
+		std::optional<size_t> maybeOutflowConn = FindOutflowConnection(
 			model, model.Connections[connIdx].To, compIdx, 0
 		);
 		assert(
-			outflowConn.has_value() && "store must have an outflow connection"
+			maybeOutflowConn.has_value() && "store must have an outflow connection"
 		);
+		assert(
+			connIdx == store.InflowConn && "connIdx must be inflowConn"
+		);
+		size_t outflowConn = maybeOutflowConn.value();
 		// TODO: consider using int64_t here
-		int netCharge = (int)ss.Flows[connIdx].Actual_W
-			- (int)ss.Flows[outflowConn.value()].Actual_W;
-		if (netCharge > 0)
+		int netCharge_W =
+			static_cast<int>(ss.Flows[connIdx].Actual_W)
+			- static_cast<int>(ss.Flows[outflowConn].Actual_W);
+		if (netCharge_W > 0)
 		{
+			flow_t storeflow_W = static_cast<flow_t>(netCharge_W);
+			if (store.WasteflowConn.has_value())
+			{
+				storeflow_W =
+					static_cast<flow_t>(
+						netCharge_W * store.RoundTripEfficiency
+					);
+				flow_t wasteflow_W = netCharge_W - storeflow_W;
+				size_t wfIdx = store.WasteflowConn.value(); 
+				ss.Flows[wfIdx].Requested_W = wasteflow_W;
+				ss.Flows[wfIdx].Available_W = wasteflow_W;
+				ss.Flows[wfIdx].Actual_W = wasteflow_W;
+			}
 			ss.StorageNextEventTimes[compIdx] = t
-				+ ((double)(model.Stores[compIdx].Capacity_J
-							- ss.StorageAmounts_J[compIdx])
-				   / (double)netCharge);
+				+ (static_cast<double>(
+						store.Capacity_J - ss.StorageAmounts_J[compIdx])
+				   / static_cast<double>(storeflow_W));
 		}
-		else if (netCharge < 0
-			&& (ss.StorageAmounts_J[compIdx]
-				> model.Stores[compIdx].ChargeAmount_J))
+		else if (netCharge_W < 0
+			&& (ss.StorageAmounts_J[compIdx] > store.ChargeAmount_J))
 		{
+			if (store.WasteflowConn.has_value())
+			{
+				size_t wfIdx = store.WasteflowConn.value();
+				ss.Flows[wfIdx].Requested_W = 0;
+				ss.Flows[wfIdx].Available_W = 0;
+				ss.Flows[wfIdx].Actual_W = 0;
+			}
 			ss.StorageNextEventTimes[compIdx] = t
-				+ ((double)(ss.StorageAmounts_J[compIdx]
-							- model.Stores[compIdx].ChargeAmount_J)
-				   / (-1.0 * (double)netCharge));
+				+ (static_cast<double>(ss.StorageAmounts_J[compIdx] - store.ChargeAmount_J)
+				   / (-1.0 * static_cast<double>(netCharge_W)));
 		}
-		else if (netCharge < 0)
+		else if (netCharge_W < 0)
 		{
+			if (store.WasteflowConn.has_value())
+			{
+				size_t wfIdx = store.WasteflowConn.value();
+				ss.Flows[wfIdx].Requested_W = 0;
+				ss.Flows[wfIdx].Available_W = 0;
+				ss.Flows[wfIdx].Actual_W = 0;
+			}
 			ss.StorageNextEventTimes[compIdx] = t
-				+ ((double)(ss.StorageAmounts_J[compIdx])
-				   / (-1.0 * (double)netCharge));
+				+ (static_cast<double>(ss.StorageAmounts_J[compIdx])
+				   / (-1.0 * static_cast<double>(netCharge_W)));
 		}
 		else
 		{
+			if (store.WasteflowConn.has_value())
+			{
+				size_t wfIdx = store.WasteflowConn.value();
+				ss.Flows[wfIdx].Requested_W = 0;
+				ss.Flows[wfIdx].Available_W = 0;
+				ss.Flows[wfIdx].Actual_W = 0;
+			}
 			ss.StorageNextEventTimes[compIdx] = infinity;
 		}
 	}
@@ -1095,9 +1138,10 @@ namespace erin_next
 	{
 		for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
 		{
+			Store const& store = m.Stores[storeIdx];
 			long netEnergyAdded = 0;
-			size_t inConn = m.Stores[storeIdx].InflowConn;
-			size_t outConn = m.Stores[storeIdx].OutflowConn;
+			size_t inConn = store.InflowConn;
+			size_t outConn = store.OutflowConn;
 			size_t compId = m.Connections[outConn].FromId;
 			if (ss.UnavailableComponents.contains(compId))
 			{
@@ -1109,6 +1153,14 @@ namespace erin_next
 			netEnergyAdded -=
 				std::lround(
 					elapsedTime * static_cast<double>(ss.Flows[outConn].Actual_W));
+			if (store.WasteflowConn.has_value())
+			{
+				size_t wConn = store.WasteflowConn.value();
+				netEnergyAdded -=
+					std::lround(
+						elapsedTime * static_cast<double>(ss.Flows[wConn].Actual_W)
+					);
+			}
 			assert(
 				static_cast<long>(
 					m.Stores[storeIdx].Capacity_J
@@ -1116,9 +1168,35 @@ namespace erin_next
 				) >= netEnergyAdded
 				&& "netEnergyAdded cannot put storage over capacity"
 			);
+			if (netEnergyAdded < -1 * static_cast<long>(ss.StorageAmounts_J[storeIdx]))
+			{
+				std::cout << "netEnergyAdded (J): "
+					<< netEnergyAdded << std::endl;
+				std::cout << "elapsed time (s): "
+					<< elapsedTime << std::endl;
+				std::cout << "stored amount (J): "
+					<< ss.StorageAmounts_J[storeIdx] << std::endl;
+				std::cout << "inflow (W): "
+					<< ss.Flows[inConn].Actual_W << std::endl;
+				std::cout << "outflow (W): "
+					<< ss.Flows[outConn].Actual_W << std::endl;
+				int64_t inflow = static_cast<int64_t>(ss.Flows[inConn].Actual_W);
+				int64_t outflow = static_cast<int64_t>(ss.Flows[outConn].Actual_W);
+				int64_t wasteflow = 0;
+				if (store.WasteflowConn.has_value())
+				{
+					size_t wConn = store.WasteflowConn.value();
+					std::cout << "wasteflow (W): "
+						<< ss.Flows[wConn].Actual_W
+						<< std::endl;
+					wasteflow = static_cast<int64_t>(ss.Flows[wConn].Actual_W);
+				}
+				std::cout << "flow balance (inflow - (outflow + wasteflow)): "
+					<< (inflow - (outflow + wasteflow)) << std::endl;
+			}
 			assert(
-				netEnergyAdded >= static_cast<long>(
-					-1 * (int)ss.StorageAmounts_J[storeIdx]
+				netEnergyAdded >= (
+					-1 * static_cast<long>(ss.StorageAmounts_J[storeIdx])
 				)
 				&& "netEnergyAdded cannot use more energy than available"
 			);
@@ -1351,15 +1429,24 @@ namespace erin_next
 	void
 	PrintFlowSummary(FlowSummary s)
 	{
-		int netDischarge = (int)s.StorageDischarge - (int)s.StorageCharge;
-		int sum = (int)s.Inflow + netDischarge
-			- ((int)s.OutflowAchieved + (int)s.Wasteflow);
-		double eff = ((double)s.Inflow + (double)netDischarge) > 0.0
-			? 100.0 * ((double)s.OutflowAchieved)
-				/ ((double)s.Inflow + (double)netDischarge)
+		int netDischarge =
+			static_cast<int>(s.StorageDischarge)
+			- static_cast<int>(s.StorageCharge);
+		int sum =
+			static_cast<int>(s.Inflow)
+			+ netDischarge
+			- (static_cast<int>(s.OutflowAchieved)
+				+ static_cast<int>(s.Wasteflow));
+		double eff =
+			(static_cast<double>(s.Inflow) + static_cast<double>(netDischarge)) > 0.0
+			? 100.0 * (static_cast<double>(s.OutflowAchieved))
+				/ (static_cast<double>(s.Inflow)
+					+ static_cast<double>(netDischarge))
 			: 0.0;
 		double effectiveness = s.OutflowRequest > 0
-			? 100.0 * ((double)s.OutflowAchieved) / ((double)s.OutflowRequest)
+			? 100.0 * (
+				static_cast<double>(s.OutflowAchieved))
+				/ (static_cast<double>(s.OutflowRequest))
 			: 0.0;
 		std::cout << "Flow Summary @ " << s.Time << ":" << std::endl;
 		std::cout << "  Inflow                 : " << s.Inflow << std::endl;
@@ -1485,6 +1572,7 @@ namespace erin_next
 		std::vector<TimeAndFlows> timeAndFlows{};
 		SimulationState ss{};
 		Model_SetupSimulationState(model, ss);
+		// TODO: add units to FinalTime (append '_s')
 		while (t != infinity && t <= model.FinalTime)
 		{
 			// schedule each event-generating component for next event
@@ -2033,11 +2121,11 @@ namespace erin_next
 	size_t
 	Model_AddStore(
 		Model& m,
-		uint32_t capacity,
-		uint32_t maxCharge,
-		uint32_t maxDischarge,
-		uint32_t chargeAmount,
-		uint32_t initialStorage,
+		flow_t capacity,
+		flow_t maxCharge,
+		flow_t maxDischarge,
+		flow_t chargeAmount,
+		flow_t initialStorage,
 		size_t flowId,
 		std::string const& tag
 	)
@@ -2056,7 +2144,8 @@ namespace erin_next
 		s.MaxDischargeRate_W = maxDischarge;
 		s.ChargeAmount_J = chargeAmount;
 		s.InitialStorage_J = initialStorage;
-		m.Stores.push_back(s);
+		s.RoundTripEfficiency = 1.0;
+		m.Stores.push_back(std::move(s));
 		return Component_AddComponentReturningId(
 			m.ComponentMap,
 			ComponentType::StoreType,
@@ -2067,6 +2156,50 @@ namespace erin_next
 			0.0
 		);
 	}
+
+	ComponentIdAndWasteConnection
+	Model_AddStoreWithWasteflow(
+		Model& m,
+		flow_t capacity,
+		flow_t maxCharge,
+		flow_t maxDischarge,
+		flow_t chargeAmount,
+		flow_t initialStorage,
+		size_t flowId,
+		double roundtripEfficiency,
+		std::string const& tag
+	)
+	{
+		assert(roundtripEfficiency > 0.0 && roundtripEfficiency <= 1.0);
+		size_t id = Model_AddStore(
+			m,
+			capacity,
+			maxCharge,
+			maxDischarge,
+			chargeAmount,
+			initialStorage,
+			flowId,
+			tag
+		);
+		size_t storeIdx = m.ComponentMap.Idx[id];
+		m.Stores[storeIdx].RoundTripEfficiency = roundtripEfficiency;
+		size_t wasteId = Component_AddComponentReturningId(
+			m.ComponentMap,
+			ComponentType::WasteSinkType,
+			0,
+			std::vector<size_t>{wasteflowId},
+			std::vector<size_t>{},
+			"",
+			0.0
+		);
+		auto wasteConn =
+			Model_AddConnection(m, id, 1, wasteId, 0, wasteflowId);
+		return {
+			.Id = id,
+			.WasteConnection = std::move(wasteConn),
+		};
+	}
+	
 
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
@@ -2262,7 +2395,21 @@ namespace erin_next
 			break;
 			case (ComponentType::StoreType):
 			{
-				m.Stores[fromIdx].OutflowConn = connId;
+				switch (fromPort)
+				{
+					case 0:
+					{
+						m.Stores[fromIdx].OutflowConn = connId;
+					} break;
+					case 1:
+					{
+						m.Stores[fromIdx].WasteflowConn = connId;
+					} break;
+					default:
+					{
+						throw std::runtime_error("unhandled port for store");
+					}
+				}
 			}
 			break;
 			default:
@@ -2478,7 +2625,6 @@ namespace erin_next
 				 storeIdx < timeAndFlows[eventIdx].StorageAmounts_J.size();
 				 ++storeIdx)
 			{
-				// TODO: confirm that stored_J is, in fact, in J
 				double stored_J =
 					static_cast<double>(
 						timeAndFlows[eventIdx].StorageAmounts_J[storeIdx]

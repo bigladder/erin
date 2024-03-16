@@ -1,0 +1,50 @@
+[meta]
+description = """
+This example demonstrates a store with constant efficiency.
+"""
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "hours"
+max_time = 10
+############################################################
+[loads.load_profile]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,100.0],[8.0,0.0]]
+############################################################
+[components.S]
+type = "source"
+outflow = "electricity"
+max_outflow = 10.0
+[components.Store]
+type = "store"
+flow = "electricity"
+rate_unit = "kW"
+max_outflow = 20.0
+capacity_unit = "kJ"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 20.0
+roundtrip_efficiency = 0.5
+[components.L]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "load_profile"
+############################################################
+[network]
+connections = [
+  ["S:OUT(0)", "Store:IN(0)", "electricity"],
+  ["Store:OUT(0)", "L:IN(0)", "electricity"],
+]
+############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
+[scenarios.blue_sky]
+occurrence_distribution = "immediately"
+duration = 10
+time_unit = "hours"
+max_occurrences = 1

@@ -254,6 +254,9 @@ namespace erin_next
 							? "unlimited"
 							: std::to_string(store.MaxOutflow_W))
 						<< std::endl;
+					std::cout << "-- roundtrip efficiency: "
+						<< store.RoundTripEfficiency * 100.0
+						<< "%" << std::endl;
 				} break;
 				case ComponentType::PassThroughType:
 				{

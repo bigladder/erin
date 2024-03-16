@@ -44,6 +44,8 @@ namespace erin_next
 	size_t const constEffConvLossflowPort = 1;
 	size_t const constEffConvWasteflowPort = 2;
 
+	constexpr size_t const wasteflowId = 0;
+
 	// NOTE: the maximum allowed flow
 	constexpr flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 
@@ -221,6 +223,8 @@ namespace erin_next
 		flow_t InitialStorage_J;
 		size_t InflowConn;
 		size_t OutflowConn;
+		std::optional<size_t> WasteflowConn;
+		double RoundTripEfficiency = 1.0;
 		flow_t MaxOutflow_W = max_flow_W;
 	};
 
@@ -652,25 +656,39 @@ namespace erin_next
 	size_t
 	Model_AddStore(
 		Model& m,
-		uint32_t capacity,
-		uint32_t maxCharge,
-		uint32_t maxDischarge,
-		uint32_t nochargeAmount,
-		uint32_t initialStorage
+		flow_t capacity,
+		flow_t maxCharge,
+		flow_t maxDischarge,
+		flow_t nochargeAmount,
+		flow_t initialStorage
 	);
 
 	size_t
 	Model_AddStore(
 		Model& m,
-		uint32_t capacity,
-		uint32_t maxCharge,
-		uint32_t maxDischarge,
-		uint32_t chargeAmount,
-		uint32_t initialStorage,
+		flow_t capacity,
+		flow_t maxCharge,
+		flow_t maxDischarge,
+		flow_t chargeAmount,
+		flow_t initialStorage,
 		size_t flowId,
 		std::string const& tag
 	);
 
+	ComponentIdAndWasteConnection
+	Model_AddStoreWithWasteflow(
+		Model& m,
+		flow_t capacity,
+		flow_t maxCharge,
+		flow_t maxDischarge,
+		flow_t chargeAmount,
+		flow_t initialStorage,
+		size_t flowId,
+		double roundtripEfficiency,
+		std::string const& tag
+	);
+
+	// TODO: remove this version?
 	ComponentIdAndWasteConnection
 	Model_AddConstantEfficiencyConverter(
 		Model& m,

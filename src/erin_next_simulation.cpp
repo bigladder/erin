@@ -1878,8 +1878,10 @@ namespace erin_next
 					break;
 					default:
 					{
-						throw std::runtime_error{"Unhandled FragilityCurveType"
-						};
+						WriteErrorMessage(
+							"fragility_curve",
+							"unhandled fragility curve type");
+						std::exit(1);
 					}
 					break;
 				}
@@ -2284,7 +2286,8 @@ namespace erin_next
 			break;
 			default:
 			{
-				throw std::runtime_error{"Unhandled random type"};
+				WriteErrorMessage("RandomType", "unhandled random type");
+				std::exit(1);
 			}
 			break;
 		}

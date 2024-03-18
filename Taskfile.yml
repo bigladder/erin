@@ -9,7 +9,7 @@ tasks:
     desc: Initialize the build directory
     cmds:
       - mkdir build
-      - cmake -S . -B build -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+      - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
   build:
     desc: (Re)build the application
     cmds:

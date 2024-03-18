@@ -2,6 +2,7 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include "erin_next/erin_next_distribution.h"
+#include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_units.h"
@@ -572,8 +573,10 @@ namespace erin_next
 			break;
 			default:
 			{
-				throw std::runtime_error("unhandled Cumulative Density Function"
-				);
+				WriteErrorMessage(
+					"distribution",
+					"unhandled cumulative density function");
+				std::exit(1);
 			}
 		}
 		if (dt < 0)
@@ -593,6 +596,8 @@ namespace erin_next
 		}
 	}
 
+	// TODO: change to pass in std::unordered_map<std::string, InputValue>
+	// TODO: change to get rid of DistributionSystem object; pass Simulation instead
 	void
 	ParseDistributions(DistributionSystem& ds, toml::table const& table)
 	{
@@ -614,20 +619,20 @@ namespace erin_next
 						{
 							if (!distTable.contains("value"))
 							{
-								std::cout << "[" << fullTableName << "] "
-										  << "missing required field 'value'"
-										  << std::endl;
-								return;
+								WriteErrorMessage(
+									fullTableName,
+									"missing required field 'value'");
+								std::exit(1);
 							}
 							auto maybeValue = TOMLTable_ParseDouble(
 								distTable, "value", fullTableName
 							);
 							if (!maybeValue.has_value())
 							{
-								std::cout << "[" << fullTableName << "] "
-										  << "unable to parse 'value' as number"
-										  << std::endl;
-								return;
+								WriteErrorMessage(
+									fullTableName,
+									"unable to parse 'value' as number");
+								std::exit(1);
 							}
 							auto v = maybeValue.value();
 							auto maybeUnit =
@@ -639,32 +644,36 @@ namespace erin_next
 								);
 							if (!maybeUnit.has_value())
 							{
-								std::cout << "[" << fullTableName << "] "
-										  << "unable to parse valid time unit"
-										  << std::endl;
-								return;
+								WriteErrorMessage(
+									fullTableName,
+									"unable to parse valid time unit");
+								std::exit(1);
 							}
 							std::string const& unitStr = maybeUnit.value();
 							std::optional<TimeUnit> maybeTimeUnit =
 								TagToTimeUnit(unitStr);
 							if (!maybeTimeUnit.has_value())
 							{
-								std::cout << "[" << fullTableName << "] "
-										  << "unhandled time unit '" << unitStr
-										  << "'" << std::endl;
-								return;
+								WriteErrorMessage(
+									fullTableName,
+									"unhandled time unit '" + unitStr + "'");
+								std::exit(1);
 							}
 							ds.add_fixed(
 								distTag,
 								Time_ToSeconds(v, maybeTimeUnit.value())
 							);
-						}
-						break;
+						} break;
+						case DistType::Weibull:
+						{
+							
+						} break;
 						default:
 						{
-							throw new std::runtime_error{
-								"Unhandled distribution type"
-							};
+							WriteErrorMessage(
+								"distribution",
+								"unhandled distribution type: " + distTypeTag);
+							std::exit(1);
 						}
 						break;
 					}

@@ -72,6 +72,11 @@ namespace erin_next
 		Components_PassThrough,
 		Components_Mover,
 		Dist_Fixed,
+		Dist_Weibull,
+		Dist_Uniform,
+		Dist_Normal,
+		Dist_01QuantileTableFromFile,
+		Dist_02QuantileTableExplicit,
 		Network,
 		Scenarios,
 	};
@@ -79,6 +84,11 @@ namespace erin_next
 	// TODO: add ability to write out all of these to markdown
 	// for inclusion into the documentation. Consider adding a
 	// description tag to FieldInfo.
+	// TODO: add additional field (possibly replace others)
+	// - validatorFn :: std::function<InputValue, std::string>
+	//   - if the validator returns a non-empty string, that's a failure
+	//     the message returned is the failure message
+	// TODO: need also to have a "table validator" function somewhere...
 	struct FieldInfo
 	{
 		std::string FieldName;
@@ -118,6 +128,11 @@ namespace erin_next
 		ValidationInfo Load_01Explicit;
 		ValidationInfo Load_02FileBased;
 		ValidationInfo Dist_Fixed;
+		ValidationInfo Dist_Uniform;
+		ValidationInfo Dist_Normal;
+		ValidationInfo Dist_QuantileTableFromFile;
+		ValidationInfo Dist_QuantileTableExplicit;
+		ValidationInfo Dist_Weibull;
 		ValidationInfo SimulationInfo;
 		ValidationInfo Network;
 		ValidationInfo Scenario;

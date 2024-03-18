@@ -49,7 +49,8 @@ namespace erin_next
 			break;
 			default:
 			{
-				throw std::runtime_error{"unhandled power unit"};
+				WriteErrorMessage("units", "unhandled power unit");
+				std::exit(1);
 			}
 			break;
 		}
@@ -79,7 +80,8 @@ namespace erin_next
 			break;
 			default:
 			{
-				throw std::runtime_error{"unhandled power unit"};
+				std::cout << "unhandled power unit" << std::endl;
+				std::exit(1);
 			}
 			break;
 		}
@@ -154,7 +156,8 @@ namespace erin_next
 			break;
 			default:
 			{
-				throw std::runtime_error{"unhandled energy unit"};
+				WriteErrorMessage("units", "unhandled energy unit");
+				std::exit(1);
 			}
 			break;
 		}
@@ -199,7 +202,8 @@ namespace erin_next
 			break;
 			default:
 			{
-				throw std::runtime_error{"unhandled energy unit"};
+				WriteErrorMessage("units", "unhandled energy unit");
+				std::exit(1);
 			}
 			break;
 		}
@@ -281,7 +285,8 @@ namespace erin_next
 			{
 				std::ostringstream oss{};
 				oss << "unhandled TimeType '" << unit << "'" << std::endl;
-				throw new std::runtime_error{oss.str()};
+				WriteErrorMessage("units", oss.str());
+				std::exit(1);
 			}
 			break;
 		}

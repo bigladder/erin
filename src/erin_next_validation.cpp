@@ -62,6 +62,26 @@ namespace erin_next
       {
         return "dist (fixed)";
       } break;
+  		case InputSection::Dist_Weibull:
+      {
+        return "dist (weibull)";
+      } break;
+  		case InputSection::Dist_Uniform:
+      {
+        return "dist (uniform)";
+      } break;
+  		case InputSection::Dist_Normal:
+      {
+        return "dist (normal)";
+      } break;
+  		case InputSection::Dist_01QuantileTableFromFile:
+      {
+        return "dist (quantile_table, from file)";
+      } break;
+  		case InputSection::Dist_02QuantileTableExplicit:
+      {
+        return "dist (quantile_table, explicit)";
+      } break;
   		case InputSection::Network:
       {
         return "network";
@@ -211,6 +231,21 @@ namespace erin_next
       "source",
       "store",
       "uncontrolled_source",
+    };
+    std::unordered_set<std::string> distTypeEnums{
+      "fixed",
+      "uniform",
+      "normal",
+      "quantile_table",
+      "weibull",
+    };
+    std::unordered_set<InputSection> distSections{
+      InputSection::Dist_Fixed,
+      InputSection::Dist_Uniform,
+      InputSection::Dist_Normal,
+      InputSection::Dist_01QuantileTableFromFile,
+      InputSection::Dist_02QuantileTableExplicit,
+      InputSection::Dist_Weibull,
     };
     std::vector<FieldInfo> fields{
       // GLOBAL
@@ -634,6 +669,140 @@ namespace erin_next
           InputSection::Components_Store,
         },
       },
+      // DIST: Common
+      FieldInfo{
+        .FieldName = "type",
+        .Type = InputType::EnumString,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = distTypeEnums,
+        .Aliases = {},
+        .Sections = distSections,
+      },
+      FieldInfo{
+        .FieldName = "time_unit",
+        .Type = InputType::EnumString,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = ValidTimeUnits,
+        .Aliases = {},
+        .Sections = distSections,
+      },
+      // DIST - FIXED
+      FieldInfo{
+        .FieldName = "value",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_Fixed,
+        },
+      },
+      // DIST - UNIFORM
+      FieldInfo{
+        .FieldName = "lower_bound",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_Uniform,
+        },
+      },
+      FieldInfo{
+        .FieldName = "upper_bound",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_Uniform,
+        },
+      },
+      // DIST - NORMAL
+      FieldInfo{
+        .FieldName = "mean",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_Normal,
+        },
+      },
+      FieldInfo{
+        .FieldName = "standard_deviation",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_Normal,
+        },
+      },
+      // DIST - Quantile Table
+      FieldInfo{
+        .FieldName = "csv_file",
+        .Type = InputType::AnyString,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_01QuantileTableFromFile,
+        },
+      },
+      FieldInfo{
+        .FieldName = "variate_time_pairs",
+        .Type = InputType::ArrayOfTuple2OfNumber,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_02QuantileTableExplicit,
+        },
+      },
+      // DIST - WEIBULL
+      FieldInfo{
+        .FieldName = "shape",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_Weibull,
+        },
+      },
+      FieldInfo{
+        .FieldName = "scale",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_Weibull,
+        },
+      },
+      FieldInfo{
+        .FieldName = "location",
+        .Type = InputType::Number,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Dist_Weibull,
+        },
+      },
     };
     InputValidationMap v{};
     for (auto const& f : fields)
@@ -696,6 +865,26 @@ namespace erin_next
           case InputSection::Dist_Fixed:
           {
             UpdateValidationInfoByField(v.Dist_Fixed, f);
+          } break;
+          case InputSection::Dist_Normal:
+          {
+            UpdateValidationInfoByField(v.Dist_Normal, f);
+          } break;
+          case InputSection::Dist_01QuantileTableFromFile:
+          {
+            UpdateValidationInfoByField(v.Dist_QuantileTableFromFile, f);
+          } break;
+          case InputSection::Dist_02QuantileTableExplicit:
+          {
+            UpdateValidationInfoByField(v.Dist_QuantileTableExplicit, f);
+          } break;
+          case InputSection::Dist_Uniform:
+          {
+            UpdateValidationInfoByField(v.Dist_Uniform, f);
+          } break;
+          case InputSection::Dist_Weibull:
+          {
+            UpdateValidationInfoByField(v.Dist_Weibull, f);
           } break;
           // TODO: add in all the other distributions
           case InputSection::Network:

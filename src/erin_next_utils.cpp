@@ -31,7 +31,8 @@ namespace erin_next
 			<< "doy: " << doy << "\n"
 			<< "day_of_year: " << day_of_year << "\n"
 			<< "days_per_year: " << days_per_year << std::endl;
-		throw std::runtime_error(oss.str());
+		WriteErrorMessage("impossible condition", oss.str());
+		std::exit(1);
 	}
 
 	std::string

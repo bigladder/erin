@@ -1,5 +1,6 @@
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_time_and_amount.h"
+#include "erin_next/erin_next_utils.h"
 #include <cmath>
 #include <cstdlib>
 #include <limits>
@@ -69,7 +70,8 @@ namespace erin_next
 			break;
 			default:
 			{
-				throw std::runtime_error{"Unhandled fragility curve type"};
+				std::cerr << "unhandled fragility curve type" << std::endl;
+				std::exit(1);
 			}
 			break;
 		}
@@ -678,7 +680,8 @@ namespace erin_next
 							break;
 							default:
 							{
-								throw std::runtime_error{"Uhandled port"};
+								std::cerr << "unhandled port" << std::endl;
+								exit(1);
 							}
 						}
 					}
@@ -916,10 +919,9 @@ namespace erin_next
 					break;
 					default:
 					{
-						throw std::runtime_error{
-							"Unhandled component type on forward pass: "
-							+ ToString(model.Connections[connIdx].To)
-						};
+						std::cerr << "unhandled component type on forward pass: "
+							<< ToString(model.Connections[connIdx].To) << std::endl;
+						std::exit(1);
 					}
 				}
 			}
@@ -1293,7 +1295,8 @@ namespace erin_next
 			break;
 			default:
 			{
-				throw std::runtime_error{"Unhandled component type"};
+				std::cerr << "unhandled component type" << std::endl;
+				std::exit(1);
 			}
 		}
 		return result;
@@ -1642,7 +1645,8 @@ namespace erin_next
 	{
 		if (compId >= m.ComponentMap.CompType.size())
 		{
-			throw std::runtime_error("invalid component id");
+			WriteErrorMessage("", "invalid component id");
+			std::exit(1);
 		}
 		if (ss.UnavailableComponents.contains(compId))
 		{
@@ -1732,7 +1736,8 @@ namespace erin_next
 			{
 				// TODO: what energy amount should the store come back with?
 				// TODO: need to call routines to do charge request
-				throw std::runtime_error{"not implemented"};
+				WriteErrorMessage("store", "not implemented");
+				std::exit(1);
 			}
 			break;
 			case (ComponentType::PassThroughType):
@@ -1756,12 +1761,16 @@ namespace erin_next
 			break;
 			case (ComponentType::WasteSinkType):
 			{
-				throw std::runtime_error{"should not be repairing waste"};
+				WriteErrorMessage(
+					"waste sink",
+					"should not be repairing pseduo-element waste");
+				std::exit(1);
 			}
 			break;
 			default:
 			{
-				throw std::runtime_error("unhandled component type");
+				WriteErrorMessage("", "unhandled component type");
+				std::exit(1);
 			}
 		}
 	}
@@ -1775,7 +1784,8 @@ namespace erin_next
 	{
 		if (compId >= m.ComponentMap.CompType.size())
 		{
-			throw std::runtime_error("invalid component id");
+			WriteErrorMessage("", "invalid component id");
+			std::exit(1);
 		}
 		ss.UnavailableComponents.insert(compId);
 		auto idx = m.ComponentMap.Idx[compId];
@@ -1896,12 +1906,14 @@ namespace erin_next
 			break;
 			case (ComponentType::WasteSinkType):
 			{
-				throw std::runtime_error{"Waste sink type cannot fail"};
+				WriteErrorMessage("waste sink", "waste sink cannot fail");
+				std::exit(1);
 			}
 			break;
 			default:
 			{
-				throw std::runtime_error("unhandled component type");
+				WriteErrorMessage("", "unhandled component type");
+				std::exit(1);
 			}
 			break;
 		}
@@ -2407,14 +2419,16 @@ namespace erin_next
 					} break;
 					default:
 					{
-						throw std::runtime_error("unhandled port for store");
+						WriteErrorMessage("store port", "unhandled port for store");
+						std::exit(1);
 					}
 				}
 			}
 			break;
 			default:
 			{
-				throw new std::runtime_error{"unhandled component type"};
+				WriteErrorMessage("", "unhandled component type");
+				std::exit(1);
 			}
 		}
 		switch (toType)

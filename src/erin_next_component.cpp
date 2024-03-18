@@ -628,7 +628,7 @@ namespace erin_next
 				WriteErrorMessage(
 					fullTableName, "unhandled component type: " + ToString(ct)
 				);
-				throw std::runtime_error{"Unhandled component type"};
+				std::exit(1);
 			}
 		}
 		if (table.contains("failure_modes"))

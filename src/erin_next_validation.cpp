@@ -688,6 +688,15 @@ namespace erin_next
         .Aliases = {},
         .Sections = distSections,
       },
+      FieldInfo{
+        .FieldName = "meta",
+        .Type = InputType::Any,
+        .IsRequired = false,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = distSections,
+      },
       // DIST - FIXED
       FieldInfo{
         .FieldName = "value",
@@ -864,27 +873,27 @@ namespace erin_next
           } break;
           case InputSection::Dist_Fixed:
           {
-            UpdateValidationInfoByField(v.Dist_Fixed, f);
+            UpdateValidationInfoByField(v.Dist.Fixed, f);
           } break;
           case InputSection::Dist_Normal:
           {
-            UpdateValidationInfoByField(v.Dist_Normal, f);
+            UpdateValidationInfoByField(v.Dist.Normal, f);
           } break;
           case InputSection::Dist_01QuantileTableFromFile:
           {
-            UpdateValidationInfoByField(v.Dist_QuantileTableFromFile, f);
+            UpdateValidationInfoByField(v.Dist.QuantileTableFromFile, f);
           } break;
           case InputSection::Dist_02QuantileTableExplicit:
           {
-            UpdateValidationInfoByField(v.Dist_QuantileTableExplicit, f);
+            UpdateValidationInfoByField(v.Dist.QuantileTableExplicit, f);
           } break;
           case InputSection::Dist_Uniform:
           {
-            UpdateValidationInfoByField(v.Dist_Uniform, f);
+            UpdateValidationInfoByField(v.Dist.Uniform, f);
           } break;
           case InputSection::Dist_Weibull:
           {
-            UpdateValidationInfoByField(v.Dist_Weibull, f);
+            UpdateValidationInfoByField(v.Dist.Weibull, f);
           } break;
           // TODO: add in all the other distributions
           case InputSection::Network:

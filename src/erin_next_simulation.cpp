@@ -1087,13 +1087,18 @@ namespace erin_next
 	}
 
 	Result
-	Simulation_ParseDistributions(Simulation& s, toml::value const& v)
+	Simulation_ParseDistributions(
+		Simulation& s,
+		toml::value const& v,
+		DistributionValidationMap const& dvm)
 	{
 		if (v.contains("dist") && v.at("dist").is_table())
 		{
 			// TODO: have ParseDistributions return a Result
-			ParseDistributions(s.TheModel.DistSys, v.at("dist").as_table());
-			return Result::Success;
+			return ParseDistributions(
+				s.TheModel.DistSys,
+				v.at("dist").as_table(),
+				dvm);
 		}
 		std::cout << "required field 'dist' not found" << std::endl;
 		return Result::Failure;
@@ -1220,7 +1225,9 @@ namespace erin_next
 			WriteErrorMessage("components", "problem parsing...");
 			return {};
 		}
-		if (Simulation_ParseDistributions(s, v) == Result::Failure)
+		auto distResult =
+			Simulation_ParseDistributions(s, v, validationInfo.Dist);
+		if (distResult == Result::Failure)
 		{
 			WriteErrorMessage("dist", "problem parsing...");
 			return {};

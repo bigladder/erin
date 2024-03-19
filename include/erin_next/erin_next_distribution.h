@@ -3,6 +3,8 @@
 
 #ifndef ERIN_NEXT_DISTRIBUTION_H
 #define ERIN_NEXT_DISTRIBUTION_H
+#include "erin_next/erin_next_valdata.h"
+#include "erin_next/erin_next_result.h"
 #include "../vendor/toml11/toml.hpp"
 #include <chrono>
 #include <exception>
@@ -55,7 +57,8 @@ namespace erin_next
 
 	std::string
 	dist_type_to_tag(DistType dist_type);
-	DistType
+
+	std::optional<DistType>
 	tag_to_dist_type(const std::string& tag);
 
 	// SOA version of AOS, std::vector<Distribution>
@@ -174,8 +177,11 @@ namespace erin_next
 		std::uniform_real_distribution<double> roll;
 	};
 
-	void
-	ParseDistributions(DistributionSystem& ds, toml::table const& table);
+	Result
+	ParseDistributions(
+		DistributionSystem& ds,
+		toml::table const& table,
+		DistributionValidationMap const& dvm);
 
 }
-#endif // ERIN_NEXT_DISTRIBUTION_H
+#endif

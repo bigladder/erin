@@ -1,3 +1,7 @@
+/* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
+ * See the LICENSE.txt file for additional terms and conditions. */
+#ifndef ERIN_NEXT_VALDATA_H
+#define ERIN_NEXT_VALDATA_H
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -52,7 +56,9 @@ namespace erin_next
 			int64_t,
 			std::vector<double>,
 			std::vector<std::string>,
+			// TODO: consider std::vector<std::array<std::string,2>> instead
 			std::vector<std::vector<std::string>>,
+			// TODO: consider std::vector<std::array<double,2>> instead
 			std::vector<std::vector<double>>,
 			std::unordered_map<std::string, std::string>> Value;
 	};
@@ -122,20 +128,26 @@ namespace erin_next
 		ValidationInfo PassThrough;
 	};
 
+	struct DistributionValidationMap
+	{
+		ValidationInfo Fixed;
+		ValidationInfo Uniform;
+		ValidationInfo Normal;
+		ValidationInfo QuantileTableFromFile;
+		ValidationInfo QuantileTableExplicit;
+		ValidationInfo Weibull;
+	};
+
 	struct InputValidationMap
 	{
 		ComponentValidationMap Comp;
 		ValidationInfo Load_01Explicit;
 		ValidationInfo Load_02FileBased;
-		ValidationInfo Dist_Fixed;
-		ValidationInfo Dist_Uniform;
-		ValidationInfo Dist_Normal;
-		ValidationInfo Dist_QuantileTableFromFile;
-		ValidationInfo Dist_QuantileTableExplicit;
-		ValidationInfo Dist_Weibull;
+		DistributionValidationMap Dist;
 		ValidationInfo SimulationInfo;
 		ValidationInfo Network;
 		ValidationInfo Scenario;
 	};
   
 }
+#endif

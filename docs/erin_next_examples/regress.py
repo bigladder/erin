@@ -59,10 +59,9 @@ def run_tests():
         sys.exit(1)
 
 
-def run_cli(example_name):
+def smoke_test(example_name):
     """
-    Run the CLI for example name and check output diffs
-    - example_name: string, "01" or "25" to call ex01.toml or ex25.toml
+    A smoke test just runs the example and confirms we get a 0 exit code
     """
     Path("out.csv").unlink(missing_ok=True)
     Path("stats.csv").unlink(missing_ok=True)
@@ -73,6 +72,15 @@ def run_cli(example_name):
         print(f"stdout:\n{result.stdout}")
         print(f"stderr:\n{result.stderr}")
         sys.exit(1)
+    return result
+
+
+def run_cli(example_name):
+    """
+    Run the CLI for example name and check output diffs
+    - example_name: string, "01" or "25" to call ex01.toml or ex25.toml
+    """
+    result = smoke_test(example_name)
     result = subprocess.run(
         ['diff', 'out.csv', f'ex{example_name}-out.csv'],
         capture_output=True)
@@ -104,6 +112,7 @@ if __name__ == "__main__":
     run_cli("09")
     run_cli("26")
     run_cli("27")
+    smoke_test("28")
     run_cli("29")
     run_cli("30")
     print("Passed all regression tests!")

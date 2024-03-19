@@ -1,3 +1,5 @@
+[meta]
+description = "Basic example of an 'uncontrolled source'."
 [simulation_info]
 rate_unit = "kW"
 quantity_unit = "kJ"

@@ -59,6 +59,14 @@ A good quote that summarizes the "spin" of data-oriented design is:
 >
 > -- Mike Acton, Data Oriented Design and C++, CppCon 2014
 
+Linus Torvalds, the creator of Linux and Git, said this once in a mailing list post:
+
+> I'm a huge proponent of designing your code around the data, rather than the other way around.
+> 
+> -- Linux Torvalds
+
+This is, in essence, what we're trying to do in ERIN.
+
 ## Developer Notes
 
 This section is for developers of the code.

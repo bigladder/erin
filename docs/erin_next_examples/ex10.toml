@@ -1,0 +1,43 @@
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "seconds"
+max_time = 10
+[loads.default]
+time_unit = "seconds"
+rate_unit = "kW"
+time_rate_pairs = [
+    [0.0,100.0],
+    [10.0,0.0],
+    ]
+[loads.supply]
+time_unit = "seconds"
+rate_unit = "kW"
+time_rate_pairs = [
+    [0.0,50.0],
+    [5.0,120.0],
+    [8.0,100.0],
+    [10.0,0.0],
+    ]
+[components.US]
+type = "uncontrolled_source"
+outflow = "electricity"
+supply_by_scenario.blue_sky = "supply"
+[components.L]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "default"
+[network]
+connections = [
+    ["US:OUT(0)",  "L:IN(0)", "electricity"],
+    ]
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+[scenarios.blue_sky]
+time_unit = "seconds"
+occurrence_distribution = "immediately"
+duration = 10
+max_occurrences = 1
+network = "nw"

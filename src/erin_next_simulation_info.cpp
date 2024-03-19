@@ -114,7 +114,7 @@ namespace erin_next
 		   << "MaxTime=" << s.MaxTime << "; "
 		   << "TimeUnit=" << TimeUnitToTag(s.TheTimeUnit) << "; "
 		   << "QuantityUnit=\"" << s.QuantityUnit << "\"; "
-		   << "RateUnit=\"" << s.RateUnit << "\"}";
+		   << "RateUnit=\"" << PowerUnitToString(s.RateUnit) << "\"}";
 		return os;
 	}
 }

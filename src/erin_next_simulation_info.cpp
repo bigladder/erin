@@ -112,7 +112,7 @@ namespace erin_next
 	{
 		os << "SimulationInfo{"
 		   << "MaxTime=" << s.MaxTime << "; "
-		   << "TimeUnit=" << TimeUnitToTag(s.TheTimeUnit) << "; "
+		   << "TimeUnit=\"" << TimeUnitToTag(s.TheTimeUnit) << "\"; "
 		   << "QuantityUnit=\"" << s.QuantityUnit << "\"; "
 		   << "RateUnit=\"" << PowerUnitToString(s.RateUnit) << "\"}";
 		return os;

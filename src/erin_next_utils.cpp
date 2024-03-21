@@ -65,6 +65,13 @@ namespace erin_next
 		return oss.str();
 	}
 
+	double
+	TimeInSecondsToHours(uint64_t time_seconds)
+	{
+		return static_cast<double>(time_seconds)
+			/ static_cast<double>(seconds_per_hour);
+	}
+
 	void
 	WriteErrorMessage(std::string const& tag, std::string const& message)
 	{

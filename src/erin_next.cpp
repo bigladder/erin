@@ -1477,8 +1477,10 @@ namespace erin_next
 	void
 	PrintFlows(Model const& m, SimulationState const& ss, double t)
 	{
-		std::cout << "time: " << t << " s ("
-			<< TimeToISO8601Period(t) << ")" << std::endl;
+		std::cout << "time: " << t << " s, "
+			<< TimeToISO8601Period(t) << ", "
+			<< TimeInSecondsToHours(t) << " h"
+			<< std::endl;
 		for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
 		{
 			std::cout << ConnectionToString(

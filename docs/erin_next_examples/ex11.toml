@@ -1,0 +1,42 @@
+[meta]
+description = "Demonstrate a Mover component."
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "seconds"
+max_time = 10
+[loads.cooling]
+time_unit = "seconds"
+rate_unit = "kW"
+time_rate_pairs = [
+    [0.0,50.0],
+    [5.0,150.0],
+    [8.0,25.0],
+    [10.0,0.0],
+    ]
+[components.utility_electricity]
+type = "source"
+outflow = "electricity"
+[components.cooling_load]
+type = "load"
+inflow = "cooling"
+loads_by_scenario.blue_sky = "cooling"
+[components.chiller]
+type = "mover"
+inflow = "electricity"
+outflow = "cooling"
+cop = 5.0
+[network]
+connections = [
+    ["utility_electricity:OUT(0)",  "chiller:IN(0)", "electricity"],
+    ["chiller:OUT(0)", "cooling_load:OUT(0)", "cooling"],
+    ]
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+[scenarios.blue_sky]
+time_unit = "seconds"
+occurrence_distribution = "immediately"
+duration = 10
+max_occurrences = 1

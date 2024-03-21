@@ -181,7 +181,7 @@ namespace erin_next
 			}
 			switch (m.ComponentMap.CompType[i])
 			{
-				case (ComponentType::ScheduleBasedLoadType):
+				case ComponentType::ScheduleBasedLoadType:
 				{
 					ScheduleBasedLoad const& sbl =
 						m.ScheduledLoads[m.ComponentMap.Idx[i]];
@@ -227,6 +227,17 @@ namespace erin_next
 						<< (cec.MaxLossflow_W == max_flow_W
 							? "unlimited"
 							: std::to_string(cec.MaxLossflow_W))
+						<< std::endl;
+				} break;
+				case ComponentType::MoverType:
+				{
+					Mover const& mov =
+						m.Movers[m.ComponentMap.Idx[i]];
+					std::cout << "-- cop: " << mov.COP << std::endl;
+					std::cout << "-- max outflow (W): "
+						<< (mov.MaxOutflow_W == max_flow_W
+							? "unlimited"
+							: std::to_string(mov.MaxOutflow_W))
 						<< std::endl;
 				} break;
 				case ComponentType::StoreType:
@@ -2094,7 +2105,7 @@ namespace erin_next
 		for (auto const& os : occurrenceStats)
 		{
 			double stored = os.StorageCharge_kJ - os.StorageDischarge_kJ;
-			double balance = os.Inflow_kJ
+			double balance = os.Inflow_kJ + os.InFromEnv_kJ
 				- (os.OutflowAchieved_kJ + stored + os.Wasteflow_kJ);
 			double efficiency = (os.Inflow_kJ + os.StorageDischarge_kJ) > 0.0
 				? ((os.OutflowAchieved_kJ + os.StorageCharge_kJ)

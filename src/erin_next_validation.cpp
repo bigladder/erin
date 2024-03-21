@@ -199,7 +199,13 @@ namespace erin_next
 		  InputSection::Components_Mux,
 		  InputSection::Components_Store,
 		  InputSection::Components_PassThrough,
+      InputSection::Components_Mover,
   		InputSection::Dist_Fixed,
+		  InputSection::Dist_Weibull,
+		  InputSection::Dist_Uniform,
+		  InputSection::Dist_Normal,
+		  InputSection::Dist_01QuantileTableFromFile,
+		  InputSection::Dist_02QuantileTableExplicit,
   		InputSection::Network,
   		InputSection::Scenarios,
     };
@@ -212,6 +218,7 @@ namespace erin_next
 		  InputSection::Components_Mux,
 		  InputSection::Components_Store,
 		  InputSection::Components_PassThrough,
+      InputSection::Components_Mover,
     };
     std::unordered_set<InputSection> nonLoadCompSections{
 		  InputSection::Components_Source,
@@ -220,6 +227,7 @@ namespace erin_next
 		  InputSection::Components_Mux,
 		  InputSection::Components_Store,
 		  InputSection::Components_PassThrough,
+      InputSection::Components_Mover,
     };
     std::unordered_set<std::string> compTypeEnums{
       "constant_load",
@@ -423,6 +431,7 @@ namespace erin_next
           InputSection::Components_ConstantLoad,
           InputSection::Components_Load,
           InputSection::Components_ConstEffConverter,
+          InputSection::Components_Mover,
         },
       },
       FieldInfo{
@@ -448,6 +457,7 @@ namespace erin_next
           InputSection::Components_Source,
           InputSection::Components_UncontrolledSource,
           InputSection::Components_ConstEffConverter,
+          InputSection::Components_Mover,
         },
       },
       FieldInfo{
@@ -669,6 +679,18 @@ namespace erin_next
           InputSection::Components_Store,
         },
       },
+      // COMP Mover
+      FieldInfo{
+        .FieldName = "cop",
+        .Type = InputType::Number,
+        .IsRequired = true,
+        .Default = "",
+        .EnumValues = {},
+        .Aliases = {},
+        .Sections = {
+          InputSection::Components_Mover,
+        },
+      },
       // DIST: Common
       FieldInfo{
         .FieldName = "type",
@@ -870,6 +892,10 @@ namespace erin_next
 		      case InputSection::Components_PassThrough:
           {
             UpdateValidationInfoByField(v.Comp.PassThrough, f);
+          } break;
+          case InputSection::Components_Mover:
+          {
+            UpdateValidationInfoByField(v.Comp.Mover, f);
           } break;
           case InputSection::Dist_Fixed:
           {

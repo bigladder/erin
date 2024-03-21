@@ -26,6 +26,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+// TODO[mok]: add #define for the index type; currently size_t but not necessary
+// to be so big; we might try a uint16_t or uint32_t; possibly in pair with enum
+// for type:
+// struct CompId { ComponentType Type; uint16_t Id; uint16_T SubtypeId; };
 // define flow type to switch easily
 // TODO[mok]: things to try
 // - unsigned has modulo wrap around which is NOT what we want
@@ -59,7 +63,9 @@ namespace erin_next
 		MuxType,
 		StoreType,
 		PassThroughType,
+		MoverType,
 		WasteSinkType,
+		EnvironmentSourceType,
 	};
 
 	// Holds the various flow types encountered
@@ -104,6 +110,7 @@ namespace erin_next
 		flow_t StorageDischarge = 0;
 		flow_t StorageCharge = 0;
 		flow_t Wasteflow = 0;
+		flow_t EnvInflow = 0;
 	};
 
 	struct ScenarioOccurrenceStats
@@ -119,6 +126,7 @@ namespace erin_next
 		double StorageDischarge_kJ = 0.0;
 		double StorageCharge_kJ = 0.0;
 		double Wasteflow_kJ = 0.0;
+		double InFromEnv_kJ = 0.0;
 		double LoadNotServed_kJ = 0.0;
 		double Uptime_s = 0.0;
 		double Downtime_s = 0.0;
@@ -185,6 +193,16 @@ namespace erin_next
 		size_t WasteflowConn;
 		flow_t MaxOutflow_W = max_flow_W;
 		flow_t MaxLossflow_W = max_flow_W;
+	};
+
+	struct Mover
+	{
+		double COP;
+		size_t InflowConn;
+		size_t OutflowConn;
+		size_t InFromEnvConn;
+		size_t WasteflowConn;
+		flow_t MaxOutflow_W = max_flow_W;
 	};
 
 	struct Connection
@@ -260,6 +278,7 @@ namespace erin_next
 		std::vector<Mux> Muxes;
 		std::vector<Store> Stores;
 		std::vector<PassThrough> PassThroughs;
+		std::vector<Mover> Movers;
 		std::vector<Connection> Connections;
 		std::vector<ScheduleBasedReliability> Reliabilities;
 		DistributionSystem DistSys{};
@@ -272,6 +291,13 @@ namespace erin_next
 	{
 		size_t Id;
 		Connection WasteConnection;
+	};
+
+	struct ComponentIdAndWasteAndEnvironmentConnection
+	{
+		size_t Id;
+		Connection WasteConn;
+		Connection EnvConn;
 	};
 
 	struct SimulationState
@@ -779,6 +805,21 @@ namespace erin_next
 	);
 
 	void
+	RunMoverBackward(
+		Model const& m,
+		SimulationState& ss,
+		size_t outflowConnIdx,
+		size_t moverIdx
+	);
+
+	void
+	UpdateEnvironmentFlowForMover(
+		Model const& m,
+		SimulationState& ss,
+		size_t moverIdx
+	);
+
+	void
 	Mux_RequestInflowsIntelligently(
 		SimulationState& ss,
 		std::vector<size_t> const& inflowConns,
@@ -798,6 +839,14 @@ namespace erin_next
 
 	void
 	RunConstantEfficiencyConverterForward(
+		Model const& model,
+		SimulationState& ss,
+		size_t connIdx,
+		size_t compIdx
+	);
+
+	void
+	RunMoverForward(
 		Model const& model,
 		SimulationState& ss,
 		size_t connIdx,
@@ -837,6 +886,18 @@ namespace erin_next
 
 	size_t
 	Model_AddFixedReliabilityDistribution(Model& m, double dt);
+
+	ComponentIdAndWasteAndEnvironmentConnection
+	Model_AddMover(Model& m, double cop);
+
+	ComponentIdAndWasteAndEnvironmentConnection
+	Model_AddMover(
+		Model& m,
+		double cop,
+		size_t inflowTypeId,
+		size_t outflowTypeId,
+		std::string const& tag
+	);
 
 	size_t
 	Model_AddFailureModeToComponent(

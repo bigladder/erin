@@ -14,8 +14,6 @@
 namespace erin_next
 {
 
-	// TODO: pass in default rate_unit and quantity_unit from
-	// simulation_info
 	Result
 	ParseSingleComponent(
 		Simulation& s,
@@ -43,6 +41,7 @@ namespace erin_next
 			);
 			return Result::Failure;
 		}
+		// TODO: move this section into another function?
 		ComponentType ct = maybeCompType.value();
 		std::vector<std::string> errors;
 		std::vector<std::string> warnings;
@@ -124,6 +123,16 @@ namespace erin_next
 				input = TOMLTable_ParseWithValidation(
 					table,
 					compValids.Store,
+					fullTableName,
+					errors,
+					warnings
+				);
+			} break;
+			case ComponentType::MoverType:
+			{
+				input = TOMLTable_ParseWithValidation(
+					table,
+					compValids.Mover,
 					fullTableName,
 					errors,
 					warnings
@@ -621,6 +630,28 @@ namespace erin_next
 						);
 					s.TheModel.Stores[s.TheModel.ComponentMap.Idx[id]].MaxOutflow_W =
 						maxOutflow_W;
+				}
+			} break;
+			case ComponentType::MoverType:
+			{
+				double cop = std::get<double>(input.at("cop").Value);
+				auto compIdAndConns =
+					Model_AddMover(
+						s.TheModel,
+						cop,
+						inflowId,
+						outflowId,
+						tag);
+				id = compIdAndConns.Id;
+				if (input.contains("max_outflow"))
+				{
+					flow_t maxOutflow_W =
+						static_cast<flow_t>(
+							Power_ToWatt(
+								std::get<double>(input.at("max_outflow").Value),
+								rateUnit));
+					size_t moverIdx = s.TheModel.ComponentMap.Idx[id];
+					s.TheModel.Movers[moverIdx].MaxOutflow_W = maxOutflow_W;
 				}
 			} break;
 			default:

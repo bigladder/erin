@@ -126,6 +126,7 @@ namespace erin_next
 		ValidationInfo Mux;
 		ValidationInfo Store;
 		ValidationInfo PassThrough;
+		ValidationInfo Mover;
 	};
 
 	struct DistributionValidationMap

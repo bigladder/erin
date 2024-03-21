@@ -440,10 +440,6 @@ namespace erin_next
 		flow_t outflow = FinalizeFlowValue(outflowRequest, outflowAvailable);
 		// NOTE: for COP, we can have outflow > inflow, but we assume no
 		// lossflow in that scenario
-		// TODO: should COP components be separate components? A COP component
-		// with a lossflow hookup would be odd... wasteflow doesn't make sense
-		// either... I think the answer is "yes"; we can re-add the check for
-		// inflow >= outflow...
 		flow_t nonOutflowAvailable = inflow > outflow ? inflow - outflow : 0;
 		flow_t lossflowRequest = 0;
 		if (lossflowConn.has_value())
@@ -476,18 +472,18 @@ namespace erin_next
 	RunConstantEfficiencyConverterBackward(
 		Model const& m,
 		SimulationState& ss,
-		size_t connIdx,
+		size_t outflowConnIdx,
 		size_t compIdx
 	)
 	{
 		ConstantEfficiencyConverter const& cec = m.ConstEffConvs[compIdx];
 		size_t inflowConn = cec.InflowConn;
 		flow_t outflowRequest =
-			ss.Flows[connIdx].Requested_W > cec.MaxOutflow_W
+			ss.Flows[outflowConnIdx].Requested_W > cec.MaxOutflow_W
 			? cec.MaxOutflow_W
-			: ss.Flows[connIdx].Requested_W;
+			: ss.Flows[outflowConnIdx].Requested_W;
 		flow_t inflowRequest = static_cast<flow_t>(
-			std::ceil(outflowRequest / m.ConstEffConvs[compIdx].Efficiency)
+			std::ceil(outflowRequest / cec.Efficiency)
 		);
 		// TODO: re-enable a check for outflow <= inflow after adding COP components
 		// NOTE: for COP, we can have inflow < outflow
@@ -498,6 +494,72 @@ namespace erin_next
 		ss.Flows[inflowConn].Requested_W = inflowRequest;
 		UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
 	}
+
+	void
+	UpdateEnvironmentFlowForMover(
+		Model const& m,
+		SimulationState& ss,
+		size_t moverIdx)
+	{
+		Mover const& mov = m.Movers[moverIdx];
+		flow_t inflowReq =
+			ss.Flows[mov.InflowConn].Requested_W;
+		flow_t inflowAvail =
+			ss.Flows[mov.InflowConn].Available_W;
+		flow_t outflowReq =
+			ss.Flows[mov.OutflowConn].Requested_W;
+		flow_t outflowAvail =
+			ss.Flows[mov.OutflowConn].Available_W > mov.MaxOutflow_W
+			? mov.MaxOutflow_W
+			: ss.Flows[mov.OutflowConn].Available_W;
+		flow_t inflow = FinalizeFlowValue(inflowReq, inflowAvail);
+		flow_t outflow = FinalizeFlowValue(outflowReq, outflowAvail);
+		if (inflow >= outflow)
+		{
+			ss.Flows[mov.InFromEnvConn].Requested_W = 0.0;
+			ss.Flows[mov.InFromEnvConn].Available_W = 0.0;
+			ss.Flows[mov.InFromEnvConn].Actual_W = 0.0;
+			flow_t waste = inflow - outflow;
+			ss.Flows[mov.WasteflowConn].Requested_W = waste;
+			ss.Flows[mov.WasteflowConn].Available_W = waste;
+			ss.Flows[mov.WasteflowConn].Actual_W = waste;
+		}
+		else
+		{
+			flow_t supply = outflow - inflow;
+			ss.Flows[mov.InFromEnvConn].Requested_W = supply;
+			ss.Flows[mov.InFromEnvConn].Available_W = supply;
+			ss.Flows[mov.InFromEnvConn].Actual_W = supply;
+			ss.Flows[mov.WasteflowConn].Requested_W = 0.0;
+			ss.Flows[mov.WasteflowConn].Available_W = 0.0;
+			ss.Flows[mov.WasteflowConn].Actual_W = 0.0;
+		}
+	}
+
+	void
+	RunMoverBackward(
+		Model const& m,
+		SimulationState& ss,
+		size_t outflowConnIdx,
+		size_t moverIdx)
+	{
+		Mover const& mov = m.Movers[moverIdx];
+		size_t inflowConn = mov.InflowConn;
+		flow_t outflowRequest =
+			ss.Flows[outflowConnIdx].Requested_W > mov.MaxOutflow_W
+			? mov.MaxOutflow_W
+			: ss.Flows[outflowConnIdx].Requested_W;
+		flow_t inflowRequest = static_cast<flow_t>(
+			std::ceil(outflowRequest / mov.COP)
+		);
+		if (inflowRequest != ss.Flows[inflowConn].Requested_W)
+		{
+			ss.ActiveConnectionsBack.insert(inflowConn);
+		}
+		ss.Flows[inflowConn].Requested_W = inflowRequest;
+		UpdateEnvironmentFlowForMover(m, ss, moverIdx);
+	}
+	
 
 	void
 	Mux_RequestInflowsIntelligently(
@@ -643,23 +705,23 @@ namespace erin_next
 				size_t compIdx = model.Connections[connIdx].FromIdx;
 				switch (model.Connections[connIdx].From)
 				{
-					case (ComponentType::ConstantSourceType):
+					case ComponentType::ConstantSourceType:
 					{
 					}
 					break;
-					case (ComponentType::PassThroughType):
+					case ComponentType::PassThroughType:
 					{
 						RunPassthroughBackward(model, ss, connIdx, compIdx);
 					}
 					break;
-					case (ComponentType::ScheduleBasedSourceType):
+					case ComponentType::ScheduleBasedSourceType:
 					{
 						RunScheduleBasedSourceBackward(
 							model, ss, connIdx, compIdx
 						);
 					}
 					break;
-					case (ComponentType::ConstantEfficiencyConverterType):
+					case ComponentType::ConstantEfficiencyConverterType:
 					{
 						switch (model.Connections[connIdx].FromPort)
 						{
@@ -686,7 +748,7 @@ namespace erin_next
 						}
 					}
 					break;
-					case (ComponentType::MuxType):
+					case ComponentType::MuxType:
 					{
 						RunMuxBackward(model, ss, compIdx);
 						if (model.Muxes[compIdx].NumOutports > 1)
@@ -696,9 +758,33 @@ namespace erin_next
 						}
 					}
 					break;
-					case (ComponentType::StoreType):
+					case ComponentType::StoreType:
 					{
 						RunStoreBackward(model, ss, connIdx, compIdx);
+					}
+					break;
+					case ComponentType::MoverType:
+					{
+						switch (model.Connections[connIdx].FromPort)
+						{
+							case 0:
+							{
+								RunMoverBackward(model, ss, connIdx, compIdx);
+							}
+							break;
+							case 1:
+							{
+								UpdateEnvironmentFlowForMover(model, ss, compIdx);
+							}
+							break;
+							default:
+							{
+								WriteErrorMessage(
+									"<runtime>",
+									"bad port connection for mover");
+								std::exit(1);
+							} break;
+						}
 					}
 					break;
 					default:
@@ -732,18 +818,40 @@ namespace erin_next
 		{
 			outflowAvailable = cec.MaxOutflow_W;
 		}
-		// NOTE: disabling to accommodate COP components for now
-		// TODO: create a separate COP component (like converter but no lossport
-		// or wasteport)
-		// assert(
-		//	(inflowAvailable >= outflowAvailable)
-		//	&& "converter forward flow; inflow must be >= outflow");
+		assert(
+			(inflowAvailable >= outflowAvailable)
+			&& "converter forward flow; inflow must be >= outflow");
 		if (outflowAvailable != ss.Flows[outflowConn].Available_W)
 		{
 			ss.ActiveConnectionsFront.insert(outflowConn);
 		}
 		ss.Flows[outflowConn].Available_W = outflowAvailable;
 		UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
+	}
+
+	void
+	RunMoverForward(
+		Model const& model,
+		SimulationState& ss,
+		size_t outConnIdx,
+		size_t moverIdx)
+	{
+		Mover const& mov = model.Movers[moverIdx];
+		flow_t inflowAvailable = ss.Flows[outConnIdx].Available_W;
+		size_t outflowConn = mov.OutflowConn;
+		flow_t outflowAvailable = static_cast<flow_t>(
+			std::floor(mov.COP * inflowAvailable)
+		);
+		if (outflowAvailable > mov.MaxOutflow_W)
+		{
+			outflowAvailable = mov.MaxOutflow_W;
+		}
+		if (outflowAvailable != ss.Flows[outflowConn].Available_W)
+		{
+			ss.ActiveConnectionsFront.insert(outflowConn);
+		}
+		ss.Flows[outflowConn].Available_W = outflowAvailable;
+		UpdateEnvironmentFlowForMover(model, ss, moverIdx);
 	}
 
 	void
@@ -884,25 +992,32 @@ namespace erin_next
 				size_t compIdx = model.Connections[connIdx].ToIdx;
 				switch (model.Connections[connIdx].To)
 				{
-					case (ComponentType::ConstantLoadType):
-					case (ComponentType::WasteSinkType):
-					case (ComponentType::ScheduleBasedLoadType):
+					case ComponentType::ConstantLoadType:
+					case ComponentType::WasteSinkType:
+					case ComponentType::ScheduleBasedLoadType:
 					{
 					}
 					break;
-					case (ComponentType::PassThroughType):
+					case ComponentType::PassThroughType:
 					{
 						RunPassthroughForward(model, ss, connIdx, compIdx);
 					}
 					break;
-					case (ComponentType::ConstantEfficiencyConverterType):
+					case ComponentType::ConstantEfficiencyConverterType:
 					{
 						RunConstantEfficiencyConverterForward(
 							model, ss, connIdx, compIdx
 						);
 					}
 					break;
-					case (ComponentType::MuxType):
+					case ComponentType::MoverType:
+					{
+						RunMoverForward(
+							model, ss, connIdx, compIdx
+						);
+					}
+					break;
+					case ComponentType::MuxType:
 					{
 						RunMuxForward(model, ss, compIdx);
 						if (model.Muxes[compIdx].NumInports > 1)
@@ -912,7 +1027,7 @@ namespace erin_next
 						}
 					}
 					break;
-					case (ComponentType::StoreType):
+					case ComponentType::StoreType:
 					{
 						RunStoreForward(model, ss, connIdx, compIdx);
 					}
@@ -1029,16 +1144,12 @@ namespace erin_next
 			size_t compIdx = model.Connections[connIdx].ToIdx;
 			switch (model.Connections[connIdx].To)
 			{
-				case (ComponentType::ConstantEfficiencyConverterType):
-				{
-				}
-				break;
-				case (ComponentType::StoreType):
+				case ComponentType::StoreType:
 				{
 					RunStorePostFinalization(model, ss, t, connIdx, compIdx);
 				}
 				break;
-				case (ComponentType::MuxType):
+				case ComponentType::MuxType:
 				{
 					RunMuxPostFinalization(model, ss, compIdx);
 				}
@@ -1242,60 +1353,71 @@ namespace erin_next
 		}
 	}
 
+	// TODO: rename to ComponentTypeToString(.)
 	std::string
 	ToString(ComponentType compType)
 	{
 		std::string result = "?";
 		switch (compType)
 		{
-			case (ComponentType::ConstantLoadType):
+			case ComponentType::ConstantLoadType:
 			{
 				result = "ConstantLoad";
 			}
 			break;
-			case (ComponentType::ScheduleBasedLoadType):
+			case ComponentType::ScheduleBasedLoadType:
 			{
 				result = "ScheduleBasedLoad";
 			}
 			break;
-			case (ComponentType::ConstantSourceType):
+			case ComponentType::ConstantSourceType:
 			{
 				result = "ConstantSource";
 			}
 			break;
-			case (ComponentType::ScheduleBasedSourceType):
+			case ComponentType::ScheduleBasedSourceType:
 			{
 				result = "ScheduleBasedSource";
 			}
 			break;
-			case (ComponentType::ConstantEfficiencyConverterType):
+			case ComponentType::ConstantEfficiencyConverterType:
 			{
 				result = "ConstantEfficiencyConverter";
 			}
 			break;
-			case (ComponentType::WasteSinkType):
+			case ComponentType::WasteSinkType:
 			{
 				result = "WasteSink";
 			}
 			break;
-			case (ComponentType::MuxType):
+			case ComponentType::MuxType:
 			{
 				result = "Mux";
 			}
 			break;
-			case (ComponentType::StoreType):
+			case ComponentType::StoreType:
 			{
 				result = "Store";
 			}
 			break;
-			case (ComponentType::PassThroughType):
+			case ComponentType::PassThroughType:
 			{
 				result = "PassThrough";
 			}
 			break;
+			case ComponentType::MoverType:
+			{
+				result = "Mover";
+			} break;
+			case ComponentType::EnvironmentSourceType:
+			{
+				result = "EnvironmentSource";
+			} break;
 			default:
 			{
-				std::cerr << "unhandled component type" << std::endl;
+				WriteErrorMessage(
+					"ToString",
+					"unhandled component type: " + ToString(compType));
 				std::exit(1);
 			}
 		}
@@ -1329,6 +1451,10 @@ namespace erin_next
 		{
 			return ComponentType::WasteSinkType;
 		}
+		if (tag == "EnvironmentSource")
+		{
+			return ComponentType::EnvironmentSourceType;
+		}
 		if (tag == "Mux" || tag == "mux" || tag == "muxer")
 		{
 			return ComponentType::MuxType;
@@ -1340,6 +1466,10 @@ namespace erin_next
 		if (tag == "PassThrough" || tag == "pass_through")
 		{
 			return ComponentType::PassThroughType;
+		}
+		if (tag == "Mover" || tag == "mover")
+		{
+			return ComponentType::MoverType;
 		}
 		return {};
 	}
@@ -1362,24 +1492,26 @@ namespace erin_next
 	FlowSummary
 	SummarizeFlows(Model const& m, SimulationState const& ss, double t)
 	{
-		FlowSummary summary = {};
-		summary.Time = t;
-		summary.Inflow = 0;
-		summary.OutflowAchieved = 0;
-		summary.OutflowRequest = 0;
-		summary.StorageCharge = 0;
-		summary.StorageDischarge = 0;
-		summary.Wasteflow = 0;
+		FlowSummary summary = {
+			.Time = t,
+			.Inflow = 0,
+			.OutflowAchieved = 0,
+			.OutflowRequest = 0,
+			.StorageCharge = 0,
+			.StorageDischarge = 0,
+			.Wasteflow = 0,
+			.EnvInflow = 0,
+		};
 		for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
 		{
 			switch (m.Connections[flowIdx].From)
 			{
-				case (ComponentType::ConstantSourceType):
+				case ComponentType::ConstantSourceType:
 				{
 					summary.Inflow += ss.Flows[flowIdx].Actual_W;
 				}
 				break;
-				case (ComponentType::ScheduleBasedSourceType):
+				case ComponentType::ScheduleBasedSourceType:
 				{
 					// NOTE: for schedule-based sources, the thinking is that
 					// the "available" is actually flowing into the system and,
@@ -1390,9 +1522,14 @@ namespace erin_next
 					}
 				}
 				break;
-				case (ComponentType::StoreType):
+				case ComponentType::StoreType:
 				{
 					summary.StorageDischarge += ss.Flows[flowIdx].Actual_W;
+				}
+				break;
+				case ComponentType::EnvironmentSourceType:
+				{
+					summary.EnvInflow += ss.Flows[flowIdx].Actual_W;
 				}
 				break;
 				default:
@@ -1438,10 +1575,12 @@ namespace erin_next
 		int sum =
 			static_cast<int>(s.Inflow)
 			+ netDischarge
+			+ static_cast<int>(s.EnvInflow)
 			- (static_cast<int>(s.OutflowAchieved)
 				+ static_cast<int>(s.Wasteflow));
 		double eff =
-			(static_cast<double>(s.Inflow) + static_cast<double>(netDischarge)) > 0.0
+			(static_cast<double>(s.Inflow)
+			+ static_cast<double>(netDischarge)) > 0.0
 			? 100.0 * (static_cast<double>(s.OutflowAchieved))
 				/ (static_cast<double>(s.Inflow)
 					+ static_cast<double>(netDischarge))
@@ -1454,6 +1593,7 @@ namespace erin_next
 		std::cout << "Flow Summary @ " << s.Time << ":" << std::endl;
 		std::cout << "  Inflow                 : " << s.Inflow << std::endl;
 		std::cout << "+ Storage Net Discharge  : " << netDischarge << std::endl;
+		std::cout << "+ Environment Inflow     : " << s.EnvInflow << std::endl;
 		std::cout << "- Outflow (achieved)     : " << s.OutflowAchieved
 				  << std::endl;
 		std::cout << "- Wasteflow              : " << s.Wasteflow << std::endl;
@@ -1461,7 +1601,8 @@ namespace erin_next
 		std::cout << "= Sum                    : " << sum << std::endl;
 		std::cout << "  Efficiency             : " << eff << "%"
 				  << " (= " << s.OutflowAchieved << "/"
-				  << ((int)s.Inflow + netDischarge) << ")" << std::endl;
+				  << ((int)s.Inflow + netDischarge) << ")"
+					<< std::endl;
 		std::cout << "  Delivery Effectiveness : " << effectiveness << "%"
 				  << " (= " << s.OutflowAchieved << "/" << s.OutflowRequest
 				  << ")" << std::endl;
@@ -1568,6 +1709,65 @@ namespace erin_next
 		return linkId;
 	}
 
+	ComponentIdAndWasteAndEnvironmentConnection
+	Model_AddMover(Model& m, double cop)
+	{
+		return Model_AddMover(m, cop, 0, 0, "");
+	}
+
+	ComponentIdAndWasteAndEnvironmentConnection
+	Model_AddMover(
+		Model& m,
+		double cop,
+		size_t inflowTypeId,
+		size_t outflowTypeId,
+		std::string const& tag)
+	{
+		assert(cop > 0.0);
+		Mover mov = {
+			.COP = cop,
+			.OutflowConn = 0,
+			.InflowConn = 0,
+			.InFromEnvConn = 0,
+			.WasteflowConn = 0,
+			.MaxOutflow_W = max_flow_W,
+		};
+		m.Movers.push_back(std::move(mov));
+		size_t wasteId = Component_AddComponentReturningId(
+			m.ComponentMap,
+			ComponentType::WasteSinkType,
+			0,
+			std::vector<size_t>{wasteflowId},
+			std::vector<size_t>{},
+			"",
+			0.0);
+		size_t envId = Component_AddComponentReturningId(
+			m.ComponentMap,
+			ComponentType::EnvironmentSourceType,
+			0,
+			std::vector<size_t>{},
+			std::vector<size_t>{wasteflowId},
+			"",
+			0.0);
+		size_t thisId = Component_AddComponentReturningId(
+			m.ComponentMap,
+			ComponentType::MoverType,
+			0,
+			std::vector<size_t>{inflowTypeId, wasteflowId},
+			std::vector<size_t>{outflowTypeId, wasteflowId},
+			tag,
+			0.0);
+		Connection wconn =
+			Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflowId);
+		Connection econn =
+			Model_AddConnection(m, envId, 0, thisId, 1, wasteflowId);
+		return {
+			.Id = thisId,
+			.EnvConn = econn,
+			.WasteConn = wconn,
+		};
+	}
+
 	std::vector<TimeAndFlows>
 	Simulate(Model& model, bool print = true)
 	{
@@ -1655,7 +1855,7 @@ namespace erin_next
 		auto idx = m.ComponentMap.Idx[compId];
 		switch (m.ComponentMap.CompType[compId])
 		{
-			case (ComponentType::ConstantLoadType):
+			case ComponentType::ConstantLoadType:
 			{
 				auto inflowConn = m.ConstLoads[idx].InflowConn;
 				if (ss.Flows[inflowConn].Requested_W
@@ -1666,7 +1866,7 @@ namespace erin_next
 				ss.Flows[inflowConn].Requested_W = m.ConstLoads[idx].Load_W;
 			}
 			break;
-			case (ComponentType::ScheduleBasedLoadType):
+			case ComponentType::ScheduleBasedLoadType:
 			{
 				auto const inflowConn = m.ConstLoads[idx].InflowConn;
 				auto const loadIdx = ss.ScheduleBasedLoadIdx[idx];
@@ -1679,7 +1879,7 @@ namespace erin_next
 				ss.Flows[inflowConn].Requested_W = amount;
 			}
 			break;
-			case (ComponentType::ConstantSourceType):
+			case ComponentType::ConstantSourceType:
 			{
 				auto const outflowConn = m.ConstSources[idx].OutflowConn;
 				auto const available = m.ConstSources[idx].Available_W;
@@ -1690,7 +1890,7 @@ namespace erin_next
 				ss.Flows[outflowConn].Available_W = available;
 			}
 			break;
-			case (ComponentType::ScheduleBasedSourceType):
+			case ComponentType::ScheduleBasedSourceType:
 			{
 				// TODO: need to call routine to reset wasteflow connection
 				// to the right amount as well.
@@ -1705,7 +1905,7 @@ namespace erin_next
 				ss.Flows[outflowConn].Available_W = available;
 			}
 			break;
-			case (ComponentType::ConstantEfficiencyConverterType):
+			case ComponentType::ConstantEfficiencyConverterType:
 			{
 				auto outflowConn = m.ConstEffConvs[idx].OutflowConn;
 				RunConstantEfficiencyConverterBackward(m, ss, outflowConn, idx);
@@ -1713,7 +1913,16 @@ namespace erin_next
 				RunConstantEfficiencyConverterForward(m, ss, inflowConn, idx);
 			}
 			break;
-			case (ComponentType::MuxType):
+			case ComponentType::MoverType:
+			{
+				// TODO: test
+				size_t outflowConn = m.Movers[idx].OutflowConn;
+				RunMoverBackward(m, ss, outflowConn, idx);
+				size_t inflowConn = m.Movers[idx].InflowConn;
+				RunMoverForward(m, ss, inflowConn, idx);
+			}
+			break;
+			case ComponentType::MuxType:
 			{
 				// TODO: check that this works
 				// may also need to call mux routines to rebalance
@@ -1732,7 +1941,7 @@ namespace erin_next
 				}
 			}
 			break;
-			case (ComponentType::StoreType):
+			case ComponentType::StoreType:
 			{
 				// TODO: what energy amount should the store come back with?
 				// TODO: need to call routines to do charge request
@@ -1740,7 +1949,7 @@ namespace erin_next
 				std::exit(1);
 			}
 			break;
-			case (ComponentType::PassThroughType):
+			case ComponentType::PassThroughType:
 			{
 				PassThrough const& pt = m.PassThroughs[idx];
 				if (ss.Flows[pt.OutflowConn].Requested_W
@@ -1759,7 +1968,7 @@ namespace erin_next
 					ss.Flows[pt.InflowConn].Available_W;
 			}
 			break;
-			case (ComponentType::WasteSinkType):
+			case ComponentType::WasteSinkType:
 			{
 				WriteErrorMessage(
 					"waste sink",
@@ -1769,7 +1978,7 @@ namespace erin_next
 			break;
 			default:
 			{
-				WriteErrorMessage("", "unhandled component type");
+				WriteErrorMessage("", "unhandled component type (b)");
 				std::exit(1);
 			}
 		}
@@ -1791,7 +2000,7 @@ namespace erin_next
 		auto idx = m.ComponentMap.Idx[compId];
 		switch (m.ComponentMap.CompType[compId])
 		{
-			case (ComponentType::ConstantLoadType):
+			case ComponentType::ConstantLoadType:
 			{
 				auto inflowConn = m.ConstLoads[idx].InflowConn;
 				if (ss.Flows[inflowConn].Requested_W != 0)
@@ -1801,7 +2010,7 @@ namespace erin_next
 				ss.Flows[inflowConn].Requested_W = 0;
 			}
 			break;
-			case (ComponentType::ScheduleBasedLoadType):
+			case ComponentType::ScheduleBasedLoadType:
 			{
 				auto inflowConn = m.ScheduledLoads[idx].InflowConn;
 				if (ss.Flows[inflowConn].Requested_W != 0)
@@ -1811,7 +2020,7 @@ namespace erin_next
 				ss.Flows[inflowConn].Requested_W = 0;
 			}
 			break;
-			case (ComponentType::ConstantSourceType):
+			case ComponentType::ConstantSourceType:
 			{
 				auto outflowConn = m.ConstSources[idx].OutflowConn;
 				if (ss.Flows[outflowConn].Available_W != 0)
@@ -1821,21 +2030,22 @@ namespace erin_next
 				ss.Flows[outflowConn].Available_W = 0;
 			}
 			break;
-			case (ComponentType::ConstantEfficiencyConverterType):
+			case ComponentType::ConstantEfficiencyConverterType:
 			{
-				auto inflowConn = m.ConstEffConvs[idx].InflowConn;
+				ConstantEfficiencyConverter const& cec = m.ConstEffConvs[idx];
+				auto inflowConn = cec.InflowConn;
 				if (ss.Flows[inflowConn].Requested_W != 0)
 				{
 					ss.ActiveConnectionsBack.insert(inflowConn);
 				}
 				ss.Flows[inflowConn].Requested_W = 0;
-				auto outflowConn = m.ConstEffConvs[idx].OutflowConn;
+				auto outflowConn = cec.OutflowConn;
 				if (ss.Flows[outflowConn].Available_W != 0)
 				{
 					ss.ActiveConnectionsFront.insert(outflowConn);
 				}
 				ss.Flows[outflowConn].Available_W = 0;
-				auto lossflowConn = m.ConstEffConvs[idx].LossflowConn;
+				auto lossflowConn = cec.LossflowConn;
 				if (lossflowConn.has_value())
 				{
 					auto lossConn = lossflowConn.value();
@@ -1845,12 +2055,29 @@ namespace erin_next
 					}
 					ss.Flows[lossConn].Available_W = 0;
 				}
-				auto wasteConn = m.ConstEffConvs[idx].WasteflowConn;
+				auto wasteConn = cec.WasteflowConn;
 				ss.Flows[wasteConn].Available_W = 0;
 				ss.Flows[wasteConn].Requested_W = 0;
 			}
 			break;
-			case (ComponentType::MuxType):
+			case ComponentType::MoverType:
+			{
+				Mover const& mov = m.Movers[idx];
+				ss.Flows[mov.InflowConn].Requested_W = 0;
+				ss.Flows[mov.InflowConn].Available_W = 0;
+				ss.Flows[mov.InflowConn].Actual_W = 0;
+				ss.Flows[mov.OutflowConn].Requested_W = 0;
+				ss.Flows[mov.OutflowConn].Available_W = 0;
+				ss.Flows[mov.OutflowConn].Actual_W = 0;
+				ss.Flows[mov.InFromEnvConn].Requested_W = 0;
+				ss.Flows[mov.InFromEnvConn].Available_W = 0;
+				ss.Flows[mov.InFromEnvConn].Actual_W = 0;
+				ss.Flows[mov.WasteflowConn].Requested_W = 0;
+				ss.Flows[mov.WasteflowConn].Available_W = 0;
+				ss.Flows[mov.WasteflowConn].Actual_W = 0;
+			}
+			break;
+			case ComponentType::MuxType:
 			{
 				for (size_t inIdx = 0; inIdx < m.Muxes[idx].NumInports; ++inIdx)
 				{
@@ -1912,7 +2139,7 @@ namespace erin_next
 			break;
 			default:
 			{
-				WriteErrorMessage("", "unhandled component type");
+				WriteErrorMessage("", "unhandled component type (c)");
 				std::exit(1);
 			}
 			break;
@@ -2242,12 +2469,12 @@ namespace erin_next
 	)
 	{
 		// NOTE: the 0th flowId is ""; the non-described flow
-		size_t constexpr wasteflowId = 0;
 		std::vector<size_t> inflowIds{inflowId};
 		std::vector<size_t> outflowIds{outflowId, lossflowId, wasteflowId};
 		size_t idx = m.ConstEffConvs.size();
-		ConstantEfficiencyConverter cec{};
-		cec.Efficiency = efficiency;
+		ConstantEfficiencyConverter cec{
+			.Efficiency = efficiency,
+		};
 		m.ConstEffConvs.push_back(std::move(cec));
 		size_t wasteId = Component_AddComponentReturningId(
 			m.ComponentMap,
@@ -2338,26 +2565,26 @@ namespace erin_next
 		m.Connections.push_back(c);
 		switch (fromType)
 		{
-			case (ComponentType::PassThroughType):
+			case ComponentType::PassThroughType:
 			{
 				m.PassThroughs[fromIdx].OutflowConn = connId;
 			}
 			break;
-			case (ComponentType::ConstantSourceType):
+			case ComponentType::ConstantSourceType:
 			{
 				m.ConstSources[fromIdx].OutflowConn = connId;
 			}
 			break;
-			case (ComponentType::ScheduleBasedSourceType):
+			case ComponentType::ScheduleBasedSourceType:
 			{
 				switch (fromPort)
 				{
-					case (0):
+					case 0:
 					{
 						m.ScheduledSrcs[fromIdx].OutflowConn = connId;
 					}
 					break;
-					case (1):
+					case 1:
 					{
 						m.ScheduledSrcs[fromIdx].WasteflowConn = connId;
 					}
@@ -2372,21 +2599,21 @@ namespace erin_next
 				}
 			}
 			break;
-			case (ComponentType::ConstantEfficiencyConverterType):
+			case ComponentType::ConstantEfficiencyConverterType:
 			{
 				switch (fromPort)
 				{
-					case (0):
+					case 0:
 					{
 						m.ConstEffConvs[fromIdx].OutflowConn = connId;
 					}
 					break;
-					case (1):
+					case 1:
 					{
 						m.ConstEffConvs[fromIdx].LossflowConn = connId;
 					}
 					break;
-					case (2):
+					case 2:
 					{
 						m.ConstEffConvs[fromIdx].WasteflowConn = connId;
 					}
@@ -2400,12 +2627,37 @@ namespace erin_next
 				}
 			}
 			break;
-			case (ComponentType::MuxType):
+			case ComponentType::MoverType:
+			{
+				switch (fromPort)
+				{
+					case 0: // outflow
+					{
+						m.Movers[fromIdx].OutflowConn = connId;
+					}
+					break;
+					case 1: // wasteflow
+					{
+						m.Movers[fromIdx].WasteflowConn = connId;
+					}
+					break;
+					default:
+					{
+						WriteErrorMessage(
+							"<network>",
+							"bad port for Mover");
+						std::exit(1);
+					}
+					break;
+				}
+			}
+			break;
+			case ComponentType::MuxType:
 			{
 				m.Muxes[fromIdx].OutflowConns[fromPort] = connId;
 			}
 			break;
-			case (ComponentType::StoreType):
+			case ComponentType::StoreType:
 			{
 				switch (fromPort)
 				{
@@ -2425,46 +2677,85 @@ namespace erin_next
 				}
 			}
 			break;
+			case ComponentType::EnvironmentSourceType:
+			{
+				// NOTE: do nothing
+			} break;
 			default:
 			{
-				WriteErrorMessage("", "unhandled component type");
+				WriteErrorMessage(
+					"Model_AddConnection",
+					"unhandled component type: " + ToString(fromType));
 				std::exit(1);
 			}
 		}
 		switch (toType)
 		{
-			case (ComponentType::PassThroughType):
+			case ComponentType::PassThroughType:
 			{
 				m.PassThroughs[toIdx].InflowConn = connId;
 			}
 			break;
-			case (ComponentType::ConstantLoadType):
+			case ComponentType::ConstantLoadType:
 			{
 				m.ConstLoads[toIdx].InflowConn = connId;
 			}
 			break;
-			case (ComponentType::ConstantEfficiencyConverterType):
+			case ComponentType::ConstantEfficiencyConverterType:
 			{
 				m.ConstEffConvs[toIdx].InflowConn = connId;
 			}
 			break;
-			case (ComponentType::MuxType):
+			case ComponentType::MoverType:
+			{
+				switch (toPort)
+				{
+					case 0:
+					{
+						m.Movers[toIdx].InflowConn = connId;
+					}
+					break;
+					case 1:
+					{
+						m.Movers[toIdx].InFromEnvConn = connId;
+					}
+					break;
+					default:
+					{
+						WriteErrorMessage(
+							"<network>",
+							"bad network connection for mover");
+						std::exit(1);
+					}
+					break;
+				}
+			}
+			break;
+			case ComponentType::MuxType:
 			{
 				m.Muxes[toIdx].InflowConns[toPort] = connId;
 			}
 			break;
-			case (ComponentType::StoreType):
+			case ComponentType::StoreType:
 			{
 				m.Stores[toIdx].InflowConn = connId;
 			}
 			break;
-			case (ComponentType::ScheduleBasedLoadType):
+			case ComponentType::ScheduleBasedLoadType:
 			{
 				m.ScheduledLoads[toIdx].InflowConn = connId;
 			}
 			break;
+			case ComponentType::WasteSinkType:
+			{
+				// NOTE: do nothing
+			}
+			break;
 			default:
 			{
+				WriteErrorMessage(
+					"Model_AddConnection",
+					"unhandled component type: " + ToString(toType));
 			}
 			break;
 		}
@@ -2571,10 +2862,15 @@ namespace erin_next
 				auto const& flow = timeAndFlows[eventIdx - 1].Flows[connId];
 				switch (fromType)
 				{
-					case (ComponentType::ConstantSourceType):
-					case (ComponentType::ScheduleBasedSourceType):
+					case ComponentType::ConstantSourceType:
+					case ComponentType::ScheduleBasedSourceType:
 					{
 						sos.Inflow_kJ += (flow.Actual_W / W_per_kW) * dt;
+					}
+					break;
+					case ComponentType::EnvironmentSourceType:
+					{
+						sos.InFromEnv_kJ += (flow.Actual_W / W_per_kW) * dt;
 					}
 					break;
 					default:
@@ -2584,8 +2880,8 @@ namespace erin_next
 				}
 				switch (toType)
 				{
-					case (ComponentType::ConstantLoadType):
-					case (ComponentType::ScheduleBasedLoadType):
+					case ComponentType::ConstantLoadType:
+					case ComponentType::ScheduleBasedLoadType:
 					{
 						sos.OutflowAchieved_kJ +=
 							(flow.Actual_W / W_per_kW) * dt;
@@ -2601,7 +2897,7 @@ namespace erin_next
 						}
 					}
 					break;
-					case (ComponentType::WasteSinkType):
+					case ComponentType::WasteSinkType:
 					{
 						sos.Wasteflow_kJ += (flow.Actual_W / W_per_kW) * dt;
 					}
@@ -2933,10 +3229,18 @@ namespace erin_next
 		{
 			fromTag = "WASTE";
 		}
+		else if (fromTag.empty() && c.From == ComponentType::EnvironmentSourceType)
+		{
+			fromTag = "ENV";
+		}
 		std::string toTag = cd.Tag[c.ToId];
 		if (toTag.empty() && c.To == ComponentType::WasteSinkType)
 		{
 			toTag = "WASTE";
+		}
+		else if (toTag.empty() && c.To == ComponentType::EnvironmentSourceType)
+		{
+			toTag = "ENV";
 		}
 		std::ostringstream oss{};
 		oss << fromTag

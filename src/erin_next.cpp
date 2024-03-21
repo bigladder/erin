@@ -568,30 +568,6 @@ namespace erin_next
 		flow_t remainingRequest_W
 	)
 	{
-		// std::vector<flow_t> requests_W(inflowConns.size(), 0);
-		// for (size_t i = 0; i < inflowConns.size(); ++i)
-		// {
-		// 	size_t inflowConn = inflowConns[i];
-		// 	flow_t req_W =
-		// 		remainingRequest_W >= ss.Flows[inflowConn].Available_W
-		// 		? ss.Flows[inflowConn].Available_W
-		// 		: remainingRequest_W;
-		// 	requests_W[i] = req_W;
-		// 	remainingRequest_W -= req_W;
-		// }
-		// if (remainingRequest_W > 0)
-		// {
-		// 	requests_W[0] = UtilSafeAdd(requests_W[0], remainingRequest_W);
-		// }
-		// for (size_t i = 0; i < inflowConns.size(); ++i)
-		// {
-		// 	size_t inflowConn = inflowConns[i];
-		// 	if (ss.Flows[inflowConn].Requested_W != requests_W[i])
-		// 	{
-		// 		ss.ActiveConnectionsBack.insert(inflowConn);
-		// 	}
-		// 	ss.Flows[inflowConn].Requested_W = requests_W[i];
-		// }
 		for (size_t inflowConn : inflowConns)
 		{
 			if (ss.Flows[inflowConn].Requested_W != remainingRequest_W)

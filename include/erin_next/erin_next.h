@@ -823,7 +823,7 @@ namespace erin_next
 	Mux_RequestInflowsIntelligently(
 		SimulationState& ss,
 		std::vector<size_t> const& inflowConns,
-		uint32_t remainingRequest
+		flow_t remainingRequest
 	);
 
 	void

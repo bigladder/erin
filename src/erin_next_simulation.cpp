@@ -561,7 +561,7 @@ namespace erin_next
 		toml::table const& simInfoTable = simInfoValue.as_table();
 		std::vector<std::string> errors;
 		std::vector<std::string> warnings;
-		auto inputs =
+		std::unordered_map<std::string, InputValue> inputs =
 			TOMLTable_ParseWithValidation(
 				simInfoTable,
 				validationInfo,
@@ -585,7 +585,7 @@ namespace erin_next
 			}
 			return Result::Failure;
 		}
-		auto maybeSimInfo = ParseSimulationInfo(simInfoTable);
+		auto maybeSimInfo = ParseSimulationInfo(inputs);
 		if (!maybeSimInfo.has_value())
 		{
 			return Result::Failure;

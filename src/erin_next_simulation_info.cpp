@@ -1,10 +1,13 @@
-#include <iostream>
-#include <unordered_set>
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+#include <optional>
+#include <tuple>
 
 namespace erin_next
 {
@@ -29,66 +32,61 @@ namespace erin_next
 	// NOTE: pre-requisite, table already validated
 	// TODO: change this to use unordered_map<string, InputValue>
 	std::optional<SimulationInfo>
-	ParseSimulationInfo(std::unordered_map<toml::key, toml::value> const& table)
+	ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
 	{
 		SimulationInfo si{};
-		auto rawTimeUnit = TOMLTable_ParseStringWithSetResponses(
-			table, ValidTimeUnits, "time_unit", "simulation_info"
-		);
-		auto maybeTimeUnit = TagToTimeUnit(rawTimeUnit.value());
-		si.TheTimeUnit = maybeTimeUnit.value();
-		auto rawMaxTime =
-			TOMLTable_ParseDouble(table, "max_time", "simulation_info");
-		si.MaxTime = rawMaxTime.value();
-		auto rawRateUnit = TOMLTable_ParseStringWithSetResponses(
-			table, ValidRateUnits, "rate_unit", "simulation_info"
-		);
-		if (!rawRateUnit.has_value())
+		std::string rawTimeUnit =
+			std::get<std::string>(table.at("time_unit").Value);
+		std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(rawTimeUnit);
+		if (!maybeTimeUnit.has_value())
 		{
 			WriteErrorMessage(
 				"simulation_info",
-				"rate_unit must be a string"
-			);
+				"unhandled time unit string '" + rawTimeUnit + "'");
 			return {};
 		}
-		auto maybeRateUnit = TagToPowerUnit(rawRateUnit.value());
+		si.TheTimeUnit = maybeTimeUnit.value();
+		double rawMaxTime =
+			std::get<double>(table.at("max_time").Value);
+		si.MaxTime = rawMaxTime;
+		std::string rawRateUnit =
+			std::get<std::string>(table.at("rate_unit").Value);
+		auto maybeRateUnit = TagToPowerUnit(rawRateUnit);
 		if (!maybeRateUnit.has_value())
 		{
 			WriteErrorMessage(
 				"simulation_info",
-				"unhandled rate unit '" + rawRateUnit.value() + "'"
+				"unhandled rate unit '" + rawRateUnit + "'"
 			);
 			return {};
 		}
 		si.RateUnit = maybeRateUnit.value();
-		auto rawQuantityUnit = TOMLTable_ParseStringWithSetResponses(
-			table, ValidQuantityUnits, "quantity_unit", "simulation_info"
-		);
-		si.QuantityUnit = rawQuantityUnit.value();
+		auto rawQuantityUnit =
+			std::get<std::string>(table.at("quantity_unit").Value);
+		si.QuantityUnit = rawQuantityUnit;
 		RandomType rtype = RandomType::RandomFromClock;
 		if (table.contains("fixed_random"))
 		{
-			std::optional<double> maybeFixed =
-				TOMLTable_ParseDouble(table, "fixed_random", "simulation_info");
+			double fixedValue =
+				std::get<double>(table.at("fixed_random").Value);
 			rtype = RandomType::FixedRandom;
-			si.FixedValue = maybeFixed.value();
+			si.FixedValue = fixedValue;
 		}
 		else if (table.contains("fixed_random_series"))
 		{
-			std::optional<std::vector<double>> maybeSeries =
-				TOMLTable_ParseArrayOfDouble(
-					table, "fixed_random_series", "simulation_info"
-				);
+			std::vector<double> maybeSeries =
+				std::get<std::vector<double>>(table.at("fixed_random_series").Value);
 			rtype = RandomType::FixedSeries;
-			si.Series = std::move(maybeSeries.value());
+			si.Series = std::move(maybeSeries);
 		}
 		else if (table.contains("random_seed"))
 		{
-			std::optional<int> maybeSeed =
-				TOMLTable_ParseInteger(table, "random_seed", "simulation_info");
+			int64_t maybeSeed =
+				std::get<int64_t>(table.at("random_seed").Value);
 			rtype = RandomType::RandomFromSeed;
-			si.Seed = maybeSeed.value() < 0 ? (-1 * maybeSeed.value())
-											: maybeSeed.value();
+			si.Seed = static_cast<int unsigned>(
+				maybeSeed < 0 ? (-1 * maybeSeed) : maybeSeed
+			);
 		}
 		si.TypeOfRandom = rtype;
 		return si;

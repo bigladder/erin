@@ -2,6 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_NEXT_SIMULATION_INFO_H
 #define ERIN_NEXT_SIMULATION_INFO_H
+#include "erin_next/erin_next_valdata.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_random.h"
 #include "../vendor/toml11/toml.hpp"
@@ -29,6 +30,7 @@ namespace erin_next
 		// defaults? if keep, use EnergyUnit
 		std::string QuantityUnit;
 		TimeUnit TheTimeUnit;
+		// TODO: change to MaxTime_s
 		double MaxTime;
 		RandomType TypeOfRandom;
 		int unsigned Seed = 0;
@@ -37,7 +39,8 @@ namespace erin_next
 	};
 
 	std::optional<SimulationInfo>
-	ParseSimulationInfo(std::unordered_map<toml::key, toml::value> const& table
+	ParseSimulationInfo(
+		std::unordered_map<std::string, InputValue> const& table
 	);
 
 	bool

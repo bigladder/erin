@@ -339,14 +339,16 @@ namespace erin_next
 				{
 					if (!value.is_integer())
 					{
-						double fracPart = 0.0;
+						double integerPart = 0.0;
 						double floatValue = value.as_floating();
-						std::modf(floatValue, &fracPart);
+						double fracPart = std::modf(floatValue, &integerPart);
 						if (!value.is_floating() || fracPart != 0.0)
 						{
 							std::ostringstream oss;
 							oss << "Expected field '" << it->first
-								<< "' to be convertable to an integer";
+								<< "' to be convertable to an integer;"
+								<< " integer part: " << integerPart
+								<< "; fraction part: " << fracPart;
 							errors.push_back(
 								WriteErrorToString(tableName, oss.str())
 							);

@@ -69,7 +69,8 @@ namespace erin_next
 								std::ostringstream oss{};
 								oss << "WARNING! field '" << aliasValue.Tag
 									<< "' is deprecated and will be removed "
-								  << "in a future version";
+								  << "in a future version; use '"
+									<< alias.first << "' instead";
 								warnings.push_back(
 									WriteErrorToString(tableName, oss.str())
 								);

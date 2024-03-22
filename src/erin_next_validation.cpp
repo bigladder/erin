@@ -1,4 +1,5 @@
 #include "erin_next/erin_next_validation.h"
+#include "erin_next/erin_next_valdata.h"
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
@@ -505,7 +506,12 @@ namespace erin_next
         .IsRequired = true,
         .Default = "",
         .EnumValues = {},
-        .Aliases = {},
+        .Aliases = {
+          TagWithDeprication{
+            .Tag = "stream",
+            .IsDeprecated = true,
+          },
+        },
         .Sections = {
           InputSection::Components_Mux,
           InputSection::Components_PassThrough,

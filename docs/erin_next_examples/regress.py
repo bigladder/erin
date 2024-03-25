@@ -2,6 +2,7 @@ import sys
 import subprocess
 from pathlib import Path
 import platform
+import csv
 
 
 if platform.system() == 'Windows':
@@ -75,6 +76,95 @@ def smoke_test(example_name):
     return result
 
 
+def read_csv(path):
+    header = None
+    data = {}
+    with open(path, newline='') as csvfile:
+        rdr = csv.reader(csvfile)
+        for row in rdr:
+            if header is None:
+                header = row
+                for col in header:
+                    data[col] = []
+                continue
+            for item, col in zip(row, header):
+                data[col].append(item)
+    return {"header": header, "data": data}
+
+
+def compare_csv(original_csv_path, proposed_csv_path):
+    """
+    Compare CSV files    
+    """
+    print(f"original: {original_csv_path}")
+    print(f"proposed: {proposed_csv_path}")
+    orig = read_csv(original_csv_path)
+    prop = read_csv(proposed_csv_path)
+    # compare headers
+    if len(orig["header"]) != len(prop["header"]):
+        print("header lengths NOT equal")
+        print(f"-- len(original['header']): {len(orig['header'])}")
+        print(f"-- len(proposed['header']): {len(prop['header'])}")
+    orig_set = set(orig['header'])
+    prop_set = set(prop['header'])
+    if orig_set != prop_set:
+        in_orig_only = orig_set.difference(prop_set)
+        in_prop_only = prop_set.difference(orig_set)
+        print("in original but not proposed: ")
+        print(f"- {','.join(sorted(in_orig_only))}")
+        print("in proposed but not original: ")
+        print(f"- {','.join(sorted(in_prop_only))}")
+    col0_key = orig['header'][0] if len(orig['header']) > 0 else ""
+    col1_key = orig['header'][1] if len(orig['header']) > 1 else ""
+    def prefix_for(idx):
+        items = []
+        if col0_key in orig['data'] and col0_key in prop['data']:
+            test_a = len(orig['data'][col0_key]) > idx
+            test_b = len(prop['data'][col0_key]) > idx
+            if test_a and test_b:
+                vorig = orig['data'][col0_key][idx]
+                vprop = prop['data'][col0_key][idx]
+                if vorig == vprop:
+                    items.append(vorig)
+                else:
+                    return ""
+            else:
+                return ""
+        else:
+            return ""
+        if col1_key in orig['data'] and col1_key in prop['data']:
+            test_a = len(orig['data'][col1_key]) > idx
+            test_b = len(prop['data'][col1_key]) > idx
+            if test_a and test_b:
+                vorig = orig['data'][col1_key][idx]
+                vprop = prop['data'][col1_key][idx]
+                if vorig == vprop:
+                    items.append(vorig)
+                else:
+                    return ""
+            else:
+                return ""
+        else:
+            return ""
+        return ":".join(items)
+    for key in orig["header"]:
+        if key not in prop["data"]:
+            continue
+        orig_xs = orig["data"][key]
+        prop_xs = prop["data"][key]
+        if len(orig_xs) != len(prop_xs):
+            print(f"Length of entries differs for {key}")
+            print(f"-- original: {len(orig_xs)}")
+            print(f"-- proposed: {len(prop_xs)}")
+        for idx, items in enumerate(zip(orig_xs, prop_xs)):
+            row_prefix = prefix_for(idx)
+            origx, propx = items
+            if origx != propx:
+                print(f"values differ {row_prefix}@{key}[{idx}]")
+                print(f"-- original: {origx}")
+                print(f"-- proposed: {propx}")
+
+
 def run_cli(example_name):
     """
     Run the CLI for example name and check output diffs
@@ -88,6 +178,7 @@ def run_cli(example_name):
         print(f"diff did not compare clean for out.csv for {example_name}")
         print(f"stdout:\n{result.stdout}")
         print(f"stderr:\n{result.stderr}")
+        compare_csv(f'ex{example_name}-out.csv', 'out.csv')
         sys.exit(1)
     result = subprocess.run(
         ['diff', 'stats.csv', f'ex{example_name}-stats.csv'],
@@ -96,6 +187,7 @@ def run_cli(example_name):
         print(f'diff did not compare clean for stats.csv for {example_name}')
         print(f"stdout:\n{result.stdout}")
         print(f"stderr:\n{result.stderr}")
+        compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
         sys.exit(1)
 
 

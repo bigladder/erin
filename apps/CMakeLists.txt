@@ -10,7 +10,7 @@ target_include_directories(erin_next_stress_test
 target_link_libraries(erin_next_stress_test erin_next)
 
 add_executable(erin_next_cli
-	erin_next_cli.cpp)
+	cli.cpp)
 target_include_directories(erin_next_cli
 	PUBLIC "${PROJECT_SOURCE_DIR}/include"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")

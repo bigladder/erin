@@ -1926,10 +1926,11 @@ namespace erin_next
 			}
 			if (print)
 			{
-				std::cout << std::endl;
 				PrintFlows(model, ss, t);
 				PrintFlowSummary(SummarizeFlows(model, ss, t));
 				PrintModelState(model, ss);
+				std::cout << "==== QUIESCENCE REACHED ===="
+					<< std::endl;
 			}
 			TimeAndFlows taf = {};
 			taf.Time = t;

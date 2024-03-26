@@ -1923,6 +1923,13 @@ namespace erin_next
 					// including any repair distribution if we have
 					// one.
 					size_t compId = s.ComponentFragilities.ComponentIds[cfmIdx];
+					// TODO: make the below printout optional; e.g., if verbose flag is true
+					std::cout << "... FAILED: "
+						<< s.TheModel.ComponentMap.Tag[compId]
+						<< " (cause: "
+						<< s.FragilityModes.Tags[s.ComponentFragilities.FragilityModeIds[cfmIdx]]
+						<< ")"
+						<< std::endl;
 					// does the component have a reliability signal?
 					bool hasReliabilityAlready = false;
 					size_t reliabilityId = 0;

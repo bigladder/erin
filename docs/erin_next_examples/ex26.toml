@@ -41,7 +41,10 @@ type = "muxer"
 flow = "electricity"
 num_inflows = 2
 num_outflows = 1
-fragility_modes = ["highly_vulnerable_to_wind", "somewhat_vulnerable_to_flooding"]
+fragility_modes = [
+  "highly_vulnerable_to_wind",
+  "somewhat_vulnerable_to_flooding",
+  ]
 ############################################################
 # Fragility Modes
 [fragility_mode.somewhat_vulnerable_to_flooding]
@@ -70,7 +73,8 @@ intensity_failure_pairs = [
 connections = [
   ["electric_utility:OUT(0)", "bus:IN(0)", "electricity"],
   ["emergency_generator:OUT(0)", "bus:IN(1)", "electricity"],
-  ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity"]]
+  ["bus:OUT(0)", "cluster_01_electric:IN(0)", "electricity"],
+  ]
 ############################################################
 # Distributions
 [dist.immediately]

@@ -178,6 +178,7 @@ def run_cli(example_name):
         print(f"diff did not compare clean for out.csv for {example_name}")
         print(f"stdout:\n{result.stdout}")
         print(f"stderr:\n{result.stderr}")
+        print(("=" * 20) + " DETAILED DIFF")
         compare_csv(f'ex{example_name}-out.csv', 'out.csv')
         sys.exit(1)
     result = subprocess.run(
@@ -187,6 +188,7 @@ def run_cli(example_name):
         print(f'diff did not compare clean for stats.csv for {example_name}')
         print(f"stdout:\n{result.stdout}")
         print(f"stderr:\n{result.stderr}")
+        print(("=" * 20) + " DETAILED DIFF")
         compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
         sys.exit(1)
 

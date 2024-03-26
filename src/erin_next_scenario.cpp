@@ -103,15 +103,21 @@ namespace erin_next
 		auto maybeOccurrenceDist =
 			TOMLTable_ParseString(table, "occurrence_distribution", fullName);
 		if (!maybeOccurrenceDist.has_value())
+		{
 			return {};
+		}
 		auto maybeTimeUnitStr = TOMLTable_ParseStringWithSetResponses(
 			table, ValidTimeUnits, "time_unit", fullName
 		);
 		if (!maybeTimeUnitStr.has_value())
+		{
 			return {};
+		}
 		auto maybeDuration = TOMLTable_ParseDouble(table, "duration", fullName);
 		if (!maybeDuration.has_value())
+		{
 			return {};
+		}
 		std::optional<size_t> maxOccurrences = {};
 		if (table.contains("max_occurrences"))
 		{
@@ -120,7 +126,9 @@ namespace erin_next
 				auto maxOccurrencesString =
 					TOMLTable_ParseString(table, "max_occurrences", fullName);
 				if (!maxOccurrencesString.has_value())
+				{
 					return {};
+				}
 				if (maxOccurrencesString.value() != "unlimited")
 				{
 					std::cout << "[" << fullName << "] max_occurrences must "
@@ -133,15 +141,23 @@ namespace erin_next
 			}
 			else
 			{
-				maxOccurrences =
+				std::optional<int64_t> maxOccurrenceValue =
 					TOMLTable_ParseInteger(table, "max_occurrences", fullName);
-				if (!maxOccurrences.has_value())
+				if (!maxOccurrenceValue.has_value())
+				{
 					return {};
+				}
+				if (maxOccurrenceValue.value() > 0)
+				{
+					maxOccurrences = maxOccurrenceValue;
+				}
 			}
 		}
 		auto maybeTimeUnit = TagToTimeUnit(maybeTimeUnitStr.value());
 		if (!maybeTimeUnit.has_value())
+		{
 			return {};
+		}
 		size_t id = ScenarioDict_RegisterScenario(
 			sd,
 			tag,

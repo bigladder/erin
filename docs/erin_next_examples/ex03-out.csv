@@ -24,43 +24,43 @@ class_1_hurricane,P0090-00-00T00:00:00,0,1,1,0,1,1,0,4294967,10,4294967,availabl
 class_1_hurricane,P0090-00-00T00:00:00,336,1,1,0,1,1,0,4294967,10,4294967,available,available,available,available
 class_1_hurricane,P0100-00-00T00:00:00,0,1,1,0,1,1,0,4294967,10,4294967,available,available,available,available
 class_1_hurricane,P0100-00-00T00:00:00,336,1,1,0,1,1,0,4294967,10,4294967,available,available,available,available
-class_4_hurricane,P0010-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0010-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0020-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0020-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0030-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0030-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0040-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0040-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0050-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0050-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0060-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0060-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0070-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0070-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0080-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0080-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0090-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0090-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0100-00-00T00:00:00,0,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_4_hurricane,P0100-00-00T00:00:00,336,1,0,1,1,1,1,4294967,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
-class_5_hurricane,P0010-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0010-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0020-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0020-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0030-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0030-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0040-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0040-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0050-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0050-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0060-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0060-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0070-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0070-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0080-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0080-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0090-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0090-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0100-00-00T00:00:00,0,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
-class_5_hurricane,P0100-00-00T00:00:00,336,0,0,0,1,1,1,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_4_hurricane,P0010-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0010-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0020-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0020-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0030-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0030-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0040-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0040-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0050-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0050-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0060-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0060-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0070-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0070-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0080-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0080-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0090-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0090-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0100-00-00T00:00:00,0,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_4_hurricane,P0100-00-00T00:00:00,336,0,0,0,1,0,0,0,0,4294967,highly_vulnerable_to_wind,available,highly_vulnerable_to_wind,available
+class_5_hurricane,P0010-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0010-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0020-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0020-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0030-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0030-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0040-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0040-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0050-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0050-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0060-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0060-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0070-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0070-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0080-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0080-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0090-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0090-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0100-00-00T00:00:00,0,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding
+class_5_hurricane,P0100-00-00T00:00:00,336,0,0,0,1,0,0,0,0,0,highly_vulnerable_to_wind | somewhat_vulnerable_to_flooding,available,highly_vulnerable_to_wind,somewhat_vulnerable_to_flooding

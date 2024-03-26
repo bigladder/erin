@@ -827,7 +827,21 @@ namespace erin_next
 	);
 
 	void
+	Mux_BalanceRequestFlows(
+		SimulationState& ss,
+		std::vector<size_t> const& inflowConns,
+		flow_t remainingRequest_W,
+		bool logNewActivity);
+
+	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx);
+
+	void
+	BalanceMuxRequests(
+		Model& model,
+		SimulationState& ss,
+		size_t muxIdx,
+		bool isUnavailable);
 
 	void
 	RunStoreBackward(

@@ -8,6 +8,9 @@
 
 namespace erin_next
 {
+	// TODO[mok]: need to rethink this. This adds a branch with an add.
+	// Probably a horrible performance issue. Use double but convert to
+	// unsigned int when finalize flows?
 	inline
 	flow_t
 	UtilSafeAdd(flow_t a, flow_t b)
@@ -166,14 +169,7 @@ namespace erin_next
 		for (size_t loadIdx = 0; loadIdx < model.ConstLoads.size(); ++loadIdx)
 		{
 			size_t connIdx = model.ConstLoads[loadIdx].InflowConn;
-			size_t compId = model.Connections[connIdx].ToId;
-			if (ss.UnavailableComponents.contains(compId))
-			{
-				// TODO: should we set flows here to zero?
-				continue;
-			}
-			if (ss.Flows[connIdx].Requested_W
-				!= model.ConstLoads[loadIdx].Load_W)
+			if (ss.Flows[connIdx].Requested_W != model.ConstLoads[loadIdx].Load_W)
 			{
 				ss.ActiveConnectionsBack.insert(connIdx);
 			}
@@ -190,7 +186,11 @@ namespace erin_next
 			size_t compId = m.Connections[connIdx].FromId;
 			if (ss.UnavailableComponents.contains(compId))
 			{
-				// TODO: should we set flows here to zero?
+				if (ss.Flows[connIdx].Available_W != 0)
+				{
+					ss.ActiveConnectionsFront.insert(connIdx);
+				}
+				ss.Flows[connIdx].Available_W = 0;
 				continue;
 			}
 			if (ss.Flows[connIdx].Available_W
@@ -212,12 +212,6 @@ namespace erin_next
 		for (size_t i = 0; i < m.ScheduledLoads.size(); ++i)
 		{
 			size_t connIdx = m.ScheduledLoads[i].InflowConn;
-			size_t compId = m.Connections[connIdx].ToId;
-			if (ss.UnavailableComponents.contains(compId))
-			{
-				// TODO: should we set flows here to zero?
-				continue;
-			}
 			size_t idx = ss.ScheduleBasedLoadIdx[i];
 			if (idx < m.ScheduledLoads[i].TimesAndLoads.size())
 			{
@@ -249,7 +243,11 @@ namespace erin_next
 			size_t compId = m.Connections[outIdx].FromId;
 			if (ss.UnavailableComponents.contains(compId))
 			{
-				// TODO: should we set flows here to zero?
+				if (ss.Flows[outIdx].Available_W != 0)
+				{
+					ss.ActiveConnectionsFront.insert(outIdx);
+				}
+				ss.Flows[outIdx].Available_W = 0;
 				continue;
 			}
 			auto idx = ss.ScheduleBasedSourceIdx[i];
@@ -287,12 +285,21 @@ namespace erin_next
 			Store const& store = m.Stores[storeIdx];
 			size_t inflowConn = store.InflowConn;
 			size_t compId = m.Connections[inflowConn].ToId;
+			size_t outflowConn = store.OutflowConn;
 			if (ss.UnavailableComponents.contains(compId))
 			{
-				// TODO: should we zero flows here?
+				if (ss.Flows[inflowConn].Requested_W != 0)
+				{
+					ss.ActiveConnectionsBack.insert(inflowConn);
+				}
+				ss.Flows[inflowConn].Requested_W = 0;
+				if (ss.Flows[outflowConn].Available_W != 0)
+				{
+					ss.ActiveConnectionsFront.insert(outflowConn);
+				}
+				ss.Flows[outflowConn].Available_W = 0;
 				continue;
 			}
-			size_t outflowConn = store.OutflowConn;
 			if (ss.StorageNextEventTimes[storeIdx] == t)
 			{
 				flow_t available = ss.Flows[inflowConn].Available_W
@@ -337,10 +344,31 @@ namespace erin_next
 					if (ts.state)
 					{
 						Model_SetComponentToRepaired(m, ss, rel.ComponentId);
+						std::cout << "... REPAIRED: "
+							<< m.ComponentMap.Tag[rel.ComponentId]
+							<< "[" << rel.ComponentId << "]"
+							<< std::endl;
 					}
 					else
 					{
 						Model_SetComponentToFailed(m, ss, rel.ComponentId);
+						std::cout << "... FAILED: "
+							<< m.ComponentMap.Tag[rel.ComponentId]
+							<< "[" << rel.ComponentId << "]"
+							<< std::endl;
+						std::cout << "... causes: " << std::endl;
+						for (auto const& fragCause : ts.fragilityModeCauses)
+						{
+							std::cout << "... ... fragility mode: "
+								<< fragCause
+								<< std::endl;
+						}
+						for (auto const& failCause : ts.failureModeCauses)
+						{
+							std::cout << "... ... failure mode: "
+								<< failCause
+								<< std::endl;
+						}
 					}
 				}
 				else if (ts.time > time)
@@ -583,6 +611,67 @@ namespace erin_next
 	}
 
 	void
+	Mux_BalanceRequestFlows(
+		SimulationState& ss,
+		std::vector<size_t> const& inflowConns,
+		flow_t remainingRequest_W,
+		bool logNewActivity)
+	{
+		std::vector<flow_t> requests_W(inflowConns.size(), 0);
+		for (size_t i = 0; i < inflowConns.size(); ++i)
+		{
+			size_t inflowConn = inflowConns[i];
+			flow_t req_W =
+				remainingRequest_W >= ss.Flows[inflowConn].Available_W
+				? ss.Flows[inflowConn].Available_W
+				: remainingRequest_W;
+			requests_W[i] = req_W;
+			remainingRequest_W -= req_W;
+		}
+		if (remainingRequest_W > 0)
+		{
+			requests_W[0] = UtilSafeAdd(requests_W[0], remainingRequest_W);
+		}
+		for (size_t i = 0; i < inflowConns.size(); ++i)
+		{
+			size_t inflowConn = inflowConns[i];
+			if (logNewActivity && ss.Flows[inflowConn].Requested_W != requests_W[i])
+			{
+				ss.ActiveConnectionsBack.insert(inflowConn);
+			}
+			ss.Flows[inflowConn].Requested_W = requests_W[i];
+		}
+	}
+
+	void
+	BalanceMuxRequests(
+		Model& model,
+		SimulationState& ss,
+		size_t muxIdx,
+		bool isUnavailable)
+	{
+		Mux const& mux = model.Muxes[muxIdx];
+		flow_t totalRequest = 0;
+		if (isUnavailable)
+		{
+			Mux_BalanceRequestFlows(ss, mux.InflowConns, totalRequest, true);
+		}
+		else
+		{
+			for (size_t i = 0; i < mux.NumOutports; ++i)
+			{
+				auto outflowConnIdx = mux.OutflowConns[i];
+				auto outflowRequest_W =
+					ss.Flows[outflowConnIdx].Requested_W > mux.MaxOutflows_W[i]
+					? mux.MaxOutflows_W[i]
+					: ss.Flows[outflowConnIdx].Requested_W;
+				totalRequest = UtilSafeAdd(totalRequest, outflowRequest_W);
+			}
+			Mux_BalanceRequestFlows(ss, mux.InflowConns, totalRequest, true);
+		}
+	}
+
+	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t muxIdx)
 	{
 		Mux const& mux = model.Muxes[muxIdx];
@@ -703,6 +792,13 @@ namespace erin_next
 			{
 				size_t connIdx = *it;
 				size_t compIdx = model.Connections[connIdx].FromIdx;
+				size_t compId = model.Connections[connIdx].FromId;
+				if (ss.UnavailableComponents.contains(compId))
+				{
+					// TODO: test if we need to call this
+					Model_SetComponentToFailed(model, ss, compId);
+					continue;
+				}
 				switch (model.Connections[connIdx].From)
 				{
 					case ComponentType::ConstantSourceType:
@@ -794,7 +890,7 @@ namespace erin_next
 							<< ToString(model.Connections[connIdx].From)
 							<< std::endl;
 					}
-				}
+				}	
 			}
 		}
 	}
@@ -990,6 +1086,13 @@ namespace erin_next
 			{
 				size_t connIdx = *it;
 				size_t compIdx = model.Connections[connIdx].ToIdx;
+				size_t compId = model.Connections[connIdx].ToId;
+				if (ss.UnavailableComponents.contains(compId))
+				{
+					// TODO: test if we need to call this
+					Model_SetComponentToFailed(model, ss, compId);
+					continue;
+				}
 				switch (model.Connections[connIdx].To)
 				{
 					case ComponentType::ConstantLoadType:
@@ -1132,8 +1235,10 @@ namespace erin_next
 	void
 	RunMuxPostFinalization(Model& model, SimulationState& ss, size_t compIdx)
 	{
+		// TODO: test if we need to run backward/forward again
 		RunMuxBackward(model, ss, compIdx);
 		RunMuxForward(model, ss, compIdx);
+		//BalanceMuxRequests(model, ss, compIdx);
 	}
 
 	void
@@ -1142,6 +1247,11 @@ namespace erin_next
 		for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
 		{
 			size_t compIdx = model.Connections[connIdx].ToIdx;
+			size_t compId = model.Connections[connIdx].ToId;
+			if (ss.UnavailableComponents.contains(compId))
+			{
+				continue;
+			}
 			switch (model.Connections[connIdx].To)
 			{
 				case ComponentType::StoreType:
@@ -1786,6 +1896,7 @@ namespace erin_next
 			// arrays
 			// note: these two arrays could be sorted by component type for
 			// faster running over loops...
+			ActivateConnectionsForReliability(model, ss, t);
 			ActivateConnectionsForScheduleBasedLoads(model, ss, t);
 			ActivateConnectionsForScheduleBasedSources(model, ss, t);
 			ActivateConnectionsForStores(model, ss, t);
@@ -1796,12 +1907,15 @@ namespace erin_next
 				ActivateConnectionsForConstantLoads(model, ss);
 				ActivateConnectionsForConstantSources(model, ss);
 			}
-			ActivateConnectionsForReliability(model, ss, t);
-			size_t const maxLoop = 10;
+			size_t const maxLoop = 1000;
 			for (size_t loopIter = 0; loopIter <= maxLoop; ++loopIter)
 			{
 				if (CountActiveConnections(ss) == 0)
 				{
+					if (print)
+					{
+						std::cout << "loop iter: " << loopIter << std::endl;
+					}
 					break;
 				}
 				if (loopIter == maxLoop)
@@ -1812,6 +1926,7 @@ namespace erin_next
 			}
 			if (print)
 			{
+				std::cout << std::endl;
 				PrintFlows(model, ss, t);
 				PrintFlowSummary(SummarizeFlows(model, ss, t));
 				PrintModelState(model, ss);
@@ -2091,8 +2206,7 @@ namespace erin_next
 					}
 					ss.Flows[inflowConn].Requested_W = 0;
 				}
-				for (size_t outIdx = 0; outIdx < m.Muxes[idx].NumOutports;
-					 ++outIdx)
+				for (size_t outIdx = 0; outIdx < m.Muxes[idx].NumOutports; ++outIdx)
 				{
 					auto outflowConn = m.Muxes[idx].OutflowConns[outIdx];
 					if (ss.Flows[outflowConn].Available_W != 0)
@@ -2103,7 +2217,7 @@ namespace erin_next
 				}
 			}
 			break;
-			case (ComponentType::StoreType):
+			case ComponentType::StoreType:
 			{
 				auto inflowConn = m.Stores[idx].InflowConn;
 				if (ss.Flows[inflowConn].Requested_W != 0)
@@ -2119,7 +2233,7 @@ namespace erin_next
 				ss.Flows[outflowConn].Available_W = 0;
 			}
 			break;
-			case (ComponentType::PassThroughType):
+			case ComponentType::PassThroughType:
 			{
 				auto const& pt = m.PassThroughs[idx];
 				if (ss.Flows[pt.InflowConn].Requested_W != 0)
@@ -2134,7 +2248,7 @@ namespace erin_next
 				ss.Flows[pt.OutflowConn].Available_W = 0;
 			}
 			break;
-			case (ComponentType::WasteSinkType):
+			case ComponentType::WasteSinkType:
 			{
 				WriteErrorMessage("waste sink", "waste sink cannot fail");
 				std::exit(1);

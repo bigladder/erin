@@ -151,6 +151,8 @@ Unit tests are created by googletest and automatically detected by CTest and add
 
 ## Graphviz Visualization of the Network Topology
 
+TODO: update after erin_graph is updated.
+
 One of the programs that builds with ERIN is `erin_graph`.
 `erin_graph` can be used to generate a Graphviz input file from your input TOML file.
 Although the graphviz input file can be created with no external dependencies, a Graphviz installation is required to actually create an output image.
@@ -167,51 +169,9 @@ See the LICENSE.txt file for the license for this project.
 
 Original author of this source code is Michael O'Keefe, under employ of Big Ladder Software LLC.
 
-## Checkout Line Tests
-
-The test example in `test/checkout_line` is adapted from the ADEVS manual and source code Copyright James Nutaro and released under a BSD License.
-The license file for that work is in `test/checkout_line/copyright.txt`.
-The example has been slightly modified from the original to remove the need for file IO for specifying the problem and reading results.
-In addition, port numbers have been eliminated in preference to using the adevs::SimpleDigraph network model.
-Output to standard out from the Clerk model has also been turned off by default.
-Additionally, minor changes have been made to upgrade to the latest adevs (i.e., bdevs) and to indicate internal variables using a leading underscore.
+# 3rd Party Copyright and License
 
 The vendor folder contains code from various 3rd party vendors as listed below:
-
-## BDEVS
-
-The license for BDEVS is copied below:
-
-```
-Copyright (c) 2013, James Nutaro
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met: 
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer. 
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution. 
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies, 
-either expressed or implied, of the FreeBSD Project.
-
-Bugs, comments, and questions can be sent to nutaro@gmail.com
-```
 
 ## toml11
 

@@ -1,0 +1,55 @@
+[meta]
+description = "demonstrates repair with fragility failure"
+
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "hours"
+max_time = 300
+############################################################
+[loads.b1_electric_load]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,10.0],[300.0,0.0]]
+############################################################
+[components.electric_utility]
+type = "source"
+outflow = "electricity"
+fragility_modes = ["power_line_down_and_repair"]
+[components.b1_electric]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.c4_hurricane = "b1_electric_load"
+############################################################
+[fragility_mode.power_line_down_and_repair]
+fragility_curve = "power_line_down_by_high_wind"
+# the repair_dist is optional; if not specified, there is no
+# repair for the component experiencing a fragility failure
+repair_dist = "power_line_repair"
+############################################################
+[fragility_curve.power_line_down_by_high_wind]
+vulnerable_to = "wind_speed_mph"
+type = "linear"
+lower_bound = 80.0
+upper_bound = 160.0
+############################################################
+[network]
+connections = [
+  ["electric_utility:OUT(0)", "b1_electric:IN(0)", "electricity"],
+]
+############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+[dist.power_line_repair]
+type = "fixed"
+value = 100
+time_unit = "hours"
+############################################################
+[scenarios.c4_hurricane]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 300
+max_occurrences = 1
+intensity.wind_speed_mph = 180

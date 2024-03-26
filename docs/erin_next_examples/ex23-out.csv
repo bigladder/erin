@@ -1,0 +1,4 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),electric_utility:OUT(0) => b1_electric:IN(0) (kW),REQUEST:electric_utility:OUT(0) => b1_electric:IN(0) (kW),AVAILABLE:electric_utility:OUT(0) => b1_electric:IN(0) (kW),op-state: b1_electric,op-state: electric_utility
+c4_hurricane,P0000-00-00T00:00:00,0,0,10,0,available,power_line_down_and_repair
+c4_hurricane,P0000-00-00T00:00:00,100,10,10,4294967.3,available,available
+c4_hurricane,P0000-00-00T00:00:00,300,0,0,4294967.3,available,available

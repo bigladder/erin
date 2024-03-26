@@ -180,14 +180,14 @@ namespace erin_next
 			inflow = std::get<std::string>(input.at("inflow").Value);
 			inflowId = Simulation_RegisterFlow(s, inflow);
 		}
-		if (table.contains("flow"))
+		if (input.contains("flow"))
 		{
 			inflow = std::get<std::string>(input.at("flow").Value);
 			inflowId = Simulation_RegisterFlow(s, inflow);
 			outflow = inflow;
 			outflowId = inflowId;
 		}
-		if (table.contains("lossflow"))
+		if (input.contains("lossflow"))
 		{
 			lossflow = std::get<std::string>(input.at("lossflow").Value);
 			lossflowId = Simulation_RegisterFlow(s, lossflow);

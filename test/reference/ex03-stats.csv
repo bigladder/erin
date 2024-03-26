@@ -1,8 +1,0 @@
-component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ)
-cluster_01_electric,load,electricity,1,0,0,5.184e+07
-electric_utility,source,electricity,1,0,0,5.184e+07
-TOTAL (source),,,,,,5.184e+07
-TOTAL (load),,,,,,5.184e+07
-TOTAL (storage),,,,,,0.0
-TOTAL (waste),,,,,,0.0
-ENERGY BALANCE (source-(load+storage+waste)),0,,,,,

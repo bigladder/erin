@@ -1,3 +1,0 @@
-time (hours),C0-inflow:achieved (kW),C0-inflow:requested (kW),C0-lossflow:achieved (kW),C0-lossflow:requested (kW),C0-outflow:achieved (kW),C0-outflow:requested (kW),C0-wasteflow:achieved (kW),C0-wasteflow:requested (kW),C1-inflow:achieved (kW),C1-inflow:requested (kW),C1-lossflow:achieved (kW),C1-lossflow:requested (kW),C1-outflow:achieved (kW),C1-outflow:requested (kW),C1-wasteflow:achieved (kW),C1-wasteflow:requested (kW),LE:achieved (kW),LE:requested (kW),LT:achieved (kW),LT:requested (kW),S:achieved (kW),S:requested (kW)
-0,20,20,2,2,10,10,8,8,2,2,0,0,1,1,1,1,10,10,1,1,20,20
-0.002777777777777778,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0

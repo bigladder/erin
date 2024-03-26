@@ -70,7 +70,9 @@ namespace erin_next
 								oss << "WARNING! field '" << aliasValue.Tag
 									<< "' is deprecated and will be removed "
 								  << "in a future version; use '"
-									<< alias.first << "' instead";
+									<< alias.first << "' instead (value = "
+									<< (value.is_string() ? value.as_string() : "")
+									<< ")";
 								warnings.push_back(
 									WriteErrorToString(tableName, oss.str())
 								);

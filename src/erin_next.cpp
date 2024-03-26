@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 
 namespace erin_next
@@ -3274,12 +3275,13 @@ namespace erin_next
 			if (m.ComponentMap.OutflowType[fromCompId][fromTap.Port]
 				!= flowTypeId)
 			{
-				std::cout << "[network] "
-						  << "mismatch of flow types: " << fromTap.Tag
-						  << ":outflow="
-						  << fd.Type[m.ComponentMap
+				std::ostringstream oss;
+				oss << "mismatch of flow types: " << fromTap.Tag
+					<< ":outflow="
+					<< fd.Type[m.ComponentMap
 										 .OutflowType[fromCompId][fromTap.Port]]
-						  << "; connection: " << flow << std::endl;
+				  << "; connection: " << flow;
+				WriteErrorMessage("network", oss.str());
 				return Result::Failure;
 			}
 			if (toTap.Port >= m.ComponentMap.InflowType[toCompId].size())

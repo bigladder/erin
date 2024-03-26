@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_component.h"
+#include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_random.h"
@@ -1521,6 +1522,18 @@ namespace erin_next
 		return result;
 	}
 
+	std::string
+	DoubleToString(double value, unsigned int precision)
+	{
+		double mult = std::pow(10.0, static_cast<double>(precision));
+		double fractionPart =
+				std::round(mult*(value - std::floor(value)));
+		return std::to_string(static_cast<uint32_t>(std::trunc(value)))
+			+ (fractionPart > 0.0
+				? ("." + std::to_string(static_cast<uint32_t>(fractionPart)))
+				: "");
+	}
+
 	void
 	WriteResultsToEventFile(
 		std::ofstream& out,
@@ -1549,19 +1562,22 @@ namespace erin_next
 			{
 				double actual_kW =
 					static_cast<double>(r.Flows[i].Actual_W) / W_per_kW;
-				out << "," << static_cast<uint32_t>(std::round(actual_kW));
+				out << ","
+					<< DoubleToString(actual_kW, 1);
 			}
 			for (size_t const& i : connOrder)
 			{
 				double req_kW =
 					static_cast<double>(r.Flows[i].Requested_W) / W_per_kW;
-				out << "," << static_cast<uint32_t>(std::round(req_kW));
+				out << ","
+					<< DoubleToString(req_kW, 1);
 			}
 			for (size_t const& i : connOrder)
 			{
 				double avail_kW =
 					static_cast<double>(r.Flows[i].Available_W) / W_per_kW;
-				out << "," << static_cast<uint32_t>(std::round(avail_kW));
+				out << ","
+					<< DoubleToString(avail_kW, 1);
 			}
 			// TODO: check StorageAmounts and m.Stores[i].Capacity; should be J
 			// TODO: append units to these variables for clarity

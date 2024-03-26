@@ -211,6 +211,7 @@ if __name__ == "__main__":
     run_cli("14")
     run_cli("15")
     run_cli("16")
+    run_cli("17")
     run_cli("26")
     run_cli("27")
     smoke_test("28")

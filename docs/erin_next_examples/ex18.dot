@@ -1,0 +1,17 @@
+digraph nw_electric {
+  bldg_a_electric [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">bldg_a_electric</TD>
+      </TR>
+    </TABLE>>];
+  utility_electrical [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">utility_electrical</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  utility_electrical:O0:s -> bldg_a_electric:I0:n;
+}

@@ -1,0 +1,110 @@
+digraph nw_electric {
+  boiler [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">boiler</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  coal_pile [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">coal_pile</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  coal_utility [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">coal_utility</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  elec_load [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">elec_load</TD>
+      </TR>
+    </TABLE>>];
+  electric_utility [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">electric_utility</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  steam_load [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">steam_load</TD>
+      </TR>
+    </TABLE>>];
+  steam_loop [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="name">steam_loop</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  steam_split [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">steam_split</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+      </TR>
+    </TABLE>>];
+  substation [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="name">substation</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  transmission [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">transmission</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  turbine [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">turbine</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+      </TR>
+    </TABLE>>];
+  waste_to_steam [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">waste_to_steam</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  electric_utility:O0:s -> transmission:I0:n;
+  transmission:O0:s -> substation:I1:n;
+  substation:O0:s -> elec_load:I0:n;
+  coal_utility:O0:s -> coal_pile:I0:n;
+  coal_pile:O0:s -> boiler:I0:n;
+  boiler:O0:s -> steam_split:I0:n;
+  steam_split:O1:s -> steam_loop:I1:n;
+  turbine:O1:s -> waste_to_steam:I0:n;
+  waste_to_steam:O0:s -> steam_loop:I0:n;
+  steam_loop:O0:s -> steam_load:I0:n;
+  steam_split:O0:s -> turbine:I0:n;
+  turbine:O0:s -> substation:I0:n;
+}

@@ -34,6 +34,9 @@ namespace erin_next
 		FailureModeDict FailureModes;
 	};
 
+	std::string
+	DoubleToString(double value, unsigned int precision);
+
 	void
 	Simulation_Init(Simulation& s);
 

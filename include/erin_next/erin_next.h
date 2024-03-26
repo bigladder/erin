@@ -35,7 +35,7 @@
 // - unsigned has modulo wrap around which is NOT what we want
 // - to prevent that, we have to compare to max which causes if statements
 //   to get interwoven with addition. We might want to try using signed
-//   with -1 meaning infinity or no limit? Need to do some timings...
+//   with -1 meaning infinity or no limit?
 #define flow_t uint32_t
 
 namespace erin_next

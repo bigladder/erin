@@ -1,0 +1,267 @@
+[meta]
+description = "two-day example with realistic loads and uncontrolled source"
+
+[simulation_info]
+time_unit = "hours"
+max_time = 48
+############################################################
+[loads.building_electrical]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+[0,187.47],
+[1,146.271],
+[2,137.308],
+[3,170.276],
+[4,139.068],
+[5,171.944],
+[6,140.051],
+[7,173.406],
+[8,127.54],
+[9,135.751],
+[10, 95.195],
+[11, 107.644],
+[12, 81.227],
+[13, 98.928],
+[14, 80.134],
+[15, 97.222],
+[16, 81.049],
+[17, 114.29],
+[18, 102.652],
+[19, 125.672],
+[20, 105.254],
+[21, 125.047],
+[22, 104.824],
+[23, 126.488],
+[24, 107.094],
+[25, 135.559],
+[26, 115.588],
+[27, 137.494],
+[28, 115.386],
+[29, 133.837],
+[30, 113.812],
+[31, 343.795],
+[32, 284.121],
+[33, 295.434],
+[34, 264.364],
+[35, 247.33],
+[36, 235.89],
+[37, 233.43],
+[38, 220.77],
+[39, 213.825],
+[40, 210.726],
+[41, 223.706],
+[42, 219.193],
+[43, 186.31],
+[44, 185.658],
+[45, 173.137],
+[46, 172.236],
+[47, 47.676],
+[48, 48.952],
+]
+[loads.building_heating]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+[0, 29.60017807],
+[1, 16.70505099],
+[2, 16.99812206],
+[3, 23.4456856],
+[4, 17.5842642],
+[5, 23.73875667],
+[6, 17.87733527],
+[7, 24.03182774],
+[8, 17.87733527],
+[9, 23.4456856],
+[10, 16.41197992],
+[11, 18.75654848],
+[12, 14.36048243],
+[13, 16.11890885],
+[14, 10.55055852],
+[15, 13.77434029],
+[16, 9.37827424],
+[17, 13.18819815],
+[18, 9.37827424],
+[19, 13.48126922],
+[20, 9.67134531],
+[21, 12.30898494],
+[22, 10.55055852],
+[23, 13.48126922],
+[24, 9.67134531],
+[25, 13.48126922],
+[26, 12.30898494],
+[27, 14.06741136],
+[28, 12.30898494],
+[29, 13.48126922],
+[30, 10.84362959],
+[31, 4.10299498],
+[32, 45.71908692],
+[33, 38.97845231],
+[34, 33.11703091],
+[35, 26.96253844],
+[36, 24.32489881],
+[37, 22.85954346],
+[38, 26.66946737],
+[39, 29.89324914],
+[40, 26.66946737],
+[41, 24.32489881],
+[42, 27.25560951],
+[43, 26.66946737],
+[44, 22.85954346],
+[45, 21.10111704],
+[46, 18.46347741],
+[47, 0.0],
+[48, 3.22378177],
+]
+[loads.pv_generation]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+[0, 0.0],
+[1, 0.0],
+[2, 0.0],
+[3, 0.0],
+[4, 0.0],
+[5, 0.0],
+[6, 0.0],
+[7, 14.36],
+[8, 671.759],
+[9, 1265.933],
+[10, 1583.21],
+[11, 1833.686],
+[12, 1922.872],
+[13, 1749.437],
+[14, 994.715],
+[15, 468.411],
+[16, 0.0],
+[17, 0.0],
+[18, 0.0],
+[19, 0.0],
+[20, 0.0],
+[21, 0.0],
+[22, 0.0],
+[23, 0.0],
+[24, 0.0],
+[25, 0.0],
+[26, 0.0],
+[27, 0.0],
+[28, 0.0],
+[29, 0.0],
+[30, 0.0],
+[31, 10.591],
+[32, 693.539],
+[33, 1191.017],
+[34, 1584.868],
+[35, 1820.692],
+[36, 1952.869],
+[37, 1799.1],
+[38, 1067.225],
+[39, 396.023],
+[40, 0.0],
+[41, 0.0],
+[42, 0.0],
+[43, 0.0],
+[44, 0.0],
+[45, 0.0],
+[46, 0.0],
+[47, 0.0],
+[48, 0.0],
+]
+############################################################
+[components.pv_array]
+type = "uncontrolled_source"
+outflow = "electricity"
+supply_by_scenario.blue_sky = "pv_generation"
+[components.electric_utility]
+type = "source"
+max_outflow = 500.0
+outflow = "electricity"
+[components.electric_battery]
+type = "store"
+flow = "electricity"
+capacity_unit = "kWh"
+capacity = 100.0
+max_charge = 10.0
+init_soc = 1.0
+max_discharge = 10.0
+[components.electric_source_mux]
+type = "mux"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+[components.electric_supply_mux]
+type = "mux"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 2
+[components.ng_grid]
+type = "source"
+outflow = "ng"
+[components.ng_source_mux]
+type = "mux"
+flow = "ng"
+num_inflows = 1
+num_outflows = 2
+[components.ng_to_elec_conv]
+type = "converter"
+inflow = "ng"
+outflow = "electricity"
+lossflow = "heating"
+constant_efficiency = 0.42
+[components.elec_heat_pump_conv]
+type = "converter"
+inflow = "electricity"
+outflow = "heating"
+constant_efficiency = 3.5
+[components.ng_heater_conv]
+type = "converter"
+inflow = "ng"
+outflow = "heating"
+constant_efficiency = 0.98
+[components.heating_supply_mux]
+type = "mux"
+flow = "heating"
+num_inflows = 3
+num_outflows = 1
+[components.electric_load]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+[components.heating_load]
+type = "load"
+inflow = "heating"
+loads_by_scenario.blue_sky = "building_heating"
+############################################################
+[network]
+connections = [
+# ELECTRICITY
+["pv_array:OUT(0)", "electric_source_mux:IN(0)", "electricity"],
+["electric_utility:OUT(0)", "electric_source_mux:IN(1)", "electricity"],
+["electric_source_mux:OUT(0)", "electric_battery:IN(0)", "electricity"],
+["electric_battery:OUT(0)", "electric_supply_mux:IN(0)", "electricity"],
+["ng_to_elec_conv:OUT(0)", "electric_supply_mux:IN(1)", "electricity"],
+["electric_supply_mux:OUT(0)", "electric_load:IN(0)", "electricity"],
+["electric_supply_mux:OUT(1)", "elec_heat_pump_conv:IN(0)", "electricity"],
+
+# NATURAL GAS (NG)
+["ng_grid:OUT(0)", "ng_source_mux:IN(0)", "ng"],
+["ng_source_mux:OUT(0)", "ng_to_elec_conv:IN(0)", "ng"],
+["ng_source_mux:OUT(1)", "ng_heater_conv:IN(0)", "ng"],
+
+# HEATING
+["ng_to_elec_conv:OUT(1)", "heating_supply_mux:IN(0)", "heating"],
+["ng_heater_conv:OUT(0)", "heating_supply_mux:IN(1)", "heating"],
+["elec_heat_pump_conv:OUT(0)", "heating_supply_mux:IN(2)", "heating"],
+["heating_supply_mux:OUT(0)", "heating_load:IN(0)", "heating"],
+]
+############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 48
+max_occurrences = 1

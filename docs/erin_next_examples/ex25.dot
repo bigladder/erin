@@ -1,0 +1,122 @@
+digraph normal_operations {
+  elec_heat_pump_conv [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">elec_heat_pump_conv</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  electric_battery [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">electric_battery</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  electric_load [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">electric_load</TD>
+      </TR>
+    </TABLE>>];
+  electric_source_mux [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="name">electric_source_mux</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  electric_supply_mux [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="name">electric_supply_mux</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+      </TR>
+    </TABLE>>];
+  electric_utility [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">electric_utility</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  heating_load [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">heating_load</TD>
+      </TR>
+    </TABLE>>];
+  heating_supply_mux [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="I2" BGCOLOR="lightgrey">I(2)</TD>
+        <TD PORT="name">heating_supply_mux</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  ng_grid [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">ng_grid</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  ng_heater_conv [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">ng_heater_conv</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  ng_source_mux [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">ng_source_mux</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+      </TR>
+    </TABLE>>];
+  ng_to_elec_conv [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">ng_to_elec_conv</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+      </TR>
+    </TABLE>>];
+  pv_array [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">pv_array</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  pv_array:O0:s -> electric_source_mux:I0:n;
+  electric_utility:O0:s -> electric_source_mux:I1:n;
+  electric_source_mux:O0:s -> electric_battery:I0:n;
+  electric_battery:O0:s -> electric_supply_mux:I0:n;
+  ng_to_elec_conv:O0:s -> electric_supply_mux:I1:n;
+  electric_supply_mux:O0:s -> electric_load:I0:n;
+  electric_supply_mux:O1:s -> elec_heat_pump_conv:I0:n;
+  ng_grid:O0:s -> ng_source_mux:I0:n;
+  ng_source_mux:O0:s -> ng_to_elec_conv:I0:n;
+  ng_source_mux:O1:s -> ng_heater_conv:I0:n;
+  ng_to_elec_conv:O1:s -> heating_supply_mux:I0:n;
+  ng_heater_conv:O0:s -> heating_supply_mux:I1:n;
+  elec_heat_pump_conv:O0:s -> heating_supply_mux:I2:n;
+  heating_supply_mux:O0:s -> heating_load:I0:n;
+}

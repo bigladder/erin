@@ -1331,7 +1331,7 @@ namespace erin
     UpdateStoresPerElapsedTime(
         Model const& m,
         SimulationState& ss,
-        double elapsedTime
+        double elapsedTime_s
     )
     {
         for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
@@ -1345,32 +1345,32 @@ namespace erin
             {
                 continue;
             }
+            long availableCharge_J =
+                static_cast<long>(
+                    m.Stores[storeIdx].Capacity_J
+                    - ss.StorageAmounts_J[storeIdx]
+                );
+            long availableDischarge_J =
+                -1 * static_cast<long>(ss.StorageAmounts_J[storeIdx]);
             netEnergyAdded += std::lround(
-                elapsedTime * static_cast<double>(ss.Flows[inConn].Actual_W)
+                elapsedTime_s * static_cast<double>(ss.Flows[inConn].Actual_W)
             );
             netEnergyAdded -= std::lround(
-                elapsedTime * static_cast<double>(ss.Flows[outConn].Actual_W)
+                elapsedTime_s * static_cast<double>(ss.Flows[outConn].Actual_W)
             );
             if (store.WasteflowConn.has_value())
             {
                 size_t wConn = store.WasteflowConn.value();
                 netEnergyAdded -= std::lround(
-                    elapsedTime * static_cast<double>(ss.Flows[wConn].Actual_W)
+                    elapsedTime_s * static_cast<double>(ss.Flows[wConn].Actual_W)
                 );
             }
-            assert(
-                static_cast<long>(
-                    m.Stores[storeIdx].Capacity_J
-                    - ss.StorageAmounts_J[storeIdx]
-                ) >= netEnergyAdded
-                && "netEnergyAdded cannot put storage over capacity"
-            );
-            if (netEnergyAdded
-                < -1 * static_cast<long>(ss.StorageAmounts_J[storeIdx]))
+            if (netEnergyAdded > availableCharge_J)
             {
-                std::cout << "netEnergyAdded (J): " << netEnergyAdded
-                          << std::endl;
-                std::cout << "elapsed time (s): " << elapsedTime << std::endl;
+                std::cout << "ERROR: netEnergyAdded is greater than capacity!" << std::endl;
+                std::cout << "netEnergyAdded (J): " << netEnergyAdded << std::endl;
+                std::cout << "availableCharge (J): " << availableCharge_J << std::endl;
+                std::cout << "elapsed time (s): " << elapsedTime_s << std::endl;
                 std::cout << "stored amount (J): "
                           << ss.StorageAmounts_J[storeIdx] << std::endl;
                 std::cout << "inflow (W): " << ss.Flows[inConn].Actual_W
@@ -1393,8 +1393,40 @@ namespace erin
                           << (inflow - (outflow + wasteflow)) << std::endl;
             }
             assert(
-                netEnergyAdded
-                    >= (-1 * static_cast<long>(ss.StorageAmounts_J[storeIdx]))
+                availableCharge_J >= netEnergyAdded
+                && "netEnergyAdded cannot put storage over capacity"
+            );
+            if (netEnergyAdded < availableDischarge_J)
+            {
+                std::cout << "ERROR: netEnergyAdded is lower than discharge limit" << std::endl;
+                std::cout << "netEnergyAdded (J): " << netEnergyAdded
+                          << std::endl;
+                std::cout << "availableDischarge (J): " << availableDischarge_J
+                          << std::endl;
+                std::cout << "elapsed time (s): " << elapsedTime_s << std::endl;
+                std::cout << "stored amount (J): "
+                          << ss.StorageAmounts_J[storeIdx] << std::endl;
+                std::cout << "inflow (W): " << ss.Flows[inConn].Actual_W
+                          << std::endl;
+                std::cout << "outflow (W): " << ss.Flows[outConn].Actual_W
+                          << std::endl;
+                int64_t inflow =
+                    static_cast<int64_t>(ss.Flows[inConn].Actual_W);
+                int64_t outflow =
+                    static_cast<int64_t>(ss.Flows[outConn].Actual_W);
+                int64_t wasteflow = 0;
+                if (store.WasteflowConn.has_value())
+                {
+                    size_t wConn = store.WasteflowConn.value();
+                    std::cout << "wasteflow (W): " << ss.Flows[wConn].Actual_W
+                              << std::endl;
+                    wasteflow = static_cast<int64_t>(ss.Flows[wConn].Actual_W);
+                }
+                std::cout << "flow balance (inflow - (outflow + wasteflow)): "
+                          << (inflow - (outflow + wasteflow)) << std::endl;
+            }
+            assert(
+                netEnergyAdded >= availableDischarge_J
                 && "netEnergyAdded cannot use more energy than available"
             );
             ss.StorageAmounts_J[storeIdx] += netEnergyAdded;

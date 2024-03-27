@@ -4,7 +4,13 @@ tasks:
   format:
     desc: Run clang-format over all project files
     cmds:
-      - clang-format -i -style=file src/*.cpp include/**/*.h
+      - clang-format -i -style=file src/*.cpp
+      - clang-format -i -style=file include/**/*.h
+  checkfmt:
+    desc: Check if there are any formatting problems
+    cmds:
+      - clang-format --dry-run --Werror src/*.cpp
+      - clang-format --dry-run --Werror include/**/*.h
   init:
     desc: Initialize the build directory
     cmds:

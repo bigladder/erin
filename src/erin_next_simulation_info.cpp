@@ -9,7 +9,7 @@
 #include <optional>
 #include <tuple>
 
-namespace erin_next
+namespace erin
 {
 	std::unordered_set<std::string> const RequiredSimulationInfoFields{
 		"time_unit",

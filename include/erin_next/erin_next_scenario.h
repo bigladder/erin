@@ -1,7 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_SCENARIO_H
-#define ERIN_NEXT_SCENARIO_H
+#ifndef ERIN_SCENARIO_H
+#define ERIN_SCENARIO_H
 
 #include "../vendor/toml11/toml.hpp"
 #include "erin_next/erin_next_distribution.h"
@@ -12,7 +12,7 @@
 #include <vector>
 #include <optional>
 
-namespace erin_next
+namespace erin
 {
 	struct ScenarioDict
 	{

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-namespace erin_next
+namespace erin
 {
 	std::vector<std::string>
 	read_row(std::istream& stream)

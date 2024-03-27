@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <cmath>
 
-namespace erin_next
+namespace erin
 {
 	// TODO: change to return
 	// std::unordered_map<std::string, InputValue>

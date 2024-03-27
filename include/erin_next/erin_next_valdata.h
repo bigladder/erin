@@ -1,7 +1,7 @@
 /* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_VALDATA_H
-#define ERIN_NEXT_VALDATA_H
+#ifndef ERIN_VALDATA_H
+#define ERIN_VALDATA_H
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <variant>
 
-namespace erin_next
+namespace erin
 {
 
 	struct TagWithDeprication

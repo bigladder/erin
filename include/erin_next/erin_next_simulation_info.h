@@ -1,7 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_SIMULATION_INFO_H
-#define ERIN_NEXT_SIMULATION_INFO_H
+#ifndef ERIN_SIMULATION_INFO_H
+#define ERIN_SIMULATION_INFO_H
 #include "erin_next/erin_next_valdata.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_random.h"
@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace erin_next
+namespace erin
 {
 	// TODO: consider what we're asking for in SimulationInfo. I think we
 	// should do the following: get rid of rate and quantity unit. TimeUnit

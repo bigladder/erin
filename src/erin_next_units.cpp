@@ -6,7 +6,7 @@
 #include <sstream>
 #include <exception>
 
-namespace erin_next
+namespace erin
 {
 	std::optional<PowerUnit>
 	TagToPowerUnit(std::string const& tag)

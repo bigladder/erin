@@ -28,7 +28,7 @@ PrintUsage(std::string const& progName)
 int
 main(int argc, char** argv)
 {
-	using namespace erin_next;
+	using namespace erin;
 	std::cout << "ERIN version " << erin::version::version_string << std::endl;
 	std::cout
 		<< "Copyright (C) 2020-2024 Big Ladder Software LLC." << std::endl;

@@ -1,7 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_H
-#define ERIN_NEXT_H
+#ifndef ERIN_H
+#define ERIN_H
 
 #include "erin_next/erin_next_timestate.h"
 #include "erin_next/erin_next_distribution.h"
@@ -38,7 +38,7 @@
 //   with -1 meaning infinity or no limit?
 #define flow_t uint32_t
 
-namespace erin_next
+namespace erin
 {
 
 	// DATA

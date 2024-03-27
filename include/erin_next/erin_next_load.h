@@ -1,7 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_LOAD_H
-#define ERIN_NEXT_LOAD_H
+#ifndef ERIN_LOAD_H
+#define ERIN_LOAD_H
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
 #include "../vendor/toml11/toml.hpp"
@@ -12,7 +12,7 @@
 #include <optional>
 #include <ostream>
 
-namespace erin_next
+namespace erin
 {
 	struct Load
 	{

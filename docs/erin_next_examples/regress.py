@@ -20,11 +20,13 @@ if platform.system() == 'Windows':
     TEST_EXE = BIN_DIR / 'test_erin_next.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test.exe'
     CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
+    PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin':
     BIN_DIR = Path('.') / '..' / '..' / 'build' / 'bin'
     TEST_EXE = BIN_DIR / 'test_erin_next'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test'
     CLI_EXE = BIN_DIR / 'erin_next_cli'
+    PERF01_EXE = BIN_DIR / 'erin_next_stress_test'
 else:
     print(f"Unhandled platform, '{platform.system()}'")
     sys.exit(1)
@@ -170,7 +172,7 @@ def run_cli(example_name):
     Run the CLI for example name and check output diffs
     - example_name: string, "01" or "25" to call ex01.toml or ex25.toml
     """
-    result = smoke_test(example_name)
+    _ = smoke_test(example_name)
     result = subprocess.run(
         ['diff', 'out.csv', f'ex{example_name}-out.csv'],
         capture_output=True)
@@ -191,6 +193,20 @@ def run_cli(example_name):
         print(("=" * 20) + " DETAILED DIFF")
         compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
         sys.exit(1)
+
+
+def run_perf():
+    """
+    Run performance tests and report timing
+    """
+    result = subprocess.run(
+        [PERF01_EXE],
+        capture_output=True)
+    if result.returncode != 0:
+        print(f"error running performance test {PERF01_EXE}")
+        print(f"stdout:\n{result.stdout}")
+        print(f"stderr:\n{result.stderr}")
+    print(result.stdout.decode(), end='')
 
 
 if __name__ == "__main__":
@@ -226,3 +242,5 @@ if __name__ == "__main__":
     run_cli("29")
     run_cli("30")
     print("Passed all regression tests!")
+    run_perf()
+    print("All performance tests run")

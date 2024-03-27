@@ -1,3 +1,5 @@
+/* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
+ * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_utils.h"
@@ -7,7 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace erin_next
+namespace erin
 {
 	// TODO[mok]: need to rethink this. This adds a branch with an add.
 	// Probably a horrible performance issue. Use double but convert to

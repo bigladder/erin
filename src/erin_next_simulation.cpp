@@ -20,7 +20,7 @@
 #include <sstream>
 #include <cstdlib>
 
-namespace erin_next
+namespace erin
 {
 	void
 	Simulation_Init(Simulation& s)

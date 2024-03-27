@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-using namespace erin_next;
+using namespace erin;
 
 int
 main(int argc, char** argv)

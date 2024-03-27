@@ -12,7 +12,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace erin_next
+namespace erin
 {
 	std::unordered_set<std::string> RequiredLoadFields{
 		"time_unit",

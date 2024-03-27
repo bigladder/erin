@@ -1,8 +1,8 @@
 /* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 
-#ifndef ERIN_NEXT_DISTRIBUTION_H
-#define ERIN_NEXT_DISTRIBUTION_H
+#ifndef ERIN_DISTRIBUTION_H
+#define ERIN_DISTRIBUTION_H
 #include "erin_next/erin_next_valdata.h"
 #include "erin_next/erin_next_result.h"
 #include "../vendor/toml11/toml.hpp"
@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <optional>
 
-namespace erin_next
+namespace erin
 {
 
 	template<class T>

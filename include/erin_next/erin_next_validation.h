@@ -1,7 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_VALIDATION_H
-#define ERIN_NEXT_VALIDATION_H
+#ifndef ERIN_VALIDATION_H
+#define ERIN_VALIDATION_H
 #include "erin_next/erin_next_toml.h"
 #include <string>
 #include <vector>
@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include <variant>
 
-namespace erin_next
+namespace erin
 {
 
 	std::unordered_set<std::string> const ValidTimeUnits{

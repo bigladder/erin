@@ -10,7 +10,7 @@ void
 TestFixedRandom(void)
 {
 	std::cout << std::left << "[" << std::setw(width) << "TestFixedRandom";
-	erin_next::FixedRandom r{};
+	erin::FixedRandom r{};
 	r.FixedValue = 0.3;
 	assert(r() == 0.3);
 	assert(r() == 0.3);
@@ -22,7 +22,7 @@ void
 TestFixedSeries(void)
 {
 	std::cout << std::left << "[" << std::setw(width) << "TestFixedSeries";
-	erin_next::FixedSeries r{};
+	erin::FixedSeries r{};
 	assert(r() == 0.0);
 	r.Series.push_back(0.1);
 	r.Series.push_back(0.2);
@@ -41,7 +41,7 @@ void
 TestRandomWithSeed(void)
 {
 	std::cout << std::left << "[" << std::setw(width) << "TestRandomWithSeed";
-	erin_next::Random r = erin_next::CreateRandomWithSeed(17);
+	erin::Random r = erin::CreateRandomWithSeed(17);
 	for (size_t i = 0; i < 1'000; ++i)
 	{
 		assert(r() >= 0.0 && r() <= 1.0);
@@ -54,7 +54,7 @@ TestRandomSeededFromClock(void)
 {
 	std::cout << std::left << "[" << std::setw(width)
 		<< "TestRandomSeededFromClock";
-	erin_next::Random r = erin_next::CreateRandom();
+	erin::Random r = erin::CreateRandom();
 	for (size_t i = 0; i < 1'000; ++i)
 	{
 		assert(r() >= 0.0 && r() <= 1.0);

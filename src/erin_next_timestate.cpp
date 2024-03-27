@@ -3,7 +3,7 @@
 #include "erin_next/erin_next_timestate.h"
 #include <assert.h>
 
-namespace erin_next
+namespace erin
 {
 
 	std::ostream&

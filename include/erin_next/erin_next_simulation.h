@@ -1,7 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_SIMULATION_H
-#define ERIN_NEXT_SIMULATION_H
+#ifndef ERIN_SIMULATION_H
+#define ERIN_SIMULATION_H
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
@@ -14,7 +14,7 @@
 #include <optional>
 #include <cstdlib>
 
-namespace erin_next
+namespace erin
 {
 	struct Simulation
 	{

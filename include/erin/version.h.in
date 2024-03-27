@@ -13,4 +13,4 @@ namespace erin::version
   const std::string version_string{"@ERIN_VERSION@"};
 }
 
-#endif // ERIN_VERSION_H
+#endif

@@ -4,7 +4,7 @@
 #include <chrono>
 #include <limits>
 
-using namespace erin_next;
+using namespace erin;
 
 static void
 PrintBanner(bool doPrint, std::string name) {

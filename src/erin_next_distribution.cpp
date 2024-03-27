@@ -1,6 +1,5 @@
 /* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
-
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
@@ -15,7 +14,7 @@
 #include <iostream>
 #include <unordered_map>
 
-namespace erin_next
+namespace erin
 {
 	// k = shape parameter, k > 0
 	// a = scale parameter, a > 0, also called 'lambda'

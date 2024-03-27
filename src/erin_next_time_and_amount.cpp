@@ -2,7 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_time_and_amount.h"
 
-namespace erin_next
+namespace erin
 {
 	std::ostream&
 	operator<<(std::ostream& os, TimeAndAmount const& timeAndLoad)

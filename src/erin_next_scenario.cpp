@@ -7,7 +7,7 @@
 #include <optional>
 #include <assert.h>
 
-namespace erin_next
+namespace erin
 {
 	std::optional<size_t>
 	ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::string const& tag)

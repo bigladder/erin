@@ -1,11 +1,11 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_RANDOM_H
-#define ERIN_NEXT_RANDOM_H
+#ifndef ERIN_RANDOM_H
+#define ERIN_RANDOM_H
 #include <vector>
 #include <random>
 
-namespace erin_next
+namespace erin
 {
 	enum class RandomType
 	{

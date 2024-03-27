@@ -1,7 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#ifndef ERIN_NEXT_UTILS_H
-#define ERIN_NEXT_UTILS_H
+#ifndef ERIN_UTILS_H
+#define ERIN_UTILS_H
 #include <string>
 #include <cstdlib>
 #include <iomanip>
@@ -10,7 +10,7 @@
 #include <vector>
 #include <stdint.h>
 
-namespace erin_next
+namespace erin
 {
 	// Clojure program to calculate the below:
 	// > (def days-per-month [31 28 31 30 31 30 31 31 30 31 30 31])

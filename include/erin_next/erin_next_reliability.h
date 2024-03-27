@@ -1,8 +1,8 @@
 /* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 
-#ifndef ERIN_NEXT_RELIABILITY_H
-#define ERIN_NEXT_RELIABILITY_H
+#ifndef ERIN_RELIABILITY_H
+#define ERIN_RELIABILITY_H
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_timestate.h"
 #include <functional>
@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace erin_next
+namespace erin
 {
 
 	// TODO: move to separate file

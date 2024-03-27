@@ -12,18 +12,18 @@
 
 namespace erin
 {
-	std::vector<std::string>
-	read_row(std::istream& stream);
+    std::vector<std::string>
+    read_row(std::istream& stream);
 
-	void
-	stream_out(std::ostream& stream, const std::vector<std::string>& xs);
+    void
+    stream_out(std::ostream& stream, const std::vector<std::string>& xs);
 
-	void
-	write_csv(
-		std::ostream& os,
-		const std::vector<std::string>& items,
-		bool start = true,
-		bool end_with_lf = true
-	);
+    void
+    write_csv(
+        std::ostream& os,
+        const std::vector<std::string>& items,
+        bool start = true,
+        bool end_with_lf = true
+    );
 } // namespace erin
 #endif

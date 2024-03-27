@@ -224,7 +224,7 @@ StatementMacros:
   - QT_REQUIRE_VERSION
 TabWidth: 4
 # TypeNames:  [] # clang-format 17
-UseTab: Always
+UseTab: Never
 # VerilogBreakBetweenInstancePorts: true # clang-format 17
 WhitespaceSensitiveMacros:
   - BOOST_PP_STRINGIZE

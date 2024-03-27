@@ -1698,11 +1698,12 @@ namespace erin
             - (static_cast<int>(s.OutflowAchieved)
                + static_cast<int>(s.Wasteflow));
         double eff =
-            (static_cast<double>(s.Inflow) + static_cast<double>(netDischarge))
+            (static_cast<double>(s.Inflow) + static_cast<double>(s.EnvInflow) + static_cast<double>(netDischarge))
                 > 0.0
             ? 100.0 * (static_cast<double>(s.OutflowAchieved))
                 / (static_cast<double>(s.Inflow)
-                   + static_cast<double>(netDischarge))
+                   + static_cast<double>(netDischarge)
+                   + static_cast<double>(s.EnvInflow))
             : 0.0;
         double effectiveness = s.OutflowRequest > 0
             ? 100.0 * (static_cast<double>(s.OutflowAchieved))
@@ -1719,7 +1720,7 @@ namespace erin
         std::cout << "= Sum                    : " << sum << std::endl;
         std::cout << "  Efficiency             : " << eff << "%"
                   << " (= " << s.OutflowAchieved << "/"
-                  << ((int)s.Inflow + netDischarge) << ")" << std::endl;
+                  << ((int)s.Inflow + (int)s.EnvInflow + netDischarge) << ")" << std::endl;
         std::cout << "  Delivery Effectiveness : " << effectiveness << "%"
                   << " (= " << s.OutflowAchieved << "/" << s.OutflowRequest
                   << ")" << std::endl;

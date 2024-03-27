@@ -7,14 +7,13 @@
 
 namespace erin
 {
-	struct TimeAndAmount
-	{
-		double Time_s = 0.0;
-		uint32_t Amount_W = 0;
-	};
+struct TimeAndAmount
+{
+    double Time_s = 0.0;
+    uint32_t Amount_W = 0;
+};
 
-	std::ostream&
-	operator<<(std::ostream& os, TimeAndAmount const& timeAndAmount);
-}
+std::ostream& operator<<(std::ostream& os, TimeAndAmount const& timeAndAmount);
+} // namespace erin
 
 #endif

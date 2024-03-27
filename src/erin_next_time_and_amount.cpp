@@ -4,11 +4,10 @@
 
 namespace erin
 {
-	std::ostream&
-	operator<<(std::ostream& os, TimeAndAmount const& timeAndLoad)
-	{
-		os << "TimeAndAmount{" << "Time_s=" << timeAndLoad.Time_s << "; "
-		   << "Amount_W=" << timeAndLoad.Amount_W << "}";
-		return os;
-	}
+std::ostream& operator<<(std::ostream& os, TimeAndAmount const& timeAndLoad)
+{
+    os << "TimeAndAmount{" << "Time_s=" << timeAndLoad.Time_s << "; "
+       << "Amount_W=" << timeAndLoad.Amount_W << "}";
+    return os;
 }
+} // namespace erin

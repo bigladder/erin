@@ -5,11 +5,11 @@
 
 namespace erin
 {
-	enum class Result
-	{
-		Success,
-		Failure
-	};
-}
+enum class Result
+{
+    Success,
+    Failure
+};
+} // namespace erin
 
 #endif

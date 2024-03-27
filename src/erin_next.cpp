@@ -547,9 +547,9 @@ namespace erin
 		flow_t outflow = FinalizeFlowValue(outflowReq, outflowAvail);
 		if (inflow >= outflow)
 		{
-			ss.Flows[mov.InFromEnvConn].Requested_W = 0.0;
-			ss.Flows[mov.InFromEnvConn].Available_W = 0.0;
-			ss.Flows[mov.InFromEnvConn].Actual_W = 0.0;
+			ss.Flows[mov.InFromEnvConn].Requested_W = 0;
+			ss.Flows[mov.InFromEnvConn].Available_W = 0;
+			ss.Flows[mov.InFromEnvConn].Actual_W = 0;
 			flow_t waste = inflow - outflow;
 			ss.Flows[mov.WasteflowConn].Requested_W = waste;
 			ss.Flows[mov.WasteflowConn].Available_W = waste;
@@ -561,9 +561,9 @@ namespace erin
 			ss.Flows[mov.InFromEnvConn].Requested_W = supply;
 			ss.Flows[mov.InFromEnvConn].Available_W = supply;
 			ss.Flows[mov.InFromEnvConn].Actual_W = supply;
-			ss.Flows[mov.WasteflowConn].Requested_W = 0.0;
-			ss.Flows[mov.WasteflowConn].Available_W = 0.0;
-			ss.Flows[mov.WasteflowConn].Actual_W = 0.0;
+			ss.Flows[mov.WasteflowConn].Requested_W = 0;
+			ss.Flows[mov.WasteflowConn].Available_W = 0;
+			ss.Flows[mov.WasteflowConn].Actual_W = 0;
 		}
 	}
 
@@ -1588,11 +1588,11 @@ namespace erin
 	}
 
 	void
-	PrintFlows(Model const& m, SimulationState const& ss, double t)
+	PrintFlows(Model const& m, SimulationState const& ss, double time_s)
 	{
-		std::cout << "time: " << t << " s, "
-			<< TimeToISO8601Period(t) << ", "
-			<< TimeInSecondsToHours(t) << " h"
+		std::cout << "time: " << time_s << " s, "
+			<< TimeToISO8601Period(static_cast<uint64_t>(time_s)) << ", "
+			<< TimeInSecondsToHours(static_cast<uint64_t>(time_s)) << " h"
 			<< std::endl;
 		for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
 		{
@@ -1611,10 +1611,10 @@ namespace erin
 		FlowSummary summary = {
 			.Time = t,
 			.Inflow = 0,
-			.OutflowAchieved = 0,
 			.OutflowRequest = 0,
-			.StorageCharge = 0,
+			.OutflowAchieved = 0,
 			.StorageDischarge = 0,
+			.StorageCharge = 0,
 			.Wasteflow = 0,
 			.EnvInflow = 0,
 		};
@@ -1842,8 +1842,8 @@ namespace erin
 		assert(cop > 0.0);
 		Mover mov = {
 			.COP = cop,
-			.OutflowConn = 0,
 			.InflowConn = 0,
+			.OutflowConn = 0,
 			.InFromEnvConn = 0,
 			.WasteflowConn = 0,
 			.MaxOutflow_W = max_flow_W,
@@ -1879,8 +1879,8 @@ namespace erin
 			Model_AddConnection(m, envId, 0, thisId, 1, wasteflowId);
 		return {
 			.Id = thisId,
-			.EnvConn = econn,
 			.WasteConn = wconn,
+			.EnvConn = econn,
 		};
 	}
 

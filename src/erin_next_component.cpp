@@ -395,7 +395,9 @@ namespace erin
 						);
 					for (size_t i = 0; i < numOutflows; ++i)
 					{
-						maxOutflows_W[i] = Power_ToWatt(maxOutflowsRaw[i], rateUnit);
+						maxOutflows_W[i] =
+							static_cast<flow_t>(
+								Power_ToWatt(maxOutflowsRaw[i], rateUnit));
 					}
 					s.TheModel.Muxes[s.TheModel.ComponentMap.Idx[id]].MaxOutflows_W =
 						std::move(maxOutflows_W);
@@ -456,7 +458,7 @@ namespace erin
 					size_t constEffIdx =
 						s.TheModel.ComponentMap.Idx[id];
 					s.TheModel.ConstEffConvs[constEffIdx].MaxOutflow_W =
-						maxOutflow_W;
+						static_cast<flow_t>(maxOutflow_W);
 				}
 				if (input.contains("max_lossflow"))
 				{
@@ -467,7 +469,7 @@ namespace erin
 					size_t constEffIdx =
 						s.TheModel.ComponentMap.Idx[id];
 					s.TheModel.ConstEffConvs[constEffIdx].MaxLossflow_W =
-						maxLossflow_W;
+						static_cast<flow_t>(maxLossflow_W);
 				}
 			} break;
 			case ComponentType::PassThroughType:

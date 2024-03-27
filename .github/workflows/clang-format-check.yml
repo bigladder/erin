@@ -6,8 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
-    - name: Set Project Name
+      uses: actions/checkout@v4
+    - name: ERIN
       run: echo "REPOSITORY_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
     - name: Run clang-format style check on implementation files.
       uses: jidicula/clang-format-action@v4.11.0
@@ -18,7 +18,7 @@ jobs:
       uses: jidicula/clang-format-action@v4.11.0
       with:
         clang-format-version: '16'
-        check-path: 'include/${{ env.REPOSITORY_NAME }}'
+        check-path: 'include/**/*.h'
     - name: Run clang-format style check on test files.
       uses: jidicula/clang-format-action@v4.11.0
       with:

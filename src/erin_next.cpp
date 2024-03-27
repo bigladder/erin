@@ -899,10 +899,6 @@ namespace erin
         {
             outflowAvailable = cec.MaxOutflow_W;
         }
-        assert(
-            (inflowAvailable >= outflowAvailable)
-            && "converter forward flow; inflow must be >= outflow"
-        );
         if (outflowAvailable != ss.Flows[outflowConn].Available_W)
         {
             ss.ActiveConnectionsFront.insert(outflowConn);

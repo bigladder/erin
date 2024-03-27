@@ -95,14 +95,16 @@ namespace erin
 	Simulation_ParseSimulationInfo(
 		Simulation& s,
 		toml::value const& v,
-		ValidationInfo const& validationInfo);
+		ValidationInfo const& validationInfo
+	);
 
 	Result
 	Simulation_ParseLoads(
 		Simulation& s,
 		toml::value const& v,
 		ValidationInfo const& explicitValidation,
-		ValidationInfo const& fileBasedValidation);
+		ValidationInfo const& fileBasedValidation
+	);
 
 	size_t
 	Simulation_RegisterFragilityCurve(Simulation& s, std::string const& tag);
@@ -155,8 +157,9 @@ namespace erin
 
 	std::optional<Simulation>
 	Simulation_ReadFromToml(
-	  toml::value const& v,
-	  InputValidationMap const& validationInfo);
+		toml::value const& v,
+		InputValidationMap const& validationInfo
+	);
 
 	void
 	Simulation_Print(Simulation const& s);

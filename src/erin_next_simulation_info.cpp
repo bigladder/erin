@@ -32,7 +32,8 @@ namespace erin
 	// NOTE: pre-requisite, table already validated
 	// TODO: change this to use unordered_map<string, InputValue>
 	std::optional<SimulationInfo>
-	ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
+	ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table
+	)
 	{
 		SimulationInfo si{};
 		std::string rawTimeUnit =
@@ -42,12 +43,12 @@ namespace erin
 		{
 			WriteErrorMessage(
 				"simulation_info",
-				"unhandled time unit string '" + rawTimeUnit + "'");
+				"unhandled time unit string '" + rawTimeUnit + "'"
+			);
 			return {};
 		}
 		si.TheTimeUnit = maybeTimeUnit.value();
-		double rawMaxTime =
-			std::get<double>(table.at("max_time").Value);
+		double rawMaxTime = std::get<double>(table.at("max_time").Value);
 		si.MaxTime = rawMaxTime;
 		std::string rawRateUnit =
 			std::get<std::string>(table.at("rate_unit").Value);
@@ -55,8 +56,7 @@ namespace erin
 		if (!maybeRateUnit.has_value())
 		{
 			WriteErrorMessage(
-				"simulation_info",
-				"unhandled rate unit '" + rawRateUnit + "'"
+				"simulation_info", "unhandled rate unit '" + rawRateUnit + "'"
 			);
 			return {};
 		}
@@ -74,8 +74,9 @@ namespace erin
 		}
 		else if (table.contains("fixed_random_series"))
 		{
-			std::vector<double> maybeSeries =
-				std::get<std::vector<double>>(table.at("fixed_random_series").Value);
+			std::vector<double> maybeSeries = std::get<std::vector<double>>(
+				table.at("fixed_random_series").Value
+			);
 			rtype = RandomType::FixedSeries;
 			si.Series = std::move(maybeSeries);
 		}
@@ -108,11 +109,10 @@ namespace erin
 	std::ostream&
 	operator<<(std::ostream& os, SimulationInfo const& s)
 	{
-		os << "SimulationInfo{"
-		   << "MaxTime=" << s.MaxTime << "; "
+		os << "SimulationInfo{" << "MaxTime=" << s.MaxTime << "; "
 		   << "TimeUnit=\"" << TimeUnitToTag(s.TheTimeUnit) << "\"; "
-		   << "QuantityUnit=\"" << s.QuantityUnit << "\"; "
-		   << "RateUnit=\"" << PowerUnitToString(s.RateUnit) << "\"}";
+		   << "QuantityUnit=\"" << s.QuantityUnit << "\"; " << "RateUnit=\""
+		   << PowerUnitToString(s.RateUnit) << "\"}";
 		return os;
 	}
 }

@@ -26,7 +26,8 @@ namespace erin
 
 	// TODO: create struct to hold if tag/name is deprecated
 	// struct TagWithDeprecation {string Name; bool IsDeprecated;}
-	// TODO: add aliases std::unordered_map<std::string, std::vector<TagWithDeprecation>>
+	// TODO: add aliases std::unordered_map<std::string,
+	// std::vector<TagWithDeprecation>>
 	// TODO: add in std::unordered_map<std::string, TomlType> to check types
 	//       are correct
 	// TODO: take in std::vector<std::string> to hold error messages

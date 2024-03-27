@@ -17,7 +17,8 @@ namespace erin
 		ValidationInfo const& validationInfo,
 		std::string const& tableName,
 		std::vector<std::string>& errors,
-		std::vector<std::string>& warnings)
+		std::vector<std::string>& warnings
+	)
 	{
 		std::unordered_map<std::string, InputValue> out;
 		std::unordered_set<std::string> fieldsFound{};
@@ -31,11 +32,9 @@ namespace erin
 				if (fieldsFound.contains(key))
 				{
 					std::ostringstream oss;
-					oss << "Duplicate field found '"
-						<< it->first << "' (for " << key << ")";
-					errors.push_back(
-						WriteErrorToString(tableName, oss.str())
-					);
+					oss << "Duplicate field found '" << it->first << "' (for "
+						<< key << ")";
+					errors.push_back(WriteErrorToString(tableName, oss.str()));
 					return out;
 				}
 				fieldsFound.insert(key);
@@ -56,8 +55,8 @@ namespace erin
 							if (fieldsFound.contains(key))
 							{
 								std::ostringstream oss;
-								oss << "Duplicate field found '"
-									<< it->first << "' (for " << key << ")";
+								oss << "Duplicate field found '" << it->first
+									<< "' (for " << key << ")";
 								errors.push_back(
 									WriteErrorToString(tableName, oss.str())
 								);
@@ -69,9 +68,10 @@ namespace erin
 								std::ostringstream oss{};
 								oss << "WARNING! field '" << aliasValue.Tag
 									<< "' is deprecated and will be removed "
-								  << "in a future version; use '"
+									<< "in a future version; use '"
 									<< alias.first << "' instead (value = "
-									<< (value.is_string() ? value.as_string() : "")
+									<< (value.is_string() ? value.as_string()
+														  : "")
 									<< ")";
 								warnings.push_back(
 									WriteErrorToString(tableName, oss.str())
@@ -88,18 +88,16 @@ namespace erin
 				if (!found)
 				{
 					std::ostringstream oss{};
-					oss << "WARNING! unhandled field '"
-						<< key << "' will be ignored";
-					warnings.push_back(
-						WriteErrorToString(tableName, oss.str())
+					oss << "WARNING! unhandled field '" << key
+						<< "' will be ignored";
+					warnings.push_back(WriteErrorToString(tableName, oss.str())
 					);
 					continue;
 				}
 			}
 			assert(validationInfo.TypeMap.contains(key));
 			// check types
-			InputType expectedType =
-				validationInfo.TypeMap.at(key);
+			InputType expectedType = validationInfo.TypeMap.at(key);
 			InputValue v;
 			v.Type = expectedType;
 			switch (expectedType)
@@ -107,15 +105,16 @@ namespace erin
 				case InputType::Any:
 				{
 					// NOTE: nothing to do
-				} break;
+				}
+				break;
 				case InputType::AnyString:
 				case InputType::EnumString:
 				{
 					if (!value.is_string())
 					{
 						std::ostringstream oss;
-						oss << "Expected type string for field '"
-							<< it->first << "'";
+						oss << "Expected type string for field '" << it->first
+							<< "'";
 						errors.push_back(
 							WriteErrorToString(tableName, oss.str())
 						);
@@ -138,8 +137,7 @@ namespace erin
 						if (!enumSet.contains(valAsStr))
 						{
 							std::ostringstream oss;
-							oss << "value for field '"
-								<< it->first << "' "
+							oss << "value for field '" << it->first << "' "
 								<< "is not a valid option. Valid options are:"
 								<< std::endl;
 							for (auto const& item : enumSet)
@@ -153,14 +151,15 @@ namespace erin
 						}
 					}
 					v.Value = value.as_string();
-				} break;
+				}
+				break;
 				case InputType::ArrayOfDouble:
 				{
 					if (!value.is_array())
 					{
 						std::ostringstream oss;
-						oss << "Expected type array for field '"
-							<< it->first << "'";
+						oss << "Expected type array for field '" << it->first
+							<< "'";
 						errors.push_back(
 							WriteErrorToString(tableName, oss.str())
 						);
@@ -169,7 +168,7 @@ namespace erin
 					auto const& xs = value.as_array();
 					std::vector<double> aod;
 					aod.reserve(xs.size());
-					for (size_t i=0; i < xs.size(); ++i)
+					for (size_t i = 0; i < xs.size(); ++i)
 					{
 						auto const& x = xs.at(i);
 						if (!x.is_integer() && !x.is_floating())
@@ -198,14 +197,15 @@ namespace erin
 						aod.push_back(maybeDouble.value());
 					}
 					v.Value = std::move(aod);
-				} break;
+				}
+				break;
 				case InputType::ArrayOfTuple2OfNumber:
 				{
 					if (!value.is_array())
 					{
 						std::ostringstream oss;
-						oss << "Expected type array for field '"
-							<< it->first << "'";
+						oss << "Expected type array for field '" << it->first
+							<< "'";
 						errors.push_back(
 							WriteErrorToString(tableName, oss.str())
 						);
@@ -213,7 +213,7 @@ namespace erin
 					}
 					std::vector<std::vector<double>> parentVec;
 					auto const& xs = value.as_array();
-					for (size_t i=0; i < xs.size(); ++i)
+					for (size_t i = 0; i < xs.size(); ++i)
 					{
 						auto const& x = xs[i];
 						if (!x.is_array())
@@ -273,14 +273,15 @@ namespace erin
 						parentVec.push_back(std::move(subvec));
 					}
 					v.Value = std::move(parentVec);
-				} break;
+				}
+				break;
 				case InputType::ArrayOfTuple3OfString:
 				{
 					if (!value.is_array())
 					{
 						std::ostringstream oss;
-						oss << "Expected type array for field '"
-							<< it->first << "'";
+						oss << "Expected type array for field '" << it->first
+							<< "'";
 						errors.push_back(
 							WriteErrorToString(tableName, oss.str())
 						);
@@ -288,7 +289,7 @@ namespace erin
 					}
 					std::vector<std::vector<std::string>> aos;
 					auto const& xs = value.as_array();
-					for (size_t i=0; i < xs.size(); ++i)
+					for (size_t i = 0; i < xs.size(); ++i)
 					{
 						auto const& x = xs.at(i);
 						if (!x.is_array())
@@ -316,7 +317,7 @@ namespace erin
 						}
 						aos[i] = std::vector<std::string>();
 						aos[i].reserve(3);
-						for (size_t j=0; j < ys.size(); ++j)
+						for (size_t j = 0; j < ys.size(); ++j)
 						{
 							auto const& y = ys[j];
 							if (!y.is_string())
@@ -324,7 +325,8 @@ namespace erin
 								std::ostringstream oss;
 								oss << "Expected array item at " << i
 									<< " for field '" << it->first
-									<< "' to be an array of string of length >= 3";
+									<< "' to be an array of string of length "
+									   ">= 3";
 								errors.push_back(
 									WriteErrorToString(tableName, oss.str())
 								);
@@ -337,7 +339,8 @@ namespace erin
 						}
 					}
 					v.Value = std::move(aos);
-				} break;
+				}
+				break;
 				case InputType::Integer:
 				{
 					if (!value.is_integer())
@@ -370,7 +373,8 @@ namespace erin
 						return out;
 					}
 					v.Value = static_cast<int64_t>(maybeInt.value());
-				} break;
+				}
+				break;
 				case InputType::Number:
 				{
 					if (!value.is_integer() && !value.is_floating())
@@ -395,7 +399,8 @@ namespace erin
 						return out;
 					}
 					v.Value = maybeDouble.value();
-				} break;
+				}
+				break;
 				case InputType::ArrayOfString:
 				{
 					std::vector<std::string> aos;
@@ -416,8 +421,8 @@ namespace erin
 						if (!x.is_string())
 						{
 							std::ostringstream oss;
-							oss << "Expected field '" << it->first
-								<< "' at " << i << " to be a string";
+							oss << "Expected field '" << it->first << "' at "
+								<< i << " to be a string";
 							errors.push_back(
 								WriteErrorToString(tableName, oss.str())
 							);
@@ -426,7 +431,8 @@ namespace erin
 						aos.push_back(x.as_string());
 					}
 					v.Value = std::move(aos);
-				} break;
+				}
+				break;
 				case InputType::MapFromStringToString:
 				{
 					std::unordered_map<std::string, std::string> map;
@@ -445,10 +451,8 @@ namespace erin
 						if (!item.second.is_string())
 						{
 							std::ostringstream oss;
-							oss << "expected field '"
-								<< it->first
-								<< "' at key '"
-								<< item.first
+							oss << "expected field '" << it->first
+								<< "' at key '" << item.first
 								<< "' to be a string";
 							errors.push_back(
 								WriteErrorToString(tableName, oss.str())
@@ -458,15 +462,17 @@ namespace erin
 						map[item.first] = item.second.as_string();
 					}
 					v.Value = std::move(map);
-				} break;
+				}
+				break;
 				default:
 				{
 					std::ostringstream oss;
-					oss << "unhandled type conversion for '"
-						<< it->first << "'";
+					oss << "unhandled type conversion for '" << it->first
+						<< "'";
 					WriteErrorMessage(tableName, oss.str());
 					std::exit(1);
-				} break;
+				}
+				break;
 			}
 			out[key] = std::move(v);
 		}
@@ -486,19 +492,23 @@ namespace erin
 				case InputType::EnumString:
 				{
 					iv.Value = defkv.second;
-				} break;
+				}
+				break;
 				case InputType::Integer:
 				{
 					iv.Value = std::stoll(defkv.second);
-				} break;
+				}
+				break;
 				case InputType::Number:
 				{
 					iv.Value = std::stod(defkv.second);
-				} break;
+				}
+				break;
 				default:
 				{
 					WriteErrorMessage(
-						tableName, "Parse error: unhandled datatype for default");
+						tableName, "Parse error: unhandled datatype for default"
+					);
 					std::exit(1);
 				}
 			}
@@ -511,14 +521,11 @@ namespace erin
 			{
 				std::ostringstream oss;
 				oss << "missing required field '" << field << "'";
-				errors.push_back(
-					WriteErrorToString(tableName, oss.str())
-				);
+				errors.push_back(WriteErrorToString(tableName, oss.str()));
 			}
 		}
 		return out;
 	}
-
 
 	// TODO: pass in a mutable vector of error strings we can push to
 	// in order to decouple printing from here.
@@ -662,8 +669,8 @@ namespace erin
 			else
 			{
 				std::cout << "[" << tableName << "] " << fieldName
-						  << " value is not a number "
-						  << "'" << table.at(fieldName).as_string() << "'"
+						  << " value is not a number " << "'"
+						  << table.at(fieldName).as_string() << "'"
 						  << std::endl;
 			}
 		}
@@ -687,8 +694,8 @@ namespace erin
 			else
 			{
 				std::cout << "[" << tableName << "] " << fieldName
-						  << " value is not a number "
-						  << "'" << table.at(fieldName).as_string() << "'"
+						  << " value is not a number " << "'"
+						  << table.at(fieldName).as_string() << "'"
 						  << std::endl;
 			}
 		}

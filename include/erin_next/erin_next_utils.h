@@ -103,7 +103,7 @@ namespace erin
 
 	double
 	TimeInSecondsToHours(uint64_t time_seconds);
-	
+
 	void
 	WriteErrorMessage(std::string const& tag, std::string const& message);
 

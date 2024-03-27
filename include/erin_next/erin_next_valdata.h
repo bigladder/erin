@@ -60,7 +60,8 @@ namespace erin
 			std::vector<std::vector<std::string>>,
 			// TODO: consider std::vector<std::array<double,2>> instead
 			std::vector<std::vector<double>>,
-			std::unordered_map<std::string, std::string>> Value;
+			std::unordered_map<std::string, std::string>>
+			Value;
 	};
 
 	enum class InputSection
@@ -111,9 +112,11 @@ namespace erin
 		std::unordered_map<std::string, InputType> TypeMap;
 		std::unordered_set<std::string> RequiredFields;
 		std::unordered_set<std::string> OptionalFields;
-		std::unordered_map<std::string, std::unordered_set<std::string>> EnumMap;
+		std::unordered_map<std::string, std::unordered_set<std::string>>
+			EnumMap;
 		std::unordered_map<std::string, std::string> Defaults;
-		std::unordered_map<std::string, std::vector<TagWithDeprication>> Aliases;
+		std::unordered_map<std::string, std::vector<TagWithDeprication>>
+			Aliases;
 	};
 
 	struct ComponentValidationMap
@@ -149,6 +152,6 @@ namespace erin
 		ValidationInfo Network;
 		ValidationInfo Scenario;
 	};
-  
+
 }
 #endif

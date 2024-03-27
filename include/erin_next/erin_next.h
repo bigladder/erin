@@ -397,8 +397,7 @@ namespace erin
 
 	// FUNCTIONS
 
-	inline
-	flow_t
+	inline flow_t
 	UtilSafeAdd(flow_t a, flow_t b);
 
 	std::vector<TimeAndAmount>
@@ -655,7 +654,10 @@ namespace erin
 	);
 
 	ComponentIdAndWasteConnection
-	Model_AddScheduleBasedSource(Model& m, std::vector<TimeAndAmount> const& xs);
+	Model_AddScheduleBasedSource(
+		Model& m,
+		std::vector<TimeAndAmount> const& xs
+	);
 
 	ComponentIdAndWasteConnection
 	Model_AddScheduleBasedSource(
@@ -831,7 +833,8 @@ namespace erin
 		SimulationState& ss,
 		std::vector<size_t> const& inflowConns,
 		flow_t remainingRequest_W,
-		bool logNewActivity);
+		bool logNewActivity
+	);
 
 	void
 	RunMuxBackward(Model& model, SimulationState& ss, size_t compIdx);
@@ -841,7 +844,8 @@ namespace erin
 		Model& model,
 		SimulationState& ss,
 		size_t muxIdx,
-		bool isUnavailable);
+		bool isUnavailable
+	);
 
 	void
 	RunStoreBackward(

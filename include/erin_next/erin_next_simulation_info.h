@@ -39,8 +39,7 @@ namespace erin
 	};
 
 	std::optional<SimulationInfo>
-	ParseSimulationInfo(
-		std::unordered_map<std::string, InputValue> const& table
+	ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table
 	);
 
 	bool

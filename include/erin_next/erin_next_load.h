@@ -42,7 +42,8 @@ namespace erin
 	ParseLoads(
 		toml::table const& table,
 		ValidationInfo const& explicitValidation,
-		ValidationInfo const& fileValidation);
+		ValidationInfo const& fileValidation
+	);
 
 	std::ostream&
 	operator<<(std::ostream& os, Load const& load);

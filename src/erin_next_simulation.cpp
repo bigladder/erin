@@ -194,94 +194,100 @@ namespace erin
 							<< ", use load: " << s.LoadMap.Tags[keyValue.second]
 							<< std::endl;
 					}
-				} break;
+				}
+				break;
 				case ComponentType::ScheduleBasedSourceType:
 				{
 					ScheduleBasedSource const& sbs =
 						m.ScheduledSrcs[m.ComponentMap.Idx[i]];
 					for (auto const& keyValue : sbs.ScenarioIdToSourceId)
 					{
-						std::cout
-							<< "-- for scenario: "
-							<< s.ScenarioMap.Tags[keyValue.first]
-							<< ", use supply: " << s.LoadMap.Tags[keyValue.second]
-							<< std::endl;
+						std::cout << "-- for scenario: "
+								  << s.ScenarioMap.Tags[keyValue.first]
+								  << ", use supply: "
+								  << s.LoadMap.Tags[keyValue.second]
+								  << std::endl;
 					}
 					std::cout << "-- max outflow (W): "
-						<< (sbs.MaxOutflow_W == max_flow_W
-							? "unlimited"
-							: std::to_string(sbs.MaxOutflow_W))
-						<< std::endl;
-				} break;
+							  << (sbs.MaxOutflow_W == max_flow_W
+									  ? "unlimited"
+									  : std::to_string(sbs.MaxOutflow_W))
+							  << std::endl;
+				}
+				break;
 				case ComponentType::ConstantEfficiencyConverterType:
 				{
 					ConstantEfficiencyConverter const& cec =
 						m.ConstEffConvs[m.ComponentMap.Idx[i]];
-					std::cout << "-- efficiency: "
-						<< cec.Efficiency * 100.0 << "%" << std::endl;
+					std::cout << "-- efficiency: " << cec.Efficiency * 100.0
+							  << "%" << std::endl;
 					std::cout << "-- max outflow (W): "
-						<< (cec.MaxOutflow_W == max_flow_W
-							? "unlimited"
-							: std::to_string(cec.MaxOutflow_W))
-						<< std::endl;
+							  << (cec.MaxOutflow_W == max_flow_W
+									  ? "unlimited"
+									  : std::to_string(cec.MaxOutflow_W))
+							  << std::endl;
 					std::cout << "-- max lossflow (W): "
-						<< (cec.MaxLossflow_W == max_flow_W
-							? "unlimited"
-							: std::to_string(cec.MaxLossflow_W))
-						<< std::endl;
-				} break;
+							  << (cec.MaxLossflow_W == max_flow_W
+									  ? "unlimited"
+									  : std::to_string(cec.MaxLossflow_W))
+							  << std::endl;
+				}
+				break;
 				case ComponentType::MoverType:
 				{
-					Mover const& mov =
-						m.Movers[m.ComponentMap.Idx[i]];
+					Mover const& mov = m.Movers[m.ComponentMap.Idx[i]];
 					std::cout << "-- cop: " << mov.COP << std::endl;
 					std::cout << "-- max outflow (W): "
-						<< (mov.MaxOutflow_W == max_flow_W
-							? "unlimited"
-							: std::to_string(mov.MaxOutflow_W))
-						<< std::endl;
-				} break;
+							  << (mov.MaxOutflow_W == max_flow_W
+									  ? "unlimited"
+									  : std::to_string(mov.MaxOutflow_W))
+							  << std::endl;
+				}
+				break;
 				case ComponentType::StoreType:
 				{
-					Store const& store =
-						m.Stores[m.ComponentMap.Idx[i]];
-					std::cout << "-- capacity (J): "
-						<< store.Capacity_J << std::endl;
+					Store const& store = m.Stores[m.ComponentMap.Idx[i]];
+					std::cout << "-- capacity (J): " << store.Capacity_J
+							  << std::endl;
 					std::cout << "-- initial SOC: "
-						<< (static_cast<double>(store.InitialStorage_J)
-							/ static_cast<double>(store.Capacity_J))
-						<< std::endl;
-					std::cout << "-- initial capacity (J): "
-						<< store.Capacity_J << std::endl;
+							  << (static_cast<double>(store.InitialStorage_J)
+								  / static_cast<double>(store.Capacity_J))
+							  << std::endl;
+					std::cout << "-- initial capacity (J): " << store.Capacity_J
+							  << std::endl;
 					std::cout << "-- SOC to start charging: "
-						<< (static_cast<double>(store.ChargeAmount_J)
-							/ static_cast<double>(store.Capacity_J))
+							  << (static_cast<double>(store.ChargeAmount_J)
+								  / static_cast<double>(store.Capacity_J))
+							  << std::endl;
+					std::cout
+						<< "-- max charge rate (W): " << store.MaxChargeRate_W
 						<< std::endl;
-					std::cout << "-- max charge rate (W): "
-						<< store.MaxChargeRate_W << std::endl;
 					std::cout << "-- max discharge rate (W): "
-						<< store.MaxDischargeRate_W << std::endl;
+							  << store.MaxDischargeRate_W << std::endl;
 					std::cout << "-- max outflow (W): "
-						<< (store.MaxOutflow_W == max_flow_W
-							? "unlimited"
-							: std::to_string(store.MaxOutflow_W))
-						<< std::endl;
+							  << (store.MaxOutflow_W == max_flow_W
+									  ? "unlimited"
+									  : std::to_string(store.MaxOutflow_W))
+							  << std::endl;
 					std::cout << "-- roundtrip efficiency: "
-						<< store.RoundTripEfficiency * 100.0
-						<< "%" << std::endl;
-				} break;
+							  << store.RoundTripEfficiency * 100.0 << "%"
+							  << std::endl;
+				}
+				break;
 				case ComponentType::PassThroughType:
 				{
 					PassThrough const& pt = m.PassThroughs[i];
 					std::cout << "-- max outflow (W): "
-						<< (pt.MaxOutflow_W == max_flow_W
-							? "unlimited"
-							: std::to_string(pt.MaxOutflow_W))
-						<< std::endl;
-				} break;
+							  << (pt.MaxOutflow_W == max_flow_W
+									  ? "unlimited"
+									  : std::to_string(pt.MaxOutflow_W))
+							  << std::endl;
+				}
+				break;
 				default:
 				{
-				} break;
+				}
+				break;
 			}
 			for (size_t compFailModeIdx = 0;
 				 compFailModeIdx < s.ComponentFailureModes.ComponentIds.size();
@@ -542,13 +548,15 @@ namespace erin
 	Simulation_ParseSimulationInfo(
 		Simulation& s,
 		toml::value const& v,
-		ValidationInfo const& validationInfo)
+		ValidationInfo const& validationInfo
+	)
 	{
 		if (!v.contains("simulation_info"))
 		{
 			WriteErrorMessage(
 				"simulation_info",
-				"Required section [simulation_info] not found");
+				"Required section [simulation_info] not found"
+			);
 			return Result::Failure;
 		}
 		toml::value const& simInfoValue = v.at("simulation_info");
@@ -556,7 +564,8 @@ namespace erin
 		{
 			WriteErrorMessage(
 				"simulation_info",
-				"Required section [simulation_info] is not a table");
+				"Required section [simulation_info] is not a table"
+			);
 			return Result::Failure;
 		}
 		toml::table const& simInfoTable = simInfoValue.as_table();
@@ -568,7 +577,8 @@ namespace erin
 				validationInfo,
 				"simulation_info",
 				errors,
-				warnings);
+				warnings
+			);
 		if (warnings.size() > 0)
 		{
 			std::cout << "WARNINGS:" << std::endl;
@@ -579,7 +589,7 @@ namespace erin
 		}
 		if (errors.size() > 0)
 		{
-			std::cout << "ERRORS:"  << std::endl;
+			std::cout << "ERRORS:" << std::endl;
 			for (auto const& err : errors)
 			{
 				WriteErrorMessage("simulation_info", err);
@@ -600,13 +610,13 @@ namespace erin
 		Simulation& s,
 		toml::value const& v,
 		ValidationInfo const& explicitValidation,
-		ValidationInfo const& fileValidation)
+		ValidationInfo const& fileValidation
+	)
 	{
 		toml::value const& loadTable = v.at("loads");
 		auto maybeLoads = ParseLoads(
-			loadTable.as_table(),
-			explicitValidation,
-			fileValidation);
+			loadTable.as_table(), explicitValidation, fileValidation
+		);
 		if (!maybeLoads.has_value())
 		{
 			return Result::Failure;
@@ -1088,11 +1098,14 @@ namespace erin
 	Simulation_ParseComponents(
 		Simulation& s,
 		toml::value const& v,
-		ComponentValidationMap const& compValidations)
+		ComponentValidationMap const& compValidations
+	)
 	{
 		if (v.contains("components") && v.at("components").is_table())
 		{
-			return ParseComponents(s, v.at("components").as_table(), compValidations);
+			return ParseComponents(
+				s, v.at("components").as_table(), compValidations
+			);
 		}
 		WriteErrorMessage("<top>", "required field 'components' not found");
 		return Result::Failure;
@@ -1102,15 +1115,15 @@ namespace erin
 	Simulation_ParseDistributions(
 		Simulation& s,
 		toml::value const& v,
-		DistributionValidationMap const& dvm)
+		DistributionValidationMap const& dvm
+	)
 	{
 		if (v.contains("dist") && v.at("dist").is_table())
 		{
 			// TODO: have ParseDistributions return a Result
 			return ParseDistributions(
-				s.TheModel.DistSys,
-				v.at("dist").as_table(),
-				dvm);
+				s.TheModel.DistSys, v.at("dist").as_table(), dvm
+			);
 		}
 		std::cout << "required field 'dist' not found" << std::endl;
 		return Result::Failure;
@@ -1211,7 +1224,8 @@ namespace erin
 	std::optional<Simulation>
 	Simulation_ReadFromToml(
 		toml::value const& v,
-		InputValidationMap const& validationInfo)
+		InputValidationMap const& validationInfo
+	)
 	{
 		Simulation s = {};
 		Simulation_Init(s);
@@ -1222,16 +1236,18 @@ namespace erin
 			WriteErrorMessage("simulation_info", "problem parsing...");
 			return {};
 		}
-		auto loadsResult =
-			Simulation_ParseLoads(s, v,
-				validationInfo.Load_01Explicit, validationInfo.Load_02FileBased);
+		auto loadsResult = Simulation_ParseLoads(
+			s,
+			v,
+			validationInfo.Load_01Explicit,
+			validationInfo.Load_02FileBased
+		);
 		if (loadsResult == Result::Failure)
 		{
 			WriteErrorMessage("loads", "problem parsing...");
 			return {};
 		}
-		auto compResult =
-			Simulation_ParseComponents(s, v, validationInfo.Comp);
+		auto compResult = Simulation_ParseComponents(s, v, validationInfo.Comp);
 		if (compResult == Result::Failure)
 		{
 			WriteErrorMessage("components", "problem parsing...");
@@ -1380,7 +1396,8 @@ namespace erin
 		std::sort(connTags.begin(), connTags.end());
 		for (auto const& connTag : connTags)
 		{
-			for (size_t connId = 0; connId < s.TheModel.Connections.size(); ++connId)
+			for (size_t connId = 0; connId < s.TheModel.Connections.size();
+				 ++connId)
 			{
 				if (connTag == originalConnTags[connId])
 				{
@@ -1403,7 +1420,8 @@ namespace erin
 		result.reserve(numScenarios);
 		for (std::string const& tag : scenarioTags)
 		{
-			for (size_t scenarioId = 0; scenarioId < s.ScenarioMap.Tags.size(); ++scenarioId)
+			for (size_t scenarioId = 0; scenarioId < s.ScenarioMap.Tags.size();
+				 ++scenarioId)
 			{
 				if (tag == s.ScenarioMap.Tags[scenarioId])
 				{
@@ -1451,8 +1469,7 @@ namespace erin
 		{
 			for (size_t compId = 0; compId < numComps; ++compId)
 			{
-				ComponentType type =
-					s.TheModel.ComponentMap.CompType[compId];
+				ComponentType type = s.TheModel.ComponentMap.CompType[compId];
 				size_t idx = s.TheModel.ComponentMap.Idx[compId];
 				if (type == ComponentType::StoreType && idx == storeId)
 				{
@@ -1526,12 +1543,11 @@ namespace erin
 	DoubleToString(double value, unsigned int precision)
 	{
 		double mult = std::pow(10.0, static_cast<double>(precision));
-		double fractionPart =
-				std::round(mult*(value - std::floor(value)));
+		double fractionPart = std::round(mult * (value - std::floor(value)));
 		return std::to_string(static_cast<uint32_t>(std::trunc(value)))
 			+ (fractionPart > 0.0
-				? ("." + std::to_string(static_cast<uint32_t>(fractionPart)))
-				: "");
+				   ? ("." + std::to_string(static_cast<uint32_t>(fractionPart)))
+				   : "");
 	}
 
 	void
@@ -1562,22 +1578,19 @@ namespace erin
 			{
 				double actual_kW =
 					static_cast<double>(r.Flows[i].Actual_W) / W_per_kW;
-				out << ","
-					<< DoubleToString(actual_kW, 1);
+				out << "," << DoubleToString(actual_kW, 1);
 			}
 			for (size_t const& i : connOrder)
 			{
 				double req_kW =
 					static_cast<double>(r.Flows[i].Requested_W) / W_per_kW;
-				out << ","
-					<< DoubleToString(req_kW, 1);
+				out << "," << DoubleToString(req_kW, 1);
 			}
 			for (size_t const& i : connOrder)
 			{
 				double avail_kW =
 					static_cast<double>(r.Flows[i].Available_W) / W_per_kW;
-				out << ","
-					<< DoubleToString(avail_kW, 1);
+				out << "," << DoubleToString(avail_kW, 1);
 			}
 			// TODO: check StorageAmounts and m.Stores[i].Capacity; should be J
 			// TODO: append units to these variables for clarity
@@ -1711,7 +1724,8 @@ namespace erin
 		{
 			if (loads[sblIdx].ScenarioIdToSourceId.contains(scenarioIdx))
 			{
-				auto loadId = loads[sblIdx].ScenarioIdToSourceId.at(scenarioIdx);
+				auto loadId =
+					loads[sblIdx].ScenarioIdToSourceId.at(scenarioIdx);
 				std::vector<TimeAndAmount> schedule{};
 				size_t numEntries = loadMap.Loads[loadId].size();
 				schedule.reserve(numEntries);
@@ -1913,8 +1927,8 @@ namespace erin
 					default:
 					{
 						WriteErrorMessage(
-							"fragility_curve",
-							"unhandled fragility curve type");
+							"fragility_curve", "unhandled fragility curve type"
+						);
 						std::exit(1);
 					}
 					break;
@@ -1939,13 +1953,14 @@ namespace erin
 					// including any repair distribution if we have
 					// one.
 					size_t compId = s.ComponentFragilities.ComponentIds[cfmIdx];
-					// TODO: make the below printout optional; e.g., if verbose flag is true
-					std::cout << "... FAILED: "
-						<< s.TheModel.ComponentMap.Tag[compId]
+					// TODO: make the below printout optional; e.g., if verbose
+					// flag is true
+					std::cout
+						<< "... FAILED: " << s.TheModel.ComponentMap.Tag[compId]
 						<< " (cause: "
-						<< s.FragilityModes.Tags[s.ComponentFragilities.FragilityModeIds[cfmIdx]]
-						<< ")"
-						<< std::endl;
+						<< s.FragilityModes.Tags[s.ComponentFragilities
+													 .FragilityModeIds[cfmIdx]]
+						<< ")" << std::endl;
 					// does the component have a reliability signal?
 					bool hasReliabilityAlready = false;
 					size_t reliabilityId = 0;
@@ -2017,19 +2032,12 @@ namespace erin
 					  << std::endl;
 			return;
 		}
-		stats << "scenario id,"
-			  << "occurrence number,"
-			  << "duration (h),"
-			  << "total source (kJ),"
-			  << "total load (kJ),"
-			  << "total storage (kJ),"
-			  << "total waste (kJ),"
+		stats << "scenario id," << "occurrence number," << "duration (h),"
+			  << "total source (kJ)," << "total load (kJ),"
+			  << "total storage (kJ)," << "total waste (kJ),"
 			  << "energy balance (source-(load+storage+waste)) (kJ),"
-			  << "site efficiency,"
-			  << "uptime (h),"
-			  << "downtime (h),"
-			  << "load not served (kJ),"
-			  << "energy robustness [ER],"
+			  << "site efficiency," << "uptime (h)," << "downtime (h),"
+			  << "load not served (kJ)," << "energy robustness [ER],"
 			  << "energy availability [EA],"
 			  << "max single event downtime [MaxSEDT] (h),"
 			  << "global availability";
@@ -2437,9 +2445,7 @@ namespace erin
 					  << std::endl;
 			return;
 		}
-		WriteEventFileHeader(
-			out, s.TheModel, connOrder, storeOrder, compOrder
-		);
+		WriteEventFileHeader(out, s.TheModel, connOrder, storeOrder, compOrder);
 		std::vector<ScenarioOccurrenceStats> occurrenceStats;
 		for (size_t scenIdx : scenarioOrder)
 		{

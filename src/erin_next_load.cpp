@@ -38,14 +38,14 @@ namespace erin
 		std::vector<TimeAndAmount> timeRatePairs;
 		if (table.contains("time_rate_pairs"))
 		{
-			auto const& timeUnitStr = std::get<std::string>(table.at("time_unit").Value);
+			auto const& timeUnitStr =
+				std::get<std::string>(table.at("time_unit").Value);
 			{
 				auto maybe = TagToTimeUnit(timeUnitStr);
 				if (!maybe.has_value())
 				{
 					WriteErrorMessage(
-						tableFullName,
-						"Unhandled 'time_unit': " + timeUnitStr
+						tableFullName, "Unhandled 'time_unit': " + timeUnitStr
 					);
 					return {};
 				}
@@ -65,14 +65,13 @@ namespace erin
 				}
 				rateUnit = maybe.value();
 			}
-			timeRatePairs =
-				ConvertToTimeAndAmounts(
-					std::get<std::vector<std::vector<double>>>(
-						table.at("time_rate_pairs").Value
-					),
-					Time_ToSeconds(1.0, timeUnit),
-					Power_ToWatt(1.0, rateUnit)
-				);
+			timeRatePairs = ConvertToTimeAndAmounts(
+				std::get<std::vector<std::vector<double>>>(
+					table.at("time_rate_pairs").Value
+				),
+				Time_ToSeconds(1.0, timeUnit),
+				Power_ToWatt(1.0, rateUnit)
+			);
 		}
 		else if (table.contains("csv_file"))
 		{
@@ -172,7 +171,8 @@ namespace erin
 	std::optional<Load>
 	ParseSingleLoadExplicit(
 		std::unordered_map<std::string, InputValue> const& table,
-		std::string const& tag)
+		std::string const& tag
+	)
 	{
 		std::string tableFullName = "loads." + tag;
 		TimeUnit timeUnit = TimeUnit::Second;
@@ -200,19 +200,19 @@ namespace erin
 			if (!maybe.has_value())
 			{
 				WriteErrorMessage(
-					tableFullName,
-					"unhandled rate_unit '" + rateUnitStr + "'"
+					tableFullName, "unhandled rate_unit '" + rateUnitStr + "'"
 				);
 				return {};
 			}
 			rateUnit = maybe.value();
 		}
-		auto timeRatePairs =
-			ConvertToTimeAndAmounts(
-				std::get<std::vector<std::vector<double>>>(table.at("time_rate_pairs").Value),
-				Time_ToSeconds(1.0, timeUnit),
-				Power_ToWatt(1.0, rateUnit)
-			);
+		auto timeRatePairs = ConvertToTimeAndAmounts(
+			std::get<std::vector<std::vector<double>>>(
+				table.at("time_rate_pairs").Value
+			),
+			Time_ToSeconds(1.0, timeUnit),
+			Power_ToWatt(1.0, rateUnit)
+		);
 		Load load{
 			.Tag = tag,
 			.TimeAndLoads = std::move(timeRatePairs),
@@ -223,14 +223,14 @@ namespace erin
 	std::optional<Load>
 	ParseSingleLoadFileLoad(
 		std::unordered_map<std::string, InputValue> const& table,
-		std::string const& tag)
+		std::string const& tag
+	)
 	{
 		std::string tableFullName = "loads." + tag;
 		TimeUnit timeUnit = TimeUnit::Second;
 		PowerUnit rateUnit = PowerUnit::Watt;
 		std::vector<TimeAndAmount> timeRatePairs;
-		auto csvFileName =
-			std::get<std::string>(table.at("csv_file").Value);
+		auto csvFileName = std::get<std::string>(table.at("csv_file").Value);
 		std::ifstream inputDataFile{};
 		inputDataFile.open(csvFileName);
 		if (!inputDataFile.good())
@@ -302,9 +302,9 @@ namespace erin
 			}
 			TimeAndAmount ta{};
 			ta.Time_s = Time_ToSeconds(std::stod(pair[0]), timeUnit);
-			ta.Amount_W = static_cast<uint32_t>(
-				Power_ToWatt(std::stod(pair[1]), rateUnit)
-			);
+			ta.Amount_W =
+				static_cast<uint32_t>(Power_ToWatt(std::stod(pair[1]), rateUnit)
+				);
 			trps.push_back(ta);
 		}
 		inputDataFile.close();
@@ -319,7 +319,8 @@ namespace erin
 	ParseLoads(
 		toml::table const& table,
 		ValidationInfo const& explicitValidation,
-		ValidationInfo const& fileValidation)
+		ValidationInfo const& fileValidation
+	)
 	{
 		std::vector<Load> loads{};
 		loads.reserve(table.size());
@@ -332,13 +333,17 @@ namespace erin
 				toml::table const& singleLoad = it->second.as_table();
 				std::vector<std::string> errors01;
 				std::vector<std::string> warnings01;
-				auto const& explicitLoadTable =
-					TOMLTable_ParseWithValidation(
-						singleLoad, explicitValidation, tableName, errors01, warnings01);
+				auto const& explicitLoadTable = TOMLTable_ParseWithValidation(
+					singleLoad,
+					explicitValidation,
+					tableName,
+					errors01,
+					warnings01
+				);
 				std::optional<Load> maybeLoad = {};
 				if (errors01.size() == 0)
 				{
-					maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag); 
+					maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag);
 					if (!maybeLoad.has_value())
 					{
 						WriteErrorMessage(tableName, "unable to load");
@@ -356,12 +361,18 @@ namespace erin
 				{
 					std::vector<std::string> errors02;
 					std::vector<std::string> warnings02;
-					auto const& fileLoadTable =
-						TOMLTable_ParseWithValidation(
-							singleLoad, fileValidation, tableName, errors02, warnings02);
+					auto const& fileLoadTable = TOMLTable_ParseWithValidation(
+						singleLoad,
+						fileValidation,
+						tableName,
+						errors02,
+						warnings02
+					);
 					if (errors02.size() > 0)
 					{
-						WriteErrorMessage(tableName, "unable to load explicitly or by file");
+						WriteErrorMessage(
+							tableName, "unable to load explicitly or by file"
+						);
 						for (auto const& err : errors01)
 						{
 							WriteErrorMessage(tableName, err);
@@ -408,9 +419,7 @@ namespace erin
 	std::ostream&
 	operator<<(std::ostream& os, Load const& load)
 	{
-		os << "Load{"
-		   << "Tag=\"" << load.Tag << "\"; "
-		   << "TimeAndLoads=[";
+		os << "Load{" << "Tag=\"" << load.Tag << "\"; " << "TimeAndLoads=[";
 		for (auto it = load.TimeAndLoads.cbegin();
 			 it != load.TimeAndLoads.cend();
 			 ++it)

@@ -59,7 +59,8 @@ namespace erin
 					errors,
 					warnings
 				);
-			} break;
+			}
+			break;
 			case ComponentType::ConstantLoadType:
 			{
 				input = TOMLTable_ParseWithValidation(
@@ -69,7 +70,8 @@ namespace erin
 					errors,
 					warnings
 				);
-			} break;
+			}
+			break;
 			case ComponentType::ConstantSourceType:
 			{
 				input = TOMLTable_ParseWithValidation(
@@ -79,17 +81,15 @@ namespace erin
 					errors,
 					warnings
 				);
-			} break;
+			}
+			break;
 			case ComponentType::MuxType:
 			{
 				input = TOMLTable_ParseWithValidation(
-					table,
-					compValids.Mux,
-					fullTableName,
-					errors,
-					warnings
+					table, compValids.Mux, fullTableName, errors, warnings
 				);
-			} break;
+			}
+			break;
 			case ComponentType::PassThroughType:
 			{
 				input = TOMLTable_ParseWithValidation(
@@ -99,7 +99,8 @@ namespace erin
 					errors,
 					warnings
 				);
-			} break;
+			}
+			break;
 			case ComponentType::ScheduleBasedLoadType:
 			{
 				input = TOMLTable_ParseWithValidation(
@@ -109,7 +110,8 @@ namespace erin
 					errors,
 					warnings
 				);
-			} break;
+			}
+			break;
 			case ComponentType::ScheduleBasedSourceType:
 			{
 				input = TOMLTable_ParseWithValidation(
@@ -119,34 +121,28 @@ namespace erin
 					errors,
 					warnings
 				);
-			} break;
+			}
+			break;
 			case ComponentType::StoreType:
 			{
 				input = TOMLTable_ParseWithValidation(
-					table,
-					compValids.Store,
-					fullTableName,
-					errors,
-					warnings
+					table, compValids.Store, fullTableName, errors, warnings
 				);
-			} break;
+			}
+			break;
 			case ComponentType::MoverType:
 			{
 				input = TOMLTable_ParseWithValidation(
-					table,
-					compValids.Mover,
-					fullTableName,
-					errors,
-					warnings
+					table, compValids.Mover, fullTableName, errors, warnings
 				);
-			} break;
+			}
+			break;
 			default:
 			{
-				WriteErrorMessage(
-					fullTableName,
-					"Unhandled component type");
+				WriteErrorMessage(fullTableName, "Unhandled component type");
 				std::exit(1);
-			} break;
+			}
+			break;
 		}
 		if (errors.size() > 0)
 		{
@@ -236,7 +232,8 @@ namespace erin
 				id = Model_AddConstantSource(
 					s.TheModel, maxAvailable, outflowId, tag
 				);
-			} break;
+			}
+			break;
 			case ComponentType::ScheduleBasedLoadType:
 			{
 				if (!table.contains("loads_by_scenario"))
@@ -275,10 +272,12 @@ namespace erin
 						}
 						else
 						{
-							// TODO: pass in warnings and error std::vector<std::string>
+							// TODO: pass in warnings and error
+							// std::vector<std::string>
 							std::ostringstream oss;
 							oss << "missing supply for tag '" << loadTag << "'";
-							std::cout << WriteErrorToString(tag, oss.str()) << std::endl;
+							std::cout << WriteErrorToString(tag, oss.str())
+									  << std::endl;
 							return Result::Failure;
 						}
 					}
@@ -287,7 +286,8 @@ namespace erin
 				id = Model_AddScheduleBasedLoad(
 					s.TheModel, emptyLoads, scenarioIdToLoadId, inflowId, tag
 				);
-			} break;
+			}
+			break;
 			case ComponentType::ScheduleBasedSourceType:
 			{
 				std::unordered_map<std::string, std::string> const& sbs =
@@ -299,22 +299,23 @@ namespace erin
 				{
 					std::string const& scenarioTag = it->first;
 					size_t scenarioId =
-					Simulation_RegisterScenario(s, scenarioTag);
+						Simulation_RegisterScenario(s, scenarioTag);
 					std::string const& loadTag = it->second;
 					std::optional<size_t> loadId =
 						Simulation_GetLoadIdByTag(s, loadTag);
 					if (loadId.has_value())
 					{
-						scenarioIdToSupplyId.insert(
-							{scenarioId, loadId.value()}
+						scenarioIdToSupplyId.insert({scenarioId, loadId.value()}
 						);
 					}
 					else
 					{
-						// TODO: pass in warnings and error std::vector<std::string>
+						// TODO: pass in warnings and error
+						// std::vector<std::string>
 						std::ostringstream oss;
 						oss << "missing supply for tag '" << loadTag << "'";
-						std::cout << WriteErrorToString(tag, oss.str()) << std::endl;
+						std::cout << WriteErrorToString(tag, oss.str())
+								  << std::endl;
 						return Result::Failure;
 					}
 				}
@@ -333,17 +334,14 @@ namespace erin
 				{
 					double rawMaxOutflow =
 						std::get<double>(input.at("max_outflow").Value);
-					flow_t maxOutflow_W =
-						static_cast<flow_t>(
-							Power_ToWatt(
-								rawMaxOutflow,
-								rateUnit
-							)
-						);
-					s.TheModel.ScheduledSrcs[s.TheModel.ComponentMap.Idx[id]].MaxOutflow_W =
-						maxOutflow_W;
+					flow_t maxOutflow_W = static_cast<flow_t>(
+						Power_ToWatt(rawMaxOutflow, rateUnit)
+					);
+					s.TheModel.ScheduledSrcs[s.TheModel.ComponentMap.Idx[id]]
+						.MaxOutflow_W = maxOutflow_W;
 				}
-			} break;
+			}
+			break;
 			case ComponentType::MuxType:
 			{
 				auto numInflowsTemp =
@@ -353,16 +351,14 @@ namespace erin
 				if (numInflowsTemp <= 0)
 				{
 					WriteErrorMessage(
-						fullTableName,
-						"num_inflows must be a positive integer"
+						fullTableName, "num_inflows must be a positive integer"
 					);
 					return Result::Failure;
 				}
 				if (numOutflowsTemp <= 0)
 				{
 					WriteErrorMessage(
-						fullTableName,
-						"num_outflows must be a positive integer"
+						fullTableName, "num_outflows must be a positive integer"
 					);
 					return Result::Failure;
 				}
@@ -380,11 +376,7 @@ namespace erin
 					return Result::Failure;
 				}
 				id = Model_AddMux(
-					s.TheModel,
-					numInflows,
-					numOutflows,
-					outflowId,
-					tag
+					s.TheModel, numInflows, numOutflows, outflowId, tag
 				);
 				if (input.contains("max_outflows"))
 				{
@@ -395,20 +387,20 @@ namespace erin
 						);
 					for (size_t i = 0; i < numOutflows; ++i)
 					{
-						maxOutflows_W[i] =
-							static_cast<flow_t>(
-								Power_ToWatt(maxOutflowsRaw[i], rateUnit));
+						maxOutflows_W[i] = static_cast<flow_t>(
+							Power_ToWatt(maxOutflowsRaw[i], rateUnit)
+						);
 					}
-					s.TheModel.Muxes[s.TheModel.ComponentMap.Idx[id]].MaxOutflows_W =
-						std::move(maxOutflows_W);
+					s.TheModel.Muxes[s.TheModel.ComponentMap.Idx[id]]
+						.MaxOutflows_W = std::move(maxOutflows_W);
 				}
-			} break;
+			}
+			break;
 			case ComponentType::ConstantEfficiencyConverterType:
 			{
 				PowerUnit localRateUnit = rateUnit;
-				double efficiency = std::get<double>(
-					input.at("constant_efficiency").Value
-				);
+				double efficiency =
+					std::get<double>(input.at("constant_efficiency").Value);
 				if (efficiency <= 0.0)
 				{
 					WriteErrorMessage(
@@ -437,8 +429,7 @@ namespace erin
 				{
 					std::string localRateUnitStr =
 						std::get<std::string>(input.at("rate_unit").Value);
-					auto maybeRateUnit =
-						TagToPowerUnit(localRateUnitStr);
+					auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
 					if (!maybeRateUnit.has_value())
 					{
 						WriteErrorMessage(
@@ -455,8 +446,7 @@ namespace erin
 						std::get<double>(input.at("max_outflow").Value),
 						localRateUnit
 					);
-					size_t constEffIdx =
-						s.TheModel.ComponentMap.Idx[id];
+					size_t constEffIdx = s.TheModel.ComponentMap.Idx[id];
 					s.TheModel.ConstEffConvs[constEffIdx].MaxOutflow_W =
 						static_cast<flow_t>(maxOutflow_W);
 				}
@@ -466,12 +456,12 @@ namespace erin
 						std::get<double>(input.at("max_lossflow").Value),
 						localRateUnit
 					);
-					size_t constEffIdx =
-						s.TheModel.ComponentMap.Idx[id];
+					size_t constEffIdx = s.TheModel.ComponentMap.Idx[id];
 					s.TheModel.ConstEffConvs[constEffIdx].MaxLossflow_W =
 						static_cast<flow_t>(maxLossflow_W);
 				}
-			} break;
+			}
+			break;
 			case ComponentType::PassThroughType:
 			{
 				if (inflowId != outflowId)
@@ -487,14 +477,14 @@ namespace erin
 				{
 					double rawMaxOutflow =
 						std::get<double>(input.at("max_outflow").Value);
-					flow_t maxOutflow_W =
-						static_cast<flow_t>(
-							Power_ToWatt(rawMaxOutflow, rateUnit)
-						);
-					s.TheModel.PassThroughs[s.TheModel.ComponentMap.Idx[id]].MaxOutflow_W =
-						maxOutflow_W;
+					flow_t maxOutflow_W = static_cast<flow_t>(
+						Power_ToWatt(rawMaxOutflow, rateUnit)
+					);
+					s.TheModel.PassThroughs[s.TheModel.ComponentMap.Idx[id]]
+						.MaxOutflow_W = maxOutflow_W;
 				}
-			} break;
+			}
+			break;
 			case ComponentType::StoreType:
 			{
 				if (inflowId != outflowId)
@@ -510,8 +500,7 @@ namespace erin
 				{
 					std::string capacityUnitStr =
 						std::get<std::string>(input.at("capacity_unit").Value);
-					auto maybeCapacityUnit =
-						TagToEnergyUnit(capacityUnitStr);
+					auto maybeCapacityUnit = TagToEnergyUnit(capacityUnitStr);
 					if (!maybeCapacityUnit.has_value())
 					{
 						WriteErrorMessage(
@@ -522,13 +511,9 @@ namespace erin
 					}
 					capacityUnit = maybeCapacityUnit.value();
 				}
-				flow_t capacity_J =
-					static_cast<flow_t>(
-						Energy_ToJoules(
-							std::get<double>(input.at("capacity").Value),
-							capacityUnit
-						)
-					);
+				flow_t capacity_J = static_cast<flow_t>(Energy_ToJoules(
+					std::get<double>(input.at("capacity").Value), capacityUnit
+				));
 				if (capacity_J == 0)
 				{
 					WriteErrorMessage(
@@ -536,20 +521,12 @@ namespace erin
 					);
 					return Result::Failure;
 				}
-				flow_t maxCharge_W =
-					static_cast<flow_t>(
-						Power_ToWatt(
-							std::get<double>(input.at("max_charge").Value),
-							rateUnit
-						)
-					);
-				flow_t maxDischarge_W =
-					static_cast<flow_t>(
-						Power_ToWatt(
-							std::get<double>(input.at("max_discharge").Value),
-							rateUnit
-						)
-					);
+				flow_t maxCharge_W = static_cast<flow_t>(Power_ToWatt(
+					std::get<double>(input.at("max_charge").Value), rateUnit
+				));
+				flow_t maxDischarge_W = static_cast<flow_t>(Power_ToWatt(
+					std::get<double>(input.at("max_discharge").Value), rateUnit
+				));
 				double chargeAtSoc =
 					std::get<double>(input.at("charge_at_soc").Value);
 				if (chargeAtSoc < 0.0 || chargeAtSoc > 1.0)
@@ -568,8 +545,7 @@ namespace erin
 					// least 1 unit less than capacity
 					noChargeAmount_J = capacity_J - 1;
 				}
-				double initSoc =
-					std::get<double>(input.at("init_soc").Value);
+				double initSoc = std::get<double>(input.at("init_soc").Value);
 				if (initSoc < 0.0 || initSoc > 1.0)
 				{
 					WriteErrorMessage(
@@ -582,13 +558,14 @@ namespace erin
 				double rtEff = 1.0;
 				if (input.contains("roundtrip_efficiency"))
 				{
-					rtEff = std::get<double>(
-						input.at("roundtrip_efficiency").Value
-					);
+					rtEff =
+						std::get<double>(input.at("roundtrip_efficiency").Value
+						);
 					if (rtEff <= 0.0 || rtEff > 1.0)
 					{
 						WriteErrorMessage(
-							fullTableName, "roundtrip efficiency must be (0.0, 1.0]"
+							fullTableName,
+							"roundtrip efficiency must be (0.0, 1.0]"
 						);
 						return Result::Failure;
 					}
@@ -623,41 +600,32 @@ namespace erin
 				}
 				if (input.contains("max_outflow"))
 				{
-					flow_t maxOutflow_W =
-						static_cast<flow_t>(
-							Power_ToWatt(
-								std::get<double>(
-									input.at("max_outflow").Value
-								),
-								rateUnit
-							)
-						);
-					s.TheModel.Stores[s.TheModel.ComponentMap.Idx[id]].MaxOutflow_W =
-						maxOutflow_W;
+					flow_t maxOutflow_W = static_cast<flow_t>(Power_ToWatt(
+						std::get<double>(input.at("max_outflow").Value),
+						rateUnit
+					));
+					s.TheModel.Stores[s.TheModel.ComponentMap.Idx[id]]
+						.MaxOutflow_W = maxOutflow_W;
 				}
-			} break;
+			}
+			break;
 			case ComponentType::MoverType:
 			{
 				double cop = std::get<double>(input.at("cop").Value);
 				auto compIdAndConns =
-					Model_AddMover(
-						s.TheModel,
-						cop,
-						inflowId,
-						outflowId,
-						tag);
+					Model_AddMover(s.TheModel, cop, inflowId, outflowId, tag);
 				id = compIdAndConns.Id;
 				if (input.contains("max_outflow"))
 				{
-					flow_t maxOutflow_W =
-						static_cast<flow_t>(
-							Power_ToWatt(
-								std::get<double>(input.at("max_outflow").Value),
-								rateUnit));
+					flow_t maxOutflow_W = static_cast<flow_t>(Power_ToWatt(
+						std::get<double>(input.at("max_outflow").Value),
+						rateUnit
+					));
 					size_t moverIdx = s.TheModel.ComponentMap.Idx[id];
 					s.TheModel.Movers[moverIdx].MaxOutflow_W = maxOutflow_W;
 				}
-			} break;
+			}
+			break;
 			default:
 			{
 				WriteErrorMessage(
@@ -804,12 +772,14 @@ namespace erin
 	ParseComponents(
 		Simulation& s,
 		toml::table const& table,
-		ComponentValidationMap const& compValids)
+		ComponentValidationMap const& compValids
+	)
 	{
 		for (auto it = table.cbegin(); it != table.cend(); ++it)
 		{
-			auto result =
-				ParseSingleComponent(s, it->second.as_table(), it->first, compValids);
+			auto result = ParseSingleComponent(
+				s, it->second.as_table(), it->first, compValids
+			);
 			if (result == Result::Failure)
 			{
 				std::string tag = "components." + it->first;

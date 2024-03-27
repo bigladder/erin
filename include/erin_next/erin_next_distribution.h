@@ -181,7 +181,8 @@ namespace erin
 	ParseDistributions(
 		DistributionSystem& ds,
 		toml::table const& table,
-		DistributionValidationMap const& dvm);
+		DistributionValidationMap const& dvm
+	);
 
 }
 #endif

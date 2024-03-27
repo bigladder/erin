@@ -109,6 +109,7 @@ namespace erin
 
     struct ValidationInfo
     {
+        // TODO: rename as FieldToType
         std::unordered_map<std::string, InputType> TypeMap;
         std::unordered_set<std::string> RequiredFields;
         std::unordered_set<std::string> OptionalFields;

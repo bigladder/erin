@@ -51,14 +51,18 @@ def run_tests():
     result = subprocess.run([TEST_EXE], capture_output=True)
     if result.returncode != 0:
         print("Tests did not pass!")
-        print(f"stdout:\n{result.stdout}")
-        print(f"stderr:\n{result.stderr}")
+        print("stdout:\n")
+        print(result.stderr.decode())
+        print("stdout:\n")
+        print(result.stderr.decode())
         sys.exit(1)
     result = subprocess.run([RAND_TEST_EXE], capture_output=True)
     if result.returncode != 0:
         print("Random tests did not pass!")
-        print(f"stdout:\n{result.stdout}")
-        print(f"stderr:\n{result.stderr}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stdout:\n")
+        print(result.stderr.decode())
         sys.exit(1)
 
 
@@ -72,8 +76,10 @@ def smoke_test(example_name):
     result = subprocess.run([CLI_EXE, toml_input], capture_output=True)
     if result.returncode != 0:
         print(f"Error running CLI for example {example_name}")
-        print(f"stdout:\n{result.stdout}")
-        print(f"stderr:\n{result.stderr}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
         sys.exit(1)
     return result
 
@@ -178,8 +184,10 @@ def run_cli(example_name):
         capture_output=True)
     if result.returncode != 0:
         print(f"diff did not compare clean for out.csv for {example_name}")
-        print(f"stdout:\n{result.stdout}")
-        print(f"stderr:\n{result.stderr}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
         print(("=" * 20) + " DETAILED DIFF")
         compare_csv(f'ex{example_name}-out.csv', 'out.csv')
         sys.exit(1)
@@ -188,8 +196,10 @@ def run_cli(example_name):
         capture_output=True)
     if result.returncode != 0:
         print(f'diff did not compare clean for stats.csv for {example_name}')
-        print(f"stdout:\n{result.stdout}")
-        print(f"stderr:\n{result.stderr}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(results.stderr.decode())
         print(("=" * 20) + " DETAILED DIFF")
         compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
         sys.exit(1)
@@ -204,8 +214,10 @@ def run_perf():
         capture_output=True)
     if result.returncode != 0:
         print(f"error running performance test {PERF01_EXE}")
-        print(f"stdout:\n{result.stdout}")
-        print(f"stderr:\n{result.stderr}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
     print(result.stdout.decode(), end='')
 
 

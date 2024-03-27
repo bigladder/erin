@@ -7,55 +7,65 @@
 
 namespace erin
 {
-enum PowerUnit
-{
-    Watt,
-    KiloWatt,
-    MegaWatt,
-};
+	enum PowerUnit
+	{
+		Watt,
+		KiloWatt,
+		MegaWatt,
+	};
 
-std::optional<PowerUnit> TagToPowerUnit(std::string const& tag);
+	std::optional<PowerUnit>
+	TagToPowerUnit(std::string const& tag);
 
-std::string PowerUnitToString(PowerUnit unit);
+	std::string
+	PowerUnitToString(PowerUnit unit);
 
-double Power_ToWatt(double value, PowerUnit unit);
+	double
+	Power_ToWatt(double value, PowerUnit unit);
 
-constexpr double W_per_kW = 1'000.0;
-constexpr double J_per_kJ = 1'000.0;
+	constexpr double W_per_kW = 1'000.0;
+	constexpr double J_per_kJ = 1'000.0;
 
-enum EnergyUnit
-{
-    Joule,
-    KiloJoule,
-    MegaJoule,
-    WattHour,
-    KiloWattHour,
-    MegaWattHour,
-};
+	enum EnergyUnit
+	{
+		Joule,
+		KiloJoule,
+		MegaJoule,
+		WattHour,
+		KiloWattHour,
+		MegaWattHour,
+	};
 
-std::optional<EnergyUnit> TagToEnergyUnit(std::string const& tag);
+	std::optional<EnergyUnit>
+	TagToEnergyUnit(std::string const& tag);
 
-std::string EnergyUnitToString(EnergyUnit unit);
+	std::string
+	EnergyUnitToString(EnergyUnit unit);
 
-double Energy_ToJoules(double value, EnergyUnit unit);
+	double
+	Energy_ToJoules(double value, EnergyUnit unit);
 
-enum TimeUnit
-{
-    Second,
-    Minute,
-    Hour,
-    Day,
-    Week,
-    Year,
-};
+	enum TimeUnit
+	{
+		Second,
+		Minute,
+		Hour,
+		Day,
+		Week,
+		Year,
+	};
 
-std::optional<TimeUnit> TagToTimeUnit(std::string const& tag);
+	std::optional<TimeUnit>
+	TagToTimeUnit(std::string const& tag);
 
-std::string TimeUnitToTag(TimeUnit unit);
+	std::string
+	TimeUnitToTag(TimeUnit unit);
 
-double Time_ToSeconds(double t, TimeUnit unit);
+	double
+	Time_ToSeconds(double t, TimeUnit unit);
 
-std::string SecondsToPrettyString(double time_s);
+	std::string
+	SecondsToPrettyString(double time_s);
 } // namespace erin
 
 #endif

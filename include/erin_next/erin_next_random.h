@@ -7,38 +7,43 @@
 
 namespace erin
 {
-enum class RandomType
-{
-    FixedRandom,
-    FixedSeries,
-    RandomFromSeed,
-    RandomFromClock,
-};
+	enum class RandomType
+	{
+		FixedRandom,
+		FixedSeries,
+		RandomFromSeed,
+		RandomFromClock,
+	};
 
-struct FixedRandom
-{
-    double FixedValue = 0.0;
-    double operator()() const;
-};
+	struct FixedRandom
+	{
+		double FixedValue = 0.0;
+		double
+		operator()() const;
+	};
 
-struct FixedSeries
-{
-    size_t Idx = 0;
-    std::vector<double> Series;
-    double operator()();
-};
+	struct FixedSeries
+	{
+		size_t Idx = 0;
+		std::vector<double> Series;
+		double
+		operator()();
+	};
 
-struct Random
-{
-    unsigned int Seed = 0;
-    std::mt19937 Generator;
-    std::uniform_real_distribution<double> Distribution {0.0, 1.0};
-    double operator()();
-};
+	struct Random
+	{
+		unsigned int Seed = 0;
+		std::mt19937 Generator;
+		std::uniform_real_distribution<double> Distribution{0.0, 1.0};
+		double
+		operator()();
+	};
 
-Random CreateRandom();
+	Random
+	CreateRandom();
 
-Random CreateRandomWithSeed(unsigned int seed);
+	Random
+	CreateRandomWithSeed(unsigned int seed);
 } // namespace erin
 
 #endif

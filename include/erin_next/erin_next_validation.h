@@ -13,45 +13,51 @@
 namespace erin
 {
 
-std::unordered_set<std::string> const ValidTimeUnits {"years",
-                                                      "year",
-                                                      "yr",
-                                                      "weeks",
-                                                      "week",
-                                                      "days",
-                                                      "day",
-                                                      "hours",
-                                                      "hour",
-                                                      "h",
-                                                      "minutes",
-                                                      "minute",
-                                                      "min",
-                                                      "seconds",
-                                                      "second",
-                                                      "s"};
+	std::unordered_set<std::string> const ValidTimeUnits{
+		"years",
+		"year",
+		"yr",
+		"weeks",
+		"week",
+		"days",
+		"day",
+		"hours",
+		"hour",
+		"h",
+		"minutes",
+		"minute",
+		"min",
+		"seconds",
+		"second",
+		"s"
+	};
 
-std::unordered_set<std::string> const ValidRateUnits {
-    "W",
-    "kW",
-    "MW",
-};
+	std::unordered_set<std::string> const ValidRateUnits{
+		"W",
+		"kW",
+		"MW",
+	};
 
-std::unordered_set<std::string> const ValidQuantityUnits {
-    "J",
-    "kJ",
-    "MJ",
-    "Wh",
-    "kWh",
-    "MWh",
-};
+	std::unordered_set<std::string> const ValidQuantityUnits{
+		"J",
+		"kJ",
+		"MJ",
+		"Wh",
+		"kWh",
+		"MWh",
+	};
 
-std::string InputSection_toString(InputSection s);
+	std::string
+	InputSection_toString(InputSection s);
 
-std::optional<InputSection> String_toInputSection(std::string tag);
+	std::optional<InputSection>
+	String_toInputSection(std::string tag);
 
-void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f);
+	void
+	UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f);
 
-InputValidationMap SetupGlobalValidationInfo();
+	InputValidationMap
+	SetupGlobalValidationInfo();
 
 } // namespace erin
 

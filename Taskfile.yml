@@ -6,11 +6,15 @@ tasks:
     cmds:
       - clang-format -i -style=file src/*.cpp
       - clang-format -i -style=file include/**/*.h
+      #- clang-format -i -style=file test/*.cpp
+      - clang-format -i -style=file apps/*.cpp
   checkfmt:
     desc: Check if there are any formatting problems
     cmds:
       - clang-format --dry-run --Werror src/*.cpp
       - clang-format --dry-run --Werror include/**/*.h
+      #- clang-format --dry-run --Werror test/*.cpp
+      - clang-format --dry-run --Werror apps/**/*.h
   init:
     desc: Initialize the build directory
     cmds:

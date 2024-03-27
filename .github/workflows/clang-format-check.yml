@@ -10,20 +10,7 @@ jobs:
     - name: Set Project Name
       run: echo "REPOSITORY_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
     - name: Run clang-format style check on implementation files.
-      uses: mrousavy/clang-format-action@v1
+      uses: jidicula/clang-format-action@v4.11.0
       with:
         clang-format-version: '17'
-        check-path: 'src'
-        clang-format-style-path: .clang-format
-    - name: Run clang-format style check on header files.
-      uses: mrousavy/clang-format-action@v1
-      with:
-        clang-format-version: '17'
-        check-path: 'include'
-        clang-format-style-path: .clang-format
-    - name: Run clang-format style check on test files.
-      uses: mrousavy/clang-format-action@v1
-      with:
-        clang-format-version: '17'
-        check-path: 'test'
-        clang-format-style-path: .clang-format
+        exclude-regex: 'vendor'

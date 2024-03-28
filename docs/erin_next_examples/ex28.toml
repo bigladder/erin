@@ -250,13 +250,19 @@ failure_modes = ["generator_diesel_engine_mtfm_2"]
 [components.41_generator.meta]
 id = 145
 
+[components.41_bu_fuel_tank_supply]
+type = "source"
+rate_unit = "kW"
+max_outflow = 0
+outflow = "diesel"
+
 [components.41_bu_gen_fuel_tank]
 type = "store"
-capacity = 49304000.0   # kJ
+capacity = 49_304_000.0   # kJ
 capacity_unit = "kJ"
 flow = "diesel"
 init_soc = 0.5
-max_inflow = 87921300.0   # kJ
+max_inflow = 87_921_300.0   # kJ
 rate_unit = "kW"
 max_discharge = 10_000.0 
 [components.41_bu_gen_fuel_tank.meta]
@@ -270,10 +276,9 @@ outflow = "diesel"
 id = 148
 
 [components.chiller]
-type = "converter"
-constant_efficiency = 3.05
+type = "mover"
+cop = 3.05
 inflow = "electricity"
-lossflow = "waste_heat"
 outflow = "chilled_water"
 failure_modes = ["chiller_electric_air_cooled_mtfm"]
 [components.chiller.meta]
@@ -288,7 +293,8 @@ connections = [
  ["41_generator:OUT(0)", "xfer_switch:IN(1)", "electricity"],
  ["xfer_switch:OUT(1)", "chiller:IN(0)", "electricity"],
  ["chiller:OUT(0)", "41_firehouse_load__chilled_water:IN(0)", "chilled_water"],
- ["41_bu_gen_fuel_tank:OUT(0)", "41_generator:IN(0)", "diesel"]
+ ["41_bu_gen_fuel_tank:OUT(0)", "41_generator:IN(0)", "diesel"],
+ ["41_bu_fuel_tank_supply:OUT(0)", "41_bu_gen_fuel_tank:IN(0)", "diesel"],
 ]
 [network.meta]
 id = 4

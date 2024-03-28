@@ -239,6 +239,7 @@ namespace erin
         // amount at or below which we request charge
         flow_t ChargeAmount_J;
         flow_t InitialStorage_J;
+        // TODO: make inflow connection optional
         size_t InflowConn;
         size_t OutflowConn;
         std::optional<size_t> WasteflowConn;

@@ -175,26 +175,26 @@ id = 89
 
 # Loads
 [loads.41_firehouse_load__electricity]
-#csv_file = "ex28-electricity.csv"
-#start temp
-time_unit = "hours"
-rate_unit = "kW"
-time_rate_pairs = [
- [0.0, 73000.0],
- [8760.0, 0.0],
-]
-#end temp
+csv_file = "ex28-electricity.csv"
+# #start temp
+# time_unit = "hours"
+# rate_unit = "kW"
+# time_rate_pairs = [
+#  [0.0, 73000.0],
+#  [8760.0, 0.0],
+# ]
+# #end temp
 
 [loads.41_firehouse_load__chilled_water]
-#csv_file = "ex28-chilled-water.csv"
-#start temp
-time_unit = "hours"
-rate_unit = "kW"
-time_rate_pairs = [
- [0.0, 20.0],
- [8760.0, 0.0],
-]
-#end temp
+csv_file = "ex28-chilled-water.csv"
+# #start temp
+# time_unit = "hours"
+# rate_unit = "kW"
+# time_rate_pairs = [
+#  [0.0, 20.0],
+#  [8760.0, 0.0],
+# ]
+# #end temp
 
 # Components
 [components.41_firehouse_load__electricity]

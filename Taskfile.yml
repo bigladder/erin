@@ -28,7 +28,7 @@ tasks:
       - cmake --build build --config Debug -j 4
   test:
     desc: Run the test suite
-    dir: 'docs/erin_next_examples'
+    dir: 'docs/examples'
     cmds:
       # TODO[mok]: have regress.py take the build directory to run against
       - python regress.py
@@ -40,7 +40,7 @@ tasks:
       - cmake --build build-release --config Release -j 4
   ex:
     desc: Run the given exercise. Pass '-- ex29.toml' to run example 29
-    dir: 'docs/erin_next_examples'
+    dir: 'docs/examples'
     cmds:
       - ../../build/bin/erin_next_cli {{.CLI_ARGS}}
   db-init:
@@ -54,6 +54,6 @@ tasks:
       - cmake --build build-db --config Debug -j 4
   db:
     desc: Runs the current exercise
-    dir: 'docs/erin_next_examples'
+    dir: 'docs/examples'
     cmds:
       - lldb ../../build-db/bin/erin_next_cli -- ex29.toml

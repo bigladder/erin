@@ -182,8 +182,11 @@ namespace erin
     void
     UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f)
     {
-        assert(!info.TypeMap.contains(f.FieldName)
-            && "attempt to add same field definition more than once to one section");
+        assert(
+            !info.TypeMap.contains(f.FieldName)
+            && "attempt to add same field definition more than once to one "
+               "section"
+        );
         info.TypeMap.insert({f.FieldName, f.Type});
         if (f.Type == InputType::EnumString)
         {

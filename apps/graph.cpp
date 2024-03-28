@@ -19,60 +19,60 @@
 void
 print_usage(std::string prog_name)
 {
-  std::cout << "\nUSAGE: " << prog_name
-            << " <toml-input-file> <output-dot-file>\n"
-            << "Creates a graphviz-compatible graph from network"
-            << std::endl;
+    std::cout << "\nUSAGE: " << prog_name
+              << " <toml-input-file> <output-dot-file>\n"
+              << "Creates a graphviz-compatible graph from network"
+              << std::endl;
 }
 
 int
 main(int argc, char** argv)
 {
-  using namespace erin;
-  std::cout << "ERIN version " << erin::version::version_string << std::endl;
-  std::cout << "Copyright (C) 2020-2024 Big Ladder Software LLC."
-            << std::endl;
-  std::cout << "See LICENSE.txt file for license information." << std::endl;
-  if (argc != 3)
-  {
-    auto prog_name = std::filesystem::path(std::string(argv[0])).filename();
-    print_usage(prog_name);
+    using namespace erin;
+    std::cout << "ERIN version " << erin::version::version_string << std::endl;
+    std::cout << "Copyright (C) 2020-2024 Big Ladder Software LLC."
+              << std::endl;
+    std::cout << "See LICENSE.txt file for license information." << std::endl;
+    if (argc != 3)
+    {
+        auto prog_name = std::filesystem::path(std::string(argv[0])).filename();
+        print_usage(prog_name);
+        return EXIT_SUCCESS;
+    }
+    std::cout << "Creating graph..." << std::endl;
+    std::string inputfile_path(argv[1]);
+    std::string outputfile_path(argv[2]);
+    std::cout << "input file : " << inputfile_path << std::endl;
+    std::cout << "output file: " << outputfile_path << std::endl;
+    std::ifstream ifs(inputfile_path, std::ios_base::binary);
+    if (!ifs.good())
+    {
+        std::cout << "Could not open input file stream on input file"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+    auto name_only = std::filesystem::path(inputfile_path).filename();
+    auto data = toml::parse(ifs, name_only.string());
+    ifs.close();
+    auto validation_info = SetupGlobalValidationInfo();
+    auto maybe_sim = Simulation_ReadFromToml(data, validation_info);
+    if (!maybe_sim.has_value())
+    {
+        return EXIT_FAILURE;
+    }
+    Simulation s = std::move(maybe_sim.value());
+    std::string dot_data = network_to_dot(
+        s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
+    );
+    // save string from network_to_dot
+    std::ofstream ofs(outputfile_path, std::ios_base::binary);
+    if (!ofs.good())
+    {
+        std::cout << "Could not open output file stream on output file"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+    ofs << dot_data << std::endl;
+    ofs.close();
     return EXIT_SUCCESS;
-  }
-  std::cout << "Creating graph..." << std::endl;
-  std::string inputfile_path(argv[1]);
-  std::string outputfile_path(argv[2]);
-  std::cout << "input file : " << inputfile_path << std::endl;
-  std::cout << "output file: " << outputfile_path << std::endl;
-  std::ifstream ifs(inputfile_path, std::ios_base::binary);
-  if (!ifs.good())
-  {
-      std::cout << "Could not open input file stream on input file"
-                << std::endl;
-      return EXIT_FAILURE;
-  }
-  auto name_only = std::filesystem::path(inputfile_path).filename();
-  auto data = toml::parse(ifs, name_only.string());
-  ifs.close();
-  auto validation_info = SetupGlobalValidationInfo();
-  auto maybe_sim = Simulation_ReadFromToml(data, validation_info);
-  if (!maybe_sim.has_value())
-  {
-      return EXIT_FAILURE;
-  }
-  Simulation s = std::move(maybe_sim.value());
-  std::string dot_data = network_to_dot(
-    s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
-  );
-  // save string from network_to_dot
-  std::ofstream ofs(outputfile_path, std::ios_base::binary);
-  if (!ofs.good())
-  {
-      std::cout << "Could not open output file stream on output file"
-                << std::endl;
-      return EXIT_FAILURE;
-  }
-  ofs << dot_data << std::endl;
-  ofs.close();
-  return EXIT_SUCCESS;
 }

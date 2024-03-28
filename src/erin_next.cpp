@@ -1349,11 +1349,9 @@ namespace erin
             {
                 continue;
             }
-            long availableCharge_J =
-                static_cast<long>(
-                    m.Stores[storeIdx].Capacity_J
-                    - ss.StorageAmounts_J[storeIdx]
-                );
+            long availableCharge_J = static_cast<long>(
+                m.Stores[storeIdx].Capacity_J - ss.StorageAmounts_J[storeIdx]
+            );
             long availableDischarge_J =
                 -1 * static_cast<long>(ss.StorageAmounts_J[storeIdx]);
             netEnergyAdded += std::lround(
@@ -1366,14 +1364,18 @@ namespace erin
             {
                 size_t wConn = store.WasteflowConn.value();
                 netEnergyAdded -= std::lround(
-                    elapsedTime_s * static_cast<double>(ss.Flows[wConn].Actual_W)
+                    elapsedTime_s
+                    * static_cast<double>(ss.Flows[wConn].Actual_W)
                 );
             }
             if (netEnergyAdded > availableCharge_J)
             {
-                std::cout << "ERROR: netEnergyAdded is greater than capacity!" << std::endl;
-                std::cout << "netEnergyAdded (J): " << netEnergyAdded << std::endl;
-                std::cout << "availableCharge (J): " << availableCharge_J << std::endl;
+                std::cout << "ERROR: netEnergyAdded is greater than capacity!"
+                          << std::endl;
+                std::cout << "netEnergyAdded (J): " << netEnergyAdded
+                          << std::endl;
+                std::cout << "availableCharge (J): " << availableCharge_J
+                          << std::endl;
                 std::cout << "elapsed time (s): " << elapsedTime_s << std::endl;
                 std::cout << "stored amount (J): "
                           << ss.StorageAmounts_J[storeIdx] << std::endl;
@@ -1402,7 +1404,9 @@ namespace erin
             );
             if (netEnergyAdded < availableDischarge_J)
             {
-                std::cout << "ERROR: netEnergyAdded is lower than discharge limit" << std::endl;
+                std::cout
+                    << "ERROR: netEnergyAdded is lower than discharge limit"
+                    << std::endl;
                 std::cout << "netEnergyAdded (J): " << netEnergyAdded
                           << std::endl;
                 std::cout << "availableDischarge (J): " << availableDischarge_J
@@ -1702,7 +1706,8 @@ namespace erin
             - (static_cast<int>(s.OutflowAchieved)
                + static_cast<int>(s.Wasteflow));
         double eff =
-            (static_cast<double>(s.Inflow) + static_cast<double>(s.EnvInflow) + static_cast<double>(netDischarge))
+            (static_cast<double>(s.Inflow) + static_cast<double>(s.EnvInflow)
+             + static_cast<double>(netDischarge))
                 > 0.0
             ? 100.0 * (static_cast<double>(s.OutflowAchieved))
                 / (static_cast<double>(s.Inflow)
@@ -1724,7 +1729,8 @@ namespace erin
         std::cout << "= Sum                    : " << sum << std::endl;
         std::cout << "  Efficiency             : " << eff << "%"
                   << " (= " << s.OutflowAchieved << "/"
-                  << ((int)s.Inflow + (int)s.EnvInflow + netDischarge) << ")" << std::endl;
+                  << ((int)s.Inflow + (int)s.EnvInflow + netDischarge) << ")"
+                  << std::endl;
         std::cout << "  Delivery Effectiveness : " << effectiveness << "%"
                   << " (= " << s.OutflowAchieved << "/" << s.OutflowRequest
                   << ")" << std::endl;

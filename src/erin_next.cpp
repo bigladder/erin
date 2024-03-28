@@ -1149,16 +1149,6 @@ namespace erin
         // TODO: consider using int64_t here
         int netCharge_W = static_cast<int>(ss.Flows[connIdx].Actual_W)
             - static_cast<int>(ss.Flows[outflowConn].Actual_W);
-        std::cout << "## int max       : "
-            << std::numeric_limits<int>::max() << std::endl;
-        std::cout << "## int32_t max  : "
-            << std::numeric_limits<int32_t>::max() << std::endl;
-        std::cout << "## int64_t max  : "
-            << std::numeric_limits<int64_t>::max() << std::endl;
-        std::cout << "## net charge (W): " << netCharge_W << std::endl;
-        std::cout << "## (pre) next storage event time: "
-            << ss.StorageNextEventTimes[compIdx] << " s"
-            << std::endl;
         if (netCharge_W > 0)
         {
             flow_t storeflow_W = static_cast<flow_t>(netCharge_W);
@@ -1219,9 +1209,6 @@ namespace erin
             }
             ss.StorageNextEventTimes[compIdx] = infinity;
         }
-        std::cout << "## (post) next storage event time: "
-            << ss.StorageNextEventTimes[compIdx] << " s"
-            << std::endl;
     }
 
     void
@@ -1339,12 +1326,8 @@ namespace erin
         double storeTime = ss.StorageNextEventTimes[storeIdx];
         if (storeTime >= 0.0 && storeTime > t)
         {
-            std::cout << "## next store time: "
-                << storeTime << " s"
-                << std::endl;
             return storeTime;
         }
-        std::cout << "## next store time: infinity" << std::endl;
         return infinity;
     }
 

@@ -17,13 +17,13 @@ if platform.system() == 'Windows':
     if not BIN_DIR.exists():
         print("Could not find build directory!")
         sys.exit(1)
-    TEST_EXE = BIN_DIR / 'test_erin.exe'
+    TEST_EXE = BIN_DIR / 'erin_tests.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test.exe'
     CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin':
     BIN_DIR = Path('.') / '..' / '..' / 'build' / 'bin'
-    TEST_EXE = BIN_DIR / 'test_erin'
+    TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test'
     CLI_EXE = BIN_DIR / 'erin_next_cli'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test'

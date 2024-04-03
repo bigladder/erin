@@ -83,8 +83,7 @@ TEST(Erin, Test2)
         << "available must equal 10";
 }
 
-static void
-Test3(bool print)
+TEST(Erin, Test3)
 {
     Model m = {};
     auto srcId = Model_AddConstantSource(m, 100);
@@ -94,70 +93,51 @@ Test3(bool print)
     auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
     auto convToLoad1Conn = Model_AddConnection(m, convId.Id, 0, load1Id, 0);
     auto convToLoad2Conn = Model_AddConnection(m, convId.Id, 1, load2Id, 0);
-    auto results = Simulate(m, print);
-    assert((results.size() == 1 && "output must have a size of 1"));
-    assert((results[0].Time == 0.0 && "time must equal 0.0"));
-    assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
+    EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].Flows.size(), 4) << "size of flows must equal 4";
     auto srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
-    assert((
-        srcToConvResults.has_value() && "source to converter must have results"
-    ));
-    assert((
-        srcToConvResults.value().Requested_W == 20 && "requested must equal 20"
-    ));
-    assert((
-        srcToConvResults.value().Actual_W == 20 && "actual value must equal 20"
-    ));
-    assert(
-        (srcToConvResults.value().Available_W == 100
-         && "available must equal 100")
-    );
+    EXPECT_TRUE(srcToConvResults.has_value())
+        << "source to converter must have results";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 20)
+        << "requested must equal 20";
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 20)
+        << "actual value must equal 20";
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
+        << "available must equal 100";
     auto convToLoad1Results =
         ModelResults_GetFlowForConnection(m, convToLoad1Conn, 0.0, results);
-    assert((
-        convToLoad1Results.has_value() && "converter to load1 must have results"
-    ));
-    assert(
-        (convToLoad1Results.value().Requested_W == 10
-         && "requested must equal 10")
-    );
-    assert(
-        (convToLoad1Results.value().Actual_W == 10
-         && "actual value must equal 10")
-    );
-    assert(
-        (convToLoad1Results.value().Available_W == 50
-         && "available must equal 50")
-    );
+    EXPECT_TRUE(convToLoad1Results.has_value())
+        << "converter to load1 must have results";
+    EXPECT_EQ(convToLoad1Results.value().Requested_W, 10)
+        << "requested must equal 10";
+    EXPECT_EQ(convToLoad1Results.value().Actual_W, 10)
+        << "actual value must equal 10";
+    EXPECT_EQ(convToLoad1Results.value().Available_W, 50)
+        << "available must equal 50";
     auto convToLoad2Results =
         ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
-    assert((convToLoad2Results.has_value() && "conv to load2 must have results")
-    );
-    assert((
-        convToLoad2Results.value().Requested_W == 2 && "requested must equal 2"
-    ));
-    assert((
-        convToLoad2Results.value().Actual_W == 2 && "actual value must equal 2"
-    ));
-    assert(
-        (convToLoad2Results.value().Available_W == 10
-         && "available must equal 10")
-    );
+    EXPECT_TRUE(convToLoad2Results.has_value())
+        << "conv to load2 must have results";
+    EXPECT_EQ(convToLoad2Results.value().Requested_W, 2)
+        << "requested must equal 2";
+    EXPECT_EQ(convToLoad2Results.value().Actual_W, 2)
+        << "actual value must equal 2";
+    EXPECT_EQ(convToLoad2Results.value().Available_W, 10)
+        << "available must equal 10";
     auto convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, 0.0, results
     );
-    assert((convToWasteResults.has_value() && "conv to waste must have results")
-    );
-    assert((
-        convToWasteResults.value().Requested_W == 8 && "requested must equal 8"
-    ));
-    assert((
-        convToWasteResults.value().Actual_W == 8 && "actual value must equal 8"
-    ));
-    assert((
-        convToWasteResults.value().Available_W == 8 && "available must equal 8"
-    ));
+    EXPECT_TRUE(convToWasteResults.has_value())
+        << "conv to waste must have results";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 8)
+        << "requested must equal 8";
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 8)
+        << "actual value must equal 8";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 8)
+        << "available must equal 8";
 }
 
 static void

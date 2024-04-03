@@ -1,28 +1,11 @@
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_timestate.h"
+#include <gtest/gtest.h>
 #include <iomanip>
 #include <chrono>
 #include <limits>
 
 using namespace erin;
-
-static void
-PrintBanner(bool doPrint, std::string name)
-{
-    if (doPrint)
-    {
-        std::cout << "[Test " << std::right << std::setw(3) << (name + ":")
-                  << std::endl;
-    }
-}
-
-static void
-PrintPass(bool doPrint, std::string name)
-{
-    std::string preamble = doPrint ? "  ... " : "[Test ";
-    std::cout << preamble << std::right << std::setw(3) << (name + "]")
-              << " :: PASSED" << std::endl;
-}
 
 static double
 Round(double n, unsigned int places = 2)
@@ -31,103 +14,78 @@ Round(double n, unsigned int places = 2)
     return std::round(n * mult) / mult;
 }
 
-static void
-Test1(bool print)
+TEST(Erin, Test1)
 {
-    PrintBanner(print, "1");
     Model m = {};
     auto srcId = Model_AddConstantSource(m, 100);
     auto loadId = Model_AddConstantLoad(m, 10);
     auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
-    auto results = Simulate(m, print);
-    assert((results.size() == 1 && "output must have a size of 1"));
-    assert((results[0].Time == 0.0 && "time must equal 0.0"));
-    assert((results[0].Flows.size() == 1 && "size of flows must equal 1"));
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1)
+        << "output must have a size of 1";
+    EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].Flows.size(), 1) << "size of flows must equal 1";
     auto srcToLoadResult =
         ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
-    assert(
-        (srcToLoadResult.has_value() && "connection result should have a value")
-    );
-    assert(
-        (srcToLoadResult.value().Actual_W == 10 && "actual value must equal 10")
-    );
-    assert((
-        srcToLoadResult.value().Available_W == 100 && "available must equal 100"
-    ));
-    assert(
-        (srcToLoadResult.value().Requested_W == 10 && "requested must equal 10")
-    );
-    PrintPass(print, "1");
+    EXPECT_TRUE(srcToLoadResult.has_value())
+        << "connection result should have a value";
+    EXPECT_EQ(srcToLoadResult.value().Actual_W, 10)
+        << "actual value must equal 10";
+    EXPECT_EQ(srcToLoadResult.value().Available_W, 100)
+        << "available must equal 100";
+    EXPECT_EQ(srcToLoadResult.value().Requested_W, 10)
+        << "requested must equal 10";
 }
 
-static void
-Test2(bool print)
+TEST(Erin, Test2)
 {
-    PrintBanner(print, "2");
     Model m = {};
     auto srcId = Model_AddConstantSource(m, 100);
     auto loadId = Model_AddConstantLoad(m, 10);
     auto convId = Model_AddConstantEfficiencyConverter(m, 1, 2);
     auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
     auto convToLoadConn = Model_AddConnection(m, convId.Id, 0, loadId, 0);
-    auto results = Simulate(m, print);
-    assert((results.size() == 1 && "output must have a size of 1"));
-    assert((results[0].Time == 0.0 && "time must equal 0.0"));
-    assert((results[0].Flows.size() == 3 && "size of flows must equal 3"));
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
+    EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].Flows.size(), 3) << "size of flows must equal 3";
     auto srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
-    assert((
-        srcToConvResults.has_value() && "source to converter must have results"
-    ));
-    assert((
-        srcToConvResults.value().Requested_W == 20 && "requested must equal 20"
-    ));
-    assert((
-        srcToConvResults.value().Actual_W == 20 && "actual value must equal 20"
-    ));
-    assert(
-        (srcToConvResults.value().Available_W == 100
-         && "available must equal 100")
-    );
+    EXPECT_TRUE(srcToConvResults.has_value())
+        << "source to converter must have results";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 20)
+        << "requested must equal 20";
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 20)
+        << "actual value must equal 20";
+    EXPECT_EQ(
+        srcToConvResults.value().Available_W, 100)
+        << "available must equal 100";
     auto convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, 0.0, results);
-    assert(
-        (convToLoadResults.has_value() && "converter to load must have results")
-    );
-    assert((
-        convToLoadResults.value().Requested_W == 10 && "requested must equal 10"
-    ));
-    assert((
-        convToLoadResults.value().Actual_W == 10 && "actual value must equal 10"
-    ));
-    assert((
-        convToLoadResults.value().Available_W == 50 && "available must equal 50"
-    ));
+    EXPECT_TRUE(convToLoadResults.has_value())
+        << "converter to load must have results";
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 10)
+        << "requested must equal 10";
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 10) 
+        << "actual value must equal 10";
+    EXPECT_EQ(convToLoadResults.value().Available_W, 50)
+        << "available must equal 50";
     auto convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, 0.0, results
     );
-    assert((
-        convToWasteResults.has_value() && "converter to waste must have results"
-    ));
-    assert(
-        (convToWasteResults.value().Requested_W == 10
-         && "requested must equal 10")
-    );
-    assert(
-        (convToWasteResults.value().Actual_W == 10
-         && "actual value must equal 10")
-    );
-    assert(
-        (convToWasteResults.value().Available_W == 10
-         && "available must equal 10")
-    );
-    PrintPass(print, "2");
+    EXPECT_TRUE(convToWasteResults.has_value())
+        << "converter to waste must have results";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 10)
+        << "requested must equal 10";
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 10)
+        << "actual value must equal 10";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 10)
+        << "available must equal 10";
 }
 
 static void
 Test3(bool print)
 {
-    PrintBanner(print, "3");
     Model m = {};
     auto srcId = Model_AddConstantSource(m, 100);
     auto load1Id = Model_AddConstantLoad(m, 10);
@@ -200,13 +158,11 @@ Test3(bool print)
     assert((
         convToWasteResults.value().Available_W == 8 && "available must equal 8"
     ));
-    PrintPass(print, "3");
 }
 
 static void
 Test3A(bool print)
 {
-    PrintBanner(print, "3a");
     Model m{};
     auto srcId = Model_AddConstantSource(m, 100);
     auto load1Id = Model_AddConstantLoad(m, 10);
@@ -279,13 +235,11 @@ Test3A(bool print)
     assert((
         convToWasteResults.value().Available_W == 8 && "available must equal 8"
     ));
-    PrintPass(print, "3a");
 }
 
 static void
 Test4(bool print)
 {
-    PrintBanner(print, "4");
     std::vector<TimeAndAmount> timesAndLoads = {};
     timesAndLoads.push_back({0.0, 10});
     timesAndLoads.push_back({3600.0, 200});
@@ -336,13 +290,11 @@ Test4(bool print)
         (srcToLoadResults_3600.value().Available_W == 100
          && "available must equal 100")
     );
-    PrintPass(print, "4");
 }
 
 static void
 Test5(bool print)
 {
-    PrintBanner(print, "5");
     std::vector<TimeAndAmount> timesAndLoads = {};
     Model m = {};
     auto srcId = Model_AddConstantSource(m, 100);
@@ -395,13 +347,11 @@ Test5(bool print)
         (conv3ToLoad3Results.value().Actual_W == 5
          && "conv3 to load3 should flow 5")
     );
-    PrintPass(print, "5");
 }
 
 static void
 Test6(bool doPrint)
 {
-    PrintBanner(doPrint, "6");
     Model m = {};
     auto src1Id = Model_AddConstantSource(m, 10);
     auto src2Id = Model_AddConstantSource(m, 50);
@@ -437,13 +387,11 @@ Test6(bool doPrint)
         (muxToLoad2Results.value().Actual_W == 50
          && "mux -> load2 expected actual flow of 50")
     );
-    PrintPass(doPrint, "6");
 }
 
 static void
 Test7(bool doPrint)
 {
-    PrintBanner(doPrint, "7");
     Model m = {};
     m.FinalTime = 10.0;
     auto srcId = Model_AddConstantSource(m, 0);
@@ -521,13 +469,11 @@ Test7(bool doPrint)
         storeToLoadResultsAt10.value().Available_W == 0
         && "store to load available should be 0"
     );
-    PrintPass(doPrint, "7");
 }
 
 static void
 Test8(bool doPrint)
 {
-    PrintBanner(doPrint, "8");
     Model m = {};
     m.FinalTime = 20.0;
     auto srcId = Model_AddConstantSource(m, 5);
@@ -605,13 +551,11 @@ Test8(bool doPrint)
         storeToLoadResultsAt20.value().Available_W == 5
         && "store to load available should be 5"
     );
-    PrintPass(doPrint, "8");
 }
 
 static void
 Test9(bool doPrint)
 {
-    PrintBanner(doPrint, "9");
     std::vector<TimeAndAmount> timesAndLoads = {};
     timesAndLoads.push_back({0.0, 20});
     timesAndLoads.push_back({5.0, 5});
@@ -690,13 +634,11 @@ Test9(bool doPrint)
     assert(storeToLoadResultsAt25.value().Requested_W == 15);
     assert(storeToLoadResultsAt25.value().Available_W == 10);
     assert(storeAmount25.value() == 0);
-    PrintPass(doPrint, "9");
 }
 
 static void
 Test10(bool doPrint)
 {
-    PrintBanner(doPrint, "10");
     std::vector<TimeAndAmount> timesAndLoads = {};
     timesAndLoads.push_back({0.0, 20});
     timesAndLoads.push_back({5.0, 5});
@@ -953,13 +895,11 @@ Test10(bool doPrint)
     assert(convToLoad3Results.value().Requested_W == 5);
     storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
     assert(storeAmount.value() == 0);
-    PrintPass(doPrint, "10");
 }
 
 void
 Test11(bool doPrint)
 {
-    PrintBanner(doPrint, "11");
     // create a model of src->conv->load and place a reliability dist on conv
     // ensure the component goes down and comes back up (i.e., is repaired)
     Model m = {};
@@ -1246,13 +1186,11 @@ Test11(bool doPrint)
         convToWasteResults.value().Available_W == 0
         && "conv -> waste available should be 0"
     );
-    PrintPass(doPrint, "11");
 }
 
 void
 Test12(bool doPrint)
 {
-    PrintBanner(doPrint, "12");
     // Add a schedule-based source (availability, uncontrolled source)
     // NOTE: it would be good to have a waste connection so that the component
     // always "spills" (ullage) when not all available is used.
@@ -1305,7 +1243,6 @@ Test12(bool doPrint)
     assert(srcToWasteResults.value().Actual_W == 2);
     assert(srcToWasteResults.value().Available_W == 2);
     assert(srcToWasteResults.value().Requested_W == 2);
-    PrintPass(doPrint, "12");
 }
 
 void
@@ -1315,7 +1252,6 @@ Test13(bool doPrint)
     { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
     auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
     auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
-    PrintBanner(doPrint, "13");
     // SIMULATION INFO and INITIALIZATION
     Model m = {};
     m.RandFn = []() { return 0.4; };
@@ -1623,13 +1559,11 @@ Test13(bool doPrint)
         Model_AddConnection(m, heatingSupplyMuxId, 0, heatLoadId, 0);
     // SIMULATE
     auto results = Simulate(m, doPrint);
-    PrintPass(doPrint, "13");
 }
 
 void
 Test14(bool doPrint)
 {
-    PrintBanner(doPrint, "14");
     Model m = {};
     m.RandFn = []() { return 0.4; };
     m.FinalTime = 4.0;
@@ -1646,13 +1580,11 @@ Test14(bool doPrint)
     auto muxToLoadConn = Model_AddConnection(m, muxId, 0, loadId, 0);
     auto results = Simulate(m, doPrint);
     // TODO: add tests/checks
-    PrintPass(doPrint, "14");
 }
 
 void
 Test15(bool doPrint)
 {
-    PrintBanner(doPrint, "15");
     Model m = {};
     m.RandFn = []() { return 0.4; };
     m.FinalTime = 2.0;
@@ -1735,13 +1667,11 @@ Test15(bool doPrint)
     assert(src2ToMuxResults.value().Actual_W == 70);
     assert(src2ToMuxResults.value().Requested_W == 70);
     assert(src2ToMuxResults.value().Available_W == 1'000);
-    PrintPass(doPrint, "15");
 }
 
 void
 Test16(bool doPrint)
 {
-    PrintBanner(doPrint, "16");
     Model m = {};
     m.RandFn = []() { return 0.4; };
     m.FinalTime = 2.0;
@@ -1765,13 +1695,11 @@ Test16(bool doPrint)
     assert(passToLoadResults.value().Actual_W == 50);
     assert(passToLoadResults.value().Requested_W == 50);
     assert(passToLoadResults.value().Available_W == 100);
-    PrintPass(doPrint, "16");
 }
 
 void
 Test17(bool doPrint)
 {
-    PrintBanner(doPrint, "17");
     std::vector<TimeState> a{{0.0, true}, {10.0, false, {1}}, {100.0, true}};
     std::vector<TimeState> b{
         {0.0, true}, {40.0, false, {2}}, {90.0, true}, {150.0, false, {2}}
@@ -1790,13 +1718,11 @@ Test17(bool doPrint)
     {
         assert(expected[i] == actual[i]);
     }
-    PrintPass(doPrint, "17");
 }
 
 void
 Test18(bool doPrint)
 {
-    PrintBanner(doPrint, "18");
     std::vector<TimeState> input{
         {0.0, true},
         {10.0, false, {1}},
@@ -1827,13 +1753,11 @@ Test18(bool doPrint)
     {
         assert(expected2[i] == actual2[i]);
     }
-    PrintPass(doPrint, "18");
 }
 
 void
 Test19(bool doPrint)
 {
-    PrintBanner(doPrint, "19");
     std::vector<TimeState> A{
         {0.0, false, {}, {0}},
         {100.0, true},
@@ -1865,13 +1789,11 @@ Test19(bool doPrint)
     {
         assert(expected[i] == actual[i]);
     }
-    PrintPass(doPrint, "19");
 }
 
 void
 Test20(bool doPrint)
 {
-    PrintBanner(doPrint, "20");
     std::vector<TimeState> input{
         {5.0, false},
         {7.0, true},
@@ -1886,13 +1808,11 @@ Test20(bool doPrint)
     };
     std::vector<TimeState> actual = TimeState_Clip(input, 0.0, 10.0, true);
     assert(expected.size() == actual.size());
-    PrintPass(doPrint, "20");
 }
 
 void
 Test21(bool doPrint)
 {
-    PrintBanner(doPrint, "21");
     std::vector<TimeState> input{
         {0.0, true},
         {10.0, false, {1}},
@@ -1981,13 +1901,11 @@ Test21(bool doPrint)
         assert(timeByFragModeId.contains(p.first));
         assert(p.second == timeByFragModeId[p.first]);
     }
-    PrintPass(doPrint, "21");
 }
 
 void
 Test22(bool doPrint)
 {
-    PrintBanner(doPrint, "22");
     TabularFragilityCurve tfc{};
     tfc.VulnerabilityId = 0;
     tfc.Intensities = std::vector<double>{0.0, 1.0, 4.0, 6.0, 9.0, 10.0};
@@ -1995,40 +1913,39 @@ Test22(bool doPrint)
     double level = 7.0;
     double result = TabularFragilityCurve_GetFailureFraction(tfc, level);
     assert(result == 0.85);
-    PrintPass(doPrint, "22");
 }
 
-int
-main(int argc, char** argv)
-{
-    auto start = std::chrono::high_resolution_clock::now();
-    Test1(false);
-    Test2(false);
-    Test3(false);
-    Test3A(false);
-    Test4(false);
-    Test5(false);
-    Test6(false);
-    Test7(false);
-    Test8(false);
-    Test9(false);
-    Test10(false);
-    Test11(false);
-    Test12(false);
-    Test13(false);
-    Test14(false);
-    Test15(false);
-    Test16(false);
-    Test17(false);
-    Test18(false);
-    Test19(false);
-    Test20(false);
-    Test21(false);
-    Test22(false);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Duration " << ((double)duration.count() / 1000.0) << " ms"
-              << std::endl;
-    return EXIT_SUCCESS;
-}
+// int
+// main(int argc, char** argv)
+// {
+//     auto start = std::chrono::high_resolution_clock::now();
+//     Test1(false);
+//     Test2(false);
+//     Test3(false);
+//     Test3A(false);
+//     Test4(false);
+//     Test5(false);
+//     Test6(false);
+//     Test7(false);
+//     Test8(false);
+//     Test9(false);
+//     Test10(false);
+//     Test11(false);
+//     Test12(false);
+//     Test13(false);
+//     Test14(false);
+//     Test15(false);
+//     Test16(false);
+//     Test17(false);
+//     Test18(false);
+//     Test19(false);
+//     Test20(false);
+//     Test21(false);
+//     Test22(false);
+//     auto stop = std::chrono::high_resolution_clock::now();
+//     auto duration =
+//         std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+//     std::cout << "Duration " << ((double)duration.count() / 1000.0) << " ms"
+//               << std::endl;
+//     return EXIT_SUCCESS;
+// }

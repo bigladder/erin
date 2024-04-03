@@ -21,8 +21,7 @@ TEST(Erin, Test1)
     auto loadId = Model_AddConstantLoad(m, 10);
     auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
     auto results = Simulate(m, false);
-    EXPECT_EQ(results.size(), 1)
-        << "output must have a size of 1";
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
     EXPECT_EQ(results[0].Flows.size(), 1) << "size of flows must equal 1";
     auto srcToLoadResult =
@@ -57,8 +56,7 @@ TEST(Erin, Test2)
         << "requested must equal 20";
     EXPECT_EQ(srcToConvResults.value().Actual_W, 20)
         << "actual value must equal 20";
-    EXPECT_EQ(
-        srcToConvResults.value().Available_W, 100)
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
         << "available must equal 100";
     auto convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, 0.0, results);
@@ -66,7 +64,7 @@ TEST(Erin, Test2)
         << "converter to load must have results";
     EXPECT_EQ(convToLoadResults.value().Requested_W, 10)
         << "requested must equal 10";
-    EXPECT_EQ(convToLoadResults.value().Actual_W, 10) 
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 10)
         << "actual value must equal 10";
     EXPECT_EQ(convToLoadResults.value().Available_W, 50)
         << "available must equal 50";

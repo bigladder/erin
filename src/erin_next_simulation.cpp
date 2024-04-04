@@ -148,6 +148,11 @@ namespace erin
         Model const& m = s.TheModel;
         for (size_t i = 0; i < m.ComponentMap.CompType.size(); ++i)
         {
+            assert(i < m.ComponentMap.OutflowType.size());
+            assert(i < m.ComponentMap.InflowType.size());
+            assert(i < m.ComponentMap.CompType.size());
+            assert(i < m.ComponentMap.Tag.size());
+            assert(i < m.ComponentMap.Idx.size());
             std::vector<size_t> const& outflowTypes =
                 m.ComponentMap.OutflowType[i];
             std::vector<size_t> inflowTypes = m.ComponentMap.InflowType[i];
@@ -160,52 +165,62 @@ namespace erin
             {
                 std::cout << std::endl;
             }
-            for (size_t inport = 0; inport < inflowTypes.size(); ++inport)
+            for (size_t inportIdx = 0; inportIdx < inflowTypes.size();
+                 ++inportIdx)
             {
-                size_t inflowType = inflowTypes[inport];
+                size_t inflowType = inflowTypes[inportIdx];
                 if (inflowType < s.FlowTypeMap.Type.size()
                     && !s.FlowTypeMap.Type[inflowType].empty())
                 {
-                    std::cout << "- inport " << inport << ": "
+                    std::cout << "- inport " << inportIdx << ": "
                               << s.FlowTypeMap.Type[inflowType] << std::endl;
                 }
             }
-            for (size_t outport = 0; outport < outflowTypes.size(); ++outport)
+            for (size_t outportIdx = 0; outportIdx < outflowTypes.size();
+                 ++outportIdx)
             {
-                size_t outflowType = outflowTypes[outport];
+                size_t outflowType = outflowTypes[outportIdx];
                 if (outflowType < s.FlowTypeMap.Type.size()
                     && !s.FlowTypeMap.Type[outflowType].empty())
                 {
-                    std::cout << "- outport " << outport << ": "
+                    std::cout << "- outport " << outportIdx << ": "
                               << s.FlowTypeMap.Type[outflowType] << std::endl;
                 }
             }
+            size_t subtypeIdx = m.ComponentMap.Idx[i];
             switch (m.ComponentMap.CompType[i])
             {
                 case ComponentType::ScheduleBasedLoadType:
                 {
-                    ScheduleBasedLoad const& sbl =
-                        m.ScheduledLoads[m.ComponentMap.Idx[i]];
+                    assert(subtypeIdx < m.ScheduledLoads.size());
+                    ScheduleBasedLoad const& sbl = m.ScheduledLoads[subtypeIdx];
                     for (auto const& keyValue : sbl.ScenarioIdToLoadId)
                     {
-                        std::cout
-                            << "-- for scenario: "
-                            << s.ScenarioMap.Tags[keyValue.first]
-                            << ", use load: " << s.LoadMap.Tags[keyValue.second]
-                            << std::endl;
+                        size_t scenarioIdx = keyValue.first;
+                        size_t loadIdx = keyValue.second;
+                        assert(scenarioIdx < s.ScenarioMap.Tags.size());
+                        assert(loadIdx < s.LoadMap.Tags.size());
+                        std::cout << "-- for scenario: "
+                                  << s.ScenarioMap.Tags[scenarioIdx]
+                                  << ", use load: " << s.LoadMap.Tags[loadIdx]
+                                  << std::endl;
                     }
                 }
                 break;
                 case ComponentType::ScheduleBasedSourceType:
                 {
+                    assert(subtypeIdx < m.ScheduledSrcs.size());
                     ScheduleBasedSource const& sbs =
-                        m.ScheduledSrcs[m.ComponentMap.Idx[i]];
+                        m.ScheduledSrcs[subtypeIdx];
                     for (auto const& keyValue : sbs.ScenarioIdToSourceId)
                     {
+                        size_t scenarioIdx = keyValue.first;
+                        size_t loadIdx = keyValue.second;
+                        assert(scenarioIdx < s.ScenarioMap.Tags.size());
+                        assert(loadIdx < s.LoadMap.Tags.size());
                         std::cout << "-- for scenario: "
-                                  << s.ScenarioMap.Tags[keyValue.first]
-                                  << ", use supply: "
-                                  << s.LoadMap.Tags[keyValue.second]
+                                  << s.ScenarioMap.Tags[scenarioIdx]
+                                  << ", use supply: " << s.LoadMap.Tags[loadIdx]
                                   << std::endl;
                     }
                     std::cout << "-- max outflow (W): "
@@ -217,8 +232,9 @@ namespace erin
                 break;
                 case ComponentType::ConstantEfficiencyConverterType:
                 {
+                    assert(subtypeIdx < m.ConstEffConvs.size());
                     ConstantEfficiencyConverter const& cec =
-                        m.ConstEffConvs[m.ComponentMap.Idx[i]];
+                        m.ConstEffConvs[subtypeIdx];
                     std::cout << "-- efficiency: " << cec.Efficiency * 100.0
                               << "%" << std::endl;
                     std::cout << "-- max outflow (W): "
@@ -235,7 +251,8 @@ namespace erin
                 break;
                 case ComponentType::MoverType:
                 {
-                    Mover const& mov = m.Movers[m.ComponentMap.Idx[i]];
+                    assert(subtypeIdx < m.Movers.size());
+                    Mover const& mov = m.Movers[subtypeIdx];
                     std::cout << "-- cop: " << mov.COP << std::endl;
                     std::cout << "-- max outflow (W): "
                               << (mov.MaxOutflow_W == max_flow_W
@@ -246,7 +263,8 @@ namespace erin
                 break;
                 case ComponentType::StoreType:
                 {
-                    Store const& store = m.Stores[m.ComponentMap.Idx[i]];
+                    assert(subtypeIdx < m.Stores.size());
+                    Store const& store = m.Stores[subtypeIdx];
                     std::cout << "-- capacity (J): " << store.Capacity_J
                               << std::endl;
                     std::cout << "-- initial SOC: "
@@ -276,7 +294,8 @@ namespace erin
                 break;
                 case ComponentType::PassThroughType:
                 {
-                    PassThrough const& pt = m.PassThroughs[i];
+                    assert(subtypeIdx < m.PassThroughs.size());
+                    PassThrough const& pt = m.PassThroughs[subtypeIdx];
                     std::cout << "-- max outflow (W): "
                               << (pt.MaxOutflow_W == max_flow_W
                                       ? "unlimited"

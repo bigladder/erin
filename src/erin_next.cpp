@@ -346,6 +346,7 @@ namespace erin
                     if (ts.state)
                     {
                         Model_SetComponentToRepaired(m, ss, rel.ComponentId);
+                        // TODO: need to enable/disable printing
                         std::cout << "... REPAIRED: "
                                   << m.ComponentMap.Tag[rel.ComponentId] << "["
                                   << rel.ComponentId << "]" << std::endl;
@@ -353,17 +354,20 @@ namespace erin
                     else
                     {
                         Model_SetComponentToFailed(m, ss, rel.ComponentId);
+                        // TODO: need to enable/disable printing
                         std::cout << "... FAILED: "
                                   << m.ComponentMap.Tag[rel.ComponentId] << "["
                                   << rel.ComponentId << "]" << std::endl;
                         std::cout << "... causes: " << std::endl;
                         for (auto const& fragCause : ts.fragilityModeCauses)
                         {
+                            // TODO: need to enable/disable printing
                             std::cout << "... ... fragility mode: " << fragCause
                                       << std::endl;
                         }
                         for (auto const& failCause : ts.failureModeCauses)
                         {
+                            // TODO: need to enable/disable printing
                             std::cout << "... ... failure mode: " << failCause
                                       << std::endl;
                         }

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+# Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
 # See the LICENSE.txt file for additional terms and conditions.
 cmake_minimum_required(VERSION 3.15..3.28) # required for gtest_discover_tests
 
@@ -19,7 +19,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE is " ${CMAKE_BUILD_TYPE})
-set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 option( ${CMAKE_PROJECT_NAME}_TESTING "Build ERIN testing targets" OFF)
 option( ${CMAKE_PROJECT_NAME}_COVERAGE "Generate coverage reports" OFF)
@@ -41,7 +41,7 @@ add_subdirectory(src)
 add_subdirectory(apps)
 
 if (${CMAKE_PROJECT_NAME}_TESTING)
-  # add_subdirectory(test)
+  add_subdirectory(test)
   if (${CMAKE_PROJECT_NAME}_COVERAGE)
     coverage_evaluate()
   endif()

@@ -35,8 +35,10 @@ main(int argc, char** argv)
     std::cout << "See LICENSE.txt file for license information." << std::endl;
     if (argc != 3)
     {
-        auto prog_name = std::filesystem::path(std::string(argv[0])).filename();
-        print_usage(prog_name);
+        std::filesystem::path prog_name =
+            std::filesystem::path(std::string(argv[0])).filename();
+        std::string prog_name_str = prog_name.string();
+        print_usage(prog_name_str);
         return EXIT_SUCCESS;
     }
     std::cout << "Creating graph..." << std::endl;

@@ -5,7 +5,10 @@ import platform
 import csv
 
 
+print("Platform: " + platform.system())
 if platform.system() == 'Windows':
+    from shutil import which
+    DIFF_PROG = 'fc' if which('fc') is not None else 'diff'
     ROOT_DIR = Path('.') / '..' / '..'
     BIN_DIR = ROOT_DIR / 'build' / 'bin' / 'Release'
     if not BIN_DIR.exists():
@@ -21,7 +24,8 @@ if platform.system() == 'Windows':
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test.exe'
     CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
-elif platform.system() == 'Darwin':
+elif platform.system() == 'Darwin' or platform.system() == 'Linux':
+    DIFF_PROG = 'diff'
     BIN_DIR = Path('.') / '..' / '..' / 'build' / 'bin'
     TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test'
@@ -30,7 +34,6 @@ elif platform.system() == 'Darwin':
 else:
     print(f"Unhandled platform, '{platform.system()}'")
     sys.exit(1)
-print("Platform: " + platform.system())
 print(f"BINARY DIR: {BIN_DIR}")
 
 
@@ -180,7 +183,7 @@ def run_cli(example_name):
     """
     _ = smoke_test(example_name)
     result = subprocess.run(
-        ['diff', 'out.csv', f'ex{example_name}-out.csv'],
+        [DIFF_PROG, 'out.csv', f'ex{example_name}-out.csv'],
         capture_output=True)
     if result.returncode != 0:
         print(f"diff did not compare clean for out.csv for {example_name}")
@@ -199,7 +202,7 @@ def run_cli(example_name):
         print("stdout:\n")
         print(result.stdout.decode())
         print("stderr:\n")
-        print(results.stderr.decode())
+        print(result.stderr.decode())
         print(("=" * 20) + " DETAILED DIFF")
         compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
         sys.exit(1)

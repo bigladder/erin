@@ -20,7 +20,7 @@ jobs:
       run:
         shell: bash
     runs-on: ${{ matrix.os }}
-    name: ${{ matrix.os }} ${{ matrix.config }} coverage=${{ matrix.coverage }}
+    name: ${{ matrix.os }} ${{ matrix.config }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -165,7 +165,8 @@ namespace erin
             {
                 std::cout << std::endl;
             }
-            for (size_t inportIdx = 0; inportIdx < inflowTypes.size(); ++inportIdx)
+            for (size_t inportIdx = 0; inportIdx < inflowTypes.size();
+                 ++inportIdx)
             {
                 size_t inflowType = inflowTypes[inportIdx];
                 if (inflowType < s.FlowTypeMap.Type.size()
@@ -175,7 +176,8 @@ namespace erin
                               << s.FlowTypeMap.Type[inflowType] << std::endl;
                 }
             }
-            for (size_t outportIdx = 0; outportIdx < outflowTypes.size(); ++outportIdx)
+            for (size_t outportIdx = 0; outportIdx < outflowTypes.size();
+                 ++outportIdx)
             {
                 size_t outflowType = outflowTypes[outportIdx];
                 if (outflowType < s.FlowTypeMap.Type.size()
@@ -191,19 +193,17 @@ namespace erin
                 case ComponentType::ScheduleBasedLoadType:
                 {
                     assert(subtypeIdx < m.ScheduledLoads.size());
-                    ScheduleBasedLoad const& sbl =
-                        m.ScheduledLoads[subtypeIdx];
+                    ScheduleBasedLoad const& sbl = m.ScheduledLoads[subtypeIdx];
                     for (auto const& keyValue : sbl.ScenarioIdToLoadId)
                     {
                         size_t scenarioIdx = keyValue.first;
                         size_t loadIdx = keyValue.second;
                         assert(scenarioIdx < s.ScenarioMap.Tags.size());
                         assert(loadIdx < s.LoadMap.Tags.size());
-                        std::cout
-                            << "-- for scenario: "
-                            << s.ScenarioMap.Tags[scenarioIdx]
-                            << ", use load: " << s.LoadMap.Tags[loadIdx]
-                            << std::endl;
+                        std::cout << "-- for scenario: "
+                                  << s.ScenarioMap.Tags[scenarioIdx]
+                                  << ", use load: " << s.LoadMap.Tags[loadIdx]
+                                  << std::endl;
                     }
                 }
                 break;
@@ -220,8 +220,7 @@ namespace erin
                         assert(loadIdx < s.LoadMap.Tags.size());
                         std::cout << "-- for scenario: "
                                   << s.ScenarioMap.Tags[scenarioIdx]
-                                  << ", use supply: "
-                                  << s.LoadMap.Tags[loadIdx]
+                                  << ", use supply: " << s.LoadMap.Tags[loadIdx]
                                   << std::endl;
                     }
                     std::cout << "-- max outflow (W): "

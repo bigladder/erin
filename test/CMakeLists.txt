@@ -4,8 +4,13 @@ enable_testing()
 
 string(TOLOWER ${PROJECT_NAME} project_name_lower)
 
+set(library_files
+		${project_name_lower}_tests.cpp
+		${project_name_lower}_next_random_test.cpp
+		)
+
 add_executable(${project_name_lower}_tests
-	${project_name_lower}_tests.cpp)
+	${library_files})
 target_include_directories(${project_name_lower}_tests
 	PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(${project_name_lower}_tests

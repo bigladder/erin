@@ -2,7 +2,6 @@
 #include "erin_next/erin_next_timestate.h"
 #include <gtest/gtest.h>
 #include <iomanip>
-#include <chrono>
 #include <limits>
 
 using namespace erin;

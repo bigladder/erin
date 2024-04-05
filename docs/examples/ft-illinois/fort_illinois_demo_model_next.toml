@@ -1,0 +1,2733 @@
+# Simulation Information
+# Fort Illinois Demo Model @ 3/29/2024 11:34:32 AM
+[simulation_info]
+id = 1
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "hours"
+max_time = 8760
+
+# Distributions
+[dist.immediately]
+id = 1
+type = "fixed"
+time_unit = "hours"
+value = 0.0
+
+[dist.boiler_mtbf]
+id = 2
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 51246.0
+location = 0.0
+
+[dist.boiler_mttr]
+id = 3
+type = "fixed"
+time_unit = "hours"
+value = 48.0
+
+[dist.substation_electrical_mtbf]
+id = 4
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 5000.0
+location = 0.0
+
+[dist.substation_electrical_mttr]
+id = 5
+type = "fixed"
+time_unit = "hours"
+value = 24.0
+
+[dist.substation_electrical_mtbf_1]
+id = 6
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 5000.0
+location = 0.0
+
+[dist.chiller_electric_air_cooled_mtbf]
+id = 7
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 20000.0
+location = 0.0
+
+[dist.chiller_electric_air_cooled_mttr]
+id = 8
+type = "fixed"
+time_unit = "hours"
+value = 72.0
+
+[dist.boiler_mtbf_1]
+id = 9
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 51246.0
+location = 0.0
+
+[dist.boiler_mtbf_2]
+id = 10
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 51246.0
+location = 0.0
+
+[dist.generator_diesel_engine_mtbf]
+id = 11
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 70932.0
+location = 0.0
+
+[dist.generator_diesel_engine_mttr]
+id = 12
+type = "fixed"
+time_unit = "hours"
+value = 18.28
+
+[dist.generator_diesel_engine_mtbf_1]
+id = 13
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 70932.0
+location = 0.0
+
+[dist.generator_diesel_engine_mtbf_2]
+id = 14
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 70932.0
+location = 0.0
+
+[dist.generator_diesel_engine_mtbf_3]
+id = 15
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 70932.0
+location = 0.0
+
+[dist.generator_diesel_engine_mtbf_4]
+id = 16
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 70932.0
+location = 0.0
+
+[dist.generator_diesel_engine_mtbf_5]
+id = 17
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 70932.0
+location = 0.0
+
+[dist.generator_diesel_engine_mtbf_6]
+id = 18
+type = "weibull"
+time_unit = "hours"
+shape = 5.0
+scale = 70932.0
+location = 0.0
+
+[dist.black_sky_substation_outage_repair]
+id = 19
+type = "fixed"
+time_unit = "hours"
+value = 336.0
+
+# Fragility Modes
+[fragility_mode.tornado]
+id = 1
+fragility_curve = "tornado"
+repair_dist = "black_sky_substation_outage_repair"
+
+# Fragility Curves
+[fragility_curve.tornado]
+id = 1
+vulnerable_to = "wind_speed_mph"
+type = "linear"
+lower_bound = 45.0
+upper_bound = 70.0
+
+# Failure Modes
+[failure_mode.boiler_mtfm]
+id = 1
+failure_dist = "boiler_mtbf"
+repair_dist = "boiler_mttr"
+
+[failure_mode.substation_electrical_mtfm]
+id = 2
+failure_dist = "substation_electrical_mtbf"
+repair_dist = "substation_electrical_mttr"
+
+[failure_mode.substation_electrical_mtfm_1]
+id = 3
+failure_dist = "substation_electrical_mtbf_1"
+repair_dist = "substation_electrical_mttr"
+
+[failure_mode.chiller_electric_air_cooled_mtfm]
+id = 4
+failure_dist = "chiller_electric_air_cooled_mtbf"
+repair_dist = "chiller_electric_air_cooled_mttr"
+
+[failure_mode.boiler_mtfm_1]
+id = 5
+failure_dist = "boiler_mtbf_1"
+repair_dist = "boiler_mttr"
+
+[failure_mode.boiler_mtfm_2]
+id = 6
+failure_dist = "boiler_mtbf_2"
+repair_dist = "boiler_mttr"
+
+[failure_mode.generator_diesel_engine_mtfm]
+id = 7
+failure_dist = "generator_diesel_engine_mtbf"
+repair_dist = "generator_diesel_engine_mttr"
+
+[failure_mode.generator_diesel_engine_mtfm_1]
+id = 8
+failure_dist = "generator_diesel_engine_mtbf_1"
+repair_dist = "generator_diesel_engine_mttr"
+
+[failure_mode.generator_diesel_engine_mtfm_2]
+id = 9
+failure_dist = "generator_diesel_engine_mtbf_2"
+repair_dist = "generator_diesel_engine_mttr"
+
+[failure_mode.generator_diesel_engine_mtfm_3]
+id = 10
+failure_dist = "generator_diesel_engine_mtbf_3"
+repair_dist = "generator_diesel_engine_mttr"
+
+[failure_mode.generator_diesel_engine_mtfm_4]
+id = 11
+failure_dist = "generator_diesel_engine_mtbf_4"
+repair_dist = "generator_diesel_engine_mttr"
+
+[failure_mode.generator_diesel_engine_mtfm_5]
+id = 12
+failure_dist = "generator_diesel_engine_mtbf_5"
+repair_dist = "generator_diesel_engine_mttr"
+
+[failure_mode.generator_diesel_engine_mtfm_6]
+id = 13
+failure_dist = "generator_diesel_engine_mtbf_6"
+repair_dist = "generator_diesel_engine_mttr"
+
+# Loads
+[loads.bldg_10_load__steam]
+csv_file = "bldg_10_load__steam.csv"
+
+[loads.bldg_10_load__chilled_water]
+csv_file = "bldg_10_load__chilled_water.csv"
+
+[loads.bldg_10_load__electricity]
+csv_file = "bldg_10_load__electricity.csv"
+
+[loads.bldg_11_load__chilled_water]
+csv_file = "bldg_11_load__chilled_water.csv"
+
+[loads.bldg_11_load__steam]
+csv_file = "bldg_11_load__steam.csv"
+
+[loads.bldg_11_load__electricity]
+csv_file = "bldg_11_load__electricity.csv"
+
+[loads.7_gym_mc_load__steam]
+csv_file = "7_gym_mc_load__steam.csv"
+
+[loads.7_gym_mc_load__chilled_water]
+csv_file = "7_gym_mc_load__chilled_water.csv"
+
+[loads.7_gym_mc_load__electricity]
+csv_file = "7_gym_mc_load__electricity.csv"
+
+[loads.41_fire_station_mc_load__steam]
+csv_file = "41_fire_station_mc_load__steam.csv"
+
+[loads.41_fire_station_mc_load__chilled_water]
+csv_file = "41_fire_station_mc_load__chilled_water.csv"
+
+[loads.41_fire_station_mc_load__electricity]
+csv_file = "41_fire_station_mc_load__electricity.csv"
+
+[loads.2_health_clinic_mc_load__steam]
+csv_file = "2_health_clinic_mc_load__steam.csv"
+
+[loads.2_health_clinic_mc_load__chilled_water]
+csv_file = "2_health_clinic_mc_load__chilled_water.csv"
+
+[loads.2_health_clinic_mc_load__electricity]
+csv_file = "2_health_clinic_mc_load__electricity.csv"
+
+[loads.16_office_mc_load__steam]
+csv_file = "16_office_mc_load__steam.csv"
+
+[loads.16_office_mc_load__chilled_water]
+csv_file = "16_office_mc_load__chilled_water.csv"
+
+[loads.16_office_mc_load__electricity]
+csv_file = "16_office_mc_load__electricity.csv"
+
+[loads.44_dfac_mc_load__steam]
+csv_file = "44_dfac_mc_load__steam.csv"
+
+[loads.44_dfac_mc_load__chilled_water]
+csv_file = "44_dfac_mc_load__chilled_water.csv"
+
+[loads.44_dfac_mc_load__electricity]
+csv_file = "44_dfac_mc_load__electricity.csv"
+
+[loads.14_maintenance_dpw_mc_load__steam]
+csv_file = "14_maintenance_dpw_mc_load__steam.csv"
+
+[loads.14_maintenance_dpw_mc_load__chilled_water]
+csv_file = "14_maintenance_dpw_mc_load__chilled_water.csv"
+
+[loads.14_maintenance_dpw_mc_load__electricity]
+csv_file = "14_maintenance_dpw_mc_load__electricity.csv"
+
+[loads.33_morton_barracks__electricity]
+csv_file = "33_morton_barracks__electricity.csv"
+
+[loads.33_morton_barracks__steam]
+csv_file = "33_morton_barracks__steam.csv"
+
+[loads.33_morton_barracks__chilled_water]
+csv_file = "33_morton_barracks__chilled_water.csv"
+
+[loads.34_wallace_barracks__electricity]
+csv_file = "34_wallace_barracks__electricity.csv"
+
+[loads.34_wallace_barracks__steam]
+csv_file = "34_wallace_barracks__steam.csv"
+
+[loads.34_wallace_barracks__chilled_water]
+csv_file = "34_wallace_barracks__chilled_water.csv"
+
+[loads.69_classrooms__electricity]
+csv_file = "69_classrooms__electricity.csv"
+
+[loads.69_classrooms__steam]
+csv_file = "69_classrooms__steam.csv"
+
+[loads.69_classrooms__chilled_water]
+csv_file = "69_classrooms__chilled_water.csv"
+
+[loads.73_classrooms__electricity]
+csv_file = "73_classrooms__electricity.csv"
+
+[loads.73_classrooms__steam]
+csv_file = "73_classrooms__steam.csv"
+
+[loads.73_classrooms__chilled_water]
+csv_file = "73_classrooms__chilled_water.csv"
+
+[loads.25_ab_hall__electricity]
+csv_file = "25_ab_hall__electricity.csv"
+
+[loads.25_ab_hall__steam]
+csv_file = "25_ab_hall__steam.csv"
+
+[loads.25_ab_hall__chilled_water]
+csv_file = "25_ab_hall__chilled_water.csv"
+
+[loads.19_band_building__electricity]
+csv_file = "19_band_building__electricity.csv"
+
+[loads.19_band_building__steam]
+csv_file = "19_band_building__steam.csv"
+
+[loads.19_band_building__chilled_water]
+csv_file = "19_band_building__chilled_water.csv"
+
+[loads.22_office__electricity]
+csv_file = "22_office__electricity.csv"
+
+[loads.22_office__steam]
+csv_file = "22_office__steam.csv"
+
+[loads.22_office__chilled_water]
+csv_file = "22_office__chilled_water.csv"
+
+[loads.23_labs__electricity]
+csv_file = "23_labs__electricity.csv"
+
+[loads.23_labs__steam]
+csv_file = "23_labs__steam.csv"
+
+[loads.23_labs__chilled_water]
+csv_file = "23_labs__chilled_water.csv"
+
+[loads.42_classrooms__electricity]
+csv_file = "42_classrooms__electricity.csv"
+
+[loads.42_classrooms__steam]
+csv_file = "42_classrooms__steam.csv"
+
+[loads.42_classrooms__chilled_water]
+csv_file = "42_classrooms__chilled_water.csv"
+
+[loads.warehouse_demolish_group__electricity]
+csv_file = "warehouse_demolish_group__electricity.csv"
+
+[loads.warehouse_demolish_group__steam]
+csv_file = "warehouse_demolish_group__steam.csv"
+
+[loads.warehouse_demolish_group__chilled_water]
+csv_file = "warehouse_demolish_group__chilled_water.csv"
+
+[loads.45_barracks__electricity]
+csv_file = "45_barracks__electricity.csv"
+
+[loads.45_barracks__steam]
+csv_file = "45_barracks__steam.csv"
+
+[loads.45_barracks__chilled_water]
+csv_file = "45_barracks__chilled_water.csv"
+
+[loads.46_barracks__electricity]
+csv_file = "46_barracks__electricity.csv"
+
+[loads.46_barracks__steam]
+csv_file = "46_barracks__steam.csv"
+
+[loads.46_barracks__chilled_water]
+csv_file = "46_barracks__chilled_water.csv"
+
+[loads.47_barracks__electricity]
+csv_file = "47_barracks__electricity.csv"
+
+[loads.47_barracks__steam]
+csv_file = "47_barracks__steam.csv"
+
+[loads.47_barracks__chilled_water]
+csv_file = "47_barracks__chilled_water.csv"
+
+[loads.49_dfac__electricity]
+csv_file = "49_dfac__electricity.csv"
+
+[loads.49_dfac__steam]
+csv_file = "49_dfac__steam.csv"
+
+[loads.49_dfac__chilled_water]
+csv_file = "49_dfac__chilled_water.csv"
+
+[loads.48_barracks__electricity]
+csv_file = "48_barracks__electricity.csv"
+
+[loads.48_barracks__steam]
+csv_file = "48_barracks__steam.csv"
+
+[loads.48_barracks__chilled_water]
+csv_file = "48_barracks__chilled_water.csv"
+
+[loads.51_barracks__electricity]
+csv_file = "51_barracks__electricity.csv"
+
+[loads.51_barracks__steam]
+csv_file = "51_barracks__steam.csv"
+
+[loads.51_barracks__chilled_water]
+csv_file = "51_barracks__chilled_water.csv"
+
+[loads.50_dfac__electricity]
+csv_file = "50_dfac__electricity.csv"
+
+[loads.50_dfac__steam]
+csv_file = "50_dfac__steam.csv"
+
+[loads.50_dfac__chilled_water]
+csv_file = "50_dfac__chilled_water.csv"
+
+[loads.52_barracks__electricity]
+csv_file = "52_barracks__electricity.csv"
+
+[loads.52_barracks__steam]
+csv_file = "52_barracks__steam.csv"
+
+[loads.52_barracks__chilled_water]
+csv_file = "52_barracks__chilled_water.csv"
+
+[loads.15_admissions__electricity]
+csv_file = "15_admissions__electricity.csv"
+
+[loads.15_admissions__steam]
+csv_file = "15_admissions__steam.csv"
+
+[loads.15_admissions__chilled_water]
+csv_file = "15_admissions__chilled_water.csv"
+
+[loads.36_wolters_barracks__electricity]
+csv_file = "36_wolters_barracks__electricity.csv"
+
+[loads.36_wolters_barracks__chilled_water]
+csv_file = "36_wolters_barracks__chilled_water.csv"
+
+[loads.36_wolters_barracks__steam]
+csv_file = "36_wolters_barracks__steam.csv"
+
+[loads.35_swanson_barracks__electricity]
+csv_file = "35_swanson_barracks__electricity.csv"
+
+[loads.35_swanson_barracks__steam]
+csv_file = "35_swanson_barracks__steam.csv"
+
+[loads.35_swanson_barracks__chilled_water]
+csv_file = "35_swanson_barracks__chilled_water.csv"
+
+[loads.43_dining_facility__electricity]
+csv_file = "43_dining_facility__electricity.csv"
+
+[loads.43_dining_facility__chilled_water]
+csv_file = "43_dining_facility__chilled_water.csv"
+
+[loads.43_dining_facility__steam]
+csv_file = "43_dining_facility__steam.csv"
+
+[loads.8_library__electricity]
+csv_file = "8_library__electricity.csv"
+
+[loads.8_library__steam]
+csv_file = "8_library__steam.csv"
+
+[loads.8_library__chilled_water]
+csv_file = "8_library__chilled_water.csv"
+
+[loads.37_young_barracks__electricity]
+csv_file = "37_young_barracks__electricity.csv"
+
+[loads.37_young_barracks__steam]
+csv_file = "37_young_barracks__steam.csv"
+
+[loads.37_young_barracks__chilled_water]
+csv_file = "37_young_barracks__chilled_water.csv"
+
+[loads.38_latino_barracks__electricity]
+csv_file = "38_latino_barracks__electricity.csv"
+
+[loads.38_latino_barracks__steam]
+csv_file = "38_latino_barracks__steam.csv"
+
+[loads.38_latino_barracks__chilled_water]
+csv_file = "38_latino_barracks__chilled_water.csv"
+
+[loads.9_physical_fitness__electricity]
+csv_file = "9_physical_fitness__electricity.csv"
+
+[loads.9_physical_fitness__steam]
+csv_file = "9_physical_fitness__steam.csv"
+
+[loads.9_physical_fitness__chilled_water]
+csv_file = "9_physical_fitness__chilled_water.csv"
+
+[loads.32_chittenden_barracks__electricity]
+csv_file = "32_chittenden_barracks__electricity.csv"
+
+[loads.32_chittenden_barracks__steam]
+csv_file = "32_chittenden_barracks__steam.csv"
+
+[loads.32_chittenden_barracks__chilled_water]
+csv_file = "32_chittenden_barracks__chilled_water.csv"
+
+[loads.31_okeefe_barracks__electricity]
+csv_file = "31_okeefe_barracks__electricity.csv"
+
+[loads.31_okeefe_barracks__steam]
+csv_file = "31_okeefe_barracks__steam.csv"
+
+[loads.31_okeefe_barracks__chilled_water]
+csv_file = "31_okeefe_barracks__chilled_water.csv"
+
+[loads.30_marks_barracks__electricity]
+csv_file = "30_marks_barracks__electricity.csv"
+
+[loads.30_marks_barracks__steam]
+csv_file = "30_marks_barracks__steam.csv"
+
+[loads.30_marks_barracks__chilled_water]
+csv_file = "30_marks_barracks__chilled_water.csv"
+
+[loads.29_case_barracks__electricity]
+csv_file = "29_case_barracks__electricity.csv"
+
+[loads.29_case_barracks__steam]
+csv_file = "29_case_barracks__steam.csv"
+
+[loads.29_case_barracks__chilled_water]
+csv_file = "29_case_barracks__chilled_water.csv"
+
+[loads.28_liesen_barracks__electricity]
+csv_file = "28_liesen_barracks__electricity.csv"
+
+[loads.28_liesen_barracks__steam]
+csv_file = "28_liesen_barracks__steam.csv"
+
+[loads.28_liesen_barracks__chilled_water]
+csv_file = "28_liesen_barracks__chilled_water.csv"
+
+[loads.27_ellis_barracks__electricity]
+csv_file = "27_ellis_barracks__electricity.csv"
+
+[loads.27_ellis_barracks__steam]
+csv_file = "27_ellis_barracks__steam.csv"
+
+[loads.27_ellis_barracks__chilled_water]
+csv_file = "27_ellis_barracks__chilled_water.csv"
+
+[loads.5_oconnor_hall__electricity]
+csv_file = "5_oconnor_hall__electricity.csv"
+
+[loads.5_oconnor_hall__steam]
+csv_file = "5_oconnor_hall__steam.csv"
+
+[loads.5_oconnor_hall__chilled_water]
+csv_file = "5_oconnor_hall__chilled_water.csv"
+
+[loads.6_cadet_chapel__electricity]
+csv_file = "6_cadet_chapel__electricity.csv"
+
+[loads.6_cadet_chapel__steam]
+csv_file = "6_cadet_chapel__steam.csv"
+
+[loads.6_cadet_chapel__chilled_water]
+csv_file = "6_cadet_chapel__chilled_water.csv"
+
+[loads.54_classrooms__electricity]
+csv_file = "54_classrooms__electricity.csv"
+
+[loads.54_classrooms__steam]
+csv_file = "54_classrooms__steam.csv"
+
+[loads.54_classrooms__chilled_water]
+csv_file = "54_classrooms__chilled_water.csv"
+
+[loads.53_classrooms__electricity]
+csv_file = "53_classrooms__electricity.csv"
+
+[loads.53_classrooms__steam]
+csv_file = "53_classrooms__steam.csv"
+
+[loads.53_classrooms__chilled_water]
+csv_file = "53_classrooms__chilled_water.csv"
+
+[loads.39_sibenaller_barracks__electricity]
+csv_file = "39_sibenaller_barracks__electricity.csv"
+
+[loads.39_sibenaller_barracks__steam]
+csv_file = "39_sibenaller_barracks__steam.csv"
+
+[loads.39_sibenaller_barracks__chilled_water]
+csv_file = "39_sibenaller_barracks__chilled_water.csv"
+
+[loads.40_barracks_n__steam]
+csv_file = "40_barracks_n__steam.csv"
+
+[loads.40_barracks_n__chilled_water]
+csv_file = "40_barracks_n__chilled_water.csv"
+
+[loads.40_barracks_n__electricity]
+csv_file = "40_barracks_n__electricity.csv"
+
+[loads.55_classrooms__electricity]
+csv_file = "55_classrooms__electricity.csv"
+
+[loads.55_classrooms__steam]
+csv_file = "55_classrooms__steam.csv"
+
+[loads.55_classrooms__chilled_water]
+csv_file = "55_classrooms__chilled_water.csv"
+
+[loads.3_schaffer_hall__electricity]
+csv_file = "3_schaffer_hall__electricity.csv"
+
+[loads.3_schaffer_hall__steam]
+csv_file = "3_schaffer_hall__steam.csv"
+
+[loads.3_schaffer_hall__chilled_water]
+csv_file = "3_schaffer_hall__chilled_water.csv"
+
+[loads.4_moore_hall__electricity]
+csv_file = "4_moore_hall__electricity.csv"
+
+[loads.4_moore_hall__steam]
+csv_file = "4_moore_hall__steam.csv"
+
+[loads.4_moore_hall__chilled_water]
+csv_file = "4_moore_hall__chilled_water.csv"
+
+[loads.18_gc_hq_doc_dol__electricity]
+csv_file = "18_gc_hq_doc_dol__electricity.csv"
+
+[loads.18_gc_hq_doc_dol__steam]
+csv_file = "18_gc_hq_doc_dol__steam.csv"
+
+[loads.18_gc_hq_doc_dol__chilled_water]
+csv_file = "18_gc_hq_doc_dol__chilled_water.csv"
+
+[loads.17_aa_hall__electricity]
+csv_file = "17_aa_hall__electricity.csv"
+
+[loads.17_aa_hall__steam]
+csv_file = "17_aa_hall__steam.csv"
+
+[loads.17_aa_hall__chilled_water]
+csv_file = "17_aa_hall__chilled_water.csv"
+
+[loads.21_field_house__electricity]
+csv_file = "21_field_house__electricity.csv"
+
+[loads.21_field_house__steam]
+csv_file = "21_field_house__steam.csv"
+
+[loads.21_field_house__chilled_water]
+csv_file = "21_field_house__chilled_water.csv"
+
+[loads.26_rifle_and_pistol_range__electricity]
+csv_file = "26_rifle_and_pistol_range__electricity.csv"
+
+[loads.26_rifle_and_pistol_range__steam]
+csv_file = "26_rifle_and_pistol_range__steam.csv"
+
+[loads.26_rifle_and_pistol_range__chilled_water]
+csv_file = "26_rifle_and_pistol_range__chilled_water.csv"
+
+[loads.20_ac_hall__electricity]
+csv_file = "20_ac_hall__electricity.csv"
+
+[loads.20_ac_hall__steam]
+csv_file = "20_ac_hall__steam.csv"
+
+[loads.20_ac_hall__chilled_water]
+csv_file = "20_ac_hall__chilled_water.csv"
+
+[loads.24_warehouse__electricity]
+csv_file = "24_warehouse__electricity.csv"
+
+[loads.24_warehouse__steam]
+csv_file = "24_warehouse__steam.csv"
+
+[loads.24_warehouse__chilled_water]
+csv_file = "24_warehouse__chilled_water.csv"
+
+[loads.12_ae_hall__electricity]
+csv_file = "12_ae_hall__electricity.csv"
+
+[loads.12_ae_hall__steam]
+csv_file = "12_ae_hall__steam.csv"
+
+[loads.12_ae_hall__chilled_water]
+csv_file = "12_ae_hall__chilled_water.csv"
+
+[loads.13_af_hall__electricity]
+csv_file = "13_af_hall__electricity.csv"
+
+[loads.13_af_hall__steam]
+csv_file = "13_af_hall__steam.csv"
+
+[loads.13_af_hall__chilled_water]
+csv_file = "13_af_hall__chilled_water.csv"
+
+[loads.56_highschool__electricity]
+csv_file = "56_highschool__electricity.csv"
+
+[loads.56_highschool__steam]
+csv_file = "56_highschool__steam.csv"
+
+[loads.56_highschool__chilled_water]
+csv_file = "56_highschool__chilled_water.csv"
+
+[loads.57_primary_school__electricity]
+csv_file = "57_primary_school__electricity.csv"
+
+[loads.57_primary_school__steam]
+csv_file = "57_primary_school__steam.csv"
+
+[loads.57_primary_school__chilled_water]
+csv_file = "57_primary_school__chilled_water.csv"
+
+[loads.1_hotel__electricity]
+csv_file = "1_hotel__electricity.csv"
+
+[loads.1_hotel__steam]
+csv_file = "1_hotel__steam.csv"
+
+[loads.1_hotel__chilled_water]
+csv_file = "1_hotel__chilled_water.csv"
+
+[loads.41_fire_station_pv]
+csv_file = "pvwatts_hourlynew_frmat__electricity-111.csv"
+
+[loads.ev_charger_1__blue_sky__electricity]
+csv_file = "ev_charge_load__blue_sky__electricity-113.csv"
+
+[loads.ev_charger_1__black_sky__electricity]
+csv_file = "ev_charge_load__black_sky__electricity-113.csv"
+
+# Components
+[components.steam_header]
+id = 4
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "steam"
+num_inflows = 1
+num_outflows = 6
+
+[components.turbine]
+id = 5
+type = "converter"
+constant_efficiency = 0.28
+inflow = "steam"
+lossflow = "waste_heat"
+outflow = "electricity"
+
+[components.ameren_electric_power_utility]
+id = 6
+type = "source"
+max_outflow = 10000.0   # kW
+outflow = "electricity"
+
+[components.ameren_off_base_substation]
+id = 7
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 1
+failure_modes = ["substation_electrical_mtfm"]
+
+[components.fi_main_substation]
+id = 8
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 4
+fragility_modes = ["tornado"]
+failure_modes = ["substation_electrical_mtfm_1"]
+
+[components.bldg_10_load__steam]
+id = 9
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "bldg_10_load__steam"
+loads_by_scenario.black_sky = "bldg_10_load__steam"
+
+[components.bldg_10_load__chilled_water]
+id = 9
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "bldg_10_load__chilled_water"
+loads_by_scenario.black_sky = "bldg_10_load__chilled_water"
+
+[components.bldg_10_load__electricity]
+id = 9
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "bldg_10_load__electricity"
+loads_by_scenario.black_sky = "bldg_10_load__electricity"
+
+[components.bldg_11_load__chilled_water]
+id = 10
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "bldg_11_load__chilled_water"
+loads_by_scenario.black_sky = "bldg_11_load__chilled_water"
+
+[components.bldg_11_load__steam]
+id = 10
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "bldg_11_load__steam"
+loads_by_scenario.black_sky = "bldg_11_load__steam"
+
+[components.bldg_11_load__electricity]
+id = 10
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "bldg_11_load__electricity"
+loads_by_scenario.black_sky = "bldg_11_load__electricity"
+
+[components.ej1_critical_circuits]
+id = 11
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 6
+
+[components.sj1]
+id = 12
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "steam"
+num_inflows = 1
+num_outflows = 12
+
+[components.chilled_water_plant]
+id = 13
+type = "converter"
+constant_efficiency = 3.05
+inflow = "electricity"
+lossflow = "waste_heat"
+outflow = "chilled_water"
+failure_modes = ["chiller_electric_air_cooled_mtfm"]
+
+[components.cwj1]
+id = 14
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "chilled_water"
+num_inflows = 1
+num_outflows = 19
+
+[components.boiler_plant_nat_gas]
+id = 15
+type = "converter"
+constant_efficiency = 0.8
+inflow = "natural_gas"
+lossflow = "waste_heat"
+outflow = "steam"
+failure_modes = ["boiler_mtfm_1"]
+
+[components.ameren_nat_gas_utility]
+id = 16
+type = "source"
+max_outflow = 25000000.0   # kW
+outflow = "natural_gas"
+
+[components.7_gym_mc_load__steam]
+id = 20
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "7_gym_mc_load__steam"
+loads_by_scenario.black_sky = "7_gym_mc_load__steam"
+
+[components.7_gym_mc_load__chilled_water]
+id = 20
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "7_gym_mc_load__chilled_water"
+loads_by_scenario.black_sky = "7_gym_mc_load__chilled_water"
+
+[components.7_gym_mc_load__electricity]
+id = 20
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "7_gym_mc_load__electricity"
+loads_by_scenario.black_sky = "7_gym_mc_load__electricity"
+
+[components.41_fire_station_mc_load__steam]
+id = 21
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "41_fire_station_mc_load__steam"
+loads_by_scenario.black_sky = "41_fire_station_mc_load__steam"
+
+[components.41_fire_station_mc_load__chilled_water]
+id = 21
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "41_fire_station_mc_load__chilled_water"
+loads_by_scenario.black_sky = "41_fire_station_mc_load__chilled_water"
+
+[components.41_fire_station_mc_load__electricity]
+id = 21
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "41_fire_station_mc_load__electricity"
+loads_by_scenario.black_sky = "41_fire_station_mc_load__electricity"
+
+[components.2_health_clinic_mc_load__steam]
+id = 22
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "2_health_clinic_mc_load__steam"
+loads_by_scenario.black_sky = "2_health_clinic_mc_load__steam"
+
+[components.2_health_clinic_mc_load__chilled_water]
+id = 22
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "2_health_clinic_mc_load__chilled_water"
+loads_by_scenario.black_sky = "2_health_clinic_mc_load__chilled_water"
+
+[components.2_health_clinic_mc_load__electricity]
+id = 22
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "2_health_clinic_mc_load__electricity"
+loads_by_scenario.black_sky = "2_health_clinic_mc_load__electricity"
+
+[components.16_office_mc_load__steam]
+id = 23
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "16_office_mc_load__steam"
+loads_by_scenario.black_sky = "16_office_mc_load__steam"
+
+[components.16_office_mc_load__chilled_water]
+id = 23
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "16_office_mc_load__chilled_water"
+loads_by_scenario.black_sky = "16_office_mc_load__chilled_water"
+
+[components.16_office_mc_load__electricity]
+id = 23
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "16_office_mc_load__electricity"
+loads_by_scenario.black_sky = "16_office_mc_load__electricity"
+
+[components.44_dfac_mc_load__steam]
+id = 24
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "44_dfac_mc_load__steam"
+loads_by_scenario.black_sky = "44_dfac_mc_load__steam"
+
+[components.44_dfac_mc_load__chilled_water]
+id = 24
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "44_dfac_mc_load__chilled_water"
+loads_by_scenario.black_sky = "44_dfac_mc_load__chilled_water"
+
+[components.44_dfac_mc_load__electricity]
+id = 24
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "44_dfac_mc_load__electricity"
+loads_by_scenario.black_sky = "44_dfac_mc_load__electricity"
+
+[components.14_maintenance_dpw_mc_load__steam]
+id = 25
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "14_maintenance_dpw_mc_load__steam"
+loads_by_scenario.black_sky = "14_maintenance_dpw_mc_load__steam"
+
+[components.14_maintenance_dpw_mc_load__chilled_water]
+id = 25
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "14_maintenance_dpw_mc_load__chilled_water"
+loads_by_scenario.black_sky = "14_maintenance_dpw_mc_load__chilled_water"
+
+[components.14_maintenance_dpw_mc_load__electricity]
+id = 25
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "14_maintenance_dpw_mc_load__electricity"
+loads_by_scenario.black_sky = "14_maintenance_dpw_mc_load__electricity"
+
+[components.ejnc2]
+id = 26
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 9
+
+[components.ejnc3]
+id = 27
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 14
+
+[components.33_morton_barracks__electricity]
+id = 28
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "33_morton_barracks__electricity"
+loads_by_scenario.black_sky = "33_morton_barracks__electricity"
+
+[components.33_morton_barracks__steam]
+id = 28
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "33_morton_barracks__steam"
+loads_by_scenario.black_sky = "33_morton_barracks__steam"
+
+[components.33_morton_barracks__chilled_water]
+id = 28
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "33_morton_barracks__chilled_water"
+loads_by_scenario.black_sky = "33_morton_barracks__chilled_water"
+
+[components.34_wallace_barracks__electricity]
+id = 29
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "34_wallace_barracks__electricity"
+loads_by_scenario.black_sky = "34_wallace_barracks__electricity"
+
+[components.34_wallace_barracks__steam]
+id = 29
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "34_wallace_barracks__steam"
+loads_by_scenario.black_sky = "34_wallace_barracks__steam"
+
+[components.34_wallace_barracks__chilled_water]
+id = 29
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "34_wallace_barracks__chilled_water"
+loads_by_scenario.black_sky = "34_wallace_barracks__chilled_water"
+
+[components.69_classrooms__electricity]
+id = 30
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "69_classrooms__electricity"
+loads_by_scenario.black_sky = "69_classrooms__electricity"
+
+[components.69_classrooms__steam]
+id = 30
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "69_classrooms__steam"
+loads_by_scenario.black_sky = "69_classrooms__steam"
+
+[components.69_classrooms__chilled_water]
+id = 30
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "69_classrooms__chilled_water"
+loads_by_scenario.black_sky = "69_classrooms__chilled_water"
+
+[components.73_classrooms__electricity]
+id = 31
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "73_classrooms__electricity"
+loads_by_scenario.black_sky = "73_classrooms__electricity"
+
+[components.73_classrooms__steam]
+id = 31
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "73_classrooms__steam"
+loads_by_scenario.black_sky = "73_classrooms__steam"
+
+[components.73_classrooms__chilled_water]
+id = 31
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "73_classrooms__chilled_water"
+loads_by_scenario.black_sky = "73_classrooms__chilled_water"
+
+[components.25_ab_hall__electricity]
+id = 32
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "25_ab_hall__electricity"
+loads_by_scenario.black_sky = "25_ab_hall__electricity"
+
+[components.25_ab_hall__steam]
+id = 32
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "25_ab_hall__steam"
+loads_by_scenario.black_sky = "25_ab_hall__steam"
+
+[components.25_ab_hall__chilled_water]
+id = 32
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "25_ab_hall__chilled_water"
+loads_by_scenario.black_sky = "25_ab_hall__chilled_water"
+
+[components.19_band_building__electricity]
+id = 33
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "19_band_building__electricity"
+loads_by_scenario.black_sky = "19_band_building__electricity"
+
+[components.19_band_building__steam]
+id = 33
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "19_band_building__steam"
+loads_by_scenario.black_sky = "19_band_building__steam"
+
+[components.19_band_building__chilled_water]
+id = 33
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "19_band_building__chilled_water"
+loads_by_scenario.black_sky = "19_band_building__chilled_water"
+
+[components.22_office__electricity]
+id = 35
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "22_office__electricity"
+loads_by_scenario.black_sky = "22_office__electricity"
+
+[components.22_office__steam]
+id = 35
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "22_office__steam"
+loads_by_scenario.black_sky = "22_office__steam"
+
+[components.22_office__chilled_water]
+id = 35
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "22_office__chilled_water"
+loads_by_scenario.black_sky = "22_office__chilled_water"
+
+[components.23_labs__electricity]
+id = 36
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "23_labs__electricity"
+loads_by_scenario.black_sky = "23_labs__electricity"
+
+[components.23_labs__steam]
+id = 36
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "23_labs__steam"
+loads_by_scenario.black_sky = "23_labs__steam"
+
+[components.23_labs__chilled_water]
+id = 36
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "23_labs__chilled_water"
+loads_by_scenario.black_sky = "23_labs__chilled_water"
+
+[components.42_classrooms__electricity]
+id = 37
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "42_classrooms__electricity"
+loads_by_scenario.black_sky = "42_classrooms__electricity"
+
+[components.42_classrooms__steam]
+id = 37
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "42_classrooms__steam"
+loads_by_scenario.black_sky = "42_classrooms__steam"
+
+[components.42_classrooms__chilled_water]
+id = 37
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "42_classrooms__chilled_water"
+loads_by_scenario.black_sky = "42_classrooms__chilled_water"
+
+[components.ejnc5]
+id = 38
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 1
+
+[components.ejnc4]
+id = 39
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 8
+
+[components.warehouse_demolish_group__electricity]
+id = 40
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "warehouse_demolish_group__electricity"
+loads_by_scenario.black_sky = "warehouse_demolish_group__electricity"
+
+[components.warehouse_demolish_group__steam]
+id = 40
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "warehouse_demolish_group__steam"
+loads_by_scenario.black_sky = "warehouse_demolish_group__steam"
+
+[components.warehouse_demolish_group__chilled_water]
+id = 40
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "warehouse_demolish_group__chilled_water"
+loads_by_scenario.black_sky = "warehouse_demolish_group__chilled_water"
+
+[components.45_barracks__electricity]
+id = 41
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "45_barracks__electricity"
+loads_by_scenario.black_sky = "45_barracks__electricity"
+
+[components.45_barracks__steam]
+id = 41
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "45_barracks__steam"
+loads_by_scenario.black_sky = "45_barracks__steam"
+
+[components.45_barracks__chilled_water]
+id = 41
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "45_barracks__chilled_water"
+loads_by_scenario.black_sky = "45_barracks__chilled_water"
+
+[components.46_barracks__electricity]
+id = 42
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "46_barracks__electricity"
+loads_by_scenario.black_sky = "46_barracks__electricity"
+
+[components.46_barracks__steam]
+id = 42
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "46_barracks__steam"
+loads_by_scenario.black_sky = "46_barracks__steam"
+
+[components.46_barracks__chilled_water]
+id = 42
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "46_barracks__chilled_water"
+loads_by_scenario.black_sky = "46_barracks__chilled_water"
+
+[components.47_barracks__electricity]
+id = 43
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "47_barracks__electricity"
+loads_by_scenario.black_sky = "47_barracks__electricity"
+
+[components.47_barracks__steam]
+id = 43
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "47_barracks__steam"
+loads_by_scenario.black_sky = "47_barracks__steam"
+
+[components.47_barracks__chilled_water]
+id = 43
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "47_barracks__chilled_water"
+loads_by_scenario.black_sky = "47_barracks__chilled_water"
+
+[components.49_dfac__electricity]
+id = 44
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "49_dfac__electricity"
+loads_by_scenario.black_sky = "49_dfac__electricity"
+
+[components.49_dfac__steam]
+id = 44
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "49_dfac__steam"
+loads_by_scenario.black_sky = "49_dfac__steam"
+
+[components.49_dfac__chilled_water]
+id = 44
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "49_dfac__chilled_water"
+loads_by_scenario.black_sky = "49_dfac__chilled_water"
+
+[components.48_barracks__electricity]
+id = 45
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "48_barracks__electricity"
+loads_by_scenario.black_sky = "48_barracks__electricity"
+
+[components.48_barracks__steam]
+id = 45
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "48_barracks__steam"
+loads_by_scenario.black_sky = "48_barracks__steam"
+
+[components.48_barracks__chilled_water]
+id = 45
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "48_barracks__chilled_water"
+loads_by_scenario.black_sky = "48_barracks__chilled_water"
+
+[components.51_barracks__electricity]
+id = 46
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "51_barracks__electricity"
+loads_by_scenario.black_sky = "51_barracks__electricity"
+
+[components.51_barracks__steam]
+id = 46
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "51_barracks__steam"
+loads_by_scenario.black_sky = "51_barracks__steam"
+
+[components.51_barracks__chilled_water]
+id = 46
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "51_barracks__chilled_water"
+loads_by_scenario.black_sky = "51_barracks__chilled_water"
+
+[components.50_dfac__electricity]
+id = 47
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "50_dfac__electricity"
+loads_by_scenario.black_sky = "50_dfac__electricity"
+
+[components.50_dfac__steam]
+id = 47
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "50_dfac__steam"
+loads_by_scenario.black_sky = "50_dfac__steam"
+
+[components.50_dfac__chilled_water]
+id = 47
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "50_dfac__chilled_water"
+loads_by_scenario.black_sky = "50_dfac__chilled_water"
+
+[components.52_barracks__electricity]
+id = 48
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "52_barracks__electricity"
+loads_by_scenario.black_sky = "52_barracks__electricity"
+
+[components.52_barracks__steam]
+id = 48
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "52_barracks__steam"
+loads_by_scenario.black_sky = "52_barracks__steam"
+
+[components.52_barracks__chilled_water]
+id = 48
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "52_barracks__chilled_water"
+loads_by_scenario.black_sky = "52_barracks__chilled_water"
+
+[components.15_admissions__electricity]
+id = 49
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "15_admissions__electricity"
+loads_by_scenario.black_sky = "15_admissions__electricity"
+
+[components.15_admissions__steam]
+id = 49
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "15_admissions__steam"
+loads_by_scenario.black_sky = "15_admissions__steam"
+
+[components.15_admissions__chilled_water]
+id = 49
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "15_admissions__chilled_water"
+loads_by_scenario.black_sky = "15_admissions__chilled_water"
+
+[components.ejnc6]
+id = 50
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 5
+
+[components.diesel_fuel_tank_1]
+id = 51
+type = "store"
+capacity = 123150000.0   # kJ
+capacity_unit = "kJ"
+flow = "diesel"
+init_soc = 1.0
+max_inflow = 539956803462.0   # kJ
+rate_unit = "kW"
+max_discharge = 10000.0 
+
+[components.14_maint_generator]
+id = 52
+type = "converter"
+constant_efficiency = 0.28
+inflow = "diesel"
+lossflow = "waste_heat"
+outflow = "electricity"
+failure_modes = ["generator_diesel_engine_mtfm"]
+
+[components.14_maint_transfer_sw]
+id = 53
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+
+[components.diesel_fuel_tank_2]
+id = 54
+type = "store"
+capacity = 975360000.0   # kJ
+capacity_unit = "kJ"
+flow = "diesel"
+init_soc = 1.0
+max_inflow = 879213000.0   # kJ
+rate_unit = "kW"
+max_discharge = 10000.0 
+
+[components.44_dfac_generator]
+id = 55
+type = "converter"
+constant_efficiency = 0.28
+inflow = "diesel"
+lossflow = "waste_heat"
+outflow = "electricity"
+failure_modes = ["generator_diesel_engine_mtfm_1"]
+
+[components.44_dfac_transfer_sw]
+id = 56
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+
+[components.36_wolters_barracks__electricity]
+id = 57
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "36_wolters_barracks__electricity"
+loads_by_scenario.black_sky = "36_wolters_barracks__electricity"
+
+[components.36_wolters_barracks__chilled_water]
+id = 57
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "36_wolters_barracks__chilled_water"
+loads_by_scenario.black_sky = "36_wolters_barracks__chilled_water"
+
+[components.36_wolters_barracks__steam]
+id = 57
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "36_wolters_barracks__steam"
+loads_by_scenario.black_sky = "36_wolters_barracks__steam"
+
+[components.35_swanson_barracks__electricity]
+id = 58
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "35_swanson_barracks__electricity"
+loads_by_scenario.black_sky = "35_swanson_barracks__electricity"
+
+[components.35_swanson_barracks__steam]
+id = 58
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "35_swanson_barracks__steam"
+loads_by_scenario.black_sky = "35_swanson_barracks__steam"
+
+[components.35_swanson_barracks__chilled_water]
+id = 58
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "35_swanson_barracks__chilled_water"
+loads_by_scenario.black_sky = "35_swanson_barracks__chilled_water"
+
+[components.43_dining_facility__electricity]
+id = 59
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "43_dining_facility__electricity"
+loads_by_scenario.black_sky = "43_dining_facility__electricity"
+
+[components.43_dining_facility__chilled_water]
+id = 59
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "43_dining_facility__chilled_water"
+loads_by_scenario.black_sky = "43_dining_facility__chilled_water"
+
+[components.43_dining_facility__steam]
+id = 59
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "43_dining_facility__steam"
+loads_by_scenario.black_sky = "43_dining_facility__steam"
+
+[components.8_library__electricity]
+id = 60
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "8_library__electricity"
+loads_by_scenario.black_sky = "8_library__electricity"
+
+[components.8_library__steam]
+id = 60
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "8_library__steam"
+loads_by_scenario.black_sky = "8_library__steam"
+
+[components.8_library__chilled_water]
+id = 60
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "8_library__chilled_water"
+loads_by_scenario.black_sky = "8_library__chilled_water"
+
+[components.37_young_barracks__electricity]
+id = 61
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "37_young_barracks__electricity"
+loads_by_scenario.black_sky = "37_young_barracks__electricity"
+
+[components.37_young_barracks__steam]
+id = 61
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "37_young_barracks__steam"
+loads_by_scenario.black_sky = "37_young_barracks__steam"
+
+[components.37_young_barracks__chilled_water]
+id = 61
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "37_young_barracks__chilled_water"
+loads_by_scenario.black_sky = "37_young_barracks__chilled_water"
+
+[components.38_latino_barracks__electricity]
+id = 62
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "38_latino_barracks__electricity"
+loads_by_scenario.black_sky = "38_latino_barracks__electricity"
+
+[components.38_latino_barracks__steam]
+id = 62
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "38_latino_barracks__steam"
+loads_by_scenario.black_sky = "38_latino_barracks__steam"
+
+[components.38_latino_barracks__chilled_water]
+id = 62
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "38_latino_barracks__chilled_water"
+loads_by_scenario.black_sky = "38_latino_barracks__chilled_water"
+
+[components.ejnc_7]
+id = 63
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 22
+
+[components.9_physical_fitness__electricity]
+id = 64
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "9_physical_fitness__electricity"
+loads_by_scenario.black_sky = "9_physical_fitness__electricity"
+
+[components.9_physical_fitness__steam]
+id = 64
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "9_physical_fitness__steam"
+loads_by_scenario.black_sky = "9_physical_fitness__steam"
+
+[components.9_physical_fitness__chilled_water]
+id = 64
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "9_physical_fitness__chilled_water"
+loads_by_scenario.black_sky = "9_physical_fitness__chilled_water"
+
+[components.32_chittenden_barracks__electricity]
+id = 65
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "32_chittenden_barracks__electricity"
+loads_by_scenario.black_sky = "32_chittenden_barracks__electricity"
+
+[components.32_chittenden_barracks__steam]
+id = 65
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "32_chittenden_barracks__steam"
+loads_by_scenario.black_sky = "32_chittenden_barracks__steam"
+
+[components.32_chittenden_barracks__chilled_water]
+id = 65
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "32_chittenden_barracks__chilled_water"
+loads_by_scenario.black_sky = "32_chittenden_barracks__chilled_water"
+
+[components.31_okeefe_barracks__electricity]
+id = 66
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "31_okeefe_barracks__electricity"
+loads_by_scenario.black_sky = "31_okeefe_barracks__electricity"
+
+[components.31_okeefe_barracks__steam]
+id = 66
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "31_okeefe_barracks__steam"
+loads_by_scenario.black_sky = "31_okeefe_barracks__steam"
+
+[components.31_okeefe_barracks__chilled_water]
+id = 66
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "31_okeefe_barracks__chilled_water"
+loads_by_scenario.black_sky = "31_okeefe_barracks__chilled_water"
+
+[components.30_marks_barracks__electricity]
+id = 67
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "30_marks_barracks__electricity"
+loads_by_scenario.black_sky = "30_marks_barracks__electricity"
+
+[components.30_marks_barracks__steam]
+id = 67
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "30_marks_barracks__steam"
+loads_by_scenario.black_sky = "30_marks_barracks__steam"
+
+[components.30_marks_barracks__chilled_water]
+id = 67
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "30_marks_barracks__chilled_water"
+loads_by_scenario.black_sky = "30_marks_barracks__chilled_water"
+
+[components.29_case_barracks__electricity]
+id = 68
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "29_case_barracks__electricity"
+loads_by_scenario.black_sky = "29_case_barracks__electricity"
+
+[components.29_case_barracks__steam]
+id = 68
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "29_case_barracks__steam"
+loads_by_scenario.black_sky = "29_case_barracks__steam"
+
+[components.29_case_barracks__chilled_water]
+id = 68
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "29_case_barracks__chilled_water"
+loads_by_scenario.black_sky = "29_case_barracks__chilled_water"
+
+[components.28_liesen_barracks__electricity]
+id = 69
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "28_liesen_barracks__electricity"
+loads_by_scenario.black_sky = "28_liesen_barracks__electricity"
+
+[components.28_liesen_barracks__steam]
+id = 69
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "28_liesen_barracks__steam"
+loads_by_scenario.black_sky = "28_liesen_barracks__steam"
+
+[components.28_liesen_barracks__chilled_water]
+id = 69
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "28_liesen_barracks__chilled_water"
+loads_by_scenario.black_sky = "28_liesen_barracks__chilled_water"
+
+[components.27_ellis_barracks__electricity]
+id = 70
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "27_ellis_barracks__electricity"
+loads_by_scenario.black_sky = "27_ellis_barracks__electricity"
+
+[components.27_ellis_barracks__steam]
+id = 70
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "27_ellis_barracks__steam"
+loads_by_scenario.black_sky = "27_ellis_barracks__steam"
+
+[components.27_ellis_barracks__chilled_water]
+id = 70
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "27_ellis_barracks__chilled_water"
+loads_by_scenario.black_sky = "27_ellis_barracks__chilled_water"
+
+[components.5_oconnor_hall__electricity]
+id = 71
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "5_oconnor_hall__electricity"
+loads_by_scenario.black_sky = "5_oconnor_hall__electricity"
+
+[components.5_oconnor_hall__steam]
+id = 71
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "5_oconnor_hall__steam"
+loads_by_scenario.black_sky = "5_oconnor_hall__steam"
+
+[components.5_oconnor_hall__chilled_water]
+id = 71
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "5_oconnor_hall__chilled_water"
+loads_by_scenario.black_sky = "5_oconnor_hall__chilled_water"
+
+[components.6_cadet_chapel__electricity]
+id = 72
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "6_cadet_chapel__electricity"
+loads_by_scenario.black_sky = "6_cadet_chapel__electricity"
+
+[components.6_cadet_chapel__steam]
+id = 72
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "6_cadet_chapel__steam"
+loads_by_scenario.black_sky = "6_cadet_chapel__steam"
+
+[components.6_cadet_chapel__chilled_water]
+id = 72
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "6_cadet_chapel__chilled_water"
+loads_by_scenario.black_sky = "6_cadet_chapel__chilled_water"
+
+[components.54_classrooms__electricity]
+id = 73
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "54_classrooms__electricity"
+loads_by_scenario.black_sky = "54_classrooms__electricity"
+
+[components.54_classrooms__steam]
+id = 73
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "54_classrooms__steam"
+loads_by_scenario.black_sky = "54_classrooms__steam"
+
+[components.54_classrooms__chilled_water]
+id = 73
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "54_classrooms__chilled_water"
+loads_by_scenario.black_sky = "54_classrooms__chilled_water"
+
+[components.53_classrooms__electricity]
+id = 74
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "53_classrooms__electricity"
+loads_by_scenario.black_sky = "53_classrooms__electricity"
+
+[components.53_classrooms__steam]
+id = 74
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "53_classrooms__steam"
+loads_by_scenario.black_sky = "53_classrooms__steam"
+
+[components.53_classrooms__chilled_water]
+id = 74
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "53_classrooms__chilled_water"
+loads_by_scenario.black_sky = "53_classrooms__chilled_water"
+
+[components.39_sibenaller_barracks__electricity]
+id = 75
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "39_sibenaller_barracks__electricity"
+loads_by_scenario.black_sky = "39_sibenaller_barracks__electricity"
+
+[components.39_sibenaller_barracks__steam]
+id = 75
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "39_sibenaller_barracks__steam"
+loads_by_scenario.black_sky = "39_sibenaller_barracks__steam"
+
+[components.39_sibenaller_barracks__chilled_water]
+id = 75
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "39_sibenaller_barracks__chilled_water"
+loads_by_scenario.black_sky = "39_sibenaller_barracks__chilled_water"
+
+[components.40_barracks_n__steam]
+id = 76
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "40_barracks_n__steam"
+loads_by_scenario.black_sky = "40_barracks_n__steam"
+
+[components.40_barracks_n__chilled_water]
+id = 76
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "40_barracks_n__chilled_water"
+loads_by_scenario.black_sky = "40_barracks_n__chilled_water"
+
+[components.40_barracks_n__electricity]
+id = 76
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "40_barracks_n__electricity"
+loads_by_scenario.black_sky = "40_barracks_n__electricity"
+
+[components.55_classrooms__electricity]
+id = 77
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "55_classrooms__electricity"
+loads_by_scenario.black_sky = "55_classrooms__electricity"
+
+[components.55_classrooms__steam]
+id = 77
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "55_classrooms__steam"
+loads_by_scenario.black_sky = "55_classrooms__steam"
+
+[components.55_classrooms__chilled_water]
+id = 77
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "55_classrooms__chilled_water"
+loads_by_scenario.black_sky = "55_classrooms__chilled_water"
+
+[components.3_schaffer_hall__electricity]
+id = 78
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "3_schaffer_hall__electricity"
+loads_by_scenario.black_sky = "3_schaffer_hall__electricity"
+
+[components.3_schaffer_hall__steam]
+id = 78
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "3_schaffer_hall__steam"
+loads_by_scenario.black_sky = "3_schaffer_hall__steam"
+
+[components.3_schaffer_hall__chilled_water]
+id = 78
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "3_schaffer_hall__chilled_water"
+loads_by_scenario.black_sky = "3_schaffer_hall__chilled_water"
+
+[components.4_moore_hall__electricity]
+id = 79
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "4_moore_hall__electricity"
+loads_by_scenario.black_sky = "4_moore_hall__electricity"
+
+[components.4_moore_hall__steam]
+id = 79
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "4_moore_hall__steam"
+loads_by_scenario.black_sky = "4_moore_hall__steam"
+
+[components.4_moore_hall__chilled_water]
+id = 79
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "4_moore_hall__chilled_water"
+loads_by_scenario.black_sky = "4_moore_hall__chilled_water"
+
+[components.18_gc_hq_doc_dol__electricity]
+id = 80
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "18_gc_hq_doc_dol__electricity"
+loads_by_scenario.black_sky = "18_gc_hq_doc_dol__electricity"
+
+[components.18_gc_hq_doc_dol__steam]
+id = 80
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "18_gc_hq_doc_dol__steam"
+loads_by_scenario.black_sky = "18_gc_hq_doc_dol__steam"
+
+[components.18_gc_hq_doc_dol__chilled_water]
+id = 80
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "18_gc_hq_doc_dol__chilled_water"
+loads_by_scenario.black_sky = "18_gc_hq_doc_dol__chilled_water"
+
+[components.17_aa_hall__electricity]
+id = 81
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "17_aa_hall__electricity"
+loads_by_scenario.black_sky = "17_aa_hall__electricity"
+
+[components.17_aa_hall__steam]
+id = 81
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "17_aa_hall__steam"
+loads_by_scenario.black_sky = "17_aa_hall__steam"
+
+[components.17_aa_hall__chilled_water]
+id = 81
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "17_aa_hall__chilled_water"
+loads_by_scenario.black_sky = "17_aa_hall__chilled_water"
+
+[components.21_field_house__electricity]
+id = 82
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "21_field_house__electricity"
+loads_by_scenario.black_sky = "21_field_house__electricity"
+
+[components.21_field_house__steam]
+id = 82
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "21_field_house__steam"
+loads_by_scenario.black_sky = "21_field_house__steam"
+
+[components.21_field_house__chilled_water]
+id = 82
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "21_field_house__chilled_water"
+loads_by_scenario.black_sky = "21_field_house__chilled_water"
+
+[components.26_rifle_and_pistol_range__electricity]
+id = 83
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "26_rifle_and_pistol_range__electricity"
+loads_by_scenario.black_sky = "26_rifle_and_pistol_range__electricity"
+
+[components.26_rifle_and_pistol_range__steam]
+id = 83
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "26_rifle_and_pistol_range__steam"
+loads_by_scenario.black_sky = "26_rifle_and_pistol_range__steam"
+
+[components.26_rifle_and_pistol_range__chilled_water]
+id = 83
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "26_rifle_and_pistol_range__chilled_water"
+loads_by_scenario.black_sky = "26_rifle_and_pistol_range__chilled_water"
+
+[components.20_ac_hall__electricity]
+id = 84
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "20_ac_hall__electricity"
+loads_by_scenario.black_sky = "20_ac_hall__electricity"
+
+[components.20_ac_hall__steam]
+id = 84
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "20_ac_hall__steam"
+loads_by_scenario.black_sky = "20_ac_hall__steam"
+
+[components.20_ac_hall__chilled_water]
+id = 84
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "20_ac_hall__chilled_water"
+loads_by_scenario.black_sky = "20_ac_hall__chilled_water"
+
+[components.24_warehouse__electricity]
+id = 85
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "24_warehouse__electricity"
+loads_by_scenario.black_sky = "24_warehouse__electricity"
+
+[components.24_warehouse__steam]
+id = 85
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "24_warehouse__steam"
+loads_by_scenario.black_sky = "24_warehouse__steam"
+
+[components.24_warehouse__chilled_water]
+id = 85
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "24_warehouse__chilled_water"
+loads_by_scenario.black_sky = "24_warehouse__chilled_water"
+
+[components.12_ae_hall__electricity]
+id = 86
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "12_ae_hall__electricity"
+loads_by_scenario.black_sky = "12_ae_hall__electricity"
+
+[components.12_ae_hall__steam]
+id = 86
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "12_ae_hall__steam"
+loads_by_scenario.black_sky = "12_ae_hall__steam"
+
+[components.12_ae_hall__chilled_water]
+id = 86
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "12_ae_hall__chilled_water"
+loads_by_scenario.black_sky = "12_ae_hall__chilled_water"
+
+[components.13_af_hall__electricity]
+id = 87
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "13_af_hall__electricity"
+loads_by_scenario.black_sky = "13_af_hall__electricity"
+
+[components.13_af_hall__steam]
+id = 87
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "13_af_hall__steam"
+loads_by_scenario.black_sky = "13_af_hall__steam"
+
+[components.13_af_hall__chilled_water]
+id = 87
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "13_af_hall__chilled_water"
+loads_by_scenario.black_sky = "13_af_hall__chilled_water"
+
+[components.56_highschool__electricity]
+id = 88
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "56_highschool__electricity"
+loads_by_scenario.black_sky = "56_highschool__electricity"
+
+[components.56_highschool__steam]
+id = 88
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "56_highschool__steam"
+loads_by_scenario.black_sky = "56_highschool__steam"
+
+[components.56_highschool__chilled_water]
+id = 88
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "56_highschool__chilled_water"
+loads_by_scenario.black_sky = "56_highschool__chilled_water"
+
+[components.57_primary_school__electricity]
+id = 89
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "57_primary_school__electricity"
+loads_by_scenario.black_sky = "57_primary_school__electricity"
+
+[components.57_primary_school__steam]
+id = 89
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "57_primary_school__steam"
+loads_by_scenario.black_sky = "57_primary_school__steam"
+
+[components.57_primary_school__chilled_water]
+id = 89
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "57_primary_school__chilled_water"
+loads_by_scenario.black_sky = "57_primary_school__chilled_water"
+
+[components.1_hotel__electricity]
+id = 90
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "1_hotel__electricity"
+loads_by_scenario.black_sky = "1_hotel__electricity"
+
+[components.1_hotel__steam]
+id = 90
+type = "load"
+inflow = "steam"
+loads_by_scenario.blue_sky = "1_hotel__steam"
+loads_by_scenario.black_sky = "1_hotel__steam"
+
+[components.1_hotel__chilled_water]
+id = 90
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "1_hotel__chilled_water"
+loads_by_scenario.black_sky = "1_hotel__chilled_water"
+
+[components.sj_2]
+id = 91
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "steam"
+num_inflows = 1
+num_outflows = 19
+
+[components.sj_3]
+id = 92
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "steam"
+num_inflows = 1
+num_outflows = 8
+
+[components.sj_4]
+id = 94
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "steam"
+num_inflows = 1
+num_outflows = 1
+
+[components.sj_5]
+id = 95
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "steam"
+num_inflows = 1
+num_outflows = 20
+
+[components.cwj_2]
+id = 98
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "chilled_water"
+num_inflows = 1
+num_outflows = 15
+
+[components.cwj_3]
+id = 99
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "chilled_water"
+num_inflows = 1
+num_outflows = 13
+
+[components.cwj_4]
+id = 100
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "chilled_water"
+num_inflows = 1
+num_outflows = 1
+
+[components.cwj_5]
+id = 101
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "chilled_water"
+num_inflows = 1
+num_outflows = 16
+
+[components.diesel_fuel_tank_3]
+id = 102
+type = "store"
+capacity = 586080000.0   # kJ
+capacity_unit = "kJ"
+flow = "diesel"
+init_soc = 1.0
+max_inflow = 879213000.0   # kJ
+rate_unit = "kW"
+max_discharge = 10000.0 
+
+[components.2_outpatient_health_clinic_generator]
+id = 103
+type = "converter"
+constant_efficiency = 0.28
+inflow = "diesel"
+lossflow = "waste_heat"
+outflow = "electricity"
+failure_modes = ["generator_diesel_engine_mtfm_2"]
+
+[components.2_outpatient_health_clinic_transfer_sw]
+id = 104
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+
+[components.diesel_fuel_tank_4]
+id = 105
+type = "store"
+capacity = 29304000.0   # kJ
+capacity_unit = "kJ"
+flow = "diesel"
+init_soc = 1.0
+max_inflow = 87921300.0   # kJ
+rate_unit = "kW"
+max_discharge = 10000.0 
+
+[components.7_gym_generator]
+id = 106
+type = "converter"
+constant_efficiency = 0.28
+inflow = "diesel"
+lossflow = "waste_heat"
+outflow = "electricity"
+failure_modes = ["generator_diesel_engine_mtfm_3"]
+
+[components.7_gym_transfer_sw]
+id = 107
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+
+[components.16_office_transfer_sw]
+id = 108
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+
+[components.diesel_tank_5]
+id = 109
+type = "store"
+capacity = 975360000.0   # kJ
+capacity_unit = "kJ"
+flow = "diesel"
+init_soc = 1.0
+max_inflow = 879213000.0   # kJ
+rate_unit = "kW"
+max_discharge = 10000.0 
+
+[components.16_office_generator]
+id = 110
+type = "converter"
+constant_efficiency = 0.28
+inflow = "diesel"
+lossflow = "waste_heat"
+outflow = "electricity"
+failure_modes = ["generator_diesel_engine_mtfm_4"]
+
+[components.41_fire_station_pv]
+id = 111
+type = "uncontrolled_source"
+outflow = "electricity"
+supply_by_scenario.blue_sky = "41_fire_station_pv"
+supply_by_scenario.black_sky = "41_fire_station_pv"
+
+[components.41_fire_station_transfer_sw]
+id = 112
+type = "muxer"
+dispatch_strategy = "in_order"
+flow = "electricity"
+num_inflows = 3
+num_outflows = 1
+
+[components.ev_charger_1__electricity]
+id = 113
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "ev_charger_1__blue_sky__electricity"
+loads_by_scenario.black_sky = "ev_charger_1__black_sky__electricity"
+
+[components.diesel_fuel_tank_6]
+id = 114
+type = "store"
+capacity = 100900000.0   # kJ
+capacity_unit = "kJ"
+flow = "diesel"
+init_soc = 1.0
+max_inflow = 87921300.0   # kJ
+rate_unit = "kW"
+max_discharge = 10000.0 
+
+[components.41_fire_station_generator]
+id = 116
+type = "converter"
+constant_efficiency = 0.28
+inflow = "diesel"
+lossflow = "waste_heat"
+outflow = "electricity"
+failure_modes = ["generator_diesel_engine_mtfm_6"]
+
+[components.diesel_fueling_point]
+id = 117
+type = "source"
+max_outflow = 3000.0   # kW
+outflow = "diesel"
+
+[components.diesel_fuel_truck]
+id = 118
+type = "muxer"
+capacity = 40700.0   # kWh
+capacity_unit = "kWh"
+dispatch_strategy = "in_order"
+flow = "diesel"
+num_inflows = 1
+num_outflows = 2
+
+[components.41_gen_pass_through]
+id = 119
+type = "pass_through"
+flow = "electricity"
+max_outflow = 50.0   # kW
+
+[components.14_maint_gen_pass_through]
+id = 120
+type = "pass_through"
+flow = "electricity"
+max_outflow = 1250.0   # kW
+
+[components.7_gym_gen_pass_through]
+id = 121
+type = "pass_through"
+flow = "electricity"
+max_outflow = 2000.0   # kW
+
+[components.16_office_gen_pass_though]
+id = 122
+type = "pass_through"
+flow = "electricity"
+max_outflow = 2000.0   # kW
+
+[components.2_outpatient_health_clinic_gen_pass_through]
+id = 123
+type = "pass_through"
+flow = "electricity"
+max_outflow = 1500.0   # kW
+
+[components.44_dfac_gen_pass_through]
+id = 124
+type = "pass_through"
+flow = "electricity"
+max_outflow = 2500.0   # kW
+
+# Networks
+[network]
+id = 1
+connections = [
+ ["steam_header:OUT(0)", "turbine:IN(0)", "steam"],
+ ["ameren_electric_power_utility:OUT(0)", "ameren_off_base_substation:IN(0)", "electricity"],
+ ["turbine:OUT(0)", "fi_main_substation:IN(0)", "electricity"],
+ ["ameren_off_base_substation:OUT(0)", "fi_main_substation:IN(1)", "electricity"],
+ ["fi_main_substation:OUT(0)", "ej1_critical_circuits:IN(0)", "electricity"],
+ ["steam_header:OUT(1)", "sj1:IN(0)", "steam"],
+ ["sj1:OUT(0)", "bldg_10_load__steam:IN(0)", "steam"],
+ ["fi_main_substation:OUT(1)", "chilled_water_plant:IN(0)", "electricity"],
+ ["chilled_water_plant:OUT(0)", "cwj1:IN(0)", "chilled_water"],
+ ["cwj1:OUT(0)", "bldg_10_load__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(1)", "bldg_11_load__chilled_water:IN(0)", "chilled_water"],
+ ["ameren_nat_gas_utility:OUT(0)", "boiler_plant_nat_gas:IN(0)", "natural_gas"],
+ ["boiler_plant_nat_gas:OUT(0)", "steam_header:IN(0)", "steam"],
+ ["fi_main_substation:OUT(2)", "ejnc2:IN(0)", "electricity"],
+ ["ejnc2:OUT(0)", "bldg_10_load__electricity:IN(0)", "electricity"],
+ ["ejnc2:OUT(1)", "ejnc3:IN(0)", "electricity"],
+ ["ejnc3:OUT(0)", "33_morton_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(1)", "34_wallace_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(2)", "25_ab_hall__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(3)", "22_office__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(4)", "23_labs__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(5)", "42_classrooms__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(6)", "19_band_building__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(7)", "69_classrooms__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(8)", "73_classrooms__electricity:IN(0)", "electricity"],
+ ["ejnc2:OUT(2)", "ejnc4:IN(0)", "electricity"],
+ ["ejnc2:OUT(3)", "ejnc5:IN(0)", "electricity"],
+ ["ejnc5:OUT(0)", "warehouse_demolish_group__electricity:IN(0)", "electricity"],
+ ["ejnc4:OUT(0)", "45_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc4:OUT(1)", "46_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc4:OUT(2)", "49_dfac__electricity:IN(0)", "electricity"],
+ ["ejnc4:OUT(3)", "48_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc4:OUT(4)", "47_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc4:OUT(5)", "52_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc4:OUT(6)", "50_dfac__electricity:IN(0)", "electricity"],
+ ["ejnc4:OUT(7)", "51_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc2:OUT(4)", "ejnc6:IN(0)", "electricity"],
+ ["ejnc6:OUT(0)", "15_admissions__electricity:IN(0)", "electricity"],
+ ["diesel_fuel_tank_1:OUT(0)", "14_maint_generator:IN(0)", "diesel"],
+ ["ej1_critical_circuits:OUT(0)", "14_maint_transfer_sw:IN(0)", "electricity"],
+ ["diesel_fuel_tank_2:OUT(0)", "44_dfac_generator:IN(0)", "diesel"],
+ ["ej1_critical_circuits:OUT(1)", "44_dfac_transfer_sw:IN(0)", "electricity"],
+ ["ejnc2:OUT(5)", "36_wolters_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc2:OUT(6)", "35_swanson_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc2:OUT(7)", "43_dining_facility__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(0)", "37_young_barracks__electricity:IN(0)", "electricity"],
+ ["fi_main_substation:OUT(3)", "ejnc_7:IN(0)", "electricity"],
+ ["ejnc_7:OUT(1)", "8_library__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(2)", "38_latino_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(3)", "9_physical_fitness__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(4)", "32_chittenden_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(5)", "31_okeefe_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(6)", "30_marks_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(7)", "29_case_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(8)", "28_liesen_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(9)", "27_ellis_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(10)", "39_sibenaller_barracks__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(11)", "5_oconnor_hall__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(12)", "6_cadet_chapel__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(13)", "53_classrooms__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(14)", "54_classrooms__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(15)", "55_classrooms__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(16)", "3_schaffer_hall__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(17)", "4_moore_hall__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(9)", "18_gc_hq_doc_dol__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(10)", "17_aa_hall__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(11)", "21_field_house__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(12)", "26_rifle_and_pistol_range__electricity:IN(0)", "electricity"],
+ ["ejnc3:OUT(13)", "20_ac_hall__electricity:IN(0)", "electricity"],
+ ["ejnc6:OUT(1)", "24_warehouse__electricity:IN(0)", "electricity"],
+ ["ejnc6:OUT(2)", "12_ae_hall__electricity:IN(0)", "electricity"],
+ ["ejnc6:OUT(3)", "13_af_hall__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(18)", "1_hotel__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(19)", "57_primary_school__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(20)", "56_highschool__electricity:IN(0)", "electricity"],
+ ["steam_header:OUT(2)", "sj_2:IN(0)", "steam"],
+ ["sj_2:OUT(0)", "3_schaffer_hall__steam:IN(0)", "steam"],
+ ["steam_header:OUT(3)", "sj_3:IN(0)", "steam"],
+ ["sj_3:OUT(0)", "45_barracks__steam:IN(0)", "steam"],
+ ["sj_3:OUT(1)", "46_barracks__steam:IN(0)", "steam"],
+ ["sj_3:OUT(2)", "48_barracks__steam:IN(0)", "steam"],
+ ["sj_3:OUT(3)", "49_dfac__steam:IN(0)", "steam"],
+ ["sj_3:OUT(4)", "47_barracks__steam:IN(0)", "steam"],
+ ["sj_3:OUT(5)", "52_barracks__steam:IN(0)", "steam"],
+ ["steam_header:OUT(4)", "sj_4:IN(0)", "steam"],
+ ["sj_4:OUT(0)", "warehouse_demolish_group__steam:IN(0)", "steam"],
+ ["sj_2:OUT(1)", "4_moore_hall__steam:IN(0)", "steam"],
+ ["sj_2:OUT(2)", "69_classrooms__steam:IN(0)", "steam"],
+ ["sj_2:OUT(3)", "73_classrooms__steam:IN(0)", "steam"],
+ ["sj_3:OUT(6)", "51_barracks__steam:IN(0)", "steam"],
+ ["sj_3:OUT(7)", "50_dfac__steam:IN(0)", "steam"],
+ ["sj_2:OUT(4)", "20_ac_hall__steam:IN(0)", "steam"],
+ ["sj_2:OUT(5)", "33_morton_barracks__steam:IN(0)", "steam"],
+ ["sj_2:OUT(6)", "34_wallace_barracks__steam:IN(0)", "steam"],
+ ["sj_2:OUT(7)", "25_ab_hall__steam:IN(0)", "steam"],
+ ["sj_2:OUT(8)", "19_band_building__steam:IN(0)", "steam"],
+ ["sj_2:OUT(9)", "18_gc_hq_doc_dol__steam:IN(0)", "steam"],
+ ["sj_2:OUT(10)", "17_aa_hall__steam:IN(0)", "steam"],
+ ["sj_2:OUT(11)", "1_hotel__steam:IN(0)", "steam"],
+ ["sj1:OUT(1)", "14_maintenance_dpw_mc_load__steam:IN(0)", "steam"],
+ ["sj_2:OUT(12)", "57_primary_school__steam:IN(0)", "steam"],
+ ["sj_2:OUT(13)", "56_highschool__steam:IN(0)", "steam"],
+ ["steam_header:OUT(5)", "sj_5:IN(0)", "steam"],
+ ["sj_5:OUT(0)", "6_cadet_chapel__steam:IN(0)", "steam"],
+ ["sj_5:OUT(1)", "54_classrooms__steam:IN(0)", "steam"],
+ ["sj_5:OUT(2)", "53_classrooms__steam:IN(0)", "steam"],
+ ["sj1:OUT(2)", "2_health_clinic_mc_load__steam:IN(0)", "steam"],
+ ["sj1:OUT(3)", "7_gym_mc_load__steam:IN(0)", "steam"],
+ ["sj1:OUT(4)", "41_fire_station_mc_load__steam:IN(0)", "steam"],
+ ["sj1:OUT(5)", "16_office_mc_load__steam:IN(0)", "steam"],
+ ["sj1:OUT(6)", "44_dfac_mc_load__steam:IN(0)", "steam"],
+ ["sj1:OUT(7)", "bldg_11_load__steam:IN(0)", "steam"],
+ ["ejnc2:OUT(8)", "bldg_11_load__electricity:IN(0)", "electricity"],
+ ["sj1:OUT(8)", "13_af_hall__steam:IN(0)", "steam"],
+ ["sj1:OUT(9)", "15_admissions__steam:IN(0)", "steam"],
+ ["sj1:OUT(10)", "12_ae_hall__steam:IN(0)", "steam"],
+ ["sj1:OUT(11)", "24_warehouse__steam:IN(0)", "steam"],
+ ["sj_5:OUT(3)", "5_oconnor_hall__steam:IN(0)", "steam"],
+ ["sj_5:OUT(4)", "55_classrooms__steam:IN(0)", "steam"],
+ ["sj_5:OUT(5)", "27_ellis_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(6)", "28_liesen_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(7)", "29_case_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(8)", "40_barracks_n__steam:IN(0)", "steam"],
+ ["sj_5:OUT(9)", "35_swanson_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(10)", "8_library__steam:IN(0)", "steam"],
+ ["sj_5:OUT(11)", "39_sibenaller_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(12)", "30_marks_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(13)", "31_okeefe_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(14)", "32_chittenden_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(15)", "9_physical_fitness__steam:IN(0)", "steam"],
+ ["sj_5:OUT(16)", "38_latino_barracks__steam:IN(0)", "steam"],
+ ["sj_5:OUT(17)", "37_young_barracks__steam:IN(0)", "steam"],
+ ["sj_2:OUT(14)", "26_rifle_and_pistol_range__steam:IN(0)", "steam"],
+ ["sj_2:OUT(15)", "21_field_house__steam:IN(0)", "steam"],
+ ["sj_2:OUT(16)", "22_office__steam:IN(0)", "steam"],
+ ["sj_2:OUT(17)", "23_labs__steam:IN(0)", "steam"],
+ ["sj_2:OUT(18)", "42_classrooms__steam:IN(0)", "steam"],
+ ["cwj1:OUT(2)", "cwj_2:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(0)", "5_oconnor_hall__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(1)", "8_library__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(2)", "43_dining_facility__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(3)", "36_wolters_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(4)", "40_barracks_n__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(5)", "35_swanson_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(3)", "44_dfac_mc_load__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(4)", "2_health_clinic_mc_load__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(5)", "41_fire_station_mc_load__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(6)", "16_office_mc_load__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(7)", "7_gym_mc_load__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(8)", "14_maintenance_dpw_mc_load__chilled_water:IN(0)", "chilled_water"],
+ ["sj_5:OUT(18)", "36_wolters_barracks__steam:IN(0)", "steam"],
+ ["cwj_2:OUT(6)", "27_ellis_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(7)", "9_physical_fitness__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(8)", "37_young_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(9)", "38_latino_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(10)", "28_liesen_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["sj_5:OUT(19)", "43_dining_facility__steam:IN(0)", "steam"],
+ ["cwj_2:OUT(11)", "6_cadet_chapel__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(12)", "54_classrooms__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(13)", "53_classrooms__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_2:OUT(14)", "55_classrooms__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(9)", "cwj_3:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(0)", "48_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(10)", "12_ae_hall__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(11)", "13_af_hall__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(12)", "24_warehouse__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(13)", "15_admissions__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(1)", "29_case_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(2)", "39_sibenaller_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(3)", "30_marks_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(4)", "31_okeefe_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(5)", "32_chittenden_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(6)", "46_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(7)", "45_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(8)", "52_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(9)", "50_dfac__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(10)", "51_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(11)", "47_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_3:OUT(12)", "49_dfac__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(14)", "cwj_4:IN(0)", "chilled_water"],
+ ["cwj_4:OUT(0)", "warehouse_demolish_group__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(15)", "cwj_5:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(0)", "69_classrooms__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(1)", "73_classrooms__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(2)", "20_ac_hall__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(3)", "3_schaffer_hall__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(4)", "4_moore_hall__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(5)", "33_morton_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(6)", "34_wallace_barracks__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(7)", "17_aa_hall__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(8)", "18_gc_hq_doc_dol__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(9)", "19_band_building__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(10)", "25_ab_hall__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(11)", "26_rifle_and_pistol_range__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(12)", "21_field_house__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(13)", "22_office__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(14)", "23_labs__chilled_water:IN(0)", "chilled_water"],
+ ["cwj_5:OUT(15)", "42_classrooms__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(16)", "1_hotel__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(17)", "56_highschool__chilled_water:IN(0)", "chilled_water"],
+ ["cwj1:OUT(18)", "57_primary_school__chilled_water:IN(0)", "chilled_water"],
+ ["ej1_critical_circuits:OUT(2)", "2_outpatient_health_clinic_transfer_sw:IN(0)", "electricity"],
+ ["diesel_fuel_tank_3:OUT(0)", "2_outpatient_health_clinic_generator:IN(0)", "diesel"],
+ ["diesel_fuel_tank_4:OUT(0)", "7_gym_generator:IN(0)", "diesel"],
+ ["ej1_critical_circuits:OUT(3)", "7_gym_transfer_sw:IN(0)", "electricity"],
+ ["diesel_tank_5:OUT(0)", "16_office_generator:IN(0)", "diesel"],
+ ["ej1_critical_circuits:OUT(4)", "16_office_transfer_sw:IN(0)", "electricity"],
+ ["diesel_fuel_tank_6:OUT(0)", "41_fire_station_generator:IN(0)", "diesel"],
+ ["41_fire_station_pv:OUT(0)", "41_fire_station_transfer_sw:IN(0)", "electricity"],
+ ["ej1_critical_circuits:OUT(5)", "41_fire_station_transfer_sw:IN(1)", "electricity"],
+ ["diesel_fueling_point:OUT(0)", "diesel_fuel_truck:IN(0)", "diesel"],
+ ["diesel_fuel_truck:OUT(0)", "diesel_fuel_tank_1:IN(0)", "diesel"],
+ ["41_fire_station_generator:OUT(0)", "41_gen_pass_through:IN(0)", "electricity"],
+ ["41_gen_pass_through:OUT(0)", "41_fire_station_transfer_sw:IN(2)", "electricity"],
+ ["41_fire_station_transfer_sw:OUT(0)", "41_fire_station_mc_load__electricity:IN(0)", "electricity"],
+ ["diesel_fuel_truck:OUT(1)", "diesel_fuel_tank_3:IN(0)", "diesel"],
+ ["14_maint_generator:OUT(0)", "14_maint_gen_pass_through:IN(0)", "electricity"],
+ ["14_maint_gen_pass_through:OUT(0)", "14_maint_transfer_sw:IN(1)", "electricity"],
+ ["14_maint_transfer_sw:OUT(0)", "14_maintenance_dpw_mc_load__electricity:IN(0)", "electricity"],
+ ["7_gym_generator:OUT(0)", "7_gym_gen_pass_through:IN(0)", "electricity"],
+ ["7_gym_gen_pass_through:OUT(0)", "7_gym_transfer_sw:IN(1)", "electricity"],
+ ["7_gym_transfer_sw:OUT(0)", "7_gym_mc_load__electricity:IN(0)", "electricity"],
+ ["16_office_generator:OUT(0)", "16_office_gen_pass_though:IN(0)", "electricity"],
+ ["16_office_gen_pass_though:OUT(0)", "16_office_transfer_sw:IN(1)", "electricity"],
+ ["16_office_transfer_sw:OUT(0)", "16_office_mc_load__electricity:IN(0)", "electricity"],
+ ["2_outpatient_health_clinic_generator:OUT(0)", "2_outpatient_health_clinic_gen_pass_through:IN(0)", "electricity"],
+ ["2_outpatient_health_clinic_gen_pass_through:OUT(0)", "2_outpatient_health_clinic_transfer_sw:IN(1)", "electricity"],
+ ["2_outpatient_health_clinic_transfer_sw:OUT(0)", "2_health_clinic_mc_load__electricity:IN(0)", "electricity"],
+ ["44_dfac_generator:OUT(0)", "44_dfac_gen_pass_through:IN(0)", "electricity"],
+ ["44_dfac_gen_pass_through:OUT(0)", "44_dfac_transfer_sw:IN(1)", "electricity"],
+ ["44_dfac_transfer_sw:OUT(0)", "44_dfac_mc_load__electricity:IN(0)", "electricity"],
+ ["ejnc_7:OUT(21)", "40_barracks_n__electricity:IN(0)", "electricity"],
+ ["ejnc6:OUT(4)", "ev_charger_1__electricity:IN(0)", "electricity"]
+]
+
+# Scenarios
+[scenarios.blue_sky]
+id = 1
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 8760
+max_occurrences = 1
+calculate_reliability = true
+
+
+[scenarios.black_sky]
+id = 2
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 408
+max_occurrences = 1
+calculate_reliability = false
+intensity.wind_speed_mph = 80.0

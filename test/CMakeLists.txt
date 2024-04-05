@@ -5,17 +5,18 @@ enable_testing()
 string(TOLOWER ${PROJECT_NAME} project_name_lower)
 
 set(library_files
-		${project_name_lower}_tests.cpp
-		${project_name_lower}_next_random_test.cpp
+		erin_tests.cpp
+		erin_next_random_test.cpp
 		)
 
-add_executable(${project_name_lower}_tests
-	${library_files})
-target_include_directories(${project_name_lower}_tests
-	PUBLIC ${PROJECT_SOURCE_DIR}/include)
+add_executable(${project_name_lower}_tests ${library_files})
+
+target_include_directories(${project_name_lower}_tests PUBLIC ${PROJECT_SOURCE_DIR}/include)
+
 target_link_libraries(${project_name_lower}_tests
 	erin_next
 	GTest::gtest_main)
 
 include(GoogleTest)
+
 gtest_discover_tests(${project_name_lower}_tests)

@@ -20,29 +20,29 @@ namespace erin
     // > (reductions + days-per-month) ;=>
     // ;;  [31 59 90 120 151 181 212 243 273 304 334 365]
     std::vector<flow_t> const days_per_month{// January
-                                               31,
-                                               // February (non-leap year)
-                                               28,
-                                               // March
-                                               31,
-                                               // April
-                                               30,
-                                               // May
-                                               31,
-                                               // June
-                                               30,
-                                               // July
-                                               31,
-                                               // August
-                                               31,
-                                               // September
-                                               30,
-                                               // October
-                                               31,
-                                               // November
-                                               30,
-                                               // December
-                                               31
+                                             31,
+                                             // February (non-leap year)
+                                             28,
+                                             // March
+                                             31,
+                                             // April
+                                             30,
+                                             // May
+                                             31,
+                                             // June
+                                             30,
+                                             // July
+                                             31,
+                                             // August
+                                             31,
+                                             // September
+                                             30,
+                                             // October
+                                             31,
+                                             // November
+                                             30,
+                                             // December
+                                             31
     };
     std::vector<flow_t> const day_of_year_to_month{
         // January is doy <= 31 days

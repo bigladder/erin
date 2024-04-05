@@ -1758,4 +1758,3 @@ TEST(Erin, Test22)
     double result = TabularFragilityCurve_GetFailureFraction(tfc, level);
     EXPECT_EQ(result, 0.85);
 }
-

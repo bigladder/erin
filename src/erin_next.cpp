@@ -366,8 +366,9 @@ namespace erin
                         {
                             // TODO: need to enable/disable printing
                             std::cout << "... REPAIRED: "
-                                      << m.ComponentMap.Tag[rel.ComponentId] << "["
-                                      << rel.ComponentId << "]" << std::endl;
+                                      << m.ComponentMap.Tag[rel.ComponentId]
+                                      << "[" << rel.ComponentId << "]"
+                                      << std::endl;
                         }
                     }
                     else
@@ -377,20 +378,23 @@ namespace erin
                         {
                             // TODO: need to enable/disable printing
                             std::cout << "... FAILED: "
-                                      << m.ComponentMap.Tag[rel.ComponentId] << "["
-                                      << rel.ComponentId << "]" << std::endl;
+                                      << m.ComponentMap.Tag[rel.ComponentId]
+                                      << "[" << rel.ComponentId << "]"
+                                      << std::endl;
                             std::cout << "... causes: " << std::endl;
                             for (auto const& fragCause : ts.fragilityModeCauses)
                             {
                                 // TODO: need to enable/disable printing
-                                std::cout << "... ... fragility mode: " << fragCause
-                                          << std::endl;
+                                std::cout
+                                    << "... ... fragility mode: " << fragCause
+                                    << std::endl;
                             }
                             for (auto const& failCause : ts.failureModeCauses)
                             {
                                 // TODO: need to enable/disable printing
-                                std::cout << "... ... failure mode: " << failCause
-                                          << std::endl;
+                                std::cout
+                                    << "... ... failure mode: " << failCause
+                                    << std::endl;
                             }
                         }
                     }
@@ -1993,12 +1997,12 @@ namespace erin
                 {
                     std::cout << "FLOW IMBALANCE!" << std::endl;
                     std::map<size_t, int64_t> sumOfFlowsByCompId;
-                    for (size_t connIdx=0; connIdx < model.Connections.size(); ++connIdx)
+                    for (size_t connIdx = 0; connIdx < model.Connections.size();
+                         ++connIdx)
                     {
                         size_t const& fromId =
                             model.Connections[connIdx].FromId;
-                        size_t const& toId =
-                            model.Connections[connIdx].ToId;
+                        size_t const& toId = model.Connections[connIdx].ToId;
                         if (!sumOfFlowsByCompId.contains(fromId))
                         {
                             sumOfFlowsByCompId.insert({fromId, 0});
@@ -2014,7 +2018,8 @@ namespace erin
                     for (auto const item : sumOfFlowsByCompId)
                     {
                         size_t const& compId = item.first;
-                        ComponentType ctype = model.ComponentMap.CompType[compId];
+                        ComponentType ctype =
+                            model.ComponentMap.CompType[compId];
                         if (ctype == ComponentType::ConstantLoadType
                             || ctype == ComponentType::ScheduleBasedLoadType
                             || ctype == ComponentType::WasteSinkType
@@ -2028,10 +2033,8 @@ namespace erin
                         {
                             std::cout
                                 << model.ComponentMap.Tag[item.first]
-                                << " doesn't have zero flow: "
-                                << item.second
-                                << " W"
-                                << std::endl;
+                                << " doesn't have zero flow: " << item.second
+                                << " W" << std::endl;
                         }
                     }
                 }

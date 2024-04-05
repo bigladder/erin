@@ -303,8 +303,7 @@ namespace erin
             TimeAndAmount ta{};
             ta.Time_s = Time_ToSeconds(std::stod(pair[0]), timeUnit);
             ta.Amount_W =
-                static_cast<flow_t>(Power_ToWatt(std::stod(pair[1]), rateUnit)
-                );
+                static_cast<flow_t>(Power_ToWatt(std::stod(pair[1]), rateUnit));
             trps.push_back(ta);
         }
         inputDataFile.close();

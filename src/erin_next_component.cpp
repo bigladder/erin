@@ -414,7 +414,8 @@ namespace erin
                         fullTableName,
                         "efficiency must be <= 1.0; "
                         "if you need efficiencies (COPs) > 1, "
-                        "consider using a mover");
+                        "consider using a mover"
+                    );
                     return Result::Failure;
                 }
                 auto const compIdAndWasteConn =

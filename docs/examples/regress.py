@@ -21,14 +21,14 @@ if platform.system() == 'Windows':
         print("Could not find build directory!")
         sys.exit(1)
     TEST_EXE = BIN_DIR / 'erin_tests.exe'
-    RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test.exe'
+    RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests.exe'
     CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     DIFF_PROG = 'diff'
     BIN_DIR = Path('.') / '..' / '..' / 'build' / 'bin'
     TEST_EXE = BIN_DIR / 'erin_tests'
-    RAND_TEST_EXE = BIN_DIR / 'erin_next_random_test'
+    RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
     CLI_EXE = BIN_DIR / 'erin_next_cli'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test'
 else:
@@ -41,6 +41,9 @@ if not TEST_EXE.exists():
     print("Cannot find test executable...")
     sys.exit(1)
 
+if not RAND_TEST_EXE.exists():
+    print("Cannot find test executable...")
+    sys.exit(1)
 
 if not CLI_EXE.exists():
     print("Cannot find command-line interface executable...")
@@ -67,7 +70,6 @@ def run_tests():
         print("stdout:\n")
         print(result.stderr.decode())
         sys.exit(1)
-
 
 def smoke_test(example_name):
     """

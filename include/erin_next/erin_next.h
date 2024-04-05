@@ -239,10 +239,9 @@ namespace erin
         // amount at or below which we request charge
         flow_t ChargeAmount_J;
         flow_t InitialStorage_J;
-        // TODO: make inflow connection optional
-        size_t InflowConn;
+        std::optional<size_t> InflowConn = {};
         size_t OutflowConn;
-        std::optional<size_t> WasteflowConn;
+        std::optional<size_t> WasteflowConn = {};
         double RoundTripEfficiency = 1.0;
         flow_t MaxOutflow_W = max_flow_W;
     };
@@ -888,7 +887,6 @@ namespace erin
         Model& model,
         SimulationState& ss,
         double t,
-        size_t connIdx,
         size_t compIdx
     );
 

@@ -20,6 +20,8 @@ It can be used to assist with varius development tasks.
 You can install the tool from the website above.
 Once installed, call `task --list` to list available tasks. 
 
+NOTE: to install Taskfile, please follow the instructions on the website above.
+
 ## Clang Format
 
 This project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html).

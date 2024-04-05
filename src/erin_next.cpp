@@ -722,7 +722,8 @@ namespace erin
         if (maybeInflowConnIdx.has_value())
         {
             size_t inflowConnIdx = maybeInflowConnIdx.value();
-            if (ss.Flows[inflowConnIdx].Requested_W != (outRequest_W + chargeRate))
+            if (ss.Flows[inflowConnIdx].Requested_W
+                != (outRequest_W + chargeRate))
             {
                 ss.ActiveConnectionsBack.insert(inflowConnIdx);
             }
@@ -1161,8 +1162,7 @@ namespace erin
         size_t outflowConn = store.OutflowConn;
         std::optional<size_t> maybeInflowConn = store.InflowConn;
         // TODO: consider using int64_t here
-        int netCharge_W =
-            -1 * static_cast<int>(ss.Flows[outflowConn].Actual_W);
+        int netCharge_W = -1 * static_cast<int>(ss.Flows[outflowConn].Actual_W);
         if (maybeInflowConn.has_value())
         {
             size_t inflowConn = maybeInflowConn.value();
@@ -1257,7 +1257,8 @@ namespace erin
             if (model.Connections[connIdx].From == ComponentType::StoreType)
             {
                 RunStorePostFinalization(
-                    model, ss, t, model.Connections[connIdx].FromIdx);
+                    model, ss, t, model.Connections[connIdx].FromIdx
+                );
             }
         }
     }
@@ -1369,7 +1370,8 @@ namespace erin
             {
                 size_t inConn = maybeInConn.value();
                 netEnergyAdded += std::lround(
-                    elapsedTime_s * static_cast<double>(ss.Flows[inConn].Actual_W)
+                    elapsedTime_s
+                    * static_cast<double>(ss.Flows[inConn].Actual_W)
                 );
             }
             netEnergyAdded -= std::lround(
@@ -1406,8 +1408,7 @@ namespace erin
                 if (maybeInConn.has_value())
                 {
                     size_t inConn = maybeInConn.value();
-                    inflow =
-                        static_cast<int64_t>(ss.Flows[inConn].Actual_W);
+                    inflow = static_cast<int64_t>(ss.Flows[inConn].Actual_W);
                 }
                 int64_t outflow =
                     static_cast<int64_t>(ss.Flows[outConn].Actual_W);
@@ -2272,7 +2273,8 @@ namespace erin
             case ComponentType::StoreType:
             {
                 // TODO: check! May need to update wasteflow and use efficiency?
-                std::optional<size_t> maybeInflowConn = m.Stores[idx].InflowConn;
+                std::optional<size_t> maybeInflowConn =
+                    m.Stores[idx].InflowConn;
                 if (maybeInflowConn.has_value())
                 {
                     size_t inflowConn = maybeInflowConn.value();

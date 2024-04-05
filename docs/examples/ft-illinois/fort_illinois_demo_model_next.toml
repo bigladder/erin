@@ -880,10 +880,9 @@ num_outflows = 12
 
 [components.chilled_water_plant]
 id = 13
-type = "converter"
-constant_efficiency = 3.05
+type = "mover"
+cop = 3.05
 inflow = "electricity"
-lossflow = "waste_heat"
 outflow = "chilled_water"
 failure_modes = ["chiller_electric_air_cooled_mtfm"]
 

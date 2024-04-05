@@ -1759,37 +1759,3 @@ TEST(Erin, Test22)
     EXPECT_EQ(result, 0.85);
 }
 
-// int
-// main(int argc, char** argv)
-// {
-//     auto start = std::chrono::high_resolution_clock::now();
-//     Test1(false);
-//     Test2(false);
-//     Test3(false);
-//     Test3A(false);
-//     Test4(false);
-//     Test5(false);
-//     Test6(false);
-//     Test7(false);
-//     Test8(false);
-//     Test9(false);
-//     Test10(false);
-//     Test11(false);
-//     Test12(false);
-//     Test13(false);
-//     Test14(false);
-//     Test15(false);
-//     Test16(false);
-//     Test17(false);
-//     Test18(false);
-//     Test19(false);
-//     Test20(false);
-//     Test21(false);
-//     Test22(false);
-//     auto stop = std::chrono::high_resolution_clock::now();
-//     auto duration =
-//         std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-//     std::cout << "Duration " << ((double)duration.count() / 1000.0) << " ms"
-//               << std::endl;
-//     return EXIT_SUCCESS;
-// }

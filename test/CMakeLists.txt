@@ -4,10 +4,6 @@ enable_testing()
 
 string(TOLOWER ${PROJECT_NAME} project_name_lower)
 
-set(library_files
-		${project_name_lower}_tests.cpp
-		${project_name_lower}_next_random_test.cpp
-		)
 # erin_tests
 add_executable(${project_name_lower}_tests ${project_name_lower}_tests.cpp)
 
@@ -26,7 +22,7 @@ target_link_libraries(${project_name_lower}_next_random_tests
 		erin_next
 		GTest::gtest_main)
 
-#
+# Google Test
 include(GoogleTest)
 
 gtest_discover_tests(${project_name_lower}_tests)

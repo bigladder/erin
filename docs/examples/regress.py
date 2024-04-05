@@ -228,6 +228,7 @@ def run_perf():
 
 if __name__ == "__main__":
     run_tests()
+    print("Passed all unit tests!")
     run_cli("01")
     run_cli("02")
     run_cli("03")

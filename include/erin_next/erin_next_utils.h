@@ -2,6 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_UTILS_H
 #define ERIN_UTILS_H
+#include "erin_next/erin_next_const.h"
 #include <string>
 #include <cstdlib>
 #include <iomanip>
@@ -18,7 +19,7 @@ namespace erin
     // > (reduce + days-per-month) ;=> 365
     // > (reductions + days-per-month) ;=>
     // ;;  [31 59 90 120 151 181 212 243 273 304 334 365]
-    std::vector<uint32_t> const days_per_month{// January
+    std::vector<flow_t> const days_per_month{// January
                                                31,
                                                // February (non-leap year)
                                                28,
@@ -43,7 +44,7 @@ namespace erin
                                                // December
                                                31
     };
-    std::vector<uint32_t> const day_of_year_to_month{
+    std::vector<flow_t> const day_of_year_to_month{
         // January is doy <= 31 days
         31,
         // February (non-leap year) is doy <= 59
@@ -69,7 +70,7 @@ namespace erin
         // December
         365
     };
-    uint32_t const num_months{12};
+    flow_t const num_months{12};
     int const max_month_idx = 11;
     int const min_month_idx = 0;
 
@@ -90,9 +91,9 @@ namespace erin
     struct Months_days_elapsed
     {
         // months of time that have ELAPSED January 1 at 00:00:00
-        uint32_t months;
+        flow_t months;
         // days of the next month
-        uint32_t days;
+        flow_t days;
     };
 
     Months_days_elapsed

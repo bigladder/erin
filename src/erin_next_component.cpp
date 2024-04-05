@@ -225,7 +225,7 @@ namespace erin
                         return Result::Failure;
                     }
                     double maxAvailableReal = maybe.value();
-                    maxAvailable = static_cast<uint32_t>(
+                    maxAvailable = static_cast<flow_t>(
                         Power_ToWatt(maxAvailableReal, rateUnit)
                     );
                 }
@@ -537,8 +537,8 @@ namespace erin
                     );
                     return Result::Failure;
                 }
-                uint32_t noChargeAmount_J =
-                    static_cast<uint32_t>(chargeAtSoc * capacity_J);
+                flow_t noChargeAmount_J =
+                    static_cast<flow_t>(chargeAtSoc * capacity_J);
                 if (noChargeAmount_J == capacity_J)
                 {
                     // NOTE: noChargeAmount must be at

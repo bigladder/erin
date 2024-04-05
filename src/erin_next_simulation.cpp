@@ -1563,9 +1563,9 @@ namespace erin
     {
         double mult = std::pow(10.0, static_cast<double>(precision));
         double fractionPart = std::round(mult * (value - std::floor(value)));
-        return std::to_string(static_cast<uint32_t>(std::trunc(value)))
+        return std::to_string(static_cast<flow_t>(std::trunc(value)))
             + (fractionPart > 0.0
-                   ? ("." + std::to_string(static_cast<uint32_t>(fractionPart)))
+                   ? ("." + std::to_string(static_cast<flow_t>(fractionPart)))
                    : "");
     }
 

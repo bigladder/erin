@@ -32,6 +32,7 @@ namespace erin
         for (auto const& xs : input)
         {
             assert(xs.size() >= 2);
+            assert(xs[1] * rateToWatts <= std::numeric_limits<flow_t>::max());
             TimeAndAmount taa{
                 .Time_s = xs[0] * timeToSeconds,
                 .Amount_W = static_cast<flow_t>(xs[1] * rateToWatts),
@@ -500,7 +501,7 @@ namespace erin
                 nonOutflowAvailableLimited;
         }
         size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn;
-        uint32_t wasteflow = nonOutflowAvailable > lossflowRequest
+        flow_t wasteflow = nonOutflowAvailable > lossflowRequest
             ? nonOutflowAvailable - lossflowRequest
             : 0;
         ss.Flows[wasteflowConn].Requested_W = wasteflow;
@@ -1272,8 +1273,8 @@ namespace erin
         RunConnectionsPostFinalization(model, ss, t);
     }
 
-    uint32_t
-    FinalizeFlowValue(uint32_t requested, uint32_t available)
+    flow_t
+    FinalizeFlowValue(flow_t requested, flow_t available)
     {
         return available >= requested ? requested : available;
     }
@@ -1782,10 +1783,10 @@ namespace erin
         return newFlows;
     }
 
-    std::vector<uint32_t>
+    std::vector<flow_t>
     CopyStorageStates(SimulationState& ss)
     {
-        std::vector<uint32_t> newAmounts = {};
+        std::vector<flow_t> newAmounts = {};
         newAmounts.reserve(ss.StorageAmounts_J.size());
         for (size_t i = 0; i < ss.StorageAmounts_J.size(); ++i)
         {
@@ -2323,7 +2324,7 @@ namespace erin
     }
 
     size_t
-    Model_AddConstantLoad(Model& m, uint32_t load)
+    Model_AddConstantLoad(Model& m, flow_t load)
     {
         size_t idx = m.ConstLoads.size();
         ConstantLoad cl{};
@@ -2344,7 +2345,7 @@ namespace erin
     Model_AddScheduleBasedLoad(
         Model& m,
         double* times,
-        uint32_t* loads,
+        flow_t* loads,
         size_t numItems
     )
     {
@@ -2408,7 +2409,7 @@ namespace erin
     }
 
     size_t
-    Model_AddConstantSource(Model& m, uint32_t available)
+    Model_AddConstantSource(Model& m, flow_t available)
     {
         return Model_AddConstantSource(m, available, 0, "");
     }
@@ -2416,7 +2417,7 @@ namespace erin
     size_t
     Model_AddConstantSource(
         Model& m,
-        uint32_t available,
+        flow_t available,
         size_t outflowTypeId,
         std::string const& tag
     )
@@ -2514,11 +2515,11 @@ namespace erin
     size_t
     Model_AddStore(
         Model& m,
-        uint32_t capacity,
-        uint32_t maxCharge,
-        uint32_t maxDischarge,
-        uint32_t chargeAmount,
-        uint32_t initialStorage
+        flow_t capacity,
+        flow_t maxCharge,
+        flow_t maxDischarge,
+        flow_t chargeAmount,
+        flow_t initialStorage
     )
     {
         return Model_AddStore(
@@ -2617,8 +2618,8 @@ namespace erin
     ComponentIdAndWasteConnection
     Model_AddConstantEfficiencyConverter(
         Model& m,
-        uint32_t eff_numerator,
-        uint32_t eff_denominator
+        flow_t eff_numerator,
+        flow_t eff_denominator
     )
     {
         return Model_AddConstantEfficiencyConverter(
@@ -2979,7 +2980,7 @@ namespace erin
         return {};
     }
 
-    std::optional<uint32_t>
+    std::optional<flow_t>
     ModelResults_GetStoreState(
         Model const& m,
         size_t compId,

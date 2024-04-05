@@ -351,6 +351,8 @@ namespace erin
         double time
     )
     {
+        // TODO pass this in...
+        constexpr bool doPrint = true;
         for (auto const& rel : m.Reliabilities)
         {
             for (auto const& ts : rel.TimeStates)
@@ -360,30 +362,36 @@ namespace erin
                     if (ts.state)
                     {
                         Model_SetComponentToRepaired(m, ss, rel.ComponentId);
-                        // TODO: need to enable/disable printing
-                        std::cout << "... REPAIRED: "
-                                  << m.ComponentMap.Tag[rel.ComponentId] << "["
-                                  << rel.ComponentId << "]" << std::endl;
+                        if (doPrint)
+                        {
+                            // TODO: need to enable/disable printing
+                            std::cout << "... REPAIRED: "
+                                      << m.ComponentMap.Tag[rel.ComponentId] << "["
+                                      << rel.ComponentId << "]" << std::endl;
+                        }
                     }
                     else
                     {
                         Model_SetComponentToFailed(m, ss, rel.ComponentId);
-                        // TODO: need to enable/disable printing
-                        std::cout << "... FAILED: "
-                                  << m.ComponentMap.Tag[rel.ComponentId] << "["
-                                  << rel.ComponentId << "]" << std::endl;
-                        std::cout << "... causes: " << std::endl;
-                        for (auto const& fragCause : ts.fragilityModeCauses)
+                        if (doPrint)
                         {
                             // TODO: need to enable/disable printing
-                            std::cout << "... ... fragility mode: " << fragCause
-                                      << std::endl;
-                        }
-                        for (auto const& failCause : ts.failureModeCauses)
-                        {
-                            // TODO: need to enable/disable printing
-                            std::cout << "... ... failure mode: " << failCause
-                                      << std::endl;
+                            std::cout << "... FAILED: "
+                                      << m.ComponentMap.Tag[rel.ComponentId] << "["
+                                      << rel.ComponentId << "]" << std::endl;
+                            std::cout << "... causes: " << std::endl;
+                            for (auto const& fragCause : ts.fragilityModeCauses)
+                            {
+                                // TODO: need to enable/disable printing
+                                std::cout << "... ... fragility mode: " << fragCause
+                                          << std::endl;
+                            }
+                            for (auto const& failCause : ts.failureModeCauses)
+                            {
+                                // TODO: need to enable/disable printing
+                                std::cout << "... ... failure mode: " << failCause
+                                          << std::endl;
+                            }
                         }
                     }
                 }
@@ -1730,15 +1738,15 @@ namespace erin
         return summary;
     }
 
-    void
+    bool
     PrintFlowSummary(FlowSummary s)
     {
-        int netDischarge = static_cast<int>(s.StorageDischarge)
-            - static_cast<int>(s.StorageCharge);
-        int sum = static_cast<int>(s.Inflow) + netDischarge
-            + static_cast<int>(s.EnvInflow)
-            - (static_cast<int>(s.OutflowAchieved)
-               + static_cast<int>(s.Wasteflow));
+        int64_t netDischarge = static_cast<int64_t>(s.StorageDischarge)
+            - static_cast<int64_t>(s.StorageCharge);
+        int64_t sum = static_cast<int64_t>(s.Inflow) + netDischarge
+            + static_cast<int64_t>(s.EnvInflow)
+            - (static_cast<int64_t>(s.OutflowAchieved)
+               + static_cast<int64_t>(s.Wasteflow));
         double eff =
             (static_cast<double>(s.Inflow) + static_cast<double>(s.EnvInflow)
              + static_cast<double>(netDischarge))
@@ -1768,6 +1776,7 @@ namespace erin
         std::cout << "  Delivery Effectiveness : " << effectiveness << "%"
                   << " (= " << s.OutflowAchieved << "/" << s.OutflowRequest
                   << ")" << std::endl;
+        return sum == 0;
     }
 
     std::vector<Flow>
@@ -1980,7 +1989,52 @@ namespace erin
             if (print)
             {
                 PrintFlows(model, ss, t);
-                PrintFlowSummary(SummarizeFlows(model, ss, t));
+                if (!PrintFlowSummary(SummarizeFlows(model, ss, t)))
+                {
+                    std::cout << "FLOW IMBALANCE!" << std::endl;
+                    std::map<size_t, int64_t> sumOfFlowsByCompId;
+                    for (size_t connIdx=0; connIdx < model.Connections.size(); ++connIdx)
+                    {
+                        size_t const& fromId =
+                            model.Connections[connIdx].FromId;
+                        size_t const& toId =
+                            model.Connections[connIdx].ToId;
+                        if (!sumOfFlowsByCompId.contains(fromId))
+                        {
+                            sumOfFlowsByCompId.insert({fromId, 0});
+                        }
+                        if (!sumOfFlowsByCompId.contains(toId))
+                        {
+                            sumOfFlowsByCompId.insert({toId, 0});
+                        }
+                        flow_t flow = ss.Flows[connIdx].Actual_W;
+                        sumOfFlowsByCompId[fromId] -= flow;
+                        sumOfFlowsByCompId[toId] += flow;
+                    }
+                    for (auto const item : sumOfFlowsByCompId)
+                    {
+                        size_t const& compId = item.first;
+                        ComponentType ctype = model.ComponentMap.CompType[compId];
+                        if (ctype == ComponentType::ConstantLoadType
+                            || ctype == ComponentType::ScheduleBasedLoadType
+                            || ctype == ComponentType::WasteSinkType
+                            || ctype == ComponentType::ConstantSourceType
+                            || ctype == ComponentType::ScheduleBasedSourceType
+                            || ctype == ComponentType::EnvironmentSourceType)
+                        {
+                            continue;
+                        }
+                        if (item.second != 0)
+                        {
+                            std::cout
+                                << model.ComponentMap.Tag[item.first]
+                                << " doesn't have zero flow: "
+                                << item.second
+                                << " W"
+                                << std::endl;
+                        }
+                    }
+                }
                 PrintModelState(model, ss);
                 std::cout << "==== QUIESCENCE REACHED ====" << std::endl;
             }
@@ -2291,6 +2345,13 @@ namespace erin
                     ss.ActiveConnectionsFront.insert(outflowConn);
                 }
                 ss.Flows[outflowConn].Available_W = 0;
+                if (m.Stores[idx].WasteflowConn.has_value())
+                {
+                    size_t wConn = m.Stores[idx].WasteflowConn.value();
+                    ss.Flows[wConn].Actual_W = 0;
+                    ss.Flows[wConn].Available_W = 0;
+                    ss.Flows[wConn].Requested_W = 0;
+                }
             }
             break;
             case ComponentType::PassThroughType:

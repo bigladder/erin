@@ -570,7 +570,7 @@ namespace erin
     FlowSummary
     SummarizeFlows(Model const& m, SimulationState const& ss, double t);
 
-    void
+    bool
     PrintFlowSummary(FlowSummary s);
 
     void

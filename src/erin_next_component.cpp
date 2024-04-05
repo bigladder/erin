@@ -408,13 +408,15 @@ namespace erin
                     );
                     return Result::Failure;
                 }
-                // TODO: re-enable this after we have dedicated COP components
-                // if (efficiency > 1.0)
-                // {
-                // 	WriteErrorMessage(
-                // 		fullTableName, "efficiency must be <= 1.0");
-                // 	return Result::Failure;
-                // }
+                if (efficiency > 1.0)
+                {
+                    WriteErrorMessage(
+                        fullTableName,
+                        "efficiency must be <= 1.0; "
+                        "if you need efficiencies (COPs) > 1, "
+                        "consider using a mover");
+                    return Result::Failure;
+                }
                 auto const compIdAndWasteConn =
                     Model_AddConstantEfficiencyConverter(
                         s.TheModel,

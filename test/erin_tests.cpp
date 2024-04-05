@@ -2,7 +2,6 @@
 #include "erin_next/erin_next_timestate.h"
 #include <gtest/gtest.h>
 #include <iomanip>
-#include <chrono>
 #include <limits>
 
 using namespace erin;
@@ -24,6 +23,7 @@ TEST(Erin, Test1)
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
     EXPECT_EQ(results[0].Flows.size(), 1) << "size of flows must equal 1";
+
     auto srcToLoadResult =
         ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
     EXPECT_TRUE(srcToLoadResult.has_value())
@@ -48,6 +48,7 @@ TEST(Erin, Test2)
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
     EXPECT_EQ(results[0].Flows.size(), 3) << "size of flows must equal 3";
+
     auto srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
     EXPECT_TRUE(srcToConvResults.has_value())
@@ -58,6 +59,7 @@ TEST(Erin, Test2)
         << "actual value must equal 20";
     EXPECT_EQ(srcToConvResults.value().Available_W, 100)
         << "available must equal 100";
+
     auto convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, 0.0, results);
     EXPECT_TRUE(convToLoadResults.has_value())
@@ -68,6 +70,7 @@ TEST(Erin, Test2)
         << "actual value must equal 10";
     EXPECT_EQ(convToLoadResults.value().Available_W, 50)
         << "available must equal 50";
+
     auto convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, 0.0, results
     );
@@ -95,6 +98,7 @@ TEST(Erin, Test3)
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
     EXPECT_EQ(results[0].Flows.size(), 4) << "size of flows must equal 4";
+
     auto srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
     EXPECT_TRUE(srcToConvResults.has_value())
@@ -105,6 +109,7 @@ TEST(Erin, Test3)
         << "actual value must equal 20";
     EXPECT_EQ(srcToConvResults.value().Available_W, 100)
         << "available must equal 100";
+
     auto convToLoad1Results =
         ModelResults_GetFlowForConnection(m, convToLoad1Conn, 0.0, results);
     EXPECT_TRUE(convToLoad1Results.has_value())
@@ -115,6 +120,7 @@ TEST(Erin, Test3)
         << "actual value must equal 10";
     EXPECT_EQ(convToLoad1Results.value().Available_W, 50)
         << "available must equal 50";
+
     auto convToLoad2Results =
         ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
     EXPECT_TRUE(convToLoad2Results.has_value())
@@ -125,6 +131,7 @@ TEST(Erin, Test3)
         << "actual value must equal 2";
     EXPECT_EQ(convToLoad2Results.value().Available_W, 10)
         << "available must equal 10";
+
     auto convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, 0.0, results
     );
@@ -138,8 +145,7 @@ TEST(Erin, Test3)
         << "available must equal 8";
 }
 
-static void
-Test3A(bool print)
+TEST(Erin, Test3A)
 {
     Model m{};
     auto srcId = Model_AddConstantSource(m, 100);
@@ -149,74 +155,59 @@ Test3A(bool print)
     auto convToLoad2Conn = Model_AddConnection(m, convId.Id, 1, load2Id, 0);
     auto convToLoad1Conn = Model_AddConnection(m, convId.Id, 0, load1Id, 0);
     auto srcToConvConn = Model_AddConnection(m, srcId, 0, convId.Id, 0);
-    auto results = Simulate(m, print);
-    assert((results.size() == 1 && "output must have a size of 1"));
-    assert((results[0].Time == 0.0 && "time must equal 0.0"));
-    assert((results[0].Flows.size() == 4 && "size of flows must equal 4"));
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
+    EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].Flows.size(), 4) << "size of flows must equal 4";
+
     auto srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, 0.0, results);
-    assert((
-        srcToConvResults.has_value() && "source to converter must have results"
-    ));
-    assert((
-        srcToConvResults.value().Requested_W == 20 && "requested must equal 20"
-    ));
-    assert((
-        srcToConvResults.value().Actual_W == 20 && "actual value must equal 20"
-    ));
-    assert(
-        (srcToConvResults.value().Available_W == 100
-         && "available must equal 100")
-    );
+    EXPECT_TRUE(srcToConvResults.has_value())
+        << "source to converter must have results";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 20)
+        << "requested must equal 20";
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 20)
+        << "actual value must equal 20";
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
+        << "available must equal 100";
+
     auto convToLoad1Results =
         ModelResults_GetFlowForConnection(m, convToLoad1Conn, 0.0, results);
-    assert((
+    EXPECT_TRUE(
         convToLoad1Results.has_value() && "converter to load1 must have results"
-    ));
-    assert(
-        (convToLoad1Results.value().Requested_W == 10
-         && "requested must equal 10")
     );
-    assert(
-        (convToLoad1Results.value().Actual_W == 10
-         && "actual value must equal 10")
-    );
-    assert(
-        (convToLoad1Results.value().Available_W == 50
-         && "available must equal 50")
-    );
+    EXPECT_EQ(convToLoad1Results.value().Requested_W, 10)
+        << "requested must equal 10";
+    EXPECT_EQ(convToLoad1Results.value().Actual_W, 10)
+        << "actual value must equal 10";
+    EXPECT_EQ(convToLoad1Results.value().Available_W, 50)
+        << "available must equal 50";
+
     auto convToLoad2Results =
         ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
-    assert((convToLoad2Results.has_value() && "conv to load2 must have results")
-    );
-    assert((
-        convToLoad2Results.value().Requested_W == 2 && "requested must equal 2"
-    ));
-    assert((
-        convToLoad2Results.value().Actual_W == 2 && "actual value must equal 2"
-    ));
-    assert(
-        (convToLoad2Results.value().Available_W == 10
-         && "available must equal 10")
-    );
+    EXPECT_TRUE(convToLoad2Results.has_value())
+        << "conv to load2 must have results";
+    EXPECT_EQ(convToLoad2Results.value().Requested_W, 2)
+        << "requested must equal 2";
+    EXPECT_EQ(convToLoad2Results.value().Actual_W, 2)
+        << "actual value must equal 2";
+    EXPECT_EQ(convToLoad2Results.value().Available_W, 10)
+        << "available must equal 10";
+
     auto convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, 0.0, results
     );
-    assert((convToWasteResults.has_value() && "conv to waste must have results")
-    );
-    assert((
-        convToWasteResults.value().Requested_W == 8 && "requested must equal 8"
-    ));
-    assert((
-        convToWasteResults.value().Actual_W == 8 && "actual value must equal 8"
-    ));
-    assert((
-        convToWasteResults.value().Available_W == 8 && "available must equal 8"
-    ));
+    EXPECT_TRUE(convToWasteResults.has_value())
+        << "conv to waste must have results";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 8)
+        << "requested must equal 8";
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 8)
+        << "actual value must equal 8";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 8)
+        << "available must equal 8";
 }
 
-static void
-Test4(bool print)
+TEST(Erin, Test4)
 {
     std::vector<TimeAndAmount> timesAndLoads = {};
     timesAndLoads.push_back({0.0, 10});
@@ -226,52 +217,37 @@ Test4(bool print)
     auto srcId = Model_AddConstantSource(m, 100);
     auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
     auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
-    auto results = Simulate(m, print);
-    assert((results.size() == 2 && "output must have a size of 2"));
-    assert((results[0].Time == 0.0 && "time must equal 0.0"));
-    assert((results[0].Flows.size() == 1 && "size of flows[0] must equal 1"));
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 2) << "output must have a size of 2";
+    EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].Flows.size(), 1) << "size of flows[0] must equal 1";
+
     auto srcToLoadResults_0 =
         ModelResults_GetFlowForConnection(m, srcToLoadConn, 0.0, results);
-    assert(
-        (srcToLoadResults_0.has_value()
-         && "source to load must have results at time=0.0")
-    );
-    assert(
-        (srcToLoadResults_0.value().Requested_W == 10
-         && "requested must equal 10")
-    );
-    assert(
-        (srcToLoadResults_0.value().Actual_W == 10
-         && "actual value must equal 10")
-    );
-    assert(
-        (srcToLoadResults_0.value().Available_W == 100
-         && "available must equal 100")
-    );
-    assert((results[1].Time == 3600.0 && "time must equal 3600.0"));
-    assert((results[1].Flows.size() == 1 && "size of flows[1] must equal 1"));
+    EXPECT_TRUE(srcToLoadResults_0.has_value())
+        << "source to load must have results at time=0.0";
+    EXPECT_EQ(srcToLoadResults_0.value().Requested_W, 10)
+        << "requested must equal 10";
+    EXPECT_EQ(srcToLoadResults_0.value().Actual_W, 10)
+        << "actual value must equal 10";
+    EXPECT_EQ(srcToLoadResults_0.value().Available_W, 100)
+        << "available must equal 100";
+    EXPECT_EQ(results[1].Time, 3600.0) << "time must equal 3600.0";
+    EXPECT_EQ(results[1].Flows.size(), 1) << "size of flows[1] must equal 1";
+
     auto srcToLoadResults_3600 =
         ModelResults_GetFlowForConnection(m, srcToLoadConn, 3600.0, results);
-    assert(
-        (srcToLoadResults_3600.has_value()
-         && "source to load must have results at time=3600.0")
-    );
-    assert(
-        (srcToLoadResults_3600.value().Requested_W == 200
-         && "requested must equal 200")
-    );
-    assert(
-        (srcToLoadResults_3600.value().Actual_W == 100
-         && "actual value must equal 100")
-    );
-    assert(
-        (srcToLoadResults_3600.value().Available_W == 100
-         && "available must equal 100")
-    );
+    EXPECT_TRUE(srcToLoadResults_3600.has_value())
+        << "source to load must have results at time=3600.0";
+    EXPECT_EQ(srcToLoadResults_3600.value().Requested_W, 200)
+        << "requested must equal 200";
+    EXPECT_EQ(srcToLoadResults_3600.value().Actual_W, 100)
+        << "actual value must equal 100";
+    EXPECT_EQ(srcToLoadResults_3600.value().Available_W, 100)
+        << "available must equal 100";
 }
 
-static void
-Test5(bool print)
+TEST(Erin, Test5)
 {
     std::vector<TimeAndAmount> timesAndLoads = {};
     Model m = {};
@@ -288,7 +264,7 @@ Test5(bool print)
     auto conv2ToLoad2Conn = Model_AddConnection(m, conv2.Id, 0, load2Id, 0);
     auto conv2ToConv3Conn = Model_AddConnection(m, conv2.Id, 1, conv3.Id, 0);
     auto conv3ToLoad3Conn = Model_AddConnection(m, conv3.Id, 0, load3Id, 0);
-    auto results = Simulate(m, print);
+    auto results = Simulate(m, false);
     auto srcToConv1Results =
         ModelResults_GetFlowForConnection(m, srcToConv1Conn, 0.0, results);
     auto conv1ToLoad1Results =
@@ -301,34 +277,21 @@ Test5(bool print)
         ModelResults_GetFlowForConnection(m, conv2ToConv3Conn, 0.0, results);
     auto conv3ToLoad3Results =
         ModelResults_GetFlowForConnection(m, conv3ToLoad3Conn, 0.0, results);
-    assert(
-        (srcToConv1Results.value().Actual_W == 40
-         && "src to conv1 should flow 40")
-    );
-    assert(
-        (conv1ToLoad1Results.value().Actual_W == 10
-         && "conv1 to load1 should flow 10")
-    );
-    assert(
-        (conv1ToConv2Results.value().Actual_W == 28
-         && "conv1 to conv2 should flow 28")
-    );
-    assert(
-        (conv2ToLoad2Results.value().Actual_W == 7
-         && "conv1 to conv2 should flow 7")
-    );
-    assert(
-        (conv2ToConv3Results.value().Actual_W == 20
-         && "conv2 to conv3 should flow 21")
-    );
-    assert(
-        (conv3ToLoad3Results.value().Actual_W == 5
-         && "conv3 to load3 should flow 5")
-    );
+    EXPECT_EQ(srcToConv1Results.value().Actual_W, 40)
+        << "src to conv1 should flow 40";
+    EXPECT_EQ(conv1ToLoad1Results.value().Actual_W, 10)
+        << "conv1 to load1 should flow 10";
+    EXPECT_EQ(conv1ToConv2Results.value().Actual_W, 28)
+        << "conv1 to conv2 should flow 28";
+    EXPECT_EQ(conv2ToLoad2Results.value().Actual_W, 7)
+        << "conv1 to conv2 should flow 7";
+    EXPECT_EQ(conv2ToConv3Results.value().Actual_W, 20)
+        << "conv2 to conv3 should flow 21";
+    EXPECT_EQ(conv3ToLoad3Results.value().Actual_W, 5)
+        << "conv3 to load3 should flow 5";
 }
 
-static void
-Test6(bool doPrint)
+TEST(Erin, Test6)
 {
     Model m = {};
     auto src1Id = Model_AddConstantSource(m, 10);
@@ -340,35 +303,29 @@ Test6(bool doPrint)
     auto src2ToMuxConn = Model_AddConnection(m, src2Id, 0, muxId, 1);
     auto muxToLoad1Conn = Model_AddConnection(m, muxId, 0, load1Id, 0);
     auto muxToLoad2Conn = Model_AddConnection(m, muxId, 1, load2Id, 0);
-    auto results = Simulate(m, doPrint);
+    auto results = Simulate(m, false);
     auto src1ToMuxResults =
         ModelResults_GetFlowForConnection(m, src1ToMuxConn, 0.0, results);
-    assert(
-        (src1ToMuxResults.value().Actual_W == 10
-         && "src1 -> mux expected actual flow of 10")
-    );
+    EXPECT_EQ(src1ToMuxResults.value().Actual_W, 10)
+        << "src1 -> mux expected actual flow of 10";
+
     auto src2ToMuxResults =
         ModelResults_GetFlowForConnection(m, src2ToMuxConn, 0.0, results);
-    assert(
-        (src2ToMuxResults.value().Actual_W == 50
-         && "src2 -> mux expected actual flow of 50")
-    );
+    EXPECT_EQ(src2ToMuxResults.value().Actual_W, 50)
+        << "src2 -> mux expected actual flow of 50";
+
     auto muxToLoad1Results =
         ModelResults_GetFlowForConnection(m, muxToLoad1Conn, 0.0, results);
-    assert(
-        (muxToLoad1Results.value().Actual_W == 10
-         && "mux -> load1 expected actual flow of 10")
-    );
+    EXPECT_EQ(muxToLoad1Results.value().Actual_W, 10)
+        << "mux -> load1 expected actual flow of 10";
+
     auto muxToLoad2Results =
         ModelResults_GetFlowForConnection(m, muxToLoad2Conn, 0.0, results);
-    assert(
-        (muxToLoad2Results.value().Actual_W == 50
-         && "mux -> load2 expected actual flow of 50")
-    );
+    EXPECT_EQ(muxToLoad2Results.value().Actual_W, 50)
+        << "mux -> load2 expected actual flow of 50";
 }
 
-static void
-Test7(bool doPrint)
+TEST(Erin, Test7)
 {
     Model m = {};
     m.FinalTime = 10.0;
@@ -377,80 +334,55 @@ Test7(bool doPrint)
     auto loadId = Model_AddConstantLoad(m, 10);
     auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
     auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
-    auto results = Simulate(m, doPrint);
+    auto results = Simulate(m, false);
+
     auto srcToStoreResults =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
-    assert(
-        srcToStoreResults.value().Actual_W == 0
-        && "src to store should be providing 0"
-    );
-    assert(
-        srcToStoreResults.value().Requested_W == 10
-        && "src to store request is 10"
-    );
-    assert(
-        srcToStoreResults.value().Available_W == 0
-        && "src to store available is 0"
-    );
+    EXPECT_EQ(srcToStoreResults.value().Actual_W, 0)
+        << "src to store should be providing 0";
+    EXPECT_EQ(srcToStoreResults.value().Requested_W, 10)
+        << "src to store request is 10";
+    EXPECT_EQ(srcToStoreResults.value().Available_W, 0)
+        << "src to store available is 0";
+
     auto storeToLoadResults =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
-    assert(
-        storeToLoadResults.has_value()
-        && "should have results for store to load connection"
-    );
-    assert(
-        storeToLoadResults.value().Actual_W == 10
-        && "store to load should be providing 10"
-    );
-    assert(
-        storeToLoadResults.value().Requested_W == 10
-        && "store to load should be requesting 10"
-    );
-    assert(
-        storeToLoadResults.value().Available_W == 10
-        && "store to load available should be 10"
-    );
-    assert(results.size() == 2 && "there should be two time events in results");
-    assert(
-        results[1].Time > 10.0 - 1e-6 && results[1].Time < 10.0 + 1e-6
-        && "time should be 10"
-    );
+    EXPECT_TRUE(storeToLoadResults.has_value())
+        << "should have results for store to load connection";
+    EXPECT_EQ(storeToLoadResults.value().Actual_W, 10)
+        << "store to load should be providing 10";
+    EXPECT_EQ(storeToLoadResults.value().Requested_W, 10)
+        << "store to load should be requesting 10";
+    EXPECT_EQ(storeToLoadResults.value().Available_W, 10)
+        << "store to load available should be 10";
+    EXPECT_EQ(results.size(), 2)
+        << "there should be two time events in results";
+    EXPECT_TRUE(
+        (results[1].Time > 10.0 - 1e-6) && (results[1].Time < 10.0 + 1e-6)
+    ) << "time should be 10";
+
     auto srcToStoreResultsAt10 =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
-    assert(
-        srcToStoreResultsAt10.value().Actual_W == 0
-        && "src to store should be providing 0"
-    );
-    assert(
-        srcToStoreResultsAt10.value().Requested_W == 20
-        && "src to store request is 20"
-    );
-    assert(
-        srcToStoreResultsAt10.value().Available_W == 0
-        && "src to store available is 0"
-    );
+    EXPECT_EQ(srcToStoreResultsAt10.value().Actual_W, 0)
+        << "src to store should be providing 0";
+    EXPECT_EQ(srcToStoreResultsAt10.value().Requested_W, 20)
+        << "src to store request is 20";
+    EXPECT_EQ(srcToStoreResultsAt10.value().Available_W, 0)
+        << "src to store available is 0";
+
     auto storeToLoadResultsAt10 =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
-    assert(
-        storeToLoadResultsAt10.has_value()
-        && "should have results for store to load connection"
-    );
-    assert(
-        storeToLoadResultsAt10.value().Actual_W == 0
-        && "store to load should be providing 0"
-    );
-    assert(
-        storeToLoadResultsAt10.value().Requested_W == 10
-        && "store to load should be requesting 10"
-    );
-    assert(
-        storeToLoadResultsAt10.value().Available_W == 0
-        && "store to load available should be 0"
-    );
+    EXPECT_TRUE(storeToLoadResultsAt10.has_value())
+        << "should have results for store to load connection";
+    EXPECT_EQ(storeToLoadResultsAt10.value().Actual_W, 0)
+        << "store to load should be providing 0";
+    EXPECT_EQ(storeToLoadResultsAt10.value().Requested_W, 10)
+        << "store to load should be requesting 10";
+    EXPECT_EQ(storeToLoadResultsAt10.value().Available_W, 0)
+        << "store to load available should be 0";
 }
 
-static void
-Test8(bool doPrint)
+TEST(Erin, Test8)
 {
     Model m = {};
     m.FinalTime = 20.0;
@@ -459,80 +391,54 @@ Test8(bool doPrint)
     auto loadId = Model_AddConstantLoad(m, 10);
     auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
     auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
-    auto results = Simulate(m, doPrint);
+    auto results = Simulate(m, false);
     auto srcToStoreResults =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
-    assert(
-        srcToStoreResults.value().Actual_W == 5
-        && "src to store should be providing 5"
-    );
-    assert(
-        srcToStoreResults.value().Requested_W == 10
-        && "src to store request is 10"
-    );
-    assert(
-        srcToStoreResults.value().Available_W == 5
-        && "src to store available is 5"
-    );
+    EXPECT_EQ(srcToStoreResults.value().Actual_W, 5)
+        << "src to store should be providing 5";
+    EXPECT_EQ(srcToStoreResults.value().Requested_W, 10)
+        << "src to store request is 10";
+    EXPECT_EQ(srcToStoreResults.value().Available_W, 5)
+        << "src to store available is 5";
+
     auto storeToLoadResults =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
-    assert(
-        storeToLoadResults.has_value()
-        && "should have results for store to load connection"
-    );
-    assert(
-        storeToLoadResults.value().Actual_W == 10
-        && "store to load should be providing 10"
-    );
-    assert(
-        storeToLoadResults.value().Requested_W == 10
-        && "store to load should be requesting 10"
-    );
-    assert(
-        storeToLoadResults.value().Available_W == 15
-        && "store to load available should be 15"
-    );
-    assert(results.size() == 2 && "there should be two time events in results");
-    assert(
-        results[1].Time > 20.0 - 1e-6 && results[1].Time < 20.0 + 1e-6
-        && "time should be 20"
-    );
+    EXPECT_TRUE(storeToLoadResults.has_value())
+        << "should have results for store to load connection";
+    EXPECT_EQ(storeToLoadResults.value().Actual_W, 10)
+        << "store to load should be providing 10";
+    EXPECT_EQ(storeToLoadResults.value().Requested_W, 10)
+        << "store to load should be requesting 10";
+    EXPECT_EQ(storeToLoadResults.value().Available_W, 15)
+        << "store to load available should be 15";
+    EXPECT_EQ(results.size(), 2)
+        << "there should be two time events in results";
+    EXPECT_TRUE(
+        (results[1].Time > 20.0 - 1e-6) && (results[1].Time < 20.0 + 1e-6)
+    ) << "time should be 20";
+
     auto srcToStoreResultsAt20 =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 20.0, results);
-    assert(
-        srcToStoreResultsAt20.value().Actual_W == 5
-        && "src to store should be providing 5"
-    );
-    assert(
-        srcToStoreResultsAt20.value().Requested_W == 20
-        && "src to store request is 20"
-    );
-    assert(
-        srcToStoreResultsAt20.value().Available_W == 5
-        && "src to store available is 5"
-    );
+    EXPECT_EQ(srcToStoreResultsAt20.value().Actual_W, 5)
+        << "src to store should be providing 5";
+    EXPECT_EQ(srcToStoreResultsAt20.value().Requested_W, 20)
+        << "src to store request is 20";
+    EXPECT_EQ(srcToStoreResultsAt20.value().Available_W, 5)
+        << "src to store available is 5";
+
     auto storeToLoadResultsAt20 =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 20.0, results);
-    assert(
-        storeToLoadResultsAt20.has_value()
-        && "should have results for store to load connection"
-    );
-    assert(
-        storeToLoadResultsAt20.value().Actual_W == 5
-        && "store to load should be providing 5"
-    );
-    assert(
-        storeToLoadResultsAt20.value().Requested_W == 10
-        && "store to load should be requesting 10"
-    );
-    assert(
-        storeToLoadResultsAt20.value().Available_W == 5
-        && "store to load available should be 5"
-    );
+    EXPECT_TRUE(storeToLoadResultsAt20.has_value())
+        << "should have results for store to load connection";
+    EXPECT_EQ(storeToLoadResultsAt20.value().Actual_W, 5)
+        << "store to load should be providing 5";
+    EXPECT_EQ(storeToLoadResultsAt20.value().Requested_W, 10)
+        << "store to load should be requesting 10";
+    EXPECT_EQ(storeToLoadResultsAt20.value().Available_W, 5)
+        << "store to load available should be 5";
 }
 
-static void
-Test9(bool doPrint)
+TEST(Erin, Test9)
 {
     std::vector<TimeAndAmount> timesAndLoads = {};
     timesAndLoads.push_back({0.0, 20});
@@ -545,77 +451,81 @@ Test9(bool doPrint)
     auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
     auto srcToStoreConn = Model_AddConnection(m, srcId, 0, storeId, 0);
     auto storeToLoadConn = Model_AddConnection(m, storeId, 0, loadId, 0);
-    auto results = Simulate(m, doPrint);
-    assert(results.size() == 5 && "expected 5 time steps");
-    assert(Round(results[0].Time) == 0.0 && "expect first time is 0.0");
-    assert(Round(results[1].Time) == 2.0 && "expect second time is 2.0");
-    assert(Round(results[2].Time) == 5.0 && "expect third time is 5.0");
-    assert(Round(results[3].Time) == 10.0 && "expect fourth time is 10.0");
-    assert(Round(results[4].Time) == 25.0 && "expect fifth time is 25.0");
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 5) << "expected 5 time steps";
+    EXPECT_EQ(Round(results[0].Time), 0.0) << "expect first time is 0.0";
+    EXPECT_EQ(Round(results[1].Time), 2.0) << "expect second time is 2.0";
+    EXPECT_EQ(Round(results[2].Time), 5.0) << "expect third time is 5.0";
+    EXPECT_EQ(Round(results[3].Time), 10.0) << "expect fourth time is 10.0";
+    EXPECT_EQ(Round(results[4].Time), 25.0) << "expect fifth time is 25.0";
+
     auto srcToStoreResultsAt0 =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 0.0, results);
     auto storeToLoadResultsAt0 =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 0.0, results);
     auto storeAmount0 = ModelResults_GetStoreState(m, storeId, 0.0, results);
-    assert(srcToStoreResultsAt0.value().Actual_W == 10);
-    assert(srcToStoreResultsAt0.value().Requested_W == 20);
-    assert(srcToStoreResultsAt0.value().Available_W == 10);
-    assert(storeToLoadResultsAt0.value().Actual_W == 20);
-    assert(storeToLoadResultsAt0.value().Requested_W == 20);
-    assert(storeToLoadResultsAt0.value().Available_W == 20);
-    assert(storeAmount0.value() == 100);
+    EXPECT_EQ(srcToStoreResultsAt0.value().Actual_W, 10);
+    EXPECT_EQ(srcToStoreResultsAt0.value().Requested_W, 20);
+    EXPECT_EQ(srcToStoreResultsAt0.value().Available_W, 10);
+    EXPECT_EQ(storeToLoadResultsAt0.value().Actual_W, 20);
+    EXPECT_EQ(storeToLoadResultsAt0.value().Requested_W, 20);
+    EXPECT_EQ(storeToLoadResultsAt0.value().Available_W, 20);
+    EXPECT_EQ(storeAmount0.value(), 100);
+
     auto srcToStoreResultsAt2 =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 2.0, results);
     auto storeToLoadResultsAt2 =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 2.0, results);
     auto storeAmount2 = ModelResults_GetStoreState(m, storeId, 2.0, results);
-    assert(srcToStoreResultsAt2.value().Actual_W == 10);
-    assert(srcToStoreResultsAt2.value().Requested_W == 30);
-    assert(srcToStoreResultsAt2.value().Available_W == 10);
-    assert(storeToLoadResultsAt2.value().Actual_W == 20);
-    assert(storeToLoadResultsAt2.value().Requested_W == 20);
-    assert(storeToLoadResultsAt2.value().Available_W == 20);
-    assert(storeAmount2.value() == 80);
+    EXPECT_EQ(srcToStoreResultsAt2.value().Actual_W, 10);
+    EXPECT_EQ(srcToStoreResultsAt2.value().Requested_W, 30);
+    EXPECT_EQ(srcToStoreResultsAt2.value().Available_W, 10);
+    EXPECT_EQ(storeToLoadResultsAt2.value().Actual_W, 20);
+    EXPECT_EQ(storeToLoadResultsAt2.value().Requested_W, 20);
+    EXPECT_EQ(storeToLoadResultsAt2.value().Available_W, 20);
+    EXPECT_EQ(storeAmount2.value(), 80);
+
     auto srcToStoreResultsAt5 =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 5.0, results);
     auto storeToLoadResultsAt5 =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 5.0, results);
     auto storeAmount5 = ModelResults_GetStoreState(m, storeId, 5.0, results);
-    assert(srcToStoreResultsAt5.value().Actual_W == 10);
-    assert(srcToStoreResultsAt5.value().Requested_W == 15);
-    assert(srcToStoreResultsAt5.value().Available_W == 10);
-    assert(storeToLoadResultsAt5.value().Actual_W == 5);
-    assert(storeToLoadResultsAt5.value().Requested_W == 5);
-    assert(storeToLoadResultsAt5.value().Available_W == 20);
-    assert(storeAmount5.value() == 50);
+    EXPECT_EQ(srcToStoreResultsAt5.value().Actual_W, 10);
+    EXPECT_EQ(srcToStoreResultsAt5.value().Requested_W, 15);
+    EXPECT_EQ(srcToStoreResultsAt5.value().Available_W, 10);
+    EXPECT_EQ(storeToLoadResultsAt5.value().Actual_W, 5);
+    EXPECT_EQ(storeToLoadResultsAt5.value().Requested_W, 5);
+    EXPECT_EQ(storeToLoadResultsAt5.value().Available_W, 20);
+    EXPECT_EQ(storeAmount5.value(), 50);
+
     auto srcToStoreResultsAt10 =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 10.0, results);
     auto storeToLoadResultsAt10 =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 10.0, results);
     auto storeAmount10 = ModelResults_GetStoreState(m, storeId, 10.0, results);
-    assert(srcToStoreResultsAt10.value().Actual_W == 10);
-    assert(srcToStoreResultsAt10.value().Requested_W == 25);
-    assert(srcToStoreResultsAt10.value().Available_W == 10);
-    assert(storeToLoadResultsAt10.value().Actual_W == 15);
-    assert(storeToLoadResultsAt10.value().Requested_W == 15);
-    assert(storeToLoadResultsAt10.value().Available_W == 20);
-    assert(storeAmount10.value() == 75);
+    EXPECT_EQ(srcToStoreResultsAt10.value().Actual_W, 10);
+    EXPECT_EQ(srcToStoreResultsAt10.value().Requested_W, 25);
+    EXPECT_EQ(srcToStoreResultsAt10.value().Available_W, 10);
+    EXPECT_EQ(storeToLoadResultsAt10.value().Actual_W, 15);
+    EXPECT_EQ(storeToLoadResultsAt10.value().Requested_W, 15);
+    EXPECT_EQ(storeToLoadResultsAt10.value().Available_W, 20);
+    EXPECT_EQ(storeAmount10.value(), 75);
+
     auto srcToStoreResultsAt25 =
         ModelResults_GetFlowForConnection(m, srcToStoreConn, 25.0, results);
     auto storeToLoadResultsAt25 =
         ModelResults_GetFlowForConnection(m, storeToLoadConn, 25.0, results);
     auto storeAmount25 = ModelResults_GetStoreState(m, storeId, 25.0, results);
-    assert(srcToStoreResultsAt25.value().Actual_W == 10);
-    assert(srcToStoreResultsAt25.value().Requested_W == 25);
-    assert(srcToStoreResultsAt25.value().Available_W == 10);
-    assert(storeToLoadResultsAt25.value().Actual_W == 10);
-    assert(storeToLoadResultsAt25.value().Requested_W == 15);
-    assert(storeToLoadResultsAt25.value().Available_W == 10);
-    assert(storeAmount25.value() == 0);
+    EXPECT_EQ(srcToStoreResultsAt25.value().Actual_W, 10);
+    EXPECT_EQ(srcToStoreResultsAt25.value().Requested_W, 25);
+    EXPECT_EQ(srcToStoreResultsAt25.value().Available_W, 10);
+    EXPECT_EQ(storeToLoadResultsAt25.value().Actual_W, 10);
+    EXPECT_EQ(storeToLoadResultsAt25.value().Requested_W, 15);
+    EXPECT_EQ(storeToLoadResultsAt25.value().Available_W, 10);
+    EXPECT_EQ(storeAmount25.value(), 0);
 }
 
-static void
-Test10(bool doPrint)
+TEST(Erin, Test10)
 {
     std::vector<TimeAndAmount> timesAndLoads = {};
     timesAndLoads.push_back({0.0, 20});
@@ -638,245 +548,292 @@ Test10(bool doPrint)
     auto mux0Port1ToConvConn = Model_AddConnection(m, muxId, 1, conv.Id, 0);
     auto convToLoad2Conn = Model_AddConnection(m, conv.Id, 0, load2Id, 0);
     auto convToLoad3Conn = Model_AddConnection(m, conv.Id, 1, load3Id, 0);
-    auto results = Simulate(m, doPrint);
-    assert(results.size() == 5 && "expect 5 events");
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 5) << "expect 5 events";
+
     // time = 0.0
     double t = 0.0;
     size_t resultsIdx = 0;
-    assert(results[resultsIdx].Time == t);
+    EXPECT_EQ(results[resultsIdx].Time, t);
     auto convToWasteResults =
         ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
-    assert(convToWasteResults.value().Actual_W == 3);
-    assert(convToWasteResults.value().Requested_W == 3);
-    assert(convToWasteResults.value().Available_W == 3);
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 3);
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 3);
+    EXPECT_EQ(convToWasteResults.value().Available_W, 3);
+
     auto src1ToMuxResults =
         ModelResults_GetFlowForConnection(m, src1ToMux0Port0Conn, 0.0, results);
-    assert(src1ToMuxResults.value().Actual_W == 20);
-    assert(src1ToMuxResults.value().Available_W == 20);
-    assert(src1ToMuxResults.value().Requested_W == 60);
+    EXPECT_EQ(src1ToMuxResults.value().Actual_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Available_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Requested_W, 60);
+
     auto src2ToStoreResults =
         ModelResults_GetFlowForConnection(m, src2ToStoreConn, 0.0, results);
-    assert(src2ToStoreResults.value().Actual_W == 5);
-    assert(src2ToStoreResults.value().Available_W == 5);
-    assert(src2ToStoreResults.value().Requested_W == 40);
+    EXPECT_EQ(src2ToStoreResults.value().Actual_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Available_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Requested_W, 40);
+
     auto storeToMuxResults = ModelResults_GetFlowForConnection(
         m, storeToMux0Port1Conn, 0.0, results
     );
-    assert(storeToMuxResults.value().Actual_W == 15);
-    assert(storeToMuxResults.value().Available_W == 15);
-    assert(storeToMuxResults.value().Requested_W == 40);
+    EXPECT_EQ(storeToMuxResults.value().Actual_W, 15);
+    EXPECT_EQ(storeToMuxResults.value().Available_W, 15);
+    EXPECT_EQ(storeToMuxResults.value().Requested_W, 40);
+
     auto muxToLoad1Results = ModelResults_GetFlowForConnection(
         m, mux0Port0ToLoad1Conn, 0.0, results
     );
-    assert(muxToLoad1Results.value().Actual_W == 20);
-    assert(muxToLoad1Results.value().Available_W == 20);
-    assert(muxToLoad1Results.value().Requested_W == 20);
+    EXPECT_EQ(muxToLoad1Results.value().Actual_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Available_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Requested_W, 20);
+
     auto muxToConvResults =
         ModelResults_GetFlowForConnection(m, mux0Port1ToConvConn, 0.0, results);
-    assert(muxToConvResults.value().Actual_W == 15);
-    assert(muxToConvResults.value().Available_W == 15);
-    assert(muxToConvResults.value().Requested_W == 40);
+    EXPECT_EQ(muxToConvResults.value().Actual_W, 15);
+    EXPECT_EQ(muxToConvResults.value().Available_W, 15);
+    EXPECT_EQ(muxToConvResults.value().Requested_W, 40);
+
     auto convToLoad2Results =
         ModelResults_GetFlowForConnection(m, convToLoad2Conn, 0.0, results);
-    assert(convToLoad2Results.value().Actual_W == 7);
-    assert(convToLoad2Results.value().Available_W == 7);
-    assert(convToLoad2Results.value().Requested_W == 20);
+    EXPECT_EQ(convToLoad2Results.value().Actual_W, 7);
+    EXPECT_EQ(convToLoad2Results.value().Available_W, 7);
+    EXPECT_EQ(convToLoad2Results.value().Requested_W, 20);
+
     auto convToLoad3Results =
         ModelResults_GetFlowForConnection(m, convToLoad3Conn, 0.0, results);
-    assert(convToLoad3Results.value().Actual_W == 5);
-    assert(convToLoad3Results.value().Available_W == 8);
-    assert(convToLoad3Results.value().Requested_W == 5);
+    EXPECT_EQ(convToLoad3Results.value().Actual_W, 5);
+    EXPECT_EQ(convToLoad3Results.value().Available_W, 8);
+    EXPECT_EQ(convToLoad3Results.value().Requested_W, 5);
+
     auto storeAmount = ModelResults_GetStoreState(m, storeId, 0.0, results);
-    assert(storeAmount.value() == 100);
+    EXPECT_EQ(storeAmount.value(), 100);
+
     // time = 2.0
     t = 2.0;
     resultsIdx = 1;
-    assert(results[resultsIdx].Time == t);
-    ;
+    EXPECT_EQ(results[resultsIdx].Time, t);
+
     convToWasteResults =
         ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
-    assert(convToWasteResults.value().Actual_W == 3);
-    assert(convToWasteResults.value().Requested_W == 3);
-    assert(convToWasteResults.value().Available_W == 3);
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 3);
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 3);
+    EXPECT_EQ(convToWasteResults.value().Available_W, 3);
+
     src1ToMuxResults =
         ModelResults_GetFlowForConnection(m, src1ToMux0Port0Conn, t, results);
-    assert(src1ToMuxResults.value().Actual_W == 20);
-    assert(src1ToMuxResults.value().Available_W == 20);
-    assert(src1ToMuxResults.value().Requested_W == 60);
+    EXPECT_EQ(src1ToMuxResults.value().Actual_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Available_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Requested_W, 60);
+
     src2ToStoreResults =
         ModelResults_GetFlowForConnection(m, src2ToStoreConn, t, results);
-    assert(src2ToStoreResults.value().Actual_W == 5);
-    assert(src2ToStoreResults.value().Available_W == 5);
-    assert(src2ToStoreResults.value().Requested_W == 50);
+    EXPECT_EQ(src2ToStoreResults.value().Actual_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Available_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Requested_W, 50);
+
     storeToMuxResults =
         ModelResults_GetFlowForConnection(m, storeToMux0Port1Conn, t, results);
-    assert(storeToMuxResults.value().Actual_W == 15);
-    assert(storeToMuxResults.value().Available_W == 15);
-    assert(storeToMuxResults.value().Requested_W == 40);
+    EXPECT_EQ(storeToMuxResults.value().Actual_W, 15);
+    EXPECT_EQ(storeToMuxResults.value().Available_W, 15);
+    EXPECT_EQ(storeToMuxResults.value().Requested_W, 40);
+
     muxToLoad1Results =
         ModelResults_GetFlowForConnection(m, mux0Port0ToLoad1Conn, t, results);
-    assert(muxToLoad1Results.value().Actual_W == 20);
-    assert(muxToLoad1Results.value().Available_W == 20);
-    assert(muxToLoad1Results.value().Requested_W == 20);
+    EXPECT_EQ(muxToLoad1Results.value().Actual_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Available_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Requested_W, 20);
+
     muxToConvResults =
         ModelResults_GetFlowForConnection(m, mux0Port1ToConvConn, t, results);
-    assert(muxToConvResults.value().Actual_W == 15);
-    assert(muxToConvResults.value().Available_W == 15);
-    assert(muxToConvResults.value().Requested_W == 40);
+    EXPECT_EQ(muxToConvResults.value().Actual_W, 15);
+    EXPECT_EQ(muxToConvResults.value().Available_W, 15);
+    EXPECT_EQ(muxToConvResults.value().Requested_W, 40);
+
     convToLoad2Results =
         ModelResults_GetFlowForConnection(m, convToLoad2Conn, t, results);
-    assert(convToLoad2Results.value().Actual_W == 7);
-    assert(convToLoad2Results.value().Available_W == 7);
-    assert(convToLoad2Results.value().Requested_W == 20);
+    EXPECT_EQ(convToLoad2Results.value().Actual_W, 7);
+    EXPECT_EQ(convToLoad2Results.value().Available_W, 7);
+    EXPECT_EQ(convToLoad2Results.value().Requested_W, 20);
+
     convToLoad3Results =
         ModelResults_GetFlowForConnection(m, convToLoad3Conn, t, results);
-    assert(convToLoad3Results.value().Actual_W == 5);
-    assert(convToLoad3Results.value().Available_W == 8);
-    assert(convToLoad3Results.value().Requested_W == 5);
+    EXPECT_EQ(convToLoad3Results.value().Actual_W, 5);
+    EXPECT_EQ(convToLoad3Results.value().Available_W, 8);
+    EXPECT_EQ(convToLoad3Results.value().Requested_W, 5);
+
     storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
-    assert(storeAmount.value() == 80);
+    EXPECT_EQ(storeAmount.value(), 80);
+
     // time = 5.0
     t = 5.0;
     resultsIdx = 2;
-    assert(results[resultsIdx].Time == t);
+    EXPECT_EQ(results[resultsIdx].Time, t);
+
     convToWasteResults =
         ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
-    assert(convToWasteResults.value().Actual_W == 0);
-    assert(convToWasteResults.value().Requested_W == 0);
-    assert(convToWasteResults.value().Available_W == 0);
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 0);
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 0);
+    EXPECT_EQ(convToWasteResults.value().Available_W, 0);
+
     src1ToMuxResults =
         ModelResults_GetFlowForConnection(m, src1ToMux0Port0Conn, t, results);
-    assert(src1ToMuxResults.value().Actual_W == 20);
-    assert(src1ToMuxResults.value().Available_W == 20);
-    assert(src1ToMuxResults.value().Requested_W == 30);
+    EXPECT_EQ(src1ToMuxResults.value().Actual_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Available_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Requested_W, 30);
+
     src2ToStoreResults =
         ModelResults_GetFlowForConnection(m, src2ToStoreConn, t, results);
-    assert(src2ToStoreResults.value().Actual_W == 5);
-    assert(src2ToStoreResults.value().Available_W == 5);
-    assert(src2ToStoreResults.value().Requested_W == 20);
+    EXPECT_EQ(src2ToStoreResults.value().Actual_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Available_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Requested_W, 20);
+
     storeToMuxResults =
         ModelResults_GetFlowForConnection(m, storeToMux0Port1Conn, t, results);
-    assert(storeToMuxResults.value().Actual_W == 10);
-    assert(storeToMuxResults.value().Available_W == 15);
-    assert(storeToMuxResults.value().Requested_W == 10);
+    EXPECT_EQ(storeToMuxResults.value().Actual_W, 10);
+    EXPECT_EQ(storeToMuxResults.value().Available_W, 15);
+    EXPECT_EQ(storeToMuxResults.value().Requested_W, 10);
+
     muxToLoad1Results =
         ModelResults_GetFlowForConnection(m, mux0Port0ToLoad1Conn, t, results);
-    assert(muxToLoad1Results.value().Actual_W == 20);
-    assert(muxToLoad1Results.value().Available_W == 25);
-    assert(muxToLoad1Results.value().Requested_W == 20);
+    EXPECT_EQ(muxToLoad1Results.value().Actual_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Available_W, 25);
+    EXPECT_EQ(muxToLoad1Results.value().Requested_W, 20);
+
     muxToConvResults =
         ModelResults_GetFlowForConnection(m, mux0Port1ToConvConn, t, results);
-    assert(muxToConvResults.value().Actual_W == 10);
-    assert(muxToConvResults.value().Available_W == 10);
-    assert(muxToConvResults.value().Requested_W == 10);
+    EXPECT_EQ(muxToConvResults.value().Actual_W, 10);
+    EXPECT_EQ(muxToConvResults.value().Available_W, 10);
+    EXPECT_EQ(muxToConvResults.value().Requested_W, 10);
+
     convToLoad2Results =
         ModelResults_GetFlowForConnection(m, convToLoad2Conn, t, results);
-    assert(convToLoad2Results.value().Actual_W == 5);
-    assert(convToLoad2Results.value().Available_W == 5);
-    assert(convToLoad2Results.value().Requested_W == 5);
+    EXPECT_EQ(convToLoad2Results.value().Actual_W, 5);
+    EXPECT_EQ(convToLoad2Results.value().Available_W, 5);
+    EXPECT_EQ(convToLoad2Results.value().Requested_W, 5);
+
     convToLoad3Results =
         ModelResults_GetFlowForConnection(m, convToLoad3Conn, t, results);
-    assert(convToLoad3Results.value().Actual_W == 5);
-    assert(convToLoad3Results.value().Available_W == 5);
-    assert(convToLoad3Results.value().Requested_W == 5);
+    EXPECT_EQ(convToLoad3Results.value().Actual_W, 5);
+    EXPECT_EQ(convToLoad3Results.value().Available_W, 5);
+    EXPECT_EQ(convToLoad3Results.value().Requested_W, 5);
+
     storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
-    assert(storeAmount.value() == 50);
+    EXPECT_EQ(storeAmount.value(), 50);
+
     // time = 10.0
     t = 10.0;
     resultsIdx = 3;
-    assert(results[resultsIdx].Time == t);
+    EXPECT_EQ(results[resultsIdx].Time, t);
+
     convToWasteResults =
         ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
-    assert(convToWasteResults.value().Actual_W == 3);
-    assert(convToWasteResults.value().Requested_W == 3);
-    assert(convToWasteResults.value().Available_W == 3);
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 3);
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 3);
+    EXPECT_EQ(convToWasteResults.value().Available_W, 3);
+
     src1ToMuxResults =
         ModelResults_GetFlowForConnection(m, src1ToMux0Port0Conn, t, results);
-    assert(src1ToMuxResults.value().Actual_W == 20);
-    assert(src1ToMuxResults.value().Available_W == 20);
-    assert(src1ToMuxResults.value().Requested_W == 50);
+    EXPECT_EQ(src1ToMuxResults.value().Actual_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Available_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Requested_W, 50);
+
     src2ToStoreResults =
         ModelResults_GetFlowForConnection(m, src2ToStoreConn, t, results);
-    assert(src2ToStoreResults.value().Actual_W == 5);
-    assert(src2ToStoreResults.value().Available_W == 5);
-    assert(src2ToStoreResults.value().Requested_W == 40);
+    EXPECT_EQ(src2ToStoreResults.value().Actual_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Available_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Requested_W, 40);
+
     storeToMuxResults =
         ModelResults_GetFlowForConnection(m, storeToMux0Port1Conn, t, results);
-    assert(storeToMuxResults.value().Actual_W == 15);
-    assert(storeToMuxResults.value().Available_W == 15);
-    assert(storeToMuxResults.value().Requested_W == 30);
+    EXPECT_EQ(storeToMuxResults.value().Actual_W, 15);
+    EXPECT_EQ(storeToMuxResults.value().Available_W, 15);
+    EXPECT_EQ(storeToMuxResults.value().Requested_W, 30);
+
     muxToLoad1Results =
         ModelResults_GetFlowForConnection(m, mux0Port0ToLoad1Conn, t, results);
-    assert(muxToLoad1Results.value().Actual_W == 20);
-    assert(muxToLoad1Results.value().Available_W == 20);
-    assert(muxToLoad1Results.value().Requested_W == 20);
+    EXPECT_EQ(muxToLoad1Results.value().Actual_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Available_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Requested_W, 20);
+
     muxToConvResults =
         ModelResults_GetFlowForConnection(m, mux0Port1ToConvConn, t, results);
-    assert(muxToConvResults.value().Actual_W == 15);
-    assert(muxToConvResults.value().Available_W == 15);
-    assert(muxToConvResults.value().Requested_W == 30);
+    EXPECT_EQ(muxToConvResults.value().Actual_W, 15);
+    EXPECT_EQ(muxToConvResults.value().Available_W, 15);
+    EXPECT_EQ(muxToConvResults.value().Requested_W, 30);
+
     convToLoad2Results =
         ModelResults_GetFlowForConnection(m, convToLoad2Conn, t, results);
-    assert(convToLoad2Results.value().Actual_W == 7);
-    assert(convToLoad2Results.value().Available_W == 7);
-    assert(convToLoad2Results.value().Requested_W == 15);
+    EXPECT_EQ(convToLoad2Results.value().Actual_W, 7);
+    EXPECT_EQ(convToLoad2Results.value().Available_W, 7);
+    EXPECT_EQ(convToLoad2Results.value().Requested_W, 15);
+
     convToLoad3Results =
         ModelResults_GetFlowForConnection(m, convToLoad3Conn, t, results);
-    assert(convToLoad3Results.value().Actual_W == 5);
-    assert(convToLoad3Results.value().Available_W == 8);
-    assert(convToLoad3Results.value().Requested_W == 5);
+    EXPECT_EQ(convToLoad3Results.value().Actual_W, 5);
+    EXPECT_EQ(convToLoad3Results.value().Available_W, 8);
+    EXPECT_EQ(convToLoad3Results.value().Requested_W, 5);
+
     storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
-    assert(storeAmount.value() == 25);
+    EXPECT_EQ(storeAmount.value(), 25);
+
     // time = 12.5
     t = 12.5;
     resultsIdx = 4;
-    assert(results[resultsIdx].Time == t);
+    EXPECT_EQ(results[resultsIdx].Time, t);
+
     convToWasteResults =
         ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
-    assert(convToWasteResults.value().Actual_W == 0);
-    assert(convToWasteResults.value().Requested_W == 0);
-    assert(convToWasteResults.value().Available_W == 0);
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 0);
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 0);
+    EXPECT_EQ(convToWasteResults.value().Available_W, 0);
+
     src1ToMuxResults =
         ModelResults_GetFlowForConnection(m, src1ToMux0Port0Conn, t, results);
-    assert(src1ToMuxResults.value().Actual_W == 20);
-    assert(src1ToMuxResults.value().Available_W == 20);
-    assert(src1ToMuxResults.value().Requested_W == 50);
+    EXPECT_EQ(src1ToMuxResults.value().Actual_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Available_W, 20);
+    EXPECT_EQ(src1ToMuxResults.value().Requested_W, 50);
+
     src2ToStoreResults =
         ModelResults_GetFlowForConnection(m, src2ToStoreConn, t, results);
-    assert(src2ToStoreResults.value().Actual_W == 5);
-    assert(src2ToStoreResults.value().Available_W == 5);
-    assert(src2ToStoreResults.value().Requested_W == 40);
+    EXPECT_EQ(src2ToStoreResults.value().Actual_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Available_W, 5);
+    EXPECT_EQ(src2ToStoreResults.value().Requested_W, 40);
+
     storeToMuxResults =
         ModelResults_GetFlowForConnection(m, storeToMux0Port1Conn, t, results);
-    assert(storeToMuxResults.value().Actual_W == 5);
-    assert(storeToMuxResults.value().Available_W == 5);
-    assert(storeToMuxResults.value().Requested_W == 30);
+    EXPECT_EQ(storeToMuxResults.value().Actual_W, 5);
+    EXPECT_EQ(storeToMuxResults.value().Available_W, 5);
+    EXPECT_EQ(storeToMuxResults.value().Requested_W, 30);
+
     muxToLoad1Results =
         ModelResults_GetFlowForConnection(m, mux0Port0ToLoad1Conn, t, results);
-    assert(muxToLoad1Results.value().Actual_W == 20);
-    assert(muxToLoad1Results.value().Available_W == 20);
-    assert(muxToLoad1Results.value().Requested_W == 20);
+    EXPECT_EQ(muxToLoad1Results.value().Actual_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Available_W, 20);
+    EXPECT_EQ(muxToLoad1Results.value().Requested_W, 20);
+
     muxToConvResults =
         ModelResults_GetFlowForConnection(m, mux0Port1ToConvConn, t, results);
-    assert(muxToConvResults.value().Actual_W == 5);
-    assert(muxToConvResults.value().Available_W == 5);
-    assert(muxToConvResults.value().Requested_W == 30);
+    EXPECT_EQ(muxToConvResults.value().Actual_W, 5);
+    EXPECT_EQ(muxToConvResults.value().Available_W, 5);
+    EXPECT_EQ(muxToConvResults.value().Requested_W, 30);
+
     convToLoad2Results =
         ModelResults_GetFlowForConnection(m, convToLoad2Conn, t, results);
-    assert(convToLoad2Results.value().Actual_W == 2);
-    assert(convToLoad2Results.value().Available_W == 2);
-    assert(convToLoad2Results.value().Requested_W == 15);
+    EXPECT_EQ(convToLoad2Results.value().Actual_W, 2);
+    EXPECT_EQ(convToLoad2Results.value().Available_W, 2);
+    EXPECT_EQ(convToLoad2Results.value().Requested_W, 15);
+
     convToLoad3Results =
         ModelResults_GetFlowForConnection(m, convToLoad3Conn, t, results);
-    assert(convToLoad3Results.value().Actual_W == 3);
-    assert(convToLoad3Results.value().Available_W == 3);
-    assert(convToLoad3Results.value().Requested_W == 5);
+    EXPECT_EQ(convToLoad3Results.value().Actual_W, 3);
+    EXPECT_EQ(convToLoad3Results.value().Available_W, 3);
+    EXPECT_EQ(convToLoad3Results.value().Requested_W, 5);
+
     storeAmount = ModelResults_GetStoreState(m, storeId, t, results);
-    assert(storeAmount.value() == 0);
+    EXPECT_EQ(storeAmount.value(), 0);
 }
 
-void
-Test11(bool doPrint)
+TEST(Erin, Test11)
 {
     // create a model of src->conv->load and place a reliability dist on conv
     // ensure the component goes down and comes back up (i.e., is repaired)
@@ -890,284 +847,191 @@ Test11(bool doPrint)
     auto convToLoadConn = Model_AddConnection(m, convId.Id, 0, loadId, 0);
     auto fixedDistId = Model_AddFixedReliabilityDistribution(m, 10.0);
     Model_AddFailureModeToComponent(m, convId.Id, fixedDistId, fixedDistId);
-    auto results = Simulate(m, doPrint);
-    assert(
-        results.size() == 6
-        && "Expect 6 times: 0.0, 10.0, 20.0, 30.0, 40.0, 50.0"
-    );
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 6)
+        << "Expect 6 times: 0.0, 10.0, 20.0, 30.0, 40.0, 50.0";
+
     double t = 0.0;
     auto srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, t, results);
-    assert(
-        srcToConvResults.value().Actual_W == 20
-        && "src -> conv actual should be 20"
-    );
-    assert(
-        srcToConvResults.value().Requested_W == 20
-        && "src -> conv requested should be 20"
-    );
-    assert(
-        srcToConvResults.value().Available_W == 100
-        && "src -> conv available should be 100"
-    );
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 20)
+        << "src -> conv actual should be 20";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 20)
+        << "src -> conv requested should be 20";
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
+        << "src -> conv available should be 100";
+
     auto convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
-    assert(
-        convToLoadResults.value().Actual_W == 10
-        && "conv -> load actual should be 10"
-    );
-    assert(
-        convToLoadResults.value().Requested_W == 10
-        && "conv -> load requested should be 10"
-    );
-    assert(
-        convToLoadResults.value().Available_W == 50
-        && "conv -> load available should be 50"
-    );
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 10)
+        << "conv -> load actual should be 10";
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(convToLoadResults.value().Available_W, 50)
+        << "conv -> load available should be 50";
+
     auto convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, t, results
     );
-    assert(
-        convToWasteResults.value().Actual_W == 10
-        && "conv -> waste actual should be 10"
-    );
-    assert(
-        convToWasteResults.value().Requested_W == 10
-        && "conv -> waste requested should be 10"
-    );
-    assert(
-        convToWasteResults.value().Available_W == 10
-        && "conv -> waste available should be 10"
-    );
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 10)
+        << "conv -> waste actual should be 10";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 10)
+        << "conv -> waste available should be 10";
+
     // time = 10.0, failed
     t = 10.0;
     srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, t, results);
-    assert(
-        srcToConvResults.value().Actual_W == 0
-        && "src -> conv actual should be 0"
-    );
-    assert(
-        srcToConvResults.value().Requested_W == 0
-        && "src -> conv requested should be 0"
-    );
-    assert(
-        srcToConvResults.value().Available_W == 100
-        && "src -> conv available should be 100"
-    );
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 0)
+        << "src -> conv actual should be 0";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 0)
+        << "src -> conv requested should be 0";
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
+        << "src -> conv available should be 100";
+
     convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
-    assert(
-        convToLoadResults.value().Actual_W == 0
-        && "conv -> load actual should be 0"
-    );
-    assert(
-        convToLoadResults.value().Requested_W == 10
-        && "conv -> load requested should be 10"
-    );
-    assert(
-        convToLoadResults.value().Available_W == 0
-        && "conv -> load available should be 0"
-    );
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 0)
+        << "conv -> load actual should be 0";
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(convToLoadResults.value().Available_W, 0)
+        << "conv -> load available should be 0";
+
     convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, t, results
     );
-    assert(
-        convToWasteResults.value().Actual_W == 0
-        && "conv -> waste actual should be 0"
-    );
-    assert(
-        convToWasteResults.value().Requested_W == 0
-        && "conv -> waste requested should be 0"
-    );
-    assert(
-        convToWasteResults.value().Available_W == 0
-        && "conv -> waste available should be 0"
-    );
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 0)
+        << "conv -> waste actual should be 0";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 0)
+        << "conv -> waste available should be 0";
+
     // time = 20.0, fixed/restored
     t = 20.0;
     srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, t, results);
-    assert(
-        srcToConvResults.value().Actual_W == 20
-        && "src -> conv actual should be 20"
-    );
-    assert(
-        srcToConvResults.value().Requested_W == 20
-        && "src -> conv requested should be 20"
-    );
-    assert(
-        srcToConvResults.value().Available_W == 100
-        && "src -> conv available should be 100"
-    );
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 20)
+        << "src -> conv actual should be 20";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 20)
+        << "src -> conv requested should be 20";
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
+        << "src -> conv available should be 100";
+
     convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
-    assert(
-        convToLoadResults.value().Actual_W == 10
-        && "conv -> load actual should be 10"
-    );
-    assert(
-        convToLoadResults.value().Requested_W == 10
-        && "conv -> load requested should be 10"
-    );
-    assert(
-        convToLoadResults.value().Available_W == 50
-        && "conv -> load available should be 0"
-    );
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 10)
+        << "conv -> load actual should be 10";
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(convToLoadResults.value().Available_W, 50)
+        << "conv -> load available should be 0";
+
     convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, t, results
     );
-    assert(
-        convToWasteResults.value().Actual_W == 10
-        && "conv -> waste actual should be 10"
-    );
-    assert(
-        convToWasteResults.value().Requested_W == 10
-        && "conv -> waste requested should be 10"
-    );
-    assert(
-        convToWasteResults.value().Available_W == 10
-        && "conv -> waste available should be 10"
-    );
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 10)
+        << "conv -> waste actual should be 10";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 10)
+        << "conv -> waste available should be 10";
+
     // time = 30.0, failed
     t = 30.0;
     srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, t, results);
-    assert(
-        srcToConvResults.value().Actual_W == 0
-        && "src -> conv actual should be 0"
-    );
-    assert(
-        srcToConvResults.value().Requested_W == 0
-        && "src -> conv requested should be 0"
-    );
-    assert(
-        srcToConvResults.value().Available_W == 100
-        && "src -> conv available should be 100"
-    );
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 0)
+        << "src -> conv actual should be 0";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 0)
+        << "src -> conv requested should be 0";
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
+        << "src -> conv available should be 100";
+
     convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
-    assert(
-        convToLoadResults.value().Actual_W == 0
-        && "conv -> load actual should be 0"
-    );
-    assert(
-        convToLoadResults.value().Requested_W == 10
-        && "conv -> load requested should be 10"
-    );
-    assert(
-        convToLoadResults.value().Available_W == 0
-        && "conv -> load available should be 0"
-    );
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 0)
+        << "conv -> load actual should be 0";
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(convToLoadResults.value().Available_W, 0)
+        << "conv -> load available should be 0";
+
     convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, t, results
     );
-    assert(
-        convToWasteResults.value().Actual_W == 0
-        && "conv -> waste actual should be 0"
-    );
-    assert(
-        convToWasteResults.value().Requested_W == 0
-        && "conv -> waste requested should be 0"
-    );
-    assert(
-        convToWasteResults.value().Available_W == 0
-        && "conv -> waste available should be 0"
-    );
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 0)
+        << "conv -> waste actual should be 0";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 0)
+        << "conv -> waste available should be 0";
+
     // time = 40.0, fixed/restored
     t = 40.0;
     srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, t, results);
-    assert(
-        srcToConvResults.value().Actual_W == 20
-        && "src -> conv actual should be 20"
-    );
-    assert(
-        srcToConvResults.value().Requested_W == 20
-        && "src -> conv requested should be 20"
-    );
-    assert(
-        srcToConvResults.value().Available_W == 100
-        && "src -> conv available should be 100"
-    );
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 20)
+        << "src -> conv actual should be 20";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 20)
+        << "src -> conv requested should be 20";
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
+        << "src -> conv available should be 100";
+
     convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
-    assert(
-        convToLoadResults.value().Actual_W == 10
-        && "conv -> load actual should be 10"
-    );
-    assert(
-        convToLoadResults.value().Requested_W == 10
-        && "conv -> load requested should be 10"
-    );
-    assert(
-        convToLoadResults.value().Available_W == 50
-        && "conv -> load available should be 0"
-    );
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 10)
+        << "conv -> load actual should be 10";
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(convToLoadResults.value().Available_W, 50)
+        << "conv -> load available should be 0";
+
     convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, t, results
     );
-    assert(
-        convToWasteResults.value().Actual_W == 10
-        && "conv -> waste actual should be 10"
-    );
-    assert(
-        convToWasteResults.value().Requested_W == 10
-        && "conv -> waste requested should be 10"
-    );
-    assert(
-        convToWasteResults.value().Available_W == 10
-        && "conv -> waste available should be 10"
-    );
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 10)
+        << "conv -> waste actual should be 10";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 10)
+        << "conv -> waste available should be 10";
+
     // time = 50.0, failed
     t = 50.0;
     srcToConvResults =
         ModelResults_GetFlowForConnection(m, srcToConvConn, t, results);
-    assert(
-        srcToConvResults.value().Actual_W == 0
-        && "src -> conv actual should be 0"
-    );
-    assert(
-        srcToConvResults.value().Requested_W == 0
-        && "src -> conv requested should be 0"
-    );
-    assert(
-        srcToConvResults.value().Available_W == 100
-        && "src -> conv available should be 100"
-    );
+    EXPECT_EQ(srcToConvResults.value().Actual_W, 0)
+        << "src -> conv actual should be 0";
+    EXPECT_EQ(srcToConvResults.value().Requested_W, 0)
+        << "src -> conv requested should be 0";
+    EXPECT_EQ(srcToConvResults.value().Available_W, 100)
+        << "src -> conv available should be 100";
+
     convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
-    assert(
-        convToLoadResults.value().Actual_W == 0
-        && "conv -> load actual should be 0"
-    );
-    assert(
-        convToLoadResults.value().Requested_W == 10
-        && "conv -> load requested should be 10"
-    );
-    assert(
-        convToLoadResults.value().Available_W == 0
-        && "conv -> load available should be 0"
-    );
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 0)
+        << "conv -> load actual should be 0";
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(convToLoadResults.value().Available_W, 0)
+        << "conv -> load available should be 0";
+
     convToWasteResults = ModelResults_GetFlowForConnection(
         m, convId.WasteConnection, t, results
     );
-    assert(
-        convToWasteResults.value().Actual_W == 0
-        && "conv -> waste actual should be 0"
-    );
-    assert(
-        convToWasteResults.value().Requested_W == 0
-        && "conv -> waste requested should be 0"
-    );
-    assert(
-        convToWasteResults.value().Available_W == 0
-        && "conv -> waste available should be 0"
-    );
+    EXPECT_EQ(convToWasteResults.value().Actual_W, 0)
+        << "conv -> waste actual should be 0";
+    EXPECT_EQ(convToWasteResults.value().Requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(convToWasteResults.value().Available_W, 0)
+        << "conv -> waste available should be 0";
 }
 
-void
-Test12(bool doPrint)
+TEST(Erin, Test12)
 {
     // Add a schedule-based source (availability, uncontrolled source)
     // NOTE: it would be good to have a waste connection so that the component
@@ -1183,48 +1047,47 @@ Test12(bool doPrint)
     auto srcId = Model_AddScheduleBasedSource(m, sourceAvailability);
     auto loadId = Model_AddConstantLoad(m, 10);
     auto srcToLoadConn = Model_AddConnection(m, srcId.Id, 0, loadId, 0);
-    auto results = Simulate(m, doPrint);
-    assert(results.size() == 3 && "should have 3 time results");
-    assert(results[0].Time == 0.0);
-    assert(results[1].Time == 10.0);
-    assert(results[2].Time == 20.0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 3) << "should have 3 time results";
+    EXPECT_EQ(results[0].Time, 0.0);
+    EXPECT_EQ(results[1].Time, 10.0);
+    EXPECT_EQ(results[2].Time, 20.0);
     double t = 0.0;
     auto srcToLoadResults =
         ModelResults_GetFlowForConnection(m, srcToLoadConn, t, results);
-    assert(srcToLoadResults.value().Actual_W == 10);
-    assert(srcToLoadResults.value().Available_W == 10);
-    assert(srcToLoadResults.value().Requested_W == 10);
+    EXPECT_EQ(srcToLoadResults.value().Actual_W, 10);
+    EXPECT_EQ(srcToLoadResults.value().Available_W, 10);
+    EXPECT_EQ(srcToLoadResults.value().Requested_W, 10);
     auto srcToWasteResults =
         ModelResults_GetFlowForConnection(m, srcId.WasteConnection, t, results);
-    assert(srcToWasteResults.value().Actual_W == 0);
-    assert(srcToWasteResults.value().Available_W == 0);
-    assert(srcToWasteResults.value().Requested_W == 0);
+    EXPECT_EQ(srcToWasteResults.value().Actual_W, 0);
+    EXPECT_EQ(srcToWasteResults.value().Available_W, 0);
+    EXPECT_EQ(srcToWasteResults.value().Requested_W, 0);
     t = 10.0;
     srcToLoadResults =
         ModelResults_GetFlowForConnection(m, srcToLoadConn, t, results);
-    assert(srcToLoadResults.value().Actual_W == 8);
-    assert(srcToLoadResults.value().Available_W == 8);
-    assert(srcToLoadResults.value().Requested_W == 10);
+    EXPECT_EQ(srcToLoadResults.value().Actual_W, 8);
+    EXPECT_EQ(srcToLoadResults.value().Available_W, 8);
+    EXPECT_EQ(srcToLoadResults.value().Requested_W, 10);
     srcToWasteResults =
         ModelResults_GetFlowForConnection(m, srcId.WasteConnection, t, results);
-    assert(srcToWasteResults.value().Actual_W == 0);
-    assert(srcToWasteResults.value().Available_W == 0);
-    assert(srcToWasteResults.value().Requested_W == 0);
+    EXPECT_EQ(srcToWasteResults.value().Actual_W, 0);
+    EXPECT_EQ(srcToWasteResults.value().Available_W, 0);
+    EXPECT_EQ(srcToWasteResults.value().Requested_W, 0);
     t = 20.0;
     srcToLoadResults =
         ModelResults_GetFlowForConnection(m, srcToLoadConn, t, results);
-    assert(srcToLoadResults.value().Actual_W == 10);
-    assert(srcToLoadResults.value().Available_W == 12);
-    assert(srcToLoadResults.value().Requested_W == 10);
+    EXPECT_EQ(srcToLoadResults.value().Actual_W, 10);
+    EXPECT_EQ(srcToLoadResults.value().Available_W, 12);
+    EXPECT_EQ(srcToLoadResults.value().Requested_W, 10);
     srcToWasteResults =
         ModelResults_GetFlowForConnection(m, srcId.WasteConnection, t, results);
-    assert(srcToWasteResults.value().Actual_W == 2);
-    assert(srcToWasteResults.value().Available_W == 2);
-    assert(srcToWasteResults.value().Requested_W == 2);
+    EXPECT_EQ(srcToWasteResults.value().Actual_W, 2);
+    EXPECT_EQ(srcToWasteResults.value().Available_W, 2);
+    EXPECT_EQ(srcToWasteResults.value().Requested_W, 2);
 }
 
-void
-Test13(bool doPrint)
+TEST(Erin, Test13)
 {
     auto kW_as_W = [](double p_kW) -> uint32_t
     { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
@@ -1536,11 +1399,10 @@ Test13(bool doPrint)
     auto heatMuxToLoadConn =
         Model_AddConnection(m, heatingSupplyMuxId, 0, heatLoadId, 0);
     // SIMULATE
-    auto results = Simulate(m, doPrint);
+    auto results = Simulate(m, false);
 }
 
-void
-Test14(bool doPrint)
+TEST(Erin, Test14)
 {
     Model m = {};
     m.RandFn = []() { return 0.4; };
@@ -1556,12 +1418,11 @@ Test14(bool doPrint)
     auto src1ToMuxConn = Model_AddConnection(m, src01Id, 0, muxId, 0);
     auto src2ToMuxConn = Model_AddConnection(m, src02Id.Id, 0, muxId, 1);
     auto muxToLoadConn = Model_AddConnection(m, muxId, 0, loadId, 0);
-    auto results = Simulate(m, doPrint);
+    auto results = Simulate(m, false);
     // TODO: add tests/checks
 }
 
-void
-Test15(bool doPrint)
+TEST(Erin, Test15)
 {
     Model m = {};
     m.RandFn = []() { return 0.4; };
@@ -1581,74 +1442,83 @@ Test15(bool doPrint)
     auto convLossToMuxConn = Model_AddConnection(m, convId.Id, 1, muxId, 0);
     auto src2ToMuxConn = Model_AddConnection(m, src02Id, 0, muxId, 1);
     auto muxToLoadConn = Model_AddConnection(m, muxId, 0, load02Id, 0);
-    auto results = Simulate(m, doPrint);
-    assert(results.size() == 2);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 2);
+
     double t = 0.0;
     auto src1ToConvResults =
         ModelResults_GetFlowForConnection(m, src1ToConvConn, t, results);
-    assert(src1ToConvResults.has_value());
-    assert(src1ToConvResults.value().Actual_W == 200);
-    assert(src1ToConvResults.value().Requested_W == 200);
-    assert(src1ToConvResults.value().Available_W == 1'000);
+    EXPECT_TRUE(src1ToConvResults.has_value());
+    EXPECT_EQ(src1ToConvResults.value().Actual_W, 200);
+    EXPECT_EQ(src1ToConvResults.value().Requested_W, 200);
+    EXPECT_EQ(src1ToConvResults.value().Available_W, 1'000);
+
     auto convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
-    assert(convToLoadResults.has_value());
-    assert(convToLoadResults.value().Actual_W == 50);
-    assert(convToLoadResults.value().Requested_W == 50);
-    assert(convToLoadResults.value().Available_W == 250);
+    EXPECT_TRUE(convToLoadResults.has_value());
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 50);
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 50);
+    EXPECT_EQ(convToLoadResults.value().Available_W, 250);
+
     auto convLossToMuxResults =
         ModelResults_GetFlowForConnection(m, convLossToMuxConn, t, results);
-    assert(convLossToMuxResults.has_value());
-    assert(convLossToMuxResults.value().Actual_W == 100);
-    assert(convLossToMuxResults.value().Requested_W == 100);
-    assert(convLossToMuxResults.value().Available_W == 150);
+    EXPECT_TRUE(convLossToMuxResults.has_value());
+    EXPECT_EQ(convLossToMuxResults.value().Actual_W, 100);
+    EXPECT_EQ(convLossToMuxResults.value().Requested_W, 100);
+    EXPECT_EQ(convLossToMuxResults.value().Available_W, 150);
+
     auto src2ToMuxResults =
         ModelResults_GetFlowForConnection(m, src2ToMuxConn, t, results);
-    assert(src2ToMuxResults.has_value());
-    assert(src2ToMuxResults.value().Actual_W == 0);
-    assert(src2ToMuxResults.value().Requested_W == 0);
-    assert(src2ToMuxResults.value().Available_W == 1'000);
+    EXPECT_TRUE(src2ToMuxResults.has_value());
+    EXPECT_EQ(src2ToMuxResults.value().Actual_W, 0);
+    EXPECT_EQ(src2ToMuxResults.value().Requested_W, 0);
+    EXPECT_EQ(src2ToMuxResults.value().Available_W, 1'000);
+
     auto muxToLoadResults =
         ModelResults_GetFlowForConnection(m, muxToLoadConn, t, results);
-    assert(muxToLoadResults.has_value());
-    assert(muxToLoadResults.value().Actual_W == 100);
-    assert(muxToLoadResults.value().Requested_W == 100);
-    assert(muxToLoadResults.value().Available_W == 1'150);
+    EXPECT_TRUE(muxToLoadResults.has_value());
+    EXPECT_EQ(muxToLoadResults.value().Actual_W, 100);
+    EXPECT_EQ(muxToLoadResults.value().Requested_W, 100);
+    EXPECT_EQ(muxToLoadResults.value().Available_W, 1'150);
+
     t = 2.0;
     src1ToConvResults =
         ModelResults_GetFlowForConnection(m, src1ToConvConn, t, results);
-    assert(src1ToConvResults.has_value());
-    assert(src1ToConvResults.value().Actual_W == 40);
-    assert(src1ToConvResults.value().Requested_W == 40);
-    assert(src1ToConvResults.value().Available_W == 1'000);
+    EXPECT_TRUE(src1ToConvResults.has_value());
+    EXPECT_EQ(src1ToConvResults.value().Actual_W, 40);
+    EXPECT_EQ(src1ToConvResults.value().Requested_W, 40);
+    EXPECT_EQ(src1ToConvResults.value().Available_W, 1'000);
+
     convToLoadResults =
         ModelResults_GetFlowForConnection(m, convToLoadConn, t, results);
-    assert(convToLoadResults.has_value());
-    assert(convToLoadResults.value().Actual_W == 10);
-    assert(convToLoadResults.value().Requested_W == 10);
-    assert(convToLoadResults.value().Available_W == 250);
+    EXPECT_TRUE(convToLoadResults.has_value());
+    EXPECT_EQ(convToLoadResults.value().Actual_W, 10);
+    EXPECT_EQ(convToLoadResults.value().Requested_W, 10);
+    EXPECT_EQ(convToLoadResults.value().Available_W, 250);
+
     convLossToMuxResults =
         ModelResults_GetFlowForConnection(m, convLossToMuxConn, t, results);
-    assert(convLossToMuxResults.has_value());
-    assert(convLossToMuxResults.value().Actual_W == 30);
-    assert(convLossToMuxResults.value().Requested_W == 100);
-    assert(convLossToMuxResults.value().Available_W == 30);
+    EXPECT_TRUE(convLossToMuxResults.has_value());
+    EXPECT_EQ(convLossToMuxResults.value().Actual_W, 30);
+    EXPECT_EQ(convLossToMuxResults.value().Requested_W, 100);
+    EXPECT_EQ(convLossToMuxResults.value().Available_W, 30);
+
     muxToLoadResults =
         ModelResults_GetFlowForConnection(m, muxToLoadConn, t, results);
-    assert(muxToLoadResults.has_value());
-    assert(muxToLoadResults.value().Actual_W == 100);
-    assert(muxToLoadResults.value().Requested_W == 100);
-    assert(muxToLoadResults.value().Available_W == 1'030);
+    EXPECT_TRUE(muxToLoadResults.has_value());
+    EXPECT_EQ(muxToLoadResults.value().Actual_W, 100);
+    EXPECT_EQ(muxToLoadResults.value().Requested_W, 100);
+    EXPECT_EQ(muxToLoadResults.value().Available_W, 1'030);
+
     src2ToMuxResults =
         ModelResults_GetFlowForConnection(m, src2ToMuxConn, t, results);
-    assert(src2ToMuxResults.has_value());
-    assert(src2ToMuxResults.value().Actual_W == 70);
-    assert(src2ToMuxResults.value().Requested_W == 70);
-    assert(src2ToMuxResults.value().Available_W == 1'000);
+    EXPECT_TRUE(src2ToMuxResults.has_value());
+    EXPECT_EQ(src2ToMuxResults.value().Actual_W, 70);
+    EXPECT_EQ(src2ToMuxResults.value().Requested_W, 70);
+    EXPECT_EQ(src2ToMuxResults.value().Available_W, 1'000);
 }
 
-void
-Test16(bool doPrint)
+TEST(Erin, Test16)
 {
     Model m = {};
     m.RandFn = []() { return 0.4; };
@@ -1658,25 +1528,26 @@ Test16(bool doPrint)
     size_t passId = Model_AddPassThrough(m);
     auto srcToPassConn = Model_AddConnection(m, srcId, 0, passId, 0);
     auto passToLoadConn = Model_AddConnection(m, passId, 0, loadId, 0);
-    auto results = Simulate(m, doPrint);
-    assert(results.size() == 2);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 2);
+
     double t = 0.0;
     auto srcToPassResults =
         ModelResults_GetFlowForConnection(m, srcToPassConn, t, results);
-    assert(srcToPassResults.has_value());
-    assert(srcToPassResults.value().Actual_W == 50);
-    assert(srcToPassResults.value().Requested_W == 50);
-    assert(srcToPassResults.value().Available_W == 100);
+    EXPECT_TRUE(srcToPassResults.has_value());
+    EXPECT_EQ(srcToPassResults.value().Actual_W, 50);
+    EXPECT_EQ(srcToPassResults.value().Requested_W, 50);
+    EXPECT_EQ(srcToPassResults.value().Available_W, 100);
+
     auto passToLoadResults =
         ModelResults_GetFlowForConnection(m, passToLoadConn, t, results);
-    assert(passToLoadResults.has_value());
-    assert(passToLoadResults.value().Actual_W == 50);
-    assert(passToLoadResults.value().Requested_W == 50);
-    assert(passToLoadResults.value().Available_W == 100);
+    EXPECT_TRUE(passToLoadResults.has_value());
+    EXPECT_EQ(passToLoadResults.value().Actual_W, 50);
+    EXPECT_EQ(passToLoadResults.value().Requested_W, 50);
+    EXPECT_EQ(passToLoadResults.value().Available_W, 100);
 }
 
-void
-Test17(bool doPrint)
+TEST(Erin, Test17)
 {
     std::vector<TimeState> a{{0.0, true}, {10.0, false, {1}}, {100.0, true}};
     std::vector<TimeState> b{
@@ -1691,15 +1562,14 @@ Test17(bool doPrint)
         {150.0, false, {2}}
     };
     std::vector<TimeState> actual = TimeState_Combine(a, b);
-    assert(expected.size() == actual.size());
+    EXPECT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
-        assert(expected[i] == actual[i]);
+        EXPECT_EQ(expected[i], actual[i]);
     }
 }
 
-void
-Test18(bool doPrint)
+TEST(Erin, Test18)
 {
     std::vector<TimeState> input{
         {0.0, true},
@@ -1715,10 +1585,10 @@ Test18(bool doPrint)
         {100.0, true},
     };
     std::vector<TimeState> actual = TimeState_Clip(input, 50.0, 120.0, false);
-    assert(expected.size() == actual.size());
+    EXPECT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
-        assert(expected[i] == actual[i]);
+        EXPECT_EQ(expected[i], actual[i]);
     }
     std::vector<TimeState> expected2{
         {0.0, false, {1, 2}},
@@ -1726,15 +1596,14 @@ Test18(bool doPrint)
         {50.0, true},
     };
     std::vector<TimeState> actual2 = TimeState_Clip(input, 50.0, 120.0, true);
-    assert(expected2.size() == actual2.size());
+    EXPECT_EQ(expected2.size(), actual2.size());
     for (size_t i = 0; i < expected2.size(); ++i)
     {
-        assert(expected2[i] == actual2[i]);
+        EXPECT_EQ(expected2[i], actual2[i]);
     }
 }
 
-void
-Test19(bool doPrint)
+TEST(Erin, Test19)
 {
     std::vector<TimeState> A{
         {0.0, false, {}, {0}},
@@ -1762,15 +1631,14 @@ Test19(bool doPrint)
     relSch = TimeState_Combine(relSch, A);
     relSch = TimeState_Combine(relSch, B);
     std::vector<TimeState> actual = TimeState_Combine(relSch, C);
-    assert(expected.size() == actual.size());
+    EXPECT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
-        assert(expected[i] == actual[i]);
+        EXPECT_EQ(expected[i], actual[i]);
     }
 }
 
-void
-Test20(bool doPrint)
+TEST(Erin, Test20)
 {
     std::vector<TimeState> input{
         {5.0, false},
@@ -1785,11 +1653,10 @@ Test20(bool doPrint)
         {7.0, true},
     };
     std::vector<TimeState> actual = TimeState_Clip(input, 0.0, 10.0, true);
-    assert(expected.size() == actual.size());
+    EXPECT_EQ(expected.size(), actual.size());
 }
 
-void
-Test21(bool doPrint)
+TEST(Erin, Test21)
 {
     std::vector<TimeState> input{
         {0.0, true},
@@ -1814,29 +1681,29 @@ Test21(bool doPrint)
     std::map<size_t, size_t> expectedCountByFragModeId{{1, 1}};
     std::map<size_t, double> expectedTimeByFailModeId{{1, 10.0}};
     std::map<size_t, double> expectedTimeByFragModeId{{1, 80.0}};
-    assert(expectedCountByFailModeId.size() == countByFailModeId.size());
-    assert(expectedCountByFragModeId.size() == countByFragModeId.size());
-    assert(expectedTimeByFailModeId.size() == timeByFailModeId.size());
-    assert(expectedTimeByFragModeId.size() == timeByFragModeId.size());
+    EXPECT_EQ(expectedCountByFailModeId.size(), countByFailModeId.size());
+    EXPECT_EQ(expectedCountByFragModeId.size(), countByFragModeId.size());
+    EXPECT_EQ(expectedTimeByFailModeId.size(), timeByFailModeId.size());
+    EXPECT_EQ(expectedTimeByFragModeId.size(), timeByFragModeId.size());
     for (auto const& p : expectedCountByFailModeId)
     {
-        assert(countByFailModeId.contains(p.first));
-        assert(p.second == countByFailModeId[p.first]);
+        EXPECT_TRUE(countByFailModeId.contains(p.first));
+        EXPECT_EQ(p.second, countByFailModeId[p.first]);
     }
     for (auto const& p : expectedCountByFragModeId)
     {
-        assert(countByFragModeId.contains(p.first));
-        assert(p.second == countByFragModeId[p.first]);
+        EXPECT_TRUE(countByFragModeId.contains(p.first));
+        EXPECT_EQ(p.second, countByFragModeId[p.first]);
     }
     for (auto const& p : expectedTimeByFailModeId)
     {
-        assert(timeByFailModeId.contains(p.first));
-        assert(p.second == timeByFailModeId[p.first]);
+        EXPECT_TRUE(timeByFailModeId.contains(p.first));
+        EXPECT_EQ(p.second, timeByFailModeId[p.first]);
     }
     for (auto const& p : expectedTimeByFragModeId)
     {
-        assert(timeByFragModeId.contains(p.first));
-        assert(p.second == timeByFragModeId[p.first]);
+        EXPECT_TRUE(timeByFragModeId.contains(p.first));
+        EXPECT_EQ(p.second, timeByFragModeId[p.first]);
     }
     countByFailModeId.clear();
     countByFragModeId.clear();
@@ -1855,34 +1722,33 @@ Test21(bool doPrint)
         timeByFailModeId,
         timeByFragModeId
     );
-    assert(expectedCountByFailModeId.size() == countByFailModeId.size());
-    assert(expectedCountByFragModeId.size() == countByFragModeId.size());
-    assert(expectedTimeByFailModeId.size() == timeByFailModeId.size());
-    assert(expectedTimeByFragModeId.size() == timeByFragModeId.size());
+    EXPECT_EQ(expectedCountByFailModeId.size(), countByFailModeId.size());
+    EXPECT_EQ(expectedCountByFragModeId.size(), countByFragModeId.size());
+    EXPECT_EQ(expectedTimeByFailModeId.size(), timeByFailModeId.size());
+    EXPECT_EQ(expectedTimeByFragModeId.size(), timeByFragModeId.size());
     for (auto const& p : expectedCountByFailModeId)
     {
-        assert(countByFailModeId.contains(p.first));
-        assert(p.second == countByFailModeId[p.first]);
+        EXPECT_TRUE(countByFailModeId.contains(p.first));
+        EXPECT_EQ(p.second, countByFailModeId[p.first]);
     }
     for (auto const& p : expectedCountByFragModeId)
     {
-        assert(countByFragModeId.contains(p.first));
-        assert(p.second == countByFragModeId[p.first]);
+        EXPECT_TRUE(countByFragModeId.contains(p.first));
+        EXPECT_EQ(p.second, countByFragModeId[p.first]);
     }
     for (auto const& p : expectedTimeByFailModeId)
     {
-        assert(timeByFailModeId.contains(p.first));
-        assert(p.second == timeByFailModeId[p.first]);
+        EXPECT_TRUE(timeByFailModeId.contains(p.first));
+        EXPECT_EQ(p.second, timeByFailModeId[p.first]);
     }
     for (auto const& p : expectedTimeByFragModeId)
     {
-        assert(timeByFragModeId.contains(p.first));
-        assert(p.second == timeByFragModeId[p.first]);
+        EXPECT_TRUE(timeByFragModeId.contains(p.first));
+        EXPECT_EQ(p.second, timeByFragModeId[p.first]);
     }
 }
 
-void
-Test22(bool doPrint)
+TEST(Erin, Test22)
 {
     TabularFragilityCurve tfc{};
     tfc.VulnerabilityId = 0;
@@ -1890,7 +1756,7 @@ Test22(bool doPrint)
     tfc.FailureFractions = std::vector<double>{0.0, 0.3, 0.7, 0.8, 0.95, 1.0};
     double level = 7.0;
     double result = TabularFragilityCurve_GetFailureFraction(tfc, level);
-    assert(result == 0.85);
+    EXPECT_EQ(result, 0.85);
 }
 
 // int

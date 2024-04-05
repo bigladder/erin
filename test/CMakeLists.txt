@@ -5,8 +5,8 @@ enable_testing()
 string(TOLOWER ${PROJECT_NAME} project_name_lower)
 
 set(library_files
-		erin_tests.cpp
-		erin_next_random_test.cpp
+		${project_name_lower}_tests.cpp
+		${project_name_lower}_next_random_test.cpp
 		)
 
 add_executable(${project_name_lower}_tests ${library_files})

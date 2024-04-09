@@ -2183,9 +2183,9 @@ namespace erin
         stats << std::endl;
         for (auto const& os : occurrenceStats)
         {
-            double stored = os.StorageCharge_kJ - os.StorageDischarge_kJ;
+            double stored_kJ = os.StorageCharge_kJ - os.StorageDischarge_kJ;
             double balance = os.Inflow_kJ + os.InFromEnv_kJ
-                - (os.OutflowAchieved_kJ + stored + os.Wasteflow_kJ);
+                - (os.OutflowAchieved_kJ + stored_kJ + os.Wasteflow_kJ);
             double efficiency = (os.Inflow_kJ + os.StorageDischarge_kJ) > 0.0
                 ? ((os.OutflowAchieved_kJ + os.StorageCharge_kJ)
                    / (os.Inflow_kJ + os.StorageDischarge_kJ))
@@ -2198,9 +2198,9 @@ namespace erin
             stats << s.ScenarioMap.Tags[os.Id];
             stats << "," << os.OccurrenceNumber;
             stats << "," << (os.Duration_s / seconds_per_hour);
-            stats << "," << DoubleToString(os.Inflow_kJ, 0);
+            stats << "," << DoubleToString(os.Inflow_kJ + os.InFromEnv_kJ, 0);
             stats << "," << DoubleToString(os.OutflowAchieved_kJ, 0);
-            stats << "," << DoubleToString(stored, 0);
+            stats << "," << DoubleToString(stored_kJ, 0);
             stats << "," << DoubleToString(os.Wasteflow_kJ, 0);
             stats << "," << DoubleToString(balance, 16);
             stats << "," << efficiency;

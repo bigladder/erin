@@ -2,9 +2,11 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_time_and_amount.h"
+#include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_utils.h"
 #include <cmath>
 #include <cstdlib>
+#include <iomanip>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
@@ -1366,7 +1368,7 @@ namespace erin
         for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
         {
             Store const& store = m.Stores[storeIdx];
-            long netEnergyAdded = 0;
+            int64_t netEnergyAdded_J = 0;
             std::optional<size_t> maybeInConn = store.InflowConn;
             size_t outConn = store.OutflowConn;
             size_t compId = m.Connections[outConn].FromId;
@@ -1374,35 +1376,33 @@ namespace erin
             {
                 continue;
             }
-            long availableCharge_J = static_cast<long>(
-                m.Stores[storeIdx].Capacity_J - ss.StorageAmounts_J[storeIdx]
-            );
-            long availableDischarge_J =
-                -1 * static_cast<long>(ss.StorageAmounts_J[storeIdx]);
+            int64_t availableCharge_J =
+                static_cast<int64_t>(m.Stores[storeIdx].Capacity_J)
+                - static_cast<int64_t>(ss.StorageAmounts_J[storeIdx]);
+            int64_t availableDischarge_J =
+                -1 * static_cast<int64_t>(ss.StorageAmounts_J[storeIdx]);
             if (maybeInConn.has_value())
             {
                 size_t inConn = maybeInConn.value();
-                netEnergyAdded += std::lround(
-                    elapsedTime_s
-                    * static_cast<double>(ss.Flows[inConn].Actual_W)
-                );
+                double actualInflow_W = ss.Flows[inConn].Actual_W;
+                netEnergyAdded_J +=
+                    std::llround(elapsedTime_s * actualInflow_W);
             }
-            netEnergyAdded -= std::lround(
-                elapsedTime_s * static_cast<double>(ss.Flows[outConn].Actual_W)
-            );
+            double actualOutflow_W = ss.Flows[outConn].Actual_W;
+            netEnergyAdded_J -=
+                std::llround(elapsedTime_s * actualOutflow_W);
             if (store.WasteflowConn.has_value())
             {
                 size_t wConn = store.WasteflowConn.value();
-                netEnergyAdded -= std::lround(
-                    elapsedTime_s
-                    * static_cast<double>(ss.Flows[wConn].Actual_W)
-                );
+                double actualWasteflow_W = ss.Flows[wConn].Actual_W;
+                netEnergyAdded_J -=
+                    std::llround(elapsedTime_s * actualWasteflow_W);
             }
-            if (netEnergyAdded > availableCharge_J)
+            if (netEnergyAdded_J > availableCharge_J)
             {
                 std::cout << "ERROR: netEnergyAdded is greater than capacity!"
                           << std::endl;
-                std::cout << "netEnergyAdded (J): " << netEnergyAdded
+                std::cout << "netEnergyAdded (J): " << netEnergyAdded_J
                           << std::endl;
                 std::cout << "availableCharge (J): " << availableCharge_J
                           << std::endl;
@@ -1437,15 +1437,15 @@ namespace erin
                           << (inflow - (outflow + wasteflow)) << std::endl;
             }
             assert(
-                availableCharge_J >= netEnergyAdded
+                availableCharge_J >= netEnergyAdded_J
                 && "netEnergyAdded cannot put storage over capacity"
             );
-            if (netEnergyAdded < availableDischarge_J)
+            if (netEnergyAdded_J < availableDischarge_J)
             {
                 std::cout
                     << "ERROR: netEnergyAdded is lower than discharge limit"
                     << std::endl;
-                std::cout << "netEnergyAdded (J): " << netEnergyAdded
+                std::cout << "netEnergyAdded (J): " << netEnergyAdded_J
                           << std::endl;
                 std::cout << "availableDischarge (J): " << availableDischarge_J
                           << std::endl;
@@ -1460,30 +1460,30 @@ namespace erin
                 }
                 std::cout << "outflow (W): " << ss.Flows[outConn].Actual_W
                           << std::endl;
-                int64_t inflow = 0;
+                int64_t inflow_W = 0;
                 if (maybeInConn.has_value())
                 {
                     size_t inConn = maybeInConn.value();
-                    inflow = static_cast<int64_t>(ss.Flows[inConn].Actual_W);
+                    inflow_W = static_cast<int64_t>(ss.Flows[inConn].Actual_W);
                 }
-                int64_t outflow =
+                int64_t outflow_W =
                     static_cast<int64_t>(ss.Flows[outConn].Actual_W);
-                int64_t wasteflow = 0;
+                int64_t wasteflow_W = 0;
                 if (store.WasteflowConn.has_value())
                 {
                     size_t wConn = store.WasteflowConn.value();
                     std::cout << "wasteflow (W): " << ss.Flows[wConn].Actual_W
                               << std::endl;
-                    wasteflow = static_cast<int64_t>(ss.Flows[wConn].Actual_W);
+                    wasteflow_W = static_cast<int64_t>(ss.Flows[wConn].Actual_W);
                 }
                 std::cout << "flow balance (inflow - (outflow + wasteflow)): "
-                          << (inflow - (outflow + wasteflow)) << std::endl;
+                          << (inflow_W - (outflow_W + wasteflow_W)) << std::endl;
             }
             assert(
-                netEnergyAdded >= availableDischarge_J
+                netEnergyAdded_J >= availableDischarge_J
                 && "netEnergyAdded cannot use more energy than available"
             );
-            ss.StorageAmounts_J[storeIdx] += netEnergyAdded;
+            ss.StorageAmounts_J[storeIdx] += netEnergyAdded_J;
         }
     }
 
@@ -3108,38 +3108,54 @@ namespace erin
         ScenarioOccurrenceStats sos{};
         sos.Id = scenarioId;
         sos.OccurrenceNumber = occurrenceNumber;
+        double initialStorage_kJ = 0.0;
+        double finalStorage_kJ = 0.0;
+        if (timeAndFlows.size() > 0)
+        {
+            for (flow_t const& stored_J : timeAndFlows[0].StorageAmounts_J)
+            {
+                initialStorage_kJ +=
+                    static_cast<double>(stored_J) / J_per_kJ;
+            }
+        }
         double lastTime = timeAndFlows.size() > 0 ? timeAndFlows[0].Time : 0.0;
         bool wasDown = false;
         double sedt = 0.0;
-        for (size_t eventIdx = 1; eventIdx < timeAndFlows.size(); ++eventIdx)
+        size_t numTimeAndFlows = timeAndFlows.size();
+        size_t lastEventIdx = numTimeAndFlows - 1;
+        for (size_t eventIdx = 1; eventIdx < numTimeAndFlows; ++eventIdx)
         {
-            double dt = timeAndFlows[eventIdx].Time - lastTime;
+            double dt_s = timeAndFlows[eventIdx].Time - lastTime;
+            assert(dt_s > 0.0);
+            lastTime = timeAndFlows[eventIdx].Time;
             // TODO: in Simulation, ensure we ALWAYS have an event at final time
             // in order that scenario duration equals what we have here; this
             // is a good check.
-            sos.Duration_s += dt;
-            lastTime = timeAndFlows[eventIdx].Time;
+            sos.Duration_s += dt_s;
             bool allLoadsMet = true;
+            size_t prevEventIdx = eventIdx - 1;
             for (size_t connId = 0;
-                 connId < timeAndFlows[eventIdx - 1].Flows.size();
+                 connId < timeAndFlows[prevEventIdx].Flows.size();
                  ++connId)
             {
-                auto fromType =
+                ComponentType fromType =
                     m.ComponentMap.CompType[m.Connections[connId].FromId];
-                auto toType =
+                ComponentType toType =
                     m.ComponentMap.CompType[m.Connections[connId].ToId];
-                auto const& flow = timeAndFlows[eventIdx - 1].Flows[connId];
+                Flow const& flow = timeAndFlows[prevEventIdx].Flows[connId];
+                double actualFlow_W = flow.Actual_W;
+                double requestedFlow_W = flow.Requested_W;
                 switch (fromType)
                 {
                     case ComponentType::ConstantSourceType:
                     case ComponentType::ScheduleBasedSourceType:
                     {
-                        sos.Inflow_kJ += (flow.Actual_W / W_per_kW) * dt;
+                        sos.Inflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
                     }
                     break;
                     case ComponentType::EnvironmentSourceType:
                     {
-                        sos.InFromEnv_kJ += (flow.Actual_W / W_per_kW) * dt;
+                        sos.InFromEnv_kJ += (actualFlow_W / W_per_kW) * dt_s;
                     }
                     break;
                     default:
@@ -3152,23 +3168,25 @@ namespace erin
                     case ComponentType::ConstantLoadType:
                     case ComponentType::ScheduleBasedLoadType:
                     {
-                        sos.OutflowAchieved_kJ +=
-                            (flow.Actual_W / W_per_kW) * dt;
+                        double outflowAchieved_kJ =
+                            (actualFlow_W / W_per_kW) * dt_s;
+                        sos.OutflowAchieved_kJ += outflowAchieved_kJ;
                         sos.OutflowRequest_kJ +=
-                            (flow.Requested_W / W_per_kW) * dt;
+                            (requestedFlow_W / W_per_kW) * dt_s;
                         allLoadsMet =
                             allLoadsMet && (flow.Actual_W == flow.Requested_W);
                         if (flow.Actual_W != flow.Requested_W)
                         {
+                            assert(flow.Requested_W > flow.Actual_W);
                             sos.LoadNotServed_kJ +=
-                                ((flow.Requested_W - flow.Actual_W) / W_per_kW)
-                                * dt;
+                                ((requestedFlow_W - actualFlow_W) / W_per_kW)
+                                * dt_s;
                         }
                     }
                     break;
                     case ComponentType::WasteSinkType:
                     {
-                        sos.Wasteflow_kJ += (flow.Actual_W / W_per_kW) * dt;
+                        sos.Wasteflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
                     }
                     break;
                     default:
@@ -3179,7 +3197,7 @@ namespace erin
             }
             if (allLoadsMet)
             {
-                sos.Uptime_s += dt;
+                sos.Uptime_s += dt_s;
                 if (wasDown && sedt > sos.MaxSEDT_s)
                 {
                     sos.MaxSEDT_s = sedt;
@@ -3189,14 +3207,14 @@ namespace erin
             }
             else
             {
-                sos.Downtime_s += dt;
+                sos.Downtime_s += dt_s;
                 if (wasDown)
                 {
-                    sedt += dt;
+                    sedt += dt_s;
                 }
                 else
                 {
-                    sedt = dt;
+                    sedt = dt_s;
                 }
                 wasDown = true;
             }
@@ -3204,23 +3222,28 @@ namespace erin
                  storeIdx < timeAndFlows[eventIdx].StorageAmounts_J.size();
                  ++storeIdx)
             {
-                double stored_J =
-                    static_cast<double>(
-                        timeAndFlows[eventIdx].StorageAmounts_J[storeIdx]
-                    )
-                    - static_cast<double>(
-                        timeAndFlows[eventIdx - 1].StorageAmounts_J[storeIdx]
-                    );
-                if (stored_J > 0.0)
+                double prevStored_J =
+                    timeAndFlows[prevEventIdx].StorageAmounts_J[storeIdx];
+                double currentStored_J =
+                    timeAndFlows[eventIdx].StorageAmounts_J[storeIdx];
+                double increaseInStorage_J = currentStored_J - prevStored_J;
+                if (increaseInStorage_J > 0.0)
                 {
-                    sos.StorageCharge_kJ += stored_J / J_per_kJ;
+                    sos.StorageCharge_kJ += increaseInStorage_J / J_per_kJ;
                 }
                 else
                 {
-                    sos.StorageDischarge_kJ += -1.0 * (stored_J / J_per_kJ);
+                    sos.StorageDischarge_kJ += -1.0 * (increaseInStorage_J / J_per_kJ);
+                }
+                if (eventIdx == lastEventIdx)
+                {
+                    double amount_J =
+                        timeAndFlows[eventIdx].StorageAmounts_J[storeIdx];
+                    finalStorage_kJ += amount_J / J_per_kJ;
                 }
             }
         }
+        sos.ChangeInStorage_kJ = finalStorage_kJ - initialStorage_kJ;
         if (sedt > sos.MaxSEDT_s)
         {
             sos.MaxSEDT_s = sedt;

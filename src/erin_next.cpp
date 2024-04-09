@@ -1708,33 +1708,58 @@ namespace erin
                     summary.EnvInflow += ss.Flows[flowIdx].Actual_W;
                 }
                 break;
+                case ComponentType::ConstantLoadType:
+                case ComponentType::ScheduleBasedLoadType:
+                case ComponentType::ConstantEfficiencyConverterType:
+                case ComponentType::MuxType:
+                case ComponentType::PassThroughType:
+                case ComponentType::MoverType:
+                case ComponentType::WasteSinkType:
+                {
+                }
+                break;
                 default:
                 {
+                    WriteErrorMessage(
+                        "SummarizeFlows(.)",
+                        "Unhandled From type for connection - from pass");
                 }
                 break;
             }
 
             switch (m.Connections[flowIdx].To)
             {
-                case (ComponentType::ConstantLoadType):
-                case (ComponentType::ScheduleBasedLoadType):
+                case ComponentType::ConstantLoadType:
+                case ComponentType::ScheduleBasedLoadType:
                 {
                     summary.OutflowRequest += ss.Flows[flowIdx].Requested_W;
                     summary.OutflowAchieved += ss.Flows[flowIdx].Actual_W;
                 }
                 break;
-                case (ComponentType::StoreType):
+                case ComponentType::StoreType:
                 {
                     summary.StorageCharge += ss.Flows[flowIdx].Actual_W;
                 }
                 break;
-                case (ComponentType::WasteSinkType):
+                case ComponentType::WasteSinkType:
                 {
                     summary.Wasteflow += ss.Flows[flowIdx].Actual_W;
                 }
                 break;
+                case ComponentType::ConstantSourceType:
+                case ComponentType::ScheduleBasedSourceType:
+                case ComponentType::ConstantEfficiencyConverterType:
+                case ComponentType::MuxType:
+                case ComponentType::PassThroughType:
+                case ComponentType::MoverType:
+                case ComponentType::EnvironmentSourceType:
+                {}
+                break;
                 default:
                 {
+                    WriteErrorMessage(
+                        "SummarizeFlows(.)",
+                        "Unhandled From type for connection - to pass");
                 }
                 break;
             }

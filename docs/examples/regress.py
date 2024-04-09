@@ -173,7 +173,7 @@ def compare_csv(original_csv_path, proposed_csv_path):
             row_prefix = prefix_for(idx)
             origx, propx = items
             if origx != propx:
-                print(f"values differ {row_prefix}@{key}[{idx}]")
+                print(f"values differ @ row={idx}; {row_prefix}@{key}")
                 print(f"-- original: {origx}")
                 print(f"-- proposed: {propx}")
 

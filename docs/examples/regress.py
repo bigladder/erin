@@ -3,13 +3,15 @@ import subprocess
 from pathlib import Path
 import platform
 import csv
+import time
+import datetime
 
 
 print("Platform: " + platform.system())
 if platform.system() == 'Windows':
     from shutil import which
     DIFF_PROG = 'fc' if which('fc') is not None else 'diff'
-    ROOT_DIR = Path('.') / '..' / '..'
+    ROOT_DIR = (Path('.') / '..' / '..').absolute()
     BIN_DIR = ROOT_DIR / 'build' / 'bin' / 'Release'
     if not BIN_DIR.exists():
         BIN_DIR = ROOT_DIR / 'build' / 'bin' / 'Debug'
@@ -26,7 +28,7 @@ if platform.system() == 'Windows':
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     DIFF_PROG = 'diff'
-    BIN_DIR = Path('.') / '..' / '..' / 'build' / 'bin'
+    BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
     TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
     CLI_EXE = BIN_DIR / 'erin_next_cli'
@@ -71,14 +73,19 @@ def run_tests():
         print(result.stderr.decode())
         sys.exit(1)
 
-def smoke_test(example_name):
+
+def smoke_test(example_name, dir=None, timeit=False):
     """
     A smoke test just runs the example and confirms we get a 0 exit code
     """
+    cwd = str(Path.cwd().resolve()) if dir is None else dir
     Path("out.csv").unlink(missing_ok=True)
     Path("stats.csv").unlink(missing_ok=True)
     toml_input = f"ex{example_name}.toml"
-    result = subprocess.run([CLI_EXE, toml_input], capture_output=True)
+    start_time = time.perf_counter_ns()
+    result = subprocess.run([CLI_EXE, toml_input], capture_output=True, cwd=cwd)
+    end_time = time.perf_counter_ns()
+    time_ns = end_time - start_time
     if result.returncode != 0:
         print(f"Error running CLI for example {example_name}")
         print("stdout:\n")
@@ -86,7 +93,19 @@ def smoke_test(example_name):
         print("stderr:\n")
         print(result.stderr.decode())
         sys.exit(1)
+    result.time_ns = time_ns
     return result
+
+
+def run_bench(bench_file, example_name, dir=None):
+    """
+    Run a benchmark test.    
+    """
+    now = datetime.datetime.now().isoformat()
+    result = smoke_test(example_name, dir)
+    with open(bench_file, 'a') as f:
+        time_s = result.time_ns / 1_000_000_000.0
+        print(f"[{now}] {example_name}: {time_s} ns\n", file=f)
 
 
 def read_csv(path):
@@ -259,6 +278,10 @@ if __name__ == "__main__":
     smoke_test("28")
     run_cli("29")
     run_cli("30")
+    smoke_test("ft-illinois", dir="ft-illinois")
     print("Passed all regression tests!")
     run_perf()
     print("All performance tests run")
+    benchfile = (Path(".")/".."/".."/"benchmark.txt").resolve()
+    run_bench(benchfile, "ft-illinois", dir="ft-illinois")
+    print("Ran all benchmarks")

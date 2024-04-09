@@ -117,6 +117,8 @@ namespace erin
         double Wasteflow_kJ = 0.0;
         double InFromEnv_kJ = 0.0;
         double LoadNotServed_kJ = 0.0;
+        // TODO: net change in storage finalStored_kJ - initialStored_kJ
+        double ChangeInStorage_kJ = 0.0;
         double Uptime_s = 0.0;
         double Downtime_s = 0.0;
         double MaxSEDT_s = 0.0;
@@ -251,6 +253,7 @@ namespace erin
 
     struct TimeAndFlows
     {
+        // TODO: change to Time_s
         double Time;
         std::vector<Flow> Flows;
         std::vector<flow_t> StorageAmounts_J;

@@ -1,15 +1,15 @@
 scenario id,occurrence number,duration (h),total source (kJ),total load (kJ),total storage (kJ),total waste (kJ),energy balance (source-(load+storage+waste)) (kJ),site efficiency,uptime (h),downtime (h),load not served (kJ),energy robustness [ER],energy availability [EA],max single event downtime [MaxSEDT] (h),global availability,availability: bus,availability: cluster_01_electric,availability: electric_utility,availability: emergency_generator,global count: highly_vulnerable_to_wind,global count: somewhat_vulnerable_to_flooding,global time fraction: highly_vulnerable_to_wind,global time fraction: somewhat_vulnerable_to_flooding,count: bus / highly_vulnerable_to_wind,count: bus / somewhat_vulnerable_to_flooding,count: electric_utility / highly_vulnerable_to_wind,count: emergency_generator / somewhat_vulnerable_to_flooding,time fraction: bus / highly_vulnerable_to_wind,time fraction: bus / somewhat_vulnerable_to_flooding,time fraction: electric_utility / highly_vulnerable_to_wind,time fraction: emergency_generator / somewhat_vulnerable_to_flooding
-blue_sky,1,8760,5.184e+07,5.184e+07,0,0,0,1,8760,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,1,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,2,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,3,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,4,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,5,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,6,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,7,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,8,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,9,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
-class_1_hurricane,10,336,1.2096e+06,1.2096e+06,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+blue_sky,1,8760,51840000,51840000,0,0,0,1,8760,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,1,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,2,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,3,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,4,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,5,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,6,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,7,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,8,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,9,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
+class_1_hurricane,10,336,1209600,1209600,0,0,0,1,336,0,0,1,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0
 class_4_hurricane,1,336,0,0,0,0,0,0,0,336,1.2096e+06,0,0,336,0,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0
 class_4_hurricane,2,336,0,0,0,0,0,0,0,336,1.2096e+06,0,0,336,0,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0
 class_4_hurricane,3,336,0,0,0,0,0,0,0,336,1.2096e+06,0,0,336,0,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0

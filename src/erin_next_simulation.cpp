@@ -1561,12 +1561,36 @@ namespace erin
     std::string
     DoubleToString(double value, unsigned int precision)
     {
-        double mult = std::pow(10.0, static_cast<double>(precision));
-        double fractionPart = std::round(mult * (value - std::floor(value)));
-        return std::to_string(static_cast<flow_t>(std::trunc(value)))
-            + (fractionPart > 0.0
-                   ? ("." + std::to_string(static_cast<flow_t>(fractionPart)))
-                   : "");
+        std::ostringstream oss{};
+        double p = precision;
+        double mult = std::pow(10.0, p);
+        double rounded = std::round(value * mult) / mult;
+        oss << std::fixed
+            << std::setprecision(static_cast<int>(precision))
+            << rounded;
+        std::string proposed = oss.str();
+        int end_idx = proposed.size();
+        bool has_decimal = false;
+        for (char const& ch : proposed)
+        {
+            if (ch == '.')
+            {
+                has_decimal = true;
+                break;
+            }
+        }
+        if (has_decimal)
+        {
+            while (proposed[end_idx - 1] == '0' && end_idx > 0)
+            {
+                --end_idx;
+            }
+        }
+        if (proposed[end_idx - 1] == '.')
+        {
+            --end_idx;
+        }
+        return proposed.substr(0, end_idx);
     }
 
     void

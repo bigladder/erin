@@ -1566,8 +1566,7 @@ namespace erin
         double p = precision;
         double mult = std::pow(10.0, p);
         double rounded = std::round(value * mult) / mult;
-        oss << std::fixed
-            << std::setprecision(static_cast<int>(precision))
+        oss << std::fixed << std::setprecision(static_cast<int>(precision))
             << rounded;
         std::string proposed = oss.str();
         int end_idx = proposed.size();
@@ -1646,8 +1645,8 @@ namespace erin
             {
                 double store_J = r.StorageAmounts_J[i];
                 double store_kJ = store_J / J_per_kJ;
-                out << "," << std::fixed
-                    << std::setprecision(storePrecision) << store_kJ;
+                out << "," << std::fixed << std::setprecision(storePrecision)
+                    << store_kJ;
             }
             // NOTE: Store state in SOC
             for (size_t i : storeOrder)
@@ -1658,8 +1657,8 @@ namespace erin
                     soc = static_cast<double>(r.StorageAmounts_J[i])
                         / static_cast<double>(m.Stores[i].Capacity_J);
                 }
-                out << "," << std::fixed
-                    << std::setprecision(storePrecision) << soc;
+                out << "," << std::fixed << std::setprecision(storePrecision)
+                    << soc;
             }
             for (size_t i : compOrder)
             {

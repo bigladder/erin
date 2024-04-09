@@ -1389,8 +1389,7 @@ namespace erin
                     std::llround(elapsedTime_s * actualInflow_W);
             }
             double actualOutflow_W = ss.Flows[outConn].Actual_W;
-            netEnergyAdded_J -=
-                std::llround(elapsedTime_s * actualOutflow_W);
+            netEnergyAdded_J -= std::llround(elapsedTime_s * actualOutflow_W);
             if (store.WasteflowConn.has_value())
             {
                 size_t wConn = store.WasteflowConn.value();
@@ -1474,10 +1473,12 @@ namespace erin
                     size_t wConn = store.WasteflowConn.value();
                     std::cout << "wasteflow (W): " << ss.Flows[wConn].Actual_W
                               << std::endl;
-                    wasteflow_W = static_cast<int64_t>(ss.Flows[wConn].Actual_W);
+                    wasteflow_W =
+                        static_cast<int64_t>(ss.Flows[wConn].Actual_W);
                 }
                 std::cout << "flow balance (inflow - (outflow + wasteflow)): "
-                          << (inflow_W - (outflow_W + wasteflow_W)) << std::endl;
+                          << (inflow_W - (outflow_W + wasteflow_W))
+                          << std::endl;
             }
             assert(
                 netEnergyAdded_J >= availableDischarge_J
@@ -1722,7 +1723,8 @@ namespace erin
                 {
                     WriteErrorMessage(
                         "SummarizeFlows(.)",
-                        "Unhandled From type for connection - from pass");
+                        "Unhandled From type for connection - from pass"
+                    );
                 }
                 break;
             }
@@ -1753,13 +1755,15 @@ namespace erin
                 case ComponentType::PassThroughType:
                 case ComponentType::MoverType:
                 case ComponentType::EnvironmentSourceType:
-                {}
+                {
+                }
                 break;
                 default:
                 {
                     WriteErrorMessage(
                         "SummarizeFlows(.)",
-                        "Unhandled From type for connection - to pass");
+                        "Unhandled From type for connection - to pass"
+                    );
                 }
                 break;
             }
@@ -3114,8 +3118,7 @@ namespace erin
         {
             for (flow_t const& stored_J : timeAndFlows[0].StorageAmounts_J)
             {
-                initialStorage_kJ +=
-                    static_cast<double>(stored_J) / J_per_kJ;
+                initialStorage_kJ += static_cast<double>(stored_J) / J_per_kJ;
             }
         }
         double lastTime = timeAndFlows.size() > 0 ? timeAndFlows[0].Time : 0.0;
@@ -3233,7 +3236,8 @@ namespace erin
                 }
                 else
                 {
-                    sos.StorageDischarge_kJ += -1.0 * (increaseInStorage_J / J_per_kJ);
+                    sos.StorageDischarge_kJ +=
+                        -1.0 * (increaseInStorage_J / J_per_kJ);
                 }
                 if (eventIdx == lastEventIdx)
                 {

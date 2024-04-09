@@ -11,6 +11,7 @@
 #include "erin_next/erin_next_toml.h"
 #include <assert.h>
 #include <fstream>
+#include <ios>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -1561,12 +1562,35 @@ namespace erin
     std::string
     DoubleToString(double value, unsigned int precision)
     {
-        double mult = std::pow(10.0, static_cast<double>(precision));
-        double fractionPart = std::round(mult * (value - std::floor(value)));
-        return std::to_string(static_cast<uint32_t>(std::trunc(value)))
-            + (fractionPart > 0.0
-                   ? ("." + std::to_string(static_cast<uint32_t>(fractionPart)))
-                   : "");
+        std::ostringstream oss{};
+        double p = precision;
+        double mult = std::pow(10.0, p);
+        double rounded = std::round(value * mult) / mult;
+        oss << std::fixed << std::setprecision(static_cast<int>(precision))
+            << rounded;
+        std::string proposed = oss.str();
+        int end_idx = proposed.size();
+        bool has_decimal = false;
+        for (char const& ch : proposed)
+        {
+            if (ch == '.')
+            {
+                has_decimal = true;
+                break;
+            }
+        }
+        if (has_decimal)
+        {
+            while (proposed[end_idx - 1] == '0' && end_idx > 0)
+            {
+                --end_idx;
+            }
+        }
+        if (proposed[end_idx - 1] == '.')
+        {
+            --end_idx;
+        }
+        return proposed.substr(0, end_idx);
     }
 
     void
@@ -1581,6 +1605,9 @@ namespace erin
         std::vector<size_t> const& compOrder
     )
     {
+        // TODO: pass in desired precision
+        unsigned int precision = 1;
+        unsigned int storePrecision = 3;
         Model const& m = s.TheModel;
         std::map<size_t, std::vector<TimeState>> relSchByCompId;
         for (size_t i = 0; i < m.Reliabilities.size(); ++i)
@@ -1591,34 +1618,35 @@ namespace erin
         for (auto const& r : results)
         {
             assert(r.Flows.size() == connOrder.size());
+            double elapsedTime_hr =
+                r.Time / static_cast<double>(seconds_per_hour);
             out << scenarioTag << "," << scenarioStartTimeTag << ","
-                << (r.Time / seconds_per_hour);
+                << elapsedTime_hr;
             for (size_t const& i : connOrder)
             {
-                double actual_kW =
-                    static_cast<double>(r.Flows[i].Actual_W) / W_per_kW;
-                out << "," << DoubleToString(actual_kW, 1);
+                double actual_W = r.Flows[i].Actual_W;
+                double actual_kW = actual_W / W_per_kW;
+                out << "," << DoubleToString(actual_kW, precision);
             }
             for (size_t const& i : connOrder)
             {
-                double req_kW =
-                    static_cast<double>(r.Flows[i].Requested_W) / W_per_kW;
-                out << "," << DoubleToString(req_kW, 1);
+                double req_W = r.Flows[i].Requested_W;
+                double req_kW = req_W / W_per_kW;
+                out << "," << DoubleToString(req_kW, precision);
             }
             for (size_t const& i : connOrder)
             {
-                double avail_kW =
-                    static_cast<double>(r.Flows[i].Available_W) / W_per_kW;
-                out << "," << DoubleToString(avail_kW, 1);
+                double avail_W = r.Flows[i].Available_W;
+                double avail_kW = avail_W / W_per_kW;
+                out << "," << DoubleToString(avail_kW, precision);
             }
-            // TODO: check StorageAmounts and m.Stores[i].Capacity; should be J
-            // TODO: append units to these variables for clarity
             // NOTE: Amounts in kJ
             for (size_t i : storeOrder)
             {
-                double store_kJ =
-                    static_cast<double>(r.StorageAmounts_J[i]) / J_per_kJ;
-                out << "," << std::fixed << std::setprecision(3) << store_kJ;
+                double store_J = r.StorageAmounts_J[i];
+                double store_kJ = store_J / J_per_kJ;
+                out << "," << std::fixed << std::setprecision(storePrecision)
+                    << store_kJ;
             }
             // NOTE: Store state in SOC
             for (size_t i : storeOrder)
@@ -1629,7 +1657,8 @@ namespace erin
                     soc = static_cast<double>(r.StorageAmounts_J[i])
                         / static_cast<double>(m.Stores[i].Capacity_J);
                 }
-                out << "," << std::fixed << std::setprecision(3) << soc;
+                out << "," << std::fixed << std::setprecision(storePrecision)
+                    << soc;
             }
             for (size_t i : compOrder)
             {
@@ -2154,9 +2183,9 @@ namespace erin
         stats << std::endl;
         for (auto const& os : occurrenceStats)
         {
-            double stored = os.StorageCharge_kJ - os.StorageDischarge_kJ;
+            double stored_kJ = os.StorageCharge_kJ - os.StorageDischarge_kJ;
             double balance = os.Inflow_kJ + os.InFromEnv_kJ
-                - (os.OutflowAchieved_kJ + stored + os.Wasteflow_kJ);
+                - (os.OutflowAchieved_kJ + stored_kJ + os.Wasteflow_kJ);
             double efficiency = (os.Inflow_kJ + os.StorageDischarge_kJ) > 0.0
                 ? ((os.OutflowAchieved_kJ + os.StorageCharge_kJ)
                    / (os.Inflow_kJ + os.StorageDischarge_kJ))
@@ -2169,11 +2198,11 @@ namespace erin
             stats << s.ScenarioMap.Tags[os.Id];
             stats << "," << os.OccurrenceNumber;
             stats << "," << (os.Duration_s / seconds_per_hour);
-            stats << "," << os.Inflow_kJ;
-            stats << "," << os.OutflowAchieved_kJ;
-            stats << "," << stored;
-            stats << "," << os.Wasteflow_kJ;
-            stats << "," << balance;
+            stats << "," << DoubleToString(os.Inflow_kJ + os.InFromEnv_kJ, 0);
+            stats << "," << DoubleToString(os.OutflowAchieved_kJ, 0);
+            stats << "," << DoubleToString(stored_kJ, 0);
+            stats << "," << DoubleToString(os.Wasteflow_kJ, 0);
+            stats << "," << DoubleToString(balance, 16);
             stats << "," << efficiency;
             stats << "," << (os.Uptime_s / seconds_per_hour);
             stats << "," << (os.Downtime_s / seconds_per_hour);

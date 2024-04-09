@@ -748,7 +748,7 @@ namespace erin
                         TimeAndAmount taa{};
                         taa.Time_s = t.value() * timeMult;
                         taa.Amount_W =
-                            static_cast<uint32_t>(r.value() * rateMult);
+                            static_cast<flow_t>(r.value() * rateMult);
                         timeAndLoads.push_back(std::move(taa));
                     }
                     else

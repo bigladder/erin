@@ -1,5 +1,6 @@
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_timestate.h"
+#include "erin_next/erin_next_simulation.h"
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>
@@ -1759,37 +1760,39 @@ TEST(Erin, Test22)
     EXPECT_EQ(result, 0.85);
 }
 
-// int
-// main(int argc, char** argv)
-// {
-//     auto start = std::chrono::high_resolution_clock::now();
-//     Test1(false);
-//     Test2(false);
-//     Test3(false);
-//     Test3A(false);
-//     Test4(false);
-//     Test5(false);
-//     Test6(false);
-//     Test7(false);
-//     Test8(false);
-//     Test9(false);
-//     Test10(false);
-//     Test11(false);
-//     Test12(false);
-//     Test13(false);
-//     Test14(false);
-//     Test15(false);
-//     Test16(false);
-//     Test17(false);
-//     Test18(false);
-//     Test19(false);
-//     Test20(false);
-//     Test21(false);
-//     Test22(false);
-//     auto stop = std::chrono::high_resolution_clock::now();
-//     auto duration =
-//         std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-//     std::cout << "Duration " << ((double)duration.count() / 1000.0) << " ms"
-//               << std::endl;
-//     return EXIT_SUCCESS;
-// }
+TEST(Erin, TestDoubleToString)
+{
+    double a = 1.5005;
+    std::string expected_a_at_p0 = "2";
+    std::string actual_a_at_p0 = erin::DoubleToString(a, 0);
+    EXPECT_EQ(expected_a_at_p0, actual_a_at_p0);
+    std::string expected_a_at_p1 = "1.5";
+    std::string actual_a_at_p1 = erin::DoubleToString(a, 1);
+    EXPECT_EQ(expected_a_at_p1, actual_a_at_p1);
+    std::string expected_a_at_p2 = "1.5";
+    std::string actual_a_at_p2 = erin::DoubleToString(a, 2);
+    EXPECT_EQ(expected_a_at_p2, actual_a_at_p2);
+    std::string expected_a_at_p3 = "1.501";
+    std::string actual_a_at_p3 = erin::DoubleToString(a, 3);
+    EXPECT_EQ(expected_a_at_p3, actual_a_at_p3);
+    std::string expected_a_at_p4 = "1.5005";
+    std::string actual_a_at_p4 = erin::DoubleToString(a, 4);
+    EXPECT_EQ(expected_a_at_p4, actual_a_at_p4);
+    std::string expected_a_at_p5 = "1.5005";
+    std::string actual_a_at_p5 = erin::DoubleToString(a, 5);
+    EXPECT_EQ(expected_a_at_p5, actual_a_at_p5);
+    double b = 4.0;
+    std::string expected_b_at_p0 = "4";
+    std::string actual_b_at_p0 = erin::DoubleToString(b, 0);
+    EXPECT_EQ(expected_b_at_p0, actual_b_at_p0);
+    std::string expected_b_at_p1 = "4";
+    std::string actual_b_at_p1 = erin::DoubleToString(b, 1);
+    EXPECT_EQ(expected_b_at_p1, actual_b_at_p1);
+    std::string expected_b_at_p2 = "4";
+    std::string actual_b_at_p2 = erin::DoubleToString(b, 2);
+    EXPECT_EQ(expected_b_at_p2, actual_b_at_p2);
+    double c = 1500.0;
+    std::string expected_c_at_p0 = "1500";
+    std::string actual_c_at_p0 = erin::DoubleToString(c, 0);
+    EXPECT_EQ(expected_c_at_p0, actual_c_at_p0);
+}

@@ -30,28 +30,27 @@ tasks:
     cmds:
       # TODO[mok]: have regress.py take the build directory to run against
       - python regress.py
-  release:
+  init-release:
+    desc: Initialize a release build
+    cmds:
+      - mkdir build
+      - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+  build-release:
     desc: Make a release build
     cmds:
-      - mkdir build-release
-      - cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-      - cmake --build build-release --config Release -j 4
+      - cmake --build build --config Release -j 4
   ex:
     desc: Run the given exercise. Pass '-- ex29.toml' to run example 29
     dir: 'docs/examples'
     cmds:
       - ../../build/bin/erin_next_cli {{.CLI_ARGS}}
-  db-init:
-    desc: Make a debug build
-    cmds:
-      - mkdir build-db
-      - cmake -S . -B build-db -DCMAKE_BUILD_TYPE=Debug -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-  db-build:
-    desc: Build in debug mode
-    cmds:
-      - cmake --build build-db --config Debug -j 4
   db:
-    desc: Runs the current exercise
+    desc: Runs the current exercise. Pass '-- ex29.toml' to debug example 29
     dir: 'docs/examples'
     cmds:
-      - lldb ../../build-db/bin/erin_next_cli -- ex29.toml
+      - lldb ../../build/bin/erin_next_cli {{.CLI_ARGS}}
+  bench:
+    desc: Runs benchmarks using hyperfine.
+    dir: 'docs/examples/ft-illinois'
+    cmds:
+      - hyperfine '../../../build/bin/erin_next_cli exft-illinois.toml > junk.txt' --export-markdown ../../../benchmark.md --export-json ../../../benchmark.json --export-csv ../../../benchmark.csv

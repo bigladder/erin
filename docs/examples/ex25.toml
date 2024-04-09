@@ -209,10 +209,10 @@ outflow = "electricity"
 lossflow = "heating"
 constant_efficiency = 0.42
 [components.elec_heat_pump_conv]
-type = "converter"
+type = "mover"
 inflow = "electricity"
 outflow = "heating"
-constant_efficiency = 3.5
+cop = 3.5
 [components.ng_heater_conv]
 type = "converter"
 inflow = "ng"

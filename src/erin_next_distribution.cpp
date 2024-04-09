@@ -498,7 +498,7 @@ namespace erin
                 auto delta = ub - lb;
                 dt = static_cast<double>(
                     fraction * static_cast<double>(delta)
-                    + static_cast<uint32_t>(lb)
+                    + static_cast<flow_t>(lb)
                 );
             }
             break;

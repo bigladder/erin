@@ -122,7 +122,7 @@ namespace erin
                 );
                 return {};
             }
-            uint32_t rowIdx = 1;
+            flow_t rowIdx = 1;
             std::vector<TimeAndAmount> trps{};
             while (inputDataFile.is_open() && inputDataFile.good())
             {
@@ -276,7 +276,7 @@ namespace erin
             );
             return {};
         }
-        uint32_t rowIdx = 1;
+        flow_t rowIdx = 1;
         std::vector<TimeAndAmount> trps{};
         while (inputDataFile.is_open() && inputDataFile.good())
         {
@@ -303,8 +303,7 @@ namespace erin
             TimeAndAmount ta{};
             ta.Time_s = Time_ToSeconds(std::stod(pair[0]), timeUnit);
             ta.Amount_W =
-                static_cast<uint32_t>(Power_ToWatt(std::stod(pair[1]), rateUnit)
-                );
+                static_cast<flow_t>(Power_ToWatt(std::stod(pair[1]), rateUnit));
             trps.push_back(ta);
         }
         inputDataFile.close();

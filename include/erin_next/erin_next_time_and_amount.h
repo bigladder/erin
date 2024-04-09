@@ -2,6 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_TIME_AND_AMOUNT_H
 #define ERIN_TIME_AND_AMOUNT_H
+#include "erin_next/erin_next_const.h"
 #include <stdint.h>
 #include <ostream>
 
@@ -10,7 +11,7 @@ namespace erin
     struct TimeAndAmount
     {
         double Time_s = 0.0;
-        uint32_t Amount_W = 0;
+        flow_t Amount_W = 0;
     };
 
     std::ostream&

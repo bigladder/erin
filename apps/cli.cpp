@@ -27,40 +27,16 @@ PrintUsage(std::string const& progName)
 int
 main(int argc, char** argv)
 {
-    using namespace erin;
-    std::cout << "ERIN version " << erin::version::version_string << std::endl;
-    std::cout << "Copyright (C) 2020-2024 Big Ladder Software LLC."
-              << std::endl;
-    std::cout << "See LICENSE.txt file for license information." << std::endl;
-    if (argc >= 2)
-    {
-        std::string fname{argv[1]};
-        std::cout << "input file: " << fname << std::endl;
-        std::ifstream ifs(fname, std::ios_base::binary);
-        if (!ifs.good())
-        {
-            std::cout << "Could not open input file stream on input file"
-                      << std::endl;
-            return EXIT_FAILURE;
-        }
-        auto nameOnly = std::filesystem::path(fname).filename();
-        auto data = toml::parse(ifs, nameOnly.string());
-        ifs.close();
-        std::cout << data << std::endl;
-        auto validationInfo = SetupGlobalValidationInfo();
-        auto maybeSim = Simulation_ReadFromToml(data, validationInfo);
-        if (!maybeSim.has_value())
-        {
-            return EXIT_FAILURE;
-        }
-        Simulation s = std::move(maybeSim.value());
-        Simulation_Print(s);
-        std::cout << "-----------------" << std::endl;
-        Simulation_Run(s);
-    }
-    else
-    {
+    CLI::App app{"erin"};
+    app.require_subcommand(1);
+
+    auto help = app.add_subcommand("help", "Display command-line help");
+
+    help->callback([&]() {
         PrintUsage(std::string{argv[0]});
     }
-    return EXIT_SUCCESS;
+    );
+
+    CLI11_PARSE(app, argc, argv);
+     return EXIT_SUCCESS;
 }

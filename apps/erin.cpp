@@ -34,6 +34,13 @@ versionCommand()
 }
 
 int
+limitsCommand()
+{
+    std::cout << "Limits: " << "not available";
+    return EXIT_SUCCESS;
+}
+
+int
 runCommand(
     std::string const& tomlFilename,
     std::string const& eventsFilename,
@@ -78,8 +85,8 @@ runCommand(
 
 int
 graphCommand(
-        std::string const& inputFilename,
-        std::string const& outputFilename
+    std::string const& inputFilename,
+    std::string const& outputFilename
 )
 {
     std::ifstream ifs(inputFilename, std::ios_base::binary);
@@ -102,7 +109,7 @@ graphCommand(
     }
     Simulation s = std::move(maybe_sim.value());
     std::string dot_data = network_to_dot(
-            s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
+        s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
     );
     // save string from network_to_dot
     std::ofstream ofs(outputFilename, std::ios_base::binary);
@@ -140,6 +147,10 @@ main(int argc, char** argv)
     auto version = app.add_subcommand("version", "Display version");
     version->callback([&]() { versionCommand(); });
 
+    // "limits" command
+    auto limits = app.add_subcommand("limits", "Display limits");
+    limits->callback([&]() { limitsCommand(); });
+
     // "run" command
     auto run = app.add_subcommand("run", "Run a simulation");
     std::string tomlFilename;
@@ -161,11 +172,11 @@ main(int argc, char** argv)
     run->add_flag("-v, --verbose", verbose, "Verbose output");
 
     run->callback(
-            [&]() {
-                result = runCommand(
-                        tomlFilename, eventsFilename, statsFilename, verbose
-                );
-            }
+        [&]() {
+            result = runCommand(
+                tomlFilename, eventsFilename, statsFilename, verbose
+            );
+        }
     );
 
     // "graph" command
@@ -175,13 +186,8 @@ main(int argc, char** argv)
     std::string outputFilename = "graph.dot";
     graph->add_option("-o, --out", outputFilename, "Graph output filename");
 
-    graph->callback(
-            [&]() {
-                result = graphCommand(
-                        tomlFilename, outputFilename
-                );
-            }
-    );
+    graph->callback([&]()
+                    { result = graphCommand(tomlFilename, outputFilename); });
 
     CLI11_PARSE(app, argc, argv);
     return result;

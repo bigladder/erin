@@ -69,10 +69,20 @@ namespace erin
                                 oss << "WARNING! field '" << aliasValue.Tag
                                     << "' is deprecated and will be removed "
                                     << "in a future version; use '"
-                                    << alias.first << "' instead (value = "
-                                    << (value.is_string() ? value.as_string()
-                                                          : "")
-                                    << ")";
+                                    << alias.first << "' instead (value = ";
+                                if (value.is_string())
+                                {
+                                    oss << value.as_string();
+                                }
+                                if (value.is_integer())
+                                {
+                                    oss << value.as_integer();
+                                }
+                                if (value.is_floating())
+                                {
+                                    oss << value.as_floating();
+                                }
+                                oss << ")";
                                 warnings.push_back(
                                     WriteErrorToString(tableName, oss.str())
                                 );
@@ -738,7 +748,7 @@ namespace erin
                         TimeAndAmount taa{};
                         taa.Time_s = t.value() * timeMult;
                         taa.Amount_W =
-                            static_cast<uint32_t>(r.value() * rateMult);
+                            static_cast<flow_t>(r.value() * rateMult);
                         timeAndLoads.push_back(std::move(taa));
                     }
                     else

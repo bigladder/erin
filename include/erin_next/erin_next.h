@@ -3,6 +3,7 @@
 #ifndef ERIN_H
 #define ERIN_H
 
+#include "erin_next/erin_next_const.h"
 #include "erin_next/erin_next_timestate.h"
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_reliability.h"
@@ -25,18 +26,6 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
-
-// TODO[mok]: add #define for the index type; currently size_t but not necessary
-// to be so big; we might try a uint16_t or uint32_t; possibly in pair with enum
-// for type:
-// struct CompId { ComponentType Type; uint16_t Id; uint16_T SubtypeId; };
-// define flow type to switch easily
-// TODO[mok]: things to try
-// - unsigned has modulo wrap around which is NOT what we want
-// - to prevent that, we have to compare to max which causes if statements
-//   to get interwoven with addition. We might want to try using signed
-//   with -1 meaning infinity or no limit?
-#define flow_t uint32_t
 
 namespace erin
 {
@@ -128,6 +117,8 @@ namespace erin
         double Wasteflow_kJ = 0.0;
         double InFromEnv_kJ = 0.0;
         double LoadNotServed_kJ = 0.0;
+        // TODO: net change in storage finalStored_kJ - initialStored_kJ
+        double ChangeInStorage_kJ = 0.0;
         double Uptime_s = 0.0;
         double Downtime_s = 0.0;
         double MaxSEDT_s = 0.0;
@@ -239,9 +230,9 @@ namespace erin
         // amount at or below which we request charge
         flow_t ChargeAmount_J;
         flow_t InitialStorage_J;
-        size_t InflowConn;
+        std::optional<size_t> InflowConn = {};
         size_t OutflowConn;
-        std::optional<size_t> WasteflowConn;
+        std::optional<size_t> WasteflowConn = {};
         double RoundTripEfficiency = 1.0;
         flow_t MaxOutflow_W = max_flow_W;
     };
@@ -255,16 +246,17 @@ namespace erin
 
     struct Flow
     {
-        uint32_t Requested_W = 0;
-        uint32_t Available_W = 0;
-        uint32_t Actual_W = 0;
+        flow_t Requested_W = 0;
+        flow_t Available_W = 0;
+        flow_t Actual_W = 0;
     };
 
     struct TimeAndFlows
     {
+        // TODO: change to Time_s
         double Time;
         std::vector<Flow> Flows;
-        std::vector<uint32_t> StorageAmounts_J;
+        std::vector<flow_t> StorageAmounts_J;
     };
 
     struct Model
@@ -306,7 +298,7 @@ namespace erin
         std::set<size_t> ActiveConnectionsFront{};
         // a set of component id that are unavailable
         std::set<size_t> UnavailableComponents{};
-        std::vector<uint32_t> StorageAmounts_J{};
+        std::vector<flow_t> StorageAmounts_J{};
         std::vector<double> StorageNextEventTimes{};
         std::vector<Flow> Flows{};
         std::vector<size_t> ScheduleBasedLoadIdx{};
@@ -534,8 +526,8 @@ namespace erin
     void
     RunConnectionsForward(Model& model, SimulationState& ss);
 
-    uint32_t
-    FinalizeFlowValue(uint32_t requested, uint32_t available);
+    flow_t
+    FinalizeFlowValue(flow_t requested, flow_t available);
 
     void
     FinalizeFlows(SimulationState& ss);
@@ -580,7 +572,7 @@ namespace erin
     FlowSummary
     SummarizeFlows(Model const& m, SimulationState const& ss, double t);
 
-    void
+    bool
     PrintFlowSummary(FlowSummary s);
 
     void
@@ -589,7 +581,7 @@ namespace erin
     std::vector<Flow>
     CopyFlows(std::vector<Flow> flows);
 
-    std::vector<uint32_t>
+    std::vector<flow_t>
     CopyStorageStates(SimulationState& ss);
 
     std::vector<TimeAndFlows>
@@ -610,13 +602,13 @@ namespace erin
     );
 
     size_t
-    Model_AddConstantLoad(Model& m, uint32_t load);
+    Model_AddConstantLoad(Model& m, flow_t load);
 
     size_t
     Model_AddScheduleBasedLoad(
         Model& m,
         double* times,
-        uint32_t* loads,
+        flow_t* loads,
         size_t numItems
     );
 
@@ -643,12 +635,12 @@ namespace erin
     );
 
     size_t
-    Model_AddConstantSource(Model& m, uint32_t available);
+    Model_AddConstantSource(Model& m, flow_t available);
 
     size_t
     Model_AddConstantSource(
         Model& m,
-        uint32_t available,
+        flow_t available,
         size_t outflowTypeId,
         std::string const& tag
     );
@@ -720,8 +712,8 @@ namespace erin
     ComponentIdAndWasteConnection
     Model_AddConstantEfficiencyConverter(
         Model& m,
-        uint32_t eff_numerator,
-        uint32_t eff_denominator
+        flow_t eff_numerator,
+        flow_t eff_denominator
     );
 
     ComponentIdAndWasteConnection
@@ -773,7 +765,7 @@ namespace erin
         std::vector<TimeAndFlows> timeAndFlows
     );
 
-    std::optional<uint32_t>
+    std::optional<flow_t>
     ModelResults_GetStoreState(
         Model const& m,
         size_t compId,
@@ -887,7 +879,6 @@ namespace erin
         Model& model,
         SimulationState& ss,
         double t,
-        size_t connIdx,
         size_t compIdx
     );
 

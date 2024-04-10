@@ -225,7 +225,7 @@ namespace erin
                         return Result::Failure;
                     }
                     double maxAvailableReal = maybe.value();
-                    maxAvailable = static_cast<uint32_t>(
+                    maxAvailable = static_cast<flow_t>(
                         Power_ToWatt(maxAvailableReal, rateUnit)
                     );
                 }
@@ -408,13 +408,16 @@ namespace erin
                     );
                     return Result::Failure;
                 }
-                // TODO: re-enable this after we have dedicated COP components
-                // if (efficiency > 1.0)
-                // {
-                // 	WriteErrorMessage(
-                // 		fullTableName, "efficiency must be <= 1.0");
-                // 	return Result::Failure;
-                // }
+                if (efficiency > 1.0)
+                {
+                    WriteErrorMessage(
+                        fullTableName,
+                        "efficiency must be <= 1.0; "
+                        "if you need efficiencies (COPs) > 1, "
+                        "consider using a mover"
+                    );
+                    return Result::Failure;
+                }
                 auto const compIdAndWasteConn =
                     Model_AddConstantEfficiencyConverter(
                         s.TheModel,
@@ -537,8 +540,8 @@ namespace erin
                     );
                     return Result::Failure;
                 }
-                uint32_t noChargeAmount_J =
-                    static_cast<uint32_t>(chargeAtSoc * capacity_J);
+                flow_t noChargeAmount_J =
+                    static_cast<flow_t>(chargeAtSoc * capacity_J);
                 if (noChargeAmount_J == capacity_J)
                 {
                     // NOTE: noChargeAmount must be at

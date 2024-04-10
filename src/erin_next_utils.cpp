@@ -23,8 +23,8 @@ namespace erin
                     elapsed_months_of_days = day_of_year_to_month[i - 1];
                 }
                 return Months_days_elapsed{
-                    static_cast<uint32_t>(i),
-                    static_cast<uint32_t>(doy - elapsed_months_of_days)
+                    static_cast<flow_t>(i),
+                    static_cast<flow_t>(doy - elapsed_months_of_days)
                 };
             }
         }

@@ -15,10 +15,13 @@
 #include <filesystem>
 #include "../vendor/CLI11/include/CLI/CLI.hpp"
 
-int runCommand(std::string const& tomlFilename)
+int runCommand(std::string const& tomlFilename, std::string const& eventsFilename, std::string const& statsFilename, bool verbose)
 {
-\
     std::cout << "input file: " << tomlFilename << std::endl;
+    std::cout << "events file: " << eventsFilename << std::endl;
+    std::cout << "statistics file: " << statsFilename << std::endl;
+    std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
+
     std::ifstream ifs(tomlFilename, std::ios_base::binary);
     if (!ifs.good())
     {
@@ -38,6 +41,9 @@ int runCommand(std::string const& tomlFilename)
         return EXIT_FAILURE;
     }
     Simulation s = std::move(maybeSim.value());
+    s.eventsFilename = eventsFilename;
+    s.statsFilename = statsFilename;
+    s.verbose = verbose;
     Simulation_Print(s);
     std::cout << "-----------------" << std::endl;
     Simulation_Run(s);
@@ -59,13 +65,24 @@ main(int argc, char** argv)
 {
     int result = EXIT_SUCCESS;
     CLI::App app{"erin"};
-    app.require_subcommand(1);
+    app.require_subcommand(1, 3);
 
     auto run = app.add_subcommand("run", "Run a simulation");
+
     std::string tomlFilename;
-    run->add_option("toml_file", tomlFilename, "TOML filename");
+    run->add_option("toml_file", tomlFilename, "TOML filename")->required();
+
+    std::string eventsFilename = "out.csv";
+    run->add_option("-e,--events", eventsFilename, "Events csv filename; default:out.csv");
+
+    std::string statsFilename = "stats.csv";
+    run->add_option("-s,--statistics", statsFilename, "Statistics csv filename; default:stats.csv");
+
+    bool verbose = false;
+    run->add_flag("-v, --verbose", verbose, "Verbose output");
+
     run->callback([&]() {
-        result = runCommand(tomlFilename);
+        result = runCommand(tomlFilename, eventsFilename, statsFilename, verbose);
     }
     );
 

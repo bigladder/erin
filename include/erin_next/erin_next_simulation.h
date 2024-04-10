@@ -32,6 +32,9 @@ namespace erin
         FragilityModeDict FragilityModes;
         ComponentFailureModeDict ComponentFailureModes;
         FailureModeDict FailureModes;
+        std::string eventsFilename;
+        std::string statsFilename;
+        bool verbose;
     };
 
     std::string

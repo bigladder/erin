@@ -2389,9 +2389,6 @@ namespace erin
             break;
         }
         // TODO: expose proper options
-        bool option_verbose = true;
-        std::string eventFilePath{"out.csv"};
-        std::string statsFilePath{"stats.csv"};
         // TODO: check the components and network:
         // -- that all components are hooked up to something
         // -- that no port is double linked
@@ -2486,10 +2483,10 @@ namespace erin
         // output format (instead of CSV)?
         // NOW, we want to do a simulation for each scenario
         std::ofstream out;
-        out.open(eventFilePath);
+        out.open(s.eventsFilename);
         if (!out.good())
         {
-            std::cout << "Could not open '" << eventFilePath << "' for writing."
+            std::cout << "Could not open '" << s.eventsFilename << "' for writing."
                       << std::endl;
             return;
         }
@@ -2521,7 +2518,7 @@ namespace erin
             // for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size();
             // ++sbsIdx) {/* ... */}
             std::vector<double> occurrenceTimes_s =
-                DetermineScenarioOccurrenceTimes(s, scenIdx, option_verbose);
+                DetermineScenarioOccurrenceTimes(s, scenIdx, s.verbose);
             // TODO: initialize total scenario stats (i.e.,
             // over all occurrences)
             std::map<size_t, double> intensityIdToAmount =
@@ -2543,7 +2540,7 @@ namespace erin
                     );
                 std::string scenarioStartTimeTag =
                     TimeToISO8601Period(static_cast<uint64_t>(std::llround(t)));
-                if (option_verbose)
+                if (s.verbose)
                 {
                     std::cout << "Running " << s.ScenarioMap.Tags[scenIdx]
                               << " from " << scenarioStartTimeTag << " for "
@@ -2556,7 +2553,7 @@ namespace erin
                 s.TheModel.FinalTime = duration_s;
                 // TODO: add an optional verbosity flag to SimInfo
                 // -- use that to set things like the print flag below
-                auto results = Simulate(s.TheModel, option_verbose);
+                auto results = Simulate(s.TheModel, s.verbose);
                 // TODO: investigate putting output on another thread
                 WriteResultsToEventFile(
                     out,
@@ -2581,7 +2578,7 @@ namespace erin
         }
         out.close();
         WriteStatisticsToFile(
-            s, statsFilePath, occurrenceStats, compOrder, failOrder, fragOrder
+            s, s.statsFilename, occurrenceStats, compOrder, failOrder, fragOrder
         );
     }
 } // namespace erin

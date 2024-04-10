@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include "../vendor/CLI11/include/CLI/CLI.hpp"
 
 void
 PrintUsage(std::string const& progName)

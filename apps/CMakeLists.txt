@@ -12,10 +12,3 @@ target_include_directories(erin
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/CLI11")
 target_link_libraries(erin erin_next CLI11)
-
-add_executable(erin_next_graph
-	graph.cpp)
-target_include_directories(erin_next_graph
-	PUBLIC "${PROJECT_SOURCE_DIR}/include"
-	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11")
-target_link_libraries(erin_next_graph erin_next)

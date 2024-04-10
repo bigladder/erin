@@ -10,10 +10,21 @@
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_result.h"
 #include "erin_next/erin_next_validation.h"
+#include "erin_next/erin_next_graph.h"
 #include <iostream>
 #include <string>
 #include <filesystem>
 #include "../vendor/CLI11/include/CLI/CLI.hpp"
+
+int
+helpCommand(std::string const& progName)
+{
+    std::cout << "USAGE: " << progName << " " << "<toml-input-file> "
+              << "<optional:output csv; default:out.csv> "
+              << "<optional:statistics.csv; default:stats.csv> "
+              << "<optional:scenario; default: run all>" << std::endl;
+    return EXIT_SUCCESS;
+}
 
 int
 runCommand(
@@ -58,13 +69,45 @@ runCommand(
     return EXIT_SUCCESS;
 }
 
-void
-helpCommand(std::string const& progName)
+int
+graphCommand(
+        std::string const& inputFilename,
+        std::string const& outputFilename
+)
 {
-    std::cout << "USAGE: " << progName << " " << "<toml-input-file> "
-              << "<optional:output csv; default:out.csv> "
-              << "<optional:statistics.csv; default:stats.csv> "
-              << "<optional:scenario; default: run all>" << std::endl;
+    std::ifstream ifs(inputFilename, std::ios_base::binary);
+    if (!ifs.good())
+    {
+        std::cout << "Could not open input file stream on input file"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    using namespace erin;
+    auto name_only = std::filesystem::path(inputFilename).filename();
+    auto data = toml::parse(ifs, name_only.string());
+    ifs.close();
+    auto validation_info = SetupGlobalValidationInfo();
+    auto maybe_sim = Simulation_ReadFromToml(data, validation_info);
+    if (!maybe_sim.has_value())
+    {
+        return EXIT_FAILURE;
+    }
+    Simulation s = std::move(maybe_sim.value());
+    std::string dot_data = network_to_dot(
+            s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
+    );
+    // save string from network_to_dot
+    std::ofstream ofs(outputFilename, std::ios_base::binary);
+    if (!ofs.good())
+    {
+        std::cout << "Could not open output file stream on output file"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+    ofs << dot_data << std::endl;
+    ofs.close();
+    return EXIT_SUCCESS;
 }
 
 int
@@ -75,8 +118,7 @@ main(int argc, char** argv)
     // call with no subcommands is equivalent to subcommand "help"
     if (argc == 1)
     {
-        helpCommand(std::string{argv[0]});
-        return result;
+        result = helpCommand(std::string{argv[0]});
     }
 
     // process subcommands
@@ -89,7 +131,6 @@ main(int argc, char** argv)
 
     // "run" command
     auto run = app.add_subcommand("run", "Run a simulation");
-
     std::string tomlFilename;
     run->add_option("toml_file", tomlFilename, "TOML filename")->required();
 
@@ -109,11 +150,26 @@ main(int argc, char** argv)
     run->add_flag("-v, --verbose", verbose, "Verbose output");
 
     run->callback(
-        [&]() {
-            result = runCommand(
-                tomlFilename, eventsFilename, statsFilename, verbose
-            );
-        }
+            [&]() {
+                result = runCommand(
+                        tomlFilename, eventsFilename, statsFilename, verbose
+                );
+            }
+    );
+
+    // "graph" command
+    auto graph = app.add_subcommand("graph", "Graph a simulation");
+    graph->add_option("toml_file", tomlFilename, "TOML filename")->required();
+
+    std::string outputFilename = "graph.dot";
+    graph->add_option("-o, --out", outputFilename, "Graph output filename");
+
+    graph->callback(
+            [&]() {
+                result = graphCommand(
+                        tomlFilename, outputFilename
+                );
+            }
     );
 
     CLI11_PARSE(app, argc, argv);

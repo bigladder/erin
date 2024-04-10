@@ -27,6 +27,13 @@ helpCommand(std::string const& progName)
 }
 
 int
+versionCommand()
+{
+    std::cout << "Version: " << erin::version::version_string;
+    return EXIT_SUCCESS;
+}
+
+int
 runCommand(
     std::string const& tomlFilename,
     std::string const& eventsFilename,
@@ -128,6 +135,10 @@ main(int argc, char** argv)
     // "help" command
     auto help = app.add_subcommand("help", "Display command-line help");
     help->callback([&]() { helpCommand(std::string{argv[0]}); });
+
+    // "version" command
+    auto version = app.add_subcommand("version", "Display version");
+    version->callback([&]() { versionCommand(); });
 
     // "run" command
     auto run = app.add_subcommand("run", "Run a simulation");

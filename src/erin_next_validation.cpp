@@ -686,6 +686,7 @@ namespace erin
                         InputSection::Components_Store,
                     },
             },
+            // TODO[mok]: should max_charge still be required if now inflow?
             FieldInfo{
                 .FieldName = "max_charge",
                 .Type = InputType::Number,

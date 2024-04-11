@@ -1,0 +1,114 @@
+[meta]
+description = """
+  Simple test to exercise stores
+"""
+# simple load that switches low to high
+# simple load that switches high to low
+# store starting at 100% SOC and above the charge level of 80%
+# store starting at 50% SOC and below the charge level of 80%
+
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "second"
+max_time = 10.0
+fixed_random = 0.5
+
+[loads.low_then_high]
+rate_unit = "kW"
+time_unit = "second"
+time_rate_pairs = [
+  [0, 10.0],
+  [5, 100.0],
+]
+
+[loads.high_then_low]
+rate_unit = "kW"
+time_unit = "second"
+time_rate_pairs = [
+  [0, 100.0],
+  [5, 10.0],
+]
+
+[components.store_01]
+type = "store"
+rate_unit = "kW"
+capacity_unit = "kJ"
+flow = "electricity"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 100.0
+max_outflow = 100.0
+init_soc = 1
+
+[components.load_01]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "low_then_high"
+
+[components.store_02]
+type = "store"
+rate_unit = "kW"
+capacity_unit = "kJ"
+flow = "electricity"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 100.0
+max_outflow = 100.0
+init_soc = 0.5
+
+[components.load_02]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "low_then_high"
+
+[components.store_03]
+type = "store"
+rate_unit = "kW"
+capacity_unit = "kJ"
+flow = "electricity"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 100.0
+max_outflow = 100.0
+init_soc = 1
+
+[components.load_03]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "high_then_low"
+
+[components.store_04]
+type = "store"
+rate_unit = "kW"
+capacity_unit = "kJ"
+flow = "electricity"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 100.0
+max_outflow = 100.0
+init_soc = 0.5
+
+[components.load_04]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "high_then_low"
+
+[network]
+connections = [
+  ["store_01:OUT(0)", "load_01:IN(0)", "electricity"],
+  ["store_02:OUT(0)", "load_02:IN(0)", "electricity"],
+  ["store_03:OUT(0)", "load_03:IN(0)", "electricity"],
+  ["store_04:OUT(0)", "load_04:IN(0)", "electricity"],
+]
+
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "second"
+
+[scenarios.blue_sky]
+duration = 10
+time_unit = "second"
+occurrence_distribution = "immediately"
+max_occurrences = 1

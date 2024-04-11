@@ -101,11 +101,15 @@ def run_bench(bench_file, example_name, dir=None):
     """
     Run a benchmark test.    
     """
+    git_sha = "<no-git-sha-detected>"
+    git_sha_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True)
+    if git_sha_result.returncode == 0:
+        git_sha = git_sha_result.stdout.decode("utf-8").strip()
     now = datetime.datetime.now().isoformat()
     result = smoke_test(example_name, dir)
     with open(bench_file, 'a') as f:
         time_s = result.time_ns / 1_000_000_000.0
-        print(f"[{now}] {example_name}: {time_s} ns\n", file=f)
+        print(f"[{now}] (commit: {git_sha}) {example_name}: {time_s} ns", file=f)
 
 
 def read_csv(path):

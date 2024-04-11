@@ -24,14 +24,14 @@ if platform.system() == 'Windows':
         sys.exit(1)
     TEST_EXE = BIN_DIR / 'erin_tests.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests.exe'
-    CLI_EXE = BIN_DIR / 'erin_next_cli.exe'
+    CLI_EXE = BIN_DIR / 'erin.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     DIFF_PROG = 'diff'
     BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
     TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
-    CLI_EXE = BIN_DIR / 'erin_next_cli'
+    CLI_EXE = BIN_DIR / 'erin'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test'
 else:
     print(f"Unhandled platform, '{platform.system()}'")
@@ -83,7 +83,7 @@ def smoke_test(example_name, dir=None, timeit=False):
     Path("stats.csv").unlink(missing_ok=True)
     toml_input = f"ex{example_name}.toml"
     start_time = time.perf_counter_ns()
-    result = subprocess.run([CLI_EXE, toml_input], capture_output=True, cwd=cwd)
+    result = subprocess.run([CLI_EXE, "run", toml_input], capture_output=True, cwd=cwd)
     end_time = time.perf_counter_ns()
     time_ns = end_time - start_time
     if result.returncode != 0:

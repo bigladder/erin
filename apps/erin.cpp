@@ -14,17 +14,7 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
-#include "../vendor/CLI11/include/CLI/CLI.hpp"
-
-int
-helpCommand(std::string const& progName)
-{
-    std::cout << "USAGE: " << progName << " " << "<toml-input-file> "
-              << "<optional:output csv; default:out.csv> "
-              << "<optional:statistics.csv; default:stats.csv> "
-              << "<optional:scenario; default: run all>" << std::endl;
-    return EXIT_SUCCESS;
-}
+#include "../vendor/CLI11/include/CLI/CLI.hpp" //TODO CLI11 license
 
 int
 versionCommand()
@@ -73,12 +63,9 @@ runCommand(
         return EXIT_FAILURE;
     }
     Simulation s = std::move(maybeSim.value());
-    s.eventsFilename = eventsFilename;
-    s.statsFilename = statsFilename;
-    s.verbose = verbose;
     Simulation_Print(s);
     std::cout << "-----------------" << std::endl;
-    Simulation_Run(s);
+    Simulation_Run(s, eventsFilename, statsFilename,verbose);
 
     return EXIT_SUCCESS;
 }
@@ -129,19 +116,10 @@ main(int argc, char** argv)
 {
     int result = EXIT_SUCCESS;
 
-    // call with no subcommands is equivalent to subcommand "help"
-    if (argc == 1)
-    {
-        result = helpCommand(std::string{argv[0]});
-    }
-
+    // TODO: show program name, copyright info
     // process subcommands
     CLI::App app{"erin"};
     app.require_subcommand(0);
-
-    // "help" command
-    auto help = app.add_subcommand("help", "Display command-line help");
-    help->callback([&]() { helpCommand(std::string{argv[0]}); });
 
     // "version" command
     auto version = app.add_subcommand("version", "Display version");
@@ -190,5 +168,12 @@ main(int argc, char** argv)
                     { result = graphCommand(tomlFilename, outputFilename); });
 
     CLI11_PARSE(app, argc, argv);
+
+    // call with no subcommands is equivalent to subcommand "help"
+    if (argc == 1)
+    {
+        std::cerr << app.help() << std::flush;
+    }
+
     return result;
 }

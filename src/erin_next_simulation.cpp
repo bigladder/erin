@@ -2349,7 +2349,10 @@ namespace erin
     }
 
     void
-    Simulation_Run(Simulation& s)
+    Simulation_Run(Simulation& s,
+                   const std::string& eventsFilename,
+                   const std::string& statsFilename,
+                   const bool verbose)
     {
         FixedRandom fixedRandom;
         FixedSeries fixedSeries;
@@ -2483,10 +2486,10 @@ namespace erin
         // output format (instead of CSV)?
         // NOW, we want to do a simulation for each scenario
         std::ofstream out;
-        out.open(s.eventsFilename);
+        out.open(eventsFilename);
         if (!out.good())
         {
-            std::cout << "Could not open '" << s.eventsFilename
+            std::cout << "Could not open '" << eventsFilename
                       << "' for writing." << std::endl;
             return;
         }
@@ -2518,7 +2521,7 @@ namespace erin
             // for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size();
             // ++sbsIdx) {/* ... */}
             std::vector<double> occurrenceTimes_s =
-                DetermineScenarioOccurrenceTimes(s, scenIdx, s.verbose);
+                DetermineScenarioOccurrenceTimes(s, scenIdx, verbose);
             // TODO: initialize total scenario stats (i.e.,
             // over all occurrences)
             std::map<size_t, double> intensityIdToAmount =
@@ -2540,7 +2543,7 @@ namespace erin
                     );
                 std::string scenarioStartTimeTag =
                     TimeToISO8601Period(static_cast<uint64_t>(std::llround(t)));
-                if (s.verbose)
+                if (verbose)
                 {
                     std::cout << "Running " << s.ScenarioMap.Tags[scenIdx]
                               << " from " << scenarioStartTimeTag << " for "
@@ -2553,7 +2556,7 @@ namespace erin
                 s.TheModel.FinalTime = duration_s;
                 // TODO: add an optional verbosity flag to SimInfo
                 // -- use that to set things like the print flag below
-                auto results = Simulate(s.TheModel, s.verbose);
+                auto results = Simulate(s.TheModel, verbose);
                 // TODO: investigate putting output on another thread
                 WriteResultsToEventFile(
                     out,
@@ -2578,7 +2581,7 @@ namespace erin
         }
         out.close();
         WriteStatisticsToFile(
-            s, s.statsFilename, occurrenceStats, compOrder, failOrder, fragOrder
+            s, statsFilename, occurrenceStats, compOrder, failOrder, fragOrder
         );
     }
 } // namespace erin

@@ -309,8 +309,7 @@ namespace erin
             bool isSource = !maybeInflowConn.has_value();
             if (ss.StorageNextEventTimes[storeIdx] == t || isSource)
             {
-                flow_t available =
-                    ss.StorageAmounts_J[storeIdx] > 0
+                flow_t available = ss.StorageAmounts_J[storeIdx] > 0
                     ? store.MaxDischargeRate_W
                     : 0;
                 if (maybeInflowConn.has_value())
@@ -1204,8 +1203,7 @@ namespace erin
                    )
                    / static_cast<double>(storeflow_W));
         }
-        else if (netCharge_W < 0
-                 && store.InflowConn.has_value()
+        else if (netCharge_W < 0 && store.InflowConn.has_value()
                  && (ss.StorageAmounts_J[compIdx] > store.ChargeAmount_J))
         {
             if (store.WasteflowConn.has_value())

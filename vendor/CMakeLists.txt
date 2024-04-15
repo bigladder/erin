@@ -23,3 +23,8 @@ if (${CMAKE_PROJECT_NAME}_TESTING AND NOT TARGET gtest)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/googletest ${googletest_BINARY_DIR})
 
 endif()
+
+# googletest library
+if (NOT TARGET CLI11)
+  add_subdirectory(CLI11)
+endif()

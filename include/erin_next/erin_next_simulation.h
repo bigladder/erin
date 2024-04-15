@@ -204,7 +204,12 @@ namespace erin
     );
 
     void
-    Simulation_Run(Simulation& s);
+    Simulation_Run(
+        Simulation& s,
+        const std::string& eventsFilename,
+        const std::string& statsFilename = "stats.csv",
+        const bool verbose = false
+    );
 
     bool
     Simulation_IsFailureNameUnique(Simulation& s, std::string const& name);

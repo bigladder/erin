@@ -306,31 +306,31 @@ namespace erin
                 ss.Flows[outflowConn].Available_W = 0;
                 continue;
             }
-            if (ss.StorageNextEventTimes[storeIdx] == t)
+            bool isSource = !maybeInflowConn.has_value();
+            if (ss.StorageNextEventTimes[storeIdx] == t || isSource)
             {
-                flow_t available = 0;
+                flow_t available = ss.StorageAmounts_J[storeIdx] > 0
+                    ? store.MaxDischargeRate_W
+                    : 0;
                 if (maybeInflowConn.has_value())
                 {
                     size_t inflowConn = maybeInflowConn.value();
-                    available = ss.Flows[inflowConn].Available_W
-                        + (ss.StorageAmounts_J[storeIdx] > 0
-                               ? store.MaxDischargeRate_W
-                               : 0);
+                    available += ss.Flows[inflowConn].Available_W;
                 }
                 if (ss.Flows[outflowConn].Available_W != available)
                 {
                     ss.ActiveConnectionsFront.insert(outflowConn);
                 }
                 ss.Flows[outflowConn].Available_W = available;
-                flow_t request =
-                    (ss.Flows[outflowConn].Requested_W > store.MaxOutflow_W
-                         ? store.MaxOutflow_W
-                         : ss.Flows[outflowConn].Requested_W)
-                    + (ss.StorageAmounts_J[storeIdx] <= store.ChargeAmount_J
-                           ? store.MaxChargeRate_W
-                           : 0);
                 if (maybeInflowConn.has_value())
                 {
+                    flow_t request =
+                        (ss.Flows[outflowConn].Requested_W > store.MaxOutflow_W
+                             ? store.MaxOutflow_W
+                             : ss.Flows[outflowConn].Requested_W)
+                        + (ss.StorageAmounts_J[storeIdx] <= store.ChargeAmount_J
+                               ? store.MaxChargeRate_W
+                               : 0);
                     size_t inflowConn = maybeInflowConn.value();
                     if (ss.Flows[inflowConn].Requested_W != request)
                     {
@@ -1203,7 +1203,7 @@ namespace erin
                    )
                    / static_cast<double>(storeflow_W));
         }
-        else if (netCharge_W < 0
+        else if (netCharge_W < 0 && store.InflowConn.has_value()
                  && (ss.StorageAmounts_J[compIdx] > store.ChargeAmount_J))
         {
             if (store.WasteflowConn.has_value())

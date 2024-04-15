@@ -1,0 +1,124 @@
+[meta]
+description = """
+  Simple test to exercise stores
+"""
+
+[simulation_info]
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "second"
+max_time = 10.0
+fixed_random = 0.5
+
+[loads.low_then_high]
+rate_unit = "kW"
+time_unit = "second"
+time_rate_pairs = [
+  [0, 10.0],
+  [5, 100.0],
+]
+
+[loads.high_then_low]
+rate_unit = "kW"
+time_unit = "second"
+time_rate_pairs = [
+  [0, 100.0],
+  [5, 10.0],
+]
+
+[components.store_01]
+type = "store"
+rate_unit = "kW"
+capacity_unit = "kJ"
+flow = "electricity"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 100.0
+max_outflow = 100.0
+init_soc = 1
+# EXPECTED
+# 0 s -> 10 kW discharge, 100% SOC
+# 2 s -> 10 kW discharge,  80% SOC
+# 5 s -> 100 kW discharge, 50% SOC
+# 5.5 s -> 0 kW discharge,  0% SOC
+
+[components.load_01]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "low_then_high"
+
+[components.store_02]
+type = "store"
+rate_unit = "kW"
+capacity_unit = "kJ"
+flow = "electricity"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 100.0
+max_outflow = 100.0
+init_soc = 0.5
+# EXPECTED
+# 0 s -> 10 kW discharge,  50% SOC
+# 5 s ->  0 kW discharge,   0% SOC
+
+[components.load_02]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "low_then_high"
+
+[components.store_03]
+type = "store"
+rate_unit = "kW"
+capacity_unit = "kJ"
+flow = "electricity"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 100.0
+max_outflow = 100.0
+init_soc = 1
+# EXPECTED
+# 0 s -> 100 kW discharge, 100% SOC
+# 1 s ->   0 kW discharge,   0% SOC
+
+[components.load_03]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "high_then_low"
+
+[components.store_04]
+type = "store"
+rate_unit = "kW"
+capacity_unit = "kJ"
+flow = "electricity"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 100.0
+max_outflow = 100.0
+init_soc = 0.5
+# EXPECTED
+# 0 s -> 100 kW discharge,  50% SOC
+# 0.5 s -> 0 kW discharge,   0% SOC
+
+[components.load_04]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "high_then_low"
+
+[network]
+connections = [
+  ["store_01:OUT(0)", "load_01:IN(0)", "electricity"],
+  ["store_02:OUT(0)", "load_02:IN(0)", "electricity"],
+  ["store_03:OUT(0)", "load_03:IN(0)", "electricity"],
+  ["store_04:OUT(0)", "load_04:IN(0)", "electricity"],
+]
+
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "second"
+
+[scenarios.blue_sky]
+duration = 10
+time_unit = "second"
+occurrence_distribution = "immediately"
+max_occurrences = 1

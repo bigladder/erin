@@ -265,7 +265,8 @@ namespace erin
         Model const& m,
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
-        std::vector<size_t> const& compOrder
+        std::vector<size_t> const& compOrder,
+        TimeUnit outputTimeUnit = TimeUnit::Hour
     );
 
     void
@@ -275,7 +276,8 @@ namespace erin
         Simulation const& s,
         std::string const& scenarioTag,
         std::string const& scenarioStartTimeTag,
-        std::vector<size_t> const& connOrder
+        std::vector<size_t> const& connOrder,
+        TimeUnit outputTimeUnit = TimeUnit::Hour
     );
 
     void

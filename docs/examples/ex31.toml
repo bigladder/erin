@@ -2,10 +2,6 @@
 description = """
   Simple test to exercise stores
 """
-# simple load that switches low to high
-# simple load that switches high to low
-# store starting at 100% SOC and above the charge level of 80%
-# store starting at 50% SOC and below the charge level of 80%
 
 [simulation_info]
 rate_unit = "kW"
@@ -40,6 +36,11 @@ max_charge = 10.0
 max_discharge = 100.0
 max_outflow = 100.0
 init_soc = 1
+# EXPECTED
+# 0 s -> 10 kW discharge, 100% SOC
+# 2 s -> 10 kW discharge,  80% SOC
+# 5 s -> 100 kW discharge, 50% SOC
+# 5.5 s -> 0 kW discharge,  0% SOC
 
 [components.load_01]
 type = "load"
@@ -56,6 +57,9 @@ max_charge = 10.0
 max_discharge = 100.0
 max_outflow = 100.0
 init_soc = 0.5
+# EXPECTED
+# 0 s -> 10 kW discharge,  50% SOC
+# 5 s ->  0 kW discharge,   0% SOC
 
 [components.load_02]
 type = "load"
@@ -72,6 +76,9 @@ max_charge = 10.0
 max_discharge = 100.0
 max_outflow = 100.0
 init_soc = 1
+# EXPECTED
+# 0 s -> 100 kW discharge, 100% SOC
+# 1 s ->   0 kW discharge,   0% SOC
 
 [components.load_03]
 type = "load"
@@ -88,6 +95,9 @@ max_charge = 10.0
 max_discharge = 100.0
 max_outflow = 100.0
 init_soc = 0.5
+# EXPECTED
+# 0 s -> 100 kW discharge,  50% SOC
+# 0.5 s -> 0 kW discharge,   0% SOC
 
 [components.load_04]
 type = "load"

@@ -1357,7 +1357,9 @@ namespace erin
         out << "scenario id,"
             << "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
             << "elapsed ("
-            << TimeUnitToTag(outputTimeUnit)
+            << (outputTimeUnit == TimeUnit::Hour
+                    ? "hours"
+                    : TimeUnitToTag(outputTimeUnit))
             << ")";
         for (std::string const& prefix :
              std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
@@ -1666,8 +1668,7 @@ namespace erin
                 default:
                 {
                     WriteErrorMessage(
-                        "WriteResultsToEventFile",
-                        "unhandled time unit"
+                        "WriteResultsToEventFile", "unhandled time unit"
                     );
                     std::exit(1);
                 }
@@ -2547,7 +2548,9 @@ namespace erin
                       << std::endl;
             return;
         }
-        WriteEventFileHeader(out, s.TheModel, connOrder, storeOrder, compOrder, outputTimeUnit);
+        WriteEventFileHeader(
+            out, s.TheModel, connOrder, storeOrder, compOrder, outputTimeUnit
+        );
         std::vector<ScenarioOccurrenceStats> occurrenceStats;
         for (size_t scenIdx : scenarioOrder)
         {

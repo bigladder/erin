@@ -14,7 +14,7 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
-#include "../vendor/CLI11/include/CLI/CLI.hpp" //TODO CLI11 license
+#include "../vendor/CLI11/include/CLI/CLI.hpp"
 
 int
 versionCommand()

@@ -1348,14 +1348,17 @@ namespace erin
         Model const& m,
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
-        std::vector<size_t> const& compOrder
+        std::vector<size_t> const& compOrder,
+        TimeUnit outputTimeUnit
     )
     {
         ComponentDict const& compMap = m.ComponentMap;
         std::vector<Connection> const& conns = m.Connections;
         out << "scenario id,"
             << "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
-            << "elapsed (hours)";
+            << "elapsed ("
+            << TimeUnitToTag(outputTimeUnit)
+            << ")";
         for (std::string const& prefix :
              std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
         {
@@ -1602,7 +1605,8 @@ namespace erin
         std::string const& scenarioStartTimeTag,
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
-        std::vector<size_t> const& compOrder
+        std::vector<size_t> const& compOrder,
+        TimeUnit outputTimeUnit
     )
     {
         // TODO: pass in desired precision
@@ -1618,10 +1622,57 @@ namespace erin
         for (auto const& r : results)
         {
             assert(r.Flows.size() == connOrder.size());
-            double elapsedTime_hr =
-                r.Time / static_cast<double>(seconds_per_hour);
-            out << scenarioTag << "," << scenarioStartTimeTag << ","
-                << elapsedTime_hr;
+            out << scenarioTag << "," << scenarioStartTimeTag << ",";
+            switch (outputTimeUnit)
+            {
+                case TimeUnit::Second:
+                {
+                    out << r.Time;
+                }
+                break;
+                case TimeUnit::Minute:
+                {
+                    double elapsedTime_min =
+                        r.Time / static_cast<double>(seconds_per_minute);
+                    out << elapsedTime_min;
+                }
+                case TimeUnit::Hour:
+                {
+                    double elapsedTime_hr =
+                        r.Time / static_cast<double>(seconds_per_hour);
+                    out << elapsedTime_hr;
+                }
+                break;
+                case TimeUnit::Day:
+                {
+                    double elapsedTime_day =
+                        r.Time / static_cast<double>(seconds_per_day);
+                    out << elapsedTime_day;
+                }
+                break;
+                case TimeUnit::Week:
+                {
+                    double elapsedTime_week =
+                        r.Time / static_cast<double>(seconds_per_week);
+                    out << elapsedTime_week;
+                }
+                break;
+                case TimeUnit::Year:
+                {
+                    double elapsedTime_yr =
+                        r.Time / static_cast<double>(seconds_per_year);
+                    out << elapsedTime_yr;
+                }
+                default:
+                {
+                    WriteErrorMessage(
+                        "WriteResultsToEventFile",
+                        "unhandled time unit"
+                    );
+                    std::exit(1);
+                }
+                break;
+            }
             for (size_t const& i : connOrder)
             {
                 double actual_W = r.Flows[i].Actual_W;
@@ -2351,6 +2402,9 @@ namespace erin
     void
     Simulation_Run(Simulation& s)
     {
+        // TODO: turn the following into parameters
+        TimeUnit outputTimeUnit = TimeUnit::Hour;
+
         FixedRandom fixedRandom;
         FixedSeries fixedSeries;
         Random fullRandom;
@@ -2493,7 +2547,7 @@ namespace erin
                       << std::endl;
             return;
         }
-        WriteEventFileHeader(out, s.TheModel, connOrder, storeOrder, compOrder);
+        WriteEventFileHeader(out, s.TheModel, connOrder, storeOrder, compOrder, outputTimeUnit);
         std::vector<ScenarioOccurrenceStats> occurrenceStats;
         for (size_t scenIdx : scenarioOrder)
         {
@@ -2566,7 +2620,8 @@ namespace erin
                     scenarioStartTimeTag,
                     connOrder,
                     storeOrder,
-                    compOrder
+                    compOrder,
+                    outputTimeUnit
                 );
                 ScenarioOccurrenceStats sos =
                     ModelResults_CalculateScenarioOccurrenceStats(

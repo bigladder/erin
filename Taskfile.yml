@@ -40,17 +40,22 @@ tasks:
     cmds:
       - cmake --build build --config Release -j 4
   ex:
-    desc: Run the given exercise. Pass '-- ex29.toml' to run example 29
+    desc: Run the given exercise. Pass '-- run ex29.toml' to run example 29
     dir: 'docs/examples'
     cmds:
-      - ../../build/bin/erin_next_cli {{.CLI_ARGS}}
+      - ../../build/bin/erin {{.CLI_ARGS}}
   db:
-    desc: Runs the current exercise. Pass '-- ex29.toml' to debug example 29
+    desc: Runs the current exercise. Pass '-- run ex29.toml' to debug example 29
     dir: 'docs/examples'
     cmds:
-      - lldb ../../build/bin/erin_next_cli {{.CLI_ARGS}}
+      - lldb ../../build/bin/erin run {{.CLI_ARGS}}
   bench:
     desc: Runs benchmarks using hyperfine.
     dir: 'docs/examples/ft-illinois'
     cmds:
-      - hyperfine '../../../build/bin/erin_next_cli exft-illinois.toml > junk.txt' --export-markdown ../../../benchmark.md --export-json ../../../benchmark.json --export-csv ../../../benchmark.csv
+      - hyperfine '../../../build/bin/erin run exft-illinois.toml > junk.txt' --export-markdown ../../../benchmark-{{.ISO_DATE}}-{{.GIT_COMMIT}}.md --export-json ../../../benchmark-{{.ISO_DATE}}-{{.GIT_COMMIT}}.json --export-csv ../../../benchmark-{{.ISO_DATE}}-{{.GIT_COMMIT}}.csv
+    vars:
+      GIT_COMMIT:
+        sh: git rev-parse --short HEAD
+      ISO_DATE:
+        sh: date +"%Y-%m-%dT%H%M%S%z"

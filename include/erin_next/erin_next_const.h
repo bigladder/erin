@@ -13,6 +13,6 @@
 // - to prevent that, we have to compare to max which causes if statements
 //   to get interwoven with addition. We might want to try using signed
 //   with -1 meaning infinity or no limit?
-#define flow_t uint32_t
+#define flow_t uint64_t
 
 #endif

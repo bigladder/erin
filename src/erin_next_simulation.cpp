@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <fstream>
 #include <ios>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -1348,14 +1349,19 @@ namespace erin
         Model const& m,
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
-        std::vector<size_t> const& compOrder
+        std::vector<size_t> const& compOrder,
+        TimeUnit outputTimeUnit
     )
     {
         ComponentDict const& compMap = m.ComponentMap;
         std::vector<Connection> const& conns = m.Connections;
         out << "scenario id,"
             << "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
-            << "elapsed (hours)";
+            << "elapsed ("
+            << (outputTimeUnit == TimeUnit::Hour
+                    ? "hours"
+                    : TimeUnitToTag(outputTimeUnit))
+            << ")";
         for (std::string const& prefix :
              std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
         {
@@ -1593,6 +1599,17 @@ namespace erin
         return proposed.substr(0, end_idx);
     }
 
+    std::string
+    FlowInWattsToString(flow_t value_W, unsigned int precision)
+    {
+        if (value_W == std::numeric_limits<flow_t>::max())
+        {
+            return "inf";
+        }
+        double value_kW = value_W / W_per_kW;
+        return DoubleToString(value_kW, precision);
+    }
+
     void
     WriteResultsToEventFile(
         std::ofstream& out,
@@ -1602,7 +1619,8 @@ namespace erin
         std::string const& scenarioStartTimeTag,
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
-        std::vector<size_t> const& compOrder
+        std::vector<size_t> const& compOrder,
+        TimeUnit outputTimeUnit
     )
     {
         // TODO: pass in desired precision
@@ -1618,27 +1636,71 @@ namespace erin
         for (auto const& r : results)
         {
             assert(r.Flows.size() == connOrder.size());
-            double elapsedTime_hr =
-                r.Time / static_cast<double>(seconds_per_hour);
-            out << scenarioTag << "," << scenarioStartTimeTag << ","
-                << elapsedTime_hr;
-            for (size_t const& i : connOrder)
+            out << scenarioTag << "," << scenarioStartTimeTag << ",";
+            // TODO: extract below into a helper function
+            switch (outputTimeUnit)
             {
-                double actual_W = r.Flows[i].Actual_W;
-                double actual_kW = actual_W / W_per_kW;
-                out << "," << DoubleToString(actual_kW, precision);
+                case TimeUnit::Second:
+                {
+                    out << r.Time;
+                }
+                break;
+                case TimeUnit::Minute:
+                {
+                    double elapsedTime_min =
+                        r.Time / static_cast<double>(seconds_per_minute);
+                    out << elapsedTime_min;
+                }
+                case TimeUnit::Hour:
+                {
+                    double elapsedTime_hr =
+                        r.Time / static_cast<double>(seconds_per_hour);
+                    out << elapsedTime_hr;
+                }
+                break;
+                case TimeUnit::Day:
+                {
+                    double elapsedTime_day =
+                        r.Time / static_cast<double>(seconds_per_day);
+                    out << elapsedTime_day;
+                }
+                break;
+                case TimeUnit::Week:
+                {
+                    double elapsedTime_week =
+                        r.Time / static_cast<double>(seconds_per_week);
+                    out << elapsedTime_week;
+                }
+                break;
+                case TimeUnit::Year:
+                {
+                    double elapsedTime_yr =
+                        r.Time / static_cast<double>(seconds_per_year);
+                    out << elapsedTime_yr;
+                }
+                default:
+                {
+                    WriteErrorMessage(
+                        "WriteResultsToEventFile", "unhandled time unit"
+                    );
+                    std::exit(1);
+                }
+                break;
             }
             for (size_t const& i : connOrder)
             {
-                double req_W = r.Flows[i].Requested_W;
-                double req_kW = req_W / W_per_kW;
-                out << "," << DoubleToString(req_kW, precision);
+                out << ","
+                    << FlowInWattsToString(r.Flows[i].Actual_W, precision);
             }
             for (size_t const& i : connOrder)
             {
-                double avail_W = r.Flows[i].Available_W;
-                double avail_kW = avail_W / W_per_kW;
-                out << "," << DoubleToString(avail_kW, precision);
+                out << ","
+                    << FlowInWattsToString(r.Flows[i].Requested_W, precision);
+            }
+            for (size_t const& i : connOrder)
+            {
+                out << ","
+                    << FlowInWattsToString(r.Flows[i].Available_W, precision);
             }
             // NOTE: Amounts in kJ
             for (size_t i : storeOrder)
@@ -2354,6 +2416,9 @@ namespace erin
                    const std::string& statsFilename,
                    const bool verbose)
     {
+        // TODO: turn the following into parameters
+        TimeUnit outputTimeUnit = TimeUnit::Hour;
+
         FixedRandom fixedRandom;
         FixedSeries fixedSeries;
         Random fullRandom;
@@ -2493,7 +2558,9 @@ namespace erin
                       << "' for writing." << std::endl;
             return;
         }
-        WriteEventFileHeader(out, s.TheModel, connOrder, storeOrder, compOrder);
+        WriteEventFileHeader(
+            out, s.TheModel, connOrder, storeOrder, compOrder, outputTimeUnit
+        );
         std::vector<ScenarioOccurrenceStats> occurrenceStats;
         for (size_t scenIdx : scenarioOrder)
         {
@@ -2566,7 +2633,8 @@ namespace erin
                     scenarioStartTimeTag,
                     connOrder,
                     storeOrder,
-                    compOrder
+                    compOrder,
+                    outputTimeUnit
                 );
                 ScenarioOccurrenceStats sos =
                     ModelResults_CalculateScenarioOccurrenceStats(

@@ -1565,6 +1565,7 @@ namespace erin
         return result;
     }
 
+    // TODO: fix, this is slow! Almost 25% of benchmark occurs here...
     std::string
     DoubleToString(double value, unsigned int precision)
     {

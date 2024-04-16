@@ -12,6 +12,7 @@
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_graph.h"
 #include <iostream>
+#include <limits>
 #include <string>
 #include <filesystem>
 #include "../vendor/CLI11/include/CLI/CLI.hpp"
@@ -26,7 +27,37 @@ versionCommand()
 int
 limitsCommand()
 {
-    std::cout << "Limits: " << "not available";
+    std::cout << "Limits: " << std::endl;
+    std::cout << "- sizeof(uint64_t): "
+              << (sizeof (uint64_t))
+              << std::endl;
+    std::cout << "- std::numeric_limits<uint64_t>::max(): "
+              << std::numeric_limits<uint64_t>::max()
+              << std::endl;
+    std::cout << "- sizeof(uint32_t): "
+              << (sizeof (uint32_t))
+              << std::endl;
+    std::cout << "- std::numeric_limits<uint32_t>::max(): "
+              << std::numeric_limits<uint32_t>::max()
+              << std::endl;
+    std::cout << "- sizeof(unsigned int): "
+              << (sizeof (unsigned int))
+              << std::endl;
+    std::cout << "- std::numeric_limits<unsigned int>::max(): "
+              << std::numeric_limits<unsigned int>::max()
+              << std::endl;
+    std::cout << "- sizeof(unsigned long): "
+              << (sizeof (unsigned long))
+              << std::endl;
+    std::cout << "- std::numeric_limits<unsigned long>::max(): "
+              << std::numeric_limits<unsigned long>::max()
+              << std::endl;
+    std::cout << "- sizeof(unsigned long long): "
+              << (sizeof (unsigned long long))
+              << std::endl;
+    std::cout << "- std::numeric_limits<unsigned long long>::max(): "
+              << std::numeric_limits<unsigned long long>::max()
+              << std::endl;
     return EXIT_SUCCESS;
 }
 

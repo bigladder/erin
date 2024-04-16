@@ -1637,6 +1637,7 @@ namespace erin
         {
             assert(r.Flows.size() == connOrder.size());
             out << scenarioTag << "," << scenarioStartTimeTag << ",";
+            // TODO: extract below into a helper function
             switch (outputTimeUnit)
             {
                 case TimeUnit::Second:

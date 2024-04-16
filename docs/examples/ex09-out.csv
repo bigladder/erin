@@ -1,5 +1,5 @@
 scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),S1:OUT(0) => L1:IN(0) (kW),REQUEST:S1:OUT(0) => L1:IN(0) (kW),AVAILABLE:S1:OUT(0) => L1:IN(0) (kW),op-state: L1,op-state: S1
-blue_sky,P0000-00-00T00:00:00,0,100,100,4294967.3,available,available
+blue_sky,P0000-00-00T00:00:00,0,100,100,inf,available,available
 blue_sky,P0000-00-00T00:00:00,0.00138889,0,100,0,available,fm
-blue_sky,P0000-00-00T00:00:00,0.00194444,100,100,4294967.3,available,available
-blue_sky,P0000-00-00T00:00:00,0.00277778,0,0,4294967.3,available,available
+blue_sky,P0000-00-00T00:00:00,0.00194444,100,100,inf,available,available
+blue_sky,P0000-00-00T00:00:00,0.00277778,0,0,inf,available,available

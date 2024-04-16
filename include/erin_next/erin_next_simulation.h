@@ -37,6 +37,9 @@ namespace erin
     std::string
     DoubleToString(double value, unsigned int precision);
 
+    std::string
+    FlowToString(flow_t value_W, unsigned int precision);
+
     void
     Simulation_Init(Simulation& s);
 

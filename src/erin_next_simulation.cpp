@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <fstream>
 #include <ios>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -1598,6 +1599,17 @@ namespace erin
         return proposed.substr(0, end_idx);
     }
 
+    std::string
+    FlowInWattsToString(flow_t value_W, unsigned int precision)
+    {
+        if (value_W == std::numeric_limits<flow_t>::max())
+        {
+            return "inf";
+        }
+        double value_kW = value_W / W_per_kW;
+        return DoubleToString(value_kW, precision);
+    }
+
     void
     WriteResultsToEventFile(
         std::ofstream& out,
@@ -1676,21 +1688,18 @@ namespace erin
             }
             for (size_t const& i : connOrder)
             {
-                double actual_W = r.Flows[i].Actual_W;
-                double actual_kW = actual_W / W_per_kW;
-                out << "," << DoubleToString(actual_kW, precision);
+                out << ","
+                    << FlowInWattsToString(r.Flows[i].Actual_W, precision);
             }
             for (size_t const& i : connOrder)
             {
-                double req_W = r.Flows[i].Requested_W;
-                double req_kW = req_W / W_per_kW;
-                out << "," << DoubleToString(req_kW, precision);
+                out << ","
+                    << FlowInWattsToString(r.Flows[i].Requested_W, precision);
             }
             for (size_t const& i : connOrder)
             {
-                double avail_W = r.Flows[i].Available_W;
-                double avail_kW = avail_W / W_per_kW;
-                out << "," << DoubleToString(avail_kW, precision);
+                out << ","
+                    << FlowInWattsToString(r.Flows[i].Available_W, precision);
             }
             // NOTE: Amounts in kJ
             for (size_t i : storeOrder)

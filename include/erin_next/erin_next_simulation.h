@@ -266,6 +266,7 @@ namespace erin
     WriteEventFileHeader(
         std::ofstream& out,
         Model const& m,
+        FlowDict const& fd,
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
         std::vector<size_t> const& compOrder,

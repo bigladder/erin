@@ -1,4 +1,4 @@
-scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),utility_electrical:OUT(0) => bldg_a_electric:IN(0) (kW),REQUEST:utility_electrical:OUT(0) => bldg_a_electric:IN(0) (kW),AVAILABLE:utility_electrical:OUT(0) => bldg_a_electric:IN(0) (kW),op-state: bldg_a_electric,op-state: utility_electrical
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),utility_electrical:OUT(0) => bldg_a_electric:IN(0) [flow: electricity] (kW),REQUEST:utility_electrical:OUT(0) => bldg_a_electric:IN(0) [flow: electricity] (kW),AVAILABLE:utility_electrical:OUT(0) => bldg_a_electric:IN(0) [flow: electricity] (kW),op-state: bldg_a_electric,op-state: utility_electrical
 blue_sky,P0000-00-00T00:00:00,0,10,10,30,available,available
 blue_sky,P0000-00-00T00:00:00,1.5,0,10,0,available,grid_outage
 blue_sky,P0000-00-00T00:00:00,1.83333,10,10,30,available,available

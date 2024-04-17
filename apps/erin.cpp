@@ -28,36 +28,24 @@ int
 limitsCommand()
 {
     std::cout << "Limits: " << std::endl;
-    std::cout << "- sizeof(uint64_t): "
-              << (sizeof (uint64_t))
-              << std::endl;
+    std::cout << "- sizeof(uint64_t): " << (sizeof(uint64_t)) << std::endl;
     std::cout << "- std::numeric_limits<uint64_t>::max(): "
-              << std::numeric_limits<uint64_t>::max()
-              << std::endl;
-    std::cout << "- sizeof(uint32_t): "
-              << (sizeof (uint32_t))
-              << std::endl;
+              << std::numeric_limits<uint64_t>::max() << std::endl;
+    std::cout << "- sizeof(uint32_t): " << (sizeof(uint32_t)) << std::endl;
     std::cout << "- std::numeric_limits<uint32_t>::max(): "
-              << std::numeric_limits<uint32_t>::max()
-              << std::endl;
-    std::cout << "- sizeof(unsigned int): "
-              << (sizeof (unsigned int))
+              << std::numeric_limits<uint32_t>::max() << std::endl;
+    std::cout << "- sizeof(unsigned int): " << (sizeof(unsigned int))
               << std::endl;
     std::cout << "- std::numeric_limits<unsigned int>::max(): "
-              << std::numeric_limits<unsigned int>::max()
-              << std::endl;
-    std::cout << "- sizeof(unsigned long): "
-              << (sizeof (unsigned long))
+              << std::numeric_limits<unsigned int>::max() << std::endl;
+    std::cout << "- sizeof(unsigned long): " << (sizeof(unsigned long))
               << std::endl;
     std::cout << "- std::numeric_limits<unsigned long>::max(): "
-              << std::numeric_limits<unsigned long>::max()
-              << std::endl;
+              << std::numeric_limits<unsigned long>::max() << std::endl;
     std::cout << "- sizeof(unsigned long long): "
-              << (sizeof (unsigned long long))
-              << std::endl;
+              << (sizeof(unsigned long long)) << std::endl;
     std::cout << "- std::numeric_limits<unsigned long long>::max(): "
-              << std::numeric_limits<unsigned long long>::max()
-              << std::endl;
+              << std::numeric_limits<unsigned long long>::max() << std::endl;
     return EXIT_SUCCESS;
 }
 
@@ -96,7 +84,7 @@ runCommand(
     Simulation s = std::move(maybeSim.value());
     Simulation_Print(s);
     std::cout << "-----------------" << std::endl;
-    Simulation_Run(s, eventsFilename, statsFilename,verbose);
+    Simulation_Run(s, eventsFilename, statsFilename, verbose);
 
     return EXIT_SUCCESS;
 }

@@ -2412,10 +2412,12 @@ namespace erin
     }
 
     void
-    Simulation_Run(Simulation& s,
-                   const std::string& eventsFilename,
-                   const std::string& statsFilename,
-                   const bool verbose)
+    Simulation_Run(
+        Simulation& s,
+        const std::string& eventsFilename,
+        const std::string& statsFilename,
+        const bool verbose
+    )
     {
         // TODO: turn the following into parameters
         TimeUnit outputTimeUnit = TimeUnit::Hour;

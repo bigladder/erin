@@ -3553,7 +3553,7 @@ namespace erin
     {
         std::ostringstream oss{};
         oss << ConnectionToString(cd, c, compact)
-            << "; flow: " << fd.Type[c.FlowTypeId];
+            << " [flow: " << fd.Type[c.FlowTypeId] << "]";
         return oss.str();
     }
 

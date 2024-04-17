@@ -1348,6 +1348,7 @@ namespace erin
     WriteEventFileHeader(
         std::ofstream& out,
         Model const& m,
+        FlowDict const& fd,
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
         std::vector<size_t> const& compOrder,
@@ -1369,8 +1370,8 @@ namespace erin
             for (auto const& connId : connOrder)
             {
                 auto const& conn = conns[connId];
-                out << "," << prefix << ConnectionToString(compMap, conn, true)
-                    << " (kW)";
+                out << "," << prefix
+                    << ConnectionToString(compMap, fd, conn, true) << " (kW)";
             }
         }
         for (std::pair<std::string, std::string> const& prePostFix :
@@ -2562,7 +2563,13 @@ namespace erin
             return;
         }
         WriteEventFileHeader(
-            out, s.TheModel, connOrder, storeOrder, compOrder, outputTimeUnit
+            out,
+            s.TheModel,
+            s.FlowTypeMap,
+            connOrder,
+            storeOrder,
+            compOrder,
+            outputTimeUnit
         );
         std::vector<ScenarioOccurrenceStats> occurrenceStats;
         for (size_t scenIdx : scenarioOrder)

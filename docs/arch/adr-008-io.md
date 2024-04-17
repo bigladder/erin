@@ -46,11 +46,24 @@ Possible avenues to explore:
 - switch to a better input file format for time-series data
 - switch to a better output file format for time-series data
 - write output data in a threaded fashion
+- do not perform processing on output
+
+The last bullet above is worth mentioning a few more words on.
+Currently, within the simulator, all flows are in Watts.
+Similarly, time is in seconds and energy in Joules.
+However, when writing to output, we convert units and round numbers.
+This does help when comparing input file versions and is nice for the user.
+However, is it ERIN's job to format those entries?
+Or would we be better serving the user to just print them out faster?
 
 Potential candidates for input and/or output data include:
 
 - [Apache Parquet](https://parquet.apache.org/): a columndar storage format
 - Protocol buffers
+
+NOTE: as an important point, this is a proposal to ADD additional input/output file options.
+In particular, CSV is very good for casual usage and debugging.
+However, when running ERIN in a parformance-critical context, another input/output format may serve us better.
 
 The Apache Parquet format is particularly interesting because it has:
 
@@ -79,6 +92,8 @@ We will:
   - and/or looking at other libraries
 - evaluate and try parquet as an optional format for read/write
 - investigate use of the Arrow in-memory format
+- investigate the possibility of using native internal units for output
+  - also investigate output without rounding
 
 ## Status
 

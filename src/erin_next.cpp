@@ -34,7 +34,7 @@ namespace erin
         for (auto const& xs : input)
         {
             assert(xs.size() >= 2);
-            assert(xs[1] * rateToWatts <= std::numeric_limits<flow_t>::max());
+            assert(xs[1] * rateToWatts <= max_flow_W);
             TimeAndAmount taa{
                 .Time_s = xs[0] * timeToSeconds,
                 .Amount_W = static_cast<flow_t>(xs[1] * rateToWatts),

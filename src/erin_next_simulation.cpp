@@ -9,6 +9,7 @@
 #include "erin_next/erin_next_random.h"
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_toml.h"
+#include <fmt/core.h>
 #include <assert.h>
 #include <fstream>
 #include <ios>
@@ -1565,16 +1566,16 @@ namespace erin
         return result;
     }
 
+    // TODO: fix, this is slow! Almost 25% of benchmark occurs here...
     std::string
     DoubleToString(double value, unsigned int precision)
     {
-        std::ostringstream oss{};
-        double p = precision;
-        double mult = std::pow(10.0, p);
-        double rounded = std::round(value * mult) / mult;
-        oss << std::fixed << std::setprecision(static_cast<int>(precision))
-            << rounded;
-        std::string proposed = oss.str();
+        assert(precision <= 6);
+        // NOTE: a small epsilon is added to the value to fix a bug where
+        // for example, 1.505 at a fixed precision of 2 does not round to 1.51
+        constexpr double eps = 1e-8;
+        std::string proposed =
+            fmt::format("{:.{}f}", value + eps, static_cast<int>(precision));
         int end_idx = proposed.size();
         bool has_decimal = false;
         for (char const& ch : proposed)
@@ -1602,7 +1603,7 @@ namespace erin
     std::string
     FlowInWattsToString(flow_t value_W, unsigned int precision)
     {
-        if (value_W == std::numeric_limits<flow_t>::max())
+        if (value_W == max_flow_W)
         {
             return "inf";
         }
@@ -2264,7 +2265,7 @@ namespace erin
             stats << "," << DoubleToString(os.OutflowAchieved_kJ, 0);
             stats << "," << DoubleToString(stored_kJ, 0);
             stats << "," << DoubleToString(os.Wasteflow_kJ, 0);
-            stats << "," << DoubleToString(balance, 16);
+            stats << "," << DoubleToString(balance, 6);
             stats << "," << efficiency;
             stats << "," << (os.Uptime_s / seconds_per_hour);
             stats << "," << (os.Downtime_s / seconds_per_hour);
@@ -2411,10 +2412,12 @@ namespace erin
     }
 
     void
-    Simulation_Run(Simulation& s,
-                   const std::string& eventsFilename,
-                   const std::string& statsFilename,
-                   const bool verbose)
+    Simulation_Run(
+        Simulation& s,
+        const std::string& eventsFilename,
+        const std::string& statsFilename,
+        const bool verbose
+    )
     {
         // TODO: turn the following into parameters
         TimeUnit outputTimeUnit = TimeUnit::Hour;

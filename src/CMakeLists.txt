@@ -65,6 +65,8 @@ add_library(erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_graph.h"
 )
 
+target_link_libraries(erin_next PRIVATE fmt)
+
 # Add Warnings
 if(MSVC)
   target_compile_options(erin_next PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")

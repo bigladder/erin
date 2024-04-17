@@ -1795,4 +1795,23 @@ TEST(Erin, TestDoubleToString)
     std::string expected_c_at_p0 = "1500";
     std::string actual_c_at_p0 = erin::DoubleToString(c, 0);
     EXPECT_EQ(expected_c_at_p0, actual_c_at_p0);
+    double d = 1.5009;
+    std::string expected_d_at_p3 = "1.501";
+    std::string actual_d_at_p3 = erin::DoubleToString(d, 3);
+    EXPECT_EQ(expected_d_at_p3, actual_d_at_p3);
+    double e = 1.5006;
+    std::string expected_e_at_p3 = "1.501";
+    std::string actual_e_at_p3 = erin::DoubleToString(e, 3);
+    EXPECT_EQ(expected_e_at_p3, actual_e_at_p3);
+    double f = 1.50051;
+    std::string expected_f_at_p3 = "1.501";
+    std::string actual_f_at_p3 = erin::DoubleToString(f, 3);
+    EXPECT_EQ(expected_f_at_p3, actual_f_at_p3);
+    double g = std::numeric_limits<flow_t>::max() / 5.0;
+    EXPECT_EQ(3689348814741910500.0, g);
+    g /= 1000.0;
+    EXPECT_EQ(3689348814741910.5, g);
+    std::string expected_g_at_p1 = "3689348814741910.5";
+    std::string actual_g_at_p1 = erin::DoubleToString(g, 1);
+    EXPECT_EQ(expected_g_at_p1, actual_g_at_p1);
 }

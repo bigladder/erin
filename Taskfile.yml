@@ -59,3 +59,13 @@ tasks:
         sh: git rev-parse --short HEAD
       ISO_DATE:
         sh: date +"%Y-%m-%dT%H%M%S%z"
+  copyout:
+    desc: Copies the last run out.csv file to be the next reference for the given example. Provide example number such as `-- 01`.
+    dir: 'docs/examples'
+    cmds:
+      - cp out.csv ex{{.CLI_ARGS}}-out.csv
+  copystats:
+    desc: Copies the last run stats.csv file to be the next reference for the given example. Provide example number such as `-- 01`.
+    dir: 'docs/examples'
+    cmds:
+      - cp stats.csv ex{{.CLI_ARGS}}-stats.csv

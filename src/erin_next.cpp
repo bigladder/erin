@@ -3262,9 +3262,11 @@ namespace erin
                             sos.LoadAndFlowTypeStats.push_back(std::move(sblf));
                         }
                         bool foundLoadNotServedForComp = false;
-                        for (LoadNotServedForComp& lns : sos.LoadNotServedForComponents)
+                        for (LoadNotServedForComp& lns :
+                             sos.LoadNotServedForComponents)
                         {
-                            if (lns.ComponentId == compId && lns.FlowTypeId == flowTypeId)
+                            if (lns.ComponentId == compId
+                                && lns.FlowTypeId == flowTypeId)
                             {
                                 foundLoadNotServedForComp = true;
                                 lns.LoadNotServed_kJ += loadNotServed_kJ;
@@ -3494,25 +3496,34 @@ namespace erin
             std::string sortTag = loadName + "/" + flowName;
             loadNotServedFlowTypeNames.push_back(std::move(sortTag));
         }
-        std::vector<size_t> loadNotServedFlowTypeNames_idx(loadNotServedFlowTypeNames.size());
+        std::vector<size_t> loadNotServedFlowTypeNames_idx(
+            loadNotServedFlowTypeNames.size()
+        );
         std::iota(
-            loadNotServedFlowTypeNames_idx.begin(), loadNotServedFlowTypeNames_idx.end(), 0
+            loadNotServedFlowTypeNames_idx.begin(),
+            loadNotServedFlowTypeNames_idx.end(),
+            0
         );
         std::sort(
             loadNotServedFlowTypeNames_idx.begin(),
             loadNotServedFlowTypeNames_idx.end(),
-            [&](size_t a, size_t b) -> bool
-            { return loadNotServedFlowTypeNames[a] < loadNotServedFlowTypeNames[b]; }
+            [&](size_t a, size_t b) -> bool {
+                return loadNotServedFlowTypeNames[a]
+                    < loadNotServedFlowTypeNames[b];
+            }
         );
         std::vector<LoadNotServedForComp> newLoadNotServedForComponents;
-        newLoadNotServedForComponents.reserve(sos.LoadNotServedForComponents.size());
+        newLoadNotServedForComponents.reserve(
+            sos.LoadNotServedForComponents.size()
+        );
         for (size_t lns_idx : loadNotServedFlowTypeNames_idx)
         {
             newLoadNotServedForComponents.push_back(
                 std::move(sos.LoadNotServedForComponents[lns_idx])
             );
         }
-        sos.LoadNotServedForComponents = std::move(newLoadNotServedForComponents);
+        sos.LoadNotServedForComponents =
+            std::move(newLoadNotServedForComponents);
         return sos;
     }
 

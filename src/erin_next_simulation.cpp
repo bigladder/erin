@@ -1947,7 +1947,8 @@ namespace erin
         double startTime_s,
         double endTime_s,
         std::map<size_t, double> const& intensityIdToAmount,
-        std::map<size_t, std::vector<TimeState>> const& relSchByCompId
+        std::map<size_t, std::vector<TimeState>> const& relSchByCompId,
+        bool verbose
     )
     {
         std::vector<ScheduleBasedReliability> orig = CopyReliabilities(s);
@@ -1968,10 +1969,13 @@ namespace erin
             }
             std::vector<TimeState> const& sch = relSchByCompId.at(compId);
             double initialAge_s = s.TheModel.ComponentMap.InitialAges_s[compId];
-            std::cout << "component: " << s.TheModel.ComponentMap.Tag[compId]
-                      << std::endl;
-            std::cout << "initial age (h): "
-                      << (initialAge_s / seconds_per_hour) << std::endl;
+            if (verbose)
+            {
+                std::cout << "component: "
+                          << s.TheModel.ComponentMap.Tag[compId] << std::endl;
+                std::cout << "initial age (h): "
+                          << (initialAge_s / seconds_per_hour) << std::endl;
+            }
             std::vector<TimeState> clip = TimeState_Clip(
                 TimeState_Translate(sch, initialAge_s),
                 startTime_s,
@@ -1988,7 +1992,10 @@ namespace erin
         }
         if (intensityIdToAmount.size() > 0)
         {
-            std::cout << "... Applying fragilities" << std::endl;
+            if (verbose)
+            {
+                std::cout << "... Applying fragilities" << std::endl;
+            }
             // NOTE: if there are no components having fragility modes,
             // there is nothing to do.
             for (size_t cfmIdx = 0;
@@ -2065,14 +2072,16 @@ namespace erin
                     // including any repair distribution if we have
                     // one.
                     size_t compId = s.ComponentFragilities.ComponentIds[cfmIdx];
-                    // TODO: make the below printout optional; e.g., if verbose
-                    // flag is true
-                    std::cout
-                        << "... FAILED: " << s.TheModel.ComponentMap.Tag[compId]
-                        << " (cause: "
-                        << s.FragilityModes.Tags[s.ComponentFragilities
-                                                     .FragilityModeIds[cfmIdx]]
-                        << ")" << std::endl;
+                    if (verbose)
+                    {
+                        std::cout << "... FAILED: "
+                                  << s.TheModel.ComponentMap.Tag[compId]
+                                  << " (cause: "
+                                  << s.FragilityModes
+                                         .Tags[s.ComponentFragilities
+                                                   .FragilityModeIds[cfmIdx]]
+                                  << ")" << std::endl;
+                    }
                     // does the component have a reliability signal?
                     bool hasReliabilityAlready = false;
                     size_t reliabilityId = 0;
@@ -2467,9 +2476,9 @@ namespace erin
     void
     Simulation_Run(
         Simulation& s,
-        const std::string& eventsFilename,
-        const std::string& statsFilename,
-        const bool verbose
+        std::string const& eventsFilename,
+        std::string const& statsFilename,
+        bool const verbose
     )
     {
         // TODO: turn the following into parameters
@@ -2627,7 +2636,10 @@ namespace erin
         for (size_t scenIdx : scenarioOrder)
         {
             std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
-            std::cout << "Scenario: " << scenarioTag << std::endl;
+            if (verbose)
+            {
+                std::cout << "Scenario: " << scenarioTag << std::endl;
+            }
             // for this scenario, ensure all schedule-based components
             // have the right schedule set for this scenario
             if (SetLoadsForScenario(
@@ -2663,12 +2675,15 @@ namespace erin
                     s.ScenarioMap.TimeUnits[scenIdx]
                 );
                 double tEnd = t + duration_s;
-                std::cout << "Occurrence #" << (occIdx + 1) << " at "
-                          << SecondsToPrettyString(t) << std::endl;
+                if (verbose)
+                {
+                    std::cout << "Occurrence #" << (occIdx + 1) << " at "
+                              << SecondsToPrettyString(t) << std::endl;
+                }
                 // TODO: make initial age part of the ComponentMap
                 std::vector<ScheduleBasedReliability> originalReliabilities =
                     ApplyReliabilitiesAndFragilities(
-                        s, t, tEnd, intensityIdToAmount, relSchByCompId
+                        s, t, tEnd, intensityIdToAmount, relSchByCompId, verbose
                     );
                 std::string scenarioStartTimeTag =
                     TimeToISO8601Period(static_cast<uint64_t>(std::llround(t)));
@@ -2705,7 +2720,11 @@ namespace erin
                 occurrenceStats.push_back(std::move(sos));
                 s.TheModel.Reliabilities = originalReliabilities;
             }
-            std::cout << "Scenario " << scenarioTag << " finished" << std::endl;
+            if (verbose)
+            {
+                std::cout << "Scenario " << scenarioTag << " finished"
+                          << std::endl;
+            }
             // TODO: merge per-occurrence stats with global for the current
             // scenario
         }

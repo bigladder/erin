@@ -350,11 +350,10 @@ namespace erin
     ActivateConnectionsForReliability(
         Model& m,
         SimulationState& ss,
-        double time
+        double time,
+        bool verbose
     )
     {
-        // TODO pass this in...
-        constexpr bool doPrint = true;
         for (auto const& rel : m.Reliabilities)
         {
             for (auto const& ts : rel.TimeStates)
@@ -364,9 +363,8 @@ namespace erin
                     if (ts.state)
                     {
                         Model_SetComponentToRepaired(m, ss, rel.ComponentId);
-                        if (doPrint)
+                        if (verbose)
                         {
-                            // TODO: need to enable/disable printing
                             std::cout << "... REPAIRED: "
                                       << m.ComponentMap.Tag[rel.ComponentId]
                                       << "[" << rel.ComponentId << "]"
@@ -376,9 +374,8 @@ namespace erin
                     else
                     {
                         Model_SetComponentToFailed(m, ss, rel.ComponentId);
-                        if (doPrint)
+                        if (verbose)
                         {
-                            // TODO: need to enable/disable printing
                             std::cout << "... FAILED: "
                                       << m.ComponentMap.Tag[rel.ComponentId]
                                       << "[" << rel.ComponentId << "]"
@@ -386,14 +383,12 @@ namespace erin
                             std::cout << "... causes: " << std::endl;
                             for (auto const& fragCause : ts.fragilityModeCauses)
                             {
-                                // TODO: need to enable/disable printing
                                 std::cout
                                     << "... ... fragility mode: " << fragCause
                                     << std::endl;
                             }
                             for (auto const& failCause : ts.failureModeCauses)
                             {
-                                // TODO: need to enable/disable printing
                                 std::cout
                                     << "... ... failure mode: " << failCause
                                     << std::endl;
@@ -1991,7 +1986,7 @@ namespace erin
             // arrays
             // note: these two arrays could be sorted by component type for
             // faster running over loops...
-            ActivateConnectionsForReliability(model, ss, t);
+            ActivateConnectionsForReliability(model, ss, t, print);
             ActivateConnectionsForScheduleBasedLoads(model, ss, t);
             ActivateConnectionsForScheduleBasedSources(model, ss, t);
             ActivateConnectionsForStores(model, ss, t);

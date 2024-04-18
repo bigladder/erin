@@ -57,10 +57,13 @@ runCommand(
     bool verbose
 )
 {
-    std::cout << "input file: " << tomlFilename << std::endl;
-    std::cout << "events file: " << eventsFilename << std::endl;
-    std::cout << "statistics file: " << statsFilename << std::endl;
-    std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
+    if (verbose)
+    {
+        std::cout << "input file: " << tomlFilename << std::endl;
+        std::cout << "events file: " << eventsFilename << std::endl;
+        std::cout << "statistics file: " << statsFilename << std::endl;
+        std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
+    }
 
     std::ifstream ifs(tomlFilename, std::ios_base::binary);
     if (!ifs.good())
@@ -81,8 +84,11 @@ runCommand(
         return EXIT_FAILURE;
     }
     Simulation s = std::move(maybeSim.value());
-    Simulation_Print(s);
-    std::cout << "-----------------" << std::endl;
+    if (verbose)
+    {
+        Simulation_Print(s);
+        std::cout << "-----------------" << std::endl;
+    }
     Simulation_Run(s, eventsFilename, statsFilename, verbose);
 
     return EXIT_SUCCESS;
@@ -134,20 +140,15 @@ main(int argc, char** argv)
 {
     int result = EXIT_SUCCESS;
 
-    // TODO: show program name, copyright info
-    // process subcommands
     CLI::App app{"erin"};
     app.require_subcommand(0);
 
-    // "version" command
     auto version = app.add_subcommand("version", "Display version");
     version->callback([&]() { versionCommand(); });
 
-    // "limits" command
     auto limits = app.add_subcommand("limits", "Display limits");
     limits->callback([&]() { limitsCommand(); });
 
-    // "run" command
     auto run = app.add_subcommand("run", "Run a simulation");
     std::string tomlFilename;
     run->add_option("toml_file", tomlFilename, "TOML filename")->required();
@@ -165,7 +166,7 @@ main(int argc, char** argv)
     );
 
     bool verbose = false;
-    run->add_flag("-v, --verbose", verbose, "Verbose output");
+    run->add_flag("-v,--verbose", verbose, "Verbose output");
 
     run->callback(
         [&]() {
@@ -175,12 +176,11 @@ main(int argc, char** argv)
         }
     );
 
-    // "graph" command
     auto graph = app.add_subcommand("graph", "Graph a simulation");
     graph->add_option("toml_file", tomlFilename, "TOML filename")->required();
 
     std::string outputFilename = "graph.dot";
-    graph->add_option("-o, --out", outputFilename, "Graph output filename");
+    graph->add_option("-o,--out", outputFilename, "Graph output filename");
 
     graph->callback([&]()
                     { result = graphCommand(tomlFilename, outputFilename); });
@@ -190,7 +190,10 @@ main(int argc, char** argv)
     // call with no subcommands is equivalent to subcommand "help"
     if (argc == 1)
     {
-        std::cerr << app.help() << std::flush;
+        std::cout << "ERIN - Energy Resilience of Interacting Networks\n"
+                  << "Version " << erin::version::version_string << "\n"
+                  << std::endl;
+        std::cout << app.help() << std::endl;
     }
 
     return result;

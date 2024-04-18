@@ -3137,6 +3137,7 @@ namespace erin
             // is a good check.
             sos.Duration_s += dt_s;
             bool allLoadsMet = true;
+            std::map<size_t, bool> allLoadsMetByFlowType;
             size_t prevEventIdx = eventIdx - 1;
             for (size_t connId = 0;
                  connId < timeAndFlows[prevEventIdx].Flows.size();
@@ -3179,9 +3180,9 @@ namespace erin
                         double outflowRequest_kJ =
                             (requestedFlow_W / W_per_kW) * dt_s;
                         sos.OutflowRequest_kJ += outflowRequest_kJ;
-                        allLoadsMet =
-                            allLoadsMet && (flow.Actual_W == flow.Requested_W);
-                        if (flow.Actual_W != flow.Requested_W)
+                        bool loadsMet = flow.Actual_W == flow.Requested_W;
+                        allLoadsMet = allLoadsMet && loadsMet;
+                        if (!loadsMet)
                         {
                             assert(flow.Requested_W > flow.Actual_W);
                             sos.LoadNotServed_kJ +=
@@ -3189,22 +3190,38 @@ namespace erin
                                 * dt_s;
                         }
                         bool foundFlowTypeStats = false;
-                        for (auto& sbf : sos.FlowTypeStats)
+                        for (StatsByFlowType& sbf : sos.FlowTypeStats)
                         {
                             if (sbf.FlowTypeId == flowTypeId)
                             {
                                 sbf.TotalRequest_kJ += outflowRequest_kJ;
                                 sbf.TotalAchieved_kJ += outflowAchieved_kJ;
-                                sbf.Uptime_s += dt_s;
+                                if (!allLoadsMetByFlowType.contains(flowTypeId))
+                                {
+                                    allLoadsMetByFlowType.insert({flowTypeId, true});
+                                }
+                                if (!loadsMet)
+                                {
+                                    allLoadsMetByFlowType[flowTypeId] = false;
+                                }
                                 foundFlowTypeStats = true;
                                 break;
                             }
                         }
                         if (!foundFlowTypeStats)
                         {
+                            if (!allLoadsMetByFlowType.contains(flowTypeId))
+                            {
+                                allLoadsMetByFlowType.insert({flowTypeId, true});
+                            }
+                            if (!loadsMet)
+                            {
+                                allLoadsMetByFlowType[flowTypeId] = false;
+                            }
                             StatsByFlowType sbf{
                                 .FlowTypeId = flowTypeId,
-                                .Uptime_s = dt_s,
+                                 // NOTE: placeholder; updated later if all loads for this flow are met 
+                                .Uptime_s = 0.0,
                                 .TotalRequest_kJ = outflowRequest_kJ,
                                 .TotalAchieved_kJ = outflowAchieved_kJ,
                             };
@@ -3212,11 +3229,14 @@ namespace erin
                         }
                         size_t compId = m.Connections[connId].ToId;
                         bool foundLoadAndFlowTypeStats = false;
-                        for (auto& sblf : sos.LoadAndFlowTypeStats)
+                        for (StatsByLoadAndFlowType& sblf : sos.LoadAndFlowTypeStats)
                         {
                             if (sblf.ComponentId == compId && sblf.Stats.FlowTypeId == flowTypeId)
                             {
-                                sblf.Stats.Uptime_s += dt_s;
+                                if (loadsMet)
+                                {
+                                    sblf.Stats.Uptime_s += dt_s;
+                                }
                                 sblf.Stats.TotalRequest_kJ += outflowRequest_kJ;
                                 sblf.Stats.TotalAchieved_kJ += outflowAchieved_kJ;
                                 foundLoadAndFlowTypeStats = true;
@@ -3227,7 +3247,7 @@ namespace erin
                         {
                             StatsByFlowType sbf{
                                 .FlowTypeId = flowTypeId,
-                                .Uptime_s = dt_s,
+                                .Uptime_s = loadsMet ? dt_s : 0.0,
                                 .TotalRequest_kJ = outflowRequest_kJ,
                                 .TotalAchieved_kJ = outflowAchieved_kJ,
                             };
@@ -3249,6 +3269,23 @@ namespace erin
                     }
                     break;
                 }
+            }
+            for (auto const& item : allLoadsMetByFlowType)
+            {
+                bool foundMatch = false;
+                for (StatsByFlowType& sbft : sos.FlowTypeStats)
+                {
+                    if (sbft.FlowTypeId == item.first)
+                    {
+                        foundMatch = true;
+                        if (item.second)
+                        {
+                            sbft.Uptime_s += dt_s;
+                        }
+                        break;
+                    }
+                }
+                assert(foundMatch);
             }
             if (allLoadsMet)
             {

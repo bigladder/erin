@@ -1,2 +1,2 @@
 scenario id,occurrence number,duration (h),total source (kJ),total load (kJ),total storage (kJ),total waste (kJ),energy balance (source-(load+storage+waste)) (kJ),site efficiency,uptime (h),downtime (h),load not served (kJ),energy robustness [ER],energy availability [EA],max single event downtime [MaxSEDT] (h),global availability,energy robustness [ER] for electricity,energy availability [EA] for electricity,energy robustness [ER] for L [flow: electricity],energy availability [EA] for L [flow: electricity],availability: L,availability: S,availability: Store
-blue_sky,1,10,288200,288100,0,100,0,0.999653,2,8,2.5919e+06,0.100035,0.2,8,1,0.100035,1,0.100035,1,1,1,1
+blue_sky,1,10,288200,288100,0,100,0,0.999653,2,8,2.5919e+06,0.100035,0.2,8,1,0.100035,0.2,0.100035,0.2,1,1,1

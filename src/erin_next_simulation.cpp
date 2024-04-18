@@ -2304,7 +2304,7 @@ namespace erin
                           ? (os.Availability_s / os.Duration_s)
                           : 0.0);
             // NOTE: written in alphabetical order by flowtype name
-            for (auto const& statsByFlow : occurrenceStats[0].FlowTypeStats)
+            for (auto const& statsByFlow : os.FlowTypeStats)
             {
 
                 double ER_by_flow = statsByFlow.TotalRequest_kJ > 0.0
@@ -2315,7 +2315,7 @@ namespace erin
                 stats << "," << ER_by_flow;
                 stats << "," << EA_by_flow;
             }
-            for (auto const& statsByFlowLoad : occurrenceStats[0].LoadAndFlowTypeStats)
+            for (auto const& statsByFlowLoad : os.LoadAndFlowTypeStats)
             {
                 double ER_by_load =
                     statsByFlowLoad.Stats.TotalRequest_kJ > 0.0

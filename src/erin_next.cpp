@@ -3106,6 +3106,7 @@ namespace erin
         size_t scenarioId,
         size_t occurrenceNumber,
         Model const& m,
+        FlowDict const& flowDict,
         std::vector<TimeAndFlows> const& timeAndFlows
     )
     {
@@ -3141,6 +3142,7 @@ namespace erin
                  connId < timeAndFlows[prevEventIdx].Flows.size();
                  ++connId)
             {
+                size_t flowTypeId = m.Connections[connId].FlowTypeId;
                 ComponentType fromType =
                     m.ComponentMap.CompType[m.Connections[connId].FromId];
                 ComponentType toType =
@@ -3174,8 +3176,9 @@ namespace erin
                         double outflowAchieved_kJ =
                             (actualFlow_W / W_per_kW) * dt_s;
                         sos.OutflowAchieved_kJ += outflowAchieved_kJ;
-                        sos.OutflowRequest_kJ +=
+                        double outflowRequest_kJ =
                             (requestedFlow_W / W_per_kW) * dt_s;
+                        sos.OutflowRequest_kJ += outflowRequest_kJ;
                         allLoadsMet =
                             allLoadsMet && (flow.Actual_W == flow.Requested_W);
                         if (flow.Actual_W != flow.Requested_W)
@@ -3184,6 +3187,55 @@ namespace erin
                             sos.LoadNotServed_kJ +=
                                 ((requestedFlow_W - actualFlow_W) / W_per_kW)
                                 * dt_s;
+                        }
+                        bool foundFlowTypeStats = false;
+                        for (auto& sbf : sos.FlowTypeStats)
+                        {
+                            if (sbf.FlowTypeId == flowTypeId)
+                            {
+                                sbf.TotalRequest_kJ += outflowRequest_kJ;
+                                sbf.TotalAchieved_kJ += outflowAchieved_kJ;
+                                sbf.Uptime_s += dt_s;
+                                foundFlowTypeStats = true;
+                                break;
+                            }
+                        }
+                        if (!foundFlowTypeStats)
+                        {
+                            StatsByFlowType sbf{
+                                .FlowTypeId = flowTypeId,
+                                .Uptime_s = dt_s,
+                                .TotalRequest_kJ = outflowRequest_kJ,
+                                .TotalAchieved_kJ = outflowAchieved_kJ,
+                            };
+                            sos.FlowTypeStats.push_back(std::move(sbf));
+                        }
+                        size_t compId = m.Connections[connId].ToId;
+                        bool foundLoadAndFlowTypeStats = false;
+                        for (auto& sblf : sos.LoadAndFlowTypeStats)
+                        {
+                            if (sblf.ComponentId == compId && sblf.Stats.FlowTypeId == flowTypeId)
+                            {
+                                sblf.Stats.Uptime_s += dt_s;
+                                sblf.Stats.TotalRequest_kJ += outflowRequest_kJ;
+                                sblf.Stats.TotalAchieved_kJ += outflowAchieved_kJ;
+                                foundLoadAndFlowTypeStats = true;
+                                break;
+                            }
+                        }
+                        if (!foundLoadAndFlowTypeStats)
+                        {
+                            StatsByFlowType sbf{
+                                .FlowTypeId = flowTypeId,
+                                .Uptime_s = dt_s,
+                                .TotalRequest_kJ = outflowRequest_kJ,
+                                .TotalAchieved_kJ = outflowAchieved_kJ,
+                            };
+                            StatsByLoadAndFlowType sblf{
+                                .ComponentId = compId,
+                                .Stats = std::move(sbf),
+                            };
+                            sos.LoadAndFlowTypeStats.push_back(std::move(sblf));
                         }
                     }
                     break;
@@ -3318,6 +3370,51 @@ namespace erin
                 sos.AvailabilityByCompId_s[compId] = m.FinalTime;
             }
         }
+        // TODO: extract this into a new function
+        std::vector<std::string> flowTypeNames;
+        flowTypeNames.reserve(sos.FlowTypeStats.size());
+        for (auto const& fts : sos.FlowTypeStats)
+        {
+            flowTypeNames.push_back(flowDict.Type[fts.FlowTypeId]);
+        }
+        std::vector<size_t> flowTypeNames_idx(flowTypeNames.size());
+        std::iota(flowTypeNames_idx.begin(), flowTypeNames_idx.end(), 0);
+        std::sort(flowTypeNames_idx.begin(), flowTypeNames_idx.end(),
+                  [&](size_t a, size_t b) -> bool
+                  {
+                      return flowTypeNames[a] < flowTypeNames[b];
+                  });
+        std::vector<StatsByFlowType> newFlowTypeStats;
+        newFlowTypeStats.reserve(sos.FlowTypeStats.size());
+        for (size_t ftn_idx : flowTypeNames_idx)
+        {
+            newFlowTypeStats.push_back(std::move(sos.FlowTypeStats[ftn_idx]));
+        }
+        sos.FlowTypeStats = std::move(newFlowTypeStats);
+        // TODO: extract common parts out to function
+        std::vector<std::string> loadFlowTypeNames;
+        loadFlowTypeNames.reserve(sos.LoadAndFlowTypeStats.size());
+        for (auto const& lfts : sos.LoadAndFlowTypeStats)
+        {
+            std::string loadName = m.ComponentMap.Tag[lfts.ComponentId];
+            std::string flowName = flowDict.Type[lfts.Stats.FlowTypeId];
+            std::string sortTag = loadName + "/" + flowName;
+            loadFlowTypeNames.push_back(std::move(sortTag));
+        }
+        std::vector<size_t> loadFlowTypeNames_idx(loadFlowTypeNames.size());
+        std::iota(loadFlowTypeNames_idx.begin(), loadFlowTypeNames_idx.end(), 0);
+        std::sort(loadFlowTypeNames_idx.begin(), loadFlowTypeNames_idx.end(),
+                  [&](size_t a, size_t b) -> bool
+                  {
+                      return loadFlowTypeNames[a] < loadFlowTypeNames[b];
+                  });
+        std::vector<StatsByLoadAndFlowType> newLoadAndFlowTypeStats;
+        newLoadAndFlowTypeStats.reserve(sos.LoadAndFlowTypeStats.size());
+        for (size_t lftn_idx : loadFlowTypeNames_idx)
+        {
+            newLoadAndFlowTypeStats.push_back(std::move(sos.LoadAndFlowTypeStats[lftn_idx]));
+        }
+        sos.LoadAndFlowTypeStats = std::move(newLoadAndFlowTypeStats);
         return sos;
     }
 

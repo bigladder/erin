@@ -27,5 +27,16 @@ ReturnType
 foo_bar_baz(int a, int b, double c);
 ```
 
+## Attributes on Variables
 
+Please use the following conventions:
+
+- `long double var0 = 0.0;`
+- `unsigned int var1 = 0;`
+
+However, for `const` qualification, that should go afterwards:
+- `std::vector<unsigned int> const& vec_of_uint`
+
+Reasoning: `unsigned` (in particular) and `long` are part of the type.
+However, `const` is a qualifier and we don't want to obfusticate what the type is.
 

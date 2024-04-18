@@ -3287,6 +3287,7 @@ namespace erin
                         break;
                     }
                 }
+                ignore(foundMatch);
                 assert(foundMatch);
             }
             if (allLoadsMet)

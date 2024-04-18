@@ -3119,7 +3119,7 @@ namespace erin
         }
         double lastTime = timeAndFlows.size() > 0 ? timeAndFlows[0].Time : 0.0;
         bool wasDown = false;
-        double sedt = 0.0;
+        double sedt_s = 0.0;
         size_t numTimeAndFlows = timeAndFlows.size();
         size_t lastEventIdx = numTimeAndFlows - 1;
         for (size_t eventIdx = 1; eventIdx < numTimeAndFlows; ++eventIdx)
@@ -3177,12 +3177,14 @@ namespace erin
                         sos.OutflowRequest_kJ += outflowRequest_kJ;
                         bool loadsMet = flow.Actual_W == flow.Requested_W;
                         allLoadsMet = allLoadsMet && loadsMet;
+                        double loadNotServed_kJ = 0.0;
                         if (!loadsMet)
                         {
                             assert(flow.Requested_W > flow.Actual_W);
-                            sos.LoadNotServed_kJ +=
+                            loadNotServed_kJ =
                                 ((requestedFlow_W - actualFlow_W) / W_per_kW)
                                 * dt_s;
+                            sos.LoadNotServed_kJ += loadNotServed_kJ;
                         }
                         bool foundFlowTypeStats = false;
                         for (StatsByFlowType& sbf : sos.FlowTypeStats)
@@ -3259,6 +3261,29 @@ namespace erin
                             };
                             sos.LoadAndFlowTypeStats.push_back(std::move(sblf));
                         }
+                        bool foundLoadNotServedForComp = false;
+                        for (LoadNotServedForComp& lns :
+                             sos.LoadNotServedForComponents)
+                        {
+                            if (lns.ComponentId == compId
+                                && lns.FlowTypeId == flowTypeId)
+                            {
+                                foundLoadNotServedForComp = true;
+                                lns.LoadNotServed_kJ += loadNotServed_kJ;
+                                break;
+                            }
+                        }
+                        if (!foundLoadNotServedForComp)
+                        {
+                            LoadNotServedForComp lns{
+                                .ComponentId = compId,
+                                .FlowTypeId = flowTypeId,
+                                .LoadNotServed_kJ = loadNotServed_kJ,
+                            };
+                            sos.LoadNotServedForComponents.push_back(
+                                std::move(lns)
+                            );
+                        }
                     }
                     break;
                     case ComponentType::WasteSinkType:
@@ -3293,11 +3318,11 @@ namespace erin
             if (allLoadsMet)
             {
                 sos.Uptime_s += dt_s;
-                if (wasDown && sedt > sos.MaxSEDT_s)
+                if (wasDown && sedt_s > sos.MaxSEDT_s)
                 {
-                    sos.MaxSEDT_s = sedt;
+                    sos.MaxSEDT_s = sedt_s;
                 }
-                sedt = 0.0;
+                sedt_s = 0.0;
                 wasDown = false;
             }
             else
@@ -3305,11 +3330,11 @@ namespace erin
                 sos.Downtime_s += dt_s;
                 if (wasDown)
                 {
-                    sedt += dt_s;
+                    sedt_s += dt_s;
                 }
                 else
                 {
-                    sedt = dt_s;
+                    sedt_s = dt_s;
                 }
                 wasDown = true;
             }
@@ -3340,9 +3365,9 @@ namespace erin
             }
         }
         sos.ChangeInStorage_kJ = finalStorage_kJ - initialStorage_kJ;
-        if (sedt > sos.MaxSEDT_s)
+        if (sedt_s > sos.MaxSEDT_s)
         {
-            sos.MaxSEDT_s = sedt;
+            sos.MaxSEDT_s = sedt_s;
         }
         // calculate availability using reliability schedules
         std::vector<TimeState> relSch;
@@ -3461,6 +3486,44 @@ namespace erin
             );
         }
         sos.LoadAndFlowTypeStats = std::move(newLoadAndFlowTypeStats);
+        // TODO: extract common parts out to function
+        std::vector<std::string> loadNotServedFlowTypeNames;
+        loadNotServedFlowTypeNames.reserve(sos.LoadAndFlowTypeStats.size());
+        for (LoadNotServedForComp const& lns : sos.LoadNotServedForComponents)
+        {
+            std::string loadName = m.ComponentMap.Tag[lns.ComponentId];
+            std::string flowName = flowDict.Type[lns.FlowTypeId];
+            std::string sortTag = loadName + "/" + flowName;
+            loadNotServedFlowTypeNames.push_back(std::move(sortTag));
+        }
+        std::vector<size_t> loadNotServedFlowTypeNames_idx(
+            loadNotServedFlowTypeNames.size()
+        );
+        std::iota(
+            loadNotServedFlowTypeNames_idx.begin(),
+            loadNotServedFlowTypeNames_idx.end(),
+            0
+        );
+        std::sort(
+            loadNotServedFlowTypeNames_idx.begin(),
+            loadNotServedFlowTypeNames_idx.end(),
+            [&](size_t a, size_t b) -> bool {
+                return loadNotServedFlowTypeNames[a]
+                    < loadNotServedFlowTypeNames[b];
+            }
+        );
+        std::vector<LoadNotServedForComp> newLoadNotServedForComponents;
+        newLoadNotServedForComponents.reserve(
+            sos.LoadNotServedForComponents.size()
+        );
+        for (size_t lns_idx : loadNotServedFlowTypeNames_idx)
+        {
+            newLoadNotServedForComponents.push_back(
+                std::move(sos.LoadNotServedForComponents[lns_idx])
+            );
+        }
+        sos.LoadNotServedForComponents =
+            std::move(newLoadNotServedForComponents);
         return sos;
     }
 

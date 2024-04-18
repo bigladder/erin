@@ -117,6 +117,13 @@ namespace erin
         StatsByFlowType Stats;
     };
 
+    struct LoadNotServedForComp
+    {
+        size_t ComponentId;
+        size_t FlowTypeId;
+        double LoadNotServed_kJ = 0.0;
+    };
+
     struct ScenarioOccurrenceStats
     {
         // Id of the scenario; indexes into Simulation.ScenarioMap
@@ -159,6 +166,8 @@ namespace erin
         std::vector<StatsByFlowType> FlowTypeStats;
         // NOTE: sorted in alphabetical order by [componentTag, flowType]
         std::vector<StatsByLoadAndFlowType> LoadAndFlowTypeStats;
+        // NOTE: sorted in alphabetical order by [componentTag, flowType]
+        std::vector<LoadNotServedForComp> LoadNotServedForComponents;
     };
 
     struct ConstantLoad

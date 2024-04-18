@@ -17,10 +17,15 @@
 
 namespace erin
 {
-   // NOTE: see https://herbsutter.com/2009/10/18/mailbag-shutting-up-compiler-warnings/
-   // allows us to ignore unused variables that are there intentionally.
-   // For example, a variable used in an assert() (that is then compiled out).
-   template<class T> void ignore(T const&) { }
+    // NOTE: see
+    // https://herbsutter.com/2009/10/18/mailbag-shutting-up-compiler-warnings/
+    // allows us to ignore unused variables that are there intentionally.
+    // For example, a variable used in an assert() (that is then compiled out).
+    template<class T>
+    void
+    ignore(T const&)
+    {
+    }
 }
 
 #endif

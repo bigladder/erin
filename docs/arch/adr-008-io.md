@@ -18,6 +18,38 @@ For writing files, we are currently using a CSV format.
 We use a custom CSV writer.
 Writing is being conducted using std::cout or ofilestream.
 
+Note: we investigated our benchmark toml file in more detail.
+We discovered that there are many CSVs being read by a single TOML file.
+Each of those reads happens one-at-a-time in series while processing the TOML inputs.
+Each file has a single time/flow trace.
+One idea that may provide for a huge speedup is to place all traces into a single CSV file.
+For example, the existing header could be changed from this:
+
+```
+<filename: 12_ae_hall__steam.csv>
+hours,kW
+0,272.3
+1,274.3
+2,274.3
+...
+```
+
+to
+
+```
+12_ae_hall,steam,21_field_house,electricity
+hours,kW,hours,kW
+0,272.3,0,204.6
+1,274.3,1,204.6
+2,274.3,2,227.4
+...
+```
+
+That is, the header could be extended to store a tag and even the stream type.
+The corresponding hours and flow amounts could then appear below.
+ERIN could read in this entire file and then just pull out loads as necessary.
+This would require engine rework to add a multi_profile_csv option but could be a quick way to gain some speedups.
+
 We would like to explore reducing this overhead for reading / writing.
 
 For reading, 5.06 s out of 5.85 s (86%) of input processing is CSV reading.

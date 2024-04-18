@@ -2187,6 +2187,16 @@ namespace erin
                 stats << ",energy availability [EA] for " << tag
                       << " [flow: " << flowType << "]";
             }
+            for (auto const& lnsByComp :
+                 occurrenceStats[0].LoadNotServedForComponents)
+            {
+                std::string const& flowType =
+                    s.FlowTypeMap.Type[lnsByComp.FlowTypeId];
+                std::string const& tag =
+                    s.TheModel.ComponentMap.Tag[lnsByComp.ComponentId];
+                stats << ",load not served (kJ) for " << tag
+                      << " [flow: " << flowType << "]";
+            }
         }
         std::set<size_t> componentsToSkip;
         for (size_t i : compOrder)
@@ -2338,6 +2348,10 @@ namespace erin
                     : 0.0;
                 stats << "," << ER_by_load;
                 stats << "," << EA_by_load;
+            }
+            for (auto const& lnsByComp : os.LoadNotServedForComponents)
+            {
+                stats << "," << lnsByComp.LoadNotServed_kJ;
             }
             for (size_t i : compOrder)
             {

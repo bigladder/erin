@@ -3198,7 +3198,9 @@ namespace erin
                                 sbf.TotalAchieved_kJ += outflowAchieved_kJ;
                                 if (!allLoadsMetByFlowType.contains(flowTypeId))
                                 {
-                                    allLoadsMetByFlowType.insert({flowTypeId, true});
+                                    allLoadsMetByFlowType.insert(
+                                        {flowTypeId, true}
+                                    );
                                 }
                                 if (!loadsMet)
                                 {
@@ -3212,7 +3214,8 @@ namespace erin
                         {
                             if (!allLoadsMetByFlowType.contains(flowTypeId))
                             {
-                                allLoadsMetByFlowType.insert({flowTypeId, true});
+                                allLoadsMetByFlowType.insert({flowTypeId, true}
+                                );
                             }
                             if (!loadsMet)
                             {
@@ -3220,7 +3223,8 @@ namespace erin
                             }
                             StatsByFlowType sbf{
                                 .FlowTypeId = flowTypeId,
-                                 // NOTE: placeholder; updated later if all loads for this flow are met 
+                                // NOTE: placeholder; updated later if all loads
+                                // for this flow are met
                                 .Uptime_s = 0.0,
                                 .TotalRequest_kJ = outflowRequest_kJ,
                                 .TotalAchieved_kJ = outflowAchieved_kJ,
@@ -3229,16 +3233,19 @@ namespace erin
                         }
                         size_t compId = m.Connections[connId].ToId;
                         bool foundLoadAndFlowTypeStats = false;
-                        for (StatsByLoadAndFlowType& sblf : sos.LoadAndFlowTypeStats)
+                        for (StatsByLoadAndFlowType& sblf :
+                             sos.LoadAndFlowTypeStats)
                         {
-                            if (sblf.ComponentId == compId && sblf.Stats.FlowTypeId == flowTypeId)
+                            if (sblf.ComponentId == compId
+                                && sblf.Stats.FlowTypeId == flowTypeId)
                             {
                                 if (loadsMet)
                                 {
                                     sblf.Stats.Uptime_s += dt_s;
                                 }
                                 sblf.Stats.TotalRequest_kJ += outflowRequest_kJ;
-                                sblf.Stats.TotalAchieved_kJ += outflowAchieved_kJ;
+                                sblf.Stats.TotalAchieved_kJ +=
+                                    outflowAchieved_kJ;
                                 foundLoadAndFlowTypeStats = true;
                                 break;
                             }
@@ -3416,11 +3423,12 @@ namespace erin
         }
         std::vector<size_t> flowTypeNames_idx(flowTypeNames.size());
         std::iota(flowTypeNames_idx.begin(), flowTypeNames_idx.end(), 0);
-        std::sort(flowTypeNames_idx.begin(), flowTypeNames_idx.end(),
-                  [&](size_t a, size_t b) -> bool
-                  {
-                      return flowTypeNames[a] < flowTypeNames[b];
-                  });
+        std::sort(
+            flowTypeNames_idx.begin(),
+            flowTypeNames_idx.end(),
+            [&](size_t a, size_t b) -> bool
+            { return flowTypeNames[a] < flowTypeNames[b]; }
+        );
         std::vector<StatsByFlowType> newFlowTypeStats;
         newFlowTypeStats.reserve(sos.FlowTypeStats.size());
         for (size_t ftn_idx : flowTypeNames_idx)
@@ -3439,17 +3447,22 @@ namespace erin
             loadFlowTypeNames.push_back(std::move(sortTag));
         }
         std::vector<size_t> loadFlowTypeNames_idx(loadFlowTypeNames.size());
-        std::iota(loadFlowTypeNames_idx.begin(), loadFlowTypeNames_idx.end(), 0);
-        std::sort(loadFlowTypeNames_idx.begin(), loadFlowTypeNames_idx.end(),
-                  [&](size_t a, size_t b) -> bool
-                  {
-                      return loadFlowTypeNames[a] < loadFlowTypeNames[b];
-                  });
+        std::iota(
+            loadFlowTypeNames_idx.begin(), loadFlowTypeNames_idx.end(), 0
+        );
+        std::sort(
+            loadFlowTypeNames_idx.begin(),
+            loadFlowTypeNames_idx.end(),
+            [&](size_t a, size_t b) -> bool
+            { return loadFlowTypeNames[a] < loadFlowTypeNames[b]; }
+        );
         std::vector<StatsByLoadAndFlowType> newLoadAndFlowTypeStats;
         newLoadAndFlowTypeStats.reserve(sos.LoadAndFlowTypeStats.size());
         for (size_t lftn_idx : loadFlowTypeNames_idx)
         {
-            newLoadAndFlowTypeStats.push_back(std::move(sos.LoadAndFlowTypeStats[lftn_idx]));
+            newLoadAndFlowTypeStats.push_back(
+                std::move(sos.LoadAndFlowTypeStats[lftn_idx])
+            );
         }
         sos.LoadAndFlowTypeStats = std::move(newLoadAndFlowTypeStats);
         return sos;

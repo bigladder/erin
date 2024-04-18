@@ -102,9 +102,25 @@ namespace erin
         flow_t EnvInflow = 0;
     };
 
+    struct StatsByFlowType
+    {
+        size_t FlowTypeId;
+        double Uptime_s = 0.0;
+        double TotalRequest_kJ = 0.0;
+        double TotalAchieved_kJ = 0.0;
+    };
+
+    struct StatsByLoadAndFlowType
+    {
+        // indexes ComponentMap
+        size_t ComponentId;
+        StatsByFlowType Stats;
+    };
+
     struct ScenarioOccurrenceStats
     {
         // Id of the scenario; indexes into Simulation.ScenarioMap
+        // TODO: rename to ScenarioId;
         size_t Id = 0;
         // The occurrence of this scenario; 1st occurrence is 1, 2nd is 2, etc.
         size_t OccurrenceNumber;
@@ -138,6 +154,11 @@ namespace erin
         std::map<size_t, double> TimeByFragilityModeId_s;
         std::map<size_t, std::map<size_t, double>>
             TimeByCompIdByFragilityModeId_s;
+        // Characteristics by Flow Type
+        // NOTE: sorted in alphabetical order by flow type name
+        std::vector<StatsByFlowType> FlowTypeStats;
+        // NOTE: sorted in alphabetical order by [componentTag, flowType]
+        std::vector<StatsByLoadAndFlowType> LoadAndFlowTypeStats;
     };
 
     struct ConstantLoad
@@ -778,6 +799,7 @@ namespace erin
         size_t scenarioId,
         size_t occurrenceNumber,
         Model const& m,
+        FlowDict const& flowDict,
         std::vector<TimeAndFlows> const& timeAndFlows
     );
 

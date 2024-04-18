@@ -2126,6 +2126,10 @@ namespace erin
         return orig;
     }
 
+    // TODO: change this to write all data in a columnar format
+    // and THEN sort them and iterate through them to write the
+    // header and rows in order. Otherwise, we separate the header
+    // names from data calculations.
     void
     WriteStatisticsToFile(
         Simulation const& s,
@@ -2153,6 +2157,27 @@ namespace erin
               << "energy availability [EA],"
               << "max single event downtime [MaxSEDT] (h),"
               << "global availability";
+        if (occurrenceStats.size() > 0)
+        {
+            for (auto const& statsByFlow : occurrenceStats[0].FlowTypeStats)
+            {
+                std::string const& flowType =
+                    s.FlowTypeMap.Type[statsByFlow.FlowTypeId];
+                stats << ",energy robustness [ER] for " << flowType;
+                stats << ",energy availability [EA] for " << flowType;
+            }
+            for (auto const& statsByFlowLoad : occurrenceStats[0].LoadAndFlowTypeStats)
+            {
+                std::string const& flowType =
+                    s.FlowTypeMap.Type[statsByFlowLoad.Stats.FlowTypeId];
+                std::string const& tag =
+                    s.TheModel.ComponentMap.Tag[statsByFlowLoad.ComponentId];
+                stats << ",energy robustness [ER] for " << tag
+                      << " [flow: " << flowType << "]";
+                stats << ",energy availability [EA] for " << tag
+                      << " [flow: " << flowType << "]";
+            }
+        }
         std::set<size_t> componentsToSkip;
         for (size_t i : compOrder)
         {
@@ -2278,6 +2303,29 @@ namespace erin
                   << ((os.Duration_s > 0.0)
                           ? (os.Availability_s / os.Duration_s)
                           : 0.0);
+            // NOTE: written in alphabetical order by flowtype name
+            for (auto const& statsByFlow : os.FlowTypeStats)
+            {
+
+                double ER_by_flow = statsByFlow.TotalRequest_kJ > 0.0
+                    ? (statsByFlow.TotalAchieved_kJ / statsByFlow.TotalRequest_kJ)
+                    : 0.0;
+                double EA_by_flow =
+                    os.Duration_s > 0.0 ? (statsByFlow.Uptime_s / os.Duration_s) : 0.0;
+                stats << "," << ER_by_flow;
+                stats << "," << EA_by_flow;
+            }
+            for (auto const& statsByFlowLoad : os.LoadAndFlowTypeStats)
+            {
+                double ER_by_load =
+                    statsByFlowLoad.Stats.TotalRequest_kJ > 0.0
+                    ? (statsByFlowLoad.Stats.TotalAchieved_kJ / statsByFlowLoad.Stats.TotalRequest_kJ)
+                    : 0.0;
+                double EA_by_load =
+                    os.Duration_s > 0.0 ? (statsByFlowLoad.Stats.Uptime_s / os.Duration_s) : 0.0;
+                stats << "," << ER_by_load;
+                stats << "," << EA_by_load;
+            }
             for (size_t i : compOrder)
             {
                 if (!componentsToSkip.contains(i))
@@ -2648,7 +2696,7 @@ namespace erin
                 );
                 ScenarioOccurrenceStats sos =
                     ModelResults_CalculateScenarioOccurrenceStats(
-                        scenIdx, occIdx + 1, s.TheModel, results
+                        scenIdx, occIdx + 1, s.TheModel, s.FlowTypeMap, results
                     );
                 occurrenceStats.push_back(std::move(sos));
                 s.TheModel.Reliabilities = originalReliabilities;

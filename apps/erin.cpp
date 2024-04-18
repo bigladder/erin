@@ -57,10 +57,13 @@ runCommand(
     bool verbose
 )
 {
-    std::cout << "input file: " << tomlFilename << std::endl;
-    std::cout << "events file: " << eventsFilename << std::endl;
-    std::cout << "statistics file: " << statsFilename << std::endl;
-    std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
+    if (verbose)
+    {
+        std::cout << "input file: " << tomlFilename << std::endl;
+        std::cout << "events file: " << eventsFilename << std::endl;
+        std::cout << "statistics file: " << statsFilename << std::endl;
+        std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
+    }
 
     std::ifstream ifs(tomlFilename, std::ios_base::binary);
     if (!ifs.good())
@@ -81,8 +84,11 @@ runCommand(
         return EXIT_FAILURE;
     }
     Simulation s = std::move(maybeSim.value());
-    Simulation_Print(s);
-    std::cout << "-----------------" << std::endl;
+    if (verbose)
+    {
+        Simulation_Print(s);
+        std::cout << "-----------------" << std::endl;
+    }
     Simulation_Run(s, eventsFilename, statsFilename, verbose);
 
     return EXIT_SUCCESS;
@@ -149,18 +155,18 @@ main(int argc, char** argv)
 
     std::string eventsFilename = "out.csv";
     run->add_option(
-        "-e, --events", eventsFilename, "Events csv filename; default:out.csv"
+        "-e,--events", eventsFilename, "Events csv filename; default:out.csv"
     );
 
     std::string statsFilename = "stats.csv";
     run->add_option(
-        "-s, --statistics",
+        "-s,--statistics",
         statsFilename,
         "Statistics csv filename; default:stats.csv"
     );
 
     bool verbose = false;
-    run->add_flag("-v, --verbose", verbose, "Verbose output");
+    run->add_flag("-v,--verbose", verbose, "Verbose output");
 
     run->callback(
         [&]() {
@@ -174,7 +180,7 @@ main(int argc, char** argv)
     graph->add_option("toml_file", tomlFilename, "TOML filename")->required();
 
     std::string outputFilename = "graph.dot";
-    graph->add_option("-o, --out", outputFilename, "Graph output filename");
+    graph->add_option("-o,--out", outputFilename, "Graph output filename");
 
     graph->callback([&]()
                     { result = graphCommand(tomlFilename, outputFilename); });

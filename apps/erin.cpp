@@ -134,32 +134,27 @@ main(int argc, char** argv)
 {
     int result = EXIT_SUCCESS;
 
-    // TODO: show program name, copyright info
-    // process subcommands
     CLI::App app{"erin"};
     app.require_subcommand(0);
 
-    // "version" command
     auto version = app.add_subcommand("version", "Display version");
     version->callback([&]() { versionCommand(); });
 
-    // "limits" command
     auto limits = app.add_subcommand("limits", "Display limits");
     limits->callback([&]() { limitsCommand(); });
 
-    // "run" command
     auto run = app.add_subcommand("run", "Run a simulation");
     std::string tomlFilename;
     run->add_option("toml_file", tomlFilename, "TOML filename")->required();
 
     std::string eventsFilename = "out.csv";
     run->add_option(
-        "-e,--events", eventsFilename, "Events csv filename; default:out.csv"
+        "-e, --events", eventsFilename, "Events csv filename; default:out.csv"
     );
 
     std::string statsFilename = "stats.csv";
     run->add_option(
-        "-s,--statistics",
+        "-s, --statistics",
         statsFilename,
         "Statistics csv filename; default:stats.csv"
     );
@@ -175,7 +170,6 @@ main(int argc, char** argv)
         }
     );
 
-    // "graph" command
     auto graph = app.add_subcommand("graph", "Graph a simulation");
     graph->add_option("toml_file", tomlFilename, "TOML filename")->required();
 
@@ -190,7 +184,10 @@ main(int argc, char** argv)
     // call with no subcommands is equivalent to subcommand "help"
     if (argc == 1)
     {
-        std::cerr << app.help() << std::flush;
+        std::cout << "ERIN - Energy Resilience of Interacting Networks\n"
+                  << "Version " << erin::version::version_string << "\n"
+                  << std::endl;
+        std::cout << app.help() << std::endl;
     }
 
     return result;

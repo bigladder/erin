@@ -74,7 +74,6 @@ runCommand(
     auto nameOnly = std::filesystem::path(tomlFilename).filename();
     auto data = toml::parse(ifs, nameOnly.string());
     ifs.close();
-    std::cout << data << std::endl;
     auto validationInfo = SetupGlobalValidationInfo();
     auto maybeSim = Simulation_ReadFromToml(data, validationInfo);
     if (!maybeSim.has_value())

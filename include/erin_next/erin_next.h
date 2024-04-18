@@ -492,7 +492,8 @@ namespace erin
     ActivateConnectionsForReliability(
         Model& m,
         SimulationState& ss,
-        double time
+        double time,
+        bool verbose
     );
 
     double

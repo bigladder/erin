@@ -203,7 +203,8 @@ namespace erin
         double startTime_s,
         double endTime_s,
         std::map<size_t, double> const& intensityIdToAmount,
-        std::map<size_t, std::vector<TimeState>> const& relSchByCompId
+        std::map<size_t, std::vector<TimeState>> const& relSchByCompId,
+        bool verbose
     );
 
     void

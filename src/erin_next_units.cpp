@@ -383,10 +383,8 @@ namespace erin
         {
             return time_s / static_cast<double>(seconds_per_year);
         }
-        WriteErrorMessage(
-            "WriteResultsToEventFile", "unhandled time unit"
-        );
+        WriteErrorMessage("WriteResultsToEventFile", "unhandled time unit");
         std::exit(1);
     }
-    
+
 } // namespace erin

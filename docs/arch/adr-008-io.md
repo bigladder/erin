@@ -1,8 +1,10 @@
-# ADR 8: Writing and Logging Results
+# ADR 8: Reading, Writing, and Logging
 
 ## Context
 
-After initial benchmarking, a typical simulation is appearing to take:
+This ADR is heavily performance oriented although there are other considerations as well.
+
+After initial profiling, a typical simulation is appearing to take:
 
 - 1/3 of the time in actual simulation
 - 1/3 of the time reading in data
@@ -37,7 +39,7 @@ hours,kW
 to
 
 ```
-12_ae_hall,steam,21_field_house,electricity
+12_ae_hall__steam,8760,21_field_house__electricity,8760
 hours,kW,hours,kW
 0,272.3,0,204.6
 1,274.3,1,204.6
@@ -45,7 +47,8 @@ hours,kW,hours,kW
 ...
 ```
 
-That is, the header could be extended to store a tag and even the stream type.
+That is, the header could be extended to store a tag and the size.
+The size would be nice to allow us to reserve the correct amount of space when reading in.
 The corresponding hours and flow amounts could then appear below.
 ERIN could read in this entire file and then just pull out loads as necessary.
 This would require engine rework to add a multi_profile_csv option but could be a quick way to gain some speedups.
@@ -77,8 +80,9 @@ Possible avenues to explore:
 - enhance csv reading/writing and/or switch to a better library for it
 - switch to a better input file format for time-series data
 - switch to a better output file format for time-series data
+- read input (especially input CSVs) in a threaded fashion
 - write output data in a threaded fashion
-- do not perform processing on output
+- do not perform processing on output (i.e., no rounding or dropping of unnecessary zeros)
 
 The last bullet above is worth mentioning a few more words on.
 Currently, within the simulator, all flows are in Watts.
@@ -87,6 +91,8 @@ However, when writing to output, we convert units and round numbers.
 This does help when comparing input file versions and is nice for the user.
 However, is it ERIN's job to format those entries?
 Or would we be better serving the user to just print them out faster?
+That said, it is suspected that the rounding of results and dropping of zeros is the real time sink.
+Perhaps adding a flag to elide all formatting niceties when writing doubles would be in order?
 
 Potential candidates for input and/or output data include:
 

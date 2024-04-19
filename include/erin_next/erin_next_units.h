@@ -66,6 +66,10 @@ namespace erin
 
     std::string
     SecondsToPrettyString(double time_s);
+
+    double
+    TimeInSecondsToDesiredUnit(double time_s, TimeUnit unit);
+
 } // namespace erin
 
 #endif

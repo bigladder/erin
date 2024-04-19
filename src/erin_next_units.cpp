@@ -355,4 +355,38 @@ namespace erin
             << seconds << " s";
         return oss.str();
     }
+
+    double
+    TimeInSecondsToDesiredUnit(double time_s, TimeUnit unit)
+    {
+        if (unit == TimeUnit::Second)
+        {
+            return time_s;
+        }
+        if (unit == TimeUnit::Minute)
+        {
+            return time_s / static_cast<double>(seconds_per_minute);
+        }
+        if (unit == TimeUnit::Hour)
+        {
+            return time_s / static_cast<double>(seconds_per_hour);
+        }
+        if (unit == TimeUnit::Day)
+        {
+            return time_s / static_cast<double>(seconds_per_day);
+        }
+        if (unit == TimeUnit::Week)
+        {
+            return time_s / static_cast<double>(seconds_per_week);
+        }
+        if (unit == TimeUnit::Year)
+        {
+            return time_s / static_cast<double>(seconds_per_year);
+        }
+        WriteErrorMessage(
+            "WriteResultsToEventFile", "unhandled time unit"
+        );
+        std::exit(1);
+    }
+    
 } // namespace erin

@@ -1639,56 +1639,7 @@ namespace erin
         {
             assert(r.Flows.size() == connOrder.size());
             out << scenarioTag << "," << scenarioStartTimeTag << ",";
-            // TODO: extract below into a helper function
-            switch (outputTimeUnit)
-            {
-                case TimeUnit::Second:
-                {
-                    out << r.Time;
-                }
-                break;
-                case TimeUnit::Minute:
-                {
-                    double elapsedTime_min =
-                        r.Time / static_cast<double>(seconds_per_minute);
-                    out << elapsedTime_min;
-                }
-                case TimeUnit::Hour:
-                {
-                    double elapsedTime_hr =
-                        r.Time / static_cast<double>(seconds_per_hour);
-                    out << elapsedTime_hr;
-                }
-                break;
-                case TimeUnit::Day:
-                {
-                    double elapsedTime_day =
-                        r.Time / static_cast<double>(seconds_per_day);
-                    out << elapsedTime_day;
-                }
-                break;
-                case TimeUnit::Week:
-                {
-                    double elapsedTime_week =
-                        r.Time / static_cast<double>(seconds_per_week);
-                    out << elapsedTime_week;
-                }
-                break;
-                case TimeUnit::Year:
-                {
-                    double elapsedTime_yr =
-                        r.Time / static_cast<double>(seconds_per_year);
-                    out << elapsedTime_yr;
-                }
-                default:
-                {
-                    WriteErrorMessage(
-                        "WriteResultsToEventFile", "unhandled time unit"
-                    );
-                    std::exit(1);
-                }
-                break;
-            }
+            out << TimeInSecondsToDesiredUnit(r.Time, outputTimeUnit);
             for (size_t const& i : connOrder)
             {
                 out << ","

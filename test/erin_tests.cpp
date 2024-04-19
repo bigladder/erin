@@ -1,6 +1,7 @@
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_timestate.h"
 #include "erin_next/erin_next_simulation.h"
+#include "erin_next/erin_next_units.h"
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>
@@ -1814,4 +1815,27 @@ TEST(Erin, TestDoubleToString)
     std::string expected_g_at_p1 = "3689348814741910.5";
     std::string actual_g_at_p1 = erin::DoubleToString(g, 1);
     EXPECT_EQ(expected_g_at_p1, actual_g_at_p1);
+}
+
+TEST(Erin, TestTimeConversion)
+{
+    double time_s = 8760.0 * 3600.0;
+    double time_yr =
+        TimeInSecondsToDesiredUnit(time_s, TimeUnit::Year);
+    EXPECT_NEAR(1.0, time_yr, 1e-6);
+    double time_wk =
+        TimeInSecondsToDesiredUnit(time_s, TimeUnit::Week);
+    EXPECT_NEAR(8760.0 / (24.0 * 7.0), time_wk, 1e-6);
+    double time_day =
+        TimeInSecondsToDesiredUnit(time_s, TimeUnit::Day);
+    EXPECT_NEAR(365.0, time_day, 1e-6);
+    double time_hr =
+        TimeInSecondsToDesiredUnit(time_s, TimeUnit::Hour);
+    EXPECT_NEAR(8760.0, time_hr, 1e-6);
+    double time_min =
+        TimeInSecondsToDesiredUnit(time_s, TimeUnit::Minute);
+    EXPECT_NEAR(8760.0 * 60.0, time_min, 1e-6);
+    double output_time_s =
+        TimeInSecondsToDesiredUnit(time_s, TimeUnit::Second);
+    EXPECT_NEAR(8760.0 * 60.0 * 60.0, output_time_s, 1e-6);
 }

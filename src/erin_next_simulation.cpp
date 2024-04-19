@@ -1577,7 +1577,7 @@ namespace erin
         constexpr double eps = 1e-8;
         std::string proposed =
             fmt::format("{:.{}f}", value + eps, static_cast<int>(precision));
-        int end_idx = proposed.size();
+        int end_idx = static_cast<int>(proposed.size());
         bool has_decimal = false;
         for (char const& ch : proposed)
         {
@@ -1707,7 +1707,7 @@ namespace erin
             // NOTE: Amounts in kJ
             for (size_t i : storeOrder)
             {
-                double store_J = r.StorageAmounts_J[i];
+                double store_J = static_cast<double>(r.StorageAmounts_J[i]);
                 double store_kJ = store_J / J_per_kJ;
                 out << "," << std::fixed << std::setprecision(storePrecision)
                     << store_kJ;

@@ -6,10 +6,9 @@
 #include "erin_next/erin_next_utils.h"
 #include <cmath>
 #include <cstdlib>
-#include <iomanip>
-#include <limits>
 #include <sstream>
 #include <stdexcept>
+#include <numeric>
 
 namespace erin
 {
@@ -1379,16 +1378,16 @@ namespace erin
             if (maybeInConn.has_value())
             {
                 size_t inConn = maybeInConn.value();
-                double actualInflow_W = ss.Flows[inConn].Actual_W;
+                double actualInflow_W = static_cast<double>(ss.Flows[inConn].Actual_W);
                 netEnergyAdded_J +=
                     std::llround(elapsedTime_s * actualInflow_W);
             }
-            double actualOutflow_W = ss.Flows[outConn].Actual_W;
+            double actualOutflow_W = static_cast<double>(ss.Flows[outConn].Actual_W);
             netEnergyAdded_J -= std::llround(elapsedTime_s * actualOutflow_W);
             if (store.WasteflowConn.has_value())
             {
                 size_t wConn = store.WasteflowConn.value();
-                double actualWasteflow_W = ss.Flows[wConn].Actual_W;
+                double actualWasteflow_W = static_cast<double>(ss.Flows[wConn].Actual_W);
                 netEnergyAdded_J -=
                     std::llround(elapsedTime_s * actualWasteflow_W);
             }
@@ -3144,8 +3143,8 @@ namespace erin
                 ComponentType toType =
                     m.ComponentMap.CompType[m.Connections[connId].ToId];
                 Flow const& flow = timeAndFlows[prevEventIdx].Flows[connId];
-                double actualFlow_W = flow.Actual_W;
-                double requestedFlow_W = flow.Requested_W;
+                double actualFlow_W = static_cast<double>(flow.Actual_W);
+                double requestedFlow_W = static_cast<double>(flow.Requested_W);
                 switch (fromType)
                 {
                     case ComponentType::ConstantSourceType:
@@ -3343,9 +3342,9 @@ namespace erin
                  ++storeIdx)
             {
                 double prevStored_J =
-                    timeAndFlows[prevEventIdx].StorageAmounts_J[storeIdx];
+                    static_cast<double>(timeAndFlows[prevEventIdx].StorageAmounts_J[storeIdx]);
                 double currentStored_J =
-                    timeAndFlows[eventIdx].StorageAmounts_J[storeIdx];
+                    static_cast<double>(timeAndFlows[eventIdx].StorageAmounts_J[storeIdx]);
                 double increaseInStorage_J = currentStored_J - prevStored_J;
                 if (increaseInStorage_J > 0.0)
                 {
@@ -3359,7 +3358,7 @@ namespace erin
                 if (eventIdx == lastEventIdx)
                 {
                     double amount_J =
-                        timeAndFlows[eventIdx].StorageAmounts_J[storeIdx];
+                        static_cast<double>(timeAndFlows[eventIdx].StorageAmounts_J[storeIdx]);
                     finalStorage_kJ += amount_J / J_per_kJ;
                 }
             }

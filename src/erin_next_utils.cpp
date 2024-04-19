@@ -51,8 +51,8 @@ namespace erin
             std::lldiv(time_seconds, seconds_per_day);
         uint64_t const day_of_year = day_of_year_div.quot % days_per_year;
         auto const month_days = DayOfYearToMonthsDaysElapsed(day_of_year);
-        int const days = month_days.days;
-        int const months = month_days.months;
+        int const days = static_cast<int>(month_days.days);
+        int const months = static_cast<int>(month_days.months);
         std::lldiv_t const year_div =
             std::lldiv(time_seconds, seconds_per_year);
         uint64_t const years = year_div.quot;

@@ -78,21 +78,16 @@ However, they may use similar techniques.
 Possible avenues to explore:
 
 - enhance csv reading/writing and/or switch to a better library for it
-- switch to a better input file format for time-series data
-- switch to a better output file format for time-series data
-- read input (especially input CSVs) in a threaded fashion
-- write output data in a threaded fashion
+- add support for additional input file format for time-series data that is more performant
+- add support for an additional output file format for time-series data that is more performant
+- read input (input CSVs and/or a new format) in a threaded fashion
+- write output data (output CSVs and/or a new format) in a threaded fashion
 - do not perform processing on output (i.e., no rounding or dropping of unnecessary zeros)
 
 The last bullet above is worth mentioning a few more words on.
-Currently, within the simulator, all flows are in Watts.
-Similarly, time is in seconds and energy in Joules.
-However, when writing to output, we convert units and round numbers.
-This does help when comparing input file versions and is nice for the user.
-However, is it ERIN's job to format those entries?
-Or would we be better serving the user to just print them out faster?
-That said, it is suspected that the rounding of results and dropping of zeros is the real time sink.
-Perhaps adding a flag to elide all formatting niceties when writing doubles would be in order?
+It seems that the rounding of results and dropping of zeros (i.e., 3.400 => 3.4 and 15.000 => 15) is a performance bottleneck.
+This is nice for the casual user to have these formatting procedures.
+Howerver, adding a flag to elide these formatting niceties for "performance writing" may be in order.
 
 Potential candidates for input and/or output data include:
 
@@ -101,7 +96,7 @@ Potential candidates for input and/or output data include:
 
 NOTE: as an important point, this is a proposal to ADD additional input/output file options.
 In particular, CSV is very good for casual usage and debugging.
-However, when running ERIN in a parformance-critical context, another input/output format may serve us better.
+However, when running ERIN in a performance-critical context, another input/output format may serve us better.
 
 The Apache Parquet format is particularly interesting because it has:
 

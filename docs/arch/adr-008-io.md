@@ -83,6 +83,7 @@ Possible avenues to explore:
 - read input (input CSVs and/or a new format) in a threaded fashion
 - write output data (output CSVs and/or a new format) in a threaded fashion
 - do not perform processing on output (i.e., no rounding or dropping of unnecessary zeros)
+- revisit the verbosity of the output file; for example, write "x" vs "available" in outputs
 
 The last bullet above is worth mentioning a few more words on.
 It seems that the rounding of results and dropping of zeros (i.e., 3.400 => 3.4 and 15.000 => 15) is a performance bottleneck.

@@ -85,7 +85,7 @@ tasks:
     desc: Tests repeated single-file read benchmarks using hyperfine.
     dir: 'docs/benchmarks/'
     cmds:
-      - hyperfine '{{.ERIN}} read test_files.toml repeat -v'
+      - hyperfine '{{.ERIN}} read test_files.toml repeat -v' --warmup 2
     vars:
       ERIN: "../../build/bin/erin"
       GIT_COMMIT:
@@ -96,7 +96,7 @@ tasks:
     desc: Tests mixed single-file read benchmarks using hyperfine.
     dir: 'docs/benchmarks/'
     cmds:
-      - hyperfine '{{.ERIN}} read test_files.toml mixed -v'
+      - hyperfine '{{.ERIN}} read test_files.toml mixed -v' --warmup 2
     vars:
       ERIN: "../../build/bin/erin"
       GIT_COMMIT:
@@ -107,7 +107,7 @@ tasks:
     desc: Tests multi-file read benchmarks using hyperfine.
     dir: 'docs/benchmarks/'
     cmds:
-      - hyperfine '{{.ERIN}} read test_files.toml multi -v'
+      - hyperfine '{{.ERIN}} read test_files.toml multi -v' --warmup 2
     vars:
       ERIN: "../../build/bin/erin"
       GIT_COMMIT:

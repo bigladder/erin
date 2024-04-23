@@ -1,9 +1,10 @@
 [repeat_file]
 filename = "1_hotel__chilled_water.csv"
-num_to_read = 64
+num_to_read = 1280
 
 [mixed_file]
 filename = "1_mixed.csv"
+num_to_read = 20
 
 [multi_files]
 filenames = [
@@ -70,6 +71,71 @@ filenames = [
 "1_hotel__chilled_water.csv",
 "1_hotel__chilled_water.csv",
 "1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
+"1_hotel__chilled_water.csv",
 "1_hotel__chilled_water.csv"
 ]
+num_to_read = 10
 

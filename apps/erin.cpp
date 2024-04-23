@@ -174,21 +174,21 @@ readCommand(
 
         std::vector<std::string> filenames =
             toml::find<std::vector<std::string>>(expt, "filenames");
-        for (auto& filename : filenames)
-        {
-            std::ifstream inFile;
-            inFile.open(filename);
-            if (inFile.good())
-            {
-                std::vector<std::string> filerow;
-                do
-                {
-                    filerow = read_row(inFile);
-                } while (!inFile.eof());
-                ++num_read;
-                // std::cout << " read " << num_read << ": "<< filename << "\n";
+        auto num_to_read = toml::find<int>(expt, "num_to_read");
+        for (int i = 0; i < num_to_read; ++i) {
+            for (auto& filename : filenames) {
+                std::ifstream inFile;
+                inFile.open(filename);
+                if (inFile.good()) {
+                    std::vector<std::string> filerow;
+                    do {
+                        filerow = read_row(inFile);
+                    } while (!inFile.eof());
+                    ++num_read;
+                    // std::cout << " read " << num_read << ": "<< filename << "\n";
+                }
+                inFile.close();
             }
-            inFile.close();
         }
     }
 
@@ -228,21 +228,21 @@ readCommand(
         }
         auto expt = data.at("mixed_file");
         auto filename = toml::find<std::string>(expt, "filename");
-
-        std::ifstream inFile;
-        inFile.open(filename);
-        if (inFile.good())
-        {
-            std::vector<std::string> filerow;
-            do
-            {
-                filerow = read_row(inFile);
-            } while (!inFile.eof());
-            ++num_read;
-            // std::cout << " read " << num_read << ": " << mixed_filename <<
-            // "\n";
+        auto num_to_read = toml::find<int>(expt, "num_to_read");
+        for (int i = 0; i < num_to_read; ++i) {
+            std::ifstream inFile;
+            inFile.open(filename);
+            if (inFile.good()) {
+                std::vector<std::string> filerow;
+                do {
+                    filerow = read_row(inFile);
+                } while (!inFile.eof());
+                ++num_read;
+                // std::cout << " read " << num_read << ": " << mixed_filename <<
+                // "\n";
+            }
+            inFile.close();
         }
-        inFile.close();
     }
 
     if (verbose)

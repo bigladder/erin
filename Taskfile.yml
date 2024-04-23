@@ -81,7 +81,7 @@ tasks:
     dir: 'docs/examples'
     cmds:
       - cp stats.csv ex{{.CLI_ARGS}}-stats.csv
-  rrepeat:
+  bench_read_repeat:
     desc: Tests repeated single-file read benchmarks using hyperfine.
     dir: 'docs/benchmarks/'
     cmds:
@@ -92,7 +92,7 @@ tasks:
         sh: git rev-parse --short HEAD
       ISO_DATE:
         sh: date +"%Y-%m-%dT%H%M%S%z"
-  rmixed:
+  bench_read_mixed:
     desc: Tests mixed single-file read benchmarks using hyperfine.
     dir: 'docs/benchmarks/'
     cmds:
@@ -103,7 +103,7 @@ tasks:
         sh: git rev-parse --short HEAD
       ISO_DATE:
         sh: date +"%Y-%m-%dT%H%M%S%z"
-  rmulti:
+  bench_read_multi:
     desc: Tests multi-file read benchmarks using hyperfine.
     dir: 'docs/benchmarks/'
     cmds:

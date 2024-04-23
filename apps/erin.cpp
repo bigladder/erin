@@ -19,13 +19,15 @@
 #include "../vendor/CLI11/include/CLI/CLI.hpp"
 
 int
-versionCommand() {
+versionCommand()
+{
     std::cout << "Version: " << erin::version::version_string;
     return EXIT_SUCCESS;
 }
 
 int
-limitsCommand() {
+limitsCommand()
+{
     std::cout << "Limits: " << std::endl;
     std::cout << "- sizeof(uint64_t): " << (sizeof(uint64_t)) << std::endl;
     std::cout << "- std::numeric_limits<uint64_t>::max(): "
@@ -50,12 +52,14 @@ limitsCommand() {
 
 int
 runCommand(
-        std::string const &tomlFilename,
-        std::string const &eventsFilename,
-        std::string const &statsFilename,
-        bool verbose
-) {
-    if (verbose) {
+    std::string const& tomlFilename,
+    std::string const& eventsFilename,
+    std::string const& statsFilename,
+    bool verbose
+)
+{
+    if (verbose)
+    {
         std::cout << "input file: " << tomlFilename << std::endl;
         std::cout << "events file: " << eventsFilename << std::endl;
         std::cout << "statistics file: " << statsFilename << std::endl;
@@ -63,7 +67,8 @@ runCommand(
     }
 
     std::ifstream ifs(tomlFilename, std::ios_base::binary);
-    if (!ifs.good()) {
+    if (!ifs.good())
+    {
         std::cout << "Could not open input file stream on input file"
                   << std::endl;
         return EXIT_FAILURE;
@@ -75,11 +80,13 @@ runCommand(
     ifs.close();
     auto validationInfo = SetupGlobalValidationInfo();
     auto maybeSim = Simulation_ReadFromToml(data, validationInfo);
-    if (!maybeSim.has_value()) {
+    if (!maybeSim.has_value())
+    {
         return EXIT_FAILURE;
     }
     Simulation s = std::move(maybeSim.value());
-    if (verbose) {
+    if (verbose)
+    {
         Simulation_Print(s);
         std::cout << "-----------------" << std::endl;
     }
@@ -90,11 +97,13 @@ runCommand(
 
 int
 graphCommand(
-        std::string const &inputFilename,
-        std::string const &outputFilename
-) {
+    std::string const& inputFilename,
+    std::string const& outputFilename
+)
+{
     std::ifstream ifs(inputFilename, std::ios_base::binary);
-    if (!ifs.good()) {
+    if (!ifs.good())
+    {
         std::cout << "Could not open input file stream on input file"
                   << std::endl;
         return EXIT_FAILURE;
@@ -106,16 +115,18 @@ graphCommand(
     ifs.close();
     auto validation_info = SetupGlobalValidationInfo();
     auto maybe_sim = Simulation_ReadFromToml(data, validation_info);
-    if (!maybe_sim.has_value()) {
+    if (!maybe_sim.has_value())
+    {
         return EXIT_FAILURE;
     }
     Simulation s = std::move(maybe_sim.value());
     std::string dot_data = network_to_dot(
-            s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
+        s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
     );
     // save string from network_to_dot
     std::ofstream ofs(outputFilename, std::ios_base::binary);
-    if (!ofs.good()) {
+    if (!ofs.good())
+    {
         std::cout << "Could not open output file stream on output file"
                   << std::endl;
         return EXIT_FAILURE;
@@ -127,17 +138,20 @@ graphCommand(
 
 int
 readCommand(
-        std::string const &tomlFilename,
-        std::string const &mode,
-        bool verbose
-) {
-    if (verbose) {
+    std::string const& tomlFilename,
+    std::string const& mode,
+    bool verbose
+)
+{
+    if (verbose)
+    {
         std::cout << "input file: " << tomlFilename << std::endl;
         std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
     }
 
     std::ifstream ifs(tomlFilename, std::ios_base::binary);
-    if (!ifs.good()) {
+    if (!ifs.good())
+    {
         std::cout << "Could not open input file stream on input file"
                   << std::endl;
         return EXIT_FAILURE;
@@ -150,72 +164,89 @@ readCommand(
     unsigned num_read = 0;
     using namespace erin;
 
-    if (mode == "multi") {
-        if (!data.contains("multi_files")) {
+    if (mode == "multi")
+    {
+        if (!data.contains("multi_files"))
+        {
             return EXIT_FAILURE;
         }
-        auto expt= data.at("multi_files");
+        auto expt = data.at("multi_files");
 
-        std::vector<std::string> filenames = toml::find<std::vector<std::string>>(expt, "filenames");
-        for (auto &filename: filenames) {
+        std::vector<std::string> filenames =
+            toml::find<std::vector<std::string>>(expt, "filenames");
+        for (auto& filename : filenames)
+        {
             std::ifstream inFile;
             inFile.open(filename);
-            if (inFile.good()) {
+            if (inFile.good())
+            {
                 std::vector<std::string> filerow;
-                do {
+                do
+                {
                     filerow = read_row(inFile);
                 } while (!inFile.eof());
                 ++num_read;
-                //std::cout << " read " << num_read << ": "<< filename << "\n";
+                // std::cout << " read " << num_read << ": "<< filename << "\n";
             }
             inFile.close();
         }
     }
 
-    if (mode == "repeat") {
-        if (!data.contains("repeat_file")) {
+    if (mode == "repeat")
+    {
+        if (!data.contains("repeat_file"))
+        {
             return EXIT_FAILURE;
         }
         auto expt = data.at("repeat_file");
         auto filename = toml::find<std::string>(expt, "filename");
         auto num_to_read = toml::find<int>(expt, "num_to_read");
-        for (int i = 0; i < num_to_read; ++i) {
+        for (int i = 0; i < num_to_read; ++i)
+        {
             std::ifstream inFile;
             inFile.open(filename);
-            if (inFile.good()) {
+            if (inFile.good())
+            {
                 std::vector<std::string> filerow;
-                do {
+                do
+                {
                     filerow = read_row(inFile);
                 } while (!inFile.eof());
                 ++num_read;
-                //std::cout << " read " << num_read << ": " << single_filename << "\n";
+                // std::cout << " read " << num_read << ": " << single_filename
+                // << "\n";
             }
             inFile.close();
         }
     }
 
-    if (mode == "mixed") {
-        if (!data.contains("mixed_file")) {
+    if (mode == "mixed")
+    {
+        if (!data.contains("mixed_file"))
+        {
             return EXIT_FAILURE;
         }
         auto expt = data.at("mixed_file");
         auto filename = toml::find<std::string>(expt, "filename");
 
-
         std::ifstream inFile;
         inFile.open(filename);
-        if (inFile.good()) {
+        if (inFile.good())
+        {
             std::vector<std::string> filerow;
-            do {
+            do
+            {
                 filerow = read_row(inFile);
             } while (!inFile.eof());
             ++num_read;
-            //std::cout << " read " << num_read << ": " << mixed_filename << "\n";
+            // std::cout << " read " << num_read << ": " << mixed_filename <<
+            // "\n";
         }
         inFile.close();
     }
 
-    if (verbose) {
+    if (verbose)
+    {
         std::cout << "mode: " << mode << std::endl;
         std::cout << "# files read: " << num_read << std::endl;
         std::cout << "-----------------" << std::endl;
@@ -225,7 +256,8 @@ readCommand(
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char** argv)
+{
     int result = EXIT_SUCCESS;
 
     CLI::App app{"erin"};
@@ -259,7 +291,7 @@ main(int argc, char **argv) {
     run->callback(
         [&]() {
             result = runCommand(
-                    tomlFilename, eventsFilename, statsFilename, verbose
+                tomlFilename, eventsFilename, statsFilename, verbose
             );
         }
     );
@@ -270,7 +302,8 @@ main(int argc, char **argv) {
     std::string outputFilename = "graph.dot";
     graph->add_option("-o,--out", outputFilename, "Graph output filename");
 
-    graph->callback([&]() { result = graphCommand(tomlFilename, outputFilename); });
+    graph->callback([&]()
+                    { result = graphCommand(tomlFilename, outputFilename); });
 
     //
     auto read = app.add_subcommand("read", "Read mixed speed test");
@@ -281,13 +314,15 @@ main(int argc, char **argv) {
 
     read->add_flag("-v,--verbose", verbose, "Verbose output");
 
-    read->callback([&]() { result = readCommand(tomlFilename, mode, verbose); });
+    read->callback([&]() { result = readCommand(tomlFilename, mode, verbose); }
+    );
 
     //
     CLI11_PARSE(app, argc, argv);
 
     // call with no subcommands is equivalent to subcommand "help"
-    if (argc == 1) {
+    if (argc == 1)
+    {
         std::cout << "ERIN - Energy Resilience of Interacting Networks\n"
                   << "Version " << erin::version::version_string << "\n"
                   << std::endl;

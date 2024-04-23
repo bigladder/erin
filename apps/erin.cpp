@@ -147,21 +147,17 @@ readCommand(
     auto data = toml::parse(ifs, tomlFilenameOnly.string());
     ifs.close();
 
-    if (!data.contains("read_files")) {
-        return EXIT_FAILURE;
-    }
-    auto read_files = data.at("read_files");
-
-    std::vector<std::string> multi_names = toml::find<std::vector<std::string>>(read_files, "multi_names");
-    auto single_filename = toml::find<std::string>(read_files, "single_name");
-    auto num_single_read = toml::find<int>(read_files, "num_single_read");
-    auto mixed_filename = toml::find<std::string>(read_files, "mixed_name");
-
     unsigned num_read = 0;
     using namespace erin;
 
     if (mode == "multi") {
-        for (auto &filename: multi_names) {
+        if (!data.contains("multi_files")) {
+            return EXIT_FAILURE;
+        }
+        auto expt= data.at("multi_files");
+
+        std::vector<std::string> filenames = toml::find<std::vector<std::string>>(expt, "filenames");
+        for (auto &filename: filenames) {
             std::ifstream inFile;
             inFile.open(filename);
             if (inFile.good()) {
@@ -176,10 +172,16 @@ readCommand(
         }
     }
 
-    if (mode == "single") {
-        for (int i = 0; i < num_single_read; ++i) {
+    if (mode == "repeat") {
+        if (!data.contains("repeat_file")) {
+            return EXIT_FAILURE;
+        }
+        auto expt = data.at("repeat_file");
+        auto filename = toml::find<std::string>(expt, "filename");
+        auto num_to_read = toml::find<int>(expt, "num_to_read");
+        for (int i = 0; i < num_to_read; ++i) {
             std::ifstream inFile;
-            inFile.open(single_filename);
+            inFile.open(filename);
             if (inFile.good()) {
                 std::vector<std::string> filerow;
                 do {
@@ -193,8 +195,15 @@ readCommand(
     }
 
     if (mode == "mixed") {
+        if (!data.contains("mixed_file")) {
+            return EXIT_FAILURE;
+        }
+        auto expt = data.at("mixed_file");
+        auto filename = toml::find<std::string>(expt, "filename");
+
+
         std::ifstream inFile;
-        inFile.open(mixed_filename);
+        inFile.open(filename);
         if (inFile.good()) {
             std::vector<std::string> filerow;
             do {
@@ -234,25 +243,25 @@ main(int argc, char **argv) {
 
     std::string eventsFilename = "out.csv";
     run->add_option(
-            "-e,--events", eventsFilename, "Events csv filename; default:out.csv"
+        "-e,--events", eventsFilename, "Events csv filename; default:out.csv"
     );
 
     std::string statsFilename = "stats.csv";
     run->add_option(
-            "-s,--statistics",
-            statsFilename,
-            "Statistics csv filename; default:stats.csv"
+        "-s,--statistics",
+        statsFilename,
+        "Statistics csv filename; default:stats.csv"
     );
 
     bool verbose = false;
     run->add_flag("-v,--verbose", verbose, "Verbose output");
 
     run->callback(
-            [&]() {
-                result = runCommand(
-                        tomlFilename, eventsFilename, statsFilename, verbose
-                );
-            }
+        [&]() {
+            result = runCommand(
+                    tomlFilename, eventsFilename, statsFilename, verbose
+            );
+        }
     );
 
     auto graph = app.add_subcommand("graph", "Graph a simulation");
@@ -274,6 +283,7 @@ main(int argc, char **argv) {
 
     read->callback([&]() { result = readCommand(tomlFilename, mode, verbose); });
 
+    //
     CLI11_PARSE(app, argc, argv);
 
     // call with no subcommands is equivalent to subcommand "help"

@@ -15,7 +15,10 @@
 #include <limits>
 #include <string>
 #include <filesystem>
+#include <unordered_map>
 #include "../vendor/CLI11/include/CLI/CLI.hpp"
+#include "toml/exception.hpp"
+#include "toml/get.hpp"
 
 int
 versionCommand()
@@ -136,6 +139,187 @@ graphCommand(
 }
 
 int
+updateTomlInputCommand(
+    std::string inputTomlFilename,
+    std::string outputTomlFilename,
+    bool removeIds
+)
+{
+    std::ifstream ifs(inputTomlFilename, std::ios_base::binary);
+    if (!ifs.good())
+    {
+        std::cout << "Could not open input file stream on input file"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+    using namespace erin;
+    auto nameOnly = std::filesystem::path(inputTomlFilename).filename();
+    auto data = toml::parse(ifs, nameOnly.string());
+    ifs.close();
+
+    // rename networks.* to network
+    if (data.contains("networks"))
+    {
+        auto new_node = std::unordered_map<std::string, toml::value>{};
+        auto nw = data["networks"].as_table();
+        for (auto it = nw.begin(); it != nw.end(); ++it)
+        {
+            std::string const& nwName = it->first;
+            std::cout << "CHANGE .networks." << nwName << " to .network"
+                      << std::endl;
+            auto nwTable = it->second.as_table();
+            new_node["connections"] = nwTable["connections"];
+            break;
+        }
+        data["network"] = new_node;
+        data.as_table().erase("networks");
+    }
+    // add missing fields to components
+    if (data.contains("components"))
+    {
+        auto& components = data["components"].as_table();
+        for (auto it = components.begin(); it != components.end(); ++it)
+        {
+            std::string const& compName = it->first;
+            auto& comp = it->second.as_table();
+            std::string compType = comp["type"].as_string();
+            if (compType == "store" && !comp.contains("max_discharge"))
+            {
+                double maxDischarge = comp["max_inflow"].is_floating()
+                    ? comp["max_inflow"].as_floating()
+                    : static_cast<double>(comp["max_inflow"].as_integer());
+                comp["max_discharge"] = toml::value(maxDischarge);
+                std::cout << "ADD .components." << compName
+                          << ".max_discharge = " << maxDischarge << std::endl;
+            }
+            if (compType == "store" && comp.contains("max_inflow"))
+            {
+                double maxInflow = comp["max_inflow"].is_floating()
+                    ? comp["max_inflow"].as_floating()
+                    : static_cast<double>(comp["max_inflow"].as_integer());
+                comp.erase("max_inflow");
+                comp["max_charge"] = toml::value(maxInflow);
+                std::cout << "RENAME .components." << compName
+                          << ".max_inflow to .components" << compName
+                          << ".max_charge" << std::endl;
+            }
+            if (compType == "muxer" && comp.contains("dispatch_strategy"))
+            {
+                comp.erase("dispatch_strategy");
+                std::cout << "REMOVE .components." << compName
+                          << ".dispatch_strategy" << std::endl;
+            }
+            if (removeIds && comp.contains("id"))
+            {
+                comp.erase("id");
+                std::cout << "REMOVE .components." << compName << ".id"
+                          << std::endl;
+            }
+            if (compType == "converter" && comp.contains("constant_efficiency"))
+            {
+                double eff = comp["constant_efficiency"].is_floating()
+                    ? comp["constant_efficiency"].as_floating()
+                    : static_cast<double>(
+                          comp["constant_efficiency"].as_integer()
+                      );
+                if (eff > 1.0)
+                {
+                    comp["type"] = toml::value("mover");
+                    comp["cop"] = toml::value(eff);
+                    comp.erase("constant_efficiency");
+                    std::cout << "CHANGE .components." << compName
+                              << ".type to mover" << std::endl;
+                }
+            }
+        }
+    }
+    if (removeIds)
+    {
+        if (data.contains("simulation_info"))
+        {
+            auto& simInfoTable = data["simulation_info"].as_table();
+            if (simInfoTable.contains("id"))
+            {
+                simInfoTable.erase("id");
+                std::cout << "REMOVE .simulation_info.id" << std::endl;
+            }
+        }
+        if (data.contains("fragility_mode"))
+        {
+            auto& fms = data["fragility_mode"].as_table();
+            for (auto it = fms.begin(); it != fms.end(); ++it)
+            {
+                std::string const& fmName = it->first;
+                auto& fm = it->second.as_table();
+                if (fm.contains("id"))
+                {
+                    fm.erase("id");
+                    std::cout << "REMOVE .fragility_mode." << fmName << ".id"
+                              << std::endl;
+                }
+            }
+        }
+        if (data.contains("failure_mode"))
+        {
+            auto& fms = data["failure_mode"].as_table();
+            for (auto it = fms.begin(); it != fms.end(); ++it)
+            {
+                std::string const& fmName = it->first;
+                auto& fm = it->second.as_table();
+                if (fm.contains("id"))
+                {
+                    fm.erase("id");
+                    std::cout << "REMOVE .failure_mode." << fmName << ".id"
+                              << std::endl;
+                }
+            }
+        }
+        if (data.contains("fragility_curve"))
+        {
+            auto& fcs = data["fragility_curve"].as_table();
+            for (auto it = fcs.begin(); it != fcs.end(); ++it)
+            {
+                std::string const& fcName = it->first;
+                auto& fc = it->second.as_table();
+                if (fc.contains("id"))
+                {
+                    fc.erase("id");
+                    std::cout << "REMOVE .fragility_curve." << fcName << ".id"
+                              << std::endl;
+                }
+            }
+        }
+        if (data.contains("dist"))
+        {
+            auto& dists = data["dist"].as_table();
+            for (auto it = dists.begin(); it != dists.end(); ++it)
+            {
+                std::string const& distName = it->first;
+                auto& distTable = it->second.as_table();
+                if (distTable.contains("id"))
+                {
+                    distTable.erase("id");
+                    std::cout << "REMOVE .dist." << distName << ".id"
+                              << std::endl;
+                }
+            }
+        }
+    }
+
+    std::ofstream ofs(outputTomlFilename, std::ios_base::binary);
+    if (!ofs.good())
+    {
+        std::cout << "Could not open ouptut file stream for output file"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+    ofs << data;
+    ofs.close();
+    // go through data and find issues
+    return EXIT_SUCCESS;
+}
+
+int
 main(int argc, char** argv)
 {
     int result = EXIT_SUCCESS;
@@ -184,6 +368,28 @@ main(int argc, char** argv)
 
     graph->callback([&]()
                     { result = graphCommand(tomlFilename, outputFilename); });
+
+    std::string tomlOutputFilename = "out.toml";
+    bool stripIds = false;
+    auto update =
+        app.add_subcommand("update", "Update an ERIN 0.55 file to current");
+    update->add_option("toml_input_file", tomlFilename, "TOML input file name")
+        ->required();
+    update->add_option(
+        "toml_output_file", tomlOutputFilename, "TOML output file name"
+    );
+    update->add_option(
+        "-s,--strip-ids",
+        stripIds,
+        "If specified, strips ids from the input file"
+    );
+    update->callback(
+        [&]() {
+            result = updateTomlInputCommand(
+                tomlFilename, tomlOutputFilename, stripIds
+            );
+        }
+    );
 
     CLI11_PARSE(app, argc, argv);
 

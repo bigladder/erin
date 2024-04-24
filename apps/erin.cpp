@@ -378,7 +378,7 @@ main(int argc, char** argv)
     update->add_option(
         "toml_output_file", tomlOutputFilename, "TOML output file name"
     );
-    update->add_option(
+    update->add_flag(
         "-s,--strip-ids",
         stripIds,
         "If specified, strips ids from the input file"

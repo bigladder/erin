@@ -50,6 +50,7 @@ namespace erin
         std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(rawTimeUnit);
         if (!maybeTimeUnit.has_value())
         {
+            // TODO: replace with logger for warning
             WriteErrorMessage(
                 "simulation_info",
                 "unhandled time unit string '" + rawTimeUnit + "'"
@@ -64,6 +65,7 @@ namespace erin
         auto maybeRateUnit = TagToPowerUnit(rawRateUnit);
         if (!maybeRateUnit.has_value())
         {
+            // TODO: replace with logger for warning
             WriteErrorMessage(
                 "simulation_info", "unhandled rate unit '" + rawRateUnit + "'"
             );

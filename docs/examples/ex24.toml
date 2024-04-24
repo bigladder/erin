@@ -1,6 +1,7 @@
 [meta]
 description = "exercise the store components"
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -24,7 +25,7 @@ type = "store"
 flow = "electricity"
 capacity_unit = "kWh"
 capacity = 10.0
-max_inflow = 1.0
+max_charge = 1.0
 init_soc = 1.0
 max_discharge = 1.0
 [components.electric_battery_B]
@@ -32,7 +33,7 @@ type = "store"
 flow = "electricity"
 capacity_unit = "kWh"
 capacity = 10.0
-max_inflow = 1.0
+max_charge = 1.0
 init_soc = 0.5
 max_discharge = 1.0
 [components.electric_load_A]

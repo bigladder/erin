@@ -2,6 +2,7 @@
 description = "two-day example with realistic loads and uncontrolled source"
 
 [simulation_info]
+input_format_version = "0.2"
 time_unit = "hours"
 max_time = 48
 ############################################################

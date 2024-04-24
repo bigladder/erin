@@ -1,6 +1,7 @@
 # Simulation Information
 # Very Simple Model @ 2/29/2024 10:37:01 AM
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -215,7 +216,6 @@ id = 137
 
 [components.substation]
 type = "muxer"
-dispatch_strategy = "in_order"
 flow = "electricity"
 num_inflows = 1
 num_outflows = 1
@@ -232,7 +232,6 @@ id = 139
 
 [components.xfer_switch]
 type = "muxer"
-dispatch_strategy = "in_order"
 flow = "electricity"
 num_inflows = 2
 num_outflows = 2
@@ -262,7 +261,7 @@ capacity = 49_304_000.0   # kJ
 capacity_unit = "kJ"
 flow = "diesel"
 init_soc = 0.5
-max_inflow = 87_921_300.0   # kJ
+max_charge = 87_921_300.0   # kJ
 rate_unit = "kW"
 max_discharge = 10_000.0 
 [components.41_bu_gen_fuel_tank.meta]

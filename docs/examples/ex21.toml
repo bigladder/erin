@@ -2,6 +2,7 @@
 description = "Another Weibull distribution test"
 
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -44,7 +45,7 @@ max_outflow = 15.0
 #### Electrical Components ###
 [components.transmission]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 failure_modes = ["grid_outage"]
 
 [components.substation]

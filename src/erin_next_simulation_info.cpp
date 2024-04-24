@@ -42,8 +42,8 @@ namespace erin
         {
             // TODO: replace with logger for warning
             WriteWarningMessage(
-                "simulation_info",
-                "input_format_version doesn't match current");
+                "simulation_info", "input_format_version doesn't match current"
+            );
         }
         std::string rawTimeUnit =
             std::get<std::string>(table.at("time_unit").Value);

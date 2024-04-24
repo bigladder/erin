@@ -25,6 +25,7 @@ namespace erin
     // uint32_t...
     struct SimulationInfo
     {
+        std::string InputFormatVersion = "";
         PowerUnit RateUnit;
         // TODO: remove QuantityUnit; not in user guide; or does this set
         // defaults? if keep, use EnergyUnit

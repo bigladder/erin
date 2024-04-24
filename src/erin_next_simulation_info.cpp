@@ -36,6 +36,15 @@ namespace erin
     )
     {
         SimulationInfo si{};
+        si.InputFormatVersion =
+            std::get<std::string>(table.at("input_format_version").Value);
+        if (si.InputFormatVersion != current_input_version)
+        {
+            // TODO: replace with logger for warning
+            WriteWarningMessage(
+                "simulation_info",
+                "input_format_version doesn't match current");
+        }
         std::string rawTimeUnit =
             std::get<std::string>(table.at("time_unit").Value);
         std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(rawTimeUnit);

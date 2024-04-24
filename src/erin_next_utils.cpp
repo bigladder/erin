@@ -75,13 +75,31 @@ namespace erin
     }
 
     void
+    WriteWarningMessage(std::string const& tag, std::string const& message)
+    {
+        std::cerr << WriteWarningToString(tag, message) << std::endl;
+    }
+
+    void
     WriteErrorMessage(std::string const& tag, std::string const& message)
     {
+        std::cerr << WriteErrorToString(tag, message) << std::endl;
+    }
+
+    std::string
+    WriteWarningToString(std::string const& tag, std::string const& message)
+    {
+        std::ostringstream oss;
         if (!tag.empty())
         {
-            std::cerr << "[" << tag << "] ";
+            oss << "[WARNING: " << tag << "] ";
         }
-        std::cerr << message << std::endl;
+        else
+        {
+            oss << "[WARNING] ";
+        }
+        oss << message << std::endl;
+        return oss.str();
     }
 
     std::string
@@ -90,7 +108,11 @@ namespace erin
         std::ostringstream oss;
         if (!tag.empty())
         {
-            oss << "[" << tag << "] ";
+            oss << "[ERROR: " << tag << "] ";
+        }
+        else
+        {
+            oss << "[ERROR] ";
         }
         oss << message << std::endl;
         return oss.str();

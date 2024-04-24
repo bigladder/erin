@@ -101,6 +101,7 @@ namespace erin
         std::string FieldName;
         InputType Type;
         bool IsRequired;
+        bool InformIfMissing = false;
         std::string Default;
         std::unordered_set<std::string> EnumValues;
         std::vector<TagWithDeprication> Aliases;
@@ -118,6 +119,7 @@ namespace erin
         std::unordered_map<std::string, std::string> Defaults;
         std::unordered_map<std::string, std::vector<TagWithDeprication>>
             Aliases;
+        std::unordered_set<std::string> InformIfMissing;
     };
 
     struct ComponentValidationMap

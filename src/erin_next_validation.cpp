@@ -148,19 +148,19 @@ namespace erin
         {
             return InputSection::Components_Load;
         }
-        if (tag == "")
+        if (tag == "converter")
         {
             return InputSection::Components_ConstEffConverter;
         }
-        if (tag == "")
+        if (tag == "mux" || tag == "muxer")
         {
             return InputSection::Components_Mux;
         }
-        if (tag == "")
+        if (tag == "store")
         {
             return InputSection::Components_Store;
         }
-        if (tag == "")
+        if (tag == "pass_through")
         {
             return InputSection::Components_PassThrough;
         }

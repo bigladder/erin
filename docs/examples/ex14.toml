@@ -1,6 +1,7 @@
 [meta]
 description = "Like example 13 but testing using real number formats"
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"

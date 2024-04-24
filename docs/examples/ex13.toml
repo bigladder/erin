@@ -1,6 +1,7 @@
 [meta]
 description = "Demonstrate multi-path loop connections"
 [simulation_info]
+input_format_version = "0.2"
 time_unit = "years"
 max_time = 1000
 [loads.load_1]

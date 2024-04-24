@@ -2,6 +2,7 @@
 description = ""
 
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"

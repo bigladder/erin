@@ -13,6 +13,8 @@
 namespace erin
 {
 
+    std::string const current_input_version = "0.2";
+
     std::unordered_set<std::string> const ValidTimeUnits{
         "years",
         "year",

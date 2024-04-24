@@ -487,20 +487,15 @@ namespace erin
             }
             out[key] = std::move(v);
         }
-        for (std::string const& fieldsToInform
-            : validationInfo.InformIfMissing)
+        for (std::string const& fieldsToInform : validationInfo.InformIfMissing)
         {
             if (!fieldsFound.contains(fieldsToInform))
             {
                 // TODO: create an inform level?
-                std::string message =
-                    fieldsToInform
+                std::string message = fieldsToInform
                     + " not found; default value of '"
-                    + validationInfo.Defaults.at(fieldsToInform)
-                    + "' assumed";
-                warnings.push_back(
-                    WriteWarningToString(tableName, message)
-                );
+                    + validationInfo.Defaults.at(fieldsToInform) + "' assumed";
+                warnings.push_back(WriteWarningToString(tableName, message));
             }
         }
         // insert defaults if not defined

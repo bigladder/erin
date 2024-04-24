@@ -311,9 +311,10 @@ namespace erin
                 .Default = current_input_version,
                 .EnumValues = {},
                 .Aliases = {},
-                .Sections = {
-                    InputSection::SimulationInfo,
-                },
+                .Sections =
+                    {
+                        InputSection::SimulationInfo,
+                    },
             },
             FieldInfo{
                 .FieldName = "rate_unit",

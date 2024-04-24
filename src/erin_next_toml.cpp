@@ -100,7 +100,8 @@ namespace erin
                     std::ostringstream oss{};
                     oss << "WARNING! unhandled field '" << key
                         << "' will be ignored";
-                    warnings.push_back(WriteErrorToString(tableName, oss.str())
+                    warnings.push_back(
+                        WriteWarningToString(tableName, oss.str())
                     );
                     continue;
                 }
@@ -485,6 +486,22 @@ namespace erin
                 break;
             }
             out[key] = std::move(v);
+        }
+        for (std::string const& fieldsToInform
+            : validationInfo.InformIfMissing)
+        {
+            if (!fieldsFound.contains(fieldsToInform))
+            {
+                // TODO: create an inform level?
+                std::string message =
+                    fieldsToInform
+                    + " not found; default value of '"
+                    + validationInfo.Defaults.at(fieldsToInform)
+                    + "' assumed";
+                warnings.push_back(
+                    WriteWarningToString(tableName, message)
+                );
+            }
         }
         // insert defaults if not defined
         for (auto const& defkv : validationInfo.Defaults)

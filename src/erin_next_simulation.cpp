@@ -606,7 +606,7 @@ namespace erin
             std::cout << "WARNINGS:" << std::endl;
             for (auto const& w : warnings)
             {
-                WriteErrorMessage("simulation_info", w);
+                std::cerr << w << std::endl;
             }
         }
         if (errors.size() > 0)
@@ -614,7 +614,7 @@ namespace erin
             std::cout << "ERRORS:" << std::endl;
             for (auto const& err : errors)
             {
-                WriteErrorMessage("simulation_info", err);
+                std::cerr << err << std::endl;
             }
             return Result::Failure;
         }

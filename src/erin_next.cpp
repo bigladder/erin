@@ -3610,8 +3610,8 @@ namespace erin
         Connection c{
             .From = fromType,
             .FromIdx = fromIdx,
-            .FromId = fromId,
             .FromPort = fromPort,
+            .FromId = fromId,
             .To = toType,
             .ToIdx = toIdx,
             .ToPort = toPort,

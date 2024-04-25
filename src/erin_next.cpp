@@ -1170,12 +1170,11 @@ namespace erin
         Store const& store = model.Stores[compIdx];
         size_t outflowConn = store.OutflowConn;
         std::optional<size_t> maybeInflowConn = store.InflowConn;
-        // TODO: consider using int64_t here
-        int netCharge_W = -1 * static_cast<int>(ss.Flows[outflowConn].Actual_W);
+        int64_t netCharge_W = -1 * static_cast<int64_t>(ss.Flows[outflowConn].Actual_W);
         if (maybeInflowConn.has_value())
         {
             size_t inflowConn = maybeInflowConn.value();
-            netCharge_W += static_cast<int>(ss.Flows[inflowConn].Actual_W);
+            netCharge_W += static_cast<int64_t>(ss.Flows[inflowConn].Actual_W);
         }
         if (netCharge_W > 0)
         {

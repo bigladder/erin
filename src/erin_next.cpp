@@ -3095,6 +3095,7 @@ namespace erin
                     "Model_AddConnection",
                     "unhandled component type: " + ToString(toType)
                 );
+                std::exit(1);
             }
             break;
         }

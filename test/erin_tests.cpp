@@ -1833,3 +1833,22 @@ TEST(Erin, TestTimeConversion)
     double output_time_s = TimeInSecondsToDesiredUnit(time_s, TimeUnit::Second);
     EXPECT_NEAR(8760.0 * 60.0 * 60.0, output_time_s, 1e-6);
 }
+
+TEST(Erin, TestParseTagAndPort)
+{
+    std::string input = "electric_utility:OUT(0)";
+    auto output = ParseTagAndPort(input, "");
+    EXPECT_TRUE(output.has_value());
+    EXPECT_EQ(output.value().Tag, "electric_utility");
+    EXPECT_EQ(output.value().Port, 0);
+    input = "bus:IN(1)";
+    output = ParseTagAndPort(input, "");
+    EXPECT_TRUE(output.has_value());
+    EXPECT_EQ(output.value().Tag, "bus");
+    EXPECT_EQ(output.value().Port, 1);
+    input = "my_place:OUT(123)";
+    output = ParseTagAndPort(input, "");
+    EXPECT_TRUE(output.has_value());
+    EXPECT_EQ(output.value().Tag, "my_place");
+    EXPECT_EQ(output.value().Port, 123);
+}

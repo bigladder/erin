@@ -3651,6 +3651,7 @@ namespace erin
                           << " must be an array" << std::endl;
                 return Result::Failure;
             }
+            // TODO: std::vector<toml::value> itemAsArray = item.as_array();
             if (item.as_array().size() < 3)
             {
                 std::cout << "[network] " << "'connections' at index " << i

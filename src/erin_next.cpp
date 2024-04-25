@@ -2597,12 +2597,13 @@ namespace erin
     )
     {
         size_t idx = m.Muxes.size();
-        Mux mux = {};
-        mux.NumInports = numInports;
-        mux.NumOutports = numOutports;
-        mux.InflowConns = std::vector<size_t>(numInports, 0);
-        mux.OutflowConns = std::vector<size_t>(numOutports, 0);
-        mux.MaxOutflows_W = std::vector<flow_t>(numOutports, max_flow_W);
+        Mux mux{
+            .NumInports = numInports,
+            .NumOutports = numOutports,
+            .InflowConns = std::vector<size_t>(numInports, 0),
+            .OutflowConns = std::vector<size_t>(numOutports, 0),
+            .MaxOutflows_W = std::vector<flow_t>(numOutports, max_flow_W),
+        };
         m.Muxes.push_back(std::move(mux));
         std::vector<size_t> inflowTypes(numInports, flowId);
         std::vector<size_t> outflowTypes(numOutports, flowId);
@@ -2833,16 +2834,17 @@ namespace erin
         size_t fromIdx = m.ComponentMap.Idx[fromId];
         ComponentType toType = m.ComponentMap.CompType[toId];
         size_t toIdx = m.ComponentMap.Idx[toId];
-        Connection c{};
-        c.From = fromType;
-        c.FromId = fromId;
-        c.FromIdx = fromIdx;
-        c.FromPort = fromPort;
-        c.To = toType;
-        c.ToId = toId;
-        c.ToIdx = toIdx;
-        c.ToPort = toPort;
-        c.FlowTypeId = flowId;
+        Connection c{
+            .From = fromType,
+            .FromIdx = fromIdx,
+            .FromId = fromId,
+            .FromPort = fromPort,
+            .To = toType,
+            .ToIdx = toIdx,
+            .ToPort = toPort,
+            .ToId = toId,
+            .FlowTypeId = flowId,
+        };
         size_t connId = m.Connections.size();
         if (check_integrity)
         {
@@ -3618,9 +3620,10 @@ namespace erin
         }
         size_t count = closing - (opening + 1);
         std::string port = s.substr(opening + 1, count);
-        TagAndPort tap = {};
-        tap.Tag = tag;
-        tap.Port = std::atoi(port.c_str());
+        TagAndPort tap{
+            .Tag = tag,
+            .Port = static_cast<size_t>(std::atoi(port.c_str())),
+        };
         return tap;
     }
 

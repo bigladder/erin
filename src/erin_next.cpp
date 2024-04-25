@@ -1365,6 +1365,7 @@ namespace erin
             std::optional<size_t> maybeInConn = store.InflowConn;
             size_t outConn = store.OutflowConn;
             size_t compId = m.Connections[outConn].FromId;
+            assert(m.Connections[outConn].From == ComponentType::StoreType);
             if (ss.UnavailableComponents.contains(compId))
             {
                 continue;
@@ -1439,6 +1440,20 @@ namespace erin
             {
                 std::cout
                     << "ERROR: netEnergyAdded is lower than discharge limit"
+                    << std::endl;
+                std::cout << "compId: " << compId << std::endl;
+                std::cout << "store idx: " << storeIdx << std::endl;
+                std::cout << "tag: " << m.ComponentMap.Tag[compId] << std::endl;
+                for (size_t compId_Idx = 0; compId_Idx < m.ComponentMap.Tag.size(); ++compId_Idx)
+                {
+                    if (m.ComponentMap.CompType[compId_Idx] == ComponentType::StoreType
+                        && m.ComponentMap.Idx[compId_Idx] == storeIdx)
+                    {
+                        std::cout << "compId (from search): " << compId_Idx << std::endl;
+                        std::cout << "tag (from search): " << m.ComponentMap.Tag[compId_Idx] << std::endl;
+                    }
+                }
+                std::cout << "has inflow? " << store.InflowConn.has_value()
                     << std::endl;
                 std::cout << "netEnergyAdded (J): " << netEnergyAdded_J
                           << std::endl;
@@ -2812,6 +2827,8 @@ namespace erin
         size_t flowId
     )
     {
+        // TODO: make the below an option?
+        bool constexpr check_integrity = false;
         ComponentType fromType = m.ComponentMap.CompType[fromId];
         size_t fromIdx = m.ComponentMap.Idx[fromId];
         ComponentType toType = m.ComponentMap.CompType[toId];
@@ -2827,21 +2844,58 @@ namespace erin
         c.ToPort = toPort;
         c.FlowTypeId = flowId;
         size_t connId = m.Connections.size();
+        if (check_integrity)
+        {
+            bool issueFound = false;
+            for (auto const& conn : m.Connections)
+            {
+                if (conn.FromId == fromId && conn.FromPort == fromPort)
+                {
+                    issueFound = true;
+                    std::cout << "INTEGRITY VIOLATION: "
+                        << "attempt to doubly connect "
+                        << "compId=" << fromId
+                        << " outport=" << fromPort
+                        << " tag=" << m.ComponentMap.Tag[fromId]
+                        << " type=" << ToString(m.ComponentMap.CompType[fromId])
+                        << std::endl;
+                }
+                if (conn.ToId == toId && conn.ToPort == toPort)
+                {
+                    issueFound = true;
+                    std::cout << "INTEGRITY VIOLATION: "
+                        << "attempt to doubly connect "
+                        << "compId=" << toId
+                        << " inport=" << toPort
+                        << " tag=" << m.ComponentMap.Tag[toId]
+                        << " type=" << ToString(m.ComponentMap.CompType[toId])
+                        << std::endl;
+                }
+            }
+            if (issueFound)
+            {
+                std::cout << "Issue when trying to make a connection\n";
+                std::exit(1); 
+            }
+        }
         m.Connections.push_back(c);
         switch (fromType)
         {
             case ComponentType::PassThroughType:
             {
+                assert(fromIdx < m.PassThroughs.size());
                 m.PassThroughs[fromIdx].OutflowConn = connId;
             }
             break;
             case ComponentType::ConstantSourceType:
             {
+                assert(fromIdx < m.ConstSources.size());
                 m.ConstSources[fromIdx].OutflowConn = connId;
             }
             break;
             case ComponentType::ScheduleBasedSourceType:
             {
+                assert(fromIdx < m.ScheduledSrcs.size());
                 switch (fromPort)
                 {
                     case 0:
@@ -2866,6 +2920,7 @@ namespace erin
             break;
             case ComponentType::ConstantEfficiencyConverterType:
             {
+                assert(fromIdx < m.ConstEffConvs.size());
                 switch (fromPort)
                 {
                     case 0:
@@ -2894,6 +2949,7 @@ namespace erin
             break;
             case ComponentType::MoverType:
             {
+                assert(fromIdx < m.Movers.size());
                 switch (fromPort)
                 {
                     case 0: // outflow
@@ -2917,11 +2973,15 @@ namespace erin
             break;
             case ComponentType::MuxType:
             {
+                assert(fromIdx < m.Muxes.size());
+                assert(fromPort < m.Muxes[fromIdx].OutflowConns.size());
+                assert(fromPort < m.Muxes[fromIdx].NumOutports);
                 m.Muxes[fromIdx].OutflowConns[fromPort] = connId;
             }
             break;
             case ComponentType::StoreType:
             {
+                assert(fromIdx < m.Stores.size());
                 switch (fromPort)
                 {
                     case 0:
@@ -2962,21 +3022,25 @@ namespace erin
         {
             case ComponentType::PassThroughType:
             {
+                assert(toIdx < m.PassThroughs.size());
                 m.PassThroughs[toIdx].InflowConn = connId;
             }
             break;
             case ComponentType::ConstantLoadType:
             {
+                assert(toIdx < m.ConstLoads.size());
                 m.ConstLoads[toIdx].InflowConn = connId;
             }
             break;
             case ComponentType::ConstantEfficiencyConverterType:
             {
+                assert(toIdx < m.ConstEffConvs.size());
                 m.ConstEffConvs[toIdx].InflowConn = connId;
             }
             break;
             case ComponentType::MoverType:
             {
+                assert(toIdx < m.Movers.size());
                 switch (toPort)
                 {
                     case 0:
@@ -3002,16 +3066,21 @@ namespace erin
             break;
             case ComponentType::MuxType:
             {
+                assert(toIdx < m.Muxes.size());
+                assert(toPort < m.Muxes[toIdx].InflowConns.size());
+                assert(toPort < m.Muxes[toIdx].NumInports);
                 m.Muxes[toIdx].InflowConns[toPort] = connId;
             }
             break;
             case ComponentType::StoreType:
             {
+                assert(toIdx < m.Stores.size());
                 m.Stores[toIdx].InflowConn = connId;
             }
             break;
             case ComponentType::ScheduleBasedLoadType:
             {
+                assert(toIdx < m.ScheduledLoads.size());
                 m.ScheduledLoads[toIdx].InflowConn = connId;
             }
             break;

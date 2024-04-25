@@ -385,6 +385,8 @@ namespace erin
                         std::get<std::vector<double>>(
                             input.at("max_outflows").Value
                         );
+                    // TODO: add en error for size mismatch on max outflows
+                    assert(maxOutflowsRaw.size() == numOutflows);
                     for (size_t i = 0; i < numOutflows; ++i)
                     {
                         maxOutflows_W[i] = static_cast<flow_t>(

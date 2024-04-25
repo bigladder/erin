@@ -3743,7 +3743,7 @@ namespace erin
             }
             if (toTap.Port >= m.ComponentMap.InflowType[toCompId].size())
             {
-                std::cout << "[network] " << "port is unaddressable for "
+                std::cout << "[network] port is unaddressable for "
                           << ToString(m.ComponentMap.CompType[toCompId])
                           << ": trying to address " << toTap.Port
                           << " but only "
@@ -3754,7 +3754,7 @@ namespace erin
             if (m.ComponentMap.InflowType[toCompId][toTap.Port] != flowTypeId)
             {
                 std::cout
-                    << "[network] " << "mismatch of flow types: " << toTap.Tag
+                    << "[network] mismatch of flow types: " << toTap.Tag
                     << ":inflow="
                     << fd.Type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
                     << "; connection: " << flow << std::endl;

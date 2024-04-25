@@ -181,16 +181,13 @@ updateTomlInputCommand(
         if (sim_info_table.contains("input_format_version"))
         {
             std::cout << "UPDATE simulation_info.input_format_version from "
-                      << sim_info_table["input_format_version"]
-                      << " to "
-                      << current_input_version
-                      << std::endl;
+                      << sim_info_table["input_format_version"] << " to "
+                      << current_input_version << std::endl;
         }
         else
         {
             std::cout << "ADD simulation_info.input_format_version = "
-                      << current_input_version
-                      << std::endl;
+                      << current_input_version << std::endl;
         }
         sim_info_table["input_format_version"] = current_input_version;
     }

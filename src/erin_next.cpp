@@ -28,7 +28,8 @@ namespace erin
         FlowDirection flowDirection
     )
     {
-        std::string direction = flowDirection == FlowDirection::Outflow ? "outflow" : "inflow ";
+        std::string direction =
+            flowDirection == FlowDirection::Outflow ? "outflow" : "inflow ";
         std::ostringstream oss;
         oss << "Inconsistent Connection\n";
         oss << "- ACCORDING TO THE COMPONENT:\n";
@@ -39,10 +40,23 @@ namespace erin
         oss << "  - component subtype index: " << compSubtypeIdx << "\n";
         oss << "- ACCORDING TO THE " << direction << " CONNECTION:\n";
         oss << "  - connection id:  " << connIdx << "\n";
-        oss << "  - component type: " << ToString(flowDirection == FlowDirection::Outflow ? conn.From : conn.To) << "\n";
-        oss << "  - component id:   " << (flowDirection == FlowDirection::Outflow ? conn.FromId : conn.ToId) << "\n";
-        oss << "  - port:           " << (flowDirection == FlowDirection::Outflow ? conn.FromPort : conn.ToPort) << "\n";
-        oss << "  - subtype index:  " << (flowDirection == FlowDirection::Outflow ? conn.FromIdx : conn.ToIdx) << "\n";
+        oss << "  - component type: "
+            << ToString(
+                   flowDirection == FlowDirection::Outflow ? conn.From : conn.To
+               )
+            << "\n";
+        oss << "  - component id:   "
+            << (flowDirection == FlowDirection::Outflow ? conn.FromId
+                                                        : conn.ToId)
+            << "\n";
+        oss << "  - port:           "
+            << (flowDirection == FlowDirection::Outflow ? conn.FromPort
+                                                        : conn.ToPort)
+            << "\n";
+        oss << "  - subtype index:  "
+            << (flowDirection == FlowDirection::Outflow ? conn.FromIdx
+                                                        : conn.ToIdx)
+            << "\n";
         if (connIdx == 0)
         {
             oss << "NOTE: Since the connection ID is 0 (initialization), "
@@ -63,19 +77,29 @@ namespace erin
             {
                 if (!tag.empty() && compTags.contains(tag))
                 {
-                    issues.push_back("multiple components with name '" + tag + "'");
+                    issues.push_back(
+                        "multiple components with name '" + tag + "'"
+                    );
                 }
                 compTags.insert(tag);
             }
         }
-        assert(m.ComponentMap.CompType.size() == m.ComponentMap.InflowType.size());
-        assert(m.ComponentMap.CompType.size() == m.ComponentMap.OutflowType.size());
+        assert(
+            m.ComponentMap.CompType.size() == m.ComponentMap.InflowType.size()
+        );
+        assert(
+            m.ComponentMap.CompType.size() == m.ComponentMap.OutflowType.size()
+        );
         assert(m.ComponentMap.CompType.size() == m.ComponentMap.Idx.size());
-        assert(m.ComponentMap.CompType.size() == m.ComponentMap.InitialAges_s.size());
+        assert(
+            m.ComponentMap.CompType.size()
+            == m.ComponentMap.InitialAges_s.size()
+        );
         assert(m.ComponentMap.CompType.size() == m.ComponentMap.Tag.size());
         std::unordered_map<size_t, std::set<size_t>> muxCompIdToInflowConns;
         std::unordered_map<size_t, std::set<size_t>> muxCompIdToOutflowConns;
-        for (size_t compId = 0; compId < m.ComponentMap.CompType.size(); ++compId)
+        for (size_t compId = 0; compId < m.ComponentMap.CompType.size();
+             ++compId)
         {
             assert(compId < m.ComponentMap.CompType.size());
             if (m.ComponentMap.CompType[compId] == ComponentType::MuxType)
@@ -92,7 +116,8 @@ namespace erin
                 case ComponentType::ConstantEfficiencyConverterType:
                 {
                     assert(idx < m.ConstEffConvs.size());
-                    ConstantEfficiencyConverter const& cec = m.ConstEffConvs[idx];
+                    ConstantEfficiencyConverter const& cec =
+                        m.ConstEffConvs[idx];
                     size_t inflowConnIdx = cec.InflowConn;
                     assert(inflowConnIdx < nConns);
                     Connection const& inflowConn = m.Connections[inflowConnIdx];
@@ -116,7 +141,8 @@ namespace erin
                     }
                     size_t outflowConnIdx = cec.OutflowConn;
                     assert(outflowConnIdx < nConns);
-                    Connection const& outflowConn = m.Connections[outflowConnIdx];
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
                     size_t outflowPort = 0;
                     if ((outflowConn.From != compType)
                         || (outflowConn.FromId != compId)
@@ -137,10 +163,9 @@ namespace erin
                     }
                     size_t wasteflowConnIdx = cec.WasteflowConn;
                     assert(wasteflowConnIdx < nConns);
-                    Connection const& wfConn = m.Connections[wasteflowConnIdx]; 
+                    Connection const& wfConn = m.Connections[wasteflowConnIdx];
                     size_t wfPort = 2;
-                    if ((wfConn.From != compType)
-                        || (wfConn.FromId != compId)
+                    if ((wfConn.From != compType) || (wfConn.FromId != compId)
                         || (wfConn.FromIdx != idx)
                         || (wfConn.FromPort != wfPort))
                     {
@@ -160,7 +185,7 @@ namespace erin
                     {
                         size_t lfConnIdx = cec.LossflowConn.value();
                         assert(lfConnIdx < nConns);
-                        Connection const& lfConn = m.Connections[lfConnIdx]; 
+                        Connection const& lfConn = m.Connections[lfConnIdx];
                         size_t lfPort = 1;
                         if ((lfConn.From != compType)
                             || (lfConn.FromId != compId)
@@ -214,7 +239,8 @@ namespace erin
                     ConstantSource const& comp = m.ConstSources[idx];
                     size_t outflowConnIdx = comp.OutflowConn;
                     assert(outflowConnIdx < nConns);
-                    Connection const& outflowConn = m.Connections[outflowConnIdx];
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
                     size_t outflowPort = 0;
                     if ((outflowConn.From != compType)
                         || (outflowConn.FromId != compId)
@@ -267,7 +293,8 @@ namespace erin
                     }
                     size_t outflowConnIdx = comp.OutflowConn;
                     assert(outflowConnIdx < nConns);
-                    Connection const& outflowConn = m.Connections[outflowConnIdx];
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
                     size_t outflowPort = 0;
                     if ((outflowConn.From != compType)
                         || (outflowConn.FromId != compId)
@@ -290,8 +317,7 @@ namespace erin
                     assert(envConnIdx < nConns);
                     Connection const& envConn = m.Connections[envConnIdx];
                     size_t envInflowPort = 1;
-                    if ((envConn.To != compType)
-                        || (envConn.ToId != compId)
+                    if ((envConn.To != compType) || (envConn.ToId != compId)
                         || (envConn.ToIdx != idx)
                         || (envConn.ToPort != envInflowPort))
                     {
@@ -311,8 +337,7 @@ namespace erin
                     assert(wConnIdx < nConns);
                     Connection const& wConn = m.Connections[wConnIdx];
                     size_t wasteOutflowPort = 1;
-                    if ((wConn.From != compType)
-                        || (wConn.FromId != compId)
+                    if ((wConn.From != compType) || (wConn.FromId != compId)
                         || (wConn.FromIdx != idx)
                         || (wConn.FromPort != wasteOutflowPort))
                     {
@@ -337,7 +362,8 @@ namespace erin
                     for (size_t inPort = 0; inPort < comp.NumInports; ++inPort)
                     {
                         size_t inflowConnIdx = comp.InflowConns[inPort];
-                        Connection const& inflowConn = m.Connections[inflowConnIdx];
+                        Connection const& inflowConn =
+                            m.Connections[inflowConnIdx];
                         if ((inflowConn.To != compType)
                             || (inflowConn.ToId != compId)
                             || (inflowConn.ToIdx != idx)
@@ -356,10 +382,12 @@ namespace erin
                             );
                         }
                     }
-                    for (size_t outPort = 0; outPort < comp.NumOutports; ++outPort)
+                    for (size_t outPort = 0; outPort < comp.NumOutports;
+                         ++outPort)
                     {
                         size_t outflowConnIdx = comp.OutflowConns[outPort];
-                        Connection const& outflowConn = m.Connections[outflowConnIdx];
+                        Connection const& outflowConn =
+                            m.Connections[outflowConnIdx];
                         if ((outflowConn.From != compType)
                             || (outflowConn.FromId != compId)
                             || (outflowConn.FromIdx != idx)
@@ -405,7 +433,8 @@ namespace erin
                         );
                     }
                     size_t outflowConnIdx = comp.OutflowConn;
-                    Connection const& outflowConn = m.Connections[outflowConnIdx];
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
                     size_t outflowPort = 0;
                     if ((outflowConn.From != compType)
                         || (outflowConn.FromId != compId)
@@ -457,7 +486,8 @@ namespace erin
                     assert(idx < m.ScheduledSrcs.size());
                     ScheduleBasedSource const& comp = m.ScheduledSrcs[idx];
                     size_t outflowConnIdx = comp.OutflowConn;
-                    Connection const& outflowConn = m.Connections[outflowConnIdx];
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
                     size_t outflowPort = 0;
                     if ((outflowConn.From != compType)
                         || (outflowConn.FromId != compId)
@@ -479,8 +509,7 @@ namespace erin
                     size_t wfConnIdx = comp.WasteflowConn;
                     Connection const& wfConn = m.Connections[wfConnIdx];
                     size_t wfPort = 1;
-                    if ((wfConn.From != compType)
-                        || (wfConn.FromId != compId)
+                    if ((wfConn.From != compType) || (wfConn.FromId != compId)
                         || (wfConn.FromIdx != idx)
                         || (wfConn.FromPort != wfPort))
                     {
@@ -503,7 +532,8 @@ namespace erin
                     assert(idx < m.Stores.size());
                     Store const& comp = m.Stores[idx];
                     size_t outflowConnIdx = comp.OutflowConn;
-                    Connection const& outflowConn = m.Connections[outflowConnIdx];
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
                     size_t outflowPort = 0;
                     if ((outflowConn.From != compType)
                         || (outflowConn.FromId != compId)
@@ -525,7 +555,8 @@ namespace erin
                     if (comp.InflowConn.has_value())
                     {
                         size_t inflowConnIdx = comp.InflowConn.value();
-                        Connection const& inflowConn = m.Connections[inflowConnIdx];
+                        Connection const& inflowConn =
+                            m.Connections[inflowConnIdx];
                         size_t inflowPort = 0;
                         if ((inflowConn.To != compType)
                             || (inflowConn.ToId != compId)
@@ -598,8 +629,10 @@ namespace erin
                     oss << "mux outflow connection inconsistent\n";
                     oss << "conn.FromId: " << conn.FromId << "\n";
                     oss << "conn.FromPort: " << conn.FromPort << "\n";
-                    oss << "mux num outflow connections: " << fromMux.NumOutports << "\n";
-                    oss << "mux num outflow connections from count: " << fromMux.OutflowConns.size() << "\n";
+                    oss << "mux num outflow connections: "
+                        << fromMux.NumOutports << "\n";
+                    oss << "mux num outflow connections from count: "
+                        << fromMux.OutflowConns.size() << "\n";
                     issues.push_back(oss.str());
                 }
                 else if (fromMux.OutflowConns[conn.FromPort] != connIdx)
@@ -609,21 +642,25 @@ namespace erin
                     oss << "connId: " << connIdx << "\n";
                     oss << "conn.FromId: " << conn.FromId << "\n";
                     oss << "conn.FromPort: " << conn.FromPort << "\n";
-                    oss << "fromMux.OutflowConns[conn.FromPort]: " << fromMux.OutflowConns[conn.FromPort] << "\n";
+                    oss << "fromMux.OutflowConns[conn.FromPort]: "
+                        << fromMux.OutflowConns[conn.FromPort] << "\n";
                     issues.push_back(oss.str());
                 }
                 if (fromMux.NumOutports != fromMux.OutflowConns.size())
                 {
                     std::ostringstream oss;
                     oss << "mux num outflows inconsistent\n";
-                    oss << "mux num outflow connections: " << fromMux.NumOutports << "\n";
-                    oss << "mux num outflow connections from count: " << fromMux.OutflowConns.size() << "\n";
+                    oss << "mux num outflow connections: "
+                        << fromMux.NumOutports << "\n";
+                    oss << "mux num outflow connections from count: "
+                        << fromMux.OutflowConns.size() << "\n";
                     issues.push_back(oss.str());
                 }
                 if (muxCompIdToOutflowConns[conn.FromId].contains(connIdx))
                 {
                     std::ostringstream oss;
-                    oss << "mux has multiple instances of the same outflow connection\n";
+                    oss << "mux has multiple instances of the same outflow "
+                           "connection\n";
                     oss << "connIdx: " << connIdx << "\n";
                     issues.push_back(oss.str());
                 }
@@ -638,8 +675,10 @@ namespace erin
                     oss << "mux inflow connection inconsistent\n";
                     oss << "conn.ToId: " << conn.ToId << "\n";
                     oss << "conn.ToPort: " << conn.ToPort << "\n";
-                    oss << "mux num inflow connections: " << toMux.NumInports << "\n";
-                    oss << "mux num inflow connections from count: " << toMux.InflowConns.size() << "\n";
+                    oss << "mux num inflow connections: " << toMux.NumInports
+                        << "\n";
+                    oss << "mux num inflow connections from count: "
+                        << toMux.InflowConns.size() << "\n";
                     issues.push_back(oss.str());
                 }
                 else if (toMux.InflowConns[conn.ToPort] != connIdx)
@@ -649,21 +688,25 @@ namespace erin
                     oss << "connId: " << connIdx << "\n";
                     oss << "conn.ToId: " << conn.ToId << "\n";
                     oss << "conn.FromPort: " << conn.ToPort << "\n";
-                    oss << "toMux.InflowConns[conn.FromPort]: " << toMux.OutflowConns[conn.ToPort] << "\n";
+                    oss << "toMux.InflowConns[conn.FromPort]: "
+                        << toMux.OutflowConns[conn.ToPort] << "\n";
                     issues.push_back(oss.str());
                 }
                 if (toMux.NumInports != toMux.InflowConns.size())
                 {
                     std::ostringstream oss;
                     oss << "mux num inflows inconsistent\n";
-                    oss << "mux num inflow connections: " << toMux.NumInports << "\n";
-                    oss << "mux num inflow connections from count: " << toMux.InflowConns.size() << "\n";
+                    oss << "mux num inflow connections: " << toMux.NumInports
+                        << "\n";
+                    oss << "mux num inflow connections from count: "
+                        << toMux.InflowConns.size() << "\n";
                     issues.push_back(oss.str());
                 }
                 if (muxCompIdToInflowConns[conn.ToId].contains(connIdx))
                 {
                     std::ostringstream oss;
-                    oss << "mux has multiple instances of the same inflow connection\n";
+                    oss << "mux has multiple instances of the same inflow "
+                           "connection\n";
                     oss << "connIdx: " << connIdx << "\n";
                     issues.push_back(oss.str());
                 }
@@ -678,12 +721,13 @@ namespace erin
             if (connectedOutflowPorts.contains(outflowCompPort))
             {
                 std::ostringstream oss;
-                oss << "Port multiply connected: "
-                    << "- outflowCompPort: " << outflowCompPort << "\n"
+                oss << "Port multiply connected: " << "- outflowCompPort: "
+                    << outflowCompPort << "\n"
                     << "- compId: " << conn.FromId << "\n"
                     << "- outflowPort: " << conn.FromPort << "\n"
                     << "- tag: " << m.ComponentMap.Tag[conn.FromId] << "\n"
-                    << "- type: " << ToString(m.ComponentMap.CompType[conn.FromId]) << "\n";
+                    << "- type: "
+                    << ToString(m.ComponentMap.CompType[conn.FromId]) << "\n";
                 issues.push_back(oss.str());
             }
             connectedOutflowPorts.insert(outflowCompPort);
@@ -696,17 +740,19 @@ namespace erin
             if (connectedInflowPorts.contains(inflowCompPort))
             {
                 std::ostringstream oss;
-                oss << "Port multiply connected: "
-                    << "- inflowCompPort: " << inflowCompPort << "\n"
+                oss << "Port multiply connected: " << "- inflowCompPort: "
+                    << inflowCompPort << "\n"
                     << "- compId: " << conn.ToId << "\n"
                     << "- outflowPort: " << conn.ToPort << "\n"
                     << "- tag: " << m.ComponentMap.Tag[conn.ToId] << "\n"
-                    << "- type: " << ToString(m.ComponentMap.CompType[conn.ToId]) << "\n";
+                    << "- type: "
+                    << ToString(m.ComponentMap.CompType[conn.ToId]) << "\n";
                 issues.push_back(oss.str());
             }
             connectedInflowPorts.insert(inflowCompPort);
         }
-        for (size_t compId = 0; compId < m.ComponentMap.CompType.size(); ++compId)
+        for (size_t compId = 0; compId < m.ComponentMap.CompType.size();
+             ++compId)
         {
             if (m.ComponentMap.CompType[compId] == ComponentType::MuxType)
             {
@@ -716,8 +762,7 @@ namespace erin
                     std::ostringstream oss;
                     oss << "mux specifies " << mux.NumInports
                         << " inports but the number of connections are "
-                        << muxCompIdToInflowConns[compId].size()
-                        << "\n";
+                        << muxCompIdToInflowConns[compId].size() << "\n";
                     issues.push_back(oss.str());
                 }
                 if (mux.NumOutports != muxCompIdToOutflowConns[compId].size())
@@ -725,8 +770,7 @@ namespace erin
                     std::ostringstream oss;
                     oss << "mux specifies " << mux.NumOutports
                         << " outports but the number of connections are "
-                        << muxCompIdToOutflowConns[compId].size()
-                        << "\n";
+                        << muxCompIdToOutflowConns[compId].size() << "\n";
                     issues.push_back(oss.str());
                 }
             }
@@ -1892,7 +1936,8 @@ namespace erin
         Store const& store = model.Stores[compIdx];
         size_t outflowConn = store.OutflowConn;
         std::optional<size_t> maybeInflowConn = store.InflowConn;
-        int64_t netCharge_W = -1 * static_cast<int64_t>(ss.Flows[outflowConn].Actual_W);
+        int64_t netCharge_W =
+            -1 * static_cast<int64_t>(ss.Flows[outflowConn].Actual_W);
         if (maybeInflowConn.has_value())
         {
             size_t inflowConn = maybeInflowConn.value();
@@ -2166,13 +2211,19 @@ namespace erin
                 std::cout << "compId: " << compId << std::endl;
                 std::cout << "store idx: " << storeIdx << std::endl;
                 std::cout << "tag: " << m.ComponentMap.Tag[compId] << std::endl;
-                for (size_t compId_Idx = 0; compId_Idx < m.ComponentMap.Tag.size(); ++compId_Idx)
+                for (size_t compId_Idx = 0;
+                     compId_Idx < m.ComponentMap.Tag.size();
+                     ++compId_Idx)
                 {
-                    if (m.ComponentMap.CompType[compId_Idx] == ComponentType::StoreType
+                    if (m.ComponentMap.CompType[compId_Idx]
+                            == ComponentType::StoreType
                         && m.ComponentMap.Idx[compId_Idx] == storeIdx)
                     {
-                        std::cout << "compId (from search): " << compId_Idx << std::endl;
-                        std::cout << "tag (from search): " << m.ComponentMap.Tag[compId_Idx] << std::endl;
+                        std::cout << "compId (from search): " << compId_Idx
+                                  << std::endl;
+                        std::cout << "tag (from search): "
+                                  << m.ComponentMap.Tag[compId_Idx]
+                                  << std::endl;
                     }
                 }
                 std::cout << "has inflow? " << store.InflowConn.has_value()
@@ -3576,9 +3627,9 @@ namespace erin
                 if (conn.FromId == fromId && conn.FromPort == fromPort)
                 {
                     issueFound = true;
-                    std::cout << "INTEGRITY VIOLATION: "
-                        << "attempt to doubly connect "
-                        << "compId=" << fromId
+                    std::cout
+                        << "INTEGRITY VIOLATION: "
+                        << "attempt to doubly connect " << "compId=" << fromId
                         << " outport=" << fromPort
                         << " tag=" << m.ComponentMap.Tag[fromId]
                         << " type=" << ToString(m.ComponentMap.CompType[fromId])
@@ -3587,9 +3638,9 @@ namespace erin
                 if (conn.ToId == toId && conn.ToPort == toPort)
                 {
                     issueFound = true;
-                    std::cout << "INTEGRITY VIOLATION: "
-                        << "attempt to doubly connect "
-                        << "compId=" << toId
+                    std::cout
+                        << "INTEGRITY VIOLATION: "
+                        << "attempt to doubly connect " << "compId=" << toId
                         << " inport=" << toPort
                         << " tag=" << m.ComponentMap.Tag[toId]
                         << " type=" << ToString(m.ComponentMap.CompType[toId])
@@ -3599,7 +3650,7 @@ namespace erin
             if (issueFound)
             {
                 std::cout << "Issue when trying to make a connection\n";
-                std::exit(1); 
+                std::exit(1);
             }
         }
         m.Connections.push_back(c);
@@ -3829,7 +3880,8 @@ namespace erin
     bool
     SameConnection(Connection a, Connection b)
     {
-        // TODO: revisit: needs to have .FromId and .ToId and ports but not others
+        // TODO: revisit: needs to have .FromId and .ToId and ports but not
+        // others
         return a.From == b.From && a.FromIdx == b.FromIdx
             && a.FromPort == b.FromPort && a.To == b.To && a.ToIdx == b.ToIdx
             && a.ToPort == b.ToPort;

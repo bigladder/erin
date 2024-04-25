@@ -100,8 +100,8 @@ runCommand(
 int
 graphCommand(
     std::string const& inputFilename,
-    std::string const& outputFilename
-)
+    std::string const& outputFilename,
+    bool const useHtml)
 {
     std::ifstream ifs(inputFilename, std::ios_base::binary);
     if (!ifs.good())
@@ -123,7 +123,7 @@ graphCommand(
     }
     Simulation s = std::move(maybe_sim.value());
     std::string dot_data = network_to_dot(
-        s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
+        s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", useHtml
     );
     // save string from network_to_dot
     std::ofstream ofs(outputFilename, std::ios_base::binary);

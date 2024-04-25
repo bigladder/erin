@@ -102,7 +102,8 @@ int
 graphCommand(
     std::string const& inputFilename,
     std::string const& outputFilename,
-    bool const useHtml)
+    bool const useHtml
+)
 {
     std::ifstream ifs(inputFilename, std::ios_base::binary);
     if (!ifs.good())
@@ -140,9 +141,7 @@ graphCommand(
 }
 
 int
-checkNetworkCommand(
-    std::string tomlFilename
-)
+checkNetworkCommand(std::string tomlFilename)
 {
     std::ifstream ifs(tomlFilename, std::ios_base::binary);
     if (!ifs.good())
@@ -424,17 +423,15 @@ main(int argc, char** argv)
     graph->add_option("-o,--out", outputFilename, "Graph output filename");
     graph->add_flag("-s,--simple", useHtml, "Create a simpler graph view");
 
-    graph->callback([&]()
-                    { result = graphCommand(tomlFilename, outputFilename, !useHtml); });
+    graph->callback(
+        [&]() { result = graphCommand(tomlFilename, outputFilename, !useHtml); }
+    );
 
-    auto checkNetwork =
-        app.add_subcommand("check", "Check network for issues");
-    checkNetwork->add_option("toml_input_file", tomlFilename, "TOML input file name")
+    auto checkNetwork = app.add_subcommand("check", "Check network for issues");
+    checkNetwork
+        ->add_option("toml_input_file", tomlFilename, "TOML input file name")
         ->required();
-    checkNetwork->callback(
-        [&]() {
-            result = checkNetworkCommand(tomlFilename);
-        }
+    checkNetwork->callback([&]() { result = checkNetworkCommand(tomlFilename); }
     );
 
     std::string tomlOutputFilename = "out.toml";

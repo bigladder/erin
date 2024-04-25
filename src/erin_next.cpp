@@ -1448,20 +1448,21 @@ namespace erin
                 std::cout << "elapsed time (s): " << elapsedTime_s << std::endl;
                 std::cout << "stored amount (J): "
                           << ss.StorageAmounts_J[storeIdx] << std::endl;
+                int64_t inflow_W = 0;
                 if (maybeInConn.has_value())
                 {
                     size_t inConn = maybeInConn.value();
                     std::cout << "inflow (W): " << ss.Flows[inConn].Actual_W
                               << std::endl;
+                    inflow_W = static_cast<int64_t>(ss.Flows[inConn].Actual_W);
+                }
+                else
+                {
+                    std::cout << "inflow (W): 0.0 (no inflow connection)"
+                              << std::endl;
                 }
                 std::cout << "outflow (W): " << ss.Flows[outConn].Actual_W
                           << std::endl;
-                int64_t inflow_W = 0;
-                if (maybeInConn.has_value())
-                {
-                    size_t inConn = maybeInConn.value();
-                    inflow_W = static_cast<int64_t>(ss.Flows[inConn].Actual_W);
-                }
                 int64_t outflow_W =
                     static_cast<int64_t>(ss.Flows[outConn].Actual_W);
                 int64_t wasteflow_W = 0;

@@ -3105,6 +3105,7 @@ namespace erin
     bool
     SameConnection(Connection a, Connection b)
     {
+        // TODO: revisit: needs to have .FromId and .ToId and ports but not others
         return a.From == b.From && a.FromIdx == b.FromIdx
             && a.FromPort == b.FromPort && a.To == b.To && a.ToIdx == b.ToIdx
             && a.ToPort == b.ToPort;

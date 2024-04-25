@@ -267,13 +267,6 @@ max_discharge = 10_000.0
 [components.41_bu_gen_fuel_tank.meta]
 id = 146
 
-[components.diesel_fuel_distribution_point]
-type = "source"
-max_outflow = 1000.0   # kW
-outflow = "diesel"
-[components.diesel_fuel_distribution_point.meta]
-id = 148
-
 [components.chiller]
 type = "mover"
 cop = 3.05

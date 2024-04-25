@@ -2446,6 +2446,21 @@ namespace erin
         bool const verbose
     )
     {
+        // TODO: wrap into input options struct and pass in
+        bool const checkNetwork = false;
+        if (checkNetwork)
+        {
+            std::vector<std::string> issues = Model_CheckNetwork(s.TheModel);
+            if (issues.size() > 0)
+            {
+                std::cout << "NETWORK CONNECTION ISSUES:" << std::endl;
+                for (std::string const& issue : issues)
+                {
+                    std::cout << issue << std::endl;
+                }
+            }
+            assert(issues.size() == 0);
+        }
         // TODO: turn the following into parameters
         TimeUnit outputTimeUnit = TimeUnit::Hour;
 

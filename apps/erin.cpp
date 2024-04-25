@@ -11,6 +11,7 @@
 #include "erin_next/erin_next_result.h"
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_graph.h"
+#include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -100,7 +101,8 @@ runCommand(
 int
 graphCommand(
     std::string const& inputFilename,
-    std::string const& outputFilename
+    std::string const& outputFilename,
+    bool const useHtml
 )
 {
     std::ifstream ifs(inputFilename, std::ios_base::binary);
@@ -123,7 +125,7 @@ graphCommand(
     }
     Simulation s = std::move(maybe_sim.value());
     std::string dot_data = network_to_dot(
-        s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", true
+        s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", useHtml
     );
     // save string from network_to_dot
     std::ofstream ofs(outputFilename, std::ios_base::binary);
@@ -135,6 +137,42 @@ graphCommand(
     }
     ofs << dot_data << std::endl;
     ofs.close();
+    return EXIT_SUCCESS;
+}
+
+int
+checkNetworkCommand(std::string tomlFilename)
+{
+    std::ifstream ifs(tomlFilename, std::ios_base::binary);
+    if (!ifs.good())
+    {
+        std::cout << "Could not open input file stream on input file"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    using namespace erin;
+    auto nameOnly = std::filesystem::path(tomlFilename).filename();
+    auto data = toml::parse(ifs, nameOnly.string());
+    ifs.close();
+    auto validationInfo = SetupGlobalValidationInfo();
+    auto maybeSim = Simulation_ReadFromToml(data, validationInfo);
+    if (!maybeSim.has_value())
+    {
+        return EXIT_FAILURE;
+    }
+    Simulation s = std::move(maybeSim.value());
+    std::vector<std::string> issues = erin::Model_CheckNetwork(s.TheModel);
+    if (issues.size() > 0)
+    {
+        std::cout << "ISSUES FOUND:" << std::endl;
+        for (std::string const& issue : issues)
+        {
+            std::cout << issue << std::endl;
+        }
+        return EXIT_FAILURE;
+    }
+    std::cout << "No issues found with network." << std::endl;
     return EXIT_SUCCESS;
 }
 
@@ -381,10 +419,20 @@ main(int argc, char** argv)
     graph->add_option("toml_file", tomlFilename, "TOML filename")->required();
 
     std::string outputFilename = "graph.dot";
+    bool useHtml = true;
     graph->add_option("-o,--out", outputFilename, "Graph output filename");
+    graph->add_flag("-s,--simple", useHtml, "Create a simpler graph view");
 
-    graph->callback([&]()
-                    { result = graphCommand(tomlFilename, outputFilename); });
+    graph->callback(
+        [&]() { result = graphCommand(tomlFilename, outputFilename, !useHtml); }
+    );
+
+    auto checkNetwork = app.add_subcommand("check", "Check network for issues");
+    checkNetwork
+        ->add_option("toml_input_file", tomlFilename, "TOML input file name")
+        ->required();
+    checkNetwork->callback([&]() { result = checkNetworkCommand(tomlFilename); }
+    );
 
     std::string tomlOutputFilename = "out.toml";
     bool stripIds = false;

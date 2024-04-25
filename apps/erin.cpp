@@ -174,6 +174,26 @@ updateTomlInputCommand(
         data["network"] = new_node;
         data.as_table().erase("networks");
     }
+    // add input_format_version = current_input_version
+    if (data.contains("simulation_info"))
+    {
+        auto& sim_info_table = data.at("simulation_info").as_table();
+        if (sim_info_table.contains("input_format_version"))
+        {
+            std::cout << "UPDATE simulation_info.input_format_version from "
+                      << sim_info_table["input_format_version"]
+                      << " to "
+                      << current_input_version
+                      << std::endl;
+        }
+        else
+        {
+            std::cout << "ADD simulation_info.input_format_version = "
+                      << current_input_version
+                      << std::endl;
+        }
+        sim_info_table["input_format_version"] = current_input_version;
+    }
     // add missing fields to components
     if (data.contains("components"))
     {
@@ -189,7 +209,7 @@ updateTomlInputCommand(
                     ? comp["max_inflow"].as_floating()
                     : static_cast<double>(comp["max_inflow"].as_integer());
                 comp["max_discharge"] = toml::value(maxDischarge);
-                std::cout << "ADD .components." << compName
+                std::cout << "ADD components." << compName
                           << ".max_discharge = " << maxDischarge << std::endl;
             }
             if (compType == "store" && comp.contains("max_inflow"))
@@ -199,20 +219,20 @@ updateTomlInputCommand(
                     : static_cast<double>(comp["max_inflow"].as_integer());
                 comp.erase("max_inflow");
                 comp["max_charge"] = toml::value(maxInflow);
-                std::cout << "RENAME .components." << compName
-                          << ".max_inflow to .components" << compName
+                std::cout << "RENAME components." << compName
+                          << ".max_inflow to components" << compName
                           << ".max_charge" << std::endl;
             }
             if (compType == "muxer" && comp.contains("dispatch_strategy"))
             {
                 comp.erase("dispatch_strategy");
-                std::cout << "REMOVE .components." << compName
+                std::cout << "REMOVE components." << compName
                           << ".dispatch_strategy" << std::endl;
             }
             if (removeIds && comp.contains("id"))
             {
                 comp.erase("id");
-                std::cout << "REMOVE .components." << compName << ".id"
+                std::cout << "REMOVE components." << compName << ".id"
                           << std::endl;
             }
             if (compType == "converter" && comp.contains("constant_efficiency"))
@@ -227,7 +247,7 @@ updateTomlInputCommand(
                     comp["type"] = toml::value("mover");
                     comp["cop"] = toml::value(eff);
                     comp.erase("constant_efficiency");
-                    std::cout << "CHANGE .components." << compName
+                    std::cout << "CHANGE components." << compName
                               << ".type to mover" << std::endl;
                 }
             }
@@ -241,7 +261,7 @@ updateTomlInputCommand(
             if (simInfoTable.contains("id"))
             {
                 simInfoTable.erase("id");
-                std::cout << "REMOVE .simulation_info.id" << std::endl;
+                std::cout << "REMOVE simulation_info.id" << std::endl;
             }
         }
         if (data.contains("fragility_mode"))
@@ -254,7 +274,7 @@ updateTomlInputCommand(
                 if (fm.contains("id"))
                 {
                     fm.erase("id");
-                    std::cout << "REMOVE .fragility_mode." << fmName << ".id"
+                    std::cout << "REMOVE fragility_mode." << fmName << ".id"
                               << std::endl;
                 }
             }
@@ -269,7 +289,7 @@ updateTomlInputCommand(
                 if (fm.contains("id"))
                 {
                     fm.erase("id");
-                    std::cout << "REMOVE .failure_mode." << fmName << ".id"
+                    std::cout << "REMOVE failure_mode." << fmName << ".id"
                               << std::endl;
                 }
             }
@@ -284,7 +304,7 @@ updateTomlInputCommand(
                 if (fc.contains("id"))
                 {
                     fc.erase("id");
-                    std::cout << "REMOVE .fragility_curve." << fcName << ".id"
+                    std::cout << "REMOVE fragility_curve." << fcName << ".id"
                               << std::endl;
                 }
             }
@@ -299,7 +319,7 @@ updateTomlInputCommand(
                 if (distTable.contains("id"))
                 {
                     distTable.erase("id");
-                    std::cout << "REMOVE .dist." << distName << ".id"
+                    std::cout << "REMOVE dist." << distName << ".id"
                               << std::endl;
                 }
             }

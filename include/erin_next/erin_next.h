@@ -42,6 +42,12 @@ namespace erin
     // NOTE: the maximum allowed flow
     constexpr flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 
+    enum class FlowDirection
+    {
+        Inflow = 0,
+        Outflow = 1,
+    };
+
     enum class ComponentType
     {
         ConstantLoadType,
@@ -418,6 +424,21 @@ namespace erin
     };
 
     // FUNCTIONS
+    void
+    AddConnectionIssue(
+        std::vector<std::string>& issues,
+        std::string componentTag,
+        size_t compId,
+        size_t compPort,
+        size_t compSubtypeIdx,
+        ComponentType compType,
+        Connection const& conn,
+        size_t connIdx,
+        FlowDirection flowDirection
+    );
+
+    std::vector<std::string>
+    Model_CheckNetwork(Model const& m);
 
     inline flow_t
     UtilSafeAdd(flow_t a, flow_t b);

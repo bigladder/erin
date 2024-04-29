@@ -1,10 +1,14 @@
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_timestate.h"
 #include "erin_next/erin_next_simulation.h"
+#include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_units.h"
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>
+#include <unordered_set>
+#include <vector>
+#include <unordered_map>
 
 using namespace erin;
 
@@ -1851,4 +1855,36 @@ TEST(Erin, TestParseTagAndPort)
     EXPECT_TRUE(output.has_value());
     EXPECT_EQ(output.value().Tag, "my_place");
     EXPECT_EQ(output.value().Port, 123);
+}
+
+TEST(Erin, TestParsingComponentsInUse)
+{
+    std::vector<toml::value> conns{
+        {"a:OUT(0)", "b:IN(0)", "electricity"},
+        {"b:OUT(0)", "c:IN(0)", "electricity"},
+        {"c:OUT(0)", "d:IN(0)", "electricity"},
+    };
+    std::unordered_map<std::string, toml::value> connTable{
+        {
+            "connections",
+            conns,
+        },
+    };
+    toml::value exampleInput = std::unordered_map<std::string, toml::value>{
+        {
+            "network",
+            connTable,
+        },
+    };
+    std::unordered_set<std::string> expected{
+        "a", "b", "c", "d"
+    };
+    std::unordered_set<std::string> actual =
+        erin::TOMLTable_ParseComponentTagsInUse(exampleInput);
+    EXPECT_EQ(expected.size(), actual.size());
+    for (auto const& item : expected)
+    {
+        EXPECT_TRUE(actual.contains(item))
+            << "expected item '" << item << "' not present";
+    }
 }

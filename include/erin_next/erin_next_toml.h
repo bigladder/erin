@@ -98,6 +98,10 @@ namespace erin
         std::string const& fieldName,
         std::string const& tableName
     );
+
+    std::unordered_set<std::string>
+    TOMLTable_ParseComponentTagsInUse(toml::value const& data);
+
 } // namespace erin
 
 #endif

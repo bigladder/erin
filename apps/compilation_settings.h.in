@@ -1,0 +1,10 @@
+/* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
+ * See the LICENSE.txt file for additional terms and conditions. */
+
+#ifndef APPS_COMPILATION_SETTINGS_H
+#define APPS_COMPILATION_SETTINGS_H
+
+std::string const build_type =
+	std::string{"@CMAKE_BUILD_TYPE@"};
+
+#endif

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
+/* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 
 #ifndef ERIN_VERSION_H
@@ -10,7 +10,7 @@ namespace erin::version
   constexpr int major_version{@ERIN_VERSION_MAJOR@};
   constexpr int minor_version{@ERIN_VERSION_MINOR@};
   constexpr int release_number{@ERIN_VERSION_PATCH@};
-  const std::string version_string{"@ERIN_VERSION@"};
+  std::string const version_string{"@ERIN_VERSION@"};
 }
 
 #endif

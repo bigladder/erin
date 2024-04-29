@@ -20,11 +20,13 @@
 #include "../vendor/CLI11/include/CLI/CLI.hpp"
 #include "toml/exception.hpp"
 #include "toml/get.hpp"
+#include "compilation_settings.h"
 
 int
 versionCommand()
 {
-    std::cout << "Version: " << erin::version::version_string;
+    std::cout << "Version: " << erin::version::version_string << "\n";
+    std::cout << "Build Type: " << build_type << "\n"; 
     return EXIT_SUCCESS;
 }
 

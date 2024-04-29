@@ -7,6 +7,7 @@
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_scenario.h"
+#include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_result.h"
 #include "erin_next/erin_next_validation.h"
@@ -17,6 +18,7 @@
 #include <string>
 #include <filesystem>
 #include <unordered_map>
+#include <unordered_set>
 #include "../vendor/CLI11/include/CLI/CLI.hpp"
 #include "toml/exception.hpp"
 #include "toml/get.hpp"
@@ -81,8 +83,10 @@ runCommand(
 
     using namespace erin;
     auto nameOnly = std::filesystem::path(tomlFilename).filename();
-    auto data = toml::parse(ifs, nameOnly.string());
+    toml::value data = toml::parse(ifs, nameOnly.string());
     ifs.close();
+    std::unordered_set<std::string> componentTagsInUse =
+        TOMLTable_ParseComponentTagsInUse(data);
     auto validationInfo = SetupGlobalValidationInfo();
     auto maybeSim = Simulation_ReadFromToml(data, validationInfo);
     if (!maybeSim.has_value())

@@ -110,7 +110,6 @@ namespace erin
             ComponentType compType = m.ComponentMap.CompType[compId];
             size_t idx = m.ComponentMap.Idx[compId];
             std::string const& tag = m.ComponentMap.Tag[compId];
-            size_t nConns = m.Connections.size();
             switch (compType)
             {
                 case ComponentType::ConstantEfficiencyConverterType:

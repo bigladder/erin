@@ -1876,9 +1876,7 @@ TEST(Erin, TestParsingComponentsInUse)
             connTable,
         },
     };
-    std::unordered_set<std::string> expected{
-        "a", "b", "c", "d"
-    };
+    std::unordered_set<std::string> expected{"a", "b", "c", "d"};
     std::unordered_set<std::string> actual =
         erin::TOMLTable_ParseComponentTagsInUse(exampleInput);
     EXPECT_EQ(expected.size(), actual.size());

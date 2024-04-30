@@ -88,7 +88,8 @@ runCommand(
     std::unordered_set<std::string> componentTagsInUse =
         TOMLTable_ParseComponentTagsInUse(data);
     auto validationInfo = SetupGlobalValidationInfo();
-    auto maybeSim = Simulation_ReadFromToml(data, validationInfo);
+    auto maybeSim =
+        Simulation_ReadFromToml(data, validationInfo, componentTagsInUse);
     if (!maybeSim.has_value())
     {
         return EXIT_FAILURE;
@@ -123,8 +124,11 @@ graphCommand(
     auto name_only = std::filesystem::path(inputFilename).filename();
     auto data = toml::parse(ifs, name_only.string());
     ifs.close();
+    std::unordered_set<std::string> componentTagsInUse =
+        TOMLTable_ParseComponentTagsInUse(data);
     auto validation_info = SetupGlobalValidationInfo();
-    auto maybe_sim = Simulation_ReadFromToml(data, validation_info);
+    auto maybe_sim =
+        Simulation_ReadFromToml(data, validation_info, componentTagsInUse);
     if (!maybe_sim.has_value())
     {
         return EXIT_FAILURE;
@@ -161,8 +165,11 @@ checkNetworkCommand(std::string tomlFilename)
     auto nameOnly = std::filesystem::path(tomlFilename).filename();
     auto data = toml::parse(ifs, nameOnly.string());
     ifs.close();
+    std::unordered_set<std::string> componentTagsInUse =
+        TOMLTable_ParseComponentTagsInUse(data);
     auto validationInfo = SetupGlobalValidationInfo();
-    auto maybeSim = Simulation_ReadFromToml(data, validationInfo);
+    auto maybeSim =
+        Simulation_ReadFromToml(data, validationInfo, componentTagsInUse);
     if (!maybeSim.has_value())
     {
         return EXIT_FAILURE;

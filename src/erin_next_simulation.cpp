@@ -16,6 +16,7 @@
 #include <limits>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <map>
 #include <iomanip>
@@ -1120,13 +1121,17 @@ namespace erin
     Simulation_ParseComponents(
         Simulation& s,
         toml::value const& v,
-        ComponentValidationMap const& compValidations
+        ComponentValidationMap const& compValidations,
+        std::unordered_set<std::string> const& componentTagsInUse
     )
     {
         if (v.contains("components") && v.at("components").is_table())
         {
             return ParseComponents(
-                s, v.at("components").as_table(), compValidations
+                s,
+                v.at("components").as_table(),
+                compValidations,
+                componentTagsInUse
             );
         }
         WriteErrorMessage("<top>", "required field 'components' not found");
@@ -1246,7 +1251,8 @@ namespace erin
     std::optional<Simulation>
     Simulation_ReadFromToml(
         toml::value const& v,
-        InputValidationMap const& validationInfo
+        InputValidationMap const& validationInfo,
+        std::unordered_set<std::string> const& componentTagsInUse
     )
     {
         Simulation s = {};
@@ -1269,7 +1275,9 @@ namespace erin
             WriteErrorMessage("loads", "problem parsing...");
             return {};
         }
-        auto compResult = Simulation_ParseComponents(s, v, validationInfo.Comp);
+        auto compResult = Simulation_ParseComponents(
+            s, v, validationInfo.Comp, componentTagsInUse
+        );
         if (compResult == Result::Failure)
         {
             WriteErrorMessage("components", "problem parsing...");

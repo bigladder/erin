@@ -13,6 +13,7 @@
 #include <vector>
 #include <optional>
 #include <cstdlib>
+#include <unordered_set>
 
 namespace erin
 {
@@ -146,7 +147,8 @@ namespace erin
     Simulation_ParseComponents(
         Simulation& s,
         toml::value const& v,
-        ComponentValidationMap const& compValidations
+        ComponentValidationMap const& compValidations,
+        std::unordered_set<std::string> const& componentTagsInUse
     );
 
     Result
@@ -161,7 +163,8 @@ namespace erin
     std::optional<Simulation>
     Simulation_ReadFromToml(
         toml::value const& v,
-        InputValidationMap const& validationInfo
+        InputValidationMap const& validationInfo,
+        std::unordered_set<std::string> const& componentTagsInUse
     );
 
     void

@@ -7,6 +7,7 @@
 #include "erin_next/erin_next_result.h"
 #include "../vendor/toml11/toml.hpp"
 #include "erin_next/erin_next_validation.h"
+#include <unordered_set>
 
 namespace erin
 {
@@ -23,7 +24,8 @@ namespace erin
     ParseComponents(
         Simulation& s,
         toml::table const& table,
-        ComponentValidationMap const& compValids
+        ComponentValidationMap const& compValids,
+        std::unordered_set<std::string> const& componentTagsInUse
     );
 
 } // namespace erin

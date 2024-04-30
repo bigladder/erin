@@ -777,17 +777,29 @@ namespace erin
     ParseComponents(
         Simulation& s,
         toml::table const& table,
-        ComponentValidationMap const& compValids
+        ComponentValidationMap const& compValids,
+        std::unordered_set<std::string> const& componentTagsInUse
     )
     {
         for (auto it = table.cbegin(); it != table.cend(); ++it)
         {
-            auto result = ParseSingleComponent(
-                s, it->second.as_table(), it->first, compValids
-            );
+            std::string const& compTag = it->first;
+            if (!componentTagsInUse.contains(compTag))
+            {
+                std::string tag = "components." + compTag;
+                WriteWarningMessage(
+                    tag,
+                    "component is declared but does not appear in network "
+                    "connections"
+                );
+                continue;
+            }
+            toml::table const& compTable = it->second.as_table();
+            auto result =
+                ParseSingleComponent(s, compTable, compTag, compValids);
             if (result == Result::Failure)
             {
-                std::string tag = "components." + it->first;
+                std::string tag = "components." + compTag;
                 WriteErrorMessage(tag, "could not parse component");
                 return Result::Failure;
             }

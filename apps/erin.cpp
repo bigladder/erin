@@ -409,9 +409,41 @@ packCommand(
     auto data = toml::parse(ifs, tomlFilenameOnly.string());
     ifs.close();
 
-    toml::value const& loadTable = data.at("loads");
-    loadTable.as_table();
+   // toml::value const& loadTable = data.at("loads");
+    auto const& loadTable = data.at("loads").as_table();
 
+    auto validationInfo = erin::SetupGlobalValidationInfo();
+    erin::ValidationInfo explicitValidation = validationInfo.Load_01Explicit;
+    erin::ValidationInfo fileValidation = validationInfo.Load_02FileBased;
+
+    auto maybeLoads = ParseLoads(
+            loadTable, explicitValidation, fileValidation
+    );
+    if (!maybeLoads.has_value())
+    {
+        return EXIT_FAILURE;
+    }
+    std::vector<erin::Load> loads = std::move(maybeLoads.value());
+
+    std::ofstream out;
+    out.open(loadsFilename);
+    if (!out.good())
+    {
+        std::cout << "Could not open '" << loadsFilename
+                  << "' for writing." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    bool first = true;
+    for (auto it = loads.cbegin(); it != loads.cend(); ++it) {
+        std::string tag = it->Tag;
+        if (!first) {
+            out << ",";
+        }
+        first= false;
+        out << it->Tag << "," << it->TimeAndLoads.size();
+    }
+    out.close();
     return EXIT_SUCCESS;
 }
 

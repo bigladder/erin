@@ -314,6 +314,77 @@ namespace erin
         return load;
     }
 
+    std::optional<Load>
+    ParseSingleLoad(
+            std::string const& tag,
+            toml::table const& table,
+            std::string const& tableName,
+            ValidationInfo const& explicitValidation,
+            ValidationInfo const& fileValidation
+    )
+    {
+        std::vector<std::string> errors01;
+        std::vector<std::string> warnings01;
+        auto const& explicitLoadTable = TOMLTable_ParseWithValidation(
+                table,
+                explicitValidation,
+                tableName,
+                errors01,
+                warnings01
+        );
+        std::optional<Load> maybeLoad = {};
+        if (errors01.size() == 0)
+        {
+            maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag);
+            if (!maybeLoad.has_value())
+            {
+                WriteErrorMessage(tableName, "unable to load");
+                return {};
+            }
+            if (warnings01.size() > 0)
+            {
+                for (auto const& w : warnings01)
+                {
+                    WriteErrorMessage(tableName, w);
+                }
+            }
+        }
+        else {
+            std::vector<std::string> errors02;
+            std::vector<std::string> warnings02;
+            auto const &fileLoadTable = TOMLTable_ParseWithValidation(
+                    table,
+                    fileValidation,
+                    tableName,
+                    errors02,
+                    warnings02
+            );
+            if (errors02.size() > 0) {
+                WriteErrorMessage(
+                        tableName, "unable to load explicitly or by file"
+                );
+                for (auto const &err: errors01) {
+                    WriteErrorMessage(tableName, err);
+                }
+                for (auto const &err: errors02) {
+                    WriteErrorMessage(tableName, err);
+                }
+                return {};
+            }
+            maybeLoad = ParseSingleLoadFileLoad(fileLoadTable, tag);
+            if (!maybeLoad.has_value()) {
+                WriteErrorMessage(tableName, "unable to load");
+                return {};
+            }
+            if (warnings02.size() > 0) {
+                for (auto const &w: warnings02) {
+                    WriteErrorMessage(tableName, w);
+                }
+            }
+        }
+        return maybeLoad;
+    }
+
     std::optional<std::vector<Load>>
     ParseLoads(
         toml::table const& table,
@@ -326,89 +397,31 @@ namespace erin
         for (auto it = table.cbegin(); it != table.cend(); ++it)
         {
             std::string tag = it->first;
-            std::string tableName = "loads." + tag;
-            if (it->second.is_table())
-            {
-                toml::table const& singleLoad = it->second.as_table();
-                std::vector<std::string> errors01;
-                std::vector<std::string> warnings01;
-                auto const& explicitLoadTable = TOMLTable_ParseWithValidation(
-                    singleLoad,
-                    explicitValidation,
-                    tableName,
-                    errors01,
-                    warnings01
-                );
-                std::optional<Load> maybeLoad = {};
-                if (errors01.size() == 0)
-                {
-                    maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag);
-                    if (!maybeLoad.has_value())
-                    {
-                        WriteErrorMessage(tableName, "unable to load");
-                        return {};
-                    }
-                    if (warnings01.size() > 0)
-                    {
-                        for (auto const& w : warnings01)
-                        {
-                            WriteErrorMessage(tableName, w);
+            std::string loadsEntryName = "loads." + tag;
+            if (it->second.is_table()) {
+                toml::table const &table2 = it->second.as_table();
+                for (auto it2 = table2.cbegin(); it2 != table2.cend(); ++it2) {
+                    std::string key = it2->first;
+                    toml::value value = it2->second;
+                    if (key == "csv_file") {
+                        std::optional<Load> maybeLoad = ParseSingleLoad(tag, table2, loadsEntryName, explicitValidation,
+                                                                        fileValidation);
+
+                        if (maybeLoad.has_value()) {
+                            loads.push_back(std::move(maybeLoad.value()));
+                        } else {
+                            WriteErrorMessage(loadsEntryName, "load did not have value");
+                            return {};
                         }
                     }
-                }
-                else
-                {
-                    std::vector<std::string> errors02;
-                    std::vector<std::string> warnings02;
-                    auto const& fileLoadTable = TOMLTable_ParseWithValidation(
-                        singleLoad,
-                        fileValidation,
-                        tableName,
-                        errors02,
-                        warnings02
-                    );
-                    if (errors02.size() > 0)
-                    {
-                        WriteErrorMessage(
-                            tableName, "unable to load explicitly or by file"
-                        );
-                        for (auto const& err : errors01)
-                        {
-                            WriteErrorMessage(tableName, err);
-                        }
-                        for (auto const& err : errors02)
-                        {
-                            WriteErrorMessage(tableName, err);
-                        }
-                        return {};
+                    if (key == "multi_part_csv") {
+                        std::cout << "multi-part csv: " << loadsEntryName << std::endl;
                     }
-                    maybeLoad = ParseSingleLoadFileLoad(fileLoadTable, tag);
-                    if (!maybeLoad.has_value())
-                    {
-                        WriteErrorMessage(tableName, "unable to load");
-                        return {};
-                    }
-                    if (warnings02.size() > 0)
-                    {
-                        for (auto const& w : warnings02)
-                        {
-                            WriteErrorMessage(tableName, w);
-                        }
-                    }
-                }
-                if (maybeLoad.has_value())
-                {
-                    loads.push_back(std::move(maybeLoad.value()));
-                }
-                else
-                {
-                    WriteErrorMessage(tableName, "load did not have value");
-                    return {};
                 }
             }
             else
             {
-                WriteErrorMessage(tableName, "is not a table");
+                WriteErrorMessage(loadsEntryName, "is not a table");
                 return {};
             }
         }

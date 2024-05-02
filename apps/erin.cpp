@@ -465,7 +465,7 @@ packCommand(
         }
     }
 
-    // write units row
+    // write data
    for (std::size_t iRow = 0; iRow < maxRows; ++iRow) {
         first = true;
         for (auto it = loads.cbegin(); it != loads.cend(); ++it) {

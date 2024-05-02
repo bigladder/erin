@@ -103,13 +103,16 @@ def run_bench(bench_file, example_name, dir=None):
     """
     git_sha = "<no-git-sha-detected>"
     git_sha_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True)
+    prog_info = subprocess.run([CLI_EXE, "version"], capture_output=True, text=True)
+    is_debug = "Build Type: Debug" in prog_info.stdout
     if git_sha_result.returncode == 0:
         git_sha = git_sha_result.stdout.decode("utf-8").strip()
     now = datetime.datetime.now().isoformat()
     result = smoke_test(example_name, dir)
     with open(bench_file, 'a') as f:
         time_s = result.time_ns / 1_000_000_000.0
-        print(f"[{now}] (commit: {git_sha}) {example_name}: {time_s} ns", file=f)
+        debug_flag = "true" if is_debug else "false"
+        print(f"{{\"time\": \"{now}\", \"commit\": \"{git_sha}\", \"debug\": {debug_flag}, \"name\": \"{example_name}\", \"time-s\": {time_s}}}", file=f)
 
 
 def read_csv(path):
@@ -287,6 +290,9 @@ if __name__ == "__main__":
     print("Passed all regression tests!")
     run_perf()
     print("All performance tests run")
-    benchfile = (Path(".")/".."/".."/"benchmark.txt").resolve()
+    bench_dir = (Path(".")/".."/".."/"benchmark").resolve()
+    if not bench_dir.exists():
+        bench_dir.mkdir(parents=True, exist_ok=True)
+    benchfile = (bench_dir / "benchmark.txt").resolve()
     run_bench(benchfile, "ft-illinois", dir="ft-illinois")
     print("Ran all benchmarks")

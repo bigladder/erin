@@ -314,6 +314,139 @@ namespace erin
         return load;
     }
 
+    std::vector<std::optional<Load>>
+    ParseMultiLoadFileLoad(
+            toml::table const& table,
+            std::string const& tag
+    )
+    {
+        std::string tableFullName = "loads." + tag;
+       std::string csvFileName = table.at("multi_part_csv").as_string();
+        std::ifstream inputDataFile{};
+        inputDataFile.open(csvFileName);
+        if (!inputDataFile.good())
+        {
+            WriteErrorMessage(
+                    tableFullName,
+                    "unable to load input csv file '" + csvFileName + "'"
+            );
+            return {};
+        }
+
+        struct LoadEntry
+        {
+            std::string name;
+            std::size_t nItems;
+            TimeUnit timeUnit;
+            PowerUnit rateUnit;
+        };
+
+        std::vector<std::optional<Load>> loads;
+
+        // read first row [name, size]
+        std::vector<LoadEntry> loadEntries = {};
+        auto sRow = read_row(inputDataFile);
+        std::size_t nCols = sRow.size();
+        for (std::size_t iCol = 0; iCol < nCols; iCol += 2) {
+            if (iCol + 1 < nCols) {
+                LoadEntry loadEntry;
+                loadEntry.name = sRow[iCol];
+                loadEntry.nItems = stoi(sRow[iCol + 1]);
+                loadEntry.timeUnit = TimeUnit::Second;
+                loadEntry.rateUnit = PowerUnit::Watt;
+                loadEntries.push_back(loadEntry);
+            }
+        }
+        // read second row [time unit, energy unit]
+        std::vector<TimeAndAmount> timeRatePairs;
+
+        sRow = read_row(inputDataFile);
+        if (sRow.size() != nCols) {
+            WriteErrorMessage(
+                    tableFullName, "invalid table size.");
+            return {};
+        }
+
+        std::size_t iEntry = 0;
+        for (std::size_t iCol = 0; iCol < nCols; iCol += 2) {
+            if (iCol + 1 < nCols) {
+                std::string const &timeUnitStr = sRow[iCol];
+                std::string const &rateUnitStr = sRow[iCol + 1];
+                auto maybeTimeUnit = TagToTimeUnit(timeUnitStr);
+                if (!maybeTimeUnit.has_value()) {
+                    WriteErrorMessage(
+                            tableFullName, "unhandled time unit: " + timeUnitStr
+                    );
+                    return {};
+                }
+                loadEntries[iEntry].timeUnit = maybeTimeUnit.value();
+                auto maybeRateUnit = TagToPowerUnit(rateUnitStr);
+                if (!maybeRateUnit.has_value()) {
+                    WriteErrorMessage(
+                            tableFullName, "unhandled rate unit: " + rateUnitStr
+                    );
+                    return {};
+                }
+                loadEntries[iEntry].rateUnit = maybeRateUnit.value();
+                ++iEntry;
+            }
+            else {
+                WriteErrorMessage(
+                        tableFullName,
+                        "multi-part csv file '" + csvFileName
+                        + "'"
+                          " -- header 2nd row must have 2 columns for each load entry: time unit "
+                          "and rate unit"
+                );
+                return {};
+            }
+        }
+
+       loads.reserve(loadEntries.size());
+       for (auto& loadEntry: loadEntries) {
+           Load load;
+           load.Tag = loadEntry.name;
+           load.TimeAndLoads = {};
+           load.TimeAndLoads.reserve(loadEntry.nItems);
+           loads.push_back(load);
+        }
+        std::size_t iRow = 0;
+        while (inputDataFile.is_open() && inputDataFile.good())
+        {
+            auto sRow = read_row(inputDataFile);
+            if (sRow.size() != 2 * loadEntries.size())
+            {
+                WriteErrorMessage(
+                        tableFullName,
+                        "multi-csv file '" + csvFileName
+                        + "'"
+                          " each entry must have 2 columns; "
+                          "found: "
+                        + std::to_string(sRow.size())
+                );
+                return {};
+            }
+            std::size_t iCol = 0;
+            std::size_t iLoad = 0;
+            for (auto& loadEntry: loadEntries)
+            {
+                if (iRow < loadEntry.nItems) {
+                    TimeAndAmount ta{};
+                    ta.Time_s = Time_ToSeconds(std::stod(sRow[iCol]), loadEntry.timeUnit);
+                    ta.Amount_W =
+                            static_cast<flow_t>(Power_ToWatt(std::stod(sRow[iCol + 1]), loadEntry.rateUnit));
+                    loads[iLoad]->TimeAndLoads.push_back(ta);
+                }
+                iCol += 2;
+                ++iLoad;
+            }
+            ++iRow;
+        }
+        inputDataFile.close();
+
+        return loads;
+    }
+
     std::optional<Load>
     ParseSingleLoad(
             std::string const& tag,
@@ -385,6 +518,25 @@ namespace erin
         return maybeLoad;
     }
 
+    std::vector<std::optional<Load>>
+    ParseMultiLoad(
+            std::string const& tableName,
+            toml::table const& table
+    )
+    {
+
+        std::vector<std::optional<Load>> maybeLoads = {};
+        maybeLoads = ParseMultiLoadFileLoad(table, tableName);
+        for (auto& maybeLoad: maybeLoads) {
+            if (!maybeLoad.has_value()) {
+                WriteErrorMessage(tableName, "unable to load");
+                return {};
+            }
+        }
+
+        return maybeLoads;
+    }
+
     std::optional<std::vector<Load>>
     ParseLoads(
         toml::table const& table,
@@ -416,6 +568,15 @@ namespace erin
                     }
                     if (key == "multi_part_csv") {
                         std::cout << "multi-part csv: " << loadsEntryName << std::endl;
+                        std::vector<std::optional<Load>> maybeLoads = ParseMultiLoad(tag, table2);
+                        for (auto &maybeLoad: maybeLoads) {
+                            if (maybeLoad.has_value()) {
+                                loads.push_back(std::move(maybeLoad.value()));
+                            } else {
+                                WriteErrorMessage(loadsEntryName, "load did not have value");
+                                return {};
+                            }
+                        }
                     }
                 }
             }

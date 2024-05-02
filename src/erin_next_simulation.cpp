@@ -2260,9 +2260,9 @@ namespace erin
                 : 0.0;
             double ER = os.OutflowRequest_kJ > 0.0
                 ? (os.OutflowAchieved_kJ / os.OutflowRequest_kJ)
-                : 0.0;
+                : 1.0;
             double EA =
-                os.Duration_s > 0.0 ? (os.Uptime_s / os.Duration_s) : 0.0;
+                os.Duration_s > 0.0 ? (os.Uptime_s / os.Duration_s) : 1.0;
             stats << s.ScenarioMap.Tags[os.Id];
             stats << "," << os.OccurrenceNumber;
             stats << "," << (os.Duration_s / seconds_per_hour);

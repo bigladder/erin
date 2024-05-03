@@ -416,19 +416,19 @@ namespace erin
                     std::get<double>(input.at("constant_efficiency").Value);
                 if (efficiency <= 0.0)
                 {
-                    WriteErrorMessage(
+                    errors.push_back(WriteErrorToString(
                         fullTableName, "efficiency must be > 0.0"
-                    );
+                    ));
                     return Result::Failure;
                 }
                 if (efficiency > 1.0)
                 {
-                    WriteErrorMessage(
+                    errors.push_back(WriteErrorToString(
                         fullTableName,
                         "efficiency must be <= 1.0; "
                         "if you need efficiencies (COPs) > 1, "
                         "consider using a mover"
-                    );
+                    ));
                     return Result::Failure;
                 }
                 auto const compIdAndWasteConn =
@@ -448,10 +448,10 @@ namespace erin
                     auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
                     if (!maybeRateUnit.has_value())
                     {
-                        WriteErrorMessage(
+                        errors.push_back(WriteErrorToString(
                             fullTableName,
                             "unhandled rate unit '" + localRateUnitStr + "'"
-                        );
+                        ));
                         return Result::Failure;
                     }
                     localRateUnit = maybeRateUnit.value();

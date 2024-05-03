@@ -79,7 +79,7 @@ def run_tests():
     print("", flush=True)
 
 
-def smoke_test(example_name, dir=None, timeit=False):
+def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     """
     A smoke test just runs the example and confirms we get a 0 exit code
     """
@@ -99,6 +99,8 @@ def smoke_test(example_name, dir=None, timeit=False):
         print(result.stderr.decode())
         sys.exit(1)
     result.time_ns = time_ns
+    if print_it:
+        print(".", end="", sep="")
     return result
 
 
@@ -239,6 +241,7 @@ def run_cli(example_name):
         print(("=" * 20) + " DETAILED DIFF")
         compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
         sys.exit(1)
+    print(".", end="", sep="", flush=True)
 
 
 def run_perf():
@@ -287,13 +290,13 @@ if __name__ == "__main__":
     run_cli("25")
     run_cli("26")
     run_cli("27")
-    smoke_test("28")
+    smoke_test("28", print_it=True)
     run_cli("29")
     run_cli("30")
     run_cli("31")
-    smoke_test("ft-illinois", dir="ft-illinois")
-    print("Passed all regression tests!")
     run_cli("32")
+    smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
+    print("\nPassed all regression tests!")
     run_perf()
     print("All performance tests run")
     bench_dir = (Path(".")/".."/".."/"benchmark").resolve()

@@ -24,6 +24,7 @@ if platform.system() == 'Windows':
         sys.exit(1)
     TEST_EXE = BIN_DIR / 'erin_tests.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests.exe'
+    LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests.exe'
     CLI_EXE = BIN_DIR / 'erin.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
@@ -31,12 +32,14 @@ elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
     TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
+    LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests'
     CLI_EXE = BIN_DIR / 'erin'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test'
 else:
     print(f"Unhandled platform, '{platform.system()}'")
     sys.exit(1)
 print(f"BINARY DIR: {BIN_DIR}")
+ALL_TESTS = [TEST_EXE, RAND_TEST_EXE, LOOKUP_TABLE_TEST_EXE]
 
 
 if not TEST_EXE.exists():
@@ -44,7 +47,11 @@ if not TEST_EXE.exists():
     sys.exit(1)
 
 if not RAND_TEST_EXE.exists():
-    print("Cannot find test executable...")
+    print("Cannot find random test executable...")
+    sys.exit(1)
+
+if not LOOKUP_TABLE_TEST_EXE.exists():
+    print("Cannot find lookup-table test executable...")
     sys.exit(1)
 
 if not CLI_EXE.exists():
@@ -56,22 +63,19 @@ def run_tests():
     """
     Run the test suite
     """
-    result = subprocess.run([TEST_EXE], capture_output=True)
-    if result.returncode != 0:
-        print("Tests did not pass!")
-        print("stdout:\n")
-        print(result.stderr.decode())
-        print("stdout:\n")
-        print(result.stderr.decode())
-        sys.exit(1)
-    result = subprocess.run([RAND_TEST_EXE], capture_output=True)
-    if result.returncode != 0:
-        print("Random tests did not pass!")
-        print("stdout:\n")
-        print(result.stdout.decode())
-        print("stdout:\n")
-        print(result.stderr.decode())
-        sys.exit(1)
+    for test in ALL_TESTS:
+        result = subprocess.run([test], capture_output=True)
+        if result.returncode != 0:
+            stem = Path(test).stem
+            print(f"Test '{stem}' did not pass!")
+            print("stdout:\n")
+            print(result.stderr.decode())
+            print("stdout:\n")
+            print(result.stderr.decode())
+            sys.exit(1)
+        else:
+            print(".", end="", sep="", flush=True)
+    print("", flush=True)
 
 
 def smoke_test(example_name, dir=None, timeit=False):

@@ -44,6 +44,7 @@ add_library(erin_next
 	erin_next_random.cpp
   erin_next_validation.cpp
   erin_next_graph.cpp
+  erin_next_lookup_table.cpp
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_valdata.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_distribution.h"
@@ -63,6 +64,7 @@ add_library(erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_csv.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_random.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_graph.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_lookup_table.h"
 )
 
 target_link_libraries(erin_next PRIVATE fmt)

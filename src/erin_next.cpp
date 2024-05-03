@@ -1,6 +1,7 @@
 /* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next.h"
+#include "erin_next/erin_next_lookup_table.h"
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_utils.h"
@@ -11,6 +12,7 @@
 #include <numeric>
 #include <unordered_set>
 #include <utility>
+#include <fmt/core.h>
 
 namespace erin
 {
@@ -185,6 +187,99 @@ namespace erin
                     if (cec.LossflowConn.has_value())
                     {
                         size_t lfConnIdx = cec.LossflowConn.value();
+                        assert(lfConnIdx < nConns);
+                        Connection const& lfConn = m.Connections[lfConnIdx];
+                        size_t lfPort = 1;
+                        if ((lfConn.From != compType)
+                            || (lfConn.FromId != compId)
+                            || (lfConn.FromIdx != idx)
+                            || (lfConn.FromPort != lfPort))
+                        {
+                            AddConnectionIssue(
+                                issues,
+                                tag,
+                                compId,
+                                lfPort,
+                                idx,
+                                compType,
+                                lfConn,
+                                lfConnIdx,
+                                FlowDirection::Outflow
+                            );
+                        }
+                    }
+                }
+                break;
+                case ComponentType::VariableEfficiencyConverterType:
+                {
+                    assert(idx < m.VarEffConvs.size());
+                    VariableEfficiencyConverter const& vec = m.VarEffConvs[idx];
+                    size_t inflowConnIdx = vec.InflowConn;
+                    assert(inflowConnIdx < nConns);
+                    Connection const& inflowConn = m.Connections[inflowConnIdx];
+                    size_t inflowPort = 0;
+                    if ((inflowConn.To != compType)
+                        || (inflowConn.ToId != compId)
+                        || (inflowConn.ToIdx != idx)
+                        || (inflowConn.ToPort != inflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            inflowPort,
+                            idx,
+                            compType,
+                            inflowConn,
+                            inflowConnIdx,
+                            FlowDirection::Inflow
+                        );
+                    }
+                    size_t outflowConnIdx = vec.OutflowConn;
+                    assert(outflowConnIdx < nConns);
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
+                    size_t outflowPort = 0;
+                    if ((outflowConn.From != compType)
+                        || (outflowConn.FromId != compId)
+                        || (outflowConn.FromIdx != idx)
+                        || (outflowConn.FromPort != outflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            outflowPort,
+                            idx,
+                            compType,
+                            outflowConn,
+                            outflowConnIdx,
+                            FlowDirection::Outflow
+                        );
+                    }
+                    size_t wasteflowConnIdx = vec.WasteflowConn;
+                    assert(wasteflowConnIdx < nConns);
+                    Connection const& wfConn = m.Connections[wasteflowConnIdx];
+                    size_t wfPort = 2;
+                    if ((wfConn.From != compType) || (wfConn.FromId != compId)
+                        || (wfConn.FromIdx != idx)
+                        || (wfConn.FromPort != wfPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            wfPort,
+                            idx,
+                            compType,
+                            wfConn,
+                            wasteflowConnIdx,
+                            FlowDirection::Outflow
+                        );
+                    }
+                    if (vec.LossflowConn.has_value())
+                    {
+                        size_t lfConnIdx = vec.LossflowConn.value();
                         assert(lfConnIdx < nConns);
                         Connection const& lfConn = m.Connections[lfConnIdx];
                         size_t lfPort = 1;
@@ -1236,21 +1331,23 @@ namespace erin
     }
 
     void
-    UpdateConstantEfficiencyLossflowAndWasteflow(
-        Model const& m,
+    UpdateConverterLossflowAndWasteflow(
         SimulationState& ss,
-        size_t compIdx
+        size_t inflowConn,
+        size_t outflowConn,
+        std::optional<size_t> lossflowConn,
+        size_t wasteflowConn,
+        flow_t maxOutflow_W,
+        flow_t maxLossflow_W
     )
     {
-        ConstantEfficiencyConverter const& cec = m.ConstEffConvs[compIdx];
-        flow_t inflowRequest = ss.Flows[cec.InflowConn].Requested_W;
-        flow_t inflowAvailable = ss.Flows[cec.InflowConn].Available_W;
-        flow_t outflowRequest = ss.Flows[cec.OutflowConn].Requested_W;
+        flow_t inflowRequest = ss.Flows[inflowConn].Requested_W;
+        flow_t inflowAvailable = ss.Flows[inflowConn].Available_W;
+        flow_t outflowRequest = ss.Flows[outflowConn].Requested_W;
         flow_t outflowAvailable =
-            ss.Flows[cec.OutflowConn].Available_W > cec.MaxOutflow_W
-            ? cec.MaxOutflow_W
-            : ss.Flows[cec.OutflowConn].Available_W;
-        std::optional<size_t> lossflowConn = cec.LossflowConn;
+            ss.Flows[outflowConn].Available_W > maxOutflow_W
+            ? maxOutflow_W
+            : ss.Flows[outflowConn].Available_W;
         flow_t inflow = FinalizeFlowValue(inflowRequest, inflowAvailable);
         flow_t outflow = FinalizeFlowValue(outflowRequest, outflowAvailable);
         // NOTE: for COP, we can have outflow > inflow, but we assume no
@@ -1260,13 +1357,13 @@ namespace erin
         if (lossflowConn.has_value())
         {
             lossflowRequest = ss.Flows[lossflowConn.value()].Requested_W;
-            if (lossflowRequest > cec.MaxLossflow_W)
+            if (lossflowRequest > maxLossflow_W)
             {
-                lossflowRequest = cec.MaxLossflow_W;
+                lossflowRequest = maxLossflow_W;
             }
             flow_t nonOutflowAvailableLimited =
-                nonOutflowAvailable > cec.MaxLossflow_W ? cec.MaxLossflow_W
-                                                        : nonOutflowAvailable;
+                nonOutflowAvailable > maxLossflow_W ? maxLossflow_W
+                                                    : nonOutflowAvailable;
             if (nonOutflowAvailableLimited
                 != ss.Flows[lossflowConn.value()].Available_W)
             {
@@ -1275,12 +1372,49 @@ namespace erin
             ss.Flows[lossflowConn.value()].Available_W =
                 nonOutflowAvailableLimited;
         }
-        size_t wasteflowConn = m.ConstEffConvs[compIdx].WasteflowConn;
         flow_t wasteflow = nonOutflowAvailable > lossflowRequest
             ? nonOutflowAvailable - lossflowRequest
             : 0;
         ss.Flows[wasteflowConn].Requested_W = wasteflow;
         ss.Flows[wasteflowConn].Available_W = wasteflow;
+    }
+
+    void
+    UpdateConstantEfficiencyLossflowAndWasteflow(
+        Model const& m,
+        SimulationState& ss,
+        size_t compIdx
+    )
+    {
+        ConstantEfficiencyConverter const& cec = m.ConstEffConvs[compIdx];
+        UpdateConverterLossflowAndWasteflow(
+            ss,
+            cec.InflowConn,
+            cec.OutflowConn,
+            cec.LossflowConn,
+            cec.WasteflowConn,
+            cec.MaxOutflow_W,
+            cec.MaxLossflow_W
+        );
+    }
+
+    void
+    UpdateVariableEfficiencyLossflowAndWasteflow(
+        Model const& m,
+        SimulationState& ss,
+        size_t compIdx
+    )
+    {
+        VariableEfficiencyConverter const& vec = m.VarEffConvs[compIdx];
+        UpdateConverterLossflowAndWasteflow(
+            ss,
+            vec.InflowConn,
+            vec.OutflowConn,
+            vec.LossflowConn,
+            vec.WasteflowConn,
+            vec.MaxOutflow_W,
+            vec.MaxLossflow_W
+        );
     }
 
     void
@@ -1307,6 +1441,34 @@ namespace erin
         }
         ss.Flows[inflowConn].Requested_W = inflowRequest;
         UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
+    }
+
+    void
+    RunVariableEfficiencyConverterBackward(
+        Model const& m,
+        SimulationState& ss,
+        size_t outflowConnIdx,
+        size_t compIdx
+    )
+    {
+        VariableEfficiencyConverter const& vec = m.VarEffConvs[compIdx];
+        size_t inflowConn = vec.InflowConn;
+        flow_t outflowRequest_W =
+            ss.Flows[outflowConnIdx].Requested_W > vec.MaxOutflow_W
+            ? vec.MaxOutflow_W
+            : ss.Flows[outflowConnIdx].Requested_W;
+        double efficiency = LookupTable_LookupInterp(
+            vec.OutflowsForEfficiency_W, vec.Efficiencies, outflowRequest_W
+        );
+        assert(efficiency >= 0.0 && efficiency <= 1.0);
+        flow_t inflowRequest_W =
+            static_cast<flow_t>(std::ceil(outflowRequest_W / efficiency));
+        if (inflowRequest_W != ss.Flows[inflowConn].Requested_W)
+        {
+            ss.ActiveConnectionsBack.insert(inflowConn);
+        }
+        ss.Flows[inflowConn].Requested_W = inflowRequest_W;
+        UpdateVariableEfficiencyLossflowAndWasteflow(m, ss, compIdx);
     }
 
     void
@@ -1630,6 +1792,37 @@ namespace erin
                         }
                     }
                     break;
+                    case ComponentType::VariableEfficiencyConverterType:
+                    {
+                        switch (model.Connections[connIdx].FromPort)
+                        {
+                            case 0:
+                            {
+                                RunVariableEfficiencyConverterBackward(
+                                    model, ss, connIdx, compIdx
+                                );
+                            }
+                            break;
+                            case 1: // lossflow
+                            case 2: // wasteflow
+                            {
+                                UpdateVariableEfficiencyLossflowAndWasteflow(
+                                    model, ss, compIdx
+                                );
+                            }
+                            break;
+                            default:
+                            {
+                                WriteErrorMessage(
+                                    "RunComponentsBackward",
+                                    "unhandled port on variable efficiency "
+                                    "converter"
+                                );
+                                exit(1);
+                            }
+                        }
+                    }
+                    break;
                     case ComponentType::MuxType:
                     {
                         RunMuxBackward(model, ss, compIdx);
@@ -1707,6 +1900,35 @@ namespace erin
         }
         ss.Flows[outflowConn].Available_W = outflowAvailable;
         UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
+    }
+
+    void
+    RunVariableEfficiencyConverterForward(
+        Model const& m,
+        SimulationState& ss,
+        size_t connIdx,
+        size_t compIdx
+    )
+    {
+        VariableEfficiencyConverter const& vec = m.VarEffConvs[compIdx];
+        flow_t inflowAvailable_W = ss.Flows[connIdx].Available_W;
+        size_t outflowConn = vec.OutflowConn;
+        double efficiency = LookupTable_LookupInterp(
+            vec.InflowsForEfficiency_W, vec.Efficiencies, inflowAvailable_W
+        );
+        assert(efficiency >= 0.0 && efficiency <= 1.0);
+        flow_t outflowAvailable =
+            static_cast<flow_t>(std::floor(efficiency * inflowAvailable_W));
+        if (outflowAvailable > vec.MaxOutflow_W)
+        {
+            outflowAvailable = vec.MaxOutflow_W;
+        }
+        if (outflowAvailable != ss.Flows[outflowConn].Available_W)
+        {
+            ss.ActiveConnectionsFront.insert(outflowConn);
+        }
+        ss.Flows[outflowConn].Available_W = outflowAvailable;
+        UpdateVariableEfficiencyLossflowAndWasteflow(m, ss, compIdx);
     }
 
     void
@@ -1887,6 +2109,13 @@ namespace erin
                     case ComponentType::ConstantEfficiencyConverterType:
                     {
                         RunConstantEfficiencyConverterForward(
+                            model, ss, connIdx, compIdx
+                        );
+                    }
+                    break;
+                    case ComponentType::VariableEfficiencyConverterType:
+                    {
+                        RunVariableEfficiencyConverterForward(
                             model, ss, connIdx, compIdx
                         );
                     }
@@ -2342,6 +2571,11 @@ namespace erin
                 result = "ConstantEfficiencyConverter";
             }
             break;
+            case ComponentType::VariableEfficiencyConverterType:
+            {
+                result = "VariableEfficiencyConverter";
+            }
+            break;
             case ComponentType::WasteSinkType:
             {
                 result = "WasteSink";
@@ -2374,10 +2608,7 @@ namespace erin
             break;
             default:
             {
-                WriteErrorMessage(
-                    "ToString",
-                    "unhandled component type: " + ToString(compType)
-                );
+                WriteErrorMessage("ToString", "unhandled component type");
                 std::exit(1);
             }
         }
@@ -2406,6 +2637,11 @@ namespace erin
         if (tag == "ConstantEfficiencyConverter" || tag == "converter")
         {
             return ComponentType::ConstantEfficiencyConverterType;
+        }
+        if (tag == "VariableEfficiencyConverter"
+            || tag == "variable_efficiency_converter")
+        {
+            return ComponentType::VariableEfficiencyConverterType;
         }
         if (tag == "WasteSink")
         {
@@ -2498,6 +2734,7 @@ namespace erin
                 case ComponentType::ConstantLoadType:
                 case ComponentType::ScheduleBasedLoadType:
                 case ComponentType::ConstantEfficiencyConverterType:
+                case ComponentType::VariableEfficiencyConverterType:
                 case ComponentType::MuxType:
                 case ComponentType::PassThroughType:
                 case ComponentType::MoverType:
@@ -2537,6 +2774,7 @@ namespace erin
                 case ComponentType::ConstantSourceType:
                 case ComponentType::ScheduleBasedSourceType:
                 case ComponentType::ConstantEfficiencyConverterType:
+                case ComponentType::VariableEfficiencyConverterType:
                 case ComponentType::MuxType:
                 case ComponentType::PassThroughType:
                 case ComponentType::MoverType:
@@ -2950,10 +3188,20 @@ namespace erin
             break;
             case ComponentType::ConstantEfficiencyConverterType:
             {
+                assert(idx < m.ConstEffConvs.size());
                 auto outflowConn = m.ConstEffConvs[idx].OutflowConn;
                 RunConstantEfficiencyConverterBackward(m, ss, outflowConn, idx);
                 auto inflowConn = m.ConstEffConvs[idx].InflowConn;
                 RunConstantEfficiencyConverterForward(m, ss, inflowConn, idx);
+            }
+            break;
+            case ComponentType::VariableEfficiencyConverterType:
+            {
+                assert(idx < m.VarEffConvs.size());
+                auto outflowConn = m.VarEffConvs[idx].OutflowConn;
+                RunVariableEfficiencyConverterBackward(m, ss, outflowConn, idx);
+                auto inflowConn = m.VarEffConvs[idx].InflowConn;
+                RunVariableEfficiencyConverterForward(m, ss, inflowConn, idx);
             }
             break;
             case ComponentType::MoverType:
@@ -3075,6 +3323,7 @@ namespace erin
             break;
             case ComponentType::ConstantEfficiencyConverterType:
             {
+                assert(idx < m.ConstEffConvs.size());
                 ConstantEfficiencyConverter const& cec = m.ConstEffConvs[idx];
                 auto inflowConn = cec.InflowConn;
                 if (ss.Flows[inflowConn].Requested_W != 0)
@@ -3099,6 +3348,37 @@ namespace erin
                     ss.Flows[lossConn].Available_W = 0;
                 }
                 auto wasteConn = cec.WasteflowConn;
+                ss.Flows[wasteConn].Available_W = 0;
+                ss.Flows[wasteConn].Requested_W = 0;
+            }
+            break;
+            case ComponentType::VariableEfficiencyConverterType:
+            {
+                assert(idx < m.VarEffConvs.size());
+                VariableEfficiencyConverter const& vec = m.VarEffConvs[idx];
+                auto inflowConn = vec.InflowConn;
+                if (ss.Flows[inflowConn].Requested_W != 0)
+                {
+                    ss.ActiveConnectionsBack.insert(inflowConn);
+                }
+                ss.Flows[inflowConn].Requested_W = 0;
+                auto outflowConn = vec.OutflowConn;
+                if (ss.Flows[outflowConn].Available_W != 0)
+                {
+                    ss.ActiveConnectionsFront.insert(outflowConn);
+                }
+                ss.Flows[outflowConn].Available_W = 0;
+                auto lossflowConn = vec.LossflowConn;
+                if (lossflowConn.has_value())
+                {
+                    auto lossConn = lossflowConn.value();
+                    if (ss.Flows[lossConn].Available_W != 0)
+                    {
+                        ss.ActiveConnectionsFront.insert(lossConn);
+                    }
+                    ss.Flows[lossConn].Available_W = 0;
+                }
+                auto wasteConn = vec.WasteflowConn;
                 ss.Flows[wasteConn].Available_W = 0;
                 ss.Flows[wasteConn].Requested_W = 0;
             }
@@ -3554,6 +3834,58 @@ namespace erin
         return {thisId, wasteConn};
     }
 
+    ComponentIdAndWasteConnection
+    Model_AddVariableEfficiencyConverter(
+        Model& m,
+        std::vector<double>&& outflowsForEfficiency_W,
+        std::vector<double>&& efficiencyByOutflow,
+        size_t inflowId,
+        size_t outflowId,
+        size_t lossflowId,
+        std::string const& tag
+    )
+    {
+        // NOTE: the 0th flowId is ""; the non-described flow
+        std::vector<size_t> inflowIds{inflowId};
+        std::vector<size_t> outflowIds{outflowId, lossflowId, wasteflowId};
+        size_t idx = m.VarEffConvs.size();
+        std::vector<double> inflowsForEfficiency_W;
+        inflowsForEfficiency_W.reserve(outflowsForEfficiency_W.size());
+        for (size_t i = 0; i < outflowsForEfficiency_W.size(); ++i)
+        {
+            inflowsForEfficiency_W.push_back(
+                outflowsForEfficiency_W[i] / efficiencyByOutflow[i]
+            );
+        }
+        VariableEfficiencyConverter vec{};
+        vec.OutflowsForEfficiency_W = std::move(outflowsForEfficiency_W);
+        vec.InflowsForEfficiency_W = std::move(inflowsForEfficiency_W);
+        vec.Efficiencies = std::move(efficiencyByOutflow);
+
+        m.VarEffConvs.push_back(std::move(vec));
+        size_t wasteId = Component_AddComponentReturningId(
+            m.ComponentMap,
+            ComponentType::WasteSinkType,
+            0,
+            std::vector<size_t>{wasteflowId},
+            std::vector<size_t>{},
+            "",
+            0.0
+        );
+        size_t thisId = Component_AddComponentReturningId(
+            m.ComponentMap,
+            ComponentType::VariableEfficiencyConverterType,
+            idx,
+            inflowIds,
+            outflowIds,
+            tag,
+            0.0
+        );
+        auto wasteConn =
+            Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflowId);
+        return {thisId, wasteConn};
+    }
+
     size_t
     Model_AddPassThrough(Model& m)
     {
@@ -3620,7 +3952,7 @@ namespace erin
             .FlowTypeId = flowId,
         };
         size_t connId = m.Connections.size();
-        if (check_integrity)
+        if constexpr (check_integrity)
         {
             bool issueFound = false;
             for (auto const& conn : m.Connections)
@@ -3723,6 +4055,35 @@ namespace erin
                 }
             }
             break;
+            case ComponentType::VariableEfficiencyConverterType:
+            {
+                assert(fromIdx < m.VarEffConvs.size());
+                switch (fromPort)
+                {
+                    case 0:
+                    {
+                        m.VarEffConvs[fromIdx].OutflowConn = connId;
+                    }
+                    break;
+                    case 1:
+                    {
+                        m.VarEffConvs[fromIdx].LossflowConn = connId;
+                    }
+                    break;
+                    case 2:
+                    {
+                        m.VarEffConvs[fromIdx].WasteflowConn = connId;
+                    }
+                    break;
+                    default:
+                    {
+                        throw std::invalid_argument(
+                            "Unhandled variable efficiency converter outport"
+                        );
+                    }
+                }
+            }
+            break;
             case ComponentType::MoverType:
             {
                 assert(fromIdx < m.Movers.size());
@@ -3812,6 +4173,12 @@ namespace erin
             {
                 assert(toIdx < m.ConstEffConvs.size());
                 m.ConstEffConvs[toIdx].InflowConn = connId;
+            }
+            break;
+            case ComponentType::VariableEfficiencyConverterType:
+            {
+                assert(toIdx < m.VarEffConvs.size());
+                m.VarEffConvs[toIdx].InflowConn = connId;
             }
             break;
             case ComponentType::MoverType:

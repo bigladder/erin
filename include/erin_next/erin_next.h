@@ -10,6 +10,7 @@
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_result.h"
+#include "erin_next/erin_next_lookup_table.h"
 #include "../vendor/toml11/toml.hpp"
 #include <iostream>
 #include <limits>
@@ -55,6 +56,7 @@ namespace erin
         ConstantSourceType,
         ScheduleBasedSourceType,
         ConstantEfficiencyConverterType,
+        VariableEfficiencyConverterType,
         MuxType,
         StoreType,
         PassThroughType,
@@ -222,6 +224,20 @@ namespace erin
         flow_t MaxLossflow_W = max_flow_W;
     };
 
+    struct VariableEfficiencyConverter
+    {
+        size_t InflowConn;
+        size_t OutflowConn;
+        std::optional<size_t> LossflowConn;
+        size_t WasteflowConn;
+        flow_t MaxOutflow_W = max_flow_W;
+        flow_t MaxLossflow_W = max_flow_W;
+        std::vector<double> OutflowsForEfficiency_W;
+        std::vector<double> InflowsForEfficiency_W;
+        // Efficiencies corresponding to the outflows and inflows
+        std::vector<double> Efficiencies;
+    };
+
     struct Mover
     {
         double COP;
@@ -303,6 +319,7 @@ namespace erin
         std::vector<ConstantLoad> ConstLoads;
         std::vector<ScheduleBasedLoad> ScheduledLoads;
         std::vector<ConstantEfficiencyConverter> ConstEffConvs;
+        std::vector<VariableEfficiencyConverter> VarEffConvs;
         std::vector<Mux> Muxes;
         std::vector<Store> Stores;
         std::vector<PassThrough> PassThroughs;
@@ -548,6 +565,13 @@ namespace erin
     );
 
     void
+    UpdateVariableEfficiencyLossflowAndWasteflow(
+        Model const& m,
+        SimulationState& ss,
+        size_t compIdx
+    );
+
+    void
     RunMuxPostFinalization(Model const& m, SimulationState& ss, size_t compIdx);
 
     void
@@ -781,6 +805,17 @@ namespace erin
         std::string const& tag
     );
 
+    ComponentIdAndWasteConnection
+    Model_AddVariableEfficiencyConverter(
+        Model& m,
+        std::vector<double>&& outflows_W,
+        std::vector<double>&& efficiency_by_outflows,
+        size_t inflowId,
+        size_t outflowId,
+        size_t lossflowId,
+        std::string const& tag
+    );
+
     size_t
     Model_AddPassThrough(Model& m);
 
@@ -852,6 +887,14 @@ namespace erin
     );
 
     void
+    RunVariableEfficiencyConverterBackward(
+        Model const& m,
+        SimulationState& ss,
+        size_t connIdx,
+        size_t compIdx
+    );
+
+    void
     RunMoverBackward(
         Model const& m,
         SimulationState& ss,
@@ -902,6 +945,14 @@ namespace erin
 
     void
     RunConstantEfficiencyConverterForward(
+        Model const& model,
+        SimulationState& ss,
+        size_t connIdx,
+        size_t compIdx
+    );
+
+    void
+    RunVariableEfficiencyConverterForward(
         Model const& model,
         SimulationState& ss,
         size_t connIdx,

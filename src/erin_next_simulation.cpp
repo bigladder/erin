@@ -253,6 +253,36 @@ namespace erin
                               << std::endl;
                 }
                 break;
+                case ComponentType::VariableEfficiencyConverterType:
+                {
+                    assert(subtypeIdx < m.VarEffConvs.size());
+                    VariableEfficiencyConverter const& vec =
+                        m.VarEffConvs[subtypeIdx];
+                    std::cout << "-- efficiencies by load fraction:"
+                              << std::endl;
+                    double maxOutflow_W = static_cast<double>(vec.MaxOutflow_W);
+                    for (size_t i = 0; i < vec.Efficiencies.size(); ++i)
+                    {
+                        std::cout << fmt::format(
+                            "  -- {:5.3f}",
+                            (vec.OutflowsForEfficiency_W[i] / maxOutflow_W)
+                        );
+                        std::cout << fmt::format(
+                            ": {:5.2f}%", (vec.Efficiencies[i] * 100.0)
+                        ) << std::endl;
+                    }
+                    std::cout << "-- max outflow (W): "
+                              << (vec.MaxOutflow_W == max_flow_W
+                                      ? "unlimited"
+                                      : std::to_string(vec.MaxOutflow_W))
+                              << std::endl;
+                    std::cout << "-- max lossflow (W): "
+                              << (vec.MaxLossflow_W == max_flow_W
+                                      ? "unlimited"
+                                      : std::to_string(vec.MaxLossflow_W))
+                              << std::endl;
+                }
+                break;
                 case ComponentType::MoverType:
                 {
                     assert(subtypeIdx < m.Movers.size());

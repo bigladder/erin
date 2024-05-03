@@ -57,6 +57,11 @@ namespace erin
                 return "components (converter)";
             }
             break;
+            case InputSection::Components_VariableEffConverter:
+            {
+                return "variable_efficiency_converter";
+            }
+            break;
             case InputSection::Components_Mux:
             {
                 return "components (mux)";
@@ -152,6 +157,10 @@ namespace erin
         {
             return InputSection::Components_ConstEffConverter;
         }
+        if (tag == "variable_efficiency_converter")
+        {
+            return InputSection::Components_VariableEffConverter;
+        }
         if (tag == "mux" || tag == "muxer")
         {
             return InputSection::Components_Mux;
@@ -230,6 +239,7 @@ namespace erin
             InputSection::Components_Source,
             InputSection::Components_UncontrolledSource,
             InputSection::Components_ConstEffConverter,
+            InputSection::Components_VariableEffConverter,
             InputSection::Components_Mux,
             InputSection::Components_Store,
             InputSection::Components_PassThrough,
@@ -249,6 +259,7 @@ namespace erin
             InputSection::Components_Source,
             InputSection::Components_UncontrolledSource,
             InputSection::Components_ConstEffConverter,
+            InputSection::Components_VariableEffConverter,
             InputSection::Components_Mux,
             InputSection::Components_Store,
             InputSection::Components_PassThrough,
@@ -258,6 +269,7 @@ namespace erin
             InputSection::Components_Source,
             InputSection::Components_UncontrolledSource,
             InputSection::Components_ConstEffConverter,
+            InputSection::Components_VariableEffConverter,
             InputSection::Components_Mux,
             InputSection::Components_Store,
             InputSection::Components_PassThrough,
@@ -266,6 +278,7 @@ namespace erin
         std::unordered_set<std::string> compTypeEnums{
             "constant_load",
             "converter",
+            "variable_efficiency_converter",
             "load",
             "mover",
             "muxer",
@@ -527,6 +540,7 @@ namespace erin
                         InputSection::Components_ConstantLoad,
                         InputSection::Components_Load,
                         InputSection::Components_ConstEffConverter,
+                        InputSection::Components_VariableEffConverter,
                         InputSection::Components_Mover,
                     },
             },
@@ -557,6 +571,7 @@ namespace erin
                         InputSection::Components_Source,
                         InputSection::Components_UncontrolledSource,
                         InputSection::Components_ConstEffConverter,
+                        InputSection::Components_VariableEffConverter,
                         InputSection::Components_Mover,
                     },
             },
@@ -589,6 +604,7 @@ namespace erin
                         InputSection::Components_UncontrolledSource,
                         InputSection::Components_Store,
                         InputSection::Components_ConstEffConverter,
+                        InputSection::Components_VariableEffConverter,
                     },
             },
             FieldInfo{
@@ -665,7 +681,7 @@ namespace erin
                         InputSection::Components_Mux,
                     },
             },
-            // Constant Efficiency Converter
+            // Constant and Variable Efficiency Converter
             FieldInfo{
                 .FieldName = "constant_efficiency",
                 .Type = InputType::Number,
@@ -680,6 +696,19 @@ namespace erin
                     },
             },
             FieldInfo{
+                .FieldName = "efficiency_by_fraction_out",
+                .Type = InputType::ArrayOfTuple2OfNumber,
+                .IsRequired = true,
+                .InformIfMissing = false,
+                .Default = "",
+                .EnumValues = {},
+                .Aliases = {},
+                .Sections =
+                    {
+                        InputSection::Components_VariableEffConverter,
+                    },
+            },
+            FieldInfo{
                 .FieldName = "lossflow",
                 .Type = InputType::AnyString,
                 .IsRequired = false,
@@ -690,6 +719,7 @@ namespace erin
                 .Sections =
                     {
                         InputSection::Components_ConstEffConverter,
+                        InputSection::Components_VariableEffConverter,
                     },
             },
             FieldInfo{
@@ -706,6 +736,19 @@ namespace erin
                     },
             },
             FieldInfo{
+                .FieldName = "max_outflow",
+                .Type = InputType::Number,
+                .IsRequired = true,
+                .InformIfMissing = false,
+                .Default = "",
+                .EnumValues = {},
+                .Aliases = {},
+                .Sections =
+                    {
+                        InputSection::Components_VariableEffConverter,
+                    },
+            },
+            FieldInfo{
                 .FieldName = "max_lossflow",
                 .Type = InputType::Number,
                 .IsRequired = false,
@@ -716,6 +759,7 @@ namespace erin
                 .Sections =
                     {
                         InputSection::Components_ConstEffConverter,
+                        InputSection::Components_VariableEffConverter,
                     },
             },
             // Store
@@ -1052,6 +1096,13 @@ namespace erin
                     {
                         UpdateValidationInfoByField(
                             v.Comp.ConstantEfficiencyConverter, f
+                        );
+                    }
+                    break;
+                    case InputSection::Components_VariableEffConverter:
+                    {
+                        UpdateValidationInfoByField(
+                            v.Comp.VariableEfficiencyConverter, f
                         );
                     }
                     break;

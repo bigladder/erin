@@ -292,6 +292,7 @@ if __name__ == "__main__":
     run_cli("31")
     smoke_test("ft-illinois", dir="ft-illinois")
     print("Passed all regression tests!")
+    run_cli("32")
     run_perf()
     print("All performance tests run")
     bench_dir = (Path(".")/".."/".."/"benchmark").resolve()

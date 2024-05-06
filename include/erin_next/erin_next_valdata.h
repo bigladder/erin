@@ -74,6 +74,7 @@ namespace erin
         Components_Source,
         Components_UncontrolledSource,
         Components_ConstEffConverter,
+        Components_VariableEffConverter,
         Components_Mux,
         Components_Store,
         Components_PassThrough,
@@ -129,6 +130,7 @@ namespace erin
         ValidationInfo ConstantSource;
         ValidationInfo ScheduleBasedSource;
         ValidationInfo ConstantEfficiencyConverter;
+        ValidationInfo VariableEfficiencyConverter;
         ValidationInfo Mux;
         ValidationInfo Store;
         ValidationInfo PassThrough;

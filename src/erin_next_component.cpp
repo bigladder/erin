@@ -61,6 +61,17 @@ namespace erin
                 );
             }
             break;
+            case ComponentType::VariableEfficiencyConverterType:
+            {
+                input = TOMLTable_ParseWithValidation(
+                    table,
+                    compValids.VariableEfficiencyConverter,
+                    fullTableName,
+                    errors,
+                    warnings
+                );
+            }
+            break;
             case ComponentType::ConstantLoadType:
             {
                 input = TOMLTable_ParseWithValidation(
@@ -405,19 +416,19 @@ namespace erin
                     std::get<double>(input.at("constant_efficiency").Value);
                 if (efficiency <= 0.0)
                 {
-                    WriteErrorMessage(
+                    errors.push_back(WriteErrorToString(
                         fullTableName, "efficiency must be > 0.0"
-                    );
+                    ));
                     return Result::Failure;
                 }
                 if (efficiency > 1.0)
                 {
-                    WriteErrorMessage(
+                    errors.push_back(WriteErrorToString(
                         fullTableName,
                         "efficiency must be <= 1.0; "
                         "if you need efficiencies (COPs) > 1, "
                         "consider using a mover"
-                    );
+                    ));
                     return Result::Failure;
                 }
                 auto const compIdAndWasteConn =
@@ -437,10 +448,10 @@ namespace erin
                     auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
                     if (!maybeRateUnit.has_value())
                     {
-                        WriteErrorMessage(
+                        errors.push_back(WriteErrorToString(
                             fullTableName,
                             "unhandled rate unit '" + localRateUnitStr + "'"
-                        );
+                        ));
                         return Result::Failure;
                     }
                     localRateUnit = maybeRateUnit.value();
@@ -463,6 +474,111 @@ namespace erin
                     );
                     size_t constEffIdx = s.TheModel.ComponentMap.Idx[id];
                     s.TheModel.ConstEffConvs[constEffIdx].MaxLossflow_W =
+                        static_cast<flow_t>(maxLossflow_W);
+                }
+            }
+            break;
+            case ComponentType::VariableEfficiencyConverterType:
+            {
+                PowerUnit localRateUnit = rateUnit;
+
+                std::vector<std::vector<double>> rawEfficiency =
+                    std::get<std::vector<std::vector<double>>>(
+                        input.at("efficiency_by_fraction_out").Value
+                    );
+                std::unordered_map<double, double> eff_by_outfrac{};
+                for (std::vector<double> const& fracEffPair : rawEfficiency)
+                {
+                    assert(fracEffPair.size() == 2);
+                    double frac = fracEffPair[0];
+                    double eff = fracEffPair[1];
+                    if (frac < 0.0 || frac > 1.0)
+                    {
+                        errors.push_back(WriteErrorToString(
+                            fullTableName,
+                            "Output power fraction must be "
+                            "in range [0.0, 1.0]; got "
+                                + std::to_string(frac)
+                        ));
+                        return Result::Failure;
+                    }
+                    if (eff <= 0.0 || eff > 1.0)
+                    {
+                        errors.push_back(WriteErrorToString(
+                            fullTableName,
+                            "Efficiency must be "
+                            "in range (0.0, 1.0]; got "
+                                + std::to_string(frac)
+                        ));
+                        return Result::Failure;
+                    }
+                    if (eff_by_outfrac.contains(frac))
+                    {
+                        warnings.push_back(WriteWarningToString(
+                            fullTableName,
+                            "Found duplicate value of output fraction: "
+                                + std::to_string(frac)
+                                + "; overwriting previous"
+                        ));
+                    }
+                    eff_by_outfrac[frac] = eff;
+                }
+                if (input.contains("rate_unit"))
+                {
+                    std::string localRateUnitStr =
+                        std::get<std::string>(input.at("rate_unit").Value);
+                    auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
+                    if (!maybeRateUnit.has_value())
+                    {
+                        errors.push_back(WriteErrorToString(
+                            fullTableName,
+                            "unhandled rate unit '" + localRateUnitStr + "'"
+                        ));
+                        return Result::Failure;
+                    }
+                    localRateUnit = maybeRateUnit.value();
+                }
+                double maxOutflow_W = Power_ToWatt(
+                    std::get<double>(input.at("max_outflow").Value),
+                    localRateUnit
+                );
+                std::vector<double> fracsForEff;
+                fracsForEff.reserve(eff_by_outfrac.size());
+                for (auto const& fracEffPair : eff_by_outfrac)
+                {
+                    fracsForEff.push_back(fracEffPair.first);
+                }
+                std::sort(fracsForEff.begin(), fracsForEff.end());
+                std::vector<double> outflowsForEff_W;
+                std::vector<double> efficiencyFracs;
+                outflowsForEff_W.reserve(eff_by_outfrac.size());
+                efficiencyFracs.reserve(eff_by_outfrac.size());
+                for (auto const& frac : fracsForEff)
+                {
+                    outflowsForEff_W.push_back(frac * maxOutflow_W);
+                    efficiencyFracs.push_back(eff_by_outfrac.at(frac));
+                }
+                auto const compIdAndWasteConn =
+                    Model_AddVariableEfficiencyConverter(
+                        s.TheModel,
+                        std::move(outflowsForEff_W),
+                        std::move(efficiencyFracs),
+                        inflowId,
+                        outflowId,
+                        lossflowId,
+                        tag
+                    );
+                id = compIdAndWasteConn.Id;
+                size_t varEffIdx = s.TheModel.ComponentMap.Idx[id];
+                s.TheModel.VarEffConvs[varEffIdx].MaxOutflow_W =
+                    static_cast<flow_t>(maxOutflow_W);
+                if (input.contains("max_lossflow"))
+                {
+                    double maxLossflow_W = Power_ToWatt(
+                        std::get<double>(input.at("max_lossflow").Value),
+                        localRateUnit
+                    );
+                    s.TheModel.VarEffConvs[varEffIdx].MaxLossflow_W =
                         static_cast<flow_t>(maxLossflow_W);
                 }
             }

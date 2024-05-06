@@ -4,6 +4,14 @@ ERIN is a district system energy-flow simulator.
 It accounts for toplogy (what is connected to what) and disruptions.
 Disruptions can be due to threat events and/or reliability-based failures.
 
+
+## Status: Beta
+
+ERIN is currently under active development.
+As such, we offer no guarantees for stability at this time.
+ERIN should currently be considered as beta software.
+
+
 ## Running Google Test
 
 ```

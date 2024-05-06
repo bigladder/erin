@@ -24,6 +24,7 @@ if platform.system() == 'Windows':
         sys.exit(1)
     TEST_EXE = BIN_DIR / 'erin_tests.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests.exe'
+    LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests.exe'
     CLI_EXE = BIN_DIR / 'erin.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
@@ -31,12 +32,15 @@ elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
     TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
+    LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests'
     CLI_EXE = BIN_DIR / 'erin'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test'
 else:
     print(f"Unhandled platform, '{platform.system()}'")
     sys.exit(1)
+BIN_DIR = BIN_DIR.resolve()
 print(f"BINARY DIR: {BIN_DIR}")
+ALL_TESTS = [TEST_EXE, RAND_TEST_EXE, LOOKUP_TABLE_TEST_EXE]
 
 
 if not TEST_EXE.exists():
@@ -44,7 +48,11 @@ if not TEST_EXE.exists():
     sys.exit(1)
 
 if not RAND_TEST_EXE.exists():
-    print("Cannot find test executable...")
+    print("Cannot find random test executable...")
+    sys.exit(1)
+
+if not LOOKUP_TABLE_TEST_EXE.exists():
+    print("Cannot find lookup-table test executable...")
     sys.exit(1)
 
 if not CLI_EXE.exists():
@@ -56,25 +64,22 @@ def run_tests():
     """
     Run the test suite
     """
-    result = subprocess.run([TEST_EXE], capture_output=True)
-    if result.returncode != 0:
-        print("Tests did not pass!")
-        print("stdout:\n")
-        print(result.stderr.decode())
-        print("stdout:\n")
-        print(result.stderr.decode())
-        sys.exit(1)
-    result = subprocess.run([RAND_TEST_EXE], capture_output=True)
-    if result.returncode != 0:
-        print("Random tests did not pass!")
-        print("stdout:\n")
-        print(result.stdout.decode())
-        print("stdout:\n")
-        print(result.stderr.decode())
-        sys.exit(1)
+    for test in ALL_TESTS:
+        result = subprocess.run([test], capture_output=True)
+        if result.returncode != 0:
+            stem = Path(test).stem
+            print(f"Test '{stem}' did not pass!")
+            print("stdout:\n")
+            print(result.stderr.decode())
+            print("stdout:\n")
+            print(result.stderr.decode())
+            sys.exit(1)
+        else:
+            print(".", end="", sep="", flush=True)
+    print("", flush=True)
 
 
-def smoke_test(example_name, dir=None, timeit=False):
+def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     """
     A smoke test just runs the example and confirms we get a 0 exit code
     """
@@ -94,6 +99,8 @@ def smoke_test(example_name, dir=None, timeit=False):
         print(result.stderr.decode())
         sys.exit(1)
     result.time_ns = time_ns
+    if print_it:
+        print(".", end="", sep="")
     return result
 
 
@@ -103,13 +110,16 @@ def run_bench(bench_file, example_name, dir=None):
     """
     git_sha = "<no-git-sha-detected>"
     git_sha_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True)
+    prog_info = subprocess.run([CLI_EXE, "version"], capture_output=True, text=True)
+    is_debug = "Build Type: Debug" in prog_info.stdout
     if git_sha_result.returncode == 0:
         git_sha = git_sha_result.stdout.decode("utf-8").strip()
     now = datetime.datetime.now().isoformat()
     result = smoke_test(example_name, dir)
     with open(bench_file, 'a') as f:
         time_s = result.time_ns / 1_000_000_000.0
-        print(f"[{now}] (commit: {git_sha}) {example_name}: {time_s} ns", file=f)
+        debug_flag = "true" if is_debug else "false"
+        print(f"{{\"time\": \"{now}\", \"commit\": \"{git_sha}\", \"debug\": {debug_flag}, \"name\": \"{example_name}\", \"time-s\": {time_s}}}", file=f)
 
 
 def read_csv(path):
@@ -231,6 +241,7 @@ def run_cli(example_name):
         print(("=" * 20) + " DETAILED DIFF")
         compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
         sys.exit(1)
+    print(".", end="", sep="", flush=True)
 
 
 def run_perf():
@@ -279,14 +290,18 @@ if __name__ == "__main__":
     run_cli("25")
     run_cli("26")
     run_cli("27")
-    smoke_test("28")
+    smoke_test("28", print_it=True)
     run_cli("29")
     run_cli("30")
     run_cli("31")
-    smoke_test("ft-illinois", dir="ft-illinois")
-    print("Passed all regression tests!")
+    run_cli("32")
+    smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
+    print("\nPassed all regression tests!")
     run_perf()
     print("All performance tests run")
-    benchfile = (Path(".")/".."/".."/"benchmark.txt").resolve()
+    bench_dir = (Path(".")/".."/".."/"benchmark").resolve()
+    if not bench_dir.exists():
+        bench_dir.mkdir(parents=True, exist_ok=True)
+    benchfile = (bench_dir / "benchmark.txt").resolve()
     run_bench(benchfile, "ft-illinois", dir="ft-illinois")
     print("Ran all benchmarks")

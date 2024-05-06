@@ -662,8 +662,7 @@ namespace erin
     int
     WritePackedLoads(
         const std::vector<Load>& loads,
-        std::string const& loadsFilename,
-        bool verbose
+        std::string const& loadsFilename
     )
     {
         std::ofstream out;
@@ -740,6 +739,7 @@ namespace erin
             out << "\n";
         };
         out.close();
+        return EXIT_SUCCESS;
     }
 
 } // namespace erin

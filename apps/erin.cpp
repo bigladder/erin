@@ -388,7 +388,7 @@ updateTomlInputCommand(
 }
 
 int
-packCommand(
+packLoadsCommand(
     std::string const& tomlFilename,
     std::string const& loadsFilename,
     bool verbose
@@ -424,7 +424,7 @@ packCommand(
     }
     std::vector<erin::Load> loads = std::move(maybeLoads.value());
 
-    return erin::WritePackedLoads(loads, loadsFilename, verbose);
+    return erin::WritePackedLoads(loads, loadsFilename);
 }
 
 int
@@ -532,24 +532,25 @@ main(int argc, char** argv)
 
     {
         std::string tomlFilename;
-        auto pack =
-            app.add_subcommand("pack", "Pack loads into a single csv file");
-        pack->add_option("toml_file", tomlFilename, "TOML filename")
+        auto packLoads = app.add_subcommand(
+            "pack-loads", "Pack loads into a single csv file"
+        );
+        packLoads->add_option("toml_file", tomlFilename, "TOML filename")
             ->required();
 
-        std::string loadsFilename = "loads.csv";
-        pack->add_option(
-            "-o,--out",
+        std::string loadsFilename = "packed-loads.csv";
+        packLoads->add_option(
+            "-o,--outcsv",
             loadsFilename,
-            "Packed-loads csv filename; default:loads.csv"
+            "Packed-loads csv filename; default:packed-loads.csv"
         );
 
         bool verbose = false;
-        pack->add_flag("-v,--verbose", verbose, "Verbose output");
+        packLoads->add_flag("-v,--verbose", verbose, "Verbose output");
 
-        pack->callback(
+        packLoads->callback(
             [&]()
-            { result = packCommand(tomlFilename, loadsFilename, verbose); }
+            { result = packLoadsCommand(tomlFilename, loadsFilename, verbose); }
         );
     }
     CLI11_PARSE(app, argc, argv);

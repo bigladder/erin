@@ -230,7 +230,7 @@ repair_dist = "generator_diesel_engine_mttr"
 
 # Loads
 [loads.combined_loads]
-multi_part_csv = "loads.csv"
+multi_part_csv = "packed-loads.csv"
 
 # Components
 [components.steam_header]

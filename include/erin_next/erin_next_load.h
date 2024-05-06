@@ -52,8 +52,7 @@ namespace erin
     int
     WritePackedLoads(
         const std::vector<Load>& loads,
-        std::string const& loadsFilename,
-        bool verbose
+        std::string const& loadsFilename
     );
 } // namespace erin
 

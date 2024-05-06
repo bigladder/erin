@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_csv.h"
 #include <iostream>
 #include <vector>
+#include <assert.h>
 #include <fmt/core.h>
 
 namespace erin

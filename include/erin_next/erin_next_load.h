@@ -13,44 +13,47 @@
 #include <optional>
 #include <ostream>
 
-namespace erin {
-    struct Load {
+namespace erin
+{
+    struct Load
+    {
         std::string Tag;
         std::vector<TimeAndAmount> TimeAndLoads;
     };
 
     std::optional<Load>
     ParseSingleLoad(
-            std::unordered_map<std::string, InputValue> const &table,
-            std::string const &tag
+        std::unordered_map<std::string, InputValue> const& table,
+        std::string const& tag
     );
 
     std::optional<Load>
     ParseSingleLoadExplicit(
-            std::unordered_map<std::string, InputValue> const &table,
-            std::string const &tag
+        std::unordered_map<std::string, InputValue> const& table,
+        std::string const& tag
     );
 
     std::optional<Load>
     ParseSingleLoadFileLoad(
-            std::unordered_map<std::string, InputValue> const &table,
-            std::string const &tag
+        std::unordered_map<std::string, InputValue> const& table,
+        std::string const& tag
     );
 
     std::optional<std::vector<Load>>
     ParseLoads(
-            toml::table const &table,
-            ValidationInfo const &explicitValidation,
-            ValidationInfo const &fileValidation
+        toml::table const& table,
+        ValidationInfo const& explicitValidation,
+        ValidationInfo const& fileValidation
     );
 
-    std::ostream &
-    operator<<(std::ostream &os, Load const &load);
+    std::ostream&
+    operator<<(std::ostream& os, Load const& load);
 
-    int WritePackedLoads(
-            const std::vector<Load> &loads,
-            std::string const &loadsFilename,
-            bool verbose
+    int
+    WritePackedLoads(
+        const std::vector<Load>& loads,
+        std::string const& loadsFilename,
+        bool verbose
     );
 } // namespace erin
 

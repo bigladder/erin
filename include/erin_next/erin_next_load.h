@@ -47,6 +47,12 @@ namespace erin
 
     std::ostream&
     operator<<(std::ostream& os, Load const& load);
+
+    int WritePackedLoads(
+            const std::vector<Load>& loads,
+            std::string const& loadsFilename,
+            bool verbose
+    );
 } // namespace erin
 
 #endif

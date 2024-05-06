@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_csv.h"
 #include <iostream>
 #include <vector>
+#include <fmt/core.h>
 
 namespace erin
 {
@@ -76,4 +77,39 @@ namespace erin
         }
         return;
     }
+
+    // TODO: fix, this is slow! Almost 25% of benchmark occurs here...
+    std::string
+    DoubleToString(double value, unsigned int precision)
+    {
+        assert(precision <= 6);
+        // NOTE: a small epsilon is added to the value to fix a bug where
+        // for example, 1.505 at a fixed precision of 2 does not round to 1.51
+        constexpr double eps = 1e-8;
+        std::string proposed =
+                fmt::format("{:.{}f}", value + eps, static_cast<int>(precision));
+        int end_idx = static_cast<int>(proposed.size());
+        bool has_decimal = false;
+        for (char const& ch : proposed)
+        {
+            if (ch == '.')
+            {
+                has_decimal = true;
+                break;
+            }
+        }
+        if (has_decimal)
+        {
+            while (proposed[end_idx - 1] == '0' && end_idx > 0)
+            {
+                --end_idx;
+            }
+        }
+        if (proposed[end_idx - 1] == '.')
+        {
+            --end_idx;
+        }
+        return proposed.substr(0, end_idx);
+    }
+
 } // namespace erin

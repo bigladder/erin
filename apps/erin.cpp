@@ -424,69 +424,7 @@ packCommand(
     }
     std::vector<erin::Load> loads = std::move(maybeLoads.value());
 
-    std::ofstream out;
-    out.open(loadsFilename);
-    if (!out.good())
-    {
-        std::cout << "Could not open '" << loadsFilename
-                  << "' for writing." << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    // write header row
-    bool first = true;
-    for (auto it = loads.cbegin(); it != loads.cend(); ++it) {
-        std::string tag = it->Tag;
-        if (!first) {
-            out << ",";
-        }
-        first= false;
-        out << it->Tag << "," << it->TimeAndLoads.size();
-    }
-    out << "\n";
-
-    // write units row
-    first = true;
-    for (auto it = loads.cbegin(); it != loads.cend(); ++it) {
-        std::string tag = it->Tag;
-        if (!first) {
-            out << ",";
-        }
-        first= false;
-        out << "hours" << "," << "kW";
-    }
-    out << "\n";
-
-    std::size_t maxRows = 0;
-    for (auto it = loads.cbegin(); it != loads.cend(); ++it) {
-        auto nRows = it->TimeAndLoads.size();
-        if (nRows > maxRows) {
-            maxRows = nRows;
-        }
-    }
-
-    // write data
-   for (std::size_t iRow = 0; iRow < maxRows; ++iRow) {
-        first = true;
-        for (auto it = loads.cbegin(); it != loads.cend(); ++it) {
-            auto &table = it->TimeAndLoads;
-            if (!first) {
-                out << ",";
-            }
-            if (iRow < table.size()) {
-                out << erin::DoubleToString(table[iRow].Time_s / 3600., 0) << "," << erin::DoubleToString(table[iRow].Amount_W / 1000., 3);
-            }
-            else
-            {
-                out << ",";
-            }
-            first = false;
-        }
-       out << "\n";
-    };
-    out.close();
-
-    return EXIT_SUCCESS;
+    return erin::WritePackedLoads(loads, loadsFilename, verbose);
 }
 
 int

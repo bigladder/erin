@@ -303,7 +303,7 @@ namespace erin
             TimeAndAmount ta{};
             ta.Time_s = Time_ToSeconds(std::stod(pair[0]), timeUnit);
             ta.Amount_W =
-                static_cast<flow_t>(Power_ToWatt(std::stod(pair[1]), rateUnit));
+                static_cast<flow_t>(std::round(Power_ToWatt(std::stod(pair[1]), rateUnit)));
             trps.push_back(ta);
         }
         inputDataFile.close();
@@ -571,7 +571,6 @@ namespace erin
                         }
                     }
                     if (key == "multi_part_csv") {
-                        std::cout << "multi-part csv: " << loadsEntryName << std::endl;
                         std::vector<std::optional<Load>> maybeLoads = ParseMultiLoad(tag, table2);
                         for (auto &maybeLoad: maybeLoads) {
                             if (maybeLoad.has_value()) {

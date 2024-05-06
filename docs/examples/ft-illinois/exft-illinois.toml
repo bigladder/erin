@@ -229,7 +229,7 @@ failure_dist = "generator_diesel_engine_mtbf_6"
 repair_dist = "generator_diesel_engine_mttr"
 
 # Loads
-[loads.combined_loads]
+[loads.packed_loads]
 multi_part_csv = "packed-loads.csv"
 
 # Components

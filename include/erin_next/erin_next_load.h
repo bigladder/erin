@@ -22,12 +22,6 @@ namespace erin
     };
 
     std::optional<Load>
-    ParseSingleLoad(
-        std::unordered_map<std::string, InputValue> const& table,
-        std::string const& tag
-    );
-
-    std::optional<Load>
     ParseSingleLoadExplicit(
         std::unordered_map<std::string, InputValue> const& table,
         std::string const& tag

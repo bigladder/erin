@@ -229,9 +229,6 @@ failure_dist = "generator_diesel_engine_mtbf_6"
 repair_dist = "generator_diesel_engine_mttr"
 
 # Loads
-[loads.combined_loads]
-multi_part_csv = "loads.csv"
-
 [loads.bldg_10_load__steam]
 csv_file = "bldg_10_load__steam.csv"
 
@@ -780,6 +777,9 @@ csv_file = "ev_charge_load__blue_sky__electricity-113.csv"
 
 [loads.ev_charger_1__black_sky__electricity]
 csv_file = "ev_charge_load__black_sky__electricity-113.csv"
+
+[loads.combined_loads]
+multi_part_csv = "loads.csv"
 
 # Components
 [components.steam_header]

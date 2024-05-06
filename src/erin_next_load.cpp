@@ -411,20 +411,12 @@ namespace erin
            loads.push_back(load);
         }
         std::size_t iRow = 0;
-        while (inputDataFile.is_open() && inputDataFile.good())
+        do
         {
-            auto sRow = read_row(inputDataFile);
-            if (sRow.size() != 2 * loadEntries.size())
+            sRow = read_row(inputDataFile);
+            if (sRow.size() < 2 * loadEntries.size())
             {
-                WriteErrorMessage(
-                        tableFullName,
-                        "multi-csv file '" + csvFileName
-                        + "'"
-                          " each entry must have 2 columns; "
-                          "found: "
-                        + std::to_string(sRow.size())
-                );
-                return {};
+                break;
             }
             std::size_t iCol = 0;
             std::size_t iLoad = 0;
@@ -441,7 +433,7 @@ namespace erin
                 ++iLoad;
             }
             ++iRow;
-        }
+        } while (!inputDataFile.eof());
         inputDataFile.close();
 
         return loads;
@@ -560,7 +552,19 @@ namespace erin
                                                                         fileValidation);
 
                         if (maybeLoad.has_value()) {
-                            loads.push_back(std::move(maybeLoad.value()));
+                            bool loadGood = true;
+                            for (auto &load: loads)
+                            {
+                                if (load.Tag == maybeLoad->Tag)
+                                {
+                                    WriteErrorMessage(loadsEntryName, "load " + maybeLoad->Tag + " already exists");
+                                    loadGood = false;
+                                    break;
+                                }
+                            }
+                            if (loadGood) {
+                                loads.push_back(std::move(maybeLoad.value()));
+                            }
                         } else {
                             WriteErrorMessage(loadsEntryName, "load did not have value");
                             return {};
@@ -571,7 +575,19 @@ namespace erin
                         std::vector<std::optional<Load>> maybeLoads = ParseMultiLoad(tag, table2);
                         for (auto &maybeLoad: maybeLoads) {
                             if (maybeLoad.has_value()) {
-                                loads.push_back(std::move(maybeLoad.value()));
+                                bool loadGood = true;
+                                for (auto &load: loads)
+                                {
+                                    if (load.Tag == maybeLoad->Tag)
+                                    {
+                                        WriteErrorMessage(loadsEntryName, "load " + maybeLoad->Tag + " already exists");
+                                        loadGood = false;
+                                        break;
+                                    }
+                                }
+                                if (loadGood) {
+                                    loads.push_back(std::move(maybeLoad.value()));
+                                }
                             } else {
                                 WriteErrorMessage(loadsEntryName, "load did not have value");
                                 return {};

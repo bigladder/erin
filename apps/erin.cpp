@@ -36,6 +36,12 @@ int
 limitsCommand()
 {
     std::cout << "Limits: " << std::endl;
+    std::cout << "- value of max_flow_W: " << erin::max_flow_W << std::endl;
+    std::cout << "- max_flow_W ==     9223372036854776: "
+              << (erin::max_flow_W == 9'223'372'036'854'776ULL) << std::endl;
+    std::cout << "- max_flow_W == 18446744073709551615: "
+              << (erin::max_flow_W == 18'446'744'073'709'551'615ULL)
+              << std::endl;
     std::cout << "- sizeof(uint64_t): " << (sizeof(uint64_t)) << std::endl;
     std::cout << "- std::numeric_limits<uint64_t>::max(): "
               << std::numeric_limits<uint64_t>::max() << std::endl;

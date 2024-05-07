@@ -396,6 +396,29 @@ namespace erin
         return maybeLoads;
     }
 
+    bool MaybePushLoad(std::optional<Load> maybeLoad, const std::string& tableName, std::vector<Load>& loads)
+    {
+        bool loadGood = true;
+        for (auto& load : loads)
+        {
+            if (load.Tag == maybeLoad->Tag)
+            {
+                WriteErrorMessage(
+                        tableName,
+                        "load " + maybeLoad->Tag
+                        + " already exists"
+                );
+                loadGood = false;
+                break;
+            }
+        }
+        if (loadGood)
+        {
+            loads.push_back(std::move(maybeLoad.value()));
+        }
+        return loadGood;
+    }
+
     std::optional<std::vector<Load>>
     ParseLoads(
         toml::table const& table,
@@ -435,25 +458,7 @@ namespace erin
                     }
                     if (maybeLoad.has_value())
                     {
-                        bool loadGood = true;
-                        for (auto& load : loads)
-                        {
-                            if (load.Tag == maybeLoad->Tag)
-                            {
-                                WriteErrorMessage(
-                                        tableName,
-                                        "load " + maybeLoad->Tag
-                                        + " already exists"
-                                );
-                                loadGood = false;
-                                break;
-                            }
-                        }
-                        if (loadGood)
-                        {
-                            loads.push_back(std::move(maybeLoad.value())
-                            );
-                        }
+                        MaybePushLoad(maybeLoad, tableName, loads);
                     }
                 }
                 else
@@ -475,25 +480,7 @@ namespace erin
 
                             if (maybeLoad.has_value())
                             {
-                                bool loadGood = true;
-                                for (auto& load : loads)
-                                {
-                                    if (load.Tag == maybeLoad->Tag)
-                                    {
-                                        WriteErrorMessage(
-                                            tableName,
-                                            "load " + maybeLoad->Tag
-                                                + " already exists"
-                                        );
-                                        loadGood = false;
-                                        break;
-                                    }
-                                }
-                                if (loadGood)
-                                {
-                                    loads.push_back(std::move(maybeLoad.value())
-                                    );
-                                }
+                                MaybePushLoad(maybeLoad, tableName, loads);
                             }
                             else
                             {
@@ -511,26 +498,7 @@ namespace erin
                             {
                                 if (maybeLoad.has_value())
                                 {
-                                    bool loadGood = true;
-                                    for (auto& load : loads)
-                                    {
-                                        if (load.Tag == maybeLoad->Tag)
-                                        {
-                                            WriteErrorMessage(
-                                                tableName,
-                                                "load " + maybeLoad->Tag
-                                                    + " already exists"
-                                            );
-                                            loadGood = false;
-                                            break;
-                                        }
-                                    }
-                                    if (loadGood)
-                                    {
-                                        loads.push_back(
-                                            std::move(maybeLoad.value())
-                                        );
-                                    }
+                                    MaybePushLoad(maybeLoad, tableName, loads);
                                 }
                                 else
                                 {

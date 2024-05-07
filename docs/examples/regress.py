@@ -1,4 +1,5 @@
 import sys
+import os
 import subprocess
 from pathlib import Path
 import platform
@@ -83,12 +84,18 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     """
     A smoke test just runs the example and confirms we get a 0 exit code
     """
-    cwd = str(Path.cwd().resolve()) if dir is None else dir
-    Path("out.csv").unlink(missing_ok=True)
-    Path("stats.csv").unlink(missing_ok=True)
+    cwd = str(Path.cwd().resolve())
+    test_dir = cwd if dir is None else os.path.join(cwd, dir)
+    out_filename = os.path.join(test_dir, 'out.csv');
+    stats_filename = os.path.join(test_dir, 'stats.csv');
+
+    Path(out_filename).unlink(missing_ok=True)
+    Path(stats_filename).unlink(missing_ok=True)
+    
     toml_input = f"ex{example_name}.toml"
+    in_filename = os.path.join(test_dir, toml_input);
     start_time = time.perf_counter_ns()
-    result = subprocess.run([CLI_EXE, "run", toml_input], capture_output=True, cwd=cwd)
+    result = subprocess.run([CLI_EXE, "run", f"{in_filename}", "-e", f"{out_filename}", "-s", f"{stats_filename}"], capture_output=True, cwd=test_dir)
     end_time = time.perf_counter_ns()
     time_ns = end_time - start_time
     if result.returncode != 0:
@@ -244,6 +251,47 @@ def run_cli(example_name):
     print(".", end="", sep="", flush=True)
 
 
+def run_cli_test(example_name, dir=None, timeit=False, print_it=False):
+    """
+    Run the CLI for example name and check output diffs
+    - example_name: string, "sim01" to test sim01.toml
+    """
+
+    _ = smoke_test(example_name, dir, timeit, print_it)
+
+    cwd = str(Path.cwd().resolve())
+    test_dir = cwd if dir is None else os.path.join(cwd, dir)
+    
+    ref_out = os.path.join(test_dir, f'ex{example_name}-out.csv');
+    ref_stats = os.path.join(test_dir, f'ex{example_name}-stats.csv');
+    out = os.path.join(test_dir, 'out.csv');
+    stats = os.path.join(test_dir, 'stats.csv');
+    result = subprocess.run(
+        [DIFF_PROG, out, ref_out],
+        capture_output=True)
+    if result.returncode != 0:
+        print(f"diff did not compare clean for out.csv for {example_name}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
+        print(("=" * 20) + " DETAILED DIFF")
+        compare_csv(ref_out, out)
+        sys.exit(1)
+    result = subprocess.run(
+        ['diff', stats, ref_stats],
+        capture_output=True)
+    if result.returncode != 0:
+        print(f'diff did not compare clean for stats.csv for {example_name}')
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
+        print(("=" * 20) + " DETAILED DIFF")
+        compare_csv(ref_stats, stats)
+        sys.exit(1)
+    print(".", end="", sep="", flush=True)
+
 def run_perf():
     """
     Run performance tests and report timing
@@ -295,7 +343,8 @@ if __name__ == "__main__":
     run_cli("30")
     run_cli("31")
     run_cli("32")
-    smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
+    #smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
+    run_cli_test("ft-illinois_packed", dir="ft-illinois_packed", print_it=True)
     print("\nPassed all regression tests!")
     run_perf()
     print("All performance tests run")

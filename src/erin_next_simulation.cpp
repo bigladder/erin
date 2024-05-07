@@ -2297,6 +2297,7 @@ namespace erin
             stats << "," << os.OccurrenceNumber;
             stats << "," << (os.Duration_s / seconds_per_hour);
             stats << "," << DoubleToString(os.Inflow_kJ + os.InFromEnv_kJ, 0);
+            // TODO(mok): break out InFromEnv from Inflow and list separately
             stats << "," << DoubleToString(os.OutflowAchieved_kJ, 0);
             stats << "," << DoubleToString(stored_kJ, 0);
             stats << "," << DoubleToString(os.Wasteflow_kJ, 0);

@@ -1,0 +1,70 @@
+[meta]
+description = """
+  Demonstrate table-based efficiency for mover
+"""
+
+[simulation_info]
+input_format_version = "0.2"
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "h"
+max_time = 10.0
+
+[loads.generic_load]
+rate_unit = "kW"
+time_unit = "h"
+time_rate_pairs = [
+  [0, 10.0],
+  [1, 20.0],
+  [2, 30.0],
+  [3, 40.0],
+  [4, 50.0],
+  [5, 100.0],
+  [6, 80.0],
+  [7, 60.0],
+  [8, 40.0],
+  [9, 20.0],
+  [10, 0.0],
+]
+
+[components.electric_utility]
+type = "source"
+rate_unit = "kW"
+outflow = "electricity"
+
+[components.chiller]
+type = "variable_efficiency_mover"
+inflow = "electricity"
+outflow = "chilled_water"
+rate_unit = "kW"
+max_outflow = 100.0
+cop_by_fraction_out = [
+  [0.0, 2.7],
+  [0.2, 3.2],
+  [0.5, 3.7],
+  [0.8, 4.2],
+  [1.0, 3.8],
+]
+
+[components.cooling_load]
+type = "load"
+inflow = "chilled_water"
+loads_by_scenario.blue_sky = "generic_load"
+
+[network]
+connections = [
+  ["electric_utility:OUT(0)", "chiller:IN(0)", "electricity"],
+  ["chiller:OUT(0)", "cooling_load:IN(0)", "chilled_water"],
+]
+
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "h"
+
+[scenarios.blue_sky]
+duration = 10
+time_unit = "h"
+occurrence_distribution = "immediately"
+max_occurrences = 1
+

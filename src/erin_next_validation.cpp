@@ -29,7 +29,7 @@ namespace erin
             break;
             case InputSection::Loads_02FileBased:
             {
-                return "loads (file-based)";
+                return "loads (file_based)";
             }
             break;
             case InputSection::Components_ConstantLoad:
@@ -59,7 +59,7 @@ namespace erin
             break;
             case InputSection::Components_VariableEffConverter:
             {
-                return "variable_efficiency_converter";
+                return "components (variable_efficiency_converter)";
             }
             break;
             case InputSection::Components_Mux:
@@ -75,6 +75,16 @@ namespace erin
             case InputSection::Components_PassThrough:
             {
                 return "components (pass_through)";
+            }
+            break;
+            case InputSection::Components_Mover:
+            {
+                return "components (mover)";
+            }
+            break;
+            case InputSection::Components_VariableEffMover:
+            {
+                return "components (variable_efficiency_mover)";
             }
             break;
             case InputSection::Dist_Fixed:
@@ -137,7 +147,7 @@ namespace erin
         {
             return InputSection::Loads_01Explicit;
         }
-        if (tag == "loads (file-based)")
+        if (tag == "loads (file_based)")
         {
             return InputSection::Loads_02FileBased;
         }
@@ -145,7 +155,7 @@ namespace erin
         {
             return InputSection::Components_Source;
         }
-        if (tag == "components (constant-load)")
+        if (tag == "components (constant_load)")
         {
             return InputSection::Components_ConstantLoad;
         }
@@ -153,25 +163,33 @@ namespace erin
         {
             return InputSection::Components_Load;
         }
-        if (tag == "converter")
+        if (tag == "components (converter)")
         {
             return InputSection::Components_ConstEffConverter;
         }
-        if (tag == "variable_efficiency_converter")
+        if (tag == "components (variable_efficiency_converter)")
         {
             return InputSection::Components_VariableEffConverter;
         }
-        if (tag == "mux" || tag == "muxer")
+        if (tag == "components (mux)")
         {
             return InputSection::Components_Mux;
         }
-        if (tag == "store")
+        if (tag == "components (store)")
         {
             return InputSection::Components_Store;
         }
-        if (tag == "pass_through")
+        if (tag == "components (pass_through)")
         {
             return InputSection::Components_PassThrough;
+        }
+        if (tag == "components (mover)")
+        {
+            return InputSection::Components_Mover;
+        }
+        if (tag == "components (variable_efficiency_mover)")
+        {
+            return InputSection::Components_VariableEffMover;
         }
         if (tag == "dist (fixed)")
         {
@@ -243,6 +261,7 @@ namespace erin
             InputSection::Components_Mux,
             InputSection::Components_Store,
             InputSection::Components_PassThrough,
+            InputSection::Components_VariableEffMover,
             InputSection::Components_Mover,
             InputSection::Dist_Fixed,
             InputSection::Dist_Weibull,
@@ -263,6 +282,7 @@ namespace erin
             InputSection::Components_Mux,
             InputSection::Components_Store,
             InputSection::Components_PassThrough,
+            InputSection::Components_VariableEffMover,
             InputSection::Components_Mover,
         };
         std::unordered_set<InputSection> nonLoadCompSections{
@@ -273,6 +293,7 @@ namespace erin
             InputSection::Components_Mux,
             InputSection::Components_Store,
             InputSection::Components_PassThrough,
+            InputSection::Components_VariableEffMover,
             InputSection::Components_Mover,
         };
         std::unordered_set<std::string> compTypeEnums{
@@ -281,6 +302,7 @@ namespace erin
             "variable_efficiency_converter",
             "load",
             "mover",
+            "variable_efficiency_mover",
             "muxer",
             "mux",
             "pass_through",
@@ -542,6 +564,7 @@ namespace erin
                         InputSection::Components_ConstEffConverter,
                         InputSection::Components_VariableEffConverter,
                         InputSection::Components_Mover,
+                        InputSection::Components_VariableEffMover,
                     },
             },
             FieldInfo{
@@ -573,6 +596,7 @@ namespace erin
                         InputSection::Components_ConstEffConverter,
                         InputSection::Components_VariableEffConverter,
                         InputSection::Components_Mover,
+                        InputSection::Components_VariableEffMover,
                     },
             },
             FieldInfo{
@@ -588,6 +612,7 @@ namespace erin
                         InputSection::Components_Source,
                         InputSection::Components_UncontrolledSource,
                         InputSection::Components_PassThrough,
+                        InputSection::Components_Mover,
                     },
             },
             FieldInfo{
@@ -605,6 +630,8 @@ namespace erin
                         InputSection::Components_Store,
                         InputSection::Components_ConstEffConverter,
                         InputSection::Components_VariableEffConverter,
+                        InputSection::Components_Mover,
+                        InputSection::Components_VariableEffMover,
                     },
             },
             FieldInfo{
@@ -746,6 +773,7 @@ namespace erin
                 .Sections =
                     {
                         InputSection::Components_VariableEffConverter,
+                        InputSection::Components_VariableEffMover,
                     },
             },
             FieldInfo{
@@ -880,6 +908,19 @@ namespace erin
                 .Sections =
                     {
                         InputSection::Components_Mover,
+                    },
+            },
+            FieldInfo{
+                .FieldName = "cop_by_fraction_out",
+                .Type = InputType::ArrayOfTuple2OfNumber,
+                .IsRequired = true,
+                .InformIfMissing = false,
+                .Default = "",
+                .EnumValues = {},
+                .Aliases = {},
+                .Sections =
+                    {
+                        InputSection::Components_VariableEffMover,
                     },
             },
             // DIST: Common
@@ -1124,6 +1165,13 @@ namespace erin
                     case InputSection::Components_Mover:
                     {
                         UpdateValidationInfoByField(v.Comp.Mover, f);
+                    }
+                    break;
+                    case InputSection::Components_VariableEffMover:
+                    {
+                        UpdateValidationInfoByField(
+                            v.Comp.VariableEfficiencyMover, f
+                        );
                     }
                     break;
                     case InputSection::Dist_Fixed:

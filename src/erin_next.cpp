@@ -1472,6 +1472,46 @@ namespace erin
     }
 
     void
+    UpdateEnvironmentFlowForAllMovers(
+        SimulationState& ss,
+        size_t inflowConn,
+        size_t envConn,
+        size_t outflowConn,
+        size_t wasteflowConn,
+        flow_t maxOutflow_W
+    )
+    {
+        flow_t inflowReq = ss.Flows[inflowConn].Requested_W;
+        flow_t inflowAvail = ss.Flows[inflowConn].Available_W;
+        flow_t outflowReq = ss.Flows[outflowConn].Requested_W;
+        flow_t outflowAvail = ss.Flows[outflowConn].Available_W > maxOutflow_W
+            ? maxOutflow_W
+            : ss.Flows[outflowConn].Available_W;
+        flow_t inflow = FinalizeFlowValue(inflowReq, inflowAvail);
+        flow_t outflow = FinalizeFlowValue(outflowReq, outflowAvail);
+        if (inflow >= outflow)
+        {
+            ss.Flows[envConn].Requested_W = 0;
+            ss.Flows[envConn].Available_W = 0;
+            ss.Flows[envConn].Actual_W = 0;
+            flow_t waste = inflow - outflow;
+            ss.Flows[wasteflowConn].Requested_W = waste;
+            ss.Flows[wasteflowConn].Available_W = waste;
+            ss.Flows[wasteflowConn].Actual_W = waste;
+        }
+        else
+        {
+            flow_t supply = outflow - inflow;
+            ss.Flows[envConn].Requested_W = supply;
+            ss.Flows[envConn].Available_W = supply;
+            ss.Flows[envConn].Actual_W = supply;
+            ss.Flows[wasteflowConn].Requested_W = 0;
+            ss.Flows[wasteflowConn].Available_W = 0;
+            ss.Flows[wasteflowConn].Actual_W = 0;
+        }
+    }
+
+    void
     UpdateEnvironmentFlowForMover(
         Model const& m,
         SimulationState& ss,
@@ -1479,35 +1519,32 @@ namespace erin
     )
     {
         Mover const& mov = m.Movers[moverIdx];
-        flow_t inflowReq = ss.Flows[mov.InflowConn].Requested_W;
-        flow_t inflowAvail = ss.Flows[mov.InflowConn].Available_W;
-        flow_t outflowReq = ss.Flows[mov.OutflowConn].Requested_W;
-        flow_t outflowAvail =
-            ss.Flows[mov.OutflowConn].Available_W > mov.MaxOutflow_W
-            ? mov.MaxOutflow_W
-            : ss.Flows[mov.OutflowConn].Available_W;
-        flow_t inflow = FinalizeFlowValue(inflowReq, inflowAvail);
-        flow_t outflow = FinalizeFlowValue(outflowReq, outflowAvail);
-        if (inflow >= outflow)
-        {
-            ss.Flows[mov.InFromEnvConn].Requested_W = 0;
-            ss.Flows[mov.InFromEnvConn].Available_W = 0;
-            ss.Flows[mov.InFromEnvConn].Actual_W = 0;
-            flow_t waste = inflow - outflow;
-            ss.Flows[mov.WasteflowConn].Requested_W = waste;
-            ss.Flows[mov.WasteflowConn].Available_W = waste;
-            ss.Flows[mov.WasteflowConn].Actual_W = waste;
-        }
-        else
-        {
-            flow_t supply = outflow - inflow;
-            ss.Flows[mov.InFromEnvConn].Requested_W = supply;
-            ss.Flows[mov.InFromEnvConn].Available_W = supply;
-            ss.Flows[mov.InFromEnvConn].Actual_W = supply;
-            ss.Flows[mov.WasteflowConn].Requested_W = 0;
-            ss.Flows[mov.WasteflowConn].Available_W = 0;
-            ss.Flows[mov.WasteflowConn].Actual_W = 0;
-        }
+        UpdateEnvironmentFlowForAllMovers(
+            ss,
+            mov.InflowConn,
+            mov.InFromEnvConn,
+            mov.OutflowConn,
+            mov.WasteflowConn,
+            mov.MaxOutflow_W
+        );
+    }
+
+    void
+    UpdateEnvironmentFlowForVariableEfficiencyMover(
+        Model const& m,
+        SimulationState& ss,
+        size_t moverIdx
+    )
+    {
+        VariableEfficiencyMover const& mov = m.VarEffMovers[moverIdx];
+        UpdateEnvironmentFlowForAllMovers(
+            ss,
+            mov.InflowConn,
+            mov.InFromEnvConn,
+            mov.OutflowConn,
+            mov.WasteflowConn,
+            mov.MaxOutflow_W
+        );
     }
 
     void
@@ -1532,6 +1569,36 @@ namespace erin
         }
         ss.Flows[inflowConn].Requested_W = inflowRequest;
         UpdateEnvironmentFlowForMover(m, ss, moverIdx);
+    }
+
+    void
+    RunVariableEfficiencyMoverBackward(
+        Model const& m,
+        SimulationState& ss,
+        size_t outflowConnIdx,
+        size_t moverIdx
+    )
+    {
+        VariableEfficiencyMover const& mov = m.VarEffMovers[moverIdx];
+        size_t inflowConn = mov.InflowConn;
+        flow_t outflowRequest_W =
+            ss.Flows[outflowConnIdx].Requested_W > mov.MaxOutflow_W
+            ? mov.MaxOutflow_W
+            : ss.Flows[outflowConnIdx].Requested_W;
+        double cop = LookupTable_LookupInterp(
+            mov.OutflowsForCop_W, mov.COPs, outflowRequest_W
+        );
+        // outflow = COP * inflow
+        // inflow = outflow / COP
+        flow_t inflowRequest_W = static_cast<flow_t>(
+            std::ceil(static_cast<double>(outflowRequest_W) / cop)
+        );
+        if (inflowRequest_W != ss.Flows[inflowConn].Requested_W)
+        {
+            ss.ActiveConnectionsBack.insert(inflowConn);
+        }
+        ss.Flows[inflowConn].Requested_W = inflowRequest_W;
+        UpdateEnvironmentFlowForVariableEfficiencyMover(m, ss, moverIdx);
     }
 
     void
@@ -1865,6 +1932,37 @@ namespace erin
                         }
                     }
                     break;
+                    case ComponentType::VariableEfficiencyMoverType:
+                    {
+                        switch (model.Connections[connIdx].FromPort)
+                        {
+                            case 0:
+                            {
+                                RunVariableEfficiencyMoverBackward(
+                                    model, ss, connIdx, compIdx
+                                );
+                            }
+                            break;
+                            case 1:
+                            {
+                                UpdateEnvironmentFlowForVariableEfficiencyMover(
+                                    model, ss, compIdx
+                                );
+                            }
+                            break;
+                            default:
+                            {
+                                WriteErrorMessage(
+                                    "<runtime>",
+                                    "bad port connection for variable "
+                                    "efficiency mover"
+                                );
+                                std::exit(1);
+                            }
+                            break;
+                        }
+                    }
+                    break;
                     default:
                     {
                         std::cout
@@ -1939,6 +2037,7 @@ namespace erin
         size_t moverIdx
     )
     {
+        assert(moverIdx < model.Movers.size());
         Mover const& mov = model.Movers[moverIdx];
         flow_t inflowAvailable = ss.Flows[outConnIdx].Available_W;
         size_t outflowConn = mov.OutflowConn;
@@ -1954,6 +2053,37 @@ namespace erin
         }
         ss.Flows[outflowConn].Available_W = outflowAvailable;
         UpdateEnvironmentFlowForMover(model, ss, moverIdx);
+    }
+
+    void
+    RunVariableEfficiencyMoverForward(
+        Model const& model,
+        SimulationState& ss,
+        size_t outConnIdx,
+        size_t moverIdx
+    )
+    {
+        assert(moverIdx < model.VarEffMovers.size());
+        VariableEfficiencyMover const& mov = model.VarEffMovers[moverIdx];
+        flow_t inflowAvailable_W = ss.Flows[outConnIdx].Available_W;
+        size_t outflowConn = mov.OutflowConn;
+        double cop = LookupTable_LookupInterp(
+            mov.InflowsForCop_W, mov.COPs, inflowAvailable_W
+        );
+        // outflow = cop * inflow
+        flow_t outflowAvailable_W = static_cast<flow_t>(
+            std::floor(cop * static_cast<double>(inflowAvailable_W))
+        );
+        if (outflowAvailable_W > mov.MaxOutflow_W)
+        {
+            outflowAvailable_W = mov.MaxOutflow_W;
+        }
+        if (outflowAvailable_W != ss.Flows[outflowConn].Available_W)
+        {
+            ss.ActiveConnectionsFront.insert(outflowConn);
+        }
+        ss.Flows[outflowConn].Available_W = outflowAvailable_W;
+        UpdateEnvironmentFlowForVariableEfficiencyMover(model, ss, moverIdx);
     }
 
     void
@@ -2123,6 +2253,13 @@ namespace erin
                     case ComponentType::MoverType:
                     {
                         RunMoverForward(model, ss, connIdx, compIdx);
+                    }
+                    break;
+                    case ComponentType::VariableEfficiencyMoverType:
+                    {
+                        RunVariableEfficiencyMoverForward(
+                            model, ss, connIdx, compIdx
+                        );
                     }
                     break;
                     case ComponentType::MuxType:
@@ -2601,6 +2738,11 @@ namespace erin
                 result = "Mover";
             }
             break;
+            case ComponentType::VariableEfficiencyMoverType:
+            {
+                result = "VariableEfficiencyMoverType";
+            }
+            break;
             case ComponentType::EnvironmentSourceType:
             {
                 result = "EnvironmentSource";
@@ -2666,6 +2808,11 @@ namespace erin
         if (tag == "Mover" || tag == "mover")
         {
             return ComponentType::MoverType;
+        }
+        if (tag == "VariableEfficiencyMover"
+            || tag == "variable_efficiency_mover")
+        {
+            return ComponentType::VariableEfficiencyMoverType;
         }
         return {};
     }
@@ -3000,6 +3147,73 @@ namespace erin
         };
     }
 
+    ComponentIdAndWasteAndEnvironmentConnection
+    Model_AddVariableEfficiencyMover(
+        Model& m,
+        std::vector<double>&& outflowsForCop_W,
+        std::vector<double>&& copByOutflow,
+        size_t inflowTypeId,
+        size_t outflowTypeId,
+        std::string const& tag
+    )
+    {
+        std::vector<double> inflowsForCop_W;
+        inflowsForCop_W.reserve(outflowsForCop_W.size());
+        for (size_t i = 0; i < outflowsForCop_W.size(); ++i)
+        {
+            // NOTE: inflow x COP = outflow;
+            // therefore, inflow = outflow / COP;
+            inflowsForCop_W.push_back(outflowsForCop_W[i] / copByOutflow[i]);
+        }
+        VariableEfficiencyMover mov = {
+            .InflowConn = 0,
+            .OutflowConn = 0,
+            .InFromEnvConn = 0,
+            .WasteflowConn = 0,
+            .MaxOutflow_W = max_flow_W,
+            .OutflowsForCop_W = std::move(outflowsForCop_W),
+            .InflowsForCop_W = std::move(inflowsForCop_W),
+            .COPs = std::move(copByOutflow),
+        };
+        m.VarEffMovers.push_back(std::move(mov));
+        size_t wasteId = Component_AddComponentReturningId(
+            m.ComponentMap,
+            ComponentType::WasteSinkType,
+            0,
+            std::vector<size_t>{wasteflowId},
+            std::vector<size_t>{},
+            "",
+            0.0
+        );
+        size_t envId = Component_AddComponentReturningId(
+            m.ComponentMap,
+            ComponentType::EnvironmentSourceType,
+            0,
+            std::vector<size_t>{},
+            std::vector<size_t>{wasteflowId},
+            "",
+            0.0
+        );
+        size_t thisId = Component_AddComponentReturningId(
+            m.ComponentMap,
+            ComponentType::VariableEfficiencyMoverType,
+            0,
+            std::vector<size_t>{inflowTypeId, wasteflowId},
+            std::vector<size_t>{outflowTypeId, wasteflowId},
+            tag,
+            0.0
+        );
+        Connection wconn =
+            Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflowId);
+        Connection econn =
+            Model_AddConnection(m, envId, 0, thisId, 1, wasteflowId);
+        return {
+            .Id = thisId,
+            .WasteConn = wconn,
+            .EnvConn = econn,
+        };
+    }
+
     std::vector<TimeAndFlows>
     Simulate(Model& model, bool print = true)
     {
@@ -3207,10 +3421,20 @@ namespace erin
             case ComponentType::MoverType:
             {
                 // TODO: test
+                assert(idx < m.Movers.size());
                 size_t outflowConn = m.Movers[idx].OutflowConn;
                 RunMoverBackward(m, ss, outflowConn, idx);
                 size_t inflowConn = m.Movers[idx].InflowConn;
                 RunMoverForward(m, ss, inflowConn, idx);
+            }
+            break;
+            case ComponentType::VariableEfficiencyMoverType:
+            {
+                assert(idx < m.VarEffMovers.size());
+                size_t outflowConn = m.VarEffMovers[idx].OutflowConn;
+                RunVariableEfficiencyMoverBackward(m, ss, outflowConn, idx);
+                size_t inflowConn = m.VarEffMovers[idx].InflowConn;
+                RunVariableEfficiencyMoverForward(m, ss, inflowConn, idx);
             }
             break;
             case ComponentType::MuxType:
@@ -3386,6 +3610,24 @@ namespace erin
             case ComponentType::MoverType:
             {
                 Mover const& mov = m.Movers[idx];
+                ss.Flows[mov.InflowConn].Requested_W = 0;
+                ss.Flows[mov.InflowConn].Available_W = 0;
+                ss.Flows[mov.InflowConn].Actual_W = 0;
+                ss.Flows[mov.OutflowConn].Requested_W = 0;
+                ss.Flows[mov.OutflowConn].Available_W = 0;
+                ss.Flows[mov.OutflowConn].Actual_W = 0;
+                ss.Flows[mov.InFromEnvConn].Requested_W = 0;
+                ss.Flows[mov.InFromEnvConn].Available_W = 0;
+                ss.Flows[mov.InFromEnvConn].Actual_W = 0;
+                ss.Flows[mov.WasteflowConn].Requested_W = 0;
+                ss.Flows[mov.WasteflowConn].Available_W = 0;
+                ss.Flows[mov.WasteflowConn].Actual_W = 0;
+            }
+            break;
+            case ComponentType::VariableEfficiencyMoverType:
+            {
+                assert(idx < m.VarEffMovers.size());
+                VariableEfficiencyMover const& mov = m.VarEffMovers[idx];
                 ss.Flows[mov.InflowConn].Requested_W = 0;
                 ss.Flows[mov.InflowConn].Available_W = 0;
                 ss.Flows[mov.InflowConn].Actual_W = 0;
@@ -4108,6 +4350,32 @@ namespace erin
                 }
             }
             break;
+            case ComponentType::VariableEfficiencyMoverType:
+            {
+                assert(fromIdx < m.VarEffMovers.size());
+                switch (fromPort)
+                {
+                    case 0: // outflow
+                    {
+                        m.VarEffMovers[fromIdx].OutflowConn = connId;
+                    }
+                    break;
+                    case 1: // wasteflow
+                    {
+                        m.VarEffMovers[fromIdx].WasteflowConn = connId;
+                    }
+                    break;
+                    default:
+                    {
+                        WriteErrorMessage(
+                            "<network>", "bad port for VariableEfficiencyMover"
+                        );
+                        std::exit(1);
+                    }
+                    break;
+                }
+            }
+            break;
             case ComponentType::MuxType:
             {
                 assert(fromIdx < m.Muxes.size());
@@ -4200,6 +4468,34 @@ namespace erin
                     {
                         WriteErrorMessage(
                             "<network>", "bad network connection for mover"
+                        );
+                        std::exit(1);
+                    }
+                    break;
+                }
+            }
+            break;
+            case ComponentType::VariableEfficiencyMoverType:
+            {
+                assert(toIdx < m.VarEffMovers.size());
+                switch (toPort)
+                {
+                    case 0:
+                    {
+                        m.VarEffMovers[toIdx].InflowConn = connId;
+                    }
+                    break;
+                    case 1:
+                    {
+                        m.VarEffMovers[toIdx].InFromEnvConn = connId;
+                    }
+                    break;
+                    default:
+                    {
+                        WriteErrorMessage(
+                            "<network>",
+                            "bad network connection for variable efficiency "
+                            "mover"
                         );
                         std::exit(1);
                     }

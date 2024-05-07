@@ -78,6 +78,7 @@ namespace erin
         Components_Mux,
         Components_Store,
         Components_PassThrough,
+        Components_VariableEffMover,
         Components_Mover,
         Dist_Fixed,
         Dist_Weibull,
@@ -135,6 +136,7 @@ namespace erin
         ValidationInfo Store;
         ValidationInfo PassThrough;
         ValidationInfo Mover;
+        ValidationInfo VariableEfficiencyMover;
     };
 
     struct DistributionValidationMap

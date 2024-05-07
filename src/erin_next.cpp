@@ -2885,6 +2885,7 @@ namespace erin
                 case ComponentType::MuxType:
                 case ComponentType::PassThroughType:
                 case ComponentType::MoverType:
+                case ComponentType::VariableEfficiencyMoverType:
                 case ComponentType::WasteSinkType:
                 {
                 }
@@ -2925,6 +2926,7 @@ namespace erin
                 case ComponentType::MuxType:
                 case ComponentType::PassThroughType:
                 case ComponentType::MoverType:
+                case ComponentType::VariableEfficiencyMoverType:
                 case ComponentType::EnvironmentSourceType:
                 {
                 }

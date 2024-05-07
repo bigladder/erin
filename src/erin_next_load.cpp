@@ -408,59 +408,71 @@ namespace erin
         for (auto it = table.cbegin(); it != table.cend(); ++it)
         {
             std::string tag = it->first;
-            std::string loadsEntryName = "loads." + tag;
+            std::string tableName = "loads." + tag;
             if (it->second.is_table())
             {
                 toml::table const& table2 = it->second.as_table();
-                for (auto it2 = table2.cbegin(); it2 != table2.cend(); ++it2)
+                std::vector<std::string> errors01;
+                std::vector<std::string> warnings01;
+                auto const& explicitLoadTable = TOMLTable_ParseWithValidation(
+                    table2, explicitValidation, tableName, errors01, warnings01
+                );
+                std::optional<Load> maybeLoad;
+                if (errors01.size() == 0)
                 {
-                    std::string key = it2->first;
-                    toml::value value = it2->second;
-                    if (key == "csv_file")
+                    maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag);
+                    if (!maybeLoad.has_value())
                     {
-                        std::optional<Load> maybeLoad = ParseSingleLoad(
-                            tag,
-                            table2,
-                            loadsEntryName,
-                            explicitValidation,
-                            fileValidation
-                        );
-
-                        if (maybeLoad.has_value())
+                        WriteErrorMessage(tableName, "unable to load");
+                        return {};
+                    }
+                    if (warnings01.size() > 0)
+                    {
+                        for (auto const& w : warnings01)
                         {
-                            bool loadGood = true;
-                            for (auto& load : loads)
-                            {
-                                if (load.Tag == maybeLoad->Tag)
-                                {
-                                    WriteErrorMessage(
-                                        loadsEntryName,
-                                        "load " + maybeLoad->Tag
-                                            + " already exists"
-                                    );
-                                    loadGood = false;
-                                    break;
-                                }
-                            }
-                            if (loadGood)
-                            {
-                                loads.push_back(std::move(maybeLoad.value()));
-                            }
-                        }
-                        else
-                        {
-                            WriteErrorMessage(
-                                loadsEntryName, "load did not have value"
-                            );
-                            return {};
+                            WriteErrorMessage(tableName, w);
                         }
                     }
-                    if (key == "multi_part_csv")
+                    if (maybeLoad.has_value())
                     {
-                        std::vector<std::optional<Load>> maybeLoads =
-                            ParseMultiLoad(tag, table2);
-                        for (auto& maybeLoad : maybeLoads)
+                        bool loadGood = true;
+                        for (auto& load : loads)
                         {
+                            if (load.Tag == maybeLoad->Tag)
+                            {
+                                WriteErrorMessage(
+                                        tableName,
+                                        "load " + maybeLoad->Tag
+                                        + " already exists"
+                                );
+                                loadGood = false;
+                                break;
+                            }
+                        }
+                        if (loadGood)
+                        {
+                            loads.push_back(std::move(maybeLoad.value())
+                            );
+                        }
+                    }
+                }
+                else
+                {
+                    for (auto it2 = table2.cbegin(); it2 != table2.cend();
+                         ++it2)
+                    {
+                        std::string key = it2->first;
+                        toml::value value = it2->second;
+                        if (key == "csv_file")
+                        {
+                            maybeLoad = ParseSingleLoad(
+                                tag,
+                                table2,
+                                tableName,
+                                explicitValidation,
+                                fileValidation
+                            );
+
                             if (maybeLoad.has_value())
                             {
                                 bool loadGood = true;
@@ -469,7 +481,7 @@ namespace erin
                                     if (load.Tag == maybeLoad->Tag)
                                     {
                                         WriteErrorMessage(
-                                            loadsEntryName,
+                                            tableName,
                                             "load " + maybeLoad->Tag
                                                 + " already exists"
                                         );
@@ -486,9 +498,47 @@ namespace erin
                             else
                             {
                                 WriteErrorMessage(
-                                    loadsEntryName, "load did not have value"
+                                    tableName, "single load did not have value"
                                 );
                                 return {};
+                            }
+                        }
+                        if (key == "multi_part_csv")
+                        {
+                            std::vector<std::optional<Load>> maybeLoads =
+                                ParseMultiLoad(tag, table2);
+                            for (auto& maybeLoad : maybeLoads)
+                            {
+                                if (maybeLoad.has_value())
+                                {
+                                    bool loadGood = true;
+                                    for (auto& load : loads)
+                                    {
+                                        if (load.Tag == maybeLoad->Tag)
+                                        {
+                                            WriteErrorMessage(
+                                                tableName,
+                                                "load " + maybeLoad->Tag
+                                                    + " already exists"
+                                            );
+                                            loadGood = false;
+                                            break;
+                                        }
+                                    }
+                                    if (loadGood)
+                                    {
+                                        loads.push_back(
+                                            std::move(maybeLoad.value())
+                                        );
+                                    }
+                                }
+                                else
+                                {
+                                    WriteErrorMessage(
+                                        tableName, "multi-part load did not have value"
+                                    );
+                                    return {};
+                                }
                             }
                         }
                     }
@@ -496,7 +546,7 @@ namespace erin
             }
             else
             {
-                WriteErrorMessage(loadsEntryName, "is not a table");
+                WriteErrorMessage(tableName, "is not a table");
                 return {};
             }
         }

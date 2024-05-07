@@ -229,8 +229,131 @@ failure_dist = "generator_diesel_engine_mtbf_6"
 repair_dist = "generator_diesel_engine_mttr"
 
 # Loads
-[loads.packed_loads]
-multi_part_csv = "packed-loads.csv"
+[loads.3_schaffer_hall__electricity]
+csv_file = "3_schaffer_hall__electricity.csv"
+
+[loads.3_schaffer_hall__steam]
+csv_file = "3_schaffer_hall__steam.csv"
+
+[loads.3_schaffer_hall__chilled_water]
+csv_file = "3_schaffer_hall__chilled_water.csv"
+
+[loads.4_moore_hall__electricity]
+csv_file = "4_moore_hall__electricity.csv"
+
+[loads.4_moore_hall__steam]
+csv_file = "4_moore_hall__steam.csv"
+
+[loads.4_moore_hall__chilled_water]
+csv_file = "4_moore_hall__chilled_water.csv"
+
+[loads.18_gc_hq_doc_dol__electricity]
+csv_file = "18_gc_hq_doc_dol__electricity.csv"
+
+[loads.18_gc_hq_doc_dol__steam]
+csv_file = "18_gc_hq_doc_dol__steam.csv"
+
+[loads.18_gc_hq_doc_dol__chilled_water]
+csv_file = "18_gc_hq_doc_dol__chilled_water.csv"
+
+[loads.17_aa_hall__electricity]
+csv_file = "17_aa_hall__electricity.csv"
+
+[loads.17_aa_hall__steam]
+csv_file = "17_aa_hall__steam.csv"
+
+[loads.17_aa_hall__chilled_water]
+csv_file = "17_aa_hall__chilled_water.csv"
+
+[loads.21_field_house__electricity]
+csv_file = "21_field_house__electricity.csv"
+
+[loads.21_field_house__steam]
+csv_file = "21_field_house__steam.csv"
+
+[loads.21_field_house__chilled_water]
+csv_file = "21_field_house__chilled_water.csv"
+
+[loads.26_rifle_and_pistol_range__electricity]
+csv_file = "26_rifle_and_pistol_range__electricity.csv"
+
+[loads.26_rifle_and_pistol_range__steam]
+csv_file = "26_rifle_and_pistol_range__steam.csv"
+
+[loads.26_rifle_and_pistol_range__chilled_water]
+csv_file = "26_rifle_and_pistol_range__chilled_water.csv"
+
+[loads.20_ac_hall__electricity]
+csv_file = "20_ac_hall__electricity.csv"
+
+[loads.20_ac_hall__steam]
+csv_file = "20_ac_hall__steam.csv"
+
+[loads.20_ac_hall__chilled_water]
+csv_file = "20_ac_hall__chilled_water.csv"
+
+[loads.24_warehouse__electricity]
+csv_file = "24_warehouse__electricity.csv"
+
+[loads.24_warehouse__steam]
+csv_file = "24_warehouse__steam.csv"
+
+[loads.24_warehouse__chilled_water]
+csv_file = "24_warehouse__chilled_water.csv"
+
+[loads.12_ae_hall__electricity]
+csv_file = "12_ae_hall__electricity.csv"
+
+[loads.12_ae_hall__steam]
+csv_file = "12_ae_hall__steam.csv"
+
+[loads.12_ae_hall__chilled_water]
+csv_file = "12_ae_hall__chilled_water.csv"
+
+[loads.13_af_hall__electricity]
+csv_file = "13_af_hall__electricity.csv"
+
+[loads.13_af_hall__steam]
+csv_file = "13_af_hall__steam.csv"
+
+[loads.13_af_hall__chilled_water]
+csv_file = "13_af_hall__chilled_water.csv"
+
+[loads.56_highschool__electricity]
+csv_file = "56_highschool__electricity.csv"
+
+[loads.56_highschool__steam]
+csv_file = "56_highschool__steam.csv"
+
+[loads.56_highschool__chilled_water]
+csv_file = "56_highschool__chilled_water.csv"
+
+[loads.57_primary_school__electricity]
+csv_file = "57_primary_school__electricity.csv"
+
+[loads.57_primary_school__steam]
+csv_file = "57_primary_school__steam.csv"
+
+[loads.57_primary_school__chilled_water]
+csv_file = "57_primary_school__chilled_water.csv"
+
+[loads.1_hotel__electricity]
+csv_file = "1_hotel__electricity.csv"
+
+[loads.1_hotel__steam]
+csv_file = "1_hotel__steam.csv"
+
+[loads.1_hotel__chilled_water]
+csv_file = "1_hotel__chilled_water.csv"
+
+[loads.41_fire_station_pv]
+csv_file = "pvwatts_hourlynew_frmat__electricity-111.csv"
+
+[loads.ev_charger_1__blue_sky__electricity]
+csv_file = "ev_charge_load__blue_sky__electricity-113.csv"
+
+[loads.ev_charger_1__black_sky__electricity]
+csv_file = "ev_charge_load__black_sky__electricity-113.csv"
 
 # Components
 [components.steam_header]

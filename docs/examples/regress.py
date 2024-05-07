@@ -60,6 +60,18 @@ if not CLI_EXE.exists():
     sys.exit(1)
 
 
+def run_limits():
+    """
+    Calls ERIN limits   
+    """
+    result = subprocess.run([CLI_EXE, "limits"], capture_output=True)
+    if result.returncode != 0:
+        print("ERIN limits did not return a non-zero exit code")
+        sys.exit(1)
+    else:
+        print(result.stdout.decode(), flush=True)
+
+
 def run_tests():
     """
     Run the test suite
@@ -70,7 +82,7 @@ def run_tests():
             stem = Path(test).stem
             print(f"Test '{stem}' did not pass!")
             print("stdout:\n")
-            print(result.stderr.decode())
+            print(result.stdout.decode())
             print("stdout:\n")
             print(result.stderr.decode())
             sys.exit(1)
@@ -261,6 +273,7 @@ def run_perf():
 
 
 if __name__ == "__main__":
+    run_limits()
     run_tests()
     print("Passed all unit tests!")
     run_cli("01")

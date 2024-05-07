@@ -298,9 +298,9 @@ namespace erin
                 case ComponentType::VariableEfficiencyMoverType:
                 {
                     assert(subtypeIdx < m.VarEffMovers.size());
-                    VariableEfficiencyMover const& mov = m.VarEffMovers[subtypeIdx];
-                    std::cout << "-- cop by load fraction:"
-                              << std::endl;
+                    VariableEfficiencyMover const& mov =
+                        m.VarEffMovers[subtypeIdx];
+                    std::cout << "-- cop by load fraction:" << std::endl;
                     double maxOutflow_W = mov.MaxOutflow_W;
                     for (size_t i = 0; i < mov.COPs.size(); ++i)
                     {
@@ -308,14 +308,13 @@ namespace erin
                             " -- {:5.3f}",
                             (mov.OutflowsForCop_W[i] / maxOutflow_W)
                         );
-                        std::cout << fmt::format(
-                            ": {:5.2f}", (mov.COPs[i])
-                        ) << std::endl;
+                        std::cout << fmt::format(": {:5.2f}", (mov.COPs[i]))
+                                  << std::endl;
                     }
                     std::cout << "-- max outflow (W): "
                               << (mov.MaxOutflow_W == max_flow_W
-                                     ? "unlimited"
-                                     : std::to_string(maxOutflow_W))
+                                      ? "unlimited"
+                                      : std::to_string(maxOutflow_W))
                               << std::endl;
                 }
                 break;

@@ -295,6 +295,7 @@ if __name__ == "__main__":
     run_cli("30")
     run_cli("31")
     run_cli("32")
+    run_cli("33")
     smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
     print("\nPassed all regression tests!")
     run_perf()

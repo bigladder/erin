@@ -1,6 +1,14 @@
 version: '3'
 
+vars:
+  PYTHON:
+    sh: if [ command -v python3 &> /dev/null ]; then which python3; else which python; fi
+
 tasks:
+  python:
+    cmds:
+      - echo {{.PYTHON}}
+
   format:
     desc: Run clang-format over all project files
     cmds:
@@ -8,6 +16,7 @@ tasks:
       - clang-format -i -style=file include/**/*.h
       - clang-format -i -style=file test/*.cpp
       - clang-format -i -style=file apps/*.cpp
+
   checkfmt:
     desc: Check if there are any formatting problems
     cmds:
@@ -15,40 +24,48 @@ tasks:
       - clang-format --dry-run --Werror include/**/*.h
       - clang-format --dry-run --Werror test/*.cpp
       - clang-format --dry-run --Werror apps/**/*.h
+
   init:
     desc: Initialize the build directory
     cmds:
       - mkdir build
       - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+
   build:
     desc: (Re)build the application
     cmds:
       - cmake --build build --config Debug -j 4
+
   test:
     desc: Run the test suite
     dir: 'docs/examples'
     cmds:
       # TODO[mok]: have regress.py take the build directory to run against
-      - python regress.py
+      - "{{.PYTHON}} regress.py"
+
   init-release:
     desc: Initialize a release build
     cmds:
       - mkdir build
       - cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DERIN_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+
   build-release:
     desc: Make a release build
     cmds:
       - cmake --build build --config Release -j 4
+
   ex:
     desc: Run the given exercise. Pass '-- run ex29.toml' to run example 29
     dir: 'docs/examples'
     cmds:
       - ../../build/bin/erin {{.CLI_ARGS}}
+
   db:
     desc: Runs the current exercise. Pass '-- run ex29.toml' to debug example 29
     dir: 'docs/examples'
     cmds:
       - lldb ../../build/bin/erin run {{.CLI_ARGS}}
+
   bench:
     desc: Runs benchmarks using hyperfine.
     dir: 'docs/examples/ft-illinois'
@@ -60,6 +77,7 @@ tasks:
         sh: git rev-parse --short HEAD
       ISO_DATE:
         sh: date +"%Y-%m-%dT%H%M%S%z"
+
   bench-win:
     desc: Runs benchmarks using hyperfine on Windows.
     dir: 'docs/examples/ft-illinois'
@@ -71,11 +89,13 @@ tasks:
         sh: git rev-parse --short HEAD
       ISO_DATE:
         sh: date +"%Y-%m-%dT%H%M%S%z"
+
   copyout:
     desc: Copies the last run out.csv file to be the next reference for the given example. Provide example number such as `-- 01`.
     dir: 'docs/examples'
     cmds:
       - cp out.csv ex{{.CLI_ARGS}}-out.csv
+
   copystats:
     desc: Copies the last run stats.csv file to be the next reference for the given example. Provide example number such as `-- 01`.
     dir: 'docs/examples'

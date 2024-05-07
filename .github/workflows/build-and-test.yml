@@ -37,3 +37,10 @@ jobs:
       - name: Test
         run: ctest -C ${{ matrix.config }} --output-on-failure
         working-directory: build
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Run Regression Testing
+        run: python regress.py
+        working-directory: docs/examples

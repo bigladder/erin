@@ -218,45 +218,11 @@ def compare_csv(original_csv_path, proposed_csv_path):
                 print(f"-- proposed: {propx}")
 
 
-def run_cli(example_name):
-    """
-    Run the CLI for example name and check output diffs
-    - example_name: string, "01" or "25" to call ex01.toml or ex25.toml
-    """
-    _ = smoke_test(example_name)
-    result = subprocess.run(
-        [DIFF_PROG, 'out.csv', f'ex{example_name}-out.csv'],
-        capture_output=True)
-    if result.returncode != 0:
-        print(f"diff did not compare clean for out.csv for {example_name}")
-        print("stdout:\n")
-        print(result.stdout.decode())
-        print("stderr:\n")
-        print(result.stderr.decode())
-        print(("=" * 20) + " DETAILED DIFF")
-        compare_csv(f'ex{example_name}-out.csv', 'out.csv')
-        sys.exit(1)
-    result = subprocess.run(
-        ['diff', 'stats.csv', f'ex{example_name}-stats.csv'],
-        capture_output=True)
-    if result.returncode != 0:
-        print(f'diff did not compare clean for stats.csv for {example_name}')
-        print("stdout:\n")
-        print(result.stdout.decode())
-        print("stderr:\n")
-        print(result.stderr.decode())
-        print(("=" * 20) + " DETAILED DIFF")
-        compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
-        sys.exit(1)
-    print(".", end="", sep="", flush=True)
-
-
-def run_cli_test(example_name, dir=None, timeit=False, print_it=False):
+def run_cli(example_name, dir=None, timeit=False, print_it=False):
     """
     Run the CLI for example name and check output diffs
     - example_name: string, "sim01" to test sim01.toml
     """
-
     _ = smoke_test(example_name, dir, timeit, print_it)
 
     cwd = str(Path.cwd().resolve())
@@ -343,8 +309,8 @@ if __name__ == "__main__":
     run_cli("30")
     run_cli("31")
     run_cli("32")
-    #smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
-    run_cli_test("ft-illinois_packed", dir="ft-illinois_packed", print_it=True)
+    smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
+    run_cli("ft-illinois_packed", dir="ft-illinois_packed", print_it=True)
     print("\nPassed all regression tests!")
     run_perf()
     print("All performance tests run")

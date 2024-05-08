@@ -39,8 +39,13 @@ jobs:
         with:
           version: 14
           env: 1
+      - name: Echo clang versions on Ubuntu
+        run: |
+          clang --version
+          clang++ --version
+        if: ${{ matrix.is == 'ubuntu-latest' }}
       - name: Configure CMake (Ubuntu)
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
+        run: cmake -S . -B build -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILIER=clang++ -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - name: Build
         run: cmake --build build --config ${{ matrix.config }}

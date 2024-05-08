@@ -303,8 +303,7 @@ def rename_file(orig_name, new_name, dir1 = None, dir2 = None):
     cwd1 = str(Path.cwd().resolve()) if dir1 is None else dir1
     cwd2 = str(Path.cwd().resolve()) if dir2 is None else dir2  
     """
-    Run the CLI for example name and check output diffs
-    - example_name: string, "sim01" to test sim01.toml
+    Rename file orig_name in dir1 to new_name in dir2
     """
      
     orig_name = os.path.join(cwd1, orig_name)

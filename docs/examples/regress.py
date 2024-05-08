@@ -84,18 +84,18 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     """
     A smoke test just runs the example and confirms we get a 0 exit code
     """
-    cwd = str(Path.cwd().resolve())
-    test_dir = cwd if dir is None else os.path.join(cwd, dir)
-    out_filename = os.path.join(test_dir, 'out.csv');
-    stats_filename = os.path.join(test_dir, 'stats.csv');
+    cwd = str(Path.cwd().resolve()) if dir is None else dir
+    
+    out_filename = 'out.csv'
+    stats_filename = 'stats.csv'
 
     Path(out_filename).unlink(missing_ok=True)
     Path(stats_filename).unlink(missing_ok=True)
     
     toml_input = f"ex{example_name}.toml"
-    in_filename = os.path.join(test_dir, toml_input);
+    in_filename = toml_input#os.path.join(cwd, toml_input);
     start_time = time.perf_counter_ns()
-    result = subprocess.run([CLI_EXE, "run", f"{in_filename}", "-e", f"{out_filename}", "-s", f"{stats_filename}"], capture_output=True, cwd=test_dir)
+    result = subprocess.run([CLI_EXE, "run", f"{in_filename}", "-e", f"{out_filename}", "-s", f"{stats_filename}"], capture_output=True, cwd=cwd)
     end_time = time.perf_counter_ns()
     time_ns = end_time - start_time
     if result.returncode != 0:
@@ -218,6 +218,27 @@ def compare_csv(original_csv_path, proposed_csv_path):
                 print(f"-- proposed: {propx}")
 
 
+def full_compare_csv(file1, file2, dir1 = None, dir2 = None):
+    cwd1 = str(Path.cwd().resolve()) if dir1 is None else dir1
+    cwd2 = str(Path.cwd().resolve()) if dir2 is None else dir2   
+    
+    file1 = os.path.join(cwd1, file1)
+    file2 = os.path.join(cwd2, file2)
+
+    result = subprocess.run(
+        [DIFF_PROG, file1, file2],
+        capture_output=True)
+    if result.returncode != 0:
+        print(f'diff did not compare clean for {file1} for {file2}')
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
+        print(("=" * 20) + " DETAILED DIFF")
+        compare_csv(file1, file2)
+        sys.exit(1)
+ 
+
 def run_cli(example_name, dir=None, timeit=False, print_it=False):
     """
     Run the CLI for example name and check output diffs
@@ -225,37 +246,15 @@ def run_cli(example_name, dir=None, timeit=False, print_it=False):
     """
     _ = smoke_test(example_name, dir, timeit, print_it)
 
-    cwd = str(Path.cwd().resolve())
-    test_dir = cwd if dir is None else os.path.join(cwd, dir)
+    ref_out = f'ex{example_name}-out.csv'
+    ref_stats = f'ex{example_name}-stats.csv'
     
-    ref_out = os.path.join(test_dir, f'ex{example_name}-out.csv');
-    ref_stats = os.path.join(test_dir, f'ex{example_name}-stats.csv');
-    out = os.path.join(test_dir, 'out.csv');
-    stats = os.path.join(test_dir, 'stats.csv');
-    result = subprocess.run(
-        [DIFF_PROG, out, ref_out],
-        capture_output=True)
-    if result.returncode != 0:
-        print(f"diff did not compare clean for out.csv for {example_name}")
-        print("stdout:\n")
-        print(result.stdout.decode())
-        print("stderr:\n")
-        print(result.stderr.decode())
-        print(("=" * 20) + " DETAILED DIFF")
-        compare_csv(ref_out, out)
-        sys.exit(1)
-    result = subprocess.run(
-        ['diff', stats, ref_stats],
-        capture_output=True)
-    if result.returncode != 0:
-        print(f'diff did not compare clean for stats.csv for {example_name}')
-        print("stdout:\n")
-        print(result.stdout.decode())
-        print("stderr:\n")
-        print(result.stderr.decode())
-        print(("=" * 20) + " DETAILED DIFF")
-        compare_csv(ref_stats, stats)
-        sys.exit(1)
+    out = 'out.csv'
+    stats = 'stats.csv'
+    
+    full_compare_csv(out, ref_out, dir1 = dir, dir2 = dir)
+    full_compare_csv(stats, ref_stats, dir1 = dir, dir2 = dir)
+        
     print(".", end="", sep="", flush=True)
 
 def run_perf():
@@ -311,6 +310,7 @@ if __name__ == "__main__":
     run_cli("32")
     smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
     run_cli("ft-illinois_packed", dir="ft-illinois_packed", print_it=True)
+    full_compare_csv(file1="out.csv", file2="out.csv", dir1="ft-illinois_packed", dir2="ft-illinois")
     print("\nPassed all regression tests!")
     run_perf()
     print("All performance tests run")

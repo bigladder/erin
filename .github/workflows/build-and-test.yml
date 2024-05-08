@@ -42,9 +42,6 @@ jobs:
       - name: Configure CMake (Ubuntu)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        env:
-          CC: clang
-          CXX: clang++
       - name: Build
         run: cmake --build build --config ${{ matrix.config }}
       - name: Test

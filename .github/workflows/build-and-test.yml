@@ -37,8 +37,8 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: "14"
-          env: true
+          version: 14
+          env: 1
       - name: Configure CMake (Ubuntu)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
         if: ${{ matrix.os == 'ubuntu-latest' }}

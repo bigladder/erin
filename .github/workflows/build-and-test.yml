@@ -30,8 +30,15 @@ jobs:
         run: echo "REPOSITORY_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
       - name: Create Build Directory
         run: cmake -E make_directory ${{github.workspace}}/build
-      - name: Configure CMake
+      - name: Configure CMake (non-Ubuntu)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
+        if: ${{ matrix.os != 'ubuntu-latest' }}
+      - name: Configure CMake (Ubuntu)
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        env:
+          CC: which clang
+          CXX: which clang++
       - name: Build
         run: cmake --build build --config ${{ matrix.config }}
       - name: Test

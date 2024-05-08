@@ -257,6 +257,7 @@ def run_cli(example_name, dir=None, timeit=False, print_it=False):
         
     print(".", end="", sep="", flush=True)
 
+
 def run_perf():
     """
     Run performance tests and report timing
@@ -273,9 +274,50 @@ def run_perf():
     print(result.stdout.decode(), end='')
 
 
+def pack_csv_cli(example_name, dir=None, timeit=False, print_it=False):
+    """
+    Pack the loads in example_name and compare to a pre-packed version
+    """
+    cwd = str(Path.cwd().resolve()) if dir is None else dir
+    
+    packed_loads = 'packed-loads.csv'
+    Path(packed_loads).unlink(missing_ok=True)
+    
+    toml_input = f"ex{example_name}.toml"
+    in_filename = toml_input
+    start_time = time.perf_counter_ns()
+    result = subprocess.run([CLI_EXE, "pack-loads", f"{in_filename}", "-o", f"{packed_loads}"], cwd=cwd)
+    end_time = time.perf_counter_ns()
+    time_ns = end_time - start_time
+    if result.returncode != 0:
+        print(f"Error running pack-loads for example {example_name}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
+        sys.exit(1)
+    result.time_ns = time_ns
+
+    return result
+
+
+def rename_file(orig_name, new_name, dir=None):
+    """
+    Run the CLI for example name and check output diffs
+    - example_name: string, "sim01" to test sim01.toml
+    """
+    cwd = str(Path.cwd().resolve()) if dir is None else dir
+    
+    orig_name = os.path.join(cwd, orig_name)
+    new_name = os.path.join(cwd, new_name)
+    Path(new_name).unlink(missing_ok=True)  
+       
+    os.rename(orig_name, new_name)
+    
 if __name__ == "__main__":
     run_tests()
     print("Passed all unit tests!")
+    
     run_cli("01")
     run_cli("02")
     run_cli("03")
@@ -308,12 +350,29 @@ if __name__ == "__main__":
     run_cli("30")
     run_cli("31")
     run_cli("32")
+ 
     smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
-    run_cli("ft-illinois_packed", dir="ft-illinois_packed", print_it=True)
-    full_compare_csv(file1="out.csv", file2="out.csv", dir1="ft-illinois_packed", dir2="ft-illinois")
     print("\nPassed all regression tests!")
+ 
+	# Run unpacked and rename output
+    smoke_test("ft-illinois_unpacked", dir="ft-illinois_packed", print_it=True)
+    rename_file("out.csv", "exft-illinois_unpacked-out.csv", "ft-illinois_packed")
+    
+	# Pack and rename packed loads
+    pack_csv_cli("ft-illinois_unpacked", dir="ft-illinois_packed", timeit=False, print_it=False)
+    rename_file("packed-loads.csv", "exft-illinois_packed-loads.csv", "ft-illinois_packed")
+    
+	# Run packed and rename output
+    smoke_test("ft-illinois_packed", dir="ft-illinois_packed", print_it=True) 
+    rename_file("out.csv", "exft-illinois_packed-out.csv", "ft-illinois_packed")
+      
+	#compare packed<->unpacked outputs
+    full_compare_csv(file1="exft-illinois_packed-out.csv", file2="exft-illinois_unpacked-out.csv", dir1="ft-illinois_packed", dir2="ft-illinois_packed")   
+    print("\nPassed load-packing test!")
+    
     run_perf()
     print("All performance tests run")
+    
     bench_dir = (Path(".")/".."/".."/"benchmark").resolve()
     if not bench_dir.exists():
         bench_dir.mkdir(parents=True, exist_ok=True)

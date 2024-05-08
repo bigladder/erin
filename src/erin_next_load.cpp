@@ -396,7 +396,12 @@ namespace erin
         return maybeLoads;
     }
 
-    bool MaybePushLoad(std::optional<Load> maybeLoad, const std::string& tableName, std::vector<Load>& loads)
+    bool
+    MaybePushLoad(
+        std::optional<Load> maybeLoad,
+        const std::string& tableName,
+        std::vector<Load>& loads
+    )
     {
         bool loadGood = true;
         for (auto& load : loads)
@@ -404,9 +409,7 @@ namespace erin
             if (load.Tag == maybeLoad->Tag)
             {
                 WriteErrorMessage(
-                        tableName,
-                        "load " + maybeLoad->Tag
-                        + " already exists"
+                    tableName, "load " + maybeLoad->Tag + " already exists"
                 );
                 loadGood = false;
                 break;
@@ -503,7 +506,8 @@ namespace erin
                                 else
                                 {
                                     WriteErrorMessage(
-                                        tableName, "multi-part load did not have value"
+                                        tableName,
+                                        "multi-part load did not have value"
                                     );
                                     return {};
                                 }

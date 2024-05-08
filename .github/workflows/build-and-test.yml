@@ -33,12 +33,17 @@ jobs:
       - name: Configure CMake (non-Ubuntu)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
         if: ${{ matrix.os != 'ubuntu-latest' }}
+      - name: Install LLVM and Clang
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "14"
       - name: Configure CMake (Ubuntu)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
         if: ${{ matrix.os == 'ubuntu-latest' }}
         env:
-          CC: clang
-          CXX: clang++
+          CC: clang-14
+          CXX: clang++-14
       - name: Build
         run: cmake --build build --config ${{ matrix.config }}
       - name: Test

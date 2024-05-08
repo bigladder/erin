@@ -357,7 +357,7 @@ if __name__ == "__main__":
     rename_file("out.csv", f"ex{orig_name}-out.csv", dir1=orig_name, dir2=orig_name)
      
 	# Pack and rename packed loads
-    packed_name = orig_name+"_packed"
+    packed_name = orig_name + "_packed"
     pack_csv_cli(orig_name, dir=orig_name, timeit=False, print_it=False)
     rename_file("packed-loads.csv", f"ex{packed_name}-loads.csv", dir1=orig_name, dir2=packed_name)
     

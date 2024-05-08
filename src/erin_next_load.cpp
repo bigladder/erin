@@ -210,6 +210,7 @@ namespace erin
                 LoadEntry loadEntry;
                 loadEntry.name = sRow[iCol];
                 loadEntry.nItems = stoi(sRow[iCol + 1]);
+                // TODO(mok): should actually read and parse in case different
                 loadEntry.timeUnit = TimeUnit::Second;
                 loadEntry.rateUnit = PowerUnit::Watt;
                 loadEntries.push_back(loadEntry);

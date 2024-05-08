@@ -434,6 +434,20 @@ namespace erin
                         InputSection::Loads_02FileBased,
                     },
             },
+            // TODO(mok): this should be a 3rd option, not part of Loads_02FileBased
+            FieldInfo{
+                .FieldName = "multi_part_csv",
+                .Type = InputType::AnyString,
+                .IsRequired = false,
+                .InformIfMissing = false,
+                .Default = "",
+                .EnumValues = {},
+                .Aliases = {},
+                .Sections =
+                    {
+                        InputSection::Loads_02FileBased,
+                    },
+            },
             // Loads -- Explicit
             FieldInfo{
                 .FieldName = "time_rate_pairs",

@@ -691,8 +691,8 @@ namespace erin
             else
             {
                 std::cout << "[" << tableName << "] " << fieldName
-                          << " value is not a number " << "'"
-                          << table.at(fieldName).as_string() << "'"
+                          << " value is not a number "
+                          << "'" << table.at(fieldName).as_string() << "'"
                           << std::endl;
             }
         }
@@ -716,8 +716,8 @@ namespace erin
             else
             {
                 std::cout << "[" << tableName << "] " << fieldName
-                          << " value is not a number " << "'"
-                          << table.at(fieldName).as_string() << "'"
+                          << " value is not a number "
+                          << "'" << table.at(fieldName).as_string() << "'"
                           << std::endl;
             }
         }

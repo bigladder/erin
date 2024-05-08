@@ -456,7 +456,8 @@ namespace erin
                         InputSection::Loads_02FileBased,
                     },
             },
-            // TODO(mok): this should be a 3rd option, not part of Loads_02FileBased
+            // TODO(mok): this should be a 3rd option, not part of
+            // Loads_02FileBased
             FieldInfo{
                 .FieldName = "multi_part_csv",
                 .Type = InputType::AnyString,
@@ -1099,8 +1100,8 @@ namespace erin
         {
             if (f.Sections.size() == 0)
             {
-                std::cerr << "Program Initialization Error: " << "field '"
-                          << f.FieldName << "' has no "
+                std::cerr << "Program Initialization Error: "
+                          << "field '" << f.FieldName << "' has no "
                           << "sections that it applies to" << std::endl;
                 std::exit(1);
             }

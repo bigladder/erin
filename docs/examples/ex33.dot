@@ -1,0 +1,12 @@
+digraph  {
+  node [shape=record];
+  "ENV0" [shape=record,label="<name> ENV0|<O0> O(0)"];
+  "WASTE0" [shape=record,label="<I0> I(0)|<name> WASTE0"];
+  "chiller" [shape=record,label="<I0> I(0)|<I1> I(1)|<name> chiller|<O0> O(0)|<O1> O(1)"];
+  "cooling_load" [shape=record,label="<I0> I(0)|<name> cooling_load"];
+  "electric_utility" [shape=record,label="<name> electric_utility|<O0> O(0)"];
+  "chiller":O1:s -> "WASTE0":I0:n;
+  "ENV0":O0:s -> "chiller":I1:n;
+  "electric_utility":O0:s -> "chiller":I0:n;
+  "chiller":O0:s -> "cooling_load":I0:n;
+}

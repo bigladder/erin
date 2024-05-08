@@ -61,6 +61,7 @@ namespace erin
         StoreType,
         PassThroughType,
         MoverType,
+        VariableEfficiencyMoverType,
         WasteSinkType,
         EnvironmentSourceType,
     };
@@ -240,12 +241,26 @@ namespace erin
 
     struct Mover
     {
+        // Coefficient of Performance
         double COP;
         size_t InflowConn;
         size_t OutflowConn;
         size_t InFromEnvConn;
         size_t WasteflowConn;
         flow_t MaxOutflow_W = max_flow_W;
+    };
+
+    struct VariableEfficiencyMover
+    {
+        size_t InflowConn;
+        size_t OutflowConn;
+        size_t InFromEnvConn;
+        size_t WasteflowConn;
+        flow_t MaxOutflow_W = max_flow_W;
+        std::vector<double> OutflowsForCop_W;
+        std::vector<double> InflowsForCop_W;
+        // Coefficient of Performances -- indexed by above two vectors
+        std::vector<double> COPs;
     };
 
     struct Connection
@@ -324,6 +339,7 @@ namespace erin
         std::vector<Store> Stores;
         std::vector<PassThrough> PassThroughs;
         std::vector<Mover> Movers;
+        std::vector<VariableEfficiencyMover> VarEffMovers;
         std::vector<Connection> Connections;
         std::vector<ScheduleBasedReliability> Reliabilities;
         DistributionSystem DistSys{};
@@ -910,6 +926,13 @@ namespace erin
     );
 
     void
+    UpdateEnvironmentFlowForVariableEfficiencyMover(
+        Model const& m,
+        SimulationState& ss,
+        size_t moverIdx
+    );
+
+    void
     Mux_RequestInflowsIntelligently(
         SimulationState& ss,
         std::vector<size_t> const& inflowConns,
@@ -1007,6 +1030,16 @@ namespace erin
     Model_AddMover(
         Model& m,
         double cop,
+        size_t inflowTypeId,
+        size_t outflowTypeId,
+        std::string const& tag
+    );
+
+    ComponentIdAndWasteAndEnvironmentConnection
+    Model_AddVariableEfficiencyMover(
+        Model& m,
+        std::vector<double>&& outflowsForCop_W,
+        std::vector<double>&& copByOutflow,
         size_t inflowTypeId,
         size_t outflowTypeId,
         std::string const& tag

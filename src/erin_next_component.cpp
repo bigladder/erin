@@ -12,6 +12,7 @@
 #include <sstream>
 #include <unordered_set>
 #include <unordered_map>
+#include <vector>
 
 namespace erin
 {
@@ -145,6 +146,17 @@ namespace erin
             {
                 input = TOMLTable_ParseWithValidation(
                     table, compValids.Mover, fullTableName, errors, warnings
+                );
+            }
+            break;
+            case ComponentType::VariableEfficiencyMoverType:
+            {
+                input = TOMLTable_ParseWithValidation(
+                    table,
+                    compValids.VariableEfficiencyMover,
+                    fullTableName,
+                    errors,
+                    warnings
                 );
             }
             break;
@@ -486,7 +498,7 @@ namespace erin
                     std::get<std::vector<std::vector<double>>>(
                         input.at("efficiency_by_fraction_out").Value
                     );
-                std::unordered_map<double, double> eff_by_outfrac{};
+                std::unordered_map<double, double> effByOutfrac{};
                 for (std::vector<double> const& fracEffPair : rawEfficiency)
                 {
                     assert(fracEffPair.size() == 2);
@@ -508,11 +520,11 @@ namespace erin
                             fullTableName,
                             "Efficiency must be "
                             "in range (0.0, 1.0]; got "
-                                + std::to_string(frac)
+                                + std::to_string(eff)
                         ));
                         return Result::Failure;
                     }
-                    if (eff_by_outfrac.contains(frac))
+                    if (effByOutfrac.contains(frac))
                     {
                         warnings.push_back(WriteWarningToString(
                             fullTableName,
@@ -521,7 +533,7 @@ namespace erin
                                 + "; overwriting previous"
                         ));
                     }
-                    eff_by_outfrac[frac] = eff;
+                    effByOutfrac[frac] = eff;
                 }
                 if (input.contains("rate_unit"))
                 {
@@ -543,20 +555,20 @@ namespace erin
                     localRateUnit
                 );
                 std::vector<double> fracsForEff;
-                fracsForEff.reserve(eff_by_outfrac.size());
-                for (auto const& fracEffPair : eff_by_outfrac)
+                fracsForEff.reserve(effByOutfrac.size());
+                for (auto const& fracEffPair : effByOutfrac)
                 {
                     fracsForEff.push_back(fracEffPair.first);
                 }
                 std::sort(fracsForEff.begin(), fracsForEff.end());
                 std::vector<double> outflowsForEff_W;
                 std::vector<double> efficiencyFracs;
-                outflowsForEff_W.reserve(eff_by_outfrac.size());
-                efficiencyFracs.reserve(eff_by_outfrac.size());
+                outflowsForEff_W.reserve(effByOutfrac.size());
+                efficiencyFracs.reserve(effByOutfrac.size());
                 for (auto const& frac : fracsForEff)
                 {
                     outflowsForEff_W.push_back(frac * maxOutflow_W);
-                    efficiencyFracs.push_back(eff_by_outfrac.at(frac));
+                    efficiencyFracs.push_back(effByOutfrac.at(frac));
                 }
                 auto const compIdAndWasteConn =
                     Model_AddVariableEfficiencyConverter(
@@ -745,6 +757,100 @@ namespace erin
                     size_t moverIdx = s.TheModel.ComponentMap.Idx[id];
                     s.TheModel.Movers[moverIdx].MaxOutflow_W = maxOutflow_W;
                 }
+            }
+            break;
+            case ComponentType::VariableEfficiencyMoverType:
+            {
+                PowerUnit localRateUnit = rateUnit;
+
+                std::vector<std::vector<double>> copsByLoadFrac =
+                    std::get<std::vector<std::vector<double>>>(
+                        input.at("cop_by_fraction_out").Value
+                    );
+                std::unordered_map<double, double> copByOutFrac{};
+                // TODO(mok): extract this and the one in var-eff conv
+                // into a separate processing step
+                for (std::vector<double> const& fracCopPair : copsByLoadFrac)
+                {
+                    assert(fracCopPair.size() == 2);
+                    double frac = fracCopPair[0];
+                    double cop = fracCopPair[1];
+                    if (frac < 0.0 || frac > 1.0)
+                    {
+                        errors.push_back(WriteErrorToString(
+                            fullTableName,
+                            "Output power fraction must be "
+                            "in range [0.0, 1.0]; got "
+                                + std::to_string(frac)
+                        ));
+                        return Result::Failure;
+                    }
+                    if (cop <= 0.0)
+                    {
+                        errors.push_back(WriteErrorToString(
+                            fullTableName,
+                            "COP must be > 0.0" + std::to_string(frac)
+                        ));
+                        return Result::Failure;
+                    }
+                    if (copByOutFrac.contains(frac))
+                    {
+                        warnings.push_back(WriteWarningToString(
+                            fullTableName,
+                            "Found duplicate value of output fraction: "
+                                + std::to_string(frac)
+                                + "; overwriting previous"
+                        ));
+                    }
+                    copByOutFrac[frac] = cop;
+                }
+                if (input.contains("rate_unit"))
+                {
+                    std::string localRateUnitStr =
+                        std::get<std::string>(input.at("rate_unit").Value);
+                    auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
+                    if (!maybeRateUnit.has_value())
+                    {
+                        errors.push_back(WriteErrorToString(
+                            fullTableName,
+                            "unhandled rate unit '" + localRateUnitStr + "'"
+                        ));
+                        return Result::Failure;
+                    }
+                    localRateUnit = maybeRateUnit.value();
+                }
+                double maxOutflow_W = Power_ToWatt(
+                    std::get<double>(input.at("max_outflow").Value),
+                    localRateUnit
+                );
+                std::vector<double> fracsForCop;
+                fracsForCop.reserve(copByOutFrac.size());
+                for (auto const& fracCopPair : copByOutFrac)
+                {
+                    fracsForCop.push_back(fracCopPair.first);
+                }
+                std::sort(fracsForCop.begin(), fracsForCop.end());
+                std::vector<double> outflowsForCop_W;
+                std::vector<double> copByOutflow;
+                outflowsForCop_W.reserve(copByOutFrac.size());
+                copByOutflow.reserve(copByOutFrac.size());
+                for (auto const& frac : fracsForCop)
+                {
+                    outflowsForCop_W.push_back(frac * maxOutflow_W);
+                    copByOutflow.push_back(copByOutFrac.at(frac));
+                }
+                auto const compIdAndConns = Model_AddVariableEfficiencyMover(
+                    s.TheModel,
+                    std::move(outflowsForCop_W),
+                    std::move(copByOutflow),
+                    inflowId,
+                    outflowId,
+                    tag
+                );
+                id = compIdAndConns.Id;
+                size_t moverIdx = s.TheModel.ComponentMap.Idx[id];
+                s.TheModel.VarEffMovers[moverIdx].MaxOutflow_W =
+                    static_cast<flow_t>(maxOutflow_W);
             }
             break;
             default:

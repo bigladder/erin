@@ -295,6 +295,29 @@ namespace erin
                               << std::endl;
                 }
                 break;
+                case ComponentType::VariableEfficiencyMoverType:
+                {
+                    assert(subtypeIdx < m.VarEffMovers.size());
+                    VariableEfficiencyMover const& mov =
+                        m.VarEffMovers[subtypeIdx];
+                    std::cout << "-- cop by load fraction:" << std::endl;
+                    double maxOutflow_W = mov.MaxOutflow_W;
+                    for (size_t i = 0; i < mov.COPs.size(); ++i)
+                    {
+                        std::cout << fmt::format(
+                            " -- {:5.3f}",
+                            (mov.OutflowsForCop_W[i] / maxOutflow_W)
+                        );
+                        std::cout << fmt::format(": {:5.2f}", (mov.COPs[i]))
+                                  << std::endl;
+                    }
+                    std::cout << "-- max outflow (W): "
+                              << (mov.MaxOutflow_W == max_flow_W
+                                      ? "unlimited"
+                                      : std::to_string(maxOutflow_W))
+                              << std::endl;
+                }
+                break;
                 case ComponentType::StoreType:
                 {
                     assert(subtypeIdx < m.Stores.size());
@@ -2263,6 +2286,7 @@ namespace erin
             stats << "," << os.OccurrenceNumber;
             stats << "," << (os.Duration_s / seconds_per_hour);
             stats << "," << DoubleToString(os.Inflow_kJ + os.InFromEnv_kJ, 0);
+            // TODO(mok): break out InFromEnv from Inflow and list separately
             stats << "," << DoubleToString(os.OutflowAchieved_kJ, 0);
             stats << "," << DoubleToString(stored_kJ, 0);
             stats << "," << DoubleToString(os.Wasteflow_kJ, 0);

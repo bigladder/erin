@@ -21,18 +21,3 @@ jobs:
       with:
         clang-format-version: '18'
         check-path: ${{ matrix.path }}
-    #- name: Install clang-format directly
-    #  run: |
-    #    sudo apt update
-    #    sudo apt upgrade
-    #    sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy main'
-    #    sudo add-apt-repository 'deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy main'
-    #    sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main'
-    #    sudo add-apt-repository 'deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main'
-    #    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
-    #    sudo apt update
-    #    sudo apt install clang-format-18
-    #- name: Check *.cpp format for ${{ matrix.path }}
-    #  run: clang-format --Werror -style=file ${{ matrix.path }}/*.cpp
-    #- name: Check *.h format for ${{ matrix.path }}
-    #  run: clang-format --Werror -style=file ${{ matrix.path }}/*.h

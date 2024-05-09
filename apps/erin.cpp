@@ -394,6 +394,46 @@ updateTomlInputCommand(
 }
 
 int
+packLoadsCommand(
+    std::string const& tomlFilename,
+    std::string const& loadsFilename,
+    bool verbose
+)
+{
+    if (verbose)
+    {
+        std::cout << "input file: " << tomlFilename << std::endl;
+        std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
+    }
+
+    std::ifstream ifs(tomlFilename, std::ios_base::binary);
+    if (!ifs.good())
+    {
+        std::cout << "Could not open input file stream on input file"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    auto tomlFilenameOnly = std::filesystem::path(tomlFilename).filename();
+    auto data = toml::parse(ifs, tomlFilenameOnly.string());
+    ifs.close();
+
+    auto const& loadTable = data.at("loads").as_table();
+
+    auto validationInfo = erin::SetupGlobalValidationInfo();
+    erin::ValidationInfo explicitValidation = validationInfo.Load_01Explicit;
+    erin::ValidationInfo fileValidation = validationInfo.Load_02FileBased;
+    auto maybeLoads = ParseLoads(loadTable, explicitValidation, fileValidation);
+    if (!maybeLoads.has_value())
+    {
+        return EXIT_FAILURE;
+    }
+    std::vector<erin::Load> loads = std::move(maybeLoads.value());
+
+    return erin::WritePackedLoads(loads, loadsFilename);
+}
+
+int
 main(int argc, char** argv)
 {
     int result = EXIT_SUCCESS;
@@ -401,80 +441,124 @@ main(int argc, char** argv)
     CLI::App app{"erin"};
     app.require_subcommand(0);
 
-    auto version = app.add_subcommand("version", "Display version");
-    version->callback([&]() { versionCommand(); });
+    {
+        auto version = app.add_subcommand("version", "Display version");
+        version->callback([&]() { versionCommand(); });
+    }
+    {
+        auto limits = app.add_subcommand("limits", "Display limits");
+        limits->callback([&]() { limitsCommand(); });
+    }
 
-    auto limits = app.add_subcommand("limits", "Display limits");
-    limits->callback([&]() { limitsCommand(); });
+    {
+        std::string tomlFilename;
+        auto run = app.add_subcommand("run", "Run a simulation");
+        run->add_option("toml_file", tomlFilename, "TOML filename")->required();
 
-    auto run = app.add_subcommand("run", "Run a simulation");
-    std::string tomlFilename;
-    run->add_option("toml_file", tomlFilename, "TOML filename")->required();
+        std::string eventsFilename = "out.csv";
+        run->add_option(
+            "-e,--events",
+            eventsFilename,
+            "Events csv filename; default:out.csv"
+        );
 
-    std::string eventsFilename = "out.csv";
-    run->add_option(
-        "-e,--events", eventsFilename, "Events csv filename; default:out.csv"
-    );
+        std::string statsFilename = "stats.csv";
+        run->add_option(
+            "-s,--statistics",
+            statsFilename,
+            "Statistics csv filename; default:stats.csv"
+        );
 
-    std::string statsFilename = "stats.csv";
-    run->add_option(
-        "-s,--statistics",
-        statsFilename,
-        "Statistics csv filename; default:stats.csv"
-    );
+        bool verbose = false;
+        run->add_flag("-v,--verbose", verbose, "Verbose output");
 
-    bool verbose = false;
-    run->add_flag("-v,--verbose", verbose, "Verbose output");
+        run->callback(
+            [&]() {
+                result = runCommand(
+                    tomlFilename, eventsFilename, statsFilename, verbose
+                );
+            }
+        );
+    }
 
-    run->callback(
-        [&]() {
-            result = runCommand(
-                tomlFilename, eventsFilename, statsFilename, verbose
-            );
-        }
-    );
+    {
+        std::string tomlFilename;
+        auto graph = app.add_subcommand("graph", "Graph a simulation");
+        graph->add_option("toml_file", tomlFilename, "TOML filename")
+            ->required();
 
-    auto graph = app.add_subcommand("graph", "Graph a simulation");
-    graph->add_option("toml_file", tomlFilename, "TOML filename")->required();
+        std::string outputFilename = "graph.dot";
+        bool useHtml = true;
+        graph->add_option("-o,--out", outputFilename, "Graph output filename");
+        graph->add_flag("-s,--simple", useHtml, "Create a simpler graph view");
 
-    std::string outputFilename = "graph.dot";
-    bool useHtml = true;
-    graph->add_option("-o,--out", outputFilename, "Graph output filename");
-    graph->add_flag("-s,--simple", useHtml, "Create a simpler graph view");
+        graph->callback(
+            [&]()
+            { result = graphCommand(tomlFilename, outputFilename, !useHtml); }
+        );
 
-    graph->callback(
-        [&]() { result = graphCommand(tomlFilename, outputFilename, !useHtml); }
-    );
+        auto checkNetwork =
+            app.add_subcommand("check", "Check network for issues");
+        checkNetwork
+            ->add_option(
+                "toml_input_file", tomlFilename, "TOML input file name"
+            )
+            ->required();
+        checkNetwork->callback([&]()
+                               { result = checkNetworkCommand(tomlFilename); });
+    }
 
-    auto checkNetwork = app.add_subcommand("check", "Check network for issues");
-    checkNetwork
-        ->add_option("toml_input_file", tomlFilename, "TOML input file name")
-        ->required();
-    checkNetwork->callback([&]() { result = checkNetworkCommand(tomlFilename); }
-    );
+    {
+        std::string tomlFilename;
+        std::string tomlOutputFilename = "out.toml";
+        bool stripIds = false;
+        auto update =
+            app.add_subcommand("update", "Update an ERIN 0.55 file to current");
+        update
+            ->add_option(
+                "toml_input_file", tomlFilename, "TOML input file name"
+            )
+            ->required();
+        update->add_option(
+            "toml_output_file", tomlOutputFilename, "TOML output file name"
+        );
+        update->add_flag(
+            "-s,--strip-ids",
+            stripIds,
+            "If specified, strips ids from the input file"
+        );
+        update->callback(
+            [&]() {
+                result = updateTomlInputCommand(
+                    tomlFilename, tomlOutputFilename, stripIds
+                );
+            }
+        );
+    }
 
-    std::string tomlOutputFilename = "out.toml";
-    bool stripIds = false;
-    auto update =
-        app.add_subcommand("update", "Update an ERIN 0.55 file to current");
-    update->add_option("toml_input_file", tomlFilename, "TOML input file name")
-        ->required();
-    update->add_option(
-        "toml_output_file", tomlOutputFilename, "TOML output file name"
-    );
-    update->add_flag(
-        "-s,--strip-ids",
-        stripIds,
-        "If specified, strips ids from the input file"
-    );
-    update->callback(
-        [&]() {
-            result = updateTomlInputCommand(
-                tomlFilename, tomlOutputFilename, stripIds
-            );
-        }
-    );
+    {
+        std::string tomlFilename;
+        auto packLoads = app.add_subcommand(
+            "pack-loads", "Pack loads into a single csv file"
+        );
+        packLoads->add_option("toml_file", tomlFilename, "TOML filename")
+            ->required();
 
+        std::string loadsFilename = "packed-loads.csv";
+        packLoads->add_option(
+            "-o,--outcsv",
+            loadsFilename,
+            "Packed-loads csv filename; default:packed-loads.csv"
+        );
+
+        bool verbose = false;
+        packLoads->add_flag("-v,--verbose", verbose, "Verbose output");
+
+        packLoads->callback(
+            [&]()
+            { result = packLoadsCommand(tomlFilename, loadsFilename, verbose); }
+        );
+    }
     CLI11_PARSE(app, argc, argv);
 
     // call with no subcommands is equivalent to subcommand "help"

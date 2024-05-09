@@ -2,6 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_SIMULATION_H
 #define ERIN_SIMULATION_H
+
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"

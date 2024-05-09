@@ -1,4 +1,5 @@
 import sys
+import os
 import subprocess
 from pathlib import Path
 import platform
@@ -96,11 +97,16 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     A smoke test just runs the example and confirms we get a 0 exit code
     """
     cwd = str(Path.cwd().resolve()) if dir is None else dir
-    Path("out.csv").unlink(missing_ok=True)
-    Path("stats.csv").unlink(missing_ok=True)
-    toml_input = f"ex{example_name}.toml"
+    
+    out_name = 'out.csv'
+    stats_name = 'stats.csv'
+
+    Path(out_name).unlink(missing_ok=True)
+    Path(stats_name).unlink(missing_ok=True)
+    
+    in_name = f"ex{example_name}.toml"
     start_time = time.perf_counter_ns()
-    result = subprocess.run([CLI_EXE, "run", toml_input], capture_output=True, cwd=cwd)
+    result = subprocess.run([CLI_EXE, "run", f"{in_name}", "-e", f"{out_name}", "-s", f"{stats_name}"], capture_output=True, cwd=cwd)
     end_time = time.perf_counter_ns()
     time_ns = end_time - start_time
     if result.returncode != 0:
@@ -223,36 +229,43 @@ def compare_csv(original_csv_path, proposed_csv_path):
                 print(f"-- proposed: {propx}")
 
 
-def run_cli(example_name):
+def full_compare_csv(file1_name, file2_name, dir1 = None, dir2 = None):
+    cwd1 = str(Path.cwd().resolve()) if dir1 is None else dir1
+    cwd2 = str(Path.cwd().resolve()) if dir2 is None else dir2   
+    
+    file1_name = os.path.join(cwd1, file1_name)
+    file2_name = os.path.join(cwd2, file2_name)
+
+    result = subprocess.run(
+        [DIFF_PROG, file1_name, file2_name],
+        capture_output=True)
+    if result.returncode != 0:
+        print(f'diff did not compare clean for {file1_name} for {file2_name}')
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
+        print(("=" * 20) + " DETAILED DIFF")
+        compare_csv(file1_name, file2_name)
+        sys.exit(1)
+ 
+
+def run_cli(example_name, dir=None, timeit=False, print_it=False):
     """
     Run the CLI for example name and check output diffs
-    - example_name: string, "01" or "25" to call ex01.toml or ex25.toml
+    - example_name: string, "sim01" to test sim01.toml
     """
-    _ = smoke_test(example_name)
-    result = subprocess.run(
-        [DIFF_PROG, 'out.csv', f'ex{example_name}-out.csv'],
-        capture_output=True)
-    if result.returncode != 0:
-        print(f"diff did not compare clean for out.csv for {example_name}")
-        print("stdout:\n")
-        print(result.stdout.decode())
-        print("stderr:\n")
-        print(result.stderr.decode())
-        print(("=" * 20) + " DETAILED DIFF")
-        compare_csv(f'ex{example_name}-out.csv', 'out.csv')
-        sys.exit(1)
-    result = subprocess.run(
-        ['diff', 'stats.csv', f'ex{example_name}-stats.csv'],
-        capture_output=True)
-    if result.returncode != 0:
-        print(f'diff did not compare clean for stats.csv for {example_name}')
-        print("stdout:\n")
-        print(result.stdout.decode())
-        print("stderr:\n")
-        print(result.stderr.decode())
-        print(("=" * 20) + " DETAILED DIFF")
-        compare_csv(f'ex{example_name}-stats.csv', 'stats.csv')
-        sys.exit(1)
+    _ = smoke_test(example_name, dir, timeit, print_it)
+
+    ref_out_name = f'ex{example_name}-out.csv'
+    ref_stats_name = f'ex{example_name}-stats.csv'
+    
+    out_name = 'out.csv'
+    stats_name = 'stats.csv'
+    
+    full_compare_csv(out_name, ref_out_name, dir1 = dir, dir2 = dir)
+    full_compare_csv(stats_name, ref_stats_name, dir1 = dir, dir2 = dir)
+        
     print(".", end="", sep="", flush=True)
 
 
@@ -272,10 +285,51 @@ def run_perf():
     print(result.stdout.decode(), end='')
 
 
+def pack_csv_cli(example_name, dir=None, timeit=False, print_it=False):
+    """
+    Pack the loads in example_name and compare to a pre-packed version
+    """
+    cwd = str(Path.cwd().resolve()) if dir is None else dir
+    
+    packed_loads_name = 'packed-loads.csv'
+    Path(packed_loads_name).unlink(missing_ok=True)
+    
+    in_name = f"ex{example_name}.toml"
+    start_time = time.perf_counter_ns()
+    result = subprocess.run([CLI_EXE, "pack-loads", f"{in_name}", "-o", f"{packed_loads_name}"], cwd=cwd)
+    end_time = time.perf_counter_ns()
+    time_ns = end_time - start_time
+    if result.returncode != 0:
+        print(f"Error running pack-loads for example {example_name}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
+        sys.exit(1)
+    result.time_ns = time_ns
+
+    return result
+
+
+def rename_file(orig_name, new_name, dir1 = None, dir2 = None):
+    cwd1 = str(Path.cwd().resolve()) if dir1 is None else dir1
+    cwd2 = str(Path.cwd().resolve()) if dir2 is None else dir2  
+    """
+    Rename file orig_name in dir1 to new_name in dir2
+    """
+     
+    orig_name = os.path.join(cwd1, orig_name)
+    new_name = os.path.join(cwd2, new_name)
+    Path(new_name).unlink(missing_ok=True)  
+       
+    os.rename(orig_name, new_name)
+ 
+   
 if __name__ == "__main__":
     run_limits()
     run_tests()
     print("Passed all unit tests!")
+    
     run_cli("01")
     run_cli("02")
     run_cli("03")
@@ -309,10 +363,29 @@ if __name__ == "__main__":
     run_cli("31")
     run_cli("32")
     run_cli("33")
-    smoke_test("ft-illinois", dir="ft-illinois", print_it=True)
     print("\nPassed all regression tests!")
+    
+	# Run original (unpacked) and rename/move output
+    orig_name = "ft-illinois"
+    smoke_test(orig_name, dir=orig_name, print_it=True)
+    rename_file("out.csv", f"ex{orig_name}-out.csv", dir1=orig_name, dir2=orig_name)
+     
+	# Pack and rename packed loads
+    packed_name = orig_name + "_packed"
+    pack_csv_cli(orig_name, dir=orig_name, timeit=False, print_it=False)
+    rename_file("packed-loads.csv", f"ex{packed_name}-loads.csv", dir1=orig_name, dir2=packed_name)
+    
+	# Run packed and rename output
+    smoke_test(packed_name, dir=packed_name, print_it=True) 
+    rename_file("out.csv", f"ex{packed_name}-out.csv", dir1=packed_name, dir2=packed_name)
+      
+	#compare packed<->unpacked outputs
+    full_compare_csv(file1_name=f"ex{packed_name}-out.csv", file2_name=f"ex{orig_name}-out.csv", dir1=packed_name, dir2=orig_name)   
+    print("\nPassed load-packing test!")
+    
     run_perf()
     print("All performance tests run")
+    
     bench_dir = (Path(".")/".."/".."/"benchmark").resolve()
     if not bench_dir.exists():
         bench_dir.mkdir(parents=True, exist_ok=True)

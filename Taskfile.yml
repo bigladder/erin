@@ -2,7 +2,7 @@ version: '3'
 
 vars:
   PYTHON:
-    sh: if [ command -v python3 &> /dev/null ]; then which python3; else which python; fi
+    sh: if command -v python &> /dev/null; then which python; else which python3; fi
 
 tasks:
   python:

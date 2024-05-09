@@ -2,6 +2,7 @@
  * See the LICENSE.txt file for additional terms and conditions. */
 #ifndef ERIN_LOAD_H
 #define ERIN_LOAD_H
+
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
 #include "../vendor/toml11/toml.hpp"
@@ -19,12 +20,6 @@ namespace erin
         std::string Tag;
         std::vector<TimeAndAmount> TimeAndLoads;
     };
-
-    std::optional<Load>
-    ParseSingleLoad(
-        std::unordered_map<std::string, InputValue> const& table,
-        std::string const& tag
-    );
 
     std::optional<Load>
     ParseSingleLoadExplicit(
@@ -47,6 +42,12 @@ namespace erin
 
     std::ostream&
     operator<<(std::ostream& os, Load const& load);
+
+    int
+    WritePackedLoads(
+        const std::vector<Load>& loads,
+        std::string const& loadsFilename
+    );
 } // namespace erin
 
 #endif

@@ -25,5 +25,9 @@ namespace erin
         bool start = true,
         bool end_with_lf = true
     );
+
+    std::string
+    DoubleToString(double value, unsigned int precision);
+
 } // namespace erin
 #endif

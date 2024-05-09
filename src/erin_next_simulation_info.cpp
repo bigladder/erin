@@ -120,11 +120,10 @@ namespace erin
     std::ostream&
     operator<<(std::ostream& os, SimulationInfo const& s)
     {
-        os << "SimulationInfo{"
-           << "MaxTime=" << s.MaxTime << "; "
+        os << "SimulationInfo{" << "MaxTime=" << s.MaxTime << "; "
            << "TimeUnit=\"" << TimeUnitToTag(s.TheTimeUnit) << "\"; "
-           << "QuantityUnit=\"" << s.QuantityUnit << "\"; "
-           << "RateUnit=\"" << PowerUnitToString(s.RateUnit) << "\"}";
+           << "QuantityUnit=\"" << s.QuantityUnit << "\"; " << "RateUnit=\""
+           << PowerUnitToString(s.RateUnit) << "\"}";
         return os;
     }
 } // namespace erin

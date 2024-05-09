@@ -132,8 +132,7 @@ namespace erin
             for (auto ip : pc.input_ports)
             {
                 label << "        <TD PORT=\"I" << ip
-                      << "\" BGCOLOR=\"lightgrey\">"
-                      << "I(" << ip << ")"
+                      << "\" BGCOLOR=\"lightgrey\">" << "I(" << ip << ")"
                       << "</TD>\n";
             }
         }
@@ -144,8 +143,7 @@ namespace erin
             for (auto op : pc.output_ports)
             {
                 label << "        <TD PORT=\"O" << op
-                      << "\" BGCOLOR=\"lightgrey\">"
-                      << "O(" << op << ")"
+                      << "\" BGCOLOR=\"lightgrey\">" << "O(" << op << ")"
                       << "</TD>\n";
             }
         }
@@ -208,10 +206,9 @@ namespace erin
             record_port_number(c2, ports);
             // to add colors to the edges, add the snippet below to the end:
             //<< " [color=\"black\"];\n";
-            connections << tab << "\"" << c1.component_id << "\":"
-                        << "O" << c1.port_number << ":s -> \""
-                        << c2.component_id << "\":"
-                        << "I" << c2.port_number << ":n;\n";
+            connections << tab << "\"" << c1.component_id << "\":" << "O"
+                        << c1.port_number << ":s -> \"" << c2.component_id
+                        << "\":" << "I" << c2.port_number << ":n;\n";
         }
         for (const auto& item : ports)
         {

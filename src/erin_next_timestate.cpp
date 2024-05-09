@@ -9,9 +9,8 @@ namespace erin
     std::ostream&
     operator<<(std::ostream& os, const TimeState& ts)
     {
-        os << "TimeState("
-           << "time=" << ts.time << ", "
-           << "state=" << ts.state << ", failureModeCauses={";
+        os << "TimeState(" << "time=" << ts.time << ", " << "state=" << ts.state
+           << ", failureModeCauses={";
         bool first = true;
         for (auto const& x : ts.failureModeCauses)
         {

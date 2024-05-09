@@ -1100,8 +1100,8 @@ namespace erin
         {
             if (f.Sections.size() == 0)
             {
-                std::cerr << "Program Initialization Error: "
-                          << "field '" << f.FieldName << "' has no "
+                std::cerr << "Program Initialization Error: " << "field '"
+                          << f.FieldName << "' has no "
                           << "sections that it applies to" << std::endl;
                 std::exit(1);
             }

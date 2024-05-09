@@ -231,8 +231,8 @@ namespace erin
         {
             std::ostringstream oss{};
             oss << "tag `" << tag << "` not a valid tabular distribution.\n"
-                << "xs.size() (" << a << ") must equal ("
-                << "dtimes_s.size() (" << b << ")\n";
+                << "xs.size() (" << a << ") must equal (" << "dtimes_s.size() ("
+                << b << ")\n";
             throw std::invalid_argument(oss.str());
         }
     }

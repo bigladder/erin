@@ -817,8 +817,8 @@ namespace erin
             if (connectedOutflowPorts.contains(outflowCompPort))
             {
                 std::ostringstream oss;
-                oss << "Port multiply connected: "
-                    << "- outflowCompPort: " << outflowCompPort << "\n"
+                oss << "Port multiply connected: " << "- outflowCompPort: "
+                    << outflowCompPort << "\n"
                     << "- compId: " << conn.FromId << "\n"
                     << "- outflowPort: " << conn.FromPort << "\n"
                     << "- tag: " << m.ComponentMap.Tag[conn.FromId] << "\n"
@@ -836,8 +836,8 @@ namespace erin
             if (connectedInflowPorts.contains(inflowCompPort))
             {
                 std::ostringstream oss;
-                oss << "Port multiply connected: "
-                    << "- inflowCompPort: " << inflowCompPort << "\n"
+                oss << "Port multiply connected: " << "- inflowCompPort: "
+                    << inflowCompPort << "\n"
                     << "- compId: " << conn.ToId << "\n"
                     << "- outflowPort: " << conn.ToPort << "\n"
                     << "- tag: " << m.ComponentMap.Tag[conn.ToId] << "\n"
@@ -4206,8 +4206,8 @@ namespace erin
                     issueFound = true;
                     std::cout
                         << "INTEGRITY VIOLATION: "
-                        << "attempt to doubly connect "
-                        << "compId=" << fromId << " outport=" << fromPort
+                        << "attempt to doubly connect " << "compId=" << fromId
+                        << " outport=" << fromPort
                         << " tag=" << m.ComponentMap.Tag[fromId]
                         << " type=" << ToString(m.ComponentMap.CompType[fromId])
                         << std::endl;
@@ -4217,8 +4217,8 @@ namespace erin
                     issueFound = true;
                     std::cout
                         << "INTEGRITY VIOLATION: "
-                        << "attempt to doubly connect "
-                        << "compId=" << toId << " inport=" << toPort
+                        << "attempt to doubly connect " << "compId=" << toId
+                        << " inport=" << toPort
                         << " tag=" << m.ComponentMap.Tag[toId]
                         << " type=" << ToString(m.ComponentMap.CompType[toId])
                         << std::endl;
@@ -5072,8 +5072,8 @@ namespace erin
     {
         if (!table.contains("connections"))
         {
-            std::cout << "[network] "
-                      << "required key 'connections' missing" << std::endl;
+            std::cout << "[network] " << "required key 'connections' missing"
+                      << std::endl;
             return Result::Failure;
         }
         if (!table.at("connections").is_array())
@@ -5087,16 +5087,14 @@ namespace erin
             toml::value const& item = connArray[i];
             if (!item.is_array())
             {
-                std::cout << "[network] "
-                          << "'connections' at index " << i
+                std::cout << "[network] " << "'connections' at index " << i
                           << " must be an array" << std::endl;
                 return Result::Failure;
             }
             // TODO: std::vector<toml::value> itemAsArray = item.as_array();
             if (item.as_array().size() < 3)
             {
-                std::cout << "[network] "
-                          << "'connections' at index " << i
+                std::cout << "[network] " << "'connections' at index " << i
                           << " must be an array of length >= 3" << std::endl;
                 return Result::Failure;
             }
@@ -5104,8 +5102,7 @@ namespace erin
             {
                 if (!item.as_array()[idx].is_string())
                 {
-                    std::cout << "[network] "
-                              << "'connections' at index " << i
+                    std::cout << "[network] " << "'connections' at index " << i
                               << " and subindex " << idx << " must be a string"
                               << std::endl;
                     return Result::Failure;
@@ -5138,9 +5135,8 @@ namespace erin
                 FlowDict_GetIdByTag(fd, flow);
             if (!maybeFlowTypeId.has_value())
             {
-                std::cout << "[network] "
-                          << "could not identify flow type '" << flow << "'"
-                          << std::endl;
+                std::cout << "[network] " << "could not identify flow type '"
+                          << flow << "'" << std::endl;
                 return Result::Failure;
             }
             size_t flowTypeId = maybeFlowTypeId.value();
@@ -5166,8 +5162,7 @@ namespace erin
             size_t toCompId = maybeToCompId.value();
             if (fromTap.Port >= m.ComponentMap.OutflowType[fromCompId].size())
             {
-                std::cout << "[network] "
-                          << "port is unaddressable for "
+                std::cout << "[network] " << "port is unaddressable for "
                           << ToString(m.ComponentMap.CompType[fromCompId])
                           << ": trying to address " << fromTap.Port
                           << " but only "

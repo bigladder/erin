@@ -2135,19 +2135,12 @@ namespace erin
                       << std::endl;
             return;
         }
-        stats << "scenario id,"
-              << "occurrence number,"
-              << "duration (h),"
-              << "total source (kJ),"
-              << "total load (kJ),"
-              << "total storage (kJ),"
-              << "total waste (kJ),"
+        stats << "scenario id," << "occurrence number," << "duration (h),"
+              << "total source (kJ)," << "total load (kJ),"
+              << "total storage (kJ)," << "total waste (kJ),"
               << "energy balance (source-(load+storage+waste)) (kJ),"
-              << "site efficiency,"
-              << "uptime (h),"
-              << "downtime (h),"
-              << "load not served (kJ),"
-              << "energy robustness [ER],"
+              << "site efficiency," << "uptime (h)," << "downtime (h),"
+              << "load not served (kJ)," << "energy robustness [ER],"
               << "energy availability [EA],"
               << "max single event downtime [MaxSEDT] (h),"
               << "global availability";

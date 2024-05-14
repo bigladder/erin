@@ -114,6 +114,7 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
         print(f"Error running CLI for example {example_name}")
         print("Command: " + (" ".join(cmd)))
         print(f"CLI_EXE.exist(): {Path(CLI_EXE).exists()}")
+        print(f"{in_name}.exists(): {Path(in_name).exists()}")
         print("stdout:\n")
         print(result.stdout.decode())
         print("stderr:\n")

@@ -385,7 +385,7 @@ namespace erin
 
         std::vector<std::optional<Load>> maybeLoads = {};
         maybeLoads = ParseMultiLoadFileLoad(table, tableName);
-        for (auto& maybeLoad : maybeLoads)
+        for (auto const& maybeLoad : maybeLoads)
         {
             if (!maybeLoad.has_value())
             {

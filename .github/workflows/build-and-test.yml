@@ -37,7 +37,7 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
-          sudo apt-get -y install clang-14
+          sudo apt-get -y install clang-17
       - name: Echo clang versions on Ubuntu
         run: |
           clang --version
@@ -45,10 +45,10 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
       - name: Configure CMake (Ubuntu)
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
         env:
-          CC: clang-14
-          CXX: clang++-14
+          CC: clang-17
+          CXX: clang++-17
       - name: Build
         run: cmake --build build --config ${{ matrix.config }}
       - name: Test

@@ -106,11 +106,14 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     
     in_name = f"ex{example_name}.toml"
     start_time = time.perf_counter_ns()
-    result = subprocess.run([CLI_EXE, "run", f"{in_name}", "-e", f"{out_name}", "-s", f"{stats_name}"], capture_output=True, cwd=cwd)
+    cmd = [CLI_EXE, "run", in_name, "-e", out_name, "-s", stats_name]
+    result = subprocess.run(cmd, capture_output=True, cwd=cwd)
     end_time = time.perf_counter_ns()
     time_ns = end_time - start_time
     if result.returncode != 0:
         print(f"Error running CLI for example {example_name}")
+        print("Command: " + " ".join(cmd))
+        print(f"CLI_EXE.exist(): {Path(CLI_EXE).exists()}")
         print("stdout:\n")
         print(result.stdout.decode())
         print("stderr:\n")

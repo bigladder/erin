@@ -23,6 +23,7 @@ if platform.system() == 'Windows':
     if not BIN_DIR.exists():
         print("Could not find build directory!")
         sys.exit(1)
+    BIN_DIR = BIN_DIR.resolve()
     TEST_EXE = BIN_DIR / 'erin_tests.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests.exe'
     LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests.exe'
@@ -31,6 +32,7 @@ if platform.system() == 'Windows':
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     DIFF_PROG = 'diff'
     BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
+    BIN_DIR = BIN_DIR.resolve()
     TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
     LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests'

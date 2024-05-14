@@ -362,18 +362,18 @@ namespace erin
                 }
                 return {};
             }
+            if (warnings02.size() > 0)
+            {
+                for (auto const& w : warnings02)
+                {
+                    WriteWarningMessage(tableName, w);
+                }
+            }
             maybeLoad = ParseSingleLoadFileLoad(fileLoadTable, tag);
             if (!maybeLoad.has_value())
             {
                 WriteErrorMessage(tableName, "unable to load");
                 return {};
-            }
-            if (warnings02.size() > 0)
-            {
-                for (auto const& w : warnings02)
-                {
-                    WriteErrorMessage(tableName, w);
-                }
             }
         }
         return maybeLoad;

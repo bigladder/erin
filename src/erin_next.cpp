@@ -3284,7 +3284,7 @@ namespace erin
                         sumOfFlowsByCompId[fromId] -= flow;
                         sumOfFlowsByCompId[toId] += flow;
                     }
-                    for (auto const item : sumOfFlowsByCompId)
+                    for (auto const& item : sumOfFlowsByCompId)
                     {
                         size_t const& compId = item.first;
                         ComponentType ctype =

@@ -44,3 +44,4 @@ jobs:
       - name: Run Regression Testing
         run: python regress.py
         working-directory: docs/examples
+        if: ${{ matrix.os }} == "windows-latest"

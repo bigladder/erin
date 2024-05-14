@@ -23,6 +23,7 @@ if platform.system() == 'Windows':
     if not BIN_DIR.exists():
         print("Could not find build directory!")
         sys.exit(1)
+    BIN_DIR = BIN_DIR.resolve()
     TEST_EXE = BIN_DIR / 'erin_tests.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests.exe'
     LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests.exe'
@@ -31,6 +32,7 @@ if platform.system() == 'Windows':
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     DIFF_PROG = 'diff'
     BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
+    BIN_DIR = BIN_DIR.resolve()
     TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
     LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests'
@@ -61,6 +63,18 @@ if not CLI_EXE.exists():
     sys.exit(1)
 
 
+def run_limits():
+    """
+    Calls ERIN limits   
+    """
+    result = subprocess.run([CLI_EXE, "limits"], capture_output=True)
+    if result.returncode != 0:
+        print("ERIN limits did not return a non-zero exit code")
+        sys.exit(1)
+    else:
+        print(result.stdout.decode(), flush=True)
+
+
 def run_tests():
     """
     Run the test suite
@@ -71,7 +85,7 @@ def run_tests():
             stem = Path(test).stem
             print(f"Test '{stem}' did not pass!")
             print("stdout:\n")
-            print(result.stderr.decode())
+            print(result.stdout.decode())
             print("stdout:\n")
             print(result.stderr.decode())
             sys.exit(1)
@@ -94,11 +108,15 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     
     in_name = f"ex{example_name}.toml"
     start_time = time.perf_counter_ns()
-    result = subprocess.run([CLI_EXE, "run", f"{in_name}", "-e", f"{out_name}", "-s", f"{stats_name}"], capture_output=True, cwd=cwd)
+    cmd = [CLI_EXE, "run", in_name, "-e", out_name, "-s", stats_name]
+    result = subprocess.run(cmd, capture_output=True, cwd=cwd)
     end_time = time.perf_counter_ns()
     time_ns = end_time - start_time
     if result.returncode != 0:
         print(f"Error running CLI for example {example_name}")
+        print("Command: " + (" ".join([str(c) for c in cmd])))
+        print(f"CLI_EXE.exist(): {Path(CLI_EXE).exists()}")
+        print(f"{in_name}.exists(): {Path(in_name).exists()}")
         print("stdout:\n")
         print(result.stdout.decode())
         print("stderr:\n")
@@ -314,6 +332,7 @@ def rename_file(orig_name, new_name, dir1 = None, dir2 = None):
  
    
 if __name__ == "__main__":
+    run_limits()
     run_tests()
     print("Passed all unit tests!")
     

@@ -30,10 +30,18 @@ jobs:
         run: echo "REPOSITORY_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
       - name: Create Build Directory
         run: cmake -E make_directory ${{github.workspace}}/build
-      - name: Configure CMake
+      - name: Configure CMake (non-Ubuntu)
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE="${{ matrix.config }}" -DERIN_TESTING="ON"
       - name: Build
         run: cmake --build build --config ${{ matrix.config }}
       - name: Test
         run: ctest -C ${{ matrix.config }} --output-on-failure
         working-directory: build
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Run Regression Testing
+        run: python regress.py
+        working-directory: docs/examples
+        if: ${{ matrix.os == 'windows-latest' }}

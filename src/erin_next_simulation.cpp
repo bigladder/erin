@@ -1633,6 +1633,11 @@ namespace erin
     {
         if (value_W == max_flow_W)
         {
+            std::cout << "Found infinity:" << std::endl;
+            std::cout << "- value_W   : " << fmt::format("{}", value_W)
+                      << std::endl;
+            std::cout << "- max_flow_W: " << fmt::format("{}", max_flow_W)
+                      << std::endl;
             return "inf";
         }
         double value_kW = value_W / W_per_kW;

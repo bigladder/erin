@@ -3284,7 +3284,7 @@ namespace erin
                         sumOfFlowsByCompId[fromId] -= flow;
                         sumOfFlowsByCompId[toId] += flow;
                     }
-                    for (auto const item : sumOfFlowsByCompId)
+                    for (auto const& item : sumOfFlowsByCompId)
                     {
                         size_t const& compId = item.first;
                         ComponentType ctype =
@@ -4053,6 +4053,12 @@ namespace erin
         size_t idx = m.ConstEffConvs.size();
         ConstantEfficiencyConverter cec{
             .Efficiency = efficiency,
+            .InflowConn = 0,
+            .OutflowConn = 0,
+            .LossflowConn = {},
+            .WasteflowConn = 0,
+            .MaxOutflow_W = max_flow_W,
+            .MaxLossflow_W = max_flow_W,
         };
         m.ConstEffConvs.push_back(std::move(cec));
         size_t wasteId = Component_AddComponentReturningId(

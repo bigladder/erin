@@ -112,7 +112,7 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     time_ns = end_time - start_time
     if result.returncode != 0:
         print(f"Error running CLI for example {example_name}")
-        print("Command: " + (" ".join(cmd)))
+        print("Command: " + (" ".join([str(c) for c in cmd])))
         print(f"CLI_EXE.exist(): {Path(CLI_EXE).exists()}")
         print(f"{in_name}.exists(): {Path(in_name).exists()}")
         print("stdout:\n")

@@ -2,20 +2,34 @@ version: '3'
 
 vars:
   PYTHON:
-    sh: if [ command -v python3 &> /dev/null ]; then which python3; else which python; fi
+    sh: if command -v python &> /dev/null; then which python; else which python3; fi
 
 tasks:
   python:
     cmds:
       - echo {{.PYTHON}}
 
-  format:
-    desc: Run clang-format over all project files
+  docker-build:
+    desc: Builds a Docker container with useful utilities for project work
     cmds:
-      - clang-format -i -style=file src/*.cpp
-      - clang-format -i -style=file include/**/*.h
-      - clang-format -i -style=file test/*.cpp
-      - clang-format -i -style=file apps/*.cpp
+      - if [ -z "$(docker images -q format:ver18 2> /dev/null)" ]; then docker buildx build -t format:ver18 .; fi
+
+  docker-format:
+    desc: Use docker to run clang-format
+    deps: ["docker-build"]
+    cmds:
+      - docker run -it --rm --mount type=bind,source="$(pwd)",target=/app format:ver18
+
+  docker-format-version:
+    desc: Get the version of clang-format in use
+    deps: ["docker-build"]
+    cmds:
+      - docker run -it --rm --mount type=bind,source="$(pwd)",target=/app format:ver18 clang-format --version
+
+  format:
+    desc: Run local clang-format over all project files
+    cmds:
+      - clang-format -i -style=file src/*.cpp include/**/*.h test/*.cpp apps/*.cpp
 
   checkfmt:
     desc: Check if there are any formatting problems

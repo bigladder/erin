@@ -36,6 +36,23 @@ This project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html).
 Once installed, formatting is facilitated by using task: `task format`.
 This makes the formatting step explicit.
 
+Note: we have added a Dockerfile to enable developers to run clang format within Docker.
+
+To run clang-format from Docker, do the following:
+
+
+0. Install Taskfile if you haven't already
+1. Install Docker Desktop
+2. Start Docker Desktop
+3. Run task docker-format
+
+NOTE: if you prefer to not use taskfile, you can run the commands manually.
+First, start Docker Desktop.
+Next, open the Taskfile which is a plain text file written in YAML format.
+Copy and run the docker-build task's command in your shell at the repo top directory.
+When those commands have completed, run docker-format tasks's command.
+
+
 ## Running Tests
 
 Task contains a convenient test task.

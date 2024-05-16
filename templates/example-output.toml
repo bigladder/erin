@@ -1,0 +1,65 @@
+[simulation_info]
+input_format_version = "0.2"
+max_time = 10
+quantity_unit = "kJ"
+rate_unit = "kW"
+time_unit = "hours"
+############################################################
+[loads.building_electrical]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,10.0],[10.0,0.0]]
+############################################################
+[components.electric_source]
+type = "source"
+max_outflow = 100.0
+outflow = "electricity"
+rate_unit = "kW"
+[components.pv_array_source]
+type = "uncontrolled_source"
+group = "pv_array_with_battery"
+outflow = "electricity"
+[components.pv_array_source.supply_by_scenario]
+blue_sky = "building_electrical"
+[components.battery]
+type = "store"
+group = "pv_array_with_battery"
+capacity = 20.0
+capacity_unit = "kWh"
+charge_at_soc = 0.8
+flow = "electricity"
+init_soc = 1.0
+max_charge = 5.0
+max_discharge = 20.0
+rate_unit = "kW"
+roundtrip_efficiency = 0.9
+[components.electric_bus]
+type = "mux"
+group = "pv_array_with_battery"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+[components.electric_load]
+type = "load"
+inflow = "electricity"
+[components.electric_load.loads_by_scenario]
+blue_sky = "building_electrical"
+############################################################
+[network]
+connections = [
+  ["pv_array_source:OUT(0)", "battery:IN(0)", "electricity"],
+  ["battery:OUT(0)", "electric_bus:IN(0)", "electricity"],
+  ["electric_source:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["electric_bus:OUT(0)", "electric_load:IN(0)", "electricity"],
+]
+############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 10
+max_occurrences = 1

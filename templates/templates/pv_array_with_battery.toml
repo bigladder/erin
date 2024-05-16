@@ -1,0 +1,62 @@
+name = "pv_array_with_battery"
+num_inflows = 1
+num_outflows = 1
+connections = [
+  ["pv_array_source:OUT(0)", "battery:IN(0)", "electricity"],
+  ["battery:OUT(0)", "electric_bus:IN(0)", "electricity"],
+  ["<0>", "electric_bus:IN(1)", "electricity"], 
+  ["electric_bus:OUT(0)", "<0>", "electricity"],
+]
+
+[parameters.required]
+supply_by_scenario.type = "(table string string)"
+capacity.type="number"
+capacity.constraints = [">0"]
+rate_unit.type = "enum"
+rate_unit.enum_options = ["W", "kW"]
+max_charge.type = "number"
+max_charge.constraints = [">=0"]
+max_discharge.type = "number"
+max_discharge.constraints = [">=0"]
+
+[parameters.optional]
+capacity_unit.type = "enum"
+capacity_unit.enum_options = ["J", "kJ", "kWh"]
+charge_at_soc.type = "frac"
+charge_at_soc.constraints = ["<1"]
+init_soc.type = "frac"
+battery_roundtrip_efficiency.type = "frac"
+battery_roundtrip_efficiency.constraints = [">0"]
+
+[[components]]
+id = "pv_array_source"
+type = "uncontrolled_source"
+supply_by_scenario.param = "supply_by_scenario"
+outflow = "electricity"
+
+[[components]]
+id = "battery"
+type = "store"
+flow = "electricity"
+capacity.param = "capacity"
+rate_unit.param = "rate_unit"
+rate_unit.inherit_from = "simulation_info.capacity_unit"
+rate_unit.default = "W"
+max_charge.param = "max_charge"
+max_discharge.param = "max_discharge"
+capacity_unit.param = "capacity_unit"
+capacity_unit.inherit_from = "simulation_info.capacity_unit"
+capacity_unit.default = "J"
+charge_at_soc.param = "charge_at_soc"
+charge_at_soc.default = 0.8
+init_soc.param = "init_soc"
+init_soc.default = 1.0
+roundtrip_efficiency.param = "battery_roundtrip_efficiency"
+roundtrip_efficiency.default = 1.0
+
+[[components]]
+id = "electric_bus"
+type = "mux"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1

@@ -365,7 +365,8 @@ namespace TemplateEngine
 		AddTemplateConnections(
 			List<(string, string, string)> connections,
 			List<(string, string, string)> templateConnections,
-			string templateComponentName
+			string templateComponentName,
+			bool verbose=false
 		)
 		{
 			HashSet<(string, string, string)> toRemove = [];
@@ -388,11 +389,17 @@ namespace TemplateEngine
 				{
 					throw new Exception($"[ERROR] Unable to parse port for {toStr}");
 				}
-				Console.WriteLine($"[INFO] fromCompName = {fromCompName}; fromCompPort = {fromCompPort}");
-				Console.WriteLine($"[INFO] toCompName = {toCompName}; toCompPort = {toCompPort}");
+				if (verbose)
+				{
+					Console.WriteLine($"[INFO] fromCompName = {fromCompName}; fromCompPort = {fromCompPort}");
+					Console.WriteLine($"[INFO] toCompName = {toCompName}; toCompPort = {toCompPort}");
+				}
 				if (fromCompName == templateComponentName)
 				{
-					Console.WriteLine($"[INFO] template match for '{templateComponentName}'");
+					if (verbose)
+					{
+						Console.WriteLine($"[INFO] template match for '{templateComponentName}'");
+					}
 					string toKey = $"<{fromCompPort}>";
 					bool foundMatch = false;
 					foreach ((string tFrom, string tTo, string tFlowType) in templateConnections)
@@ -415,7 +422,10 @@ namespace TemplateEngine
 				}
 				else if (toCompName == templateComponentName)
 				{
-					Console.WriteLine($"[INFO] template match for '{templateComponentName}'");
+					if (verbose)
+					{
+						Console.WriteLine($"[INFO] template match for '{templateComponentName}'");
+					}
 					string fromKey = $"<{toCompPort}>";
 					bool foundMatch = false;
 					foreach ((string tFrom, string tTo, string tFlowType) in templateConnections)
@@ -460,7 +470,8 @@ namespace TemplateEngine
 			TomlTable templateComponent,
 			Dictionary<string, TemplateParameter> parameters,
 			TomlTable component,
-			string templateInfo
+			string templateInfo,
+			bool verbose=false
 		)
 		{
 			TomlTable result = [];
@@ -487,9 +498,12 @@ namespace TemplateEngine
 						{
 							defaultValue = fieldValue["default"];
 						}
-						Console.WriteLine(
-							$"[INFO] Found field '{fieldName}' parameterized on '{paramName}' {templateInfo}"
-						);
+						if (verbose)
+						{
+							Console.WriteLine(
+								$"[INFO] Found field '{fieldName}' parameterized on '{paramName}' {templateInfo}"
+							);
+						}
 					}
 				}
 				catch
@@ -547,12 +561,16 @@ namespace TemplateEngine
 		public static TomlTable
 		ApplyTemplatesToModel(
 			Dictionary<string, TomlTable> templates,
-			TomlTable model
+			TomlTable model,
+			bool verbose=false
 		)
 		{
 			TomlTable newModel = [];
 			List<(string, string, string)> connections = ReadConnectionsFromModel(model);
-			PrintConnections(connections);
+			if (verbose)
+			{
+				PrintConnections(connections);
+			}
 			foreach (KeyValuePair<string, object> kvp in model)
 			{
 				if (kvp.Key != "components" && kvp.Key != "network")
@@ -580,21 +598,30 @@ namespace TemplateEngine
 							string templateName = Get<string>(compData, "template_name");
 							if (templates.TryGetValue(templateName, out TomlTable? value))
 							{
-								Console.WriteLine(
-									$"[INFO] Expanding template {templateName} for component {compName}"
-								);
+								if (verbose)
+								{
+									Console.WriteLine(
+										$"[INFO] Expanding template {templateName} for component {compName}"
+									);
+								}
 								var template = value;
 								long numInflows = Get<long>(template, "num_inflows");
 								long numOutflows = Get<long>(template, "num_outflows");
-								Console.WriteLine(
-									$"[INFO] {templateName} has {numInflows} inflow(s)"
-								);
-								Console.WriteLine(
-									$"[INFO] {templateName} has {numOutflows} outflow(s)"
-								);
+								if (verbose)
+								{
+									Console.WriteLine(
+										$"[INFO] {templateName} has {numInflows} inflow(s)"
+									);
+									Console.WriteLine(
+										$"[INFO] {templateName} has {numOutflows} outflow(s)"
+									);
+								}
 								List<(string, string, string)> templateConnections =
 									ReadConnectionsFromTemplate(template);
-								PrintConnections(templateConnections);
+								if (verbose)
+								{
+									PrintConnections(templateConnections);
+								}
 								AddTemplateConnections(
 									connections,
 									templateConnections,
@@ -625,7 +652,10 @@ namespace TemplateEngine
 										);
 									}
 								}
-								PrintParameters(parameters);
+								if (verbose)
+								{
+									PrintParameters(parameters);
+								}
 								Dictionary<string, TomlTable> templateComponents = [];
 								var tempCompArray =
 									Get<TomlTableArray>(template, "components");
@@ -641,7 +671,7 @@ namespace TemplateEngine
 										$"(template: {templateName}; template component id: {id}; "
 										+ $"component name: {compName})";
 									TomlTable reifiedComponent = FillComponentParameters(
-										tempCompTable, parameters, compData, templateInfo);
+										tempCompTable, parameters, compData, templateInfo, verbose);
 									reifiedComponent["group"] = compName;
 									templateComponents[id] = reifiedComponent;
 								}
@@ -670,19 +700,23 @@ namespace TemplateEngine
 		}
 
 		public static void
-		WriteModel(TomlTable model, string outputFilePath)
-		{
+		WriteModel(TomlTable model, string outputFilePath) {
 			TomlTable m = model;
 			File.WriteAllText(outputFilePath, Toml.FromModel(m));
 		}
 
 		public static void
-		Run(string templateDirectory, string inputFile, string outputFile)
+		Run(
+			string templateDirectory,
+			string inputFile,
+			string outputFile,
+			bool verbose=false
+		)
 		{
 			Dictionary<string, TomlTable> templates =
 				Utils.ReadTemplateLibrary(templateDirectory);
 			var model = Utils.ReadInputModel(inputFile);
-			var modifiedModel = Utils.ApplyTemplatesToModel(templates, model);
+			var modifiedModel = Utils.ApplyTemplatesToModel(templates, model, verbose);
 			Utils.WriteModel(modifiedModel, outputFile);
 		}
 	}

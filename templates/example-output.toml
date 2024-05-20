@@ -47,10 +47,10 @@ blue_sky = "building_electrical"
 ############################################################
 [network]
 connections = [
-  ["pv_array_source:OUT(0)", "battery:IN(0)", "electricity"],
   ["battery:OUT(0)", "electric_bus:IN(0)", "electricity"],
-  ["electric_source:OUT(0)", "electric_bus:IN(1)", "electricity"],
   ["electric_bus:OUT(0)", "electric_load:IN(0)", "electricity"],
+  ["electric_source:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["pv_array_source:OUT(0)", "battery:IN(0)", "electricity"],
 ]
 ############################################################
 [dist.immediately]

@@ -30,5 +30,8 @@ if (ECHO_ARGS)
 }
 
 Utils.Run(templateDirectory, inputFile, outputFile, verbose);
-Console.WriteLine("Done!");
+if (verbose)
+{
+	Console.WriteLine("Done!");
+}
 return 0;

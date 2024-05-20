@@ -1,6 +1,4 @@
 namespace tests;
-using TemplateEngine;
-using Tomlyn.Model;
 
 public class UnitTest1
 {

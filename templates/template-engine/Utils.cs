@@ -5,6 +5,229 @@ namespace TemplateEngine
 {
 	public class Utils
 	{
+
+		public static List<string>
+		ModelDifferences(object? a, object? b, string path=".")
+		{
+			List<string> differences = new();
+			if (a == null && b == null)
+			{
+			}
+			else if (a is TomlTable aTable)
+			{
+				if (b is TomlTable bTable)
+				{
+					List<string> subDiffs = ModelDifferences(aTable, bTable, path);
+					if (subDiffs.Count > 0)
+					{
+						differences.AddRange(subDiffs);
+					}
+				}
+				else
+				{
+					differences.Add(
+						$"[{path}] A is a TomlTable but B is not"
+					);
+				}
+			}
+			else if (a is TomlArray aArray)
+			{
+				if (b is TomlArray bArray)
+				{
+					List<string> subDiffs = ModelDifferences(aArray, bArray, path);
+					if (subDiffs.Count > 0)
+					{
+						differences.AddRange(subDiffs);
+					}
+				}
+				else
+				{
+					differences.Add(
+						$"[{path}] A is a TomlArray but B is not"
+					);
+				}
+			}
+			else if (a is TomlTableArray aTableArray)
+			{
+				if (b is TomlTableArray bTableArray)
+				{
+					List<string> subDiffs =
+						ModelDifferences(aTableArray, bTableArray);
+					if (subDiffs.Count > 0)
+					{
+						differences.AddRange(subDiffs);
+					}
+				}
+				else
+				{
+					differences.Add(
+						$"[{path}] A is TomlTableArray but B is not"
+					);
+				}
+			}
+			else if (a is long aLong)
+			{
+				if (b is long bLong)
+				{
+					if (aLong != bLong)
+					{
+						differences.Add(
+							$"[{path}] A ({aLong}) != B ({bLong})"
+						);
+					}
+				}
+				else if (b is double bDouble)
+				{
+					double aDouble = (double)aLong;
+					if (aDouble != bDouble)
+					{
+						differences.Add(
+							$"[{path}] A ({aDouble}) != B ({bDouble})"
+						);
+					}
+				}
+				else
+				{
+					differences.Add(
+						$"[{path}] A is long but B is not"
+					);
+				}
+			}
+			else if (a is string aString)
+			{
+				if (b is string bString)
+				{
+					if (aString != bString)
+					{
+						differences.Add(
+							$"[{path}] A is '{aString}' but B is '{bString}'"
+						);
+					}
+				}
+				else
+				{
+					differences.Add(
+						$"[{path}] A is string but B is not"
+					);
+				}
+			}
+			else if (a is double aDouble)
+			{
+				if (b is double bDouble)
+				{
+					if (aDouble != bDouble)
+					{
+						differences.Add(
+							$"[{path}] A ({aDouble}) != B ({bDouble})"
+						);
+					}
+				}
+				else if (b is long bLong)
+				{
+					double bDouble2 = (double)bLong;
+					if (aDouble != bDouble2)
+					{
+						differences.Add(
+							$"[{path}] A ({aDouble}) != B ({bDouble2})"
+						);
+					}
+				}
+				else
+				{
+					differences.Add(
+						$"[{path}] A is double but B is not"
+					);
+				}
+			}
+			else
+			{
+				differences.Add(
+					$"[{path}] Unhandled type for A {a}"
+				);
+			}
+			return differences;
+		}
+
+		public static List<string>
+		ModelDifferences(TomlArray a, TomlArray b, string path=".")
+		{
+			List<string> differences = [];
+			if (a.Count != b.Count)
+			{
+				differences.Add($"[{path}] Array count for A ({a.Count}) not the same count as B ({b.Count})");
+				return differences;
+			}
+			for (int idx=0; idx < a.Count; ++idx)
+			{
+				object? aItem = a[idx];
+				object? bItem = b[idx];
+				List<string> subDiffs = ModelDifferences(aItem, bItem, path + $".{idx}");
+				if (subDiffs.Count > 0)
+				{
+					differences.AddRange(subDiffs);
+					return differences;
+				}
+			}
+			return differences;
+		}
+
+		public static List<string>
+		ModelDifferences(TomlTableArray a, TomlTableArray b, string path=".")
+		{
+			List<string> differences = [];
+			if (a.Count != b.Count)
+			{
+				differences.Add(
+					$"[{path}] A count ({a.Count}) != B count ({b.Count})"
+				);
+				return differences;
+			}
+			for (int idx=0; idx < a.Count; ++idx)
+			{
+				TomlTable aItem = a[idx];
+				TomlTable bItem = b[idx];
+				List<string> subDiffs =
+					ModelDifferences(aItem, bItem, path: path + $".{idx}");
+				if (subDiffs.Count > 0)
+				{
+					differences.AddRange(subDiffs);
+					return differences;
+				}
+			}
+			return differences;
+		}
+
+		public static List<string>
+		ModelDifferences(TomlTable a, TomlTable b, string path=".")
+		{
+			List<string> differences = new();
+			List<string> aKeys = new(a.Keys);
+			List<string> bKeys = new(b.Keys);
+			if (aKeys.Count != bKeys.Count)
+			{
+				differences.Add($"[{path}] Key counts differ: a.Keys.Count = {aKeys.Count}; b.Keys.Count = {bKeys.Count}");
+				HashSet<string> aKeySet = new(aKeys);
+				HashSet<string> bKeySet = new(bKeys);
+				HashSet<string> aNotB = new(aKeySet.Except(bKeySet));
+				HashSet<string> bNotA = new(bKeySet.Except(aKeySet));
+				differences.Add($"[{path}] In A, not B: {String.Join(", ", aNotB.ToList())}");
+				differences.Add($"[{path}] In B, not A: {String.Join(", ", bNotA.ToList())}");
+				return differences;
+			}
+			foreach (string key in aKeys)
+			{
+				object aValue = a[key];
+				object bValue = b[key];
+				List<string> subDiffs = ModelDifferences(aValue, bValue, path + $".{key}");
+				if (subDiffs.Count > 0)
+				{
+					differences.AddRange(subDiffs);
+					return differences;
+				}
+			}
+			return differences;
+		}
+
 		public static TomlTable
 		ReadTemplate(string templatePath)
 		{
@@ -349,13 +572,23 @@ namespace TemplateEngine
 		public static TomlArray
 		ConnectionsToTomlArray(List<(string, string, string)> connections)
 		{
-			TomlArray cs = [];
+			List<List<string>> conns = [];
 			foreach ((string fromStr, string toStr, string flowTypeStr) in connections)
 			{
+				conns.Add([fromStr, toStr, flowTypeStr]);
+			}
+			conns.Sort((List<string> a, List<string> b) => {
+				string aHash = String.Join(":", a);
+				string bHash = String.Join(":", b);
+				return aHash.CompareTo(bHash);
+			});
+			TomlArray cs = [];
+			foreach (List<string> c in conns)
+			{
 				TomlArray conn = [];
-				conn.Add(fromStr);
-				conn.Add(toStr);
-				conn.Add(flowTypeStr);
+				conn.Add(c[0]);
+				conn.Add(c[1]);
+				conn.Add(c[2]);
 				cs.Add(conn);
 			}
 			return cs;

@@ -37,4 +37,10 @@ public class UnitTest1
 		// Cleanup
         File.Delete(outputToml);
     }
+
+	[Fact]
+	public void TestMultiplesOfTheSameTemplateExpand()
+	{
+		// set up an example file that has TWO PV templates to expand and ensure it works
+	}
 }

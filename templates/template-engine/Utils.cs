@@ -828,6 +828,9 @@ namespace TemplateEngine
 						}
 						else
 						{
+							// TODO: need to modify this code to only load/process a template once
+							// ... and then apply that template to the component (without mutating it).
+							// ... A good use case for Immutable Containers?
 							string templateName = Get<string>(compData, "template_name");
 							if (templates.TryGetValue(templateName, out TomlTable? value))
 							{

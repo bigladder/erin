@@ -2471,11 +2471,73 @@ namespace erin
         stats.close();
     }
 
+
+    std::vector<TimeAndFlows> format_results(std::vector<TimeAndFlows> const& results, std::pair<bool, double> const& custom_cadence_h)
+    {
+        if (results.empty() || (!custom_cadence_h.first))
+            return results;
+
+        auto& taf_eff = results.front();
+        auto num_flows = taf_eff.Flows.size();
+
+        std::vector<TimeAndFlows> formatted_results = {taf_eff};
+
+
+        double t_s = 0.0;
+        double dt_report_s = 3600. * custom_cadence_h.second;
+        double tnext_s = t_s + dt_report_s;
+
+        struct time_flow_products
+        {
+            double actual_J, requested_J, available_J;
+        };
+        std::vector<time_flow_products> time_flow_prods(num_flows);
+
+        for (auto& taf: results)
+        {
+
+            while (tnext_s < taf.Time)
+            {
+                double dt_s = (tnext_s < taf.Time) ? (tnext_s - t_s) :
+                {
+                    dt_s = tnext_s - t_s;
+                }
+
+
+                for (size_t i = 0; i < num_flows; ++i)
+                {
+                    auto& time_flow_prod = time_flow_prods[i];
+                    auto& flows = taf.Flows[i];
+
+                    time_flow_prod.actual_J += flows.Actual_W * dt_s;
+                }
+            }
+
+            std::vector<Flow> tot_flows;
+
+            for (auto& flow: taf.Flows)
+            {
+                tot_flows
+            }
+
+
+            if (taf.Time > tnext_s) {
+                taf.Flows;
+                taf.StorageAmounts_J;
+            }
+            t_s = taf.Time;
+        }
+
+
+        return formatted_results;
+    }
+
     void
     Simulation_Run(
         Simulation& s,
         std::string const& eventsFilename,
         std::string const& statsFilename,
+        std::pair<bool, double> custom_cadence_h /*{false, -1.}*/,
         bool const verbose
     )
     {
@@ -2713,11 +2775,15 @@ namespace erin
                 s.TheModel.FinalTime = duration_s;
                 // TODO: add an optional verbosity flag to SimInfo
                 // -- use that to set things like the print flag below
+
                 auto results = Simulate(s.TheModel, verbose);
+
+                auto formatted_results = format_results(results, custom_cadence_h);
+
                 // TODO: investigate putting output on another thread
                 WriteResultsToEventFile(
                     out,
-                    results,
+                    formatted_results,
                     s,
                     scenarioTag,
                     scenarioStartTimeTag,

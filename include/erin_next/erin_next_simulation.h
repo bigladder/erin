@@ -216,6 +216,7 @@ namespace erin
         Simulation& s,
         const std::string& eventsFilename,
         const std::string& statsFilename = "stats.csv",
+        std::pair<bool, double> custom_cadence_h = {false, -1.},
         const bool verbose = false
     );
 

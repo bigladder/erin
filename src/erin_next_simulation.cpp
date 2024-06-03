@@ -2141,7 +2141,8 @@ namespace erin {
             return;
         }
 
-        flow_W = static_cast<flow_t>(new_flow_J / dt_s);
+        if (dt_s > 0.)
+            flow_W = static_cast<flow_t>(new_flow_J / dt_s);
     }
 
     std::vector<TimeAndFlows>
@@ -2172,6 +2173,16 @@ namespace erin {
 
             double t_next_report_s = t_prev_report_s + T_report_s;
 
+            if (t_next_report_s == next_taf.Time) {
+                formatted_results.push_back(next_taf);
+
+                t_prev_report_s = t_next_report_s;
+                t_next_report_s += T_report_s;
+
+                taf = next_taf;
+                continue;
+            }
+
             if (t_next_report_s > next_taf.Time) {
                 double dt_s = next_taf.Time - t_prev_report_s;
                 for (std::size_t i = 0; i < num_flows; ++i) {
@@ -2191,12 +2202,13 @@ namespace erin {
                 continue;
             }
 
-            // advance to next event time
-            while (t_next_report_s <= next_taf.Time) {
 
-                double dt_s = t_next_report_s - taf.Time;
+            // advance to next event time
+            while (t_next_report_s < next_taf.Time) {
+
+                double dt_s = t_next_report_s - t_prev_report_s;
                 for (std::size_t i = 0; i < num_flows; ++i) {
-                    getFlow(flow_times[i].Requested_J, taf.Flows[i].Requested_W,  dt_s);
+                    getFlow(flow_times[i].Requested_J, taf.Flows[i].Requested_W, dt_s);
                     getFlow(flow_times[i].Available_J, taf.Flows[i].Available_W, dt_s);
                     getFlow(flow_times[i].Actual_J, taf.Flows[i].Actual_W, dt_s);
                 }
@@ -2210,7 +2222,7 @@ namespace erin {
                 }
 
                 // report
-                auto mod_taf = taf;
+                auto mod_taf = next_taf;
                 mod_taf.Time = t_next_report_s;
                 for (std::size_t i = 0; i < num_flows; ++i) {
                     setFlow(flow_times[i].Requested_J, mod_taf.Flows[i].Requested_W, dt_s);
@@ -2228,8 +2240,8 @@ namespace erin {
                 t_prev_report_s = t_next_report_s;
                 t_next_report_s += T_report_s;
             }
-
             taf = next_taf;
+
         }
         return formatted_results;
     }

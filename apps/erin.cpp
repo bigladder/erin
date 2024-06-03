@@ -68,10 +68,14 @@ runCommand(
     std::string const& tomlFilename,
     std::string const& eventsFilename,
     std::string const& statsFilename,
-    std::pair<bool, double> const& custom_cadence,
+    double cadence,
     bool verbose
 )
 {
+
+    std::pair<bool, double> custom_cadence = {false, cadence};
+    custom_cadence.first = (custom_cadence.second > 0.);
+
     if (verbose)
     {
         std::cout << "input file: " << tomlFilename << std::endl;
@@ -472,9 +476,8 @@ main(int argc, char** argv)
             "Statistics csv filename; default:stats.csv"
         );
 
-        std::pair<bool, double> custom_cadence = {false, -1.};
-        run->add_option("time_step_h", custom_cadence.second, "Report with uniform time step");
-        custom_cadence.first = (custom_cadence.second > 0.);
+        double cadence = -1.;
+        run->add_option("-t,--time_step_h", cadence, "Report with uniform time step");
 
         bool verbose = false;
         run->add_flag("-v,--verbose", verbose, "Verbose output");
@@ -482,7 +485,7 @@ main(int argc, char** argv)
         run->callback(
             [&]() {
                 result = runCommand(
-                    tomlFilename, eventsFilename, statsFilename, custom_cadence, verbose
+                    tomlFilename, eventsFilename, statsFilename, cadence, verbose
                 );
             }
         );

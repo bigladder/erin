@@ -109,7 +109,7 @@ runCommand(
         Simulation_Print(s);
         std::cout << "-----------------" << std::endl;
     }
-    Simulation_Run(s, eventsFilename, statsFilename, verbose);
+    Simulation_Run(s, eventsFilename, statsFilename, custom_cadence, verbose);
 
     return EXIT_SUCCESS;
 }

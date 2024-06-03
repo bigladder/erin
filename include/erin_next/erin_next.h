@@ -677,7 +677,7 @@ namespace erin
     CopyStorageStates(SimulationState& ss);
 
     std::vector<TimeAndFlows>
-    Simulate(Model& m, std::pair<bool, bool print);
+    Simulate(Model& m, bool print);
 
     void
     Model_SetComponentToRepaired(

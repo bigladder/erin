@@ -1887,8 +1887,10 @@ TEST(Erin, TestParsingComponentsInUse)
     }
 }
 
-TEST(Erin, TestApplyUniformTimeStep) {
-    auto kW_as_W = [](double p_kW) -> uint32_t { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
+TEST(Erin, TestApplyUniformTimeStep)
+{
+    auto kW_as_W = [](double p_kW) -> uint32_t
+    { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
     auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
     auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
 
@@ -1907,19 +1909,11 @@ TEST(Erin, TestApplyUniformTimeStep) {
 
     std::vector<TimeAndAmount> heatLoad{};
     heatLoad.reserve(5);
-    heatLoad.push_back(
-            TimeAndAmount{hours_as_seconds(0.0), kW_as_W(10.00)}
-    );
-    heatLoad.push_back(
-            TimeAndAmount{hours_as_seconds(3.0), kW_as_W(20.00)}
-    );
-    heatLoad.push_back(
-            TimeAndAmount{hours_as_seconds(9.0), kW_as_W(10.00)}
-    );
-    heatLoad.push_back(TimeAndAmount{hours_as_seconds(15.0), kW_as_W(30.00)}
-    );
-    heatLoad.push_back(TimeAndAmount{hours_as_seconds(21.0), kW_as_W(10.00)}
-    );
+    heatLoad.push_back(TimeAndAmount{hours_as_seconds(0.0), kW_as_W(10.00)});
+    heatLoad.push_back(TimeAndAmount{hours_as_seconds(3.0), kW_as_W(20.00)});
+    heatLoad.push_back(TimeAndAmount{hours_as_seconds(9.0), kW_as_W(10.00)});
+    heatLoad.push_back(TimeAndAmount{hours_as_seconds(15.0), kW_as_W(30.00)});
+    heatLoad.push_back(TimeAndAmount{hours_as_seconds(21.0), kW_as_W(10.00)});
 
     std::vector<TimeAndAmount> pvAvail{};
     pvAvail.reserve(4);
@@ -1931,17 +1925,17 @@ TEST(Erin, TestApplyUniformTimeStep) {
     auto pvArrayId = Model_AddScheduleBasedSource(m, pvAvail);
     auto elecUtilId = Model_AddConstantSource(m, kW_as_W(10.0));
     auto batteryId = Model_AddStore(
-            m,
-            kWh_as_J(100.0),
-            kW_as_W(10.0),
-            kW_as_W(1'000.0),
-            kWh_as_J(80.0),
-            kWh_as_J(100.0)
+        m,
+        kWh_as_J(100.0),
+        kW_as_W(10.0),
+        kW_as_W(1'000.0),
+        kWh_as_J(80.0),
+        kWh_as_J(100.0)
     );
     auto elecSourceMuxId = Model_AddMux(m, 2, 1);
     auto elecSupplyMuxId = Model_AddMux(m, 2, 2);
     auto ngUtilId =
-            Model_AddConstantSource(m, std::numeric_limits<uint32_t>::max());
+        Model_AddConstantSource(m, std::numeric_limits<uint32_t>::max());
     auto ngSourceMuxId = Model_AddMux(m, 1, 2);
     auto ngToElecConvId = Model_AddConstantEfficiencyConverter(m, 42, 100);
     auto elecHeatPumpConvId = Model_AddConstantEfficiencyConverter(m, 35, 10);
@@ -1953,37 +1947,37 @@ TEST(Erin, TestApplyUniformTimeStep) {
     // NETWORK / CONNECTIONS
     // - electricity
     auto pvToEmuxConn =
-            Model_AddConnection(m, pvArrayId.Id, 0, elecSourceMuxId, 0);
+        Model_AddConnection(m, pvArrayId.Id, 0, elecSourceMuxId, 0);
     auto eutilToEmuxConn =
-            Model_AddConnection(m, elecUtilId, 0, elecSourceMuxId, 1);
+        Model_AddConnection(m, elecUtilId, 0, elecSourceMuxId, 1);
     auto emuxToBatteryConn =
-            Model_AddConnection(m, elecSourceMuxId, 0, batteryId, 0);
+        Model_AddConnection(m, elecSourceMuxId, 0, batteryId, 0);
     auto batteryToEsupplyConn =
-            Model_AddConnection(m, batteryId, 0, elecSupplyMuxId, 0);
+        Model_AddConnection(m, batteryId, 0, elecSupplyMuxId, 0);
     auto ngGenToEsupplyConn =
-            Model_AddConnection(m, ngToElecConvId.Id, 0, elecSupplyMuxId, 1);
+        Model_AddConnection(m, ngToElecConvId.Id, 0, elecSupplyMuxId, 1);
     auto esupplyToLoadConn =
-            Model_AddConnection(m, elecSupplyMuxId, 0, elecLoadId, 0);
+        Model_AddConnection(m, elecSupplyMuxId, 0, elecLoadId, 0);
     auto esupplyToHeatPumpConn =
-            Model_AddConnection(m, elecSupplyMuxId, 1, elecHeatPumpConvId.Id, 0);
+        Model_AddConnection(m, elecSupplyMuxId, 1, elecHeatPumpConvId.Id, 0);
 
     // - natural gas
     auto ngGridToNgMuxConn =
-            Model_AddConnection(m, ngUtilId, 0, ngSourceMuxId, 0);
+        Model_AddConnection(m, ngUtilId, 0, ngSourceMuxId, 0);
     auto ngMuxToNgGenConn =
-            Model_AddConnection(m, ngSourceMuxId, 0, ngToElecConvId.Id, 0);
+        Model_AddConnection(m, ngSourceMuxId, 0, ngToElecConvId.Id, 0);
     auto ngMuxToNgHeaterConn =
-            Model_AddConnection(m, ngSourceMuxId, 1, ngHeaterConvId.Id, 0);
+        Model_AddConnection(m, ngSourceMuxId, 1, ngHeaterConvId.Id, 0);
 
     // - heating
     auto ngGenLossToHeatMuxConn =
-            Model_AddConnection(m, ngToElecConvId.Id, 1, heatingSupplyMuxId, 0);
+        Model_AddConnection(m, ngToElecConvId.Id, 1, heatingSupplyMuxId, 0);
     auto ngHeaterToHeatMuxConn =
-            Model_AddConnection(m, ngHeaterConvId.Id, 0, heatingSupplyMuxId, 1);
+        Model_AddConnection(m, ngHeaterConvId.Id, 0, heatingSupplyMuxId, 1);
     auto heatPumpToHeatMuxConn =
-            Model_AddConnection(m, elecHeatPumpConvId.Id, 0, heatingSupplyMuxId, 2);
+        Model_AddConnection(m, elecHeatPumpConvId.Id, 0, heatingSupplyMuxId, 2);
     auto heatMuxToLoadConn =
-            Model_AddConnection(m, heatingSupplyMuxId, 0, heatLoadId, 0);
+        Model_AddConnection(m, heatingSupplyMuxId, 0, heatLoadId, 0);
 
     // SIMULATE
     auto results = Simulate(m, false);
@@ -1991,9 +1985,13 @@ TEST(Erin, TestApplyUniformTimeStep) {
     auto modified_results = applyUniformTimeStep(results, 6.);
 
     EXPECT_EQ(modified_results.size(), 5) << "incorrect number of events";
-    EXPECT_EQ(modified_results[1].Time, hours_as_seconds(6.0)) << "incorrect time of event";
-    EXPECT_EQ(modified_results[0].Flows.size(), 18) << "incorrect number of flows";
+    EXPECT_EQ(modified_results[1].Time, hours_as_seconds(6.0))
+        << "incorrect time of event";
+    EXPECT_EQ(modified_results[0].Flows.size(), 18)
+        << "incorrect number of flows";
 
-    EXPECT_EQ(modified_results[2].Flows[3].Actual_W, 205) << "incorrect actual-flow value";
-    EXPECT_EQ(modified_results[2].StorageAmounts_J[0], J_per_kJ * 216000) << "incorrect storage amount";
+    EXPECT_EQ(modified_results[2].Flows[3].Actual_W, 205)
+        << "incorrect actual-flow value";
+    EXPECT_EQ(modified_results[2].StorageAmounts_J[0], J_per_kJ * 216'000)
+        << "incorrect storage amount";
 }

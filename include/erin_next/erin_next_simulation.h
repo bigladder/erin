@@ -209,6 +209,12 @@ namespace erin {
             bool verbose
     );
 
+    std::vector<TimeAndFlows>
+    applyUniformTimeStep(
+            std::vector<TimeAndFlows> const &results,
+            double const time_step_h
+    );
+
     void
     Simulation_Run(
             Simulation &s,

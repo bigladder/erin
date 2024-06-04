@@ -2117,34 +2117,6 @@ namespace erin {
         stats.close();
     }
 
-    void getFlow(double& new_flow_J, flow_t flow_W, double dt_s)
-    {
-        constexpr double max_flow_J = -1.;
-
-        if (new_flow_J == max_flow_J)
-            return;
-
-        if(flow_W == max_flow_W) {
-            new_flow_J = max_flow_J;
-            return;
-        }
-
-        new_flow_J += static_cast<double>(flow_W) * dt_s;
-    }
-
-    void setFlow(double new_flow_J, flow_t &flow_W, double dt_s)
-    {
-        constexpr double max_flow_J = -1.;
-
-        if (new_flow_J == max_flow_J) {
-            flow_W = max_flow_W;
-            return;
-        }
-
-        if (dt_s > 0.)
-            flow_W = static_cast<flow_t>(new_flow_J / dt_s);
-    }
-
     std::vector<TimeAndFlows>
     format_results(std::vector<TimeAndFlows> const &results, std::pair<bool, double> const &custom_cadence_h) {
         auto num_events = results.size();
@@ -2167,49 +2139,30 @@ namespace erin {
 
             double t_next_report_s = t_prev_report_s + T_report_s;
 
-            if (t_next_report_s > next_taf.Time) {
-                double dt_s = next_taf.Time - t_prev_report_s;
-                double dt_orig_s = next_taf.Time - taf.Time;
-                if (dt_orig_s > 0.) {
-                    double time_frac = dt_s / dt_orig_s;
-                    for (size_t i = 0; i < num_stored; ++i) {
-                        storage_totals_J[i] += time_frac *
-                                               static_cast<double>(taf.StorageAmounts_J[i]);
-                    }
-                }
-                taf = next_taf;
-                continue;
-            }
-
             // advance to next event time
             while (t_next_report_s <= next_taf.Time) {
-
-                double dt_s = t_next_report_s - t_prev_report_s;
-                double dt_orig_s = next_taf.Time - taf.Time;
-                if (dt_orig_s > 0.) {
-                    double time_frac = dt_s / dt_orig_s;
-                    for (size_t i = 0; i < num_stored; ++i) {
-                        storage_totals_J[i] += time_frac *
-                                               static_cast<double>(taf.StorageAmounts_J[i]);
-                    }
-                }
 
                 // report
                 auto mod_taf = taf;
                 if (t_next_report_s == next_taf.Time)
                     mod_taf.Flows = next_taf.Flows;
+
                 mod_taf.Time = t_next_report_s;
-                for (size_t i = 0; i < num_stored; ++i) {
-                    mod_taf.StorageAmounts_J[i] = static_cast<flow_t>(storage_totals_J[i]);
+                double dt_orig_s = next_taf.Time - taf.Time;
+                if (dt_orig_s > 0.) {
+                    double dt_s = t_next_report_s - taf.Time;
+                    double time_frac = dt_s / dt_orig_s;
+                    for (std::size_t i = 0; i < num_stored; ++i) {
+                        mod_taf.StorageAmounts_J[i] = (1. - time_frac) * taf.StorageAmounts_J[i]
+                                                      + time_frac * next_taf.StorageAmounts_J[i];
+                    }
                 }
                 formatted_results.push_back(mod_taf);
-                storage_totals_J.assign(num_flows, 0.);
 
                 t_prev_report_s = t_next_report_s;
                 t_next_report_s += T_report_s;
             }
             taf = next_taf;
-
         }
         return formatted_results;
     }

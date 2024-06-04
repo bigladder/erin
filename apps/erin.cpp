@@ -66,19 +66,16 @@ runCommand(
         std::string const &tomlFilename,
         std::string const &eventsFilename,
         std::string const &statsFilename,
-        double cadence,
+        double time_step_h,
         bool verbose
 ) {
-
-    std::pair<bool, double> custom_cadence = {false, cadence};
-    custom_cadence.first = (custom_cadence.second > 0.);
 
     if (verbose) {
         std::cout << "input file: " << tomlFilename << std::endl;
         std::cout << "events file: " << eventsFilename << std::endl;
         std::cout << "statistics file: " << statsFilename << std::endl;
-        if (custom_cadence.first)
-            std::cout << "custom cadence (h): " << custom_cadence.second << std::endl;
+        if (time_step_h > 0.)
+            std::cout << "time step (h): " << time_step_h << std::endl;
         std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
     }
 
@@ -106,7 +103,7 @@ runCommand(
         Simulation_Print(s);
         std::cout << "-----------------" << std::endl;
     }
-    Simulation_Run(s, eventsFilename, statsFilename, custom_cadence, verbose);
+    Simulation_Run(s, eventsFilename, statsFilename, time_step_h, verbose);
 
     return EXIT_SUCCESS;
 }
@@ -423,8 +420,8 @@ main(int argc, char **argv) {
                 "Statistics csv filename; default:stats.csv"
         );
 
-        double cadence = -1.;
-        run->add_option("-t,--time_step_h", cadence, "Report with uniform time step");
+        double time_step_h = -1.;
+        run->add_option("-t,--time_step_h", time_step_h, "Report with uniform time step (hours)");
 
         bool verbose = false;
         run->add_flag("-v,--verbose", verbose, "Verbose output");
@@ -432,7 +429,7 @@ main(int argc, char **argv) {
         run->callback(
                 [&]() {
                     result = runCommand(
-                            tomlFilename, eventsFilename, statsFilename, cadence, verbose
+                            tomlFilename, eventsFilename, statsFilename, time_step_h, verbose
                     );
                 }
         );

@@ -2118,31 +2118,27 @@ namespace erin {
     }
 
     std::vector<TimeAndFlows>
-    format_results(std::vector<TimeAndFlows> const &results, std::pair<bool, double> const &custom_cadence_h) {
+    applyUniformTimeStep(std::vector<TimeAndFlows> const &results, double const time_step_h) {
         auto num_events = results.size();
-        if ((num_events == 0) || (!custom_cadence_h.first))
+        if ((num_events == 0) || (time_step_h <= 0.))
             return results;
 
         auto taf = results.front();
         auto num_flows = taf.Flows.size();
         auto num_stored = taf.StorageAmounts_J.size();
 
-        std::vector<TimeAndFlows> formatted_results = {taf};
+        std::vector<TimeAndFlows> modified_results = {taf};
 
         double t_prev_report_s = 0.;
-        double T_report_s = 3600. * custom_cadence_h.second;
+        double T_report_s = 3600. * time_step_h;
 
         std::vector<double> storage_totals_J(num_flows, 0.);
 
-        for (std::size_t i_taf = 1; i_taf < num_events; ++i_taf) {
-            auto &next_taf = results[i_taf];
+        for (auto &next_taf: results) {
 
             double t_next_report_s = t_prev_report_s + T_report_s;
-
-            // advance to next event time
             while (t_next_report_s <= next_taf.Time) {
 
-                // report
                 auto mod_taf = taf;
                 if (t_next_report_s == next_taf.Time)
                     mod_taf.Flows = next_taf.Flows;
@@ -2157,14 +2153,14 @@ namespace erin {
                                                       + time_frac * next_taf.StorageAmounts_J[i];
                     }
                 }
-                formatted_results.push_back(mod_taf);
+                modified_results.push_back(mod_taf);
 
                 t_prev_report_s = t_next_report_s;
                 t_next_report_s += T_report_s;
             }
             taf = next_taf;
         }
-        return formatted_results;
+        return modified_results;
     }
 
     void
@@ -2172,7 +2168,7 @@ namespace erin {
             Simulation &s,
             std::string const &eventsFilename,
             std::string const &statsFilename,
-            std::pair<bool, double> custom_cadence_h /*{false, -1.}*/,
+            double time_step_h /*-1.*/,
             bool const verbose
     ) {
         // TODO: wrap into input options struct and pass in
@@ -2384,13 +2380,17 @@ namespace erin {
                 // -- use that to set things like the print flag below
 
                 auto results = Simulate(s.TheModel, verbose);
-
-                auto formatted_results = format_results(results, custom_cadence_h);
+                auto *output_results = &results;
+                std::vector<TimeAndFlows> modified_results = {};
+                if (time_step_h > 0.) {
+                    modified_results = applyUniformTimeStep(results, time_step_h);
+                    output_results = &modified_results;
+                }
 
                 // TODO: investigate putting output on another thread
                 WriteResultsToEventFile(
                         out,
-                        formatted_results,
+                        *output_results,
                         s,
                         scenarioTag,
                         scenarioStartTimeTag,

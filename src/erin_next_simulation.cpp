@@ -2380,25 +2380,27 @@ namespace erin {
                 // -- use that to set things like the print flag below
 
                 auto results = Simulate(s.TheModel, verbose);
-                auto *output_results = &results;
-                std::vector<TimeAndFlows> modified_results = {};
-                if (time_step_h > 0.) {
-                    modified_results = applyUniformTimeStep(results, time_step_h);
-                    output_results = &modified_results;
-                }
+                {
+                    auto *output_results = &results;
+                    std::vector<TimeAndFlows> modified_results = {};
+                    if (time_step_h > 0.) {
+                        modified_results = applyUniformTimeStep(results, time_step_h);
+                        output_results = &modified_results;
+                    }
 
-                // TODO: investigate putting output on another thread
-                WriteResultsToEventFile(
-                        out,
-                        *output_results,
-                        s,
-                        scenarioTag,
-                        scenarioStartTimeTag,
-                        connOrder,
-                        storeOrder,
-                        compOrder,
-                        outputTimeUnit
-                );
+                    // TODO: investigate putting output on another thread
+                    WriteResultsToEventFile(
+                            out,
+                            *output_results,
+                            s,
+                            scenarioTag,
+                            scenarioStartTimeTag,
+                            connOrder,
+                            storeOrder,
+                            compOrder,
+                            outputTimeUnit
+                    );
+                }
                 ScenarioOccurrenceStats sos =
                         ModelResults_CalculateScenarioOccurrenceStats(
                                 scenIdx, occIdx + 1, s.TheModel, s.FlowTypeMap, results

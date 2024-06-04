@@ -413,6 +413,7 @@ main(int argc, char **argv) {
                 "Events csv filename; default:out.csv"
         );
 
+
         std::string statsFilename = "stats.csv";
         run->add_option(
                 "-s,--statistics",
@@ -421,7 +422,11 @@ main(int argc, char **argv) {
         );
 
         double time_step_h = -1.;
-        run->add_option("-t,--time_step_h", time_step_h, "Report with uniform time step (hours)");
+        run->add_option(
+                "-t,--time_step_h",
+                time_step_h,
+                "Report with uniform time step (hours)"
+        )->check(CLI::PositiveNumber);
 
         bool verbose = false;
         run->add_flag("-v,--verbose", verbose, "Verbose output");
@@ -429,7 +434,11 @@ main(int argc, char **argv) {
         run->callback(
                 [&]() {
                     result = runCommand(
-                            tomlFilename, eventsFilename, statsFilename, time_step_h, verbose
+                            tomlFilename,
+                            eventsFilename,
+                            statsFilename,
+                            time_step_h,
+                            verbose
                     );
                 }
         );

@@ -1887,10 +1887,8 @@ TEST(Erin, TestParsingComponentsInUse)
     }
 }
 
-TEST(Erin, TestApplyUniformTimeStep)
-{
-    auto kW_as_W = [](double p_kW) -> uint32_t
-    { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
+TEST(Erin, TestApplyUniformTimeStep) {
+    auto kW_as_W = [](double p_kW) -> uint32_t { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
     auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
     auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
 

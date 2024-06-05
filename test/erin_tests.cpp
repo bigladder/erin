@@ -23,7 +23,7 @@ static auto kW_as_W = [](double p_kW) -> uint32_t
 { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
 static auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
 static auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
-
+static auto J_as_kWh = [](double J) -> double { return J / 3'600'000.0; };
 
 TEST(Erin, Test1)
 {
@@ -1889,105 +1889,65 @@ TEST(Erin, TestParsingComponentsInUse)
     }
 }
 
-TEST(Erin, TestApplyUniformTimeStep)
-{
+TEST(Erin, TestApplyUniformTimeStep) {
     // SIMULATION INFO and INITIALIZATION
     Model m = {};
     m.RandFn = []() { return 0.4; };
-    m.FinalTime = hours_as_seconds(24.0);
-
-    // LOADS
-    std::vector<TimeAndAmount> elecLoad{};
-    elecLoad.reserve(4);
-    elecLoad.push_back(TimeAndAmount{hours_as_seconds(0.0), kW_as_W(100.00)});
-    elecLoad.push_back(TimeAndAmount{hours_as_seconds(6.0), kW_as_W(0.00)});
-    elecLoad.push_back(TimeAndAmount{hours_as_seconds(12.0), kW_as_W(50.0)});
-    elecLoad.push_back(TimeAndAmount{hours_as_seconds(18.0), kW_as_W(0.00)});
-
-    std::vector<TimeAndAmount> heatLoad{};
-    heatLoad.reserve(5);
-    heatLoad.push_back(TimeAndAmount{hours_as_seconds(0.0), kW_as_W(10.00)});
-    heatLoad.push_back(TimeAndAmount{hours_as_seconds(3.0), kW_as_W(20.00)});
-    heatLoad.push_back(TimeAndAmount{hours_as_seconds(9.0), kW_as_W(10.00)});
-    heatLoad.push_back(TimeAndAmount{hours_as_seconds(15.0), kW_as_W(30.00)});
-    heatLoad.push_back(TimeAndAmount{hours_as_seconds(21.0), kW_as_W(10.00)});
-
-    std::vector<TimeAndAmount> pvAvail{};
-    pvAvail.reserve(4);
-    pvAvail.push_back(TimeAndAmount{hours_as_seconds(0.0), kW_as_W(0.0)});
-    pvAvail.push_back(TimeAndAmount{hours_as_seconds(6.0), kW_as_W(100.0)});
-    pvAvail.push_back(TimeAndAmount{hours_as_seconds(12.0), kW_as_W(0.0)});
+    m.FinalTime = hours_as_seconds(24.);
 
     // COMPONENTS
-    auto pvArrayId = Model_AddScheduleBasedSource(m, pvAvail);
-    auto elecUtilId = Model_AddConstantSource(m, kW_as_W(10.0));
-    auto batteryId = Model_AddStore(
-        m,
-        kWh_as_J(100.0),
-        kW_as_W(10.0),
-        kW_as_W(1'000.0),
-        kWh_as_J(80.0),
-        kWh_as_J(100.0)
+    std::vector<TimeAndAmount> ePV_avail{};
+    ePV_avail.reserve(5);
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(0.), kW_as_W(0.)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(6.), kW_as_W(1.)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(9.), kW_as_W(1.5)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(18.), kW_as_W(1.)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(21.), kW_as_W(0.)});
+
+    // COMPONENTS
+    auto ePV = Model_AddScheduleBasedSource(m, ePV_avail);
+    auto eBattId = Model_AddStore(
+            m,
+            kWh_as_J(2.),
+            kW_as_W(0.5),
+            kW_as_W(1.),
+            kWh_as_J(0.),
+            kWh_as_J(1.)
     );
-    auto elecSourceMuxId = Model_AddMux(m, 2, 1);
-    auto elecSupplyMuxId = Model_AddMux(m, 2, 2);
-    auto ngUtilId =
-        Model_AddConstantSource(m, std::numeric_limits<uint32_t>::max());
-    auto ngSourceMuxId = Model_AddMux(m, 1, 2);
-    auto ngToElecConvId = Model_AddConstantEfficiencyConverter(m, 42, 100);
-    auto elecHeatPumpConvId = Model_AddConstantEfficiencyConverter(m, 35, 10);
-    auto ngHeaterConvId = Model_AddConstantEfficiencyConverter(m, 98, 100);
-    auto heatingSupplyMuxId = Model_AddMux(m, 3, 1);
-    auto elecLoadId = Model_AddScheduleBasedLoad(m, elecLoad);
-    auto heatLoadId = Model_AddScheduleBasedLoad(m, heatLoad);
+
+    // LOADS
+    std::vector<TimeAndAmount> eLoad{};
+    eLoad.reserve(5);
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(0.), kW_as_W(0.1)});
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(6.), kW_as_W(1.5)});
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(12.), kW_as_W(0.5)});
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(18.), kW_as_W(1.)});
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(21.0), kW_as_W(0.1)});
+    auto eLoadId = Model_AddScheduleBasedLoad(m, eLoad);
 
     // NETWORK / CONNECTIONS
-    // - electricity
-    auto pvToEmuxConn =
-        Model_AddConnection(m, pvArrayId.Id, 0, elecSourceMuxId, 0);
-    auto eutilToEmuxConn =
-        Model_AddConnection(m, elecUtilId, 0, elecSourceMuxId, 1);
-    auto emuxToBatteryConn =
-        Model_AddConnection(m, elecSourceMuxId, 0, batteryId, 0);
-    auto batteryToEsupplyConn =
-        Model_AddConnection(m, batteryId, 0, elecSupplyMuxId, 0);
-    auto ngGenToEsupplyConn =
-        Model_AddConnection(m, ngToElecConvId.Id, 0, elecSupplyMuxId, 1);
-    auto esupplyToLoadConn =
-        Model_AddConnection(m, elecSupplyMuxId, 0, elecLoadId, 0);
-    auto esupplyToHeatPumpConn =
-        Model_AddConnection(m, elecSupplyMuxId, 1, elecHeatPumpConvId.Id, 0);
-
-    // - natural gas
-    auto ngGridToNgMuxConn =
-        Model_AddConnection(m, ngUtilId, 0, ngSourceMuxId, 0);
-    auto ngMuxToNgGenConn =
-        Model_AddConnection(m, ngSourceMuxId, 0, ngToElecConvId.Id, 0);
-    auto ngMuxToNgHeaterConn =
-        Model_AddConnection(m, ngSourceMuxId, 1, ngHeaterConvId.Id, 0);
-
-    // - heating
-    auto ngGenLossToHeatMuxConn =
-        Model_AddConnection(m, ngToElecConvId.Id, 1, heatingSupplyMuxId, 0);
-    auto ngHeaterToHeatMuxConn =
-        Model_AddConnection(m, ngHeaterConvId.Id, 0, heatingSupplyMuxId, 1);
-    auto heatPumpToHeatMuxConn =
-        Model_AddConnection(m, elecHeatPumpConvId.Id, 0, heatingSupplyMuxId, 2);
-    auto heatMuxToLoadConn =
-        Model_AddConnection(m, heatingSupplyMuxId, 0, heatLoadId, 0);
+    Model_AddConnection(m, ePV.Id, 0, eBattId, 0);
+    Model_AddConnection(m, eBattId, 0, eLoadId, 0);
 
     // SIMULATE
     auto results = Simulate(m, false);
 
-    auto modified_results = applyUniformTimeStep(results, 6.); // 6-h steps
-    EXPECT_EQ(modified_results.size(), 5) << "incorrect number of events";
-    EXPECT_EQ(modified_results[1].Time, hours_as_seconds(6.0))
-        << "incorrect time of event";
-    EXPECT_EQ(modified_results[0].Flows.size(), 18)
-        << "incorrect number of flows";
+    // Apply uniform time step
+    auto modified_results = applyUniformTimeStep(results, 1.); // 1-h steps
 
-    EXPECT_EQ(modified_results[2].Flows[3].Actual_W, 205)
-        << "incorrect actual-flow value";
-    EXPECT_EQ(modified_results[2].StorageAmounts_J[0], J_per_kJ * 216'000)
-        << "incorrect storage amount";
+    EXPECT_EQ(modified_results.size(), 25) << "incorrect number of events";
+    EXPECT_EQ(modified_results[8].Time, hours_as_seconds(8.))
+                        << "incorrect time of event";
+    EXPECT_EQ(modified_results[8].Flows.size(), 3)
+                        << "incorrect number of flows";
+
+    EXPECT_EQ(modified_results[8].Flows[2].Requested_W, kW_as_W(1.5))
+                        << "incorrect requested-flow value";
+    EXPECT_EQ(modified_results[8].Flows[2].Actual_W, kW_as_W(1.))
+                        << "incorrect actual-flow value";
+    EXPECT_EQ(modified_results[8].StorageAmounts_J[0], kWh_as_J(0.))
+                        << "incorrect storage amount";
+
+    EXPECT_EQ(modified_results[14].StorageAmounts_J[0], kWh_as_J(1.))
+                        << "incorrect storage amount";
 }

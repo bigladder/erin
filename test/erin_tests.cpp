@@ -19,6 +19,12 @@ Round(double n, unsigned int places = 2)
     return std::round(n * mult) / mult;
 }
 
+static auto kW_as_W = [](double p_kW) -> uint32_t
+{ return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
+static auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
+static auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
+
+
 TEST(Erin, Test1)
 {
     Model m = {};
@@ -1095,10 +1101,6 @@ TEST(Erin, Test12)
 
 TEST(Erin, Test13)
 {
-    auto kW_as_W = [](double p_kW) -> uint32_t
-    { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
-    auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
-    auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
     // SIMULATION INFO and INITIALIZATION
     Model m = {};
     m.RandFn = []() { return 0.4; };
@@ -1889,11 +1891,6 @@ TEST(Erin, TestParsingComponentsInUse)
 
 TEST(Erin, TestApplyUniformTimeStep)
 {
-    auto kW_as_W = [](double p_kW) -> uint32_t
-    { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
-    auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
-    auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
-
     // SIMULATION INFO and INITIALIZATION
     Model m = {};
     m.RandFn = []() { return 0.4; };
@@ -1982,8 +1979,7 @@ TEST(Erin, TestApplyUniformTimeStep)
     // SIMULATE
     auto results = Simulate(m, false);
 
-    auto modified_results = applyUniformTimeStep(results, 6.);
-
+    auto modified_results = applyUniformTimeStep(results, 6.); // 6-h steps
     EXPECT_EQ(modified_results.size(), 5) << "incorrect number of events";
     EXPECT_EQ(modified_results[1].Time, hours_as_seconds(6.0))
         << "incorrect time of event";

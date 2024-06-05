@@ -23,7 +23,6 @@ static auto kW_as_W = [](double p_kW) -> uint32_t
 { return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
 static auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
 static auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
-static auto J_as_kWh = [](double J) -> double { return J / 3'600'000.0; };
 
 TEST(Erin, Test1)
 {
@@ -1889,7 +1888,8 @@ TEST(Erin, TestParsingComponentsInUse)
     }
 }
 
-TEST(Erin, TestApplyUniformTimeStep) {
+TEST(Erin, TestApplyUniformTimeStep)
+{
     // SIMULATION INFO and INITIALIZATION
     Model m = {};
     m.RandFn = []() { return 0.4; };
@@ -1907,12 +1907,7 @@ TEST(Erin, TestApplyUniformTimeStep) {
     // COMPONENTS
     auto ePV = Model_AddScheduleBasedSource(m, ePV_avail);
     auto eBattId = Model_AddStore(
-            m,
-            kWh_as_J(2.),
-            kW_as_W(0.5),
-            kW_as_W(1.),
-            kWh_as_J(0.),
-            kWh_as_J(1.)
+        m, kWh_as_J(2.), kW_as_W(0.5), kW_as_W(1.), kWh_as_J(0.), kWh_as_J(1.)
     );
 
     // LOADS
@@ -1937,17 +1932,17 @@ TEST(Erin, TestApplyUniformTimeStep) {
 
     EXPECT_EQ(modified_results.size(), 25) << "incorrect number of events";
     EXPECT_EQ(modified_results[8].Time, hours_as_seconds(8.))
-                        << "incorrect time of event";
+        << "incorrect time of event";
     EXPECT_EQ(modified_results[8].Flows.size(), 3)
-                        << "incorrect number of flows";
+        << "incorrect number of flows";
 
     EXPECT_EQ(modified_results[8].Flows[2].Requested_W, kW_as_W(1.5))
-                        << "incorrect requested-flow value";
+        << "incorrect requested-flow value";
     EXPECT_EQ(modified_results[8].Flows[2].Actual_W, kW_as_W(1.))
-                        << "incorrect actual-flow value";
+        << "incorrect actual-flow value";
     EXPECT_EQ(modified_results[8].StorageAmounts_J[0], kWh_as_J(0.))
-                        << "incorrect storage amount";
+        << "incorrect storage amount";
 
     EXPECT_EQ(modified_results[14].StorageAmounts_J[0], kWh_as_J(1.))
-                        << "incorrect storage amount";
+        << "incorrect storage amount";
 }

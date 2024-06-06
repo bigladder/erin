@@ -2496,8 +2496,6 @@ namespace erin
         double t_prev_report_s = 0.0;
         double T_report_s = 3600.0 * time_step_h;
 
-        std::vector<double> storage_totals_J(num_flows, 0.0);
-
         for (auto& next_taf : results)
         {
 

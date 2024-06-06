@@ -78,8 +78,10 @@ runCommand(
         std::cout << "input file: " << tomlFilename << std::endl;
         std::cout << "events file: " << eventsFilename << std::endl;
         std::cout << "statistics file: " << statsFilename << std::endl;
-        if (time_step_h > 0.)
+        if (time_step_h > 0.0)
+        {
             std::cout << "time step (h): " << time_step_h << std::endl;
+        }
         std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
     }
 
@@ -473,7 +475,7 @@ main(int argc, char** argv)
             "Statistics csv filename; default:stats.csv"
         );
 
-        double time_step_h = -1.;
+        double time_step_h = -1.0;
         run->add_option(
                "-t,--time_step_h",
                time_step_h,

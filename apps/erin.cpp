@@ -68,14 +68,20 @@ runCommand(
     std::string const& tomlFilename,
     std::string const& eventsFilename,
     std::string const& statsFilename,
+    double time_step_h,
     bool verbose
 )
 {
+
     if (verbose)
     {
         std::cout << "input file: " << tomlFilename << std::endl;
         std::cout << "events file: " << eventsFilename << std::endl;
         std::cout << "statistics file: " << statsFilename << std::endl;
+        if (time_step_h > 0.0)
+        {
+            std::cout << "time step (h): " << time_step_h << std::endl;
+        }
         std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
     }
 
@@ -106,7 +112,7 @@ runCommand(
         Simulation_Print(s);
         std::cout << "-----------------" << std::endl;
     }
-    Simulation_Run(s, eventsFilename, statsFilename, verbose);
+    Simulation_Run(s, eventsFilename, statsFilename, time_step_h, verbose);
 
     return EXIT_SUCCESS;
 }
@@ -469,13 +475,26 @@ main(int argc, char** argv)
             "Statistics csv filename; default:stats.csv"
         );
 
+        double time_step_h = -1.0;
+        run->add_option(
+               "-t,--time_step_h",
+               time_step_h,
+               "Report with uniform time step (hours)"
+        )
+            ->check(CLI::PositiveNumber);
+
         bool verbose = false;
         run->add_flag("-v,--verbose", verbose, "Verbose output");
 
         run->callback(
-            [&]() {
+            [&]()
+            {
                 result = runCommand(
-                    tomlFilename, eventsFilename, statsFilename, verbose
+                    tomlFilename,
+                    eventsFilename,
+                    statsFilename,
+                    time_step_h,
+                    verbose
                 );
             }
         );

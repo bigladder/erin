@@ -211,11 +211,18 @@ namespace erin
         bool verbose
     );
 
+    std::vector<TimeAndFlows>
+    ApplyUniformTimeStep(
+        std::vector<TimeAndFlows> const& results,
+        double const time_step_h
+    );
+
     void
     Simulation_Run(
         Simulation& s,
         const std::string& eventsFilename,
         const std::string& statsFilename = "stats.csv",
+        double time_step_h = -1.0,
         const bool verbose = false
     );
 

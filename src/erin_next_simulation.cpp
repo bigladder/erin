@@ -1631,13 +1631,17 @@ namespace erin
     std::string
     FlowInWattsToString(flow_t value_W, unsigned int precision)
     {
+        bool const printDebugInfo = false;
         if (value_W == max_flow_W)
         {
-            std::cout << "Found infinity:" << std::endl;
-            std::cout << "- value_W   : " << fmt::format("{}", value_W)
-                      << std::endl;
-            std::cout << "- max_flow_W: " << fmt::format("{}", max_flow_W)
-                      << std::endl;
+            if (printDebugInfo)
+            {
+                std::cout << "Found infinity:" << std::endl;
+                std::cout << "- value_W   : " << fmt::format("{}", value_W)
+                          << std::endl;
+                std::cout << "- max_flow_W: " << fmt::format("{}", max_flow_W)
+                          << std::endl;
+            }
             return "inf";
         }
         double value_kW = value_W / W_per_kW;
@@ -2471,11 +2475,69 @@ namespace erin
         stats.close();
     }
 
+    std::vector<TimeAndFlows>
+    ApplyUniformTimeStep(
+        std::vector<TimeAndFlows> const& results,
+        double const time_step_h
+    )
+    {
+        auto num_events = results.size();
+        if ((num_events == 0) || (time_step_h <= 0.0))
+        {
+            return results;
+        }
+
+        auto taf = results.front();
+        auto num_flows = taf.Flows.size();
+        auto num_stored = taf.StorageAmounts_J.size();
+
+        std::vector<TimeAndFlows> modified_results = {taf};
+
+        double t_prev_report_s = 0.0;
+        double T_report_s = 3600.0 * time_step_h;
+
+        std::vector<double> storage_totals_J(num_flows, 0.0);
+
+        for (auto& next_taf : results)
+        {
+
+            double t_next_report_s = t_prev_report_s + T_report_s;
+            while (t_next_report_s <= next_taf.Time)
+            {
+
+                auto mod_taf = taf;
+                if (t_next_report_s == next_taf.Time)
+                    mod_taf.Flows = next_taf.Flows;
+
+                mod_taf.Time = t_next_report_s;
+                double dt_orig_s = next_taf.Time - taf.Time;
+                if (dt_orig_s > 0.0)
+                {
+                    double dt_s = t_next_report_s - taf.Time;
+                    double time_frac = dt_s / dt_orig_s;
+                    for (std::size_t i = 0; i < num_stored; ++i)
+                    {
+                        mod_taf.StorageAmounts_J[i] =
+                            (1. - time_frac) * taf.StorageAmounts_J[i]
+                            + time_frac * next_taf.StorageAmounts_J[i];
+                    }
+                }
+                modified_results.push_back(mod_taf);
+
+                t_prev_report_s = t_next_report_s;
+                t_next_report_s += T_report_s;
+            }
+            taf = next_taf;
+        }
+        return modified_results;
+    }
+
     void
     Simulation_Run(
         Simulation& s,
         std::string const& eventsFilename,
         std::string const& statsFilename,
+        double time_step_h /*-1.0*/,
         bool const verbose
     )
     {
@@ -2713,19 +2775,31 @@ namespace erin
                 s.TheModel.FinalTime = duration_s;
                 // TODO: add an optional verbosity flag to SimInfo
                 // -- use that to set things like the print flag below
+
                 auto results = Simulate(s.TheModel, verbose);
-                // TODO: investigate putting output on another thread
-                WriteResultsToEventFile(
-                    out,
-                    results,
-                    s,
-                    scenarioTag,
-                    scenarioStartTimeTag,
-                    connOrder,
-                    storeOrder,
-                    compOrder,
-                    outputTimeUnit
-                );
+                {
+                    auto* output_results = &results;
+                    std::vector<TimeAndFlows> modified_results = {};
+                    if (time_step_h > 0.0)
+                    {
+                        modified_results =
+                            ApplyUniformTimeStep(results, time_step_h);
+                        output_results = &modified_results;
+                    }
+
+                    // TODO: investigate putting output on another thread
+                    WriteResultsToEventFile(
+                        out,
+                        *output_results,
+                        s,
+                        scenarioTag,
+                        scenarioStartTimeTag,
+                        connOrder,
+                        storeOrder,
+                        compOrder,
+                        outputTimeUnit
+                    );
+                }
                 ScenarioOccurrenceStats sos =
                     ModelResults_CalculateScenarioOccurrenceStats(
                         scenIdx, occIdx + 1, s.TheModel, s.FlowTypeMap, results

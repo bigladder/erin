@@ -212,7 +212,7 @@ namespace erin
     );
 
     std::vector<TimeAndFlows>
-    applyUniformTimeStep(
+    ApplyUniformTimeStep(
         std::vector<TimeAndFlows> const& results,
         double const time_step_h
     );
@@ -222,7 +222,7 @@ namespace erin
         Simulation& s,
         const std::string& eventsFilename,
         const std::string& statsFilename = "stats.csv",
-        double time_step_h = -1.,
+        double time_step_h = -1.0,
         const bool verbose = false
     );
 

@@ -2472,14 +2472,16 @@ namespace erin
     }
 
     std::vector<TimeAndFlows>
-    applyUniformTimeStep(
+    ApplyUniformTimeStep(
         std::vector<TimeAndFlows> const& results,
         double const time_step_h
     )
     {
         auto num_events = results.size();
-        if ((num_events == 0) || (time_step_h <= 0.))
+        if ((num_events == 0) || (time_step_h <= 0.0))
+        {
             return results;
+        }
 
         auto taf = results.front();
         auto num_flows = taf.Flows.size();
@@ -2487,10 +2489,10 @@ namespace erin
 
         std::vector<TimeAndFlows> modified_results = {taf};
 
-        double t_prev_report_s = 0.;
-        double T_report_s = 3600. * time_step_h;
+        double t_prev_report_s = 0.0;
+        double T_report_s = 3600.0 * time_step_h;
 
-        std::vector<double> storage_totals_J(num_flows, 0.);
+        std::vector<double> storage_totals_J(num_flows, 0.0);
 
         for (auto& next_taf : results)
         {
@@ -2505,7 +2507,7 @@ namespace erin
 
                 mod_taf.Time = t_next_report_s;
                 double dt_orig_s = next_taf.Time - taf.Time;
-                if (dt_orig_s > 0.)
+                if (dt_orig_s > 0.0)
                 {
                     double dt_s = t_next_report_s - taf.Time;
                     double time_frac = dt_s / dt_orig_s;
@@ -2531,7 +2533,7 @@ namespace erin
         Simulation& s,
         std::string const& eventsFilename,
         std::string const& statsFilename,
-        double time_step_h /*-1.*/,
+        double time_step_h /*-1.0*/,
         bool const verbose
     )
     {
@@ -2774,10 +2776,10 @@ namespace erin
                 {
                     auto* output_results = &results;
                     std::vector<TimeAndFlows> modified_results = {};
-                    if (time_step_h > 0.)
+                    if (time_step_h > 0.0)
                     {
                         modified_results =
-                            applyUniformTimeStep(results, time_step_h);
+                            ApplyUniformTimeStep(results, time_step_h);
                         output_results = &modified_results;
                     }
 

@@ -1893,30 +1893,35 @@ TEST(Erin, TestApplyUniformTimeStep)
     // SIMULATION INFO and INITIALIZATION
     Model m = {};
     m.RandFn = []() { return 0.4; };
-    m.FinalTime = hours_as_seconds(24.);
+    m.FinalTime = hours_as_seconds(24.0);
 
     // COMPONENTS
     std::vector<TimeAndAmount> ePV_avail{};
     ePV_avail.reserve(5);
-    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(0.), kW_as_W(0.)});
-    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(6.), kW_as_W(1.)});
-    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(9.), kW_as_W(1.5)});
-    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(18.), kW_as_W(1.)});
-    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(21.), kW_as_W(0.)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(0.0), kW_as_W(0.0)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(6.0), kW_as_W(1.0)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(9.0), kW_as_W(1.5)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(18.0), kW_as_W(1.0)});
+    ePV_avail.push_back(TimeAndAmount{hours_as_seconds(21.0), kW_as_W(0.0)});
 
     // COMPONENTS
     auto ePV = Model_AddScheduleBasedSource(m, ePV_avail);
     auto eBattId = Model_AddStore(
-        m, kWh_as_J(2.), kW_as_W(0.5), kW_as_W(1.), kWh_as_J(0.), kWh_as_J(1.)
+        m,
+        kWh_as_J(2.0),
+        kW_as_W(0.5),
+        kW_as_W(1.0),
+        kWh_as_J(0.0),
+        kWh_as_J(1.0)
     );
 
     // LOADS
     std::vector<TimeAndAmount> eLoad{};
     eLoad.reserve(5);
-    eLoad.push_back(TimeAndAmount{hours_as_seconds(0.), kW_as_W(0.1)});
-    eLoad.push_back(TimeAndAmount{hours_as_seconds(6.), kW_as_W(1.5)});
-    eLoad.push_back(TimeAndAmount{hours_as_seconds(12.), kW_as_W(0.5)});
-    eLoad.push_back(TimeAndAmount{hours_as_seconds(18.), kW_as_W(1.)});
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(0.0), kW_as_W(0.1)});
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(6.0), kW_as_W(1.5)});
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(12.0), kW_as_W(0.5)});
+    eLoad.push_back(TimeAndAmount{hours_as_seconds(18.0), kW_as_W(1.0)});
     eLoad.push_back(TimeAndAmount{hours_as_seconds(21.0), kW_as_W(0.1)});
     auto eLoadId = Model_AddScheduleBasedLoad(m, eLoad);
 
@@ -1928,21 +1933,21 @@ TEST(Erin, TestApplyUniformTimeStep)
     auto results = Simulate(m, false);
 
     // Apply uniform time step
-    auto modified_results = applyUniformTimeStep(results, 1.); // 1-h steps
+    auto modified_results = ApplyUniformTimeStep(results, 1.0); // 1-h steps
 
     EXPECT_EQ(modified_results.size(), 25) << "incorrect number of events";
-    EXPECT_EQ(modified_results[8].Time, hours_as_seconds(8.))
+    EXPECT_EQ(modified_results[8].Time, hours_as_seconds(8.0))
         << "incorrect time of event";
     EXPECT_EQ(modified_results[8].Flows.size(), 3)
         << "incorrect number of flows";
 
     EXPECT_EQ(modified_results[8].Flows[2].Requested_W, kW_as_W(1.5))
         << "incorrect requested-flow value";
-    EXPECT_EQ(modified_results[8].Flows[2].Actual_W, kW_as_W(1.))
+    EXPECT_EQ(modified_results[8].Flows[2].Actual_W, kW_as_W(1.0))
         << "incorrect actual-flow value";
-    EXPECT_EQ(modified_results[8].StorageAmounts_J[0], kWh_as_J(0.))
+    EXPECT_EQ(modified_results[8].StorageAmounts_J[0], kWh_as_J(0.0))
         << "incorrect storage amount";
 
-    EXPECT_EQ(modified_results[14].StorageAmounts_J[0], kWh_as_J(1.))
+    EXPECT_EQ(modified_results[14].StorageAmounts_J[0], kWh_as_J(1.0))
         << "incorrect storage amount";
 }

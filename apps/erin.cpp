@@ -1,4 +1,3 @@
-#include "../vendor/toml11/toml.hpp"
 #include "erin/version.h"
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
@@ -19,9 +18,8 @@
 #include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
-#include "../vendor/CLI11/include/CLI/CLI.hpp"
-#include "toml/exception.hpp"
-#include "toml/get.hpp"
+#include <toml.hpp>
+#include <CLI/CLI.hpp>
 #include "compilation_settings.h"
 
 CLI::App*

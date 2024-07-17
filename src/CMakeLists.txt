@@ -36,6 +36,7 @@ add_library(erin_next
 	erin_next_load.cpp
 	erin_next_time_and_amount.cpp
 	erin_next_component.cpp
+	erin_next_group.cpp
 	erin_next_simulation.cpp
 	erin_next_scenario.cpp
 	erin_next_units.cpp
@@ -56,6 +57,7 @@ add_library(erin_next
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_load.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_validation.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_component.h"
+	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_group.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_simulation.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_scenario.h"
 	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_units.h"

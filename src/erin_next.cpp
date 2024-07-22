@@ -5389,4 +5389,18 @@ namespace erin
         cd.InitialAges_s[id] = age_s;
     }
 
+    void
+    AddComponentToGroup(Model& model, size_t id, std::string group)
+    {
+        model.ComponentToGroup.insert({id, group});
+
+        auto &map = model.GroupToComponents;
+        if (map.contains(group)) {
+            auto &s = map[group];//
+            s.insert(id);
+        }
+        else
+            map.insert({group, {id}});
+
+    }
 } // namespace erin

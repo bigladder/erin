@@ -326,6 +326,8 @@ namespace erin
         std::vector<flow_t> StorageAmounts_J;
     };
 
+    typedef std::unordered_map<std::string, std::set<std::size_t>> GroupToComponentMap;
+    typedef std::unordered_map<std::size_t, std::string> ComponentToGroupMap;
     struct Model
     {
         ComponentDict ComponentMap;
@@ -346,6 +348,9 @@ namespace erin
         ReliabilityCoordinator Rel{};
         std::function<double()> RandFn;
         double FinalTime = 0.0;
+        GroupToComponentMap GroupToComponents;
+        ComponentToGroupMap ComponentToGroup;
+
     };
 
     struct ComponentIdAndWasteConnection
@@ -1117,6 +1122,9 @@ namespace erin
 
     void
     ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s);
+
+    void
+    AddComponentToGroup(Model& model, size_t id, std::string group);
 
 } // namespace erin
 

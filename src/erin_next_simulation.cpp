@@ -2488,7 +2488,6 @@ namespace erin
         }
 
         auto taf = results.front();
-        auto num_flows = taf.Flows.size();
         auto num_stored = taf.StorageAmounts_J.size();
 
         std::vector<TimeAndFlows> modified_results = {taf};

@@ -5392,12 +5392,14 @@ namespace erin
     void
     AddComponentToGroup(Model& model, size_t id, std::string group)
     {
+        // record group association of component
         model.ComponentToGroup.insert({id, group});
 
+        // insert component into group set
         auto &map = model.GroupToComponents;
         if (map.contains(group)) {
-            auto &s = map[group];//
-            s.insert(id);
+            auto &components_in_group = map[group];//
+            components_in_group.insert(id);
         }
         else
             map.insert({group, {id}});

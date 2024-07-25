@@ -263,21 +263,34 @@ namespace erin
         std::vector<double> COPs;
     };
 
-    struct Connection
-    {
-        ComponentType From = ComponentType::ConstantSourceType;
+    template <typename C>
+    struct ConnectionBase
+    {   C To, From;
         // index into the specific component type's array
         size_t FromIdx = 0;
         size_t FromPort = 0;
         // index into ComponentDict
         size_t FromId = 0;
-        ComponentType To = ComponentType::ConstantLoadType;
         // index into the specific component type's array
         size_t ToIdx = 0;
         size_t ToPort = 0;
         // index into ComponentDict
         size_t ToId = 0;
         size_t FlowTypeId = 0;
+    };
+
+    struct Connection:ConnectionBase<ComponentType> {
+        Connection() : ConnectionBase() {
+            From = ComponentType::ConstantSourceType;
+            To = ComponentType::ConstantLoadType;
+        }
+    };
+
+    struct GroupConnection:ConnectionBase<std::string> {
+        GroupConnection() : ConnectionBase() {
+            From = "";
+            To = "";
+        }
     };
 
     struct Mux

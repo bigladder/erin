@@ -2529,6 +2529,30 @@ namespace erin
         return modified_results;
     }
 
+
+    void AggregateGroups(Model& model,
+            std::vector<TimeAndFlows>& results)
+    {
+        auto num_events = results.size();
+        if ((num_events == 0)) {
+            return;
+        }
+
+        auto &map = model.GroupToComponents;
+        if (map.size() == 0) {
+            return;
+        }
+
+        for(auto& group: map)
+        {
+            auto& componentSet = group;
+
+        }
+        model.ComponentToGroup;
+        auto taf = results.front();
+
+    }
+
     void
     Simulation_Run(
         Simulation& s,
@@ -2620,12 +2644,7 @@ namespace erin
                 maxDuration_s = duration_s;
             }
         }
-        std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
-        std::vector<size_t> connOrder = CalculateConnectionOrder(s);
-        std::vector<size_t> storeOrder = CalculateStoreOrder(s);
-        std::vector<size_t> compOrder = CalculateComponentOrder(s);
-        std::vector<size_t> failOrder = CalculateFailModeOrder(s);
-        std::vector<size_t> fragOrder = CalculateFragilModeOrder(s);
+
         std::map<size_t, std::vector<TimeState>> relSchByCompFailId;
         // NOTE: set up reliability manager
         // TODO: remove duplication of data here
@@ -2695,6 +2714,12 @@ namespace erin
                       << "' for writing." << std::endl;
             return;
         }
+        std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
+        std::vector<size_t> connOrder = CalculateConnectionOrder(s);
+        std::vector<size_t> storeOrder = CalculateStoreOrder(s);
+        std::vector<size_t> compOrder = CalculateComponentOrder(s);
+        std::vector<size_t> failOrder = CalculateFailModeOrder(s);
+        std::vector<size_t> fragOrder = CalculateFragilModeOrder(s);
         WriteEventFileHeader(
             out,
             s.TheModel,
@@ -2783,6 +2808,10 @@ namespace erin
                             ApplyUniformTimeStep(results, time_step_h);
                         output_results = &modified_results;
                     }
+
+                    output_results = &results;
+
+                    AggregateGroups(s.TheModel, *output_results);
 
                     // TODO: investigate putting output on another thread
                     WriteResultsToEventFile(

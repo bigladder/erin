@@ -217,6 +217,9 @@ namespace erin
         double const time_step_h
     );
 
+    void AggregateGroups(Model& model,
+         std::vector<TimeAndFlows> const& results);
+
     void
     Simulation_Run(
         Simulation& s,

@@ -263,14 +263,16 @@ namespace erin
         std::vector<double> COPs;
     };
 
-    template <typename C>
-    struct ConnectionBase
-    {   C To, From;
+
+    struct Connection
+    {
+        ComponentType From = ComponentType::ConstantSourceType;
         // index into the specific component type's array
         size_t FromIdx = 0;
         size_t FromPort = 0;
         // index into ComponentDict
         size_t FromId = 0;
+        ComponentType To = ComponentType::ConstantLoadType;
         // index into the specific component type's array
         size_t ToIdx = 0;
         size_t ToPort = 0;
@@ -279,17 +281,73 @@ namespace erin
         size_t FlowTypeId = 0;
     };
 
-    struct Connection:ConnectionBase<ComponentType> {
-        Connection() : ConnectionBase() {
-            From = ComponentType::ConstantSourceType;
-            To = ComponentType::ConstantLoadType;
+    template <typename T>
+    struct ID
+    {
+        ID(T id_in):id(id_in){}
+        T id;
+
+    };
+    struct ComponentID:ID<size_t>
+    {
+        ComponentID(size_t id_in = 0):ID(id_in){}
+    };
+
+    struct GroupID:ID<std::string>
+    {
+        GroupID(std::string id_in = ""):ID<std::string>(id_in){}
+    };
+
+    struct NodeID:std::variant<ComponentID, GroupID>
+    {
+        NodeID():std::variant<ComponentID, GroupID>(0){}
+        NodeID(size_t id_in):std::variant<ComponentID, GroupID>(id_in){}
+        NodeID(std::string id_in):std::variant<ComponentID, GroupID>(id_in){}
+
+        bool operator==(NodeID nodeID)
+        {
+            bool same = false;
+            auto i = index();
+            auto i0 = nodeID.index();
+            if (i == i0)
+            {
+                if (i == 0) {
+                    if (std::get<0>(*this).id == std::get<0>(nodeID).id)
+                        same = true;
+                }
+                else
+                {
+                    if (std::get<1>(*this).id == std::get<1>(nodeID).id)
+                        same = true;
+                }
+
+            }
+            return same;
         }
     };
 
-    struct GroupConnection:ConnectionBase<std::string> {
-        GroupConnection() : ConnectionBase() {
-            From = "";
-            To = "";
+
+    struct NodeConnection
+    {
+        ComponentType From = ComponentType::ConstantSourceType;
+        ComponentType To = ComponentType::ConstantLoadType;
+        // index into the specific component type's array
+        size_t FromIdx = 0;
+        size_t FromPort = 0;
+        // index into ComponentDict
+        NodeID FromId;
+        // index into the specific component type's array
+        size_t ToIdx = 0;
+        size_t ToPort = 0;
+        // index into ComponentDict
+        NodeID ToId;
+        size_t FlowTypeId = 0;
+
+        bool operator==(const NodeConnection& nodeConn)
+        {
+            bool fromSame = (nodeConn.FromId == FromId) && (nodeConn.FromPort == FromPort);
+            bool toSame = (nodeConn.ToId == ToId) && (nodeConn.ToPort == ToPort);
+            return fromSame && toSame;
         }
     };
 
@@ -1116,6 +1174,20 @@ namespace erin
         FlowDict const& fd,
         Connection const& c,
         bool compact = false
+    );
+
+    std::string
+    ConnectionToString(
+            Model const& model,
+            NodeConnection const& c,
+            bool compact = false
+    );
+    std::string
+    ConnectionToString(
+            Model const& model,
+            FlowDict const& fd,
+            NodeConnection const& c,
+            bool compact = false
     );
 
     double

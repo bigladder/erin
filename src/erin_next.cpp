@@ -5289,6 +5289,67 @@ namespace erin
         return oss.str();
     }
 
+    std::string
+    ConnectionToString(
+            Model const& model,
+            NodeConnection const& c,
+            bool compact
+    )
+    {
+        std::string fromTag = "";
+        std::string toTag = "";
+        std::string fromString = "";
+        std::string toString = "";
+
+        auto& componentMap = model.ComponentMap;
+        if (c.FromId.index() == 0) {
+            auto idx = std::get<0>(c.FromId).id;
+
+            std::string fromTag = componentMap.Tag[idx];
+            if (fromTag.empty() && c.From == ComponentType::WasteSinkType) {
+                fromTag = "WASTE";
+            } else if (fromTag.empty()
+                       && c.From == ComponentType::EnvironmentSourceType) {
+                fromTag = "ENV";
+            }
+            fromString = std::to_string(idx);
+
+        }
+        if (c.ToId.index() == 0) {
+            auto idx = std::get<0>(c.FromId).id;
+            std::string toTag = componentMap.Tag[idx];
+            if (toTag.empty() && c.To == ComponentType::WasteSinkType) {
+                toTag = "WASTE";
+            } else if (toTag.empty() && c.To == ComponentType::EnvironmentSourceType) {
+                toTag = "ENV";
+            }
+            toString = std::to_string(idx);
+        }
+
+        std::ostringstream oss{};
+        oss << fromTag
+            << (compact ? "" : ("[" + fromString + "]"))
+            << ":OUT(" << c.FromPort << ")"
+            << (compact ? "" : (": " + ToString(c.From))) << " => " << toTag
+            << (compact ? "" : ("[" + toString + "]")) << ":IN("
+            << c.ToPort << ")" << (compact ? "" : (": " + ToString(c.To)));
+        return oss.str();
+    }
+
+    std::string
+    ConnectionToString(
+            Model const& model,
+            FlowDict const& fd,
+            NodeConnection const& c,
+            bool compact
+    )
+    {
+        std::ostringstream oss{};
+        oss << ConnectionToString(model, c, compact)
+            << " [flow: " << fd.Type[c.FlowTypeId] << "]";
+        return oss.str();
+    }
+
     // TODO: extract connection printing
     void
     Model_PrintConnections(Model const& m, FlowDict const& ft)

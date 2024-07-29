@@ -279,6 +279,8 @@ namespace erin
         // index into ComponentDict
         size_t ToId = 0;
         size_t FlowTypeId = 0;
+
+        size_t resultId = 0;
     };
 
     template <typename T>
@@ -304,7 +306,7 @@ namespace erin
         NodeID(size_t id_in):std::variant<ComponentID, GroupID>(id_in){}
         NodeID(std::string id_in):std::variant<ComponentID, GroupID>(id_in){}
 
-        bool operator==(NodeID nodeID)
+        bool operator==(NodeID nodeID)  const
         {
             bool same = false;
             auto i = index();
@@ -343,12 +345,16 @@ namespace erin
         NodeID ToId;
         size_t FlowTypeId = 0;
 
-        bool operator==(const NodeConnection& nodeConn)
+        std::vector<size_t> origConnId = {};
+
+
+        bool operator==(const NodeConnection& nodeConn) const
         {
             bool fromSame = (nodeConn.FromId == FromId) && (nodeConn.FromPort == FromPort);
             bool toSame = (nodeConn.ToId == ToId) && (nodeConn.ToPort == ToPort);
             return fromSame && toSame;
         }
+
     };
 
     struct Mux
@@ -387,6 +393,17 @@ namespace erin
         flow_t Requested_W = 0;
         flow_t Available_W = 0;
         flow_t Actual_W = 0;
+
+        Flow operator+(Flow const& flow) const
+        {
+            Flow newFlow;
+            newFlow.Requested_W = Requested_W + flow.Requested_W;
+            newFlow.Available_W = Available_W + flow.Available_W;
+            newFlow.Actual_W = Actual_W + flow.Actual_W;
+            return newFlow;
+        }
+
+        Flow operator+=(Flow const& flow){ return *this = *this + flow;}
     };
 
     struct TimeAndFlows

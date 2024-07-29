@@ -5301,8 +5301,9 @@ namespace erin
         std::string fromString = "";
         std::string toString = "";
 
+
         auto& componentMap = model.ComponentMap;
-        if (c.FromId.index() == 0) {
+        if (c.FromId.index() == 0) { // component
             auto idx = std::get<0>(c.FromId).id;
 
             std::string fromTag = componentMap.Tag[idx];
@@ -5313,8 +5314,12 @@ namespace erin
                 fromTag = "ENV";
             }
             fromString = std::to_string(idx);
-
         }
+        else
+        { //group
+            fromString = "group";
+        }
+
         if (c.ToId.index() == 0) {
             auto idx = std::get<0>(c.FromId).id;
             std::string toTag = componentMap.Tag[idx];
@@ -5325,14 +5330,26 @@ namespace erin
             }
             toString = std::to_string(idx);
         }
+        else
+        { //group
+            toString = "group";
+        }
 
         std::ostringstream oss{};
         oss << fromTag
             << (compact ? "" : ("[" + fromString + "]"))
-            << ":OUT(" << c.FromPort << ")"
-            << (compact ? "" : (": " + ToString(c.From))) << " => " << toTag
-            << (compact ? "" : ("[" + toString + "]")) << ":IN("
-            << c.ToPort << ")" << (compact ? "" : (": " + ToString(c.To)));
+            << ":OUT(" << c.FromPort << ")";
+
+        if (c.FromId.index() == 0)
+            oss << (compact ? "" : (": " + ToString(c.From)));
+
+        oss << " => " << toTag
+            << (compact ? "" : ("[" + toString + "]"))
+            << ":IN(" << c.ToPort << ")";
+
+        if (c.ToId.index() == 0)
+            oss << (compact ? "" : (": " + ToString(c.To)));
+
         return oss.str();
     }
 

@@ -260,9 +260,6 @@ namespace erin
     );
 
     std::vector<size_t>
-    CalculateConnectionOrder(Simulation const& s);
-
-    std::vector<size_t>
     CalculateScenarioOrder(Simulation const& s);
 
     std::vector<size_t>

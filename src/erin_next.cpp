@@ -5290,7 +5290,7 @@ namespace erin
     }
 
     std::string
-    ConnectionToString(
+    NodeConnectionToString(
             Model const& model,
             NodeConnection const& c,
             bool compact
@@ -5301,11 +5301,9 @@ namespace erin
         std::string fromString = "";
         std::string toString = "";
 
-
         auto& componentMap = model.ComponentMap;
         if (c.FromId.index() == 0) { // component
             auto idx = std::get<0>(c.FromId).id;
-
             std::string fromTag = componentMap.Tag[idx];
             if (fromTag.empty() && c.From == ComponentType::WasteSinkType) {
                 fromTag = "WASTE";
@@ -5317,11 +5315,11 @@ namespace erin
         }
         else
         { //group
-            fromString = "group";
+            fromString = std::get<1>(c.FromId).id;
         }
 
         if (c.ToId.index() == 0) {
-            auto idx = std::get<0>(c.FromId).id;
+            auto idx = std::get<0>(c.ToId).id;
             std::string toTag = componentMap.Tag[idx];
             if (toTag.empty() && c.To == ComponentType::WasteSinkType) {
                 toTag = "WASTE";
@@ -5332,7 +5330,7 @@ namespace erin
         }
         else
         { //group
-            toString = "group";
+            toString = std::get<1>(c.ToId).id;
         }
 
         std::ostringstream oss{};
@@ -5353,17 +5351,18 @@ namespace erin
         return oss.str();
     }
 
+
     std::string
-    ConnectionToString(
+    NodeConnectionToString(
             Model const& model,
             FlowDict const& fd,
-            NodeConnection const& c,
+            NodeConnection const& nodeConn,
             bool compact
     )
     {
         std::ostringstream oss{};
-        oss << ConnectionToString(model, c, compact)
-            << " [flow: " << fd.Type[c.FlowTypeId] << "]";
+        oss << NodeConnectionToString(model, nodeConn, compact)
+            << " [flow: " << fd.Type[nodeConn.FlowTypeId] << "]";
         return oss.str();
     }
 

@@ -438,7 +438,7 @@ namespace erin
         double FinalTime = 0.0;
         GroupToComponentMap GroupToComponents;
         ComponentToGroupMap ComponentToGroup;
-
+        std::unordered_map<std::string, size_t> nGroupPortsTo, nGroupPortsFrom;
     };
 
     struct ComponentIdAndWasteConnection
@@ -1194,13 +1194,13 @@ namespace erin
     );
 
     std::string
-    ConnectionToString(
+    NodeConnectionToString(
             Model const& model,
             NodeConnection const& c,
             bool compact = false
     );
     std::string
-    ConnectionToString(
+    NodeConnectionToString(
             Model const& model,
             FlowDict const& fd,
             NodeConnection const& c,

@@ -1430,11 +1430,11 @@ namespace erin
         for (std::string const& prefix :
              std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
         {
-            for (auto const& connId : nodeConnOrder)
+            for (auto const& nodeConnId : nodeConnOrder)
             {
-                auto const& conn = nodeConnections[connId];
+                auto const& nodeConn = nodeConnections[nodeConnId];
                 out << "," << prefix
-                    << ConnectionToString(model, fd, conn, true) << " (kW)";
+                    << NodeConnectionToString(model, fd, nodeConn, false) << " (kW)";
             }
         }
 
@@ -1709,7 +1709,7 @@ namespace erin
         Simulation const& s,
         std::string const& scenarioTag,
         std::string const& scenarioStartTimeTag,
-        std::vector<size_t> const& connOrder,
+        std::vector<size_t> const& nodeConnOrder,
         std::vector<size_t> const& storeOrder,
         std::vector<size_t> const& compOrder,
         TimeUnit outputTimeUnit
@@ -1727,20 +1727,20 @@ namespace erin
         }
         for (auto const& r : results)
         {
-            assert(r.Flows.size() == connOrder.size());
+            assert(r.Flows.size() == nodeConnOrder.size());
             out << scenarioTag << "," << scenarioStartTimeTag << ",";
             out << TimeInSecondsToDesiredUnit(r.Time, outputTimeUnit);
-            for (size_t const& i : connOrder)
+            for (size_t const& i : nodeConnOrder)
             {
                 out << ","
                     << FlowInWattsToString(r.Flows[i].Actual_W, precision);
             }
-            for (size_t const& i : connOrder)
+            for (size_t const& i : nodeConnOrder)
             {
                 out << ","
                     << FlowInWattsToString(r.Flows[i].Requested_W, precision);
             }
-            for (size_t const& i : connOrder)
+            for (size_t const& i : nodeConnOrder)
             {
                 out << ","
                     << FlowInWattsToString(r.Flows[i].Available_W, precision);
@@ -2588,6 +2588,16 @@ namespace erin
         std::vector<NodeConnection> NodeConnections = {};
 
         auto nConn = s.TheModel.Connections.size();
+
+        s.TheModel.nGroupPortsTo = {};
+        s.TheModel.nGroupPortsFrom = {};
+
+        for (const auto& [key, value] : s.TheModel.GroupToComponents)
+       {
+            s.TheModel.nGroupPortsTo.insert({key, 0});
+            s.TheModel.nGroupPortsFrom.insert({key, 0});
+        }
+
         for (size_t iConn = 0; iConn < nConn; ++iConn)
         {
             auto const &connection = s.TheModel.Connections[iConn];
@@ -2605,36 +2615,44 @@ namespace erin
             nodeConn.ToIdx = connection.ToIdx;
             nodeConn.To = connection.To;
 
+            nodeConn.FlowTypeId = connection.FlowTypeId;
+
             if (fromIsGroup && toIsGroup)
             {
-                if (std::get<GroupID>(nodeConn.FromId).id == std::get<GroupID>(nodeConn.ToId).id)
+
+                auto groupFrom = s.TheModel.ComponentToGroup[connection.FromId];
+                auto groupTo = s.TheModel.ComponentToGroup[connection.ToId];
+                if (groupFrom == groupTo)
                     continue;
             }
-
             if (fromIsGroup)
             {
-                nodeConn.FromId = s.TheModel.ComponentToGroup[connection.FromId];
-
+                auto groupFrom = s.TheModel.ComponentToGroup[connection.FromId];
+                nodeConn.FromId = groupFrom;
+                auto& nPorts = s.TheModel.nGroupPortsFrom[groupFrom];
+                nodeConn.FromPort = nPorts;
+                nPorts++;
             }
             if (toIsGroup)
             {
-                nodeConn.ToId = s.TheModel.ComponentToGroup[connection.ToId];
+                auto groupTo = s.TheModel.ComponentToGroup[connection.ToId];
+                nodeConn.ToId = groupTo;
+                auto& nPorts = s.TheModel.nGroupPortsTo[groupTo];
+                nodeConn.ToPort = nPorts;
+                nPorts++;
             }
-
-            bool newConn = false;
-            for (auto &nodeConn0: NodeConnections)
-            {
-                if (nodeConn0 == nodeConn)
-                {
+            bool newConn = true;
+            for (auto &nodeConn0: NodeConnections) {
+                if (nodeConn0 == nodeConn) {
                     newConn = false;
                     nodeConn0.origConnId.push_back(iConn);
                     break;
                 }
-                if (newConn)
-                {
-                    nodeConn.origConnId = {iConn};
-                    NodeConnections.push_back(nodeConn);
-                }
+            }
+            if (newConn)
+            {
+                nodeConn.origConnId = {iConn};
+                NodeConnections.push_back(nodeConn);
             }
         }
         return NodeConnections;
@@ -2643,23 +2661,23 @@ namespace erin
     std::vector<size_t>
     CalculateNodeConnectionOrder(Simulation const& s, std::vector<NodeConnection> NodeConnections)
     {
-        size_t const nConns = NodeConnections.size();
+        size_t const nNodeConns = NodeConnections.size();
         std::vector<std::string> originalConnTags;
         std::vector<std::string> connTags;
 
-        originalConnTags.reserve(nConns);
-        connTags.reserve(nConns);
+        originalConnTags.reserve(nNodeConns);
+        connTags.reserve(nNodeConns);
         for (auto const& nodeConn : NodeConnections)
         {
             std::string connTag =
-                    ConnectionToString(s.TheModel, nodeConn, true);
+                    NodeConnectionToString(s.TheModel, nodeConn, true);
             originalConnTags.push_back(connTag);
             connTags.push_back(connTag);
         }
         std::sort(connTags.begin(), connTags.end());
 
         std::vector<size_t> result;
-        result.reserve(nConns);
+        result.reserve(nNodeConns);
         for (auto const& connTag : connTags)
         {
             for (size_t connId = 0; connId < connTags.size();
@@ -2672,7 +2690,7 @@ namespace erin
                 }
             }
         }
-        assert(result.size() == nConns);
+        assert(result.size() == nNodeConns);
         return result;
     }
 
@@ -2845,8 +2863,8 @@ namespace erin
         std::vector<size_t> failOrder = CalculateFailModeOrder(s);
         std::vector<size_t> fragOrder = CalculateFragilModeOrder(s);
 
-        auto NodeConnections = GetNodeConnections(s);
-        std::vector<size_t> nodeConnOrder = CalculateNodeConnectionOrder(s, NodeConnections);
+        auto nodeConnections = GetNodeConnections(s);
+        std::vector<size_t> nodeConnOrder = CalculateNodeConnectionOrder(s, nodeConnections);
 
         WriteEventFileHeader(
             out,
@@ -2856,7 +2874,7 @@ namespace erin
             storeOrder,
             compOrder,
             outputTimeUnit,
-            NodeConnections
+            nodeConnections
         );
         std::vector<ScenarioOccurrenceStats> occurrenceStats;
         for (size_t scenIdx : scenarioOrder)
@@ -2940,7 +2958,7 @@ namespace erin
 
                     output_results = &results;
 
-                    AggregateGroups(s.TheModel, *output_results, NodeConnections, nodeConnOrder,
+                    AggregateGroups(s.TheModel, *output_results, nodeConnections, nodeConnOrder,
                             connOrder);
 
                     // TODO: investigate putting output on another thread

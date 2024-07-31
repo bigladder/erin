@@ -1434,7 +1434,7 @@ namespace erin
             {
                 auto const& nodeConn = nodeConnections[nodeConnId];
                 out << "," << prefix
-                    << NodeConnectionToString(model, fd, nodeConn, false) << " (kW)";
+                    << NodeConnectionToString(model, fd, nodeConn, true) << " (kW)";
             }
         }
 

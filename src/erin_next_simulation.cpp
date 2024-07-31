@@ -1670,10 +1670,10 @@ namespace erin
 
         auto nConn = connOrder.size();
         auto nNodeConn = nodeConnections.size();
-        auto nResults = results.size();
-        std::vector<TimeAndFlows> newResults(nResults);
+        auto nResult = results.size();
+        std::vector<TimeAndFlows> newResults(nResult);
 
-        for (size_t iResult = 0; iResult < nResults; ++iResult )
+        for (size_t iResult = 0; iResult < nResult; ++iResult )
         {
             newResults[iResult].Time = results[iResult].Time;
 
@@ -2585,7 +2585,7 @@ namespace erin
 
     std::vector<NodeConnection> GetNodeConnections(Simulation& s)
     {
-        std::vector<NodeConnection> NodeConnections = {};
+        std::vector<NodeConnection> nodeConnections = {};
 
         auto nConn = s.TheModel.Connections.size();
 
@@ -2642,7 +2642,7 @@ namespace erin
                 nPorts++;
             }
             bool newConn = true;
-            for (auto &nodeConn0: NodeConnections) {
+            for (auto &nodeConn0: nodeConnections) {
                 if (nodeConn0 == nodeConn) {
                     newConn = false;
                     nodeConn0.origConnId.push_back(iConn);
@@ -2652,22 +2652,22 @@ namespace erin
             if (newConn)
             {
                 nodeConn.origConnId = {iConn};
-                NodeConnections.push_back(nodeConn);
+                nodeConnections.push_back(nodeConn);
             }
         }
-        return NodeConnections;
+        return nodeConnections;
     }
 
     std::vector<size_t>
-    CalculateNodeConnectionOrder(Simulation const& s, std::vector<NodeConnection> NodeConnections)
+    CalculateNodeConnectionOrder(Simulation const& s, std::vector<NodeConnection> nodeConnections)
     {
-        size_t const nNodeConns = NodeConnections.size();
+        size_t const nNodeConns = nodeConnections.size();
         std::vector<std::string> originalConnTags;
         std::vector<std::string> connTags;
 
         originalConnTags.reserve(nNodeConns);
         connTags.reserve(nNodeConns);
-        for (auto const& nodeConn : NodeConnections)
+        for (auto const& nodeConn : nodeConnections)
         {
             std::string connTag =
                     NodeConnectionToString(s.TheModel, nodeConn, true);

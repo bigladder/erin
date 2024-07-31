@@ -5304,7 +5304,7 @@ namespace erin
         auto& componentMap = model.ComponentMap;
         if (c.FromId.index() == 0) { // component
             auto idx = std::get<0>(c.FromId).id;
-            std::string fromTag = componentMap.Tag[idx];
+            fromTag = componentMap.Tag[idx];
             if (fromTag.empty() && c.From == ComponentType::WasteSinkType) {
                 fromTag = "WASTE";
             } else if (fromTag.empty()
@@ -5320,7 +5320,7 @@ namespace erin
 
         if (c.ToId.index() == 0) {
             auto idx = std::get<0>(c.ToId).id;
-            std::string toTag = componentMap.Tag[idx];
+            toTag = componentMap.Tag[idx];
             if (toTag.empty() && c.To == ComponentType::WasteSinkType) {
                 toTag = "WASTE";
             } else if (toTag.empty() && c.To == ComponentType::EnvironmentSourceType) {

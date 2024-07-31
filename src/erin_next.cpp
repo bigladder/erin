@@ -5315,7 +5315,7 @@ namespace erin
         }
         else
         { //group
-            fromString = std::get<1>(c.FromId).id;
+            fromTag = std::get<1>(c.FromId).id;
         }
 
         if (c.ToId.index() == 0) {
@@ -5330,7 +5330,7 @@ namespace erin
         }
         else
         { //group
-            toString = std::get<1>(c.ToId).id;
+            toTag = std::get<1>(c.ToId).id;
         }
 
         std::ostringstream oss{};

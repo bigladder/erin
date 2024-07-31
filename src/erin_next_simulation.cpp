@@ -1418,7 +1418,6 @@ namespace erin
     )
     {
         ComponentDict const& compMap = model.ComponentMap;
-        //std::vector<Connection> const& conns = m.Connections;
         out << "scenario id,"
             << "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
             << "elapsed ("
@@ -1653,9 +1652,7 @@ namespace erin
 
     void AggregateGroups(Model& model,
                          std::vector<TimeAndFlows>& results,
-                         std::vector<NodeConnection> const& nodeConnections,
-                         std::vector<size_t> const& nodeConnOrder,
-                         std::vector<size_t> const& connOrder
+                         std::vector<NodeConnection> const& nodeConnections
                          )
     {
         auto num_events = results.size();
@@ -1668,7 +1665,6 @@ namespace erin
             return;
         }
 
-        auto nConn = connOrder.size();
         auto nNodeConn = nodeConnections.size();
         auto nResult = results.size();
         std::vector<TimeAndFlows> newResults(nResult);
@@ -1681,18 +1677,11 @@ namespace erin
             auto& newFlows = newResults[iResult].Flows;
             newFlows.resize(nNodeConn);
 
-            for (size_t iNodeConn = 0; iNodeConn < nNodeConn; ++iNodeConn) {
-                auto& nodeConnId = nodeConnOrder[iNodeConn];
-                auto &nodeConn = nodeConnections[nodeConnId];
-
+            for (size_t iNodeConn = 0; iNodeConn < nNodeConn; ++iNodeConn)
+            {
+                auto &nodeConn = nodeConnections[iNodeConn];
                 for (auto &connId: nodeConn.origConnId) {
-                    for (size_t iConn = 0; iConn < nConn; ++iConn) {
-                        if (connOrder[iConn] == connId) {
-                            newFlows[iNodeConn] += origFlows[iConn];
-                        }
-
-                    }
-
+                    newFlows[iNodeConn] += origFlows[connId];
                 }
             }
 
@@ -2662,28 +2651,28 @@ namespace erin
     CalculateNodeConnectionOrder(Simulation const& s, std::vector<NodeConnection> nodeConnections)
     {
         size_t const nNodeConns = nodeConnections.size();
-        std::vector<std::string> originalConnTags;
-        std::vector<std::string> connTags;
+        std::vector<std::string> originalNodeConnTags;
+        std::vector<std::string> nodeConnTags;
 
-        originalConnTags.reserve(nNodeConns);
-        connTags.reserve(nNodeConns);
+        originalNodeConnTags.reserve(nNodeConns);
+        nodeConnTags.reserve(nNodeConns);
         for (auto const& nodeConn : nodeConnections)
         {
-            std::string connTag =
+            std::string nodeConnTag =
                     NodeConnectionToString(s.TheModel, nodeConn, true);
-            originalConnTags.push_back(connTag);
-            connTags.push_back(connTag);
+            originalNodeConnTags.push_back(nodeConnTag);
+            nodeConnTags.push_back(nodeConnTag);
         }
-        std::sort(connTags.begin(), connTags.end());
+        std::sort(nodeConnTags.begin(), nodeConnTags.end());
 
         std::vector<size_t> result;
         result.reserve(nNodeConns);
-        for (auto const& connTag : connTags)
+        for (auto const& nodeConnTag : nodeConnTags)
         {
-            for (size_t connId = 0; connId < connTags.size();
+            for (size_t connId = 0; connId < nodeConnTags.size();
                  ++connId)
             {
-                if (connTag == originalConnTags[connId])
+                if (nodeConnTag == originalNodeConnTags[connId])
                 {
                     result.push_back(connId);
                     break;
@@ -2958,8 +2947,7 @@ namespace erin
 
                     output_results = &results;
 
-                    AggregateGroups(s.TheModel, *output_results, nodeConnections, nodeConnOrder,
-                            connOrder);
+                    AggregateGroups(s.TheModel, *output_results, nodeConnections);
 
                     // TODO: investigate putting output on another thread
                     WriteResultsToEventFile(

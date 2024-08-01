@@ -1449,7 +1449,12 @@ namespace erin
                     if (compMap.CompType[compId] == ComponentType::StoreType
                         && compMap.Idx[compId] == storeIdx)
                     {
-                        out << "," << prePostFix.first << compMap.Tag[compId]
+                        auto tag = compMap.Tag[compId];
+                        if (model.ComponentToGroup.contains(compId))
+                        {
+                            tag = model.ComponentToGroup.at(compId);
+                        }
+                        out << "," << prePostFix.first << tag
                             << prePostFix.second;
                     }
                 }

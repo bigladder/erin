@@ -1434,7 +1434,9 @@ namespace erin
             {
                 auto const& nodeConn = nodeConnections[nodeConnId];
                 out << "," << prefix
-                    << NodeConnectionToString(model, fd, nodeConn, true, aggregateGroups)
+                    << NodeConnectionToString(
+                           model, fd, nodeConn, true, aggregateGroups
+                       )
                     << " (kW)";
             }
         }
@@ -2693,8 +2695,9 @@ namespace erin
         nodeConnTags.reserve(nNodeConns);
         for (auto const& nodeConn : nodeConnections)
         {
-            std::string nodeConnTag =
-                NodeConnectionToString(s.TheModel, nodeConn, true, aggregateGroups);
+            std::string nodeConnTag = NodeConnectionToString(
+                s.TheModel, nodeConn, true, aggregateGroups
+            );
             originalNodeConnTags.push_back(nodeConnTag);
             nodeConnTags.push_back(nodeConnTag);
         }

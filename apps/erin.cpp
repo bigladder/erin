@@ -588,6 +588,7 @@ main(int argc, char** argv)
     add_version(app);
     add_limits(app);
     add_run(app);
+    add_graph(app);
     add_checkNetwork(app);
     add_update(app);
     add_packLoads(app);

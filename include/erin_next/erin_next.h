@@ -1214,14 +1214,16 @@ namespace erin
     NodeConnectionToString(
         Model const& model,
         NodeConnection const& c,
-        bool compact = false
+        bool compact = false,
+        bool aggregateGroups = true
     );
     std::string
     NodeConnectionToString(
         Model const& model,
         FlowDict const& fd,
         NodeConnection const& c,
-        bool compact = false
+        bool compact = false,
+        bool aggregateGroups = true
     );
 
     double

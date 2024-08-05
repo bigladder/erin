@@ -5294,7 +5294,8 @@ namespace erin
     NodeConnectionToString(
         Model const& model,
         NodeConnection const& c,
-        bool compact
+        bool compact,
+        bool aggregateGroups
     )
     {
         std::string fromTag = "";
@@ -5303,7 +5304,7 @@ namespace erin
         std::string toString = "";
 
         auto& componentMap = model.ComponentMap;
-        if (c.FromId.index() == 0)
+        if ((c.FromId.index() == 0) || (!aggregateGroups))
         { // component
             auto idx = std::get<0>(c.FromId).id;
             fromTag = componentMap.Tag[idx];
@@ -5323,7 +5324,7 @@ namespace erin
             fromTag = std::get<1>(c.FromId).id;
         }
 
-        if (c.ToId.index() == 0)
+        if ((c.ToId.index() == 0) || (!aggregateGroups))
         {
             auto idx = std::get<0>(c.ToId).id;
             toTag = componentMap.Tag[idx];
@@ -5364,11 +5365,12 @@ namespace erin
         Model const& model,
         FlowDict const& fd,
         NodeConnection const& nodeConn,
-        bool compact
+        bool compact,
+        bool aggregateGroups
     )
     {
         std::ostringstream oss{};
-        oss << NodeConnectionToString(model, nodeConn, compact)
+        oss << NodeConnectionToString(model, nodeConn, compact, aggregateGroups)
             << " [flow: " << fd.Type[nodeConn.FlowTypeId] << "]";
         return oss.str();
     }

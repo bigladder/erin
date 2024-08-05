@@ -1465,7 +1465,13 @@ namespace erin
         {
             if (!model.ComponentMap.Tag[compId].empty())
             {
-                out << ",op-state: " << model.ComponentMap.Tag[compId];
+                std::string compName = model.ComponentMap.Tag[compId];
+                if(model.ComponentToGroup.contains(compId))
+                {
+                    auto& group = model.ComponentToGroup.at(compId);
+                    compName = group + "(" + compName + ")";
+                }
+                out << ",op-state: " << compName;
             }
         }
         out << std::endl;

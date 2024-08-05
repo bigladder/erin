@@ -2488,15 +2488,12 @@ namespace erin
         }
 
         auto taf = results.front();
-        auto num_flows = taf.Flows.size();
         auto num_stored = taf.StorageAmounts_J.size();
 
         std::vector<TimeAndFlows> modified_results = {taf};
 
         double t_prev_report_s = 0.0;
         double T_report_s = 3600.0 * time_step_h;
-
-        std::vector<double> storage_totals_J(num_flows, 0.0);
 
         for (auto& next_taf : results)
         {

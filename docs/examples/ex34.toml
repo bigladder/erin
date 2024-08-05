@@ -24,7 +24,7 @@ type = "muxer"
 group = "group_1"
 flow = "electricity"
 num_inflows = 1
-num_outflows = 2
+num_outflows = 3
 
 [components.convA]
 type = "converter"
@@ -32,6 +32,20 @@ group = "group_1"
 inflow = "electricity"
 outflow = "electricity"
 constant_efficiency = 0.9
+
+[components.convB]
+type = "converter"
+group = "group_1"
+inflow = "electricity"
+outflow = "electricity"
+constant_efficiency = 0.5
+
+[components.convC]
+type = "converter"
+group = "group_1"
+inflow = "electricity"
+outflow = "electricity"
+constant_efficiency = 0.3
 
 [components.batteryA]
 type = "store"
@@ -55,12 +69,15 @@ max_charge = 30   # kJ
 rate_unit = "kW"
 max_discharge = 10.0 
 
-[components.convB]
-type = "converter"
-group = "group_1"
-inflow = "electricity"
-outflow = "electricity"
-constant_efficiency = 0.9
+[components.batteryC]
+type = "store"
+capacity = 5   # kJ
+capacity_unit = "kJ"
+flow = "electricity"
+init_soc = 0.9
+max_charge = 5   # kJ
+rate_unit = "kW"
+max_discharge = 1.0 
 
 [components.loadA]
 type = "load"
@@ -68,6 +85,11 @@ inflow = "electricity"
 loads_by_scenario.blue_sky = "building1_electrical"
 
 [components.loadB]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "building2_electrical"
+
+[components.loadC]
 type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "building2_electrical"
@@ -88,7 +110,10 @@ connections = [
 ["batteryA:OUT(0)", "loadA:IN(0)", "electricity"],
 ["muxer:OUT(1)", "batteryB:IN(0)", "electricity"], 
 ["batteryB:OUT(0)", "convB:IN(0)", "electricity"], 
-["convB:OUT(0)", "loadB:IN(0)", "electricity"]
+["convB:OUT(0)", "loadB:IN(0)", "electricity"],
+["muxer:OUT(2)", "convC:IN(0)", "electricity"], 
+["convC:OUT(0)", "batteryC:IN(0)", "electricity"],
+["batteryC:OUT(0)", "loadC:IN(0)", "electricity"]
 ]
 ############################################################
 [dist.immediately]

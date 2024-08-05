@@ -263,7 +263,6 @@ namespace erin
         std::vector<double> COPs;
     };
 
-
     struct Connection
     {
         ComponentType From = ComponentType::ConstantSourceType;
@@ -283,37 +282,50 @@ namespace erin
         size_t resultId = 0;
     };
 
-    template <typename T>
+    template<typename T>
     struct ID
     {
-        ID(T id_in):id(id_in){}
+        ID(T id_in): id(id_in)
+        {
+        }
         T id;
-
     };
-    struct ComponentID:ID<size_t>
+    struct ComponentID: ID<size_t>
     {
-        ComponentID(size_t id_in = 0):ID(id_in){}
-    };
-
-    struct GroupID:ID<std::string>
-    {
-        GroupID(std::string id_in = ""):ID<std::string>(id_in){}
+        ComponentID(size_t id_in = 0): ID(id_in)
+        {
+        }
     };
 
-    struct NodeID:std::variant<ComponentID, GroupID>
+    struct GroupID: ID<std::string>
     {
-        NodeID():std::variant<ComponentID, GroupID>(0){}
-        NodeID(size_t id_in):std::variant<ComponentID, GroupID>(id_in){}
-        NodeID(std::string id_in):std::variant<ComponentID, GroupID>(id_in){}
+        GroupID(std::string id_in = ""): ID<std::string>(id_in)
+        {
+        }
+    };
 
-        bool operator==(NodeID nodeID)  const
+    struct NodeID: std::variant<ComponentID, GroupID>
+    {
+        NodeID(): std::variant<ComponentID, GroupID>(0)
+        {
+        }
+        NodeID(size_t id_in): std::variant<ComponentID, GroupID>(id_in)
+        {
+        }
+        NodeID(std::string id_in): std::variant<ComponentID, GroupID>(id_in)
+        {
+        }
+
+        bool
+        operator==(NodeID nodeID) const
         {
             bool same = false;
             auto i = index();
             auto i0 = nodeID.index();
             if (i == i0)
             {
-                if (i == 0) {
+                if (i == 0)
+                {
                     if (std::get<0>(*this).id == std::get<0>(nodeID).id)
                         same = true;
                 }
@@ -322,12 +334,10 @@ namespace erin
                     if (std::get<1>(*this).id == std::get<1>(nodeID).id)
                         same = true;
                 }
-
             }
             return same;
         }
     };
-
 
     struct NodeConnection
     {
@@ -347,14 +357,15 @@ namespace erin
 
         std::vector<size_t> origConnId = {};
 
-
-        bool operator==(const NodeConnection& nodeConn) const
+        bool
+        operator==(const NodeConnection& nodeConn) const
         {
-            bool fromSame = (nodeConn.FromId == FromId) && (nodeConn.FromPort == FromPort);
-            bool toSame = (nodeConn.ToId == ToId) && (nodeConn.ToPort == ToPort);
+            bool fromSame =
+                (nodeConn.FromId == FromId) && (nodeConn.FromPort == FromPort);
+            bool toSame =
+                (nodeConn.ToId == ToId) && (nodeConn.ToPort == ToPort);
             return fromSame && toSame;
         }
-
     };
 
     struct Mux
@@ -394,7 +405,8 @@ namespace erin
         flow_t Available_W = 0;
         flow_t Actual_W = 0;
 
-        Flow operator+(Flow const& flow) const
+        Flow
+        operator+(Flow const& flow) const
         {
             Flow newFlow;
             newFlow.Requested_W = Requested_W + flow.Requested_W;
@@ -403,7 +415,11 @@ namespace erin
             return newFlow;
         }
 
-        Flow operator+=(Flow const& flow){ return *this = *this + flow;}
+        Flow
+        operator+=(Flow const& flow)
+        {
+            return *this = *this + flow;
+        }
     };
 
     struct TimeAndFlows
@@ -414,7 +430,8 @@ namespace erin
         std::vector<flow_t> StorageAmounts_J;
     };
 
-    typedef std::unordered_map<std::string, std::set<std::size_t>> GroupToComponentMap;
+    typedef std::unordered_map<std::string, std::set<std::size_t>>
+        GroupToComponentMap;
     typedef std::unordered_map<std::size_t, std::string> ComponentToGroupMap;
     struct Model
     {
@@ -1195,16 +1212,16 @@ namespace erin
 
     std::string
     NodeConnectionToString(
-            Model const& model,
-            NodeConnection const& c,
-            bool compact = false
+        Model const& model,
+        NodeConnection const& c,
+        bool compact = false
     );
     std::string
     NodeConnectionToString(
-            Model const& model,
-            FlowDict const& fd,
-            NodeConnection const& c,
-            bool compact = false
+        Model const& model,
+        FlowDict const& fd,
+        NodeConnection const& c,
+        bool compact = false
     );
 
     double

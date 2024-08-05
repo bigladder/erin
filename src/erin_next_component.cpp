@@ -995,11 +995,11 @@ namespace erin
         if (table.contains("group"))
         {
             auto maybeGroup =
-                    TOMLTable_ParseString(table, "group", fullTableName);
+                TOMLTable_ParseString(table, "group", fullTableName);
             if (!maybeGroup.has_value())
             {
                 WriteErrorMessage(
-                        fullTableName, "unable to parse 'group' as a string"
+                    fullTableName, "unable to parse 'group' as a string"
                 );
                 return Result::Failure;
             }

@@ -112,11 +112,14 @@ add_run(CLI::App& app)
     static bool verbose = false;
     subcommand->add_flag("-v,--verbose", verbose, "Verbose output");
 
-    static bool aggregate_groups = true;
-    subcommand->add_flag("-n,--no-group", aggregate_groups, "Suppress group aggregation");
+    static bool no_aggregate_groups = false;
+    subcommand->add_flag(
+        "-n,--no-group", no_aggregate_groups, "Suppress group aggregation"
+    );
 
     auto run = [&]()
     {
+        bool aggregate_groups = !no_aggregate_groups;
         if (verbose)
         {
             std::cout << "input file: " << tomlFilename << std::endl;
@@ -128,7 +131,7 @@ add_run(CLI::App& app)
             }
             std::cout << "verbose: " << (verbose ? "true" : "false")
                       << std::endl;
-            std::cout << "group: " << (aggregate_groups ? "true" : "false")
+            std::cout << "groups: " << (aggregate_groups ? "true" : "false")
                       << std::endl;
         }
 
@@ -159,7 +162,14 @@ add_run(CLI::App& app)
             Simulation_Print(s);
             std::cout << "-----------------" << std::endl;
         }
-        Simulation_Run(s, eventsFilename, statsFilename, time_step_h, verbose);
+        Simulation_Run(
+            s,
+            eventsFilename,
+            statsFilename,
+            time_step_h,
+            aggregate_groups,
+            verbose
+        );
         return EXIT_SUCCESS;
     };
 

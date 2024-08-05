@@ -67,6 +67,7 @@ namespace erin
         }
         issues.push_back(oss.str());
     }
+
     std::vector<std::string>
     Model_CheckNetwork(Model const& m)
     {
@@ -5291,9 +5292,9 @@ namespace erin
 
     std::string
     NodeConnectionToString(
-            Model const& model,
-            NodeConnection const& c,
-            bool compact
+        Model const& model,
+        NodeConnection const& c,
+        bool compact
     )
     {
         std::string fromTag = "";
@@ -5302,47 +5303,54 @@ namespace erin
         std::string toString = "";
 
         auto& componentMap = model.ComponentMap;
-        if (c.FromId.index() == 0) { // component
+        if (c.FromId.index() == 0)
+        { // component
             auto idx = std::get<0>(c.FromId).id;
             fromTag = componentMap.Tag[idx];
-            if (fromTag.empty() && c.From == ComponentType::WasteSinkType) {
+            if (fromTag.empty() && c.From == ComponentType::WasteSinkType)
+            {
                 fromTag = "WASTE";
-            } else if (fromTag.empty()
-                       && c.From == ComponentType::EnvironmentSourceType) {
+            }
+            else if (fromTag.empty()
+                     && c.From == ComponentType::EnvironmentSourceType)
+            {
                 fromTag = "ENV";
             }
             fromString = std::to_string(idx);
         }
         else
-        { //group
+        { // group
             fromTag = std::get<1>(c.FromId).id;
         }
 
-        if (c.ToId.index() == 0) {
+        if (c.ToId.index() == 0)
+        {
             auto idx = std::get<0>(c.ToId).id;
             toTag = componentMap.Tag[idx];
-            if (toTag.empty() && c.To == ComponentType::WasteSinkType) {
+            if (toTag.empty() && c.To == ComponentType::WasteSinkType)
+            {
                 toTag = "WASTE";
-            } else if (toTag.empty() && c.To == ComponentType::EnvironmentSourceType) {
+            }
+            else if (toTag.empty()
+                     && c.To == ComponentType::EnvironmentSourceType)
+            {
                 toTag = "ENV";
             }
             toString = std::to_string(idx);
         }
         else
-        { //group
+        { // group
             toTag = std::get<1>(c.ToId).id;
         }
 
         std::ostringstream oss{};
-        oss << fromTag
-            << (compact ? "" : ("[" + fromString + "]"))
-            << ":OUT(" << c.FromPort << ")";
+        oss << fromTag << (compact ? "" : ("[" + fromString + "]")) << ":OUT("
+            << c.FromPort << ")";
 
         if (c.FromId.index() == 0)
             oss << (compact ? "" : (": " + ToString(c.From)));
 
-        oss << " => " << toTag
-            << (compact ? "" : ("[" + toString + "]"))
+        oss << " => " << toTag << (compact ? "" : ("[" + toString + "]"))
             << ":IN(" << c.ToPort << ")";
 
         if (c.ToId.index() == 0)
@@ -5351,13 +5359,12 @@ namespace erin
         return oss.str();
     }
 
-
     std::string
     NodeConnectionToString(
-            Model const& model,
-            FlowDict const& fd,
-            NodeConnection const& nodeConn,
-            bool compact
+        Model const& model,
+        FlowDict const& fd,
+        NodeConnection const& nodeConn,
+        bool compact
     )
     {
         std::ostringstream oss{};
@@ -5473,13 +5480,13 @@ namespace erin
         model.ComponentToGroup.insert({id, group});
 
         // insert component into group set
-        auto &map = model.GroupToComponents;
-        if (map.contains(group)) {
-            auto &components_in_group = map[group];//
+        auto& map = model.GroupToComponents;
+        if (map.contains(group))
+        {
+            auto& components_in_group = map[group]; //
             components_in_group.insert(id);
         }
         else
             map.insert({group, {id}});
-
     }
 } // namespace erin

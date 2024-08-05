@@ -1434,7 +1434,7 @@ namespace erin
             {
                 auto const& nodeConn = nodeConnections[nodeConnId];
                 out << "," << prefix
-                    << NodeConnectionToString(model, fd, nodeConn, true)
+                    << NodeConnectionToString(model, fd, nodeConn, true, aggregateGroups)
                     << " (kW)";
             }
         }
@@ -2681,7 +2681,8 @@ namespace erin
     std::vector<size_t>
     CalculateNodeConnectionOrder(
         Simulation const& s,
-        std::vector<NodeConnection> nodeConnections
+        std::vector<NodeConnection> nodeConnections,
+        bool aggregateGroups
     )
     {
         size_t const nNodeConns = nodeConnections.size();
@@ -2693,7 +2694,7 @@ namespace erin
         for (auto const& nodeConn : nodeConnections)
         {
             std::string nodeConnTag =
-                NodeConnectionToString(s.TheModel, nodeConn, true);
+                NodeConnectionToString(s.TheModel, nodeConn, true, aggregateGroups);
             originalNodeConnTags.push_back(nodeConnTag);
             nodeConnTags.push_back(nodeConnTag);
         }
@@ -2888,7 +2889,7 @@ namespace erin
 
         auto nodeConnections = GetNodeConnections(s, aggregateGroups);
         std::vector<size_t> nodeConnOrder =
-            CalculateNodeConnectionOrder(s, nodeConnections);
+            CalculateNodeConnectionOrder(s, nodeConnections, aggregateGroups);
 
         WriteEventFileHeader(
             out,

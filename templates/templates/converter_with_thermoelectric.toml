@@ -1,0 +1,48 @@
+name = "converter_with_recovery"
+description = "Diesel generator with thermo-electric recovery"
+num_inflows = 1
+num_outflows = 1
+connections = [
+  ["<0>", "diesel_generator:IN(0)", "diesel"],
+  ["diesel_generator:OUT(0)", "electric_bus:IN(0)", "electricity"],
+  ["diesel_generator:OUT(1)", "thermoelectric_converter:IN(0)", "waste_heat"],
+  ["thermoelectric_converter:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["electric_bus:OUT(0)", "<0>", "electricity"],
+]
+
+[parameters.required]
+diesel_generator_efficiency.type = "frac"
+thermoelectric_efficiency.type = "frac"
+
+[parameters.optional]
+max_outflow.type = "number"
+max_outflow.constraints = [">=0"]
+
+[[components]]
+id = "diesel_generator"
+type = "converter"
+inflow = "diesel"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency.param = "diesel_generator_efficiency"
+constant_efficiency.default = 0.4
+rate_unit = "kW"
+max_outflow.param = "max_outflow"
+max_outflow.default = 60.0
+
+[[components]]
+id = "thermoelectric_converter"
+type = "converter"
+inflow = "waste_heat"
+outflow = "electricity"
+lossflow = "waste_heat"
+constant_efficiency.param = "thermoelectric_efficiency"
+constant_efficiency.default = 0.1
+
+[[components]]
+id = "electric_bus"
+type = "mux"
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1
+

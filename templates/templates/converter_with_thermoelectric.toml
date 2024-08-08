@@ -1,4 +1,4 @@
-name = "converter_with_recovery"
+name = "converter_with_thermoelectric"
 description = "Diesel generator with thermo-electric recovery"
 num_inflows = 1
 num_outflows = 1

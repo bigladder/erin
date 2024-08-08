@@ -256,6 +256,14 @@ namespace TemplateEngine
 			return Toml.ToModel(rawData);
 		}
 
+		public static TomlTable
+		ReadInputModelFromStream(MemoryStream stream)
+		{
+			var reader = new StreamReader(stream);
+			string rawData = reader.ReadToEnd();
+			return Toml.ToModel(rawData);
+		}
+
 		public static T 
 		Get<T>(TomlTable table, string key)
 		{	
@@ -895,6 +903,43 @@ namespace TemplateEngine
 			return name;
 		}
 
+		public static bool
+		ModelContainsTemplates(TomlTable model)
+		{
+			foreach (KeyValuePair<string, object> kvp in model)
+			{
+				if (kvp.Key == "components")
+				{
+					if (kvp.Value is Dictionary<string, object> compTable)
+					{
+						foreach (KeyValuePair<string, object> compKvp in compTable)
+						{
+							string compType = "";
+							if (compKvp.Value is TomlTable compData)
+							{
+								compType = Get<string>(compData, "type");
+							}
+							else if (compKvp.Value is Dictionary<string, object> compData2)
+							{
+								if (compData2.ContainsKey("type"))
+								{
+									if (compData2["type"] is string compTypeStr)
+									{
+										compType = compTypeStr;
+									}
+								}
+							}
+							if (compType == "template")
+							{
+								return true;
+							}
+						}
+					}
+				}
+			}
+			return false;
+		}
+
 		public static TomlTable
 		ApplyTemplatesToModel(
 			Dictionary<string, TomlTable> templates,
@@ -937,6 +982,11 @@ namespace TemplateEngine
 							// ... and then apply that template to the component (without mutating it).
 							// ... A good use case for Immutable Containers?
 							string templateName = Get<string>(compData, "template_name");
+							string parentGroup = "";
+							if (compData.ContainsKey("group"))
+							{
+								parentGroup = Get<string>(compData, "group");
+							}
 							if (templates.TryGetValue(templateName, out TomlTable? value))
 							{
 								if (verbose)
@@ -1040,7 +1090,7 @@ namespace TemplateEngine
 										+ $"component name: {compName})";
 									TomlTable reifiedComponent = FillComponentParameters(
 										tempCompTable, parameters, compData, templateInfo, verbose);
-									reifiedComponent["group"] = compName;
+									reifiedComponent["group"] = parentGroup == "" ? compName : parentGroup;
 									templateComponents[id] = reifiedComponent;
 								}
 								foreach (KeyValuePair<string, TomlTable> ttKvp in templateComponents)
@@ -1074,6 +1124,14 @@ namespace TemplateEngine
 		}
 
 		public static void
+		WriteModelToStream(TomlTable model, MemoryStream stream)
+		{
+			var sw = new StreamWriter(stream);
+			sw.Write(Toml.FromModel(model));
+			sw.Flush();
+		}
+
+		public static void
 		Run(
 			string templateDirectory,
 			string inputFile,
@@ -1082,10 +1140,27 @@ namespace TemplateEngine
 		)
 		{
 			Dictionary<string, TomlTable> templates =
-				Utils.ReadTemplateLibrary(templateDirectory);
-			var model = Utils.ReadInputModel(inputFile);
-			var modifiedModel = Utils.ApplyTemplatesToModel(templates, model, verbose);
-			Utils.WriteModel(modifiedModel, outputFile);
+				ReadTemplateLibrary(templateDirectory);
+			MemoryStream ms = new();
+			var model = ReadInputModel(inputFile);
+			var modifiedModel = ApplyTemplatesToModel(templates, model, verbose);
+			int numPasses = 0;
+			using (var stream = new MemoryStream())
+			{
+				while (ModelContainsTemplates(modifiedModel))
+				{
+					if (verbose)
+					{
+						Console.WriteLine($"[INFO] Nested templates detected. Recursive expansion pass {++numPasses}");
+					}
+					WriteModelToStream(modifiedModel, stream);
+					stream.Seek(0, SeekOrigin.Begin);
+					model = ReadInputModelFromStream(stream);
+					stream.Seek(0, SeekOrigin.Begin);
+					modifiedModel = ApplyTemplatesToModel(templates, model, verbose);
+				}
+			}
+			WriteModel(modifiedModel, outputFile);
 		}
 	}
 }

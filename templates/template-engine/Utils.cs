@@ -710,6 +710,10 @@ namespace TemplateEngine
 			TomlTable result = [];
 			foreach (KeyValuePair<string, object> kvp in templateComponent)
 			{
+				if (kvp.Key == "id")
+				{
+					continue;
+				}
 				result[kvp.Key] = kvp.Value;
 			}
 			HashSet<string> toRemove = [];
@@ -791,6 +795,106 @@ namespace TemplateEngine
 			return result;
 		}
 
+		public static string
+		EnsureIdIsUnique(
+			string rawId,
+			HashSet<string> existingNames)
+		{
+			string result = rawId;
+			int nextNumber = 0;
+			while (existingNames.Contains(result))
+			{
+				result = $"{rawId}_{nextNumber}";
+				nextNumber++;
+			}
+			existingNames.Add(result);
+			return result;
+		}
+
+		public static HashSet<string>
+		ExtractComponentNamesFromConnections(
+			List<(string, string, string)> connections)
+		{
+			HashSet<string> result =
+				new();
+			foreach ((string fromComp, string toComp, string _) in connections)
+			{
+				string[] fromParts = fromComp.Split(":");
+				if (fromParts.Length > 0)
+				{
+					result.Add(fromParts[0]);
+				}
+				string[] toParts = toComp.Split(":");
+				if (toParts.Length > 0)
+				{
+					result.Add(toParts[0]);
+				}
+			}
+			return result;
+		}
+
+		public static Dictionary<string, string>
+		GenerateUniqueNamesForTemplateNames(
+			HashSet<string> templateNames,
+			HashSet<string> existingNames)
+		{
+			Dictionary<string, string> result = new();
+			foreach (string name in templateNames)
+			{
+				string uniqueName = name;
+				if (existingNames.Contains(name))
+				{
+					uniqueName = EnsureIdIsUnique(name, existingNames);
+				}
+				result[name] = uniqueName;
+			}
+			return result;
+		}
+
+		public static List<(string, string, string)>
+		ReplaceComponentNamesInConnections(
+			List<(string, string, string)> connections,
+			Dictionary<string, string> existingToNewNames)
+		{
+			string updateName(string name)
+			{
+				string result = name;
+				List<string> parts = name.Split(":").ToList();
+				if (parts.Count > 1)
+				{
+					if (existingToNewNames.ContainsKey(parts[0]))
+					{
+						List<string> newParts = new();
+						newParts.Add(existingToNewNames[parts[0]]);
+						for (int i = 1; i < parts.Count; ++i)
+						{
+							newParts.Add(parts[i]);
+						}
+						result = String.Join(":", newParts);
+					}
+				}
+				return result;
+			};
+			List<(string, string, string)> result = new();
+			foreach ((string fromComp, string toComp, string flow) in connections)
+			{
+				string newFromName = updateName(fromComp);
+				string newToName = updateName(toComp);
+				result.Add((newFromName, newToName, flow));
+			}
+			return result;
+		}
+
+		public static string
+		ReplaceName(string name, Dictionary<string, string> existingToNewNames)
+		{
+			if (existingToNewNames.ContainsKey(name))
+			{
+				return existingToNewNames[name];
+			}
+			return name;
+		}
+
 		public static TomlTable
 		ApplyTemplatesToModel(
 			Dictionary<string, TomlTable> templates,
@@ -816,6 +920,7 @@ namespace TemplateEngine
 					Dictionary<string, object> newComponents = [];
 					var compTable = (TomlTable)kvp.Value;
 					HashSet<string> existingComponentNames = new(compTable.Keys);
+					HashSet<string> generatedComponentNames = new();
 					foreach (KeyValuePair<string, object> compKvp in compTable)
 					{
 						string compName = compKvp.Key;
@@ -858,9 +963,27 @@ namespace TemplateEngine
 								{
 									PrintConnections(templateConnections);
 								}
+								HashSet<string> namesUsedInConnections =
+									ExtractComponentNamesFromConnections(templateConnections);
+								Dictionary<string, string> uniqueNamesByTemplateNames =
+									GenerateUniqueNamesForTemplateNames(namesUsedInConnections, existingComponentNames);
+								foreach (string newName in uniqueNamesByTemplateNames.Values)
+								{
+									existingComponentNames.Add(newName);
+								}
+								List<(string, string, string)> uniqueTemplateConnections =
+									ReplaceComponentNamesInConnections(templateConnections, uniqueNamesByTemplateNames);
+								if (verbose)
+								{
+									Console.WriteLine("[INFO] ensuring template connections are unique");
+									foreach (var conn in uniqueTemplateConnections)
+									{
+										Console.WriteLine($"- {conn.Item1} => {conn.Item2} [{conn.Item3}]");
+									}
+								}
 								AddTemplateConnections(
 									connections,
-									templateConnections,
+									uniqueTemplateConnections,
 									compName
 								);
 								Dictionary<string, TemplateParameter> parameters = [];
@@ -899,10 +1022,19 @@ namespace TemplateEngine
 								{
 									if (!tempCompTable.ContainsKey("id"))
 									{
+										Console.WriteLine($"[ERROR] with tempCompTable for {compName}:");
+										foreach (string key in tempCompTable.Keys)
+										{
+											Console.WriteLine($"- {key}: {tempCompTable[key]}");
+										}
 										throw new Exception($"[ERROR] missing required field 'id' in template component");
 									}
-									string id = Get<string>(tempCompTable, "id");
-									tempCompTable.Remove("id");
+									string rawId = Get<string>(tempCompTable, "id");
+									string id = ReplaceName(rawId, uniqueNamesByTemplateNames);
+									if (verbose)
+									{
+										Console.WriteLine($"[INFO] id replacement of {rawId} => {id}");
+									}
 									string templateInfo =
 										$"(template: {templateName}; template component id: {id}; "
 										+ $"component name: {compName})";

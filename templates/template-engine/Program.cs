@@ -16,7 +16,7 @@ if (args.Length == 4)
 {
 	if (!bool.TryParse(args[3], out verbose))
 	{
-		Console.WriteLine($"Problem parsing verbosity flag; assuming false");
+		Console.WriteLine("[WARNING] Problem parsing verbosity flag; assuming false");
 		verbose = false;
 	}
 }

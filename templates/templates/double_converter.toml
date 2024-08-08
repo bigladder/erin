@@ -1,0 +1,42 @@
+name = "double_converter"
+description = "Test to ensure nested templates work"
+num_inflows = 1
+num_outflows = 1
+connections = [
+  ["<0>", "mux0:IN(0)", "diesel"],
+  ["mux0:OUT(0)", "dc0:IN(0)", "diesel"],
+  ["mux0:OUT(1)", "dc1:IN(0)", "diesel"],
+  ["dc0:OUT(0)", "mux1:IN(0)", "electricity"],
+  ["dc1:OUT(0)", "mux1:IN(1)", "electricity"],
+  ["mux1:OUT(0)", "<0>", "electricity"],
+]
+
+[[components]]
+id = "mux0"
+type = "mux" 
+flow = "diesel"
+num_inflows = 1
+num_outflows = 2
+
+[[components]]
+id = "dc0"
+type = "template"
+template_name = "converter_with_thermoelectric"
+diesel_generator_efficiency = 0.42
+thermoelectric_efficiency = 0.12
+max_outflow = 100.0
+
+[[components]]
+id = "dc1"
+type = "template"
+template_name = "converter_with_thermoelectric"
+diesel_generator_efficiency = 0.38
+thermoelectric_efficiency = 0.08
+max_outflow = 80.0
+
+[[components]]
+id = "mux1"
+type = "mux" 
+flow = "electricity"
+num_inflows = 2
+num_outflows = 1

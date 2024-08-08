@@ -218,11 +218,15 @@ namespace erin
     );
 
     void
+    AggregateGroups(Model& model, std::vector<TimeAndFlows> const& results);
+
+    void
     Simulation_Run(
         Simulation& s,
         const std::string& eventsFilename,
         const std::string& statsFilename = "stats.csv",
         double time_step_h = -1.0,
+        bool aggregateGroups = true,
         const bool verbose = false
     );
 
@@ -257,9 +261,6 @@ namespace erin
     );
 
     std::vector<size_t>
-    CalculateConnectionOrder(Simulation const& s);
-
-    std::vector<size_t>
     CalculateScenarioOrder(Simulation const& s);
 
     std::vector<size_t>
@@ -282,7 +283,8 @@ namespace erin
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
         std::vector<size_t> const& compOrder,
-        TimeUnit outputTimeUnit = TimeUnit::Hour
+        TimeUnit outputTimeUnit = TimeUnit::Hour,
+        std::vector<NodeConnection> nodeConnections = {}
     );
 
     void

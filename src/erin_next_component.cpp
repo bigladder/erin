@@ -992,6 +992,20 @@ namespace erin
                 s.TheModel.ComponentMap, id, initialAge_s
             );
         }
+        if (table.contains("group"))
+        {
+            auto maybeGroup =
+                TOMLTable_ParseString(table, "group", fullTableName);
+            if (!maybeGroup.has_value())
+            {
+                WriteErrorMessage(
+                    fullTableName, "unable to parse 'group' as a string"
+                );
+                return Result::Failure;
+            }
+            std::string group = maybeGroup.value();
+            AddComponentToGroup(s.TheModel, id, group);
+        }
         return Result::Success;
     }
 

@@ -278,6 +278,94 @@ namespace erin
         // index into ComponentDict
         size_t ToId = 0;
         size_t FlowTypeId = 0;
+
+        size_t resultId = 0;
+    };
+
+    template<typename T>
+    struct ID
+    {
+        ID(T id_in): id(id_in)
+        {
+        }
+        T id;
+    };
+    struct ComponentID: ID<size_t>
+    {
+        ComponentID(size_t id_in = 0): ID(id_in)
+        {
+        }
+    };
+
+    struct GroupID: ID<std::string>
+    {
+        GroupID(std::string id_in = ""): ID<std::string>(id_in)
+        {
+        }
+    };
+
+    struct NodeID: std::variant<ComponentID, GroupID>
+    {
+        NodeID(): std::variant<ComponentID, GroupID>(0)
+        {
+        }
+        NodeID(size_t id_in): std::variant<ComponentID, GroupID>(id_in)
+        {
+        }
+        NodeID(std::string id_in): std::variant<ComponentID, GroupID>(id_in)
+        {
+        }
+
+        bool
+        operator==(NodeID nodeID) const
+        {
+            bool same = false;
+            auto i = index();
+            auto i0 = nodeID.index();
+            if (i == i0)
+            {
+                if (i == 0)
+                {
+                    if (std::get<0>(*this).id == std::get<0>(nodeID).id)
+                        same = true;
+                }
+                else
+                {
+                    if (std::get<1>(*this).id == std::get<1>(nodeID).id)
+                        same = true;
+                }
+            }
+            return same;
+        }
+    };
+
+    struct NodeConnection
+    {
+        ComponentType From = ComponentType::ConstantSourceType;
+        ComponentType To = ComponentType::ConstantLoadType;
+        // index into the specific component type's array
+        size_t FromIdx = 0;
+        size_t FromPort = 0;
+        // index into ComponentDict
+        NodeID FromId;
+        // index into the specific component type's array
+        size_t ToIdx = 0;
+        size_t ToPort = 0;
+        // index into ComponentDict
+        NodeID ToId;
+        size_t FlowTypeId = 0;
+
+        std::vector<size_t> origConnId = {};
+
+        bool
+        operator==(const NodeConnection& nodeConn) const
+        {
+            bool fromSame =
+                (nodeConn.FromId == FromId) && (nodeConn.FromPort == FromPort);
+            bool toSame =
+                (nodeConn.ToId == ToId) && (nodeConn.ToPort == ToPort);
+            return fromSame && toSame;
+        }
     };
 
     struct Mux
@@ -316,6 +404,22 @@ namespace erin
         flow_t Requested_W = 0;
         flow_t Available_W = 0;
         flow_t Actual_W = 0;
+
+        Flow
+        operator+(Flow const& flow) const
+        {
+            Flow newFlow;
+            newFlow.Requested_W = Requested_W + flow.Requested_W;
+            newFlow.Available_W = Available_W + flow.Available_W;
+            newFlow.Actual_W = Actual_W + flow.Actual_W;
+            return newFlow;
+        }
+
+        Flow
+        operator+=(Flow const& flow)
+        {
+            return *this = *this + flow;
+        }
     };
 
     struct TimeAndFlows
@@ -326,6 +430,9 @@ namespace erin
         std::vector<flow_t> StorageAmounts_J;
     };
 
+    typedef std::unordered_map<std::string, std::set<std::size_t>>
+        GroupToComponentMap;
+    typedef std::unordered_map<std::size_t, std::string> ComponentToGroupMap;
     struct Model
     {
         ComponentDict ComponentMap;
@@ -346,6 +453,9 @@ namespace erin
         ReliabilityCoordinator Rel{};
         std::function<double()> RandFn;
         double FinalTime = 0.0;
+        GroupToComponentMap GroupToComponents;
+        ComponentToGroupMap ComponentToGroup;
+        std::unordered_map<std::string, size_t> nGroupPortsTo, nGroupPortsFrom;
     };
 
     struct ComponentIdAndWasteConnection
@@ -1100,6 +1210,22 @@ namespace erin
         bool compact = false
     );
 
+    std::string
+    NodeConnectionToString(
+        Model const& model,
+        NodeConnection const& c,
+        bool compact = false,
+        bool aggregateGroups = true
+    );
+    std::string
+    NodeConnectionToString(
+        Model const& model,
+        FlowDict const& fd,
+        NodeConnection const& c,
+        bool compact = false,
+        bool aggregateGroups = true
+    );
+
     double
     Interpolate1d(double x, double x0, double y0, double x1, double y1);
 
@@ -1117,6 +1243,9 @@ namespace erin
 
     void
     ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s);
+
+    void
+    AddComponentToGroup(Model& model, size_t id, std::string group);
 
 } // namespace erin
 

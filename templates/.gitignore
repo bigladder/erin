@@ -1,4 +1,3 @@
-output.toml
-output01.toml
+output*.toml
 out.csv
 stats.csv

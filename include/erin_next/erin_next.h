@@ -30,6 +30,8 @@
 
 namespace erin
 {
+    // Forward Declarations
+    enum class SwitchState;
 
     // DATA
     double const infinity = -1.0;
@@ -487,6 +489,7 @@ namespace erin
         std::vector<Flow> Flows{};
         std::vector<size_t> ScheduleBasedLoadIdx{};
         std::vector<size_t> ScheduleBasedSourceIdx{};
+        std::vector<SwitchState> SwitchStates{};
     };
 
     struct TagAndPort

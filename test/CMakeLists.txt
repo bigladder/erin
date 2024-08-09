@@ -5,18 +5,22 @@ enable_testing()
 string(TOLOWER ${PROJECT_NAME} project_name_lower)
 
 # erin_tests
-add_executable(${project_name_lower}_tests ${project_name_lower}_tests.cpp)
+add_executable(${project_name_lower}_tests
+	${project_name_lower}_tests.cpp)
 
-target_include_directories(${project_name_lower}_tests PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${project_name_lower}_tests
+	PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 target_link_libraries(${project_name_lower}_tests
 	erin_next
 	GTest::gtest_main)
 
 # erin_next_random_tests
-add_executable(${project_name_lower}_next_random_tests ${project_name_lower}_next_random_tests.cpp erin_next_random_tests.cpp)
+add_executable(${project_name_lower}_next_random_tests
+	${project_name_lower}_next_random_tests.cpp erin_next_random_tests.cpp)
 
-target_include_directories(${project_name_lower}_next_random_tests PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${project_name_lower}_next_random_tests
+	PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 target_link_libraries(${project_name_lower}_next_random_tests
 		erin_next
@@ -36,6 +40,24 @@ target_include_directories(${project_name_lower}_lookup_table_tests
 )
 
 target_link_libraries(${project_name_lower}_lookup_table_tests
+	erin_next
+	GTest::gtest_main
+)
+
+# switch
+add_executable(erin_switch_tests
+	erin_switch_tests.cpp
+	${PROJECT_SOURCE_DIR}/src/erin_switch.cpp
+	${PROJECT_SOURCE_DIR}/include/erin/switch.h
+)
+
+target_include_directories(erin_switch_tests
+	PUBLIC
+	${PROJECT_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/src
+)
+
+target_link_libraries(erin_switch_tests
 	GTest::gtest_main
 )
 

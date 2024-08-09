@@ -3,6 +3,7 @@
 #ifndef ERIN_CONST_H
 #define ERIN_CONST_H
 
+#include <cstdint>
 // TODO[mok]: add #define for the index type; currently size_t but not necessary
 // to be so big; we might try a uint16_t or uint32_t; possibly in pair with enum
 // for type:

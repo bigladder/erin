@@ -1013,6 +1013,27 @@ namespace erin
         items.push_back(item);
     }
 
+    SwitchState
+    SimulationState_GetSwitchState(
+        SimulationState const& ss,
+        CompId const& switchId
+    )
+    {
+        assert(switchId.SubtypeIdx < ss.SwitchStates.size());
+        return ss.SwitchStates[switchId.SubtypeIdx];
+    }
+
+    void
+    SimulationState_SetSwitchState(
+        SimulationState& ss,
+        CompId const& switchId,
+        SwitchState newState
+    )
+    {
+        assert(switchId.SubtypeIdx < ss.SwitchStates.size());
+        ss.SwitchStates[switchId.SubtypeIdx] = newState;
+    }
+
     void
     SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx)
     {
@@ -3725,6 +3746,29 @@ namespace erin
             }
             break;
         }
+    }
+
+    CompId
+    Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag)
+    {
+        Switch s = {
+            .InflowConnPrimary = 0,
+            .InflowConnSecondary = 0,
+            .OutflowConn = 0,
+            .MaxOutflow_W = max_flow_W,
+        };
+        size_t subtypeIndex = m.Switches.size();
+        m.Switches.push_back(std::move(s));
+        size_t componentIndex = Component_AddComponentReturningId(
+            m.ComponentMap,
+            ComponentType::SwitchType,
+            subtypeIndex,
+            std::vector<size_t>{flowTypeId, flowTypeId},
+            std::vector<size_t>{flowTypeId},
+            tag,
+            0.0
+        );
+        return {(uint32_t)componentIndex, (uint32_t)subtypeIndex};
     }
 
     size_t

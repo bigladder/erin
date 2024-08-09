@@ -30,9 +30,6 @@
 
 namespace erin
 {
-    // Forward Declarations
-    enum class SwitchState;
-
     // DATA
     double const infinity = -1.0;
 
@@ -86,6 +83,14 @@ namespace erin
     {
         std::vector<std::string> Tags;
         std::vector<std::vector<TimeAndAmount>> Loads;
+    };
+
+    struct CompId
+    {
+        // Index into the top-level component array
+        uint32_t ComponentIdx;
+        // Index into the array of the subtype
+        uint32_t SubtypeIdx;
     };
 
     // NOTE: arrays in struct below indexed by size_t which we call ComponentId
@@ -440,6 +445,14 @@ namespace erin
 
     typedef std::unordered_map<std::size_t, std::string> ComponentToGroupMap;
 
+    struct Switch
+    {
+        size_t InflowConnPrimary;
+        size_t InflowConnSecondary;
+        size_t OutflowConn;
+        flow_t MaxOutflow_W;
+    };
+
     struct Model
     {
         ComponentDict ComponentMap;
@@ -454,6 +467,7 @@ namespace erin
         std::vector<PassThrough> PassThroughs;
         std::vector<Mover> Movers;
         std::vector<VariableEfficiencyMover> VarEffMovers;
+        std::vector<Switch> Switches;
         std::vector<Connection> Connections;
         std::vector<ScheduleBasedReliability> Reliabilities;
         DistributionSystem DistSys{};
@@ -476,6 +490,12 @@ namespace erin
         size_t Id;
         Connection WasteConn;
         Connection EnvConn;
+    };
+
+    enum class SwitchState
+    {
+        Primary = 0,
+        Secondary = 1,
     };
 
     struct SimulationState
@@ -630,6 +650,19 @@ namespace erin
 
     void
     Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
+
+    SwitchState
+    SimulationState_GetSwitchState(
+        SimulationState const& ss,
+        CompId const& switchId
+    );
+
+    void
+    SimulationState_SetSwitchState(
+        SimulationState& ss,
+        CompId const& switchId,
+        SwitchState newState
+    );
 
     void
     SimulationState_AddActiveConnectionBack(
@@ -810,6 +843,9 @@ namespace erin
         SimulationState& ss,
         size_t compId
     );
+
+    CompId
+    Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag);
 
     size_t
     Model_AddConstantLoad(Model& m, flow_t load);

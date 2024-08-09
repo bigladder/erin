@@ -64,6 +64,7 @@ namespace erin
         VariableEfficiencyMoverType,
         WasteSinkType,
         EnvironmentSourceType,
+        SwitchType,
     };
 
     // Holds the various flow types encountered

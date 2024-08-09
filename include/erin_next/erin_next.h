@@ -406,6 +406,7 @@ namespace erin
         flow_t Available_W = 0;
         flow_t Actual_W = 0;
 
+        // TODO: fix the below. This will break if available is at max size for unsigned int
         Flow
         operator+(Flow const& flow) const
         {
@@ -433,7 +434,9 @@ namespace erin
 
     typedef std::unordered_map<std::string, std::set<std::size_t>>
         GroupToComponentMap;
+
     typedef std::unordered_map<std::size_t, std::string> ComponentToGroupMap;
+
     struct Model
     {
         ComponentDict ComponentMap;

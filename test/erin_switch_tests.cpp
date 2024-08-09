@@ -15,3 +15,14 @@ TEST(Switch, TestGetSwitchState)
     SwitchState expectedSwitchState = SwitchState::Primary;
     EXPECT_EQ(expectedSwitchState, actualSwitchState);
 }
+
+TEST(Switch, TestSetSwitchState)
+{
+    SimulationState ss = {};
+    ss.SwitchStates.push_back(SwitchState::Primary);
+    CompId id = {0, 0};
+    SimulationState_SetSwitchState(ss, id, SwitchState::Secondary);
+    SwitchState actualSwitchState = SimulationState_GetSwitchState(ss, id);
+    SwitchState expectedSwitchState = SwitchState::Secondary;
+    EXPECT_EQ(expectedSwitchState, actualSwitchState);
+}

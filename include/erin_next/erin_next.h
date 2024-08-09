@@ -406,7 +406,8 @@ namespace erin
         flow_t Available_W = 0;
         flow_t Actual_W = 0;
 
-        // TODO: fix the below. This will break if available is at max size for unsigned int
+        // TODO: fix the below. This will break if available is at max size for
+        // unsigned int
         Flow
         operator+(Flow const& flow) const
         {

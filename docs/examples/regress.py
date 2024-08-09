@@ -27,6 +27,7 @@ if platform.system() == 'Windows':
     TEST_EXE = BIN_DIR / 'erin_tests.exe'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests.exe'
     LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests.exe'
+    SWITCH_TEST_EXE = BIN_DIR / 'erin_switch_tests.exe'
     CLI_EXE = BIN_DIR / 'erin.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
@@ -36,6 +37,7 @@ elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     TEST_EXE = BIN_DIR / 'erin_tests'
     RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
     LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests'
+    SWITCH_TEST_EXE = BIN_DIR / 'erin_switch_tests'
     CLI_EXE = BIN_DIR / 'erin'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test'
 else:
@@ -43,7 +45,7 @@ else:
     sys.exit(1)
 BIN_DIR = BIN_DIR.resolve()
 print(f"BINARY DIR: {BIN_DIR}")
-ALL_TESTS = [TEST_EXE, RAND_TEST_EXE, LOOKUP_TABLE_TEST_EXE]
+ALL_TESTS = [TEST_EXE, RAND_TEST_EXE, LOOKUP_TABLE_TEST_EXE, SWITCH_TEST_EXE]
 
 
 if not TEST_EXE.exists():

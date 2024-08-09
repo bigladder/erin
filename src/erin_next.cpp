@@ -1016,22 +1016,22 @@ namespace erin
     SwitchState
     SimulationState_GetSwitchState(
         SimulationState const& ss,
-        CompId const& switchId
+        size_t const& switchIdx
     )
     {
-        assert(switchId.SubtypeIdx < ss.SwitchStates.size());
-        return ss.SwitchStates[switchId.SubtypeIdx];
+        assert(switchIdx < ss.SwitchStates.size());
+        return ss.SwitchStates[switchIdx];
     }
 
     void
     SimulationState_SetSwitchState(
         SimulationState& ss,
-        CompId const& switchId,
+        size_t const& switchIdx,
         SwitchState newState
     )
     {
-        assert(switchId.SubtypeIdx < ss.SwitchStates.size());
-        ss.SwitchStates[switchId.SubtypeIdx] = newState;
+        assert(switchIdx < ss.SwitchStates.size());
+        ss.SwitchStates[switchIdx] = newState;
     }
 
     void
@@ -3748,7 +3748,7 @@ namespace erin
         }
     }
 
-    CompId
+    size_t
     Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag)
     {
         Switch s = {
@@ -3759,7 +3759,7 @@ namespace erin
         };
         size_t subtypeIndex = m.Switches.size();
         m.Switches.push_back(std::move(s));
-        size_t componentIndex = Component_AddComponentReturningId(
+        return Component_AddComponentReturningId(
             m.ComponentMap,
             ComponentType::SwitchType,
             subtypeIndex,
@@ -3768,7 +3768,6 @@ namespace erin
             tag,
             0.0
         );
-        return {(uint32_t)componentIndex, (uint32_t)subtypeIndex};
     }
 
     size_t

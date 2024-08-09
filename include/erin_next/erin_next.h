@@ -85,13 +85,16 @@ namespace erin
         std::vector<std::vector<TimeAndAmount>> Loads;
     };
 
-    struct CompId
-    {
-        // Index into the top-level component array
-        uint32_t ComponentIdx;
-        // Index into the array of the subtype
-        uint32_t SubtypeIdx;
-    };
+    // TODO: enable this in the future. Idea is to return
+    // it via Model_Add*() calls and use it for all gets on
+    // model and simulation state.
+    // struct CompId
+    // {
+    //     // Index into the top-level component array
+    //     uint32_t ComponentIdx;
+    //     // Index into the array of the subtype
+    //     uint32_t SubtypeIdx;
+    // };
 
     // NOTE: arrays in struct below indexed by size_t which we call ComponentId
     struct ComponentDict
@@ -654,13 +657,13 @@ namespace erin
     SwitchState
     SimulationState_GetSwitchState(
         SimulationState const& ss,
-        CompId const& switchId
+        size_t const& switchIdx
     );
 
     void
     SimulationState_SetSwitchState(
         SimulationState& ss,
-        CompId const& switchId,
+        size_t const& switchIdx,
         SwitchState newState
     );
 
@@ -844,7 +847,7 @@ namespace erin
         size_t compId
     );
 
-    CompId
+    size_t
     Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag);
 
     size_t

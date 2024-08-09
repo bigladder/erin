@@ -40,14 +40,17 @@ namespace erin
 
     // Function Declarations
     SwitchState
-    SimulationState_GetSwitchState(SimulationState const& ss, CompId const& id);
+    SimulationState_GetSwitchState(
+        SimulationState const& ss,
+        CompId const& switchId
+    );
 
-    // void
-    // SimulationState_SetSwitchState(
-    //   SimulationState& ss,
-    //   CompId const& id,
-    //   SwitchState newState
-    // );
+    void
+    SimulationState_SetSwitchState(
+        SimulationState& ss,
+        CompId const& switchId,
+        SwitchState newState
+    );
 
     // void
     // RunSwitchBackward(

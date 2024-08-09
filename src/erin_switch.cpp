@@ -13,4 +13,15 @@ namespace erin
         assert(switchId.SubtypeIdx < ss.SwitchStates.size());
         return ss.SwitchStates[switchId.SubtypeIdx];
     }
+
+    void
+    SimulationState_SetSwitchState(
+        SimulationState& ss,
+        CompId const& switchId,
+        SwitchState newState
+    )
+    {
+        assert(switchId.SubtypeIdx < ss.SwitchStates.size());
+        ss.SwitchStates[switchId.SubtypeIdx] = newState;
+    }
 }

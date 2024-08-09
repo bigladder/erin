@@ -26,8 +26,22 @@ TEST(Switch, TestSetSwitchState)
     EXPECT_EQ(expectedSwitchState, actualSwitchState);
 }
 
-TEST(Switch, TestModelIntegration)
+TEST(Switch, TestAddingSwitchToModel)
 {
     Model m = {};
-    auto switchId = Model_AddSwitch(m, 0, "ATS");
+    EXPECT_EQ(m.ComponentMap.CompType.size(), 0);
+    EXPECT_EQ(m.Switches.size(), 0);
+    auto switchIdx = Model_AddSwitch(m, 0, "ATS");
+    EXPECT_EQ(m.ComponentMap.CompType.size(), 1);
+    EXPECT_EQ(m.Switches.size(), 1);
+    EXPECT_EQ(switchIdx, 0);
+}
+
+TEST(Switch, TestRunningSwitchBackward)
+{
+    Model m = {};
+    auto src0 = Model_AddConstantSource(m, 100, 0, "src0");
+    auto src1 = Model_AddConstantSource(m, 50, 0, "src1");
+    auto switchIdx = Model_AddSwitch(m, 0, "ATS");
+    auto load = Model_AddConstantLoad(m, 200);
 }

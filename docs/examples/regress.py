@@ -371,6 +371,8 @@ if __name__ == "__main__":
     run_cli("31")
     run_cli("32")
     run_cli("33")
+    run_cli("34")
+    run_cli("35")
     print("\nPassed all regression tests!")
     
 	# Run original (unpacked) and rename/move output

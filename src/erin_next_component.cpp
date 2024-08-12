@@ -160,6 +160,13 @@ namespace erin
                 );
             }
             break;
+            case ComponentType::SwitchType:
+            {
+                input = TOMLTable_ParseWithValidation(
+                    table, compValids.Switch, fullTableName, errors, warnings
+                );
+            }
+            break;
             default:
             {
                 WriteErrorMessage(fullTableName, "Unhandled component type");
@@ -851,6 +858,36 @@ namespace erin
                 size_t moverIdx = s.TheModel.ComponentMap.Idx[id];
                 s.TheModel.VarEffMovers[moverIdx].MaxOutflow_W =
                     static_cast<flow_t>(maxOutflow_W);
+            }
+            break;
+            case ComponentType::SwitchType:
+            {
+                PowerUnit localRateUnit = rateUnit;
+                id = Model_AddSwitch(s.TheModel, inflowId, tag);
+                if (input.contains("max_outflow"))
+                {
+                    if (input.contains("rate_unit"))
+                    {
+                        std::string localRateUnitStr =
+                            std::get<std::string>(input.at("rate_unit").Value);
+                        auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
+                        if (!maybeRateUnit.has_value())
+                        {
+                            errors.push_back(WriteErrorToString(
+                                fullTableName,
+                                "unhandled rate unit '" + localRateUnitStr + "'"
+                            ));
+                            return Result::Failure;
+                        }
+                        localRateUnit = maybeRateUnit.value();
+                    }
+                    double maxOutflow_W = Power_ToWatt(
+                        std::get<double>(input.at("max_outflow").Value),
+                        localRateUnit
+                    );
+                    size_t switchIdx = s.TheModel.ComponentMap.Idx[id];
+                    s.TheModel.Switches[switchIdx].MaxOutflow_W = maxOutflow_W;
+                }
             }
             break;
             default:

@@ -263,6 +263,7 @@ namespace erin
             InputSection::Components_PassThrough,
             InputSection::Components_VariableEffMover,
             InputSection::Components_Mover,
+            InputSection::Components_Switch,
             InputSection::Dist_Fixed,
             InputSection::Dist_Weibull,
             InputSection::Dist_Uniform,
@@ -284,6 +285,7 @@ namespace erin
             InputSection::Components_PassThrough,
             InputSection::Components_VariableEffMover,
             InputSection::Components_Mover,
+            InputSection::Components_Switch,
         };
         std::unordered_set<InputSection> nonLoadCompSections{
             InputSection::Components_Source,
@@ -295,6 +297,7 @@ namespace erin
             InputSection::Components_PassThrough,
             InputSection::Components_VariableEffMover,
             InputSection::Components_Mover,
+            InputSection::Components_Switch,
         };
         std::unordered_set<std::string> compTypeEnums{
             "constant_load",
@@ -309,6 +312,7 @@ namespace erin
             "source",
             "store",
             "uncontrolled_source",
+            "switch",
         };
         std::unordered_set<std::string> distTypeEnums{
             "fixed",
@@ -692,6 +696,7 @@ namespace erin
                         InputSection::Components_Mux,
                         InputSection::Components_PassThrough,
                         InputSection::Components_Store,
+                        InputSection::Components_Switch,
                     },
             },
             FieldInfo{
@@ -1197,6 +1202,11 @@ namespace erin
                         UpdateValidationInfoByField(
                             v.Comp.VariableEfficiencyMover, f
                         );
+                    }
+                    break;
+                    case InputSection::Components_Switch:
+                    {
+                        UpdateValidationInfoByField(v.Comp.Switch, f);
                     }
                     break;
                     case InputSection::Dist_Fixed:

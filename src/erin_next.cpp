@@ -2952,7 +2952,7 @@ namespace erin
         {
             return ComponentType::VariableEfficiencyMoverType;
         }
-        if (tag == "Switch")
+        if (tag == "Switch" || tag == "switch")
         {
             return ComponentType::SwitchType;
         }

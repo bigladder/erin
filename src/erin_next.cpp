@@ -3371,6 +3371,59 @@ namespace erin
         };
     }
 
+    bool
+    RunSwitchLogic(Model const& model, SimulationState& ss)
+    {
+        bool result = false;
+        for (size_t switchIdx = 0; switchIdx < ss.SwitchStates.size();
+             ++switchIdx)
+        {
+            auto switchState = ss.SwitchStates[switchIdx];
+            assert(switchIdx < model.Switches.size());
+            auto const& theSwitch = model.Switches[switchIdx];
+            auto in0Conn = theSwitch.InflowConnPrimary;
+            auto in1Conn = theSwitch.InflowConnSecondary;
+            auto outConn = theSwitch.OutflowConn;
+            assert(in0Conn < ss.Flows.size());
+            bool primaryIsSufficient =
+                ss.Flows[in0Conn].Available_W >= ss.Flows[in0Conn].Requested_W;
+            switch (switchState)
+            {
+                case SwitchState::Primary:
+                {
+                    if (!primaryIsSufficient)
+                    {
+                        ss.SwitchStates[switchIdx] = SwitchState::Secondary;
+                        ss.ActiveConnectionsBack.insert(outConn);
+                        ss.ActiveConnectionsFront.insert(in0Conn);
+                        ss.ActiveConnectionsFront.insert(in1Conn);
+                        result = true;
+                    }
+                }
+                break;
+                case SwitchState::Secondary:
+                {
+                    if (primaryIsSufficient)
+                    {
+                        ss.SwitchStates[switchIdx] = SwitchState::Primary;
+                        ss.ActiveConnectionsBack.insert(outConn);
+                        ss.ActiveConnectionsFront.insert(in0Conn);
+                        ss.ActiveConnectionsFront.insert(in1Conn);
+                        result = true;
+                    }
+                }
+                break;
+                default:
+                {
+                    WriteErrorMessage("Simulate", "unhandled switch state");
+                    std::exit(1);
+                }
+                break;
+            }
+        }
+        return result;
+    }
+
     std::vector<TimeAndFlows>
     Simulate(Model& model, bool print, bool enableSwitchLogic)
     {
@@ -3415,57 +3468,7 @@ namespace erin
                 RunActiveConnections(model, ss, t);
                 if (enableSwitchLogic)
                 {
-                    bool anySwitchChanged = false;
-                    for (size_t switchIdx = 0;
-                         switchIdx < ss.SwitchStates.size();
-                         ++switchIdx)
-                    {
-                        auto switchState = ss.SwitchStates[switchIdx];
-                        assert(switchIdx < model.Switches.size());
-                        auto const& theSwitch = model.Switches[switchIdx];
-                        auto in0Conn = theSwitch.InflowConnPrimary;
-                        auto in1Conn = theSwitch.InflowConnSecondary;
-                        auto outConn = theSwitch.OutflowConn;
-                        bool primaryIsSufficient = ss.Flows[in0Conn].Available_W
-                            >= ss.Flows[in0Conn].Requested_W;
-                        switch (switchState)
-                        {
-                            case SwitchState::Primary:
-                            {
-                                if (!primaryIsSufficient)
-                                {
-                                    ss.SwitchStates[switchIdx] =
-                                        SwitchState::Secondary;
-                                    ss.ActiveConnectionsBack.insert(outConn);
-                                    ss.ActiveConnectionsFront.insert(in0Conn);
-                                    ss.ActiveConnectionsFront.insert(in1Conn);
-                                    anySwitchChanged = true;
-                                }
-                            }
-                            break;
-                            case SwitchState::Secondary:
-                            {
-                                if (primaryIsSufficient)
-                                {
-                                    ss.SwitchStates[switchIdx] =
-                                        SwitchState::Primary;
-                                    ss.ActiveConnectionsBack.insert(outConn);
-                                    ss.ActiveConnectionsFront.insert(in0Conn);
-                                    ss.ActiveConnectionsFront.insert(in1Conn);
-                                    anySwitchChanged = true;
-                                }
-                            }
-                            break;
-                            default:
-                            {
-                                WriteErrorMessage(
-                                    "Simulate", "unhandled switch state"
-                                );
-                                std::exit(1);
-                            }
-                            break;
-                        }
-                    }
+                    bool anySwitchChanged = RunSwitchLogic(model, ss);
                     if (anySwitchChanged)
                     {
                         RunActiveConnections(model, ss, t);

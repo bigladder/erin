@@ -831,7 +831,7 @@ namespace erin
     CopyStorageStates(SimulationState& ss);
 
     std::vector<TimeAndFlows>
-    Simulate(Model& m, bool print);
+    Simulate(Model& m, bool print = true, bool enableSwitchLogic = true);
 
     void
     Model_SetComponentToRepaired(

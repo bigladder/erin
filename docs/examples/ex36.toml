@@ -1,0 +1,85 @@
+[simulation_info]
+input_format_version = "0.2"
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "hours"
+max_time = 4
+############################################################
+[loads.building_electrical]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,200.0],[4.0,0.0]]
+############################################################
+[components.S_A0]
+type = "source"
+outflow = "electricity"
+max_outflow = 250.0
+[components.S_B0]
+type = "source"
+outflow = "electricity"
+max_outflow = 100.0
+[components.SW0]
+type = "switch"
+flow = "electricity"
+# initial_state = 0
+[components.L0]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+[components.S_A1]
+type = "source"
+outflow = "electricity"
+max_outflow = 250.0
+[components.S_B1]
+type = "source"
+outflow = "electricity"
+max_outflow = 100.0
+[components.SW1]
+type = "switch"
+flow = "electricity"
+# initial_state = 0
+[components.L1]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+[components.S_A2]
+type = "source"
+outflow = "electricity"
+max_outflow = 100.0
+[components.S_B2]
+type = "source"
+outflow = "electricity"
+max_outflow = 250.0
+[components.SW2]
+type = "switch"
+flow = "electricity"
+# initial_state = 0
+[components.L2]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+############################################################
+[network]
+connections = [
+  ["S_A0:OUT(0)", "SW0:IN(0)", "electricity"],
+  ["S_B0:OUT(0)", "SW0:IN(1)", "electricity"],
+  ["SW0:OUT(0)", "L0:IN(0)", "electricity"],
+  ["S_A1:OUT(0)", "SW1:IN(0)", "electricity"],
+  ["S_B1:OUT(0)", "SW1:IN(1)", "electricity"],
+  ["SW1:OUT(0)", "L1:IN(0)", "electricity"],
+  ["S_A2:OUT(0)", "SW2:IN(0)", "electricity"],
+  ["S_B2:OUT(0)", "SW2:IN(1)", "electricity"],
+  ["SW2:OUT(0)", "L2:IN(0)", "electricity"],
+]
+############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 4
+max_occurrences = 1
+

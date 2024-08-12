@@ -1011,7 +1011,8 @@ namespace erin
         size_t fromPort,
         size_t toId,
         size_t toPort,
-        size_t flowId
+        size_t flowId,
+        bool checkIntegrity = false
     );
 
     bool

@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <numeric>
+#include <string>
 #include <unordered_set>
 #include <utility>
 #include <fmt/core.h>
@@ -1985,6 +1986,76 @@ namespace erin
                         }
                     }
                     break;
+                    case ComponentType::SwitchType:
+                    {
+                        auto switchIdx = model.Connections[connIdx].FromIdx;
+                        assert(switchIdx < ss.SwitchStates.size());
+                        auto switchState = ss.SwitchStates[switchIdx];
+                        auto const& theSwitch = model.Switches[switchIdx];
+                        assert(
+                            theSwitch.InflowConnPrimary
+                            < model.Connections.size()
+                        );
+                        auto inflow0ConnIdx = theSwitch.InflowConnPrimary;
+                        auto inflow1ConnIdx = theSwitch.InflowConnSecondary;
+                        auto outflowConnIdx = theSwitch.OutflowConn;
+                        switch (switchState)
+                        {
+                            case SwitchState::Primary:
+                            {
+                                // send request on primary
+                                if (ss.Flows[inflow0ConnIdx].Requested_W
+                                    != ss.Flows[outflowConnIdx].Requested_W)
+                                {
+                                    ss.ActiveConnectionsBack.insert(
+                                        inflow0ConnIdx
+                                    );
+                                }
+                                ss.Flows[inflow0ConnIdx].Requested_W =
+                                    ss.Flows[outflowConnIdx].Requested_W;
+                                // set request on secondary to 0
+                                if (ss.Flows[inflow0ConnIdx].Requested_W != 0)
+                                {
+                                    ss.ActiveConnectionsBack.insert(
+                                        inflow1ConnIdx
+                                    );
+                                }
+                                ss.Flows[inflow1ConnIdx].Requested_W = 0;
+                            }
+                            break;
+                            case SwitchState::Secondary:
+                            {
+                                // send request on secondary
+                                if (ss.Flows[inflow0ConnIdx].Requested_W != 0)
+                                {
+                                    ss.ActiveConnectionsBack.insert(
+                                        inflow0ConnIdx
+                                    );
+                                }
+                                ss.Flows[inflow0ConnIdx].Requested_W = 0;
+                                // set request on primary to 0
+                                if (ss.Flows[inflow1ConnIdx].Requested_W
+                                    != ss.Flows[outflowConnIdx].Requested_W)
+                                {
+                                    ss.ActiveConnectionsBack.insert(
+                                        inflow1ConnIdx
+                                    );
+                                }
+                                ss.Flows[inflow1ConnIdx].Requested_W =
+                                    ss.Flows[outflowConnIdx].Requested_W;
+                            }
+                            break;
+                            default:
+                            {
+                                WriteErrorMessage(
+                                    "<runtime>", "unhandled switch state"
+                                );
+                                std::exit(1);
+                            }
+                            break;
+                        }
+                    }
+                    break;
                     default:
                     {
                         std::cout
@@ -2297,6 +2368,55 @@ namespace erin
                     case ComponentType::StoreType:
                     {
                         RunStoreForward(model, ss, connIdx, compIdx);
+                    }
+                    break;
+                    case ComponentType::SwitchType:
+                    {
+                        auto switchIdx = model.Connections[connIdx].ToIdx;
+                        assert(switchIdx < model.Switches.size());
+                        auto const& theSwitch = model.Switches[switchIdx];
+                        assert(switchIdx < ss.SwitchStates.size());
+                        auto switchState = ss.SwitchStates[switchIdx];
+                        auto inflow0ConnIdx = theSwitch.InflowConnPrimary;
+                        auto inflow1ConnIdx = theSwitch.InflowConnSecondary;
+                        auto outflowConnIdx = theSwitch.OutflowConn;
+                        switch (switchState)
+                        {
+                            case SwitchState::Primary:
+                            {
+                                if (ss.Flows[outflowConnIdx].Available_W
+                                    != ss.Flows[inflow0ConnIdx].Available_W)
+                                {
+                                    ss.ActiveConnectionsFront.insert(
+                                        outflowConnIdx
+                                    );
+                                }
+                                ss.Flows[outflowConnIdx].Available_W =
+                                    ss.Flows[inflow0ConnIdx].Available_W;
+                            }
+                            break;
+                            case SwitchState::Secondary:
+                            {
+                                if (ss.Flows[outflowConnIdx].Available_W
+                                    != ss.Flows[inflow1ConnIdx].Available_W)
+                                {
+                                    ss.ActiveConnectionsFront.insert(
+                                        outflowConnIdx
+                                    );
+                                }
+                                ss.Flows[outflowConnIdx].Available_W =
+                                    ss.Flows[inflow1ConnIdx].Available_W;
+                            }
+                            break;
+                            default:
+                            {
+                                WriteErrorMessage(
+                                    "<runtime>", "unhandled switch state"
+                                );
+                                std::exit(1);
+                            }
+                            break;
+                        }
                     }
                     break;
                     default:
@@ -2770,6 +2890,11 @@ namespace erin
                 result = "EnvironmentSource";
             }
             break;
+            case ComponentType::SwitchType:
+            {
+                result = "Switch";
+            }
+            break;
             default:
             {
                 WriteErrorMessage("ToString", "unhandled component type");
@@ -2835,6 +2960,10 @@ namespace erin
             || tag == "variable_efficiency_mover")
         {
             return ComponentType::VariableEfficiencyMoverType;
+        }
+        if (tag == "Switch")
+        {
+            return ComponentType::SwitchType;
         }
         return {};
     }
@@ -3079,6 +3208,10 @@ namespace erin
         for (size_t i = 0; i < model.Connections.size(); ++i)
         {
             ss.Flows.push_back(Flow{});
+        }
+        for (size_t i = 0; i < model.Switches.size(); ++i)
+        {
+            ss.SwitchStates.push_back(SwitchState::Primary);
         }
     }
 
@@ -4225,11 +4358,10 @@ namespace erin
         size_t fromPort,
         size_t toId,
         size_t toPort,
-        size_t flowId
+        size_t flowId,
+        bool checkIntegrity
     )
     {
-        // TODO: make the below an option?
-        bool constexpr check_integrity = false;
         ComponentType fromType = m.ComponentMap.CompType[fromId];
         size_t fromIdx = m.ComponentMap.Idx[fromId];
         ComponentType toType = m.ComponentMap.CompType[toId];
@@ -4246,7 +4378,7 @@ namespace erin
             .FlowTypeId = flowId,
         };
         size_t connId = m.Connections.size();
-        if constexpr (check_integrity)
+        if (checkIntegrity)
         {
             bool issueFound = false;
             for (auto const& conn : m.Connections)
@@ -4466,6 +4598,12 @@ namespace erin
                 // NOTE: do nothing
             }
             break;
+            case ComponentType::SwitchType:
+            {
+                assert(fromIdx < m.Switches.size());
+                m.Switches[fromIdx].OutflowConn = connId;
+            }
+            break;
             default:
             {
                 WriteErrorMessage(
@@ -4477,6 +4615,34 @@ namespace erin
         }
         switch (toType)
         {
+            case ComponentType::SwitchType:
+            {
+                assert(toIdx < m.Switches.size());
+                switch (toPort)
+                {
+                    case 0:
+                    {
+                        m.Switches[toIdx].InflowConnPrimary = connId;
+                    }
+                    break;
+                    case 1:
+                    {
+                        m.Switches[toIdx].InflowConnSecondary = connId;
+                    }
+                    break;
+                    default:
+                    {
+                        WriteErrorMessage(
+                            "Model_AddConnection",
+                            "unhandled inport: " + std::to_string(toPort)
+                                + " for " + ToString(toType)
+                        );
+                        std::exit(1);
+                    }
+                    break;
+                }
+            }
+            break;
             case ComponentType::PassThroughType:
             {
                 assert(toIdx < m.PassThroughs.size());

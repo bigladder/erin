@@ -44,4 +44,8 @@ TEST(Switch, TestRunningSwitchBackward)
     auto src1 = Model_AddConstantSource(m, 50, 0, "src1");
     auto switchIdx = Model_AddSwitch(m, 0, "ATS");
     auto load = Model_AddConstantLoad(m, 200);
+    auto src0ToSwitch = Model_AddConnection(m, src0, 0, switchIdx, 0, true);
+    auto src1ToSwitch = Model_AddConnection(m, src1, 0, switchIdx, 1, true);
+    auto switchToLoad = Model_AddConnection(m, switchIdx, 0, load, 0, true);
+    auto results = Simulate(m, false);
 }

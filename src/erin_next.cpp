@@ -1625,6 +1625,67 @@ namespace erin
     }
 
     void
+    RunSwitchBackward(
+        Model const& m,
+        SimulationState& ss,
+        size_t outflowConnIdx,
+        size_t switchIdx
+    )
+    {
+        assert(switchIdx < ss.SwitchStates.size());
+        auto switchState = ss.SwitchStates[switchIdx];
+        auto const& theSwitch = m.Switches[switchIdx];
+        assert(theSwitch.InflowConnPrimary < m.Connections.size());
+        auto inflow0ConnIdx = theSwitch.InflowConnPrimary;
+        auto inflow1ConnIdx = theSwitch.InflowConnSecondary;
+        switch (switchState)
+        {
+            case SwitchState::Primary:
+            {
+                // send request on primary
+                if (ss.Flows[inflow0ConnIdx].Requested_W
+                    != ss.Flows[outflowConnIdx].Requested_W)
+                {
+                    ss.ActiveConnectionsBack.insert(inflow0ConnIdx);
+                }
+                ss.Flows[inflow0ConnIdx].Requested_W =
+                    ss.Flows[outflowConnIdx].Requested_W;
+                // set request on secondary to 0
+                if (ss.Flows[inflow0ConnIdx].Requested_W != 0)
+                {
+                    ss.ActiveConnectionsBack.insert(inflow1ConnIdx);
+                }
+                ss.Flows[inflow1ConnIdx].Requested_W = 0;
+            }
+            break;
+            case SwitchState::Secondary:
+            {
+                // send request on secondary
+                if (ss.Flows[inflow0ConnIdx].Requested_W != 0)
+                {
+                    ss.ActiveConnectionsBack.insert(inflow0ConnIdx);
+                }
+                ss.Flows[inflow0ConnIdx].Requested_W = 0;
+                // set request on primary to 0
+                if (ss.Flows[inflow1ConnIdx].Requested_W
+                    != ss.Flows[outflowConnIdx].Requested_W)
+                {
+                    ss.ActiveConnectionsBack.insert(inflow1ConnIdx);
+                }
+                ss.Flows[inflow1ConnIdx].Requested_W =
+                    ss.Flows[outflowConnIdx].Requested_W;
+            }
+            break;
+            default:
+            {
+                WriteErrorMessage("<runtime>", "unhandled switch state");
+                std::exit(1);
+            }
+            break;
+        }
+    }
+
+    void
     Mux_RequestInflowsIntelligently(
         SimulationState& ss,
         std::vector<size_t> const& inflowConns,
@@ -1988,72 +2049,7 @@ namespace erin
                     break;
                     case ComponentType::SwitchType:
                     {
-                        auto switchIdx = model.Connections[connIdx].FromIdx;
-                        assert(switchIdx < ss.SwitchStates.size());
-                        auto switchState = ss.SwitchStates[switchIdx];
-                        auto const& theSwitch = model.Switches[switchIdx];
-                        assert(
-                            theSwitch.InflowConnPrimary
-                            < model.Connections.size()
-                        );
-                        auto inflow0ConnIdx = theSwitch.InflowConnPrimary;
-                        auto inflow1ConnIdx = theSwitch.InflowConnSecondary;
-                        auto outflowConnIdx = theSwitch.OutflowConn;
-                        switch (switchState)
-                        {
-                            case SwitchState::Primary:
-                            {
-                                // send request on primary
-                                if (ss.Flows[inflow0ConnIdx].Requested_W
-                                    != ss.Flows[outflowConnIdx].Requested_W)
-                                {
-                                    ss.ActiveConnectionsBack.insert(
-                                        inflow0ConnIdx
-                                    );
-                                }
-                                ss.Flows[inflow0ConnIdx].Requested_W =
-                                    ss.Flows[outflowConnIdx].Requested_W;
-                                // set request on secondary to 0
-                                if (ss.Flows[inflow0ConnIdx].Requested_W != 0)
-                                {
-                                    ss.ActiveConnectionsBack.insert(
-                                        inflow1ConnIdx
-                                    );
-                                }
-                                ss.Flows[inflow1ConnIdx].Requested_W = 0;
-                            }
-                            break;
-                            case SwitchState::Secondary:
-                            {
-                                // send request on secondary
-                                if (ss.Flows[inflow0ConnIdx].Requested_W != 0)
-                                {
-                                    ss.ActiveConnectionsBack.insert(
-                                        inflow0ConnIdx
-                                    );
-                                }
-                                ss.Flows[inflow0ConnIdx].Requested_W = 0;
-                                // set request on primary to 0
-                                if (ss.Flows[inflow1ConnIdx].Requested_W
-                                    != ss.Flows[outflowConnIdx].Requested_W)
-                                {
-                                    ss.ActiveConnectionsBack.insert(
-                                        inflow1ConnIdx
-                                    );
-                                }
-                                ss.Flows[inflow1ConnIdx].Requested_W =
-                                    ss.Flows[outflowConnIdx].Requested_W;
-                            }
-                            break;
-                            default:
-                            {
-                                WriteErrorMessage(
-                                    "<runtime>", "unhandled switch state"
-                                );
-                                std::exit(1);
-                            }
-                            break;
-                        }
+                        RunSwitchBackward(model, ss, connIdx, compIdx);
                     }
                     break;
                     default:

@@ -48,4 +48,7 @@ TEST(Switch, TestRunningSwitchBackward)
     auto src1ToSwitch = Model_AddConnection(m, src1, 0, switchIdx, 1, true);
     auto switchToLoad = Model_AddConnection(m, switchIdx, 0, load, 0, true);
     auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
+    EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].Flows.size(), 3) << "size of flows must equal 3";
 }

@@ -2260,6 +2260,45 @@ namespace erin
     }
 
     void
+    RunSwitchForward(
+        Model& model,
+        SimulationState& ss,
+        size_t inflowConnIdx,
+        size_t switchIdx
+    )
+    {
+        assert(switchIdx < model.Switches.size());
+        auto const& theSwitch = model.Switches[switchIdx];
+        assert(switchIdx < ss.SwitchStates.size());
+        auto switchState = ss.SwitchStates[switchIdx];
+        auto inflow0ConnIdx = theSwitch.InflowConnPrimary;
+        auto inflow1ConnIdx = theSwitch.InflowConnSecondary;
+        auto outflowConnIdx = theSwitch.OutflowConn;
+        if (switchState == SwitchState::Primary
+            && inflowConnIdx == inflow0ConnIdx)
+        {
+            if (ss.Flows[outflowConnIdx].Available_W
+                != ss.Flows[inflow0ConnIdx].Available_W)
+            {
+                ss.ActiveConnectionsFront.insert(outflowConnIdx);
+            }
+            ss.Flows[outflowConnIdx].Available_W =
+                ss.Flows[inflow0ConnIdx].Available_W;
+        }
+        else if (switchState == SwitchState::Secondary
+                 && inflowConnIdx == inflow1ConnIdx)
+        {
+            if (ss.Flows[outflowConnIdx].Available_W
+                != ss.Flows[inflow1ConnIdx].Available_W)
+            {
+                ss.ActiveConnectionsFront.insert(outflowConnIdx);
+            }
+            ss.Flows[outflowConnIdx].Available_W =
+                ss.Flows[inflow1ConnIdx].Available_W;
+        }
+    }
+
+    void
     RunPassthroughForward(
         Model& m,
         SimulationState& ss,
@@ -2368,51 +2407,7 @@ namespace erin
                     break;
                     case ComponentType::SwitchType:
                     {
-                        auto switchIdx = model.Connections[connIdx].ToIdx;
-                        assert(switchIdx < model.Switches.size());
-                        auto const& theSwitch = model.Switches[switchIdx];
-                        assert(switchIdx < ss.SwitchStates.size());
-                        auto switchState = ss.SwitchStates[switchIdx];
-                        auto inflow0ConnIdx = theSwitch.InflowConnPrimary;
-                        auto inflow1ConnIdx = theSwitch.InflowConnSecondary;
-                        auto outflowConnIdx = theSwitch.OutflowConn;
-                        switch (switchState)
-                        {
-                            case SwitchState::Primary:
-                            {
-                                if (ss.Flows[outflowConnIdx].Available_W
-                                    != ss.Flows[inflow0ConnIdx].Available_W)
-                                {
-                                    ss.ActiveConnectionsFront.insert(
-                                        outflowConnIdx
-                                    );
-                                }
-                                ss.Flows[outflowConnIdx].Available_W =
-                                    ss.Flows[inflow0ConnIdx].Available_W;
-                            }
-                            break;
-                            case SwitchState::Secondary:
-                            {
-                                if (ss.Flows[outflowConnIdx].Available_W
-                                    != ss.Flows[inflow1ConnIdx].Available_W)
-                                {
-                                    ss.ActiveConnectionsFront.insert(
-                                        outflowConnIdx
-                                    );
-                                }
-                                ss.Flows[outflowConnIdx].Available_W =
-                                    ss.Flows[inflow1ConnIdx].Available_W;
-                            }
-                            break;
-                            default:
-                            {
-                                WriteErrorMessage(
-                                    "<runtime>", "unhandled switch state"
-                                );
-                                std::exit(1);
-                            }
-                            break;
-                        }
+                        RunSwitchForward(model, ss, connIdx, compIdx);
                     }
                     break;
                     default:

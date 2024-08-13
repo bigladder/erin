@@ -67,7 +67,7 @@ if not CLI_EXE.exists():
 
 def run_limits():
     """
-    Calls ERIN limits   
+    Calls ERIN limits
     """
     result = subprocess.run([CLI_EXE, "limits"], capture_output=True)
     if result.returncode != 0:
@@ -101,13 +101,13 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     A smoke test just runs the example and confirms we get a 0 exit code
     """
     cwd = str(Path.cwd().resolve()) if dir is None else dir
-    
+
     out_name = 'out.csv'
     stats_name = 'stats.csv'
 
     Path(out_name).unlink(missing_ok=True)
     Path(stats_name).unlink(missing_ok=True)
-    
+
     in_name = f"ex{example_name}.toml"
     start_time = time.perf_counter_ns()
     cmd = [CLI_EXE, "run", in_name, "-e", out_name, "-s", stats_name]
@@ -132,11 +132,16 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
 
 def run_bench(bench_file, example_name, dir=None):
     """
-    Run a benchmark test.    
+    Run a benchmark test.
     """
     git_sha = "<no-git-sha-detected>"
-    git_sha_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True)
-    prog_info = subprocess.run([CLI_EXE, "version"], capture_output=True, text=True)
+    git_sha_result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True)
+    prog_info = subprocess.run(
+        [CLI_EXE, "version"],
+        capture_output=True,
+        text=True)
     is_debug = "Build Type: Debug" in prog_info.stdout
     if git_sha_result.returncode == 0:
         git_sha = git_sha_result.stdout.decode("utf-8").strip()
@@ -145,7 +150,9 @@ def run_bench(bench_file, example_name, dir=None):
     with open(bench_file, 'a') as f:
         time_s = result.time_ns / 1_000_000_000.0
         debug_flag = "true" if is_debug else "false"
-        print(f"{{\"time\": \"{now}\", \"commit\": \"{git_sha}\", \"debug\": {debug_flag}, \"name\": \"{example_name}\", \"time-s\": {time_s}}}", file=f)
+        print(f"{{\"time\": \"{now}\", \"commit\": \"{git_sha}\", " +
+              f"\"debug\": {debug_flag}, \"name\": \"{example_name}\", " +
+              f"\"time-s\": {time_s}}}", file=f)
 
 
 def read_csv(path):
@@ -166,7 +173,7 @@ def read_csv(path):
 
 def compare_csv(original_csv_path, proposed_csv_path):
     """
-    Compare CSV files    
+    Compare CSV files
     """
     print(f"original: {original_csv_path}")
     print(f"proposed: {proposed_csv_path}")
@@ -188,6 +195,7 @@ def compare_csv(original_csv_path, proposed_csv_path):
         print(f"- {','.join(sorted(in_prop_only))}")
     col0_key = orig['header'][0] if len(orig['header']) > 0 else ""
     col1_key = orig['header'][1] if len(orig['header']) > 1 else ""
+
     def prefix_for(idx):
         items = []
         if col0_key in orig['data'] and col0_key in prop['data']:
@@ -237,10 +245,10 @@ def compare_csv(original_csv_path, proposed_csv_path):
                 print(f"-- proposed: {propx}")
 
 
-def full_compare_csv(file1_name, file2_name, dir1 = None, dir2 = None):
+def full_compare_csv(file1_name, file2_name, dir1=None, dir2=None):
     cwd1 = str(Path.cwd().resolve()) if dir1 is None else dir1
-    cwd2 = str(Path.cwd().resolve()) if dir2 is None else dir2   
-    
+    cwd2 = str(Path.cwd().resolve()) if dir2 is None else dir2
+
     file1_name = os.path.join(cwd1, file1_name)
     file2_name = os.path.join(cwd2, file2_name)
 
@@ -256,7 +264,7 @@ def full_compare_csv(file1_name, file2_name, dir1 = None, dir2 = None):
         print(("=" * 20) + " DETAILED DIFF")
         compare_csv(file1_name, file2_name)
         sys.exit(1)
- 
+
 
 def run_cli(example_name, dir=None, timeit=False, print_it=False):
     """
@@ -267,13 +275,13 @@ def run_cli(example_name, dir=None, timeit=False, print_it=False):
 
     ref_out_name = f'ex{example_name}-out.csv'
     ref_stats_name = f'ex{example_name}-stats.csv'
-    
+
     out_name = 'out.csv'
     stats_name = 'stats.csv'
-    
-    full_compare_csv(out_name, ref_out_name, dir1 = dir, dir2 = dir)
-    full_compare_csv(stats_name, ref_stats_name, dir1 = dir, dir2 = dir)
-        
+
+    full_compare_csv(out_name, ref_out_name, dir1=dir, dir2=dir)
+    full_compare_csv(stats_name, ref_stats_name, dir1=dir, dir2=dir)
+
     print(".", end="", sep="", flush=True)
 
 
@@ -298,13 +306,15 @@ def pack_csv_cli(example_name, dir=None, timeit=False, print_it=False):
     Pack the loads in example_name and compare to a pre-packed version
     """
     cwd = str(Path.cwd().resolve()) if dir is None else dir
-    
+
     packed_loads_name = 'packed-loads.csv'
     Path(packed_loads_name).unlink(missing_ok=True)
-    
+
     in_name = f"ex{example_name}.toml"
     start_time = time.perf_counter_ns()
-    result = subprocess.run([CLI_EXE, "pack-loads", f"{in_name}", "-o", f"{packed_loads_name}"], cwd=cwd)
+    result = subprocess.run(
+        [CLI_EXE, "pack-loads", f"{in_name}", "-o", f"{packed_loads_name}"],
+        cwd=cwd)
     end_time = time.perf_counter_ns()
     time_ns = end_time - start_time
     if result.returncode != 0:
@@ -319,25 +329,25 @@ def pack_csv_cli(example_name, dir=None, timeit=False, print_it=False):
     return result
 
 
-def rename_file(orig_name, new_name, dir1 = None, dir2 = None):
+def rename_file(orig_name, new_name, dir1=None, dir2=None):
     cwd1 = str(Path.cwd().resolve()) if dir1 is None else dir1
-    cwd2 = str(Path.cwd().resolve()) if dir2 is None else dir2  
+    cwd2 = str(Path.cwd().resolve()) if dir2 is None else dir2
     """
     Rename file orig_name in dir1 to new_name in dir2
     """
-     
+
     orig_name = os.path.join(cwd1, orig_name)
     new_name = os.path.join(cwd2, new_name)
-    Path(new_name).unlink(missing_ok=True)  
-       
+    Path(new_name).unlink(missing_ok=True)
+
     os.rename(orig_name, new_name)
- 
-   
+
+
 if __name__ == "__main__":
     run_limits()
     run_tests()
     print("Passed all unit tests!")
-    
+
     run_cli("01")
     run_cli("02")
     run_cli("03")
@@ -371,34 +381,39 @@ if __name__ == "__main__":
     run_cli("31")
     run_cli("32")
     run_cli("33")
-    # TODO: address regression on Windows for 34; probably an order of ops/ lack
-    #       of sorting thing?
-    #run_cli("34")
+    # TODO: address regression on Windows for 34; probably an order of
+    #       ops/ lack of sorting thing?
+    # run_cli("34")
     run_cli("35")
     run_cli("36")
     print("\nPassed all regression tests!")
-    
-	# Run original (unpacked) and rename/move output
+
+    # Run original (unpacked) and rename/move output
     orig_name = "ft-illinois"
     smoke_test(orig_name, dir=orig_name, print_it=True)
-    rename_file("out.csv", f"ex{orig_name}-out.csv", dir1=orig_name, dir2=orig_name)
-     
-	# Pack and rename packed loads
+    rename_file("out.csv", f"ex{orig_name}-out.csv",
+                dir1=orig_name, dir2=orig_name)
+
+    # Pack and rename packed loads
     packed_name = orig_name + "_packed"
     pack_csv_cli(orig_name, dir=orig_name, timeit=False, print_it=False)
-    rename_file("packed-loads.csv", f"ex{packed_name}-loads.csv", dir1=orig_name, dir2=packed_name)
-    
-	# Run packed and rename output
-    smoke_test(packed_name, dir=packed_name, print_it=True) 
-    rename_file("out.csv", f"ex{packed_name}-out.csv", dir1=packed_name, dir2=packed_name)
-      
-	#compare packed<->unpacked outputs
-    full_compare_csv(file1_name=f"ex{packed_name}-out.csv", file2_name=f"ex{orig_name}-out.csv", dir1=packed_name, dir2=orig_name)   
+    rename_file("packed-loads.csv", f"ex{packed_name}-loads.csv",
+                dir1=orig_name, dir2=packed_name)
+
+    # Run packed and rename output
+    smoke_test(packed_name, dir=packed_name, print_it=True)
+    rename_file("out.csv", f"ex{packed_name}-out.csv",
+                dir1=packed_name, dir2=packed_name)
+
+    # compare packed<->unpacked outputs
+    full_compare_csv(file1_name=f"ex{packed_name}-out.csv",
+                     file2_name=f"ex{orig_name}-out.csv",
+                     dir1=packed_name, dir2=orig_name)
     print("\nPassed load-packing test!")
-    
+
     run_perf()
     print("All performance tests run")
-    
+
     bench_dir = (Path(".")/".."/".."/"benchmark").resolve()
     if not bench_dir.exists():
         bench_dir.mkdir(parents=True, exist_ok=True)

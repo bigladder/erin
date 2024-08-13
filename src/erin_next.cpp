@@ -1481,7 +1481,9 @@ namespace erin
             ? vec.MaxOutflow_W
             : ss.Flows[outflowConnIdx].Requested_W;
         double efficiency = LookupTable_LookupInterp(
-            vec.OutflowsForEfficiency_W, vec.Efficiencies, outflowRequest_W
+            vec.OutflowsForEfficiency_W,
+            vec.Efficiencies,
+            static_cast<double>(outflowRequest_W)
         );
         assert(efficiency >= 0.0 && efficiency <= 1.0);
         flow_t inflowRequest_W =
@@ -1609,7 +1611,9 @@ namespace erin
             ? mov.MaxOutflow_W
             : ss.Flows[outflowConnIdx].Requested_W;
         double cop = LookupTable_LookupInterp(
-            mov.OutflowsForCop_W, mov.COPs, outflowRequest_W
+            mov.OutflowsForCop_W,
+            mov.COPs,
+            static_cast<double>(outflowRequest_W)
         );
         // outflow = COP * inflow
         // inflow = outflow / COP
@@ -2101,7 +2105,9 @@ namespace erin
         flow_t inflowAvailable_W = ss.Flows[connIdx].Available_W;
         size_t outflowConn = vec.OutflowConn;
         double efficiency = LookupTable_LookupInterp(
-            vec.InflowsForEfficiency_W, vec.Efficiencies, inflowAvailable_W
+            vec.InflowsForEfficiency_W,
+            vec.Efficiencies,
+            static_cast<double>(inflowAvailable_W)
         );
         assert(efficiency >= 0.0 && efficiency <= 1.0);
         flow_t outflowAvailable =
@@ -2157,7 +2163,9 @@ namespace erin
         flow_t inflowAvailable_W = ss.Flows[outConnIdx].Available_W;
         size_t outflowConn = mov.OutflowConn;
         double cop = LookupTable_LookupInterp(
-            mov.InflowsForCop_W, mov.COPs, inflowAvailable_W
+            mov.InflowsForCop_W,
+            mov.COPs,
+            static_cast<double>(inflowAvailable_W)
         );
         // outflow = cop * inflow
         flow_t outflowAvailable_W = static_cast<flow_t>(

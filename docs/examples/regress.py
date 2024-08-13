@@ -373,7 +373,7 @@ if __name__ == "__main__":
     run_cli("33")
     # TODO: address regression on Windows for 34; probably an order of ops/ lack
     #       of sorting thing?
-    #run_cli("34")
+    run_cli("34")
     run_cli("35")
     run_cli("36")
     print("\nPassed all regression tests!")

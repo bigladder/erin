@@ -1671,7 +1671,8 @@ namespace erin
     AggregateGroups(
         Model& model,
         std::vector<TimeAndFlows>& results,
-        std::vector<NodeConnection> const& nodeConnections
+        std::vector<NodeConnection> const& nodeConnections,
+        std::vector<size_t>& nodeConnOrder
     )
     {
         auto num_events = results.size();
@@ -1698,12 +1699,12 @@ namespace erin
             auto& newFlows = newResults[iResult].Flows;
             newFlows.resize(nNodeConn);
 
-            for (size_t iNodeConn = 0; iNodeConn < nNodeConn; ++iNodeConn)
+            for (auto& iNodeConn : nodeConnOrder)
             {
                 auto& nodeConn = nodeConnections[iNodeConn];
-                for (auto& connId : nodeConn.origConnId)
+                for (auto& iConn : nodeConn.origConnId)
                 {
-                    newFlows[iNodeConn] += origFlows[connId];
+                    newFlows[iNodeConn] += origFlows[iConn];
                 }
             }
 
@@ -2595,11 +2596,7 @@ namespace erin
     }
 
     std::vector<NodeConnection>
-    GetNodeConnections(
-        Simulation& s,
-        bool aggregateGroups,
-        std::vector<size_t>& connOrder
-    )
+    GetNodeConnections(Simulation& s, bool aggregateGroups)
     {
         std::vector<NodeConnection> nodeConnections = {};
 
@@ -2616,8 +2613,8 @@ namespace erin
 
         for (size_t iConn = 0; iConn < nConn; ++iConn)
         {
-            auto iOrdConn = connOrder[iConn];
-            auto const& connection = s.TheModel.Connections[iOrdConn];
+            ;
+            auto const& connection = s.TheModel.Connections[iConn];
             bool fromIsGroup = false;
             bool toIsGroup = false;
 
@@ -2672,13 +2669,13 @@ namespace erin
                 if (nodeConn0 == nodeConn)
                 {
                     newConn = false;
-                    nodeConn0.origConnId.push_back(iOrdConn);
+                    nodeConn0.origConnId.push_back(iConn);
                     break;
                 }
             }
             if (newConn)
             {
-                nodeConn.origConnId = {iOrdConn};
+                nodeConn.origConnId = {iConn};
                 nodeConnections.push_back(nodeConn);
             }
         }
@@ -2889,14 +2886,13 @@ namespace erin
         }
 
         std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
-        std::vector<size_t> connOrder = CalculateConnectionOrder(s);
+        // std::vector<size_t> connOrder = CalculateConnectionOrder(s);
         std::vector<size_t> storeOrder = CalculateStoreOrder(s);
         std::vector<size_t> compOrder = CalculateComponentOrder(s);
         std::vector<size_t> failOrder = CalculateFailModeOrder(s);
         std::vector<size_t> fragOrder = CalculateFragilModeOrder(s);
 
-        auto nodeConnections =
-            GetNodeConnections(s, aggregateGroups, connOrder);
+        auto nodeConnections = GetNodeConnections(s, aggregateGroups);
         std::vector<size_t> nodeConnOrder =
             CalculateNodeConnectionOrder(s, nodeConnections, aggregateGroups);
 
@@ -2995,7 +2991,10 @@ namespace erin
                     if (aggregateGroups)
                     {
                         AggregateGroups(
-                            s.TheModel, *output_results, nodeConnections
+                            s.TheModel,
+                            *output_results,
+                            nodeConnections,
+                            nodeConnOrder
                         );
                     }
 

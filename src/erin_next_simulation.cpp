@@ -2598,9 +2598,10 @@ namespace erin
     std::vector<NodeConnection>
     GetNodeConnections(Simulation& s, bool aggregateGroups)
     {
-        std::vector<NodeConnection> nodeConnections = {};
+        auto& connections = s.TheModel.Connections;
+        auto nConn = connections.size();
 
-        auto nConn = s.TheModel.Connections.size();
+        std::vector<NodeConnection> nodeConnections = {};
 
         s.TheModel.nGroupPortsTo = {};
         s.TheModel.nGroupPortsFrom = {};
@@ -2611,10 +2612,10 @@ namespace erin
             s.TheModel.nGroupPortsFrom.insert({key, 0});
         }
 
-        for (size_t iConn = 0; iConn < nConn; ++iConn)
+        auto connOrder = CalculateConnectionOrder(s);
+        for (auto& iConn : connOrder)
         {
-            ;
-            auto const& connection = s.TheModel.Connections[iConn];
+            auto const& connection = connections[iConn];
             bool fromIsGroup = false;
             bool toIsGroup = false;
 
@@ -2641,7 +2642,6 @@ namespace erin
 
             if (fromIsGroup && toIsGroup)
             {
-
                 auto groupFrom = s.TheModel.ComponentToGroup[connection.FromId];
                 auto groupTo = s.TheModel.ComponentToGroup[connection.ToId];
                 if (groupFrom == groupTo)
@@ -2690,8 +2690,8 @@ namespace erin
     )
     {
         size_t const nNodeConns = nodeConnections.size();
-        std::vector<std::string> originalNodeConnTags;
-        std::vector<std::string> nodeConnTags;
+        std::vector<std::string> originalNodeConnTags = {};
+        std::vector<std::string> nodeConnTags = {};
 
         originalNodeConnTags.reserve(nNodeConns);
         nodeConnTags.reserve(nNodeConns);

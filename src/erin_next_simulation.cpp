@@ -1427,12 +1427,15 @@ namespace erin
                     : TimeUnitToTag(outputTimeUnit))
             << ")";
 
+        auto nNodeConn = nodeConnections.size();
         for (std::string const& prefix :
              std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
         {
-            for (auto const& nodeConnId : nodeConnOrder)
+            for (size_t iOrdNodeConn = 0; iOrdNodeConn < nNodeConn; ++iOrdNodeConn)
             {
-                auto const& nodeConn = nodeConnections[nodeConnId];
+                auto iNodeConn = nodeConnOrder[iOrdNodeConn];
+
+                auto const& nodeConn = nodeConnections[iNodeConn];
                 out << "," << prefix
                     << NodeConnectionToString(
                            model, fd, nodeConn, true, aggregateGroups
@@ -1672,7 +1675,8 @@ namespace erin
         Model& model,
         std::vector<TimeAndFlows>& results,
         std::vector<NodeConnection> const& nodeConnections,
-        std::vector<size_t>& nodeConnOrder
+        std::vector<size_t>& nodeConnOrder,
+        std::vector<size_t>& connOrder
     )
     {
         auto num_events = results.size();
@@ -1687,6 +1691,9 @@ namespace erin
             return;
         }
 
+        auto& connections = model.Connections;
+        auto nConn = connections.size();
+
         auto nNodeConn = nodeConnections.size();
         auto nResult = results.size();
         std::vector<TimeAndFlows> newResults(nResult);
@@ -1699,12 +1706,22 @@ namespace erin
             auto& newFlows = newResults[iResult].Flows;
             newFlows.resize(nNodeConn);
 
-            for (auto& iNodeConn : nodeConnOrder)
+
+            for (size_t iOrdConn = 0;iOrdConn < nConn; ++iOrdConn)
             {
-                auto& nodeConn = nodeConnections[iNodeConn];
-                for (auto& iConn : nodeConn.origConnId)
+                auto &iConn = connOrder[iOrdConn];
+                for (size_t iOrdNodeConn = 0; iOrdNodeConn < nNodeConn; ++iOrdNodeConn)
                 {
-                    newFlows[iNodeConn] += origFlows[iConn];
+                    auto &iNodeConn = nodeConnOrder[iOrdNodeConn];
+                    auto& nodeConn = nodeConnections[iNodeConn];
+                    for (auto& iOrigConn : nodeConn.origConnId)
+                    {
+                        if (iOrigConn == iConn)
+                        {
+                            newFlows[iOrdNodeConn] += origFlows[iOrdConn];
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -2599,7 +2616,6 @@ namespace erin
     GetNodeConnections(Simulation& s, bool aggregateGroups)
     {
         auto& connections = s.TheModel.Connections;
-        auto nConn = connections.size();
 
         std::vector<NodeConnection> nodeConnections = {};
 
@@ -2612,8 +2628,10 @@ namespace erin
             s.TheModel.nGroupPortsFrom.insert({key, 0});
         }
 
-        auto connOrder = CalculateConnectionOrder(s);
-        for (auto& iConn : connOrder)
+        //auto connOrder = CalculateConnectionOrder(s);
+
+        auto nConn = connections.size();
+        for (size_t iConn = 0; iConn < nConn; ++iConn)
         {
             auto const& connection = connections[iConn];
             bool fromIsGroup = false;
@@ -2679,6 +2697,7 @@ namespace erin
                 nodeConnections.push_back(nodeConn);
             }
         }
+
         return nodeConnections;
     }
 
@@ -2886,7 +2905,7 @@ namespace erin
         }
 
         std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
-        // std::vector<size_t> connOrder = CalculateConnectionOrder(s);
+        std::vector<size_t> connOrder = CalculateConnectionOrder(s);
         std::vector<size_t> storeOrder = CalculateStoreOrder(s);
         std::vector<size_t> compOrder = CalculateComponentOrder(s);
         std::vector<size_t> failOrder = CalculateFailModeOrder(s);
@@ -2994,7 +3013,8 @@ namespace erin
                             s.TheModel,
                             *output_results,
                             nodeConnections,
-                            nodeConnOrder
+                            nodeConnOrder,
+                            connOrder
                         );
                     }
 

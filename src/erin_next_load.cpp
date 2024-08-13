@@ -498,11 +498,13 @@ namespace erin
                         {
                             std::vector<std::optional<Load>> maybeLoads =
                                 ParseMultiLoad(tag, table2);
-                            for (auto& maybeLoad : maybeLoads)
+                            for (auto& anotherMaybeLoad : maybeLoads)
                             {
-                                if (maybeLoad.has_value())
+                                if (anotherMaybeLoad.has_value())
                                 {
-                                    MaybePushLoad(maybeLoad, tableName, loads);
+                                    MaybePushLoad(
+                                        anotherMaybeLoad, tableName, loads
+                                    );
                                 }
                                 else
                                 {

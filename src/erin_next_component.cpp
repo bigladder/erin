@@ -886,7 +886,8 @@ namespace erin
                         localRateUnit
                     );
                     size_t switchIdx = s.TheModel.ComponentMap.Idx[id];
-                    s.TheModel.Switches[switchIdx].MaxOutflow_W = maxOutflow_W;
+                    s.TheModel.Switches[switchIdx].MaxOutflow_W =
+                        static_cast<flow_t>(maxOutflow_W);
                 }
             }
             break;

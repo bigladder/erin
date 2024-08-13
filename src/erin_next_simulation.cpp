@@ -150,20 +150,22 @@ namespace erin
     Simulation_PrintComponents(Simulation const& s)
     {
         Model const& m = s.TheModel;
-        for (size_t i = 0; i < m.ComponentMap.CompType.size(); ++i)
+        for (size_t compId = 0; compId < m.ComponentMap.CompType.size();
+             ++compId)
         {
-            assert(i < m.ComponentMap.OutflowType.size());
-            assert(i < m.ComponentMap.InflowType.size());
-            assert(i < m.ComponentMap.CompType.size());
-            assert(i < m.ComponentMap.Tag.size());
-            assert(i < m.ComponentMap.Idx.size());
+            assert(compId < m.ComponentMap.OutflowType.size());
+            assert(compId < m.ComponentMap.InflowType.size());
+            assert(compId < m.ComponentMap.CompType.size());
+            assert(compId < m.ComponentMap.Tag.size());
+            assert(compId < m.ComponentMap.Idx.size());
             std::vector<size_t> const& outflowTypes =
-                m.ComponentMap.OutflowType[i];
-            std::vector<size_t> inflowTypes = m.ComponentMap.InflowType[i];
-            std::cout << i << ": " << ToString(m.ComponentMap.CompType[i]);
-            if (!m.ComponentMap.Tag[i].empty())
+                m.ComponentMap.OutflowType[compId];
+            std::vector<size_t> inflowTypes = m.ComponentMap.InflowType[compId];
+            std::cout << compId << ": "
+                      << ToString(m.ComponentMap.CompType[compId]);
+            if (!m.ComponentMap.Tag[compId].empty())
             {
-                std::cout << " -- " << m.ComponentMap.Tag[i] << std::endl;
+                std::cout << " -- " << m.ComponentMap.Tag[compId] << std::endl;
             }
             else
             {
@@ -191,8 +193,8 @@ namespace erin
                               << s.FlowTypeMap.Type[outflowType] << std::endl;
                 }
             }
-            size_t subtypeIdx = m.ComponentMap.Idx[i];
-            switch (m.ComponentMap.CompType[i])
+            size_t subtypeIdx = m.ComponentMap.Idx[compId];
+            switch (m.ComponentMap.CompType[compId])
             {
                 case ComponentType::ScheduleBasedLoadType:
                 {
@@ -301,7 +303,7 @@ namespace erin
                     VariableEfficiencyMover const& mov =
                         m.VarEffMovers[subtypeIdx];
                     std::cout << "-- cop by load fraction:" << std::endl;
-                    double maxOutflow_W = mov.MaxOutflow_W;
+                    double maxOutflow_W = static_cast<double>(mov.MaxOutflow_W);
                     for (size_t i = 0; i < mov.COPs.size(); ++i)
                     {
                         std::cout << fmt::format(
@@ -369,7 +371,8 @@ namespace erin
                  compFailModeIdx < s.ComponentFailureModes.ComponentIds.size();
                  ++compFailModeIdx)
             {
-                if (s.ComponentFailureModes.ComponentIds[compFailModeIdx] == i)
+                if (s.ComponentFailureModes.ComponentIds[compFailModeIdx]
+                    == compId)
                 {
                     size_t fmId =
                         s.ComponentFailureModes.FailureModeIds[compFailModeIdx];
@@ -382,7 +385,7 @@ namespace erin
                  compFragIdx < s.ComponentFragilities.ComponentIds.size();
                  ++compFragIdx)
             {
-                if (s.ComponentFragilities.ComponentIds[compFragIdx] == i)
+                if (s.ComponentFragilities.ComponentIds[compFragIdx] == compId)
                 {
                     size_t fmId =
                         s.ComponentFragilities.FragilityModeIds[compFragIdx];
@@ -2579,9 +2582,10 @@ namespace erin
                     double time_frac = dt_s / dt_orig_s;
                     for (std::size_t i = 0; i < num_stored; ++i)
                     {
-                        mod_taf.StorageAmounts_J[i] =
+                        mod_taf.StorageAmounts_J[i] = static_cast<flow_t>(
                             (1. - time_frac) * taf.StorageAmounts_J[i]
-                            + time_frac * next_taf.StorageAmounts_J[i];
+                            + time_frac * next_taf.StorageAmounts_J[i]
+                        );
                     }
                 }
                 modified_results.push_back(mod_taf);

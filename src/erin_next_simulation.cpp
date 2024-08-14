@@ -1817,12 +1817,10 @@ namespace erin
 
     void
     AggregateGroups(
-        Simulation const& s,
         std::vector<TimeAndFlows>& results,
         std::vector<NodeConnection> const& nodeConnections
     )
     {
-        auto& model = s.TheModel;
         auto num_events = results.size();
         if (num_events == 0)
         {
@@ -3005,13 +3003,10 @@ namespace erin
                         output_results = &modified_results0;
                     }
 
-                    std::vector<TimeAndFlows> modified_results1 = {};
-                    if (aggregateGroups)
-                    {
-                        modified_results1 = *output_results;
-                        AggregateGroups(s, modified_results1, nodeConnections);
-                        output_results = &modified_results1;
-                    }
+                    std::vector<TimeAndFlows> modified_results1 =
+                        *output_results;
+                    AggregateGroups(modified_results1, nodeConnections);
+                    output_results = &modified_results1;
 
                     // TODO: investigate putting output on another thread
                     WriteResultsToEventFile(

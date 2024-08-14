@@ -1795,22 +1795,6 @@ namespace erin
                 nodeConnections.push_back(nodeConn);
             }
         }
-        for (auto& nodeConn : nodeConnections)
-        {
-            std::cout << NodeConnectionToString(
-                s.TheModel, nodeConn, true, aggregateGroups
-            ) << "\n";
-        }
-
-        std::cout << "\n";
-        auto nodeConnOrder = CalculateNodeConnectionOrder(s, nodeConnections);
-        for (auto& iOrdNodeConn : nodeConnOrder)
-        {
-            auto& nodeConn = nodeConnections[iOrdNodeConn];
-            std::cout << NodeConnectionToString(
-                s.TheModel, nodeConn, true, aggregateGroups
-            ) << "\n";
-        }
 
         return nodeConnections;
     }

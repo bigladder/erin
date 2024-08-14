@@ -1431,7 +1431,8 @@ namespace erin
         for (std::string const& prefix :
              std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
         {
-            for (size_t iOrdNodeConn = 0; iOrdNodeConn < nNodeConn; ++iOrdNodeConn)
+            for (size_t iOrdNodeConn = 0; iOrdNodeConn < nNodeConn;
+                 ++iOrdNodeConn)
             {
                 auto iNodeConn = nodeConnOrder[iOrdNodeConn];
 
@@ -1674,9 +1675,7 @@ namespace erin
     AggregateGroups(
         Model& model,
         std::vector<TimeAndFlows>& results,
-        std::vector<NodeConnection> const& nodeConnections,
-        std::vector<size_t>& nodeConnOrder,
-        std::vector<size_t>& connOrder
+        std::vector<NodeConnection> const& nodeConnections
     )
     {
         auto num_events = results.size();
@@ -1691,9 +1690,6 @@ namespace erin
             return;
         }
 
-        auto& connections = model.Connections;
-        auto nConn = connections.size();
-
         auto nNodeConn = nodeConnections.size();
         auto nResult = results.size();
         std::vector<TimeAndFlows> newResults(nResult);
@@ -1706,22 +1702,13 @@ namespace erin
             auto& newFlows = newResults[iResult].Flows;
             newFlows.resize(nNodeConn);
 
-
-            for (size_t iOrdConn = 0;iOrdConn < nConn; ++iOrdConn)
+            for (size_t iNodeConn = 0; iNodeConn < nNodeConn; ++iNodeConn)
             {
-                auto &iConn = connOrder[iOrdConn];
-                for (size_t iOrdNodeConn = 0; iOrdNodeConn < nNodeConn; ++iOrdNodeConn)
+                auto& nodeConn = nodeConnections[iNodeConn];
+                for (auto& iConn : nodeConn.origConnId)
                 {
-                    auto &iNodeConn = nodeConnOrder[iOrdNodeConn];
-                    auto& nodeConn = nodeConnections[iNodeConn];
-                    for (auto& iOrigConn : nodeConn.origConnId)
-                    {
-                        if (iOrigConn == iConn)
-                        {
-                            newFlows[iOrdNodeConn] += origFlows[iOrdConn];
-                            break;
-                        }
-                    }
+                    newFlows[iNodeConn] += origFlows[iConn];
+                    break;
                 }
             }
 
@@ -1754,11 +1741,13 @@ namespace erin
             size_t compId = m.Reliabilities[i].ComponentId;
             relSchByCompId[compId] = m.Reliabilities[i].TimeStates;
         }
+
         for (auto const& r : results)
         {
             assert(r.Flows.size() == nodeConnOrder.size());
             out << scenarioTag << "," << scenarioStartTimeTag << ",";
             out << TimeInSecondsToDesiredUnit(r.Time, outputTimeUnit);
+
             for (size_t const& i : nodeConnOrder)
             {
                 out << ","
@@ -2628,11 +2617,12 @@ namespace erin
             s.TheModel.nGroupPortsFrom.insert({key, 0});
         }
 
-        //auto connOrder = CalculateConnectionOrder(s);
+        // auto connOrder = CalculateConnectionOrder(s);
 
         auto nConn = connections.size();
         for (size_t iConn = 0; iConn < nConn; ++iConn)
         {
+            // auto& iConn = connOrder[iOrdConn];
             auto const& connection = connections[iConn];
             bool fromIsGroup = false;
             bool toIsGroup = false;
@@ -2728,11 +2718,12 @@ namespace erin
         result.reserve(nNodeConns);
         for (auto const& nodeConnTag : nodeConnTags)
         {
-            for (size_t connId = 0; connId < nodeConnTags.size(); ++connId)
+            for (size_t nodeConnId = 0; nodeConnId < nodeConnTags.size();
+                 ++nodeConnId)
             {
-                if (nodeConnTag == originalNodeConnTags[connId])
+                if (nodeConnTag == originalNodeConnTags[nodeConnId])
                 {
-                    result.push_back(connId);
+                    result.push_back(nodeConnId);
                     break;
                 }
             }
@@ -3010,11 +3001,7 @@ namespace erin
                     if (aggregateGroups)
                     {
                         AggregateGroups(
-                            s.TheModel,
-                            *output_results,
-                            nodeConnections,
-                            nodeConnOrder,
-                            connOrder
+                            s.TheModel, *output_results, nodeConnections
                         );
                     }
 

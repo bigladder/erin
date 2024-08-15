@@ -438,7 +438,7 @@ namespace erin
     struct TimeAndFlows
     {
         // TODO: change to Time_s
-        double Time;
+        double Time = 0.0;
         std::vector<Flow> Flows;
         std::vector<flow_t> StorageAmounts_J;
     };

@@ -28,4 +28,12 @@ def main(input_toml_path, output_csv_path):
 
 
 if __name__ == "__main__":
-    main("ex-full.toml", "packed-loads.csv")
+    import argparse
+    parser = argparse.ArgumentParser(
+        prog="make_packed_loads",
+        description="Create a packed loads file",
+    )
+    parser.add_argument("source_toml")
+    parser.add_argument("-o", "--output", default="packed-loads.csv")
+    args = parser.parse_args()
+    main(args.source_toml, args.output)

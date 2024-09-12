@@ -21,6 +21,7 @@ namespace erin
         // TODO: remove TimeUnits and pre-convert to make Durations in seconds
         std::vector<TimeUnit> TimeUnits;
         std::vector<double> Durations;
+        std::vector<double> TimeOffsetsInHours;
         // NOTE: an entry of none means "no max occurrences"; will take as
         // many as fit in the max time of the simulation (see SimulationInfo)
         std::vector<std::optional<size_t>> MaxOccurrences;

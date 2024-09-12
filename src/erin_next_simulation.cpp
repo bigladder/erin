@@ -2813,6 +2813,10 @@ namespace erin
             double duration_s = Time_ToSeconds(
                 s.ScenarioMap.Durations[scenId], s.ScenarioMap.TimeUnits[scenId]
             );
+            double offset_s = Time_ToSeconds(
+                s.ScenarioMap.TimeOffsetsInHours[scenId], TimeUnit::Hours
+            );
+            duration_s += offset_s;
             if (duration_s > maxDuration_s)
             {
                 maxDuration_s = duration_s;
@@ -2840,6 +2844,24 @@ namespace erin
                 s.ComponentFailureModes.ComponentIds[compFailId],
                 s.ComponentFailureModes.FailureModeIds[compFailId]
             );
+            // NOTE: Fix. ERIN is like the movie Groundhog's Day --
+            // each "year" is repeated over and over again until the
+            // max time limit is reached. As such, if we have
+            // 1,000 years of simulation, we need to generate 1,000
+            // unique 1-year reliability schedules. The exact duration
+            // will be (scenarioStartMonth + scenarioStartDay
+            // + scenarioDuration) - Jan 1 at 00:00:00. We could also
+            // just build out the longest duration needed by any
+            // scenario and just use that for all of them and clip
+            // to the correct time...
+            // BUT s.Info.MaxTime should just set the number of
+            // "Groundhog Days"...
+            // Question: does scenario need start month/day? Could just be
+            // of length duration... is it needed to match up with initial
+            // age? Yes. So what we need for each scenario is a time
+            // offset. So the reliability schedule duration will be
+            // (scenarioOffset + scenarioDuration). Offset will be from
+            // the time the age is assessed.
             double maxTime_s =
                 Time_ToSeconds(s.Info.MaxTime, s.Info.TheTimeUnit)
                 + maxDuration_s;

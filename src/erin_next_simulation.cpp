@@ -2143,7 +2143,8 @@ namespace erin
         double startTime_s,
         double endTime_s,
         std::unordered_map<size_t, double> const& intensityIdToAmount,
-        std::unordered_map<size_t, std::vector<TimeState>> const& relSchByCompId,
+        std::unordered_map<size_t, std::vector<TimeState>> const&
+            relSchByCompId,
         bool verbose
     )
     {
@@ -2173,10 +2174,7 @@ namespace erin
                           << (initialAge_s / seconds_per_hour) << std::endl;
             }
             std::vector<TimeState> clip = TimeState_Clip(
-                sch,
-                startTime_s + initialAge_s,
-                endTime_s + initialAge_s,
-                true
+                sch, startTime_s + initialAge_s, endTime_s + initialAge_s, true
             );
             // NOTE: Reliabilities have not yet been assigned so we can
             // just push_back()
@@ -2739,7 +2737,6 @@ namespace erin
         return modified_results;
     }
 
-
     std::unordered_map<size_t, std::vector<TimeState>>
     CreateFailureSchedules(
         Simulation& s,
@@ -2750,7 +2747,9 @@ namespace erin
         std::unordered_map<size_t, std::vector<TimeState>> relSchByCompFailId;
         relSchByCompFailId.reserve(s.ComponentFailureModes.ComponentIds.size());
         std::unordered_set<size_t> componentsWithFailures;
-        componentsWithFailures.reserve(s.ComponentFailureModes.ComponentIds.size());
+        componentsWithFailures.reserve(
+            s.ComponentFailureModes.ComponentIds.size()
+        );
         for (size_t compFailId = 0;
              compFailId < s.ComponentFailureModes.ComponentIds.size();
              ++compFailId)
@@ -2947,8 +2946,10 @@ namespace erin
         {
             double scenarioDuration_s = Time_ToSeconds(
                 s.ScenarioMap.Durations[scenIdx],
-                s.ScenarioMap.TimeUnits[scenIdx]);
-            double scenarioOffset_s = s.ScenarioMap.TimeOffsetsInSeconds[scenIdx];
+                s.ScenarioMap.TimeUnits[scenIdx]
+            );
+            double scenarioOffset_s =
+                s.ScenarioMap.TimeOffsetsInSeconds[scenIdx];
             std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
             if (verbose)
             {
@@ -2983,8 +2984,10 @@ namespace erin
                 GetIntensitiesForScenario(s, scenIdx);
             for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
             {
-                std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
-                    CreateFailureSchedules(s, scenarioDuration_s, scenarioOffset_s);
+                std::unordered_map<size_t, std::vector<TimeState>>
+                    relSchByCompId = CreateFailureSchedules(
+                        s, scenarioDuration_s, scenarioOffset_s
+                    );
                 double t = occurrenceTimes_s[occIdx];
                 double tEnd = t + scenarioDuration_s;
                 if (verbose)

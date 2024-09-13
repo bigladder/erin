@@ -73,7 +73,8 @@ namespace erin
                 sd.Durations[i] = duration;
                 sd.TimeUnits[i] = timeUnit;
                 sd.MaxOccurrences[i] = maxOccurrences;
-                sd.TimeOffsetsInSeconds[i] = Time_ToSeconds(timeOffset, timeUnit);
+                sd.TimeOffsetsInSeconds[i] =
+                    Time_ToSeconds(timeOffset, timeUnit);
                 assert(sd.Durations.size() == sd.MaxOccurrences.size());
                 assert(
                     sd.Durations.size() == sd.OccurrenceDistributionIds.size()
@@ -167,7 +168,8 @@ namespace erin
         {
             if (table.at("time_offset").is_integer())
             {
-                timeOffset = static_cast<double>(table.at("time_offset").as_integer());
+                timeOffset =
+                    static_cast<double>(table.at("time_offset").as_integer());
             }
             else if (table.at("time_offset").is_floating())
             {

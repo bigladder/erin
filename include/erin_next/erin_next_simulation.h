@@ -195,7 +195,7 @@ namespace erin
         bool isVerbose
     );
 
-    std::map<size_t, double>
+    std::unordered_map<size_t, double>
     GetIntensitiesForScenario(Simulation& s, size_t scenIdx);
 
     std::vector<ScheduleBasedReliability>
@@ -206,8 +206,8 @@ namespace erin
         Simulation& s,
         double startTime_s,
         double endTime_s,
-        std::map<size_t, double> const& intensityIdToAmount,
-        std::map<size_t, std::vector<TimeState>> const& relSchByCompId,
+        std::unordered_map<size_t, double> const& intensityIdToAmount,
+        std::unordered_map<size_t, std::vector<TimeState>> const& relSchByCompId,
         bool verbose
     );
 

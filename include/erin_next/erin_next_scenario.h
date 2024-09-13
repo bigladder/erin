@@ -21,7 +21,7 @@ namespace erin
         // TODO: remove TimeUnits and pre-convert to make Durations in seconds
         std::vector<TimeUnit> TimeUnits;
         std::vector<double> Durations;
-        std::vector<double> TimeOffsetsInHours;
+        std::vector<double> TimeOffsetsInSeconds;
         // NOTE: an entry of none means "no max occurrences"; will take as
         // many as fit in the max time of the simulation (see SimulationInfo)
         std::vector<std::optional<size_t>> MaxOccurrences;
@@ -40,7 +40,8 @@ namespace erin
         size_t occurrenceDistId,
         double duration,
         TimeUnit timeUnit,
-        std::optional<size_t> maxOccurrences
+        std::optional<size_t> maxOccurrences,
+        double timeOffset
     );
 
     std::optional<size_t>

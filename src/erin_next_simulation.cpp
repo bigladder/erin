@@ -2082,10 +2082,23 @@ namespace erin
         return occurrenceTimes_s;
     }
 
-    std::map<size_t, double>
+    std::unordered_map<size_t, double>
     GetIntensitiesForScenario(Simulation& s, size_t scenIdx)
     {
-        std::map<size_t, double> intensityIdToAmount;
+        std::unordered_map<size_t, double> intensityIdToAmount;
+        size_t numIntensities = 0;
+        for (size_t i = 0; i < s.ScenarioIntensities.ScenarioIds.size(); ++i)
+        {
+            if (s.ScenarioIntensities.ScenarioIds[i] == scenIdx)
+            {
+                numIntensities++;
+            }
+        }
+        if (numIntensities == 0)
+        {
+            return intensityIdToAmount;
+        }
+        intensityIdToAmount.reserve(numIntensities);
         for (size_t i = 0; i < s.ScenarioIntensities.ScenarioIds.size(); ++i)
         {
             if (s.ScenarioIntensities.ScenarioIds[i] == scenIdx)
@@ -2129,8 +2142,8 @@ namespace erin
         Simulation& s,
         double startTime_s,
         double endTime_s,
-        std::map<size_t, double> const& intensityIdToAmount,
-        std::map<size_t, std::vector<TimeState>> const& relSchByCompId,
+        std::unordered_map<size_t, double> const& intensityIdToAmount,
+        std::unordered_map<size_t, std::vector<TimeState>> const& relSchByCompId,
         bool verbose
     )
     {
@@ -2160,9 +2173,9 @@ namespace erin
                           << (initialAge_s / seconds_per_hour) << std::endl;
             }
             std::vector<TimeState> clip = TimeState_Clip(
-                TimeState_Translate(sch, initialAge_s),
-                startTime_s,
-                endTime_s,
+                sch,
+                startTime_s + initialAge_s,
+                endTime_s + initialAge_s,
                 true
             );
             // NOTE: Reliabilities have not yet been assigned so we can
@@ -2726,6 +2739,79 @@ namespace erin
         return modified_results;
     }
 
+
+    std::unordered_map<size_t, std::vector<TimeState>>
+    CreateFailureSchedules(
+        Simulation& s,
+        double scenarioDuration_s,
+        double scenarioOffset_s
+    )
+    {
+        std::unordered_map<size_t, std::vector<TimeState>> relSchByCompFailId;
+        relSchByCompFailId.reserve(s.ComponentFailureModes.ComponentIds.size());
+        std::unordered_set<size_t> componentsWithFailures;
+        componentsWithFailures.reserve(s.ComponentFailureModes.ComponentIds.size());
+        for (size_t compFailId = 0;
+             compFailId < s.ComponentFailureModes.ComponentIds.size();
+             ++compFailId)
+        {
+            size_t fmId = s.ComponentFailureModes.FailureModeIds[compFailId];
+            size_t compId = s.ComponentFailureModes.ComponentIds[compFailId];
+            componentsWithFailures.insert(compId);
+            double age_s = s.TheModel.ComponentMap.InitialAges_s[compId];
+            // NOTE: Fix. ERIN is like the movie Groundhog's Day --
+            // each "year" is repeated over and over again until the
+            // max time limit is reached. As such, if we have
+            // 1,000 years of simulation, we need to generate 1,000
+            // unique 1-year reliability schedules. The exact duration
+            // will be (scenarioStartMonth + scenarioStartDay
+            // + scenarioDuration) - Jan 1 at 00:00:00. We could also
+            // just build out the longest duration needed by any
+            // scenario and just use that for all of them and clip
+            // to the correct time...
+            // BUT s.Info.MaxTime should just set the number of
+            // "Groundhog Days"...
+            // Question: does scenario need start month/day? Could just be
+            // of length duration... is it needed to match up with initial
+            // age? Yes. So what we need for each scenario is a time
+            // offset. So the reliability schedule duration will be
+            // (scenarioOffset + scenarioDuration). Offset will be from
+            // the time the age is assessed.
+            double endTime_s = age_s + scenarioOffset_s + scenarioDuration_s;
+            std::vector<TimeState> relSch =
+                s.TheModel.Rel.make_schedule_for_link(
+                    fmId, s.TheModel.RandFn, s.TheModel.DistSys, endTime_s
+                );
+            for (auto& ts : relSch)
+            {
+                if (!ts.state)
+                {
+                    ts.failureModeCauses.insert(fmId);
+                }
+            }
+            relSchByCompFailId.insert({compFailId, std::move(relSch)});
+        }
+        // NOTE: combine reliability curves so they are per component
+        std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId;
+        relSchByCompId.reserve(componentsWithFailures.size());
+        for (auto const& pair : relSchByCompFailId)
+        {
+            size_t compId = s.ComponentFailureModes.ComponentIds[pair.first];
+            if (relSchByCompId.contains(compId))
+            {
+                std::vector<TimeState> combined = TimeState_Combine(
+                    pair.second, relSchByCompId.at(pair.first)
+                );
+                relSchByCompId.insert({compId, std::move(combined)});
+            }
+            else
+            {
+                relSchByCompId.insert({compId, pair.second});
+            }
+        }
+        return relSchByCompId;
+    }
+
     void
     Simulation_Run(
         Simulation& s,
@@ -2798,32 +2884,6 @@ namespace erin
         // -- that all connections have the correct flows
         // -- that required ports are linked
         // -- check that we have a proper acyclic graph?
-        // TODO: generate reliability information from time = 0 to final time
-        // ... from sim info. Those schedules will be clipped to the times of
-        // ... each scenario's instance. We will also need to merge it with
-        // ... fragility failure curves. We may want to consolidate to, at most
-        // ... one curve per component but also track the (possibly multiple)
-        // ... failure modes and fragility modes causing the failure
-        // ... (provenance). Note: the fragility part will need to be moved
-        // ... as fragility is "by scenario".
-        double maxDuration_s = 0.0;
-        for (size_t scenId = 0; scenId < s.ScenarioMap.Durations.size();
-             ++scenId)
-        {
-            double duration_s = Time_ToSeconds(
-                s.ScenarioMap.Durations[scenId], s.ScenarioMap.TimeUnits[scenId]
-            );
-            double offset_s = Time_ToSeconds(
-                s.ScenarioMap.TimeOffsetsInHours[scenId], TimeUnit::Hours
-            );
-            duration_s += offset_s;
-            if (duration_s > maxDuration_s)
-            {
-                maxDuration_s = duration_s;
-            }
-        }
-
-        std::map<size_t, std::vector<TimeState>> relSchByCompFailId;
         // NOTE: set up reliability manager
         // TODO: remove duplication of data here
         for (size_t fmIdx = 0; fmIdx < s.FailureModes.FailureDistIds.size();
@@ -2839,61 +2899,10 @@ namespace erin
              compFailId < s.ComponentFailureModes.ComponentIds.size();
              ++compFailId)
         {
-            size_t fmId = s.ComponentFailureModes.FailureModeIds[compFailId];
             s.TheModel.Rel.link_component_with_failure_mode(
                 s.ComponentFailureModes.ComponentIds[compFailId],
                 s.ComponentFailureModes.FailureModeIds[compFailId]
             );
-            // NOTE: Fix. ERIN is like the movie Groundhog's Day --
-            // each "year" is repeated over and over again until the
-            // max time limit is reached. As such, if we have
-            // 1,000 years of simulation, we need to generate 1,000
-            // unique 1-year reliability schedules. The exact duration
-            // will be (scenarioStartMonth + scenarioStartDay
-            // + scenarioDuration) - Jan 1 at 00:00:00. We could also
-            // just build out the longest duration needed by any
-            // scenario and just use that for all of them and clip
-            // to the correct time...
-            // BUT s.Info.MaxTime should just set the number of
-            // "Groundhog Days"...
-            // Question: does scenario need start month/day? Could just be
-            // of length duration... is it needed to match up with initial
-            // age? Yes. So what we need for each scenario is a time
-            // offset. So the reliability schedule duration will be
-            // (scenarioOffset + scenarioDuration). Offset will be from
-            // the time the age is assessed.
-            double maxTime_s =
-                Time_ToSeconds(s.Info.MaxTime, s.Info.TheTimeUnit)
-                + maxDuration_s;
-            std::vector<TimeState> relSch =
-                s.TheModel.Rel.make_schedule_for_link(
-                    fmId, s.TheModel.RandFn, s.TheModel.DistSys, maxTime_s
-                );
-            for (auto& ts : relSch)
-            {
-                if (!ts.state)
-                {
-                    ts.failureModeCauses.insert(fmId);
-                }
-            }
-            relSchByCompFailId.insert({compFailId, std::move(relSch)});
-        }
-        // NOTE: combine reliability curves so they are per component
-        std::map<size_t, std::vector<TimeState>> relSchByCompId;
-        for (auto const& pair : relSchByCompFailId)
-        {
-            size_t compId = s.ComponentFailureModes.ComponentIds[pair.first];
-            if (relSchByCompId.contains(compId))
-            {
-                std::vector<TimeState> combined = TimeState_Combine(
-                    pair.second, relSchByCompId.at(pair.first)
-                );
-                relSchByCompId.insert({compId, std::move(combined)});
-            }
-            else
-            {
-                relSchByCompId.insert({compId, pair.second});
-            }
         }
         // TODO: generate a data structure to hold all results.
         // TODO: set random function for Model based on SimInfo
@@ -2936,6 +2945,10 @@ namespace erin
         std::vector<ScenarioOccurrenceStats> occurrenceStats;
         for (size_t scenIdx : scenarioOrder)
         {
+            double scenarioDuration_s = Time_ToSeconds(
+                s.ScenarioMap.Durations[scenIdx],
+                s.ScenarioMap.TimeUnits[scenIdx]);
+            double scenarioOffset_s = s.ScenarioMap.TimeOffsetsInSeconds[scenIdx];
             std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
             if (verbose)
             {
@@ -2966,25 +2979,27 @@ namespace erin
                 DetermineScenarioOccurrenceTimes(s, scenIdx, verbose);
             // TODO: initialize total scenario stats (i.e.,
             // over all occurrences)
-            std::map<size_t, double> intensityIdToAmount =
+            std::unordered_map<size_t, double> intensityIdToAmount =
                 GetIntensitiesForScenario(s, scenIdx);
             for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
             {
+                std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
+                    CreateFailureSchedules(s, scenarioDuration_s, scenarioOffset_s);
                 double t = occurrenceTimes_s[occIdx];
-                double duration_s = Time_ToSeconds(
-                    s.ScenarioMap.Durations[scenIdx],
-                    s.ScenarioMap.TimeUnits[scenIdx]
-                );
-                double tEnd = t + duration_s;
+                double tEnd = t + scenarioDuration_s;
                 if (verbose)
                 {
                     std::cout << "Occurrence #" << (occIdx + 1) << " at "
                               << SecondsToPrettyString(t) << std::endl;
                 }
-                // TODO: make initial age part of the ComponentMap
                 std::vector<ScheduleBasedReliability> originalReliabilities =
                     ApplyReliabilitiesAndFragilities(
-                        s, t, tEnd, intensityIdToAmount, relSchByCompId, verbose
+                        s,
+                        scenarioOffset_s,
+                        scenarioOffset_s + scenarioDuration_s,
+                        intensityIdToAmount,
+                        relSchByCompId,
+                        verbose
                     );
                 std::string scenarioStartTimeTag =
                     TimeToISO8601Period(static_cast<uint64_t>(std::llround(t)));
@@ -2998,7 +3013,7 @@ namespace erin
                               << SecondsToPrettyString(tEnd) << ")"
                               << std::endl;
                 }
-                s.TheModel.FinalTime = duration_s;
+                s.TheModel.FinalTime = scenarioDuration_s;
                 // TODO: add an optional verbosity flag to SimInfo
                 // -- use that to set things like the print flag below
 

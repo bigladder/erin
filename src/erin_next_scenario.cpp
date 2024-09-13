@@ -1,6 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_scenario.h"
+#include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_toml.h"
 #include <iostream>
@@ -43,6 +44,7 @@ namespace erin
         sd.OccurrenceDistributionIds.push_back(0);
         sd.Durations.push_back(0.0);
         sd.TimeUnits.push_back(TimeUnit::Hour);
+        sd.TimeOffsetsInSeconds.push_back(0.0);
         sd.MaxOccurrences.push_back(0);
         assert(sd.Durations.size() == sd.MaxOccurrences.size());
         assert(sd.Durations.size() == sd.OccurrenceDistributionIds.size());
@@ -58,7 +60,8 @@ namespace erin
         size_t occurrenceDistId,
         double duration,
         TimeUnit timeUnit,
-        std::optional<size_t> maxOccurrences
+        std::optional<size_t> maxOccurrences,
+        double timeOffset
     )
     {
         size_t id = sd.Tags.size();
@@ -70,6 +73,7 @@ namespace erin
                 sd.Durations[i] = duration;
                 sd.TimeUnits[i] = timeUnit;
                 sd.MaxOccurrences[i] = maxOccurrences;
+                sd.TimeOffsetsInSeconds[i] = Time_ToSeconds(timeOffset, timeUnit);
                 assert(sd.Durations.size() == sd.MaxOccurrences.size());
                 assert(
                     sd.Durations.size() == sd.OccurrenceDistributionIds.size()
@@ -158,13 +162,30 @@ namespace erin
         {
             return {};
         }
+        double timeOffset = 0.0;
+        if (table.contains("time_offset"))
+        {
+            if (table.at("time_offset").is_integer())
+            {
+                timeOffset = static_cast<double>(table.at("time_offset").as_integer());
+            }
+            else if (table.at("time_offset").is_floating())
+            {
+                timeOffset = table.at("time_offset").as_floating();
+            }
+            else
+            {
+                return {};
+            }
+        }
         size_t id = ScenarioDict_RegisterScenario(
             sd,
             tag,
             ds.lookup_dist_by_tag(maybeOccurrenceDist.value()),
             maybeDuration.value(),
             maybeTimeUnit.value(),
-            maxOccurrences
+            maxOccurrences,
+            timeOffset
         );
         return id;
     }

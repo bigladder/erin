@@ -4,6 +4,7 @@
 #define ERIN_SIMULATION_H
 
 #include "erin_next/erin_next.h"
+#include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
 #include "erin_next/erin_next_scenario.h"
@@ -15,6 +16,7 @@
 #include <optional>
 #include <cstdlib>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace erin
 {
@@ -200,6 +202,18 @@ namespace erin
 
     std::vector<ScheduleBasedReliability>
     CopyReliabilities(Simulation const& s);
+
+    std::unordered_map<size_t, std::vector<TimeState>>
+    CreateFailureSchedules(
+        std::vector<size_t> const& componentFailureModeComponentIds,
+        std::vector<size_t> const& componentFailureModeFailureModeIds,
+        std::vector<double> const& componentInitialAges_s,
+        ReliabilityCoordinator const& rc,
+        std::function<double()> const& randFn,
+        DistributionSystem const& ds,
+        double scenarioDuration_s,
+        double scenarioOffset_s
+    );
 
     std::vector<ScheduleBasedReliability>
     ApplyReliabilitiesAndFragilities(

@@ -2739,25 +2739,28 @@ namespace erin
 
     std::unordered_map<size_t, std::vector<TimeState>>
     CreateFailureSchedules(
-        Simulation& s,
+        std::vector<size_t> const& componentFailureModeComponentIds,
+        std::vector<size_t> const& componentFailureModeFailureModeIds,
+        std::vector<double> const& componentInitialAges_s,
+        ReliabilityCoordinator const& rc,
+        std::function<double()> const& randFn,
+        DistributionSystem const& ds,
         double scenarioDuration_s,
         double scenarioOffset_s
     )
     {
         std::unordered_map<size_t, std::vector<TimeState>> relSchByCompFailId;
-        relSchByCompFailId.reserve(s.ComponentFailureModes.ComponentIds.size());
+        relSchByCompFailId.reserve(componentFailureModeComponentIds.size());
         std::unordered_set<size_t> componentsWithFailures;
-        componentsWithFailures.reserve(
-            s.ComponentFailureModes.ComponentIds.size()
-        );
+        componentsWithFailures.reserve(componentFailureModeComponentIds.size());
         for (size_t compFailId = 0;
-             compFailId < s.ComponentFailureModes.ComponentIds.size();
+             compFailId < componentFailureModeComponentIds.size();
              ++compFailId)
         {
-            size_t fmId = s.ComponentFailureModes.FailureModeIds[compFailId];
-            size_t compId = s.ComponentFailureModes.ComponentIds[compFailId];
+            size_t fmId = componentFailureModeFailureModeIds[compFailId];
+            size_t compId = componentFailureModeComponentIds[compFailId];
             componentsWithFailures.insert(compId);
-            double age_s = s.TheModel.ComponentMap.InitialAges_s[compId];
+            double age_s = componentInitialAges_s[compId];
             // NOTE: Fix. ERIN is like the movie Groundhog's Day --
             // each "year" is repeated over and over again until the
             // max time limit is reached. As such, if we have
@@ -2778,9 +2781,7 @@ namespace erin
             // the time the age is assessed.
             double endTime_s = age_s + scenarioOffset_s + scenarioDuration_s;
             std::vector<TimeState> relSch =
-                s.TheModel.Rel.make_schedule_for_link(
-                    fmId, s.TheModel.RandFn, s.TheModel.DistSys, endTime_s
-                );
+                rc.make_schedule_for_link(fmId, randFn, ds, endTime_s);
             for (auto& ts : relSch)
             {
                 if (!ts.state)
@@ -2795,7 +2796,7 @@ namespace erin
         relSchByCompId.reserve(componentsWithFailures.size());
         for (auto const& pair : relSchByCompFailId)
         {
-            size_t compId = s.ComponentFailureModes.ComponentIds[pair.first];
+            size_t compId = componentFailureModeComponentIds[pair.first];
             if (relSchByCompId.contains(compId))
             {
                 std::vector<TimeState> combined = TimeState_Combine(
@@ -3078,7 +3079,14 @@ namespace erin
             {
                 std::unordered_map<size_t, std::vector<TimeState>>
                     relSchByCompId = CreateFailureSchedules(
-                        s, scenarioDuration_s, scenarioOffset_s
+                        s.ComponentFailureModes.ComponentIds,
+                        s.ComponentFailureModes.FailureModeIds,
+                        s.TheModel.ComponentMap.InitialAges_s,
+                        s.TheModel.Rel,
+                        s.TheModel.RandFn,
+                        s.TheModel.DistSys,
+                        scenarioDuration_s,
+                        scenarioOffset_s
                     );
                 double t = occurrenceTimes_s[occIdx];
                 double tEnd = t + scenarioDuration_s;

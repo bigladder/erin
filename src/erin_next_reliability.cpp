@@ -87,7 +87,7 @@ namespace erin
         const std::function<double()>& rand_fn,
         const DistributionSystem& cds,
         double final_time
-    )
+    ) const
     {
         double time = 0.0;
         double dt = -1.0;

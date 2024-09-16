@@ -224,11 +224,12 @@ namespace erin
     void
     Simulation_Run(
         Simulation& s,
-        const std::string& eventsFilename,
-        const std::string& statsFilename = "stats.csv",
+        std::string const& eventsFilename,
+        std::string const& statsFilename = "stats.csv",
         double time_step_h = -1.0,
         bool aggregateGroups = true,
-        const bool verbose = false
+        bool saveReliabilityCurves = false,
+        bool verbose = false
     );
 
     bool

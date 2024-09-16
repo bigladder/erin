@@ -1,0 +1,66 @@
+[simulation_info]
+input_format_version = "0.2"
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "years"
+max_time = 200
+[loads.building_load]
+time_unit = "h"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,1.0],[336.0,0.0]]
+[components.source]
+type = "source"
+outflow = "natural-gas"
+[components.converter]
+type = "converter"
+constant_efficiency = 0.5
+inflow = "natural-gas"
+outflow = "electricity"
+fragility_modes = ["vulnerable_to_wind", "vulnerable_to_flooding"]
+failure_modes = ["fm"]
+[components.load]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.class_2_hurricane = "building_load"
+[network]
+connections = [
+  ["source:OUT(0)", "converter:IN(0)", "natural-gas"],
+  ["converter:OUT(0)", "load:IN(0)", "electricity"],
+]
+[dist.every_10_years]
+type = "fixed"
+value = 10
+time_unit = "yr"
+[dist.break]
+type = "uniform"
+lower_bound = 40
+upper_bound = 80
+time_unit = "hours"
+[dist.repair]
+type = "fixed"
+value = 2
+time_unit = "hours"
+[failure_mode.fm]
+failure_dist = "break"
+repair_dist = "repair"
+[fragility_mode.vulnerable_to_flooding]
+fragility_curve = "vulnerable_to_flooding_curve"
+[fragility_mode.vulnerable_to_wind]
+fragility_curve = "vulnerable_to_wind_curve"
+[fragility_curve.vulnerable_to_flooding_curve]
+vulnerable_to = "inundation_depth_ft"
+type = "linear"
+lower_bound = 2.0
+upper_bound = 14.0
+[fragility_curve.vulnerable_to_wind_curve]
+vulnerable_to = "wind_speed_mph"
+type = "linear"
+lower_bound = 80.0
+upper_bound = 180.0
+[scenarios.class_2_hurricane]
+time_unit = "h"
+occurrence_distribution = "every_10_years"
+duration = 336
+max_occurrences = 10
+intensity.wind_speed_mph = 120
+intensity.inundation_depth_ft = 4

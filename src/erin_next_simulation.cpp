@@ -2812,13 +2812,94 @@ namespace erin
     }
 
     void
+    WriteReliabilityCurves(
+        std::string const& scenarioName,
+        size_t scenarioOccurrence,
+        Simulation const& s
+    )
+    {
+        std::string fname = fmt::format("{}-{:03}.csv", scenarioName, scenarioOccurrence);
+        std::ofstream out;
+        out.open(fname);
+        if (!out.good())
+        {
+            std::cout << "Could not open '" << fname
+                      << "' for writing." << std::endl;
+            return;
+        }
+        size_t maxRow = 0;
+        for (size_t i = 0; i < s.TheModel.Reliabilities.size(); ++i)
+        {
+            ScheduleBasedReliability const& sbr = s.TheModel.Reliabilities[i];
+            if (sbr.TimeStates.size() > maxRow)
+            {
+                maxRow = sbr.TimeStates.size();
+            }
+        }
+        for (size_t row = 0; row < maxRow; row++)
+        {
+            if (row == 0)
+            {
+                for (size_t i=0; i < s.TheModel.Reliabilities.size(); ++i)
+                {
+                    ScheduleBasedReliability const& sbr = s.TheModel.Reliabilities[i];
+                    if (i > 0)
+                    {
+                        out << ",";
+                    }
+                    std::string const& compTag = s.TheModel.ComponentMap.Tag[sbr.ComponentId];
+                    out << "time (s)," << compTag << " state,causes";
+                }
+                out << "\n";
+            }
+            for (size_t i=0; i < s.TheModel.Reliabilities.size(); ++i)
+            {
+                ScheduleBasedReliability const& sbr = s.TheModel.Reliabilities[i];
+                if (i > 0)
+                {
+                    out << ",";
+                }
+                std::vector<std::string> causes;
+                for (size_t fmId : sbr.TimeStates[row].failureModeCauses)
+                {
+                    causes.push_back(s.FailureModes.Tags[fmId]);
+                }
+                for (size_t fmId : sbr.TimeStates[row].fragilityModeCauses)
+                {
+                    causes.push_back(s.FragilityModes.Tags[fmId]);
+                }
+                std::string causeStr = "";
+                for (std::string const& cause : causes)
+                {
+                    causeStr = (causeStr.size() == 0) ? cause : fmt::format("| {}", cause);
+                }
+                if (row < sbr.TimeStates.size())
+                {
+                    out << TimeInSecondsToDesiredUnit(sbr.TimeStates[row].time, TimeUnit::Hour)
+                        << ","
+                        << sbr.TimeStates[row].state
+                        << ","
+                        << causeStr;
+                }
+                else
+                {
+                    out << ",";
+                }
+            }
+            out << "\n";
+        }
+        out.close();
+    }
+
+    void
     Simulation_Run(
         Simulation& s,
         std::string const& eventsFilename,
         std::string const& statsFilename,
         double time_step_h /*-1.0*/,
         bool aggregateGroups,
-        bool const verbose
+        bool saveReliabilityCurves,
+        bool verbose
     )
     {
         // TODO: wrap into input options struct and pass in
@@ -2978,6 +3059,12 @@ namespace erin
             // ++sbsIdx) {/* ... */}
             std::vector<double> occurrenceTimes_s =
                 DetermineScenarioOccurrenceTimes(s, scenIdx, verbose);
+            if (verbose)
+            {
+                std::cout << "Calculated " << occurrenceTimes_s.size()
+                    << " occurrence times for "
+                    << s.ScenarioMap.Tags[scenIdx] << std::endl;
+            }
             // TODO: initialize total scenario stats (i.e.,
             // over all occurrences)
             std::unordered_map<size_t, double> intensityIdToAmount =
@@ -3004,6 +3091,19 @@ namespace erin
                         relSchByCompId,
                         verbose
                     );
+                if (saveReliabilityCurves)
+                {
+                    if (verbose)
+                    {
+                        std::cout << "Writing reliability curves..." << std::endl;
+                    }
+                    WriteReliabilityCurves(
+                        s.ScenarioMap.Tags[scenIdx], occIdx, s);
+                    if (verbose)
+                    {
+                        std::cout << "Reliability curves written" << std::endl;
+                    }
+                }
                 std::string scenarioStartTimeTag =
                     TimeToISO8601Period(static_cast<uint64_t>(std::llround(t)));
                 if (verbose)

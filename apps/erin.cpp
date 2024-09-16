@@ -117,6 +117,11 @@ add_run(CLI::App& app)
         "-n,--no-group", no_aggregate_groups, "Suppress group aggregation"
     );
 
+    static bool save_reliability_curves = false;
+    subcommand->add_flag(
+        "-r,--save-reliability", save_reliability_curves, "Save reliability curves"
+    );
+
     auto run = [&]()
     {
         bool aggregate_groups = !no_aggregate_groups;
@@ -129,6 +134,8 @@ add_run(CLI::App& app)
             {
                 std::cout << "time step (h): " << time_step_h << std::endl;
             }
+            std::cout << "save reliability curves: "
+                << (save_reliability_curves ? "true" : "false") << std::endl;
             std::cout << "verbose: " << (verbose ? "true" : "false")
                       << std::endl;
             std::cout << "groups: " << (aggregate_groups ? "true" : "false")
@@ -168,6 +175,7 @@ add_run(CLI::App& app)
             statsFilename,
             time_step_h,
             aggregate_groups,
+            save_reliability_curves,
             verbose
         );
         return EXIT_SUCCESS;

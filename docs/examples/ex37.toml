@@ -35,18 +35,25 @@ time_unit = "yr"
 type = "uniform"
 lower_bound = 40
 upper_bound = 80
-time_unit = "hours"
+time_unit = "h"
 [dist.repair]
 type = "fixed"
 value = 2
-time_unit = "hours"
+time_unit = "h"
+[dist.extended_repair]
+type = "uniform"
+lower_bound = 20
+upper_bound = 80
+time_unit = "h"
 [failure_mode.fm]
 failure_dist = "break"
 repair_dist = "repair"
 [fragility_mode.vulnerable_to_flooding]
 fragility_curve = "vulnerable_to_flooding_curve"
+repair_dist = "extended_repair"
 [fragility_mode.vulnerable_to_wind]
 fragility_curve = "vulnerable_to_wind_curve"
+repair_dist = "extended_repair"
 [fragility_curve.vulnerable_to_flooding_curve]
 vulnerable_to = "inundation_depth_ft"
 type = "linear"
@@ -63,4 +70,4 @@ occurrence_distribution = "every_10_years"
 duration = 336
 max_occurrences = 10
 intensity.wind_speed_mph = 120
-intensity.inundation_depth_ft = 4
+intensity.inundation_depth_ft = 6

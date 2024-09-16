@@ -69,3 +69,19 @@ TEST(ErinSim, TestCreateFailureSchedulesWithOffset)
         EXPECT_EQ(tss[27].state, true) << tss[27];
     }
 }
+
+TEST(ErinSim, TestCreateFailureSchedulesWithInitialAge)
+{
+    std::unordered_map<size_t, std::vector<TimeState>> actual =
+        RunCreateFailureSchedules(24.0, 0.0);
+    EXPECT_EQ(actual.size(), 1);
+    for (auto const& it : actual)
+    {
+        std::vector<TimeState> const& tss = it.second;
+        EXPECT_EQ(tss.size(), 28);
+        EXPECT_EQ(tss[0].time, 10.0) << tss[0];
+        EXPECT_EQ(tss[0].state, false) << tss[0];
+        EXPECT_EQ(tss[27].time, 168.0) << tss[27];
+        EXPECT_EQ(tss[27].state, true) << tss[27];
+    }
+}

@@ -58,6 +58,22 @@ target_link_libraries(erin_switch_tests
 	GTest::gtest_main
 )
 
+# ERIN Simulation Tests
+add_executable(erin_simulation_tests
+	erin_simulation_tests.cpp
+)
+
+target_include_directories(erin_simulation_tests
+	PUBLIC
+	${PROJECT_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/src
+)
+
+target_link_libraries(erin_simulation_tests
+	erin_next
+	GTest::gtest_main
+)
+
 # Google Test
 include(GoogleTest)
 

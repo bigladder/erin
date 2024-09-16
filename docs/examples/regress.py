@@ -24,20 +24,26 @@ if platform.system() == 'Windows':
         print("Could not find build directory!")
         sys.exit(1)
     BIN_DIR = BIN_DIR.resolve()
-    TEST_EXE = BIN_DIR / 'erin_tests.exe'
-    RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests.exe'
-    LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests.exe'
-    SWITCH_TEST_EXE = BIN_DIR / 'erin_switch_tests.exe'
+    ALL_TESTS = [
+        BIN_DIR / 'erin_tests.exe',
+        BIN_DIR / 'erin_next_random_tests.exe',
+        BIN_DIR / 'erin_lookup_table_tests.exe',
+        BIN_DIR / 'erin_switch_tests.exe',
+        BIN_DIR / 'erin_simulation_tests.exe',
+    ]
     CLI_EXE = BIN_DIR / 'erin.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     DIFF_PROG = 'diff'
     BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
     BIN_DIR = BIN_DIR.resolve()
-    TEST_EXE = BIN_DIR / 'erin_tests'
-    RAND_TEST_EXE = BIN_DIR / 'erin_next_random_tests'
-    LOOKUP_TABLE_TEST_EXE = BIN_DIR / 'erin_lookup_table_tests'
-    SWITCH_TEST_EXE = BIN_DIR / 'erin_switch_tests'
+    ALL_TESTS = [
+        BIN_DIR / 'erin_tests',
+        BIN_DIR / 'erin_next_random_tests',
+        BIN_DIR / 'erin_lookup_table_tests',
+        BIN_DIR / 'erin_switch_tests',
+        BIN_DIR / 'erin_simulation_tests',
+    ]
     CLI_EXE = BIN_DIR / 'erin'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test'
 else:
@@ -45,20 +51,16 @@ else:
     sys.exit(1)
 BIN_DIR = BIN_DIR.resolve()
 print(f"BINARY DIR: {BIN_DIR}")
-ALL_TESTS = [TEST_EXE, RAND_TEST_EXE, LOOKUP_TABLE_TEST_EXE, SWITCH_TEST_EXE]
 
 
-if not TEST_EXE.exists():
-    print("Cannot find test executable...")
+if len(ALL_TESTS) < 1:
+    print("No test executables defined...")
     sys.exit(1)
 
-if not RAND_TEST_EXE.exists():
-    print("Cannot find random test executable...")
-    sys.exit(1)
-
-if not LOOKUP_TABLE_TEST_EXE.exists():
-    print("Cannot find lookup-table test executable...")
-    sys.exit(1)
+for test_exe in ALL_TESTS:
+    if not test_exe.exists():
+        print(f"Cannot find {test_exe} executable...")
+        sys.exit(1)
 
 if not CLI_EXE.exists():
     print("Cannot find command-line interface executable...")

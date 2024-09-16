@@ -2871,7 +2871,7 @@ namespace erin
                 std::string causeStr = "";
                 for (std::string const& cause : causes)
                 {
-                    causeStr = (causeStr.size() == 0) ? cause : fmt::format("| {}", cause);
+                    causeStr += (causeStr.size() == 0) ? cause : fmt::format(" | {}", cause);
                 }
                 if (row < sbr.TimeStates.size())
                 {

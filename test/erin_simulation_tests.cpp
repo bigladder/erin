@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_reliability.h"
 #include "erin_next/erin_next_simulation.h"
+#include "erin_next/erin_next_timestate.h"
 #include <gtest/gtest.h>
 
 using namespace erin;
@@ -37,4 +38,13 @@ TEST(ErinSim, TestCreateFailureSchedules)
             scenarioOffset_s
         );
     EXPECT_EQ(actual.size(), 1);
+    for (auto const& it : actual)
+    {
+        std::vector<TimeState> const& tss = it.second;
+        EXPECT_EQ(tss.size(), 24);
+        EXPECT_EQ(tss[0].time, 10.0) << tss[0];
+        EXPECT_EQ(tss[0].state, false) << tss[0];
+        EXPECT_EQ(tss[23].time, 144.0) << tss[23];
+        EXPECT_EQ(tss[23].state, true) << tss[23];
+    }
 }

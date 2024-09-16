@@ -2851,7 +2851,7 @@ namespace erin
                     }
                     std::string const& compTag =
                         s.TheModel.ComponentMap.Tag[sbr.ComponentId];
-                    out << "time (s)," << compTag << " state,causes";
+                    out << "time (h)," << compTag << " state,causes";
                 }
                 out << "\n";
             }

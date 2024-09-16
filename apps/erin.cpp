@@ -119,7 +119,9 @@ add_run(CLI::App& app)
 
     static bool save_reliability_curves = false;
     subcommand->add_flag(
-        "-r,--save-reliability", save_reliability_curves, "Save reliability curves"
+        "-r,--save-reliability",
+        save_reliability_curves,
+        "Save reliability curves"
     );
 
     auto run = [&]()
@@ -135,7 +137,8 @@ add_run(CLI::App& app)
                 std::cout << "time step (h): " << time_step_h << std::endl;
             }
             std::cout << "save reliability curves: "
-                << (save_reliability_curves ? "true" : "false") << std::endl;
+                      << (save_reliability_curves ? "true" : "false")
+                      << std::endl;
             std::cout << "verbose: " << (verbose ? "true" : "false")
                       << std::endl;
             std::cout << "groups: " << (aggregate_groups ? "true" : "false")

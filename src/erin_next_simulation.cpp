@@ -2818,13 +2818,14 @@ namespace erin
         Simulation const& s
     )
     {
-        std::string fname = fmt::format("{}-{:03}.csv", scenarioName, scenarioOccurrence);
+        std::string fname =
+            fmt::format("{}-{:03}.csv", scenarioName, scenarioOccurrence);
         std::ofstream out;
         out.open(fname);
         if (!out.good())
         {
-            std::cout << "Could not open '" << fname
-                      << "' for writing." << std::endl;
+            std::cout << "Could not open '" << fname << "' for writing."
+                      << std::endl;
             return;
         }
         size_t maxRow = 0;
@@ -2840,21 +2841,24 @@ namespace erin
         {
             if (row == 0)
             {
-                for (size_t i=0; i < s.TheModel.Reliabilities.size(); ++i)
+                for (size_t i = 0; i < s.TheModel.Reliabilities.size(); ++i)
                 {
-                    ScheduleBasedReliability const& sbr = s.TheModel.Reliabilities[i];
+                    ScheduleBasedReliability const& sbr =
+                        s.TheModel.Reliabilities[i];
                     if (i > 0)
                     {
                         out << ",";
                     }
-                    std::string const& compTag = s.TheModel.ComponentMap.Tag[sbr.ComponentId];
+                    std::string const& compTag =
+                        s.TheModel.ComponentMap.Tag[sbr.ComponentId];
                     out << "time (s)," << compTag << " state,causes";
                 }
                 out << "\n";
             }
-            for (size_t i=0; i < s.TheModel.Reliabilities.size(); ++i)
+            for (size_t i = 0; i < s.TheModel.Reliabilities.size(); ++i)
             {
-                ScheduleBasedReliability const& sbr = s.TheModel.Reliabilities[i];
+                ScheduleBasedReliability const& sbr =
+                    s.TheModel.Reliabilities[i];
                 if (i > 0)
                 {
                     out << ",";
@@ -2871,15 +2875,16 @@ namespace erin
                 std::string causeStr = "";
                 for (std::string const& cause : causes)
                 {
-                    causeStr += (causeStr.size() == 0) ? cause : fmt::format(" | {}", cause);
+                    causeStr += (causeStr.size() == 0)
+                        ? cause
+                        : fmt::format(" | {}", cause);
                 }
                 if (row < sbr.TimeStates.size())
                 {
-                    out << TimeInSecondsToDesiredUnit(sbr.TimeStates[row].time, TimeUnit::Hour)
-                        << ","
-                        << sbr.TimeStates[row].state
-                        << ","
-                        << causeStr;
+                    out << TimeInSecondsToDesiredUnit(
+                        sbr.TimeStates[row].time, TimeUnit::Hour
+                    ) << ","
+                        << sbr.TimeStates[row].state << "," << causeStr;
                 }
                 else
                 {
@@ -3062,8 +3067,8 @@ namespace erin
             if (verbose)
             {
                 std::cout << "Calculated " << occurrenceTimes_s.size()
-                    << " occurrence times for "
-                    << s.ScenarioMap.Tags[scenIdx] << std::endl;
+                          << " occurrence times for "
+                          << s.ScenarioMap.Tags[scenIdx] << std::endl;
             }
             // TODO: initialize total scenario stats (i.e.,
             // over all occurrences)
@@ -3095,10 +3100,12 @@ namespace erin
                 {
                     if (verbose)
                     {
-                        std::cout << "Writing reliability curves..." << std::endl;
+                        std::cout << "Writing reliability curves..."
+                                  << std::endl;
                     }
                     WriteReliabilityCurves(
-                        s.ScenarioMap.Tags[scenIdx], occIdx, s);
+                        s.ScenarioMap.Tags[scenIdx], occIdx, s
+                    );
                     if (verbose)
                     {
                         std::cout << "Reliability curves written" << std::endl;

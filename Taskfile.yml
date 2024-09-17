@@ -57,6 +57,14 @@ tasks:
       # TODO[mok]: have regress.py take the build directory to run against
       - "{{.PYTHON}} regress.py"
 
+  short-test:
+    desc: Run the test suite, skipping long-running tests
+    dir: 'docs/examples'
+    cmds:
+      - "{{.PYTHON}} regress.py"
+    env:
+      ERIN_SHORT_TEST: 1
+
   init-release:
     desc: Initialize a release build
     cmds:

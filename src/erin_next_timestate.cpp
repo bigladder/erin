@@ -162,10 +162,10 @@ namespace erin
                 }
             }
             result.push_back({
-                .time=time,
-                .state=state,
-                .failureModeCauses=std::move(failureModes),
-                .fragilityModeCauses=std::move(fragilityModes),
+                .time = time,
+                .state = state,
+                .failureModeCauses = std::move(failureModes),
+                .fragilityModeCauses = std::move(fragilityModes),
             });
             // increment to the lowest time (ta or tb) ahead of t
             bool aCanInc = (aIdx + 1) < a.size();

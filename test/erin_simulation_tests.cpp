@@ -27,15 +27,15 @@ RunCreateFailureSchedules(double initialAge_s, double scenarioOffset_s)
     componentInitialAges_s.push_back(initialAge_s);
     double scenarioDuration_s = 144.0;
     return erin::CreateFailureSchedules(
-            componentFailureModeComponentIds,
-            componentFailureModeFailureModeIds,
-            componentInitialAges_s,
-            rc,
-            []() { return 0.5; },
-            ds,
-            scenarioDuration_s,
-            scenarioOffset_s
-        );
+        componentFailureModeComponentIds,
+        componentFailureModeFailureModeIds,
+        componentInitialAges_s,
+        rc,
+        []() { return 0.5; },
+        ds,
+        scenarioDuration_s,
+        scenarioOffset_s
+    );
 }
 
 TEST(ErinSim, TestCreateFailureSchedules)

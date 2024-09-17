@@ -217,7 +217,7 @@ namespace erin
 
     std::vector<ScheduleBasedReliability>
     ApplyReliabilitiesAndFragilities(
-        std::function<double ()>& randFn,
+        std::function<double()>& randFn,
         std::vector<size_t> const& componentFailureModeComponentIds,
         std::vector<double> const& componentInitialAges_s,
         std::vector<std::string> const& componentTags,

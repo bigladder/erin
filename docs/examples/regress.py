@@ -98,6 +98,22 @@ def run_tests():
     print("", flush=True)
 
 
+def run_command(cmd, dir=None):
+    """
+    Run the given command in the given directory.    
+    """
+    cwd = str(Path.cwd().resolve()) if dir is None else dir
+    result = subprocess.run(cmd, capture_output=True, cwd=cwd)
+    if result.returncode != 0:
+        print(f"Error running CLI for {' '.join(cmd)}")
+        print("stdout:\n")
+        print(result.stdout.decode())
+        print("stderr:\n")
+        print(result.stderr.decode())
+        sys.exit(1)
+    return result
+
+
 def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     """
     A smoke test just runs the example and confirms we get a 0 exit code
@@ -386,7 +402,19 @@ if __name__ == "__main__":
     run_cli("34")
     run_cli("35")
     run_cli("36")
+    run_command([CLI_EXE, "run", "ex37.toml", "-r"])
+    files_generated = [f for f in Path.cwd().resolve().glob("class_2_hurricane*.csv")]
+    if len(files_generated) != 10:
+        print("Error on example 37")
+        print(f"Should have created 10 csv files, got {len(files_generated)}")
+        sys.exit(1)
+    for f in files_generated:
+        f.unlink()
     print("\nPassed all regression tests!")
+
+    if os.environ.get("ERIN_SHORT_TEST") is not None:
+        print("Short exit...")
+        sys.exit(0)
 
     # Run original (unpacked) and rename/move output
     orig_name = "ft-illinois"
@@ -414,7 +442,7 @@ if __name__ == "__main__":
     run_perf()
     print("All performance tests run")
 
-    bench_dir = (Path(".")/".."/".."/"benchmark").resolve()
+    bench_dir = (Path(".") / ".." / ".." / "benchmark").resolve()
     if not bench_dir.exists():
         bench_dir.mkdir(parents=True, exist_ok=True)
     benchfile = (bench_dir / "benchmark.txt").resolve()

@@ -217,7 +217,20 @@ namespace erin
 
     std::vector<ScheduleBasedReliability>
     ApplyReliabilitiesAndFragilities(
-        Simulation& s,
+        std::function<double ()>& randFn,
+        std::vector<size_t> const& componentFailureModeComponentIds,
+        std::vector<double> const& componentInitialAges_s,
+        std::vector<std::string> const& componentTags,
+        std::vector<size_t> const& componentFragilityComponentIds,
+        std::vector<size_t> const& componentFragilityFragilityModeIds,
+        std::vector<size_t> const& fragilityModeFragilityCurveIds,
+        std::vector<std::optional<size_t>> const& fragilityModeRepairDistIds,
+        std::vector<std::string> const& fragilityModeTags,
+        std::vector<size_t> const& fragilityCurveCurveIds,
+        std::vector<FragilityCurveType> const& fragilityCurveCurveTypes,
+        std::vector<LinearFragilityCurve> linearFragilityCurves,
+        std::vector<TabularFragilityCurve> tabularFragilityCurves,
+        DistributionSystem const& ds,
         double startTime_s,
         double endTime_s,
         std::unordered_map<size_t, double> const& intensityIdToAmount,

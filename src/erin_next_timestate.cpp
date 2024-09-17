@@ -81,7 +81,7 @@ namespace erin
             result.reserve(b.size());
             for (size_t i = 0; i < b.size(); ++i)
             {
-                result.push_back(TimeState_Copy(b[i]));
+                result.push_back(TimeState_Copy(b.at(i)));
             }
             return result;
         }
@@ -90,7 +90,7 @@ namespace erin
             result.reserve(a.size());
             for (size_t i = 0; i < a.size(); ++i)
             {
-                result.push_back(TimeState_Copy(a[i]));
+                result.push_back(TimeState_Copy(a.at(i)));
             }
             return result;
         }
@@ -100,85 +100,124 @@ namespace erin
         }
         size_t aIdx = 0;
         size_t bIdx = 0;
-        TimeState next{0.0, true, {}, {}};
-        bool aState = true;
-        bool bState = true;
-        while (aIdx < a.size() && bIdx < b.size())
+        double time = 0.0;
+        bool state = true;
+        size_t iter = 0;
+        while (true)
         {
-            TimeState const& nextA = a[aIdx];
-            TimeState const& nextB = b[bIdx];
-            if (next.time == nextA.time)
+            TimeState const& nextA = a.at(aIdx);
+            TimeState const& nextB = b.at(bIdx);
+            std::set<size_t> failureModes{};
+            std::set<size_t> fragilityModes{};
+            if (time >= nextA.time && time >= nextB.time)
             {
-                aState = nextA.state;
+                state = nextA.state && nextB.state;
             }
-            if (next.time == nextB.time)
+            else if (time >= nextA.time)
             {
-                bState = nextB.state;
+                state = nextA.state;
             }
-            if (next.time == nextA.time || next.time == nextB.time)
+            else if (time >= nextB.time)
             {
-                next.state = aState && bState;
-                std::set<size_t> failureModes;
-                std::set<size_t> fragilityModes;
-                if (!aState)
-                {
-                    for (auto const& fmA : nextA.failureModeCauses)
-                    {
-                        failureModes.insert(fmA);
-                    }
-                    for (auto const& fmA : nextA.fragilityModeCauses)
-                    {
-                        fragilityModes.insert(fmA);
-                    }
-                }
-                if (!bState)
-                {
-                    for (auto const& fmB : nextB.failureModeCauses)
-                    {
-                        failureModes.insert(fmB);
-                    }
-                    for (auto const& fmB : nextB.fragilityModeCauses)
-                    {
-                        fragilityModes.insert(fmB);
-                    }
-                }
-                next.failureModeCauses = std::move(failureModes);
-                next.fragilityModeCauses = std::move(fragilityModes);
+                state = nextB.state;
             }
-            result.push_back(next);
-            if ((aIdx + 1) < a.size() && (bIdx + 1) < b.size())
+            else
             {
-                if (a[aIdx + 1].time < b[bIdx + 1].time)
+                if (nextA.time < nextB.time)
                 {
-                    next = a[aIdx + 1];
-                    ++aIdx;
+                    time = nextA.time;
+                    state = nextA.state;
                 }
-                else if (b[bIdx + 1].time < a[aIdx + 1].time)
+                else if (nextB.time < nextA.time)
                 {
-                    next = b[bIdx + 1];
-                    ++bIdx;
+                    time = nextB.time;
+                    state = nextB.state;
                 }
                 else
                 {
-                    next = a[aIdx + 1];
-                    ++aIdx;
-                    ++bIdx;
+                    time = nextA.time;
+                    state = nextA.state && nextB.state;
                 }
             }
-            else if ((aIdx + 1) < a.size())
+            if (time >= nextA.time && !nextA.state)
             {
-                next = a[aIdx + 1];
-                ++aIdx;
+                for (auto const& fmA : nextA.failureModeCauses)
+                {
+                    failureModes.insert(fmA);
+                }
+                for (auto const& fmA : nextA.fragilityModeCauses)
+                {
+                    fragilityModes.insert(fmA);
+                }
             }
-            else if ((bIdx + 1) < b.size())
+            if (time >= nextB.time && !nextB.state)
             {
-                next = b[bIdx + 1];
-                ++bIdx;
+                for (auto const& fmB : nextB.failureModeCauses)
+                {
+                    failureModes.insert(fmB);
+                }
+                for (auto const& fmB : nextB.fragilityModeCauses)
+                {
+                    fragilityModes.insert(fmB);
+                }
+            }
+            result.push_back({
+                .time=time,
+                .state=state,
+                .failureModeCauses=std::move(failureModes),
+                .fragilityModeCauses=std::move(fragilityModes),
+            });
+            // increment to the lowest time (ta or tb) ahead of t
+            bool aCanInc = (aIdx + 1) < a.size();
+            bool bCanInc = (bIdx + 1) < b.size();
+            size_t nextAIdx = aIdx;
+            size_t nextBIdx = bIdx;
+            double nextATime = a.at(aIdx).time;
+            double nextBTime = b.at(bIdx).time;
+            if (a.at(aIdx).time <= time && aCanInc)
+            {
+                nextATime = a.at(aIdx + 1).time;
+                nextAIdx = aIdx + 1;
+            }
+            if (b.at(bIdx).time <= time && bCanInc)
+            {
+                nextBTime = b.at(bIdx + 1).time;
+                nextBIdx = bIdx + 1;
+            }
+            if (nextATime > time && nextBTime > time)
+            {
+                if (nextATime < nextBTime)
+                {
+                    aIdx = nextAIdx;
+                    time = nextATime;
+                }
+                else if (nextBTime < nextATime)
+                {
+                    bIdx = nextBIdx;
+                    time = nextBTime;
+                }
+                else
+                {
+                    aIdx = nextAIdx;
+                    bIdx = nextBIdx;
+                    time = nextATime;
+                }
+            }
+            else if (nextATime > time)
+            {
+                aIdx = nextAIdx;
+                time = nextATime;
+            }
+            else if (nextBTime > time)
+            {
+                bIdx = nextBIdx;
+                time = nextBTime;
             }
             else
             {
                 break;
             }
+            ++iter;
         }
         return result;
     }
@@ -402,6 +441,15 @@ namespace erin
                     }
                 }
             }
+        }
+    }
+
+    void
+    TimeState_Print(std::vector<TimeState> const& tss)
+    {
+        for (TimeState const& ts : tss)
+        {
+            std::cout << "- " << ts << std::endl;
         }
     }
 

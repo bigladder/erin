@@ -69,6 +69,9 @@ namespace erin
         std::map<size_t, double>& timeByFragilityModeId_s
     );
 
+    void
+    TimeState_Print(std::vector<TimeState> const& tss);
+
 } // namespace erin
 
 #endif

@@ -113,7 +113,7 @@ RunApplyReliabilitiesAndFragilities(
 {
     // NOTE: our network is one source feeding electricity
     // into one load. That is, S -> L
-    std::function<double()> randFn = []{ return 0.5; };
+    std::function<double()> randFn = [] { return 0.5; };
     std::vector<size_t> componentFailureModeComponentIds{};
     std::vector<double> componentInitialAges_s = {0.0, 0.0};
     std::vector<std::string> componentTags = {"S", "L"};
@@ -123,51 +123,55 @@ RunApplyReliabilitiesAndFragilities(
     std::vector<std::optional<size_t>> fragilityModeRepairDistIds = {{}};
     std::vector<std::string> fragilityModeTags = {"vulnerable_to_wind"};
     std::vector<size_t> fragilityCurveCurveIds = {0};
-    std::vector<FragilityCurveType> fragilityCurveCurveTypes = {FragilityCurveType::Linear};
+    std::vector<FragilityCurveType> fragilityCurveCurveTypes = {
+        FragilityCurveType::Linear
+    };
     std::vector<LinearFragilityCurve> linearFragilityCurves = {
-        {.VulnerabilityId=0, .LowerBound=80.0, .UpperBound=140.0}
+        {.VulnerabilityId = 0, .LowerBound = 80.0, .UpperBound = 140.0}
     };
     std::vector<TabularFragilityCurve> tabularFragilityCurves = {};
     DistributionSystem ds{};
     std::unordered_map<size_t, double> intensityIdToAmount = {
-        { 0, 160.0 },
+        {0, 160.0},
     };
     std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId{};
     bool verbose = false;
 
     return ApplyReliabilitiesAndFragilities(
-            randFn,
-            componentFailureModeComponentIds,
-            componentInitialAges_s,
-            componentTags,
-            componentFragilityComponentIds,
-            componentFragilityFragilityModeIds,
-            fragilityModeFragilityCurveId,
-            fragilityModeRepairDistIds,
-            fragilityModeTags,
-            fragilityCurveCurveIds,
-            fragilityCurveCurveTypes,
-            linearFragilityCurves,
-            tabularFragilityCurves,
-            ds,
-            scenarioOffset_s,
-            scenarioOffset_s + scenarioDuration_s,
-            intensityIdToAmount,
-            relSchByCompId,
-            verbose
-        );
+        randFn,
+        componentFailureModeComponentIds,
+        componentInitialAges_s,
+        componentTags,
+        componentFragilityComponentIds,
+        componentFragilityFragilityModeIds,
+        fragilityModeFragilityCurveId,
+        fragilityModeRepairDistIds,
+        fragilityModeTags,
+        fragilityCurveCurveIds,
+        fragilityCurveCurveTypes,
+        linearFragilityCurves,
+        tabularFragilityCurves,
+        ds,
+        scenarioOffset_s,
+        scenarioOffset_s + scenarioDuration_s,
+        intensityIdToAmount,
+        relSchByCompId,
+        verbose
+    );
 }
 
 TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_NoAge)
 {
     double scenarioOffset_s = 0.0;
     double scenarioDuration_s = 1'000.0;
-    //std::unordered_map<size_t, double> intensityIdToAmount = {
-    //    { 0, 160.0 },
-    //};
-    //std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId{};
+    // std::unordered_map<size_t, double> intensityIdToAmount = {
+    //     { 0, 160.0 },
+    // };
+    // std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId{};
     std::vector<ScheduleBasedReliability> actual =
-        RunApplyReliabilitiesAndFragilities(scenarioOffset_s, scenarioDuration_s);    
+        RunApplyReliabilitiesAndFragilities(
+            scenarioOffset_s, scenarioDuration_s
+        );
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {

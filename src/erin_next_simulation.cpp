@@ -2137,9 +2137,48 @@ namespace erin
         return originalReliabilities;
     }
 
+    void
+    PrintReliabilities(std::vector<ScheduleBasedReliability> const& sbrs)
+    {
+        std::cout << "ScheduleBasedReliability vector size: " << sbrs.size() << std::endl;
+        for (ScheduleBasedReliability const& sbr : sbrs)
+        {
+            std::cout
+                << "- {ComponentId: " << sbr.ComponentId
+                << ",TimeStates=[";
+            bool isFirst = true;
+            for (TimeState const& ts : sbr.TimeStates)
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                }
+                else
+                {
+                    std::cout << ",";
+                }
+                std::cout << "{" << ts.time << "," << ts.state << "}";
+            }
+            std::cout << "]}" << std::endl; 
+        }
+    }
+
     std::vector<ScheduleBasedReliability>
     ApplyReliabilitiesAndFragilities(
-        Simulation& s,
+        std::function<double ()>& randFn,
+        std::vector<size_t> const& componentFailureModeComponentIds,
+        std::vector<double> const& componentInitialAges_s,
+        std::vector<std::string> const& componentTags,
+        std::vector<size_t> const& componentFragilityComponentIds,
+        std::vector<size_t> const& componentFragilityFragilityModeIds,
+        std::vector<size_t> const& fragilityModeFragilityCurveIds,
+        std::vector<std::optional<size_t>> const& fragilityModeRepairDistIds,
+        std::vector<std::string> const& fragilityModeTags,
+        std::vector<size_t> const& fragilityCurveCurveIds,
+        std::vector<FragilityCurveType> const& fragilityCurveCurveTypes,
+        std::vector<LinearFragilityCurve> linearFragilityCurves,
+        std::vector<TabularFragilityCurve> tabularFragilityCurves,
+        DistributionSystem const& ds,
         double startTime_s,
         double endTime_s,
         std::unordered_map<size_t, double> const& intensityIdToAmount,
@@ -2148,13 +2187,15 @@ namespace erin
         bool verbose
     )
     {
-        std::vector<ScheduleBasedReliability> orig = CopyReliabilities(s);
-        std::set<size_t> reliabilitiesAdded;
+        std::vector<ScheduleBasedReliability> result;
+        result.reserve(componentFailureModeComponentIds.size());
+        std::unordered_set<size_t> reliabilitiesAdded;
+        reliabilitiesAdded.reserve(componentFailureModeComponentIds.size());
         for (size_t cfmIdx = 0;
-             cfmIdx < s.ComponentFailureModes.ComponentIds.size();
+             cfmIdx < componentFailureModeComponentIds.size();
              ++cfmIdx)
         {
-            auto const& compId = s.ComponentFailureModes.ComponentIds[cfmIdx];
+            auto const& compId = componentFailureModeComponentIds[cfmIdx];
             // NOTE: there should be a reliability schedule for each entry in
             // ComponentFailureModes. However, since it is possible to have
             // more than one failure mode on one component (and those have
@@ -2165,11 +2206,11 @@ namespace erin
                 continue;
             }
             std::vector<TimeState> const& sch = relSchByCompId.at(compId);
-            double initialAge_s = s.TheModel.ComponentMap.InitialAges_s[compId];
+            double initialAge_s = componentInitialAges_s[compId];
             if (verbose)
             {
                 std::cout << "component: "
-                          << s.TheModel.ComponentMap.Tag[compId] << std::endl;
+                          << componentTags[compId] << std::endl;
                 std::cout << "initial age (h): "
                           << (initialAge_s / seconds_per_hour) << std::endl;
             }
@@ -2181,7 +2222,7 @@ namespace erin
             ScheduleBasedReliability sbr{};
             sbr.ComponentId = compId;
             sbr.TimeStates = std::move(clip);
-            s.TheModel.Reliabilities.push_back(std::move(sbr));
+            result.push_back(std::move(sbr));
             reliabilitiesAdded.insert(compId);
         }
         if (intensityIdToAmount.size() > 0)
@@ -2193,16 +2234,16 @@ namespace erin
             // NOTE: if there are no components having fragility modes,
             // there is nothing to do.
             for (size_t cfmIdx = 0;
-                 cfmIdx < s.ComponentFragilities.ComponentIds.size();
+                 cfmIdx < componentFragilityComponentIds.size();
                  ++cfmIdx)
             {
-                size_t fmId = s.ComponentFragilities.FragilityModeIds[cfmIdx];
-                size_t fcId = s.FragilityModes.FragilityCurveId[fmId];
+                size_t fmId = componentFragilityFragilityModeIds[cfmIdx];
+                size_t fcId = fragilityModeFragilityCurveIds[fmId];
                 std::optional<size_t> repairId =
-                    s.FragilityModes.RepairDistIds[fmId];
+                    fragilityModeRepairDistIds[fmId];
                 FragilityCurveType curveType =
-                    s.FragilityCurves.CurveTypes[fcId];
-                size_t fcIdx = s.FragilityCurves.CurveId[fcId];
+                    fragilityCurveCurveTypes[fcId];
+                size_t fcIdx = fragilityCurveCurveIds[fcId];
                 bool isFailed = false;
                 double failureFrac = 0.0;
                 switch (curveType)
@@ -2210,7 +2251,7 @@ namespace erin
                     case (FragilityCurveType::Linear):
                     {
                         LinearFragilityCurve lfc =
-                            s.LinearFragilityCurves[fcIdx];
+                            linearFragilityCurves[fcIdx];
                         size_t vulnerId = lfc.VulnerabilityId;
                         if (intensityIdToAmount.contains(vulnerId))
                         {
@@ -2225,7 +2266,7 @@ namespace erin
                     case (FragilityCurveType::Tabular):
                     {
                         TabularFragilityCurve tfc =
-                            s.TabularFragilityCurves[fcIdx];
+                            tabularFragilityCurves[fcIdx];
                         size_t vulnerId = tfc.VulnerabilityId;
                         if (intensityIdToAmount.contains(vulnerId))
                         {
@@ -2246,17 +2287,17 @@ namespace erin
                     }
                     break;
                 }
-                if (failureFrac == 1.0)
+                if (failureFrac >= 1.0)
                 {
                     isFailed = true;
                 }
-                else if (failureFrac == 0.0)
+                else if (failureFrac <= 0.0)
                 {
                     isFailed = false;
                 }
                 else
                 {
-                    isFailed = s.TheModel.RandFn() <= failureFrac;
+                    isFailed = randFn() <= failureFrac;
                 }
                 // NOTE: if we are not failed, there is nothing to do
                 if (isFailed)
@@ -2265,26 +2306,23 @@ namespace erin
                     // and assign/update a reliability schedule for it
                     // including any repair distribution if we have
                     // one.
-                    size_t compId = s.ComponentFragilities.ComponentIds[cfmIdx];
+                    size_t compId = componentFragilityComponentIds[cfmIdx];
                     if (verbose)
                     {
                         std::cout << "... FAILED: "
-                                  << s.TheModel.ComponentMap.Tag[compId]
+                                  << componentTags[compId]
                                   << " (cause: "
-                                  << s.FragilityModes
-                                         .Tags[s.ComponentFragilities
-                                                   .FragilityModeIds[cfmIdx]]
+                                  << fragilityModeTags[fmId]
                                   << ")" << std::endl;
                     }
                     // does the component have a reliability signal?
                     bool hasReliabilityAlready = false;
                     size_t reliabilityId = 0;
                     for (size_t rIdx = 0;
-                         rIdx < s.TheModel.Reliabilities.size();
+                         rIdx < result.size();
                          ++rIdx)
                     {
-                        if (s.TheModel.Reliabilities[rIdx].ComponentId
-                            == compId)
+                        if (result[rIdx].ComponentId == compId)
                         {
                             hasReliabilityAlready = true;
                             reliabilityId = rIdx;
@@ -2300,8 +2338,13 @@ namespace erin
                     if (repairId.has_value())
                     {
                         size_t repId = repairId.value();
+                        double randValue = randFn();
+                        if (verbose)
+                        {
+                            std::cout << "randValue for next time advance is: " << randValue << "\n";
+                        }
                         double repairTime_s =
-                            s.TheModel.DistSys.next_time_advance(repId);
+                            ds.next_time_advance(repId, randValue);
                         TimeState repairTime{};
                         repairTime.time = repairTime_s;
                         repairTime.state = true;
@@ -2309,24 +2352,22 @@ namespace erin
                     }
                     if (hasReliabilityAlready)
                     {
-                        auto const& currentSch =
-                            s.TheModel.Reliabilities[reliabilityId].TimeStates;
+                        auto const& currentSch = result[reliabilityId].TimeStates;
                         std::vector<TimeState> combined =
                             TimeState_Combine(currentSch, newTimeStates);
-                        s.TheModel.Reliabilities[reliabilityId].TimeStates =
-                            std::move(combined);
+                        result[reliabilityId].TimeStates = std::move(combined);
                     }
                     else
                     {
                         ScheduleBasedReliability sbr{};
                         sbr.ComponentId = compId;
                         sbr.TimeStates = newTimeStates;
-                        s.TheModel.Reliabilities.push_back(std::move(sbr));
+                        result.push_back(std::move(sbr));
                     }
                 }
             }
         }
-        return orig;
+        return result;
     }
 
     // TODO: change this to write all data in a columnar format
@@ -3095,15 +3136,35 @@ namespace erin
                     std::cout << "Occurrence #" << (occIdx + 1) << " at "
                               << SecondsToPrettyString(t) << std::endl;
                 }
-                std::vector<ScheduleBasedReliability> originalReliabilities =
+                s.TheModel.Reliabilities.clear();
+                s.TheModel.Reliabilities =
                     ApplyReliabilitiesAndFragilities(
-                        s,
+                        s.TheModel.RandFn,
+                        s.ComponentFailureModes.ComponentIds,
+                        s.TheModel.ComponentMap.InitialAges_s,
+                        s.TheModel.ComponentMap.Tag,
+                        s.ComponentFragilities.ComponentIds,
+                        s.ComponentFragilities.FragilityModeIds,
+                        s.FragilityModes.FragilityCurveId,
+                        s.FragilityModes.RepairDistIds,
+                        s.FragilityModes.Tags,
+                        s.FragilityCurves.CurveId,
+                        s.FragilityCurves.CurveTypes,
+                        s.LinearFragilityCurves,
+                        s.TabularFragilityCurves,
+                        s.TheModel.DistSys,
                         scenarioOffset_s,
                         scenarioOffset_s + scenarioDuration_s,
                         intensityIdToAmount,
                         relSchByCompId,
                         verbose
                     );
+                if (verbose)
+                {
+                    std::cout << "Reliabilities for Scenario: " << scenarioTag << std::endl;
+                    std::cout << "Occurrence #" << (occIdx + 1) << std::endl;
+                    PrintReliabilities(s.TheModel.Reliabilities);
+                }
                 if (saveReliabilityCurves)
                 {
                     if (verbose)
@@ -3169,7 +3230,6 @@ namespace erin
                         scenIdx, occIdx + 1, s.TheModel, s.FlowTypeMap, results
                     );
                 occurrenceStats.push_back(std::move(sos));
-                s.TheModel.Reliabilities = originalReliabilities;
             }
             if (verbose)
             {

@@ -541,6 +541,8 @@ namespace erin
             std::cout << i << ": " << s.ScenarioMap.Tags[i] << std::endl;
             std::cout << "- duration: " << s.ScenarioMap.Durations[i] << " "
                       << TimeUnitToTag(s.ScenarioMap.TimeUnits[i]) << std::endl;
+            std::cout << "- offset: " << TimeInSecondsToDesiredUnit(s.ScenarioMap.TimeOffsetsInSeconds[i], TimeUnit::Hour) << " "
+                      << TimeUnitToTag(TimeUnit::Hour) << std::endl;
             auto maybeDist = s.TheModel.DistSys.get_dist_by_id(
                 s.ScenarioMap.OccurrenceDistributionIds[i]
             );
@@ -2901,24 +2903,24 @@ namespace erin
                 {
                     out << ",";
                 }
-                std::vector<std::string> causes;
-                for (size_t fmId : sbr.TimeStates[row].failureModeCauses)
-                {
-                    causes.push_back(s.FailureModes.Tags[fmId]);
-                }
-                for (size_t fmId : sbr.TimeStates[row].fragilityModeCauses)
-                {
-                    causes.push_back(s.FragilityModes.Tags[fmId]);
-                }
-                std::string causeStr = "";
-                for (std::string const& cause : causes)
-                {
-                    causeStr += (causeStr.size() == 0)
-                        ? cause
-                        : fmt::format(" | {}", cause);
-                }
                 if (row < sbr.TimeStates.size())
                 {
+                    std::vector<std::string> causes;
+                    for (size_t fmId : sbr.TimeStates[row].failureModeCauses)
+                    {
+                        causes.push_back(s.FailureModes.Tags[fmId]);
+                    }
+                    for (size_t fmId : sbr.TimeStates[row].fragilityModeCauses)
+                    {
+                        causes.push_back(s.FragilityModes.Tags[fmId]);
+                    }
+                    std::string causeStr = "";
+                    for (std::string const& cause : causes)
+                    {
+                        causeStr += (causeStr.size() == 0)
+                            ? cause
+                            : fmt::format(" | {}", cause);
+                    }
                     out << TimeInSecondsToDesiredUnit(
                         sbr.TimeStates[row].time, TimeUnit::Hour
                     ) << ","
@@ -2926,7 +2928,7 @@ namespace erin
                 }
                 else
                 {
-                    out << ",";
+                    out << ",,";
                 }
             }
             out << "\n";

@@ -1610,6 +1610,136 @@ TEST(Erin, Test18)
     }
 }
 
+TEST(Erin, Test18a_TimeState_Combine_issue)
+{
+    std::vector<TimeState> a = {
+        {.time=43800*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+        {.time=43896*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=87696*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+    };
+    std::vector<TimeState> b = {
+        {.time=2520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=3000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=5520*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+        {.time=6000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=8520*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+        {.time=9000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+    };
+    std::vector<TimeState> expected = {
+        {.time=2520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=3000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=5520*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+        {.time=6000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=8520*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+        {.time=9000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=43800*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+        {.time=43896*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=87696*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+    };
+    std::vector<TimeState> actual = TimeState_Combine(a, b);
+    EXPECT_EQ(actual.size(), expected.size());
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(actual[i], expected[i]);
+    }
+    actual = TimeState_Combine(b, a);
+    EXPECT_EQ(actual.size(), expected.size());
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(actual[i], expected[i]);
+    }
+}
+
+TEST(Erin, Test18b_TimeState_Combine_issue)
+{
+    std::vector<TimeState> a = {
+        {.time=43800*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+        {.time=43896*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=87696*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}},
+    };
+    std::vector<TimeState> b = {
+        {.time=2520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=3000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=5520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=6000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=8520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=9000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=11520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=12000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=14520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=15000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=17520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=18000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=20520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=21000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=23520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=24000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=26520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=27000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=29520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=30000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=32520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=33000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=35520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=36000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=38520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=39000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=41520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=42000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=44520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=45000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=47520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+    };
+    std::vector<TimeState> expected = {
+        {.time=2520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=3000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=5520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=6000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=8520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=9000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=11520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=12000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=14520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=15000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=17520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=18000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=20520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=21000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=23520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=24000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=26520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=27000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=29520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=30000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=32520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=33000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=35520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=36000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=38520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=39000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=41520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=42000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=43800*3600.0,.state=0,.failureModeCauses={1},.fragilityModeCauses={}}, // *
+        {.time=43896*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}}, // *
+        {.time=44520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=45000*3600.0,.state=1,.failureModeCauses={},.fragilityModeCauses={}},
+        {.time=47520*3600.0,.state=0,.failureModeCauses={0},.fragilityModeCauses={}},
+        {.time=87696*3600.0,.state=0,.failureModeCauses={0,1},.fragilityModeCauses={}}, // *
+    };
+    std::vector<TimeState> actual = TimeState_Combine(a, b);
+    EXPECT_EQ(actual.size(), expected.size());
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(actual[i], expected[i]);
+    }
+    actual = TimeState_Combine(b, a);
+    EXPECT_EQ(actual.size(), expected.size());
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(actual[i], expected[i]);
+    }
+}
+
 TEST(Erin, Test19)
 {
     std::vector<TimeState> A{

@@ -595,59 +595,68 @@ namespace erin
             switch (dist.dist_type[i])
             {
                 case DistType::Fixed:
-                    {
-                        double v = fixed_dist.value[dist.subtype_id[i]];
-                        std::cout << "-- value: "
-                                  << TimeInSecondsToHours(v) << " h" << std::endl;
-                    } break;
+                {
+                    double v = fixed_dist.value[dist.subtype_id[i]];
+                    std::cout << "-- value: " << TimeInSecondsToHours(v) << " h"
+                              << std::endl;
+                }
+                break;
                 case DistType::Normal:
-                    {
-                        double avg = normal_dist.average[dist.subtype_id[i]];
-                        double sd = normal_dist.stddev[dist.subtype_id[i]];
-                        std::cout << "-- average: "
-                                  << TimeInSecondsToHours(avg) << " h" << std::endl;
-                        std::cout << "-- standard deviation: "
-                                  << TimeInSecondsToHours(sd) << " h" << std::endl;
-                    } break;
+                {
+                    double avg = normal_dist.average[dist.subtype_id[i]];
+                    double sd = normal_dist.stddev[dist.subtype_id[i]];
+                    std::cout << "-- average: " << TimeInSecondsToHours(avg)
+                              << " h" << std::endl;
+                    std::cout
+                        << "-- standard deviation: " << TimeInSecondsToHours(sd)
+                        << " h" << std::endl;
+                }
+                break;
                 case DistType::QuantileTable:
+                {
+                    size_t q0 =
+                        quantile_table_dist.start_idx[dist.subtype_id[i]];
+                    size_t qn = quantile_table_dist.end_idx[dist.subtype_id[i]];
+                    for (size_t qIdx = q0; qIdx <= qn; ++qIdx)
                     {
-                        size_t q0 = quantile_table_dist.start_idx[dist.subtype_id[i]];
-                        size_t qn = quantile_table_dist.end_idx[dist.subtype_id[i]];
-                        for (size_t qIdx = q0; qIdx <= qn; ++qIdx)
-                        {
-                            double t = quantile_table_dist.times[qIdx];
-                            double v = quantile_table_dist.variates[qIdx];
-                            std::cout << "-- [" << qIdx - q0 << "] time: "
-                                      << TimeInSecondsToHours(t)
-                                      << " h => variate: "
-                                      << v
-                                      << std::endl;
-                       }
-                    } break;
+                        double t = quantile_table_dist.times[qIdx];
+                        double v = quantile_table_dist.variates[qIdx];
+                        std::cout << "-- [" << qIdx - q0
+                                  << "] time: " << TimeInSecondsToHours(t)
+                                  << " h => variate: " << v << std::endl;
+                    }
+                }
+                break;
                 case DistType::Uniform:
-                    {
-                        double lb = uniform_dist.lower_bound[dist.subtype_id[i]];
-                        double ub = uniform_dist.upper_bound[dist.subtype_id[i]];
-                        std::cout << "-- lower bound: "
-                                  << TimeInSecondsToHours(lb) << " h" << std::endl;
-                        std::cout << "-- upper bound: "
-                                  << TimeInSecondsToHours(ub) << " h" << std::endl;
-                    } break;
+                {
+                    double lb = uniform_dist.lower_bound[dist.subtype_id[i]];
+                    double ub = uniform_dist.upper_bound[dist.subtype_id[i]];
+                    std::cout << "-- lower bound: " << TimeInSecondsToHours(lb)
+                              << " h" << std::endl;
+                    std::cout << "-- upper bound: " << TimeInSecondsToHours(ub)
+                              << " h" << std::endl;
+                }
+                break;
                 case DistType::Weibull:
-                    {
-                        double shape = weibull_dist.shape_params[dist.subtype_id[i]];
-                        double scale = weibull_dist.scale_params[dist.subtype_id[i]];
-                        double loc = weibull_dist.location_params[dist.subtype_id[i]];
-                        std::cout << "-- shape parameter: " << shape << std::endl;
-                        std::cout << "-- scale parameter: " << scale << std::endl;
-                        std::cout << "-- location: "
-                                  << TimeInSecondsToHours(loc) << " h" << std::endl;
-                    } break;
+                {
+                    double shape =
+                        weibull_dist.shape_params[dist.subtype_id[i]];
+                    double scale =
+                        weibull_dist.scale_params[dist.subtype_id[i]];
+                    double loc =
+                        weibull_dist.location_params[dist.subtype_id[i]];
+                    std::cout << "-- shape parameter: " << shape << std::endl;
+                    std::cout << "-- scale parameter: " << scale << std::endl;
+                    std::cout << "-- location: " << TimeInSecondsToHours(loc)
+                              << " h" << std::endl;
+                }
+                break;
                 default:
-                    {
-                        std::cout << "Unhandled dist type" << std::endl;
-                        std::exit(1);
-                    } break;
+                {
+                    std::cout << "Unhandled dist type" << std::endl;
+                    std::exit(1);
+                }
+                break;
             }
         }
     }

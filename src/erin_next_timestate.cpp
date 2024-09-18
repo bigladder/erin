@@ -1,6 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_timestate.h"
+#include "erin_next/erin_next_utils.h"
 #include <assert.h>
 
 namespace erin
@@ -9,8 +10,8 @@ namespace erin
     std::ostream&
     operator<<(std::ostream& os, const TimeState& ts)
     {
-        os << "TimeState(" << "time=" << ts.time << ", " << "state=" << ts.state
-           << ", failureModeCauses={";
+        os << "TimeState(time=" << TimeInSecondsToHours(ts.time)
+           << " h, state=" << ts.state << ", failureModeCauses={";
         bool first = true;
         for (auto const& x : ts.failureModeCauses)
         {

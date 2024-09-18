@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_component.h"
+#include "erin_next/erin_next_timestate.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_toml.h"
@@ -506,6 +507,22 @@ namespace erin
     }
 
     void
+    Simulation_PrintComponentFailureModes(Simulation const& s)
+    {
+        for (size_t i = 0; i < s.ComponentFailureModes.ComponentIds.size(); ++i)
+        {
+            size_t compId = s.ComponentFailureModes.ComponentIds[i];
+            size_t fmId = s.ComponentFailureModes.FailureModeIds[i];
+            std::cout << "[" << i << "]: component="
+                      << s.TheModel.ComponentMap.Tag[compId]
+                      << "[" << compId
+                      << "]; failure mode="
+                      << s.FailureModes.Tags[fmId] << "[" << fmId
+                      << "]" << std::endl; 
+        }
+    }
+
+    void
     Simulation_PrintFragilityModes(Simulation const& s)
     {
         for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
@@ -530,6 +547,22 @@ namespace erin
                               << "]" << std::endl;
                 }
             }
+        }
+    }
+
+    void
+    Simulation_PrintComponentFragilityModes(Simulation const& s)
+    {
+        for (size_t i = 0; i < s.ComponentFragilities.ComponentIds.size(); ++i)
+        {
+            size_t compId = s.ComponentFragilities.ComponentIds[i];
+            size_t fmId = s.ComponentFragilities.FragilityModeIds[i];
+            std::cout << "[" << i << "]: component="
+                      << s.TheModel.ComponentMap.Tag[compId]
+                      << "[" << s.ComponentFragilities.ComponentIds[i]
+                      << "]; fragility mode="
+                      << s.FragilityModes.Tags[fmId]
+                      << "[" << fmId << "]" << std::endl;
         }
     }
 
@@ -1389,10 +1422,14 @@ namespace erin
         s.TheModel.DistSys.print_distributions();
         std::cout << "\nFailure Modes:" << std::endl;
         Simulation_PrintFailureModes(s);
+        std::cout << "\nComponent/Failure Modes:" << std::endl;
+        Simulation_PrintComponentFailureModes(s);
         std::cout << "\nFragility Curves:" << std::endl;
         Simulation_PrintFragilityCurves(s);
         std::cout << "\nFragility Modes:" << std::endl;
         Simulation_PrintFragilityModes(s);
+        std::cout << "\nComponent/Fragility Modes:" << std::endl;
+        Simulation_PrintComponentFragilityModes(s);
         std::cout << "\nConnections:" << std::endl;
         Model_PrintConnections(s.TheModel, s.FlowTypeMap);
         std::cout << "\nScenarios:" << std::endl;
@@ -2830,6 +2867,18 @@ namespace erin
             }
             relSchByCompFailId.insert({compFailId, std::move(relSch)});
         }
+        if (true)
+        {
+            for (auto const& item : relSchByCompFailId)
+            {
+                size_t compId = componentFailureModeComponentIds[item.first];
+                size_t fmId = componentFailureModeFailureModeIds[item.first];
+                std::cout << "Reliability Schedule for Component/Failure Mode ID=" << item.first << std::endl;
+                std::cout << "-- component ID=" << compId << std::endl;
+                std::cout << "-- failure mode ID=" << fmId << std::endl;
+                TimeState_Print(item.second);
+            }
+        }
         // NOTE: combine reliability curves so they are per component
         std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId;
         relSchByCompId.reserve(componentsWithFailures.size());
@@ -2838,14 +2887,21 @@ namespace erin
             size_t compId = componentFailureModeComponentIds[pair.first];
             if (relSchByCompId.contains(compId))
             {
+                std::cout << "COMBINING for compId=" << compId << std::endl;
+                std::cout << "- A:" << std::endl;
+                TimeState_Print(pair.second);
+                std::cout << "- B:" << std::endl;
+                TimeState_Print(relSchByCompId.at(pair.first));
                 std::vector<TimeState> combined = TimeState_Combine(
                     pair.second, relSchByCompId.at(pair.first)
                 );
-                relSchByCompId.insert({compId, std::move(combined)});
+                std::cout << "- RESULT:" << std::endl;
+                TimeState_Print(combined);
+                relSchByCompId[compId] = std::move(combined);
             }
             else
             {
-                relSchByCompId.insert({compId, pair.second});
+                relSchByCompId[compId] = pair.second;
             }
         }
         return relSchByCompId;
@@ -3127,12 +3183,33 @@ namespace erin
                         scenarioDuration_s,
                         scenarioOffset_s
                     );
+                if (verbose)
+                {
+                    std::cout << "Generated reliability schedules:" << std::endl;
+                    for (auto const& pair : relSchByCompId)
+                    {
+                        std::string const& tag =
+                            s.TheModel.ComponentMap.Tag[pair.first];
+                        std::cout << "Schedule for " << tag
+                                  << "[" << pair.first << "]:" << std::endl;
+                        for (auto const& ts : pair.second)
+                        {
+                            std::cout << "- " << ts << std::endl;
+                        }
+                    }
+                }
                 double t = occurrenceTimes_s[occIdx];
                 double tEnd = t + scenarioDuration_s;
                 if (verbose)
                 {
                     std::cout << "Occurrence #" << (occIdx + 1) << " at "
                               << SecondsToPrettyString(t) << std::endl;
+                    std::cout << "- scenario start time: "
+                              << TimeInSecondsToHours(scenarioOffset_s)
+                              << " h" << std::endl;
+                    std::cout << "- scenario end time: "
+                              << TimeInSecondsToHours(scenarioOffset_s + scenarioDuration_s)
+                              << " h" << std::endl;
                 }
                 s.TheModel.Reliabilities.clear();
                 s.TheModel.Reliabilities = ApplyReliabilitiesAndFragilities(

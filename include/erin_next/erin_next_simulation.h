@@ -87,7 +87,13 @@ namespace erin
     Simulation_PrintFailureModes(Simulation const& s);
 
     void
+    Simulation_PrintComponentFailureModes(Simulation const& s);
+
+    void
     Simulation_PrintFragilityModes(Simulation const& s);
+
+    void
+    Simulation_PrintComponentFragilityModes(Simulation const& s);
 
     void
     Simulation_PrintScenarios(Simulation const& s);

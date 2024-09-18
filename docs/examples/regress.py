@@ -410,6 +410,7 @@ if __name__ == "__main__":
         sys.exit(1)
     for f in files_generated:
         f.unlink()
+    run_cli("38")
     print("\nPassed all regression tests!")
 
     if os.environ.get("ERIN_SHORT_TEST") is not None:

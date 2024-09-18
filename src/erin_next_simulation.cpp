@@ -2867,18 +2867,6 @@ namespace erin
             }
             relSchByCompFailId.insert({compFailId, std::move(relSch)});
         }
-        if (true)
-        {
-            for (auto const& item : relSchByCompFailId)
-            {
-                size_t compId = componentFailureModeComponentIds[item.first];
-                size_t fmId = componentFailureModeFailureModeIds[item.first];
-                std::cout << "Reliability Schedule for Component/Failure Mode ID=" << item.first << std::endl;
-                std::cout << "-- component ID=" << compId << std::endl;
-                std::cout << "-- failure mode ID=" << fmId << std::endl;
-                TimeState_Print(item.second);
-            }
-        }
         // NOTE: combine reliability curves so they are per component
         std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId;
         relSchByCompId.reserve(componentsWithFailures.size());
@@ -2887,16 +2875,9 @@ namespace erin
             size_t compId = componentFailureModeComponentIds[pair.first];
             if (relSchByCompId.contains(compId))
             {
-                std::cout << "COMBINING for compId=" << compId << std::endl;
-                std::cout << "- A:" << std::endl;
-                TimeState_Print(pair.second);
-                std::cout << "- B:" << std::endl;
-                TimeState_Print(relSchByCompId.at(pair.first));
                 std::vector<TimeState> combined = TimeState_Combine(
                     pair.second, relSchByCompId.at(pair.first)
                 );
-                std::cout << "- RESULT:" << std::endl;
-                TimeState_Print(combined);
                 relSchByCompId[compId] = std::move(combined);
             }
             else

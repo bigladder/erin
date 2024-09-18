@@ -513,12 +513,11 @@ namespace erin
         {
             size_t compId = s.ComponentFailureModes.ComponentIds[i];
             size_t fmId = s.ComponentFailureModes.FailureModeIds[i];
-            std::cout << "[" << i << "]: component="
-                      << s.TheModel.ComponentMap.Tag[compId]
+            std::cout << "[" << i
+                      << "]: component=" << s.TheModel.ComponentMap.Tag[compId]
                       << "[" << compId
-                      << "]; failure mode="
-                      << s.FailureModes.Tags[fmId] << "[" << fmId
-                      << "]" << std::endl; 
+                      << "]; failure mode=" << s.FailureModes.Tags[fmId] << "["
+                      << fmId << "]" << std::endl;
         }
     }
 
@@ -557,11 +556,10 @@ namespace erin
         {
             size_t compId = s.ComponentFragilities.ComponentIds[i];
             size_t fmId = s.ComponentFragilities.FragilityModeIds[i];
-            std::cout << "[" << i << "]: component="
-                      << s.TheModel.ComponentMap.Tag[compId]
+            std::cout << "[" << i
+                      << "]: component=" << s.TheModel.ComponentMap.Tag[compId]
                       << "[" << s.ComponentFragilities.ComponentIds[i]
-                      << "]; fragility mode="
-                      << s.FragilityModes.Tags[fmId]
+                      << "]; fragility mode=" << s.FragilityModes.Tags[fmId]
                       << "[" << fmId << "]" << std::endl;
         }
     }
@@ -574,8 +572,12 @@ namespace erin
             std::cout << i << ": " << s.ScenarioMap.Tags[i] << std::endl;
             std::cout << "- duration: " << s.ScenarioMap.Durations[i] << " "
                       << TimeUnitToTag(s.ScenarioMap.TimeUnits[i]) << std::endl;
-            std::cout << "- offset: " << TimeInSecondsToDesiredUnit(s.ScenarioMap.TimeOffsetsInSeconds[i], TimeUnit::Hour) << " "
-                      << TimeUnitToTag(TimeUnit::Hour) << std::endl;
+            std::cout << "- offset: "
+                      << TimeInSecondsToDesiredUnit(
+                             s.ScenarioMap.TimeOffsetsInSeconds[i],
+                             TimeUnit::Hour
+                         )
+                      << " " << TimeUnitToTag(TimeUnit::Hour) << std::endl;
             auto maybeDist = s.TheModel.DistSys.get_dist_by_id(
                 s.ScenarioMap.OccurrenceDistributionIds[i]
             );
@@ -3166,13 +3168,14 @@ namespace erin
                     );
                 if (verbose)
                 {
-                    std::cout << "Generated reliability schedules:" << std::endl;
+                    std::cout << "Generated reliability schedules:"
+                              << std::endl;
                     for (auto const& pair : relSchByCompId)
                     {
                         std::string const& tag =
                             s.TheModel.ComponentMap.Tag[pair.first];
-                        std::cout << "Schedule for " << tag
-                                  << "[" << pair.first << "]:" << std::endl;
+                        std::cout << "Schedule for " << tag << "[" << pair.first
+                                  << "]:" << std::endl;
                         for (auto const& ts : pair.second)
                         {
                             std::cout << "- " << ts << std::endl;
@@ -3186,10 +3189,12 @@ namespace erin
                     std::cout << "Occurrence #" << (occIdx + 1) << " at "
                               << SecondsToPrettyString(t) << std::endl;
                     std::cout << "- scenario start time: "
-                              << TimeInSecondsToHours(scenarioOffset_s)
-                              << " h" << std::endl;
+                              << TimeInSecondsToHours(scenarioOffset_s) << " h"
+                              << std::endl;
                     std::cout << "- scenario end time: "
-                              << TimeInSecondsToHours(scenarioOffset_s + scenarioDuration_s)
+                              << TimeInSecondsToHours(
+                                     scenarioOffset_s + scenarioDuration_s
+                                 )
                               << " h" << std::endl;
                 }
                 s.TheModel.Reliabilities.clear();

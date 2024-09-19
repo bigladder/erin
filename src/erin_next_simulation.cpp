@@ -2878,7 +2878,7 @@ namespace erin
             if (relSchByCompId.contains(compId))
             {
                 std::vector<TimeState> combined = TimeState_Combine(
-                    pair.second, relSchByCompId.at(pair.first)
+                    pair.second, relSchByCompId.at(compId)
                 );
                 relSchByCompId[compId] = std::move(combined);
             }

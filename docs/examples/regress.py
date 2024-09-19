@@ -403,7 +403,9 @@ if __name__ == "__main__":
     run_cli("35")
     run_cli("36")
     run_command([CLI_EXE, "run", "ex37.toml", "-r"])
-    files_generated = [f for f in Path.cwd().resolve().glob("class_2_hurricane*.csv")]
+    files_generated = [f
+                       for f in Path.cwd().resolve().glob(
+                           "class_2_hurricane*.csv")]
     if len(files_generated) != 10:
         print("Error on example 37")
         print(f"Should have created 10 csv files, got {len(files_generated)}")

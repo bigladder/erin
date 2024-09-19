@@ -3155,6 +3155,10 @@ namespace erin
                 GetIntensitiesForScenario(s, scenIdx);
             for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
             {
+                if (verbose)
+                {
+                    std::cout << "... Occurrence #" << occIdx << std::endl;
+                }
                 std::unordered_map<size_t, std::vector<TimeState>>
                     relSchByCompId = CreateFailureSchedules(
                         s.ComponentFailureModes.ComponentIds,
@@ -3189,11 +3193,14 @@ namespace erin
                     std::cout << "Occurrence #" << (occIdx + 1) << " at "
                               << SecondsToPrettyString(t) << std::endl;
                     std::cout << "- scenario start time: "
-                              << TimeInSecondsToHours(scenarioOffset_s) << " h"
-                              << std::endl;
+                              << TimeInSecondsToHours(
+                                     static_cast<uint64_t>(scenarioOffset_s)
+                                 )
+                              << " h" << std::endl;
                     std::cout << "- scenario end time: "
                               << TimeInSecondsToHours(
-                                     scenarioOffset_s + scenarioDuration_s
+                                     static_cast<uint64_t>(scenarioOffset_s)
+                                     + static_cast<uint64_t>(scenarioDuration_s)
                                  )
                               << " h" << std::endl;
                 }

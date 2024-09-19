@@ -597,7 +597,7 @@ namespace erin
                 case DistType::Fixed:
                 {
                     double v = fixed_dist.value[dist.subtype_id[i]];
-                    std::cout << "-- value: " << TimeInSecondsToHours(v) << " h"
+                    std::cout << "-- value: " << TimeInSecondsToHours(static_cast<uint64_t>(v)) << " h"
                               << std::endl;
                 }
                 break;
@@ -605,10 +605,10 @@ namespace erin
                 {
                     double avg = normal_dist.average[dist.subtype_id[i]];
                     double sd = normal_dist.stddev[dist.subtype_id[i]];
-                    std::cout << "-- average: " << TimeInSecondsToHours(avg)
+                    std::cout << "-- average: " << TimeInSecondsToHours(static_cast<uint64_t>(avg))
                               << " h" << std::endl;
                     std::cout
-                        << "-- standard deviation: " << TimeInSecondsToHours(sd)
+                        << "-- standard deviation: " << TimeInSecondsToHours(static_cast<uint64_t>(sd))
                         << " h" << std::endl;
                 }
                 break;
@@ -622,7 +622,7 @@ namespace erin
                         double t = quantile_table_dist.times[qIdx];
                         double v = quantile_table_dist.variates[qIdx];
                         std::cout << "-- [" << qIdx - q0
-                                  << "] time: " << TimeInSecondsToHours(t)
+                                  << "] time: " << TimeInSecondsToHours(static_cast<uint64_t>(t))
                                   << " h => variate: " << v << std::endl;
                     }
                 }
@@ -631,9 +631,9 @@ namespace erin
                 {
                     double lb = uniform_dist.lower_bound[dist.subtype_id[i]];
                     double ub = uniform_dist.upper_bound[dist.subtype_id[i]];
-                    std::cout << "-- lower bound: " << TimeInSecondsToHours(lb)
+                    std::cout << "-- lower bound: " << TimeInSecondsToHours(static_cast<uint64_t>(lb))
                               << " h" << std::endl;
-                    std::cout << "-- upper bound: " << TimeInSecondsToHours(ub)
+                    std::cout << "-- upper bound: " << TimeInSecondsToHours(static_cast<uint64_t>(ub))
                               << " h" << std::endl;
                 }
                 break;
@@ -647,7 +647,7 @@ namespace erin
                         weibull_dist.location_params[dist.subtype_id[i]];
                     std::cout << "-- shape parameter: " << shape << std::endl;
                     std::cout << "-- scale parameter: " << scale << std::endl;
-                    std::cout << "-- location: " << TimeInSecondsToHours(loc)
+                    std::cout << "-- location: " << TimeInSecondsToHours(static_cast<uint64_t>(loc))
                               << " h" << std::endl;
                 }
                 break;

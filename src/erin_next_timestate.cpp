@@ -10,7 +10,7 @@ namespace erin
     std::ostream&
     operator<<(std::ostream& os, const TimeState& ts)
     {
-        os << "TimeState(time=" << TimeInSecondsToHours(ts.time)
+        os << "TimeState(time=" << TimeInSecondsToHours(static_cast<uint64_t>(ts.time))
            << " h, state=" << ts.state << ", failureModeCauses={";
         bool first = true;
         for (auto const& x : ts.failureModeCauses)

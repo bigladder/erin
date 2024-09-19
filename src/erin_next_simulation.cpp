@@ -2877,9 +2877,8 @@ namespace erin
             size_t compId = componentFailureModeComponentIds[pair.first];
             if (relSchByCompId.contains(compId))
             {
-                std::vector<TimeState> combined = TimeState_Combine(
-                    pair.second, relSchByCompId.at(compId)
-                );
+                std::vector<TimeState> combined =
+                    TimeState_Combine(pair.second, relSchByCompId.at(compId));
                 relSchByCompId[compId] = std::move(combined);
             }
             else

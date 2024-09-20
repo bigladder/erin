@@ -150,27 +150,48 @@ namespace erin
     );
 
     Result
-    Simulation_ParseFragilityCurves(Simulation& s, std::string const& v);
+    Simulation_ParseFragilityCurves(
+        Simulation& s,
+        std::string const& v,
+        Log const& log
+    );
 
     Result
-    Simulation_ParseFragilityModes(Simulation& s, toml::value const& v);
+    Simulation_ParseFragilityModes(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    );
 
     Result
     Simulation_ParseComponents(
         Simulation& s,
         toml::value const& v,
         ComponentValidationMap const& compValidations,
-        std::unordered_set<std::string> const& componentTagsInUse
+        std::unordered_set<std::string> const& componentTagsInUse,
+        Log const& log
     );
 
     Result
-    Simulation_ParseDistributions(Simulation& s, toml::value const& v);
+    Simulation_ParseDistributions(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    );
 
     Result
-    Simulation_ParseNetwork(Simulation& s, toml::value const& v);
+    Simulation_ParseNetwork(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    );
 
     Result
-    Simulation_ParseScenarios(Simulation& s, toml::value const& v);
+    Simulation_ParseScenarios(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    );
 
     std::optional<Simulation>
     Simulation_ReadFromToml(
@@ -280,7 +301,11 @@ namespace erin
     );
 
     Result
-    Simulation_ParseFailureModes(Simulation& s, toml::value const& v);
+    Simulation_ParseFailureModes(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    );
 
     Result
     Simulation_ParseLinearFragilityCurve(

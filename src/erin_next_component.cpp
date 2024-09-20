@@ -1,6 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_component.h"
+#include "erin/logging.h"
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_toml.h"
@@ -22,25 +23,27 @@ namespace erin
         Simulation& s,
         toml::table const& table,
         std::string const& tag,
-        ComponentValidationMap const& compValids
+        ComponentValidationMap const& compValids,
+        Log const& log
     )
     {
         std::string fullTableName = "components." + tag;
         if (!table.contains("type"))
         {
-            WriteErrorMessage(
-                fullTableName, "required field 'type' not present"
-            );
+            Log_Error(log, fullTableName, "required field 'type' not present");
             return Result::Failure;
         }
         std::optional<ComponentType> maybeCompType =
             TagToComponentType(table.at("type").as_string());
         if (!maybeCompType.has_value())
         {
-            WriteErrorMessage(
+            Log_Error(
+                log,
                 fullTableName,
-                "unable to parse component type '"
-                    + std::string{table.at("type").as_string()} + "'"
+                fmt::format(
+                    "unable to parse component type '{}'",
+                    std::string{table.at("type").as_string()}
+                )
             );
             return Result::Failure;
         }
@@ -174,21 +177,20 @@ namespace erin
             }
             break;
         }
-        if (errors.size() > 0)
+        if (!errors.empty())
         {
-            std::cout << "ERRORS Parsing Component " << tag << ":" << std::endl;
+            Log_Error(log, tag, "errors parsing component");
             for (auto const& err : errors)
             {
-                std::cout << "- " << err << std::endl;
+                Log_Error(log, tag, err);
             }
             return Result::Failure;
         }
-        if (warnings.size() > 0)
+        if (!warnings.empty())
         {
-            std::cout << "WARNINGS:" << std::endl;
             for (auto const& w : warnings)
             {
-                std::cout << "- " << w << std::endl;
+                Log_Warning(log, tag, w);
             }
         }
         size_t id = {};
@@ -228,9 +230,10 @@ namespace erin
             auto maybeRateUnit = TagToPowerUnit(rateUnitStr);
             if (!maybeRateUnit.has_value())
             {
-                WriteErrorMessage(
+                Log_Error(
+                    log,
                     fullTableName,
-                    "unable to understand rate_unit '" + rateUnitStr + "'"
+                    fmt::format("unhandled rate_unit '{}'", rateUnitStr)
                 );
                 return Result::Failure;
             }
@@ -248,7 +251,8 @@ namespace erin
                     );
                     if (!maybe.has_value())
                     {
-                        WriteErrorMessage(
+                        Log_Error(
+                            log,
                             fullTableName,
                             "unable to parse 'max_outflow' as number"
                         );
@@ -268,7 +272,8 @@ namespace erin
             {
                 if (!table.contains("loads_by_scenario"))
                 {
-                    WriteErrorMessage(
+                    Log_Error(
+                        log,
                         fullTableName,
                         "missing required field 'loads_by_scenario'"
                     );
@@ -276,8 +281,10 @@ namespace erin
                 }
                 if (!table.at("loads_by_scenario").is_table())
                 {
-                    WriteErrorMessage(
-                        fullTableName, "'loads_by_scenario' must be a table"
+                    Log_Error(
+                        log,
+                        fullTableName,
+                        "'loads_by_scenario' must be a table"
                     );
                     return Result::Failure;
                 }
@@ -302,12 +309,13 @@ namespace erin
                         }
                         else
                         {
-                            // TODO: pass in warnings and error
-                            // std::vector<std::string>
-                            std::ostringstream oss;
-                            oss << "missing supply for tag '" << loadTag << "'";
-                            std::cout << WriteErrorToString(tag, oss.str())
-                                      << std::endl;
+                            Log_Error(
+                                log,
+                                tag,
+                                fmt::format(
+                                    "missing supply for tag '{}'", loadTag
+                                )
+                            );
                             return Result::Failure;
                         }
                     }
@@ -340,12 +348,11 @@ namespace erin
                     }
                     else
                     {
-                        // TODO: pass in warnings and error
-                        // std::vector<std::string>
-                        std::ostringstream oss;
-                        oss << "missing supply for tag '" << loadTag << "'";
-                        std::cout << WriteErrorToString(tag, oss.str())
-                                  << std::endl;
+                        Log_Error(
+                            log,
+                            tag,
+                            fmt::format("missing supply for tag '{}'", loadTag)
+                        );
                         return Result::Failure;
                     }
                 }
@@ -1052,7 +1059,8 @@ namespace erin
         Simulation& s,
         toml::table const& table,
         ComponentValidationMap const& compValids,
-        std::unordered_set<std::string> const& componentTagsInUse
+        std::unordered_set<std::string> const& componentTagsInUse,
+        Log const& log
     )
     {
         for (auto it = table.cbegin(); it != table.cend(); ++it)
@@ -1061,7 +1069,8 @@ namespace erin
             if (!componentTagsInUse.contains(compTag))
             {
                 std::string tag = "components." + compTag;
-                WriteWarningMessage(
+                Log_Warning(
+                    log,
                     tag,
                     "component is declared but does not appear in network "
                     "connections"
@@ -1070,11 +1079,11 @@ namespace erin
             }
             toml::table const& compTable = it->second.as_table();
             auto result =
-                ParseSingleComponent(s, compTable, compTag, compValids);
+                ParseSingleComponent(s, compTable, compTag, compValids, log);
             if (result == Result::Failure)
             {
                 std::string tag = "components." + compTag;
-                WriteErrorMessage(tag, "could not parse component");
+                Log_Error(log, tag, "could not parse component");
                 return Result::Failure;
             }
         }

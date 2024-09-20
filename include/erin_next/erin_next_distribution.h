@@ -5,6 +5,7 @@
 #define ERIN_DISTRIBUTION_H
 #include "erin_next/erin_next_valdata.h"
 #include "erin_next/erin_next_result.h"
+#include "erin/logging.h"
 #include "../vendor/toml11/toml.hpp"
 #include <chrono>
 #include <exception>
@@ -181,7 +182,8 @@ namespace erin
     ParseDistributions(
         DistributionSystem& ds,
         toml::table const& table,
-        DistributionValidationMap const& dvm
+        DistributionValidationMap const& dvm,
+        Log const& log
     );
 
 } // namespace erin

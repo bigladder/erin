@@ -1274,7 +1274,7 @@ namespace erin
         {
             // TODO: have ParseDistributions return a Result
             return ParseDistributions(
-                s.TheModel.DistSys, v.at("dist").as_table(), dvm
+                s.TheModel.DistSys, v.at("dist").as_table(), dvm, log
             );
         }
         Log_Error(log, "required field 'dist' not found");

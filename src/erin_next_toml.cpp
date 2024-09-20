@@ -2,6 +2,7 @@
 #include "erin/logging.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
+#include "fmt/format.h"
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
@@ -35,7 +36,8 @@ namespace erin
                     std::ostringstream oss;
                     oss << "Duplicate field found '" << it->first << "' (for "
                         << key << ")";
-                    errors.push_back(WriteErrorToString(tableName, oss.str()));
+                    errors.push_back(fmt::format("{}: {}", tableName, oss.str())
+                    );
                     return out;
                 }
                 fieldsFound.insert(key);
@@ -59,7 +61,7 @@ namespace erin
                                 oss << "Duplicate field found '" << it->first
                                     << "' (for " << key << ")";
                                 errors.push_back(
-                                    WriteErrorToString(tableName, oss.str())
+                                    fmt::format("{}: {}", tableName, oss.str())
                                 );
                                 return out;
                             }
@@ -67,7 +69,7 @@ namespace erin
                             if (aliasValue.IsDeprecated)
                             {
                                 std::ostringstream oss{};
-                                oss << "WARNING! field '" << aliasValue.Tag
+                                oss << "field '" << aliasValue.Tag
                                     << "' is deprecated and will be removed "
                                     << "in a future version; use '"
                                     << alias.first << "' instead (value = ";
@@ -85,7 +87,7 @@ namespace erin
                                 }
                                 oss << ")";
                                 warnings.push_back(
-                                    WriteErrorToString(tableName, oss.str())
+                                    fmt::format("{}: {}", tableName, oss.str())
                                 );
                             }
                             break;
@@ -99,10 +101,9 @@ namespace erin
                 if (!found)
                 {
                     std::ostringstream oss{};
-                    oss << "WARNING! unhandled field '" << key
-                        << "' will be ignored";
+                    oss << "unhandled field '" << key << "' will be ignored";
                     warnings.push_back(
-                        WriteWarningToString(tableName, oss.str())
+                        fmt::format("{}: {}", tableName, oss.str())
                     );
                     continue;
                 }
@@ -128,7 +129,7 @@ namespace erin
                         oss << "Expected type string for field '" << it->first
                             << "'";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -141,7 +142,7 @@ namespace erin
                             oss << "Could not find enumerations for field '"
                                 << it->first << "'";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -157,7 +158,7 @@ namespace erin
                                 oss << "- " << item << std::endl;
                             }
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -173,7 +174,7 @@ namespace erin
                         oss << "Expected type array for field '" << it->first
                             << "'";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -190,7 +191,7 @@ namespace erin
                                 << it->first << "' to be a number at "
                                 << "index " << i;
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -202,7 +203,7 @@ namespace erin
                                 << it->first << "' to be a number at "
                                 << "index " << i;
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -219,7 +220,7 @@ namespace erin
                         oss << "Expected type array for field '" << it->first
                             << "'";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -235,7 +236,7 @@ namespace erin
                                 << " for field '" << it->first
                                 << "' to be an array of number of length 2 (a)";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -247,7 +248,7 @@ namespace erin
                                 << " for field '" << it->first
                                 << "' to be an array of number of length 2 (b)";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -261,7 +262,7 @@ namespace erin
                                 << " for field '" << it->first
                                 << "' to be an array of number of length 2 (c)";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -274,7 +275,7 @@ namespace erin
                                 << " for field '" << it->first
                                 << "' to be an array of number of length 2 (c)";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -295,7 +296,7 @@ namespace erin
                         oss << "Expected type array for field '" << it->first
                             << "'";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -311,7 +312,7 @@ namespace erin
                                 << " for field '" << it->first
                                 << "' to be an array of string of length >= 3";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -323,7 +324,7 @@ namespace erin
                                 << " for field '" << it->first
                                 << "' to be an array of string of length >= 3";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -340,7 +341,7 @@ namespace erin
                                     << "' to be an array of string of length "
                                        ">= 3";
                                 errors.push_back(
-                                    WriteErrorToString(tableName, oss.str())
+                                    fmt::format("{}: {}", tableName, oss.str())
                                 );
                                 return out;
                             }
@@ -368,7 +369,7 @@ namespace erin
                                 << " integer part: " << integerPart
                                 << "; fraction part: " << fracPart;
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -380,7 +381,7 @@ namespace erin
                         oss << "Expected field '" << it->first
                             << "' to be convertable to an integer";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -395,7 +396,7 @@ namespace erin
                         oss << "Expected field '" << it->first
                             << "' to be convertable to a real number";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -406,7 +407,7 @@ namespace erin
                         oss << "Expected field '" << it->first
                             << "' to be convertable to a real number";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -422,7 +423,7 @@ namespace erin
                         oss << "Expected field '" << it->first
                             << "' to be an array of string";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -436,7 +437,7 @@ namespace erin
                             oss << "Expected field '" << it->first << "' at "
                                 << i << " to be a string";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -454,7 +455,7 @@ namespace erin
                         oss << "expected field '" << it->first
                             << "' to be a map from string to string";
                         errors.push_back(
-                            WriteErrorToString(tableName, oss.str())
+                            fmt::format("{}: {}", tableName, oss.str())
                         );
                         return out;
                     }
@@ -467,7 +468,7 @@ namespace erin
                                 << "' at key '" << item.first
                                 << "' to be a string";
                             errors.push_back(
-                                WriteErrorToString(tableName, oss.str())
+                                fmt::format("{}: {}", tableName, oss.str())
                             );
                             return out;
                         }
@@ -496,7 +497,7 @@ namespace erin
                 std::string message = fieldsToInform
                     + " not found; default value of '"
                     + validationInfo.Defaults.at(fieldsToInform) + "' assumed";
-                warnings.push_back(WriteWarningToString(tableName, message));
+                warnings.push_back(fmt::format("{}: {}", tableName, message));
             }
         }
         // insert defaults if not defined
@@ -544,7 +545,7 @@ namespace erin
             {
                 std::ostringstream oss;
                 oss << "missing required field '" << field << "'";
-                errors.push_back(WriteErrorToString(tableName, oss.str()));
+                errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
             }
         }
         return out;

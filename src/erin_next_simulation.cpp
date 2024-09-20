@@ -2090,8 +2090,7 @@ namespace erin
     std::vector<double>
     DetermineScenarioOccurrenceTimes(
         Simulation& s,
-        size_t scenIdx,
-        bool isVerbose
+        size_t scenIdx
     )
     {
         std::vector<double> occurrenceTimes_s;
@@ -2110,17 +2109,6 @@ namespace erin
                 break;
             }
             occurrenceTimes_s.push_back(scenarioStartTime_s);
-        }
-        if (isVerbose)
-        {
-            std::cout << "Occurrences: " << occurrenceTimes_s.size()
-                      << std::endl;
-            for (size_t i = 0; i < occurrenceTimes_s.size(); ++i)
-            {
-                std::cout << "-- "
-                          << SecondsToPrettyString(occurrenceTimes_s[i])
-                          << std::endl;
-            }
         }
         return occurrenceTimes_s;
     }
@@ -3152,7 +3140,7 @@ namespace erin
             // for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size();
             // ++sbsIdx) {/* ... */}
             std::vector<double> occurrenceTimes_s =
-                DetermineScenarioOccurrenceTimes(s, scenIdx, verbose);
+                DetermineScenarioOccurrenceTimes(s, scenIdx);
             if (verbose)
             {
                 Log_Debug(
@@ -3281,7 +3269,7 @@ namespace erin
                 // TODO: add an optional verbosity flag to SimInfo
                 // -- use that to set things like the print flag below
 
-                auto results = Simulate(s.TheModel, verbose);
+                auto results = Simulate(s.TheModel, verbose, true, log);
                 {
                     auto* output_results = &results;
                     std::vector<TimeAndFlows> modified_results0 = {};

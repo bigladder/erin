@@ -184,8 +184,9 @@ add_run(CLI::App& app)
         std::unordered_set<std::string> componentTagsInUse =
             TOMLTable_ParseComponentTagsInUse(data);
         auto validationInfo = SetupGlobalValidationInfo();
-        auto maybeSim =
-            Simulation_ReadFromToml(data, validationInfo, componentTagsInUse, log);
+        auto maybeSim = Simulation_ReadFromToml(
+            data, validationInfo, componentTagsInUse, log
+        );
         if (!maybeSim.has_value())
         {
             Log_Error(log, "Simulation returned without value");
@@ -246,8 +247,9 @@ add_graph(CLI::App& app)
         std::unordered_set<std::string> componentTagsInUse =
             TOMLTable_ParseComponentTagsInUse(data);
         auto validation_info = SetupGlobalValidationInfo();
-        auto maybe_sim =
-            Simulation_ReadFromToml(data, validation_info, componentTagsInUse, log);
+        auto maybe_sim = Simulation_ReadFromToml(
+            data, validation_info, componentTagsInUse, log
+        );
         if (!maybe_sim.has_value())
         {
             Log_Error(log, "Could not parse sim data from TOML");
@@ -301,8 +303,9 @@ add_checkNetwork(CLI::App& app)
         std::unordered_set<std::string> componentTagsInUse =
             TOMLTable_ParseComponentTagsInUse(data);
         auto validationInfo = SetupGlobalValidationInfo();
-        auto maybeSim =
-            Simulation_ReadFromToml(data, validationInfo, componentTagsInUse, log);
+        auto maybeSim = Simulation_ReadFromToml(
+            data, validationInfo, componentTagsInUse, log
+        );
         if (!maybeSim.has_value())
         {
             return EXIT_FAILURE;

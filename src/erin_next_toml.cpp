@@ -572,7 +572,11 @@ namespace erin
             {
                 if (verbose)
                 {
-                    Log_Warning(log, tableName, fmt::format("Unrecognized key '{}'", it->first));
+                    Log_Warning(
+                        log,
+                        tableName,
+                        fmt::format("Unrecognized key '{}'", it->first)
+                    );
                 }
                 return false;
             }
@@ -584,7 +588,11 @@ namespace erin
             {
                 if (verbose)
                 {
-                    Log_Error(log, tableName, fmt::format("Missing required key '{}'", *it));
+                    Log_Error(
+                        log,
+                        tableName,
+                        fmt::format("Missing required key '{}'", *it)
+                    );
                 }
                 return false;
             }

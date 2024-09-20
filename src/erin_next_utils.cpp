@@ -81,7 +81,8 @@ namespace erin
         std::string const& message
     )
     {
-        std::cerr << WriteTaggedCategoryToString(category, tag, message) << std::endl;
+        std::cerr << WriteTaggedCategoryToString(category, tag, message)
+                  << std::endl;
     }
 
     void
@@ -100,7 +101,8 @@ namespace erin
     WriteTaggedCategoryToString(
         std::string const& category,
         std::string const& tag,
-        std::string const& message)
+        std::string const& message
+    )
     {
         std::ostringstream oss;
         if (!tag.empty())
@@ -118,15 +120,13 @@ namespace erin
     std::string
     WriteWarningToString(std::string const& tag, std::string const& message)
     {
-        return WriteTaggedCategoryToString(
-            "WARNING", tag, message);
+        return WriteTaggedCategoryToString("WARNING", tag, message);
     }
 
     std::string
     WriteErrorToString(std::string const& tag, std::string const& message)
     {
-        return WriteTaggedCategoryToString(
-            "ERROR", tag, message);
+        return WriteTaggedCategoryToString("ERROR", tag, message);
     }
 
 } // namespace erin

@@ -134,14 +134,16 @@ add_run(CLI::App& app)
         // NOTE: overriding default error functionality as it throws.
         //       instead, error conditions and exiting are handled explicitly
         //       by the library.
-        log.error = [&](std::string const& tag, std::string const& msg) {
+        log.error = [&](std::string const& tag, std::string const& msg)
+        {
             if (tag.empty())
             {
                 std::cout << fmt::format("[{}] {}", "ERROR", msg) << std::endl;
             }
             else
             {
-                std::cout << fmt::format("[{}] {}: {}", "ERROR", tag, msg) << std::endl;
+                std::cout << fmt::format("[{}] {}: {}", "ERROR", tag, msg)
+                          << std::endl;
             }
         };
         bool aggregate_groups = !no_aggregate_groups;

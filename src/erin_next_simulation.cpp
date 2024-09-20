@@ -2088,10 +2088,7 @@ namespace erin
     }
 
     std::vector<double>
-    DetermineScenarioOccurrenceTimes(
-        Simulation& s,
-        size_t scenIdx
-    )
+    DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenIdx)
     {
         std::vector<double> occurrenceTimes_s;
         auto const& maybeMaxOccurrences = s.ScenarioMap.MaxOccurrences[scenIdx];
@@ -2173,8 +2170,8 @@ namespace erin
     {
         std::vector<std::string> result{};
         result.push_back(
-            fmt::format("ScheduleBasedReliability vector size: {}",
-                        sbrs.size()));
+            fmt::format("ScheduleBasedReliability vector size: {}", sbrs.size())
+        );
         for (ScheduleBasedReliability const& sbr : sbrs)
         {
             std::ostringstream oss{};
@@ -2191,9 +2188,11 @@ namespace erin
                 }
                 oss << "{" << ts.time << "," << ts.state << "}";
             }
-            result.push_back(
-                fmt::format("- {{ComponentId: {},TimeStates=[{}]}}",
-                            sbr.ComponentId, oss.str()));
+            result.push_back(fmt::format(
+                "- {{ComponentId: {},TimeStates=[{}]}}",
+                sbr.ComponentId,
+                oss.str()
+            ));
         }
         return result;
     }
@@ -2254,8 +2253,15 @@ namespace erin
             double initialAge_s = componentInitialAges_s[compId];
             if (verbose)
             {
-                Log_Info(log, fmt::format("component: {}", componentTags[compId]));
-                Log_Info(log, fmt::format("initial age (h): {}", (initialAge_s / seconds_per_hour)));
+                Log_Info(
+                    log, fmt::format("component: {}", componentTags[compId])
+                );
+                Log_Info(
+                    log,
+                    fmt::format(
+                        "initial age (h): {}", (initialAge_s / seconds_per_hour)
+                    )
+                );
             }
             std::vector<TimeState> clip = TimeState_Clip(
                 sch, startTime_s + initialAge_s, endTime_s + initialAge_s, true
@@ -2321,7 +2327,11 @@ namespace erin
                     break;
                     default:
                     {
-                        Log_Error(log, "fragility_curve", "unhandled fragility curve type");
+                        Log_Error(
+                            log,
+                            "fragility_curve",
+                            "unhandled fragility curve type"
+                        );
                         std::exit(1);
                     }
                     break;
@@ -2348,8 +2358,15 @@ namespace erin
                     size_t compId = componentFragilityComponentIds[cfmIdx];
                     if (verbose)
                     {
-                        Log_Debug(log, "fragility_curve",
-                                  fmt::format("component failed: {}; cause: {}", componentTags[compId], fragilityModeTags[fmId]));
+                        Log_Debug(
+                            log,
+                            "fragility_curve",
+                            fmt::format(
+                                "component failed: {}; cause: {}",
+                                componentTags[compId],
+                                fragilityModeTags[fmId]
+                            )
+                        );
                     }
                     // does the component have a reliability signal?
                     bool hasReliabilityAlready = false;
@@ -2375,7 +2392,13 @@ namespace erin
                         double randValue = randFn();
                         if (verbose)
                         {
-                            Log_Info(log, fmt::format("randValue for next time advance is: {}", randValue));
+                            Log_Info(
+                                log,
+                                fmt::format(
+                                    "randValue for next time advance is: {}",
+                                    randValue
+                                )
+                            );
                         }
                         double repairTime_s =
                             ds.next_time_advance(repId, randValue);
@@ -3078,7 +3101,11 @@ namespace erin
         out.open(eventsFilename);
         if (!out.good())
         {
-            Log_Warning(log, "file I/O", fmt::format("Could not open '{}' for writing", eventsFilename));
+            Log_Warning(
+                log,
+                "file I/O",
+                fmt::format("Could not open '{}' for writing", eventsFilename)
+            );
             return;
         }
 
@@ -3145,9 +3172,12 @@ namespace erin
             {
                 Log_Debug(
                     log,
-                    fmt::format("Calculated {} occurrence times for {}",
+                    fmt::format(
+                        "Calculated {} occurrence times for {}",
                         occurrenceTimes_s.size(),
-                        s.ScenarioMap.Tags[scenIdx]));
+                        s.ScenarioMap.Tags[scenIdx]
+                    )
+                );
             }
             // TODO: initialize total scenario stats (i.e.,
             // over all occurrences)
@@ -3177,10 +3207,15 @@ namespace erin
                     {
                         std::string const& tag =
                             s.TheModel.ComponentMap.Tag[pair.first];
-                        Log_Info(log, fmt::format("Schedule for {}[{}]", tag, pair.first));
+                        Log_Info(
+                            log,
+                            fmt::format("Schedule for {}[{}]", tag, pair.first)
+                        );
                         for (auto const& ts : pair.second)
                         {
-                            Log_Debug(log, fmt::format("- {}", TimeState_ToString(ts)));
+                            Log_Debug(
+                                log, fmt::format("- {}", TimeState_ToString(ts))
+                            );
                         }
                     }
                 }
@@ -3188,21 +3223,33 @@ namespace erin
                 double tEnd = t + scenarioDuration_s;
                 if (verbose)
                 {
-                    Log_Info(log, fmt::format("Occurrence #{} at {}",
-                                                 occIdx + 1,
-                                                 SecondsToPrettyString(t)));
-                    Log_Info(log,
-                                fmt::format(
-                                    "Scenario start time: {} h",
-                                    TimeInSecondsToHours(
-                                        static_cast<uint64_t>(scenarioOffset_s)
-                                    )));
-                    Log_Info(log,
-                                fmt::format("Scenario end time: {} h",
-                                    TimeInSecondsToHours(
-                                        static_cast<uint64_t>(scenarioOffset_s)
-                                        + static_cast<uint64_t>(scenarioDuration_s)
-                                    )));
+                    Log_Info(
+                        log,
+                        fmt::format(
+                            "Occurrence #{} at {}",
+                            occIdx + 1,
+                            SecondsToPrettyString(t)
+                        )
+                    );
+                    Log_Info(
+                        log,
+                        fmt::format(
+                            "Scenario start time: {} h",
+                            TimeInSecondsToHours(
+                                static_cast<uint64_t>(scenarioOffset_s)
+                            )
+                        )
+                    );
+                    Log_Info(
+                        log,
+                        fmt::format(
+                            "Scenario end time: {} h",
+                            TimeInSecondsToHours(
+                                static_cast<uint64_t>(scenarioOffset_s)
+                                + static_cast<uint64_t>(scenarioDuration_s)
+                            )
+                        )
+                    );
                 }
                 s.TheModel.Reliabilities.clear();
                 s.TheModel.Reliabilities = ApplyReliabilitiesAndFragilities(
@@ -3229,9 +3276,15 @@ namespace erin
                 );
                 if (verbose)
                 {
-                    Log_Info(log, fmt::format("Reliabilities for Scenario: {}", scenarioTag));
+                    Log_Info(
+                        log,
+                        fmt::format(
+                            "Reliabilities for Scenario: {}", scenarioTag
+                        )
+                    );
                     Log_Info(log, fmt::format("Occurrence #{}", occIdx + 1));
-                    for (std::string const& s : ReliabilitiesToStrings(s.TheModel.Reliabilities))
+                    for (std::string const& s :
+                         ReliabilitiesToStrings(s.TheModel.Reliabilities))
                     {
                         Log_Info(log, s);
                     }
@@ -3254,16 +3307,24 @@ namespace erin
                     TimeToISO8601Period(static_cast<uint64_t>(std::llround(t)));
                 if (verbose)
                 {
-                    Log_Info(log,
-                        fmt::format("Running {} from {} for {} {}",
+                    Log_Info(
+                        log,
+                        fmt::format(
+                            "Running {} from {} for {} {}",
                             s.ScenarioMap.Tags[scenIdx],
                             scenarioStartTimeTag,
                             s.ScenarioMap.Durations[scenIdx],
-                            TimeUnitToTag(s.ScenarioMap.TimeUnits[scenIdx])));
-                    Log_Info(log,
-                        fmt::format("time: {} to {}",
+                            TimeUnitToTag(s.ScenarioMap.TimeUnits[scenIdx])
+                        )
+                    );
+                    Log_Info(
+                        log,
+                        fmt::format(
+                            "time: {} to {}",
                             SecondsToPrettyString(t),
-                            SecondsToPrettyString(tEnd)));
+                            SecondsToPrettyString(tEnd)
+                        )
+                    );
                 }
                 s.TheModel.FinalTime = scenarioDuration_s;
                 // TODO: add an optional verbosity flag to SimInfo

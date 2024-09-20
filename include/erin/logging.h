@@ -13,89 +13,107 @@
 
 namespace erin
 {
-  enum class LogLevel
-  {
-    Debug = 0,
-    Info,
-    Warning,
-    Error,
-  };
-
-  struct Log
-  {
-    LogLevel LogLevel = LogLevel::Debug;
-    std::optional<std::function<void(std::string const&, std::string const&)>> debug = {};
-    std::optional<std::function<void(std::string const&, std::string const&)>> info = {};
-    std::optional<std::function<void(std::string const&, std::string const&)>> warning = {};
-    std::optional<std::function<void(std::string const&, std::string const&)>> error = {};
-  };
-
-  void
-  Log_General(Log const& log, LogLevel ll, std::string const& msg);
-
-  void
-  Log_General(Log const& log, LogLevel ll, std::string const& tag, std::string const& msg);
-
-  void
-  Log_Debug(Log const& log, std::string const& msg);
-
-  void
-  Log_Debug(Log const& log, std::string const& tag, std::string const& msg);
-
-  void
-  Log_Info(Log const& log, std::string const& msg);
-
-  void
-  Log_Info(Log const& log, std::string const& tag, std::string const& msg);
-
-  void
-  Log_Warning(Log const& log, std::string const& msg);
-
-  void
-  Log_Warning(Log const& log, std::string const& tag, std::string const& msg);
-
-  void
-  Log_Error(Log const& log, std::string const& msg);
-
-  void
-  Log_Error(Log const& log, std::string const& tag, std::string const& msg);
-
-  class Logger final : public Courier::Courier
-  {
-    public:
-
-    void
-    receive_error(const std::string& message) override
+    enum class LogLevel
     {
-        write_message("ERROR", message);
-    }
+        Debug = 0,
+        Info,
+        Warning,
+        Error,
+    };
 
-    void
-    receive_warning(const std::string& message) override {
-      write_message("WARNING", message);
-    }
-
-    void
-    receive_info(const std::string& message) override {
-      write_message("INFO", message);
-    }
-
-    void
-    receive_debug(const std::string& message) override
+    struct Log
     {
-      write_message("DEBUG", message);
-    }
+        LogLevel LogLevel = LogLevel::Debug;
+        std::optional<
+            std::function<void(std::string const&, std::string const&)>>
+            debug = {};
+        std::optional<
+            std::function<void(std::string const&, std::string const&)>>
+            info = {};
+        std::optional<
+            std::function<void(std::string const&, std::string const&)>>
+            warning = {};
+        std::optional<
+            std::function<void(std::string const&, std::string const&)>>
+            error = {};
+    };
 
-    static void
-    write_message(const std::string& message_type, const std::string& message)
+    void
+    Log_General(Log const& log, LogLevel ll, std::string const& msg);
 
+    void
+    Log_General(
+        Log const& log,
+        LogLevel ll,
+        std::string const& tag,
+        std::string const& msg
+    );
+
+    void
+    Log_Debug(Log const& log, std::string const& msg);
+
+    void
+    Log_Debug(Log const& log, std::string const& tag, std::string const& msg);
+
+    void
+    Log_Info(Log const& log, std::string const& msg);
+
+    void
+    Log_Info(Log const& log, std::string const& tag, std::string const& msg);
+
+    void
+    Log_Warning(Log const& log, std::string const& msg);
+
+    void
+    Log_Warning(Log const& log, std::string const& tag, std::string const& msg);
+
+    void
+    Log_Error(Log const& log, std::string const& msg);
+
+    void
+    Log_Error(Log const& log, std::string const& tag, std::string const& msg);
+
+    class Logger final: public Courier::Courier
     {
-        std::cout << fmt::format("[{}] {}", message_type, message) << std::endl;
-    }
-  };
+      public:
+        void
+        receive_error(const std::string& message) override
+        {
+            write_message("ERROR", message);
+        }
 
-  Log
-  Log_MakeFromCourier(Courier::Courier& courier);
+        void
+        receive_warning(const std::string& message) override
+        {
+            write_message("WARNING", message);
+        }
+
+        void
+        receive_info(const std::string& message) override
+        {
+            write_message("INFO", message);
+        }
+
+        void
+        receive_debug(const std::string& message) override
+        {
+            write_message("DEBUG", message);
+        }
+
+        static void
+        write_message(
+            const std::string& message_type,
+            const std::string& message
+        )
+
+        {
+            std::cout << fmt::format("[{}] {}", message_type, message)
+                      << std::endl;
+        }
+    };
+
+    Log
+    Log_MakeFromCourier(Courier::Courier& courier);
 }
 
 #endif

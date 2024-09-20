@@ -8,12 +8,13 @@ using namespace erin;
 
 TEST(Logging, TestWeCanLog)
 {
-  Logger logger{};
-  Log log = Log_MakeFromCourier(logger);
-  Log_Debug(log, "this is a debug statement");
-  Log_Info(log, "this is an info statement");
-  Log_Warning(log, "this is a warning statement");
-  EXPECT_THROW(
-    Log_Error(log, "this is an error -- using courier, it throws..."),
-    std::exception);
+    Logger logger{};
+    Log log = Log_MakeFromCourier(logger);
+    Log_Debug(log, "this is a debug statement");
+    Log_Info(log, "this is an info statement");
+    Log_Warning(log, "this is a warning statement");
+    EXPECT_THROW(
+        Log_Error(log, "this is an error -- using courier, it throws..."),
+        std::exception
+    );
 }

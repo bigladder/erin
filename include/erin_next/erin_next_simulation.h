@@ -199,10 +199,7 @@ namespace erin
     );
 
     std::vector<double>
-    DetermineScenarioOccurrenceTimes(
-        Simulation& s,
-        size_t scenIdx
-    );
+    DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenIdx);
 
     std::unordered_map<size_t, double>
     GetIntensitiesForScenario(Simulation& s, size_t scenIdx);

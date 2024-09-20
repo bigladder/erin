@@ -23,7 +23,7 @@ namespace erin
 
     struct Log
     {
-        LogLevel LogLevel = LogLevel::Debug;
+        LogLevel log_level = LogLevel::Debug;
         std::optional<
             std::function<void(std::string const&, std::string const&)>>
             debug = {};

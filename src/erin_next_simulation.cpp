@@ -1347,7 +1347,8 @@ namespace erin
     Simulation_ReadFromToml(
         toml::value const& v,
         InputValidationMap const& validationInfo,
-        std::unordered_set<std::string> const& componentTagsInUse
+        std::unordered_set<std::string> const& componentTagsInUse,
+        Log const& log
     )
     {
         Simulation s = {};
@@ -1356,7 +1357,7 @@ namespace erin
             Simulation_ParseSimulationInfo(s, v, validationInfo.SimulationInfo);
         if (simInfoResult == Result::Failure)
         {
-            WriteErrorMessage("simulation_info", "problem parsing...");
+            Log_Error(log, "simulation_info", "problem parsing...");
             return {};
         }
         auto loadsResult = Simulation_ParseLoads(
@@ -1367,7 +1368,7 @@ namespace erin
         );
         if (loadsResult == Result::Failure)
         {
-            WriteErrorMessage("loads", "problem parsing...");
+            Log_Error(log, "loads", "problem parsing...");
             return {};
         }
         auto compResult = Simulation_ParseComponents(
@@ -1375,39 +1376,39 @@ namespace erin
         );
         if (compResult == Result::Failure)
         {
-            WriteErrorMessage("components", "problem parsing...");
+            Log_Error(log, "components", "problem parsing...");
             return {};
         }
         auto distResult =
             Simulation_ParseDistributions(s, v, validationInfo.Dist);
         if (distResult == Result::Failure)
         {
-            WriteErrorMessage("dist", "problem parsing...");
+            Log_Error(log, "dist", "problem parsing...");
             return {};
         }
         if (Simulation_ParseFailureModes(s, v) == Result::Failure)
         {
-            WriteErrorMessage("failure_mode", "problem parsing...");
+            Log_Error(log, "failure_mode", "problem parsing...");
             return {};
         }
         if (Simulation_ParseFragilityModes(s, v) == Result::Failure)
         {
-            WriteErrorMessage("fragility_mode", "problem parsing...");
+            Log_Error(log, "fragility_mode", "problem parsing...");
             return {};
         }
         if (Simulation_ParseNetwork(s, v) == Result::Failure)
         {
-            WriteErrorMessage("network", "problem parsing...");
+            Log_Error(log, "network", "problem parsing...");
             return {};
         }
         if (Simulation_ParseScenarios(s, v) == Result::Failure)
         {
-            WriteErrorMessage("scenarios", "problem parsing...");
+            Log_Error(log, "scenarios", "problem parsing...");
             return {};
         }
         if (Simulation_ParseFragilityCurves(s, v) == Result::Failure)
         {
-            WriteErrorMessage("fragility_curve", "problem parsing...");
+            Log_Error(log, "fragility_curve", "problem parsing...");
             return {};
         }
         return s;

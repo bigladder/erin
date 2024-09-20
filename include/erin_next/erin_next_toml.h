@@ -4,6 +4,7 @@
 #define ERIN_TOML_H
 #include "erin_next/erin_next_valdata.h"
 #include "erin_next/erin_next_time_and_amount.h"
+#include "erin/logging.h"
 #include "../vendor/toml11/toml.hpp"
 #include <vector>
 #include <unordered_map>
@@ -24,6 +25,7 @@ namespace erin
         std::vector<std::string>& warnings
     );
 
+    // TODO: remove, this function is apparently not used
     // TODO: create struct to hold if tag/name is deprecated
     // struct TagWithDeprecation {string Name; bool IsDeprecated;}
     // TODO: add aliases std::unordered_map<std::string,
@@ -38,7 +40,8 @@ namespace erin
         std::unordered_set<std::string> const& optionalFields,
         std::unordered_map<std::string, std::string> const& defaults,
         std::string const& tableName,
-        bool doPrint = false
+        bool verbose = false,
+        Log const& log = Log{}
     );
 
     std::optional<std::string>

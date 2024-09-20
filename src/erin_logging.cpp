@@ -97,7 +97,7 @@ namespace erin
         std::string const& msg
     )
     {
-        if (!ContinueLogging(ll, log.LogLevel))
+        if (!ContinueLogging(ll, log.log_level))
         {
             return;
         }

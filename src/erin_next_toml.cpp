@@ -1,4 +1,5 @@
 #include "erin_next/erin_next_toml.h"
+#include "erin/logging.h"
 #include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
 #include <iostream>
@@ -559,7 +560,8 @@ namespace erin
         std::unordered_set<std::string> const& optionalFields,
         std::unordered_map<std::string, std::string> const& defaults,
         std::string const& tableName,
-        bool doPrint
+        bool verbose,
+        Log const& log
     )
     {
         for (auto it = table.cbegin(); it != table.cend(); ++it)
@@ -568,11 +570,9 @@ namespace erin
                 && !optionalFields.contains(it->first)
                 && !defaults.contains(it->first))
             {
-                if (doPrint)
+                if (verbose)
                 {
-                    std::cout << "[" << tableName << "] "
-                              << "Unrecognized key '" << it->first << "'"
-                              << std::endl;
+                    Log_Warning(log, tableName, fmt::format("Unrecognized key '{}'", it->first));
                 }
                 return false;
             }
@@ -582,11 +582,9 @@ namespace erin
         {
             if (!table.contains(*it))
             {
-                if (doPrint)
+                if (verbose)
                 {
-                    std::cout << "[" << tableName << "] "
-                              << "Missing required key '" << *it << "'"
-                              << std::endl;
+                    Log_Error(log, tableName, fmt::format("Missing required key '{}'", *it));
                 }
                 return false;
             }

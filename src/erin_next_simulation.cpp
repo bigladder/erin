@@ -938,13 +938,17 @@ namespace erin
     }
 
     Result
-    Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v)
+    Simulation_ParseFragilityCurves(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    )
     {
         if (v.contains("fragility_curve"))
         {
             if (!v.at("fragility_curve").is_table())
             {
-                std::cout << "[fragility_curve] not a table" << std::endl;
+                Log_Error(log, "fragility_curve", "must be a table");
                 return Result::Failure;
             }
             for (auto const& pair : v.at("fragility_curve").as_table())
@@ -953,16 +957,17 @@ namespace erin
                 std::string tableFullName = "fragility_curve." + fcName;
                 if (!pair.second.is_table())
                 {
-                    std::cout << "[" << tableFullName << "] not a table"
-                              << std::endl;
+                    Log_Error(log, tableFullName, "not a table");
                     return Result::Failure;
                 }
                 toml::table const& fcData = pair.second.as_table();
                 if (!fcData.contains("type"))
                 {
-                    std::cout << "[" << tableFullName << "] "
-                              << "does not contain required value 'type'"
-                              << std::endl;
+                    Log_Error(
+                        log,
+                        tableFullName,
+                        "does not contain required value 'type'"
+                    );
                     return Result::Failure;
                 }
                 std::string const& typeStr = fcData.at("type").as_string();
@@ -970,9 +975,9 @@ namespace erin
                     TagToFragilityCurveType(typeStr);
                 if (!maybeFct.has_value())
                 {
-                    std::cout << "[" << tableFullName << "] "
-                              << "could not interpret type as string"
-                              << std::endl;
+                    Log_Error(
+                        log, tableFullName, "could not interpret type as string"
+                    );
                     return Result::Failure;
                 }
                 FragilityCurveType fct = maybeFct.value();
@@ -1019,7 +1024,8 @@ namespace erin
                     break;
                     default:
                     {
-                        WriteErrorMessage(
+                        Log_Error(
+                            log,
                             tableFullName,
                             "unhandled fragility curve type '" + typeStr + "'"
                         );
@@ -1066,14 +1072,18 @@ namespace erin
     }
 
     Result
-    Simulation_ParseFailureModes(Simulation& s, toml::value const& v)
+    Simulation_ParseFailureModes(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    )
     {
         if (v.contains("failure_mode"))
         {
             if (!v.at("failure_mode").is_table())
             {
-                WriteErrorMessage(
-                    "failure_mode", "failure_mode section must be a table"
+                Log_Error(
+                    log, "failure_mode", "failure_mode section must be a table"
                 );
                 return Result::Failure;
             }
@@ -1084,7 +1094,8 @@ namespace erin
                 std::string const fullName = "failue_mode." + fmName;
                 if (!Simulation_IsFragilityModeNameUnique(s, fmName))
                 {
-                    WriteErrorMessage(
+                    Log_Error(
+                        log,
                         fmName,
                         "failure mode name must be unique within both "
                         "failure_mode and fragility_mode names"
@@ -1093,14 +1104,14 @@ namespace erin
                 }
                 if (!pair.second.is_table())
                 {
-                    WriteErrorMessage(fullName, "value must be a table");
+                    Log_Error(log, fullName, "value must be a table");
                     return Result::Failure;
                 }
                 toml::table const& fmValueTable = pair.second.as_table();
                 if (!fmValueTable.contains("failure_dist"))
                 {
-                    WriteErrorMessage(
-                        fullName, "missing required field 'failure_dist'"
+                    Log_Error(
+                        log, fullName, "missing required field 'failure_dist'"
                     );
                     return Result::Failure;
                 }
@@ -1109,16 +1120,18 @@ namespace erin
                 );
                 if (!maybeFailureDistTag.has_value())
                 {
-                    WriteErrorMessage(
-                        fullName, "could not parse 'failure_dist' as string"
+                    Log_Error(
+                        log,
+                        fullName,
+                        "could not parse 'failure_dist' as string"
                     );
                     return Result::Failure;
                 }
                 std::string const& failureDistTag = maybeFailureDistTag.value();
                 if (!fmValueTable.contains("repair_dist"))
                 {
-                    WriteErrorMessage(
-                        fullName, "missing required field 'repair_dist'"
+                    Log_Error(
+                        log, fullName, "missing required field 'repair_dist'"
                     );
                     return Result::Failure;
                 }
@@ -1127,8 +1140,8 @@ namespace erin
                 );
                 if (!maybeRepairDistTag.has_value())
                 {
-                    WriteErrorMessage(
-                        fullName, "could not parse 'repair_dist' as string"
+                    Log_Error(
+                        log, fullName, "could not parse 'repair_dist' as string"
                     );
                     return Result::Failure;
                 }
@@ -1144,12 +1157,17 @@ namespace erin
     }
 
     Result
-    Simulation_ParseFragilityModes(Simulation& s, toml::value const& v)
+    Simulation_ParseFragilityModes(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    )
     {
         if (v.contains("fragility_mode"))
         {
             if (!v.at("fragility_mode").is_table())
             {
+                Log_Error(log, "fragility_mode must be a table");
                 return Result::Failure;
             }
             toml::table const& fmTable = v.at("fragility_mode").as_table();
@@ -1159,7 +1177,8 @@ namespace erin
                 std::string const fullName = "fragility_mode." + fmName;
                 if (!Simulation_IsFailureModeNameUnique(s, fmName))
                 {
-                    WriteErrorMessage(
+                    Log_Error(
+                        log,
                         fullName,
                         "fragility mode name must be unique within both "
                         "failure_mode and fragility_mode names"
@@ -1168,23 +1187,27 @@ namespace erin
                 }
                 if (!pair.second.is_table())
                 {
-                    WriteErrorMessage(
-                        fullName, "fragility_mode section must be a table"
+                    Log_Error(
+                        log, fullName, "fragility_mode section must be a table"
                     );
                     return Result::Failure;
                 }
                 toml::table const& fmValueTable = pair.second.as_table();
                 if (!fmValueTable.contains("fragility_curve"))
                 {
-                    WriteErrorMessage(
-                        fullName, "missing required field 'fragility_curve'"
+                    Log_Error(
+                        log,
+                        fullName,
+                        "missing required field 'fragility_curve'"
                     );
                     return Result::Failure;
                 }
                 if (!fmValueTable.at("fragility_curve").is_string())
                 {
-                    WriteErrorMessage(
-                        fullName, "'fragility_curve' field must be a string"
+                    Log_Error(
+                        log,
+                        fullName,
+                        "'fragility_curve' field must be a string"
                     );
                     return Result::Failure;
                 }
@@ -1196,8 +1219,10 @@ namespace erin
                 {
                     if (!fmValueTable.at("repair_dist").is_string())
                     {
-                        WriteErrorMessage(
-                            fullName, "field 'repair_dist' must be a string"
+                        Log_Error(
+                            log,
+                            fullName,
+                            "field 'repair_dist' must be a string"
                         );
                         return Result::Failure;
                     }
@@ -1219,7 +1244,8 @@ namespace erin
         Simulation& s,
         toml::value const& v,
         ComponentValidationMap const& compValidations,
-        std::unordered_set<std::string> const& componentTagsInUse
+        std::unordered_set<std::string> const& componentTagsInUse,
+        Log const& log
     )
     {
         if (v.contains("components") && v.at("components").is_table())
@@ -1228,10 +1254,11 @@ namespace erin
                 s,
                 v.at("components").as_table(),
                 compValidations,
-                componentTagsInUse
+                componentTagsInUse,
+                log
             );
         }
-        WriteErrorMessage("<top>", "required field 'components' not found");
+        Log_Error(log, "required field 'components' not found");
         return Result::Failure;
     }
 
@@ -1239,7 +1266,8 @@ namespace erin
     Simulation_ParseDistributions(
         Simulation& s,
         toml::value const& v,
-        DistributionValidationMap const& dvm
+        DistributionValidationMap const& dvm,
+        Log const& log
     )
     {
         if (v.contains("dist") && v.at("dist").is_table())
@@ -1249,27 +1277,28 @@ namespace erin
                 s.TheModel.DistSys, v.at("dist").as_table(), dvm
             );
         }
-        std::cout << "required field 'dist' not found" << std::endl;
+        Log_Error(log, "required field 'dist' not found");
         return Result::Failure;
     }
 
     Result
-    Simulation_ParseNetwork(Simulation& s, toml::value const& v)
+    Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& log)
     {
         std::string const n = "network";
         if (v.contains(n) && v.at(n).is_table())
         {
             return ParseNetwork(s.FlowTypeMap, s.TheModel, v.at(n).as_table());
         }
-        else
-        {
-            std::cout << "required field '" << n << "' not found" << std::endl;
-            return Result::Failure;
-        }
+        Log_Error(log, fmt::format("required field '{}' not found", n));
+        return Result::Failure;
     }
 
     Result
-    Simulation_ParseScenarios(Simulation& s, toml::value const& v)
+    Simulation_ParseScenarios(
+        Simulation& s,
+        toml::value const& v,
+        Log const& log
+    )
     {
         if (v.contains("scenarios") && v.at("scenarios").is_table())
         {
@@ -1287,25 +1316,31 @@ namespace erin
                         );
                     if (!maybeScenarioId.has_value())
                     {
-                        std::cout << "[scenarios] "
-                                  << "could not find scenario id for '"
-                                  << scenarioName << "'" << std::endl;
+                        Log_Error(
+                            log,
+                            "scenarios",
+                            fmt::format(
+                                "could not find scenario id for '{}'",
+                                scenarioName
+                            )
+                        );
                         return Result::Failure;
                     }
                     size_t scenarioId = maybeScenarioId.value();
                     std::string fullName = "scenarios." + scenarioName;
                     if (!pair.second.is_table())
                     {
-                        std::cout << "[" << fullName << "] "
-                                  << "must be a table" << std::endl;
+                        Log_Error(log, fullName, "must be a table");
+                        return Result::Failure;
                     }
                     toml::table const& data = pair.second.as_table();
                     if (data.contains("intensity"))
                     {
                         if (!data.at("intensity").is_table())
                         {
-                            std::cout << "[" << fullName << ".intensity] "
-                                      << "must be a table" << std::endl;
+                            Log_Error(
+                                log, fullName + ".intensity", "must be a table"
+                            );
                             return Result::Failure;
                         }
                         for (auto const& p : data.at("intensity").as_table())
@@ -1314,18 +1349,22 @@ namespace erin
                             if (!(p.second.is_integer()
                                   || p.second.is_floating()))
                             {
-                                std::cout << "[" << fullName << ".intensity."
-                                          << intensityTag << "] "
-                                          << "must be a number" << std::endl;
+                                Log_Error(
+                                    log,
+                                    fullName + ".intensity." + intensityTag,
+                                    "must be a number"
+                                );
                                 return Result::Failure;
                             }
                             std::optional<double> maybeValue =
                                 TOML_ParseNumericValueAsDouble(p.second);
                             if (!maybeValue.has_value())
                             {
-                                std::cout << "[" << fullName << ".intensity."
-                                          << intensityTag << "] "
-                                          << "must be a number" << std::endl;
+                                Log_Error(
+                                    log,
+                                    fullName + ".intensity." + intensityTag,
+                                    "must be a number"
+                                );
                                 return Result::Failure;
                             }
                             double value = maybeValue.value();
@@ -1340,8 +1379,7 @@ namespace erin
             }
             return result;
         }
-        std::cout << "required field 'scenarios' not found or not a table"
-                  << std::endl;
+        Log_Error(log, "required field 'scenarios' not found or not a table");
         return Result::Failure;
     }
 
@@ -1376,7 +1414,7 @@ namespace erin
             return {};
         }
         auto compResult = Simulation_ParseComponents(
-            s, v, validationInfo.Comp, componentTagsInUse
+            s, v, validationInfo.Comp, componentTagsInUse, log
         );
         if (compResult == Result::Failure)
         {
@@ -1384,33 +1422,33 @@ namespace erin
             return {};
         }
         auto distResult =
-            Simulation_ParseDistributions(s, v, validationInfo.Dist);
+            Simulation_ParseDistributions(s, v, validationInfo.Dist, log);
         if (distResult == Result::Failure)
         {
             Log_Error(log, "dist", "problem parsing...");
             return {};
         }
-        if (Simulation_ParseFailureModes(s, v) == Result::Failure)
+        if (Simulation_ParseFailureModes(s, v, log) == Result::Failure)
         {
             Log_Error(log, "failure_mode", "problem parsing...");
             return {};
         }
-        if (Simulation_ParseFragilityModes(s, v) == Result::Failure)
+        if (Simulation_ParseFragilityModes(s, v, log) == Result::Failure)
         {
             Log_Error(log, "fragility_mode", "problem parsing...");
             return {};
         }
-        if (Simulation_ParseNetwork(s, v) == Result::Failure)
+        if (Simulation_ParseNetwork(s, v, log) == Result::Failure)
         {
             Log_Error(log, "network", "problem parsing...");
             return {};
         }
-        if (Simulation_ParseScenarios(s, v) == Result::Failure)
+        if (Simulation_ParseScenarios(s, v, log) == Result::Failure)
         {
             Log_Error(log, "scenarios", "problem parsing...");
             return {};
         }
-        if (Simulation_ParseFragilityCurves(s, v) == Result::Failure)
+        if (Simulation_ParseFragilityCurves(s, v, log) == Result::Failure)
         {
             Log_Error(log, "fragility_curve", "problem parsing...");
             return {};

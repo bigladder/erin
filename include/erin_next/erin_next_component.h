@@ -17,7 +17,8 @@ namespace erin
         Simulation& s,
         toml::table const& table,
         std::string const& tag,
-        ComponentValidationMap const& compValids
+        ComponentValidationMap const& compValids,
+        Log const& log
     );
 
     Result
@@ -25,7 +26,8 @@ namespace erin
         Simulation& s,
         toml::table const& table,
         ComponentValidationMap const& compValids,
-        std::unordered_set<std::string> const& componentTagsInUse
+        std::unordered_set<std::string> const& componentTagsInUse,
+        Log const& log
     );
 
 } // namespace erin

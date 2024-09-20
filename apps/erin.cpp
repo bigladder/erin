@@ -25,10 +25,9 @@
 #include "compilation_settings.h"
 
 erin::Log
-get_standard_log()
+get_standard_log(erin::Logger& logger)
 {
     using namespace erin;
-    Logger logger{};
     Log log = Log_MakeFromCourier(logger);
     // NOTE: overriding default error functionality as it throws.
     //       instead, error conditions and exiting are handled explicitly
@@ -153,7 +152,8 @@ add_run(CLI::App& app)
     auto run = [&]()
     {
         using namespace erin;
-        Log log = get_standard_log();
+        Logger logger{};
+        Log log = get_standard_log(logger);
         bool aggregate_groups = !no_aggregate_groups;
         if (verbose)
         {
@@ -234,7 +234,8 @@ add_graph(CLI::App& app)
     auto graph = [&]()
     {
         using namespace erin;
-        Log log = get_standard_log();
+        Logger logger{};
+        Log log = get_standard_log(logger);
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
@@ -290,7 +291,8 @@ add_checkNetwork(CLI::App& app)
     auto checkNetwork = [&]()
     {
         using namespace erin;
-        Log log = get_standard_log();
+        Logger logger{};
+        Log log = get_standard_log(logger);
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
@@ -575,7 +577,8 @@ add_packLoads(CLI::App& app)
 
     auto packLoads = [&]()
     {
-        erin::Log log = get_standard_log();
+        erin::Logger logger{};
+        erin::Log log = get_standard_log(logger);
         if (verbose)
         {
             std::cout << "input file: " << tomlFilename << std::endl;

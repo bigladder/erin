@@ -27,3 +27,7 @@ endif()
 if (NOT TARGET CLI11)
   add_subdirectory(CLI11)
 endif()
+
+if (NOT TARGET courier)
+  add_subdirectory(courier)
+endif()

@@ -106,10 +106,20 @@ namespace erin
     TimeInSecondsToHours(uint64_t time_seconds);
 
     void
+    WriteTaggedCategoryMessage(
+        std::string const& category,
+        std::string const& tag,
+        std::string const& message
+    );
+
+    void
     WriteWarningMessage(std::string const& tag, std::string const& message);
 
     void
     WriteErrorMessage(std::string const& tag, std::string const& message);
+
+    std::string
+    WriteTaggedCategoryToString(std::string const& category, std::string const& tag, std::string const& message);
 
     std::string
     WriteWarningToString(std::string const& tag, std::string const& message);

@@ -25,11 +25,12 @@ if platform.system() == 'Windows':
         sys.exit(1)
     BIN_DIR = BIN_DIR.resolve()
     ALL_TESTS = [
-        BIN_DIR / 'erin_tests.exe',
-        BIN_DIR / 'erin_next_random_tests.exe',
+        BIN_DIR / 'erin_logging_tests.exe',
         BIN_DIR / 'erin_lookup_table_tests.exe',
-        BIN_DIR / 'erin_switch_tests.exe',
+        BIN_DIR / 'erin_next_random_tests.exe',
         BIN_DIR / 'erin_simulation_tests.exe',
+        BIN_DIR / 'erin_switch_tests.exe',
+        BIN_DIR / 'erin_tests.exe',
     ]
     CLI_EXE = BIN_DIR / 'erin.exe'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
@@ -38,11 +39,12 @@ elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
     BIN_DIR = BIN_DIR.resolve()
     ALL_TESTS = [
-        BIN_DIR / 'erin_tests',
-        BIN_DIR / 'erin_next_random_tests',
+        BIN_DIR / 'erin_logging_tests',
         BIN_DIR / 'erin_lookup_table_tests',
-        BIN_DIR / 'erin_switch_tests',
+        BIN_DIR / 'erin_next_random_tests',
         BIN_DIR / 'erin_simulation_tests',
+        BIN_DIR / 'erin_switch_tests',
+        BIN_DIR / 'erin_tests',
     ]
     CLI_EXE = BIN_DIR / 'erin'
     PERF01_EXE = BIN_DIR / 'erin_next_stress_test'

@@ -74,6 +74,17 @@ target_link_libraries(erin_simulation_tests
 	GTest::gtest_main
 )
 
+# erin_logging_test
+add_executable(erin_logging_tests
+	erin_logging_tests.cpp)
+
+target_include_directories(erin_logging_tests
+	PUBLIC ${PROJECT_SOURCE_DIR}/include)
+
+target_link_libraries(erin_logging_tests
+	erin_next
+	GTest::gtest_main)
+
 # Google Test
 include(GoogleTest)
 

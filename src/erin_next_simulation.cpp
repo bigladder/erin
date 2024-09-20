@@ -1,6 +1,7 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next_simulation.h"
+#include "erin/logging.h"
 #include "erin_next/erin_next.h"
 #include "erin_next/erin_next_component.h"
 #include "erin_next/erin_next_timestate.h"
@@ -11,7 +12,7 @@
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_toml.h"
 #include <fmt/core.h>
-#include <assert.h>
+#include <cassert>
 #include <fstream>
 #include <ios>
 #include <limits>
@@ -263,7 +264,7 @@ namespace erin
                         m.VarEffConvs[subtypeIdx];
                     std::cout << "-- efficiencies by load fraction:"
                               << std::endl;
-                    double maxOutflow_W = static_cast<double>(vec.MaxOutflow_W);
+                    auto maxOutflow_W = static_cast<double>(vec.MaxOutflow_W);
                     for (size_t i = 0; i < vec.Efficiencies.size(); ++i)
                     {
                         std::cout << fmt::format(
@@ -304,7 +305,7 @@ namespace erin
                     VariableEfficiencyMover const& mov =
                         m.VarEffMovers[subtypeIdx];
                     std::cout << "-- cop by load fraction:" << std::endl;
-                    double maxOutflow_W = static_cast<double>(mov.MaxOutflow_W);
+                    auto maxOutflow_W = static_cast<double>(mov.MaxOutflow_W);
                     for (size_t i = 0; i < mov.COPs.size(); ++i)
                     {
                         std::cout << fmt::format(
@@ -477,7 +478,7 @@ namespace erin
             std::cout << i << ": " << s.FailureModes.Tags[i] << std::endl;
             if (maybeFailureDist.has_value())
             {
-                Distribution failureDist = maybeFailureDist.value();
+                Distribution const& failureDist = maybeFailureDist.value();
                 std::cout << "-- failure distribution: " << failureDist.Tag
                           << ", " << dist_type_to_tag(failureDist.Type) << "["
                           << s.FailureModes.FailureDistIds[i] << "]"
@@ -491,7 +492,7 @@ namespace erin
             }
             if (maybeRepairDist.has_value())
             {
-                Distribution repairDist = maybeRepairDist.value();
+                Distribution const& repairDist = maybeRepairDist.value();
                 std::cout << "-- repair distribution: " << repairDist.Tag
                           << ", " << dist_type_to_tag(repairDist.Type) << "["
                           << s.FailureModes.RepairDistIds[i] << "]"
@@ -540,7 +541,7 @@ namespace erin
                     );
                 if (maybeDist.has_value())
                 {
-                    Distribution d = maybeDist.value();
+                    Distribution const& d = maybeDist.value();
                     std::cout << "-- repair dist: " << d.Tag << "["
                               << s.FragilityModes.RepairDistIds[i].value()
                               << "]" << std::endl;
@@ -583,7 +584,7 @@ namespace erin
             );
             if (maybeDist.has_value())
             {
-                Distribution d = maybeDist.value();
+                Distribution const& d = maybeDist.value();
                 std::cout << "- occurrence distribution: "
                           << dist_type_to_tag(d.Type) << "["
                           << s.ScenarioMap.OccurrenceDistributionIds[i]
@@ -630,7 +631,7 @@ namespace erin
             std::cout << i << ": " << s.LoadMap.Tags[i] << std::endl;
             std::cout << "- load entries: " << s.LoadMap.Loads[i].size()
                       << std::endl;
-            if (s.LoadMap.Loads[i].size() > 0)
+            if (!s.LoadMap.Loads[i].empty())
             {
                 // TODO: add time units
                 std::cout << "- initial time: " << s.LoadMap.Loads[i][0].Time_s
@@ -1031,9 +1032,9 @@ namespace erin
     bool
     Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name)
     {
-        for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+        for (std::string const& tag : s.FailureModes.Tags)
         {
-            if (s.FailureModes.Tags[i] == name)
+            if (tag == name)
             {
                 return false;
             }
@@ -1708,7 +1709,7 @@ namespace erin
             }
             return "inf";
         }
-        double value_kW = value_W / W_per_kW;
+        double value_kW = static_cast<double>(value_W) / W_per_kW;
         return DoubleToString(value_kW, precision);
     }
 
@@ -2977,6 +2978,7 @@ namespace erin
     void
     Simulation_Run(
         Simulation& s,
+        Log& log,
         std::string const& eventsFilename,
         std::string const& statsFilename,
         double time_step_h /*-1.0*/,
@@ -2992,11 +2994,12 @@ namespace erin
             std::vector<std::string> issues = Model_CheckNetwork(s.TheModel);
             if (issues.size() > 0)
             {
-                std::cout << "NETWORK CONNECTION ISSUES:" << std::endl;
+                Log_Warning(log, "network connection", "start list of issues");
                 for (std::string const& issue : issues)
                 {
-                    std::cout << issue << std::endl;
+                    Log_Warning(log, "network connection", issue);
                 }
+                Log_Warning(log, "network connection", "end list of issues");
             }
             assert(issues.size() == 0);
         }
@@ -3035,7 +3038,7 @@ namespace erin
             break;
             default:
             {
-                WriteErrorMessage("RandomType", "unhandled random type");
+                Log_Error(log, "RandomType", "unhandled random type");
                 std::exit(1);
             }
             break;
@@ -3078,8 +3081,7 @@ namespace erin
         out.open(eventsFilename);
         if (!out.good())
         {
-            std::cout << "Could not open '" << eventsFilename
-                      << "' for writing." << std::endl;
+            Log_Warning(log, "file I/O", fmt::format("Could not open '{}' for writing", eventsFilename));
             return;
         }
 
@@ -3117,7 +3119,7 @@ namespace erin
             std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
             if (verbose)
             {
-                std::cout << "Scenario: " << scenarioTag << std::endl;
+                Log_Info(log, "Scenario", scenarioTag);
             }
             // for this scenario, ensure all schedule-based components
             // have the right schedule set for this scenario
@@ -3126,7 +3128,7 @@ namespace erin
                 )
                 == Result::Failure)
             {
-                std::cout << "Issue setting schedule loads" << std::endl;
+                Log_Warning(log, "", "Issue setting schedule loads");
                 return;
             }
             if (SetSupplyForScenario(
@@ -3134,7 +3136,7 @@ namespace erin
                 )
                 == Result::Failure)
             {
-                std::cout << "Issue setting schedule sources" << std::endl;
+                Log_Warning(log, "", "Issue setting schedule sources");
                 return;
             }
             // TODO: implement load substitution for schedule-based sources
@@ -3144,9 +3146,11 @@ namespace erin
                 DetermineScenarioOccurrenceTimes(s, scenIdx, verbose);
             if (verbose)
             {
-                std::cout << "Calculated " << occurrenceTimes_s.size()
-                          << " occurrence times for "
-                          << s.ScenarioMap.Tags[scenIdx] << std::endl;
+                Log_Debug(
+                    log,
+                    fmt::format("Calculated {} occurrence times for {}",
+                        occurrenceTimes_s.size(),
+                        s.ScenarioMap.Tags[scenIdx]));
             }
             // TODO: initialize total scenario stats (i.e.,
             // over all occurrences)
@@ -3156,7 +3160,7 @@ namespace erin
             {
                 if (verbose)
                 {
-                    std::cout << "... Occurrence #" << occIdx << std::endl;
+                    Log_Debug(log, fmt::format("... Occurrence #{}", occIdx));
                 }
                 std::unordered_map<size_t, std::vector<TimeState>>
                     relSchByCompId = CreateFailureSchedules(
@@ -3171,17 +3175,15 @@ namespace erin
                     );
                 if (verbose)
                 {
-                    std::cout << "Generated reliability schedules:"
-                              << std::endl;
+                    Log_Info(log, "Generating reliability schedules");
                     for (auto const& pair : relSchByCompId)
                     {
                         std::string const& tag =
                             s.TheModel.ComponentMap.Tag[pair.first];
-                        std::cout << "Schedule for " << tag << "[" << pair.first
-                                  << "]:" << std::endl;
+                        Log_Info(log, fmt::format("Schedule for {}[{}]", tag, pair.first));
                         for (auto const& ts : pair.second)
                         {
-                            std::cout << "- " << ts << std::endl;
+                            Log_Debug(log, fmt::format("- {}", TimeState_ToString(ts)));
                         }
                     }
                 }
@@ -3189,19 +3191,21 @@ namespace erin
                 double tEnd = t + scenarioDuration_s;
                 if (verbose)
                 {
-                    std::cout << "Occurrence #" << (occIdx + 1) << " at "
-                              << SecondsToPrettyString(t) << std::endl;
-                    std::cout << "- scenario start time: "
-                              << TimeInSecondsToHours(
-                                     static_cast<uint64_t>(scenarioOffset_s)
-                                 )
-                              << " h" << std::endl;
-                    std::cout << "- scenario end time: "
-                              << TimeInSecondsToHours(
-                                     static_cast<uint64_t>(scenarioOffset_s)
-                                     + static_cast<uint64_t>(scenarioDuration_s)
-                                 )
-                              << " h" << std::endl;
+                    Log_Info(log, fmt::format("Occurrence #{} at {}",
+                                                 occIdx + 1,
+                                                 SecondsToPrettyString(t)));
+                    Log_Info(log,
+                                fmt::format(
+                                    "Scenario start time: {} h",
+                                    TimeInSecondsToHours(
+                                        static_cast<uint64_t>(scenarioOffset_s)
+                                    )));
+                    Log_Info(log,
+                                fmt::format("Scenario end time: {} h",
+                                    TimeInSecondsToHours(
+                                        static_cast<uint64_t>(scenarioOffset_s)
+                                        + static_cast<uint64_t>(scenarioDuration_s)
+                                    )));
                 }
                 s.TheModel.Reliabilities.clear();
                 s.TheModel.Reliabilities = ApplyReliabilitiesAndFragilities(

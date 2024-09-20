@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_timestate.h"
 #include "erin_next/erin_next_utils.h"
 #include <assert.h>
+#include <sstream>
 
 namespace erin
 {
@@ -453,6 +454,14 @@ namespace erin
         {
             std::cout << "- " << ts << std::endl;
         }
+    }
+
+    std::string
+    TimeState_ToString(TimeState const& ts)
+    {
+        std::ostringstream oss;
+        oss << ts;
+        return oss.str();
     }
 
 } // namespace erin

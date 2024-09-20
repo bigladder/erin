@@ -10,3 +10,6 @@
 [submodule "vendor/fmt"]
 	path = vendor/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "vendor/courier"]
+	path = vendor/courier
+	url = https://github.com/bigladder/courier.git

@@ -72,6 +72,9 @@ namespace erin
     void
     TimeState_Print(std::vector<TimeState> const& tss);
 
+    std::string
+    TimeState_ToString(TimeState const& ts);
+
 } // namespace erin
 
 #endif

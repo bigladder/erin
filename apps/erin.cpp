@@ -1,4 +1,5 @@
 #include "erin/version.h"
+#include "erin/logging.h"
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
 #include "erin_next/erin_next_component.h"
@@ -9,6 +10,7 @@
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_result.h"
+#include "erin_next/erin_next_utils.h"
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_graph.h"
 #include <cstdlib>
@@ -172,8 +174,24 @@ add_run(CLI::App& app)
             Simulation_Print(s);
             std::cout << "-----------------" << std::endl;
         }
+        Logger logger{};
+        Log log = Log_MakeFromCourier(logger);
+        // NOTE: overriding default error functionality as it throws.
+        //       instead, error conditions and exiting are handled explicitly
+        //       by the library.
+        log.error = [&](std::string const& tag, std::string const& msg) {
+            if (tag.empty())
+            {
+                std::cout << fmt::format("[{}] {}", "ERROR", msg) << std::endl;
+            }
+            else
+            {
+                std::cout << fmt::format("[{}] {}: {}", "ERROR", tag, msg) << std::endl;
+            }
+        };
         Simulation_Run(
             s,
+            log,
             eventsFilename,
             statsFilename,
             time_step_h,

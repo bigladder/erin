@@ -4,12 +4,14 @@
 #define ERIN_SIMULATION_H
 
 #include "erin_next/erin_next.h"
+#include "erin/logging.h"
 #include "erin_next/erin_next_distribution.h"
 #include "erin_next/erin_next_simulation_info.h"
 #include "erin_next/erin_next_load.h"
 #include "erin_next/erin_next_scenario.h"
 #include "erin_next/erin_next_result.h"
 #include "../vendor/toml11/toml.hpp"
+#include "../vendor/courier/include/courier/courier.h"
 #include "erin_next/erin_next_validation.h"
 #include <string>
 #include <vector>
@@ -257,6 +259,7 @@ namespace erin
     void
     Simulation_Run(
         Simulation& s,
+        Log& log,
         std::string const& eventsFilename,
         std::string const& statsFilename = "stats.csv",
         double time_step_h = -1.0,

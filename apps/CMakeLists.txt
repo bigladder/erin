@@ -14,5 +14,6 @@ add_executable(erin erin.cpp compilation_settings.h.in)
 target_include_directories(erin
 	PUBLIC "${PROJECT_SOURCE_DIR}/include"
 	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/toml11"
-	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/CLI11")
+	PRIVATE "${PROJECT_SOURCE_DIR}/vendor/CLI11"
+)
 target_link_libraries(erin erin_next CLI11)

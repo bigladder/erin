@@ -75,6 +75,16 @@ namespace erin
     }
 
     void
+    WriteTaggedCategoryMessage(
+        std::string const& category,
+        std::string const& tag,
+        std::string const& message
+    )
+    {
+        std::cerr << WriteTaggedCategoryToString(category, tag, message) << std::endl;
+    }
+
+    void
     WriteWarningMessage(std::string const& tag, std::string const& message)
     {
         std::cerr << WriteWarningToString(tag, message) << std::endl;
@@ -87,35 +97,36 @@ namespace erin
     }
 
     std::string
-    WriteWarningToString(std::string const& tag, std::string const& message)
+    WriteTaggedCategoryToString(
+        std::string const& category,
+        std::string const& tag,
+        std::string const& message)
     {
         std::ostringstream oss;
         if (!tag.empty())
         {
-            oss << "[WARNING: " << tag << "] ";
+            oss << "[" << category << ": " << tag << "] ";
         }
         else
         {
-            oss << "[WARNING] ";
+            oss << "[" << category << "] ";
         }
         oss << message << std::endl;
         return oss.str();
     }
 
     std::string
+    WriteWarningToString(std::string const& tag, std::string const& message)
+    {
+        return WriteTaggedCategoryToString(
+            "WARNING", tag, message);
+    }
+
+    std::string
     WriteErrorToString(std::string const& tag, std::string const& message)
     {
-        std::ostringstream oss;
-        if (!tag.empty())
-        {
-            oss << "[ERROR: " << tag << "] ";
-        }
-        else
-        {
-            oss << "[ERROR] ";
-        }
-        oss << message << std::endl;
-        return oss.str();
+        return WriteTaggedCategoryToString(
+            "ERROR", tag, message);
     }
 
 } // namespace erin

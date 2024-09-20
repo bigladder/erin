@@ -575,39 +575,36 @@ add_packLoads(CLI::App& app)
 
     auto packLoads = [&]()
     {
+        erin::Log log = get_standard_log();
         if (verbose)
         {
             std::cout << "input file: " << tomlFilename << std::endl;
             std::cout << "verbose: " << (verbose ? "true" : "false")
                       << std::endl;
         }
-
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
-            std::cout << "Could not open input file stream on input file"
-                      << std::endl;
+            erin::Log_Error(
+                log, "Could not open input file stream on input file"
+            );
             return EXIT_FAILURE;
         }
-
         auto tomlFilenameOnly = std::filesystem::path(tomlFilename).filename();
         auto data = toml::parse(ifs, tomlFilenameOnly.string());
         ifs.close();
-
         auto const& loadTable = data.at("loads").as_table();
-
         auto validationInfo = erin::SetupGlobalValidationInfo();
         erin::ValidationInfo explicitValidation =
             validationInfo.Load_01Explicit;
         erin::ValidationInfo fileValidation = validationInfo.Load_02FileBased;
         auto maybeLoads =
-            ParseLoads(loadTable, explicitValidation, fileValidation);
+            ParseLoads(loadTable, explicitValidation, fileValidation, log);
         if (!maybeLoads.has_value())
         {
             return EXIT_FAILURE;
         }
         std::vector<erin::Load> loads = std::move(maybeLoads.value());
-
         return erin::WritePackedLoads(loads, loadsFilename);
     };
 

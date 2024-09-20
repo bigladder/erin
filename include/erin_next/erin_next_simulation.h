@@ -110,7 +110,8 @@ namespace erin
     Simulation_ParseSimulationInfo(
         Simulation& s,
         toml::value const& v,
-        ValidationInfo const& validationInfo
+        ValidationInfo const& validationInfo,
+        Log const& log
     );
 
     Result

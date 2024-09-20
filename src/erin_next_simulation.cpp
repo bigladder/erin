@@ -666,12 +666,14 @@ namespace erin
     Simulation_ParseSimulationInfo(
         Simulation& s,
         toml::value const& v,
-        ValidationInfo const& validationInfo
+        ValidationInfo const& validationInfo,
+        Log const& log
     )
     {
         if (!v.contains("simulation_info"))
         {
-            WriteErrorMessage(
+            Log_Error(
+                log,
                 "simulation_info",
                 "Required section [simulation_info] not found"
             );
@@ -680,7 +682,8 @@ namespace erin
         toml::value const& simInfoValue = v.at("simulation_info");
         if (!simInfoValue.is_table())
         {
-            WriteErrorMessage(
+            Log_Error(
+                log,
                 "simulation_info",
                 "Required section [simulation_info] is not a table"
             );
@@ -697,20 +700,18 @@ namespace erin
                 errors,
                 warnings
             );
-        if (warnings.size() > 0)
+        if (!warnings.empty())
         {
-            std::cout << "WARNINGS:" << std::endl;
             for (auto const& w : warnings)
             {
-                std::cerr << w << std::endl;
+                Log_Warning(log, w);
             }
         }
-        if (errors.size() > 0)
+        if (!errors.empty())
         {
-            std::cout << "ERRORS:" << std::endl;
             for (auto const& err : errors)
             {
-                std::cerr << err << std::endl;
+                Log_Error(log, err);
             }
             return Result::Failure;
         }
@@ -1353,8 +1354,9 @@ namespace erin
     {
         Simulation s = {};
         Simulation_Init(s);
-        auto simInfoResult =
-            Simulation_ParseSimulationInfo(s, v, validationInfo.SimulationInfo);
+        auto simInfoResult = Simulation_ParseSimulationInfo(
+            s, v, validationInfo.SimulationInfo, log
+        );
         if (simInfoResult == Result::Failure)
         {
             Log_Error(log, "simulation_info", "problem parsing...");

@@ -675,7 +675,8 @@ namespace erin
     ParseDistributions(
         DistributionSystem& ds,
         toml::table const& table,
-        DistributionValidationMap const& dvm
+        DistributionValidationMap const& dvm,
+        Log const& log
     )
     {
         for (auto it = table.cbegin(); it != table.cend(); ++it)
@@ -687,8 +688,8 @@ namespace erin
                 toml::table distTable = it->second.as_table();
                 if (!distTable.contains("type"))
                 {
-                    WriteErrorMessage(
-                        fullTableName, "missing required field 'type'"
+                    Log_Error(
+                        log, fullTableName, "missing required field 'type'"
                     );
                     return Result::Failure;
                 }
@@ -697,7 +698,8 @@ namespace erin
                     tag_to_dist_type(distTypeTag);
                 if (!maybeDistType.has_value())
                 {
-                    WriteErrorMessage(
+                    Log_Error(
+                        log,
                         fullTableName,
                         "unhandled distribution type '" + distTypeTag + "'"
                     );
@@ -779,7 +781,7 @@ namespace erin
                     break;
                     default:
                     {
-                        WriteErrorMessage(fullTableName, "unhandled dist type");
+                        Log_Error(log, fullTableName, "unhandled dist type");
                         return Result::Failure;
                     }
                     break;
@@ -788,13 +790,13 @@ namespace erin
                 {
                     for (std::string const& err : errors)
                     {
-                        WriteErrorMessage("", err);
+                        Log_Error(log, err);
                     }
                     return Result::Failure;
                 }
                 for (std::string const& w : warnings)
                 {
-                    WriteErrorMessage("", w);
+                    Log_Warning(log, w);
                 }
                 // TODO: pull default time from SimulationInfo
                 TimeUnit timeUnit = TimeUnit::Second;
@@ -806,7 +808,8 @@ namespace erin
                         TagToTimeUnit(timeUnitStr);
                     if (!maybeTimeUnit.has_value())
                     {
-                        WriteErrorMessage(
+                        Log_Error(
+                            log,
                             fullTableName,
                             "unhandled time unit '" + timeUnitStr + "'"
                         );
@@ -925,7 +928,8 @@ namespace erin
                             }
                             else
                             {
-                                WriteErrorMessage(
+                                Log_Error(
+                                    log,
                                     fullTableName,
                                     "csv file '" + csvFileName
                                         + "'"
@@ -938,7 +942,8 @@ namespace erin
                         }
                         else
                         {
-                            WriteErrorMessage(
+                            Log_Error(
+                                log,
                                 fullTableName,
                                 "need one of 'variate_time_pairs' or 'csv_file'"
                             );
@@ -982,7 +987,8 @@ namespace erin
                     break;
                     default:
                     {
-                        WriteErrorMessage(
+                        Log_Error(
+                            log,
                             "distribution",
                             "unhandled distribution type: " + distTypeTag
                         );

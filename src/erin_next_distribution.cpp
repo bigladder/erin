@@ -784,7 +784,7 @@ namespace erin
                     }
                     break;
                 }
-                if (errors.size() > 0)
+                if (!errors.empty())
                 {
                     for (std::string const& err : errors)
                     {

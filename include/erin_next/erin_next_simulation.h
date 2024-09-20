@@ -175,7 +175,8 @@ namespace erin
     Simulation_ReadFromToml(
         toml::value const& v,
         InputValidationMap const& validationInfo,
-        std::unordered_set<std::string> const& componentTagsInUse
+        std::unordered_set<std::string> const& componentTagsInUse,
+        Log const& log = Log{}
     );
 
     void

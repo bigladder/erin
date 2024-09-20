@@ -24,6 +24,30 @@
 #include <CLI/CLI.hpp>
 #include "compilation_settings.h"
 
+erin::Log
+get_standard_log()
+{
+    using namespace erin;
+    Logger logger{};
+    Log log = Log_MakeFromCourier(logger);
+    // NOTE: overriding default error functionality as it throws.
+    //       instead, error conditions and exiting are handled explicitly
+    //       by the library.
+    log.error = [&](std::string const& tag, std::string const& msg)
+    {
+        if (tag.empty())
+        {
+            std::cout << fmt::format("[{}] {}", "ERROR", msg) << std::endl;
+        }
+        else
+        {
+            std::cout << fmt::format("[{}] {}: {}", "ERROR", tag, msg)
+                      << std::endl;
+        }
+    };
+    return log;
+}
+
 CLI::App*
 add_version(CLI::App& app)
 {
@@ -129,23 +153,7 @@ add_run(CLI::App& app)
     auto run = [&]()
     {
         using namespace erin;
-        Logger logger{};
-        Log log = Log_MakeFromCourier(logger);
-        // NOTE: overriding default error functionality as it throws.
-        //       instead, error conditions and exiting are handled explicitly
-        //       by the library.
-        log.error = [&](std::string const& tag, std::string const& msg)
-        {
-            if (tag.empty())
-            {
-                std::cout << fmt::format("[{}] {}", "ERROR", msg) << std::endl;
-            }
-            else
-            {
-                std::cout << fmt::format("[{}] {}: {}", "ERROR", tag, msg)
-                          << std::endl;
-            }
-        };
+        Log log = get_standard_log();
         bool aggregate_groups = !no_aggregate_groups;
         if (verbose)
         {
@@ -164,14 +172,12 @@ add_run(CLI::App& app)
             std::cout << "groups: " << (aggregate_groups ? "true" : "false")
                       << std::endl;
         }
-
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
             Log_Error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
-
         auto nameOnly = std::filesystem::path(tomlFilename).filename();
         toml::value data = toml::parse(ifs, nameOnly.string());
         ifs.close();
@@ -179,7 +185,7 @@ add_run(CLI::App& app)
             TOMLTable_ParseComponentTagsInUse(data);
         auto validationInfo = SetupGlobalValidationInfo();
         auto maybeSim =
-            Simulation_ReadFromToml(data, validationInfo, componentTagsInUse);
+            Simulation_ReadFromToml(data, validationInfo, componentTagsInUse, log);
         if (!maybeSim.has_value())
         {
             Log_Error(log, "Simulation returned without value");
@@ -226,15 +232,14 @@ add_graph(CLI::App& app)
 
     auto graph = [&]()
     {
+        using namespace erin;
+        Log log = get_standard_log();
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
-            std::cout << "Could not open input file stream on input file"
-                      << std::endl;
+            Log_Error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
-
-        using namespace erin;
         auto name_only = std::filesystem::path(tomlFilename).filename();
         auto data = toml::parse(ifs, name_only.string());
         ifs.close();
@@ -242,9 +247,10 @@ add_graph(CLI::App& app)
             TOMLTable_ParseComponentTagsInUse(data);
         auto validation_info = SetupGlobalValidationInfo();
         auto maybe_sim =
-            Simulation_ReadFromToml(data, validation_info, componentTagsInUse);
+            Simulation_ReadFromToml(data, validation_info, componentTagsInUse, log);
         if (!maybe_sim.has_value())
         {
+            Log_Error(log, "Could not parse sim data from TOML");
             return EXIT_FAILURE;
         }
         Simulation s = std::move(maybe_sim.value());
@@ -281,15 +287,14 @@ add_checkNetwork(CLI::App& app)
 
     auto checkNetwork = [&]()
     {
+        using namespace erin;
+        Log log = get_standard_log();
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
-            std::cout << "Could not open input file stream on input file"
-                      << std::endl;
+            Log_Error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
-
-        using namespace erin;
         auto nameOnly = std::filesystem::path(tomlFilename).filename();
         auto data = toml::parse(ifs, nameOnly.string());
         ifs.close();
@@ -297,7 +302,7 @@ add_checkNetwork(CLI::App& app)
             TOMLTable_ParseComponentTagsInUse(data);
         auto validationInfo = SetupGlobalValidationInfo();
         auto maybeSim =
-            Simulation_ReadFromToml(data, validationInfo, componentTagsInUse);
+            Simulation_ReadFromToml(data, validationInfo, componentTagsInUse, log);
         if (!maybeSim.has_value())
         {
             return EXIT_FAILURE;

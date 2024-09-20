@@ -427,7 +427,8 @@ namespace erin
     ParseLoads(
         toml::table const& table,
         ValidationInfo const& explicitValidation,
-        ValidationInfo const& fileValidation
+        ValidationInfo const& fileValidation,
+        Log const& log
     )
     {
         std::vector<Load> loads{};
@@ -450,14 +451,14 @@ namespace erin
                     maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag);
                     if (!maybeLoad.has_value())
                     {
-                        WriteErrorMessage(tableName, "unable to load");
+                        Log_Error(log, tableName, "unable to load");
                         return {};
                     }
                     if (warnings01.size() > 0)
                     {
                         for (auto const& w : warnings01)
                         {
-                            WriteErrorMessage(tableName, w);
+                            Log_Warning(log, tableName, w);
                         }
                     }
                     if (maybeLoad.has_value())
@@ -488,8 +489,10 @@ namespace erin
                             }
                             else
                             {
-                                WriteErrorMessage(
-                                    tableName, "single load did not have value"
+                                Log_Error(
+                                    log,
+                                    tableName,
+                                    "single load did not have value"
                                 );
                                 return {};
                             }
@@ -508,7 +511,8 @@ namespace erin
                                 }
                                 else
                                 {
-                                    WriteErrorMessage(
+                                    Log_Error(
+                                        log,
                                         tableName,
                                         "multi-part load did not have value"
                                     );
@@ -521,7 +525,7 @@ namespace erin
             }
             else
             {
-                WriteErrorMessage(tableName, "is not a table");
+                Log_Error(log, tableName, "not a table");
                 return {};
             }
         }

@@ -729,12 +729,13 @@ namespace erin
         Simulation& s,
         toml::value const& v,
         ValidationInfo const& explicitValidation,
-        ValidationInfo const& fileValidation
+        ValidationInfo const& fileValidation,
+        Log const& log
     )
     {
         toml::value const& loadTable = v.at("loads");
         auto maybeLoads = ParseLoads(
-            loadTable.as_table(), explicitValidation, fileValidation
+            loadTable.as_table(), explicitValidation, fileValidation, log
         );
         if (!maybeLoads.has_value())
         {
@@ -1366,7 +1367,8 @@ namespace erin
             s,
             v,
             validationInfo.Load_01Explicit,
-            validationInfo.Load_02FileBased
+            validationInfo.Load_02FileBased,
+            log
         );
         if (loadsResult == Result::Failure)
         {

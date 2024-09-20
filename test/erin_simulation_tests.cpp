@@ -151,6 +151,7 @@ RunApplyReliabilitiesAndFragilities(
         {0, 160.0},
     };
     bool verbose = false;
+    Log log{};
 
     return ApplyReliabilitiesAndFragilities(
         randFn,
@@ -171,7 +172,8 @@ RunApplyReliabilitiesAndFragilities(
         scenarioOffset_s + scenarioDuration_s,
         intensityIdToAmount,
         relSchByCompId,
-        verbose
+        verbose,
+        log
     );
 }
 

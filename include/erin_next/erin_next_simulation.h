@@ -244,7 +244,8 @@ namespace erin
         std::unordered_map<size_t, double> const& intensityIdToAmount,
         std::unordered_map<size_t, std::vector<TimeState>> const&
             relSchByCompId,
-        bool verbose
+        bool verbose,
+        Log const& log
     );
 
     std::vector<TimeAndFlows>

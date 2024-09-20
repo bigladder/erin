@@ -11,6 +11,7 @@
 #include "erin_next/erin_next_random.h"
 #include "erin_next/erin_next_validation.h"
 #include "erin_next/erin_next_toml.h"
+#include "fmt/format.h"
 #include <fmt/core.h>
 #include <cassert>
 #include <fstream>
@@ -2179,15 +2180,16 @@ namespace erin
         return originalReliabilities;
     }
 
-    void
-    PrintReliabilities(std::vector<ScheduleBasedReliability> const& sbrs)
+    std::vector<std::string>
+    ReliabilitiesToStrings(std::vector<ScheduleBasedReliability> const& sbrs)
     {
-        std::cout << "ScheduleBasedReliability vector size: " << sbrs.size()
-                  << std::endl;
+        std::vector<std::string> result{};
+        result.push_back(
+            fmt::format("ScheduleBasedReliability vector size: {}",
+                        sbrs.size()));
         for (ScheduleBasedReliability const& sbr : sbrs)
         {
-            std::cout << "- {ComponentId: " << sbr.ComponentId
-                      << ",TimeStates=[";
+            std::ostringstream oss{};
             bool isFirst = true;
             for (TimeState const& ts : sbr.TimeStates)
             {
@@ -2197,11 +2199,23 @@ namespace erin
                 }
                 else
                 {
-                    std::cout << ",";
+                    oss << ",";
                 }
-                std::cout << "{" << ts.time << "," << ts.state << "}";
+                oss << "{" << ts.time << "," << ts.state << "}";
             }
-            std::cout << "]}" << std::endl;
+            result.push_back(
+                fmt::format("- {{ComponentId: {},TimeStates=[{}]}}",
+                            sbr.ComponentId, oss.str()));
+        }
+        return result;
+    }
+
+    void
+    PrintReliabilities(std::vector<ScheduleBasedReliability> const& sbrs)
+    {
+        for (std::string const& s : ReliabilitiesToStrings(sbrs))
+        {
+            std::cout << s << std::endl;
         }
     }
 
@@ -2226,7 +2240,8 @@ namespace erin
         std::unordered_map<size_t, double> const& intensityIdToAmount,
         std::unordered_map<size_t, std::vector<TimeState>> const&
             relSchByCompId,
-        bool verbose
+        bool verbose,
+        Log const& log
     )
     {
         std::vector<ScheduleBasedReliability> result;
@@ -2251,10 +2266,8 @@ namespace erin
             double initialAge_s = componentInitialAges_s[compId];
             if (verbose)
             {
-                std::cout << "component: " << componentTags[compId]
-                          << std::endl;
-                std::cout << "initial age (h): "
-                          << (initialAge_s / seconds_per_hour) << std::endl;
+                Log_Info(log, fmt::format("component: {}", componentTags[compId]));
+                Log_Info(log, fmt::format("initial age (h): {}", (initialAge_s / seconds_per_hour)));
             }
             std::vector<TimeState> clip = TimeState_Clip(
                 sch, startTime_s + initialAge_s, endTime_s + initialAge_s, true
@@ -2271,7 +2284,7 @@ namespace erin
         {
             if (verbose)
             {
-                std::cout << "... Applying fragilities" << std::endl;
+                Log_Info(log, "... Applying fragilities");
             }
             // NOTE: if there are no components having fragility modes,
             // there is nothing to do.
@@ -2320,9 +2333,7 @@ namespace erin
                     break;
                     default:
                     {
-                        WriteErrorMessage(
-                            "fragility_curve", "unhandled fragility curve type"
-                        );
+                        Log_Error(log, "fragility_curve", "unhandled fragility curve type");
                         std::exit(1);
                     }
                     break;
@@ -2349,9 +2360,8 @@ namespace erin
                     size_t compId = componentFragilityComponentIds[cfmIdx];
                     if (verbose)
                     {
-                        std::cout << "... FAILED: " << componentTags[compId]
-                                  << " (cause: " << fragilityModeTags[fmId]
-                                  << ")" << std::endl;
+                        Log_Debug(log, "fragility_curve",
+                                  fmt::format("component failed: {}; cause: {}", componentTags[compId], fragilityModeTags[fmId]));
                     }
                     // does the component have a reliability signal?
                     bool hasReliabilityAlready = false;
@@ -2377,8 +2387,7 @@ namespace erin
                         double randValue = randFn();
                         if (verbose)
                         {
-                            std::cout << "randValue for next time advance is: "
-                                      << randValue << "\n";
+                            Log_Info(log, fmt::format("randValue for next time advance is: {}", randValue));
                         }
                         double repairTime_s =
                             ds.next_time_advance(repId, randValue);
@@ -3227,41 +3236,46 @@ namespace erin
                     scenarioOffset_s + scenarioDuration_s,
                     intensityIdToAmount,
                     relSchByCompId,
-                    verbose
+                    verbose,
+                    log
                 );
                 if (verbose)
                 {
-                    std::cout << "Reliabilities for Scenario: " << scenarioTag
-                              << std::endl;
-                    std::cout << "Occurrence #" << (occIdx + 1) << std::endl;
-                    PrintReliabilities(s.TheModel.Reliabilities);
+                    Log_Info(log, fmt::format("Reliabilities for Scenario: {}", scenarioTag));
+                    Log_Info(log, fmt::format("Occurrence #{}", occIdx + 1));
+                    for (std::string const& s : ReliabilitiesToStrings(s.TheModel.Reliabilities))
+                    {
+                        Log_Info(log, s);
+                    }
                 }
                 if (saveReliabilityCurves)
                 {
                     if (verbose)
                     {
-                        std::cout << "Writing reliability curves..."
-                                  << std::endl;
+                        Log_Debug(log, "Writing reliability curves...");
                     }
                     WriteReliabilityCurves(
                         s.ScenarioMap.Tags[scenIdx], occIdx, s
                     );
                     if (verbose)
                     {
-                        std::cout << "Reliability curves written" << std::endl;
+                        Log_Debug(log, "Reliability curves written");
                     }
                 }
                 std::string scenarioStartTimeTag =
                     TimeToISO8601Period(static_cast<uint64_t>(std::llround(t)));
                 if (verbose)
                 {
-                    std::cout << "Running " << s.ScenarioMap.Tags[scenIdx]
-                              << " from " << scenarioStartTimeTag << " for "
-                              << s.ScenarioMap.Durations[scenIdx] << " "
-                              << TimeUnitToTag(s.ScenarioMap.TimeUnits[scenIdx])
-                              << " (" << SecondsToPrettyString(t) << " to "
-                              << SecondsToPrettyString(tEnd) << ")"
-                              << std::endl;
+                    Log_Info(log,
+                        fmt::format("Running {} from {} for {} {}",
+                            s.ScenarioMap.Tags[scenIdx],
+                            scenarioStartTimeTag,
+                            s.ScenarioMap.Durations[scenIdx],
+                            TimeUnitToTag(s.ScenarioMap.TimeUnits[scenIdx])));
+                    Log_Info(log,
+                        fmt::format("time: {} to {}",
+                            SecondsToPrettyString(t),
+                            SecondsToPrettyString(tEnd)));
                 }
                 s.TheModel.FinalTime = scenarioDuration_s;
                 // TODO: add an optional verbosity flag to SimInfo
@@ -3304,8 +3318,7 @@ namespace erin
             }
             if (verbose)
             {
-                std::cout << "Scenario " << scenarioTag << " finished"
-                          << std::endl;
+                Log_Info(log, fmt::format("Scenario {} finished", scenarioTag));
             }
             // TODO: merge per-occurrence stats with global for the current
             // scenario

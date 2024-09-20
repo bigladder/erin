@@ -11,6 +11,7 @@
 #include "erin_next/erin_next_units.h"
 #include "erin_next/erin_next_result.h"
 #include "erin_next/erin_next_lookup_table.h"
+#include "erin/logging.h"
 #include "../vendor/toml11/toml.hpp"
 #include <iostream>
 #include <limits>
@@ -812,8 +813,14 @@ namespace erin
     std::optional<ComponentType>
     TagToComponentType(std::string const& tag);
 
+    std::vector<std::string>
+    FlowsToStrings(Model const& m, SimulationState const& ss, double t);
+
     void
-    PrintFlows(Model const& m, SimulationState const&, double t);
+    LogFlows(Log const& log, Model const& m, SimulationState const& ss, double t);
+
+    void
+    PrintFlows(Model const& m, SimulationState const& ss, double t);
 
     FlowSummary
     SummarizeFlows(Model const& m, SimulationState const& ss, double t);
@@ -831,7 +838,7 @@ namespace erin
     CopyStorageStates(SimulationState& ss);
 
     std::vector<TimeAndFlows>
-    Simulate(Model& m, bool print = true, bool enableSwitchLogic = true);
+    Simulate(Model& m, bool verbose = true, bool enableSwitchLogic = true, Log const& log = Log{});
 
     void
     Model_SetComponentToRepaired(

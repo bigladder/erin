@@ -128,6 +128,22 @@ add_run(CLI::App& app)
 
     auto run = [&]()
     {
+        using namespace erin;
+        Logger logger{};
+        Log log = Log_MakeFromCourier(logger);
+        // NOTE: overriding default error functionality as it throws.
+        //       instead, error conditions and exiting are handled explicitly
+        //       by the library.
+        log.error = [&](std::string const& tag, std::string const& msg) {
+            if (tag.empty())
+            {
+                std::cout << fmt::format("[{}] {}", "ERROR", msg) << std::endl;
+            }
+            else
+            {
+                std::cout << fmt::format("[{}] {}: {}", "ERROR", tag, msg) << std::endl;
+            }
+        };
         bool aggregate_groups = !no_aggregate_groups;
         if (verbose)
         {
@@ -150,12 +166,10 @@ add_run(CLI::App& app)
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
-            std::cout << "Could not open input file stream on input file"
-                      << std::endl;
+            Log_Error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
 
-        using namespace erin;
         auto nameOnly = std::filesystem::path(tomlFilename).filename();
         toml::value data = toml::parse(ifs, nameOnly.string());
         ifs.close();
@@ -166,29 +180,15 @@ add_run(CLI::App& app)
             Simulation_ReadFromToml(data, validationInfo, componentTagsInUse);
         if (!maybeSim.has_value())
         {
+            Log_Error(log, "Simulation returned without value");
             return EXIT_FAILURE;
         }
         Simulation s = std::move(maybeSim.value());
         if (verbose)
         {
             Simulation_Print(s);
-            std::cout << "-----------------" << std::endl;
+            Log_Info(log, "-----------------");
         }
-        Logger logger{};
-        Log log = Log_MakeFromCourier(logger);
-        // NOTE: overriding default error functionality as it throws.
-        //       instead, error conditions and exiting are handled explicitly
-        //       by the library.
-        log.error = [&](std::string const& tag, std::string const& msg) {
-            if (tag.empty())
-            {
-                std::cout << fmt::format("[{}] {}", "ERROR", msg) << std::endl;
-            }
-            else
-            {
-                std::cout << fmt::format("[{}] {}: {}", "ERROR", tag, msg) << std::endl;
-            }
-        };
         Simulation_Run(
             s,
             log,

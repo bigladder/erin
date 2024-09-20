@@ -1,6 +1,7 @@
 /* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
 #include "erin_next/erin_next.h"
+#include "erin/logging.h"
 #include "erin_next/erin_next_lookup_table.h"
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_units.h"
@@ -2967,21 +2968,43 @@ namespace erin
         return {};
     }
 
+    std::vector<std::string>
+    FlowsToStrings(Model const& m, SimulationState const& ss, double time_s)
+    {
+        std::vector<std::string> result{};
+        result.push_back(
+            fmt::format("time: {} s, {}, {} h",
+                time_s,
+                TimeToISO8601Period(static_cast<uint64_t>(time_s)),
+                TimeInSecondsToHours(static_cast<uint64_t>(time_s))));
+        for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
+        {
+            result.push_back(
+                fmt::format(
+                    "{}: {} (R: {}; A: {})",
+                    ConnectionToString(m.ComponentMap, m.Connections[flowIdx]),
+                    ss.Flows[flowIdx].Actual_W,
+                    ss.Flows[flowIdx].Requested_W,
+                    ss.Flows[flowIdx].Available_W));
+        }
+        return result;
+    }
+
+    void
+    LogFlows(Log const& log, Model const& m, SimulationState const& ss, double time_s)
+    {
+        for (std::string const& s : FlowsToStrings(m, ss, time_s))
+        {
+            Log_Info(log, s);
+        }
+    }
+
     void
     PrintFlows(Model const& m, SimulationState const& ss, double time_s)
     {
-        std::cout << "time: " << time_s << " s, "
-                  << TimeToISO8601Period(static_cast<uint64_t>(time_s)) << ", "
-                  << TimeInSecondsToHours(static_cast<uint64_t>(time_s)) << " h"
-                  << std::endl;
-        for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
+        for (std::string const& s : FlowsToStrings(m, ss, time_s))
         {
-            std::cout << ConnectionToString(
-                m.ComponentMap, m.Connections[flowIdx]
-            ) << ": " << ss.Flows[flowIdx].Actual_W
-                      << " (R: " << ss.Flows[flowIdx].Requested_W
-                      << "; A: " << ss.Flows[flowIdx].Available_W << ")"
-                      << std::endl;
+            std::cout << s << std::endl;
         }
     }
 
@@ -3424,7 +3447,7 @@ namespace erin
     }
 
     std::vector<TimeAndFlows>
-    Simulate(Model& model, bool print, bool enableSwitchLogic)
+    Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
     {
         double t = 0.0;
         std::vector<TimeAndFlows> timeAndFlows{};
@@ -3438,7 +3461,7 @@ namespace erin
             // arrays
             // note: these two arrays could be sorted by component type for
             // faster running over loops...
-            ActivateConnectionsForReliability(model, ss, t, print);
+            ActivateConnectionsForReliability(model, ss, t, verbose);
             ActivateConnectionsForScheduleBasedLoads(model, ss, t);
             ActivateConnectionsForScheduleBasedSources(model, ss, t);
             ActivateConnectionsForStores(model, ss, t);
@@ -3454,9 +3477,9 @@ namespace erin
             {
                 if (CountActiveConnections(ss) == 0)
                 {
-                    if (print)
+                    if (verbose)
                     {
-                        std::cout << "loop iter: " << loopIter << std::endl;
+                        Log_Debug(log, fmt::format("loop iter: {}", loopIter));
                     }
                     break;
                 }
@@ -3474,12 +3497,12 @@ namespace erin
                     }
                 }
             }
-            if (print)
+            if (verbose)
             {
-                PrintFlows(model, ss, t);
+                LogFlows(log, model, ss, t);
                 if (!PrintFlowSummary(SummarizeFlows(model, ss, t)))
                 {
-                    std::cout << "FLOW IMBALANCE!" << std::endl;
+                    Log_Warning(log, "FLOW IMBALANCE!");
                     std::map<size_t, int64_t> sumOfFlowsByCompId;
                     for (size_t connIdx = 0; connIdx < model.Connections.size();
                          ++connIdx)
@@ -3515,15 +3538,15 @@ namespace erin
                         }
                         if (item.second != 0)
                         {
-                            std::cout
-                                << model.ComponentMap.Tag[item.first]
-                                << " doesn't have zero flow: " << item.second
-                                << " W" << std::endl;
+                            Log_Warning(log,
+                                fmt::format("{} doesn't have a zero sum of all flows: {} W",
+                                    model.ComponentMap.Tag[item.first],
+                                    item.second));
                         }
                     }
                 }
                 PrintModelState(model, ss);
-                std::cout << "==== QUIESCENCE REACHED ====" << std::endl;
+                Log_Info(log, "==== QUIESCENCE REACHED ====");
             }
             TimeAndFlows taf = {};
             taf.Time = t;

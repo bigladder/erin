@@ -24,10 +24,10 @@ namespace erin
   struct Log
   {
     LogLevel LogLevel = LogLevel::Debug;
-    std::optional<std::function<void(std::string const&, std::string const&)>> debug;
-    std::optional<std::function<void(std::string const&, std::string const&)>> info;
-    std::optional<std::function<void(std::string const&, std::string const&)>> warning;
-    std::optional<std::function<void(std::string const&, std::string const&)>> error;
+    std::optional<std::function<void(std::string const&, std::string const&)>> debug = {};
+    std::optional<std::function<void(std::string const&, std::string const&)>> info = {};
+    std::optional<std::function<void(std::string const&, std::string const&)>> warning = {};
+    std::optional<std::function<void(std::string const&, std::string const&)>> error = {};
   };
 
   void

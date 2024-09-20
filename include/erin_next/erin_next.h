@@ -817,7 +817,12 @@ namespace erin
     FlowsToStrings(Model const& m, SimulationState const& ss, double t);
 
     void
-    LogFlows(Log const& log, Model const& m, SimulationState const& ss, double t);
+    LogFlows(
+        Log const& log,
+        Model const& m,
+        SimulationState const& ss,
+        double t
+    );
 
     void
     PrintFlows(Model const& m, SimulationState const& ss, double t);
@@ -838,7 +843,12 @@ namespace erin
     CopyStorageStates(SimulationState& ss);
 
     std::vector<TimeAndFlows>
-    Simulate(Model& m, bool verbose = true, bool enableSwitchLogic = true, Log const& log = Log{});
+    Simulate(
+        Model& m,
+        bool verbose = true,
+        bool enableSwitchLogic = true,
+        Log const& log = Log{}
+    );
 
     void
     Model_SetComponentToRepaired(

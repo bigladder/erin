@@ -119,7 +119,11 @@ namespace erin
     WriteErrorMessage(std::string const& tag, std::string const& message);
 
     std::string
-    WriteTaggedCategoryToString(std::string const& category, std::string const& tag, std::string const& message);
+    WriteTaggedCategoryToString(
+        std::string const& category,
+        std::string const& tag,
+        std::string const& message
+    );
 
     std::string
     WriteWarningToString(std::string const& tag, std::string const& message);

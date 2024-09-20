@@ -2972,26 +2972,32 @@ namespace erin
     FlowsToStrings(Model const& m, SimulationState const& ss, double time_s)
     {
         std::vector<std::string> result{};
-        result.push_back(
-            fmt::format("time: {} s, {}, {} h",
-                time_s,
-                TimeToISO8601Period(static_cast<uint64_t>(time_s)),
-                TimeInSecondsToHours(static_cast<uint64_t>(time_s))));
+        result.push_back(fmt::format(
+            "time: {} s, {}, {} h",
+            time_s,
+            TimeToISO8601Period(static_cast<uint64_t>(time_s)),
+            TimeInSecondsToHours(static_cast<uint64_t>(time_s))
+        ));
         for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
         {
-            result.push_back(
-                fmt::format(
-                    "{}: {} (R: {}; A: {})",
-                    ConnectionToString(m.ComponentMap, m.Connections[flowIdx]),
-                    ss.Flows[flowIdx].Actual_W,
-                    ss.Flows[flowIdx].Requested_W,
-                    ss.Flows[flowIdx].Available_W));
+            result.push_back(fmt::format(
+                "{}: {} (R: {}; A: {})",
+                ConnectionToString(m.ComponentMap, m.Connections[flowIdx]),
+                ss.Flows[flowIdx].Actual_W,
+                ss.Flows[flowIdx].Requested_W,
+                ss.Flows[flowIdx].Available_W
+            ));
         }
         return result;
     }
 
     void
-    LogFlows(Log const& log, Model const& m, SimulationState const& ss, double time_s)
+    LogFlows(
+        Log const& log,
+        Model const& m,
+        SimulationState const& ss,
+        double time_s
+    )
     {
         for (std::string const& s : FlowsToStrings(m, ss, time_s))
         {
@@ -3538,10 +3544,15 @@ namespace erin
                         }
                         if (item.second != 0)
                         {
-                            Log_Warning(log,
-                                fmt::format("{} doesn't have a zero sum of all flows: {} W",
+                            Log_Warning(
+                                log,
+                                fmt::format(
+                                    "{} doesn't have a zero sum of all flows: "
+                                    "{} W",
                                     model.ComponentMap.Tag[item.first],
-                                    item.second));
+                                    item.second
+                                )
+                            );
                         }
                     }
                 }

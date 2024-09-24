@@ -69,7 +69,7 @@ namespace erin
          *  D = B / 2
          *  erfinv(x) ~= ((-A) + (-D) + sqrt((A + D)**2 - (C*B)))**0.5
          *
-         *  domain is (-1, 1) but outliter values are allowed (they just get
+         *  domain is (-1, 1) but outlier values are allowed (they just get
          *  cropped)
          */
         constexpr double extent{3.0};

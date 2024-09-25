@@ -100,6 +100,18 @@ tasks:
       ISO_DATE:
         sh: date +"%Y-%m-%dT%H%M%S%z"
 
+  bench-packed:
+    desc: Runs benchmarks using hyperfine for packed loads.
+    dir: 'docs/examples/ft-illinois_packed'
+    cmds:
+      - hyperfine --warmup 2 '{{.ERIN}} run exft-illinois_packed_clean.toml' --export-markdown ../../../benchmark-pack-{{.ISO_DATE}}-{{.GIT_COMMIT}}.md --export-json ../../../benchmark-pack-{{.ISO_DATE}}-{{.GIT_COMMIT}}.json --export-csv ../../../benchmark-pack-{{.ISO_DATE}}-{{.GIT_COMMIT}}.csv
+    vars:
+      ERIN: "../../../build/bin/erin"
+      GIT_COMMIT:
+        sh: git rev-parse --short HEAD
+      ISO_DATE:
+        sh: date +"%Y-%m-%dT%H%M%S%z"
+
   bench-win:
     desc: Runs benchmarks using hyperfine on Windows.
     dir: 'docs/examples/ft-illinois'

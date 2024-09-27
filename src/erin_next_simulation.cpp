@@ -3326,10 +3326,10 @@ namespace erin
                         )
                     );
                     Log_Info(log, fmt::format("Occurrence #{}", occIdx + 1));
-                    for (std::string const& s :
+                    for (std::string const& reliabilityStrings :
                          ReliabilitiesToStrings(s.TheModel.Reliabilities))
                     {
-                        Log_Info(log, s);
+                        Log_Info(log, reliabilityStrings);
                     }
                 }
                 if (saveReliabilityCurves)

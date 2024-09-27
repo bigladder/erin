@@ -55,6 +55,7 @@ add_version(CLI::App& app)
     auto version = [&]()
     {
         std::cout << "Version: " << erin::version::version_string << "\n";
+        std::cout << "(git hash: " << erin::version::git_hash << ")\n";
         std::cout << "Build Type: " << build_type << "\n";
     };
 

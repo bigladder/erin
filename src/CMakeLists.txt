@@ -13,9 +13,7 @@
 #file(GLOB_RECURSE sources "${PROJECT_SOURCE_DIR}/src/[a-zA-Z]*.cpp")
 #file(GLOB_RECURSE public_headers "${PROJECT_SOURCE_DIR}/include/${CMAKE_PROJECT_NAME}/[a-zA-Z]*.h")
 #file(GLOB_RECURSE private_headers "${PROJECT_SOURCE_DIR}/src/[a-zA-Z]*.h")
-configure_file(
-  ${PROJECT_SOURCE_DIR}/include/erin/version.h.in
-  ${PROJECT_SOURCE_DIR}/include/erin/version.h)
+include(../cmake/get-git-hash.cmake)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)

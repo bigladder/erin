@@ -11,6 +11,7 @@ namespace erin::version
   constexpr int minor_version{@ERIN_VERSION_MINOR@};
   constexpr int release_number{@ERIN_VERSION_PATCH@};
   std::string const version_string{"@ERIN_VERSION@"};
+  std::string const git_hash{"@ERIN_GIT_HASH@"};
 }
 
 #endif

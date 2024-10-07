@@ -136,11 +136,11 @@ namespace erin
                 }
                 if (maxOccurrencesString.value() != "unlimited")
                 {
-                    std::cout << "[" << fullName << "] max_occurrences must "
-                              << "be a non-zero positive number or the string "
-                              << "'unlimited' or the value -1 (unlimited); got '"
-                              << maxOccurrencesString.value() << "'"
-                              << std::endl;
+                    std::cout
+                        << "[" << fullName << "] max_occurrences must "
+                        << "be a non-zero positive number or the string "
+                        << "'unlimited' or the value -1 (unlimited); got '"
+                        << maxOccurrencesString.value() << "'" << std::endl;
                     return {};
                 }
             }
@@ -154,7 +154,8 @@ namespace erin
                 }
                 if (maxOccurrenceValue.value() == -1)
                 {
-                    // nothing to do; this means there is no maximum number of occurrences.
+                    // nothing to do; this means there is no maximum number of
+                    // occurrences.
                 }
                 else if (maxOccurrenceValue.value() > 0)
                 {

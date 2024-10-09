@@ -599,8 +599,9 @@ namespace erin
                     {
                         WriteErrorMessage(
                             tableName,
-                            "Parse error: unhandled datatype for boolean default '"
-                            + defkv.second + "'"
+                            "Parse error: unhandled datatype for boolean "
+                            "default '"
+                                + defkv.second + "'"
                         );
                         std::exit(1);
                     }

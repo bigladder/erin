@@ -100,10 +100,7 @@ namespace erin
             m.ComponentMap.CompType.size()
             == m.ComponentMap.InitialAges_s.size()
         );
-        assert(
-            m.ComponentMap.CompType.size()
-            == m.ComponentMap.Report.size()
-        );
+        assert(m.ComponentMap.CompType.size() == m.ComponentMap.Report.size());
         assert(m.ComponentMap.CompType.size() == m.ComponentMap.Tag.size());
         std::unordered_map<size_t, std::set<size_t>> muxCompIdToInflowConns;
         std::unordered_map<size_t, std::set<size_t>> muxCompIdToOutflowConns;

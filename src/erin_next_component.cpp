@@ -251,9 +251,7 @@ namespace erin
             else
             {
                 Log_Error(
-                    log,
-                    fullTableName,
-                    "unable to parse 'report' as bool"
+                    log, fullTableName, "unable to parse 'report' as bool"
                 );
                 return Result::Failure;
             }

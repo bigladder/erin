@@ -556,6 +556,16 @@ namespace erin
                 .Aliases = {},
                 .Sections = allCompSections,
             },
+            FieldInfo{
+                .FieldName = "report",
+                .Type = InputType::Bool,
+                .IsRequired = false,
+                .InformIfMissing = false,
+                .Default = "true",
+                .EnumValues = {},
+                .Aliases = {},
+                .Sections = allCompSections,
+            },
             // Components -- All Except Loads
             FieldInfo{
                 .FieldName = "failure_modes",

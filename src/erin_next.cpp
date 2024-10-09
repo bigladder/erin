@@ -100,6 +100,10 @@ namespace erin
             m.ComponentMap.CompType.size()
             == m.ComponentMap.InitialAges_s.size()
         );
+        assert(
+            m.ComponentMap.CompType.size()
+            == m.ComponentMap.Report.size()
+        );
         assert(m.ComponentMap.CompType.size() == m.ComponentMap.Tag.size());
         std::unordered_map<size_t, std::set<size_t>> muxCompIdToInflowConns;
         std::unordered_map<size_t, std::set<size_t>> muxCompIdToOutflowConns;
@@ -981,7 +985,8 @@ namespace erin
         std::vector<size_t> inflowType,
         std::vector<size_t> outflowType,
         std::string const& tag,
-        double initialAge_s
+        double initialAge_s,
+        bool report
     )
     {
         size_t id = c.CompType.size();
@@ -991,6 +996,7 @@ namespace erin
         c.InitialAges_s.push_back(initialAge_s);
         c.InflowType.push_back(inflowType);
         c.OutflowType.push_back(outflowType);
+        c.Report.push_back(report);
         return id;
     }
 
@@ -5775,7 +5781,16 @@ namespace erin
     ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s)
     {
         assert(id < cd.CompType.size());
+        assert(cd.CompType.size() == cd.InitialAges_s.size());
         cd.InitialAges_s[id] = age_s;
+    }
+
+    void
+    ComponentDict_SetReporting(ComponentDict& cd, size_t id, bool report)
+    {
+        assert(id < cd.CompType.size());
+        assert(cd.CompType.size() == cd.Report.size());
+        cd.Report[id] = report;
     }
 
     void

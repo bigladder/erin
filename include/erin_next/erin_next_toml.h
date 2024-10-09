@@ -59,6 +59,9 @@ namespace erin
         std::string const& tableName
     );
 
+    std::optional<bool>
+    TOML_ParseValueAsBool(toml::value const& v);
+
     std::optional<double>
     TOML_ParseNumericValueAsDouble(toml::value const& v);
 

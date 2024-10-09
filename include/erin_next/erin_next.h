@@ -109,6 +109,8 @@ namespace erin
         std::vector<std::vector<size_t>> InflowType;
         // Component's outflow type by outport; result indexes FlowDict
         std::vector<std::vector<size_t>> OutflowType;
+        // if true, all connected inflows should be reported in event log
+        std::vector<bool> Report;
     };
 
     struct FlowSummary
@@ -649,7 +651,8 @@ namespace erin
         std::vector<size_t> inflowType,
         std::vector<size_t> outflowType,
         std::string const& tag,
-        double initialAge_s
+        double initialAge_s,
+        bool report = true
     );
 
     void
@@ -1308,6 +1311,9 @@ namespace erin
 
     void
     ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s);
+
+    void
+    ComponentDict_SetReporting(ComponentDict& cd, size_t id, bool report);
 
     void
     AddComponentToGroup(Model& model, size_t id, std::string group);

@@ -34,6 +34,7 @@ namespace erin
         EnumString,
         Number, // float or integer
         Integer, // only integer; will also parse 3.0 as 3, though
+        Bool,
         ArrayOfDouble,
         ArrayOfString,
         ArrayOfTuple3OfString,
@@ -51,6 +52,7 @@ namespace erin
     {
         InputType Type;
         std::variant<
+            bool,
             std::string,
             double,
             int64_t,

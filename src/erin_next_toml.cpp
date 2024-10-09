@@ -354,6 +354,63 @@ namespace erin
                     v.Value = std::move(aos);
                 }
                 break;
+                case InputType::Bool:
+                {
+                    bool has_error = false;
+                    if (value.is_boolean())
+                    {
+                        v.Value = static_cast<bool>(value.as_boolean());
+                    }
+                    else if (value.is_integer())
+                    {
+                        int val = value.as_integer();
+                        if (val == 1 || val == -1)
+                        {
+                            v.Value = true;
+                        }
+                        else if (value.as_integer() == 0)
+                        {
+                            v.Value = false;
+                        }
+                        else
+                        {
+                            has_error = true;
+                        }
+                    }
+                    else if (value.is_string())
+                    {
+                        std::string str = value.as_string();
+                        if (str == "true")
+                        {
+                            v.Value = true;
+                        }
+                        else if (str == "false")
+                        {
+                            v.Value = false;
+                        }
+                        else
+                        {
+                            has_error = true;
+                        }
+                    }
+                    else
+                    {
+                        has_error = true;
+                    }
+                    if (has_error)
+                    {
+                        std::ostringstream oss;
+                        oss << "Expected an item of type bool "
+                            << " for field '" << it->first
+                            << "' to be a bool, 'true', 'false', "
+                            << "1, -1, or 0";
+                        errors.push_back(
+                            fmt::format("{}: {}", tableName, oss.str())
+                        );
+                        return out;
+                    }
+                }
+                break;
                 case InputType::Integer:
                 {
                     if (!value.is_integer())
@@ -526,6 +583,27 @@ namespace erin
                 case InputType::Number:
                 {
                     iv.Value = std::stod(defkv.second);
+                }
+                break;
+                case InputType::Bool:
+                {
+                    if (defkv.second == "true")
+                    {
+                        iv.Value = true;
+                    }
+                    else if (defkv.second == "false")
+                    {
+                        iv.Value = false;
+                    }
+                    else
+                    {
+                        WriteErrorMessage(
+                            tableName,
+                            "Parse error: unhandled datatype for boolean default '"
+                            + defkv.second + "'"
+                        );
+                        std::exit(1);
+                    }
                 }
                 break;
                 default:

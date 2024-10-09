@@ -356,48 +356,13 @@ namespace erin
                 break;
                 case InputType::Bool:
                 {
-                    bool has_error = false;
-                    if (value.is_boolean())
+                    std::optional<bool> maybeBool =
+                        TOML_ParseValueAsBool(value);
+                    if (maybeBool.has_value())
                     {
-                        v.Value = static_cast<bool>(value.as_boolean());
-                    }
-                    else if (value.is_integer())
-                    {
-                        int val = value.as_integer();
-                        if (val == 1 || val == -1)
-                        {
-                            v.Value = true;
-                        }
-                        else if (value.as_integer() == 0)
-                        {
-                            v.Value = false;
-                        }
-                        else
-                        {
-                            has_error = true;
-                        }
-                    }
-                    else if (value.is_string())
-                    {
-                        std::string str = value.as_string();
-                        if (str == "true")
-                        {
-                            v.Value = true;
-                        }
-                        else if (str == "false")
-                        {
-                            v.Value = false;
-                        }
-                        else
-                        {
-                            has_error = true;
-                        }
+                        v.Value = maybeBool.value();
                     }
                     else
-                    {
-                        has_error = true;
-                    }
-                    if (has_error)
                     {
                         std::ostringstream oss;
                         oss << "Expected an item of type bool "
@@ -730,6 +695,40 @@ namespace erin
             }
         }
         return field;
+    }
+
+    std::optional<bool>
+    TOML_ParseValueAsBool(toml::value const& v)
+    {
+        if (v.is_boolean())
+        {
+            return static_cast<bool>(v.as_boolean());
+        }
+        if (v.is_integer())
+        {
+            int val = v.as_integer();
+            if (val == 0)
+            {
+                return false;
+            }
+            if (val == -1 || val == 1)
+            {
+                return true;
+            }
+        }
+        if (v.is_string())
+        {
+            std::string val = v.as_string();
+            if (val == "true" || val == "True")
+            {
+                return true;
+            }
+            if (val == "false" || val == "False")
+            {
+                return false;
+            }
+        }
+        return {};
     }
 
     std::optional<double>

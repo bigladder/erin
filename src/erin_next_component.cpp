@@ -239,6 +239,25 @@ namespace erin
             }
             rateUnit = maybeRateUnit.value();
         }
+        bool report = true;
+        if (table.contains("report"))
+        {
+            std::optional<bool> maybeReport =
+                TOML_ParseValueAsBool(table.at("report"));
+            if (maybeReport.has_value())
+            {
+                report = maybeReport.value();
+            }
+            else
+            {
+                Log_Error(
+                    log,
+                    fullTableName,
+                    "unable to parse 'report' as bool"
+                );
+                return Result::Failure;
+            }
+        }
         switch (ct)
         {
             case ComponentType::ConstantSourceType:
@@ -906,6 +925,7 @@ namespace erin
                 std::exit(1);
             }
         }
+        s.TheModel.ComponentMap.Report[id] = report;
         if (table.contains("failure_modes"))
         {
             if (!table.at("failure_modes").is_array())

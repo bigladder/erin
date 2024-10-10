@@ -1657,7 +1657,8 @@ namespace erin
     std::vector<size_t>
     RemoveNonReportingIds(
         std::vector<size_t> const& idOrder,
-        std::unordered_set<size_t> const& idsToReport)
+        std::unordered_set<size_t> const& idsToReport
+    )
     {
         std::vector<size_t> result{};
         result.reserve(idsToReport.size());
@@ -3090,7 +3091,8 @@ namespace erin
         for (size_t id = 0; id < conns.size(); ++id)
         {
             Connection const& c = conns[id];
-            if (compsToReport.contains(c.FromId) || compsToReport.contains(c.ToId))
+            if (compsToReport.contains(c.FromId)
+                || compsToReport.contains(c.ToId))
             {
                 connsToReport.insert(id);
             }
@@ -3222,7 +3224,8 @@ namespace erin
 
         std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
         std::vector<size_t> connOrder = CalculateConnectionOrder(s);
-        std::vector<size_t> storeOrderForEvents = CalculateStoreOrder(s, compsToReport);
+        std::vector<size_t> storeOrderForEvents =
+            CalculateStoreOrder(s, compsToReport);
         std::vector<size_t> compOrder = CalculateComponentOrder(s);
         std::vector<size_t> failOrder = CalculateFailModeOrder(s);
         std::vector<size_t> fragOrder = CalculateFragilModeOrder(s);
@@ -3234,7 +3237,7 @@ namespace erin
             CalculateNodeConnectionOrder(s, nodeConnections, aggregateGroups);
         std::unordered_set<size_t> nodeConnsToReport{};
         nodeConnsToReport.reserve(connsToReport.size());
-        for (size_t id=0; id < nodeConnections.size(); ++id)
+        for (size_t id = 0; id < nodeConnections.size(); ++id)
         {
             NodeConnection const& nc = nodeConnections[id];
             if (connsToReport.contains(nc.ConnectionId))

@@ -778,8 +778,9 @@ namespace erin
             case ComponentType::MoverType:
             {
                 double cop = std::get<double>(input.at("cop").Value);
-                auto compIdAndConns =
-                    Model_AddMover(s.TheModel, cop, inflowId, outflowId, tag, report);
+                auto compIdAndConns = Model_AddMover(
+                    s.TheModel, cop, inflowId, outflowId, tag, report
+                );
                 id = compIdAndConns.Id;
                 if (input.contains("max_outflow"))
                 {

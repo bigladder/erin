@@ -341,12 +341,16 @@ namespace erin
                 if (i == 0)
                 {
                     if (std::get<0>(*this).id == std::get<0>(nodeID).id)
+                    {
                         same = true;
+                    }
                 }
                 else
                 {
                     if (std::get<1>(*this).id == std::get<1>(nodeID).id)
+                    {
                         same = true;
+                    }
                 }
             }
             return same;
@@ -355,6 +359,7 @@ namespace erin
 
     struct NodeConnection
     {
+        size_t ConnectionId = 0;
         ComponentType From = ComponentType::ConstantSourceType;
         ComponentType To = ComponentType::ConstantLoadType;
         // index into the specific component type's array
@@ -372,7 +377,7 @@ namespace erin
         std::vector<size_t> origConnId = {};
 
         bool
-        operator==(const NodeConnection& nodeConn) const
+        operator==(NodeConnection const& nodeConn) const
         {
             bool fromSame =
                 (nodeConn.FromId == FromId) && (nodeConn.FromPort == FromPort);
@@ -995,7 +1000,8 @@ namespace erin
         size_t inflowId,
         size_t outflowId,
         size_t lossflowId,
-        std::string const& tag
+        std::string const& tag,
+        bool report = true
     );
 
     ComponentIdAndWasteConnection
@@ -1006,7 +1012,8 @@ namespace erin
         size_t inflowId,
         size_t outflowId,
         size_t lossflowId,
-        std::string const& tag
+        std::string const& tag,
+        bool report = true
     );
 
     size_t
@@ -1210,7 +1217,8 @@ namespace erin
         double cop,
         size_t inflowTypeId,
         size_t outflowTypeId,
-        std::string const& tag
+        std::string const& tag,
+        bool report = true
     );
 
     ComponentIdAndWasteAndEnvironmentConnection
@@ -1220,7 +1228,8 @@ namespace erin
         std::vector<double>&& copByOutflow,
         size_t inflowTypeId,
         size_t outflowTypeId,
-        std::string const& tag
+        std::string const& tag,
+        bool report = true
     );
 
     size_t

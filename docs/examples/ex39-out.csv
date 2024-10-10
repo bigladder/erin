@@ -1,0 +1,3 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),diesel_utility:OUT(0) => diesel_storage:IN(0) [flow: diesel] (kW),power_lines:OUT(0) => building:IN(0) [flow: electricity] (kW),REQUEST:diesel_utility:OUT(0) => diesel_storage:IN(0) [flow: diesel] (kW),REQUEST:power_lines:OUT(0) => building:IN(0) [flow: electricity] (kW),AVAILABLE:diesel_utility:OUT(0) => diesel_storage:IN(0) [flow: diesel] (kW),AVAILABLE:power_lines:OUT(0) => building:IN(0) [flow: electricity] (kW),op-state: building,op-state: diesel_utility
+blue_sky,P0000-00-00T00:00:00,0,3,1,3,1,inf,6.6,available,available
+blue_sky,P0000-00-00T00:00:00,480,0,0,0,0,inf,6.6,available,available

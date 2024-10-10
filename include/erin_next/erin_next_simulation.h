@@ -345,8 +345,9 @@ namespace erin
         std::vector<size_t> const& connOrder,
         std::vector<size_t> const& storeOrder,
         std::vector<size_t> const& compOrder,
-        TimeUnit outputTimeUnit = TimeUnit::Hour,
-        std::vector<NodeConnection> nodeConnections = {}
+        TimeUnit outputTimeUnit,
+        std::vector<NodeConnection> const& nodeConnections,
+        bool aggregateGroups
     );
 
     void

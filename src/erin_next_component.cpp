@@ -481,7 +481,8 @@ namespace erin
                         inflowId,
                         outflowId,
                         lossflowId,
-                        tag
+                        tag,
+                        report
                     );
                 id = compIdAndWasteConn.Id;
                 if (input.contains("rate_unit"))
@@ -609,7 +610,8 @@ namespace erin
                         inflowId,
                         outflowId,
                         lossflowId,
-                        tag
+                        tag,
+                        report
                     );
                 id = compIdAndWasteConn.Id;
                 size_t varEffIdx = s.TheModel.ComponentMap.Idx[id];
@@ -777,7 +779,7 @@ namespace erin
             {
                 double cop = std::get<double>(input.at("cop").Value);
                 auto compIdAndConns =
-                    Model_AddMover(s.TheModel, cop, inflowId, outflowId, tag);
+                    Model_AddMover(s.TheModel, cop, inflowId, outflowId, tag, report);
                 id = compIdAndConns.Id;
                 if (input.contains("max_outflow"))
                 {
@@ -876,7 +878,8 @@ namespace erin
                     std::move(copByOutflow),
                     inflowId,
                     outflowId,
-                    tag
+                    tag,
+                    report
                 );
                 id = compIdAndConns.Id;
                 size_t moverIdx = s.TheModel.ComponentMap.Idx[id];

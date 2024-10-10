@@ -3284,7 +3284,8 @@ namespace erin
         double cop,
         size_t inflowTypeId,
         size_t outflowTypeId,
-        std::string const& tag
+        std::string const& tag,
+        bool report
     )
     {
         assert(cop > 0.0);
@@ -3304,7 +3305,8 @@ namespace erin
             std::vector<size_t>{wasteflowId},
             std::vector<size_t>{},
             "",
-            0.0
+            0.0,
+            report
         );
         size_t envId = Component_AddComponentReturningId(
             m.ComponentMap,
@@ -3313,7 +3315,8 @@ namespace erin
             std::vector<size_t>{},
             std::vector<size_t>{wasteflowId},
             "",
-            0.0
+            0.0,
+            report
         );
         size_t thisId = Component_AddComponentReturningId(
             m.ComponentMap,
@@ -3322,7 +3325,8 @@ namespace erin
             std::vector<size_t>{inflowTypeId, wasteflowId},
             std::vector<size_t>{outflowTypeId, wasteflowId},
             tag,
-            0.0
+            0.0,
+            report
         );
         Connection wconn =
             Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflowId);
@@ -3342,7 +3346,8 @@ namespace erin
         std::vector<double>&& copByOutflow,
         size_t inflowTypeId,
         size_t outflowTypeId,
-        std::string const& tag
+        std::string const& tag,
+        bool report
     )
     {
         std::vector<double> inflowsForCop_W;
@@ -3371,7 +3376,8 @@ namespace erin
             std::vector<size_t>{wasteflowId},
             std::vector<size_t>{},
             "",
-            0.0
+            0.0,
+            report
         );
         size_t envId = Component_AddComponentReturningId(
             m.ComponentMap,
@@ -3380,7 +3386,8 @@ namespace erin
             std::vector<size_t>{},
             std::vector<size_t>{wasteflowId},
             "",
-            0.0
+            0.0,
+            report
         );
         size_t thisId = Component_AddComponentReturningId(
             m.ComponentMap,
@@ -3389,7 +3396,8 @@ namespace erin
             std::vector<size_t>{inflowTypeId, wasteflowId},
             std::vector<size_t>{outflowTypeId, wasteflowId},
             tag,
-            0.0
+            0.0,
+            report
         );
         Connection wconn =
             Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflowId);
@@ -4308,7 +4316,7 @@ namespace erin
     ComponentIdAndWasteConnection
     Model_AddConstantEfficiencyConverter(Model& m, double efficiency)
     {
-        return Model_AddConstantEfficiencyConverter(m, efficiency, 0, 0, 0, "");
+        return Model_AddConstantEfficiencyConverter(m, efficiency, 0, 0, 0, "", true);
     }
 
     ComponentIdAndWasteConnection
@@ -4318,7 +4326,8 @@ namespace erin
         size_t inflowId,
         size_t outflowId,
         size_t lossflowId,
-        std::string const& tag
+        std::string const& tag,
+        bool report
     )
     {
         // NOTE: the 0th flowId is ""; the non-described flow
@@ -4342,7 +4351,8 @@ namespace erin
             std::vector<size_t>{wasteflowId},
             std::vector<size_t>{},
             "",
-            0.0
+            0.0,
+            report
         );
         size_t thisId = Component_AddComponentReturningId(
             m.ComponentMap,
@@ -4351,7 +4361,8 @@ namespace erin
             inflowIds,
             outflowIds,
             tag,
-            0.0
+            0.0,
+            report
         );
         auto wasteConn =
             Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflowId);
@@ -4366,7 +4377,8 @@ namespace erin
         size_t inflowId,
         size_t outflowId,
         size_t lossflowId,
-        std::string const& tag
+        std::string const& tag,
+        bool report
     )
     {
         // NOTE: the 0th flowId is ""; the non-described flow
@@ -4394,7 +4406,8 @@ namespace erin
             std::vector<size_t>{wasteflowId},
             std::vector<size_t>{},
             "",
-            0.0
+            0.0,
+            report
         );
         size_t thisId = Component_AddComponentReturningId(
             m.ComponentMap,
@@ -4403,7 +4416,8 @@ namespace erin
             inflowIds,
             outflowIds,
             tag,
-            0.0
+            0.0,
+            report
         );
         auto wasteConn =
             Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflowId);
@@ -5604,14 +5618,19 @@ namespace erin
         bool aggregateGroups
     )
     {
+        if (!aggregateGroups)
+        {
+            return ConnectionToString(model.ComponentMap, model.Connections[c.ConnectionId], compact);
+        }
         std::string fromTag = "";
         std::string toTag = "";
         std::string fromString = "";
         std::string toString = "";
 
-        auto& componentMap = model.ComponentMap;
-        if ((c.FromId.index() == 0) || (!aggregateGroups))
-        { // component
+        auto const& componentMap = model.ComponentMap;
+        if (c.FromId.index() == 0)
+        {
+            // component
             auto idx = std::get<0>(c.FromId).id;
             fromTag = componentMap.Tag[idx];
             if (fromTag.empty() && c.From == ComponentType::WasteSinkType)
@@ -5626,11 +5645,12 @@ namespace erin
             fromString = std::to_string(idx);
         }
         else
-        { // group
+        {
+            // group
             fromTag = std::get<1>(c.FromId).id;
         }
 
-        if ((c.ToId.index() == 0) || (!aggregateGroups))
+        if (c.ToId.index() == 0)
         {
             auto idx = std::get<0>(c.ToId).id;
             toTag = componentMap.Tag[idx];
@@ -5646,7 +5666,8 @@ namespace erin
             toString = std::to_string(idx);
         }
         else
-        { // group
+        {
+            // group
             toTag = std::get<1>(c.ToId).id;
         }
 
@@ -5655,13 +5676,17 @@ namespace erin
             << c.FromPort << ")";
 
         if (c.FromId.index() == 0)
+        {
             oss << (compact ? "" : (": " + ToString(c.From)));
+        }
 
         oss << " => " << toTag << (compact ? "" : ("[" + toString + "]"))
             << ":IN(" << c.ToPort << ")";
 
         if (c.ToId.index() == 0)
+        {
             oss << (compact ? "" : (": " + ToString(c.To)));
+        }
 
         return oss.str();
     }

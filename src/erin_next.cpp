@@ -4316,7 +4316,9 @@ namespace erin
     ComponentIdAndWasteConnection
     Model_AddConstantEfficiencyConverter(Model& m, double efficiency)
     {
-        return Model_AddConstantEfficiencyConverter(m, efficiency, 0, 0, 0, "", true);
+        return Model_AddConstantEfficiencyConverter(
+            m, efficiency, 0, 0, 0, "", true
+        );
     }
 
     ComponentIdAndWasteConnection
@@ -5620,7 +5622,9 @@ namespace erin
     {
         if (!aggregateGroups)
         {
-            return ConnectionToString(model.ComponentMap, model.Connections[c.ConnectionId], compact);
+            return ConnectionToString(
+                model.ComponentMap, model.Connections[c.ConnectionId], compact
+            );
         }
         std::string fromTag = "";
         std::string toTag = "";

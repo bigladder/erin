@@ -1,0 +1,53 @@
+[simulation_info]
+input_format_version = "0.2"
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "days"
+max_time = 20
+[loads.building_load]
+time_unit = "day"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,1.0],[20.0,0.0]]
+[components.diesel_utility]
+type = "source"
+outflow = "diesel"
+[components.diesel_storage]
+type = "store"
+flow = "diesel"
+rate_unit = "kW"
+max_outflow = 20.0
+capacity_unit = "kJ"
+capacity = 100.0
+max_charge = 10.0
+max_discharge = 20.0
+report = false
+[components.generator]
+type = "converter"
+inflow = "diesel"
+outflow = "electricity"
+constant_efficiency = 0.33
+report = false
+[components.power_lines]
+type = "pass_through"
+flow = "electricity"
+report = false
+[components.building]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "building_load"
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+[network]
+connections = [
+  ["diesel_utility:OUT(0)", "diesel_storage:IN(0)", "diesel"],
+  ["diesel_storage:OUT(0)", "generator:IN(0)", "diesel"],
+  ["generator:OUT(0)", "power_lines:IN(0)", "electricity"],
+  ["power_lines:OUT(0)", "building:IN(0)", "electricity"],
+]
+[scenarios.blue_sky]
+time_unit = "days"
+occurrence_distribution = "immediately"
+duration = 20
+max_occurrences = 1

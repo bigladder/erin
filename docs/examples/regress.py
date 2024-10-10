@@ -415,6 +415,7 @@ if __name__ == "__main__":
     for f in files_generated:
         f.unlink()
     run_cli("38")
+    run_cli("39")
     print("\nPassed all regression tests!")
 
     if os.environ.get("ERIN_SHORT_TEST") is not None:

@@ -1503,7 +1503,7 @@ namespace erin
         std::vector<size_t> const& storeOrder,
         std::vector<size_t> const& compOrder,
         TimeUnit outputTimeUnit,
-        std::vector<NodeConnection> nodeConnections,
+        std::vector<NodeConnection> const& nodeConnections,
         bool aggregateGroups
     )
     {
@@ -1516,13 +1516,12 @@ namespace erin
                     : TimeUnitToTag(outputTimeUnit))
             << ")";
 
-        // auto nNodeConn = nodeConnections.size();
         for (std::string const& prefix :
              std::vector<std::string>{"", "REQUEST:", "AVAILABLE:"})
         {
             for (auto& iOrdNodeConn : nodeConnOrder)
             {
-                auto const& nodeConn = nodeConnections[iOrdNodeConn];
+                NodeConnection const& nodeConn = nodeConnections[iOrdNodeConn];
                 out << "," << prefix
                     << NodeConnectionToString(
                            model, fd, nodeConn, true, aggregateGroups
@@ -1656,7 +1655,27 @@ namespace erin
     }
 
     std::vector<size_t>
-    CalculateStoreOrder(Simulation const& s)
+    RemoveNonReportingIds(
+        std::vector<size_t> const& idOrder,
+        std::unordered_set<size_t> const& idsToReport)
+    {
+        std::vector<size_t> result{};
+        result.reserve(idsToReport.size());
+        for (size_t const& id : idOrder)
+        {
+            if (idsToReport.contains(id))
+            {
+                result.push_back(id);
+            }
+        }
+        return result;
+    }
+
+    std::vector<size_t>
+    CalculateStoreOrder(
+        Simulation const& s,
+        std::unordered_set<size_t> compsToReport
+    )
     {
         std::vector<size_t> result;
         std::vector<std::string> storeTags;
@@ -1667,6 +1686,10 @@ namespace erin
         {
             for (size_t compId = 0; compId < numComps; ++compId)
             {
+                if (!compsToReport.contains(compId))
+                {
+                    continue;
+                }
                 ComponentType type = s.TheModel.ComponentMap.CompType[compId];
                 size_t idx = s.TheModel.ComponentMap.Idx[compId];
                 if (type == ComponentType::StoreType && idx == storeId)
@@ -1676,7 +1699,7 @@ namespace erin
                 }
             }
         }
-        assert(storeTags.size() == numStores);
+        assert(storeTags.size() <= numStores);
         std::vector<std::string> originalStoreTags(storeTags);
         std::sort(storeTags.begin(), storeTags.end());
         for (auto const& tag : storeTags)
@@ -1689,7 +1712,7 @@ namespace erin
                 }
             }
         }
-        assert(result.size() == numStores);
+        assert(result.size() <= numStores);
         return result;
     }
 
@@ -1833,6 +1856,7 @@ namespace erin
             }
 
             NodeConnection nodeConn;
+            nodeConn.ConnectionId = iConn;
             nodeConn.FromId = connection.FromId;
             nodeConn.FromPort = connection.FromPort;
             nodeConn.FromIdx = connection.FromIdx;
@@ -1850,7 +1874,9 @@ namespace erin
                 auto groupFrom = s.TheModel.ComponentToGroup[connection.FromId];
                 auto groupTo = s.TheModel.ComponentToGroup[connection.ToId];
                 if (groupFrom == groupTo)
+                {
                     continue;
+                }
             }
             if (fromIsGroup)
             {
@@ -1954,7 +1980,7 @@ namespace erin
 
         for (auto const& r : results)
         {
-            assert(r.Flows.size() == nodeConnOrder.size());
+            assert(r.Flows.size() >= nodeConnOrder.size());
             out << scenarioTag << "," << scenarioStartTimeTag << ",";
             out << TimeInSecondsToDesiredUnit(r.Time, outputTimeUnit);
 
@@ -3038,6 +3064,40 @@ namespace erin
         out.close();
     }
 
+    std::unordered_set<size_t>
+    CalculateComponentsToReport(std::vector<bool> const& reportFlags)
+    {
+        std::unordered_set<size_t> compsToReport{};
+        compsToReport.reserve(reportFlags.size());
+        for (size_t id = 0; id < reportFlags.size(); ++id)
+        {
+            if (reportFlags[id])
+            {
+                compsToReport.insert(id);
+            }
+        }
+        return compsToReport;
+    }
+
+    std::unordered_set<size_t>
+    CalculateConnectionsToReport(
+        std::vector<Connection> const& conns,
+        std::unordered_set<size_t> const& compsToReport
+    )
+    {
+        std::unordered_set<size_t> connsToReport{};
+        connsToReport.reserve(conns.size());
+        for (size_t id = 0; id < conns.size(); ++id)
+        {
+            Connection const& c = conns[id];
+            if (compsToReport.contains(c.FromId) || compsToReport.contains(c.ToId))
+            {
+                connsToReport.insert(id);
+            }
+        }
+        return connsToReport;
+    }
+
     void
     Simulation_Run(
         Simulation& s,
@@ -3152,24 +3212,46 @@ namespace erin
             return;
         }
 
+        // TODO: need to account for WASTE component
+        // if a component is not reported and connected to WASTE, the
+        // WASTE should also be not reported
+        std::unordered_set<size_t> compsToReport =
+            CalculateComponentsToReport(s.TheModel.ComponentMap.Report);
+        std::unordered_set<size_t> connsToReport =
+            CalculateConnectionsToReport(s.TheModel.Connections, compsToReport);
+
         std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
         std::vector<size_t> connOrder = CalculateConnectionOrder(s);
-        std::vector<size_t> storeOrder = CalculateStoreOrder(s);
+        std::vector<size_t> storeOrderForEvents = CalculateStoreOrder(s, compsToReport);
         std::vector<size_t> compOrder = CalculateComponentOrder(s);
         std::vector<size_t> failOrder = CalculateFailModeOrder(s);
         std::vector<size_t> fragOrder = CalculateFragilModeOrder(s);
+        std::vector<size_t> compOrderForEvents =
+            RemoveNonReportingIds(compOrder, compsToReport);
 
         auto nodeConnections = GetNodeConnections(s, aggregateGroups);
         std::vector<size_t> nodeConnOrder =
             CalculateNodeConnectionOrder(s, nodeConnections, aggregateGroups);
+        std::unordered_set<size_t> nodeConnsToReport{};
+        nodeConnsToReport.reserve(connsToReport.size());
+        for (size_t id=0; id < nodeConnections.size(); ++id)
+        {
+            NodeConnection const& nc = nodeConnections[id];
+            if (connsToReport.contains(nc.ConnectionId))
+            {
+                nodeConnsToReport.insert(id);
+            }
+        }
+        std::vector<size_t> nodeConnOrderForEvents =
+            RemoveNonReportingIds(nodeConnOrder, nodeConnsToReport);
 
         WriteEventFileHeader(
             out,
             s.TheModel,
             s.FlowTypeMap,
-            nodeConnOrder,
-            storeOrder,
-            compOrder,
+            nodeConnOrderForEvents,
+            storeOrderForEvents,
+            compOrderForEvents,
             outputTimeUnit,
             nodeConnections,
             aggregateGroups
@@ -3396,9 +3478,9 @@ namespace erin
                         s,
                         scenarioTag,
                         scenarioStartTimeTag,
-                        nodeConnOrder,
-                        storeOrder,
-                        compOrder,
+                        nodeConnOrderForEvents,
+                        storeOrderForEvents,
+                        compOrderForEvents,
                         outputTimeUnit
                     );
                 }

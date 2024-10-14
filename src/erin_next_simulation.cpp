@@ -203,6 +203,8 @@ namespace erin
                 {
                     assert(subtypeIdx < m.ScheduledLoads.size());
                     ScheduleBasedLoad const& sbl = m.ScheduledLoads[subtypeIdx];
+                    std::cout << "-- inflow connection: " << sbl.InflowConn
+                              << std::endl;
                     for (auto const& keyValue : sbl.ScenarioIdToLoadId)
                     {
                         size_t scenarioIdx = keyValue.first;
@@ -214,6 +216,15 @@ namespace erin
                                   << ", use load: " << s.LoadMap.Tags[loadIdx]
                                   << std::endl;
                     }
+                }
+                break;
+                case ComponentType::ConstantLoadType:
+                {
+                    assert(subtypeIdx < m.ConstLoads.size());
+                    ConstantLoad const& cl = m.ConstLoads[subtypeIdx];
+                    std::cout << "-- constant request: " << cl.Load_W << " W" << std::endl;
+                    std::cout << "-- inflow connection: " << cl.InflowConn
+                              << std::endl;
                 }
                 break;
                 case ComponentType::ScheduleBasedSourceType:
@@ -237,6 +248,9 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(sbs.MaxOutflow_W))
                               << std::endl;
+
+                    std::cout << "-- outflow connection: " << sbs.OutflowConn
+                              << std::endl;
                 }
                 break;
                 case ComponentType::ConstantEfficiencyConverterType:
@@ -256,6 +270,17 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(cec.MaxLossflow_W))
                               << std::endl;
+                    std::cout << "-- inflow connection: "
+                              << cec.InflowConn << std::endl;
+                    std::cout << "-- outflow connection: "
+                              << cec.OutflowConn << std::endl;
+                    std::cout << "-- lossflow connection: "
+                              << (cec.LossflowConn.has_value()
+                                  ? std::to_string(cec.LossflowConn.value())
+                                  : "NA")
+                              << std::endl;
+                    std::cout << "-- wasteflow connection: "
+                              << cec.WasteflowConn << std::endl;
                 }
                 break;
                 case ComponentType::VariableEfficiencyConverterType:
@@ -286,6 +311,17 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(vec.MaxLossflow_W))
                               << std::endl;
+                    std::cout << "-- inflow connection: "
+                              << vec.InflowConn << std::endl;
+                    std::cout << "-- outflow connection: "
+                              << vec.OutflowConn << std::endl;
+                    std::cout << "-- lossflow connection: "
+                              << (vec.LossflowConn.has_value()
+                                  ? std::to_string(vec.LossflowConn.value())
+                                  : "NA")
+                              << std::endl;
+                    std::cout << "-- wasteflow connection: "
+                              << vec.WasteflowConn << std::endl;
                 }
                 break;
                 case ComponentType::MoverType:
@@ -298,6 +334,14 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(mov.MaxOutflow_W))
                               << std::endl;
+                    std::cout << "-- inflow connection: "
+                              << mov.InflowConn << std::endl;
+                    std::cout << "-- outflow connection: "
+                              << mov.OutflowConn << std::endl;
+                    std::cout << "-- envflow connection: "
+                              << mov.InFromEnvConn << std::endl;
+                    std::cout << "-- wasteflow connection: "
+                              << mov.WasteflowConn << std::endl;
                 }
                 break;
                 case ComponentType::VariableEfficiencyMoverType:
@@ -321,6 +365,14 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(maxOutflow_W))
                               << std::endl;
+                    std::cout << "-- inflow connection: "
+                              << mov.InflowConn << std::endl;
+                    std::cout << "-- outflow connection: "
+                              << mov.OutflowConn << std::endl;
+                    std::cout << "-- envflow connection: "
+                              << mov.InFromEnvConn << std::endl;
+                    std::cout << "-- wasteflow connection: "
+                              << mov.WasteflowConn << std::endl;
                 }
                 break;
                 case ComponentType::StoreType:
@@ -352,6 +404,12 @@ namespace erin
                     std::cout << "-- roundtrip efficiency: "
                               << store.RoundTripEfficiency * 100.0 << "%"
                               << std::endl;
+                    std::cout << "-- inflow connection: "
+                              << (store.InflowConn.has_value()
+                                  ? std::to_string(store.InflowConn.value())
+                                  : "NA") << std::endl;
+                    std::cout << "-- outflow connection: "
+                              << store.OutflowConn << std::endl;
                 }
                 break;
                 case ComponentType::PassThroughType:
@@ -363,6 +421,48 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(pt.MaxOutflow_W))
                               << std::endl;
+                    std::cout << "-- inflow connection: "
+                              << pt.InflowConn << std::endl;
+                    std::cout << "-- outflow connection: "
+                              << pt.OutflowConn << std::endl;
+                }
+                break;
+                case ComponentType::MuxType:
+                {
+                    assert(subtypeIdx < m.Muxes.size());
+                    Mux const& mux = m.Muxes[subtypeIdx];
+                    assert(mux.InflowConns.size() == mux.NumInports);
+                    assert(mux.OutflowConns.size() == mux.NumOutports);
+                    for (size_t i = 0; i < mux.NumInports; ++i)
+                    {
+                        std::cout << "-- inflow connection " << i << ": "
+                                  << mux.InflowConns[i] << std::endl;
+                    }
+                    for (size_t i = 0; i < mux.NumOutports; ++i)
+                    {
+                        std::cout << "-- outflow connection " << i << ": "
+                                  << mux.OutflowConns[i] << std::endl;
+                    }
+                }
+                break;
+                case ComponentType::ConstantSourceType:
+                {
+                    assert(subtypeIdx < m.ConstSources.size());
+                    ConstantSource const& cs = m.ConstSources[subtypeIdx];
+                    std::cout << "-- outflow connection: " << cs.OutflowConn
+                              << std::endl;
+                }
+                break;
+                case ComponentType::SwitchType:
+                {
+                    assert(subtypeIdx < m.Switches.size());
+                    Switch const& sw = m.Switches[subtypeIdx];
+                    std::cout << "-- primary inflow connection: "
+                              << sw.InflowConnPrimary << std::endl;
+                    std::cout << "-- secondary inflow connection: "
+                              << sw.InflowConnSecondary << std::endl;
+                    std::cout << "-- outflow connection: "
+                              << sw.OutflowConn << std::endl;
                 }
                 break;
                 default:

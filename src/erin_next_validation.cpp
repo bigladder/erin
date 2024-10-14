@@ -619,6 +619,19 @@ namespace erin
                         InputSection::Components_Load,
                     },
             },
+            FieldInfo{
+                .FieldName = "constant_request",
+                .Type = InputType::Number,
+                .IsRequired = true,
+                .InformIfMissing = false,
+                .Default = "",
+                .EnumValues = {},
+                .Aliases = {},
+                .Sections =
+                    {
+                        InputSection::Components_ConstantLoad,
+                    },
+            },
             // Constant Source and Uncontrolled Source
             FieldInfo{
                 .FieldName = "outflow",
@@ -664,6 +677,7 @@ namespace erin
                 .Aliases = {},
                 .Sections =
                     {
+                        InputSection::Components_ConstantLoad,
                         InputSection::Components_Source,
                         InputSection::Components_UncontrolledSource,
                         InputSection::Components_Store,

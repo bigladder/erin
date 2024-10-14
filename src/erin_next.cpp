@@ -1614,20 +1614,19 @@ namespace erin
     )
     {
         ConstantEfficiencyConverter const& cec = m.ConstEffConvs[compIdx];
-        size_t inflowConn = cec.InflowConn;
-        flow_t outflowRequest =
+        assert(cec.OutflowConn == outflowConnIdx);
+        flow_t outflowRequest_W =
             ss.Flows[outflowConnIdx].Requested_W > cec.MaxOutflow_W
             ? cec.MaxOutflow_W
             : ss.Flows[outflowConnIdx].Requested_W;
-        flow_t inflowRequest =
-            static_cast<flow_t>(std::ceil(outflowRequest / cec.Efficiency));
-        // TODO: re-enable a check for outflow <= inflow after adding COP
-        // components NOTE: for COP, we can have inflow < outflow
-        if (inflowRequest != ss.Flows[inflowConn].Requested_W)
+        flow_t inflowRequest_W =
+            static_cast<flow_t>(std::ceil(outflowRequest_W / cec.Efficiency));
+        assert(inflowRequest_W >= outflowRequest_W);
+        if (inflowRequest_W != ss.Flows[cec.InflowConn].Requested_W)
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.ActiveConnectionsBack.insert(cec.InflowConn);
         }
-        ss.Flows[inflowConn].Requested_W = inflowRequest;
+        ss.Flows[cec.InflowConn].Requested_W = inflowRequest_W;
         UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
     }
 

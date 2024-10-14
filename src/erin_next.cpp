@@ -5771,9 +5771,8 @@ namespace erin
                 {
                     std::cout << "[network] port is unaddressable"
                               << ":tag=" << fromTap.Tag << "[" << fromTap.Port
-                              << "]"
-                              << " => " << toTap.Tag << "[" << toTap.Port << "]"
-                              << ":port=" << toTap.Port << ":availablePorts="
+                              << "] => " << toTap.Tag << "[" << toTap.Port
+                              << "]:port=" << toTap.Port << ":availablePorts="
                               << m.ComponentMap.OutflowType[toCompId].size()
                               << std::endl;
                     return Result::Failure;

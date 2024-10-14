@@ -1639,7 +1639,8 @@ namespace erin
     )
     {
         VariableEfficiencyConverter const& vec = m.VarEffConvs[compIdx];
-        size_t inflowConn = vec.InflowConn;
+        assert(outflowConnIdx == vec.OutflowConn);
+        size_t inflowConnIdx = vec.InflowConn;
         flow_t outflowRequest_W =
             ss.Flows[outflowConnIdx].Requested_W > vec.MaxOutflow_W
             ? vec.MaxOutflow_W
@@ -1649,14 +1650,14 @@ namespace erin
             vec.Efficiencies,
             static_cast<double>(outflowRequest_W)
         );
-        assert(efficiency >= 0.0 && efficiency <= 1.0);
+        assert(efficiency > 0.0 && efficiency <= 1.0);
         flow_t inflowRequest_W =
             static_cast<flow_t>(std::ceil(outflowRequest_W / efficiency));
-        if (inflowRequest_W != ss.Flows[inflowConn].Requested_W)
+        if (inflowRequest_W != ss.Flows[inflowConnIdx].Requested_W)
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.ActiveConnectionsBack.insert(inflowConnIdx);
         }
-        ss.Flows[inflowConn].Requested_W = inflowRequest_W;
+        ss.Flows[inflowConnIdx].Requested_W = inflowRequest_W;
         UpdateVariableEfficiencyLossflowAndWasteflow(m, ss, compIdx);
     }
 

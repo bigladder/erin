@@ -54,9 +54,9 @@ capacity = 60   # kJ
 capacity_unit = "kJ"
 flow = "electricity"
 init_soc = 1.0
-max_charge = 30   # kJ
+max_charge = 30   # kW
 rate_unit = "kW"
-max_discharge = 10.0 
+max_discharge = 10.0 # kW
 
 [components.batteryB]
 type = "store"
@@ -65,9 +65,9 @@ capacity = 60   # kJ
 capacity_unit = "kJ"
 flow = "electricity"
 init_soc = 0.5
-max_charge = 30   # kJ
+max_charge = 30   # kW
 rate_unit = "kW"
-max_discharge = 10.0 
+max_discharge = 10.0
 
 [components.batteryC]
 type = "store"
@@ -96,13 +96,6 @@ loads_by_scenario.blue_sky = "building2_electrical"
 
 ############################################################
 [network]
-# Specify network as an array of 3-tuples.
-# The interpretation is as follows:
-# 3-tuples: [COMPONENT_AND_PORT, COMPONENT_AND_PORT, STREAM_ID]
-# COMPONENT_AND_PORT := COMPONENT_ID ":" ("IN" | "OUT") "(" \d+ ")" ;
-# COMPONENT_ID := STRING_IDENTIFIER ;
-# STREAM_ID := STRING_IDENTIFIER ;
-# STRING_IDENTIFIER := [a-zA-Z_] [a-zA-Z_0-9]* ;
 connections = [
 ["utility:OUT(0)", "muxer:IN(0)", "electricity"], 
 ["muxer:OUT(0)", "convA:IN(0)", "electricity"], 

@@ -2700,8 +2700,25 @@ namespace erin
     void
     RunActiveConnections(Model& model, SimulationState& ss, double t)
     {
-        RunConnectionsBackward(model, ss);
-        RunConnectionsForward(model, ss);
+        constexpr size_t max_times = 100;
+        size_t num_times = 0;
+        do
+        {
+            RunConnectionsBackward(model, ss);
+            RunConnectionsForward(model, ss);
+            ++num_times;
+        } while (num_times < max_times
+                 && (ss.ActiveConnectionsBack.size() > 0
+                     || ss.ActiveConnectionsFront.size() > 0));
+        if (num_times == max_times)
+        {
+            std::cout << "WARNING! iterated " << max_times << " to resolve connections" << std::endl;
+        }
+        else
+        {
+            assert(ss.ActiveConnectionsBack.size() == 0);
+            assert(ss.ActiveConnectionsFront.size() == 0);
+        }
         FinalizeFlows(ss);
         RunConnectionsPostFinalization(model, ss, t);
     }

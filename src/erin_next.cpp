@@ -2354,11 +2354,11 @@ namespace erin
     RunMuxForward(Model& model, SimulationState& ss, size_t muxIdx)
     {
         Mux const& mux = model.Muxes[muxIdx];
-        flow_t totalAvailable = 0;
+        flow_t totalAvailable_W = 0;
         for (size_t inflowConnIdx : mux.InflowConns)
         {
-            totalAvailable = UtilSafeAdd(
-                totalAvailable, ss.Flows[inflowConnIdx].Available_W
+            totalAvailable_W = UtilSafeAdd(
+                totalAvailable_W, ss.Flows[inflowConnIdx].Available_W
             );
         }
         std::vector<flow_t> outflowAvailables{};
@@ -2370,11 +2370,11 @@ namespace erin
                 ss.Flows[outflowConnIdx].Requested_W > mux.MaxOutflows_W[i]
                 ? mux.MaxOutflows_W[i]
                 : ss.Flows[outflowConnIdx].Requested_W;
-            flow_t available = req_W >= totalAvailable ? totalAvailable : req_W;
-            outflowAvailables.push_back(available);
-            totalAvailable -= available;
+            flow_t available_W = req_W >= totalAvailable_W ? totalAvailable_W : req_W;
+            outflowAvailables.push_back(available_W);
+            totalAvailable_W -= available_W;
         }
-        if (totalAvailable > 0)
+        if (totalAvailable_W > 0)
         {
             for (size_t i = 0; i < mux.NumOutports; ++i)
             {
@@ -2382,19 +2382,19 @@ namespace erin
                 {
                     flow_t maxAdd = mux.MaxOutflows_W[i] - outflowAvailables[i];
                     flow_t toAdd =
-                        maxAdd > totalAvailable ? totalAvailable : maxAdd;
+                        maxAdd > totalAvailable_W ? totalAvailable_W : maxAdd;
                     flow_t actuallyAdded = outflowAvailables[i];
                     outflowAvailables[i] =
                         UtilSafeAdd(outflowAvailables[i], toAdd);
                     actuallyAdded = outflowAvailables[i] - actuallyAdded;
-                    totalAvailable -= actuallyAdded;
-                    if (totalAvailable == 0)
+                    totalAvailable_W -= actuallyAdded;
+                    if (totalAvailable_W == 0)
                     {
                         break;
                     }
                 }
             }
-            totalAvailable = 0;
+            totalAvailable_W = 0;
         }
         for (size_t i = 0; i < mux.NumOutports; ++i)
         {

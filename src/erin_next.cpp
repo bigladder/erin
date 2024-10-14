@@ -649,7 +649,8 @@ namespace erin
                     assert(idx < m.Switches.size());
                     Switch const& comp = m.Switches[idx];
                     size_t primaryInflowConnIdx = comp.InflowConnPrimary;
-                    Connection const& primaryInflowConn = m.Connections[primaryInflowConnIdx];
+                    Connection const& primaryInflowConn =
+                        m.Connections[primaryInflowConnIdx];
                     size_t primaryInflowPort = 0;
                     if ((primaryInflowConn.To != compType)
                         || (primaryInflowConn.ToId != compId)
@@ -669,7 +670,8 @@ namespace erin
                         );
                     }
                     size_t secondaryInflowConnIdx = comp.InflowConnSecondary;
-                    Connection const& secondaryInflowConn = m.Connections[secondaryInflowConnIdx];
+                    Connection const& secondaryInflowConn =
+                        m.Connections[secondaryInflowConnIdx];
                     size_t secondaryInflowPort = 1;
                     if ((secondaryInflowConn.To != compType)
                         || (secondaryInflowConn.ToId != compId)
@@ -864,8 +866,9 @@ namespace erin
                 break;
                 default:
                 {
-                    std::cout << "unhandled component type: " + ToString(compType)
-                              << std::endl;
+                    std::cout
+                        << "unhandled component type: " + ToString(compType)
+                        << std::endl;
                     std::exit(1);
                 }
                 break;
@@ -1360,7 +1363,9 @@ namespace erin
                 if (maybeInflowConn.has_value())
                 {
                     size_t inflowConn = maybeInflowConn.value();
-                    available_W = UtilSafeAdd(available_W, ss.Flows[inflowConn].Available_W);
+                    available_W = UtilSafeAdd(
+                        available_W, ss.Flows[inflowConn].Available_W
+                    );
                 }
                 if (available_W > store.MaxOutflow_W)
                 {
@@ -1952,7 +1957,8 @@ namespace erin
                 ss.Flows[outflowConnIdx].Requested_W > mux.MaxOutflows_W[i]
                 ? mux.MaxOutflows_W[i]
                 : ss.Flows[outflowConnIdx].Requested_W;
-            totalOutflowRequest_W = UtilSafeAdd(totalOutflowRequest_W, outflowRequest_W);
+            totalOutflowRequest_W =
+                UtilSafeAdd(totalOutflowRequest_W, outflowRequest_W);
         }
         Mux_RequestInflowsIntelligently(
             ss, model.Muxes[muxIdx].InflowConns, totalOutflowRequest_W
@@ -2370,7 +2376,8 @@ namespace erin
                 ss.Flows[outflowConnIdx].Requested_W > mux.MaxOutflows_W[i]
                 ? mux.MaxOutflows_W[i]
                 : ss.Flows[outflowConnIdx].Requested_W;
-            flow_t available_W = req_W >= totalAvailable_W ? totalAvailable_W : req_W;
+            flow_t available_W =
+                req_W >= totalAvailable_W ? totalAvailable_W : req_W;
             outflowAvailables.push_back(available_W);
             totalAvailable_W -= available_W;
         }
@@ -2421,7 +2428,8 @@ namespace erin
         flow_t dischargeAvailable_W =
             ss.StorageAmounts_J[storeIdx] > 0 ? store.MaxDischargeRate_W : 0;
         flow_t available_W = UtilSafeAdd(
-            ss.Flows[inflowConnIdx].Available_W, dischargeAvailable_W);
+            ss.Flows[inflowConnIdx].Available_W, dischargeAvailable_W
+        );
         if (available_W > store.MaxOutflow_W)
         {
             available_W = store.MaxOutflow_W;
@@ -2712,7 +2720,8 @@ namespace erin
                      || ss.ActiveConnectionsFront.size() > 0));
         if (num_times == max_times)
         {
-            std::cout << "WARNING! iterated " << max_times << " to resolve connections" << std::endl;
+            std::cout << "WARNING! iterated " << max_times
+                      << " to resolve connections" << std::endl;
         }
         else
         {
@@ -3242,7 +3251,7 @@ namespace erin
                     WriteErrorMessage(
                         "SummarizeFlows(.)",
                         "Unhandled From type for connection - from pass: "
-                        + ToString(m.Connections[flowIdx].From)
+                            + ToString(m.Connections[flowIdx].From)
                     );
                 }
                 break;
@@ -3285,7 +3294,7 @@ namespace erin
                     WriteErrorMessage(
                         "SummarizeFlows(.)",
                         "Unhandled From type for connection - to pass: "
-                        + ToString(m.Connections[flowIdx].To)
+                            + ToString(m.Connections[flowIdx].To)
                     );
                 }
                 break;
@@ -3729,19 +3738,25 @@ namespace erin
                                     item.second
                                 )
                             );
-                            for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
+                            for (size_t connIdx = 0;
+                                 connIdx < model.Connections.size();
+                                 ++connIdx)
                             {
-                                Connection const& conn = model.Connections[connIdx];
+                                Connection const& conn =
+                                    model.Connections[connIdx];
                                 if (conn.ToId == item.first)
                                 {
                                     Log_Warning(
                                         log,
                                         fmt::format(
-                                            "* +{:>16d} W (R: +{:>16d} W // A: +{:>16d} W):: {}",
+                                            "* +{:>16d} W (R: +{:>16d} W // A: "
+                                            "+{:>16d} W):: {}",
                                             ss.Flows[connIdx].Actual_W,
                                             ss.Flows[connIdx].Requested_W,
                                             ss.Flows[connIdx].Available_W,
-                                            ConnectionToString(model.ComponentMap, conn, true)
+                                            ConnectionToString(
+                                                model.ComponentMap, conn, true
+                                            )
                                         )
                                     );
                                 }
@@ -3750,15 +3765,17 @@ namespace erin
                                     Log_Warning(
                                         log,
                                         fmt::format(
-                                            "* -{:>16d} W (R: -{:>16d} W // A: -{:>16d} W):: {}",
+                                            "* -{:>16d} W (R: -{:>16d} W // A: "
+                                            "-{:>16d} W):: {}",
                                             ss.Flows[connIdx].Actual_W,
                                             ss.Flows[connIdx].Requested_W,
                                             ss.Flows[connIdx].Available_W,
-                                            ConnectionToString(model.ComponentMap, conn, true)
+                                            ConnectionToString(
+                                                model.ComponentMap, conn, true
+                                            )
                                         )
                                     );
                                 }
-                                
                             }
                         }
                     }
@@ -5722,9 +5739,8 @@ namespace erin
             }
             if (toCompId >= m.ComponentMap.InflowType.size())
             {
-                std::cout
-                    << "[network] toCompId overflows InflowTypes"
-                    << std::endl;
+                std::cout << "[network] toCompId overflows InflowTypes"
+                          << std::endl;
                 return Result::Failure;
             }
             if (toTap.Port >= m.ComponentMap.InflowType[toCompId].size())
@@ -5747,34 +5763,30 @@ namespace erin
             {
                 if (toCompId >= m.ComponentMap.OutflowType.size())
                 {
-                    std::cout
-                        << "[network] toCompId is beyond outflow types"
-                        << std::endl;
+                    std::cout << "[network] toCompId is beyond outflow types"
+                              << std::endl;
                     return Result::Failure;
                 }
                 if (toTap.Port >= m.ComponentMap.OutflowType[toCompId].size())
                 {
-                    std::cout
-                        << "[network] port is unaddressable"
-                        << ":tag="
-                        << fromTap.Tag << "[" << fromTap.Port << "]"
-                        << " => "
-                        << toTap.Tag <<"[" << toTap.Port << "]"
-                        << ":port=" << toTap.Port
-                        << ":availablePorts="
-                        << m.ComponentMap.OutflowType[toCompId].size()
-                        << std::endl;
+                    std::cout << "[network] port is unaddressable"
+                              << ":tag=" << fromTap.Tag << "[" << fromTap.Port
+                              << "]"
+                              << " => " << toTap.Tag << "[" << toTap.Port << "]"
+                              << ":port=" << toTap.Port << ":availablePorts="
+                              << m.ComponentMap.OutflowType[toCompId].size()
+                              << std::endl;
                     return Result::Failure;
                 }
-                size_t typeId = m.ComponentMap.OutflowType[toCompId][toTap.Port];
+                size_t typeId =
+                    m.ComponentMap.OutflowType[toCompId][toTap.Port];
                 if (typeId >= fd.Type.size())
                 {
-                    std::cout
-                        << "[network] port is unaddressable"
-                        << ":port=" << toTap.Port
-                        << ":flowTypeId=" << typeId
-                        << ":availableFlowTypes=" << fd.Type.size()
-                        << std::endl;
+                    std::cout << "[network] port is unaddressable"
+                              << ":port=" << toTap.Port
+                              << ":flowTypeId=" << typeId
+                              << ":availableFlowTypes=" << fd.Type.size()
+                              << std::endl;
                     return Result::Failure;
                 }
                 std::cout

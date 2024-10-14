@@ -173,7 +173,9 @@ namespace erin
             break;
             default:
             {
-                WriteErrorMessage(fullTableName, "unhandled component type: " + ToString(ct));
+                WriteErrorMessage(
+                    fullTableName, "unhandled component type: " + ToString(ct)
+                );
                 std::exit(1);
             }
             break;
@@ -265,13 +267,15 @@ namespace erin
                 PowerUnit localPowerUnit = rateUnit;
                 if (input.contains("rate_unit"))
                 {
-                    std::string localRateUnit = std::get<std::string>(input.at("rate_unit").Value);
+                    std::string localRateUnit =
+                        std::get<std::string>(input.at("rate_unit").Value);
                     std::optional<PowerUnit> maybePowerUnit =
                         TagToPowerUnit(localRateUnit);
                     if (!maybePowerUnit.has_value())
                     {
                         WriteErrorMessage(
-                            fullTableName, "unhandled rate_unit value: '" + localRateUnit + "'"
+                            fullTableName,
+                            "unhandled rate_unit value: '" + localRateUnit + "'"
                         );
                         return Result::Failure;
                     }
@@ -280,7 +284,8 @@ namespace erin
                 if (!input.contains("constant_request"))
                 {
                     WriteErrorMessage(
-                        fullTableName, "required field 'constant_request' not found"
+                        fullTableName,
+                        "required field 'constant_request' not found"
                     );
                     return Result::Failure;
                 }

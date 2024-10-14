@@ -222,7 +222,8 @@ namespace erin
                 {
                     assert(subtypeIdx < m.ConstLoads.size());
                     ConstantLoad const& cl = m.ConstLoads[subtypeIdx];
-                    std::cout << "-- constant request: " << cl.Load_W << " W" << std::endl;
+                    std::cout << "-- constant request: " << cl.Load_W << " W"
+                              << std::endl;
                     std::cout << "-- inflow connection: " << cl.InflowConn
                               << std::endl;
                 }
@@ -270,17 +271,18 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(cec.MaxLossflow_W))
                               << std::endl;
-                    std::cout << "-- inflow connection: "
-                              << cec.InflowConn << std::endl;
-                    std::cout << "-- outflow connection: "
-                              << cec.OutflowConn << std::endl;
+                    std::cout << "-- inflow connection: " << cec.InflowConn
+                              << std::endl;
+                    std::cout << "-- outflow connection: " << cec.OutflowConn
+                              << std::endl;
                     std::cout << "-- lossflow connection: "
                               << (cec.LossflowConn.has_value()
-                                  ? std::to_string(cec.LossflowConn.value())
-                                  : "NA")
+                                      ? std::to_string(cec.LossflowConn.value())
+                                      : "NA")
                               << std::endl;
-                    std::cout << "-- wasteflow connection: "
-                              << cec.WasteflowConn << std::endl;
+                    std::cout
+                        << "-- wasteflow connection: " << cec.WasteflowConn
+                        << std::endl;
                 }
                 break;
                 case ComponentType::VariableEfficiencyConverterType:
@@ -311,17 +313,18 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(vec.MaxLossflow_W))
                               << std::endl;
-                    std::cout << "-- inflow connection: "
-                              << vec.InflowConn << std::endl;
-                    std::cout << "-- outflow connection: "
-                              << vec.OutflowConn << std::endl;
+                    std::cout << "-- inflow connection: " << vec.InflowConn
+                              << std::endl;
+                    std::cout << "-- outflow connection: " << vec.OutflowConn
+                              << std::endl;
                     std::cout << "-- lossflow connection: "
                               << (vec.LossflowConn.has_value()
-                                  ? std::to_string(vec.LossflowConn.value())
-                                  : "NA")
+                                      ? std::to_string(vec.LossflowConn.value())
+                                      : "NA")
                               << std::endl;
-                    std::cout << "-- wasteflow connection: "
-                              << vec.WasteflowConn << std::endl;
+                    std::cout
+                        << "-- wasteflow connection: " << vec.WasteflowConn
+                        << std::endl;
                 }
                 break;
                 case ComponentType::MoverType:
@@ -334,14 +337,15 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(mov.MaxOutflow_W))
                               << std::endl;
-                    std::cout << "-- inflow connection: "
-                              << mov.InflowConn << std::endl;
-                    std::cout << "-- outflow connection: "
-                              << mov.OutflowConn << std::endl;
-                    std::cout << "-- envflow connection: "
-                              << mov.InFromEnvConn << std::endl;
-                    std::cout << "-- wasteflow connection: "
-                              << mov.WasteflowConn << std::endl;
+                    std::cout << "-- inflow connection: " << mov.InflowConn
+                              << std::endl;
+                    std::cout << "-- outflow connection: " << mov.OutflowConn
+                              << std::endl;
+                    std::cout << "-- envflow connection: " << mov.InFromEnvConn
+                              << std::endl;
+                    std::cout
+                        << "-- wasteflow connection: " << mov.WasteflowConn
+                        << std::endl;
                 }
                 break;
                 case ComponentType::VariableEfficiencyMoverType:
@@ -365,14 +369,15 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(maxOutflow_W))
                               << std::endl;
-                    std::cout << "-- inflow connection: "
-                              << mov.InflowConn << std::endl;
-                    std::cout << "-- outflow connection: "
-                              << mov.OutflowConn << std::endl;
-                    std::cout << "-- envflow connection: "
-                              << mov.InFromEnvConn << std::endl;
-                    std::cout << "-- wasteflow connection: "
-                              << mov.WasteflowConn << std::endl;
+                    std::cout << "-- inflow connection: " << mov.InflowConn
+                              << std::endl;
+                    std::cout << "-- outflow connection: " << mov.OutflowConn
+                              << std::endl;
+                    std::cout << "-- envflow connection: " << mov.InFromEnvConn
+                              << std::endl;
+                    std::cout
+                        << "-- wasteflow connection: " << mov.WasteflowConn
+                        << std::endl;
                 }
                 break;
                 case ComponentType::StoreType:
@@ -406,10 +411,11 @@ namespace erin
                               << std::endl;
                     std::cout << "-- inflow connection: "
                               << (store.InflowConn.has_value()
-                                  ? std::to_string(store.InflowConn.value())
-                                  : "NA") << std::endl;
-                    std::cout << "-- outflow connection: "
-                              << store.OutflowConn << std::endl;
+                                      ? std::to_string(store.InflowConn.value())
+                                      : "NA")
+                              << std::endl;
+                    std::cout << "-- outflow connection: " << store.OutflowConn
+                              << std::endl;
                 }
                 break;
                 case ComponentType::PassThroughType:
@@ -421,10 +427,10 @@ namespace erin
                                       ? "unlimited"
                                       : std::to_string(pt.MaxOutflow_W))
                               << std::endl;
-                    std::cout << "-- inflow connection: "
-                              << pt.InflowConn << std::endl;
-                    std::cout << "-- outflow connection: "
-                              << pt.OutflowConn << std::endl;
+                    std::cout << "-- inflow connection: " << pt.InflowConn
+                              << std::endl;
+                    std::cout << "-- outflow connection: " << pt.OutflowConn
+                              << std::endl;
                 }
                 break;
                 case ComponentType::MuxType:
@@ -461,8 +467,8 @@ namespace erin
                               << sw.InflowConnPrimary << std::endl;
                     std::cout << "-- secondary inflow connection: "
                               << sw.InflowConnSecondary << std::endl;
-                    std::cout << "-- outflow connection: "
-                              << sw.OutflowConn << std::endl;
+                    std::cout << "-- outflow connection: " << sw.OutflowConn
+                              << std::endl;
                 }
                 break;
                 default:

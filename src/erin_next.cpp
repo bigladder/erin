@@ -2263,19 +2263,20 @@ namespace erin
     RunVariableEfficiencyConverterForward(
         Model const& m,
         SimulationState& ss,
-        size_t connIdx,
+        size_t inflowConnIdx,
         size_t compIdx
     )
     {
         VariableEfficiencyConverter const& vec = m.VarEffConvs[compIdx];
-        flow_t inflowAvailable_W = ss.Flows[connIdx].Available_W;
+        assert(inflowConnIdx == vec.InflowConn);
         size_t outflowConn = vec.OutflowConn;
+        flow_t inflowAvailable_W = ss.Flows[inflowConnIdx].Available_W;
         double efficiency = LookupTable_LookupInterp(
             vec.InflowsForEfficiency_W,
             vec.Efficiencies,
             static_cast<double>(inflowAvailable_W)
         );
-        assert(efficiency >= 0.0 && efficiency <= 1.0);
+        assert(efficiency > 0.0 && efficiency <= 1.0);
         flow_t outflowAvailable =
             static_cast<flow_t>(std::floor(efficiency * inflowAvailable_W));
         if (outflowAvailable > vec.MaxOutflow_W)

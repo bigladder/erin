@@ -2237,24 +2237,25 @@ namespace erin
     RunConstantEfficiencyConverterForward(
         Model const& m,
         SimulationState& ss,
-        size_t connIdx,
+        size_t inflowConnIdx,
         size_t compIdx
     )
     {
         ConstantEfficiencyConverter const& cec = m.ConstEffConvs[compIdx];
-        flow_t inflowAvailable = ss.Flows[connIdx].Available_W;
-        size_t outflowConn = cec.OutflowConn;
-        flow_t outflowAvailable =
-            static_cast<flow_t>(std::floor(cec.Efficiency * inflowAvailable));
-        if (outflowAvailable > cec.MaxOutflow_W)
+        assert(cec.InflowConn == inflowConnIdx);
+        flow_t inflowAvailable_W = ss.Flows[inflowConnIdx].Available_W;
+        flow_t outflowAvailable_W =
+            static_cast<flow_t>(std::floor(cec.Efficiency * inflowAvailable_W));
+        assert(inflowAvailable_W >= outflowAvailable_W);
+        if (outflowAvailable_W > cec.MaxOutflow_W)
         {
-            outflowAvailable = cec.MaxOutflow_W;
+            outflowAvailable_W = cec.MaxOutflow_W;
         }
-        if (outflowAvailable != ss.Flows[outflowConn].Available_W)
+        if (outflowAvailable_W != ss.Flows[cec.OutflowConn].Available_W)
         {
-            ss.ActiveConnectionsFront.insert(outflowConn);
+            ss.ActiveConnectionsFront.insert(cec.OutflowConn);
         }
-        ss.Flows[outflowConn].Available_W = outflowAvailable;
+        ss.Flows[cec.OutflowConn].Available_W = outflowAvailable_W;
         UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
     }
 

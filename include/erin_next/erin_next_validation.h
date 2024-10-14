@@ -21,6 +21,7 @@ namespace erin
         "yr",
         "weeks",
         "week",
+        "d",
         "days",
         "day",
         "hours",

@@ -1942,8 +1942,9 @@ namespace erin
     void
     RunMuxBackward(Model& model, SimulationState& ss, size_t muxIdx)
     {
+        assert(muxIdx < model.Muxes.size());
         Mux const& mux = model.Muxes[muxIdx];
-        flow_t totalRequest = 0;
+        flow_t totalOutflowRequest_W = 0;
         for (size_t i = 0; i < mux.NumOutports; ++i)
         {
             auto outflowConnIdx = mux.OutflowConns[i];
@@ -1951,10 +1952,10 @@ namespace erin
                 ss.Flows[outflowConnIdx].Requested_W > mux.MaxOutflows_W[i]
                 ? mux.MaxOutflows_W[i]
                 : ss.Flows[outflowConnIdx].Requested_W;
-            totalRequest = UtilSafeAdd(totalRequest, outflowRequest_W);
+            totalOutflowRequest_W = UtilSafeAdd(totalOutflowRequest_W, outflowRequest_W);
         }
         Mux_RequestInflowsIntelligently(
-            ss, model.Muxes[muxIdx].InflowConns, totalRequest
+            ss, model.Muxes[muxIdx].InflowConns, totalOutflowRequest_W
         );
     }
 

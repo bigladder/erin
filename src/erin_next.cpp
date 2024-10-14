@@ -4541,6 +4541,7 @@ namespace erin
         bool report
     )
     {
+        assert(efficiency > 0.0 && efficiency <= 1.0);
         // NOTE: the 0th flowId is ""; the non-described flow
         std::vector<size_t> inflowIds{inflowId};
         std::vector<size_t> outflowIds{outflowId, lossflowId, wasteflowId};
@@ -5719,8 +5720,21 @@ namespace erin
                 WriteErrorMessage("network", oss.str());
                 return Result::Failure;
             }
+            if (toCompId >= m.ComponentMap.InflowType.size())
+            {
+                std::cout
+                    << "[network] toCompId overflows InflowTypes"
+                    << std::endl;
+                return Result::Failure;
+            }
             if (toTap.Port >= m.ComponentMap.InflowType[toCompId].size())
             {
+                if (toCompId >= m.ComponentMap.CompType.size())
+                {
+                    std::cout << "[network] component type not logged"
+                              << std::endl;
+                    return Result::Failure;
+                }
                 std::cout << "[network] port is unaddressable for "
                           << ToString(m.ComponentMap.CompType[toCompId])
                           << ": trying to address " << toTap.Port
@@ -5731,6 +5745,38 @@ namespace erin
             }
             if (m.ComponentMap.InflowType[toCompId][toTap.Port] != flowTypeId)
             {
+                if (toCompId >= m.ComponentMap.OutflowType.size())
+                {
+                    std::cout
+                        << "[network] toCompId is beyond outflow types"
+                        << std::endl;
+                    return Result::Failure;
+                }
+                if (toTap.Port >= m.ComponentMap.OutflowType[toCompId].size())
+                {
+                    std::cout
+                        << "[network] port is unaddressable"
+                        << ":tag="
+                        << fromTap.Tag << "[" << fromTap.Port << "]"
+                        << " => "
+                        << toTap.Tag <<"[" << toTap.Port << "]"
+                        << ":port=" << toTap.Port
+                        << ":availablePorts="
+                        << m.ComponentMap.OutflowType[toCompId].size()
+                        << std::endl;
+                    return Result::Failure;
+                }
+                size_t typeId = m.ComponentMap.OutflowType[toCompId][toTap.Port];
+                if (typeId >= fd.Type.size())
+                {
+                    std::cout
+                        << "[network] port is unaddressable"
+                        << ":port=" << toTap.Port
+                        << ":flowTypeId=" << typeId
+                        << ":availableFlowTypes=" << fd.Type.size()
+                        << std::endl;
+                    return Result::Failure;
+                }
                 std::cout
                     << "[network] mismatch of flow types: " << toTap.Tag
                     << ":inflow="

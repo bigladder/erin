@@ -3711,6 +3711,7 @@ namespace erin
                         if (ctype == ComponentType::ConstantLoadType
                             || ctype == ComponentType::ScheduleBasedLoadType
                             || ctype == ComponentType::WasteSinkType
+                            || ctype == ComponentType::StoreType
                             || ctype == ComponentType::ConstantSourceType
                             || ctype == ComponentType::ScheduleBasedSourceType
                             || ctype == ComponentType::EnvironmentSourceType)
@@ -3728,6 +3729,37 @@ namespace erin
                                     item.second
                                 )
                             );
+                            for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
+                            {
+                                Connection const& conn = model.Connections[connIdx];
+                                if (conn.ToId == item.first)
+                                {
+                                    Log_Warning(
+                                        log,
+                                        fmt::format(
+                                            "* +{:>16d} W (R: +{:>16d} W // A: +{:>16d} W):: {}",
+                                            ss.Flows[connIdx].Actual_W,
+                                            ss.Flows[connIdx].Requested_W,
+                                            ss.Flows[connIdx].Available_W,
+                                            ConnectionToString(model.ComponentMap, conn, true)
+                                        )
+                                    );
+                                }
+                                if (conn.FromId == item.first)
+                                {
+                                    Log_Warning(
+                                        log,
+                                        fmt::format(
+                                            "* -{:>16d} W (R: -{:>16d} W // A: -{:>16d} W):: {}",
+                                            ss.Flows[connIdx].Actual_W,
+                                            ss.Flows[connIdx].Requested_W,
+                                            ss.Flows[connIdx].Available_W,
+                                            ConnectionToString(model.ComponentMap, conn, true)
+                                        )
+                                    );
+                                }
+                                
+                            }
                         }
                     }
                 }

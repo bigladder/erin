@@ -2416,22 +2416,21 @@ namespace erin
     )
     {
         Store const& store = model.Stores[storeIdx];
-        size_t outflowConn = store.OutflowConn;
         assert(store.InflowConn.has_value());
         assert(inflowConnIdx == store.InflowConn.value());
-        flow_t available = ss.Flows[inflowConnIdx].Available_W;
-        flow_t dischargeAvailable =
+        flow_t dischargeAvailable_W =
             ss.StorageAmounts_J[storeIdx] > 0 ? store.MaxDischargeRate_W : 0;
-        available = UtilSafeAdd(available, dischargeAvailable);
-        if (available > store.MaxOutflow_W)
+        flow_t available_W = UtilSafeAdd(
+            ss.Flows[inflowConnIdx].Available_W, dischargeAvailable_W);
+        if (available_W > store.MaxOutflow_W)
         {
-            available = store.MaxOutflow_W;
+            available_W = store.MaxOutflow_W;
         }
-        if (ss.Flows[outflowConn].Available_W != available)
+        if (ss.Flows[store.OutflowConn].Available_W != available_W)
         {
-            ss.ActiveConnectionsFront.insert(outflowConn);
+            ss.ActiveConnectionsFront.insert(store.OutflowConn);
         }
-        ss.Flows[outflowConn].Available_W = available;
+        ss.Flows[store.OutflowConn].Available_W = available_W;
     }
 
     void

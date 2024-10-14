@@ -2691,24 +2691,9 @@ namespace erin
     void
     RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t)
     {
-        for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
+        for (size_t storeIdx = 0; storeIdx < model.Stores.size(); ++storeIdx)
         {
-            size_t compIdx = model.Connections[connIdx].ToIdx;
-            size_t compId = model.Connections[connIdx].ToId;
-            if (ss.UnavailableComponents.contains(compId))
-            {
-                continue;
-            }
-            if (model.Connections[connIdx].To == ComponentType::MuxType)
-            {
-                RunMuxPostFinalization(model, ss, compIdx);
-            }
-            if (model.Connections[connIdx].From == ComponentType::StoreType)
-            {
-                RunStorePostFinalization(
-                    model, ss, t, model.Connections[connIdx].FromIdx
-                );
-            }
+            RunStorePostFinalization(model, ss, t, storeIdx);
         }
     }
 

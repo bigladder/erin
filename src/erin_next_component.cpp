@@ -3,6 +3,7 @@
 #include "erin_next/erin_next_component.h"
 #include "erin/logging.h"
 #include "erin_next/erin_next.h"
+#include "erin_next/erin_next_simulation.h"
 #include "erin_next/erin_next_time_and_amount.h"
 #include "erin_next/erin_next_toml.h"
 #include "erin_next/erin_next_units.h"
@@ -172,7 +173,7 @@ namespace erin
             break;
             default:
             {
-                WriteErrorMessage(fullTableName, "Unhandled component type");
+                WriteErrorMessage(fullTableName, "unhandled component type: " + ToString(ct));
                 std::exit(1);
             }
             break;
@@ -258,6 +259,41 @@ namespace erin
         }
         switch (ct)
         {
+            case ComponentType::ConstantLoadType:
+            {
+                flow_t loadRequest_W = 0;
+                PowerUnit localPowerUnit = rateUnit;
+                if (input.contains("rate_unit"))
+                {
+                    std::string localRateUnit = std::get<std::string>(input.at("rate_unit").Value);
+                    std::optional<PowerUnit> maybePowerUnit =
+                        TagToPowerUnit(localRateUnit);
+                    if (!maybePowerUnit.has_value())
+                    {
+                        WriteErrorMessage(
+                            fullTableName, "unhandled rate_unit value: '" + localRateUnit + "'"
+                        );
+                        return Result::Failure;
+                    }
+                    localPowerUnit = maybePowerUnit.value();
+                }
+                if (!input.contains("constant_request"))
+                {
+                    WriteErrorMessage(
+                        fullTableName, "required field 'constant_request' not found"
+                    );
+                    return Result::Failure;
+                }
+                double loadRequest =
+                    std::get<double>(input.at("constant_request").Value);
+                loadRequest_W = static_cast<flow_t>(
+                    Power_ToWatt(loadRequest, localPowerUnit)
+                );
+                id = Model_AddConstantLoad(
+                    s.TheModel, loadRequest_W, inflowId, tag, report
+                );
+            }
+            break;
             case ComponentType::ConstantSourceType:
             {
                 flow_t maxAvailable = max_flow_W;

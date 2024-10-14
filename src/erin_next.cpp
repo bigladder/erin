@@ -1861,16 +1861,16 @@ namespace erin
         flow_t remainingRequest_W
     )
     {
-        for (size_t inflowConn : inflowConns)
+        for (size_t inflowConnIdx : inflowConns)
         {
-            if (ss.Flows[inflowConn].Requested_W != remainingRequest_W)
+            if (ss.Flows[inflowConnIdx].Requested_W != remainingRequest_W)
             {
-                ss.ActiveConnectionsBack.insert(inflowConn);
+                ss.ActiveConnectionsBack.insert(inflowConnIdx);
             }
-            ss.Flows[inflowConn].Requested_W = remainingRequest_W;
+            ss.Flows[inflowConnIdx].Requested_W = remainingRequest_W;
             remainingRequest_W =
-                remainingRequest_W > ss.Flows[inflowConn].Available_W
-                ? remainingRequest_W - ss.Flows[inflowConn].Available_W
+                remainingRequest_W > ss.Flows[inflowConnIdx].Available_W
+                ? remainingRequest_W - ss.Flows[inflowConnIdx].Available_W
                 : 0;
         }
     }

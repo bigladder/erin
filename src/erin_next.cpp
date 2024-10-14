@@ -3074,7 +3074,7 @@ namespace erin
     std::optional<ComponentType>
     TagToComponentType(std::string const& tag)
     {
-        if (tag == "ConstantLoad")
+        if (tag == "ConstantLoad" || tag == "constant_load")
         {
             return ComponentType::ConstantLoadType;
         }
@@ -3233,6 +3233,7 @@ namespace erin
                 case ComponentType::MoverType:
                 case ComponentType::VariableEfficiencyMoverType:
                 case ComponentType::WasteSinkType:
+                case ComponentType::SwitchType:
                 {
                 }
                 break;
@@ -3240,7 +3241,8 @@ namespace erin
                 {
                     WriteErrorMessage(
                         "SummarizeFlows(.)",
-                        "Unhandled From type for connection - from pass"
+                        "Unhandled From type for connection - from pass: "
+                        + ToString(m.Connections[flowIdx].From)
                     );
                 }
                 break;
@@ -3274,6 +3276,7 @@ namespace erin
                 case ComponentType::MoverType:
                 case ComponentType::VariableEfficiencyMoverType:
                 case ComponentType::EnvironmentSourceType:
+                case ComponentType::SwitchType:
                 {
                 }
                 break;
@@ -3281,7 +3284,8 @@ namespace erin
                 {
                     WriteErrorMessage(
                         "SummarizeFlows(.)",
-                        "Unhandled From type for connection - to pass"
+                        "Unhandled From type for connection - to pass: "
+                        + ToString(m.Connections[flowIdx].To)
                     );
                 }
                 break;

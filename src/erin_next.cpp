@@ -4011,6 +4011,18 @@ namespace erin
     size_t
     Model_AddConstantLoad(Model& m, flow_t load)
     {
+        return Model_AddConstantLoad(m, load, 0, "", true);
+    }
+
+    size_t
+    Model_AddConstantLoad(
+        Model& m,
+        flow_t load,
+        size_t inflowTypeId,
+        std::string const& tag,
+        bool report
+    )
+    {
         size_t idx = m.ConstLoads.size();
         ConstantLoad cl{};
         cl.Load_W = load;
@@ -4019,10 +4031,11 @@ namespace erin
             m.ComponentMap,
             ComponentType::ConstantLoadType,
             idx,
-            std::vector<size_t>{0},
+            std::vector<size_t>{inflowTypeId},
             std::vector<size_t>{},
-            "",
-            0.0
+            tag,
+            0.0,
+            report
         );
     }
 

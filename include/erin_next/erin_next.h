@@ -879,6 +879,15 @@ namespace erin
     Model_AddConstantLoad(Model& m, flow_t load);
 
     size_t
+    Model_AddConstantLoad(
+        Model& m,
+        flow_t load,
+        size_t inflowTypeId,
+        std::string const& tag,
+        bool report
+    );
+
+    size_t
     Model_AddScheduleBasedLoad(
         Model& m,
         double* times,

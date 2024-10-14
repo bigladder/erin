@@ -3658,7 +3658,7 @@ namespace erin
                 ActivateConnectionsForConstantSources(model, ss);
             }
             size_t const maxLoop = 1'000;
-            for (size_t loopIter = 0; loopIter <= maxLoop; ++loopIter)
+            for (size_t loopIter = 0; loopIter < maxLoop; ++loopIter)
             {
                 if (CountActiveConnections(ss) == 0)
                 {
@@ -3667,10 +3667,6 @@ namespace erin
                         Log_Debug(log, fmt::format("loop iter: {}", loopIter));
                     }
                     break;
-                }
-                if (loopIter == maxLoop)
-                {
-                    // TODO: throw an error? exit with error code?
                 }
                 RunActiveConnections(model, ss, t);
                 if (enableSwitchLogic)

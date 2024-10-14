@@ -1354,22 +1354,26 @@ namespace erin
             bool isSource = !maybeInflowConn.has_value();
             if (ss.StorageNextEventTimes[storeIdx] == t || isSource)
             {
-                flow_t available = ss.StorageAmounts_J[storeIdx] > 0
+                flow_t available_W = ss.StorageAmounts_J[storeIdx] > 0
                     ? store.MaxDischargeRate_W
                     : 0;
                 if (maybeInflowConn.has_value())
                 {
                     size_t inflowConn = maybeInflowConn.value();
-                    available += ss.Flows[inflowConn].Available_W;
+                    available_W = UtilSafeAdd(available_W, ss.Flows[inflowConn].Available_W);
                 }
-                if (ss.Flows[outflowConn].Available_W != available)
+                if (available_W > store.MaxOutflow_W)
+                {
+                    available_W = store.MaxOutflow_W;
+                }
+                if (ss.Flows[outflowConn].Available_W != available_W)
                 {
                     ss.ActiveConnectionsFront.insert(outflowConn);
                 }
-                ss.Flows[outflowConn].Available_W = available;
+                ss.Flows[outflowConn].Available_W = available_W;
                 if (maybeInflowConn.has_value())
                 {
-                    flow_t request =
+                    flow_t request_W =
                         (ss.Flows[outflowConn].Requested_W > store.MaxOutflow_W
                              ? store.MaxOutflow_W
                              : ss.Flows[outflowConn].Requested_W)
@@ -1377,11 +1381,11 @@ namespace erin
                                ? store.MaxChargeRate_W
                                : 0);
                     size_t inflowConn = maybeInflowConn.value();
-                    if (ss.Flows[inflowConn].Requested_W != request)
+                    if (ss.Flows[inflowConn].Requested_W != request_W)
                     {
-                        ss.ActiveConnectionsFront.insert(inflowConn);
+                        ss.ActiveConnectionsBack.insert(inflowConn);
                     }
-                    ss.Flows[inflowConn].Requested_W = request;
+                    ss.Flows[inflowConn].Requested_W = request_W;
                 }
                 continue;
             }

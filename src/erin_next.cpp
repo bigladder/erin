@@ -455,6 +455,95 @@ namespace erin
                     }
                 }
                 break;
+                case ComponentType::VariableEfficiencyMoverType:
+                {
+                    assert(idx < m.VarEffMovers.size());
+                    VariableEfficiencyMover const& comp = m.VarEffMovers[idx];
+                    size_t inflowConnIdx = comp.InflowConn;
+                    assert(inflowConnIdx < nConns);
+                    Connection const& inflowConn = m.Connections[inflowConnIdx];
+                    size_t inflowPort = 0;
+                    if ((inflowConn.To != compType)
+                        || (inflowConn.ToId != compId)
+                        || (inflowConn.ToIdx != idx)
+                        || (inflowConn.ToPort != inflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            inflowPort,
+                            idx,
+                            compType,
+                            inflowConn,
+                            inflowConnIdx,
+                            FlowDirection::Inflow
+                        );
+                    }
+                    size_t outflowConnIdx = comp.OutflowConn;
+                    assert(outflowConnIdx < nConns);
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
+                    size_t outflowPort = 0;
+                    if ((outflowConn.From != compType)
+                        || (outflowConn.FromId != compId)
+                        || (outflowConn.FromIdx != idx)
+                        || (outflowConn.FromPort != outflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            outflowPort,
+                            idx,
+                            compType,
+                            outflowConn,
+                            outflowConnIdx,
+                            FlowDirection::Outflow
+                        );
+                    }
+                    size_t envConnIdx = comp.InFromEnvConn;
+                    assert(envConnIdx < nConns);
+                    Connection const& envConn = m.Connections[envConnIdx];
+                    size_t envInflowPort = 1;
+                    if ((envConn.To != compType) || (envConn.ToId != compId)
+                        || (envConn.ToIdx != idx)
+                        || (envConn.ToPort != envInflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            envInflowPort,
+                            idx,
+                            compType,
+                            envConn,
+                            envConnIdx,
+                            FlowDirection::Inflow
+                        );
+                    }
+                    size_t wConnIdx = comp.WasteflowConn;
+                    assert(wConnIdx < nConns);
+                    Connection const& wConn = m.Connections[wConnIdx];
+                    size_t wasteOutflowPort = 1;
+                    if ((wConn.From != compType) || (wConn.FromId != compId)
+                        || (wConn.FromIdx != idx)
+                        || (wConn.FromPort != wasteOutflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            wasteOutflowPort,
+                            idx,
+                            compType,
+                            wConn,
+                            wConnIdx,
+                            FlowDirection::Outflow
+                        );
+                    }
+                }
+                break;
                 case ComponentType::MuxType:
                 {
                     assert(idx < m.Muxes.size());
@@ -529,6 +618,73 @@ namespace erin
                             compType,
                             inflowConn,
                             inflowConnIdx,
+                            FlowDirection::Inflow
+                        );
+                    }
+                    size_t outflowConnIdx = comp.OutflowConn;
+                    Connection const& outflowConn =
+                        m.Connections[outflowConnIdx];
+                    size_t outflowPort = 0;
+                    if ((outflowConn.From != compType)
+                        || (outflowConn.FromId != compId)
+                        || (outflowConn.FromIdx != idx)
+                        || (outflowConn.FromPort != outflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            outflowPort,
+                            idx,
+                            compType,
+                            outflowConn,
+                            outflowConnIdx,
+                            FlowDirection::Outflow
+                        );
+                    }
+                }
+                break;
+                case ComponentType::SwitchType:
+                {
+                    assert(idx < m.Switches.size());
+                    Switch const& comp = m.Switches[idx];
+                    size_t primaryInflowConnIdx = comp.InflowConnPrimary;
+                    Connection const& primaryInflowConn = m.Connections[primaryInflowConnIdx];
+                    size_t primaryInflowPort = 0;
+                    if ((primaryInflowConn.To != compType)
+                        || (primaryInflowConn.ToId != compId)
+                        || (primaryInflowConn.ToIdx != idx)
+                        || (primaryInflowConn.ToPort != primaryInflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            primaryInflowPort,
+                            idx,
+                            compType,
+                            primaryInflowConn,
+                            primaryInflowConnIdx,
+                            FlowDirection::Inflow
+                        );
+                    }
+                    size_t secondaryInflowConnIdx = comp.InflowConnSecondary;
+                    Connection const& secondaryInflowConn = m.Connections[secondaryInflowConnIdx];
+                    size_t secondaryInflowPort = 1;
+                    if ((secondaryInflowConn.To != compType)
+                        || (secondaryInflowConn.ToId != compId)
+                        || (secondaryInflowConn.ToIdx != idx)
+                        || (secondaryInflowConn.ToPort != secondaryInflowPort))
+                    {
+                        AddConnectionIssue(
+                            issues,
+                            tag,
+                            compId,
+                            secondaryInflowPort,
+                            idx,
+                            compType,
+                            secondaryInflowConn,
+                            secondaryInflowConnIdx,
                             FlowDirection::Inflow
                         );
                     }
@@ -708,7 +864,8 @@ namespace erin
                 break;
                 default:
                 {
-                    std::cout << "unhandled component type\n";
+                    std::cout << "unhandled component type: " + ToString(compType)
+                              << std::endl;
                     std::exit(1);
                 }
                 break;

@@ -1368,7 +1368,7 @@ TEST(Erin, Test13)
         Model_AddConstantSource(m, std::numeric_limits<uint32_t>::max());
     auto ngSourceMuxId = Model_AddMux(m, 1, 2);
     auto ngToElecConvId = Model_AddConstantEfficiencyConverter(m, 42, 100);
-    auto elecHeatPumpConvId = Model_AddConstantEfficiencyConverter(m, 35, 10);
+    auto elecHeatPumpConvId = Model_AddMover(m, 3.5);
     auto ngHeaterConvId = Model_AddConstantEfficiencyConverter(m, 98, 100);
     auto heatingSupplyMuxId = Model_AddMux(m, 3, 1);
     auto elecLoadId = Model_AddScheduleBasedLoad(m, elecLoad);

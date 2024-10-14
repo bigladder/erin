@@ -1968,25 +1968,24 @@ namespace erin
     )
     {
         Store const& store = model.Stores[storeIdx];
-        std::optional<size_t> maybeInflowConnIdx = store.InflowConn;
         assert(outflowConnIdx == store.OutflowConn);
-        flow_t chargeRate =
-            ss.StorageAmounts_J[storeIdx] <= store.ChargeAmount_J
-            ? store.MaxChargeRate_W
-            : 0;
-        flow_t outRequest_W =
-            ss.Flows[outflowConnIdx].Requested_W > store.MaxOutflow_W
-            ? store.MaxOutflow_W
-            : ss.Flows[outflowConnIdx].Requested_W;
-        if (maybeInflowConnIdx.has_value())
+        if (store.InflowConn.has_value())
         {
-            size_t inflowConnIdx = maybeInflowConnIdx.value();
-            if (ss.Flows[inflowConnIdx].Requested_W
-                != (outRequest_W + chargeRate))
+            flow_t chargeRate_W =
+                ss.StorageAmounts_J[storeIdx] <= store.ChargeAmount_J
+                ? store.MaxChargeRate_W
+                : 0;
+            flow_t outRequest_W =
+                ss.Flows[outflowConnIdx].Requested_W > store.MaxOutflow_W
+                ? store.MaxOutflow_W
+                : ss.Flows[outflowConnIdx].Requested_W;
+            flow_t totalRequest_W = outRequest_W + chargeRate_W;
+            size_t inflowConnIdx = store.InflowConn.value();
+            if (ss.Flows[inflowConnIdx].Requested_W != totalRequest_W)
             {
                 ss.ActiveConnectionsBack.insert(inflowConnIdx);
             }
-            ss.Flows[inflowConnIdx].Requested_W = outRequest_W + chargeRate;
+            ss.Flows[inflowConnIdx].Requested_W = totalRequest_W;
         }
     }
 

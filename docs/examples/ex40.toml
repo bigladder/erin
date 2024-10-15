@@ -315,10 +315,6 @@ type = "mux"
 flow = "electricity"
 num_inflows = 4
 num_outflows = 4
-[components.electric_pump]
-type = "constant_load"
-inflow = "electricity"
-constant_request = 10.0
 [components.ng_fired_heater]
 type = "converter"
 inflow = "natural_gas"
@@ -369,6 +365,10 @@ type = "load"
 inflow = "chilled_water"
 loads_by_scenario.blue_sky = "building_chilled_water"
 loads_by_scenario.hurricane = "building_chilled_water"
+[components.electric_pump]
+type = "constant_load"
+inflow = "electricity"
+constant_request = 10.0
 #####################
 [dist.immediately]
 type = "fixed"

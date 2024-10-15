@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.15..3.28) # required for gtest_discover_tests
 
 project(ERIN
-    VERSION 0.0.55
+    VERSION 0.0.56
     DESCRIPTION "Energy Resilience of Interacting Networks"
     LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)

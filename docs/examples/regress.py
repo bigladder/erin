@@ -418,6 +418,7 @@ if __name__ == "__main__":
     run_cli("39")
     run_cli("40")
     run_cli("41")
+    run_cli("42")
     print("\nPassed all regression tests!")
 
     if os.environ.get("ERIN_SHORT_TEST") is not None:

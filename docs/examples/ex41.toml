@@ -1,6 +1,8 @@
 [meta]
 description = """
-  This example uses ALL of the different component types.
+  This example builds on example 40 but also uses:
+
+  * group aggregation
 """
 [simulation_info]
 input_format_version = "0.2"
@@ -232,6 +234,7 @@ outflow = "electricity"
 max_outflow = 100.0
 [components.pv_array]
 type = "uncontrolled_source"
+group = "elec_group"
 outflow = "electricity"
 supply_by_scenario.blue_sky = "pv_generation"
 supply_by_scenario.hurricane = "pv_generation"
@@ -241,6 +244,7 @@ outflow = "natural_gas"
 max_outflow = 1000.0
 [components.natural_gas_turbine]
 type = "variable_efficiency_converter"
+group = "gas_group"
 inflow = "natural_gas"
 outflow = "electricity"
 lossflow = "heating"
@@ -255,6 +259,7 @@ efficiency_by_fraction_out = [
 ]
 [components.diesel_fuel_tank]
 type = "store"
+group = "diesel_group"
 flow = "diesel"
 rate_unit = "kW"
 max_outflow = 20.0
@@ -264,20 +269,24 @@ max_charge = 10.0
 max_discharge = 20.0
 [components.backup_generator]
 type = "converter"
+group = "elec_group"
 inflow = "diesel"
 outflow = "electricity"
 lossflow = "waste_heat"
 constant_efficiency = 0.3
 [components.power_lines]
 type = "pass_through"
+group = "elec_group"
 flow = "electricity"
 [components.backup_chiller]
 type = "mover"
+group = "cool_group"
 inflow = "electricity"
 outflow = "chilled_water"
 cop = 2.5
 [components.main_chiller]
 type = "variable_efficiency_mover"
+group = "cool_group"
 inflow = "electricity"
 outflow = "chilled_water"
 rate_unit = "kW"
@@ -291,48 +300,57 @@ cop_by_fraction_out = [
 ]
 [components.chilled_water_junction]
 type = "mux"
+group = "cool_group"
 flow = "chilled_water"
 num_inflows = 2
 num_outflows = 1
 [components.heating_manifold]
 type = "mux"
+group = "heat_group"
 flow = "heating"
 num_inflows = 3
 num_outflows = 1
 [components.electric_bus0]
 type = "mux"
+group = "elec_group"
 flow = "electricity"
 num_inflows = 1
 num_outflows = 2
 [components.electric_bus1]
 type = "mux"
+group = "elec_group"
 flow = "electricity"
 num_inflows = 4
 num_outflows = 4
 [components.ng_fired_heater]
 type = "converter"
+group = "gas_group"
 inflow = "natural_gas"
 outflow = "heating"
 lossflow = "waste_heat"
 constant_efficiency = 0.94
 [components.diesel_fired_heater]
 type = "converter"
+group = "heat_group"
 inflow = "diesel"
 outflow = "heating"
 lossflow = "waste_heat"
 constant_efficiency = 0.88
 [components.diesel_fuel_router]
 type = "mux"
+group = "diesel_group"
 flow = "diesel"
 num_inflows = 1
 num_outflows = 2
 [components.ng_fuel_router]
 type = "mux"
+group = "gas_group"
 flow = "natural_gas"
 num_inflows = 1
 num_outflows = 2
 [components.battery]
 type = "store"
+group = "elec_group"
 flow = "electricity"
 capacity = 20.0
 capacity_unit = "kWh"
@@ -343,6 +361,7 @@ max_discharge = 20.0
 roundtrip_efficiency = 0.9
 [components.automated_transfer_switch]
 type = "switch"
+group = "elec_group"
 flow = "electricity"
 [components.building_electrical]
 type = "load"

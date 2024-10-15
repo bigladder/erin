@@ -196,6 +196,9 @@ namespace erin
                               << s.FlowTypeMap.Type[outflowType] << std::endl;
                 }
             }
+            std::cout << "- report? "
+                      << (m.ComponentMap.Report[compId] ? "true" : "false")
+                      << std::endl;
             size_t subtypeIdx = m.ComponentMap.Idx[compId];
             switch (m.ComponentMap.CompType[compId])
             {

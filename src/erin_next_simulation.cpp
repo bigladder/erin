@@ -1708,7 +1708,7 @@ namespace erin
                     if (compMap.CompType[compId] == ComponentType::StoreType
                         && compMap.Idx[compId] == storeIdx)
                     {
-                        auto tag = compMap.Tag[compId];
+                        std::string tag(compMap.Tag[compId]);
                         if (aggregateGroups
                             && model.ComponentToGroup.contains(compId))
                         {

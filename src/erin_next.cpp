@@ -3411,12 +3411,6 @@ namespace erin
             std::vector<size_t>(model.ScheduledLoads.size(), 0);
         ss.ScheduleBasedSourceIdx =
             std::vector<size_t>(model.ScheduledSrcs.size(), 0);
-        ss.Flows.clear();
-        ss.Flows.reserve(model.Connections.size());
-        for (size_t i = 0; i < model.Connections.size(); ++i)
-        {
-            ss.Flows.push_back(Flow{});
-        }
         for (size_t i = 0; i < model.Switches.size(); ++i)
         {
             ss.SwitchStates.push_back(SwitchState::Primary);

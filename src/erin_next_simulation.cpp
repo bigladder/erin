@@ -199,6 +199,10 @@ namespace erin
             std::cout << "- report? "
                       << (m.ComponentMap.Report[compId] ? "true" : "false")
                       << std::endl;
+            if (m.ComponentToGroup.contains(compId))
+            {
+                std::cout << "- group: " << m.ComponentToGroup.at(compId) << std::endl;
+            }
             size_t subtypeIdx = m.ComponentMap.Idx[compId];
             switch (m.ComponentMap.CompType[compId])
             {
@@ -1565,6 +1569,57 @@ namespace erin
         return s;
     }
 
+    static void
+    Simulation_PrintGroups(Simulation const& s)
+    {
+        if (s.TheModel.GroupToComponents.size() == 0)
+        {
+            return;
+        }
+        std::vector<std::string> groupTags{};
+        groupTags.reserve(s.TheModel.GroupToComponents.size());
+        for (auto const& p : s.TheModel.GroupToComponents)
+        {
+            groupTags.push_back(p.first);
+        }
+        std::set<size_t> groupedComponents{};
+        std::sort(groupTags.begin(), groupTags.end());
+        for (std::string const& gTag : groupTags)
+        {
+            size_t count = s.TheModel.GroupToComponents.at(gTag).size();
+            std::cout << "- GROUP: " << gTag << " (count: " << count << ")" << std::endl;
+            for (size_t compId : s.TheModel.GroupToComponents.at(gTag))
+            {
+                groupedComponents.insert(compId);
+                std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId] << std::endl;
+            }
+        }
+        size_t numUngrouped = s.TheModel.ComponentMap.Tag.size()
+                - groupedComponents.size();
+        std::cout << "- UNGROUPED (count: " << numUngrouped << ")" << std::endl;
+        for (size_t compId = 0;
+            compId < s.TheModel.ComponentMap.Tag.size();
+            ++compId)
+        {
+            if (groupedComponents.contains(compId))
+            {
+                continue;
+            }
+            if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::EnvironmentSourceType)
+            {
+                std::cout << "-- ENV[" << compId << "]" << std::endl;
+            }
+            else if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::WasteSinkType)
+            {
+                std::cout << "-- WASTE[" << compId << "]" << std::endl;
+            }
+            else
+            {
+                std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId] << std::endl;
+            }
+        }
+    }
+
     void
     Simulation_Print(Simulation const& s)
     {
@@ -1574,6 +1629,8 @@ namespace erin
         Simulation_PrintLoads(s);
         std::cout << "\nComponents:" << std::endl;
         Simulation_PrintComponents(s);
+        std::cout << "\nGroups:" << std::endl;
+        Simulation_PrintGroups(s);
         std::cout << "\nDistributions:" << std::endl;
         s.TheModel.DistSys.print_distributions();
         std::cout << "\nFailure Modes:" << std::endl;

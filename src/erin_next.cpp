@@ -6099,6 +6099,8 @@ namespace erin
             components_in_group.insert(id);
         }
         else
+        {
             map.insert({group, {id}});
+        }
     }
 } // namespace erin

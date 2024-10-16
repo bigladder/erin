@@ -329,7 +329,10 @@ namespace erin
     CalculateComponentOrder(Simulation const& s);
 
     std::vector<size_t>
-    CalculateStoreOrder(Simulation const& s);
+    CalculateStoreOrder(
+        Simulation const& s,
+        std::unordered_set<std::string> const& compsToReport
+    );
 
     std::vector<size_t>
     CalculateFailModeOrder(Simulation const& s);

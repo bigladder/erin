@@ -201,7 +201,8 @@ namespace erin
                       << std::endl;
             if (m.ComponentToGroup.contains(compId))
             {
-                std::cout << "- group: " << m.ComponentToGroup.at(compId) << std::endl;
+                std::cout << "- group: " << m.ComponentToGroup.at(compId)
+                          << std::endl;
             }
             size_t subtypeIdx = m.ComponentMap.Idx[compId];
             switch (m.ComponentMap.CompType[compId])
@@ -1587,35 +1588,39 @@ namespace erin
         for (std::string const& gTag : groupTags)
         {
             size_t count = s.TheModel.GroupToComponents.at(gTag).size();
-            std::cout << "- GROUP: " << gTag << " (count: " << count << ")" << std::endl;
+            std::cout << "- GROUP: " << gTag << " (count: " << count << ")"
+                      << std::endl;
             for (size_t compId : s.TheModel.GroupToComponents.at(gTag))
             {
                 groupedComponents.insert(compId);
-                std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId] << std::endl;
+                std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId]
+                          << std::endl;
             }
         }
-        size_t numUngrouped = s.TheModel.ComponentMap.Tag.size()
-                - groupedComponents.size();
+        size_t numUngrouped =
+            s.TheModel.ComponentMap.Tag.size() - groupedComponents.size();
         std::cout << "- UNGROUPED (count: " << numUngrouped << ")" << std::endl;
-        for (size_t compId = 0;
-            compId < s.TheModel.ComponentMap.Tag.size();
-            ++compId)
+        for (size_t compId = 0; compId < s.TheModel.ComponentMap.Tag.size();
+             ++compId)
         {
             if (groupedComponents.contains(compId))
             {
                 continue;
             }
-            if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::EnvironmentSourceType)
+            if (s.TheModel.ComponentMap.CompType[compId]
+                == ComponentType::EnvironmentSourceType)
             {
                 std::cout << "-- ENV[" << compId << "]" << std::endl;
             }
-            else if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::WasteSinkType)
+            else if (s.TheModel.ComponentMap.CompType[compId]
+                     == ComponentType::WasteSinkType)
             {
                 std::cout << "-- WASTE[" << compId << "]" << std::endl;
             }
             else
             {
-                std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId] << std::endl;
+                std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId]
+                          << std::endl;
             }
         }
     }

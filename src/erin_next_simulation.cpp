@@ -1841,7 +1841,7 @@ namespace erin
     std::vector<size_t>
     CalculateStoreOrder(
         Simulation const& s,
-        std::unordered_set<size_t> compsToReport
+        std::unordered_set<size_t> const& compsToReport
     )
     {
         std::vector<size_t> result;

@@ -1844,11 +1844,13 @@ namespace erin
         std::unordered_set<size_t> const& compsToReport
     )
     {
-        std::vector<size_t> result;
-        std::vector<std::string> storeTags;
+        std::vector<size_t> result{};
+        std::vector<std::string> storeTags{};
         storeTags.reserve(s.TheModel.Stores.size());
         size_t const numComps = s.TheModel.ComponentMap.CompType.size();
         size_t const numStores = s.TheModel.Stores.size();
+        std::vector<size_t> reportedStoreIdxs{};
+        reportedStoreIdxs.reserve(s.TheModel.Stores.size());
         for (size_t storeId = 0; storeId < numStores; ++storeId)
         {
             for (size_t compId = 0; compId < numComps; ++compId)
@@ -1861,6 +1863,7 @@ namespace erin
                 size_t idx = s.TheModel.ComponentMap.Idx[compId];
                 if (type == ComponentType::StoreType && idx == storeId)
                 {
+                    reportedStoreIdxs.push_back(idx);
                     storeTags.push_back(s.TheModel.ComponentMap.Tag[compId]);
                     break;
                 }
@@ -1871,11 +1874,11 @@ namespace erin
         std::sort(storeTags.begin(), storeTags.end());
         for (auto const& tag : storeTags)
         {
-            for (size_t storeId = 0; storeId < numStores; ++storeId)
+            for (size_t i = 0; i < reportedStoreIdxs.size(); ++i)
             {
-                if (tag == originalStoreTags[storeId])
+                if (tag == originalStoreTags[i])
                 {
-                    result.push_back(storeId);
+                    result.push_back(reportedStoreIdxs[i]);
                 }
             }
         }

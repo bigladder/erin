@@ -27,13 +27,13 @@ if platform.system() == 'Windows':
     ALL_TESTS = [
         BIN_DIR / 'erin_logging_tests.exe',
         BIN_DIR / 'erin_lookup_table_tests.exe',
-        BIN_DIR / 'erin_next_random_tests.exe',
+        BIN_DIR / 'erin_random_tests.exe',
         BIN_DIR / 'erin_simulation_tests.exe',
         BIN_DIR / 'erin_switch_tests.exe',
         BIN_DIR / 'erin_tests.exe',
     ]
     CLI_EXE = BIN_DIR / 'erin.exe'
-    PERF01_EXE = BIN_DIR / 'erin_next_stress_test.exe'
+    PERF01_EXE = BIN_DIR / 'erin_stress_test.exe'
 elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     DIFF_PROG = 'diff'
     BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
@@ -41,13 +41,13 @@ elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     ALL_TESTS = [
         BIN_DIR / 'erin_logging_tests',
         BIN_DIR / 'erin_lookup_table_tests',
-        BIN_DIR / 'erin_next_random_tests',
+        BIN_DIR / 'erin_random_tests',
         BIN_DIR / 'erin_simulation_tests',
         BIN_DIR / 'erin_switch_tests',
         BIN_DIR / 'erin_tests',
     ]
     CLI_EXE = BIN_DIR / 'erin'
-    PERF01_EXE = BIN_DIR / 'erin_next_stress_test'
+    PERF01_EXE = BIN_DIR / 'erin_stress_test'
 else:
     print(f"Unhandled platform, '{platform.system()}'")
     sys.exit(1)

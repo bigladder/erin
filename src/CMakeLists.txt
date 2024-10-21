@@ -24,56 +24,56 @@ if (${CMAKE_PROJECT_NAME}_COVERAGE)
   add_coverage(${CMAKE_PROJECT_NAME})
 endif()
 
-add_library(erin_next
+add_library(erinlib
   erin_logging.cpp
-	erin_next.cpp
-	erin_next_distribution.cpp
-	erin_next_reliability.cpp
-	erin_next_timestate.cpp
-	erin_next_simulation_info.cpp
-	erin_next_toml.cpp
-	erin_next_load.cpp
-	erin_next_time_and_amount.cpp
-	erin_next_component.cpp
-	erin_next_simulation.cpp
-	erin_next_scenario.cpp
-	erin_next_units.cpp
-	erin_next_utils.cpp
-	erin_next_csv.cpp
-	erin_next_random.cpp
-	erin_next_validation.cpp
-	erin_next_graph.cpp
-	erin_next_lookup_table.cpp
+	erin.cpp
+	erin_distribution.cpp
+	erin_reliability.cpp
+	erin_timestate.cpp
+	erin_simulation_info.cpp
+	erin_toml.cpp
+	erin_load.cpp
+	erin_time_and_amount.cpp
+	erin_component.cpp
+	erin_simulation.cpp
+	erin_scenario.cpp
+	erin_units.cpp
+	erin_utils.cpp
+	erin_csv.cpp
+	erin_random.cpp
+	erin_validation.cpp
+	erin_graph.cpp
+	erin_lookup_table.cpp
 	"${PROJECT_SOURCE_DIR}/include/erin/logging.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_valdata.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_distribution.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_reliability.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_timestate.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_simulation_info.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_toml.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_time_and_amount.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_load.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_validation.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_component.h"
-  "${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_simulation.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_scenario.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_units.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_result.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_utils.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_csv.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_random.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_graph.h"
-	"${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_lookup_table.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/erin.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/valdata.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/distribution.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/reliability.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/timestate.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/simulation_info.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/toml.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/time_and_amount.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/load.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/validation.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/component.h"
+  "${PROJECT_SOURCE_DIR}/include/erin/simulation.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/scenario.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/units.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/result.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/utils.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/csv.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/random.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/graph.h"
+	"${PROJECT_SOURCE_DIR}/include/erin/lookup_table.h"
 )
 
-target_link_libraries(erin_next
+target_link_libraries(erinlib
   PRIVATE courier fmt
 )
 
 # Add Warnings
 if(MSVC)
-  target_compile_options(erin_next PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
+  target_compile_options(erinlib PRIVATE /W4 "$<$<CONFIG:Release>:/O2>")
 else()
-  target_compile_options(erin_next PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
+  target_compile_options(erinlib PRIVATE -Wall -Wextra -pedantic "$<$<CONFIG:Release>:-O3>")
 endif()

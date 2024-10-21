@@ -59,12 +59,12 @@ Task contains a convenient test task.
 However, running this task requires you to have a working version of Python installed.
 If you would prefer to run the tests manually, the procedure is:
 
-- `build/bin/test_erin_next` -- call this to run the unit test suite
+- `build/bin/test_erin` -- call this to run the unit test suite
 - regression tests:
-    - run each example file in `docs/erin_next_examples` using `build/bin/erin_next_cli`
+    - run each example file in `docs/examples` using `build/bin/erin_cli`
     - diff each `out.csv` and `stats.csv` against that example's expected output
 
-The python file `docs/erin_next_examples/regress.py` does all of the above for you.
+The python file `docs/examples/regress.py` does all of the above for you.
 
 ## Architectural Design Strategy
 

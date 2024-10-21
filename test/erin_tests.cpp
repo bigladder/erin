@@ -1,8 +1,8 @@
-#include "erin_next/erin_next.h"
-#include "erin_next/erin_next_timestate.h"
-#include "erin_next/erin_next_simulation.h"
-#include "erin_next/erin_next_toml.h"
-#include "erin_next/erin_next_units.h"
+#include "erin/erin.h"
+#include "erin/timestate.h"
+#include "erin/simulation.h"
+#include "erin/toml.h"
+#include "erin/units.h"
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>

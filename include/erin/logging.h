@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include "../vendor/courier/include/courier/courier.h"
 #include "../vendor/fmt/include/fmt/core.h"
-#include "erin_next/erin_next_utils.h"
+#include "erin/utils.h"
 
 namespace erin
 {

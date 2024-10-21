@@ -1,10 +1,10 @@
 /* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE.txt file for additional terms and conditions. */
-#include "erin_next/erin_next.h"
-#include "erin_next/erin_next_distribution.h"
-#include "erin_next/erin_next_reliability.h"
-#include "erin_next/erin_next_simulation.h"
-#include "erin_next/erin_next_timestate.h"
+#include "erin/erin.h"
+#include "erin/distribution.h"
+#include "erin/reliability.h"
+#include "erin/simulation.h"
+#include "erin/timestate.h"
 #include "gtest/gtest.h"
 #include <gtest/gtest.h>
 #include <optional>

@@ -10,25 +10,25 @@ target_include_directories(erin_tests
 	PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 target_link_libraries(erin_tests
-	erin_next
+	erinlib
 	GTest::gtest_main)
 
-# erin_next_random_tests
-add_executable(erin_next_random_tests
-	erin_next_random_tests.cpp erin_next_random_tests.cpp)
+# erin_random_tests
+add_executable(erin_random_tests
+	erin_random_tests.cpp)
 
-target_include_directories(erin_next_random_tests
+target_include_directories(erin_random_tests
 	PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-target_link_libraries(erin_next_random_tests
-		erin_next
+target_link_libraries(erin_random_tests
+		erinlib
 		GTest::gtest_main)
 
 # lookup_table
 add_executable(erin_lookup_table_tests
 	erin_lookup_table_tests.cpp
-	${PROJECT_SOURCE_DIR}/src/erin_next_lookup_table.cpp
-	${PROJECT_SOURCE_DIR}/include/erin_next/erin_next_lookup_table.h
+	${PROJECT_SOURCE_DIR}/src/erin_lookup_table.cpp
+	${PROJECT_SOURCE_DIR}/include/erin/lookup_table.h
 )
 
 target_include_directories(erin_lookup_table_tests
@@ -38,7 +38,7 @@ target_include_directories(erin_lookup_table_tests
 )
 
 target_link_libraries(erin_lookup_table_tests
-	erin_next
+	erinlib
 	GTest::gtest_main
 )
 
@@ -54,7 +54,7 @@ target_include_directories(erin_switch_tests
 )
 
 target_link_libraries(erin_switch_tests
-	erin_next
+	erinlib
 	GTest::gtest_main
 )
 
@@ -70,7 +70,7 @@ target_include_directories(erin_simulation_tests
 )
 
 target_link_libraries(erin_simulation_tests
-	erin_next
+	erinlib
 	GTest::gtest_main
 )
 
@@ -82,14 +82,14 @@ target_include_directories(erin_logging_tests
 	PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 target_link_libraries(erin_logging_tests
-	erin_next
+	erinlib
 	GTest::gtest_main)
 
 # Google Test
 include(GoogleTest)
 
 gtest_discover_tests(erin_tests)
-gtest_discover_tests(erin_next_random_tests)
+gtest_discover_tests(erin_random_tests)
 gtest_discover_tests(erin_lookup_table_tests)
 gtest_discover_tests(erin_switch_tests)
 

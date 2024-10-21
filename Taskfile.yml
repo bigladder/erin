@@ -1,13 +1,12 @@
 version: '3'
 
 vars:
-  PYTHON:
-    sh: if command -v python &> /dev/null; then which python; else which python3; fi
+  PYTHON: python
 
 tasks:
   python:
     cmds:
-      - echo {{.PYTHON}}
+      - echo "$({{.PYTHON}} --version)"
 
   docker-build:
     desc: Builds a Docker container with useful utilities for project work

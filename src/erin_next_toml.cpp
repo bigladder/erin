@@ -706,7 +706,7 @@ namespace erin
         }
         if (v.is_integer())
         {
-            int val = v.as_integer();
+            toml::value::integer_type val = v.as_integer();
             if (val == 0)
             {
                 return false;

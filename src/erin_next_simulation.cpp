@@ -199,6 +199,11 @@ namespace erin
             std::cout << "- report? "
                       << (m.ComponentMap.Report[compId] ? "true" : "false")
                       << std::endl;
+            if (m.ComponentToGroup.contains(compId))
+            {
+                std::cout << "- group: " << m.ComponentToGroup.at(compId)
+                          << std::endl;
+            }
             size_t subtypeIdx = m.ComponentMap.Idx[compId];
             switch (m.ComponentMap.CompType[compId])
             {
@@ -1565,6 +1570,61 @@ namespace erin
         return s;
     }
 
+    static void
+    Simulation_PrintGroups(Simulation const& s)
+    {
+        if (s.TheModel.GroupToComponents.size() == 0)
+        {
+            return;
+        }
+        std::vector<std::string> groupTags{};
+        groupTags.reserve(s.TheModel.GroupToComponents.size());
+        for (auto const& p : s.TheModel.GroupToComponents)
+        {
+            groupTags.push_back(p.first);
+        }
+        std::set<size_t> groupedComponents{};
+        std::sort(groupTags.begin(), groupTags.end());
+        for (std::string const& gTag : groupTags)
+        {
+            size_t count = s.TheModel.GroupToComponents.at(gTag).size();
+            std::cout << "- GROUP: " << gTag << " (count: " << count << ")"
+                      << std::endl;
+            for (size_t compId : s.TheModel.GroupToComponents.at(gTag))
+            {
+                groupedComponents.insert(compId);
+                std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId]
+                          << std::endl;
+            }
+        }
+        size_t numUngrouped =
+            s.TheModel.ComponentMap.Tag.size() - groupedComponents.size();
+        std::cout << "- UNGROUPED (count: " << numUngrouped << ")" << std::endl;
+        for (size_t compId = 0; compId < s.TheModel.ComponentMap.Tag.size();
+             ++compId)
+        {
+            if (groupedComponents.contains(compId))
+            {
+                continue;
+            }
+            if (s.TheModel.ComponentMap.CompType[compId]
+                == ComponentType::EnvironmentSourceType)
+            {
+                std::cout << "-- ENV[" << compId << "]" << std::endl;
+            }
+            else if (s.TheModel.ComponentMap.CompType[compId]
+                     == ComponentType::WasteSinkType)
+            {
+                std::cout << "-- WASTE[" << compId << "]" << std::endl;
+            }
+            else
+            {
+                std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId]
+                          << std::endl;
+            }
+        }
+    }
+
     void
     Simulation_Print(Simulation const& s)
     {
@@ -1574,6 +1634,8 @@ namespace erin
         Simulation_PrintLoads(s);
         std::cout << "\nComponents:" << std::endl;
         Simulation_PrintComponents(s);
+        std::cout << "\nGroups:" << std::endl;
+        Simulation_PrintGroups(s);
         std::cout << "\nDistributions:" << std::endl;
         s.TheModel.DistSys.print_distributions();
         std::cout << "\nFailure Modes:" << std::endl;
@@ -1651,7 +1713,7 @@ namespace erin
                     if (compMap.CompType[compId] == ComponentType::StoreType
                         && compMap.Idx[compId] == storeIdx)
                     {
-                        auto tag = compMap.Tag[compId];
+                        std::string tag(compMap.Tag[compId]);
                         if (aggregateGroups
                             && model.ComponentToGroup.contains(compId))
                         {
@@ -1784,14 +1846,16 @@ namespace erin
     std::vector<size_t>
     CalculateStoreOrder(
         Simulation const& s,
-        std::unordered_set<size_t> compsToReport
+        std::unordered_set<size_t> const& compsToReport
     )
     {
-        std::vector<size_t> result;
-        std::vector<std::string> storeTags;
+        std::vector<size_t> result{};
+        std::vector<std::string> storeTags{};
         storeTags.reserve(s.TheModel.Stores.size());
         size_t const numComps = s.TheModel.ComponentMap.CompType.size();
         size_t const numStores = s.TheModel.Stores.size();
+        std::vector<size_t> reportedStoreIdxs{};
+        reportedStoreIdxs.reserve(s.TheModel.Stores.size());
         for (size_t storeId = 0; storeId < numStores; ++storeId)
         {
             for (size_t compId = 0; compId < numComps; ++compId)
@@ -1804,6 +1868,7 @@ namespace erin
                 size_t idx = s.TheModel.ComponentMap.Idx[compId];
                 if (type == ComponentType::StoreType && idx == storeId)
                 {
+                    reportedStoreIdxs.push_back(idx);
                     storeTags.push_back(s.TheModel.ComponentMap.Tag[compId]);
                     break;
                 }
@@ -1814,11 +1879,11 @@ namespace erin
         std::sort(storeTags.begin(), storeTags.end());
         for (auto const& tag : storeTags)
         {
-            for (size_t storeId = 0; storeId < numStores; ++storeId)
+            for (size_t i = 0; i < reportedStoreIdxs.size(); ++i)
             {
-                if (tag == originalStoreTags[storeId])
+                if (tag == originalStoreTags[i])
                 {
-                    result.push_back(storeId);
+                    result.push_back(reportedStoreIdxs[i]);
                 }
             }
         }

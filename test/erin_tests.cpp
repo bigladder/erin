@@ -1375,36 +1375,22 @@ TEST(Erin, Test13)
     auto heatLoadId = Model_AddScheduleBasedLoad(m, heatLoad);
     // NETWORK / CONNECTIONS
     // - electricity
-    auto pvToEmuxConn =
-        Model_AddConnection(m, pvArrayId.Id, 0, elecSourceMuxId, 0);
-    auto eutilToEmuxConn =
-        Model_AddConnection(m, elecUtilId, 0, elecSourceMuxId, 1);
-    auto emuxToBatteryConn =
-        Model_AddConnection(m, elecSourceMuxId, 0, batteryId, 0);
-    auto batteryToEsupplyConn =
-        Model_AddConnection(m, batteryId, 0, elecSupplyMuxId, 0);
-    auto ngGenToEsupplyConn =
-        Model_AddConnection(m, ngToElecConvId.Id, 0, elecSupplyMuxId, 1);
-    auto esupplyToLoadConn =
-        Model_AddConnection(m, elecSupplyMuxId, 0, elecLoadId, 0);
-    auto esupplyToHeatPumpConn =
-        Model_AddConnection(m, elecSupplyMuxId, 1, elecHeatPumpConvId.Id, 0);
+    Model_AddConnection(m, pvArrayId.Id, 0, elecSourceMuxId, 0);
+    Model_AddConnection(m, elecUtilId, 0, elecSourceMuxId, 1);
+    Model_AddConnection(m, elecSourceMuxId, 0, batteryId, 0);
+    Model_AddConnection(m, batteryId, 0, elecSupplyMuxId, 0);
+    Model_AddConnection(m, ngToElecConvId.Id, 0, elecSupplyMuxId, 1);
+    Model_AddConnection(m, elecSupplyMuxId, 0, elecLoadId, 0);
+    Model_AddConnection(m, elecSupplyMuxId, 1, elecHeatPumpConvId.Id, 0);
     // - natural gas
-    auto ngGridToNgMuxConn =
-        Model_AddConnection(m, ngUtilId, 0, ngSourceMuxId, 0);
-    auto ngMuxToNgGenConn =
-        Model_AddConnection(m, ngSourceMuxId, 0, ngToElecConvId.Id, 0);
-    auto ngMuxToNgHeaterConn =
-        Model_AddConnection(m, ngSourceMuxId, 1, ngHeaterConvId.Id, 0);
+    Model_AddConnection(m, ngUtilId, 0, ngSourceMuxId, 0);
+    Model_AddConnection(m, ngSourceMuxId, 0, ngToElecConvId.Id, 0);
+    Model_AddConnection(m, ngSourceMuxId, 1, ngHeaterConvId.Id, 0);
     // - heating
-    auto ngGenLossToHeatMuxConn =
-        Model_AddConnection(m, ngToElecConvId.Id, 1, heatingSupplyMuxId, 0);
-    auto ngHeaterToHeatMuxConn =
-        Model_AddConnection(m, ngHeaterConvId.Id, 0, heatingSupplyMuxId, 1);
-    auto heatPumpToHeatMuxConn =
-        Model_AddConnection(m, elecHeatPumpConvId.Id, 0, heatingSupplyMuxId, 2);
-    auto heatMuxToLoadConn =
-        Model_AddConnection(m, heatingSupplyMuxId, 0, heatLoadId, 0);
+    Model_AddConnection(m, ngToElecConvId.Id, 1, heatingSupplyMuxId, 0);
+    Model_AddConnection(m, ngHeaterConvId.Id, 0, heatingSupplyMuxId, 1);
+    Model_AddConnection(m, elecHeatPumpConvId.Id, 0, heatingSupplyMuxId, 2);
+    Model_AddConnection(m, heatingSupplyMuxId, 0, heatLoadId, 0);
     // SIMULATE
     auto results = Simulate(m, false);
 }
@@ -1422,11 +1408,10 @@ TEST(Erin, Test14)
     auto src02Id = Model_AddScheduleBasedSource(m, availablePower);
     auto muxId = Model_AddMux(m, 2, 1);
     auto loadId = Model_AddConstantLoad(m, 100);
-    auto src1ToMuxConn = Model_AddConnection(m, src01Id, 0, muxId, 0);
-    auto src2ToMuxConn = Model_AddConnection(m, src02Id.Id, 0, muxId, 1);
-    auto muxToLoadConn = Model_AddConnection(m, muxId, 0, loadId, 0);
+    Model_AddConnection(m, src01Id, 0, muxId, 0);
+    Model_AddConnection(m, src02Id.Id, 0, muxId, 1);
+    Model_AddConnection(m, muxId, 0, loadId, 0);
     auto results = Simulate(m, false);
-    // TODO: add tests/checks
 }
 
 TEST(Erin, Test15)
@@ -1556,17 +1541,17 @@ TEST(Erin, Test16)
 
 TEST(Erin, Test17)
 {
-    std::vector<TimeState> a{{0.0, true}, {10.0, false, {1}}, {100.0, true}};
+    std::vector<TimeState> a{{0.0, true, {}, {}}, {10.0, false, {1}, {}}, {100.0, true, {}, {}}};
     std::vector<TimeState> b{
-        {0.0, true}, {40.0, false, {2}}, {90.0, true}, {150.0, false, {2}}
+        {0.0, true, {}, {}}, {40.0, false, {2}, {}}, {90.0, true, {}, {}}, {150.0, false, {2}, {}}
     };
     std::vector<TimeState> expected{
-        {0.0, true},
-        {10.0, false, {1}},
-        {40.0, false, {1, 2}},
-        {90.0, false, {1}},
-        {100.0, true},
-        {150.0, false, {2}}
+        {0.0, true, {}, {}},
+        {10.0, false, {1}, {}},
+        {40.0, false, {1, 2}, {}},
+        {90.0, false, {1}, {}},
+        {100.0, true, {}, {}},
+        {150.0, false, {2}, {}}
     };
     std::vector<TimeState> actual = TimeState_Combine(a, b);
     EXPECT_EQ(expected.size(), actual.size());
@@ -1579,17 +1564,17 @@ TEST(Erin, Test17)
 TEST(Erin, Test18)
 {
     std::vector<TimeState> input{
-        {0.0, true},
-        {10.0, false, {1}},
-        {40.0, false, {1, 2}},
-        {90.0, false, {1}},
-        {100.0, true},
-        {150.0, false, {2}}
+        {0.0, true, {}, {}},
+        {10.0, false, {1}, {}},
+        {40.0, false, {1, 2}, {}},
+        {90.0, false, {1}, {}},
+        {100.0, true, {}, {}},
+        {150.0, false, {2}, {}}
     };
     std::vector<TimeState> expected{
-        {50.0, false, {1, 2}},
-        {90.0, false, {1}},
-        {100.0, true},
+        {50.0, false, {1, 2}, {}},
+        {90.0, false, {1}, {}},
+        {100.0, true, {}, {}},
     };
     std::vector<TimeState> actual = TimeState_Clip(input, 50.0, 120.0, false);
     EXPECT_EQ(expected.size(), actual.size());
@@ -1598,9 +1583,9 @@ TEST(Erin, Test18)
         EXPECT_EQ(expected[i], actual[i]);
     }
     std::vector<TimeState> expected2{
-        {0.0, false, {1, 2}},
-        {40.0, false, {1}},
-        {50.0, true},
+        {0.0, false, {1, 2}, {}},
+        {40.0, false, {1}, {}},
+        {50.0, true, {}, {}},
     };
     std::vector<TimeState> actual2 = TimeState_Clip(input, 50.0, 120.0, true);
     EXPECT_EQ(expected2.size(), actual2.size());
@@ -2002,25 +1987,25 @@ TEST(Erin, Test19)
 {
     std::vector<TimeState> A{
         {0.0, false, {}, {0}},
-        {100.0, true},
+        {100.0, true, {}, {}},
     };
     std::vector<TimeState> B{
-        {0.0, true},
-        {120.0, false, {0}},
-        {180.0, true},
+        {0.0, true, {}, {}},
+        {120.0, false, {0}, {}},
+        {180.0, true, {}, {}},
     };
     std::vector<TimeState> C{
-        {0.0, true},
-        {60.0, false, {1}},
-        {140.0, true},
+        {0.0, true, {}, {}},
+        {60.0, false, {1}, {}},
+        {140.0, true, {}, {}},
     };
     std::vector<TimeState> expected{
         {0.0, false, {}, {0}},
         {60.0, false, {1}, {0}},
-        {100.0, false, {1}},
-        {120.0, false, {0, 1}},
-        {140.0, false, {0}},
-        {180.0, true},
+        {100.0, false, {1}, {}},
+        {120.0, false, {0, 1}, {}},
+        {140.0, false, {0}, {}},
+        {180.0, true, {}, {}},
     };
     std::vector<TimeState> relSch;
     relSch = TimeState_Combine(relSch, A);
@@ -2036,16 +2021,16 @@ TEST(Erin, Test19)
 TEST(Erin, Test20)
 {
     std::vector<TimeState> input{
-        {5.0, false},
-        {7.0, true},
-        {12.0, false},
-        {14.0, true},
-        {19.0, false},
-        {21.0, true},
+        {5.0, false, {}, {}},
+        {7.0, true, {}, {}},
+        {12.0, false, {}, {}},
+        {14.0, true, {}, {}},
+        {19.0, false, {}, {}},
+        {21.0, true, {}, {}},
     };
     std::vector<TimeState> expected{
-        {5.0, false},
-        {7.0, true},
+        {5.0, false, {}, {}},
+        {7.0, true, {}, {}},
     };
     std::vector<TimeState> actual = TimeState_Clip(input, 0.0, 10.0, true);
     EXPECT_EQ(expected.size(), actual.size());
@@ -2054,11 +2039,11 @@ TEST(Erin, Test20)
 TEST(Erin, Test21)
 {
     std::vector<TimeState> input{
-        {0.0, true},
-        {10.0, false, {1}},
-        {20.0, true},
+        {0.0, true, {}, {}},
+        {10.0, false, {1}, {}},
+        {20.0, true, {}, {}},
         {100.0, false, {}, {1}},
-        {180.0, true},
+        {180.0, true, {}, {}},
     };
     std::map<size_t, size_t> countByFailModeId;
     std::map<size_t, size_t> countByFragModeId;
@@ -2105,8 +2090,8 @@ TEST(Erin, Test21)
     timeByFailModeId.clear();
     timeByFragModeId.clear();
     input = {
-        {10.0, false, {1}},
-        {20.0, true},
+        {10.0, false, {1}, {}},
+        {20.0, true, {}, {}},
         {100.0, false, {}, {1}},
     };
     TimeState_CountAndTimeFailureEvents(

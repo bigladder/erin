@@ -21,7 +21,7 @@ RunCreateFailureSchedules(double initialAge_s, double scenarioOffset_s)
     size_t breakDistId = ds.add_fixed("break", 10.0);
     size_t fixDistId = ds.add_fixed("fix", 2.0);
     size_t fmId = rc.add_failure_mode("fm", breakDistId, fixDistId);
-    size_t compFmId = rc.link_component_with_failure_mode(compId, fmId);
+    rc.link_component_with_failure_mode(compId, fmId);
     std::vector<size_t> componentFailureModeComponentIds{};
     componentFailureModeComponentIds.push_back(compId);
     std::vector<size_t> componentFailureModeFailureModeIds{};

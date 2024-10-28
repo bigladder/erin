@@ -1,0 +1,34 @@
+cpp_std = "20"
+project_short_description = "Energy Resilience of Interacting Networks"
+project_name = "ERIN"
+start_year = 2020
+use_app = true
+version_major = 0
+version_minor = 0
+version_patch = 56
+# year = 2024
+[[deps]]
+name = "fmt"
+git_url = "https://github.com/fmtlib/fmt.git"
+git_checkout = "master"
+add_to_cmake = false
+[[deps]]
+name = "googletest"
+git_url = "https://github.com/google/googletest.git"
+git_checkout = "main"
+add_to_cmake = false
+[[deps]]
+name = "toml11"
+git_url = "https://github.com/ToruNiina/toml11.git"
+git_checkout = "v3.8.1"
+add_to_cmake = true
+[[deps]]
+name = "CLI11"
+git_url = "https://github.com/CLIUtils/CLI11.git"
+git_checkout = "main"
+add_to_cmake = true
+[[deps]]
+name = "courier"
+git_url = "https://github.com/bigladder/courier.git"
+git_checkout = "main"
+add_to_cmake = true

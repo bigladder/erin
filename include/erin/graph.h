@@ -8,13 +8,10 @@
 
 namespace erin
 {
-    std::string
-    network_to_dot(
-        std::vector<Connection> const&,
-        std::vector<std::string> const& componentTagById,
-        std::string const& graph_name,
-        bool use_html_label = true
-    );
+std::string network_to_dot(std::vector<Connection> const&,
+                           std::vector<std::string> const& componentTagById,
+                           std::string const& graph_name,
+                           bool use_html_label = true);
 }
 
 #endif

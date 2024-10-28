@@ -6,18 +6,17 @@
 
 using namespace erin;
 
-int
-main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     size_t numComponents = 5'000;
     size_t numHours = 8'760;
     if (argc == 3)
     {
-        numComponents = static_cast<size_t>(std::stoll(std::string{argv[1]}));
-        numHours = static_cast<size_t>(std::stoll(std::string{argv[2]}));
+        numComponents = static_cast<size_t>(std::stoll(std::string {argv[1]}));
+        numHours = static_cast<size_t>(std::stoll(std::string {argv[2]}));
     }
-    std::cout << "Running " << numComponents << " components for " << numHours
-              << " hours" << std::endl;
+    std::cout << "Running " << numComponents << " components for " << numHours << " hours"
+              << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
     Model m = {};
     m.RandFn = []() { return 0.4; };
@@ -26,7 +25,7 @@ main(int argc, char** argv)
     timesAndLoads.reserve(numHours + 1);
     for (size_t i = 0; i <= numHours; ++i)
     {
-        timesAndLoads.push_back(TimeAndAmount{((double)i) * 3600.0, 1});
+        timesAndLoads.push_back(TimeAndAmount {((double)i) * 3600.0, 1});
     }
     for (size_t i = 0; i < numComponents; ++i)
     {
@@ -35,25 +34,15 @@ main(int argc, char** argv)
         auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
     }
     auto stopConstr = std::chrono::high_resolution_clock::now();
-    auto durationConstr = std::chrono::duration_cast<std::chrono::microseconds>(
-        stopConstr - start
-    );
-    std::cout << "Construction time: "
-              << ((double)durationConstr.count() / 1000.0) << " ms"
+    auto durationConstr = std::chrono::duration_cast<std::chrono::microseconds>(stopConstr - start);
+    std::cout << "Construction time: " << ((double)durationConstr.count() / 1000.0) << " ms"
               << std::endl;
     auto results = Simulate(m, false);
-    assert(
-        results.size() == numHours + 1 && "Results is not of expected length"
-    );
+    assert(results.size() == numHours + 1 && "Results is not of expected length");
     auto stop = std::chrono::high_resolution_clock::now();
-    auto durationSim = std::chrono::duration_cast<std::chrono::microseconds>(
-        stop - stopConstr
-    );
-    std::cout << "Sim time: " << ((double)durationSim.count() / 1000.0) << " ms"
-              << std::endl;
-    auto duration =
-        std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    std::cout << "Total time: " << ((double)duration.count() / 1000.0) << " ms"
-              << std::endl;
+    auto durationSim = std::chrono::duration_cast<std::chrono::microseconds>(stop - stopConstr);
+    std::cout << "Sim time: " << ((double)durationSim.count() / 1000.0) << " ms" << std::endl;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    std::cout << "Total time: " << ((double)duration.count() / 1000.0) << " ms" << std::endl;
     return EXIT_SUCCESS;
 }

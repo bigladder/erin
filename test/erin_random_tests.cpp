@@ -3,7 +3,7 @@
 
 TEST(ErinRandom, Fixed)
 {
-    erin::FixedRandom r{};
+    erin::FixedRandom r {};
     r.FixedValue = 0.3;
     EXPECT_EQ(r(), 0.3);
     EXPECT_EQ(r(), 0.3);
@@ -12,7 +12,7 @@ TEST(ErinRandom, Fixed)
 
 TEST(ErinRandom, Series)
 {
-    erin::FixedSeries r{};
+    erin::FixedSeries r {};
     EXPECT_EQ(r(), 0.0);
     r.Series.push_back(0.1);
     r.Series.push_back(0.2);

@@ -5,4 +5,4 @@ RUN mkdir /app
 WORKDIR /app
 
 SHELL ["/bin/sh", "-c"]
-CMD clang-format -i --style=file src/*.cpp include/**/*.h test/*.cpp app/*.cpp
+CMD clang-format -i --style=file src/*.cpp src/*.h include/**/*.h test/*.cpp app/*.cpp

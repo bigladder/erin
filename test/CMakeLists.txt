@@ -1,95 +1,22 @@
-# Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
-# See the LICENSE.txt file for additional terms and conditions.
-enable_testing()
-
-# erin_tests
-add_executable(erin_tests
-	erin_tests.cpp)
-
-target_include_directories(erin_tests
-	PUBLIC ${PROJECT_SOURCE_DIR}/include)
-
-target_link_libraries(erin_tests
-	erinlib
-	GTest::gtest_main)
-
-# erin_random_tests
-add_executable(erin_random_tests
-	erin_random_tests.cpp)
-
-target_include_directories(erin_random_tests
-	PUBLIC ${PROJECT_SOURCE_DIR}/include)
-
-target_link_libraries(erin_random_tests
-		erinlib
-		GTest::gtest_main)
-
-# lookup_table
-add_executable(erin_lookup_table_tests
-	erin_lookup_table_tests.cpp
-	${PROJECT_SOURCE_DIR}/src/erin_lookup_table.cpp
-	${PROJECT_SOURCE_DIR}/include/erin/lookup_table.h
+set(test_sources
+  erin_logging_tests.cpp
+  erin_lookup_table_tests.cpp
+  erin_random_tests.cpp
+  erin_simulation_tests.cpp
+  erin_switch_tests.cpp
+  erin_tests.cpp
 )
 
-target_include_directories(erin_lookup_table_tests
-	PUBLIC
-	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/src
+add_executable(${PROJECT_NAME}_tests ${test_sources})
+
+target_link_libraries(${PROJECT_NAME}_tests
+  PRIVATE ${PROJECT_NAME}lib gtest ${PROJECT_NAME}_build_options
+  GTest::gtest_main
+  toml11
+  CLI11
+  courier
 )
+target_compile_features(${PROJECT_NAME}_tests PRIVATE cxx_std_20)
 
-target_link_libraries(erin_lookup_table_tests
-	erinlib
-	GTest::gtest_main
-)
-
-# switch
-add_executable(erin_switch_tests
-	erin_switch_tests.cpp
-)
-
-target_include_directories(erin_switch_tests
-	PUBLIC
-	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/src
-)
-
-target_link_libraries(erin_switch_tests
-	erinlib
-	GTest::gtest_main
-)
-
-# ERIN Simulation Tests
-add_executable(erin_simulation_tests
-	erin_simulation_tests.cpp
-)
-
-target_include_directories(erin_simulation_tests
-	PUBLIC
-	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/src
-)
-
-target_link_libraries(erin_simulation_tests
-	erinlib
-	GTest::gtest_main
-)
-
-# erin_logging_test
-add_executable(erin_logging_tests
-	erin_logging_tests.cpp)
-
-target_include_directories(erin_logging_tests
-	PUBLIC ${PROJECT_SOURCE_DIR}/include)
-
-target_link_libraries(erin_logging_tests
-	erinlib
-	GTest::gtest_main)
-
-# Google Test
 include(GoogleTest)
-
-gtest_discover_tests(erin_tests)
-gtest_discover_tests(erin_random_tests)
-gtest_discover_tests(erin_lookup_table_tests)
-gtest_discover_tests(erin_switch_tests)
-
+gtest_discover_tests(${PROJECT_NAME}_tests)

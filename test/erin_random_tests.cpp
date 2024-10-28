@@ -1,8 +1,6 @@
 #include "erin/random.h"
 #include <gtest/gtest.h>
 
-std::streamsize const width = 30;
-
 TEST(ErinRandom, Fixed)
 {
     erin::FixedRandom r{};

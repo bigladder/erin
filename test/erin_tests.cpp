@@ -1020,8 +1020,12 @@ TEST(Erin, Test13)
     // COMPONENTS
     auto pvArrayId = Model_AddScheduleBasedSource(m, pvAvail);
     auto elecUtilId = Model_AddConstantSource(m, kW_as_W(10.0));
-    auto batteryId = Model_AddStore(
-        m, kWh_as_J(100.0), kW_as_W(10.0), kW_as_W(1'000.0), kWh_as_J(80.0), kWh_as_J(100.0));
+    auto batteryId = Model_AddStore(m,
+                                    static_cast<uint64_t>(kWh_as_J(100.0)),
+                                    static_cast<uint64_t>(kW_as_W(10.0)),
+                                    static_cast<uint64_t>(kW_as_W(1'000.0)),
+                                    static_cast<uint64_t>(kWh_as_J(80.0)),
+                                    static_cast<uint64_t>(kWh_as_J(100.0)));
     auto elecSourceMuxId = Model_AddMux(m, 2, 1);
     auto elecSupplyMuxId = Model_AddMux(m, 2, 2);
     auto ngUtilId = Model_AddConstantSource(m, std::numeric_limits<uint32_t>::max());
@@ -1658,8 +1662,12 @@ TEST(Erin, TestApplyUniformTimeStep)
 
     // COMPONENTS
     auto ePV = Model_AddScheduleBasedSource(m, ePV_avail);
-    auto eBattId =
-        Model_AddStore(m, kWh_as_J(2.0), kW_as_W(0.5), kW_as_W(1.0), kWh_as_J(0.0), kWh_as_J(1.0));
+    auto eBattId = Model_AddStore(m,
+                                  static_cast<uint64_t>(kWh_as_J(2.0)),
+                                  static_cast<uint64_t>(kW_as_W(0.5)),
+                                  static_cast<uint64_t>(kW_as_W(1.0)),
+                                  static_cast<uint64_t>(kWh_as_J(0.0)),
+                                  static_cast<uint64_t>(kWh_as_J(1.0)));
 
     // LOADS
     std::vector<TimeAndAmount> eLoad {};

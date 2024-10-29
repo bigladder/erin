@@ -5,4 +5,7 @@ RUN mkdir /app
 WORKDIR /app
 
 SHELL ["/bin/sh", "-c"]
-CMD clang-format -i --style=file src/*.cpp src/*.h include/**/*.h test/*.cpp app/*.cpp
+CMD find src/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i --style=file && \
+  find include/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i --style=file && \
+  find test/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i --style=file && \
+  find app/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i --style=file

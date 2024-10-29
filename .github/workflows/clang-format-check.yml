@@ -8,7 +8,7 @@ jobs:
       matrix:
         path:
         - 'src'
-        - 'include/**'
+        - 'include'
         - 'test'
         - 'app'
     steps:
@@ -17,7 +17,7 @@ jobs:
     - name: Set Project Name
       run: echo "REPOSITORY_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
     - name: Run clang-format style check on ${{ matrix.path }}.
-      uses: jidicula/clang-format-action@v4.11.0
+      uses: jidicula/clang-format-action@v4.13.0
       with:
         clang-format-version: '18'
         check-path: ${{ matrix.path }}

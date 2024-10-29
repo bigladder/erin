@@ -6,30 +6,36 @@ configure_file(
 	${PROJECT_BINARY_DIR}/app/compilation_settings.h
 )
 
-add_executable(erin
+add_executable(APP_erin
   erin.cpp
 )
-target_include_directories(erin
+set_target_properties(APP_erin
+  PROPERTIES OUTPUT_NAME erin
+)
+target_include_directories(APP_erin
 	PUBLIC ${PROJECT_SOURCE_DIR}/include
 	PRIVATE ${PROJECT_BINARY_DIR}/app
 )
-target_link_libraries(erin
-  ${PROJECT_NAME}lib
-  toml11
+target_link_libraries(APP_erin
+  ${PROJECT_NAME}
+  toml11::toml11
   CLI11
   courier
 )
 
-add_executable(erin_stress_test
+add_executable(APP_erin_stress_test
   erin_stress_test.cpp
 )
-target_include_directories(erin_stress_test
+set_target_properties(APP_erin_stress_test
+  PROPERTIES OUTPUT_NAME erin_stress_test
+)
+target_include_directories(APP_erin_stress_test
 	PUBLIC ${PROJECT_SOURCE_DIR}/include
 	PRIVATE ${PROJECT_BINARY_DIR}/app
 )
-target_link_libraries(erin_stress_test
-  ${PROJECT_NAME}lib
-  toml11
+target_link_libraries(APP_erin_stress_test
+  ${PROJECT_NAME}
+  toml11::toml11
   CLI11
   courier
 )

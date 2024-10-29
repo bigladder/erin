@@ -11,19 +11,19 @@ tasks:
   docker-build:
     desc: Builds a Docker container with useful utilities for project work
     cmds:
-      - if [ -z "$(docker images -q format:ver18 2> /dev/null)" ]; then docker buildx build -f Dockerfile.format -t format:ver18 .; fi
+      - if [ -z "$(docker images -q format:ver16 2> /dev/null)" ]; then docker buildx build -f Dockerfile.format -t format:ver16 .; fi
 
   docker-format:
     desc: Use docker to run clang-format
     deps: ["docker-build"]
     cmds:
-      - docker run -it --rm --mount type=bind,source="$(pwd)",target=/app format:ver18
+      - docker run -it --rm --mount type=bind,source="$(pwd)",target=/app format:ver16
 
   docker-format-version:
     desc: Get the version of clang-format in use
     deps: ["docker-build"]
     cmds:
-      - docker run -it --rm --mount type=bind,source="$(pwd)",target=/app format:ver18 clang-format --version
+      - docker run -it --rm --mount type=bind,source="$(pwd)",target=/app format:ver16 clang-format --version
 
   init:
     desc: Initialize the build directory

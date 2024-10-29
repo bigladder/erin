@@ -3,6 +3,7 @@
 # NOTE: THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
 # Main library
 set(library_sources
+    ${PROJECT_SOURCE_DIR}/src/erin-simulation-info.cpp
     ${PROJECT_SOURCE_DIR}/src/erin.cpp
     ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
     ${PROJECT_SOURCE_DIR}/src/erin_csv.cpp
@@ -15,7 +16,6 @@ set(library_sources
     ${PROJECT_SOURCE_DIR}/src/erin_reliability.cpp
     ${PROJECT_SOURCE_DIR}/src/erin_scenario.cpp
     ${PROJECT_SOURCE_DIR}/src/erin_simulation.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_simulation_info.cpp
     ${PROJECT_SOURCE_DIR}/src/erin_time_and_amount.cpp
     ${PROJECT_SOURCE_DIR}/src/erin_timestate.cpp
     ${PROJECT_SOURCE_DIR}/src/erin_toml.cpp

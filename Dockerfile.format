@@ -1,4 +1,4 @@
-FROM silkeh/clang:18
+FROM silkeh/clang:16
 
 RUN mkdir /app
 

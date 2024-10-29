@@ -110,8 +110,8 @@ std::string build_label_html(std::string const& id, PortCounts const& pc)
     {
         for (auto ip : pc.input_ports)
         {
-            label << "        <TD PORT=\"I" << ip << "\" BGCOLOR=\"lightgrey\">" << "I(" << ip
-                  << ")"
+            label << "        <TD PORT=\"I" << ip << "\" BGCOLOR=\"lightgrey\">"
+                  << "I(" << ip << ")"
                   << "</TD>\n";
         }
     }
@@ -121,8 +121,8 @@ std::string build_label_html(std::string const& id, PortCounts const& pc)
     {
         for (auto op : pc.output_ports)
         {
-            label << "        <TD PORT=\"O" << op << "\" BGCOLOR=\"lightgrey\">" << "O(" << op
-                  << ")"
+            label << "        <TD PORT=\"O" << op << "\" BGCOLOR=\"lightgrey\">"
+                  << "O(" << op << ")"
                   << "</TD>\n";
         }
     }
@@ -181,8 +181,9 @@ std::string network_to_dot(std::vector<Connection> const& network,
         record_port_number(c2, ports);
         // to add colors to the edges, add the snippet below to the end:
         //<< " [color=\"black\"];\n";
-        connections << tab << "\"" << c1.component_id << "\":" << "O" << c1.port_number
-                    << ":s -> \"" << c2.component_id << "\":" << "I" << c2.port_number << ":n;\n";
+        connections << tab << "\"" << c1.component_id << "\":"
+                    << "O" << c1.port_number << ":s -> \"" << c2.component_id << "\":"
+                    << "I" << c2.port_number << ":n;\n";
     }
     for (const auto& item : ports)
     {

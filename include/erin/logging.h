@@ -68,7 +68,7 @@ class Logger final : public Courier::Courier
     }
 };
 
-Log Log_MakeFromCourier(Courier::Courier& courier);
+Log Log_make_from_courier(Courier::Courier& courier);
 } // namespace erin
 
 #endif

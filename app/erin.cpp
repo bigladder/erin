@@ -27,7 +27,7 @@
 erin::Log get_standard_log(erin::Logger& logger)
 {
     using namespace erin;
-    Log log = Log_MakeFromCourier(logger);
+    Log log = Log_make_from_courier(logger);
     // NOTE: overriding default error functionality as it throws.
     //       instead, error conditions and exiting are handled explicitly
     //       by the library.

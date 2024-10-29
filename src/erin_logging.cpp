@@ -26,7 +26,7 @@ bool ContinueLogging(LogLevel incoming, LogLevel reference)
     return LogLevel_ToInt(incoming) >= LogLevel_ToInt(reference);
 }
 
-Log Log_MakeFromCourier(Courier::Courier& courier)
+Log Log_make_from_courier(Courier::Courier& courier)
 {
     return Log {
         .debug =

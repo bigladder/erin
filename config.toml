@@ -24,6 +24,7 @@ name = "toml11"
 git_url = "https://github.com/ToruNiina/toml11.git"
 git_checkout = "v3.8.1"
 add_to_cmake = true
+link_library_spec = "toml11::toml11"
 [[deps]]
 name = "CLI11"
 git_url = "https://github.com/CLIUtils/CLI11.git"

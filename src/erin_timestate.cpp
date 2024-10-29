@@ -93,7 +93,6 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
     size_t bIdx = 0;
     double time = 0.0;
     bool state = true;
-    size_t iter = 0;
     while (true)
     {
         TimeState const& nextA = a.at(aIdx);
@@ -208,7 +207,6 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
         {
             break;
         }
-        ++iter;
     }
     return result;
 }

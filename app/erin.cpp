@@ -1,6 +1,6 @@
 #include "erin/version.h"
 #include "erin/logging.h"
-#include "erin/simulation_info.h"
+#include "erin/simulation-info.h"
 #include "erin/load.h"
 #include "erin/component.h"
 #include "erin/simulation.h"

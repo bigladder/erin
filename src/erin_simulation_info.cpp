@@ -1,4 +1,4 @@
-#include "erin/simulation_info.h"
+#include "erin/simulation-info.h"
 #include "erin/toml.h"
 #include "erin/units.h"
 #include "erin/utils.h"

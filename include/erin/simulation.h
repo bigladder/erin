@@ -6,7 +6,7 @@
 #include "erin/erin.h"
 #include "erin/logging.h"
 #include "erin/distribution.h"
-#include "erin/simulation_info.h"
+#include "erin/simulation-info.h"
 #include "erin/load.h"
 #include "erin/scenario.h"
 #include "erin/result.h"

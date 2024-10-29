@@ -35,8 +35,8 @@ set(library_sources
     ${PROJECT_SOURCE_DIR}/include/erin/reliability.h
     ${PROJECT_SOURCE_DIR}/include/erin/result.h
     ${PROJECT_SOURCE_DIR}/include/erin/scenario.h
+    ${PROJECT_SOURCE_DIR}/include/erin/simulation-info.h
     ${PROJECT_SOURCE_DIR}/include/erin/simulation.h
-    ${PROJECT_SOURCE_DIR}/include/erin/simulation_info.h
     ${PROJECT_SOURCE_DIR}/include/erin/time_and_amount.h
     ${PROJECT_SOURCE_DIR}/include/erin/timestate.h
     ${PROJECT_SOURCE_DIR}/include/erin/toml.h

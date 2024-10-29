@@ -41,6 +41,7 @@ if (NOT ${PROJECT_NAME}_STATIC_LIB)
 endif ()
 
 include(build-options-interface)
+message(STATUS "Building ${PROJECT_NAME} ${PROJECT_VERSION}")
 
 # Set up testing/coverage
 if (${PROJECT_NAME}_BUILD_TESTING)

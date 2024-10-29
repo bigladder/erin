@@ -240,7 +240,7 @@ void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f)
     }
 }
 
-InputValidationMap SetupGlobalValidationInfo()
+InputValidationMap setup_global_validation_info()
 {
     std::unordered_set<InputSection> allSections {
         InputSection::SimulationInfo,

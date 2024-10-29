@@ -127,12 +127,12 @@ Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& l
 Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const& log);
 
 std::optional<Simulation>
-Simulation_ReadFromToml(toml::value const& v,
+Simulation_read_from_toml(toml::value const& v,
                         InputValidationMap const& validationInfo,
                         std::unordered_set<std::string> const& componentTagsInUse,
                         Log const& log = Log {});
 
-void Simulation_Print(Simulation const& s);
+void Simulation_print(Simulation const& s);
 
 void Simulation_PrintIntensities(Simulation const& s);
 
@@ -185,7 +185,7 @@ std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& 
 
 void AggregateGroups(Model& model, std::vector<TimeAndFlows> const& results);
 
-void Simulation_Run(Simulation& s,
+void Simulation_run(Simulation& s,
                     Log& log,
                     std::string const& eventsFilename,
                     std::string const& statsFilename = "stats.csv",

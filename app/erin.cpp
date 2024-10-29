@@ -99,15 +99,15 @@ CLI::App* add_run(CLI::App& app)
 {
     auto subcommand = app.add_subcommand("run", "Run a simulation");
 
-    static std::string tomlFilename;
-    subcommand->add_option("toml_file", tomlFilename, "TOML filename")->required();
+    static std::string toml_filename;
+    subcommand->add_option("toml_file", toml_filename, "TOML filename")->required();
 
-    static std::string eventsFilename = "out.csv";
-    subcommand->add_option("-e,--events", eventsFilename, "Events csv filename; default:out.csv");
+    static std::string events_filename = "out.csv";
+    subcommand->add_option("-e,--events", events_filename, "Events csv filename; default:out.csv");
 
-    static std::string statsFilename = "stats.csv";
+    static std::string stats_filename = "stats.csv";
     subcommand->add_option(
-        "-s,--statistics", statsFilename, "Statistics csv filename; default:stats.csv");
+        "-s,--statistics", stats_filename, "Statistics csv filename; default:stats.csv");
 
     static double time_step_h = -1.0;
     subcommand->add_option("-t,--time_step_h", time_step_h, "Report with uniform time step (hours)")
@@ -131,9 +131,9 @@ CLI::App* add_run(CLI::App& app)
         bool aggregate_groups = !no_aggregate_groups;
         if (verbose)
         {
-            std::cout << "input file: " << tomlFilename << std::endl;
-            std::cout << "events file: " << eventsFilename << std::endl;
-            std::cout << "statistics file: " << statsFilename << std::endl;
+            std::cout << "input file: " << toml_filename << std::endl;
+            std::cout << "events file: " << events_filename << std::endl;
+            std::cout << "statistics file: " << stats_filename << std::endl;
             if (time_step_h > 0.0)
             {
                 std::cout << "time step (h): " << time_step_h << std::endl;
@@ -143,34 +143,34 @@ CLI::App* add_run(CLI::App& app)
             std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
             std::cout << "groups: " << (aggregate_groups ? "true" : "false") << std::endl;
         }
-        std::ifstream ifs(tomlFilename, std::ios_base::binary);
+        std::ifstream ifs(toml_filename, std::ios_base::binary);
         if (!ifs.good())
         {
             Log_error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
-        auto nameOnly = std::filesystem::path(tomlFilename).filename();
-        toml::value data = toml::parse(ifs, nameOnly.string());
+        auto name_only = std::filesystem::path(toml_filename).filename();
+        toml::value data = toml::parse(ifs, name_only.string());
         ifs.close();
-        std::unordered_set<std::string> componentTagsInUse =
+        std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
-        auto validationInfo = SetupGlobalValidationInfo();
-        auto maybeSim = Simulation_ReadFromToml(data, validationInfo, componentTagsInUse, log);
-        if (!maybeSim.has_value())
+        auto validation_info = setup_global_validation_info();
+        auto maybe_sim = Simulation_read_from_toml(data, validation_info, component_tags_in_use, log);
+        if (!maybe_sim.has_value())
         {
             Log_error(log, "Simulation returned without value");
             return EXIT_FAILURE;
         }
-        Simulation s = std::move(maybeSim.value());
+        Simulation s = std::move(maybe_sim.value());
         if (verbose)
         {
-            Simulation_Print(s);
+            Simulation_print(s);
             Log_info(log, "-----------------");
         }
-        Simulation_Run(s,
+        Simulation_run(s,
                        log,
-                       eventsFilename,
-                       statsFilename,
+                       events_filename,
+                       stats_filename,
                        time_step_h,
                        aggregate_groups,
                        save_reliability_curves,
@@ -187,33 +187,33 @@ CLI::App* add_graph(CLI::App& app)
 {
     auto subcommand = app.add_subcommand("graph", "Graph a simulation");
 
-    static std::string tomlFilename;
-    subcommand->add_option("toml_file", tomlFilename, "TOML filename")->required();
+    static std::string toml_filename;
+    subcommand->add_option("toml_file", toml_filename, "TOML filename")->required();
 
-    static std::string outputFilename = "graph.dot";
-    subcommand->add_option("-o,--out", outputFilename, "Graph output filename");
+    static std::string output_filename = "graph.dot";
+    subcommand->add_option("-o,--out", output_filename, "Graph output filename");
 
-    static bool useHtml = true;
-    subcommand->add_flag("-s,--simple", useHtml, "Create a simpler graph view");
+    static bool use_html = true;
+    subcommand->add_flag("-s,--simple", use_html, "Create a simpler graph view");
 
     auto graph = [&]()
     {
         using namespace erin;
         Logger logger {};
         Log log = get_standard_log(logger);
-        std::ifstream ifs(tomlFilename, std::ios_base::binary);
+        std::ifstream ifs(toml_filename, std::ios_base::binary);
         if (!ifs.good())
         {
             Log_error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
-        auto name_only = std::filesystem::path(tomlFilename).filename();
+        auto name_only = std::filesystem::path(toml_filename).filename();
         auto data = toml::parse(ifs, name_only.string());
         ifs.close();
-        std::unordered_set<std::string> componentTagsInUse =
+        std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
-        auto validation_info = SetupGlobalValidationInfo();
-        auto maybe_sim = Simulation_ReadFromToml(data, validation_info, componentTagsInUse, log);
+        auto validation_info = setup_global_validation_info();
+        auto maybe_sim = Simulation_read_from_toml(data, validation_info, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Could not parse sim data from TOML");
@@ -221,9 +221,9 @@ CLI::App* add_graph(CLI::App& app)
         }
         Simulation s = std::move(maybe_sim.value());
         std::string dot_data =
-            network_to_dot(s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", useHtml);
+            network_to_dot(s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", use_html);
         // save string from network_to_dot
-        std::ofstream ofs(outputFilename, std::ios_base::binary);
+        std::ofstream ofs(output_filename, std::ios_base::binary);
         if (!ofs.good())
         {
             std::cout << "Could not open output file stream on output file" << std::endl;
@@ -243,33 +243,33 @@ CLI::App* add_checkNetwork(CLI::App& app)
 {
     auto subcommand = app.add_subcommand("check", "Check network for issues");
 
-    static std::string tomlFilename;
-    subcommand->add_option("toml_input_file", tomlFilename, "TOML input file name")->required();
+    static std::string toml_filename;
+    subcommand->add_option("toml_input_file", toml_filename, "TOML input file name")->required();
 
-    auto checkNetwork = [&]()
+    auto check_network = [&]()
     {
         using namespace erin;
         Logger logger {};
         Log log = get_standard_log(logger);
-        std::ifstream ifs(tomlFilename, std::ios_base::binary);
+        std::ifstream ifs(toml_filename, std::ios_base::binary);
         if (!ifs.good())
         {
             Log_error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
-        auto nameOnly = std::filesystem::path(tomlFilename).filename();
-        auto data = toml::parse(ifs, nameOnly.string());
+        auto name_only = std::filesystem::path(toml_filename).filename();
+        auto data = toml::parse(ifs, name_only.string());
         ifs.close();
-        std::unordered_set<std::string> componentTagsInUse =
+        std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
-        auto validationInfo = SetupGlobalValidationInfo();
-        auto maybeSim = Simulation_ReadFromToml(data, validationInfo, componentTagsInUse, log);
-        if (!maybeSim.has_value())
+        auto validationInfo = setup_global_validation_info();
+        auto maybe_sim = Simulation_read_from_toml(data, validationInfo, component_tags_in_use, log);
+        if (!maybe_sim.has_value())
         {
             return EXIT_FAILURE;
         }
-        Simulation s = std::move(maybeSim.value());
-        std::vector<std::string> issues = erin::Model_CheckNetwork(s.TheModel);
+        Simulation s = std::move(maybe_sim.value());
+        std::vector<std::string> issues = erin::Model_check_network(s.TheModel);
         if (issues.size() > 0)
         {
             std::cout << "ISSUES FOUND:" << std::endl;
@@ -283,7 +283,7 @@ CLI::App* add_checkNetwork(CLI::App& app)
         return EXIT_SUCCESS;
     };
 
-    subcommand->callback([&]() { checkNetwork(); });
+    subcommand->callback([&]() { check_network(); });
 
     return subcommand;
 }
@@ -292,27 +292,27 @@ CLI::App* add_update(CLI::App& app)
 {
     auto subcommand = app.add_subcommand("update", "Update an ERIN 0.55 file to current");
 
-    static std::string inputFilename;
-    subcommand->add_option("toml_input_file", inputFilename, "TOML input file name")->required();
+    static std::string input_filename;
+    subcommand->add_option("toml_input_file", input_filename, "TOML input file name")->required();
 
-    static std::string outputFilename = "out.toml";
-    subcommand->add_option("toml_output_file", outputFilename, "TOML output file name");
+    static std::string output_filename = "out.toml";
+    subcommand->add_option("toml_output_file", output_filename, "TOML output file name");
 
-    static bool stripIds = false;
+    static bool strip_ids = false;
     subcommand->add_flag(
-        "-s,--strip-ids", stripIds, "If specified, strips ids from the input file");
+        "-s,--strip-ids", strip_ids, "If specified, strips ids from the input file");
 
     auto update = [&]()
     {
-        std::ifstream ifs(inputFilename, std::ios_base::binary);
+        std::ifstream ifs(input_filename, std::ios_base::binary);
         if (!ifs.good())
         {
             std::cout << "Could not open input file stream on input file" << std::endl;
             return EXIT_FAILURE;
         }
         using namespace erin;
-        auto nameOnly = std::filesystem::path(inputFilename).filename();
-        auto data = toml::parse(ifs, nameOnly.string());
+        auto name_only = std::filesystem::path(input_filename).filename();
+        auto data = toml::parse(ifs, name_only.string());
         ifs.close();
 
         // rename networks.* to network
@@ -322,10 +322,10 @@ CLI::App* add_update(CLI::App& app)
             auto nw = data["networks"].as_table();
             for (auto it = nw.begin(); it != nw.end(); ++it)
             {
-                std::string const& nwName = it->first;
-                std::cout << "CHANGE .networks." << nwName << " to .network" << std::endl;
-                auto nwTable = it->second.as_table();
-                new_node["connections"] = nwTable["connections"];
+                std::string const& nw_name = it->first;
+                std::cout << "CHANGE .networks." << nw_name << " to .network" << std::endl;
+                auto nw_table = it->second.as_table();
+                new_node["connections"] = nw_table["connections"];
                 break;
             }
             data["network"] = new_node;
@@ -354,41 +354,41 @@ CLI::App* add_update(CLI::App& app)
             auto& components = data["components"].as_table();
             for (auto it = components.begin(); it != components.end(); ++it)
             {
-                std::string const& compName = it->first;
+                std::string const& comp_name = it->first;
                 auto& comp = it->second.as_table();
-                std::string compType = comp["type"].as_string();
-                if (compType == "store" && !comp.contains("max_discharge"))
+                std::string comp_type = comp["type"].as_string();
+                if (comp_type == "store" && !comp.contains("max_discharge"))
                 {
-                    double maxDischarge =
+                    double max_discharge =
                         comp["max_inflow"].is_floating()
                             ? comp["max_inflow"].as_floating()
                             : static_cast<double>(comp["max_inflow"].as_integer());
-                    comp["max_discharge"] = toml::value(maxDischarge);
-                    std::cout << "ADD components." << compName
-                              << ".max_discharge = " << maxDischarge << std::endl;
+                    comp["max_discharge"] = toml::value(max_discharge);
+                    std::cout << "ADD components." << comp_name
+                              << ".max_discharge = " << max_discharge << std::endl;
                 }
-                if (compType == "store" && comp.contains("max_inflow"))
+                if (comp_type == "store" && comp.contains("max_inflow"))
                 {
-                    double maxInflow = comp["max_inflow"].is_floating()
+                    double max_inflow = comp["max_inflow"].is_floating()
                                            ? comp["max_inflow"].as_floating()
                                            : static_cast<double>(comp["max_inflow"].as_integer());
                     comp.erase("max_inflow");
-                    comp["max_charge"] = toml::value(maxInflow);
-                    std::cout << "RENAME components." << compName << ".max_inflow to components"
-                              << compName << ".max_charge" << std::endl;
+                    comp["max_charge"] = toml::value(max_inflow);
+                    std::cout << "RENAME components." << comp_name << ".max_inflow to components"
+                              << comp_name << ".max_charge" << std::endl;
                 }
-                if (compType == "muxer" && comp.contains("dispatch_strategy"))
+                if (comp_type == "muxer" && comp.contains("dispatch_strategy"))
                 {
                     comp.erase("dispatch_strategy");
-                    std::cout << "REMOVE components." << compName << ".dispatch_strategy"
+                    std::cout << "REMOVE components." << comp_name << ".dispatch_strategy"
                               << std::endl;
                 }
-                if (stripIds && comp.contains("id"))
+                if (strip_ids && comp.contains("id"))
                 {
                     comp.erase("id");
-                    std::cout << "REMOVE components." << compName << ".id" << std::endl;
+                    std::cout << "REMOVE components." << comp_name << ".id" << std::endl;
                 }
-                if (compType == "converter" && comp.contains("constant_efficiency"))
+                if (comp_type == "converter" && comp.contains("constant_efficiency"))
                 {
                     double eff =
                         comp["constant_efficiency"].is_floating()
@@ -399,20 +399,20 @@ CLI::App* add_update(CLI::App& app)
                         comp["type"] = toml::value("mover");
                         comp["cop"] = toml::value(eff);
                         comp.erase("constant_efficiency");
-                        std::cout << "CHANGE components." << compName << ".type to mover"
+                        std::cout << "CHANGE components." << comp_name << ".type to mover"
                                   << std::endl;
                     }
                 }
             }
         }
-        if (stripIds)
+        if (strip_ids)
         {
             if (data.contains("simulation_info"))
             {
-                auto& simInfoTable = data["simulation_info"].as_table();
-                if (simInfoTable.contains("id"))
+                auto& sim_info_table = data["simulation_info"].as_table();
+                if (sim_info_table.contains("id"))
                 {
-                    simInfoTable.erase("id");
+                    sim_info_table.erase("id");
                     std::cout << "REMOVE simulation_info.id" << std::endl;
                 }
             }
@@ -421,12 +421,12 @@ CLI::App* add_update(CLI::App& app)
                 auto& fms = data["fragility_mode"].as_table();
                 for (auto it = fms.begin(); it != fms.end(); ++it)
                 {
-                    std::string const& fmName = it->first;
+                    std::string const& fm_name = it->first;
                     auto& fm = it->second.as_table();
                     if (fm.contains("id"))
                     {
                         fm.erase("id");
-                        std::cout << "REMOVE fragility_mode." << fmName << ".id" << std::endl;
+                        std::cout << "REMOVE fragility_mode." << fm_name << ".id" << std::endl;
                     }
                 }
             }
@@ -435,12 +435,12 @@ CLI::App* add_update(CLI::App& app)
                 auto& fms = data["failure_mode"].as_table();
                 for (auto it = fms.begin(); it != fms.end(); ++it)
                 {
-                    std::string const& fmName = it->first;
+                    std::string const& fm_name = it->first;
                     auto& fm = it->second.as_table();
                     if (fm.contains("id"))
                     {
                         fm.erase("id");
-                        std::cout << "REMOVE failure_mode." << fmName << ".id" << std::endl;
+                        std::cout << "REMOVE failure_mode." << fm_name << ".id" << std::endl;
                     }
                 }
             }
@@ -449,12 +449,12 @@ CLI::App* add_update(CLI::App& app)
                 auto& fcs = data["fragility_curve"].as_table();
                 for (auto it = fcs.begin(); it != fcs.end(); ++it)
                 {
-                    std::string const& fcName = it->first;
+                    std::string const& fc_name = it->first;
                     auto& fc = it->second.as_table();
                     if (fc.contains("id"))
                     {
                         fc.erase("id");
-                        std::cout << "REMOVE fragility_curve." << fcName << ".id" << std::endl;
+                        std::cout << "REMOVE fragility_curve." << fc_name << ".id" << std::endl;
                     }
                 }
             }
@@ -463,18 +463,18 @@ CLI::App* add_update(CLI::App& app)
                 auto& dists = data["dist"].as_table();
                 for (auto it = dists.begin(); it != dists.end(); ++it)
                 {
-                    std::string const& distName = it->first;
-                    auto& distTable = it->second.as_table();
-                    if (distTable.contains("id"))
+                    std::string const& dist_name = it->first;
+                    auto& dist_table = it->second.as_table();
+                    if (dist_table.contains("id"))
                     {
-                        distTable.erase("id");
-                        std::cout << "REMOVE dist." << distName << ".id" << std::endl;
+                        dist_table.erase("id");
+                        std::cout << "REMOVE dist." << dist_name << ".id" << std::endl;
                     }
                 }
             }
         }
 
-        std::ofstream ofs(outputFilename, std::ios_base::binary);
+        std::ofstream ofs(output_filename, std::ios_base::binary);
         if (!ofs.good())
         {
             std::cout << "Could not open ouptut file stream for output file" << std::endl;
@@ -495,12 +495,12 @@ CLI::App* add_packLoads(CLI::App& app)
 {
     auto subcommand = app.add_subcommand("pack-loads", "Pack loads into a single csv file");
 
-    static std::string tomlFilename;
-    subcommand->add_option("toml_file", tomlFilename, "TOML filename")->required();
+    static std::string toml_filename;
+    subcommand->add_option("toml_file", toml_filename, "TOML filename")->required();
 
-    static std::string loadsFilename = "packed-loads.csv";
+    static std::string loads_filename = "packed-loads.csv";
     subcommand->add_option(
-        "-o,--outcsv", loadsFilename, "Packed-loads csv filename; default:packed-loads.csv");
+        "-o,--outcsv", loads_filename, "Packed-loads csv filename; default:packed-loads.csv");
 
     static bool verbose = false;
     subcommand->add_flag("-v,--verbose", verbose, "Verbose output");
@@ -511,29 +511,29 @@ CLI::App* add_packLoads(CLI::App& app)
         erin::Log log = get_standard_log(logger);
         if (verbose)
         {
-            std::cout << "input file: " << tomlFilename << std::endl;
+            std::cout << "input file: " << toml_filename << std::endl;
             std::cout << "verbose: " << (verbose ? "true" : "false") << std::endl;
         }
-        std::ifstream ifs(tomlFilename, std::ios_base::binary);
+        std::ifstream ifs(toml_filename, std::ios_base::binary);
         if (!ifs.good())
         {
             erin::Log_error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
-        auto tomlFilenameOnly = std::filesystem::path(tomlFilename).filename();
-        auto data = toml::parse(ifs, tomlFilenameOnly.string());
+        auto toml_filename_only = std::filesystem::path(toml_filename).filename();
+        auto data = toml::parse(ifs, toml_filename_only.string());
         ifs.close();
-        auto const& loadTable = data.at("loads").as_table();
-        auto validationInfo = erin::SetupGlobalValidationInfo();
-        erin::ValidationInfo explicitValidation = validationInfo.Load_01Explicit;
-        erin::ValidationInfo fileValidation = validationInfo.Load_02FileBased;
-        auto maybeLoads = ParseLoads(loadTable, explicitValidation, fileValidation, log);
+        auto const& load_table = data.at("loads").as_table();
+        auto validation_info = erin::setup_global_validation_info();
+        erin::ValidationInfo explicit_validation = validation_info.Load_01Explicit;
+        erin::ValidationInfo file_validation = validation_info.Load_02FileBased;
+        auto maybeLoads = parse_loads(load_table, explicit_validation, file_validation, log);
         if (!maybeLoads.has_value())
         {
             return EXIT_FAILURE;
         }
         std::vector<erin::Load> loads = std::move(maybeLoads.value());
-        return erin::WritePackedLoads(loads, loadsFilename);
+        return erin::write_packed_loads(loads, loads_filename);
     };
 
     subcommand->callback([&]() { packLoads(); });

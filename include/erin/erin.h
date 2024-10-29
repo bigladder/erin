@@ -590,7 +590,7 @@ void AddConnectionIssue(std::vector<std::string>& issues,
                         size_t connIdx,
                         FlowDirection flowDirection);
 
-std::vector<std::string> Model_CheckNetwork(Model const& m);
+std::vector<std::string> Model_check_network(Model const& m);
 
 inline flow_t UtilSafeAdd(flow_t a, flow_t b);
 

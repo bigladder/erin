@@ -57,7 +57,7 @@ void AddConnectionIssue(std::vector<std::string>& issues,
     issues.push_back(oss.str());
 }
 
-std::vector<std::string> Model_CheckNetwork(Model const& m)
+std::vector<std::string> Model_check_network(Model const& m)
 {
     std::vector<std::string> issues;
     std::unordered_set<std::string> connectedOutflowPorts;

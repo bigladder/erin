@@ -29,14 +29,14 @@ std::optional<Load>
 ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table,
                         std::string const& tag);
 
-std::optional<std::vector<Load>> ParseLoads(toml::table const& table,
+std::optional<std::vector<Load>> parse_loads(toml::table const& table,
                                             ValidationInfo const& explicitValidation,
                                             ValidationInfo const& fileValidation,
                                             Log const& log);
 
 std::ostream& operator<<(std::ostream& os, Load const& load);
 
-int WritePackedLoads(const std::vector<Load>& loads, std::string const& loadsFilename);
+int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsFilename);
 } // namespace erin
 
 #endif

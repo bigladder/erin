@@ -372,7 +372,7 @@ bool MaybePushLoad(std::optional<Load> maybeLoad,
     return loadGood;
 }
 
-std::optional<std::vector<Load>> ParseLoads(toml::table const& table,
+std::optional<std::vector<Load>> parse_loads(toml::table const& table,
                                             ValidationInfo const& explicitValidation,
                                             ValidationInfo const& fileValidation,
                                             Log const& log)
@@ -473,7 +473,7 @@ std::ostream& operator<<(std::ostream& os, Load const& load)
     return os;
 }
 
-int WritePackedLoads(const std::vector<Load>& loads, std::string const& loadsFilename)
+int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsFilename)
 {
     std::ofstream out;
     out.open(loadsFilename, std::ofstream::out | std::ofstream::trunc); // overwrite, if file exists

@@ -675,7 +675,7 @@ Result Simulation_ParseLoads(Simulation& s,
                              Log const& log)
 {
     toml::value const& loadTable = v.at("loads");
-    auto maybeLoads = ParseLoads(loadTable.as_table(), explicitValidation, fileValidation, log);
+    auto maybeLoads = parse_loads(loadTable.as_table(), explicitValidation, fileValidation, log);
     if (!maybeLoads.has_value())
     {
         return Result::Failure;
@@ -1179,7 +1179,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
 }
 
 std::optional<Simulation>
-Simulation_ReadFromToml(toml::value const& v,
+Simulation_read_from_toml(toml::value const& v,
                         InputValidationMap const& validationInfo,
                         std::unordered_set<std::string> const& componentTagsInUse,
                         Log const& log)
@@ -1287,7 +1287,7 @@ static void Simulation_PrintGroups(Simulation const& s)
     }
 }
 
-void Simulation_Print(Simulation const& s)
+void Simulation_print(Simulation const& s)
 {
     std::cout << "-----------------" << std::endl;
     std::cout << s.Info << std::endl;
@@ -2737,7 +2737,7 @@ CalculateConnectionsToReport(std::vector<Connection> const& conns,
     return connsToReport;
 }
 
-void Simulation_Run(Simulation& s,
+void Simulation_run(Simulation& s,
                     Log& log,
                     std::string const& eventsFilename,
                     std::string const& statsFilename,
@@ -2750,7 +2750,7 @@ void Simulation_Run(Simulation& s,
     bool const checkNetwork = false;
     if (checkNetwork)
     {
-        std::vector<std::string> issues = Model_CheckNetwork(s.TheModel);
+        std::vector<std::string> issues = Model_check_network(s.TheModel);
         if (issues.size() > 0)
         {
             Log_warning(log, "network connection", "start list of issues");

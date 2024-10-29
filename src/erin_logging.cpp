@@ -8,13 +8,13 @@ unsigned int LogLevel_ToInt(LogLevel ll)
 {
     switch (ll)
     {
-    case LogLevel::Debug:
+    case LogLevel::debug:
         return 0;
-    case LogLevel::Info:
+    case LogLevel::info:
         return 1;
-    case LogLevel::Warning:
+    case LogLevel::warning:
         return 2;
-    case LogLevel::Error:
+    case LogLevel::error:
         return 3;
     }
     std::cout << "Error: unhandled log level" << std::endl;
@@ -80,12 +80,12 @@ Log Log_make_from_courier(Courier::Courier& courier)
     };
 }
 
-void Log_General(Log const& log, LogLevel ll, std::string const& msg)
+void Log_general(Log const& log, LogLevel ll, std::string const& msg)
 {
-    Log_General(log, ll, "", msg);
+    Log_general(log, ll, "", msg);
 }
 
-void Log_General(Log const& log, LogLevel ll, std::string const& tag, std::string const& msg)
+void Log_general(Log const& log, LogLevel ll, std::string const& tag, std::string const& msg)
 {
     if (!ContinueLogging(ll, log.log_level))
     {
@@ -94,22 +94,22 @@ void Log_General(Log const& log, LogLevel ll, std::string const& tag, std::strin
     std::optional<std::function<void(std::string const&, std::string const&)>> maybeFn = {};
     switch (ll)
     {
-    case LogLevel::Debug:
+    case LogLevel::debug:
     {
         maybeFn = log.debug;
     }
     break;
-    case LogLevel::Info:
+    case LogLevel::info:
     {
         maybeFn = log.info;
     }
     break;
-    case LogLevel::Warning:
+    case LogLevel::warning:
     {
         maybeFn = log.warning;
     }
     break;
-    case LogLevel::Error:
+    case LogLevel::error:
     {
         maybeFn = log.error;
     }
@@ -127,34 +127,34 @@ void Log_General(Log const& log, LogLevel ll, std::string const& tag, std::strin
     }
 }
 
-void Log_Debug(Log const& log, std::string const& msg) { Log_General(log, LogLevel::Debug, msg); }
+void Log_debug(Log const& log, std::string const& msg) { Log_general(log, LogLevel::debug, msg); }
 
-void Log_Debug(Log const& log, std::string const& tag, std::string const& msg)
+void Log_debug(Log const& log, std::string const& tag, std::string const& msg)
 {
-    Log_General(log, LogLevel::Debug, tag, msg);
+    Log_general(log, LogLevel::debug, tag, msg);
 }
 
-void Log_Info(Log const& log, std::string const& msg) { Log_General(log, LogLevel::Info, msg); }
+void Log_info(Log const& log, std::string const& msg) { Log_general(log, LogLevel::info, msg); }
 
-void Log_Info(Log const& log, std::string const& tag, std::string const& msg)
+void Log_info(Log const& log, std::string const& tag, std::string const& msg)
 {
-    Log_General(log, LogLevel::Info, tag, msg);
+    Log_general(log, LogLevel::info, tag, msg);
 }
 
-void Log_Warning(Log const& log, std::string const& msg)
+void Log_warning(Log const& log, std::string const& msg)
 {
-    Log_General(log, LogLevel::Warning, msg);
+    Log_general(log, LogLevel::warning, msg);
 }
 
-void Log_Warning(Log const& log, std::string const& tag, std::string const& msg)
+void Log_warning(Log const& log, std::string const& tag, std::string const& msg)
 {
-    Log_General(log, LogLevel::Warning, tag, msg);
+    Log_general(log, LogLevel::warning, tag, msg);
 }
 
-void Log_Error(Log const& log, std::string const& msg) { Log_General(log, LogLevel::Error, msg); }
+void Log_error(Log const& log, std::string const& msg) { Log_general(log, LogLevel::error, msg); }
 
-void Log_Error(Log const& log, std::string const& tag, std::string const& msg)
+void Log_error(Log const& log, std::string const& tag, std::string const& msg)
 {
-    Log_General(log, LogLevel::Error, tag, msg);
+    Log_general(log, LogLevel::error, tag, msg);
 }
 } // namespace erin

@@ -28,13 +28,13 @@ Result ParseSingleComponent(Simulation& s,
     std::string fullTableName = "components." + tag;
     if (!table.contains("type"))
     {
-        Log_Error(log, fullTableName, "required field 'type' not present");
+        Log_error(log, fullTableName, "required field 'type' not present");
         return Result::Failure;
     }
     std::optional<ComponentType> maybeCompType = TagToComponentType(table.at("type").as_string());
     if (!maybeCompType.has_value())
     {
-        Log_Error(log,
+        Log_error(log,
                   fullTableName,
                   fmt::format("unable to parse component type '{}'",
                               std::string {table.at("type").as_string()}));
@@ -49,73 +49,73 @@ Result ParseSingleComponent(Simulation& s,
     {
     case ComponentType::ConstantEfficiencyConverterType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.ConstantEfficiencyConverter, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::VariableEfficiencyConverterType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.VariableEfficiencyConverter, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::ConstantLoadType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.ConstantLoad, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::ConstantSourceType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.ConstantSource, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::MuxType:
     {
         input =
-            TOMLTable_ParseWithValidation(table, compValids.Mux, fullTableName, errors, warnings);
+            TOMLTable_parse_with_validation(table, compValids.Mux, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::PassThroughType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.PassThrough, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::ScheduleBasedLoadType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.ScheduleBasedLoad, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::ScheduleBasedSourceType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.ScheduleBasedSource, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::StoreType:
     {
         input =
-            TOMLTable_ParseWithValidation(table, compValids.Store, fullTableName, errors, warnings);
+            TOMLTable_parse_with_validation(table, compValids.Store, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::MoverType:
     {
         input =
-            TOMLTable_ParseWithValidation(table, compValids.Mover, fullTableName, errors, warnings);
+            TOMLTable_parse_with_validation(table, compValids.Mover, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::VariableEfficiencyMoverType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.VariableEfficiencyMover, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::SwitchType:
     {
-        input = TOMLTable_ParseWithValidation(
+        input = TOMLTable_parse_with_validation(
             table, compValids.Switch, fullTableName, errors, warnings);
     }
     break;
@@ -128,10 +128,10 @@ Result ParseSingleComponent(Simulation& s,
     }
     if (!errors.empty())
     {
-        Log_Error(log, tag, "errors parsing component");
+        Log_error(log, tag, "errors parsing component");
         for (auto const& err : errors)
         {
-            Log_Error(log, tag, err);
+            Log_error(log, tag, err);
         }
         return Result::Failure;
     }
@@ -139,7 +139,7 @@ Result ParseSingleComponent(Simulation& s,
     {
         for (auto const& w : warnings)
         {
-            Log_Warning(log, tag, w);
+            Log_warning(log, tag, w);
         }
     }
     size_t id = {};
@@ -178,7 +178,7 @@ Result ParseSingleComponent(Simulation& s,
         auto maybeRateUnit = TagToPowerUnit(rateUnitStr);
         if (!maybeRateUnit.has_value())
         {
-            Log_Error(log, fullTableName, fmt::format("unhandled rate_unit '{}'", rateUnitStr));
+            Log_error(log, fullTableName, fmt::format("unhandled rate_unit '{}'", rateUnitStr));
             return Result::Failure;
         }
         rateUnit = maybeRateUnit.value();
@@ -186,14 +186,14 @@ Result ParseSingleComponent(Simulation& s,
     bool report = true;
     if (table.contains("report"))
     {
-        std::optional<bool> maybeReport = TOML_ParseValueAsBool(table.at("report"));
+        std::optional<bool> maybeReport = TOML_parse_value_as_bool(table.at("report"));
         if (maybeReport.has_value())
         {
             report = maybeReport.value();
         }
         else
         {
-            Log_Error(log, fullTableName, "unable to parse 'report' as bool");
+            Log_error(log, fullTableName, "unable to parse 'report' as bool");
             return Result::Failure;
         }
     }
@@ -230,10 +230,10 @@ Result ParseSingleComponent(Simulation& s,
         flow_t maxAvailable = max_flow_W;
         if (table.contains("max_outflow"))
         {
-            auto maybe = TOMLTable_ParseDouble(table, "max_outflow", fullTableName);
+            auto maybe = TOMLTable_parse_double(table, "max_outflow", fullTableName);
             if (!maybe.has_value())
             {
-                Log_Error(log, fullTableName, "unable to parse 'max_outflow' as number");
+                Log_error(log, fullTableName, "unable to parse 'max_outflow' as number");
                 return Result::Failure;
             }
             double maxAvailableReal = maybe.value();
@@ -246,12 +246,12 @@ Result ParseSingleComponent(Simulation& s,
     {
         if (!table.contains("loads_by_scenario"))
         {
-            Log_Error(log, fullTableName, "missing required field 'loads_by_scenario'");
+            Log_error(log, fullTableName, "missing required field 'loads_by_scenario'");
             return Result::Failure;
         }
         if (!table.at("loads_by_scenario").is_table())
         {
-            Log_Error(log, fullTableName, "'loads_by_scenario' must be a table");
+            Log_error(log, fullTableName, "'loads_by_scenario' must be a table");
             return Result::Failure;
         }
         toml::table const& lbs = table.at("loads_by_scenario").as_table();
@@ -270,7 +270,7 @@ Result ParseSingleComponent(Simulation& s,
                 }
                 else
                 {
-                    Log_Error(log, tag, fmt::format("missing supply for tag '{}'", loadTag));
+                    Log_error(log, tag, fmt::format("missing supply for tag '{}'", loadTag));
                     return Result::Failure;
                 }
             }
@@ -297,7 +297,7 @@ Result ParseSingleComponent(Simulation& s,
             }
             else
             {
-                Log_Error(log, tag, fmt::format("missing supply for tag '{}'", loadTag));
+                Log_error(log, tag, fmt::format("missing supply for tag '{}'", loadTag));
                 return Result::Failure;
             }
         }
@@ -810,7 +810,7 @@ Result ParseSingleComponent(Simulation& s,
         TimeUnit timeUnit = TimeUnit::Second;
         if (table.contains("time_unit"))
         {
-            auto maybeTimeUnitStr = TOMLTable_ParseString(table, "time_unit", fullTableName);
+            auto maybeTimeUnitStr = TOMLTable_parse_string(table, "time_unit", fullTableName);
             if (!maybeTimeUnitStr.has_value())
             {
                 WriteErrorMessage(fullTableName, "unable to parse 'time_unit' as string");
@@ -826,7 +826,7 @@ Result ParseSingleComponent(Simulation& s,
             }
             timeUnit = maybeTimeUnit.value();
         }
-        auto maybeInitialAge = TOMLTable_ParseDouble(table, "initial_age", fullTableName);
+        auto maybeInitialAge = TOMLTable_parse_double(table, "initial_age", fullTableName);
         if (!maybeInitialAge.has_value())
         {
             WriteErrorMessage(fullTableName, "unable to parse initial age as a number");
@@ -837,7 +837,7 @@ Result ParseSingleComponent(Simulation& s,
     }
     if (table.contains("group"))
     {
-        auto maybeGroup = TOMLTable_ParseString(table, "group", fullTableName);
+        auto maybeGroup = TOMLTable_parse_string(table, "group", fullTableName);
         if (!maybeGroup.has_value())
         {
             WriteErrorMessage(fullTableName, "unable to parse 'group' as a string");
@@ -861,7 +861,7 @@ Result ParseComponents(Simulation& s,
         if (!componentTagsInUse.contains(compTag))
         {
             std::string tag = "components." + compTag;
-            Log_Warning(log,
+            Log_warning(log,
                         tag,
                         "component is declared but does not appear in network "
                         "connections");
@@ -872,7 +872,7 @@ Result ParseComponents(Simulation& s,
         if (result == Result::Failure)
         {
             std::string tag = "components." + compTag;
-            Log_Error(log, tag, "could not parse component");
+            Log_error(log, tag, "could not parse component");
             return Result::Failure;
         }
     }

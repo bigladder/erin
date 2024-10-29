@@ -2616,7 +2616,7 @@ void LogFlows(Log const& log, Model const& m, SimulationState const& ss, double 
 {
     for (std::string const& s : FlowsToStrings(m, ss, time_s))
     {
-        Log_Info(log, s);
+        Log_info(log, s);
     }
 }
 
@@ -3046,7 +3046,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
             {
                 if (verbose)
                 {
-                    Log_Debug(log, fmt::format("loop iter: {}", loopIter));
+                    Log_debug(log, fmt::format("loop iter: {}", loopIter));
                 }
                 break;
             }
@@ -3065,7 +3065,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
             LogFlows(log, model, ss, t);
             if (!PrintFlowSummary(SummarizeFlows(model, ss, t)))
             {
-                Log_Warning(log, "FLOW IMBALANCE!");
+                Log_warning(log, "FLOW IMBALANCE!");
                 std::map<size_t, int64_t> sumOfFlowsByCompId;
                 for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
                 {
@@ -3099,7 +3099,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                     }
                     if (item.second != 0)
                     {
-                        Log_Warning(log,
+                        Log_warning(log,
                                     fmt::format("{} doesn't have a zero sum of all flows: "
                                                 "{} W",
                                                 model.ComponentMap.Tag[item.first],
@@ -3109,7 +3109,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                             Connection const& conn = model.Connections[connIdx];
                             if (conn.ToId == item.first)
                             {
-                                Log_Warning(log,
+                                Log_warning(log,
                                             fmt::format("* +{:>16d} W (R: +{:>16d} W // A: "
                                                         "+{:>16d} W):: {}",
                                                         ss.Flows[connIdx].Actual_W,
@@ -3120,7 +3120,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                             }
                             if (conn.FromId == item.first)
                             {
-                                Log_Warning(log,
+                                Log_warning(log,
                                             fmt::format("* -{:>16d} W (R: -{:>16d} W // A: "
                                                         "-{:>16d} W):: {}",
                                                         ss.Flows[connIdx].Actual_W,
@@ -3134,7 +3134,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                 }
             }
             PrintModelState(model, ss);
-            Log_Info(log, "==== QUIESCENCE REACHED ====");
+            Log_info(log, "==== QUIESCENCE REACHED ====");
         }
         TimeAndFlows taf = {};
         taf.Time = t;

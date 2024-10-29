@@ -146,26 +146,26 @@ CLI::App* add_run(CLI::App& app)
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
-            Log_Error(log, "Could not open input file stream on input file");
+            Log_error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
         auto nameOnly = std::filesystem::path(tomlFilename).filename();
         toml::value data = toml::parse(ifs, nameOnly.string());
         ifs.close();
         std::unordered_set<std::string> componentTagsInUse =
-            TOMLTable_ParseComponentTagsInUse(data);
+            TOMLTable_parse_component_tags_in_use(data);
         auto validationInfo = SetupGlobalValidationInfo();
         auto maybeSim = Simulation_ReadFromToml(data, validationInfo, componentTagsInUse, log);
         if (!maybeSim.has_value())
         {
-            Log_Error(log, "Simulation returned without value");
+            Log_error(log, "Simulation returned without value");
             return EXIT_FAILURE;
         }
         Simulation s = std::move(maybeSim.value());
         if (verbose)
         {
             Simulation_Print(s);
-            Log_Info(log, "-----------------");
+            Log_info(log, "-----------------");
         }
         Simulation_Run(s,
                        log,
@@ -204,19 +204,19 @@ CLI::App* add_graph(CLI::App& app)
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
-            Log_Error(log, "Could not open input file stream on input file");
+            Log_error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
         auto name_only = std::filesystem::path(tomlFilename).filename();
         auto data = toml::parse(ifs, name_only.string());
         ifs.close();
         std::unordered_set<std::string> componentTagsInUse =
-            TOMLTable_ParseComponentTagsInUse(data);
+            TOMLTable_parse_component_tags_in_use(data);
         auto validation_info = SetupGlobalValidationInfo();
         auto maybe_sim = Simulation_ReadFromToml(data, validation_info, componentTagsInUse, log);
         if (!maybe_sim.has_value())
         {
-            Log_Error(log, "Could not parse sim data from TOML");
+            Log_error(log, "Could not parse sim data from TOML");
             return EXIT_FAILURE;
         }
         Simulation s = std::move(maybe_sim.value());
@@ -254,14 +254,14 @@ CLI::App* add_checkNetwork(CLI::App& app)
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
-            Log_Error(log, "Could not open input file stream on input file");
+            Log_error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
         auto nameOnly = std::filesystem::path(tomlFilename).filename();
         auto data = toml::parse(ifs, nameOnly.string());
         ifs.close();
         std::unordered_set<std::string> componentTagsInUse =
-            TOMLTable_ParseComponentTagsInUse(data);
+            TOMLTable_parse_component_tags_in_use(data);
         auto validationInfo = SetupGlobalValidationInfo();
         auto maybeSim = Simulation_ReadFromToml(data, validationInfo, componentTagsInUse, log);
         if (!maybeSim.has_value())
@@ -517,7 +517,7 @@ CLI::App* add_packLoads(CLI::App& app)
         std::ifstream ifs(tomlFilename, std::ios_base::binary);
         if (!ifs.good())
         {
-            erin::Log_Error(log, "Could not open input file stream on input file");
+            erin::Log_error(log, "Could not open input file stream on input file");
             return EXIT_FAILURE;
         }
         auto tomlFilenameOnly = std::filesystem::path(tomlFilename).filename();

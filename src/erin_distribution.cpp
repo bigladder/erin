@@ -593,14 +593,14 @@ Result ParseDistributions(DistributionSystem& ds,
             toml::table distTable = it->second.as_table();
             if (!distTable.contains("type"))
             {
-                Log_Error(log, fullTableName, "missing required field 'type'");
+                Log_error(log, fullTableName, "missing required field 'type'");
                 return Result::Failure;
             }
             std::string distTypeTag = distTable.at("type").as_string();
             std::optional<DistType> maybeDistType = tag_to_dist_type(distTypeTag);
             if (!maybeDistType.has_value())
             {
-                Log_Error(log, fullTableName, "unhandled distribution type '" + distTypeTag + "'");
+                Log_error(log, fullTableName, "unhandled distribution type '" + distTypeTag + "'");
                 return Result::Failure;
             }
             DistType distType = maybeDistType.value();
@@ -611,13 +611,13 @@ Result ParseDistributions(DistributionSystem& ds,
             {
             case DistType::Fixed:
             {
-                inputs = TOMLTable_ParseWithValidation(
+                inputs = TOMLTable_parse_with_validation(
                     distTable, dvm.Fixed, fullTableName, errors, warnings);
             }
             break;
             case DistType::Normal:
             {
-                inputs = TOMLTable_ParseWithValidation(
+                inputs = TOMLTable_parse_with_validation(
                     distTable, dvm.Normal, fullTableName, errors, warnings);
             }
             break;
@@ -625,31 +625,31 @@ Result ParseDistributions(DistributionSystem& ds,
             {
                 if (distTable.contains("csv_file"))
                 {
-                    inputs = TOMLTable_ParseWithValidation(
+                    inputs = TOMLTable_parse_with_validation(
                         distTable, dvm.QuantileTableFromFile, fullTableName, errors, warnings);
                 }
                 else
                 {
-                    inputs = TOMLTable_ParseWithValidation(
+                    inputs = TOMLTable_parse_with_validation(
                         distTable, dvm.QuantileTableExplicit, fullTableName, errors, warnings);
                 }
             }
             break;
             case DistType::Uniform:
             {
-                inputs = TOMLTable_ParseWithValidation(
+                inputs = TOMLTable_parse_with_validation(
                     distTable, dvm.Uniform, fullTableName, errors, warnings);
             }
             break;
             case DistType::Weibull:
             {
-                inputs = TOMLTable_ParseWithValidation(
+                inputs = TOMLTable_parse_with_validation(
                     distTable, dvm.Weibull, fullTableName, errors, warnings);
             }
             break;
             default:
             {
-                Log_Error(log, fullTableName, "unhandled dist type");
+                Log_error(log, fullTableName, "unhandled dist type");
                 return Result::Failure;
             }
             break;
@@ -658,13 +658,13 @@ Result ParseDistributions(DistributionSystem& ds,
             {
                 for (std::string const& err : errors)
                 {
-                    Log_Error(log, err);
+                    Log_error(log, err);
                 }
                 return Result::Failure;
             }
             for (std::string const& w : warnings)
             {
-                Log_Warning(log, w);
+                Log_warning(log, w);
             }
             // TODO: pull default time from SimulationInfo
             TimeUnit timeUnit = TimeUnit::Second;
@@ -674,7 +674,7 @@ Result ParseDistributions(DistributionSystem& ds,
                 std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(timeUnitStr);
                 if (!maybeTimeUnit.has_value())
                 {
-                    Log_Error(log, fullTableName, "unhandled time unit '" + timeUnitStr + "'");
+                    Log_error(log, fullTableName, "unhandled time unit '" + timeUnitStr + "'");
                     return Result::Failure;
                 }
                 timeUnit = maybeTimeUnit.value();
@@ -765,7 +765,7 @@ Result ParseDistributions(DistributionSystem& ds,
                     }
                     else
                     {
-                        Log_Error(log,
+                        Log_error(log,
                                   fullTableName,
                                   "csv file '" + csvFileName +
                                       "'"
@@ -777,7 +777,7 @@ Result ParseDistributions(DistributionSystem& ds,
                 }
                 else
                 {
-                    Log_Error(log, fullTableName, "need one of 'variate_time_pairs' or 'csv_file'");
+                    Log_error(log, fullTableName, "need one of 'variate_time_pairs' or 'csv_file'");
                     return Result::Failure;
                 }
                 ds.add_quantile_table(distTag, xs, times_s);
@@ -809,7 +809,7 @@ Result ParseDistributions(DistributionSystem& ds,
             break;
             default:
             {
-                Log_Error(log, "distribution", "unhandled distribution type: " + distTypeTag);
+                Log_error(log, "distribution", "unhandled distribution type: " + distTypeTag);
                 std::exit(1);
             }
             break;

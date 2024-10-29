@@ -10,8 +10,8 @@ TEST(Logging, TestWeCanLog)
 {
     Logger logger {};
     Log log = Log_make_from_courier(logger);
-    Log_Debug(log, "this is a debug statement");
-    Log_Info(log, "this is an info statement");
-    Log_Warning(log, "this is a warning statement");
-    EXPECT_THROW(Log_Error(log, "this is an error -- using courier, it throws..."), std::exception);
+    Log_debug(log, "this is a debug statement");
+    Log_info(log, "this is an info statement");
+    Log_warning(log, "this is a warning statement");
+    EXPECT_THROW(Log_error(log, "this is an error -- using courier, it throws..."), std::exception);
 }

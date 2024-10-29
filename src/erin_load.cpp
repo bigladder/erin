@@ -279,7 +279,7 @@ std::optional<Load> ParseSingleLoad(std::string const& tag,
     std::vector<std::string> errors01;
     std::vector<std::string> warnings01;
     auto const& explicitLoadTable =
-        TOMLTable_ParseWithValidation(table, explicitValidation, tableName, errors01, warnings01);
+        TOMLTable_parse_with_validation(table, explicitValidation, tableName, errors01, warnings01);
     std::optional<Load> maybeLoad = {};
     if (errors01.size() == 0)
     {
@@ -302,7 +302,7 @@ std::optional<Load> ParseSingleLoad(std::string const& tag,
         std::vector<std::string> errors02;
         std::vector<std::string> warnings02;
         auto const& fileLoadTable =
-            TOMLTable_ParseWithValidation(table, fileValidation, tableName, errors02, warnings02);
+            TOMLTable_parse_with_validation(table, fileValidation, tableName, errors02, warnings02);
         if (errors02.size() > 0)
         {
             WriteErrorMessage(tableName, "unable to load explicitly or by file");
@@ -388,7 +388,7 @@ std::optional<std::vector<Load>> ParseLoads(toml::table const& table,
             toml::table const& table2 = it->second.as_table();
             std::vector<std::string> errors01;
             std::vector<std::string> warnings01;
-            auto const& explicitLoadTable = TOMLTable_ParseWithValidation(
+            auto const& explicitLoadTable = TOMLTable_parse_with_validation(
                 table2, explicitValidation, tableName, errors01, warnings01);
             std::optional<Load> maybeLoad;
             if (errors01.size() == 0)
@@ -396,14 +396,14 @@ std::optional<std::vector<Load>> ParseLoads(toml::table const& table,
                 maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag);
                 if (!maybeLoad.has_value())
                 {
-                    Log_Error(log, tableName, "unable to load");
+                    Log_error(log, tableName, "unable to load");
                     return {};
                 }
                 if (warnings01.size() > 0)
                 {
                     for (auto const& w : warnings01)
                     {
-                        Log_Warning(log, tableName, w);
+                        Log_warning(log, tableName, w);
                     }
                 }
                 if (maybeLoad.has_value())
@@ -428,7 +428,7 @@ std::optional<std::vector<Load>> ParseLoads(toml::table const& table,
                         }
                         else
                         {
-                            Log_Error(log, tableName, "single load did not have value");
+                            Log_error(log, tableName, "single load did not have value");
                             return {};
                         }
                     }
@@ -443,7 +443,7 @@ std::optional<std::vector<Load>> ParseLoads(toml::table const& table,
                             }
                             else
                             {
-                                Log_Error(log, tableName, "multi-part load did not have value");
+                                Log_error(log, tableName, "multi-part load did not have value");
                                 return {};
                             }
                         }
@@ -453,7 +453,7 @@ std::optional<std::vector<Load>> ParseLoads(toml::table const& table,
         }
         else
         {
-            Log_Error(log, tableName, "not a table");
+            Log_error(log, tableName, "not a table");
             return {};
         }
     }

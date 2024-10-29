@@ -14,7 +14,7 @@ namespace erin
 // std::unordered_map<std::string, InputValue>
 // InputValue will be loaded with exactly what we need
 std::unordered_map<std::string, InputValue>
-TOMLTable_ParseWithValidation(std::unordered_map<toml::key, toml::value> const& table,
+TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const& table,
                               ValidationInfo const& validationInfo,
                               std::string const& tableName,
                               std::vector<std::string>& errors,
@@ -170,7 +170,7 @@ TOMLTable_ParseWithValidation(std::unordered_map<toml::key, toml::value> const& 
                     errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                     return out;
                 }
-                auto maybeDouble = TOML_ParseNumericValueAsDouble(x);
+                auto maybeDouble = TOML_parse_numeric_value_as_double(x);
                 if (!maybeDouble.has_value())
                 {
                     std::ostringstream oss;
@@ -226,8 +226,8 @@ TOMLTable_ParseWithValidation(std::unordered_map<toml::key, toml::value> const& 
                     errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                     return out;
                 }
-                auto maybeNum0 = TOML_ParseNumericValueAsDouble(y0);
-                auto maybeNum1 = TOML_ParseNumericValueAsDouble(y1);
+                auto maybeNum0 = TOML_parse_numeric_value_as_double(y0);
+                auto maybeNum1 = TOML_parse_numeric_value_as_double(y1);
                 if (!maybeNum0.has_value() || !maybeNum1.has_value())
                 {
                     std::ostringstream oss;
@@ -301,7 +301,7 @@ TOMLTable_ParseWithValidation(std::unordered_map<toml::key, toml::value> const& 
         break;
         case InputType::Bool:
         {
-            std::optional<bool> maybeBool = TOML_ParseValueAsBool(value);
+            std::optional<bool> maybeBool = TOML_parse_value_as_bool(value);
             if (maybeBool.has_value())
             {
                 v.Value = maybeBool.value();
@@ -333,7 +333,7 @@ TOMLTable_ParseWithValidation(std::unordered_map<toml::key, toml::value> const& 
                     return out;
                 }
             }
-            auto maybeInt = TOML_ParseNumericValueAsInteger(value);
+            auto maybeInt = TOML_parse_numeric_value_as_integer(value);
             if (!maybeInt.has_value())
             {
                 std::ostringstream oss;
@@ -353,7 +353,7 @@ TOMLTable_ParseWithValidation(std::unordered_map<toml::key, toml::value> const& 
                 errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                 return out;
             }
-            auto maybeDouble = TOML_ParseNumericValueAsDouble(value);
+            auto maybeDouble = TOML_parse_numeric_value_as_double(value);
             if (!maybeDouble.has_value())
             {
                 std::ostringstream oss;
@@ -508,7 +508,7 @@ TOMLTable_ParseWithValidation(std::unordered_map<toml::key, toml::value> const& 
 // TODO: pass in a mutable vector of error strings we can push to
 // in order to decouple printing from here.
 // TODO: see header; also pass in list of aliases for keys
-bool TOMLTable_IsValid(std::unordered_map<toml::key, toml::value> const& table,
+bool TOMLTable_is_valid(std::unordered_map<toml::key, toml::value> const& table,
                        std::unordered_set<std::string> const& requiredFields,
                        std::unordered_set<std::string> const& optionalFields,
                        std::unordered_map<std::string, std::string> const& defaults,
@@ -523,7 +523,7 @@ bool TOMLTable_IsValid(std::unordered_map<toml::key, toml::value> const& table,
         {
             if (verbose)
             {
-                Log_Warning(log, tableName, fmt::format("Unrecognized key '{}'", it->first));
+                Log_warning(log, tableName, fmt::format("Unrecognized key '{}'", it->first));
             }
             return false;
         }
@@ -534,7 +534,7 @@ bool TOMLTable_IsValid(std::unordered_map<toml::key, toml::value> const& table,
         {
             if (verbose)
             {
-                Log_Error(log, tableName, fmt::format("Missing required key '{}'", *it));
+                Log_error(log, tableName, fmt::format("Missing required key '{}'", *it));
             }
             return false;
         }
@@ -543,7 +543,7 @@ bool TOMLTable_IsValid(std::unordered_map<toml::key, toml::value> const& table,
 }
 
 std::optional<std::string>
-TOMLTable_ParseString(std::unordered_map<toml::key, toml::value> const& table,
+TOMLTable_parse_string(std::unordered_map<toml::key, toml::value> const& table,
                       std::string const& fieldName,
                       std::string const& tableName)
 {
@@ -558,12 +558,12 @@ TOMLTable_ParseString(std::unordered_map<toml::key, toml::value> const& table,
 }
 
 std::optional<std::string>
-TOMLTable_ParseStringWithSetResponses(std::unordered_map<toml::key, toml::value> const& table,
+TOMLTable_parse_string_with_set_responses(std::unordered_map<toml::key, toml::value> const& table,
                                       std::unordered_set<std::string> const& allowedResponses,
                                       std::string const& fieldName,
                                       std::string const& tableName)
 {
-    auto field = TOMLTable_ParseString(table, fieldName, tableName);
+    auto field = TOMLTable_parse_string(table, fieldName, tableName);
     if (field.has_value())
     {
         if (allowedResponses.contains(field.value()))
@@ -587,7 +587,7 @@ TOMLTable_ParseStringWithSetResponses(std::unordered_map<toml::key, toml::value>
     return field;
 }
 
-std::optional<bool> TOML_ParseValueAsBool(toml::value const& v)
+std::optional<bool> TOML_parse_value_as_bool(toml::value const& v)
 {
     if (v.is_boolean())
     {
@@ -620,7 +620,7 @@ std::optional<bool> TOML_ParseValueAsBool(toml::value const& v)
     return {};
 }
 
-std::optional<double> TOML_ParseNumericValueAsDouble(toml::value const& v)
+std::optional<double> TOML_parse_numeric_value_as_double(toml::value const& v)
 {
     if (v.is_integer())
     {
@@ -633,7 +633,7 @@ std::optional<double> TOML_ParseNumericValueAsDouble(toml::value const& v)
     return {};
 }
 
-std::optional<int> TOML_ParseNumericValueAsInteger(toml::value const& v)
+std::optional<int> TOML_parse_numeric_value_as_integer(toml::value const& v)
 {
     if (v.is_integer())
     {
@@ -646,13 +646,13 @@ std::optional<int> TOML_ParseNumericValueAsInteger(toml::value const& v)
     return {};
 }
 
-std::optional<double> TOMLTable_ParseDouble(std::unordered_map<toml::key, toml::value> const& table,
+std::optional<double> TOMLTable_parse_double(std::unordered_map<toml::key, toml::value> const& table,
                                             std::string const& fieldName,
                                             std::string const& tableName)
 {
     if (table.contains(fieldName))
     {
-        auto v = TOML_ParseNumericValueAsDouble(table.at(fieldName));
+        auto v = TOML_parse_numeric_value_as_double(table.at(fieldName));
         if (v.has_value())
         {
             return v;
@@ -666,13 +666,13 @@ std::optional<double> TOMLTable_ParseDouble(std::unordered_map<toml::key, toml::
     return {};
 }
 
-std::optional<int> TOMLTable_ParseInteger(std::unordered_map<toml::key, toml::value> const& table,
+std::optional<int> TOMLTable_parse_integer(std::unordered_map<toml::key, toml::value> const& table,
                                           std::string const& fieldName,
                                           std::string const& tableName)
 {
     if (table.contains(fieldName))
     {
-        auto v = TOML_ParseNumericValueAsInteger(table.at(fieldName));
+        auto v = TOML_parse_numeric_value_as_integer(table.at(fieldName));
         if (v.has_value())
         {
             return v;
@@ -687,7 +687,7 @@ std::optional<int> TOMLTable_ParseInteger(std::unordered_map<toml::key, toml::va
 }
 
 std::optional<std::vector<TimeAndAmount>>
-TOMLTable_ParseVectorOfTimeRatePairs(std::unordered_map<toml::key, toml::value> const& table,
+TOMLTable_parse_vector_of_time_rate_pairs(std::unordered_map<toml::key, toml::value> const& table,
                                      std::string const& fieldName,
                                      std::string const& tableName,
                                      double timeMult,
@@ -709,8 +709,8 @@ TOMLTable_ParseVectorOfTimeRatePairs(std::unordered_map<toml::key, toml::value> 
             std::vector<toml::value> const& t_and_r = tr.as_array();
             if (t_and_r.size() == 2)
             {
-                std::optional<double> t = TOML_ParseNumericValueAsDouble(t_and_r.at(0));
-                std::optional<double> r = TOML_ParseNumericValueAsDouble(t_and_r.at(1));
+                std::optional<double> t = TOML_parse_numeric_value_as_double(t_and_r.at(0));
+                std::optional<double> r = TOML_parse_numeric_value_as_double(t_and_r.at(1));
                 if (t.has_value() && r.has_value() && r.value() >= 0)
                 {
                     TimeAndAmount taa {};
@@ -738,7 +738,7 @@ TOMLTable_ParseVectorOfTimeRatePairs(std::unordered_map<toml::key, toml::value> 
 }
 
 std::optional<std::vector<double>>
-TOMLTable_ParseArrayOfDouble(std::unordered_map<toml::key, toml::value> const& table,
+TOMLTable_parse_array_of_double(std::unordered_map<toml::key, toml::value> const& table,
                              std::string const& fieldName,
                              std::string const& tableName)
 {
@@ -763,7 +763,7 @@ TOMLTable_ParseArrayOfDouble(std::unordered_map<toml::key, toml::value> const& t
                               "array value at " + std::to_string(i) + " must be numeric");
             return {};
         }
-        std::optional<double> maybeNumber = TOML_ParseNumericValueAsDouble(v);
+        std::optional<double> maybeNumber = TOML_parse_numeric_value_as_double(v);
         if (!maybeNumber.has_value())
         {
             WriteErrorMessage(tableName,
@@ -777,7 +777,7 @@ TOMLTable_ParseArrayOfDouble(std::unordered_map<toml::key, toml::value> const& t
 }
 
 std::optional<PairsVector>
-TOMLTable_ParseArrayOfPairsOfDouble(std::unordered_map<toml::key, toml::value> const& table,
+TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::value> const& table,
                                     std::string const& fieldName,
                                     std::string const& tableName)
 {
@@ -812,8 +812,8 @@ TOMLTable_ParseArrayOfPairsOfDouble(std::unordered_map<toml::key, toml::value> c
                                   " must be an array of two numbers");
             return {};
         }
-        std::optional<double> maybeFirst = TOML_ParseNumericValueAsDouble(xy[0]);
-        std::optional<double> maybeSecond = TOML_ParseNumericValueAsDouble(xy[1]);
+        std::optional<double> maybeFirst = TOML_parse_numeric_value_as_double(xy[0]);
+        std::optional<double> maybeSecond = TOML_parse_numeric_value_as_double(xy[1]);
         if (!maybeFirst.has_value() || !maybeSecond.has_value())
         {
             WriteErrorMessage(tableName,
@@ -827,7 +827,7 @@ TOMLTable_ParseArrayOfPairsOfDouble(std::unordered_map<toml::key, toml::value> c
     return result;
 }
 
-std::unordered_set<std::string> TOMLTable_ParseComponentTagsInUse(toml::value const& data)
+std::unordered_set<std::string> TOMLTable_parse_component_tags_in_use(toml::value const& data)
 {
     std::unordered_set<std::string> tagsInUse;
     if (!data.is_table())

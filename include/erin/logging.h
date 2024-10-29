@@ -15,40 +15,40 @@ namespace erin
 {
 enum class LogLevel
 {
-    Debug = 0,
-    Info,
-    Warning,
-    Error,
+    debug = 0,
+    info,
+    warning,
+    error,
 };
 
 struct Log
 {
-    LogLevel log_level = LogLevel::Debug;
+    LogLevel log_level = LogLevel::debug;
     std::optional<std::function<void(std::string const&, std::string const&)>> debug = {};
     std::optional<std::function<void(std::string const&, std::string const&)>> info = {};
     std::optional<std::function<void(std::string const&, std::string const&)>> warning = {};
     std::optional<std::function<void(std::string const&, std::string const&)>> error = {};
 };
 
-void Log_General(Log const& log, LogLevel ll, std::string const& msg);
+void Log_general(Log const& log, LogLevel ll, std::string const& msg);
 
-void Log_General(Log const& log, LogLevel ll, std::string const& tag, std::string const& msg);
+void Log_general(Log const& log, LogLevel ll, std::string const& tag, std::string const& msg);
 
-void Log_Debug(Log const& log, std::string const& msg);
+void Log_debug(Log const& log, std::string const& msg);
 
-void Log_Debug(Log const& log, std::string const& tag, std::string const& msg);
+void Log_debug(Log const& log, std::string const& tag, std::string const& msg);
 
-void Log_Info(Log const& log, std::string const& msg);
+void Log_info(Log const& log, std::string const& msg);
 
-void Log_Info(Log const& log, std::string const& tag, std::string const& msg);
+void Log_info(Log const& log, std::string const& tag, std::string const& msg);
 
-void Log_Warning(Log const& log, std::string const& msg);
+void Log_warning(Log const& log, std::string const& msg);
 
-void Log_Warning(Log const& log, std::string const& tag, std::string const& msg);
+void Log_warning(Log const& log, std::string const& tag, std::string const& msg);
 
-void Log_Error(Log const& log, std::string const& msg);
+void Log_error(Log const& log, std::string const& msg);
 
-void Log_Error(Log const& log, std::string const& tag, std::string const& msg);
+void Log_error(Log const& log, std::string const& tag, std::string const& msg);
 
 class Logger final : public Courier::Courier
 {

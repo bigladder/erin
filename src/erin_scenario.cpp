@@ -92,18 +92,18 @@ std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
                                           std::string const& fullName,
                                           std::string const& tag)
 {
-    auto maybeOccurrenceDist = TOMLTable_ParseString(table, "occurrence_distribution", fullName);
+    auto maybeOccurrenceDist = TOMLTable_parse_string(table, "occurrence_distribution", fullName);
     if (!maybeOccurrenceDist.has_value())
     {
         return {};
     }
     auto maybeTimeUnitStr =
-        TOMLTable_ParseStringWithSetResponses(table, ValidTimeUnits, "time_unit", fullName);
+        TOMLTable_parse_string_with_set_responses(table, ValidTimeUnits, "time_unit", fullName);
     if (!maybeTimeUnitStr.has_value())
     {
         return {};
     }
-    auto maybeDuration = TOMLTable_ParseDouble(table, "duration", fullName);
+    auto maybeDuration = TOMLTable_parse_double(table, "duration", fullName);
     if (!maybeDuration.has_value())
     {
         return {};
@@ -113,7 +113,7 @@ std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
     {
         if (table.at("max_occurrences").is_string())
         {
-            auto maxOccurrencesString = TOMLTable_ParseString(table, "max_occurrences", fullName);
+            auto maxOccurrencesString = TOMLTable_parse_string(table, "max_occurrences", fullName);
             if (!maxOccurrencesString.has_value())
             {
                 return {};
@@ -130,7 +130,7 @@ std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
         else
         {
             std::optional<int64_t> maxOccurrenceValue =
-                TOMLTable_ParseInteger(table, "max_occurrences", fullName);
+                TOMLTable_parse_integer(table, "max_occurrences", fullName);
             if (!maxOccurrenceValue.has_value())
             {
                 return {};

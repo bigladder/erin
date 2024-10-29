@@ -128,9 +128,9 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
 
 std::optional<Simulation>
 Simulation_read_from_toml(toml::value const& v,
-                        InputValidationMap const& validationInfo,
-                        std::unordered_set<std::string> const& componentTagsInUse,
-                        Log const& log = Log {});
+                          InputValidationMap const& validationInfo,
+                          std::unordered_set<std::string> const& componentTagsInUse,
+                          Log const& log = Log {});
 
 void Simulation_print(Simulation const& s);
 

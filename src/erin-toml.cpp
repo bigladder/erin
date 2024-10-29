@@ -15,10 +15,10 @@ namespace erin
 // InputValue will be loaded with exactly what we need
 std::unordered_map<std::string, InputValue>
 TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const& table,
-                              ValidationInfo const& validationInfo,
-                              std::string const& tableName,
-                              std::vector<std::string>& errors,
-                              std::vector<std::string>& warnings)
+                                ValidationInfo const& validationInfo,
+                                std::string const& tableName,
+                                std::vector<std::string>& errors,
+                                std::vector<std::string>& warnings)
 {
     std::unordered_map<std::string, InputValue> out;
     std::unordered_set<std::string> fieldsFound {};
@@ -509,12 +509,12 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
 // in order to decouple printing from here.
 // TODO: see header; also pass in list of aliases for keys
 bool TOMLTable_is_valid(std::unordered_map<toml::key, toml::value> const& table,
-                       std::unordered_set<std::string> const& requiredFields,
-                       std::unordered_set<std::string> const& optionalFields,
-                       std::unordered_map<std::string, std::string> const& defaults,
-                       std::string const& tableName,
-                       bool verbose,
-                       Log const& log)
+                        std::unordered_set<std::string> const& requiredFields,
+                        std::unordered_set<std::string> const& optionalFields,
+                        std::unordered_map<std::string, std::string> const& defaults,
+                        std::string const& tableName,
+                        bool verbose,
+                        Log const& log)
 {
     for (auto it = table.cbegin(); it != table.cend(); ++it)
     {
@@ -544,8 +544,8 @@ bool TOMLTable_is_valid(std::unordered_map<toml::key, toml::value> const& table,
 
 std::optional<std::string>
 TOMLTable_parse_string(std::unordered_map<toml::key, toml::value> const& table,
-                      std::string const& fieldName,
-                      std::string const& tableName)
+                       std::string const& fieldName,
+                       std::string const& tableName)
 {
     if (table.contains(fieldName))
     {
@@ -559,9 +559,9 @@ TOMLTable_parse_string(std::unordered_map<toml::key, toml::value> const& table,
 
 std::optional<std::string>
 TOMLTable_parse_string_with_set_responses(std::unordered_map<toml::key, toml::value> const& table,
-                                      std::unordered_set<std::string> const& allowedResponses,
-                                      std::string const& fieldName,
-                                      std::string const& tableName)
+                                          std::unordered_set<std::string> const& allowedResponses,
+                                          std::string const& fieldName,
+                                          std::string const& tableName)
 {
     auto field = TOMLTable_parse_string(table, fieldName, tableName);
     if (field.has_value())
@@ -646,9 +646,10 @@ std::optional<int> TOML_parse_numeric_value_as_integer(toml::value const& v)
     return {};
 }
 
-std::optional<double> TOMLTable_parse_double(std::unordered_map<toml::key, toml::value> const& table,
-                                            std::string const& fieldName,
-                                            std::string const& tableName)
+std::optional<double>
+TOMLTable_parse_double(std::unordered_map<toml::key, toml::value> const& table,
+                       std::string const& fieldName,
+                       std::string const& tableName)
 {
     if (table.contains(fieldName))
     {
@@ -667,8 +668,8 @@ std::optional<double> TOMLTable_parse_double(std::unordered_map<toml::key, toml:
 }
 
 std::optional<int> TOMLTable_parse_integer(std::unordered_map<toml::key, toml::value> const& table,
-                                          std::string const& fieldName,
-                                          std::string const& tableName)
+                                           std::string const& fieldName,
+                                           std::string const& tableName)
 {
     if (table.contains(fieldName))
     {
@@ -688,10 +689,10 @@ std::optional<int> TOMLTable_parse_integer(std::unordered_map<toml::key, toml::v
 
 std::optional<std::vector<TimeAndAmount>>
 TOMLTable_parse_vector_of_time_rate_pairs(std::unordered_map<toml::key, toml::value> const& table,
-                                     std::string const& fieldName,
-                                     std::string const& tableName,
-                                     double timeMult,
-                                     double rateMult)
+                                          std::string const& fieldName,
+                                          std::string const& tableName,
+                                          double timeMult,
+                                          double rateMult)
 {
     std::vector<TimeAndAmount> timeAndLoads {};
     if (!table.contains(fieldName) || !table.at(fieldName).is_array())
@@ -739,8 +740,8 @@ TOMLTable_parse_vector_of_time_rate_pairs(std::unordered_map<toml::key, toml::va
 
 std::optional<std::vector<double>>
 TOMLTable_parse_array_of_double(std::unordered_map<toml::key, toml::value> const& table,
-                             std::string const& fieldName,
-                             std::string const& tableName)
+                                std::string const& fieldName,
+                                std::string const& tableName)
 {
     std::vector<double> result;
     if (!table.contains(fieldName))
@@ -778,8 +779,8 @@ TOMLTable_parse_array_of_double(std::unordered_map<toml::key, toml::value> const
 
 std::optional<PairsVector>
 TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::value> const& table,
-                                    std::string const& fieldName,
-                                    std::string const& tableName)
+                                         std::string const& fieldName,
+                                         std::string const& tableName)
 {
     PairsVector result;
     if (!table.contains(fieldName))

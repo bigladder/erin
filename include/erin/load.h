@@ -30,9 +30,9 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
                         std::string const& tag);
 
 std::optional<std::vector<Load>> parse_loads(toml::table const& table,
-                                            ValidationInfo const& explicitValidation,
-                                            ValidationInfo const& fileValidation,
-                                            Log const& log);
+                                             ValidationInfo const& explicitValidation,
+                                             ValidationInfo const& fileValidation,
+                                             Log const& log);
 
 std::ostream& operator<<(std::ostream& os, Load const& load);
 

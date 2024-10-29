@@ -1636,7 +1636,8 @@ TEST(Erin, TestParsingComponentsInUse)
         },
     };
     std::unordered_set<std::string> expected {"a", "b", "c", "d"};
-    std::unordered_set<std::string> actual = erin::TOMLTable_parse_component_tags_in_use(exampleInput);
+    std::unordered_set<std::string> actual =
+        erin::TOMLTable_parse_component_tags_in_use(exampleInput);
     EXPECT_EQ(expected.size(), actual.size());
     for (auto const& item : expected)
     {

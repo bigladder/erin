@@ -1157,7 +1157,8 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
                                 log, fullName + ".intensity." + intensityTag, "must be a number");
                             return Result::Failure;
                         }
-                        std::optional<double> maybeValue = TOML_parse_numeric_value_as_double(p.second);
+                        std::optional<double> maybeValue =
+                            TOML_parse_numeric_value_as_double(p.second);
                         if (!maybeValue.has_value())
                         {
                             Log_error(
@@ -1180,9 +1181,9 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
 
 std::optional<Simulation>
 Simulation_read_from_toml(toml::value const& v,
-                        InputValidationMap const& validationInfo,
-                        std::unordered_set<std::string> const& componentTagsInUse,
-                        Log const& log)
+                          InputValidationMap const& validationInfo,
+                          std::unordered_set<std::string> const& componentTagsInUse,
+                          Log const& log)
 {
     Simulation s = {};
     Simulation_Init(s);

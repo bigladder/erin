@@ -373,9 +373,9 @@ bool MaybePushLoad(std::optional<Load> maybeLoad,
 }
 
 std::optional<std::vector<Load>> parse_loads(toml::table const& table,
-                                            ValidationInfo const& explicitValidation,
-                                            ValidationInfo const& fileValidation,
-                                            Log const& log)
+                                             ValidationInfo const& explicitValidation,
+                                             ValidationInfo const& fileValidation,
+                                             Log const& log)
 {
     std::vector<Load> loads {};
     loads.reserve(table.size());

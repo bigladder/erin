@@ -97,14 +97,14 @@ Result ParseSingleComponent(Simulation& s,
     break;
     case ComponentType::StoreType:
     {
-        input =
-            TOMLTable_parse_with_validation(table, compValids.Store, fullTableName, errors, warnings);
+        input = TOMLTable_parse_with_validation(
+            table, compValids.Store, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::MoverType:
     {
-        input =
-            TOMLTable_parse_with_validation(table, compValids.Mover, fullTableName, errors, warnings);
+        input = TOMLTable_parse_with_validation(
+            table, compValids.Mover, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::VariableEfficiencyMoverType:

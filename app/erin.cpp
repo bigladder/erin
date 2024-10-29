@@ -155,7 +155,8 @@ CLI::App* add_run(CLI::App& app)
         std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
         auto validation_info = setup_global_validation_info();
-        auto maybe_sim = Simulation_read_from_toml(data, validation_info, component_tags_in_use, log);
+        auto maybe_sim =
+            Simulation_read_from_toml(data, validation_info, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Simulation returned without value");
@@ -213,7 +214,8 @@ CLI::App* add_graph(CLI::App& app)
         std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
         auto validation_info = setup_global_validation_info();
-        auto maybe_sim = Simulation_read_from_toml(data, validation_info, component_tags_in_use, log);
+        auto maybe_sim =
+            Simulation_read_from_toml(data, validation_info, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Could not parse sim data from TOML");
@@ -263,7 +265,8 @@ CLI::App* add_checkNetwork(CLI::App& app)
         std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
         auto validationInfo = setup_global_validation_info();
-        auto maybe_sim = Simulation_read_from_toml(data, validationInfo, component_tags_in_use, log);
+        auto maybe_sim =
+            Simulation_read_from_toml(data, validationInfo, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             return EXIT_FAILURE;
@@ -370,8 +373,8 @@ CLI::App* add_update(CLI::App& app)
                 if (comp_type == "store" && comp.contains("max_inflow"))
                 {
                     double max_inflow = comp["max_inflow"].is_floating()
-                                           ? comp["max_inflow"].as_floating()
-                                           : static_cast<double>(comp["max_inflow"].as_integer());
+                                            ? comp["max_inflow"].as_floating()
+                                            : static_cast<double>(comp["max_inflow"].as_integer());
                     comp.erase("max_inflow");
                     comp["max_charge"] = toml::value(max_inflow);
                     std::cout << "RENAME components." << comp_name << ".max_inflow to components"

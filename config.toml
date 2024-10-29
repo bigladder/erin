@@ -3,6 +3,7 @@ project_short_description = "Energy Resilience of Interacting Networks"
 project_name = "ERIN"
 start_year = 2020
 use_app = true
+use_cmake_version = true
 use_taskfile = true
 version_major = 0
 version_minor = 0

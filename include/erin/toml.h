@@ -82,6 +82,7 @@ TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::val
                                          std::string const& fieldName,
                                          std::string const& tableName);
 
+// TEMP: public
 std::unordered_set<std::string> TOMLTable_parse_component_tags_in_use(toml::value const& data);
 
 } // namespace erin

@@ -16,112 +16,112 @@ std::string InputSection_toString(InputSection s)
 {
     switch (s)
     {
-    case InputSection::SimulationInfo:
+    case InputSection::simulation_info:
     {
         return "simulation_info";
     }
     break;
-    case InputSection::Loads_01Explicit:
+    case InputSection::loads_01explicit:
     {
         return "loads";
     }
     break;
-    case InputSection::Loads_02FileBased:
+    case InputSection::loads_02file_based:
     {
         return "loads (file_based)";
     }
     break;
-    case InputSection::Components_ConstantLoad:
+    case InputSection::components_constant_load:
     {
         return "components (constant_load)";
     }
     break;
-    case InputSection::Components_Load:
+    case InputSection::components_load:
     {
         return "components (load)";
     }
     break;
-    case InputSection::Components_Source:
+    case InputSection::components_source:
     {
         return "components (source)";
     }
     break;
-    case InputSection::Components_UncontrolledSource:
+    case InputSection::components_uncontrolled_source:
     {
         return "components (uncontrolled_source)";
     }
     break;
-    case InputSection::Components_ConstEffConverter:
+    case InputSection::components_const_eff_converter:
     {
         return "components (converter)";
     }
     break;
-    case InputSection::Components_VariableEffConverter:
+    case InputSection::components_variable_eff_converter:
     {
         return "components (variable_efficiency_converter)";
     }
     break;
-    case InputSection::Components_Mux:
+    case InputSection::components_mux:
     {
         return "components (mux)";
     }
     break;
-    case InputSection::Components_Store:
+    case InputSection::components_store:
     {
         return "components (store)";
     }
     break;
-    case InputSection::Components_PassThrough:
+    case InputSection::components_pass_through:
     {
         return "components (pass_through)";
     }
     break;
-    case InputSection::Components_Mover:
+    case InputSection::components_mover:
     {
         return "components (mover)";
     }
     break;
-    case InputSection::Components_VariableEffMover:
+    case InputSection::components_variable_eff_mover:
     {
         return "components (variable_efficiency_mover)";
     }
     break;
-    case InputSection::Dist_Fixed:
+    case InputSection::dist_fixed:
     {
         return "dist (fixed)";
     }
     break;
-    case InputSection::Dist_Weibull:
+    case InputSection::dist_weibull:
     {
         return "dist (weibull)";
     }
     break;
-    case InputSection::Dist_Uniform:
+    case InputSection::dist_uniform:
     {
         return "dist (uniform)";
     }
     break;
-    case InputSection::Dist_Normal:
+    case InputSection::dist_normal:
     {
         return "dist (normal)";
     }
     break;
-    case InputSection::Dist_01QuantileTableFromFile:
+    case InputSection::dist_01quantile_table_from_file:
     {
         return "dist (quantile_table, from file)";
     }
     break;
-    case InputSection::Dist_02QuantileTableExplicit:
+    case InputSection::dist_02quantile_table_explicit:
     {
         return "dist (quantile_table, explicit)";
     }
     break;
-    case InputSection::Network:
+    case InputSection::network:
     {
         return "network";
     }
     break;
-    case InputSection::Scenarios:
+    case InputSection::scenarios:
     {
         return "scenarios";
     }
@@ -139,67 +139,67 @@ std::optional<InputSection> String_toInputSection(std::string tag)
 {
     if (tag == "simulation_info")
     {
-        return InputSection::SimulationInfo;
+        return InputSection::simulation_info;
     }
     if (tag == "loads")
     {
-        return InputSection::Loads_01Explicit;
+        return InputSection::loads_01explicit;
     }
     if (tag == "loads (file_based)")
     {
-        return InputSection::Loads_02FileBased;
+        return InputSection::loads_02file_based;
     }
     if (tag == "components (source)")
     {
-        return InputSection::Components_Source;
+        return InputSection::components_source;
     }
     if (tag == "components (constant_load)")
     {
-        return InputSection::Components_ConstantLoad;
+        return InputSection::components_constant_load;
     }
     if (tag == "components (load)")
     {
-        return InputSection::Components_Load;
+        return InputSection::components_load;
     }
     if (tag == "components (converter)")
     {
-        return InputSection::Components_ConstEffConverter;
+        return InputSection::components_const_eff_converter;
     }
     if (tag == "components (variable_efficiency_converter)")
     {
-        return InputSection::Components_VariableEffConverter;
+        return InputSection::components_variable_eff_converter;
     }
     if (tag == "components (mux)")
     {
-        return InputSection::Components_Mux;
+        return InputSection::components_mux;
     }
     if (tag == "components (store)")
     {
-        return InputSection::Components_Store;
+        return InputSection::components_store;
     }
     if (tag == "components (pass_through)")
     {
-        return InputSection::Components_PassThrough;
+        return InputSection::components_pass_through;
     }
     if (tag == "components (mover)")
     {
-        return InputSection::Components_Mover;
+        return InputSection::components_mover;
     }
     if (tag == "components (variable_efficiency_mover)")
     {
-        return InputSection::Components_VariableEffMover;
+        return InputSection::components_variable_eff_mover;
     }
     if (tag == "dist (fixed)")
     {
-        return InputSection::Dist_Fixed;
+        return InputSection::dist_fixed;
     }
     if (tag == "network")
     {
-        return InputSection::Network;
+        return InputSection::network;
     }
     if (tag == "scenarios")
     {
-        return InputSection::Scenarios;
+        return InputSection::scenarios;
     }
     return {};
 }
@@ -242,58 +242,58 @@ void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f)
 
 InputValidationMap setup_global_validation_info()
 {
-    std::unordered_set<InputSection> allSections {
-        InputSection::SimulationInfo,
-        InputSection::Loads_01Explicit,
-        InputSection::Loads_02FileBased,
-        InputSection::Components_ConstantLoad,
-        InputSection::Components_Load,
-        InputSection::Components_Source,
-        InputSection::Components_UncontrolledSource,
-        InputSection::Components_ConstEffConverter,
-        InputSection::Components_VariableEffConverter,
-        InputSection::Components_Mux,
-        InputSection::Components_Store,
-        InputSection::Components_PassThrough,
-        InputSection::Components_VariableEffMover,
-        InputSection::Components_Mover,
-        InputSection::Components_Switch,
-        InputSection::Dist_Fixed,
-        InputSection::Dist_Weibull,
-        InputSection::Dist_Uniform,
-        InputSection::Dist_Normal,
-        InputSection::Dist_01QuantileTableFromFile,
-        InputSection::Dist_02QuantileTableExplicit,
-        InputSection::Network,
-        InputSection::Scenarios,
+    std::unordered_set<InputSection> all_sections {
+        InputSection::simulation_info,
+        InputSection::loads_01explicit,
+        InputSection::loads_02file_based,
+        InputSection::components_constant_load,
+        InputSection::components_load,
+        InputSection::components_source,
+        InputSection::components_uncontrolled_source,
+        InputSection::components_const_eff_converter,
+        InputSection::components_variable_eff_converter,
+        InputSection::components_mux,
+        InputSection::components_store,
+        InputSection::components_pass_through,
+        InputSection::components_variable_eff_mover,
+        InputSection::components_mover,
+        InputSection::components_switch,
+        InputSection::dist_fixed,
+        InputSection::dist_weibull,
+        InputSection::dist_uniform,
+        InputSection::dist_normal,
+        InputSection::dist_01quantile_table_from_file,
+        InputSection::dist_02quantile_table_explicit,
+        InputSection::network,
+        InputSection::scenarios,
     };
-    std::unordered_set<InputSection> allCompSections {
-        InputSection::Components_ConstantLoad,
-        InputSection::Components_Load,
-        InputSection::Components_Source,
-        InputSection::Components_UncontrolledSource,
-        InputSection::Components_ConstEffConverter,
-        InputSection::Components_VariableEffConverter,
-        InputSection::Components_Mux,
-        InputSection::Components_Store,
-        InputSection::Components_PassThrough,
-        InputSection::Components_VariableEffMover,
-        InputSection::Components_Mover,
-        InputSection::Components_Switch,
+    std::unordered_set<InputSection> all_comp_sections {
+        InputSection::components_constant_load,
+        InputSection::components_load,
+        InputSection::components_source,
+        InputSection::components_uncontrolled_source,
+        InputSection::components_const_eff_converter,
+        InputSection::components_variable_eff_converter,
+        InputSection::components_mux,
+        InputSection::components_store,
+        InputSection::components_pass_through,
+        InputSection::components_variable_eff_mover,
+        InputSection::components_mover,
+        InputSection::components_switch,
     };
-    std::unordered_set<InputSection> nonLoadCompSections {
-        InputSection::Components_Source,
-        InputSection::Components_UncontrolledSource,
-        InputSection::Components_ConstEffConverter,
-        InputSection::Components_VariableEffConverter,
-        InputSection::Components_Mux,
-        InputSection::Components_Store,
-        InputSection::Components_PassThrough,
-        InputSection::Components_VariableEffMover,
-        InputSection::Components_Mover,
-        InputSection::Components_Switch,
+    std::unordered_set<InputSection> non_load_comp_sections {
+        InputSection::components_source,
+        InputSection::components_uncontrolled_source,
+        InputSection::components_const_eff_converter,
+        InputSection::components_variable_eff_converter,
+        InputSection::components_mux,
+        InputSection::components_store,
+        InputSection::components_pass_through,
+        InputSection::components_variable_eff_mover,
+        InputSection::components_mover,
+        InputSection::components_switch,
     };
-    std::unordered_set<std::string> compTypeEnums {
+    std::unordered_set<std::string> comp_type_enums {
         "constant_load",
         "converter",
         "variable_efficiency_converter",
@@ -308,20 +308,20 @@ InputValidationMap setup_global_validation_info()
         "uncontrolled_source",
         "switch",
     };
-    std::unordered_set<std::string> distTypeEnums {
+    std::unordered_set<std::string> dist_type_enums {
         "fixed",
         "uniform",
         "normal",
         "quantile_table",
         "weibull",
     };
-    std::unordered_set<InputSection> distSections {
-        InputSection::Dist_Fixed,
-        InputSection::Dist_Uniform,
-        InputSection::Dist_Normal,
-        InputSection::Dist_01QuantileTableFromFile,
-        InputSection::Dist_02QuantileTableExplicit,
-        InputSection::Dist_Weibull,
+    std::unordered_set<InputSection> dist_sections {
+        InputSection::dist_fixed,
+        InputSection::dist_uniform,
+        InputSection::dist_normal,
+        InputSection::dist_01quantile_table_from_file,
+        InputSection::dist_02quantile_table_explicit,
+        InputSection::dist_weibull,
     };
     std::vector<FieldInfo> fields {
         // GLOBAL
@@ -333,7 +333,7 @@ InputValidationMap setup_global_validation_info()
             .Default = "",
             .EnumValues = {},
             .Aliases = {},
-            .Sections = allSections,
+            .Sections = all_sections,
         },
         // SIMULATION_INFO
         FieldInfo {
@@ -346,7 +346,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::SimulationInfo,
+                    InputSection::simulation_info,
                 },
         },
         FieldInfo {
@@ -359,7 +359,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::SimulationInfo,
+                    InputSection::simulation_info,
                 },
         },
         FieldInfo {
@@ -372,7 +372,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::SimulationInfo,
+                    InputSection::simulation_info,
                 },
         },
         FieldInfo {
@@ -385,7 +385,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::SimulationInfo,
+                    InputSection::simulation_info,
                 },
         },
         FieldInfo {
@@ -398,7 +398,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::SimulationInfo,
+                    InputSection::simulation_info,
                 },
         },
         FieldInfo {
@@ -411,7 +411,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::SimulationInfo,
+                    InputSection::simulation_info,
                 },
         },
         FieldInfo {
@@ -424,7 +424,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::SimulationInfo,
+                    InputSection::simulation_info,
                 },
         },
         FieldInfo {
@@ -437,7 +437,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::SimulationInfo,
+                    InputSection::simulation_info,
                 },
         },
         // Loads -- File-Based
@@ -451,7 +451,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Loads_02FileBased,
+                    InputSection::loads_02file_based,
                 },
         },
         // TODO(mok): this should be a 3rd option, not part of
@@ -466,7 +466,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Loads_02FileBased,
+                    InputSection::loads_02file_based,
                 },
         },
         // Loads -- Explicit
@@ -480,7 +480,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Loads_01Explicit,
+                    InputSection::loads_01explicit,
                 },
         },
         FieldInfo {
@@ -493,7 +493,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Loads_01Explicit,
+                    InputSection::loads_01explicit,
                 },
         },
         FieldInfo {
@@ -506,7 +506,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Loads_01Explicit,
+                    InputSection::loads_01explicit,
                 },
         },
         // Components -- Global
@@ -516,9 +516,9 @@ InputValidationMap setup_global_validation_info()
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
-            .EnumValues = compTypeEnums,
+            .EnumValues = comp_type_enums,
             .Aliases = {},
-            .Sections = allCompSections,
+            .Sections = all_comp_sections,
         },
         FieldInfo {
             .FieldName = "initial_age",
@@ -528,7 +528,7 @@ InputValidationMap setup_global_validation_info()
             .Default = "0.0",
             .EnumValues = {},
             .Aliases = {},
-            .Sections = allCompSections,
+            .Sections = all_comp_sections,
         },
         FieldInfo {
             .FieldName = "time_unit",
@@ -538,7 +538,7 @@ InputValidationMap setup_global_validation_info()
             .Default = "h",
             .EnumValues = ValidTimeUnits,
             .Aliases = {},
-            .Sections = allCompSections,
+            .Sections = all_comp_sections,
         },
         FieldInfo {
             .FieldName = "group",
@@ -548,7 +548,7 @@ InputValidationMap setup_global_validation_info()
             .Default = "group",
             .EnumValues = {},
             .Aliases = {},
-            .Sections = allCompSections,
+            .Sections = all_comp_sections,
         },
         FieldInfo {
             .FieldName = "report",
@@ -558,7 +558,7 @@ InputValidationMap setup_global_validation_info()
             .Default = "true",
             .EnumValues = {},
             .Aliases = {},
-            .Sections = allCompSections,
+            .Sections = all_comp_sections,
         },
         // Components -- All Except Loads
         FieldInfo {
@@ -569,7 +569,7 @@ InputValidationMap setup_global_validation_info()
             .Default = "",
             .EnumValues = {},
             .Aliases = {},
-            .Sections = nonLoadCompSections,
+            .Sections = non_load_comp_sections,
         },
         FieldInfo {
             .FieldName = "fragility_modes",
@@ -579,7 +579,7 @@ InputValidationMap setup_global_validation_info()
             .Default = "",
             .EnumValues = {},
             .Aliases = {},
-            .Sections = nonLoadCompSections,
+            .Sections = non_load_comp_sections,
         },
         // Constant and Schedule-Based Load Component
         FieldInfo {
@@ -592,12 +592,12 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_ConstantLoad,
-                    InputSection::Components_Load,
-                    InputSection::Components_ConstEffConverter,
-                    InputSection::Components_VariableEffConverter,
-                    InputSection::Components_Mover,
-                    InputSection::Components_VariableEffMover,
+                    InputSection::components_constant_load,
+                    InputSection::components_load,
+                    InputSection::components_const_eff_converter,
+                    InputSection::components_variable_eff_converter,
+                    InputSection::components_mover,
+                    InputSection::components_variable_eff_mover,
                 },
         },
         FieldInfo {
@@ -610,7 +610,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Load,
+                    InputSection::components_load,
                 },
         },
         FieldInfo {
@@ -623,7 +623,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_ConstantLoad,
+                    InputSection::components_constant_load,
                 },
         },
         // Constant Source and Uncontrolled Source
@@ -637,12 +637,12 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Source,
-                    InputSection::Components_UncontrolledSource,
-                    InputSection::Components_ConstEffConverter,
-                    InputSection::Components_VariableEffConverter,
-                    InputSection::Components_Mover,
-                    InputSection::Components_VariableEffMover,
+                    InputSection::components_source,
+                    InputSection::components_uncontrolled_source,
+                    InputSection::components_const_eff_converter,
+                    InputSection::components_variable_eff_converter,
+                    InputSection::components_mover,
+                    InputSection::components_variable_eff_mover,
                 },
         },
         FieldInfo {
@@ -655,10 +655,10 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Source,
-                    InputSection::Components_UncontrolledSource,
-                    InputSection::Components_PassThrough,
-                    InputSection::Components_Mover,
+                    InputSection::components_source,
+                    InputSection::components_uncontrolled_source,
+                    InputSection::components_pass_through,
+                    InputSection::components_mover,
                 },
         },
         FieldInfo {
@@ -671,14 +671,14 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_ConstantLoad,
-                    InputSection::Components_Source,
-                    InputSection::Components_UncontrolledSource,
-                    InputSection::Components_Store,
-                    InputSection::Components_ConstEffConverter,
-                    InputSection::Components_VariableEffConverter,
-                    InputSection::Components_Mover,
-                    InputSection::Components_VariableEffMover,
+                    InputSection::components_constant_load,
+                    InputSection::components_source,
+                    InputSection::components_uncontrolled_source,
+                    InputSection::components_store,
+                    InputSection::components_const_eff_converter,
+                    InputSection::components_variable_eff_converter,
+                    InputSection::components_mover,
+                    InputSection::components_variable_eff_mover,
                 },
         },
         FieldInfo {
@@ -691,7 +691,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_UncontrolledSource,
+                    InputSection::components_uncontrolled_source,
                 },
         },
         // Mux
@@ -711,10 +711,10 @@ InputValidationMap setup_global_validation_info()
                 },
             .Sections =
                 {
-                    InputSection::Components_Mux,
-                    InputSection::Components_PassThrough,
-                    InputSection::Components_Store,
-                    InputSection::Components_Switch,
+                    InputSection::components_mux,
+                    InputSection::components_pass_through,
+                    InputSection::components_store,
+                    InputSection::components_switch,
                 },
         },
         FieldInfo {
@@ -727,7 +727,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Mux,
+                    InputSection::components_mux,
                 },
         },
         FieldInfo {
@@ -740,7 +740,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Mux,
+                    InputSection::components_mux,
                 },
         },
         FieldInfo {
@@ -753,7 +753,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Mux,
+                    InputSection::components_mux,
                 },
         },
         // Constant and Variable Efficiency Converter
@@ -767,7 +767,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_ConstEffConverter,
+                    InputSection::components_const_eff_converter,
                 },
         },
         FieldInfo {
@@ -780,7 +780,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_VariableEffConverter,
+                    InputSection::components_variable_eff_converter,
                 },
         },
         FieldInfo {
@@ -793,8 +793,8 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_ConstEffConverter,
-                    InputSection::Components_VariableEffConverter,
+                    InputSection::components_const_eff_converter,
+                    InputSection::components_variable_eff_converter,
                 },
         },
         FieldInfo {
@@ -807,7 +807,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_ConstEffConverter,
+                    InputSection::components_const_eff_converter,
                 },
         },
         FieldInfo {
@@ -820,8 +820,8 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_VariableEffConverter,
-                    InputSection::Components_VariableEffMover,
+                    InputSection::components_variable_eff_converter,
+                    InputSection::components_variable_eff_mover,
                 },
         },
         FieldInfo {
@@ -834,8 +834,8 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_ConstEffConverter,
-                    InputSection::Components_VariableEffConverter,
+                    InputSection::components_const_eff_converter,
+                    InputSection::components_variable_eff_converter,
                 },
         },
         // Store
@@ -849,7 +849,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Store,
+                    InputSection::components_store,
                 },
         },
         FieldInfo {
@@ -862,7 +862,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Store,
+                    InputSection::components_store,
                 },
         },
         FieldInfo {
@@ -875,7 +875,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Store,
+                    InputSection::components_store,
                 },
         },
         // TODO[mok]: should max_charge still be required if now inflow?
@@ -889,7 +889,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {{"max_inflow", true}},
             .Sections =
                 {
-                    InputSection::Components_Store,
+                    InputSection::components_store,
                 },
         },
         FieldInfo {
@@ -902,7 +902,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Store,
+                    InputSection::components_store,
                 },
         },
         FieldInfo {
@@ -915,7 +915,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Store,
+                    InputSection::components_store,
                 },
         },
         FieldInfo {
@@ -928,7 +928,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Store,
+                    InputSection::components_store,
                 },
         },
         FieldInfo {
@@ -941,7 +941,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Store,
+                    InputSection::components_store,
                 },
         },
         // COMP Mover
@@ -955,7 +955,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_Mover,
+                    InputSection::components_mover,
                 },
         },
         FieldInfo {
@@ -968,7 +968,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Components_VariableEffMover,
+                    InputSection::components_variable_eff_mover,
                 },
         },
         // DIST: Common
@@ -978,9 +978,9 @@ InputValidationMap setup_global_validation_info()
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
-            .EnumValues = distTypeEnums,
+            .EnumValues = dist_type_enums,
             .Aliases = {},
-            .Sections = distSections,
+            .Sections = dist_sections,
         },
         FieldInfo {
             .FieldName = "time_unit",
@@ -990,7 +990,7 @@ InputValidationMap setup_global_validation_info()
             .Default = "",
             .EnumValues = ValidTimeUnits,
             .Aliases = {},
-            .Sections = distSections,
+            .Sections = dist_sections,
         },
         // DIST - FIXED
         FieldInfo {
@@ -1003,7 +1003,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_Fixed,
+                    InputSection::dist_fixed,
                 },
         },
         // DIST - UNIFORM
@@ -1017,7 +1017,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_Uniform,
+                    InputSection::dist_uniform,
                 },
         },
         FieldInfo {
@@ -1030,7 +1030,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_Uniform,
+                    InputSection::dist_uniform,
                 },
         },
         // DIST - NORMAL
@@ -1044,7 +1044,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_Normal,
+                    InputSection::dist_normal,
                 },
         },
         FieldInfo {
@@ -1057,7 +1057,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_Normal,
+                    InputSection::dist_normal,
                 },
         },
         // DIST - Quantile Table
@@ -1071,7 +1071,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_01QuantileTableFromFile,
+                    InputSection::dist_01quantile_table_from_file,
                 },
         },
         FieldInfo {
@@ -1084,7 +1084,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_02QuantileTableExplicit,
+                    InputSection::dist_02quantile_table_explicit,
                 },
         },
         // DIST - WEIBULL
@@ -1098,7 +1098,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_Weibull,
+                    InputSection::dist_weibull,
                 },
         },
         FieldInfo {
@@ -1111,7 +1111,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_Weibull,
+                    InputSection::dist_weibull,
                 },
         },
         FieldInfo {
@@ -1124,7 +1124,7 @@ InputValidationMap setup_global_validation_info()
             .Aliases = {},
             .Sections =
                 {
-                    InputSection::Dist_Weibull,
+                    InputSection::dist_weibull,
                 },
         },
     };
@@ -1142,118 +1142,118 @@ InputValidationMap setup_global_validation_info()
         {
             switch (sec)
             {
-            case InputSection::SimulationInfo:
+            case InputSection::simulation_info:
             {
                 UpdateValidationInfoByField(v.SimulationInfo, f);
             }
             break;
-            case InputSection::Loads_01Explicit:
+            case InputSection::loads_01explicit:
             {
                 UpdateValidationInfoByField(v.Load_01Explicit, f);
             }
             break;
-            case InputSection::Loads_02FileBased:
+            case InputSection::loads_02file_based:
             {
                 UpdateValidationInfoByField(v.Load_02FileBased, f);
             }
             break;
-            case InputSection::Components_ConstantLoad:
+            case InputSection::components_constant_load:
             {
                 UpdateValidationInfoByField(v.Comp.ConstantLoad, f);
             }
             break;
-            case InputSection::Components_Load:
+            case InputSection::components_load:
             {
                 UpdateValidationInfoByField(v.Comp.ScheduleBasedLoad, f);
             }
             break;
-            case InputSection::Components_Source:
+            case InputSection::components_source:
             {
                 UpdateValidationInfoByField(v.Comp.ConstantSource, f);
             }
             break;
-            case InputSection::Components_UncontrolledSource:
+            case InputSection::components_uncontrolled_source:
             {
                 UpdateValidationInfoByField(v.Comp.ScheduleBasedSource, f);
             }
             break;
-            case InputSection::Components_ConstEffConverter:
+            case InputSection::components_const_eff_converter:
             {
                 UpdateValidationInfoByField(v.Comp.ConstantEfficiencyConverter, f);
             }
             break;
-            case InputSection::Components_VariableEffConverter:
+            case InputSection::components_variable_eff_converter:
             {
                 UpdateValidationInfoByField(v.Comp.VariableEfficiencyConverter, f);
             }
             break;
-            case InputSection::Components_Mux:
+            case InputSection::components_mux:
             {
                 UpdateValidationInfoByField(v.Comp.Mux, f);
             }
             break;
-            case InputSection::Components_Store:
+            case InputSection::components_store:
             {
                 UpdateValidationInfoByField(v.Comp.Store, f);
             }
             break;
-            case InputSection::Components_PassThrough:
+            case InputSection::components_pass_through:
             {
                 UpdateValidationInfoByField(v.Comp.PassThrough, f);
             }
             break;
-            case InputSection::Components_Mover:
+            case InputSection::components_mover:
             {
                 UpdateValidationInfoByField(v.Comp.Mover, f);
             }
             break;
-            case InputSection::Components_VariableEffMover:
+            case InputSection::components_variable_eff_mover:
             {
                 UpdateValidationInfoByField(v.Comp.VariableEfficiencyMover, f);
             }
             break;
-            case InputSection::Components_Switch:
+            case InputSection::components_switch:
             {
                 UpdateValidationInfoByField(v.Comp.Switch, f);
             }
             break;
-            case InputSection::Dist_Fixed:
+            case InputSection::dist_fixed:
             {
                 UpdateValidationInfoByField(v.Dist.Fixed, f);
             }
             break;
-            case InputSection::Dist_Normal:
+            case InputSection::dist_normal:
             {
                 UpdateValidationInfoByField(v.Dist.Normal, f);
             }
             break;
-            case InputSection::Dist_01QuantileTableFromFile:
+            case InputSection::dist_01quantile_table_from_file:
             {
                 UpdateValidationInfoByField(v.Dist.QuantileTableFromFile, f);
             }
             break;
-            case InputSection::Dist_02QuantileTableExplicit:
+            case InputSection::dist_02quantile_table_explicit:
             {
                 UpdateValidationInfoByField(v.Dist.QuantileTableExplicit, f);
             }
             break;
-            case InputSection::Dist_Uniform:
+            case InputSection::dist_uniform:
             {
                 UpdateValidationInfoByField(v.Dist.Uniform, f);
             }
             break;
-            case InputSection::Dist_Weibull:
+            case InputSection::dist_weibull:
             {
                 UpdateValidationInfoByField(v.Dist.Weibull, f);
             }
             break;
             // TODO: add in all the other distributions
-            case InputSection::Network:
+            case InputSection::network:
             {
                 UpdateValidationInfoByField(v.Network, f);
             }
             break;
-            case InputSection::Scenarios:
+            case InputSection::scenarios:
             {
                 UpdateValidationInfoByField(v.Scenario, f);
             }

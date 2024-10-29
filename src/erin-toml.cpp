@@ -830,57 +830,57 @@ TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::val
 
 std::unordered_set<std::string> TOMLTable_parse_component_tags_in_use(toml::value const& data)
 {
-    std::unordered_set<std::string> tagsInUse;
+    std::unordered_set<std::string> tags_in_use;
     if (!data.is_table())
     {
-        return tagsInUse;
+        return tags_in_use;
     }
     toml::table const& table = data.as_table();
     if (!table.contains("network"))
     {
-        return tagsInUse;
+        return tags_in_use;
     }
     toml::value const& network = table.at("network");
     if (!network.is_table())
     {
-        return tagsInUse;
+        return tags_in_use;
     }
-    toml::table const& networkTable = network.as_table();
-    if (!networkTable.contains("connections"))
+    toml::table const& network_table = network.as_table();
+    if (!network_table.contains("connections"))
     {
-        return tagsInUse;
+        return tags_in_use;
     }
-    toml::value const& conns = networkTable.at("connections");
+    toml::value const& conns = network_table.at("connections");
     if (!conns.is_array())
     {
-        return tagsInUse;
+        return tags_in_use;
     }
-    std::vector<toml::value> const& connsArray = conns.as_array();
-    for (toml::value const& item : connsArray)
+    std::vector<toml::value> const& conns_array = conns.as_array();
+    for (toml::value const& item : conns_array)
     {
         if (!item.is_array())
         {
-            return tagsInUse;
+            return tags_in_use;
         }
-        std::vector<toml::value> const& itemArray = item.as_array();
+        std::vector<toml::value> const& item_array = item.as_array();
         // NOTE: array should be 3+ in size but we'll only access
         // the first two items.
-        if (itemArray.size() < 2)
+        if (item_array.size() < 2)
         {
-            return tagsInUse;
+            return tags_in_use;
         }
-        if (!itemArray[0].is_string() || !itemArray[1].is_string())
+        if (!item_array[0].is_string() || !item_array[1].is_string())
         {
-            return tagsInUse;
+            return tags_in_use;
         }
-        std::string const& first = itemArray[0].as_string();
-        std::string const& second = itemArray[1].as_string();
+        std::string const& first = item_array[0].as_string();
+        std::string const& second = item_array[1].as_string();
         std::string tag1 = first.substr(0, first.find(":"));
         std::string tag2 = second.substr(0, second.find(":"));
-        tagsInUse.emplace(tag1);
-        tagsInUse.emplace(tag2);
+        tags_in_use.emplace(tag1);
+        tags_in_use.emplace(tag2);
     }
-    return tagsInUse;
+    return tags_in_use;
 }
 
 } // namespace erin

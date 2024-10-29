@@ -3,25 +3,25 @@
 # NOTE: THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
 # Main library
 set(library_sources
+    ${PROJECT_SOURCE_DIR}/src/erin-component.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-csv.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-distribution.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-graph.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-load.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-logging.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-lookup-table.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-random.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-reliability.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-scenario.cpp
     ${PROJECT_SOURCE_DIR}/src/erin-simulation-info.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-simulation.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-time-and-amount.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-timestate.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-toml.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-units.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-utils.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-validation.cpp
     ${PROJECT_SOURCE_DIR}/src/erin.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_csv.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_graph.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_load.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_logging.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_lookup_table.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_random.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_reliability.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_scenario.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_simulation.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_time_and_amount.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_timestate.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_toml.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_units.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_utils.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_validation.cpp
     ${PROJECT_SOURCE_DIR}/include/erin/component.h
     ${PROJECT_SOURCE_DIR}/include/erin/const.h
     ${PROJECT_SOURCE_DIR}/include/erin/csv.h

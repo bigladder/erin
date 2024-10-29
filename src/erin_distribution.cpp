@@ -208,7 +208,8 @@ void ensure_sizes_equal(const std::string& tag, const size_t& a, const size_t& b
     {
         std::ostringstream oss {};
         oss << "tag `" << tag << "` not a valid tabular distribution.\n"
-            << "xs.size() (" << a << ") must equal (" << "dtimes_s.size() (" << b << ")\n";
+            << "xs.size() (" << a << ") must equal ("
+            << "dtimes_s.size() (" << b << ")\n";
         throw std::invalid_argument(oss.str());
     }
 }

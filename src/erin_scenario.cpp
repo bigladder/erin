@@ -196,13 +196,15 @@ Result ParseScenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::tabl
         }
         else
         {
-            std::cout << "[" << fullName << "] " << "not a table" << std::endl;
+            std::cout << "[" << fullName << "] "
+                      << "not a table" << std::endl;
             return Result::Failure;
         }
     }
     if (!ranAtLeastOnce)
     {
-        std::cout << "[scenarios] " << "must define at least one scenario" << std::endl;
+        std::cout << "[scenarios] "
+                  << "must define at least one scenario" << std::endl;
         return Result::Failure;
     }
     return ranAtLeastOnce ? Result::Success : Result::Failure;

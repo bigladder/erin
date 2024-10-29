@@ -659,8 +659,8 @@ std::optional<double> TOMLTable_ParseDouble(std::unordered_map<toml::key, toml::
         }
         else
         {
-            std::cout << "[" << tableName << "] " << fieldName << " value is not a number " << "'"
-                      << table.at(fieldName).as_string() << "'" << std::endl;
+            std::cout << "[" << tableName << "] " << fieldName << " value is not a number "
+                      << "'" << table.at(fieldName).as_string() << "'" << std::endl;
         }
     }
     return {};
@@ -679,8 +679,8 @@ std::optional<int> TOMLTable_ParseInteger(std::unordered_map<toml::key, toml::va
         }
         else
         {
-            std::cout << "[" << tableName << "] " << fieldName << " value is not a number " << "'"
-                      << table.at(fieldName).as_string() << "'" << std::endl;
+            std::cout << "[" << tableName << "] " << fieldName << " value is not a number "
+                      << "'" << table.at(fieldName).as_string() << "'" << std::endl;
         }
     }
     return {};

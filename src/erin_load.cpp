@@ -462,7 +462,9 @@ std::optional<std::vector<Load>> ParseLoads(toml::table const& table,
 
 std::ostream& operator<<(std::ostream& os, Load const& load)
 {
-    os << "Load{" << "Tag=\"" << load.Tag << "\"; " << "TimeAndLoads=[";
+    os << "Load{"
+       << "Tag=\"" << load.Tag << "\"; "
+       << "TimeAndLoads=[";
     for (auto it = load.TimeAndLoads.cbegin(); it != load.TimeAndLoads.cend(); ++it)
     {
         os << (it == load.TimeAndLoads.cbegin() ? "" : ", ") << *it;
@@ -505,7 +507,9 @@ int WritePackedLoads(const std::vector<Load>& loads, std::string const& loadsFil
             out << ",";
         }
         first = false;
-        out << "seconds" << "," << "W";
+        out << "seconds"
+            << ","
+            << "W";
     }
     out << "\n";
 

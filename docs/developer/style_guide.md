@@ -2,6 +2,28 @@
 
 TODO: make consistent with Athenium
 
+## Include Headers
+
+* Use include guards:
+
+```
+#ifndef ERIN_<FILE_NAME>_H
+#define ERIN_<FILE_NAME>_H
+...
+#endif
+```
+
+* Each header file should be able to compile cleanly on its own
+    - i.e., a source file including the header should compile without error/warnings
+* Only include the minimum necessary to compile
+* Only expose the public interface in headers
+* Use forward declarations as much as possible
+    - a forward declaration may only be used with pointer/reference to object
+* Every `*.cpp` includes its own header file first.
+* A header file must include all the header files necessary to parse it.
+* A header file should include only the bare minimum necessary to parse it.
+
+
 ## Numbers
 
 When writing a double floating point number always show the decimal and the zero:

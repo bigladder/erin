@@ -1571,7 +1571,7 @@ TEST(Erin, TestDoubleToString)
     std::string expected_f_at_p3 = "1.501";
     std::string actual_f_at_p3 = erin::DoubleToString(f, 3);
     EXPECT_EQ(expected_f_at_p3, actual_f_at_p3);
-    double g = std::numeric_limits<flow_t>::max() / 5.0;
+    double g = static_cast<double>(std::numeric_limits<flow_t>::max()) / 5.0;
     EXPECT_EQ(3689348814741910500.0, g);
     g /= 1000.0;
     EXPECT_EQ(3689348814741910.5, g);

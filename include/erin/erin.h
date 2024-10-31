@@ -398,6 +398,14 @@ struct PassThrough
     flow_t MaxOutflow_W = max_flow_W;
 };
 
+// TODO[mok]: need to rethink this. This adds a branch with an add.
+// Probably a horrible performance issue. Use double but convert to
+// unsigned int when finalize flows?
+inline flow_t UtilSafeAdd(flow_t a, flow_t b)
+{
+    return (b > (max_flow_W - a)) ? max_flow_W : a + b;
+}
+
 struct Flow
 {
     flow_t Requested_W = 0;
@@ -410,7 +418,7 @@ struct Flow
     {
         Flow newFlow;
         newFlow.Requested_W = Requested_W + flow.Requested_W;
-        newFlow.Available_W = Available_W + flow.Available_W;
+        newFlow.Available_W = UtilSafeAdd(Available_W, flow.Available_W);
         newFlow.Actual_W = Actual_W + flow.Actual_W;
         return newFlow;
     }

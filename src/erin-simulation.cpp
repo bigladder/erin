@@ -1734,10 +1734,9 @@ void AggregateGroups(std::vector<TimeAndFlows>& results,
         for (size_t iNodeConn = 0; iNodeConn < nNodeConn; ++iNodeConn)
         {
             auto& nodeConn = nodeConnections[iNodeConn];
-            for (auto& iConn : nodeConn.origConnId)
+            for (auto const& iConn : nodeConn.origConnId)
             {
                 newFlows[iNodeConn] += origFlows[iConn];
-                break;
             }
         }
 

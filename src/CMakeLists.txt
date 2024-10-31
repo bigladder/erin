@@ -44,7 +44,6 @@ set(library_sources
     ${PROJECT_SOURCE_DIR}/include/erin/utils.h
     ${PROJECT_SOURCE_DIR}/include/erin/valdata.h
     ${PROJECT_SOURCE_DIR}/include/erin/validation.h
-    ${PROJECT_SOURCE_DIR}/include/erin/version.h
     ${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
 )
 

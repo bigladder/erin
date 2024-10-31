@@ -873,14 +873,6 @@ std::vector<std::string> Model_CheckNetwork(Model const& m)
     return issues;
 }
 
-// TODO[mok]: need to rethink this. This adds a branch with an add.
-// Probably a horrible performance issue. Use double but convert to
-// unsigned int when finalize flows?
-inline flow_t UtilSafeAdd(flow_t a, flow_t b)
-{
-    return (b > (max_flow_W - a)) ? max_flow_W : a + b;
-}
-
 std::vector<TimeAndAmount> ConvertToTimeAndAmounts(std::vector<std::vector<double>> const& input,
                                                    double timeToSeconds,
                                                    double rateToWatts)

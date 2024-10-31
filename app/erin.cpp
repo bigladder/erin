@@ -1,18 +1,3 @@
-#include "erin/version.h"
-#include "erin/logging.h"
-#include "erin/simulation-info.h"
-#include "erin/load.h"
-#include "erin/component.h"
-#include "erin/simulation.h"
-#include "erin/erin.h"
-#include "erin/distribution.h"
-#include "erin/scenario.h"
-#include "erin/toml.h"
-#include "erin/units.h"
-#include "erin/result.h"
-#include "erin/utils.h"
-#include "erin/validation.h"
-#include "erin/graph.h"
 #include <cstdlib>
 #include <iostream>
 #include <limits>
@@ -20,8 +5,11 @@
 #include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
+
 #include <toml.hpp>
 #include <CLI/CLI.hpp>
+
+#include "erin/all.h"
 #include "compilation_settings.h"
 
 erin::Log get_standard_log(erin::Logger& logger)

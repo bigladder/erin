@@ -22,6 +22,7 @@ set(library_sources
     ${PROJECT_SOURCE_DIR}/src/erin-utils.cpp
     ${PROJECT_SOURCE_DIR}/src/erin-validation.cpp
     ${PROJECT_SOURCE_DIR}/src/erin.cpp
+    ${PROJECT_SOURCE_DIR}/include/erin/all.h
     ${PROJECT_SOURCE_DIR}/include/erin/component.h
     ${PROJECT_SOURCE_DIR}/include/erin/const.h
     ${PROJECT_SOURCE_DIR}/include/erin/csv.h

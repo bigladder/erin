@@ -1,4 +1,4 @@
-# Copyright (c) 2020 - 2024 Big Ladder Software LLC. All rights reserved.
+# Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 # See the LICENSE.txt file for additional terms and conditions.
 # NOTE: THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
 # Main library

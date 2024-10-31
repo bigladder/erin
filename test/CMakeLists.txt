@@ -1,3 +1,5 @@
+# Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+# See the LICENSE.txt file for additional terms and conditions.
 set(test_sources
   erin_logging_tests.cpp
   erin_lookup_table_tests.cpp

@@ -1,3 +1,5 @@
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_ALL_H
 #define ERIN_ALL_H
 

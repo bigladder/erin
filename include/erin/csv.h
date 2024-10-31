@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 // reference: https://stackoverflow.com/a/1120224
 #ifndef ERIN_CSV_H
 #define ERIN_CSV_H

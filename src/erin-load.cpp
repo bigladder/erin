@@ -36,7 +36,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
     if (table.contains("time_unit"))
     {
         auto const& maybeTimeUnitStr = std::get<std::string>(table.at("time_unit").Value);
-        auto maybe = TagToTimeUnit(maybeTimeUnitStr);
+        auto maybe = tag_to_time_unit(maybeTimeUnitStr);
         if (!maybe.has_value())
         {
             WriteErrorMessage(tableFullName, "unhandled time_unit '" + maybeTimeUnitStr + "'");
@@ -57,7 +57,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
     }
     auto timeRatePairs = ConvertToTimeAndAmounts(
         std::get<std::vector<std::vector<double>>>(table.at("time_rate_pairs").Value),
-        Time_ToSeconds(1.0, timeUnit),
+        time_to_seconds(1.0, timeUnit),
         power_to_watts(1.0, rateUnit));
     Load load {
         .Tag = tag,
@@ -87,7 +87,7 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
     {
         std::string const& timeUnitStr = header[0];
         std::string const& rateUnitStr = header[1];
-        auto maybeTimeUnit = TagToTimeUnit(timeUnitStr);
+        auto maybeTimeUnit = tag_to_time_unit(timeUnitStr);
         if (!maybeTimeUnit.has_value())
         {
             WriteErrorMessage(tableFullName, "unhandled time unit: " + timeUnitStr);
@@ -134,7 +134,7 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
             return {};
         }
         TimeAndAmount ta {};
-        ta.Time_s = Time_ToSeconds(std::stod(pair[0]), timeUnit);
+        ta.Time_s = time_to_seconds(std::stod(pair[0]), timeUnit);
         ta.Amount_W = static_cast<flow_t>(std::round(power_to_watts(std::stod(pair[1]), rateUnit)));
         trps.push_back(ta);
     }
@@ -203,7 +203,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
         {
             std::string const& timeUnitStr = sRow[iCol];
             std::string const& rateUnitStr = sRow[iCol + 1];
-            auto maybeTimeUnit = TagToTimeUnit(timeUnitStr);
+            auto maybeTimeUnit = tag_to_time_unit(timeUnitStr);
             if (!maybeTimeUnit.has_value())
             {
                 WriteErrorMessage(tableFullName, "unhandled time unit: " + timeUnitStr);
@@ -255,7 +255,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
             if (iRow < loadEntry.nItems)
             {
                 TimeAndAmount ta {};
-                ta.Time_s = Time_ToSeconds(std::stod(sRow[iCol]), loadEntry.timeUnit);
+                ta.Time_s = time_to_seconds(std::stod(sRow[iCol]), loadEntry.timeUnit);
                 ta.Amount_W = static_cast<flow_t>(
                     power_to_watts(std::stod(sRow[iCol + 1]), loadEntry.rateUnit));
                 loads[iLoad]->TimeAndLoads.push_back(ta);

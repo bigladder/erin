@@ -671,7 +671,7 @@ Result ParseDistributions(DistributionSystem& ds,
             if (inputs.contains("time_unit"))
             {
                 std::string timeUnitStr = std::get<std::string>(inputs.at("time_unit").Value);
-                std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(timeUnitStr);
+                std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(timeUnitStr);
                 if (!maybeTimeUnit.has_value())
                 {
                     Log_error(log, fullTableName, "unhandled time unit '" + timeUnitStr + "'");
@@ -684,7 +684,7 @@ Result ParseDistributions(DistributionSystem& ds,
             case (DistType::Fixed):
             {
                 double value = std::get<double>(inputs.at("value").Value);
-                ds.add_fixed(distTag, Time_ToSeconds(value, timeUnit));
+                ds.add_fixed(distTag, time_to_seconds(value, timeUnit));
             }
             break;
             case DistType::Normal:
@@ -692,7 +692,7 @@ Result ParseDistributions(DistributionSystem& ds,
                 double mean = std::get<double>(inputs.at("mean").Value);
                 double sd = std::get<double>(inputs.at("standard_deviation").Value);
                 ds.add_normal(
-                    distTag, Time_ToSeconds(mean, timeUnit), Time_ToSeconds(sd, timeUnit));
+                    distTag, time_to_seconds(mean, timeUnit), time_to_seconds(sd, timeUnit));
             }
             break;
             case DistType::QuantileTable:
@@ -709,7 +709,7 @@ Result ParseDistributions(DistributionSystem& ds,
                     for (std::vector<double> const& vt : vt_pairs)
                     {
                         xs.push_back(vt[0]);
-                        times_s.push_back(Time_ToSeconds(vt[1], timeUnit));
+                        times_s.push_back(time_to_seconds(vt[1], timeUnit));
                     }
                 }
                 else if (inputs.contains("csv_file"))
@@ -730,7 +730,7 @@ Result ParseDistributions(DistributionSystem& ds,
                     if (header.size() == 2)
                     {
                         std::string const& timeUnitStr = header[1];
-                        std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(timeUnitStr);
+                        std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(timeUnitStr);
                         if (!maybeTimeUnit.has_value())
                         {
                             WriteErrorMessage(fullTableName, "unhandled time unit: " + timeUnitStr);
@@ -759,7 +759,7 @@ Result ParseDistributions(DistributionSystem& ds,
                                 return Result::Failure;
                             }
                             xs.push_back(std::stod(pair[0]));
-                            times_s.push_back(Time_ToSeconds(std::stod(pair[1]), timeUnitForRead));
+                            times_s.push_back(time_to_seconds(std::stod(pair[1]), timeUnitForRead));
                         }
                         inputDataFile.close();
                     }
@@ -786,9 +786,9 @@ Result ParseDistributions(DistributionSystem& ds,
             case DistType::Uniform:
             {
                 double lower_bound_s =
-                    Time_ToSeconds(std::get<double>(inputs.at("lower_bound").Value), timeUnit);
+                    time_to_seconds(std::get<double>(inputs.at("lower_bound").Value), timeUnit);
                 double upper_bound_s =
-                    Time_ToSeconds(std::get<double>(inputs.at("upper_bound").Value), timeUnit);
+                    time_to_seconds(std::get<double>(inputs.at("upper_bound").Value), timeUnit);
                 ds.add_uniform(distTag, lower_bound_s, upper_bound_s);
             }
             break;
@@ -803,8 +803,8 @@ Result ParseDistributions(DistributionSystem& ds,
                 }
                 ds.add_weibull(distTag,
                                shape,
-                               Time_ToSeconds(scale, timeUnit),
-                               Time_ToSeconds(location, timeUnit));
+                               time_to_seconds(scale, timeUnit),
+                               time_to_seconds(location, timeUnit));
             }
             break;
             default:

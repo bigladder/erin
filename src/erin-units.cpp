@@ -114,7 +114,7 @@ std::optional<EnergyUnit> tag_to_energy_unit(std::string const& tag)
     return {};
 }
 
-std::string EnergyUnitToString(EnergyUnit unit)
+std::string energy_unit_to_string(EnergyUnit unit)
 {
     std::string result;
     switch (unit)
@@ -159,7 +159,7 @@ std::string EnergyUnitToString(EnergyUnit unit)
     return result;
 }
 
-double Energy_ToJoules(double value, EnergyUnit unit)
+double energy_to_joules(double value, EnergyUnit unit)
 {
     double result = 0.0;
     switch (unit)
@@ -204,7 +204,7 @@ double Energy_ToJoules(double value, EnergyUnit unit)
     return result;
 }
 
-std::optional<TimeUnit> TagToTimeUnit(std::string const& tag)
+std::optional<TimeUnit> tag_to_time_unit(std::string const& tag)
 {
 
     if (tag == "s" || tag == "sec" || tag == "secs" || tag == "second" || tag == "seconds")
@@ -234,7 +234,7 @@ std::optional<TimeUnit> TagToTimeUnit(std::string const& tag)
     return {};
 }
 
-std::string TimeUnitToTag(TimeUnit unit)
+std::string time_unit_to_tag(TimeUnit unit)
 {
     std::string result;
     switch (unit)
@@ -272,7 +272,7 @@ std::string TimeUnitToTag(TimeUnit unit)
     default:
     {
         std::ostringstream oss {};
-        oss << "unhandled TimeType '" << TimeUnitToTag(unit) << "'" << std::endl;
+        oss << "unhandled TimeType '" << time_unit_to_tag(unit) << "'" << std::endl;
         WriteErrorMessage("units", oss.str());
         std::exit(1);
     }
@@ -281,7 +281,7 @@ std::string TimeUnitToTag(TimeUnit unit)
     return result;
 }
 
-double Time_ToSeconds(double t, TimeUnit unit)
+double time_to_seconds(double t, TimeUnit unit)
 {
     switch (unit)
     {
@@ -317,11 +317,11 @@ double Time_ToSeconds(double t, TimeUnit unit)
     break;
     }
     std::ostringstream oss {};
-    oss << "unhandled time unit '" << TimeUnitToTag(unit) << "'" << std::endl;
+    oss << "unhandled time unit '" << time_unit_to_tag(unit) << "'" << std::endl;
     throw new std::invalid_argument {oss.str()};
 }
 
-std::string SecondsToPrettyString(double time_s)
+std::string seconds_to_pretty_string(double time_s)
 {
     size_t years = static_cast<size_t>(time_s) / seconds_per_year;
     size_t hours = static_cast<size_t>(time_s - seconds_per_year * years) / seconds_per_hour;
@@ -335,7 +335,7 @@ std::string SecondsToPrettyString(double time_s)
     return oss.str();
 }
 
-double TimeInSecondsToDesiredUnit(double time_s, TimeUnit unit)
+double time_in_seconds_to_desired_unit(double time_s, TimeUnit unit)
 {
     if (unit == TimeUnit::Second)
     {

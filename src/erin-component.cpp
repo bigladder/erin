@@ -530,7 +530,7 @@ Result ParseSingleComponent(Simulation& s,
             capacityUnit = maybeCapacityUnit.value();
         }
         flow_t capacity_J = static_cast<flow_t>(
-            Energy_ToJoules(std::get<double>(input.at("capacity").Value), capacityUnit));
+            energy_to_joules(std::get<double>(input.at("capacity").Value), capacityUnit));
         if (capacity_J == 0)
         {
             WriteErrorMessage(fullTableName, "capacity must be greater than 0");
@@ -816,7 +816,7 @@ Result ParseSingleComponent(Simulation& s,
                 WriteErrorMessage(fullTableName, "unable to parse 'time_unit' as string");
                 return Result::Failure;
             }
-            auto maybeTimeUnit = TagToTimeUnit(maybeTimeUnitStr.value());
+            auto maybeTimeUnit = tag_to_time_unit(maybeTimeUnitStr.value());
             if (!maybeTimeUnit.has_value())
             {
                 WriteErrorMessage(fullTableName,
@@ -832,7 +832,7 @@ Result ParseSingleComponent(Simulation& s,
             WriteErrorMessage(fullTableName, "unable to parse initial age as a number");
             return Result::Failure;
         }
-        double initialAge_s = Time_ToSeconds(maybeInitialAge.value(), timeUnit);
+        double initialAge_s = time_to_seconds(maybeInitialAge.value(), timeUnit);
         ComponentDict_SetInitialAge(s.TheModel.ComponentMap, id, initialAge_s);
     }
     if (table.contains("group"))

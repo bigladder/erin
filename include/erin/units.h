@@ -7,6 +7,7 @@
 
 namespace erin
 {
+
 enum class PowerUnit
 {
     Watt,
@@ -35,9 +36,9 @@ enum class EnergyUnit
 
 std::optional<EnergyUnit> tag_to_energy_unit(std::string const& tag);
 
-std::string EnergyUnitToString(EnergyUnit unit);
+std::string energy_unit_to_string(EnergyUnit unit);
 
-double Energy_ToJoules(double value, EnergyUnit unit);
+double energy_to_joules(double value, EnergyUnit unit);
 
 // PUBLIC
 enum class TimeUnit
@@ -50,16 +51,15 @@ enum class TimeUnit
     Year,
 };
 
-std::optional<TimeUnit> TagToTimeUnit(std::string const& tag);
+std::optional<TimeUnit> tag_to_time_unit(std::string const& tag);
 
-std::string TimeUnitToTag(TimeUnit unit);
+std::string time_unit_to_tag(TimeUnit unit);
 
-double Time_ToSeconds(double t, TimeUnit unit);
+double time_to_seconds(double t, TimeUnit unit);
 
-std::string SecondsToPrettyString(double time_s);
+std::string seconds_to_pretty_string(double time_s);
 
-// PUBLIC
-double TimeInSecondsToDesiredUnit(double time_s, TimeUnit unit);
+double time_in_seconds_to_desired_unit(double time_s, TimeUnit unit);
 
 } // namespace erin
 

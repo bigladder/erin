@@ -552,11 +552,11 @@ void Simulation_PrintScenarios(Simulation const& s)
     {
         std::cout << i << ": " << s.ScenarioMap.Tags[i] << std::endl;
         std::cout << "- duration: " << s.ScenarioMap.Durations[i] << " "
-                  << TimeUnitToTag(s.ScenarioMap.TimeUnits[i]) << std::endl;
+                  << time_unit_to_tag(s.ScenarioMap.TimeUnits[i]) << std::endl;
         std::cout << "- offset: "
-                  << TimeInSecondsToDesiredUnit(s.ScenarioMap.TimeOffsetsInSeconds[i],
+                  << time_in_seconds_to_desired_unit(s.ScenarioMap.TimeOffsetsInSeconds[i],
                                                 TimeUnit::Hour)
-                  << " " << TimeUnitToTag(TimeUnit::Hour) << std::endl;
+                  << " " << time_unit_to_tag(TimeUnit::Hour) << std::endl;
         auto maybeDist =
             s.TheModel.DistSys.get_dist_by_id(s.ScenarioMap.OccurrenceDistributionIds[i]);
         if (maybeDist.has_value())
@@ -1340,7 +1340,7 @@ void WriteEventFileHeader(std::ofstream& out,
     out << "scenario id,"
         << "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
         << "elapsed ("
-        << (outputTimeUnit == TimeUnit::Hour ? "hours" : TimeUnitToTag(outputTimeUnit)) << ")";
+        << (outputTimeUnit == TimeUnit::Hour ? "hours" : time_unit_to_tag(outputTimeUnit)) << ")";
 
     for (std::string const& prefix : std::vector<std::string> {"", "REQUEST:", "AVAILABLE:"})
     {
@@ -1770,7 +1770,7 @@ void WriteResultsToEventFile(std::ofstream& out,
     {
         assert(r.Flows.size() >= nodeConnOrder.size());
         out << scenarioTag << "," << scenarioStartTimeTag << ",";
-        out << TimeInSecondsToDesiredUnit(r.Time, outputTimeUnit);
+        out << time_in_seconds_to_desired_unit(r.Time, outputTimeUnit);
 
         for (size_t const& i : nodeConnOrder)
         {
@@ -1927,7 +1927,7 @@ std::vector<double> DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenI
     size_t maxOccurrence = maybeMaxOccurrences.has_value() ? maybeMaxOccurrences.value() : 1'000;
     auto const distId = s.ScenarioMap.OccurrenceDistributionIds[scenIdx];
     double scenarioStartTime_s = 0.0;
-    double maxTime_s = Time_ToSeconds(s.Info.MaxTime, s.Info.TheTimeUnit);
+    double maxTime_s = time_to_seconds(s.Info.MaxTime, s.Info.TheTimeUnit);
     for (size_t i = 0; i < maxOccurrence; ++i)
     {
         scenarioStartTime_s += s.TheModel.DistSys.next_time_advance(distId);
@@ -2693,7 +2693,7 @@ void WriteReliabilityCurves(std::string const& scenarioName,
                 {
                     causeStr += (causeStr.size() == 0) ? cause : fmt::format(" | {}", cause);
                 }
-                out << TimeInSecondsToDesiredUnit(sbr.TimeStates[row].time, TimeUnit::Hour) << ","
+                out << time_in_seconds_to_desired_unit(sbr.TimeStates[row].time, TimeUnit::Hour) << ","
                     << sbr.TimeStates[row].state << "," << causeStr;
             }
             else
@@ -2885,7 +2885,7 @@ void Simulation_run(Simulation& s,
     for (size_t scenIdx : scenarioOrder)
     {
         double scenarioDuration_s =
-            Time_ToSeconds(s.ScenarioMap.Durations[scenIdx], s.ScenarioMap.TimeUnits[scenIdx]);
+            time_to_seconds(s.ScenarioMap.Durations[scenIdx], s.ScenarioMap.TimeUnits[scenIdx]);
         double scenarioOffset_s = s.ScenarioMap.TimeOffsetsInSeconds[scenIdx];
         std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
         if (verbose)
@@ -2952,7 +2952,7 @@ void Simulation_run(Simulation& s,
             if (verbose)
             {
                 Log_info(log,
-                         fmt::format("Occurrence #{} at {}", occIdx + 1, SecondsToPrettyString(t)));
+                         fmt::format("Occurrence #{} at {}", occIdx + 1, seconds_to_pretty_string(t)));
                 Log_info(
                     log,
                     fmt::format("Scenario start time: {} h",
@@ -3016,11 +3016,11 @@ void Simulation_run(Simulation& s,
                                      s.ScenarioMap.Tags[scenIdx],
                                      scenarioStartTimeTag,
                                      s.ScenarioMap.Durations[scenIdx],
-                                     TimeUnitToTag(s.ScenarioMap.TimeUnits[scenIdx])));
+                                     time_unit_to_tag(s.ScenarioMap.TimeUnits[scenIdx])));
                 Log_info(log,
                          fmt::format("time: {} to {}",
-                                     SecondsToPrettyString(t),
-                                     SecondsToPrettyString(tEnd)));
+                                     seconds_to_pretty_string(t),
+                                     seconds_to_pretty_string(tEnd)));
             }
             s.TheModel.FinalTime = scenarioDuration_s;
             // TODO: add an optional verbosity flag to SimInfo

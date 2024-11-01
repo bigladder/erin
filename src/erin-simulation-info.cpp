@@ -40,7 +40,7 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
         WriteWarningMessage("simulation_info", "input_format_version doesn't match current");
     }
     std::string rawTimeUnit = std::get<std::string>(table.at("time_unit").Value);
-    std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(rawTimeUnit);
+    std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(rawTimeUnit);
     if (!maybeTimeUnit.has_value())
     {
         // TODO: replace with logger for warning
@@ -97,7 +97,7 @@ std::ostream& operator<<(std::ostream& os, SimulationInfo const& s)
 {
     os << "SimulationInfo{"
        << "MaxTime=" << s.MaxTime << "; "
-       << "TimeUnit=\"" << TimeUnitToTag(s.TheTimeUnit) << "\"; "
+       << "TimeUnit=\"" << time_unit_to_tag(s.TheTimeUnit) << "\"; "
        << "QuantityUnit=\"" << s.QuantityUnit << "\"; "
        << "RateUnit=\"" << power_unit_to_string(s.RateUnit) << "\"}";
     return os;

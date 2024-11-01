@@ -66,7 +66,7 @@ size_t ScenarioDict_RegisterScenario(ScenarioDict& sd,
             sd.Durations[i] = duration;
             sd.TimeUnits[i] = timeUnit;
             sd.MaxOccurrences[i] = maxOccurrences;
-            sd.TimeOffsetsInSeconds[i] = Time_ToSeconds(timeOffset, timeUnit);
+            sd.TimeOffsetsInSeconds[i] = time_to_seconds(timeOffset, timeUnit);
             assert(sd.Durations.size() == sd.MaxOccurrences.size());
             assert(sd.Durations.size() == sd.OccurrenceDistributionIds.size());
             assert(sd.Durations.size() == sd.Tags.size());
@@ -146,7 +146,7 @@ std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
             }
         }
     }
-    auto maybeTimeUnit = TagToTimeUnit(maybeTimeUnitStr.value());
+    auto maybeTimeUnit = tag_to_time_unit(maybeTimeUnitStr.value());
     if (!maybeTimeUnit.has_value())
     {
         return {};
@@ -215,7 +215,7 @@ void Scenario_Print(ScenarioDict const& sd, DistributionSystem const& ds)
     for (size_t i = 0; i < sd.Durations.size(); ++i)
     {
         std::cout << i << ": " << sd.Tags[i] << std::endl;
-        std::cout << "- duration: " << sd.Durations[i] << " " << TimeUnitToTag(sd.TimeUnits[i])
+        std::cout << "- duration: " << sd.Durations[i] << " " << time_unit_to_tag(sd.TimeUnits[i])
                   << std::endl;
         auto maybeDist = ds.get_dist_by_id(sd.OccurrenceDistributionIds[i]);
         if (maybeDist.has_value())

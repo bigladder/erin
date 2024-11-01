@@ -66,8 +66,8 @@ double time_in_seconds_to_hours(uint64_t time_seconds)
 }
 
 void write_tagged_category_message(std::string const& category,
-                                std::string const& tag,
-                                std::string const& message)
+                                   std::string const& tag,
+                                   std::string const& message)
 {
     std::cerr << write_tagged_category_to_string(category, tag, message) << std::endl;
 }
@@ -83,8 +83,8 @@ void write_error_message(std::string const& tag, std::string const& message)
 }
 
 std::string write_tagged_category_to_string(std::string const& category,
-                                        std::string const& tag,
-                                        std::string const& message)
+                                            std::string const& tag,
+                                            std::string const& message)
 {
     std::ostringstream oss;
     if (!tag.empty())

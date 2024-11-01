@@ -210,7 +210,7 @@ Result ParseSingleComponent(Simulation& s,
             if (!maybePowerUnit.has_value())
             {
                 write_error_message(fullTableName,
-                                  "unhandled rate_unit value: '" + localRateUnit + "'");
+                                    "unhandled rate_unit value: '" + localRateUnit + "'");
                 return Result::Failure;
             }
             localPowerUnit = maybePowerUnit.value();
@@ -333,10 +333,10 @@ Result ParseSingleComponent(Simulation& s,
         if (inflowId != outflowId)
         {
             write_error_message(fullTableName,
-                              "a mux component must have the same inflow type "
-                              "as outflow type; we have inflow = '" +
-                                  s.FlowTypeMap.Type[inflowId] + "'; outflow = '" +
-                                  s.FlowTypeMap.Type[outflowId] + "'");
+                                "a mux component must have the same inflow type "
+                                "as outflow type; we have inflow = '" +
+                                    s.FlowTypeMap.Type[inflowId] + "'; outflow = '" +
+                                    s.FlowTypeMap.Type[outflowId] + "'");
             return Result::Failure;
         }
         id = Model_AddMux(s.TheModel, numInflows, numOutflows, outflowId, tag);
@@ -368,9 +368,9 @@ Result ParseSingleComponent(Simulation& s,
         if (efficiency > 1.0)
         {
             errors.push_back(write_error_to_string(fullTableName,
-                                                "efficiency must be <= 1.0; "
-                                                "if you need efficiencies (COPs) > 1, "
-                                                "consider using a mover"));
+                                                   "efficiency must be <= 1.0; "
+                                                   "if you need efficiencies (COPs) > 1, "
+                                                   "consider using a mover"));
             return Result::Failure;
         }
         auto const compIdAndWasteConn = Model_AddConstantEfficiencyConverter(
@@ -420,17 +420,17 @@ Result ParseSingleComponent(Simulation& s,
             if (frac < 0.0 || frac > 1.0)
             {
                 errors.push_back(write_error_to_string(fullTableName,
-                                                    "Output power fraction must be "
-                                                    "in range [0.0, 1.0]; got " +
-                                                        std::to_string(frac)));
+                                                       "Output power fraction must be "
+                                                       "in range [0.0, 1.0]; got " +
+                                                           std::to_string(frac)));
                 return Result::Failure;
             }
             if (eff <= 0.0 || eff > 1.0)
             {
                 errors.push_back(write_error_to_string(fullTableName,
-                                                    "Efficiency must be "
-                                                    "in range (0.0, 1.0]; got " +
-                                                        std::to_string(eff)));
+                                                       "Efficiency must be "
+                                                       "in range (0.0, 1.0]; got " +
+                                                           std::to_string(eff)));
                 return Result::Failure;
             }
             if (effByOutfrac.contains(frac))
@@ -497,7 +497,7 @@ Result ParseSingleComponent(Simulation& s,
         if (inflowId != outflowId)
         {
             write_error_message(fullTableName,
-                              "inflow type must equal outflow type for pass-through");
+                                "inflow type must equal outflow type for pass-through");
             return Result::Failure;
         }
         id = Model_AddPassThrough(s.TheModel, inflowId, tag);
@@ -524,7 +524,7 @@ Result ParseSingleComponent(Simulation& s,
             if (!maybeCapacityUnit.has_value())
             {
                 write_error_message(fullTableName,
-                                  "unhandled capacity unit '" + capacityUnitStr + "'");
+                                    "unhandled capacity unit '" + capacityUnitStr + "'");
                 return Result::Failure;
             }
             capacityUnit = maybeCapacityUnit.value();
@@ -633,15 +633,15 @@ Result ParseSingleComponent(Simulation& s,
             if (frac < 0.0 || frac > 1.0)
             {
                 errors.push_back(write_error_to_string(fullTableName,
-                                                    "Output power fraction must be "
-                                                    "in range [0.0, 1.0]; got " +
-                                                        std::to_string(frac)));
+                                                       "Output power fraction must be "
+                                                       "in range [0.0, 1.0]; got " +
+                                                           std::to_string(frac)));
                 return Result::Failure;
             }
             if (cop <= 0.0)
             {
-                errors.push_back(
-                    write_error_to_string(fullTableName, "COP must be > 0.0" + std::to_string(frac)));
+                errors.push_back(write_error_to_string(fullTableName,
+                                                       "COP must be > 0.0" + std::to_string(frac)));
                 return Result::Failure;
             }
             if (copByOutFrac.contains(frac))
@@ -740,7 +740,7 @@ Result ParseSingleComponent(Simulation& s,
             if (!fms[fmIdx].is_string())
             {
                 write_error_message(fullTableName,
-                                  "failure_modes[" + std::to_string(fmIdx) + "] must be string");
+                                    "failure_modes[" + std::to_string(fmIdx) + "] must be string");
                 return Result::Failure;
             }
             std::string const& fmTag = fms[fmIdx].as_string();
@@ -778,8 +778,8 @@ Result ParseSingleComponent(Simulation& s,
         {
             if (!fms[fmIdx].is_string())
             {
-                write_error_message(fullTableName,
-                                  "fragility_modes[" + std::to_string(fmIdx) + "] must be string");
+                write_error_message(
+                    fullTableName, "fragility_modes[" + std::to_string(fmIdx) + "] must be string");
                 return Result::Failure;
             }
             std::string const& fmTag = fms[fmIdx].as_string();
@@ -820,8 +820,8 @@ Result ParseSingleComponent(Simulation& s,
             if (!maybeTimeUnit.has_value())
             {
                 write_error_message(fullTableName,
-                                  "could not interpret '" + maybeTimeUnitStr.value() +
-                                      "' as time unit");
+                                    "could not interpret '" + maybeTimeUnitStr.value() +
+                                        "' as time unit");
                 return Result::Failure;
             }
             timeUnit = maybeTimeUnit.value();

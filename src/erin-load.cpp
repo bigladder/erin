@@ -105,10 +105,10 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
     else
     {
         write_error_message(tableFullName,
-                          "csv file '" + csvFileName +
-                              "'"
-                              " -- header must have 2 columns: time unit "
-                              "and rate unit");
+                            "csv file '" + csvFileName +
+                                "'"
+                                " -- header must have 2 columns: time unit "
+                                "and rate unit");
         return {};
     }
     flow_t rowIdx = 1;
@@ -124,13 +124,13 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
         if (pair.size() != 2)
         {
             write_error_message(tableFullName,
-                              "csv file '" + csvFileName +
-                                  "'"
-                                  " row: " +
-                                  std::to_string(rowIdx) +
-                                  "; must have 2 columns; "
-                                  "found: " +
-                                  std::to_string(pair.size()));
+                                "csv file '" + csvFileName +
+                                    "'"
+                                    " row: " +
+                                    std::to_string(rowIdx) +
+                                    "; must have 2 columns; "
+                                    "found: " +
+                                    std::to_string(pair.size()));
             return {};
         }
         TimeAndAmount ta {};
@@ -222,11 +222,11 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
         else
         {
             write_error_message(tableFullName,
-                              "multi-part csv file '" + csvFileName +
-                                  "'"
-                                  " -- header 2nd row must have 2 columns for each "
-                                  "load entry: time unit "
-                                  "and rate unit");
+                                "multi-part csv file '" + csvFileName +
+                                    "'"
+                                    " -- header 2nd row must have 2 columns for each "
+                                    "load entry: time unit "
+                                    "and rate unit");
             return {};
         }
     }

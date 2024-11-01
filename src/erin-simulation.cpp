@@ -775,8 +775,8 @@ Parse_VulnerableTo(Simulation const& s, toml::table const& fcData, std::string c
     if (!maybeIntId.has_value())
     {
         write_error_message(tableFullName,
-                          "could not find referenced intensity '" + vulnerStr +
-                              "' for 'vulnerable_to'");
+                            "could not find referenced intensity '" + vulnerStr +
+                                "' for 'vulnerable_to'");
         return {};
     }
     return maybeIntId;
@@ -2958,11 +2958,11 @@ void Simulation_run(Simulation& s,
                     log,
                     fmt::format("Scenario start time: {} h",
                                 time_in_seconds_to_hours(static_cast<uint64_t>(scenarioOffset_s))));
-                Log_info(
-                    log,
-                    fmt::format("Scenario end time: {} h",
-                                time_in_seconds_to_hours(static_cast<uint64_t>(scenarioOffset_s) +
-                                                     static_cast<uint64_t>(scenarioDuration_s))));
+                Log_info(log,
+                         fmt::format(
+                             "Scenario end time: {} h",
+                             time_in_seconds_to_hours(static_cast<uint64_t>(scenarioOffset_s) +
+                                                      static_cast<uint64_t>(scenarioDuration_s))));
             }
             s.TheModel.Reliabilities.clear();
             s.TheModel.Reliabilities =

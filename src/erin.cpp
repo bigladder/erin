@@ -1757,8 +1757,8 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 default:
                 {
                     write_error_message("RunComponentsBackward",
-                                      "unhandled port on variable efficiency "
-                                      "converter");
+                                        "unhandled port on variable efficiency "
+                                        "converter");
                     exit(1);
                 }
                 }
@@ -1819,8 +1819,8 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 default:
                 {
                     write_error_message("<runtime>",
-                                      "bad port connection for variable "
-                                      "efficiency mover");
+                                        "bad port connection for variable "
+                                        "efficiency mover");
                     std::exit(1);
                 }
                 break;
@@ -2678,8 +2678,8 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         default:
         {
             write_error_message("SummarizeFlows(.)",
-                              "Unhandled From type for connection - from pass: " +
-                                  ToString(m.Connections[flowIdx].From));
+                                "Unhandled From type for connection - from pass: " +
+                                    ToString(m.Connections[flowIdx].From));
         }
         break;
         }
@@ -2719,8 +2719,8 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         default:
         {
             write_error_message("SummarizeFlows(.)",
-                              "Unhandled From type for connection - to pass: " +
-                                  ToString(m.Connections[flowIdx].To));
+                                "Unhandled From type for connection - to pass: " +
+                                    ToString(m.Connections[flowIdx].To));
         }
         break;
         }
@@ -4116,7 +4116,8 @@ Connection Model_AddConnection(Model& m,
     break;
     default:
     {
-        write_error_message("Model_AddConnection", "unhandled component type: " + ToString(fromType));
+        write_error_message("Model_AddConnection",
+                            "unhandled component type: " + ToString(fromType));
         std::exit(1);
     }
     }
@@ -4140,8 +4141,8 @@ Connection Model_AddConnection(Model& m,
         default:
         {
             write_error_message("Model_AddConnection",
-                              "unhandled inport: " + std::to_string(toPort) + " for " +
-                                  ToString(toType));
+                                "unhandled inport: " + std::to_string(toPort) + " for " +
+                                    ToString(toType));
             std::exit(1);
         }
         break;
@@ -4214,8 +4215,8 @@ Connection Model_AddConnection(Model& m,
         default:
         {
             write_error_message("<network>",
-                              "bad network connection for variable efficiency "
-                              "mover");
+                                "bad network connection for variable efficiency "
+                                "mover");
             std::exit(1);
         }
         break;

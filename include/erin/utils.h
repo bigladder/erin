@@ -103,16 +103,16 @@ std::string time_to_ISO8601_period(uint64_t time_seconds);
 double time_in_seconds_to_hours(uint64_t time_seconds);
 
 void write_tagged_category_message(std::string const& category,
-                                std::string const& tag,
-                                std::string const& message);
+                                   std::string const& tag,
+                                   std::string const& message);
 
 void write_warning_message(std::string const& tag, std::string const& message);
 
 void write_error_message(std::string const& tag, std::string const& message);
 
 std::string write_tagged_category_to_string(std::string const& category,
-                                        std::string const& tag,
-                                        std::string const& message);
+                                            std::string const& tag,
+                                            std::string const& message);
 
 std::string write_warning_to_string(std::string const& tag, std::string const& message);
 

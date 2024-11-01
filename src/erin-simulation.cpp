@@ -555,7 +555,7 @@ void Simulation_PrintScenarios(Simulation const& s)
                   << time_unit_to_tag(s.ScenarioMap.TimeUnits[i]) << std::endl;
         std::cout << "- offset: "
                   << time_in_seconds_to_desired_unit(s.ScenarioMap.TimeOffsetsInSeconds[i],
-                                                TimeUnit::Hour)
+                                                     TimeUnit::Hour)
                   << " " << time_unit_to_tag(TimeUnit::Hour) << std::endl;
         auto maybeDist =
             s.TheModel.DistSys.get_dist_by_id(s.ScenarioMap.OccurrenceDistributionIds[i]);
@@ -2693,8 +2693,8 @@ void WriteReliabilityCurves(std::string const& scenarioName,
                 {
                     causeStr += (causeStr.size() == 0) ? cause : fmt::format(" | {}", cause);
                 }
-                out << time_in_seconds_to_desired_unit(sbr.TimeStates[row].time, TimeUnit::Hour) << ","
-                    << sbr.TimeStates[row].state << "," << causeStr;
+                out << time_in_seconds_to_desired_unit(sbr.TimeStates[row].time, TimeUnit::Hour)
+                    << "," << sbr.TimeStates[row].state << "," << causeStr;
             }
             else
             {
@@ -2951,8 +2951,9 @@ void Simulation_run(Simulation& s,
             double tEnd = t + scenarioDuration_s;
             if (verbose)
             {
-                Log_info(log,
-                         fmt::format("Occurrence #{} at {}", occIdx + 1, seconds_to_pretty_string(t)));
+                Log_info(
+                    log,
+                    fmt::format("Occurrence #{} at {}", occIdx + 1, seconds_to_pretty_string(t)));
                 Log_info(
                     log,
                     fmt::format("Scenario start time: {} h",

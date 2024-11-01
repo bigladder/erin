@@ -60,7 +60,8 @@ TEST(Erin, Test2)
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 20) << "actual value must equal 20";
     EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "available must equal 100";
 
-    auto conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, 0.0, results);
+    auto conv_to_load_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load_conn, 0.0, results);
     EXPECT_TRUE(conv_to_load_results.has_value()) << "converter to load must have results";
     EXPECT_EQ(conv_to_load_results.value().Requested_W, 10) << "requested must equal 10";
     EXPECT_EQ(conv_to_load_results.value().Actual_W, 10) << "actual value must equal 10";
@@ -95,13 +96,15 @@ TEST(Erin, Test3)
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 20) << "actual value must equal 20";
     EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "available must equal 100";
 
-    auto conv_to_load1_results = ModelResults_GetFlowForConnection(m, conv_to_load1_conn, 0.0, results);
+    auto conv_to_load1_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load1_conn, 0.0, results);
     EXPECT_TRUE(conv_to_load1_results.has_value()) << "converter to load1 must have results";
     EXPECT_EQ(conv_to_load1_results.value().Requested_W, 10) << "requested must equal 10";
     EXPECT_EQ(conv_to_load1_results.value().Actual_W, 10) << "actual value must equal 10";
     EXPECT_EQ(conv_to_load1_results.value().Available_W, 50) << "available must equal 50";
 
-    auto conv_to_load2_results = ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
+    auto conv_to_load2_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
     EXPECT_TRUE(conv_to_load2_results.has_value()) << "conv to load2 must have results";
     EXPECT_EQ(conv_to_load2_results.value().Requested_W, 2) << "requested must equal 2";
     EXPECT_EQ(conv_to_load2_results.value().Actual_W, 2) << "actual value must equal 2";
@@ -136,13 +139,15 @@ TEST(Erin, Test3A)
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 20) << "actual value must equal 20";
     EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "available must equal 100";
 
-    auto conv_to_load1_results = ModelResults_GetFlowForConnection(m, conv_to_load1_conn, 0.0, results);
+    auto conv_to_load1_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load1_conn, 0.0, results);
     EXPECT_TRUE(conv_to_load1_results.has_value() && "converter to load1 must have results");
     EXPECT_EQ(conv_to_load1_results.value().Requested_W, 10) << "requested must equal 10";
     EXPECT_EQ(conv_to_load1_results.value().Actual_W, 10) << "actual value must equal 10";
     EXPECT_EQ(conv_to_load1_results.value().Available_W, 50) << "available must equal 50";
 
-    auto conv_to_load2_results = ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
+    auto conv_to_load2_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
     EXPECT_TRUE(conv_to_load2_results.has_value()) << "conv to load2 must have results";
     EXPECT_EQ(conv_to_load2_results.value().Requested_W, 2) << "requested must equal 2";
     EXPECT_EQ(conv_to_load2_results.value().Actual_W, 2) << "actual value must equal 2";
@@ -171,8 +176,10 @@ TEST(Erin, Test4)
     EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
     EXPECT_EQ(results[0].Flows.size(), 1) << "size of flows[0] must equal 1";
 
-    auto src_to_load_results_0 = ModelResults_GetFlowForConnection(m, src_to_load_conn, 0.0, results);
-    EXPECT_TRUE(src_to_load_results_0.has_value()) << "source to load must have results at time=0.0";
+    auto src_to_load_results_0 =
+        ModelResults_GetFlowForConnection(m, src_to_load_conn, 0.0, results);
+    EXPECT_TRUE(src_to_load_results_0.has_value())
+        << "source to load must have results at time=0.0";
     EXPECT_EQ(src_to_load_results_0.value().Requested_W, 10) << "requested must equal 10";
     EXPECT_EQ(src_to_load_results_0.value().Actual_W, 10) << "actual value must equal 10";
     EXPECT_EQ(src_to_load_results_0.value().Available_W, 100) << "available must equal 100";
@@ -206,12 +213,18 @@ TEST(Erin, Test5)
     auto conv2_to_conv3_conn = Model_AddConnection(m, conv2.Id, 1, conv3.Id, 0);
     auto conv3_to_load3_conn = Model_AddConnection(m, conv3.Id, 0, load3_id, 0);
     auto results = Simulate(m, false);
-    auto src_to_conv1_results = ModelResults_GetFlowForConnection(m, src_to_conv1_conn, 0.0, results);
-    auto conv1_to_load1_results = ModelResults_GetFlowForConnection(m, conv1_to_load1_conn, 0.0, results);
-    auto conv1_to_conv2_results = ModelResults_GetFlowForConnection(m, conv1_to_conv2_conn, 0.0, results);
-    auto conv2_to_load2_results = ModelResults_GetFlowForConnection(m, conv2_to_load2_conn, 0.0, results);
-    auto conv2_to_conv3_results = ModelResults_GetFlowForConnection(m, conv2_to_conv3_conn, 0.0, results);
-    auto conv3_to_load3_results = ModelResults_GetFlowForConnection(m, conv3_to_load3_conn, 0.0, results);
+    auto src_to_conv1_results =
+        ModelResults_GetFlowForConnection(m, src_to_conv1_conn, 0.0, results);
+    auto conv1_to_load1_results =
+        ModelResults_GetFlowForConnection(m, conv1_to_load1_conn, 0.0, results);
+    auto conv1_to_conv2_results =
+        ModelResults_GetFlowForConnection(m, conv1_to_conv2_conn, 0.0, results);
+    auto conv2_to_load2_results =
+        ModelResults_GetFlowForConnection(m, conv2_to_load2_conn, 0.0, results);
+    auto conv2_to_conv3_results =
+        ModelResults_GetFlowForConnection(m, conv2_to_conv3_conn, 0.0, results);
+    auto conv3_to_load3_results =
+        ModelResults_GetFlowForConnection(m, conv3_to_load3_conn, 0.0, results);
     EXPECT_EQ(src_to_conv1_results.value().Actual_W, 40) << "src to conv1 should flow 40";
     EXPECT_EQ(conv1_to_load1_results.value().Actual_W, 10) << "conv1 to load1 should flow 10";
     EXPECT_EQ(conv1_to_conv2_results.value().Actual_W, 28) << "conv1 to conv2 should flow 28";
@@ -239,11 +252,15 @@ TEST(Erin, Test6)
     auto src2_to_mux_results = ModelResults_GetFlowForConnection(m, src2_to_mux_conn, 0.0, results);
     EXPECT_EQ(src2_to_mux_results.value().Actual_W, 50) << "src2 -> mux expected actual flow of 50";
 
-    auto mux_to_load1_results = ModelResults_GetFlowForConnection(m, mux_to_load1_conn, 0.0, results);
-    EXPECT_EQ(mux_to_load1_results.value().Actual_W, 10) << "mux -> load1 expected actual flow of 10";
+    auto mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux_to_load1_conn, 0.0, results);
+    EXPECT_EQ(mux_to_load1_results.value().Actual_W, 10)
+        << "mux -> load1 expected actual flow of 10";
 
-    auto mux_to_load2_results = ModelResults_GetFlowForConnection(m, mux_to_load2_conn, 0.0, results);
-    EXPECT_EQ(mux_to_load2_results.value().Actual_W, 50) << "mux -> load2 expected actual flow of 50";
+    auto mux_to_load2_results =
+        ModelResults_GetFlowForConnection(m, mux_to_load2_conn, 0.0, results);
+    EXPECT_EQ(mux_to_load2_results.value().Actual_W, 50)
+        << "mux -> load2 expected actual flow of 50";
 }
 
 TEST(Erin, Test7)
@@ -257,25 +274,29 @@ TEST(Erin, Test7)
     auto store_to_load_conn = Model_AddConnection(m, store_id, 0, load_id, 0);
     auto results = Simulate(m, false);
 
-    auto src_to_store_results = ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
+    auto src_to_store_results =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
     EXPECT_EQ(src_to_store_results.value().Actual_W, 0) << "src to store should be providing 0";
     EXPECT_EQ(src_to_store_results.value().Requested_W, 10) << "src to store request is 10";
     EXPECT_EQ(src_to_store_results.value().Available_W, 0) << "src to store available is 0";
 
-    auto store_to_load_results = ModelResults_GetFlowForConnection(m, store_to_load_conn, 0.0, results);
+    auto store_to_load_results =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 0.0, results);
     EXPECT_TRUE(store_to_load_results.has_value())
         << "should have results for store to load connection";
     EXPECT_EQ(store_to_load_results.value().Actual_W, 10) << "store to load should be providing 10";
     EXPECT_EQ(store_to_load_results.value().Requested_W, 10)
         << "store to load should be requesting 10";
-    EXPECT_EQ(store_to_load_results.value().Available_W, 10) << "store to load available should be 10";
+    EXPECT_EQ(store_to_load_results.value().Available_W, 10)
+        << "store to load available should be 10";
     EXPECT_EQ(results.size(), 2) << "there should be two time events in results";
     EXPECT_TRUE((results[1].Time > 10.0 - 1e-6) && (results[1].Time < 10.0 + 1e-6))
         << "time should be 10";
 
     auto src_to_store_results_at_10 =
         ModelResults_GetFlowForConnection(m, src_to_store_conn, 10.0, results);
-    EXPECT_EQ(src_to_store_results_at_10.value().Actual_W, 0) << "src to store should be providing 0";
+    EXPECT_EQ(src_to_store_results_at_10.value().Actual_W, 0)
+        << "src to store should be providing 0";
     EXPECT_EQ(src_to_store_results_at_10.value().Requested_W, 20) << "src to store request is 20";
     EXPECT_EQ(src_to_store_results_at_10.value().Available_W, 0) << "src to store available is 0";
 
@@ -283,7 +304,8 @@ TEST(Erin, Test7)
         ModelResults_GetFlowForConnection(m, store_to_load_conn, 10.0, results);
     EXPECT_TRUE(store_to_load_results_at_10.has_value())
         << "should have results for store to load connection";
-    EXPECT_EQ(store_to_load_results_at_10.value().Actual_W, 0) << "store to load should be providing 0";
+    EXPECT_EQ(store_to_load_results_at_10.value().Actual_W, 0)
+        << "store to load should be providing 0";
     EXPECT_EQ(store_to_load_results_at_10.value().Requested_W, 10)
         << "store to load should be requesting 10";
     EXPECT_EQ(store_to_load_results_at_10.value().Available_W, 0)
@@ -300,25 +322,29 @@ TEST(Erin, Test8)
     auto src_to_store_conn = Model_AddConnection(m, src_id, 0, store_id, 0);
     auto store_to_load_conn = Model_AddConnection(m, store_id, 0, load_id, 0);
     auto results = Simulate(m, false);
-    auto src_to_store_results = ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
+    auto src_to_store_results =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
     EXPECT_EQ(src_to_store_results.value().Actual_W, 5) << "src to store should be providing 5";
     EXPECT_EQ(src_to_store_results.value().Requested_W, 10) << "src to store request is 10";
     EXPECT_EQ(src_to_store_results.value().Available_W, 5) << "src to store available is 5";
 
-    auto store_to_load_results = ModelResults_GetFlowForConnection(m, store_to_load_conn, 0.0, results);
+    auto store_to_load_results =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 0.0, results);
     EXPECT_TRUE(store_to_load_results.has_value())
         << "should have results for store to load connection";
     EXPECT_EQ(store_to_load_results.value().Actual_W, 10) << "store to load should be providing 10";
     EXPECT_EQ(store_to_load_results.value().Requested_W, 10)
         << "store to load should be requesting 10";
-    EXPECT_EQ(store_to_load_results.value().Available_W, 15) << "store to load available should be 15";
+    EXPECT_EQ(store_to_load_results.value().Available_W, 15)
+        << "store to load available should be 15";
     EXPECT_EQ(results.size(), 2) << "there should be two time events in results";
     EXPECT_TRUE((results[1].Time > 20.0 - 1e-6) && (results[1].Time < 20.0 + 1e-6))
         << "time should be 20";
 
     auto src_to_store_results_at_20 =
         ModelResults_GetFlowForConnection(m, src_to_store_conn, 20.0, results);
-    EXPECT_EQ(src_to_store_results_at_20.value().Actual_W, 5) << "src to store should be providing 5";
+    EXPECT_EQ(src_to_store_results_at_20.value().Actual_W, 5)
+        << "src to store should be providing 5";
     EXPECT_EQ(src_to_store_results_at_20.value().Requested_W, 20) << "src to store request is 20";
     EXPECT_EQ(src_to_store_results_at_20.value().Available_W, 5) << "src to store available is 5";
 
@@ -326,7 +352,8 @@ TEST(Erin, Test8)
         ModelResults_GetFlowForConnection(m, store_to_load_conn, 20.0, results);
     EXPECT_TRUE(store_to_load_results_at_20.has_value())
         << "should have results for store to load connection";
-    EXPECT_EQ(store_to_load_results_at_20.value().Actual_W, 5) << "store to load should be providing 5";
+    EXPECT_EQ(store_to_load_results_at_20.value().Actual_W, 5)
+        << "store to load should be providing 5";
     EXPECT_EQ(store_to_load_results_at_20.value().Requested_W, 10)
         << "store to load should be requesting 10";
     EXPECT_EQ(store_to_load_results_at_20.value().Available_W, 5)
@@ -354,7 +381,8 @@ TEST(Erin, Test9)
     EXPECT_EQ(round_it(results[3].Time), 10.0) << "expect fourth time is 10.0";
     EXPECT_EQ(round_it(results[4].Time), 25.0) << "expect fifth time is 25.0";
 
-    auto src_to_store_results_at_0 = ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
+    auto src_to_store_results_at_0 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
     auto store_to_load_results_at_0 =
         ModelResults_GetFlowForConnection(m, store_to_load_conn, 0.0, results);
     auto store_amount_0 = ModelResults_GetStoreState(m, store_id, 0.0, results);
@@ -366,7 +394,8 @@ TEST(Erin, Test9)
     EXPECT_EQ(store_to_load_results_at_0.value().Available_W, 20);
     EXPECT_EQ(store_amount_0.value(), 100);
 
-    auto src_to_store_results_at_2 = ModelResults_GetFlowForConnection(m, src_to_store_conn, 2.0, results);
+    auto src_to_store_results_at_2 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 2.0, results);
     auto store_to_load_results_at_2 =
         ModelResults_GetFlowForConnection(m, store_to_load_conn, 2.0, results);
     auto store_amount_2 = ModelResults_GetStoreState(m, store_id, 2.0, results);
@@ -378,7 +407,8 @@ TEST(Erin, Test9)
     EXPECT_EQ(store_to_load_results_at_2.value().Available_W, 20);
     EXPECT_EQ(store_amount_2.value(), 80);
 
-    auto src_to_store_results_at_5 = ModelResults_GetFlowForConnection(m, src_to_store_conn, 5.0, results);
+    auto src_to_store_results_at_5 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 5.0, results);
     auto store_to_load_results_at_5 =
         ModelResults_GetFlowForConnection(m, store_to_load_conn, 5.0, results);
     auto store_amount_5 = ModelResults_GetStoreState(m, store_id, 5.0, results);
@@ -453,12 +483,14 @@ TEST(Erin, Test10)
     EXPECT_EQ(conv_to_waste_results.value().Requested_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().Available_W, 3);
 
-    auto src1_to_mux_results = ModelResults_GetFlowForConnection(m, src1_to_mux0_port0_conn, 0.0, results);
+    auto src1_to_mux_results =
+        ModelResults_GetFlowForConnection(m, src1_to_mux0_port0_conn, 0.0, results);
     EXPECT_EQ(src1_to_mux_results.value().Actual_W, 20);
     EXPECT_EQ(src1_to_mux_results.value().Available_W, 20);
     EXPECT_EQ(src1_to_mux_results.value().Requested_W, 60);
 
-    auto src2_to_store_results = ModelResults_GetFlowForConnection(m, src2_to_store_conn, 0.0, results);
+    auto src2_to_store_results =
+        ModelResults_GetFlowForConnection(m, src2_to_store_conn, 0.0, results);
     EXPECT_EQ(src2_to_store_results.value().Actual_W, 5);
     EXPECT_EQ(src2_to_store_results.value().Available_W, 5);
     EXPECT_EQ(src2_to_store_results.value().Requested_W, 40);
@@ -475,17 +507,20 @@ TEST(Erin, Test10)
     EXPECT_EQ(mux_to_load1_results.value().Available_W, 20);
     EXPECT_EQ(mux_to_load1_results.value().Requested_W, 20);
 
-    auto mux_to_conv_results = ModelResults_GetFlowForConnection(m, mux0_port1_to_conv_conn, 0.0, results);
+    auto mux_to_conv_results =
+        ModelResults_GetFlowForConnection(m, mux0_port1_to_conv_conn, 0.0, results);
     EXPECT_EQ(mux_to_conv_results.value().Actual_W, 15);
     EXPECT_EQ(mux_to_conv_results.value().Available_W, 15);
     EXPECT_EQ(mux_to_conv_results.value().Requested_W, 40);
 
-    auto conv_to_load2_results = ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
+    auto conv_to_load2_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
     EXPECT_EQ(conv_to_load2_results.value().Actual_W, 7);
     EXPECT_EQ(conv_to_load2_results.value().Available_W, 7);
     EXPECT_EQ(conv_to_load2_results.value().Requested_W, 20);
 
-    auto conv_to_load3_results = ModelResults_GetFlowForConnection(m, conv_to_load3_conn, 0.0, results);
+    auto conv_to_load3_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load3_conn, 0.0, results);
     EXPECT_EQ(conv_to_load3_results.value().Actual_W, 5);
     EXPECT_EQ(conv_to_load3_results.value().Available_W, 8);
     EXPECT_EQ(conv_to_load3_results.value().Requested_W, 5);
@@ -513,12 +548,14 @@ TEST(Erin, Test10)
     EXPECT_EQ(src2_to_store_results.value().Available_W, 5);
     EXPECT_EQ(src2_to_store_results.value().Requested_W, 50);
 
-    store_to_mux_results = ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
+    store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
     EXPECT_EQ(store_to_mux_results.value().Actual_W, 15);
     EXPECT_EQ(store_to_mux_results.value().Available_W, 15);
     EXPECT_EQ(store_to_mux_results.value().Requested_W, 40);
 
-    mux_to_load1_results = ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
+    mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
     EXPECT_EQ(mux_to_load1_results.value().Actual_W, 20);
     EXPECT_EQ(mux_to_load1_results.value().Available_W, 20);
     EXPECT_EQ(mux_to_load1_results.value().Requested_W, 20);
@@ -561,12 +598,14 @@ TEST(Erin, Test10)
     EXPECT_EQ(src2_to_store_results.value().Available_W, 5);
     EXPECT_EQ(src2_to_store_results.value().Requested_W, 20);
 
-    store_to_mux_results = ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
+    store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
     EXPECT_EQ(store_to_mux_results.value().Actual_W, 10);
     EXPECT_EQ(store_to_mux_results.value().Available_W, 15);
     EXPECT_EQ(store_to_mux_results.value().Requested_W, 10);
 
-    mux_to_load1_results = ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
+    mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
     EXPECT_EQ(mux_to_load1_results.value().Actual_W, 20);
     EXPECT_EQ(mux_to_load1_results.value().Available_W, 25);
     EXPECT_EQ(mux_to_load1_results.value().Requested_W, 20);
@@ -609,12 +648,14 @@ TEST(Erin, Test10)
     EXPECT_EQ(src2_to_store_results.value().Available_W, 5);
     EXPECT_EQ(src2_to_store_results.value().Requested_W, 40);
 
-    store_to_mux_results = ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
+    store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
     EXPECT_EQ(store_to_mux_results.value().Actual_W, 15);
     EXPECT_EQ(store_to_mux_results.value().Available_W, 15);
     EXPECT_EQ(store_to_mux_results.value().Requested_W, 30);
 
-    mux_to_load1_results = ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
+    mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
     EXPECT_EQ(mux_to_load1_results.value().Actual_W, 20);
     EXPECT_EQ(mux_to_load1_results.value().Available_W, 20);
     EXPECT_EQ(mux_to_load1_results.value().Requested_W, 20);
@@ -657,12 +698,14 @@ TEST(Erin, Test10)
     EXPECT_EQ(src2_to_store_results.value().Available_W, 5);
     EXPECT_EQ(src2_to_store_results.value().Requested_W, 40);
 
-    store_to_mux_results = ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
+    store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
     EXPECT_EQ(store_to_mux_results.value().Actual_W, 5);
     EXPECT_EQ(store_to_mux_results.value().Available_W, 5);
     EXPECT_EQ(store_to_mux_results.value().Requested_W, 30);
 
-    mux_to_load1_results = ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
+    mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
     EXPECT_EQ(mux_to_load1_results.value().Actual_W, 20);
     EXPECT_EQ(mux_to_load1_results.value().Available_W, 20);
     EXPECT_EQ(mux_to_load1_results.value().Requested_W, 20);
@@ -707,103 +750,133 @@ TEST(Erin, Test11)
     auto src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 20) << "src -> conv actual should be 20";
     EXPECT_EQ(src_to_conv_results.value().Requested_W, 20) << "src -> conv requested should be 20";
-    EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "src -> conv available should be 100";
+    EXPECT_EQ(src_to_conv_results.value().Available_W, 100)
+        << "src -> conv available should be 100";
 
     auto conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
     EXPECT_EQ(conv_to_load_results.value().Actual_W, 10) << "conv -> load actual should be 10";
-    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10) << "conv -> load requested should be 10";
-    EXPECT_EQ(conv_to_load_results.value().Available_W, 50) << "conv -> load available should be 50";
+    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().Available_W, 50)
+        << "conv -> load available should be 50";
 
     auto conv_to_waste_results =
         ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
     EXPECT_EQ(conv_to_waste_results.value().Actual_W, 10) << "conv -> waste actual should be 10";
-    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 10) << "conv -> waste requested should be 10";
-    EXPECT_EQ(conv_to_waste_results.value().Available_W, 10) << "conv -> waste available should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().Available_W, 10)
+        << "conv -> waste available should be 10";
 
     // time = 10.0, failed
     t = 10.0;
     src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 0) << "src -> conv actual should be 0";
     EXPECT_EQ(src_to_conv_results.value().Requested_W, 0) << "src -> conv requested should be 0";
-    EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "src -> conv available should be 100";
+    EXPECT_EQ(src_to_conv_results.value().Available_W, 100)
+        << "src -> conv available should be 100";
 
     conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
     EXPECT_EQ(conv_to_load_results.value().Actual_W, 0) << "conv -> load actual should be 0";
-    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10) << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
     EXPECT_EQ(conv_to_load_results.value().Available_W, 0) << "conv -> load available should be 0";
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
     EXPECT_EQ(conv_to_waste_results.value().Actual_W, 0) << "conv -> waste actual should be 0";
-    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 0) << "conv -> waste requested should be 0";
-    EXPECT_EQ(conv_to_waste_results.value().Available_W, 0) << "conv -> waste available should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().Available_W, 0)
+        << "conv -> waste available should be 0";
 
     // time = 20.0, fixed/restored
     t = 20.0;
     src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 20) << "src -> conv actual should be 20";
     EXPECT_EQ(src_to_conv_results.value().Requested_W, 20) << "src -> conv requested should be 20";
-    EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "src -> conv available should be 100";
+    EXPECT_EQ(src_to_conv_results.value().Available_W, 100)
+        << "src -> conv available should be 100";
 
     conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
     EXPECT_EQ(conv_to_load_results.value().Actual_W, 10) << "conv -> load actual should be 10";
-    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10) << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
     EXPECT_EQ(conv_to_load_results.value().Available_W, 50) << "conv -> load available should be 0";
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
     EXPECT_EQ(conv_to_waste_results.value().Actual_W, 10) << "conv -> waste actual should be 10";
-    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 10) << "conv -> waste requested should be 10";
-    EXPECT_EQ(conv_to_waste_results.value().Available_W, 10) << "conv -> waste available should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().Available_W, 10)
+        << "conv -> waste available should be 10";
 
     // time = 30.0, failed
     t = 30.0;
     src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 0) << "src -> conv actual should be 0";
     EXPECT_EQ(src_to_conv_results.value().Requested_W, 0) << "src -> conv requested should be 0";
-    EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "src -> conv available should be 100";
+    EXPECT_EQ(src_to_conv_results.value().Available_W, 100)
+        << "src -> conv available should be 100";
 
     conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
     EXPECT_EQ(conv_to_load_results.value().Actual_W, 0) << "conv -> load actual should be 0";
-    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10) << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
     EXPECT_EQ(conv_to_load_results.value().Available_W, 0) << "conv -> load available should be 0";
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
     EXPECT_EQ(conv_to_waste_results.value().Actual_W, 0) << "conv -> waste actual should be 0";
-    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 0) << "conv -> waste requested should be 0";
-    EXPECT_EQ(conv_to_waste_results.value().Available_W, 0) << "conv -> waste available should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().Available_W, 0)
+        << "conv -> waste available should be 0";
 
     // time = 40.0, fixed/restored
     t = 40.0;
     src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 20) << "src -> conv actual should be 20";
     EXPECT_EQ(src_to_conv_results.value().Requested_W, 20) << "src -> conv requested should be 20";
-    EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "src -> conv available should be 100";
+    EXPECT_EQ(src_to_conv_results.value().Available_W, 100)
+        << "src -> conv available should be 100";
 
     conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
     EXPECT_EQ(conv_to_load_results.value().Actual_W, 10) << "conv -> load actual should be 10";
-    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10) << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
     EXPECT_EQ(conv_to_load_results.value().Available_W, 50) << "conv -> load available should be 0";
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
     EXPECT_EQ(conv_to_waste_results.value().Actual_W, 10) << "conv -> waste actual should be 10";
-    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 10) << "conv -> waste requested should be 10";
-    EXPECT_EQ(conv_to_waste_results.value().Available_W, 10) << "conv -> waste available should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().Available_W, 10)
+        << "conv -> waste available should be 10";
 
     // time = 50.0, failed
     t = 50.0;
     src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
     EXPECT_EQ(src_to_conv_results.value().Actual_W, 0) << "src -> conv actual should be 0";
     EXPECT_EQ(src_to_conv_results.value().Requested_W, 0) << "src -> conv requested should be 0";
-    EXPECT_EQ(src_to_conv_results.value().Available_W, 100) << "src -> conv available should be 100";
+    EXPECT_EQ(src_to_conv_results.value().Available_W, 100)
+        << "src -> conv available should be 100";
 
     conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
     EXPECT_EQ(conv_to_load_results.value().Actual_W, 0) << "conv -> load actual should be 0";
-    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10) << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().Requested_W, 10)
+        << "conv -> load requested should be 10";
     EXPECT_EQ(conv_to_load_results.value().Available_W, 0) << "conv -> load available should be 0";
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
     EXPECT_EQ(conv_to_waste_results.value().Actual_W, 0) << "conv -> waste actual should be 0";
-    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 0) << "conv -> waste requested should be 0";
-    EXPECT_EQ(conv_to_waste_results.value().Available_W, 0) << "conv -> waste available should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().Requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().Available_W, 0)
+        << "conv -> waste available should be 0";
 }
 
 TEST(Erin, Test12)
@@ -1021,11 +1094,11 @@ TEST(Erin, Test13)
     auto pv_array_id = Model_AddScheduleBasedSource(m, pv_avail);
     auto elec_util_id = Model_AddConstantSource(m, kW_as_W(10.0));
     auto battery_id = Model_AddStore(m,
-                                    static_cast<uint64_t>(kWh_as_J(100.0)),
-                                    static_cast<uint64_t>(kW_as_W(10.0)),
-                                    static_cast<uint64_t>(kW_as_W(1'000.0)),
-                                    static_cast<uint64_t>(kWh_as_J(80.0)),
-                                    static_cast<uint64_t>(kWh_as_J(100.0)));
+                                     static_cast<uint64_t>(kWh_as_J(100.0)),
+                                     static_cast<uint64_t>(kW_as_W(10.0)),
+                                     static_cast<uint64_t>(kW_as_W(1'000.0)),
+                                     static_cast<uint64_t>(kWh_as_J(80.0)),
+                                     static_cast<uint64_t>(kWh_as_J(100.0)));
     auto elec_source_mux_id = Model_AddMux(m, 2, 1);
     auto elec_supply_mux_id = Model_AddMux(m, 2, 2);
     auto ng_util_id = Model_AddConstantSource(m, std::numeric_limits<uint32_t>::max());
@@ -1112,7 +1185,8 @@ TEST(Erin, Test15)
     EXPECT_EQ(conv_to_load_results.value().Requested_W, 50);
     EXPECT_EQ(conv_to_load_results.value().Available_W, 250);
 
-    auto conv_loss_to_mux_results = ModelResults_GetFlowForConnection(m, conv_loss_to_mux_conn, t, results);
+    auto conv_loss_to_mux_results =
+        ModelResults_GetFlowForConnection(m, conv_loss_to_mux_conn, t, results);
     EXPECT_TRUE(conv_loss_to_mux_results.has_value());
     EXPECT_EQ(conv_loss_to_mux_results.value().Actual_W, 100);
     EXPECT_EQ(conv_loss_to_mux_results.value().Requested_W, 100);
@@ -1143,7 +1217,8 @@ TEST(Erin, Test15)
     EXPECT_EQ(conv_to_load_results.value().Requested_W, 10);
     EXPECT_EQ(conv_to_load_results.value().Available_W, 250);
 
-    conv_loss_to_mux_results = ModelResults_GetFlowForConnection(m, conv_loss_to_mux_conn, t, results);
+    conv_loss_to_mux_results =
+        ModelResults_GetFlowForConnection(m, conv_loss_to_mux_conn, t, results);
     EXPECT_TRUE(conv_loss_to_mux_results.has_value());
     EXPECT_EQ(conv_loss_to_mux_results.value().Actual_W, 30);
     EXPECT_EQ(conv_loss_to_mux_results.value().Requested_W, 100);
@@ -1445,8 +1520,12 @@ TEST(Erin, Test21)
     std::map<size_t, size_t> count_by_frag_mode_id;
     std::map<size_t, double> time_by_fail_mode_id;
     std::map<size_t, double> time_by_frag_mode_id;
-    TimeState_CountAndTimeFailureEvents(
-        input, 200.0, count_by_fail_mode_id, count_by_frag_mode_id, time_by_fail_mode_id, time_by_frag_mode_id);
+    TimeState_CountAndTimeFailureEvents(input,
+                                        200.0,
+                                        count_by_fail_mode_id,
+                                        count_by_frag_mode_id,
+                                        time_by_fail_mode_id,
+                                        time_by_frag_mode_id);
     std::map<size_t, size_t> expected_count_by_fail_mode_id {{1, 1}};
     std::map<size_t, size_t> expected_count_by_frag_mode_id {{1, 1}};
     std::map<size_t, double> expected_time_by_fail_mode_id {{1, 10.0}};
@@ -1484,8 +1563,12 @@ TEST(Erin, Test21)
         {20.0, true, {}, {}},
         {100.0, false, {}, {1}},
     };
-    TimeState_CountAndTimeFailureEvents(
-        input, 180.0, count_by_fail_mode_id, count_by_frag_mode_id, time_by_fail_mode_id, time_by_frag_mode_id);
+    TimeState_CountAndTimeFailureEvents(input,
+                                        180.0,
+                                        count_by_fail_mode_id,
+                                        count_by_frag_mode_id,
+                                        time_by_fail_mode_id,
+                                        time_by_frag_mode_id);
     EXPECT_EQ(expected_count_by_fail_mode_id.size(), count_by_fail_mode_id.size());
     EXPECT_EQ(expected_count_by_frag_mode_id.size(), count_by_frag_mode_id.size());
     EXPECT_EQ(expected_time_by_fail_mode_id.size(), time_by_fail_mode_id.size());
@@ -1663,11 +1746,11 @@ TEST(Erin, TestApplyUniformTimeStep)
     // COMPONENTS
     auto e_pv = Model_AddScheduleBasedSource(m, ePV_avail);
     auto e_batt_id = Model_AddStore(m,
-                                  static_cast<uint64_t>(kWh_as_J(2.0)),
-                                  static_cast<uint64_t>(kW_as_W(0.5)),
-                                  static_cast<uint64_t>(kW_as_W(1.0)),
-                                  static_cast<uint64_t>(kWh_as_J(0.0)),
-                                  static_cast<uint64_t>(kWh_as_J(1.0)));
+                                    static_cast<uint64_t>(kWh_as_J(2.0)),
+                                    static_cast<uint64_t>(kW_as_W(0.5)),
+                                    static_cast<uint64_t>(kW_as_W(1.0)),
+                                    static_cast<uint64_t>(kWh_as_J(0.0)),
+                                    static_cast<uint64_t>(kWh_as_J(1.0)));
 
     // LOADS
     std::vector<TimeAndAmount> e_load {};
@@ -1686,7 +1769,7 @@ TEST(Erin, TestApplyUniformTimeStep)
     // SIMULATE
     auto results = Simulate(m, false);
 
-     // NOTE: 1-h steps
+    // NOTE: 1-h steps
     auto modified_results = ApplyUniformTimeStep(results, 1.0);
 
     EXPECT_EQ(modified_results.size(), 25) << "incorrect number of events";

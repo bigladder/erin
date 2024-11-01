@@ -37,7 +37,8 @@ int main(int argc, char** argv)
         Model_AddConnection(m, src_id, 0, load_id, 0);
     }
     auto stop_constr = std::chrono::high_resolution_clock::now();
-    auto duration_constr = std::chrono::duration_cast<std::chrono::microseconds>(stop_constr - start);
+    auto duration_constr =
+        std::chrono::duration_cast<std::chrono::microseconds>(stop_constr - start);
     std::cout << "Construction time: " << ((double)duration_constr.count() / 1000.0) << " ms"
               << std::endl;
     auto results = Simulate(m, false);

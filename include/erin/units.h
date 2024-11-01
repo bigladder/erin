@@ -7,7 +7,7 @@
 
 namespace erin
 {
-enum PowerUnit
+enum class PowerUnit
 {
     Watt,
     KiloWatt,
@@ -23,7 +23,7 @@ double Power_ToWatt(double value, PowerUnit unit);
 constexpr double W_per_kW = 1'000.0;
 constexpr double J_per_kJ = 1'000.0;
 
-enum EnergyUnit
+enum class EnergyUnit
 {
     Joule,
     KiloJoule,
@@ -40,7 +40,7 @@ std::string EnergyUnitToString(EnergyUnit unit);
 double Energy_ToJoules(double value, EnergyUnit unit);
 
 // PUBLIC
-enum TimeUnit
+enum class TimeUnit
 {
     Second,
     Minute,

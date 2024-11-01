@@ -272,7 +272,7 @@ std::string TimeUnitToTag(TimeUnit unit)
     default:
     {
         std::ostringstream oss {};
-        oss << "unhandled TimeType '" << unit << "'" << std::endl;
+        oss << "unhandled TimeType '" << TimeUnitToTag(unit) << "'" << std::endl;
         WriteErrorMessage("units", oss.str());
         std::exit(1);
     }

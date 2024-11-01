@@ -10,36 +10,36 @@
 using namespace erin;
 
 std::unordered_map<size_t, std::vector<TimeState>>
-RunCreateFailureSchedules(double initialAge_s, double scenarioOffset_s)
+run_create_failure_schedules(double initial_age_s, double scenario_offset_s)
 {
-    size_t compId = 0;
+    size_t comp_id = 0;
     DistributionSystem ds {};
     ReliabilityCoordinator rc {};
-    size_t breakDistId = ds.add_fixed("break", 10.0);
-    size_t fixDistId = ds.add_fixed("fix", 2.0);
-    size_t fmId = rc.add_failure_mode("fm", breakDistId, fixDistId);
-    rc.link_component_with_failure_mode(compId, fmId);
-    std::vector<size_t> componentFailureModeComponentIds {};
-    componentFailureModeComponentIds.push_back(compId);
-    std::vector<size_t> componentFailureModeFailureModeIds {};
-    componentFailureModeFailureModeIds.push_back(fmId);
-    std::vector<double> componentInitialAges_s {};
-    componentInitialAges_s.push_back(initialAge_s);
-    double scenarioDuration_s = 144.0;
+    size_t break_dist_id = ds.add_fixed("break", 10.0);
+    size_t fix_dist_id = ds.add_fixed("fix", 2.0);
+    size_t fm_id = rc.add_failure_mode("fm", break_dist_id, fix_dist_id);
+    rc.link_component_with_failure_mode(comp_id, fm_id);
+    std::vector<size_t> component_failure_mode_component_ids {};
+    component_failure_mode_component_ids.push_back(comp_id);
+    std::vector<size_t> component_failure_mode_failure_mode_ids {};
+    component_failure_mode_failure_mode_ids.push_back(fm_id);
+    std::vector<double> component_initial_ages_s {};
+    component_initial_ages_s.push_back(initial_age_s);
+    double scenario_duration_s = 144.0;
     return erin::CreateFailureSchedules(
-        componentFailureModeComponentIds,
-        componentFailureModeFailureModeIds,
-        componentInitialAges_s,
+        component_failure_mode_component_ids,
+        component_failure_mode_failure_mode_ids,
+        component_initial_ages_s,
         rc,
         []() { return 0.5; },
         ds,
-        scenarioDuration_s,
-        scenarioOffset_s);
+        scenario_duration_s,
+        scenario_offset_s);
 }
 
 TEST(ErinSim, TestCreateFailureSchedules)
 {
-    std::unordered_map<size_t, std::vector<TimeState>> actual = RunCreateFailureSchedules(0.0, 0.0);
+    std::unordered_map<size_t, std::vector<TimeState>> actual = run_create_failure_schedules(0.0, 0.0);
     EXPECT_EQ(actual.size(), 1);
     for (auto const& it : actual)
     {
@@ -55,7 +55,7 @@ TEST(ErinSim, TestCreateFailureSchedules)
 TEST(ErinSim, TestCreateFailureSchedulesWithOffset)
 {
     std::unordered_map<size_t, std::vector<TimeState>> actual =
-        RunCreateFailureSchedules(0.0, 24.0);
+        run_create_failure_schedules(0.0, 24.0);
     EXPECT_EQ(actual.size(), 1);
     for (auto const& it : actual)
     {
@@ -71,7 +71,7 @@ TEST(ErinSim, TestCreateFailureSchedulesWithOffset)
 TEST(ErinSim, TestCreateFailureSchedulesWithInitialAge)
 {
     std::unordered_map<size_t, std::vector<TimeState>> actual =
-        RunCreateFailureSchedules(24.0, 0.0);
+        run_create_failure_schedules(24.0, 0.0);
     EXPECT_EQ(actual.size(), 1);
     for (auto const& it : actual)
     {
@@ -87,7 +87,7 @@ TEST(ErinSim, TestCreateFailureSchedulesWithInitialAge)
 TEST(ErinSim, TestCreateFailureSchedulesWithInitialAgeAndOffset)
 {
     std::unordered_map<size_t, std::vector<TimeState>> actual =
-        RunCreateFailureSchedules(12.0, 12.0);
+        run_create_failure_schedules(12.0, 12.0);
     EXPECT_EQ(actual.size(), 1);
     for (auto const& it : actual)
     {
@@ -100,80 +100,80 @@ TEST(ErinSim, TestCreateFailureSchedulesWithInitialAgeAndOffset)
     }
 }
 
-std::vector<ScheduleBasedReliability> RunApplyReliabilitiesAndFragilities(
-    double scenarioOffset_s,
-    double scenarioDuration_s,
-    bool doRepair,
-    double initialAge_s,
-    std::unordered_map<size_t, std::vector<TimeState>> const& relSchByCompId)
+std::vector<ScheduleBasedReliability> run_apply_reliabilities_and_fragilities(
+    double scenario_offset_s,
+    double scenario_duration_s,
+    bool do_repair,
+    double initial_age_s,
+    std::unordered_map<size_t, std::vector<TimeState>> const& rel_sch_by_comp_id)
 {
     // NOTE: our network is one source feeding electricity
     // into one load. That is, S -> L
-    std::function<double()> randFn = [] { return 0.5; };
-    std::vector<size_t> componentFailureModeComponentIds {};
-    for (auto const& pair : relSchByCompId)
+    std::function<double()> rand_fn = [] { return 0.5; };
+    std::vector<size_t> component_failure_mode_component_ids {};
+    for (auto const& pair : rel_sch_by_comp_id)
     {
-        componentFailureModeComponentIds.push_back(pair.first);
+        component_failure_mode_component_ids.push_back(pair.first);
     }
-    std::vector<double> componentInitialAges_s = {initialAge_s, 0.0};
-    std::vector<std::string> componentTags = {"S", "L"};
-    std::vector<size_t> componentFragilityComponentIds = {0};
-    std::vector<size_t> componentFragilityFragilityModeIds = {0};
-    std::vector<size_t> fragilityModeFragilityCurveId = {0};
+    std::vector<double> component_initial_ages_s = {initial_age_s, 0.0};
+    std::vector<std::string> component_tags = {"S", "L"};
+    std::vector<size_t> component_fragility_component_ids = {0};
+    std::vector<size_t> component_fragility_fragility_mode_ids = {0};
+    std::vector<size_t> fragility_mode_fragility_curve_id = {0};
     DistributionSystem ds {};
-    std::vector<std::optional<size_t>> fragilityModeRepairDistIds {};
-    if (doRepair)
+    std::vector<std::optional<size_t>> fragility_mode_repair_dist_ids {};
+    if (do_repair)
     {
-        size_t repairId = ds.add_fixed("repair", 0.1 * scenarioDuration_s);
-        fragilityModeRepairDistIds.push_back(repairId);
+        size_t repair_id = ds.add_fixed("repair", 0.1 * scenario_duration_s);
+        fragility_mode_repair_dist_ids.push_back(repair_id);
     }
     else
     {
-        fragilityModeRepairDistIds.push_back({});
+        fragility_mode_repair_dist_ids.push_back({});
     }
-    std::vector<std::string> fragilityModeTags = {"vulnerable_to_wind"};
-    std::vector<size_t> fragilityCurveCurveIds = {0};
-    std::vector<FragilityCurveType> fragilityCurveCurveTypes = {FragilityCurveType::Linear};
-    std::vector<LinearFragilityCurve> linearFragilityCurves = {
+    std::vector<std::string> fragility_mode_tags = {"vulnerable_to_wind"};
+    std::vector<size_t> fragility_curve_curve_ids = {0};
+    std::vector<FragilityCurveType> fragility_curve_curve_types = {FragilityCurveType::Linear};
+    std::vector<LinearFragilityCurve> linear_fragility_curves = {
         {.VulnerabilityId = 0, .LowerBound = 80.0, .UpperBound = 140.0}};
-    std::vector<TabularFragilityCurve> tabularFragilityCurves = {};
-    std::unordered_map<size_t, double> intensityIdToAmount = {
+    std::vector<TabularFragilityCurve> tabular_fragility_curves = {};
+    std::unordered_map<size_t, double> intensity_id_to_amount = {
         {0, 160.0},
     };
     bool verbose = false;
     Log log {};
 
-    return ApplyReliabilitiesAndFragilities(randFn,
-                                            componentFailureModeComponentIds,
-                                            componentInitialAges_s,
-                                            componentTags,
-                                            componentFragilityComponentIds,
-                                            componentFragilityFragilityModeIds,
-                                            fragilityModeFragilityCurveId,
-                                            fragilityModeRepairDistIds,
-                                            fragilityModeTags,
-                                            fragilityCurveCurveIds,
-                                            fragilityCurveCurveTypes,
-                                            linearFragilityCurves,
-                                            tabularFragilityCurves,
+    return ApplyReliabilitiesAndFragilities(rand_fn,
+                                            component_failure_mode_component_ids,
+                                            component_initial_ages_s,
+                                            component_tags,
+                                            component_fragility_component_ids,
+                                            component_fragility_fragility_mode_ids,
+                                            fragility_mode_fragility_curve_id,
+                                            fragility_mode_repair_dist_ids,
+                                            fragility_mode_tags,
+                                            fragility_curve_curve_ids,
+                                            fragility_curve_curve_types,
+                                            linear_fragility_curves,
+                                            tabular_fragility_curves,
                                             ds,
-                                            scenarioOffset_s,
-                                            scenarioOffset_s + scenarioDuration_s,
-                                            intensityIdToAmount,
-                                            relSchByCompId,
+                                            scenario_offset_s,
+                                            scenario_offset_s + scenario_duration_s,
+                                            intensity_id_to_amount,
+                                            rel_sch_by_comp_id,
                                             verbose,
                                             log);
 }
 
 TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_NoAge)
 {
-    double scenarioOffset_s = 0.0;
-    double scenarioDuration_s = 1'000.0;
-    bool doRepair = false;
-    double initialAge_s = 0.0;
-    std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId {};
-    std::vector<ScheduleBasedReliability> actual = RunApplyReliabilitiesAndFragilities(
-        scenarioOffset_s, scenarioDuration_s, doRepair, initialAge_s, relSchByCompId);
+    double scenario_offset_s = 0.0;
+    double scenario_duration_s = 1'000.0;
+    bool do_repair = false;
+    double initial_age_s = 0.0;
+    std::unordered_map<size_t, std::vector<TimeState>> rel_sch_by_comp_id {};
+    std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
+        scenario_offset_s, scenario_duration_s, do_repair, initial_age_s, rel_sch_by_comp_id);
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
@@ -192,13 +192,13 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_NoAge)
 
 TEST(ErinSim, TestFragility_NoReliability_Repair_NoOffset_NoAge)
 {
-    double scenarioOffset_s = 0.0;
-    double scenarioDuration_s = 1'000.0;
-    bool doRepair = true;
-    double initialAge_s = 0.0;
-    std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId {};
-    std::vector<ScheduleBasedReliability> actual = RunApplyReliabilitiesAndFragilities(
-        scenarioOffset_s, scenarioDuration_s, doRepair, initialAge_s, relSchByCompId);
+    double scenario_offset_s = 0.0;
+    double scenario_duration_s = 1'000.0;
+    bool do_repair = true;
+    double initial_age_s = 0.0;
+    std::unordered_map<size_t, std::vector<TimeState>> rel_sch_by_comp_id {};
+    std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
+        scenario_offset_s, scenario_duration_s, do_repair, initial_age_s, rel_sch_by_comp_id);
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
@@ -221,13 +221,13 @@ TEST(ErinSim, TestFragility_NoReliability_Repair_NoOffset_NoAge)
 
 TEST(ErinSim, TestFragility_NoReliability_NoRepair_Offset_NoAge)
 {
-    double scenarioOffset_s = 250.0;
-    double scenarioDuration_s = 1'000.0;
-    bool doRepair = false;
-    double initialAge_s = 0.0;
-    std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId {};
-    std::vector<ScheduleBasedReliability> actual = RunApplyReliabilitiesAndFragilities(
-        scenarioOffset_s, scenarioDuration_s, doRepair, initialAge_s, relSchByCompId);
+    double scenario_offset_s = 250.0;
+    double scenario_duration_s = 1'000.0;
+    bool do_repair = false;
+    double initial_age_s = 0.0;
+    std::unordered_map<size_t, std::vector<TimeState>> rel_sch_by_comp_id {};
+    std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
+        scenario_offset_s, scenario_duration_s, do_repair, initial_age_s, rel_sch_by_comp_id);
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
@@ -246,13 +246,13 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_Offset_NoAge)
 
 TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_Age)
 {
-    double scenarioOffset_s = 0.0;
-    double scenarioDuration_s = 1'000.0;
-    double initialAge_s = 2'000;
-    bool doRepair = false;
-    std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId {};
-    std::vector<ScheduleBasedReliability> actual = RunApplyReliabilitiesAndFragilities(
-        scenarioOffset_s, scenarioDuration_s, doRepair, initialAge_s, relSchByCompId);
+    double scenario_offset_s = 0.0;
+    double scenario_duration_s = 1'000.0;
+    double initial_age_s = 2'000;
+    bool do_repair = false;
+    std::unordered_map<size_t, std::vector<TimeState>> rel_sch_by_comp_id {};
+    std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
+        scenario_offset_s, scenario_duration_s, do_repair, initial_age_s, rel_sch_by_comp_id);
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
@@ -271,13 +271,13 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_Age)
 
 TEST(ErinSim, TestFragility_NoReliability_NoRepair_Offset_Age)
 {
-    double scenarioOffset_s = 250.0;
-    double scenarioDuration_s = 1'000.0;
-    double initialAge_s = 2'000;
-    bool doRepair = false;
-    std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId {};
-    std::vector<ScheduleBasedReliability> actual = RunApplyReliabilitiesAndFragilities(
-        scenarioOffset_s, scenarioDuration_s, doRepair, initialAge_s, relSchByCompId);
+    double scenario_offset_s = 250.0;
+    double scenario_duration_s = 1'000.0;
+    double initial_age_s = 2'000;
+    bool do_repair = false;
+    std::unordered_map<size_t, std::vector<TimeState>> rel_sch_by_comp_id {};
+    std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
+        scenario_offset_s, scenario_duration_s, do_repair, initial_age_s, rel_sch_by_comp_id);
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
@@ -344,27 +344,27 @@ TEST(TimeState, TestTimeStateCombine)
 
 TEST(ErinSim, TestFragility_Reliability_NoRepair_NoOffset_NoAge)
 {
-    double scenarioOffset_s = 0.0;
-    double scenarioDuration_s = 1'000.0;
-    double initialAge_s = 0.0;
-    bool doRepair = false;
-    std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId {};
-    std::vector<TimeState> relSch {};
-    relSch.push_back({
+    double scenario_offset_s = 0.0;
+    double scenario_duration_s = 1'000.0;
+    double initial_age_s = 0.0;
+    bool do_repair = false;
+    std::unordered_map<size_t, std::vector<TimeState>> rel_sch_by_comp_id {};
+    std::vector<TimeState> rel_sch {};
+    rel_sch.push_back({
         .time = 10.0,
         .state = false,
         .failureModeCauses = {0},
         .fragilityModeCauses = {},
     });
-    relSch.push_back({
+    rel_sch.push_back({
         .time = 20.0,
         .state = true,
         .failureModeCauses = {},
         .fragilityModeCauses = {},
     });
-    relSchByCompId[0] = std::move(relSch);
-    std::vector<ScheduleBasedReliability> actual = RunApplyReliabilitiesAndFragilities(
-        scenarioOffset_s, scenarioDuration_s, doRepair, initialAge_s, relSchByCompId);
+    rel_sch_by_comp_id[0] = std::move(rel_sch);
+    std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
+        scenario_offset_s, scenario_duration_s, do_repair, initial_age_s, rel_sch_by_comp_id);
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
@@ -375,58 +375,58 @@ TEST(ErinSim, TestFragility_Reliability_NoRepair_NoOffset_NoAge)
         EXPECT_EQ(sbr.TimeStates[0].state, false);
         EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
         EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[0].fragilityModeCauses)
+        for (size_t fm_id : sbr.TimeStates[0].fragilityModeCauses)
         {
-            EXPECT_EQ(fmId, 0);
+            EXPECT_EQ(fm_id, 0);
         }
         // 2nd
         EXPECT_EQ(sbr.TimeStates[1].time, 10.0);
         EXPECT_EQ(sbr.TimeStates[1].state, false);
         EXPECT_EQ(sbr.TimeStates[1].failureModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[1].failureModeCauses)
+        for (size_t fm_id : sbr.TimeStates[1].failureModeCauses)
         {
-            EXPECT_EQ(fmId, 0);
+            EXPECT_EQ(fm_id, 0);
         }
         EXPECT_EQ(sbr.TimeStates[1].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[1].fragilityModeCauses)
+        for (size_t fm_id : sbr.TimeStates[1].fragilityModeCauses)
         {
-            EXPECT_EQ(fmId, 0);
+            EXPECT_EQ(fm_id, 0);
         }
         // 3rd
         EXPECT_EQ(sbr.TimeStates[2].time, 20.0);
         EXPECT_EQ(sbr.TimeStates[2].state, false);
         EXPECT_EQ(sbr.TimeStates[2].failureModeCauses.size(), 0);
         EXPECT_EQ(sbr.TimeStates[2].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[2].fragilityModeCauses)
+        for (size_t fm_id : sbr.TimeStates[2].fragilityModeCauses)
         {
-            EXPECT_EQ(fmId, 0);
+            EXPECT_EQ(fm_id, 0);
         }
     }
 }
 
 TEST(ErinSim, TestFragility_Reliability_Repair_Offset_Age)
 {
-    double scenarioOffset_s = 250.0;
-    double scenarioDuration_s = 1'000.0;
-    double initialAge_s = 250.0;
-    bool doRepair = false;
-    std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId {};
-    std::vector<TimeState> relSch {};
-    relSch.push_back({
+    double scenario_offset_s = 250.0;
+    double scenario_duration_s = 1'000.0;
+    double initial_age_s = 250.0;
+    bool do_repair = false;
+    std::unordered_map<size_t, std::vector<TimeState>> rel_sch_by_comp_id {};
+    std::vector<TimeState> rel_sch {};
+    rel_sch.push_back({
         .time = 510.0,
         .state = false,
         .failureModeCauses = {0},
         .fragilityModeCauses = {},
     });
-    relSch.push_back({
+    rel_sch.push_back({
         .time = 520.0,
         .state = true,
         .failureModeCauses = {},
         .fragilityModeCauses = {},
     });
-    relSchByCompId[0] = std::move(relSch);
-    std::vector<ScheduleBasedReliability> actual = RunApplyReliabilitiesAndFragilities(
-        scenarioOffset_s, scenarioDuration_s, doRepair, initialAge_s, relSchByCompId);
+    rel_sch_by_comp_id[0] = std::move(rel_sch);
+    std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
+        scenario_offset_s, scenario_duration_s, do_repair, initial_age_s, rel_sch_by_comp_id);
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
@@ -437,9 +437,9 @@ TEST(ErinSim, TestFragility_Reliability_Repair_Offset_Age)
         EXPECT_EQ(sbr.TimeStates[0].state, false);
         EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
         EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[0].fragilityModeCauses)
+        for (size_t fm_id : sbr.TimeStates[0].fragilityModeCauses)
         {
-            EXPECT_EQ(fmId, 0);
+            EXPECT_EQ(fm_id, 0);
         }
         // 2nd
         EXPECT_EQ(sbr.TimeStates[1].time, 10.0);
@@ -450,18 +450,18 @@ TEST(ErinSim, TestFragility_Reliability_Repair_Offset_Age)
             EXPECT_EQ(fmId, 0);
         }
         EXPECT_EQ(sbr.TimeStates[1].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[1].fragilityModeCauses)
+        for (size_t fm_id : sbr.TimeStates[1].fragilityModeCauses)
         {
-            EXPECT_EQ(fmId, 0);
+            EXPECT_EQ(fm_id, 0);
         }
         // 3rd
         EXPECT_EQ(sbr.TimeStates[2].time, 20.0);
         EXPECT_EQ(sbr.TimeStates[2].state, false);
         EXPECT_EQ(sbr.TimeStates[2].failureModeCauses.size(), 0);
         EXPECT_EQ(sbr.TimeStates[2].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[2].fragilityModeCauses)
+        for (size_t fm_id : sbr.TimeStates[2].fragilityModeCauses)
         {
-            EXPECT_EQ(fmId, 0);
+            EXPECT_EQ(fm_id, 0);
         }
     }
 }

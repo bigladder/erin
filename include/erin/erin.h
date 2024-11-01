@@ -3,31 +3,33 @@
 #ifndef ERIN_H
 #define ERIN_H
 
-#include "erin/const.h"
-#include "erin/timestate.h"
-#include "erin/distribution.h"
-#include "erin/reliability.h"
-#include "erin/time_and_amount.h"
-#include "erin/units.h"
-#include "erin/result.h"
-#include "erin/lookup_table.h"
-#include "erin/logging.h"
-#include "../vendor/toml11/toml.hpp"
+#include <cassert>
+#include <functional>
 #include <iostream>
 #include <limits>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string>
-#include <cassert>
-#include <stdexcept>
-#include <vector>
-#include <optional>
-#include <set>
 #include <map>
+#include <optional>
 #include <ostream>
-#include <functional>
+#include <set>
+#include <stdexcept>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
+
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/const.h"
+#include "erin/distribution.h"
+#include "erin/logging.h"
+#include "erin/lookup_table.h"
+#include "erin/reliability.h"
+#include "erin/result.h"
+#include "erin/time_and_amount.h"
+#include "erin/timestate.h"
+#include "erin/units.h"
 
 namespace erin
 {
@@ -413,8 +415,6 @@ struct Flow
     flow_t Available_W = 0;
     flow_t Actual_W = 0;
 
-    // TODO: fix the below. This will break if available is at max size for
-    // unsigned int
     Flow operator+(Flow const& flow) const
     {
         Flow newFlow;

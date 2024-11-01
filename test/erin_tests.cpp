@@ -1,16 +1,14 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-#include "erin/erin.h"
-#include "erin/timestate.h"
-#include "erin/simulation.h"
-#include "erin/toml.h"
-#include "erin/units.h"
-#include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <unordered_map>
+
+#include <gtest/gtest.h>
+
+#include "erin/all.h"
 
 using namespace erin;
 

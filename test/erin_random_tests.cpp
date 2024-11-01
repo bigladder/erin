@@ -1,7 +1,8 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-#include "erin/random.h"
 #include <gtest/gtest.h>
+
+#include "erin/random.h"
 
 TEST(ErinRandom, Fixed)
 {

@@ -1,15 +1,15 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <limits>
 #include <string>
-#include <filesystem>
 #include <unordered_map>
 #include <unordered_set>
 
-#include <toml.hpp>
 #include <CLI/CLI.hpp>
+#include <toml.hpp>
 
 #include "erin/all.h"
 #include "compilation_settings.h"

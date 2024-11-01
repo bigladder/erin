@@ -1,8 +1,10 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-#include "erin/lookup_table.h"
-#include <gtest/gtest.h>
 #include <vector>
+
+#include <gtest/gtest.h>
+
+#include "erin/lookup_table.h"
 
 TEST(LookupTable, TestInterp)
 {

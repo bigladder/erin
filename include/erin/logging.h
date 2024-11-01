@@ -13,6 +13,7 @@
 
 namespace erin
 {
+// PUBLIC
 enum class LogLevel
 {
     debug = 0,
@@ -21,6 +22,7 @@ enum class LogLevel
     error,
 };
 
+// PUBLIC
 struct Log
 {
     LogLevel log_level = LogLevel::debug;
@@ -30,26 +32,37 @@ struct Log
     std::optional<std::function<void(std::string const&, std::string const&)>> error = {};
 };
 
+// PUBLIC
 void Log_general(Log const& log, LogLevel ll, std::string const& msg);
 
+// PUBLIC
 void Log_general(Log const& log, LogLevel ll, std::string const& tag, std::string const& msg);
 
+// PUBLIC
 void Log_debug(Log const& log, std::string const& msg);
 
+// PUBLIC
 void Log_debug(Log const& log, std::string const& tag, std::string const& msg);
 
+// PUBLIC
 void Log_info(Log const& log, std::string const& msg);
 
+// PUBLIC
 void Log_info(Log const& log, std::string const& tag, std::string const& msg);
 
+// PUBLIC
 void Log_warning(Log const& log, std::string const& msg);
 
+// PUBLIC
 void Log_warning(Log const& log, std::string const& tag, std::string const& msg);
 
+// PUBLIC
 void Log_error(Log const& log, std::string const& msg);
 
+// PUBLIC
 void Log_error(Log const& log, std::string const& tag, std::string const& msg);
 
+// PUBLIC
 class Logger final : public Courier::Courier
 {
   public:
@@ -68,7 +81,9 @@ class Logger final : public Courier::Courier
     }
 };
 
+// PUBLIC
 Log Log_make_from_courier(Courier::Courier& courier);
+
 } // namespace erin
 
 #endif

@@ -41,6 +41,7 @@ size_t const constEffConvWasteflowPort = 2;
 constexpr size_t const wasteflowId = 0;
 
 // NOTE: the maximum allowed flow
+// PUBLIC
 constexpr flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 
 enum class FlowDirection
@@ -598,6 +599,7 @@ void AddConnectionIssue(std::vector<std::string>& issues,
                         size_t connIdx,
                         FlowDirection flowDirection);
 
+// PUBLIC
 std::vector<std::string> Model_check_network(Model const& m);
 
 inline flow_t UtilSafeAdd(flow_t a, flow_t b);

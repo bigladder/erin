@@ -15,6 +15,7 @@
 
 namespace erin
 {
+
 struct Load
 {
     std::string Tag;
@@ -36,7 +37,9 @@ std::optional<std::vector<Load>> parse_loads(toml::table const& table,
 
 std::ostream& operator<<(std::ostream& os, Load const& load);
 
+// PUBLIC
 int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsFilename);
+
 } // namespace erin
 
 #endif

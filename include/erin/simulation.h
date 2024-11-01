@@ -22,6 +22,7 @@
 
 namespace erin
 {
+// PUBLIC
 struct Simulation
 {
     FlowDict FlowTypeMap;
@@ -126,12 +127,14 @@ Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& l
 
 Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const& log);
 
+// PUBLIC
 std::optional<Simulation>
 Simulation_read_from_toml(toml::value const& v,
                           InputValidationMap const& validationInfo,
                           std::unordered_set<std::string> const& componentTagsInUse,
                           Log const& log = Log {});
 
+// PUBLIC
 void Simulation_print(Simulation const& s);
 
 void Simulation_PrintIntensities(Simulation const& s);
@@ -185,6 +188,7 @@ std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& 
 
 void AggregateGroups(Model& model, std::vector<TimeAndFlows> const& results);
 
+// PUBLIC
 void Simulation_run(Simulation& s,
                     Log& log,
                     std::string const& eventsFilename,

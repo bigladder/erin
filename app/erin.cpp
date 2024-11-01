@@ -475,7 +475,6 @@ CLI::App* add_update(CLI::App& app)
         }
         ofs << data;
         ofs.close();
-        // go through data and find issues
         return EXIT_SUCCESS;
     };
 
@@ -484,7 +483,7 @@ CLI::App* add_update(CLI::App& app)
     return subcommand;
 }
 
-CLI::App* add_packLoads(CLI::App& app)
+CLI::App* add_pack_loads(CLI::App& app)
 {
     auto subcommand = app.add_subcommand("pack-loads", "Pack loads into a single csv file");
 
@@ -498,7 +497,7 @@ CLI::App* add_packLoads(CLI::App& app)
     static bool verbose = false;
     subcommand->add_flag("-v,--verbose", verbose, "Verbose output");
 
-    auto packLoads = [&]()
+    auto pack_loads = [&]()
     {
         erin::Logger logger {};
         erin::Log log = get_standard_log(logger);
@@ -529,7 +528,7 @@ CLI::App* add_packLoads(CLI::App& app)
         return erin::write_packed_loads(loads, loads_filename);
     };
 
-    subcommand->callback([&]() { packLoads(); });
+    subcommand->callback([&]() { pack_loads(); });
 
     return subcommand;
 }
@@ -547,7 +546,7 @@ int main(int argc, char** argv)
     add_graph(app);
     add_checkNetwork(app);
     add_update(app);
-    add_packLoads(app);
+    add_pack_loads(app);
 
     CLI11_PARSE(app, argc, argv);
 

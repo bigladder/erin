@@ -10,7 +10,7 @@
 namespace erin
 {
 
-Months_days_elapsed DayOfYearToMonthsDaysElapsed(uint64_t day_of_year)
+Months_days_elapsed day_of_year_to_months_days_elapsed(uint64_t day_of_year)
 {
     uint64_t const doy = day_of_year % days_per_year;
     for (size_t i = 0; i < num_months; ++i)
@@ -33,11 +33,11 @@ Months_days_elapsed DayOfYearToMonthsDaysElapsed(uint64_t day_of_year)
         << "doy: " << doy << "\n"
         << "day_of_year: " << day_of_year << "\n"
         << "days_per_year: " << days_per_year << std::endl;
-    WriteErrorMessage("impossible condition", oss.str());
+    write_error_message("impossible condition", oss.str());
     std::exit(1);
 }
 
-std::string TimeToISO8601Period(uint64_t time_seconds)
+std::string time_to_ISO8601_period(uint64_t time_seconds)
 {
     uint64_t const seconds = time_seconds % seconds_per_minute;
     std::lldiv_t const minute_div = std::lldiv(time_seconds, seconds_per_minute);
@@ -46,7 +46,7 @@ std::string TimeToISO8601Period(uint64_t time_seconds)
     uint64_t const hours = hour_div.quot % hours_per_day;
     std::lldiv_t const day_of_year_div = std::lldiv(time_seconds, seconds_per_day);
     uint64_t const day_of_year = day_of_year_div.quot % days_per_year;
-    auto const month_days = DayOfYearToMonthsDaysElapsed(day_of_year);
+    auto const month_days = day_of_year_to_months_days_elapsed(day_of_year);
     int const days = static_cast<int>(month_days.days);
     int const months = static_cast<int>(month_days.months);
     std::lldiv_t const year_div = std::lldiv(time_seconds, seconds_per_year);
@@ -60,24 +60,24 @@ std::string TimeToISO8601Period(uint64_t time_seconds)
     return oss.str();
 }
 
-double TimeInSecondsToHours(uint64_t time_seconds)
+double time_in_seconds_to_hours(uint64_t time_seconds)
 {
     return static_cast<double>(time_seconds) / static_cast<double>(seconds_per_hour);
 }
 
-void WriteTaggedCategoryMessage(std::string const& category,
+void write_tagged_category_message(std::string const& category,
                                 std::string const& tag,
                                 std::string const& message)
 {
     std::cerr << WriteTaggedCategoryToString(category, tag, message) << std::endl;
 }
 
-void WriteWarningMessage(std::string const& tag, std::string const& message)
+void write_warning_message(std::string const& tag, std::string const& message)
 {
     std::cerr << WriteWarningToString(tag, message) << std::endl;
 }
 
-void WriteErrorMessage(std::string const& tag, std::string const& message)
+void write_error_message(std::string const& tag, std::string const& message)
 {
     std::cerr << WriteErrorToString(tag, message) << std::endl;
 }

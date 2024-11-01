@@ -37,14 +37,14 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
     if (si.InputFormatVersion != current_input_version)
     {
         // TODO: replace with logger for warning
-        WriteWarningMessage("simulation_info", "input_format_version doesn't match current");
+        write_warning_message("simulation_info", "input_format_version doesn't match current");
     }
     std::string rawTimeUnit = std::get<std::string>(table.at("time_unit").Value);
     std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(rawTimeUnit);
     if (!maybeTimeUnit.has_value())
     {
         // TODO: replace with logger for warning
-        WriteErrorMessage("simulation_info", "unhandled time unit string '" + rawTimeUnit + "'");
+        write_error_message("simulation_info", "unhandled time unit string '" + rawTimeUnit + "'");
         return {};
     }
     si.TheTimeUnit = maybeTimeUnit.value();
@@ -55,7 +55,7 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
     if (!maybeRateUnit.has_value())
     {
         // TODO: replace with logger for warning
-        WriteErrorMessage("simulation_info", "unhandled rate unit '" + rawRateUnit + "'");
+        write_error_message("simulation_info", "unhandled rate unit '" + rawRateUnit + "'");
         return {};
     }
     si.RateUnit = maybeRateUnit.value();

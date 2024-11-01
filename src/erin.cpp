@@ -1520,7 +1520,7 @@ void RunSwitchBackward(Model const& m, SimulationState& ss, size_t outflowConnId
     break;
     default:
     {
-        WriteErrorMessage("<runtime>", "unhandled switch state");
+        write_error_message("<runtime>", "unhandled switch state");
         std::exit(1);
     }
     break;
@@ -1756,7 +1756,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 break;
                 default:
                 {
-                    WriteErrorMessage("RunComponentsBackward",
+                    write_error_message("RunComponentsBackward",
                                       "unhandled port on variable efficiency "
                                       "converter");
                     exit(1);
@@ -1795,7 +1795,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 break;
                 default:
                 {
-                    WriteErrorMessage("<runtime>", "bad port connection for mover");
+                    write_error_message("<runtime>", "bad port connection for mover");
                     std::exit(1);
                 }
                 break;
@@ -1818,7 +1818,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 break;
                 default:
                 {
-                    WriteErrorMessage("<runtime>",
+                    write_error_message("<runtime>",
                                       "bad port connection for variable "
                                       "efficiency mover");
                     std::exit(1);
@@ -2518,7 +2518,7 @@ std::string ToString(ComponentType compType)
     break;
     default:
     {
-        WriteErrorMessage("ToString", "unhandled component type");
+        write_error_message("ToString", "unhandled component type");
         std::exit(1);
     }
     }
@@ -2591,8 +2591,8 @@ std::vector<std::string> FlowsToStrings(Model const& m, SimulationState const& s
     std::vector<std::string> result {};
     result.push_back(fmt::format("time: {} s, {}, {} h",
                                  time_s,
-                                 TimeToISO8601Period(static_cast<uint64_t>(time_s)),
-                                 TimeInSecondsToHours(static_cast<uint64_t>(time_s))));
+                                 time_to_ISO8601_period(static_cast<uint64_t>(time_s)),
+                                 time_in_seconds_to_hours(static_cast<uint64_t>(time_s))));
     for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
     {
         result.push_back(fmt::format("{}: {} (R: {}; A: {})",
@@ -2677,7 +2677,7 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         break;
         default:
         {
-            WriteErrorMessage("SummarizeFlows(.)",
+            write_error_message("SummarizeFlows(.)",
                               "Unhandled From type for connection - from pass: " +
                                   ToString(m.Connections[flowIdx].From));
         }
@@ -2718,7 +2718,7 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         break;
         default:
         {
-            WriteErrorMessage("SummarizeFlows(.)",
+            write_error_message("SummarizeFlows(.)",
                               "Unhandled From type for connection - to pass: " +
                                   ToString(m.Connections[flowIdx].To));
         }
@@ -2996,7 +2996,7 @@ bool RunSwitchLogic(Model const& model, SimulationState& ss)
         break;
         default:
         {
-            WriteErrorMessage("Simulate", "unhandled switch state");
+            write_error_message("Simulate", "unhandled switch state");
             std::exit(1);
         }
         break;
@@ -3154,7 +3154,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
 {
     if (compId >= m.ComponentMap.CompType.size())
     {
-        WriteErrorMessage("", "invalid component id");
+        write_error_message("", "invalid component id");
         std::exit(1);
     }
     if (ss.UnavailableComponents.contains(compId))
@@ -3270,7 +3270,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     {
         // TODO: what energy amount should the store come back with?
         // TODO: need to call routines to do charge request
-        WriteErrorMessage("store", "not implemented");
+        write_error_message("store", "not implemented");
         std::exit(1);
     }
     break;
@@ -3291,13 +3291,13 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     break;
     case ComponentType::WasteSinkType:
     {
-        WriteErrorMessage("waste sink", "should not be repairing pseduo-element waste");
+        write_error_message("waste sink", "should not be repairing pseduo-element waste");
         std::exit(1);
     }
     break;
     default:
     {
-        WriteErrorMessage("", "unhandled component type (b)");
+        write_error_message("", "unhandled component type (b)");
         std::exit(1);
     }
     }
@@ -3307,7 +3307,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
 {
     if (compId >= m.ComponentMap.CompType.size())
     {
-        WriteErrorMessage("", "invalid component id");
+        write_error_message("", "invalid component id");
         std::exit(1);
     }
     ss.UnavailableComponents.insert(compId);
@@ -3508,13 +3508,13 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
     break;
     case ComponentType::WasteSinkType:
     {
-        WriteErrorMessage("waste sink", "waste sink cannot fail");
+        write_error_message("waste sink", "waste sink cannot fail");
         std::exit(1);
     }
     break;
     default:
     {
-        WriteErrorMessage("", "unhandled component type (c)");
+        write_error_message("", "unhandled component type (c)");
         std::exit(1);
     }
     break;
@@ -4041,7 +4041,7 @@ Connection Model_AddConnection(Model& m,
         break;
         default:
         {
-            WriteErrorMessage("<network>", "bad port for Mover");
+            write_error_message("<network>", "bad port for Mover");
             std::exit(1);
         }
         break;
@@ -4065,7 +4065,7 @@ Connection Model_AddConnection(Model& m,
         break;
         default:
         {
-            WriteErrorMessage("<network>", "bad port for VariableEfficiencyMover");
+            write_error_message("<network>", "bad port for VariableEfficiencyMover");
             std::exit(1);
         }
         break;
@@ -4097,7 +4097,7 @@ Connection Model_AddConnection(Model& m,
         break;
         default:
         {
-            WriteErrorMessage("store port", "unhandled port for store");
+            write_error_message("store port", "unhandled port for store");
             std::exit(1);
         }
         }
@@ -4116,7 +4116,7 @@ Connection Model_AddConnection(Model& m,
     break;
     default:
     {
-        WriteErrorMessage("Model_AddConnection", "unhandled component type: " + ToString(fromType));
+        write_error_message("Model_AddConnection", "unhandled component type: " + ToString(fromType));
         std::exit(1);
     }
     }
@@ -4139,7 +4139,7 @@ Connection Model_AddConnection(Model& m,
         break;
         default:
         {
-            WriteErrorMessage("Model_AddConnection",
+            write_error_message("Model_AddConnection",
                               "unhandled inport: " + std::to_string(toPort) + " for " +
                                   ToString(toType));
             std::exit(1);
@@ -4189,7 +4189,7 @@ Connection Model_AddConnection(Model& m,
         break;
         default:
         {
-            WriteErrorMessage("<network>", "bad network connection for mover");
+            write_error_message("<network>", "bad network connection for mover");
             std::exit(1);
         }
         break;
@@ -4213,7 +4213,7 @@ Connection Model_AddConnection(Model& m,
         break;
         default:
         {
-            WriteErrorMessage("<network>",
+            write_error_message("<network>",
                               "bad network connection for variable efficiency "
                               "mover");
             std::exit(1);
@@ -4249,7 +4249,7 @@ Connection Model_AddConnection(Model& m,
     break;
     default:
     {
-        WriteErrorMessage("Model_AddConnection", "unhandled component type: " + ToString(toType));
+        write_error_message("Model_AddConnection", "unhandled component type: " + ToString(toType));
         std::exit(1);
     }
     break;
@@ -4811,7 +4811,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
             oss << "mismatch of flow types: " << fromTap.Tag
                 << ":outflow=" << fd.Type[m.ComponentMap.OutflowType[fromCompId][fromTap.Port]]
                 << "; connection: " << flow;
-            WriteErrorMessage("network", oss.str());
+            write_error_message("network", oss.str());
             return Result::Failure;
         }
         if (toCompId >= m.ComponentMap.InflowType.size())

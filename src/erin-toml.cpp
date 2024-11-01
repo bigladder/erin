@@ -421,7 +421,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
         {
             std::ostringstream oss;
             oss << "unhandled type conversion for '" << it->first << "'";
-            WriteErrorMessage(tableName, oss.str());
+            write_error_message(tableName, oss.str());
             std::exit(1);
         }
         break;
@@ -478,7 +478,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
             }
             else
             {
-                WriteErrorMessage(tableName,
+                write_error_message(tableName,
                                   "Parse error: unhandled datatype for boolean "
                                   "default '" +
                                       defkv.second + "'");
@@ -488,7 +488,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
         break;
         default:
         {
-            WriteErrorMessage(tableName, "Parse error: unhandled datatype for default");
+            write_error_message(tableName, "Parse error: unhandled datatype for default");
             std::exit(1);
         }
         }
@@ -699,7 +699,7 @@ TOMLTable_parse_vector_of_time_rate_pairs(std::unordered_map<toml::key, toml::va
     std::vector<TimeAndAmount> timeAndLoads {};
     if (!table.contains(fieldName) || !table.at(fieldName).is_array())
     {
-        WriteErrorMessage(tableName, fieldName + " not present or not an array");
+        write_error_message(tableName, fieldName + " not present or not an array");
         return {};
     }
     std::vector<toml::value> const& trs = table.at(fieldName).as_array();
@@ -728,7 +728,7 @@ TOMLTable_parse_vector_of_time_rate_pairs(std::unordered_map<toml::key, toml::va
             }
             else
             {
-                WriteErrorMessage(tableName, "time/rate pair was not of length 2");
+                write_error_message(tableName, "time/rate pair was not of length 2");
                 return {};
             }
         }
@@ -748,12 +748,12 @@ TOMLTable_parse_array_of_double(std::unordered_map<toml::key, toml::value> const
     std::vector<double> result;
     if (!table.contains(fieldName))
     {
-        WriteErrorMessage(tableName, "missing field '" + fieldName + "'");
+        write_error_message(tableName, "missing field '" + fieldName + "'");
         return {};
     }
     if (!table.at(fieldName).is_array())
     {
-        WriteErrorMessage(tableName, "must be an array");
+        write_error_message(tableName, "must be an array");
         return {};
     }
     std::vector<toml::value> xs = table.at(fieldName).as_array();
@@ -762,14 +762,14 @@ TOMLTable_parse_array_of_double(std::unordered_map<toml::key, toml::value> const
         toml::value v = xs[i];
         if (!(v.is_integer() || v.is_floating()))
         {
-            WriteErrorMessage(tableName,
+            write_error_message(tableName,
                               "array value at " + std::to_string(i) + " must be numeric");
             return {};
         }
         std::optional<double> maybeNumber = TOML_parse_numeric_value_as_double(v);
         if (!maybeNumber.has_value())
         {
-            WriteErrorMessage(tableName,
+            write_error_message(tableName,
                               "array value at " + std::to_string(i) +
                                   " could not be parsed as number");
             return {};
@@ -787,13 +787,13 @@ TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::val
     PairsVector result;
     if (!table.contains(fieldName))
     {
-        WriteErrorMessage(tableName, "does not contain required field '" + fieldName + "'");
+        write_error_message(tableName, "does not contain required field '" + fieldName + "'");
         return {};
     }
     toml::value fieldData = table.at(fieldName);
     if (!fieldData.is_array())
     {
-        WriteErrorMessage(tableName, fieldName + " must be an array of 2-element array of numbers");
+        write_error_message(tableName, fieldName + " must be an array of 2-element array of numbers");
         return {};
     }
     toml::array const& pairs = fieldData.as_array();
@@ -802,7 +802,7 @@ TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::val
         toml::value const& pair = pairs.at(i);
         if (!pair.is_array())
         {
-            WriteErrorMessage(tableName,
+            write_error_message(tableName,
                               "array entry at index " + std::to_string(i) +
                                   " must be an array of two numbers");
             return {};
@@ -810,7 +810,7 @@ TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::val
         toml::array xy = pair.as_array();
         if (xy.size() != 2)
         {
-            WriteErrorMessage(tableName,
+            write_error_message(tableName,
                               "array entry at index " + std::to_string(i) +
                                   " must be an array of two numbers");
             return {};
@@ -819,7 +819,7 @@ TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::val
         std::optional<double> maybeSecond = TOML_parse_numeric_value_as_double(xy[1]);
         if (!maybeFirst.has_value() || !maybeSecond.has_value())
         {
-            WriteErrorMessage(tableName,
+            write_error_message(tableName,
                               "array entry at index " + std::to_string(i) +
                                   " must be an array of two numbers");
             return {};

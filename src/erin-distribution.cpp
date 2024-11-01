@@ -496,7 +496,7 @@ double DistributionSystem::next_time_advance(size_t dist_id, double fraction) co
     break;
     default:
     {
-        WriteErrorMessage("distribution", "unhandled cumulative density function");
+        write_error_message("distribution", "unhandled cumulative density function");
         std::exit(1);
     }
     }
@@ -518,7 +518,7 @@ void DistributionSystem::print_distributions() const
         case DistType::Fixed:
         {
             double v = fixed_dist.value[dist.subtype_id[i]];
-            std::cout << "-- value: " << TimeInSecondsToHours(static_cast<uint64_t>(v)) << " h"
+            std::cout << "-- value: " << time_in_seconds_to_hours(static_cast<uint64_t>(v)) << " h"
                       << std::endl;
         }
         break;
@@ -526,10 +526,10 @@ void DistributionSystem::print_distributions() const
         {
             double avg = normal_dist.average[dist.subtype_id[i]];
             double sd = normal_dist.stddev[dist.subtype_id[i]];
-            std::cout << "-- average: " << TimeInSecondsToHours(static_cast<uint64_t>(avg)) << " h"
+            std::cout << "-- average: " << time_in_seconds_to_hours(static_cast<uint64_t>(avg)) << " h"
                       << std::endl;
             std::cout << "-- standard deviation: "
-                      << TimeInSecondsToHours(static_cast<uint64_t>(sd)) << " h" << std::endl;
+                      << time_in_seconds_to_hours(static_cast<uint64_t>(sd)) << " h" << std::endl;
         }
         break;
         case DistType::QuantileTable:
@@ -541,7 +541,7 @@ void DistributionSystem::print_distributions() const
                 double t = quantile_table_dist.times[qIdx];
                 double v = quantile_table_dist.variates[qIdx];
                 std::cout << "-- [" << qIdx - q0
-                          << "] time: " << TimeInSecondsToHours(static_cast<uint64_t>(t))
+                          << "] time: " << time_in_seconds_to_hours(static_cast<uint64_t>(t))
                           << " h => variate: " << v << std::endl;
             }
         }
@@ -550,9 +550,9 @@ void DistributionSystem::print_distributions() const
         {
             double lb = uniform_dist.lower_bound[dist.subtype_id[i]];
             double ub = uniform_dist.upper_bound[dist.subtype_id[i]];
-            std::cout << "-- lower bound: " << TimeInSecondsToHours(static_cast<uint64_t>(lb))
+            std::cout << "-- lower bound: " << time_in_seconds_to_hours(static_cast<uint64_t>(lb))
                       << " h" << std::endl;
-            std::cout << "-- upper bound: " << TimeInSecondsToHours(static_cast<uint64_t>(ub))
+            std::cout << "-- upper bound: " << time_in_seconds_to_hours(static_cast<uint64_t>(ub))
                       << " h" << std::endl;
         }
         break;
@@ -563,7 +563,7 @@ void DistributionSystem::print_distributions() const
             double loc = weibull_dist.location_params[dist.subtype_id[i]];
             std::cout << "-- shape parameter: " << shape << std::endl;
             std::cout << "-- scale parameter: " << scale << std::endl;
-            std::cout << "-- location: " << TimeInSecondsToHours(static_cast<uint64_t>(loc)) << " h"
+            std::cout << "-- location: " << time_in_seconds_to_hours(static_cast<uint64_t>(loc)) << " h"
                       << std::endl;
         }
         break;
@@ -722,7 +722,7 @@ Result ParseDistributions(DistributionSystem& ds,
                     inputDataFile.open(csvFileName);
                     if (!inputDataFile.good())
                     {
-                        WriteErrorMessage(fullTableName,
+                        write_error_message(fullTableName,
                                           "unable to load input csv file '" + csvFileName + "'");
                         return {};
                     }
@@ -733,7 +733,7 @@ Result ParseDistributions(DistributionSystem& ds,
                         std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(timeUnitStr);
                         if (!maybeTimeUnit.has_value())
                         {
-                            WriteErrorMessage(fullTableName, "unhandled time unit: " + timeUnitStr);
+                            write_error_message(fullTableName, "unhandled time unit: " + timeUnitStr);
                             return {};
                         }
                         TimeUnit timeUnitForRead = maybeTimeUnit.value();
@@ -748,7 +748,7 @@ Result ParseDistributions(DistributionSystem& ds,
                             ++rowIdx;
                             if (pair.size() != 2)
                             {
-                                WriteErrorMessage(fullTableName,
+                                write_error_message(fullTableName,
                                                   "csv file '" + csvFileName +
                                                       "'"
                                                       " row: " +

@@ -39,7 +39,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
         auto maybe = tag_to_time_unit(maybeTimeUnitStr);
         if (!maybe.has_value())
         {
-            WriteErrorMessage(tableFullName, "unhandled time_unit '" + maybeTimeUnitStr + "'");
+            write_error_message(tableFullName, "unhandled time_unit '" + maybeTimeUnitStr + "'");
             return {};
         }
         timeUnit = maybe.value();
@@ -50,7 +50,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
         auto maybe = tag_to_power_unit(rateUnitStr);
         if (!maybe.has_value())
         {
-            WriteErrorMessage(tableFullName, "unhandled rate_unit '" + rateUnitStr + "'");
+            write_error_message(tableFullName, "unhandled rate_unit '" + rateUnitStr + "'");
             return {};
         }
         rateUnit = maybe.value();
@@ -79,7 +79,7 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
     inputDataFile.open(csvFileName);
     if (!inputDataFile.good())
     {
-        WriteErrorMessage(tableFullName, "unable to load input csv file '" + csvFileName + "'");
+        write_error_message(tableFullName, "unable to load input csv file '" + csvFileName + "'");
         return {};
     }
     auto header = read_row(inputDataFile);
@@ -90,21 +90,21 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
         auto maybeTimeUnit = tag_to_time_unit(timeUnitStr);
         if (!maybeTimeUnit.has_value())
         {
-            WriteErrorMessage(tableFullName, "unhandled time unit: " + timeUnitStr);
+            write_error_message(tableFullName, "unhandled time unit: " + timeUnitStr);
             return {};
         }
         timeUnit = maybeTimeUnit.value();
         auto maybeRateUnit = tag_to_power_unit(rateUnitStr);
         if (!maybeRateUnit.has_value())
         {
-            WriteErrorMessage(tableFullName, "unhandled rate unit: " + rateUnitStr);
+            write_error_message(tableFullName, "unhandled rate unit: " + rateUnitStr);
             return {};
         }
         rateUnit = maybeRateUnit.value();
     }
     else
     {
-        WriteErrorMessage(tableFullName,
+        write_error_message(tableFullName,
                           "csv file '" + csvFileName +
                               "'"
                               " -- header must have 2 columns: time unit "
@@ -123,7 +123,7 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
         ++rowIdx;
         if (pair.size() != 2)
         {
-            WriteErrorMessage(tableFullName,
+            write_error_message(tableFullName,
                               "csv file '" + csvFileName +
                                   "'"
                                   " row: " +
@@ -155,7 +155,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
     inputDataFile.open(csvFileName);
     if (!inputDataFile.good())
     {
-        WriteErrorMessage(tableFullName, "unable to load input csv file '" + csvFileName + "'");
+        write_error_message(tableFullName, "unable to load input csv file '" + csvFileName + "'");
         return {};
     }
 
@@ -192,7 +192,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
     sRow = read_row(inputDataFile);
     if (sRow.size() != nCols)
     {
-        WriteErrorMessage(tableFullName, "invalid table size.");
+        write_error_message(tableFullName, "invalid table size.");
         return {};
     }
 
@@ -206,14 +206,14 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
             auto maybeTimeUnit = tag_to_time_unit(timeUnitStr);
             if (!maybeTimeUnit.has_value())
             {
-                WriteErrorMessage(tableFullName, "unhandled time unit: " + timeUnitStr);
+                write_error_message(tableFullName, "unhandled time unit: " + timeUnitStr);
                 return {};
             }
             loadEntries[iEntry].timeUnit = maybeTimeUnit.value();
             auto maybeRateUnit = tag_to_power_unit(rateUnitStr);
             if (!maybeRateUnit.has_value())
             {
-                WriteErrorMessage(tableFullName, "unhandled rate unit: " + rateUnitStr);
+                write_error_message(tableFullName, "unhandled rate unit: " + rateUnitStr);
                 return {};
             }
             loadEntries[iEntry].rateUnit = maybeRateUnit.value();
@@ -221,7 +221,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
         }
         else
         {
-            WriteErrorMessage(tableFullName,
+            write_error_message(tableFullName,
                               "multi-part csv file '" + csvFileName +
                                   "'"
                                   " -- header 2nd row must have 2 columns for each "
@@ -286,14 +286,14 @@ std::optional<Load> ParseSingleLoad(std::string const& tag,
         maybeLoad = ParseSingleLoadExplicit(explicitLoadTable, tag);
         if (!maybeLoad.has_value())
         {
-            WriteErrorMessage(tableName, "unable to load");
+            write_error_message(tableName, "unable to load");
             return {};
         }
         if (warnings01.size() > 0)
         {
             for (auto const& w : warnings01)
             {
-                WriteErrorMessage(tableName, w);
+                write_error_message(tableName, w);
             }
         }
     }
@@ -305,14 +305,14 @@ std::optional<Load> ParseSingleLoad(std::string const& tag,
             TOMLTable_parse_with_validation(table, fileValidation, tableName, errors02, warnings02);
         if (errors02.size() > 0)
         {
-            WriteErrorMessage(tableName, "unable to load explicitly or by file");
+            write_error_message(tableName, "unable to load explicitly or by file");
             for (auto const& err : errors01)
             {
-                WriteErrorMessage(tableName, err);
+                write_error_message(tableName, err);
             }
             for (auto const& err : errors02)
             {
-                WriteErrorMessage(tableName, err);
+                write_error_message(tableName, err);
             }
             return {};
         }
@@ -320,13 +320,13 @@ std::optional<Load> ParseSingleLoad(std::string const& tag,
         {
             for (auto const& w : warnings02)
             {
-                WriteWarningMessage(tableName, w);
+                write_warning_message(tableName, w);
             }
         }
         maybeLoad = ParseSingleLoadFileLoad(fileLoadTable, tag);
         if (!maybeLoad.has_value())
         {
-            WriteErrorMessage(tableName, "unable to load");
+            write_error_message(tableName, "unable to load");
             return {};
         }
     }
@@ -343,7 +343,7 @@ std::vector<std::optional<Load>> ParseMultiLoad(std::string const& tableName,
     {
         if (!maybeLoad.has_value())
         {
-            WriteErrorMessage(tableName, "unable to load");
+            write_error_message(tableName, "unable to load");
             return {};
         }
     }
@@ -360,7 +360,7 @@ bool MaybePushLoad(std::optional<Load> maybeLoad,
     {
         if (load.Tag == maybeLoad->Tag)
         {
-            WriteErrorMessage(tableName, "load " + maybeLoad->Tag + " already exists");
+            write_error_message(tableName, "load " + maybeLoad->Tag + " already exists");
             loadGood = false;
             break;
         }

@@ -47,7 +47,7 @@ std::string power_unit_to_string(PowerUnit unit)
     break;
     default:
     {
-        WriteErrorMessage("units", "unhandled power unit");
+        write_error_message("units", "unhandled power unit");
         std::exit(1);
     }
     break;
@@ -151,7 +151,7 @@ std::string energy_unit_to_string(EnergyUnit unit)
     break;
     default:
     {
-        WriteErrorMessage("units", "unhandled energy unit");
+        write_error_message("units", "unhandled energy unit");
         std::exit(1);
     }
     break;
@@ -196,7 +196,7 @@ double energy_to_joules(double value, EnergyUnit unit)
     break;
     default:
     {
-        WriteErrorMessage("units", "unhandled energy unit");
+        write_error_message("units", "unhandled energy unit");
         std::exit(1);
     }
     break;
@@ -273,7 +273,7 @@ std::string time_unit_to_tag(TimeUnit unit)
     {
         std::ostringstream oss {};
         oss << "unhandled TimeType '" << time_unit_to_tag(unit) << "'" << std::endl;
-        WriteErrorMessage("units", oss.str());
+        write_error_message("units", oss.str());
         std::exit(1);
     }
     break;
@@ -361,7 +361,7 @@ double time_in_seconds_to_desired_unit(double time_s, TimeUnit unit)
     {
         return time_s / static_cast<double>(seconds_per_year);
     }
-    WriteErrorMessage("WriteResultsToEventFile", "unhandled time unit");
+    write_error_message("WriteResultsToEventFile", "unhandled time unit");
     std::exit(1);
 }
 

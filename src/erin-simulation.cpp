@@ -762,19 +762,19 @@ Parse_VulnerableTo(Simulation const& s, toml::table const& fcData, std::string c
 {
     if (!fcData.contains("vulnerable_to"))
     {
-        WriteErrorMessage(tableFullName, "missing required field 'vulnerable_to'");
+        write_error_message(tableFullName, "missing required field 'vulnerable_to'");
         return {};
     }
     if (!fcData.at("vulnerable_to").is_string())
     {
-        WriteErrorMessage(tableFullName, "field 'vulnerable_to' not a string");
+        write_error_message(tableFullName, "field 'vulnerable_to' not a string");
         return {};
     }
     std::string const& vulnerStr = fcData.at("vulnerable_to").as_string();
     std::optional<size_t> maybeIntId = GetIntensityIdByTag(s.Intensities, vulnerStr);
     if (!maybeIntId.has_value())
     {
-        WriteErrorMessage(tableFullName,
+        write_error_message(tableFullName,
                           "could not find referenced intensity '" + vulnerStr +
                               "' for 'vulnerable_to'");
         return {};
@@ -2957,11 +2957,11 @@ void Simulation_run(Simulation& s,
                 Log_info(
                     log,
                     fmt::format("Scenario start time: {} h",
-                                TimeInSecondsToHours(static_cast<uint64_t>(scenarioOffset_s))));
+                                time_in_seconds_to_hours(static_cast<uint64_t>(scenarioOffset_s))));
                 Log_info(
                     log,
                     fmt::format("Scenario end time: {} h",
-                                TimeInSecondsToHours(static_cast<uint64_t>(scenarioOffset_s) +
+                                time_in_seconds_to_hours(static_cast<uint64_t>(scenarioOffset_s) +
                                                      static_cast<uint64_t>(scenarioDuration_s))));
             }
             s.TheModel.Reliabilities.clear();
@@ -3009,7 +3009,7 @@ void Simulation_run(Simulation& s,
                 }
             }
             std::string scenarioStartTimeTag =
-                TimeToISO8601Period(static_cast<uint64_t>(std::llround(t)));
+                time_to_ISO8601_period(static_cast<uint64_t>(std::llround(t)));
             if (verbose)
             {
                 Log_info(log,

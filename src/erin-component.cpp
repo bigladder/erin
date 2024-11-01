@@ -121,7 +121,7 @@ Result ParseSingleComponent(Simulation& s,
     break;
     default:
     {
-        WriteErrorMessage(fullTableName, "unhandled component type: " + ToString(ct));
+        write_error_message(fullTableName, "unhandled component type: " + ToString(ct));
         std::exit(1);
     }
     break;
@@ -209,7 +209,7 @@ Result ParseSingleComponent(Simulation& s,
             std::optional<PowerUnit> maybePowerUnit = tag_to_power_unit(localRateUnit);
             if (!maybePowerUnit.has_value())
             {
-                WriteErrorMessage(fullTableName,
+                write_error_message(fullTableName,
                                   "unhandled rate_unit value: '" + localRateUnit + "'");
                 return Result::Failure;
             }
@@ -217,7 +217,7 @@ Result ParseSingleComponent(Simulation& s,
         }
         if (!input.contains("constant_request"))
         {
-            WriteErrorMessage(fullTableName, "required field 'constant_request' not found");
+            write_error_message(fullTableName, "required field 'constant_request' not found");
             return Result::Failure;
         }
         double loadRequest = std::get<double>(input.at("constant_request").Value);
@@ -320,19 +320,19 @@ Result ParseSingleComponent(Simulation& s,
         auto numOutflowsTemp = std::get<int64_t>(input.at("num_outflows").Value);
         if (numInflowsTemp <= 0)
         {
-            WriteErrorMessage(fullTableName, "num_inflows must be a positive integer");
+            write_error_message(fullTableName, "num_inflows must be a positive integer");
             return Result::Failure;
         }
         if (numOutflowsTemp <= 0)
         {
-            WriteErrorMessage(fullTableName, "num_outflows must be a positive integer");
+            write_error_message(fullTableName, "num_outflows must be a positive integer");
             return Result::Failure;
         }
         size_t numInflows = static_cast<size_t>(numInflowsTemp);
         size_t numOutflows = static_cast<size_t>(numOutflowsTemp);
         if (inflowId != outflowId)
         {
-            WriteErrorMessage(fullTableName,
+            write_error_message(fullTableName,
                               "a mux component must have the same inflow type "
                               "as outflow type; we have inflow = '" +
                                   s.FlowTypeMap.Type[inflowId] + "'; outflow = '" +
@@ -496,7 +496,7 @@ Result ParseSingleComponent(Simulation& s,
     {
         if (inflowId != outflowId)
         {
-            WriteErrorMessage(fullTableName,
+            write_error_message(fullTableName,
                               "inflow type must equal outflow type for pass-through");
             return Result::Failure;
         }
@@ -513,7 +513,7 @@ Result ParseSingleComponent(Simulation& s,
     {
         if (inflowId != outflowId)
         {
-            WriteErrorMessage(fullTableName, "inflow type must equal outflow type for store");
+            write_error_message(fullTableName, "inflow type must equal outflow type for store");
             return Result::Failure;
         }
         EnergyUnit capacityUnit = EnergyUnit::Joule;
@@ -523,7 +523,7 @@ Result ParseSingleComponent(Simulation& s,
             auto maybeCapacityUnit = tag_to_energy_unit(capacityUnitStr);
             if (!maybeCapacityUnit.has_value())
             {
-                WriteErrorMessage(fullTableName,
+                write_error_message(fullTableName,
                                   "unhandled capacity unit '" + capacityUnitStr + "'");
                 return Result::Failure;
             }
@@ -533,7 +533,7 @@ Result ParseSingleComponent(Simulation& s,
             energy_to_joules(std::get<double>(input.at("capacity").Value), capacityUnit));
         if (capacity_J == 0)
         {
-            WriteErrorMessage(fullTableName, "capacity must be greater than 0");
+            write_error_message(fullTableName, "capacity must be greater than 0");
             return Result::Failure;
         }
         flow_t maxCharge_W = static_cast<flow_t>(
@@ -543,7 +543,7 @@ Result ParseSingleComponent(Simulation& s,
         double chargeAtSoc = std::get<double>(input.at("charge_at_soc").Value);
         if (chargeAtSoc < 0.0 || chargeAtSoc > 1.0)
         {
-            WriteErrorMessage(fullTableName, "charge_at_soc must be in range [0.0, 1.0]");
+            write_error_message(fullTableName, "charge_at_soc must be in range [0.0, 1.0]");
             return Result::Failure;
         }
         flow_t noChargeAmount_J = static_cast<flow_t>(chargeAtSoc * capacity_J);
@@ -556,7 +556,7 @@ Result ParseSingleComponent(Simulation& s,
         double initSoc = std::get<double>(input.at("init_soc").Value);
         if (initSoc < 0.0 || initSoc > 1.0)
         {
-            WriteErrorMessage(fullTableName, "init_soc must be in range [0.0, 1.0]");
+            write_error_message(fullTableName, "init_soc must be in range [0.0, 1.0]");
             return Result::Failure;
         }
         flow_t initialStorage_J = static_cast<flow_t>(capacity_J * initSoc);
@@ -566,7 +566,7 @@ Result ParseSingleComponent(Simulation& s,
             rtEff = std::get<double>(input.at("roundtrip_efficiency").Value);
             if (rtEff <= 0.0 || rtEff > 1.0)
             {
-                WriteErrorMessage(fullTableName, "roundtrip efficiency must be (0.0, 1.0]");
+                write_error_message(fullTableName, "roundtrip efficiency must be (0.0, 1.0]");
                 return Result::Failure;
             }
         }
@@ -722,7 +722,7 @@ Result ParseSingleComponent(Simulation& s,
     break;
     default:
     {
-        WriteErrorMessage(fullTableName, "unhandled component type: " + ToString(ct));
+        write_error_message(fullTableName, "unhandled component type: " + ToString(ct));
         std::exit(1);
     }
     }
@@ -731,7 +731,7 @@ Result ParseSingleComponent(Simulation& s,
     {
         if (!table.at("failure_modes").is_array())
         {
-            WriteErrorMessage(fullTableName, "failure_modes must be an array of string");
+            write_error_message(fullTableName, "failure_modes must be an array of string");
             return Result::Failure;
         }
         std::vector<toml::value> const& fms = table.at("failure_modes").as_array();
@@ -739,7 +739,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             if (!fms[fmIdx].is_string())
             {
-                WriteErrorMessage(fullTableName,
+                write_error_message(fullTableName,
                                   "failure_modes[" + std::to_string(fmIdx) + "] must be string");
                 return Result::Failure;
             }
@@ -770,7 +770,7 @@ Result ParseSingleComponent(Simulation& s,
     {
         if (!table.at("fragility_modes").is_array())
         {
-            WriteErrorMessage(fullTableName, "fragility_modes must be an array of string");
+            write_error_message(fullTableName, "fragility_modes must be an array of string");
             return Result::Failure;
         }
         std::vector<toml::value> const& fms = table.at("fragility_modes").as_array();
@@ -778,7 +778,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             if (!fms[fmIdx].is_string())
             {
-                WriteErrorMessage(fullTableName,
+                write_error_message(fullTableName,
                                   "fragility_modes[" + std::to_string(fmIdx) + "] must be string");
                 return Result::Failure;
             }
@@ -813,13 +813,13 @@ Result ParseSingleComponent(Simulation& s,
             auto maybeTimeUnitStr = TOMLTable_parse_string(table, "time_unit", fullTableName);
             if (!maybeTimeUnitStr.has_value())
             {
-                WriteErrorMessage(fullTableName, "unable to parse 'time_unit' as string");
+                write_error_message(fullTableName, "unable to parse 'time_unit' as string");
                 return Result::Failure;
             }
             auto maybeTimeUnit = tag_to_time_unit(maybeTimeUnitStr.value());
             if (!maybeTimeUnit.has_value())
             {
-                WriteErrorMessage(fullTableName,
+                write_error_message(fullTableName,
                                   "could not interpret '" + maybeTimeUnitStr.value() +
                                       "' as time unit");
                 return Result::Failure;
@@ -829,7 +829,7 @@ Result ParseSingleComponent(Simulation& s,
         auto maybeInitialAge = TOMLTable_parse_double(table, "initial_age", fullTableName);
         if (!maybeInitialAge.has_value())
         {
-            WriteErrorMessage(fullTableName, "unable to parse initial age as a number");
+            write_error_message(fullTableName, "unable to parse initial age as a number");
             return Result::Failure;
         }
         double initialAge_s = time_to_seconds(maybeInitialAge.value(), timeUnit);
@@ -840,7 +840,7 @@ Result ParseSingleComponent(Simulation& s,
         auto maybeGroup = TOMLTable_parse_string(table, "group", fullTableName);
         if (!maybeGroup.has_value())
         {
-            WriteErrorMessage(fullTableName, "unable to parse 'group' as a string");
+            write_error_message(fullTableName, "unable to parse 'group' as a string");
             return Result::Failure;
         }
         std::string group = maybeGroup.value();

@@ -41,6 +41,7 @@ struct Simulation
     FailureModeDict FailureModes;
 };
 
+// PUBLIC
 std::string DoubleToString(double value, unsigned int precision);
 
 std::string FlowToString(flow_t value_W, unsigned int precision);
@@ -183,6 +184,7 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
     bool verbose,
     Log const& log);
 
+// PUBLIC
 std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& results,
                                                double const time_step_h);
 

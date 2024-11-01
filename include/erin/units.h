@@ -39,6 +39,7 @@ std::string EnergyUnitToString(EnergyUnit unit);
 
 double Energy_ToJoules(double value, EnergyUnit unit);
 
+// PUBLIC
 enum TimeUnit
 {
     Second,
@@ -57,6 +58,7 @@ double Time_ToSeconds(double t, TimeUnit unit);
 
 std::string SecondsToPrettyString(double time_s);
 
+// PUBLIC
 double TimeInSecondsToDesiredUnit(double time_s, TimeUnit unit);
 
 } // namespace erin

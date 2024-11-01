@@ -722,11 +722,13 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
 
 size_t Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag);
 
+// PUBLIC
 size_t Model_AddConstantLoad(Model& m, flow_t load);
 
 size_t Model_AddConstantLoad(
     Model& m, flow_t load, size_t inflowTypeId, std::string const& tag, bool report);
 
+// PUBLIC
 size_t Model_AddScheduleBasedLoad(Model& m, double* times, flow_t* loads, size_t numItems);
 
 size_t Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndAmount> const& timesAndLoads);
@@ -816,8 +818,10 @@ size_t Model_AddPassThrough(Model& m);
 
 size_t Model_AddPassThrough(Model& m, size_t flowId, std::string const& tag);
 
+// PUBLIC
 Connection Model_AddConnection(Model& m, size_t from, size_t fromPort, size_t to, size_t toPort);
 
+// PUBLIC
 Connection Model_AddConnection(Model& m,
                                size_t fromId,
                                size_t fromPort,

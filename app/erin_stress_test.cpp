@@ -11,40 +11,40 @@ using namespace erin;
 
 int main(int argc, char** argv)
 {
-    size_t numComponents = 5'000;
-    size_t numHours = 8'760;
+    size_t num_components = 5'000;
+    size_t num_hours = 8'760;
     if (argc == 3)
     {
-        numComponents = static_cast<size_t>(std::stoll(std::string {argv[1]}));
-        numHours = static_cast<size_t>(std::stoll(std::string {argv[2]}));
+        num_components = static_cast<size_t>(std::stoll(std::string {argv[1]}));
+        num_hours = static_cast<size_t>(std::stoll(std::string {argv[2]}));
     }
-    std::cout << "Running " << numComponents << " components for " << numHours << " hours"
+    std::cout << "Running " << num_components << " components for " << num_hours << " hours"
               << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
     Model m = {};
     m.RandFn = []() { return 0.4; };
     m.FinalTime = 8760.0 * 3600.0;
-    std::vector<TimeAndAmount> timesAndLoads = {};
-    timesAndLoads.reserve(numHours + 1);
-    for (size_t i = 0; i <= numHours; ++i)
+    std::vector<TimeAndAmount> times_and_loads = {};
+    times_and_loads.reserve(num_hours + 1);
+    for (size_t i = 0; i <= num_hours; ++i)
     {
-        timesAndLoads.push_back(TimeAndAmount {((double)i) * 3600.0, 1});
+        times_and_loads.push_back(TimeAndAmount {((double)i) * 3600.0, 1});
     }
-    for (size_t i = 0; i < numComponents; ++i)
+    for (size_t i = 0; i < num_components; ++i)
     {
-        auto srcId = Model_AddConstantSource(m, 100);
-        auto loadId = Model_AddScheduleBasedLoad(m, timesAndLoads);
-        auto srcToLoadConn = Model_AddConnection(m, srcId, 0, loadId, 0);
+        auto src_id = Model_AddConstantSource(m, 100);
+        auto load_id = Model_AddScheduleBasedLoad(m, times_and_loads);
+        Model_AddConnection(m, src_id, 0, load_id, 0);
     }
-    auto stopConstr = std::chrono::high_resolution_clock::now();
-    auto durationConstr = std::chrono::duration_cast<std::chrono::microseconds>(stopConstr - start);
-    std::cout << "Construction time: " << ((double)durationConstr.count() / 1000.0) << " ms"
+    auto stop_constr = std::chrono::high_resolution_clock::now();
+    auto duration_constr = std::chrono::duration_cast<std::chrono::microseconds>(stop_constr - start);
+    std::cout << "Construction time: " << ((double)duration_constr.count() / 1000.0) << " ms"
               << std::endl;
     auto results = Simulate(m, false);
-    assert(results.size() == numHours + 1 && "Results is not of expected length");
+    assert(results.size() == num_hours + 1 && "Results is not of expected length");
     auto stop = std::chrono::high_resolution_clock::now();
-    auto durationSim = std::chrono::duration_cast<std::chrono::microseconds>(stop - stopConstr);
-    std::cout << "Sim time: " << ((double)durationSim.count() / 1000.0) << " ms" << std::endl;
+    auto duration_sim = std::chrono::duration_cast<std::chrono::microseconds>(stop - stop_constr);
+    std::cout << "Sim time: " << ((double)duration_sim.count() / 1000.0) << " ms" << std::endl;
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     std::cout << "Total time: " << ((double)duration.count() / 1000.0) << " ms" << std::endl;
     return EXIT_SUCCESS;

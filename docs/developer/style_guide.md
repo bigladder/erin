@@ -2,13 +2,24 @@
 
 TODO: make consistent with Athenium
 
+## File Width
+
+Please keep line width to 80 chars.
+This facilitates opening multiple views on several files while keeping readability.
+
+Suggestions:
+
+- in `.clang-format`, set `ColumnLimit: 80` or 82 or something.
+
+
 ## Include Headers
 
 * Use include guards:
+    - see: https://google.github.io/styleguide/cppguide.html#The__define_Guard
 
 ```
-#ifndef ERIN_<FILE_NAME>_H
-#define ERIN_<FILE_NAME>_H
+#ifndef ERIN_<FILE_NAME>_H_
+#define ERIN_<FILE_NAME>_H_
 ...
 #endif
 ```

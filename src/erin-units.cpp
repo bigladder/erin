@@ -8,7 +8,7 @@
 
 namespace erin
 {
-std::optional<PowerUnit> TagToPowerUnit(std::string const& tag)
+std::optional<PowerUnit> tag_to_power_unit(std::string const& tag)
 {
     if (tag == "W")
     {

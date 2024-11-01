@@ -47,7 +47,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
     if (table.contains("rate_unit"))
     {
         auto rateUnitStr = std::get<std::string>(table.at("rate_unit").Value);
-        auto maybe = TagToPowerUnit(rateUnitStr);
+        auto maybe = tag_to_power_unit(rateUnitStr);
         if (!maybe.has_value())
         {
             WriteErrorMessage(tableFullName, "unhandled rate_unit '" + rateUnitStr + "'");
@@ -94,7 +94,7 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
             return {};
         }
         timeUnit = maybeTimeUnit.value();
-        auto maybeRateUnit = TagToPowerUnit(rateUnitStr);
+        auto maybeRateUnit = tag_to_power_unit(rateUnitStr);
         if (!maybeRateUnit.has_value())
         {
             WriteErrorMessage(tableFullName, "unhandled rate unit: " + rateUnitStr);
@@ -210,7 +210,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
                 return {};
             }
             loadEntries[iEntry].timeUnit = maybeTimeUnit.value();
-            auto maybeRateUnit = TagToPowerUnit(rateUnitStr);
+            auto maybeRateUnit = tag_to_power_unit(rateUnitStr);
             if (!maybeRateUnit.has_value())
             {
                 WriteErrorMessage(tableFullName, "unhandled rate unit: " + rateUnitStr);

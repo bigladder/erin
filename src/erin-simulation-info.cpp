@@ -51,7 +51,7 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
     double rawMaxTime = std::get<double>(table.at("max_time").Value);
     si.MaxTime = rawMaxTime;
     std::string rawRateUnit = std::get<std::string>(table.at("rate_unit").Value);
-    auto maybeRateUnit = TagToPowerUnit(rawRateUnit);
+    auto maybeRateUnit = tag_to_power_unit(rawRateUnit);
     if (!maybeRateUnit.has_value())
     {
         // TODO: replace with logger for warning

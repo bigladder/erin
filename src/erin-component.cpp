@@ -175,7 +175,7 @@ Result ParseSingleComponent(Simulation& s,
     if (input.contains("rate_unit"))
     {
         auto const& rateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
-        auto maybeRateUnit = TagToPowerUnit(rateUnitStr);
+        auto maybeRateUnit = tag_to_power_unit(rateUnitStr);
         if (!maybeRateUnit.has_value())
         {
             Log_error(log, fullTableName, fmt::format("unhandled rate_unit '{}'", rateUnitStr));
@@ -206,7 +206,7 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("rate_unit"))
         {
             std::string localRateUnit = std::get<std::string>(input.at("rate_unit").Value);
-            std::optional<PowerUnit> maybePowerUnit = TagToPowerUnit(localRateUnit);
+            std::optional<PowerUnit> maybePowerUnit = tag_to_power_unit(localRateUnit);
             if (!maybePowerUnit.has_value())
             {
                 WriteErrorMessage(fullTableName,
@@ -379,7 +379,7 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("rate_unit"))
         {
             std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
-            auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
+            auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
                 errors.push_back(WriteErrorToString(
@@ -445,7 +445,7 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("rate_unit"))
         {
             std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
-            auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
+            auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
                 errors.push_back(WriteErrorToString(
@@ -656,7 +656,7 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("rate_unit"))
         {
             std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
-            auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
+            auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
                 errors.push_back(WriteErrorToString(
@@ -704,7 +704,7 @@ Result ParseSingleComponent(Simulation& s,
             if (input.contains("rate_unit"))
             {
                 std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
-                auto maybeRateUnit = TagToPowerUnit(localRateUnitStr);
+                auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
                 if (!maybeRateUnit.has_value())
                 {
                     errors.push_back(WriteErrorToString(

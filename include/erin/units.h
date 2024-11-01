@@ -14,7 +14,7 @@ enum class PowerUnit
     MegaWatt,
 };
 
-std::optional<PowerUnit> TagToPowerUnit(std::string const& tag);
+std::optional<PowerUnit> tag_to_power_unit(std::string const& tag);
 
 std::string PowerUnitToString(PowerUnit unit);
 

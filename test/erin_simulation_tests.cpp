@@ -39,7 +39,8 @@ run_create_failure_schedules(double initial_age_s, double scenario_offset_s)
 
 TEST(ErinSim, TestCreateFailureSchedules)
 {
-    std::unordered_map<size_t, std::vector<TimeState>> actual = run_create_failure_schedules(0.0, 0.0);
+    std::unordered_map<size_t, std::vector<TimeState>> actual =
+        run_create_failure_schedules(0.0, 0.0);
     EXPECT_EQ(actual.size(), 1);
     for (auto const& it : actual)
     {

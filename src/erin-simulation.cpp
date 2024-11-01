@@ -1581,7 +1581,7 @@ std::string FlowInWattsToString(flow_t value_W, unsigned int precision)
         return "inf";
     }
     double value_kW = static_cast<double>(value_W) / W_per_kW;
-    return DoubleToString(value_kW, precision);
+    return double_to_string(value_kW, precision);
 }
 
 std::vector<size_t> CalculateNodeConnectionOrder(Simulation const& s,
@@ -2366,12 +2366,12 @@ void WriteStatisticsToFile(Simulation const& s,
         stats << s.ScenarioMap.Tags[os.Id];
         stats << "," << os.OccurrenceNumber;
         stats << "," << (os.Duration_s / seconds_per_hour);
-        stats << "," << DoubleToString(os.Inflow_kJ + os.InFromEnv_kJ, 0);
+        stats << "," << double_to_string(os.Inflow_kJ + os.InFromEnv_kJ, 0);
         // TODO(mok): break out InFromEnv from Inflow and list separately
-        stats << "," << DoubleToString(os.OutflowAchieved_kJ, 0);
-        stats << "," << DoubleToString(stored_kJ, 0);
-        stats << "," << DoubleToString(os.Wasteflow_kJ, 0);
-        stats << "," << DoubleToString(balance, 6);
+        stats << "," << double_to_string(os.OutflowAchieved_kJ, 0);
+        stats << "," << double_to_string(stored_kJ, 0);
+        stats << "," << double_to_string(os.Wasteflow_kJ, 0);
+        stats << "," << double_to_string(balance, 6);
         stats << "," << efficiency;
         stats << "," << (os.Uptime_s / seconds_per_hour);
         stats << "," << (os.Downtime_s / seconds_per_hour);

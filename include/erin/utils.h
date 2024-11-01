@@ -115,6 +115,8 @@ std::string WriteWarningToString(std::string const& tag, std::string const& mess
 
 std::string WriteErrorToString(std::string const& tag, std::string const& msg);
 
+std::string double_to_string(double value, unsigned int precision);
+
 } // namespace erin
 
 #endif

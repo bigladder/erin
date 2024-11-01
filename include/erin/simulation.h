@@ -42,7 +42,7 @@ struct Simulation
 };
 
 // PUBLIC
-std::string DoubleToString(double value, unsigned int precision);
+std::string double_to_string(double value, unsigned int precision);
 
 std::string FlowToString(flow_t value_W, unsigned int precision);
 

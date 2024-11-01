@@ -536,7 +536,7 @@ int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsF
             }
             if (iRow < table.size())
             {
-                out << erin::DoubleToString(table[iRow].Time_s, 1) << "," << table[iRow].Amount_W;
+                out << erin::double_to_string(table[iRow].Time_s, 1) << "," << table[iRow].Amount_W;
             }
             else
             {

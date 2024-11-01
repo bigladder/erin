@@ -85,7 +85,7 @@ double power_to_watts(double value, PowerUnit unit)
     return result;
 }
 
-std::optional<EnergyUnit> TagToEnergyUnit(std::string const& tag)
+std::optional<EnergyUnit> tag_to_energy_unit(std::string const& tag)
 {
     if (tag == "J")
     {

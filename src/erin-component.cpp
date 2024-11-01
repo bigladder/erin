@@ -520,7 +520,7 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("capacity_unit"))
         {
             std::string capacityUnitStr = std::get<std::string>(input.at("capacity_unit").Value);
-            auto maybeCapacityUnit = TagToEnergyUnit(capacityUnitStr);
+            auto maybeCapacityUnit = tag_to_energy_unit(capacityUnitStr);
             if (!maybeCapacityUnit.has_value())
             {
                 WriteErrorMessage(fullTableName,

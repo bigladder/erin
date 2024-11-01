@@ -58,7 +58,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
     auto timeRatePairs = ConvertToTimeAndAmounts(
         std::get<std::vector<std::vector<double>>>(table.at("time_rate_pairs").Value),
         Time_ToSeconds(1.0, timeUnit),
-        Power_ToWatt(1.0, rateUnit));
+        power_to_watts(1.0, rateUnit));
     Load load {
         .Tag = tag,
         .TimeAndLoads = std::move(timeRatePairs),
@@ -135,7 +135,7 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
         }
         TimeAndAmount ta {};
         ta.Time_s = Time_ToSeconds(std::stod(pair[0]), timeUnit);
-        ta.Amount_W = static_cast<flow_t>(std::round(Power_ToWatt(std::stod(pair[1]), rateUnit)));
+        ta.Amount_W = static_cast<flow_t>(std::round(power_to_watts(std::stod(pair[1]), rateUnit)));
         trps.push_back(ta);
     }
     inputDataFile.close();
@@ -257,7 +257,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
                 TimeAndAmount ta {};
                 ta.Time_s = Time_ToSeconds(std::stod(sRow[iCol]), loadEntry.timeUnit);
                 ta.Amount_W = static_cast<flow_t>(
-                    Power_ToWatt(std::stod(sRow[iCol + 1]), loadEntry.rateUnit));
+                    power_to_watts(std::stod(sRow[iCol + 1]), loadEntry.rateUnit));
                 loads[iLoad]->TimeAndLoads.push_back(ta);
             }
             iCol += 2;

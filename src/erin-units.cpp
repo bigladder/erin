@@ -55,7 +55,7 @@ std::string power_unit_to_string(PowerUnit unit)
     return result;
 }
 
-double Power_ToWatt(double value, PowerUnit unit)
+double power_to_watts(double value, PowerUnit unit)
 {
     double result = 0.0;
     switch (unit)

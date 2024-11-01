@@ -18,7 +18,7 @@ std::optional<PowerUnit> tag_to_power_unit(std::string const& tag);
 
 std::string power_unit_to_string(PowerUnit unit);
 
-double Power_ToWatt(double value, PowerUnit unit);
+double power_to_watts(double value, PowerUnit unit);
 
 constexpr double W_per_kW = 1'000.0;
 constexpr double J_per_kJ = 1'000.0;

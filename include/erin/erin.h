@@ -489,6 +489,7 @@ struct ComponentIdAndWasteAndEnvironmentConnection
     Connection EnvConn;
 };
 
+// PUBLIC
 enum class SwitchState
 {
     Primary = 0,
@@ -631,8 +632,10 @@ size_t Component_AddComponentReturningId(ComponentDict& c,
 
 void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
 
+// PUBLIC
 SwitchState SimulationState_GetSwitchState(SimulationState const& ss, size_t const& switchIdx);
 
+// PUBLIC
 void SimulationState_SetSwitchState(SimulationState& ss,
                                     size_t const& switchIdx,
                                     SwitchState newState);
@@ -727,6 +730,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
 
 void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t compId);
 
+// PUBLIC
 size_t Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag);
 
 // PUBLIC

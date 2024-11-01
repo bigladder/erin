@@ -110,13 +110,13 @@ void write_warning_message(std::string const& tag, std::string const& message);
 
 void write_error_message(std::string const& tag, std::string const& message);
 
-std::string WriteTaggedCategoryToString(std::string const& category,
+std::string write_tagged_category_to_string(std::string const& category,
                                         std::string const& tag,
                                         std::string const& message);
 
-std::string WriteWarningToString(std::string const& tag, std::string const& message);
+std::string write_warning_to_string(std::string const& tag, std::string const& message);
 
-std::string WriteErrorToString(std::string const& tag, std::string const& msg);
+std::string write_error_to_string(std::string const& tag, std::string const& msg);
 
 std::string double_to_string(double value, unsigned int precision);
 

@@ -69,20 +69,20 @@ void write_tagged_category_message(std::string const& category,
                                 std::string const& tag,
                                 std::string const& message)
 {
-    std::cerr << WriteTaggedCategoryToString(category, tag, message) << std::endl;
+    std::cerr << write_tagged_category_to_string(category, tag, message) << std::endl;
 }
 
 void write_warning_message(std::string const& tag, std::string const& message)
 {
-    std::cerr << WriteWarningToString(tag, message) << std::endl;
+    std::cerr << write_warning_to_string(tag, message) << std::endl;
 }
 
 void write_error_message(std::string const& tag, std::string const& message)
 {
-    std::cerr << WriteErrorToString(tag, message) << std::endl;
+    std::cerr << write_error_to_string(tag, message) << std::endl;
 }
 
-std::string WriteTaggedCategoryToString(std::string const& category,
+std::string write_tagged_category_to_string(std::string const& category,
                                         std::string const& tag,
                                         std::string const& message)
 {
@@ -99,14 +99,14 @@ std::string WriteTaggedCategoryToString(std::string const& category,
     return oss.str();
 }
 
-std::string WriteWarningToString(std::string const& tag, std::string const& message)
+std::string write_warning_to_string(std::string const& tag, std::string const& message)
 {
-    return WriteTaggedCategoryToString("WARNING", tag, message);
+    return write_tagged_category_to_string("WARNING", tag, message);
 }
 
-std::string WriteErrorToString(std::string const& tag, std::string const& message)
+std::string write_error_to_string(std::string const& tag, std::string const& message)
 {
-    return WriteTaggedCategoryToString("ERROR", tag, message);
+    return write_tagged_category_to_string("ERROR", tag, message);
 }
 
 // TODO: fix, this is slow! Almost 25% of benchmark occurs here...

@@ -362,12 +362,12 @@ Result ParseSingleComponent(Simulation& s,
         double efficiency = std::get<double>(input.at("constant_efficiency").Value);
         if (efficiency <= 0.0)
         {
-            errors.push_back(WriteErrorToString(fullTableName, "efficiency must be > 0.0"));
+            errors.push_back(write_error_to_string(fullTableName, "efficiency must be > 0.0"));
             return Result::Failure;
         }
         if (efficiency > 1.0)
         {
-            errors.push_back(WriteErrorToString(fullTableName,
+            errors.push_back(write_error_to_string(fullTableName,
                                                 "efficiency must be <= 1.0; "
                                                 "if you need efficiencies (COPs) > 1, "
                                                 "consider using a mover"));
@@ -382,7 +382,7 @@ Result ParseSingleComponent(Simulation& s,
             auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
-                errors.push_back(WriteErrorToString(
+                errors.push_back(write_error_to_string(
                     fullTableName, "unhandled rate unit '" + localRateUnitStr + "'"));
                 return Result::Failure;
             }
@@ -419,7 +419,7 @@ Result ParseSingleComponent(Simulation& s,
             double eff = fracEffPair[1];
             if (frac < 0.0 || frac > 1.0)
             {
-                errors.push_back(WriteErrorToString(fullTableName,
+                errors.push_back(write_error_to_string(fullTableName,
                                                     "Output power fraction must be "
                                                     "in range [0.0, 1.0]; got " +
                                                         std::to_string(frac)));
@@ -427,7 +427,7 @@ Result ParseSingleComponent(Simulation& s,
             }
             if (eff <= 0.0 || eff > 1.0)
             {
-                errors.push_back(WriteErrorToString(fullTableName,
+                errors.push_back(write_error_to_string(fullTableName,
                                                     "Efficiency must be "
                                                     "in range (0.0, 1.0]; got " +
                                                         std::to_string(eff)));
@@ -435,7 +435,7 @@ Result ParseSingleComponent(Simulation& s,
             }
             if (effByOutfrac.contains(frac))
             {
-                warnings.push_back(WriteWarningToString(
+                warnings.push_back(write_warning_to_string(
                     fullTableName,
                     "Found duplicate value of output fraction: " + std::to_string(frac) +
                         "; overwriting previous"));
@@ -448,7 +448,7 @@ Result ParseSingleComponent(Simulation& s,
             auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
-                errors.push_back(WriteErrorToString(
+                errors.push_back(write_error_to_string(
                     fullTableName, "unhandled rate unit '" + localRateUnitStr + "'"));
                 return Result::Failure;
             }
@@ -632,7 +632,7 @@ Result ParseSingleComponent(Simulation& s,
             double cop = fracCopPair[1];
             if (frac < 0.0 || frac > 1.0)
             {
-                errors.push_back(WriteErrorToString(fullTableName,
+                errors.push_back(write_error_to_string(fullTableName,
                                                     "Output power fraction must be "
                                                     "in range [0.0, 1.0]; got " +
                                                         std::to_string(frac)));
@@ -641,12 +641,12 @@ Result ParseSingleComponent(Simulation& s,
             if (cop <= 0.0)
             {
                 errors.push_back(
-                    WriteErrorToString(fullTableName, "COP must be > 0.0" + std::to_string(frac)));
+                    write_error_to_string(fullTableName, "COP must be > 0.0" + std::to_string(frac)));
                 return Result::Failure;
             }
             if (copByOutFrac.contains(frac))
             {
-                warnings.push_back(WriteWarningToString(
+                warnings.push_back(write_warning_to_string(
                     fullTableName,
                     "Found duplicate value of output fraction: " + std::to_string(frac) +
                         "; overwriting previous"));
@@ -659,7 +659,7 @@ Result ParseSingleComponent(Simulation& s,
             auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
-                errors.push_back(WriteErrorToString(
+                errors.push_back(write_error_to_string(
                     fullTableName, "unhandled rate unit '" + localRateUnitStr + "'"));
                 return Result::Failure;
             }
@@ -707,7 +707,7 @@ Result ParseSingleComponent(Simulation& s,
                 auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
                 if (!maybeRateUnit.has_value())
                 {
-                    errors.push_back(WriteErrorToString(
+                    errors.push_back(write_error_to_string(
                         fullTableName, "unhandled rate unit '" + localRateUnitStr + "'"));
                     return Result::Failure;
                 }

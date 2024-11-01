@@ -152,6 +152,7 @@ std::unordered_map<size_t, double> GetIntensitiesForScenario(Simulation& s, size
 
 std::vector<ScheduleBasedReliability> CopyReliabilities(Simulation const& s);
 
+// PUBLIC
 std::unordered_map<size_t, std::vector<TimeState>>
 CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentIds,
                        std::vector<size_t> const& componentFailureModeFailureModeIds,
@@ -162,6 +163,7 @@ CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentI
                        double scenarioDuration_s,
                        double scenarioOffset_s);
 
+// PUBLIC
 std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
     std::function<double()>& randFn,
     std::vector<size_t> const& componentFailureModeComponentIds,

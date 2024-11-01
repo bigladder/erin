@@ -52,17 +52,20 @@ TEST(Switch, TestSimulateSwitchNoLogic)
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
     EXPECT_EQ(results[0].Flows.size(), 3) << "size of flows must equal 3";
-    auto switch_to_load_results = ModelResults_GetFlowForConnection(m, switch_to_load, 0.0, results);
+    auto switch_to_load_results =
+        ModelResults_GetFlowForConnection(m, switch_to_load, 0.0, results);
     EXPECT_TRUE(switch_to_load_results.has_value());
     EXPECT_EQ(switch_to_load_results.value().Requested_W, 200);
     EXPECT_EQ(switch_to_load_results.value().Available_W, 100);
     EXPECT_EQ(switch_to_load_results.value().Actual_W, 100);
-    auto src0_to_primary_results = ModelResults_GetFlowForConnection(m, src0_to_switch, 0.0, results);
+    auto src0_to_primary_results =
+        ModelResults_GetFlowForConnection(m, src0_to_switch, 0.0, results);
     EXPECT_TRUE(src0_to_primary_results.has_value());
     EXPECT_EQ(src0_to_primary_results.value().Requested_W, 200);
     EXPECT_EQ(src0_to_primary_results.value().Available_W, 100);
     EXPECT_EQ(src0_to_primary_results.value().Actual_W, 100);
-    auto src1_to_secondary_results = ModelResults_GetFlowForConnection(m, src1_to_switch, 0.0, results);
+    auto src1_to_secondary_results =
+        ModelResults_GetFlowForConnection(m, src1_to_switch, 0.0, results);
     EXPECT_TRUE(src1_to_secondary_results.has_value());
     EXPECT_EQ(src1_to_secondary_results.value().Requested_W, 0);
     EXPECT_EQ(src1_to_secondary_results.value().Available_W, 250);
@@ -83,17 +86,20 @@ TEST(Switch, TestSimulateSwitchWithLogic)
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";
     EXPECT_EQ(results[0].Flows.size(), 3) << "size of flows must equal 3";
-    auto switch_to_load_results = ModelResults_GetFlowForConnection(m, switch_to_load, 0.0, results);
+    auto switch_to_load_results =
+        ModelResults_GetFlowForConnection(m, switch_to_load, 0.0, results);
     EXPECT_TRUE(switch_to_load_results.has_value());
     EXPECT_EQ(switch_to_load_results.value().Requested_W, 200);
     EXPECT_EQ(switch_to_load_results.value().Available_W, 250);
     EXPECT_EQ(switch_to_load_results.value().Actual_W, 200);
-    auto src0_to_primary_results = ModelResults_GetFlowForConnection(m, src0_to_switch, 0.0, results);
+    auto src0_to_primary_results =
+        ModelResults_GetFlowForConnection(m, src0_to_switch, 0.0, results);
     EXPECT_TRUE(src0_to_primary_results.has_value());
     EXPECT_EQ(src0_to_primary_results.value().Requested_W, 0);
     EXPECT_EQ(src0_to_primary_results.value().Available_W, 100);
     EXPECT_EQ(src0_to_primary_results.value().Actual_W, 0);
-    auto src1_to_secondary_results = ModelResults_GetFlowForConnection(m, src1_to_switch, 0.0, results);
+    auto src1_to_secondary_results =
+        ModelResults_GetFlowForConnection(m, src1_to_switch, 0.0, results);
     EXPECT_TRUE(src1_to_secondary_results.has_value());
     EXPECT_EQ(src1_to_secondary_results.value().Requested_W, 200);
     EXPECT_EQ(src1_to_secondary_results.value().Available_W, 250);

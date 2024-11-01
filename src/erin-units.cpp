@@ -25,7 +25,7 @@ std::optional<PowerUnit> tag_to_power_unit(std::string const& tag)
     return {};
 }
 
-std::string PowerUnitToString(PowerUnit unit)
+std::string power_unit_to_string(PowerUnit unit)
 {
     std::string result;
     switch (unit)

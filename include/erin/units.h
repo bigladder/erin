@@ -16,7 +16,7 @@ enum class PowerUnit
 
 std::optional<PowerUnit> tag_to_power_unit(std::string const& tag);
 
-std::string PowerUnitToString(PowerUnit unit);
+std::string power_unit_to_string(PowerUnit unit);
 
 double Power_ToWatt(double value, PowerUnit unit);
 

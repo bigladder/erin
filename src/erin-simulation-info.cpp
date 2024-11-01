@@ -99,7 +99,7 @@ std::ostream& operator<<(std::ostream& os, SimulationInfo const& s)
        << "MaxTime=" << s.MaxTime << "; "
        << "TimeUnit=\"" << TimeUnitToTag(s.TheTimeUnit) << "\"; "
        << "QuantityUnit=\"" << s.QuantityUnit << "\"; "
-       << "RateUnit=\"" << PowerUnitToString(s.RateUnit) << "\"}";
+       << "RateUnit=\"" << power_unit_to_string(s.RateUnit) << "\"}";
     return os;
 }
 } // namespace erin

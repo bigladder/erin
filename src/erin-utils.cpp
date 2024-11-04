@@ -2,6 +2,7 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #include <cmath>
 #include <sstream>
+#include <cassert>
 
 #include <fmt/core.h>
 

@@ -2,14 +2,16 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_UTILS_H
 #define ERIN_UTILS_H
-#include "erin/const.h"
-#include <string>
+
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <vector>
 #include <stdint.h>
+#include <string>
+#include <vector>
+
+#include "erin/const.h"
 
 namespace erin
 {

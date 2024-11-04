@@ -23,7 +23,7 @@
 
 namespace erin
 {
-// PUBLIC
+
 struct Simulation
 {
     FlowDict FlowTypeMap;
@@ -42,7 +42,6 @@ struct Simulation
     FailureModeDict FailureModes;
 };
 
-// PUBLIC
 std::string double_to_string(double value, unsigned int precision);
 
 std::string FlowToString(flow_t value_W, unsigned int precision);
@@ -129,14 +128,12 @@ Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& l
 
 Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const& log);
 
-// PUBLIC
 std::optional<Simulation>
 Simulation_read_from_toml(toml::value const& v,
                           InputValidationMap const& validationInfo,
                           std::unordered_set<std::string> const& componentTagsInUse,
                           Log const& log = Log {});
 
-// PUBLIC
 void Simulation_print(Simulation const& s);
 
 void Simulation_PrintIntensities(Simulation const& s);
@@ -153,7 +150,6 @@ std::unordered_map<size_t, double> GetIntensitiesForScenario(Simulation& s, size
 
 std::vector<ScheduleBasedReliability> CopyReliabilities(Simulation const& s);
 
-// PUBLIC
 std::unordered_map<size_t, std::vector<TimeState>>
 CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentIds,
                        std::vector<size_t> const& componentFailureModeFailureModeIds,
@@ -164,7 +160,6 @@ CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentI
                        double scenarioDuration_s,
                        double scenarioOffset_s);
 
-// PUBLIC
 std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
     std::function<double()>& randFn,
     std::vector<size_t> const& componentFailureModeComponentIds,
@@ -187,13 +182,11 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
     bool verbose,
     Log const& log);
 
-// PUBLIC
 std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& results,
                                                double const time_step_h);
 
 void AggregateGroups(Model& model, std::vector<TimeAndFlows> const& results);
 
-// PUBLIC
 void Simulation_run(Simulation& s,
                     Log& log,
                     std::string const& eventsFilename,

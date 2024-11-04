@@ -43,7 +43,6 @@ size_t const constEffConvWasteflowPort = 2;
 constexpr size_t const wasteflowId = 0;
 
 // NOTE: the maximum allowed flow
-// PUBLIC
 constexpr flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 
 enum class FlowDirection
@@ -447,7 +446,6 @@ struct Switch
     flow_t MaxOutflow_W;
 };
 
-// PUBLIC
 struct Model
 {
     ComponentDict ComponentMap;
@@ -474,14 +472,12 @@ struct Model
     std::unordered_map<std::string, size_t> nGroupPortsTo, nGroupPortsFrom;
 };
 
-// PUBLIC
 struct ComponentIdAndWasteConnection
 {
     size_t Id;
     Connection WasteConnection;
 };
 
-// PUBLIC
 struct ComponentIdAndWasteAndEnvironmentConnection
 {
     size_t Id;
@@ -489,7 +485,6 @@ struct ComponentIdAndWasteAndEnvironmentConnection
     Connection EnvConn;
 };
 
-// PUBLIC
 enum class SwitchState
 {
     Primary = 0,
@@ -536,7 +531,6 @@ struct LinearFragilityCurve
     double UpperBound = 1.0;
 };
 
-// PUBLIC
 struct TabularFragilityCurve
 {
     size_t VulnerabilityId = 0;
@@ -604,7 +598,6 @@ void AddConnectionIssue(std::vector<std::string>& issues,
                         size_t connIdx,
                         FlowDirection flowDirection);
 
-// PUBLIC
 std::vector<std::string> Model_check_network(Model const& m);
 
 inline flow_t UtilSafeAdd(flow_t a, flow_t b);
@@ -632,10 +625,8 @@ size_t Component_AddComponentReturningId(ComponentDict& c,
 
 void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
 
-// PUBLIC
 SwitchState SimulationState_GetSwitchState(SimulationState const& ss, size_t const& switchIdx);
 
-// PUBLIC
 void SimulationState_SetSwitchState(SimulationState& ss,
                                     size_t const& switchIdx,
                                     SwitchState newState);
@@ -722,7 +713,6 @@ std::vector<Flow> CopyFlows(std::vector<Flow> flows);
 
 std::vector<flow_t> CopyStorageStates(SimulationState& ss);
 
-// PUBLIC
 std::vector<TimeAndFlows>
 Simulate(Model& m, bool verbose = true, bool enableSwitchLogic = true, Log const& log = Log {});
 
@@ -730,46 +720,35 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
 
 void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t compId);
 
-// PUBLIC
 size_t Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag);
 
-// PUBLIC
 size_t Model_AddConstantLoad(Model& m, flow_t load);
 
-// PUBLIC
 size_t Model_AddConstantLoad(
     Model& m, flow_t load, size_t inflowTypeId, std::string const& tag, bool report);
 
-// PUBLIC
 size_t Model_AddScheduleBasedLoad(Model& m, double* times, flow_t* loads, size_t numItems);
 
-// PUBLIC
 size_t Model_AddScheduleBasedLoad(Model& m, std::vector<TimeAndAmount> const& timesAndLoads);
 
-// PUBLIC
 size_t Model_AddScheduleBasedLoad(Model& m,
                                   std::vector<TimeAndAmount> const& timesAndLoads,
                                   std::map<size_t, size_t> const& scenarioIdToLoadId);
 
-// PUBLIC
 size_t Model_AddScheduleBasedLoad(Model& m,
                                   std::vector<TimeAndAmount> const& timesAndLoads,
                                   std::map<size_t, size_t> const& scenarioIdToLoadId,
                                   size_t inflowTypeId,
                                   std::string const& tag);
 
-// PUBLIC
 size_t Model_AddConstantSource(Model& m, flow_t available);
 
-// PUBLIC
 size_t
 Model_AddConstantSource(Model& m, flow_t available, size_t outflowTypeId, std::string const& tag);
 
-// PUBLIC
 ComponentIdAndWasteConnection Model_AddScheduleBasedSource(Model& m,
                                                            std::vector<TimeAndAmount> const& xs);
 
-// PUBLIC
 ComponentIdAndWasteConnection
 Model_AddScheduleBasedSource(Model& m,
                              std::vector<TimeAndAmount> const& xs,
@@ -778,14 +757,11 @@ Model_AddScheduleBasedSource(Model& m,
                              std::string const& tag,
                              double initialAge_s);
 
-// PUBLIC
 size_t Model_AddMux(Model& m, size_t numInports, size_t numOutports);
 
-// PUBLIC
 size_t Model_AddMux(
     Model& m, size_t numInports, size_t numOutports, size_t flowId, std::string const& tag);
 
-// PUBLIC
 size_t Model_AddStore(Model& m,
                       flow_t capacity,
                       flow_t maxCharge,
@@ -793,7 +769,6 @@ size_t Model_AddStore(Model& m,
                       flow_t nochargeAmount,
                       flow_t initialStorage);
 
-// PUBLIC
 size_t Model_AddStore(Model& m,
                       flow_t capacity,
                       flow_t maxCharge,
@@ -813,14 +788,11 @@ ComponentIdAndWasteConnection Model_AddStoreWithWasteflow(Model& m,
                                                           double roundtripEfficiency,
                                                           std::string const& tag);
 
-// PUBLIC
 ComponentIdAndWasteConnection
 Model_AddConstantEfficiencyConverter(Model& m, flow_t eff_numerator, flow_t eff_denominator);
 
-// PUBLIC
 ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m, double efficiency);
 
-// PUBLIC
 ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m,
                                                                    double efficiency,
                                                                    size_t inflowId,
@@ -839,16 +811,12 @@ Model_AddVariableEfficiencyConverter(Model& m,
                                      std::string const& tag,
                                      bool report = true);
 
-// PUBLIC
 size_t Model_AddPassThrough(Model& m);
 
-// PUBLIC
 size_t Model_AddPassThrough(Model& m, size_t flowId, std::string const& tag);
 
-// PUBLIC
 Connection Model_AddConnection(Model& m, size_t from, size_t fromPort, size_t to, size_t toPort);
 
-// PUBLIC
 Connection Model_AddConnection(Model& m,
                                size_t fromId,
                                size_t fromPort,
@@ -859,13 +827,11 @@ Connection Model_AddConnection(Model& m,
 
 bool SameConnection(Connection a, Connection b);
 
-// PUBLIC
 std::optional<Flow> ModelResults_GetFlowForConnection(Model const& m,
                                                       Connection conn,
                                                       double time,
                                                       std::vector<TimeAndFlows> timeAndFlows);
 
-// PUBLIC
 std::optional<flow_t> ModelResults_GetStoreState(Model const& m,
                                                  size_t compId,
                                                  double time,
@@ -969,7 +935,6 @@ void UpdateScheduleBasedLoadNextEvent(Model const& m, SimulationState& ss, doubl
 
 void UpdateScheduleBasedSourceNextEvent(Model const& model, SimulationState& ss, double time);
 
-// PUBLIC
 std::optional<TagAndPort> ParseTagAndPort(std::string const& s, std::string const& tableName);
 
 Result ParseNetwork(FlowDict const& ft, Model& model, toml::table const& table);
@@ -1003,7 +968,6 @@ double Interpolate1d(double x, double x0, double y0, double x1, double y1);
 
 double LinearFragilityCurve_GetFailureFraction(LinearFragilityCurve lfc, double intensityLevel);
 
-// PUBLIC
 double TabularFragilityCurve_GetFailureFraction(TabularFragilityCurve tfc, double intensityLevel);
 
 void ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s);

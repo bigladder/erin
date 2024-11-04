@@ -24,11 +24,9 @@ bool operator==(TimeState const& a, TimeState const& b);
 
 bool operator!=(TimeState const& a, TimeState const& b);
 
-// PUBLIC
 std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
                                          std::vector<TimeState> const& b);
 
-// PUBLIC
 std::vector<TimeState> TimeState_Clip(std::vector<TimeState> const& input,
                                       double startTime_s,
                                       double endTime_s,

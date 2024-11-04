@@ -15,11 +15,9 @@ namespace erin
 // if x is less than xs[0] or greater than xs[xs.size()-1], then we return
 // ys[0] or ys[ys.size()-1], respectively
 
-// PUBLIC
 double
 LookupTable_LookupStairStep(std::vector<double> const& xs, std::vector<double> const& ys, double x);
 
-// PUBLIC
 double
 LookupTable_LookupInterp(std::vector<double> const& xs, std::vector<double> const& ys, double x);
 

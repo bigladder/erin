@@ -40,7 +40,6 @@ std::string energy_unit_to_string(EnergyUnit unit);
 
 double energy_to_joules(double value, EnergyUnit unit);
 
-// PUBLIC
 enum class TimeUnit
 {
     Second,

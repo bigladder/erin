@@ -11,7 +11,6 @@
 namespace erin
 {
 
-// PUBLIC
 std::string network_to_dot(std::vector<Connection> const& connections,
                            std::vector<std::string> const& component_tag_by_id,
                            std::string const& graph_name,

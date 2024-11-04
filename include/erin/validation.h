@@ -56,7 +56,6 @@ std::optional<InputSection> String_toInputSection(std::string tag);
 
 void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f);
 
-// PUBLIC
 InputValidationMap setup_global_validation_info();
 
 } // namespace erin

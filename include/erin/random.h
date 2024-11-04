@@ -8,7 +8,6 @@
 namespace erin
 {
 
-// PUBLIC
 enum class RandomType
 {
     FixedRandom,
@@ -17,14 +16,12 @@ enum class RandomType
     RandomFromClock,
 };
 
-// PUBLIC
 struct FixedRandom
 {
     double FixedValue = 0.0;
     double operator()() const;
 };
 
-// PUBLIC
 struct FixedSeries
 {
     size_t Idx = 0;
@@ -32,7 +29,6 @@ struct FixedSeries
     double operator()();
 };
 
-// PUBLIC
 struct Random
 {
     unsigned int Seed = 0;
@@ -41,10 +37,8 @@ struct Random
     double operator()();
 };
 
-// PUBLIC
 Random CreateRandom();
 
-// PUBLIC
 Random CreateRandomWithSeed(unsigned int seed);
 
 } // namespace erin

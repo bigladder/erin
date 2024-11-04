@@ -36,10 +36,6 @@ namespace erin
 // DATA
 double const infinity = -1.0;
 
-size_t const constEffConvOutflowPort = 0;
-size_t const constEffConvLossflowPort = 1;
-size_t const constEffConvWasteflowPort = 2;
-
 constexpr size_t const wasteflowId = 0;
 
 // NOTE: the maximum allowed flow

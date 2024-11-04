@@ -48,73 +48,73 @@ Result ParseSingleComponent(Simulation& s,
     std::unordered_map<std::string, InputValue> input;
     switch (ct)
     {
-    case ComponentType::ConstantEfficiencyConverterType:
+    case ComponentType::constant_efficiency_converter_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.ConstantEfficiencyConverter, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::VariableEfficiencyConverterType:
+    case ComponentType::variable_efficiency_converter_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.VariableEfficiencyConverter, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::ConstantLoadType:
+    case ComponentType::constant_load_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.ConstantLoad, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::ConstantSourceType:
+    case ComponentType::constant_source_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.ConstantSource, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::MuxType:
+    case ComponentType::mux_type:
     {
         input =
             TOMLTable_parse_with_validation(table, compValids.Mux, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::PassThroughType:
+    case ComponentType::pass_through_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.PassThrough, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::ScheduleBasedLoadType:
+    case ComponentType::schedule_based_load_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.ScheduleBasedLoad, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::ScheduleBasedSourceType:
+    case ComponentType::schedule_based_source_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.ScheduleBasedSource, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::StoreType:
+    case ComponentType::store_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.Store, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::MoverType:
+    case ComponentType::mover_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.Mover, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::VariableEfficiencyMoverType:
+    case ComponentType::variable_efficiency_mover_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.VariableEfficiencyMover, fullTableName, errors, warnings);
     }
     break;
-    case ComponentType::SwitchType:
+    case ComponentType::switch_type:
     {
         input = TOMLTable_parse_with_validation(
             table, compValids.Switch, fullTableName, errors, warnings);
@@ -200,7 +200,7 @@ Result ParseSingleComponent(Simulation& s,
     }
     switch (ct)
     {
-    case ComponentType::ConstantLoadType:
+    case ComponentType::constant_load_type:
     {
         flow_t loadRequest_W = 0;
         PowerUnit localPowerUnit = rateUnit;
@@ -226,7 +226,7 @@ Result ParseSingleComponent(Simulation& s,
         id = Model_AddConstantLoad(s.TheModel, loadRequest_W, inflowId, tag, report);
     }
     break;
-    case ComponentType::ConstantSourceType:
+    case ComponentType::constant_source_type:
     {
         flow_t maxAvailable = max_flow_W;
         if (table.contains("max_outflow"))
@@ -243,7 +243,7 @@ Result ParseSingleComponent(Simulation& s,
         id = Model_AddConstantSource(s.TheModel, maxAvailable, outflowId, tag);
     }
     break;
-    case ComponentType::ScheduleBasedLoadType:
+    case ComponentType::schedule_based_load_type:
     {
         if (!table.contains("loads_by_scenario"))
         {
@@ -280,7 +280,7 @@ Result ParseSingleComponent(Simulation& s,
         id = Model_AddScheduleBasedLoad(s.TheModel, emptyLoads, scenarioIdToLoadId, inflowId, tag);
     }
     break;
-    case ComponentType::ScheduleBasedSourceType:
+    case ComponentType::schedule_based_source_type:
     {
         std::unordered_map<std::string, std::string> const& sbs =
             std::get<std::unordered_map<std::string, std::string>>(
@@ -315,7 +315,7 @@ Result ParseSingleComponent(Simulation& s,
         }
     }
     break;
-    case ComponentType::MuxType:
+    case ComponentType::mux_type:
     {
         auto numInflowsTemp = std::get<int64_t>(input.at("num_inflows").Value);
         auto numOutflowsTemp = std::get<int64_t>(input.at("num_outflows").Value);
@@ -357,7 +357,7 @@ Result ParseSingleComponent(Simulation& s,
         }
     }
     break;
-    case ComponentType::ConstantEfficiencyConverterType:
+    case ComponentType::constant_efficiency_converter_type:
     {
         PowerUnit localRateUnit = rateUnit;
         double efficiency = std::get<double>(input.at("constant_efficiency").Value);
@@ -406,7 +406,7 @@ Result ParseSingleComponent(Simulation& s,
         }
     }
     break;
-    case ComponentType::VariableEfficiencyConverterType:
+    case ComponentType::variable_efficiency_converter_type:
     {
         PowerUnit localRateUnit = rateUnit;
 
@@ -493,7 +493,7 @@ Result ParseSingleComponent(Simulation& s,
         }
     }
     break;
-    case ComponentType::PassThroughType:
+    case ComponentType::pass_through_type:
     {
         if (inflowId != outflowId)
         {
@@ -510,7 +510,7 @@ Result ParseSingleComponent(Simulation& s,
         }
     }
     break;
-    case ComponentType::StoreType:
+    case ComponentType::store_type:
     {
         if (inflowId != outflowId)
         {
@@ -603,7 +603,7 @@ Result ParseSingleComponent(Simulation& s,
         }
     }
     break;
-    case ComponentType::MoverType:
+    case ComponentType::mover_type:
     {
         double cop = std::get<double>(input.at("cop").Value);
         auto compIdAndConns = Model_AddMover(s.TheModel, cop, inflowId, outflowId, tag, report);
@@ -617,7 +617,7 @@ Result ParseSingleComponent(Simulation& s,
         }
     }
     break;
-    case ComponentType::VariableEfficiencyMoverType:
+    case ComponentType::variable_efficiency_mover_type:
     {
         PowerUnit localRateUnit = rateUnit;
 
@@ -696,7 +696,7 @@ Result ParseSingleComponent(Simulation& s,
         s.TheModel.VarEffMovers[moverIdx].MaxOutflow_W = static_cast<flow_t>(maxOutflow_W);
     }
     break;
-    case ComponentType::SwitchType:
+    case ComponentType::switch_type:
     {
         PowerUnit localRateUnit = rateUnit;
         id = Model_AddSwitch(s.TheModel, inflowId, tag);

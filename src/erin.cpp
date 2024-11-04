@@ -89,7 +89,7 @@ std::vector<std::string> Model_check_network(Model const& m)
     for (size_t compId = 0; compId < m.ComponentMap.CompType.size(); ++compId)
     {
         assert(compId < m.ComponentMap.CompType.size());
-        if (m.ComponentMap.CompType[compId] == ComponentType::MuxType)
+        if (m.ComponentMap.CompType[compId] == ComponentType::mux_type)
         {
             muxCompIdToInflowConns[compId] = std::set<size_t> {};
             muxCompIdToOutflowConns[compId] = std::set<size_t> {};
@@ -101,7 +101,7 @@ std::vector<std::string> Model_check_network(Model const& m)
         ignore(nConns);
         switch (compType)
         {
-        case ComponentType::ConstantEfficiencyConverterType:
+        case ComponentType::constant_efficiency_converter_type:
         {
             assert(idx < m.ConstEffConvs.size());
             ConstantEfficiencyConverter const& cec = m.ConstEffConvs[idx];
@@ -178,7 +178,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::VariableEfficiencyConverterType:
+        case ComponentType::variable_efficiency_converter_type:
         {
             assert(idx < m.VarEffConvs.size());
             VariableEfficiencyConverter const& vec = m.VarEffConvs[idx];
@@ -255,7 +255,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::ConstantLoadType:
+        case ComponentType::constant_load_type:
         {
             assert(idx < m.ConstLoads.size());
             ConstantLoad const& comp = m.ConstLoads[idx];
@@ -277,7 +277,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::ConstantSourceType:
+        case ComponentType::constant_source_type:
         {
             assert(idx < m.ConstSources.size());
             ConstantSource const& comp = m.ConstSources[idx];
@@ -300,12 +300,12 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::EnvironmentSourceType:
+        case ComponentType::environment_source_type:
         {
             // pass
         }
         break;
-        case ComponentType::MoverType:
+        case ComponentType::mover_type:
         {
             assert(idx < m.Movers.size());
             Mover const& comp = m.Movers[idx];
@@ -379,7 +379,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::VariableEfficiencyMoverType:
+        case ComponentType::variable_efficiency_mover_type:
         {
             assert(idx < m.VarEffMovers.size());
             VariableEfficiencyMover const& comp = m.VarEffMovers[idx];
@@ -453,7 +453,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::MuxType:
+        case ComponentType::mux_type:
         {
             assert(idx < m.Muxes.size());
             Mux const& comp = m.Muxes[idx];
@@ -495,7 +495,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::PassThroughType:
+        case ComponentType::pass_through_type:
         {
             assert(idx < m.PassThroughs.size());
             PassThrough const& comp = m.PassThroughs[idx];
@@ -533,7 +533,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::SwitchType:
+        case ComponentType::switch_type:
         {
             assert(idx < m.Switches.size());
             Switch const& comp = m.Switches[idx];
@@ -588,7 +588,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::ScheduleBasedLoadType:
+        case ComponentType::schedule_based_load_type:
         {
             assert(idx < m.ScheduledLoads.size());
             ScheduleBasedLoad const& comp = m.ScheduledLoads[idx];
@@ -610,7 +610,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::ScheduleBasedSourceType:
+        case ComponentType::schedule_based_source_type:
         {
             assert(idx < m.ScheduledSrcs.size());
             ScheduleBasedSource const& comp = m.ScheduledSrcs[idx];
@@ -648,7 +648,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::StoreType:
+        case ComponentType::store_type:
         {
             assert(idx < m.Stores.size());
             Store const& comp = m.Stores[idx];
@@ -708,7 +708,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
         }
         break;
-        case ComponentType::WasteSinkType:
+        case ComponentType::waste_sink_type:
         {
             // pass
         }
@@ -727,7 +727,7 @@ std::vector<std::string> Model_check_network(Model const& m)
         // asser that component port links back to connection
         ComponentType fromType = conn.From;
         ComponentType toType = conn.To;
-        if (fromType == ComponentType::MuxType)
+        if (fromType == ComponentType::mux_type)
         {
             auto const& fromMux = m.Muxes[conn.FromIdx];
             if (conn.FromPort >= fromMux.OutflowConns.size())
@@ -771,7 +771,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             }
             muxCompIdToOutflowConns[conn.FromId].insert(connIdx);
         }
-        if (toType == ComponentType::MuxType)
+        if (toType == ComponentType::mux_type)
         {
             auto const& toMux = m.Muxes[conn.ToIdx];
             if (conn.ToPort >= toMux.InflowConns.size())
@@ -854,7 +854,7 @@ std::vector<std::string> Model_check_network(Model const& m)
     }
     for (size_t compId = 0; compId < m.ComponentMap.CompType.size(); ++compId)
     {
-        if (m.ComponentMap.CompType[compId] == ComponentType::MuxType)
+        if (m.ComponentMap.CompType[compId] == ComponentType::mux_type)
         {
             Mux const& mux = m.Muxes[m.ComponentMap.Idx[compId]];
             if (mux.NumInports != muxCompIdToInflowConns[compId].size())
@@ -1707,21 +1707,21 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
             }
             switch (model.Connections[connIdx].From)
             {
-            case ComponentType::ConstantSourceType:
+            case ComponentType::constant_source_type:
             {
             }
             break;
-            case ComponentType::PassThroughType:
+            case ComponentType::pass_through_type:
             {
                 RunPassthroughBackward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::ScheduleBasedSourceType:
+            case ComponentType::schedule_based_source_type:
             {
                 RunScheduleBasedSourceBackward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::ConstantEfficiencyConverterType:
+            case ComponentType::constant_efficiency_converter_type:
             {
                 switch (model.Connections[connIdx].FromPort)
                 {
@@ -1744,7 +1744,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 }
             }
             break;
-            case ComponentType::VariableEfficiencyConverterType:
+            case ComponentType::variable_efficiency_converter_type:
             {
                 switch (model.Connections[connIdx].FromPort)
                 {
@@ -1769,7 +1769,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 }
             }
             break;
-            case ComponentType::MuxType:
+            case ComponentType::mux_type:
             {
                 RunMuxBackward(model, ss, compIdx);
                 if (model.Muxes[compIdx].NumOutports > 1)
@@ -1779,12 +1779,12 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 }
             }
             break;
-            case ComponentType::StoreType:
+            case ComponentType::store_type:
             {
                 RunStoreBackward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::MoverType:
+            case ComponentType::mover_type:
             {
                 switch (model.Connections[connIdx].FromPort)
                 {
@@ -1807,7 +1807,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 }
             }
             break;
-            case ComponentType::VariableEfficiencyMoverType:
+            case ComponentType::variable_efficiency_mover_type:
             {
                 switch (model.Connections[connIdx].FromPort)
                 {
@@ -1832,7 +1832,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 }
             }
             break;
-            case ComponentType::SwitchType:
+            case ComponentType::switch_type:
             {
                 RunSwitchBackward(model, ss, connIdx, compIdx);
             }
@@ -2080,38 +2080,38 @@ void RunConnectionsForward(Model& model, SimulationState& ss)
             }
             switch (model.Connections[connIdx].To)
             {
-            case ComponentType::ConstantLoadType:
-            case ComponentType::WasteSinkType:
-            case ComponentType::ScheduleBasedLoadType:
+            case ComponentType::constant_load_type:
+            case ComponentType::waste_sink_type:
+            case ComponentType::schedule_based_load_type:
             {
             }
             break;
-            case ComponentType::PassThroughType:
+            case ComponentType::pass_through_type:
             {
                 RunPassthroughForward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::ConstantEfficiencyConverterType:
+            case ComponentType::constant_efficiency_converter_type:
             {
                 RunConstantEfficiencyConverterForward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::VariableEfficiencyConverterType:
+            case ComponentType::variable_efficiency_converter_type:
             {
                 RunVariableEfficiencyConverterForward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::MoverType:
+            case ComponentType::mover_type:
             {
                 RunMoverForward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::VariableEfficiencyMoverType:
+            case ComponentType::variable_efficiency_mover_type:
             {
                 RunVariableEfficiencyMoverForward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::MuxType:
+            case ComponentType::mux_type:
             {
                 RunMuxForward(model, ss, compIdx);
                 if (model.Muxes[compIdx].NumInports > 1)
@@ -2121,12 +2121,12 @@ void RunConnectionsForward(Model& model, SimulationState& ss)
                 }
             }
             break;
-            case ComponentType::StoreType:
+            case ComponentType::store_type:
             {
                 RunStoreForward(model, ss, connIdx, compIdx);
             }
             break;
-            case ComponentType::SwitchType:
+            case ComponentType::switch_type:
             {
                 RunSwitchForward(model, ss, connIdx, compIdx);
             }
@@ -2315,7 +2315,7 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
         std::optional<size_t> maybeInConn = store.InflowConn;
         size_t outConn = store.OutflowConn;
         size_t compId = m.Connections[outConn].FromId;
-        assert(m.Connections[outConn].From == ComponentType::StoreType);
+        assert(m.Connections[outConn].From == ComponentType::store_type);
         if (ss.UnavailableComponents.contains(compId))
         {
             continue;
@@ -2377,7 +2377,7 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
             std::cout << "tag: " << m.ComponentMap.Tag[compId] << std::endl;
             for (size_t compId_Idx = 0; compId_Idx < m.ComponentMap.Tag.size(); ++compId_Idx)
             {
-                if (m.ComponentMap.CompType[compId_Idx] == ComponentType::StoreType &&
+                if (m.ComponentMap.CompType[compId_Idx] == ComponentType::store_type &&
                     m.ComponentMap.Idx[compId_Idx] == storeIdx)
                 {
                     std::cout << "compId (from search): " << compId_Idx << std::endl;
@@ -2451,72 +2451,72 @@ std::string ToString(ComponentType compType)
     std::string result = "?";
     switch (compType)
     {
-    case ComponentType::ConstantLoadType:
+    case ComponentType::constant_load_type:
     {
         result = "ConstantLoad";
     }
     break;
-    case ComponentType::ScheduleBasedLoadType:
+    case ComponentType::schedule_based_load_type:
     {
         result = "ScheduleBasedLoad";
     }
     break;
-    case ComponentType::ConstantSourceType:
+    case ComponentType::constant_source_type:
     {
         result = "ConstantSource";
     }
     break;
-    case ComponentType::ScheduleBasedSourceType:
+    case ComponentType::schedule_based_source_type:
     {
         result = "ScheduleBasedSource";
     }
     break;
-    case ComponentType::ConstantEfficiencyConverterType:
+    case ComponentType::constant_efficiency_converter_type:
     {
         result = "ConstantEfficiencyConverter";
     }
     break;
-    case ComponentType::VariableEfficiencyConverterType:
+    case ComponentType::variable_efficiency_converter_type:
     {
         result = "VariableEfficiencyConverter";
     }
     break;
-    case ComponentType::WasteSinkType:
+    case ComponentType::waste_sink_type:
     {
         result = "WasteSink";
     }
     break;
-    case ComponentType::MuxType:
+    case ComponentType::mux_type:
     {
         result = "Mux";
     }
     break;
-    case ComponentType::StoreType:
+    case ComponentType::store_type:
     {
         result = "Store";
     }
     break;
-    case ComponentType::PassThroughType:
+    case ComponentType::pass_through_type:
     {
         result = "PassThrough";
     }
     break;
-    case ComponentType::MoverType:
+    case ComponentType::mover_type:
     {
         result = "Mover";
     }
     break;
-    case ComponentType::VariableEfficiencyMoverType:
+    case ComponentType::variable_efficiency_mover_type:
     {
         result = "VariableEfficiencyMoverType";
     }
     break;
-    case ComponentType::EnvironmentSourceType:
+    case ComponentType::environment_source_type:
     {
         result = "EnvironmentSource";
     }
     break;
-    case ComponentType::SwitchType:
+    case ComponentType::switch_type:
     {
         result = "Switch";
     }
@@ -2534,59 +2534,59 @@ std::optional<ComponentType> TagToComponentType(std::string const& tag)
 {
     if (tag == "ConstantLoad" || tag == "constant_load")
     {
-        return ComponentType::ConstantLoadType;
+        return ComponentType::constant_load_type;
     }
     if (tag == "ScheduleBasedLoad" || tag == "load")
     {
-        return ComponentType::ScheduleBasedLoadType;
+        return ComponentType::schedule_based_load_type;
     }
     if (tag == "ConstantSource" || tag == "source")
     {
-        return ComponentType::ConstantSourceType;
+        return ComponentType::constant_source_type;
     }
     if (tag == "ScheduleBasedSource" || tag == "uncontrolled_source")
     {
-        return ComponentType::ScheduleBasedSourceType;
+        return ComponentType::schedule_based_source_type;
     }
     if (tag == "ConstantEfficiencyConverter" || tag == "converter")
     {
-        return ComponentType::ConstantEfficiencyConverterType;
+        return ComponentType::constant_efficiency_converter_type;
     }
     if (tag == "VariableEfficiencyConverter" || tag == "variable_efficiency_converter")
     {
-        return ComponentType::VariableEfficiencyConverterType;
+        return ComponentType::variable_efficiency_converter_type;
     }
     if (tag == "WasteSink")
     {
-        return ComponentType::WasteSinkType;
+        return ComponentType::waste_sink_type;
     }
     if (tag == "EnvironmentSource")
     {
-        return ComponentType::EnvironmentSourceType;
+        return ComponentType::environment_source_type;
     }
     if (tag == "Mux" || tag == "mux" || tag == "muxer")
     {
-        return ComponentType::MuxType;
+        return ComponentType::mux_type;
     }
     if (tag == "Store" || tag == "store")
     {
-        return ComponentType::StoreType;
+        return ComponentType::store_type;
     }
     if (tag == "PassThrough" || tag == "pass_through")
     {
-        return ComponentType::PassThroughType;
+        return ComponentType::pass_through_type;
     }
     if (tag == "Mover" || tag == "mover")
     {
-        return ComponentType::MoverType;
+        return ComponentType::mover_type;
     }
     if (tag == "VariableEfficiencyMover" || tag == "variable_efficiency_mover")
     {
-        return ComponentType::VariableEfficiencyMoverType;
+        return ComponentType::variable_efficiency_mover_type;
     }
     if (tag == "Switch" || tag == "switch")
     {
-        return ComponentType::SwitchType;
+        return ComponentType::switch_type;
     }
     return {};
 }
@@ -2641,12 +2641,12 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
     {
         switch (m.Connections[flowIdx].From)
         {
-        case ComponentType::ConstantSourceType:
+        case ComponentType::constant_source_type:
         {
             summary.Inflow += ss.Flows[flowIdx].Actual_W;
         }
         break;
-        case ComponentType::ScheduleBasedSourceType:
+        case ComponentType::schedule_based_source_type:
         {
             // NOTE: for schedule-based sources, the thinking is that
             // the "available" is actually flowing into the system and,
@@ -2657,26 +2657,26 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
             }
         }
         break;
-        case ComponentType::StoreType:
+        case ComponentType::store_type:
         {
             summary.StorageDischarge += ss.Flows[flowIdx].Actual_W;
         }
         break;
-        case ComponentType::EnvironmentSourceType:
+        case ComponentType::environment_source_type:
         {
             summary.EnvInflow += ss.Flows[flowIdx].Actual_W;
         }
         break;
-        case ComponentType::ConstantLoadType:
-        case ComponentType::ScheduleBasedLoadType:
-        case ComponentType::ConstantEfficiencyConverterType:
-        case ComponentType::VariableEfficiencyConverterType:
-        case ComponentType::MuxType:
-        case ComponentType::PassThroughType:
-        case ComponentType::MoverType:
-        case ComponentType::VariableEfficiencyMoverType:
-        case ComponentType::WasteSinkType:
-        case ComponentType::SwitchType:
+        case ComponentType::constant_load_type:
+        case ComponentType::schedule_based_load_type:
+        case ComponentType::constant_efficiency_converter_type:
+        case ComponentType::variable_efficiency_converter_type:
+        case ComponentType::mux_type:
+        case ComponentType::pass_through_type:
+        case ComponentType::mover_type:
+        case ComponentType::variable_efficiency_mover_type:
+        case ComponentType::waste_sink_type:
+        case ComponentType::switch_type:
         {
         }
         break;
@@ -2691,33 +2691,33 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
 
         switch (m.Connections[flowIdx].To)
         {
-        case ComponentType::ConstantLoadType:
-        case ComponentType::ScheduleBasedLoadType:
+        case ComponentType::constant_load_type:
+        case ComponentType::schedule_based_load_type:
         {
             summary.OutflowRequest += ss.Flows[flowIdx].Requested_W;
             summary.OutflowAchieved += ss.Flows[flowIdx].Actual_W;
         }
         break;
-        case ComponentType::StoreType:
+        case ComponentType::store_type:
         {
             summary.StorageCharge += ss.Flows[flowIdx].Actual_W;
         }
         break;
-        case ComponentType::WasteSinkType:
+        case ComponentType::waste_sink_type:
         {
             summary.Wasteflow += ss.Flows[flowIdx].Actual_W;
         }
         break;
-        case ComponentType::ConstantSourceType:
-        case ComponentType::ScheduleBasedSourceType:
-        case ComponentType::ConstantEfficiencyConverterType:
-        case ComponentType::VariableEfficiencyConverterType:
-        case ComponentType::MuxType:
-        case ComponentType::PassThroughType:
-        case ComponentType::MoverType:
-        case ComponentType::VariableEfficiencyMoverType:
-        case ComponentType::EnvironmentSourceType:
-        case ComponentType::SwitchType:
+        case ComponentType::constant_source_type:
+        case ComponentType::schedule_based_source_type:
+        case ComponentType::constant_efficiency_converter_type:
+        case ComponentType::variable_efficiency_converter_type:
+        case ComponentType::mux_type:
+        case ComponentType::pass_through_type:
+        case ComponentType::mover_type:
+        case ComponentType::variable_efficiency_mover_type:
+        case ComponentType::environment_source_type:
+        case ComponentType::switch_type:
         {
         }
         break;
@@ -2792,15 +2792,15 @@ void PrintModelState(Model& m, SimulationState& ss)
 {
     for (size_t storeIdx = 0; storeIdx < m.Stores.size(); ++storeIdx)
     {
-        std::cout << ToString(ComponentType::StoreType) << "[" << storeIdx
+        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
                   << "].InitialStorage (J): " << m.Stores[storeIdx].InitialStorage_J << std::endl;
-        std::cout << ToString(ComponentType::StoreType) << "[" << storeIdx
+        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
                   << "].StorageAmount (J) : " << ss.StorageAmounts_J[storeIdx] << std::endl;
-        std::cout << ToString(ComponentType::StoreType) << "[" << storeIdx
+        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
                   << "].Capacity (J)      : " << m.Stores[storeIdx].Capacity_J << std::endl;
         double soc =
             (double)ss.StorageAmounts_J[storeIdx] * 100.0 / (double)m.Stores[storeIdx].Capacity_J;
-        std::cout << ToString(ComponentType::StoreType) << "[" << storeIdx
+        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
                   << "].SOC               : " << soc << " %" << std::endl;
     }
 }
@@ -2865,7 +2865,7 @@ ComponentIdAndWasteAndEnvironmentConnection Model_AddMover(Model& m,
     };
     m.Movers.push_back(std::move(mov));
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
-                                                       ComponentType::WasteSinkType,
+                                                       ComponentType::waste_sink_type,
                                                        0,
                                                        std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
@@ -2873,7 +2873,7 @@ ComponentIdAndWasteAndEnvironmentConnection Model_AddMover(Model& m,
                                                        0.0,
                                                        report);
     size_t envId = Component_AddComponentReturningId(m.ComponentMap,
-                                                     ComponentType::EnvironmentSourceType,
+                                                     ComponentType::environment_source_type,
                                                      0,
                                                      std::vector<size_t> {},
                                                      std::vector<size_t> {wasteflow_id},
@@ -2882,7 +2882,7 @@ ComponentIdAndWasteAndEnvironmentConnection Model_AddMover(Model& m,
                                                      report);
     size_t thisId =
         Component_AddComponentReturningId(m.ComponentMap,
-                                          ComponentType::MoverType,
+                                          ComponentType::mover_type,
                                           0,
                                           std::vector<size_t> {inflowTypeId, wasteflow_id},
                                           std::vector<size_t> {outflowTypeId, wasteflow_id},
@@ -2927,7 +2927,7 @@ Model_AddVariableEfficiencyMover(Model& m,
     };
     m.VarEffMovers.push_back(std::move(mov));
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
-                                                       ComponentType::WasteSinkType,
+                                                       ComponentType::waste_sink_type,
                                                        0,
                                                        std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
@@ -2935,7 +2935,7 @@ Model_AddVariableEfficiencyMover(Model& m,
                                                        0.0,
                                                        report);
     size_t envId = Component_AddComponentReturningId(m.ComponentMap,
-                                                     ComponentType::EnvironmentSourceType,
+                                                     ComponentType::environment_source_type,
                                                      0,
                                                      std::vector<size_t> {},
                                                      std::vector<size_t> {wasteflow_id},
@@ -2944,7 +2944,7 @@ Model_AddVariableEfficiencyMover(Model& m,
                                                      report);
     size_t thisId =
         Component_AddComponentReturningId(m.ComponentMap,
-                                          ComponentType::VariableEfficiencyMoverType,
+                                          ComponentType::variable_efficiency_mover_type,
                                           0,
                                           std::vector<size_t> {inflowTypeId, wasteflow_id},
                                           std::vector<size_t> {outflowTypeId, wasteflow_id},
@@ -3084,13 +3084,13 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                 {
                     size_t const& compId = item.first;
                     ComponentType ctype = model.ComponentMap.CompType[compId];
-                    if (ctype == ComponentType::ConstantLoadType ||
-                        ctype == ComponentType::ScheduleBasedLoadType ||
-                        ctype == ComponentType::WasteSinkType ||
-                        ctype == ComponentType::StoreType ||
-                        ctype == ComponentType::ConstantSourceType ||
-                        ctype == ComponentType::ScheduleBasedSourceType ||
-                        ctype == ComponentType::EnvironmentSourceType)
+                    if (ctype == ComponentType::constant_load_type ||
+                        ctype == ComponentType::schedule_based_load_type ||
+                        ctype == ComponentType::waste_sink_type ||
+                        ctype == ComponentType::store_type ||
+                        ctype == ComponentType::constant_source_type ||
+                        ctype == ComponentType::schedule_based_source_type ||
+                        ctype == ComponentType::environment_source_type)
                     {
                         continue;
                     }
@@ -3169,7 +3169,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     auto idx = m.ComponentMap.Idx[compId];
     switch (m.ComponentMap.CompType[compId])
     {
-    case ComponentType::ConstantLoadType:
+    case ComponentType::constant_load_type:
     {
         auto inflowConn = m.ConstLoads[idx].InflowConn;
         if (ss.Flows[inflowConn].Requested_W != m.ConstLoads[idx].Load_W)
@@ -3179,7 +3179,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         ss.Flows[inflowConn].Requested_W = m.ConstLoads[idx].Load_W;
     }
     break;
-    case ComponentType::ScheduleBasedLoadType:
+    case ComponentType::schedule_based_load_type:
     {
         auto const inflowConn = m.ConstLoads[idx].InflowConn;
         auto const loadIdx = ss.ScheduleBasedLoadIdx[idx];
@@ -3191,7 +3191,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         ss.Flows[inflowConn].Requested_W = amount;
     }
     break;
-    case ComponentType::ConstantSourceType:
+    case ComponentType::constant_source_type:
     {
         auto const outflowConn = m.ConstSources[idx].OutflowConn;
         auto const available = m.ConstSources[idx].Available_W;
@@ -3202,7 +3202,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         ss.Flows[outflowConn].Available_W = available;
     }
     break;
-    case ComponentType::ScheduleBasedSourceType:
+    case ComponentType::schedule_based_source_type:
     {
         // TODO: need to call routine to reset wasteflow connection
         // to the right amount as well.
@@ -3216,7 +3216,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         ss.Flows[outflowConn].Available_W = available;
     }
     break;
-    case ComponentType::ConstantEfficiencyConverterType:
+    case ComponentType::constant_efficiency_converter_type:
     {
         assert(idx < m.ConstEffConvs.size());
         auto outflowConn = m.ConstEffConvs[idx].OutflowConn;
@@ -3225,7 +3225,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         RunConstantEfficiencyConverterForward(m, ss, inflowConn, idx);
     }
     break;
-    case ComponentType::VariableEfficiencyConverterType:
+    case ComponentType::variable_efficiency_converter_type:
     {
         assert(idx < m.VarEffConvs.size());
         auto outflowConn = m.VarEffConvs[idx].OutflowConn;
@@ -3234,7 +3234,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         RunVariableEfficiencyConverterForward(m, ss, inflowConn, idx);
     }
     break;
-    case ComponentType::MoverType:
+    case ComponentType::mover_type:
     {
         // TODO: test
         assert(idx < m.Movers.size());
@@ -3244,7 +3244,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         RunMoverForward(m, ss, inflowConn, idx);
     }
     break;
-    case ComponentType::VariableEfficiencyMoverType:
+    case ComponentType::variable_efficiency_mover_type:
     {
         assert(idx < m.VarEffMovers.size());
         size_t outflowConn = m.VarEffMovers[idx].OutflowConn;
@@ -3253,7 +3253,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         RunVariableEfficiencyMoverForward(m, ss, inflowConn, idx);
     }
     break;
-    case ComponentType::MuxType:
+    case ComponentType::mux_type:
     {
         // TODO: check that this works
         // may also need to call mux routines to rebalance
@@ -3271,7 +3271,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         }
     }
     break;
-    case ComponentType::StoreType:
+    case ComponentType::store_type:
     {
         // TODO: what energy amount should the store come back with?
         // TODO: need to call routines to do charge request
@@ -3279,7 +3279,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         std::exit(1);
     }
     break;
-    case ComponentType::PassThroughType:
+    case ComponentType::pass_through_type:
     {
         PassThrough const& pt = m.PassThroughs[idx];
         if (ss.Flows[pt.OutflowConn].Requested_W != ss.Flows[pt.InflowConn].Requested_W)
@@ -3294,7 +3294,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         ss.Flows[pt.OutflowConn].Available_W = ss.Flows[pt.InflowConn].Available_W;
     }
     break;
-    case ComponentType::WasteSinkType:
+    case ComponentType::waste_sink_type:
     {
         write_error_message("waste sink", "should not be repairing pseduo-element waste");
         std::exit(1);
@@ -3319,7 +3319,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
     auto idx = m.ComponentMap.Idx[compId];
     switch (m.ComponentMap.CompType[compId])
     {
-    case ComponentType::ConstantLoadType:
+    case ComponentType::constant_load_type:
     {
         auto inflowConn = m.ConstLoads[idx].InflowConn;
         if (ss.Flows[inflowConn].Requested_W != 0)
@@ -3329,7 +3329,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         ss.Flows[inflowConn].Requested_W = 0;
     }
     break;
-    case ComponentType::ScheduleBasedLoadType:
+    case ComponentType::schedule_based_load_type:
     {
         auto inflowConn = m.ScheduledLoads[idx].InflowConn;
         if (ss.Flows[inflowConn].Requested_W != 0)
@@ -3339,7 +3339,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         ss.Flows[inflowConn].Requested_W = 0;
     }
     break;
-    case ComponentType::ConstantSourceType:
+    case ComponentType::constant_source_type:
     {
         auto outflowConn = m.ConstSources[idx].OutflowConn;
         if (ss.Flows[outflowConn].Available_W != 0)
@@ -3349,7 +3349,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         ss.Flows[outflowConn].Available_W = 0;
     }
     break;
-    case ComponentType::ConstantEfficiencyConverterType:
+    case ComponentType::constant_efficiency_converter_type:
     {
         assert(idx < m.ConstEffConvs.size());
         ConstantEfficiencyConverter const& cec = m.ConstEffConvs[idx];
@@ -3380,7 +3380,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         ss.Flows[wasteConn].Requested_W = 0;
     }
     break;
-    case ComponentType::VariableEfficiencyConverterType:
+    case ComponentType::variable_efficiency_converter_type:
     {
         assert(idx < m.VarEffConvs.size());
         VariableEfficiencyConverter const& vec = m.VarEffConvs[idx];
@@ -3411,7 +3411,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         ss.Flows[wasteConn].Requested_W = 0;
     }
     break;
-    case ComponentType::MoverType:
+    case ComponentType::mover_type:
     {
         Mover const& mov = m.Movers[idx];
         ss.Flows[mov.InflowConn].Requested_W = 0;
@@ -3428,7 +3428,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         ss.Flows[mov.WasteflowConn].Actual_W = 0;
     }
     break;
-    case ComponentType::VariableEfficiencyMoverType:
+    case ComponentType::variable_efficiency_mover_type:
     {
         assert(idx < m.VarEffMovers.size());
         VariableEfficiencyMover const& mov = m.VarEffMovers[idx];
@@ -3446,7 +3446,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         ss.Flows[mov.WasteflowConn].Actual_W = 0;
     }
     break;
-    case ComponentType::MuxType:
+    case ComponentType::mux_type:
     {
         for (size_t inIdx = 0; inIdx < m.Muxes[idx].NumInports; ++inIdx)
         {
@@ -3468,7 +3468,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         }
     }
     break;
-    case ComponentType::StoreType:
+    case ComponentType::store_type:
     {
         // TODO: check! May need to update wasteflow and use efficiency?
         std::optional<size_t> maybeInflowConn = m.Stores[idx].InflowConn;
@@ -3496,7 +3496,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         }
     }
     break;
-    case ComponentType::PassThroughType:
+    case ComponentType::pass_through_type:
     {
         auto const& pt = m.PassThroughs[idx];
         if (ss.Flows[pt.InflowConn].Requested_W != 0)
@@ -3511,7 +3511,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         ss.Flows[pt.OutflowConn].Available_W = 0;
     }
     break;
-    case ComponentType::WasteSinkType:
+    case ComponentType::waste_sink_type:
     {
         write_error_message("waste sink", "waste sink cannot fail");
         std::exit(1);
@@ -3537,7 +3537,7 @@ size_t Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag)
     size_t subtypeIndex = m.Switches.size();
     m.Switches.push_back(std::move(s));
     return Component_AddComponentReturningId(m.ComponentMap,
-                                             ComponentType::SwitchType,
+                                             ComponentType::switch_type,
                                              subtypeIndex,
                                              std::vector<size_t> {flowTypeId, flowTypeId},
                                              std::vector<size_t> {flowTypeId},
@@ -3558,7 +3558,7 @@ size_t Model_AddConstantLoad(
     cl.Load_W = load;
     m.ConstLoads.push_back(std::move(cl));
     return Component_AddComponentReturningId(m.ComponentMap,
-                                             ComponentType::ConstantLoadType,
+                                             ComponentType::constant_load_type,
                                              idx,
                                              std::vector<size_t> {inflowTypeId},
                                              std::vector<size_t> {},
@@ -3604,7 +3604,7 @@ size_t Model_AddScheduleBasedLoad(Model& m,
     sbl.ScenarioIdToLoadId = scenarioIdToLoadId;
     m.ScheduledLoads.push_back(std::move(sbl));
     return Component_AddComponentReturningId(m.ComponentMap,
-                                             ComponentType::ScheduleBasedLoadType,
+                                             ComponentType::schedule_based_load_type,
                                              idx,
                                              std::vector<size_t> {inflowTypeId},
                                              std::vector<size_t> {},
@@ -3625,7 +3625,7 @@ Model_AddConstantSource(Model& m, flow_t available, size_t outflowTypeId, std::s
     cs.Available_W = available;
     m.ConstSources.push_back(std::move(cs));
     return Component_AddComponentReturningId(m.ComponentMap,
-                                             ComponentType::ConstantSourceType,
+                                             ComponentType::constant_source_type,
                                              idx,
                                              std::vector<size_t> {},
                                              std::vector<size_t> {outflowTypeId},
@@ -3653,9 +3653,9 @@ Model_AddScheduleBasedSource(Model& m,
     sbs.ScenarioIdToSourceId = scenarioIdToSourceId;
     m.ScheduledSrcs.push_back(sbs);
     size_t wasteId =
-        Component_AddComponentReturningId(m.ComponentMap, ComponentType::WasteSinkType, 0);
+        Component_AddComponentReturningId(m.ComponentMap, ComponentType::waste_sink_type, 0);
     size_t thisId = Component_AddComponentReturningId(m.ComponentMap,
-                                                      ComponentType::ScheduleBasedSourceType,
+                                                      ComponentType::schedule_based_source_type,
                                                       idx,
                                                       std::vector<size_t> {},
                                                       std::vector<size_t> {outflowId},
@@ -3685,7 +3685,7 @@ Model_AddMux(Model& m, size_t numInports, size_t numOutports, size_t flowId, std
     std::vector<size_t> inflowTypes(numInports, flowId);
     std::vector<size_t> outflowTypes(numOutports, flowId);
     return Component_AddComponentReturningId(
-        m.ComponentMap, ComponentType::MuxType, idx, inflowTypes, outflowTypes, tag, 0.0);
+        m.ComponentMap, ComponentType::mux_type, idx, inflowTypes, outflowTypes, tag, 0.0);
 }
 
 size_t Model_AddStore(Model& m,
@@ -3720,7 +3720,7 @@ size_t Model_AddStore(Model& m,
     s.RoundTripEfficiency = 1.0;
     m.Stores.push_back(std::move(s));
     return Component_AddComponentReturningId(m.ComponentMap,
-                                             ComponentType::StoreType,
+                                             ComponentType::store_type,
                                              idx,
                                              std::vector<size_t> {flowId},
                                              std::vector<size_t> {flowId},
@@ -3744,7 +3744,7 @@ ComponentIdAndWasteConnection Model_AddStoreWithWasteflow(Model& m,
     size_t storeIdx = m.ComponentMap.Idx[id];
     m.Stores[storeIdx].RoundTripEfficiency = roundtripEfficiency;
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
-                                                       ComponentType::WasteSinkType,
+                                                       ComponentType::waste_sink_type,
                                                        0,
                                                        std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
@@ -3792,7 +3792,7 @@ ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m,
     };
     m.ConstEffConvs.push_back(std::move(cec));
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
-                                                       ComponentType::WasteSinkType,
+                                                       ComponentType::waste_sink_type,
                                                        0,
                                                        std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
@@ -3801,7 +3801,7 @@ ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m,
                                                        report);
     size_t thisId =
         Component_AddComponentReturningId(m.ComponentMap,
-                                          ComponentType::ConstantEfficiencyConverterType,
+                                          ComponentType::constant_efficiency_converter_type,
                                           idx,
                                           inflowIds,
                                           outflowIds,
@@ -3839,7 +3839,7 @@ Model_AddVariableEfficiencyConverter(Model& m,
 
     m.VarEffConvs.push_back(std::move(vec));
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
-                                                       ComponentType::WasteSinkType,
+                                                       ComponentType::waste_sink_type,
                                                        0,
                                                        std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
@@ -3848,7 +3848,7 @@ Model_AddVariableEfficiencyConverter(Model& m,
                                                        report);
     size_t thisId =
         Component_AddComponentReturningId(m.ComponentMap,
-                                          ComponentType::VariableEfficiencyConverterType,
+                                          ComponentType::variable_efficiency_converter_type,
                                           idx,
                                           inflowIds,
                                           outflowIds,
@@ -3870,7 +3870,7 @@ size_t Model_AddPassThrough(Model& m, size_t flowId, std::string const& tag)
         .MaxOutflow_W = max_flow_W,
     });
     return Component_AddComponentReturningId(m.ComponentMap,
-                                             ComponentType::PassThroughType,
+                                             ComponentType::pass_through_type,
                                              idx,
                                              std::vector<size_t> {flowId},
                                              std::vector<size_t> {flowId},
@@ -3940,19 +3940,19 @@ Connection Model_AddConnection(Model& m,
     m.Connections.push_back(c);
     switch (fromType)
     {
-    case ComponentType::PassThroughType:
+    case ComponentType::pass_through_type:
     {
         assert(fromIdx < m.PassThroughs.size());
         m.PassThroughs[fromIdx].OutflowConn = connId;
     }
     break;
-    case ComponentType::ConstantSourceType:
+    case ComponentType::constant_source_type:
     {
         assert(fromIdx < m.ConstSources.size());
         m.ConstSources[fromIdx].OutflowConn = connId;
     }
     break;
-    case ComponentType::ScheduleBasedSourceType:
+    case ComponentType::schedule_based_source_type:
     {
         assert(fromIdx < m.ScheduledSrcs.size());
         switch (fromPort)
@@ -3975,7 +3975,7 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::ConstantEfficiencyConverterType:
+    case ComponentType::constant_efficiency_converter_type:
     {
         assert(fromIdx < m.ConstEffConvs.size());
         switch (fromPort)
@@ -4002,7 +4002,7 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::VariableEfficiencyConverterType:
+    case ComponentType::variable_efficiency_converter_type:
     {
         assert(fromIdx < m.VarEffConvs.size());
         switch (fromPort)
@@ -4029,7 +4029,7 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::MoverType:
+    case ComponentType::mover_type:
     {
         assert(fromIdx < m.Movers.size());
         switch (fromPort)
@@ -4053,7 +4053,7 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::VariableEfficiencyMoverType:
+    case ComponentType::variable_efficiency_mover_type:
     {
         assert(fromIdx < m.VarEffMovers.size());
         switch (fromPort)
@@ -4077,7 +4077,7 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::MuxType:
+    case ComponentType::mux_type:
     {
         assert(fromIdx < m.Muxes.size());
         assert(fromPort < m.Muxes[fromIdx].OutflowConns.size());
@@ -4085,7 +4085,7 @@ Connection Model_AddConnection(Model& m,
         m.Muxes[fromIdx].OutflowConns[fromPort] = connId;
     }
     break;
-    case ComponentType::StoreType:
+    case ComponentType::store_type:
     {
         assert(fromIdx < m.Stores.size());
         switch (fromPort)
@@ -4108,12 +4108,12 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::EnvironmentSourceType:
+    case ComponentType::environment_source_type:
     {
         // NOTE: do nothing
     }
     break;
-    case ComponentType::SwitchType:
+    case ComponentType::switch_type:
     {
         assert(fromIdx < m.Switches.size());
         m.Switches[fromIdx].OutflowConn = connId;
@@ -4128,7 +4128,7 @@ Connection Model_AddConnection(Model& m,
     }
     switch (toType)
     {
-    case ComponentType::SwitchType:
+    case ComponentType::switch_type:
     {
         assert(toIdx < m.Switches.size());
         switch (toPort)
@@ -4154,31 +4154,31 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::PassThroughType:
+    case ComponentType::pass_through_type:
     {
         assert(toIdx < m.PassThroughs.size());
         m.PassThroughs[toIdx].InflowConn = connId;
     }
     break;
-    case ComponentType::ConstantLoadType:
+    case ComponentType::constant_load_type:
     {
         assert(toIdx < m.ConstLoads.size());
         m.ConstLoads[toIdx].InflowConn = connId;
     }
     break;
-    case ComponentType::ConstantEfficiencyConverterType:
+    case ComponentType::constant_efficiency_converter_type:
     {
         assert(toIdx < m.ConstEffConvs.size());
         m.ConstEffConvs[toIdx].InflowConn = connId;
     }
     break;
-    case ComponentType::VariableEfficiencyConverterType:
+    case ComponentType::variable_efficiency_converter_type:
     {
         assert(toIdx < m.VarEffConvs.size());
         m.VarEffConvs[toIdx].InflowConn = connId;
     }
     break;
-    case ComponentType::MoverType:
+    case ComponentType::mover_type:
     {
         assert(toIdx < m.Movers.size());
         switch (toPort)
@@ -4202,7 +4202,7 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::VariableEfficiencyMoverType:
+    case ComponentType::variable_efficiency_mover_type:
     {
         assert(toIdx < m.VarEffMovers.size());
         switch (toPort)
@@ -4228,7 +4228,7 @@ Connection Model_AddConnection(Model& m,
         }
     }
     break;
-    case ComponentType::MuxType:
+    case ComponentType::mux_type:
     {
         assert(toIdx < m.Muxes.size());
         assert(toPort < m.Muxes[toIdx].InflowConns.size());
@@ -4236,19 +4236,19 @@ Connection Model_AddConnection(Model& m,
         m.Muxes[toIdx].InflowConns[toPort] = connId;
     }
     break;
-    case ComponentType::StoreType:
+    case ComponentType::store_type:
     {
         assert(toIdx < m.Stores.size());
         m.Stores[toIdx].InflowConn = connId;
     }
     break;
-    case ComponentType::ScheduleBasedLoadType:
+    case ComponentType::schedule_based_load_type:
     {
         assert(toIdx < m.ScheduledLoads.size());
         m.ScheduledLoads[toIdx].InflowConn = connId;
     }
     break;
-    case ComponentType::WasteSinkType:
+    case ComponentType::waste_sink_type:
     {
         // NOTE: do nothing
     }
@@ -4304,7 +4304,7 @@ std::optional<flow_t> ModelResults_GetStoreState(Model const& m,
                                                  std::vector<TimeAndFlows> timeAndFlows)
 {
     if (compId >= m.ComponentMap.CompType.size() ||
-        m.ComponentMap.CompType[compId] != ComponentType::StoreType)
+        m.ComponentMap.CompType[compId] != ComponentType::store_type)
     {
         return {};
     }
@@ -4368,13 +4368,13 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             double requestedFlow_W = static_cast<double>(flow.Requested_W);
             switch (fromType)
             {
-            case ComponentType::ConstantSourceType:
-            case ComponentType::ScheduleBasedSourceType:
+            case ComponentType::constant_source_type:
+            case ComponentType::schedule_based_source_type:
             {
                 sos.Inflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
             }
             break;
-            case ComponentType::EnvironmentSourceType:
+            case ComponentType::environment_source_type:
             {
                 sos.InFromEnv_kJ += (actualFlow_W / W_per_kW) * dt_s;
             }
@@ -4386,8 +4386,8 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             }
             switch (toType)
             {
-            case ComponentType::ConstantLoadType:
-            case ComponentType::ScheduleBasedLoadType:
+            case ComponentType::constant_load_type:
+            case ComponentType::schedule_based_load_type:
             {
                 double outflowAchieved_kJ = (actualFlow_W / W_per_kW) * dt_s;
                 sos.OutflowAchieved_kJ += outflowAchieved_kJ;
@@ -4492,7 +4492,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                 }
             }
             break;
-            case ComponentType::WasteSinkType:
+            case ComponentType::waste_sink_type:
             {
                 sos.Wasteflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
             }
@@ -4899,20 +4899,20 @@ std::optional<size_t> FlowDict_GetIdByTag(FlowDict const& fd, std::string const&
 std::string ConnectionToString(ComponentDict const& cd, Connection const& c, bool compact)
 {
     std::string fromTag = cd.Tag[c.FromId];
-    if (fromTag.empty() && c.From == ComponentType::WasteSinkType)
+    if (fromTag.empty() && c.From == ComponentType::waste_sink_type)
     {
         fromTag = "WASTE";
     }
-    else if (fromTag.empty() && c.From == ComponentType::EnvironmentSourceType)
+    else if (fromTag.empty() && c.From == ComponentType::environment_source_type)
     {
         fromTag = "ENV";
     }
     std::string toTag = cd.Tag[c.ToId];
-    if (toTag.empty() && c.To == ComponentType::WasteSinkType)
+    if (toTag.empty() && c.To == ComponentType::waste_sink_type)
     {
         toTag = "WASTE";
     }
-    else if (toTag.empty() && c.To == ComponentType::EnvironmentSourceType)
+    else if (toTag.empty() && c.To == ComponentType::environment_source_type)
     {
         toTag = "ENV";
     }
@@ -4952,11 +4952,11 @@ std::string NodeConnectionToString(Model const& model,
         // component
         auto idx = std::get<0>(c.FromId).id;
         fromTag = componentMap.Tag[idx];
-        if (fromTag.empty() && c.From == ComponentType::WasteSinkType)
+        if (fromTag.empty() && c.From == ComponentType::waste_sink_type)
         {
             fromTag = "WASTE";
         }
-        else if (fromTag.empty() && c.From == ComponentType::EnvironmentSourceType)
+        else if (fromTag.empty() && c.From == ComponentType::environment_source_type)
         {
             fromTag = "ENV";
         }
@@ -4972,11 +4972,11 @@ std::string NodeConnectionToString(Model const& model,
     {
         auto idx = std::get<0>(c.ToId).id;
         toTag = componentMap.Tag[idx];
-        if (toTag.empty() && c.To == ComponentType::WasteSinkType)
+        if (toTag.empty() && c.To == ComponentType::waste_sink_type)
         {
             toTag = "WASTE";
         }
-        else if (toTag.empty() && c.To == ComponentType::EnvironmentSourceType)
+        else if (toTag.empty() && c.To == ComponentType::environment_source_type)
         {
             toTag = "ENV";
         }

@@ -186,7 +186,7 @@ void Simulation_PrintComponents(Simulation const& s)
         size_t subtypeIdx = m.ComponentMap.Idx[compId];
         switch (m.ComponentMap.CompType[compId])
         {
-        case ComponentType::ScheduleBasedLoadType:
+        case ComponentType::schedule_based_load_type:
         {
             assert(subtypeIdx < m.ScheduledLoads.size());
             ScheduleBasedLoad const& sbl = m.ScheduledLoads[subtypeIdx];
@@ -202,7 +202,7 @@ void Simulation_PrintComponents(Simulation const& s)
             }
         }
         break;
-        case ComponentType::ConstantLoadType:
+        case ComponentType::constant_load_type:
         {
             assert(subtypeIdx < m.ConstLoads.size());
             ConstantLoad const& cl = m.ConstLoads[subtypeIdx];
@@ -210,7 +210,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- inflow connection: " << cl.InflowConn << std::endl;
         }
         break;
-        case ComponentType::ScheduleBasedSourceType:
+        case ComponentType::schedule_based_source_type:
         {
             assert(subtypeIdx < m.ScheduledSrcs.size());
             ScheduleBasedSource const& sbs = m.ScheduledSrcs[subtypeIdx];
@@ -231,7 +231,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- outflow connection: " << sbs.OutflowConn << std::endl;
         }
         break;
-        case ComponentType::ConstantEfficiencyConverterType:
+        case ComponentType::constant_efficiency_converter_type:
         {
             assert(subtypeIdx < m.ConstEffConvs.size());
             ConstantEfficiencyConverter const& cec = m.ConstEffConvs[subtypeIdx];
@@ -253,7 +253,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- wasteflow connection: " << cec.WasteflowConn << std::endl;
         }
         break;
-        case ComponentType::VariableEfficiencyConverterType:
+        case ComponentType::variable_efficiency_converter_type:
         {
             assert(subtypeIdx < m.VarEffConvs.size());
             VariableEfficiencyConverter const& vec = m.VarEffConvs[subtypeIdx];
@@ -282,7 +282,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- wasteflow connection: " << vec.WasteflowConn << std::endl;
         }
         break;
-        case ComponentType::MoverType:
+        case ComponentType::mover_type:
         {
             assert(subtypeIdx < m.Movers.size());
             Mover const& mov = m.Movers[subtypeIdx];
@@ -297,7 +297,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- wasteflow connection: " << mov.WasteflowConn << std::endl;
         }
         break;
-        case ComponentType::VariableEfficiencyMoverType:
+        case ComponentType::variable_efficiency_mover_type:
         {
             assert(subtypeIdx < m.VarEffMovers.size());
             VariableEfficiencyMover const& mov = m.VarEffMovers[subtypeIdx];
@@ -318,7 +318,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- wasteflow connection: " << mov.WasteflowConn << std::endl;
         }
         break;
-        case ComponentType::StoreType:
+        case ComponentType::store_type:
         {
             assert(subtypeIdx < m.Stores.size());
             Store const& store = m.Stores[subtypeIdx];
@@ -347,7 +347,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- outflow connection: " << store.OutflowConn << std::endl;
         }
         break;
-        case ComponentType::PassThroughType:
+        case ComponentType::pass_through_type:
         {
             assert(subtypeIdx < m.PassThroughs.size());
             PassThrough const& pt = m.PassThroughs[subtypeIdx];
@@ -359,7 +359,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- outflow connection: " << pt.OutflowConn << std::endl;
         }
         break;
-        case ComponentType::MuxType:
+        case ComponentType::mux_type:
         {
             assert(subtypeIdx < m.Muxes.size());
             Mux const& mux = m.Muxes[subtypeIdx];
@@ -377,14 +377,14 @@ void Simulation_PrintComponents(Simulation const& s)
             }
         }
         break;
-        case ComponentType::ConstantSourceType:
+        case ComponentType::constant_source_type:
         {
             assert(subtypeIdx < m.ConstSources.size());
             ConstantSource const& cs = m.ConstSources[subtypeIdx];
             std::cout << "-- outflow connection: " << cs.OutflowConn << std::endl;
         }
         break;
-        case ComponentType::SwitchType:
+        case ComponentType::switch_type:
         {
             assert(subtypeIdx < m.Switches.size());
             Switch const& sw = m.Switches[subtypeIdx];
@@ -1274,11 +1274,11 @@ static void Simulation_PrintGroups(Simulation const& s)
         {
             continue;
         }
-        if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::EnvironmentSourceType)
+        if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::environment_source_type)
         {
             std::cout << "-- ENV[" << compId << "]" << std::endl;
         }
-        else if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::WasteSinkType)
+        else if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::waste_sink_type)
         {
             std::cout << "-- WASTE[" << compId << "]" << std::endl;
         }
@@ -1360,7 +1360,7 @@ void WriteEventFileHeader(std::ofstream& out,
         {
             for (size_t compId = 0; compId < compMap.Tag.size(); ++compId)
             {
-                if (compMap.CompType[compId] == ComponentType::StoreType &&
+                if (compMap.CompType[compId] == ComponentType::store_type &&
                     compMap.Idx[compId] == storeIdx)
                 {
                     std::string tag(compMap.Tag[compId]);
@@ -1501,7 +1501,7 @@ std::vector<size_t> CalculateStoreOrder(Simulation const& s,
             }
             ComponentType type = s.TheModel.ComponentMap.CompType[compId];
             size_t idx = s.TheModel.ComponentMap.Idx[compId];
-            if (type == ComponentType::StoreType && idx == storeId)
+            if (type == ComponentType::store_type && idx == storeId)
             {
                 reportedStoreIdxs.push_back(idx);
                 storeTags.push_back(s.TheModel.ComponentMap.Tag[compId]);

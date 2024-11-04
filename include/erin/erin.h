@@ -45,20 +45,20 @@ enum class FlowDirection
 
 enum class ComponentType
 {
-    ConstantLoadType,
-    ScheduleBasedLoadType,
-    ConstantSourceType,
-    ScheduleBasedSourceType,
-    ConstantEfficiencyConverterType,
-    VariableEfficiencyConverterType,
-    MuxType,
-    StoreType,
-    PassThroughType,
-    MoverType,
-    VariableEfficiencyMoverType,
-    WasteSinkType,
-    EnvironmentSourceType,
-    SwitchType,
+    constant_load_type,
+    schedule_based_load_type,
+    constant_source_type,
+    schedule_based_source_type,
+    constant_efficiency_converter_type,
+    variable_efficiency_converter_type,
+    mux_type,
+    store_type,
+    pass_through_type,
+    mover_type,
+    variable_efficiency_mover_type,
+    waste_sink_type,
+    environment_source_type,
+    switch_type,
 };
 
 // Holds the various flow types encountered
@@ -269,13 +269,13 @@ struct VariableEfficiencyMover
 
 struct Connection
 {
-    ComponentType From = ComponentType::ConstantSourceType;
+    ComponentType From = ComponentType::constant_source_type;
     // index into the specific component type's array
     size_t FromIdx = 0;
     size_t FromPort = 0;
     // index into ComponentDict
     size_t FromId = 0;
-    ComponentType To = ComponentType::ConstantLoadType;
+    ComponentType To = ComponentType::constant_load_type;
     // index into the specific component type's array
     size_t ToIdx = 0;
     size_t ToPort = 0;
@@ -337,8 +337,8 @@ struct NodeID : std::variant<ComponentID, GroupID>
 struct NodeConnection
 {
     size_t ConnectionId = 0;
-    ComponentType From = ComponentType::ConstantSourceType;
-    ComponentType To = ComponentType::ConstantLoadType;
+    ComponentType From = ComponentType::constant_source_type;
+    ComponentType To = ComponentType::constant_load_type;
     // index into the specific component type's array
     size_t FromIdx = 0;
     size_t FromPort = 0;

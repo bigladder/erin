@@ -156,7 +156,7 @@ std::string network_to_dot(std::vector<Connection> const& network,
     for (auto const& connection : network)
     {
         std::string from_tag = componentTagById[connection.FromId];
-        if (from_tag.empty() && connection.From == ComponentType::EnvironmentSourceType)
+        if (from_tag.empty() && connection.From == ComponentType::environment_source_type)
         {
             from_tag = "ENV" + std::to_string(env_count);
             ++env_count;
@@ -167,7 +167,7 @@ std::string network_to_dot(std::vector<Connection> const& network,
             .port_number = connection.FromPort,
         };
         std::string to_tag = componentTagById[connection.ToId];
-        if (to_tag.empty() && connection.To == ComponentType::WasteSinkType)
+        if (to_tag.empty() && connection.To == ComponentType::waste_sink_type)
         {
             to_tag = "WASTE" + std::to_string(waste_count);
             ++waste_count;

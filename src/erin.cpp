@@ -34,7 +34,7 @@ void AddConnectionIssue(std::vector<std::string>& issues,
                         size_t connIdx,
                         FlowDirection flowDirection)
 {
-    std::string direction = flowDirection == FlowDirection::Outflow ? "outflow" : "inflow ";
+    std::string direction = flowDirection == FlowDirection::outflow ? "outflow" : "inflow ";
     std::ostringstream oss;
     oss << "Inconsistent Connection\n";
     oss << "- ACCORDING TO THE COMPONENT:\n";
@@ -46,13 +46,13 @@ void AddConnectionIssue(std::vector<std::string>& issues,
     oss << "- ACCORDING TO THE " << direction << " CONNECTION:\n";
     oss << "  - connection id:  " << connIdx << "\n";
     oss << "  - component type: "
-        << ToString(flowDirection == FlowDirection::Outflow ? conn.From : conn.To) << "\n";
+        << ToString(flowDirection == FlowDirection::outflow ? conn.From : conn.To) << "\n";
     oss << "  - component id:   "
-        << (flowDirection == FlowDirection::Outflow ? conn.FromId : conn.ToId) << "\n";
+        << (flowDirection == FlowDirection::outflow ? conn.FromId : conn.ToId) << "\n";
     oss << "  - port:           "
-        << (flowDirection == FlowDirection::Outflow ? conn.FromPort : conn.ToPort) << "\n";
+        << (flowDirection == FlowDirection::outflow ? conn.FromPort : conn.ToPort) << "\n";
     oss << "  - subtype index:  "
-        << (flowDirection == FlowDirection::Outflow ? conn.FromIdx : conn.ToIdx) << "\n";
+        << (flowDirection == FlowDirection::outflow ? conn.FromIdx : conn.ToIdx) << "\n";
     if (connIdx == 0)
     {
         oss << "NOTE: Since the connection ID is 0 (initialization), "
@@ -120,7 +120,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    inflowConn,
                                    inflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t outflowConnIdx = cec.OutflowConn;
             assert(outflowConnIdx < nConns);
@@ -137,7 +137,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
             size_t wasteflowConnIdx = cec.WasteflowConn;
             assert(wasteflowConnIdx < nConns);
@@ -154,7 +154,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    wfConn,
                                    wasteflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
             if (cec.LossflowConn.has_value())
             {
@@ -173,7 +173,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                        compType,
                                        lfConn,
                                        lfConnIdx,
-                                       FlowDirection::Outflow);
+                                       FlowDirection::outflow);
                 }
             }
         }
@@ -197,7 +197,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    inflowConn,
                                    inflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t outflowConnIdx = vec.OutflowConn;
             assert(outflowConnIdx < nConns);
@@ -214,7 +214,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
             size_t wasteflowConnIdx = vec.WasteflowConn;
             assert(wasteflowConnIdx < nConns);
@@ -231,7 +231,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    wfConn,
                                    wasteflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
             if (vec.LossflowConn.has_value())
             {
@@ -250,7 +250,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                        compType,
                                        lfConn,
                                        lfConnIdx,
-                                       FlowDirection::Outflow);
+                                       FlowDirection::outflow);
                 }
             }
         }
@@ -273,7 +273,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    inflowConn,
                                    inflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
         }
         break;
@@ -296,7 +296,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
         }
         break;
@@ -324,7 +324,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    inflowConn,
                                    inflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t outflowConnIdx = comp.OutflowConn;
             assert(outflowConnIdx < nConns);
@@ -341,7 +341,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
             size_t envConnIdx = comp.InFromEnvConn;
             assert(envConnIdx < nConns);
@@ -358,7 +358,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    envConn,
                                    envConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t wConnIdx = comp.WasteflowConn;
             assert(wConnIdx < nConns);
@@ -375,7 +375,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    wConn,
                                    wConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
         }
         break;
@@ -398,7 +398,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    inflowConn,
                                    inflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t outflowConnIdx = comp.OutflowConn;
             assert(outflowConnIdx < nConns);
@@ -415,7 +415,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
             size_t envConnIdx = comp.InFromEnvConn;
             assert(envConnIdx < nConns);
@@ -432,7 +432,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    envConn,
                                    envConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t wConnIdx = comp.WasteflowConn;
             assert(wConnIdx < nConns);
@@ -449,7 +449,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    wConn,
                                    wConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
         }
         break;
@@ -472,7 +472,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                        compType,
                                        inflowConn,
                                        inflowConnIdx,
-                                       FlowDirection::Inflow);
+                                       FlowDirection::inflow);
                 }
             }
             for (size_t outPort = 0; outPort < comp.NumOutports; ++outPort)
@@ -490,7 +490,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                        compType,
                                        outflowConn,
                                        outflowConnIdx,
-                                       FlowDirection::Outflow);
+                                       FlowDirection::outflow);
                 }
             }
         }
@@ -513,7 +513,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    inflowConn,
                                    inflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t outflowConnIdx = comp.OutflowConn;
             Connection const& outflowConn = m.Connections[outflowConnIdx];
@@ -529,7 +529,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
         }
         break;
@@ -551,7 +551,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    primaryInflowConn,
                                    primaryInflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t secondaryInflowConnIdx = comp.InflowConnSecondary;
             Connection const& secondaryInflowConn = m.Connections[secondaryInflowConnIdx];
@@ -568,7 +568,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    secondaryInflowConn,
                                    secondaryInflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
             size_t outflowConnIdx = comp.OutflowConn;
             Connection const& outflowConn = m.Connections[outflowConnIdx];
@@ -584,7 +584,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
         }
         break;
@@ -606,7 +606,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    inflowConn,
                                    inflowConnIdx,
-                                   FlowDirection::Inflow);
+                                   FlowDirection::inflow);
             }
         }
         break;
@@ -628,7 +628,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
             size_t wfConnIdx = comp.WasteflowConn;
             Connection const& wfConn = m.Connections[wfConnIdx];
@@ -644,7 +644,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    wfConn,
                                    wfConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
         }
         break;
@@ -666,7 +666,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    compType,
                                    outflowConn,
                                    outflowConnIdx,
-                                   FlowDirection::Outflow);
+                                   FlowDirection::outflow);
             }
             if (comp.InflowConn.has_value())
             {
@@ -684,7 +684,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                        compType,
                                        inflowConn,
                                        inflowConnIdx,
-                                       FlowDirection::Inflow);
+                                       FlowDirection::inflow);
                 }
             }
             if (comp.WasteflowConn.has_value())
@@ -703,7 +703,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                        compType,
                                        wfConn,
                                        wfConnIdx,
-                                       FlowDirection::Outflow);
+                                       FlowDirection::outflow);
                 }
             }
         }

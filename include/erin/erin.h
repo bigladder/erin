@@ -39,8 +39,8 @@ constexpr flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 
 enum class FlowDirection
 {
-    Inflow = 0,
-    Outflow = 1,
+    inflow = 0,
+    outflow = 1,
 };
 
 enum class ComponentType

@@ -19,6 +19,11 @@
 namespace erin
 {
 
+// PRIVATE CONSTANTS
+constexpr double const infinite_time = -1.0;
+
+constexpr size_t const wasteflow_id = 0;
+
 void AddConnectionIssue(std::vector<std::string>& issues,
                         std::string componentTag,
                         size_t compId,
@@ -1223,7 +1228,7 @@ double GetNextTime(double nextTime, size_t count, std::function<double(size_t)> 
     for (size_t i = 0; i < count; ++i)
     {
         double nextTimeForComponent = f(i);
-        if (nextTime == infinity ||
+        if (nextTime == infinite_time ||
             (nextTimeForComponent >= 0.0 && nextTimeForComponent < nextTime))
         {
             nextTime = nextTimeForComponent;
@@ -1234,7 +1239,7 @@ double GetNextTime(double nextTime, size_t count, std::function<double(size_t)> 
 
 double EarliestNextEvent(Model const& m, SimulationState const& ss, double t)
 {
-    double next = infinity;
+    double next = infinite_time;
     next = GetNextTime(next,
                        m.ScheduledLoads.size(),
                        [&](size_t i) -> double { return NextEvent(m.ScheduledLoads[i], i, ss); });
@@ -2201,7 +2206,7 @@ void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_
             ss.Flows[wfIdx].Available_W = 0;
             ss.Flows[wfIdx].Actual_W = 0;
         }
-        ss.StorageNextEventTimes[compIdx] = infinity;
+        ss.StorageNextEventTimes[compIdx] = infinite_time;
     }
 }
 
@@ -2264,7 +2269,7 @@ double NextEvent(ScheduleBasedLoad const& sb, size_t sbIdx, SimulationState cons
     auto nextIdx = ss.ScheduleBasedLoadIdx[sbIdx] + 1;
     if (nextIdx >= sb.TimesAndLoads.size())
     {
-        return infinity;
+        return infinite_time;
     }
     return sb.TimesAndLoads[nextIdx].Time_s;
 }
@@ -2274,7 +2279,7 @@ double NextEvent(ScheduleBasedSource const& sb, size_t sbIdx, SimulationState co
     auto nextIdx = ss.ScheduleBasedSourceIdx[sbIdx] + 1;
     if (nextIdx >= sb.TimeAndAvails.size())
     {
-        return infinity;
+        return infinite_time;
     }
     return sb.TimeAndAvails[nextIdx].Time_s;
 }
@@ -2288,7 +2293,7 @@ double NextEvent(ScheduleBasedReliability const& sbr, double t)
             return sbr.TimeStates[i].time;
         }
     }
-    return infinity;
+    return infinite_time;
 }
 
 double NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t)
@@ -2298,7 +2303,7 @@ double NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t)
     {
         return storeTime;
     }
-    return infinity;
+    return infinite_time;
 }
 
 void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elapsedTime_s)
@@ -3013,7 +3018,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
     SimulationState ss {};
     Model_SetupSimulationState(model, ss);
     // TODO: add units to FinalTime (append '_s')
-    while (t != infinity && t <= model.FinalTime)
+    while (t != infinite_time && t <= model.FinalTime)
     {
         // schedule each event-generating component for next event
         // by adding to the ActiveComponentBack or ActiveComponentFront
@@ -3138,7 +3143,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
             break;
         }
         double nextTime = EarliestNextEvent(model, ss, t);
-        if ((nextTime == infinity && t < model.FinalTime) || (nextTime > model.FinalTime))
+        if ((nextTime == infinite_time && t < model.FinalTime) || (nextTime > model.FinalTime))
         {
             nextTime = model.FinalTime;
         }

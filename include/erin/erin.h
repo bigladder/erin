@@ -34,10 +34,6 @@
 namespace erin
 {
 // DATA
-double const infinity = -1.0;
-
-constexpr size_t const wasteflow_id = 0;
-
 // NOTE: the maximum allowed flow
 constexpr flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 

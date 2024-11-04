@@ -2,13 +2,15 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_VALIDATION_H
 #define ERIN_VALIDATION_H
-#include "erin/toml.h"
-#include <string>
-#include <vector>
+
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>
+#include <vector>
+
+#include "erin/valdata.h"
 
 namespace erin
 {

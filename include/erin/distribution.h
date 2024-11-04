@@ -1,20 +1,21 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-
 #ifndef ERIN_DISTRIBUTION_H
 #define ERIN_DISTRIBUTION_H
-#include "erin/valdata.h"
-#include "erin/result.h"
-#include "erin/logging.h"
-#include "../vendor/toml11/toml.hpp"
 #include <chrono>
 #include <exception>
 #include <functional>
+#include <optional>
 #include <random>
 #include <sstream>
-#include <string>
 #include <stdint.h>
-#include <optional>
+#include <string>
+
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/logging.h"
+#include "erin/result.h"
+#include "erin/valdata.h"
 
 namespace erin
 {

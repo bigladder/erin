@@ -2,15 +2,16 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_SCENARIO_H
 #define ERIN_SCENARIO_H
-
-#include "../vendor/toml11/toml.hpp"
-#include "erin/distribution.h"
-#include "erin/units.h"
-#include "erin/result.h"
 #include <cstdlib>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
+
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/distribution.h"
+#include "erin/result.h"
+#include "erin/units.h"
 
 namespace erin
 {

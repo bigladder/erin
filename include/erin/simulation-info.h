@@ -2,18 +2,22 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_SIMULATION_INFO_H
 #define ERIN_SIMULATION_INFO_H
-#include "erin/valdata.h"
-#include "erin/units.h"
-#include "erin/random.h"
-#include "../vendor/toml11/toml.hpp"
+
+#include <optional>
 #include <ostream>
 #include <string>
-#include <optional>
 #include <unordered_map>
 #include <vector>
 
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/random.h"
+#include "erin/units.h"
+#include "erin/valdata.h"
+
 namespace erin
 {
+
 // TODO: consider what we're asking for in SimulationInfo. I think we
 // should do the following: get rid of rate and quantity unit. TimeUnit
 // is needed as it corresponds with max_time. Otherwise, more thought is
@@ -47,6 +51,7 @@ bool operator==(SimulationInfo const& a, SimulationInfo const& b);
 bool operator!=(SimulationInfo const& a, SimulationInfo const& b);
 
 std::ostream& operator<<(std::ostream& os, SimulationInfo const& s);
+
 } // namespace erin
 
 #endif

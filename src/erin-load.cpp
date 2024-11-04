@@ -1,16 +1,18 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-#include "erin/load.h"
-#include "erin/erin.h"
-#include "erin/units.h"
-#include "erin/validation.h"
-#include "erin/toml.h"
-#include "erin/csv.h"
-#include "erin/utils.h"
-#include <iostream>
+
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <unordered_map>
+
+#include "erin/csv.h"
+#include "erin/erin.h"
+#include "erin/load.h"
+#include "erin/toml.h"
+#include "erin/units.h"
+#include "erin/utils.h"
+#include "erin/validation.h"
 
 namespace erin
 {

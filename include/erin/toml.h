@@ -2,16 +2,19 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_TOML_H
 #define ERIN_TOML_H
-#include "erin/valdata.h"
-#include "erin/time_and_amount.h"
-#include "erin/logging.h"
-#include "../vendor/toml11/toml.hpp"
-#include <vector>
+
+#include <optional>
+#include <stdint.h>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <string>
-#include <stdint.h>
-#include <optional>
+#include <vector>
+
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/logging.h"
+#include "erin/time_and_amount.h"
+#include "erin/valdata.h"
 
 namespace erin
 {

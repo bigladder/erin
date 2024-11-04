@@ -2,23 +2,24 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_SIMULATION_H
 #define ERIN_SIMULATION_H
-
-#include "erin/erin.h"
-#include "erin/logging.h"
-#include "erin/distribution.h"
-#include "erin/simulation-info.h"
-#include "erin/load.h"
-#include "erin/scenario.h"
-#include "erin/result.h"
-#include "../vendor/toml11/toml.hpp"
-#include "../vendor/courier/include/courier/courier.h"
-#include "erin/validation.h"
-#include <string>
-#include <vector>
-#include <optional>
 #include <cstdlib>
-#include <unordered_set>
+#include <optional>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "../vendor/courier/include/courier/courier.h"
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/distribution.h"
+#include "erin/erin.h"
+#include "erin/load.h"
+#include "erin/logging.h"
+#include "erin/result.h"
+#include "erin/scenario.h"
+#include "erin/simulation-info.h"
+#include "erin/validation.h"
 
 namespace erin
 {

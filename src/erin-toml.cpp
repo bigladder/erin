@@ -1,14 +1,16 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-#include "erin/toml.h"
-#include "erin/logging.h"
-#include "erin/utils.h"
-#include "erin/validation.h"
-#include "fmt/format.h"
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
-#include <cmath>
+
+#include <fmt/format.h>
+
+#include "erin/logging.h"
+#include "erin/toml.h"
+#include "erin/utils.h"
+#include "erin/validation.h"
 
 namespace erin
 {

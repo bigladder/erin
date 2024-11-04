@@ -1,31 +1,32 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-#include "erin/simulation.h"
-#include "erin/logging.h"
-#include "erin/erin.h"
-#include "erin/component.h"
-#include "erin/timestate.h"
-#include "erin/units.h"
-#include "erin/utils.h"
-#include "erin/toml.h"
-#include "erin/random.h"
-#include "erin/validation.h"
-#include "erin/toml.h"
-#include "fmt/format.h"
-#include <fmt/core.h>
+#include <algorithm>
 #include <cassert>
+#include <cstdlib>
 #include <fstream>
+#include <iomanip>
 #include <ios>
 #include <limits>
+#include <map>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <map>
-#include <iomanip>
-#include <algorithm>
-#include <sstream>
-#include <cstdlib>
+
+#include <fmt/core.h>
+#include <fmt/format.h>
+
+#include "erin/component.h"
+#include "erin/erin.h"
+#include "erin/logging.h"
+#include "erin/random.h"
+#include "erin/simulation.h"
+#include "erin/timestate.h"
+#include "erin/toml.h"
+#include "erin/units.h"
+#include "erin/utils.h"
+#include "erin/validation.h"
 
 namespace erin
 {

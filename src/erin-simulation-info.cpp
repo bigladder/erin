@@ -1,15 +1,17 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
+
+#include <iostream>
+#include <optional>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "erin/simulation-info.h"
 #include "erin/toml.h"
 #include "erin/units.h"
 #include "erin/utils.h"
 #include "erin/validation.h"
-#include <iostream>
-#include <unordered_map>
-#include <unordered_set>
-#include <optional>
-#include <tuple>
 
 namespace erin
 {

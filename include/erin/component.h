@@ -2,12 +2,14 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_COMPONENT_H
 #define ERIN_COMPONENT_H
-#include "erin/erin.h"
-#include "erin/simulation.h"
-#include "erin/result.h"
-#include "../vendor/toml11/toml.hpp"
-#include "erin/validation.h"
 #include <unordered_set>
+
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/erin.h"
+#include "erin/result.h"
+#include "erin/simulation.h"
+#include "erin/validation.h"
 
 namespace erin
 {

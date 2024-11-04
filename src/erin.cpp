@@ -2862,7 +2862,7 @@ ComponentIdAndWasteAndEnvironmentConnection Model_AddMover(Model& m,
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
                                                        ComponentType::WasteSinkType,
                                                        0,
-                                                       std::vector<size_t> {wasteflowId},
+                                                       std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
                                                        "",
                                                        0.0,
@@ -2871,7 +2871,7 @@ ComponentIdAndWasteAndEnvironmentConnection Model_AddMover(Model& m,
                                                      ComponentType::EnvironmentSourceType,
                                                      0,
                                                      std::vector<size_t> {},
-                                                     std::vector<size_t> {wasteflowId},
+                                                     std::vector<size_t> {wasteflow_id},
                                                      "",
                                                      0.0,
                                                      report);
@@ -2879,13 +2879,13 @@ ComponentIdAndWasteAndEnvironmentConnection Model_AddMover(Model& m,
         Component_AddComponentReturningId(m.ComponentMap,
                                           ComponentType::MoverType,
                                           0,
-                                          std::vector<size_t> {inflowTypeId, wasteflowId},
-                                          std::vector<size_t> {outflowTypeId, wasteflowId},
+                                          std::vector<size_t> {inflowTypeId, wasteflow_id},
+                                          std::vector<size_t> {outflowTypeId, wasteflow_id},
                                           tag,
                                           0.0,
                                           report);
-    Connection wconn = Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflowId);
-    Connection econn = Model_AddConnection(m, envId, 0, thisId, 1, wasteflowId);
+    Connection wconn = Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflow_id);
+    Connection econn = Model_AddConnection(m, envId, 0, thisId, 1, wasteflow_id);
     return {
         .Id = thisId,
         .WasteConn = wconn,
@@ -2924,7 +2924,7 @@ Model_AddVariableEfficiencyMover(Model& m,
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
                                                        ComponentType::WasteSinkType,
                                                        0,
-                                                       std::vector<size_t> {wasteflowId},
+                                                       std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
                                                        "",
                                                        0.0,
@@ -2933,7 +2933,7 @@ Model_AddVariableEfficiencyMover(Model& m,
                                                      ComponentType::EnvironmentSourceType,
                                                      0,
                                                      std::vector<size_t> {},
-                                                     std::vector<size_t> {wasteflowId},
+                                                     std::vector<size_t> {wasteflow_id},
                                                      "",
                                                      0.0,
                                                      report);
@@ -2941,13 +2941,13 @@ Model_AddVariableEfficiencyMover(Model& m,
         Component_AddComponentReturningId(m.ComponentMap,
                                           ComponentType::VariableEfficiencyMoverType,
                                           0,
-                                          std::vector<size_t> {inflowTypeId, wasteflowId},
-                                          std::vector<size_t> {outflowTypeId, wasteflowId},
+                                          std::vector<size_t> {inflowTypeId, wasteflow_id},
+                                          std::vector<size_t> {outflowTypeId, wasteflow_id},
                                           tag,
                                           0.0,
                                           report);
-    Connection wconn = Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflowId);
-    Connection econn = Model_AddConnection(m, envId, 0, thisId, 1, wasteflowId);
+    Connection wconn = Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflow_id);
+    Connection econn = Model_AddConnection(m, envId, 0, thisId, 1, wasteflow_id);
     return {
         .Id = thisId,
         .WasteConn = wconn,
@@ -3741,11 +3741,11 @@ ComponentIdAndWasteConnection Model_AddStoreWithWasteflow(Model& m,
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
                                                        ComponentType::WasteSinkType,
                                                        0,
-                                                       std::vector<size_t> {wasteflowId},
+                                                       std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
                                                        "",
                                                        0.0);
-    auto wasteConn = Model_AddConnection(m, id, 1, wasteId, 0, wasteflowId);
+    auto wasteConn = Model_AddConnection(m, id, 1, wasteId, 0, wasteflow_id);
     return {
         .Id = id,
         .WasteConnection = std::move(wasteConn),
@@ -3774,7 +3774,7 @@ ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m,
     assert(efficiency > 0.0 && efficiency <= 1.0);
     // NOTE: the 0th flowId is ""; the non-described flow
     std::vector<size_t> inflowIds {inflowId};
-    std::vector<size_t> outflowIds {outflowId, lossflowId, wasteflowId};
+    std::vector<size_t> outflowIds {outflowId, lossflowId, wasteflow_id};
     size_t idx = m.ConstEffConvs.size();
     ConstantEfficiencyConverter cec {
         .Efficiency = efficiency,
@@ -3789,7 +3789,7 @@ ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m,
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
                                                        ComponentType::WasteSinkType,
                                                        0,
-                                                       std::vector<size_t> {wasteflowId},
+                                                       std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
                                                        "",
                                                        0.0,
@@ -3803,7 +3803,7 @@ ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m,
                                           tag,
                                           0.0,
                                           report);
-    auto wasteConn = Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflowId);
+    auto wasteConn = Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflow_id);
     return {thisId, wasteConn};
 }
 
@@ -3819,7 +3819,7 @@ Model_AddVariableEfficiencyConverter(Model& m,
 {
     // NOTE: the 0th flowId is ""; the non-described flow
     std::vector<size_t> inflowIds {inflowId};
-    std::vector<size_t> outflowIds {outflowId, lossflowId, wasteflowId};
+    std::vector<size_t> outflowIds {outflowId, lossflowId, wasteflow_id};
     size_t idx = m.VarEffConvs.size();
     std::vector<double> inflowsForEfficiency_W;
     inflowsForEfficiency_W.reserve(outflowsForEfficiency_W.size());
@@ -3836,7 +3836,7 @@ Model_AddVariableEfficiencyConverter(Model& m,
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
                                                        ComponentType::WasteSinkType,
                                                        0,
-                                                       std::vector<size_t> {wasteflowId},
+                                                       std::vector<size_t> {wasteflow_id},
                                                        std::vector<size_t> {},
                                                        "",
                                                        0.0,
@@ -3850,7 +3850,7 @@ Model_AddVariableEfficiencyConverter(Model& m,
                                           tag,
                                           0.0,
                                           report);
-    auto wasteConn = Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflowId);
+    auto wasteConn = Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflow_id);
     return {thisId, wasteConn};
 }
 

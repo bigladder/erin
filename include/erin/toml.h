@@ -26,22 +26,6 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                                 std::vector<std::string>& errors,
                                 std::vector<std::string>& warnings);
 
-// TODO: remove, this function is apparently not used
-// TODO: create struct to hold if tag/name is deprecated
-// struct TagWithDeprecation {string Name; bool IsDeprecated;}
-// TODO: add aliases std::unordered_map<std::string,
-// std::vector<TagWithDeprecation>>
-// TODO: add in std::unordered_map<std::string, TomlType> to check types
-//       are correct
-// TODO: take in std::vector<std::string> to hold error messages
-bool TOMLTable_is_valid(std::unordered_map<toml::key, toml::value> const& table,
-                        std::unordered_set<std::string> const& requiredFields,
-                        std::unordered_set<std::string> const& optionalFields,
-                        std::unordered_map<std::string, std::string> const& defaults,
-                        std::string const& tableName,
-                        bool verbose = false,
-                        Log const& log = Log {});
-
 std::optional<std::string>
 TOMLTable_parse_string(std::unordered_map<toml::key, toml::value> const& table,
                        std::string const& fieldName,

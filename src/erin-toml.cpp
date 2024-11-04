@@ -509,43 +509,6 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
     return out;
 }
 
-// TODO: pass in a mutable vector of error strings we can push to
-// in order to decouple printing from here.
-// TODO: see header; also pass in list of aliases for keys
-bool TOMLTable_is_valid(std::unordered_map<toml::key, toml::value> const& table,
-                        std::unordered_set<std::string> const& requiredFields,
-                        std::unordered_set<std::string> const& optionalFields,
-                        std::unordered_map<std::string, std::string> const& defaults,
-                        std::string const& tableName,
-                        bool verbose,
-                        Log const& log)
-{
-    for (auto it = table.cbegin(); it != table.cend(); ++it)
-    {
-        if (!requiredFields.contains(it->first) && !optionalFields.contains(it->first) &&
-            !defaults.contains(it->first))
-        {
-            if (verbose)
-            {
-                Log_warning(log, tableName, fmt::format("Unrecognized key '{}'", it->first));
-            }
-            return false;
-        }
-    }
-    for (auto it = requiredFields.cbegin(); it != requiredFields.cend(); ++it)
-    {
-        if (!table.contains(*it))
-        {
-            if (verbose)
-            {
-                Log_error(log, tableName, fmt::format("Missing required key '{}'", *it));
-            }
-            return false;
-        }
-    }
-    return true;
-}
-
 std::optional<std::string>
 TOMLTable_parse_string(std::unordered_map<toml::key, toml::value> const& table,
                        std::string const& fieldName,

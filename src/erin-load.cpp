@@ -14,6 +14,17 @@
 
 namespace erin
 {
+
+// LOCAL DECLARATIONS
+std::optional<Load>
+ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table,
+                        std::string const& tag);
+
+std::optional<Load>
+ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table,
+                        std::string const& tag);
+
+// DEFINITIONS
 std::unordered_set<std::string> RequiredLoadFields {
     "time_unit",
     "rate_unit",

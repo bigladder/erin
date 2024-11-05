@@ -4407,10 +4407,10 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                 bool foundFlowTypeStats = false;
                 for (StatsByFlowType& sbf : sos.FlowTypeStats)
                 {
-                    if (sbf.FlowTypeId == flowTypeId)
+                    if (sbf.flow_type_id == flowTypeId)
                     {
-                        sbf.TotalRequest_kJ += outflowRequest_kJ;
-                        sbf.TotalAchieved_kJ += outflowAchieved_kJ;
+                        sbf.total_request_kJ += outflowRequest_kJ;
+                        sbf.total_achieved_kJ += outflowAchieved_kJ;
                         if (!allLoadsMetByFlowType.contains(flowTypeId))
                         {
                             allLoadsMetByFlowType.insert({flowTypeId, true});
@@ -4434,12 +4434,12 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                         allLoadsMetByFlowType[flowTypeId] = false;
                     }
                     StatsByFlowType sbf {
-                        .FlowTypeId = flowTypeId,
+                        .flow_type_id = flowTypeId,
                         // NOTE: placeholder; updated later if all loads
                         // for this flow are met
-                        .Uptime_s = 0.0,
-                        .TotalRequest_kJ = outflowRequest_kJ,
-                        .TotalAchieved_kJ = outflowAchieved_kJ,
+                        .uptime_s = 0.0,
+                        .total_request_kJ = outflowRequest_kJ,
+                        .total_achieved_kJ = outflowAchieved_kJ,
                     };
                     sos.FlowTypeStats.push_back(std::move(sbf));
                 }
@@ -4447,14 +4447,14 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                 bool foundLoadAndFlowTypeStats = false;
                 for (StatsByLoadAndFlowType& sblf : sos.LoadAndFlowTypeStats)
                 {
-                    if (sblf.ComponentId == compId && sblf.Stats.FlowTypeId == flowTypeId)
+                    if (sblf.ComponentId == compId && sblf.Stats.flow_type_id == flowTypeId)
                     {
                         if (loadsMet)
                         {
-                            sblf.Stats.Uptime_s += dt_s;
+                            sblf.Stats.uptime_s += dt_s;
                         }
-                        sblf.Stats.TotalRequest_kJ += outflowRequest_kJ;
-                        sblf.Stats.TotalAchieved_kJ += outflowAchieved_kJ;
+                        sblf.Stats.total_request_kJ += outflowRequest_kJ;
+                        sblf.Stats.total_achieved_kJ += outflowAchieved_kJ;
                         foundLoadAndFlowTypeStats = true;
                         break;
                     }
@@ -4462,10 +4462,10 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                 if (!foundLoadAndFlowTypeStats)
                 {
                     StatsByFlowType sbf {
-                        .FlowTypeId = flowTypeId,
-                        .Uptime_s = loadsMet ? dt_s : 0.0,
-                        .TotalRequest_kJ = outflowRequest_kJ,
-                        .TotalAchieved_kJ = outflowAchieved_kJ,
+                        .flow_type_id = flowTypeId,
+                        .uptime_s = loadsMet ? dt_s : 0.0,
+                        .total_request_kJ = outflowRequest_kJ,
+                        .total_achieved_kJ = outflowAchieved_kJ,
                     };
                     StatsByLoadAndFlowType sblf {
                         .ComponentId = compId,
@@ -4510,12 +4510,12 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             bool foundMatch = false;
             for (StatsByFlowType& sbft : sos.FlowTypeStats)
             {
-                if (sbft.FlowTypeId == item.first)
+                if (sbft.flow_type_id == item.first)
                 {
                     foundMatch = true;
                     if (item.second)
                     {
-                        sbft.Uptime_s += dt_s;
+                        sbft.uptime_s += dt_s;
                     }
                     break;
                 }
@@ -4636,7 +4636,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     flowTypeNames.reserve(sos.FlowTypeStats.size());
     for (auto const& fts : sos.FlowTypeStats)
     {
-        flowTypeNames.push_back(flowDict.flow_type[fts.FlowTypeId]);
+        flowTypeNames.push_back(flowDict.flow_type[fts.flow_type_id]);
     }
     std::vector<size_t> flowTypeNames_idx(flowTypeNames.size());
     std::iota(flowTypeNames_idx.begin(), flowTypeNames_idx.end(), 0);
@@ -4656,7 +4656,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     for (auto const& lfts : sos.LoadAndFlowTypeStats)
     {
         std::string loadName = m.ComponentMap.tag[lfts.ComponentId];
-        std::string flowName = flowDict.flow_type[lfts.Stats.FlowTypeId];
+        std::string flowName = flowDict.flow_type[lfts.Stats.flow_type_id];
         std::string sortTag = loadName + "/" + flowName;
         loadFlowTypeNames.push_back(std::move(sortTag));
     }

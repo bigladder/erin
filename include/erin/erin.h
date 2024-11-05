@@ -120,10 +120,10 @@ struct FlowSummary
 
 struct StatsByFlowType
 {
-    size_t FlowTypeId;
-    double Uptime_s = 0.0;
-    double TotalRequest_kJ = 0.0;
-    double TotalAchieved_kJ = 0.0;
+    size_t flow_type_id;
+    double uptime_s = 0.0;
+    double total_request_kJ = 0.0;
+    double total_achieved_kJ = 0.0;
 };
 
 struct StatsByLoadAndFlowType

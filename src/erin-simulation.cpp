@@ -2249,13 +2249,13 @@ void WriteStatisticsToFile(Simulation const& s,
     {
         for (auto const& statsByFlow : occurrenceStats[0].FlowTypeStats)
         {
-            std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlow.FlowTypeId];
+            std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlow.flow_type_id];
             stats << ",energy robustness [ER] for " << flowType;
             stats << ",energy availability [EA] for " << flowType;
         }
         for (auto const& statsByFlowLoad : occurrenceStats[0].LoadAndFlowTypeStats)
         {
-            std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlowLoad.Stats.FlowTypeId];
+            std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlowLoad.Stats.flow_type_id];
             std::string const& tag = s.TheModel.ComponentMap.tag[statsByFlowLoad.ComponentId];
             stats << ",energy robustness [ER] for " << tag << " [flow: " << flowType << "]";
             stats << ",energy availability [EA] for " << tag << " [flow: " << flowType << "]";
@@ -2388,21 +2388,21 @@ void WriteStatisticsToFile(Simulation const& s,
         for (auto const& statsByFlow : os.FlowTypeStats)
         {
 
-            double ER_by_flow = statsByFlow.TotalRequest_kJ > 0.0
-                                    ? (statsByFlow.TotalAchieved_kJ / statsByFlow.TotalRequest_kJ)
+            double ER_by_flow = statsByFlow.total_request_kJ > 0.0
+                                    ? (statsByFlow.total_achieved_kJ / statsByFlow.total_request_kJ)
                                     : 0.0;
-            double EA_by_flow = os.Duration_s > 0.0 ? (statsByFlow.Uptime_s / os.Duration_s) : 0.0;
+            double EA_by_flow = os.Duration_s > 0.0 ? (statsByFlow.uptime_s / os.Duration_s) : 0.0;
             stats << "," << ER_by_flow;
             stats << "," << EA_by_flow;
         }
         for (auto const& statsByFlowLoad : os.LoadAndFlowTypeStats)
         {
-            double ER_by_load = statsByFlowLoad.Stats.TotalRequest_kJ > 0.0
-                                    ? (statsByFlowLoad.Stats.TotalAchieved_kJ /
-                                       statsByFlowLoad.Stats.TotalRequest_kJ)
+            double ER_by_load = statsByFlowLoad.Stats.total_request_kJ > 0.0
+                                    ? (statsByFlowLoad.Stats.total_achieved_kJ /
+                                       statsByFlowLoad.Stats.total_request_kJ)
                                     : 0.0;
             double EA_by_load =
-                os.Duration_s > 0.0 ? (statsByFlowLoad.Stats.Uptime_s / os.Duration_s) : 0.0;
+                os.Duration_s > 0.0 ? (statsByFlowLoad.Stats.uptime_s / os.Duration_s) : 0.0;
             stats << "," << ER_by_load;
             stats << "," << EA_by_load;
         }

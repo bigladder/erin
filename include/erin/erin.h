@@ -586,22 +586,11 @@ convert_to_time_and_amounts(std::vector<std::vector<double>> const& input,
                             double timeToSeconds = 1.0,
                             double rateToWatts = 1.0);
 
-std::optional<FragilityCurveType> TagToFragilityCurveType(std::string const& tag);
+std::optional<FragilityCurveType> tag_to_fragility_curve_type(std::string const& tag);
 
-std::string FragilityCurveTypeToTag(FragilityCurveType fctype);
+std::string fragility_curve_type_to_tag(FragilityCurveType fctype);
 
-std::optional<size_t> GetIntensityIdByTag(IntensityDict intenseDict, std::string const& tag);
-
-size_t Component_AddComponentReturningId(ComponentDict& c, ComponentType ct, size_t idx);
-
-size_t Component_AddComponentReturningId(ComponentDict& c,
-                                         ComponentType ct,
-                                         size_t idx,
-                                         std::vector<size_t> inflowType,
-                                         std::vector<size_t> outflowType,
-                                         std::string const& tag,
-                                         double initialAge_s,
-                                         bool report = true);
+std::optional<size_t> get_intensity_id_by_tag(IntensityDict intensity_dict, std::string const& tag);
 
 void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
 

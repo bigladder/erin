@@ -434,8 +434,8 @@ void Simulation_PrintFragilityCurves(Simulation const& s)
     assert(s.FragilityCurves.curve_id.size() == s.FragilityCurves.tag.size());
     for (size_t i = 0; i < s.FragilityCurves.curve_id.size(); ++i)
     {
-        std::cout << i << ": " << FragilityCurveTypeToTag(s.FragilityCurves.curve_type[i]) << " -- "
-                  << s.FragilityCurves.tag[i] << std::endl;
+        std::cout << i << ": " << fragility_curve_type_to_tag(s.FragilityCurves.curve_type[i])
+                  << " -- " << s.FragilityCurves.tag[i] << std::endl;
         size_t idx = s.FragilityCurves.curve_id[i];
         switch (s.FragilityCurves.curve_type[i])
         {
@@ -782,7 +782,7 @@ Parse_VulnerableTo(Simulation const& s, toml::table const& fcData, std::string c
         return {};
     }
     std::string const& vulnerStr = fcData.at("vulnerable_to").as_string();
-    std::optional<size_t> maybeIntId = GetIntensityIdByTag(s.Intensities, vulnerStr);
+    std::optional<size_t> maybeIntId = get_intensity_id_by_tag(s.Intensities, vulnerStr);
     if (!maybeIntId.has_value())
     {
         write_error_message(tableFullName,
@@ -881,7 +881,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
                 return Result::Failure;
             }
             std::string const& typeStr = fcData.at("type").as_string();
-            std::optional<FragilityCurveType> maybeFct = TagToFragilityCurveType(typeStr);
+            std::optional<FragilityCurveType> maybeFct = tag_to_fragility_curve_type(typeStr);
             if (!maybeFct.has_value())
             {
                 Log_error(log, tableFullName, "could not interpret type as string");

@@ -29,6 +29,17 @@ void add_connection_issue(std::vector<std::string>& issues,
                           size_t connection_index,
                           FlowDirection flow_direction);
 
+size_t add_component_returning_id(ComponentDict& c, ComponentType ct, size_t idx);
+
+size_t add_component_returning_id(ComponentDict& c,
+                                  ComponentType ct,
+                                  size_t idx,
+                                  std::vector<size_t> inflow_type,
+                                  std::vector<size_t> outflow_type,
+                                  std::string const& tag,
+                                  double initial_age_s,
+                                  bool report = true);
+
 // PRIVATE CONSTANTS
 constexpr double const infinite_time = -1.0;
 
@@ -913,7 +924,7 @@ std::vector<TimeAndAmount> convert_to_time_and_amounts(
     return result;
 }
 
-std::optional<FragilityCurveType> TagToFragilityCurveType(std::string const& tag)
+std::optional<FragilityCurveType> tag_to_fragility_curve_type(std::string const& tag)
 {
     if (tag == "linear")
     {
@@ -926,7 +937,7 @@ std::optional<FragilityCurveType> TagToFragilityCurveType(std::string const& tag
     return {};
 }
 
-std::string FragilityCurveTypeToTag(FragilityCurveType fctype)
+std::string fragility_curve_type_to_tag(FragilityCurveType fctype)
 {
     std::string tag;
     switch (fctype)
@@ -951,7 +962,7 @@ std::string FragilityCurveTypeToTag(FragilityCurveType fctype)
     return tag;
 }
 
-std::optional<size_t> GetIntensityIdByTag(IntensityDict intenseDict, std::string const& tag)
+std::optional<size_t> get_intensity_id_by_tag(IntensityDict intenseDict, std::string const& tag)
 {
     for (size_t i = 0; i < intenseDict.tag.size(); ++i)
     {
@@ -963,20 +974,20 @@ std::optional<size_t> GetIntensityIdByTag(IntensityDict intenseDict, std::string
     return {};
 }
 
-size_t Component_AddComponentReturningId(ComponentDict& c, ComponentType ct, size_t idx)
+size_t add_component_returning_id(ComponentDict& c, ComponentType ct, size_t idx)
 {
-    return Component_AddComponentReturningId(
+    return add_component_returning_id(
         c, ct, idx, std::vector<size_t>(), std::vector<size_t>(), "", 0.0);
 }
 
-size_t Component_AddComponentReturningId(ComponentDict& c,
-                                         ComponentType ct,
-                                         size_t idx,
-                                         std::vector<size_t> inflowType,
-                                         std::vector<size_t> outflowType,
-                                         std::string const& tag,
-                                         double initialAge_s,
-                                         bool report)
+size_t add_component_returning_id(ComponentDict& c,
+                                  ComponentType ct,
+                                  size_t idx,
+                                  std::vector<size_t> inflowType,
+                                  std::vector<size_t> outflowType,
+                                  std::string const& tag,
+                                  double initialAge_s,
+                                  bool report)
 {
     size_t id = c.component_type.size();
     c.component_type.push_back(ct);
@@ -2886,31 +2897,30 @@ ComponentIdAndWasteAndEnvironmentConnection Model_AddMover(Model& m,
         .max_outflow_W = max_flow_W,
     };
     m.mover.push_back(std::move(mov));
-    size_t wasteId = Component_AddComponentReturningId(m.component,
-                                                       ComponentType::waste_sink_type,
-                                                       0,
-                                                       std::vector<size_t> {wasteflow_id},
-                                                       std::vector<size_t> {},
-                                                       "",
-                                                       0.0,
-                                                       report);
-    size_t envId = Component_AddComponentReturningId(m.component,
-                                                     ComponentType::environment_source_type,
-                                                     0,
-                                                     std::vector<size_t> {},
-                                                     std::vector<size_t> {wasteflow_id},
-                                                     "",
-                                                     0.0,
-                                                     report);
-    size_t thisId =
-        Component_AddComponentReturningId(m.component,
-                                          ComponentType::mover_type,
-                                          0,
-                                          std::vector<size_t> {inflowTypeId, wasteflow_id},
-                                          std::vector<size_t> {outflowTypeId, wasteflow_id},
-                                          tag,
-                                          0.0,
-                                          report);
+    size_t wasteId = add_component_returning_id(m.component,
+                                                ComponentType::waste_sink_type,
+                                                0,
+                                                std::vector<size_t> {wasteflow_id},
+                                                std::vector<size_t> {},
+                                                "",
+                                                0.0,
+                                                report);
+    size_t envId = add_component_returning_id(m.component,
+                                              ComponentType::environment_source_type,
+                                              0,
+                                              std::vector<size_t> {},
+                                              std::vector<size_t> {wasteflow_id},
+                                              "",
+                                              0.0,
+                                              report);
+    size_t thisId = add_component_returning_id(m.component,
+                                               ComponentType::mover_type,
+                                               0,
+                                               std::vector<size_t> {inflowTypeId, wasteflow_id},
+                                               std::vector<size_t> {outflowTypeId, wasteflow_id},
+                                               tag,
+                                               0.0,
+                                               report);
     Connection wconn = Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflow_id);
     Connection econn = Model_AddConnection(m, envId, 0, thisId, 1, wasteflow_id);
     return {
@@ -2948,31 +2958,30 @@ Model_AddVariableEfficiencyMover(Model& m,
         .COPs = std::move(copByOutflow),
     };
     m.variable_efficiency_mover.push_back(std::move(mov));
-    size_t wasteId = Component_AddComponentReturningId(m.component,
-                                                       ComponentType::waste_sink_type,
-                                                       0,
-                                                       std::vector<size_t> {wasteflow_id},
-                                                       std::vector<size_t> {},
-                                                       "",
-                                                       0.0,
-                                                       report);
-    size_t envId = Component_AddComponentReturningId(m.component,
-                                                     ComponentType::environment_source_type,
-                                                     0,
-                                                     std::vector<size_t> {},
-                                                     std::vector<size_t> {wasteflow_id},
-                                                     "",
-                                                     0.0,
-                                                     report);
-    size_t thisId =
-        Component_AddComponentReturningId(m.component,
-                                          ComponentType::variable_efficiency_mover_type,
-                                          0,
-                                          std::vector<size_t> {inflowTypeId, wasteflow_id},
-                                          std::vector<size_t> {outflowTypeId, wasteflow_id},
-                                          tag,
-                                          0.0,
-                                          report);
+    size_t wasteId = add_component_returning_id(m.component,
+                                                ComponentType::waste_sink_type,
+                                                0,
+                                                std::vector<size_t> {wasteflow_id},
+                                                std::vector<size_t> {},
+                                                "",
+                                                0.0,
+                                                report);
+    size_t envId = add_component_returning_id(m.component,
+                                              ComponentType::environment_source_type,
+                                              0,
+                                              std::vector<size_t> {},
+                                              std::vector<size_t> {wasteflow_id},
+                                              "",
+                                              0.0,
+                                              report);
+    size_t thisId = add_component_returning_id(m.component,
+                                               ComponentType::variable_efficiency_mover_type,
+                                               0,
+                                               std::vector<size_t> {inflowTypeId, wasteflow_id},
+                                               std::vector<size_t> {outflowTypeId, wasteflow_id},
+                                               tag,
+                                               0.0,
+                                               report);
     Connection wconn = Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflow_id);
     Connection econn = Model_AddConnection(m, envId, 0, thisId, 1, wasteflow_id);
     return {
@@ -3563,13 +3572,13 @@ size_t Model_AddSwitch(Model& m, size_t flowTypeId, std::string const& tag)
     };
     size_t subtypeIndex = m.transfer_switch.size();
     m.transfer_switch.push_back(std::move(s));
-    return Component_AddComponentReturningId(m.component,
-                                             ComponentType::switch_type,
-                                             subtypeIndex,
-                                             std::vector<size_t> {flowTypeId, flowTypeId},
-                                             std::vector<size_t> {flowTypeId},
-                                             tag,
-                                             0.0);
+    return add_component_returning_id(m.component,
+                                      ComponentType::switch_type,
+                                      subtypeIndex,
+                                      std::vector<size_t> {flowTypeId, flowTypeId},
+                                      std::vector<size_t> {flowTypeId},
+                                      tag,
+                                      0.0);
 }
 
 size_t Model_AddConstantLoad(Model& m, flow_t load)
@@ -3584,14 +3593,14 @@ size_t Model_AddConstantLoad(
     ConstantLoad cl {};
     cl.load_W = load;
     m.constant_load.push_back(std::move(cl));
-    return Component_AddComponentReturningId(m.component,
-                                             ComponentType::constant_load_type,
-                                             idx,
-                                             std::vector<size_t> {inflowTypeId},
-                                             std::vector<size_t> {},
-                                             tag,
-                                             0.0,
-                                             report);
+    return add_component_returning_id(m.component,
+                                      ComponentType::constant_load_type,
+                                      idx,
+                                      std::vector<size_t> {inflowTypeId},
+                                      std::vector<size_t> {},
+                                      tag,
+                                      0.0,
+                                      report);
 }
 
 size_t Model_AddScheduleBasedLoad(Model& m, double* times, flow_t* loads, size_t numItems)
@@ -3630,13 +3639,13 @@ size_t Model_AddScheduleBasedLoad(Model& m,
     sbl.inflow_connection_id = 0;
     sbl.scenario_id_to_load_id = scenarioIdToLoadId;
     m.scheduled_load.push_back(std::move(sbl));
-    return Component_AddComponentReturningId(m.component,
-                                             ComponentType::schedule_based_load_type,
-                                             idx,
-                                             std::vector<size_t> {inflowTypeId},
-                                             std::vector<size_t> {},
-                                             tag,
-                                             0.0);
+    return add_component_returning_id(m.component,
+                                      ComponentType::schedule_based_load_type,
+                                      idx,
+                                      std::vector<size_t> {inflowTypeId},
+                                      std::vector<size_t> {},
+                                      tag,
+                                      0.0);
 }
 
 size_t Model_AddConstantSource(Model& m, flow_t available)
@@ -3651,13 +3660,13 @@ Model_AddConstantSource(Model& m, flow_t available, size_t outflowTypeId, std::s
     ConstantSource cs {};
     cs.available_W = available;
     m.constant_source.push_back(std::move(cs));
-    return Component_AddComponentReturningId(m.component,
-                                             ComponentType::constant_source_type,
-                                             idx,
-                                             std::vector<size_t> {},
-                                             std::vector<size_t> {outflowTypeId},
-                                             tag,
-                                             0.0);
+    return add_component_returning_id(m.component,
+                                      ComponentType::constant_source_type,
+                                      idx,
+                                      std::vector<size_t> {},
+                                      std::vector<size_t> {outflowTypeId},
+                                      tag,
+                                      0.0);
 }
 
 ComponentIdAndWasteConnection Model_AddScheduleBasedSource(Model& m,
@@ -3679,15 +3688,14 @@ Model_AddScheduleBasedSource(Model& m,
     sbs.time_and_availables = xs;
     sbs.scenario_id_to_source_id = scenarioIdToSourceId;
     m.scheduled_source.push_back(sbs);
-    size_t wasteId =
-        Component_AddComponentReturningId(m.component, ComponentType::waste_sink_type, 0);
-    size_t thisId = Component_AddComponentReturningId(m.component,
-                                                      ComponentType::schedule_based_source_type,
-                                                      idx,
-                                                      std::vector<size_t> {},
-                                                      std::vector<size_t> {outflowId},
-                                                      tag,
-                                                      initialAge_s);
+    size_t wasteId = add_component_returning_id(m.component, ComponentType::waste_sink_type, 0);
+    size_t thisId = add_component_returning_id(m.component,
+                                               ComponentType::schedule_based_source_type,
+                                               idx,
+                                               std::vector<size_t> {},
+                                               std::vector<size_t> {outflowId},
+                                               tag,
+                                               initialAge_s);
     auto wasteConn = Model_AddConnection(m, thisId, 1, wasteId, 0);
     return {thisId, wasteConn};
 }
@@ -3711,7 +3719,7 @@ Model_AddMux(Model& m, size_t numInports, size_t numOutports, size_t flowId, std
     m.mux.push_back(std::move(mux));
     std::vector<size_t> inflowTypes(numInports, flowId);
     std::vector<size_t> outflowTypes(numOutports, flowId);
-    return Component_AddComponentReturningId(
+    return add_component_returning_id(
         m.component, ComponentType::mux_type, idx, inflowTypes, outflowTypes, tag, 0.0);
 }
 
@@ -3746,13 +3754,13 @@ size_t Model_AddStore(Model& m,
     s.initial_storage_J = initialStorage;
     s.roundtrip_efficiency = 1.0;
     m.store.push_back(std::move(s));
-    return Component_AddComponentReturningId(m.component,
-                                             ComponentType::store_type,
-                                             idx,
-                                             std::vector<size_t> {flowId},
-                                             std::vector<size_t> {flowId},
-                                             tag,
-                                             0.0);
+    return add_component_returning_id(m.component,
+                                      ComponentType::store_type,
+                                      idx,
+                                      std::vector<size_t> {flowId},
+                                      std::vector<size_t> {flowId},
+                                      tag,
+                                      0.0);
 }
 
 ComponentIdAndWasteConnection Model_AddStoreWithWasteflow(Model& m,
@@ -3770,13 +3778,13 @@ ComponentIdAndWasteConnection Model_AddStoreWithWasteflow(Model& m,
         m, capacity, maxCharge, maxDischarge, chargeAmount, initialStorage, flowId, tag);
     size_t storeIdx = m.component.subtype_index[id];
     m.store[storeIdx].roundtrip_efficiency = roundtripEfficiency;
-    size_t wasteId = Component_AddComponentReturningId(m.component,
-                                                       ComponentType::waste_sink_type,
-                                                       0,
-                                                       std::vector<size_t> {wasteflow_id},
-                                                       std::vector<size_t> {},
-                                                       "",
-                                                       0.0);
+    size_t wasteId = add_component_returning_id(m.component,
+                                                ComponentType::waste_sink_type,
+                                                0,
+                                                std::vector<size_t> {wasteflow_id},
+                                                std::vector<size_t> {},
+                                                "",
+                                                0.0);
     auto wasteConn = Model_AddConnection(m, id, 1, wasteId, 0, wasteflow_id);
     return {
         .id = id,
@@ -3818,23 +3826,22 @@ ComponentIdAndWasteConnection Model_AddConstantEfficiencyConverter(Model& m,
         .max_lossflow_W = max_flow_W,
     };
     m.constant_efficiency_converter.push_back(std::move(cec));
-    size_t wasteId = Component_AddComponentReturningId(m.component,
-                                                       ComponentType::waste_sink_type,
-                                                       0,
-                                                       std::vector<size_t> {wasteflow_id},
-                                                       std::vector<size_t> {},
-                                                       "",
-                                                       0.0,
-                                                       report);
-    size_t thisId =
-        Component_AddComponentReturningId(m.component,
-                                          ComponentType::constant_efficiency_converter_type,
-                                          idx,
-                                          inflowIds,
-                                          outflowIds,
-                                          tag,
-                                          0.0,
-                                          report);
+    size_t wasteId = add_component_returning_id(m.component,
+                                                ComponentType::waste_sink_type,
+                                                0,
+                                                std::vector<size_t> {wasteflow_id},
+                                                std::vector<size_t> {},
+                                                "",
+                                                0.0,
+                                                report);
+    size_t thisId = add_component_returning_id(m.component,
+                                               ComponentType::constant_efficiency_converter_type,
+                                               idx,
+                                               inflowIds,
+                                               outflowIds,
+                                               tag,
+                                               0.0,
+                                               report);
     auto wasteConn = Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflow_id);
     return {thisId, wasteConn};
 }
@@ -3865,23 +3872,22 @@ Model_AddVariableEfficiencyConverter(Model& m,
     vec.efficiencies = std::move(efficiencyByOutflow);
 
     m.variable_efficiency_converter.push_back(std::move(vec));
-    size_t wasteId = Component_AddComponentReturningId(m.component,
-                                                       ComponentType::waste_sink_type,
-                                                       0,
-                                                       std::vector<size_t> {wasteflow_id},
-                                                       std::vector<size_t> {},
-                                                       "",
-                                                       0.0,
-                                                       report);
-    size_t thisId =
-        Component_AddComponentReturningId(m.component,
-                                          ComponentType::variable_efficiency_converter_type,
-                                          idx,
-                                          inflowIds,
-                                          outflowIds,
-                                          tag,
-                                          0.0,
-                                          report);
+    size_t wasteId = add_component_returning_id(m.component,
+                                                ComponentType::waste_sink_type,
+                                                0,
+                                                std::vector<size_t> {wasteflow_id},
+                                                std::vector<size_t> {},
+                                                "",
+                                                0.0,
+                                                report);
+    size_t thisId = add_component_returning_id(m.component,
+                                               ComponentType::variable_efficiency_converter_type,
+                                               idx,
+                                               inflowIds,
+                                               outflowIds,
+                                               tag,
+                                               0.0,
+                                               report);
     auto wasteConn = Model_AddConnection(m, thisId, 2, wasteId, 0, wasteflow_id);
     return {thisId, wasteConn};
 }
@@ -3896,13 +3902,13 @@ size_t Model_AddPassThrough(Model& m, size_t flowId, std::string const& tag)
         .outflow_connection_id = 0,
         .max_outflow_W = max_flow_W,
     });
-    return Component_AddComponentReturningId(m.component,
-                                             ComponentType::pass_through_type,
-                                             idx,
-                                             std::vector<size_t> {flowId},
-                                             std::vector<size_t> {flowId},
-                                             tag,
-                                             0.0);
+    return add_component_returning_id(m.component,
+                                      ComponentType::pass_through_type,
+                                      idx,
+                                      std::vector<size_t> {flowId},
+                                      std::vector<size_t> {flowId},
+                                      tag,
+                                      0.0);
 }
 
 Connection Model_AddConnection(Model& m, size_t fromId, size_t fromPort, size_t toId, size_t toPort)

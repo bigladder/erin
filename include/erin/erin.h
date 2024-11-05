@@ -129,57 +129,56 @@ struct StatsByFlowType
 struct StatsByLoadAndFlowType
 {
     // indexes ComponentMap
-    size_t ComponentId;
-    StatsByFlowType Stats;
+    size_t component_id;
+    StatsByFlowType stats;
 };
 
 struct LoadNotServedForComp
 {
-    size_t ComponentId;
-    size_t FlowTypeId;
-    double LoadNotServed_kJ = 0.0;
+    size_t component_id;
+    size_t flow_type_id;
+    double load_not_served_kJ = 0.0;
 };
 
 struct ScenarioOccurrenceStats
 {
     // Id of the scenario; indexes into Simulation.ScenarioMap
-    // TODO: rename to ScenarioId;
-    size_t Id = 0;
+    size_t scenario_id = 0;
     // The occurrence of this scenario; 1st occurrence is 1, 2nd is 2, etc.
-    size_t OccurrenceNumber;
-    double Duration_s = 0.0;
-    double Inflow_kJ = 0.0;
-    double OutflowRequest_kJ = 0.0;
-    double OutflowAchieved_kJ = 0.0;
-    double StorageDischarge_kJ = 0.0;
-    double StorageCharge_kJ = 0.0;
-    double Wasteflow_kJ = 0.0;
-    double InFromEnv_kJ = 0.0;
-    double LoadNotServed_kJ = 0.0;
-    // TODO: net change in storage finalStored_kJ - initialStored_kJ
-    double ChangeInStorage_kJ = 0.0;
-    double Uptime_s = 0.0;
-    double Downtime_s = 0.0;
-    double MaxSEDT_s = 0.0;
-    double Availability_s = 0.0;
-    std::map<size_t, double> AvailabilityByCompId_s;
+    size_t occurrence_number;
+    double duration_s = 0.0;
+    double inflow_kJ = 0.0;
+    double outflow_request_kJ = 0.0;
+    double outflow_achieved_kJ = 0.0;
+    double storage_discharge_kJ = 0.0;
+    double storage_charge_kJ = 0.0;
+    double wasteflow_kJ = 0.0;
+    double in_from_env_kJ = 0.0;
+    double load_not_served_kJ = 0.0;
+    // net change in storage finalStored_kJ - initialStored_kJ
+    double change_in_storage_kJ = 0.0;
+    double uptime_s = 0.0;
+    double downtime_s = 0.0;
+    double max_SEDT_s = 0.0;
+    double availability_s = 0.0;
+    std::map<size_t, double> availability_by_comp_id_s;
     // Event Counts
-    std::map<size_t, size_t> EventCountByFailureModeId;
-    std::map<size_t, std::map<size_t, size_t>> EventCountByCompIdByFailureModeId;
-    std::map<size_t, size_t> EventCountByFragilityModeId;
-    std::map<size_t, std::map<size_t, size_t>> EventCountByCompIdByFragilityModeId;
+    std::map<size_t, size_t> event_count_by_failure_mode_id;
+    std::map<size_t, std::map<size_t, size_t>> event_count_by_comp_id_by_failure_mode_id;
+    std::map<size_t, size_t> event_count_by_fragility_mode_id;
+    std::map<size_t, std::map<size_t, size_t>> event_count_by_comp_id_by_fragility_mode_id;
     // Failure/Fragility Times
-    std::map<size_t, double> TimeByFailureModeId_s;
-    std::map<size_t, std::map<size_t, double>> TimeByCompIdByFailureModeId_s;
-    std::map<size_t, double> TimeByFragilityModeId_s;
-    std::map<size_t, std::map<size_t, double>> TimeByCompIdByFragilityModeId_s;
+    std::map<size_t, double> time_by_failure_mode_id_s;
+    std::map<size_t, std::map<size_t, double>> time_by_comp_id_by_failure_mode_id_s;
+    std::map<size_t, double> time_by_fragility_mode_id_s;
+    std::map<size_t, std::map<size_t, double>> time_by_comp_id_by_fragility_mode_id_s;
     // Characteristics by Flow Type
     // NOTE: sorted in alphabetical order by flow type name
-    std::vector<StatsByFlowType> FlowTypeStats;
+    std::vector<StatsByFlowType> flow_type_stats;
     // NOTE: sorted in alphabetical order by [componentTag, flowType]
-    std::vector<StatsByLoadAndFlowType> LoadAndFlowTypeStats;
+    std::vector<StatsByLoadAndFlowType> load_and_flow_type_stats;
     // NOTE: sorted in alphabetical order by [componentTag, flowType]
-    std::vector<LoadNotServedForComp> LoadNotServedForComponents;
+    std::vector<LoadNotServedForComp> load_not_served_for_components;
 };
 
 struct ConstantLoad

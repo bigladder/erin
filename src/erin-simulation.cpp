@@ -2247,24 +2247,24 @@ void WriteStatisticsToFile(Simulation const& s,
           << "global availability";
     if (occurrenceStats.size() > 0)
     {
-        for (auto const& statsByFlow : occurrenceStats[0].FlowTypeStats)
+        for (auto const& statsByFlow : occurrenceStats[0].flow_type_stats)
         {
             std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlow.flow_type_id];
             stats << ",energy robustness [ER] for " << flowType;
             stats << ",energy availability [EA] for " << flowType;
         }
-        for (auto const& statsByFlowLoad : occurrenceStats[0].LoadAndFlowTypeStats)
+        for (auto const& statsByFlowLoad : occurrenceStats[0].load_and_flow_type_stats)
         {
             std::string const& flowType =
-                s.FlowTypeMap.flow_type[statsByFlowLoad.Stats.flow_type_id];
-            std::string const& tag = s.TheModel.ComponentMap.tag[statsByFlowLoad.ComponentId];
+                s.FlowTypeMap.flow_type[statsByFlowLoad.stats.flow_type_id];
+            std::string const& tag = s.TheModel.ComponentMap.tag[statsByFlowLoad.component_id];
             stats << ",energy robustness [ER] for " << tag << " [flow: " << flowType << "]";
             stats << ",energy availability [EA] for " << tag << " [flow: " << flowType << "]";
         }
-        for (auto const& lnsByComp : occurrenceStats[0].LoadNotServedForComponents)
+        for (auto const& lnsByComp : occurrenceStats[0].load_not_served_for_components)
         {
-            std::string const& flowType = s.FlowTypeMap.flow_type[lnsByComp.FlowTypeId];
-            std::string const& tag = s.TheModel.ComponentMap.tag[lnsByComp.ComponentId];
+            std::string const& flowType = s.FlowTypeMap.flow_type[lnsByComp.flow_type_id];
+            std::string const& tag = s.TheModel.ComponentMap.tag[lnsByComp.component_id];
             stats << ",load not served (kJ) for " << tag << " [flow: " << flowType << "]";
         }
     }
@@ -2304,16 +2304,16 @@ void WriteStatisticsToFile(Simulation const& s,
         fragModeIdsByCompId[compId] = std::set<size_t> {};
         for (auto const& occ : occurrenceStats)
         {
-            if (occ.EventCountByCompIdByFailureModeId.contains(compId))
+            if (occ.event_count_by_comp_id_by_failure_mode_id.contains(compId))
             {
-                for (auto const& p : occ.EventCountByCompIdByFailureModeId.at(compId))
+                for (auto const& p : occ.event_count_by_comp_id_by_failure_mode_id.at(compId))
                 {
                     failModeIdsByCompId[compId].insert(p.first);
                 }
             }
-            if (occ.EventCountByCompIdByFragilityModeId.contains(compId))
+            if (occ.event_count_by_comp_id_by_fragility_mode_id.contains(compId))
             {
-                for (auto const& p : occ.EventCountByCompIdByFragilityModeId.at(compId))
+                for (auto const& p : occ.event_count_by_comp_id_by_fragility_mode_id.at(compId))
                 {
                     fragModeIdsByCompId[compId].insert(p.first);
                 }
@@ -2358,92 +2358,92 @@ void WriteStatisticsToFile(Simulation const& s,
     stats << std::endl;
     for (auto const& os : occurrenceStats)
     {
-        double stored_kJ = os.StorageCharge_kJ - os.StorageDischarge_kJ;
+        double stored_kJ = os.storage_charge_kJ - os.storage_discharge_kJ;
         double balance =
-            os.Inflow_kJ + os.InFromEnv_kJ - (os.OutflowAchieved_kJ + stored_kJ + os.Wasteflow_kJ);
-        double efficiency = (os.Inflow_kJ + os.StorageDischarge_kJ) > 0.0
-                                ? ((os.OutflowAchieved_kJ + os.StorageCharge_kJ) /
-                                   (os.Inflow_kJ + os.StorageDischarge_kJ))
+            os.inflow_kJ + os.in_from_env_kJ - (os.outflow_achieved_kJ + stored_kJ + os.wasteflow_kJ);
+        double efficiency = (os.inflow_kJ + os.storage_discharge_kJ) > 0.0
+                                ? ((os.outflow_achieved_kJ + os.storage_charge_kJ) /
+                                   (os.inflow_kJ + os.storage_discharge_kJ))
                                 : 0.0;
         double ER =
-            os.OutflowRequest_kJ > 0.0 ? (os.OutflowAchieved_kJ / os.OutflowRequest_kJ) : 1.0;
-        double EA = os.Duration_s > 0.0 ? (os.Uptime_s / os.Duration_s) : 1.0;
-        stats << s.ScenarioMap.Tags[os.Id];
-        stats << "," << os.OccurrenceNumber;
-        stats << "," << (os.Duration_s / seconds_per_hour);
-        stats << "," << double_to_string(os.Inflow_kJ + os.InFromEnv_kJ, 0);
+            os.outflow_request_kJ > 0.0 ? (os.outflow_achieved_kJ / os.outflow_request_kJ) : 1.0;
+        double EA = os.duration_s > 0.0 ? (os.uptime_s / os.duration_s) : 1.0;
+        stats << s.ScenarioMap.Tags[os.scenario_id];
+        stats << "," << os.occurrence_number;
+        stats << "," << (os.duration_s / seconds_per_hour);
+        stats << "," << double_to_string(os.inflow_kJ + os.in_from_env_kJ, 0);
         // TODO(mok): break out InFromEnv from Inflow and list separately
-        stats << "," << double_to_string(os.OutflowAchieved_kJ, 0);
+        stats << "," << double_to_string(os.outflow_achieved_kJ, 0);
         stats << "," << double_to_string(stored_kJ, 0);
-        stats << "," << double_to_string(os.Wasteflow_kJ, 0);
+        stats << "," << double_to_string(os.wasteflow_kJ, 0);
         stats << "," << double_to_string(balance, 6);
         stats << "," << efficiency;
-        stats << "," << (os.Uptime_s / seconds_per_hour);
-        stats << "," << (os.Downtime_s / seconds_per_hour);
-        stats << "," << os.LoadNotServed_kJ;
+        stats << "," << (os.uptime_s / seconds_per_hour);
+        stats << "," << (os.downtime_s / seconds_per_hour);
+        stats << "," << os.load_not_served_kJ;
         stats << "," << ER;
         stats << "," << EA;
-        stats << "," << (os.MaxSEDT_s / seconds_per_hour);
-        stats << "," << ((os.Duration_s > 0.0) ? (os.Availability_s / os.Duration_s) : 0.0);
+        stats << "," << (os.max_SEDT_s / seconds_per_hour);
+        stats << "," << ((os.duration_s > 0.0) ? (os.availability_s / os.duration_s) : 0.0);
         // NOTE: written in alphabetical order by flowtype name
-        for (auto const& statsByFlow : os.FlowTypeStats)
+        for (auto const& statsByFlow : os.flow_type_stats)
         {
 
             double ER_by_flow = statsByFlow.total_request_kJ > 0.0
                                     ? (statsByFlow.total_achieved_kJ / statsByFlow.total_request_kJ)
                                     : 0.0;
-            double EA_by_flow = os.Duration_s > 0.0 ? (statsByFlow.uptime_s / os.Duration_s) : 0.0;
+            double EA_by_flow = os.duration_s > 0.0 ? (statsByFlow.uptime_s / os.duration_s) : 0.0;
             stats << "," << ER_by_flow;
             stats << "," << EA_by_flow;
         }
-        for (auto const& statsByFlowLoad : os.LoadAndFlowTypeStats)
+        for (auto const& statsByFlowLoad : os.load_and_flow_type_stats)
         {
-            double ER_by_load = statsByFlowLoad.Stats.total_request_kJ > 0.0
-                                    ? (statsByFlowLoad.Stats.total_achieved_kJ /
-                                       statsByFlowLoad.Stats.total_request_kJ)
+            double ER_by_load = statsByFlowLoad.stats.total_request_kJ > 0.0
+                                    ? (statsByFlowLoad.stats.total_achieved_kJ /
+                                       statsByFlowLoad.stats.total_request_kJ)
                                     : 0.0;
             double EA_by_load =
-                os.Duration_s > 0.0 ? (statsByFlowLoad.Stats.uptime_s / os.Duration_s) : 0.0;
+                os.duration_s > 0.0 ? (statsByFlowLoad.stats.uptime_s / os.duration_s) : 0.0;
             stats << "," << ER_by_load;
             stats << "," << EA_by_load;
         }
-        for (auto const& lnsByComp : os.LoadNotServedForComponents)
+        for (auto const& lnsByComp : os.load_not_served_for_components)
         {
-            stats << "," << lnsByComp.LoadNotServed_kJ;
+            stats << "," << lnsByComp.load_not_served_kJ;
         }
         for (size_t i : compOrder)
         {
             if (!componentsToSkip.contains(i))
             {
                 double availability =
-                    os.Duration_s > 0.0 ? os.AvailabilityByCompId_s.at(i) / os.Duration_s : 1.0;
+                    os.duration_s > 0.0 ? os.availability_by_comp_id_s.at(i) / os.duration_s : 1.0;
                 stats << "," << availability;
             }
         }
         for (size_t i : failOrder)
         {
             size_t eventCount =
-                os.EventCountByFailureModeId.contains(i) ? os.EventCountByFailureModeId.at(i) : 0;
+                os.event_count_by_failure_mode_id.contains(i) ? os.event_count_by_failure_mode_id.at(i) : 0;
             stats << "," << eventCount;
         }
         for (size_t i : fragOrder)
         {
-            size_t eventCount = os.EventCountByFragilityModeId.contains(i)
-                                    ? os.EventCountByFragilityModeId.at(i)
+            size_t eventCount = os.event_count_by_fragility_mode_id.contains(i)
+                                    ? os.event_count_by_fragility_mode_id.at(i)
                                     : 0;
             stats << "," << eventCount;
         }
         for (size_t i : failOrder)
         {
             double time_s =
-                os.TimeByFailureModeId_s.contains(i) ? os.TimeByFailureModeId_s.at(i) : 0.0;
-            stats << "," << (os.Duration_s > 0.0 ? time_s / os.Duration_s : 0.0);
+                os.time_by_failure_mode_id_s.contains(i) ? os.time_by_failure_mode_id_s.at(i) : 0.0;
+            stats << "," << (os.duration_s > 0.0 ? time_s / os.duration_s : 0.0);
         }
         for (size_t i : fragOrder)
         {
             double time_s =
-                os.TimeByFragilityModeId_s.contains(i) ? os.TimeByFragilityModeId_s.at(i) : 0.0;
-            stats << "," << (os.Duration_s > 0.0 ? time_s / os.Duration_s : 0.0);
+                os.time_by_fragility_mode_id_s.contains(i) ? os.time_by_fragility_mode_id_s.at(i) : 0.0;
+            stats << "," << (os.duration_s > 0.0 ? time_s / os.duration_s : 0.0);
         }
         for (size_t compId : compOrder)
         {
@@ -2451,10 +2451,10 @@ void WriteStatisticsToFile(Simulation const& s,
             {
                 if (failModeIdsByCompId[compId].contains(i))
                 {
-                    if (os.EventCountByCompIdByFailureModeId.contains(compId) &&
-                        os.EventCountByCompIdByFailureModeId.at(compId).contains(i))
+                    if (os.event_count_by_comp_id_by_failure_mode_id.contains(compId) &&
+                        os.event_count_by_comp_id_by_failure_mode_id.at(compId).contains(i))
                     {
-                        stats << "," << os.EventCountByCompIdByFailureModeId.at(compId).at(i);
+                        stats << "," << os.event_count_by_comp_id_by_failure_mode_id.at(compId).at(i);
                     }
                     else
                     {
@@ -2466,10 +2466,10 @@ void WriteStatisticsToFile(Simulation const& s,
             {
                 if (fragModeIdsByCompId[compId].contains(i))
                 {
-                    if (os.EventCountByCompIdByFragilityModeId.contains(compId) &&
-                        os.EventCountByCompIdByFragilityModeId.at(compId).contains(i))
+                    if (os.event_count_by_comp_id_by_fragility_mode_id.contains(compId) &&
+                        os.event_count_by_comp_id_by_fragility_mode_id.at(compId).contains(i))
                     {
-                        stats << "," << os.EventCountByCompIdByFragilityModeId.at(compId).at(i);
+                        stats << "," << os.event_count_by_comp_id_by_fragility_mode_id.at(compId).at(i);
                     }
                     else
                     {
@@ -2484,11 +2484,11 @@ void WriteStatisticsToFile(Simulation const& s,
             {
                 if (failModeIdsByCompId[compId].contains(i))
                 {
-                    if (os.TimeByCompIdByFailureModeId_s.contains(compId) &&
-                        os.TimeByCompIdByFailureModeId_s.at(compId).contains(i))
+                    if (os.time_by_comp_id_by_failure_mode_id_s.contains(compId) &&
+                        os.time_by_comp_id_by_failure_mode_id_s.at(compId).contains(i))
                     {
-                        double t = os.TimeByCompIdByFailureModeId_s.at(compId).at(i);
-                        stats << "," << (os.Duration_s > 0.0 ? t / os.Duration_s : 0.0);
+                        double t = os.time_by_comp_id_by_failure_mode_id_s.at(compId).at(i);
+                        stats << "," << (os.duration_s > 0.0 ? t / os.duration_s : 0.0);
                     }
                     else
                     {
@@ -2500,11 +2500,11 @@ void WriteStatisticsToFile(Simulation const& s,
             {
                 if (fragModeIdsByCompId[compId].contains(i))
                 {
-                    if (os.TimeByCompIdByFragilityModeId_s.contains(compId) &&
-                        os.TimeByCompIdByFragilityModeId_s.at(compId).contains(i))
+                    if (os.time_by_comp_id_by_fragility_mode_id_s.contains(compId) &&
+                        os.time_by_comp_id_by_fragility_mode_id_s.at(compId).contains(i))
                     {
-                        double t = os.TimeByCompIdByFragilityModeId_s.at(compId).at(i);
-                        stats << "," << (os.Duration_s > 0.0 ? t / os.Duration_s : 0.0);
+                        double t = os.time_by_comp_id_by_fragility_mode_id_s.at(compId).at(i);
+                        stats << "," << (os.duration_s > 0.0 ? t / os.duration_s : 0.0);
                     }
                     else
                     {

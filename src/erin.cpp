@@ -4332,8 +4332,8 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                                               std::vector<TimeAndFlows> const& timeAndFlows)
 {
     ScenarioOccurrenceStats sos {};
-    sos.Id = scenarioId;
-    sos.OccurrenceNumber = occurrenceNumber;
+    sos.scenario_id = scenarioId;
+    sos.occurrence_number = occurrenceNumber;
     double initialStorage_kJ = 0.0;
     double finalStorage_kJ = 0.0;
     if (timeAndFlows.size() > 0)
@@ -4356,7 +4356,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
         // TODO: in Simulation, ensure we ALWAYS have an event at final time
         // in order that scenario duration equals what we have here; this
         // is a good check.
-        sos.Duration_s += dt_s;
+        sos.duration_s += dt_s;
         bool allLoadsMet = true;
         std::map<size_t, bool> allLoadsMetByFlowType;
         size_t prevEventIdx = eventIdx - 1;
@@ -4373,12 +4373,12 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             case ComponentType::constant_source_type:
             case ComponentType::schedule_based_source_type:
             {
-                sos.Inflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
+                sos.inflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
             }
             break;
             case ComponentType::environment_source_type:
             {
-                sos.InFromEnv_kJ += (actualFlow_W / W_per_kW) * dt_s;
+                sos.in_from_env_kJ += (actualFlow_W / W_per_kW) * dt_s;
             }
             break;
             default:
@@ -4392,9 +4392,9 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             case ComponentType::schedule_based_load_type:
             {
                 double outflowAchieved_kJ = (actualFlow_W / W_per_kW) * dt_s;
-                sos.OutflowAchieved_kJ += outflowAchieved_kJ;
+                sos.outflow_achieved_kJ += outflowAchieved_kJ;
                 double outflowRequest_kJ = (requestedFlow_W / W_per_kW) * dt_s;
-                sos.OutflowRequest_kJ += outflowRequest_kJ;
+                sos.outflow_request_kJ += outflowRequest_kJ;
                 bool loadsMet = flow.Actual_W == flow.Requested_W;
                 allLoadsMet = allLoadsMet && loadsMet;
                 double loadNotServed_kJ = 0.0;
@@ -4402,10 +4402,10 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                 {
                     assert(flow.Requested_W > flow.Actual_W);
                     loadNotServed_kJ = ((requestedFlow_W - actualFlow_W) / W_per_kW) * dt_s;
-                    sos.LoadNotServed_kJ += loadNotServed_kJ;
+                    sos.load_not_served_kJ += loadNotServed_kJ;
                 }
                 bool foundFlowTypeStats = false;
-                for (StatsByFlowType& sbf : sos.FlowTypeStats)
+                for (StatsByFlowType& sbf : sos.flow_type_stats)
                 {
                     if (sbf.flow_type_id == flowTypeId)
                     {
@@ -4441,20 +4441,20 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                         .total_request_kJ = outflowRequest_kJ,
                         .total_achieved_kJ = outflowAchieved_kJ,
                     };
-                    sos.FlowTypeStats.push_back(std::move(sbf));
+                    sos.flow_type_stats.push_back(std::move(sbf));
                 }
                 size_t compId = m.Connections[connId].ToId;
                 bool foundLoadAndFlowTypeStats = false;
-                for (StatsByLoadAndFlowType& sblf : sos.LoadAndFlowTypeStats)
+                for (StatsByLoadAndFlowType& sblf : sos.load_and_flow_type_stats)
                 {
-                    if (sblf.ComponentId == compId && sblf.Stats.flow_type_id == flowTypeId)
+                    if (sblf.component_id == compId && sblf.stats.flow_type_id == flowTypeId)
                     {
                         if (loadsMet)
                         {
-                            sblf.Stats.uptime_s += dt_s;
+                            sblf.stats.uptime_s += dt_s;
                         }
-                        sblf.Stats.total_request_kJ += outflowRequest_kJ;
-                        sblf.Stats.total_achieved_kJ += outflowAchieved_kJ;
+                        sblf.stats.total_request_kJ += outflowRequest_kJ;
+                        sblf.stats.total_achieved_kJ += outflowAchieved_kJ;
                         foundLoadAndFlowTypeStats = true;
                         break;
                     }
@@ -4468,35 +4468,35 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                         .total_achieved_kJ = outflowAchieved_kJ,
                     };
                     StatsByLoadAndFlowType sblf {
-                        .ComponentId = compId,
-                        .Stats = std::move(sbf),
+                        .component_id = compId,
+                        .stats = std::move(sbf),
                     };
-                    sos.LoadAndFlowTypeStats.push_back(std::move(sblf));
+                    sos.load_and_flow_type_stats.push_back(std::move(sblf));
                 }
                 bool foundLoadNotServedForComp = false;
-                for (LoadNotServedForComp& lns : sos.LoadNotServedForComponents)
+                for (LoadNotServedForComp& lns : sos.load_not_served_for_components)
                 {
-                    if (lns.ComponentId == compId && lns.FlowTypeId == flowTypeId)
+                    if (lns.component_id == compId && lns.flow_type_id == flowTypeId)
                     {
                         foundLoadNotServedForComp = true;
-                        lns.LoadNotServed_kJ += loadNotServed_kJ;
+                        lns.load_not_served_kJ += loadNotServed_kJ;
                         break;
                     }
                 }
                 if (!foundLoadNotServedForComp)
                 {
                     LoadNotServedForComp lns {
-                        .ComponentId = compId,
-                        .FlowTypeId = flowTypeId,
-                        .LoadNotServed_kJ = loadNotServed_kJ,
+                        .component_id = compId,
+                        .flow_type_id = flowTypeId,
+                        .load_not_served_kJ = loadNotServed_kJ,
                     };
-                    sos.LoadNotServedForComponents.push_back(std::move(lns));
+                    sos.load_not_served_for_components.push_back(std::move(lns));
                 }
             }
             break;
             case ComponentType::waste_sink_type:
             {
-                sos.Wasteflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
+                sos.wasteflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
             }
             break;
             default:
@@ -4508,7 +4508,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
         for (auto const& item : allLoadsMetByFlowType)
         {
             bool foundMatch = false;
-            for (StatsByFlowType& sbft : sos.FlowTypeStats)
+            for (StatsByFlowType& sbft : sos.flow_type_stats)
             {
                 if (sbft.flow_type_id == item.first)
                 {
@@ -4525,17 +4525,17 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
         }
         if (allLoadsMet)
         {
-            sos.Uptime_s += dt_s;
-            if (wasDown && sedt_s > sos.MaxSEDT_s)
+            sos.uptime_s += dt_s;
+            if (wasDown && sedt_s > sos.max_SEDT_s)
             {
-                sos.MaxSEDT_s = sedt_s;
+                sos.max_SEDT_s = sedt_s;
             }
             sedt_s = 0.0;
             wasDown = false;
         }
         else
         {
-            sos.Downtime_s += dt_s;
+            sos.downtime_s += dt_s;
             if (wasDown)
             {
                 sedt_s += dt_s;
@@ -4556,11 +4556,11 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             double increaseInStorage_J = currentStored_J - prevStored_J;
             if (increaseInStorage_J > 0.0)
             {
-                sos.StorageCharge_kJ += increaseInStorage_J / J_per_kJ;
+                sos.storage_charge_kJ += increaseInStorage_J / J_per_kJ;
             }
             else
             {
-                sos.StorageDischarge_kJ += -1.0 * (increaseInStorage_J / J_per_kJ);
+                sos.storage_discharge_kJ += -1.0 * (increaseInStorage_J / J_per_kJ);
             }
             if (eventIdx == lastEventIdx)
             {
@@ -4570,10 +4570,10 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             }
         }
     }
-    sos.ChangeInStorage_kJ = finalStorage_kJ - initialStorage_kJ;
-    if (sedt_s > sos.MaxSEDT_s)
+    sos.change_in_storage_kJ = finalStorage_kJ - initialStorage_kJ;
+    if (sedt_s > sos.max_SEDT_s)
     {
-        sos.MaxSEDT_s = sedt_s;
+        sos.max_SEDT_s = sedt_s;
     }
     // calculate availability using reliability schedules
     std::vector<TimeState> relSch;
@@ -4583,11 +4583,11 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     }
     TimeState_CountAndTimeFailureEvents(relSch,
                                         m.FinalTime,
-                                        sos.EventCountByFailureModeId,
-                                        sos.EventCountByFragilityModeId,
-                                        sos.TimeByFailureModeId_s,
-                                        sos.TimeByFragilityModeId_s);
-    sos.Availability_s = TimeState_CalcAvailability_s(relSch, m.FinalTime);
+                                        sos.event_count_by_failure_mode_id,
+                                        sos.event_count_by_fragility_mode_id,
+                                        sos.time_by_failure_mode_id_s,
+                                        sos.time_by_fragility_mode_id_s);
+    sos.availability_s = TimeState_CalcAvailability_s(relSch, m.FinalTime);
     std::map<size_t, std::vector<TimeState>> relSchByCompId;
     for (size_t i = 0; i < m.Reliabilities.size(); ++i)
     {
@@ -4596,31 +4596,31 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     }
     for (size_t compId = 0; compId < m.ComponentMap.tag.size(); ++compId)
     {
-        if (!sos.EventCountByCompIdByFailureModeId.contains(compId))
+        if (!sos.event_count_by_comp_id_by_failure_mode_id.contains(compId))
         {
-            sos.EventCountByCompIdByFailureModeId[compId] = std::map<size_t, size_t> {};
+            sos.event_count_by_comp_id_by_failure_mode_id[compId] = std::map<size_t, size_t> {};
         }
-        if (!sos.EventCountByCompIdByFragilityModeId.contains(compId))
+        if (!sos.event_count_by_comp_id_by_fragility_mode_id.contains(compId))
         {
-            sos.EventCountByCompIdByFragilityModeId[compId] = std::map<size_t, size_t> {};
+            sos.event_count_by_comp_id_by_fragility_mode_id[compId] = std::map<size_t, size_t> {};
         }
-        if (!sos.TimeByCompIdByFailureModeId_s.contains(compId))
+        if (!sos.time_by_comp_id_by_failure_mode_id_s.contains(compId))
         {
-            sos.TimeByCompIdByFailureModeId_s[compId] = std::map<size_t, double> {};
+            sos.time_by_comp_id_by_failure_mode_id_s[compId] = std::map<size_t, double> {};
         }
-        if (!sos.TimeByCompIdByFragilityModeId_s.contains(compId))
+        if (!sos.time_by_comp_id_by_fragility_mode_id_s.contains(compId))
         {
-            sos.TimeByCompIdByFragilityModeId_s[compId] = std::map<size_t, double> {};
+            sos.time_by_comp_id_by_fragility_mode_id_s[compId] = std::map<size_t, double> {};
         }
         if (relSchByCompId.contains(compId))
         {
             TimeState_CountAndTimeFailureEvents(relSchByCompId[compId],
                                                 m.FinalTime,
-                                                sos.EventCountByCompIdByFailureModeId[compId],
-                                                sos.EventCountByCompIdByFragilityModeId[compId],
-                                                sos.TimeByCompIdByFailureModeId_s[compId],
-                                                sos.TimeByCompIdByFragilityModeId_s[compId]);
-            sos.AvailabilityByCompId_s[compId] =
+                                                sos.event_count_by_comp_id_by_failure_mode_id[compId],
+                                                sos.event_count_by_comp_id_by_fragility_mode_id[compId],
+                                                sos.time_by_comp_id_by_failure_mode_id_s[compId],
+                                                sos.time_by_comp_id_by_fragility_mode_id_s[compId]);
+            sos.availability_by_comp_id_s[compId] =
                 TimeState_CalcAvailability_s(relSchByCompId[compId], m.FinalTime);
         }
         else
@@ -4628,13 +4628,13 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             // NOTE: if there is no reliability schedule,
             // availability is 100% and there are no failure times or events
             // to count/sum.
-            sos.AvailabilityByCompId_s[compId] = m.FinalTime;
+            sos.availability_by_comp_id_s[compId] = m.FinalTime;
         }
     }
     // TODO: extract this into a new function
     std::vector<std::string> flowTypeNames;
-    flowTypeNames.reserve(sos.FlowTypeStats.size());
-    for (auto const& fts : sos.FlowTypeStats)
+    flowTypeNames.reserve(sos.flow_type_stats.size());
+    for (auto const& fts : sos.flow_type_stats)
     {
         flowTypeNames.push_back(flowDict.flow_type[fts.flow_type_id]);
     }
@@ -4644,19 +4644,19 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
               flowTypeNames_idx.end(),
               [&](size_t a, size_t b) -> bool { return flowTypeNames[a] < flowTypeNames[b]; });
     std::vector<StatsByFlowType> newFlowTypeStats;
-    newFlowTypeStats.reserve(sos.FlowTypeStats.size());
+    newFlowTypeStats.reserve(sos.flow_type_stats.size());
     for (size_t ftn_idx : flowTypeNames_idx)
     {
-        newFlowTypeStats.push_back(std::move(sos.FlowTypeStats[ftn_idx]));
+        newFlowTypeStats.push_back(std::move(sos.flow_type_stats[ftn_idx]));
     }
-    sos.FlowTypeStats = std::move(newFlowTypeStats);
+    sos.flow_type_stats = std::move(newFlowTypeStats);
     // TODO: extract common parts out to function
     std::vector<std::string> loadFlowTypeNames;
-    loadFlowTypeNames.reserve(sos.LoadAndFlowTypeStats.size());
-    for (auto const& lfts : sos.LoadAndFlowTypeStats)
+    loadFlowTypeNames.reserve(sos.load_and_flow_type_stats.size());
+    for (auto const& lfts : sos.load_and_flow_type_stats)
     {
-        std::string loadName = m.ComponentMap.tag[lfts.ComponentId];
-        std::string flowName = flowDict.flow_type[lfts.Stats.flow_type_id];
+        std::string loadName = m.ComponentMap.tag[lfts.component_id];
+        std::string flowName = flowDict.flow_type[lfts.stats.flow_type_id];
         std::string sortTag = loadName + "/" + flowName;
         loadFlowTypeNames.push_back(std::move(sortTag));
     }
@@ -4667,19 +4667,19 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
               [&](size_t a, size_t b) -> bool
               { return loadFlowTypeNames[a] < loadFlowTypeNames[b]; });
     std::vector<StatsByLoadAndFlowType> newLoadAndFlowTypeStats;
-    newLoadAndFlowTypeStats.reserve(sos.LoadAndFlowTypeStats.size());
+    newLoadAndFlowTypeStats.reserve(sos.load_and_flow_type_stats.size());
     for (size_t lftn_idx : loadFlowTypeNames_idx)
     {
-        newLoadAndFlowTypeStats.push_back(std::move(sos.LoadAndFlowTypeStats[lftn_idx]));
+        newLoadAndFlowTypeStats.push_back(std::move(sos.load_and_flow_type_stats[lftn_idx]));
     }
-    sos.LoadAndFlowTypeStats = std::move(newLoadAndFlowTypeStats);
+    sos.load_and_flow_type_stats = std::move(newLoadAndFlowTypeStats);
     // TODO: extract common parts out to function
     std::vector<std::string> loadNotServedFlowTypeNames;
-    loadNotServedFlowTypeNames.reserve(sos.LoadAndFlowTypeStats.size());
-    for (LoadNotServedForComp const& lns : sos.LoadNotServedForComponents)
+    loadNotServedFlowTypeNames.reserve(sos.load_and_flow_type_stats.size());
+    for (LoadNotServedForComp const& lns : sos.load_not_served_for_components)
     {
-        std::string loadName = m.ComponentMap.tag[lns.ComponentId];
-        std::string flowName = flowDict.flow_type[lns.FlowTypeId];
+        std::string loadName = m.ComponentMap.tag[lns.component_id];
+        std::string flowName = flowDict.flow_type[lns.flow_type_id];
         std::string sortTag = loadName + "/" + flowName;
         loadNotServedFlowTypeNames.push_back(std::move(sortTag));
     }
@@ -4690,12 +4690,12 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
               [&](size_t a, size_t b) -> bool
               { return loadNotServedFlowTypeNames[a] < loadNotServedFlowTypeNames[b]; });
     std::vector<LoadNotServedForComp> newLoadNotServedForComponents;
-    newLoadNotServedForComponents.reserve(sos.LoadNotServedForComponents.size());
+    newLoadNotServedForComponents.reserve(sos.load_not_served_for_components.size());
     for (size_t lns_idx : loadNotServedFlowTypeNames_idx)
     {
-        newLoadNotServedForComponents.push_back(std::move(sos.LoadNotServedForComponents[lns_idx]));
+        newLoadNotServedForComponents.push_back(std::move(sos.load_not_served_for_components[lns_idx]));
     }
-    sos.LoadNotServedForComponents = std::move(newLoadNotServedForComponents);
+    sos.load_not_served_for_components = std::move(newLoadNotServedForComponents);
     return sos;
 }
 

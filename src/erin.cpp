@@ -4733,8 +4733,8 @@ std::optional<TagAndPort> ParseTagAndPort(std::string const& s, std::string cons
     size_t count = closing - (opening + 1);
     std::string port = s.substr(opening + 1, count);
     TagAndPort tap {
-        .Tag = tag,
-        .Port = static_cast<size_t>(std::atoi(port.c_str())),
+        .tag = tag,
+        .port = static_cast<size_t>(std::atoi(port.c_str())),
     };
     return tap;
 }
@@ -4807,14 +4807,14 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
             return Result::Failure;
         }
         size_t flowTypeId = maybeFlowTypeId.value();
-        std::optional<size_t> maybeFromCompId = Model_FindCompIdByTag(m, fromTap.Tag);
+        std::optional<size_t> maybeFromCompId = Model_FindCompIdByTag(m, fromTap.tag);
         if (!maybeFromCompId.has_value())
         {
             std::cout << "[network] "
                       << "could not find component id for tag '" << from << "'" << std::endl;
             return Result::Failure;
         }
-        std::optional<size_t> maybeToCompId = Model_FindCompIdByTag(m, toTap.Tag);
+        std::optional<size_t> maybeToCompId = Model_FindCompIdByTag(m, toTap.tag);
         if (!maybeToCompId.has_value())
         {
             std::cout << "[network] "
@@ -4823,20 +4823,20 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         }
         size_t fromCompId = maybeFromCompId.value();
         size_t toCompId = maybeToCompId.value();
-        if (fromTap.Port >= m.component.outflow_type[fromCompId].size())
+        if (fromTap.port >= m.component.outflow_type[fromCompId].size())
         {
             std::cout << "[network] "
                       << "port is unaddressable for "
                       << ToString(m.component.component_type[fromCompId]) << ": trying to address "
-                      << fromTap.Port << " but only " << m.component.outflow_type[fromCompId].size()
+                      << fromTap.port << " but only " << m.component.outflow_type[fromCompId].size()
                       << " ports available" << std::endl;
             return Result::Failure;
         }
-        if (m.component.outflow_type[fromCompId][fromTap.Port] != flowTypeId)
+        if (m.component.outflow_type[fromCompId][fromTap.port] != flowTypeId)
         {
             std::ostringstream oss;
-            oss << "mismatch of flow types: " << fromTap.Tag
-                << ":outflow=" << fd.flow_type[m.component.outflow_type[fromCompId][fromTap.Port]]
+            oss << "mismatch of flow types: " << fromTap.tag
+                << ":outflow=" << fd.flow_type[m.component.outflow_type[fromCompId][fromTap.port]]
                 << "; connection: " << flow;
             write_error_message("network", oss.str());
             return Result::Failure;
@@ -4846,7 +4846,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
             std::cout << "[network] toCompId overflows InflowTypes" << std::endl;
             return Result::Failure;
         }
-        if (toTap.Port >= m.component.inflow_type[toCompId].size())
+        if (toTap.port >= m.component.inflow_type[toCompId].size())
         {
             if (toCompId >= m.component.component_type.size())
             {
@@ -4855,40 +4855,40 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
             }
             std::cout << "[network] port is unaddressable for "
                       << ToString(m.component.component_type[toCompId]) << ": trying to address "
-                      << toTap.Port << " but only " << m.component.inflow_type[toCompId].size()
+                      << toTap.port << " but only " << m.component.inflow_type[toCompId].size()
                       << " ports available" << std::endl;
             return Result::Failure;
         }
-        if (m.component.inflow_type[toCompId][toTap.Port] != flowTypeId)
+        if (m.component.inflow_type[toCompId][toTap.port] != flowTypeId)
         {
             if (toCompId >= m.component.outflow_type.size())
             {
                 std::cout << "[network] toCompId is beyond outflow types" << std::endl;
                 return Result::Failure;
             }
-            if (toTap.Port >= m.component.outflow_type[toCompId].size())
+            if (toTap.port >= m.component.outflow_type[toCompId].size())
             {
                 std::cout << "[network] port is unaddressable"
-                          << ":tag=" << fromTap.Tag << "[" << fromTap.Port << "] => " << toTap.Tag
-                          << "[" << toTap.Port << "]:port=" << toTap.Port
+                          << ":tag=" << fromTap.tag << "[" << fromTap.port << "] => " << toTap.tag
+                          << "[" << toTap.port << "]:port=" << toTap.port
                           << ":availablePorts=" << m.component.outflow_type[toCompId].size()
                           << std::endl;
                 return Result::Failure;
             }
-            size_t typeId = m.component.outflow_type[toCompId][toTap.Port];
+            size_t typeId = m.component.outflow_type[toCompId][toTap.port];
             if (typeId >= fd.flow_type.size())
             {
                 std::cout << "[network] port is unaddressable"
-                          << ":port=" << toTap.Port << ":flowTypeId=" << typeId
+                          << ":port=" << toTap.port << ":flowTypeId=" << typeId
                           << ":availableFlowTypes=" << fd.flow_type.size() << std::endl;
                 return Result::Failure;
             }
-            std::cout << "[network] mismatch of flow types: " << toTap.Tag
-                      << ":inflow=" << fd.flow_type[m.component.outflow_type[toCompId][toTap.Port]]
+            std::cout << "[network] mismatch of flow types: " << toTap.tag
+                      << ":inflow=" << fd.flow_type[m.component.outflow_type[toCompId][toTap.port]]
                       << "; connection: " << flow << std::endl;
             return Result::Failure;
         }
-        Model_AddConnection(m, fromCompId, fromTap.Port, toCompId, toTap.Port, flowTypeId);
+        Model_AddConnection(m, fromCompId, fromTap.port, toCompId, toTap.port, flowTypeId);
     }
     return Result::Success;
 }

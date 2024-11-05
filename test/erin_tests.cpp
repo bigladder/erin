@@ -1690,18 +1690,18 @@ TEST(Erin, TestParseTagAndPort)
     std::string input = "electric_utility:OUT(0)";
     auto output = ParseTagAndPort(input, "");
     EXPECT_TRUE(output.has_value());
-    EXPECT_EQ(output.value().Tag, "electric_utility");
-    EXPECT_EQ(output.value().Port, 0);
+    EXPECT_EQ(output.value().tag, "electric_utility");
+    EXPECT_EQ(output.value().port, 0);
     input = "bus:IN(1)";
     output = ParseTagAndPort(input, "");
     EXPECT_TRUE(output.has_value());
-    EXPECT_EQ(output.value().Tag, "bus");
-    EXPECT_EQ(output.value().Port, 1);
+    EXPECT_EQ(output.value().tag, "bus");
+    EXPECT_EQ(output.value().port, 1);
     input = "my_place:OUT(123)";
     output = ParseTagAndPort(input, "");
     EXPECT_TRUE(output.has_value());
-    EXPECT_EQ(output.value().Tag, "my_place");
-    EXPECT_EQ(output.value().Port, 123);
+    EXPECT_EQ(output.value().tag, "my_place");
+    EXPECT_EQ(output.value().port, 123);
 }
 
 TEST(Erin, TestParsingComponentsInUse)

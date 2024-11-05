@@ -497,8 +497,8 @@ struct SimulationState
 
 struct TagAndPort
 {
-    std::string Tag;
-    size_t Port;
+    std::string tag;
+    size_t port;
 };
 
 enum class FragilityResult

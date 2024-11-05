@@ -18,6 +18,16 @@
 
 namespace erin
 {
+// PRIVATE DECLARATIONS
+void add_connection_issue(std::vector<std::string>& issues,
+                          std::string component_tag,
+                          size_t component_id,
+                          size_t component_port,
+                          size_t component_subtype_index,
+                          ComponentType component_type,
+                          Connection const& connection,
+                          size_t connection_index,
+                          FlowDirection flow_direction);
 
 // PRIVATE CONSTANTS
 constexpr double const infinite_time = -1.0;

@@ -531,8 +531,8 @@ void Simulation_PrintFragilityModes(Simulation const& s)
                   << s.FragilityModes.fragility_curve_id[i] << "]" << std::endl;
         if (s.FragilityModes.repair_distribution_id[i].has_value())
         {
-            std::optional<Distribution> maybeDist =
-                s.TheModel.dist_sys.get_dist_by_id(s.FragilityModes.repair_distribution_id[i].value());
+            std::optional<Distribution> maybeDist = s.TheModel.dist_sys.get_dist_by_id(
+                s.FragilityModes.repair_distribution_id[i].value());
             if (maybeDist.has_value())
             {
                 Distribution const& d = maybeDist.value();

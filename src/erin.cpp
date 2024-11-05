@@ -40,6 +40,12 @@ size_t add_component_returning_id(ComponentDict& c,
                                   double initial_age_s,
                                   bool report = true);
 
+void add_if_not_added(std::vector<size_t>& items, size_t item);
+
+void add_active_connection_back(SimulationState& ss, size_t connection_index);
+
+void add_active_connection_forward(SimulationState& ss, size_t connIdx);
+
 // PRIVATE CONSTANTS
 constexpr double const infinite_time = -1.0;
 
@@ -1005,7 +1011,7 @@ size_t CountActiveConnections(SimulationState const& ss)
     return (ss.active_connections_back.size() + ss.active_connections_front.size());
 }
 
-void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item)
+void add_if_not_added(std::vector<size_t>& items, size_t item)
 {
     for (size_t i = 0; i < items.size(); ++i)
     {
@@ -1017,13 +1023,13 @@ void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item)
     items.push_back(item);
 }
 
-SwitchState SimulationState_GetSwitchState(SimulationState const& ss, size_t const& switchIdx)
+SwitchState get_switch_state(SimulationState const& ss, size_t const& switchIdx)
 {
     assert(switchIdx < ss.switch_states.size());
     return ss.switch_states[switchIdx];
 }
 
-void SimulationState_SetSwitchState(SimulationState& ss,
+void set_switch_state(SimulationState& ss,
                                     size_t const& switchIdx,
                                     SwitchState newState)
 {
@@ -1031,12 +1037,12 @@ void SimulationState_SetSwitchState(SimulationState& ss,
     ss.switch_states[switchIdx] = newState;
 }
 
-void SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx)
+void add_active_connection_back(SimulationState& ss, size_t connIdx)
 {
     ss.active_connections_back.insert(connIdx);
 }
 
-void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx)
+void add_active_connection_forward(SimulationState& ss, size_t connIdx)
 {
     ss.active_connections_front.insert(connIdx);
 }

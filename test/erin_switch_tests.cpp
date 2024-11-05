@@ -11,7 +11,7 @@ TEST(Switch, TestGetSwitchState)
     SimulationState ss = {};
     ss.switch_states.push_back(SwitchState::primary);
     size_t idx = 0;
-    SwitchState actual_switch_state = SimulationState_GetSwitchState(ss, idx);
+    SwitchState actual_switch_state = get_switch_state(ss, idx);
     SwitchState expected_switch_state = SwitchState::primary;
     EXPECT_EQ(expected_switch_state, actual_switch_state);
 }
@@ -21,8 +21,8 @@ TEST(Switch, TestSetSwitchState)
     SimulationState ss = {};
     ss.switch_states.push_back(SwitchState::primary);
     size_t idx = 0;
-    SimulationState_SetSwitchState(ss, idx, SwitchState::secondary);
-    SwitchState actual_switch_state = SimulationState_GetSwitchState(ss, idx);
+    set_switch_state(ss, idx, SwitchState::secondary);
+    SwitchState actual_switch_state = get_switch_state(ss, idx);
     SwitchState expected_switch_state = SwitchState::secondary;
     EXPECT_EQ(expected_switch_state, actual_switch_state);
 }

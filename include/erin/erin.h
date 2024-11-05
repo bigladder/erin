@@ -592,17 +592,11 @@ std::string fragility_curve_type_to_tag(FragilityCurveType fctype);
 
 std::optional<size_t> get_intensity_id_by_tag(IntensityDict intensity_dict, std::string const& tag);
 
-void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
+SwitchState get_switch_state(SimulationState const& ss, size_t const& switch_index);
 
-SwitchState SimulationState_GetSwitchState(SimulationState const& ss, size_t const& switchIdx);
-
-void SimulationState_SetSwitchState(SimulationState& ss,
-                                    size_t const& switchIdx,
-                                    SwitchState newState);
-
-void SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx);
-
-void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx);
+void set_switch_state(SimulationState& ss,
+                                    size_t const& switch_index,
+                                    SwitchState new_state);
 
 size_t CountActiveConnections(SimulationState const& ss);
 

@@ -40,15 +40,15 @@ void Simulation_Init(Simulation& s)
 
 size_t Simulation_RegisterFlow(Simulation& s, std::string const& flowTag)
 {
-    size_t id = s.FlowTypeMap.Type.size();
+    size_t id = s.FlowTypeMap.flow_type.size();
     for (size_t i = 0; i < id; ++i)
     {
-        if (s.FlowTypeMap.Type[i] == flowTag)
+        if (s.FlowTypeMap.flow_type[i] == flowTag)
         {
             return i;
         }
     }
-    s.FlowTypeMap.Type.push_back(flowTag);
+    s.FlowTypeMap.flow_type.push_back(flowTag);
     return id;
 }
 
@@ -96,27 +96,27 @@ size_t Simulation_RegisterLoadSchedule(Simulation& s,
                                        std::string const& tag,
                                        std::vector<TimeAndAmount> const& loadSchedule)
 {
-    size_t id = s.LoadMap.Tags.size();
-    assert(s.LoadMap.Tags.size() == s.LoadMap.Loads.size());
+    size_t id = s.LoadMap.tags.size();
+    assert(s.LoadMap.tags.size() == s.LoadMap.loads.size());
     for (size_t i = 0; i < id; ++i)
     {
-        if (s.LoadMap.Tags[i] == tag)
+        if (s.LoadMap.tags[i] == tag)
         {
-            s.LoadMap.Loads[i].clear();
-            s.LoadMap.Loads[i] = loadSchedule;
+            s.LoadMap.loads[i].clear();
+            s.LoadMap.loads[i] = loadSchedule;
             return i;
         }
     }
-    s.LoadMap.Tags.push_back(tag);
-    s.LoadMap.Loads.push_back(loadSchedule);
+    s.LoadMap.tags.push_back(tag);
+    s.LoadMap.loads.push_back(loadSchedule);
     return id;
 }
 
 std::optional<size_t> Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag)
 {
-    for (size_t i = 0; i < s.LoadMap.Tags.size(); ++i)
+    for (size_t i = 0; i < s.LoadMap.tags.size(); ++i)
     {
-        if (s.LoadMap.Tags[i] == tag)
+        if (s.LoadMap.tags[i] == tag)
         {
             return i;
         }
@@ -126,15 +126,15 @@ std::optional<size_t> Simulation_GetLoadIdByTag(Simulation const& s, std::string
 
 void Simulation_RegisterAllLoads(Simulation& s, std::vector<Load> const& loads)
 {
-    s.LoadMap.Tags.clear();
-    s.LoadMap.Loads.clear();
+    s.LoadMap.tags.clear();
+    s.LoadMap.loads.clear();
     auto numLoads = loads.size();
-    s.LoadMap.Tags.reserve(numLoads);
-    s.LoadMap.Loads.reserve(numLoads);
+    s.LoadMap.tags.reserve(numLoads);
+    s.LoadMap.loads.reserve(numLoads);
     for (size_t i = 0; i < numLoads; ++i)
     {
-        s.LoadMap.Tags.push_back(loads[i].Tag);
-        s.LoadMap.Loads.push_back(loads[i].TimeAndLoads);
+        s.LoadMap.tags.push_back(loads[i].Tag);
+        s.LoadMap.loads.push_back(loads[i].TimeAndLoads);
     }
 }
 
@@ -162,18 +162,18 @@ void Simulation_PrintComponents(Simulation const& s)
         for (size_t inportIdx = 0; inportIdx < inflowTypes.size(); ++inportIdx)
         {
             size_t inflowType = inflowTypes[inportIdx];
-            if (inflowType < s.FlowTypeMap.Type.size() && !s.FlowTypeMap.Type[inflowType].empty())
+            if (inflowType < s.FlowTypeMap.flow_type.size() && !s.FlowTypeMap.flow_type[inflowType].empty())
             {
-                std::cout << "- inport " << inportIdx << ": " << s.FlowTypeMap.Type[inflowType]
+                std::cout << "- inport " << inportIdx << ": " << s.FlowTypeMap.flow_type[inflowType]
                           << std::endl;
             }
         }
         for (size_t outportIdx = 0; outportIdx < outflowTypes.size(); ++outportIdx)
         {
             size_t outflowType = outflowTypes[outportIdx];
-            if (outflowType < s.FlowTypeMap.Type.size() && !s.FlowTypeMap.Type[outflowType].empty())
+            if (outflowType < s.FlowTypeMap.flow_type.size() && !s.FlowTypeMap.flow_type[outflowType].empty())
             {
-                std::cout << "- outport " << outportIdx << ": " << s.FlowTypeMap.Type[outflowType]
+                std::cout << "- outport " << outportIdx << ": " << s.FlowTypeMap.flow_type[outflowType]
                           << std::endl;
             }
         }
@@ -196,9 +196,9 @@ void Simulation_PrintComponents(Simulation const& s)
                 size_t scenarioIdx = keyValue.first;
                 size_t loadIdx = keyValue.second;
                 assert(scenarioIdx < s.ScenarioMap.Tags.size());
-                assert(loadIdx < s.LoadMap.Tags.size());
+                assert(loadIdx < s.LoadMap.tags.size());
                 std::cout << "-- for scenario: " << s.ScenarioMap.Tags[scenarioIdx]
-                          << ", use load: " << s.LoadMap.Tags[loadIdx] << std::endl;
+                          << ", use load: " << s.LoadMap.tags[loadIdx] << std::endl;
             }
         }
         break;
@@ -219,9 +219,9 @@ void Simulation_PrintComponents(Simulation const& s)
                 size_t scenarioIdx = keyValue.first;
                 size_t loadIdx = keyValue.second;
                 assert(scenarioIdx < s.ScenarioMap.Tags.size());
-                assert(loadIdx < s.LoadMap.Tags.size());
+                assert(loadIdx < s.LoadMap.tags.size());
                 std::cout << "-- for scenario: " << s.ScenarioMap.Tags[scenarioIdx]
-                          << ", use supply: " << s.LoadMap.Tags[loadIdx] << std::endl;
+                          << ", use supply: " << s.LoadMap.tags[loadIdx] << std::endl;
             }
             std::cout << "-- max outflow (W): "
                       << (sbs.MaxOutflow_W == max_flow_W ? "unlimited"
@@ -597,17 +597,17 @@ void Simulation_PrintScenarios(Simulation const& s)
 
 void Simulation_PrintLoads(Simulation const& s)
 {
-    for (size_t i = 0; i < s.LoadMap.Tags.size(); ++i)
+    for (size_t i = 0; i < s.LoadMap.tags.size(); ++i)
     {
-        std::cout << i << ": " << s.LoadMap.Tags[i] << std::endl;
-        std::cout << "- load entries: " << s.LoadMap.Loads[i].size() << std::endl;
-        if (!s.LoadMap.Loads[i].empty())
+        std::cout << i << ": " << s.LoadMap.tags[i] << std::endl;
+        std::cout << "- load entries: " << s.LoadMap.loads[i].size() << std::endl;
+        if (!s.LoadMap.loads[i].empty())
         {
             // TODO: add time units
-            std::cout << "- initial time: " << s.LoadMap.Loads[i][0].Time_s << std::endl;
+            std::cout << "- initial time: " << s.LoadMap.loads[i][0].Time_s << std::endl;
             // TODO: add time units
             std::cout << "- final time  : "
-                      << s.LoadMap.Loads[i][s.LoadMap.Loads[i].size() - 1].Time_s << std::endl;
+                      << s.LoadMap.loads[i][s.LoadMap.loads[i].size() - 1].Time_s << std::endl;
             // TODO: add max rate
             // TODO: add min rate
             // TODO: add average rate
@@ -1870,13 +1870,13 @@ SetLoadsForScenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, siz
         {
             auto loadId = loads[sblIdx].ScenarioIdToLoadId.at(scenarioIdx);
             std::vector<TimeAndAmount> schedule {};
-            size_t numEntries = loadMap.Loads[loadId].size();
+            size_t numEntries = loadMap.loads[loadId].size();
             schedule.reserve(numEntries);
             for (size_t i = 0; i < numEntries; ++i)
             {
                 TimeAndAmount tal {};
-                tal.Time_s = loadMap.Loads[loadId][i].Time_s;
-                tal.Amount_W = loadMap.Loads[loadId][i].Amount_W;
+                tal.Time_s = loadMap.loads[loadId][i].Time_s;
+                tal.Amount_W = loadMap.loads[loadId][i].Amount_W;
                 schedule.push_back(std::move(tal));
             }
             loads[sblIdx].TimesAndLoads = std::move(schedule);
@@ -1900,13 +1900,13 @@ SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, 
         {
             auto loadId = loads[sblIdx].ScenarioIdToSourceId.at(scenarioIdx);
             std::vector<TimeAndAmount> schedule {};
-            size_t numEntries = loadMap.Loads[loadId].size();
+            size_t numEntries = loadMap.loads[loadId].size();
             schedule.reserve(numEntries);
             for (size_t i = 0; i < numEntries; ++i)
             {
                 TimeAndAmount tal {};
-                tal.Time_s = loadMap.Loads[loadId][i].Time_s;
-                tal.Amount_W = loadMap.Loads[loadId][i].Amount_W;
+                tal.Time_s = loadMap.loads[loadId][i].Time_s;
+                tal.Amount_W = loadMap.loads[loadId][i].Amount_W;
                 schedule.push_back(std::move(tal));
             }
             loads[sblIdx].TimeAndAvails = std::move(schedule);
@@ -2246,20 +2246,20 @@ void WriteStatisticsToFile(Simulation const& s,
     {
         for (auto const& statsByFlow : occurrenceStats[0].FlowTypeStats)
         {
-            std::string const& flowType = s.FlowTypeMap.Type[statsByFlow.FlowTypeId];
+            std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlow.FlowTypeId];
             stats << ",energy robustness [ER] for " << flowType;
             stats << ",energy availability [EA] for " << flowType;
         }
         for (auto const& statsByFlowLoad : occurrenceStats[0].LoadAndFlowTypeStats)
         {
-            std::string const& flowType = s.FlowTypeMap.Type[statsByFlowLoad.Stats.FlowTypeId];
+            std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlowLoad.Stats.FlowTypeId];
             std::string const& tag = s.TheModel.ComponentMap.Tag[statsByFlowLoad.ComponentId];
             stats << ",energy robustness [ER] for " << tag << " [flow: " << flowType << "]";
             stats << ",energy availability [EA] for " << tag << " [flow: " << flowType << "]";
         }
         for (auto const& lnsByComp : occurrenceStats[0].LoadNotServedForComponents)
         {
-            std::string const& flowType = s.FlowTypeMap.Type[lnsByComp.FlowTypeId];
+            std::string const& flowType = s.FlowTypeMap.flow_type[lnsByComp.FlowTypeId];
             std::string const& tag = s.TheModel.ComponentMap.Tag[lnsByComp.ComponentId];
             stats << ",load not served (kJ) for " << tag << " [flow: " << flowType << "]";
         }

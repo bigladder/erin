@@ -336,8 +336,8 @@ Result ParseSingleComponent(Simulation& s,
             write_error_message(fullTableName,
                                 "a mux component must have the same inflow type "
                                 "as outflow type; we have inflow = '" +
-                                    s.FlowTypeMap.Type[inflowId] + "'; outflow = '" +
-                                    s.FlowTypeMap.Type[outflowId] + "'");
+                                    s.FlowTypeMap.flow_type[inflowId] + "'; outflow = '" +
+                                    s.FlowTypeMap.flow_type[outflowId] + "'");
             return Result::Failure;
         }
         id = Model_AddMux(s.TheModel, numInflows, numOutflows, outflowId, tag);

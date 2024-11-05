@@ -4634,7 +4634,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     flowTypeNames.reserve(sos.FlowTypeStats.size());
     for (auto const& fts : sos.FlowTypeStats)
     {
-        flowTypeNames.push_back(flowDict.Type[fts.FlowTypeId]);
+        flowTypeNames.push_back(flowDict.flow_type[fts.FlowTypeId]);
     }
     std::vector<size_t> flowTypeNames_idx(flowTypeNames.size());
     std::iota(flowTypeNames_idx.begin(), flowTypeNames_idx.end(), 0);
@@ -4654,7 +4654,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     for (auto const& lfts : sos.LoadAndFlowTypeStats)
     {
         std::string loadName = m.ComponentMap.Tag[lfts.ComponentId];
-        std::string flowName = flowDict.Type[lfts.Stats.FlowTypeId];
+        std::string flowName = flowDict.flow_type[lfts.Stats.FlowTypeId];
         std::string sortTag = loadName + "/" + flowName;
         loadFlowTypeNames.push_back(std::move(sortTag));
     }
@@ -4677,7 +4677,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     for (LoadNotServedForComp const& lns : sos.LoadNotServedForComponents)
     {
         std::string loadName = m.ComponentMap.Tag[lns.ComponentId];
-        std::string flowName = flowDict.Type[lns.FlowTypeId];
+        std::string flowName = flowDict.flow_type[lns.FlowTypeId];
         std::string sortTag = loadName + "/" + flowName;
         loadNotServedFlowTypeNames.push_back(std::move(sortTag));
     }
@@ -4815,7 +4815,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::ostringstream oss;
             oss << "mismatch of flow types: " << fromTap.Tag
-                << ":outflow=" << fd.Type[m.ComponentMap.OutflowType[fromCompId][fromTap.Port]]
+                << ":outflow=" << fd.flow_type[m.ComponentMap.OutflowType[fromCompId][fromTap.Port]]
                 << "; connection: " << flow;
             write_error_message("network", oss.str());
             return Result::Failure;
@@ -4855,15 +4855,15 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                 return Result::Failure;
             }
             size_t typeId = m.ComponentMap.OutflowType[toCompId][toTap.Port];
-            if (typeId >= fd.Type.size())
+            if (typeId >= fd.flow_type.size())
             {
                 std::cout << "[network] port is unaddressable"
                           << ":port=" << toTap.Port << ":flowTypeId=" << typeId
-                          << ":availableFlowTypes=" << fd.Type.size() << std::endl;
+                          << ":availableFlowTypes=" << fd.flow_type.size() << std::endl;
                 return Result::Failure;
             }
             std::cout << "[network] mismatch of flow types: " << toTap.Tag
-                      << ":inflow=" << fd.Type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
+                      << ":inflow=" << fd.flow_type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
                       << "; connection: " << flow << std::endl;
             return Result::Failure;
         }
@@ -4886,9 +4886,9 @@ std::optional<size_t> Model_FindCompIdByTag(Model const& m, std::string const& t
 
 std::optional<size_t> FlowDict_GetIdByTag(FlowDict const& fd, std::string const& tag)
 {
-    for (size_t idx = 0; idx < fd.Type.size(); ++idx)
+    for (size_t idx = 0; idx < fd.flow_type.size(); ++idx)
     {
-        if (fd.Type[idx] == tag)
+        if (fd.flow_type[idx] == tag)
         {
             return idx;
         }
@@ -4928,7 +4928,7 @@ std::string
 ConnectionToString(ComponentDict const& cd, FlowDict const& fd, Connection const& c, bool compact)
 {
     std::ostringstream oss {};
-    oss << ConnectionToString(cd, c, compact) << " [flow: " << fd.Type[c.FlowTypeId] << "]";
+    oss << ConnectionToString(cd, c, compact) << " [flow: " << fd.flow_type[c.FlowTypeId] << "]";
     return oss.str();
 }
 
@@ -5014,7 +5014,7 @@ std::string NodeConnectionToString(Model const& model,
 {
     std::ostringstream oss {};
     oss << NodeConnectionToString(model, nodeConn, compact, aggregateGroups)
-        << " [flow: " << fd.Type[nodeConn.FlowTypeId] << "]";
+        << " [flow: " << fd.flow_type[nodeConn.FlowTypeId] << "]";
     return oss.str();
 }
 

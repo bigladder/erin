@@ -71,13 +71,13 @@ enum class ComponentType
 // Watt, for example. For Mass, it might be kg/s (or g/s?).
 struct FlowDict
 {
-    std::vector<std::string> Type;
+    std::vector<std::string> flow_type;
 };
 
 struct LoadDict
 {
-    std::vector<std::string> Tags;
-    std::vector<std::vector<TimeAndAmount>> Loads;
+    std::vector<std::string> tags;
+    std::vector<std::vector<TimeAndAmount>> loads;
 };
 
 // TODO: enable this in the future. Idea is to return

@@ -240,17 +240,18 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- efficiency: " << cec.efficiency * 100.0 << "%" << std::endl;
             std::cout << "-- max outflow (W): "
                       << (cec.max_outflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(cec.max_outflow_W))
+                                                          : std::to_string(cec.max_outflow_W))
                       << std::endl;
             std::cout << "-- max lossflow (W): "
                       << (cec.max_lossflow_W == max_flow_W ? "unlimited"
-                                                          : std::to_string(cec.max_lossflow_W))
+                                                           : std::to_string(cec.max_lossflow_W))
                       << std::endl;
             std::cout << "-- inflow connection: " << cec.inflow_connection_id << std::endl;
             std::cout << "-- outflow connection: " << cec.outflow_connection_id << std::endl;
             std::cout << "-- lossflow connection: "
-                      << (cec.lossflow_connection_id.has_value() ? std::to_string(cec.lossflow_connection_id.value())
-                                                       : "NA")
+                      << (cec.lossflow_connection_id.has_value()
+                              ? std::to_string(cec.lossflow_connection_id.value())
+                              : "NA")
                       << std::endl;
             std::cout << "-- wasteflow connection: " << cec.wasteflow_connection_id << std::endl;
         }
@@ -269,17 +270,18 @@ void Simulation_PrintComponents(Simulation const& s)
             }
             std::cout << "-- max outflow (W): "
                       << (vec.max_outflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(vec.max_outflow_W))
+                                                          : std::to_string(vec.max_outflow_W))
                       << std::endl;
             std::cout << "-- max lossflow (W): "
                       << (vec.max_lossflow_W == max_flow_W ? "unlimited"
-                                                          : std::to_string(vec.max_lossflow_W))
+                                                           : std::to_string(vec.max_lossflow_W))
                       << std::endl;
             std::cout << "-- inflow connection: " << vec.inflow_connection_id << std::endl;
             std::cout << "-- outflow connection: " << vec.outflow_connection_id << std::endl;
             std::cout << "-- lossflow connection: "
-                      << (vec.lossflow_connection_id.has_value() ? std::to_string(vec.lossflow_connection_id.value())
-                                                       : "NA")
+                      << (vec.lossflow_connection_id.has_value()
+                              ? std::to_string(vec.lossflow_connection_id.value())
+                              : "NA")
                       << std::endl;
             std::cout << "-- wasteflow connection: " << vec.wasteflow_connection_id << std::endl;
         }

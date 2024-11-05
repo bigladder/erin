@@ -25,14 +25,14 @@ constexpr double const infinite_time = -1.0;
 constexpr size_t const wasteflow_id = 0;
 
 void add_connection_issue(std::vector<std::string>& issues,
-                        std::string componentTag,
-                        size_t compId,
-                        size_t compPort,
-                        size_t compSubtypeIdx,
-                        ComponentType compType,
-                        Connection const& conn,
-                        size_t connIdx,
-                        FlowDirection flowDirection)
+                          std::string componentTag,
+                          size_t compId,
+                          size_t compPort,
+                          size_t compSubtypeIdx,
+                          ComponentType compType,
+                          Connection const& conn,
+                          size_t connIdx,
+                          FlowDirection flowDirection)
 {
     std::string direction = flowDirection == FlowDirection::outflow ? "outflow" : "inflow ";
     std::ostringstream oss;
@@ -116,14 +116,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   inflowPort,
-                                   idx,
-                                   compType,
-                                   inflowConn,
-                                   inflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     inflowPort,
+                                     idx,
+                                     compType,
+                                     inflowConn,
+                                     inflowConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t outflowConnIdx = cec.outflow_connection_id;
             assert(outflowConnIdx < nConns);
@@ -133,14 +133,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
             size_t wasteflowConnIdx = cec.wasteflow_connection_id;
             assert(wasteflowConnIdx < nConns);
@@ -150,14 +150,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   wfPort,
-                                   idx,
-                                   compType,
-                                   wfConn,
-                                   wasteflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     wfPort,
+                                     idx,
+                                     compType,
+                                     wfConn,
+                                     wasteflowConnIdx,
+                                     FlowDirection::outflow);
             }
             if (cec.lossflow_connection_id.has_value())
             {
@@ -169,14 +169,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                     (lfConn.from_subtype_index != idx) || (lfConn.from_port != lfPort))
                 {
                     add_connection_issue(issues,
-                                       tag,
-                                       compId,
-                                       lfPort,
-                                       idx,
-                                       compType,
-                                       lfConn,
-                                       lfConnIdx,
-                                       FlowDirection::outflow);
+                                         tag,
+                                         compId,
+                                         lfPort,
+                                         idx,
+                                         compType,
+                                         lfConn,
+                                         lfConnIdx,
+                                         FlowDirection::outflow);
                 }
             }
         }
@@ -193,14 +193,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   inflowPort,
-                                   idx,
-                                   compType,
-                                   inflowConn,
-                                   inflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     inflowPort,
+                                     idx,
+                                     compType,
+                                     inflowConn,
+                                     inflowConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t outflowConnIdx = vec.outflow_connection_id;
             assert(outflowConnIdx < nConns);
@@ -210,14 +210,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
             size_t wasteflowConnIdx = vec.wasteflow_connection_id;
             assert(wasteflowConnIdx < nConns);
@@ -227,14 +227,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   wfPort,
-                                   idx,
-                                   compType,
-                                   wfConn,
-                                   wasteflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     wfPort,
+                                     idx,
+                                     compType,
+                                     wfConn,
+                                     wasteflowConnIdx,
+                                     FlowDirection::outflow);
             }
             if (vec.lossflow_connection_id.has_value())
             {
@@ -246,14 +246,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                     (lfConn.from_subtype_index != idx) || (lfConn.from_port != lfPort))
                 {
                     add_connection_issue(issues,
-                                       tag,
-                                       compId,
-                                       lfPort,
-                                       idx,
-                                       compType,
-                                       lfConn,
-                                       lfConnIdx,
-                                       FlowDirection::outflow);
+                                         tag,
+                                         compId,
+                                         lfPort,
+                                         idx,
+                                         compType,
+                                         lfConn,
+                                         lfConnIdx,
+                                         FlowDirection::outflow);
                 }
             }
         }
@@ -269,14 +269,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   inflowPort,
-                                   idx,
-                                   compType,
-                                   inflowConn,
-                                   inflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     inflowPort,
+                                     idx,
+                                     compType,
+                                     inflowConn,
+                                     inflowConnIdx,
+                                     FlowDirection::inflow);
             }
         }
         break;
@@ -292,14 +292,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
         }
         break;
@@ -320,14 +320,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   inflowPort,
-                                   idx,
-                                   compType,
-                                   inflowConn,
-                                   inflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     inflowPort,
+                                     idx,
+                                     compType,
+                                     inflowConn,
+                                     inflowConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t outflowConnIdx = comp.outflow_connection_id;
             assert(outflowConnIdx < nConns);
@@ -337,14 +337,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
             size_t envConnIdx = comp.in_from_env_connection_id;
             assert(envConnIdx < nConns);
@@ -354,14 +354,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (envConn.to_subtype_index != idx) || (envConn.to_port != envInflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   envInflowPort,
-                                   idx,
-                                   compType,
-                                   envConn,
-                                   envConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     envInflowPort,
+                                     idx,
+                                     compType,
+                                     envConn,
+                                     envConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t wConnIdx = comp.wasteflow_connection_id;
             assert(wConnIdx < nConns);
@@ -371,14 +371,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (wConn.from_subtype_index != idx) || (wConn.from_port != wasteOutflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   wasteOutflowPort,
-                                   idx,
-                                   compType,
-                                   wConn,
-                                   wConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     wasteOutflowPort,
+                                     idx,
+                                     compType,
+                                     wConn,
+                                     wConnIdx,
+                                     FlowDirection::outflow);
             }
         }
         break;
@@ -394,14 +394,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   inflowPort,
-                                   idx,
-                                   compType,
-                                   inflowConn,
-                                   inflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     inflowPort,
+                                     idx,
+                                     compType,
+                                     inflowConn,
+                                     inflowConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t outflowConnIdx = comp.outflow_connection_id;
             assert(outflowConnIdx < nConns);
@@ -411,14 +411,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
             size_t envConnIdx = comp.in_from_env_connection_id;
             assert(envConnIdx < nConns);
@@ -428,14 +428,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (envConn.to_subtype_index != idx) || (envConn.to_port != envInflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   envInflowPort,
-                                   idx,
-                                   compType,
-                                   envConn,
-                                   envConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     envInflowPort,
+                                     idx,
+                                     compType,
+                                     envConn,
+                                     envConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t wConnIdx = comp.wasteflow_connection_id;
             assert(wConnIdx < nConns);
@@ -445,14 +445,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (wConn.from_subtype_index != idx) || (wConn.from_port != wasteOutflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   wasteOutflowPort,
-                                   idx,
-                                   compType,
-                                   wConn,
-                                   wConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     wasteOutflowPort,
+                                     idx,
+                                     compType,
+                                     wConn,
+                                     wConnIdx,
+                                     FlowDirection::outflow);
             }
         }
         break;
@@ -468,14 +468,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                     (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inPort))
                 {
                     add_connection_issue(issues,
-                                       tag,
-                                       compId,
-                                       inPort,
-                                       idx,
-                                       compType,
-                                       inflowConn,
-                                       inflowConnIdx,
-                                       FlowDirection::inflow);
+                                         tag,
+                                         compId,
+                                         inPort,
+                                         idx,
+                                         compType,
+                                         inflowConn,
+                                         inflowConnIdx,
+                                         FlowDirection::inflow);
                 }
             }
             for (size_t outPort = 0; outPort < comp.number_of_outports; ++outPort)
@@ -486,14 +486,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                     (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outPort))
                 {
                     add_connection_issue(issues,
-                                       tag,
-                                       compId,
-                                       outPort,
-                                       idx,
-                                       compType,
-                                       outflowConn,
-                                       outflowConnIdx,
-                                       FlowDirection::outflow);
+                                         tag,
+                                         compId,
+                                         outPort,
+                                         idx,
+                                         compType,
+                                         outflowConn,
+                                         outflowConnIdx,
+                                         FlowDirection::outflow);
                 }
             }
         }
@@ -509,14 +509,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   inflowPort,
-                                   idx,
-                                   compType,
-                                   inflowConn,
-                                   inflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     inflowPort,
+                                     idx,
+                                     compType,
+                                     inflowConn,
+                                     inflowConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t outflowConnIdx = comp.outflow_connection_id;
             Connection const& outflowConn = m.connection[outflowConnIdx];
@@ -525,14 +525,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
         }
         break;
@@ -549,14 +549,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (primaryInflowConn.to_port != primaryInflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   primaryInflowPort,
-                                   idx,
-                                   compType,
-                                   primaryInflowConn,
-                                   primaryInflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     primaryInflowPort,
+                                     idx,
+                                     compType,
+                                     primaryInflowConn,
+                                     primaryInflowConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t secondaryInflowConnIdx = comp.inflow_connection_id_secondary;
             Connection const& secondaryInflowConn = m.connection[secondaryInflowConnIdx];
@@ -567,14 +567,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (secondaryInflowConn.to_port != secondaryInflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   secondaryInflowPort,
-                                   idx,
-                                   compType,
-                                   secondaryInflowConn,
-                                   secondaryInflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     secondaryInflowPort,
+                                     idx,
+                                     compType,
+                                     secondaryInflowConn,
+                                     secondaryInflowConnIdx,
+                                     FlowDirection::inflow);
             }
             size_t outflowConnIdx = comp.outflow_connection_id;
             Connection const& outflowConn = m.connection[outflowConnIdx];
@@ -583,14 +583,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
         }
         break;
@@ -605,14 +605,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   inflowPort,
-                                   idx,
-                                   compType,
-                                   inflowConn,
-                                   inflowConnIdx,
-                                   FlowDirection::inflow);
+                                     tag,
+                                     compId,
+                                     inflowPort,
+                                     idx,
+                                     compType,
+                                     inflowConn,
+                                     inflowConnIdx,
+                                     FlowDirection::inflow);
             }
         }
         break;
@@ -627,14 +627,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
             size_t wfConnIdx = comp.wasteflow_connection_id;
             Connection const& wfConn = m.connection[wfConnIdx];
@@ -643,14 +643,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   wfPort,
-                                   idx,
-                                   compType,
-                                   wfConn,
-                                   wfConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     wfPort,
+                                     idx,
+                                     compType,
+                                     wfConn,
+                                     wfConnIdx,
+                                     FlowDirection::outflow);
             }
         }
         break;
@@ -665,14 +665,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
                 add_connection_issue(issues,
-                                   tag,
-                                   compId,
-                                   outflowPort,
-                                   idx,
-                                   compType,
-                                   outflowConn,
-                                   outflowConnIdx,
-                                   FlowDirection::outflow);
+                                     tag,
+                                     compId,
+                                     outflowPort,
+                                     idx,
+                                     compType,
+                                     outflowConn,
+                                     outflowConnIdx,
+                                     FlowDirection::outflow);
             }
             if (comp.inflow_connection_id.has_value())
             {
@@ -683,14 +683,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                     (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
                 {
                     add_connection_issue(issues,
-                                       tag,
-                                       compId,
-                                       inflowPort,
-                                       idx,
-                                       compType,
-                                       inflowConn,
-                                       inflowConnIdx,
-                                       FlowDirection::inflow);
+                                         tag,
+                                         compId,
+                                         inflowPort,
+                                         idx,
+                                         compType,
+                                         inflowConn,
+                                         inflowConnIdx,
+                                         FlowDirection::inflow);
                 }
             }
             if (comp.wasteflow_connection_id.has_value())
@@ -702,14 +702,14 @@ std::vector<std::string> Model_check_network(Model const& m)
                     (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
                 {
                     add_connection_issue(issues,
-                                       tag,
-                                       compId,
-                                       wfPort,
-                                       idx,
-                                       compType,
-                                       wfConn,
-                                       wfConnIdx,
-                                       FlowDirection::outflow);
+                                         tag,
+                                         compId,
+                                         wfPort,
+                                         idx,
+                                         compType,
+                                         wfConn,
+                                         wfConnIdx,
+                                         FlowDirection::outflow);
                 }
             }
         }

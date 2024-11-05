@@ -580,8 +580,6 @@ struct FailureModeDict
 // FUNCTIONS
 std::vector<std::string> check_network(Model const& m);
 
-inline flow_t safe_add(flow_t a, flow_t b);
-
 std::vector<TimeAndAmount> ConvertToTimeAndAmounts(std::vector<std::vector<double>> const& input,
                                                    double timeToSeconds = 1.0,
                                                    double rateToWatts = 1.0);

@@ -262,7 +262,7 @@ CLI::App* add_checkNetwork(CLI::App& app)
             return EXIT_FAILURE;
         }
         Simulation s = std::move(maybe_sim.value());
-        std::vector<std::string> issues = erin::Model_check_network(s.TheModel);
+        std::vector<std::string> issues = erin::check_network(s.TheModel);
         if (issues.size() > 0)
         {
             std::cout << "ISSUES FOUND:" << std::endl;

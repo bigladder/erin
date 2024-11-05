@@ -2767,7 +2767,7 @@ void Simulation_run(Simulation& s,
     bool const checkNetwork = false;
     if (checkNetwork)
     {
-        std::vector<std::string> issues = Model_check_network(s.TheModel);
+        std::vector<std::string> issues = check_network(s.TheModel);
         if (issues.size() > 0)
         {
             Log_warning(log, "network connection", "start list of issues");

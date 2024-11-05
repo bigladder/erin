@@ -578,7 +578,7 @@ struct FailureModeDict
 };
 
 // FUNCTIONS
-std::vector<std::string> Model_check_network(Model const& m);
+std::vector<std::string> check_network(Model const& m);
 
 inline flow_t safe_add(flow_t a, flow_t b);
 

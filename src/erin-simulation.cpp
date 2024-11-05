@@ -2359,8 +2359,8 @@ void WriteStatisticsToFile(Simulation const& s,
     for (auto const& os : occurrenceStats)
     {
         double stored_kJ = os.storage_charge_kJ - os.storage_discharge_kJ;
-        double balance =
-            os.inflow_kJ + os.in_from_env_kJ - (os.outflow_achieved_kJ + stored_kJ + os.wasteflow_kJ);
+        double balance = os.inflow_kJ + os.in_from_env_kJ -
+                         (os.outflow_achieved_kJ + stored_kJ + os.wasteflow_kJ);
         double efficiency = (os.inflow_kJ + os.storage_discharge_kJ) > 0.0
                                 ? ((os.outflow_achieved_kJ + os.storage_charge_kJ) /
                                    (os.inflow_kJ + os.storage_discharge_kJ))
@@ -2422,8 +2422,9 @@ void WriteStatisticsToFile(Simulation const& s,
         }
         for (size_t i : failOrder)
         {
-            size_t eventCount =
-                os.event_count_by_failure_mode_id.contains(i) ? os.event_count_by_failure_mode_id.at(i) : 0;
+            size_t eventCount = os.event_count_by_failure_mode_id.contains(i)
+                                    ? os.event_count_by_failure_mode_id.at(i)
+                                    : 0;
             stats << "," << eventCount;
         }
         for (size_t i : fragOrder)
@@ -2441,8 +2442,9 @@ void WriteStatisticsToFile(Simulation const& s,
         }
         for (size_t i : fragOrder)
         {
-            double time_s =
-                os.time_by_fragility_mode_id_s.contains(i) ? os.time_by_fragility_mode_id_s.at(i) : 0.0;
+            double time_s = os.time_by_fragility_mode_id_s.contains(i)
+                                ? os.time_by_fragility_mode_id_s.at(i)
+                                : 0.0;
             stats << "," << (os.duration_s > 0.0 ? time_s / os.duration_s : 0.0);
         }
         for (size_t compId : compOrder)
@@ -2454,7 +2456,8 @@ void WriteStatisticsToFile(Simulation const& s,
                     if (os.event_count_by_comp_id_by_failure_mode_id.contains(compId) &&
                         os.event_count_by_comp_id_by_failure_mode_id.at(compId).contains(i))
                     {
-                        stats << "," << os.event_count_by_comp_id_by_failure_mode_id.at(compId).at(i);
+                        stats << ","
+                              << os.event_count_by_comp_id_by_failure_mode_id.at(compId).at(i);
                     }
                     else
                     {
@@ -2469,7 +2472,8 @@ void WriteStatisticsToFile(Simulation const& s,
                     if (os.event_count_by_comp_id_by_fragility_mode_id.contains(compId) &&
                         os.event_count_by_comp_id_by_fragility_mode_id.at(compId).contains(i))
                     {
-                        stats << "," << os.event_count_by_comp_id_by_fragility_mode_id.at(compId).at(i);
+                        stats << ","
+                              << os.event_count_by_comp_id_by_fragility_mode_id.at(compId).at(i);
                     }
                     else
                     {

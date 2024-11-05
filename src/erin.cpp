@@ -4614,12 +4614,13 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
         }
         if (relSchByCompId.contains(compId))
         {
-            TimeState_CountAndTimeFailureEvents(relSchByCompId[compId],
-                                                m.FinalTime,
-                                                sos.event_count_by_comp_id_by_failure_mode_id[compId],
-                                                sos.event_count_by_comp_id_by_fragility_mode_id[compId],
-                                                sos.time_by_comp_id_by_failure_mode_id_s[compId],
-                                                sos.time_by_comp_id_by_fragility_mode_id_s[compId]);
+            TimeState_CountAndTimeFailureEvents(
+                relSchByCompId[compId],
+                m.FinalTime,
+                sos.event_count_by_comp_id_by_failure_mode_id[compId],
+                sos.event_count_by_comp_id_by_fragility_mode_id[compId],
+                sos.time_by_comp_id_by_failure_mode_id_s[compId],
+                sos.time_by_comp_id_by_fragility_mode_id_s[compId]);
             sos.availability_by_comp_id_s[compId] =
                 TimeState_CalcAvailability_s(relSchByCompId[compId], m.FinalTime);
         }
@@ -4693,7 +4694,8 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     newLoadNotServedForComponents.reserve(sos.load_not_served_for_components.size());
     for (size_t lns_idx : loadNotServedFlowTypeNames_idx)
     {
-        newLoadNotServedForComponents.push_back(std::move(sos.load_not_served_for_components[lns_idx]));
+        newLoadNotServedForComponents.push_back(
+            std::move(sos.load_not_served_for_components[lns_idx]));
     }
     sos.load_not_served_for_components = std::move(newLoadNotServedForComponents);
     return sos;

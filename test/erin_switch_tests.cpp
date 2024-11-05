@@ -9,7 +9,7 @@ using namespace ::erin;
 TEST(Switch, TestGetSwitchState)
 {
     SimulationState ss = {};
-    ss.SwitchStates.push_back(SwitchState::primary);
+    ss.switch_states.push_back(SwitchState::primary);
     size_t idx = 0;
     SwitchState actual_switch_state = SimulationState_GetSwitchState(ss, idx);
     SwitchState expected_switch_state = SwitchState::primary;
@@ -19,7 +19,7 @@ TEST(Switch, TestGetSwitchState)
 TEST(Switch, TestSetSwitchState)
 {
     SimulationState ss = {};
-    ss.SwitchStates.push_back(SwitchState::primary);
+    ss.switch_states.push_back(SwitchState::primary);
     size_t idx = 0;
     SimulationState_SetSwitchState(ss, idx, SwitchState::secondary);
     SwitchState actual_switch_state = SimulationState_GetSwitchState(ss, idx);

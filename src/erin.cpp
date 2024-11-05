@@ -982,7 +982,7 @@ size_t Component_AddComponentReturningId(ComponentDict& c,
 
 size_t CountActiveConnections(SimulationState const& ss)
 {
-    return (ss.ActiveConnectionsBack.size() + ss.ActiveConnectionsFront.size());
+    return (ss.active_connections_back.size() + ss.active_connections_front.size());
 }
 
 void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item)
@@ -999,26 +999,26 @@ void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item)
 
 SwitchState SimulationState_GetSwitchState(SimulationState const& ss, size_t const& switchIdx)
 {
-    assert(switchIdx < ss.SwitchStates.size());
-    return ss.SwitchStates[switchIdx];
+    assert(switchIdx < ss.switch_states.size());
+    return ss.switch_states[switchIdx];
 }
 
 void SimulationState_SetSwitchState(SimulationState& ss,
                                     size_t const& switchIdx,
                                     SwitchState newState)
 {
-    assert(switchIdx < ss.SwitchStates.size());
-    ss.SwitchStates[switchIdx] = newState;
+    assert(switchIdx < ss.switch_states.size());
+    ss.switch_states[switchIdx] = newState;
 }
 
 void SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx)
 {
-    ss.ActiveConnectionsBack.insert(connIdx);
+    ss.active_connections_back.insert(connIdx);
 }
 
 void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx)
 {
-    ss.ActiveConnectionsFront.insert(connIdx);
+    ss.active_connections_front.insert(connIdx);
 }
 
 void ActivateConnectionsForConstantLoads(Model const& model, SimulationState& ss)
@@ -1026,11 +1026,11 @@ void ActivateConnectionsForConstantLoads(Model const& model, SimulationState& ss
     for (size_t loadIdx = 0; loadIdx < model.constant_load.size(); ++loadIdx)
     {
         size_t connIdx = model.constant_load[loadIdx].inflow_connection_id;
-        if (ss.Flows[connIdx].requested_W != model.constant_load[loadIdx].load_W)
+        if (ss.flows[connIdx].requested_W != model.constant_load[loadIdx].load_W)
         {
-            ss.ActiveConnectionsBack.insert(connIdx);
+            ss.active_connections_back.insert(connIdx);
         }
-        ss.Flows[connIdx].requested_W = model.constant_load[loadIdx].load_W;
+        ss.flows[connIdx].requested_W = model.constant_load[loadIdx].load_W;
     }
 }
 
@@ -1040,20 +1040,20 @@ void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss)
     {
         size_t connIdx = m.constant_source[srcIdx].outflow_connection_id;
         size_t compId = m.connection[connIdx].from_component_id;
-        if (ss.UnavailableComponents.contains(compId))
+        if (ss.unavailable_components.contains(compId))
         {
-            if (ss.Flows[connIdx].available_W != 0)
+            if (ss.flows[connIdx].available_W != 0)
             {
-                ss.ActiveConnectionsFront.insert(connIdx);
+                ss.active_connections_front.insert(connIdx);
             }
-            ss.Flows[connIdx].available_W = 0;
+            ss.flows[connIdx].available_W = 0;
             continue;
         }
-        if (ss.Flows[connIdx].available_W != m.constant_source[srcIdx].available_W)
+        if (ss.flows[connIdx].available_W != m.constant_source[srcIdx].available_W)
         {
-            ss.ActiveConnectionsFront.insert(connIdx);
+            ss.active_connections_front.insert(connIdx);
         }
-        ss.Flows[connIdx].available_W = m.constant_source[srcIdx].available_W;
+        ss.flows[connIdx].available_W = m.constant_source[srcIdx].available_W;
     }
 }
 
@@ -1062,18 +1062,18 @@ void ActivateConnectionsForScheduleBasedLoads(Model const& m, SimulationState& s
     for (size_t i = 0; i < m.scheduled_load.size(); ++i)
     {
         size_t connIdx = m.scheduled_load[i].inflow_connection_id;
-        size_t idx = ss.ScheduleBasedLoadIdx[i];
+        size_t idx = ss.schedule_based_load_index[i];
         if (idx < m.scheduled_load[i].times_and_loads.size())
         {
             auto const& tal = m.scheduled_load[i].times_and_loads[idx];
             if (tal.Time_s == t)
             {
 
-                if (ss.Flows[connIdx].requested_W != tal.Amount_W)
+                if (ss.flows[connIdx].requested_W != tal.Amount_W)
                 {
-                    ss.ActiveConnectionsBack.insert(connIdx);
+                    ss.active_connections_back.insert(connIdx);
                 }
-                ss.Flows[connIdx].requested_W = tal.Amount_W;
+                ss.flows[connIdx].requested_W = tal.Amount_W;
             }
         }
     }
@@ -1086,16 +1086,16 @@ void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState&
         ScheduleBasedSource const& sbs = m.scheduled_source[i];
         auto outIdx = sbs.outflow_connection_id;
         size_t compId = m.connection[outIdx].from_component_id;
-        if (ss.UnavailableComponents.contains(compId))
+        if (ss.unavailable_components.contains(compId))
         {
-            if (ss.Flows[outIdx].available_W != 0)
+            if (ss.flows[outIdx].available_W != 0)
             {
-                ss.ActiveConnectionsFront.insert(outIdx);
+                ss.active_connections_front.insert(outIdx);
             }
-            ss.Flows[outIdx].available_W = 0;
+            ss.flows[outIdx].available_W = 0;
             continue;
         }
-        auto idx = ss.ScheduleBasedSourceIdx[i];
+        auto idx = ss.schedule_based_source_index[i];
         if (idx < sbs.time_and_availables.size())
         {
             auto const& taa = sbs.time_and_availables[idx];
@@ -1103,17 +1103,17 @@ void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState&
             {
                 flow_t outAvail_W =
                     taa.Amount_W > sbs.max_outflow_W ? sbs.max_outflow_W : taa.Amount_W;
-                if (ss.Flows[outIdx].available_W != outAvail_W)
+                if (ss.flows[outIdx].available_W != outAvail_W)
                 {
-                    ss.ActiveConnectionsFront.insert(outIdx);
+                    ss.active_connections_front.insert(outIdx);
                 }
-                ss.Flows[outIdx].available_W = outAvail_W;
-                auto spillage = outAvail_W > ss.Flows[outIdx].requested_W
-                                    ? (outAvail_W - ss.Flows[outIdx].requested_W)
+                ss.flows[outIdx].available_W = outAvail_W;
+                auto spillage = outAvail_W > ss.flows[outIdx].requested_W
+                                    ? (outAvail_W - ss.flows[outIdx].requested_W)
                                     : 0;
                 auto wasteIdx = m.scheduled_source[i].wasteflow_connection_id;
-                ss.Flows[wasteIdx].requested_W = spillage;
-                ss.Flows[wasteIdx].available_W = spillage;
+                ss.flows[wasteIdx].requested_W = spillage;
+                ss.flows[wasteIdx].available_W = spillage;
             }
         }
     }
@@ -1127,56 +1127,56 @@ void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t)
         std::optional<size_t> maybeInflowConn = store.inflow_connection_id;
         size_t outflowConn = store.outflow_connection_id;
         size_t compId = m.connection[outflowConn].from_component_id;
-        if (ss.UnavailableComponents.contains(compId))
+        if (ss.unavailable_components.contains(compId))
         {
             if (maybeInflowConn.has_value())
             {
                 size_t inflowConn = maybeInflowConn.value();
-                if (ss.Flows[inflowConn].requested_W != 0)
+                if (ss.flows[inflowConn].requested_W != 0)
                 {
-                    ss.ActiveConnectionsBack.insert(inflowConn);
+                    ss.active_connections_back.insert(inflowConn);
                 }
-                ss.Flows[inflowConn].requested_W = 0;
+                ss.flows[inflowConn].requested_W = 0;
             }
-            if (ss.Flows[outflowConn].available_W != 0)
+            if (ss.flows[outflowConn].available_W != 0)
             {
-                ss.ActiveConnectionsFront.insert(outflowConn);
+                ss.active_connections_front.insert(outflowConn);
             }
-            ss.Flows[outflowConn].available_W = 0;
+            ss.flows[outflowConn].available_W = 0;
             continue;
         }
         bool isSource = !maybeInflowConn.has_value();
-        if (ss.StorageNextEventTimes[storeIdx] == t || isSource)
+        if (ss.storage_next_event_times[storeIdx] == t || isSource)
         {
-            flow_t available_W = ss.StorageAmounts_J[storeIdx] > 0 ? store.max_discharge_rate_W : 0;
+            flow_t available_W = ss.storage_amounts_J[storeIdx] > 0 ? store.max_discharge_rate_W : 0;
             if (maybeInflowConn.has_value())
             {
                 size_t inflowConn = maybeInflowConn.value();
-                available_W = safe_add(available_W, ss.Flows[inflowConn].available_W);
+                available_W = safe_add(available_W, ss.flows[inflowConn].available_W);
             }
             if (available_W > store.max_outflow_W)
             {
                 available_W = store.max_outflow_W;
             }
-            if (ss.Flows[outflowConn].available_W != available_W)
+            if (ss.flows[outflowConn].available_W != available_W)
             {
-                ss.ActiveConnectionsFront.insert(outflowConn);
+                ss.active_connections_front.insert(outflowConn);
             }
-            ss.Flows[outflowConn].available_W = available_W;
+            ss.flows[outflowConn].available_W = available_W;
             if (maybeInflowConn.has_value())
             {
-                flow_t request_W = (ss.Flows[outflowConn].requested_W > store.max_outflow_W
+                flow_t request_W = (ss.flows[outflowConn].requested_W > store.max_outflow_W
                                         ? store.max_outflow_W
-                                        : ss.Flows[outflowConn].requested_W) +
-                                   (ss.StorageAmounts_J[storeIdx] <= store.charge_amount_J
+                                        : ss.flows[outflowConn].requested_W) +
+                                   (ss.storage_amounts_J[storeIdx] <= store.charge_amount_J
                                         ? store.max_charge_rate_W
                                         : 0);
                 size_t inflowConn = maybeInflowConn.value();
-                if (ss.Flows[inflowConn].requested_W != request_W)
+                if (ss.flows[inflowConn].requested_W != request_W)
                 {
-                    ss.ActiveConnectionsBack.insert(inflowConn);
+                    ss.active_connections_back.insert(inflowConn);
                 }
-                ss.Flows[inflowConn].requested_W = request_W;
+                ss.flows[inflowConn].requested_W = request_W;
             }
             continue;
         }
@@ -1284,12 +1284,12 @@ void UpdateConverterLossflowAndWasteflow(SimulationState& ss,
                                          flow_t maxOutflow_W,
                                          flow_t maxLossflow_W)
 {
-    flow_t inflowRequest = ss.Flows[inflowConn].requested_W;
-    flow_t inflowAvailable = ss.Flows[inflowConn].available_W;
-    flow_t outflowRequest = ss.Flows[outflowConn].requested_W;
-    flow_t outflowAvailable = ss.Flows[outflowConn].available_W > maxOutflow_W
+    flow_t inflowRequest = ss.flows[inflowConn].requested_W;
+    flow_t inflowAvailable = ss.flows[inflowConn].available_W;
+    flow_t outflowRequest = ss.flows[outflowConn].requested_W;
+    flow_t outflowAvailable = ss.flows[outflowConn].available_W > maxOutflow_W
                                   ? maxOutflow_W
-                                  : ss.Flows[outflowConn].available_W;
+                                  : ss.flows[outflowConn].available_W;
     flow_t inflow = FinalizeFlowValue(inflowRequest, inflowAvailable);
     flow_t outflow = FinalizeFlowValue(outflowRequest, outflowAvailable);
     // NOTE: for COP, we can have outflow > inflow, but we assume no
@@ -1298,23 +1298,23 @@ void UpdateConverterLossflowAndWasteflow(SimulationState& ss,
     flow_t lossflowRequest = 0;
     if (lossflowConn.has_value())
     {
-        lossflowRequest = ss.Flows[lossflowConn.value()].requested_W;
+        lossflowRequest = ss.flows[lossflowConn.value()].requested_W;
         if (lossflowRequest > maxLossflow_W)
         {
             lossflowRequest = maxLossflow_W;
         }
         flow_t nonOutflowAvailableLimited =
             nonOutflowAvailable > maxLossflow_W ? maxLossflow_W : nonOutflowAvailable;
-        if (nonOutflowAvailableLimited != ss.Flows[lossflowConn.value()].available_W)
+        if (nonOutflowAvailableLimited != ss.flows[lossflowConn.value()].available_W)
         {
-            ss.ActiveConnectionsFront.insert(lossflowConn.value());
+            ss.active_connections_front.insert(lossflowConn.value());
         }
-        ss.Flows[lossflowConn.value()].available_W = nonOutflowAvailableLimited;
+        ss.flows[lossflowConn.value()].available_W = nonOutflowAvailableLimited;
     }
     flow_t wasteflow =
         nonOutflowAvailable > lossflowRequest ? nonOutflowAvailable - lossflowRequest : 0;
-    ss.Flows[wasteflowConn].requested_W = wasteflow;
-    ss.Flows[wasteflowConn].available_W = wasteflow;
+    ss.flows[wasteflowConn].requested_W = wasteflow;
+    ss.flows[wasteflowConn].available_W = wasteflow;
 }
 
 void UpdateConstantEfficiencyLossflowAndWasteflow(Model const& m,
@@ -1352,16 +1352,16 @@ void RunConstantEfficiencyConverterBackward(Model const& m,
 {
     ConstantEfficiencyConverter const& cec = m.constant_efficiency_converter[compIdx];
     assert(cec.outflow_connection_id == outflowConnIdx);
-    flow_t outflowRequest_W = ss.Flows[outflowConnIdx].requested_W > cec.max_outflow_W
+    flow_t outflowRequest_W = ss.flows[outflowConnIdx].requested_W > cec.max_outflow_W
                                   ? cec.max_outflow_W
-                                  : ss.Flows[outflowConnIdx].requested_W;
+                                  : ss.flows[outflowConnIdx].requested_W;
     flow_t inflowRequest_W = static_cast<flow_t>(std::ceil(outflowRequest_W / cec.efficiency));
     assert(inflowRequest_W >= outflowRequest_W);
-    if (inflowRequest_W != ss.Flows[cec.inflow_connection_id].requested_W)
+    if (inflowRequest_W != ss.flows[cec.inflow_connection_id].requested_W)
     {
-        ss.ActiveConnectionsBack.insert(cec.inflow_connection_id);
+        ss.active_connections_back.insert(cec.inflow_connection_id);
     }
-    ss.Flows[cec.inflow_connection_id].requested_W = inflowRequest_W;
+    ss.flows[cec.inflow_connection_id].requested_W = inflowRequest_W;
     UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
 }
 
@@ -1373,18 +1373,18 @@ void RunVariableEfficiencyConverterBackward(Model const& m,
     VariableEfficiencyConverter const& vec = m.variable_efficiency_converter[compIdx];
     assert(outflowConnIdx == vec.outflow_connection_id);
     size_t inflowConnIdx = vec.inflow_connection_id;
-    flow_t outflowRequest_W = ss.Flows[outflowConnIdx].requested_W > vec.max_outflow_W
+    flow_t outflowRequest_W = ss.flows[outflowConnIdx].requested_W > vec.max_outflow_W
                                   ? vec.max_outflow_W
-                                  : ss.Flows[outflowConnIdx].requested_W;
+                                  : ss.flows[outflowConnIdx].requested_W;
     double efficiency = LookupTable_LookupInterp(
         vec.outflows_for_efficiency_W, vec.efficiencies, static_cast<double>(outflowRequest_W));
     assert(efficiency > 0.0 && efficiency <= 1.0);
     flow_t inflowRequest_W = static_cast<flow_t>(std::ceil(outflowRequest_W / efficiency));
-    if (inflowRequest_W != ss.Flows[inflowConnIdx].requested_W)
+    if (inflowRequest_W != ss.flows[inflowConnIdx].requested_W)
     {
-        ss.ActiveConnectionsBack.insert(inflowConnIdx);
+        ss.active_connections_back.insert(inflowConnIdx);
     }
-    ss.Flows[inflowConnIdx].requested_W = inflowRequest_W;
+    ss.flows[inflowConnIdx].requested_W = inflowRequest_W;
     UpdateVariableEfficiencyLossflowAndWasteflow(m, ss, compIdx);
 }
 
@@ -1395,33 +1395,33 @@ void UpdateEnvironmentFlowForAllMovers(SimulationState& ss,
                                        size_t wasteflowConn,
                                        flow_t maxOutflow_W)
 {
-    flow_t inflowReq = ss.Flows[inflowConn].requested_W;
-    flow_t inflowAvail = ss.Flows[inflowConn].available_W;
-    flow_t outflowReq = ss.Flows[outflowConn].requested_W;
-    flow_t outflowAvail = ss.Flows[outflowConn].available_W > maxOutflow_W
+    flow_t inflowReq = ss.flows[inflowConn].requested_W;
+    flow_t inflowAvail = ss.flows[inflowConn].available_W;
+    flow_t outflowReq = ss.flows[outflowConn].requested_W;
+    flow_t outflowAvail = ss.flows[outflowConn].available_W > maxOutflow_W
                               ? maxOutflow_W
-                              : ss.Flows[outflowConn].available_W;
+                              : ss.flows[outflowConn].available_W;
     flow_t inflow = FinalizeFlowValue(inflowReq, inflowAvail);
     flow_t outflow = FinalizeFlowValue(outflowReq, outflowAvail);
     if (inflow >= outflow)
     {
-        ss.Flows[envConn].requested_W = 0;
-        ss.Flows[envConn].available_W = 0;
-        ss.Flows[envConn].actual_W = 0;
+        ss.flows[envConn].requested_W = 0;
+        ss.flows[envConn].available_W = 0;
+        ss.flows[envConn].actual_W = 0;
         flow_t waste = inflow - outflow;
-        ss.Flows[wasteflowConn].requested_W = waste;
-        ss.Flows[wasteflowConn].available_W = waste;
-        ss.Flows[wasteflowConn].actual_W = waste;
+        ss.flows[wasteflowConn].requested_W = waste;
+        ss.flows[wasteflowConn].available_W = waste;
+        ss.flows[wasteflowConn].actual_W = waste;
     }
     else
     {
         flow_t supply = outflow - inflow;
-        ss.Flows[envConn].requested_W = supply;
-        ss.Flows[envConn].available_W = supply;
-        ss.Flows[envConn].actual_W = supply;
-        ss.Flows[wasteflowConn].requested_W = 0;
-        ss.Flows[wasteflowConn].available_W = 0;
-        ss.Flows[wasteflowConn].actual_W = 0;
+        ss.flows[envConn].requested_W = supply;
+        ss.flows[envConn].available_W = supply;
+        ss.flows[envConn].actual_W = supply;
+        ss.flows[wasteflowConn].requested_W = 0;
+        ss.flows[wasteflowConn].available_W = 0;
+        ss.flows[wasteflowConn].actual_W = 0;
     }
 }
 
@@ -1453,15 +1453,15 @@ void RunMoverBackward(Model const& m, SimulationState& ss, size_t outflowConnIdx
 {
     Mover const& mov = m.mover[moverIdx];
     size_t inflowConn = mov.inflow_connection_id;
-    flow_t outflowRequest = ss.Flows[outflowConnIdx].requested_W > mov.max_outflow_W
+    flow_t outflowRequest = ss.flows[outflowConnIdx].requested_W > mov.max_outflow_W
                                 ? mov.max_outflow_W
-                                : ss.Flows[outflowConnIdx].requested_W;
+                                : ss.flows[outflowConnIdx].requested_W;
     flow_t inflowRequest = static_cast<flow_t>(std::ceil(outflowRequest / mov.COP));
-    if (inflowRequest != ss.Flows[inflowConn].requested_W)
+    if (inflowRequest != ss.flows[inflowConn].requested_W)
     {
-        ss.ActiveConnectionsBack.insert(inflowConn);
+        ss.active_connections_back.insert(inflowConn);
     }
-    ss.Flows[inflowConn].requested_W = inflowRequest;
+    ss.flows[inflowConn].requested_W = inflowRequest;
     UpdateEnvironmentFlowForMover(m, ss, moverIdx);
 }
 
@@ -1472,27 +1472,27 @@ void RunVariableEfficiencyMoverBackward(Model const& m,
 {
     VariableEfficiencyMover const& mov = m.variable_efficiency_mover[moverIdx];
     size_t inflowConn = mov.inflow_connection_id;
-    flow_t outflowRequest_W = ss.Flows[outflowConnIdx].requested_W > mov.max_outflow_W
+    flow_t outflowRequest_W = ss.flows[outflowConnIdx].requested_W > mov.max_outflow_W
                                   ? mov.max_outflow_W
-                                  : ss.Flows[outflowConnIdx].requested_W;
+                                  : ss.flows[outflowConnIdx].requested_W;
     double cop = LookupTable_LookupInterp(
         mov.outflows_for_COP_W, mov.COPs, static_cast<double>(outflowRequest_W));
     // outflow = COP * inflow
     // inflow = outflow / COP
     flow_t inflowRequest_W =
         static_cast<flow_t>(std::ceil(static_cast<double>(outflowRequest_W) / cop));
-    if (inflowRequest_W != ss.Flows[inflowConn].requested_W)
+    if (inflowRequest_W != ss.flows[inflowConn].requested_W)
     {
-        ss.ActiveConnectionsBack.insert(inflowConn);
+        ss.active_connections_back.insert(inflowConn);
     }
-    ss.Flows[inflowConn].requested_W = inflowRequest_W;
+    ss.flows[inflowConn].requested_W = inflowRequest_W;
     UpdateEnvironmentFlowForVariableEfficiencyMover(m, ss, moverIdx);
 }
 
 void RunSwitchBackward(Model const& m, SimulationState& ss, size_t outflowConnIdx, size_t switchIdx)
 {
-    assert(switchIdx < ss.SwitchStates.size());
-    auto switchState = ss.SwitchStates[switchIdx];
+    assert(switchIdx < ss.switch_states.size());
+    auto switchState = ss.switch_states[switchIdx];
     auto const& theSwitch = m.transfer_switch[switchIdx];
     assert(theSwitch.inflow_connection_id_primary < m.connection.size());
     auto inflow0ConnIdx = theSwitch.inflow_connection_id_primary;
@@ -1502,33 +1502,33 @@ void RunSwitchBackward(Model const& m, SimulationState& ss, size_t outflowConnId
     case SwitchState::primary:
     {
         // send request on primary
-        if (ss.Flows[inflow0ConnIdx].requested_W != ss.Flows[outflowConnIdx].requested_W)
+        if (ss.flows[inflow0ConnIdx].requested_W != ss.flows[outflowConnIdx].requested_W)
         {
-            ss.ActiveConnectionsBack.insert(inflow0ConnIdx);
+            ss.active_connections_back.insert(inflow0ConnIdx);
         }
-        ss.Flows[inflow0ConnIdx].requested_W = ss.Flows[outflowConnIdx].requested_W;
+        ss.flows[inflow0ConnIdx].requested_W = ss.flows[outflowConnIdx].requested_W;
         // set request on secondary to 0
-        if (ss.Flows[inflow0ConnIdx].requested_W != 0)
+        if (ss.flows[inflow0ConnIdx].requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(inflow1ConnIdx);
+            ss.active_connections_back.insert(inflow1ConnIdx);
         }
-        ss.Flows[inflow1ConnIdx].requested_W = 0;
+        ss.flows[inflow1ConnIdx].requested_W = 0;
     }
     break;
     case SwitchState::secondary:
     {
         // send request on secondary
-        if (ss.Flows[inflow0ConnIdx].requested_W != 0)
+        if (ss.flows[inflow0ConnIdx].requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(inflow0ConnIdx);
+            ss.active_connections_back.insert(inflow0ConnIdx);
         }
-        ss.Flows[inflow0ConnIdx].requested_W = 0;
+        ss.flows[inflow0ConnIdx].requested_W = 0;
         // set request on primary to 0
-        if (ss.Flows[inflow1ConnIdx].requested_W != ss.Flows[outflowConnIdx].requested_W)
+        if (ss.flows[inflow1ConnIdx].requested_W != ss.flows[outflowConnIdx].requested_W)
         {
-            ss.ActiveConnectionsBack.insert(inflow1ConnIdx);
+            ss.active_connections_back.insert(inflow1ConnIdx);
         }
-        ss.Flows[inflow1ConnIdx].requested_W = ss.Flows[outflowConnIdx].requested_W;
+        ss.flows[inflow1ConnIdx].requested_W = ss.flows[outflowConnIdx].requested_W;
     }
     break;
     default:
@@ -1546,13 +1546,13 @@ void Mux_RequestInflowsIntelligently(SimulationState& ss,
 {
     for (size_t inflowConnIdx : inflowConns)
     {
-        if (ss.Flows[inflowConnIdx].requested_W != remainingRequest_W)
+        if (ss.flows[inflowConnIdx].requested_W != remainingRequest_W)
         {
-            ss.ActiveConnectionsBack.insert(inflowConnIdx);
+            ss.active_connections_back.insert(inflowConnIdx);
         }
-        ss.Flows[inflowConnIdx].requested_W = remainingRequest_W;
-        remainingRequest_W = remainingRequest_W > ss.Flows[inflowConnIdx].available_W
-                                 ? remainingRequest_W - ss.Flows[inflowConnIdx].available_W
+        ss.flows[inflowConnIdx].requested_W = remainingRequest_W;
+        remainingRequest_W = remainingRequest_W > ss.flows[inflowConnIdx].available_W
+                                 ? remainingRequest_W - ss.flows[inflowConnIdx].available_W
                                  : 0;
     }
 }
@@ -1566,8 +1566,8 @@ void Mux_BalanceRequestFlows(SimulationState& ss,
     for (size_t i = 0; i < inflowConns.size(); ++i)
     {
         size_t inflowConn = inflowConns[i];
-        flow_t req_W = remainingRequest_W >= ss.Flows[inflowConn].available_W
-                           ? ss.Flows[inflowConn].available_W
+        flow_t req_W = remainingRequest_W >= ss.flows[inflowConn].available_W
+                           ? ss.flows[inflowConn].available_W
                            : remainingRequest_W;
         requests_W[i] = req_W;
         remainingRequest_W -= req_W;
@@ -1579,11 +1579,11 @@ void Mux_BalanceRequestFlows(SimulationState& ss,
     for (size_t i = 0; i < inflowConns.size(); ++i)
     {
         size_t inflowConn = inflowConns[i];
-        if (logNewActivity && ss.Flows[inflowConn].requested_W != requests_W[i])
+        if (logNewActivity && ss.flows[inflowConn].requested_W != requests_W[i])
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.active_connections_back.insert(inflowConn);
         }
-        ss.Flows[inflowConn].requested_W = requests_W[i];
+        ss.flows[inflowConn].requested_W = requests_W[i];
     }
 }
 
@@ -1600,9 +1600,9 @@ void BalanceMuxRequests(Model& model, SimulationState& ss, size_t muxIdx, bool i
         for (size_t i = 0; i < mux.number_of_outports; ++i)
         {
             auto outflowConnIdx = mux.outflow_connection_ids[i];
-            auto outflowRequest_W = ss.Flows[outflowConnIdx].requested_W > mux.max_outflows_W[i]
+            auto outflowRequest_W = ss.flows[outflowConnIdx].requested_W > mux.max_outflows_W[i]
                                         ? mux.max_outflows_W[i]
-                                        : ss.Flows[outflowConnIdx].requested_W;
+                                        : ss.flows[outflowConnIdx].requested_W;
             totalRequest = safe_add(totalRequest, outflowRequest_W);
         }
         Mux_BalanceRequestFlows(ss, mux.inflow_connection_ids, totalRequest, true);
@@ -1617,9 +1617,9 @@ void RunMuxBackward(Model& model, SimulationState& ss, size_t muxIdx)
     for (size_t i = 0; i < mux.number_of_outports; ++i)
     {
         auto outflowConnIdx = mux.outflow_connection_ids[i];
-        auto outflowRequest_W = ss.Flows[outflowConnIdx].requested_W > mux.max_outflows_W[i]
+        auto outflowRequest_W = ss.flows[outflowConnIdx].requested_W > mux.max_outflows_W[i]
                                     ? mux.max_outflows_W[i]
-                                    : ss.Flows[outflowConnIdx].requested_W;
+                                    : ss.flows[outflowConnIdx].requested_W;
         totalOutflowRequest_W = safe_add(totalOutflowRequest_W, outflowRequest_W);
     }
     Mux_RequestInflowsIntelligently(
@@ -1633,17 +1633,17 @@ void RunStoreBackward(Model& model, SimulationState& ss, size_t outflowConnIdx, 
     if (store.inflow_connection_id.has_value())
     {
         flow_t chargeRate_W =
-            ss.StorageAmounts_J[storeIdx] <= store.charge_amount_J ? store.max_charge_rate_W : 0;
-        flow_t outRequest_W = ss.Flows[outflowConnIdx].requested_W > store.max_outflow_W
+            ss.storage_amounts_J[storeIdx] <= store.charge_amount_J ? store.max_charge_rate_W : 0;
+        flow_t outRequest_W = ss.flows[outflowConnIdx].requested_W > store.max_outflow_W
                                   ? store.max_outflow_W
-                                  : ss.Flows[outflowConnIdx].requested_W;
+                                  : ss.flows[outflowConnIdx].requested_W;
         flow_t totalRequest_W = outRequest_W + chargeRate_W;
         size_t inflowConnIdx = store.inflow_connection_id.value();
-        if (ss.Flows[inflowConnIdx].requested_W != totalRequest_W)
+        if (ss.flows[inflowConnIdx].requested_W != totalRequest_W)
         {
-            ss.ActiveConnectionsBack.insert(inflowConnIdx);
+            ss.active_connections_back.insert(inflowConnIdx);
         }
-        ss.Flows[inflowConnIdx].requested_W = totalRequest_W;
+        ss.flows[inflowConnIdx].requested_W = totalRequest_W;
     }
 }
 
@@ -1655,60 +1655,60 @@ void RunScheduleBasedSourceBackward(Model& model,
     ScheduleBasedSource const& sbs = model.scheduled_source[sbsIdx];
     assert(outConnIdx == sbs.outflow_connection_id);
     auto wasteConn = model.scheduled_source[sbsIdx].wasteflow_connection_id;
-    auto schIdx = ss.ScheduleBasedSourceIdx[sbsIdx];
+    auto schIdx = ss.schedule_based_source_index[sbsIdx];
     auto available = sbs.time_and_availables[schIdx].Amount_W > sbs.max_outflow_W
                          ? sbs.max_outflow_W
                          : sbs.time_and_availables[schIdx].Amount_W;
-    auto spillage = available > ss.Flows[outConnIdx].requested_W
-                        ? available - ss.Flows[outConnIdx].requested_W
+    auto spillage = available > ss.flows[outConnIdx].requested_W
+                        ? available - ss.flows[outConnIdx].requested_W
                         : 0;
-    if (ss.Flows[outConnIdx].available_W != available)
+    if (ss.flows[outConnIdx].available_W != available)
     {
-        ss.ActiveConnectionsFront.insert(outConnIdx);
+        ss.active_connections_front.insert(outConnIdx);
     }
-    ss.Flows[outConnIdx].available_W = available;
-    ss.Flows[wasteConn].available_W = spillage;
-    ss.Flows[wasteConn].requested_W = spillage;
+    ss.flows[outConnIdx].available_W = available;
+    ss.flows[wasteConn].available_W = spillage;
+    ss.flows[wasteConn].requested_W = spillage;
 }
 
 void RunPassthroughBackward(Model& m, SimulationState& ss, size_t outConnIdx, size_t ptIdx)
 {
     PassThrough const& pt = m.pass_through[ptIdx];
     size_t compId = m.connection[outConnIdx].from_component_id;
-    if (ss.UnavailableComponents.contains(compId))
+    if (ss.unavailable_components.contains(compId))
     {
-        if (ss.Flows[pt.inflow_connection_id].requested_W != 0)
+        if (ss.flows[pt.inflow_connection_id].requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(pt.inflow_connection_id);
+            ss.active_connections_back.insert(pt.inflow_connection_id);
         }
-        ss.Flows[pt.inflow_connection_id].requested_W = 0;
+        ss.flows[pt.inflow_connection_id].requested_W = 0;
     }
     else
     {
-        flow_t req_W = ss.Flows[outConnIdx].requested_W > pt.max_outflow_W
+        flow_t req_W = ss.flows[outConnIdx].requested_W > pt.max_outflow_W
                            ? pt.max_outflow_W
-                           : ss.Flows[outConnIdx].requested_W;
-        if (ss.Flows[pt.inflow_connection_id].requested_W != req_W)
+                           : ss.flows[outConnIdx].requested_W;
+        if (ss.flows[pt.inflow_connection_id].requested_W != req_W)
         {
-            ss.ActiveConnectionsBack.insert(pt.inflow_connection_id);
+            ss.active_connections_back.insert(pt.inflow_connection_id);
         }
-        ss.Flows[pt.inflow_connection_id].requested_W = req_W;
+        ss.flows[pt.inflow_connection_id].requested_W = req_W;
     }
 }
 
 void RunConnectionsBackward(Model& model, SimulationState& ss)
 {
-    while (!ss.ActiveConnectionsBack.empty())
+    while (!ss.active_connections_back.empty())
     {
         auto temp =
-            std::vector<size_t>(ss.ActiveConnectionsBack.begin(), ss.ActiveConnectionsBack.end());
-        ss.ActiveConnectionsBack.clear();
+            std::vector<size_t>(ss.active_connections_back.begin(), ss.active_connections_back.end());
+        ss.active_connections_back.clear();
         for (auto it = temp.cbegin(); it != temp.cend(); ++it)
         {
             size_t connIdx = *it;
             size_t compIdx = model.connection[connIdx].from_subtype_index;
             size_t compId = model.connection[connIdx].from_component_id;
-            if (ss.UnavailableComponents.contains(compId))
+            if (ss.unavailable_components.contains(compId))
             {
                 // TODO: test if we need to call this
                 Model_SetComponentToFailed(model, ss, compId);
@@ -1863,18 +1863,18 @@ void RunConstantEfficiencyConverterForward(Model const& m,
 {
     ConstantEfficiencyConverter const& cec = m.constant_efficiency_converter[compIdx];
     assert(cec.inflow_connection_id == inflowConnIdx);
-    flow_t inflowAvailable_W = ss.Flows[inflowConnIdx].available_W;
+    flow_t inflowAvailable_W = ss.flows[inflowConnIdx].available_W;
     flow_t outflowAvailable_W = static_cast<flow_t>(std::floor(cec.efficiency * inflowAvailable_W));
     assert(inflowAvailable_W >= outflowAvailable_W);
     if (outflowAvailable_W > cec.max_outflow_W)
     {
         outflowAvailable_W = cec.max_outflow_W;
     }
-    if (outflowAvailable_W != ss.Flows[cec.outflow_connection_id].available_W)
+    if (outflowAvailable_W != ss.flows[cec.outflow_connection_id].available_W)
     {
-        ss.ActiveConnectionsFront.insert(cec.outflow_connection_id);
+        ss.active_connections_front.insert(cec.outflow_connection_id);
     }
-    ss.Flows[cec.outflow_connection_id].available_W = outflowAvailable_W;
+    ss.flows[cec.outflow_connection_id].available_W = outflowAvailable_W;
     UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
 }
 
@@ -1886,7 +1886,7 @@ void RunVariableEfficiencyConverterForward(Model const& m,
     VariableEfficiencyConverter const& vec = m.variable_efficiency_converter[compIdx];
     assert(inflowConnIdx == vec.inflow_connection_id);
     size_t outflowConn = vec.outflow_connection_id;
-    flow_t inflowAvailable_W = ss.Flows[inflowConnIdx].available_W;
+    flow_t inflowAvailable_W = ss.flows[inflowConnIdx].available_W;
     double efficiency = LookupTable_LookupInterp(
         vec.inflows_for_efficiency_W, vec.efficiencies, static_cast<double>(inflowAvailable_W));
     assert(efficiency > 0.0 && efficiency <= 1.0);
@@ -1895,11 +1895,11 @@ void RunVariableEfficiencyConverterForward(Model const& m,
     {
         outflowAvailable = vec.max_outflow_W;
     }
-    if (outflowAvailable != ss.Flows[outflowConn].available_W)
+    if (outflowAvailable != ss.flows[outflowConn].available_W)
     {
-        ss.ActiveConnectionsFront.insert(outflowConn);
+        ss.active_connections_front.insert(outflowConn);
     }
-    ss.Flows[outflowConn].available_W = outflowAvailable;
+    ss.flows[outflowConn].available_W = outflowAvailable;
     UpdateVariableEfficiencyLossflowAndWasteflow(m, ss, compIdx);
 }
 
@@ -1907,18 +1907,18 @@ void RunMoverForward(Model const& model, SimulationState& ss, size_t outConnIdx,
 {
     assert(moverIdx < model.mover.size());
     Mover const& mov = model.mover[moverIdx];
-    flow_t inflowAvailable = ss.Flows[outConnIdx].available_W;
+    flow_t inflowAvailable = ss.flows[outConnIdx].available_W;
     size_t outflowConn = mov.outflow_connection_id;
     flow_t outflowAvailable = static_cast<flow_t>(std::floor(mov.COP * inflowAvailable));
     if (outflowAvailable > mov.max_outflow_W)
     {
         outflowAvailable = mov.max_outflow_W;
     }
-    if (outflowAvailable != ss.Flows[outflowConn].available_W)
+    if (outflowAvailable != ss.flows[outflowConn].available_W)
     {
-        ss.ActiveConnectionsFront.insert(outflowConn);
+        ss.active_connections_front.insert(outflowConn);
     }
-    ss.Flows[outflowConn].available_W = outflowAvailable;
+    ss.flows[outflowConn].available_W = outflowAvailable;
     UpdateEnvironmentFlowForMover(model, ss, moverIdx);
 }
 
@@ -1929,7 +1929,7 @@ void RunVariableEfficiencyMoverForward(Model const& model,
 {
     assert(moverIdx < model.variable_efficiency_mover.size());
     VariableEfficiencyMover const& mov = model.variable_efficiency_mover[moverIdx];
-    flow_t inflowAvailable_W = ss.Flows[outConnIdx].available_W;
+    flow_t inflowAvailable_W = ss.flows[outConnIdx].available_W;
     size_t outflowConn = mov.outflow_connection_id;
     double cop = LookupTable_LookupInterp(
         mov.inflows_for_COP_W, mov.COPs, static_cast<double>(inflowAvailable_W));
@@ -1940,11 +1940,11 @@ void RunVariableEfficiencyMoverForward(Model const& model,
     {
         outflowAvailable_W = mov.max_outflow_W;
     }
-    if (outflowAvailable_W != ss.Flows[outflowConn].available_W)
+    if (outflowAvailable_W != ss.flows[outflowConn].available_W)
     {
-        ss.ActiveConnectionsFront.insert(outflowConn);
+        ss.active_connections_front.insert(outflowConn);
     }
-    ss.Flows[outflowConn].available_W = outflowAvailable_W;
+    ss.flows[outflowConn].available_W = outflowAvailable_W;
     UpdateEnvironmentFlowForVariableEfficiencyMover(model, ss, moverIdx);
 }
 
@@ -1954,16 +1954,16 @@ void RunMuxForward(Model& model, SimulationState& ss, size_t muxIdx)
     flow_t totalAvailable_W = 0;
     for (size_t inflowConnIdx : mux.inflow_connection_ids)
     {
-        totalAvailable_W = safe_add(totalAvailable_W, ss.Flows[inflowConnIdx].available_W);
+        totalAvailable_W = safe_add(totalAvailable_W, ss.flows[inflowConnIdx].available_W);
     }
     std::vector<flow_t> outflowAvailables {};
     outflowAvailables.reserve(mux.number_of_outports);
     for (size_t i = 0; i < mux.number_of_outports; ++i)
     {
         size_t outflowConnIdx = mux.outflow_connection_ids[i];
-        flow_t req_W = ss.Flows[outflowConnIdx].requested_W > mux.max_outflows_W[i]
+        flow_t req_W = ss.flows[outflowConnIdx].requested_W > mux.max_outflows_W[i]
                            ? mux.max_outflows_W[i]
-                           : ss.Flows[outflowConnIdx].requested_W;
+                           : ss.flows[outflowConnIdx].requested_W;
         flow_t available_W = req_W >= totalAvailable_W ? totalAvailable_W : req_W;
         outflowAvailables.push_back(available_W);
         totalAvailable_W -= available_W;
@@ -1991,11 +1991,11 @@ void RunMuxForward(Model& model, SimulationState& ss, size_t muxIdx)
     for (size_t i = 0; i < mux.number_of_outports; ++i)
     {
         size_t outflowConnIdx = mux.outflow_connection_ids[i];
-        if (ss.Flows[outflowConnIdx].available_W != outflowAvailables[i])
+        if (ss.flows[outflowConnIdx].available_W != outflowAvailables[i])
         {
-            ss.ActiveConnectionsFront.insert(outflowConnIdx);
+            ss.active_connections_front.insert(outflowConnIdx);
         }
-        ss.Flows[outflowConnIdx].available_W = outflowAvailables[i];
+        ss.flows[outflowConnIdx].available_W = outflowAvailables[i];
     }
 }
 
@@ -2005,43 +2005,43 @@ void RunStoreForward(Model& model, SimulationState& ss, size_t inflowConnIdx, si
     assert(store.inflow_connection_id.has_value());
     assert(inflowConnIdx == store.inflow_connection_id.value());
     flow_t dischargeAvailable_W =
-        ss.StorageAmounts_J[storeIdx] > 0 ? store.max_discharge_rate_W : 0;
-    flow_t available_W = safe_add(ss.Flows[inflowConnIdx].available_W, dischargeAvailable_W);
+        ss.storage_amounts_J[storeIdx] > 0 ? store.max_discharge_rate_W : 0;
+    flow_t available_W = safe_add(ss.flows[inflowConnIdx].available_W, dischargeAvailable_W);
     if (available_W > store.max_outflow_W)
     {
         available_W = store.max_outflow_W;
     }
-    if (ss.Flows[store.outflow_connection_id].available_W != available_W)
+    if (ss.flows[store.outflow_connection_id].available_W != available_W)
     {
-        ss.ActiveConnectionsFront.insert(store.outflow_connection_id);
+        ss.active_connections_front.insert(store.outflow_connection_id);
     }
-    ss.Flows[store.outflow_connection_id].available_W = available_W;
+    ss.flows[store.outflow_connection_id].available_W = available_W;
 }
 
 void RunSwitchForward(Model& model, SimulationState& ss, size_t inflowConnIdx, size_t switchIdx)
 {
     assert(switchIdx < model.transfer_switch.size());
     auto const& theSwitch = model.transfer_switch[switchIdx];
-    assert(switchIdx < ss.SwitchStates.size());
-    auto switchState = ss.SwitchStates[switchIdx];
+    assert(switchIdx < ss.switch_states.size());
+    auto switchState = ss.switch_states[switchIdx];
     auto inflow0ConnIdx = theSwitch.inflow_connection_id_primary;
     auto inflow1ConnIdx = theSwitch.inflow_connection_id_secondary;
     auto outflowConnIdx = theSwitch.outflow_connection_id;
     if (switchState == SwitchState::primary && inflowConnIdx == inflow0ConnIdx)
     {
-        if (ss.Flows[outflowConnIdx].available_W != ss.Flows[inflow0ConnIdx].available_W)
+        if (ss.flows[outflowConnIdx].available_W != ss.flows[inflow0ConnIdx].available_W)
         {
-            ss.ActiveConnectionsFront.insert(outflowConnIdx);
+            ss.active_connections_front.insert(outflowConnIdx);
         }
-        ss.Flows[outflowConnIdx].available_W = ss.Flows[inflow0ConnIdx].available_W;
+        ss.flows[outflowConnIdx].available_W = ss.flows[inflow0ConnIdx].available_W;
     }
     else if (switchState == SwitchState::secondary && inflowConnIdx == inflow1ConnIdx)
     {
-        if (ss.Flows[outflowConnIdx].available_W != ss.Flows[inflow1ConnIdx].available_W)
+        if (ss.flows[outflowConnIdx].available_W != ss.flows[inflow1ConnIdx].available_W)
         {
-            ss.ActiveConnectionsFront.insert(outflowConnIdx);
+            ss.active_connections_front.insert(outflowConnIdx);
         }
-        ss.Flows[outflowConnIdx].available_W = ss.Flows[inflow1ConnIdx].available_W;
+        ss.flows[outflowConnIdx].available_W = ss.flows[inflow1ConnIdx].available_W;
     }
 }
 
@@ -2049,40 +2049,40 @@ void RunPassthroughForward(Model& m, SimulationState& ss, size_t inflowConnIdx, 
 {
     auto const& pt = m.pass_through[ptIdx];
     size_t compId = m.connection[inflowConnIdx].to_component_id;
-    if (ss.UnavailableComponents.contains(compId))
+    if (ss.unavailable_components.contains(compId))
     {
-        if (ss.Flows[pt.outflow_connection_id].available_W != 0)
+        if (ss.flows[pt.outflow_connection_id].available_W != 0)
         {
-            ss.ActiveConnectionsFront.insert(pt.outflow_connection_id);
+            ss.active_connections_front.insert(pt.outflow_connection_id);
         }
-        ss.Flows[pt.outflow_connection_id].available_W = 0;
+        ss.flows[pt.outflow_connection_id].available_W = 0;
     }
     else
     {
-        flow_t avail_W = ss.Flows[inflowConnIdx].available_W > pt.max_outflow_W
+        flow_t avail_W = ss.flows[inflowConnIdx].available_W > pt.max_outflow_W
                              ? pt.max_outflow_W
-                             : ss.Flows[inflowConnIdx].available_W;
-        if (ss.Flows[pt.outflow_connection_id].available_W != avail_W)
+                             : ss.flows[inflowConnIdx].available_W;
+        if (ss.flows[pt.outflow_connection_id].available_W != avail_W)
         {
-            ss.ActiveConnectionsFront.insert(pt.outflow_connection_id);
+            ss.active_connections_front.insert(pt.outflow_connection_id);
         }
-        ss.Flows[pt.outflow_connection_id].available_W = avail_W;
+        ss.flows[pt.outflow_connection_id].available_W = avail_W;
     }
 }
 
 void RunConnectionsForward(Model& model, SimulationState& ss)
 {
-    while (!ss.ActiveConnectionsFront.empty())
+    while (!ss.active_connections_front.empty())
     {
         auto temp =
-            std::vector<size_t>(ss.ActiveConnectionsFront.begin(), ss.ActiveConnectionsFront.end());
-        ss.ActiveConnectionsFront.clear();
+            std::vector<size_t>(ss.active_connections_front.begin(), ss.active_connections_front.end());
+        ss.active_connections_front.clear();
         for (auto it = temp.cbegin(); it != temp.cend(); ++it)
         {
             size_t connIdx = *it;
             size_t compIdx = model.connection[connIdx].to_subtype_index;
             size_t compId = model.connection[connIdx].to_component_id;
-            if (ss.UnavailableComponents.contains(compId))
+            if (ss.unavailable_components.contains(compId))
             {
                 // TODO: test if we need to call this
                 Model_SetComponentToFailed(model, ss, compId);
@@ -2159,11 +2159,11 @@ void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_
     Store const& store = model.store[compIdx];
     size_t outflowConn = store.outflow_connection_id;
     std::optional<size_t> maybeInflowConn = store.inflow_connection_id;
-    int64_t netCharge_W = -1 * static_cast<int64_t>(ss.Flows[outflowConn].actual_W);
+    int64_t netCharge_W = -1 * static_cast<int64_t>(ss.flows[outflowConn].actual_W);
     if (maybeInflowConn.has_value())
     {
         size_t inflowConn = maybeInflowConn.value();
-        netCharge_W += static_cast<int64_t>(ss.Flows[inflowConn].actual_W);
+        netCharge_W += static_cast<int64_t>(ss.flows[inflowConn].actual_W);
     }
     if (netCharge_W > 0)
     {
@@ -2173,26 +2173,26 @@ void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_
             storeflow_W = static_cast<flow_t>(netCharge_W * store.roundtrip_efficiency);
             flow_t wasteflow_W = netCharge_W - storeflow_W;
             size_t wfIdx = store.wasteflow_connection_id.value();
-            ss.Flows[wfIdx].requested_W = wasteflow_W;
-            ss.Flows[wfIdx].available_W = wasteflow_W;
-            ss.Flows[wfIdx].actual_W = wasteflow_W;
+            ss.flows[wfIdx].requested_W = wasteflow_W;
+            ss.flows[wfIdx].available_W = wasteflow_W;
+            ss.flows[wfIdx].actual_W = wasteflow_W;
         }
-        ss.StorageNextEventTimes[compIdx] =
-            t + (static_cast<double>(store.capacity_J - ss.StorageAmounts_J[compIdx]) /
+        ss.storage_next_event_times[compIdx] =
+            t + (static_cast<double>(store.capacity_J - ss.storage_amounts_J[compIdx]) /
                  static_cast<double>(storeflow_W));
     }
     else if (netCharge_W < 0 && store.inflow_connection_id.has_value() &&
-             (ss.StorageAmounts_J[compIdx] > store.charge_amount_J))
+             (ss.storage_amounts_J[compIdx] > store.charge_amount_J))
     {
         if (store.wasteflow_connection_id.has_value())
         {
             size_t wfIdx = store.wasteflow_connection_id.value();
-            ss.Flows[wfIdx].requested_W = 0;
-            ss.Flows[wfIdx].available_W = 0;
-            ss.Flows[wfIdx].actual_W = 0;
+            ss.flows[wfIdx].requested_W = 0;
+            ss.flows[wfIdx].available_W = 0;
+            ss.flows[wfIdx].actual_W = 0;
         }
-        ss.StorageNextEventTimes[compIdx] =
-            t + (static_cast<double>(ss.StorageAmounts_J[compIdx] - store.charge_amount_J) /
+        ss.storage_next_event_times[compIdx] =
+            t + (static_cast<double>(ss.storage_amounts_J[compIdx] - store.charge_amount_J) /
                  (-1.0 * static_cast<double>(netCharge_W)));
     }
     else if (netCharge_W < 0)
@@ -2200,11 +2200,11 @@ void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_
         if (store.wasteflow_connection_id.has_value())
         {
             size_t wfIdx = store.wasteflow_connection_id.value();
-            ss.Flows[wfIdx].requested_W = 0;
-            ss.Flows[wfIdx].available_W = 0;
-            ss.Flows[wfIdx].actual_W = 0;
+            ss.flows[wfIdx].requested_W = 0;
+            ss.flows[wfIdx].available_W = 0;
+            ss.flows[wfIdx].actual_W = 0;
         }
-        ss.StorageNextEventTimes[compIdx] = t + (static_cast<double>(ss.StorageAmounts_J[compIdx]) /
+        ss.storage_next_event_times[compIdx] = t + (static_cast<double>(ss.storage_amounts_J[compIdx]) /
                                                  (-1.0 * static_cast<double>(netCharge_W)));
     }
     else // netCharge_W = 0
@@ -2212,11 +2212,11 @@ void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_
         if (store.wasteflow_connection_id.has_value())
         {
             size_t wfIdx = store.wasteflow_connection_id.value();
-            ss.Flows[wfIdx].requested_W = 0;
-            ss.Flows[wfIdx].available_W = 0;
-            ss.Flows[wfIdx].actual_W = 0;
+            ss.flows[wfIdx].requested_W = 0;
+            ss.flows[wfIdx].available_W = 0;
+            ss.flows[wfIdx].actual_W = 0;
         }
-        ss.StorageNextEventTimes[compIdx] = infinite_time;
+        ss.storage_next_event_times[compIdx] = infinite_time;
     }
 }
 
@@ -2246,15 +2246,15 @@ void RunActiveConnections(Model& model, SimulationState& ss, double t)
         RunConnectionsForward(model, ss);
         ++num_times;
     } while (num_times < max_times &&
-             (ss.ActiveConnectionsBack.size() > 0 || ss.ActiveConnectionsFront.size() > 0));
+             (ss.active_connections_back.size() > 0 || ss.active_connections_front.size() > 0));
     if (num_times == max_times)
     {
         std::cout << "WARNING! iterated " << max_times << " to resolve connections" << std::endl;
     }
     else
     {
-        assert(ss.ActiveConnectionsBack.size() == 0);
-        assert(ss.ActiveConnectionsFront.size() == 0);
+        assert(ss.active_connections_back.size() == 0);
+        assert(ss.active_connections_front.size() == 0);
     }
     FinalizeFlows(ss);
     RunConnectionsPostFinalization(model, ss, t);
@@ -2267,16 +2267,16 @@ flow_t FinalizeFlowValue(flow_t requested, flow_t available)
 
 void FinalizeFlows(SimulationState& ss)
 {
-    for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
+    for (size_t flowIdx = 0; flowIdx < ss.flows.size(); ++flowIdx)
     {
-        ss.Flows[flowIdx].actual_W =
-            FinalizeFlowValue(ss.Flows[flowIdx].requested_W, ss.Flows[flowIdx].available_W);
+        ss.flows[flowIdx].actual_W =
+            FinalizeFlowValue(ss.flows[flowIdx].requested_W, ss.flows[flowIdx].available_W);
     }
 }
 
 double NextEvent(ScheduleBasedLoad const& sb, size_t sbIdx, SimulationState const& ss)
 {
-    auto nextIdx = ss.ScheduleBasedLoadIdx[sbIdx] + 1;
+    auto nextIdx = ss.schedule_based_load_index[sbIdx] + 1;
     if (nextIdx >= sb.times_and_loads.size())
     {
         return infinite_time;
@@ -2286,7 +2286,7 @@ double NextEvent(ScheduleBasedLoad const& sb, size_t sbIdx, SimulationState cons
 
 double NextEvent(ScheduleBasedSource const& sb, size_t sbIdx, SimulationState const& ss)
 {
-    auto nextIdx = ss.ScheduleBasedSourceIdx[sbIdx] + 1;
+    auto nextIdx = ss.schedule_based_source_index[sbIdx] + 1;
     if (nextIdx >= sb.time_and_availables.size())
     {
         return infinite_time;
@@ -2308,7 +2308,7 @@ double NextEvent(ScheduleBasedReliability const& sbr, double t)
 
 double NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t)
 {
-    double storeTime = ss.StorageNextEventTimes[storeIdx];
+    double storeTime = ss.storage_next_event_times[storeIdx];
     if (storeTime >= 0.0 && storeTime > t)
     {
         return storeTime;
@@ -2326,25 +2326,25 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
         size_t outConn = store.outflow_connection_id;
         size_t compId = m.connection[outConn].from_component_id;
         assert(m.connection[outConn].from == ComponentType::store_type);
-        if (ss.UnavailableComponents.contains(compId))
+        if (ss.unavailable_components.contains(compId))
         {
             continue;
         }
         int64_t availableCharge_J = static_cast<int64_t>(m.store[storeIdx].capacity_J) -
-                                    static_cast<int64_t>(ss.StorageAmounts_J[storeIdx]);
-        int64_t availableDischarge_J = -1 * static_cast<int64_t>(ss.StorageAmounts_J[storeIdx]);
+                                    static_cast<int64_t>(ss.storage_amounts_J[storeIdx]);
+        int64_t availableDischarge_J = -1 * static_cast<int64_t>(ss.storage_amounts_J[storeIdx]);
         if (maybeInConn.has_value())
         {
             size_t inConn = maybeInConn.value();
-            double actualInflow_W = static_cast<double>(ss.Flows[inConn].actual_W);
+            double actualInflow_W = static_cast<double>(ss.flows[inConn].actual_W);
             netEnergyAdded_J += std::llround(elapsedTime_s * actualInflow_W);
         }
-        double actualOutflow_W = static_cast<double>(ss.Flows[outConn].actual_W);
+        double actualOutflow_W = static_cast<double>(ss.flows[outConn].actual_W);
         netEnergyAdded_J -= std::llround(elapsedTime_s * actualOutflow_W);
         if (store.wasteflow_connection_id.has_value())
         {
             size_t wConn = store.wasteflow_connection_id.value();
-            double actualWasteflow_W = static_cast<double>(ss.Flows[wConn].actual_W);
+            double actualWasteflow_W = static_cast<double>(ss.flows[wConn].actual_W);
             netEnergyAdded_J -= std::llround(elapsedTime_s * actualWasteflow_W);
         }
         if (netEnergyAdded_J > availableCharge_J)
@@ -2353,26 +2353,26 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
             std::cout << "netEnergyAdded (J): " << netEnergyAdded_J << std::endl;
             std::cout << "availableCharge (J): " << availableCharge_J << std::endl;
             std::cout << "elapsed time (s): " << elapsedTime_s << std::endl;
-            std::cout << "stored amount (J): " << ss.StorageAmounts_J[storeIdx] << std::endl;
+            std::cout << "stored amount (J): " << ss.storage_amounts_J[storeIdx] << std::endl;
             if (maybeInConn.has_value())
             {
                 size_t inConn = maybeInConn.value();
-                std::cout << "inflow (W): " << ss.Flows[inConn].actual_W << std::endl;
+                std::cout << "inflow (W): " << ss.flows[inConn].actual_W << std::endl;
             }
-            std::cout << "outflow (W): " << ss.Flows[outConn].actual_W << std::endl;
+            std::cout << "outflow (W): " << ss.flows[outConn].actual_W << std::endl;
             int64_t inflow = 0;
             if (maybeInConn.has_value())
             {
                 size_t inConn = maybeInConn.value();
-                inflow = static_cast<int64_t>(ss.Flows[inConn].actual_W);
+                inflow = static_cast<int64_t>(ss.flows[inConn].actual_W);
             }
-            int64_t outflow = static_cast<int64_t>(ss.Flows[outConn].actual_W);
+            int64_t outflow = static_cast<int64_t>(ss.flows[outConn].actual_W);
             int64_t wasteflow = 0;
             if (store.wasteflow_connection_id.has_value())
             {
                 size_t wConn = store.wasteflow_connection_id.value();
-                std::cout << "wasteflow (W): " << ss.Flows[wConn].actual_W << std::endl;
-                wasteflow = static_cast<int64_t>(ss.Flows[wConn].actual_W);
+                std::cout << "wasteflow (W): " << ss.flows[wConn].actual_W << std::endl;
+                wasteflow = static_cast<int64_t>(ss.flows[wConn].actual_W);
             }
             std::cout << "flow balance (inflow - (outflow + wasteflow)): "
                       << (inflow - (outflow + wasteflow)) << std::endl;
@@ -2398,33 +2398,33 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
             std::cout << "netEnergyAdded (J): " << netEnergyAdded_J << std::endl;
             std::cout << "availableDischarge (J): " << availableDischarge_J << std::endl;
             std::cout << "elapsed time (s): " << elapsedTime_s << std::endl;
-            std::cout << "stored amount (J): " << ss.StorageAmounts_J[storeIdx] << std::endl;
+            std::cout << "stored amount (J): " << ss.storage_amounts_J[storeIdx] << std::endl;
             int64_t inflow_W = 0;
             if (maybeInConn.has_value())
             {
                 size_t inConn = maybeInConn.value();
-                std::cout << "inflow (W): " << ss.Flows[inConn].actual_W << std::endl;
-                inflow_W = static_cast<int64_t>(ss.Flows[inConn].actual_W);
+                std::cout << "inflow (W): " << ss.flows[inConn].actual_W << std::endl;
+                inflow_W = static_cast<int64_t>(ss.flows[inConn].actual_W);
             }
             else
             {
                 std::cout << "inflow (W): 0.0 (no inflow connection)" << std::endl;
             }
-            std::cout << "outflow (W): " << ss.Flows[outConn].actual_W << std::endl;
-            int64_t outflow_W = static_cast<int64_t>(ss.Flows[outConn].actual_W);
+            std::cout << "outflow (W): " << ss.flows[outConn].actual_W << std::endl;
+            int64_t outflow_W = static_cast<int64_t>(ss.flows[outConn].actual_W);
             int64_t wasteflow_W = 0;
             if (store.wasteflow_connection_id.has_value())
             {
                 size_t wConn = store.wasteflow_connection_id.value();
-                std::cout << "wasteflow (W): " << ss.Flows[wConn].actual_W << std::endl;
-                wasteflow_W = static_cast<int64_t>(ss.Flows[wConn].actual_W);
+                std::cout << "wasteflow (W): " << ss.flows[wConn].actual_W << std::endl;
+                wasteflow_W = static_cast<int64_t>(ss.flows[wConn].actual_W);
             }
             std::cout << "flow balance (inflow - (outflow + wasteflow)): "
                       << (inflow_W - (outflow_W + wasteflow_W)) << std::endl;
         }
         assert(netEnergyAdded_J >= availableDischarge_J &&
                "netEnergyAdded cannot use more energy than available");
-        ss.StorageAmounts_J[storeIdx] += netEnergyAdded_J;
+        ss.storage_amounts_J[storeIdx] += netEnergyAdded_J;
     }
 }
 
@@ -2432,11 +2432,11 @@ void UpdateScheduleBasedLoadNextEvent(Model const& m, SimulationState& ss, doubl
 {
     for (size_t i = 0; i < m.scheduled_load.size(); ++i)
     {
-        size_t nextIdx = ss.ScheduleBasedLoadIdx[i] + 1;
+        size_t nextIdx = ss.schedule_based_load_index[i] + 1;
         if (nextIdx < m.scheduled_load[i].times_and_loads.size() &&
             m.scheduled_load[i].times_and_loads[nextIdx].Time_s == time)
         {
-            ss.ScheduleBasedLoadIdx[i] = nextIdx;
+            ss.schedule_based_load_index[i] = nextIdx;
         }
     }
 }
@@ -2445,11 +2445,11 @@ void UpdateScheduleBasedSourceNextEvent(Model const& m, SimulationState& ss, dou
 {
     for (size_t i = 0; i < m.scheduled_source.size(); ++i)
     {
-        size_t nextIdx = ss.ScheduleBasedSourceIdx[i] + 1;
+        size_t nextIdx = ss.schedule_based_source_index[i] + 1;
         if (nextIdx < m.scheduled_source[i].time_and_availables.size() &&
             m.scheduled_source[i].time_and_availables[nextIdx].Time_s == time)
         {
-            ss.ScheduleBasedSourceIdx[i] = nextIdx;
+            ss.schedule_based_source_index[i] = nextIdx;
         }
     }
 }
@@ -2607,13 +2607,13 @@ std::vector<std::string> FlowsToStrings(Model const& m, SimulationState const& s
                                  time_s,
                                  time_to_ISO8601_period(static_cast<uint64_t>(time_s)),
                                  time_in_seconds_to_hours(static_cast<uint64_t>(time_s))));
-    for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
+    for (size_t flowIdx = 0; flowIdx < ss.flows.size(); ++flowIdx)
     {
         result.push_back(fmt::format("{}: {} (R: {}; A: {})",
                                      ConnectionToString(m.component, m.connection[flowIdx]),
-                                     ss.Flows[flowIdx].actual_W,
-                                     ss.Flows[flowIdx].requested_W,
-                                     ss.Flows[flowIdx].available_W));
+                                     ss.flows[flowIdx].actual_W,
+                                     ss.flows[flowIdx].requested_W,
+                                     ss.flows[flowIdx].available_W));
     }
     return result;
 }
@@ -2646,13 +2646,13 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         .wasteflow_W = 0,
         .env_inflow_W = 0,
     };
-    for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
+    for (size_t flowIdx = 0; flowIdx < ss.flows.size(); ++flowIdx)
     {
         switch (m.connection[flowIdx].from)
         {
         case ComponentType::constant_source_type:
         {
-            summary.inflow_W += ss.Flows[flowIdx].actual_W;
+            summary.inflow_W += ss.flows[flowIdx].actual_W;
         }
         break;
         case ComponentType::schedule_based_source_type:
@@ -2662,18 +2662,18 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
             // if not used (i.e., ullage/spillage), it goes to wasteflow
             if (m.connection[flowIdx].from_port == 0)
             {
-                summary.inflow_W += ss.Flows[flowIdx].available_W;
+                summary.inflow_W += ss.flows[flowIdx].available_W;
             }
         }
         break;
         case ComponentType::store_type:
         {
-            summary.storage_discharge_W += ss.Flows[flowIdx].actual_W;
+            summary.storage_discharge_W += ss.flows[flowIdx].actual_W;
         }
         break;
         case ComponentType::environment_source_type:
         {
-            summary.env_inflow_W += ss.Flows[flowIdx].actual_W;
+            summary.env_inflow_W += ss.flows[flowIdx].actual_W;
         }
         break;
         case ComponentType::constant_load_type:
@@ -2703,18 +2703,18 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         case ComponentType::constant_load_type:
         case ComponentType::schedule_based_load_type:
         {
-            summary.outflow_request_W += ss.Flows[flowIdx].requested_W;
-            summary.outflow_achieved_W += ss.Flows[flowIdx].actual_W;
+            summary.outflow_request_W += ss.flows[flowIdx].requested_W;
+            summary.outflow_achieved_W += ss.flows[flowIdx].actual_W;
         }
         break;
         case ComponentType::store_type:
         {
-            summary.storage_charge_W += ss.Flows[flowIdx].actual_W;
+            summary.storage_charge_W += ss.flows[flowIdx].actual_W;
         }
         break;
         case ComponentType::waste_sink_type:
         {
-            summary.wasteflow_W += ss.Flows[flowIdx].actual_W;
+            summary.wasteflow_W += ss.flows[flowIdx].actual_W;
         }
         break;
         case ComponentType::constant_source_type:
@@ -2790,10 +2790,10 @@ std::vector<Flow> CopyFlows(std::vector<Flow> flows)
 std::vector<flow_t> CopyStorageStates(SimulationState& ss)
 {
     std::vector<flow_t> newAmounts = {};
-    newAmounts.reserve(ss.StorageAmounts_J.size());
-    for (size_t i = 0; i < ss.StorageAmounts_J.size(); ++i)
+    newAmounts.reserve(ss.storage_amounts_J.size());
+    for (size_t i = 0; i < ss.storage_amounts_J.size(); ++i)
     {
-        newAmounts.push_back(ss.StorageAmounts_J[i]);
+        newAmounts.push_back(ss.storage_amounts_J[i]);
     }
     return newAmounts;
 }
@@ -2805,11 +2805,11 @@ void PrintModelState(Model& m, SimulationState& ss)
         std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
                   << "].InitialStorage (J): " << m.store[storeIdx].initial_storage_J << std::endl;
         std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
-                  << "].StorageAmount (J) : " << ss.StorageAmounts_J[storeIdx] << std::endl;
+                  << "].StorageAmount (J) : " << ss.storage_amounts_J[storeIdx] << std::endl;
         std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
                   << "].Capacity (J)      : " << m.store[storeIdx].capacity_J << std::endl;
         double soc =
-            (double)ss.StorageAmounts_J[storeIdx] * 100.0 / (double)m.store[storeIdx].capacity_J;
+            (double)ss.storage_amounts_J[storeIdx] * 100.0 / (double)m.store[storeIdx].capacity_J;
         std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
                   << "].SOC               : " << soc << " %" << std::endl;
     }
@@ -2822,15 +2822,15 @@ void Model_SetupSimulationState(Model& model, SimulationState& ss)
 {
     for (size_t i = 0; i < model.store.size(); ++i)
     {
-        ss.StorageAmounts_J.push_back(model.store[i].initial_storage_J);
+        ss.storage_amounts_J.push_back(model.store[i].initial_storage_J);
     }
-    ss.StorageNextEventTimes = std::vector<double>(model.store.size(), 0.0);
-    ss.Flows = std::vector<Flow>(model.connection.size(), {0, 0, 0});
-    ss.ScheduleBasedLoadIdx = std::vector<size_t>(model.scheduled_load.size(), 0);
-    ss.ScheduleBasedSourceIdx = std::vector<size_t>(model.scheduled_source.size(), 0);
+    ss.storage_next_event_times = std::vector<double>(model.store.size(), 0.0);
+    ss.flows = std::vector<Flow>(model.connection.size(), {0, 0, 0});
+    ss.schedule_based_load_index = std::vector<size_t>(model.scheduled_load.size(), 0);
+    ss.schedule_based_source_index = std::vector<size_t>(model.scheduled_source.size(), 0);
     for (size_t i = 0; i < model.transfer_switch.size(); ++i)
     {
-        ss.SwitchStates.push_back(SwitchState::primary);
+        ss.switch_states.push_back(SwitchState::primary);
     }
 }
 
@@ -2974,26 +2974,26 @@ Model_AddVariableEfficiencyMover(Model& m,
 bool RunSwitchLogic(Model const& model, SimulationState& ss)
 {
     bool result = false;
-    for (size_t switchIdx = 0; switchIdx < ss.SwitchStates.size(); ++switchIdx)
+    for (size_t switchIdx = 0; switchIdx < ss.switch_states.size(); ++switchIdx)
     {
-        auto switchState = ss.SwitchStates[switchIdx];
+        auto switchState = ss.switch_states[switchIdx];
         assert(switchIdx < model.transfer_switch.size());
         auto const& theSwitch = model.transfer_switch[switchIdx];
         auto in0Conn = theSwitch.inflow_connection_id_primary;
         auto in1Conn = theSwitch.inflow_connection_id_secondary;
         auto outConn = theSwitch.outflow_connection_id;
-        assert(in0Conn < ss.Flows.size());
-        bool primaryIsSufficient = ss.Flows[in0Conn].available_W >= ss.Flows[in0Conn].requested_W;
+        assert(in0Conn < ss.flows.size());
+        bool primaryIsSufficient = ss.flows[in0Conn].available_W >= ss.flows[in0Conn].requested_W;
         switch (switchState)
         {
         case SwitchState::primary:
         {
             if (!primaryIsSufficient)
             {
-                ss.SwitchStates[switchIdx] = SwitchState::secondary;
-                ss.ActiveConnectionsBack.insert(outConn);
-                ss.ActiveConnectionsFront.insert(in0Conn);
-                ss.ActiveConnectionsFront.insert(in1Conn);
+                ss.switch_states[switchIdx] = SwitchState::secondary;
+                ss.active_connections_back.insert(outConn);
+                ss.active_connections_front.insert(in0Conn);
+                ss.active_connections_front.insert(in1Conn);
                 result = true;
             }
         }
@@ -3002,10 +3002,10 @@ bool RunSwitchLogic(Model const& model, SimulationState& ss)
         {
             if (primaryIsSufficient)
             {
-                ss.SwitchStates[switchIdx] = SwitchState::primary;
-                ss.ActiveConnectionsBack.insert(outConn);
-                ss.ActiveConnectionsFront.insert(in0Conn);
-                ss.ActiveConnectionsFront.insert(in1Conn);
+                ss.switch_states[switchIdx] = SwitchState::primary;
+                ss.active_connections_back.insert(outConn);
+                ss.active_connections_front.insert(in0Conn);
+                ss.active_connections_front.insert(in1Conn);
                 result = true;
             }
         }
@@ -3087,7 +3087,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                     {
                         sumOfFlowsByCompId.insert({toId, 0});
                     }
-                    flow_t flow = ss.Flows[connIdx].actual_W;
+                    flow_t flow = ss.flows[connIdx].actual_W;
                     sumOfFlowsByCompId[fromId] -= flow;
                     sumOfFlowsByCompId[toId] += flow;
                 }
@@ -3121,9 +3121,9 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                                     log,
                                     fmt::format("* +{:>16d} W (R: +{:>16d} W // A: "
                                                 "+{:>16d} W):: {}",
-                                                ss.Flows[connIdx].actual_W,
-                                                ss.Flows[connIdx].requested_W,
-                                                ss.Flows[connIdx].available_W,
+                                                ss.flows[connIdx].actual_W,
+                                                ss.flows[connIdx].requested_W,
+                                                ss.flows[connIdx].available_W,
                                                 ConnectionToString(model.component, conn, true)));
                             }
                             if (conn.from_component_id == item.first)
@@ -3132,9 +3132,9 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                                     log,
                                     fmt::format("* -{:>16d} W (R: -{:>16d} W // A: "
                                                 "-{:>16d} W):: {}",
-                                                ss.Flows[connIdx].actual_W,
-                                                ss.Flows[connIdx].requested_W,
-                                                ss.Flows[connIdx].available_W,
+                                                ss.flows[connIdx].actual_W,
+                                                ss.flows[connIdx].requested_W,
+                                                ss.flows[connIdx].available_W,
                                                 ConnectionToString(model.component, conn, true)));
                             }
                         }
@@ -3146,7 +3146,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
         }
         TimeAndFlows taf = {};
         taf.time_s = t;
-        taf.flows = CopyFlows(ss.Flows);
+        taf.flows = CopyFlows(ss.flows);
         taf.storage_amounts_J = CopyStorageStates(ss);
         timeAndFlows.push_back(std::move(taf));
         if (t == model.final_time_s)
@@ -3174,9 +3174,9 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         write_error_message("", "invalid component id");
         std::exit(1);
     }
-    if (ss.UnavailableComponents.contains(compId))
+    if (ss.unavailable_components.contains(compId))
     {
-        ss.UnavailableComponents.erase(compId);
+        ss.unavailable_components.erase(compId);
     }
     auto idx = m.component.subtype_index[compId];
     switch (m.component.component_type[compId])
@@ -3184,34 +3184,34 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     case ComponentType::constant_load_type:
     {
         auto inflowConn = m.constant_load[idx].inflow_connection_id;
-        if (ss.Flows[inflowConn].requested_W != m.constant_load[idx].load_W)
+        if (ss.flows[inflowConn].requested_W != m.constant_load[idx].load_W)
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.active_connections_back.insert(inflowConn);
         }
-        ss.Flows[inflowConn].requested_W = m.constant_load[idx].load_W;
+        ss.flows[inflowConn].requested_W = m.constant_load[idx].load_W;
     }
     break;
     case ComponentType::schedule_based_load_type:
     {
         auto const inflowConn = m.constant_load[idx].inflow_connection_id;
-        auto const loadIdx = ss.ScheduleBasedLoadIdx[idx];
+        auto const loadIdx = ss.schedule_based_load_index[idx];
         auto const amount = m.scheduled_load[idx].times_and_loads[loadIdx].Amount_W;
-        if (ss.Flows[inflowConn].requested_W != amount)
+        if (ss.flows[inflowConn].requested_W != amount)
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.active_connections_back.insert(inflowConn);
         }
-        ss.Flows[inflowConn].requested_W = amount;
+        ss.flows[inflowConn].requested_W = amount;
     }
     break;
     case ComponentType::constant_source_type:
     {
         auto const outflowConn = m.constant_source[idx].outflow_connection_id;
         auto const available = m.constant_source[idx].available_W;
-        if (ss.Flows[outflowConn].available_W != available)
+        if (ss.flows[outflowConn].available_W != available)
         {
-            ss.ActiveConnectionsFront.insert(outflowConn);
+            ss.active_connections_front.insert(outflowConn);
         }
-        ss.Flows[outflowConn].available_W = available;
+        ss.flows[outflowConn].available_W = available;
     }
     break;
     case ComponentType::schedule_based_source_type:
@@ -3219,13 +3219,13 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         // TODO: need to call routine to reset wasteflow connection
         // to the right amount as well.
         auto const outflowConn = m.scheduled_source[idx].outflow_connection_id;
-        auto const availIdx = ss.ScheduleBasedSourceIdx[idx];
+        auto const availIdx = ss.schedule_based_source_index[idx];
         auto const available = m.scheduled_source[idx].time_and_availables[availIdx].Amount_W;
-        if (ss.Flows[outflowConn].available_W != available)
+        if (ss.flows[outflowConn].available_W != available)
         {
-            ss.ActiveConnectionsFront.insert(outflowConn);
+            ss.active_connections_front.insert(outflowConn);
         }
-        ss.Flows[outflowConn].available_W = available;
+        ss.flows[outflowConn].available_W = available;
     }
     break;
     case ComponentType::constant_efficiency_converter_type:
@@ -3274,12 +3274,12 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
             auto const inConn = m.mux[idx].inflow_connection_ids[inIdx];
             // NOTE: schedule upstream to provide available flow info
             // again.
-            ss.ActiveConnectionsFront.insert(inConn);
+            ss.active_connections_front.insert(inConn);
         }
         for (size_t outIdx = 0; outIdx < m.mux[idx].number_of_outports; ++outIdx)
         {
             auto const outConn = m.mux[idx].outflow_connection_ids[outIdx];
-            ss.ActiveConnectionsBack.insert(outConn);
+            ss.active_connections_back.insert(outConn);
         }
     }
     break;
@@ -3294,20 +3294,20 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     case ComponentType::pass_through_type:
     {
         PassThrough const& pt = m.pass_through[idx];
-        if (ss.Flows[pt.outflow_connection_id].requested_W !=
-            ss.Flows[pt.inflow_connection_id].requested_W)
+        if (ss.flows[pt.outflow_connection_id].requested_W !=
+            ss.flows[pt.inflow_connection_id].requested_W)
         {
-            ss.ActiveConnectionsBack.insert(pt.outflow_connection_id);
+            ss.active_connections_back.insert(pt.outflow_connection_id);
         }
-        ss.Flows[pt.inflow_connection_id].requested_W =
-            ss.Flows[pt.outflow_connection_id].requested_W;
-        if (ss.Flows[pt.inflow_connection_id].available_W !=
-            ss.Flows[pt.outflow_connection_id].available_W)
+        ss.flows[pt.inflow_connection_id].requested_W =
+            ss.flows[pt.outflow_connection_id].requested_W;
+        if (ss.flows[pt.inflow_connection_id].available_W !=
+            ss.flows[pt.outflow_connection_id].available_W)
         {
-            ss.ActiveConnectionsFront.insert(pt.inflow_connection_id);
+            ss.active_connections_front.insert(pt.inflow_connection_id);
         }
-        ss.Flows[pt.outflow_connection_id].available_W =
-            ss.Flows[pt.inflow_connection_id].available_W;
+        ss.flows[pt.outflow_connection_id].available_W =
+            ss.flows[pt.inflow_connection_id].available_W;
     }
     break;
     case ComponentType::waste_sink_type:
@@ -3331,38 +3331,38 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         write_error_message("", "invalid component id");
         std::exit(1);
     }
-    ss.UnavailableComponents.insert(compId);
+    ss.unavailable_components.insert(compId);
     auto idx = m.component.subtype_index[compId];
     switch (m.component.component_type[compId])
     {
     case ComponentType::constant_load_type:
     {
         auto inflowConn = m.constant_load[idx].inflow_connection_id;
-        if (ss.Flows[inflowConn].requested_W != 0)
+        if (ss.flows[inflowConn].requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.active_connections_back.insert(inflowConn);
         }
-        ss.Flows[inflowConn].requested_W = 0;
+        ss.flows[inflowConn].requested_W = 0;
     }
     break;
     case ComponentType::schedule_based_load_type:
     {
         auto inflowConn = m.scheduled_load[idx].inflow_connection_id;
-        if (ss.Flows[inflowConn].requested_W != 0)
+        if (ss.flows[inflowConn].requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.active_connections_back.insert(inflowConn);
         }
-        ss.Flows[inflowConn].requested_W = 0;
+        ss.flows[inflowConn].requested_W = 0;
     }
     break;
     case ComponentType::constant_source_type:
     {
         auto outflowConn = m.constant_source[idx].outflow_connection_id;
-        if (ss.Flows[outflowConn].available_W != 0)
+        if (ss.flows[outflowConn].available_W != 0)
         {
-            ss.ActiveConnectionsFront.insert(outflowConn);
+            ss.active_connections_front.insert(outflowConn);
         }
-        ss.Flows[outflowConn].available_W = 0;
+        ss.flows[outflowConn].available_W = 0;
     }
     break;
     case ComponentType::constant_efficiency_converter_type:
@@ -3370,30 +3370,30 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         assert(idx < m.constant_efficiency_converter.size());
         ConstantEfficiencyConverter const& cec = m.constant_efficiency_converter[idx];
         auto inflowConn = cec.inflow_connection_id;
-        if (ss.Flows[inflowConn].requested_W != 0)
+        if (ss.flows[inflowConn].requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.active_connections_back.insert(inflowConn);
         }
-        ss.Flows[inflowConn].requested_W = 0;
+        ss.flows[inflowConn].requested_W = 0;
         auto outflowConn = cec.outflow_connection_id;
-        if (ss.Flows[outflowConn].available_W != 0)
+        if (ss.flows[outflowConn].available_W != 0)
         {
-            ss.ActiveConnectionsFront.insert(outflowConn);
+            ss.active_connections_front.insert(outflowConn);
         }
-        ss.Flows[outflowConn].available_W = 0;
+        ss.flows[outflowConn].available_W = 0;
         auto lossflowConn = cec.lossflow_connection_id;
         if (lossflowConn.has_value())
         {
             auto lossConn = lossflowConn.value();
-            if (ss.Flows[lossConn].available_W != 0)
+            if (ss.flows[lossConn].available_W != 0)
             {
-                ss.ActiveConnectionsFront.insert(lossConn);
+                ss.active_connections_front.insert(lossConn);
             }
-            ss.Flows[lossConn].available_W = 0;
+            ss.flows[lossConn].available_W = 0;
         }
         auto wasteConn = cec.wasteflow_connection_id;
-        ss.Flows[wasteConn].available_W = 0;
-        ss.Flows[wasteConn].requested_W = 0;
+        ss.flows[wasteConn].available_W = 0;
+        ss.flows[wasteConn].requested_W = 0;
     }
     break;
     case ComponentType::variable_efficiency_converter_type:
@@ -3401,65 +3401,65 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         assert(idx < m.variable_efficiency_converter.size());
         VariableEfficiencyConverter const& vec = m.variable_efficiency_converter[idx];
         auto inflowConn = vec.inflow_connection_id;
-        if (ss.Flows[inflowConn].requested_W != 0)
+        if (ss.flows[inflowConn].requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(inflowConn);
+            ss.active_connections_back.insert(inflowConn);
         }
-        ss.Flows[inflowConn].requested_W = 0;
+        ss.flows[inflowConn].requested_W = 0;
         auto outflowConn = vec.outflow_connection_id;
-        if (ss.Flows[outflowConn].available_W != 0)
+        if (ss.flows[outflowConn].available_W != 0)
         {
-            ss.ActiveConnectionsFront.insert(outflowConn);
+            ss.active_connections_front.insert(outflowConn);
         }
-        ss.Flows[outflowConn].available_W = 0;
+        ss.flows[outflowConn].available_W = 0;
         auto lossflowConn = vec.lossflow_connection_id;
         if (lossflowConn.has_value())
         {
             auto lossConn = lossflowConn.value();
-            if (ss.Flows[lossConn].available_W != 0)
+            if (ss.flows[lossConn].available_W != 0)
             {
-                ss.ActiveConnectionsFront.insert(lossConn);
+                ss.active_connections_front.insert(lossConn);
             }
-            ss.Flows[lossConn].available_W = 0;
+            ss.flows[lossConn].available_W = 0;
         }
         auto wasteConn = vec.wasteflow_connection_id;
-        ss.Flows[wasteConn].available_W = 0;
-        ss.Flows[wasteConn].requested_W = 0;
+        ss.flows[wasteConn].available_W = 0;
+        ss.flows[wasteConn].requested_W = 0;
     }
     break;
     case ComponentType::mover_type:
     {
         Mover const& mov = m.mover[idx];
-        ss.Flows[mov.inflow_connection_id].requested_W = 0;
-        ss.Flows[mov.inflow_connection_id].available_W = 0;
-        ss.Flows[mov.inflow_connection_id].actual_W = 0;
-        ss.Flows[mov.outflow_connection_id].requested_W = 0;
-        ss.Flows[mov.outflow_connection_id].available_W = 0;
-        ss.Flows[mov.outflow_connection_id].actual_W = 0;
-        ss.Flows[mov.in_from_env_connection_id].requested_W = 0;
-        ss.Flows[mov.in_from_env_connection_id].available_W = 0;
-        ss.Flows[mov.in_from_env_connection_id].actual_W = 0;
-        ss.Flows[mov.wasteflow_connection_id].requested_W = 0;
-        ss.Flows[mov.wasteflow_connection_id].available_W = 0;
-        ss.Flows[mov.wasteflow_connection_id].actual_W = 0;
+        ss.flows[mov.inflow_connection_id].requested_W = 0;
+        ss.flows[mov.inflow_connection_id].available_W = 0;
+        ss.flows[mov.inflow_connection_id].actual_W = 0;
+        ss.flows[mov.outflow_connection_id].requested_W = 0;
+        ss.flows[mov.outflow_connection_id].available_W = 0;
+        ss.flows[mov.outflow_connection_id].actual_W = 0;
+        ss.flows[mov.in_from_env_connection_id].requested_W = 0;
+        ss.flows[mov.in_from_env_connection_id].available_W = 0;
+        ss.flows[mov.in_from_env_connection_id].actual_W = 0;
+        ss.flows[mov.wasteflow_connection_id].requested_W = 0;
+        ss.flows[mov.wasteflow_connection_id].available_W = 0;
+        ss.flows[mov.wasteflow_connection_id].actual_W = 0;
     }
     break;
     case ComponentType::variable_efficiency_mover_type:
     {
         assert(idx < m.variable_efficiency_mover.size());
         VariableEfficiencyMover const& mov = m.variable_efficiency_mover[idx];
-        ss.Flows[mov.inflow_connection_id].requested_W = 0;
-        ss.Flows[mov.inflow_connection_id].available_W = 0;
-        ss.Flows[mov.inflow_connection_id].actual_W = 0;
-        ss.Flows[mov.outflow_connection_id].requested_W = 0;
-        ss.Flows[mov.outflow_connection_id].available_W = 0;
-        ss.Flows[mov.outflow_connection_id].actual_W = 0;
-        ss.Flows[mov.in_from_env_connection_id].requested_W = 0;
-        ss.Flows[mov.in_from_env_connection_id].available_W = 0;
-        ss.Flows[mov.in_from_env_connection_id].actual_W = 0;
-        ss.Flows[mov.wasteflow_connection_id].requested_W = 0;
-        ss.Flows[mov.wasteflow_connection_id].available_W = 0;
-        ss.Flows[mov.wasteflow_connection_id].actual_W = 0;
+        ss.flows[mov.inflow_connection_id].requested_W = 0;
+        ss.flows[mov.inflow_connection_id].available_W = 0;
+        ss.flows[mov.inflow_connection_id].actual_W = 0;
+        ss.flows[mov.outflow_connection_id].requested_W = 0;
+        ss.flows[mov.outflow_connection_id].available_W = 0;
+        ss.flows[mov.outflow_connection_id].actual_W = 0;
+        ss.flows[mov.in_from_env_connection_id].requested_W = 0;
+        ss.flows[mov.in_from_env_connection_id].available_W = 0;
+        ss.flows[mov.in_from_env_connection_id].actual_W = 0;
+        ss.flows[mov.wasteflow_connection_id].requested_W = 0;
+        ss.flows[mov.wasteflow_connection_id].available_W = 0;
+        ss.flows[mov.wasteflow_connection_id].actual_W = 0;
     }
     break;
     case ComponentType::mux_type:
@@ -3467,20 +3467,20 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         for (size_t inIdx = 0; inIdx < m.mux[idx].number_of_inports; ++inIdx)
         {
             auto inflowConn = m.mux[idx].inflow_connection_ids[inIdx];
-            if (ss.Flows[inflowConn].requested_W != 0)
+            if (ss.flows[inflowConn].requested_W != 0)
             {
-                ss.ActiveConnectionsBack.insert(inflowConn);
+                ss.active_connections_back.insert(inflowConn);
             }
-            ss.Flows[inflowConn].requested_W = 0;
+            ss.flows[inflowConn].requested_W = 0;
         }
         for (size_t outIdx = 0; outIdx < m.mux[idx].number_of_outports; ++outIdx)
         {
             auto outflowConn = m.mux[idx].outflow_connection_ids[outIdx];
-            if (ss.Flows[outflowConn].available_W != 0)
+            if (ss.flows[outflowConn].available_W != 0)
             {
-                ss.ActiveConnectionsFront.insert(outflowConn);
+                ss.active_connections_front.insert(outflowConn);
             }
-            ss.Flows[outflowConn].available_W = 0;
+            ss.flows[outflowConn].available_W = 0;
         }
     }
     break;
@@ -3491,40 +3491,40 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
         if (maybeInflowConn.has_value())
         {
             size_t inflowConn = maybeInflowConn.value();
-            if (ss.Flows[inflowConn].requested_W != 0)
+            if (ss.flows[inflowConn].requested_W != 0)
             {
-                ss.ActiveConnectionsBack.insert(inflowConn);
+                ss.active_connections_back.insert(inflowConn);
             }
-            ss.Flows[inflowConn].requested_W = 0;
+            ss.flows[inflowConn].requested_W = 0;
         }
         auto outflowConn = m.store[idx].outflow_connection_id;
-        if (ss.Flows[outflowConn].available_W != 0)
+        if (ss.flows[outflowConn].available_W != 0)
         {
-            ss.ActiveConnectionsFront.insert(outflowConn);
+            ss.active_connections_front.insert(outflowConn);
         }
-        ss.Flows[outflowConn].available_W = 0;
+        ss.flows[outflowConn].available_W = 0;
         if (m.store[idx].wasteflow_connection_id.has_value())
         {
             size_t wConn = m.store[idx].wasteflow_connection_id.value();
-            ss.Flows[wConn].actual_W = 0;
-            ss.Flows[wConn].available_W = 0;
-            ss.Flows[wConn].requested_W = 0;
+            ss.flows[wConn].actual_W = 0;
+            ss.flows[wConn].available_W = 0;
+            ss.flows[wConn].requested_W = 0;
         }
     }
     break;
     case ComponentType::pass_through_type:
     {
         auto const& pt = m.pass_through[idx];
-        if (ss.Flows[pt.inflow_connection_id].requested_W != 0)
+        if (ss.flows[pt.inflow_connection_id].requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(pt.inflow_connection_id);
+            ss.active_connections_back.insert(pt.inflow_connection_id);
         }
-        ss.Flows[pt.inflow_connection_id].requested_W = 0;
-        if (ss.Flows[pt.outflow_connection_id].available_W != 0)
+        ss.flows[pt.inflow_connection_id].requested_W = 0;
+        if (ss.flows[pt.outflow_connection_id].available_W != 0)
         {
-            ss.ActiveConnectionsFront.insert(pt.outflow_connection_id);
+            ss.active_connections_front.insert(pt.outflow_connection_id);
         }
-        ss.Flows[pt.outflow_connection_id].available_W = 0;
+        ss.flows[pt.outflow_connection_id].available_W = 0;
     }
     break;
     case ComponentType::waste_sink_type:

@@ -483,16 +483,16 @@ enum class SwitchState
 
 struct SimulationState
 {
-    std::set<size_t> ActiveConnectionsBack {};
-    std::set<size_t> ActiveConnectionsFront {};
+    std::set<size_t> active_connections_back {};
+    std::set<size_t> active_connections_front {};
     // a set of component id that are unavailable
-    std::set<size_t> UnavailableComponents {};
-    std::vector<flow_t> StorageAmounts_J {};
-    std::vector<double> StorageNextEventTimes {};
-    std::vector<Flow> Flows {};
-    std::vector<size_t> ScheduleBasedLoadIdx {};
-    std::vector<size_t> ScheduleBasedSourceIdx {};
-    std::vector<SwitchState> SwitchStates {};
+    std::set<size_t> unavailable_components {};
+    std::vector<flow_t> storage_amounts_J {};
+    std::vector<double> storage_next_event_times {};
+    std::vector<Flow> flows {};
+    std::vector<size_t> schedule_based_load_index {};
+    std::vector<size_t> schedule_based_source_index {};
+    std::vector<SwitchState> switch_states {};
 };
 
 struct TagAndPort

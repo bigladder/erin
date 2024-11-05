@@ -218,27 +218,27 @@ struct ScheduleBasedSource
 struct ConstantEfficiencyConverter
 {
     // NOTE: efficiency is a fraction in range (0.0, 1.0]
-    double Efficiency;
-    size_t InflowConn;
-    size_t OutflowConn;
-    std::optional<size_t> LossflowConn;
-    size_t WasteflowConn;
-    flow_t MaxOutflow_W = max_flow_W;
-    flow_t MaxLossflow_W = max_flow_W;
+    double efficiency;
+    size_t inflow_connection_id;
+    size_t outflow_connection_id;
+    std::optional<size_t> lossflow_connection_id;
+    size_t wasteflow_connection_id;
+    flow_t max_outflow_W = max_flow_W;
+    flow_t max_lossflow_W = max_flow_W;
 };
 
 struct VariableEfficiencyConverter
 {
-    size_t InflowConn;
-    size_t OutflowConn;
-    std::optional<size_t> LossflowConn;
-    size_t WasteflowConn;
-    flow_t MaxOutflow_W = max_flow_W;
-    flow_t MaxLossflow_W = max_flow_W;
-    std::vector<double> OutflowsForEfficiency_W;
-    std::vector<double> InflowsForEfficiency_W;
+    size_t inflow_connection_id;
+    size_t outflow_connection_id;
+    std::optional<size_t> lossflow_connection_id;
+    size_t wasteflow_connection_id;
+    flow_t max_outflow_W = max_flow_W;
+    flow_t max_lossflow_W = max_flow_W;
+    std::vector<double> outflows_for_efficiency_W;
+    std::vector<double> inflows_for_efficiency_W;
     // Efficiencies corresponding to the outflows and inflows
-    std::vector<double> Efficiencies;
+    std::vector<double> efficiencies;
 };
 
 struct Mover

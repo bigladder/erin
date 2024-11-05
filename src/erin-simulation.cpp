@@ -237,22 +237,22 @@ void Simulation_PrintComponents(Simulation const& s)
         {
             assert(subtypeIdx < m.ConstEffConvs.size());
             ConstantEfficiencyConverter const& cec = m.ConstEffConvs[subtypeIdx];
-            std::cout << "-- efficiency: " << cec.Efficiency * 100.0 << "%" << std::endl;
+            std::cout << "-- efficiency: " << cec.efficiency * 100.0 << "%" << std::endl;
             std::cout << "-- max outflow (W): "
-                      << (cec.MaxOutflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(cec.MaxOutflow_W))
+                      << (cec.max_outflow_W == max_flow_W ? "unlimited"
+                                                         : std::to_string(cec.max_outflow_W))
                       << std::endl;
             std::cout << "-- max lossflow (W): "
-                      << (cec.MaxLossflow_W == max_flow_W ? "unlimited"
-                                                          : std::to_string(cec.MaxLossflow_W))
+                      << (cec.max_lossflow_W == max_flow_W ? "unlimited"
+                                                          : std::to_string(cec.max_lossflow_W))
                       << std::endl;
-            std::cout << "-- inflow connection: " << cec.InflowConn << std::endl;
-            std::cout << "-- outflow connection: " << cec.OutflowConn << std::endl;
+            std::cout << "-- inflow connection: " << cec.inflow_connection_id << std::endl;
+            std::cout << "-- outflow connection: " << cec.outflow_connection_id << std::endl;
             std::cout << "-- lossflow connection: "
-                      << (cec.LossflowConn.has_value() ? std::to_string(cec.LossflowConn.value())
+                      << (cec.lossflow_connection_id.has_value() ? std::to_string(cec.lossflow_connection_id.value())
                                                        : "NA")
                       << std::endl;
-            std::cout << "-- wasteflow connection: " << cec.WasteflowConn << std::endl;
+            std::cout << "-- wasteflow connection: " << cec.wasteflow_connection_id << std::endl;
         }
         break;
         case ComponentType::variable_efficiency_converter_type:
@@ -260,28 +260,28 @@ void Simulation_PrintComponents(Simulation const& s)
             assert(subtypeIdx < m.VarEffConvs.size());
             VariableEfficiencyConverter const& vec = m.VarEffConvs[subtypeIdx];
             std::cout << "-- efficiencies by load fraction:" << std::endl;
-            auto maxOutflow_W = static_cast<double>(vec.MaxOutflow_W);
-            for (size_t i = 0; i < vec.Efficiencies.size(); ++i)
+            auto maxOutflow_W = static_cast<double>(vec.max_outflow_W);
+            for (size_t i = 0; i < vec.efficiencies.size(); ++i)
             {
                 std::cout << fmt::format("  -- {:5.3f}",
-                                         (vec.OutflowsForEfficiency_W[i] / maxOutflow_W));
-                std::cout << fmt::format(": {:5.2f}%", (vec.Efficiencies[i] * 100.0)) << std::endl;
+                                         (vec.outflows_for_efficiency_W[i] / maxOutflow_W));
+                std::cout << fmt::format(": {:5.2f}%", (vec.efficiencies[i] * 100.0)) << std::endl;
             }
             std::cout << "-- max outflow (W): "
-                      << (vec.MaxOutflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(vec.MaxOutflow_W))
+                      << (vec.max_outflow_W == max_flow_W ? "unlimited"
+                                                         : std::to_string(vec.max_outflow_W))
                       << std::endl;
             std::cout << "-- max lossflow (W): "
-                      << (vec.MaxLossflow_W == max_flow_W ? "unlimited"
-                                                          : std::to_string(vec.MaxLossflow_W))
+                      << (vec.max_lossflow_W == max_flow_W ? "unlimited"
+                                                          : std::to_string(vec.max_lossflow_W))
                       << std::endl;
-            std::cout << "-- inflow connection: " << vec.InflowConn << std::endl;
-            std::cout << "-- outflow connection: " << vec.OutflowConn << std::endl;
+            std::cout << "-- inflow connection: " << vec.inflow_connection_id << std::endl;
+            std::cout << "-- outflow connection: " << vec.outflow_connection_id << std::endl;
             std::cout << "-- lossflow connection: "
-                      << (vec.LossflowConn.has_value() ? std::to_string(vec.LossflowConn.value())
+                      << (vec.lossflow_connection_id.has_value() ? std::to_string(vec.lossflow_connection_id.value())
                                                        : "NA")
                       << std::endl;
-            std::cout << "-- wasteflow connection: " << vec.WasteflowConn << std::endl;
+            std::cout << "-- wasteflow connection: " << vec.wasteflow_connection_id << std::endl;
         }
         break;
         case ComponentType::mover_type:

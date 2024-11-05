@@ -395,14 +395,14 @@ Result ParseSingleComponent(Simulation& s,
             double maxOutflow_W =
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), localRateUnit);
             size_t constEffIdx = s.TheModel.ComponentMap.subtype_index[id];
-            s.TheModel.ConstEffConvs[constEffIdx].MaxOutflow_W = static_cast<flow_t>(maxOutflow_W);
+            s.TheModel.ConstEffConvs[constEffIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
         }
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
                 power_to_watts(std::get<double>(input.at("max_lossflow").Value), localRateUnit);
             size_t constEffIdx = s.TheModel.ComponentMap.subtype_index[id];
-            s.TheModel.ConstEffConvs[constEffIdx].MaxLossflow_W =
+            s.TheModel.ConstEffConvs[constEffIdx].max_lossflow_W =
                 static_cast<flow_t>(maxLossflow_W);
         }
     }
@@ -485,12 +485,12 @@ Result ParseSingleComponent(Simulation& s,
                                                  report);
         id = compIdAndWasteConn.Id;
         size_t varEffIdx = s.TheModel.ComponentMap.subtype_index[id];
-        s.TheModel.VarEffConvs[varEffIdx].MaxOutflow_W = static_cast<flow_t>(maxOutflow_W);
+        s.TheModel.VarEffConvs[varEffIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
                 power_to_watts(std::get<double>(input.at("max_lossflow").Value), localRateUnit);
-            s.TheModel.VarEffConvs[varEffIdx].MaxLossflow_W = static_cast<flow_t>(maxLossflow_W);
+            s.TheModel.VarEffConvs[varEffIdx].max_lossflow_W = static_cast<flow_t>(maxLossflow_W);
         }
     }
     break;

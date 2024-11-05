@@ -2737,18 +2737,19 @@ bool PrintFlowSummary(FlowSummary s)
 {
     int64_t netDischarge =
         static_cast<int64_t>(s.storage_discharge_W) - static_cast<int64_t>(s.storage_charge_W);
-    int64_t sum = static_cast<int64_t>(s.inflow_W) + netDischarge +
-                  static_cast<int64_t>(s.env_inflow_W) -
-                  (static_cast<int64_t>(s.outflow_achieved_W) + static_cast<int64_t>(s.wasteflow_W));
+    int64_t sum =
+        static_cast<int64_t>(s.inflow_W) + netDischarge + static_cast<int64_t>(s.env_inflow_W) -
+        (static_cast<int64_t>(s.outflow_achieved_W) + static_cast<int64_t>(s.wasteflow_W));
     double eff = (static_cast<double>(s.inflow_W) + static_cast<double>(s.env_inflow_W) +
                   static_cast<double>(netDischarge)) > 0.0
                      ? 100.0 * (static_cast<double>(s.outflow_achieved_W)) /
                            (static_cast<double>(s.inflow_W) + static_cast<double>(netDischarge) +
                             static_cast<double>(s.env_inflow_W))
                      : 0.0;
-    double effectiveness = s.outflow_request_W > 0 ? 100.0 * (static_cast<double>(s.outflow_achieved_W)) /
-                                                      (static_cast<double>(s.outflow_request_W))
-                                                : 0.0;
+    double effectiveness = s.outflow_request_W > 0
+                               ? 100.0 * (static_cast<double>(s.outflow_achieved_W)) /
+                                     (static_cast<double>(s.outflow_request_W))
+                               : 0.0;
     std::cout << "Flow Summary @ " << s.time_s << ":" << std::endl;
     std::cout << "  Inflow                 : " << s.inflow_W << std::endl;
     std::cout << "+ Storage Net Discharge  : " << netDischarge << std::endl;

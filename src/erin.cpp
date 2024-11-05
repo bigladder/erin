@@ -1148,7 +1148,8 @@ void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t)
         bool isSource = !maybeInflowConn.has_value();
         if (ss.storage_next_event_times[storeIdx] == t || isSource)
         {
-            flow_t available_W = ss.storage_amounts_J[storeIdx] > 0 ? store.max_discharge_rate_W : 0;
+            flow_t available_W =
+                ss.storage_amounts_J[storeIdx] > 0 ? store.max_discharge_rate_W : 0;
             if (maybeInflowConn.has_value())
             {
                 size_t inflowConn = maybeInflowConn.value();
@@ -1700,8 +1701,8 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
 {
     while (!ss.active_connections_back.empty())
     {
-        auto temp =
-            std::vector<size_t>(ss.active_connections_back.begin(), ss.active_connections_back.end());
+        auto temp = std::vector<size_t>(ss.active_connections_back.begin(),
+                                        ss.active_connections_back.end());
         ss.active_connections_back.clear();
         for (auto it = temp.cbegin(); it != temp.cend(); ++it)
         {
@@ -2074,8 +2075,8 @@ void RunConnectionsForward(Model& model, SimulationState& ss)
 {
     while (!ss.active_connections_front.empty())
     {
-        auto temp =
-            std::vector<size_t>(ss.active_connections_front.begin(), ss.active_connections_front.end());
+        auto temp = std::vector<size_t>(ss.active_connections_front.begin(),
+                                        ss.active_connections_front.end());
         ss.active_connections_front.clear();
         for (auto it = temp.cbegin(); it != temp.cend(); ++it)
         {
@@ -2204,8 +2205,9 @@ void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_
             ss.flows[wfIdx].available_W = 0;
             ss.flows[wfIdx].actual_W = 0;
         }
-        ss.storage_next_event_times[compIdx] = t + (static_cast<double>(ss.storage_amounts_J[compIdx]) /
-                                                 (-1.0 * static_cast<double>(netCharge_W)));
+        ss.storage_next_event_times[compIdx] =
+            t + (static_cast<double>(ss.storage_amounts_J[compIdx]) /
+                 (-1.0 * static_cast<double>(netCharge_W)));
     }
     else // netCharge_W = 0
     {

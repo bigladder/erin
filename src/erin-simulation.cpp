@@ -293,7 +293,7 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- cop: " << mov.COP << std::endl;
             std::cout << "-- max outflow (W): "
                       << (mov.max_outflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(mov.max_outflow_W))
+                                                          : std::to_string(mov.max_outflow_W))
                       << std::endl;
             std::cout << "-- inflow connection: " << mov.inflow_connection_id << std::endl;
             std::cout << "-- outflow connection: " << mov.outflow_connection_id << std::endl;
@@ -314,7 +314,7 @@ void Simulation_PrintComponents(Simulation const& s)
             }
             std::cout << "-- max outflow (W): "
                       << (mov.max_outflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(maxOutflow_W))
+                                                          : std::to_string(maxOutflow_W))
                       << std::endl;
             std::cout << "-- inflow connection: " << mov.inflow_connection_id << std::endl;
             std::cout << "-- outflow connection: " << mov.outflow_connection_id << std::endl;
@@ -2740,7 +2740,8 @@ CalculateConnectionsToReport(std::vector<Connection> const& conns,
     for (size_t id = 0; id < conns.size(); ++id)
     {
         Connection const& c = conns[id];
-        if (compsToReport.contains(c.from_component_id) || compsToReport.contains(c.to_component_id))
+        if (compsToReport.contains(c.from_component_id) ||
+            compsToReport.contains(c.to_component_id))
         {
             connsToReport.insert(id);
         }

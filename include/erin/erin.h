@@ -596,13 +596,6 @@ SwitchState get_switch_state(SimulationState const& ss, size_t const& switch_ind
 
 void set_switch_state(SimulationState& ss, size_t const& switch_index, SwitchState new_state);
 
-double GetNextTime(double nextTime, size_t count, std::function<double(size_t)> f);
-
-double EarliestNextEvent(Model const& m, SimulationState const& ss, double t);
-
-std::optional<size_t>
-FindOutflowConnection(Model const& m, ComponentType ct, size_t compId, size_t outflowPort);
-
 void UpdateConstantEfficiencyLossflowAndWasteflow(Model const& m,
                                                   SimulationState& ss,
                                                   size_t compIdx);

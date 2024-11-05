@@ -60,6 +60,10 @@ void activate_store_connections(Model& m, SimulationState& ss, double t);
 
 void activate_reliability_connections(Model& m, SimulationState& ss, double time, bool verbose);
 
+double get_next_time(double next_time, size_t count, std::function<double(size_t)> f);
+
+double earliest_next_event(Model const& m, SimulationState const& ss, double t);
+
 // PRIVATE CONSTANTS
 constexpr double const infinite_time = -1.0;
 
@@ -1269,7 +1273,7 @@ void activate_reliability_connections(Model& m, SimulationState& ss, double time
     }
 }
 
-double GetNextTime(double nextTime, size_t count, std::function<double(size_t)> f)
+double get_next_time(double nextTime, size_t count, std::function<double(size_t)> f)
 {
     for (size_t i = 0; i < count; ++i)
     {
@@ -1283,18 +1287,18 @@ double GetNextTime(double nextTime, size_t count, std::function<double(size_t)> 
     return nextTime;
 }
 
-double EarliestNextEvent(Model const& m, SimulationState const& ss, double t)
+double earliest_next_event(Model const& m, SimulationState const& ss, double t)
 {
     double next = infinite_time;
-    next = GetNextTime(next,
+    next = get_next_time(next,
                        m.scheduled_load.size(),
                        [&](size_t i) -> double { return NextEvent(m.scheduled_load[i], i, ss); });
-    next = GetNextTime(next,
+    next = get_next_time(next,
                        m.scheduled_source.size(),
                        [&](size_t i) -> double { return NextEvent(m.scheduled_source[i], i, ss); });
-    next = GetNextTime(
+    next = get_next_time(
         next, m.store.size(), [&](size_t i) -> double { return NextStorageEvent(ss, i, t); });
-    next = GetNextTime(next,
+    next = get_next_time(next,
                        m.reliability.size(),
                        [&](size_t i) -> double { return NextEvent(m.reliability[i], t); });
     return next;
@@ -3191,7 +3195,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
         {
             break;
         }
-        double nextTime = EarliestNextEvent(model, ss, t);
+        double nextTime = earliest_next_event(model, ss, t);
         if ((nextTime == infinite_time && t < model.final_time_s) ||
             (nextTime > model.final_time_s))
         {

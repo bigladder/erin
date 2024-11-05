@@ -581,9 +581,10 @@ struct FailureModeDict
 std::vector<std::string> check_network(Model const& m);
 
 // NOTE: INTERNAL
-std::vector<TimeAndAmount> convert_to_time_and_amounts(std::vector<std::vector<double>> const& input,
-                                                   double timeToSeconds = 1.0,
-                                                   double rateToWatts = 1.0);
+std::vector<TimeAndAmount>
+convert_to_time_and_amounts(std::vector<std::vector<double>> const& input,
+                            double timeToSeconds = 1.0,
+                            double rateToWatts = 1.0);
 
 std::optional<FragilityCurveType> TagToFragilityCurveType(std::string const& tag);
 

@@ -895,9 +895,8 @@ std::vector<std::string> check_network(Model const& m)
     return issues;
 }
 
-std::vector<TimeAndAmount> convert_to_time_and_amounts(std::vector<std::vector<double>> const& input,
-                                                   double timeToSeconds,
-                                                   double rateToWatts)
+std::vector<TimeAndAmount> convert_to_time_and_amounts(
+    std::vector<std::vector<double>> const& input, double timeToSeconds, double rateToWatts)
 {
     std::vector<TimeAndAmount> result;
     result.reserve(input.size());

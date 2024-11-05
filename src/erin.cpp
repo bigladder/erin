@@ -1499,7 +1499,7 @@ void RunSwitchBackward(Model const& m, SimulationState& ss, size_t outflowConnId
     auto inflow1ConnIdx = theSwitch.inflow_connection_id_secondary;
     switch (switchState)
     {
-    case SwitchState::Primary:
+    case SwitchState::primary:
     {
         // send request on primary
         if (ss.Flows[inflow0ConnIdx].requested_W != ss.Flows[outflowConnIdx].requested_W)
@@ -1515,7 +1515,7 @@ void RunSwitchBackward(Model const& m, SimulationState& ss, size_t outflowConnId
         ss.Flows[inflow1ConnIdx].requested_W = 0;
     }
     break;
-    case SwitchState::Secondary:
+    case SwitchState::secondary:
     {
         // send request on secondary
         if (ss.Flows[inflow0ConnIdx].requested_W != 0)
@@ -2027,7 +2027,7 @@ void RunSwitchForward(Model& model, SimulationState& ss, size_t inflowConnIdx, s
     auto inflow0ConnIdx = theSwitch.inflow_connection_id_primary;
     auto inflow1ConnIdx = theSwitch.inflow_connection_id_secondary;
     auto outflowConnIdx = theSwitch.outflow_connection_id;
-    if (switchState == SwitchState::Primary && inflowConnIdx == inflow0ConnIdx)
+    if (switchState == SwitchState::primary && inflowConnIdx == inflow0ConnIdx)
     {
         if (ss.Flows[outflowConnIdx].available_W != ss.Flows[inflow0ConnIdx].available_W)
         {
@@ -2035,7 +2035,7 @@ void RunSwitchForward(Model& model, SimulationState& ss, size_t inflowConnIdx, s
         }
         ss.Flows[outflowConnIdx].available_W = ss.Flows[inflow0ConnIdx].available_W;
     }
-    else if (switchState == SwitchState::Secondary && inflowConnIdx == inflow1ConnIdx)
+    else if (switchState == SwitchState::secondary && inflowConnIdx == inflow1ConnIdx)
     {
         if (ss.Flows[outflowConnIdx].available_W != ss.Flows[inflow1ConnIdx].available_W)
         {
@@ -2830,7 +2830,7 @@ void Model_SetupSimulationState(Model& model, SimulationState& ss)
     ss.ScheduleBasedSourceIdx = std::vector<size_t>(model.scheduled_source.size(), 0);
     for (size_t i = 0; i < model.transfer_switch.size(); ++i)
     {
-        ss.SwitchStates.push_back(SwitchState::Primary);
+        ss.SwitchStates.push_back(SwitchState::primary);
     }
 }
 
@@ -2903,9 +2903,9 @@ ComponentIdAndWasteAndEnvironmentConnection Model_AddMover(Model& m,
     Connection wconn = Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflow_id);
     Connection econn = Model_AddConnection(m, envId, 0, thisId, 1, wasteflow_id);
     return {
-        .Id = thisId,
-        .WasteConn = wconn,
-        .EnvConn = econn,
+        .id = thisId,
+        .waste_connection_id = wconn,
+        .environment_connection_id = econn,
     };
 }
 
@@ -2965,9 +2965,9 @@ Model_AddVariableEfficiencyMover(Model& m,
     Connection wconn = Model_AddConnection(m, thisId, 1, wasteId, 0, wasteflow_id);
     Connection econn = Model_AddConnection(m, envId, 0, thisId, 1, wasteflow_id);
     return {
-        .Id = thisId,
-        .WasteConn = wconn,
-        .EnvConn = econn,
+        .id = thisId,
+        .waste_connection_id = wconn,
+        .environment_connection_id = econn,
     };
 }
 
@@ -2986,11 +2986,11 @@ bool RunSwitchLogic(Model const& model, SimulationState& ss)
         bool primaryIsSufficient = ss.Flows[in0Conn].available_W >= ss.Flows[in0Conn].requested_W;
         switch (switchState)
         {
-        case SwitchState::Primary:
+        case SwitchState::primary:
         {
             if (!primaryIsSufficient)
             {
-                ss.SwitchStates[switchIdx] = SwitchState::Secondary;
+                ss.SwitchStates[switchIdx] = SwitchState::secondary;
                 ss.ActiveConnectionsBack.insert(outConn);
                 ss.ActiveConnectionsFront.insert(in0Conn);
                 ss.ActiveConnectionsFront.insert(in1Conn);
@@ -2998,11 +2998,11 @@ bool RunSwitchLogic(Model const& model, SimulationState& ss)
             }
         }
         break;
-        case SwitchState::Secondary:
+        case SwitchState::secondary:
         {
             if (primaryIsSufficient)
             {
-                ss.SwitchStates[switchIdx] = SwitchState::Primary;
+                ss.SwitchStates[switchIdx] = SwitchState::primary;
                 ss.ActiveConnectionsBack.insert(outConn);
                 ss.ActiveConnectionsFront.insert(in0Conn);
                 ss.ActiveConnectionsFront.insert(in1Conn);
@@ -3768,8 +3768,8 @@ ComponentIdAndWasteConnection Model_AddStoreWithWasteflow(Model& m,
                                                        0.0);
     auto wasteConn = Model_AddConnection(m, id, 1, wasteId, 0, wasteflow_id);
     return {
-        .Id = id,
-        .WasteConnection = std::move(wasteConn),
+        .id = id,
+        .waste_connection_id = std::move(wasteConn),
     };
 }
 

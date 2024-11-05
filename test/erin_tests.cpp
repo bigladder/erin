@@ -47,8 +47,8 @@ TEST(Erin, Test2)
     auto src_id = Model_AddConstantSource(m, 100);
     auto load_id = Model_AddConstantLoad(m, 10);
     auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
-    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.Id, 0);
-    auto conv_to_load_conn = Model_AddConnection(m, conv_id.Id, 0, load_id, 0);
+    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.id, 0);
+    auto conv_to_load_conn = Model_AddConnection(m, conv_id.id, 0, load_id, 0);
     auto results = Simulate(m, false);
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].time_s, 0.0) << "time must equal 0.0";
@@ -68,7 +68,7 @@ TEST(Erin, Test2)
     EXPECT_EQ(conv_to_load_results.value().available_W, 50) << "available must equal 50";
 
     auto conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, 0.0, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, 0.0, results);
     EXPECT_TRUE(conv_to_waste_results.has_value()) << "converter to waste must have results";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 10) << "requested must equal 10";
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 10) << "actual value must equal 10";
@@ -82,9 +82,9 @@ TEST(Erin, Test3)
     auto load1_id = Model_AddConstantLoad(m, 10);
     auto load2_id = Model_AddConstantLoad(m, 2);
     auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
-    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.Id, 0);
-    auto conv_to_load1_conn = Model_AddConnection(m, conv_id.Id, 0, load1_id, 0);
-    auto conv_to_load2_conn = Model_AddConnection(m, conv_id.Id, 1, load2_id, 0);
+    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.id, 0);
+    auto conv_to_load1_conn = Model_AddConnection(m, conv_id.id, 0, load1_id, 0);
+    auto conv_to_load2_conn = Model_AddConnection(m, conv_id.id, 1, load2_id, 0);
     auto results = Simulate(m, false);
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].time_s, 0.0) << "time must equal 0.0";
@@ -111,7 +111,7 @@ TEST(Erin, Test3)
     EXPECT_EQ(conv_to_load2_results.value().available_W, 10) << "available must equal 10";
 
     auto conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, 0.0, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, 0.0, results);
     EXPECT_TRUE(conv_to_waste_results.has_value()) << "conv to waste must have results";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 8) << "requested must equal 8";
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 8) << "actual value must equal 8";
@@ -125,9 +125,9 @@ TEST(Erin, Test3A)
     auto load1_id = Model_AddConstantLoad(m, 10);
     auto load2_id = Model_AddConstantLoad(m, 2);
     auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
-    auto conv_to_load2_conn = Model_AddConnection(m, conv_id.Id, 1, load2_id, 0);
-    auto conv_to_load1_conn = Model_AddConnection(m, conv_id.Id, 0, load1_id, 0);
-    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.Id, 0);
+    auto conv_to_load2_conn = Model_AddConnection(m, conv_id.id, 1, load2_id, 0);
+    auto conv_to_load1_conn = Model_AddConnection(m, conv_id.id, 0, load1_id, 0);
+    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.id, 0);
     auto results = Simulate(m, false);
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].time_s, 0.0) << "time must equal 0.0";
@@ -154,7 +154,7 @@ TEST(Erin, Test3A)
     EXPECT_EQ(conv_to_load2_results.value().available_W, 10) << "available must equal 10";
 
     auto conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, 0.0, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, 0.0, results);
     EXPECT_TRUE(conv_to_waste_results.has_value()) << "conv to waste must have results";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 8) << "requested must equal 8";
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 8) << "actual value must equal 8";
@@ -206,12 +206,12 @@ TEST(Erin, Test5)
     auto conv1 = Model_AddConstantEfficiencyConverter(m, 1, 4);
     auto conv2 = Model_AddConstantEfficiencyConverter(m, 1, 4);
     auto conv3 = Model_AddConstantEfficiencyConverter(m, 1, 4);
-    auto src_to_conv1_conn = Model_AddConnection(m, src_id, 0, conv1.Id, 0);
-    auto conv1_to_load1_conn = Model_AddConnection(m, conv1.Id, 0, load1_id, 0);
-    auto conv1_to_conv2_conn = Model_AddConnection(m, conv1.Id, 1, conv2.Id, 0);
-    auto conv2_to_load2_conn = Model_AddConnection(m, conv2.Id, 0, load2_id, 0);
-    auto conv2_to_conv3_conn = Model_AddConnection(m, conv2.Id, 1, conv3.Id, 0);
-    auto conv3_to_load3_conn = Model_AddConnection(m, conv3.Id, 0, load3_id, 0);
+    auto src_to_conv1_conn = Model_AddConnection(m, src_id, 0, conv1.id, 0);
+    auto conv1_to_load1_conn = Model_AddConnection(m, conv1.id, 0, load1_id, 0);
+    auto conv1_to_conv2_conn = Model_AddConnection(m, conv1.id, 1, conv2.id, 0);
+    auto conv2_to_load2_conn = Model_AddConnection(m, conv2.id, 0, load2_id, 0);
+    auto conv2_to_conv3_conn = Model_AddConnection(m, conv2.id, 1, conv3.id, 0);
+    auto conv3_to_load3_conn = Model_AddConnection(m, conv3.id, 0, load3_id, 0);
     auto results = Simulate(m, false);
     auto src_to_conv1_results =
         ModelResults_GetFlowForConnection(m, src_to_conv1_conn, 0.0, results);
@@ -467,9 +467,9 @@ TEST(Erin, Test10)
     auto src2_to_store_conn = Model_AddConnection(m, src2_id, 0, store_id, 0);
     auto store_to_mux0_port1_conn = Model_AddConnection(m, store_id, 0, mux_id, 1);
     auto mux0_port0_to_load1_conn = Model_AddConnection(m, mux_id, 0, load1_id, 0);
-    auto mux0_port1_to_conv_conn = Model_AddConnection(m, mux_id, 1, conv.Id, 0);
-    auto conv_to_load2_conn = Model_AddConnection(m, conv.Id, 0, load2_id, 0);
-    auto conv_to_load3_conn = Model_AddConnection(m, conv.Id, 1, load3_id, 0);
+    auto mux0_port1_to_conv_conn = Model_AddConnection(m, mux_id, 1, conv.id, 0);
+    auto conv_to_load2_conn = Model_AddConnection(m, conv.id, 0, load2_id, 0);
+    auto conv_to_load3_conn = Model_AddConnection(m, conv.id, 1, load3_id, 0);
     auto results = Simulate(m, false);
     EXPECT_EQ(results.size(), 5) << "expect 5 events";
 
@@ -478,7 +478,7 @@ TEST(Erin, Test10)
     size_t results_idx = 0;
     EXPECT_EQ(results[results_idx].time_s, t);
     auto conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 3);
@@ -533,7 +533,7 @@ TEST(Erin, Test10)
     results_idx = 1;
     EXPECT_EQ(results[results_idx].time_s, t);
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
+    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 3);
@@ -583,7 +583,7 @@ TEST(Erin, Test10)
     results_idx = 2;
     EXPECT_EQ(results[results_idx].time_s, t);
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
+    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 0);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 0);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 0);
@@ -633,7 +633,7 @@ TEST(Erin, Test10)
     results_idx = 3;
     EXPECT_EQ(results[results_idx].time_s, t);
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
+    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 3);
@@ -683,7 +683,7 @@ TEST(Erin, Test10)
     results_idx = 4;
     EXPECT_EQ(results[results_idx].time_s, t);
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.WasteConnection, t, results);
+    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 0);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 0);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 0);
@@ -739,10 +739,10 @@ TEST(Erin, Test11)
     auto src_id = Model_AddConstantSource(m, 100);
     auto load_id = Model_AddConstantLoad(m, 10);
     auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
-    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.Id, 0);
-    auto conv_to_load_conn = Model_AddConnection(m, conv_id.Id, 0, load_id, 0);
+    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.id, 0);
+    auto conv_to_load_conn = Model_AddConnection(m, conv_id.id, 0, load_id, 0);
     auto fixed_dist_id = Model_AddFixedReliabilityDistribution(m, 10.0);
-    Model_AddFailureModeToComponent(m, conv_id.Id, fixed_dist_id, fixed_dist_id);
+    Model_AddFailureModeToComponent(m, conv_id.id, fixed_dist_id, fixed_dist_id);
     auto results = Simulate(m, false);
     EXPECT_EQ(results.size(), 6) << "Expect 6 times: 0.0, 10.0, 20.0, 30.0, 40.0, 50.0";
 
@@ -761,7 +761,7 @@ TEST(Erin, Test11)
         << "conv -> load available should be 50";
 
     auto conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 10) << "conv -> waste actual should be 10";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 10)
         << "conv -> waste requested should be 10";
@@ -783,7 +783,7 @@ TEST(Erin, Test11)
     EXPECT_EQ(conv_to_load_results.value().available_W, 0) << "conv -> load available should be 0";
 
     conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 0) << "conv -> waste actual should be 0";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 0)
         << "conv -> waste requested should be 0";
@@ -805,7 +805,7 @@ TEST(Erin, Test11)
     EXPECT_EQ(conv_to_load_results.value().available_W, 50) << "conv -> load available should be 0";
 
     conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 10) << "conv -> waste actual should be 10";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 10)
         << "conv -> waste requested should be 10";
@@ -827,7 +827,7 @@ TEST(Erin, Test11)
     EXPECT_EQ(conv_to_load_results.value().available_W, 0) << "conv -> load available should be 0";
 
     conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 0) << "conv -> waste actual should be 0";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 0)
         << "conv -> waste requested should be 0";
@@ -849,7 +849,7 @@ TEST(Erin, Test11)
     EXPECT_EQ(conv_to_load_results.value().available_W, 50) << "conv -> load available should be 0";
 
     conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 10) << "conv -> waste actual should be 10";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 10)
         << "conv -> waste requested should be 10";
@@ -871,7 +871,7 @@ TEST(Erin, Test11)
     EXPECT_EQ(conv_to_load_results.value().available_W, 0) << "conv -> load available should be 0";
 
     conv_to_waste_results =
-        ModelResults_GetFlowForConnection(m, conv_id.WasteConnection, t, results);
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 0) << "conv -> waste actual should be 0";
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 0)
         << "conv -> waste requested should be 0";
@@ -894,7 +894,7 @@ TEST(Erin, Test12)
     source_availability.push_back(TimeAndAmount {20, 12});
     auto src_id = Model_AddScheduleBasedSource(m, source_availability);
     auto load_id = Model_AddConstantLoad(m, 10);
-    auto src_to_load_conn = Model_AddConnection(m, src_id.Id, 0, load_id, 0);
+    auto src_to_load_conn = Model_AddConnection(m, src_id.id, 0, load_id, 0);
     auto results = Simulate(m, false);
     EXPECT_EQ(results.size(), 3) << "should have 3 time results";
     EXPECT_EQ(results[0].time_s, 0.0);
@@ -906,7 +906,7 @@ TEST(Erin, Test12)
     EXPECT_EQ(src_to_load_results.value().available_W, 10);
     EXPECT_EQ(src_to_load_results.value().requested_W, 10);
     auto src_to_waste_results =
-        ModelResults_GetFlowForConnection(m, src_id.WasteConnection, t, results);
+        ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
     EXPECT_EQ(src_to_waste_results.value().actual_W, 0);
     EXPECT_EQ(src_to_waste_results.value().available_W, 0);
     EXPECT_EQ(src_to_waste_results.value().requested_W, 0);
@@ -915,7 +915,7 @@ TEST(Erin, Test12)
     EXPECT_EQ(src_to_load_results.value().actual_W, 8);
     EXPECT_EQ(src_to_load_results.value().available_W, 8);
     EXPECT_EQ(src_to_load_results.value().requested_W, 10);
-    src_to_waste_results = ModelResults_GetFlowForConnection(m, src_id.WasteConnection, t, results);
+    src_to_waste_results = ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
     EXPECT_EQ(src_to_waste_results.value().actual_W, 0);
     EXPECT_EQ(src_to_waste_results.value().available_W, 0);
     EXPECT_EQ(src_to_waste_results.value().requested_W, 0);
@@ -924,7 +924,7 @@ TEST(Erin, Test12)
     EXPECT_EQ(src_to_load_results.value().actual_W, 10);
     EXPECT_EQ(src_to_load_results.value().available_W, 12);
     EXPECT_EQ(src_to_load_results.value().requested_W, 10);
-    src_to_waste_results = ModelResults_GetFlowForConnection(m, src_id.WasteConnection, t, results);
+    src_to_waste_results = ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
     EXPECT_EQ(src_to_waste_results.value().actual_W, 2);
     EXPECT_EQ(src_to_waste_results.value().available_W, 2);
     EXPECT_EQ(src_to_waste_results.value().requested_W, 2);
@@ -1111,21 +1111,21 @@ TEST(Erin, Test13)
     auto heat_load_id = Model_AddScheduleBasedLoad(m, heat_load);
     // NETWORK / CONNECTIONS
     // - electricity
-    Model_AddConnection(m, pv_array_id.Id, 0, elec_source_mux_id, 0);
+    Model_AddConnection(m, pv_array_id.id, 0, elec_source_mux_id, 0);
     Model_AddConnection(m, elec_util_id, 0, elec_source_mux_id, 1);
     Model_AddConnection(m, elec_source_mux_id, 0, battery_id, 0);
     Model_AddConnection(m, battery_id, 0, elec_supply_mux_id, 0);
-    Model_AddConnection(m, ng_to_elec_conv_id.Id, 0, elec_supply_mux_id, 1);
+    Model_AddConnection(m, ng_to_elec_conv_id.id, 0, elec_supply_mux_id, 1);
     Model_AddConnection(m, elec_supply_mux_id, 0, elec_load_id, 0);
-    Model_AddConnection(m, elec_supply_mux_id, 1, elec_heat_pump_conv_id.Id, 0);
+    Model_AddConnection(m, elec_supply_mux_id, 1, elec_heat_pump_conv_id.id, 0);
     // - natural gas
     Model_AddConnection(m, ng_util_id, 0, ng_source_mux_id, 0);
-    Model_AddConnection(m, ng_source_mux_id, 0, ng_to_elec_conv_id.Id, 0);
-    Model_AddConnection(m, ng_source_mux_id, 1, ng_heater_conv_id.Id, 0);
+    Model_AddConnection(m, ng_source_mux_id, 0, ng_to_elec_conv_id.id, 0);
+    Model_AddConnection(m, ng_source_mux_id, 1, ng_heater_conv_id.id, 0);
     // - heating
-    Model_AddConnection(m, ng_to_elec_conv_id.Id, 1, heating_supply_mux_id, 0);
-    Model_AddConnection(m, ng_heater_conv_id.Id, 0, heating_supply_mux_id, 1);
-    Model_AddConnection(m, elec_heat_pump_conv_id.Id, 0, heating_supply_mux_id, 2);
+    Model_AddConnection(m, ng_to_elec_conv_id.id, 1, heating_supply_mux_id, 0);
+    Model_AddConnection(m, ng_heater_conv_id.id, 0, heating_supply_mux_id, 1);
+    Model_AddConnection(m, elec_heat_pump_conv_id.id, 0, heating_supply_mux_id, 2);
     Model_AddConnection(m, heating_supply_mux_id, 0, heat_load_id, 0);
     Simulate(m, false);
 }
@@ -1144,7 +1144,7 @@ TEST(Erin, Test14)
     auto mux_id = Model_AddMux(m, 2, 1);
     auto load_id = Model_AddConstantLoad(m, 100);
     Model_AddConnection(m, src01_id, 0, mux_id, 0);
-    Model_AddConnection(m, src02_id.Id, 0, mux_id, 1);
+    Model_AddConnection(m, src02_id.id, 0, mux_id, 1);
     Model_AddConnection(m, mux_id, 0, load_id, 0);
     Simulate(m, false);
 }
@@ -1164,9 +1164,9 @@ TEST(Erin, Test15)
     auto mux_id = Model_AddMux(m, 2, 1);
     auto load01_id = Model_AddScheduleBasedLoad(m, load_one);
     auto load02_id = Model_AddConstantLoad(m, 100);
-    auto src1_to_conv_conn = Model_AddConnection(m, src01_id, 0, conv_id.Id, 0);
-    auto conv_to_load_conn = Model_AddConnection(m, conv_id.Id, 0, load01_id, 0);
-    auto conv_loss_to_mux_conn = Model_AddConnection(m, conv_id.Id, 1, mux_id, 0);
+    auto src1_to_conv_conn = Model_AddConnection(m, src01_id, 0, conv_id.id, 0);
+    auto conv_to_load_conn = Model_AddConnection(m, conv_id.id, 0, load01_id, 0);
+    auto conv_loss_to_mux_conn = Model_AddConnection(m, conv_id.id, 1, mux_id, 0);
     auto src2_to_mux_conn = Model_AddConnection(m, src02_id, 0, mux_id, 1);
     auto mux_to_load_conn = Model_AddConnection(m, mux_id, 0, load02_id, 0);
     auto results = Simulate(m, false);
@@ -1763,7 +1763,7 @@ TEST(Erin, TestApplyUniformTimeStep)
     auto eLoadId = Model_AddScheduleBasedLoad(m, e_load);
 
     // NETWORK / CONNECTIONS
-    Model_AddConnection(m, e_pv.Id, 0, e_batt_id, 0);
+    Model_AddConnection(m, e_pv.id, 0, e_batt_id, 0);
     Model_AddConnection(m, e_batt_id, 0, eLoadId, 0);
 
     // SIMULATE

@@ -464,21 +464,21 @@ struct Model
 
 struct ComponentIdAndWasteConnection
 {
-    size_t Id;
-    Connection WasteConnection;
+    size_t id;
+    Connection waste_connection_id;
 };
 
 struct ComponentIdAndWasteAndEnvironmentConnection
 {
-    size_t Id;
-    Connection WasteConn;
-    Connection EnvConn;
+    size_t id;
+    Connection waste_connection_id;
+    Connection environment_connection_id;
 };
 
 enum class SwitchState
 {
-    Primary = 0,
-    Secondary = 1,
+    primary = 0,
+    secondary = 1,
 };
 
 struct SimulationState

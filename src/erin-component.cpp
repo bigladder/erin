@@ -306,7 +306,7 @@ Result ParseSingleComponent(Simulation& s,
         double initialAge_s = 0.0;
         auto const compIdAndWasteConn = Model_AddScheduleBasedSource(
             s.TheModel, timesAndAmounts, scenarioIdToSupplyId, outflowId, tag, initialAge_s);
-        id = compIdAndWasteConn.Id;
+        id = compIdAndWasteConn.id;
         if (input.contains("max_outflow"))
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
@@ -377,7 +377,7 @@ Result ParseSingleComponent(Simulation& s,
         }
         auto const compIdAndWasteConn = Model_AddConstantEfficiencyConverter(
             s.TheModel, efficiency, inflowId, outflowId, lossflowId, tag, report);
-        id = compIdAndWasteConn.Id;
+        id = compIdAndWasteConn.id;
         if (input.contains("rate_unit"))
         {
             std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
@@ -484,7 +484,7 @@ Result ParseSingleComponent(Simulation& s,
                                                  lossflowId,
                                                  tag,
                                                  report);
-        id = compIdAndWasteConn.Id;
+        id = compIdAndWasteConn.id;
         size_t varEffIdx = s.TheModel.component.subtype_index[id];
         s.TheModel.variable_efficiency_converter[varEffIdx].max_outflow_W =
             static_cast<flow_t>(maxOutflow_W);
@@ -598,7 +598,7 @@ Result ParseSingleComponent(Simulation& s,
                                                                   inflowId,
                                                                   rtEff,
                                                                   tag);
-            id = compIdAndWasteConn.Id;
+            id = compIdAndWasteConn.id;
         }
         if (input.contains("max_outflow"))
         {
@@ -612,7 +612,7 @@ Result ParseSingleComponent(Simulation& s,
     {
         double cop = std::get<double>(input.at("cop").Value);
         auto compIdAndConns = Model_AddMover(s.TheModel, cop, inflowId, outflowId, tag, report);
-        id = compIdAndConns.Id;
+        id = compIdAndConns.id;
         if (input.contains("max_outflow"))
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
@@ -696,7 +696,7 @@ Result ParseSingleComponent(Simulation& s,
                                                                      outflowId,
                                                                      tag,
                                                                      report);
-        id = compIdAndConns.Id;
+        id = compIdAndConns.id;
         size_t moverIdx = s.TheModel.component.subtype_index[id];
         s.TheModel.variable_efficiency_mover[moverIdx].max_outflow_W =
             static_cast<flow_t>(maxOutflow_W);

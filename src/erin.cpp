@@ -2628,14 +2628,14 @@ void PrintFlows(Model const& m, SimulationState const& ss, double time_s)
 FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
 {
     FlowSummary summary = {
-        .Time = t,
-        .Inflow = 0,
-        .OutflowRequest = 0,
-        .OutflowAchieved = 0,
-        .StorageDischarge = 0,
-        .StorageCharge = 0,
-        .Wasteflow = 0,
-        .EnvInflow = 0,
+        .time_s = t,
+        .inflow_W = 0,
+        .outflow_request_W = 0,
+        .outflow_achieved_W = 0,
+        .storage_discharge_W = 0,
+        .storage_charge_W = 0,
+        .wasteflow_W = 0,
+        .env_inflow_W = 0,
     };
     for (size_t flowIdx = 0; flowIdx < ss.Flows.size(); ++flowIdx)
     {
@@ -2643,7 +2643,7 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         {
         case ComponentType::constant_source_type:
         {
-            summary.Inflow += ss.Flows[flowIdx].Actual_W;
+            summary.inflow_W += ss.Flows[flowIdx].Actual_W;
         }
         break;
         case ComponentType::schedule_based_source_type:
@@ -2653,18 +2653,18 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
             // if not used (i.e., ullage/spillage), it goes to wasteflow
             if (m.Connections[flowIdx].FromPort == 0)
             {
-                summary.Inflow += ss.Flows[flowIdx].Available_W;
+                summary.inflow_W += ss.Flows[flowIdx].Available_W;
             }
         }
         break;
         case ComponentType::store_type:
         {
-            summary.StorageDischarge += ss.Flows[flowIdx].Actual_W;
+            summary.storage_discharge_W += ss.Flows[flowIdx].Actual_W;
         }
         break;
         case ComponentType::environment_source_type:
         {
-            summary.EnvInflow += ss.Flows[flowIdx].Actual_W;
+            summary.env_inflow_W += ss.Flows[flowIdx].Actual_W;
         }
         break;
         case ComponentType::constant_load_type:
@@ -2694,18 +2694,18 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         case ComponentType::constant_load_type:
         case ComponentType::schedule_based_load_type:
         {
-            summary.OutflowRequest += ss.Flows[flowIdx].Requested_W;
-            summary.OutflowAchieved += ss.Flows[flowIdx].Actual_W;
+            summary.outflow_request_W += ss.Flows[flowIdx].Requested_W;
+            summary.outflow_achieved_W += ss.Flows[flowIdx].Actual_W;
         }
         break;
         case ComponentType::store_type:
         {
-            summary.StorageCharge += ss.Flows[flowIdx].Actual_W;
+            summary.storage_charge_W += ss.Flows[flowIdx].Actual_W;
         }
         break;
         case ComponentType::waste_sink_type:
         {
-            summary.Wasteflow += ss.Flows[flowIdx].Actual_W;
+            summary.wasteflow_W += ss.Flows[flowIdx].Actual_W;
         }
         break;
         case ComponentType::constant_source_type:
@@ -2736,32 +2736,32 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
 bool PrintFlowSummary(FlowSummary s)
 {
     int64_t netDischarge =
-        static_cast<int64_t>(s.StorageDischarge) - static_cast<int64_t>(s.StorageCharge);
-    int64_t sum = static_cast<int64_t>(s.Inflow) + netDischarge +
-                  static_cast<int64_t>(s.EnvInflow) -
-                  (static_cast<int64_t>(s.OutflowAchieved) + static_cast<int64_t>(s.Wasteflow));
-    double eff = (static_cast<double>(s.Inflow) + static_cast<double>(s.EnvInflow) +
+        static_cast<int64_t>(s.storage_discharge_W) - static_cast<int64_t>(s.storage_charge_W);
+    int64_t sum = static_cast<int64_t>(s.inflow_W) + netDischarge +
+                  static_cast<int64_t>(s.env_inflow_W) -
+                  (static_cast<int64_t>(s.outflow_achieved_W) + static_cast<int64_t>(s.wasteflow_W));
+    double eff = (static_cast<double>(s.inflow_W) + static_cast<double>(s.env_inflow_W) +
                   static_cast<double>(netDischarge)) > 0.0
-                     ? 100.0 * (static_cast<double>(s.OutflowAchieved)) /
-                           (static_cast<double>(s.Inflow) + static_cast<double>(netDischarge) +
-                            static_cast<double>(s.EnvInflow))
+                     ? 100.0 * (static_cast<double>(s.outflow_achieved_W)) /
+                           (static_cast<double>(s.inflow_W) + static_cast<double>(netDischarge) +
+                            static_cast<double>(s.env_inflow_W))
                      : 0.0;
-    double effectiveness = s.OutflowRequest > 0 ? 100.0 * (static_cast<double>(s.OutflowAchieved)) /
-                                                      (static_cast<double>(s.OutflowRequest))
+    double effectiveness = s.outflow_request_W > 0 ? 100.0 * (static_cast<double>(s.outflow_achieved_W)) /
+                                                      (static_cast<double>(s.outflow_request_W))
                                                 : 0.0;
-    std::cout << "Flow Summary @ " << s.Time << ":" << std::endl;
-    std::cout << "  Inflow                 : " << s.Inflow << std::endl;
+    std::cout << "Flow Summary @ " << s.time_s << ":" << std::endl;
+    std::cout << "  Inflow                 : " << s.inflow_W << std::endl;
     std::cout << "+ Storage Net Discharge  : " << netDischarge << std::endl;
-    std::cout << "+ Environment Inflow     : " << s.EnvInflow << std::endl;
-    std::cout << "- Outflow (achieved)     : " << s.OutflowAchieved << std::endl;
-    std::cout << "- Wasteflow              : " << s.Wasteflow << std::endl;
+    std::cout << "+ Environment Inflow     : " << s.env_inflow_W << std::endl;
+    std::cout << "- Outflow (achieved)     : " << s.outflow_achieved_W << std::endl;
+    std::cout << "- Wasteflow              : " << s.wasteflow_W << std::endl;
     std::cout << "-----------------------------------" << std::endl;
     std::cout << "= Sum                    : " << sum << std::endl;
     std::cout << "  Efficiency             : " << eff << "%"
-              << " (= " << s.OutflowAchieved << "/"
-              << ((int)s.Inflow + (int)s.EnvInflow + netDischarge) << ")" << std::endl;
+              << " (= " << s.outflow_achieved_W << "/"
+              << ((int)s.inflow_W + (int)s.env_inflow_W + netDischarge) << ")" << std::endl;
     std::cout << "  Delivery Effectiveness : " << effectiveness << "%"
-              << " (= " << s.OutflowAchieved << "/" << s.OutflowRequest << ")" << std::endl;
+              << " (= " << s.outflow_achieved_W << "/" << s.outflow_request_W << ")" << std::endl;
     return sum == 0;
 }
 

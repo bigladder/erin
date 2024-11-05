@@ -108,14 +108,14 @@ struct ComponentDict
 
 struct FlowSummary
 {
-    double Time = 0.0;
-    flow_t Inflow = 0;
-    flow_t OutflowRequest = 0;
-    flow_t OutflowAchieved = 0;
-    flow_t StorageDischarge = 0;
-    flow_t StorageCharge = 0;
-    flow_t Wasteflow = 0;
-    flow_t EnvInflow = 0;
+    double time_s = 0.0;
+    flow_t inflow_W = 0;
+    flow_t outflow_request_W = 0;
+    flow_t outflow_achieved_W = 0;
+    flow_t storage_discharge_W = 0;
+    flow_t storage_charge_W = 0;
+    flow_t wasteflow_W = 0;
+    flow_t env_inflow_W = 0;
 };
 
 struct StatsByFlowType

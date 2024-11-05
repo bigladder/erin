@@ -594,9 +594,7 @@ std::optional<size_t> get_intensity_id_by_tag(IntensityDict intensity_dict, std:
 
 SwitchState get_switch_state(SimulationState const& ss, size_t const& switch_index);
 
-void set_switch_state(SimulationState& ss,
-                                    size_t const& switch_index,
-                                    SwitchState new_state);
+void set_switch_state(SimulationState& ss, size_t const& switch_index, SwitchState new_state);
 
 size_t CountActiveConnections(SimulationState const& ss);
 

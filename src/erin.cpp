@@ -1029,9 +1029,7 @@ SwitchState get_switch_state(SimulationState const& ss, size_t const& switchIdx)
     return ss.switch_states[switchIdx];
 }
 
-void set_switch_state(SimulationState& ss,
-                                    size_t const& switchIdx,
-                                    SwitchState newState)
+void set_switch_state(SimulationState& ss, size_t const& switchIdx, SwitchState newState)
 {
     assert(switchIdx < ss.switch_states.size());
     ss.switch_states[switchIdx] = newState;

@@ -2255,7 +2255,8 @@ void WriteStatisticsToFile(Simulation const& s,
         }
         for (auto const& statsByFlowLoad : occurrenceStats[0].LoadAndFlowTypeStats)
         {
-            std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlowLoad.Stats.flow_type_id];
+            std::string const& flowType =
+                s.FlowTypeMap.flow_type[statsByFlowLoad.Stats.flow_type_id];
             std::string const& tag = s.TheModel.ComponentMap.tag[statsByFlowLoad.ComponentId];
             stats << ",energy robustness [ER] for " << tag << " [flow: " << flowType << "]";
             stats << ",energy availability [EA] for " << tag << " [flow: " << flowType << "]";

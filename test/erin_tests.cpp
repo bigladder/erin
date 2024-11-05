@@ -533,7 +533,8 @@ TEST(Erin, Test10)
     results_idx = 1;
     EXPECT_EQ(results[results_idx].time_s, t);
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 3);
@@ -583,7 +584,8 @@ TEST(Erin, Test10)
     results_idx = 2;
     EXPECT_EQ(results[results_idx].time_s, t);
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 0);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 0);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 0);
@@ -633,7 +635,8 @@ TEST(Erin, Test10)
     results_idx = 3;
     EXPECT_EQ(results[results_idx].time_s, t);
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 3);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 3);
@@ -683,7 +686,8 @@ TEST(Erin, Test10)
     results_idx = 4;
     EXPECT_EQ(results[results_idx].time_s, t);
 
-    conv_to_waste_results = ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
     EXPECT_EQ(conv_to_waste_results.value().actual_W, 0);
     EXPECT_EQ(conv_to_waste_results.value().requested_W, 0);
     EXPECT_EQ(conv_to_waste_results.value().available_W, 0);
@@ -915,7 +919,8 @@ TEST(Erin, Test12)
     EXPECT_EQ(src_to_load_results.value().actual_W, 8);
     EXPECT_EQ(src_to_load_results.value().available_W, 8);
     EXPECT_EQ(src_to_load_results.value().requested_W, 10);
-    src_to_waste_results = ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
+    src_to_waste_results =
+        ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
     EXPECT_EQ(src_to_waste_results.value().actual_W, 0);
     EXPECT_EQ(src_to_waste_results.value().available_W, 0);
     EXPECT_EQ(src_to_waste_results.value().requested_W, 0);
@@ -924,7 +929,8 @@ TEST(Erin, Test12)
     EXPECT_EQ(src_to_load_results.value().actual_W, 10);
     EXPECT_EQ(src_to_load_results.value().available_W, 12);
     EXPECT_EQ(src_to_load_results.value().requested_W, 10);
-    src_to_waste_results = ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
+    src_to_waste_results =
+        ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
     EXPECT_EQ(src_to_waste_results.value().actual_W, 2);
     EXPECT_EQ(src_to_waste_results.value().available_W, 2);
     EXPECT_EQ(src_to_waste_results.value().requested_W, 2);

@@ -162,7 +162,8 @@ void Simulation_PrintComponents(Simulation const& s)
         for (size_t inportIdx = 0; inportIdx < inflowTypes.size(); ++inportIdx)
         {
             size_t inflowType = inflowTypes[inportIdx];
-            if (inflowType < s.FlowTypeMap.flow_type.size() && !s.FlowTypeMap.flow_type[inflowType].empty())
+            if (inflowType < s.FlowTypeMap.flow_type.size() &&
+                !s.FlowTypeMap.flow_type[inflowType].empty())
             {
                 std::cout << "- inport " << inportIdx << ": " << s.FlowTypeMap.flow_type[inflowType]
                           << std::endl;
@@ -171,10 +172,11 @@ void Simulation_PrintComponents(Simulation const& s)
         for (size_t outportIdx = 0; outportIdx < outflowTypes.size(); ++outportIdx)
         {
             size_t outflowType = outflowTypes[outportIdx];
-            if (outflowType < s.FlowTypeMap.flow_type.size() && !s.FlowTypeMap.flow_type[outflowType].empty())
+            if (outflowType < s.FlowTypeMap.flow_type.size() &&
+                !s.FlowTypeMap.flow_type[outflowType].empty())
             {
-                std::cout << "- outport " << outportIdx << ": " << s.FlowTypeMap.flow_type[outflowType]
-                          << std::endl;
+                std::cout << "- outport " << outportIdx << ": "
+                          << s.FlowTypeMap.flow_type[outflowType] << std::endl;
             }
         }
         std::cout << "- report? " << (m.ComponentMap.Report[compId] ? "true" : "false")

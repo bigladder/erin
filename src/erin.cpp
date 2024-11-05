@@ -4862,8 +4862,8 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                           << ":availableFlowTypes=" << fd.flow_type.size() << std::endl;
                 return Result::Failure;
             }
-            std::cout << "[network] mismatch of flow types: " << toTap.Tag
-                      << ":inflow=" << fd.flow_type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
+            std::cout << "[network] mismatch of flow types: " << toTap.Tag << ":inflow="
+                      << fd.flow_type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
                       << "; connection: " << flow << std::endl;
             return Result::Failure;
         }

@@ -76,19 +76,19 @@ size_t Simulation_RegisterIntensityLevelForScenario(Simulation& s,
                                                     size_t intensityId,
                                                     double intensityLevel)
 {
-    for (size_t i = 0; i < s.ScenarioIntensities.IntensityIds.size(); ++i)
+    for (size_t i = 0; i < s.ScenarioIntensities.intensity_id.size(); ++i)
     {
-        if (s.ScenarioIntensities.IntensityIds[i] == intensityId &&
-            s.ScenarioIntensities.ScenarioIds[i] == scenarioId)
+        if (s.ScenarioIntensities.intensity_id[i] == intensityId &&
+            s.ScenarioIntensities.scenario_id[i] == scenarioId)
         {
-            s.ScenarioIntensities.IntensityLevels[i] = intensityLevel;
+            s.ScenarioIntensities.intensity_level[i] = intensityLevel;
             return i;
         }
     }
-    size_t id = s.ScenarioIntensities.IntensityIds.size();
-    s.ScenarioIntensities.ScenarioIds.push_back(scenarioId);
-    s.ScenarioIntensities.IntensityIds.push_back(intensityId);
-    s.ScenarioIntensities.IntensityLevels.push_back(intensityLevel);
+    size_t id = s.ScenarioIntensities.intensity_id.size();
+    s.ScenarioIntensities.scenario_id.push_back(scenarioId);
+    s.ScenarioIntensities.intensity_id.push_back(intensityId);
+    s.ScenarioIntensities.intensity_level.push_back(intensityLevel);
     return id;
 }
 
@@ -430,14 +430,14 @@ void Simulation_PrintComponents(Simulation const& s)
 
 void Simulation_PrintFragilityCurves(Simulation const& s)
 {
-    assert(s.FragilityCurves.CurveId.size() == s.FragilityCurves.CurveTypes.size());
-    assert(s.FragilityCurves.CurveId.size() == s.FragilityCurves.Tags.size());
-    for (size_t i = 0; i < s.FragilityCurves.CurveId.size(); ++i)
+    assert(s.FragilityCurves.curve_id.size() == s.FragilityCurves.curve_type.size());
+    assert(s.FragilityCurves.curve_id.size() == s.FragilityCurves.tag.size());
+    for (size_t i = 0; i < s.FragilityCurves.curve_id.size(); ++i)
     {
-        std::cout << i << ": " << FragilityCurveTypeToTag(s.FragilityCurves.CurveTypes[i]) << " -- "
-                  << s.FragilityCurves.Tags[i] << std::endl;
-        size_t idx = s.FragilityCurves.CurveId[i];
-        switch (s.FragilityCurves.CurveTypes[i])
+        std::cout << i << ": " << FragilityCurveTypeToTag(s.FragilityCurves.curve_type[i]) << " -- "
+                  << s.FragilityCurves.tag[i] << std::endl;
+        size_t idx = s.FragilityCurves.curve_id[i];
+        switch (s.FragilityCurves.curve_type[i])
         {
         case (FragilityCurveType::linear):
         {
@@ -527,7 +527,7 @@ void Simulation_PrintFragilityModes(Simulation const& s)
     {
         std::cout << i << ": " << s.FragilityModes.Tags[i] << std::endl;
         std::cout << "-- fragility curve: "
-                  << s.FragilityCurves.Tags[s.FragilityModes.FragilityCurveId[i]] << "["
+                  << s.FragilityCurves.tag[s.FragilityModes.FragilityCurveId[i]] << "["
                   << s.FragilityModes.FragilityCurveId[i] << "]" << std::endl;
         if (s.FragilityModes.RepairDistIds[i].has_value())
         {
@@ -586,19 +586,19 @@ void Simulation_PrintScenarios(Simulation const& s)
             std::cout << "no limit" << std::endl;
         }
         bool printedHeader = false;
-        for (size_t siIdx = 0; siIdx < s.ScenarioIntensities.IntensityIds.size(); ++siIdx)
+        for (size_t siIdx = 0; siIdx < s.ScenarioIntensities.intensity_id.size(); ++siIdx)
         {
-            if (s.ScenarioIntensities.ScenarioIds[siIdx] == i)
+            if (s.ScenarioIntensities.scenario_id[siIdx] == i)
             {
                 if (!printedHeader)
                 {
                     std::cout << "- intensities:" << std::endl;
                     printedHeader = true;
                 }
-                auto intId = s.ScenarioIntensities.IntensityIds[siIdx];
+                auto intId = s.ScenarioIntensities.intensity_id[siIdx];
                 auto const& intTag = s.Intensities.tag[intId];
                 std::cout << "-- " << intTag << "[" << intId
-                          << "]: " << s.ScenarioIntensities.IntensityLevels[siIdx] << std::endl;
+                          << "]: " << s.ScenarioIntensities.intensity_level[siIdx] << std::endl;
             }
         }
     }
@@ -707,19 +707,19 @@ size_t Simulation_RegisterFragilityCurve(Simulation& s,
                                          FragilityCurveType curveType,
                                          size_t curveIdx)
 {
-    for (size_t i = 0; i < s.FragilityCurves.Tags.size(); ++i)
+    for (size_t i = 0; i < s.FragilityCurves.tag.size(); ++i)
     {
-        if (s.FragilityCurves.Tags[i] == tag)
+        if (s.FragilityCurves.tag[i] == tag)
         {
-            s.FragilityCurves.CurveId[i] = curveIdx;
-            s.FragilityCurves.CurveTypes[i] = curveType;
+            s.FragilityCurves.curve_id[i] = curveIdx;
+            s.FragilityCurves.curve_type[i] = curveType;
             return i;
         }
     }
-    size_t id = s.FragilityCurves.Tags.size();
-    s.FragilityCurves.Tags.push_back(tag);
-    s.FragilityCurves.CurveId.push_back(curveIdx);
-    s.FragilityCurves.CurveTypes.push_back(curveType);
+    size_t id = s.FragilityCurves.tag.size();
+    s.FragilityCurves.tag.push_back(tag);
+    s.FragilityCurves.curve_id.push_back(curveIdx);
+    s.FragilityCurves.curve_type.push_back(curveType);
     return id;
 }
 
@@ -1954,9 +1954,9 @@ std::unordered_map<size_t, double> GetIntensitiesForScenario(Simulation& s, size
 {
     std::unordered_map<size_t, double> intensityIdToAmount;
     size_t numIntensities = 0;
-    for (size_t i = 0; i < s.ScenarioIntensities.ScenarioIds.size(); ++i)
+    for (size_t i = 0; i < s.ScenarioIntensities.scenario_id.size(); ++i)
     {
-        if (s.ScenarioIntensities.ScenarioIds[i] == scenIdx)
+        if (s.ScenarioIntensities.scenario_id[i] == scenIdx)
         {
             numIntensities++;
         }
@@ -1966,12 +1966,12 @@ std::unordered_map<size_t, double> GetIntensitiesForScenario(Simulation& s, size
         return intensityIdToAmount;
     }
     intensityIdToAmount.reserve(numIntensities);
-    for (size_t i = 0; i < s.ScenarioIntensities.ScenarioIds.size(); ++i)
+    for (size_t i = 0; i < s.ScenarioIntensities.scenario_id.size(); ++i)
     {
-        if (s.ScenarioIntensities.ScenarioIds[i] == scenIdx)
+        if (s.ScenarioIntensities.scenario_id[i] == scenIdx)
         {
-            auto intensityId = s.ScenarioIntensities.IntensityIds[i];
-            intensityIdToAmount[intensityId] = s.ScenarioIntensities.IntensityLevels[i];
+            auto intensityId = s.ScenarioIntensities.intensity_id[i];
+            intensityIdToAmount[intensityId] = s.ScenarioIntensities.intensity_level[i];
         }
     }
     return intensityIdToAmount;
@@ -2992,8 +2992,8 @@ void Simulation_run(Simulation& s,
                                                  s.FragilityModes.FragilityCurveId,
                                                  s.FragilityModes.RepairDistIds,
                                                  s.FragilityModes.Tags,
-                                                 s.FragilityCurves.CurveId,
-                                                 s.FragilityCurves.CurveTypes,
+                                                 s.FragilityCurves.curve_id,
+                                                 s.FragilityCurves.curve_type,
                                                  s.LinearFragilityCurves,
                                                  s.TabularFragilityCurves,
                                                  s.TheModel.dist_sys,

@@ -535,16 +535,16 @@ struct IntensityDict
 
 struct ScenarioIntensityDict
 {
-    std::vector<size_t> ScenarioIds;
-    std::vector<size_t> IntensityIds;
-    std::vector<double> IntensityLevels;
+    std::vector<size_t> scenario_id;
+    std::vector<size_t> intensity_id;
+    std::vector<double> intensity_level;
 };
 
 struct FragilityCurveDict
 {
-    std::vector<std::string> Tags {};
-    std::vector<FragilityCurveType> CurveTypes {};
-    std::vector<size_t> CurveId {};
+    std::vector<std::string> tag {};
+    std::vector<FragilityCurveType> curve_type {};
+    std::vector<size_t> curve_id {};
 };
 
 // TODO: should we call these "tables" instead of dict?

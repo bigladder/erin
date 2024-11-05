@@ -227,7 +227,7 @@ void Simulation_PrintComponents(Simulation const& s)
             }
             std::cout << "-- max outflow (W): "
                       << (sbs.max_outflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(sbs.max_outflow_W))
+                                                          : std::to_string(sbs.max_outflow_W))
                       << std::endl;
 
             std::cout << "-- outflow connection: " << sbs.outflow_connection_id << std::endl;

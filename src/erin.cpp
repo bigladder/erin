@@ -743,8 +743,8 @@ std::vector<std::string> Model_check_network(Model const& m)
                 oss << "conn.FromId: " << conn.from_component_id << "\n";
                 oss << "conn.FromPort: " << conn.from_port << "\n";
                 oss << "mux num outflow connections: " << fromMux.number_of_outports << "\n";
-                oss << "mux num outflow connections from count: " << fromMux.outflow_connection_ids.size()
-                    << "\n";
+                oss << "mux num outflow connections from count: "
+                    << fromMux.outflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
             else if (fromMux.outflow_connection_ids[conn.from_port] != connIdx)
@@ -763,8 +763,8 @@ std::vector<std::string> Model_check_network(Model const& m)
                 std::ostringstream oss;
                 oss << "mux num outflows inconsistent\n";
                 oss << "mux num outflow connections: " << fromMux.number_of_outports << "\n";
-                oss << "mux num outflow connections from count: " << fromMux.outflow_connection_ids.size()
-                    << "\n";
+                oss << "mux num outflow connections from count: "
+                    << fromMux.outflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
             if (muxCompIdToOutflowConns[conn.from_component_id].contains(connIdx))
@@ -787,8 +787,8 @@ std::vector<std::string> Model_check_network(Model const& m)
                 oss << "conn.ToId: " << conn.to_component_id << "\n";
                 oss << "conn.ToPort: " << conn.to_port << "\n";
                 oss << "mux num inflow connections: " << toMux.number_of_inports << "\n";
-                oss << "mux num inflow connections from count: " << toMux.inflow_connection_ids.size()
-                    << "\n";
+                oss << "mux num inflow connections from count: "
+                    << toMux.inflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
             else if (toMux.inflow_connection_ids[conn.to_port] != connIdx)
@@ -798,8 +798,8 @@ std::vector<std::string> Model_check_network(Model const& m)
                 oss << "connId: " << connIdx << "\n";
                 oss << "conn.ToId: " << conn.to_component_id << "\n";
                 oss << "conn.FromPort: " << conn.to_port << "\n";
-                oss << "toMux.InflowConns[conn.FromPort]: " << toMux.outflow_connection_ids[conn.to_port]
-                    << "\n";
+                oss << "toMux.InflowConns[conn.FromPort]: "
+                    << toMux.outflow_connection_ids[conn.to_port] << "\n";
                 issues.push_back(oss.str());
             }
             if (toMux.number_of_inports != toMux.inflow_connection_ids.size())
@@ -807,8 +807,8 @@ std::vector<std::string> Model_check_network(Model const& m)
                 std::ostringstream oss;
                 oss << "mux num inflows inconsistent\n";
                 oss << "mux num inflow connections: " << toMux.number_of_inports << "\n";
-                oss << "mux num inflow connections from count: " << toMux.inflow_connection_ids.size()
-                    << "\n";
+                oss << "mux num inflow connections from count: "
+                    << toMux.inflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
             if (muxCompIdToInflowConns[conn.to_component_id].contains(connIdx))
@@ -1166,12 +1166,12 @@ void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t)
             ss.Flows[outflowConn].available_W = available_W;
             if (maybeInflowConn.has_value())
             {
-                flow_t request_W =
-                    (ss.Flows[outflowConn].requested_W > store.max_outflow_W
-                         ? store.max_outflow_W
-                         : ss.Flows[outflowConn].requested_W) +
-                    (ss.StorageAmounts_J[storeIdx] <= store.charge_amount_J ? store.max_charge_rate_W
-                                                                           : 0);
+                flow_t request_W = (ss.Flows[outflowConn].requested_W > store.max_outflow_W
+                                        ? store.max_outflow_W
+                                        : ss.Flows[outflowConn].requested_W) +
+                                   (ss.StorageAmounts_J[storeIdx] <= store.charge_amount_J
+                                        ? store.max_charge_rate_W
+                                        : 0);
                 size_t inflowConn = maybeInflowConn.value();
                 if (ss.Flows[inflowConn].requested_W != request_W)
                 {
@@ -1623,7 +1623,8 @@ void RunMuxBackward(Model& model, SimulationState& ss, size_t muxIdx)
                                     : ss.Flows[outflowConnIdx].requested_W;
         totalOutflowRequest_W = safe_add(totalOutflowRequest_W, outflowRequest_W);
     }
-    Mux_RequestInflowsIntelligently(ss, model.Muxes[muxIdx].inflow_connection_ids, totalOutflowRequest_W);
+    Mux_RequestInflowsIntelligently(
+        ss, model.Muxes[muxIdx].inflow_connection_ids, totalOutflowRequest_W);
 }
 
 void RunStoreBackward(Model& model, SimulationState& ss, size_t outflowConnIdx, size_t storeIdx)
@@ -2004,7 +2005,8 @@ void RunStoreForward(Model& model, SimulationState& ss, size_t inflowConnIdx, si
     Store const& store = model.Stores[storeIdx];
     assert(store.inflow_connection_id.has_value());
     assert(inflowConnIdx == store.inflow_connection_id.value());
-    flow_t dischargeAvailable_W = ss.StorageAmounts_J[storeIdx] > 0 ? store.max_discharge_rate_W : 0;
+    flow_t dischargeAvailable_W =
+        ss.StorageAmounts_J[storeIdx] > 0 ? store.max_discharge_rate_W : 0;
     flow_t available_W = safe_add(ss.Flows[inflowConnIdx].available_W, dischargeAvailable_W);
     if (available_W > store.max_outflow_W)
     {
@@ -3292,16 +3294,20 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     case ComponentType::pass_through_type:
     {
         PassThrough const& pt = m.PassThroughs[idx];
-        if (ss.Flows[pt.outflow_connection_id].requested_W != ss.Flows[pt.inflow_connection_id].requested_W)
+        if (ss.Flows[pt.outflow_connection_id].requested_W !=
+            ss.Flows[pt.inflow_connection_id].requested_W)
         {
             ss.ActiveConnectionsBack.insert(pt.outflow_connection_id);
         }
-        ss.Flows[pt.inflow_connection_id].requested_W = ss.Flows[pt.outflow_connection_id].requested_W;
-        if (ss.Flows[pt.inflow_connection_id].available_W != ss.Flows[pt.outflow_connection_id].available_W)
+        ss.Flows[pt.inflow_connection_id].requested_W =
+            ss.Flows[pt.outflow_connection_id].requested_W;
+        if (ss.Flows[pt.inflow_connection_id].available_W !=
+            ss.Flows[pt.outflow_connection_id].available_W)
         {
             ss.ActiveConnectionsFront.insert(pt.inflow_connection_id);
         }
-        ss.Flows[pt.outflow_connection_id].available_W = ss.Flows[pt.inflow_connection_id].available_W;
+        ss.Flows[pt.outflow_connection_id].available_W =
+            ss.Flows[pt.inflow_connection_id].available_W;
     }
     break;
     case ComponentType::waste_sink_type:

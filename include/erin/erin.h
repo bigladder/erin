@@ -353,8 +353,10 @@ struct NodeConnection
 
     bool operator==(NodeConnection const& node_connection) const
     {
-        bool from_is_same = (node_connection.from_component_id == from_component_id) && (node_connection.from_port == from_port);
-        bool to_is_same = (node_connection.to_component_id == to_component_id) && (node_connection.to_port == to_port);
+        bool from_is_same = (node_connection.from_component_id == from_component_id) &&
+                            (node_connection.from_port == from_port);
+        bool to_is_same = (node_connection.to_component_id == to_component_id) &&
+                          (node_connection.to_port == to_port);
         return from_is_same && to_is_same;
     }
 };
@@ -393,10 +395,7 @@ struct PassThrough
 // TODO[mok]: need to rethink this. This adds a branch with an add.
 // Probably a horrible performance issue. Use double but convert to
 // unsigned int when finalize flows?
-inline flow_t safe_add(flow_t a, flow_t b)
-{
-    return (b > (max_flow_W - a)) ? max_flow_W : a + b;
-}
+inline flow_t safe_add(flow_t a, flow_t b) { return (b > (max_flow_W - a)) ? max_flow_W : a + b; }
 
 struct Flow
 {
@@ -406,8 +405,7 @@ struct Flow
 
     Flow operator+(Flow const& flow) const
     {
-        return Flow
-        {
+        return Flow {
             .requested_W = requested_W + flow.requested_W,
             .available_W = safe_add(available_W, flow.available_W),
             .actual_W = actual_W + flow.actual_W,

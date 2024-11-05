@@ -340,13 +340,14 @@ void Simulation_PrintComponents(Simulation const& s)
             std::cout << "-- max discharge rate (W): " << store.max_discharge_rate_W << std::endl;
             std::cout << "-- max outflow (W): "
                       << (store.max_outflow_W == max_flow_W ? "unlimited"
-                                                           : std::to_string(store.max_outflow_W))
+                                                            : std::to_string(store.max_outflow_W))
                       << std::endl;
             std::cout << "-- roundtrip efficiency: " << store.roundtrip_efficiency * 100.0 << "%"
                       << std::endl;
             std::cout << "-- inflow connection: "
-                      << (store.inflow_connection_id.has_value() ? std::to_string(store.inflow_connection_id.value())
-                                                       : "NA")
+                      << (store.inflow_connection_id.has_value()
+                              ? std::to_string(store.inflow_connection_id.value())
+                              : "NA")
                       << std::endl;
             std::cout << "-- outflow connection: " << store.outflow_connection_id << std::endl;
         }
@@ -357,7 +358,7 @@ void Simulation_PrintComponents(Simulation const& s)
             PassThrough const& pt = m.PassThroughs[subtypeIdx];
             std::cout << "-- max outflow (W): "
                       << (pt.max_outflow_W == max_flow_W ? "unlimited"
-                                                        : std::to_string(pt.max_outflow_W))
+                                                         : std::to_string(pt.max_outflow_W))
                       << std::endl;
             std::cout << "-- inflow connection: " << pt.inflow_connection_id << std::endl;
             std::cout << "-- outflow connection: " << pt.outflow_connection_id << std::endl;

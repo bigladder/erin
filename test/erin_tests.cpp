@@ -1779,7 +1779,8 @@ TEST(Erin, TestApplyUniformTimeStep)
     EXPECT_EQ(modified_results[8].flows[2].requested_W, kW_as_W(1.5))
         << "incorrect requested-flow value";
     EXPECT_EQ(modified_results[8].flows[2].actual_W, kW_as_W(1.0)) << "incorrect actual-flow value";
-    EXPECT_EQ(modified_results[8].storage_amounts_J[0], kWh_as_J(0.0)) << "incorrect storage amount";
+    EXPECT_EQ(modified_results[8].storage_amounts_J[0], kWh_as_J(0.0))
+        << "incorrect storage amount";
 
     EXPECT_EQ(modified_results[14].storage_amounts_J[0], kWh_as_J(1.0))
         << "incorrect storage amount";

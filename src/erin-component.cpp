@@ -395,7 +395,8 @@ Result ParseSingleComponent(Simulation& s,
             double maxOutflow_W =
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), localRateUnit);
             size_t constEffIdx = s.TheModel.component.subtype_index[id];
-            s.TheModel.constant_efficiency_converter[constEffIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
+            s.TheModel.constant_efficiency_converter[constEffIdx].max_outflow_W =
+                static_cast<flow_t>(maxOutflow_W);
         }
         if (input.contains("max_lossflow"))
         {
@@ -485,12 +486,14 @@ Result ParseSingleComponent(Simulation& s,
                                                  report);
         id = compIdAndWasteConn.Id;
         size_t varEffIdx = s.TheModel.component.subtype_index[id];
-        s.TheModel.variable_efficiency_converter[varEffIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
+        s.TheModel.variable_efficiency_converter[varEffIdx].max_outflow_W =
+            static_cast<flow_t>(maxOutflow_W);
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
                 power_to_watts(std::get<double>(input.at("max_lossflow").Value), localRateUnit);
-            s.TheModel.variable_efficiency_converter[varEffIdx].max_lossflow_W = static_cast<flow_t>(maxLossflow_W);
+            s.TheModel.variable_efficiency_converter[varEffIdx].max_lossflow_W =
+                static_cast<flow_t>(maxLossflow_W);
         }
     }
     break;
@@ -601,8 +604,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), rateUnit));
-            s.TheModel.store[s.TheModel.component.subtype_index[id]].max_outflow_W =
-                maxOutflow_W;
+            s.TheModel.store[s.TheModel.component.subtype_index[id]].max_outflow_W = maxOutflow_W;
         }
     }
     break;
@@ -696,7 +698,8 @@ Result ParseSingleComponent(Simulation& s,
                                                                      report);
         id = compIdAndConns.Id;
         size_t moverIdx = s.TheModel.component.subtype_index[id];
-        s.TheModel.variable_efficiency_mover[moverIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
+        s.TheModel.variable_efficiency_mover[moverIdx].max_outflow_W =
+            static_cast<flow_t>(maxOutflow_W);
     }
     break;
     case ComponentType::switch_type:

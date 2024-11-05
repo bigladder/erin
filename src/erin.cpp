@@ -854,8 +854,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 << "- compId: " << conn.to_component_id << "\n"
                 << "- outflowPort: " << conn.to_port << "\n"
                 << "- tag: " << m.component.tag[conn.to_component_id] << "\n"
-                << "- type: " << ToString(m.component.component_type[conn.to_component_id])
-                << "\n";
+                << "- type: " << ToString(m.component.component_type[conn.to_component_id]) << "\n";
             issues.push_back(oss.str());
         }
         connectedInflowPorts.insert(inflowCompPort);
@@ -2392,8 +2391,7 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
                     m.component.subtype_index[compId_Idx] == storeIdx)
                 {
                     std::cout << "compId (from search): " << compId_Idx << std::endl;
-                    std::cout << "tag (from search): " << m.component.tag[compId_Idx]
-                              << std::endl;
+                    std::cout << "tag (from search): " << m.component.tag[compId_Idx] << std::endl;
                 }
             }
             std::cout << "has inflow? " << store.inflow_connection_id.has_value() << std::endl;
@@ -2846,7 +2844,8 @@ Model_AddFailureModeToComponent(Model& m, size_t compId, size_t failureDistId, s
 {
     auto fmId = m.rel_coord.add_failure_mode("", failureDistId, repairDistId);
     auto linkId = m.rel_coord.link_component_with_failure_mode(compId, fmId);
-    auto schedule = m.rel_coord.make_schedule_for_link(linkId, m.random_function, m.dist_sys, m.final_time_s);
+    auto schedule =
+        m.rel_coord.make_schedule_for_link(linkId, m.random_function, m.dist_sys, m.final_time_s);
     ScheduleBasedReliability sbr = {};
     sbr.component_id = compId;
     sbr.time_states = std::move(schedule);
@@ -3118,25 +3117,25 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                             Connection const& conn = model.connection[connIdx];
                             if (conn.to_component_id == item.first)
                             {
-                                Log_warning(log,
-                                            fmt::format("* +{:>16d} W (R: +{:>16d} W // A: "
-                                                        "+{:>16d} W):: {}",
-                                                        ss.Flows[connIdx].actual_W,
-                                                        ss.Flows[connIdx].requested_W,
-                                                        ss.Flows[connIdx].available_W,
-                                                        ConnectionToString(
-                                                            model.component, conn, true)));
+                                Log_warning(
+                                    log,
+                                    fmt::format("* +{:>16d} W (R: +{:>16d} W // A: "
+                                                "+{:>16d} W):: {}",
+                                                ss.Flows[connIdx].actual_W,
+                                                ss.Flows[connIdx].requested_W,
+                                                ss.Flows[connIdx].available_W,
+                                                ConnectionToString(model.component, conn, true)));
                             }
                             if (conn.from_component_id == item.first)
                             {
-                                Log_warning(log,
-                                            fmt::format("* -{:>16d} W (R: -{:>16d} W // A: "
-                                                        "-{:>16d} W):: {}",
-                                                        ss.Flows[connIdx].actual_W,
-                                                        ss.Flows[connIdx].requested_W,
-                                                        ss.Flows[connIdx].available_W,
-                                                        ConnectionToString(
-                                                            model.component, conn, true)));
+                                Log_warning(
+                                    log,
+                                    fmt::format("* -{:>16d} W (R: -{:>16d} W // A: "
+                                                "-{:>16d} W):: {}",
+                                                ss.Flows[connIdx].actual_W,
+                                                ss.Flows[connIdx].requested_W,
+                                                ss.Flows[connIdx].available_W,
+                                                ConnectionToString(model.component, conn, true)));
                             }
                         }
                     }
@@ -3155,7 +3154,8 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
             break;
         }
         double nextTime = EarliestNextEvent(model, ss, t);
-        if ((nextTime == infinite_time && t < model.final_time_s) || (nextTime > model.final_time_s))
+        if ((nextTime == infinite_time && t < model.final_time_s) ||
+            (nextTime > model.final_time_s))
         {
             nextTime = model.final_time_s;
         }
@@ -3935,8 +3935,7 @@ Connection Model_AddConnection(Model& m,
                           << "attempt to doubly connect "
                           << "compId=" << fromId << " outport=" << fromPort
                           << " tag=" << m.component.tag[fromId]
-                          << " type=" << ToString(m.component.component_type[fromId])
-                          << std::endl;
+                          << " type=" << ToString(m.component.component_type[fromId]) << std::endl;
             }
             if (conn.to_component_id == toId && conn.to_port == toPort)
             {
@@ -4381,8 +4380,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             size_t flowTypeId = m.connection[connId].flow_type_id;
             ComponentType fromType =
                 m.component.component_type[m.connection[connId].from_component_id];
-            ComponentType toType =
-                m.component.component_type[m.connection[connId].to_component_id];
+            ComponentType toType = m.component.component_type[m.connection[connId].to_component_id];
             Flow const& flow = timeAndFlows[prevEventIdx].flows[connId];
             double actualFlow_W = static_cast<double>(flow.actual_W);
             double requestedFlow_W = static_cast<double>(flow.requested_W);
@@ -4827,17 +4825,16 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "port is unaddressable for "
-                      << ToString(m.component.component_type[fromCompId])
-                      << ": trying to address " << fromTap.Port << " but only "
-                      << m.component.outflow_type[fromCompId].size() << " ports available"
-                      << std::endl;
+                      << ToString(m.component.component_type[fromCompId]) << ": trying to address "
+                      << fromTap.Port << " but only " << m.component.outflow_type[fromCompId].size()
+                      << " ports available" << std::endl;
             return Result::Failure;
         }
         if (m.component.outflow_type[fromCompId][fromTap.Port] != flowTypeId)
         {
             std::ostringstream oss;
-            oss << "mismatch of flow types: " << fromTap.Tag << ":outflow="
-                << fd.flow_type[m.component.outflow_type[fromCompId][fromTap.Port]]
+            oss << "mismatch of flow types: " << fromTap.Tag
+                << ":outflow=" << fd.flow_type[m.component.outflow_type[fromCompId][fromTap.Port]]
                 << "; connection: " << flow;
             write_error_message("network", oss.str());
             return Result::Failure;
@@ -4884,8 +4881,8 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                           << ":availableFlowTypes=" << fd.flow_type.size() << std::endl;
                 return Result::Failure;
             }
-            std::cout << "[network] mismatch of flow types: " << toTap.Tag << ":inflow="
-                      << fd.flow_type[m.component.outflow_type[toCompId][toTap.Port]]
+            std::cout << "[network] mismatch of flow types: " << toTap.Tag
+                      << ":inflow=" << fd.flow_type[m.component.outflow_type[toCompId][toTap.Port]]
                       << "; connection: " << flow << std::endl;
             return Result::Failure;
         }
@@ -5045,8 +5042,7 @@ void Model_PrintConnections(Model const& m, FlowDict const& ft)
 {
     for (size_t i = 0; i < m.connection.size(); ++i)
     {
-        std::cout << i << ": " << ConnectionToString(m.component, ft, m.connection[i])
-                  << std::endl;
+        std::cout << i << ": " << ConnectionToString(m.component, ft, m.connection[i]) << std::endl;
     }
 }
 

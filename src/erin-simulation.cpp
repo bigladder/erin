@@ -179,8 +179,7 @@ void Simulation_PrintComponents(Simulation const& s)
                           << s.FlowTypeMap.flow_type[outflowType] << std::endl;
             }
         }
-        std::cout << "- report? " << (m.component.report[compId] ? "true" : "false")
-                  << std::endl;
+        std::cout << "- report? " << (m.component.report[compId] ? "true" : "false") << std::endl;
         if (m.component_to_group.contains(compId))
         {
             std::cout << "- group: " << m.component_to_group.at(compId) << std::endl;
@@ -393,8 +392,10 @@ void Simulation_PrintComponents(Simulation const& s)
         {
             assert(subtypeIdx < m.transfer_switch.size());
             Switch const& sw = m.transfer_switch[subtypeIdx];
-            std::cout << "-- primary inflow connection: " << sw.inflow_connection_id_primary << std::endl;
-            std::cout << "-- secondary inflow connection: " << sw.inflow_connection_id_secondary << std::endl;
+            std::cout << "-- primary inflow connection: " << sw.inflow_connection_id_primary
+                      << std::endl;
+            std::cout << "-- secondary inflow connection: " << sw.inflow_connection_id_secondary
+                      << std::endl;
             std::cout << "-- outflow connection: " << sw.outflow_connection_id << std::endl;
         }
         break;
@@ -475,7 +476,8 @@ void Simulation_PrintFailureModes(Simulation const& s)
 {
     for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
     {
-        auto maybeFailureDist = s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.FailureDistIds[i]);
+        auto maybeFailureDist =
+            s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.FailureDistIds[i]);
         auto maybeRepairDist = s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.RepairDistIds[i]);
         std::cout << i << ": " << s.FailureModes.Tags[i] << std::endl;
         if (maybeFailureDist.has_value())
@@ -1279,8 +1281,7 @@ static void Simulation_PrintGroups(Simulation const& s)
         {
             continue;
         }
-        if (s.TheModel.component.component_type[compId] ==
-            ComponentType::environment_source_type)
+        if (s.TheModel.component.component_type[compId] == ComponentType::environment_source_type)
         {
             std::cout << "-- ENV[" << compId << "]" << std::endl;
         }
@@ -2827,8 +2828,8 @@ void Simulation_run(Simulation& s,
     for (size_t fmIdx = 0; fmIdx < s.FailureModes.FailureDistIds.size(); ++fmIdx)
     {
         s.TheModel.rel_coord.add_failure_mode(s.FailureModes.Tags[fmIdx],
-                                        s.FailureModes.FailureDistIds[fmIdx],
-                                        s.FailureModes.RepairDistIds[fmIdx]);
+                                              s.FailureModes.FailureDistIds[fmIdx],
+                                              s.FailureModes.RepairDistIds[fmIdx]);
     }
     for (size_t compFailId = 0; compFailId < s.ComponentFailureModes.ComponentIds.size();
          ++compFailId)
@@ -2912,7 +2913,8 @@ void Simulation_run(Simulation& s,
             Log_warning(log, "", "Issue setting schedule loads");
             return;
         }
-        if (SetSupplyForScenario(s.TheModel.scheduled_source, s.LoadMap, scenIdx) == Result::Failure)
+        if (SetSupplyForScenario(s.TheModel.scheduled_source, s.LoadMap, scenIdx) ==
+            Result::Failure)
         {
             Log_warning(log, "", "Issue setting schedule sources");
             return;

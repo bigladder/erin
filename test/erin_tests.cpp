@@ -1604,9 +1604,9 @@ TEST(Erin, Test21)
 TEST(Erin, Test22)
 {
     TabularFragilityCurve tfc {};
-    tfc.VulnerabilityId = 0;
-    tfc.Intensities = std::vector<double> {0.0, 1.0, 4.0, 6.0, 9.0, 10.0};
-    tfc.FailureFractions = std::vector<double> {0.0, 0.3, 0.7, 0.8, 0.95, 1.0};
+    tfc.vulnerability_id = 0;
+    tfc.intensity = std::vector<double> {0.0, 1.0, 4.0, 6.0, 9.0, 10.0};
+    tfc.failure_fraction = std::vector<double> {0.0, 0.3, 0.7, 0.8, 0.95, 1.0};
     double level = 7.0;
     double result = TabularFragilityCurve_GetFailureFraction(tfc, level);
     EXPECT_EQ(result, 0.85);

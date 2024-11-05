@@ -908,11 +908,11 @@ std::optional<FragilityCurveType> TagToFragilityCurveType(std::string const& tag
 {
     if (tag == "linear")
     {
-        return FragilityCurveType::Linear;
+        return FragilityCurveType::linear;
     }
     if (tag == "tabular")
     {
-        return FragilityCurveType::Tabular;
+        return FragilityCurveType::tabular;
     }
     return {};
 }
@@ -922,12 +922,12 @@ std::string FragilityCurveTypeToTag(FragilityCurveType fctype)
     std::string tag;
     switch (fctype)
     {
-    case (FragilityCurveType::Linear):
+    case (FragilityCurveType::linear):
     {
         tag = "linear";
     }
     break;
-    case (FragilityCurveType::Tabular):
+    case (FragilityCurveType::tabular):
     {
         tag = "tabular";
     }
@@ -944,9 +944,9 @@ std::string FragilityCurveTypeToTag(FragilityCurveType fctype)
 
 std::optional<size_t> GetIntensityIdByTag(IntensityDict intenseDict, std::string const& tag)
 {
-    for (size_t i = 0; i < intenseDict.Tags.size(); ++i)
+    for (size_t i = 0; i < intenseDict.tag.size(); ++i)
     {
-        if (intenseDict.Tags[i] == tag)
+        if (intenseDict.tag[i] == tag)
         {
             return i;
         }
@@ -5078,36 +5078,36 @@ double Interpolate1d(double x, double x0, double y0, double x1, double y1)
 
 double LinearFragilityCurve_GetFailureFraction(LinearFragilityCurve lfc, double intensityLevel)
 {
-    return Interpolate1d(intensityLevel, lfc.LowerBound, 0.0, lfc.UpperBound, 1.0);
+    return Interpolate1d(intensityLevel, lfc.lower_bound, 0.0, lfc.upper_bound, 1.0);
 }
 
 double TabularFragilityCurve_GetFailureFraction(TabularFragilityCurve tfc, double intensityLevel)
 {
-    size_t size = tfc.Intensities.size();
-    assert(size == tfc.FailureFractions.size());
+    size_t size = tfc.intensity.size();
+    assert(size == tfc.failure_fraction.size());
     assert(size > 0);
-    if (intensityLevel <= tfc.Intensities[0])
+    if (intensityLevel <= tfc.intensity[0])
     {
-        return tfc.FailureFractions[0];
+        return tfc.failure_fraction[0];
     }
-    if (intensityLevel >= tfc.Intensities[size - 1])
+    if (intensityLevel >= tfc.intensity[size - 1])
     {
-        return tfc.FailureFractions[size - 1];
+        return tfc.failure_fraction[size - 1];
     }
     for (size_t i = 0; i < size; ++i)
     {
-        if (intensityLevel == tfc.Intensities[i])
+        if (intensityLevel == tfc.intensity[i])
         {
-            return tfc.FailureFractions[i];
+            return tfc.failure_fraction[i];
         }
-        if ((i + 1) < size && intensityLevel > tfc.Intensities[i] &&
-            intensityLevel <= tfc.Intensities[i + 1])
+        if ((i + 1) < size && intensityLevel > tfc.intensity[i] &&
+            intensityLevel <= tfc.intensity[i + 1])
         {
             return Interpolate1d(intensityLevel,
-                                 tfc.Intensities[i],
-                                 tfc.FailureFractions[i],
-                                 tfc.Intensities[i + 1],
-                                 tfc.FailureFractions[i + 1]);
+                                 tfc.intensity[i],
+                                 tfc.failure_fraction[i],
+                                 tfc.intensity[i + 1],
+                                 tfc.failure_fraction[i + 1]);
         }
     }
     return 0.0;

@@ -59,15 +59,15 @@ size_t Simulation_RegisterScenario(Simulation& s, std::string const& scenarioTag
 
 size_t Simulation_RegisterIntensity(Simulation& s, std::string const& tag)
 {
-    for (size_t i = 0; i < s.Intensities.Tags.size(); ++i)
+    for (size_t i = 0; i < s.Intensities.tag.size(); ++i)
     {
-        if (s.Intensities.Tags[i] == tag)
+        if (s.Intensities.tag[i] == tag)
         {
             return i;
         }
     }
-    size_t id = s.Intensities.Tags.size();
-    s.Intensities.Tags.push_back(tag);
+    size_t id = s.Intensities.tag.size();
+    s.Intensities.tag.push_back(tag);
     return id;
 }
 
@@ -439,25 +439,25 @@ void Simulation_PrintFragilityCurves(Simulation const& s)
         size_t idx = s.FragilityCurves.CurveId[i];
         switch (s.FragilityCurves.CurveTypes[i])
         {
-        case (FragilityCurveType::Linear):
+        case (FragilityCurveType::linear):
         {
-            std::cout << "-- lower bound: " << s.LinearFragilityCurves[idx].LowerBound << std::endl;
-            std::cout << "-- upper bound: " << s.LinearFragilityCurves[idx].UpperBound << std::endl;
-            size_t intensityId = s.LinearFragilityCurves[idx].VulnerabilityId;
-            std::cout << "-- vulnerable to: " << s.Intensities.Tags[intensityId] << "["
+            std::cout << "-- lower bound: " << s.LinearFragilityCurves[idx].lower_bound << std::endl;
+            std::cout << "-- upper bound: " << s.LinearFragilityCurves[idx].upper_bound << std::endl;
+            size_t intensityId = s.LinearFragilityCurves[idx].vulnerability_id;
+            std::cout << "-- vulnerable to: " << s.Intensities.tag[intensityId] << "["
                       << intensityId << "]" << std::endl;
         }
         break;
-        case (FragilityCurveType::Tabular):
+        case (FragilityCurveType::tabular):
         {
-            size_t size = s.TabularFragilityCurves[idx].Intensities.size();
-            size_t intensityId = s.TabularFragilityCurves[idx].VulnerabilityId;
+            size_t size = s.TabularFragilityCurves[idx].intensity.size();
+            size_t intensityId = s.TabularFragilityCurves[idx].vulnerability_id;
             if (size > 0)
             {
-                std::cout << "-- intensity from " << s.TabularFragilityCurves[idx].Intensities[0]
-                          << " to " << s.TabularFragilityCurves[idx].Intensities[size - 1]
+                std::cout << "-- intensity from " << s.TabularFragilityCurves[idx].intensity[0]
+                          << " to " << s.TabularFragilityCurves[idx].intensity[size - 1]
                           << std::endl;
-                std::cout << "-- vulnerable to: " << s.Intensities.Tags[intensityId] << "["
+                std::cout << "-- vulnerable to: " << s.Intensities.tag[intensityId] << "["
                           << intensityId << "]" << std::endl;
             }
         }
@@ -594,7 +594,7 @@ void Simulation_PrintScenarios(Simulation const& s)
                     printedHeader = true;
                 }
                 auto intId = s.ScenarioIntensities.IntensityIds[siIdx];
-                auto const& intTag = s.Intensities.Tags[intId];
+                auto const& intTag = s.Intensities.tag[intId];
                 std::cout << "-- " << intTag << "[" << intId
                           << "]: " << s.ScenarioIntensities.IntensityLevels[siIdx] << std::endl;
             }
@@ -697,7 +697,7 @@ Result Simulation_ParseLoads(Simulation& s,
 // if it returns !*.has_value(), register with the bogus data explicitly.
 size_t Simulation_RegisterFragilityCurve(Simulation& s, std::string const& tag)
 {
-    return Simulation_RegisterFragilityCurve(s, tag, FragilityCurveType::Linear, 0);
+    return Simulation_RegisterFragilityCurve(s, tag, FragilityCurveType::linear, 0);
 }
 
 size_t Simulation_RegisterFragilityCurve(Simulation& s,
@@ -844,12 +844,12 @@ Result Simulation_ParseLinearFragilityCurve(Simulation& s,
     }
     size_t intensityId = maybeIntId.value();
     LinearFragilityCurve lfc {};
-    lfc.LowerBound = lowerBound;
-    lfc.UpperBound = upperBound;
-    lfc.VulnerabilityId = intensityId;
+    lfc.lower_bound = lowerBound;
+    lfc.upper_bound = upperBound;
+    lfc.vulnerability_id = intensityId;
     size_t idx = s.LinearFragilityCurves.size();
     s.LinearFragilityCurves.push_back(std::move(lfc));
-    Simulation_RegisterFragilityCurve(s, fcName, FragilityCurveType::Linear, idx);
+    Simulation_RegisterFragilityCurve(s, fcName, FragilityCurveType::linear, idx);
     return Result::Success;
 }
 
@@ -887,7 +887,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
             FragilityCurveType fct = maybeFct.value();
             switch (fct)
             {
-            case (FragilityCurveType::Linear):
+            case (FragilityCurveType::linear):
             {
                 if (Simulation_ParseLinearFragilityCurve(s, fcName, tableFullName, fcData) ==
                     Result::Failure)
@@ -896,7 +896,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
                 }
             }
             break;
-            case (FragilityCurveType::Tabular):
+            case (FragilityCurveType::tabular):
             {
                 std::optional<size_t> maybeIntId = Parse_VulnerableTo(s, fcData, tableFullName);
                 if (!maybeIntId.has_value())
@@ -912,13 +912,13 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
                 }
                 PairsVector pv = maybePairs.value();
                 TabularFragilityCurve tfc {};
-                tfc.VulnerabilityId = intensityId;
-                tfc.Intensities = std::move(pv.Firsts);
-                tfc.FailureFractions = std::move(pv.Seconds);
+                tfc.vulnerability_id = intensityId;
+                tfc.intensity = std::move(pv.Firsts);
+                tfc.failure_fraction = std::move(pv.Seconds);
                 size_t subtypeIdx = s.TabularFragilityCurves.size();
                 s.TabularFragilityCurves.push_back(std::move(tfc));
                 Simulation_RegisterFragilityCurve(
-                    s, fcName, FragilityCurveType::Tabular, subtypeIdx);
+                    s, fcName, FragilityCurveType::tabular, subtypeIdx);
             }
             break;
             default:
@@ -1328,9 +1328,9 @@ void Simulation_print(Simulation const& s)
 
 void Simulation_PrintIntensities(Simulation const& s)
 {
-    for (size_t i = 0; i < s.Intensities.Tags.size(); ++i)
+    for (size_t i = 0; i < s.Intensities.tag.size(); ++i)
     {
-        std::cout << i << ": " << s.Intensities.Tags[i] << std::endl;
+        std::cout << i << ": " << s.Intensities.tag[i] << std::endl;
     }
 }
 
@@ -2106,10 +2106,10 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
             double failureFrac = 0.0;
             switch (curveType)
             {
-            case (FragilityCurveType::Linear):
+            case (FragilityCurveType::linear):
             {
                 LinearFragilityCurve lfc = linearFragilityCurves[fcIdx];
-                size_t vulnerId = lfc.VulnerabilityId;
+                size_t vulnerId = lfc.vulnerability_id;
                 if (intensityIdToAmount.contains(vulnerId))
                 {
                     double level = intensityIdToAmount.at(vulnerId);
@@ -2117,10 +2117,10 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
                 }
             }
             break;
-            case (FragilityCurveType::Tabular):
+            case (FragilityCurveType::tabular):
             {
                 TabularFragilityCurve tfc = tabularFragilityCurves[fcIdx];
-                size_t vulnerId = tfc.VulnerabilityId;
+                size_t vulnerId = tfc.vulnerability_id;
                 if (intensityIdToAmount.contains(vulnerId))
                 {
                     double level = intensityIdToAmount.at(vulnerId);

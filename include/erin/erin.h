@@ -503,34 +503,34 @@ struct TagAndPort
 
 enum class FragilityResult
 {
-    IsFailed,
-    HasSurvived,
+    is_failed,
+    has_survived,
 };
 
 enum class FragilityCurveType
 {
-    Linear,
-    Tabular,
+    linear,
+    tabular,
 };
 
 struct LinearFragilityCurve
 {
     // indexes IntensityDict
-    size_t VulnerabilityId = 0;
-    double LowerBound = 0.0;
-    double UpperBound = 1.0;
+    size_t vulnerability_id = 0;
+    double lower_bound = 0.0;
+    double upper_bound = 1.0;
 };
 
 struct TabularFragilityCurve
 {
-    size_t VulnerabilityId = 0;
-    std::vector<double> Intensities;
-    std::vector<double> FailureFractions;
+    size_t vulnerability_id = 0;
+    std::vector<double> intensity;
+    std::vector<double> failure_fraction;
 };
 
 struct IntensityDict
 {
-    std::vector<std::string> Tags {};
+    std::vector<std::string> tag {};
 };
 
 struct ScenarioIntensityDict

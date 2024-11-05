@@ -134,9 +134,9 @@ std::vector<ScheduleBasedReliability> run_apply_reliabilities_and_fragilities(
     }
     std::vector<std::string> fragility_mode_tags = {"vulnerable_to_wind"};
     std::vector<size_t> fragility_curve_curve_ids = {0};
-    std::vector<FragilityCurveType> fragility_curve_curve_types = {FragilityCurveType::Linear};
+    std::vector<FragilityCurveType> fragility_curve_curve_types = {FragilityCurveType::linear};
     std::vector<LinearFragilityCurve> linear_fragility_curves = {
-        {.VulnerabilityId = 0, .LowerBound = 80.0, .UpperBound = 140.0}};
+        {.vulnerability_id = 0, .lower_bound = 80.0, .upper_bound = 140.0}};
     std::vector<TabularFragilityCurve> tabular_fragility_curves = {};
     std::unordered_map<size_t, double> intensity_id_to_amount = {
         {0, 160.0},

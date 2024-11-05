@@ -259,7 +259,7 @@ std::vector<std::string> Model_check_network(Model const& m)
         {
             assert(idx < m.ConstLoads.size());
             ConstantLoad const& comp = m.ConstLoads[idx];
-            size_t inflowConnIdx = comp.InflowConn;
+            size_t inflowConnIdx = comp.inflow_connection_id;
             Connection const& inflowConn = m.Connections[inflowConnIdx];
             size_t inflowPort = 0;
             if ((inflowConn.To != compType) || (inflowConn.ToId != compId) ||
@@ -281,7 +281,7 @@ std::vector<std::string> Model_check_network(Model const& m)
         {
             assert(idx < m.ConstSources.size());
             ConstantSource const& comp = m.ConstSources[idx];
-            size_t outflowConnIdx = comp.OutflowConn;
+            size_t outflowConnIdx = comp.outflow_connection_id;
             assert(outflowConnIdx < nConns);
             Connection const& outflowConn = m.Connections[outflowConnIdx];
             size_t outflowPort = 0;
@@ -592,7 +592,7 @@ std::vector<std::string> Model_check_network(Model const& m)
         {
             assert(idx < m.ScheduledLoads.size());
             ScheduleBasedLoad const& comp = m.ScheduledLoads[idx];
-            size_t inflowConnIdx = comp.InflowConn;
+            size_t inflowConnIdx = comp.inflow_connection_id;
             Connection const& inflowConn = m.Connections[inflowConnIdx];
             size_t inflowPort = 0;
             if ((inflowConn.To != compType) || (inflowConn.ToId != compId) ||
@@ -614,7 +614,7 @@ std::vector<std::string> Model_check_network(Model const& m)
         {
             assert(idx < m.ScheduledSrcs.size());
             ScheduleBasedSource const& comp = m.ScheduledSrcs[idx];
-            size_t outflowConnIdx = comp.OutflowConn;
+            size_t outflowConnIdx = comp.outflow_connection_id;
             Connection const& outflowConn = m.Connections[outflowConnIdx];
             size_t outflowPort = 0;
             if ((outflowConn.From != compType) || (outflowConn.FromId != compId) ||
@@ -630,7 +630,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                                    outflowConnIdx,
                                    FlowDirection::outflow);
             }
-            size_t wfConnIdx = comp.WasteflowConn;
+            size_t wfConnIdx = comp.wasteflow_connection_id;
             Connection const& wfConn = m.Connections[wfConnIdx];
             size_t wfPort = 1;
             if ((wfConn.From != compType) || (wfConn.FromId != compId) || (wfConn.FromIdx != idx) ||
@@ -1018,12 +1018,12 @@ void ActivateConnectionsForConstantLoads(Model const& model, SimulationState& ss
 {
     for (size_t loadIdx = 0; loadIdx < model.ConstLoads.size(); ++loadIdx)
     {
-        size_t connIdx = model.ConstLoads[loadIdx].InflowConn;
-        if (ss.Flows[connIdx].Requested_W != model.ConstLoads[loadIdx].Load_W)
+        size_t connIdx = model.ConstLoads[loadIdx].inflow_connection_id;
+        if (ss.Flows[connIdx].Requested_W != model.ConstLoads[loadIdx].load_W)
         {
             ss.ActiveConnectionsBack.insert(connIdx);
         }
-        ss.Flows[connIdx].Requested_W = model.ConstLoads[loadIdx].Load_W;
+        ss.Flows[connIdx].Requested_W = model.ConstLoads[loadIdx].load_W;
     }
 }
 
@@ -1031,7 +1031,7 @@ void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss)
 {
     for (size_t srcIdx = 0; srcIdx < m.ConstSources.size(); ++srcIdx)
     {
-        size_t connIdx = m.ConstSources[srcIdx].OutflowConn;
+        size_t connIdx = m.ConstSources[srcIdx].outflow_connection_id;
         size_t compId = m.Connections[connIdx].FromId;
         if (ss.UnavailableComponents.contains(compId))
         {
@@ -1042,11 +1042,11 @@ void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss)
             ss.Flows[connIdx].Available_W = 0;
             continue;
         }
-        if (ss.Flows[connIdx].Available_W != m.ConstSources[srcIdx].Available_W)
+        if (ss.Flows[connIdx].Available_W != m.ConstSources[srcIdx].available_W)
         {
             ss.ActiveConnectionsFront.insert(connIdx);
         }
-        ss.Flows[connIdx].Available_W = m.ConstSources[srcIdx].Available_W;
+        ss.Flows[connIdx].Available_W = m.ConstSources[srcIdx].available_W;
     }
 }
 
@@ -1054,11 +1054,11 @@ void ActivateConnectionsForScheduleBasedLoads(Model const& m, SimulationState& s
 {
     for (size_t i = 0; i < m.ScheduledLoads.size(); ++i)
     {
-        size_t connIdx = m.ScheduledLoads[i].InflowConn;
+        size_t connIdx = m.ScheduledLoads[i].inflow_connection_id;
         size_t idx = ss.ScheduleBasedLoadIdx[i];
-        if (idx < m.ScheduledLoads[i].TimesAndLoads.size())
+        if (idx < m.ScheduledLoads[i].times_and_loads.size())
         {
-            auto const& tal = m.ScheduledLoads[i].TimesAndLoads[idx];
+            auto const& tal = m.ScheduledLoads[i].times_and_loads[idx];
             if (tal.Time_s == t)
             {
 
@@ -1077,7 +1077,7 @@ void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState&
     for (size_t i = 0; i < m.ScheduledSrcs.size(); ++i)
     {
         ScheduleBasedSource const& sbs = m.ScheduledSrcs[i];
-        auto outIdx = sbs.OutflowConn;
+        auto outIdx = sbs.outflow_connection_id;
         size_t compId = m.Connections[outIdx].FromId;
         if (ss.UnavailableComponents.contains(compId))
         {
@@ -1089,13 +1089,13 @@ void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState&
             continue;
         }
         auto idx = ss.ScheduleBasedSourceIdx[i];
-        if (idx < sbs.TimeAndAvails.size())
+        if (idx < sbs.time_and_availables.size())
         {
-            auto const& taa = sbs.TimeAndAvails[idx];
+            auto const& taa = sbs.time_and_availables[idx];
             if (taa.Time_s == t)
             {
                 flow_t outAvail_W =
-                    taa.Amount_W > sbs.MaxOutflow_W ? sbs.MaxOutflow_W : taa.Amount_W;
+                    taa.Amount_W > sbs.max_outflow_W ? sbs.max_outflow_W : taa.Amount_W;
                 if (ss.Flows[outIdx].Available_W != outAvail_W)
                 {
                     ss.ActiveConnectionsFront.insert(outIdx);
@@ -1104,7 +1104,7 @@ void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState&
                 auto spillage = outAvail_W > ss.Flows[outIdx].Requested_W
                                     ? (outAvail_W - ss.Flows[outIdx].Requested_W)
                                     : 0;
-                auto wasteIdx = m.ScheduledSrcs[i].WasteflowConn;
+                auto wasteIdx = m.ScheduledSrcs[i].wasteflow_connection_id;
                 ss.Flows[wasteIdx].Requested_W = spillage;
                 ss.Flows[wasteIdx].Available_W = spillage;
             }
@@ -1183,26 +1183,26 @@ void ActivateConnectionsForReliability(Model& m, SimulationState& ss, double tim
 {
     for (auto const& rel : m.Reliabilities)
     {
-        for (auto const& ts : rel.TimeStates)
+        for (auto const& ts : rel.time_states)
         {
             if (ts.time == time)
             {
                 if (ts.state)
                 {
-                    Model_SetComponentToRepaired(m, ss, rel.ComponentId);
+                    Model_SetComponentToRepaired(m, ss, rel.component_id);
                     if (verbose)
                     {
-                        std::cout << "... REPAIRED: " << m.ComponentMap.tag[rel.ComponentId] << "["
-                                  << rel.ComponentId << "]" << std::endl;
+                        std::cout << "... REPAIRED: " << m.ComponentMap.tag[rel.component_id] << "["
+                                  << rel.component_id << "]" << std::endl;
                     }
                 }
                 else
                 {
-                    Model_SetComponentToFailed(m, ss, rel.ComponentId);
+                    Model_SetComponentToFailed(m, ss, rel.component_id);
                     if (verbose)
                     {
-                        std::cout << "... FAILED: " << m.ComponentMap.tag[rel.ComponentId] << "["
-                                  << rel.ComponentId << "]" << std::endl;
+                        std::cout << "... FAILED: " << m.ComponentMap.tag[rel.component_id] << "["
+                                  << rel.component_id << "]" << std::endl;
                         std::cout << "... causes: " << std::endl;
                         for (auto const& fragCause : ts.fragilityModeCauses)
                         {
@@ -1644,12 +1644,12 @@ void RunScheduleBasedSourceBackward(Model& model,
                                     size_t sbsIdx)
 {
     ScheduleBasedSource const& sbs = model.ScheduledSrcs[sbsIdx];
-    assert(outConnIdx == sbs.OutflowConn);
-    auto wasteConn = model.ScheduledSrcs[sbsIdx].WasteflowConn;
+    assert(outConnIdx == sbs.outflow_connection_id);
+    auto wasteConn = model.ScheduledSrcs[sbsIdx].wasteflow_connection_id;
     auto schIdx = ss.ScheduleBasedSourceIdx[sbsIdx];
-    auto available = sbs.TimeAndAvails[schIdx].Amount_W > sbs.MaxOutflow_W
-                         ? sbs.MaxOutflow_W
-                         : sbs.TimeAndAvails[schIdx].Amount_W;
+    auto available = sbs.time_and_availables[schIdx].Amount_W > sbs.max_outflow_W
+                         ? sbs.max_outflow_W
+                         : sbs.time_and_availables[schIdx].Amount_W;
     auto spillage = available > ss.Flows[outConnIdx].Requested_W
                         ? available - ss.Flows[outConnIdx].Requested_W
                         : 0;
@@ -2267,30 +2267,30 @@ void FinalizeFlows(SimulationState& ss)
 double NextEvent(ScheduleBasedLoad const& sb, size_t sbIdx, SimulationState const& ss)
 {
     auto nextIdx = ss.ScheduleBasedLoadIdx[sbIdx] + 1;
-    if (nextIdx >= sb.TimesAndLoads.size())
+    if (nextIdx >= sb.times_and_loads.size())
     {
         return infinite_time;
     }
-    return sb.TimesAndLoads[nextIdx].Time_s;
+    return sb.times_and_loads[nextIdx].Time_s;
 }
 
 double NextEvent(ScheduleBasedSource const& sb, size_t sbIdx, SimulationState const& ss)
 {
     auto nextIdx = ss.ScheduleBasedSourceIdx[sbIdx] + 1;
-    if (nextIdx >= sb.TimeAndAvails.size())
+    if (nextIdx >= sb.time_and_availables.size())
     {
         return infinite_time;
     }
-    return sb.TimeAndAvails[nextIdx].Time_s;
+    return sb.time_and_availables[nextIdx].Time_s;
 }
 
 double NextEvent(ScheduleBasedReliability const& sbr, double t)
 {
-    for (size_t i = 0; i < sbr.TimeStates.size(); ++i)
+    for (size_t i = 0; i < sbr.time_states.size(); ++i)
     {
-        if (sbr.TimeStates[i].time > t)
+        if (sbr.time_states[i].time > t)
         {
-            return sbr.TimeStates[i].time;
+            return sbr.time_states[i].time;
         }
     }
     return infinite_time;
@@ -2424,8 +2424,8 @@ void UpdateScheduleBasedLoadNextEvent(Model const& m, SimulationState& ss, doubl
     for (size_t i = 0; i < m.ScheduledLoads.size(); ++i)
     {
         size_t nextIdx = ss.ScheduleBasedLoadIdx[i] + 1;
-        if (nextIdx < m.ScheduledLoads[i].TimesAndLoads.size() &&
-            m.ScheduledLoads[i].TimesAndLoads[nextIdx].Time_s == time)
+        if (nextIdx < m.ScheduledLoads[i].times_and_loads.size() &&
+            m.ScheduledLoads[i].times_and_loads[nextIdx].Time_s == time)
         {
             ss.ScheduleBasedLoadIdx[i] = nextIdx;
         }
@@ -2437,8 +2437,8 @@ void UpdateScheduleBasedSourceNextEvent(Model const& m, SimulationState& ss, dou
     for (size_t i = 0; i < m.ScheduledSrcs.size(); ++i)
     {
         size_t nextIdx = ss.ScheduleBasedSourceIdx[i] + 1;
-        if (nextIdx < m.ScheduledSrcs[i].TimeAndAvails.size() &&
-            m.ScheduledSrcs[i].TimeAndAvails[nextIdx].Time_s == time)
+        if (nextIdx < m.ScheduledSrcs[i].time_and_availables.size() &&
+            m.ScheduledSrcs[i].time_and_availables[nextIdx].Time_s == time)
         {
             ss.ScheduleBasedSourceIdx[i] = nextIdx;
         }
@@ -2837,8 +2837,8 @@ Model_AddFailureModeToComponent(Model& m, size_t compId, size_t failureDistId, s
     auto linkId = m.Rel.link_component_with_failure_mode(compId, fmId);
     auto schedule = m.Rel.make_schedule_for_link(linkId, m.RandFn, m.DistSys, m.FinalTime);
     ScheduleBasedReliability sbr = {};
-    sbr.ComponentId = compId;
-    sbr.TimeStates = std::move(schedule);
+    sbr.component_id = compId;
+    sbr.time_states = std::move(schedule);
     m.Reliabilities.push_back(std::move(sbr));
     return linkId;
 }
@@ -3172,19 +3172,19 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     {
     case ComponentType::constant_load_type:
     {
-        auto inflowConn = m.ConstLoads[idx].InflowConn;
-        if (ss.Flows[inflowConn].Requested_W != m.ConstLoads[idx].Load_W)
+        auto inflowConn = m.ConstLoads[idx].inflow_connection_id;
+        if (ss.Flows[inflowConn].Requested_W != m.ConstLoads[idx].load_W)
         {
             ss.ActiveConnectionsBack.insert(inflowConn);
         }
-        ss.Flows[inflowConn].Requested_W = m.ConstLoads[idx].Load_W;
+        ss.Flows[inflowConn].Requested_W = m.ConstLoads[idx].load_W;
     }
     break;
     case ComponentType::schedule_based_load_type:
     {
-        auto const inflowConn = m.ConstLoads[idx].InflowConn;
+        auto const inflowConn = m.ConstLoads[idx].inflow_connection_id;
         auto const loadIdx = ss.ScheduleBasedLoadIdx[idx];
-        auto const amount = m.ScheduledLoads[idx].TimesAndLoads[loadIdx].Amount_W;
+        auto const amount = m.ScheduledLoads[idx].times_and_loads[loadIdx].Amount_W;
         if (ss.Flows[inflowConn].Requested_W != amount)
         {
             ss.ActiveConnectionsBack.insert(inflowConn);
@@ -3194,8 +3194,8 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     break;
     case ComponentType::constant_source_type:
     {
-        auto const outflowConn = m.ConstSources[idx].OutflowConn;
-        auto const available = m.ConstSources[idx].Available_W;
+        auto const outflowConn = m.ConstSources[idx].outflow_connection_id;
+        auto const available = m.ConstSources[idx].available_W;
         if (ss.Flows[outflowConn].Available_W != available)
         {
             ss.ActiveConnectionsFront.insert(outflowConn);
@@ -3207,9 +3207,9 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     {
         // TODO: need to call routine to reset wasteflow connection
         // to the right amount as well.
-        auto const outflowConn = m.ScheduledSrcs[idx].OutflowConn;
+        auto const outflowConn = m.ScheduledSrcs[idx].outflow_connection_id;
         auto const availIdx = ss.ScheduleBasedSourceIdx[idx];
-        auto const available = m.ScheduledSrcs[idx].TimeAndAvails[availIdx].Amount_W;
+        auto const available = m.ScheduledSrcs[idx].time_and_availables[availIdx].Amount_W;
         if (ss.Flows[outflowConn].Available_W != available)
         {
             ss.ActiveConnectionsFront.insert(outflowConn);
@@ -3322,7 +3322,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
     {
     case ComponentType::constant_load_type:
     {
-        auto inflowConn = m.ConstLoads[idx].InflowConn;
+        auto inflowConn = m.ConstLoads[idx].inflow_connection_id;
         if (ss.Flows[inflowConn].Requested_W != 0)
         {
             ss.ActiveConnectionsBack.insert(inflowConn);
@@ -3332,7 +3332,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
     break;
     case ComponentType::schedule_based_load_type:
     {
-        auto inflowConn = m.ScheduledLoads[idx].InflowConn;
+        auto inflowConn = m.ScheduledLoads[idx].inflow_connection_id;
         if (ss.Flows[inflowConn].Requested_W != 0)
         {
             ss.ActiveConnectionsBack.insert(inflowConn);
@@ -3342,7 +3342,7 @@ void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t comp
     break;
     case ComponentType::constant_source_type:
     {
-        auto outflowConn = m.ConstSources[idx].OutflowConn;
+        auto outflowConn = m.ConstSources[idx].outflow_connection_id;
         if (ss.Flows[outflowConn].Available_W != 0)
         {
             ss.ActiveConnectionsFront.insert(outflowConn);
@@ -3556,7 +3556,7 @@ size_t Model_AddConstantLoad(
 {
     size_t idx = m.ConstLoads.size();
     ConstantLoad cl {};
-    cl.Load_W = load;
+    cl.load_W = load;
     m.ConstLoads.push_back(std::move(cl));
     return Component_AddComponentReturningId(m.ComponentMap,
                                              ComponentType::constant_load_type,
@@ -3600,9 +3600,9 @@ size_t Model_AddScheduleBasedLoad(Model& m,
 {
     size_t idx = m.ScheduledLoads.size();
     ScheduleBasedLoad sbl = {};
-    sbl.TimesAndLoads = timesAndLoads;
-    sbl.InflowConn = 0;
-    sbl.ScenarioIdToLoadId = scenarioIdToLoadId;
+    sbl.times_and_loads = timesAndLoads;
+    sbl.inflow_connection_id = 0;
+    sbl.scenario_id_to_load_id = scenarioIdToLoadId;
     m.ScheduledLoads.push_back(std::move(sbl));
     return Component_AddComponentReturningId(m.ComponentMap,
                                              ComponentType::schedule_based_load_type,
@@ -3623,7 +3623,7 @@ Model_AddConstantSource(Model& m, flow_t available, size_t outflowTypeId, std::s
 {
     size_t idx = m.ConstSources.size();
     ConstantSource cs {};
-    cs.Available_W = available;
+    cs.available_W = available;
     m.ConstSources.push_back(std::move(cs));
     return Component_AddComponentReturningId(m.ComponentMap,
                                              ComponentType::constant_source_type,
@@ -3650,8 +3650,8 @@ Model_AddScheduleBasedSource(Model& m,
 {
     auto idx = m.ScheduledSrcs.size();
     ScheduleBasedSource sbs = {};
-    sbs.TimeAndAvails = xs;
-    sbs.ScenarioIdToSourceId = scenarioIdToSourceId;
+    sbs.time_and_availables = xs;
+    sbs.scenario_id_to_source_id = scenarioIdToSourceId;
     m.ScheduledSrcs.push_back(sbs);
     size_t wasteId =
         Component_AddComponentReturningId(m.ComponentMap, ComponentType::waste_sink_type, 0);
@@ -3951,7 +3951,7 @@ Connection Model_AddConnection(Model& m,
     case ComponentType::constant_source_type:
     {
         assert(fromIdx < m.ConstSources.size());
-        m.ConstSources[fromIdx].OutflowConn = connId;
+        m.ConstSources[fromIdx].outflow_connection_id = connId;
     }
     break;
     case ComponentType::schedule_based_source_type:
@@ -3961,12 +3961,12 @@ Connection Model_AddConnection(Model& m,
         {
         case 0:
         {
-            m.ScheduledSrcs[fromIdx].OutflowConn = connId;
+            m.ScheduledSrcs[fromIdx].outflow_connection_id = connId;
         }
         break;
         case 1:
         {
-            m.ScheduledSrcs[fromIdx].WasteflowConn = connId;
+            m.ScheduledSrcs[fromIdx].wasteflow_connection_id = connId;
         }
         break;
         default:
@@ -4165,7 +4165,7 @@ Connection Model_AddConnection(Model& m,
     case ComponentType::constant_load_type:
     {
         assert(toIdx < m.ConstLoads.size());
-        m.ConstLoads[toIdx].InflowConn = connId;
+        m.ConstLoads[toIdx].inflow_connection_id = connId;
     }
     break;
     case ComponentType::constant_efficiency_converter_type:
@@ -4247,7 +4247,7 @@ Connection Model_AddConnection(Model& m,
     case ComponentType::schedule_based_load_type:
     {
         assert(toIdx < m.ScheduledLoads.size());
-        m.ScheduledLoads[toIdx].InflowConn = connId;
+        m.ScheduledLoads[toIdx].inflow_connection_id = connId;
     }
     break;
     case ComponentType::waste_sink_type:
@@ -4579,7 +4579,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     std::vector<TimeState> relSch;
     for (size_t i = 0; i < m.Reliabilities.size(); ++i)
     {
-        relSch = TimeState_Combine(relSch, m.Reliabilities[i].TimeStates);
+        relSch = TimeState_Combine(relSch, m.Reliabilities[i].time_states);
     }
     TimeState_CountAndTimeFailureEvents(relSch,
                                         m.FinalTime,
@@ -4592,7 +4592,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     for (size_t i = 0; i < m.Reliabilities.size(); ++i)
     {
         ScheduleBasedReliability const& sbr = m.Reliabilities[i];
-        relSchByCompId[sbr.ComponentId] = sbr.TimeStates;
+        relSchByCompId[sbr.component_id] = sbr.time_states;
     }
     for (size_t compId = 0; compId < m.ComponentMap.tag.size(); ++compId)
     {

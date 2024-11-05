@@ -311,7 +311,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
-            s.TheModel.ScheduledSrcs[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W =
+            s.TheModel.ScheduledSrcs[s.TheModel.ComponentMap.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
         }
     }

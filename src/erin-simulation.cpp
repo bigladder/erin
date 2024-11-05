@@ -192,8 +192,8 @@ void Simulation_PrintComponents(Simulation const& s)
         {
             assert(subtypeIdx < m.ScheduledLoads.size());
             ScheduleBasedLoad const& sbl = m.ScheduledLoads[subtypeIdx];
-            std::cout << "-- inflow connection: " << sbl.InflowConn << std::endl;
-            for (auto const& keyValue : sbl.ScenarioIdToLoadId)
+            std::cout << "-- inflow connection: " << sbl.inflow_connection_id << std::endl;
+            for (auto const& keyValue : sbl.scenario_id_to_load_id)
             {
                 size_t scenarioIdx = keyValue.first;
                 size_t loadIdx = keyValue.second;
@@ -208,15 +208,15 @@ void Simulation_PrintComponents(Simulation const& s)
         {
             assert(subtypeIdx < m.ConstLoads.size());
             ConstantLoad const& cl = m.ConstLoads[subtypeIdx];
-            std::cout << "-- constant request: " << cl.Load_W << " W" << std::endl;
-            std::cout << "-- inflow connection: " << cl.InflowConn << std::endl;
+            std::cout << "-- constant request: " << cl.load_W << " W" << std::endl;
+            std::cout << "-- inflow connection: " << cl.inflow_connection_id << std::endl;
         }
         break;
         case ComponentType::schedule_based_source_type:
         {
             assert(subtypeIdx < m.ScheduledSrcs.size());
             ScheduleBasedSource const& sbs = m.ScheduledSrcs[subtypeIdx];
-            for (auto const& keyValue : sbs.ScenarioIdToSourceId)
+            for (auto const& keyValue : sbs.scenario_id_to_source_id)
             {
                 size_t scenarioIdx = keyValue.first;
                 size_t loadIdx = keyValue.second;
@@ -226,11 +226,11 @@ void Simulation_PrintComponents(Simulation const& s)
                           << ", use supply: " << s.LoadMap.tags[loadIdx] << std::endl;
             }
             std::cout << "-- max outflow (W): "
-                      << (sbs.MaxOutflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(sbs.MaxOutflow_W))
+                      << (sbs.max_outflow_W == max_flow_W ? "unlimited"
+                                                         : std::to_string(sbs.max_outflow_W))
                       << std::endl;
 
-            std::cout << "-- outflow connection: " << sbs.OutflowConn << std::endl;
+            std::cout << "-- outflow connection: " << sbs.outflow_connection_id << std::endl;
         }
         break;
         case ComponentType::constant_efficiency_converter_type:
@@ -383,7 +383,7 @@ void Simulation_PrintComponents(Simulation const& s)
         {
             assert(subtypeIdx < m.ConstSources.size());
             ConstantSource const& cs = m.ConstSources[subtypeIdx];
-            std::cout << "-- outflow connection: " << cs.OutflowConn << std::endl;
+            std::cout << "-- outflow connection: " << cs.outflow_connection_id << std::endl;
         }
         break;
         case ComponentType::switch_type:
@@ -1766,8 +1766,8 @@ void WriteResultsToEventFile(std::ofstream& out,
     std::map<size_t, std::vector<TimeState>> relSchByCompId;
     for (size_t i = 0; i < m.Reliabilities.size(); ++i)
     {
-        size_t compId = m.Reliabilities[i].ComponentId;
-        relSchByCompId[compId] = m.Reliabilities[i].TimeStates;
+        size_t compId = m.Reliabilities[i].component_id;
+        relSchByCompId[compId] = m.Reliabilities[i].time_states;
     }
 
     for (auto const& r : results)
@@ -1869,9 +1869,9 @@ SetLoadsForScenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, siz
 {
     for (size_t sblIdx = 0; sblIdx < loads.size(); ++sblIdx)
     {
-        if (loads[sblIdx].ScenarioIdToLoadId.contains(scenarioIdx))
+        if (loads[sblIdx].scenario_id_to_load_id.contains(scenarioIdx))
         {
-            auto loadId = loads[sblIdx].ScenarioIdToLoadId.at(scenarioIdx);
+            auto loadId = loads[sblIdx].scenario_id_to_load_id.at(scenarioIdx);
             std::vector<TimeAndAmount> schedule {};
             size_t numEntries = loadMap.loads[loadId].size();
             schedule.reserve(numEntries);
@@ -1882,7 +1882,7 @@ SetLoadsForScenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, siz
                 tal.Amount_W = loadMap.loads[loadId][i].Amount_W;
                 schedule.push_back(std::move(tal));
             }
-            loads[sblIdx].TimesAndLoads = std::move(schedule);
+            loads[sblIdx].times_and_loads = std::move(schedule);
         }
         else
         {
@@ -1899,9 +1899,9 @@ SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, 
 {
     for (size_t sblIdx = 0; sblIdx < loads.size(); ++sblIdx)
     {
-        if (loads[sblIdx].ScenarioIdToSourceId.contains(scenarioIdx))
+        if (loads[sblIdx].scenario_id_to_source_id.contains(scenarioIdx))
         {
-            auto loadId = loads[sblIdx].ScenarioIdToSourceId.at(scenarioIdx);
+            auto loadId = loads[sblIdx].scenario_id_to_source_id.at(scenarioIdx);
             std::vector<TimeAndAmount> schedule {};
             size_t numEntries = loadMap.loads[loadId].size();
             schedule.reserve(numEntries);
@@ -1912,7 +1912,7 @@ SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, 
                 tal.Amount_W = loadMap.loads[loadId][i].Amount_W;
                 schedule.push_back(std::move(tal));
             }
-            loads[sblIdx].TimeAndAvails = std::move(schedule);
+            loads[sblIdx].time_and_availables = std::move(schedule);
         }
         else
         {
@@ -1979,15 +1979,15 @@ std::vector<ScheduleBasedReliability> CopyReliabilities(Simulation const& s)
     {
         ScheduleBasedReliability const& sbrSrc = s.TheModel.Reliabilities[sbrIdx];
         ScheduleBasedReliability sbrCopy {};
-        sbrCopy.ComponentId = sbrSrc.ComponentId;
-        sbrCopy.TimeStates.reserve(sbrSrc.TimeStates.size());
-        for (size_t tsIdx = 0; tsIdx < sbrSrc.TimeStates.size(); ++tsIdx)
+        sbrCopy.component_id = sbrSrc.component_id;
+        sbrCopy.time_states.reserve(sbrSrc.time_states.size());
+        for (size_t tsIdx = 0; tsIdx < sbrSrc.time_states.size(); ++tsIdx)
         {
-            TimeState const& tsSrc = sbrSrc.TimeStates[tsIdx];
+            TimeState const& tsSrc = sbrSrc.time_states[tsIdx];
             TimeState tsCopy {};
             tsCopy.time = tsSrc.time;
             tsCopy.state = tsSrc.state;
-            sbrCopy.TimeStates.push_back(std::move(tsCopy));
+            sbrCopy.time_states.push_back(std::move(tsCopy));
         }
         originalReliabilities.push_back(std::move(sbrCopy));
     }
@@ -2002,7 +2002,7 @@ std::vector<std::string> ReliabilitiesToStrings(std::vector<ScheduleBasedReliabi
     {
         std::ostringstream oss {};
         bool isFirst = true;
-        for (TimeState const& ts : sbr.TimeStates)
+        for (TimeState const& ts : sbr.time_states)
         {
             if (isFirst)
             {
@@ -2015,7 +2015,7 @@ std::vector<std::string> ReliabilitiesToStrings(std::vector<ScheduleBasedReliabi
             oss << "{" << ts.time << "," << ts.state << "}";
         }
         result.push_back(
-            fmt::format("- {{ComponentId: {},TimeStates=[{}]}}", sbr.ComponentId, oss.str()));
+            fmt::format("- {{ComponentId: {},TimeStates=[{}]}}", sbr.component_id, oss.str()));
     }
     return result;
 }
@@ -2078,8 +2078,8 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
         // NOTE: Reliabilities have not yet been assigned so we can
         // just push_back()
         ScheduleBasedReliability sbr {};
-        sbr.ComponentId = compId;
-        sbr.TimeStates = std::move(clip);
+        sbr.component_id = compId;
+        sbr.time_states = std::move(clip);
         result.push_back(std::move(sbr));
         reliabilitiesAdded.insert(compId);
     }
@@ -2164,7 +2164,7 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
                 size_t reliabilityId = 0;
                 for (size_t rIdx = 0; rIdx < result.size(); ++rIdx)
                 {
-                    if (result[rIdx].ComponentId == compId)
+                    if (result[rIdx].component_id == compId)
                     {
                         hasReliabilityAlready = true;
                         reliabilityId = rIdx;
@@ -2194,15 +2194,15 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
                 }
                 if (hasReliabilityAlready)
                 {
-                    auto const& currentSch = result[reliabilityId].TimeStates;
+                    auto const& currentSch = result[reliabilityId].time_states;
                     std::vector<TimeState> combined = TimeState_Combine(currentSch, newTimeStates);
-                    result[reliabilityId].TimeStates = std::move(combined);
+                    result[reliabilityId].time_states = std::move(combined);
                 }
                 else
                 {
                     ScheduleBasedReliability sbr {};
-                    sbr.ComponentId = compId;
-                    sbr.TimeStates = newTimeStates;
+                    sbr.component_id = compId;
+                    sbr.time_states = newTimeStates;
                     result.push_back(std::move(sbr));
                 }
             }
@@ -2658,9 +2658,9 @@ void WriteReliabilityCurves(std::string const& scenarioName,
     for (size_t i = 0; i < s.TheModel.Reliabilities.size(); ++i)
     {
         ScheduleBasedReliability const& sbr = s.TheModel.Reliabilities[i];
-        if (sbr.TimeStates.size() > maxRow)
+        if (sbr.time_states.size() > maxRow)
         {
-            maxRow = sbr.TimeStates.size();
+            maxRow = sbr.time_states.size();
         }
     }
     for (size_t row = 0; row < maxRow; row++)
@@ -2674,7 +2674,7 @@ void WriteReliabilityCurves(std::string const& scenarioName,
                 {
                     out << ",";
                 }
-                std::string const& compTag = s.TheModel.ComponentMap.tag[sbr.ComponentId];
+                std::string const& compTag = s.TheModel.ComponentMap.tag[sbr.component_id];
                 out << "time (h)," << compTag << " state,causes";
             }
             out << "\n";
@@ -2686,14 +2686,14 @@ void WriteReliabilityCurves(std::string const& scenarioName,
             {
                 out << ",";
             }
-            if (row < sbr.TimeStates.size())
+            if (row < sbr.time_states.size())
             {
                 std::vector<std::string> causes;
-                for (size_t fmId : sbr.TimeStates[row].failureModeCauses)
+                for (size_t fmId : sbr.time_states[row].failureModeCauses)
                 {
                     causes.push_back(s.FailureModes.Tags[fmId]);
                 }
-                for (size_t fmId : sbr.TimeStates[row].fragilityModeCauses)
+                for (size_t fmId : sbr.time_states[row].fragilityModeCauses)
                 {
                     causes.push_back(s.FragilityModes.Tags[fmId]);
                 }
@@ -2702,8 +2702,8 @@ void WriteReliabilityCurves(std::string const& scenarioName,
                 {
                     causeStr += (causeStr.size() == 0) ? cause : fmt::format(" | {}", cause);
                 }
-                out << time_in_seconds_to_desired_unit(sbr.TimeStates[row].time, TimeUnit::Hour)
-                    << "," << sbr.TimeStates[row].state << "," << causeStr;
+                out << time_in_seconds_to_desired_unit(sbr.time_states[row].time, TimeUnit::Hour)
+                    << "," << sbr.time_states[row].state << "," << causeStr;
             }
             else
             {

@@ -183,36 +183,36 @@ struct ScenarioOccurrenceStats
 
 struct ConstantLoad
 {
-    flow_t Load_W;
-    size_t InflowConn;
+    flow_t load_W;
+    size_t inflow_connection_id;
 };
 
 struct ScheduleBasedLoad
 {
-    std::vector<TimeAndAmount> TimesAndLoads;
-    size_t InflowConn;
-    std::map<size_t, size_t> ScenarioIdToLoadId;
+    std::vector<TimeAndAmount> times_and_loads;
+    size_t inflow_connection_id;
+    std::map<size_t, size_t> scenario_id_to_load_id;
 };
 
 struct ScheduleBasedReliability
 {
-    std::vector<TimeState> TimeStates;
-    size_t ComponentId;
+    std::vector<TimeState> time_states;
+    size_t component_id;
 };
 
 struct ConstantSource
 {
-    flow_t Available_W;
-    size_t OutflowConn;
+    flow_t available_W;
+    size_t outflow_connection_id;
 };
 
 struct ScheduleBasedSource
 {
-    std::vector<TimeAndAmount> TimeAndAvails;
-    size_t OutflowConn;
-    size_t WasteflowConn;
-    std::map<size_t, size_t> ScenarioIdToSourceId;
-    flow_t MaxOutflow_W = max_flow_W;
+    std::vector<TimeAndAmount> time_and_availables;
+    size_t outflow_connection_id;
+    size_t wasteflow_connection_id;
+    std::map<size_t, size_t> scenario_id_to_source_id;
+    flow_t max_outflow_W = max_flow_W;
 };
 
 struct ConstantEfficiencyConverter

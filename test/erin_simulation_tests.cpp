@@ -178,13 +178,13 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_NoAge)
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
-        EXPECT_EQ(sbr.ComponentId, 0);
-        EXPECT_EQ(sbr.TimeStates.size(), 1);
-        EXPECT_EQ(sbr.TimeStates[0].time, 0.0);
-        EXPECT_EQ(sbr.TimeStates[0].state, false);
-        EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.component_id, 0);
+        EXPECT_EQ(sbr.time_states.size(), 1);
+        EXPECT_EQ(sbr.time_states[0].time, 0.0);
+        EXPECT_EQ(sbr.time_states[0].state, false);
+        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
         {
             EXPECT_EQ(fmId, 0);
         }
@@ -203,20 +203,20 @@ TEST(ErinSim, TestFragility_NoReliability_Repair_NoOffset_NoAge)
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
-        EXPECT_EQ(sbr.ComponentId, 0);
-        EXPECT_EQ(sbr.TimeStates.size(), 2);
-        EXPECT_EQ(sbr.TimeStates[0].time, 0.0);
-        EXPECT_EQ(sbr.TimeStates[0].state, false);
-        EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.component_id, 0);
+        EXPECT_EQ(sbr.time_states.size(), 2);
+        EXPECT_EQ(sbr.time_states[0].time, 0.0);
+        EXPECT_EQ(sbr.time_states[0].state, false);
+        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
         {
             EXPECT_EQ(fmId, 0);
         }
-        EXPECT_DOUBLE_EQ(sbr.TimeStates[1].time, 100.0);
-        EXPECT_EQ(sbr.TimeStates[1].state, true);
-        EXPECT_EQ(sbr.TimeStates[1].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[1].fragilityModeCauses.size(), 0);
+        EXPECT_DOUBLE_EQ(sbr.time_states[1].time, 100.0);
+        EXPECT_EQ(sbr.time_states[1].state, true);
+        EXPECT_EQ(sbr.time_states[1].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[1].fragilityModeCauses.size(), 0);
     }
 }
 
@@ -232,13 +232,13 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_Offset_NoAge)
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
-        EXPECT_EQ(sbr.ComponentId, 0);
-        EXPECT_EQ(sbr.TimeStates.size(), 1);
-        EXPECT_EQ(sbr.TimeStates[0].time, 0.0);
-        EXPECT_EQ(sbr.TimeStates[0].state, false);
-        EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.component_id, 0);
+        EXPECT_EQ(sbr.time_states.size(), 1);
+        EXPECT_EQ(sbr.time_states[0].time, 0.0);
+        EXPECT_EQ(sbr.time_states[0].state, false);
+        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
         {
             EXPECT_EQ(fmId, 0);
         }
@@ -257,13 +257,13 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_Age)
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
-        EXPECT_EQ(sbr.ComponentId, 0);
-        EXPECT_EQ(sbr.TimeStates.size(), 1);
-        EXPECT_EQ(sbr.TimeStates[0].time, 0.0);
-        EXPECT_EQ(sbr.TimeStates[0].state, false);
-        EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.component_id, 0);
+        EXPECT_EQ(sbr.time_states.size(), 1);
+        EXPECT_EQ(sbr.time_states[0].time, 0.0);
+        EXPECT_EQ(sbr.time_states[0].state, false);
+        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
         {
             EXPECT_EQ(fmId, 0);
         }
@@ -282,13 +282,13 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_Offset_Age)
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
-        EXPECT_EQ(sbr.ComponentId, 0);
-        EXPECT_EQ(sbr.TimeStates.size(), 1);
-        EXPECT_EQ(sbr.TimeStates[0].time, 0.0);
-        EXPECT_EQ(sbr.TimeStates[0].state, false);
-        EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.component_id, 0);
+        EXPECT_EQ(sbr.time_states.size(), 1);
+        EXPECT_EQ(sbr.time_states[0].time, 0.0);
+        EXPECT_EQ(sbr.time_states[0].state, false);
+        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
         {
             EXPECT_EQ(fmId, 0);
         }
@@ -369,36 +369,36 @@ TEST(ErinSim, TestFragility_Reliability_NoRepair_NoOffset_NoAge)
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
-        EXPECT_EQ(sbr.ComponentId, 0);
-        EXPECT_EQ(sbr.TimeStates.size(), 3);
+        EXPECT_EQ(sbr.component_id, 0);
+        EXPECT_EQ(sbr.time_states.size(), 3);
         // 1st
-        EXPECT_EQ(sbr.TimeStates[0].time, 0.0);
-        EXPECT_EQ(sbr.TimeStates[0].state, false);
-        EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.TimeStates[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].time, 0.0);
+        EXPECT_EQ(sbr.time_states[0].state, false);
+        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
+        for (size_t fm_id : sbr.time_states[0].fragilityModeCauses)
         {
             EXPECT_EQ(fm_id, 0);
         }
         // 2nd
-        EXPECT_EQ(sbr.TimeStates[1].time, 10.0);
-        EXPECT_EQ(sbr.TimeStates[1].state, false);
-        EXPECT_EQ(sbr.TimeStates[1].failureModeCauses.size(), 1);
-        for (size_t fm_id : sbr.TimeStates[1].failureModeCauses)
+        EXPECT_EQ(sbr.time_states[1].time, 10.0);
+        EXPECT_EQ(sbr.time_states[1].state, false);
+        EXPECT_EQ(sbr.time_states[1].failureModeCauses.size(), 1);
+        for (size_t fm_id : sbr.time_states[1].failureModeCauses)
         {
             EXPECT_EQ(fm_id, 0);
         }
-        EXPECT_EQ(sbr.TimeStates[1].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.TimeStates[1].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[1].fragilityModeCauses.size(), 1);
+        for (size_t fm_id : sbr.time_states[1].fragilityModeCauses)
         {
             EXPECT_EQ(fm_id, 0);
         }
         // 3rd
-        EXPECT_EQ(sbr.TimeStates[2].time, 20.0);
-        EXPECT_EQ(sbr.TimeStates[2].state, false);
-        EXPECT_EQ(sbr.TimeStates[2].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[2].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.TimeStates[2].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[2].time, 20.0);
+        EXPECT_EQ(sbr.time_states[2].state, false);
+        EXPECT_EQ(sbr.time_states[2].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[2].fragilityModeCauses.size(), 1);
+        for (size_t fm_id : sbr.time_states[2].fragilityModeCauses)
         {
             EXPECT_EQ(fm_id, 0);
         }
@@ -431,36 +431,36 @@ TEST(ErinSim, TestFragility_Reliability_Repair_Offset_Age)
     EXPECT_EQ(actual.size(), 1);
     for (ScheduleBasedReliability const& sbr : actual)
     {
-        EXPECT_EQ(sbr.ComponentId, 0);
-        EXPECT_EQ(sbr.TimeStates.size(), 3);
+        EXPECT_EQ(sbr.component_id, 0);
+        EXPECT_EQ(sbr.time_states.size(), 3);
         // 1st
-        EXPECT_EQ(sbr.TimeStates[0].time, 0.0);
-        EXPECT_EQ(sbr.TimeStates[0].state, false);
-        EXPECT_EQ(sbr.TimeStates[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[0].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.TimeStates[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].time, 0.0);
+        EXPECT_EQ(sbr.time_states[0].state, false);
+        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
+        for (size_t fm_id : sbr.time_states[0].fragilityModeCauses)
         {
             EXPECT_EQ(fm_id, 0);
         }
         // 2nd
-        EXPECT_EQ(sbr.TimeStates[1].time, 10.0);
-        EXPECT_EQ(sbr.TimeStates[1].state, false);
-        EXPECT_EQ(sbr.TimeStates[1].failureModeCauses.size(), 1);
-        for (size_t fmId : sbr.TimeStates[1].failureModeCauses)
+        EXPECT_EQ(sbr.time_states[1].time, 10.0);
+        EXPECT_EQ(sbr.time_states[1].state, false);
+        EXPECT_EQ(sbr.time_states[1].failureModeCauses.size(), 1);
+        for (size_t fmId : sbr.time_states[1].failureModeCauses)
         {
             EXPECT_EQ(fmId, 0);
         }
-        EXPECT_EQ(sbr.TimeStates[1].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.TimeStates[1].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[1].fragilityModeCauses.size(), 1);
+        for (size_t fm_id : sbr.time_states[1].fragilityModeCauses)
         {
             EXPECT_EQ(fm_id, 0);
         }
         // 3rd
-        EXPECT_EQ(sbr.TimeStates[2].time, 20.0);
-        EXPECT_EQ(sbr.TimeStates[2].state, false);
-        EXPECT_EQ(sbr.TimeStates[2].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.TimeStates[2].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.TimeStates[2].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[2].time, 20.0);
+        EXPECT_EQ(sbr.time_states[2].state, false);
+        EXPECT_EQ(sbr.time_states[2].failureModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[2].fragilityModeCauses.size(), 1);
+        for (size_t fm_id : sbr.time_states[2].fragilityModeCauses)
         {
             EXPECT_EQ(fm_id, 0);
         }

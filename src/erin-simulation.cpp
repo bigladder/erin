@@ -480,7 +480,8 @@ void Simulation_PrintFailureModes(Simulation const& s)
     {
         auto maybeFailureDist =
             s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.failure_distribution_id[i]);
-        auto maybeRepairDist = s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.repair_distribution_id[i]);
+        auto maybeRepairDist =
+            s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.repair_distribution_id[i]);
         std::cout << i << ": " << s.FailureModes.tag[i] << std::endl;
         if (maybeFailureDist.has_value())
         {
@@ -498,8 +499,8 @@ void Simulation_PrintFailureModes(Simulation const& s)
         {
             Distribution const& repairDist = maybeRepairDist.value();
             std::cout << "-- repair distribution: " << repairDist.Tag << ", "
-                      << dist_type_to_tag(repairDist.Type) << "[" << s.FailureModes.repair_distribution_id[i]
-                      << "]" << std::endl;
+                      << dist_type_to_tag(repairDist.Type) << "["
+                      << s.FailureModes.repair_distribution_id[i] << "]" << std::endl;
         }
         else
         {

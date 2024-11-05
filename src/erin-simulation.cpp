@@ -441,8 +441,10 @@ void Simulation_PrintFragilityCurves(Simulation const& s)
         {
         case (FragilityCurveType::linear):
         {
-            std::cout << "-- lower bound: " << s.LinearFragilityCurves[idx].lower_bound << std::endl;
-            std::cout << "-- upper bound: " << s.LinearFragilityCurves[idx].upper_bound << std::endl;
+            std::cout << "-- lower bound: " << s.LinearFragilityCurves[idx].lower_bound
+                      << std::endl;
+            std::cout << "-- upper bound: " << s.LinearFragilityCurves[idx].upper_bound
+                      << std::endl;
             size_t intensityId = s.LinearFragilityCurves[idx].vulnerability_id;
             std::cout << "-- vulnerable to: " << s.Intensities.tag[intensityId] << "["
                       << intensityId << "]" << std::endl;

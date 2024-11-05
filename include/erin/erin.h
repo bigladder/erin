@@ -580,7 +580,8 @@ struct FailureModeDict
 // FUNCTIONS
 std::vector<std::string> check_network(Model const& m);
 
-std::vector<TimeAndAmount> ConvertToTimeAndAmounts(std::vector<std::vector<double>> const& input,
+// NOTE: INTERNAL
+std::vector<TimeAndAmount> convert_to_time_and_amounts(std::vector<std::vector<double>> const& input,
                                                    double timeToSeconds = 1.0,
                                                    double rateToWatts = 1.0);
 

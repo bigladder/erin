@@ -68,7 +68,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
         }
         rateUnit = maybe.value();
     }
-    auto timeRatePairs = ConvertToTimeAndAmounts(
+    auto timeRatePairs = convert_to_time_and_amounts(
         std::get<std::vector<std::vector<double>>>(table.at("time_rate_pairs").Value),
         time_to_seconds(1.0, timeUnit),
         power_to_watts(1.0, rateUnit));

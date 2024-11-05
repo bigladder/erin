@@ -94,17 +94,16 @@ struct LoadDict
 // NOTE: arrays in struct below indexed by size_t which we call ComponentId
 struct ComponentDict
 {
-    // The index into the component vector for the given component subtype
-    std::vector<size_t> Idx;
-    std::vector<ComponentType> CompType;
-    std::vector<std::string> Tag;
-    std::vector<double> InitialAges_s;
+    std::vector<size_t> subtype_index;
+    std::vector<ComponentType> component_type;
+    std::vector<std::string> tag;
+    std::vector<double> initial_age_s;
     // Component's inflow type by inport; result indexes FlowDict
-    std::vector<std::vector<size_t>> InflowType;
+    std::vector<std::vector<size_t>> inflow_type;
     // Component's outflow type by outport; result indexes FlowDict
-    std::vector<std::vector<size_t>> OutflowType;
+    std::vector<std::vector<size_t>> outflow_type;
     // if true, all connected inflows should be reported in event log
-    std::vector<bool> Report;
+    std::vector<bool> report;
 };
 
 struct FlowSummary

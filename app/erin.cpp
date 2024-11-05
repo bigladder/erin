@@ -213,7 +213,7 @@ CLI::App* add_graph(CLI::App& app)
         }
         Simulation s = std::move(maybe_sim.value());
         std::string dot_data =
-            network_to_dot(s.TheModel.Connections, s.TheModel.ComponentMap.Tag, "", use_html);
+            network_to_dot(s.TheModel.Connections, s.TheModel.ComponentMap.tag, "", use_html);
         // save string from network_to_dot
         std::ofstream ofs(output_filename, std::ios_base::binary);
         if (!ofs.good())

@@ -69,7 +69,7 @@ std::vector<std::string> Model_check_network(Model const& m)
     std::unordered_set<std::string> connectedInflowPorts;
     std::unordered_set<std::string> compTags;
     {
-        for (auto const& tag : m.ComponentMap.Tag)
+        for (auto const& tag : m.ComponentMap.tag)
         {
             if (!tag.empty() && compTags.contains(tag))
             {
@@ -78,25 +78,25 @@ std::vector<std::string> Model_check_network(Model const& m)
             compTags.insert(tag);
         }
     }
-    assert(m.ComponentMap.CompType.size() == m.ComponentMap.InflowType.size());
-    assert(m.ComponentMap.CompType.size() == m.ComponentMap.OutflowType.size());
-    assert(m.ComponentMap.CompType.size() == m.ComponentMap.Idx.size());
-    assert(m.ComponentMap.CompType.size() == m.ComponentMap.InitialAges_s.size());
-    assert(m.ComponentMap.CompType.size() == m.ComponentMap.Report.size());
-    assert(m.ComponentMap.CompType.size() == m.ComponentMap.Tag.size());
+    assert(m.ComponentMap.component_type.size() == m.ComponentMap.inflow_type.size());
+    assert(m.ComponentMap.component_type.size() == m.ComponentMap.outflow_type.size());
+    assert(m.ComponentMap.component_type.size() == m.ComponentMap.subtype_index.size());
+    assert(m.ComponentMap.component_type.size() == m.ComponentMap.initial_age_s.size());
+    assert(m.ComponentMap.component_type.size() == m.ComponentMap.report.size());
+    assert(m.ComponentMap.component_type.size() == m.ComponentMap.tag.size());
     std::unordered_map<size_t, std::set<size_t>> muxCompIdToInflowConns;
     std::unordered_map<size_t, std::set<size_t>> muxCompIdToOutflowConns;
-    for (size_t compId = 0; compId < m.ComponentMap.CompType.size(); ++compId)
+    for (size_t compId = 0; compId < m.ComponentMap.component_type.size(); ++compId)
     {
-        assert(compId < m.ComponentMap.CompType.size());
-        if (m.ComponentMap.CompType[compId] == ComponentType::mux_type)
+        assert(compId < m.ComponentMap.component_type.size());
+        if (m.ComponentMap.component_type[compId] == ComponentType::mux_type)
         {
             muxCompIdToInflowConns[compId] = std::set<size_t> {};
             muxCompIdToOutflowConns[compId] = std::set<size_t> {};
         }
-        ComponentType compType = m.ComponentMap.CompType[compId];
-        size_t idx = m.ComponentMap.Idx[compId];
-        std::string const& tag = m.ComponentMap.Tag[compId];
+        ComponentType compType = m.ComponentMap.component_type[compId];
+        size_t idx = m.ComponentMap.subtype_index[compId];
+        std::string const& tag = m.ComponentMap.tag[compId];
         size_t nConns = m.Connections.size();
         ignore(nConns);
         switch (compType)
@@ -828,8 +828,8 @@ std::vector<std::string> Model_check_network(Model const& m)
                 << "- outflowCompPort: " << outflowCompPort << "\n"
                 << "- compId: " << conn.FromId << "\n"
                 << "- outflowPort: " << conn.FromPort << "\n"
-                << "- tag: " << m.ComponentMap.Tag[conn.FromId] << "\n"
-                << "- type: " << ToString(m.ComponentMap.CompType[conn.FromId]) << "\n";
+                << "- tag: " << m.ComponentMap.tag[conn.FromId] << "\n"
+                << "- type: " << ToString(m.ComponentMap.component_type[conn.FromId]) << "\n";
             issues.push_back(oss.str());
         }
         connectedOutflowPorts.insert(outflowCompPort);
@@ -846,17 +846,17 @@ std::vector<std::string> Model_check_network(Model const& m)
                 << "- inflowCompPort: " << inflowCompPort << "\n"
                 << "- compId: " << conn.ToId << "\n"
                 << "- outflowPort: " << conn.ToPort << "\n"
-                << "- tag: " << m.ComponentMap.Tag[conn.ToId] << "\n"
-                << "- type: " << ToString(m.ComponentMap.CompType[conn.ToId]) << "\n";
+                << "- tag: " << m.ComponentMap.tag[conn.ToId] << "\n"
+                << "- type: " << ToString(m.ComponentMap.component_type[conn.ToId]) << "\n";
             issues.push_back(oss.str());
         }
         connectedInflowPorts.insert(inflowCompPort);
     }
-    for (size_t compId = 0; compId < m.ComponentMap.CompType.size(); ++compId)
+    for (size_t compId = 0; compId < m.ComponentMap.component_type.size(); ++compId)
     {
-        if (m.ComponentMap.CompType[compId] == ComponentType::mux_type)
+        if (m.ComponentMap.component_type[compId] == ComponentType::mux_type)
         {
-            Mux const& mux = m.Muxes[m.ComponentMap.Idx[compId]];
+            Mux const& mux = m.Muxes[m.ComponentMap.subtype_index[compId]];
             if (mux.NumInports != muxCompIdToInflowConns[compId].size())
             {
                 std::ostringstream oss;
@@ -962,14 +962,14 @@ size_t Component_AddComponentReturningId(ComponentDict& c,
                                          double initialAge_s,
                                          bool report)
 {
-    size_t id = c.CompType.size();
-    c.CompType.push_back(ct);
-    c.Idx.push_back(idx);
-    c.Tag.push_back(tag);
-    c.InitialAges_s.push_back(initialAge_s);
-    c.InflowType.push_back(inflowType);
-    c.OutflowType.push_back(outflowType);
-    c.Report.push_back(report);
+    size_t id = c.component_type.size();
+    c.component_type.push_back(ct);
+    c.subtype_index.push_back(idx);
+    c.tag.push_back(tag);
+    c.initial_age_s.push_back(initialAge_s);
+    c.inflow_type.push_back(inflowType);
+    c.outflow_type.push_back(outflowType);
+    c.report.push_back(report);
     return id;
 }
 
@@ -1192,7 +1192,7 @@ void ActivateConnectionsForReliability(Model& m, SimulationState& ss, double tim
                     Model_SetComponentToRepaired(m, ss, rel.ComponentId);
                     if (verbose)
                     {
-                        std::cout << "... REPAIRED: " << m.ComponentMap.Tag[rel.ComponentId] << "["
+                        std::cout << "... REPAIRED: " << m.ComponentMap.tag[rel.ComponentId] << "["
                                   << rel.ComponentId << "]" << std::endl;
                     }
                 }
@@ -1201,7 +1201,7 @@ void ActivateConnectionsForReliability(Model& m, SimulationState& ss, double tim
                     Model_SetComponentToFailed(m, ss, rel.ComponentId);
                     if (verbose)
                     {
-                        std::cout << "... FAILED: " << m.ComponentMap.Tag[rel.ComponentId] << "["
+                        std::cout << "... FAILED: " << m.ComponentMap.tag[rel.ComponentId] << "["
                                   << rel.ComponentId << "]" << std::endl;
                         std::cout << "... causes: " << std::endl;
                         for (auto const& fragCause : ts.fragilityModeCauses)
@@ -2374,14 +2374,14 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
             std::cout << "ERROR: netEnergyAdded is lower than discharge limit" << std::endl;
             std::cout << "compId: " << compId << std::endl;
             std::cout << "store idx: " << storeIdx << std::endl;
-            std::cout << "tag: " << m.ComponentMap.Tag[compId] << std::endl;
-            for (size_t compId_Idx = 0; compId_Idx < m.ComponentMap.Tag.size(); ++compId_Idx)
+            std::cout << "tag: " << m.ComponentMap.tag[compId] << std::endl;
+            for (size_t compId_Idx = 0; compId_Idx < m.ComponentMap.tag.size(); ++compId_Idx)
             {
-                if (m.ComponentMap.CompType[compId_Idx] == ComponentType::store_type &&
-                    m.ComponentMap.Idx[compId_Idx] == storeIdx)
+                if (m.ComponentMap.component_type[compId_Idx] == ComponentType::store_type &&
+                    m.ComponentMap.subtype_index[compId_Idx] == storeIdx)
                 {
                     std::cout << "compId (from search): " << compId_Idx << std::endl;
-                    std::cout << "tag (from search): " << m.ComponentMap.Tag[compId_Idx]
+                    std::cout << "tag (from search): " << m.ComponentMap.tag[compId_Idx]
                               << std::endl;
                 }
             }
@@ -2805,7 +2805,7 @@ void PrintModelState(Model& m, SimulationState& ss)
     }
 }
 
-size_t Model_NumberOfComponents(Model const& m) { return m.ComponentMap.Tag.size(); }
+size_t Model_NumberOfComponents(Model const& m) { return m.ComponentMap.tag.size(); }
 
 // TODO: add schedule-based reliability index?
 void Model_SetupSimulationState(Model& model, SimulationState& ss)
@@ -3083,7 +3083,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                 for (auto const& item : sumOfFlowsByCompId)
                 {
                     size_t const& compId = item.first;
-                    ComponentType ctype = model.ComponentMap.CompType[compId];
+                    ComponentType ctype = model.ComponentMap.component_type[compId];
                     if (ctype == ComponentType::constant_load_type ||
                         ctype == ComponentType::schedule_based_load_type ||
                         ctype == ComponentType::waste_sink_type ||
@@ -3099,7 +3099,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                         Log_warning(log,
                                     fmt::format("{} doesn't have a zero sum of all flows: "
                                                 "{} W",
-                                                model.ComponentMap.Tag[item.first],
+                                                model.ComponentMap.tag[item.first],
                                                 item.second));
                         for (size_t connIdx = 0; connIdx < model.Connections.size(); ++connIdx)
                         {
@@ -3157,7 +3157,7 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
 
 void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t compId)
 {
-    if (compId >= m.ComponentMap.CompType.size())
+    if (compId >= m.ComponentMap.component_type.size())
     {
         write_error_message("", "invalid component id");
         std::exit(1);
@@ -3166,8 +3166,8 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     {
         ss.UnavailableComponents.erase(compId);
     }
-    auto idx = m.ComponentMap.Idx[compId];
-    switch (m.ComponentMap.CompType[compId])
+    auto idx = m.ComponentMap.subtype_index[compId];
+    switch (m.ComponentMap.component_type[compId])
     {
     case ComponentType::constant_load_type:
     {
@@ -3310,14 +3310,14 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
 
 void Model_SetComponentToFailed(Model const& m, SimulationState& ss, size_t compId)
 {
-    if (compId >= m.ComponentMap.CompType.size())
+    if (compId >= m.ComponentMap.component_type.size())
     {
         write_error_message("", "invalid component id");
         std::exit(1);
     }
     ss.UnavailableComponents.insert(compId);
-    auto idx = m.ComponentMap.Idx[compId];
-    switch (m.ComponentMap.CompType[compId])
+    auto idx = m.ComponentMap.subtype_index[compId];
+    switch (m.ComponentMap.component_type[compId])
     {
     case ComponentType::constant_load_type:
     {
@@ -3741,7 +3741,7 @@ ComponentIdAndWasteConnection Model_AddStoreWithWasteflow(Model& m,
     assert(roundtripEfficiency > 0.0 && roundtripEfficiency <= 1.0);
     size_t id = Model_AddStore(
         m, capacity, maxCharge, maxDischarge, chargeAmount, initialStorage, flowId, tag);
-    size_t storeIdx = m.ComponentMap.Idx[id];
+    size_t storeIdx = m.ComponentMap.subtype_index[id];
     m.Stores[storeIdx].RoundTripEfficiency = roundtripEfficiency;
     size_t wasteId = Component_AddComponentReturningId(m.ComponentMap,
                                                        ComponentType::waste_sink_type,
@@ -3891,10 +3891,10 @@ Connection Model_AddConnection(Model& m,
                                size_t flowId,
                                bool checkIntegrity)
 {
-    ComponentType fromType = m.ComponentMap.CompType[fromId];
-    size_t fromIdx = m.ComponentMap.Idx[fromId];
-    ComponentType toType = m.ComponentMap.CompType[toId];
-    size_t toIdx = m.ComponentMap.Idx[toId];
+    ComponentType fromType = m.ComponentMap.component_type[fromId];
+    size_t fromIdx = m.ComponentMap.subtype_index[fromId];
+    ComponentType toType = m.ComponentMap.component_type[toId];
+    size_t toIdx = m.ComponentMap.subtype_index[toId];
     Connection c {
         .From = fromType,
         .FromIdx = fromIdx,
@@ -3918,8 +3918,8 @@ Connection Model_AddConnection(Model& m,
                 std::cout << "INTEGRITY VIOLATION: "
                           << "attempt to doubly connect "
                           << "compId=" << fromId << " outport=" << fromPort
-                          << " tag=" << m.ComponentMap.Tag[fromId]
-                          << " type=" << ToString(m.ComponentMap.CompType[fromId]) << std::endl;
+                          << " tag=" << m.ComponentMap.tag[fromId]
+                          << " type=" << ToString(m.ComponentMap.component_type[fromId]) << std::endl;
             }
             if (conn.ToId == toId && conn.ToPort == toPort)
             {
@@ -3927,8 +3927,8 @@ Connection Model_AddConnection(Model& m,
                 std::cout << "INTEGRITY VIOLATION: "
                           << "attempt to doubly connect "
                           << "compId=" << toId << " inport=" << toPort
-                          << " tag=" << m.ComponentMap.Tag[toId]
-                          << " type=" << ToString(m.ComponentMap.CompType[toId]) << std::endl;
+                          << " tag=" << m.ComponentMap.tag[toId]
+                          << " type=" << ToString(m.ComponentMap.component_type[toId]) << std::endl;
             }
         }
         if (issueFound)
@@ -4303,12 +4303,12 @@ std::optional<flow_t> ModelResults_GetStoreState(Model const& m,
                                                  double time,
                                                  std::vector<TimeAndFlows> timeAndFlows)
 {
-    if (compId >= m.ComponentMap.CompType.size() ||
-        m.ComponentMap.CompType[compId] != ComponentType::store_type)
+    if (compId >= m.ComponentMap.component_type.size() ||
+        m.ComponentMap.component_type[compId] != ComponentType::store_type)
     {
         return {};
     }
-    size_t storeIdx = m.ComponentMap.Idx[compId];
+    size_t storeIdx = m.ComponentMap.subtype_index[compId];
     // TODO: update to also be able to give storage amounts between events
     // by looking at the inflow and outflows to storage and doing the
     // math...
@@ -4361,8 +4361,8 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
         for (size_t connId = 0; connId < timeAndFlows[prevEventIdx].Flows.size(); ++connId)
         {
             size_t flowTypeId = m.Connections[connId].FlowTypeId;
-            ComponentType fromType = m.ComponentMap.CompType[m.Connections[connId].FromId];
-            ComponentType toType = m.ComponentMap.CompType[m.Connections[connId].ToId];
+            ComponentType fromType = m.ComponentMap.component_type[m.Connections[connId].FromId];
+            ComponentType toType = m.ComponentMap.component_type[m.Connections[connId].ToId];
             Flow const& flow = timeAndFlows[prevEventIdx].Flows[connId];
             double actualFlow_W = static_cast<double>(flow.Actual_W);
             double requestedFlow_W = static_cast<double>(flow.Requested_W);
@@ -4592,7 +4592,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
         ScheduleBasedReliability const& sbr = m.Reliabilities[i];
         relSchByCompId[sbr.ComponentId] = sbr.TimeStates;
     }
-    for (size_t compId = 0; compId < m.ComponentMap.Tag.size(); ++compId)
+    for (size_t compId = 0; compId < m.ComponentMap.tag.size(); ++compId)
     {
         if (!sos.EventCountByCompIdByFailureModeId.contains(compId))
         {
@@ -4653,7 +4653,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     loadFlowTypeNames.reserve(sos.LoadAndFlowTypeStats.size());
     for (auto const& lfts : sos.LoadAndFlowTypeStats)
     {
-        std::string loadName = m.ComponentMap.Tag[lfts.ComponentId];
+        std::string loadName = m.ComponentMap.tag[lfts.ComponentId];
         std::string flowName = flowDict.flow_type[lfts.Stats.FlowTypeId];
         std::string sortTag = loadName + "/" + flowName;
         loadFlowTypeNames.push_back(std::move(sortTag));
@@ -4676,7 +4676,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     loadNotServedFlowTypeNames.reserve(sos.LoadAndFlowTypeStats.size());
     for (LoadNotServedForComp const& lns : sos.LoadNotServedForComponents)
     {
-        std::string loadName = m.ComponentMap.Tag[lns.ComponentId];
+        std::string loadName = m.ComponentMap.tag[lns.ComponentId];
         std::string flowName = flowDict.flow_type[lns.FlowTypeId];
         std::string sortTag = loadName + "/" + flowName;
         loadNotServedFlowTypeNames.push_back(std::move(sortTag));
@@ -4801,60 +4801,60 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         }
         size_t fromCompId = maybeFromCompId.value();
         size_t toCompId = maybeToCompId.value();
-        if (fromTap.Port >= m.ComponentMap.OutflowType[fromCompId].size())
+        if (fromTap.Port >= m.ComponentMap.outflow_type[fromCompId].size())
         {
             std::cout << "[network] "
                       << "port is unaddressable for "
-                      << ToString(m.ComponentMap.CompType[fromCompId]) << ": trying to address "
+                      << ToString(m.ComponentMap.component_type[fromCompId]) << ": trying to address "
                       << fromTap.Port << " but only "
-                      << m.ComponentMap.OutflowType[fromCompId].size() << " ports available"
+                      << m.ComponentMap.outflow_type[fromCompId].size() << " ports available"
                       << std::endl;
             return Result::Failure;
         }
-        if (m.ComponentMap.OutflowType[fromCompId][fromTap.Port] != flowTypeId)
+        if (m.ComponentMap.outflow_type[fromCompId][fromTap.Port] != flowTypeId)
         {
             std::ostringstream oss;
             oss << "mismatch of flow types: " << fromTap.Tag
-                << ":outflow=" << fd.flow_type[m.ComponentMap.OutflowType[fromCompId][fromTap.Port]]
+                << ":outflow=" << fd.flow_type[m.ComponentMap.outflow_type[fromCompId][fromTap.Port]]
                 << "; connection: " << flow;
             write_error_message("network", oss.str());
             return Result::Failure;
         }
-        if (toCompId >= m.ComponentMap.InflowType.size())
+        if (toCompId >= m.ComponentMap.inflow_type.size())
         {
             std::cout << "[network] toCompId overflows InflowTypes" << std::endl;
             return Result::Failure;
         }
-        if (toTap.Port >= m.ComponentMap.InflowType[toCompId].size())
+        if (toTap.Port >= m.ComponentMap.inflow_type[toCompId].size())
         {
-            if (toCompId >= m.ComponentMap.CompType.size())
+            if (toCompId >= m.ComponentMap.component_type.size())
             {
                 std::cout << "[network] component type not logged" << std::endl;
                 return Result::Failure;
             }
             std::cout << "[network] port is unaddressable for "
-                      << ToString(m.ComponentMap.CompType[toCompId]) << ": trying to address "
-                      << toTap.Port << " but only " << m.ComponentMap.InflowType[toCompId].size()
+                      << ToString(m.ComponentMap.component_type[toCompId]) << ": trying to address "
+                      << toTap.Port << " but only " << m.ComponentMap.inflow_type[toCompId].size()
                       << " ports available" << std::endl;
             return Result::Failure;
         }
-        if (m.ComponentMap.InflowType[toCompId][toTap.Port] != flowTypeId)
+        if (m.ComponentMap.inflow_type[toCompId][toTap.Port] != flowTypeId)
         {
-            if (toCompId >= m.ComponentMap.OutflowType.size())
+            if (toCompId >= m.ComponentMap.outflow_type.size())
             {
                 std::cout << "[network] toCompId is beyond outflow types" << std::endl;
                 return Result::Failure;
             }
-            if (toTap.Port >= m.ComponentMap.OutflowType[toCompId].size())
+            if (toTap.Port >= m.ComponentMap.outflow_type[toCompId].size())
             {
                 std::cout << "[network] port is unaddressable"
                           << ":tag=" << fromTap.Tag << "[" << fromTap.Port << "] => " << toTap.Tag
                           << "[" << toTap.Port << "]:port=" << toTap.Port
-                          << ":availablePorts=" << m.ComponentMap.OutflowType[toCompId].size()
+                          << ":availablePorts=" << m.ComponentMap.outflow_type[toCompId].size()
                           << std::endl;
                 return Result::Failure;
             }
-            size_t typeId = m.ComponentMap.OutflowType[toCompId][toTap.Port];
+            size_t typeId = m.ComponentMap.outflow_type[toCompId][toTap.Port];
             if (typeId >= fd.flow_type.size())
             {
                 std::cout << "[network] port is unaddressable"
@@ -4863,7 +4863,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                 return Result::Failure;
             }
             std::cout << "[network] mismatch of flow types: " << toTap.Tag << ":inflow="
-                      << fd.flow_type[m.ComponentMap.OutflowType[toCompId][toTap.Port]]
+                      << fd.flow_type[m.ComponentMap.outflow_type[toCompId][toTap.Port]]
                       << "; connection: " << flow << std::endl;
             return Result::Failure;
         }
@@ -4874,9 +4874,9 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
 
 std::optional<size_t> Model_FindCompIdByTag(Model const& m, std::string const& tag)
 {
-    for (size_t i = 0; i < m.ComponentMap.Tag.size(); ++i)
+    for (size_t i = 0; i < m.ComponentMap.tag.size(); ++i)
     {
-        if (m.ComponentMap.Tag[i] == tag)
+        if (m.ComponentMap.tag[i] == tag)
         {
             return i;
         }
@@ -4898,7 +4898,7 @@ std::optional<size_t> FlowDict_GetIdByTag(FlowDict const& fd, std::string const&
 
 std::string ConnectionToString(ComponentDict const& cd, Connection const& c, bool compact)
 {
-    std::string fromTag = cd.Tag[c.FromId];
+    std::string fromTag = cd.tag[c.FromId];
     if (fromTag.empty() && c.From == ComponentType::waste_sink_type)
     {
         fromTag = "WASTE";
@@ -4907,7 +4907,7 @@ std::string ConnectionToString(ComponentDict const& cd, Connection const& c, boo
     {
         fromTag = "ENV";
     }
-    std::string toTag = cd.Tag[c.ToId];
+    std::string toTag = cd.tag[c.ToId];
     if (toTag.empty() && c.To == ComponentType::waste_sink_type)
     {
         toTag = "WASTE";
@@ -4951,7 +4951,7 @@ std::string NodeConnectionToString(Model const& model,
     {
         // component
         auto idx = std::get<0>(c.FromId).id;
-        fromTag = componentMap.Tag[idx];
+        fromTag = componentMap.tag[idx];
         if (fromTag.empty() && c.From == ComponentType::waste_sink_type)
         {
             fromTag = "WASTE";
@@ -4971,7 +4971,7 @@ std::string NodeConnectionToString(Model const& model,
     if (c.ToId.index() == 0)
     {
         auto idx = std::get<0>(c.ToId).id;
-        toTag = componentMap.Tag[idx];
+        toTag = componentMap.tag[idx];
         if (toTag.empty() && c.To == ComponentType::waste_sink_type)
         {
             toTag = "WASTE";
@@ -5095,16 +5095,16 @@ double TabularFragilityCurve_GetFailureFraction(TabularFragilityCurve tfc, doubl
 
 void ComponentDict_SetInitialAge(ComponentDict& cd, size_t id, double age_s)
 {
-    assert(id < cd.CompType.size());
-    assert(cd.CompType.size() == cd.InitialAges_s.size());
-    cd.InitialAges_s[id] = age_s;
+    assert(id < cd.component_type.size());
+    assert(cd.component_type.size() == cd.initial_age_s.size());
+    cd.initial_age_s[id] = age_s;
 }
 
 void ComponentDict_SetReporting(ComponentDict& cd, size_t id, bool report)
 {
-    assert(id < cd.CompType.size());
-    assert(cd.CompType.size() == cd.Report.size());
-    cd.Report[id] = report;
+    assert(id < cd.component_type.size());
+    assert(cd.component_type.size() == cd.report.size());
+    cd.report[id] = report;
 }
 
 void AddComponentToGroup(Model& model, size_t id, std::string group)

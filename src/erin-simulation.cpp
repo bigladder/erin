@@ -141,19 +141,19 @@ void Simulation_RegisterAllLoads(Simulation& s, std::vector<Load> const& loads)
 void Simulation_PrintComponents(Simulation const& s)
 {
     Model const& m = s.TheModel;
-    for (size_t compId = 0; compId < m.ComponentMap.CompType.size(); ++compId)
+    for (size_t compId = 0; compId < m.ComponentMap.component_type.size(); ++compId)
     {
-        assert(compId < m.ComponentMap.OutflowType.size());
-        assert(compId < m.ComponentMap.InflowType.size());
-        assert(compId < m.ComponentMap.CompType.size());
-        assert(compId < m.ComponentMap.Tag.size());
-        assert(compId < m.ComponentMap.Idx.size());
-        std::vector<size_t> const& outflowTypes = m.ComponentMap.OutflowType[compId];
-        std::vector<size_t> inflowTypes = m.ComponentMap.InflowType[compId];
-        std::cout << compId << ": " << ToString(m.ComponentMap.CompType[compId]);
-        if (!m.ComponentMap.Tag[compId].empty())
+        assert(compId < m.ComponentMap.outflow_type.size());
+        assert(compId < m.ComponentMap.inflow_type.size());
+        assert(compId < m.ComponentMap.component_type.size());
+        assert(compId < m.ComponentMap.tag.size());
+        assert(compId < m.ComponentMap.subtype_index.size());
+        std::vector<size_t> const& outflowTypes = m.ComponentMap.outflow_type[compId];
+        std::vector<size_t> inflowTypes = m.ComponentMap.inflow_type[compId];
+        std::cout << compId << ": " << ToString(m.ComponentMap.component_type[compId]);
+        if (!m.ComponentMap.tag[compId].empty())
         {
-            std::cout << " -- " << m.ComponentMap.Tag[compId] << std::endl;
+            std::cout << " -- " << m.ComponentMap.tag[compId] << std::endl;
         }
         else
         {
@@ -179,14 +179,14 @@ void Simulation_PrintComponents(Simulation const& s)
                           << s.FlowTypeMap.flow_type[outflowType] << std::endl;
             }
         }
-        std::cout << "- report? " << (m.ComponentMap.Report[compId] ? "true" : "false")
+        std::cout << "- report? " << (m.ComponentMap.report[compId] ? "true" : "false")
                   << std::endl;
         if (m.ComponentToGroup.contains(compId))
         {
             std::cout << "- group: " << m.ComponentToGroup.at(compId) << std::endl;
         }
-        size_t subtypeIdx = m.ComponentMap.Idx[compId];
-        switch (m.ComponentMap.CompType[compId])
+        size_t subtypeIdx = m.ComponentMap.subtype_index[compId];
+        switch (m.ComponentMap.component_type[compId])
         {
         case ComponentType::schedule_based_load_type:
         {
@@ -508,7 +508,7 @@ void Simulation_PrintComponentFailureModes(Simulation const& s)
     {
         size_t compId = s.ComponentFailureModes.ComponentIds[i];
         size_t fmId = s.ComponentFailureModes.FailureModeIds[i];
-        std::cout << "[" << i << "]: component=" << s.TheModel.ComponentMap.Tag[compId] << "["
+        std::cout << "[" << i << "]: component=" << s.TheModel.ComponentMap.tag[compId] << "["
                   << compId << "]; failure mode=" << s.FailureModes.Tags[fmId] << "[" << fmId << "]"
                   << std::endl;
     }
@@ -542,7 +542,7 @@ void Simulation_PrintComponentFragilityModes(Simulation const& s)
     {
         size_t compId = s.ComponentFragilities.ComponentIds[i];
         size_t fmId = s.ComponentFragilities.FragilityModeIds[i];
-        std::cout << "[" << i << "]: component=" << s.TheModel.ComponentMap.Tag[compId] << "["
+        std::cout << "[" << i << "]: component=" << s.TheModel.ComponentMap.tag[compId] << "["
                   << s.ComponentFragilities.ComponentIds[i]
                   << "]; fragility mode=" << s.FragilityModes.Tags[fmId] << "[" << fmId << "]"
                   << std::endl;
@@ -1265,28 +1265,28 @@ static void Simulation_PrintGroups(Simulation const& s)
         for (size_t compId : s.TheModel.GroupToComponents.at(gTag))
         {
             groupedComponents.insert(compId);
-            std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId] << std::endl;
+            std::cout << "-- " << s.TheModel.ComponentMap.tag[compId] << std::endl;
         }
     }
-    size_t numUngrouped = s.TheModel.ComponentMap.Tag.size() - groupedComponents.size();
+    size_t numUngrouped = s.TheModel.ComponentMap.tag.size() - groupedComponents.size();
     std::cout << "- UNGROUPED (count: " << numUngrouped << ")" << std::endl;
-    for (size_t compId = 0; compId < s.TheModel.ComponentMap.Tag.size(); ++compId)
+    for (size_t compId = 0; compId < s.TheModel.ComponentMap.tag.size(); ++compId)
     {
         if (groupedComponents.contains(compId))
         {
             continue;
         }
-        if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::environment_source_type)
+        if (s.TheModel.ComponentMap.component_type[compId] == ComponentType::environment_source_type)
         {
             std::cout << "-- ENV[" << compId << "]" << std::endl;
         }
-        else if (s.TheModel.ComponentMap.CompType[compId] == ComponentType::waste_sink_type)
+        else if (s.TheModel.ComponentMap.component_type[compId] == ComponentType::waste_sink_type)
         {
             std::cout << "-- WASTE[" << compId << "]" << std::endl;
         }
         else
         {
-            std::cout << "-- " << s.TheModel.ComponentMap.Tag[compId] << std::endl;
+            std::cout << "-- " << s.TheModel.ComponentMap.tag[compId] << std::endl;
         }
     }
 }
@@ -1360,12 +1360,12 @@ void WriteEventFileHeader(std::ofstream& out,
     {
         for (size_t storeIdx : storeOrder)
         {
-            for (size_t compId = 0; compId < compMap.Tag.size(); ++compId)
+            for (size_t compId = 0; compId < compMap.tag.size(); ++compId)
             {
-                if (compMap.CompType[compId] == ComponentType::store_type &&
-                    compMap.Idx[compId] == storeIdx)
+                if (compMap.component_type[compId] == ComponentType::store_type &&
+                    compMap.subtype_index[compId] == storeIdx)
                 {
-                    std::string tag(compMap.Tag[compId]);
+                    std::string tag(compMap.tag[compId]);
                     if (aggregateGroups && model.ComponentToGroup.contains(compId))
                     {
                         tag = model.ComponentToGroup.at(compId) + "(" + tag + ")";
@@ -1378,9 +1378,9 @@ void WriteEventFileHeader(std::ofstream& out,
     // op-state: <component-name>
     for (size_t compId : compOrder)
     {
-        if (!model.ComponentMap.Tag[compId].empty())
+        if (!model.ComponentMap.tag[compId].empty())
         {
-            std::string compName = model.ComponentMap.Tag[compId];
+            std::string compName = model.ComponentMap.tag[compId];
             if (aggregateGroups && model.ComponentToGroup.contains(compId))
             {
                 auto& group = model.ComponentToGroup.at(compId);
@@ -1448,16 +1448,16 @@ std::vector<size_t> CalculateScenarioOrder(Simulation const& s)
 
 std::vector<size_t> CalculateComponentOrder(Simulation const& s)
 {
-    size_t const numComps = s.TheModel.ComponentMap.Tag.size();
+    size_t const numComps = s.TheModel.ComponentMap.tag.size();
     std::vector<size_t> result;
     result.reserve(numComps);
-    std::vector<std::string> compTags(s.TheModel.ComponentMap.Tag);
+    std::vector<std::string> compTags(s.TheModel.ComponentMap.tag);
     std::sort(compTags.begin(), compTags.end());
     for (auto const& t : compTags)
     {
         for (size_t compId = 0; compId < numComps; ++compId)
         {
-            if (s.TheModel.ComponentMap.Tag[compId] == t)
+            if (s.TheModel.ComponentMap.tag[compId] == t)
             {
                 result.push_back(compId);
                 break;
@@ -1489,7 +1489,7 @@ std::vector<size_t> CalculateStoreOrder(Simulation const& s,
     std::vector<size_t> result {};
     std::vector<std::string> storeTags {};
     storeTags.reserve(s.TheModel.Stores.size());
-    size_t const numComps = s.TheModel.ComponentMap.CompType.size();
+    size_t const numComps = s.TheModel.ComponentMap.component_type.size();
     size_t const numStores = s.TheModel.Stores.size();
     std::vector<size_t> reportedStoreIdxs {};
     reportedStoreIdxs.reserve(s.TheModel.Stores.size());
@@ -1501,12 +1501,12 @@ std::vector<size_t> CalculateStoreOrder(Simulation const& s,
             {
                 continue;
             }
-            ComponentType type = s.TheModel.ComponentMap.CompType[compId];
-            size_t idx = s.TheModel.ComponentMap.Idx[compId];
+            ComponentType type = s.TheModel.ComponentMap.component_type[compId];
+            size_t idx = s.TheModel.ComponentMap.subtype_index[compId];
             if (type == ComponentType::store_type && idx == storeId)
             {
                 reportedStoreIdxs.push_back(idx);
-                storeTags.push_back(s.TheModel.ComponentMap.Tag[compId]);
+                storeTags.push_back(s.TheModel.ComponentMap.tag[compId]);
                 break;
             }
         }
@@ -1807,7 +1807,7 @@ void WriteResultsToEventFile(std::ofstream& out,
         }
         for (size_t i : compOrder)
         {
-            if (!m.ComponentMap.Tag[i].empty())
+            if (!m.ComponentMap.tag[i].empty())
             {
                 if (relSchByCompId.contains(i))
                 {
@@ -2255,27 +2255,27 @@ void WriteStatisticsToFile(Simulation const& s,
         for (auto const& statsByFlowLoad : occurrenceStats[0].LoadAndFlowTypeStats)
         {
             std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlowLoad.Stats.FlowTypeId];
-            std::string const& tag = s.TheModel.ComponentMap.Tag[statsByFlowLoad.ComponentId];
+            std::string const& tag = s.TheModel.ComponentMap.tag[statsByFlowLoad.ComponentId];
             stats << ",energy robustness [ER] for " << tag << " [flow: " << flowType << "]";
             stats << ",energy availability [EA] for " << tag << " [flow: " << flowType << "]";
         }
         for (auto const& lnsByComp : occurrenceStats[0].LoadNotServedForComponents)
         {
             std::string const& flowType = s.FlowTypeMap.flow_type[lnsByComp.FlowTypeId];
-            std::string const& tag = s.TheModel.ComponentMap.Tag[lnsByComp.ComponentId];
+            std::string const& tag = s.TheModel.ComponentMap.tag[lnsByComp.ComponentId];
             stats << ",load not served (kJ) for " << tag << " [flow: " << flowType << "]";
         }
     }
     std::set<size_t> componentsToSkip;
     for (size_t i : compOrder)
     {
-        if (s.TheModel.ComponentMap.Tag[i].empty())
+        if (s.TheModel.ComponentMap.tag[i].empty())
         {
             componentsToSkip.insert(i);
         }
         else
         {
-            stats << ",availability: " << s.TheModel.ComponentMap.Tag[i];
+            stats << ",availability: " << s.TheModel.ComponentMap.tag[i];
         }
     }
     for (size_t i : failOrder)
@@ -2321,7 +2321,7 @@ void WriteStatisticsToFile(Simulation const& s,
         {
             if (failModeIdsByCompId[compId].contains(failModeId))
             {
-                stats << ",count: " << s.TheModel.ComponentMap.Tag[compId] << " / "
+                stats << ",count: " << s.TheModel.ComponentMap.tag[compId] << " / "
                       << s.FailureModes.Tags[failModeId];
             }
         }
@@ -2329,7 +2329,7 @@ void WriteStatisticsToFile(Simulation const& s,
         {
             if (fragModeIdsByCompId[compId].contains(fragModeId))
             {
-                stats << ",count: " << s.TheModel.ComponentMap.Tag[compId] << " / "
+                stats << ",count: " << s.TheModel.ComponentMap.tag[compId] << " / "
                       << s.FragilityModes.Tags[fragModeId];
             }
         }
@@ -2340,7 +2340,7 @@ void WriteStatisticsToFile(Simulation const& s,
         {
             if (failModeIdsByCompId[compId].contains(failModeId))
             {
-                stats << ",time fraction: " << s.TheModel.ComponentMap.Tag[compId] << " / "
+                stats << ",time fraction: " << s.TheModel.ComponentMap.tag[compId] << " / "
                       << s.FailureModes.Tags[failModeId];
             }
         }
@@ -2348,7 +2348,7 @@ void WriteStatisticsToFile(Simulation const& s,
         {
             if (fragModeIdsByCompId[compId].contains(fragModeId))
             {
-                stats << ",time fraction: " << s.TheModel.ComponentMap.Tag[compId] << " / "
+                stats << ",time fraction: " << s.TheModel.ComponentMap.tag[compId] << " / "
                       << s.FragilityModes.Tags[fragModeId];
             }
         }
@@ -2668,7 +2668,7 @@ void WriteReliabilityCurves(std::string const& scenarioName,
                 {
                     out << ",";
                 }
-                std::string const& compTag = s.TheModel.ComponentMap.Tag[sbr.ComponentId];
+                std::string const& compTag = s.TheModel.ComponentMap.tag[sbr.ComponentId];
                 out << "time (h)," << compTag << " state,causes";
             }
             out << "\n";
@@ -2847,7 +2847,7 @@ void Simulation_run(Simulation& s,
     // if a component is not reported and connected to WASTE, the
     // WASTE should also be not reported
     std::unordered_set<size_t> compsToReport =
-        CalculateComponentsToReport(s.TheModel.ComponentMap.Report);
+        CalculateComponentsToReport(s.TheModel.ComponentMap.report);
     std::unordered_set<size_t> connsToReport =
         CalculateConnectionsToReport(s.TheModel.Connections, compsToReport);
 
@@ -2931,7 +2931,7 @@ void Simulation_run(Simulation& s,
             std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
                 CreateFailureSchedules(s.ComponentFailureModes.ComponentIds,
                                        s.ComponentFailureModes.FailureModeIds,
-                                       s.TheModel.ComponentMap.InitialAges_s,
+                                       s.TheModel.ComponentMap.initial_age_s,
                                        s.TheModel.Rel,
                                        s.TheModel.RandFn,
                                        s.TheModel.DistSys,
@@ -2942,7 +2942,7 @@ void Simulation_run(Simulation& s,
                 Log_info(log, "Generating reliability schedules");
                 for (auto const& pair : relSchByCompId)
                 {
-                    std::string const& tag = s.TheModel.ComponentMap.Tag[pair.first];
+                    std::string const& tag = s.TheModel.ComponentMap.tag[pair.first];
                     Log_info(log, fmt::format("Schedule for {}[{}]", tag, pair.first));
                     for (auto const& ts : pair.second)
                     {
@@ -2971,8 +2971,8 @@ void Simulation_run(Simulation& s,
             s.TheModel.Reliabilities =
                 ApplyReliabilitiesAndFragilities(s.TheModel.RandFn,
                                                  s.ComponentFailureModes.ComponentIds,
-                                                 s.TheModel.ComponentMap.InitialAges_s,
-                                                 s.TheModel.ComponentMap.Tag,
+                                                 s.TheModel.ComponentMap.initial_age_s,
+                                                 s.TheModel.ComponentMap.tag,
                                                  s.ComponentFragilities.ComponentIds,
                                                  s.ComponentFragilities.FragilityModeIds,
                                                  s.FragilityModes.FragilityCurveId,

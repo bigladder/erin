@@ -1291,16 +1291,17 @@ double earliest_next_event(Model const& m, SimulationState const& ss, double t)
 {
     double next = infinite_time;
     next = get_next_time(next,
-                       m.scheduled_load.size(),
-                       [&](size_t i) -> double { return NextEvent(m.scheduled_load[i], i, ss); });
-    next = get_next_time(next,
-                       m.scheduled_source.size(),
-                       [&](size_t i) -> double { return NextEvent(m.scheduled_source[i], i, ss); });
+                         m.scheduled_load.size(),
+                         [&](size_t i) -> double { return NextEvent(m.scheduled_load[i], i, ss); });
+    next =
+        get_next_time(next,
+                      m.scheduled_source.size(),
+                      [&](size_t i) -> double { return NextEvent(m.scheduled_source[i], i, ss); });
     next = get_next_time(
         next, m.store.size(), [&](size_t i) -> double { return NextStorageEvent(ss, i, t); });
     next = get_next_time(next,
-                       m.reliability.size(),
-                       [&](size_t i) -> double { return NextEvent(m.reliability[i], t); });
+                         m.reliability.size(),
+                         [&](size_t i) -> double { return NextEvent(m.reliability[i], t); });
     return next;
 }
 

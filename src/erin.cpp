@@ -65,12 +65,12 @@ double get_next_time(double next_time, size_t count, std::function<double(size_t
 double earliest_next_event(Model const& m, SimulationState const& ss, double t);
 
 void update_constant_efficiency_lossflow_and_wasteflow(Model const& m,
-                                                  SimulationState& ss,
-                                                  size_t compIdx);
+                                                       SimulationState& ss,
+                                                       size_t compIdx);
 
 void update_variable_efficiency_lossflow_and_wasteflow(Model const& m,
-                                                  SimulationState& ss,
-                                                  size_t compIdx);
+                                                       SimulationState& ss,
+                                                       size_t compIdx);
 
 void run_active_connections(Model& m, SimulationState& ss, double t);
 
@@ -1372,8 +1372,8 @@ void UpdateConverterLossflowAndWasteflow(SimulationState& ss,
 }
 
 void update_constant_efficiency_lossflow_and_wasteflow(Model const& m,
-                                                  SimulationState& ss,
-                                                  size_t compIdx)
+                                                       SimulationState& ss,
+                                                       size_t compIdx)
 {
     ConstantEfficiencyConverter const& cec = m.constant_efficiency_converter[compIdx];
     UpdateConverterLossflowAndWasteflow(ss,
@@ -1386,8 +1386,8 @@ void update_constant_efficiency_lossflow_and_wasteflow(Model const& m,
 }
 
 void update_variable_efficiency_lossflow_and_wasteflow(Model const& m,
-                                                  SimulationState& ss,
-                                                  size_t compIdx)
+                                                       SimulationState& ss,
+                                                       size_t compIdx)
 {
     VariableEfficiencyConverter const& vec = m.variable_efficiency_converter[compIdx];
     UpdateConverterLossflowAndWasteflow(ss,

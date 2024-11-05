@@ -565,16 +565,16 @@ struct FragilityModeDict
 struct ComponentFailureModeDict
 {
     // index into ComponentDict
-    std::vector<size_t> ComponentIds;
+    std::vector<size_t> component_id;
     // index into FailureModeDict
-    std::vector<size_t> FailureModeIds;
+    std::vector<size_t> failure_mode_id;
 };
 
 struct FailureModeDict
 {
-    std::vector<std::string> Tags;
-    std::vector<size_t> FailureDistIds;
-    std::vector<size_t> RepairDistIds;
+    std::vector<std::string> tag;
+    std::vector<size_t> failure_distribution_id;
+    std::vector<size_t> repair_distribution_id;
 };
 
 // FUNCTIONS

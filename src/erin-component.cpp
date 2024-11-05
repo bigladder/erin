@@ -753,9 +753,9 @@ Result ParseSingleComponent(Simulation& s,
             std::string const& fmTag = fms[fmIdx].as_string();
             bool existingFailureMode = false;
             size_t fmId;
-            for (fmId = 0; fmId < s.FailureModes.Tags.size(); ++fmId)
+            for (fmId = 0; fmId < s.FailureModes.tag.size(); ++fmId)
             {
-                if (s.FailureModes.Tags[fmId] == fmTag)
+                if (s.FailureModes.tag[fmId] == fmTag)
                 {
                     existingFailureMode = true;
                     break;
@@ -763,14 +763,14 @@ Result ParseSingleComponent(Simulation& s,
             }
             if (!existingFailureMode)
             {
-                fmId = s.FailureModes.Tags.size();
-                s.FailureModes.Tags.push_back(fmTag);
+                fmId = s.FailureModes.tag.size();
+                s.FailureModes.tag.push_back(fmTag);
                 // NOTE: add placeholder default data
-                s.FailureModes.FailureDistIds.push_back(0);
-                s.FailureModes.RepairDistIds.push_back(0);
+                s.FailureModes.failure_distribution_id.push_back(0);
+                s.FailureModes.repair_distribution_id.push_back(0);
             }
-            s.ComponentFailureModes.ComponentIds.push_back(id);
-            s.ComponentFailureModes.FailureModeIds.push_back(fmId);
+            s.ComponentFailureModes.component_id.push_back(id);
+            s.ComponentFailureModes.failure_mode_id.push_back(fmId);
         }
     }
     if (table.contains("fragility_modes"))

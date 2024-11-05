@@ -405,13 +405,13 @@ void Simulation_PrintComponents(Simulation const& s)
         break;
         }
         for (size_t compFailModeIdx = 0;
-             compFailModeIdx < s.ComponentFailureModes.ComponentIds.size();
+             compFailModeIdx < s.ComponentFailureModes.component_id.size();
              ++compFailModeIdx)
         {
-            if (s.ComponentFailureModes.ComponentIds[compFailModeIdx] == compId)
+            if (s.ComponentFailureModes.component_id[compFailModeIdx] == compId)
             {
-                size_t fmId = s.ComponentFailureModes.FailureModeIds[compFailModeIdx];
-                std::cout << "-- failure-mode: " << s.FailureModes.Tags[fmId] << "[" << fmId << "]"
+                size_t fmId = s.ComponentFailureModes.failure_mode_id[compFailModeIdx];
+                std::cout << "-- failure-mode: " << s.FailureModes.tag[fmId] << "[" << fmId << "]"
                           << std::endl;
             }
         }
@@ -476,47 +476,47 @@ void Simulation_PrintFragilityCurves(Simulation const& s)
 
 void Simulation_PrintFailureModes(Simulation const& s)
 {
-    for (size_t i = 0; i < s.FailureModes.Tags.size(); ++i)
+    for (size_t i = 0; i < s.FailureModes.tag.size(); ++i)
     {
         auto maybeFailureDist =
-            s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.FailureDistIds[i]);
-        auto maybeRepairDist = s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.RepairDistIds[i]);
-        std::cout << i << ": " << s.FailureModes.Tags[i] << std::endl;
+            s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.failure_distribution_id[i]);
+        auto maybeRepairDist = s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.repair_distribution_id[i]);
+        std::cout << i << ": " << s.FailureModes.tag[i] << std::endl;
         if (maybeFailureDist.has_value())
         {
             Distribution const& failureDist = maybeFailureDist.value();
             std::cout << "-- failure distribution: " << failureDist.Tag << ", "
                       << dist_type_to_tag(failureDist.Type) << "["
-                      << s.FailureModes.FailureDistIds[i] << "]" << std::endl;
+                      << s.FailureModes.failure_distribution_id[i] << "]" << std::endl;
         }
         else
         {
             std::cout << "-- ERROR! Problem finding failure distribution "
-                      << " with id = " << s.FailureModes.FailureDistIds[i] << std::endl;
+                      << " with id = " << s.FailureModes.failure_distribution_id[i] << std::endl;
         }
         if (maybeRepairDist.has_value())
         {
             Distribution const& repairDist = maybeRepairDist.value();
             std::cout << "-- repair distribution: " << repairDist.Tag << ", "
-                      << dist_type_to_tag(repairDist.Type) << "[" << s.FailureModes.RepairDistIds[i]
+                      << dist_type_to_tag(repairDist.Type) << "[" << s.FailureModes.repair_distribution_id[i]
                       << "]" << std::endl;
         }
         else
         {
             std::cout << "-- ERROR! Problem finding repair distribution "
-                      << " with id = " << s.FailureModes.RepairDistIds[i] << std::endl;
+                      << " with id = " << s.FailureModes.repair_distribution_id[i] << std::endl;
         }
     }
 }
 
 void Simulation_PrintComponentFailureModes(Simulation const& s)
 {
-    for (size_t i = 0; i < s.ComponentFailureModes.ComponentIds.size(); ++i)
+    for (size_t i = 0; i < s.ComponentFailureModes.component_id.size(); ++i)
     {
-        size_t compId = s.ComponentFailureModes.ComponentIds[i];
-        size_t fmId = s.ComponentFailureModes.FailureModeIds[i];
+        size_t compId = s.ComponentFailureModes.component_id[i];
+        size_t fmId = s.ComponentFailureModes.failure_mode_id[i];
         std::cout << "[" << i << "]: component=" << s.TheModel.component.tag[compId] << "["
-                  << compId << "]; failure mode=" << s.FailureModes.Tags[fmId] << "[" << fmId << "]"
+                  << compId << "]; failure mode=" << s.FailureModes.tag[fmId] << "[" << fmId << "]"
                   << std::endl;
     }
 }
@@ -728,20 +728,20 @@ size_t Simulation_RegisterFailureMode(Simulation& s,
                                       size_t failureId,
                                       size_t repairId)
 {
-    size_t size = s.FailureModes.Tags.size();
+    size_t size = s.FailureModes.tag.size();
     for (size_t i = 0; i < size; ++i)
     {
-        if (s.FailureModes.Tags[i] == tag)
+        if (s.FailureModes.tag[i] == tag)
         {
-            s.FailureModes.FailureDistIds[i] = failureId;
-            s.FailureModes.RepairDistIds[i] = repairId;
+            s.FailureModes.failure_distribution_id[i] = failureId;
+            s.FailureModes.repair_distribution_id[i] = repairId;
             return i;
         }
     }
     size_t result = size;
-    s.FailureModes.Tags.push_back(tag);
-    s.FailureModes.FailureDistIds.push_back(failureId);
-    s.FailureModes.RepairDistIds.push_back(repairId);
+    s.FailureModes.tag.push_back(tag);
+    s.FailureModes.failure_distribution_id.push_back(failureId);
+    s.FailureModes.repair_distribution_id.push_back(repairId);
     return result;
 }
 
@@ -937,7 +937,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
 
 bool Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name)
 {
-    for (std::string const& tag : s.FailureModes.Tags)
+    for (std::string const& tag : s.FailureModes.tag)
     {
         if (tag == name)
         {
@@ -1537,15 +1537,15 @@ std::vector<size_t> CalculateStoreOrder(Simulation const& s,
 
 std::vector<size_t> CalculateFailModeOrder(Simulation const& s)
 {
-    size_t const numFailModes = s.FailureModes.Tags.size();
+    size_t const numFailModes = s.FailureModes.tag.size();
     std::vector<size_t> result;
-    std::vector<std::string> failTags(s.FailureModes.Tags);
+    std::vector<std::string> failTags(s.FailureModes.tag);
     std::sort(failTags.begin(), failTags.end());
     for (auto const& t : failTags)
     {
         for (size_t i = 0; i < numFailModes; ++i)
         {
-            if (s.FailureModes.Tags[i] == t)
+            if (s.FailureModes.tag[i] == t)
             {
                 result.push_back(i);
                 break;
@@ -1844,7 +1844,7 @@ void WriteResultsToEventFile(std::ofstream& out,
                         fmTags.reserve(ts.failureModeCauses.size() + ts.fragilityModeCauses.size());
                         for (auto const& failModeId : failModes)
                         {
-                            fmTags.push_back(s.FailureModes.Tags[failModeId]);
+                            fmTags.push_back(s.FailureModes.tag[failModeId]);
                         }
                         for (auto const& fragModeId : fragModes)
                         {
@@ -2288,7 +2288,7 @@ void WriteStatisticsToFile(Simulation const& s,
     }
     for (size_t i : failOrder)
     {
-        stats << ",global count: " << s.FailureModes.Tags[i];
+        stats << ",global count: " << s.FailureModes.tag[i];
     }
     for (size_t i : fragOrder)
     {
@@ -2296,7 +2296,7 @@ void WriteStatisticsToFile(Simulation const& s,
     }
     for (size_t i : failOrder)
     {
-        stats << ",global time fraction: " << s.FailureModes.Tags[i];
+        stats << ",global time fraction: " << s.FailureModes.tag[i];
     }
     for (size_t i : fragOrder)
     {
@@ -2330,7 +2330,7 @@ void WriteStatisticsToFile(Simulation const& s,
             if (failModeIdsByCompId[compId].contains(failModeId))
             {
                 stats << ",count: " << s.TheModel.component.tag[compId] << " / "
-                      << s.FailureModes.Tags[failModeId];
+                      << s.FailureModes.tag[failModeId];
             }
         }
         for (size_t fragModeId : fragOrder)
@@ -2349,7 +2349,7 @@ void WriteStatisticsToFile(Simulation const& s,
             if (failModeIdsByCompId[compId].contains(failModeId))
             {
                 stats << ",time fraction: " << s.TheModel.component.tag[compId] << " / "
-                      << s.FailureModes.Tags[failModeId];
+                      << s.FailureModes.tag[failModeId];
             }
         }
         for (size_t fragModeId : fragOrder)
@@ -2697,7 +2697,7 @@ void WriteReliabilityCurves(std::string const& scenarioName,
                 std::vector<std::string> causes;
                 for (size_t fmId : sbr.time_states[row].failureModeCauses)
                 {
-                    causes.push_back(s.FailureModes.Tags[fmId]);
+                    causes.push_back(s.FailureModes.tag[fmId]);
                 }
                 for (size_t fmId : sbr.time_states[row].fragilityModeCauses)
                 {
@@ -2827,18 +2827,18 @@ void Simulation_run(Simulation& s,
     // -- check that we have a proper acyclic graph?
     // NOTE: set up reliability manager
     // TODO: remove duplication of data here
-    for (size_t fmIdx = 0; fmIdx < s.FailureModes.FailureDistIds.size(); ++fmIdx)
+    for (size_t fmIdx = 0; fmIdx < s.FailureModes.failure_distribution_id.size(); ++fmIdx)
     {
-        s.TheModel.rel_coord.add_failure_mode(s.FailureModes.Tags[fmIdx],
-                                              s.FailureModes.FailureDistIds[fmIdx],
-                                              s.FailureModes.RepairDistIds[fmIdx]);
+        s.TheModel.rel_coord.add_failure_mode(s.FailureModes.tag[fmIdx],
+                                              s.FailureModes.failure_distribution_id[fmIdx],
+                                              s.FailureModes.repair_distribution_id[fmIdx]);
     }
-    for (size_t compFailId = 0; compFailId < s.ComponentFailureModes.ComponentIds.size();
+    for (size_t compFailId = 0; compFailId < s.ComponentFailureModes.component_id.size();
          ++compFailId)
     {
         s.TheModel.rel_coord.link_component_with_failure_mode(
-            s.ComponentFailureModes.ComponentIds[compFailId],
-            s.ComponentFailureModes.FailureModeIds[compFailId]);
+            s.ComponentFailureModes.component_id[compFailId],
+            s.ComponentFailureModes.failure_mode_id[compFailId]);
     }
     // TODO: generate a data structure to hold all results.
     // TODO: set random function for Model based on SimInfo
@@ -2943,8 +2943,8 @@ void Simulation_run(Simulation& s,
                 Log_debug(log, fmt::format("... Occurrence #{}", occIdx));
             }
             std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
-                CreateFailureSchedules(s.ComponentFailureModes.ComponentIds,
-                                       s.ComponentFailureModes.FailureModeIds,
+                CreateFailureSchedules(s.ComponentFailureModes.component_id,
+                                       s.ComponentFailureModes.failure_mode_id,
                                        s.TheModel.component.initial_age_s,
                                        s.TheModel.rel_coord,
                                        s.TheModel.random_function,
@@ -2984,7 +2984,7 @@ void Simulation_run(Simulation& s,
             s.TheModel.reliability.clear();
             s.TheModel.reliability =
                 ApplyReliabilitiesAndFragilities(s.TheModel.random_function,
-                                                 s.ComponentFailureModes.ComponentIds,
+                                                 s.ComponentFailureModes.component_id,
                                                  s.TheModel.component.initial_age_s,
                                                  s.TheModel.component.tag,
                                                  s.ComponentFragilities.component_id,

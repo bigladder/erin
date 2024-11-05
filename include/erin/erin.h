@@ -245,43 +245,42 @@ struct Mover
 {
     // Coefficient of Performance
     double COP;
-    size_t InflowConn;
-    size_t OutflowConn;
-    size_t InFromEnvConn;
-    size_t WasteflowConn;
-    flow_t MaxOutflow_W = max_flow_W;
+    size_t inflow_connection_id;
+    size_t outflow_connection_id;
+    size_t in_from_env_connection_id;
+    size_t wasteflow_connection_id;
+    flow_t max_outflow_W = max_flow_W;
 };
 
 struct VariableEfficiencyMover
 {
-    size_t InflowConn;
-    size_t OutflowConn;
-    size_t InFromEnvConn;
-    size_t WasteflowConn;
-    flow_t MaxOutflow_W = max_flow_W;
-    std::vector<double> OutflowsForCop_W;
-    std::vector<double> InflowsForCop_W;
+    size_t inflow_connection_id;
+    size_t outflow_connection_id;
+    size_t in_from_env_connection_id;
+    size_t wasteflow_connection_id;
+    flow_t max_outflow_W = max_flow_W;
+    std::vector<double> outflows_for_COP_W;
+    std::vector<double> inflows_for_COP_W;
     // Coefficient of Performances -- indexed by above two vectors
     std::vector<double> COPs;
 };
 
 struct Connection
 {
-    ComponentType From = ComponentType::constant_source_type;
+    ComponentType from = ComponentType::constant_source_type;
     // index into the specific component type's array
-    size_t FromIdx = 0;
-    size_t FromPort = 0;
+    size_t from_subtype_index = 0;
+    size_t from_port = 0;
     // index into ComponentDict
-    size_t FromId = 0;
-    ComponentType To = ComponentType::constant_load_type;
+    size_t from_component_id = 0;
+    ComponentType to = ComponentType::constant_load_type;
     // index into the specific component type's array
-    size_t ToIdx = 0;
-    size_t ToPort = 0;
+    size_t to_subtype_index = 0;
+    size_t to_port = 0;
     // index into ComponentDict
-    size_t ToId = 0;
-    size_t FlowTypeId = 0;
-
-    size_t resultId = 0;
+    size_t to_component_id = 0;
+    size_t flow_type_id = 0;
+    size_t result_id = 0;
 };
 
 template <typename T>

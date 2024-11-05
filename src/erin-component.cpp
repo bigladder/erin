@@ -616,7 +616,7 @@ Result ParseSingleComponent(Simulation& s,
             flow_t maxOutflow_W = static_cast<flow_t>(
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), rateUnit));
             size_t moverIdx = s.TheModel.ComponentMap.subtype_index[id];
-            s.TheModel.Movers[moverIdx].MaxOutflow_W = maxOutflow_W;
+            s.TheModel.Movers[moverIdx].max_outflow_W = maxOutflow_W;
         }
     }
     break;
@@ -696,7 +696,7 @@ Result ParseSingleComponent(Simulation& s,
                                                                      report);
         id = compIdAndConns.Id;
         size_t moverIdx = s.TheModel.ComponentMap.subtype_index[id];
-        s.TheModel.VarEffMovers[moverIdx].MaxOutflow_W = static_cast<flow_t>(maxOutflow_W);
+        s.TheModel.VarEffMovers[moverIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
     }
     break;
     case ComponentType::switch_type:

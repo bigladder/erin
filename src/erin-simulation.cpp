@@ -292,13 +292,13 @@ void Simulation_PrintComponents(Simulation const& s)
             Mover const& mov = m.Movers[subtypeIdx];
             std::cout << "-- cop: " << mov.COP << std::endl;
             std::cout << "-- max outflow (W): "
-                      << (mov.MaxOutflow_W == max_flow_W ? "unlimited"
-                                                         : std::to_string(mov.MaxOutflow_W))
+                      << (mov.max_outflow_W == max_flow_W ? "unlimited"
+                                                         : std::to_string(mov.max_outflow_W))
                       << std::endl;
-            std::cout << "-- inflow connection: " << mov.InflowConn << std::endl;
-            std::cout << "-- outflow connection: " << mov.OutflowConn << std::endl;
-            std::cout << "-- envflow connection: " << mov.InFromEnvConn << std::endl;
-            std::cout << "-- wasteflow connection: " << mov.WasteflowConn << std::endl;
+            std::cout << "-- inflow connection: " << mov.inflow_connection_id << std::endl;
+            std::cout << "-- outflow connection: " << mov.outflow_connection_id << std::endl;
+            std::cout << "-- envflow connection: " << mov.in_from_env_connection_id << std::endl;
+            std::cout << "-- wasteflow connection: " << mov.wasteflow_connection_id << std::endl;
         }
         break;
         case ComponentType::variable_efficiency_mover_type:
@@ -306,20 +306,20 @@ void Simulation_PrintComponents(Simulation const& s)
             assert(subtypeIdx < m.VarEffMovers.size());
             VariableEfficiencyMover const& mov = m.VarEffMovers[subtypeIdx];
             std::cout << "-- cop by load fraction:" << std::endl;
-            auto maxOutflow_W = static_cast<double>(mov.MaxOutflow_W);
+            auto maxOutflow_W = static_cast<double>(mov.max_outflow_W);
             for (size_t i = 0; i < mov.COPs.size(); ++i)
             {
-                std::cout << fmt::format(" -- {:5.3f}", (mov.OutflowsForCop_W[i] / maxOutflow_W));
+                std::cout << fmt::format(" -- {:5.3f}", (mov.outflows_for_COP_W[i] / maxOutflow_W));
                 std::cout << fmt::format(": {:5.2f}", (mov.COPs[i])) << std::endl;
             }
             std::cout << "-- max outflow (W): "
-                      << (mov.MaxOutflow_W == max_flow_W ? "unlimited"
+                      << (mov.max_outflow_W == max_flow_W ? "unlimited"
                                                          : std::to_string(maxOutflow_W))
                       << std::endl;
-            std::cout << "-- inflow connection: " << mov.InflowConn << std::endl;
-            std::cout << "-- outflow connection: " << mov.OutflowConn << std::endl;
-            std::cout << "-- envflow connection: " << mov.InFromEnvConn << std::endl;
-            std::cout << "-- wasteflow connection: " << mov.WasteflowConn << std::endl;
+            std::cout << "-- inflow connection: " << mov.inflow_connection_id << std::endl;
+            std::cout << "-- outflow connection: " << mov.outflow_connection_id << std::endl;
+            std::cout << "-- envflow connection: " << mov.in_from_env_connection_id << std::endl;
+            std::cout << "-- wasteflow connection: " << mov.wasteflow_connection_id << std::endl;
         }
         break;
         case ComponentType::store_type:
@@ -1653,28 +1653,28 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
 
         if (aggregateGroups)
         {
-            fromIsGroup = s.TheModel.ComponentToGroup.contains(connection.FromId);
-            toIsGroup = s.TheModel.ComponentToGroup.contains(connection.ToId);
+            fromIsGroup = s.TheModel.ComponentToGroup.contains(connection.from_component_id);
+            toIsGroup = s.TheModel.ComponentToGroup.contains(connection.to_component_id);
         }
 
         NodeConnection nodeConn;
         nodeConn.ConnectionId = iConn;
-        nodeConn.FromId = connection.FromId;
-        nodeConn.FromPort = connection.FromPort;
-        nodeConn.FromIdx = connection.FromIdx;
-        nodeConn.From = connection.From;
+        nodeConn.FromId = connection.from_component_id;
+        nodeConn.FromPort = connection.from_port;
+        nodeConn.FromIdx = connection.from_subtype_index;
+        nodeConn.From = connection.from;
 
-        nodeConn.ToId = connection.ToId;
-        nodeConn.ToPort = connection.ToPort;
-        nodeConn.ToIdx = connection.ToIdx;
-        nodeConn.To = connection.To;
+        nodeConn.ToId = connection.to_component_id;
+        nodeConn.ToPort = connection.to_port;
+        nodeConn.ToIdx = connection.to_subtype_index;
+        nodeConn.To = connection.to;
 
-        nodeConn.FlowTypeId = connection.FlowTypeId;
+        nodeConn.FlowTypeId = connection.flow_type_id;
 
         if (fromIsGroup && toIsGroup)
         {
-            auto groupFrom = s.TheModel.ComponentToGroup[connection.FromId];
-            auto groupTo = s.TheModel.ComponentToGroup[connection.ToId];
+            auto groupFrom = s.TheModel.ComponentToGroup[connection.from_component_id];
+            auto groupTo = s.TheModel.ComponentToGroup[connection.to_component_id];
             if (groupFrom == groupTo)
             {
                 continue;
@@ -1682,7 +1682,7 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
         }
         if (fromIsGroup)
         {
-            auto groupFrom = s.TheModel.ComponentToGroup[connection.FromId];
+            auto groupFrom = s.TheModel.ComponentToGroup[connection.from_component_id];
             nodeConn.FromId = groupFrom;
             auto& nPorts = s.TheModel.nGroupPortsFrom[groupFrom];
             nodeConn.FromPort = nPorts;
@@ -1690,7 +1690,7 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
         }
         if (toIsGroup)
         {
-            auto groupTo = s.TheModel.ComponentToGroup[connection.ToId];
+            auto groupTo = s.TheModel.ComponentToGroup[connection.to_component_id];
             nodeConn.ToId = groupTo;
             auto& nPorts = s.TheModel.nGroupPortsTo[groupTo];
             nodeConn.ToPort = nPorts;
@@ -2740,7 +2740,7 @@ CalculateConnectionsToReport(std::vector<Connection> const& conns,
     for (size_t id = 0; id < conns.size(); ++id)
     {
         Connection const& c = conns[id];
-        if (compsToReport.contains(c.FromId) || compsToReport.contains(c.ToId))
+        if (compsToReport.contains(c.from_component_id) || compsToReport.contains(c.to_component_id))
         {
             connsToReport.insert(id);
         }

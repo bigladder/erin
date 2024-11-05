@@ -596,18 +596,6 @@ SwitchState get_switch_state(SimulationState const& ss, size_t const& switch_ind
 
 void set_switch_state(SimulationState& ss, size_t const& switch_index, SwitchState new_state);
 
-void UpdateConstantEfficiencyLossflowAndWasteflow(Model const& m,
-                                                  SimulationState& ss,
-                                                  size_t compIdx);
-
-void UpdateVariableEfficiencyLossflowAndWasteflow(Model const& m,
-                                                  SimulationState& ss,
-                                                  size_t compIdx);
-
-void RunMuxPostFinalization(Model const& m, SimulationState& ss, size_t compIdx);
-
-void RunActiveConnections(Model& m, SimulationState& ss, double t);
-
 void RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t);
 
 void RunPassthroughBackward(Model& m, SimulationState& ss, size_t connIdx, size_t compIdx);

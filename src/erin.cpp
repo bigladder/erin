@@ -64,6 +64,16 @@ double get_next_time(double next_time, size_t count, std::function<double(size_t
 
 double earliest_next_event(Model const& m, SimulationState const& ss, double t);
 
+void update_constant_efficiency_lossflow_and_wasteflow(Model const& m,
+                                                  SimulationState& ss,
+                                                  size_t compIdx);
+
+void update_variable_efficiency_lossflow_and_wasteflow(Model const& m,
+                                                  SimulationState& ss,
+                                                  size_t compIdx);
+
+void run_active_connections(Model& m, SimulationState& ss, double t);
+
 // PRIVATE CONSTANTS
 constexpr double const infinite_time = -1.0;
 
@@ -1361,7 +1371,7 @@ void UpdateConverterLossflowAndWasteflow(SimulationState& ss,
     ss.flows[wasteflowConn].available_W = wasteflow;
 }
 
-void UpdateConstantEfficiencyLossflowAndWasteflow(Model const& m,
+void update_constant_efficiency_lossflow_and_wasteflow(Model const& m,
                                                   SimulationState& ss,
                                                   size_t compIdx)
 {
@@ -1375,7 +1385,7 @@ void UpdateConstantEfficiencyLossflowAndWasteflow(Model const& m,
                                         cec.max_lossflow_W);
 }
 
-void UpdateVariableEfficiencyLossflowAndWasteflow(Model const& m,
+void update_variable_efficiency_lossflow_and_wasteflow(Model const& m,
                                                   SimulationState& ss,
                                                   size_t compIdx)
 {
@@ -1406,7 +1416,7 @@ void RunConstantEfficiencyConverterBackward(Model const& m,
         ss.active_connections_back.insert(cec.inflow_connection_id);
     }
     ss.flows[cec.inflow_connection_id].requested_W = inflowRequest_W;
-    UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
+    update_constant_efficiency_lossflow_and_wasteflow(m, ss, compIdx);
 }
 
 void RunVariableEfficiencyConverterBackward(Model const& m,
@@ -1429,7 +1439,7 @@ void RunVariableEfficiencyConverterBackward(Model const& m,
         ss.active_connections_back.insert(inflowConnIdx);
     }
     ss.flows[inflowConnIdx].requested_W = inflowRequest_W;
-    UpdateVariableEfficiencyLossflowAndWasteflow(m, ss, compIdx);
+    update_variable_efficiency_lossflow_and_wasteflow(m, ss, compIdx);
 }
 
 void UpdateEnvironmentFlowForAllMovers(SimulationState& ss,
@@ -1786,7 +1796,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 case 1: // lossflow
                 case 2: // wasteflow
                 {
-                    UpdateConstantEfficiencyLossflowAndWasteflow(model, ss, compIdx);
+                    update_constant_efficiency_lossflow_and_wasteflow(model, ss, compIdx);
                 }
                 break;
                 default:
@@ -1809,7 +1819,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
                 case 1: // lossflow
                 case 2: // wasteflow
                 {
-                    UpdateVariableEfficiencyLossflowAndWasteflow(model, ss, compIdx);
+                    update_variable_efficiency_lossflow_and_wasteflow(model, ss, compIdx);
                 }
                 break;
                 default:
@@ -1919,7 +1929,7 @@ void RunConstantEfficiencyConverterForward(Model const& m,
         ss.active_connections_front.insert(cec.outflow_connection_id);
     }
     ss.flows[cec.outflow_connection_id].available_W = outflowAvailable_W;
-    UpdateConstantEfficiencyLossflowAndWasteflow(m, ss, compIdx);
+    update_constant_efficiency_lossflow_and_wasteflow(m, ss, compIdx);
 }
 
 void RunVariableEfficiencyConverterForward(Model const& m,
@@ -1944,7 +1954,7 @@ void RunVariableEfficiencyConverterForward(Model const& m,
         ss.active_connections_front.insert(outflowConn);
     }
     ss.flows[outflowConn].available_W = outflowAvailable;
-    UpdateVariableEfficiencyLossflowAndWasteflow(m, ss, compIdx);
+    update_variable_efficiency_lossflow_and_wasteflow(m, ss, compIdx);
 }
 
 void RunMoverForward(Model const& model, SimulationState& ss, size_t outConnIdx, size_t moverIdx)
@@ -2265,14 +2275,6 @@ void RunStorePostFinalization(Model& model, SimulationState& ss, double t, size_
     }
 }
 
-void RunMuxPostFinalization(Model& model, SimulationState& ss, size_t compIdx)
-{
-    // TODO: test if we need to run backward/forward again
-    RunMuxBackward(model, ss, compIdx);
-    RunMuxForward(model, ss, compIdx);
-    // BalanceMuxRequests(model, ss, compIdx);
-}
-
 void RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t)
 {
     for (size_t storeIdx = 0; storeIdx < model.store.size(); ++storeIdx)
@@ -2281,7 +2283,7 @@ void RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t)
     }
 }
 
-void RunActiveConnections(Model& model, SimulationState& ss, double t)
+void run_active_connections(Model& model, SimulationState& ss, double t)
 {
     constexpr size_t max_times = 100;
     size_t num_times = 0;
@@ -3101,13 +3103,13 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
                 }
                 break;
             }
-            RunActiveConnections(model, ss, t);
+            run_active_connections(model, ss, t);
             if (enableSwitchLogic)
             {
                 bool anySwitchChanged = RunSwitchLogic(model, ss);
                 if (anySwitchChanged)
                 {
-                    RunActiveConnections(model, ss, t);
+                    run_active_connections(model, ss, t);
                 }
             }
         }

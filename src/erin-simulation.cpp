@@ -326,29 +326,29 @@ void Simulation_PrintComponents(Simulation const& s)
         {
             assert(subtypeIdx < m.Stores.size());
             Store const& store = m.Stores[subtypeIdx];
-            std::cout << "-- capacity (J): " << store.Capacity_J << std::endl;
+            std::cout << "-- capacity (J): " << store.capacity_J << std::endl;
             std::cout << "-- initial SOC: "
-                      << (static_cast<double>(store.InitialStorage_J) /
-                          static_cast<double>(store.Capacity_J))
+                      << (static_cast<double>(store.initial_storage_J) /
+                          static_cast<double>(store.capacity_J))
                       << std::endl;
-            std::cout << "-- initial capacity (J): " << store.Capacity_J << std::endl;
+            std::cout << "-- initial capacity (J): " << store.capacity_J << std::endl;
             std::cout << "-- SOC to start charging: "
-                      << (static_cast<double>(store.ChargeAmount_J) /
-                          static_cast<double>(store.Capacity_J))
+                      << (static_cast<double>(store.charge_amount_J) /
+                          static_cast<double>(store.capacity_J))
                       << std::endl;
-            std::cout << "-- max charge rate (W): " << store.MaxChargeRate_W << std::endl;
-            std::cout << "-- max discharge rate (W): " << store.MaxDischargeRate_W << std::endl;
+            std::cout << "-- max charge rate (W): " << store.max_charge_rate_W << std::endl;
+            std::cout << "-- max discharge rate (W): " << store.max_discharge_rate_W << std::endl;
             std::cout << "-- max outflow (W): "
-                      << (store.MaxOutflow_W == max_flow_W ? "unlimited"
-                                                           : std::to_string(store.MaxOutflow_W))
+                      << (store.max_outflow_W == max_flow_W ? "unlimited"
+                                                           : std::to_string(store.max_outflow_W))
                       << std::endl;
-            std::cout << "-- roundtrip efficiency: " << store.RoundTripEfficiency * 100.0 << "%"
+            std::cout << "-- roundtrip efficiency: " << store.roundtrip_efficiency * 100.0 << "%"
                       << std::endl;
             std::cout << "-- inflow connection: "
-                      << (store.InflowConn.has_value() ? std::to_string(store.InflowConn.value())
+                      << (store.inflow_connection_id.has_value() ? std::to_string(store.inflow_connection_id.value())
                                                        : "NA")
                       << std::endl;
-            std::cout << "-- outflow connection: " << store.OutflowConn << std::endl;
+            std::cout << "-- outflow connection: " << store.outflow_connection_id << std::endl;
         }
         break;
         case ComponentType::pass_through_type:
@@ -356,27 +356,27 @@ void Simulation_PrintComponents(Simulation const& s)
             assert(subtypeIdx < m.PassThroughs.size());
             PassThrough const& pt = m.PassThroughs[subtypeIdx];
             std::cout << "-- max outflow (W): "
-                      << (pt.MaxOutflow_W == max_flow_W ? "unlimited"
-                                                        : std::to_string(pt.MaxOutflow_W))
+                      << (pt.max_outflow_W == max_flow_W ? "unlimited"
+                                                        : std::to_string(pt.max_outflow_W))
                       << std::endl;
-            std::cout << "-- inflow connection: " << pt.InflowConn << std::endl;
-            std::cout << "-- outflow connection: " << pt.OutflowConn << std::endl;
+            std::cout << "-- inflow connection: " << pt.inflow_connection_id << std::endl;
+            std::cout << "-- outflow connection: " << pt.outflow_connection_id << std::endl;
         }
         break;
         case ComponentType::mux_type:
         {
             assert(subtypeIdx < m.Muxes.size());
             Mux const& mux = m.Muxes[subtypeIdx];
-            assert(mux.InflowConns.size() == mux.NumInports);
-            assert(mux.OutflowConns.size() == mux.NumOutports);
-            for (size_t i = 0; i < mux.NumInports; ++i)
+            assert(mux.inflow_connection_ids.size() == mux.number_of_inports);
+            assert(mux.outflow_connection_ids.size() == mux.number_of_outports);
+            for (size_t i = 0; i < mux.number_of_inports; ++i)
             {
-                std::cout << "-- inflow connection " << i << ": " << mux.InflowConns[i]
+                std::cout << "-- inflow connection " << i << ": " << mux.inflow_connection_ids[i]
                           << std::endl;
             }
-            for (size_t i = 0; i < mux.NumOutports; ++i)
+            for (size_t i = 0; i < mux.number_of_outports; ++i)
             {
-                std::cout << "-- outflow connection " << i << ": " << mux.OutflowConns[i]
+                std::cout << "-- outflow connection " << i << ": " << mux.outflow_connection_ids[i]
                           << std::endl;
             }
         }
@@ -1658,18 +1658,18 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
         }
 
         NodeConnection nodeConn;
-        nodeConn.ConnectionId = iConn;
-        nodeConn.FromId = connection.from_component_id;
-        nodeConn.FromPort = connection.from_port;
-        nodeConn.FromIdx = connection.from_subtype_index;
-        nodeConn.From = connection.from;
+        nodeConn.connection_id = iConn;
+        nodeConn.from_component_id = connection.from_component_id;
+        nodeConn.from_port = connection.from_port;
+        nodeConn.from_subtype_index = connection.from_subtype_index;
+        nodeConn.from = connection.from;
 
-        nodeConn.ToId = connection.to_component_id;
-        nodeConn.ToPort = connection.to_port;
-        nodeConn.ToIdx = connection.to_subtype_index;
-        nodeConn.To = connection.to;
+        nodeConn.to_component_id = connection.to_component_id;
+        nodeConn.to_port = connection.to_port;
+        nodeConn.to_subtype_index = connection.to_subtype_index;
+        nodeConn.to = connection.to;
 
-        nodeConn.FlowTypeId = connection.flow_type_id;
+        nodeConn.flow_type_id = connection.flow_type_id;
 
         if (fromIsGroup && toIsGroup)
         {
@@ -1683,17 +1683,17 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
         if (fromIsGroup)
         {
             auto groupFrom = s.TheModel.ComponentToGroup[connection.from_component_id];
-            nodeConn.FromId = groupFrom;
+            nodeConn.from_component_id = groupFrom;
             auto& nPorts = s.TheModel.nGroupPortsFrom[groupFrom];
-            nodeConn.FromPort = nPorts;
+            nodeConn.from_port = nPorts;
             nPorts++;
         }
         if (toIsGroup)
         {
             auto groupTo = s.TheModel.ComponentToGroup[connection.to_component_id];
-            nodeConn.ToId = groupTo;
+            nodeConn.to_component_id = groupTo;
             auto& nPorts = s.TheModel.nGroupPortsTo[groupTo];
-            nodeConn.ToPort = nPorts;
+            nodeConn.to_port = nPorts;
             nPorts++;
         }
         bool newConn = true;
@@ -1702,13 +1702,13 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
             if (nodeConn0 == nodeConn)
             {
                 newConn = false;
-                nodeConn0.origConnId.push_back(iConn);
+                nodeConn0.original_connection_id.push_back(iConn);
                 break;
             }
         }
         if (newConn)
         {
-            nodeConn.origConnId = {iConn};
+            nodeConn.original_connection_id = {iConn};
             nodeConnections.push_back(nodeConn);
         }
     }
@@ -1731,22 +1731,22 @@ void AggregateGroups(std::vector<TimeAndFlows>& results,
 
     for (size_t iResult = 0; iResult < nResult; ++iResult)
     {
-        newResults[iResult].Time = results[iResult].Time;
+        newResults[iResult].time_s = results[iResult].time_s;
 
-        auto& origFlows = results[iResult].Flows;
-        auto& newFlows = newResults[iResult].Flows;
+        auto& origFlows = results[iResult].flows;
+        auto& newFlows = newResults[iResult].flows;
         newFlows.resize(nNodeConn);
 
         for (size_t iNodeConn = 0; iNodeConn < nNodeConn; ++iNodeConn)
         {
             auto& nodeConn = nodeConnections[iNodeConn];
-            for (auto const& iConn : nodeConn.origConnId)
+            for (auto const& iConn : nodeConn.original_connection_id)
             {
                 newFlows[iNodeConn] += origFlows[iConn];
             }
         }
 
-        newResults[iResult].StorageAmounts_J = results[iResult].StorageAmounts_J;
+        newResults[iResult].storage_amounts_J = results[iResult].storage_amounts_J;
     }
     results = newResults;
 }
@@ -1774,26 +1774,26 @@ void WriteResultsToEventFile(std::ofstream& out,
 
     for (auto const& r : results)
     {
-        assert(r.Flows.size() >= nodeConnOrder.size());
+        assert(r.flows.size() >= nodeConnOrder.size());
         out << scenarioTag << "," << scenarioStartTimeTag << ",";
-        out << time_in_seconds_to_desired_unit(r.Time, outputTimeUnit);
+        out << time_in_seconds_to_desired_unit(r.time_s, outputTimeUnit);
 
         for (size_t const& i : nodeConnOrder)
         {
-            out << "," << FlowInWattsToString(r.Flows[i].Actual_W, precision);
+            out << "," << FlowInWattsToString(r.flows[i].actual_W, precision);
         }
         for (size_t const& i : nodeConnOrder)
         {
-            out << "," << FlowInWattsToString(r.Flows[i].Requested_W, precision);
+            out << "," << FlowInWattsToString(r.flows[i].requested_W, precision);
         }
         for (size_t const& i : nodeConnOrder)
         {
-            out << "," << FlowInWattsToString(r.Flows[i].Available_W, precision);
+            out << "," << FlowInWattsToString(r.flows[i].available_W, precision);
         }
         // NOTE: Amounts in kJ
         for (size_t i : storeOrder)
         {
-            double store_J = static_cast<double>(r.StorageAmounts_J[i]);
+            double store_J = static_cast<double>(r.storage_amounts_J[i]);
             double store_kJ = store_J / J_per_kJ;
             out << "," << std::fixed << std::setprecision(storePrecision) << store_kJ;
         }
@@ -1801,10 +1801,10 @@ void WriteResultsToEventFile(std::ofstream& out,
         for (size_t i : storeOrder)
         {
             double soc = 0.0;
-            if (m.Stores[i].Capacity_J > 0)
+            if (m.Stores[i].capacity_J > 0)
             {
-                soc = static_cast<double>(r.StorageAmounts_J[i]) /
-                      static_cast<double>(m.Stores[i].Capacity_J);
+                soc = static_cast<double>(r.storage_amounts_J[i]) /
+                      static_cast<double>(m.Stores[i].capacity_J);
             }
             out << "," << std::fixed << std::setprecision(storePrecision) << soc;
         }
@@ -1814,7 +1814,7 @@ void WriteResultsToEventFile(std::ofstream& out,
             {
                 if (relSchByCompId.contains(i))
                 {
-                    TimeState ts = TimeState_GetActiveTimeState(relSchByCompId[i], r.Time);
+                    TimeState ts = TimeState_GetActiveTimeState(relSchByCompId[i], r.time_s);
                     if (ts.state)
                     {
                         out << ",available";
@@ -2534,7 +2534,7 @@ std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& 
     }
 
     auto taf = results.front();
-    auto num_stored = taf.StorageAmounts_J.size();
+    auto num_stored = taf.storage_amounts_J.size();
 
     std::vector<TimeAndFlows> modified_results = {taf};
 
@@ -2545,24 +2545,24 @@ std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& 
     {
 
         double t_next_report_s = t_prev_report_s + T_report_s;
-        while (t_next_report_s <= next_taf.Time)
+        while (t_next_report_s <= next_taf.time_s)
         {
 
             auto mod_taf = taf;
-            if (t_next_report_s == next_taf.Time)
-                mod_taf.Flows = next_taf.Flows;
+            if (t_next_report_s == next_taf.time_s)
+                mod_taf.flows = next_taf.flows;
 
-            mod_taf.Time = t_next_report_s;
-            double dt_orig_s = next_taf.Time - taf.Time;
+            mod_taf.time_s = t_next_report_s;
+            double dt_orig_s = next_taf.time_s - taf.time_s;
             if (dt_orig_s > 0.0)
             {
-                double dt_s = t_next_report_s - taf.Time;
+                double dt_s = t_next_report_s - taf.time_s;
                 double time_frac = dt_s / dt_orig_s;
                 for (std::size_t i = 0; i < num_stored; ++i)
                 {
-                    mod_taf.StorageAmounts_J[i] =
-                        static_cast<flow_t>((1. - time_frac) * taf.StorageAmounts_J[i] +
-                                            time_frac * next_taf.StorageAmounts_J[i]);
+                    mod_taf.storage_amounts_J[i] =
+                        static_cast<flow_t>((1. - time_frac) * taf.storage_amounts_J[i] +
+                                            time_frac * next_taf.storage_amounts_J[i]);
                 }
             }
             modified_results.push_back(mod_taf);
@@ -2876,7 +2876,7 @@ void Simulation_run(Simulation& s,
     for (size_t id = 0; id < nodeConnections.size(); ++id)
     {
         NodeConnection const& nc = nodeConnections[id];
-        if (connsToReport.contains(nc.ConnectionId))
+        if (connsToReport.contains(nc.connection_id))
         {
             nodeConnsToReport.insert(id);
         }

@@ -289,6 +289,7 @@ struct ID
     ID(T id_in) : id(id_in) {}
     T id;
 };
+
 struct ComponentID : ID<size_t>
 {
     ComponentID(size_t id_in = 0) : ID(id_in) {}
@@ -333,83 +334,84 @@ struct NodeID : std::variant<ComponentID, GroupID>
 
 struct NodeConnection
 {
-    size_t ConnectionId = 0;
-    ComponentType From = ComponentType::constant_source_type;
-    ComponentType To = ComponentType::constant_load_type;
+    size_t connection_id = 0;
+    ComponentType from = ComponentType::constant_source_type;
+    ComponentType to = ComponentType::constant_load_type;
     // index into the specific component type's array
-    size_t FromIdx = 0;
-    size_t FromPort = 0;
+    size_t from_subtype_index = 0;
+    size_t from_port = 0;
     // index into ComponentDict
-    NodeID FromId;
+    NodeID from_component_id;
     // index into the specific component type's array
-    size_t ToIdx = 0;
-    size_t ToPort = 0;
+    size_t to_subtype_index = 0;
+    size_t to_port = 0;
     // index into ComponentDict
-    NodeID ToId;
-    size_t FlowTypeId = 0;
+    NodeID to_component_id;
+    size_t flow_type_id = 0;
 
-    std::vector<size_t> origConnId = {};
+    std::vector<size_t> original_connection_id = {};
 
-    bool operator==(NodeConnection const& nodeConn) const
+    bool operator==(NodeConnection const& node_connection) const
     {
-        bool fromSame = (nodeConn.FromId == FromId) && (nodeConn.FromPort == FromPort);
-        bool toSame = (nodeConn.ToId == ToId) && (nodeConn.ToPort == ToPort);
-        return fromSame && toSame;
+        bool from_is_same = (node_connection.from_component_id == from_component_id) && (node_connection.from_port == from_port);
+        bool to_is_same = (node_connection.to_component_id == to_component_id) && (node_connection.to_port == to_port);
+        return from_is_same && to_is_same;
     }
 };
 
 struct Mux
 {
-    size_t NumInports;
-    size_t NumOutports;
-    std::vector<size_t> InflowConns;
-    std::vector<size_t> OutflowConns;
-    std::vector<flow_t> MaxOutflows_W;
+    size_t number_of_inports;
+    size_t number_of_outports;
+    std::vector<size_t> inflow_connection_ids;
+    std::vector<size_t> outflow_connection_ids;
+    std::vector<flow_t> max_outflows_W;
 };
 
 struct Store
 {
-    flow_t Capacity_J;
-    flow_t MaxChargeRate_W;
-    flow_t MaxDischargeRate_W;
+    flow_t capacity_J;
+    flow_t max_charge_rate_W;
+    flow_t max_discharge_rate_W;
     // amount at or below which we request charge
-    flow_t ChargeAmount_J;
-    flow_t InitialStorage_J;
-    std::optional<size_t> InflowConn = {};
-    size_t OutflowConn;
-    std::optional<size_t> WasteflowConn = {};
-    double RoundTripEfficiency = 1.0;
-    flow_t MaxOutflow_W = max_flow_W;
+    flow_t charge_amount_J;
+    flow_t initial_storage_J;
+    std::optional<size_t> inflow_connection_id = {};
+    size_t outflow_connection_id;
+    std::optional<size_t> wasteflow_connection_id = {};
+    double roundtrip_efficiency = 1.0;
+    flow_t max_outflow_W = max_flow_W;
 };
 
 struct PassThrough
 {
-    size_t InflowConn = 0;
-    size_t OutflowConn = 0;
-    flow_t MaxOutflow_W = max_flow_W;
+    size_t inflow_connection_id = 0;
+    size_t outflow_connection_id = 0;
+    flow_t max_outflow_W = max_flow_W;
 };
 
 // TODO[mok]: need to rethink this. This adds a branch with an add.
 // Probably a horrible performance issue. Use double but convert to
 // unsigned int when finalize flows?
-inline flow_t UtilSafeAdd(flow_t a, flow_t b)
+inline flow_t safe_add(flow_t a, flow_t b)
 {
     return (b > (max_flow_W - a)) ? max_flow_W : a + b;
 }
 
 struct Flow
 {
-    flow_t Requested_W = 0;
-    flow_t Available_W = 0;
-    flow_t Actual_W = 0;
+    flow_t requested_W = 0;
+    flow_t available_W = 0;
+    flow_t actual_W = 0;
 
     Flow operator+(Flow const& flow) const
     {
-        Flow newFlow;
-        newFlow.Requested_W = Requested_W + flow.Requested_W;
-        newFlow.Available_W = UtilSafeAdd(Available_W, flow.Available_W);
-        newFlow.Actual_W = Actual_W + flow.Actual_W;
-        return newFlow;
+        return Flow
+        {
+            .requested_W = requested_W + flow.requested_W,
+            .available_W = safe_add(available_W, flow.available_W),
+            .actual_W = actual_W + flow.actual_W,
+        };
     }
 
     Flow operator+=(Flow const& flow) { return *this = *this + flow; }
@@ -418,9 +420,9 @@ struct Flow
 struct TimeAndFlows
 {
     // TODO: change to Time_s
-    double Time = 0.0;
-    std::vector<Flow> Flows;
-    std::vector<flow_t> StorageAmounts_J;
+    double time_s = 0.0;
+    std::vector<Flow> flows;
+    std::vector<flow_t> storage_amounts_J;
 };
 
 typedef std::unordered_map<std::string, std::set<std::size_t>> GroupToComponentMap;
@@ -589,7 +591,7 @@ void AddConnectionIssue(std::vector<std::string>& issues,
 
 std::vector<std::string> Model_check_network(Model const& m);
 
-inline flow_t UtilSafeAdd(flow_t a, flow_t b);
+inline flow_t safe_add(flow_t a, flow_t b);
 
 std::vector<TimeAndAmount> ConvertToTimeAndAmounts(std::vector<std::vector<double>> const& input,
                                                    double timeToSeconds = 1.0,

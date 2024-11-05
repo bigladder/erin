@@ -353,7 +353,7 @@ Result ParseSingleComponent(Simulation& s,
             {
                 maxOutflows_W[i] = static_cast<flow_t>(power_to_watts(maxOutflowsRaw[i], rateUnit));
             }
-            s.TheModel.Muxes[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflows_W =
+            s.TheModel.Muxes[s.TheModel.ComponentMap.subtype_index[id]].max_outflows_W =
                 std::move(maxOutflows_W);
         }
     }
@@ -507,7 +507,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
-            s.TheModel.PassThroughs[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W =
+            s.TheModel.PassThroughs[s.TheModel.ComponentMap.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
         }
     }
@@ -601,7 +601,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), rateUnit));
-            s.TheModel.Stores[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W =
+            s.TheModel.Stores[s.TheModel.ComponentMap.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
         }
     }

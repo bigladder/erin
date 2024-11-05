@@ -1276,7 +1276,8 @@ static void Simulation_PrintGroups(Simulation const& s)
         {
             continue;
         }
-        if (s.TheModel.ComponentMap.component_type[compId] == ComponentType::environment_source_type)
+        if (s.TheModel.ComponentMap.component_type[compId] ==
+            ComponentType::environment_source_type)
         {
             std::cout << "-- ENV[" << compId << "]" << std::endl;
         }

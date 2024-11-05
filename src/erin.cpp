@@ -3919,7 +3919,8 @@ Connection Model_AddConnection(Model& m,
                           << "attempt to doubly connect "
                           << "compId=" << fromId << " outport=" << fromPort
                           << " tag=" << m.ComponentMap.tag[fromId]
-                          << " type=" << ToString(m.ComponentMap.component_type[fromId]) << std::endl;
+                          << " type=" << ToString(m.ComponentMap.component_type[fromId])
+                          << std::endl;
             }
             if (conn.ToId == toId && conn.ToPort == toPort)
             {
@@ -4805,8 +4806,8 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "port is unaddressable for "
-                      << ToString(m.ComponentMap.component_type[fromCompId]) << ": trying to address "
-                      << fromTap.Port << " but only "
+                      << ToString(m.ComponentMap.component_type[fromCompId])
+                      << ": trying to address " << fromTap.Port << " but only "
                       << m.ComponentMap.outflow_type[fromCompId].size() << " ports available"
                       << std::endl;
             return Result::Failure;
@@ -4814,8 +4815,8 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         if (m.ComponentMap.outflow_type[fromCompId][fromTap.Port] != flowTypeId)
         {
             std::ostringstream oss;
-            oss << "mismatch of flow types: " << fromTap.Tag
-                << ":outflow=" << fd.flow_type[m.ComponentMap.outflow_type[fromCompId][fromTap.Port]]
+            oss << "mismatch of flow types: " << fromTap.Tag << ":outflow="
+                << fd.flow_type[m.ComponentMap.outflow_type[fromCompId][fromTap.Port]]
                 << "; connection: " << flow;
             write_error_message("network", oss.str());
             return Result::Failure;

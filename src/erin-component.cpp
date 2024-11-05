@@ -311,7 +311,8 @@ Result ParseSingleComponent(Simulation& s,
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
-            s.TheModel.ScheduledSrcs[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W = maxOutflow_W;
+            s.TheModel.ScheduledSrcs[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W =
+                maxOutflow_W;
         }
     }
     break;
@@ -506,7 +507,8 @@ Result ParseSingleComponent(Simulation& s,
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
-            s.TheModel.PassThroughs[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W = maxOutflow_W;
+            s.TheModel.PassThroughs[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W =
+                maxOutflow_W;
         }
     }
     break;
@@ -599,7 +601,8 @@ Result ParseSingleComponent(Simulation& s,
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), rateUnit));
-            s.TheModel.Stores[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W = maxOutflow_W;
+            s.TheModel.Stores[s.TheModel.ComponentMap.subtype_index[id]].MaxOutflow_W =
+                maxOutflow_W;
         }
     }
     break;

@@ -415,13 +415,13 @@ void Simulation_PrintComponents(Simulation const& s)
                           << std::endl;
             }
         }
-        for (size_t compFragIdx = 0; compFragIdx < s.ComponentFragilities.ComponentIds.size();
+        for (size_t compFragIdx = 0; compFragIdx < s.ComponentFragilities.component_id.size();
              ++compFragIdx)
         {
-            if (s.ComponentFragilities.ComponentIds[compFragIdx] == compId)
+            if (s.ComponentFragilities.component_id[compFragIdx] == compId)
             {
-                size_t fmId = s.ComponentFragilities.FragilityModeIds[compFragIdx];
-                std::cout << "-- fragility mode: " << s.FragilityModes.Tags[fmId] << "[" << fmId
+                size_t fmId = s.ComponentFragilities.fragility_mode_id[compFragIdx];
+                std::cout << "-- fragility mode: " << s.FragilityModes.tag[fmId] << "[" << fmId
                           << "]" << std::endl;
             }
         }
@@ -523,21 +523,21 @@ void Simulation_PrintComponentFailureModes(Simulation const& s)
 
 void Simulation_PrintFragilityModes(Simulation const& s)
 {
-    for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+    for (size_t i = 0; i < s.FragilityModes.tag.size(); ++i)
     {
-        std::cout << i << ": " << s.FragilityModes.Tags[i] << std::endl;
+        std::cout << i << ": " << s.FragilityModes.tag[i] << std::endl;
         std::cout << "-- fragility curve: "
-                  << s.FragilityCurves.tag[s.FragilityModes.FragilityCurveId[i]] << "["
-                  << s.FragilityModes.FragilityCurveId[i] << "]" << std::endl;
-        if (s.FragilityModes.RepairDistIds[i].has_value())
+                  << s.FragilityCurves.tag[s.FragilityModes.fragility_curve_id[i]] << "["
+                  << s.FragilityModes.fragility_curve_id[i] << "]" << std::endl;
+        if (s.FragilityModes.repair_distribution_id[i].has_value())
         {
             std::optional<Distribution> maybeDist =
-                s.TheModel.dist_sys.get_dist_by_id(s.FragilityModes.RepairDistIds[i].value());
+                s.TheModel.dist_sys.get_dist_by_id(s.FragilityModes.repair_distribution_id[i].value());
             if (maybeDist.has_value())
             {
                 Distribution const& d = maybeDist.value();
                 std::cout << "-- repair dist: " << d.Tag << "["
-                          << s.FragilityModes.RepairDistIds[i].value() << "]" << std::endl;
+                          << s.FragilityModes.repair_distribution_id[i].value() << "]" << std::endl;
             }
         }
     }
@@ -545,13 +545,13 @@ void Simulation_PrintFragilityModes(Simulation const& s)
 
 void Simulation_PrintComponentFragilityModes(Simulation const& s)
 {
-    for (size_t i = 0; i < s.ComponentFragilities.ComponentIds.size(); ++i)
+    for (size_t i = 0; i < s.ComponentFragilities.component_id.size(); ++i)
     {
-        size_t compId = s.ComponentFragilities.ComponentIds[i];
-        size_t fmId = s.ComponentFragilities.FragilityModeIds[i];
+        size_t compId = s.ComponentFragilities.component_id[i];
+        size_t fmId = s.ComponentFragilities.fragility_mode_id[i];
         std::cout << "[" << i << "]: component=" << s.TheModel.component.tag[compId] << "["
-                  << s.ComponentFragilities.ComponentIds[i]
-                  << "]; fragility mode=" << s.FragilityModes.Tags[fmId] << "[" << fmId << "]"
+                  << s.ComponentFragilities.component_id[i]
+                  << "]; fragility mode=" << s.FragilityModes.tag[fmId] << "[" << fmId << "]"
                   << std::endl;
     }
 }
@@ -750,20 +750,20 @@ size_t Simulation_RegisterFragilityMode(Simulation& s,
                                         size_t fragilityCurveId,
                                         std::optional<size_t> maybeRepairDistId)
 {
-    size_t size = s.FragilityModes.Tags.size();
+    size_t size = s.FragilityModes.tag.size();
     for (size_t i = 0; i < size; ++i)
     {
-        if (s.FragilityModes.Tags[i] == tag)
+        if (s.FragilityModes.tag[i] == tag)
         {
-            s.FragilityModes.FragilityCurveId[i] = fragilityCurveId;
-            s.FragilityModes.RepairDistIds[i] = maybeRepairDistId;
+            s.FragilityModes.fragility_curve_id[i] = fragilityCurveId;
+            s.FragilityModes.repair_distribution_id[i] = maybeRepairDistId;
             return i;
         }
     }
     size_t result = size;
-    s.FragilityModes.Tags.push_back(tag);
-    s.FragilityModes.FragilityCurveId.push_back(fragilityCurveId);
-    s.FragilityModes.RepairDistIds.push_back(maybeRepairDistId);
+    s.FragilityModes.tag.push_back(tag);
+    s.FragilityModes.fragility_curve_id.push_back(fragilityCurveId);
+    s.FragilityModes.repair_distribution_id.push_back(maybeRepairDistId);
     return result;
 }
 
@@ -949,9 +949,9 @@ bool Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name)
 
 bool Simulation_IsFragilityModeNameUnique(Simulation& s, std::string const& name)
 {
-    for (size_t i = 0; i < s.FragilityModes.Tags.size(); ++i)
+    for (size_t i = 0; i < s.FragilityModes.tag.size(); ++i)
     {
-        if (s.FragilityModes.Tags[i] == name)
+        if (s.FragilityModes.tag[i] == name)
         {
             return false;
         }
@@ -1558,15 +1558,15 @@ std::vector<size_t> CalculateFailModeOrder(Simulation const& s)
 
 std::vector<size_t> CalculateFragilModeOrder(Simulation const& s)
 {
-    size_t const numFragModes = s.FragilityModes.Tags.size();
+    size_t const numFragModes = s.FragilityModes.tag.size();
     std::vector<size_t> result;
-    std::vector<std::string> fragTags(s.FragilityModes.Tags);
+    std::vector<std::string> fragTags(s.FragilityModes.tag);
     std::sort(fragTags.begin(), fragTags.end());
     for (auto const& t : fragTags)
     {
         for (size_t i = 0; i < numFragModes; ++i)
         {
-            if (s.FragilityModes.Tags[i] == t)
+            if (s.FragilityModes.tag[i] == t)
             {
                 result.push_back(i);
                 break;
@@ -1848,7 +1848,7 @@ void WriteResultsToEventFile(std::ofstream& out,
                         }
                         for (auto const& fragModeId : fragModes)
                         {
-                            fmTags.push_back(s.FragilityModes.Tags[fragModeId]);
+                            fmTags.push_back(s.FragilityModes.tag[fragModeId]);
                         }
                         bool first = true;
                         std::ostringstream oss {};
@@ -2292,7 +2292,7 @@ void WriteStatisticsToFile(Simulation const& s,
     }
     for (size_t i : fragOrder)
     {
-        stats << ",global count: " << s.FragilityModes.Tags[i];
+        stats << ",global count: " << s.FragilityModes.tag[i];
     }
     for (size_t i : failOrder)
     {
@@ -2300,7 +2300,7 @@ void WriteStatisticsToFile(Simulation const& s,
     }
     for (size_t i : fragOrder)
     {
-        stats << ",global time fraction: " << s.FragilityModes.Tags[i];
+        stats << ",global time fraction: " << s.FragilityModes.tag[i];
     }
     std::map<size_t, std::set<size_t>> failModeIdsByCompId;
     std::map<size_t, std::set<size_t>> fragModeIdsByCompId;
@@ -2338,7 +2338,7 @@ void WriteStatisticsToFile(Simulation const& s,
             if (fragModeIdsByCompId[compId].contains(fragModeId))
             {
                 stats << ",count: " << s.TheModel.component.tag[compId] << " / "
-                      << s.FragilityModes.Tags[fragModeId];
+                      << s.FragilityModes.tag[fragModeId];
             }
         }
     }
@@ -2357,7 +2357,7 @@ void WriteStatisticsToFile(Simulation const& s,
             if (fragModeIdsByCompId[compId].contains(fragModeId))
             {
                 stats << ",time fraction: " << s.TheModel.component.tag[compId] << " / "
-                      << s.FragilityModes.Tags[fragModeId];
+                      << s.FragilityModes.tag[fragModeId];
             }
         }
     }
@@ -2701,7 +2701,7 @@ void WriteReliabilityCurves(std::string const& scenarioName,
                 }
                 for (size_t fmId : sbr.time_states[row].fragilityModeCauses)
                 {
-                    causes.push_back(s.FragilityModes.Tags[fmId]);
+                    causes.push_back(s.FragilityModes.tag[fmId]);
                 }
                 std::string causeStr = "";
                 for (std::string const& cause : causes)
@@ -2987,11 +2987,11 @@ void Simulation_run(Simulation& s,
                                                  s.ComponentFailureModes.ComponentIds,
                                                  s.TheModel.component.initial_age_s,
                                                  s.TheModel.component.tag,
-                                                 s.ComponentFragilities.ComponentIds,
-                                                 s.ComponentFragilities.FragilityModeIds,
-                                                 s.FragilityModes.FragilityCurveId,
-                                                 s.FragilityModes.RepairDistIds,
-                                                 s.FragilityModes.Tags,
+                                                 s.ComponentFragilities.component_id,
+                                                 s.ComponentFragilities.fragility_mode_id,
+                                                 s.FragilityModes.fragility_curve_id,
+                                                 s.FragilityModes.repair_distribution_id,
+                                                 s.FragilityModes.tag,
                                                  s.FragilityCurves.curve_id,
                                                  s.FragilityCurves.curve_type,
                                                  s.LinearFragilityCurves,

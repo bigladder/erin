@@ -551,15 +551,15 @@ struct FragilityCurveDict
 // more remeniscent of databases...
 struct ComponentFragilityModeDict
 {
-    std::vector<size_t> ComponentIds;
-    std::vector<size_t> FragilityModeIds;
+    std::vector<size_t> component_id;
+    std::vector<size_t> fragility_mode_id;
 };
 
 struct FragilityModeDict
 {
-    std::vector<std::string> Tags {};
-    std::vector<size_t> FragilityCurveId {};
-    std::vector<std::optional<size_t>> RepairDistIds {};
+    std::vector<std::string> tag {};
+    std::vector<size_t> fragility_curve_id {};
+    std::vector<std::optional<size_t>> repair_distribution_id {};
 };
 
 struct ComponentFailureModeDict

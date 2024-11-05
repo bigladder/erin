@@ -167,7 +167,7 @@ TEST(Erin, Test4)
     times_and_loads.push_back({0.0, 10});
     times_and_loads.push_back({3600.0, 200});
     Model m = {};
-    m.FinalTime = 3600.0;
+    m.final_time_s = 3600.0;
     auto src_id = Model_AddConstantSource(m, 100);
     auto load_id = Model_AddScheduleBasedLoad(m, times_and_loads);
     auto src_to_load_conn = Model_AddConnection(m, src_id, 0, load_id, 0);
@@ -266,7 +266,7 @@ TEST(Erin, Test6)
 TEST(Erin, Test7)
 {
     Model m = {};
-    m.FinalTime = 10.0;
+    m.final_time_s = 10.0;
     auto src_id = Model_AddConstantSource(m, 0);
     auto store_id = Model_AddStore(m, 100, 10, 10, 0, 100);
     auto load_id = Model_AddConstantLoad(m, 10);
@@ -315,7 +315,7 @@ TEST(Erin, Test7)
 TEST(Erin, Test8)
 {
     Model m = {};
-    m.FinalTime = 20.0;
+    m.final_time_s = 20.0;
     auto src_id = Model_AddConstantSource(m, 5);
     auto store_id = Model_AddStore(m, 100, 10, 10, 0, 100);
     auto load_id = Model_AddConstantLoad(m, 10);
@@ -367,7 +367,7 @@ TEST(Erin, Test9)
     times_and_loads.push_back({5.0, 5});
     times_and_loads.push_back({10.0, 15});
     Model m = {};
-    m.FinalTime = 25.0;
+    m.final_time_s = 25.0;
     auto src_id = Model_AddConstantSource(m, 10);
     auto store_id = Model_AddStore(m, 100, 10, 10, 80, 100);
     auto load_id = Model_AddScheduleBasedLoad(m, times_and_loads);
@@ -454,7 +454,7 @@ TEST(Erin, Test10)
     times_and_loads.push_back({5.0, 5});
     times_and_loads.push_back({10.0, 15});
     Model m = {};
-    m.FinalTime = 12.5;
+    m.final_time_s = 12.5;
     auto src1_id = Model_AddConstantSource(m, 20);
     auto src2_id = Model_AddConstantSource(m, 5);
     auto store_id = Model_AddStore(m, 100, 10, 10, 80, 100);
@@ -734,8 +734,8 @@ TEST(Erin, Test11)
     // create a model of src->conv->load and place a reliability dist on conv
     // ensure the component goes down and comes back up (i.e., is repaired)
     Model m = {};
-    m.RandFn = []() { return 0.4; };
-    m.FinalTime = 50.0;
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 50.0;
     auto src_id = Model_AddConstantSource(m, 100);
     auto load_id = Model_AddConstantLoad(m, 10);
     auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
@@ -885,8 +885,8 @@ TEST(Erin, Test12)
     // NOTE: it would be good to have a waste connection so that the component
     // always "spills" (ullage) when not all available is used.
     Model m = {};
-    m.RandFn = []() { return 0.4; };
-    m.FinalTime = 20.0;
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 20.0;
     std::vector<TimeAndAmount> source_availability {};
     source_availability.reserve(5);
     source_availability.push_back(TimeAndAmount {0, 10});
@@ -934,8 +934,8 @@ TEST(Erin, Test13)
 {
     // SIMULATION INFO and INITIALIZATION
     Model m = {};
-    m.RandFn = []() { return 0.4; };
-    m.FinalTime = hours_as_seconds(48.0);
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = hours_as_seconds(48.0);
     // LOADS
     std::vector<TimeAndAmount> elecLoad {};
     elecLoad.reserve(49);
@@ -1133,8 +1133,8 @@ TEST(Erin, Test13)
 TEST(Erin, Test14)
 {
     Model m = {};
-    m.RandFn = []() { return 0.4; };
-    m.FinalTime = 4.0;
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 4.0;
     std::vector<TimeAndAmount> available_power {
         {0.0, 50},
         {2.0, 10},
@@ -1152,8 +1152,8 @@ TEST(Erin, Test14)
 TEST(Erin, Test15)
 {
     Model m = {};
-    m.RandFn = []() { return 0.4; };
-    m.FinalTime = 2.0;
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 2.0;
     std::vector<TimeAndAmount> load_one {
         {0.0, 50},
         {2.0, 10},
@@ -1240,8 +1240,8 @@ TEST(Erin, Test15)
 TEST(Erin, Test16)
 {
     Model m = {};
-    m.RandFn = []() { return 0.4; };
-    m.FinalTime = 2.0;
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 2.0;
     size_t src_id = Model_AddConstantSource(m, 100);
     size_t load_id = Model_AddConstantLoad(m, 50);
     size_t pass_id = Model_AddPassThrough(m);
@@ -1731,8 +1731,8 @@ TEST(Erin, TestApplyUniformTimeStep)
 {
     // SIMULATION INFO and INITIALIZATION
     Model m = {};
-    m.RandFn = []() { return 0.4; };
-    m.FinalTime = hours_as_seconds(24.0);
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = hours_as_seconds(24.0);
 
     // COMPONENTS
     std::vector<TimeAndAmount> ePV_avail {};

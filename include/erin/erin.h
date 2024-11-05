@@ -429,36 +429,37 @@ typedef std::unordered_map<std::size_t, std::string> ComponentToGroupMap;
 
 struct Switch
 {
-    size_t InflowConnPrimary;
-    size_t InflowConnSecondary;
-    size_t OutflowConn;
-    flow_t MaxOutflow_W;
+    size_t inflow_connection_id_primary;
+    size_t inflow_connection_id_secondary;
+    size_t outflow_connection_id;
+    flow_t max_outflow_W;
 };
 
 struct Model
 {
-    ComponentDict ComponentMap;
-    std::vector<ConstantSource> ConstSources;
-    std::vector<ScheduleBasedSource> ScheduledSrcs;
-    std::vector<ConstantLoad> ConstLoads;
-    std::vector<ScheduleBasedLoad> ScheduledLoads;
-    std::vector<ConstantEfficiencyConverter> ConstEffConvs;
-    std::vector<VariableEfficiencyConverter> VarEffConvs;
-    std::vector<Mux> Muxes;
-    std::vector<Store> Stores;
-    std::vector<PassThrough> PassThroughs;
-    std::vector<Mover> Movers;
-    std::vector<VariableEfficiencyMover> VarEffMovers;
-    std::vector<Switch> Switches;
-    std::vector<Connection> Connections;
-    std::vector<ScheduleBasedReliability> Reliabilities;
-    DistributionSystem DistSys {};
-    ReliabilityCoordinator Rel {};
-    std::function<double()> RandFn;
-    double FinalTime = 0.0;
-    GroupToComponentMap GroupToComponents;
-    ComponentToGroupMap ComponentToGroup;
-    std::unordered_map<std::string, size_t> nGroupPortsTo, nGroupPortsFrom;
+    ComponentDict component;
+    std::vector<ConstantSource> constant_source;
+    std::vector<ScheduleBasedSource> scheduled_source;
+    std::vector<ConstantLoad> constant_load;
+    std::vector<ScheduleBasedLoad> scheduled_load;
+    std::vector<ConstantEfficiencyConverter> constant_efficiency_converter;
+    std::vector<VariableEfficiencyConverter> variable_efficiency_converter;
+    std::vector<Mux> mux;
+    std::vector<Store> store;
+    std::vector<PassThrough> pass_through;
+    std::vector<Mover> mover;
+    std::vector<VariableEfficiencyMover> variable_efficiency_mover;
+    std::vector<Switch> transfer_switch;
+    std::vector<Connection> connection;
+    std::vector<ScheduleBasedReliability> reliability;
+    DistributionSystem dist_sys {};
+    ReliabilityCoordinator rel_coord {};
+    std::function<double()> random_function;
+    double final_time_s = 0.0;
+    GroupToComponentMap group_to_component;
+    ComponentToGroupMap component_to_group;
+    std::unordered_map<std::string, size_t> number_of_group_ports_to;
+    std::unordered_map<std::string, size_t> number_of_group_ports_from;
 };
 
 struct ComponentIdAndWasteConnection

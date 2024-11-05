@@ -311,7 +311,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
-            s.TheModel.ScheduledSrcs[s.TheModel.ComponentMap.subtype_index[id]].max_outflow_W =
+            s.TheModel.scheduled_source[s.TheModel.component.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
         }
     }
@@ -353,7 +353,7 @@ Result ParseSingleComponent(Simulation& s,
             {
                 maxOutflows_W[i] = static_cast<flow_t>(power_to_watts(maxOutflowsRaw[i], rateUnit));
             }
-            s.TheModel.Muxes[s.TheModel.ComponentMap.subtype_index[id]].max_outflows_W =
+            s.TheModel.mux[s.TheModel.component.subtype_index[id]].max_outflows_W =
                 std::move(maxOutflows_W);
         }
     }
@@ -394,15 +394,15 @@ Result ParseSingleComponent(Simulation& s,
         {
             double maxOutflow_W =
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), localRateUnit);
-            size_t constEffIdx = s.TheModel.ComponentMap.subtype_index[id];
-            s.TheModel.ConstEffConvs[constEffIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
+            size_t constEffIdx = s.TheModel.component.subtype_index[id];
+            s.TheModel.constant_efficiency_converter[constEffIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
         }
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
                 power_to_watts(std::get<double>(input.at("max_lossflow").Value), localRateUnit);
-            size_t constEffIdx = s.TheModel.ComponentMap.subtype_index[id];
-            s.TheModel.ConstEffConvs[constEffIdx].max_lossflow_W =
+            size_t constEffIdx = s.TheModel.component.subtype_index[id];
+            s.TheModel.constant_efficiency_converter[constEffIdx].max_lossflow_W =
                 static_cast<flow_t>(maxLossflow_W);
         }
     }
@@ -484,13 +484,13 @@ Result ParseSingleComponent(Simulation& s,
                                                  tag,
                                                  report);
         id = compIdAndWasteConn.Id;
-        size_t varEffIdx = s.TheModel.ComponentMap.subtype_index[id];
-        s.TheModel.VarEffConvs[varEffIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
+        size_t varEffIdx = s.TheModel.component.subtype_index[id];
+        s.TheModel.variable_efficiency_converter[varEffIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
                 power_to_watts(std::get<double>(input.at("max_lossflow").Value), localRateUnit);
-            s.TheModel.VarEffConvs[varEffIdx].max_lossflow_W = static_cast<flow_t>(maxLossflow_W);
+            s.TheModel.variable_efficiency_converter[varEffIdx].max_lossflow_W = static_cast<flow_t>(maxLossflow_W);
         }
     }
     break;
@@ -507,7 +507,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
-            s.TheModel.PassThroughs[s.TheModel.ComponentMap.subtype_index[id]].max_outflow_W =
+            s.TheModel.pass_through[s.TheModel.component.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
         }
     }
@@ -601,7 +601,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), rateUnit));
-            s.TheModel.Stores[s.TheModel.ComponentMap.subtype_index[id]].max_outflow_W =
+            s.TheModel.store[s.TheModel.component.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
         }
     }
@@ -615,8 +615,8 @@ Result ParseSingleComponent(Simulation& s,
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), rateUnit));
-            size_t moverIdx = s.TheModel.ComponentMap.subtype_index[id];
-            s.TheModel.Movers[moverIdx].max_outflow_W = maxOutflow_W;
+            size_t moverIdx = s.TheModel.component.subtype_index[id];
+            s.TheModel.mover[moverIdx].max_outflow_W = maxOutflow_W;
         }
     }
     break;
@@ -695,8 +695,8 @@ Result ParseSingleComponent(Simulation& s,
                                                                      tag,
                                                                      report);
         id = compIdAndConns.Id;
-        size_t moverIdx = s.TheModel.ComponentMap.subtype_index[id];
-        s.TheModel.VarEffMovers[moverIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
+        size_t moverIdx = s.TheModel.component.subtype_index[id];
+        s.TheModel.variable_efficiency_mover[moverIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
     }
     break;
     case ComponentType::switch_type:
@@ -719,8 +719,8 @@ Result ParseSingleComponent(Simulation& s,
             }
             double maxOutflow_W =
                 power_to_watts(std::get<double>(input.at("max_outflow").Value), localRateUnit);
-            size_t switchIdx = s.TheModel.ComponentMap.subtype_index[id];
-            s.TheModel.Switches[switchIdx].MaxOutflow_W = static_cast<flow_t>(maxOutflow_W);
+            size_t switchIdx = s.TheModel.component.subtype_index[id];
+            s.TheModel.transfer_switch[switchIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
         }
     }
     break;
@@ -730,7 +730,7 @@ Result ParseSingleComponent(Simulation& s,
         std::exit(1);
     }
     }
-    s.TheModel.ComponentMap.report[id] = report;
+    s.TheModel.component.report[id] = report;
     if (table.contains("failure_modes"))
     {
         if (!table.at("failure_modes").is_array())
@@ -837,7 +837,7 @@ Result ParseSingleComponent(Simulation& s,
             return Result::Failure;
         }
         double initialAge_s = time_to_seconds(maybeInitialAge.value(), timeUnit);
-        ComponentDict_SetInitialAge(s.TheModel.ComponentMap, id, initialAge_s);
+        ComponentDict_SetInitialAge(s.TheModel.component, id, initialAge_s);
     }
     if (table.contains("group"))
     {

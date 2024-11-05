@@ -30,11 +30,11 @@ TEST(Switch, TestSetSwitchState)
 TEST(Switch, TestAddingSwitchToModel)
 {
     Model m = {};
-    EXPECT_EQ(m.ComponentMap.component_type.size(), 0);
-    EXPECT_EQ(m.Switches.size(), 0);
+    EXPECT_EQ(m.component.component_type.size(), 0);
+    EXPECT_EQ(m.transfer_switch.size(), 0);
     auto switch_idx = Model_AddSwitch(m, 0, "ATS");
-    EXPECT_EQ(m.ComponentMap.component_type.size(), 1);
-    EXPECT_EQ(m.Switches.size(), 1);
+    EXPECT_EQ(m.component.component_type.size(), 1);
+    EXPECT_EQ(m.transfer_switch.size(), 1);
     EXPECT_EQ(switch_idx, 0);
 }
 

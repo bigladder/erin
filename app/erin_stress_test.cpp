@@ -22,8 +22,8 @@ int main(int argc, char** argv)
               << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
     Model m = {};
-    m.RandFn = []() { return 0.4; };
-    m.FinalTime = 8760.0 * 3600.0;
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 8760.0 * 3600.0;
     std::vector<TimeAndAmount> times_and_loads = {};
     times_and_loads.reserve(num_hours + 1);
     for (size_t i = 0; i <= num_hours; ++i)

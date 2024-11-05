@@ -24,7 +24,7 @@ constexpr double const infinite_time = -1.0;
 
 constexpr size_t const wasteflow_id = 0;
 
-void AddConnectionIssue(std::vector<std::string>& issues,
+void add_connection_issue(std::vector<std::string>& issues,
                         std::string componentTag,
                         size_t compId,
                         size_t compPort,
@@ -115,7 +115,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    inflowPort,
@@ -132,7 +132,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -149,7 +149,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((wfConn.from != compType) || (wfConn.from_component_id != compId) ||
                 (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    wfPort,
@@ -168,7 +168,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 if ((lfConn.from != compType) || (lfConn.from_component_id != compId) ||
                     (lfConn.from_subtype_index != idx) || (lfConn.from_port != lfPort))
                 {
-                    AddConnectionIssue(issues,
+                    add_connection_issue(issues,
                                        tag,
                                        compId,
                                        lfPort,
@@ -192,7 +192,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    inflowPort,
@@ -209,7 +209,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -226,7 +226,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((wfConn.from != compType) || (wfConn.from_component_id != compId) ||
                 (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    wfPort,
@@ -245,7 +245,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 if ((lfConn.from != compType) || (lfConn.from_component_id != compId) ||
                     (lfConn.from_subtype_index != idx) || (lfConn.from_port != lfPort))
                 {
-                    AddConnectionIssue(issues,
+                    add_connection_issue(issues,
                                        tag,
                                        compId,
                                        lfPort,
@@ -268,7 +268,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    inflowPort,
@@ -291,7 +291,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -319,7 +319,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    inflowPort,
@@ -336,7 +336,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -353,7 +353,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((envConn.to != compType) || (envConn.to_component_id != compId) ||
                 (envConn.to_subtype_index != idx) || (envConn.to_port != envInflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    envInflowPort,
@@ -370,7 +370,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((wConn.from != compType) || (wConn.from_component_id != compId) ||
                 (wConn.from_subtype_index != idx) || (wConn.from_port != wasteOutflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    wasteOutflowPort,
@@ -393,7 +393,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    inflowPort,
@@ -410,7 +410,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -427,7 +427,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((envConn.to != compType) || (envConn.to_component_id != compId) ||
                 (envConn.to_subtype_index != idx) || (envConn.to_port != envInflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    envInflowPort,
@@ -444,7 +444,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((wConn.from != compType) || (wConn.from_component_id != compId) ||
                 (wConn.from_subtype_index != idx) || (wConn.from_port != wasteOutflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    wasteOutflowPort,
@@ -467,7 +467,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                     (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inPort))
                 {
-                    AddConnectionIssue(issues,
+                    add_connection_issue(issues,
                                        tag,
                                        compId,
                                        inPort,
@@ -485,7 +485,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                     (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outPort))
                 {
-                    AddConnectionIssue(issues,
+                    add_connection_issue(issues,
                                        tag,
                                        compId,
                                        outPort,
@@ -508,7 +508,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    inflowPort,
@@ -524,7 +524,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -548,7 +548,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (primaryInflowConn.to_subtype_index != idx) ||
                 (primaryInflowConn.to_port != primaryInflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    primaryInflowPort,
@@ -566,7 +566,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 (secondaryInflowConn.to_subtype_index != idx) ||
                 (secondaryInflowConn.to_port != secondaryInflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    secondaryInflowPort,
@@ -582,7 +582,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -604,7 +604,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                 (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    inflowPort,
@@ -626,7 +626,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -642,7 +642,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((wfConn.from != compType) || (wfConn.from_component_id != compId) ||
                 (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    wfPort,
@@ -664,7 +664,7 @@ std::vector<std::string> Model_check_network(Model const& m)
             if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
                 (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
             {
-                AddConnectionIssue(issues,
+                add_connection_issue(issues,
                                    tag,
                                    compId,
                                    outflowPort,
@@ -682,7 +682,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
                     (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
                 {
-                    AddConnectionIssue(issues,
+                    add_connection_issue(issues,
                                        tag,
                                        compId,
                                        inflowPort,
@@ -701,7 +701,7 @@ std::vector<std::string> Model_check_network(Model const& m)
                 if ((wfConn.from != compType) || (wfConn.from_component_id != compId) ||
                     (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
                 {
-                    AddConnectionIssue(issues,
+                    add_connection_issue(issues,
                                        tag,
                                        compId,
                                        wfPort,

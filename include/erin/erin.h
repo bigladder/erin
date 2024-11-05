@@ -596,20 +596,6 @@ SwitchState get_switch_state(SimulationState const& ss, size_t const& switch_ind
 
 void set_switch_state(SimulationState& ss, size_t const& switch_index, SwitchState new_state);
 
-size_t CountActiveConnections(SimulationState const& ss);
-
-void ActivateConnectionsForConstantLoads(Model const& m, SimulationState& ss);
-
-void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss);
-
-void ActivateConnectionsForScheduleBasedLoads(Model const& m, SimulationState& ss, double t);
-
-void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState& ss, double t);
-
-void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
-
-void ActivateConnectionsForReliability(Model& m, SimulationState& ss, double time, bool verbose);
-
 double GetNextTime(double nextTime, size_t count, std::function<double(size_t)> f);
 
 double EarliestNextEvent(Model const& m, SimulationState const& ss, double t);

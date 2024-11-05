@@ -46,6 +46,20 @@ void add_active_connection_back(SimulationState& ss, size_t connection_index);
 
 void add_active_connection_forward(SimulationState& ss, size_t connIdx);
 
+size_t count_active_connections(SimulationState const& ss);
+
+void activate_constant_load_connections(Model const& m, SimulationState& ss);
+
+void activate_constant_source_connections(Model const& m, SimulationState& ss);
+
+void activate_schedule_based_load_connections(Model const& m, SimulationState& ss, double t);
+
+void activate_schedule_based_source_connections(Model const& m, SimulationState& ss, double t);
+
+void activate_store_connections(Model& m, SimulationState& ss, double t);
+
+void activate_reliability_connections(Model& m, SimulationState& ss, double time, bool verbose);
+
 // PRIVATE CONSTANTS
 constexpr double const infinite_time = -1.0;
 
@@ -1006,7 +1020,7 @@ size_t add_component_returning_id(ComponentDict& c,
     return id;
 }
 
-size_t CountActiveConnections(SimulationState const& ss)
+size_t count_active_connections(SimulationState const& ss)
 {
     return (ss.active_connections_back.size() + ss.active_connections_front.size());
 }
@@ -1045,7 +1059,7 @@ void add_active_connection_forward(SimulationState& ss, size_t connIdx)
     ss.active_connections_front.insert(connIdx);
 }
 
-void ActivateConnectionsForConstantLoads(Model const& model, SimulationState& ss)
+void activate_constant_load_connections(Model const& model, SimulationState& ss)
 {
     for (size_t loadIdx = 0; loadIdx < model.constant_load.size(); ++loadIdx)
     {
@@ -1058,7 +1072,7 @@ void ActivateConnectionsForConstantLoads(Model const& model, SimulationState& ss
     }
 }
 
-void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss)
+void activate_constant_source_connections(Model const& m, SimulationState& ss)
 {
     for (size_t srcIdx = 0; srcIdx < m.constant_source.size(); ++srcIdx)
     {
@@ -1081,7 +1095,7 @@ void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss)
     }
 }
 
-void ActivateConnectionsForScheduleBasedLoads(Model const& m, SimulationState& ss, double t)
+void activate_schedule_based_load_connections(Model const& m, SimulationState& ss, double t)
 {
     for (size_t i = 0; i < m.scheduled_load.size(); ++i)
     {
@@ -1103,7 +1117,7 @@ void ActivateConnectionsForScheduleBasedLoads(Model const& m, SimulationState& s
     }
 }
 
-void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState& ss, double t)
+void activate_schedule_based_source_connections(Model const& m, SimulationState& ss, double t)
 {
     for (size_t i = 0; i < m.scheduled_source.size(); ++i)
     {
@@ -1143,7 +1157,7 @@ void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState&
     }
 }
 
-void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t)
+void activate_store_connections(Model& m, SimulationState& ss, double t)
 {
     for (size_t storeIdx = 0; storeIdx < m.store.size(); ++storeIdx)
     {
@@ -1211,7 +1225,7 @@ void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t)
     }
 }
 
-void ActivateConnectionsForReliability(Model& m, SimulationState& ss, double time, bool verbose)
+void activate_reliability_connections(Model& m, SimulationState& ss, double time, bool verbose)
 {
     for (auto const& rel : m.reliability)
     {
@@ -3060,21 +3074,21 @@ Simulate(Model& model, bool verbose, bool enableSwitchLogic, Log const& log)
         // arrays
         // note: these two arrays could be sorted by component type for
         // faster running over loops...
-        ActivateConnectionsForReliability(model, ss, t, verbose);
-        ActivateConnectionsForScheduleBasedLoads(model, ss, t);
-        ActivateConnectionsForScheduleBasedSources(model, ss, t);
-        ActivateConnectionsForStores(model, ss, t);
+        activate_reliability_connections(model, ss, t, verbose);
+        activate_schedule_based_load_connections(model, ss, t);
+        activate_schedule_based_source_connections(model, ss, t);
+        activate_store_connections(model, ss, t);
         // TODO: remove this if statement after we add a delay capability to
         // constant loads and constant sources
         if (t == 0)
         {
-            ActivateConnectionsForConstantLoads(model, ss);
-            ActivateConnectionsForConstantSources(model, ss);
+            activate_constant_load_connections(model, ss);
+            activate_constant_source_connections(model, ss);
         }
         size_t const maxLoop = 1'000;
         for (size_t loopIter = 0; loopIter < maxLoop; ++loopIter)
         {
-            if (CountActiveConnections(ss) == 0)
+            if (count_active_connections(ss) == 0)
             {
                 if (verbose)
                 {

@@ -1264,11 +1264,11 @@ void activate_reliability_connections(Model& m, SimulationState& ss, double time
                         std::cout << "... FAILED: " << m.component.tag[rel.component_id] << "["
                                   << rel.component_id << "]" << std::endl;
                         std::cout << "... causes: " << std::endl;
-                        for (auto const& fragCause : ts.fragilityModeCauses)
+                        for (auto const& fragCause : ts.fragility_mode_causes)
                         {
                             std::cout << "... ... fragility mode: " << fragCause << std::endl;
                         }
-                        for (auto const& failCause : ts.failureModeCauses)
+                        for (auto const& failCause : ts.failure_mode_causes)
                         {
                             std::cout << "... ... failure mode: " << failCause << std::endl;
                         }
@@ -4642,7 +4642,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     std::vector<TimeState> relSch;
     for (size_t i = 0; i < m.reliability.size(); ++i)
     {
-        relSch = TimeState_Combine(relSch, m.reliability[i].time_states);
+        relSch = combine(relSch, m.reliability[i].time_states);
     }
     TimeState_CountAndTimeFailureEvents(relSch,
                                         m.final_time_s,

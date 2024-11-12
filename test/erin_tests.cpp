@@ -1281,7 +1281,7 @@ TEST(Erin, Test17)
                                      {90.0, false, {1}, {}},
                                      {100.0, true, {}, {}},
                                      {150.0, false, {2}, {}}};
-    std::vector<TimeState> actual = TimeState_Combine(a, b);
+    std::vector<TimeState> actual = combine(a, b);
     EXPECT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
@@ -1302,7 +1302,7 @@ TEST(Erin, Test18)
         {90.0, false, {1}, {}},
         {100.0, true, {}, {}},
     };
-    std::vector<TimeState> actual = TimeState_Clip(input, 50.0, 120.0, false);
+    std::vector<TimeState> actual = clip(input, 50.0, 120.0, false);
     EXPECT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
@@ -1313,7 +1313,7 @@ TEST(Erin, Test18)
         {40.0, false, {1}, {}},
         {50.0, true, {}, {}},
     };
-    std::vector<TimeState> actual2 = TimeState_Clip(input, 50.0, 120.0, true);
+    std::vector<TimeState> actual2 = clip(input, 50.0, 120.0, true);
     EXPECT_EQ(expected2.size(), actual2.size());
     for (size_t i = 0; i < expected2.size(); ++i)
     {
@@ -1324,36 +1324,36 @@ TEST(Erin, Test18)
 TEST(Erin, Test18a_TimeState_Combine_issue)
 {
     std::vector<TimeState> a = {
-        {.time = 43'800 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
-        {.time = 43'896 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 87'696 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
+        {.time = 43'800 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
+        {.time = 43'896 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 87'696 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
     };
     std::vector<TimeState> b = {
-        {.time = 2'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 3'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 5'520 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
-        {.time = 6'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 8'520 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
-        {.time = 9'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
+        {.time = 2'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 3'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 5'520 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
+        {.time = 6'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 8'520 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
+        {.time = 9'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
     };
     std::vector<TimeState> expected = {
-        {.time = 2'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 3'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 5'520 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
-        {.time = 6'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 8'520 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
-        {.time = 9'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 43'800 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
-        {.time = 43'896 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 87'696 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
+        {.time = 2'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 3'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 5'520 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
+        {.time = 6'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 8'520 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
+        {.time = 9'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 43'800 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
+        {.time = 43'896 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 87'696 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
     };
-    std::vector<TimeState> actual = TimeState_Combine(a, b);
+    std::vector<TimeState> actual = combine(a, b);
     EXPECT_EQ(actual.size(), expected.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
         EXPECT_EQ(actual[i], expected[i]);
     }
-    actual = TimeState_Combine(b, a);
+    actual = combine(b, a);
     EXPECT_EQ(actual.size(), expected.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
@@ -1364,95 +1364,95 @@ TEST(Erin, Test18a_TimeState_Combine_issue)
 TEST(Erin, Test18b_TimeState_Combine_issue)
 {
     std::vector<TimeState> a = {
-        {.time = 43'800 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
-        {.time = 43'896 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 87'696 * 3600.0, .state = 0, .failureModeCauses = {1}, .fragilityModeCauses = {}},
+        {.time = 43'800 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
+        {.time = 43'896 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 87'696 * 3600.0, .state = 0, .failure_mode_causes = {1}, .fragility_mode_causes = {}},
     };
     std::vector<TimeState> b = {
-        {.time = 2'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 3'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 5'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 6'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 8'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 9'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 11'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 12'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 14'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 15'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 17'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 18'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 20'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 21'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 23'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 24'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 26'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 27'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 29'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 30'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 32'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 33'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 35'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 36'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 38'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 39'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 41'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 42'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 44'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 45'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 47'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
+        {.time = 2'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 3'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 5'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 6'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 8'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 9'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 11'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 12'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 14'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 15'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 17'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 18'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 20'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 21'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 23'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 24'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 26'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 27'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 29'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 30'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 32'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 33'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 35'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 36'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 38'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 39'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 41'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 42'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 44'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 45'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 47'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
     };
     std::vector<TimeState> expected = {
-        {.time = 2'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 3'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 5'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 6'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 8'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 9'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 11'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 12'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 14'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 15'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 17'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 18'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 20'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 21'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 23'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 24'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 26'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 27'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 29'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 30'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 32'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 33'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 35'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 36'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 38'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 39'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 41'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 42'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
+        {.time = 2'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 3'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 5'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 6'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 8'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 9'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 11'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 12'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 14'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 15'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 17'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 18'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 20'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 21'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 23'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 24'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 26'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 27'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 29'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 30'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 32'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 33'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 35'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 36'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 38'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 39'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 41'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 42'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
         {.time = 43'800 * 3600.0,
          .state = 0,
-         .failureModeCauses = {1},
-         .fragilityModeCauses = {}}, // *
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}}, // *
         {.time = 43'896 * 3600.0,
          .state = 1,
-         .failureModeCauses = {},
-         .fragilityModeCauses = {}}, // *
-        {.time = 44'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
-        {.time = 45'000 * 3600.0, .state = 1, .failureModeCauses = {}, .fragilityModeCauses = {}},
-        {.time = 47'520 * 3600.0, .state = 0, .failureModeCauses = {0}, .fragilityModeCauses = {}},
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}}, // *
+        {.time = 44'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
+        {.time = 45'000 * 3600.0, .state = 1, .failure_mode_causes = {}, .fragility_mode_causes = {}},
+        {.time = 47'520 * 3600.0, .state = 0, .failure_mode_causes = {0}, .fragility_mode_causes = {}},
         {.time = 87'696 * 3600.0,
          .state = 0,
-         .failureModeCauses = {0, 1},
-         .fragilityModeCauses = {}}, // *
+         .failure_mode_causes = {0, 1},
+         .fragility_mode_causes = {}}, // *
     };
-    std::vector<TimeState> actual = TimeState_Combine(a, b);
+    std::vector<TimeState> actual = combine(a, b);
     EXPECT_EQ(actual.size(), expected.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
         EXPECT_EQ(actual[i], expected[i]);
     }
-    actual = TimeState_Combine(b, a);
+    actual = combine(b, a);
     EXPECT_EQ(actual.size(), expected.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
@@ -1485,9 +1485,9 @@ TEST(Erin, Test19)
         {180.0, true, {}, {}},
     };
     std::vector<TimeState> rel_sch;
-    rel_sch = TimeState_Combine(rel_sch, A);
-    rel_sch = TimeState_Combine(rel_sch, B);
-    std::vector<TimeState> actual = TimeState_Combine(rel_sch, C);
+    rel_sch = combine(rel_sch, A);
+    rel_sch = combine(rel_sch, B);
+    std::vector<TimeState> actual = combine(rel_sch, C);
     EXPECT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < expected.size(); ++i)
     {
@@ -1509,7 +1509,7 @@ TEST(Erin, Test20)
         {5.0, false, {}, {}},
         {7.0, true, {}, {}},
     };
-    std::vector<TimeState> actual = TimeState_Clip(input, 0.0, 10.0, true);
+    std::vector<TimeState> actual = clip(input, 0.0, 10.0, true);
     EXPECT_EQ(expected.size(), actual.size());
 }
 

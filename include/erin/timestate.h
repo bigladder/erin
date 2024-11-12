@@ -14,8 +14,8 @@ struct TimeState
 {
     double time = 0.0;
     bool state = true;
-    std::set<size_t> failureModeCauses;
-    std::set<size_t> fragilityModeCauses;
+    std::set<size_t> failure_mode_causes;
+    std::set<size_t> fragility_mode_causes;
 };
 
 std::ostream& operator<<(std::ostream& os, TimeState const& ts);
@@ -24,13 +24,13 @@ bool operator==(TimeState const& a, TimeState const& b);
 
 bool operator!=(TimeState const& a, TimeState const& b);
 
-std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
+std::vector<TimeState> combine(std::vector<TimeState> const& a,
                                          std::vector<TimeState> const& b);
 
-std::vector<TimeState> TimeState_Clip(std::vector<TimeState> const& input,
-                                      double startTime_s,
-                                      double endTime_s,
-                                      bool rezeroTime);
+std::vector<TimeState> clip(std::vector<TimeState> const& input,
+                                      double start_time_s,
+                                      double end_time_s,
+                                      bool rezero_time);
 
 std::vector<TimeState> TimeState_Translate(std::vector<TimeState> const& input, double dt_s);
 

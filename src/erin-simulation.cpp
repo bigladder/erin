@@ -1828,21 +1828,21 @@ void WriteResultsToEventFile(std::ofstream& out,
                     {
                         // lookup the failure and fragility modes
                         std::vector<size_t> failModes;
-                        failModes.reserve(ts.failureModeCauses.size());
+                        failModes.reserve(ts.failure_mode_causes.size());
                         std::vector<size_t> fragModes;
-                        fragModes.reserve(ts.fragilityModeCauses.size());
-                        for (size_t fm : ts.failureModeCauses)
+                        fragModes.reserve(ts.fragility_mode_causes.size());
+                        for (size_t fm : ts.failure_mode_causes)
                         {
                             failModes.push_back(fm);
                         }
-                        for (size_t fm : ts.fragilityModeCauses)
+                        for (size_t fm : ts.fragility_mode_causes)
                         {
                             fragModes.push_back(fm);
                         }
                         std::sort(failModes.begin(), failModes.end());
                         std::sort(fragModes.begin(), fragModes.end());
                         std::vector<std::string> fmTags;
-                        fmTags.reserve(ts.failureModeCauses.size() + ts.fragilityModeCauses.size());
+                        fmTags.reserve(ts.failure_mode_causes.size() + ts.fragility_mode_causes.size());
                         for (auto const& failModeId : failModes)
                         {
                             fmTags.push_back(s.FailureModes.tag[failModeId]);
@@ -2080,13 +2080,13 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
             Log_info(log, fmt::format("component: {}", componentTags[compId]));
             Log_info(log, fmt::format("initial age (h): {}", (initialAge_s / seconds_per_hour)));
         }
-        std::vector<TimeState> clip =
-            TimeState_Clip(sch, startTime_s + initialAge_s, endTime_s + initialAge_s, true);
+        std::vector<TimeState> clipped =
+            clip(sch, startTime_s + initialAge_s, endTime_s + initialAge_s, true);
         // NOTE: Reliabilities have not yet been assigned so we can
         // just push_back()
         ScheduleBasedReliability sbr {};
         sbr.component_id = compId;
-        sbr.time_states = std::move(clip);
+        sbr.time_states = std::move(clipped);
         result.push_back(std::move(sbr));
         reliabilitiesAdded.insert(compId);
     }
@@ -2182,7 +2182,7 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
                 TimeState ts {};
                 ts.state = false;
                 ts.time = 0.0;
-                ts.fragilityModeCauses.insert(fmId);
+                ts.fragility_mode_causes.insert(fmId);
                 newTimeStates.push_back(std::move(ts));
                 if (repairId.has_value())
                 {
@@ -2202,7 +2202,7 @@ std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
                 if (hasReliabilityAlready)
                 {
                     auto const& currentSch = result[reliabilityId].time_states;
-                    std::vector<TimeState> combined = TimeState_Combine(currentSch, newTimeStates);
+                    std::vector<TimeState> combined = combine(currentSch, newTimeStates);
                     result[reliabilityId].time_states = std::move(combined);
                 }
                 else
@@ -2630,7 +2630,7 @@ CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentI
         {
             if (!ts.state)
             {
-                ts.failureModeCauses.insert(fmId);
+                ts.failure_mode_causes.insert(fmId);
             }
         }
         relSchByCompFailId.insert({compFailId, std::move(relSch)});
@@ -2644,7 +2644,7 @@ CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentI
         if (relSchByCompId.contains(compId))
         {
             std::vector<TimeState> combined =
-                TimeState_Combine(pair.second, relSchByCompId.at(compId));
+                combine(pair.second, relSchByCompId.at(compId));
             relSchByCompId[compId] = std::move(combined);
         }
         else
@@ -2702,11 +2702,11 @@ void WriteReliabilityCurves(std::string const& scenarioName,
             if (row < sbr.time_states.size())
             {
                 std::vector<std::string> causes;
-                for (size_t fmId : sbr.time_states[row].failureModeCauses)
+                for (size_t fmId : sbr.time_states[row].failure_mode_causes)
                 {
                     causes.push_back(s.FailureModes.tag[fmId]);
                 }
-                for (size_t fmId : sbr.time_states[row].fragilityModeCauses)
+                for (size_t fmId : sbr.time_states[row].fragility_mode_causes)
                 {
                     causes.push_back(s.FragilityModes.tag[fmId]);
                 }

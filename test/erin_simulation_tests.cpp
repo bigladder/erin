@@ -182,9 +182,9 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_NoAge)
         EXPECT_EQ(sbr.time_states.size(), 1);
         EXPECT_EQ(sbr.time_states[0].time, 0.0);
         EXPECT_EQ(sbr.time_states[0].state, false);
-        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragility_mode_causes.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragility_mode_causes)
         {
             EXPECT_EQ(fmId, 0);
         }
@@ -207,16 +207,16 @@ TEST(ErinSim, TestFragility_NoReliability_Repair_NoOffset_NoAge)
         EXPECT_EQ(sbr.time_states.size(), 2);
         EXPECT_EQ(sbr.time_states[0].time, 0.0);
         EXPECT_EQ(sbr.time_states[0].state, false);
-        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragility_mode_causes.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragility_mode_causes)
         {
             EXPECT_EQ(fmId, 0);
         }
         EXPECT_DOUBLE_EQ(sbr.time_states[1].time, 100.0);
         EXPECT_EQ(sbr.time_states[1].state, true);
-        EXPECT_EQ(sbr.time_states[1].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[1].fragilityModeCauses.size(), 0);
+        EXPECT_EQ(sbr.time_states[1].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[1].fragility_mode_causes.size(), 0);
     }
 }
 
@@ -236,9 +236,9 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_Offset_NoAge)
         EXPECT_EQ(sbr.time_states.size(), 1);
         EXPECT_EQ(sbr.time_states[0].time, 0.0);
         EXPECT_EQ(sbr.time_states[0].state, false);
-        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragility_mode_causes.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragility_mode_causes)
         {
             EXPECT_EQ(fmId, 0);
         }
@@ -261,9 +261,9 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_NoOffset_Age)
         EXPECT_EQ(sbr.time_states.size(), 1);
         EXPECT_EQ(sbr.time_states[0].time, 0.0);
         EXPECT_EQ(sbr.time_states[0].state, false);
-        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragility_mode_causes.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragility_mode_causes)
         {
             EXPECT_EQ(fmId, 0);
         }
@@ -286,9 +286,9 @@ TEST(ErinSim, TestFragility_NoReliability_NoRepair_Offset_Age)
         EXPECT_EQ(sbr.time_states.size(), 1);
         EXPECT_EQ(sbr.time_states[0].time, 0.0);
         EXPECT_EQ(sbr.time_states[0].state, false);
-        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
-        for (size_t fmId : sbr.time_states[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragility_mode_causes.size(), 1);
+        for (size_t fmId : sbr.time_states[0].fragility_mode_causes)
         {
             EXPECT_EQ(fmId, 0);
         }
@@ -301,45 +301,45 @@ TEST(TimeState, TestTimeStateCombine)
         {
             .time = 10.0,
             .state = false,
-            .failureModeCauses = {0},
-            .fragilityModeCauses = {},
+            .failure_mode_causes = {0},
+            .fragility_mode_causes = {},
         },
         {
             .time = 20.0,
             .state = true,
-            .failureModeCauses = {},
-            .fragilityModeCauses = {},
+            .failure_mode_causes = {},
+            .fragility_mode_causes = {},
         },
     };
     std::vector<TimeState> B = {
         {
             .time = 0.0,
             .state = false,
-            .failureModeCauses = {},
-            .fragilityModeCauses = {0},
+            .failure_mode_causes = {},
+            .fragility_mode_causes = {0},
         },
     };
     std::vector<TimeState> expected = {
         {
             .time = 0.0,
             .state = false,
-            .failureModeCauses = {},
-            .fragilityModeCauses = {0},
+            .failure_mode_causes = {},
+            .fragility_mode_causes = {0},
         },
         {
             .time = 10.0,
             .state = false,
-            .failureModeCauses = {0},
-            .fragilityModeCauses = {0},
+            .failure_mode_causes = {0},
+            .fragility_mode_causes = {0},
         },
         {
             .time = 20.0,
             .state = false,
-            .failureModeCauses = {},
-            .fragilityModeCauses = {0},
+            .failure_mode_causes = {},
+            .fragility_mode_causes = {0},
         },
     };
-    std::vector<TimeState> actual = TimeState_Combine(A, B);
+    std::vector<TimeState> actual = combine(A, B);
     EXPECT_EQ(actual.size(), expected.size());
 }
 
@@ -354,14 +354,14 @@ TEST(ErinSim, TestFragility_Reliability_NoRepair_NoOffset_NoAge)
     rel_sch.push_back({
         .time = 10.0,
         .state = false,
-        .failureModeCauses = {0},
-        .fragilityModeCauses = {},
+        .failure_mode_causes = {0},
+        .fragility_mode_causes = {},
     });
     rel_sch.push_back({
         .time = 20.0,
         .state = true,
-        .failureModeCauses = {},
-        .fragilityModeCauses = {},
+        .failure_mode_causes = {},
+        .fragility_mode_causes = {},
     });
     rel_sch_by_comp_id[0] = std::move(rel_sch);
     std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
@@ -374,31 +374,31 @@ TEST(ErinSim, TestFragility_Reliability_NoRepair_NoOffset_NoAge)
         // 1st
         EXPECT_EQ(sbr.time_states[0].time, 0.0);
         EXPECT_EQ(sbr.time_states[0].state, false);
-        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.time_states[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragility_mode_causes.size(), 1);
+        for (size_t fm_id : sbr.time_states[0].fragility_mode_causes)
         {
             EXPECT_EQ(fm_id, 0);
         }
         // 2nd
         EXPECT_EQ(sbr.time_states[1].time, 10.0);
         EXPECT_EQ(sbr.time_states[1].state, false);
-        EXPECT_EQ(sbr.time_states[1].failureModeCauses.size(), 1);
-        for (size_t fm_id : sbr.time_states[1].failureModeCauses)
+        EXPECT_EQ(sbr.time_states[1].failure_mode_causes.size(), 1);
+        for (size_t fm_id : sbr.time_states[1].failure_mode_causes)
         {
             EXPECT_EQ(fm_id, 0);
         }
-        EXPECT_EQ(sbr.time_states[1].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.time_states[1].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[1].fragility_mode_causes.size(), 1);
+        for (size_t fm_id : sbr.time_states[1].fragility_mode_causes)
         {
             EXPECT_EQ(fm_id, 0);
         }
         // 3rd
         EXPECT_EQ(sbr.time_states[2].time, 20.0);
         EXPECT_EQ(sbr.time_states[2].state, false);
-        EXPECT_EQ(sbr.time_states[2].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[2].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.time_states[2].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[2].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[2].fragility_mode_causes.size(), 1);
+        for (size_t fm_id : sbr.time_states[2].fragility_mode_causes)
         {
             EXPECT_EQ(fm_id, 0);
         }
@@ -416,14 +416,14 @@ TEST(ErinSim, TestFragility_Reliability_Repair_Offset_Age)
     rel_sch.push_back({
         .time = 510.0,
         .state = false,
-        .failureModeCauses = {0},
-        .fragilityModeCauses = {},
+        .failure_mode_causes = {0},
+        .fragility_mode_causes = {},
     });
     rel_sch.push_back({
         .time = 520.0,
         .state = true,
-        .failureModeCauses = {},
-        .fragilityModeCauses = {},
+        .failure_mode_causes = {},
+        .fragility_mode_causes = {},
     });
     rel_sch_by_comp_id[0] = std::move(rel_sch);
     std::vector<ScheduleBasedReliability> actual = run_apply_reliabilities_and_fragilities(
@@ -436,31 +436,31 @@ TEST(ErinSim, TestFragility_Reliability_Repair_Offset_Age)
         // 1st
         EXPECT_EQ(sbr.time_states[0].time, 0.0);
         EXPECT_EQ(sbr.time_states[0].state, false);
-        EXPECT_EQ(sbr.time_states[0].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[0].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.time_states[0].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[0].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[0].fragility_mode_causes.size(), 1);
+        for (size_t fm_id : sbr.time_states[0].fragility_mode_causes)
         {
             EXPECT_EQ(fm_id, 0);
         }
         // 2nd
         EXPECT_EQ(sbr.time_states[1].time, 10.0);
         EXPECT_EQ(sbr.time_states[1].state, false);
-        EXPECT_EQ(sbr.time_states[1].failureModeCauses.size(), 1);
-        for (size_t fmId : sbr.time_states[1].failureModeCauses)
+        EXPECT_EQ(sbr.time_states[1].failure_mode_causes.size(), 1);
+        for (size_t fmId : sbr.time_states[1].failure_mode_causes)
         {
             EXPECT_EQ(fmId, 0);
         }
-        EXPECT_EQ(sbr.time_states[1].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.time_states[1].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[1].fragility_mode_causes.size(), 1);
+        for (size_t fm_id : sbr.time_states[1].fragility_mode_causes)
         {
             EXPECT_EQ(fm_id, 0);
         }
         // 3rd
         EXPECT_EQ(sbr.time_states[2].time, 20.0);
         EXPECT_EQ(sbr.time_states[2].state, false);
-        EXPECT_EQ(sbr.time_states[2].failureModeCauses.size(), 0);
-        EXPECT_EQ(sbr.time_states[2].fragilityModeCauses.size(), 1);
-        for (size_t fm_id : sbr.time_states[2].fragilityModeCauses)
+        EXPECT_EQ(sbr.time_states[2].failure_mode_causes.size(), 0);
+        EXPECT_EQ(sbr.time_states[2].fragility_mode_causes.size(), 1);
+        for (size_t fm_id : sbr.time_states[2].fragility_mode_causes)
         {
             EXPECT_EQ(fm_id, 0);
         }

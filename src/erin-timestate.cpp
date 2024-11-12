@@ -13,14 +13,14 @@ std::ostream& operator<<(std::ostream& os, const TimeState& ts)
     os << "TimeState(time=" << time_in_seconds_to_hours(static_cast<uint64_t>(ts.time))
        << " h, state=" << ts.state << ", failureModeCauses={";
     bool first = true;
-    for (auto const& x : ts.failureModeCauses)
+    for (auto const& x : ts.failure_mode_causes)
     {
         os << (first ? "" : ",") << x;
         first = false;
     }
     os << "}, fragilityModeCauses={";
     first = true;
-    for (auto const& x : ts.fragilityModeCauses)
+    for (auto const& x : ts.fragility_mode_causes)
     {
         os << (first ? "" : ",") << x;
         first = false;
@@ -34,13 +34,13 @@ bool operator==(TimeState const& a, TimeState const& b)
     bool result = true;
     result = result && a.time == b.time;
     result = result && a.state == b.state;
-    result = result && a.failureModeCauses.size() == b.failureModeCauses.size();
-    result = result && a.fragilityModeCauses.size() == b.fragilityModeCauses.size();
+    result = result && a.failure_mode_causes.size() == b.failure_mode_causes.size();
+    result = result && a.fragility_mode_causes.size() == b.fragility_mode_causes.size();
     if (result)
     {
-        for (auto const& aFm : a.failureModeCauses)
+        for (auto const& aFm : a.failure_mode_causes)
         {
-            result = result && b.failureModeCauses.contains(aFm);
+            result = result && b.failure_mode_causes.contains(aFm);
             if (!result)
             {
                 break;
@@ -49,9 +49,9 @@ bool operator==(TimeState const& a, TimeState const& b)
     }
     if (result)
     {
-        for (auto const& aFm : a.fragilityModeCauses)
+        for (auto const& aFm : a.fragility_mode_causes)
         {
-            result = result && b.fragilityModeCauses.contains(aFm);
+            result = result && b.fragility_mode_causes.contains(aFm);
             if (!result)
             {
                 break;
@@ -63,7 +63,7 @@ bool operator==(TimeState const& a, TimeState const& b)
 
 bool operator!=(TimeState const& a, TimeState const& b) { return !(a == b); }
 
-std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
+std::vector<TimeState> combine(std::vector<TimeState> const& a,
                                          std::vector<TimeState> const& b)
 {
     std::vector<TimeState> result;
@@ -131,22 +131,22 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
         }
         if (time >= nextA.time && !nextA.state)
         {
-            for (auto const& fmA : nextA.failureModeCauses)
+            for (auto const& fmA : nextA.failure_mode_causes)
             {
                 failureModes.insert(fmA);
             }
-            for (auto const& fmA : nextA.fragilityModeCauses)
+            for (auto const& fmA : nextA.fragility_mode_causes)
             {
                 fragilityModes.insert(fmA);
             }
         }
         if (time >= nextB.time && !nextB.state)
         {
-            for (auto const& fmB : nextB.failureModeCauses)
+            for (auto const& fmB : nextB.failure_mode_causes)
             {
                 failureModes.insert(fmB);
             }
-            for (auto const& fmB : nextB.fragilityModeCauses)
+            for (auto const& fmB : nextB.fragility_mode_causes)
             {
                 fragilityModes.insert(fmB);
             }
@@ -154,8 +154,8 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
         result.push_back({
             .time = time,
             .state = state,
-            .failureModeCauses = std::move(failureModes),
-            .fragilityModeCauses = std::move(fragilityModes),
+            .failure_mode_causes = std::move(failureModes),
+            .fragility_mode_causes = std::move(fragilityModes),
         });
         // increment to the lowest time (ta or tb) ahead of t
         bool aCanInc = (aIdx + 1) < a.size();
@@ -211,7 +211,7 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
     return result;
 }
 
-std::vector<TimeState> TimeState_Clip(std::vector<TimeState> const& input,
+std::vector<TimeState> clip(std::vector<TimeState> const& input,
                                       double startTime_s,
                                       double endTime_s,
                                       bool rezeroTime)
@@ -273,13 +273,13 @@ TimeState TimeState_Copy(TimeState const& ts)
     TimeState result;
     result.time = ts.time;
     result.state = ts.state;
-    for (auto x : ts.failureModeCauses)
+    for (auto x : ts.failure_mode_causes)
     {
-        result.failureModeCauses.insert(x);
+        result.failure_mode_causes.insert(x);
     }
-    for (auto x : ts.fragilityModeCauses)
+    for (auto x : ts.fragility_mode_causes)
     {
-        result.fragilityModeCauses.insert(x);
+        result.fragility_mode_causes.insert(x);
     }
     return result;
 }
@@ -343,7 +343,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
         if (i == 0 && !ts.state)
         {
             // count initial failures
-            for (auto failModeId : ts.failureModeCauses)
+            for (auto failModeId : ts.failure_mode_causes)
             {
                 if (eventCountsByFailureModeId.contains(failModeId))
                 {
@@ -354,7 +354,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
                     eventCountsByFailureModeId[failModeId] = 1;
                 }
             }
-            for (auto fragModeId : ts.fragilityModeCauses)
+            for (auto fragModeId : ts.fragility_mode_causes)
             {
                 if (eventCountsByFragilityModeId.contains(fragModeId))
                 {
@@ -376,7 +376,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
         }
         if (!ts.state)
         {
-            for (auto failModeId : ts.failureModeCauses)
+            for (auto failModeId : ts.failure_mode_causes)
             {
                 if (timeByFailureModeId_s.contains(failModeId))
                 {
@@ -387,7 +387,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
                     timeByFailureModeId_s[failModeId] = dt;
                 }
             }
-            for (auto fragModeId : ts.fragilityModeCauses)
+            for (auto fragModeId : ts.fragility_mode_causes)
             {
                 if (timeByFragilityModeId_s.contains(fragModeId))
                 {
@@ -401,7 +401,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
         }
         if (ts.state && !nextTs.state)
         {
-            for (auto failModeId : nextTs.failureModeCauses)
+            for (auto failModeId : nextTs.failure_mode_causes)
             {
                 if (eventCountsByFailureModeId.contains(failModeId))
                 {
@@ -412,7 +412,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
                     eventCountsByFailureModeId[failModeId] = 1;
                 }
             }
-            for (auto fragModeId : nextTs.fragilityModeCauses)
+            for (auto fragModeId : nextTs.fragility_mode_causes)
             {
                 if (eventCountsByFragilityModeId.contains(fragModeId))
                 {

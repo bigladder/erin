@@ -196,9 +196,9 @@ void Simulation_PrintComponents(Simulation const& s)
             {
                 size_t scenarioIdx = keyValue.first;
                 size_t loadIdx = keyValue.second;
-                assert(scenarioIdx < s.ScenarioMap.Tags.size());
+                assert(scenarioIdx < s.ScenarioMap.tag.size());
                 assert(loadIdx < s.LoadMap.tags.size());
-                std::cout << "-- for scenario: " << s.ScenarioMap.Tags[scenarioIdx]
+                std::cout << "-- for scenario: " << s.ScenarioMap.tag[scenarioIdx]
                           << ", use load: " << s.LoadMap.tags[loadIdx] << std::endl;
             }
         }
@@ -219,9 +219,9 @@ void Simulation_PrintComponents(Simulation const& s)
             {
                 size_t scenarioIdx = keyValue.first;
                 size_t loadIdx = keyValue.second;
-                assert(scenarioIdx < s.ScenarioMap.Tags.size());
+                assert(scenarioIdx < s.ScenarioMap.tag.size());
                 assert(loadIdx < s.LoadMap.tags.size());
-                std::cout << "-- for scenario: " << s.ScenarioMap.Tags[scenarioIdx]
+                std::cout << "-- for scenario: " << s.ScenarioMap.tag[scenarioIdx]
                           << ", use supply: " << s.LoadMap.tags[loadIdx] << std::endl;
             }
             std::cout << "-- max outflow (W): "
@@ -559,28 +559,28 @@ void Simulation_PrintComponentFragilityModes(Simulation const& s)
 
 void Simulation_PrintScenarios(Simulation const& s)
 {
-    for (size_t i = 0; i < s.ScenarioMap.Tags.size(); ++i)
+    for (size_t i = 0; i < s.ScenarioMap.tag.size(); ++i)
     {
-        std::cout << i << ": " << s.ScenarioMap.Tags[i] << std::endl;
-        std::cout << "- duration: " << s.ScenarioMap.Durations[i] << " "
-                  << time_unit_to_tag(s.ScenarioMap.TimeUnits[i]) << std::endl;
+        std::cout << i << ": " << s.ScenarioMap.tag[i] << std::endl;
+        std::cout << "- duration: " << s.ScenarioMap.duration[i] << " "
+                  << time_unit_to_tag(s.ScenarioMap.time_unit[i]) << std::endl;
         std::cout << "- offset: "
-                  << time_in_seconds_to_desired_unit(s.ScenarioMap.TimeOffsetsInSeconds[i],
+                  << time_in_seconds_to_desired_unit(s.ScenarioMap.time_offset_in_seconds[i],
                                                      TimeUnit::hour)
                   << " " << time_unit_to_tag(TimeUnit::hour) << std::endl;
         auto maybeDist =
-            s.TheModel.dist_sys.get_dist_by_id(s.ScenarioMap.OccurrenceDistributionIds[i]);
+            s.TheModel.dist_sys.get_dist_by_id(s.ScenarioMap.occurrence_distribution_id[i]);
         if (maybeDist.has_value())
         {
             Distribution const& d = maybeDist.value();
             std::cout << "- occurrence distribution: " << dist_type_to_tag(d.Type) << "["
-                      << s.ScenarioMap.OccurrenceDistributionIds[i] << "] -- " << d.Tag
+                      << s.ScenarioMap.occurrence_distribution_id[i] << "] -- " << d.Tag
                       << std::endl;
         }
         std::cout << "- max occurrences: ";
-        if (s.ScenarioMap.MaxOccurrences[i].has_value())
+        if (s.ScenarioMap.max_occurrence[i].has_value())
         {
-            std::cout << s.ScenarioMap.MaxOccurrences[i].value() << std::endl;
+            std::cout << s.ScenarioMap.max_occurrence[i].value() << std::endl;
         }
         else
         {
@@ -632,7 +632,7 @@ void Simulation_PrintLoads(Simulation const& s)
     */
 }
 
-size_t Simulation_ScenarioCount(Simulation const& s) { return s.ScenarioMap.Tags.size(); }
+size_t Simulation_ScenarioCount(Simulation const& s) { return s.ScenarioMap.tag.size(); }
 
 Result Simulation_ParseSimulationInfo(Simulation& s,
                                       toml::value const& v,
@@ -1435,15 +1435,15 @@ std::vector<size_t> CalculateConnectionOrder(Simulation const& s)
 std::vector<size_t> CalculateScenarioOrder(Simulation const& s)
 {
     std::vector<size_t> result;
-    std::vector<std::string> scenarioTags(s.ScenarioMap.Tags);
-    size_t numScenarios = s.ScenarioMap.Tags.size();
+    std::vector<std::string> scenarioTags(s.ScenarioMap.tag);
+    size_t numScenarios = s.ScenarioMap.tag.size();
     std::sort(scenarioTags.begin(), scenarioTags.end());
     result.reserve(numScenarios);
     for (std::string const& tag : scenarioTags)
     {
-        for (size_t scenarioId = 0; scenarioId < s.ScenarioMap.Tags.size(); ++scenarioId)
+        for (size_t scenarioId = 0; scenarioId < s.ScenarioMap.tag.size(); ++scenarioId)
         {
-            if (tag == s.ScenarioMap.Tags[scenarioId])
+            if (tag == s.ScenarioMap.tag[scenarioId])
             {
                 result.push_back(scenarioId);
                 break;
@@ -1934,9 +1934,9 @@ SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, 
 std::vector<double> DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenIdx)
 {
     std::vector<double> occurrenceTimes_s;
-    auto const& maybeMaxOccurrences = s.ScenarioMap.MaxOccurrences[scenIdx];
+    auto const& maybeMaxOccurrences = s.ScenarioMap.max_occurrence[scenIdx];
     size_t maxOccurrence = maybeMaxOccurrences.has_value() ? maybeMaxOccurrences.value() : 1'000;
-    auto const distId = s.ScenarioMap.OccurrenceDistributionIds[scenIdx];
+    auto const distId = s.ScenarioMap.occurrence_distribution_id[scenIdx];
     double scenarioStartTime_s = 0.0;
     double maxTime_s = time_to_seconds(s.Info.MaxTime, s.Info.TheTimeUnit);
     for (size_t i = 0; i < maxOccurrence; ++i)
@@ -2375,7 +2375,7 @@ void WriteStatisticsToFile(Simulation const& s,
         double ER =
             os.outflow_request_kJ > 0.0 ? (os.outflow_achieved_kJ / os.outflow_request_kJ) : 1.0;
         double EA = os.duration_s > 0.0 ? (os.uptime_s / os.duration_s) : 1.0;
-        stats << s.ScenarioMap.Tags[os.scenario_id];
+        stats << s.ScenarioMap.tag[os.scenario_id];
         stats << "," << os.occurrence_number;
         stats << "," << (os.duration_s / seconds_per_hour);
         stats << "," << double_to_string(os.inflow_kJ + os.in_from_env_kJ, 0);
@@ -2908,9 +2908,9 @@ void Simulation_run(Simulation& s,
     for (size_t scenIdx : scenarioOrder)
     {
         double scenarioDuration_s =
-            time_to_seconds(s.ScenarioMap.Durations[scenIdx], s.ScenarioMap.TimeUnits[scenIdx]);
-        double scenarioOffset_s = s.ScenarioMap.TimeOffsetsInSeconds[scenIdx];
-        std::string const& scenarioTag = s.ScenarioMap.Tags[scenIdx];
+            time_to_seconds(s.ScenarioMap.duration[scenIdx], s.ScenarioMap.time_unit[scenIdx]);
+        double scenarioOffset_s = s.ScenarioMap.time_offset_in_seconds[scenIdx];
+        std::string const& scenarioTag = s.ScenarioMap.tag[scenIdx];
         if (verbose)
         {
             Log_info(log, "Scenario", scenarioTag);
@@ -2937,7 +2937,7 @@ void Simulation_run(Simulation& s,
             Log_debug(log,
                       fmt::format("Calculated {} occurrence times for {}",
                                   occurrenceTimes_s.size(),
-                                  s.ScenarioMap.Tags[scenIdx]));
+                                  s.ScenarioMap.tag[scenIdx]));
         }
         // TODO: initialize total scenario stats (i.e.,
         // over all occurrences)
@@ -3026,7 +3026,7 @@ void Simulation_run(Simulation& s,
                 {
                     Log_debug(log, "Writing reliability curves...");
                 }
-                WriteReliabilityCurves(s.ScenarioMap.Tags[scenIdx], occIdx, s);
+                WriteReliabilityCurves(s.ScenarioMap.tag[scenIdx], occIdx, s);
                 if (verbose)
                 {
                     Log_debug(log, "Reliability curves written");
@@ -3038,10 +3038,10 @@ void Simulation_run(Simulation& s,
             {
                 Log_info(log,
                          fmt::format("Running {} from {} for {} {}",
-                                     s.ScenarioMap.Tags[scenIdx],
+                                     s.ScenarioMap.tag[scenIdx],
                                      scenarioStartTimeTag,
-                                     s.ScenarioMap.Durations[scenIdx],
-                                     time_unit_to_tag(s.ScenarioMap.TimeUnits[scenIdx])));
+                                     s.ScenarioMap.duration[scenIdx],
+                                     time_unit_to_tag(s.ScenarioMap.time_unit[scenIdx])));
                 Log_info(log,
                          fmt::format("time: {} to {}",
                                      seconds_to_pretty_string(t),

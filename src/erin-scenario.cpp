@@ -13,9 +13,9 @@ namespace erin
 {
 std::optional<size_t> ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::string const& tag)
 {
-    for (size_t i = 0; i < sd.Tags.size(); ++i)
+    for (size_t i = 0; i < sd.tag.size(); ++i)
     {
-        if (sd.Tags[i] == tag)
+        if (sd.tag[i] == tag)
         {
             return i;
         }
@@ -25,28 +25,28 @@ std::optional<size_t> ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::strin
 
 size_t ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag)
 {
-    size_t id = sd.Tags.size();
+    size_t id = sd.tag.size();
     for (size_t i = 0; i < id; ++i)
     {
-        if (sd.Tags[i] == tag)
+        if (sd.tag[i] == tag)
         {
-            assert(sd.Durations.size() == sd.MaxOccurrences.size());
-            assert(sd.Durations.size() == sd.OccurrenceDistributionIds.size());
-            assert(sd.Durations.size() == sd.Tags.size());
-            assert(sd.Durations.size() == sd.TimeUnits.size());
+            assert(sd.duration.size() == sd.max_occurrence.size());
+            assert(sd.duration.size() == sd.occurrence_distribution_id.size());
+            assert(sd.duration.size() == sd.tag.size());
+            assert(sd.duration.size() == sd.time_unit.size());
             return i;
         }
     }
-    sd.Tags.push_back(tag);
-    sd.OccurrenceDistributionIds.push_back(0);
-    sd.Durations.push_back(0.0);
-    sd.TimeUnits.push_back(TimeUnit::hour);
-    sd.TimeOffsetsInSeconds.push_back(0.0);
-    sd.MaxOccurrences.push_back(0);
-    assert(sd.Durations.size() == sd.MaxOccurrences.size());
-    assert(sd.Durations.size() == sd.OccurrenceDistributionIds.size());
-    assert(sd.Durations.size() == sd.Tags.size());
-    assert(sd.Durations.size() == sd.TimeUnits.size());
+    sd.tag.push_back(tag);
+    sd.occurrence_distribution_id.push_back(0);
+    sd.duration.push_back(0.0);
+    sd.time_unit.push_back(TimeUnit::hour);
+    sd.time_offset_in_seconds.push_back(0.0);
+    sd.max_occurrence.push_back(0);
+    assert(sd.duration.size() == sd.max_occurrence.size());
+    assert(sd.duration.size() == sd.occurrence_distribution_id.size());
+    assert(sd.duration.size() == sd.tag.size());
+    assert(sd.duration.size() == sd.time_unit.size());
     return id;
 }
 
@@ -58,32 +58,32 @@ size_t ScenarioDict_RegisterScenario(ScenarioDict& sd,
                                      std::optional<size_t> maxOccurrences,
                                      double timeOffset)
 {
-    size_t id = sd.Tags.size();
+    size_t id = sd.tag.size();
     for (size_t i = 0; i < id; ++i)
     {
-        if (sd.Tags[i] == tag)
+        if (sd.tag[i] == tag)
         {
-            sd.OccurrenceDistributionIds[i] = occurrenceDistId;
-            sd.Durations[i] = duration;
-            sd.TimeUnits[i] = timeUnit;
-            sd.MaxOccurrences[i] = maxOccurrences;
-            sd.TimeOffsetsInSeconds[i] = time_to_seconds(timeOffset, timeUnit);
-            assert(sd.Durations.size() == sd.MaxOccurrences.size());
-            assert(sd.Durations.size() == sd.OccurrenceDistributionIds.size());
-            assert(sd.Durations.size() == sd.Tags.size());
-            assert(sd.Durations.size() == sd.TimeUnits.size());
+            sd.occurrence_distribution_id[i] = occurrenceDistId;
+            sd.duration[i] = duration;
+            sd.time_unit[i] = timeUnit;
+            sd.max_occurrence[i] = maxOccurrences;
+            sd.time_offset_in_seconds[i] = time_to_seconds(timeOffset, timeUnit);
+            assert(sd.duration.size() == sd.max_occurrence.size());
+            assert(sd.duration.size() == sd.occurrence_distribution_id.size());
+            assert(sd.duration.size() == sd.tag.size());
+            assert(sd.duration.size() == sd.time_unit.size());
             return i;
         }
     }
-    sd.Tags.push_back(tag);
-    sd.OccurrenceDistributionIds.push_back(occurrenceDistId);
-    sd.Durations.push_back(duration);
-    sd.TimeUnits.push_back(timeUnit);
-    sd.MaxOccurrences.push_back(maxOccurrences);
-    assert(sd.Durations.size() == sd.MaxOccurrences.size());
-    assert(sd.Durations.size() == sd.OccurrenceDistributionIds.size());
-    assert(sd.Durations.size() == sd.Tags.size());
-    assert(sd.Durations.size() == sd.TimeUnits.size());
+    sd.tag.push_back(tag);
+    sd.occurrence_distribution_id.push_back(occurrenceDistId);
+    sd.duration.push_back(duration);
+    sd.time_unit.push_back(timeUnit);
+    sd.max_occurrence.push_back(maxOccurrences);
+    assert(sd.duration.size() == sd.max_occurrence.size());
+    assert(sd.duration.size() == sd.occurrence_distribution_id.size());
+    assert(sd.duration.size() == sd.tag.size());
+    assert(sd.duration.size() == sd.time_unit.size());
     return id;
 }
 
@@ -213,22 +213,22 @@ Result ParseScenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::tabl
 
 void Scenario_Print(ScenarioDict const& sd, DistributionSystem const& ds)
 {
-    for (size_t i = 0; i < sd.Durations.size(); ++i)
+    for (size_t i = 0; i < sd.duration.size(); ++i)
     {
-        std::cout << i << ": " << sd.Tags[i] << std::endl;
-        std::cout << "- duration: " << sd.Durations[i] << " " << time_unit_to_tag(sd.TimeUnits[i])
+        std::cout << i << ": " << sd.tag[i] << std::endl;
+        std::cout << "- duration: " << sd.duration[i] << " " << time_unit_to_tag(sd.time_unit[i])
                   << std::endl;
-        auto maybeDist = ds.get_dist_by_id(sd.OccurrenceDistributionIds[i]);
+        auto maybeDist = ds.get_dist_by_id(sd.occurrence_distribution_id[i]);
         if (maybeDist.has_value())
         {
             Distribution d = maybeDist.value();
             std::cout << "- occurrence distribution: " << dist_type_to_tag(d.Type) << "["
-                      << sd.OccurrenceDistributionIds[i] << "] -- " << d.Tag << std::endl;
+                      << sd.occurrence_distribution_id[i] << "] -- " << d.Tag << std::endl;
         }
         std::cout << "- max occurrences: ";
-        if (sd.MaxOccurrences[i].has_value())
+        if (sd.max_occurrence[i].has_value())
         {
-            std::cout << sd.MaxOccurrences[i].value() << std::endl;
+            std::cout << sd.max_occurrence[i].value() << std::endl;
         }
         else
         {

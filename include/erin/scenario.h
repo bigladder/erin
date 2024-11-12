@@ -17,15 +17,15 @@ namespace erin
 {
 struct ScenarioDict
 {
-    std::vector<std::string> Tags;
-    std::vector<size_t> OccurrenceDistributionIds;
+    std::vector<std::string> tag;
+    std::vector<size_t> occurrence_distribution_id;
     // TODO: remove TimeUnits and pre-convert to make Durations in seconds
-    std::vector<TimeUnit> TimeUnits;
-    std::vector<double> Durations;
-    std::vector<double> TimeOffsetsInSeconds;
+    std::vector<TimeUnit> time_unit;
+    std::vector<double> duration;
+    std::vector<double> time_offset_in_seconds;
     // NOTE: an entry of none means "no max occurrences"; will take as
     // many as fit in the max time of the simulation (see SimulationInfo)
-    std::vector<std::optional<size_t>> MaxOccurrences;
+    std::vector<std::optional<size_t>> max_occurrence;
 };
 
 std::optional<size_t> ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::string const& tag);

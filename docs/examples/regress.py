@@ -92,7 +92,7 @@ def run_tests():
 
 def run_command(cmd, dir=None):
     """
-    Run the given command in the given directory.    
+    Run the given command in the given directory.
     """
     cwd = str(Path.cwd().resolve()) if dir is None else dir
     result = subprocess.run(cmd, capture_output=True, cwd=cwd)
@@ -409,6 +409,7 @@ if __name__ == "__main__":
     run_cli("40")
     run_cli("41")
     run_cli("42")
+    run_cli("43")
     print("\nPassed all regression tests!")
 
     if os.environ.get("ERIN_SHORT_TEST") is not None:

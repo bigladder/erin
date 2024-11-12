@@ -1545,44 +1545,43 @@ void RunVariableEfficiencyMoverBackward(Model const& m,
 
 void RunSwitchBackward(Model const& m, SimulationState& ss, size_t outflowConnIdx, size_t switchIdx)
 {
+    assert(switchIdx < m.transfer_switch.size());
     assert(switchIdx < ss.switch_states.size());
     auto switchState = ss.switch_states[switchIdx];
     auto const& theSwitch = m.transfer_switch[switchIdx];
-    assert(theSwitch.inflow_connection_id_primary < m.connection.size());
-    auto inflow0ConnIdx = theSwitch.inflow_connection_id_primary;
-    auto inflow1ConnIdx = theSwitch.inflow_connection_id_secondary;
+    assert(theSwitch.inflow_connection_id_primary < ss.flows.size());
+    assert(theSwitch.inflow_connection_id_secondary < ss.flows.size());
+    assert(theSwitch.outflow_connection_id < ss.flows.size());
+    auto primaryInflowIdx = theSwitch.inflow_connection_id_primary;
+    auto secondaryInflowIdx = theSwitch.inflow_connection_id_secondary;
     switch (switchState)
     {
     case SwitchState::primary:
     {
-        // send request on primary
-        if (ss.flows[inflow0ConnIdx].requested_W != ss.flows[outflowConnIdx].requested_W)
+        if (ss.flows[primaryInflowIdx].requested_W != ss.flows[outflowConnIdx].requested_W)
         {
-            ss.active_connections_back.insert(inflow0ConnIdx);
+            ss.active_connections_back.insert(primaryInflowIdx);
         }
-        ss.flows[inflow0ConnIdx].requested_W = ss.flows[outflowConnIdx].requested_W;
-        // set request on secondary to 0
-        if (ss.flows[inflow0ConnIdx].requested_W != 0)
+        ss.flows[primaryInflowIdx].requested_W = ss.flows[outflowConnIdx].requested_W;
+        if (ss.flows[secondaryInflowIdx].requested_W != 0)
         {
-            ss.active_connections_back.insert(inflow1ConnIdx);
+            ss.active_connections_back.insert(secondaryInflowIdx);
         }
-        ss.flows[inflow1ConnIdx].requested_W = 0;
+        ss.flows[secondaryInflowIdx].requested_W = 0;
     }
     break;
     case SwitchState::secondary:
     {
-        // send request on secondary
-        if (ss.flows[inflow0ConnIdx].requested_W != 0)
+        if (ss.flows[primaryInflowIdx].requested_W != 0)
         {
-            ss.active_connections_back.insert(inflow0ConnIdx);
+            ss.active_connections_back.insert(primaryInflowIdx);
         }
-        ss.flows[inflow0ConnIdx].requested_W = 0;
-        // set request on primary to 0
-        if (ss.flows[inflow1ConnIdx].requested_W != ss.flows[outflowConnIdx].requested_W)
+        ss.flows[primaryInflowIdx].requested_W = 0;
+        if (ss.flows[secondaryInflowIdx].requested_W != ss.flows[outflowConnIdx].requested_W)
         {
-            ss.active_connections_back.insert(inflow1ConnIdx);
+            ss.active_connections_back.insert(secondaryInflowIdx);
         }
-        ss.flows[inflow1ConnIdx].requested_W = ss.flows[outflowConnIdx].requested_W;
+        ss.flows[secondaryInflowIdx].requested_W = ss.flows[outflowConnIdx].requested_W;
     }
     break;
     default:
@@ -2075,12 +2074,15 @@ void RunStoreForward(Model& model, SimulationState& ss, size_t inflowConnIdx, si
 void RunSwitchForward(Model& model, SimulationState& ss, size_t inflowConnIdx, size_t switchIdx)
 {
     assert(switchIdx < model.transfer_switch.size());
-    auto const& theSwitch = model.transfer_switch[switchIdx];
     assert(switchIdx < ss.switch_states.size());
+    auto const& theSwitch = model.transfer_switch[switchIdx];
     auto switchState = ss.switch_states[switchIdx];
     auto inflow0ConnIdx = theSwitch.inflow_connection_id_primary;
     auto inflow1ConnIdx = theSwitch.inflow_connection_id_secondary;
     auto outflowConnIdx = theSwitch.outflow_connection_id;
+    assert(inflow0ConnIdx < ss.flows.size());
+    assert(inflow1ConnIdx < ss.flows.size());
+    assert(outflowConnIdx < ss.flows.size());
     if (switchState == SwitchState::primary && inflowConnIdx == inflow0ConnIdx)
     {
         if (ss.flows[outflowConnIdx].available_W != ss.flows[inflow0ConnIdx].available_W)
@@ -3021,14 +3023,17 @@ bool RunSwitchLogic(Model const& model, SimulationState& ss)
     bool result = false;
     for (size_t switchIdx = 0; switchIdx < ss.switch_states.size(); ++switchIdx)
     {
-        auto switchState = ss.switch_states[switchIdx];
         assert(switchIdx < model.transfer_switch.size());
+        assert(switchIdx < ss.switch_states.size());
+        auto switchState = ss.switch_states[switchIdx];
         auto const& theSwitch = model.transfer_switch[switchIdx];
         auto in0Conn = theSwitch.inflow_connection_id_primary;
         auto in1Conn = theSwitch.inflow_connection_id_secondary;
         auto outConn = theSwitch.outflow_connection_id;
         assert(in0Conn < ss.flows.size());
-        bool primaryIsSufficient = ss.flows[in0Conn].available_W >= ss.flows[in0Conn].requested_W;
+        assert(in1Conn < ss.flows.size());
+        assert(outConn < ss.flows.size());
+        bool primaryIsSufficient = ss.flows[in0Conn].available_W >= ss.flows[outConn].requested_W;
         switch (switchState)
         {
         case SwitchState::primary:

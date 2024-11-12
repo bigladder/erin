@@ -63,8 +63,7 @@ bool operator==(TimeState const& a, TimeState const& b)
 
 bool operator!=(TimeState const& a, TimeState const& b) { return !(a == b); }
 
-std::vector<TimeState> combine(std::vector<TimeState> const& a,
-                                         std::vector<TimeState> const& b)
+std::vector<TimeState> combine(std::vector<TimeState> const& a, std::vector<TimeState> const& b)
 {
     std::vector<TimeState> result;
     if (a.size() == 0 && b.size() > 0)
@@ -211,10 +210,8 @@ std::vector<TimeState> combine(std::vector<TimeState> const& a,
     return result;
 }
 
-std::vector<TimeState> clip(std::vector<TimeState> const& input,
-                                      double startTime_s,
-                                      double endTime_s,
-                                      bool rezeroTime)
+std::vector<TimeState>
+clip(std::vector<TimeState> const& input, double startTime_s, double endTime_s, bool rezeroTime)
 {
     assert(startTime_s <= endTime_s);
     std::vector<TimeState> result;
@@ -331,11 +328,11 @@ TimeState get_active_time_state(std::vector<TimeState> const& tss, double time_s
 }
 
 void count_and_time_failure_events(std::vector<TimeState> const& tss,
-                                         double finalTime_s,
-                                         std::map<size_t, size_t>& eventCountsByFailureModeId,
-                                         std::map<size_t, size_t>& eventCountsByFragilityModeId,
-                                         std::map<size_t, double>& timeByFailureModeId_s,
-                                         std::map<size_t, double>& timeByFragilityModeId_s)
+                                   double finalTime_s,
+                                   std::map<size_t, size_t>& eventCountsByFailureModeId,
+                                   std::map<size_t, size_t>& eventCountsByFragilityModeId,
+                                   std::map<size_t, double>& timeByFailureModeId_s,
+                                   std::map<size_t, double>& timeByFragilityModeId_s)
 {
     for (size_t i = 0; i < tss.size(); ++i)
     {

@@ -21,10 +21,10 @@ namespace erin
 {
 
 Result parse_single_component(Simulation& s,
-                            toml::table const& table,
-                            std::string const& tag,
-                            ComponentValidationMap const& compValids,
-                            Log const& log)
+                              toml::table const& table,
+                              std::string const& tag,
+                              ComponentValidationMap const& compValids,
+                              Log const& log)
 {
     std::string fullTableName = "components." + tag;
     if (!table.contains("type"))
@@ -723,7 +723,8 @@ Result parse_single_component(Simulation& s,
             double maxOutflow_W =
                 power_to_watts(std::get<double>(input.at("max_outflow").value), localRateUnit);
             size_t switchIdx = s.the_model.component.subtype_index[id];
-            s.the_model.transfer_switch[switchIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
+            s.the_model.transfer_switch[switchIdx].max_outflow_W =
+                static_cast<flow_t>(maxOutflow_W);
         }
     }
     break;
@@ -857,10 +858,10 @@ Result parse_single_component(Simulation& s,
 }
 
 Result parse_components(Simulation& s,
-                       toml::table const& table,
-                       ComponentValidationMap const& compValids,
-                       std::unordered_set<std::string> const& componentTagsInUse,
-                       Log const& log)
+                        toml::table const& table,
+                        ComponentValidationMap const& compValids,
+                        std::unordered_set<std::string> const& componentTagsInUse,
+                        Log const& log)
 {
     for (auto it = table.cbegin(); it != table.cend(); ++it)
     {

@@ -165,8 +165,8 @@ void Simulation_PrintComponents(Simulation const& s)
             if (inflowType < s.flow_type_map.flow_type.size() &&
                 !s.flow_type_map.flow_type[inflowType].empty())
             {
-                std::cout << "- inport " << inportIdx << ": " << s.flow_type_map.flow_type[inflowType]
-                          << std::endl;
+                std::cout << "- inport " << inportIdx << ": "
+                          << s.flow_type_map.flow_type[inflowType] << std::endl;
             }
         }
         for (size_t outportIdx = 0; outportIdx < outflowTypes.size(); ++outportIdx)
@@ -538,7 +538,8 @@ void Simulation_PrintFragilityModes(Simulation const& s)
             {
                 Distribution const& d = maybeDist.value();
                 std::cout << "-- repair dist: " << d.Tag << "["
-                          << s.fragility_modes.repair_distribution_id[i].value() << "]" << std::endl;
+                          << s.fragility_modes.repair_distribution_id[i].value() << "]"
+                          << std::endl;
             }
         }
     }
@@ -1842,7 +1843,8 @@ void WriteResultsToEventFile(std::ofstream& out,
                         std::sort(failModes.begin(), failModes.end());
                         std::sort(fragModes.begin(), fragModes.end());
                         std::vector<std::string> fmTags;
-                        fmTags.reserve(ts.failure_mode_causes.size() + ts.fragility_mode_causes.size());
+                        fmTags.reserve(ts.failure_mode_causes.size() +
+                                       ts.fragility_mode_causes.size());
                         for (auto const& failModeId : failModes)
                         {
                             fmTags.push_back(s.failure_modes.tag[failModeId]);
@@ -2643,8 +2645,7 @@ CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentI
         size_t compId = componentFailureModeComponentIds[pair.first];
         if (relSchByCompId.contains(compId))
         {
-            std::vector<TimeState> combined =
-                combine(pair.second, relSchByCompId.at(compId));
+            std::vector<TimeState> combined = combine(pair.second, relSchByCompId.at(compId));
             relSchByCompId[compId] = std::move(combined);
         }
         else
@@ -2837,8 +2838,8 @@ void Simulation_run(Simulation& s,
     for (size_t fmIdx = 0; fmIdx < s.failure_modes.failure_distribution_id.size(); ++fmIdx)
     {
         s.the_model.rel_coord.add_failure_mode(s.failure_modes.tag[fmIdx],
-                                              s.failure_modes.failure_distribution_id[fmIdx],
-                                              s.failure_modes.repair_distribution_id[fmIdx]);
+                                               s.failure_modes.failure_distribution_id[fmIdx],
+                                               s.failure_modes.repair_distribution_id[fmIdx]);
     }
     for (size_t compFailId = 0; compFailId < s.component_failure_modes.component_id.size();
          ++compFailId)

@@ -4645,11 +4645,11 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
         relSch = combine(relSch, m.reliability[i].time_states);
     }
     count_and_time_failure_events(relSch,
-                                        m.final_time_s,
-                                        sos.event_count_by_failure_mode_id,
-                                        sos.event_count_by_fragility_mode_id,
-                                        sos.time_by_failure_mode_id_s,
-                                        sos.time_by_fragility_mode_id_s);
+                                  m.final_time_s,
+                                  sos.event_count_by_failure_mode_id,
+                                  sos.event_count_by_fragility_mode_id,
+                                  sos.time_by_failure_mode_id_s,
+                                  sos.time_by_fragility_mode_id_s);
     sos.availability_s = calculate_availability_s(relSch, m.final_time_s);
     std::map<size_t, std::vector<TimeState>> relSchByCompId;
     for (size_t i = 0; i < m.reliability.size(); ++i)
@@ -4677,13 +4677,12 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
         }
         if (relSchByCompId.contains(compId))
         {
-            count_and_time_failure_events(
-                relSchByCompId[compId],
-                m.final_time_s,
-                sos.event_count_by_comp_id_by_failure_mode_id[compId],
-                sos.event_count_by_comp_id_by_fragility_mode_id[compId],
-                sos.time_by_comp_id_by_failure_mode_id_s[compId],
-                sos.time_by_comp_id_by_fragility_mode_id_s[compId]);
+            count_and_time_failure_events(relSchByCompId[compId],
+                                          m.final_time_s,
+                                          sos.event_count_by_comp_id_by_failure_mode_id[compId],
+                                          sos.event_count_by_comp_id_by_fragility_mode_id[compId],
+                                          sos.time_by_comp_id_by_failure_mode_id_s[compId],
+                                          sos.time_by_comp_id_by_fragility_mode_id_s[compId]);
             sos.availability_by_comp_id_s[compId] =
                 calculate_availability_s(relSchByCompId[compId], m.final_time_s);
         }

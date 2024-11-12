@@ -24,13 +24,10 @@ bool operator==(TimeState const& a, TimeState const& b);
 
 bool operator!=(TimeState const& a, TimeState const& b);
 
-std::vector<TimeState> combine(std::vector<TimeState> const& a,
-                                         std::vector<TimeState> const& b);
+std::vector<TimeState> combine(std::vector<TimeState> const& a, std::vector<TimeState> const& b);
 
-std::vector<TimeState> clip(std::vector<TimeState> const& input,
-                                      double start_time_s,
-                                      double end_time_s,
-                                      bool rezero_time);
+std::vector<TimeState>
+clip(std::vector<TimeState> const& input, double start_time_s, double end_time_s, bool rezero_time);
 
 std::vector<TimeState> translate(std::vector<TimeState> const& input, double dt_s);
 
@@ -41,11 +38,11 @@ double calculate_availability_s(std::vector<TimeState> const& tss, double endTim
 TimeState get_active_time_state(std::vector<TimeState> const& tss, double time_s);
 
 void count_and_time_failure_events(std::vector<TimeState> const& tss,
-                                         double final_time_s,
-                                         std::map<size_t, size_t>& event_cunts_by_failure_mode_id,
-                                         std::map<size_t, size_t>& event_counts_by_fragility_mode_id,
-                                         std::map<size_t, double>& time_by_failure_mode_id_s,
-                                         std::map<size_t, double>& time_by_fragility_mode_id_s);
+                                   double final_time_s,
+                                   std::map<size_t, size_t>& event_cunts_by_failure_mode_id,
+                                   std::map<size_t, size_t>& event_counts_by_fragility_mode_id,
+                                   std::map<size_t, double>& time_by_failure_mode_id_s,
+                                   std::map<size_t, double>& time_by_fragility_mode_id_s);
 
 void print(std::vector<TimeState> const& tss);
 

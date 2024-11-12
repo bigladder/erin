@@ -51,12 +51,12 @@ size_t register_scenario(ScenarioDict& sd, std::string const& tag)
 }
 
 size_t register_scenario(ScenarioDict& sd,
-                                     std::string const& tag,
-                                     size_t occurrenceDistId,
-                                     double duration,
-                                     TimeUnit timeUnit,
-                                     std::optional<size_t> maxOccurrences,
-                                     double timeOffset)
+                         std::string const& tag,
+                         size_t occurrenceDistId,
+                         double duration,
+                         TimeUnit timeUnit,
+                         std::optional<size_t> maxOccurrences,
+                         double timeOffset)
 {
     size_t id = sd.tag.size();
     for (size_t i = 0; i < id; ++i)
@@ -88,10 +88,10 @@ size_t register_scenario(ScenarioDict& sd,
 }
 
 std::optional<size_t> parse_single_scenario(ScenarioDict& sd,
-                                          DistributionSystem const& ds,
-                                          toml::table const& table,
-                                          std::string const& fullName,
-                                          std::string const& tag)
+                                            DistributionSystem const& ds,
+                                            toml::table const& table,
+                                            std::string const& fullName,
+                                            std::string const& tag)
 {
     auto maybeOccurrenceDist = TOMLTable_parse_string(table, "occurrence_distribution", fullName);
     if (!maybeOccurrenceDist.has_value())
@@ -169,12 +169,12 @@ std::optional<size_t> parse_single_scenario(ScenarioDict& sd,
         }
     }
     size_t id = register_scenario(sd,
-                                              tag,
-                                              ds.lookup_dist_by_tag(maybeOccurrenceDist.value()),
-                                              maybeDuration.value(),
-                                              maybeTimeUnit.value(),
-                                              maxOccurrences,
-                                              timeOffset);
+                                  tag,
+                                  ds.lookup_dist_by_tag(maybeOccurrenceDist.value()),
+                                  maybeDuration.value(),
+                                  maybeTimeUnit.value(),
+                                  maxOccurrences,
+                                  timeOffset);
     return id;
 }
 

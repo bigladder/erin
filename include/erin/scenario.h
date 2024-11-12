@@ -33,18 +33,18 @@ std::optional<size_t> get_scenario_by_tag(ScenarioDict& sd, std::string const& t
 size_t register_scenario(ScenarioDict& sd, std::string const& tag);
 
 size_t register_scenario(ScenarioDict& sd,
-                                     std::string const& tag,
-                                     size_t occurrence_distribution_id,
-                                     double duration,
-                                     TimeUnit time_unit,
-                                     std::optional<size_t> maximum_occurrences,
-                                     double time_offset);
+                         std::string const& tag,
+                         size_t occurrence_distribution_id,
+                         double duration,
+                         TimeUnit time_unit,
+                         std::optional<size_t> maximum_occurrences,
+                         double time_offset);
 
 std::optional<size_t> parse_single_scenario(ScenarioDict& sd,
-                                          DistributionSystem const& ds,
-                                          toml::table const& table,
-                                          std::string const& full_name,
-                                          std::string const& tag);
+                                            DistributionSystem const& ds,
+                                            toml::table const& table,
+                                            std::string const& full_name,
+                                            std::string const& tag);
 
 Result parse_scenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::table const& table);
 

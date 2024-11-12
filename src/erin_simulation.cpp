@@ -326,7 +326,7 @@ void Simulation_PrintComponents(Simulation const& s)
                       << (static_cast<double>(store.InitialStorage_J) /
                           static_cast<double>(store.Capacity_J))
                       << std::endl;
-            std::cout << "-- initial capacity (J): " << store.Capacity_J << std::endl;
+            std::cout << "-- initial capacity (J): " << store.InitialStorage_J << std::endl;
             std::cout << "-- SOC to start charging: "
                       << (static_cast<double>(store.ChargeAmount_J) /
                           static_cast<double>(store.Capacity_J))

@@ -2378,7 +2378,13 @@ void WriteStatisticsToFile(Simulation const& s,
         stats << "," << ER;
         stats << "," << EA;
         stats << "," << (os.MaxSEDT_s / seconds_per_hour);
-        stats << "," << ((os.Duration_s > 0.0) ? (os.Availability_s / os.Duration_s) : 0.0);
+        double global_availability =
+            (os.Duration_s > 0.0) ? (os.Availability_s / os.Duration_s) : 0.0;
+        if (global_availability < 0.0)
+        {
+            global_availability = 0.0;
+        }
+        stats << "," << global_availability;
         // NOTE: written in alphabetical order by flowtype name
         for (auto const& statsByFlow : os.FlowTypeStats)
         {

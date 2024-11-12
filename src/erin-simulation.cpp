@@ -2793,28 +2793,28 @@ void Simulation_run(Simulation& s,
     Random fullRandom;
     switch (s.Info.TypeOfRandom)
     {
-    case (RandomType::FixedRandom):
+    case (RandomType::fixed_random):
     {
-        fixedRandom.FixedValue = s.Info.FixedValue;
+        fixedRandom.fixed_value = s.Info.FixedValue;
         s.TheModel.random_function = fixedRandom;
     }
     break;
-    case (RandomType::FixedSeries):
+    case (RandomType::fixed_series):
     {
-        fixedSeries.Idx = 0;
-        fixedSeries.Series = s.Info.Series;
+        fixedSeries.index = 0;
+        fixedSeries.series = s.Info.Series;
         s.TheModel.random_function = fixedSeries;
     }
     break;
-    case (RandomType::RandomFromSeed):
+    case (RandomType::random_from_seed):
     {
-        fullRandom = CreateRandomWithSeed(s.Info.Seed);
+        fullRandom = create_random_with_seed(s.Info.Seed);
         s.TheModel.random_function = fullRandom;
     }
     break;
-    case (RandomType::RandomFromClock):
+    case (RandomType::random_from_clock):
     {
-        fullRandom = CreateRandom();
+        fullRandom = create_random();
         s.TheModel.random_function = fullRandom;
     }
     break;

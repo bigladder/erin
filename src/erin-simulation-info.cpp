@@ -63,24 +63,24 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
     si.RateUnit = maybeRateUnit.value();
     auto rawQuantityUnit = std::get<std::string>(table.at("quantity_unit").Value);
     si.QuantityUnit = rawQuantityUnit;
-    RandomType rtype = RandomType::RandomFromClock;
+    RandomType rtype = RandomType::random_from_clock;
     if (table.contains("fixed_random"))
     {
         double fixedValue = std::get<double>(table.at("fixed_random").Value);
-        rtype = RandomType::FixedRandom;
+        rtype = RandomType::fixed_random;
         si.FixedValue = fixedValue;
     }
     else if (table.contains("fixed_random_series"))
     {
         std::vector<double> maybeSeries =
             std::get<std::vector<double>>(table.at("fixed_random_series").Value);
-        rtype = RandomType::FixedSeries;
+        rtype = RandomType::fixed_series;
         si.Series = std::move(maybeSeries);
     }
     else if (table.contains("random_seed"))
     {
         int64_t maybeSeed = std::get<int64_t>(table.at("random_seed").Value);
-        rtype = RandomType::RandomFromSeed;
+        rtype = RandomType::random_from_seed;
         si.Seed = static_cast<int unsigned>(maybeSeed < 0 ? (-1 * maybeSeed) : maybeSeed);
     }
     si.TypeOfRandom = rtype;

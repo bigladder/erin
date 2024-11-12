@@ -6,39 +6,39 @@
 
 namespace erin
 {
-double FixedRandom::operator()() const { return FixedValue; }
+double FixedRandom::operator()() const { return fixed_value; }
 
 double FixedSeries::operator()()
 {
-    if (Series.size() == 0)
+    if (series.size() == 0)
     {
         return 0.0;
     }
-    Idx = Idx % Series.size();
-    double result = Series[Idx];
-    ++Idx;
+    index = index % series.size();
+    double result = series[index];
+    ++index;
     return result;
 }
 
-double Random::operator()() { return Distribution(Generator); }
+double Random::operator()() { return distribution(generator); }
 
-Random CreateRandom()
+Random create_random()
 {
     Random r {};
     auto now = std::chrono::high_resolution_clock::now();
     auto d = now.time_since_epoch();
     constexpr unsigned int range =
         std::numeric_limits<unsigned int>::max() - std::numeric_limits<unsigned int>::min();
-    r.Seed = d.count() % range;
-    r.Generator.seed(r.Seed);
+    r.seed = d.count() % range;
+    r.generator.seed(r.seed);
     return r;
 }
 
-Random CreateRandomWithSeed(unsigned int seed)
+Random create_random_with_seed(unsigned int seed)
 {
     Random r {};
-    r.Seed = seed;
-    r.Generator.seed(seed);
+    r.seed = seed;
+    r.generator.seed(seed);
     return r;
 }
 } // namespace erin

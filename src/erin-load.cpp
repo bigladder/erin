@@ -48,7 +48,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
     PowerUnit rateUnit = PowerUnit::Watt;
     if (table.contains("time_unit"))
     {
-        auto const& maybeTimeUnitStr = std::get<std::string>(table.at("time_unit").Value);
+        auto const& maybeTimeUnitStr = std::get<std::string>(table.at("time_unit").value);
         auto maybe = tag_to_time_unit(maybeTimeUnitStr);
         if (!maybe.has_value())
         {
@@ -59,7 +59,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
     }
     if (table.contains("rate_unit"))
     {
-        auto rateUnitStr = std::get<std::string>(table.at("rate_unit").Value);
+        auto rateUnitStr = std::get<std::string>(table.at("rate_unit").value);
         auto maybe = tag_to_power_unit(rateUnitStr);
         if (!maybe.has_value())
         {
@@ -69,7 +69,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
         rateUnit = maybe.value();
     }
     auto timeRatePairs = convert_to_time_and_amounts(
-        std::get<std::vector<std::vector<double>>>(table.at("time_rate_pairs").Value),
+        std::get<std::vector<std::vector<double>>>(table.at("time_rate_pairs").value),
         time_to_seconds(1.0, timeUnit),
         power_to_watts(1.0, rateUnit));
     Load load {
@@ -87,7 +87,7 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
     TimeUnit timeUnit = TimeUnit::second;
     PowerUnit rateUnit = PowerUnit::Watt;
     std::vector<TimeAndAmount> timeRatePairs;
-    auto csvFileName = std::get<std::string>(table.at("csv_file").Value);
+    auto csvFileName = std::get<std::string>(table.at("csv_file").value);
     std::ifstream inputDataFile {};
     inputDataFile.open(csvFileName);
     if (!inputDataFile.good())

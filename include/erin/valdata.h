@@ -28,29 +28,28 @@ struct TagWithDeprication
 // - etc.
 enum class InputType
 {
-    Any,
-    // TODO: rename below to String
-    AnyString,
-    EnumString,
-    Number,  // float or integer
-    Integer, // only integer; will also parse 3.0 as 3, though
-    Bool,
-    ArrayOfDouble,
-    ArrayOfString,
-    ArrayOfTuple3OfString,
-    ArrayOfTuple2OfNumber,
-    MapFromStringToString,
+    any,
+    string,
+    enum_string,
+    number,  // float or integer
+    integer, // only integer; will also parse 3.0 as 3, though
+    boolean,
+    array_of_double,
+    array_of_string,
+    array_of_tuple3_of_string,
+    array_of_tuple2_of_number,
+    map_from_string_to_string,
 };
 
 struct PairsVector
 {
-    std::vector<double> Firsts;
-    std::vector<double> Seconds;
+    std::vector<double> firsts;
+    std::vector<double> seconds;
 };
 
 struct InputValue
 {
-    InputType Type;
+    InputType input_type;
     std::variant<bool,
                  std::string,
                  double,
@@ -62,7 +61,7 @@ struct InputValue
                  // TODO: consider std::vector<std::array<double,2>> instead
                  std::vector<std::vector<double>>,
                  std::unordered_map<std::string, std::string>>
-        Value;
+        value;
 };
 
 enum class InputSection

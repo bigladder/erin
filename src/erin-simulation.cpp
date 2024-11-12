@@ -916,8 +916,8 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
                 PairsVector pv = maybePairs.value();
                 TabularFragilityCurve tfc {};
                 tfc.vulnerability_id = intensityId;
-                tfc.intensity = std::move(pv.Firsts);
-                tfc.failure_fraction = std::move(pv.Seconds);
+                tfc.intensity = std::move(pv.firsts);
+                tfc.failure_fraction = std::move(pv.seconds);
                 size_t subtypeIdx = s.TabularFragilityCurves.size();
                 s.TabularFragilityCurves.push_back(std::move(tfc));
                 Simulation_RegisterFragilityCurve(

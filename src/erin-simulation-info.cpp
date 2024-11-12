@@ -35,13 +35,13 @@ std::optional<SimulationInfo>
 ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
 {
     SimulationInfo si {};
-    si.InputFormatVersion = std::get<std::string>(table.at("input_format_version").Value);
+    si.InputFormatVersion = std::get<std::string>(table.at("input_format_version").value);
     if (si.InputFormatVersion != current_input_version)
     {
         // TODO: replace with logger for warning
         write_warning_message("simulation_info", "input_format_version doesn't match current");
     }
-    std::string rawTimeUnit = std::get<std::string>(table.at("time_unit").Value);
+    std::string rawTimeUnit = std::get<std::string>(table.at("time_unit").value);
     std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(rawTimeUnit);
     if (!maybeTimeUnit.has_value())
     {
@@ -50,9 +50,9 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
         return {};
     }
     si.TheTimeUnit = maybeTimeUnit.value();
-    double rawMaxTime = std::get<double>(table.at("max_time").Value);
+    double rawMaxTime = std::get<double>(table.at("max_time").value);
     si.MaxTime = rawMaxTime;
-    std::string rawRateUnit = std::get<std::string>(table.at("rate_unit").Value);
+    std::string rawRateUnit = std::get<std::string>(table.at("rate_unit").value);
     auto maybeRateUnit = tag_to_power_unit(rawRateUnit);
     if (!maybeRateUnit.has_value())
     {
@@ -61,25 +61,25 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
         return {};
     }
     si.RateUnit = maybeRateUnit.value();
-    auto rawQuantityUnit = std::get<std::string>(table.at("quantity_unit").Value);
+    auto rawQuantityUnit = std::get<std::string>(table.at("quantity_unit").value);
     si.QuantityUnit = rawQuantityUnit;
     RandomType rtype = RandomType::random_from_clock;
     if (table.contains("fixed_random"))
     {
-        double fixedValue = std::get<double>(table.at("fixed_random").Value);
+        double fixedValue = std::get<double>(table.at("fixed_random").value);
         rtype = RandomType::fixed_random;
         si.FixedValue = fixedValue;
     }
     else if (table.contains("fixed_random_series"))
     {
         std::vector<double> maybeSeries =
-            std::get<std::vector<double>>(table.at("fixed_random_series").Value);
+            std::get<std::vector<double>>(table.at("fixed_random_series").value);
         rtype = RandomType::fixed_series;
         si.Series = std::move(maybeSeries);
     }
     else if (table.contains("random_seed"))
     {
-        int64_t maybeSeed = std::get<int64_t>(table.at("random_seed").Value);
+        int64_t maybeSeed = std::get<int64_t>(table.at("random_seed").value);
         rtype = RandomType::random_from_seed;
         si.Seed = static_cast<int unsigned>(maybeSeed < 0 ? (-1 * maybeSeed) : maybeSeed);
     }

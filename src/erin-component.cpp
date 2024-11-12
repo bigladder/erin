@@ -152,30 +152,30 @@ Result ParseSingleComponent(Simulation& s,
     size_t lossflowId = 0;
     if (input.contains("outflow"))
     {
-        outflow = std::get<std::string>(input.at("outflow").Value);
+        outflow = std::get<std::string>(input.at("outflow").value);
         outflowId = Simulation_RegisterFlow(s, outflow);
     }
     if (input.contains("inflow"))
     {
-        inflow = std::get<std::string>(input.at("inflow").Value);
+        inflow = std::get<std::string>(input.at("inflow").value);
         inflowId = Simulation_RegisterFlow(s, inflow);
     }
     if (input.contains("flow"))
     {
-        inflow = std::get<std::string>(input.at("flow").Value);
+        inflow = std::get<std::string>(input.at("flow").value);
         inflowId = Simulation_RegisterFlow(s, inflow);
         outflow = inflow;
         outflowId = inflowId;
     }
     if (input.contains("lossflow"))
     {
-        lossflow = std::get<std::string>(input.at("lossflow").Value);
+        lossflow = std::get<std::string>(input.at("lossflow").value);
         lossflowId = Simulation_RegisterFlow(s, lossflow);
     }
     PowerUnit rateUnit = s.Info.RateUnit;
     if (input.contains("rate_unit"))
     {
-        auto const& rateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
+        auto const& rateUnitStr = std::get<std::string>(input.at("rate_unit").value);
         auto maybeRateUnit = tag_to_power_unit(rateUnitStr);
         if (!maybeRateUnit.has_value())
         {
@@ -206,7 +206,7 @@ Result ParseSingleComponent(Simulation& s,
         PowerUnit localPowerUnit = rateUnit;
         if (input.contains("rate_unit"))
         {
-            std::string localRateUnit = std::get<std::string>(input.at("rate_unit").Value);
+            std::string localRateUnit = std::get<std::string>(input.at("rate_unit").value);
             std::optional<PowerUnit> maybePowerUnit = tag_to_power_unit(localRateUnit);
             if (!maybePowerUnit.has_value())
             {
@@ -221,7 +221,7 @@ Result ParseSingleComponent(Simulation& s,
             write_error_message(fullTableName, "required field 'constant_request' not found");
             return Result::failure;
         }
-        double loadRequest = std::get<double>(input.at("constant_request").Value);
+        double loadRequest = std::get<double>(input.at("constant_request").value);
         loadRequest_W = static_cast<flow_t>(power_to_watts(loadRequest, localPowerUnit));
         id = Model_AddConstantLoad(s.TheModel, loadRequest_W, inflowId, tag, report);
     }
@@ -284,7 +284,7 @@ Result ParseSingleComponent(Simulation& s,
     {
         std::unordered_map<std::string, std::string> const& sbs =
             std::get<std::unordered_map<std::string, std::string>>(
-                input.at("supply_by_scenario").Value);
+                input.at("supply_by_scenario").value);
         std::map<size_t, size_t> scenarioIdToSupplyId = {};
         for (auto it = sbs.cbegin(); it != sbs.cend(); ++it)
         {
@@ -309,7 +309,7 @@ Result ParseSingleComponent(Simulation& s,
         id = compIdAndWasteConn.id;
         if (input.contains("max_outflow"))
         {
-            double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
+            double rawMaxOutflow = std::get<double>(input.at("max_outflow").value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
             s.TheModel.scheduled_source[s.TheModel.component.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
@@ -318,8 +318,8 @@ Result ParseSingleComponent(Simulation& s,
     break;
     case ComponentType::mux_type:
     {
-        auto numInflowsTemp = std::get<int64_t>(input.at("num_inflows").Value);
-        auto numOutflowsTemp = std::get<int64_t>(input.at("num_outflows").Value);
+        auto numInflowsTemp = std::get<int64_t>(input.at("num_inflows").value);
+        auto numOutflowsTemp = std::get<int64_t>(input.at("num_outflows").value);
         if (numInflowsTemp <= 0)
         {
             write_error_message(fullTableName, "num_inflows must be a positive integer");
@@ -346,7 +346,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             std::vector<flow_t> maxOutflows_W(numOutflows, 0);
             std::vector<double> maxOutflowsRaw =
-                std::get<std::vector<double>>(input.at("max_outflows").Value);
+                std::get<std::vector<double>>(input.at("max_outflows").value);
             // TODO: add en error for size mismatch on max outflows
             assert(maxOutflowsRaw.size() == numOutflows);
             for (size_t i = 0; i < numOutflows; ++i)
@@ -361,7 +361,7 @@ Result ParseSingleComponent(Simulation& s,
     case ComponentType::constant_efficiency_converter_type:
     {
         PowerUnit localRateUnit = rateUnit;
-        double efficiency = std::get<double>(input.at("constant_efficiency").Value);
+        double efficiency = std::get<double>(input.at("constant_efficiency").value);
         if (efficiency <= 0.0)
         {
             errors.push_back(write_error_to_string(fullTableName, "efficiency must be > 0.0"));
@@ -380,7 +380,7 @@ Result ParseSingleComponent(Simulation& s,
         id = compIdAndWasteConn.id;
         if (input.contains("rate_unit"))
         {
-            std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
+            std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").value);
             auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
@@ -393,7 +393,7 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("max_outflow"))
         {
             double maxOutflow_W =
-                power_to_watts(std::get<double>(input.at("max_outflow").Value), localRateUnit);
+                power_to_watts(std::get<double>(input.at("max_outflow").value), localRateUnit);
             size_t constEffIdx = s.TheModel.component.subtype_index[id];
             s.TheModel.constant_efficiency_converter[constEffIdx].max_outflow_W =
                 static_cast<flow_t>(maxOutflow_W);
@@ -401,7 +401,7 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
-                power_to_watts(std::get<double>(input.at("max_lossflow").Value), localRateUnit);
+                power_to_watts(std::get<double>(input.at("max_lossflow").value), localRateUnit);
             size_t constEffIdx = s.TheModel.component.subtype_index[id];
             s.TheModel.constant_efficiency_converter[constEffIdx].max_lossflow_W =
                 static_cast<flow_t>(maxLossflow_W);
@@ -413,7 +413,7 @@ Result ParseSingleComponent(Simulation& s,
         PowerUnit localRateUnit = rateUnit;
 
         std::vector<std::vector<double>> rawEfficiency = std::get<std::vector<std::vector<double>>>(
-            input.at("efficiency_by_fraction_out").Value);
+            input.at("efficiency_by_fraction_out").value);
         std::unordered_map<double, double> effByOutfrac {};
         for (std::vector<double> const& fracEffPair : rawEfficiency)
         {
@@ -447,7 +447,7 @@ Result ParseSingleComponent(Simulation& s,
         }
         if (input.contains("rate_unit"))
         {
-            std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
+            std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").value);
             auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
@@ -458,7 +458,7 @@ Result ParseSingleComponent(Simulation& s,
             localRateUnit = maybeRateUnit.value();
         }
         double maxOutflow_W =
-            power_to_watts(std::get<double>(input.at("max_outflow").Value), localRateUnit);
+            power_to_watts(std::get<double>(input.at("max_outflow").value), localRateUnit);
         std::vector<double> fracsForEff;
         fracsForEff.reserve(effByOutfrac.size());
         for (auto const& fracEffPair : effByOutfrac)
@@ -491,7 +491,7 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
-                power_to_watts(std::get<double>(input.at("max_lossflow").Value), localRateUnit);
+                power_to_watts(std::get<double>(input.at("max_lossflow").value), localRateUnit);
             s.TheModel.variable_efficiency_converter[varEffIdx].max_lossflow_W =
                 static_cast<flow_t>(maxLossflow_W);
         }
@@ -508,7 +508,7 @@ Result ParseSingleComponent(Simulation& s,
         id = Model_AddPassThrough(s.TheModel, inflowId, tag);
         if (input.contains("max_outflow"))
         {
-            double rawMaxOutflow = std::get<double>(input.at("max_outflow").Value);
+            double rawMaxOutflow = std::get<double>(input.at("max_outflow").value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
             s.TheModel.pass_through[s.TheModel.component.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
@@ -525,7 +525,7 @@ Result ParseSingleComponent(Simulation& s,
         EnergyUnit capacityUnit = EnergyUnit::Joule;
         if (input.contains("capacity_unit"))
         {
-            std::string capacityUnitStr = std::get<std::string>(input.at("capacity_unit").Value);
+            std::string capacityUnitStr = std::get<std::string>(input.at("capacity_unit").value);
             auto maybeCapacityUnit = tag_to_energy_unit(capacityUnitStr);
             if (!maybeCapacityUnit.has_value())
             {
@@ -536,17 +536,17 @@ Result ParseSingleComponent(Simulation& s,
             capacityUnit = maybeCapacityUnit.value();
         }
         flow_t capacity_J = static_cast<flow_t>(
-            energy_to_joules(std::get<double>(input.at("capacity").Value), capacityUnit));
+            energy_to_joules(std::get<double>(input.at("capacity").value), capacityUnit));
         if (capacity_J == 0)
         {
             write_error_message(fullTableName, "capacity must be greater than 0");
             return Result::failure;
         }
         flow_t maxCharge_W = static_cast<flow_t>(
-            power_to_watts(std::get<double>(input.at("max_charge").Value), rateUnit));
+            power_to_watts(std::get<double>(input.at("max_charge").value), rateUnit));
         flow_t maxDischarge_W = static_cast<flow_t>(
-            power_to_watts(std::get<double>(input.at("max_discharge").Value), rateUnit));
-        double chargeAtSoc = std::get<double>(input.at("charge_at_soc").Value);
+            power_to_watts(std::get<double>(input.at("max_discharge").value), rateUnit));
+        double chargeAtSoc = std::get<double>(input.at("charge_at_soc").value);
         if (chargeAtSoc < 0.0 || chargeAtSoc > 1.0)
         {
             write_error_message(fullTableName, "charge_at_soc must be in range [0.0, 1.0]");
@@ -559,7 +559,7 @@ Result ParseSingleComponent(Simulation& s,
             // least 1 unit less than capacity
             noChargeAmount_J = capacity_J - 1;
         }
-        double initSoc = std::get<double>(input.at("init_soc").Value);
+        double initSoc = std::get<double>(input.at("init_soc").value);
         if (initSoc < 0.0 || initSoc > 1.0)
         {
             write_error_message(fullTableName, "init_soc must be in range [0.0, 1.0]");
@@ -569,7 +569,7 @@ Result ParseSingleComponent(Simulation& s,
         double rtEff = 1.0;
         if (input.contains("roundtrip_efficiency"))
         {
-            rtEff = std::get<double>(input.at("roundtrip_efficiency").Value);
+            rtEff = std::get<double>(input.at("roundtrip_efficiency").value);
             if (rtEff <= 0.0 || rtEff > 1.0)
             {
                 write_error_message(fullTableName, "roundtrip efficiency must be (0.0, 1.0]");
@@ -603,20 +603,20 @@ Result ParseSingleComponent(Simulation& s,
         if (input.contains("max_outflow"))
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
-                power_to_watts(std::get<double>(input.at("max_outflow").Value), rateUnit));
+                power_to_watts(std::get<double>(input.at("max_outflow").value), rateUnit));
             s.TheModel.store[s.TheModel.component.subtype_index[id]].max_outflow_W = maxOutflow_W;
         }
     }
     break;
     case ComponentType::mover_type:
     {
-        double cop = std::get<double>(input.at("cop").Value);
+        double cop = std::get<double>(input.at("cop").value);
         auto compIdAndConns = Model_AddMover(s.TheModel, cop, inflowId, outflowId, tag, report);
         id = compIdAndConns.id;
         if (input.contains("max_outflow"))
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
-                power_to_watts(std::get<double>(input.at("max_outflow").Value), rateUnit));
+                power_to_watts(std::get<double>(input.at("max_outflow").value), rateUnit));
             size_t moverIdx = s.TheModel.component.subtype_index[id];
             s.TheModel.mover[moverIdx].max_outflow_W = maxOutflow_W;
         }
@@ -627,7 +627,7 @@ Result ParseSingleComponent(Simulation& s,
         PowerUnit localRateUnit = rateUnit;
 
         std::vector<std::vector<double>> copsByLoadFrac =
-            std::get<std::vector<std::vector<double>>>(input.at("cop_by_fraction_out").Value);
+            std::get<std::vector<std::vector<double>>>(input.at("cop_by_fraction_out").value);
         std::unordered_map<double, double> copByOutFrac {};
         // TODO(mok): extract this and the one in var-eff conv
         // into a separate processing step
@@ -661,7 +661,7 @@ Result ParseSingleComponent(Simulation& s,
         }
         if (input.contains("rate_unit"))
         {
-            std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
+            std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").value);
             auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
             if (!maybeRateUnit.has_value())
             {
@@ -672,7 +672,7 @@ Result ParseSingleComponent(Simulation& s,
             localRateUnit = maybeRateUnit.value();
         }
         double maxOutflow_W =
-            power_to_watts(std::get<double>(input.at("max_outflow").Value), localRateUnit);
+            power_to_watts(std::get<double>(input.at("max_outflow").value), localRateUnit);
         std::vector<double> fracsForCop;
         fracsForCop.reserve(copByOutFrac.size());
         for (auto const& fracCopPair : copByOutFrac)
@@ -710,7 +710,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             if (input.contains("rate_unit"))
             {
-                std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").Value);
+                std::string localRateUnitStr = std::get<std::string>(input.at("rate_unit").value);
                 auto maybeRateUnit = tag_to_power_unit(localRateUnitStr);
                 if (!maybeRateUnit.has_value())
                 {
@@ -721,7 +721,7 @@ Result ParseSingleComponent(Simulation& s,
                 localRateUnit = maybeRateUnit.value();
             }
             double maxOutflow_W =
-                power_to_watts(std::get<double>(input.at("max_outflow").Value), localRateUnit);
+                power_to_watts(std::get<double>(input.at("max_outflow").value), localRateUnit);
             size_t switchIdx = s.TheModel.component.subtype_index[id];
             s.TheModel.transfer_switch[switchIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
         }

@@ -671,7 +671,7 @@ Result ParseDistributions(DistributionSystem& ds,
             TimeUnit timeUnit = TimeUnit::second;
             if (inputs.contains("time_unit"))
             {
-                std::string timeUnitStr = std::get<std::string>(inputs.at("time_unit").Value);
+                std::string timeUnitStr = std::get<std::string>(inputs.at("time_unit").value);
                 std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(timeUnitStr);
                 if (!maybeTimeUnit.has_value())
                 {
@@ -684,14 +684,14 @@ Result ParseDistributions(DistributionSystem& ds,
             {
             case (DistType::Fixed):
             {
-                double value = std::get<double>(inputs.at("value").Value);
+                double value = std::get<double>(inputs.at("value").value);
                 ds.add_fixed(distTag, time_to_seconds(value, timeUnit));
             }
             break;
             case DistType::Normal:
             {
-                double mean = std::get<double>(inputs.at("mean").Value);
-                double sd = std::get<double>(inputs.at("standard_deviation").Value);
+                double mean = std::get<double>(inputs.at("mean").value);
+                double sd = std::get<double>(inputs.at("standard_deviation").value);
                 ds.add_normal(
                     distTag, time_to_seconds(mean, timeUnit), time_to_seconds(sd, timeUnit));
             }
@@ -704,7 +704,7 @@ Result ParseDistributions(DistributionSystem& ds,
                 {
                     std::vector<std::vector<double>> vt_pairs =
                         std::get<std::vector<std::vector<double>>>(
-                            inputs.at("variate_time_pairs").Value);
+                            inputs.at("variate_time_pairs").value);
                     xs.reserve(vt_pairs.size());
                     times_s.reserve(vt_pairs.size());
                     for (std::vector<double> const& vt : vt_pairs)
@@ -718,7 +718,7 @@ Result ParseDistributions(DistributionSystem& ds,
                     // TODO: move csv_file read into separate function
                     // std::optional<std::vector<std::array<double,2>>>
                     // ReadCsvToArrayOfTwoTuples(std::string csvFile);
-                    std::string csvFileName = std::get<std::string>(inputs.at("csv_file").Value);
+                    std::string csvFileName = std::get<std::string>(inputs.at("csv_file").value);
                     std::ifstream inputDataFile;
                     inputDataFile.open(csvFileName);
                     if (!inputDataFile.good())
@@ -788,20 +788,20 @@ Result ParseDistributions(DistributionSystem& ds,
             case DistType::Uniform:
             {
                 double lower_bound_s =
-                    time_to_seconds(std::get<double>(inputs.at("lower_bound").Value), timeUnit);
+                    time_to_seconds(std::get<double>(inputs.at("lower_bound").value), timeUnit);
                 double upper_bound_s =
-                    time_to_seconds(std::get<double>(inputs.at("upper_bound").Value), timeUnit);
+                    time_to_seconds(std::get<double>(inputs.at("upper_bound").value), timeUnit);
                 ds.add_uniform(distTag, lower_bound_s, upper_bound_s);
             }
             break;
             case DistType::Weibull:
             {
-                double shape = std::get<double>(inputs.at("shape").Value);
-                double scale = std::get<double>(inputs.at("scale").Value);
+                double shape = std::get<double>(inputs.at("shape").value);
+                double scale = std::get<double>(inputs.at("scale").value);
                 double location = 0.0;
                 if (inputs.contains("location"))
                 {
-                    location = std::get<double>(inputs.at("location").Value);
+                    location = std::get<double>(inputs.at("location").value);
                 }
                 ds.add_weibull(distTag,
                                shape,

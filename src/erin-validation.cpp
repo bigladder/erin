@@ -210,7 +210,7 @@ void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f)
            "attempt to add same field definition more than once to one "
            "section");
     info.TypeMap.insert({f.FieldName, f.Type});
-    if (f.Type == InputType::EnumString)
+    if (f.Type == InputType::enum_string)
     {
         assert(f.EnumValues.size() > 0);
         info.EnumMap.insert({f.FieldName, f.EnumValues});
@@ -327,7 +327,7 @@ InputValidationMap setup_global_validation_info()
         // GLOBAL
         FieldInfo {
             .FieldName = "meta",
-            .Type = InputType::Any,
+            .Type = InputType::any,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -338,7 +338,7 @@ InputValidationMap setup_global_validation_info()
         // SIMULATION_INFO
         FieldInfo {
             .FieldName = "input_format_version",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = false,
             .InformIfMissing = true,
             .Default = current_input_version,
@@ -351,7 +351,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "rate_unit",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "W",
@@ -364,7 +364,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "quantity_unit",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "J",
@@ -377,7 +377,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "time_unit",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "yr",
@@ -390,7 +390,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "max_time",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "1000.0",
@@ -403,7 +403,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "random_seed",
-            .Type = InputType::Integer,
+            .Type = InputType::integer,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "17",
@@ -416,7 +416,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "fixed_random",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -429,7 +429,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "fixed_random_series",
-            .Type = InputType::ArrayOfDouble,
+            .Type = InputType::array_of_double,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -443,7 +443,7 @@ InputValidationMap setup_global_validation_info()
         // Loads -- File-Based
         FieldInfo {
             .FieldName = "csv_file",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -458,7 +458,7 @@ InputValidationMap setup_global_validation_info()
         // Loads_02FileBased
         FieldInfo {
             .FieldName = "multi_part_csv",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -472,7 +472,7 @@ InputValidationMap setup_global_validation_info()
         // Loads -- Explicit
         FieldInfo {
             .FieldName = "time_rate_pairs",
-            .Type = InputType::ArrayOfTuple2OfNumber,
+            .Type = InputType::array_of_tuple2_of_number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -485,7 +485,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "time_unit",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "s",
@@ -498,7 +498,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "rate_unit",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "W",
@@ -512,7 +512,7 @@ InputValidationMap setup_global_validation_info()
         // Components -- Global
         FieldInfo {
             .FieldName = "type",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -522,7 +522,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "initial_age",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "0.0",
@@ -532,7 +532,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "time_unit",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "h",
@@ -542,7 +542,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "group",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "group",
@@ -552,7 +552,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "report",
-            .Type = InputType::Bool,
+            .Type = InputType::boolean,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "true",
@@ -563,7 +563,7 @@ InputValidationMap setup_global_validation_info()
         // Components -- All Except Loads
         FieldInfo {
             .FieldName = "failure_modes",
-            .Type = InputType::ArrayOfString,
+            .Type = InputType::array_of_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -573,7 +573,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "fragility_modes",
-            .Type = InputType::ArrayOfString,
+            .Type = InputType::array_of_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -584,7 +584,7 @@ InputValidationMap setup_global_validation_info()
         // Constant and Schedule-Based Load Component
         FieldInfo {
             .FieldName = "inflow",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -602,7 +602,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "loads_by_scenario",
-            .Type = InputType::MapFromStringToString,
+            .Type = InputType::map_from_string_to_string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -615,7 +615,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "constant_request",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -629,7 +629,7 @@ InputValidationMap setup_global_validation_info()
         // Constant Source and Uncontrolled Source
         FieldInfo {
             .FieldName = "outflow",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -647,7 +647,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "max_outflow",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -663,7 +663,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "rate_unit",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -683,7 +683,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "supply_by_scenario",
-            .Type = InputType::MapFromStringToString,
+            .Type = InputType::map_from_string_to_string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -697,7 +697,7 @@ InputValidationMap setup_global_validation_info()
         // Mux
         FieldInfo {
             .FieldName = "flow",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -719,7 +719,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "num_outflows",
-            .Type = InputType::Integer,
+            .Type = InputType::integer,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -732,7 +732,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "num_inflows",
-            .Type = InputType::Integer,
+            .Type = InputType::integer,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -745,7 +745,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "max_outflows",
-            .Type = InputType::ArrayOfDouble,
+            .Type = InputType::array_of_double,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -759,7 +759,7 @@ InputValidationMap setup_global_validation_info()
         // Constant and Variable Efficiency Converter
         FieldInfo {
             .FieldName = "constant_efficiency",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -772,7 +772,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "efficiency_by_fraction_out",
-            .Type = InputType::ArrayOfTuple2OfNumber,
+            .Type = InputType::array_of_tuple2_of_number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -785,7 +785,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "lossflow",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -799,7 +799,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "max_outflow",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -812,7 +812,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "max_outflow",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -826,7 +826,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "max_lossflow",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -841,7 +841,7 @@ InputValidationMap setup_global_validation_info()
         // Store
         FieldInfo {
             .FieldName = "init_soc",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "1.0",
@@ -854,7 +854,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "capacity_unit",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "J",
@@ -867,7 +867,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "capacity",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -881,7 +881,7 @@ InputValidationMap setup_global_validation_info()
         // TODO[mok]: should max_charge still be required if now inflow?
         FieldInfo {
             .FieldName = "max_charge",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -894,7 +894,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "max_discharge",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -907,7 +907,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "max_outflow",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -920,7 +920,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "charge_at_soc",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "0.8",
@@ -933,7 +933,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "roundtrip_efficiency",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "1.0",
@@ -947,7 +947,7 @@ InputValidationMap setup_global_validation_info()
         // COMP Mover
         FieldInfo {
             .FieldName = "cop",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -960,7 +960,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "cop_by_fraction_out",
-            .Type = InputType::ArrayOfTuple2OfNumber,
+            .Type = InputType::array_of_tuple2_of_number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -974,7 +974,7 @@ InputValidationMap setup_global_validation_info()
         // DIST: Common
         FieldInfo {
             .FieldName = "type",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -984,7 +984,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "time_unit",
-            .Type = InputType::EnumString,
+            .Type = InputType::enum_string,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",
@@ -995,7 +995,7 @@ InputValidationMap setup_global_validation_info()
         // DIST - FIXED
         FieldInfo {
             .FieldName = "value",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1009,7 +1009,7 @@ InputValidationMap setup_global_validation_info()
         // DIST - UNIFORM
         FieldInfo {
             .FieldName = "lower_bound",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1022,7 +1022,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "upper_bound",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1036,7 +1036,7 @@ InputValidationMap setup_global_validation_info()
         // DIST - NORMAL
         FieldInfo {
             .FieldName = "mean",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1049,7 +1049,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "standard_deviation",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1063,7 +1063,7 @@ InputValidationMap setup_global_validation_info()
         // DIST - Quantile Table
         FieldInfo {
             .FieldName = "csv_file",
-            .Type = InputType::AnyString,
+            .Type = InputType::string,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1076,7 +1076,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "variate_time_pairs",
-            .Type = InputType::ArrayOfTuple2OfNumber,
+            .Type = InputType::array_of_tuple2_of_number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1090,7 +1090,7 @@ InputValidationMap setup_global_validation_info()
         // DIST - WEIBULL
         FieldInfo {
             .FieldName = "shape",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1103,7 +1103,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "scale",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = true,
             .InformIfMissing = false,
             .Default = "",
@@ -1116,7 +1116,7 @@ InputValidationMap setup_global_validation_info()
         },
         FieldInfo {
             .FieldName = "location",
-            .Type = InputType::Number,
+            .Type = InputType::number,
             .IsRequired = false,
             .InformIfMissing = false,
             .Default = "",

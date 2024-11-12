@@ -106,16 +106,16 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
         // check types
         InputType expectedType = validationInfo.TypeMap.at(key);
         InputValue v;
-        v.Type = expectedType;
+        v.input_type = expectedType;
         switch (expectedType)
         {
-        case InputType::Any:
+        case InputType::any:
         {
             // NOTE: nothing to do
         }
         break;
-        case InputType::AnyString:
-        case InputType::EnumString:
+        case InputType::string:
+        case InputType::enum_string:
         {
             if (!value.is_string())
             {
@@ -124,7 +124,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                 return out;
             }
-            if (validationInfo.TypeMap.at(key) == InputType::EnumString)
+            if (validationInfo.TypeMap.at(key) == InputType::enum_string)
             {
                 std::string const& valAsStr = value.as_string();
                 if (!validationInfo.EnumMap.contains(key))
@@ -148,10 +148,10 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                     return out;
                 }
             }
-            v.Value = value.as_string();
+            v.value = value.as_string();
         }
         break;
-        case InputType::ArrayOfDouble:
+        case InputType::array_of_double:
         {
             if (!value.is_array())
             {
@@ -185,10 +185,10 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 }
                 aod.push_back(maybeDouble.value());
             }
-            v.Value = std::move(aod);
+            v.value = std::move(aod);
         }
         break;
-        case InputType::ArrayOfTuple2OfNumber:
+        case InputType::array_of_tuple2_of_number:
         {
             if (!value.is_array())
             {
@@ -246,10 +246,10 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 };
                 parentVec.push_back(std::move(subvec));
             }
-            v.Value = std::move(parentVec);
+            v.value = std::move(parentVec);
         }
         break;
-        case InputType::ArrayOfTuple3OfString:
+        case InputType::array_of_tuple3_of_string:
         {
             if (!value.is_array())
             {
@@ -300,15 +300,15 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                     }
                 }
             }
-            v.Value = std::move(aos);
+            v.value = std::move(aos);
         }
         break;
-        case InputType::Bool:
+        case InputType::boolean:
         {
             std::optional<bool> maybeBool = TOML_parse_value_as_bool(value);
             if (maybeBool.has_value())
             {
-                v.Value = maybeBool.value();
+                v.value = maybeBool.value();
             }
             else
             {
@@ -321,7 +321,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
             }
         }
         break;
-        case InputType::Integer:
+        case InputType::integer:
         {
             if (!value.is_integer())
             {
@@ -345,10 +345,10 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                 return out;
             }
-            v.Value = static_cast<int64_t>(maybeInt.value());
+            v.value = static_cast<int64_t>(maybeInt.value());
         }
         break;
-        case InputType::Number:
+        case InputType::number:
         {
             if (!value.is_integer() && !value.is_floating())
             {
@@ -365,10 +365,10 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                 return out;
             }
-            v.Value = maybeDouble.value();
+            v.value = maybeDouble.value();
         }
         break;
-        case InputType::ArrayOfString:
+        case InputType::array_of_string:
         {
             std::vector<std::string> aos;
             if (!value.is_array())
@@ -391,10 +391,10 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 }
                 aos.push_back(x.as_string());
             }
-            v.Value = std::move(aos);
+            v.value = std::move(aos);
         }
         break;
-        case InputType::MapFromStringToString:
+        case InputType::map_from_string_to_string:
         {
             std::unordered_map<std::string, std::string> map;
             if (!value.is_table())
@@ -416,7 +416,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 }
                 map[item.first] = item.second.as_string();
             }
-            v.Value = std::move(map);
+            v.value = std::move(map);
         }
         break;
         default:
@@ -449,34 +449,34 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
         }
         InputValue iv;
         InputType itype = validationInfo.TypeMap.at(defkv.first);
-        iv.Type = itype;
+        iv.input_type = itype;
         switch (itype)
         {
-        case InputType::AnyString:
-        case InputType::EnumString:
+        case InputType::string:
+        case InputType::enum_string:
         {
-            iv.Value = defkv.second;
+            iv.value = defkv.second;
         }
         break;
-        case InputType::Integer:
+        case InputType::integer:
         {
-            iv.Value = std::stoll(defkv.second);
+            iv.value = std::stoll(defkv.second);
         }
         break;
-        case InputType::Number:
+        case InputType::number:
         {
-            iv.Value = std::stod(defkv.second);
+            iv.value = std::stod(defkv.second);
         }
         break;
-        case InputType::Bool:
+        case InputType::boolean:
         {
             if (defkv.second == "true")
             {
-                iv.Value = true;
+                iv.value = true;
             }
             else if (defkv.second == "false")
             {
-                iv.Value = false;
+                iv.value = false;
             }
             else
             {
@@ -790,8 +790,8 @@ TOMLTable_parse_array_of_pairs_of_double(std::unordered_map<toml::key, toml::val
                                     " must be an array of two numbers");
             return {};
         }
-        result.Firsts.push_back(maybeFirst.value());
-        result.Seconds.push_back(maybeSecond.value());
+        result.firsts.push_back(maybeFirst.value());
+        result.seconds.push_back(maybeSecond.value());
     }
     return result;
 }

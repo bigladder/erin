@@ -213,7 +213,7 @@ CLI::App* add_graph(CLI::App& app)
         }
         Simulation s = std::move(maybe_sim.value());
         std::string dot_data =
-            network_to_dot(s.TheModel.connection, s.TheModel.component.tag, "", use_html);
+            network_to_dot(s.the_model.connection, s.the_model.component.tag, "", use_html);
         // save string from network_to_dot
         std::ofstream ofs(output_filename, std::ios_base::binary);
         if (!ofs.good())
@@ -262,7 +262,7 @@ CLI::App* add_checkNetwork(CLI::App& app)
             return EXIT_FAILURE;
         }
         Simulation s = std::move(maybe_sim.value());
-        std::vector<std::string> issues = erin::check_network(s.TheModel);
+        std::vector<std::string> issues = erin::check_network(s.the_model);
         if (issues.size() > 0)
         {
             std::cout << "ISSUES FOUND:" << std::endl;

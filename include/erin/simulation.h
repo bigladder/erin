@@ -26,11 +26,11 @@ namespace erin
 
 struct Simulation
 {
-    FlowDict FlowTypeMap;
-    ScenarioDict ScenarioMap;
-    LoadDict LoadMap;
-    SimulationInfo Info;
-    Model TheModel;
+    FlowDict flow_type_map;
+    ScenarioDict scenario_map;
+    LoadDict load_map;
+    SimulationInfo info;
+    Model the_model;
     std::vector<LinearFragilityCurve> LinearFragilityCurves;
     std::vector<TabularFragilityCurve> TabularFragilityCurves;
     IntensityDict Intensities;

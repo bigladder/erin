@@ -40,21 +40,21 @@ void Simulation_Init(Simulation& s)
 
 size_t Simulation_RegisterFlow(Simulation& s, std::string const& flowTag)
 {
-    size_t id = s.FlowTypeMap.flow_type.size();
+    size_t id = s.flow_type_map.flow_type.size();
     for (size_t i = 0; i < id; ++i)
     {
-        if (s.FlowTypeMap.flow_type[i] == flowTag)
+        if (s.flow_type_map.flow_type[i] == flowTag)
         {
             return i;
         }
     }
-    s.FlowTypeMap.flow_type.push_back(flowTag);
+    s.flow_type_map.flow_type.push_back(flowTag);
     return id;
 }
 
 size_t Simulation_RegisterScenario(Simulation& s, std::string const& scenarioTag)
 {
-    return register_scenario(s.ScenarioMap, scenarioTag);
+    return register_scenario(s.scenario_map, scenarioTag);
 }
 
 size_t Simulation_RegisterIntensity(Simulation& s, std::string const& tag)
@@ -96,27 +96,27 @@ size_t Simulation_RegisterLoadSchedule(Simulation& s,
                                        std::string const& tag,
                                        std::vector<TimeAndAmount> const& loadSchedule)
 {
-    size_t id = s.LoadMap.tags.size();
-    assert(s.LoadMap.tags.size() == s.LoadMap.loads.size());
+    size_t id = s.load_map.tags.size();
+    assert(s.load_map.tags.size() == s.load_map.loads.size());
     for (size_t i = 0; i < id; ++i)
     {
-        if (s.LoadMap.tags[i] == tag)
+        if (s.load_map.tags[i] == tag)
         {
-            s.LoadMap.loads[i].clear();
-            s.LoadMap.loads[i] = loadSchedule;
+            s.load_map.loads[i].clear();
+            s.load_map.loads[i] = loadSchedule;
             return i;
         }
     }
-    s.LoadMap.tags.push_back(tag);
-    s.LoadMap.loads.push_back(loadSchedule);
+    s.load_map.tags.push_back(tag);
+    s.load_map.loads.push_back(loadSchedule);
     return id;
 }
 
 std::optional<size_t> Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag)
 {
-    for (size_t i = 0; i < s.LoadMap.tags.size(); ++i)
+    for (size_t i = 0; i < s.load_map.tags.size(); ++i)
     {
-        if (s.LoadMap.tags[i] == tag)
+        if (s.load_map.tags[i] == tag)
         {
             return i;
         }
@@ -126,21 +126,21 @@ std::optional<size_t> Simulation_GetLoadIdByTag(Simulation const& s, std::string
 
 void Simulation_RegisterAllLoads(Simulation& s, std::vector<Load> const& loads)
 {
-    s.LoadMap.tags.clear();
-    s.LoadMap.loads.clear();
+    s.load_map.tags.clear();
+    s.load_map.loads.clear();
     auto numLoads = loads.size();
-    s.LoadMap.tags.reserve(numLoads);
-    s.LoadMap.loads.reserve(numLoads);
+    s.load_map.tags.reserve(numLoads);
+    s.load_map.loads.reserve(numLoads);
     for (size_t i = 0; i < numLoads; ++i)
     {
-        s.LoadMap.tags.push_back(loads[i].tag);
-        s.LoadMap.loads.push_back(loads[i].time_and_loads);
+        s.load_map.tags.push_back(loads[i].tag);
+        s.load_map.loads.push_back(loads[i].time_and_loads);
     }
 }
 
 void Simulation_PrintComponents(Simulation const& s)
 {
-    Model const& m = s.TheModel;
+    Model const& m = s.the_model;
     for (size_t compId = 0; compId < m.component.component_type.size(); ++compId)
     {
         assert(compId < m.component.outflow_type.size());
@@ -162,21 +162,21 @@ void Simulation_PrintComponents(Simulation const& s)
         for (size_t inportIdx = 0; inportIdx < inflowTypes.size(); ++inportIdx)
         {
             size_t inflowType = inflowTypes[inportIdx];
-            if (inflowType < s.FlowTypeMap.flow_type.size() &&
-                !s.FlowTypeMap.flow_type[inflowType].empty())
+            if (inflowType < s.flow_type_map.flow_type.size() &&
+                !s.flow_type_map.flow_type[inflowType].empty())
             {
-                std::cout << "- inport " << inportIdx << ": " << s.FlowTypeMap.flow_type[inflowType]
+                std::cout << "- inport " << inportIdx << ": " << s.flow_type_map.flow_type[inflowType]
                           << std::endl;
             }
         }
         for (size_t outportIdx = 0; outportIdx < outflowTypes.size(); ++outportIdx)
         {
             size_t outflowType = outflowTypes[outportIdx];
-            if (outflowType < s.FlowTypeMap.flow_type.size() &&
-                !s.FlowTypeMap.flow_type[outflowType].empty())
+            if (outflowType < s.flow_type_map.flow_type.size() &&
+                !s.flow_type_map.flow_type[outflowType].empty())
             {
                 std::cout << "- outport " << outportIdx << ": "
-                          << s.FlowTypeMap.flow_type[outflowType] << std::endl;
+                          << s.flow_type_map.flow_type[outflowType] << std::endl;
             }
         }
         std::cout << "- report? " << (m.component.report[compId] ? "true" : "false") << std::endl;
@@ -196,10 +196,10 @@ void Simulation_PrintComponents(Simulation const& s)
             {
                 size_t scenarioIdx = keyValue.first;
                 size_t loadIdx = keyValue.second;
-                assert(scenarioIdx < s.ScenarioMap.tag.size());
-                assert(loadIdx < s.LoadMap.tags.size());
-                std::cout << "-- for scenario: " << s.ScenarioMap.tag[scenarioIdx]
-                          << ", use load: " << s.LoadMap.tags[loadIdx] << std::endl;
+                assert(scenarioIdx < s.scenario_map.tag.size());
+                assert(loadIdx < s.load_map.tags.size());
+                std::cout << "-- for scenario: " << s.scenario_map.tag[scenarioIdx]
+                          << ", use load: " << s.load_map.tags[loadIdx] << std::endl;
             }
         }
         break;
@@ -219,10 +219,10 @@ void Simulation_PrintComponents(Simulation const& s)
             {
                 size_t scenarioIdx = keyValue.first;
                 size_t loadIdx = keyValue.second;
-                assert(scenarioIdx < s.ScenarioMap.tag.size());
-                assert(loadIdx < s.LoadMap.tags.size());
-                std::cout << "-- for scenario: " << s.ScenarioMap.tag[scenarioIdx]
-                          << ", use supply: " << s.LoadMap.tags[loadIdx] << std::endl;
+                assert(scenarioIdx < s.scenario_map.tag.size());
+                assert(loadIdx < s.load_map.tags.size());
+                std::cout << "-- for scenario: " << s.scenario_map.tag[scenarioIdx]
+                          << ", use supply: " << s.load_map.tags[loadIdx] << std::endl;
             }
             std::cout << "-- max outflow (W): "
                       << (sbs.max_outflow_W == max_flow_W ? "unlimited"
@@ -479,9 +479,9 @@ void Simulation_PrintFailureModes(Simulation const& s)
     for (size_t i = 0; i < s.FailureModes.tag.size(); ++i)
     {
         auto maybeFailureDist =
-            s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.failure_distribution_id[i]);
+            s.the_model.dist_sys.get_dist_by_id(s.FailureModes.failure_distribution_id[i]);
         auto maybeRepairDist =
-            s.TheModel.dist_sys.get_dist_by_id(s.FailureModes.repair_distribution_id[i]);
+            s.the_model.dist_sys.get_dist_by_id(s.FailureModes.repair_distribution_id[i]);
         std::cout << i << ": " << s.FailureModes.tag[i] << std::endl;
         if (maybeFailureDist.has_value())
         {
@@ -516,7 +516,7 @@ void Simulation_PrintComponentFailureModes(Simulation const& s)
     {
         size_t compId = s.ComponentFailureModes.component_id[i];
         size_t fmId = s.ComponentFailureModes.failure_mode_id[i];
-        std::cout << "[" << i << "]: component=" << s.TheModel.component.tag[compId] << "["
+        std::cout << "[" << i << "]: component=" << s.the_model.component.tag[compId] << "["
                   << compId << "]; failure mode=" << s.FailureModes.tag[fmId] << "[" << fmId << "]"
                   << std::endl;
     }
@@ -532,7 +532,7 @@ void Simulation_PrintFragilityModes(Simulation const& s)
                   << s.FragilityModes.fragility_curve_id[i] << "]" << std::endl;
         if (s.FragilityModes.repair_distribution_id[i].has_value())
         {
-            std::optional<Distribution> maybeDist = s.TheModel.dist_sys.get_dist_by_id(
+            std::optional<Distribution> maybeDist = s.the_model.dist_sys.get_dist_by_id(
                 s.FragilityModes.repair_distribution_id[i].value());
             if (maybeDist.has_value())
             {
@@ -550,7 +550,7 @@ void Simulation_PrintComponentFragilityModes(Simulation const& s)
     {
         size_t compId = s.ComponentFragilities.component_id[i];
         size_t fmId = s.ComponentFragilities.fragility_mode_id[i];
-        std::cout << "[" << i << "]: component=" << s.TheModel.component.tag[compId] << "["
+        std::cout << "[" << i << "]: component=" << s.the_model.component.tag[compId] << "["
                   << s.ComponentFragilities.component_id[i]
                   << "]; fragility mode=" << s.FragilityModes.tag[fmId] << "[" << fmId << "]"
                   << std::endl;
@@ -559,28 +559,28 @@ void Simulation_PrintComponentFragilityModes(Simulation const& s)
 
 void Simulation_PrintScenarios(Simulation const& s)
 {
-    for (size_t i = 0; i < s.ScenarioMap.tag.size(); ++i)
+    for (size_t i = 0; i < s.scenario_map.tag.size(); ++i)
     {
-        std::cout << i << ": " << s.ScenarioMap.tag[i] << std::endl;
-        std::cout << "- duration: " << s.ScenarioMap.duration[i] << " "
-                  << time_unit_to_tag(s.ScenarioMap.time_unit[i]) << std::endl;
+        std::cout << i << ": " << s.scenario_map.tag[i] << std::endl;
+        std::cout << "- duration: " << s.scenario_map.duration[i] << " "
+                  << time_unit_to_tag(s.scenario_map.time_unit[i]) << std::endl;
         std::cout << "- offset: "
-                  << time_in_seconds_to_desired_unit(s.ScenarioMap.time_offset_in_seconds[i],
+                  << time_in_seconds_to_desired_unit(s.scenario_map.time_offset_in_seconds[i],
                                                      TimeUnit::hour)
                   << " " << time_unit_to_tag(TimeUnit::hour) << std::endl;
         auto maybeDist =
-            s.TheModel.dist_sys.get_dist_by_id(s.ScenarioMap.occurrence_distribution_id[i]);
+            s.the_model.dist_sys.get_dist_by_id(s.scenario_map.occurrence_distribution_id[i]);
         if (maybeDist.has_value())
         {
             Distribution const& d = maybeDist.value();
             std::cout << "- occurrence distribution: " << dist_type_to_tag(d.Type) << "["
-                      << s.ScenarioMap.occurrence_distribution_id[i] << "] -- " << d.Tag
+                      << s.scenario_map.occurrence_distribution_id[i] << "] -- " << d.Tag
                       << std::endl;
         }
         std::cout << "- max occurrences: ";
-        if (s.ScenarioMap.max_occurrence[i].has_value())
+        if (s.scenario_map.max_occurrence[i].has_value())
         {
-            std::cout << s.ScenarioMap.max_occurrence[i].value() << std::endl;
+            std::cout << s.scenario_map.max_occurrence[i].value() << std::endl;
         }
         else
         {
@@ -607,17 +607,17 @@ void Simulation_PrintScenarios(Simulation const& s)
 
 void Simulation_PrintLoads(Simulation const& s)
 {
-    for (size_t i = 0; i < s.LoadMap.tags.size(); ++i)
+    for (size_t i = 0; i < s.load_map.tags.size(); ++i)
     {
-        std::cout << i << ": " << s.LoadMap.tags[i] << std::endl;
-        std::cout << "- load entries: " << s.LoadMap.loads[i].size() << std::endl;
-        if (!s.LoadMap.loads[i].empty())
+        std::cout << i << ": " << s.load_map.tags[i] << std::endl;
+        std::cout << "- load entries: " << s.load_map.loads[i].size() << std::endl;
+        if (!s.load_map.loads[i].empty())
         {
             // TODO: add time units
-            std::cout << "- initial time: " << s.LoadMap.loads[i][0].Time_s << std::endl;
+            std::cout << "- initial time: " << s.load_map.loads[i][0].Time_s << std::endl;
             // TODO: add time units
             std::cout << "- final time  : "
-                      << s.LoadMap.loads[i][s.LoadMap.loads[i].size() - 1].Time_s << std::endl;
+                      << s.load_map.loads[i][s.load_map.loads[i].size() - 1].Time_s << std::endl;
             // TODO: add max rate
             // TODO: add min rate
             // TODO: add average rate
@@ -632,7 +632,7 @@ void Simulation_PrintLoads(Simulation const& s)
     */
 }
 
-size_t Simulation_ScenarioCount(Simulation const& s) { return s.ScenarioMap.tag.size(); }
+size_t Simulation_ScenarioCount(Simulation const& s) { return s.scenario_map.tag.size(); }
 
 Result Simulation_ParseSimulationInfo(Simulation& s,
                                       toml::value const& v,
@@ -675,7 +675,7 @@ Result Simulation_ParseSimulationInfo(Simulation& s,
     {
         return Result::failure;
     }
-    s.Info = std::move(maybeSimInfo.value());
+    s.info = std::move(maybeSimInfo.value());
     return Result::success;
 }
 
@@ -1019,8 +1019,8 @@ Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log con
                 return Result::failure;
             }
             std::string const& repairDistTag = maybeRepairDistTag.value();
-            size_t failureId = s.TheModel.dist_sys.lookup_dist_by_tag(failureDistTag);
-            size_t repairId = s.TheModel.dist_sys.lookup_dist_by_tag(repairDistTag);
+            size_t failureId = s.the_model.dist_sys.lookup_dist_by_tag(failureDistTag);
+            size_t repairId = s.the_model.dist_sys.lookup_dist_by_tag(repairDistTag);
             Simulation_RegisterFailureMode(s, fmName, failureId, repairId);
         }
     }
@@ -1076,7 +1076,7 @@ Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log c
                     return Result::failure;
                 }
                 std::string const& repairDistTag = fmValueTable.at("repair_dist").as_string();
-                maybeRepairDistId = s.TheModel.dist_sys.lookup_dist_by_tag(repairDistTag);
+                maybeRepairDistId = s.the_model.dist_sys.lookup_dist_by_tag(repairDistTag);
             }
             Simulation_RegisterFragilityMode(s, fmName, fcId, maybeRepairDistId);
         }
@@ -1107,7 +1107,7 @@ Result Simulation_ParseDistributions(Simulation& s,
     if (v.contains("dist") && v.at("dist").is_table())
     {
         // TODO: have ParseDistributions return a Result
-        return ParseDistributions(s.TheModel.dist_sys, v.at("dist").as_table(), dvm, log);
+        return ParseDistributions(s.the_model.dist_sys, v.at("dist").as_table(), dvm, log);
     }
     Log_error(log, "required field 'dist' not found");
     return Result::failure;
@@ -1118,7 +1118,7 @@ Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& l
     std::string const n = "network";
     if (v.contains(n) && v.at(n).is_table())
     {
-        return ParseNetwork(s.FlowTypeMap, s.TheModel, v.at(n).as_table());
+        return ParseNetwork(s.flow_type_map, s.the_model, v.at(n).as_table());
     }
     Log_error(log, fmt::format("required field '{}' not found", n));
     return Result::failure;
@@ -1129,14 +1129,14 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
     if (v.contains("scenarios") && v.at("scenarios").is_table())
     {
         auto result =
-            parse_scenarios(s.ScenarioMap, s.TheModel.dist_sys, v.at("scenarios").as_table());
+            parse_scenarios(s.scenario_map, s.the_model.dist_sys, v.at("scenarios").as_table());
         if (result == Result::success)
         {
             for (auto const& pair : v.at("scenarios").as_table())
             {
                 std::string const& scenarioName = pair.first;
                 std::optional<size_t> maybeScenarioId =
-                    get_scenario_by_tag(s.ScenarioMap, scenarioName);
+                    get_scenario_by_tag(s.scenario_map, scenarioName);
                 if (!maybeScenarioId.has_value())
                 {
                     Log_error(log,
@@ -1254,13 +1254,13 @@ Simulation_read_from_toml(toml::value const& v,
 
 static void Simulation_PrintGroups(Simulation const& s)
 {
-    if (s.TheModel.group_to_component.size() == 0)
+    if (s.the_model.group_to_component.size() == 0)
     {
         return;
     }
     std::vector<std::string> groupTags {};
-    groupTags.reserve(s.TheModel.group_to_component.size());
-    for (auto const& p : s.TheModel.group_to_component)
+    groupTags.reserve(s.the_model.group_to_component.size());
+    for (auto const& p : s.the_model.group_to_component)
     {
         groupTags.push_back(p.first);
     }
@@ -1268,33 +1268,33 @@ static void Simulation_PrintGroups(Simulation const& s)
     std::sort(groupTags.begin(), groupTags.end());
     for (std::string const& gTag : groupTags)
     {
-        size_t count = s.TheModel.group_to_component.at(gTag).size();
+        size_t count = s.the_model.group_to_component.at(gTag).size();
         std::cout << "- GROUP: " << gTag << " (count: " << count << ")" << std::endl;
-        for (size_t compId : s.TheModel.group_to_component.at(gTag))
+        for (size_t compId : s.the_model.group_to_component.at(gTag))
         {
             groupedComponents.insert(compId);
-            std::cout << "-- " << s.TheModel.component.tag[compId] << std::endl;
+            std::cout << "-- " << s.the_model.component.tag[compId] << std::endl;
         }
     }
-    size_t numUngrouped = s.TheModel.component.tag.size() - groupedComponents.size();
+    size_t numUngrouped = s.the_model.component.tag.size() - groupedComponents.size();
     std::cout << "- UNGROUPED (count: " << numUngrouped << ")" << std::endl;
-    for (size_t compId = 0; compId < s.TheModel.component.tag.size(); ++compId)
+    for (size_t compId = 0; compId < s.the_model.component.tag.size(); ++compId)
     {
         if (groupedComponents.contains(compId))
         {
             continue;
         }
-        if (s.TheModel.component.component_type[compId] == ComponentType::environment_source_type)
+        if (s.the_model.component.component_type[compId] == ComponentType::environment_source_type)
         {
             std::cout << "-- ENV[" << compId << "]" << std::endl;
         }
-        else if (s.TheModel.component.component_type[compId] == ComponentType::waste_sink_type)
+        else if (s.the_model.component.component_type[compId] == ComponentType::waste_sink_type)
         {
             std::cout << "-- WASTE[" << compId << "]" << std::endl;
         }
         else
         {
-            std::cout << "-- " << s.TheModel.component.tag[compId] << std::endl;
+            std::cout << "-- " << s.the_model.component.tag[compId] << std::endl;
         }
     }
 }
@@ -1302,7 +1302,7 @@ static void Simulation_PrintGroups(Simulation const& s)
 void Simulation_print(Simulation const& s)
 {
     std::cout << "-----------------" << std::endl;
-    std::cout << s.Info << std::endl;
+    std::cout << s.info << std::endl;
     std::cout << "\nLoads:" << std::endl;
     Simulation_PrintLoads(s);
     std::cout << "\nComponents:" << std::endl;
@@ -1310,7 +1310,7 @@ void Simulation_print(Simulation const& s)
     std::cout << "\nGroups:" << std::endl;
     Simulation_PrintGroups(s);
     std::cout << "\nDistributions:" << std::endl;
-    s.TheModel.dist_sys.print_distributions();
+    s.the_model.dist_sys.print_distributions();
     std::cout << "\nFailure Modes:" << std::endl;
     Simulation_PrintFailureModes(s);
     std::cout << "\nComponent/Failure Modes:" << std::endl;
@@ -1322,7 +1322,7 @@ void Simulation_print(Simulation const& s)
     std::cout << "\nComponent/Fragility Modes:" << std::endl;
     Simulation_PrintComponentFragilityModes(s);
     std::cout << "\nConnections:" << std::endl;
-    Model_PrintConnections(s.TheModel, s.FlowTypeMap);
+    Model_PrintConnections(s.the_model, s.flow_type_map);
     std::cout << "\nScenarios:" << std::endl;
     Simulation_PrintScenarios(s);
     std::cout << "\nIntensities:" << std::endl;
@@ -1403,23 +1403,23 @@ void WriteEventFileHeader(std::ofstream& out,
 std::vector<size_t> CalculateConnectionOrder(Simulation const& s)
 {
     // TODO: need to enforce connections are unique
-    size_t const numConns = s.TheModel.connection.size();
+    size_t const numConns = s.the_model.connection.size();
     std::vector<size_t> result;
     std::vector<std::string> originalConnTags;
     std::vector<std::string> connTags;
     result.reserve(numConns);
     originalConnTags.reserve(numConns);
     connTags.reserve(numConns);
-    for (auto const& conn : s.TheModel.connection)
+    for (auto const& conn : s.the_model.connection)
     {
-        std::string connTag = ConnectionToString(s.TheModel.component, conn, true);
+        std::string connTag = ConnectionToString(s.the_model.component, conn, true);
         originalConnTags.push_back(connTag);
         connTags.push_back(connTag);
     }
     std::sort(connTags.begin(), connTags.end());
     for (auto const& connTag : connTags)
     {
-        for (size_t connId = 0; connId < s.TheModel.connection.size(); ++connId)
+        for (size_t connId = 0; connId < s.the_model.connection.size(); ++connId)
         {
             if (connTag == originalConnTags[connId])
             {
@@ -1435,15 +1435,15 @@ std::vector<size_t> CalculateConnectionOrder(Simulation const& s)
 std::vector<size_t> CalculateScenarioOrder(Simulation const& s)
 {
     std::vector<size_t> result;
-    std::vector<std::string> scenarioTags(s.ScenarioMap.tag);
-    size_t numScenarios = s.ScenarioMap.tag.size();
+    std::vector<std::string> scenarioTags(s.scenario_map.tag);
+    size_t numScenarios = s.scenario_map.tag.size();
     std::sort(scenarioTags.begin(), scenarioTags.end());
     result.reserve(numScenarios);
     for (std::string const& tag : scenarioTags)
     {
-        for (size_t scenarioId = 0; scenarioId < s.ScenarioMap.tag.size(); ++scenarioId)
+        for (size_t scenarioId = 0; scenarioId < s.scenario_map.tag.size(); ++scenarioId)
         {
-            if (tag == s.ScenarioMap.tag[scenarioId])
+            if (tag == s.scenario_map.tag[scenarioId])
             {
                 result.push_back(scenarioId);
                 break;
@@ -1456,16 +1456,16 @@ std::vector<size_t> CalculateScenarioOrder(Simulation const& s)
 
 std::vector<size_t> CalculateComponentOrder(Simulation const& s)
 {
-    size_t const numComps = s.TheModel.component.tag.size();
+    size_t const numComps = s.the_model.component.tag.size();
     std::vector<size_t> result;
     result.reserve(numComps);
-    std::vector<std::string> compTags(s.TheModel.component.tag);
+    std::vector<std::string> compTags(s.the_model.component.tag);
     std::sort(compTags.begin(), compTags.end());
     for (auto const& t : compTags)
     {
         for (size_t compId = 0; compId < numComps; ++compId)
         {
-            if (s.TheModel.component.tag[compId] == t)
+            if (s.the_model.component.tag[compId] == t)
             {
                 result.push_back(compId);
                 break;
@@ -1496,11 +1496,11 @@ std::vector<size_t> CalculateStoreOrder(Simulation const& s,
 {
     std::vector<size_t> result {};
     std::vector<std::string> storeTags {};
-    storeTags.reserve(s.TheModel.store.size());
-    size_t const numComps = s.TheModel.component.component_type.size();
-    size_t const numStores = s.TheModel.store.size();
+    storeTags.reserve(s.the_model.store.size());
+    size_t const numComps = s.the_model.component.component_type.size();
+    size_t const numStores = s.the_model.store.size();
     std::vector<size_t> reportedStoreIdxs {};
-    reportedStoreIdxs.reserve(s.TheModel.store.size());
+    reportedStoreIdxs.reserve(s.the_model.store.size());
     for (size_t storeId = 0; storeId < numStores; ++storeId)
     {
         for (size_t compId = 0; compId < numComps; ++compId)
@@ -1509,12 +1509,12 @@ std::vector<size_t> CalculateStoreOrder(Simulation const& s,
             {
                 continue;
             }
-            ComponentType type = s.TheModel.component.component_type[compId];
-            size_t idx = s.TheModel.component.subtype_index[compId];
+            ComponentType type = s.the_model.component.component_type[compId];
+            size_t idx = s.the_model.component.subtype_index[compId];
             if (type == ComponentType::store_type && idx == storeId)
             {
                 reportedStoreIdxs.push_back(idx);
-                storeTags.push_back(s.TheModel.component.tag[compId]);
+                storeTags.push_back(s.the_model.component.tag[compId]);
                 break;
             }
         }
@@ -1608,7 +1608,7 @@ std::vector<size_t> CalculateNodeConnectionOrder(Simulation const& s,
     for (auto const& nodeConn : nodeConnections)
     {
         std::string nodeConnTag =
-            NodeConnectionToString(s.TheModel, nodeConn, true, aggregateGroups);
+            NodeConnectionToString(s.the_model, nodeConn, true, aggregateGroups);
         originalNodeConnTags.push_back(nodeConnTag);
         nodeConnTags.push_back(nodeConnTag);
     }
@@ -1633,17 +1633,17 @@ std::vector<size_t> CalculateNodeConnectionOrder(Simulation const& s,
 
 std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGroups)
 {
-    auto& connections = s.TheModel.connection;
+    auto& connections = s.the_model.connection;
 
     std::vector<NodeConnection> nodeConnections = {};
 
-    s.TheModel.number_of_group_ports_to = {};
-    s.TheModel.number_of_group_ports_from = {};
+    s.the_model.number_of_group_ports_to = {};
+    s.the_model.number_of_group_ports_from = {};
 
-    for (const auto& [key, value] : s.TheModel.group_to_component)
+    for (const auto& [key, value] : s.the_model.group_to_component)
     {
-        s.TheModel.number_of_group_ports_to.insert({key, 0});
-        s.TheModel.number_of_group_ports_from.insert({key, 0});
+        s.the_model.number_of_group_ports_to.insert({key, 0});
+        s.the_model.number_of_group_ports_from.insert({key, 0});
     }
 
     auto connOrder = CalculateConnectionOrder(s);
@@ -1658,8 +1658,8 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
 
         if (aggregateGroups)
         {
-            fromIsGroup = s.TheModel.component_to_group.contains(connection.from_component_id);
-            toIsGroup = s.TheModel.component_to_group.contains(connection.to_component_id);
+            fromIsGroup = s.the_model.component_to_group.contains(connection.from_component_id);
+            toIsGroup = s.the_model.component_to_group.contains(connection.to_component_id);
         }
 
         NodeConnection nodeConn;
@@ -1678,8 +1678,8 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
 
         if (fromIsGroup && toIsGroup)
         {
-            auto groupFrom = s.TheModel.component_to_group[connection.from_component_id];
-            auto groupTo = s.TheModel.component_to_group[connection.to_component_id];
+            auto groupFrom = s.the_model.component_to_group[connection.from_component_id];
+            auto groupTo = s.the_model.component_to_group[connection.to_component_id];
             if (groupFrom == groupTo)
             {
                 continue;
@@ -1687,17 +1687,17 @@ std::vector<NodeConnection> GetNodeConnections(Simulation& s, bool aggregateGrou
         }
         if (fromIsGroup)
         {
-            auto groupFrom = s.TheModel.component_to_group[connection.from_component_id];
+            auto groupFrom = s.the_model.component_to_group[connection.from_component_id];
             nodeConn.from_component_id = groupFrom;
-            auto& nPorts = s.TheModel.number_of_group_ports_from[groupFrom];
+            auto& nPorts = s.the_model.number_of_group_ports_from[groupFrom];
             nodeConn.from_port = nPorts;
             nPorts++;
         }
         if (toIsGroup)
         {
-            auto groupTo = s.TheModel.component_to_group[connection.to_component_id];
+            auto groupTo = s.the_model.component_to_group[connection.to_component_id];
             nodeConn.to_component_id = groupTo;
-            auto& nPorts = s.TheModel.number_of_group_ports_to[groupTo];
+            auto& nPorts = s.the_model.number_of_group_ports_to[groupTo];
             nodeConn.to_port = nPorts;
             nPorts++;
         }
@@ -1769,7 +1769,7 @@ void WriteResultsToEventFile(std::ofstream& out,
     // TODO: pass in desired precision
     unsigned int precision = 1;
     unsigned int storePrecision = 3;
-    Model const& m = s.TheModel;
+    Model const& m = s.the_model;
     std::map<size_t, std::vector<TimeState>> relSchByCompId;
     for (size_t i = 0; i < m.reliability.size(); ++i)
     {
@@ -1934,14 +1934,14 @@ SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, 
 std::vector<double> DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenIdx)
 {
     std::vector<double> occurrenceTimes_s;
-    auto const& maybeMaxOccurrences = s.ScenarioMap.max_occurrence[scenIdx];
+    auto const& maybeMaxOccurrences = s.scenario_map.max_occurrence[scenIdx];
     size_t maxOccurrence = maybeMaxOccurrences.has_value() ? maybeMaxOccurrences.value() : 1'000;
-    auto const distId = s.ScenarioMap.occurrence_distribution_id[scenIdx];
+    auto const distId = s.scenario_map.occurrence_distribution_id[scenIdx];
     double scenarioStartTime_s = 0.0;
-    double maxTime_s = time_to_seconds(s.Info.MaxTime, s.Info.TheTimeUnit);
+    double maxTime_s = time_to_seconds(s.info.MaxTime, s.info.TheTimeUnit);
     for (size_t i = 0; i < maxOccurrence; ++i)
     {
-        scenarioStartTime_s += s.TheModel.dist_sys.next_time_advance(distId);
+        scenarioStartTime_s += s.the_model.dist_sys.next_time_advance(distId);
         if (scenarioStartTime_s > maxTime_s)
         {
             break;
@@ -1981,10 +1981,10 @@ std::unordered_map<size_t, double> GetIntensitiesForScenario(Simulation& s, size
 std::vector<ScheduleBasedReliability> CopyReliabilities(Simulation const& s)
 {
     std::vector<ScheduleBasedReliability> originalReliabilities;
-    originalReliabilities.reserve(s.TheModel.reliability.size());
-    for (size_t sbrIdx = 0; sbrIdx < s.TheModel.reliability.size(); ++sbrIdx)
+    originalReliabilities.reserve(s.the_model.reliability.size());
+    for (size_t sbrIdx = 0; sbrIdx < s.the_model.reliability.size(); ++sbrIdx)
     {
-        ScheduleBasedReliability const& sbrSrc = s.TheModel.reliability[sbrIdx];
+        ScheduleBasedReliability const& sbrSrc = s.the_model.reliability[sbrIdx];
         ScheduleBasedReliability sbrCopy {};
         sbrCopy.component_id = sbrSrc.component_id;
         sbrCopy.time_states.reserve(sbrSrc.time_states.size());
@@ -2256,35 +2256,35 @@ void WriteStatisticsToFile(Simulation const& s,
     {
         for (auto const& statsByFlow : occurrenceStats[0].flow_type_stats)
         {
-            std::string const& flowType = s.FlowTypeMap.flow_type[statsByFlow.flow_type_id];
+            std::string const& flowType = s.flow_type_map.flow_type[statsByFlow.flow_type_id];
             stats << ",energy robustness [ER] for " << flowType;
             stats << ",energy availability [EA] for " << flowType;
         }
         for (auto const& statsByFlowLoad : occurrenceStats[0].load_and_flow_type_stats)
         {
             std::string const& flowType =
-                s.FlowTypeMap.flow_type[statsByFlowLoad.stats.flow_type_id];
-            std::string const& tag = s.TheModel.component.tag[statsByFlowLoad.component_id];
+                s.flow_type_map.flow_type[statsByFlowLoad.stats.flow_type_id];
+            std::string const& tag = s.the_model.component.tag[statsByFlowLoad.component_id];
             stats << ",energy robustness [ER] for " << tag << " [flow: " << flowType << "]";
             stats << ",energy availability [EA] for " << tag << " [flow: " << flowType << "]";
         }
         for (auto const& lnsByComp : occurrenceStats[0].load_not_served_for_components)
         {
-            std::string const& flowType = s.FlowTypeMap.flow_type[lnsByComp.flow_type_id];
-            std::string const& tag = s.TheModel.component.tag[lnsByComp.component_id];
+            std::string const& flowType = s.flow_type_map.flow_type[lnsByComp.flow_type_id];
+            std::string const& tag = s.the_model.component.tag[lnsByComp.component_id];
             stats << ",load not served (kJ) for " << tag << " [flow: " << flowType << "]";
         }
     }
     std::set<size_t> componentsToSkip;
     for (size_t i : compOrder)
     {
-        if (s.TheModel.component.tag[i].empty())
+        if (s.the_model.component.tag[i].empty())
         {
             componentsToSkip.insert(i);
         }
         else
         {
-            stats << ",availability: " << s.TheModel.component.tag[i];
+            stats << ",availability: " << s.the_model.component.tag[i];
         }
     }
     for (size_t i : failOrder)
@@ -2330,7 +2330,7 @@ void WriteStatisticsToFile(Simulation const& s,
         {
             if (failModeIdsByCompId[compId].contains(failModeId))
             {
-                stats << ",count: " << s.TheModel.component.tag[compId] << " / "
+                stats << ",count: " << s.the_model.component.tag[compId] << " / "
                       << s.FailureModes.tag[failModeId];
             }
         }
@@ -2338,7 +2338,7 @@ void WriteStatisticsToFile(Simulation const& s,
         {
             if (fragModeIdsByCompId[compId].contains(fragModeId))
             {
-                stats << ",count: " << s.TheModel.component.tag[compId] << " / "
+                stats << ",count: " << s.the_model.component.tag[compId] << " / "
                       << s.FragilityModes.tag[fragModeId];
             }
         }
@@ -2349,7 +2349,7 @@ void WriteStatisticsToFile(Simulation const& s,
         {
             if (failModeIdsByCompId[compId].contains(failModeId))
             {
-                stats << ",time fraction: " << s.TheModel.component.tag[compId] << " / "
+                stats << ",time fraction: " << s.the_model.component.tag[compId] << " / "
                       << s.FailureModes.tag[failModeId];
             }
         }
@@ -2357,7 +2357,7 @@ void WriteStatisticsToFile(Simulation const& s,
         {
             if (fragModeIdsByCompId[compId].contains(fragModeId))
             {
-                stats << ",time fraction: " << s.TheModel.component.tag[compId] << " / "
+                stats << ",time fraction: " << s.the_model.component.tag[compId] << " / "
                       << s.FragilityModes.tag[fragModeId];
             }
         }
@@ -2375,7 +2375,7 @@ void WriteStatisticsToFile(Simulation const& s,
         double ER =
             os.outflow_request_kJ > 0.0 ? (os.outflow_achieved_kJ / os.outflow_request_kJ) : 1.0;
         double EA = os.duration_s > 0.0 ? (os.uptime_s / os.duration_s) : 1.0;
-        stats << s.ScenarioMap.tag[os.scenario_id];
+        stats << s.scenario_map.tag[os.scenario_id];
         stats << "," << os.occurrence_number;
         stats << "," << (os.duration_s / seconds_per_hour);
         stats << "," << double_to_string(os.inflow_kJ + os.in_from_env_kJ, 0);
@@ -2668,9 +2668,9 @@ void WriteReliabilityCurves(std::string const& scenarioName,
         return;
     }
     size_t maxRow = 0;
-    for (size_t i = 0; i < s.TheModel.reliability.size(); ++i)
+    for (size_t i = 0; i < s.the_model.reliability.size(); ++i)
     {
-        ScheduleBasedReliability const& sbr = s.TheModel.reliability[i];
+        ScheduleBasedReliability const& sbr = s.the_model.reliability[i];
         if (sbr.time_states.size() > maxRow)
         {
             maxRow = sbr.time_states.size();
@@ -2680,21 +2680,21 @@ void WriteReliabilityCurves(std::string const& scenarioName,
     {
         if (row == 0)
         {
-            for (size_t i = 0; i < s.TheModel.reliability.size(); ++i)
+            for (size_t i = 0; i < s.the_model.reliability.size(); ++i)
             {
-                ScheduleBasedReliability const& sbr = s.TheModel.reliability[i];
+                ScheduleBasedReliability const& sbr = s.the_model.reliability[i];
                 if (i > 0)
                 {
                     out << ",";
                 }
-                std::string const& compTag = s.TheModel.component.tag[sbr.component_id];
+                std::string const& compTag = s.the_model.component.tag[sbr.component_id];
                 out << "time (h)," << compTag << " state,causes";
             }
             out << "\n";
         }
-        for (size_t i = 0; i < s.TheModel.reliability.size(); ++i)
+        for (size_t i = 0; i < s.the_model.reliability.size(); ++i)
         {
-            ScheduleBasedReliability const& sbr = s.TheModel.reliability[i];
+            ScheduleBasedReliability const& sbr = s.the_model.reliability[i];
             if (i > 0)
             {
                 out << ",";
@@ -2773,7 +2773,7 @@ void Simulation_run(Simulation& s,
     bool const checkNetwork = false;
     if (checkNetwork)
     {
-        std::vector<std::string> issues = check_network(s.TheModel);
+        std::vector<std::string> issues = check_network(s.the_model);
         if (issues.size() > 0)
         {
             Log_warning(log, "network connection", "start list of issues");
@@ -2791,31 +2791,31 @@ void Simulation_run(Simulation& s,
     FixedRandom fixedRandom;
     FixedSeries fixedSeries;
     Random fullRandom;
-    switch (s.Info.TypeOfRandom)
+    switch (s.info.TypeOfRandom)
     {
     case (RandomType::fixed_random):
     {
-        fixedRandom.fixed_value = s.Info.FixedValue;
-        s.TheModel.random_function = fixedRandom;
+        fixedRandom.fixed_value = s.info.FixedValue;
+        s.the_model.random_function = fixedRandom;
     }
     break;
     case (RandomType::fixed_series):
     {
         fixedSeries.index = 0;
-        fixedSeries.series = s.Info.Series;
-        s.TheModel.random_function = fixedSeries;
+        fixedSeries.series = s.info.Series;
+        s.the_model.random_function = fixedSeries;
     }
     break;
     case (RandomType::random_from_seed):
     {
-        fullRandom = create_random_with_seed(s.Info.Seed);
-        s.TheModel.random_function = fullRandom;
+        fullRandom = create_random_with_seed(s.info.Seed);
+        s.the_model.random_function = fullRandom;
     }
     break;
     case (RandomType::random_from_clock):
     {
         fullRandom = create_random();
-        s.TheModel.random_function = fullRandom;
+        s.the_model.random_function = fullRandom;
     }
     break;
     default:
@@ -2836,14 +2836,14 @@ void Simulation_run(Simulation& s,
     // TODO: remove duplication of data here
     for (size_t fmIdx = 0; fmIdx < s.FailureModes.failure_distribution_id.size(); ++fmIdx)
     {
-        s.TheModel.rel_coord.add_failure_mode(s.FailureModes.tag[fmIdx],
+        s.the_model.rel_coord.add_failure_mode(s.FailureModes.tag[fmIdx],
                                               s.FailureModes.failure_distribution_id[fmIdx],
                                               s.FailureModes.repair_distribution_id[fmIdx]);
     }
     for (size_t compFailId = 0; compFailId < s.ComponentFailureModes.component_id.size();
          ++compFailId)
     {
-        s.TheModel.rel_coord.link_component_with_failure_mode(
+        s.the_model.rel_coord.link_component_with_failure_mode(
             s.ComponentFailureModes.component_id[compFailId],
             s.ComponentFailureModes.failure_mode_id[compFailId]);
     }
@@ -2867,9 +2867,9 @@ void Simulation_run(Simulation& s,
     // if a component is not reported and connected to WASTE, the
     // WASTE should also be not reported
     std::unordered_set<size_t> compsToReport =
-        CalculateComponentsToReport(s.TheModel.component.report);
+        CalculateComponentsToReport(s.the_model.component.report);
     std::unordered_set<size_t> connsToReport =
-        CalculateConnectionsToReport(s.TheModel.connection, compsToReport);
+        CalculateConnectionsToReport(s.the_model.connection, compsToReport);
 
     std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
     std::vector<size_t> connOrder = CalculateConnectionOrder(s);
@@ -2896,8 +2896,8 @@ void Simulation_run(Simulation& s,
         RemoveNonReportingIds(nodeConnOrder, nodeConnsToReport);
 
     WriteEventFileHeader(out,
-                         s.TheModel,
-                         s.FlowTypeMap,
+                         s.the_model,
+                         s.flow_type_map,
                          nodeConnOrderForEvents,
                          storeOrderForEvents,
                          compOrderForEvents,
@@ -2908,21 +2908,21 @@ void Simulation_run(Simulation& s,
     for (size_t scenIdx : scenarioOrder)
     {
         double scenarioDuration_s =
-            time_to_seconds(s.ScenarioMap.duration[scenIdx], s.ScenarioMap.time_unit[scenIdx]);
-        double scenarioOffset_s = s.ScenarioMap.time_offset_in_seconds[scenIdx];
-        std::string const& scenarioTag = s.ScenarioMap.tag[scenIdx];
+            time_to_seconds(s.scenario_map.duration[scenIdx], s.scenario_map.time_unit[scenIdx]);
+        double scenarioOffset_s = s.scenario_map.time_offset_in_seconds[scenIdx];
+        std::string const& scenarioTag = s.scenario_map.tag[scenIdx];
         if (verbose)
         {
             Log_info(log, "Scenario", scenarioTag);
         }
         // for this scenario, ensure all schedule-based components
         // have the right schedule set for this scenario
-        if (SetLoadsForScenario(s.TheModel.scheduled_load, s.LoadMap, scenIdx) == Result::failure)
+        if (SetLoadsForScenario(s.the_model.scheduled_load, s.load_map, scenIdx) == Result::failure)
         {
             Log_warning(log, "", "Issue setting schedule loads");
             return;
         }
-        if (SetSupplyForScenario(s.TheModel.scheduled_source, s.LoadMap, scenIdx) ==
+        if (SetSupplyForScenario(s.the_model.scheduled_source, s.load_map, scenIdx) ==
             Result::failure)
         {
             Log_warning(log, "", "Issue setting schedule sources");
@@ -2937,7 +2937,7 @@ void Simulation_run(Simulation& s,
             Log_debug(log,
                       fmt::format("Calculated {} occurrence times for {}",
                                   occurrenceTimes_s.size(),
-                                  s.ScenarioMap.tag[scenIdx]));
+                                  s.scenario_map.tag[scenIdx]));
         }
         // TODO: initialize total scenario stats (i.e.,
         // over all occurrences)
@@ -2952,10 +2952,10 @@ void Simulation_run(Simulation& s,
             std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
                 CreateFailureSchedules(s.ComponentFailureModes.component_id,
                                        s.ComponentFailureModes.failure_mode_id,
-                                       s.TheModel.component.initial_age_s,
-                                       s.TheModel.rel_coord,
-                                       s.TheModel.random_function,
-                                       s.TheModel.dist_sys,
+                                       s.the_model.component.initial_age_s,
+                                       s.the_model.rel_coord,
+                                       s.the_model.random_function,
+                                       s.the_model.dist_sys,
                                        scenarioDuration_s,
                                        scenarioOffset_s);
             if (verbose)
@@ -2963,7 +2963,7 @@ void Simulation_run(Simulation& s,
                 Log_info(log, "Generating reliability schedules");
                 for (auto const& pair : relSchByCompId)
                 {
-                    std::string const& tag = s.TheModel.component.tag[pair.first];
+                    std::string const& tag = s.the_model.component.tag[pair.first];
                     Log_info(log, fmt::format("Schedule for {}[{}]", tag, pair.first));
                     for (auto const& ts : pair.second)
                     {
@@ -2988,12 +2988,12 @@ void Simulation_run(Simulation& s,
                              time_in_seconds_to_hours(static_cast<uint64_t>(scenarioOffset_s) +
                                                       static_cast<uint64_t>(scenarioDuration_s))));
             }
-            s.TheModel.reliability.clear();
-            s.TheModel.reliability =
-                ApplyReliabilitiesAndFragilities(s.TheModel.random_function,
+            s.the_model.reliability.clear();
+            s.the_model.reliability =
+                ApplyReliabilitiesAndFragilities(s.the_model.random_function,
                                                  s.ComponentFailureModes.component_id,
-                                                 s.TheModel.component.initial_age_s,
-                                                 s.TheModel.component.tag,
+                                                 s.the_model.component.initial_age_s,
+                                                 s.the_model.component.tag,
                                                  s.ComponentFragilities.component_id,
                                                  s.ComponentFragilities.fragility_mode_id,
                                                  s.FragilityModes.fragility_curve_id,
@@ -3003,7 +3003,7 @@ void Simulation_run(Simulation& s,
                                                  s.FragilityCurves.curve_type,
                                                  s.LinearFragilityCurves,
                                                  s.TabularFragilityCurves,
-                                                 s.TheModel.dist_sys,
+                                                 s.the_model.dist_sys,
                                                  scenarioOffset_s,
                                                  scenarioOffset_s + scenarioDuration_s,
                                                  intensityIdToAmount,
@@ -3015,7 +3015,7 @@ void Simulation_run(Simulation& s,
                 Log_info(log, fmt::format("Reliabilities for Scenario: {}", scenarioTag));
                 Log_info(log, fmt::format("Occurrence #{}", occIdx + 1));
                 for (std::string const& reliabilityStrings :
-                     ReliabilitiesToStrings(s.TheModel.reliability))
+                     ReliabilitiesToStrings(s.the_model.reliability))
                 {
                     Log_info(log, reliabilityStrings);
                 }
@@ -3026,7 +3026,7 @@ void Simulation_run(Simulation& s,
                 {
                     Log_debug(log, "Writing reliability curves...");
                 }
-                WriteReliabilityCurves(s.ScenarioMap.tag[scenIdx], occIdx, s);
+                WriteReliabilityCurves(s.scenario_map.tag[scenIdx], occIdx, s);
                 if (verbose)
                 {
                     Log_debug(log, "Reliability curves written");
@@ -3038,20 +3038,20 @@ void Simulation_run(Simulation& s,
             {
                 Log_info(log,
                          fmt::format("Running {} from {} for {} {}",
-                                     s.ScenarioMap.tag[scenIdx],
+                                     s.scenario_map.tag[scenIdx],
                                      scenarioStartTimeTag,
-                                     s.ScenarioMap.duration[scenIdx],
-                                     time_unit_to_tag(s.ScenarioMap.time_unit[scenIdx])));
+                                     s.scenario_map.duration[scenIdx],
+                                     time_unit_to_tag(s.scenario_map.time_unit[scenIdx])));
                 Log_info(log,
                          fmt::format("time: {} to {}",
                                      seconds_to_pretty_string(t),
                                      seconds_to_pretty_string(tEnd)));
             }
-            s.TheModel.final_time_s = scenarioDuration_s;
+            s.the_model.final_time_s = scenarioDuration_s;
             // TODO: add an optional verbosity flag to SimInfo
             // -- use that to set things like the print flag below
 
-            auto results = Simulate(s.TheModel, verbose, true, log);
+            auto results = Simulate(s.the_model, verbose, true, log);
             {
                 auto* output_results = &results;
                 std::vector<TimeAndFlows> modified_results0 = {};
@@ -3077,7 +3077,7 @@ void Simulation_run(Simulation& s,
                                         outputTimeUnit);
             }
             ScenarioOccurrenceStats sos = ModelResults_CalculateScenarioOccurrenceStats(
-                scenIdx, occIdx + 1, s.TheModel, s.FlowTypeMap, results);
+                scenIdx, occIdx + 1, s.the_model, s.flow_type_map, results);
             occurrenceStats.push_back(std::move(sos));
         }
         if (verbose)

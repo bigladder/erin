@@ -172,7 +172,7 @@ Result parse_single_component(Simulation& s,
         lossflow = std::get<std::string>(input.at("lossflow").value);
         lossflowId = Simulation_RegisterFlow(s, lossflow);
     }
-    PowerUnit rateUnit = s.Info.RateUnit;
+    PowerUnit rateUnit = s.info.RateUnit;
     if (input.contains("rate_unit"))
     {
         auto const& rateUnitStr = std::get<std::string>(input.at("rate_unit").value);
@@ -223,7 +223,7 @@ Result parse_single_component(Simulation& s,
         }
         double loadRequest = std::get<double>(input.at("constant_request").value);
         loadRequest_W = static_cast<flow_t>(power_to_watts(loadRequest, localPowerUnit));
-        id = Model_AddConstantLoad(s.TheModel, loadRequest_W, inflowId, tag, report);
+        id = Model_AddConstantLoad(s.the_model, loadRequest_W, inflowId, tag, report);
     }
     break;
     case ComponentType::constant_source_type:
@@ -240,7 +240,7 @@ Result parse_single_component(Simulation& s,
             double maxAvailableReal = maybe.value();
             maxAvailable = static_cast<flow_t>(power_to_watts(maxAvailableReal, rateUnit));
         }
-        id = Model_AddConstantSource(s.TheModel, maxAvailable, outflowId, tag);
+        id = Model_AddConstantSource(s.the_model, maxAvailable, outflowId, tag);
     }
     break;
     case ComponentType::schedule_based_load_type:
@@ -277,7 +277,7 @@ Result parse_single_component(Simulation& s,
             }
         }
         std::vector<TimeAndAmount> emptyLoads = {};
-        id = Model_AddScheduleBasedLoad(s.TheModel, emptyLoads, scenarioIdToLoadId, inflowId, tag);
+        id = Model_AddScheduleBasedLoad(s.the_model, emptyLoads, scenarioIdToLoadId, inflowId, tag);
     }
     break;
     case ComponentType::schedule_based_source_type:
@@ -305,13 +305,13 @@ Result parse_single_component(Simulation& s,
         std::vector<TimeAndAmount> timesAndAmounts;
         double initialAge_s = 0.0;
         auto const compIdAndWasteConn = Model_AddScheduleBasedSource(
-            s.TheModel, timesAndAmounts, scenarioIdToSupplyId, outflowId, tag, initialAge_s);
+            s.the_model, timesAndAmounts, scenarioIdToSupplyId, outflowId, tag, initialAge_s);
         id = compIdAndWasteConn.id;
         if (input.contains("max_outflow"))
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
-            s.TheModel.scheduled_source[s.TheModel.component.subtype_index[id]].max_outflow_W =
+            s.the_model.scheduled_source[s.the_model.component.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
         }
     }
@@ -337,11 +337,11 @@ Result parse_single_component(Simulation& s,
             write_error_message(fullTableName,
                                 "a mux component must have the same inflow type "
                                 "as outflow type; we have inflow = '" +
-                                    s.FlowTypeMap.flow_type[inflowId] + "'; outflow = '" +
-                                    s.FlowTypeMap.flow_type[outflowId] + "'");
+                                    s.flow_type_map.flow_type[inflowId] + "'; outflow = '" +
+                                    s.flow_type_map.flow_type[outflowId] + "'");
             return Result::failure;
         }
-        id = Model_AddMux(s.TheModel, numInflows, numOutflows, outflowId, tag);
+        id = Model_AddMux(s.the_model, numInflows, numOutflows, outflowId, tag);
         if (input.contains("max_outflows"))
         {
             std::vector<flow_t> maxOutflows_W(numOutflows, 0);
@@ -353,7 +353,7 @@ Result parse_single_component(Simulation& s,
             {
                 maxOutflows_W[i] = static_cast<flow_t>(power_to_watts(maxOutflowsRaw[i], rateUnit));
             }
-            s.TheModel.mux[s.TheModel.component.subtype_index[id]].max_outflows_W =
+            s.the_model.mux[s.the_model.component.subtype_index[id]].max_outflows_W =
                 std::move(maxOutflows_W);
         }
     }
@@ -376,7 +376,7 @@ Result parse_single_component(Simulation& s,
             return Result::failure;
         }
         auto const compIdAndWasteConn = Model_AddConstantEfficiencyConverter(
-            s.TheModel, efficiency, inflowId, outflowId, lossflowId, tag, report);
+            s.the_model, efficiency, inflowId, outflowId, lossflowId, tag, report);
         id = compIdAndWasteConn.id;
         if (input.contains("rate_unit"))
         {
@@ -394,16 +394,16 @@ Result parse_single_component(Simulation& s,
         {
             double maxOutflow_W =
                 power_to_watts(std::get<double>(input.at("max_outflow").value), localRateUnit);
-            size_t constEffIdx = s.TheModel.component.subtype_index[id];
-            s.TheModel.constant_efficiency_converter[constEffIdx].max_outflow_W =
+            size_t constEffIdx = s.the_model.component.subtype_index[id];
+            s.the_model.constant_efficiency_converter[constEffIdx].max_outflow_W =
                 static_cast<flow_t>(maxOutflow_W);
         }
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
                 power_to_watts(std::get<double>(input.at("max_lossflow").value), localRateUnit);
-            size_t constEffIdx = s.TheModel.component.subtype_index[id];
-            s.TheModel.constant_efficiency_converter[constEffIdx].max_lossflow_W =
+            size_t constEffIdx = s.the_model.component.subtype_index[id];
+            s.the_model.constant_efficiency_converter[constEffIdx].max_lossflow_W =
                 static_cast<flow_t>(maxLossflow_W);
         }
     }
@@ -476,7 +476,7 @@ Result parse_single_component(Simulation& s,
             efficiencyFracs.push_back(effByOutfrac.at(frac));
         }
         auto const compIdAndWasteConn =
-            Model_AddVariableEfficiencyConverter(s.TheModel,
+            Model_AddVariableEfficiencyConverter(s.the_model,
                                                  std::move(outflowsForEff_W),
                                                  std::move(efficiencyFracs),
                                                  inflowId,
@@ -485,14 +485,14 @@ Result parse_single_component(Simulation& s,
                                                  tag,
                                                  report);
         id = compIdAndWasteConn.id;
-        size_t varEffIdx = s.TheModel.component.subtype_index[id];
-        s.TheModel.variable_efficiency_converter[varEffIdx].max_outflow_W =
+        size_t varEffIdx = s.the_model.component.subtype_index[id];
+        s.the_model.variable_efficiency_converter[varEffIdx].max_outflow_W =
             static_cast<flow_t>(maxOutflow_W);
         if (input.contains("max_lossflow"))
         {
             double maxLossflow_W =
                 power_to_watts(std::get<double>(input.at("max_lossflow").value), localRateUnit);
-            s.TheModel.variable_efficiency_converter[varEffIdx].max_lossflow_W =
+            s.the_model.variable_efficiency_converter[varEffIdx].max_lossflow_W =
                 static_cast<flow_t>(maxLossflow_W);
         }
     }
@@ -505,12 +505,12 @@ Result parse_single_component(Simulation& s,
                                 "inflow type must equal outflow type for pass-through");
             return Result::failure;
         }
-        id = Model_AddPassThrough(s.TheModel, inflowId, tag);
+        id = Model_AddPassThrough(s.the_model, inflowId, tag);
         if (input.contains("max_outflow"))
         {
             double rawMaxOutflow = std::get<double>(input.at("max_outflow").value);
             flow_t maxOutflow_W = static_cast<flow_t>(power_to_watts(rawMaxOutflow, rateUnit));
-            s.TheModel.pass_through[s.TheModel.component.subtype_index[id]].max_outflow_W =
+            s.the_model.pass_through[s.the_model.component.subtype_index[id]].max_outflow_W =
                 maxOutflow_W;
         }
     }
@@ -578,7 +578,7 @@ Result parse_single_component(Simulation& s,
         }
         if (rtEff == 1.0)
         {
-            id = Model_AddStore(s.TheModel,
+            id = Model_AddStore(s.the_model,
                                 capacity_J,
                                 maxCharge_W,
                                 maxDischarge_W,
@@ -589,7 +589,7 @@ Result parse_single_component(Simulation& s,
         }
         else
         {
-            auto compIdAndWasteConn = Model_AddStoreWithWasteflow(s.TheModel,
+            auto compIdAndWasteConn = Model_AddStoreWithWasteflow(s.the_model,
                                                                   capacity_J,
                                                                   maxCharge_W,
                                                                   maxDischarge_W,
@@ -604,21 +604,21 @@ Result parse_single_component(Simulation& s,
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
                 power_to_watts(std::get<double>(input.at("max_outflow").value), rateUnit));
-            s.TheModel.store[s.TheModel.component.subtype_index[id]].max_outflow_W = maxOutflow_W;
+            s.the_model.store[s.the_model.component.subtype_index[id]].max_outflow_W = maxOutflow_W;
         }
     }
     break;
     case ComponentType::mover_type:
     {
         double cop = std::get<double>(input.at("cop").value);
-        auto compIdAndConns = Model_AddMover(s.TheModel, cop, inflowId, outflowId, tag, report);
+        auto compIdAndConns = Model_AddMover(s.the_model, cop, inflowId, outflowId, tag, report);
         id = compIdAndConns.id;
         if (input.contains("max_outflow"))
         {
             flow_t maxOutflow_W = static_cast<flow_t>(
                 power_to_watts(std::get<double>(input.at("max_outflow").value), rateUnit));
-            size_t moverIdx = s.TheModel.component.subtype_index[id];
-            s.TheModel.mover[moverIdx].max_outflow_W = maxOutflow_W;
+            size_t moverIdx = s.the_model.component.subtype_index[id];
+            s.the_model.mover[moverIdx].max_outflow_W = maxOutflow_W;
         }
     }
     break;
@@ -689,7 +689,7 @@ Result parse_single_component(Simulation& s,
             outflowsForCop_W.push_back(frac * maxOutflow_W);
             copByOutflow.push_back(copByOutFrac.at(frac));
         }
-        auto const compIdAndConns = Model_AddVariableEfficiencyMover(s.TheModel,
+        auto const compIdAndConns = Model_AddVariableEfficiencyMover(s.the_model,
                                                                      std::move(outflowsForCop_W),
                                                                      std::move(copByOutflow),
                                                                      inflowId,
@@ -697,15 +697,15 @@ Result parse_single_component(Simulation& s,
                                                                      tag,
                                                                      report);
         id = compIdAndConns.id;
-        size_t moverIdx = s.TheModel.component.subtype_index[id];
-        s.TheModel.variable_efficiency_mover[moverIdx].max_outflow_W =
+        size_t moverIdx = s.the_model.component.subtype_index[id];
+        s.the_model.variable_efficiency_mover[moverIdx].max_outflow_W =
             static_cast<flow_t>(maxOutflow_W);
     }
     break;
     case ComponentType::switch_type:
     {
         PowerUnit localRateUnit = rateUnit;
-        id = Model_AddSwitch(s.TheModel, inflowId, tag);
+        id = Model_AddSwitch(s.the_model, inflowId, tag);
         if (input.contains("max_outflow"))
         {
             if (input.contains("rate_unit"))
@@ -722,8 +722,8 @@ Result parse_single_component(Simulation& s,
             }
             double maxOutflow_W =
                 power_to_watts(std::get<double>(input.at("max_outflow").value), localRateUnit);
-            size_t switchIdx = s.TheModel.component.subtype_index[id];
-            s.TheModel.transfer_switch[switchIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
+            size_t switchIdx = s.the_model.component.subtype_index[id];
+            s.the_model.transfer_switch[switchIdx].max_outflow_W = static_cast<flow_t>(maxOutflow_W);
         }
     }
     break;
@@ -733,7 +733,7 @@ Result parse_single_component(Simulation& s,
         std::exit(1);
     }
     }
-    s.TheModel.component.report[id] = report;
+    s.the_model.component.report[id] = report;
     if (table.contains("failure_modes"))
     {
         if (!table.at("failure_modes").is_array())
@@ -840,7 +840,7 @@ Result parse_single_component(Simulation& s,
             return Result::failure;
         }
         double initialAge_s = time_to_seconds(maybeInitialAge.value(), timeUnit);
-        ComponentDict_SetInitialAge(s.TheModel.component, id, initialAge_s);
+        ComponentDict_SetInitialAge(s.the_model.component, id, initialAge_s);
     }
     if (table.contains("group"))
     {
@@ -851,7 +851,7 @@ Result parse_single_component(Simulation& s,
             return Result::failure;
         }
         std::string group = maybeGroup.value();
-        AddComponentToGroup(s.TheModel, id, group);
+        AddComponentToGroup(s.the_model, id, group);
     }
     return Result::success;
 }

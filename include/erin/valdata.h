@@ -14,8 +14,8 @@ namespace erin
 
 struct TagWithDeprication
 {
-    std::string Tag;
-    bool IsDeprecated = false;
+    std::string tag;
+    bool is_deprecated = false;
 };
 
 // TODO: add "types" from the user-manual:

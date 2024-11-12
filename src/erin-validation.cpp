@@ -705,8 +705,8 @@ InputValidationMap setup_global_validation_info()
             .Aliases =
                 {
                     TagWithDeprication {
-                        .Tag = "stream",
-                        .IsDeprecated = true,
+                        .tag = "stream",
+                        .is_deprecated = true,
                     },
                 },
             .Sections =

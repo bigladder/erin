@@ -51,7 +51,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 assert(key != alias.first);
                 for (auto const& aliasValue : alias.second)
                 {
-                    if (aliasValue.Tag == key)
+                    if (aliasValue.tag == key)
                     {
                         found = true;
                         key = alias.first;
@@ -64,10 +64,10 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                             return out;
                         }
                         fieldsFound.insert(key);
-                        if (aliasValue.IsDeprecated)
+                        if (aliasValue.is_deprecated)
                         {
                             std::ostringstream oss {};
-                            oss << "field '" << aliasValue.Tag
+                            oss << "field '" << aliasValue.tag
                                 << "' is deprecated and will be removed "
                                 << "in a future version; use '" << alias.first
                                 << "' instead (value = ";

@@ -44,7 +44,7 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
                         std::string const& tag)
 {
     std::string tableFullName = "loads." + tag;
-    TimeUnit timeUnit = TimeUnit::Second;
+    TimeUnit timeUnit = TimeUnit::second;
     PowerUnit rateUnit = PowerUnit::Watt;
     if (table.contains("time_unit"))
     {
@@ -84,7 +84,7 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
                         std::string const& tag)
 {
     std::string tableFullName = "loads." + tag;
-    TimeUnit timeUnit = TimeUnit::Second;
+    TimeUnit timeUnit = TimeUnit::second;
     PowerUnit rateUnit = PowerUnit::Watt;
     std::vector<TimeAndAmount> timeRatePairs;
     auto csvFileName = std::get<std::string>(table.at("csv_file").Value);
@@ -194,7 +194,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
             loadEntry.name = sRow[iCol];
             loadEntry.nItems = stoi(sRow[iCol + 1]);
             // TODO(mok): should actually read and parse in case different
-            loadEntry.timeUnit = TimeUnit::Second;
+            loadEntry.timeUnit = TimeUnit::second;
             loadEntry.rateUnit = PowerUnit::Watt;
             loadEntries.push_back(loadEntry);
         }

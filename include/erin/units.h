@@ -42,12 +42,12 @@ double energy_to_joules(double value, EnergyUnit unit);
 
 enum class TimeUnit
 {
-    Second,
-    Minute,
-    Hour,
-    Day,
-    Week,
-    Year,
+    second,
+    minute,
+    hour,
+    day,
+    week,
+    year,
 };
 
 std::optional<TimeUnit> tag_to_time_unit(std::string const& tag);

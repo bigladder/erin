@@ -668,7 +668,7 @@ Result ParseDistributions(DistributionSystem& ds,
                 Log_warning(log, w);
             }
             // TODO: pull default time from SimulationInfo
-            TimeUnit timeUnit = TimeUnit::Second;
+            TimeUnit timeUnit = TimeUnit::second;
             if (inputs.contains("time_unit"))
             {
                 std::string timeUnitStr = std::get<std::string>(inputs.at("time_unit").Value);

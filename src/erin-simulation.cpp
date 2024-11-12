@@ -566,8 +566,8 @@ void Simulation_PrintScenarios(Simulation const& s)
                   << time_unit_to_tag(s.ScenarioMap.TimeUnits[i]) << std::endl;
         std::cout << "- offset: "
                   << time_in_seconds_to_desired_unit(s.ScenarioMap.TimeOffsetsInSeconds[i],
-                                                     TimeUnit::Hour)
-                  << " " << time_unit_to_tag(TimeUnit::Hour) << std::endl;
+                                                     TimeUnit::hour)
+                  << " " << time_unit_to_tag(TimeUnit::hour) << std::endl;
         auto maybeDist =
             s.TheModel.dist_sys.get_dist_by_id(s.ScenarioMap.OccurrenceDistributionIds[i]);
         if (maybeDist.has_value())
@@ -1351,7 +1351,7 @@ void WriteEventFileHeader(std::ofstream& out,
     out << "scenario id,"
         << "scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
         << "elapsed ("
-        << (outputTimeUnit == TimeUnit::Hour ? "hours" : time_unit_to_tag(outputTimeUnit)) << ")";
+        << (outputTimeUnit == TimeUnit::hour ? "hours" : time_unit_to_tag(outputTimeUnit)) << ")";
 
     for (std::string const& prefix : std::vector<std::string> {"", "REQUEST:", "AVAILABLE:"})
     {
@@ -2715,7 +2715,7 @@ void WriteReliabilityCurves(std::string const& scenarioName,
                 {
                     causeStr += (causeStr.size() == 0) ? cause : fmt::format(" | {}", cause);
                 }
-                out << time_in_seconds_to_desired_unit(sbr.time_states[row].time, TimeUnit::Hour)
+                out << time_in_seconds_to_desired_unit(sbr.time_states[row].time, TimeUnit::hour)
                     << "," << sbr.time_states[row].state << "," << causeStr;
             }
             else
@@ -2786,7 +2786,7 @@ void Simulation_run(Simulation& s,
         assert(issues.size() == 0);
     }
     // TODO: turn the following into parameters
-    TimeUnit outputTimeUnit = TimeUnit::Hour;
+    TimeUnit outputTimeUnit = TimeUnit::hour;
 
     FixedRandom fixedRandom;
     FixedSeries fixedSeries;

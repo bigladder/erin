@@ -40,7 +40,7 @@ size_t ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag)
     sd.Tags.push_back(tag);
     sd.OccurrenceDistributionIds.push_back(0);
     sd.Durations.push_back(0.0);
-    sd.TimeUnits.push_back(TimeUnit::Hour);
+    sd.TimeUnits.push_back(TimeUnit::hour);
     sd.TimeOffsetsInSeconds.push_back(0.0);
     sd.MaxOccurrences.push_back(0);
     assert(sd.Durations.size() == sd.MaxOccurrences.size());

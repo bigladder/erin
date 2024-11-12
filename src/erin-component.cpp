@@ -814,7 +814,7 @@ Result ParseSingleComponent(Simulation& s,
     }
     if (table.contains("initial_age"))
     {
-        TimeUnit timeUnit = TimeUnit::Second;
+        TimeUnit timeUnit = TimeUnit::second;
         if (table.contains("time_unit"))
         {
             auto maybeTimeUnitStr = TOMLTable_parse_string(table, "time_unit", fullTableName);

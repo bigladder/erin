@@ -1671,17 +1671,17 @@ TEST(Erin, TestDoubleToString)
 TEST(Erin, TestTimeConversion)
 {
     double time_s = 8760.0 * 3600.0;
-    double time_yr = time_in_seconds_to_desired_unit(time_s, TimeUnit::Year);
+    double time_yr = time_in_seconds_to_desired_unit(time_s, TimeUnit::year);
     EXPECT_NEAR(1.0, time_yr, 1e-6);
-    double time_wk = time_in_seconds_to_desired_unit(time_s, TimeUnit::Week);
+    double time_wk = time_in_seconds_to_desired_unit(time_s, TimeUnit::week);
     EXPECT_NEAR(8760.0 / (24.0 * 7.0), time_wk, 1e-6);
-    double time_day = time_in_seconds_to_desired_unit(time_s, TimeUnit::Day);
+    double time_day = time_in_seconds_to_desired_unit(time_s, TimeUnit::day);
     EXPECT_NEAR(365.0, time_day, 1e-6);
-    double time_hr = time_in_seconds_to_desired_unit(time_s, TimeUnit::Hour);
+    double time_hr = time_in_seconds_to_desired_unit(time_s, TimeUnit::hour);
     EXPECT_NEAR(8760.0, time_hr, 1e-6);
-    double time_min = time_in_seconds_to_desired_unit(time_s, TimeUnit::Minute);
+    double time_min = time_in_seconds_to_desired_unit(time_s, TimeUnit::minute);
     EXPECT_NEAR(8760.0 * 60.0, time_min, 1e-6);
-    double output_time_s = time_in_seconds_to_desired_unit(time_s, TimeUnit::Second);
+    double output_time_s = time_in_seconds_to_desired_unit(time_s, TimeUnit::second);
     EXPECT_NEAR(8760.0 * 60.0 * 60.0, output_time_s, 1e-6);
 }
 

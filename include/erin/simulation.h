@@ -240,7 +240,7 @@ void WriteResultsToEventFile(std::ofstream& out,
                              std::string const& scenarioTag,
                              std::string const& scenarioStartTimeTag,
                              std::vector<size_t> const& connOrder,
-                             TimeUnit outputTimeUnit = TimeUnit::Hour);
+                             TimeUnit outputTimeUnit = TimeUnit::hour);
 
 void WriteStatisticsToFile(Simulation const& s,
                            std::string const& statsFilePath,

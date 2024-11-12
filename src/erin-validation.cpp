@@ -1219,32 +1219,32 @@ InputValidationMap setup_global_validation_info()
             break;
             case InputSection::dist_fixed:
             {
-                UpdateValidationInfoByField(v.Dist.Fixed, f);
+                UpdateValidationInfoByField(v.Dist.fixed, f);
             }
             break;
             case InputSection::dist_normal:
             {
-                UpdateValidationInfoByField(v.Dist.Normal, f);
+                UpdateValidationInfoByField(v.Dist.normal, f);
             }
             break;
             case InputSection::dist_01quantile_table_from_file:
             {
-                UpdateValidationInfoByField(v.Dist.QuantileTableFromFile, f);
+                UpdateValidationInfoByField(v.Dist.quantile_table_from_file, f);
             }
             break;
             case InputSection::dist_02quantile_table_explicit:
             {
-                UpdateValidationInfoByField(v.Dist.QuantileTableExplicit, f);
+                UpdateValidationInfoByField(v.Dist.quantile_table_explicit, f);
             }
             break;
             case InputSection::dist_uniform:
             {
-                UpdateValidationInfoByField(v.Dist.Uniform, f);
+                UpdateValidationInfoByField(v.Dist.uniform, f);
             }
             break;
             case InputSection::dist_weibull:
             {
-                UpdateValidationInfoByField(v.Dist.Weibull, f);
+                UpdateValidationInfoByField(v.Dist.weibull, f);
             }
             break;
             // TODO: add in all the other distributions

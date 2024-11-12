@@ -613,13 +613,13 @@ Result ParseDistributions(DistributionSystem& ds,
             case DistType::Fixed:
             {
                 inputs = TOMLTable_parse_with_validation(
-                    distTable, dvm.Fixed, fullTableName, errors, warnings);
+                    distTable, dvm.fixed, fullTableName, errors, warnings);
             }
             break;
             case DistType::Normal:
             {
                 inputs = TOMLTable_parse_with_validation(
-                    distTable, dvm.Normal, fullTableName, errors, warnings);
+                    distTable, dvm.normal, fullTableName, errors, warnings);
             }
             break;
             case DistType::QuantileTable:
@@ -627,25 +627,25 @@ Result ParseDistributions(DistributionSystem& ds,
                 if (distTable.contains("csv_file"))
                 {
                     inputs = TOMLTable_parse_with_validation(
-                        distTable, dvm.QuantileTableFromFile, fullTableName, errors, warnings);
+                        distTable, dvm.quantile_table_from_file, fullTableName, errors, warnings);
                 }
                 else
                 {
                     inputs = TOMLTable_parse_with_validation(
-                        distTable, dvm.QuantileTableExplicit, fullTableName, errors, warnings);
+                        distTable, dvm.quantile_table_explicit, fullTableName, errors, warnings);
                 }
             }
             break;
             case DistType::Uniform:
             {
                 inputs = TOMLTable_parse_with_validation(
-                    distTable, dvm.Uniform, fullTableName, errors, warnings);
+                    distTable, dvm.uniform, fullTableName, errors, warnings);
             }
             break;
             case DistType::Weibull:
             {
                 inputs = TOMLTable_parse_with_validation(
-                    distTable, dvm.Weibull, fullTableName, errors, warnings);
+                    distTable, dvm.weibull, fullTableName, errors, warnings);
             }
             break;
             default:

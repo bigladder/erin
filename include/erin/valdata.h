@@ -140,12 +140,12 @@ struct ComponentValidationMap
 
 struct DistributionValidationMap
 {
-    ValidationInfo Fixed;
-    ValidationInfo Uniform;
-    ValidationInfo Normal;
-    ValidationInfo QuantileTableFromFile;
-    ValidationInfo QuantileTableExplicit;
-    ValidationInfo Weibull;
+    ValidationInfo fixed;
+    ValidationInfo uniform;
+    ValidationInfo normal;
+    ValidationInfo quantile_table_from_file;
+    ValidationInfo quantile_table_explicit;
+    ValidationInfo weibull;
 };
 
 struct InputValidationMap

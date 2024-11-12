@@ -1159,62 +1159,62 @@ InputValidationMap setup_global_validation_info()
             break;
             case InputSection::components_constant_load:
             {
-                UpdateValidationInfoByField(v.Comp.ConstantLoad, f);
+                UpdateValidationInfoByField(v.Comp.constant_load, f);
             }
             break;
             case InputSection::components_load:
             {
-                UpdateValidationInfoByField(v.Comp.ScheduleBasedLoad, f);
+                UpdateValidationInfoByField(v.Comp.schedule_based_load, f);
             }
             break;
             case InputSection::components_source:
             {
-                UpdateValidationInfoByField(v.Comp.ConstantSource, f);
+                UpdateValidationInfoByField(v.Comp.constant_source, f);
             }
             break;
             case InputSection::components_uncontrolled_source:
             {
-                UpdateValidationInfoByField(v.Comp.ScheduleBasedSource, f);
+                UpdateValidationInfoByField(v.Comp.schedule_based_source, f);
             }
             break;
             case InputSection::components_const_eff_converter:
             {
-                UpdateValidationInfoByField(v.Comp.ConstantEfficiencyConverter, f);
+                UpdateValidationInfoByField(v.Comp.constant_efficiency_converter, f);
             }
             break;
             case InputSection::components_variable_eff_converter:
             {
-                UpdateValidationInfoByField(v.Comp.VariableEfficiencyConverter, f);
+                UpdateValidationInfoByField(v.Comp.variable_efficiency_converter, f);
             }
             break;
             case InputSection::components_mux:
             {
-                UpdateValidationInfoByField(v.Comp.Mux, f);
+                UpdateValidationInfoByField(v.Comp.mux, f);
             }
             break;
             case InputSection::components_store:
             {
-                UpdateValidationInfoByField(v.Comp.Store, f);
+                UpdateValidationInfoByField(v.Comp.store, f);
             }
             break;
             case InputSection::components_pass_through:
             {
-                UpdateValidationInfoByField(v.Comp.PassThrough, f);
+                UpdateValidationInfoByField(v.Comp.pass_through, f);
             }
             break;
             case InputSection::components_mover:
             {
-                UpdateValidationInfoByField(v.Comp.Mover, f);
+                UpdateValidationInfoByField(v.Comp.mover, f);
             }
             break;
             case InputSection::components_variable_eff_mover:
             {
-                UpdateValidationInfoByField(v.Comp.VariableEfficiencyMover, f);
+                UpdateValidationInfoByField(v.Comp.variable_efficiency_mover, f);
             }
             break;
             case InputSection::components_switch:
             {
-                UpdateValidationInfoByField(v.Comp.Switch, f);
+                UpdateValidationInfoByField(v.Comp.transfer_switch, f);
             }
             break;
             case InputSection::dist_fixed:

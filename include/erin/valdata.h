@@ -124,18 +124,18 @@ struct ValidationInfo
 
 struct ComponentValidationMap
 {
-    ValidationInfo ConstantLoad;
-    ValidationInfo ScheduleBasedLoad;
-    ValidationInfo ConstantSource;
-    ValidationInfo ScheduleBasedSource;
-    ValidationInfo ConstantEfficiencyConverter;
-    ValidationInfo VariableEfficiencyConverter;
-    ValidationInfo Mux;
-    ValidationInfo Store;
-    ValidationInfo PassThrough;
-    ValidationInfo Mover;
-    ValidationInfo VariableEfficiencyMover;
-    ValidationInfo Switch;
+    ValidationInfo constant_load;
+    ValidationInfo schedule_based_load;
+    ValidationInfo constant_source;
+    ValidationInfo schedule_based_source;
+    ValidationInfo constant_efficiency_converter;
+    ValidationInfo variable_efficiency_converter;
+    ValidationInfo mux;
+    ValidationInfo store;
+    ValidationInfo pass_through;
+    ValidationInfo mover;
+    ValidationInfo variable_efficiency_mover;
+    ValidationInfo transfer_switch;
 };
 
 struct DistributionValidationMap

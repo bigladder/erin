@@ -51,73 +51,73 @@ Result ParseSingleComponent(Simulation& s,
     case ComponentType::constant_efficiency_converter_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.ConstantEfficiencyConverter, fullTableName, errors, warnings);
+            table, compValids.constant_efficiency_converter, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::variable_efficiency_converter_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.VariableEfficiencyConverter, fullTableName, errors, warnings);
+            table, compValids.variable_efficiency_converter, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::constant_load_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.ConstantLoad, fullTableName, errors, warnings);
+            table, compValids.constant_load, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::constant_source_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.ConstantSource, fullTableName, errors, warnings);
+            table, compValids.constant_source, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::mux_type:
     {
         input =
-            TOMLTable_parse_with_validation(table, compValids.Mux, fullTableName, errors, warnings);
+            TOMLTable_parse_with_validation(table, compValids.mux, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::pass_through_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.PassThrough, fullTableName, errors, warnings);
+            table, compValids.pass_through, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::schedule_based_load_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.ScheduleBasedLoad, fullTableName, errors, warnings);
+            table, compValids.schedule_based_load, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::schedule_based_source_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.ScheduleBasedSource, fullTableName, errors, warnings);
+            table, compValids.schedule_based_source, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::store_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.Store, fullTableName, errors, warnings);
+            table, compValids.store, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::mover_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.Mover, fullTableName, errors, warnings);
+            table, compValids.mover, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::variable_efficiency_mover_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.VariableEfficiencyMover, fullTableName, errors, warnings);
+            table, compValids.variable_efficiency_mover, fullTableName, errors, warnings);
     }
     break;
     case ComponentType::switch_type:
     {
         input = TOMLTable_parse_with_validation(
-            table, compValids.Switch, fullTableName, errors, warnings);
+            table, compValids.transfer_switch, fullTableName, errors, warnings);
     }
     break;
     default:

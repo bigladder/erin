@@ -7,8 +7,8 @@ namespace erin
 {
 enum class Result
 {
-    Success,
-    Failure
+    success,
+    failure
 };
 } // namespace erin
 

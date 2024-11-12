@@ -595,14 +595,14 @@ Result ParseDistributions(DistributionSystem& ds,
             if (!distTable.contains("type"))
             {
                 Log_error(log, fullTableName, "missing required field 'type'");
-                return Result::Failure;
+                return Result::failure;
             }
             std::string distTypeTag = distTable.at("type").as_string();
             std::optional<DistType> maybeDistType = tag_to_dist_type(distTypeTag);
             if (!maybeDistType.has_value())
             {
                 Log_error(log, fullTableName, "unhandled distribution type '" + distTypeTag + "'");
-                return Result::Failure;
+                return Result::failure;
             }
             DistType distType = maybeDistType.value();
             std::vector<std::string> errors;
@@ -651,7 +651,7 @@ Result ParseDistributions(DistributionSystem& ds,
             default:
             {
                 Log_error(log, fullTableName, "unhandled dist type");
-                return Result::Failure;
+                return Result::failure;
             }
             break;
             }
@@ -661,7 +661,7 @@ Result ParseDistributions(DistributionSystem& ds,
                 {
                     Log_error(log, err);
                 }
-                return Result::Failure;
+                return Result::failure;
             }
             for (std::string const& w : warnings)
             {
@@ -676,7 +676,7 @@ Result ParseDistributions(DistributionSystem& ds,
                 if (!maybeTimeUnit.has_value())
                 {
                     Log_error(log, fullTableName, "unhandled time unit '" + timeUnitStr + "'");
-                    return Result::Failure;
+                    return Result::failure;
                 }
                 timeUnit = maybeTimeUnit.value();
             }
@@ -758,7 +758,7 @@ Result ParseDistributions(DistributionSystem& ds,
                                                         "; must have 2 columns; "
                                                         "found: " +
                                                         std::to_string(pair.size()));
-                                return Result::Failure;
+                                return Result::failure;
                             }
                             xs.push_back(std::stod(pair[0]));
                             times_s.push_back(time_to_seconds(std::stod(pair[1]), timeUnitForRead));
@@ -774,13 +774,13 @@ Result ParseDistributions(DistributionSystem& ds,
                                       " -- header must have 2 columns: "
                                       "variate "
                                       "and time unit");
-                        return Result::Failure;
+                        return Result::failure;
                     }
                 }
                 else
                 {
                     Log_error(log, fullTableName, "need one of 'variate_time_pairs' or 'csv_file'");
-                    return Result::Failure;
+                    return Result::failure;
                 }
                 ds.add_quantile_table(distTag, xs, times_s);
             }
@@ -818,7 +818,7 @@ Result ParseDistributions(DistributionSystem& ds,
             }
         }
     }
-    return Result::Success;
+    return Result::success;
 }
 
 } // namespace erin

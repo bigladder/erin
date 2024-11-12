@@ -4790,12 +4790,12 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
     {
         std::cout << "[network] "
                   << "required key 'connections' missing" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
     if (!table.at("connections").is_array())
     {
         std::cout << "[network] 'connections' is not an array" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
     toml::array connArray = table.at("connections").as_array();
     for (size_t i = 0; i < connArray.size(); ++i)
@@ -4805,7 +4805,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "'connections' at index " << i << " must be an array" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         // TODO: std::vector<toml::value> itemAsArray = item.as_array();
         if (item.as_array().size() < 3)
@@ -4813,7 +4813,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
             std::cout << "[network] "
                       << "'connections' at index " << i << " must be an array of length >= 3"
                       << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         for (int idx = 0; idx < 3; ++idx)
         {
@@ -4822,7 +4822,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                 std::cout << "[network] "
                           << "'connections' at index " << i << " and subindex " << idx
                           << " must be a string" << std::endl;
-                return Result::Failure;
+                return Result::failure;
             }
         }
         std::string from = item.as_array()[0].as_string();
@@ -4831,7 +4831,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "unable to parse connection string at [" << i << "][0]" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         TagAndPort fromTap = maybeFromTap.value();
         std::string to = item.as_array()[1].as_string();
@@ -4840,7 +4840,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "unable to parse connection string at [" << i << "][1]" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         TagAndPort toTap = maybeToTap.value();
         std::string flow = item.as_array()[2].as_string();
@@ -4849,7 +4849,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "could not identify flow type '" << flow << "'" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         size_t flowTypeId = maybeFlowTypeId.value();
         std::optional<size_t> maybeFromCompId = Model_FindCompIdByTag(m, fromTap.tag);
@@ -4857,14 +4857,14 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "could not find component id for tag '" << from << "'" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         std::optional<size_t> maybeToCompId = Model_FindCompIdByTag(m, toTap.tag);
         if (!maybeToCompId.has_value())
         {
             std::cout << "[network] "
                       << "could not find component id for tag '" << to << "'" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         size_t fromCompId = maybeFromCompId.value();
         size_t toCompId = maybeToCompId.value();
@@ -4875,7 +4875,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                       << ToString(m.component.component_type[fromCompId]) << ": trying to address "
                       << fromTap.port << " but only " << m.component.outflow_type[fromCompId].size()
                       << " ports available" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         if (m.component.outflow_type[fromCompId][fromTap.port] != flowTypeId)
         {
@@ -4884,32 +4884,32 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                 << ":outflow=" << fd.flow_type[m.component.outflow_type[fromCompId][fromTap.port]]
                 << "; connection: " << flow;
             write_error_message("network", oss.str());
-            return Result::Failure;
+            return Result::failure;
         }
         if (toCompId >= m.component.inflow_type.size())
         {
             std::cout << "[network] toCompId overflows InflowTypes" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         if (toTap.port >= m.component.inflow_type[toCompId].size())
         {
             if (toCompId >= m.component.component_type.size())
             {
                 std::cout << "[network] component type not logged" << std::endl;
-                return Result::Failure;
+                return Result::failure;
             }
             std::cout << "[network] port is unaddressable for "
                       << ToString(m.component.component_type[toCompId]) << ": trying to address "
                       << toTap.port << " but only " << m.component.inflow_type[toCompId].size()
                       << " ports available" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         if (m.component.inflow_type[toCompId][toTap.port] != flowTypeId)
         {
             if (toCompId >= m.component.outflow_type.size())
             {
                 std::cout << "[network] toCompId is beyond outflow types" << std::endl;
-                return Result::Failure;
+                return Result::failure;
             }
             if (toTap.port >= m.component.outflow_type[toCompId].size())
             {
@@ -4918,7 +4918,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                           << "[" << toTap.port << "]:port=" << toTap.port
                           << ":availablePorts=" << m.component.outflow_type[toCompId].size()
                           << std::endl;
-                return Result::Failure;
+                return Result::failure;
             }
             size_t typeId = m.component.outflow_type[toCompId][toTap.port];
             if (typeId >= fd.flow_type.size())
@@ -4926,16 +4926,16 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                 std::cout << "[network] port is unaddressable"
                           << ":port=" << toTap.port << ":flowTypeId=" << typeId
                           << ":availableFlowTypes=" << fd.flow_type.size() << std::endl;
-                return Result::Failure;
+                return Result::failure;
             }
             std::cout << "[network] mismatch of flow types: " << toTap.tag
                       << ":inflow=" << fd.flow_type[m.component.outflow_type[toCompId][toTap.port]]
                       << "; connection: " << flow << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
         Model_AddConnection(m, fromCompId, fromTap.port, toCompId, toTap.port, flowTypeId);
     }
-    return Result::Success;
+    return Result::success;
 }
 
 std::optional<size_t> Model_FindCompIdByTag(Model const& m, std::string const& tag)

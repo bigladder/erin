@@ -191,7 +191,7 @@ Result ParseScenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::tabl
                 ParseSingleScenario(sd, ds, it->second.as_table(), fullName, tag);
             if (!maybeScenarioId.has_value())
             {
-                return Result::Failure;
+                return Result::failure;
             }
             ranAtLeastOnce = true;
         }
@@ -199,16 +199,16 @@ Result ParseScenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::tabl
         {
             std::cout << "[" << fullName << "] "
                       << "not a table" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
     }
     if (!ranAtLeastOnce)
     {
         std::cout << "[scenarios] "
                   << "must define at least one scenario" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
-    return ranAtLeastOnce ? Result::Success : Result::Failure;
+    return ranAtLeastOnce ? Result::success : Result::failure;
 }
 
 void Scenario_Print(ScenarioDict const& sd, DistributionSystem const& ds)

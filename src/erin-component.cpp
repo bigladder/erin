@@ -30,7 +30,7 @@ Result ParseSingleComponent(Simulation& s,
     if (!table.contains("type"))
     {
         Log_error(log, fullTableName, "required field 'type' not present");
-        return Result::Failure;
+        return Result::failure;
     }
     std::optional<ComponentType> maybeCompType = TagToComponentType(table.at("type").as_string());
     if (!maybeCompType.has_value())
@@ -39,7 +39,7 @@ Result ParseSingleComponent(Simulation& s,
                   fullTableName,
                   fmt::format("unable to parse component type '{}'",
                               std::string {table.at("type").as_string()}));
-        return Result::Failure;
+        return Result::failure;
     }
     // TODO: move this section into another function?
     ComponentType ct = maybeCompType.value();
@@ -134,7 +134,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             Log_error(log, tag, err);
         }
-        return Result::Failure;
+        return Result::failure;
     }
     if (!warnings.empty())
     {
@@ -180,7 +180,7 @@ Result ParseSingleComponent(Simulation& s,
         if (!maybeRateUnit.has_value())
         {
             Log_error(log, fullTableName, fmt::format("unhandled rate_unit '{}'", rateUnitStr));
-            return Result::Failure;
+            return Result::failure;
         }
         rateUnit = maybeRateUnit.value();
     }
@@ -195,7 +195,7 @@ Result ParseSingleComponent(Simulation& s,
         else
         {
             Log_error(log, fullTableName, "unable to parse 'report' as bool");
-            return Result::Failure;
+            return Result::failure;
         }
     }
     switch (ct)
@@ -212,14 +212,14 @@ Result ParseSingleComponent(Simulation& s,
             {
                 write_error_message(fullTableName,
                                     "unhandled rate_unit value: '" + localRateUnit + "'");
-                return Result::Failure;
+                return Result::failure;
             }
             localPowerUnit = maybePowerUnit.value();
         }
         if (!input.contains("constant_request"))
         {
             write_error_message(fullTableName, "required field 'constant_request' not found");
-            return Result::Failure;
+            return Result::failure;
         }
         double loadRequest = std::get<double>(input.at("constant_request").Value);
         loadRequest_W = static_cast<flow_t>(power_to_watts(loadRequest, localPowerUnit));
@@ -235,7 +235,7 @@ Result ParseSingleComponent(Simulation& s,
             if (!maybe.has_value())
             {
                 Log_error(log, fullTableName, "unable to parse 'max_outflow' as number");
-                return Result::Failure;
+                return Result::failure;
             }
             double maxAvailableReal = maybe.value();
             maxAvailable = static_cast<flow_t>(power_to_watts(maxAvailableReal, rateUnit));
@@ -248,12 +248,12 @@ Result ParseSingleComponent(Simulation& s,
         if (!table.contains("loads_by_scenario"))
         {
             Log_error(log, fullTableName, "missing required field 'loads_by_scenario'");
-            return Result::Failure;
+            return Result::failure;
         }
         if (!table.at("loads_by_scenario").is_table())
         {
             Log_error(log, fullTableName, "'loads_by_scenario' must be a table");
-            return Result::Failure;
+            return Result::failure;
         }
         toml::table const& lbs = table.at("loads_by_scenario").as_table();
         std::map<size_t, size_t> scenarioIdToLoadId = {};
@@ -272,7 +272,7 @@ Result ParseSingleComponent(Simulation& s,
                 else
                 {
                     Log_error(log, tag, fmt::format("missing supply for tag '{}'", loadTag));
-                    return Result::Failure;
+                    return Result::failure;
                 }
             }
         }
@@ -299,7 +299,7 @@ Result ParseSingleComponent(Simulation& s,
             else
             {
                 Log_error(log, tag, fmt::format("missing supply for tag '{}'", loadTag));
-                return Result::Failure;
+                return Result::failure;
             }
         }
         std::vector<TimeAndAmount> timesAndAmounts;
@@ -323,12 +323,12 @@ Result ParseSingleComponent(Simulation& s,
         if (numInflowsTemp <= 0)
         {
             write_error_message(fullTableName, "num_inflows must be a positive integer");
-            return Result::Failure;
+            return Result::failure;
         }
         if (numOutflowsTemp <= 0)
         {
             write_error_message(fullTableName, "num_outflows must be a positive integer");
-            return Result::Failure;
+            return Result::failure;
         }
         size_t numInflows = static_cast<size_t>(numInflowsTemp);
         size_t numOutflows = static_cast<size_t>(numOutflowsTemp);
@@ -339,7 +339,7 @@ Result ParseSingleComponent(Simulation& s,
                                 "as outflow type; we have inflow = '" +
                                     s.FlowTypeMap.flow_type[inflowId] + "'; outflow = '" +
                                     s.FlowTypeMap.flow_type[outflowId] + "'");
-            return Result::Failure;
+            return Result::failure;
         }
         id = Model_AddMux(s.TheModel, numInflows, numOutflows, outflowId, tag);
         if (input.contains("max_outflows"))
@@ -365,7 +365,7 @@ Result ParseSingleComponent(Simulation& s,
         if (efficiency <= 0.0)
         {
             errors.push_back(write_error_to_string(fullTableName, "efficiency must be > 0.0"));
-            return Result::Failure;
+            return Result::failure;
         }
         if (efficiency > 1.0)
         {
@@ -373,7 +373,7 @@ Result ParseSingleComponent(Simulation& s,
                                                    "efficiency must be <= 1.0; "
                                                    "if you need efficiencies (COPs) > 1, "
                                                    "consider using a mover"));
-            return Result::Failure;
+            return Result::failure;
         }
         auto const compIdAndWasteConn = Model_AddConstantEfficiencyConverter(
             s.TheModel, efficiency, inflowId, outflowId, lossflowId, tag, report);
@@ -386,7 +386,7 @@ Result ParseSingleComponent(Simulation& s,
             {
                 errors.push_back(write_error_to_string(
                     fullTableName, "unhandled rate unit '" + localRateUnitStr + "'"));
-                return Result::Failure;
+                return Result::failure;
             }
             localRateUnit = maybeRateUnit.value();
         }
@@ -426,7 +426,7 @@ Result ParseSingleComponent(Simulation& s,
                                                        "Output power fraction must be "
                                                        "in range [0.0, 1.0]; got " +
                                                            std::to_string(frac)));
-                return Result::Failure;
+                return Result::failure;
             }
             if (eff <= 0.0 || eff > 1.0)
             {
@@ -434,7 +434,7 @@ Result ParseSingleComponent(Simulation& s,
                                                        "Efficiency must be "
                                                        "in range (0.0, 1.0]; got " +
                                                            std::to_string(eff)));
-                return Result::Failure;
+                return Result::failure;
             }
             if (effByOutfrac.contains(frac))
             {
@@ -453,7 +453,7 @@ Result ParseSingleComponent(Simulation& s,
             {
                 errors.push_back(write_error_to_string(
                     fullTableName, "unhandled rate unit '" + localRateUnitStr + "'"));
-                return Result::Failure;
+                return Result::failure;
             }
             localRateUnit = maybeRateUnit.value();
         }
@@ -503,7 +503,7 @@ Result ParseSingleComponent(Simulation& s,
         {
             write_error_message(fullTableName,
                                 "inflow type must equal outflow type for pass-through");
-            return Result::Failure;
+            return Result::failure;
         }
         id = Model_AddPassThrough(s.TheModel, inflowId, tag);
         if (input.contains("max_outflow"))
@@ -520,7 +520,7 @@ Result ParseSingleComponent(Simulation& s,
         if (inflowId != outflowId)
         {
             write_error_message(fullTableName, "inflow type must equal outflow type for store");
-            return Result::Failure;
+            return Result::failure;
         }
         EnergyUnit capacityUnit = EnergyUnit::Joule;
         if (input.contains("capacity_unit"))
@@ -531,7 +531,7 @@ Result ParseSingleComponent(Simulation& s,
             {
                 write_error_message(fullTableName,
                                     "unhandled capacity unit '" + capacityUnitStr + "'");
-                return Result::Failure;
+                return Result::failure;
             }
             capacityUnit = maybeCapacityUnit.value();
         }
@@ -540,7 +540,7 @@ Result ParseSingleComponent(Simulation& s,
         if (capacity_J == 0)
         {
             write_error_message(fullTableName, "capacity must be greater than 0");
-            return Result::Failure;
+            return Result::failure;
         }
         flow_t maxCharge_W = static_cast<flow_t>(
             power_to_watts(std::get<double>(input.at("max_charge").Value), rateUnit));
@@ -550,7 +550,7 @@ Result ParseSingleComponent(Simulation& s,
         if (chargeAtSoc < 0.0 || chargeAtSoc > 1.0)
         {
             write_error_message(fullTableName, "charge_at_soc must be in range [0.0, 1.0]");
-            return Result::Failure;
+            return Result::failure;
         }
         flow_t noChargeAmount_J = static_cast<flow_t>(chargeAtSoc * capacity_J);
         if (noChargeAmount_J == capacity_J)
@@ -563,7 +563,7 @@ Result ParseSingleComponent(Simulation& s,
         if (initSoc < 0.0 || initSoc > 1.0)
         {
             write_error_message(fullTableName, "init_soc must be in range [0.0, 1.0]");
-            return Result::Failure;
+            return Result::failure;
         }
         flow_t initialStorage_J = static_cast<flow_t>(capacity_J * initSoc);
         double rtEff = 1.0;
@@ -573,7 +573,7 @@ Result ParseSingleComponent(Simulation& s,
             if (rtEff <= 0.0 || rtEff > 1.0)
             {
                 write_error_message(fullTableName, "roundtrip efficiency must be (0.0, 1.0]");
-                return Result::Failure;
+                return Result::failure;
             }
         }
         if (rtEff == 1.0)
@@ -642,13 +642,13 @@ Result ParseSingleComponent(Simulation& s,
                                                        "Output power fraction must be "
                                                        "in range [0.0, 1.0]; got " +
                                                            std::to_string(frac)));
-                return Result::Failure;
+                return Result::failure;
             }
             if (cop <= 0.0)
             {
                 errors.push_back(write_error_to_string(fullTableName,
                                                        "COP must be > 0.0" + std::to_string(frac)));
-                return Result::Failure;
+                return Result::failure;
             }
             if (copByOutFrac.contains(frac))
             {
@@ -667,7 +667,7 @@ Result ParseSingleComponent(Simulation& s,
             {
                 errors.push_back(write_error_to_string(
                     fullTableName, "unhandled rate unit '" + localRateUnitStr + "'"));
-                return Result::Failure;
+                return Result::failure;
             }
             localRateUnit = maybeRateUnit.value();
         }
@@ -716,7 +716,7 @@ Result ParseSingleComponent(Simulation& s,
                 {
                     errors.push_back(write_error_to_string(
                         fullTableName, "unhandled rate unit '" + localRateUnitStr + "'"));
-                    return Result::Failure;
+                    return Result::failure;
                 }
                 localRateUnit = maybeRateUnit.value();
             }
@@ -739,7 +739,7 @@ Result ParseSingleComponent(Simulation& s,
         if (!table.at("failure_modes").is_array())
         {
             write_error_message(fullTableName, "failure_modes must be an array of string");
-            return Result::Failure;
+            return Result::failure;
         }
         std::vector<toml::value> const& fms = table.at("failure_modes").as_array();
         for (size_t fmIdx = 0; fmIdx < fms.size(); ++fmIdx)
@@ -748,7 +748,7 @@ Result ParseSingleComponent(Simulation& s,
             {
                 write_error_message(fullTableName,
                                     "failure_modes[" + std::to_string(fmIdx) + "] must be string");
-                return Result::Failure;
+                return Result::failure;
             }
             std::string const& fmTag = fms[fmIdx].as_string();
             bool existingFailureMode = false;
@@ -778,7 +778,7 @@ Result ParseSingleComponent(Simulation& s,
         if (!table.at("fragility_modes").is_array())
         {
             write_error_message(fullTableName, "fragility_modes must be an array of string");
-            return Result::Failure;
+            return Result::failure;
         }
         std::vector<toml::value> const& fms = table.at("fragility_modes").as_array();
         for (size_t fmIdx = 0; fmIdx < fms.size(); ++fmIdx)
@@ -787,7 +787,7 @@ Result ParseSingleComponent(Simulation& s,
             {
                 write_error_message(
                     fullTableName, "fragility_modes[" + std::to_string(fmIdx) + "] must be string");
-                return Result::Failure;
+                return Result::failure;
             }
             std::string const& fmTag = fms[fmIdx].as_string();
             bool existingFragilityMode = false;
@@ -821,7 +821,7 @@ Result ParseSingleComponent(Simulation& s,
             if (!maybeTimeUnitStr.has_value())
             {
                 write_error_message(fullTableName, "unable to parse 'time_unit' as string");
-                return Result::Failure;
+                return Result::failure;
             }
             auto maybeTimeUnit = tag_to_time_unit(maybeTimeUnitStr.value());
             if (!maybeTimeUnit.has_value())
@@ -829,7 +829,7 @@ Result ParseSingleComponent(Simulation& s,
                 write_error_message(fullTableName,
                                     "could not interpret '" + maybeTimeUnitStr.value() +
                                         "' as time unit");
-                return Result::Failure;
+                return Result::failure;
             }
             timeUnit = maybeTimeUnit.value();
         }
@@ -837,7 +837,7 @@ Result ParseSingleComponent(Simulation& s,
         if (!maybeInitialAge.has_value())
         {
             write_error_message(fullTableName, "unable to parse initial age as a number");
-            return Result::Failure;
+            return Result::failure;
         }
         double initialAge_s = time_to_seconds(maybeInitialAge.value(), timeUnit);
         ComponentDict_SetInitialAge(s.TheModel.component, id, initialAge_s);
@@ -848,12 +848,12 @@ Result ParseSingleComponent(Simulation& s,
         if (!maybeGroup.has_value())
         {
             write_error_message(fullTableName, "unable to parse 'group' as a string");
-            return Result::Failure;
+            return Result::failure;
         }
         std::string group = maybeGroup.value();
         AddComponentToGroup(s.TheModel, id, group);
     }
-    return Result::Success;
+    return Result::success;
 }
 
 Result ParseComponents(Simulation& s,
@@ -876,13 +876,13 @@ Result ParseComponents(Simulation& s,
         }
         toml::table const& compTable = it->second.as_table();
         auto result = ParseSingleComponent(s, compTable, compTag, compValids, log);
-        if (result == Result::Failure)
+        if (result == Result::failure)
         {
             std::string tag = "components." + compTag;
             Log_error(log, tag, "could not parse component");
-            return Result::Failure;
+            return Result::failure;
         }
     }
-    return Result::Success;
+    return Result::success;
 }
 } // namespace erin

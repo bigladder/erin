@@ -642,13 +642,13 @@ Result Simulation_ParseSimulationInfo(Simulation& s,
     if (!v.contains("simulation_info"))
     {
         Log_error(log, "simulation_info", "Required section [simulation_info] not found");
-        return Result::Failure;
+        return Result::failure;
     }
     toml::value const& simInfoValue = v.at("simulation_info");
     if (!simInfoValue.is_table())
     {
         Log_error(log, "simulation_info", "Required section [simulation_info] is not a table");
-        return Result::Failure;
+        return Result::failure;
     }
     toml::table const& simInfoTable = simInfoValue.as_table();
     std::vector<std::string> errors;
@@ -668,15 +668,15 @@ Result Simulation_ParseSimulationInfo(Simulation& s,
         {
             Log_error(log, err);
         }
-        return Result::Failure;
+        return Result::failure;
     }
     auto maybeSimInfo = ParseSimulationInfo(inputs);
     if (!maybeSimInfo.has_value())
     {
-        return Result::Failure;
+        return Result::failure;
     }
     s.Info = std::move(maybeSimInfo.value());
-    return Result::Success;
+    return Result::success;
 }
 
 Result Simulation_ParseLoads(Simulation& s,
@@ -689,11 +689,11 @@ Result Simulation_ParseLoads(Simulation& s,
     auto maybeLoads = parse_loads(loadTable.as_table(), explicitValidation, fileValidation, log);
     if (!maybeLoads.has_value())
     {
-        return Result::Failure;
+        return Result::failure;
     }
     std::vector<Load> loads = std::move(maybeLoads.value());
     Simulation_RegisterAllLoads(s, loads);
-    return Result::Success;
+    return Result::success;
 }
 
 // TODO: change this to a std::optional<size_t> GetFragilityCurveByTag()
@@ -802,13 +802,13 @@ Result Simulation_ParseLinearFragilityCurve(Simulation& s,
     {
         std::cout << "[" << tableFullName << "] "
                   << "missing required field 'lower_bound'" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
     if (!(fcData.at("lower_bound").is_floating() || fcData.at("lower_bound").is_integer()))
     {
         std::cout << "[" << tableFullName << "] "
                   << "field 'lower_bound' not a number" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
     std::optional<double> maybeLowerBound =
         TOMLTable_parse_double(fcData, "lower_bound", tableFullName);
@@ -816,20 +816,20 @@ Result Simulation_ParseLinearFragilityCurve(Simulation& s,
     {
         std::cout << "[" << tableFullName << "] "
                   << "field 'lower_bound' has no value" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
     double lowerBound = maybeLowerBound.value();
     if (!fcData.contains("upper_bound"))
     {
         std::cout << "[" << tableFullName << "] "
                   << "missing required field 'upper_bound'" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
     if (!(fcData.at("upper_bound").is_floating() || fcData.at("upper_bound").is_integer()))
     {
         std::cout << "[" << tableFullName << "] "
                   << "field 'upper_bound' not a number" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
     std::optional<double> maybeUpperBound =
         TOMLTable_parse_double(fcData, "upper_bound", tableFullName);
@@ -837,13 +837,13 @@ Result Simulation_ParseLinearFragilityCurve(Simulation& s,
     {
         std::cout << "[" << tableFullName << "] "
                   << "field 'upper_bound' has no value" << std::endl;
-        return Result::Failure;
+        return Result::failure;
     }
     double upperBound = maybeUpperBound.value();
     std::optional<size_t> maybeIntId = Parse_VulnerableTo(s, fcData, tableFullName);
     if (!maybeIntId.has_value())
     {
-        return Result::Failure;
+        return Result::failure;
     }
     size_t intensityId = maybeIntId.value();
     LinearFragilityCurve lfc {};
@@ -853,7 +853,7 @@ Result Simulation_ParseLinearFragilityCurve(Simulation& s,
     size_t idx = s.LinearFragilityCurves.size();
     s.LinearFragilityCurves.push_back(std::move(lfc));
     Simulation_RegisterFragilityCurve(s, fcName, FragilityCurveType::linear, idx);
-    return Result::Success;
+    return Result::success;
 }
 
 Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log const& log)
@@ -863,7 +863,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
         if (!v.at("fragility_curve").is_table())
         {
             Log_error(log, "fragility_curve", "must be a table");
-            return Result::Failure;
+            return Result::failure;
         }
         for (auto const& pair : v.at("fragility_curve").as_table())
         {
@@ -872,20 +872,20 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
             if (!pair.second.is_table())
             {
                 Log_error(log, tableFullName, "not a table");
-                return Result::Failure;
+                return Result::failure;
             }
             toml::table const& fcData = pair.second.as_table();
             if (!fcData.contains("type"))
             {
                 Log_error(log, tableFullName, "does not contain required value 'type'");
-                return Result::Failure;
+                return Result::failure;
             }
             std::string const& typeStr = fcData.at("type").as_string();
             std::optional<FragilityCurveType> maybeFct = tag_to_fragility_curve_type(typeStr);
             if (!maybeFct.has_value())
             {
                 Log_error(log, tableFullName, "could not interpret type as string");
-                return Result::Failure;
+                return Result::failure;
             }
             FragilityCurveType fct = maybeFct.value();
             switch (fct)
@@ -893,9 +893,9 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
             case (FragilityCurveType::linear):
             {
                 if (Simulation_ParseLinearFragilityCurve(s, fcName, tableFullName, fcData) ==
-                    Result::Failure)
+                    Result::failure)
                 {
-                    return Result::Failure;
+                    return Result::failure;
                 }
             }
             break;
@@ -904,14 +904,14 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
                 std::optional<size_t> maybeIntId = Parse_VulnerableTo(s, fcData, tableFullName);
                 if (!maybeIntId.has_value())
                 {
-                    return Result::Failure;
+                    return Result::failure;
                 }
                 size_t intensityId = maybeIntId.value();
                 auto maybePairs = TOMLTable_parse_array_of_pairs_of_double(
                     fcData, "intensity_failure_pairs", tableFullName);
                 if (!maybePairs.has_value())
                 {
-                    return Result::Failure;
+                    return Result::failure;
                 }
                 PairsVector pv = maybePairs.value();
                 TabularFragilityCurve tfc {};
@@ -933,7 +933,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
             }
         }
     }
-    return Result::Success;
+    return Result::success;
 }
 
 bool Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name)
@@ -973,7 +973,7 @@ Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log con
         if (!v.at("failure_mode").is_table())
         {
             Log_error(log, "failure_mode", "failure_mode section must be a table");
-            return Result::Failure;
+            return Result::failure;
         }
         toml::table const& fmTable = v.at("failure_mode").as_table();
         for (auto const& pair : fmTable)
@@ -986,37 +986,37 @@ Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log con
                           fmName,
                           "failure mode name must be unique within both "
                           "failure_mode and fragility_mode names");
-                return Result::Failure;
+                return Result::failure;
             }
             if (!pair.second.is_table())
             {
                 Log_error(log, fullName, "value must be a table");
-                return Result::Failure;
+                return Result::failure;
             }
             toml::table const& fmValueTable = pair.second.as_table();
             if (!fmValueTable.contains("failure_dist"))
             {
                 Log_error(log, fullName, "missing required field 'failure_dist'");
-                return Result::Failure;
+                return Result::failure;
             }
             auto maybeFailureDistTag =
                 TOMLTable_parse_string(fmValueTable, "failure_dist", fullName);
             if (!maybeFailureDistTag.has_value())
             {
                 Log_error(log, fullName, "could not parse 'failure_dist' as string");
-                return Result::Failure;
+                return Result::failure;
             }
             std::string const& failureDistTag = maybeFailureDistTag.value();
             if (!fmValueTable.contains("repair_dist"))
             {
                 Log_error(log, fullName, "missing required field 'repair_dist'");
-                return Result::Failure;
+                return Result::failure;
             }
             auto maybeRepairDistTag = TOMLTable_parse_string(fmValueTable, "repair_dist", fullName);
             if (!maybeRepairDistTag.has_value())
             {
                 Log_error(log, fullName, "could not parse 'repair_dist' as string");
-                return Result::Failure;
+                return Result::failure;
             }
             std::string const& repairDistTag = maybeRepairDistTag.value();
             size_t failureId = s.TheModel.dist_sys.lookup_dist_by_tag(failureDistTag);
@@ -1024,7 +1024,7 @@ Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log con
             Simulation_RegisterFailureMode(s, fmName, failureId, repairId);
         }
     }
-    return Result::Success;
+    return Result::success;
 }
 
 Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log const& log)
@@ -1034,7 +1034,7 @@ Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log c
         if (!v.at("fragility_mode").is_table())
         {
             Log_error(log, "fragility_mode must be a table");
-            return Result::Failure;
+            return Result::failure;
         }
         toml::table const& fmTable = v.at("fragility_mode").as_table();
         for (auto const& pair : fmTable)
@@ -1047,23 +1047,23 @@ Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log c
                           fullName,
                           "fragility mode name must be unique within both "
                           "failure_mode and fragility_mode names");
-                return Result::Failure;
+                return Result::failure;
             }
             if (!pair.second.is_table())
             {
                 Log_error(log, fullName, "fragility_mode section must be a table");
-                return Result::Failure;
+                return Result::failure;
             }
             toml::table const& fmValueTable = pair.second.as_table();
             if (!fmValueTable.contains("fragility_curve"))
             {
                 Log_error(log, fullName, "missing required field 'fragility_curve'");
-                return Result::Failure;
+                return Result::failure;
             }
             if (!fmValueTable.at("fragility_curve").is_string())
             {
                 Log_error(log, fullName, "'fragility_curve' field must be a string");
-                return Result::Failure;
+                return Result::failure;
             }
             std::string const& fcTag = fmValueTable.at("fragility_curve").as_string();
             size_t fcId = Simulation_RegisterFragilityCurve(s, fcTag);
@@ -1073,7 +1073,7 @@ Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log c
                 if (!fmValueTable.at("repair_dist").is_string())
                 {
                     Log_error(log, fullName, "field 'repair_dist' must be a string");
-                    return Result::Failure;
+                    return Result::failure;
                 }
                 std::string const& repairDistTag = fmValueTable.at("repair_dist").as_string();
                 maybeRepairDistId = s.TheModel.dist_sys.lookup_dist_by_tag(repairDistTag);
@@ -1081,7 +1081,7 @@ Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log c
             Simulation_RegisterFragilityMode(s, fmName, fcId, maybeRepairDistId);
         }
     }
-    return Result::Success;
+    return Result::success;
 }
 
 Result Simulation_ParseComponents(Simulation& s,
@@ -1096,7 +1096,7 @@ Result Simulation_ParseComponents(Simulation& s,
             s, v.at("components").as_table(), compValidations, componentTagsInUse, log);
     }
     Log_error(log, "required field 'components' not found");
-    return Result::Failure;
+    return Result::failure;
 }
 
 Result Simulation_ParseDistributions(Simulation& s,
@@ -1110,7 +1110,7 @@ Result Simulation_ParseDistributions(Simulation& s,
         return ParseDistributions(s.TheModel.dist_sys, v.at("dist").as_table(), dvm, log);
     }
     Log_error(log, "required field 'dist' not found");
-    return Result::Failure;
+    return Result::failure;
 }
 
 Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& log)
@@ -1121,7 +1121,7 @@ Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& l
         return ParseNetwork(s.FlowTypeMap, s.TheModel, v.at(n).as_table());
     }
     Log_error(log, fmt::format("required field '{}' not found", n));
-    return Result::Failure;
+    return Result::failure;
 }
 
 Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const& log)
@@ -1130,7 +1130,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
     {
         auto result =
             ParseScenarios(s.ScenarioMap, s.TheModel.dist_sys, v.at("scenarios").as_table());
-        if (result == Result::Success)
+        if (result == Result::success)
         {
             for (auto const& pair : v.at("scenarios").as_table())
             {
@@ -1142,14 +1142,14 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
                     Log_error(log,
                               "scenarios",
                               fmt::format("could not find scenario id for '{}'", scenarioName));
-                    return Result::Failure;
+                    return Result::failure;
                 }
                 size_t scenarioId = maybeScenarioId.value();
                 std::string fullName = "scenarios." + scenarioName;
                 if (!pair.second.is_table())
                 {
                     Log_error(log, fullName, "must be a table");
-                    return Result::Failure;
+                    return Result::failure;
                 }
                 toml::table const& data = pair.second.as_table();
                 if (data.contains("intensity"))
@@ -1157,7 +1157,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
                     if (!data.at("intensity").is_table())
                     {
                         Log_error(log, fullName + ".intensity", "must be a table");
-                        return Result::Failure;
+                        return Result::failure;
                     }
                     for (auto const& p : data.at("intensity").as_table())
                     {
@@ -1166,7 +1166,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
                         {
                             Log_error(
                                 log, fullName + ".intensity." + intensityTag, "must be a number");
-                            return Result::Failure;
+                            return Result::failure;
                         }
                         std::optional<double> maybeValue =
                             TOML_parse_numeric_value_as_double(p.second);
@@ -1174,7 +1174,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
                         {
                             Log_error(
                                 log, fullName + ".intensity." + intensityTag, "must be a number");
-                            return Result::Failure;
+                            return Result::failure;
                         }
                         double value = maybeValue.value();
                         size_t intensityId = Simulation_RegisterIntensity(s, intensityTag);
@@ -1187,7 +1187,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
         return result;
     }
     Log_error(log, "required field 'scenarios' not found or not a table");
-    return Result::Failure;
+    return Result::failure;
 }
 
 std::optional<Simulation>
@@ -1199,52 +1199,52 @@ Simulation_read_from_toml(toml::value const& v,
     Simulation s = {};
     Simulation_Init(s);
     auto simInfoResult = Simulation_ParseSimulationInfo(s, v, validationInfo.SimulationInfo, log);
-    if (simInfoResult == Result::Failure)
+    if (simInfoResult == Result::failure)
     {
         Log_error(log, "simulation_info", "problem parsing...");
         return {};
     }
     auto loadsResult = Simulation_ParseLoads(
         s, v, validationInfo.Load_01Explicit, validationInfo.Load_02FileBased, log);
-    if (loadsResult == Result::Failure)
+    if (loadsResult == Result::failure)
     {
         Log_error(log, "loads", "problem parsing...");
         return {};
     }
     auto compResult =
         Simulation_ParseComponents(s, v, validationInfo.Comp, componentTagsInUse, log);
-    if (compResult == Result::Failure)
+    if (compResult == Result::failure)
     {
         Log_error(log, "components", "problem parsing...");
         return {};
     }
     auto distResult = Simulation_ParseDistributions(s, v, validationInfo.Dist, log);
-    if (distResult == Result::Failure)
+    if (distResult == Result::failure)
     {
         Log_error(log, "dist", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseFailureModes(s, v, log) == Result::Failure)
+    if (Simulation_ParseFailureModes(s, v, log) == Result::failure)
     {
         Log_error(log, "failure_mode", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseFragilityModes(s, v, log) == Result::Failure)
+    if (Simulation_ParseFragilityModes(s, v, log) == Result::failure)
     {
         Log_error(log, "fragility_mode", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseNetwork(s, v, log) == Result::Failure)
+    if (Simulation_ParseNetwork(s, v, log) == Result::failure)
     {
         Log_error(log, "network", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseScenarios(s, v, log) == Result::Failure)
+    if (Simulation_ParseScenarios(s, v, log) == Result::failure)
     {
         Log_error(log, "scenarios", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseFragilityCurves(s, v, log) == Result::Failure)
+    if (Simulation_ParseFragilityCurves(s, v, log) == Result::failure)
     {
         Log_error(log, "fragility_curve", "problem parsing...");
         return {};
@@ -1895,10 +1895,10 @@ SetLoadsForScenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, siz
         {
             std::cout << "ERROR:"
                       << "Unhandled scenario id in ScenarioIdToLoadId" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
     }
-    return Result::Success;
+    return Result::success;
 }
 
 Result
@@ -1925,10 +1925,10 @@ SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, 
         {
             std::cout << "ERROR:"
                       << "Unhandled scenario id in ScenarioIdToSourceId" << std::endl;
-            return Result::Failure;
+            return Result::failure;
         }
     }
-    return Result::Success;
+    return Result::success;
 }
 
 std::vector<double> DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenIdx)
@@ -2917,13 +2917,13 @@ void Simulation_run(Simulation& s,
         }
         // for this scenario, ensure all schedule-based components
         // have the right schedule set for this scenario
-        if (SetLoadsForScenario(s.TheModel.scheduled_load, s.LoadMap, scenIdx) == Result::Failure)
+        if (SetLoadsForScenario(s.TheModel.scheduled_load, s.LoadMap, scenIdx) == Result::failure)
         {
             Log_warning(log, "", "Issue setting schedule loads");
             return;
         }
         if (SetSupplyForScenario(s.TheModel.scheduled_source, s.LoadMap, scenIdx) ==
-            Result::Failure)
+            Result::failure)
         {
             Log_warning(log, "", "Issue setting schedule sources");
             return;

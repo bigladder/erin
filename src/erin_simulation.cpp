@@ -326,7 +326,7 @@ void Simulation_PrintComponents(Simulation const& s)
                       << (static_cast<double>(store.InitialStorage_J) /
                           static_cast<double>(store.Capacity_J))
                       << std::endl;
-            std::cout << "-- initial capacity (J): " << store.Capacity_J << std::endl;
+            std::cout << "-- initial capacity (J): " << store.InitialStorage_J << std::endl;
             std::cout << "-- SOC to start charging: "
                       << (static_cast<double>(store.ChargeAmount_J) /
                           static_cast<double>(store.Capacity_J))
@@ -2378,7 +2378,13 @@ void WriteStatisticsToFile(Simulation const& s,
         stats << "," << ER;
         stats << "," << EA;
         stats << "," << (os.MaxSEDT_s / seconds_per_hour);
-        stats << "," << ((os.Duration_s > 0.0) ? (os.Availability_s / os.Duration_s) : 0.0);
+        double global_availability =
+            (os.Duration_s > 0.0) ? (os.Availability_s / os.Duration_s) : 0.0;
+        if (global_availability < 0.0)
+        {
+            global_availability = 0.0;
+        }
+        stats << "," << global_availability;
         // NOTE: written in alphabetical order by flowtype name
         for (auto const& statsByFlow : os.FlowTypeStats)
         {
@@ -2922,7 +2928,7 @@ void Simulation_Run(Simulation& s,
         {
             if (verbose)
             {
-                Log_Debug(log, fmt::format("... Occurrence #{}", occIdx));
+                Log_Debug(log, fmt::format("... Occurrence #{}", occIdx + 1));
             }
             std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
                 CreateFailureSchedules(s.ComponentFailureModes.ComponentIds,

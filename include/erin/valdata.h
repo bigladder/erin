@@ -101,14 +101,14 @@ enum class InputSection
 // TODO: need also to have a "table validator" function somewhere...
 struct FieldInfo
 {
-    std::string FieldName;
-    InputType Type;
-    bool IsRequired;
-    bool InformIfMissing = false;
-    std::string Default;
-    std::unordered_set<std::string> EnumValues;
-    std::vector<TagWithDeprication> Aliases;
-    std::unordered_set<InputSection> Sections;
+    std::string field_name;
+    InputType input_type;
+    bool is_required;
+    bool inform_if_missing = false;
+    std::string default_value;
+    std::unordered_set<std::string> enum_values;
+    std::vector<TagWithDeprication> aliases;
+    std::unordered_set<InputSection> sections;
 };
 
 struct ValidationInfo

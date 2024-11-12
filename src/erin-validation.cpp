@@ -206,37 +206,37 @@ std::optional<InputSection> String_toInputSection(std::string tag)
 
 void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f)
 {
-    assert(!info.TypeMap.contains(f.FieldName) &&
+    assert(!info.TypeMap.contains(f.field_name) &&
            "attempt to add same field definition more than once to one "
            "section");
-    info.TypeMap.insert({f.FieldName, f.Type});
-    if (f.Type == InputType::enum_string)
+    info.TypeMap.insert({f.field_name, f.input_type});
+    if (f.input_type == InputType::enum_string)
     {
-        assert(f.EnumValues.size() > 0);
-        info.EnumMap.insert({f.FieldName, f.EnumValues});
+        assert(f.enum_values.size() > 0);
+        info.EnumMap.insert({f.field_name, f.enum_values});
     }
-    if (f.IsRequired)
+    if (f.is_required)
     {
-        info.RequiredFields.insert(f.FieldName);
+        info.RequiredFields.insert(f.field_name);
     }
     else
     {
-        info.OptionalFields.insert(f.FieldName);
+        info.OptionalFields.insert(f.field_name);
     }
-    if (!f.Default.empty())
+    if (!f.default_value.empty())
     {
-        info.Defaults.insert({f.FieldName, f.Default});
+        info.Defaults.insert({f.field_name, f.default_value});
     }
-    if (f.Aliases.size() > 0)
+    if (f.aliases.size() > 0)
     {
-        info.Aliases.insert({f.FieldName, f.Aliases});
+        info.Aliases.insert({f.field_name, f.aliases});
     }
-    if (f.InformIfMissing)
+    if (f.inform_if_missing)
     {
         // NOTE: to inform if missing, we must have a default
         // ... otherwise it would be an error.
-        assert(info.Defaults.contains(f.FieldName));
-        info.InformIfMissing.insert(f.FieldName);
+        assert(info.Defaults.contains(f.field_name));
+        info.InformIfMissing.insert(f.field_name);
     }
 }
 
@@ -326,130 +326,130 @@ InputValidationMap setup_global_validation_info()
     std::vector<FieldInfo> fields {
         // GLOBAL
         FieldInfo {
-            .FieldName = "meta",
-            .Type = InputType::any,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections = all_sections,
+            .field_name = "meta",
+            .input_type = InputType::any,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections = all_sections,
         },
         // SIMULATION_INFO
         FieldInfo {
-            .FieldName = "input_format_version",
-            .Type = InputType::string,
-            .IsRequired = false,
-            .InformIfMissing = true,
-            .Default = current_input_version,
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "input_format_version",
+            .input_type = InputType::string,
+            .is_required = false,
+            .inform_if_missing = true,
+            .default_value = current_input_version,
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::simulation_info,
                 },
         },
         FieldInfo {
-            .FieldName = "rate_unit",
-            .Type = InputType::enum_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "W",
-            .EnumValues = ValidRateUnits,
-            .Aliases = {},
-            .Sections =
+            .field_name = "rate_unit",
+            .input_type = InputType::enum_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "W",
+            .enum_values = ValidRateUnits,
+            .aliases = {},
+            .sections =
                 {
                     InputSection::simulation_info,
                 },
         },
         FieldInfo {
-            .FieldName = "quantity_unit",
-            .Type = InputType::enum_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "J",
-            .EnumValues = ValidQuantityUnits,
-            .Aliases = {},
-            .Sections =
+            .field_name = "quantity_unit",
+            .input_type = InputType::enum_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "J",
+            .enum_values = ValidQuantityUnits,
+            .aliases = {},
+            .sections =
                 {
                     InputSection::simulation_info,
                 },
         },
         FieldInfo {
-            .FieldName = "time_unit",
-            .Type = InputType::enum_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "yr",
-            .EnumValues = ValidTimeUnits,
-            .Aliases = {},
-            .Sections =
+            .field_name = "time_unit",
+            .input_type = InputType::enum_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "yr",
+            .enum_values = ValidTimeUnits,
+            .aliases = {},
+            .sections =
                 {
                     InputSection::simulation_info,
                 },
         },
         FieldInfo {
-            .FieldName = "max_time",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "1000.0",
-            .EnumValues = ValidTimeUnits,
-            .Aliases = {},
-            .Sections =
+            .field_name = "max_time",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "1000.0",
+            .enum_values = ValidTimeUnits,
+            .aliases = {},
+            .sections =
                 {
                     InputSection::simulation_info,
                 },
         },
         FieldInfo {
-            .FieldName = "random_seed",
-            .Type = InputType::integer,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "17",
-            .EnumValues = ValidTimeUnits,
-            .Aliases = {},
-            .Sections =
+            .field_name = "random_seed",
+            .input_type = InputType::integer,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "17",
+            .enum_values = ValidTimeUnits,
+            .aliases = {},
+            .sections =
                 {
                     InputSection::simulation_info,
                 },
         },
         FieldInfo {
-            .FieldName = "fixed_random",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "fixed_random",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::simulation_info,
                 },
         },
         FieldInfo {
-            .FieldName = "fixed_random_series",
-            .Type = InputType::array_of_double,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "fixed_random_series",
+            .input_type = InputType::array_of_double,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::simulation_info,
                 },
         },
         // Loads -- File-Based
         FieldInfo {
-            .FieldName = "csv_file",
-            .Type = InputType::string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "csv_file",
+            .input_type = InputType::string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::loads_02file_based,
                 },
@@ -457,140 +457,140 @@ InputValidationMap setup_global_validation_info()
         // TODO(mok): this should be a 3rd option, not part of
         // Loads_02FileBased
         FieldInfo {
-            .FieldName = "multi_part_csv",
-            .Type = InputType::string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "multi_part_csv",
+            .input_type = InputType::string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::loads_02file_based,
                 },
         },
         // Loads -- Explicit
         FieldInfo {
-            .FieldName = "time_rate_pairs",
-            .Type = InputType::array_of_tuple2_of_number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "time_rate_pairs",
+            .input_type = InputType::array_of_tuple2_of_number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::loads_01explicit,
                 },
         },
         FieldInfo {
-            .FieldName = "time_unit",
-            .Type = InputType::enum_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "s",
-            .EnumValues = ValidTimeUnits,
-            .Aliases = {},
-            .Sections =
+            .field_name = "time_unit",
+            .input_type = InputType::enum_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "s",
+            .enum_values = ValidTimeUnits,
+            .aliases = {},
+            .sections =
                 {
                     InputSection::loads_01explicit,
                 },
         },
         FieldInfo {
-            .FieldName = "rate_unit",
-            .Type = InputType::enum_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "W",
-            .EnumValues = ValidRateUnits,
-            .Aliases = {},
-            .Sections =
+            .field_name = "rate_unit",
+            .input_type = InputType::enum_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "W",
+            .enum_values = ValidRateUnits,
+            .aliases = {},
+            .sections =
                 {
                     InputSection::loads_01explicit,
                 },
         },
         // Components -- Global
         FieldInfo {
-            .FieldName = "type",
-            .Type = InputType::enum_string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = comp_type_enums,
-            .Aliases = {},
-            .Sections = all_comp_sections,
+            .field_name = "type",
+            .input_type = InputType::enum_string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = comp_type_enums,
+            .aliases = {},
+            .sections = all_comp_sections,
         },
         FieldInfo {
-            .FieldName = "initial_age",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "0.0",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections = all_comp_sections,
+            .field_name = "initial_age",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "0.0",
+            .enum_values = {},
+            .aliases = {},
+            .sections = all_comp_sections,
         },
         FieldInfo {
-            .FieldName = "time_unit",
-            .Type = InputType::enum_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "h",
-            .EnumValues = ValidTimeUnits,
-            .Aliases = {},
-            .Sections = all_comp_sections,
+            .field_name = "time_unit",
+            .input_type = InputType::enum_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "h",
+            .enum_values = ValidTimeUnits,
+            .aliases = {},
+            .sections = all_comp_sections,
         },
         FieldInfo {
-            .FieldName = "group",
-            .Type = InputType::string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "group",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections = all_comp_sections,
+            .field_name = "group",
+            .input_type = InputType::string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "group",
+            .enum_values = {},
+            .aliases = {},
+            .sections = all_comp_sections,
         },
         FieldInfo {
-            .FieldName = "report",
-            .Type = InputType::boolean,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "true",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections = all_comp_sections,
+            .field_name = "report",
+            .input_type = InputType::boolean,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "true",
+            .enum_values = {},
+            .aliases = {},
+            .sections = all_comp_sections,
         },
         // Components -- All Except Loads
         FieldInfo {
-            .FieldName = "failure_modes",
-            .Type = InputType::array_of_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections = non_load_comp_sections,
+            .field_name = "failure_modes",
+            .input_type = InputType::array_of_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections = non_load_comp_sections,
         },
         FieldInfo {
-            .FieldName = "fragility_modes",
-            .Type = InputType::array_of_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections = non_load_comp_sections,
+            .field_name = "fragility_modes",
+            .input_type = InputType::array_of_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections = non_load_comp_sections,
         },
         // Constant and Schedule-Based Load Component
         FieldInfo {
-            .FieldName = "inflow",
-            .Type = InputType::string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "inflow",
+            .input_type = InputType::string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_constant_load,
                     InputSection::components_load,
@@ -601,41 +601,41 @@ InputValidationMap setup_global_validation_info()
                 },
         },
         FieldInfo {
-            .FieldName = "loads_by_scenario",
-            .Type = InputType::map_from_string_to_string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "loads_by_scenario",
+            .input_type = InputType::map_from_string_to_string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_load,
                 },
         },
         FieldInfo {
-            .FieldName = "constant_request",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "constant_request",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_constant_load,
                 },
         },
         // Constant Source and Uncontrolled Source
         FieldInfo {
-            .FieldName = "outflow",
-            .Type = InputType::string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "outflow",
+            .input_type = InputType::string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_source,
                     InputSection::components_uncontrolled_source,
@@ -646,14 +646,14 @@ InputValidationMap setup_global_validation_info()
                 },
         },
         FieldInfo {
-            .FieldName = "max_outflow",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "max_outflow",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_source,
                     InputSection::components_uncontrolled_source,
@@ -662,14 +662,14 @@ InputValidationMap setup_global_validation_info()
                 },
         },
         FieldInfo {
-            .FieldName = "rate_unit",
-            .Type = InputType::string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "rate_unit",
+            .input_type = InputType::string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_constant_load,
                     InputSection::components_source,
@@ -682,34 +682,34 @@ InputValidationMap setup_global_validation_info()
                 },
         },
         FieldInfo {
-            .FieldName = "supply_by_scenario",
-            .Type = InputType::map_from_string_to_string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "supply_by_scenario",
+            .input_type = InputType::map_from_string_to_string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_uncontrolled_source,
                 },
         },
         // Mux
         FieldInfo {
-            .FieldName = "flow",
-            .Type = InputType::string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases =
+            .field_name = "flow",
+            .input_type = InputType::string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases =
                 {
                     TagWithDeprication {
                         .tag = "stream",
                         .is_deprecated = true,
                     },
                 },
-            .Sections =
+            .sections =
                 {
                     InputSection::components_mux,
                     InputSection::components_pass_through,
@@ -718,121 +718,121 @@ InputValidationMap setup_global_validation_info()
                 },
         },
         FieldInfo {
-            .FieldName = "num_outflows",
-            .Type = InputType::integer,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "num_outflows",
+            .input_type = InputType::integer,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_mux,
                 },
         },
         FieldInfo {
-            .FieldName = "num_inflows",
-            .Type = InputType::integer,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "num_inflows",
+            .input_type = InputType::integer,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_mux,
                 },
         },
         FieldInfo {
-            .FieldName = "max_outflows",
-            .Type = InputType::array_of_double,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "max_outflows",
+            .input_type = InputType::array_of_double,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_mux,
                 },
         },
         // Constant and Variable Efficiency Converter
         FieldInfo {
-            .FieldName = "constant_efficiency",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "constant_efficiency",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_const_eff_converter,
                 },
         },
         FieldInfo {
-            .FieldName = "efficiency_by_fraction_out",
-            .Type = InputType::array_of_tuple2_of_number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "efficiency_by_fraction_out",
+            .input_type = InputType::array_of_tuple2_of_number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_variable_eff_converter,
                 },
         },
         FieldInfo {
-            .FieldName = "lossflow",
-            .Type = InputType::string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "lossflow",
+            .input_type = InputType::string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_const_eff_converter,
                     InputSection::components_variable_eff_converter,
                 },
         },
         FieldInfo {
-            .FieldName = "max_outflow",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "max_outflow",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_const_eff_converter,
                 },
         },
         FieldInfo {
-            .FieldName = "max_outflow",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "max_outflow",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_variable_eff_converter,
                     InputSection::components_variable_eff_mover,
                 },
         },
         FieldInfo {
-            .FieldName = "max_lossflow",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "max_lossflow",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_const_eff_converter,
                     InputSection::components_variable_eff_converter,
@@ -840,289 +840,289 @@ InputValidationMap setup_global_validation_info()
         },
         // Store
         FieldInfo {
-            .FieldName = "init_soc",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "1.0",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "init_soc",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "1.0",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_store,
                 },
         },
         FieldInfo {
-            .FieldName = "capacity_unit",
-            .Type = InputType::enum_string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "J",
-            .EnumValues = ValidQuantityUnits,
-            .Aliases = {},
-            .Sections =
+            .field_name = "capacity_unit",
+            .input_type = InputType::enum_string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "J",
+            .enum_values = ValidQuantityUnits,
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_store,
                 },
         },
         FieldInfo {
-            .FieldName = "capacity",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "capacity",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_store,
                 },
         },
         // TODO[mok]: should max_charge still be required if now inflow?
         FieldInfo {
-            .FieldName = "max_charge",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {{"max_inflow", true}},
-            .Sections =
+            .field_name = "max_charge",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {{"max_inflow", true}},
+            .sections =
                 {
                     InputSection::components_store,
                 },
         },
         FieldInfo {
-            .FieldName = "max_discharge",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "max_discharge",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_store,
                 },
         },
         FieldInfo {
-            .FieldName = "max_outflow",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "max_outflow",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_store,
                 },
         },
         FieldInfo {
-            .FieldName = "charge_at_soc",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "0.8",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "charge_at_soc",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "0.8",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_store,
                 },
         },
         FieldInfo {
-            .FieldName = "roundtrip_efficiency",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "1.0",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "roundtrip_efficiency",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "1.0",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_store,
                 },
         },
         // COMP Mover
         FieldInfo {
-            .FieldName = "cop",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "cop",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_mover,
                 },
         },
         FieldInfo {
-            .FieldName = "cop_by_fraction_out",
-            .Type = InputType::array_of_tuple2_of_number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "cop_by_fraction_out",
+            .input_type = InputType::array_of_tuple2_of_number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::components_variable_eff_mover,
                 },
         },
         // DIST: Common
         FieldInfo {
-            .FieldName = "type",
-            .Type = InputType::enum_string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = dist_type_enums,
-            .Aliases = {},
-            .Sections = dist_sections,
+            .field_name = "type",
+            .input_type = InputType::enum_string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = dist_type_enums,
+            .aliases = {},
+            .sections = dist_sections,
         },
         FieldInfo {
-            .FieldName = "time_unit",
-            .Type = InputType::enum_string,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = ValidTimeUnits,
-            .Aliases = {},
-            .Sections = dist_sections,
+            .field_name = "time_unit",
+            .input_type = InputType::enum_string,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = ValidTimeUnits,
+            .aliases = {},
+            .sections = dist_sections,
         },
         // DIST - FIXED
         FieldInfo {
-            .FieldName = "value",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "value",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_fixed,
                 },
         },
         // DIST - UNIFORM
         FieldInfo {
-            .FieldName = "lower_bound",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "lower_bound",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_uniform,
                 },
         },
         FieldInfo {
-            .FieldName = "upper_bound",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "upper_bound",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_uniform,
                 },
         },
         // DIST - NORMAL
         FieldInfo {
-            .FieldName = "mean",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "mean",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_normal,
                 },
         },
         FieldInfo {
-            .FieldName = "standard_deviation",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "standard_deviation",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_normal,
                 },
         },
         // DIST - Quantile Table
         FieldInfo {
-            .FieldName = "csv_file",
-            .Type = InputType::string,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "csv_file",
+            .input_type = InputType::string,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_01quantile_table_from_file,
                 },
         },
         FieldInfo {
-            .FieldName = "variate_time_pairs",
-            .Type = InputType::array_of_tuple2_of_number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "variate_time_pairs",
+            .input_type = InputType::array_of_tuple2_of_number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_02quantile_table_explicit,
                 },
         },
         // DIST - WEIBULL
         FieldInfo {
-            .FieldName = "shape",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "shape",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_weibull,
                 },
         },
         FieldInfo {
-            .FieldName = "scale",
-            .Type = InputType::number,
-            .IsRequired = true,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "scale",
+            .input_type = InputType::number,
+            .is_required = true,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_weibull,
                 },
         },
         FieldInfo {
-            .FieldName = "location",
-            .Type = InputType::number,
-            .IsRequired = false,
-            .InformIfMissing = false,
-            .Default = "",
-            .EnumValues = {},
-            .Aliases = {},
-            .Sections =
+            .field_name = "location",
+            .input_type = InputType::number,
+            .is_required = false,
+            .inform_if_missing = false,
+            .default_value = "",
+            .enum_values = {},
+            .aliases = {},
+            .sections =
                 {
                     InputSection::dist_weibull,
                 },
@@ -1131,14 +1131,14 @@ InputValidationMap setup_global_validation_info()
     InputValidationMap v {};
     for (auto const& f : fields)
     {
-        if (f.Sections.size() == 0)
+        if (f.sections.size() == 0)
         {
             std::cerr << "Program Initialization Error: "
-                      << "field '" << f.FieldName << "' has no "
+                      << "field '" << f.field_name << "' has no "
                       << "sections that it applies to" << std::endl;
             std::exit(1);
         }
-        for (auto const sec : f.Sections)
+        for (auto const sec : f.sections)
         {
             switch (sec)
             {

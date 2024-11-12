@@ -366,8 +366,9 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
                 }
             }
         }
-        TimeState const nextTs =
-            (i + 1) < tss.size() && tss[i + 1].time <= finalTime_s ? tss[i + 1] : TimeState {finalTime_s, ts.state, {}, {}};
+        TimeState const nextTs = (i + 1) < tss.size() && tss[i + 1].time <= finalTime_s
+                                     ? tss[i + 1]
+                                     : TimeState {finalTime_s, ts.state, {}, {}};
         double dt = nextTs.time - ts.time;
         if (dt <= 0.0)
         {

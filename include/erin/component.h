@@ -14,16 +14,16 @@
 namespace erin
 {
 
-Result ParseSingleComponent(Simulation& s,
+Result parse_single_component(Simulation& s,
                             toml::table const& table,
                             std::string const& tag,
-                            ComponentValidationMap const& compValids,
+                            ComponentValidationMap const& comp_validation_info,
                             Log const& log);
 
-Result ParseComponents(Simulation& s,
+Result parse_components(Simulation& s,
                        toml::table const& table,
-                       ComponentValidationMap const& compValids,
-                       std::unordered_set<std::string> const& componentTagsInUse,
+                       ComponentValidationMap const& comp_validation_info,
+                       std::unordered_set<std::string> const& component_tags_in_use,
                        Log const& log);
 
 } // namespace erin

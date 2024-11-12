@@ -1092,7 +1092,7 @@ Result Simulation_ParseComponents(Simulation& s,
 {
     if (v.contains("components") && v.at("components").is_table())
     {
-        return ParseComponents(
+        return parse_components(
             s, v.at("components").as_table(), compValidations, componentTagsInUse, log);
     }
     Log_error(log, "required field 'components' not found");

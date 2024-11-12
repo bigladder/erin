@@ -20,7 +20,7 @@
 namespace erin
 {
 
-Result ParseSingleComponent(Simulation& s,
+Result parse_single_component(Simulation& s,
                             toml::table const& table,
                             std::string const& tag,
                             ComponentValidationMap const& compValids,
@@ -856,7 +856,7 @@ Result ParseSingleComponent(Simulation& s,
     return Result::success;
 }
 
-Result ParseComponents(Simulation& s,
+Result parse_components(Simulation& s,
                        toml::table const& table,
                        ComponentValidationMap const& compValids,
                        std::unordered_set<std::string> const& componentTagsInUse,
@@ -875,7 +875,7 @@ Result ParseComponents(Simulation& s,
             continue;
         }
         toml::table const& compTable = it->second.as_table();
-        auto result = ParseSingleComponent(s, compTable, compTag, compValids, log);
+        auto result = parse_single_component(s, compTable, compTag, compValids, log);
         if (result == Result::failure)
         {
             std::string tag = "components." + compTag;

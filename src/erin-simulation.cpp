@@ -1129,7 +1129,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
     if (v.contains("scenarios") && v.at("scenarios").is_table())
     {
         auto result =
-            ParseScenarios(s.ScenarioMap, s.TheModel.dist_sys, v.at("scenarios").as_table());
+            parse_scenarios(s.ScenarioMap, s.TheModel.dist_sys, v.at("scenarios").as_table());
         if (result == Result::success)
         {
             for (auto const& pair : v.at("scenarios").as_table())

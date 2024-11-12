@@ -40,15 +40,15 @@ size_t register_scenario(ScenarioDict& sd,
                                      std::optional<size_t> maximum_occurrences,
                                      double time_offset);
 
-std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
+std::optional<size_t> parse_single_scenario(ScenarioDict& sd,
                                           DistributionSystem const& ds,
                                           toml::table const& table,
-                                          std::string const& fullName,
+                                          std::string const& full_name,
                                           std::string const& tag);
 
-Result ParseScenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::table const& table);
+Result parse_scenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::table const& table);
 
-void Scenario_Print(ScenarioDict const& sd, DistributionSystem const& ds);
+void scenario_print(ScenarioDict const& sd, DistributionSystem const& ds);
 } // namespace erin
 
 #endif

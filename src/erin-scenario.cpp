@@ -87,7 +87,7 @@ size_t register_scenario(ScenarioDict& sd,
     return id;
 }
 
-std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
+std::optional<size_t> parse_single_scenario(ScenarioDict& sd,
                                           DistributionSystem const& ds,
                                           toml::table const& table,
                                           std::string const& fullName,
@@ -178,7 +178,7 @@ std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
     return id;
 }
 
-Result ParseScenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::table const& table)
+Result parse_scenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::table const& table)
 {
     bool ranAtLeastOnce = false;
     for (auto it = table.cbegin(); it != table.cend(); ++it)
@@ -188,7 +188,7 @@ Result ParseScenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::tabl
         if (it->second.is_table())
         {
             auto maybeScenarioId =
-                ParseSingleScenario(sd, ds, it->second.as_table(), fullName, tag);
+                parse_single_scenario(sd, ds, it->second.as_table(), fullName, tag);
             if (!maybeScenarioId.has_value())
             {
                 return Result::failure;
@@ -211,7 +211,7 @@ Result ParseScenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::tabl
     return ranAtLeastOnce ? Result::success : Result::failure;
 }
 
-void Scenario_Print(ScenarioDict const& sd, DistributionSystem const& ds)
+void scenario_print(ScenarioDict const& sd, DistributionSystem const& ds)
 {
     for (size_t i = 0; i < sd.duration.size(); ++i)
     {

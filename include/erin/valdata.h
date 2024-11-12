@@ -114,13 +114,13 @@ struct FieldInfo
 struct ValidationInfo
 {
     // TODO: rename as FieldToType
-    std::unordered_map<std::string, InputType> TypeMap;
-    std::unordered_set<std::string> RequiredFields;
-    std::unordered_set<std::string> OptionalFields;
-    std::unordered_map<std::string, std::unordered_set<std::string>> EnumMap;
-    std::unordered_map<std::string, std::string> Defaults;
-    std::unordered_map<std::string, std::vector<TagWithDeprication>> Aliases;
-    std::unordered_set<std::string> InformIfMissing;
+    std::unordered_map<std::string, InputType> type_map;
+    std::unordered_set<std::string> required_fields;
+    std::unordered_set<std::string> optional_fields;
+    std::unordered_map<std::string, std::unordered_set<std::string>> enum_map;
+    std::unordered_map<std::string, std::string> default_values;
+    std::unordered_map<std::string, std::vector<TagWithDeprication>> aliases;
+    std::unordered_set<std::string> inform_if_missing;
 };
 
 struct ComponentValidationMap

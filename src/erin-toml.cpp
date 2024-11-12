@@ -30,8 +30,8 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
     {
         std::string key = it->first;
         toml::value value = it->second;
-        if (validationInfo.RequiredFields.contains(key) ||
-            validationInfo.OptionalFields.contains(key))
+        if (validationInfo.required_fields.contains(key) ||
+            validationInfo.optional_fields.contains(key))
         {
             if (fieldsFound.contains(key))
             {
@@ -46,7 +46,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
         {
             // check all aliases
             bool found = false;
-            for (auto const& alias : validationInfo.Aliases)
+            for (auto const& alias : validationInfo.aliases)
             {
                 assert(key != alias.first);
                 for (auto const& aliasValue : alias.second)
@@ -102,9 +102,9 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 continue;
             }
         }
-        assert(validationInfo.TypeMap.contains(key));
+        assert(validationInfo.type_map.contains(key));
         // check types
-        InputType expectedType = validationInfo.TypeMap.at(key);
+        InputType expectedType = validationInfo.type_map.at(key);
         InputValue v;
         v.input_type = expectedType;
         switch (expectedType)
@@ -124,17 +124,17 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                 return out;
             }
-            if (validationInfo.TypeMap.at(key) == InputType::enum_string)
+            if (validationInfo.type_map.at(key) == InputType::enum_string)
             {
                 std::string const& valAsStr = value.as_string();
-                if (!validationInfo.EnumMap.contains(key))
+                if (!validationInfo.enum_map.contains(key))
                 {
                     std::ostringstream oss;
                     oss << "Could not find enumerations for field '" << it->first << "'";
                     errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                     return out;
                 }
-                auto const& enumSet = validationInfo.EnumMap.at(key);
+                auto const& enumSet = validationInfo.enum_map.at(key);
                 if (!enumSet.contains(valAsStr))
                 {
                     std::ostringstream oss;
@@ -430,25 +430,25 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
         }
         out[key] = std::move(v);
     }
-    for (std::string const& fieldsToInform : validationInfo.InformIfMissing)
+    for (std::string const& fieldsToInform : validationInfo.inform_if_missing)
     {
         if (!fieldsFound.contains(fieldsToInform))
         {
             // TODO: create an inform level?
             std::string message = fieldsToInform + " not found; default value of '" +
-                                  validationInfo.Defaults.at(fieldsToInform) + "' assumed";
+                                  validationInfo.default_values.at(fieldsToInform) + "' assumed";
             warnings.push_back(fmt::format("{}: {}", tableName, message));
         }
     }
     // insert defaults if not defined
-    for (auto const& defkv : validationInfo.Defaults)
+    for (auto const& defkv : validationInfo.default_values)
     {
         if (out.contains(defkv.first))
         {
             continue;
         }
         InputValue iv;
-        InputType itype = validationInfo.TypeMap.at(defkv.first);
+        InputType itype = validationInfo.type_map.at(defkv.first);
         iv.input_type = itype;
         switch (itype)
         {
@@ -497,7 +497,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
         out.insert({defkv.first, std::move(iv)});
     }
     // check that all required fields are present
-    for (auto const& field : validationInfo.RequiredFields)
+    for (auto const& field : validationInfo.required_fields)
     {
         if (!out.contains(field))
         {

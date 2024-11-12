@@ -206,37 +206,37 @@ std::optional<InputSection> String_toInputSection(std::string tag)
 
 void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f)
 {
-    assert(!info.TypeMap.contains(f.field_name) &&
+    assert(!info.type_map.contains(f.field_name) &&
            "attempt to add same field definition more than once to one "
            "section");
-    info.TypeMap.insert({f.field_name, f.input_type});
+    info.type_map.insert({f.field_name, f.input_type});
     if (f.input_type == InputType::enum_string)
     {
         assert(f.enum_values.size() > 0);
-        info.EnumMap.insert({f.field_name, f.enum_values});
+        info.enum_map.insert({f.field_name, f.enum_values});
     }
     if (f.is_required)
     {
-        info.RequiredFields.insert(f.field_name);
+        info.required_fields.insert(f.field_name);
     }
     else
     {
-        info.OptionalFields.insert(f.field_name);
+        info.optional_fields.insert(f.field_name);
     }
     if (!f.default_value.empty())
     {
-        info.Defaults.insert({f.field_name, f.default_value});
+        info.default_values.insert({f.field_name, f.default_value});
     }
     if (f.aliases.size() > 0)
     {
-        info.Aliases.insert({f.field_name, f.aliases});
+        info.aliases.insert({f.field_name, f.aliases});
     }
     if (f.inform_if_missing)
     {
         // NOTE: to inform if missing, we must have a default
         // ... otherwise it would be an error.
-        assert(info.Defaults.contains(f.field_name));
-        info.InformIfMissing.insert(f.field_name);
+        assert(info.default_values.contains(f.field_name));
+        info.inform_if_missing.insert(f.field_name);
     }
 }
 

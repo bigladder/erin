@@ -2922,7 +2922,7 @@ void Simulation_Run(Simulation& s,
         {
             if (verbose)
             {
-                Log_Debug(log, fmt::format("... Occurrence #{}", occIdx));
+                Log_Debug(log, fmt::format("... Occurrence #{}", occIdx + 1));
             }
             std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
                 CreateFailureSchedules(s.ComponentFailureModes.ComponentIds,

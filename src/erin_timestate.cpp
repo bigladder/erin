@@ -289,7 +289,18 @@ double TimeState_CalcAvailability_s(std::vector<TimeState> const& sch, double en
     double result = endTime_s;
     for (size_t i = 0; i < sch.size(); ++i)
     {
-        double dt = (i + 1) < sch.size() ? sch[i + 1].time - sch[i].time : endTime_s - sch[i].time;
+        double t = sch[i].time;
+        if (t >= endTime_s)
+        {
+            break;
+        }
+        double next_time = endTime_s;
+        if ((i + 1) < sch.size() && sch[i + 1].time < endTime_s)
+        {
+            next_time = sch[i + 1].time;
+        }
+        double dt = next_time - t;
+        assert(dt >= 0.0);
         if (!sch[i].state)
         {
             result -= dt;
@@ -355,8 +366,9 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
                 }
             }
         }
-        TimeState const nextTs =
-            (i + 1) < tss.size() ? tss[i + 1] : TimeState {finalTime_s, ts.state, {}, {}};
+        TimeState const nextTs = (i + 1) < tss.size() && tss[i + 1].time <= finalTime_s
+                                     ? tss[i + 1]
+                                     : TimeState {finalTime_s, ts.state, {}, {}};
         double dt = nextTs.time - ts.time;
         if (dt <= 0.0)
         {

@@ -1478,44 +1478,43 @@ void RunVariableEfficiencyMoverBackward(Model const& m,
 
 void RunSwitchBackward(Model const& m, SimulationState& ss, size_t outflowConnIdx, size_t switchIdx)
 {
+    assert(switchIdx < m.Switches.size());
     assert(switchIdx < ss.SwitchStates.size());
     auto switchState = ss.SwitchStates[switchIdx];
     auto const& theSwitch = m.Switches[switchIdx];
-    assert(theSwitch.InflowConnPrimary < m.Connections.size());
-    auto inflow0ConnIdx = theSwitch.InflowConnPrimary;
-    auto inflow1ConnIdx = theSwitch.InflowConnSecondary;
+    assert(theSwitch.InflowConnPrimary < ss.Flows.size());
+    assert(theSwitch.InflowConnSecondary < ss.Flows.size());
+    assert(theSwitch.OutflowConn < ss.Flows.size());
+    auto primaryInflowIdx = theSwitch.InflowConnPrimary;
+    auto secondaryInflowIdx = theSwitch.InflowConnSecondary;
     switch (switchState)
     {
     case SwitchState::Primary:
     {
-        // send request on primary
-        if (ss.Flows[inflow0ConnIdx].Requested_W != ss.Flows[outflowConnIdx].Requested_W)
+        if (ss.Flows[primaryInflowIdx].Requested_W != ss.Flows[outflowConnIdx].Requested_W)
         {
-            ss.ActiveConnectionsBack.insert(inflow0ConnIdx);
+            ss.ActiveConnectionsBack.insert(primaryInflowIdx);
         }
-        ss.Flows[inflow0ConnIdx].Requested_W = ss.Flows[outflowConnIdx].Requested_W;
-        // set request on secondary to 0
-        if (ss.Flows[inflow0ConnIdx].Requested_W != 0)
+        ss.Flows[primaryInflowIdx].Requested_W = ss.Flows[outflowConnIdx].Requested_W;
+        if (ss.Flows[secondaryInflowIdx].Requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(inflow1ConnIdx);
+            ss.ActiveConnectionsBack.insert(secondaryInflowIdx);
         }
-        ss.Flows[inflow1ConnIdx].Requested_W = 0;
+        ss.Flows[secondaryInflowIdx].Requested_W = 0;
     }
     break;
     case SwitchState::Secondary:
     {
-        // send request on secondary
-        if (ss.Flows[inflow0ConnIdx].Requested_W != 0)
+        if (ss.Flows[primaryInflowIdx].Requested_W != 0)
         {
-            ss.ActiveConnectionsBack.insert(inflow0ConnIdx);
+            ss.ActiveConnectionsBack.insert(primaryInflowIdx);
         }
-        ss.Flows[inflow0ConnIdx].Requested_W = 0;
-        // set request on primary to 0
-        if (ss.Flows[inflow1ConnIdx].Requested_W != ss.Flows[outflowConnIdx].Requested_W)
+        ss.Flows[primaryInflowIdx].Requested_W = 0;
+        if (ss.Flows[secondaryInflowIdx].Requested_W != ss.Flows[outflowConnIdx].Requested_W)
         {
-            ss.ActiveConnectionsBack.insert(inflow1ConnIdx);
+            ss.ActiveConnectionsBack.insert(secondaryInflowIdx);
         }
-        ss.Flows[inflow1ConnIdx].Requested_W = ss.Flows[outflowConnIdx].Requested_W;
+        ss.Flows[secondaryInflowIdx].Requested_W = ss.Flows[outflowConnIdx].Requested_W;
     }
     break;
     default:
@@ -2006,12 +2005,15 @@ void RunStoreForward(Model& model, SimulationState& ss, size_t inflowConnIdx, si
 void RunSwitchForward(Model& model, SimulationState& ss, size_t inflowConnIdx, size_t switchIdx)
 {
     assert(switchIdx < model.Switches.size());
-    auto const& theSwitch = model.Switches[switchIdx];
     assert(switchIdx < ss.SwitchStates.size());
+    auto const& theSwitch = model.Switches[switchIdx];
     auto switchState = ss.SwitchStates[switchIdx];
     auto inflow0ConnIdx = theSwitch.InflowConnPrimary;
     auto inflow1ConnIdx = theSwitch.InflowConnSecondary;
     auto outflowConnIdx = theSwitch.OutflowConn;
+    assert(inflow0ConnIdx < ss.Flows.size());
+    assert(inflow1ConnIdx < ss.Flows.size());
+    assert(outflowConnIdx < ss.Flows.size());
     if (switchState == SwitchState::Primary && inflowConnIdx == inflow0ConnIdx)
     {
         if (ss.Flows[outflowConnIdx].Available_W != ss.Flows[inflow0ConnIdx].Available_W)
@@ -2960,14 +2962,17 @@ bool RunSwitchLogic(Model const& model, SimulationState& ss)
     bool result = false;
     for (size_t switchIdx = 0; switchIdx < ss.SwitchStates.size(); ++switchIdx)
     {
-        auto switchState = ss.SwitchStates[switchIdx];
         assert(switchIdx < model.Switches.size());
+        assert(switchIdx < ss.SwitchStates.size());
+        auto switchState = ss.SwitchStates[switchIdx];
         auto const& theSwitch = model.Switches[switchIdx];
         auto in0Conn = theSwitch.InflowConnPrimary;
         auto in1Conn = theSwitch.InflowConnSecondary;
         auto outConn = theSwitch.OutflowConn;
         assert(in0Conn < ss.Flows.size());
-        bool primaryIsSufficient = ss.Flows[in0Conn].Available_W >= ss.Flows[in0Conn].Requested_W;
+        assert(in1Conn < ss.Flows.size());
+        assert(outConn < ss.Flows.size());
+        bool primaryIsSufficient = ss.Flows[in0Conn].Available_W >= ss.Flows[outConn].Requested_W;
         switch (switchState)
         {
         case SwitchState::Primary:

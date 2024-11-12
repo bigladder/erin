@@ -30,6 +30,22 @@ Once installed, call `task --list` to list available tasks.
 
 NOTE: to install Taskfile, please follow the instructions on the website above.
 
+The taskfile uses .env files to set absolute paths to the executables
+depending on how you plan to build/use ERIN and what operating system you're on.
+A template file called `example.env` appears in this directory.
+Simply copy that file to `.env.debug` and `.env.release` and then set the
+appropriate paths inside of those files to correspond to the executable locations
+for the given environment. For example, on Mac OS, for release, we might
+set `ERIN=/Users/user/projects/erin/build/bin/erin`.
+
+You can then switch your environment using the following:
+
+`ENV=release task show-env`
+
+OR (on Windows):
+
+`task show-env ENV=release`
+
 ## Clang Format
 
 This project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html).

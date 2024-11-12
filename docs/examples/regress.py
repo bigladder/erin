@@ -41,8 +41,8 @@ elif platform.system() == 'Darwin' or platform.system() == 'Linux':
 else:
     print(f"Unhandled platform, '{platform.system()}'")
     sys.exit(1)
-BIN_DIR = BIN_DIR.resolve()
 print(f"BINARY DIR: {BIN_DIR}")
+print(f"CLI_EXE:    {CLI_EXE}")
 
 
 if len(ALL_TESTS) < 1:

@@ -16,3 +16,4 @@ out/
 benchmark*.*
 benchmark/
 .mypy_cache/
+.env*

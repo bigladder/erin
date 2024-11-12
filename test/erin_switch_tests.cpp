@@ -75,9 +75,9 @@ TEST(Switch, TestSimulateSwitchWithLogic)
     auto src1 = Model_AddConstantSource(m, 250, 0, "src1");
     auto switchIdx = Model_AddSwitch(m, 0, "ATS");
     auto load = Model_AddConstantLoad(m, 200);
-    auto src0ToSwitch = Model_AddConnection(m, src0, 0, switchIdx, 0, true);
-    auto src1ToSwitch = Model_AddConnection(m, src1, 0, switchIdx, 1, true);
-    auto switchToLoad = Model_AddConnection(m, switchIdx, 0, load, 0, true);
+    auto src0ToSwitch = Model_AddConnection(m, src0, 0, switchIdx, 0, 0, true);
+    auto src1ToSwitch = Model_AddConnection(m, src1, 0, switchIdx, 1, 0, true);
+    auto switchToLoad = Model_AddConnection(m, switchIdx, 0, load, 0, 0, true);
     auto results = Simulate(m, false, true);
     EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
     EXPECT_EQ(results[0].Time, 0.0) << "time must equal 0.0";

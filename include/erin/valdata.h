@@ -113,8 +113,7 @@ struct FieldInfo
 
 struct ValidationInfo
 {
-    // TODO: rename as FieldToType
-    std::unordered_map<std::string, InputType> type_map;
+    std::unordered_map<std::string, InputType> field_to_type;
     std::unordered_set<std::string> required_fields;
     std::unordered_set<std::string> optional_fields;
     std::unordered_map<std::string, std::unordered_set<std::string>> enum_map;

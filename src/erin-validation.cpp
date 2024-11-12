@@ -206,10 +206,10 @@ std::optional<InputSection> String_toInputSection(std::string tag)
 
 void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f)
 {
-    assert(!info.type_map.contains(f.field_name) &&
+    assert(!info.field_to_type.contains(f.field_name) &&
            "attempt to add same field definition more than once to one "
            "section");
-    info.type_map.insert({f.field_name, f.input_type});
+    info.field_to_type.insert({f.field_name, f.input_type});
     if (f.input_type == InputType::enum_string)
     {
         assert(f.enum_values.size() > 0);

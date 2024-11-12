@@ -102,9 +102,9 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 continue;
             }
         }
-        assert(validationInfo.type_map.contains(key));
+        assert(validationInfo.field_to_type.contains(key));
         // check types
-        InputType expectedType = validationInfo.type_map.at(key);
+        InputType expectedType = validationInfo.field_to_type.at(key);
         InputValue v;
         v.input_type = expectedType;
         switch (expectedType)
@@ -124,7 +124,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
                 errors.push_back(fmt::format("{}: {}", tableName, oss.str()));
                 return out;
             }
-            if (validationInfo.type_map.at(key) == InputType::enum_string)
+            if (validationInfo.field_to_type.at(key) == InputType::enum_string)
             {
                 std::string const& valAsStr = value.as_string();
                 if (!validationInfo.enum_map.contains(key))
@@ -448,7 +448,7 @@ TOMLTable_parse_with_validation(std::unordered_map<toml::key, toml::value> const
             continue;
         }
         InputValue iv;
-        InputType itype = validationInfo.type_map.at(defkv.first);
+        InputType itype = validationInfo.field_to_type.at(defkv.first);
         iv.input_type = itype;
         switch (itype)
         {

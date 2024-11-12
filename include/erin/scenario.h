@@ -28,17 +28,17 @@ struct ScenarioDict
     std::vector<std::optional<size_t>> max_occurrence;
 };
 
-std::optional<size_t> ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::string const& tag);
+std::optional<size_t> get_scenario_by_tag(ScenarioDict& sd, std::string const& tag);
 
-size_t ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag);
+size_t register_scenario(ScenarioDict& sd, std::string const& tag);
 
-size_t ScenarioDict_RegisterScenario(ScenarioDict& sd,
+size_t register_scenario(ScenarioDict& sd,
                                      std::string const& tag,
-                                     size_t occurrenceDistId,
+                                     size_t occurrence_distribution_id,
                                      double duration,
-                                     TimeUnit timeUnit,
-                                     std::optional<size_t> maxOccurrences,
-                                     double timeOffset);
+                                     TimeUnit time_unit,
+                                     std::optional<size_t> maximum_occurrences,
+                                     double time_offset);
 
 std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
                                           DistributionSystem const& ds,

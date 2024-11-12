@@ -11,7 +11,7 @@
 
 namespace erin
 {
-std::optional<size_t> ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::string const& tag)
+std::optional<size_t> get_scenario_by_tag(ScenarioDict& sd, std::string const& tag)
 {
     for (size_t i = 0; i < sd.tag.size(); ++i)
     {
@@ -23,7 +23,7 @@ std::optional<size_t> ScenarioDict_GetScenarioByTag(ScenarioDict& sd, std::strin
     return {};
 }
 
-size_t ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag)
+size_t register_scenario(ScenarioDict& sd, std::string const& tag)
 {
     size_t id = sd.tag.size();
     for (size_t i = 0; i < id; ++i)
@@ -50,7 +50,7 @@ size_t ScenarioDict_RegisterScenario(ScenarioDict& sd, std::string const& tag)
     return id;
 }
 
-size_t ScenarioDict_RegisterScenario(ScenarioDict& sd,
+size_t register_scenario(ScenarioDict& sd,
                                      std::string const& tag,
                                      size_t occurrenceDistId,
                                      double duration,
@@ -168,7 +168,7 @@ std::optional<size_t> ParseSingleScenario(ScenarioDict& sd,
             return {};
         }
     }
-    size_t id = ScenarioDict_RegisterScenario(sd,
+    size_t id = register_scenario(sd,
                                               tag,
                                               ds.lookup_dist_by_tag(maybeOccurrenceDist.value()),
                                               maybeDuration.value(),

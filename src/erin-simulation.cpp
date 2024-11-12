@@ -54,7 +54,7 @@ size_t Simulation_RegisterFlow(Simulation& s, std::string const& flowTag)
 
 size_t Simulation_RegisterScenario(Simulation& s, std::string const& scenarioTag)
 {
-    return ScenarioDict_RegisterScenario(s.ScenarioMap, scenarioTag);
+    return register_scenario(s.ScenarioMap, scenarioTag);
 }
 
 size_t Simulation_RegisterIntensity(Simulation& s, std::string const& tag)
@@ -1136,7 +1136,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
             {
                 std::string const& scenarioName = pair.first;
                 std::optional<size_t> maybeScenarioId =
-                    ScenarioDict_GetScenarioByTag(s.ScenarioMap, scenarioName);
+                    get_scenario_by_tag(s.ScenarioMap, scenarioName);
                 if (!maybeScenarioId.has_value())
                 {
                     Log_error(log,

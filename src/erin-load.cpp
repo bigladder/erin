@@ -73,8 +73,8 @@ ParseSingleLoadExplicit(std::unordered_map<std::string, InputValue> const& table
         time_to_seconds(1.0, timeUnit),
         power_to_watts(1.0, rateUnit));
     Load load {
-        .Tag = tag,
-        .TimeAndLoads = std::move(timeRatePairs),
+        .tag = tag,
+        .time_and_loads = std::move(timeRatePairs),
     };
     return load;
 }
@@ -154,8 +154,8 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
     inputDataFile.close();
     timeRatePairs = trps;
     Load load {};
-    load.Tag = tag;
-    load.TimeAndLoads = std::move(timeRatePairs);
+    load.tag = tag;
+    load.time_and_loads = std::move(timeRatePairs);
     return load;
 }
 
@@ -248,9 +248,9 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
     for (auto& loadEntry : loadEntries)
     {
         Load load;
-        load.Tag = loadEntry.name;
-        load.TimeAndLoads = {};
-        load.TimeAndLoads.reserve(loadEntry.nItems);
+        load.tag = loadEntry.name;
+        load.time_and_loads = {};
+        load.time_and_loads.reserve(loadEntry.nItems);
         loads.push_back(load);
     }
     std::size_t iRow = 0;
@@ -271,7 +271,7 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
                 ta.Time_s = time_to_seconds(std::stod(sRow[iCol]), loadEntry.timeUnit);
                 ta.Amount_W = static_cast<flow_t>(
                     power_to_watts(std::stod(sRow[iCol + 1]), loadEntry.rateUnit));
-                loads[iLoad]->TimeAndLoads.push_back(ta);
+                loads[iLoad]->time_and_loads.push_back(ta);
             }
             iCol += 2;
             ++iLoad;
@@ -371,9 +371,9 @@ bool MaybePushLoad(std::optional<Load> maybeLoad,
     bool loadGood = true;
     for (auto& load : loads)
     {
-        if (load.Tag == maybeLoad->Tag)
+        if (load.tag == maybeLoad->tag)
         {
-            write_error_message(tableName, "load " + maybeLoad->Tag + " already exists");
+            write_error_message(tableName, "load " + maybeLoad->tag + " already exists");
             loadGood = false;
             break;
         }
@@ -476,11 +476,11 @@ std::optional<std::vector<Load>> parse_loads(toml::table const& table,
 std::ostream& operator<<(std::ostream& os, Load const& load)
 {
     os << "Load{"
-       << "Tag=\"" << load.Tag << "\"; "
+       << "Tag=\"" << load.tag << "\"; "
        << "TimeAndLoads=[";
-    for (auto it = load.TimeAndLoads.cbegin(); it != load.TimeAndLoads.cend(); ++it)
+    for (auto it = load.time_and_loads.cbegin(); it != load.time_and_loads.cend(); ++it)
     {
-        os << (it == load.TimeAndLoads.cbegin() ? "" : ", ") << *it;
+        os << (it == load.time_and_loads.cbegin() ? "" : ", ") << *it;
     }
     os << "]}";
     return os;
@@ -500,13 +500,13 @@ int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsF
     bool first = true;
     for (auto it = loads.cbegin(); it != loads.cend(); ++it)
     {
-        std::string tag = it->Tag;
+        std::string tag = it->tag;
         if (!first)
         {
             out << ",";
         }
         first = false;
-        out << it->Tag << "," << it->TimeAndLoads.size();
+        out << it->tag << "," << it->time_and_loads.size();
     }
     out << "\n";
 
@@ -514,7 +514,7 @@ int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsF
     first = true;
     for (auto it = loads.cbegin(); it != loads.cend(); ++it)
     {
-        std::string tag = it->Tag;
+        std::string tag = it->tag;
         if (!first)
         {
             out << ",";
@@ -529,7 +529,7 @@ int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsF
     std::size_t maxRows = 0;
     for (auto it = loads.cbegin(); it != loads.cend(); ++it)
     {
-        auto nRows = it->TimeAndLoads.size();
+        auto nRows = it->time_and_loads.size();
         if (nRows > maxRows)
         {
             maxRows = nRows;
@@ -542,7 +542,7 @@ int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsF
         first = true;
         for (auto it = loads.cbegin(); it != loads.cend(); ++it)
         {
-            auto& table = it->TimeAndLoads;
+            auto& table = it->time_and_loads;
             if (!first)
             {
                 out << ",";

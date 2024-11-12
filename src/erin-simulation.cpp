@@ -133,8 +133,8 @@ void Simulation_RegisterAllLoads(Simulation& s, std::vector<Load> const& loads)
     s.LoadMap.loads.reserve(numLoads);
     for (size_t i = 0; i < numLoads; ++i)
     {
-        s.LoadMap.tags.push_back(loads[i].Tag);
-        s.LoadMap.loads.push_back(loads[i].TimeAndLoads);
+        s.LoadMap.tags.push_back(loads[i].tag);
+        s.LoadMap.loads.push_back(loads[i].time_and_loads);
     }
 }
 

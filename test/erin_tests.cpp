@@ -1526,7 +1526,7 @@ TEST(Erin, Test21)
     std::map<size_t, size_t> count_by_frag_mode_id;
     std::map<size_t, double> time_by_fail_mode_id;
     std::map<size_t, double> time_by_frag_mode_id;
-    TimeState_CountAndTimeFailureEvents(input,
+    count_and_time_failure_events(input,
                                         200.0,
                                         count_by_fail_mode_id,
                                         count_by_frag_mode_id,
@@ -1569,7 +1569,7 @@ TEST(Erin, Test21)
         {20.0, true, {}, {}},
         {100.0, false, {}, {1}},
     };
-    TimeState_CountAndTimeFailureEvents(input,
+    count_and_time_failure_events(input,
                                         180.0,
                                         count_by_fail_mode_id,
                                         count_by_frag_mode_id,

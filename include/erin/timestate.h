@@ -32,24 +32,24 @@ std::vector<TimeState> clip(std::vector<TimeState> const& input,
                                       double end_time_s,
                                       bool rezero_time);
 
-std::vector<TimeState> TimeState_Translate(std::vector<TimeState> const& input, double dt_s);
+std::vector<TimeState> translate(std::vector<TimeState> const& input, double dt_s);
 
-TimeState TimeState_Copy(TimeState const& ts);
+TimeState copy(TimeState const& ts);
 
-double TimeState_CalcAvailability_s(std::vector<TimeState> const& tss, double endTime_s);
+double calculate_availability_s(std::vector<TimeState> const& tss, double endTime_s);
 
-TimeState TimeState_GetActiveTimeState(std::vector<TimeState> const& tss, double time_s);
+TimeState get_active_time_state(std::vector<TimeState> const& tss, double time_s);
 
-void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
-                                         double finalTime_s,
-                                         std::map<size_t, size_t>& eventCountsByFailureModeId,
-                                         std::map<size_t, size_t>& eventCountsByFragilityModeId,
-                                         std::map<size_t, double>& timeByFailureModeId_s,
-                                         std::map<size_t, double>& timeByFragilityModeId_s);
+void count_and_time_failure_events(std::vector<TimeState> const& tss,
+                                         double final_time_s,
+                                         std::map<size_t, size_t>& event_cunts_by_failure_mode_id,
+                                         std::map<size_t, size_t>& event_counts_by_fragility_mode_id,
+                                         std::map<size_t, double>& time_by_failure_mode_id_s,
+                                         std::map<size_t, double>& time_by_fragility_mode_id_s);
 
-void TimeState_Print(std::vector<TimeState> const& tss);
+void print(std::vector<TimeState> const& tss);
 
-std::string TimeState_ToString(TimeState const& ts);
+std::string to_string(TimeState const& ts);
 
 } // namespace erin
 

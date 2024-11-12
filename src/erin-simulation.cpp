@@ -1819,7 +1819,7 @@ void WriteResultsToEventFile(std::ofstream& out,
             {
                 if (relSchByCompId.contains(i))
                 {
-                    TimeState ts = TimeState_GetActiveTimeState(relSchByCompId[i], r.time_s);
+                    TimeState ts = get_active_time_state(relSchByCompId[i], r.time_s);
                     if (ts.state)
                     {
                         out << ",available";
@@ -2967,7 +2967,7 @@ void Simulation_run(Simulation& s,
                     Log_info(log, fmt::format("Schedule for {}[{}]", tag, pair.first));
                     for (auto const& ts : pair.second)
                     {
-                        Log_debug(log, fmt::format("- {}", TimeState_ToString(ts)));
+                        Log_debug(log, fmt::format("- {}", to_string(ts)));
                     }
                 }
             }

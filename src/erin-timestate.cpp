@@ -72,7 +72,7 @@ std::vector<TimeState> combine(std::vector<TimeState> const& a,
         result.reserve(b.size());
         for (size_t i = 0; i < b.size(); ++i)
         {
-            result.push_back(TimeState_Copy(b.at(i)));
+            result.push_back(copy(b.at(i)));
         }
         return result;
     }
@@ -81,7 +81,7 @@ std::vector<TimeState> combine(std::vector<TimeState> const& a,
         result.reserve(a.size());
         for (size_t i = 0; i < a.size(); ++i)
         {
-            result.push_back(TimeState_Copy(a.at(i)));
+            result.push_back(copy(a.at(i)));
         }
         return result;
     }
@@ -236,11 +236,11 @@ std::vector<TimeState> clip(std::vector<TimeState> const& input,
         {
             if (result.size() == 0 && ts.time > startTime_s && foundFirst)
             {
-                TimeState firstTs = TimeState_Copy(input[firstIdx]);
+                TimeState firstTs = copy(input[firstIdx]);
                 firstTs.time = rezeroTime ? 0.0 : startTime_s;
                 result.push_back(std::move(firstTs));
             }
-            TimeState newTs = TimeState_Copy(input[i]);
+            TimeState newTs = copy(input[i]);
             if (rezeroTime)
             {
                 newTs.time = newTs.time - startTime_s;
@@ -251,7 +251,7 @@ std::vector<TimeState> clip(std::vector<TimeState> const& input,
     return result;
 }
 
-std::vector<TimeState> TimeState_Translate(std::vector<TimeState> const& input, double dt_s)
+std::vector<TimeState> translate(std::vector<TimeState> const& input, double dt_s)
 {
     if (dt_s == 0.0)
     {
@@ -261,14 +261,14 @@ std::vector<TimeState> TimeState_Translate(std::vector<TimeState> const& input, 
     result.reserve(input.size());
     for (auto const& ts : input)
     {
-        TimeState newTs = TimeState_Copy(ts);
+        TimeState newTs = copy(ts);
         newTs.time -= dt_s;
         result.push_back(std::move(newTs));
     }
     return result;
 }
 
-TimeState TimeState_Copy(TimeState const& ts)
+TimeState copy(TimeState const& ts)
 {
     TimeState result;
     result.time = ts.time;
@@ -284,7 +284,7 @@ TimeState TimeState_Copy(TimeState const& ts)
     return result;
 }
 
-double TimeState_CalcAvailability_s(std::vector<TimeState> const& sch, double endTime_s)
+double calculate_availability_s(std::vector<TimeState> const& sch, double endTime_s)
 {
     double result = endTime_s;
     for (size_t i = 0; i < sch.size(); ++i)
@@ -309,7 +309,7 @@ double TimeState_CalcAvailability_s(std::vector<TimeState> const& sch, double en
     return result;
 }
 
-TimeState TimeState_GetActiveTimeState(std::vector<TimeState> const& tss, double time_s)
+TimeState get_active_time_state(std::vector<TimeState> const& tss, double time_s)
 {
     TimeState result {time_s, true, {}, {}};
     for (auto const& ts : tss)
@@ -330,7 +330,7 @@ TimeState TimeState_GetActiveTimeState(std::vector<TimeState> const& tss, double
     return result;
 }
 
-void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
+void count_and_time_failure_events(std::vector<TimeState> const& tss,
                                          double finalTime_s,
                                          std::map<size_t, size_t>& eventCountsByFailureModeId,
                                          std::map<size_t, size_t>& eventCountsByFragilityModeId,
@@ -427,7 +427,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
     }
 }
 
-void TimeState_Print(std::vector<TimeState> const& tss)
+void print(std::vector<TimeState> const& tss)
 {
     for (TimeState const& ts : tss)
     {
@@ -435,7 +435,7 @@ void TimeState_Print(std::vector<TimeState> const& tss)
     }
 }
 
-std::string TimeState_ToString(TimeState const& ts)
+std::string to_string(TimeState const& ts)
 {
     std::ostringstream oss;
     oss << ts;

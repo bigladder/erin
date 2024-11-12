@@ -1144,118 +1144,118 @@ InputValidationMap setup_global_validation_info()
             {
             case InputSection::simulation_info:
             {
-                UpdateValidationInfoByField(v.SimulationInfo, f);
+                UpdateValidationInfoByField(v.simulation_info, f);
             }
             break;
             case InputSection::loads_01explicit:
             {
-                UpdateValidationInfoByField(v.Load_01Explicit, f);
+                UpdateValidationInfoByField(v.load_explicit, f);
             }
             break;
             case InputSection::loads_02file_based:
             {
-                UpdateValidationInfoByField(v.Load_02FileBased, f);
+                UpdateValidationInfoByField(v.load_file_based, f);
             }
             break;
             case InputSection::components_constant_load:
             {
-                UpdateValidationInfoByField(v.Comp.constant_load, f);
+                UpdateValidationInfoByField(v.component.constant_load, f);
             }
             break;
             case InputSection::components_load:
             {
-                UpdateValidationInfoByField(v.Comp.schedule_based_load, f);
+                UpdateValidationInfoByField(v.component.schedule_based_load, f);
             }
             break;
             case InputSection::components_source:
             {
-                UpdateValidationInfoByField(v.Comp.constant_source, f);
+                UpdateValidationInfoByField(v.component.constant_source, f);
             }
             break;
             case InputSection::components_uncontrolled_source:
             {
-                UpdateValidationInfoByField(v.Comp.schedule_based_source, f);
+                UpdateValidationInfoByField(v.component.schedule_based_source, f);
             }
             break;
             case InputSection::components_const_eff_converter:
             {
-                UpdateValidationInfoByField(v.Comp.constant_efficiency_converter, f);
+                UpdateValidationInfoByField(v.component.constant_efficiency_converter, f);
             }
             break;
             case InputSection::components_variable_eff_converter:
             {
-                UpdateValidationInfoByField(v.Comp.variable_efficiency_converter, f);
+                UpdateValidationInfoByField(v.component.variable_efficiency_converter, f);
             }
             break;
             case InputSection::components_mux:
             {
-                UpdateValidationInfoByField(v.Comp.mux, f);
+                UpdateValidationInfoByField(v.component.mux, f);
             }
             break;
             case InputSection::components_store:
             {
-                UpdateValidationInfoByField(v.Comp.store, f);
+                UpdateValidationInfoByField(v.component.store, f);
             }
             break;
             case InputSection::components_pass_through:
             {
-                UpdateValidationInfoByField(v.Comp.pass_through, f);
+                UpdateValidationInfoByField(v.component.pass_through, f);
             }
             break;
             case InputSection::components_mover:
             {
-                UpdateValidationInfoByField(v.Comp.mover, f);
+                UpdateValidationInfoByField(v.component.mover, f);
             }
             break;
             case InputSection::components_variable_eff_mover:
             {
-                UpdateValidationInfoByField(v.Comp.variable_efficiency_mover, f);
+                UpdateValidationInfoByField(v.component.variable_efficiency_mover, f);
             }
             break;
             case InputSection::components_switch:
             {
-                UpdateValidationInfoByField(v.Comp.transfer_switch, f);
+                UpdateValidationInfoByField(v.component.transfer_switch, f);
             }
             break;
             case InputSection::dist_fixed:
             {
-                UpdateValidationInfoByField(v.Dist.fixed, f);
+                UpdateValidationInfoByField(v.distribution.fixed, f);
             }
             break;
             case InputSection::dist_normal:
             {
-                UpdateValidationInfoByField(v.Dist.normal, f);
+                UpdateValidationInfoByField(v.distribution.normal, f);
             }
             break;
             case InputSection::dist_01quantile_table_from_file:
             {
-                UpdateValidationInfoByField(v.Dist.quantile_table_from_file, f);
+                UpdateValidationInfoByField(v.distribution.quantile_table_from_file, f);
             }
             break;
             case InputSection::dist_02quantile_table_explicit:
             {
-                UpdateValidationInfoByField(v.Dist.quantile_table_explicit, f);
+                UpdateValidationInfoByField(v.distribution.quantile_table_explicit, f);
             }
             break;
             case InputSection::dist_uniform:
             {
-                UpdateValidationInfoByField(v.Dist.uniform, f);
+                UpdateValidationInfoByField(v.distribution.uniform, f);
             }
             break;
             case InputSection::dist_weibull:
             {
-                UpdateValidationInfoByField(v.Dist.weibull, f);
+                UpdateValidationInfoByField(v.distribution.weibull, f);
             }
             break;
             // TODO: add in all the other distributions
             case InputSection::network:
             {
-                UpdateValidationInfoByField(v.Network, f);
+                UpdateValidationInfoByField(v.network, f);
             }
             break;
             case InputSection::scenarios:
             {
-                UpdateValidationInfoByField(v.Scenario, f);
+                UpdateValidationInfoByField(v.scenario, f);
             }
             break;
             default:

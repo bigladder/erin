@@ -1198,27 +1198,27 @@ Simulation_read_from_toml(toml::value const& v,
 {
     Simulation s = {};
     Simulation_Init(s);
-    auto simInfoResult = Simulation_ParseSimulationInfo(s, v, validationInfo.SimulationInfo, log);
+    auto simInfoResult = Simulation_ParseSimulationInfo(s, v, validationInfo.simulation_info, log);
     if (simInfoResult == Result::failure)
     {
         Log_error(log, "simulation_info", "problem parsing...");
         return {};
     }
     auto loadsResult = Simulation_ParseLoads(
-        s, v, validationInfo.Load_01Explicit, validationInfo.Load_02FileBased, log);
+        s, v, validationInfo.load_explicit, validationInfo.load_file_based, log);
     if (loadsResult == Result::failure)
     {
         Log_error(log, "loads", "problem parsing...");
         return {};
     }
     auto compResult =
-        Simulation_ParseComponents(s, v, validationInfo.Comp, componentTagsInUse, log);
+        Simulation_ParseComponents(s, v, validationInfo.component, componentTagsInUse, log);
     if (compResult == Result::failure)
     {
         Log_error(log, "components", "problem parsing...");
         return {};
     }
-    auto distResult = Simulation_ParseDistributions(s, v, validationInfo.Dist, log);
+    auto distResult = Simulation_ParseDistributions(s, v, validationInfo.distribution, log);
     if (distResult == Result::failure)
     {
         Log_error(log, "dist", "problem parsing...");

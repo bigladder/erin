@@ -517,8 +517,8 @@ CLI::App* add_pack_loads(CLI::App& app)
         ifs.close();
         auto const& load_table = data.at("loads").as_table();
         auto validation_info = erin::setup_global_validation_info();
-        erin::ValidationInfo explicit_validation = validation_info.Load_01Explicit;
-        erin::ValidationInfo file_validation = validation_info.Load_02FileBased;
+        erin::ValidationInfo explicit_validation = validation_info.load_explicit;
+        erin::ValidationInfo file_validation = validation_info.load_file_based;
         auto maybeLoads = parse_loads(load_table, explicit_validation, file_validation, log);
         if (!maybeLoads.has_value())
         {

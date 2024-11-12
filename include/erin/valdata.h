@@ -150,13 +150,13 @@ struct DistributionValidationMap
 
 struct InputValidationMap
 {
-    ComponentValidationMap Comp;
-    ValidationInfo Load_01Explicit;
-    ValidationInfo Load_02FileBased;
-    DistributionValidationMap Dist;
-    ValidationInfo SimulationInfo;
-    ValidationInfo Network;
-    ValidationInfo Scenario;
+    ComponentValidationMap component;
+    ValidationInfo load_explicit;
+    ValidationInfo load_file_based;
+    DistributionValidationMap distribution;
+    ValidationInfo simulation_info;
+    ValidationInfo network;
+    ValidationInfo scenario;
 };
 
 } // namespace erin

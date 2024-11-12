@@ -753,9 +753,9 @@ Result parse_single_component(Simulation& s,
             std::string const& fmTag = fms[fmIdx].as_string();
             bool existingFailureMode = false;
             size_t fmId;
-            for (fmId = 0; fmId < s.FailureModes.tag.size(); ++fmId)
+            for (fmId = 0; fmId < s.failure_modes.tag.size(); ++fmId)
             {
-                if (s.FailureModes.tag[fmId] == fmTag)
+                if (s.failure_modes.tag[fmId] == fmTag)
                 {
                     existingFailureMode = true;
                     break;
@@ -763,14 +763,14 @@ Result parse_single_component(Simulation& s,
             }
             if (!existingFailureMode)
             {
-                fmId = s.FailureModes.tag.size();
-                s.FailureModes.tag.push_back(fmTag);
+                fmId = s.failure_modes.tag.size();
+                s.failure_modes.tag.push_back(fmTag);
                 // NOTE: add placeholder default data
-                s.FailureModes.failure_distribution_id.push_back(0);
-                s.FailureModes.repair_distribution_id.push_back(0);
+                s.failure_modes.failure_distribution_id.push_back(0);
+                s.failure_modes.repair_distribution_id.push_back(0);
             }
-            s.ComponentFailureModes.component_id.push_back(id);
-            s.ComponentFailureModes.failure_mode_id.push_back(fmId);
+            s.component_failure_modes.component_id.push_back(id);
+            s.component_failure_modes.failure_mode_id.push_back(fmId);
         }
     }
     if (table.contains("fragility_modes"))
@@ -792,9 +792,9 @@ Result parse_single_component(Simulation& s,
             std::string const& fmTag = fms[fmIdx].as_string();
             bool existingFragilityMode = false;
             size_t fmId;
-            for (fmId = 0; fmId < s.FragilityModes.tag.size(); ++fmId)
+            for (fmId = 0; fmId < s.fragility_modes.tag.size(); ++fmId)
             {
-                if (s.FragilityModes.tag[fmId] == fmTag)
+                if (s.fragility_modes.tag[fmId] == fmTag)
                 {
                     existingFragilityMode = true;
                     break;
@@ -802,14 +802,14 @@ Result parse_single_component(Simulation& s,
             }
             if (!existingFragilityMode)
             {
-                fmId = s.FragilityModes.tag.size();
-                s.FragilityModes.tag.push_back(fmTag);
+                fmId = s.fragility_modes.tag.size();
+                s.fragility_modes.tag.push_back(fmTag);
                 // NOTE: add placeholder default data
-                s.FragilityModes.fragility_curve_id.push_back(0);
-                s.FragilityModes.repair_distribution_id.push_back({});
+                s.fragility_modes.fragility_curve_id.push_back(0);
+                s.fragility_modes.repair_distribution_id.push_back({});
             }
-            s.ComponentFragilities.component_id.push_back(id);
-            s.ComponentFragilities.fragility_mode_id.push_back(fmId);
+            s.component_fragilities.component_id.push_back(id);
+            s.component_fragilities.fragility_mode_id.push_back(fmId);
         }
     }
     if (table.contains("initial_age"))

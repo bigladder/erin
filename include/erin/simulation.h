@@ -31,15 +31,15 @@ struct Simulation
     LoadDict load_map;
     SimulationInfo info;
     Model the_model;
-    std::vector<LinearFragilityCurve> LinearFragilityCurves;
-    std::vector<TabularFragilityCurve> TabularFragilityCurves;
-    IntensityDict Intensities;
-    ScenarioIntensityDict ScenarioIntensities;
-    FragilityCurveDict FragilityCurves;
-    ComponentFragilityModeDict ComponentFragilities;
-    FragilityModeDict FragilityModes;
-    ComponentFailureModeDict ComponentFailureModes;
-    FailureModeDict FailureModes;
+    std::vector<LinearFragilityCurve> linear_fragility_curves;
+    std::vector<TabularFragilityCurve> tabular_fragility_curves;
+    IntensityDict intensities;
+    ScenarioIntensityDict scenario_intensities;
+    FragilityCurveDict fragility_curves;
+    ComponentFragilityModeDict component_fragilities;
+    FragilityModeDict fragility_modes;
+    ComponentFailureModeDict component_failure_modes;
+    FailureModeDict failure_modes;
 };
 
 std::string double_to_string(double value, unsigned int precision);

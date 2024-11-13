@@ -671,7 +671,7 @@ Result parse_simulation_info(Simulation& s,
         }
         return Result::failure;
     }
-    auto maybeSimInfo = ParseSimulationInfo(inputs);
+    auto maybeSimInfo = parse_simulation_info(inputs);
     if (!maybeSimInfo.has_value())
     {
         return Result::failure;
@@ -1935,7 +1935,7 @@ std::vector<double> determine_scenario_occurrence_times(Simulation& s, size_t sc
     size_t maxOccurrence = maybeMaxOccurrences.has_value() ? maybeMaxOccurrences.value() : 1'000;
     auto const distId = s.scenario_map.occurrence_distribution_id[scenIdx];
     double scenarioStartTime_s = 0.0;
-    double maxTime_s = time_to_seconds(s.info.MaxTime, s.info.TheTimeUnit);
+    double maxTime_s = time_to_seconds(s.info.max_time_s, s.info.time_unit);
     for (size_t i = 0; i < maxOccurrence; ++i)
     {
         scenarioStartTime_s += s.the_model.dist_sys.next_time_advance(distId);
@@ -2787,24 +2787,24 @@ void run(Simulation& s,
     FixedRandom fixedRandom;
     FixedSeries fixedSeries;
     Random fullRandom;
-    switch (s.info.TypeOfRandom)
+    switch (s.info.type_of_random)
     {
     case (RandomType::fixed_random):
     {
-        fixedRandom.fixed_value = s.info.FixedValue;
+        fixedRandom.fixed_value = s.info.fixed_value;
         s.the_model.random_function = fixedRandom;
     }
     break;
     case (RandomType::fixed_series):
     {
         fixedSeries.index = 0;
-        fixedSeries.series = s.info.Series;
+        fixedSeries.series = s.info.series;
         s.the_model.random_function = fixedSeries;
     }
     break;
     case (RandomType::random_from_seed):
     {
-        fullRandom = create_random_with_seed(s.info.Seed);
+        fullRandom = create_random_with_seed(s.info.seed);
         s.the_model.random_function = fullRandom;
     }
     break;

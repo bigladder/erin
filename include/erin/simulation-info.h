@@ -29,22 +29,21 @@ namespace erin
 // uint32_t...
 struct SimulationInfo
 {
-    std::string InputFormatVersion = "";
-    PowerUnit RateUnit;
+    std::string input_format_version = "";
+    PowerUnit rate_unit;
     // TODO: remove QuantityUnit; not in user guide; or does this set
     // defaults? if keep, use EnergyUnit
-    std::string QuantityUnit;
-    TimeUnit TheTimeUnit;
-    // TODO: change to MaxTime_s
-    double MaxTime;
-    RandomType TypeOfRandom;
-    int unsigned Seed = 0;
-    std::vector<double> Series;
-    double FixedValue = 0.0;
+    std::string quantity_unit;
+    TimeUnit time_unit;
+    double max_time_s;
+    RandomType type_of_random;
+    int unsigned seed = 0;
+    std::vector<double> series;
+    double fixed_value = 0.0;
 };
 
 std::optional<SimulationInfo>
-ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table);
+parse_simulation_info(std::unordered_map<std::string, InputValue> const& table);
 
 bool operator==(SimulationInfo const& a, SimulationInfo const& b);
 

@@ -172,7 +172,7 @@ Result parse_single_component(Simulation& s,
         lossflow = std::get<std::string>(input.at("lossflow").value);
         lossflowId = register_flow(s, lossflow);
     }
-    PowerUnit rateUnit = s.info.RateUnit;
+    PowerUnit rateUnit = s.info.rate_unit;
     if (input.contains("rate_unit"))
     {
         auto const& rateUnitStr = std::get<std::string>(input.at("rate_unit").value);

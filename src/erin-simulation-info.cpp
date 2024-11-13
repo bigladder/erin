@@ -32,11 +32,11 @@ std::unordered_set<std::string> const OptionalSimulationInfoFields {
 // NOTE: pre-requisite, table already validated
 // TODO: change this to use unordered_map<string, InputValue>
 std::optional<SimulationInfo>
-ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
+parse_simulation_info(std::unordered_map<std::string, InputValue> const& table)
 {
     SimulationInfo si {};
-    si.InputFormatVersion = std::get<std::string>(table.at("input_format_version").value);
-    if (si.InputFormatVersion != current_input_version)
+    si.input_format_version = std::get<std::string>(table.at("input_format_version").value);
+    if (si.input_format_version != current_input_version)
     {
         // TODO: replace with logger for warning
         write_warning_message("simulation_info", "input_format_version doesn't match current");
@@ -49,9 +49,9 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
         write_error_message("simulation_info", "unhandled time unit string '" + rawTimeUnit + "'");
         return {};
     }
-    si.TheTimeUnit = maybeTimeUnit.value();
+    si.time_unit = maybeTimeUnit.value();
     double rawMaxTime = std::get<double>(table.at("max_time").value);
-    si.MaxTime = rawMaxTime;
+    si.max_time_s = rawMaxTime;
     std::string rawRateUnit = std::get<std::string>(table.at("rate_unit").value);
     auto maybeRateUnit = tag_to_power_unit(rawRateUnit);
     if (!maybeRateUnit.has_value())
@@ -60,37 +60,37 @@ ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table)
         write_error_message("simulation_info", "unhandled rate unit '" + rawRateUnit + "'");
         return {};
     }
-    si.RateUnit = maybeRateUnit.value();
+    si.rate_unit = maybeRateUnit.value();
     auto rawQuantityUnit = std::get<std::string>(table.at("quantity_unit").value);
-    si.QuantityUnit = rawQuantityUnit;
+    si.quantity_unit = rawQuantityUnit;
     RandomType rtype = RandomType::random_from_clock;
     if (table.contains("fixed_random"))
     {
         double fixedValue = std::get<double>(table.at("fixed_random").value);
         rtype = RandomType::fixed_random;
-        si.FixedValue = fixedValue;
+        si.fixed_value = fixedValue;
     }
     else if (table.contains("fixed_random_series"))
     {
         std::vector<double> maybeSeries =
             std::get<std::vector<double>>(table.at("fixed_random_series").value);
         rtype = RandomType::fixed_series;
-        si.Series = std::move(maybeSeries);
+        si.series = std::move(maybeSeries);
     }
     else if (table.contains("random_seed"))
     {
         int64_t maybeSeed = std::get<int64_t>(table.at("random_seed").value);
         rtype = RandomType::random_from_seed;
-        si.Seed = static_cast<int unsigned>(maybeSeed < 0 ? (-1 * maybeSeed) : maybeSeed);
+        si.seed = static_cast<int unsigned>(maybeSeed < 0 ? (-1 * maybeSeed) : maybeSeed);
     }
-    si.TypeOfRandom = rtype;
+    si.type_of_random = rtype;
     return si;
 }
 
 bool operator==(SimulationInfo const& a, SimulationInfo const& b)
 {
-    return a.MaxTime == b.MaxTime && a.QuantityUnit == b.QuantityUnit && a.RateUnit == b.RateUnit &&
-           a.TheTimeUnit == b.TheTimeUnit;
+    return a.max_time_s == b.max_time_s && a.quantity_unit == b.quantity_unit && a.rate_unit == b.rate_unit &&
+           a.time_unit == b.time_unit;
 }
 
 bool operator!=(SimulationInfo const& a, SimulationInfo const& b) { return !(a == b); }
@@ -98,10 +98,10 @@ bool operator!=(SimulationInfo const& a, SimulationInfo const& b) { return !(a =
 std::ostream& operator<<(std::ostream& os, SimulationInfo const& s)
 {
     os << "SimulationInfo{"
-       << "MaxTime=" << s.MaxTime << "; "
-       << "TimeUnit=\"" << time_unit_to_tag(s.TheTimeUnit) << "\"; "
-       << "QuantityUnit=\"" << s.QuantityUnit << "\"; "
-       << "RateUnit=\"" << power_unit_to_string(s.RateUnit) << "\"}";
+       << "MaxTime=" << s.max_time_s << "; "
+       << "TimeUnit=\"" << time_unit_to_tag(s.time_unit) << "\"; "
+       << "QuantityUnit=\"" << s.quantity_unit << "\"; "
+       << "RateUnit=\"" << power_unit_to_string(s.rate_unit) << "\"}";
     return os;
 }
 } // namespace erin

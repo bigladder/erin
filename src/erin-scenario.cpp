@@ -99,7 +99,7 @@ std::optional<size_t> parse_single_scenario(ScenarioDict& sd,
         return {};
     }
     auto maybeTimeUnitStr =
-        TOMLTable_parse_string_with_set_responses(table, ValidTimeUnits, "time_unit", fullName);
+        TOMLTable_parse_string_with_set_responses(table, valid_time_units, "time_unit", fullName);
     if (!maybeTimeUnitStr.has_value())
     {
         return {};

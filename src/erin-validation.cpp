@@ -12,7 +12,7 @@
 namespace erin
 {
 
-std::string InputSection_toString(InputSection s)
+std::string to_string(InputSection s)
 {
     switch (s)
     {
@@ -135,7 +135,7 @@ std::string InputSection_toString(InputSection s)
     std::exit(1);
 }
 
-std::optional<InputSection> String_toInputSection(std::string tag)
+std::optional<InputSection> to_input_section(std::string tag)
 {
     if (tag == "simulation_info")
     {
@@ -204,7 +204,7 @@ std::optional<InputSection> String_toInputSection(std::string tag)
     return {};
 }
 
-void UpdateValidationInfoByField(ValidationInfo& info, FieldInfo const& f)
+void update_validation_info_by_field(ValidationInfo& info, FieldInfo const& f)
 {
     assert(!info.field_to_type.contains(f.field_name) &&
            "attempt to add same field definition more than once to one "
@@ -355,7 +355,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "W",
-            .enum_values = ValidRateUnits,
+            .enum_values = valid_rate_units,
             .aliases = {},
             .sections =
                 {
@@ -368,7 +368,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "J",
-            .enum_values = ValidQuantityUnits,
+            .enum_values = valid_quantity_units,
             .aliases = {},
             .sections =
                 {
@@ -381,7 +381,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "yr",
-            .enum_values = ValidTimeUnits,
+            .enum_values = valid_time_units,
             .aliases = {},
             .sections =
                 {
@@ -394,7 +394,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "1000.0",
-            .enum_values = ValidTimeUnits,
+            .enum_values = valid_time_units,
             .aliases = {},
             .sections =
                 {
@@ -407,7 +407,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "17",
-            .enum_values = ValidTimeUnits,
+            .enum_values = valid_time_units,
             .aliases = {},
             .sections =
                 {
@@ -489,7 +489,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "s",
-            .enum_values = ValidTimeUnits,
+            .enum_values = valid_time_units,
             .aliases = {},
             .sections =
                 {
@@ -502,7 +502,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "W",
-            .enum_values = ValidRateUnits,
+            .enum_values = valid_rate_units,
             .aliases = {},
             .sections =
                 {
@@ -536,7 +536,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "h",
-            .enum_values = ValidTimeUnits,
+            .enum_values = valid_time_units,
             .aliases = {},
             .sections = all_comp_sections,
         },
@@ -858,7 +858,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = true,
             .inform_if_missing = false,
             .default_value = "J",
-            .enum_values = ValidQuantityUnits,
+            .enum_values = valid_quantity_units,
             .aliases = {},
             .sections =
                 {
@@ -988,7 +988,7 @@ InputValidationMap setup_global_validation_info()
             .is_required = false,
             .inform_if_missing = false,
             .default_value = "",
-            .enum_values = ValidTimeUnits,
+            .enum_values = valid_time_units,
             .aliases = {},
             .sections = dist_sections,
         },
@@ -1144,124 +1144,124 @@ InputValidationMap setup_global_validation_info()
             {
             case InputSection::simulation_info:
             {
-                UpdateValidationInfoByField(v.simulation_info, f);
+                update_validation_info_by_field(v.simulation_info, f);
             }
             break;
             case InputSection::loads_01explicit:
             {
-                UpdateValidationInfoByField(v.load_explicit, f);
+                update_validation_info_by_field(v.load_explicit, f);
             }
             break;
             case InputSection::loads_02file_based:
             {
-                UpdateValidationInfoByField(v.load_file_based, f);
+                update_validation_info_by_field(v.load_file_based, f);
             }
             break;
             case InputSection::components_constant_load:
             {
-                UpdateValidationInfoByField(v.component.constant_load, f);
+                update_validation_info_by_field(v.component.constant_load, f);
             }
             break;
             case InputSection::components_load:
             {
-                UpdateValidationInfoByField(v.component.schedule_based_load, f);
+                update_validation_info_by_field(v.component.schedule_based_load, f);
             }
             break;
             case InputSection::components_source:
             {
-                UpdateValidationInfoByField(v.component.constant_source, f);
+                update_validation_info_by_field(v.component.constant_source, f);
             }
             break;
             case InputSection::components_uncontrolled_source:
             {
-                UpdateValidationInfoByField(v.component.schedule_based_source, f);
+                update_validation_info_by_field(v.component.schedule_based_source, f);
             }
             break;
             case InputSection::components_const_eff_converter:
             {
-                UpdateValidationInfoByField(v.component.constant_efficiency_converter, f);
+                update_validation_info_by_field(v.component.constant_efficiency_converter, f);
             }
             break;
             case InputSection::components_variable_eff_converter:
             {
-                UpdateValidationInfoByField(v.component.variable_efficiency_converter, f);
+                update_validation_info_by_field(v.component.variable_efficiency_converter, f);
             }
             break;
             case InputSection::components_mux:
             {
-                UpdateValidationInfoByField(v.component.mux, f);
+                update_validation_info_by_field(v.component.mux, f);
             }
             break;
             case InputSection::components_store:
             {
-                UpdateValidationInfoByField(v.component.store, f);
+                update_validation_info_by_field(v.component.store, f);
             }
             break;
             case InputSection::components_pass_through:
             {
-                UpdateValidationInfoByField(v.component.pass_through, f);
+                update_validation_info_by_field(v.component.pass_through, f);
             }
             break;
             case InputSection::components_mover:
             {
-                UpdateValidationInfoByField(v.component.mover, f);
+                update_validation_info_by_field(v.component.mover, f);
             }
             break;
             case InputSection::components_variable_eff_mover:
             {
-                UpdateValidationInfoByField(v.component.variable_efficiency_mover, f);
+                update_validation_info_by_field(v.component.variable_efficiency_mover, f);
             }
             break;
             case InputSection::components_switch:
             {
-                UpdateValidationInfoByField(v.component.transfer_switch, f);
+                update_validation_info_by_field(v.component.transfer_switch, f);
             }
             break;
             case InputSection::dist_fixed:
             {
-                UpdateValidationInfoByField(v.distribution.fixed, f);
+                update_validation_info_by_field(v.distribution.fixed, f);
             }
             break;
             case InputSection::dist_normal:
             {
-                UpdateValidationInfoByField(v.distribution.normal, f);
+                update_validation_info_by_field(v.distribution.normal, f);
             }
             break;
             case InputSection::dist_01quantile_table_from_file:
             {
-                UpdateValidationInfoByField(v.distribution.quantile_table_from_file, f);
+                update_validation_info_by_field(v.distribution.quantile_table_from_file, f);
             }
             break;
             case InputSection::dist_02quantile_table_explicit:
             {
-                UpdateValidationInfoByField(v.distribution.quantile_table_explicit, f);
+                update_validation_info_by_field(v.distribution.quantile_table_explicit, f);
             }
             break;
             case InputSection::dist_uniform:
             {
-                UpdateValidationInfoByField(v.distribution.uniform, f);
+                update_validation_info_by_field(v.distribution.uniform, f);
             }
             break;
             case InputSection::dist_weibull:
             {
-                UpdateValidationInfoByField(v.distribution.weibull, f);
+                update_validation_info_by_field(v.distribution.weibull, f);
             }
             break;
             // TODO: add in all the other distributions
             case InputSection::network:
             {
-                UpdateValidationInfoByField(v.network, f);
+                update_validation_info_by_field(v.network, f);
             }
             break;
             case InputSection::scenarios:
             {
-                UpdateValidationInfoByField(v.scenario, f);
+                update_validation_info_by_field(v.scenario, f);
             }
             break;
             default:
             {
                 std::cerr << "Program Initialization Error: "
-                          << "unhandled section '" << InputSection_toString(sec) << "'"
+                          << "unhandled section '" << to_string(sec) << "'"
                           << std::endl;
                 std::exit(1);
             }

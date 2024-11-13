@@ -72,9 +72,9 @@ size_t register_intensity(Simulation& s, std::string const& tag)
 }
 
 size_t register_intensity_level_for_scenario(Simulation& s,
-                                                    size_t scenarioId,
-                                                    size_t intensityId,
-                                                    double intensityLevel)
+                                             size_t scenarioId,
+                                             size_t intensityId,
+                                             double intensityLevel)
 {
     for (size_t i = 0; i < s.scenario_intensities.intensity_id.size(); ++i)
     {
@@ -93,8 +93,8 @@ size_t register_intensity_level_for_scenario(Simulation& s,
 }
 
 size_t register_load_schedule(Simulation& s,
-                                       std::string const& tag,
-                                       std::vector<TimeAndAmount> const& loadSchedule)
+                              std::string const& tag,
+                              std::vector<TimeAndAmount> const& loadSchedule)
 {
     size_t id = s.load_map.tags.size();
     assert(s.load_map.tags.size() == s.load_map.loads.size());
@@ -636,9 +636,9 @@ void print_loads(Simulation const& s)
 size_t scenario_count(Simulation const& s) { return s.scenario_map.tag.size(); }
 
 Result parse_simulation_info(Simulation& s,
-                                      toml::value const& v,
-                                      ValidationInfo const& validationInfo,
-                                      Log const& log)
+                             toml::value const& v,
+                             ValidationInfo const& validationInfo,
+                             Log const& log)
 {
     if (!v.contains("simulation_info"))
     {
@@ -705,9 +705,9 @@ size_t register_fragility_curve(Simulation& s, std::string const& tag)
 }
 
 size_t register_fragility_curve(Simulation& s,
-                                         std::string const& tag,
-                                         FragilityCurveType curveType,
-                                         size_t curveIdx)
+                                std::string const& tag,
+                                FragilityCurveType curveType,
+                                size_t curveIdx)
 {
     for (size_t i = 0; i < s.fragility_curves.tag.size(); ++i)
     {
@@ -725,10 +725,8 @@ size_t register_fragility_curve(Simulation& s,
     return id;
 }
 
-size_t register_failure_mode(Simulation& s,
-                                      std::string const& tag,
-                                      size_t failureId,
-                                      size_t repairId)
+size_t
+register_failure_mode(Simulation& s, std::string const& tag, size_t failureId, size_t repairId)
 {
     size_t size = s.failure_modes.tag.size();
     for (size_t i = 0; i < size; ++i)
@@ -748,9 +746,9 @@ size_t register_failure_mode(Simulation& s,
 }
 
 size_t register_fragility_mode(Simulation& s,
-                                        std::string const& tag,
-                                        size_t fragilityCurveId,
-                                        std::optional<size_t> maybeRepairDistId)
+                               std::string const& tag,
+                               size_t fragilityCurveId,
+                               std::optional<size_t> maybeRepairDistId)
 {
     size_t size = s.fragility_modes.tag.size();
     for (size_t i = 0; i < size; ++i)
@@ -769,8 +767,9 @@ size_t register_fragility_mode(Simulation& s,
     return result;
 }
 
-std::optional<size_t>
-parse_vulnerable_to(Simulation const& s, toml::table const& fcData, std::string const& tableFullName)
+std::optional<size_t> parse_vulnerable_to(Simulation const& s,
+                                          toml::table const& fcData,
+                                          std::string const& tableFullName)
 {
     if (!fcData.contains("vulnerable_to"))
     {
@@ -795,9 +794,9 @@ parse_vulnerable_to(Simulation const& s, toml::table const& fcData, std::string 
 }
 
 Result parse_linear_fragility_curve(Simulation& s,
-                                            std::string const& fcName,
-                                            std::string const& tableFullName,
-                                            toml::table const& fcData)
+                                    std::string const& fcName,
+                                    std::string const& tableFullName,
+                                    toml::table const& fcData)
 {
     if (!fcData.contains("lower_bound"))
     {
@@ -921,8 +920,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
                 tfc.failure_fraction = std::move(pv.seconds);
                 size_t subtypeIdx = s.tabular_fragility_curves.size();
                 s.tabular_fragility_curves.push_back(std::move(tfc));
-                register_fragility_curve(
-                    s, fcName, FragilityCurveType::tabular, subtypeIdx);
+                register_fragility_curve(s, fcName, FragilityCurveType::tabular, subtypeIdx);
             }
             break;
             default:
@@ -963,8 +961,7 @@ bool is_fragility_mode_name_unique(Simulation& s, std::string const& name)
 
 bool is_failure_name_unique(Simulation& s, std::string const& name)
 {
-    return is_failure_mode_name_unique(s, name) &&
-           is_fragility_mode_name_unique(s, name);
+    return is_failure_mode_name_unique(s, name) && is_fragility_mode_name_unique(s, name);
 }
 
 Result parse_failure_modes(Simulation& s, toml::value const& v, Log const& log)
@@ -1086,10 +1083,10 @@ Result parse_fragility_modes(Simulation& s, toml::value const& v, Log const& log
 }
 
 Result parse_components(Simulation& s,
-                                  toml::value const& v,
-                                  ComponentValidationMap const& compValidations,
-                                  std::unordered_set<std::string> const& componentTagsInUse,
-                                  Log const& log)
+                        toml::value const& v,
+                        ComponentValidationMap const& compValidations,
+                        std::unordered_set<std::string> const& componentTagsInUse,
+                        Log const& log)
 {
     if (v.contains("components") && v.at("components").is_table())
     {
@@ -1179,8 +1176,7 @@ Result parse_scenarios(Simulation& s, toml::value const& v, Log const& log)
                         }
                         double value = maybeValue.value();
                         size_t intensityId = register_intensity(s, intensityTag);
-                        register_intensity_level_for_scenario(
-                            s, scenarioId, intensityId, value);
+                        register_intensity_level_for_scenario(s, scenarioId, intensityId, value);
                     }
                 }
             }
@@ -1191,11 +1187,10 @@ Result parse_scenarios(Simulation& s, toml::value const& v, Log const& log)
     return Result::failure;
 }
 
-std::optional<Simulation>
-read_from_toml(toml::value const& v,
-                          InputValidationMap const& validationInfo,
-                          std::unordered_set<std::string> const& componentTagsInUse,
-                          Log const& log)
+std::optional<Simulation> read_from_toml(toml::value const& v,
+                                         InputValidationMap const& validationInfo,
+                                         std::unordered_set<std::string> const& componentTagsInUse,
+                                         Log const& log)
 {
     Simulation s = {};
     initialize(s);
@@ -1212,8 +1207,7 @@ read_from_toml(toml::value const& v,
         Log_error(log, "loads", "problem parsing...");
         return {};
     }
-    auto compResult =
-        parse_components(s, v, validationInfo.component, componentTagsInUse, log);
+    auto compResult = parse_components(s, v, validationInfo.component, componentTagsInUse, log);
     if (compResult == Result::failure)
     {
         Log_error(log, "components", "problem parsing...");
@@ -1339,14 +1333,14 @@ void print_intensities(Simulation const& s)
 }
 
 void write_event_file_header(std::ofstream& out,
-                          Model const& model,
-                          FlowDict const& fd,
-                          std::vector<size_t> const& nodeConnOrder,
-                          std::vector<size_t> const& storeOrder,
-                          std::vector<size_t> const& compOrder,
-                          TimeUnit outputTimeUnit,
-                          std::vector<NodeConnection> const& nodeConnections,
-                          bool aggregateGroups)
+                             Model const& model,
+                             FlowDict const& fd,
+                             std::vector<size_t> const& nodeConnOrder,
+                             std::vector<size_t> const& storeOrder,
+                             std::vector<size_t> const& compOrder,
+                             TimeUnit outputTimeUnit,
+                             std::vector<NodeConnection> const& nodeConnections,
+                             bool aggregateGroups)
 {
     ComponentDict const& compMap = model.component;
     out << "scenario id,"
@@ -1903,8 +1897,9 @@ set_loads_for_scenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, 
     return Result::success;
 }
 
-Result
-set_supply_for_scenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, size_t scenarioIdx)
+Result set_supply_for_scenario(std::vector<ScheduleBasedSource>& loads,
+                               LoadDict loadMap,
+                               size_t scenarioIdx)
 {
     for (size_t sblIdx = 0; sblIdx < loads.size(); ++sblIdx)
     {
@@ -2538,7 +2533,7 @@ void WriteStatisticsToFile(Simulation const& s,
 }
 
 std::vector<TimeAndFlows> apply_uniform_time_step(std::vector<TimeAndFlows> const& results,
-                                               double const time_step_h)
+                                                  double const time_step_h)
 {
     auto num_events = results.size();
     if ((num_events == 0) || (time_step_h <= 0.0))
@@ -2590,13 +2585,13 @@ std::vector<TimeAndFlows> apply_uniform_time_step(std::vector<TimeAndFlows> cons
 
 std::unordered_map<size_t, std::vector<TimeState>>
 create_failure_schedules(std::vector<size_t> const& componentFailureModeComponentIds,
-                       std::vector<size_t> const& componentFailureModeFailureModeIds,
-                       std::vector<double> const& componentInitialAges_s,
-                       ReliabilityCoordinator const& rc,
-                       std::function<double()> const& randFn,
-                       DistributionSystem const& ds,
-                       double scenarioDuration_s,
-                       double scenarioOffset_s)
+                         std::vector<size_t> const& componentFailureModeFailureModeIds,
+                         std::vector<double> const& componentInitialAges_s,
+                         ReliabilityCoordinator const& rc,
+                         std::function<double()> const& randFn,
+                         DistributionSystem const& ds,
+                         double scenarioDuration_s,
+                         double scenarioOffset_s)
 {
     std::unordered_map<size_t, std::vector<TimeState>> relSchByCompFailId;
     relSchByCompFailId.reserve(componentFailureModeComponentIds.size());
@@ -2762,13 +2757,13 @@ CalculateConnectionsToReport(std::vector<Connection> const& conns,
 }
 
 void run(Simulation& s,
-                    Log& log,
-                    std::string const& eventsFilename,
-                    std::string const& statsFilename,
-                    double time_step_h /*-1.0*/,
-                    bool aggregateGroups,
-                    bool saveReliabilityCurves,
-                    bool verbose)
+         Log& log,
+         std::string const& eventsFilename,
+         std::string const& statsFilename,
+         double time_step_h /*-1.0*/,
+         bool aggregateGroups,
+         bool saveReliabilityCurves,
+         bool verbose)
 {
     // TODO: wrap into input options struct and pass in
     bool const checkNetwork = false;
@@ -2897,14 +2892,14 @@ void run(Simulation& s,
         RemoveNonReportingIds(nodeConnOrder, nodeConnsToReport);
 
     write_event_file_header(out,
-                         s.the_model,
-                         s.flow_type_map,
-                         nodeConnOrderForEvents,
-                         storeOrderForEvents,
-                         compOrderForEvents,
-                         outputTimeUnit,
-                         nodeConnections,
-                         aggregateGroups);
+                            s.the_model,
+                            s.flow_type_map,
+                            nodeConnOrderForEvents,
+                            storeOrderForEvents,
+                            compOrderForEvents,
+                            outputTimeUnit,
+                            nodeConnections,
+                            aggregateGroups);
     std::vector<ScenarioOccurrenceStats> occurrenceStats;
     for (size_t scenIdx : scenarioOrder)
     {
@@ -2918,7 +2913,8 @@ void run(Simulation& s,
         }
         // for this scenario, ensure all schedule-based components
         // have the right schedule set for this scenario
-        if (set_loads_for_scenario(s.the_model.scheduled_load, s.load_map, scenIdx) == Result::failure)
+        if (set_loads_for_scenario(s.the_model.scheduled_load, s.load_map, scenIdx) ==
+            Result::failure)
         {
             Log_warning(log, "", "Issue setting schedule loads");
             return;
@@ -2952,13 +2948,13 @@ void run(Simulation& s,
             }
             std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
                 create_failure_schedules(s.component_failure_modes.component_id,
-                                       s.component_failure_modes.failure_mode_id,
-                                       s.the_model.component.initial_age_s,
-                                       s.the_model.rel_coord,
-                                       s.the_model.random_function,
-                                       s.the_model.dist_sys,
-                                       scenarioDuration_s,
-                                       scenarioOffset_s);
+                                         s.component_failure_modes.failure_mode_id,
+                                         s.the_model.component.initial_age_s,
+                                         s.the_model.rel_coord,
+                                         s.the_model.random_function,
+                                         s.the_model.dist_sys,
+                                         scenarioDuration_s,
+                                         scenarioOffset_s);
             if (verbose)
             {
                 Log_info(log, "Generating reliability schedules");
@@ -2992,25 +2988,25 @@ void run(Simulation& s,
             s.the_model.reliability.clear();
             s.the_model.reliability =
                 apply_reliabilities_and_fragilities(s.the_model.random_function,
-                                                 s.component_failure_modes.component_id,
-                                                 s.the_model.component.initial_age_s,
-                                                 s.the_model.component.tag,
-                                                 s.component_fragilities.component_id,
-                                                 s.component_fragilities.fragility_mode_id,
-                                                 s.fragility_modes.fragility_curve_id,
-                                                 s.fragility_modes.repair_distribution_id,
-                                                 s.fragility_modes.tag,
-                                                 s.fragility_curves.curve_id,
-                                                 s.fragility_curves.curve_type,
-                                                 s.linear_fragility_curves,
-                                                 s.tabular_fragility_curves,
-                                                 s.the_model.dist_sys,
-                                                 scenarioOffset_s,
-                                                 scenarioOffset_s + scenarioDuration_s,
-                                                 intensityIdToAmount,
-                                                 relSchByCompId,
-                                                 verbose,
-                                                 log);
+                                                    s.component_failure_modes.component_id,
+                                                    s.the_model.component.initial_age_s,
+                                                    s.the_model.component.tag,
+                                                    s.component_fragilities.component_id,
+                                                    s.component_fragilities.fragility_mode_id,
+                                                    s.fragility_modes.fragility_curve_id,
+                                                    s.fragility_modes.repair_distribution_id,
+                                                    s.fragility_modes.tag,
+                                                    s.fragility_curves.curve_id,
+                                                    s.fragility_curves.curve_type,
+                                                    s.linear_fragility_curves,
+                                                    s.tabular_fragility_curves,
+                                                    s.the_model.dist_sys,
+                                                    scenarioOffset_s,
+                                                    scenarioOffset_s + scenarioDuration_s,
+                                                    intensityIdToAmount,
+                                                    relSchByCompId,
+                                                    verbose,
+                                                    log);
             if (verbose)
             {
                 Log_info(log, fmt::format("Reliabilities for Scenario: {}", scenarioTag));

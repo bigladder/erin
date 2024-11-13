@@ -18,22 +18,22 @@ namespace erin
 std::string const current_input_version = "0.2";
 
 std::unordered_set<std::string> const valid_time_units {"years",
-                                                      "year",
-                                                      "yr",
-                                                      "weeks",
-                                                      "week",
-                                                      "d",
-                                                      "days",
-                                                      "day",
-                                                      "hours",
-                                                      "hour",
-                                                      "h",
-                                                      "minutes",
-                                                      "minute",
-                                                      "min",
-                                                      "seconds",
-                                                      "second",
-                                                      "s"};
+                                                        "year",
+                                                        "yr",
+                                                        "weeks",
+                                                        "week",
+                                                        "d",
+                                                        "days",
+                                                        "day",
+                                                        "hours",
+                                                        "hour",
+                                                        "h",
+                                                        "minutes",
+                                                        "minute",
+                                                        "min",
+                                                        "seconds",
+                                                        "second",
+                                                        "s"};
 
 std::unordered_set<std::string> const valid_rate_units {
     "W",

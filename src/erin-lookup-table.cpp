@@ -4,8 +4,7 @@
 
 namespace erin
 {
-double
-lookup_stair_step(std::vector<double> const& xs, std::vector<double> const& ys, double x)
+double lookup_stair_step(std::vector<double> const& xs, std::vector<double> const& ys, double x)
 {
     assert(xs.size() == ys.size());
     assert(xs.size() > 0);
@@ -29,8 +28,7 @@ lookup_stair_step(std::vector<double> const& xs, std::vector<double> const& ys, 
     return ys[maxIdx];
 }
 
-double
-lookup_linear_interp(std::vector<double> const& xs, std::vector<double> const& ys, double x)
+double lookup_linear_interp(std::vector<double> const& xs, std::vector<double> const& ys, double x)
 {
     assert(xs.size() == ys.size());
     assert(xs.size() > 0);

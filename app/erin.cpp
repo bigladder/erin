@@ -145,8 +145,7 @@ CLI::App* add_run(CLI::App& app)
         std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
         auto validation_info = setup_global_validation_info();
-        auto maybe_sim =
-            read_from_toml(data, validation_info, component_tags_in_use, log);
+        auto maybe_sim = read_from_toml(data, validation_info, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Simulation returned without value");
@@ -159,13 +158,13 @@ CLI::App* add_run(CLI::App& app)
             Log_info(log, "-----------------");
         }
         run(s,
-                       log,
-                       events_filename,
-                       stats_filename,
-                       time_step_h,
-                       aggregate_groups,
-                       save_reliability_curves,
-                       verbose);
+            log,
+            events_filename,
+            stats_filename,
+            time_step_h,
+            aggregate_groups,
+            save_reliability_curves,
+            verbose);
         return EXIT_SUCCESS;
     };
 
@@ -204,8 +203,7 @@ CLI::App* add_graph(CLI::App& app)
         std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
         auto validation_info = setup_global_validation_info();
-        auto maybe_sim =
-            read_from_toml(data, validation_info, component_tags_in_use, log);
+        auto maybe_sim = read_from_toml(data, validation_info, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Could not parse sim data from TOML");
@@ -255,8 +253,7 @@ CLI::App* add_checkNetwork(CLI::App& app)
         std::unordered_set<std::string> component_tags_in_use =
             TOMLTable_parse_component_tags_in_use(data);
         auto validationInfo = setup_global_validation_info();
-        auto maybe_sim =
-            read_from_toml(data, validationInfo, component_tags_in_use, log);
+        auto maybe_sim = read_from_toml(data, validationInfo, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             return EXIT_FAILURE;

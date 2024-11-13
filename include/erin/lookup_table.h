@@ -15,11 +15,9 @@ namespace erin
 // if x is less than xs[0] or greater than xs[xs.size()-1], then we return
 // ys[0] or ys[ys.size()-1], respectively
 
-double
-lookup_stair_step(std::vector<double> const& xs, std::vector<double> const& ys, double x);
+double lookup_stair_step(std::vector<double> const& xs, std::vector<double> const& ys, double x);
 
-double
-lookup_linear_interp(std::vector<double> const& xs, std::vector<double> const& ys, double x);
+double lookup_linear_interp(std::vector<double> const& xs, std::vector<double> const& ys, double x);
 
 } // namespace erin
 

@@ -1261,8 +1261,7 @@ InputValidationMap setup_global_validation_info()
             default:
             {
                 std::cerr << "Program Initialization Error: "
-                          << "unhandled section '" << to_string(sec) << "'"
-                          << std::endl;
+                          << "unhandled section '" << to_string(sec) << "'" << std::endl;
                 std::exit(1);
             }
             break;

@@ -89,8 +89,8 @@ parse_simulation_info(std::unordered_map<std::string, InputValue> const& table)
 
 bool operator==(SimulationInfo const& a, SimulationInfo const& b)
 {
-    return a.max_time_s == b.max_time_s && a.quantity_unit == b.quantity_unit && a.rate_unit == b.rate_unit &&
-           a.time_unit == b.time_unit;
+    return a.max_time_s == b.max_time_s && a.quantity_unit == b.quantity_unit &&
+           a.rate_unit == b.rate_unit && a.time_unit == b.time_unit;
 }
 
 bool operator!=(SimulationInfo const& a, SimulationInfo const& b) { return !(a == b); }

@@ -5,11 +5,13 @@
 
 namespace erin
 {
+
 enum class Result
 {
     success,
     failure
 };
+
 } // namespace erin
 
 #endif

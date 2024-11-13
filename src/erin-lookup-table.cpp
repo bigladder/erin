@@ -5,7 +5,7 @@
 namespace erin
 {
 double
-LookupTable_LookupStairStep(std::vector<double> const& xs, std::vector<double> const& ys, double x)
+lookup_stair_step(std::vector<double> const& xs, std::vector<double> const& ys, double x)
 {
     assert(xs.size() == ys.size());
     assert(xs.size() > 0);
@@ -30,7 +30,7 @@ LookupTable_LookupStairStep(std::vector<double> const& xs, std::vector<double> c
 }
 
 double
-LookupTable_LookupInterp(std::vector<double> const& xs, std::vector<double> const& ys, double x)
+lookup_linear_interp(std::vector<double> const& xs, std::vector<double> const& ys, double x)
 {
     assert(xs.size() == ys.size());
     assert(xs.size() > 0);

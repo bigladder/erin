@@ -16,10 +16,10 @@ namespace erin
 // ys[0] or ys[ys.size()-1], respectively
 
 double
-LookupTable_LookupStairStep(std::vector<double> const& xs, std::vector<double> const& ys, double x);
+lookup_stair_step(std::vector<double> const& xs, std::vector<double> const& ys, double x);
 
 double
-LookupTable_LookupInterp(std::vector<double> const& xs, std::vector<double> const& ys, double x);
+lookup_linear_interp(std::vector<double> const& xs, std::vector<double> const& ys, double x);
 
 } // namespace erin
 

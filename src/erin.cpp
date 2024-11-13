@@ -1430,7 +1430,7 @@ void RunVariableEfficiencyConverterBackward(Model const& m,
     flow_t outflowRequest_W = ss.flows[outflowConnIdx].requested_W > vec.max_outflow_W
                                   ? vec.max_outflow_W
                                   : ss.flows[outflowConnIdx].requested_W;
-    double efficiency = LookupTable_LookupInterp(
+    double efficiency = lookup_linear_interp(
         vec.outflows_for_efficiency_W, vec.efficiencies, static_cast<double>(outflowRequest_W));
     assert(efficiency > 0.0 && efficiency <= 1.0);
     flow_t inflowRequest_W = static_cast<flow_t>(std::ceil(outflowRequest_W / efficiency));
@@ -1529,7 +1529,7 @@ void RunVariableEfficiencyMoverBackward(Model const& m,
     flow_t outflowRequest_W = ss.flows[outflowConnIdx].requested_W > mov.max_outflow_W
                                   ? mov.max_outflow_W
                                   : ss.flows[outflowConnIdx].requested_W;
-    double cop = LookupTable_LookupInterp(
+    double cop = lookup_linear_interp(
         mov.outflows_for_COP_W, mov.COPs, static_cast<double>(outflowRequest_W));
     // outflow = COP * inflow
     // inflow = outflow / COP
@@ -1940,7 +1940,7 @@ void RunVariableEfficiencyConverterForward(Model const& m,
     assert(inflowConnIdx == vec.inflow_connection_id);
     size_t outflowConn = vec.outflow_connection_id;
     flow_t inflowAvailable_W = ss.flows[inflowConnIdx].available_W;
-    double efficiency = LookupTable_LookupInterp(
+    double efficiency = lookup_linear_interp(
         vec.inflows_for_efficiency_W, vec.efficiencies, static_cast<double>(inflowAvailable_W));
     assert(efficiency > 0.0 && efficiency <= 1.0);
     flow_t outflowAvailable = static_cast<flow_t>(std::floor(efficiency * inflowAvailable_W));
@@ -1984,7 +1984,7 @@ void RunVariableEfficiencyMoverForward(Model const& model,
     VariableEfficiencyMover const& mov = model.variable_efficiency_mover[moverIdx];
     flow_t inflowAvailable_W = ss.flows[outConnIdx].available_W;
     size_t outflowConn = mov.outflow_connection_id;
-    double cop = LookupTable_LookupInterp(
+    double cop = lookup_linear_interp(
         mov.inflows_for_COP_W, mov.COPs, static_cast<double>(inflowAvailable_W));
     // outflow = cop * inflow
     flow_t outflowAvailable_W =

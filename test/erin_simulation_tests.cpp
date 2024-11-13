@@ -26,7 +26,7 @@ run_create_failure_schedules(double initial_age_s, double scenario_offset_s)
     std::vector<double> component_initial_ages_s {};
     component_initial_ages_s.push_back(initial_age_s);
     double scenario_duration_s = 144.0;
-    return erin::CreateFailureSchedules(
+    return erin::create_failure_schedules(
         component_failure_mode_component_ids,
         component_failure_mode_failure_mode_ids,
         component_initial_ages_s,

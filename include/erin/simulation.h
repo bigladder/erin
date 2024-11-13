@@ -112,53 +112,53 @@ size_t register_fragility_mode(Simulation& s,
                                         size_t fragility_curve_id,
                                         std::optional<size_t> maybe_repair_distribution_id);
 
-Result Simulation_ParseFragilityCurves(Simulation& s, std::string const& v, Log const& log);
+Result parse_fragility_curves(Simulation& s, std::string const& v, Log const& log);
 
-Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log const& log);
+Result parse_fragility_modes(Simulation& s, toml::value const& v, Log const& log);
 
-Result Simulation_ParseComponents(Simulation& s,
+Result parse_components(Simulation& s,
                                   toml::value const& v,
-                                  ComponentValidationMap const& compValidations,
-                                  std::unordered_set<std::string> const& componentTagsInUse,
+                                  ComponentValidationMap const& component_validations,
+                                  std::unordered_set<std::string> const& component_tags_in_use,
                                   Log const& log);
 
-Result Simulation_ParseDistributions(Simulation& s, toml::value const& v, Log const& log);
+Result parse_distributions(Simulation& s, toml::value const& v, Log const& log);
 
-Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& log);
+Result parse_network(Simulation& s, toml::value const& v, Log const& log);
 
-Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const& log);
+Result parse_scenarios(Simulation& s, toml::value const& v, Log const& log);
 
 std::optional<Simulation>
-Simulation_read_from_toml(toml::value const& v,
-                          InputValidationMap const& validationInfo,
-                          std::unordered_set<std::string> const& componentTagsInUse,
+read_from_toml(toml::value const& v,
+                          InputValidationMap const& validation_info,
+                          std::unordered_set<std::string> const& component_tags_in_use,
                           Log const& log = Log {});
 
-void Simulation_print(Simulation const& s);
+void print(Simulation const& s);
 
-void Simulation_PrintIntensities(Simulation const& s);
-
-Result
-SetLoadsForScenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, size_t scenarioIdx);
+void print_intensities(Simulation const& s);
 
 Result
-SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, size_t scenarioIdx);
+set_loads_for_scenario(std::vector<ScheduleBasedLoad>& loads, LoadDict load_map, size_t scenario_index);
 
-std::vector<double> DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenIdx);
+Result
+set_supply_for_scenario(std::vector<ScheduleBasedSource>& loads, LoadDict load_map, size_t scenario_index);
 
-std::unordered_map<size_t, double> GetIntensitiesForScenario(Simulation& s, size_t scenIdx);
+std::vector<double> determine_scenario_occurrence_times(Simulation& s, size_t scenIdx);
 
-std::vector<ScheduleBasedReliability> CopyReliabilities(Simulation const& s);
+std::unordered_map<size_t, double> get_intensities_for_scenario(Simulation& s, size_t scenIdx);
+
+std::vector<ScheduleBasedReliability> copy_reliabilities(Simulation const& s);
 
 std::unordered_map<size_t, std::vector<TimeState>>
-CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentIds,
-                       std::vector<size_t> const& componentFailureModeFailureModeIds,
-                       std::vector<double> const& componentInitialAges_s,
+create_failure_schedules(std::vector<size_t> const& component_failure_mode_component_ids,
+                       std::vector<size_t> const& component_failure_mode_failure_mode_ids,
+                       std::vector<double> const& component_initial_ages_s,
                        ReliabilityCoordinator const& rc,
-                       std::function<double()> const& randFn,
+                       std::function<double()> const& random_funct,
                        DistributionSystem const& ds,
-                       double scenarioDuration_s,
-                       double scenarioOffset_s);
+                       double scenario_duration_s,
+                       double scenario_offset_s);
 
 std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
     std::function<double()>& randFn,

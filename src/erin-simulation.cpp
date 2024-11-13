@@ -1028,7 +1028,7 @@ Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log con
     return Result::success;
 }
 
-Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log const& log)
+Result parse_fragility_modes(Simulation& s, toml::value const& v, Log const& log)
 {
     if (v.contains("fragility_mode"))
     {
@@ -1085,7 +1085,7 @@ Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log c
     return Result::success;
 }
 
-Result Simulation_ParseComponents(Simulation& s,
+Result parse_components(Simulation& s,
                                   toml::value const& v,
                                   ComponentValidationMap const& compValidations,
                                   std::unordered_set<std::string> const& componentTagsInUse,
@@ -1114,7 +1114,7 @@ Result Simulation_ParseDistributions(Simulation& s,
     return Result::failure;
 }
 
-Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& log)
+Result parse_network(Simulation& s, toml::value const& v, Log const& log)
 {
     std::string const n = "network";
     if (v.contains(n) && v.at(n).is_table())
@@ -1125,7 +1125,7 @@ Result Simulation_ParseNetwork(Simulation& s, toml::value const& v, Log const& l
     return Result::failure;
 }
 
-Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const& log)
+Result parse_scenarios(Simulation& s, toml::value const& v, Log const& log)
 {
     if (v.contains("scenarios") && v.at("scenarios").is_table())
     {
@@ -1192,7 +1192,7 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
 }
 
 std::optional<Simulation>
-Simulation_read_from_toml(toml::value const& v,
+read_from_toml(toml::value const& v,
                           InputValidationMap const& validationInfo,
                           std::unordered_set<std::string> const& componentTagsInUse,
                           Log const& log)
@@ -1213,7 +1213,7 @@ Simulation_read_from_toml(toml::value const& v,
         return {};
     }
     auto compResult =
-        Simulation_ParseComponents(s, v, validationInfo.component, componentTagsInUse, log);
+        parse_components(s, v, validationInfo.component, componentTagsInUse, log);
     if (compResult == Result::failure)
     {
         Log_error(log, "components", "problem parsing...");
@@ -1230,17 +1230,17 @@ Simulation_read_from_toml(toml::value const& v,
         Log_error(log, "failure_mode", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseFragilityModes(s, v, log) == Result::failure)
+    if (parse_fragility_modes(s, v, log) == Result::failure)
     {
         Log_error(log, "fragility_mode", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseNetwork(s, v, log) == Result::failure)
+    if (parse_network(s, v, log) == Result::failure)
     {
         Log_error(log, "network", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseScenarios(s, v, log) == Result::failure)
+    if (parse_scenarios(s, v, log) == Result::failure)
     {
         Log_error(log, "scenarios", "problem parsing...");
         return {};
@@ -1300,7 +1300,7 @@ static void Simulation_PrintGroups(Simulation const& s)
     }
 }
 
-void Simulation_print(Simulation const& s)
+void print(Simulation const& s)
 {
     std::cout << "-----------------" << std::endl;
     std::cout << s.info << std::endl;
@@ -1327,10 +1327,10 @@ void Simulation_print(Simulation const& s)
     std::cout << "\nScenarios:" << std::endl;
     print_scenarios(s);
     std::cout << "\nIntensities:" << std::endl;
-    Simulation_PrintIntensities(s);
+    print_intensities(s);
 }
 
-void Simulation_PrintIntensities(Simulation const& s)
+void print_intensities(Simulation const& s)
 {
     for (size_t i = 0; i < s.intensities.tag.size(); ++i)
     {
@@ -1874,7 +1874,7 @@ void WriteResultsToEventFile(std::ofstream& out,
 }
 
 Result
-SetLoadsForScenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, size_t scenarioIdx)
+set_loads_for_scenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, size_t scenarioIdx)
 {
     for (size_t sblIdx = 0; sblIdx < loads.size(); ++sblIdx)
     {
@@ -1904,7 +1904,7 @@ SetLoadsForScenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, siz
 }
 
 Result
-SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, size_t scenarioIdx)
+set_supply_for_scenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, size_t scenarioIdx)
 {
     for (size_t sblIdx = 0; sblIdx < loads.size(); ++sblIdx)
     {
@@ -1933,7 +1933,7 @@ SetSupplyForScenario(std::vector<ScheduleBasedSource>& loads, LoadDict loadMap, 
     return Result::success;
 }
 
-std::vector<double> DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenIdx)
+std::vector<double> determine_scenario_occurrence_times(Simulation& s, size_t scenIdx)
 {
     std::vector<double> occurrenceTimes_s;
     auto const& maybeMaxOccurrences = s.scenario_map.max_occurrence[scenIdx];
@@ -1953,7 +1953,7 @@ std::vector<double> DetermineScenarioOccurrenceTimes(Simulation& s, size_t scenI
     return occurrenceTimes_s;
 }
 
-std::unordered_map<size_t, double> GetIntensitiesForScenario(Simulation& s, size_t scenIdx)
+std::unordered_map<size_t, double> get_intensities_for_scenario(Simulation& s, size_t scenIdx)
 {
     std::unordered_map<size_t, double> intensityIdToAmount;
     size_t numIntensities = 0;
@@ -1980,7 +1980,7 @@ std::unordered_map<size_t, double> GetIntensitiesForScenario(Simulation& s, size
     return intensityIdToAmount;
 }
 
-std::vector<ScheduleBasedReliability> CopyReliabilities(Simulation const& s)
+std::vector<ScheduleBasedReliability> copy_reliabilities(Simulation const& s)
 {
     std::vector<ScheduleBasedReliability> originalReliabilities;
     originalReliabilities.reserve(s.the_model.reliability.size());
@@ -2589,7 +2589,7 @@ std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& 
 }
 
 std::unordered_map<size_t, std::vector<TimeState>>
-CreateFailureSchedules(std::vector<size_t> const& componentFailureModeComponentIds,
+create_failure_schedules(std::vector<size_t> const& componentFailureModeComponentIds,
                        std::vector<size_t> const& componentFailureModeFailureModeIds,
                        std::vector<double> const& componentInitialAges_s,
                        ReliabilityCoordinator const& rc,
@@ -2918,12 +2918,12 @@ void Simulation_run(Simulation& s,
         }
         // for this scenario, ensure all schedule-based components
         // have the right schedule set for this scenario
-        if (SetLoadsForScenario(s.the_model.scheduled_load, s.load_map, scenIdx) == Result::failure)
+        if (set_loads_for_scenario(s.the_model.scheduled_load, s.load_map, scenIdx) == Result::failure)
         {
             Log_warning(log, "", "Issue setting schedule loads");
             return;
         }
-        if (SetSupplyForScenario(s.the_model.scheduled_source, s.load_map, scenIdx) ==
+        if (set_supply_for_scenario(s.the_model.scheduled_source, s.load_map, scenIdx) ==
             Result::failure)
         {
             Log_warning(log, "", "Issue setting schedule sources");
@@ -2932,7 +2932,7 @@ void Simulation_run(Simulation& s,
         // TODO: implement load substitution for schedule-based sources
         // for (size_t sbsIdx = 0; sbsIdx < s.Model.ScheduleSrcs.size();
         // ++sbsIdx) {/* ... */}
-        std::vector<double> occurrenceTimes_s = DetermineScenarioOccurrenceTimes(s, scenIdx);
+        std::vector<double> occurrenceTimes_s = determine_scenario_occurrence_times(s, scenIdx);
         if (verbose)
         {
             Log_debug(log,
@@ -2943,7 +2943,7 @@ void Simulation_run(Simulation& s,
         // TODO: initialize total scenario stats (i.e.,
         // over all occurrences)
         std::unordered_map<size_t, double> intensityIdToAmount =
-            GetIntensitiesForScenario(s, scenIdx);
+            get_intensities_for_scenario(s, scenIdx);
         for (size_t occIdx = 0; occIdx < occurrenceTimes_s.size(); ++occIdx)
         {
             if (verbose)
@@ -2951,7 +2951,7 @@ void Simulation_run(Simulation& s,
                 Log_debug(log, fmt::format("... Occurrence #{}", occIdx + 1));
             }
             std::unordered_map<size_t, std::vector<TimeState>> relSchByCompId =
-                CreateFailureSchedules(s.component_failure_modes.component_id,
+                create_failure_schedules(s.component_failure_modes.component_id,
                                        s.component_failure_modes.failure_mode_id,
                                        s.the_model.component.initial_age_s,
                                        s.the_model.rel_coord,

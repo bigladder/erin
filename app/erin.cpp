@@ -146,7 +146,7 @@ CLI::App* add_run(CLI::App& app)
             TOMLTable_parse_component_tags_in_use(data);
         auto validation_info = setup_global_validation_info();
         auto maybe_sim =
-            Simulation_read_from_toml(data, validation_info, component_tags_in_use, log);
+            read_from_toml(data, validation_info, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Simulation returned without value");
@@ -155,7 +155,7 @@ CLI::App* add_run(CLI::App& app)
         Simulation s = std::move(maybe_sim.value());
         if (verbose)
         {
-            Simulation_print(s);
+            print(s);
             Log_info(log, "-----------------");
         }
         Simulation_run(s,
@@ -205,7 +205,7 @@ CLI::App* add_graph(CLI::App& app)
             TOMLTable_parse_component_tags_in_use(data);
         auto validation_info = setup_global_validation_info();
         auto maybe_sim =
-            Simulation_read_from_toml(data, validation_info, component_tags_in_use, log);
+            read_from_toml(data, validation_info, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Could not parse sim data from TOML");
@@ -256,7 +256,7 @@ CLI::App* add_checkNetwork(CLI::App& app)
             TOMLTable_parse_component_tags_in_use(data);
         auto validationInfo = setup_global_validation_info();
         auto maybe_sim =
-            Simulation_read_from_toml(data, validationInfo, component_tags_in_use, log);
+            read_from_toml(data, validationInfo, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
             return EXIT_FAILURE;

@@ -2,19 +2,23 @@
 // See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_TIME_AND_AMOUNT_H
 #define ERIN_TIME_AND_AMOUNT_H
-#include "erin/const.h"
+
 #include <stdint.h>
 #include <ostream>
 
+#include "erin/const.h"
+
 namespace erin
 {
+
 struct TimeAndAmount
 {
-    double Time_s = 0.0;
-    flow_t Amount_W = 0;
+    double time_s = 0.0;
+    flow_t amount_W = 0;
 };
 
-std::ostream& operator<<(std::ostream& os, TimeAndAmount const& timeAndAmount);
+std::ostream& operator<<(std::ostream& os, TimeAndAmount const& time_and_amount);
+
 } // namespace erin
 
 #endif

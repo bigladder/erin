@@ -682,8 +682,8 @@ TOMLTable_parse_vector_of_time_rate_pairs(std::unordered_map<toml::key, toml::va
                 if (t.has_value() && r.has_value() && r.value() >= 0)
                 {
                     TimeAndAmount taa {};
-                    taa.Time_s = t.value() * timeMult;
-                    taa.Amount_W = static_cast<flow_t>(r.value() * rateMult);
+                    taa.time_s = t.value() * timeMult;
+                    taa.amount_W = static_cast<flow_t>(r.value() * rateMult);
                     timeAndLoads.push_back(std::move(taa));
                 }
                 else

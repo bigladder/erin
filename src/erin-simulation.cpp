@@ -615,10 +615,10 @@ void print_loads(Simulation const& s)
         if (!s.load_map.loads[i].empty())
         {
             // TODO: add time units
-            std::cout << "- initial time: " << s.load_map.loads[i][0].Time_s << std::endl;
+            std::cout << "- initial time: " << s.load_map.loads[i][0].time_s << std::endl;
             // TODO: add time units
             std::cout << "- final time  : "
-                      << s.load_map.loads[i][s.load_map.loads[i].size() - 1].Time_s << std::endl;
+                      << s.load_map.loads[i][s.load_map.loads[i].size() - 1].time_s << std::endl;
             // TODO: add max rate
             // TODO: add min rate
             // TODO: add average rate
@@ -1881,8 +1881,8 @@ set_loads_for_scenario(std::vector<ScheduleBasedLoad>& loads, LoadDict loadMap, 
             for (size_t i = 0; i < numEntries; ++i)
             {
                 TimeAndAmount tal {};
-                tal.Time_s = loadMap.loads[loadId][i].Time_s;
-                tal.Amount_W = loadMap.loads[loadId][i].Amount_W;
+                tal.time_s = loadMap.loads[loadId][i].time_s;
+                tal.amount_W = loadMap.loads[loadId][i].amount_W;
                 schedule.push_back(std::move(tal));
             }
             loads[sblIdx].times_and_loads = std::move(schedule);
@@ -1912,8 +1912,8 @@ Result set_supply_for_scenario(std::vector<ScheduleBasedSource>& loads,
             for (size_t i = 0; i < numEntries; ++i)
             {
                 TimeAndAmount tal {};
-                tal.Time_s = loadMap.loads[loadId][i].Time_s;
-                tal.Amount_W = loadMap.loads[loadId][i].Amount_W;
+                tal.time_s = loadMap.loads[loadId][i].time_s;
+                tal.amount_W = loadMap.loads[loadId][i].amount_W;
                 schedule.push_back(std::move(tal));
             }
             loads[sblIdx].time_and_availables = std::move(schedule);

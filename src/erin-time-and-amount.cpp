@@ -7,8 +7,8 @@ namespace erin
 std::ostream& operator<<(std::ostream& os, TimeAndAmount const& timeAndLoad)
 {
     os << "TimeAndAmount{"
-       << "Time_s=" << timeAndLoad.Time_s << "; "
-       << "Amount_W=" << timeAndLoad.Amount_W << "}";
+       << "Time_s=" << timeAndLoad.time_s << "; "
+       << "Amount_W=" << timeAndLoad.amount_W << "}";
     return os;
 }
 } // namespace erin

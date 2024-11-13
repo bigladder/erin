@@ -950,8 +950,8 @@ std::vector<TimeAndAmount> convert_to_time_and_amounts(
         assert(xs.size() >= 2);
         assert(xs[1] * rateToWatts <= max_flow_W);
         TimeAndAmount taa {
-            .Time_s = xs[0] * timeToSeconds,
-            .Amount_W = static_cast<flow_t>(xs[1] * rateToWatts),
+            .time_s = xs[0] * timeToSeconds,
+            .amount_W = static_cast<flow_t>(xs[1] * rateToWatts),
         };
         result.push_back(std::move(taa));
     }
@@ -1118,14 +1118,14 @@ void activate_schedule_based_load_connections(Model const& m, SimulationState& s
         if (idx < m.scheduled_load[i].times_and_loads.size())
         {
             auto const& tal = m.scheduled_load[i].times_and_loads[idx];
-            if (tal.Time_s == t)
+            if (tal.time_s == t)
             {
 
-                if (ss.flows[connIdx].requested_W != tal.Amount_W)
+                if (ss.flows[connIdx].requested_W != tal.amount_W)
                 {
                     ss.active_connections_back.insert(connIdx);
                 }
-                ss.flows[connIdx].requested_W = tal.Amount_W;
+                ss.flows[connIdx].requested_W = tal.amount_W;
             }
         }
     }
@@ -1151,10 +1151,10 @@ void activate_schedule_based_source_connections(Model const& m, SimulationState&
         if (idx < sbs.time_and_availables.size())
         {
             auto const& taa = sbs.time_and_availables[idx];
-            if (taa.Time_s == t)
+            if (taa.time_s == t)
             {
                 flow_t outAvail_W =
-                    taa.Amount_W > sbs.max_outflow_W ? sbs.max_outflow_W : taa.Amount_W;
+                    taa.amount_W > sbs.max_outflow_W ? sbs.max_outflow_W : taa.amount_W;
                 if (ss.flows[outIdx].available_W != outAvail_W)
                 {
                     ss.active_connections_front.insert(outIdx);
@@ -1709,9 +1709,9 @@ void RunScheduleBasedSourceBackward(Model& model,
     assert(outConnIdx == sbs.outflow_connection_id);
     auto wasteConn = model.scheduled_source[sbsIdx].wasteflow_connection_id;
     auto schIdx = ss.schedule_based_source_index[sbsIdx];
-    auto available = sbs.time_and_availables[schIdx].Amount_W > sbs.max_outflow_W
+    auto available = sbs.time_and_availables[schIdx].amount_W > sbs.max_outflow_W
                          ? sbs.max_outflow_W
-                         : sbs.time_and_availables[schIdx].Amount_W;
+                         : sbs.time_and_availables[schIdx].amount_W;
     auto spillage = available > ss.flows[outConnIdx].requested_W
                         ? available - ss.flows[outConnIdx].requested_W
                         : 0;
@@ -2330,7 +2330,7 @@ double NextEvent(ScheduleBasedLoad const& sb, size_t sbIdx, SimulationState cons
     {
         return infinite_time;
     }
-    return sb.times_and_loads[nextIdx].Time_s;
+    return sb.times_and_loads[nextIdx].time_s;
 }
 
 double NextEvent(ScheduleBasedSource const& sb, size_t sbIdx, SimulationState const& ss)
@@ -2340,7 +2340,7 @@ double NextEvent(ScheduleBasedSource const& sb, size_t sbIdx, SimulationState co
     {
         return infinite_time;
     }
-    return sb.time_and_availables[nextIdx].Time_s;
+    return sb.time_and_availables[nextIdx].time_s;
 }
 
 double NextEvent(ScheduleBasedReliability const& sbr, double t)
@@ -2483,7 +2483,7 @@ void UpdateScheduleBasedLoadNextEvent(Model const& m, SimulationState& ss, doubl
     {
         size_t nextIdx = ss.schedule_based_load_index[i] + 1;
         if (nextIdx < m.scheduled_load[i].times_and_loads.size() &&
-            m.scheduled_load[i].times_and_loads[nextIdx].Time_s == time)
+            m.scheduled_load[i].times_and_loads[nextIdx].time_s == time)
         {
             ss.schedule_based_load_index[i] = nextIdx;
         }
@@ -2496,7 +2496,7 @@ void UpdateScheduleBasedSourceNextEvent(Model const& m, SimulationState& ss, dou
     {
         size_t nextIdx = ss.schedule_based_source_index[i] + 1;
         if (nextIdx < m.scheduled_source[i].time_and_availables.size() &&
-            m.scheduled_source[i].time_and_availables[nextIdx].Time_s == time)
+            m.scheduled_source[i].time_and_availables[nextIdx].time_s == time)
         {
             ss.schedule_based_source_index[i] = nextIdx;
         }
@@ -3245,7 +3245,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
     {
         auto const inflowConn = m.constant_load[idx].inflow_connection_id;
         auto const loadIdx = ss.schedule_based_load_index[idx];
-        auto const amount = m.scheduled_load[idx].times_and_loads[loadIdx].Amount_W;
+        auto const amount = m.scheduled_load[idx].times_and_loads[loadIdx].amount_W;
         if (ss.flows[inflowConn].requested_W != amount)
         {
             ss.active_connections_back.insert(inflowConn);
@@ -3270,7 +3270,7 @@ void Model_SetComponentToRepaired(Model const& m, SimulationState& ss, size_t co
         // to the right amount as well.
         auto const outflowConn = m.scheduled_source[idx].outflow_connection_id;
         auto const availIdx = ss.schedule_based_source_index[idx];
-        auto const available = m.scheduled_source[idx].time_and_availables[availIdx].Amount_W;
+        auto const available = m.scheduled_source[idx].time_and_availables[availIdx].amount_W;
         if (ss.flows[outflowConn].available_W != available)
         {
             ss.active_connections_front.insert(outflowConn);

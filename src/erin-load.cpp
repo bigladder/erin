@@ -147,8 +147,8 @@ ParseSingleLoadFileLoad(std::unordered_map<std::string, InputValue> const& table
             return {};
         }
         TimeAndAmount ta {};
-        ta.Time_s = time_to_seconds(std::stod(pair[0]), timeUnit);
-        ta.Amount_W = static_cast<flow_t>(std::round(power_to_watts(std::stod(pair[1]), rateUnit)));
+        ta.time_s = time_to_seconds(std::stod(pair[0]), timeUnit);
+        ta.amount_W = static_cast<flow_t>(std::round(power_to_watts(std::stod(pair[1]), rateUnit)));
         trps.push_back(ta);
     }
     inputDataFile.close();
@@ -268,8 +268,8 @@ std::vector<std::optional<Load>> ParseMultiLoadFileLoad(toml::table const& table
             if (iRow < loadEntry.nItems)
             {
                 TimeAndAmount ta {};
-                ta.Time_s = time_to_seconds(std::stod(sRow[iCol]), loadEntry.timeUnit);
-                ta.Amount_W = static_cast<flow_t>(
+                ta.time_s = time_to_seconds(std::stod(sRow[iCol]), loadEntry.timeUnit);
+                ta.amount_W = static_cast<flow_t>(
                     power_to_watts(std::stod(sRow[iCol + 1]), loadEntry.rateUnit));
                 loads[iLoad]->time_and_loads.push_back(ta);
             }
@@ -549,7 +549,7 @@ int write_packed_loads(const std::vector<Load>& loads, std::string const& loadsF
             }
             if (iRow < table.size())
             {
-                out << erin::double_to_string(table[iRow].Time_s, 1) << "," << table[iRow].Amount_W;
+                out << erin::double_to_string(table[iRow].time_s, 1) << "," << table[iRow].amount_W;
             }
             else
             {

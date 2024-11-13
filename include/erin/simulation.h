@@ -46,71 +46,71 @@ std::string double_to_string(double value, unsigned int precision);
 
 std::string FlowToString(flow_t value_W, unsigned int precision);
 
-void Simulation_Init(Simulation& s);
+void initialize(Simulation& s);
 
-size_t Simulation_RegisterFlow(Simulation& s, std::string const& flowTag);
+size_t register_flow(Simulation& s, std::string const& flow_tag);
 
-size_t Simulation_RegisterScenario(Simulation& s, std::string const& scenarioTag);
+size_t register_scenario(Simulation& s, std::string const& scenario_tag);
 
-size_t Simulation_RegisterIntensity(Simulation& s, std::string const& tag);
+size_t register_intensity(Simulation& s, std::string const& tag);
 
-size_t Simulation_RegisterIntensityLevelForScenario(Simulation& s,
-                                                    size_t scenarioId,
-                                                    size_t intensityId,
-                                                    double intensityLevel);
+size_t register_intensity_level_for_scenario(Simulation& s,
+                                                    size_t scenario_id,
+                                                    size_t intensity_id,
+                                                    double intensity_level);
 
-size_t Simulation_RegisterLoadSchedule(Simulation& s,
+size_t register_load_schedule(Simulation& s,
                                        std::string const& tag,
-                                       std::vector<TimeAndAmount> const& loadSchedule);
+                                       std::vector<TimeAndAmount> const& load_schedule);
 
-std::optional<size_t> Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag);
+std::optional<size_t> get_load_id_by_tag(Simulation const& s, std::string const& tag);
 
-void Simulation_RegisterAllLoads(Simulation& s, std::vector<Load> const& loads);
+void register_all_loads(Simulation& s, std::vector<Load> const& loads);
 
-void Simulation_PrintComponents(Simulation const& s);
+void print_components(Simulation const& s);
 
-void Simulation_PrintFragilityCurves(Simulation const& s);
+void print_fragility_curves(Simulation const& s);
 
-void Simulation_PrintFailureModes(Simulation const& s);
+void print_failure_modes(Simulation const& s);
 
-void Simulation_PrintComponentFailureModes(Simulation const& s);
+void print_component_failure_modes(Simulation const& s);
 
-void Simulation_PrintFragilityModes(Simulation const& s);
+void print_fragility_modes(Simulation const& s);
 
-void Simulation_PrintComponentFragilityModes(Simulation const& s);
+void print_component_fragility_modes(Simulation const& s);
 
-void Simulation_PrintScenarios(Simulation const& s);
+void print_scenarios(Simulation const& s);
 
-void Simulation_PrintLoads(Simulation const& s);
+void print_loads(Simulation const& s);
 
-size_t Simulation_ScenarioCount(Simulation const& s);
+size_t scenario_count(Simulation const& s);
 
-Result Simulation_ParseSimulationInfo(Simulation& s,
+Result parse_simulation_info(Simulation& s,
                                       toml::value const& v,
-                                      ValidationInfo const& validationInfo,
+                                      ValidationInfo const& validation_info,
                                       Log const& log);
 
-Result Simulation_ParseLoads(Simulation& s,
+Result parse_loads(Simulation& s,
                              toml::value const& v,
-                             ValidationInfo const& explicitValidation,
-                             ValidationInfo const& fileBasedValidation);
+                             ValidationInfo const& explicit_validation,
+                             ValidationInfo const& file_based_validation);
 
-size_t Simulation_RegisterFragilityCurve(Simulation& s, std::string const& tag);
+size_t register_fragility_curve(Simulation& s, std::string const& tag);
 
-size_t Simulation_RegisterFragilityCurve(Simulation& s,
+size_t register_fragility_curve(Simulation& s,
                                          std::string const& tag,
-                                         FragilityCurveType curveType,
-                                         size_t curveIdx);
+                                         FragilityCurveType curve_type,
+                                         size_t curve_index);
 
-size_t Simulation_RegisterFailureMode(Simulation& s,
+size_t register_failure_mode(Simulation& s,
                                       std::string const& tag,
-                                      size_t failureId,
-                                      size_t repairId);
+                                      size_t failure_id,
+                                      size_t repair_id);
 
-size_t Simulation_RegisterFragilityMode(Simulation& s,
+size_t register_fragility_mode(Simulation& s,
                                         std::string const& tag,
-                                        size_t fragilityCurveId,
-                                        std::optional<size_t> maybeRepairDistId);
+                                        size_t fragility_curve_id,
+                                        std::optional<size_t> maybe_repair_distribution_id);
 
 Result Simulation_ParseFragilityCurves(Simulation& s, std::string const& v, Log const& log);
 

@@ -153,24 +153,24 @@ Result parse_single_component(Simulation& s,
     if (input.contains("outflow"))
     {
         outflow = std::get<std::string>(input.at("outflow").value);
-        outflowId = Simulation_RegisterFlow(s, outflow);
+        outflowId = register_flow(s, outflow);
     }
     if (input.contains("inflow"))
     {
         inflow = std::get<std::string>(input.at("inflow").value);
-        inflowId = Simulation_RegisterFlow(s, inflow);
+        inflowId = register_flow(s, inflow);
     }
     if (input.contains("flow"))
     {
         inflow = std::get<std::string>(input.at("flow").value);
-        inflowId = Simulation_RegisterFlow(s, inflow);
+        inflowId = register_flow(s, inflow);
         outflow = inflow;
         outflowId = inflowId;
     }
     if (input.contains("lossflow"))
     {
         lossflow = std::get<std::string>(input.at("lossflow").value);
-        lossflowId = Simulation_RegisterFlow(s, lossflow);
+        lossflowId = register_flow(s, lossflow);
     }
     PowerUnit rateUnit = s.info.RateUnit;
     if (input.contains("rate_unit"))
@@ -260,11 +260,11 @@ Result parse_single_component(Simulation& s,
         for (auto it = lbs.cbegin(); it != lbs.cend(); ++it)
         {
             std::string const& scenarioTag = it->first;
-            size_t scenarioId = Simulation_RegisterScenario(s, scenarioTag);
+            size_t scenarioId = register_scenario(s, scenarioTag);
             if (it->second.is_string())
             {
                 std::string const& loadTag = it->second.as_string();
-                std::optional<size_t> loadId = Simulation_GetLoadIdByTag(s, loadTag);
+                std::optional<size_t> loadId = get_load_id_by_tag(s, loadTag);
                 if (loadId.has_value())
                 {
                     scenarioIdToLoadId.insert({scenarioId, loadId.value()});
@@ -289,9 +289,9 @@ Result parse_single_component(Simulation& s,
         for (auto it = sbs.cbegin(); it != sbs.cend(); ++it)
         {
             std::string const& scenarioTag = it->first;
-            size_t scenarioId = Simulation_RegisterScenario(s, scenarioTag);
+            size_t scenarioId = register_scenario(s, scenarioTag);
             std::string const& loadTag = it->second;
-            std::optional<size_t> loadId = Simulation_GetLoadIdByTag(s, loadTag);
+            std::optional<size_t> loadId = get_load_id_by_tag(s, loadTag);
             if (loadId.has_value())
             {
                 scenarioIdToSupplyId.insert({scenarioId, loadId.value()});

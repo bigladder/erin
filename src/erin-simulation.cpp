@@ -30,15 +30,15 @@
 
 namespace erin
 {
-void Simulation_Init(Simulation& s)
+void initialize(Simulation& s)
 {
     // NOTE: we register a 'null' flow. This allows users to 'opt-out'
     // of flow specification by passing empty strings. Effectively, this
     // allows any connections to occur which is nice for simple examples.
-    Simulation_RegisterFlow(s, "");
+    register_flow(s, "");
 }
 
-size_t Simulation_RegisterFlow(Simulation& s, std::string const& flowTag)
+size_t register_flow(Simulation& s, std::string const& flowTag)
 {
     size_t id = s.flow_type_map.flow_type.size();
     for (size_t i = 0; i < id; ++i)
@@ -52,12 +52,12 @@ size_t Simulation_RegisterFlow(Simulation& s, std::string const& flowTag)
     return id;
 }
 
-size_t Simulation_RegisterScenario(Simulation& s, std::string const& scenarioTag)
+size_t register_scenario(Simulation& s, std::string const& scenarioTag)
 {
     return register_scenario(s.scenario_map, scenarioTag);
 }
 
-size_t Simulation_RegisterIntensity(Simulation& s, std::string const& tag)
+size_t register_intensity(Simulation& s, std::string const& tag)
 {
     for (size_t i = 0; i < s.intensities.tag.size(); ++i)
     {
@@ -71,7 +71,7 @@ size_t Simulation_RegisterIntensity(Simulation& s, std::string const& tag)
     return id;
 }
 
-size_t Simulation_RegisterIntensityLevelForScenario(Simulation& s,
+size_t register_intensity_level_for_scenario(Simulation& s,
                                                     size_t scenarioId,
                                                     size_t intensityId,
                                                     double intensityLevel)
@@ -92,7 +92,7 @@ size_t Simulation_RegisterIntensityLevelForScenario(Simulation& s,
     return id;
 }
 
-size_t Simulation_RegisterLoadSchedule(Simulation& s,
+size_t register_load_schedule(Simulation& s,
                                        std::string const& tag,
                                        std::vector<TimeAndAmount> const& loadSchedule)
 {
@@ -112,7 +112,7 @@ size_t Simulation_RegisterLoadSchedule(Simulation& s,
     return id;
 }
 
-std::optional<size_t> Simulation_GetLoadIdByTag(Simulation const& s, std::string const& tag)
+std::optional<size_t> get_load_id_by_tag(Simulation const& s, std::string const& tag)
 {
     for (size_t i = 0; i < s.load_map.tags.size(); ++i)
     {
@@ -124,7 +124,7 @@ std::optional<size_t> Simulation_GetLoadIdByTag(Simulation const& s, std::string
     return {};
 }
 
-void Simulation_RegisterAllLoads(Simulation& s, std::vector<Load> const& loads)
+void register_all_loads(Simulation& s, std::vector<Load> const& loads)
 {
     s.load_map.tags.clear();
     s.load_map.loads.clear();
@@ -138,7 +138,7 @@ void Simulation_RegisterAllLoads(Simulation& s, std::vector<Load> const& loads)
     }
 }
 
-void Simulation_PrintComponents(Simulation const& s)
+void print_components(Simulation const& s)
 {
     Model const& m = s.the_model;
     for (size_t compId = 0; compId < m.component.component_type.size(); ++compId)
@@ -428,7 +428,7 @@ void Simulation_PrintComponents(Simulation const& s)
     }
 }
 
-void Simulation_PrintFragilityCurves(Simulation const& s)
+void print_fragility_curves(Simulation const& s)
 {
     assert(s.fragility_curves.curve_id.size() == s.fragility_curves.curve_type.size());
     assert(s.fragility_curves.curve_id.size() == s.fragility_curves.tag.size());
@@ -474,7 +474,7 @@ void Simulation_PrintFragilityCurves(Simulation const& s)
     }
 }
 
-void Simulation_PrintFailureModes(Simulation const& s)
+void print_failure_modes(Simulation const& s)
 {
     for (size_t i = 0; i < s.failure_modes.tag.size(); ++i)
     {
@@ -510,7 +510,7 @@ void Simulation_PrintFailureModes(Simulation const& s)
     }
 }
 
-void Simulation_PrintComponentFailureModes(Simulation const& s)
+void print_component_failure_modes(Simulation const& s)
 {
     for (size_t i = 0; i < s.component_failure_modes.component_id.size(); ++i)
     {
@@ -522,7 +522,7 @@ void Simulation_PrintComponentFailureModes(Simulation const& s)
     }
 }
 
-void Simulation_PrintFragilityModes(Simulation const& s)
+void print_fragility_modes(Simulation const& s)
 {
     for (size_t i = 0; i < s.fragility_modes.tag.size(); ++i)
     {
@@ -545,7 +545,7 @@ void Simulation_PrintFragilityModes(Simulation const& s)
     }
 }
 
-void Simulation_PrintComponentFragilityModes(Simulation const& s)
+void print_component_fragility_modes(Simulation const& s)
 {
     for (size_t i = 0; i < s.component_fragilities.component_id.size(); ++i)
     {
@@ -558,7 +558,7 @@ void Simulation_PrintComponentFragilityModes(Simulation const& s)
     }
 }
 
-void Simulation_PrintScenarios(Simulation const& s)
+void print_scenarios(Simulation const& s)
 {
     for (size_t i = 0; i < s.scenario_map.tag.size(); ++i)
     {
@@ -606,7 +606,7 @@ void Simulation_PrintScenarios(Simulation const& s)
     }
 }
 
-void Simulation_PrintLoads(Simulation const& s)
+void print_loads(Simulation const& s)
 {
     for (size_t i = 0; i < s.load_map.tags.size(); ++i)
     {
@@ -633,9 +633,9 @@ void Simulation_PrintLoads(Simulation const& s)
     */
 }
 
-size_t Simulation_ScenarioCount(Simulation const& s) { return s.scenario_map.tag.size(); }
+size_t scenario_count(Simulation const& s) { return s.scenario_map.tag.size(); }
 
-Result Simulation_ParseSimulationInfo(Simulation& s,
+Result parse_simulation_info(Simulation& s,
                                       toml::value const& v,
                                       ValidationInfo const& validationInfo,
                                       Log const& log)
@@ -693,18 +693,18 @@ Result Simulation_ParseLoads(Simulation& s,
         return Result::failure;
     }
     std::vector<Load> loads = std::move(maybeLoads.value());
-    Simulation_RegisterAllLoads(s, loads);
+    register_all_loads(s, loads);
     return Result::success;
 }
 
 // TODO: change this to a std::optional<size_t> GetFragilityCurveByTag()
 // if it returns !*.has_value(), register with the bogus data explicitly.
-size_t Simulation_RegisterFragilityCurve(Simulation& s, std::string const& tag)
+size_t register_fragility_curve(Simulation& s, std::string const& tag)
 {
-    return Simulation_RegisterFragilityCurve(s, tag, FragilityCurveType::linear, 0);
+    return register_fragility_curve(s, tag, FragilityCurveType::linear, 0);
 }
 
-size_t Simulation_RegisterFragilityCurve(Simulation& s,
+size_t register_fragility_curve(Simulation& s,
                                          std::string const& tag,
                                          FragilityCurveType curveType,
                                          size_t curveIdx)
@@ -725,7 +725,7 @@ size_t Simulation_RegisterFragilityCurve(Simulation& s,
     return id;
 }
 
-size_t Simulation_RegisterFailureMode(Simulation& s,
+size_t register_failure_mode(Simulation& s,
                                       std::string const& tag,
                                       size_t failureId,
                                       size_t repairId)
@@ -747,7 +747,7 @@ size_t Simulation_RegisterFailureMode(Simulation& s,
     return result;
 }
 
-size_t Simulation_RegisterFragilityMode(Simulation& s,
+size_t register_fragility_mode(Simulation& s,
                                         std::string const& tag,
                                         size_t fragilityCurveId,
                                         std::optional<size_t> maybeRepairDistId)
@@ -853,7 +853,7 @@ Result Simulation_ParseLinearFragilityCurve(Simulation& s,
     lfc.vulnerability_id = intensityId;
     size_t idx = s.linear_fragility_curves.size();
     s.linear_fragility_curves.push_back(std::move(lfc));
-    Simulation_RegisterFragilityCurve(s, fcName, FragilityCurveType::linear, idx);
+    register_fragility_curve(s, fcName, FragilityCurveType::linear, idx);
     return Result::success;
 }
 
@@ -921,7 +921,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
                 tfc.failure_fraction = std::move(pv.seconds);
                 size_t subtypeIdx = s.tabular_fragility_curves.size();
                 s.tabular_fragility_curves.push_back(std::move(tfc));
-                Simulation_RegisterFragilityCurve(
+                register_fragility_curve(
                     s, fcName, FragilityCurveType::tabular, subtypeIdx);
             }
             break;
@@ -1022,7 +1022,7 @@ Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log con
             std::string const& repairDistTag = maybeRepairDistTag.value();
             size_t failureId = s.the_model.dist_sys.lookup_dist_by_tag(failureDistTag);
             size_t repairId = s.the_model.dist_sys.lookup_dist_by_tag(repairDistTag);
-            Simulation_RegisterFailureMode(s, fmName, failureId, repairId);
+            register_failure_mode(s, fmName, failureId, repairId);
         }
     }
     return Result::success;
@@ -1067,7 +1067,7 @@ Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log c
                 return Result::failure;
             }
             std::string const& fcTag = fmValueTable.at("fragility_curve").as_string();
-            size_t fcId = Simulation_RegisterFragilityCurve(s, fcTag);
+            size_t fcId = register_fragility_curve(s, fcTag);
             std::optional<size_t> maybeRepairDistId = {};
             if (fmValueTable.contains("repair_dist"))
             {
@@ -1079,7 +1079,7 @@ Result Simulation_ParseFragilityModes(Simulation& s, toml::value const& v, Log c
                 std::string const& repairDistTag = fmValueTable.at("repair_dist").as_string();
                 maybeRepairDistId = s.the_model.dist_sys.lookup_dist_by_tag(repairDistTag);
             }
-            Simulation_RegisterFragilityMode(s, fmName, fcId, maybeRepairDistId);
+            register_fragility_mode(s, fmName, fcId, maybeRepairDistId);
         }
     }
     return Result::success;
@@ -1178,8 +1178,8 @@ Result Simulation_ParseScenarios(Simulation& s, toml::value const& v, Log const&
                             return Result::failure;
                         }
                         double value = maybeValue.value();
-                        size_t intensityId = Simulation_RegisterIntensity(s, intensityTag);
-                        Simulation_RegisterIntensityLevelForScenario(
+                        size_t intensityId = register_intensity(s, intensityTag);
+                        register_intensity_level_for_scenario(
                             s, scenarioId, intensityId, value);
                     }
                 }
@@ -1198,8 +1198,8 @@ Simulation_read_from_toml(toml::value const& v,
                           Log const& log)
 {
     Simulation s = {};
-    Simulation_Init(s);
-    auto simInfoResult = Simulation_ParseSimulationInfo(s, v, validationInfo.simulation_info, log);
+    initialize(s);
+    auto simInfoResult = parse_simulation_info(s, v, validationInfo.simulation_info, log);
     if (simInfoResult == Result::failure)
     {
         Log_error(log, "simulation_info", "problem parsing...");
@@ -1305,27 +1305,27 @@ void Simulation_print(Simulation const& s)
     std::cout << "-----------------" << std::endl;
     std::cout << s.info << std::endl;
     std::cout << "\nLoads:" << std::endl;
-    Simulation_PrintLoads(s);
+    print_loads(s);
     std::cout << "\nComponents:" << std::endl;
-    Simulation_PrintComponents(s);
+    print_components(s);
     std::cout << "\nGroups:" << std::endl;
     Simulation_PrintGroups(s);
     std::cout << "\nDistributions:" << std::endl;
     s.the_model.dist_sys.print_distributions();
     std::cout << "\nFailure Modes:" << std::endl;
-    Simulation_PrintFailureModes(s);
+    print_failure_modes(s);
     std::cout << "\nComponent/Failure Modes:" << std::endl;
-    Simulation_PrintComponentFailureModes(s);
+    print_component_failure_modes(s);
     std::cout << "\nFragility Curves:" << std::endl;
-    Simulation_PrintFragilityCurves(s);
+    print_fragility_curves(s);
     std::cout << "\nFragility Modes:" << std::endl;
-    Simulation_PrintFragilityModes(s);
+    print_fragility_modes(s);
     std::cout << "\nComponent/Fragility Modes:" << std::endl;
-    Simulation_PrintComponentFragilityModes(s);
+    print_component_fragility_modes(s);
     std::cout << "\nConnections:" << std::endl;
     Model_PrintConnections(s.the_model, s.flow_type_map);
     std::cout << "\nScenarios:" << std::endl;
-    Simulation_PrintScenarios(s);
+    print_scenarios(s);
     std::cout << "\nIntensities:" << std::endl;
     Simulation_PrintIntensities(s);
 }

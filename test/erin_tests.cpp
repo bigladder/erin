@@ -2025,7 +2025,7 @@ TEST(Erin, TestApplyUniformTimeStep)
     auto results = Simulate(m, false);
 
     // NOTE: 1-h steps
-    auto modified_results = ApplyUniformTimeStep(results, 1.0);
+    auto modified_results = apply_uniform_time_step(results, 1.0);
 
     EXPECT_EQ(modified_results.size(), 25) << "incorrect number of events";
     EXPECT_EQ(modified_results[8].time_s, hours_as_seconds(8.0)) << "incorrect time of event";

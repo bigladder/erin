@@ -770,7 +770,7 @@ size_t register_fragility_mode(Simulation& s,
 }
 
 std::optional<size_t>
-Parse_VulnerableTo(Simulation const& s, toml::table const& fcData, std::string const& tableFullName)
+parse_vulnerable_to(Simulation const& s, toml::table const& fcData, std::string const& tableFullName)
 {
     if (!fcData.contains("vulnerable_to"))
     {
@@ -794,7 +794,7 @@ Parse_VulnerableTo(Simulation const& s, toml::table const& fcData, std::string c
     return maybeIntId;
 }
 
-Result Simulation_ParseLinearFragilityCurve(Simulation& s,
+Result parse_linear_fragility_curve(Simulation& s,
                                             std::string const& fcName,
                                             std::string const& tableFullName,
                                             toml::table const& fcData)
@@ -841,7 +841,7 @@ Result Simulation_ParseLinearFragilityCurve(Simulation& s,
         return Result::failure;
     }
     double upperBound = maybeUpperBound.value();
-    std::optional<size_t> maybeIntId = Parse_VulnerableTo(s, fcData, tableFullName);
+    std::optional<size_t> maybeIntId = parse_vulnerable_to(s, fcData, tableFullName);
     if (!maybeIntId.has_value())
     {
         return Result::failure;
@@ -893,7 +893,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
             {
             case (FragilityCurveType::linear):
             {
-                if (Simulation_ParseLinearFragilityCurve(s, fcName, tableFullName, fcData) ==
+                if (parse_linear_fragility_curve(s, fcName, tableFullName, fcData) ==
                     Result::failure)
                 {
                     return Result::failure;
@@ -902,7 +902,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
             break;
             case (FragilityCurveType::tabular):
             {
-                std::optional<size_t> maybeIntId = Parse_VulnerableTo(s, fcData, tableFullName);
+                std::optional<size_t> maybeIntId = parse_vulnerable_to(s, fcData, tableFullName);
                 if (!maybeIntId.has_value())
                 {
                     return Result::failure;
@@ -937,7 +937,7 @@ Result Simulation_ParseFragilityCurves(Simulation& s, toml::value const& v, Log 
     return Result::success;
 }
 
-bool Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name)
+bool is_failure_mode_name_unique(Simulation& s, std::string const& name)
 {
     for (std::string const& tag : s.failure_modes.tag)
     {
@@ -949,7 +949,7 @@ bool Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name)
     return true;
 }
 
-bool Simulation_IsFragilityModeNameUnique(Simulation& s, std::string const& name)
+bool is_fragility_mode_name_unique(Simulation& s, std::string const& name)
 {
     for (size_t i = 0; i < s.fragility_modes.tag.size(); ++i)
     {
@@ -961,13 +961,13 @@ bool Simulation_IsFragilityModeNameUnique(Simulation& s, std::string const& name
     return true;
 }
 
-bool Simulation_IsFailureNameUnique(Simulation& s, std::string const& name)
+bool is_failure_name_unique(Simulation& s, std::string const& name)
 {
-    return Simulation_IsFailureModeNameUnique(s, name) &&
-           Simulation_IsFragilityModeNameUnique(s, name);
+    return is_failure_mode_name_unique(s, name) &&
+           is_fragility_mode_name_unique(s, name);
 }
 
-Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log const& log)
+Result parse_failure_modes(Simulation& s, toml::value const& v, Log const& log)
 {
     if (v.contains("failure_mode"))
     {
@@ -981,7 +981,7 @@ Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log con
         {
             std::string const& fmName = pair.first;
             std::string const fullName = "failue_mode." + fmName;
-            if (!Simulation_IsFragilityModeNameUnique(s, fmName))
+            if (!is_fragility_mode_name_unique(s, fmName))
             {
                 Log_error(log,
                           fmName,
@@ -1042,7 +1042,7 @@ Result parse_fragility_modes(Simulation& s, toml::value const& v, Log const& log
         {
             std::string const& fmName = pair.first;
             std::string const fullName = "fragility_mode." + fmName;
-            if (!Simulation_IsFailureModeNameUnique(s, fmName))
+            if (!is_failure_mode_name_unique(s, fmName))
             {
                 Log_error(log,
                           fullName,
@@ -1225,7 +1225,7 @@ read_from_toml(toml::value const& v,
         Log_error(log, "dist", "problem parsing...");
         return {};
     }
-    if (Simulation_ParseFailureModes(s, v, log) == Result::failure)
+    if (parse_failure_modes(s, v, log) == Result::failure)
     {
         Log_error(log, "failure_mode", "problem parsing...");
         return {};
@@ -1338,7 +1338,7 @@ void print_intensities(Simulation const& s)
     }
 }
 
-void WriteEventFileHeader(std::ofstream& out,
+void write_event_file_header(std::ofstream& out,
                           Model const& model,
                           FlowDict const& fd,
                           std::vector<size_t> const& nodeConnOrder,
@@ -1433,7 +1433,7 @@ std::vector<size_t> CalculateConnectionOrder(Simulation const& s)
     return result;
 }
 
-std::vector<size_t> CalculateScenarioOrder(Simulation const& s)
+std::vector<size_t> calculate_scenario_order(Simulation const& s)
 {
     std::vector<size_t> result;
     std::vector<std::string> scenarioTags(s.scenario_map.tag);
@@ -1455,7 +1455,7 @@ std::vector<size_t> CalculateScenarioOrder(Simulation const& s)
     return result;
 }
 
-std::vector<size_t> CalculateComponentOrder(Simulation const& s)
+std::vector<size_t> calculate_component_order(Simulation const& s)
 {
     size_t const numComps = s.the_model.component.tag.size();
     std::vector<size_t> result;
@@ -1537,7 +1537,7 @@ std::vector<size_t> CalculateStoreOrder(Simulation const& s,
     return result;
 }
 
-std::vector<size_t> CalculateFailModeOrder(Simulation const& s)
+std::vector<size_t> calculate_fail_mode_order(Simulation const& s)
 {
     size_t const numFailModes = s.failure_modes.tag.size();
     std::vector<size_t> result;
@@ -1558,7 +1558,7 @@ std::vector<size_t> CalculateFailModeOrder(Simulation const& s)
     return result;
 }
 
-std::vector<size_t> CalculateFragilModeOrder(Simulation const& s)
+std::vector<size_t> calculate_fragil_mode_order(Simulation const& s)
 {
     size_t const numFragModes = s.fragility_modes.tag.size();
     std::vector<size_t> result;
@@ -2037,7 +2037,7 @@ void PrintReliabilities(std::vector<ScheduleBasedReliability> const& sbrs)
     }
 }
 
-std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
+std::vector<ScheduleBasedReliability> apply_reliabilities_and_fragilities(
     std::function<double()>& randFn,
     std::vector<size_t> const& componentFailureModeComponentIds,
     std::vector<double> const& componentInitialAges_s,
@@ -2537,7 +2537,7 @@ void WriteStatisticsToFile(Simulation const& s,
     stats.close();
 }
 
-std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& results,
+std::vector<TimeAndFlows> apply_uniform_time_step(std::vector<TimeAndFlows> const& results,
                                                double const time_step_h)
 {
     auto num_events = results.size();
@@ -2761,7 +2761,7 @@ CalculateConnectionsToReport(std::vector<Connection> const& conns,
     return connsToReport;
 }
 
-void Simulation_run(Simulation& s,
+void run(Simulation& s,
                     Log& log,
                     std::string const& eventsFilename,
                     std::string const& statsFilename,
@@ -2872,12 +2872,12 @@ void Simulation_run(Simulation& s,
     std::unordered_set<size_t> connsToReport =
         CalculateConnectionsToReport(s.the_model.connection, compsToReport);
 
-    std::vector<size_t> scenarioOrder = CalculateScenarioOrder(s);
+    std::vector<size_t> scenarioOrder = calculate_scenario_order(s);
     std::vector<size_t> connOrder = CalculateConnectionOrder(s);
     std::vector<size_t> storeOrderForEvents = CalculateStoreOrder(s, compsToReport);
-    std::vector<size_t> compOrder = CalculateComponentOrder(s);
-    std::vector<size_t> failOrder = CalculateFailModeOrder(s);
-    std::vector<size_t> fragOrder = CalculateFragilModeOrder(s);
+    std::vector<size_t> compOrder = calculate_component_order(s);
+    std::vector<size_t> failOrder = calculate_fail_mode_order(s);
+    std::vector<size_t> fragOrder = calculate_fragil_mode_order(s);
     std::vector<size_t> compOrderForEvents = RemoveNonReportingIds(compOrder, compsToReport);
 
     auto nodeConnections = GetNodeConnections(s, aggregateGroups);
@@ -2896,7 +2896,7 @@ void Simulation_run(Simulation& s,
     std::vector<size_t> nodeConnOrderForEvents =
         RemoveNonReportingIds(nodeConnOrder, nodeConnsToReport);
 
-    WriteEventFileHeader(out,
+    write_event_file_header(out,
                          s.the_model,
                          s.flow_type_map,
                          nodeConnOrderForEvents,
@@ -2991,7 +2991,7 @@ void Simulation_run(Simulation& s,
             }
             s.the_model.reliability.clear();
             s.the_model.reliability =
-                ApplyReliabilitiesAndFragilities(s.the_model.random_function,
+                apply_reliabilities_and_fragilities(s.the_model.random_function,
                                                  s.component_failure_modes.component_id,
                                                  s.the_model.component.initial_age_s,
                                                  s.the_model.component.tag,
@@ -3058,7 +3058,7 @@ void Simulation_run(Simulation& s,
                 std::vector<TimeAndFlows> modified_results0 = {};
                 if (time_step_h > 0.0)
                 {
-                    modified_results0 = ApplyUniformTimeStep(results, time_step_h);
+                    modified_results0 = apply_uniform_time_step(results, time_step_h);
                     output_results = &modified_results0;
                 }
 

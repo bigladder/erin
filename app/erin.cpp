@@ -113,7 +113,7 @@ CLI::App* add_run(CLI::App& app)
     subcommand->add_flag(
         "-r,--save-reliability", save_reliability_curves, "Save reliability curves");
 
-    auto run = [&]()
+    auto run_it = [&]()
     {
         using namespace erin;
         Logger logger {};
@@ -158,7 +158,7 @@ CLI::App* add_run(CLI::App& app)
             print(s);
             Log_info(log, "-----------------");
         }
-        Simulation_run(s,
+        run(s,
                        log,
                        events_filename,
                        stats_filename,
@@ -169,7 +169,7 @@ CLI::App* add_run(CLI::App& app)
         return EXIT_SUCCESS;
     };
 
-    subcommand->callback([&]() { run(); });
+    subcommand->callback([&]() { run_it(); });
 
     return subcommand;
 }

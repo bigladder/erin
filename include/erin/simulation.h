@@ -160,92 +160,92 @@ create_failure_schedules(std::vector<size_t> const& component_failure_mode_compo
                        double scenario_duration_s,
                        double scenario_offset_s);
 
-std::vector<ScheduleBasedReliability> ApplyReliabilitiesAndFragilities(
-    std::function<double()>& randFn,
-    std::vector<size_t> const& componentFailureModeComponentIds,
-    std::vector<double> const& componentInitialAges_s,
-    std::vector<std::string> const& componentTags,
-    std::vector<size_t> const& componentFragilityComponentIds,
-    std::vector<size_t> const& componentFragilityFragilityModeIds,
-    std::vector<size_t> const& fragilityModeFragilityCurveIds,
-    std::vector<std::optional<size_t>> const& fragilityModeRepairDistIds,
-    std::vector<std::string> const& fragilityModeTags,
-    std::vector<size_t> const& fragilityCurveCurveIds,
-    std::vector<FragilityCurveType> const& fragilityCurveCurveTypes,
-    std::vector<LinearFragilityCurve> linearFragilityCurves,
-    std::vector<TabularFragilityCurve> tabularFragilityCurves,
+std::vector<ScheduleBasedReliability> apply_reliabilities_and_fragilities(
+    std::function<double()>& random_funct,
+    std::vector<size_t> const& component_failure_mode_component_ids,
+    std::vector<double> const& component_initial_ages_s,
+    std::vector<std::string> const& component_tags,
+    std::vector<size_t> const& component_fragility_component_ids,
+    std::vector<size_t> const& component_fragility_fragility_mode_ids,
+    std::vector<size_t> const& fragility_mode_fragility_curve_ids,
+    std::vector<std::optional<size_t>> const& fragility_mode_repair_dist_ids,
+    std::vector<std::string> const& fragility_mode_tags,
+    std::vector<size_t> const& fragility_curve_curve_ids,
+    std::vector<FragilityCurveType> const& fragility_curve_curve_types,
+    std::vector<LinearFragilityCurve> linear_fragility_curves,
+    std::vector<TabularFragilityCurve> tabular_fragility_curves,
     DistributionSystem const& ds,
-    double startTime_s,
-    double endTime_s,
-    std::unordered_map<size_t, double> const& intensityIdToAmount,
-    std::unordered_map<size_t, std::vector<TimeState>> const& relSchByCompId,
+    double start_time_s,
+    double end_time_s,
+    std::unordered_map<size_t, double> const& intensity_id_to_amount,
+    std::unordered_map<size_t, std::vector<TimeState>> const& rel_sch_by_comp_id,
     bool verbose,
     Log const& log);
 
-std::vector<TimeAndFlows> ApplyUniformTimeStep(std::vector<TimeAndFlows> const& results,
+std::vector<TimeAndFlows> apply_uniform_time_step(std::vector<TimeAndFlows> const& results,
                                                double const time_step_h);
 
-void AggregateGroups(Model& model, std::vector<TimeAndFlows> const& results);
+void aggregate_groups(Model& model, std::vector<TimeAndFlows> const& results);
 
-void Simulation_run(Simulation& s,
+void run(Simulation& s,
                     Log& log,
-                    std::string const& eventsFilename,
-                    std::string const& statsFilename = "stats.csv",
+                    std::string const& events_filename,
+                    std::string const& stats_filename = "stats.csv",
                     double time_step_h = -1.0,
-                    bool aggregateGroups = true,
-                    bool saveReliabilityCurves = false,
+                    bool aggregate_groups = true,
+                    bool save_reliability_curves = false,
                     bool verbose = false);
 
-bool Simulation_IsFailureNameUnique(Simulation& s, std::string const& name);
+bool is_failure_name_unique(Simulation& s, std::string const& name);
 
-bool Simulation_IsFailureModeNameUnique(Simulation& s, std::string const& name);
+bool is_failure_mode_name_unique(Simulation& s, std::string const& name);
 
-bool Simulation_IsFragilityModeNameUnique(Simulation& s, std::string const& name);
+bool is_fragility_mode_name_unique(Simulation& s, std::string const& name);
 
-Result Simulation_ParseFailureModes(Simulation& s, toml::value const& v, Log const& log);
+Result parse_failure_modes(Simulation& s, toml::value const& v, Log const& log);
 
-Result Simulation_ParseLinearFragilityCurve(Simulation& s,
-                                            std::string const& fcName,
-                                            std::string const& tableFullName,
-                                            toml::table const& fcData);
+Result parse_linear_fragility_curve(Simulation& s,
+                                            std::string const& fc_name,
+                                            std::string const& table_full_name,
+                                            toml::table const& fc_data);
 
-std::optional<size_t> Parse_VulnerableTo(Simulation const& s,
-                                         toml::table const& fcData,
-                                         std::string const& tableFullName);
+std::optional<size_t> parse_vulnerable_to(Simulation const& s,
+                                         toml::table const& fc_data,
+                                         std::string const& table_full_name);
 
-std::vector<size_t> CalculateScenarioOrder(Simulation const& s);
+std::vector<size_t> calculate_scenario_order(Simulation const& s);
 
-std::vector<size_t> CalculateComponentOrder(Simulation const& s);
+std::vector<size_t> calculate_component_order(Simulation const& s);
 
-std::vector<size_t> CalculateStoreOrder(Simulation const& s,
+std::vector<size_t> calculate_store_order(Simulation const& s,
                                         std::unordered_set<std::string> const& compsToReport);
 
-std::vector<size_t> CalculateFailModeOrder(Simulation const& s);
+std::vector<size_t> calculate_fail_mode_order(Simulation const& s);
 
-std::vector<size_t> CalculateFragilModeOrder(Simulation const& s);
+std::vector<size_t> calculate_fragil_mode_order(Simulation const& s);
 
-void WriteEventFileHeader(std::ofstream& out,
+void write_event_file_header(std::ofstream& out,
                           Model const& m,
                           FlowDict const& fd,
-                          std::vector<size_t> const& connOrder,
-                          std::vector<size_t> const& storeOrder,
-                          std::vector<size_t> const& compOrder,
-                          TimeUnit outputTimeUnit,
-                          std::vector<NodeConnection> const& nodeConnections,
-                          bool aggregateGroups);
+                          std::vector<size_t> const& conn_order,
+                          std::vector<size_t> const& store_order,
+                          std::vector<size_t> const& comp_order,
+                          TimeUnit output_time_unit,
+                          std::vector<NodeConnection> const& node_connections,
+                          bool aggregate_groups);
 
-void WriteResultsToEventFile(std::ofstream& out,
+void write_results_to_event_file(std::ofstream& out,
                              std::vector<TimeAndFlows> results,
                              Simulation const& s,
-                             std::string const& scenarioTag,
-                             std::string const& scenarioStartTimeTag,
-                             std::vector<size_t> const& connOrder,
-                             TimeUnit outputTimeUnit = TimeUnit::hour);
+                             std::string const& scenario_tag,
+                             std::string const& scenario_start_time_tag,
+                             std::vector<size_t> const& conn_order,
+                             TimeUnit output_time_unit = TimeUnit::hour);
 
-void WriteStatisticsToFile(Simulation const& s,
-                           std::string const& statsFilePath,
-                           std::vector<ScenarioOccurrenceStats> const& occurrenceStats,
-                           std::vector<size_t> const& compOrder);
+void write_statistics_to_file(Simulation const& s,
+                           std::string const& stats_file_path,
+                           std::vector<ScenarioOccurrenceStats> const& occurrence_stats,
+                           std::vector<size_t> const& comp_order);
 
 } // namespace erin
 

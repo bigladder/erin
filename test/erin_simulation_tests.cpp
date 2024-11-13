@@ -144,7 +144,7 @@ std::vector<ScheduleBasedReliability> run_apply_reliabilities_and_fragilities(
     bool verbose = false;
     Log log {};
 
-    return ApplyReliabilitiesAndFragilities(rand_fn,
+    return apply_reliabilities_and_fragilities(rand_fn,
                                             component_failure_mode_component_ids,
                                             component_initial_ages_s,
                                             component_tags,
